@@ -108,7 +108,7 @@ async def async_retry_with_exponential_backoff(
 def retry(config: Optional[RetryConfig] = None):
     """通用的重试装饰器"""
     if config is None:
-        config = RetryConfig()
+        _config = RetryConfig()
 
     return retry_with_exponential_backoff(
         max_attempts=config.max_attempts,
@@ -120,7 +120,7 @@ def retry(config: Optional[RetryConfig] = None):
 def async_retry(config: Optional[RetryConfig] = None):
     """通用的异步重试装饰器"""
     if config is None:
-        config = RetryConfig()
+        _config = RetryConfig()
 
     return async_retry_with_exponential_backoff(
         max_attempts=config.max_attempts,

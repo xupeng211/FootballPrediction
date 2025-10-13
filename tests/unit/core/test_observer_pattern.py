@@ -35,7 +35,7 @@ def sample_event():
         event_type=ObservableEventType.METRIC_UPDATE,
         source="test_source",
         severity="info",
-        data={"metric_name": "cpu_usage", "metric_value": 75.5},
+        _data ={"metric_name": "cpu_usage", "metric_value": 75.5},
     )
 
 
@@ -46,7 +46,7 @@ def sample_error_event():
         event_type=ObservableEventType.ERROR_OCCURRED,
         source="test_service",
         severity="error",
-        data={"error_message": "Test error", "error_count": 1},
+        _data ={"error_message": "Test error", "error_count": 1},
     )
 
 
@@ -102,14 +102,14 @@ class TestObserver:
         # 符合过滤器条件的事件
         event1 = ObservableEvent(
             event_type=ObservableEventType.METRIC_UPDATE,
-            data={"metric_value": 75},
+            _data ={"metric_value": 75},
         )
         assert observer.should_handle_event(event1) is True
 
         # 不符合过滤器条件的事件
         event2 = ObservableEvent(
             event_type=ObservableEventType.METRIC_UPDATE,
-            data={"metric_value": 25},
+            _data ={"metric_value": 25},
         )
         assert observer.should_handle_event(event2) is False
 
@@ -122,7 +122,7 @@ class TestObserver:
 
     def test_observer_stats(self, observer):
         """测试观察者统计信息"""
-        stats = observer.get_stats()
+        _stats = observer.get_stats()
         assert stats["name"] == "TestObserver"
         assert stats["enabled"] is True
         assert stats["filters_count"] == 0
@@ -230,7 +230,7 @@ class TestSubject:
 
     def test_subject_stats(self, subject):
         """测试被观察者统计信息"""
-        stats = subject.get_stats()
+        _stats = subject.get_stats()
         assert stats["name"] == "TestSubject"
         assert stats["observers_count"] == 0
         assert stats["events_count"] == 0
@@ -253,7 +253,7 @@ class TestMetricsObserver:
         """测试处理指标更新事件"""
         event = ObservableEvent(
             event_type=ObservableEventType.METRIC_UPDATE,
-            data={
+            _data ={
                 "metric_name": "cpu_usage",
                 "metric_value": 75.5,
                 "metric_type": "gauge",
@@ -271,7 +271,7 @@ class TestMetricsObserver:
         """测试处理预测完成事件"""
         event = ObservableEvent(
             event_type=ObservableEventType.PREDICTION_COMPLETED,
-            data={"latency_ms": 150.0},
+            _data ={"latency_ms": 150.0},
         )
 
         await observer.update(event)
@@ -327,7 +327,7 @@ class TestLoggingObserver:
         info_event = ObservableEvent(
             event_type=ObservableEventType.METRIC_UPDATE,
             severity="info",
-            data={"message": "Test info"},
+            _data ={"message": "Test info"},
         )
         await observer.update(info_event)
         mock_info.assert_called_once()
@@ -336,7 +336,7 @@ class TestLoggingObserver:
         warning_event = ObservableEvent(
             event_type=ObservableEventType.THRESHOLD_EXCEEDED,
             severity="warning",
-            data={"message": "Test warning"},
+            _data ={"message": "Test warning"},
         )
         await observer.update(warning_event)
         mock_warning.assert_called_once()
@@ -345,7 +345,7 @@ class TestLoggingObserver:
         error_event = ObservableEvent(
             event_type=ObservableEventType.ERROR_OCCURRED,
             severity="error",
-            data={"message": "Test error"},
+            _data ={"message": "Test error"},
         )
         await observer.update(error_event)
         mock_error.assert_called_once()
@@ -404,7 +404,7 @@ class TestAlertingObserver:
         # 触发条件的事件
         event = ObservableEvent(
             event_type=ObservableEventType.THRESHOLD_EXCEEDED,
-            data={"metric_name": "cpu_usage", "metric_value": 85.0},
+            _data ={"metric_name": "cpu_usage", "metric_value": 85.0},
         )
 
         await observer.update(event)
@@ -447,7 +447,7 @@ class TestPerformanceObserver:
         """测试处理预测完成事件"""
         event = ObservableEvent(
             event_type=ObservableEventType.PREDICTION_COMPLETED,
-            data={"response_time_ms": 150.0},
+            _data ={"response_time_ms": 150.0},
         )
 
         await observer.update(event)
@@ -610,7 +610,7 @@ class TestAlertSubject:
             severity="warning",
             message="Test alert message",
             source="test_source",
-            data={"key": "value"},
+            _data ={"key": "value"},
         )
 
         # 验证观察者收到通知
@@ -629,7 +629,7 @@ class TestAlertSubject:
             time_window=300,  # 5分钟
         )
 
-        stats = subject.get_alert_statistics()
+        _stats = subject.get_alert_statistics()
         assert stats["suppression_rules"] == 1
 
 
@@ -657,7 +657,7 @@ class TestCacheSubject:
         # 记录缓存删除
         await subject.record_cache_delete("test_cache", "key5")
 
-        stats = subject.get_cache_statistics()
+        _stats = subject.get_cache_statistics()
         assert stats["stats"]["hits"] == 2
         assert stats["stats"]["misses"] == 1
         assert stats["stats"]["sets"] == 1
@@ -739,7 +739,7 @@ class TestObserverManager:
 
         # 验证缓存统计被记录
         cache_subject = manager.get_cache_subject()
-        stats = cache_subject.get_cache_statistics()
+        _stats = cache_subject.get_cache_statistics()
         assert stats["stats"]["hits"] == 1
         assert stats["stats"]["misses"] == 1
 
@@ -785,7 +785,7 @@ class TestObserverManager:
                     event_type=ObservableEventType.SYSTEM_ALERT,
                     source="test_source",
                     severity="warning",
-                    data={"alert_type": "test_alert", "message": "Test alert"},
+                    _data ={"alert_type": "test_alert", "message": "Test alert"},
                 )
                 await alerting_observer.update(event)
                 await asyncio.sleep(0.01)
@@ -908,7 +908,7 @@ class TestObserverIntegration:
         # 发送事件不应该抛出异常
         event = ObservableEvent(
             event_type=ObservableEventType.METRIC_UPDATE,
-            data={"test": True},
+            _data ={"test": True},
         )
         await subject.notify(event)
 

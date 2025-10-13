@@ -69,7 +69,7 @@ class TestFactoryUsage:
 
     def test_create_batch_teams(self, test_db_session):
         """测试批量创建球队"""
-        teams = TeamFactory.create_batch(5)
+        _teams = TeamFactory.create_batch(5)
         test_db_session.commit()
 
         assert len(teams) == 5
@@ -83,7 +83,7 @@ class TestFactoryUsage:
         test_db_session.flush()
 
         # 创建属于该联赛的球队
-        teams = TeamFactory.create_batch_with_league(
+        _teams = TeamFactory.create_batch_with_league(
             count=4,
             league_id=league.id
         )
@@ -137,7 +137,7 @@ class TestFactoryUsage:
         test_db_session.flush()
 
         # 创建正确的预测
-        prediction = PredictionFactory.create_correct_prediction(
+        _prediction = PredictionFactory.create_correct_prediction(
             match_id=match.id,
             actual_home_score=2,
             actual_away_score=1,
@@ -162,7 +162,7 @@ class TestFactoryUsage:
     def test_create_users(self, test_db_session):
         """测试创建用户"""
         # 创建普通用户
-        user = UserFactory.create()
+        _user = UserFactory.create()
         test_db_session.commit()
 
         # 创建管理员
@@ -199,14 +199,14 @@ class TestFactoryUsage:
         test_db_session.flush()
 
         # 创建20支球队
-        teams = TeamFactory.create_batch_with_league(20, league.id)
+        _teams = TeamFactory.create_batch_with_league(20, league.id)
         test_db_session.flush()
 
         # 获取球队ID列表
         team_ids = [team.id for team in teams]
 
         # 创建赛季比赛（简化版）
-        matches = []
+        _matches = []
         for i in range(10):  # 只创建10轮作为示例
             for j in range(0, 20, 2):  # 每轮10场比赛
                 if j + 1 < 20:

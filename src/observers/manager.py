@@ -305,7 +305,7 @@ class ObserverManager:
 
     def get_all_metrics(self) -> Dict[str, Any]:
         """获取所有指标"""
-        result = {}
+        _result = {}
 
         # 获取指标观察者的数据
         metrics_observer = self.get_metrics_observer()
@@ -338,7 +338,7 @@ class ObserverManager:
 
     def get_system_status(self) -> Dict[str, Any]:
         """获取系统状态"""
-        result = {
+        _result = {
             "initialized": self._initialized,
             "running": self._running,
             "observers": {},
@@ -348,13 +348,13 @@ class ObserverManager:
 
         # 获取观察者状态
         for name, observer in self._observers.items():
-            stats = observer.get_stats()
+            _stats = observer.get_stats()
             stats["enabled"] = observer.is_enabled()
             result["observers"][name] = stats
 
         # 获取被观察者状态
         for name, subject in self._subjects.items():
-            stats = subject.get_stats()
+            _stats = subject.get_stats()
             stats["enabled"] = subject.is_enabled()
             result["subjects"][name] = stats
 

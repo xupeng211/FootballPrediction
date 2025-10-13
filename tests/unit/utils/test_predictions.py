@@ -36,7 +36,7 @@ class TestGetMatchPrediction:
 
         # 验证响应
         assert response.status_code == status.HTTP_200_OK
-        data = response.json()
+        _data = response.json()
         assert data["success"] is True
         assert data["data"]["match_id"] == 12345
         assert data["data"]["source"] == "cached"
@@ -85,7 +85,7 @@ class TestGetMatchPrediction:
 
             # 验证响应
             assert response.status_code == status.HTTP_200_OK
-            data = response.json()
+            _data = response.json()
             assert data["success"] is True
             assert data["data"]["source"] == "real_time"
             assert data["data"]["prediction"]["model_version"] == "2.0"
@@ -103,7 +103,7 @@ class TestGetMatchPrediction:
 
         # 验证响应
         assert response.status_code == status.HTTP_404_NOT_FOUND
-        data = response.json()
+        _data = response.json()
         # Check if error message is in detail or message field
         error_msg = data.get("detail", data.get("message", ""))
         assert "比赛 99999 不存在" in error_msg
@@ -129,7 +129,7 @@ class TestGetMatchPrediction:
 
         # 验证响应
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        data = response.json()
+        _data = response.json()
         # Check if error message is in detail or message field
         error_msg = data.get("detail", data.get("message", ""))
         assert "已结束，无法生成预测" in error_msg
@@ -147,7 +147,7 @@ class TestGetMatchPrediction:
 
         # 验证响应
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-        data = response.json()
+        _data = response.json()
         # Check if error message is in detail or message field
         error_msg = data.get("detail", data.get("message", ""))
         assert "获取预测结果失败" in error_msg
@@ -187,7 +187,7 @@ class TestGetMatchPrediction:
 
             # 验证响应
             assert response.status_code == status.HTTP_200_OK
-            data = response.json()
+            _data = response.json()
             assert data["data"]["match_id"] == match_id
 
 
@@ -220,7 +220,7 @@ class TestPredictMatch:
 
             # 验证响应
             assert response.status_code == status.HTTP_200_OK
-            data = response.json()
+            _data = response.json()
             assert data["success"] is True
             assert "比赛 12345 预测完成" in data["message"]
             assert data["data"]["model_version"] == "1.0"
@@ -279,7 +279,7 @@ class TestBatchPredictMatches:
         # 模拟预测服务
         mock_results = []
         for match_id in match_ids:
-            result = MagicMock()
+            _result = MagicMock()
             result.to_dict.return_value = {
                 "match_id": match_id,
                 "predicted_result": "home_win",
@@ -299,7 +299,7 @@ class TestBatchPredictMatches:
 
             # 验证响应
             assert response.status_code == status.HTTP_200_OK
-            data = response.json()
+            _data = response.json()
             assert data["success"] is True
             assert data["data"]["total_requested"] == 3
             assert data["data"]["valid_matches"] == 3
@@ -320,7 +320,7 @@ class TestBatchPredictMatches:
 
         # 验证响应
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        data = response.json()
+        _data = response.json()
         # Check if error message is in detail, message or error field
         error_msg = data.get("detail", data.get("message", data.get("error", "")))
         assert "批量预测最多支持50场比赛" in error_msg
@@ -341,7 +341,7 @@ class TestBatchPredictMatches:
         # 模拟预测服务
         mock_results = []
         for match_id in [1, 2, 3]:
-            result = MagicMock()
+            _result = MagicMock()
             result.to_dict.return_value = {"match_id": match_id}
             mock_results.append(result)
 
@@ -358,7 +358,7 @@ class TestBatchPredictMatches:
 
             # 验证响应
             assert response.status_code == status.HTTP_200_OK
-            data = response.json()
+            _data = response.json()
             assert data["data"]["total_requested"] == 4
             assert data["data"]["valid_matches"] == 3
             assert 999 in data["data"]["invalid_match_ids"]
@@ -404,7 +404,7 @@ class TestGetMatchPredictionHistory:
 
         # 验证响应
         assert response.status_code == status.HTTP_200_OK
-        data = response.json()
+        _data = response.json()
         assert data["success"] is True
         assert data["data"]["match_id"] == 12345
         assert data["data"]["total_predictions"] == 3
@@ -487,7 +487,7 @@ class TestGetRecentPredictions:
 
         # 验证响应
         assert response.status_code == status.HTTP_200_OK
-        data = response.json()
+        _data = response.json()
         assert data["success"] is True
         assert data["data"]["time_range_hours"] == 24
         assert data["data"]["total_predictions"] == 5
@@ -512,7 +512,7 @@ class TestGetRecentPredictions:
 
         # 验证响应
         assert response.status_code == status.HTTP_200_OK
-        data = response.json()
+        _data = response.json()
         assert data["success"] is True
         assert data["data"]["time_range_hours"] == hours
 
@@ -534,7 +534,7 @@ class TestVerifyPrediction:
 
             # 验证响应
             assert response.status_code == status.HTTP_200_OK
-            data = response.json()
+            _data = response.json()
             assert data["success"] is True
             assert data["data"]["match_id"] == 12345
             assert data["data"]["verified"] is True
@@ -554,7 +554,7 @@ class TestVerifyPrediction:
 
             # 验证响应
             assert response.status_code == status.HTTP_200_OK
-            data = response.json()
+            _data = response.json()
             assert data["success"] is False
             assert data["data"]["verified"] is False
             assert "验证失败" in data["message"]

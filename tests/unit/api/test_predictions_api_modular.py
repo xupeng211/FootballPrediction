@@ -20,7 +20,7 @@ class TestPredictionsAPI:
         """测试健康检查端点"""
         response = self.client.get("/api/v1/predictions/health")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["status"] == "healthy"
         assert data["service"] == "predictions"
 
@@ -70,10 +70,10 @@ class TestPredictionsAPI:
 
         response = PredictionResponse(
             match_id=1,
-            prediction="home_win",
+            _prediction ="home_win",
             confidence=0.85,
             probabilities={"home_win": 0.85, "draw": 0.10, "away_win": 0.05},
         )
         assert response.match_id == 1
-        assert response.prediction == "home_win"
+        assert response._prediction == "home_win"
         assert response.confidence == 0.85

@@ -153,7 +153,7 @@ def is_match_day() -> bool:
         #         SELECT COUNT(*) as match_count FROM matches
         #         WHERE DATE(match_date) = :today
         #     """)
-        #     result = await session.execute(query, {"today": today})
+        #     _result = await session.execute(query, {"today": today})
         #     match_count = result.scalar()
         #     return match_count > 0
 
@@ -181,8 +181,8 @@ def get_upcoming_matches(hours: int = 24) -> list:
         #         WHERE match_date BETWEEN :now AND :end_time
         #         ORDER BY match_date
         #     """)
-        #     result = await session.execute(query, {"now": now, "end_time": end_time})
-        #     matches = [{
+        #     _result = await session.execute(query, {"now": now, "end_time": end_time})
+        #     _matches = [{
         #         "match_id": row.match_id,
         #         "home_team": row.home_team,
         #         "away_team": row.away_team,
@@ -201,7 +201,7 @@ def should_collect_live_scores() -> bool:
     try:
         # 检查当前是否有进行中的比赛
         # 获取当前时间前后2小时内的比赛
-        matches = get_upcoming_matches(hours=2)
+        _matches = get_upcoming_matches(hours=2)
 
         # 如果有比赛，则需要采集实时比分
         return len(matches) > 0

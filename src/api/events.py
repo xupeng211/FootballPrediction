@@ -32,7 +32,7 @@ async def event_health_check() -> Dict[str, Any]:
 async def get_event_statistics() -> Dict[str, Any]:
     """获取事件系统统计信息"""
     bus = get_event_bus()
-    stats = bus.get_stats()
+    _stats = bus.get_stats()
 
     # 获取各处理器的指标
     detailed_stats = stats.copy()

@@ -12,7 +12,7 @@ class TestAPIResponse:
 
     def test_success_response(self):
         """测试创建成功响应"""
-        data = {"id": 1, "name": "test"}
+        _data = {"id": 1, "name": "test"}
         response = APIResponse.success(data, "操作成功")
         assert response["success"] is True
         assert response["data"] == data
@@ -43,7 +43,7 @@ class TestAPIResponse:
 
     def test_success_response_alias(self):
         """测试成功响应别名方法"""
-        data = {"test": "data"}
+        _data = {"test": "data"}
         response = APIResponse.success_response(data, "成功")
         assert response["success"] is True
         assert response["data"] == data
@@ -59,9 +59,9 @@ class TestAPIResponse:
     def test_api_response_model(self):
         """测试API响应模型"""
         model = APIResponseModel(
-            success=True, message="测试消息", data={"key": "value"}, code="TEST_001"
+            success=True, message="测试消息", _data ={"key": "value"}, code="TEST_001"
         )
         assert model.success is True
         assert model.message == "测试消息"
-        assert model.data == {"key": "value"}
+        assert model._data == {"key": "value"}
         assert model.code == "TEST_001"

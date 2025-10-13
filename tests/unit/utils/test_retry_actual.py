@@ -9,7 +9,7 @@ class TestRetryActual:
 
     def test_retry_config_creation(self):
         """测试RetryConfig创建"""
-        config = RetryConfig(
+        _config = RetryConfig(
             max_attempts=5,
             base_delay=0.1,
             max_delay=10.0,
@@ -28,7 +28,7 @@ class TestRetryActual:
 
     def test_retry_config_defaults(self):
         """测试RetryConfig默认值"""
-        config = RetryConfig()
+        _config = RetryConfig()
 
         assert config.max_attempts == 3
         assert config.base_delay == 1.0
@@ -44,8 +44,8 @@ class TestRetryActual:
         def successful_function():
             return "success"
 
-        result = successful_function()
-        assert result == "success"
+        _result = successful_function()
+        assert _result == "success"
 
     def test_retry_decorator_eventual_success(self):
         """测试重试装饰器（最终成功）"""
@@ -59,8 +59,8 @@ class TestRetryActual:
                 raise ValueError("Temporary failure")
             return "success"
 
-        result = flaky_function()
-        assert result == "success"
+        _result = flaky_function()
+        assert _result == "success"
         assert attempt_count == 3
 
     def test_retry_decorator_all_fail(self):
@@ -95,8 +95,8 @@ class TestRetryActual:
         async def async_successful_function():
             return "async success"
 
-        result = await async_successful_function()
-        assert result == "async success"
+        _result = await async_successful_function()
+        assert _result == "async success"
 
     @pytest.mark.asyncio
     async def test_async_retry_eventual_success(self):
@@ -111,8 +111,8 @@ class TestRetryActual:
                 raise ValueError("Async temporary failure")
             return "async success"
 
-        result = await async_flaky_function()
-        assert result == "async success"
+        _result = await async_flaky_function()
+        assert _result == "async success"
         assert attempt_count == 3
 
     def test_retry_preserves_metadata(self):

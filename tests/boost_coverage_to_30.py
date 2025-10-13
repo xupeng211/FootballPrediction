@@ -70,7 +70,7 @@ def run_tests():
     print("\n运行测试中...\n")
 
     # 运行测试
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    _result = subprocess.run(cmd, capture_output=True, text=True)
 
     # 输出结果
     lines = result.stdout.split("\n")

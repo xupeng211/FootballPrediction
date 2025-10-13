@@ -189,7 +189,7 @@ class TestFacadesAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "available_types" in data
         assert "configured_facades" in data
         assert "cached_instances" in data
@@ -209,7 +209,7 @@ class TestFacadesAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["facade_name"] == "test_main"
         assert data["facade_type"] == "main"
         assert data["initialized"] is True
@@ -229,7 +229,7 @@ class TestFacadesAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["facade_name"] == "existing_facade"
         mock_factory.create_facade.assert_not_called()
 
@@ -259,7 +259,7 @@ class TestFacadesAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "test_facade 已成功关闭" in data["message"]
         assert "test_facade" not in global_facades
 
@@ -282,7 +282,7 @@ class TestFacadesAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["name"] == "test_facade"
         assert data["initialized"] is False  # Mock的默认值
 
@@ -299,7 +299,7 @@ class TestFacadesAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["total_facades"] == 2
         assert "facades" in data
         assert len(data["facades"]) == 2
@@ -324,7 +324,7 @@ class TestFacadesAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["overall_health"] is True
 
     def test_health_check_facade_all(self, client):
@@ -341,7 +341,7 @@ class TestFacadesAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["overall_healthy"] is False
         assert data["checked_facades"] == 2
         assert data["healthy_facades"] == 1
@@ -368,7 +368,7 @@ class TestFacadesAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["operation"] == "store_and_predict"
         assert data["model"] == "neural_network"
         assert data["cache_enabled"] is True
@@ -388,7 +388,7 @@ class TestFacadesAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["operation"] == "batch_process"
         assert data["items_count"] == 2
         assert "execution_time_seconds" in data
@@ -415,7 +415,7 @@ class TestFacadesAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["operation"] == "predict"
         assert data["model"] == "random_forest"
         assert data["cache_key"] == "test_cache"
@@ -438,7 +438,7 @@ class TestFacadesAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["operation"] == "batch_predict"
         assert data["predictions_count"] == 3
         assert len(data["results"]) == 3
@@ -455,7 +455,7 @@ class TestFacadesAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "model_info" in data
         assert "facade_metrics" in data
 
@@ -476,7 +476,7 @@ class TestFacadesAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["operation"] == "store_data"
         assert data["table"] == "matches"
         assert data["result"]["stored"] is True
@@ -496,7 +496,7 @@ class TestFacadesAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["operation"] == "query_data"
         assert data["query"] == "SELECT * FROM matches"
         assert data["cache_enabled"] is True
@@ -522,7 +522,7 @@ class TestFacadesAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["operation"] == "track_event"
         assert data["event_name"] == "prediction_made"
         assert data["properties"]["model"] == "neural_network"
@@ -545,7 +545,7 @@ class TestFacadesAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["operation"] == "generate_report"
         assert data["report_type"] == "daily_summary"
         assert "generation_time_seconds" in data
@@ -563,7 +563,7 @@ class TestFacadesAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "summary" in data
         assert "facade_metrics" in data
 
@@ -588,7 +588,7 @@ class TestFacadesAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["operation"] == "send_notification"
         assert data["recipient"] == "user@example.com"
         assert data["channel"] == "email"
@@ -615,7 +615,7 @@ class TestFacadesAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["operation"] == "queue_notification"
         assert data["result"]["queued"] is True
 
@@ -631,7 +631,7 @@ class TestFacadesAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "stats" in data
         assert data["stats"]["sent_today"] == 100
 
@@ -657,7 +657,7 @@ class TestFacadesAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "configs" in data
         assert "factory_info" in data
         assert data["configs"]["main_config"]["type"] == "main"
@@ -670,7 +670,7 @@ class TestFacadesAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "门面配置已重新加载" in data["message"]
         mock_factory.clear_cache.assert_called_once()
         mock_factory.create_default_configs.assert_called_once()
@@ -705,7 +705,7 @@ class TestFacadesAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["workflow"] == "complete_workflow"
         assert data["success"] is True
         assert "total_time_seconds" in data
@@ -742,7 +742,7 @@ class TestFacadesAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["success"] is False
         assert "error" in data
         assert "partial_results" in data
@@ -756,7 +756,7 @@ class TestFacadesAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["total_facades"] == 0
         assert data["facades"] == {}
 
@@ -767,6 +767,6 @@ class TestFacadesAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["overall_healthy"] is True  # 没有门面认为是健康的
         assert data["checked_facades"] == 0

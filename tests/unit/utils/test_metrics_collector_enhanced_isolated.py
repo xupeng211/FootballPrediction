@@ -328,7 +328,7 @@ def test_decorators_isolated():
             async def async_wrapper(*args, **kwargs):
                 start_time = datetime.now()
                 try:
-                    result = await func(*args, **kwargs)
+                    _result = await func(*args, **kwargs)
                     success = True
                 except Exception:
                     success = False
@@ -355,7 +355,7 @@ def test_decorators_isolated():
             def sync_wrapper(*args, **kwargs):
                 start_time = datetime.now()
                 try:
-                    result = func(*args, **kwargs)
+                    _result = func(*args, **kwargs)
                     success = True
                 except Exception:
                     success = False
@@ -389,7 +389,7 @@ def test_decorators_isolated():
             def wrapper(*args, **kwargs):
                 start_time = datetime.now()
                 try:
-                    result = func(*args, **kwargs)
+                    _result = func(*args, **kwargs)
                     hit = result is not None
                 except Exception:
                     hit = False
@@ -413,8 +413,8 @@ def test_decorators_isolated():
             return "value"
         return None
 
-    result = cache_get("exists")
-    assert result == "value"
+    _result = cache_get("exists")
+    assert _result == "value"
     assert collector.record_cache_operation.called
 
     # 测试同步装饰器
@@ -422,8 +422,8 @@ def test_decorators_isolated():
     def test_function(model_version="v1.0"):
         return "test"
 
-    result = test_function(model_version="v2.0")
-    assert result == "test"
+    _result = test_function(model_version="v2.0")
+    assert _result == "test"
     assert collector.record_prediction.called
 
     # 验证调用参数

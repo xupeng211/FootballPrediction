@@ -15,7 +15,7 @@ def test_import_retry_config():
 
     assert RetryConfig is not None
 
-    config = RetryConfig(max_attempts=5)
+    _config = RetryConfig(max_attempts=5)
     assert config.max_attempts == 5
 
 
@@ -110,7 +110,7 @@ def test_retry_config_creation():
     """测试创建重试配置"""
     from src.utils.retry.config import RetryConfig
 
-    config = RetryConfig(
+    _config = RetryConfig(
         max_attempts=5,
         base_delay=2.0,
         max_delay=30.0,
@@ -133,7 +133,7 @@ def test_retry_decorator_sync():
     """测试同步重试装饰器"""
     # from src.utils.retry import retry, RetryConfig
 
-    config = RetryConfig(max_attempts=3, base_delay=0.01, jitter=False)
+    _config = RetryConfig(max_attempts=3, base_delay=0.01, jitter=False)
     call_count = 0
 
     @retry(config)
@@ -144,8 +144,8 @@ def test_retry_decorator_sync():
             raise ValueError("Test error")
         return "success"
 
-    result = failing_function()
-    assert result == "success"
+    _result = failing_function()
+    assert _result == "success"
     assert call_count == 3
 
 
@@ -154,7 +154,7 @@ async def test_retry_decorator_async():
     """测试异步重试装饰器"""
     # from src.utils.retry import retry, RetryConfig
 
-    config = RetryConfig(max_attempts=3, base_delay=0.01, jitter=False)
+    _config = RetryConfig(max_attempts=3, base_delay=0.01, jitter=False)
     call_count = 0
 
     @retry(config)
@@ -165,8 +165,8 @@ async def test_retry_decorator_async():
             raise ValueError("Test error")
         return "success"
 
-    result = await failing_function()
-    assert result == "success"
+    _result = await failing_function()
+    assert _result == "success"
     assert call_count == 3
 
 
@@ -174,7 +174,7 @@ def test_retry_decorator_with_callback():
     """测试带回调的重试装饰器"""
     # from src.utils.retry import retry, RetryConfig
 
-    config = RetryConfig(max_attempts=2, base_delay=0.01)
+    _config = RetryConfig(max_attempts=2, base_delay=0.01)
     callback_calls = []
 
     def retry_callback(attempt: int, error: Exception):
@@ -214,8 +214,8 @@ async def test_circuit_breaker_success():
     async def success_func():
         return "success"
 
-    result = await breaker.call(success_func)
-    assert result == "success"
+    _result = await breaker.call(success_func)
+    assert _result == "success"
     assert breaker.get_state() == CircuitState.CLOSED
     assert breaker.get_failure_count() == 0
 
@@ -304,11 +304,11 @@ def test_backward_compatibility_usage():
     """测试向后兼容的使用方式"""
     # from src.utils.retry import retry, RetryConfig
 
-    config = RetryConfig(max_attempts=2, base_delay=0.01)
+    _config = RetryConfig(max_attempts=2, base_delay=0.01)
 
     @retry(config)
     def test_function():
         return "test"
 
-    result = test_function()
-    assert result == "test"
+    _result = test_function()
+    assert _result == "test"

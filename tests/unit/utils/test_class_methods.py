@@ -17,7 +17,7 @@ class TestResponseUtils:
 
     def test_create_success_response(self):
         """测试创建成功响应"""
-        data = {"id": 1, "name": "test"}
+        _data = {"id": 1, "name": "test"}
         response = ResponseUtils.success(data)
 
         assert response["status"] == "success"
@@ -143,7 +143,7 @@ class TestDictUtils:
 
     def test_get_nested_value(self):
         """测试获取嵌套值"""
-        data = {"user": {"profile": {"name": "John"}}}
+        _data = {"user": {"profile": {"name": "John"}}}
 
         # 存在的路径
         assert DictUtils.get_nested(data, "user.profile.name") == "John"
@@ -157,11 +157,11 @@ class TestDictUtils:
 
     def test_set_nested_value(self):
         """测试设置嵌套值"""
-        data = {}
+        _data = {}
 
         # 设置新值
         DictUtils.set_nested(data, "a.b.c", 123)
-        assert data == {"a": {"b": {"c": 123}}}
+        assert _data == {"a": {"b": {"c": 123}}}
 
         # 覆盖现有值
         DictUtils.set_nested(data, "a.b.c", 456)
@@ -169,7 +169,7 @@ class TestDictUtils:
 
     def test_flatten_dict(self):
         """测试扁平化字典"""
-        data = {"a": 1, "b": {"c": 2, "d": {"e": 3}}}
+        _data = {"a": 1, "b": {"c": 2, "d": {"e": 3}}}
 
         flat = DictUtils.flatten(data)
         expected = {"a": 1, "b.c": 2, "b.d.e": 3}
@@ -177,7 +177,7 @@ class TestDictUtils:
 
     def test_filter_keys(self):
         """测试过滤键"""
-        data = {
+        _data = {
             "id": 1,
             "name": "test",
             "password": "secret",
@@ -243,7 +243,7 @@ class TestDictUtils:
 #
 #     def test_validate_required_fields(self):
 #         """测试验证必填字段"""
-#         data = {"name": "John", "email": "john@example.com"}
+#         _data = {"name": "John", "email": "john@example.com"}
 #         required = ["name", "email"]
 #
 #         # 所有字段存在

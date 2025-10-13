@@ -223,7 +223,7 @@ class AdapterRegistry:
         # 检查单个适配器
         for name, adapter in self.adapters.items():
             try:
-                result = await adapter.health_check()
+                _result = await adapter.health_check()
                 health_results[name] = result
             except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 health_results[name] = {
@@ -235,7 +235,7 @@ class AdapterRegistry:
         # 检查适配器组
         for name, group in self.groups.items():
             try:
-                result = await group.health_check()
+                _result = await group.health_check()
                 health_results[f"group:{name}"] = result
             except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 health_results[f"group:{name}"] = {

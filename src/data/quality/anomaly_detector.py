@@ -25,7 +25,7 @@ class AnomalyDetector:
     ) -> List[int]:
         """Detect statistical outliers using z-score"""
         if isinstance(data, list):
-            data = pd.Series(data)
+            _data = pd.Series(data)
 
         z_scores = np.abs((data - data.mean()) / data.std())
         outlier_indices = z_scores[z_scores > threshold].index.tolist()

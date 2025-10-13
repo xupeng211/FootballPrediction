@@ -305,7 +305,7 @@ class PredictionSubsystem(Subsystem):
         """批量预测"""
         results: List[Any] = []
         for pred in predictions:
-            result = await self.predict(pred["model"], pred["input"])
+            _result = await self.predict(pred["model"], pred["input"])
             results.append(result)
         return results
 
@@ -388,7 +388,7 @@ class MainSystemFacade(SystemFacade):
             return cached_result  # type: ignore
 
         # 执行预测
-        prediction = await self.quick_predict(data, model)
+        _prediction = await self.quick_predict(data, model)
 
         # 存储到缓存
         await cache_subsystem.set(cache_key, prediction, ttl=300)  # type: ignore
@@ -419,7 +419,7 @@ class MainSystemFacade(SystemFacade):
                     results.append(cached)
                     continue
 
-            prediction = await prediction_subsystem.predict(  # type: ignore
+            _prediction = await prediction_subsystem.predict(  # type: ignore
                 item.get("model", "neural_network"), item.get("input_data", {})
             )
             results.append(prediction)
@@ -488,7 +488,7 @@ class PredictionFacade(SystemFacade):
             if cached:
                 return cached  # type: ignore
 
-        prediction = await pred_subsystem.predict(model, input_data)
+        _prediction = await pred_subsystem.predict(model, input_data)
 
         if cache_key:
             await cache_subsystem.set(cache_key, prediction, ttl=600)
@@ -520,7 +520,7 @@ class DataCollectionFacade(SystemFacade):
         analytics_subsystem = self.subsystem_manager.get_subsystem("analytics")
 
         if operation == "store_data":
-            data = kwargs.get("data", {})
+            _data = kwargs.get("data", {})
             table = kwargs.get("table", "default")
 
             # 模拟存储数据
@@ -550,7 +550,7 @@ class DataCollectionFacade(SystemFacade):
                 if cached:
                     return cached
 
-            result = await db_subsystem.execute_query(query)  # type: ignore
+            _result = await db_subsystem.execute_query(query)  # type: ignore
 
             if use_cache:
                 await cache_subsystem.set(cache_key, result, ttl=60)  # type: ignore

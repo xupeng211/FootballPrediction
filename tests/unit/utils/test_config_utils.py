@@ -19,7 +19,7 @@ class TestConfigUtils:
         try:
             from src.core.config import Config
 
-            config = Config()
+            _config = Config()
             assert config is not None
         except ImportError:
             pytest.skip("Config module not available")
@@ -29,7 +29,7 @@ class TestConfigUtils:
         try:
             from src.config.fastapi_config import FastAPIConfig
 
-            config = FastAPIConfig()
+            _config = FastAPIConfig()
             assert config is not None
         except ImportError:
             pytest.skip("FastAPIConfig module not available")
@@ -40,7 +40,7 @@ class TestConfigUtils:
         try:
             from src.core.config import Config
 
-            config = Config()
+            _config = Config()
             assert config is not None
         except ImportError:
             pytest.skip("Config module not available")
@@ -50,12 +50,12 @@ class TestConfigUtils:
         try:
             from src.config.fastapi_config import FastAPIConfig
 
-            config = FastAPIConfig()
+            _config = FastAPIConfig()
 
             # Mock验证方法
             config.validate = Mock(return_value=True)
 
-            result = config.validate()
+            _result = config.validate()
             assert result is True
         except ImportError:
             pytest.skip("FastAPIConfig module not available")
@@ -65,13 +65,13 @@ class TestConfigUtils:
         try:
             from src.core.config import Config
 
-            config = Config()
+            _config = Config()
 
             # Mock序列化方法
             config.to_dict = Mock(return_value={"key": "value"})
 
-            result = config.to_dict()
-            assert result == {"key": "value"}
+            _result = config.to_dict()
+            assert _result == {"key": "value"}
         except ImportError:
             pytest.skip("Config module not available")
 
@@ -81,7 +81,7 @@ class TestConfigUtils:
             from src.core.config import Config
 
             # 尝试加载配置
-            config = Config()
+            _config = Config()
             assert config is not None
         except (ImportError, AttributeError):
             pytest.skip("Config class not available")
@@ -91,7 +91,7 @@ class TestConfigUtils:
         try:
             from src.config.fastapi_config import FastAPIConfig
 
-            config = FastAPIConfig()
+            _config = FastAPIConfig()
 
             # 测试默认值
             assert hasattr(config, "host")
@@ -141,7 +141,7 @@ class TestConfigUtils:
 
     def test_nested_config_access(self):
         """测试嵌套配置访问"""
-        config = {
+        _config = {
             "services": {
                 "database": {
                     "primary": {"host": "db1.example.com", "port": 5432},
@@ -228,7 +228,7 @@ class TestConfigUtils:
 
         def merge_dicts(dict1, dict2):
             """深度合并字典"""
-            result = dict1.copy()
+            _result = dict1.copy()
             for key, value in dict2.items():
                 if (
                     key in result
@@ -286,7 +286,7 @@ class TestConfigUtils:
             },
         }
 
-        config = AppConfig(**valid_config)
+        _config = AppConfig(**valid_config)
         assert config.app_name == "my_app"
         assert config.database.host == "localhost"
 
@@ -345,7 +345,7 @@ class TestConfigUtils:
 
     def test_config_sensitive_data_masking(self):
         """测试敏感数据掩码"""
-        config = {
+        _config = {
             "database": {
                 "host": "localhost",
                 "username": "admin",
@@ -411,7 +411,7 @@ class TestConfigUtils:
 
         class ConfigWatcher:
             def __init__(self, initial_config):
-                self.config = initial_config.copy()
+                self._config = initial_config.copy()
                 self.callbacks = []
 
             def on_change(self, callback):
@@ -421,7 +421,7 @@ class TestConfigUtils:
             def update_config(self, new_config):
                 """更新配置并触发回调"""
                 old_config = self.config.copy()
-                self.config = new_config
+                self._config = new_config
                 for callback in self.callbacks:
                     callback(old_config, self.config)
 
@@ -459,7 +459,7 @@ class TestConfigUtils:
 
             def load_from_env(prefix="FP_"):
                 """从环境变量加载配置"""
-                config = {}
+                _config = {}
                 for key, value in os.environ.items():
                     if key.startswith(prefix):
                         config_key = key[len(prefix) :].lower()
@@ -471,7 +471,7 @@ class TestConfigUtils:
                         config[config_key] = value
                 return config
 
-            config = load_from_env()
+            _config = load_from_env()
             assert config["app_name"] == "football_prediction"
             assert config["debug"] is True
             assert config["db_host"] == "localhost"

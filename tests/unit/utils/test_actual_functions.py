@@ -92,7 +92,7 @@ class TestCryptoFunctions:
 
             assert callable(encrypt_data)
 
-            data = "secret message"
+            _data = "secret message"
             encrypted = encrypt_data(data)
             assert encrypted != data
 
@@ -133,11 +133,11 @@ class TestValidatorFunctions:
             assert callable(validate_email)
 
             # 测试有效邮箱
-            result = validate_email("test@example.com")
+            _result = validate_email("test@example.com")
             assert isinstance(result, bool)
 
             # 测试无效邮箱
-            result = validate_email("not-an-email")
+            _result = validate_email("not-an-email")
             assert isinstance(result, bool)
         except ImportError:
             pytest.skip("validate_email not available")
@@ -149,7 +149,7 @@ class TestValidatorFunctions:
 
             assert callable(validate_phone)
 
-            result = validate_phone("1234567890")
+            _result = validate_phone("1234567890")
             assert isinstance(result, bool)
         except ImportError:
             pytest.skip("validate_phone not available")
@@ -161,7 +161,7 @@ class TestValidatorFunctions:
 
             assert callable(validate_url)
 
-            result = validate_url("https://example.com")
+            _result = validate_url("https://example.com")
             assert isinstance(result, bool)
         except ImportError:
             pytest.skip("validate_url not available")
@@ -173,7 +173,7 @@ class TestValidatorFunctions:
 
             assert callable(validate_date)
 
-            result = validate_date("2024-01-01")
+            _result = validate_date("2024-01-01")
             assert isinstance(result, bool)
         except ImportError:
             pytest.skip("validate_date not available")
@@ -185,7 +185,7 @@ class TestValidatorFunctions:
 
             assert callable(validate_number)
 
-            result = validate_number("123")
+            _result = validate_number("123")
             assert isinstance(result, bool)
         except ImportError:
             pytest.skip("validate_number not available")
@@ -197,7 +197,7 @@ class TestValidatorFunctions:
 
             assert callable(validate_json)
 
-            result = validate_json('{"key": "value"}')
+            _result = validate_json('{"key": "value"}')
             assert isinstance(result, bool)
         except ImportError:
             pytest.skip("validate_json not available")
@@ -402,7 +402,7 @@ class TestFormatterFunctions:
 
             assert callable(format_currency)
 
-            result = format_currency(123.45, "USD")
+            _result = format_currency(123.45, "USD")
             assert isinstance(result, str)
             assert "123" in result or "$" in result
         except ImportError:
@@ -415,7 +415,7 @@ class TestFormatterFunctions:
 
             assert callable(format_bytes)
 
-            result = format_bytes(1024)
+            _result = format_bytes(1024)
             assert isinstance(result, str)
             assert "KB" in result or "kb" in result
         except ImportError:
@@ -428,7 +428,7 @@ class TestFormatterFunctions:
 
             assert callable(format_percentage)
 
-            result = format_percentage(0.75)
+            _result = format_percentage(0.75)
             assert isinstance(result, str)
             assert "75" in result or "%" in result
         except ImportError:
@@ -484,7 +484,7 @@ class TestHelperFunctions:
 
             assert callable(deep_get)
 
-            data = {"a": {"b": {"c": 123}}}
+            _data = {"a": {"b": {"c": 123}}}
             value = deep_get(data, "a.b.c")
             assert value == 123
 
@@ -534,7 +534,7 @@ class TestI18nFunctions:
 
             assert callable(_)
 
-            result = _("hello")
+            _result = _("hello")
             assert isinstance(result, str)
         except ImportError:
             pytest.skip("_ not available")
@@ -720,7 +720,7 @@ class TestStringFunctions:
 
             assert callable(singularize)
 
-            result = singularize("cats")
+            _result = singularize("cats")
             assert isinstance(result, str)
         except ImportError:
             pytest.skip("singularize not available")
@@ -733,7 +733,7 @@ class TestStringFunctions:
             assert callable(truncate_words)
 
             text = "This is a test"
-            result = truncate_words(text, 2)
+            _result = truncate_words(text, 2)
             assert isinstance(result, str)
         except ImportError:
             pytest.skip("truncate_words not available")
@@ -779,7 +779,7 @@ class TestTimeFunctions:
 
             assert callable(duration_format)
 
-            result = duration_format(3665)
+            _result = duration_format(3665)
             assert isinstance(result, str)
         except ImportError:
             pytest.skip("duration_format not available")
@@ -837,7 +837,7 @@ class TestTimeFunctions:
 
             assert callable(parse_datetime)
 
-            result = parse_datetime("2024-01-01")
+            _result = parse_datetime("2024-01-01")
             assert result is not None or result is None  # 取决于实现
         except ImportError:
             pytest.skip("parse_datetime not available")
@@ -865,7 +865,7 @@ class TestValidatorFunctionsDirect:
 
             assert callable(validate_required)
 
-            result = validate_required("test")
+            _result = validate_required("test")
             assert isinstance(result, bool)
         except ImportError:
             pytest.skip("validate_required not available")
@@ -877,7 +877,7 @@ class TestValidatorFunctionsDirect:
 
             assert callable(validate_range)
 
-            result = validate_range(5, 1, 10)
+            _result = validate_range(5, 1, 10)
             assert isinstance(result, bool)
         except ImportError:
             pytest.skip("validate_range not available")
@@ -889,7 +889,7 @@ class TestValidatorFunctionsDirect:
 
             assert callable(validate_length)
 
-            result = validate_length("test", 1, 10)
+            _result = validate_length("test", 1, 10)
             assert isinstance(result, bool)
         except ImportError:
             pytest.skip("validate_length not available")
@@ -901,7 +901,7 @@ class TestValidatorFunctionsDirect:
 
             assert callable(validate_pattern)
 
-            result = validate_pattern("test@example.com", r".*@.*\..*")
+            _result = validate_pattern("test@example.com", r".*@.*\..*")
             assert isinstance(result, bool)
         except ImportError:
             pytest.skip("validate_pattern not available")
@@ -913,7 +913,7 @@ class TestValidatorFunctionsDirect:
 
             assert callable(validate_choice)
 
-            result = validate_choice("red", ["red", "green", "blue"])
+            _result = validate_choice("red", ["red", "green", "blue"])
             assert isinstance(result, bool)
         except ImportError:
             pytest.skip("validate_choice not available")
@@ -925,7 +925,7 @@ class TestValidatorFunctionsDirect:
 
             assert callable(validate_email_format)
 
-            result = validate_email_format("test@example.com")
+            _result = validate_email_format("test@example.com")
             assert isinstance(result, bool)
         except ImportError:
             pytest.skip("validate_email_format not available")
@@ -963,7 +963,7 @@ class TestStandardLibraryCoverage:
         import io
 
         # JSON操作
-        data = {"test": True}
+        _data = {"test": True}
         json_str = json.dumps(data)
         parsed = json.loads(json_str)
         assert parsed == data
@@ -992,8 +992,8 @@ class TestStandardLibraryCoverage:
 
         # 正则表达式
         pattern = re.compile(r"\d+")
-        matches = pattern.findall("123abc456")
-        assert matches == ["123", "456"]
+        _matches = pattern.findall("123abc456")
+        assert _matches == ["123", "456"]
 
         # 集合操作
         counter = collections.Counter("hello")
@@ -1040,7 +1040,7 @@ class TestStandardLibraryCoverage:
         assert f * 3 == fractions.Fraction(1, 1)
 
         # 统计
-        data = [1, 2, 3, 4, 5]
+        _data = [1, 2, 3, 4, 5]
         assert statistics.mean(data) == 3
 
         # 文件操作

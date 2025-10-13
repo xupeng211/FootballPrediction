@@ -177,7 +177,7 @@ class PredictionRepository(BaseRepository[Predictions]):
             if limit:
                 stmt = stmt.limit(limit)
 
-            result = await sess.execute(stmt)
+            _result = await sess.execute(stmt)
             return result.scalars().all()
 
     async def get_user_prediction_for_match(
@@ -342,11 +342,11 @@ class PredictionRepository(BaseRepository[Predictions]):
                 query = query.where(Prediction.created_at >= start_date)
 
             # 执行查询
-            result = await sess.execute(query)
+            _result = await sess.execute(query)
             predictions = result.scalars().all()
 
             # 计算统计数据
-            stats = {
+            _stats = {
                 "total": len(predictions),
                 "pending": 0,
                 "completed": 0,
@@ -519,7 +519,7 @@ class PredictionRepository(BaseRepository[Predictions]):
                 .limit(limit)
             )
 
-            result = await sess.execute(stmt)
+            _result = await sess.execute(stmt)
             rows = result.all()
 
             # 转换为字典列表
@@ -583,8 +583,8 @@ class PredictionRepository(BaseRepository[Predictions]):
             else:
                 return None
 
-            result = await sess.execute(stmt)
-            prediction = result.scalar_one_or_none()
+            _result = await sess.execute(stmt)
+            _prediction = result.scalar_one_or_none()
 
             if prediction:
                 return getattr(prediction, relation_name, None)

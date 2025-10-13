@@ -22,7 +22,7 @@ class TestCQRSExistingFunctions:
         from src.api.cqrs import CommandResponse
 
         response = CommandResponse(
-            success=True, message="Command executed", data={"id": 123}
+            success=True, message="Command executed", _data ={"id": 123}
         )
         assert response.success is True
         assert response.message == "Command executed"
@@ -32,7 +32,7 @@ class TestCQRSExistingFunctions:
         """测试QueryResponse类"""
         from src.api.cqrs import QueryResponse
 
-        response = QueryResponse(data=[{"id": 1, "name": "test"}], total=1, page=1)
+        response = QueryResponse(_data =[{"id": 1, "name": "test"}], total=1, page=1)
         assert len(response.data) == 1
         assert response.total == 1
         assert response.page == 1
@@ -42,7 +42,7 @@ class TestCQRSExistingFunctions:
         from src.api.cqrs import CreateCommand
 
         command = CreateCommand(
-            aggregate_id="test_123", data={"name": "test", "value": 100}
+            aggregate_id="test_123", _data ={"name": "test", "value": 100}
         )
         assert command.aggregate_id == "test_123"
         assert command.data["name"] == "test"
@@ -51,7 +51,7 @@ class TestCQRSExistingFunctions:
         """测试UpdateCommand类"""
         from src.api.cqrs import UpdateCommand
 
-        command = UpdateCommand(aggregate_id="test_123", data={"name": "updated"})
+        command = UpdateCommand(aggregate_id="test_123", _data ={"name": "updated"})
         assert command.aggregate_id == "test_123"
         assert command.data["name"] == "updated"
 
@@ -91,7 +91,7 @@ class TestEventsExistingFunctions:
 
         event = Event(
             event_type="test_event",
-            data={"message": "test"},
+            _data ={"message": "test"},
             timestamp=datetime.utcnow(),
         )
         assert event.event_type == "test_event"
@@ -133,7 +133,7 @@ class TestEventsExistingFunctions:
 
         class TestObserver(Observer):
             def update(self, data):
-                self.data = data
+                self._data = data
 
         observer = TestObserver()
         assert hasattr(observer, "update")
@@ -151,8 +151,8 @@ class TestDecoratorsExistingFunctions:
         def test_function(x):
             return x * x
 
-        result = test_function(5)
-        assert result == 25
+        _result = test_function(5)
+        assert _result == 25
 
     def test_log_requests_decorator_exists(self):
         """测试请求日志装饰器存在"""
@@ -162,8 +162,8 @@ class TestDecoratorsExistingFunctions:
         def test_function():
             return "test"
 
-        result = test_function()
-        assert result == "test"
+        _result = test_function()
+        assert _result == "test"
 
     def test_validate_input_decorator_exists(self):
         """测试输入验证装饰器存在"""
@@ -204,7 +204,7 @@ class TestObsersersExistingFunctions:
 
         class TestObserver(Observer):
             def update(self, data):
-                self.data = data
+                self._data = data
 
         observer = TestObserver()
         assert hasattr(observer, "update")
@@ -424,7 +424,7 @@ class TestAppIntegration:
         """测试错误处理中间件"""
         response = client.get("/nonexistent")
         assert response.status_code == 404
-        data = response.json()
+        _data = response.json()
         assert "error" in data
 
 
@@ -443,7 +443,7 @@ class TestConfiguration:
         """测试CORS配置"""
         from src.api.app import get_cors_config
 
-        config = get_cors_config()
+        _config = get_cors_config()
         assert isinstance(config, dict)
 
     def test_logging_configuration(self):
@@ -463,7 +463,7 @@ class TestDataModels:
         """测试基础响应模型"""
         from src.api.schemas import BaseResponse
 
-        response = BaseResponse(success=True, message="Success", data={"test": True})
+        response = BaseResponse(success=True, message="Success", _data ={"test": True})
         assert response.success is True
         assert response.message == "Success"
 
@@ -472,7 +472,7 @@ class TestDataModels:
         from src.api.schemas import PaginatedResponse
 
         response = PaginatedResponse(
-            success=True, data=[{"id": 1}, {"id": 2}], total=100, page=1, per_page=10
+            success=True, _data =[{"id": 1}, {"id": 2}], total=100, page=1, per_page=10
         )
         assert len(response.data) == 2
         assert response.total == 100
@@ -507,7 +507,7 @@ class TestUtilityFunctions:
 
     def test_json_serialization(self):
         """测试JSON序列化"""
-        data = {"test": True, "number": 123}
+        _data = {"test": True, "number": 123}
         json_str = json.dumps(data)
         assert json_str is not None
         assert isinstance(json_str, str)

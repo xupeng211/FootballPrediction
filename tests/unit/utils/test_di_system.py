@@ -201,7 +201,7 @@ class TestDISetup:
         setup = DISetup()
 
         # 模拟配置
-        config = {
+        _config = {
             "database": {"url": "sqlite:///:memory:"},
             "cache": {"redis_url": "redis://localhost"},
             "logging": {"level": "INFO"},

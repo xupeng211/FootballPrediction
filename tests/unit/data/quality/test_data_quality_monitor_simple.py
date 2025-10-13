@@ -165,8 +165,8 @@ class TestDataQualityMonitorSimple:
             ]
 
             for freshness, anomalies, expected in test_cases:
-                result = monitor._determine_overall_status(freshness, anomalies)
-                assert result == expected
+                _result = monitor._determine_overall_status(freshness, anomalies)
+                assert _result == expected
 
 
 @pytest.mark.skipif(

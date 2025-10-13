@@ -42,7 +42,7 @@ class TestPredictionFacade:
         request = PredictionRequest(match_id=123, user_id=456, algorithm="ensemble")
 
         # 执行预测
-        result = await prediction_facade.make_prediction(request)
+        _result = await prediction_facade.make_prediction(request)
 
         # 验证结果
         assert isinstance(result, PredictionResult)
@@ -55,7 +55,7 @@ class TestPredictionFacade:
     async def test_make_prediction_with_value_assessment(self, prediction_facade):
         """测试带价值评估的预测"""
         request = PredictionRequest(match_id=123, user_id=456)
-        result = await prediction_facade.make_prediction(request)
+        _result = await prediction_facade.make_prediction(request)
 
         # 验证价值评估
         assert result.value_assessment is not None
@@ -75,7 +75,7 @@ class TestPredictionFacade:
     @pytest.mark.asyncio
     async def test_get_prediction_stats(self, prediction_facade):
         """测试获取预测统计"""
-        stats = await prediction_facade.get_prediction_stats(days=30)
+        _stats = await prediction_facade.get_prediction_stats(days=30)
 
         # 验证
         assert stats["period_days"] == 30
@@ -119,14 +119,14 @@ class TestDataCollectionFacade:
     async def test_sync_all_data(self, data_facade):
         """测试同步所有数据"""
         # 创建配置
-        config = DataCollectionConfig(
+        _config = DataCollectionConfig(
             sources=["football", "odds"],
             refresh_interval=timedelta(hours=1),
             batch_size=50,
         )
 
         # 执行同步
-        result = await data_facade.sync_all_data(config)
+        _result = await data_facade.sync_all_data(config)
 
         # 验证结果
         assert "matches" in result
@@ -292,7 +292,7 @@ class TestSystemFacade:
     @pytest.mark.asyncio
     async def test_quick_predict(self, initialized_facade):
         """测试快速预测"""
-        result = await initialized_facade.quick_predict(123, 456)
+        _result = await initialized_facade.quick_predict(123, 456)
 
         assert "prediction" in result
         assert "confidence" in result
@@ -349,15 +349,15 @@ class TestPredictionRequestAndResult:
 
     def test_prediction_result_creation(self):
         """测试预测结果创建"""
-        prediction = {"match_id": 123, "prediction": "home_win"}
-        result = PredictionResult(
-            prediction=prediction,
+        _prediction = {"match_id": 123, "prediction": "home_win"}
+        _result = PredictionResult(
+            _prediction =prediction,
             confidence=0.75,
             value_assessment={"is_value": True},
             recommendations=["建议投注"],
         )
 
-        assert result.prediction == prediction
+        assert result._prediction == prediction
         assert result.confidence == 0.75
         assert result.value_assessment["is_value"] is True
         assert len(result.recommendations) == 1
@@ -368,7 +368,7 @@ class TestDataCollectionConfig:
 
     def test_config_creation(self):
         """测试配置创建"""
-        config = DataCollectionConfig(
+        _config = DataCollectionConfig(
             sources=["football", "odds"],
             refresh_interval=timedelta(hours=1),
             batch_size=50,
@@ -380,7 +380,7 @@ class TestDataCollectionConfig:
 
     def test_config_defaults(self):
         """测试配置默认值"""
-        config = DataCollectionConfig(
+        _config = DataCollectionConfig(
             sources=["test"], refresh_interval=timedelta(days=1)
         )
 

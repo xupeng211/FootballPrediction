@@ -35,7 +35,7 @@ Provides real-time match prediction functionality, including:
     from src.models.prediction_service_mod import PredictionService
 
     service = PredictionService(mlflow_tracking_uri="http://localhost:5002")
-    result = await service.predict_match(12345)
+    _result = await service.predict_match(12345)
     logger.info(f"预测结果: {result.predicted_result}")
     ```
 

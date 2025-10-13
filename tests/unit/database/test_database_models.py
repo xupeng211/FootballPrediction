@@ -27,7 +27,7 @@ class TestUser:
 
     def test_user_creation(self):
         """测试用户创建"""
-        user = User(
+        _user = User(
             username="testuser",
             email="test@example.com",
             password_hash="hashed123",
@@ -41,7 +41,7 @@ class TestUser:
 
     def test_user_repr(self):
         """测试用户表示"""
-        user = User(username="testuser", email="test@example.com")
+        _user = User(username="testuser", email="test@example.com")
         repr_str = repr(user)
 
         assert "User" in repr_str
@@ -49,7 +49,7 @@ class TestUser:
 
     def test_user_str(self):
         """测试用户字符串表示"""
-        user = User(username="testuser", email="test@example.com")
+        _user = User(username="testuser", email="test@example.com")
         str_str = str(user)
 
         assert "testuser" in str_str
@@ -166,7 +166,7 @@ class TestPrediction:
 
     def test_prediction_creation(self):
         """测试预测创建"""
-        prediction = Predictions(
+        _prediction = Predictions(
             user_id=1,
             match_id=2,
             predicted_home_score=2,
@@ -182,7 +182,7 @@ class TestPrediction:
 
     def test_prediction_with_result(self):
         """测试带结果的预测"""
-        prediction = Predictions(
+        _prediction = Predictions(
             user_id=1,
             match_id=2,
             predicted_home_score=2,
@@ -198,7 +198,7 @@ class TestPrediction:
 
     def test_prediction_points(self):
         """测试预测得分"""
-        prediction = Predictions(
+        _prediction = Predictions(
             user_id=1,
             match_id=2,
             predicted_home_score=2,
@@ -210,7 +210,7 @@ class TestPrediction:
 
     def test_prediction_repr(self):
         """测试预测表示"""
-        prediction = Predictions(
+        _prediction = Predictions(
             user_id=1, match_id=2, predicted_home_score=2, predicted_away_score=1
         )
         repr_str = repr(prediction)
@@ -279,7 +279,7 @@ class TestFeatures:
             team_id=2,
             feature_type="HEAD_TO_HEAD",
             feature_data={"wins": 5, "draws": 2, "losses": 3},
-            metadata={"last_updated": datetime.now()},
+            _metadata ={"last_updated": datetime.now()},
         )
 
         assert features.feature_data["wins"] == 5

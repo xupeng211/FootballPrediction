@@ -64,7 +64,7 @@ def collect_fixtures_task(self) -> Dict[str, Any]:
         collector = task.orchestrator.get_collector("fixtures")
         if collector:
             # 使用asyncio.run在同步上下文中运行异步代码
-            result = asyncio.run(collector.collect_async(days_ahead=30))  # type: ignore
+            _result = asyncio.run(collector.collect_async(days_ahead=30))  # type: ignore
             return result  # type: ignore
         else:
             return {"error": "Fixtures collector not found"}
@@ -90,7 +90,7 @@ def collect_odds_task(self) -> Dict[str, Any]:
         collector = task.orchestrator.get_collector("odds")
         if collector:
             # 使用asyncio.run在同步上下文中运行异步代码
-            result = asyncio.run(collector.collect_async())  # type: ignore
+            _result = asyncio.run(collector.collect_async())  # type: ignore
             return result  # type: ignore
         else:
             return {"error": "Odds collector not found"}
@@ -116,7 +116,7 @@ def collect_scores_task(self) -> Dict[str, Any]:
         collector = task.orchestrator.get_collector("scores")
         if collector:
             # 使用asyncio.run在同步上下文中运行异步代码
-            result = asyncio.run(collector.collect_async())  # type: ignore
+            _result = asyncio.run(collector.collect_async())  # type: ignore
             return result  # type: ignore
         else:
             return {"error": "Scores collector not found"}

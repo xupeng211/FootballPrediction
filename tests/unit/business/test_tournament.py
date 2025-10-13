@@ -100,7 +100,7 @@ class Group:
 
     def __init__(self, name: str, teams: List[Team]):
         self.name = name
-        self.teams = teams
+        self._teams = teams
         self.matches: List[Match] = []
         self.standings: List[Team] = []
 
@@ -407,16 +407,16 @@ class TestTournament:
 
     def test_group_creation(self):
         """测试创建小组"""
-        teams = [Team(i, f"Team {i}", i) for i in range(1, 5)]
+        _teams = [Team(i, f"Team {i}", i) for i in range(1, 5)]
         group = Group("A", teams)
 
         assert group.name == "A"
         assert len(group.teams) == 4
-        assert group.teams == teams
+        assert group._teams == teams
 
     def test_group_generate_fixtures(self):
         """测试生成小组赛程"""
-        teams = [Team(i, f"Team {i}", i) for i in range(1, 5)]
+        _teams = [Team(i, f"Team {i}", i) for i in range(1, 5)]
         group = Group("A", teams)
         group.generate_fixtures()
 
@@ -431,7 +431,7 @@ class TestTournament:
 
     def test_group_update_standings(self):
         """测试更新小组排名"""
-        teams = [Team(i, f"Team {i}", i) for i in range(1, 5)]
+        _teams = [Team(i, f"Team {i}", i) for i in range(1, 5)]
         group = Group("A", teams)
 
         # 设置不同的积分
@@ -448,7 +448,7 @@ class TestTournament:
 
     def test_group_get_qualified_teams(self):
         """测试获取出线球队"""
-        teams = [Team(i, f"Team {i}", i) for i in range(1, 5)]
+        _teams = [Team(i, f"Team {i}", i) for i in range(1, 5)]
         teams[0].points = 9
         teams[1].points = 6
         teams[2].points = 3
@@ -467,7 +467,7 @@ class TestTournament:
         assert tournament.id == 1
         assert tournament.name == "World Cup"
         assert tournament.type == TournamentType.MIXED
-        assert tournament.teams == []
+        assert tournament._teams == []
 
     def test_tournament_add_team(self):
         """测试添加球队到锦标赛"""
@@ -529,11 +529,11 @@ class TestTournament:
         tournament = Tournament(1, "Test Cup", TournamentType.KNOCKOUT)
 
         # 添加8支球队
-        teams = [Team(i + 1, f"Team {i + 1}", i + 1) for i in range(8)]
+        _teams = [Team(i + 1, f"Team {i + 1}", i + 1) for i in range(8)]
         for team in teams:
             tournament.add_team(team)
 
-        matches = tournament.create_knockout_bracket(teams)
+        _matches = tournament.create_knockout_bracket(teams)
         assert len(matches) == 4  # 8队淘汰赛第一轮有4场比赛
 
         # 检查对阵安排
@@ -595,7 +595,7 @@ class TestTournament:
         tournament = Tournament(1, "Test Cup", TournamentType.LEAGUE)
 
         # 添加球队并设置积分
-        teams = []
+        _teams = []
         for i in range(4):
             team = Team(i + 1, f"Team {i + 1}", i + 1)
             team.points = 9 - i * 3
@@ -623,7 +623,7 @@ class TestTournament:
         tournament.create_groups(2, 4)
         tournament.champion = tournament.teams[0]
 
-        stats = tournament.get_tournament_statistics()
+        _stats = tournament.get_tournament_statistics()
         assert stats["name"] == "Test Cup"
         assert stats["type"] == "mixed"
         assert stats["total_teams"] == 8
@@ -655,7 +655,7 @@ class TestTournament:
         tournament.run_tournament()
         assert tournament.champion is None
 
-        stats = tournament.get_tournament_statistics()
+        _stats = tournament.get_tournament_statistics()
         assert stats["total_teams"] == 0
         assert stats["total_matches"] == 0
         assert stats["total_goals"] == 0

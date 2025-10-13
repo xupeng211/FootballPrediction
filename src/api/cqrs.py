@@ -96,7 +96,7 @@ async def create_prediction(
     service=Depends(get_prediction_cqrs_service),
 ):
     """创建新的预测"""
-    result = await service.create_prediction(
+    _result = await service.create_prediction(
         match_id=request.match_id,
         user_id=request.user_id or 1,  # 从认证中获取，默认为1
         predicted_home=request.predicted_home,
@@ -109,7 +109,7 @@ async def create_prediction(
     return CommandResponse(
         success=result.success,
         message=result.message,
-        data=result.data.to_dict() if result.data else None,
+        _data =result.data.to_dict() if result.data else None,
         errors=result.errors,
     )
 
@@ -123,7 +123,7 @@ async def update_prediction(
     service=Depends(get_prediction_cqrs_service),
 ):
     """更新预测"""
-    result = await service.update_prediction(
+    _result = await service.update_prediction(
         prediction_id=prediction_id,
         predicted_home=request.predicted_home,
         predicted_away=request.predicted_away,
@@ -135,7 +135,7 @@ async def update_prediction(
     return CommandResponse(
         success=result.success,
         message=result.message,
-        data=result.data.to_dict() if result.data else None,
+        _data =result.data.to_dict() if result.data else None,
         errors=result.errors,
     )
 
@@ -147,12 +147,12 @@ async def delete_prediction(
     prediction_id: int, service=Depends(get_prediction_cqrs_service)
 ):
     """删除预测"""
-    result = await service.delete_prediction(prediction_id)
+    _result = await service.delete_prediction(prediction_id)
 
     return CommandResponse(
         success=result.success,
         message=result.message,
-        data=result.data,
+        _data =result.data,
         errors=result.errors,
     )
 
@@ -163,7 +163,7 @@ async def get_prediction(
     prediction_id: int, service=Depends(get_prediction_cqrs_service)
 ):
     """获取预测详情"""
-    prediction = await service.get_prediction_by_id(prediction_id)
+    _prediction = await service.get_prediction_by_id(prediction_id)
     if not prediction:
         raise HTTPException(status_code=404, detail="预测不存在")
 
@@ -203,7 +203,7 @@ async def get_user_statistics(
     service=Depends(get_prediction_cqrs_service),
 ):
     """获取用户统计信息"""
-    stats = await service.get_user_stats(user_id, include_predictions)
+    _stats = await service.get_user_stats(user_id, include_predictions)
     if not stats:
         raise HTTPException(status_code=404, detail="用户统计不存在")
 
@@ -216,7 +216,7 @@ async def create_match(
     request: CreateMatchRequest, service=Depends(get_match_cqrs_service)
 ):
     """创建新的比赛"""
-    result = await service.create_match(
+    _result = await service.create_match(
         home_team=request.home_team,
         away_team=request.away_team,
         match_date=request.match_date,
@@ -227,7 +227,7 @@ async def create_match(
     return CommandResponse(
         success=result.success,
         message=result.message,
-        data=result.data.to_dict() if result.data else None,
+        _data =result.data.to_dict() if result.data else None,
         errors=result.errors,
     )
 
@@ -256,7 +256,7 @@ async def get_upcoming_matches(
     service=Depends(get_match_cqrs_service),
 ):
     """获取即将到来的比赛列表"""
-    matches = await service.get_upcoming_matches(
+    _matches = await service.get_upcoming_matches(
         days_ahead=days_ahead, competition=competition, limit=limit, offset=offset
     )
 
@@ -273,7 +273,7 @@ async def create_user(
     request: CreateUserRequest, service=Depends(get_user_cqrs_service)
 ):
     """创建新用户"""
-    result = await service.create_user(
+    _result = await service.create_user(
         username=request.username,
         email=request.email,
         password_hash=request.password_hash,
@@ -282,7 +282,7 @@ async def create_user(
     return CommandResponse(
         success=result.success,
         message=result.message,
-        data=result.data.to_dict() if result.data else None,
+        _data =result.data.to_dict() if result.data else None,
         errors=result.errors,
     )
 

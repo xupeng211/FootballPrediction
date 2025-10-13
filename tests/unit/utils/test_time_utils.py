@@ -136,7 +136,7 @@ class TestTimeUtilsOperations:
     def test_add_days(self):
         """测试：添加天数"""
         dt = datetime(2023, 1, 1)
-        result = TimeUtils.add_days(dt, 7)
+        _result = TimeUtils.add_days(dt, 7)
         assert result.year == 2023
         assert result.month == 1
         assert result.day == 8
@@ -144,21 +144,21 @@ class TestTimeUtilsOperations:
     def test_add_hours(self):
         """测试：添加小时"""
         dt = datetime(2023, 1, 1, 12, 0, 0)
-        result = TimeUtils.add_hours(dt, 5)
+        _result = TimeUtils.add_hours(dt, 5)
         assert result.hour == 17
         assert result.day == 1
 
     def test_add_minutes(self):
         """测试：添加分钟"""
         dt = datetime(2023, 1, 1, 12, 30, 0)
-        result = TimeUtils.add_minutes(dt, 45)
+        _result = TimeUtils.add_minutes(dt, 45)
         assert result.minute == 15
         assert result.hour == 13
 
     def test_subtract_days(self):
         """测试：减去天数"""
         dt = datetime(2023, 1, 8)
-        result = TimeUtils.subtract_days(dt, 7)
+        _result = TimeUtils.subtract_days(dt, 7)
         assert result.day == 1
         assert result.month == 1
         assert result.year == 2023
@@ -430,7 +430,7 @@ class TestTimeUtilsEdgeCases:
         base_dt = datetime(2023, 1, 8)
 
         # 减去7天
-        result = TimeUtils.subtract_days(base_dt, 7)
+        _result = TimeUtils.subtract_days(base_dt, 7)
         assert result.day == 1
         assert result.month == 1
 

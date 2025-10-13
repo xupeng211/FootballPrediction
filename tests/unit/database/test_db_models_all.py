@@ -62,5 +62,5 @@ def test_prediction_model():
 
 
 def test_user_model():
-    user = User(username="test")
+    _user = User(username="test")
     assert user.username == "test"

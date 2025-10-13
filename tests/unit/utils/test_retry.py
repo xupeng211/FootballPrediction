@@ -68,9 +68,9 @@ class TestRetryUtils:
             call_count += 1
             return "success"
 
-        result = await test_function()
+        _result = await test_function()
 
-        assert result == "success"
+        assert _result == "success"
         assert call_count == 1
 
     @pytest.mark.asyncio
@@ -86,9 +86,9 @@ class TestRetryUtils:
                 raise ValueError("Temporary failure")
             return "success"
 
-        result = await test_function()
+        _result = await test_function()
 
-        assert result == "success"
+        assert _result == "success"
         assert call_count == 3
 
     @pytest.mark.asyncio
@@ -163,9 +163,9 @@ class TestRetryUtils:
                 raise ValueError("Temporary failure")
             return "success"
 
-        result = test_function()
+        _result = test_function()
 
-        assert result == "success"
+        assert _result == "success"
         assert call_count == 2
 
     def test_sync_retry_failure(self):

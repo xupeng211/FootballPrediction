@@ -140,17 +140,17 @@ class AdapterFactory:
         # 根据文件扩展名选择解析器
         if file_path.suffix.lower() in [".yaml", ".yml"]:
             with open(file_path, "r", encoding="utf-8") as f:
-                data = yaml.safe_load(f)
+                _data = yaml.safe_load(f)
         elif file_path.suffix.lower() == ".json":
             with open(file_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
+                _data = json.load(f)
         else:
             raise ValueError(f"Unsupported config file format: {file_path.suffix}")
 
         # 解析适配器配置
         if "adapters" in data:
             for adapter_data in data["adapters"]:
-                config = AdapterConfig(**adapter_data)
+                _config = AdapterConfig(**adapter_data)
                 self._configs[config.name] = config
 
         # 解析适配器组配置
@@ -163,7 +163,7 @@ class AdapterFactory:
         """保存配置到文件"""
         file_path = Path(file_path)
 
-        data = {
+        _data = {
             "adapters": [
                 {
                     "name": config.name,

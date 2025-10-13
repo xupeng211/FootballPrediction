@@ -29,7 +29,7 @@ class TestEventEndpoints:
             pytest.skip("事件健康检查端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "status" in data or "health" in data
 
     def test_get_event_stats(self, client):
@@ -40,7 +40,7 @@ class TestEventEndpoints:
             pytest.skip("事件统计端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "stats" in data or "events" in data or "count" in data
 
     def test_get_event_types(self, client):
@@ -51,7 +51,7 @@ class TestEventEndpoints:
             pytest.skip("事件类型端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list) or "types" in data
 
     def test_get_subscribers(self, client):
@@ -62,7 +62,7 @@ class TestEventEndpoints:
             pytest.skip("订阅者端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list) or "subscribers" in data
 
     @patch("src.api.events.EventManager.restart")
@@ -76,7 +76,7 @@ class TestEventEndpoints:
             pytest.skip("重启事件系统端点未实现")
 
         assert response.status_code in [200, 202]
-        data = response.json()
+        _data = response.json()
         assert "success" in data or "status" in data
 
     def test_get_event_metrics(self, client):
@@ -87,7 +87,7 @@ class TestEventEndpoints:
             pytest.skip("事件指标端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "metrics" in data or "events_processed" in data
 
     def test_get_recent_predictions(self, client):
@@ -98,7 +98,7 @@ class TestEventEndpoints:
             pytest.skip("最近预测统计端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "predictions" in data or "stats" in data
 
     def test_get_user_activity(self, client):
@@ -109,7 +109,7 @@ class TestEventEndpoints:
             pytest.skip("用户活动统计端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "activity" in data or "users" in data
 
     @patch("src.api.events.EventManager.publish")
@@ -132,7 +132,7 @@ class TestEventEndpoints:
             pytest.skip("发布事件端点未实现")
 
         assert response.status_code in [200, 201]
-        data = response.json()
+        _data = response.json()
         assert "event_id" in data or "success" in data
 
     @patch("src.api.events.EventManager.subscribe")
@@ -152,7 +152,7 @@ class TestEventEndpoints:
             pytest.skip("订阅事件端点未实现")
 
         assert response.status_code in [200, 201]
-        data = response.json()
+        _data = response.json()
         assert "subscription_id" in data or "success" in data
 
     def test_get_event_history(self, client):
@@ -163,7 +163,7 @@ class TestEventEndpoints:
             pytest.skip("事件历史端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list) or "events" in data or "history" in data
 
 

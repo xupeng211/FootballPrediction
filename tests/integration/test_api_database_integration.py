@@ -62,7 +62,7 @@ class TestAPIDatabaseIntegration:
         }
 
         # 创建用户对象
-        user = User(
+        _user = User(
             username=user_data["username"],
             email=user_data["email"],
             hashed_password="hashed_password",
@@ -86,7 +86,7 @@ class TestAPIDatabaseIntegration:
 
         # 验证响应
         if response.status_code in [200, 201]:
-            data = response.json()
+            _data = response.json()
             assert "id" in data or "username" in data
         else:
             # 验证数据库操作被调用
@@ -129,7 +129,7 @@ class TestAPIDatabaseIntegration:
 
         # 验证响应
         if response.status_code == 200:
-            data = response.json()
+            _data = response.json()
             assert isinstance(data, list) or "predictions" in data
         else:
             # 验证查询被执行
@@ -146,7 +146,7 @@ class TestAPIDatabaseIntegration:
         }
 
         # 创建预测对象
-        prediction = Prediction(
+        _prediction = Prediction(
             user_id=1,
             match_id=prediction_data["match_id"],
             predicted_home_score=prediction_data["predicted_home_score"],
@@ -171,7 +171,7 @@ class TestAPIDatabaseIntegration:
 
         # 验证响应
         if response.status_code in [200, 201]:
-            data = response.json()
+            _data = response.json()
             assert "id" in data or "match_id" in data
         else:
             # 验证数据库操作
@@ -182,7 +182,7 @@ class TestAPIDatabaseIntegration:
     async def test_get_matches_with_filters(self, client, mock_db_session):
         """测试带过滤器的比赛列表获取"""
         # 模拟比赛数据
-        matches = [
+        _matches = [
             Match(
                 id=1,
                 home_team="Team A",
@@ -222,7 +222,7 @@ class TestAPIDatabaseIntegration:
 
             # 验证响应
             if response.status_code == 200:
-                data = response.json()
+                _data = response.json()
                 assert isinstance(data, list) or "matches" in data
 
     @pytest.mark.asyncio
@@ -256,7 +256,7 @@ class TestAPIDatabaseIntegration:
 
         # 验证响应
         if response.status_code == 200:
-            data = response.json()
+            _data = response.json()
             assert "confidence" in data or "message" in data
         else:
             # 验证数据库操作
@@ -305,7 +305,7 @@ class TestAPIDatabaseIntegration:
         user_id = 1
 
         # 模拟统计数据
-        stats = {
+        _stats = {
             "total_predictions": 50,
             "correct_predictions": 35,
             "accuracy": 0.70,
@@ -327,7 +327,7 @@ class TestAPIDatabaseIntegration:
 
         # 验证响应
         if response.status_code == 200:
-            data = response.json()
+            _data = response.json()
             assert isinstance(data, dict)
             # 验证统计字段存在
             assert any(
@@ -355,7 +355,7 @@ class TestAPIDatabaseIntegration:
 
         # 验证响应
         if response.status_code == 200:
-            data = response.json()
+            _data = response.json()
             assert isinstance(data, list) or "leaderboard" in data
             if isinstance(data, list):
                 assert len(data) >= 0

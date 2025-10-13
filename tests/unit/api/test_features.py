@@ -407,7 +407,7 @@ class TestAPIEndpoints:
             # 直接调用函数而不是通过HTTP
             from src.api.features import health_check
 
-            result = await health_check()
+            _result = await health_check()
             assert result["service"] == "特征获取服务"
             assert result["status"] == "healthy"
             assert result["feature_store"] == "available"
@@ -421,7 +421,7 @@ class TestAPIEndpoints:
             # 直接调用函数而不是通过HTTP
             from src.api.features import health_check
 
-            result = await health_check()
+            _result = await health_check()
             assert result["service"] == "特征获取服务"
             assert result["status"] == "unhealthy"
             assert result["feature_store"] == "unavailable"

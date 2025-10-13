@@ -50,7 +50,7 @@ class TestDataProcessor:
         processor = MockDataProcessor()
         input_data = {"id": 123, "value": "test"}
 
-        result = await processor.process(input_data)
+        _result = await processor.process(input_data)
 
         assert result["id"] == 123
         assert result["value"] == "test"
@@ -78,7 +78,7 @@ class TestMatchDataProcessor:
             "status": "FINISHED",
         }
 
-        result = await match_processor.process(input_data)
+        _result = await match_processor.process(input_data)
 
         # 验证所有原始数据都被保留
         assert result["id"] == 123
@@ -98,7 +98,7 @@ class TestMatchDataProcessor:
         """测试处理空比赛数据"""
         input_data = {}
 
-        result = await match_processor.process(input_data)
+        _result = await match_processor.process(input_data)
 
         # 空数据仍然会添加processed_at和type字段
         assert result["type"] == "match"
@@ -126,7 +126,7 @@ class TestOddsDataProcessor:
             "timestamp": "2024-01-15T10:00:00Z",
         }
 
-        result = await odds_processor.process(input_data)
+        _result = await odds_processor.process(input_data)
 
         # 验证所有原始数据都被保留
         assert result["match_id"] == 123
@@ -160,7 +160,7 @@ class TestScoresDataProcessor:
             "assist": "Player B",
         }
 
-        result = await scores_processor.process(input_data)
+        _result = await scores_processor.process(input_data)
 
         # 验证所有原始数据都被保留
         assert result["match_id"] == 123
@@ -193,7 +193,7 @@ class TestFeaturesDataProcessor:
             "calculated_at": "2024-01-15T10:00:00Z",
         }
 
-        result = await features_processor.process(input_data)
+        _result = await features_processor.process(input_data)
 
         # 验证所有原始数据都被保留
         assert result["match_id"] == 123
@@ -287,7 +287,7 @@ class TestMissingDataHandler:
         """测试处理缺失值"""
         data_with_missing = {"id": 123, "value": None, "score": 85}
 
-        result = handler.handle(data_with_missing)
+        _result = handler.handle(data_with_missing)
         # 根据实际实现验证结果
         assert isinstance(result, dict)
 
@@ -295,9 +295,9 @@ class TestMissingDataHandler:
         """测试处理完整数据"""
         complete_data = {"id": 123, "value": 100, "score": 85}
 
-        result = handler.handle(complete_data)
+        _result = handler.handle(complete_data)
         # 完整数据应该保持不变
-        assert result == complete_data
+        assert _result == complete_data
 
 
 class TestMissingScoresHandler:
@@ -310,7 +310,7 @@ class TestMissingScoresHandler:
 
     def test_handle_missing_scores(self, handler):
         """测试处理缺失比分"""
-        data = {
+        _data = {
             "match_id": 123,
             "home_team": "Team A",
             "away_team": "Team B",
@@ -318,7 +318,7 @@ class TestMissingScoresHandler:
             "away_score": None,
         }
 
-        result = handler.handle(data)
+        _result = handler.handle(data)
         # 根据实际实现验证结果
         assert isinstance(result, dict)
 
@@ -333,9 +333,9 @@ class TestMissingTeamHandler:
 
     def test_handle_missing_team(self, handler):
         """测试处理缺失球队"""
-        data = {"match_id": 123, "home_team": None, "away_team": "Team B"}
+        _data = {"match_id": 123, "home_team": None, "away_team": "Team B"}
 
-        result = handler.handle(data)
+        _result = handler.handle(data)
         # 根据实际实现验证结果
         assert isinstance(result, dict)
 
@@ -353,7 +353,7 @@ class TestBronzeToSilverProcessor:
         """测试处理青铜数据"""
         bronze_data = {"id": 123, "raw_data": "raw content", "source": "api"}
 
-        result = await processor.process(bronze_data)
+        _result = await processor.process(bronze_data)
 
         # 验证数据被转换
         assert isinstance(result, dict)
@@ -371,14 +371,14 @@ class TestDataProcessingService:
     @pytest.mark.asyncio
     async def test_process_match_data(self, service):
         """测试处理比赛数据"""
-        data = {
+        _data = {
             "id": 123,
             "home_team": "Team A",
             "away_team": "Team B",
             "type": "match",
         }
 
-        result = await service.process_data(data)
+        _result = await service.process_data(data)
 
         assert isinstance(result, dict)
         assert "processed_at" in result
@@ -386,7 +386,7 @@ class TestDataProcessingService:
     @pytest.mark.asyncio
     async def test_process_odds_data(self, service):
         """测试处理赔率数据"""
-        data = {
+        _data = {
             "match_id": 123,
             "home_win": 2.10,
             "draw": 3.20,
@@ -394,7 +394,7 @@ class TestDataProcessingService:
             "type": "odds",
         }
 
-        result = await service.process_data(data)
+        _result = await service.process_data(data)
 
         assert isinstance(result, dict)
         assert "processed_at" in result

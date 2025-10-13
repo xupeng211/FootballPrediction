@@ -10,28 +10,28 @@ class TestStringUtils:
     def test_truncate_string(self):
         """测试截断字符串"""
         text = "This is a very long string"
-        result = StringUtils.truncate(text, 10)
-        assert result == "This is..."
+        _result = StringUtils.truncate(text, 10)
+        assert _result == "This is..."
         assert len(result) <= 13  # 10 + 3 for ...
 
     def test_truncate_string_short(self):
         """测试短字符串截断"""
         text = "short"
-        result = StringUtils.truncate(text, 10)
-        assert result == "short"
+        _result = StringUtils.truncate(text, 10)
+        assert _result == "short"
 
     def test_truncate_with_suffix(self):
         """测试自定义后缀截断"""
         text = "This is a very long string"
-        result = StringUtils.truncate(text, 10, suffix=" [more]")
+        _result = StringUtils.truncate(text, 10, suffix=" [more]")
         # 截断长度10包含后缀，所以实际文本长度是 10 - 7 = 3
-        assert result == "Thi [more]"
+        assert _result == "Thi [more]"
 
     def test_slugify(self):
         """测试转换为URL友好字符串"""
         text = "Hello World! This is a Test"
-        result = StringUtils.slugify(text)
-        assert result == "hello-world-this-is-a-test"
+        _result = StringUtils.slugify(text)
+        assert _result == "hello-world-this-is-a-test"
 
     def test_camel_to_snake(self):
         """测试驼峰转下划线"""
@@ -47,8 +47,8 @@ class TestStringUtils:
     def test_clean_text(self):
         """测试清理文本"""
         text = "  This   has    extra   spaces  "
-        result = StringUtils.clean_text(text)
-        assert result == "This has extra spaces"
+        _result = StringUtils.clean_text(text)
+        assert _result == "This has extra spaces"
 
     def test_extract_numbers(self):
         """测试提取数字"""

@@ -77,7 +77,7 @@ class DataFactory:
     @staticmethod
     def user_data(overrides: Dict[str, Any] = None) -> Dict[str, Any]:
         """生成用户数据"""
-        data = {
+        _data = {
             "username": fake.user_name(),
             "email": fake.email(),
             "full_name": fake.name(),
@@ -93,7 +93,7 @@ class DataFactory:
     @staticmethod
     def match_data(overrides: Dict[str, Any] = None) -> Dict[str, Any]:
         """生成比赛数据"""
-        data = {
+        _data = {
             "home_team": fake.company(),
             "away_team": fake.company(),
             "league": fake.country(),
@@ -108,7 +108,7 @@ class DataFactory:
     @staticmethod
     def prediction_data(overrides: Dict[str, Any] = None) -> Dict[str, Any]:
         """生成预测数据"""
-        data = {
+        _data = {
             "match_id": fake.random_int(min=1, max=10000),
             "prediction": secrets.choice(["home_win", "away_win", "draw"]),
             "confidence": round(fake.random.uniform(0.5, 1.0), 2),
@@ -145,7 +145,7 @@ class DataFactory:
     def unique_values(factory_func, count: int, **kwargs) -> List[Any]:
         """生成唯一的值列表"""
         seen = set()
-        result = []
+        _result = []
         while len(result) < count:
             value = factory_func(**kwargs)
             if value not in seen:

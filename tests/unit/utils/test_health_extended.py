@@ -28,7 +28,7 @@ class TestAPIHealthExtended:
 
             response = client.get("/api/health")
             assert response.status_code == 200
-            data = response.json()
+            _data = response.json()
             assert data["status"] == "healthy"
             assert "checks" in data
 
@@ -53,6 +53,6 @@ class TestAPIHealthExtended:
         """测试健康指标端点"""
         response = client.get("/api/health/metrics")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "uptime" in data
         assert "version" in data

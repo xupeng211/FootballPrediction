@@ -182,7 +182,7 @@ def upgrade() -> None:
 
     logger.info("6. 验证索引创建结果...")
     try:
-        result = conn.execute(
+        _result = conn.execute(
             text(  # type: ignore
                 """
             SELECT

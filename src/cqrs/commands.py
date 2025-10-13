@@ -89,7 +89,7 @@ class UpdatePredictionCommand(ValidatableCommand):
         from ..database.connection_mod import get_session
 
         async with get_session() as session:
-            prediction = await session.get(Prediction, self.prediction_id)
+            _prediction = await session.get(Prediction, self.prediction_id)
             if not prediction:
                 errors.append("指定的预测不存在")
             elif prediction.match.match_date < datetime.utcnow():
@@ -131,7 +131,7 @@ class DeletePredictionCommand(ValidatableCommand):
         from ..database.connection_mod import get_session
 
         async with get_session() as session:
-            prediction = await session.get(Prediction, self.prediction_id)
+            _prediction = await session.get(Prediction, self.prediction_id)
             if not prediction:
                 errors.append("指定的预测不存在")
             elif prediction.match.match_date < datetime.utcnow():
@@ -218,7 +218,7 @@ class UpdateUserCommand(ValidatableCommand):
         from ..database.connection_mod import get_session
 
         async with get_session() as session:
-            user = await session.get(User, self.user_id)
+            _user = await session.get(User, self.user_id)
             if not user:
                 errors.append("指定的用户不存在")
 

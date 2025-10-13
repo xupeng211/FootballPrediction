@@ -45,11 +45,11 @@ class TestMarketType:
             # Try with required arguments
             try:
                 return MarketType(test_param="test_value")
-            except:
+            except Exception:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate MarketType")
+                pytest.skip("Cannot instantiate MarketType")
         except Exception:
-            pytest.skip(f"Error creating MarketType instance")
+            pytest.skip("Error creating MarketType instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -99,11 +99,11 @@ class TestOddsFormat:
             # Try with required arguments
             try:
                 return OddsFormat(test_param="test_value")
-            except:
+            except Exception:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate OddsFormat")
+                pytest.skip("Cannot instantiate OddsFormat")
         except Exception:
-            pytest.skip(f"Error creating OddsFormat instance")
+            pytest.skip("Error creating OddsFormat instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -153,11 +153,11 @@ class TestOddsMovement:
             # Try with required arguments
             try:
                 return OddsMovement(test_param="test_value")
-            except:
+            except Exception:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate OddsMovement")
+                pytest.skip("Cannot instantiate OddsMovement")
         except Exception:
-            pytest.skip(f"Error creating OddsMovement instance")
+            pytest.skip("Error creating OddsMovement instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -217,11 +217,11 @@ class TestValueBet:
             # Try with required arguments
             try:
                 return ValueBet(test_param="test_value")
-            except:
+            except Exception:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate ValueBet")
+                pytest.skip("Cannot instantiate ValueBet")
         except Exception:
-            pytest.skip(f"Error creating ValueBet instance")
+            pytest.skip("Error creating ValueBet instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -291,11 +291,11 @@ class TestOdds:
             # Try with required arguments
             try:
                 return Odds(test_param="test_value")
-            except:
+            except Exception:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate Odds")
+                pytest.skip("Cannot instantiate Odds")
         except Exception:
-            pytest.skip(f"Error creating Odds instance")
+            pytest.skip("Error creating Odds instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -512,6 +512,6 @@ class TestModuleIntegration:
         mock_service = Mock()
         mock_service.process.return_value = {"status": "success"}
 
-        result = mock_service.process("test_data")
+        _result = mock_service.process("test_data")
         assert result["status"] == "success"
         mock_service.process.assert_called_once_with("test_data")

@@ -47,7 +47,7 @@ class TestHealthCheck:
 
     def test_check_database_function(self):
         """测试：数据库检查函数"""
-        result = _check_database()
+        _result = _check_database()
         assert isinstance(result, dict)
         assert "status" in result
         assert "latency_ms" in result
@@ -59,7 +59,7 @@ class TestHealthCheck:
         response = client.get("/health/")
         assert response.status_code == 200
 
-        data = response.json()
+        _data = response.json()
         assert "status" in data
         assert "timestamp" in data
         assert "checks" in data
@@ -72,7 +72,7 @@ class TestHealthCheck:
         response = client.get("/health/liveness")
         assert response.status_code == 200
 
-        data = response.json()
+        _data = response.json()
         assert "status" in data
         assert "timestamp" in data
         assert "service" in data
@@ -85,7 +85,7 @@ class TestHealthCheck:
         response = client.get("/health/readiness")
         assert response.status_code == 200
 
-        data = response.json()
+        _data = response.json()
         assert "status" in data
         assert "timestamp" in data
         assert "checks" in data
@@ -98,7 +98,7 @@ class TestHealthCheck:
         response = client.get("/health/detailed")
         assert response.status_code == 200
 
-        data = response.json()
+        _data = response.json()
         assert "status" in data
         assert "timestamp" in data
         assert "checks" in data
@@ -137,7 +137,7 @@ class TestHealthCheckMocked:
             response = client.get("/health/")
             assert response.status_code == 200
 
-            data = response.json()
+            _data = response.json()
             assert data["status"] == "unhealthy"
             assert data["checks"]["database"]["status"] == "unhealthy"
 
@@ -156,7 +156,7 @@ class TestHealthCheckMocked:
             response = client.get("/health/readiness")
             assert response.status_code == 200
 
-            data = response.json()
+            _data = response.json()
             assert data["status"] == "not_ready"
             assert data["checks"]["database"]["status"] == "unhealthy"
 
@@ -220,7 +220,7 @@ class TestHealthCheckIntegration:
         client = TestClient(app)
 
         response = client.get("/health/")
-        data = response.json()
+        _data = response.json()
 
         # 验证必需字段
         required_fields = ["status", "timestamp", "checks"]
@@ -236,7 +236,7 @@ class TestHealthCheckIntegration:
         """测试：数据库检查一致性"""
         # 多次调用数据库检查函数
         result1 = _check_database()
-        result2 = _check_database()
+        _result2 = _check_database()
 
         # 结果应该结构相同
         assert list(result1.keys()) == list(result2.keys())
@@ -287,22 +287,22 @@ async def test_async_endpoints():
         )
 
         # 测试health_check
-        result = await health_check()
+        _result = await health_check()
         assert "status" in result
         assert "timestamp" in result
         assert "checks" in result
 
         # 测试liveness_check
-        result = await liveness_check()
+        _result = await liveness_check()
         assert result["status"] == "alive"
         assert "service" in result
 
         # 测试readiness_check
-        result = await readiness_check()
+        _result = await readiness_check()
         assert result["status"] in ["ready", "not_ready"]
 
         # 测试detailed_health
-        result = await detailed_health()
+        _result = await detailed_health()
         assert "database" in result["checks"]
         assert "redis" in result["checks"]
         assert "system" in result["checks"]

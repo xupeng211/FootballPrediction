@@ -38,7 +38,7 @@ class TestAdapterConfig:
 
     def test_adapter_config_creation(self):
         """测试：适配器配置创建"""
-        config = AdapterConfig(
+        _config = AdapterConfig(
             name="test_adapter",
             adapter_type="test",
             enabled=True,
@@ -60,7 +60,7 @@ class TestAdapterConfig:
 
     def test_adapter_config_defaults(self):
         """测试：适配器配置默认值"""
-        config = AdapterConfig(name="test", adapter_type="test")
+        _config = AdapterConfig(name="test", adapter_type="test")
 
         assert config.enabled is True  # 默认启用
         assert config.priority == 0  # 默认优先级
@@ -149,7 +149,7 @@ class TestAdapterFactory:
         factory.register_adapter_type("test_type", mock_adapter_class)
 
         # 创建配置
-        config = AdapterConfig(
+        _config = AdapterConfig(
             name="test",
             adapter_type="test_type",
             enabled=True,
@@ -170,7 +170,7 @@ class TestAdapterFactory:
         factory = AdapterFactory()
 
         # 创建配置（禁用）
-        config = AdapterConfig(name="test", adapter_type="test_type", enabled=False)
+        _config = AdapterConfig(name="test", adapter_type="test_type", enabled=False)
 
         # 应该抛出异常
         with pytest.raises(ValueError, match="disabled"):
@@ -181,7 +181,7 @@ class TestAdapterFactory:
         factory = AdapterFactory()
 
         # 创建配置（未知类型）
-        config = AdapterConfig(name="test", adapter_type="unknown_type", enabled=True)
+        _config = AdapterConfig(name="test", adapter_type="unknown_type", enabled=True)
 
         # 应该抛出异常
         with pytest.raises(ValueError, match="Unknown adapter type"):
@@ -298,7 +298,7 @@ class TestAdapterFactory:
             assert "test_adapter" in factory._configs
             assert "test_group" in factory._group_configs
 
-            config = factory.get_config("test_adapter")
+            _config = factory.get_config("test_adapter")
             assert config.name == "test_adapter"
             assert config.adapter_type == "test"
 
@@ -335,7 +335,7 @@ class TestAdapterFactory:
 
             # 验证配置加载
             assert "yaml_adapter" in factory._configs
-            config = factory.get_config("yaml_adapter")
+            _config = factory.get_config("yaml_adapter")
             assert config.name == "yaml_adapter"
 
         finally:
@@ -369,7 +369,7 @@ class TestAdapterFactory:
         factory = AdapterFactory()
 
         # 添加配置
-        config = AdapterConfig(
+        _config = AdapterConfig(
             name="save_test",
             adapter_type="test",
             enabled=True,
@@ -404,7 +404,7 @@ class TestAdapterFactory:
         factory = AdapterFactory()
 
         # 添加配置
-        config = AdapterConfig(name="test", adapter_type="test")
+        _config = AdapterConfig(name="test", adapter_type="test")
         factory._configs["test"] = config
 
         # 获取配置
@@ -459,7 +459,7 @@ class TestAdapterFactory:
         """测试：验证配置（未知类型）"""
         factory = AdapterFactory()
 
-        config = AdapterConfig(name="test", adapter_type="unknown_type")
+        _config = AdapterConfig(name="test", adapter_type="unknown_type")
         errors = factory.validate_config(config)
 
         assert len(errors) == 1

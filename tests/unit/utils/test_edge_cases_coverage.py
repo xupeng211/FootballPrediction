@@ -39,7 +39,7 @@ class TestDeepNestingCoverage:
             }
         }
 
-        result = deep_merge(dict1, dict2)
+        _result = deep_merge(dict1, dict2)
         assert result["level1"]["level2"]["level3"]["level4"]["data"] == [4, 5, 6]
         assert (
             result["level1"]["level2"]["level3"]["level4"]["nested"]["deep"] == "value1"
@@ -136,15 +136,15 @@ class TestDeepNestingCoverage:
         from src.utils.helpers import deep_get, deep_set
 
         # 测试深度获取的错误路径
-        data = {"level1": {"level2": {}}}
+        _data = {"level1": {"level2": {}}}
 
         # 尝试获取不存在的深层路径
-        result = deep_get(data, "level1.level2.level3.level4", default="not_found")
-        assert result == "not_found"
+        _result = deep_get(data, "level1.level2.level3.level4", default="not_found")
+        assert _result == "not_found"
 
         # 测试部分路径存在
-        result = deep_get(data, "level1.level2", default="not_found")
-        assert result == {}
+        _result = deep_get(data, "level1.level2", default="not_found")
+        assert _result == {}
 
         # 测试设置到不存在的路径
         new_data = {}
@@ -195,7 +195,7 @@ class TestDeepNestingCoverage:
         for inp in inputs:
             try:
                 if inp is not None and isinstance(inp, str):
-                    result = hash_string(inp)
+                    _result = hash_string(inp)
                     assert isinstance(result, str)
                     assert len(result) > 0
             except (TypeError, ValueError):
@@ -289,7 +289,7 @@ class TestDeepNestingCoverage:
 
         for delta, expected_pattern in test_cases:
             past_time = now - delta
-            result = time_ago(past_time)
+            _result = time_ago(past_time)
             assert isinstance(result, str)
             assert len(result) > 0
 
@@ -305,7 +305,7 @@ class TestDeepNestingCoverage:
         ]
 
         for seconds, expected in durations:
-            result = duration_format(seconds)
+            _result = duration_format(seconds)
             assert isinstance(result, str)
 
         # 测试未来/过去判断
@@ -375,7 +375,7 @@ class TestDeepNestingCoverage:
 
         for camel in camel_cases:
             snake = camel_to_snake(camel)
-            back_to_camel = snake_to_camel(snake)
+            snake_to_camel(snake)
             assert "_" in snake
             assert " " not in snake
 
@@ -672,8 +672,8 @@ class TestDeepNestingCoverage:
                 return "completed"
 
         # 运行异步测试
-        result = asyncio.run(test_async_context())
-        assert result == "completed"
+        _result = asyncio.run(test_async_context())
+        assert _result == "completed"
 
     def test_list_comprehensions_edge_cases(self):
         """测试列表推导式的边界情况"""
@@ -726,8 +726,8 @@ class TestDeepNestingCoverage:
         # 链式生成器
         gen1 = (x for x in range(5) if x % 2 == 0)
         gen2 = (y * 2 for y in gen1)
-        result = list(gen2)
-        assert result == [0, 4, 8]
+        _result = list(gen2)
+        assert _result == [0, 4, 8]
 
         # 惰性求值
         infinite_gen = (x for x in itertools.count())
@@ -741,13 +741,13 @@ class TestDeepNestingCoverage:
         def complex_function(x):
             try:
                 try:
-                    result = 10 / x
+                    _result = 10 / x
                 except ZeroDivisionError:
-                    result = float("inf")
+                    _result = float("inf")
                 except TypeError:
-                    result = None
+                    _result = None
             except Exception:
-                result = "error"
+                _result = "error"
             finally:
                 # 清理代码
                 pass

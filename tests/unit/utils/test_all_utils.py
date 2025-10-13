@@ -42,8 +42,8 @@ class TestStringUtils:
         ]
 
         for input_text, expected in test_cases:
-            result = slugify(input_text)
-            assert result == expected
+            _result = slugify(input_text)
+            assert _result == expected
 
     def test_truncate_text(self):
         """测试文本截断"""
@@ -63,8 +63,8 @@ class TestStringUtils:
         ]
 
         for text, max_len, expected in test_cases:
-            result = truncate(text, max_len)
-            assert result == expected
+            _result = truncate(text, max_len)
+            assert _result == expected
 
     def test_extract_numbers(self):
         """测试提取数字"""
@@ -82,8 +82,8 @@ class TestStringUtils:
         ]
 
         for text, expected in test_cases:
-            result = extract_numbers(text)
-            assert result == expected
+            _result = extract_numbers(text)
+            assert _result == expected
 
     def test_generate_random_string(self):
         """测试生成随机字符串"""
@@ -105,16 +105,16 @@ class TestStringUtils:
 
         # 测试不同长度
         for length in [0, 5, 10, 20]:
-            result = random_string(length)
+            _result = random_string(length)
             assert len(result) == length
 
         # 测试只使用字母
-        result = random_string(10, use_digits=False)
+        _result = random_string(10, use_digits=False)
         assert not any(c.isdigit() for c in result)
         assert len(result) == 10
 
         # 测试只使用数字
-        result = random_string(10, use_letters=False)
+        _result = random_string(10, use_letters=False)
         assert all(c.isdigit() for c in result)
         assert len(result) == 10
 
@@ -182,8 +182,8 @@ class TestTimeUtils:
         ]
 
         for seconds, expected in test_cases:
-            result = format_duration(seconds)
-            assert result == expected
+            _result = format_duration(seconds)
+            assert _result == expected
 
     def test_time_ago(self):
         """测试时间差计算"""
@@ -220,8 +220,8 @@ class TestTimeUtils:
         ]
 
         for past_time, expected in test_cases:
-            result = time_ago(past_time, now)
-            assert result == expected
+            _result = time_ago(past_time, now)
+            assert _result == expected
 
     def test_is_business_hours(self):
         """测试工作时间判断"""
@@ -270,8 +270,8 @@ class TestFileUtils:
         ]
 
         for filename, expected in test_cases:
-            result = get_extension(filename)
-            assert result == expected
+            _result = get_extension(filename)
+            assert _result == expected
 
     def test_safe_filename(self):
         """测试安全文件名"""
@@ -296,8 +296,8 @@ class TestFileUtils:
         ]
 
         for filename, expected in test_cases:
-            result = safe_filename(filename)
-            assert result == expected
+            _result = safe_filename(filename)
+            assert _result == expected
 
     def test_calculate_file_hash(self):
         """测试计算文件哈希"""
@@ -311,15 +311,15 @@ class TestFileUtils:
         # 测试MD5
         content = "Hello, World!"
         expected_md5 = "65a8e279883337fed1b1c2d4a1b56f1b"
-        result = calculate_hash(content, "md5")
-        assert result == expected_md5
+        _result = calculate_hash(content, "md5")
+        assert _result == expected_md5
 
         # 测试SHA256
         expected_sha256 = (
             "dffd6021bb2bd5b0af676290809ec3a53191dd81c7f70a4b28688a362182986f"
         )
-        result = calculate_hash(content, "sha256")
-        assert result == expected_sha256
+        _result = calculate_hash(content, "sha256")
+        assert _result == expected_sha256
 
     def test_create_temp_file(self):
         """测试创建临时文件"""
@@ -383,8 +383,8 @@ class TestDataConversion:
         ]
 
         for bytes_value, expected in test_cases:
-            result = bytes_to_human(bytes_value)
-            assert result == expected
+            _result = bytes_to_human(bytes_value)
+            assert _result == expected
 
     def test_parse_query_string(self):
         """测试解析查询字符串"""
@@ -425,15 +425,15 @@ class TestDataConversion:
         ]
 
         for query, expected in test_cases:
-            result = parse_query_string(query)
-            assert result == expected
+            _result = parse_query_string(query)
+            assert _result == expected
 
     def test_deep_merge_dicts(self):
         """测试深度合并字典"""
 
         def deep_merge(dict1: Dict, dict2: Dict) -> Dict:
             """深度合并两个字典"""
-            result = dict1.copy()
+            _result = dict1.copy()
             for key, value in dict2.items():
                 if (
                     key in result
@@ -451,8 +451,8 @@ class TestDataConversion:
 
         expected = {"a": 1, "b": {"x": 10, "y": 30, "z": 40}, "c": [4, 5], "d": 4}
 
-        result = deep_merge(dict1, dict2)
-        assert result == expected
+        _result = deep_merge(dict1, dict2)
+        assert _result == expected
 
     def test_flatten_dict(self):
         """测试扁平化字典"""
@@ -488,8 +488,8 @@ class TestDataConversion:
             "settings.notifications.sms": False,
         }
 
-        result = flatten_dict(nested)
-        assert result == expected
+        _result = flatten_dict(nested)
+        assert _result == expected
 
 
 # 测试加密工具

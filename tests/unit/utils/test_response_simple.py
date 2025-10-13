@@ -18,8 +18,8 @@ class TestResponseSimple:
 
     def test_success_with_data(self):
         """测试成功响应（带数据）"""
-        data = {"test": "value"}
-        response = APIResponse.success(data=data)
+        _data = {"test": "value"}
+        response = APIResponse.success(_data =data)
         assert response["success"] is True
         assert response["data"] == data
         assert "timestamp" in response
@@ -34,8 +34,8 @@ class TestResponseSimple:
 
     def test_success_response_alias(self):
         """测试成功响应别名方法"""
-        data = {"test": "data"}
-        response = APIResponse.success_response(data=data)
+        _data = {"test": "data"}
+        response = APIResponse.success_response(_data =data)
         assert response["success"] is True
         assert response["data"] == data
         assert "timestamp" in response
@@ -50,7 +50,7 @@ class TestResponseSimple:
     def test_error_with_details(self):
         """测试错误响应（带详细信息）"""
         details = {"field": "email", "issue": "格式错误"}
-        response = APIResponse.error("验证失败", data=details)
+        response = APIResponse.error("验证失败", _data =details)
         assert response["success"] is False
         assert response["message"] == "验证失败"
         assert response["data"] == details
@@ -73,14 +73,14 @@ class TestResponseSimple:
 
     def test_complex_data_structure(self):
         """测试复杂数据结构"""
-        data = {
+        _data = {
             "user": {
                 "id": 1,
                 "profile": {"name": "测试用户", "settings": {"theme": "dark"}},
             },
             "items": [1, 2, 3],
         }
-        response = APIResponse.success(data=data)
+        response = APIResponse.success(_data =data)
         assert response["success"] is True
         assert response["data"]["user"]["profile"]["name"] == "测试用户"
         assert len(response["data"]["items"]) == 3

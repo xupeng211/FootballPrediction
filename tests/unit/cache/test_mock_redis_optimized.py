@@ -190,8 +190,8 @@ class TestMockRedisOptimized:
             fast_redis.set("async_key", "async_value")
             return fast_redis.get("async_key")
 
-        result = await loop.run_in_executor(None, sync_operation)
-        assert result == "async_value"
+        _result = await loop.run_in_executor(None, sync_operation)
+        assert _result == "async_value"
 
 
 @pytest.mark.skipif(
@@ -224,7 +224,7 @@ class TestRedisManagerIntegration:
         assert cached is not None
 
         # 解析数据
-        data = json.loads(cached)
+        _data = json.loads(cached)
         assert data["id"] == 123
         assert data["name"] == "Test User"
 

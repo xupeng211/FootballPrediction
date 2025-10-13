@@ -48,7 +48,7 @@ class TestAllAvailableModules:
 
             # 测试加密解密（如果存在）
             if hasattr(encrypt_data, "__call__"):
-                data = "secret message"
+                _data = "secret message"
                 encrypted = encrypt_data(data)
                 decrypted = decrypt_data(encrypted)
                 assert decrypted == data
@@ -73,19 +73,19 @@ class TestAllAvailableModules:
             # 测试邮箱验证
             emails = ["test@example.com", "user.name@domain.co.uk", "invalid", "@wrong"]
             for email in emails:
-                result = validate_email(email)
+                _result = validate_email(email)
                 assert isinstance(result, bool)
 
             # 测试电话验证
             phones = ["1234567890", "+1-234-567-8900", "invalid"]
             for phone in phones:
-                result = validate_phone(phone)
+                _result = validate_phone(phone)
                 assert isinstance(result, bool)
 
             # 测试URL验证
             urls = ["https://example.com", "http://localhost:8000", "not-url"]
             for url in urls:
-                result = validate_url(url)
+                _result = validate_url(url)
                 assert isinstance(result, bool)
 
             # 测试其他验证器
@@ -294,7 +294,7 @@ class TestAllAvailableModules:
             # 测试必填验证
             values = [None, "", [], {}, "test", 0, False]
             for value in values:
-                result = validate_required(value)
+                _result = validate_required(value)
                 assert isinstance(result, bool)
 
             # 测试范围验证
@@ -304,13 +304,13 @@ class TestAllAvailableModules:
                 (11, 1, 10),  # 大于最大值
             ]
             for value, min_val, max_val in ranges:
-                result = validate_range(value, min_val, max_val)
+                _result = validate_range(value, min_val, max_val)
                 assert isinstance(result, bool)
 
             # 测试长度验证
             strings = ["", "a", "hello", "a" * 20]
             for s in strings:
-                result = validate_length(s, 1, 10)
+                _result = validate_length(s, 1, 10)
                 assert isinstance(result, bool)
 
         except ImportError:
@@ -328,7 +328,7 @@ class TestAllAvailableModules:
             )
 
             # 测试加载配置
-            config = load_config()
+            _config = load_config()
             assert isinstance(config, dict)
 
             # 测试获取配置值
@@ -396,7 +396,7 @@ class TestAllAvailableModules:
             # 测试翻译
             keys = ["hello", "goodbye", "error", "success"]
             for key in keys:
-                result = _(key)
+                _result = _(key)
                 assert isinstance(result, str)
 
             # 测试语言切换
@@ -438,7 +438,7 @@ class TestAllAvailableModules:
                 "not json",
             ]
             for value in test_values:
-                result = is_json(value)
+                _result = is_json(value)
                 assert isinstance(result, bool)
 
             # 测试字符串截断
@@ -499,13 +499,13 @@ class TestAllAvailableModules:
             currencies = ["USD", "EUR", "CNY", "JPY"]
             for amount in amounts:
                 for currency in currencies:
-                    result = format_currency(amount, currency)
+                    _result = format_currency(amount, currency)
                     assert isinstance(result, str)
 
             # 测试字节格式化
             bytes_values = [1024, 1048576, 1073741824]
             for bytes_val in bytes_values:
-                result = format_bytes(bytes_val)
+                _result = format_bytes(bytes_val)
                 assert isinstance(result, str)
                 assert any(unit in result for unit in ["B", "KB", "MB", "GB"])
 
@@ -534,8 +534,8 @@ class TestAllAvailableModules:
                     raise ValueError("Not yet")
                 return "success"
 
-            result = eventually_success()
-            assert result == "success"
+            _result = eventually_success()
+            assert _result == "success"
             assert attempts == 3
 
             # 测试退避策略
@@ -580,7 +580,7 @@ class TestStandardLibraryCoverage:
         for algo in algorithms:
             hash_obj = hashlib.new(algo)
             hash_obj.update(text.encode("utf-8"))
-            result = hash_obj.hexdigest()
+            _result = hash_obj.hexdigest()
             assert isinstance(result, str)
             assert len(result) > 0
 

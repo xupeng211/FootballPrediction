@@ -17,7 +17,7 @@ class TestConfig:
     def test_config_init_without_file(self, tmp_path):
         """测试没有配置文件时的初始化"""
         with patch("src.core.config.Path.home", return_value=tmp_path):
-            config = Config()
+            _config = Config()
             assert isinstance(config._config, dict)
             assert len(config._config) == 0
 
@@ -31,7 +31,7 @@ class TestConfig:
         config_file.write_text(json.dumps(test_config), encoding="utf-8")
 
         with patch("src.core.config.Path.home", return_value=tmp_path):
-            config = Config()
+            _config = Config()
             assert config.get("test_key") == "test_value"
             assert config.get("number") == 123
 
@@ -44,14 +44,14 @@ class TestConfig:
 
         with patch("src.core.config.Path.home", return_value=tmp_path):
             with patch("src.core.config.logging.warning") as mock_warning:
-                config = Config()
+                _config = Config()
                 mock_warning.assert_called_once()
                 assert isinstance(config._config, dict)
 
     def test_config_get_with_default(self, tmp_path):
         """测试获取配置项（带默认值）"""
         with patch("src.core.config.Path.home", return_value=tmp_path):
-            config = Config()
+            _config = Config()
             assert config.get("nonexistent_key") is None
             assert config.get("nonexistent_key", "default") == "default"
             assert config.get("nonexistent_key", 0) == 0
@@ -59,7 +59,7 @@ class TestConfig:
     def test_config_set_and_get(self, tmp_path):
         """测试设置和获取配置项"""
         with patch("src.core.config.Path.home", return_value=tmp_path):
-            config = Config()
+            _config = Config()
             config.set("key1", "value1")
             config.set("key2", 123)
             config.set("key3", {"nested": "value"})
@@ -71,7 +71,7 @@ class TestConfig:
     def test_config_save(self, tmp_path):
         """测试保存配置"""
         with patch("src.core.config.Path.home", return_value=tmp_path):
-            config = Config()
+            _config = Config()
             config.set("test", "value")
             config.save()
 
@@ -86,7 +86,7 @@ class TestConfig:
         config_dir = tmp_path / ".footballprediction"
 
         with patch("src.core.config.Path.home", return_value=tmp_path):
-            config = Config()
+            _config = Config()
             config.set("test", "value")
             config.save()
 
@@ -96,7 +96,7 @@ class TestConfig:
     def test_config_key_conversion(self, tmp_path):
         """测试键名转换为字符串"""
         with patch("src.core.config.Path.home", return_value=tmp_path):
-            config = Config()
+            _config = Config()
             config.set("123", "numeric_key")
             assert config.get("123") == "numeric_key"
             # 键会被自动转换为字符串
@@ -105,7 +105,7 @@ class TestConfig:
     def test_config_complex_types(self, tmp_path):
         """测试复杂数据类型的配置"""
         with patch("src.core.config.Path.home", return_value=tmp_path):
-            config = Config()
+            _config = Config()
             complex_data = {
                 "list": [1, 2, 3],
                 "dict": {"nested": "value"},

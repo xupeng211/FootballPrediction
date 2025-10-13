@@ -57,7 +57,7 @@ class TestAdaptersAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "registry" in data
         assert "metrics" in data
 
@@ -72,7 +72,7 @@ class TestAdaptersAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["message"] == "适配器注册表已初始化"
 
     @patch("src.api.adapters.adapter_registry")
@@ -86,7 +86,7 @@ class TestAdaptersAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["message"] == "适配器注册表已关闭"
 
     # ==================== 适配器配置管理测试 ====================
@@ -115,7 +115,7 @@ class TestAdaptersAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "adapters" in data
         assert "groups" in data
 
@@ -148,7 +148,7 @@ class TestAdaptersAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["source"] == "demo_adapter"
         assert data["total_matches"] == 2
 
@@ -165,7 +165,7 @@ class TestAdaptersAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["filters"]["league_id"] == "39"
         assert data["filters"]["team_id"] == "111"
         assert data["filters"]["live"] is True
@@ -181,7 +181,7 @@ class TestAdaptersAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["source"] == "demo_adapter"
         assert data["match"]["id"] == "12345"
 
@@ -196,7 +196,7 @@ class TestAdaptersAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["source"] == "demo_adapter"
         assert data["total_teams"] == 2
 
@@ -211,7 +211,7 @@ class TestAdaptersAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["filters"]["search"] == "Manchester"
 
     @patch("src.api.adapters.adapter_registry")
@@ -225,7 +225,7 @@ class TestAdaptersAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["source"] == "demo_adapter"
         assert data["team_id"] == "111"
 
@@ -238,7 +238,7 @@ class TestAdaptersAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "comparison" in data
         assert "unified_format" in data
         assert "benefits" in data
@@ -250,7 +250,7 @@ class TestAdaptersAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "scenario" in data
         assert "result" in data
         assert data["result"]["success"] is True
@@ -262,7 +262,7 @@ class TestAdaptersAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "examples" in data
         assert "benefits" in data
         assert len(data["examples"]) == 2

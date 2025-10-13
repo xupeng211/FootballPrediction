@@ -86,9 +86,9 @@ class TestFeaturesProcessorComponents:
         """测试：aggregator功能"""
         if hasattr(aggregator, "aggregate"):
             # 模拟数据
-            data = [1, 2, 3, 4, 5]
-            result = aggregator.aggregate(data, method="sum")
-            assert result == 15
+            _data = [1, 2, 3, 4, 5]
+            _result = aggregator.aggregate(data, method="sum")
+            assert _result == 15
 
         # 测试聚合器方法
         if hasattr(aggregator, "methods"):
@@ -98,8 +98,8 @@ class TestFeaturesProcessorComponents:
         """测试：calculator功能"""
         if hasattr(calculator, "calculate"):
             # 测试基本计算
-            result = calculator.calculate(10, 5, operation="add")
-            assert result == 15
+            _result = calculator.calculate(10, 5, operation="add")
+            assert _result == 15
 
         # 测试计算器操作
         if hasattr(calculator, "operations"):
@@ -109,8 +109,8 @@ class TestFeaturesProcessorComponents:
         """测试：processor功能"""
         if hasattr(processor, "process"):
             # 测试数据处理
-            data = {"values": [1, 2, 3]}
-            result = processor.process(data)
+            _data = {"values": [1, 2, 3]}
+            _result = processor.process(data)
             assert result is not None
 
         # 检查处理器方法
@@ -122,12 +122,12 @@ class TestFeaturesProcessorComponents:
         if hasattr(validator, "validate"):
             # 测试有效数据
             valid_data = {"field": "value"}
-            result = validator.validate(valid_data)
+            _result = validator.validate(valid_data)
             assert result is True or isinstance(result, dict)
 
             # 测试无效数据
             invalid_data = {}
-            result = validator.validate(invalid_data)
+            _result = validator.validate(invalid_data)
             assert (
                 result is False or isinstance(result, dict) and "errors" in str(result)
             )
@@ -178,26 +178,26 @@ class TestFeaturesProcessorIntegration:
         """测试：组件交互"""
         # 测试组件之间的协作
         if hasattr(validator, "validate") and hasattr(processor, "process"):
-            data = {"numbers": [1, 2, 3, 4, 5]}
+            _data = {"numbers": [1, 2, 3, 4, 5]}
 
             # 先验证
             is_valid = validator.validate(data)
             if is_valid:
                 # 再处理
-                result = processor.process(data)
+                _result = processor.process(data)
                 assert result is not None
 
     def test_pipeline_workflow(self):
         """测试：管道工作流"""
         # 模拟完整的特征处理管道
-        data = {"raw_values": [1, 2, 3, 4, 5]}
+        _data = {"raw_values": [1, 2, 3, 4, 5]}
 
         # 步骤1：验证
         if hasattr(validator, "validate"):
             if validator.validate(data):
                 # 步骤2：计算
                 if hasattr(calculator, "calculate"):
-                    stats = calculator.calculate(data["raw_values"], operation="stats")
+                    _stats = calculator.calculate(data["raw_values"], operation="stats")
                     assert stats is not None
 
                 # 步骤3：处理
@@ -219,7 +219,7 @@ class TestFeaturesProcessorIntegration:
             if hasattr(component, "validate"):
                 # 测试无效输入
                 try:
-                    result = component.validate(None)
+                    _result = component.validate(None)
                     # 如果不抛出异常，应该返回False或错误信息
                     assert result is False or isinstance(result, dict)
                 except (ValueError, TypeError):

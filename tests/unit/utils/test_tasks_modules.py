@@ -62,7 +62,7 @@ class TestBackupTasks:
             # Mock执行方法
             task.execute = Mock(return_value={"status": "success", "bytes": 1024})
 
-            result = task.execute()
+            _result = task.execute()
             assert result["status"] == "success"
             assert result["bytes"] == 1024
         except ImportError:
@@ -97,7 +97,7 @@ class TestBackupTasks:
 
             collector.collect_metrics = Mock(return_value=metrics)
 
-            result = collector.collect_metrics()
+            _result = collector.collect_metrics()
             assert result["total_backups"] == 10
             assert result["successful_backups"] == 9
         except ImportError:
@@ -201,7 +201,7 @@ class TestBackupCore:
         try:
             from src.tasks.backup.core import BackupConfig
 
-            config = BackupConfig(
+            _config = BackupConfig(
                 backup_path="/backup/data", compression=True, encryption=True
             )
 
@@ -371,7 +371,7 @@ class TestTaskUtils:
 
             collector.get_metrics = Mock(return_value=metrics)
 
-            result = collector.get_metrics()
+            _result = collector.get_metrics()
             assert result["total_tasks"] == 100
             assert result["success_rate"] == 0.85
         except ImportError:
@@ -403,7 +403,7 @@ class TestAsyncTasks:
                 }
             )
 
-            result = await task.execute_async()
+            _result = await task.execute_async()
             assert result["status"] == "success"
             assert result["bytes_copied"] == 1024000
         except ImportError:
@@ -422,7 +422,7 @@ class TestAsyncTasks:
                 return_value={"processed": 10, "succeeded": 9, "failed": 1}
             )
 
-            result = await processor.process_batch([f"task_{i}" for i in range(10)])
+            _result = await processor.process_batch([f"task_{i}" for i in range(10)])
             assert result["processed"] == 10
         except ImportError:
             pytest.skip("TaskBatchProcessor module not available")

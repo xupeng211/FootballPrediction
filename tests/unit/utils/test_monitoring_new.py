@@ -29,7 +29,7 @@ class TestAPIMonitoring:
 
             response = client.get("/api/monitoring/metrics")
             assert response.status_code == 200
-            data = response.json()
+            _data = response.json()
             assert "cpu_usage" in data
             assert isinstance(data["cpu_usage"], (int, float))
 
@@ -46,7 +46,7 @@ class TestAPIMonitoring:
 
             response = client.get("/api/monitoring/performance")
             assert response.status_code == 200
-            data = response.json()
+            _data = response.json()
             assert "avg_response_time" in data
 
     def test_get_alerts(self, client):
@@ -64,7 +64,7 @@ class TestAPIMonitoring:
 
             response = client.get("/api/monitoring/alerts")
             assert response.status_code == 200
-            data = response.json()
+            _data = response.json()
             assert len(data) == 1
             assert data[0]["type"] == "high_cpu"
 
@@ -77,7 +77,7 @@ class TestAPIMonitoring:
 
             response = client.post("/api/monitoring/alerts", json=alert_data)
             assert response.status_code == 201
-            data = response.json()
+            _data = response.json()
             assert data["status"] == "triggered"
 
     def test_acknowledge_alert(self, client):
@@ -87,7 +87,7 @@ class TestAPIMonitoring:
 
             response = client.post("/api/monitoring/alerts/1/acknowledge")
             assert response.status_code == 200
-            data = response.json()
+            _data = response.json()
             assert data["status"] == "acknowledged"
 
     def test_health_check_with_metrics(self, client):
@@ -105,6 +105,6 @@ class TestAPIMonitoring:
 
             response = client.get("/api/monitoring/health")
             assert response.status_code == 200
-            data = response.json()
+            _data = response.json()
             assert data["status"] in ["healthy", "degraded", "unhealthy"]
             assert "checks" in data

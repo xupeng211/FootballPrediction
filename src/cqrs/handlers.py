@@ -61,7 +61,7 @@ class CreatePredictionHandler(CommandHandler):
                     )
 
                 # 创建预测
-                prediction = Prediction(
+                _prediction = Prediction(
                     match_id=command.match_id,
                     user_id=command.user_id,
                     predicted_home=command.predicted_home,
@@ -79,7 +79,7 @@ class CreatePredictionHandler(CommandHandler):
                 logger.info(f"创建预测成功: ID={prediction.id}")
 
                 return CommandResult.success_result(
-                    data=PredictionDTO(
+                    _data =PredictionDTO(
                         id=prediction.id,  # type: ignore
                         match_id=prediction.match_id,
                         user_id=prediction.user_id,  # type: ignore
@@ -109,7 +109,7 @@ class UpdatePredictionHandler(CommandHandler):
         """处理更新预测命令"""
         try:
             async with get_session() as session:  # type: ignore
-                prediction = await session.get(Prediction, command.prediction_id)
+                _prediction = await session.get(Prediction, command.prediction_id)
                 if not prediction:
                     return CommandResult.failure_result(["预测不存在"], "预测未找到")
 
@@ -133,7 +133,7 @@ class UpdatePredictionHandler(CommandHandler):
                 logger.info(f"更新预测成功: ID={prediction.id}")
 
                 return CommandResult.success_result(
-                    data=PredictionDTO(
+                    _data =PredictionDTO(
                         id=prediction.id,
                         match_id=prediction.match_id,
                         user_id=prediction.user_id,
@@ -164,7 +164,7 @@ class DeletePredictionHandler(CommandHandler):
         """处理删除预测命令"""
         try:
             async with get_session() as session:  # type: ignore
-                prediction = await session.get(Prediction, command.prediction_id)
+                _prediction = await session.get(Prediction, command.prediction_id)
                 if not prediction:
                     return CommandResult.failure_result(["预测不存在"], "预测未找到")
 
@@ -174,7 +174,7 @@ class DeletePredictionHandler(CommandHandler):
                 logger.info(f"删除预测成功: ID={command.prediction_id}")
 
                 return CommandResult.success_result(
-                    data={"deleted_id": command.prediction_id}, message="预测删除成功"
+                    _data ={"deleted_id": command.prediction_id}, message="预测删除成功"
                 )
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
@@ -194,7 +194,7 @@ class CreateUserHandler(CommandHandler):
         """处理创建用户命令"""
         try:
             async with get_session() as session:  # type: ignore
-                user = User(
+                _user = User(
                     username=command.username,
                     email=command.email,
                     password_hash=command.password_hash,
@@ -209,7 +209,7 @@ class CreateUserHandler(CommandHandler):
                 logger.info(f"创建用户成功: ID={user.id}")
 
                 return CommandResult.success_result(
-                    data=UserDTO(
+                    _data =UserDTO(
                         id=user.id,  # type: ignore
                         username=user.username,  # type: ignore
                         email=user.email,  # type: ignore
@@ -240,7 +240,7 @@ class GetPredictionByIdHandler(QueryHandler):
         """处理获取预测查询"""
         try:
             async with get_session() as session:  # type: ignore
-                prediction = await session.get(Prediction, query.prediction_id)
+                _prediction = await session.get(Prediction, query.prediction_id)
                 if not prediction:
                     return None
 
@@ -301,7 +301,7 @@ class GetPredictionsByUserHandler(QueryHandler):
                     sql += " OFFSET :offset"
                     params["offset"] = query.offset
 
-                result = await session.execute(sql, params)
+                _result = await session.execute(sql, params)
                 predictions = result.fetchall()
 
                 return [
@@ -351,7 +351,7 @@ class GetUserStatsHandler(QueryHandler):
                 stats_result = await session.execute(
                     stats_sql, {"user_id": query.user_id}
                 )
-                stats = stats_result.fetchone()
+                _stats = stats_result.fetchone()
 
                 if not stats or stats.total_predictions == 0:
                     return PredictionStatsDTO(
@@ -477,8 +477,8 @@ class GetUpcomingMatchesHandler(QueryHandler):
                     sql += " OFFSET :offset"
                     params["offset"] = query.offset
 
-                result = await session.execute(sql, params)
-                matches = result.fetchall()
+                _result = await session.execute(sql, params)
+                _matches = result.fetchall()
 
                 return [
                     MatchDTO(

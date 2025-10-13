@@ -68,18 +68,18 @@ class TestAPIDecorators:
 
     async def test_example_function_1(self):
         """测试：示例函数1工作正常"""
-        result = await example_function_1(5, 10)
-        assert result == 15
+        _result = await example_function_1(5, 10)
+        assert _result == 15
 
     async def test_example_function_2(self):
         """测试：示例函数2工作正常"""
-        result = await example_function_2("test")
-        assert result == "Processed: test"
+        _result = await example_function_2("test")
+        assert _result == "Processed: test"
 
     async def test_failing_function(self):
         """测试：失败函数最终成功"""
-        result = await failing_function(retry_count=2)
-        assert result == "Success after retries"
+        _result = await failing_function(retry_count=2)
+        assert _result == "Success after retries"
 
     async def test_failing_function_will_fail(self):
         """测试：失败函数在重试次数不足时失败"""
@@ -89,10 +89,10 @@ class TestAPIDecorators:
     async def test_slow_function(self):
         """测试：慢速函数"""
         start = datetime.utcnow()
-        result = await slow_function(0.01)
+        _result = await slow_function(0.01)
         end = datetime.utcnow()
 
-        assert result == "Completed slowly"
+        assert _result == "Completed slowly"
         assert (end - start).total_seconds() >= 0.01
 
     @patch("src.api.decorators.global_decorator_service")
@@ -105,7 +105,7 @@ class TestAPIDecorators:
 
         response = client.get("/decorators/stats")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "function1" in data
         assert "function2" in data
         mock_service.get_all_stats.assert_called_once()
@@ -121,7 +121,7 @@ class TestAPIDecorators:
 
         response = client.get("/decorators/stats?function_name=example_function_1")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["function_name"] == "example_function_1"
         mock_service.get_function_stats.assert_called_with("example_function_1")
 
@@ -132,7 +132,7 @@ class TestAPIDecorators:
 
         response = client.get("/decorators/stats?function_name=nonexistent")
         assert response.status_code == 404
-        data = response.json()
+        _data = response.json()
         assert "detail" in data
         assert "未找到" in data["detail"]
 
@@ -143,7 +143,7 @@ class TestAPIDecorators:
 
         response = client.post("/decorators/stats/clear")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["message"] == "统计信息已清空"
         mock_service.clear_stats.assert_called_once()
 
@@ -178,7 +178,7 @@ class TestDecoratorDemos:
 
         response = client.get("/decorators/demo/logging?input_value=10")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
 
         assert data["input"] == 10
         assert data["result"] == 30
@@ -203,7 +203,7 @@ class TestDecoratorDemos:
 
         response = client.get("/decorators/demo/retry")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
 
         assert data["result"] == "Success after retries"
         assert "execution_time_seconds" in data
@@ -225,7 +225,7 @@ class TestDecoratorDemos:
 
         response = client.get("/decorators/demo/cache?input_value=10&use_cache=true")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
 
         assert data["input"] == 10
         assert data["first_call"]["result"] == 30
@@ -244,7 +244,7 @@ class TestDecoratorDemos:
 
         response = client.get("/decorators/demo/timeout?delay=0.05&timeout_seconds=0.1")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
 
         assert data["success"] is True
         assert data["result"] == "Completed"
@@ -261,7 +261,7 @@ class TestDecoratorDemos:
 
         response = client.get("/decorators/demo/timeout?delay=0.2&timeout_seconds=0.1")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
 
         assert data["success"] is False
         assert data["result"] is None
@@ -290,7 +290,7 @@ class TestDecoratorDemos:
 
         response = client.get("/decorators/demo/metrics?iterations=3")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
 
         assert data["iterations"] == 3
         assert data["results_count"] == 3
@@ -317,7 +317,7 @@ class TestDecoratorDemos:
 
         response = client.get("/decorators/demo/combo?input_value=10")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
 
         assert data["input"] == 10
         assert len(data["results"]) == 2
@@ -380,7 +380,7 @@ class TestDecoratorConfigManagement:
 
         response = client.get("/decorators/configs")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
 
         assert "decorators" in data
         assert "chains" in data
@@ -395,7 +395,7 @@ class TestDecoratorConfigManagement:
 
         response = client.post("/decorators/reload")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["message"] == "装饰器配置已重新加载"
         mock_service.reload_configuration.assert_called_once()
 
@@ -450,7 +450,7 @@ class TestDecoratorContext:
 
         response = client.get("/decorators/demo/context?step_count=3")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
 
         assert "context_info" in data
         assert data["step_count"] == 3

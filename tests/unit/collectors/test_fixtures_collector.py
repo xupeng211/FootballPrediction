@@ -76,7 +76,7 @@ class TestFixturesCollector:
         cached_data = '[{"id": 1, "homeTeam": "Team A", "awayTeam": "Team B"}]'
         mock_redis_client.get.return_value = cached_data
 
-        result = await collector.collect_team_fixtures(team_id=123, days_ahead=30)
+        _result = await collector.collect_team_fixtures(team_id=123, days_ahead=30)
 
         # 应该返回缓存的数据
         assert len(result) == 1
@@ -96,7 +96,7 @@ class TestFixturesCollector:
         with patch.object(collector, "_fetch_from_api") as mock_fetch:
             mock_fetch.return_value = [{"id": 2, "homeTeam": "Team C"}]
 
-            result = await collector.collect_team_fixtures(
+            _result = await collector.collect_team_fixtures(
                 team_id=123, days_ahead=30, force_refresh=True
             )
 
@@ -124,7 +124,7 @@ class TestFixturesCollector:
         with patch.object(collector, "_fetch_from_api") as mock_fetch:
             mock_fetch.return_value = api_data
 
-            result = await collector.collect_team_fixtures(team_id=123)
+            _result = await collector.collect_team_fixtures(team_id=123)
 
             assert len(result) == 1
             assert result[0]["id"] == 456
@@ -141,9 +141,9 @@ class TestFixturesCollector:
         with patch.object(collector, "_fetch_from_api") as mock_fetch:
             mock_fetch.side_effect = Exception("API Error")
 
-            result = await collector.collect_team_fixtures(team_id=123)
+            _result = await collector.collect_team_fixtures(team_id=123)
 
-            assert result == []
+            assert _result == []
             mock_redis_client.set.assert_not_called()
 
     @pytest.mark.asyncio
@@ -168,7 +168,7 @@ class TestFixturesCollector:
                 [{"id": 3, "homeTeam": "Team C"}],
             ]
 
-            result = await collector.collect_all_fixtures()
+            _result = await collector.collect_all_fixtures()
 
             assert len(result) == 3
             assert result[0]["id"] == 1
@@ -194,9 +194,9 @@ class TestFixturesCollector:
         with patch("src.collectors.fixtures_collector.Match") as mock_match_class:
             mock_match_class.return_value = mock_match
 
-            result = await collector.store_fixtures_in_db(fixtures_data)
+            _result = await collector.store_fixtures_in_db(fixtures_data)
 
-            assert result == 1  # 存储了1条记录
+            assert _result == 1  # 存储了1条记录
             mock_match_class.assert_called_once()
             collector.db_session.add.assert_called_once_with(mock_match)
             collector.db_session.commit.assert_called_once()
@@ -212,9 +212,9 @@ class TestFixturesCollector:
             mock_select.return_value.where.return_value.return_value = mock_select
             collector.db_session.execute.return_value.scalar_one_or_none.return_value = mock_existing_match
 
-            result = await collector.store_fixtures_in_db(fixtures_data)
+            _result = await collector.store_fixtures_in_db(fixtures_data)
 
-            assert result == 0  # 没有新存储的记录
+            assert _result == 0  # 没有新存储的记录
             collector.db_session.add.assert_not_called()
             collector.db_session.commit.assert_not_called()
 
@@ -251,7 +251,7 @@ class TestFixturesCollector:
                 {"id": 2, "date": "2024-02-16"},
             ]
 
-            result = await collector.collect_by_date_range(start_date, end_date)
+            _result = await collector.collect_by_date_range(start_date, end_date)
 
             assert len(result) == 2
             mock_fetch.assert_called_once_with(start_date, end_date)

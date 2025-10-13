@@ -69,9 +69,9 @@ class TestScoresCollector:
         cached_data = {"live_matches_count": 2, "scores": {"match1": {}}}
         collector.redis_client.get_cache_value.return_value = cached_data
 
-        result = await collector.collect_live_scores()
+        _result = await collector.collect_live_scores()
 
-        assert result == cached_data
+        assert _result == cached_data
         collector.redis_client.get_cache_value.assert_called_once_with("scores:live")
 
     @pytest.mark.asyncio
@@ -91,7 +91,7 @@ class TestScoresCollector:
         mock_result.scalars.return_value.all.return_value = [mock_match]
         collector.db_session.execute.return_value = mock_result
 
-        result = await collector.collect_live_scores(force_refresh=True)
+        _result = await collector.collect_live_scores(force_refresh=True)
 
         assert "live_matches_count" in result
         assert result["live_matches_count"] == 1
@@ -108,7 +108,7 @@ class TestScoresCollector:
         mock_result.scalars.return_value.all.return_value = []
         collector.db_session.execute.return_value = mock_result
 
-        result = await collector.collect_live_scores()
+        _result = await collector.collect_live_scores()
 
         assert result["live_matches_count"] == 0
         assert result["scores"] == {}
@@ -119,7 +119,7 @@ class TestScoresCollector:
         """测试：收集实时比分时的错误处理"""
         collector.db_session.execute.side_effect = Exception("Database error")
 
-        result = await collector.collect_live_scores()
+        _result = await collector.collect_live_scores()
 
         assert "error" in result
         assert "Database error" in result["error"]
@@ -134,7 +134,7 @@ class TestScoresCollector:
         mock_result.scalars.return_value.all.return_value = [mock_match]
         collector.db_session.execute.return_value = mock_result
 
-        matches = await collector._get_live_matches_from_db()
+        _matches = await collector._get_live_matches_from_db()
 
         assert len(matches) == 1
         assert matches[0] == mock_match
@@ -239,7 +239,7 @@ class TestScoresCollectorAdvanced:
         mock_redis.get_cache_value.return_value = None
 
         # 创建多场比赛
-        matches = []
+        _matches = []
         for i in range(5):
             match = Mock()
             match.id = i + 1
@@ -257,7 +257,7 @@ class TestScoresCollectorAdvanced:
 
         with patch.dict("os.environ", {"FOOTBALL_API_TOKEN": "test"}):
             collector = ScoresCollector(mock_db, mock_redis)
-            result = await collector.collect_live_scores()
+            _result = await collector.collect_live_scores()
 
             assert result["live_matches_count"] == 5
             assert len(result["scores"]) == 5
@@ -303,7 +303,7 @@ class TestScoresCollectorAdvanced:
             results = await asyncio.gather(*tasks)
 
             # 所有结果应该相同
-            assert all(result == results[0] for result in results)
+            assert all(_result == results[0] for result in results)
 
     def test_api_endpoints_configuration(self):
         """测试：API端点配置"""
@@ -371,7 +371,7 @@ class TestScoresCollectorAdvanced:
         mock_redis.get_cache_value.return_value = None
 
         # 一些比赛有数据，一些没有
-        matches = [
+        _matches = [
             Mock(
                 id=1,
                 home_team_id=10,
@@ -398,7 +398,7 @@ class TestScoresCollectorAdvanced:
 
         with patch.dict("os.environ", {"FOOTBALL_API_TOKEN": "test"}):
             collector = ScoresCollector(mock_db, mock_redis)
-            result = await collector.collect_live_scores()
+            _result = await collector.collect_live_scores()
 
             # 应该处理所有比赛，即使有些数据不完整
             assert result["live_matches_count"] == 2

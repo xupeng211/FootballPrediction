@@ -55,7 +55,7 @@ def test_mock_collector_pattern():
     class BaseCollector:
         def __init__(self, name):
             self.name = name
-            self.data = []
+            self._data = []
 
         def collect(self):
             return {"status": "collected", "data": self.data}
@@ -79,7 +79,7 @@ def test_mock_collector_pattern():
     assert len(collector.data) == 0
 
     # 测试收集方法
-    result = collector.collect_fixtures()
+    _result = collector.collect_fixtures()
     assert result["status"] == "collected"
     assert len(collector.data) == 2
     assert "fixture1" in collector.data
@@ -103,8 +103,8 @@ def test_collector_registry():
 
     # 模拟收集器
     class MockCollector:
-        def __init__(self, config=None):
-            self.config = config or {}
+        def __init__(self, _config =None):
+            self._config = config or {}
 
     # 创建注册表
     registry = CollectorRegistry()

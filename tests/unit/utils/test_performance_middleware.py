@@ -78,10 +78,10 @@ class TestPerformanceMonitoringMiddleware:
         call_next.return_value = response
 
         # 处理请求
-        result = await middleware.dispatch(request, call_next)
+        _result = await middleware.dispatch(request, call_next)
 
         # 由于采样率为0，应该直接返回响应
-        assert result == response
+        assert _result == response
         assert middleware.total_requests == 0  # 没有被统计
 
     @pytest.mark.asyncio
@@ -103,10 +103,10 @@ class TestPerformanceMonitoringMiddleware:
         call_next.return_value = response
 
         # 处理请求
-        result = await middleware.dispatch(request, call_next)
+        _result = await middleware.dispatch(request, call_next)
 
         # 验证响应
-        assert result == response
+        assert _result == response
         assert result.headers["X-Process-Time"] is not None
         assert result.headers["X-Request-ID"] is not None
 
@@ -142,7 +142,7 @@ class TestPerformanceMonitoringMiddleware:
         call_next.return_value = response
 
         # 处理请求
-        result = await middleware.dispatch(request, call_next)
+        _result = await middleware.dispatch(request, call_next)
 
         # 验证内存增量头部
         assert "X-Memory-Delta" in result.headers
@@ -284,7 +284,7 @@ class TestPerformanceMonitoringMiddleware:
             }
         }
 
-        stats = middleware.get_performance_stats()
+        _stats = middleware.get_performance_stats()
 
         assert stats["total_requests"] == 5
         assert stats["max_concurrent_requests"] == 3
@@ -302,7 +302,7 @@ class TestPerformanceMonitoringMiddleware:
         assert middleware._percentile([], 50) == 0
 
         # 测试各种百分位数
-        data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        _data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
         assert middleware._percentile(data, 0) == 1
         assert middleware._percentile(data, 50) == 5
         assert middleware._percentile(data, 95) == 10
@@ -339,7 +339,7 @@ class TestDatabasePerformanceMiddleware:
             query="SELECT * FROM users WHERE id = 1", duration=0.05, rows_affected=1
         )
 
-        stats = self.db_middleware.get_query_stats()
+        _stats = self.db_middleware.get_query_stats()
         assert stats["total_queries"] == 1
         assert "SELECT" in stats["query_types"]
         assert stats["query_types"]["SELECT"]["count"] == 1
@@ -355,7 +355,7 @@ class TestDatabasePerformanceMiddleware:
             rows_affected=1000,
         )
 
-        stats = self.db_middleware.get_query_stats()
+        _stats = self.db_middleware.get_query_stats()
         assert len(stats["slow_queries"]) == 1
         assert stats["slow_queries"][0]["duration"] == 0.2
         assert "SELECT * FROM large_table" in stats["slow_queries"][0]["query"]
@@ -370,7 +370,7 @@ class TestDatabasePerformanceMiddleware:
             error="syntax error",
         )
 
-        stats = self.db_middleware.get_query_stats()
+        _stats = self.db_middleware.get_query_stats()
         assert stats["query_types"]["UNKNOWN"]["error_count"] == 1
         assert stats["query_types"]["UNKNOWN"]["error_rate"] == 1.0
 
@@ -399,7 +399,7 @@ class TestDatabasePerformanceMiddleware:
             },
         }
 
-        stats = self.db_middleware.get_query_stats()
+        _stats = self.db_middleware.get_query_stats()
 
         assert stats["total_queries"] == 10
         assert len(stats["query_types"]) == 3
@@ -418,7 +418,7 @@ class TestCachePerformanceMiddleware:
         """测试记录缓存命中"""
         self.cache_middleware.record_cache_hit(0.001)
 
-        stats = self.cache_middleware.get_cache_stats()
+        _stats = self.cache_middleware.get_cache_stats()
         assert stats["hits"] == 1
         assert stats["misses"] == 0
         assert stats["total_requests"] == 1
@@ -429,7 +429,7 @@ class TestCachePerformanceMiddleware:
         """测试记录缓存未命中"""
         self.cache_middleware.record_cache_miss()
 
-        stats = self.cache_middleware.get_cache_stats()
+        _stats = self.cache_middleware.get_cache_stats()
         assert stats["hits"] == 0
         assert stats["misses"] == 1
         assert stats["total_requests"] == 1
@@ -444,7 +444,7 @@ class TestCachePerformanceMiddleware:
         self.cache_middleware.record_cache_set(0.01)
         self.cache_middleware.record_cache_delete()
 
-        stats = self.cache_middleware.get_cache_stats()
+        _stats = self.cache_middleware.get_cache_stats()
 
         assert stats["hits"] == 2
         assert stats["misses"] == 1
@@ -461,7 +461,7 @@ class TestCachePerformanceMiddleware:
         for i in range(1005):
             self.cache_middleware.record_cache_hit(0.001 * i)
 
-        stats = self.cache_middleware.get_cache_stats()
+        _stats = self.cache_middleware.get_cache_stats()
 
         # 应该只保留最近1000条
         assert len(self.cache_middleware.cache_stats["hit_times"]) == 1000
@@ -493,7 +493,7 @@ class TestBackgroundTaskPerformanceMonitor:
         assert len(self.task_monitor.active_tasks) == 0
 
         # 检查统计
-        stats = self.task_monitor.get_task_stats()
+        _stats = self.task_monitor.get_task_stats()
         assert stats["active_tasks"] == 0
         assert task_name in stats["task_types"]
         assert stats["task_types"][task_name]["total_count"] == 1
@@ -511,7 +511,7 @@ class TestBackgroundTaskPerformanceMonitor:
         self.task_monitor.start_task(task_id, task_name)
         self.task_monitor.end_task(task_id, success=False, error="Connection timeout")
 
-        stats = self.task_monitor.get_task_stats()
+        _stats = self.task_monitor.get_task_stats()
 
         assert stats["task_types"][task_name]["success_count"] == 0
         assert stats["task_types"][task_name]["failure_count"] == 1
@@ -535,7 +535,7 @@ class TestBackgroundTaskPerformanceMonitor:
             time.sleep(0.001)  # 确保有不同的时间
             self.task_monitor.end_task(task_id, success=success, error=error)
 
-        stats = self.task_monitor.get_task_stats()
+        _stats = self.task_monitor.get_task_stats()
 
         # 验证email_send任务
         email_stats = stats["task_types"]["email_send"]
@@ -553,7 +553,7 @@ class TestBackgroundTaskPerformanceMonitor:
         self.task_monitor.end_task("nonexistent_task", success=True)
 
         # 应该不抛出错误
-        stats = self.task_monitor.get_task_stats()
+        _stats = self.task_monitor.get_task_stats()
         assert stats["active_tasks"] == 0
 
     def test_failure_history_limit(self):
@@ -564,7 +564,7 @@ class TestBackgroundTaskPerformanceMonitor:
             self.task_monitor.start_task(task_id, "test_task")
             self.task_monitor.end_task(task_id, success=False, error=f"Error {i}")
 
-        stats = self.task_monitor.get_task_stats()
+        _stats = self.task_monitor.get_task_stats()
 
         # 应该只保留最近100个失败
         assert len(self.task_monitor.failed_tasks) == 100

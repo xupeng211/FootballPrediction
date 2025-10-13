@@ -33,7 +33,7 @@ class TestAPIFeatures:
 
             response = client.get("/api/features")
             assert response.status_code == 200
-            data = response.json()
+            _data = response.json()
             assert len(data) == 2
 
     def test_calculate_features(self, client):
@@ -55,7 +55,7 @@ class TestAPIFeatures:
 
             response = client.post("/api/features/calculate", json=match_data)
             assert response.status_code == 200
-            data = response.json()
+            _data = response.json()
             assert "home_goals_avg" in data
 
     def test_get_feature_importance(self, client):
@@ -71,7 +71,7 @@ class TestAPIFeatures:
 
             response = client.get("/api/features/importance")
             assert response.status_code == 200
-            data = response.json()
+            _data = response.json()
             assert "features" in data
             assert len(data["features"]) == 3
 
@@ -104,5 +104,5 @@ class TestAPIFeatures:
 
             response = client.post("/api/features/batch-calculate", json=batch_data)
             assert response.status_code == 200
-            data = response.json()
+            _data = response.json()
             assert len(data["results"]) == 2

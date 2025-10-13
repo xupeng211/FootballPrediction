@@ -52,7 +52,7 @@ class TestSubsystem:
         assert subsystem.connection_pool is not None
 
         # 测试查询执行
-        result = await subsystem.execute_query("SELECT * FROM test")
+        _result = await subsystem.execute_query("SELECT * FROM test")
         assert isinstance(result, list)
         assert len(result) > 0
         assert subsystem.query_count > 0
@@ -159,7 +159,7 @@ class TestSubsystem:
         assert subsystem.status == SubsystemStatus.ACTIVE
 
         # 测试预测
-        result = await subsystem.predict(
+        _result = await subsystem.predict(
             "neural_network", {"feature1": 1.0, "feature2": 2.0}
         )
         assert "model" in result
@@ -383,16 +383,16 @@ class TestConcreteFacades:
         assert status["total_subsystems"] == 5
 
         # 测试快速预测
-        prediction = await facade.execute(
+        _prediction = await facade.execute(
             "quick_prediction", input_data={"feature1": 1.0}, model="neural_network"
         )
         assert "model" in prediction
         assert "output" in prediction
 
         # 测试存储并预测
-        result = await facade.execute(
+        _result = await facade.execute(
             "store_and_predict",
-            data={"test": "data"},
+            _data ={"test": "data"},
             cache_key="test_key",
             model="neural_network",
         )
@@ -417,7 +417,7 @@ class TestConcreteFacades:
         await facade.initialize()
 
         # 测试预测
-        prediction = await facade.execute(
+        _prediction = await facade.execute(
             "predict",
             model="neural_network",
             input_data={"feature1": 1.0},
@@ -447,14 +447,14 @@ class TestConcreteFacades:
         await facade.initialize()
 
         # 测试存储数据
-        result = await facade.execute(
-            "store_data", data={"key": "value"}, table="test_table"
+        _result = await facade.execute(
+            "store_data", _data ={"key": "value"}, table="test_table"
         )
         assert result["status"] == "success"
         assert result["table"] == "test_table"
 
         # 测试查询数据
-        result = await facade.execute(
+        _result = await facade.execute(
             "query_data", query="SELECT * FROM test_table", use_cache=True
         )
         assert isinstance(result, list)
@@ -466,7 +466,7 @@ class TestConcreteFacades:
         await facade.initialize()
 
         # 测试跟踪事件
-        result = await facade.execute(
+        _result = await facade.execute(
             "track_event", event_name="test_event", properties={"key": "value"}
         )
         assert result["status"] == "tracked"
@@ -488,7 +488,7 @@ class TestConcreteFacades:
         await facade.initialize()
 
         # 测试发送通知
-        result = await facade.execute(
+        _result = await facade.execute(
             "send_notification",
             recipient="test@example.com",
             message="Test message",
@@ -497,7 +497,7 @@ class TestConcreteFacades:
         assert result["status"] == "sent"
 
         # 测试排队通知
-        result = await facade.execute(
+        _result = await facade.execute(
             "queue_notification",
             notification={
                 "recipient": "test2@example.com",
@@ -507,7 +507,7 @@ class TestConcreteFacades:
         assert result["status"] == "queued"
 
         # 测试获取通知统计
-        stats = await facade.execute("get_notification_stats")
+        _stats = await facade.execute("get_notification_stats")
         assert "sent" in stats
         assert "queued" in stats
 
@@ -534,7 +534,7 @@ class TestFacadeFactory:
     def test_create_from_config(self):
         """测试从配置创建门面"""
         factory = FacadeFactory()
-        config = FacadeConfig(
+        _config = FacadeConfig(
             name="test_facade",
             facade_type="main",
             enabled=True,
@@ -552,7 +552,7 @@ class TestFacadeFactory:
     def test_get_or_create_singleton(self):
         """测试获取或创建门面（单例）"""
         factory = FacadeFactory()
-        config = FacadeConfig(name="test_facade", facade_type="main", enabled=True)
+        _config = FacadeConfig(name="test_facade", facade_type="main", enabled=True)
         factory.register_config(config)
 
         # 第一次获取
@@ -565,7 +565,7 @@ class TestFacadeFactory:
     def test_load_config_from_dict(self):
         """测试从字典加载配置"""
         factory = FacadeFactory()
-        data = {
+        _data = {
             "facades": [
                 {
                     "name": "test_facade",
@@ -577,7 +577,7 @@ class TestFacadeFactory:
         }
 
         factory.load_config_from_dict(data)
-        config = factory.get_config("test_facade")
+        _config = factory.get_config("test_facade")
         assert config is not None
         assert config.facade_type == "main"
         assert config.parameters["test"] == "value"
@@ -589,7 +589,7 @@ class TestFacadeFactory:
 
         factory = FacadeFactory()
 
-        config = FacadeConfig(
+        _config = FacadeConfig(
             name="test_env", facade_type="main", parameters={"env_param": "$TEST_VAR"}
         )
 
@@ -653,7 +653,7 @@ class TestFacadeFactory:
         import json
 
         with open(json_file) as f:
-            data = json.load(f)
+            _data = json.load(f)
         assert "facades" in data
         assert len(data["facades"]) > 0
 

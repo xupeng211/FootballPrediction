@@ -47,7 +47,7 @@ class TestMatchAPIIntegration:
 
         # 验证响应
         assert response.status_code == 201
-        data = response.json()
+        _data = response.json()
         assert data["home_team_id"] == request_data["home_team_id"]
         assert data["away_team_id"] == request_data["away_team_id"]
         assert data["competition"] == request_data["competition"]
@@ -69,7 +69,7 @@ class TestMatchAPIIntegration:
         # 创建测试数据
         from src.database.models import Match, Team
 
-        teams = []
+        _teams = []
         for i in range(4):
             team = Team(name=f"Team {i}", city=f"City {i}", founded=2000 + i)
             teams.append(team)
@@ -77,7 +77,7 @@ class TestMatchAPIIntegration:
 
         await db_session.commit()
 
-        matches = []
+        _matches = []
         for i in range(5):
             match = Match(
                 home_team_id=teams[i * 2 % 4].id,
@@ -99,7 +99,7 @@ class TestMatchAPIIntegration:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "data" in data
         assert len(data["data"]) >= 5
         assert "pagination" in data
@@ -126,7 +126,7 @@ class TestMatchAPIIntegration:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["id"] == match.id
         assert data["home_team_id"] == match.home_team_id
         assert data["away_team_id"] == match.away_team_id
@@ -153,7 +153,7 @@ class TestMatchAPIIntegration:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["status"] == "COMPLETED"
         assert data["home_score"] == 3
         assert data["away_score"] == 1
@@ -200,7 +200,7 @@ class TestMatchAPIIntegration:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "data" in data
         assert len(data["data"]) >= 1
         assert all(m["status"] == "UPCOMING" for m in data["data"])
@@ -238,7 +238,7 @@ class TestMatchAPIIntegration:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "data" in data
         assert len(data["data"]) >= 1
         assert all(m["status"] == "LIVE" for m in data["data"])
@@ -283,7 +283,7 @@ class TestMatchAPIIntegration:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "data" in data
         assert len(data["data"]) == 2  # match1 和 match2 都包含 team1
 
@@ -295,7 +295,7 @@ class TestMatchAPIIntegration:
         # 创建不同状态的比赛
         from src.database.models import Match, Team
 
-        teams = []
+        _teams = []
         for i in range(6):
             team = Team(name=f"Stats Team {i}", city=f"Stats City {i}", founded=2020)
             teams.append(team)
@@ -328,7 +328,7 @@ class TestMatchAPIIntegration:
 
         # 验证响应
         assert response.status_code == 200
-        stats = response.json()
+        _stats = response.json()
         assert "total_matches" in stats
         assert "status_counts" in stats
         assert "upcoming_count" in stats

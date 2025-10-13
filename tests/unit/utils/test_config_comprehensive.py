@@ -24,7 +24,7 @@ class TestConfig:
 
     def test_config_initialization(self):
         """测试Config初始化"""
-        config = Config()
+        _config = Config()
 
         # 验证基本属性
         assert hasattr(config, "config_dir")
@@ -43,7 +43,7 @@ class TestConfig:
 
         with patch("builtins.open", mock_open(read_data=json.dumps(test_config))):
             with patch("pathlib.Path.exists", return_value=True):
-                config = Config()
+                _config = Config()
 
                 # 验证配置被正确加载
                 assert config.get("test_key") == "test_value"
@@ -54,7 +54,7 @@ class TestConfig:
     def test_config_load_nonexistent_file(self):
         """测试加载不存在的配置文件"""
         with patch("pathlib.Path.exists", return_value=False):
-            config = Config()
+            _config = Config()
 
             # 验证配置为空
             assert config.get("nonexistent_key") is None
@@ -69,7 +69,7 @@ class TestConfig:
         with patch("builtins.open", mock_open(read_data=invalid_json)):
             with patch("pathlib.Path.exists", return_value=True):
                 with patch("logging.warning") as mock_warning:
-                    config = Config()
+                    _config = Config()
 
                     # 验证警告被记录
                     mock_warning.assert_called_once()
@@ -81,7 +81,7 @@ class TestConfig:
 
     def test_config_get_set(self):
         """测试配置的get和set方法"""
-        config = Config()
+        _config = Config()
 
         # 测试get默认值
         assert config.get("key") is None
@@ -110,7 +110,7 @@ class TestConfig:
 
     def test_config_save(self):
         """测试配置保存"""
-        config = Config()
+        _config = Config()
         config.set("test_key", "test_value")
         config.set("number", 42)
 
@@ -139,7 +139,7 @@ class TestConfig:
 
     def test_config_save_creates_directory(self):
         """测试保存时自动创建目录"""
-        config = Config()
+        _config = Config()
 
         with patch("builtins.open", mock_open()):
             with patch("pathlib.Path.mkdir") as mock_mkdir:
@@ -270,7 +270,7 @@ class TestConfigEdgeCases:
 
     def test_config_with_unicode(self):
         """测试Unicode字符处理"""
-        config = Config()
+        _config = Config()
 
         # 设置包含Unicode的值
         unicode_values = {
@@ -303,7 +303,7 @@ class TestConfigEdgeCases:
 
     def test_config_large_data(self):
         """测试大数据处理"""
-        config = Config()
+        _config = Config()
 
         # 设置大量数据
         large_data = {
@@ -320,7 +320,7 @@ class TestConfigEdgeCases:
 
     def test_config_concurrent_access(self):
         """测试并发访问（简化版）"""
-        config = Config()
+        _config = Config()
 
         # 模拟多个线程访问
         import threading

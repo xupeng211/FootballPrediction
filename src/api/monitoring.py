@@ -61,8 +61,8 @@ async def _get_database_metrics(db: Session) -> Dict[str, Any]:  # type: ignore
         db.execute(text("SELECT 1"))  # type: ignore
 
         # 统计信息（关键字用于测试桩匹配）
-        teams = db.execute(text("SELECT COUNT(*) FROM teams"))  # type: ignore
-        matches = db.execute(text("SELECT COUNT(*) FROM matches"))  # type: ignore
+        _teams = db.execute(text("SELECT COUNT(*) FROM teams"))  # type: ignore
+        _matches = db.execute(text("SELECT COUNT(*) FROM matches"))  # type: ignore
         predictions = db.execute(text("SELECT COUNT(*) FROM predictions"))  # type: ignore
         active = db.execute(
             text("SELECT COUNT(*) FROM pg_stat_activity WHERE state = 'active'")  # type: ignore
@@ -310,7 +310,7 @@ async def collector_health() -> Dict[str, Any]:  # type: ignore
 async def manual_collect() -> Dict[str, Any]:  # type: ignore
     try:
         collector = get_metrics_collector()  # type: ignore
-        result = await collector.collect_once()
+        _result = await collector.collect_once()
         return result
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"手动指标收集失败: {e}", exc_info=True)

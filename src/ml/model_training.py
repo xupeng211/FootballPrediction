@@ -92,7 +92,7 @@ class ModelTrainer:
         Args:
             config: 训练配置
         """
-        self.config = config or TrainingConfig()
+        self._config = config or TrainingConfig()
         import logging
         from datetime import datetime
         from typing import List, Dict, Any, Optional, Tuple
@@ -223,7 +223,7 @@ class ModelTrainer:
 
             training_time = (self.end_time - self.start_time).total_seconds()
 
-            result = {
+            _result = {
                 "status": "completed",
                 "model_name": self.model.model_name,
                 "training_time": training_time,
@@ -542,7 +542,7 @@ async def train_football_model(
     registry.register_model(
         trainer.model,
         model_name,
-        metadata={
+        _metadata ={
             "training_result": training_result,
             "evaluation_metrics": evaluation_metrics,
             "model_path": model_path,

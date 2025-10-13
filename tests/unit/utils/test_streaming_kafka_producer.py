@@ -36,7 +36,7 @@ class TestKafkaMessageProducer:
     @pytest.fixture
     def producer(self):
         """创建生产者实例"""
-        config = {"bootstrap_servers": ["localhost:9092"], "topic": "test_topic"}
+        _config = {"bootstrap_servers": ["localhost:9092"], "topic": "test_topic"}
         producer = KafkaMessageProducer(config)
         return producer
 
@@ -69,7 +69,7 @@ class TestKafkaMessageProducer:
 
         # 发送消息
         message = {"key": "test_key", "value": {"data": "test"}}
-        result = await producer.send_message(message)
+        _result = await producer.send_message(message)
 
         # 验证调用
         mock_kafka_producer.send.assert_called_once_with(
@@ -285,7 +285,7 @@ class TestKafkaMessageProducer:
         ]
 
         message = {"value": {"data": "test"}}
-        result = await producer.send_message(message, retries=3)
+        _result = await producer.send_message(message, retries=3)
 
         assert result is not None
         assert mock_kafka_producer.send.call_count == 3
@@ -326,7 +326,7 @@ class TestKafkaMessageProducer:
 
     def test_get_producer_stats(self, producer):
         """测试获取生产者统计"""
-        stats = producer.get_stats()
+        _stats = producer.get_stats()
         assert "messages_sent" in stats
         assert "errors" in stats
         assert stats["messages_sent"] == 0

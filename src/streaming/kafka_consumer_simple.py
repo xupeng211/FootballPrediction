@@ -25,7 +25,7 @@ class KafkaMessageConsumer:
         self.topics = config["topics"]
         self.consumer = None
         self.is_closed = False
-        self.stats = {
+        self._stats = {
             "messages_consumed": 0,
             "partitions_assigned": 0,
             "last_commit_offset": 0,

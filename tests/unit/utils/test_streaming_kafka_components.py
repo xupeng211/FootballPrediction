@@ -287,7 +287,7 @@ class TestKafkaCluster:
 
     def test_get_cluster_metadata(self, cluster):
         """测试获取集群元数据"""
-        metadata = cluster.get_metadata()
+        _metadata = cluster.get_metadata()
         assert "name" in metadata
         assert "brokers" in metadata
         assert "broker_count" in metadata

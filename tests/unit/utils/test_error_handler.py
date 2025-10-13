@@ -29,7 +29,7 @@ class TestErrorHandler:
         try:
             raise ValueError("Test error")
         except Exception as e:
-            result = handle_error(e)
+            _result = handle_error(e)
             assert result is not None
             assert "error" in str(result).lower() or "exception" in str(result).lower()
 

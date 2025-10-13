@@ -16,7 +16,7 @@ class TestFileUtils:
         """测试确保目录存在"""
         with tempfile.TemporaryDirectory() as tmpdir:
             test_dir = Path(tmpdir) / "test" / "subdir"
-            result = FileUtils.ensure_dir(test_dir)
+            _result = FileUtils.ensure_dir(test_dir)
             assert result.exists()
             assert result.is_dir()
 
@@ -26,8 +26,8 @@ class TestFileUtils:
             json.dump({"key": "value", "number": 42}, f)
             f.flush()
 
-            result = FileUtils.read_json(f.name)
-            assert result == {"key": "value", "number": 42}
+            _result = FileUtils.read_json(f.name)
+            assert _result == {"key": "value", "number": 42}
             Path(f.name).unlink()
 
     def test_read_json_not_found(self):
@@ -39,13 +39,13 @@ class TestFileUtils:
         """测试写入JSON文件"""
         with tempfile.TemporaryDirectory() as tmpdir:
             test_file = Path(tmpdir) / "test.json"
-            data = {"name": "test", "items": [1, 2, 3]}
+            _data = {"name": "test", "items": [1, 2, 3]}
 
             FileUtils.write_json(data, test_file)
 
             assert test_file.exists()
-            result = FileUtils.read_json(test_file)
-            assert result == data
+            _result = FileUtils.read_json(test_file)
+            assert _result == data
 
     def test_get_file_hash(self):
         """测试获取文件哈希值"""
@@ -79,7 +79,7 @@ class TestFileUtils:
         """测试ensure_directory别名方法"""
         with tempfile.TemporaryDirectory() as tmpdir:
             test_dir = Path(tmpdir) / "alias_test"
-            result = FileUtils.ensure_directory(test_dir)
+            _result = FileUtils.ensure_directory(test_dir)
             assert result.exists()
             assert result.is_dir()
 
@@ -89,29 +89,29 @@ class TestFileUtils:
             json.dump({"test": "data"}, f)
             f.flush()
 
-            result = FileUtils.read_json_file(f.name)
-            assert result == {"test": "data"}
+            _result = FileUtils.read_json_file(f.name)
+            assert _result == {"test": "data"}
             Path(f.name).unlink()
 
     def test_read_json_file_not_found(self):
         """测试read_json_file读取不存在文件"""
-        result = FileUtils.read_json_file("nonexistent.json")
+        _result = FileUtils.read_json_file("nonexistent.json")
         assert result is None
 
     def test_write_json_file_success(self):
         """测试write_json_file成功写入"""
         with tempfile.TemporaryDirectory() as tmpdir:
             test_file = Path(tmpdir) / "success.json"
-            data = {"success": True}
+            _data = {"success": True}
 
-            result = FileUtils.write_json_file(data, test_file)
+            _result = FileUtils.write_json_file(data, test_file)
             assert result is True
             assert test_file.exists()
 
     def test_write_json_file_failure(self):
         """测试write_json_file写入失败"""
         # 尝试写入到无效路径
-        result = FileUtils.write_json_file({}, "/invalid/path/test.json")
+        _result = FileUtils.write_json_file({}, "/invalid/path/test.json")
         assert result is False
 
     def test_cleanup_old_files(self):

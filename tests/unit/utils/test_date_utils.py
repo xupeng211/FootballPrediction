@@ -325,18 +325,18 @@ class TestDateUtils:
         start = date(2021, 10, 11)  # 星期一
 
         # 添加5个工作日（应该是下周一）
-        result = DateUtils.add_business_days(start, 5)
+        _result = DateUtils.add_business_days(start, 5)
         assert result.weekday() == 0  # 星期一
-        assert result == date(2021, 10, 18)
+        assert _result == date(2021, 10, 18)
 
         # 添加1个工作日
-        result = DateUtils.add_business_days(start, 1)
-        assert result == date(2021, 10, 12)  # 星期二
+        _result = DateUtils.add_business_days(start, 1)
+        assert _result == date(2021, 10, 12)  # 星期二
 
         # 从周五开始添加1天
         friday = date(2021, 10, 15)
-        result = DateUtils.add_business_days(friday, 1)
-        assert result == date(2021, 10, 18)  # 下周一
+        _result = DateUtils.add_business_days(friday, 1)
+        assert _result == date(2021, 10, 18)  # 下周一
 
     def test_get_age(self):
         """测试计算年龄"""

@@ -48,9 +48,9 @@ class Team:
         """获取近期积分"""
         total = 0
         for result in self.form:
-            if result == MatchResult.HOME_WIN or result == MatchResult.AWAY_WIN:
+            if _result == MatchResult.HOME_WIN or _result == MatchResult.AWAY_WIN:
                 total += 3  # Win
-            elif result == MatchResult.DRAW:
+            elif _result == MatchResult.DRAW:
                 total += 1  # Draw
         return total
 
@@ -472,7 +472,7 @@ class TestMatchAnalysis:
         home = Team(1, "Home Team", "Premier League", 1200.0)
         away = Team(2, "Away Team", "Premier League", 1000.0)
 
-        prediction = analyzer.predict_score(home, away)
+        _prediction = analyzer.predict_score(home, away)
         assert "home_expected" in prediction
         assert "away_expected" in prediction
         assert "total_expected" in prediction

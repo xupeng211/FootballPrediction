@@ -149,7 +149,7 @@ class StatisticsProvider:
     """统计信息提供者"""
 
     def __init__(self):
-        self.stats = {}
+        self._stats = {}
 
     def calculate_basic_stats(self, data: List[float]) -> Dict[str, float]:
         """计算基础统计信息"""
@@ -305,7 +305,7 @@ class DataQualityRule:
     def validate(self, data: Any) -> bool:
         """验证数据"""
         try:
-            result = self.validator(data)
+            _result = self.validator(data)
             return bool(result)
         except Exception:
             return False

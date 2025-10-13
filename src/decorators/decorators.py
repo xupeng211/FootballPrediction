@@ -97,7 +97,7 @@ class LoggingDecorator(Decorator):
 
         try:
             # 执行被装饰的函数
-            result = await self.component.execute(*args, **kwargs)
+            _result = await self.component.execute(*args, **kwargs)
 
             # 记录函数执行成功
             if self.log_result:
@@ -291,7 +291,7 @@ class MetricsDecorator(Decorator):
 
         try:
             # 执行被装饰的函数
-            result = await self.component.execute(*args, **kwargs)
+            _result = await self.component.execute(*args, **kwargs)
             success = True
             return result
 
@@ -393,7 +393,7 @@ class ValidationDecorator(Decorator):
                         )
 
         # 执行被装饰的函数
-        result = await self.component.execute(*args, **kwargs)
+        _result = await self.component.execute(*args, **kwargs)
 
         # 验证输出结果
         if self.validate_result and self.output_validators and Validator:
@@ -440,7 +440,7 @@ class CacheDecorator(Decorator):
             return cached_result
 
         # 缓存未命中，执行函数
-        result = await self.component.execute(*args, **kwargs)
+        _result = await self.component.execute(*args, **kwargs)
 
         # 缓存结果
         if result is not None or self.cache_empty:
@@ -504,7 +504,7 @@ class AuthDecorator(Decorator):
             raise AuthenticationError("Authentication token is required")
 
         # 验证token
-        user = await self.auth_service.authenticate(token)
+        _user = await self.auth_service.authenticate(token)
         if not user:
             raise AuthenticationError("Invalid authentication token")
 

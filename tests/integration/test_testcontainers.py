@@ -65,7 +65,7 @@ class TestPostgreSQLIntegration:
 
         # 测试连接
         async with engine.begin() as conn:
-            result = await conn.execute(text("SELECT version()"))
+            _result = await conn.execute(text("SELECT version()"))
             version = result.scalar()
             assert "PostgreSQL" in version
 
@@ -105,7 +105,7 @@ class TestPostgreSQLIntegration:
             )
 
             # 查询数据
-            result = await session.execute(
+            _result = await session.execute(
                 text("SELECT name FROM test_table WHERE name = :name"),
                 {"name": "test_record"},
             )
@@ -241,7 +241,7 @@ class TestWithMockContainers:
             # 测试连接
             db_manager = mock_db("sqlite+aiosqlite:///:memory:")
             async with db_manager.get_session() as session:
-                result = await session.execute("SELECT 1")
+                _result = await session.execute("SELECT 1")
                 assert result is not None
 
     async def test_redis_connection_mock(self):
@@ -283,11 +283,11 @@ class TestWithMockContainers:
 
                 # 测试工作流
                 data_service = mock_service()
-                matches = await data_service.collect_match_data()
+                _matches = await data_service.collect_match_data()
                 assert matches["matches"] == 10
 
                 pred_service_instance = mock_pred()
-                prediction = await pred_service_instance.predict(match_id=1)
+                _prediction = await pred_service_instance.predict(match_id=1)
                 assert prediction["home_win"] == 0.5
 
     async def test_error_handling_mock(self):

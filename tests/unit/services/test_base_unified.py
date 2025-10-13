@@ -43,7 +43,7 @@ class TestBaseService:
     @pytest.mark.asyncio
     async def test_initialize_service(self):
         """测试初始化服务"""
-        result = await self.service.initialize()
+        _result = await self.service.initialize()
         assert result is True
         assert self.service._initialized is True
 
@@ -54,7 +54,7 @@ class TestBaseService:
         await self.service.initialize()
 
         # 启动服务
-        result = self.service.start()
+        _result = self.service.start()
         assert result is True
         assert self.service._running is True
 
@@ -87,13 +87,13 @@ class TestBaseService:
         await self.service.initialize()
 
         # 第二次初始化应该返回True
-        result = await self.service.initialize()
+        _result = await self.service.initialize()
         assert result is True
 
     @pytest.mark.asyncio
     async def test_start_without_init(self):
         """测试未初始化时启动"""
-        result = self.service.start()
+        _result = self.service.start()
         assert result is False
 
     @pytest.mark.asyncio
@@ -185,7 +185,7 @@ class TestBaseService:
     async def test_lifecycle_methods(self):
         """测试生命周期方法"""
         # 测试默认实现
-        result = await self.service._on_initialize()
+        _result = await self.service._on_initialize()
         assert result is True
 
         await self.service._on_start()
@@ -263,11 +263,11 @@ class TestParameterizedInput:
         try:
             # 尝试处理无效数据
             if invalid_data is None:
-                result = None
+                _result = None
             elif isinstance(invalid_data, str):
-                result = invalid_data.upper()
+                _result = invalid_data.upper()
             else:
-                result = str(invalid_data)
+                _result = str(invalid_data)
             # 确保没有崩溃
             assert result is not None
         except Exception:

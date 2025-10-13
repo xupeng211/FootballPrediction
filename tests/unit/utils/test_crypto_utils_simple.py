@@ -35,7 +35,7 @@ class TestCryptoUtilsSimple:
 
     def test_hash_string(self):
         """测试哈希字符串"""
-        data = "test data"
+        _data = "test data"
         hashed = CryptoUtils.hash_string(data)
         assert isinstance(hashed, str)
         assert len(hashed) == 32  # 实际返回的长度

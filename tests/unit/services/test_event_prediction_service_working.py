@@ -93,7 +93,7 @@ class TestEventDrivenPredictionService:
         strategy_name = "test_strategy"
 
         # When
-        result = await service.predict_match(
+        _result = await service.predict_match(
             match_id=456,
             user_id=789,
             strategy_name=strategy_name,
@@ -102,7 +102,7 @@ class TestEventDrivenPredictionService:
         )
 
         # Then
-        assert result == sample_prediction
+        assert _result == sample_prediction
         mock_event_bus.publish.assert_called_once()
 
     @pytest.mark.asyncio
@@ -114,10 +114,10 @@ class TestEventDrivenPredictionService:
         service.predict_match = AsyncMock(return_value=sample_prediction)
 
         # When
-        result = await service.predict_match(match_id=456, user_id=789)
+        _result = await service.predict_match(match_id=456, user_id=789)
 
         # Then
-        assert result == sample_prediction
+        assert _result == sample_prediction
         service._event_bus.publish.assert_called_once()
 
     @pytest.mark.asyncio
@@ -133,7 +133,7 @@ class TestEventDrivenPredictionService:
         service._prediction_repository = mock_repo
 
         # When
-        result = await service.update_prediction(
+        _result = await service.update_prediction(
             prediction_id=123,
             user_id=789,
             new_predicted_home=3,
@@ -178,7 +178,7 @@ class TestEventDrivenPredictionService:
         service._prediction_repository = mock_repo
 
         # When - 只更新主队得分
-        result = await service.update_prediction(
+        _result = await service.update_prediction(
             prediction_id=123, user_id=789, new_predicted_home=3
         )
 
@@ -201,13 +201,13 @@ class TestEventDrivenPredictionService:
         strategy_name = "batch_strategy"
 
         # When
-        result = await service.batch_predict(
+        _result = await service.batch_predict(
             match_ids=[101, 102, 103], user_id=1001, strategy_name=strategy_name
         )
 
         # Then
         assert len(result) == 3
-        assert result == predictions
+        assert _result == predictions
 
         # 验证每个预测都发布了事件
         assert service._event_bus.publish.call_count == 3
@@ -220,7 +220,7 @@ class TestEventDrivenPredictionService:
         service.batch_predict = AsyncMock(return_value=predictions)
 
         # When
-        result = await service.batch_predict(match_ids=[101], user_id=1001)
+        _result = await service.batch_predict(match_ids=[101], user_id=1001)
 
         # Then
         assert len(result) == 1
@@ -286,10 +286,10 @@ class TestEventDrivenPredictionService:
         service._event_bus.publish = AsyncMock(side_effect=Exception("Event bus error"))
 
         # When - 即使事件发布失败，预测仍应返回
-        result = await service.predict_match(match_id=456, user_id=789)
+        _result = await service.predict_match(match_id=456, user_id=789)
 
         # Then
-        assert result == sample_prediction
+        assert _result == sample_prediction
         # 异常应该被记录或处理
 
 
@@ -390,7 +390,7 @@ class TestEventDrivenUserService:
         password_hash = "hashed_password"
 
         # When
-        result = await user_service.register_user(
+        _result = await user_service.register_user(
             username=username,
             email=email,
             password_hash=password_hash,

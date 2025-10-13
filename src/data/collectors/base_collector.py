@@ -481,7 +481,7 @@ class DataCollector(ABC):
                 log_id = await self._create_collection_log(data_type)
 
                 # 执行采集
-                result = await collect_method()
+                _result = await collect_method()
                 results[data_type] = result
 
                 # 更新采集日志

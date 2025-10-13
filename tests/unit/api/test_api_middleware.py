@@ -97,7 +97,7 @@ class TestTimingMiddleware:
 
         # 执行中间件
         start_time = time.time()
-        result = await middleware.dispatch(request, call_next)
+        _result = await middleware.dispatch(request, call_next)
         end_time = time.time()
 
         # 验证计时头部
@@ -225,7 +225,7 @@ class TestRateLimitMiddleware:
         response = client.get("/test")
         assert response.status_code == 429
 
-        data = response.json()
+        _data = response.json()
         assert "rate limit" in data["detail"].lower()
 
         # 检查重试头部
@@ -303,7 +303,7 @@ class TestAuthenticationMiddleware:
         response = client.get("/protected")
         assert response.status_code == 401
 
-        data = response.json()
+        _data = response.json()
         assert "authentication" in data["detail"].lower()
 
     @patch("src.api.middleware.verify_token")
@@ -620,7 +620,7 @@ class TestErrorHandlingMiddleware:
         response = client.get("/error")
         assert response.status_code == 500
 
-        data = response.json()
+        _data = response.json()
         assert "error" in data
         assert "Internal Server Error" in data["error"]["message"]
 
@@ -629,7 +629,7 @@ class TestErrorHandlingMiddleware:
         response = client.get("/http_error")
         assert response.status_code == 404
 
-        data = response.json()
+        _data = response.json()
         assert data["detail"] == "Not found"
 
     def test_error_logging(self, client):
@@ -650,7 +650,7 @@ class TestErrorHandlingMiddleware:
             response = client.get("/error")
             assert response.status_code == 500
 
-            data = response.json()
+            _data = response.json()
             assert "error" in data
             # 在生产环境中，错误信息可能更加通用
             assert "Test error" not in data["error"]["message"]

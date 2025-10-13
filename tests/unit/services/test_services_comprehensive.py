@@ -130,7 +130,7 @@ class TestContentAnalysisService:
                 "confidence": 0.95,
             }
 
-            result = service.analyze_content(mock_content_data)
+            _result = service.analyze_content(mock_content_data)
             assert "sentiment" in result
             assert "keywords" in result
             mock_analyze.assert_called_once()
@@ -195,7 +195,7 @@ class TestUserProfileService:
         with patch("src.services.user_profile.save_user_profile") as mock_save:
             mock_save.return_value = {"id": 1, **mock_user_data}
 
-            result = service.create_profile(mock_user_data)
+            _result = service.create_profile(mock_user_data)
             assert result["id"] == 1
             assert result["username"] == "testuser"
             mock_save.assert_called_once()
@@ -215,7 +215,7 @@ class TestUserProfileService:
                 "predictions_count": 10,
             }
 
-            result = service.get_profile(user_id)
+            _result = service.get_profile(user_id)
             assert result["id"] == user_id
             mock_get.assert_called_once_with(user_id)
 
@@ -231,7 +231,7 @@ class TestUserProfileService:
         with patch("src.services.user_profile.update_preferences") as mock_update:
             mock_update.return_value = {"updated": True}
 
-            result = service.update_preferences(user_id, preferences)
+            _result = service.update_preferences(user_id, preferences)
             assert result["updated"] is True
 
     def test_get_user_statistics(self):
@@ -249,7 +249,7 @@ class TestUserProfileService:
                 "streak": 5,
             }
 
-            result = service.get_statistics(user_id)
+            _result = service.get_statistics(user_id)
             assert "total_predictions" in result
             assert "accuracy" in result
 
@@ -284,7 +284,7 @@ class TestStrategyPredictionService:
                 "probabilities": {"home": 0.65, "draw": 0.25, "away": 0.10},
             }
 
-            result = service.predict_match(mock_match_data)
+            _result = service.predict_match(mock_match_data)
             assert result["prediction"] == "home_win"
             assert result["confidence"] > 0.5
 
@@ -320,7 +320,7 @@ class TestStrategyPredictionService:
             {"prediction": "home_win", "confidence": 0.70, "weight": 0.3},
         ]
 
-        result = service.ensemble_predictions(predictions)
+        _result = service.ensemble_predictions(predictions)
         assert "final_prediction" in result
         assert "confidence" in result
 
@@ -335,7 +335,7 @@ class TestStrategyPredictionService:
         with patch("src.services.strategy_prediction.save_weights") as mock_save:
             mock_save.return_value = {"saved": True}
 
-            result = service.update_strategy_weights(new_weights)
+            _result = service.update_strategy_weights(new_weights)
             assert result["saved"] is True
 
 
@@ -369,7 +369,7 @@ class TestEventPredictionService:
                 "time_window": "5-10 minutes",
             }
 
-            result = service.predict_next_event(mock_event_data)
+            _result = service.predict_next_event(mock_event_data)
             assert result["next_event"] == "goal"
             assert result["probability"] > 0
 
@@ -391,7 +391,7 @@ class TestEventPredictionService:
                 {"minute": 90, "goal_prob": 0.15},
             ]
 
-            result = service.get_event_timeline(match_id)
+            _result = service.get_event_timeline(match_id)
             assert len(result) == 6
             assert all("minute" in item for item in result)
 
@@ -412,7 +412,7 @@ class TestEventPredictionService:
                 "cards_prob": 0.10,
             }
 
-            result = service.predict_player_events(player_id)
+            _result = service.predict_player_events(player_id)
             assert "goals_prob" in result
 
 
@@ -435,7 +435,7 @@ class TestDataService:
                 "score": {"home": 2, "away": 1},
             }
 
-            result = service.get_match_data(match_id)
+            _result = service.get_match_data(match_id)
             assert result["id"] == match_id
 
     def test_batch_data_fetch(self):
@@ -474,12 +474,12 @@ class TestDataService:
             with patch("src.services.data_service.db_query") as mock_query:
                 mock_query.return_value = {"id": 1, "data": "match_data"}
 
-                result = service.get_match_data_cached(match_id)
+                _result = service.get_match_data_cached(match_id)
                 mock_cache_set.assert_called_once()
 
                 # 第二次查询 - 缓存命中
                 mock_cache_get.return_value = {"id": 1, "data": "cached_data"}
-                result = service.get_match_data_cached(match_id)
+                _result = service.get_match_data_cached(match_id)
                 assert result["data"] == "cached_data"
 
     def test_data_validation(self):
@@ -514,7 +514,7 @@ class TestAuditService:
         with patch("src.services.audit_service.write_audit_log") as mock_write:
             mock_write.return_value = {"log_id": 123}
 
-            result = service.log_action(action_data)
+            _result = service.log_action(action_data)
             assert result["log_id"] == 123
 
     def test_get_audit_trail(self):
@@ -554,7 +554,7 @@ class TestAuditService:
                 "violations": 5,
             }
 
-            result = service.generate_compliance_report(date_range)
+            _result = service.generate_compliance_report(date_range)
             assert "total_actions" in result
             assert result["compliance_score"] > 0.9
 
@@ -575,7 +575,7 @@ class TestAuditService:
         with patch("src.services.audit_service.record_data_access") as mock_record:
             mock_record.return_value = {"recorded": True}
 
-            result = service.record_data_access(access_data)
+            _result = service.record_data_access(access_data)
             assert result["recorded"] is True
 
 
@@ -857,7 +857,7 @@ class TestServiceLifecycle:
 
     def test_service_configuration(self):
         """测试服务配置"""
-        config = {
+        _config = {
             "database": {"host": "localhost", "port": 5432, "pool_size": 10},
             "cache": {"host": "localhost", "port": 6379, "ttl": 3600},
             "api": {"host": "0.0.0.0", "port": 8000, "workers": 4},

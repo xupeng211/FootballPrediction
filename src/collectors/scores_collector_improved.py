@@ -98,7 +98,7 @@ class ScoresCollector:
         self.last_update_cache: Dict[int, datetime] = {}
 
         # 性能统计
-        self.stats = {
+        self._stats = {
             "total_updates": 0,
             "successful_updates": 0,
             "failed_updates": 0,
@@ -257,7 +257,7 @@ class ScoresCollector:
                             break
 
                         try:
-                            data = json.loads(message)
+                            _data = json.loads(message)
                             await self._handle_websocket_message(data)
                             self.stats["websocket_messages"] += 1
                         except json.JSONDecodeError:
@@ -364,7 +364,7 @@ class ScoresCollector:
         async with aiohttp.ClientSession() as session:
             async with session.get(url, headers=headers) as response:
                 if response.status == 200:
-                    data = await response.json()
+                    _data = await response.json()
                     return self._transform_football_api_data(data)
                 else:
                     logger.warning(f"Football API请求失败: {response.status}")
@@ -381,7 +381,7 @@ class ScoresCollector:
         async with aiohttp.ClientSession() as session:
             async with session.get(url, headers=headers) as response:
                 if response.status == 200:
-                    data = await response.json()
+                    _data = await response.json()
                     if data.get("response"):
                         return self._transform_api_sports_data(data["response"][0])
                 return None
@@ -442,7 +442,7 @@ class ScoresCollector:
 
             # 更新比赛状态
             old_status = match.match_status
-            new_status = self._map_status(score_data["match_status"])
+            _new_status = self._map_status(score_data["match_status"])
 
             processed_data = {
                 "match_id": match_id,
@@ -530,7 +530,7 @@ class ScoresCollector:
             raw_data = RawScoresData(
                 match_id=score_data["match_id"],
                 source="real_time_collector",
-                data=score_data,
+                _data =score_data,
                 collected_at=score_data["last_updated"],
             )
             self.db_session.add(raw_data)
@@ -597,8 +597,8 @@ class ScoresCollector:
             .order_by(Match.match_time)
         )
 
-        result = await self.db_session.execute(query)
-        matches = result.scalars().all()
+        _result = await self.db_session.execute(query)
+        _matches = result.scalars().all()
 
         return [
             {

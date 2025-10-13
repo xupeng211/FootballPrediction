@@ -31,7 +31,7 @@ class TestContentAnalysisService:
         return Content(
             content_id="test_001",
             content_type="text",
-            data={"text": "曼联今天在英超比赛中取得了胜利，这是一场非常精彩的比赛。"},
+            _data ={"text": "曼联今天在英超比赛中取得了胜利，这是一场非常精彩的比赛。"},
         )
 
     @pytest.fixture
@@ -40,7 +40,7 @@ class TestContentAnalysisService:
         return Content(
             content_id="test_002",
             content_type="image",
-            data={"url": "http://example.com/image.jpg", "size": "1024x768"},
+            _data ={"url": "http://example.com/image.jpg", "size": "1024x768"},
         )
 
     @pytest.fixture
@@ -62,7 +62,7 @@ class TestContentAnalysisService:
     async def test_initialize_success(self, service):
         """测试：成功初始化"""
         # When
-        result = await service.initialize()
+        _result = await service.initialize()
 
         # Then
         assert result is True
@@ -75,7 +75,7 @@ class TestContentAnalysisService:
         # Given
         with patch.object(service, "_on_initialize", return_value=False):
             # When
-            result = await service.initialize()
+            _result = await service.initialize()
 
             # Then
             assert result is False
@@ -120,7 +120,7 @@ class TestContentAnalysisService:
         await service.initialize()
 
         # When
-        result = await service.analyze_content(sample_text_content)
+        _result = await service.analyze_content(sample_text_content)
 
         # Then
         assert isinstance(result, AnalysisResult)
@@ -143,7 +143,7 @@ class TestContentAnalysisService:
         await service.initialize()
 
         # When
-        result = await service.analyze_content(sample_image_content)
+        _result = await service.analyze_content(sample_image_content)
 
         # Then
         assert isinstance(result, AnalysisResult)
@@ -225,7 +225,7 @@ class TestContentAnalysisService:
         content = Content(
             content_id="test",
             content_type="text",
-            data={"text": "这是一场关于足球比赛的详细分析，包含了多个关键因素。"},
+            _data ={"text": "这是一场关于足球比赛的详细分析，包含了多个关键因素。"},
         )
 
         # When
@@ -246,7 +246,7 @@ class TestContentAnalysisService:
     def test_analyze_text_empty(self, service):
         """测试：分析空文本"""
         # When
-        result = service.analyze_text("")
+        _result = service.analyze_text("")
 
         # Then
         assert "error" in result
@@ -258,7 +258,7 @@ class TestContentAnalysisService:
         text = "曼联今天在英超比赛中取得了胜利"
 
         # When
-        result = service.analyze_text(text)
+        _result = service.analyze_text(text)
 
         # Then
         assert "word_count" in result
@@ -303,7 +303,7 @@ class TestContentAnalysisService:
         content = "比赛结束，比分为3:1，曼联在主场取得了胜利"
 
         # When
-        result = service.classify_content(content)
+        _result = service.classify_content(content)
 
         # Then
         assert result["category"] == "match_report"
@@ -316,7 +316,7 @@ class TestContentAnalysisService:
         content = "球员完成转会，签约新俱乐部"
 
         # When
-        result = service.classify_content(content)
+        _result = service.classify_content(content)
 
         # Then
         assert result["category"] == "transfer_news"
@@ -325,7 +325,7 @@ class TestContentAnalysisService:
     def test_classify_content_empty(self, service):
         """测试：分类空内容"""
         # When
-        result = service.classify_content("")
+        _result = service.classify_content("")
 
         # Then
         assert result["category"] == "unknown"
@@ -337,7 +337,7 @@ class TestContentAnalysisService:
         text = "这是一场精彩的胜利，表现出色！"
 
         # When
-        result = service.analyze_sentiment(text)
+        _result = service.analyze_sentiment(text)
 
         # Then
         assert "sentiment" in result
@@ -352,7 +352,7 @@ class TestContentAnalysisService:
         text = "糟糕的失败，令人失望"
 
         # When
-        result = service.analyze_sentiment(text)
+        _result = service.analyze_sentiment(text)
 
         # Then
         assert result["negative_count"] > 0
@@ -364,7 +364,7 @@ class TestContentAnalysisService:
         text = "今天进行了比赛"
 
         # When
-        result = service.analyze_sentiment(text)
+        _result = service.analyze_sentiment(text)
 
         # Then
         assert result["sentiment"] == "neutral"
@@ -373,7 +373,7 @@ class TestContentAnalysisService:
     def test_analyze_sentiment_empty(self, service):
         """测试：空文本情感分析"""
         # When
-        result = service.analyze_sentiment("")
+        _result = service.analyze_sentiment("")
 
         # Then
         assert result["sentiment"] == "neutral"
@@ -432,7 +432,7 @@ class TestContentModel:
         """测试：创建内容对象"""
         # Given & When
         content = Content(
-            content_id="test_001", content_type="text", data={"text": "测试内容"}
+            content_id="test_001", content_type="text", _data ={"text": "测试内容"}
         )
 
         # Then
@@ -464,12 +464,12 @@ class TestContentModel:
     def test_analysis_result_creation_default(self):
         """测试：创建分析结果（默认值）"""
         # Given & When
-        result = AnalysisResult()
+        _result = AnalysisResult()
 
         # Then
         assert result.id == ""
         assert result.analysis_type == ""
-        assert result.result == {}
+        assert result._result == {}
         assert result.confidence == 0.0
         assert isinstance(result.timestamp, datetime)
         assert result.content_id == ""
@@ -480,10 +480,10 @@ class TestContentModel:
         timestamp = datetime.now()
 
         # When
-        result = AnalysisResult(
+        _result = AnalysisResult(
             id="analysis_001",
             analysis_type="sentiment",
-            result={"sentiment": "positive"},
+            _result ={"sentiment": "positive"},
             confidence=0.95,
             timestamp=timestamp,
             content_id="content_001",

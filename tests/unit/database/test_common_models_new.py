@@ -14,7 +14,7 @@ from src.models.common_models import (
 
 def test_data_validation_result():
     """测试数据验证结果"""
-    result = DataValidationResult(is_valid=True)
+    _result = DataValidationResult(is_valid=True)
     assert result.is_valid is True
 
     result.add_error("Test error")

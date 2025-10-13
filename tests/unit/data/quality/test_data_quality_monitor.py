@@ -72,7 +72,7 @@ class TestDataQualityMonitor:
                     "stale_odds_count": 5,
                 }
 
-                result = await monitor.check_data_freshness()
+                _result = await monitor.check_data_freshness()
 
                 assert "fixtures" in result
                 assert "odds" in result
@@ -108,7 +108,7 @@ class TestDataQualityMonitor:
                             {"match_id": 101, "issue": "inconsistent_data"}
                         ]
 
-                        result = await monitor.detect_anomalies()
+                        _result = await monitor.detect_anomalies()
 
                         assert isinstance(result, list)
                         assert len(result) >= 4  # 至少4个异常
@@ -130,7 +130,7 @@ class TestDataQualityMonitor:
         mock_result.scalar.return_value = recent_time
         mock_session.execute.return_value = mock_result
 
-        result = await monitor._check_fixtures_age(mock_session)
+        _result = await monitor._check_fixtures_age(mock_session)
 
         assert result["status"] == "good"
         assert result["oldest_fixture_hours"] < 24
@@ -149,7 +149,7 @@ class TestDataQualityMonitor:
         mock_result.scalar.return_value = stale_time
         mock_session.execute.return_value = mock_result
 
-        result = await monitor._check_fixtures_age(mock_session)
+        _result = await monitor._check_fixtures_age(mock_session)
 
         assert result["status"] == "critical"
         assert result["oldest_fixture_hours"] > 24
@@ -168,7 +168,7 @@ class TestDataQualityMonitor:
         mock_result.scalar.return_value = warning_time
         mock_session.execute.return_value = mock_result
 
-        result = await monitor._check_odds_age(mock_session)
+        _result = await monitor._check_odds_age(mock_session)
 
         assert result["status"] == "warning"
         assert result["oldest_odds_hours"] > 24
@@ -187,7 +187,7 @@ class TestDataQualityMonitor:
         ]
         mock_session.execute.return_value = mock_result
 
-        result = await monitor._find_missing_matches(mock_session)
+        _result = await monitor._find_missing_matches(mock_session)
 
         assert "missing_matches" in result
         assert result["missing_matches"] >= 0
@@ -220,7 +220,7 @@ class TestDataQualityMonitor:
         ]
         mock_session.execute.return_value = mock_result
 
-        result = await monitor._find_suspicious_odds(mock_session)
+        _result = await monitor._find_suspicious_odds(mock_session)
 
         assert isinstance(result, list)
         if result:
@@ -252,7 +252,7 @@ class TestDataQualityMonitor:
         ]
         mock_session.execute.return_value = mock_result
 
-        result = await monitor._find_unusual_scores(mock_session)
+        _result = await monitor._find_unusual_scores(mock_session)
 
         assert isinstance(result, list)
         if result:
@@ -282,7 +282,7 @@ class TestDataQualityMonitor:
         ]
         mock_session.execute.return_value = mock_result
 
-        result = await monitor._check_data_consistency(mock_session)
+        _result = await monitor._check_data_consistency(mock_session)
 
         assert isinstance(result, list)
         if result:
@@ -448,7 +448,7 @@ class TestDataQualityMonitor:
         mock_result.scalar.return_value = recent_time
         mock_session.execute.return_value = mock_result
 
-        result = await monitor._check_fixtures_age(mock_session)
+        _result = await monitor._check_fixtures_age(mock_session)
 
         # 使用12小时阈值，10小时应该是好的
         assert result["status"] == "good"
@@ -456,7 +456,7 @@ class TestDataQualityMonitor:
         # 使用48小时前的时间应该是严重的
         old_time = datetime.now() - timedelta(hours=48)
         mock_result.scalar.return_value = old_time
-        result = await monitor._check_fixtures_age(mock_session)
+        _result = await monitor._check_fixtures_age(mock_session)
         assert result["status"] == "critical"
 
     @pytest.mark.asyncio
@@ -505,7 +505,7 @@ class TestDataQualityMonitor:
         mock_session.execute.side_effect = Exception("Database connection failed")
 
         # 应该优雅地处理错误
-        result = await monitor._check_fixtures_age(mock_session)
+        _result = await monitor._check_fixtures_age(mock_session)
 
         assert "status" in result
         assert result["status"] == "error"
@@ -607,7 +607,7 @@ class TestDataQualityMonitorIntegration:
                 mock_check.return_value = {
                     "overall_status": "good" if i % 2 == 0 else "warning"
                 }
-                result = await monitor.check_data_freshness()
+                _result = await monitor.check_data_freshness()
                 check_results.append(result)
 
         # 验证监控历史
@@ -681,7 +681,7 @@ class TestDataQualityMonitorIntegration:
                     "status": "good" if source != "manual_entry" else "warning",
                     "source": source,
                 }
-                result = await monitor._check_fixtures_age(AsyncMock())
+                _result = await monitor._check_fixtures_age(AsyncMock())
                 source_quality[source] = result
 
         # 验证多源检查

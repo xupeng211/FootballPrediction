@@ -126,7 +126,7 @@ class TestMaintenanceTasks:
             # 使用mock模拟执行
             with patch("src.tasks.maintenance_tasks.cleanup_old_data") as mock_cleanup:
                 mock_cleanup.return_value = {"deleted": 100}
-                result = mock_cleanup(days=30)
+                _result = mock_cleanup(days=30)
                 assert result["deleted"] == 100
         except ImportError:
             pytest.skip("maintenance_tasks not available")
@@ -138,7 +138,7 @@ class TestMaintenanceTasks:
 
             with patch("src.tasks.maintenance_tasks.backup_database") as mock_backup:
                 mock_backup.return_value = {"backup_file": "backup_2025.sql"}
-                result = mock_backup()
+                _result = mock_backup()
                 assert "backup_file" in result
         except ImportError:
             pytest.skip("maintenance_tasks not available")
@@ -177,7 +177,7 @@ class TestMonitoringTasks:
                         "disk_space": "warning",
                     },
                 }
-                result = mock_check()
+                _result = mock_check()
                 assert result["status"] == "healthy"
         except ImportError:
             pytest.skip("monitoring not available")
@@ -193,7 +193,7 @@ class TestMonitoringTasks:
                     "memory_usage": 67.8,
                     "active_connections": 125,
                 }
-                result = mock_collect()
+                _result = mock_collect()
                 assert "cpu_usage" in result
                 assert "memory_usage" in result
         except ImportError:
@@ -221,8 +221,8 @@ class TestErrorHandling:
 
             with patch("src.tasks.error_logger.log_error") as mock_log:
                 mock_log.return_value = "logged"
-                result = mock_log("Test error", exc_info=True)
-                assert result == "logged"
+                _result = mock_log("Test error", exc_info=True)
+                assert _result == "logged"
         except ImportError:
             pytest.skip("error_logger not available")
 
@@ -256,7 +256,7 @@ class TestStreamingTasks:
                 "src.tasks.streaming_tasks.process_kafka_message"
             ) as mock_process:
                 mock_process.return_value = {"status": "processed"}
-                result = mock_process({"topic": "test", "message": "data"})
+                _result = mock_process({"topic": "test", "message": "data"})
                 assert result["status"] == "processed"
         except ImportError:
             pytest.skip("streaming_tasks not available")
@@ -292,7 +292,7 @@ class TestBackupTasks:
                     "status": "completed",
                     "size": 1024000,
                 }
-                result = mock_backup(type="full")
+                _result = mock_backup(type="full")
                 assert result["status"] == "completed"
                 assert "backup_id" in result
         except ImportError:
@@ -331,7 +331,7 @@ class TestTaskUtils:
                     "status": "SUCCESS",
                     "result": "completed",
                 }
-                result = mock_status("task_123")
+                _result = mock_status("task_123")
                 assert result["status"] == "SUCCESS"
         except ImportError:
             pytest.skip("task utils not available")
@@ -347,7 +347,7 @@ class TestTaskUtils:
                     "data": {"processed": 100},
                     "timestamp": datetime.now().isoformat(),
                 }
-                result = mock_format({"processed": 100})
+                _result = mock_format({"processed": 100})
                 assert result["success"] is True
         except ImportError:
             pytest.skip("task utils not available")
@@ -420,7 +420,7 @@ class TestTaskScheduler:
                     "task_id": "scheduled_123",
                     "scheduled_at": datetime.now().isoformat(),
                 }
-                result = mock_schedule("task_name", args=[], kwargs={})
+                _result = mock_schedule("task_name", args=[], kwargs={})
                 assert "task_id" in result
         except ImportError:
             pytest.skip("scheduler not available")
@@ -495,5 +495,5 @@ class TestTaskIntegration:
             await asyncio.sleep(0.01)
             return "completed"
 
-        result = await dummy_async_task()
-        assert result == "completed"
+        _result = await dummy_async_task()
+        assert _result == "completed"

@@ -98,7 +98,7 @@ class PerformanceProfiler:
 
         self.active_profiling = False
 
-        result = {
+        _result = {
             "stats": stats_stream.getvalue(),
             "memory_current": current,
             "memory_peak": peak,
@@ -215,7 +215,7 @@ class PerformanceProfiler:
             name="database_query_duration",
             value=execution_time,
             unit="seconds",
-            metadata={"query": query[:100], "rows": rows_affected},
+            _metadata ={"query": query[:100], "rows": rows_affected},
         )
         self.metrics.append(metric)
 
@@ -256,7 +256,7 @@ class PerformanceProfiler:
 
     def export_metrics(self, format: str = "json") -> str:
         """导出性能指标"""
-        data = {
+        _data = {
             "timestamp": datetime.now().isoformat(),
             "metrics_summary": self.get_metrics_summary(),
             "slow_functions": [
@@ -358,7 +358,7 @@ class DatabaseQueryProfiler:
         start_time = time.perf_counter()
 
         try:
-            result = execute_func(query)
+            _result = execute_func(query)
 
             # 尝试获取影响行数
             rows_affected = 0
@@ -418,7 +418,7 @@ class APIEndpointProfiler:
                 "max_duration": 0,
             }
 
-        stats = self.endpoint_stats[key]
+        _stats = self.endpoint_stats[key]
         stats["request_count"] += 1
         stats["total_duration"] += duration
         stats["min_duration"] = min(stats["min_duration"], duration)
@@ -442,7 +442,7 @@ class APIEndpointProfiler:
             name=f"api_endpoint_duration_{key}",
             value=duration,
             unit="seconds",
-            metadata={
+            _metadata ={
                 "endpoint": endpoint,
                 "method": method,
                 "status_code": status_code,

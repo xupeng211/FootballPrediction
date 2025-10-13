@@ -32,7 +32,7 @@ class TestCQRSModule:
             from src.api.cqrs import CommandResponse
 
             response = CommandResponse(
-                success=True, message="Command executed", data={"id": 123}
+                success=True, message="Command executed", _data ={"id": 123}
             )
             assert response.success is True
             assert response.message == "Command executed"
@@ -45,7 +45,7 @@ class TestCQRSModule:
         try:
             from src.api.cqrs import QueryResponse
 
-            response = QueryResponse(data=[{"name": "test"}], total=1)
+            response = QueryResponse(_data =[{"name": "test"}], total=1)
             assert response.data[0]["name"] == "test"
             assert response.total == 1
         except ImportError:
@@ -74,7 +74,7 @@ class TestEventsModule:
 
             event = Event(
                 event_type="test_event",
-                data={"message": "test"},
+                _data ={"message": "test"},
                 timestamp=datetime.now(),
             )
             assert event.event_type == "test_event"
@@ -183,7 +183,7 @@ class TestRepositoriesModule:
 
             class TestRepo(BaseRepository):
                 def __init__(self):
-                    self.data = {}
+                    self._data = {}
 
                 def create(self, data):
                     id = len(self.data) + 1
@@ -236,8 +236,8 @@ class TestDecoratorsModule:
             def test_function(x):
                 return x * 2
 
-            result = test_function(5)
-            assert result == 10
+            _result = test_function(5)
+            assert _result == 10
         except ImportError:
             pytest.skip("log_requests装饰器未实现")
 
@@ -260,8 +260,8 @@ class TestDecoratorsModule:
             assert call_count == 1
 
             # 第二次调用应该使用缓存
-            result2 = expensive_function(5)
-            assert result2 == 25
+            _result2 = expensive_function(5)
+            assert _result2 == 25
             # 如果缓存工作，call_count应该还是1
         except ImportError:
             pytest.skip("cache_result装饰器未实现")
@@ -281,8 +281,8 @@ class TestDecoratorsModule:
                     raise ValueError("Failed")
                 return "success"
 
-            result = flaky_function()
-            assert result == "success"
+            _result = flaky_function()
+            assert _result == "success"
             assert call_count == 3
         except ImportError:
             pytest.skip("retry装饰器未实现")
@@ -345,7 +345,7 @@ class TestAdaptersModule:
                     return self.transform(raw_data)
 
             adapter = TransformAdapter()
-            result = adapter.get_data({})
+            _result = adapter.get_data({})
 
             assert "team_name" in result
             assert result["team_name"] == "Real Madrid"
@@ -389,7 +389,7 @@ class TestFacadesModule:
 
             facade = PredictionFacade(prediction_service=mock_service)
 
-            result = facade.make_prediction(
+            _result = facade.make_prediction(
                 match_id=123, home_team="Team A", away_team="Team B"
             )
 

@@ -128,7 +128,7 @@ class TestResponseUtils:
 
     def test_create_success_response(self):
         """测试创建成功响应"""
-        data = {"message": "success"}
+        _data = {"message": "success"}
         response_obj = response.APIResponse.success(data)
 
         assert response_obj["success"] is True
@@ -139,7 +139,7 @@ class TestResponseUtils:
 
     def test_create_success_response_with_custom_message(self):
         """测试带自定义消息的成功响应"""
-        data = {"id": 1}
+        _data = {"id": 1}
         custom_message = "创建成功"
         response_obj = response.APIResponse.success(data, message=custom_message)
 
@@ -157,7 +157,7 @@ class TestResponseUtils:
 
     def test_create_success_response_alias(self):
         """测试成功响应别名方法"""
-        data = {"test": "data"}
+        _data = {"test": "data"}
         response_obj = response.APIResponse.success_response(data)
         assert response_obj["success"] is True
         assert response_obj["data"] == data
@@ -187,7 +187,7 @@ class TestResponseUtils:
         """测试带数据的错误响应"""
         error_msg = "Validation failed"
         details = {"field": "email", "error": "invalid format"}
-        response_obj = response.APIResponse.error(error_msg, data=details)
+        response_obj = response.APIResponse.error(error_msg, _data =details)
 
         assert response_obj["success"] is False
         assert response_obj["message"] == error_msg
@@ -205,11 +205,11 @@ class TestResponseUtils:
         """测试API响应模型"""
         # 测试成功响应模型
         model = response.APIResponseModel(
-            success=True, message="Success", data={"id": 1}
+            success=True, message="Success", _data ={"id": 1}
         )
         assert model.success is True
         assert model.message == "Success"
-        assert model.data == {"id": 1}
+        assert model._data == {"id": 1}
         assert model.code is None
 
         # 测试错误响应模型

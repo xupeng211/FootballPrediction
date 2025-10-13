@@ -38,15 +38,15 @@ class TestDataTypeConversion:
     )
     def test_type_conversion(self, input_value, expected_type):
         """测试类型转换"""
-        if expected_type == int and isinstance(input_value, str):
+        if expected_type is int and isinstance(input_value, str):
             try:
-                result = int(input_value)
+                _result = int(input_value)
                 assert isinstance(result, int)
             except ValueError:
                 pytest.skip("Cannot convert to int")
-        elif expected_type == float and isinstance(input_value, str):
+        elif expected_type is float and isinstance(input_value, str):
             try:
-                result = float(input_value)
+                _result = float(input_value)
                 assert isinstance(result, float)
             except ValueError:
                 pytest.skip("Cannot convert to float")
@@ -72,7 +72,7 @@ class TestDataTypeConversion:
     def test_json_parsing(self, json_str):
         """测试JSON解析"""
         try:
-            result = json.loads(json_str)
+            _result = json.loads(json_str)
             assert isinstance(result, (dict, list, str, int, float, bool, type(None)))
         except json.JSONDecodeError:
             pytest.skip("Invalid JSON")
@@ -163,25 +163,25 @@ class TestStringOperations:
         elif operation == "strip":
             assert string.strip() == string.strip()
         elif operation == "replace":
-            result = string.replace(" ", "_")
+            _result = string.replace(" ", "_")
             assert isinstance(result, str)
         elif operation == "startswith":
             assert string.startswith(string[:1]) if string else False
         elif operation == "endswith":
             assert string.endswith(string[-1:]) if string else False
         elif operation == "split":
-            result = string.split()
+            _result = string.split()
             assert isinstance(result, list)
         elif operation == "join":
-            result = "-".join(["hello", "world"])
-            assert result == "hello-world"
+            _result = "-".join(["hello", "world"])
+            assert _result == "hello-world"
         elif operation == "empty":
             assert len(string) == 0
         elif operation == "split_space":
-            result = string.split(" ")
+            _result = string.split(" ")
             assert " " in string
         elif operation == "split_underscore":
-            result = string.split("_")
+            _result = string.split("_")
             assert "_" in string
 
     @pytest.mark.parametrize(
@@ -232,7 +232,7 @@ class TestCollectionOperations:
     def test_list_operations(self, list1, list2):
         """测试列表操作"""
         # 连接
-        result = list1 + list2
+        _result = list1 + list2
         assert len(result) == len(list1) + len(list2)
 
         # 扩展
@@ -322,6 +322,6 @@ def test_generic_handling(test_input):
         or test_input == ""
         or test_input == []
         or test_input == {}
-        or test_input == True
+        or test_input is True
         or test_input == 123
     )

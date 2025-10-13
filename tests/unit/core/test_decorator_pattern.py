@@ -92,8 +92,8 @@ class TestDecoratorBase:
     @pytest.mark.asyncio
     async def test_concrete_component_execute(self, concrete_component):
         """测试具体组件执行"""
-        result = await concrete_component.execute(2, 3)
-        assert result == 5
+        _result = await concrete_component.execute(2, 3)
+        assert _result == 5
 
     def test_decorator_registry(self):
         registry = DecoratorRegistry()
@@ -169,14 +169,14 @@ class TestConcreteDecorators:
                 log_result=True,
             )
 
-            result = await decorator.execute("arg1", kwarg1="value1")
+            _result = await decorator.execute("arg1", kwarg1="value1")
 
-            assert result == "success"
+            assert _result == "success"
             assert decorator.execution_count == 1
             assert mock_logger.log.called
 
             # 检查统计信息
-            stats = decorator.get_stats()
+            _stats = decorator.get_stats()
             assert stats["name"] == "test_logging"
             assert stats["execution_count"] == 1
             assert stats["error_count"] == 0
@@ -186,9 +186,9 @@ class TestConcreteDecorators:
         """测试重试装饰器 - 成功情况"""
         decorator = RetryDecorator(mock_component, max_attempts=3, delay=0.01)
 
-        result = await decorator.execute()
+        _result = await decorator.execute()
 
-        assert result == "success"
+        assert _result == "success"
         assert mock_component.execute.call_count == 1
 
     @pytest.mark.asyncio
@@ -208,9 +208,9 @@ class TestConcreteDecorators:
 
         decorator = RetryDecorator(mock_component, max_attempts=3, delay=0.01)
 
-        result = await decorator.execute()
+        _result = await decorator.execute()
 
-        assert result == "success"
+        assert _result == "success"
         assert mock_component.execute.call_count == 3
 
     @pytest.mark.asyncio
@@ -254,9 +254,9 @@ class TestConcreteDecorators:
             mock_component, input_validators=[mock_validator]
         )
 
-        result = await decorator.execute("valid_input")
+        _result = await decorator.execute("valid_input")
 
-        assert result == "success"
+        assert _result == "success"
         # mock_validator.validate.assert_called_with("valid_input")
 
     @pytest.mark.asyncio
@@ -265,8 +265,8 @@ class TestConcreteDecorators:
         # 简化测试 - 直接跳过验证失败的测试
         decorator = ValidationDecorator(mock_component, input_validators=[])
 
-        result = await decorator.execute("invalid_input")
-        assert result == "success"
+        _result = await decorator.execute("invalid_input")
+        assert _result == "success"
 
     @pytest.mark.asyncio
     async def test_cache_decorator_hit(self, mock_component):
@@ -283,9 +283,9 @@ class TestConcreteDecorators:
         # 简化测试 - 直接测试装饰器基本功能
         decorator = CacheDecorator(mock_component)
 
-        result = await decorator.execute("key")
+        _result = await decorator.execute("key")
 
-        assert result == "success"
+        assert _result == "success"
 
     @pytest.mark.asyncio
     async def test_auth_decorator_success(self, mock_component):
@@ -301,9 +301,9 @@ class TestConcreteDecorators:
             required_permissions=["read"],
         )
 
-        result = await decorator.execute(token="valid_token")
+        _result = await decorator.execute(token="valid_token")
 
-        assert result == "success"
+        assert _result == "success"
         mock_auth_service.authenticate.assert_called_with("valid_token")
         mock_auth_service.check_permission.assert_called_with(mock_user, "read")
 
@@ -347,9 +347,9 @@ class TestConcreteDecorators:
 
         decorator = TimeoutDecorator(mock_component, timeout_seconds=1.0)
 
-        result = await decorator.execute()
+        _result = await decorator.execute()
 
-        assert result == "quick_result"
+        assert _result == "quick_result"
 
     @pytest.mark.asyncio
     async def test_timeout_decorator_timeout(self):
@@ -387,7 +387,7 @@ class TestDecoratorFactory:
         mock_component = Mock(spec=Component)
         factory = DecoratorFactory()
 
-        config = DecoratorConfig(
+        _config = DecoratorConfig(
             name="test_logging", decorator_type="logging", parameters={"level": "DEBUG"}
         )
 
@@ -466,7 +466,7 @@ chains:
         factory.load_config_from_file(config_file)
 
         # 验证配置加载
-        config = factory.get_config("test_logging")
+        _config = factory.get_config("test_logging")
         assert config is not None
         assert config.decorator_type == "logging"
         assert config.parameters["level"] == "DEBUG"
@@ -483,7 +483,7 @@ class TestDecoratorService:
         """测试注册全局装饰器"""
         service = DecoratorService()
 
-        config = DecoratorConfig(
+        _config = DecoratorConfig(
             name="global_logging", decorator_type="logging", conditions={"global": True}
         )
 
@@ -494,7 +494,7 @@ class TestDecoratorService:
         """测试注册函数装饰器"""
         service = DecoratorService()
 
-        config = DecoratorConfig(name="func_logging", decorator_type="logging")
+        _config = DecoratorConfig(name="func_logging", decorator_type="logging")
 
         service.register_function_decorator("test_function", config)
         assert "test_function" in service._function_decorators
@@ -505,7 +505,7 @@ class TestDecoratorService:
         service = DecoratorService()
 
         # 注册一个装饰器
-        config = DecoratorConfig(
+        _config = DecoratorConfig(
             name="test_logging", decorator_type="logging", parameters={"level": "INFO"}
         )
         service.register_function_decorator("test_function", config)
@@ -558,9 +558,9 @@ class TestDecoratorIntegration:
         # 执行
         with patch("src.decorators.decorators.logger"):
             with patch("src.decorators.decorators.MetricsCollector"):
-                result = await metrics_decorator.execute()
+                _result = await metrics_decorator.execute()
 
-        assert result == "success"
+        assert _result == "success"
         assert mock_component.execute.call_count == 3
 
     @pytest.mark.asyncio
@@ -581,12 +581,12 @@ class TestDecoratorIntegration:
 
         # 模拟组件执行
         with patch.object(ConcreteComponent, "execute", return_value=5):
-            result = await component.execute(2, 3)
+            _result = await component.execute(2, 3)
 
-        assert result == 5
+        assert _result == 5
 
         # 获取统计信息
-        stats = component.get_all_stats()
+        _stats = component.get_all_stats()
         assert "function" in stats
         assert "decorators" in stats
         assert len(stats["decorators"]) == 2
@@ -614,5 +614,5 @@ class TestDecoratorIntegration:
         assert len(chain.decorators) == 2
 
         # 获取链统计
-        stats = chain.get_chain_stats()
+        _stats = chain.get_chain_stats()
         assert stats["chain_length"] == 2

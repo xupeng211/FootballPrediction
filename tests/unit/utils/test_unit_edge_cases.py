@@ -246,7 +246,7 @@ class TestEdgeCasesAndErrorHandling:
 
         # Python的json模块能处理循环引用
         try:
-            result = json.dumps(circular_dict)
+            _result = json.dumps(circular_dict)
             assert result is not None
         except (ValueError, TypeError):
             # 某些版本可能抛出异常
@@ -314,8 +314,8 @@ class TestEdgeCasesAndErrorHandling:
             return 1 + recursive_function(depth - 1)
 
         # 正常递归应该工作
-        result = recursive_function(100)
-        assert result == 100
+        _result = recursive_function(100)
+        assert _result == 100
 
         # 测试递归限制
         try:
@@ -352,8 +352,8 @@ class TestEdgeCasesAndErrorHandling:
         # 测试异步错误
         async def test_async():
             # 测试成功的异步函数
-            result = await successful_async_function()
-            assert result == "success"
+            _result = await successful_async_function()
+            assert _result == "success"
 
             # 测试失败的异步函数
             with pytest.raises(ValueError):
@@ -377,10 +377,10 @@ class TestEdgeCasesAndErrorHandling:
 
         # 测试除零
         with pytest.raises(ZeroDivisionError):
-            result = 1 / 0
+            _result = 1 / 0
 
         # 测试浮点除零
-        result = 1.0 / 0.0
+        _result = 1.0 / 0.0
         assert math.isinf(result)
 
         # 测试NaN

@@ -64,7 +64,7 @@ class TestGenerateHash:
 
     def test_generate_hash(self):
         """测试：生成哈希"""
-        data = "test string"
+        _data = "test string"
         hash_value = generate_hash(data)
 
         # 验证哈希格式
@@ -96,7 +96,7 @@ class TestGenerateHash:
 
     def test_generate_hash_special_characters(self):
         """测试：特殊字符哈希"""
-        data = "test@#$%^&*()_+-={}[]|\\:;\"'<>?,./"
+        _data = "test@#$%^&*()_+-={}[]|\\:;\"'<>?,./"
         hash_value = generate_hash(data)
 
         assert isinstance(hash_value, str)
@@ -109,7 +109,7 @@ class TestSafeGet:
 
     def test_safe_get_key_exists(self):
         """测试：键存在"""
-        data = {"key1": "value1", "key2": 100, "key3": None}
+        _data = {"key1": "value1", "key2": 100, "key3": None}
 
         assert safe_get(data, "key1") == "value1"
         assert safe_get(data, "key2") == 100
@@ -117,14 +117,14 @@ class TestSafeGet:
 
     def test_safe_get_key_not_exists(self):
         """测试：键不存在"""
-        data = {"key1": "value1"}
+        _data = {"key1": "value1"}
 
         assert safe_get(data, "key2") is None
         assert safe_get(data, "nonexistent") is None
 
     def test_safe_get_with_default(self):
         """测试：使用默认值"""
-        data = {"key1": "value1"}
+        _data = {"key1": "value1"}
 
         assert safe_get(data, "key2", "default") == "default"
         assert safe_get(data, "key2", 0) == 0
@@ -137,7 +137,7 @@ class TestSafeGet:
 
     def test_safe_get_nested_dict(self):
         """测试：嵌套字典"""
-        data = {"nested": {"inner": "value"}}
+        _data = {"nested": {"inner": "value"}}
 
         assert safe_get(data, "nested") == {"inner": "value"}
         assert safe_get(data, "nonexistent", "default") == "default"
@@ -197,64 +197,64 @@ class TestSanitizeString:
     def test_sanitize_string_normal(self):
         """测试：正常字符串"""
         s = "Hello World"
-        result = sanitize_string(s)
+        _result = sanitize_string(s)
 
-        assert result == "hello world"
+        assert _result == "hello world"
         assert isinstance(result, str)
 
     def test_sanitize_string_with_spaces(self):
         """测试：带空格的字符串"""
         s = "   Hello World   "
-        result = sanitize_string(s)
+        _result = sanitize_string(s)
 
-        assert result == "hello world"
+        assert _result == "hello world"
 
     def test_sanitize_string_with_uppercase(self):
         """测试：大写字符串"""
         s = "HELLO WORLD"
-        result = sanitize_string(s)
+        _result = sanitize_string(s)
 
-        assert result == "hello world"
+        assert _result == "hello world"
 
     def test_sanitize_string_with_mixed_case(self):
         """测试：混合大小写字符串"""
         s = "HeLLo WoRLd"
-        result = sanitize_string(s)
+        _result = sanitize_string(s)
 
-        assert result == "hello world"
+        assert _result == "hello world"
 
     def test_sanitize_string_empty(self):
         """测试：空字符串"""
-        result = sanitize_string("")
+        _result = sanitize_string("")
 
-        assert result == ""
+        assert _result == ""
 
     def test_sanitize_string_with_special_chars(self):
         """测试：特殊字符"""
         s = "Hello World! @#$%"
-        result = sanitize_string(s)
+        _result = sanitize_string(s)
 
-        assert result == "hello world! @#$%"
+        assert _result == "hello world! @#$%"
 
     def test_sanitize_string_with_numbers(self):
         """测试：数字"""
         s = "Hello 123 World 456"
-        result = sanitize_string(s)
+        _result = sanitize_string(s)
 
-        assert result == "hello 123 world 456"
+        assert _result == "hello 123 world 456"
 
     def test_sanitize_string_none_input(self):
         """测试：输入为None"""
-        result = sanitize_string(None)
+        _result = sanitize_string(None)
 
-        assert result == ""
+        assert _result == ""
 
     def test_sanitize_string_whitespace_only(self):
         """测试：只有空白字符"""
         s = "   \t\n   "
-        result = sanitize_string(s)
+        _result = sanitize_string(s)
 
-        assert result == ""
+        assert _result == ""
 
 
 @pytest.mark.skipif(HELPERS_AVAILABLE, reason="Helpers module should be available")

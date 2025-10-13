@@ -77,7 +77,7 @@ class Predictions(BaseModel):
     )
 
     # 用户关系
-    user = relationship("User", back_populates="predictions")
+    _user = relationship("User", back_populates="predictions")
 
     # 预测状态
     status: Mapped[str] = mapped_column(
@@ -193,7 +193,7 @@ class Predictions(BaseModel):
     def __repr__(self) -> str:
         return (
             f"<Predictions(id={self.id}, match_id={self.match_id}, "
-            f"model='{self.model_name}', result='{self.predicted_result.value}')>"
+            f"model='{self.model_name}', _result ='{self.predicted_result.value}')>"
         )
 
     @property

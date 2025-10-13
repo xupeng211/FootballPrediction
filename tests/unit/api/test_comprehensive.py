@@ -160,7 +160,7 @@ class TestAPIEndpoints:
             assert response.status_code in [200, 404, 405]
 
             if response.status_code == 200:
-                data = response.json()
+                _data = response.json()
                 assert isinstance(data, dict)
         except (ImportError, Exception):
             pytest.skip("Info endpoint not available")
@@ -272,8 +272,8 @@ class TestAPIDependencies:
             with patch("src.api.dependencies.get_db_session") as mock_session:
                 mock_db = Mock()
                 mock_session.return_value = mock_db
-                result = mock_session()
-                assert result == mock_db
+                _result = mock_session()
+                assert _result == mock_db
         except ImportError:
             pytest.skip("get_db_session not available")
 
@@ -285,8 +285,8 @@ class TestAPIDependencies:
             with patch("src.api.dependencies.get_current_user") as mock_user:
                 mock_user_obj = Mock()
                 mock_user.return_value = mock_user_obj
-                result = mock_user(token="test_token")
-                assert result == mock_user_obj
+                _result = mock_user(token="test_token")
+                assert _result == mock_user_obj
         except ImportError:
             pytest.skip("get_current_user not available")
 
@@ -371,7 +371,7 @@ class TestAPIResponses:
             from src.api.facades import SuccessResponse
 
             response = SuccessResponse(
-                data={"id": 1, "name": "test"}, message="Success"
+                _data ={"id": 1, "name": "test"}, message="Success"
             )
             assert response.data["id"] == 1
             assert response.message == "Success"
@@ -416,7 +416,7 @@ class TestAPIValidation:
                 "password": "securepassword123",
             }
 
-            user = UserCreate(**user_data)
+            _user = UserCreate(**user_data)
             assert user.username == "testuser"
             assert user.email == "test@example.com"
         except ImportError:
@@ -525,7 +525,7 @@ class TestAPISecurity:
             from src.api.security import create_access_token, verify_token
 
             token = create_access_token(
-                data={"sub": "testuser"}, expires_delta=timedelta(minutes=30)
+                _data ={"sub": "testuser"}, expires_delta=timedelta(minutes=30)
             )
             assert isinstance(token, str)
             assert len(token) > 0

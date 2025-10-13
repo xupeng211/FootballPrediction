@@ -153,9 +153,9 @@ class TestOddsCollector:
         cached_data = {"bet365": {"home": 2.0, "draw": 3.2, "away": 3.8}}
         mock_redis_client.get_cache_value.return_value = cached_data
 
-        result = await odds_collector.collect_match_odds(123)
+        _result = await odds_collector.collect_match_odds(123)
 
-        assert result == cached_data
+        assert _result == cached_data
         mock_redis_client.get_cache_value.assert_called_once_with("odds:match:123")
 
     @pytest.mark.asyncio
@@ -164,16 +164,16 @@ class TestOddsCollector:
         # Mock _get_match_by_id 返回 None
         odds_collector._get_match_by_id = AsyncMock(return_value=None)
 
-        result = await odds_collector.collect_match_odds(999)
+        _result = await odds_collector.collect_match_odds(999)
 
-        assert result == {}
+        assert _result == {}
 
     @pytest.mark.asyncio
     async def test_collect_match_odds_force_refresh(
         self, odds_collector, mock_redis_client
     ):
         """测试强制刷新"""
-        result = await odds_collector.collect_match_odds(123, force_refresh=True)
+        _result = await odds_collector.collect_match_odds(123, force_refresh=True)
 
         # 验证没有从缓存读取
         mock_redis_client.get_cache_value.assert_not_called()
@@ -189,7 +189,7 @@ class TestOddsCollector:
     @pytest.mark.asyncio
     async def test_collect_match_odds_specific_bookmakers(self, odds_collector):
         """测试只收集特定博彩公司的赔率"""
-        result = await odds_collector.collect_match_odds(123, bookmakers=["bet365"])
+        _result = await odds_collector.collect_match_odds(123, bookmakers=["bet365"])
 
         # 验证返回了指定博彩公司的数据
         assert "bet365" in result
@@ -228,7 +228,7 @@ class TestOddsCollector:
     @pytest.mark.asyncio
     async def test_collect_upcoming_matches_odds(self, odds_collector):
         """测试收集即将到来的比赛赔率"""
-        result = await odds_collector.collect_upcoming_matches_odds(hours_ahead=24)
+        _result = await odds_collector.collect_upcoming_matches_odds(hours_ahead=24)
 
         # 验证返回了比赛数据
         assert "matches" in result
@@ -264,9 +264,9 @@ class TestOddsCollector:
             side_effect=Exception("Database error")
         )
 
-        result = await odds_collector.collect_match_odds(123)
+        _result = await odds_collector.collect_match_odds(123)
 
-        assert result == {}
+        assert _result == {}
 
 
 class TestOddsCollectorHelperMethods:
@@ -316,7 +316,7 @@ class TestOddsCollectorHelperMethods:
             "bookmaker2": {"home": 2.1, "draw": 3.1, "away": 3.4},
         }
 
-        result = odds_collector._calculate_average_odds(odds_data)
+        _result = odds_collector._calculate_average_odds(odds_data)
 
         # 验证返回结构
         assert "home" in result

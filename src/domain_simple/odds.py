@@ -208,7 +208,7 @@ class Odds:
 
     def convert_format(self, target_format: OddsFormat) -> Dict[str, float]:
         """转换赔率格式"""
-        result = {}
+        _result = {}
 
         if target_format == OddsFormat.DECIMAL:
             if self.home_odds:

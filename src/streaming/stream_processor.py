@@ -19,7 +19,7 @@ class StreamProcessor:
         """初始化流处理器"""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.is_running = False
-        self.stats = {"processed_count": 0, "error_count": 0, "last_processed": None}
+        self._stats = {"processed_count": 0, "error_count": 0, "last_processed": None}
 
     async def start(self):
         """启动处理器"""

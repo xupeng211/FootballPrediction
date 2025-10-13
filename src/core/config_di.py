@@ -65,9 +65,9 @@ class ConfigurationBinder:
         try:
             with open(config_path, "r", encoding="utf-8") as f:
                 if config_path.suffix.lower() in [".yml", ".yaml"]:
-                    data = yaml.safe_load(f)
+                    _data = yaml.safe_load(f)
                 elif config_path.suffix.lower() == ".json":
-                    data = json.load(f)
+                    _data = json.load(f)
                 else:
                     raise DependencyInjectionError(
                         f"不支持的配置文件格式: {config_path.suffix}"
@@ -126,7 +126,7 @@ class ConfigurationBinder:
 
     def _parse_config(self, data: Dict[str, Any]) -> DIConfiguration:
         """解析配置"""
-        config = DIConfiguration()
+        _config = DIConfiguration()
 
         # 解析服务配置
         if "services" in data:
@@ -253,7 +253,7 @@ class ConfigurationBinder:
     def _evaluate_condition(self, condition: str) -> bool:
         """评估条件"""
         # 简单的条件评估
-        # 例如: "profile == 'development'" or "env['DEBUG'] == True"
+        # 例如: "profile == 'development'" or "env['DEBUG'] is True"
         try:
             # 这里可以实现更复杂的条件评估逻辑
             if condition.startswith("profile =="):

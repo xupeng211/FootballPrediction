@@ -75,7 +75,7 @@ class TestStrategyPredictionService:
         team = Mock(spec=Team)
         team.id = 1
         team.name = "Test Team"
-        team.stats = Mock()
+        team._stats = Mock()
         return team
 
     @pytest.fixture
@@ -140,7 +140,7 @@ class TestStrategyPredictionService:
         service._log_prediction_details = AsyncMock()
 
         # When
-        result = await service.predict_match(
+        _result = await service.predict_match(
             match_id=123,
             user_id=456,
             strategy_name="test_strategy",
@@ -208,7 +208,7 @@ class TestStrategyPredictionService:
         service._log_prediction_details = AsyncMock()
 
         # When
-        result = await service.batch_predict(
+        _result = await service.batch_predict(
             match_ids, user_id=456, strategy_name="test"
         )
 
@@ -224,10 +224,10 @@ class TestStrategyPredictionService:
         service._current_strategies["test_strategy"] = sample_strategy
 
         # When
-        result = await service._get_or_create_strategy("test_strategy")
+        _result = await service._get_or_create_strategy("test_strategy")
 
         # Then
-        assert result == sample_strategy
+        assert _result == sample_strategy
         # 不应该从工厂获取
         service._strategy_factory.get_strategy.assert_not_called()
 
@@ -238,10 +238,10 @@ class TestStrategyPredictionService:
         service._strategy_factory.get_strategy = AsyncMock(return_value=sample_strategy)
 
         # When
-        result = await service._get_or_create_strategy("new_strategy")
+        _result = await service._get_or_create_strategy("new_strategy")
 
         # Then
-        assert result == sample_strategy
+        assert _result == sample_strategy
         service._strategy_factory.get_strategy.assert_called_once_with("new_strategy")
         assert "new_strategy" in service._current_strategies
 
@@ -254,7 +254,7 @@ class TestStrategyPredictionService:
         )
 
         # When
-        result = await service._prepare_prediction_input(context)
+        _result = await service._prepare_prediction_input(context)
 
         # Then
         assert isinstance(result, PredictionInput)
@@ -269,10 +269,10 @@ class TestStrategyPredictionService:
         service._match_repository.get_team = AsyncMock(return_value=team)
 
         # When
-        result = service._get_team_info(123)
+        _result = service._get_team_info(123)
 
         # Then
-        assert result == team
+        assert _result == team
         service._match_repository.get_team.assert_called_once_with(123)
 
     def test_service_attributes(self, service):
@@ -318,7 +318,7 @@ class TestStrategyPredictionService:
     ):
         """测试：预测输出处理"""
         # Given
-        prediction = Mock()
+        _prediction = Mock()
         service._prediction_domain_service.create_prediction = Mock(
             return_value=prediction
         )
@@ -342,7 +342,7 @@ class TestStrategyPredictionService:
     async def test_log_prediction_details(self, service):
         """测试：记录预测详情"""
         # Given
-        prediction = Mock()
+        _prediction = Mock()
         output = Mock()
         service.log_prediction_details = AsyncMock()
 
@@ -366,10 +366,10 @@ class TestStrategyPredictionService:
         service._current_strategies["test"] = strategy
 
         # When
-        result = service._select_strategy("test", None)
+        _result = service._select_strategy("test", None)
 
         # Then
-        assert result == "test"
+        assert _result == "test"
 
     def test_strategy_factory_dependency(self):
         """测试：策略工厂依赖注入"""

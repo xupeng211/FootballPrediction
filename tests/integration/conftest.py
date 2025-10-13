@@ -70,7 +70,7 @@ async def test_db():
             async with engine.begin() as conn:
                 await conn.execute(text("SELECT 1"))
             break
-        except Exception as e:
+        except Exception:
             if i == max_retries - 1:
                 raise
             logger.info(f"Waiting for database... ({i + 1}/{max_retries})")
@@ -113,7 +113,7 @@ async def test_redis():
             try:
                 await client.ping()
                 break
-            except Exception as e:
+            except Exception:
                 if i == max_retries - 1:
                     raise
                 logger.info(f"Waiting for Redis... ({i + 1}/{max_retries})")
@@ -130,7 +130,6 @@ async def test_redis():
 
     except ImportError:
         logger.warning("Redis not available, using mock")
-        import asyncio
         from unittest.mock import AsyncMock
 
         mock_redis = AsyncMock()
@@ -167,7 +166,7 @@ async def test_kafka():
                 admin_client.list_topics()
                 admin_client.close()
                 break
-            except Exception as e:
+            except Exception:
                 if i == max_retries - 1:
                     raise
                 logger.info(f"Waiting for Kafka... ({i + 1}/{max_retries})")
@@ -265,13 +264,13 @@ async def test_user_token(api_client):
             "username": user_data["username"],
             "password": user_data["password"],
         }
-        response = await api_client.post("/api/v1/auth/login", data=login_data)
+        response = await api_client.post("/api/v1/auth/login", _data =login_data)
         if response.status_code == 200:
             return response.json()["access_token"]
 
     # 如果注册失败，尝试直接登录
     login_data = {"username": user_data["username"], "password": user_data["password"]}
-    response = await api_client.post("/api/v1/auth/login", data=login_data)
+    response = await api_client.post("/api/v1/auth/login", _data =login_data)
     if response.status_code == 200:
         return response.json()["access_token"]
 
@@ -327,7 +326,7 @@ async def sample_prediction_data(db_session, sample_match_data):
     from src.database.models import User, Prediction
 
     # 创建用户
-    user = User(
+    _user = User(
         username="test_predictor",
         email="predictor@example.com",
         password_hash="hashed_password",
@@ -339,10 +338,10 @@ async def sample_prediction_data(db_session, sample_match_data):
     await db_session.refresh(user)
 
     # 创建预测
-    prediction = Prediction(
+    _prediction = Prediction(
         user_id=user.id,
         match_id=sample_match_data["match"].id,
-        prediction="HOME_WIN",
+        _prediction ="HOME_WIN",
         confidence=0.75,
         created_at="2025-01-15T10:00:00Z",
     )

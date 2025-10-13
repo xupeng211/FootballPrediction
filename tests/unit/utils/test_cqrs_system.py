@@ -90,7 +90,7 @@ class TestCreatePredictionCommand:
             )
             mock_session.return_value.__aenter__.return_value.execute.return_value.scalar.return_value = None
 
-            result = await command.validate()
+            _result = await command.validate()
             assert result.is_valid
 
     @pytest.mark.asyncio
@@ -104,7 +104,7 @@ class TestCreatePredictionCommand:
             confidence=1.5,  # 无效
         )
 
-        result = await command.validate()
+        _result = await command.validate()
         assert not result.is_valid
         assert "置信度必须在0到1之间" in result.errors[0]
 
@@ -116,14 +116,14 @@ class TestGetPredictionByIdQuery:
     async def test_valid_query(self):
         """测试有效查询"""
         query = GetPredictionByIdQuery(prediction_id=1)
-        result = await query.validate()
+        _result = await query.validate()
         assert result.is_valid
 
     @pytest.mark.asyncio
     async def test_invalid_id(self):
         """测试无效ID"""
         query = GetPredictionByIdQuery(prediction_id=-1)
-        result = await query.validate()
+        _result = await query.validate()
         assert not result.is_valid
 
 
@@ -142,7 +142,7 @@ class TestCommandBus:
 
         # 分发命令
         command = TestCommand()
-        result = await bus.dispatch(command)
+        _result = await bus.dispatch(command)
 
         assert result.success
         handler.handle.assert_called_once_with(command)
@@ -171,9 +171,9 @@ class TestQueryBus:
 
         # 分发查询
         query = TestQuery()
-        result = await bus.dispatch(query)
+        _result = await bus.dispatch(query)
 
-        assert result == {"test": "data"}
+        assert _result == {"test": "data"}
         handler.handle.assert_called_once_with(query)
 
 
@@ -208,7 +208,7 @@ class TestCreatePredictionHandler:
                 None
             )
 
-            result = await handler.handle(command)
+            _result = await handler.handle(command)
 
             assert result.success
             assert result.message == "预测创建成功"
@@ -225,7 +225,7 @@ class TestCreatePredictionHandler:
         with patch("src.cqrs.handlers.get_session") as mock_session:
             mock_session.return_value.__aenter__.return_value.execute.return_value.scalar.return_value = 1
 
-            result = await handler.handle(command)
+            _result = await handler.handle(command)
 
             assert not result.success
             assert "预测已存在" in result.message
@@ -242,7 +242,7 @@ class TestPredictionCQRSService:
         # 模拟命令总线
         with patch.object(service.command_bus, "dispatch") as mock_dispatch:
             mock_dispatch.return_value = CommandResult.success_result(
-                data=PredictionDTO(
+                _data =PredictionDTO(
                     id=1,
                     match_id=1,
                     user_id=1,
@@ -252,7 +252,7 @@ class TestPredictionCQRSService:
                 )
             )
 
-            result = await service.create_prediction(
+            _result = await service.create_prediction(
                 match_id=1,
                 user_id=1,
                 predicted_home=2,
@@ -279,9 +279,9 @@ class TestPredictionCQRSService:
         with patch.object(service.query_bus, "dispatch") as mock_dispatch:
             mock_dispatch.return_value = expected_dto
 
-            result = await service.get_prediction_by_id(1)
+            _result = await service.get_prediction_by_id(1)
 
-            assert result == expected_dto
+            assert _result == expected_dto
             mock_dispatch.assert_called_once()
 
 
@@ -290,16 +290,16 @@ class TestCommandResult:
 
     def test_success_result(self):
         """测试成功结果"""
-        result = CommandResult.success_result(data={"id": 1})
+        _result = CommandResult.success_result(_data ={"id": 1})
         assert result.success
         assert result.message == "操作成功"
-        assert result.data == {"id": 1}
+        assert result._data == {"id": 1}
         assert result.errors is None
 
     def test_failure_result(self):
         """测试失败结果"""
         errors = ["错误1", "错误2"]
-        result = CommandResult.failure_result(errors)
+        _result = CommandResult.failure_result(errors)
         assert not result.success
         assert result.message == "操作失败"
         assert result.errors == errors
@@ -395,6 +395,6 @@ class TestCQRSIntegration:
             )
 
             # 执行查询
-            prediction = await service.get_prediction_by_id(1)
+            _prediction = await service.get_prediction_by_id(1)
             assert prediction is not None
             assert prediction.predicted_home == 2

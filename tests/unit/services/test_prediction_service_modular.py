@@ -21,7 +21,7 @@ class TestPredictionModels:
         """测试预测结果创建"""
         from src.models.prediction.models import PredictionResult
 
-        result = PredictionResult(
+        _result = PredictionResult(
             match_id=12345,
             model_version="v1.0.0",
             model_name="football_model",
@@ -43,7 +43,7 @@ class TestPredictionModels:
         """测试预测结果转字典"""
         from src.models.prediction.models import PredictionResult
 
-        result = PredictionResult(
+        _result = PredictionResult(
             match_id=12345,
             model_version="v1.0.0",
             home_win_probability=0.5,
@@ -65,7 +65,7 @@ class TestPredictionModels:
         """测试从字典创建预测结果"""
         from src.models.prediction.models import PredictionResult
 
-        data = {
+        _data = {
             "match_id": 12345,
             "model_version": "v1.0.0",
             "model_name": "football_model",
@@ -77,7 +77,7 @@ class TestPredictionModels:
             "created_at": datetime.now().isoformat(),
         }
 
-        result = PredictionResult.from_dict(data)
+        _result = PredictionResult.from_dict(data)
         assert result.match_id == 12345
         assert result.model_version == "v1.0.0"
         assert result.predicted_result == "home"
@@ -86,7 +86,7 @@ class TestPredictionModels:
         """测试预测结果验证"""
         from src.models.prediction.models import PredictionResult
 
-        result = PredictionResult(
+        _result = PredictionResult(
             match_id=12345,
             model_version="v1.0.0",
             home_win_probability=0.5,
@@ -108,7 +108,7 @@ class TestPredictionModels:
         """测试获取最高概率"""
         from src.models.prediction.models import PredictionResult
 
-        result = PredictionResult(
+        _result = PredictionResult(
             match_id=12345,
             model_version="v1.0.0",
             home_win_probability=0.6,
@@ -126,7 +126,7 @@ class TestPredictionModels:
         """测试更新实际结果"""
         from src.models.prediction.models import PredictionResult
 
-        result = PredictionResult(
+        _result = PredictionResult(
             match_id=12345,
             model_version="v1.0.0",
             predicted_result="home",
@@ -211,7 +211,7 @@ class TestPredictionCache:
         from src.models.prediction.cache import PredictionCache
 
         cache = PredictionCache()
-        prediction = {"match_id": 12345, "result": "home"}
+        _prediction = {"match_id": 12345, "result": "home"}
 
         # 设置预测结果
         await cache.set_prediction(12345, prediction)
@@ -226,7 +226,7 @@ class TestPredictionCache:
         from src.models.prediction.cache import PredictionCache
 
         cache = PredictionCache()
-        prediction = {"match_id": 12345, "result": "home"}
+        _prediction = {"match_id": 12345, "result": "home"}
 
         # 设置预测结果
         await cache.set_prediction(12345, prediction)
@@ -456,7 +456,7 @@ class TestPredictionService:
                             "away_team_strength": 0.5,
                         }
 
-                        result = await service.predict_match(12345)
+                        _result = await service.predict_match(12345)
                         assert isinstance(result, PredictionResult)
                         assert result.match_id == 12345
                         assert result.predicted_result == "home"
@@ -490,7 +490,7 @@ class TestPredictionService:
                 "home",  # home_score, away_score, predicted_result
             )
 
-            result = await service.verify_prediction(12345)
+            _result = await service.verify_prediction(12345)
             assert result is True
 
     @pytest.mark.asyncio
@@ -508,7 +508,7 @@ class TestPredictionService:
             mock_row.model_versions_used = 3
             mock_session.return_value.__aenter__.return_value.execute.return_value.first.return_value = mock_row
 
-            stats = await service.get_prediction_statistics(30)
+            _stats = await service.get_prediction_statistics(30)
             assert "total_predictions" in stats
             assert stats["accuracy"] == 0.6
 
@@ -584,7 +584,7 @@ async def test_integration_example():
     assert hasattr(service, "verify_prediction")
 
     # 验证PredictionResult可以正常使用
-    result = PredictionResult(
+    _result = PredictionResult(
         match_id=12345,
         model_version="v1.0.0",
         home_win_probability=0.5,

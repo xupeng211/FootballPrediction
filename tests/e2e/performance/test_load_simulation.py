@@ -24,7 +24,7 @@ class TestLoadSimulation:
     ):
         """测试并发用户创建预测的性能"""
         # 1. 准备测试数据
-        teams = await test_data_loader.create_teams()
+        _teams = await test_data_loader.create_teams()
 
         # 创建多个即将到来的比赛
         matches_data = []
@@ -45,7 +45,7 @@ class TestLoadSimulation:
         admin_token = (
             await api_client.post(
                 "/api/v1/auth/login",
-                data={"username": "e2e_admin", "password": "E2EAdminPass123!"},
+                _data ={"username": "e2e_admin", "password": "E2EAdminPass123!"},
             )
         ).json()["access_token"]
         admin_headers = {"Authorization": f"Bearer {admin_token}"}
@@ -83,7 +83,7 @@ class TestLoadSimulation:
                 "username": user_data["username"],
                 "password": user_data["password"],
             }
-            response = await api_client.post("/api/v1/auth/login", data=login_data)
+            response = await api_client.post("/api/v1/auth/login", _data =login_data)
             if response.status_code == 200:
                 token = response.json()["access_token"]
                 sessions.append(
@@ -184,7 +184,7 @@ class TestLoadSimulation:
         )
         throughput = total_successful / duration if duration > 0 else 0
 
-        print(f"\n📊 并发测试结果:")
+        print("\n📊 并发测试结果:")
         print(f"   - 总请求数: {total_predictions}")
         print(f"   - 成功数: {total_successful}")
         print(f"   - 成功率: {success_rate * 100:.1f}%")
@@ -206,14 +206,14 @@ class TestLoadSimulation:
     ):
         """测试各API端点的性能"""
         # 准备测试数据
-        teams = await test_data_loader.create_teams()
-        matches = await test_data_loader.create_matches()
+        _teams = await test_data_loader.create_teams()
+        _matches = await test_data_loader.create_matches()
 
         # 获取token
         user_token = (
             await api_client.post(
                 "/api/v1/auth/login",
-                data={"username": "e2e_user", "password": "E2ETestPass123!"},
+                _data ={"username": "e2e_user", "password": "E2ETestPass123!"},
             )
         ).json()["access_token"]
         headers = {"Authorization": f"Bearer {user_token}"}
@@ -310,7 +310,7 @@ class TestLoadSimulation:
     ):
         """测试数据库查询性能"""
         # 准备大量数据
-        teams = await test_data_loader.create_teams()
+        _teams = await test_data_loader.create_teams()
 
         # 创建多个用户
         users = []
@@ -328,12 +328,12 @@ class TestLoadSimulation:
         user_tokens = []
         for user in users:
             login_data = {"username": user["username"], "password": user["password"]}
-            response = await api_client.post("/api/v1/auth/login", data=login_data)
+            response = await api_client.post("/api/v1/auth/login", _data =login_data)
             if response.status_code == 200:
                 user_tokens.append(response.json()["access_token"])
 
         # 创建比赛
-        matches = await test_data_loader.create_matches()
+        _matches = await test_data_loader.create_matches()
 
         # 批量创建预测
         total_predictions = 0
@@ -416,14 +416,14 @@ class TestLoadSimulation:
     ):
         """测试缓存性能影响"""
         # 准备测试数据
-        teams = await test_data_loader.create_teams()
-        matches = await test_data_loader.create_matches()
+        _teams = await test_data_loader.create_teams()
+        _matches = await test_data_loader.create_matches()
 
         # 获取token
         token = (
             await api_client.post(
                 "/api/v1/auth/login",
-                data={"username": "e2e_user", "password": "E2ETestPass123!"},
+                _data ={"username": "e2e_user", "password": "E2ETestPass123!"},
             )
         ).json()["access_token"]
         headers = {"Authorization": f"Bearer {token}"}
@@ -471,8 +471,8 @@ class TestLoadSimulation:
         print("\n🔥 压力测试：模拟高负载场景")
 
         # 准备测试数据
-        teams = await test_data_loader.create_teams()
-        matches = await test_data_loader.create_matches()
+        _teams = await test_data_loader.create_teams()
+        _matches = await test_data_loader.create_matches()
 
         # 创建用户池
         user_pool = []
@@ -491,7 +491,7 @@ class TestLoadSimulation:
                 "username": user_data["username"],
                 "password": user_data["password"],
             }
-            response = await api_client.post("/api/v1/auth/login", data=login_data)
+            response = await api_client.post("/api/v1/auth/login", _data =login_data)
             if response.status_code == 200:
                 user_pool.append(
                     {
@@ -567,7 +567,7 @@ class TestLoadSimulation:
         )
         throughput = successful_operations / duration if duration > 0 else 0
 
-        print(f"\n📊 压力测试结果:")
+        print("\n📊 压力测试结果:")
         print(f"   - 总操作数: {total_operations}")
         print(f"   - 成功数: {successful_operations}")
         print(f"   - 成功率: {success_rate * 100:.1f}%")

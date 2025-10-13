@@ -44,7 +44,7 @@ class TestCacheWarmupManager:
                 mock_result
             )
 
-            result = await self.warmup_manager.warmup_match_cache(123)
+            _result = await self.warmup_manager.warmup_match_cache(123)
 
             assert result is True
             # 验证缓存设置被调用了两次（比赛信息和特征）
@@ -66,7 +66,7 @@ class TestCacheWarmupManager:
                 mock_result
             )
 
-            result = await self.warmup_manager.warmup_match_cache(999)
+            _result = await self.warmup_manager.warmup_match_cache(999)
 
             assert result is False
             # 验证没有调用缓存设置
@@ -96,7 +96,7 @@ class TestCacheWarmupManager:
                 mock_result
             )
 
-            result = await self.warmup_manager.warmup_team_cache(456)
+            _result = await self.warmup_manager.warmup_team_cache(456)
 
             assert result is True
             # 验证缓存设置被调用了两次（球队信息和特征）
@@ -135,9 +135,9 @@ class TestCacheWarmupManager:
             self.warmup_manager.warmup_match_cache = AsyncMock(return_value=True)
             self.warmup_manager.warmup_team_cache = AsyncMock(return_value=True)
 
-            result = await self.warmup_manager.warmup_upcoming_matches(24)
+            _result = await self.warmup_manager.warmup_upcoming_matches(24)
 
-            assert result == 2
+            assert _result == 2
             # 验证每个比赛和其主客队都被预热了
             assert self.warmup_manager.warmup_match_cache.call_count == 2
             assert self.warmup_manager.warmup_team_cache.call_count == 4
@@ -145,7 +145,7 @@ class TestCacheWarmupManager:
     @pytest.mark.asyncio
     async def test_warmup_historical_stats(self):
         """测试预热历史统计"""
-        result = await self.warmup_manager.warmup_historical_stats(7)
+        _result = await self.warmup_manager.warmup_historical_stats(7)
 
         assert result is True
         # 验证缓存设置被调用
@@ -158,9 +158,9 @@ class TestCacheWarmupManager:
         self.warmup_manager.warmup_upcoming_matches = AsyncMock(return_value=5)
         self.warmup_manager.warmup_historical_stats = AsyncMock(return_value=True)
 
-        result = await self.warmup_manager.full_warmup()
+        _result = await self.warmup_manager.full_warmup()
 
-        assert result == {"upcoming_matches": 5, "historical_stats": 1, "total": 6}
+        assert _result == {"upcoming_matches": 5, "historical_stats": 1, "total": 6}
 
     @pytest.mark.asyncio
     async def test_warmup_on_startup(self):
@@ -176,7 +176,7 @@ class TestCacheWarmupManager:
         ) as mock_warmup_class:
             mock_warmup_class.return_value = mock_warmup_manager
 
-            result = await warmup_cache_on_startup(mock_manager)
+            _result = await warmup_cache_on_startup(mock_manager)
 
-            assert result == {"total": 10}
+            assert _result == {"total": 10}
             mock_warmup_class.assert_called_once_with(mock_manager)

@@ -203,7 +203,7 @@ class TestMatchModel:
 
         # 测试异步保存（如果有）
         if hasattr(sample_match, "async_save"):
-            result = await sample_match.async_save(mock_session)
+            _result = await sample_match.async_save(mock_session)
             assert result is not None
 
     def test_match_comparisons(self, sample_match):

@@ -197,7 +197,7 @@ class TestPerformanceMonitoringIntegration:
             mock_get_settings.return_value = mock_settings
 
             integration = PerformanceMonitoringIntegration()
-            config = integration.get_performance_config()
+            _config = integration.get_performance_config()
 
             assert config["enabled"] is True
             assert config["sample_rate"] == 0.8
@@ -316,7 +316,7 @@ class TestGlobalFunctions:
         mock_app = Mock(spec=FastAPI)
 
         # 测试带应用参数
-        result = setup_performance_monitoring(mock_app)
+        _result = setup_performance_monitoring(mock_app)
 
         # 验证调用
         mock_integration.integrate_with_fastapi.assert_called_once_with(mock_app)
@@ -326,7 +326,7 @@ class TestGlobalFunctions:
         mock_integration.setup_alerting.assert_called_once()
 
         # 返回值应该是集成实例
-        assert result == mock_integration
+        assert _result == mock_integration
 
         # 测试不带应用参数
         mock_integration.reset_mock()

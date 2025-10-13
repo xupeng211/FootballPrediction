@@ -226,7 +226,7 @@ class User:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "User":
         """从字典创建实例"""
-        user = cls(
+        _user = cls(
             id=data.get("id"),
             username=data.get("username", ""),
             email=data.get("email", ""),
@@ -282,7 +282,7 @@ class UserProfile:
     """用户档案（扩展的用户信息）"""
 
     def __init__(self, user: User):
-        self.user = user
+        self._user = user
         self.prediction_history: List[Dict[str, Any]] = []
         self.following: List[int] = []  # 关注的用户ID列表
         self.followers: List[int] = []  # 粉丝列表

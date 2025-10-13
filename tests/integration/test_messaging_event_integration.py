@@ -299,7 +299,7 @@ class TestEventHandlerIntegration:
                     else:
                         handler_method(event)
                     self.processed_events.append(event)
-            except Exception as e:
+            except Exception:
                 # 处理异常
                 pass
 
@@ -310,7 +310,7 @@ class TestEventHandlerIntegration:
     async def test_match_event_handlers(self):
         """测试比赛事件处理器"""
         # 创建比赛事件处理器
-        match_handler = MatchEventHandler()
+        MatchEventHandler()
 
         # 模拟比赛事件
         match_events = [
@@ -427,7 +427,7 @@ class TestMessageReliabilityIntegration:
                     key="test_key",
                 )
                 message_delivered = True
-            except Exception as e:
+            except Exception:
                 retry_count += 1
                 await asyncio.sleep(0.1 * retry_count)  # 指数退避
 

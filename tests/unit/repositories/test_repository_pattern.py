@@ -76,7 +76,7 @@ class MockAsyncSession:
         self.deleted_objects.append(obj)
 
     async def execute(self, query):
-        result = AsyncMock()
+        _result = AsyncMock()
         # 模拟返回结果
         result.scalars.return_value.first.return_value = None
         result.scalars.return_value.all.return_value = []
@@ -133,7 +133,7 @@ class TestReadOnlyPredictionRepository:
     async def test_find_one(self):
         """测试查询单个预测"""
         query_spec = QuerySpec(filters={"id": 1})
-        prediction = await self.repo.find_one(query_spec)
+        _prediction = await self.repo.find_one(query_spec)
 
         # 验证查询被执行
         assert prediction is None  # Mock返回None
@@ -149,7 +149,7 @@ class TestReadOnlyPredictionRepository:
 
     async def test_get_by_id(self):
         """测试根据ID获取预测"""
-        prediction = await self.repo.get_by_id(1)
+        _prediction = await self.repo.get_by_id(1)
 
         # Mock返回None
         assert prediction is None
@@ -181,7 +181,7 @@ class TestReadOnlyPredictionRepository:
 
             self.session.execute.return_value = mock_result
 
-            stats = await self.repo.get_user_statistics(1)
+            _stats = await self.repo.get_user_statistics(1)
 
             assert "total_predictions" in stats
             assert "success_rate" in stats
@@ -189,14 +189,14 @@ class TestReadOnlyPredictionRepository:
 
     async def test_save_not_implemented(self):
         """测试只读仓储不允许保存"""
-        prediction = MagicMock()
+        _prediction = MagicMock()
 
         with pytest.raises(NotImplementedError):
             await self.repo.save(prediction)
 
     async def test_delete_not_implemented(self):
         """测试只读仓储不允许删除"""
-        prediction = MagicMock()
+        _prediction = MagicMock()
 
         with pytest.raises(NotImplementedError):
             await self.repo.delete(prediction)
@@ -213,7 +213,7 @@ class TestPredictionRepository:
 
     async def test_create_prediction(self):
         """测试创建预测"""
-        data = {
+        _data = {
             "match_id": 1,
             "user_id": 1,
             "predicted_home": 2,
@@ -247,9 +247,9 @@ class TestPredictionRepository:
                 mock_prediction.id = 1
                 mock_get.return_value = mock_prediction
 
-                result = await self.repo.update_by_id(1, update_data)
+                _result = await self.repo.update_by_id(1, update_data)
 
-                assert result == mock_prediction
+                assert _result == mock_prediction
                 assert self.session.committed
 
     async def test_bulk_create(self):
@@ -283,7 +283,7 @@ class TestPredictionRepository:
             mock_delete.return_value.where.return_value = mock_delete.return_value
             self.session.execute.return_value.rowcount = 1
 
-            result = await self.repo.delete_by_id(1)
+            _result = await self.repo.delete_by_id(1)
 
             assert result is True
             assert self.session.committed
@@ -300,7 +300,7 @@ class TestUserRepository:
 
     async def test_create_user(self):
         """测试创建用户"""
-        data = {
+        _data = {
             "username": "testuser",
             "email": "test@example.com",
             "password_hash": "hashed_password",
@@ -332,7 +332,7 @@ class TestUserRepository:
             mock_user.created_at = datetime.utcnow() - timedelta(days=30)
             mock_get.return_value = mock_user
 
-            stats = await self.repo.get_user_statistics(1)
+            _stats = await self.repo.get_user_statistics(1)
 
         assert "total_predictions" in stats
         assert "predictions_per_day" in stats
@@ -348,7 +348,7 @@ class TestUserRepository:
             with patch("src.repositories.user.datetime") as mock_datetime:
                 mock_datetime.utcnow.return_value = datetime(2024, 1, 1)
 
-                result = await self.repo.update_last_login(1)
+                _result = await self.repo.update_last_login(1)
 
                 assert result is True
                 assert self.session.committed
@@ -361,7 +361,7 @@ class TestUserRepository:
             )
             self.session.execute.return_value.rowcount = 1
 
-            result = await self.repo.deactivate_user(1)
+            _result = await self.repo.deactivate_user(1)
 
             assert result is True
             assert self.session.committed
@@ -378,19 +378,19 @@ class TestMatchRepository:
 
     async def test_get_upcoming_matches(self):
         """测试获取即将到来的比赛"""
-        matches = await self.repo.get_upcoming_matches(days=7, limit=10)
+        _matches = await self.repo.get_upcoming_matches(days=7, limit=10)
 
         assert isinstance(matches, list)
 
     async def test_get_live_matches(self):
         """测试获取正在进行的比赛"""
-        matches = await self.repo.get_live_matches()
+        _matches = await self.repo.get_live_matches()
 
         assert isinstance(matches, list)
 
     async def test_get_matches_by_team(self):
         """测试获取指定队伍的比赛"""
-        matches = await self.repo.get_matches_by_team(team_id=1, limit=20)
+        _matches = await self.repo.get_matches_by_team(team_id=1, limit=20)
 
         assert isinstance(matches, list)
 
@@ -409,9 +409,9 @@ class TestMatchRepository:
                 with patch("src.repositories.match.datetime") as mock_datetime:
                     mock_datetime.utcnow.return_value = datetime(2024, 1, 1)
 
-                    result = await self.repo.start_match(1)
+                    _result = await self.repo.start_match(1)
 
-                    assert result == mock_match
+                    assert _result == mock_match
                     assert self.session.committed
 
     async def test_finish_match(self):
@@ -429,9 +429,9 @@ class TestMatchRepository:
                 with patch("src.repositories.match.datetime") as mock_datetime:
                     mock_datetime.utcnow.return_value = datetime(2024, 1, 1)
 
-                    result = await self.repo.finish_match(1, 2, 1)
+                    _result = await self.repo.finish_match(1, 2, 1)
 
-                    assert result == mock_match
+                    assert _result == mock_match
                     assert self.session.committed
 
     async def test_get_match_statistics(self):
@@ -456,7 +456,7 @@ class TestMatchRepository:
 
         self.session.execute.return_value = mock_result
 
-        stats = await self.repo.get_match_statistics(1)
+        _stats = await self.repo.get_match_statistics(1)
 
         assert "match_info" in stats
         assert "predictions" in stats
@@ -621,7 +621,7 @@ class TestRepositoryIntegration:
         repo = PredictionRepository(session, Prediction)
 
         # 1. 创建预测
-        data = {
+        _data = {
             "match_id": 1,
             "user_id": 1,
             "predicted_home": 2,
@@ -671,5 +671,5 @@ class TestRepositoryIntegration:
             await repo.delete(MagicMock())
 
         # 读取操作应该正常
-        prediction = await repo.get_by_id(1)
+        _prediction = await repo.get_by_id(1)
         assert prediction is None  # Mock返回None

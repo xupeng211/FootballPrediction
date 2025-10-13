@@ -93,7 +93,7 @@ class PredictionFacade:
             external_data = await self._collect_external_data(request.match_id)
 
             # 3. 生成预测
-            prediction = await self._generate_prediction(match, external_data, request)
+            _prediction = await self._generate_prediction(match, external_data, request)
 
             # 4. 评估价值
             value_assessment = await self._assess_value(prediction, external_data)
@@ -107,7 +107,7 @@ class PredictionFacade:
             await self._save_prediction(prediction, request.user_id)
 
             return PredictionResult(
-                prediction=prediction,
+                _prediction =prediction,
                 confidence=prediction.get("confidence", 0.0),
                 value_assessment=value_assessment,
                 recommendations=recommendations,
@@ -165,7 +165,7 @@ class PredictionFacade:
 
     async def _collect_external_data(self, match_id: int) -> Dict[str, Any]:
         """收集外部数据"""
-        data = {}
+        _data = {}
         try:
             # 收集比赛相关数据
             match_data = await self.data_collector.collect_match_data(match_id)
@@ -181,7 +181,7 @@ class PredictionFacade:
         """生成预测"""
         # 这里可以集成实际的预测算法
         # 现在返回模拟数据
-        prediction = {
+        _prediction = {
             "match_id": request.match_id,
             "algorithm": request.algorithm,
             "prediction": "home_win",

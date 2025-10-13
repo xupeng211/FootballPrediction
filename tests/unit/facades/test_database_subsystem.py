@@ -26,7 +26,7 @@ class TestDatabaseSubsystem:
 
     async def test_execute_query(self, subsystem):
         """测试执行查询"""
-        result = await subsystem.execute_query("SELECT * FROM test", {"id": 1})
+        _result = await subsystem.execute_query("SELECT * FROM test", {"id": 1})
         assert result["query"] == "SELECT * FROM test"
         assert result["params"] == {"id": 1}
         assert result["result"] == "success"
@@ -34,7 +34,7 @@ class TestDatabaseSubsystem:
 
     async def test_execute_query_without_params(self, subsystem):
         """测试无参数查询"""
-        result = await subsystem.execute_query("SELECT NOW()")
+        _result = await subsystem.execute_query("SELECT NOW()")
         assert result["query"] == "SELECT NOW()"
         assert result["params"] is None
         assert subsystem.query_count == 1

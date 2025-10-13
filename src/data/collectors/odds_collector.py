@@ -181,7 +181,7 @@ class OddsCollector(DataCollector):
             else:
                 status = "failed"
 
-            result = CollectionResult(
+            _result = CollectionResult(
                 data_source=self.data_source,
                 collection_type="odds",
                 records_collected=total_collected,

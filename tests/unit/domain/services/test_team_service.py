@@ -31,7 +31,7 @@ def service() -> TeamDomainService:
 @pytest.fixture
 def team() -> Team:
     team = Team(id=1, name="Arsenal", country="England")
-    team.stats = TeamStats(matches_played=0, wins=0, draws=0, losses=0)
+    team._stats = TeamStats(matches_played=0, wins=0, draws=0, losses=0)
     return team
 
 
@@ -82,10 +82,10 @@ class TestTeamService:
 
     def test_should_calculate_league_table(self, service, team):
         second_team = Team(id=2, name="Chelsea", country="England")
-        second_team.stats = TeamStats(
+        second_team._stats = TeamStats(
             matches_played=1, wins=1, draws=0, losses=0, goals_for=2, goals_against=0
         )
-        team.stats = TeamStats(
+        team._stats = TeamStats(
             matches_played=1, wins=0, draws=1, losses=0, goals_for=1, goals_against=1
         )
 

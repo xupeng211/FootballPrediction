@@ -194,11 +194,11 @@ class TestUtilsExtra:
             from utils import _, set_language, get_current_language
 
             # 测试翻译函数
-            result = _("test_key")
+            _result = _("test_key")
             assert isinstance(result, str)
 
             # 测试设置语言
-            result = set_language("en")
+            _result = set_language("en")
             # 可能返回None或其他值
 
             # 测试获取当前语言
@@ -285,7 +285,7 @@ class TestStandardLibraryCoverage:
     def test_json_operations(self):
         """测试JSON操作"""
         # 测试json模块
-        data = {"key": "value", "number": 123}
+        _data = {"key": "value", "number": 123}
         json_str = json.dumps(data)
         parsed = json.loads(json_str)
         assert parsed == data
@@ -500,8 +500,8 @@ class TestStandardLibraryCoverage:
             return "async result"
 
         # 运行异步函数
-        result = asyncio.run(async_func())
-        assert result == "async result"
+        _result = asyncio.run(async_func())
+        assert _result == "async result"
 
     def test_exception_handling(self):
         """测试异常处理"""
@@ -544,8 +544,8 @@ class TestStandardLibraryCoverage:
         assert match.group() == "123-456-7890"
 
         # 测试替换
-        result = re.sub(r"\d+", "X", "abc123def")
-        assert result == "abcXdef"
+        _result = re.sub(r"\d+", "X", "abc123def")
+        assert _result == "abcXdef"
 
     def test_iterators_and_generators(self):
         """测试迭代器和生成器"""

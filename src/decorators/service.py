@@ -78,7 +78,7 @@ class DecoratorService:
         # 3. 添加指定的装饰器
         if decorator_names:
             for name in decorator_names:
-                config = self.factory.get_config(name)
+                _config = self.factory.get_config(name)
                 if config:
                     configs_to_apply.append(config)
 
@@ -159,7 +159,7 @@ class DecoratorService:
 
     def get_all_stats(self) -> Dict[str, Any]:
         """获取所有装饰器的统计信息"""
-        stats = {"total_functions": len(self._decorated_functions), "functions": {}}
+        _stats = {"total_functions": len(self._decorated_functions), "functions": {}}
 
         for func_name, component in self._decorated_functions.items():
             stats["functions"][func_name] = component.get_all_stats()  # type: ignore
