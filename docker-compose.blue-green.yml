@@ -1,0 +1,79 @@
+# 蓝绿部署Docker Compose配置
+# 使用环境变量来区分blue和green环境
+
+version: '3.8'
+
+services:
+  app:
+    image: football-prediction:${DEPLOY_TAG:-latest}
+    container_name: football-${DEPLOY_ENV:-blue}
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      - ENVIRONMENT=production
+      - DEPLOY_ENV=${DEPLOY_ENV:-blue}
+    volumes:
+      - ./logs:/var/log/football-prediction
+      - ./uploads:/app/uploads
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      - db
+      - redis
+    networks:
+      - football-${DEPLOY_ENV:-blue}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  db:
+    image: postgres:15-alpine
+    container_name: football-${DEPLOY_ENV:-blue}-db
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_${DEPLOY_ENV:-blue}_data:/var/lib/postgresql/data
+      - ./backups:/backups
+    networks:
+      - football-${DEPLOY_ENV:-blue}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: football-${DEPLOY_ENV:-blue}-redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_${DEPLOY_ENV:-blue}_data:/data
+    networks:
+      - football-${DEPLOY_ENV:-blue}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_blue_data:
+  postgres_green_data:
+  redis_blue_data:
+  redis_green_data:
+
+networks:
+  football-blue:
+    driver: bridge
+  football-green:
+    driver: bridge
