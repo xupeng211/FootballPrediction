@@ -397,7 +397,7 @@ class ProcessingCache:
         for operation in operations:
             for i, data in enumerate(sample_data[:5]):  # 每个操作预热5个样本
                 try:
-                    self.logger.debug(f"预热 {operation} 样本 {i+1}")
+                    self.logger.debug(f"预热 {operation} 样本 {i + 1}")
 
                     # 检查是否已缓存
                     cached = await self.get_cached_result(operation, data)

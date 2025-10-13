@@ -1,0 +1,138 @@
+{
+  "quality_gate": {
+    "min_success_rate": 95.0,
+    "max_failed_tests": 0,
+    "max_test_duration": 3600,
+    "required_coverage": 30.0
+  },
+  "notifications": {
+    "slack": {
+      "enabled": true,
+      "webhook_url": "${SLACK_WEBHOOK_URL}",
+      "channels": ["#ci-cd", "#dev-alerts"],
+      "mention_on_failure": true
+    },
+    "email": {
+      "enabled": true,
+      "smtp_host": "${SMTP_HOST}",
+      "smtp_port": "${SMTP_PORT}",
+      "smtp_user": "${SMTP_USER}",
+      "smtp_pass": "${SMTP_PASS}",
+      "to_emails": ["dev-team@example.com", "qa@example.com"],
+      "cc_emails": ["manager@example.com"]
+    },
+    "github": {
+      "enabled": true,
+      "token": "${GITHUB_TOKEN}",
+      "repo": "${GITHUB_REPOSITORY}",
+      "auto_assign": ["@qa-team", "@dev-lead"],
+      "labels": ["nightly-tests", "automated"]
+    }
+  },
+  "test_schedule": {
+    "timezone": "UTC",
+    "time": "18:00",
+    "weekends": false,
+    "holidays": ["2024-12-25", "2025-01-01"]
+  },
+  "test_types": {
+    "unit": {
+      "enabled": true,
+      "timeout": 600,
+      "parallel": 4,
+      "retry": 1,
+      "marker": "unit"
+    },
+    "integration": {
+      "enabled": true,
+      "timeout": 1200,
+      "parallel": 2,
+      "retry": 2,
+      "marker": "integration",
+      "services": ["postgres", "redis", "kafka"]
+    },
+    "e2e": {
+      "enabled": true,
+      "timeout": 1800,
+      "parallel": 1,
+      "retry": 1,
+      "marker": "e2e",
+      "environment": "staging"
+    },
+    "performance": {
+      "enabled": true,
+      "timeout": 900,
+      "parallel": 1,
+      "retry": 0,
+      "baseline_comparison": true,
+      "threshold": 10
+    }
+  },
+  "report_paths": {
+    "unit": "reports/unit-results.json",
+    "integration": "reports/integration-results.json",
+    "e2e": "reports/e2e-results.json",
+    "performance": "reports/benchmark-summary.json",
+    "coverage": "reports/coverage.json"
+  },
+  "artifacts": {
+    "retention_days": 30,
+    "compress": true,
+    "include": [
+      "reports/*.html",
+      "reports/*.xml",
+      "reports/*.json",
+      "test-results/**/*",
+      "screenshots/**/*",
+      "logs/**/*"
+    ]
+  },
+  "cleanup": {
+    "enabled": true,
+    "schedule": "0 2 * * 0",
+    "retention_days": 90,
+    "keep_failed_runs": true
+  },
+  "escalation": {
+    "rules": [
+      {
+        "condition": "failed_runs >= 3",
+        "action": "create_incident",
+        "severity": "high"
+      },
+      {
+        "condition": "success_rate < 90",
+        "action": "notify_management",
+        "severity": "medium"
+      },
+      {
+        "condition": "coverage_drop > 5",
+        "action": "create_ticket",
+        "severity": "low"
+      }
+    ]
+  },
+  "integrations": {
+    "testrail": {
+      "enabled": false,
+      "url": "${TESTRAIL_URL}",
+      "username": "${TESTRAIL_USERNAME}",
+      "password": "${TESTRAIL_PASSWORD}",
+      "project_id": 1,
+      "suite_id": 1
+    },
+    "jira": {
+      "enabled": false,
+      "url": "${JIRA_URL}",
+      "username": "${JIRA_USERNAME}",
+      "token": "${JIRA_TOKEN}",
+      "project_key": "FP"
+    },
+    "sonarqube": {
+      "enabled": false,
+      "url": "${SONAR_URL}",
+      "token": "${SONAR_TOKEN}",
+      "project_key": "football-prediction"
+    }
+  }
+}

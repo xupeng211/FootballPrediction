@@ -110,7 +110,7 @@ class HistoricalStrategy(PredictionStrategy):
         current_year = datetime.now().year
 
         for year in range(current_year - self._max_historical_years, current_year + 1):
-            season = f"{year-1}/{year}"
+            season = f"{year - 1}/{year}"
             self._season_patterns[season] = []
 
             # 模拟生成历史比赛数据

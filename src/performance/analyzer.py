@@ -135,7 +135,7 @@ class PerformanceAnalyzer:
                         category="api",
                         severity="high",
                         title="API响应时间不稳定",
-                        description=f"P95响应时间({p95_time:.2f}s)是平均值的{p95_time/avg_time:.1f}倍",
+                        description=f"P95响应时间({p95_time:.2f}s)是平均值的{p95_time / avg_time:.1f}倍",
                         impact="部分用户响应时间过长，体验不一致",
                         recommendation="检查是否存在性能尖峰，优化异常情况处理",
                         metrics={"p95_time": p95_time, "avg_time": avg_time},
@@ -276,7 +276,7 @@ class PerformanceAnalyzer:
                     category="cache",
                     severity="medium",
                     title="缓存读取时间过长",
-                    description=f"缓存平均读取时间{avg_hit_time*1000:.2f}ms",
+                    description=f"缓存平均读取时间{avg_hit_time * 1000:.2f}ms",
                     impact="影响缓存效果，增加请求延迟",
                     recommendation="检查缓存服务器性能、网络延迟、序列化方式",
                     metrics={"avg_hit_time": avg_hit_time},
@@ -289,7 +289,7 @@ class PerformanceAnalyzer:
                     category="cache",
                     severity="medium",
                     title="缓存写入时间过长",
-                    description=f"缓存平均写入时间{avg_set_time*1000:.2f}ms",
+                    description=f"缓存平均写入时间{avg_set_time * 1000:.2f}ms",
                     impact="影响写操作性能",
                     recommendation="优化缓存写入策略、考虑批量写入、异步写入",
                     metrics={"avg_set_time": avg_set_time},
@@ -412,7 +412,7 @@ class PerformanceAnalyzer:
                         category="tasks",
                         severity="medium",
                         title=f"任务{task_name}执行时间过长",
-                        description=f"任务{task_name}平均执行时间{avg_time/60:.1f}分钟",
+                        description=f"任务{task_name}平均执行时间{avg_time / 60:.1f}分钟",
                         impact="占用系统资源时间过长",
                         recommendation="优化任务逻辑，考虑拆分为小任务",
                         metrics={"task_name": task_name, "avg_time": avg_time},
@@ -715,18 +715,18 @@ class PerformanceAnalyzer:
         <body>
             <div class="header">
                 <h1>性能分析报告</h1>
-                <p>生成时间: {report['timestamp']}</p>
+                <p>生成时间: {report["timestamp"]}</p>
                 <div class="score">
-                    性能评分: {report['performance_score']['score']}/100 ({report['performance_score']['grade']})
+                    性能评分: {report["performance_score"]["score"]}/100 ({report["performance_score"]["grade"]})
                 </div>
             </div>
 
             <h2>问题摘要</h2>
             <ul>
-                <li>关键问题: {report['summary']['critical_issues']}</li>
-                <li>高优先级问题: {report['summary']['high_issues']}</li>
-                <li>中优先级问题: {report['summary']['medium_issues']}</li>
-                <li>低优先级问题: {report['summary']['low_issues']}</li>
+                <li>关键问题: {report["summary"]["critical_issues"]}</li>
+                <li>高优先级问题: {report["summary"]["high_issues"]}</li>
+                <li>中优先级问题: {report["summary"]["medium_issues"]}</li>
+                <li>低优先级问题: {report["summary"]["low_issues"]}</li>
             </ul>
 
             <h2>性能洞察</h2>
@@ -734,11 +734,11 @@ class PerformanceAnalyzer:
 
         for insight in report["insights"]:
             html += f"""
-            <div class="insight {insight['severity']}">
-                <h3 class="{insight['severity']}">{insight['title']}</h3>
-                <p><strong>描述:</strong> {insight['description']}</p>
-                <p><strong>影响:</strong> {insight['impact']}</p>
-                <p><strong>建议:</strong> {insight['recommendation']}</p>
+            <div class="insight {insight["severity"]}">
+                <h3 class="{insight["severity"]}">{insight["title"]}</h3>
+                <p><strong>描述:</strong> {insight["description"]}</p>
+                <p><strong>影响:</strong> {insight["impact"]}</p>
+                <p><strong>建议:</strong> {insight["recommendation"]}</p>
             </div>
             """
 

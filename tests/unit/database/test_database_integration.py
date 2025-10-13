@@ -183,7 +183,7 @@ class TestDatabaseIntegration:
         teams = []
         for i in range(5):
             team = Team(
-                team_name=f"Team {i+1}", team_code=f"T{i+1}", country="Testland"
+                team_name=f"Team {i + 1}", team_code=f"T{i + 1}", country="Testland"
             )
             teams.append(team)
 
