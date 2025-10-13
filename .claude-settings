@@ -1,0 +1,12 @@
+# Claude Code 设置
+# 语言偏好：简体中文
+language: zh-CN
+
+# 响应风格：简洁
+response_style: concise
+
+# 代码注释语言：简体中文
+code_comments_language: zh-CN
+
+# 文档语言：简体中文
+documentation_language: zh-CN
