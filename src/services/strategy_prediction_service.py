@@ -117,7 +117,7 @@ class StrategyPredictionService:
         prediction_output = await strategy.predict(prediction_input)
 
         # 使用领域服务创建预测
-        prediction = self._prediction_domain_service.create_prediction(
+        _prediction = self._prediction_domain_service.create_prediction(
             user_id=user_id,
             match=match,
             predicted_home=prediction_output.predicted_home_score,
@@ -156,7 +156,7 @@ class StrategyPredictionService:
         strategy = await self._get_or_create_strategy(strategy_name)
 
         # 批量获取比赛信息
-        matches = await self._match_repository.get_by_ids(match_ids)
+        _matches = await self._match_repository.get_by_ids(match_ids)
         if not matches:
             raise ValueError("没有找到有效的比赛")
 
@@ -182,7 +182,7 @@ class StrategyPredictionService:
         # 创建预测对象
         predictions = []
         for context, output in zip(contexts, prediction_outputs):
-            prediction = self._prediction_domain_service.create_prediction(
+            _prediction = self._prediction_domain_service.create_prediction(
                 user_id=user_id,
                 match=context.match,
                 predicted_home=output.predicted_home_score,

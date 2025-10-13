@@ -13,7 +13,7 @@ class TestRetrySimpleEnhanced:
 
     def test_retry_config_creation(self):
         """测试RetryConfig创建"""
-        config = RetryConfig(
+        _config = RetryConfig(
             max_attempts=5,
             base_delay=0.1,
             max_delay=10.0,
@@ -32,7 +32,7 @@ class TestRetrySimpleEnhanced:
 
     def test_retry_config_default_values(self):
         """测试RetryConfig默认值"""
-        config = RetryConfig()
+        _config = RetryConfig()
 
         assert config.max_attempts == 3
         assert config.base_delay == 1.0
@@ -48,8 +48,8 @@ class TestRetrySimpleEnhanced:
         def successful_function():
             return "success"
 
-        result = successful_function()
-        assert result == "success"
+        _result = successful_function()
+        assert _result == "success"
 
     def test_retry_decorator_eventual_success(self):
         """测试重试装饰器（最终成功）"""
@@ -63,8 +63,8 @@ class TestRetrySimpleEnhanced:
                 raise ValueError("Temporary failure")
             return "success"
 
-        result = flaky_function()
-        assert result == "success"
+        _result = flaky_function()
+        assert _result == "success"
         assert attempt_count == 3
 
     def test_retry_decorator_all_attempts_fail(self):
@@ -129,8 +129,8 @@ class TestRetrySimpleEnhanced:
                 raise ValueError("Async temporary failure")
             return "async success"
 
-        result = await async_flaky_function()
-        assert result == "async success"
+        _result = await async_flaky_function()
+        assert _result == "async success"
         assert attempt_count == 3
 
     @pytest.mark.asyncio
@@ -271,8 +271,8 @@ class TestRetrySimpleEnhanced:
         def successful_function():
             return "success"
 
-        result = successful_function()
-        assert result == "success"
+        _result = successful_function()
+        assert _result == "success"
         assert breaker.state == CircuitState.CLOSED
         assert breaker.failure_count == 0
 
@@ -372,8 +372,8 @@ class TestRetrySimpleEnhanced:
         time.sleep(0.15)
 
         # 下次调用应该成功并关闭熔断器
-        result = sometimes_failing_function()
-        assert result == "success"
+        _result = sometimes_failing_function()
+        assert _result == "success"
         assert breaker.state == CircuitState.CLOSED
         assert breaker.failure_count == 0
 

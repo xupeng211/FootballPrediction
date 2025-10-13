@@ -232,11 +232,11 @@ class TestParameterizedInput:
         try:
             # 尝试处理无效数据
             if invalid_data is None:
-                result = None
+                _result = None
             elif isinstance(invalid_data, str):
-                result = invalid_data.upper()
+                _result = invalid_data.upper()
             else:
-                result = str(invalid_data)
+                _result = str(invalid_data)
             # 确保没有崩溃
             assert result is not None
         except Exception:

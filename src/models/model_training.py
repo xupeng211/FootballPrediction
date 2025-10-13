@@ -14,7 +14,7 @@ class BaselineModelTrainer:
         self.mlflow_tracking_uri = kwargs.get(
             "mlflow_tracking_uri", "http://localhost:5000"
         )
-        self.config = {}
+        self._config = {}
 
     def train(self, *args, **kwargs):
         """训练模型（占位符实现）"""

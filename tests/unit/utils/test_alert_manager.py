@@ -78,7 +78,7 @@ class TestAlertManager:
 
         alert_manager.notifiers = [mock_notifier]
 
-        result = await alert_manager.send_alert(sample_alert)
+        _result = await alert_manager.send_alert(sample_alert)
 
         assert result is True
         mock_notifier.send.assert_called_once_with(sample_alert)
@@ -96,7 +96,7 @@ class TestAlertManager:
             mock_pagerduty_notifier,
         ]
 
-        result = await alert_manager.send_alert(sample_alert)
+        _result = await alert_manager.send_alert(sample_alert)
 
         assert result is True
         mock_email_notifier.send.assert_called_once()
@@ -111,7 +111,7 @@ class TestAlertManager:
 
         alert_manager.notifiers = [mock_notifier]
 
-        result = await alert_manager.send_alert(sample_alert)
+        _result = await alert_manager.send_alert(sample_alert)
 
         assert result is False
         alert_manager.logger.error.assert_called()
@@ -347,7 +347,7 @@ class TestAlertManager:
                 severity=AlertSeverity.HIGH,
                 message="Database connection failed",
                 source="database",
-                metadata={"error_code": "DB_CONN_ERROR"},
+                _metadata ={"error_code": "DB_CONN_ERROR"},
             )
             similar_alerts.append(alert)
 
@@ -398,7 +398,7 @@ class TestAlertManager:
         alert_manager.notifiers = [mock_notifier]
 
         digest = alert_manager.create_digest(alerts)
-        result = await alert_manager.send_digest(digest)
+        _result = await alert_manager.send_digest(digest)
 
         assert result is True
         mock_notifier.send.assert_called_once()
@@ -437,7 +437,7 @@ class TestAlertManager:
             )
         )
 
-        stats = alert_manager.get_alert_statistics()
+        _stats = alert_manager.get_alert_statistics()
 
         assert stats["total_alerts"] == 3
         assert stats["by_type"]["error"] == 2

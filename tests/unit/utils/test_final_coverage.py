@@ -245,7 +245,7 @@ class TestHelpersModule:
             assert len(truncated) <= 13  # 包括省略号
 
             # 测试深度获取
-            data = {"a": {"b": {"c": 1}}}
+            _data = {"a": {"b": {"c": 1}}}
             value = Helpers.deep_get(data, "a.b.c")
             assert value == 1
 
@@ -477,7 +477,7 @@ class TestI18nModule:
 
             # 测试设置语言
             if hasattr(i18n, "set_language"):
-                result = i18n.set_language("en")
+                _result = i18n.set_language("en")
                 # 可能返回bool或None
 
             # 测试获取当前语言
@@ -599,20 +599,20 @@ class TestWarningFiltersModule:
 
             # 测试过滤废弃警告
             if hasattr(WarningFilters, "filter_deprecation_warnings"):
-                result = WarningFilters.filter_deprecation_warnings()
+                _result = WarningFilters.filter_deprecation_warnings()
                 # 可能返回None或布尔值
 
             # 测试过滤导入警告
             if hasattr(WarningFilters, "filter_import_warnings"):
-                result = WarningFilters.filter_import_warnings()
+                _result = WarningFilters.filter_import_warnings()
 
             # 测试过滤用户警告
             if hasattr(WarningFilters, "filter_user_warnings"):
-                result = WarningFilters.filter_user_warnings()
+                _result = WarningFilters.filter_user_warnings()
 
             # 测试设置警告
             if hasattr(WarningFilters, "setup_warnings"):
-                result = WarningFilters.setup_warnings()
+                _result = WarningFilters.setup_warnings()
         except (ImportError, AttributeError):
             pytest.skip("WarningFilters methods not available")
 
@@ -636,7 +636,7 @@ class TestConfigLoaderModule:
 
             # 测试加载配置
             if hasattr(ConfigLoader, "load_config"):
-                config = ConfigLoader.load_config()
+                _config = ConfigLoader.load_config()
                 # 可能返回dict或None
 
             # 测试获取配置值
@@ -648,11 +648,11 @@ class TestConfigLoaderModule:
 
             # 测试设置配置值
             if hasattr(ConfigLoader, "set_config_value"):
-                result = ConfigLoader.set_config_value("test_key", "test_value")
+                _result = ConfigLoader.set_config_value("test_key", "test_value")
 
             # 测试重新加载配置
             if hasattr(ConfigLoader, "reload_config"):
-                result = ConfigLoader.reload_config()
+                _result = ConfigLoader.reload_config()
 
             # 测试获取环境配置
             if hasattr(ConfigLoader, "get_env_config"):

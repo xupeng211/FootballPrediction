@@ -110,7 +110,7 @@ class TestObserverPattern:
         service.attach(logging_observer)
 
         # 模拟服务操作
-        result = await service.predict_match(123)
+        _result = await service.predict_match(123)
 
         assert result["match_id"] == 123
         assert result["prediction"] == "home_win"
@@ -142,7 +142,7 @@ class TestDecoratorPattern:
         base_service = DatabaseService("test")
         decorated_service = LoggingDecorator(base_service)
 
-        result = await decorated_service.execute("SELECT * FROM test")
+        _result = await decorated_service.execute("SELECT * FROM test")
 
         assert result["query"] == "SELECT * FROM test"
         assert result["result"] == "success"
@@ -153,7 +153,7 @@ class TestDecoratorPattern:
         base_service = DatabaseService("test")
         decorated_service = RetryDecorator(base_service, max_retries=3)
 
-        result = await decorated_service.execute("SELECT * FROM test")
+        _result = await decorated_service.execute("SELECT * FROM test")
 
         assert result["result"] == "success"
 
@@ -192,7 +192,7 @@ class TestDecoratorPattern:
 
         decorated_service = ValidationDecorator(base_service, validators=[validator])
 
-        result = await decorated_service.execute("SELECT * FROM test")
+        _result = await decorated_service.execute("SELECT * FROM test")
 
         assert result["result"] == "success"
 
@@ -226,7 +226,7 @@ class TestDecoratorPattern:
 
         service = ValidationDecorator(service, validators=[validator])
 
-        result = await service.execute("SELECT * FROM test")
+        _result = await service.execute("SELECT * FROM test")
 
         assert result["result"] == "success"
 
@@ -250,8 +250,8 @@ class TestDecoratorPattern:
                 )  # 使用RuntimeError而不是Exception
             return "success"
 
-        result = await failing_function()
-        assert result == "success"
+        _result = await failing_function()
+        assert _result == "success"
         assert attempt_count == 3
 
     @pytest.mark.asyncio
@@ -262,8 +262,8 @@ class TestDecoratorPattern:
         async def test_function(x):
             return x * 2
 
-        result = await test_function(5)
-        assert result == 10
+        _result = await test_function(5)
+        assert _result == 10
 
 
 @pytest.mark.skipif(not PATTERNS_AVAILABLE, reason="Patterns module not available")

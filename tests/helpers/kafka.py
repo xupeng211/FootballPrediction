@@ -35,7 +35,7 @@ class MockKafkaProducer:
     """记录消息的内存 Kafka Producer"""
 
     def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
-        self.config = config or {}
+        self._config = config or {}
         self.messages: List[Tuple[str, Optional[str], bytes]] = []
 
     def produce(
@@ -60,7 +60,7 @@ class MockKafkaConsumer:
         messages: Optional[List[MockKafkaMessage]] = None,
     ) -> None:
         self.topics = topics
-        self.config = config or {}
+        self._config = config or {}
         self._messages = messages or []
         self._message_index = 0
 

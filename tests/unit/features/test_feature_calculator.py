@@ -37,19 +37,19 @@ class TestFeatureCalculator:
 
         # Then
         assert calc.db_manager is not None
-        assert calc.config == {}
+        assert calc._config == {}
         assert calc.features == []
 
     def test_initialization_with_config(self):
         """测试：使用配置初始化特征计算器"""
         # Given
-        config = {"cache_size": 1000, "timeout": 30}
+        _config = {"cache_size": 1000, "timeout": 30}
 
         # When
-        calc = FeatureCalculator(config=config)
+        calc = FeatureCalculator(_config =config)
 
         # Then
-        assert calc.config == config
+        assert calc._config == config
 
     @pytest.mark.asyncio
     async def test_calculate_recent_performance_features_with_no_matches(
@@ -166,7 +166,7 @@ class TestFeatureCalculator:
     def test_config_property(self):
         """测试：配置属性"""
         # Given
-        config = {"test": "value"}
+        _config = {"test": "value"}
         calc = FeatureCalculator(config)
 
         # When/Then

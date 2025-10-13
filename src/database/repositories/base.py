@@ -88,7 +88,7 @@ class BaseRepository(ABC, Generic[T]):
             stmt = select(self.model_class).where(
                 getattr(self.model_class, "id") == obj_id
             )  # type: ignore
-            result = await sess.execute(stmt)
+            _result = await sess.execute(stmt)
             return result.scalar_one_or_none()
 
     async def get_all(
@@ -119,7 +119,7 @@ class BaseRepository(ABC, Generic[T]):
             if limit:
                 stmt = stmt.limit(limit)
 
-            result = await sess.execute(stmt)
+            _result = await sess.execute(stmt)
             return list(result.scalars().all())  # type: ignore
 
     async def update(
@@ -150,7 +150,7 @@ class BaseRepository(ABC, Generic[T]):
                 .returning(self.model_class)
             )
 
-            result = await sess.execute(stmt)
+            _result = await sess.execute(stmt)
             await sess.commit()
 
             return result.scalar_one_or_none()
@@ -175,7 +175,7 @@ class BaseRepository(ABC, Generic[T]):
             stmt = delete(self.model_class).where(
                 getattr(self.model_class, "id") == obj_id
             )  # type: ignore
-            result = await sess.execute(stmt)
+            _result = await sess.execute(stmt)
             await sess.commit()
 
             return result.rowcount > 0
@@ -226,7 +226,7 @@ class BaseRepository(ABC, Generic[T]):
             if limit:
                 stmt = stmt.limit(limit)
 
-            result = await sess.execute(stmt)
+            _result = await sess.execute(stmt)
             return list(result.scalars().all())  # type: ignore
 
     async def find_one_by(
@@ -272,7 +272,7 @@ class BaseRepository(ABC, Generic[T]):
                     if hasattr(self.model_class, key):
                         stmt = stmt.where(getattr(self.model_class, key) == value)
 
-            result = await sess.execute(stmt)
+            _result = await sess.execute(stmt)
             return len(result.scalars().all())
 
     async def exists(
@@ -349,7 +349,7 @@ class BaseRepository(ABC, Generic[T]):
                         .where(getattr(self.model_class, "id") == obj_id)  # type: ignore
                         .values(**update_data)
                     )
-                    result = await sess.execute(stmt)
+                    _result = await sess.execute(stmt)
                     updated_count += result.rowcount
 
             await sess.commit()
@@ -375,7 +375,7 @@ class BaseRepository(ABC, Generic[T]):
             stmt = delete(self.model_class).where(
                 getattr(self.model_class, "id").in_(ids)
             )  # type: ignore
-            result = await sess.execute(stmt)
+            _result = await sess.execute(stmt)
             await sess.commit()
 
             return result.rowcount
@@ -406,7 +406,7 @@ class BaseRepository(ABC, Generic[T]):
             try:
                 results = []
                 for operation in operations:
-                    result = await operation(sess)
+                    _result = await operation(sess)
                     results.append(result)
 
                 await sess.commit()

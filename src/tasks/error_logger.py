@@ -286,12 +286,12 @@ class TaskErrorLogger:
                 error_count_sql = text(
                     query_builder.build_error_statistics_query(hours)  # type: ignore
                 )
-                result = await session.execute(error_count_sql)
+                _result = await session.execute(error_count_sql)
                 total_errors = result.scalar() or 0
 
                 # 按任务类型统计错误
                 task_errors_sql = text(query_builder.build_task_errors_query(hours))  # type: ignore
-                result = await session.execute(task_errors_sql)
+                _result = await session.execute(task_errors_sql)
                 task_errors = [
                     {"task_name": row.task_name, "error_count": row.error_count}
                     for row in result
@@ -299,7 +299,7 @@ class TaskErrorLogger:
 
                 # 按错误类型统计
                 type_errors_sql = text(query_builder.build_type_errors_query(hours))  # type: ignore
-                result = await session.execute(type_errors_sql)
+                _result = await session.execute(type_errors_sql)
                 type_errors = [
                     {"error_type": row.error_type, "error_count": row.error_count}
                     for row in result
@@ -339,7 +339,7 @@ class TaskErrorLogger:
                 cleanup_sql = text(
                     query_builder.build_cleanup_old_logs_query(days_to_keep)  # type: ignore
                 )
-                result = await session.execute(cleanup_sql)
+                _result = await session.execute(cleanup_sql)
                 await session.commit()
 
                 deleted_count = result.rowcount

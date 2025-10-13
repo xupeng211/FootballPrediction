@@ -46,7 +46,7 @@ class TestTestStreamProcessor:
             or input_data == []
             or input_data == {}
             or input_data == 0
-            or input_data == False
+            or input_data is False
             or input_data == "test_string"
         )
 

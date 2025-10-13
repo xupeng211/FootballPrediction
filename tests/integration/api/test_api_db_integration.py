@@ -127,7 +127,7 @@ async def cached_prediction(db_session: AsyncSession) -> Dict[str, int]:
     db_session.add(match)
     await db_session.flush()
 
-    prediction = Predictions(
+    _prediction = Predictions(
         match_id=match.id,
         model_name="baseline_model",
         model_version="1.0",
@@ -162,7 +162,7 @@ async def test_get_match_prediction_returns_cached(
     payload = response.json()
     assert payload["success"] is True
 
-    data = payload["data"]
+    _data = payload["data"]
     assert data["match_id"] == match_id
     assert data["source"] == "cached"
     assert data["prediction"]["model_version"] == "1.0"
@@ -185,7 +185,7 @@ async def test_prediction_history_returns_records(
     payload = response.json()
     assert payload["success"] is True
 
-    data = payload["data"]
+    _data = payload["data"]
     assert data["match_id"] == match_id
     assert data["total_predictions"] == 1
     assert data["predictions"][0]["model_version"] == "1.0"

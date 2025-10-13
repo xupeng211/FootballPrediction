@@ -233,7 +233,7 @@ class TestValidationUtils:
                     missing.append(field)
             return missing
 
-        data = {"name": "John", "email": "john@example.com", "age": 30, "phone": ""}
+        _data = {"name": "John", "email": "john@example.com", "age": 30, "phone": ""}
 
         # 验证必填字段
         missing = validate_required(data, ["name", "email"])
@@ -312,7 +312,7 @@ class TestValidationUtils:
                 errors = []
                 for validator_func, error_msg in self.validators:
                     try:
-                        result = validator_func(value)
+                        _result = validator_func(value)
                         if isinstance(result, tuple):
                             is_valid, msg = result
                             if not is_valid:
@@ -359,7 +359,7 @@ class TestValidationUtils:
             else:
                 return True, None  # 条件不满足，跳过验证
 
-        data = {
+        _data = {
             "user_type": "premium",
             "payment_method": "credit_card",
             "card_number": "4111111111111111",
@@ -426,7 +426,7 @@ class TestValidationUtils:
         }
 
         # 测试数据
-        data = {"name": "John", "age": 30, "email": "john@example.com"}
+        _data = {"name": "John", "age": 30, "email": "john@example.com"}
 
         is_valid, results = validate_bulk(data, validators)
         assert is_valid is True
@@ -488,7 +488,7 @@ class TestValidationUtils:
         # 测试异步验证
         async def test_async():
             # 有效数据
-            data = {"email": "test@example.com"}
+            _data = {"email": "test@example.com"}
             is_valid, errors = await validate_user_data(data)
             assert is_valid is True
             assert len(errors) == 0

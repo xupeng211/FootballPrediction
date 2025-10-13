@@ -13,7 +13,7 @@ class TestServiceConfig:
 
     def test_service_config_creation(self):
         """测试服务配置创建"""
-        config = ServiceConfig("test_service")
+        _config = ServiceConfig("test_service")
 
         assert config.service_name == "test_service"
         assert config.enabled is True
@@ -23,7 +23,7 @@ class TestServiceConfig:
 
     def test_service_config_custom(self):
         """测试自定义服务配置"""
-        config = ServiceConfig(
+        _config = ServiceConfig(
             "custom_service",
             enabled=False,
             retry_attempts=5,
@@ -53,7 +53,7 @@ class TestEnhancedBaseService:
 
     def test_enhanced_service_init(self, enhanced_service, service_config):
         """测试增强服务初始化"""
-        assert enhanced_service.config == service_config
+        assert enhanced_service._config == service_config
         assert enhanced_service.service_name == "test_service"
         assert enhanced_service.metrics is not None
         assert enhanced_service.is_running is False
@@ -114,14 +114,14 @@ class TestEnhancedBaseService:
         """测试带重试的执行"""
         # 测试成功的情况
         mock_func = AsyncMock(return_value="success")
-        result = await enhanced_service.execute_with_retry(mock_func)
-        assert result == "success"
+        _result = await enhanced_service.execute_with_retry(mock_func)
+        assert _result == "success"
         mock_func.assert_called_once()
 
         # 测试失败后重试
         mock_func_fail = AsyncMock(side_effect=[Exception("error"), "success"])
-        result = await enhanced_service.execute_with_retry(mock_func_fail)
-        assert result == "success"
+        _result = await enhanced_service.execute_with_retry(mock_func_fail)
+        assert _result == "success"
         assert mock_func_fail.call_count == 2
 
         # 测试达到重试次数
@@ -134,8 +134,8 @@ class TestEnhancedBaseService:
         """测试带超时的执行"""
         # 测试快速执行
         mock_func = AsyncMock(return_value="success")
-        result = await enhanced_service.execute_with_timeout(mock_func, timeout=1.0)
-        assert result == "success"
+        _result = await enhanced_service.execute_with_timeout(mock_func, timeout=1.0)
+        assert _result == "success"
 
         # 测试超时
         async def slow_func():

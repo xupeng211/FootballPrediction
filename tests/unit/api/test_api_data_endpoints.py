@@ -19,7 +19,7 @@ class TestAPIData:
         """测试根端点"""
         response = client.get("/")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "message" in data
         assert "version" in data
 

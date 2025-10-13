@@ -53,7 +53,7 @@ class TestShouldCollectLiveScores:
 
             mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
 
-            result = await should_collect_live_scores()
+            _result = await should_collect_live_scores()
 
             assert result is True
             mock_session.execute.assert_called_once()
@@ -69,7 +69,7 @@ class TestShouldCollectLiveScores:
 
             mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
 
-            result = await should_collect_live_scores()
+            _result = await should_collect_live_scores()
 
             assert result is False
 
@@ -84,7 +84,7 @@ class TestShouldCollectLiveScores:
 
             mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
 
-            result = await should_collect_live_scores()
+            _result = await should_collect_live_scores()
 
             assert result is True
 
@@ -96,7 +96,7 @@ class TestShouldCollectLiveScores:
                 "Database error"
             )
 
-            result = await should_collect_live_scores()
+            _result = await should_collect_live_scores()
 
             assert result is False
 
@@ -137,7 +137,7 @@ class TestGetUpcomingMatches:
 
             mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
 
-            matches = await get_upcoming_matches()
+            _matches = await get_upcoming_matches()
 
             assert len(matches) == 2
             assert matches[0]["home_team"] == "Team A"
@@ -154,7 +154,7 @@ class TestGetUpcomingMatches:
 
             mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
 
-            matches = await get_upcoming_matches(hours=48)
+            _matches = await get_upcoming_matches(hours=48)
 
             assert isinstance(matches, list)
             assert len(matches) == 0
@@ -183,7 +183,7 @@ class TestGetUpcomingMatches:
 
             mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
 
-            matches = await get_upcoming_matches(hours=12)
+            _matches = await get_upcoming_matches(hours=12)
 
             assert len(matches) == 1
             assert matches[0]["status"] == "scheduled"
@@ -199,34 +199,34 @@ class TestIsMatchDay:
         """测试：周末是比赛日"""
         # 2024-01-13是周六
         saturday = datetime(2024, 1, 13)
-        result = is_match_day(saturday)
+        _result = is_match_day(saturday)
         assert result is True
 
     def test_is_match_day_weekday(self):
         """测试：工作日可能不是比赛日"""
         # 2024-01-10是周三
         wednesday = datetime(2024, 1, 10)
-        result = is_match_day(wednesday)
+        _result = is_match_day(wednesday)
         # 根据实现，可能返回True或False
         assert isinstance(result, bool)
 
     def test_is_match_day_default_date(self):
         """测试：使用默认日期（今天）"""
-        result = is_match_day()
+        _result = is_match_day()
         assert isinstance(result, bool)
 
     def test_is_match_day_friday(self):
         """测试：周五通常是比赛日"""
         # 2024-01-12是周五
         friday = datetime(2024, 1, 12)
-        result = is_match_day(friday)
+        _result = is_match_day(friday)
         assert result is True
 
     def test_is_match_day_monday(self):
         """测试：周一通常不是比赛日"""
         # 2024-01-08是周一
         monday = datetime(2024, 1, 8)
-        result = is_match_day(monday)
+        _result = is_match_day(monday)
         # 根据实现，可能返回True或False
         assert isinstance(result, bool)
 
@@ -579,7 +579,7 @@ class TestTasksUtilsIntegration:
             )
 
             # 应该优雅处理错误
-            result = await should_collect_live_scores()
+            _result = await should_collect_live_scores()
             assert result is False
 
             # 重置模拟
@@ -592,7 +592,7 @@ class TestTasksUtilsIntegration:
             mock_session.execute.return_value = mock_result
             mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
 
-            result = await should_collect_live_scores()
+            _result = await should_collect_live_scores()
             assert result is True
 
 

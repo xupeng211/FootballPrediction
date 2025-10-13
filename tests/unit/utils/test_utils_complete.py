@@ -26,7 +26,7 @@ def test_utils_functionality():
     try:
         # from src.utils.string_utils import StringUtils
 
-        result = StringUtils.truncate("Hello World", 5)
+        _result = StringUtils.truncate("Hello World", 5)
         assert "Hello" in result
     except Exception:
         assert True

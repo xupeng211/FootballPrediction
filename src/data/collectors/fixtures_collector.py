@@ -179,7 +179,7 @@ class FixturesCollector(DataCollector):
             else:
                 status = "failed"
 
-            result = CollectionResult(
+            _result = CollectionResult(
                 data_source=self.data_source,
                 collection_type="fixtures",
                 records_collected=total_collected,
@@ -282,7 +282,7 @@ class FixturesCollector(DataCollector):
             #         SELECT match_id FROM matches
             #         WHERE match_date BETWEEN :date_from AND :date_to
             #     """)
-            #     result = await session.execute(query, {"date_from": date_from, "date_to": date_to})
+            #     _result = await session.execute(query, {"date_from": date_from, "date_to": date_to})
             #     self._processed_matches = {row.match_id for row in result}
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:

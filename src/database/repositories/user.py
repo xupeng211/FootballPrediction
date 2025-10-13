@@ -140,7 +140,7 @@ class UserRepository(BaseRepository[User]):
             if limit:
                 stmt = stmt.limit(limit)
 
-            result = await sess.execute(stmt)
+            _result = await sess.execute(stmt)
             return result.scalars().all()  # type: ignore
 
     async def get_inactive_users(
@@ -177,7 +177,7 @@ class UserRepository(BaseRepository[User]):
             if limit:
                 stmt = stmt.limit(limit)
 
-            result = await sess.execute(stmt)
+            _result = await sess.execute(stmt)
             return result.scalars().all()  # type: ignore
 
     async def search_users(
@@ -217,7 +217,7 @@ class UserRepository(BaseRepository[User]):
             if limit:
                 stmt = stmt.limit(limit)
 
-            result = await sess.execute(stmt)
+            _result = await sess.execute(stmt)
             return result.scalars().all()  # type: ignore
 
     async def update_last_login(
@@ -413,7 +413,7 @@ class UserRepository(BaseRepository[User]):
                 .order_by(func.date(User.created_at))
             )
 
-            result = await sess.execute(stmt)
+            _result = await sess.execute(stmt)
             rows = result.all()
 
             # 转换为字典列表
@@ -472,8 +472,8 @@ class UserRepository(BaseRepository[User]):
             else:
                 return None
 
-            result = await sess.execute(stmt)
-            user = result.scalar_one_or_none()
+            _result = await sess.execute(stmt)
+            _user = result.scalar_one_or_none()
 
             if user:
                 return getattr(user, relation_name, None)

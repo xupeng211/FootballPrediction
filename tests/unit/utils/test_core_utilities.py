@@ -94,34 +94,34 @@ class TestDictUtils:
 
     def test_get_nested_value(self):
         """测试获取嵌套值"""
-        data = {"a": {"b": {"c": "value"}}}
+        _data = {"a": {"b": {"c": "value"}}}
         assert DictUtils.get_nested_value(data, "a.b.c") == "value"
         assert DictUtils.get_nested_value(data, "a.b.x", "default") == "default"
 
     def test_set_nested_value(self):
         """测试设置嵌套值"""
-        data = {}
+        _data = {}
         DictUtils.set_nested_value(data, "a.b.c", "value")
-        assert data == {"a": {"b": {"c": "value"}}}
+        assert _data == {"a": {"b": {"c": "value"}}}
 
     def test_flatten_dict(self):
         """测试扁平化字典"""
-        data = {"a": {"b": {"c": 1}}, "d": 2}
-        result = DictUtils.flatten_dict(data)
-        assert result == {"a.b.c": 1, "d": 2}
+        _data = {"a": {"b": {"c": 1}}, "d": 2}
+        _result = DictUtils.flatten_dict(data)
+        assert _result == {"a.b.c": 1, "d": 2}
 
     def test_filter_dict(self):
         """测试过滤字典"""
-        data = {"a": 1, "b": 2, "c": None, "d": ""}
-        result = DictUtils.filter_dict(data)
-        assert result == {"a": 1, "b": 2}
+        _data = {"a": 1, "b": 2, "c": None, "d": ""}
+        _result = DictUtils.filter_dict(data)
+        assert _result == {"a": 1, "b": 2}
 
     def test_merge_dicts(self):
         """测试合并字典"""
         dict1 = {"a": 1, "b": 2}
         dict2 = {"b": 3, "c": 4}
-        result = DictUtils.merge_dicts(dict1, dict2)
-        assert result == {"a": 1, "b": 3, "c": 4}
+        _result = DictUtils.merge_dicts(dict1, dict2)
+        assert _result == {"a": 1, "b": 3, "c": 4}
 
 
 class TestFileUtils:

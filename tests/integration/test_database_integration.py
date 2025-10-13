@@ -79,7 +79,7 @@ class TestDatabaseConnection:
 
         async with db_manager.get_session() as session:
             # 执行简单查询
-            result = await session.execute(text("SELECT 1"))
+            _result = await session.execute(text("SELECT 1"))
             assert result.scalar() == 1
 
     async def test_database_transaction(self, test_session):
@@ -98,7 +98,7 @@ class TestDatabaseConnection:
             )
 
         # 验证数据已提交
-        result = await test_session.execute(text("SELECT value FROM test_table"))
+        _result = await test_session.execute(text("SELECT value FROM test_table"))
         assert result.scalar() == "test_value"
 
     async def test_database_transaction_rollback(self, test_session):
@@ -124,7 +124,7 @@ class TestDatabaseConnection:
             pass
 
         # 验证数据未被提交
-        result = await test_session.execute(
+        _result = await test_session.execute(
             text("SELECT COUNT(*) FROM test_table WHERE value = :value"),
             {"value": "rollback_test"},
         )
@@ -304,7 +304,7 @@ class TestDatabasePerformance:
             assert end_time - start_time < 1.0
 
             # 验证数据
-            result = await session.execute(text("SELECT COUNT(*) FROM test_bulk"))
+            _result = await session.execute(text("SELECT COUNT(*) FROM test_bulk"))
             assert result.scalar() == 100
 
     async def test_concurrent_operations(self):
@@ -334,7 +334,7 @@ class TestDatabasePerformance:
                 )
 
                 # 查询数据
-                result = await session.execute(
+                _result = await session.execute(
                     text(f"SELECT value FROM test_concurrent_{session_id}")
                 )
                 return result.scalar()
@@ -346,7 +346,7 @@ class TestDatabasePerformance:
         # 所有查询都应该成功
         assert len(results) == 10
         for i, result in enumerate(results):
-            assert result == f"session_{i}"
+            assert _result == f"session_{i}"
 
 
 @pytest.mark.skipif(DATABASE_AVAILABLE, reason="Database modules should be available")
@@ -434,7 +434,7 @@ class TestDatabaseErrorHandling:
 
             # 尝试SQL注入（使用参数化查询应该安全）
             malicious_input = "testuser'; DROP TABLE users; --"
-            result = await session.execute(
+            _result = await session.execute(
                 text("SELECT * FROM users WHERE username = :username"),
                 {"username": malicious_input},
             )
@@ -444,5 +444,5 @@ class TestDatabaseErrorHandling:
             assert len(users) == 0
 
             # 验证表仍然存在
-            result = await session.execute(text("SELECT COUNT(*) FROM users"))
+            _result = await session.execute(text("SELECT COUNT(*) FROM users"))
             assert result.scalar() == 1

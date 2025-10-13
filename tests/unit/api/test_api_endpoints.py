@@ -68,7 +68,7 @@ class TestHealthEndpoint:
         response = client.get("/health")
         assert response.status_code == 200
 
-        data = response.json()
+        _data = response.json()
         assert "status" in data
         assert "timestamp" in data
         assert "version" in data
@@ -78,7 +78,7 @@ class TestHealthEndpoint:
         response = client.get("/health?detailed=true")
         assert response.status_code == 200
 
-        data = response.json()
+        _data = response.json()
         assert "status" in data
         assert "checks" in data
         assert "database" in data["checks"]
@@ -104,7 +104,7 @@ class TestHealthEndpoint:
         response = client.get("/health")
         assert response.status_code == 503
 
-        data = response.json()
+        _data = response.json()
         assert data["status"] == "unhealthy"
 
 
@@ -141,7 +141,7 @@ class TestPredictionEndpoints:
         response = client.post("/api/v1/predictions", json=request_data)
         assert response.status_code == 201
 
-        data = response.json()
+        _data = response.json()
         assert data["match_id"] == 123
         assert "prediction" in data
         assert "confidence" in data
@@ -174,7 +174,7 @@ class TestPredictionEndpoints:
         response = client.get("/api/v1/predictions/1")
         assert response.status_code == 200
 
-        data = response.json()
+        _data = response.json()
         assert data["id"] == 1
         assert data["match_id"] == 123
 
@@ -200,7 +200,7 @@ class TestPredictionEndpoints:
         response = client.get("/api/v1/predictions?user_id=456&limit=10")
         assert response.status_code == 200
 
-        data = response.json()
+        _data = response.json()
         assert len(data) == 2
         assert data[0]["match_id"] == 123
 
@@ -250,7 +250,7 @@ class TestPredictionEndpoints:
         response = client.post("/api/v1/predictions/batch", json=request_data)
         assert response.status_code == 200
 
-        data = response.json()
+        _data = response.json()
         assert len(data["predictions"]) == 2
 
 
@@ -278,7 +278,7 @@ class TestDataEndpoints:
         response = client.get("/api/v1/matches?limit=10&offset=0")
         assert response.status_code == 200
 
-        data = response.json()
+        _data = response.json()
         assert "matches" in data
         assert "total" in data
         assert len(data["matches"]) == 2
@@ -301,7 +301,7 @@ class TestDataEndpoints:
         response = client.get("/api/v1/matches/123")
         assert response.status_code == 200
 
-        data = response.json()
+        _data = response.json()
         assert data["id"] == 123
         assert data["home_team"]["name"] == "Team A"
 
@@ -320,7 +320,7 @@ class TestDataEndpoints:
         response = client.get("/api/v1/teams?league_id=10")
         assert response.status_code == 200
 
-        data = response.json()
+        _data = response.json()
         assert len(data) == 2
 
     @patch("src.api.data.get_team_service")
@@ -344,7 +344,7 @@ class TestDataEndpoints:
         response = client.get("/api/v1/teams/1/statistics")
         assert response.status_code == 200
 
-        data = response.json()
+        _data = response.json()
         assert data["team_id"] == 1
         assert data["wins"] == 20
 
@@ -363,7 +363,7 @@ class TestDataEndpoints:
         response = client.get("/api/v1/leagues/10/standings")
         assert response.status_code == 200
 
-        data = response.json()
+        _data = response.json()
         assert len(data) == 2
         assert data[0]["position"] == 1
 
@@ -384,7 +384,7 @@ class TestDataEndpoints:
         response = client.post("/api/v1/data/sync")
         assert response.status_code == 200
 
-        data = response.json()
+        _data = response.json()
         assert data["status"] == "success"
         assert data["synced_matches"] == 100
 
@@ -412,7 +412,7 @@ class TestAuthentication:
             response = client.post("/api/v1/auth/login", json=login_data)
             assert response.status_code == 200
 
-            data = response.json()
+            _data = response.json()
             assert "token" in data
             assert data["username"] == "testuser"
 
@@ -476,7 +476,7 @@ class TestRateLimiting:
         response = client.get("/api/v1/matches")
         assert response.status_code == 429
 
-        data = response.json()
+        _data = response.json()
         assert "error" in data
         assert "rate limit" in data["error"].lower()
 
@@ -567,7 +567,7 @@ class TestErrorHandling:
         response = client.get("/api/v1/nonexistent-endpoint")
         assert response.status_code == 404
 
-        data = response.json()
+        _data = response.json()
         assert "error" in data
         assert "Not Found" in data["error"]["message"]
 
@@ -583,7 +583,7 @@ class TestErrorHandling:
             response = client.post("/api/v1/predictions", json=request_data)
             assert response.status_code == 500
 
-            data = response.json()
+            _data = response.json()
             assert "error" in data
 
     def test_validation_error_format(self, client):
@@ -593,7 +593,7 @@ class TestErrorHandling:
         response = client.post("/api/v1/predictions", json=request_data)
         assert response.status_code == 422
 
-        data = response.json()
+        _data = response.json()
         assert "detail" in data
         assert isinstance(data["detail"], list)
 
@@ -632,7 +632,7 @@ class TestPagination:
         response = client.get("/api/v1/matches?limit=10&offset=0")
         assert response.status_code == 200
 
-        data = response.json()
+        _data = response.json()
         assert len(data["matches"]) == 10
         assert data["total"] == 100
 
@@ -653,7 +653,7 @@ class TestPagination:
         response = client.get("/api/v1/matches?limit=10&offset=90")
         assert response.status_code == 200
 
-        data = response.json()
+        _data = response.json()
         assert len(data["matches"]) == 10
         assert data["matches"][0]["id"] == 91
 
@@ -669,7 +669,7 @@ class TestPagination:
         response = client.get("/api/v1/matches?limit=10&offset=100")
         assert response.status_code == 200
 
-        data = response.json()
+        _data = response.json()
         assert len(data["matches"]) == 0
 
     def test_pagination_links(self, client):

@@ -13,7 +13,7 @@ from pathlib import Path
 def run_command(cmd):
     """运行命令并返回结果"""
     print(f"Running: {cmd}")
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    _result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
     return result.returncode, result.stdout, result.stderr
 
 
@@ -85,7 +85,7 @@ def main():
     else:
         print("\n✅ 所有测试通过！")
 
-    print(f"\n详细报告已生成到: htmlcov/index.html")
+    print("\n详细报告已生成到: htmlcov/index.html")
 
     return returncode
 

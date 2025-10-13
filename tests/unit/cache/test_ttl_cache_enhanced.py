@@ -74,7 +74,7 @@ class TestCacheEntry:
     def test_cache_entry_to_dict(self):
         """测试：缓存条目转字典"""
         entry = CacheEntry("test_value", ttl=60)
-        data = entry.to_dict()
+        _data = entry.to_dict()
 
         assert "value" in data
         assert "ttl" in data
@@ -185,7 +185,7 @@ class TestTTLCache:
         cache = TTLCache(maxsize=100, ttl=60)
 
         # 初始统计
-        stats = cache.get_stats()
+        _stats = cache.get_stats()
         assert "hits" in stats
         assert "misses" in stats
         assert "size" in stats
@@ -197,7 +197,7 @@ class TestTTLCache:
         cache.get("key1")  # hit
         cache.get("key2")  # miss
 
-        stats = cache.get_stats()
+        _stats = cache.get_stats()
         assert stats["hits"] == 1
         assert stats["misses"] == 1
         assert stats["size"] == 1
@@ -368,7 +368,7 @@ class TestGlobalCacheFunctions:
         cache2.set("key2", "value2")
 
         # 获取统计
-        stats = get_all_stats()
+        _stats = get_all_stats()
         assert isinstance(stats, dict)
         assert "cache1" in stats
         assert "cache2" in stats

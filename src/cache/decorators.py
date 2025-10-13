@@ -148,9 +148,9 @@ def cache_result(
                     # 反序列化结果
                     if isinstance(cached_result, str):
                         try:
-                            result = json.loads(cached_result)
+                            _result = json.loads(cached_result)
                         except json.JSONDecodeError:
-                            result = cached_result
+                            _result = cached_result
                     logger.debug(f"缓存命中: {cache_key}")
                     return result
             except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
@@ -159,7 +159,7 @@ def cache_result(
                     raise
 
             # 执行原函数
-            result = await func(*args, **kwargs)
+            _result = await func(*args, **kwargs)
 
             # 存储到缓存
             try:
@@ -208,9 +208,9 @@ def cache_result(
                     # 反序列化结果
                     if isinstance(cached_result, str):
                         try:
-                            result = json.loads(cached_result)
+                            _result = json.loads(cached_result)
                         except json.JSONDecodeError:
-                            result = cached_result
+                            _result = cached_result
                     logger.debug(f"缓存命中: {cache_key}")
                     return result
             except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
@@ -219,7 +219,7 @@ def cache_result(
                     raise
 
             # 执行原函数
-            result = func(*args, **kwargs)
+            _result = func(*args, **kwargs)
 
             # 存储到缓存
             try:
@@ -389,9 +389,9 @@ async def _cache_with_key(
         if cached_result is not None:
             if isinstance(cached_result, str):
                 try:
-                    result = json.loads(cached_result)
+                    _result = json.loads(cached_result)
                 except json.JSONDecodeError:
-                    result = cached_result
+                    _result = cached_result
             logger.debug(f"用户缓存命中: {cache_key}")
             return result
     except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
@@ -399,9 +399,9 @@ async def _cache_with_key(
 
     # 执行原函数
     if is_async:
-        result = await func(*args, **kwargs)
+        _result = await func(*args, **kwargs)
     else:
-        result = func(*args, **kwargs)
+        _result = func(*args, **kwargs)
 
     # 存储到缓存
     try:
@@ -455,7 +455,7 @@ def cache_invalidate(
         @functools.wraps(func)
         async def async_wrapper(*args, **kwargs):
             # 执行原函数
-            result = await func(*args, **kwargs)
+            _result = await func(*args, **kwargs)
 
             # 生成要失效的键
             invalidate_keys = []
@@ -503,7 +503,7 @@ def cache_invalidate(
         @functools.wraps(func)
         def sync_wrapper(*args, **kwargs):
             # 执行原函数
-            result = func(*args, **kwargs)
+            _result = func(*args, **kwargs)
 
             # 生成要失效的键
             invalidate_keys = []

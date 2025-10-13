@@ -196,12 +196,12 @@ class TestBackwardCompatibility:
 
     def test_parse_datetime_function_with_none(self):
         """测试：parse_datetime函数处理None"""
-        result = parse_datetime(None)
+        _result = parse_datetime(None)
         assert result is None
 
     def test_parse_datetime_function_empty_string(self):
         """测试：parse_datetime函数处理空字符串"""
-        result = parse_datetime("")
+        _result = parse_datetime("")
         assert result is None
 
     def test_parse_datetime_function_various_formats(self):
@@ -214,7 +214,7 @@ class TestBackwardCompatibility:
         ]
 
         for date_str, expected in test_cases:
-            result = parse_datetime(date_str)
+            _result = parse_datetime(date_str)
             assert result is not None
             assert result.year == expected.year
             assert result.month == expected.month
@@ -233,7 +233,7 @@ class TestBackwardCompatibility:
         ]
 
         for invalid in invalid_cases:
-            result = parse_datetime(invalid)
+            _result = parse_datetime(invalid)
             assert result is None
 
 

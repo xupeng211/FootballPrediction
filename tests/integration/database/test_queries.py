@@ -19,7 +19,7 @@ class TestDatabaseQueries:
         from src.database.models import Team
 
         # 创建测试数据
-        teams = []
+        _teams = []
         for i in range(10):
             team = Team(
                 name=f"Query Team {i}", city=f"Query City {i}", founded=2000 + i
@@ -29,8 +29,8 @@ class TestDatabaseQueries:
         await db_session.commit()
 
         # 简单查询
-        result = await db_session.execute(select(Team).where(Team.founded > 2005))
-        teams = result.scalars().all()
+        _result = await db_session.execute(select(Team).where(Team.founded > 2005))
+        _teams = result.scalars().all()
 
         assert len(teams) == 4  # 2006-2009
         assert all(team.founded > 2005 for team in teams)
@@ -41,15 +41,15 @@ class TestDatabaseQueries:
         from src.database.models import Team, Match, Prediction, User
 
         # 创建测试数据
-        teams = []
+        _teams = []
         for i in range(6):
-            team = Team(name=f"Join Team {i}", city=f"Join City", founded=2000 + i)
+            team = Team(name=f"Join Team {i}", city="Join City", founded=2000 + i)
             teams.append(team)
         db_session.add_all(teams)
         await db_session.commit()
 
         # 创建比赛
-        matches = []
+        _matches = []
         for i in range(5):
             match = Match(
                 home_team_id=teams[i].id,
@@ -66,7 +66,7 @@ class TestDatabaseQueries:
         await db_session.commit()
 
         # 创建用户和预测
-        user = User(
+        _user = User(
             username="join_user",
             email="join@example.com",
             password_hash="hashed",
@@ -81,7 +81,7 @@ class TestDatabaseQueries:
             pred = Prediction(
                 user_id=user.id,
                 match_id=match.id,
-                prediction="HOME_WIN",
+                _prediction ="HOME_WIN",
                 confidence=0.8,
                 status="COMPLETED",
                 is_correct=True,
@@ -91,7 +91,7 @@ class TestDatabaseQueries:
         await db_session.commit()
 
         # 复杂连接查询
-        result = await db_session.execute(
+        _result = await db_session.execute(
             text("""
             SELECT
                 t.name as team_name,
@@ -119,7 +119,7 @@ class TestDatabaseQueries:
         # 创建用户
         users = []
         for i in range(5):
-            user = User(
+            _user = User(
                 username=f"agg_user_{i}",
                 email=f"agg{i}@example.com",
                 password_hash="hashed",
@@ -136,7 +136,7 @@ class TestDatabaseQueries:
                 pred = Prediction(
                     user_id=user.id,
                     match_id=1,
-                    prediction="HOME_WIN" if i % 2 == 0 else "DRAW",
+                    _prediction ="HOME_WIN" if i % 2 == 0 else "DRAW",
                     confidence=0.5 + (i * 0.025),
                     status="COMPLETED" if i < 15 else "PENDING",
                     is_correct=(i % 3 == 0),
@@ -147,7 +147,7 @@ class TestDatabaseQueries:
         await db_session.commit()
 
         # 测试各种聚合函数
-        result = await db_session.execute(
+        _result = await db_session.execute(
             select(
                 func.count(Prediction.id).label("total"),
                 func.avg(Prediction.confidence).label("avg_confidence"),
@@ -170,7 +170,7 @@ class TestDatabaseQueries:
         # 创建用户
         users = []
         for i in range(3):
-            user = User(
+            _user = User(
                 username=f"window_user_{i}",
                 email=f"window{i}@example.com",
                 password_hash="hashed",
@@ -187,7 +187,7 @@ class TestDatabaseQueries:
                 pred = Prediction(
                     user_id=user.id,
                     match_id=1,
-                    prediction="HOME_WIN",
+                    _prediction ="HOME_WIN",
                     confidence=0.5 + (i * 0.1),
                     status="COMPLETED",
                     is_correct=(i + user_idx) % 2 == 0,
@@ -198,7 +198,7 @@ class TestDatabaseQueries:
         await db_session.commit()
 
         # 使用窗口函数查询
-        result = await db_session.execute(
+        _result = await db_session.execute(
             text("""
             SELECT
                 u.username,
@@ -229,7 +229,7 @@ class TestDatabaseQueries:
         from src.database.models import User, Prediction, Team, Match
 
         # 创建测试数据
-        teams = []
+        _teams = []
         for i in range(4):
             team = Team(name=f"Sub Team {i}", city="Sub City", founded=2000 + i)
             teams.append(team)
@@ -254,7 +254,7 @@ class TestDatabaseQueries:
         # 创建用户
         users = []
         for i in range(5):
-            user = User(
+            _user = User(
                 username=f"sub_user_{i}",
                 email=f"sub{i}@example.com",
                 password_hash="hashed",
@@ -273,7 +273,7 @@ class TestDatabaseQueries:
             pred = Prediction(
                 user_id=user_id,
                 match_id=match.id,
-                prediction="HOME_WIN",
+                _prediction ="HOME_WIN",
                 confidence=0.5 + (i * 0.1),
                 status="COMPLETED",
                 is_correct=(i % 2 == 0),
@@ -283,7 +283,7 @@ class TestDatabaseQueries:
         await db_session.commit()
 
         # 使用子查询查找预测准确率高于平均的用户
-        result = await db_session.execute(
+        _result = await db_session.execute(
             text("""
             SELECT u.username, u.email
             FROM users u
@@ -311,7 +311,7 @@ class TestDatabaseQueries:
         from src.database.models import Team, Match
 
         # 创建测试数据
-        teams = []
+        _teams = []
         for i in range(6):
             team = Team(name=f"CTE Team {i}", city="CTE City", founded=2000 + i)
             teams.append(team)
@@ -334,7 +334,7 @@ class TestDatabaseQueries:
         await db_session.commit()
 
         # 使用 CTE 查询
-        result = await db_session.execute(
+        _result = await db_session.execute(
             text("""
             WITH team_stats AS (
                 SELECT
@@ -375,7 +375,7 @@ class TestDatabaseQueries:
         # 创建用户和预测
         users = []
         for i in range(3):
-            user = User(
+            _user = User(
                 username=f"eager_user_{i}",
                 email=f"eager{i}@example.com",
                 password_hash="hashed",
@@ -395,7 +395,7 @@ class TestDatabaseQueries:
                 pred = Prediction(
                     user_id=user_id,
                     match_id=1,
-                    prediction="HOME_WIN",
+                    _prediction ="HOME_WIN",
                     confidence=0.5 + (i * 0.1),
                     status="COMPLETED",
                     is_correct=(i % 2 == 0),
@@ -406,7 +406,7 @@ class TestDatabaseQueries:
 
         # 使用 selectinload 预加载
         start_time = time.time()
-        result = await db_session.execute(
+        _result = await db_session.execute(
             select(User).options(selectinload(User.predictions))
         )
         users_with_predictions = result.scalars().unique().all()
@@ -418,7 +418,7 @@ class TestDatabaseQueries:
 
         # 使用 joinedload 预加载
         start_time = time.time()
-        result = await db_session.execute(
+        _result = await db_session.execute(
             select(User).options(joinedload(User.predictions))
         )
         users_with_predictions_joined = result.scalars().unique().all()
@@ -437,7 +437,7 @@ class TestDatabaseQueries:
         from src.database.models import Team
 
         # 创建测试数据
-        teams = []
+        _teams = []
         for i in range(25):
             team = Team(
                 name=f"Page Team {i:02d}", city=f"Page City {i}", founded=2000 + i
@@ -453,7 +453,7 @@ class TestDatabaseQueries:
 
         while True:
             offset = (page - 1) * page_size
-            result = await db_session.execute(
+            _result = await db_session.execute(
                 select(Team).order_by(Team.founded).offset(offset).limit(page_size)
             )
             page_teams = result.scalars().all()
@@ -470,7 +470,7 @@ class TestDatabaseQueries:
         assert all_teams[-1].name == "Page Team 24"
 
         # 测试计数查询
-        result = await db_session.execute(select(func.count(Team.id)))
+        _result = await db_session.execute(select(func.count(Team.id)))
         total_count = result.scalar()
         assert total_count == 25
 
@@ -482,7 +482,7 @@ class TestDatabaseQueries:
         # 创建大量数据
         users = []
         for i in range(100):
-            user = User(
+            _user = User(
                 username=f"index_user_{i:03d}",
                 email=f"index{i:03d}@example.com",
                 password_hash="hashed",
@@ -499,7 +499,7 @@ class TestDatabaseQueries:
                 pred = Prediction(
                     user_id=user.id,
                     match_id=1,
-                    prediction="HOME_WIN",
+                    _prediction ="HOME_WIN",
                     confidence=0.5 + (j * 0.05),
                     status="COMPLETED",
                     is_correct=(j % 2 == 0),
@@ -510,7 +510,7 @@ class TestDatabaseQueries:
 
         # 使用索引优化查询
         start_time = time.time()
-        result = await db_session.execute(
+        _result = await db_session.execute(
             select(Prediction)
             .where(Prediction.user_id.in_([u.id for u in users[:10]]))
             .order_by(Prediction.created_at.desc())

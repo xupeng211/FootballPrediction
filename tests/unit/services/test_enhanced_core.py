@@ -23,14 +23,14 @@ class TestServiceConfig:
     def test_service_config_creation_minimal(self):
         """测试：最小参数创建配置"""
         # When
-        config = ServiceConfig(name="TestService")
+        _config = ServiceConfig(name="TestService")
 
         # Then
         assert config.name == "TestService"
         assert config.version == "1.0.0"
         assert config.description == ""
         assert config.dependencies == []
-        assert config.config == {}
+        assert config._config == {}
         assert isinstance(config.created_at, datetime)
 
     def test_service_config_creation_full(self):
@@ -40,12 +40,12 @@ class TestServiceConfig:
         config_dict = {"timeout": 30, "retries": 3}
 
         # When
-        config = ServiceConfig(
+        _config = ServiceConfig(
             name="FullService",
             version="2.0.0",
             description="A test service with full config",
             dependencies=dependencies,
-            config=config_dict,
+            _config =config_dict,
         )
 
         # Then
@@ -53,16 +53,16 @@ class TestServiceConfig:
         assert config.version == "2.0.0"
         assert config.description == "A test service with full config"
         assert config.dependencies == dependencies
-        assert config.config == config_dict
+        assert config._config == config_dict
 
     def test_service_config_empty_lists(self):
         """测试：空列表参数"""
         # When
-        config = ServiceConfig(name="TestService", dependencies=[], config={})
+        _config = ServiceConfig(name="TestService", dependencies=[], _config ={})
 
         # Then
         assert config.dependencies == []
-        assert config.config == {}
+        assert config._config == {}
 
 
 class TestServiceMetrics:
@@ -134,7 +134,7 @@ class TestServiceMetrics:
         metrics.record_call(1.0, True)
 
         # When
-        result = metrics.get_metrics()
+        _result = metrics.get_metrics()
 
         # Then
         assert result is not metrics.metrics  # 应该是副本
@@ -145,7 +145,7 @@ class TestServiceMetrics:
 class MockEnhancedService(EnhancedBaseService):
     """用于测试的模拟增强服务"""
 
-    def __init__(self, config=None):
+    def __init__(self, _config =None):
         super().__init__(config)
         self.initialize_called = False
         self.shutdown_called = False
@@ -170,7 +170,7 @@ class TestEnhancedBaseService:
     @pytest.fixture
     def service(self):
         """创建服务实例"""
-        config = ServiceConfig(
+        _config = ServiceConfig(
             name="TestService",
             version="1.0.0",
             description="Test service for unit tests",
@@ -202,7 +202,7 @@ class TestEnhancedBaseService:
     async def test_start_success(self, service):
         """测试：成功启动服务"""
         # When
-        result = await service.start()
+        _result = await service.start()
 
         # Then
         assert result is True
@@ -219,7 +219,7 @@ class TestEnhancedBaseService:
         await service.start()
 
         # When
-        result = await service.start()
+        _result = await service.start()
 
         # Then
         assert result is True
@@ -236,7 +236,7 @@ class TestEnhancedBaseService:
         service.initialize_error = RuntimeError("Initialization failed")
 
         # When
-        result = await service.start()
+        _result = await service.start()
 
         # Then
         assert result is False
@@ -251,7 +251,7 @@ class TestEnhancedBaseService:
         await service.start()
 
         # When
-        result = await service.stop()
+        _result = await service.stop()
 
         # Then
         assert result is True
@@ -264,7 +264,7 @@ class TestEnhancedBaseService:
     async def test_stop_not_running(self, service):
         """测试：停止未运行的服务"""
         # When
-        result = await service.stop()
+        _result = await service.stop()
 
         # Then
         assert result is True
@@ -278,7 +278,7 @@ class TestEnhancedBaseService:
         service.shutdown_error = RuntimeError("Shutdown failed")
 
         # When
-        result = await service.stop()
+        _result = await service.stop()
 
         # Then
         assert result is False
@@ -323,7 +323,7 @@ class TestEnhancedBaseService:
         service._health_status["status"] = "healthy"
 
         # When
-        result = service.is_healthy()
+        _result = service.is_healthy()
 
         # Then
         assert result is True
@@ -334,7 +334,7 @@ class TestEnhancedBaseService:
         service._health_status["status"] = "unhealthy"
 
         # When
-        result = service.is_healthy()
+        _result = service.is_healthy()
 
         # Then
         assert result is False
@@ -377,7 +377,7 @@ class TestEnhancedBaseService:
         service.add_dependency("unhealthy", unhealthy_dep)
 
         # When
-        result = await service.health_check()
+        _result = await service.health_check()
 
         # Then
         # health_check返回get_health_info的结果，其中status来自get_status()
@@ -395,7 +395,7 @@ class TestEnhancedBaseService:
         service.add_dependency("dep", dep)
 
         # When
-        result = await service.health_check()
+        _result = await service.health_check()
 
         # Then
         # status来自get_status()，不是health_status
@@ -410,10 +410,10 @@ class TestEnhancedBaseService:
             return "test_result"
 
         # When
-        result = await service.execute_with_metrics("test_operation", test_func)
+        _result = await service.execute_with_metrics("test_operation", test_func)
 
         # Then
-        assert result == "test_result"
+        assert _result == "test_result"
         metrics = service.metrics.get_metrics()
         assert metrics["calls"] == 1
         assert metrics["errors"] == 0
@@ -453,15 +453,15 @@ class TestEnhancedBaseService:
         service.add_dependency("test_dep", dep)
 
         # When
-        result = service.get_dependency("test_dep")
+        _result = service.get_dependency("test_dep")
 
         # Then
-        assert result == dep
+        assert _result == dep
 
     def test_get_dependency_not_found(self, service):
         """测试：获取不存在的依赖"""
         # When
-        result = service.get_dependency("nonexistent")
+        _result = service.get_dependency("nonexistent")
 
         # Then
         assert result is None
@@ -472,23 +472,23 @@ class TestEnhancedBaseService:
         service.config.config["test_key"] = "test_value"
 
         # When
-        result = service.get_config("test_key")
+        _result = service.get_config("test_key")
 
         # Then
-        assert result == "test_value"
+        assert _result == "test_value"
 
     def test_get_config_default(self, service):
         """测试：获取配置（默认值）"""
         # When
-        result = service.get_config("nonexistent", "default_value")
+        _result = service.get_config("nonexistent", "default_value")
 
         # Then
-        assert result == "default_value"
+        assert _result == "default_value"
 
     def test_repr(self, service):
         """测试：字符串表示"""
         # When
-        result = repr(service)
+        _result = repr(service)
 
         # Then
         assert "MockEnhancedService" in result

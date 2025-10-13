@@ -19,7 +19,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../../.."))  # type: ig
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
-config = context.config  # type: ignore
+_config = context.config  # type: ignore
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

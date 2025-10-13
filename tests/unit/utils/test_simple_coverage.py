@@ -68,8 +68,8 @@ class TestBasicCoverage:
         assert True and False is False
         assert True or False is True
         assert False or False is False
-        assert not True is False
-        assert not False is True
+        assert True is not False
+        assert False is not True
 
     def test_comparisons(self):
         """测试比较操作"""
@@ -111,7 +111,7 @@ class TestBasicCoverage:
 
     def test_json_operations(self):
         """测试JSON操作"""
-        data = {"name": "test", "value": 123, "items": [1, 2, 3]}
+        _data = {"name": "test", "value": 123, "items": [1, 2, 3]}
         json_str = json.dumps(data)
         assert isinstance(json_str, str)
         assert "test" in json_str
@@ -163,8 +163,8 @@ class TestBasicCoverage:
         # 测试匹配
         pattern = r"\d+"
         text = "abc123def456"
-        matches = re.findall(pattern, text)
-        assert matches == ["123", "456"]
+        _matches = re.findall(pattern, text)
+        assert _matches == ["123", "456"]
 
         # 测试替换
         replaced = re.sub(r"\d+", "#", text)
@@ -309,11 +309,13 @@ class TestBasicCoverage:
     def test_lambda_functions(self):
         """测试lambda函数"""
         # 简单lambda
-        add = lambda x, y: x + y
+        def add(x, y):
+            return x + y
         assert add(2, 3) == 5
 
         # 带条件lambda
-        get_sign = lambda x: "positive" if x > 0 else "negative" if x < 0 else "zero"
+        def get_sign(x):
+            return "positive" if x > 0 else "negative" if x < 0 else "zero"
         assert get_sign(5) == "positive"
         assert get_sign(-5) == "negative"
         assert get_sign(0) == "zero"
@@ -367,16 +369,16 @@ class TestBasicCoverage:
     def test_none_handling(self):
         """测试None处理"""
         assert None is None
-        assert None is not 0
+        assert None != 0
         assert None is not False
-        assert None is not ""
+        assert None != ""
 
         # 三元运算符
-        result = None or "default"
-        assert result == "default"
+        _result = None or "default"
+        assert _result == "default"
 
-        result = "value" or "default"
-        assert result == "value"
+        _result = "value" or "default"
+        assert _result == "value"
 
     def test_truthiness(self):
         """测试真值判断"""

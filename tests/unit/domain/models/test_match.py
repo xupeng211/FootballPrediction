@@ -96,17 +96,17 @@ class TestMatchScore:
     def test_result_home_win(self):
         """测试：主队获胜结果"""
         score = MatchScore(2, 1)
-        assert score.result == MatchResult.HOME_WIN
+        assert score._result == MatchResult.HOME_WIN
 
     def test_result_away_win(self):
         """测试：客队获胜结果"""
         score = MatchScore(1, 2)
-        assert score.result == MatchResult.AWAY_WIN
+        assert score._result == MatchResult.AWAY_WIN
 
     def test_result_draw(self):
         """测试：平局结果"""
         score = MatchScore(1, 1)
-        assert score.result == MatchResult.DRAW
+        assert score._result == MatchResult.DRAW
 
     def test_string_representation(self):
         """测试：字符串表示"""
@@ -118,14 +118,14 @@ class TestMatchScore:
         score = MatchScore(7, 5)
         assert score.total_goals == 12
         assert score.goal_difference == 2
-        assert score.result == MatchResult.HOME_WIN
+        assert score._result == MatchResult.HOME_WIN
 
     def test_zero_scores(self):
         """测试：零比分"""
         score = MatchScore(0, 0)
         assert score.total_goals == 0
         assert score.goal_difference == 0
-        assert score.result == MatchResult.DRAW
+        assert score._result == MatchResult.DRAW
 
 
 class TestMatch:
@@ -518,7 +518,7 @@ class TestMatch:
             venue="Camp Nou",
         )
 
-        data = match.to_dict()
+        _data = match.to_dict()
         assert data["id"] == 100
         assert data["home_team_id"] == 1
         assert data["away_team_id"] == 2
@@ -540,7 +540,7 @@ class TestMatch:
             score=score,
         )
 
-        data = match.to_dict()
+        _data = match.to_dict()
         assert data["status"] == "finished"
         assert data["score"]["home_score"] == 2
         assert data["score"]["away_score"] == 1
@@ -548,7 +548,7 @@ class TestMatch:
 
     def test_from_dict_without_score(self):
         """测试：从字典创建实例（无比分）"""
-        data = {
+        _data = {
             "id": 100,
             "home_team_id": 1,
             "away_team_id": 2,
@@ -569,7 +569,7 @@ class TestMatch:
 
     def test_from_dict_with_score(self):
         """测试：从字典创建实例（有比分）"""
-        data = {
+        _data = {
             "id": 100,
             "home_team_id": 1,
             "away_team_id": 2,
@@ -582,11 +582,11 @@ class TestMatch:
         assert match.status == MatchStatus.FINISHED
         assert match.score.home_score == 2
         assert match.score.away_score == 1
-        assert match.score.result == MatchResult.HOME_WIN
+        assert match.score._result == MatchResult.HOME_WIN
 
     def test_from_dict_with_dates(self):
         """测试：从字典创建实例（包含日期）"""
-        data = {
+        _data = {
             "home_team_id": 1,
             "away_team_id": 2,
             "league_id": 10,

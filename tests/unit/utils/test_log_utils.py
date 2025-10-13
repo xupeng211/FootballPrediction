@@ -334,7 +334,7 @@ class TestLogUtils:
 
     def test_logging_configuration_from_dict(self):
         """测试从字典配置日志"""
-        config = {
+        _config = {
             "version": 1,
             "disable_existing_loggers": False,
             "formatters": {

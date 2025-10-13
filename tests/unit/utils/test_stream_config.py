@@ -15,33 +15,33 @@ class TestStreamConfig:
     def test_stream_config_import(self):
         """测试流配置导入"""
         # 简单的mock测试
-        config = StreamConfig()
+        _config = StreamConfig()
         assert config is not None
 
     def test_kafka_config_creation(self):
         """测试Kafka配置创建"""
-        config = KafkaConfig()
+        _config = KafkaConfig()
         assert config is not None
 
     def test_topic_config_creation(self):
         """测试主题配置创建"""
-        config = TopicConfig()
+        _config = TopicConfig()
         assert config is not None
 
     def test_stream_config_validation(self):
         """测试流配置验证"""
         # Mock validation test
-        config = StreamConfig()
+        _config = StreamConfig()
         config.validate = Mock(return_value=True)
 
-        result = config.validate()
+        _result = config.validate()
         assert result is True
 
     def test_stream_config_serialization(self):
         """测试流配置序列化"""
-        config = StreamConfig()
+        _config = StreamConfig()
         config.to_dict = Mock(return_value={"key": "value"})
 
-        result = config.to_dict()
+        _result = config.to_dict()
         assert isinstance(result, dict)
         assert "key" in result

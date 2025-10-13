@@ -45,11 +45,11 @@ class TestRegistryStatus:
             # Try with required arguments
             try:
                 return RegistryStatus(test_param="test_value")
-            except:
+            except Exception:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate RegistryStatus")
+                pytest.skip("Cannot instantiate RegistryStatus")
         except Exception:
-            pytest.skip(f"Error creating RegistryStatus instance")
+            pytest.skip("Error creating RegistryStatus instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -99,11 +99,11 @@ class TestAdapterRegistry:
             # Try with required arguments
             try:
                 return AdapterRegistry(test_param="test_value")
-            except:
+            except Exception:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate AdapterRegistry")
+                pytest.skip("Cannot instantiate AdapterRegistry")
         except Exception:
-            pytest.skip(f"Error creating AdapterRegistry instance")
+            pytest.skip("Error creating AdapterRegistry instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -300,7 +300,7 @@ class TestModuleIntegration:
             await asyncio.sleep(0.001)
             return True
 
-        result = await async_test()
+        _result = await async_test()
         assert result is True
 
     @pytest.mark.parametrize(
@@ -331,6 +331,6 @@ class TestModuleIntegration:
         mock_service = Mock()
         mock_service.process.return_value = {"status": "success"}
 
-        result = mock_service.process("test_data")
+        _result = mock_service.process("test_data")
         assert result["status"] == "success"
         mock_service.process.assert_called_once_with("test_data")

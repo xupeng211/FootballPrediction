@@ -82,17 +82,17 @@ class TestModelsInstantiation:
         try:
             from src.database.models.predictions import Prediction
 
-            prediction = Prediction(
+            _prediction = Prediction(
                 id=1,
                 match_id=100,
                 model_version="v1.0",
-                prediction="HOME_WIN",
+                _prediction ="HOME_WIN",
                 confidence=0.85,
                 created_at=datetime.datetime.now(),
             )
             assert prediction.id == 1
             assert prediction.match_id == 100
-            assert prediction.prediction == "HOME_WIN"
+            assert prediction._prediction == "HOME_WIN"
             assert prediction.confidence == 0.85
         except ImportError:
             pytest.skip("Prediction model not available")

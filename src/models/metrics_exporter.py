@@ -125,7 +125,7 @@ class ModelMetricsExporter:
             ).inc()
 
             logger.debug(
-                f"已导出预测指标：match_id={result.match_id}, result={result.predicted_result}"
+                f"已导出预测指标：match_id={result.match_id}, _result ={result.predicted_result}"
             )
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:

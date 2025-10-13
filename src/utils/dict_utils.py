@@ -13,7 +13,7 @@ class DictUtils:
     @staticmethod
     def deep_merge(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Dict[str, Any]:
         """深度合并字典 - 递归合并嵌套字典，dict2的值会覆盖dict1中的同名键"""
-        result = dict1.copy()
+        _result = dict1.copy()
         for key, value in dict2.items():
             if (
                 key in result

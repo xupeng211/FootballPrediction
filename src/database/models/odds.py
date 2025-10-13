@@ -346,7 +346,7 @@ class Odds(BaseModel):
         """获取市场平均赔率"""
 
         if market_type == MarketType.ONE_X_TWO:
-            result = (
+            _result = (
                 session.query(
                     func.avg(cls.home_odds).label("avg_home"),
                     func.avg(cls.draw_odds).label("avg_draw"),
@@ -363,7 +363,7 @@ class Odds(BaseModel):
             }
 
         elif market_type == MarketType.OVER_UNDER:
-            result = (
+            _result = (
                 session.query(
                     func.avg(cls.over_odds).label("avg_over"),
                     func.avg(cls.under_odds).label("avg_under"),

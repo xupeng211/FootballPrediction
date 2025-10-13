@@ -64,7 +64,7 @@ class TestDataValidator:
             "ftp://example.com/file.txt",
         ]
         for url in valid_urls:
-            result = self.validator.is_valid_url(url)
+            _result = self.validator.is_valid_url(url)
             # 简单的URL验证，实际实现可能更复杂
             assert result is not None
 
@@ -84,21 +84,21 @@ class TestDataValidator:
 
     def test_validate_required_fields_all_present(self):
         """测试：所有必填字段都存在"""
-        data = {"name": "John", "email": "john@example.com", "age": 30}
+        _data = {"name": "John", "email": "john@example.com", "age": 30}
         required = ["name", "email", "age"]
         errors = self.validator.validate_required_fields(data, required)
         assert errors == []
 
     def test_validate_required_fields_missing_fields(self):
         """测试：缺少必填字段"""
-        data = {"name": "John", "age": 30}
+        _data = {"name": "John", "age": 30}
         required = ["name", "email", "age"]
         errors = self.validator.validate_required_fields(data, required)
         assert "email" in errors
 
     def test_validate_required_fields_empty_values(self):
         """测试：空值字段"""
-        data = {"name": "", "email": None, "age": 0}
+        _data = {"name": "", "email": None, "age": 0}
         required = ["name", "email", "age"]
         errors = self.validator.validate_required_fields(data, required)
         # 假设空字符串和None被认为是缺失的
@@ -108,21 +108,21 @@ class TestDataValidator:
 
     def test_validate_data_types_valid(self):
         """测试：有效的数据类型"""
-        data = {"name": "John", "age": 30, "active": True, "scores": [90, 85, 95]}
+        _data = {"name": "John", "age": 30, "active": True, "scores": [90, 85, 95]}
         schema = {"name": str, "age": int, "active": bool, "scores": list}
         errors = self.validator.validate_data_types(data, schema)
         assert errors == []
 
     def test_validate_data_types_invalid(self):
         """测试：无效的数据类型"""
-        data = {"name": 123, "age": "30", "active": "true", "scores": "90"}
+        _data = {"name": 123, "age": "30", "active": "true", "scores": "90"}
         schema = {"name": str, "age": int, "active": bool, "scores": list}
         errors = self.validator.validate_data_types(data, schema)
         assert len(errors) == 4
 
     def test_validate_data_types_partial(self):
         """测试：部分字段类型错误"""
-        data = {"name": "John", "age": "30", "active": True}
+        _data = {"name": "John", "age": "30", "active": True}
         schema = {"name": str, "age": int, "active": bool}
         errors = self.validator.validate_data_types(data, schema)
         # age是字符串，应该有错误
@@ -269,7 +269,7 @@ class TestDataValidator:
         assert self.validator.is_valid_email(email) is False  # 当前实现可能不支持
 
         # 特殊字符的字符串
-        data = {"name": "John@Doe", "description": "Contains & symbols"}
+        _data = {"name": "John@Doe", "description": "Contains & symbols"}
         errors = self.validator.validate_required_fields(data, ["name"])
         assert len(errors) == 0
 

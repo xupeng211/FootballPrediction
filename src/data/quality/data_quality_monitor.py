@@ -149,7 +149,7 @@ class DataQualityMonitor:
                 WHERE collection_type = 'fixtures' AND status = 'success'
                 """
             )
-            result = latest_log.fetchone()
+            _result = latest_log.fetchone()
 
             if result and result.last_update:
                 hours_since = (
@@ -186,7 +186,7 @@ class DataQualityMonitor:
                 WHERE collected_at > NOW() - INTERVAL '24 hours'
                 """
             )
-            result = latest_odds.fetchone()
+            _result = latest_odds.fetchone()
 
             if result and result.last_update:
                 hours_since = (

@@ -45,11 +45,11 @@ class TestMetricsEventHandler:
             # Try with required arguments
             try:
                 return MetricsEventHandler(test_param="test_value")
-            except:
+            except Exception:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate MetricsEventHandler")
+                pytest.skip("Cannot instantiate MetricsEventHandler")
         except Exception:
-            pytest.skip(f"Error creating MetricsEventHandler instance")
+            pytest.skip("Error creating MetricsEventHandler instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -119,11 +119,11 @@ class TestLoggingEventHandler:
             # Try with required arguments
             try:
                 return LoggingEventHandler(test_param="test_value")
-            except:
+            except Exception:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate LoggingEventHandler")
+                pytest.skip("Cannot instantiate LoggingEventHandler")
         except Exception:
-            pytest.skip(f"Error creating LoggingEventHandler instance")
+            pytest.skip("Error creating LoggingEventHandler instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -183,11 +183,11 @@ class TestCacheInvalidationHandler:
             # Try with required arguments
             try:
                 return CacheInvalidationHandler(test_param="test_value")
-            except:
+            except Exception:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate CacheInvalidationHandler")
+                pytest.skip("Cannot instantiate CacheInvalidationHandler")
         except Exception:
-            pytest.skip(f"Error creating CacheInvalidationHandler instance")
+            pytest.skip("Error creating CacheInvalidationHandler instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -247,11 +247,11 @@ class TestNotificationEventHandler:
             # Try with required arguments
             try:
                 return NotificationEventHandler(test_param="test_value")
-            except:
+            except Exception:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate NotificationEventHandler")
+                pytest.skip("Cannot instantiate NotificationEventHandler")
         except Exception:
-            pytest.skip(f"Error creating NotificationEventHandler instance")
+            pytest.skip("Error creating NotificationEventHandler instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -311,11 +311,11 @@ class TestAnalyticsEventHandler:
             # Try with required arguments
             try:
                 return AnalyticsEventHandler(test_param="test_value")
-            except:
+            except Exception:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate AnalyticsEventHandler")
+                pytest.skip("Cannot instantiate AnalyticsEventHandler")
         except Exception:
-            pytest.skip(f"Error creating AnalyticsEventHandler instance")
+            pytest.skip("Error creating AnalyticsEventHandler instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -385,11 +385,11 @@ class TestAlertEventHandler:
             # Try with required arguments
             try:
                 return AlertEventHandler(test_param="test_value")
-            except:
+            except Exception:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate AlertEventHandler")
+                pytest.skip("Cannot instantiate AlertEventHandler")
         except Exception:
-            pytest.skip(f"Error creating AlertEventHandler instance")
+            pytest.skip("Error creating AlertEventHandler instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -478,7 +478,7 @@ class TestModuleIntegration:
             await asyncio.sleep(0.001)
             return True
 
-        result = await async_test()
+        _result = await async_test()
         assert result is True
 
     @pytest.mark.parametrize(
@@ -509,6 +509,6 @@ class TestModuleIntegration:
         mock_service = Mock()
         mock_service.process.return_value = {"status": "success"}
 
-        result = mock_service.process("test_data")
+        _result = mock_service.process("test_data")
         assert result["status"] == "success"
         mock_service.process.assert_called_once_with("test_data")

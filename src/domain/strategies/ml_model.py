@@ -352,7 +352,7 @@ class MLModelStrategy(PredictionStrategy):
             predicted_away_score=pred_away,
             confidence=confidence,
             probability_distribution=probability_distribution,
-            metadata={
+            _metadata ={
                 "model_version": self._model_version,
                 "model_loaded_at": self._model_loaded_at.isoformat()
                 if self._model_loaded_at

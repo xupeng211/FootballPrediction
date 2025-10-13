@@ -71,7 +71,7 @@ class MockConsumer:
     """模拟Kafka消费者"""
 
     def __init__(self, config: Dict[str, Any]):
-        self.config = config
+        self._config = config
         self._topics: set[str] = set()
         self._messages: Dict[str, List[MockMessage]] = defaultdict(list)  # type: ignore
         self._current_offset: Dict[str, int] = defaultdict(int)  # type: ignore
@@ -143,7 +143,7 @@ class MockProducer:
     """模拟Kafka生产者"""
 
     def __init__(self, config: Dict[str, Any]):
-        self.config = config
+        self._config = config
         self._messages: Dict[str, List[MockMessage]] = defaultdict(list)  # type: ignore
         self._callbacks: Dict[str, Callable] = {}
         self._flushed = True
@@ -213,7 +213,7 @@ class MockAdminClient:
     """模拟Kafka管理客户端"""
 
     def __init__(self, config: Dict[str, Any]):
-        self.config = config
+        self._config = config
         self._metadata = {"topics": {}, "brokers": {"1": "localhost:9093"}}
 
     def create_topics(self, new_topics: List[Any]) -> Dict[str, Any]:

@@ -56,7 +56,7 @@ async def get_observers() -> Dict[str, Any]:
     observers = {}
 
     for name, observer in manager._observers.items():
-        stats = observer.get_stats()
+        _stats = observer.get_stats()
         stats["observed_event_types"] = [
             et.value for et in observer.get_observed_event_types()
         ]
@@ -75,7 +75,7 @@ async def get_subjects() -> Dict[str, Any]:
     subjects = {}
 
     for name, subject in manager._subjects.items():
-        stats = subject.get_stats()
+        _stats = subject.get_stats()
         subjects[name] = stats
 
     return {
@@ -127,7 +127,7 @@ async def trigger_alert(
         severity=request.severity,
         message=request.message,
         source=request.source,
-        data=request.data,
+        _data =request.data,
     )
 
     return {"message": "告警已触发", "alert_type": request.alert_type}

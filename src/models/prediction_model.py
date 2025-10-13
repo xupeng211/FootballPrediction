@@ -57,7 +57,7 @@ class PredictionModel:
         self.model = None
         self.feature_columns = []  # type: ignore
         self.target_column = "result"
-        self.metadata = {
+        self._metadata = {
             "created_at": datetime.now().isoformat(),
             "version": "1.0.0",
             "description": "Stub implementation of prediction model",
@@ -219,7 +219,7 @@ class PredictionModel:
             self.model_type = model_data["model_type"]
             self.is_trained = model_data["is_trained"]
             self.feature_columns = model_data["feature_columns"]
-            self.metadata = model_data["metadata"]
+            self._metadata = model_data["metadata"]
 
             self.logger.info(f"Model loaded from: {file_path}")
             return True
@@ -310,7 +310,7 @@ class FootballPredictionModel(PredictionModel):
         probabilities = np.random.dirichlet(np.ones(3))
         prediction_idx = np.argmax(probabilities)
 
-        result = {
+        _result = {
             "home_team": home_team,
             "away_team": away_team,
             "prediction": self.target_classes[prediction_idx],
@@ -338,7 +338,7 @@ class FootballPredictionModel(PredictionModel):
         """
         results = []
         for match in matches:
-            prediction = self.predict_match(
+            _prediction = self.predict_match(
                 match.get("home_team", ""),
                 match.get("away_team", ""),
                 match.get("features", {}),

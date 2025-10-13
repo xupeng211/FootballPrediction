@@ -69,7 +69,7 @@ class TestAllUtilsComprehensive:
             ("@test.com", False),
         ]
         for email, expected in emails:
-            result = validator.validate_email(email)
+            _result = validator.validate_email(email)
             assert isinstance(result, bool)
 
         # 测试电话验证
@@ -82,7 +82,7 @@ class TestAllUtilsComprehensive:
             "",
         ]
         for phone in phones:
-            result = validator.validate_phone(phone)
+            _result = validator.validate_phone(phone)
             assert isinstance(result, bool)
 
         # 测试URL验证
@@ -94,25 +94,25 @@ class TestAllUtilsComprehensive:
             "www.example.com",  # 缺少协议
         ]
         for url in urls:
-            result = validator.validate_url(url)
+            _result = validator.validate_url(url)
             assert isinstance(result, bool)
 
         # 测试日期验证
         dates = ["2024-01-01", "01/01/2024", "2024-01-01T12:00:00", "invalid-date", ""]
         for date in dates:
-            result = validator.validate_date(date)
+            _result = validator.validate_date(date)
             assert isinstance(result, bool)
 
         # 测试数字验证
         numbers = ["123", "123.45", "-123", "0", "abc", ""]
         for num in numbers:
-            result = validator.validate_number(num)
+            _result = validator.validate_number(num)
             assert isinstance(result, bool)
 
         # 测试JSON验证
         jsons = ['{"key": "value"}', "[]", "null", '"string"', "123", "not json", ""]
         for j in jsons:
-            result = validator.validate_json(j)
+            _result = validator.validate_json(j)
             assert isinstance(result, bool)
 
         # 测试IP验证
@@ -123,13 +123,13 @@ class TestAllUtilsComprehensive:
             "",
         ]
         for ip in ips:
-            result = validator.validate_ip(ip)
+            _result = validator.validate_ip(ip)
             assert isinstance(result, bool)
 
         # 测试信用卡验证
         cards = ["4111111111111111", "5555555555554444", "invalid-card", ""]
         for card in cards:
-            result = validator.validate_credit_card(card)
+            _result = validator.validate_credit_card(card)
             assert isinstance(result, bool)
 
     # ==================== Dict Utils ====================
@@ -172,7 +172,7 @@ class TestAllUtilsComprehensive:
             assert None not in filtered.values()
 
         # 测试选择键
-        data = {"a": 1, "b": 2, "c": 3, "d": 4}
+        _data = {"a": 1, "b": 2, "c": 3, "d": 4}
         keys_list = [
             ["a", "c"],
             ["b", "d"],
@@ -285,7 +285,7 @@ class TestAllUtilsComprehensive:
             dt - timedelta(weeks=1),
         ]
         for time in times:
-            result = Formatters.format_relative_time(time)
+            _result = Formatters.format_relative_time(time)
             assert isinstance(result, str)
 
         # 测试货币格式化
@@ -358,7 +358,7 @@ class TestAllUtilsComprehensive:
             ("", False),
         ]
         for value, expected in json_values:
-            result = Helpers.is_json(value)
+            _result = Helpers.is_json(value)
             assert isinstance(result, bool)
 
         # 测试字符串截断
@@ -375,7 +375,7 @@ class TestAllUtilsComprehensive:
                 assert "..." in truncated or len(truncated) <= length
 
         # 测试深度获取
-        data = {"a": {"b": {"c": {"d": 123}}}, "x": None, "y": []}
+        _data = {"a": {"b": {"c": {"d": 123}}}, "x": None, "y": []}
         paths = [
             ("a.b.c.d", 123),
             ("a.b.c", {"d": 123}),
@@ -413,7 +413,7 @@ class TestAllUtilsComprehensive:
             assert isinstance(chunks, list)
 
         # 测试列表展平
-        nested_lists = [
+        _nested_lists = [
             [[1, 2], [3, 4], [5]],
             [[[]], [[1]], [[2, 3]]],
             [],
@@ -469,12 +469,12 @@ class TestAllUtilsComprehensive:
             ("person", "people"),
         ]
         for singular, plural in words:
-            result = StringUtils.pluralize(singular, 2)
+            _result = StringUtils.pluralize(singular, 2)
             assert isinstance(result, str)
 
         # 测试单数形式
         for singular, plural in words:
-            result = StringUtils.singularize(plural)
+            _result = StringUtils.singularize(plural)
             assert isinstance(result, str)
 
         # 测试单词截断
@@ -485,7 +485,7 @@ class TestAllUtilsComprehensive:
             ("One two", 1),
         ]
         for text, count in texts:
-            result = StringUtils.truncate_words(text, count)
+            _result = StringUtils.truncate_words(text, count)
             assert isinstance(result, str)
 
         # 测试清理HTML
@@ -503,7 +503,7 @@ class TestAllUtilsComprehensive:
         # 测试首字母大写
         sentences = ["hello world", "this is a test", "already Capitalized", ""]
         for sentence in sentences:
-            result = StringUtils.capitalize_first(sentence)
+            _result = StringUtils.capitalize_first(sentence)
             assert isinstance(result, str)
 
     # ==================== Time Utils ====================
@@ -547,7 +547,7 @@ class TestAllUtilsComprehensive:
             (now, False),  # 当前时间不算未来
         ]
         for test_time, is_future_expected in test_times:
-            result = TimeUtils.is_future(test_time)
+            _result = TimeUtils.is_future(test_time)
             assert isinstance(result, bool)
 
         # 测试时区偏移
@@ -556,7 +556,7 @@ class TestAllUtilsComprehensive:
             try:
                 offset = TimeUtils.get_timezone_offset(tz)
                 assert isinstance(offset, (int, float, str))
-            except:
+            except Exception:
                 pass  # 时区可能不存在
 
         # 测试日期时间格式化
@@ -582,7 +582,7 @@ class TestAllUtilsComprehensive:
             try:
                 parsed = TimeUtils.parse_datetime(date_str)
                 assert parsed is not None or parsed is None
-            except:
+            except Exception:
                 pass
 
     # ==================== Validators ====================
@@ -604,7 +604,7 @@ class TestAllUtilsComprehensive:
             (0.0, True),
         ]
         for value, expected in test_values:
-            result = validator.validate_required(value)
+            _result = validator.validate_required(value)
             assert isinstance(result, bool)
 
         # 测试范围验证
@@ -618,7 +618,7 @@ class TestAllUtilsComprehensive:
             (1, -10, 0, False),
         ]
         for value, min_val, max_val, expected in ranges:
-            result = validator.validate_range(value, min_val, max_val)
+            _result = validator.validate_range(value, min_val, max_val)
             assert isinstance(result, bool)
 
         # 测试长度验证
@@ -630,7 +630,7 @@ class TestAllUtilsComprehensive:
             ([], 1, 5),
         ]
         for item, min_len, max_len in test_items:
-            result = validator.validate_length(item, min_len, max_len)
+            _result = validator.validate_length(item, min_len, max_len)
             assert isinstance(result, bool)
 
         # 测试模式验证
@@ -641,7 +641,7 @@ class TestAllUtilsComprehensive:
             (r"^[^@]+@[^@]+\.[^@]+$", "not-email", False),
         ]
         for pattern, value, expected in patterns_and_values:
-            result = validator.validate_pattern(value, pattern)
+            _result = validator.validate_pattern(value, pattern)
             assert isinstance(result, bool)
 
         # 测试选择验证
@@ -652,7 +652,7 @@ class TestAllUtilsComprehensive:
             ([1, 2, 3], 4, False),
         ]
         for choices, value, expected in choices_list:
-            result = validator.validate_choice(value, choices)
+            _result = validator.validate_choice(value, choices)
             assert isinstance(result, bool)
 
         # 测试邮箱格式验证
@@ -664,7 +664,7 @@ class TestAllUtilsComprehensive:
             ("user@", False),
         ]
         for email, expected in emails:
-            result = validator.validate_email_format(email)
+            _result = validator.validate_email_format(email)
             assert isinstance(result, bool)
 
         # 测试URL格式验证
@@ -676,7 +676,7 @@ class TestAllUtilsComprehensive:
             ("www.example.com", False),
         ]
         for url, expected in urls:
-            result = validator.validate_url_format(url)
+            _result = validator.validate_url_format(url)
             assert isinstance(result, bool)
 
         # 测试数字格式验证
@@ -689,7 +689,7 @@ class TestAllUtilsComprehensive:
             ("12a3", False),
         ]
         for num, expected in numbers:
-            result = validator.validate_number_format(num)
+            _result = validator.validate_number_format(num)
             assert isinstance(result, bool)
 
     # ==================== I18n ====================
@@ -703,7 +703,7 @@ class TestAllUtilsComprehensive:
         # 测试翻译
         keys = ["hello", "goodbye", "error", "success", "welcome", "unknown_key"]
         for key in keys:
-            result = i18n.translate(key)
+            _result = i18n.translate(key)
             assert isinstance(result, str)
 
         # 测试语言切换
@@ -713,7 +713,7 @@ class TestAllUtilsComprehensive:
                 i18n.set_language(lang)
                 current = i18n.get_current_language()
                 assert isinstance(current, str)
-            except:
+            except Exception:
                 pass  # 某些语言可能不支持
 
         # 测试获取翻译
@@ -790,7 +790,7 @@ class TestAllUtilsComprehensive:
         WarningFilters.setup_warnings()
 
         # 测试过滤特定警告
-        with warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True):
             warnings.warn("Test deprecation warning", DeprecationWarning)
             WarningFilters.filter_deprecation_warnings()
             # 过滤后应该没有警告或被过滤
@@ -801,7 +801,7 @@ class TestAllUtilsComprehensive:
         from utils.config_loader import ConfigLoader
 
         # 测试加载配置
-        config = ConfigLoader.load_config()
+        _config = ConfigLoader.load_config()
         assert isinstance(config, dict)
 
         # 测试获取配置值
@@ -851,8 +851,8 @@ class TestAllUtilsComprehensive:
                 raise ValueError("Not yet")
             return "success"
 
-        result = eventually_success()
-        assert result == "success"
+        _result = eventually_success()
+        assert _result == "success"
         assert attempts[0] == 3
 
         # 测试各种退避策略
@@ -1013,14 +1013,14 @@ class TestStandardLibraryExtensive:
         """
 
         for pattern, description in patterns:
-            matches = re.findall(pattern, test_text)
+            _matches = re.findall(pattern, test_text)
             assert isinstance(matches, list)
 
         # 替换操作
         replacements = [(r"\b(test)\b", "[TEST]"), (r"\d+", "[NUM]"), (r"\s+", " ")]
 
         for pattern, replacement in replacements:
-            result = re.sub(pattern, replacement, test_text)
+            _result = re.sub(pattern, replacement, test_text)
             assert isinstance(result, str)
 
     def test_collections_operations_extensive(self):
@@ -1134,7 +1134,7 @@ class TestStandardLibraryExtensive:
         for angle in angles:
             sin_val = math.sin(angle)
             cos_val = math.cos(angle)
-            tan_val = math.tan(angle) if abs(math.cos(angle)) > 1e-10 else None
+            _tan_val = math.tan(angle) if abs(math.cos(angle)) > 1e-10 else None
             assert isinstance(sin_val, float)
             assert isinstance(cos_val, float)
 
@@ -1148,7 +1148,7 @@ class TestStandardLibraryExtensive:
                 assert isinstance(log_val, float)
 
         # 统计函数
-        data = list(range(1, 11))
+        _data = list(range(1, 11))
         assert statistics.mean(data) == 5.5
         assert statistics.median(data) == 5.5
         assert statistics.mode(data) == 1
@@ -1175,8 +1175,8 @@ class TestStandardLibraryExtensive:
         for f in fractions_list:
             assert isinstance(f, fractions.Fraction)
 
-        result = fractions.Fraction(1, 3) + fractions.Fraction(2, 3)
-        assert result == fractions.Fraction(1, 1)
+        _result = fractions.Fraction(1, 3) + fractions.Fraction(2, 3)
+        assert _result == fractions.Fraction(1, 1)
 
         # 十进制精确计算
         decimal.getcontext().prec = 28
@@ -1360,7 +1360,7 @@ class TestStandardLibraryExtensive:
         import io
 
         # Pickle序列化
-        data = {
+        _data = {
             "string": "test",
             "number": 123,
             "list": [1, 2, 3],
@@ -1440,7 +1440,7 @@ class TestStandardLibraryExtensive:
 
         # 创建XML树
         root = ET.Element("root")
-        child1 = ET.SubElement(root, "child1", attrib={"id": "1"})
+        ET.SubElement(root, "child1", attrib={"id": "1"})
         child2 = ET.SubElement(root, "child2")
         child2.text = "Text content"
 
@@ -1463,7 +1463,7 @@ class TestStandardLibraryExtensive:
         # 命名空间处理
         ns = {"ns": "http://example.com/namespace"}
         ns_root = ET.Element(f"{{{ns['ns']}}}root")
-        ns_child = ET.SubElement(ns_root, f"{{{ns['ns']}}}child")
+        _ns_child = ET.SubElement(ns_root, f"{{{ns['ns']}}}child")
         ns_str = ET.tostring(ns_root, encoding="unicode")
         assert "http://example.com/namespace" in ns_str or ns_str.count("ns:") > 0
 

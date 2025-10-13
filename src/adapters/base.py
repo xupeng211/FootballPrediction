@@ -101,7 +101,7 @@ class Adapter(Target):
 
         try:
             # 调用具体适配器的实现
-            result = await self._request(*args, **kwargs)
+            _result = await self._request(*args, **kwargs)
 
             # 更新成功指标
             self.metrics["successful_requests"] += 1
@@ -332,7 +332,7 @@ class BaseAdapter(ABC):
     """基础适配器抽象类"""
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
-        self.config = config or {}
+        self._config = config or {}
         self.is_initialized = False
 
     async def initialize(self) -> None:

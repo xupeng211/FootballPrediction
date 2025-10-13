@@ -121,7 +121,7 @@ class TestAdapterRegistry:
         await registry.initialize()
 
         # 创建配置和模拟适配器
-        config = AdapterConfig(name="test_adapter", adapter_type="test")
+        _config = AdapterConfig(name="test_adapter", adapter_type="test")
         mock_adapter = Mock(spec=Adapter)
         mock_adapter.initialize = AsyncMock()
         registry.factory.create_adapter.return_value = mock_adapter
@@ -138,7 +138,7 @@ class TestAdapterRegistry:
 
     async def test_register_adapter_not_active(self, registry):
         """测试：在非活跃状态下注册适配器"""
-        config = AdapterConfig(name="test", adapter_type="test")
+        _config = AdapterConfig(name="test", adapter_type="test")
 
         with pytest.raises(RuntimeError, match="Registry not active"):
             await registry.register_adapter(config)
@@ -148,7 +148,7 @@ class TestAdapterRegistry:
         await registry.initialize()
 
         # 创建配置
-        config = AdapterConfig(name="test_adapter", adapter_type="test")
+        _config = AdapterConfig(name="test_adapter", adapter_type="test")
         mock_adapter = Mock(spec=Adapter)
         mock_adapter.initialize = AsyncMock()
         registry.factory.create_adapter.return_value = mock_adapter
@@ -168,7 +168,7 @@ class TestAdapterRegistry:
         await registry.initialize()
 
         # 创建并注册适配器
-        config = AdapterConfig(name="test_adapter", adapter_type="test")
+        _config = AdapterConfig(name="test_adapter", adapter_type="test")
         mock_adapter = Mock(spec=Adapter)
         mock_adapter.initialize = AsyncMock()
         mock_adapter.cleanup = AsyncMock()
@@ -358,13 +358,13 @@ class TestAdapterRegistry:
         registry.adapters["test_adapter"] = mock_adapter
 
         # 启用适配器
-        result = await registry.enable_adapter("test_adapter")
+        _result = await registry.enable_adapter("test_adapter")
         assert result is True
         mock_adapter.initialize.assert_called_once()
 
     async def test_enable_adapter_not_found(self, registry):
         """测试：启用不存在的适配器"""
-        result = await registry.enable_adapter("nonexistent")
+        _result = await registry.enable_adapter("nonexistent")
         assert result is False
 
     async def test_enable_adapter_failure(self, registry):
@@ -375,7 +375,7 @@ class TestAdapterRegistry:
         registry.adapters["test_adapter"] = mock_adapter
 
         # 启用应该失败
-        result = await registry.enable_adapter("test_adapter")
+        _result = await registry.enable_adapter("test_adapter")
         assert result is False
 
     async def test_disable_adapter(self, registry):
@@ -386,14 +386,14 @@ class TestAdapterRegistry:
         registry.adapters["test_adapter"] = mock_adapter
 
         # 禁用适配器
-        result = await registry.disable_adapter("test_adapter")
+        _result = await registry.disable_adapter("test_adapter")
         assert result is True
         mock_adapter.cleanup.assert_called_once()
         assert mock_adapter.status == AdapterStatus.INACTIVE
 
     async def test_disable_adapter_not_found(self, registry):
         """测试：禁用不存在的适配器"""
-        result = await registry.disable_adapter("nonexistent")
+        _result = await registry.disable_adapter("nonexistent")
         assert result is False
 
     async def test_restart_adapter(self, registry):
@@ -405,14 +405,14 @@ class TestAdapterRegistry:
         registry.adapters["test_adapter"] = mock_adapter
 
         # 重启适配器
-        result = await registry.restart_adapter("test_adapter")
+        _result = await registry.restart_adapter("test_adapter")
         assert result is True
         mock_adapter.cleanup.assert_called_once()
         mock_adapter.initialize.assert_called_once()
 
     async def test_restart_adapter_not_found(self, registry):
         """测试：重启不存在的适配器"""
-        result = await registry.restart_adapter("nonexistent")
+        _result = await registry.restart_adapter("nonexistent")
         assert result is False
 
     async def test_restart_adapter_failure(self, registry):
@@ -424,7 +424,7 @@ class TestAdapterRegistry:
         registry.adapters["test_adapter"] = mock_adapter
 
         # 重启应该失败
-        result = await registry.restart_adapter("test_adapter")
+        _result = await registry.restart_adapter("test_adapter")
         assert result is False
 
     @patch("asyncio.sleep")

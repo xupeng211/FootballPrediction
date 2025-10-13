@@ -199,7 +199,7 @@ class ScoresCollector(DataCollector):
             else:
                 status = "failed"
 
-            result = CollectionResult(
+            _result = CollectionResult(
                 data_source=self.data_source,
                 collection_type="live_scores",
                 records_collected=total_collected,
@@ -300,7 +300,7 @@ class ScoresCollector(DataCollector):
                         message = await asyncio.wait_for(websocket.recv(), timeout=30)
 
                         # 解析实时数据
-                        data = json.loads(message)  # type: ignore
+                        _data = json.loads(message)  # type: ignore
                         if data.get("type") == "match_update":
                             cleaned_data = await self._clean_live_data(data)
                             if cleaned_data:
@@ -475,7 +475,7 @@ class ScoresCollector(DataCollector):
                     current_matches = match_ids
 
                 if current_matches:
-                    result = await self.collect_live_scores(
+                    _result = await self.collect_live_scores(
                         match_ids=current_matches, use_websocket=use_websocket
                     )
 

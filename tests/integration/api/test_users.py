@@ -26,7 +26,7 @@ class TestUserAPIIntegration:
 
         # 验证响应
         assert response.status_code == 201
-        data = response.json()
+        _data = response.json()
         assert data["username"] == user_data["username"]
         assert data["email"] == user_data["email"]
         assert data["role"] == user_data["role"]
@@ -37,10 +37,10 @@ class TestUserAPIIntegration:
         # 验证数据库中的用户
         from src.database.models import User
 
-        user = await db_session.execute(
+        _user = await db_session.execute(
             select(User).where(User.username == user_data["username"])
         )
-        user = user.scalar_one_or_none()
+        _user = user.scalar_one_or_none()
         assert user is not None
         assert user.email == user_data["email"]
         assert user.role == user_data["role"]
@@ -63,11 +63,11 @@ class TestUserAPIIntegration:
             "password": user_data["password"],
         }
 
-        response = await api_client.post("/api/v1/auth/login", data=login_data)
+        response = await api_client.post("/api/v1/auth/login", _data =login_data)
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "access_token" in data
         assert "token_type" in data
         assert data["token_type"] == "bearer"
@@ -82,7 +82,7 @@ class TestUserAPIIntegration:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "username" in data
         assert "email" in data
         assert "role" in data
@@ -105,7 +105,7 @@ class TestUserAPIIntegration:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["email"] == update_data["email"]
         assert data["first_name"] == update_data["first_name"]
         assert data["last_name"] == update_data["last_name"]
@@ -124,13 +124,13 @@ class TestUserAPIIntegration:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "message" in data
 
         # 使用新密码登录
         login_response = await api_client.post(
             "/api/v1/auth/login",
-            data={
+            _data ={
                 "username": "test_integration_user",
                 "password": password_data["new_password"],
             },
@@ -146,7 +146,7 @@ class TestUserAPIIntegration:
         auth_headers: dict,
     ):
         """测试获取用户预测历史"""
-        user = sample_prediction_data["user"]
+        _user = sample_prediction_data["user"]
 
         # 获取用户预测
         response = await api_client.get(
@@ -155,7 +155,7 @@ class TestUserAPIIntegration:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "data" in data
         assert "pagination" in data
         assert len(data["data"]) >= 1
@@ -169,7 +169,7 @@ class TestUserAPIIntegration:
         auth_headers: dict,
     ):
         """测试获取用户统计信息"""
-        user = sample_prediction_data["user"]
+        _user = sample_prediction_data["user"]
 
         # 创建更多预测数据
         from src.database.models import Prediction
@@ -178,7 +178,7 @@ class TestUserAPIIntegration:
             Prediction(
                 user_id=user.id,
                 match_id=sample_prediction_data["prediction"].match_id,
-                prediction="DRAW",
+                _prediction ="DRAW",
                 confidence=0.6,
                 status="COMPLETED",
                 is_correct=True,
@@ -187,7 +187,7 @@ class TestUserAPIIntegration:
             Prediction(
                 user_id=user.id,
                 match_id=sample_prediction_data["prediction"].match_id,
-                prediction="AWAY_WIN",
+                _prediction ="AWAY_WIN",
                 confidence=0.7,
                 status="COMPLETED",
                 is_correct=False,
@@ -206,7 +206,7 @@ class TestUserAPIIntegration:
 
         # 验证响应
         assert response.status_code == 200
-        stats = response.json()
+        _stats = response.json()
         assert "total_predictions" in stats
         assert "correct_predictions" in stats
         assert "accuracy" in stats
@@ -225,7 +225,7 @@ class TestUserAPIIntegration:
 
         users = []
         for i in range(5):
-            user = User(
+            _user = User(
                 username=f"test_user_{i}",
                 email=f"user{i}@example.com",
                 password_hash="hashed_password",
@@ -241,7 +241,7 @@ class TestUserAPIIntegration:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "data" in data
         assert "pagination" in data
         assert len(data["data"]) >= 5
@@ -262,7 +262,7 @@ class TestUserAPIIntegration:
         # 创建要停用的用户
         from src.database.models import User
 
-        user = User(
+        _user = User(
             username="to_deactivate",
             email="deactivate@example.com",
             password_hash="hashed_password",
@@ -282,7 +282,7 @@ class TestUserAPIIntegration:
 
         # 验证数据库
         await db_session.refresh(user)
-        assert user.is_active == False
+        assert user.is_active is False
 
     @pytest.mark.asyncio
     async def test_user_validation(self, api_client: AsyncClient):
@@ -357,7 +357,7 @@ class TestUserAPIIntegration:
         # 用户不存在
         response = await api_client.post(
             "/api/v1/auth/login",
-            data={"username": "nonexistent_user", "password": "password123"},
+            _data ={"username": "nonexistent_user", "password": "password123"},
         )
         assert response.status_code == 401
 
@@ -375,7 +375,7 @@ class TestUserAPIIntegration:
         # 使用错误密码登录
         response = await api_client.post(
             "/api/v1/auth/login",
-            data={"username": "test_user_invalid", "password": "wrong_password"},
+            _data ={"username": "test_user_invalid", "password": "wrong_password"},
         )
         assert response.status_code == 401
 
@@ -389,6 +389,6 @@ class TestUserAPIIntegration:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "access_token" in data
         assert "token_type" in data

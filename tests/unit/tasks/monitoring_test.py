@@ -45,11 +45,11 @@ class TestTaskMonitor:
             # Try with required arguments
             try:
                 return TaskMonitor(test_param="test_value")
-            except:
+            except Exception:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate TaskMonitor")
+                pytest.skip("Cannot instantiate TaskMonitor")
         except Exception:
-            pytest.skip(f"Error creating TaskMonitor instance")
+            pytest.skip("Error creating TaskMonitor instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -178,7 +178,7 @@ class TestModuleIntegration:
             await asyncio.sleep(0.001)
             return True
 
-        result = await async_test()
+        _result = await async_test()
         assert result is True
 
     @pytest.mark.parametrize(
@@ -209,6 +209,6 @@ class TestModuleIntegration:
         mock_service = Mock()
         mock_service.process.return_value = {"status": "success"}
 
-        result = mock_service.process("test_data")
+        _result = mock_service.process("test_data")
         assert result["status"] == "success"
         mock_service.process.assert_called_once_with("test_data")

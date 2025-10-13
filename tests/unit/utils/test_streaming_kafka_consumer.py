@@ -55,7 +55,7 @@ class TestKafkaMessageConsumer:
     @pytest.fixture
     def consumer(self):
         """创建消费者实例"""
-        config = {
+        _config = {
             "bootstrap_servers": ["localhost:9092"],
             "group_id": "test_group",
             "topics": ["topic1", "topic2"],
@@ -120,7 +120,7 @@ class TestKafkaMessageConsumer:
         """测试提交偏移量"""
         await consumer.start()
         await consumer.commit()
-        stats = consumer.get_stats()
+        _stats = consumer.get_stats()
         assert stats["last_commit_offset"] >= 0
 
     @pytest.mark.asyncio
@@ -129,7 +129,7 @@ class TestKafkaMessageConsumer:
         await consumer.start()
         offsets = {("topic1", 0): 100}
         await consumer.commit(offsets)
-        stats = consumer.get_stats()
+        _stats = consumer.get_stats()
         assert stats["last_commit_offset"] == 100
 
     @pytest.mark.asyncio
@@ -138,7 +138,7 @@ class TestKafkaMessageConsumer:
         await consumer.start()
         # 简化版本的commit不会失败，只测试正常提交
         await consumer.commit()
-        stats = consumer.get_stats()
+        _stats = consumer.get_stats()
         assert stats["last_commit_offset"] >= 0
 
     @pytest.mark.asyncio
@@ -192,7 +192,7 @@ class TestKafkaMessageConsumer:
         mock_message.value = b'{"data": "test"}'
         mock_message.headers = [("source", b"api"), ("version", b"1.0")]
 
-        result = consumer._deserialize_message(mock_message)
+        _result = consumer._deserialize_message(mock_message)
 
         assert result["key"] == "test_key"
         assert result["value"] == {"data": "test"}
@@ -206,7 +206,7 @@ class TestKafkaMessageConsumer:
         mock_message.value = b'{"data": "test"}'
         mock_message.headers = None
 
-        result = consumer._deserialize_message(mock_message)
+        _result = consumer._deserialize_message(mock_message)
 
         assert result["key"] == "test_key"
         assert result["value"] == {"data": "test"}
@@ -365,7 +365,7 @@ class TestKafkaMessageConsumer:
 
     def test_get_consumer_stats(self, consumer):
         """测试获取消费者统计"""
-        stats = consumer.get_stats()
+        _stats = consumer.get_stats()
         assert "messages_consumed" in stats
         assert "partitions_assigned" in stats
         assert "last_commit_offset" in stats

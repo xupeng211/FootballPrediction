@@ -37,7 +37,7 @@ class EventData:
         self.timestamp = timestamp or datetime.utcnow()
         self.source = source
         self.version = version
-        self.metadata = metadata or {}
+        self._metadata = metadata or {}
 
 
 class Event(ABC):

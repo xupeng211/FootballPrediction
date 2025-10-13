@@ -45,7 +45,7 @@ class TestGetCurrentUser:
         with patch("src.api.dependencies.jwt.decode") as mock_decode:
             mock_decode.return_value = {"sub": "123", "role": "user"}
 
-            result = await get_current_user(mock_credentials)
+            _result = await get_current_user(mock_credentials)
 
             assert result["id"] == 123
             assert result["role"] == "user"
@@ -60,7 +60,7 @@ class TestGetCurrentUser:
         with patch("src.api.dependencies.jwt.decode") as mock_decode:
             mock_decode.return_value = {"sub": "456", "role": "admin"}
 
-            result = await get_current_user(mock_credentials)
+            _result = await get_current_user(mock_credentials)
 
             assert result["id"] == 456
             assert result["role"] == "admin"
@@ -103,7 +103,7 @@ class TestGetCurrentUser:
         with patch("src.api.dependencies.jwt.decode") as mock_decode:
             mock_decode.return_value = {"sub": "789"}  # 缺少role
 
-            result = await get_current_user(mock_credentials)
+            _result = await get_current_user(mock_credentials)
 
             assert result["id"] == 789
             assert result["role"] == "user"  # 默认角色
@@ -120,7 +120,7 @@ class TestGetAdminUser:
         """测试：管理员用户验证成功"""
         admin_user = {"id": 1, "role": "admin", "token": "admin_token"}
 
-        result = await get_admin_user(admin_user)
+        _result = await get_admin_user(admin_user)
 
         assert result is admin_user
         assert result["role"] == "admin"
@@ -210,10 +210,10 @@ class TestVerifyPredictionPermission:
     @pytest.mark.asyncio
     async def test_verify_prediction_permission_success(self):
         """测试：预测权限验证成功"""
-        user = {"id": 1, "role": "user"}
+        _user = {"id": 1, "role": "user"}
         match_id = 123
 
-        result = await verify_prediction_permission(match_id, user)
+        _result = await verify_prediction_permission(match_id, user)
 
         assert result is True  # 当前实现总是返回True
 
@@ -223,7 +223,7 @@ class TestVerifyPredictionPermission:
         admin_user = {"id": 2, "role": "admin"}
         match_id = 456
 
-        result = await verify_prediction_permission(match_id, admin_user)
+        _result = await verify_prediction_permission(match_id, admin_user)
 
         assert result is True
 
@@ -237,9 +237,9 @@ class TestRateLimitCheck:
     @pytest.mark.asyncio
     async def test_rate_limit_check_success(self):
         """测试：速率限制通过"""
-        user = {"id": 1, "role": "user"}
+        _user = {"id": 1, "role": "user"}
 
-        result = await rate_limit_check(user)
+        _result = await rate_limit_check(user)
 
         assert result is True  # 当前实现总是返回True
 
@@ -248,7 +248,7 @@ class TestRateLimitCheck:
         """测试：管理员速率限制"""
         admin_user = {"id": 2, "role": "admin"}
 
-        result = await rate_limit_check(admin_user)
+        _result = await rate_limit_check(admin_user)
 
         assert result is True
 
@@ -269,7 +269,7 @@ class TestDependenciesIntegration:
             mock_decode.return_value = {"sub": "1", "role": "admin"}
 
             # 1. 获取当前用户
-            user = await get_current_user(mock_credentials)
+            _user = await get_current_user(mock_credentials)
             assert user["role"] == "admin"
 
             # 2. 验证管理员权限
@@ -286,7 +286,7 @@ class TestDependenciesIntegration:
             mock_decode.return_value = {"sub": "2", "role": "user"}
 
             # 1. 获取当前用户
-            user = await get_current_user(mock_credentials)
+            _user = await get_current_user(mock_credentials)
             assert user["role"] == "user"
 
             # 2. 尝试获取管理员权限（应该失败）
@@ -297,7 +297,7 @@ class TestDependenciesIntegration:
     @pytest.mark.asyncio
     async def test_permission_and_rate_limit_flow(self):
         """测试：权限和速率限制流程"""
-        user = {"id": 123, "role": "user", "token": "valid_token"}
+        _user = {"id": 123, "role": "user", "token": "valid_token"}
         match_id = 456
 
         # 1. 验证预测权限
@@ -329,7 +329,7 @@ class TestDependenciesIntegration:
             mock_get_redis.return_value = mock_redis
 
             # 执行完整流程
-            user = await get_current_user(mock_credentials)
+            _user = await get_current_user(mock_credentials)
             admin_user = await get_admin_user(user)
             engine = await get_prediction_engine()
             redis = await get_redis_manager()
@@ -394,11 +394,11 @@ class TestDependenciesIntegration:
     async def test_dependency_caching(self):
         """测试：依赖缓存"""
         # FastAPI的依赖注入会缓存相同参数的依赖
-        user = {"id": 1, "role": "user"}
+        _user = {"id": 1, "role": "user"}
 
         # 多次调用无状态函数应该返回相同结果
         result1 = await verify_prediction_permission(123, user)
-        result2 = await verify_prediction_permission(123, user)
+        _result2 = await verify_prediction_permission(123, user)
         result3 = await rate_limit_check(user)
 
         assert result1 is True

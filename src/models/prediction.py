@@ -73,7 +73,7 @@ class PredictionService(SimpleService):
         """批量预测比赛"""
         results = []
         for match_id in match_ids:
-            result = await self.predict_match(match_id)
+            _result = await self.predict_match(match_id)
             results.append(result)
         return results
 

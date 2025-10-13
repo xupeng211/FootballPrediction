@@ -41,8 +41,8 @@ class TestBaseRepository:
         with patch.object(base_repo.db_manager, "add", return_value=None):
             with patch.object(base_repo.db_manager, "commit", return_value=None):
                 with patch.object(base_repo.db_manager, "refresh", return_value=None):
-                    result = await base_repo.create(mock_obj)
-                    assert result == mock_obj
+                    _result = await base_repo.create(mock_obj)
+                    assert _result == mock_obj
 
     @pytest.mark.asyncio
     async def test_get_by_id(self, base_repo):
@@ -51,8 +51,8 @@ class TestBaseRepository:
         mock_obj.id = 1
 
         with patch.object(base_repo, "find_one", return_value=mock_obj):
-            result = await base_repo.get_by_id(1)
-            assert result == mock_obj
+            _result = await base_repo.get_by_id(1)
+            assert _result == mock_obj
 
     @pytest.mark.asyncio
     async def test_update(self, base_repo):
@@ -62,8 +62,8 @@ class TestBaseRepository:
 
         with patch.object(base_repo.db_manager, "merge", return_value=mock_obj):
             with patch.object(base_repo.db_manager, "commit", return_value=None):
-                result = await base_repo.update(mock_obj)
-                assert result == mock_obj
+                _result = await base_repo.update(mock_obj)
+                assert _result == mock_obj
 
     @pytest.mark.asyncio
     async def test_delete(self, base_repo):
@@ -100,7 +100,7 @@ class TestMatchRepository:
             with patch.object(
                 match_repo.db_manager, "execute", return_value=mock_execute
             ):
-                result = await match_repo.get_upcoming_matches(days=7)
+                _result = await match_repo.get_upcoming_matches(days=7)
                 assert len(result) == 2
 
     @pytest.mark.asyncio
@@ -114,7 +114,7 @@ class TestMatchRepository:
             with patch.object(
                 match_repo.db_manager, "execute", return_value=mock_execute
             ):
-                result = await match_repo.get_matches_by_team(team_id=1, limit=10)
+                _result = await match_repo.get_matches_by_team(team_id=1, limit=10)
                 assert len(result) == 1
 
     @pytest.mark.asyncio
@@ -128,7 +128,7 @@ class TestMatchRepository:
             with patch.object(
                 match_repo.db_manager, "execute", return_value=mock_execute
             ):
-                result = await match_repo.get_live_matches()
+                _result = await match_repo.get_live_matches()
                 assert len(result) == 3
 
     @pytest.mark.asyncio
@@ -141,7 +141,7 @@ class TestMatchRepository:
             with patch.object(
                 match_repo.db_manager, "execute", return_value=mock_execute
             ):
-                result = await match_repo.get_match_statistics()
+                _result = await match_repo.get_match_statistics()
                 assert result["total_matches"] == 100
                 assert result["completed_matches"] == 50
                 assert result["upcoming_matches"] == 20
@@ -171,8 +171,8 @@ class TestUserRepository:
             with patch.object(
                 user_repo.db_manager, "execute", return_value=mock_execute
             ):
-                result = await user_repo.get_user_by_username("testuser")
-                assert result == mock_user
+                _result = await user_repo.get_user_by_username("testuser")
+                assert _result == mock_user
 
     @pytest.mark.asyncio
     async def test_get_user_by_email(self, user_repo):
@@ -185,8 +185,8 @@ class TestUserRepository:
             with patch.object(
                 user_repo.db_manager, "execute", return_value=mock_execute
             ):
-                result = await user_repo.get_user_by_email("test@example.com")
-                assert result == mock_user
+                _result = await user_repo.get_user_by_email("test@example.com")
+                assert _result == mock_user
 
 
 class TestPredictionRepository:
@@ -208,7 +208,7 @@ class TestPredictionRepository:
         mock_predictions = [MagicMock(), MagicMock()]
 
         with patch.object(prediction_repo, "find", return_value=mock_predictions):
-            result = await prediction_repo.get_user_predictions(user_id=1, limit=10)
+            _result = await prediction_repo.get_user_predictions(user_id=1, limit=10)
             assert len(result) == 2
 
     @pytest.mark.asyncio
@@ -217,15 +217,15 @@ class TestPredictionRepository:
         mock_predictions = [MagicMock()]
 
         with patch.object(prediction_repo, "find", return_value=mock_predictions):
-            result = await prediction_repo.get_match_predictions(match_id=123)
+            _result = await prediction_repo.get_match_predictions(match_id=123)
             assert len(result) == 1
 
     @pytest.mark.asyncio
     async def test_get_prediction_accuracy(self, prediction_repo):
         """测试获取预测准确率"""
         with patch.object(prediction_repo, "count", side_effect=[100, 65]):
-            result = await prediction_repo.get_prediction_accuracy(user_id=1, days=30)
-            assert result == 65.0
+            _result = await prediction_repo.get_prediction_accuracy(user_id=1, days=30)
+            assert _result == 65.0
 
     @pytest.mark.asyncio
     async def test_get_pending_predictions(self, prediction_repo):
@@ -233,7 +233,7 @@ class TestPredictionRepository:
         mock_predictions = [MagicMock(), MagicMock(), MagicMock()]
 
         with patch.object(prediction_repo, "find", return_value=mock_predictions):
-            result = await prediction_repo.get_pending_predictions(user_id=1)
+            _result = await prediction_repo.get_pending_predictions(user_id=1)
             assert len(result) == 3
 
     @pytest.mark.asyncio
@@ -242,5 +242,5 @@ class TestPredictionRepository:
         mock_predictions = [MagicMock(id=1), MagicMock(id=2)]
 
         with patch.object(prediction_repo.db_manager, "commit", return_value=None):
-            result = await prediction_repo.batch_update_predictions(mock_predictions)
-            assert result == 2
+            _result = await prediction_repo.batch_update_predictions(mock_predictions)
+            assert _result == 2

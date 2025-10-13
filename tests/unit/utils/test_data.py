@@ -50,7 +50,7 @@ class TestGetMatchFeatures:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["match_id"] == 12345
         assert data["match_info"]["home_team_id"] == 10
         assert data["match_info"]["away_team_id"] == 20
@@ -139,7 +139,7 @@ class TestGetMatchFeatures:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["match_id"] == 12345
         assert data["features"]["home_team"]["team_id"] == 10
         assert data["features"]["home_team"]["recent_form"]["wins"] == 3
@@ -166,7 +166,7 @@ class TestGetMatchFeatures:
 
         # 验证响应
         assert response.status_code == 404
-        data = response.json()
+        _data = response.json()
         assert data["error"] is True
         assert "比赛不存在" in data["message"]
 
@@ -186,7 +186,7 @@ class TestGetMatchFeatures:
 
         # 验证响应
         assert response.status_code == 500
-        data = response.json()
+        _data = response.json()
         assert data["error"] is True
         assert "获取比赛特征失败" in data["message"]
 
@@ -265,7 +265,7 @@ class TestGetTeamStats:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["team_id"] == 10
         assert data["team_name"] == "Test Team FC"
         assert data["total_matches"] == 5
@@ -302,7 +302,7 @@ class TestGetTeamStats:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["team_id"] == 10
         assert data["total_matches"] == 0
         assert data["wins"] == 0
@@ -325,7 +325,7 @@ class TestGetTeamStats:
 
         # 验证响应
         assert response.status_code == 404
-        data = response.json()
+        _data = response.json()
         assert data["error"] is True
         assert "球队不存在" in data["message"]
 
@@ -368,7 +368,7 @@ class TestGetTeamRecentStats:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["team_id"] == 10
         assert data["team_name"] == "Test Team FC"
         assert data["period_days"] == 30
@@ -406,7 +406,7 @@ class TestGetTeamRecentStats:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["period_days"] == 7
         assert data["total_matches"] == 0
 
@@ -434,7 +434,7 @@ class TestGetTeamRecentStats:
 
         # 验证响应
         assert response.status_code == 404
-        data = response.json()
+        _data = response.json()
         assert data["error"] is True
         assert "球队不存在" in data["message"]
 
@@ -491,7 +491,7 @@ class TestGetDashboardData:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "generated_at" in data
         assert data["today_matches"]["count"] == 1
         assert len(data["today_matches"]["matches"]) == 1
@@ -531,7 +531,7 @@ class TestGetDashboardData:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["today_matches"]["count"] == 0
         assert data["predictions"]["count"] == 0
         assert data["data_quality"]["overall_status"] == "healthy"
@@ -549,7 +549,7 @@ class TestGetDashboardData:
 
         # 验证响应
         assert response.status_code == 500
-        data = response.json()
+        _data = response.json()
         assert data["error"] is True
         assert "获取仪表板数据失败" in data["message"]
 

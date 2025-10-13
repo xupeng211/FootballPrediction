@@ -148,7 +148,7 @@ class TestPredictionModel:
 
     def test_prediction_creation(self):
         """测试预测创建"""
-        prediction = Predictions(
+        _prediction = Predictions(
             match_id=1,
             model_name="outcome_model",
             model_version="v1.0",
@@ -174,7 +174,7 @@ class TestPredictionModel:
 
     def test_prediction_repr(self):
         """测试预测字符串表示"""
-        prediction = Predictions(
+        _prediction = Predictions(
             id=1,
             match_id=1,
             model_name="outcome_model",
@@ -189,7 +189,7 @@ class TestPredictionModel:
     def test_get_created_at(self):
         """测试获取创建时间"""
         prediction_time = datetime.utcnow()
-        prediction = Predictions(
+        _prediction = Predictions(
             match_id=1,
             model_name="test_model",
             predicted_result=PredictedResult.HOME_WIN,
@@ -265,7 +265,7 @@ class TestModelMethods:
         # 手动设置match_status以避免None错误
         match.match_status = MatchStatus.SCHEDULED
 
-        stats = match.get_match_stats()
+        _stats = match.get_match_stats()
         assert stats["match_id"] == 1
         assert stats["final_score"] == "2-1"
         assert stats["total_goals"] == 3

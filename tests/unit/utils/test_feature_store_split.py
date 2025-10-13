@@ -72,7 +72,7 @@ def test_feature_store_config():
     """测试特征仓库配置"""
     from src.data.features.feature_store.config import FeatureStoreConfig
 
-    config = FeatureStoreConfig(project_name="test_project", repo_path="/tmp/test_repo")
+    _config = FeatureStoreConfig(project_name="test_project", repo_path="/tmp/test_repo")
 
     assert config.project_name == "test_project"
     assert config.repo_path == "/tmp/test_repo"
@@ -222,7 +222,7 @@ def test_get_online_features():
     )
 
     # 获取在线特征
-    result = query_manager.get_online_features("test_service", entity_df)
+    _result = query_manager.get_online_features("test_service", entity_df)
 
     assert isinstance(result, pd.DataFrame)
     mock_store.get_online_features.assert_called_once()
@@ -249,7 +249,7 @@ def test_create_training_dataset():
     start_date = datetime(2023, 1, 1)
     end_date = datetime(2023, 12, 31)
 
-    result = dataset_manager.create_training_dataset(
+    _result = dataset_manager.create_training_dataset(
         start_date=start_date, end_date=end_date, match_ids=[1, 2, 3]
     )
 

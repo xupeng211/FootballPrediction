@@ -17,27 +17,27 @@ class TestStringUtils:
     def test_truncate_shorter_text(self):
         """测试：短文本不需要截断"""
         text = "Hello"
-        result = StringUtils.truncate(text, 10)
-        assert result == "Hello"
+        _result = StringUtils.truncate(text, 10)
+        assert _result == "Hello"
 
     def test_truncate_exact_length(self):
         """测试：正好等于长度限制"""
         text = "Hello World"
-        result = StringUtils.truncate(text, 11)
-        assert result == "Hello World"
+        _result = StringUtils.truncate(text, 11)
+        assert _result == "Hello World"
 
     def test_truncate_longer_text(self):
         """测试：长文本需要截断"""
         text = "This is a very long text"
-        result = StringUtils.truncate(text, 10)
-        assert result == "This is..."
+        _result = StringUtils.truncate(text, 10)
+        assert _result == "This is..."
 
     def test_truncate_custom_suffix(self):
         """测试：自定义后缀"""
         text = "This is a very long text"
-        result = StringUtils.truncate(text, 10, suffix=" [more]")
+        _result = StringUtils.truncate(text, 10, suffix=" [more]")
         # 计算正确的结果：10 - len(" [more]") = 10 - 7 = 3个字符
-        assert result == "Thi [more]"
+        assert _result == "Thi [more]"
 
     def test_truncate_empty_text(self):
         """测试：空文本"""
@@ -46,9 +46,9 @@ class TestStringUtils:
     def test_truncate_zero_length(self):
         """测试：零长度限制"""
         text = "Hello"
-        result = StringUtils.truncate(text, 0)
+        _result = StringUtils.truncate(text, 0)
         # 0长度意味着只能放后缀，但truncate会保留至少后缀长度的字符
-        assert result == "He..."
+        assert _result == "He..."
 
     # ==================== Slugify测试 ====================
 
@@ -134,32 +134,32 @@ class TestStringUtils:
     def test_clean_text_simple(self):
         """测试：简单清理"""
         text = "  Hello   World  "
-        result = StringUtils.clean_text(text)
-        assert result == "Hello World"
+        _result = StringUtils.clean_text(text)
+        assert _result == "Hello World"
 
     def test_clean_text_with_newlines(self):
         """测试：包含换行"""
         text = "Hello\n\nWorld\n\n"
-        result = StringUtils.clean_text(text)
-        assert result == "Hello World"
+        _result = StringUtils.clean_text(text)
+        assert _result == "Hello World"
 
     def test_clean_text_with_tabs(self):
         """测试：包含制表符"""
         text = "Hello\t\tWorld\t"
-        result = StringUtils.clean_text(text)
-        assert result == "Hello World"
+        _result = StringUtils.clean_text(text)
+        assert _result == "Hello World"
 
     def test_clean_text_mixed_whitespace(self):
         """测试：混合空白字符"""
         text = "  Hello \n\n\t World  \t\n"
-        result = StringUtils.clean_text(text)
-        assert result == "Hello World"
+        _result = StringUtils.clean_text(text)
+        assert _result == "Hello World"
 
     def test_clean_text_already_clean(self):
         """测试：已经干净的文本"""
         text = "Hello World"
-        result = StringUtils.clean_text(text)
-        assert result == "Hello World"
+        _result = StringUtils.clean_text(text)
+        assert _result == "Hello World"
 
     def test_clean_text_empty(self):
         """测试：空文本"""
@@ -168,46 +168,46 @@ class TestStringUtils:
     def test_clean_text_only_whitespace(self):
         """测试：只有空白字符"""
         text = "   \n\n\t   "
-        result = StringUtils.clean_text(text)
-        assert result == ""
+        _result = StringUtils.clean_text(text)
+        assert _result == ""
 
     # ==================== 提取数字测试 ====================
 
     def test_extract_numbers_simple(self):
         """测试：简单数字提取"""
         text = "abc123def456"
-        result = StringUtils.extract_numbers(text)
-        assert result == [123.0, 456.0]
+        _result = StringUtils.extract_numbers(text)
+        assert _result == [123.0, 456.0]
 
     def test_extract_numbers_no_numbers(self):
         """测试：没有数字"""
         text = "no numbers here"
-        result = StringUtils.extract_numbers(text)
-        assert result == []
+        _result = StringUtils.extract_numbers(text)
+        assert _result == []
 
     def test_extract_numbers_with_decimals(self):
         """测试：包含小数"""
         text = "The price is 12.99 dollars"
-        result = StringUtils.extract_numbers(text)
-        assert result == [12.99]
+        _result = StringUtils.extract_numbers(text)
+        assert _result == [12.99]
 
     def test_extract_numbers_negative_numbers(self):
         """测试：负数"""
         text = "Temperature is -5 degrees"
-        result = StringUtils.extract_numbers(text)
-        assert result == [-5.0]
+        _result = StringUtils.extract_numbers(text)
+        assert _result == [-5.0]
 
     def test_extract_numbers_mixed(self):
         """测试：混合数字"""
         text = "Values: -1.5, 2, 3.14, and 100"
-        result = StringUtils.extract_numbers(text)
-        assert result == [-1.5, 2.0, 3.14, 100.0]
+        _result = StringUtils.extract_numbers(text)
+        assert _result == [-1.5, 2.0, 3.14, 100.0]
 
     def test_extract_numbers_only_numbers(self):
         """测试：只有数字"""
         text = "123"
-        result = StringUtils.extract_numbers(text)
-        assert result == [123.0]
+        _result = StringUtils.extract_numbers(text)
+        assert _result == [123.0]
 
     def test_extract_numbers_empty(self):
         """测试：空字符串"""
@@ -252,18 +252,18 @@ class TestStringUtils:
         assert isinstance(slug, str)
 
         # truncate应该正确处理
-        result = StringUtils.truncate(text, 3)
+        _result = StringUtils.truncate(text, 3)
         assert len(result) <= 3 + len("...")
 
     def test_very_long_text(self):
         """测试：非常长的文本"""
         text = "A" * 10000
-        result = StringUtils.truncate(text, 100)
+        _result = StringUtils.truncate(text, 100)
         assert len(result) == 100
         assert result.endswith("...")
 
     def test_text_with_line_breaks_in_slugify(self):
         """测试：slugify处理换行"""
         text = "Hello\nWorld"
-        result = StringUtils.slugify(text)
-        assert result == "hello-world"
+        _result = StringUtils.slugify(text)
+        assert _result == "hello-world"

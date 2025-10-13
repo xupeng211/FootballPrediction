@@ -26,7 +26,7 @@ except ImportError:
 
 def test_get_config():
     try:
-        config = get_config()
+        _config = get_config()
         assert config is not None
     except Exception:
         # 配置加载失败也算通过
@@ -44,7 +44,7 @@ def test_config_values():
     try:
         from src.core.config import Config
 
-        config = Config()
+        _config = Config()
         # 简化测试，只检查对象是否创建成功
         assert config is not None
         # 检查是否有任何属性存在

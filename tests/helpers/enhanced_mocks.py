@@ -300,7 +300,7 @@ class MockDataGenerator:
     @staticmethod
     def create_match_data(overrides: Optional[Dict] = None) -> Dict:
         """创建比赛数据"""
-        data = {
+        _data = {
             "id": 12345,
             "home_team_id": 10,
             "away_team_id": 20,
@@ -319,7 +319,7 @@ class MockDataGenerator:
     @staticmethod
     def create_team_data(overrides: Optional[Dict] = None) -> Dict:
         """创建球队数据"""
-        data = {
+        _data = {
             "id": 10,
             "team_name": "Test Team",
             "team_code": "TT",
@@ -335,7 +335,7 @@ class MockDataGenerator:
     @staticmethod
     def create_prediction_data(overrides: Optional[Dict] = None) -> Dict:
         """创建预测数据"""
-        data = {
+        _data = {
             "match_id": 12345,
             "prediction": "home_win",
             "confidence": 0.75,
@@ -352,7 +352,7 @@ class MockDataGenerator:
     @staticmethod
     def create_odds_data(overrides: Optional[Dict] = None) -> Dict:
         """创建赔率数据"""
-        data = {
+        _data = {
             "match_id": 12345,
             "home_win": 2.1,
             "draw": 3.4,

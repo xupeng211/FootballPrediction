@@ -174,8 +174,8 @@ class TestCacheResultDecorator:
             def test_func(x):
                 return f"computed-{x}"
 
-            result = test_func(1)
-            assert result == {"result": "cached"}
+            _result = test_func(1)
+            assert _result == {"result": "cached"}
             mock_redis.get.assert_called_once()
 
     def test_sync_function_cache_miss(self):
@@ -192,8 +192,8 @@ class TestCacheResultDecorator:
             def test_func(x):
                 return f"computed-{x}"
 
-            result = test_func(1)
-            assert result == "computed-1"
+            _result = test_func(1)
+            assert _result == "computed-1"
             mock_redis.get.assert_called_once()
             mock_redis.set.assert_called_once()
 
@@ -212,8 +212,8 @@ class TestCacheResultDecorator:
                 return f"computed-{x}"
 
             async def test():
-                result = await test_func(1)
-                assert result == "computed-1"
+                _result = await test_func(1)
+                assert _result == "computed-1"
 
             asyncio.run(test())
 
@@ -269,12 +269,12 @@ class TestCacheResultDecorator:
                 return f"computed-{x}"
 
             # x > 5，不应该缓存
-            result = test_func(10)
-            assert result == "computed-10"
+            _result = test_func(10)
+            assert _result == "computed-10"
             mock_redis.get.assert_not_called()
 
             # x <= 5，应该缓存
-            result = test_func(3)
+            _result = test_func(3)
             mock_redis.get.assert_called_once()
 
     def test_cache_custom_key_generator(self):
@@ -314,8 +314,8 @@ class TestCacheResultDecorator:
                 return f"computed-{x}"
 
             # 应该回退到直接执行函数
-            result = test_func(1)
-            assert result == "computed-1"
+            _result = test_func(1)
+            assert _result == "computed-1"
 
     def test_cache_deserialize_error(self):
         """测试：反序列化错误"""
@@ -331,8 +331,8 @@ class TestCacheResultDecorator:
                 return f"computed-{x}"
 
             # 应该回退到重新计算
-            result = test_func(1)
-            assert result == "computed-1"
+            _result = test_func(1)
+            assert _result == "computed-1"
 
     def test_cache_method(self):
         """测试：缓存方法"""
@@ -350,8 +350,8 @@ class TestCacheResultDecorator:
                     return f"method-{x}"
 
             obj = TestClass()
-            result = obj.method(1)
-            assert result == "method-1"
+            _result = obj.method(1)
+            assert _result == "method-1"
             mock_redis.set.assert_called_once()
 
     def test_cache_classmethod(self):
@@ -370,8 +370,8 @@ class TestCacheResultDecorator:
                 def classmethod(cls, x):
                     return f"classmethod-{x}"
 
-            result = TestClass.classmethod(1)
-            assert result == "classmethod-1"
+            _result = TestClass.classmethod(1)
+            assert _result == "classmethod-1"
             mock_redis.set.assert_called_once()
 
     def test_cache_staticmethod(self):
@@ -390,8 +390,8 @@ class TestCacheResultDecorator:
                 def staticmethod(x):
                     return f"staticmethod-{x}"
 
-            result = TestClass.staticmethod(1)
-            assert result == "staticmethod-1"
+            _result = TestClass.staticmethod(1)
+            assert _result == "staticmethod-1"
             mock_redis.set.assert_called_once()
 
 
@@ -499,8 +499,8 @@ class TestCacheInvalidate:
             def update_func(x):
                 return f"updated-{x}"
 
-            result = update_func(1)
-            assert result == "updated-1"
+            _result = update_func(1)
+            assert _result == "updated-1"
             # 注意：实际的invalidate可能需要更复杂的逻辑
 
     def test_cache_invalidate_after_update(self):
@@ -574,8 +574,8 @@ class TestCacheDecoratorIntegration:
 
                 return inner_func(x)
 
-            result = outer_func(1)
-            assert result == "inner-1"
+            _result = outer_func(1)
+            assert _result == "inner-1"
 
             # 两个函数都应该尝试缓存
             assert mock_redis.set.call_count >= 1
@@ -596,8 +596,8 @@ class TestCacheDecoratorIntegration:
                     return 1
                 return n * factorial(n - 1)
 
-            result = factorial(5)
-            assert result == 120
+            _result = factorial(5)
+            assert _result == 120
 
             # 应该有多次缓存调用
             assert mock_redis.set.call_count >= 5
@@ -633,8 +633,8 @@ class TestCacheDecoratorIntegration:
             # 这可能导致问题
             try:
                 test_func = cache_result()(lambda x: x * 2)
-                result = test_func(5)
-                assert result == 10
+                _result = test_func(5)
+                assert _result == 10
             except AttributeError:
                 # 预期的错误，Lambda没有某些属性
                 pytest.skip("Lambda functions may not be cacheable")
@@ -655,8 +655,8 @@ class TestCacheDecoratorIntegration:
         ):
             try:
                 cached_func = cache_result()(partial_func)
-                result = cached_func(5)
-                assert result == 15
+                _result = cached_func(5)
+                assert _result == 15
             except AttributeError:
                 # 偏函数可能没有某些属性
                 pytest.skip("Partial functions may not be cacheable")
@@ -729,11 +729,11 @@ class TestParameterizedInput:
         try:
             # 尝试处理无效数据
             if invalid_data is None:
-                result = None
+                _result = None
             elif isinstance(invalid_data, str):
-                result = invalid_data.upper()
+                _result = invalid_data.upper()
             else:
-                result = str(invalid_data)
+                _result = str(invalid_data)
             # 确保没有崩溃
             assert result is not None
         except Exception:

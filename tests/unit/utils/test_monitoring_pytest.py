@@ -111,7 +111,7 @@ def mock_dependencies():
 async def _get_database_metrics_test(db):
     """测试版本的数据库指标获取函数"""
     start = time.time()
-    stats = {
+    _stats = {
         "healthy": False,
         "statistics": {
             "teams_count": 0,
@@ -125,8 +125,8 @@ async def _get_database_metrics_test(db):
         db.execute("SELECT 1")
 
         # 统计信息
-        teams = db.execute("SELECT COUNT(*) FROM teams")
-        matches = db.execute("SELECT COUNT(*) FROM matches")
+        _teams = db.execute("SELECT COUNT(*) FROM teams")
+        _matches = db.execute("SELECT COUNT(*) FROM matches")
         predictions = db.execute("SELECT COUNT(*) FROM predictions")
         active = db.execute(
             "SELECT COUNT(*) FROM pg_stat_activity WHERE state = 'active'"
@@ -157,7 +157,7 @@ async def _get_database_metrics_test(db):
 
 async def _get_business_metrics_test(db):
     """测试版本的业务指标获取函数"""
-    result = {
+    _result = {
         "24h_predictions": None,
         "upcoming_matches_7d": None,
         "model_accuracy_30d": None,
@@ -207,7 +207,7 @@ async def _get_business_metrics_test(db):
 
 async def _get_system_metrics_test():
     """测试版本的系统指标获取函数"""
-    result = {}
+    _result = {}
     try:
         result["cpu"] = {
             "usage_percent": pytest_psutil.cpu_percent(),
@@ -242,7 +242,7 @@ async def _get_system_metrics_test():
 
 async def _get_redis_metrics_test():
     """测试版本的Redis指标获取函数"""
-    result = {"healthy": False}
+    _result = {"healthy": False}
     try:
         client = pytest_redis.Redis()
         client.ping()
@@ -290,7 +290,7 @@ class TestMonitoringPytest:
         mock_session.execute.side_effect = mock_execute
 
         # 执行函数
-        result = await _get_database_metrics_test(mock_session)
+        _result = await _get_database_metrics_test(mock_session)
 
         # 验证结果
         assert result["healthy"] is True
@@ -309,7 +309,7 @@ class TestMonitoringPytest:
         mock_session.execute.side_effect = Exception("Database connection failed")
 
         # 执行函数
-        result = await _get_database_metrics_test(mock_session)
+        _result = await _get_database_metrics_test(mock_session)
 
         # 验证错误处理
         assert result["healthy"] is False
@@ -329,7 +329,7 @@ class TestMonitoringPytest:
         ]
 
         # 执行函数
-        result = await _get_business_metrics_test(mock_session)
+        _result = await _get_business_metrics_test(mock_session)
 
         # 验证结果
         assert result["24h_predictions"] == 100
@@ -349,7 +349,7 @@ class TestMonitoringPytest:
         ]
 
         # 执行函数
-        result = await _get_business_metrics_test(mock_session)
+        _result = await _get_business_metrics_test(mock_session)
 
         # 验证NULL处理
         assert result["24h_predictions"] is None
@@ -361,7 +361,7 @@ class TestMonitoringPytest:
     async def test_system_metrics(self):
         """测试系统指标"""
         # 执行系统指标函数
-        result = await _get_system_metrics_test()
+        _result = await _get_system_metrics_test()
 
         # 验证结果结构
         assert isinstance(result, dict)
@@ -390,7 +390,7 @@ class TestMonitoringPytest:
     async def test_redis_metrics(self):
         """测试Redis指标"""
         # 执行Redis指标函数
-        result = await _get_redis_metrics_test()
+        _result = await _get_redis_metrics_test()
 
         # 验证结果结构
         assert isinstance(result, dict)
@@ -414,7 +414,7 @@ class TestMonitoringPytest:
 
         try:
             # 执行Redis指标函数
-            result = await _get_redis_metrics_test()
+            _result = await _get_redis_metrics_test()
 
             # 验证错误处理
             assert result["healthy"] is False
@@ -432,7 +432,7 @@ class TestMonitoringPytest:
         pytest_psutil.cpu_percent = Mock(side_effect=Exception("CPU error"))
 
         try:
-            result = await _get_system_metrics_test()
+            _result = await _get_system_metrics_test()
             assert "error" in result
         finally:
             pytest_psutil.cpu_percent = original_cpu_percent
@@ -448,7 +448,7 @@ class TestMonitoringPytest:
         start_time = time.time()
 
         # 执行函数
-        result = await _get_database_metrics_test(mock_session)
+        _result = await _get_database_metrics_test(mock_session)
 
         # 验证响应时间
         assert "response_time_ms" in result

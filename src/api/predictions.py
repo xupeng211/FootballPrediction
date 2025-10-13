@@ -25,11 +25,11 @@ Provides API endpoints for match prediction:
 
     # 获取比赛预测
     response = requests.get("http://localhost:8000/api/v1/predictions/12345")
-    prediction = response.json()
+    _prediction = response.json()
 
     # 实时预测
     response = requests.post("http://localhost:8000/api/v1/predictions/12345/predict")
-    result = response.json()
+    _result = response.json()
     ```
 
 错误处理 / Error Handling:

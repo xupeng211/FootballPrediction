@@ -144,7 +144,7 @@ class TestAnomalyDetector:
         normal_data = np.random.multivariate_normal([0, 0], [[1, 0.5], [0.5, 1]], 100)
 
         anomalies_points = np.array([[10, 10], [-10, -10]])
-        data = np.vstack([normal_data, anomalies_points])
+        _data = np.vstack([normal_data, anomalies_points])
 
         df = pd.DataFrame(data, columns=["feature1", "feature2"])
 
@@ -155,7 +155,7 @@ class TestAnomalyDetector:
 
     def test_calculate_zscore(self, detector):
         """测试Z-score计算"""
-        data = [1, 2, 3, 4, 5, 100]
+        _data = [1, 2, 3, 4, 5, 100]
         zscores = detector._calculate_zscore(data)
 
         assert len(zscores) == len(data)
@@ -163,7 +163,7 @@ class TestAnomalyDetector:
 
     def test_calculate_iqr_bounds(self, detector):
         """测试IQR边界计算"""
-        data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100]
+        _data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100]
         bounds = detector._calculate_iqr_bounds(data)
 
         assert "lower_bound" in bounds
@@ -256,7 +256,7 @@ class TestAnomalyDetector:
         detector.initialize_real_time_detection(window_size=100)
 
         for _ in range(100):
-            data = {"value": np.random.normal(10, 2), "timestamp": datetime.now()}
+            _data = {"value": np.random.normal(10, 2), "timestamp": datetime.now()}
             detector.update_real_time_data(data)
 
         normal_result = detector.detect_real_time_anomaly(normal_data)
@@ -282,7 +282,7 @@ class TestAnomalyDetector:
         anomalies = [{"index": 5, "value": 50, "column": "home_goals"}]
 
         detector.visualize_anomalies(
-            data=sample_data,
+            _data =sample_data,
             anomalies=anomalies,
             column="home_goals",
             save_path="/tmp/anomaly_plot.png",
@@ -298,7 +298,7 @@ class TestAnomalyDetector:
         ]
 
         report = detector.generate_anomaly_report(
-            data=sample_data, anomalies=anomalies, include_summary=True
+            _data =sample_data, anomalies=anomalies, include_summary=True
         )
 
         assert isinstance(report, dict)
@@ -319,7 +319,7 @@ class TestAnomalyDetector:
             "severity": "high",
         }
 
-        result = await detector.notify_anomaly(anomaly)
+        _result = await detector.notify_anomaly(anomaly)
         assert result is True
         mock_notifier.send.assert_called_once()
 
@@ -373,5 +373,5 @@ class TestAnomalyDetector:
         assert "afternoon_dip" in patterns
 
         current_time = datetime(2025, 1, 3, 10, 0)
-        prediction = detector.predict_anomaly_probability(current_time, patterns)
+        _prediction = detector.predict_anomaly_probability(current_time, patterns)
         assert prediction > 0.5  # 上午10点异常概率高

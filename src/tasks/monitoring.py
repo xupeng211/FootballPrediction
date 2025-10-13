@@ -227,7 +227,7 @@ class TaskMonitor:
                     """
                     )
 
-                result = await session.execute(error_rate_query)
+                _result = await session.execute(error_rate_query)
 
                 for row in result:
                     task_name = row.task_name
@@ -278,7 +278,7 @@ class TaskMonitor:
                         ORDER BY total_executions DESC
                     """
                     )
-                    result = await session.execute(
+                    _result = await session.execute(
                         stats_query, {"hours_param": f"-{hours}"}
                     )
                 else:
@@ -297,7 +297,7 @@ class TaskMonitor:
                         ORDER BY total_executions DESC
                     """
                     )
-                    result = await session.execute(stats_query, {"hours": hours})
+                    _result = await session.execute(stats_query, {"hours": hours})
 
                 statistics = []
                 for row in result:
@@ -445,7 +445,7 @@ class TaskMonitor:
             async with db_manager.get_async_session() as session:
                 # 查询运行时间过长的任务
                 delay_query = text(query_builder.build_task_delay_query())  # type: ignore
-                result = await session.execute(delay_query)
+                _result = await session.execute(delay_query)
 
                 for row in result:
                     task_delays[row.task_name] = float(row.avg_delay_seconds)

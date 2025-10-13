@@ -486,7 +486,7 @@ class GreatExpectationsConfig:
         }
 
         for table_name in self.data_assertions.keys():
-            result = await self.run_validation(table_name)
+            _result = await self.run_validation(table_name)
             all_results.append(result)
 
             # 统计结果

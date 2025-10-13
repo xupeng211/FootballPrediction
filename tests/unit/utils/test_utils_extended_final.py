@@ -29,7 +29,7 @@ def test_crypto_utils_extended():
 
 def test_dict_utils_extended():
     # 测试字典扁平化
-    data = {"a": {"b": {"c": 1}}}
+    _data = {"a": {"b": {"c": 1}}}
     flat = DictUtils.flatten_dict(data)
     assert "a.b.c" in flat
     assert flat["a.b.c"] == 1
@@ -49,7 +49,7 @@ def test_dict_utils_extended():
 def test_string_utils_extended():
     # 测试字符串操作
     text = "This is a very long string"
-    result = StringUtils.truncate(text, 10)
+    _result = StringUtils.truncate(text, 10)
     assert len(result) <= 13  # 10 + 3 for ...
 
     # 测试驼峰转下划线
@@ -72,7 +72,7 @@ def test_file_utils_extended():
     from pathlib import Path
 
     test_dir = Path("/tmp/test_football")
-    result = FileUtils.ensure_dir(test_dir)
+    _result = FileUtils.ensure_dir(test_dir)
     assert result.exists()
 
     # 测试JSON读写

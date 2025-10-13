@@ -67,20 +67,20 @@ class TestRedisManagerFixedV2:
         redis_manager._sync_client = mock_sync_client
 
         # 设置字符串
-        result = redis_manager.set("test_key", "test_value")
+        _result = redis_manager.set("test_key", "test_value")
         assert result is True
 
         # 获取字符串
         mock_sync_client.get.return_value = b"test_value"
-        result = redis_manager.get("test_key")
-        assert result == "test_value"
+        _result = redis_manager.get("test_key")
+        assert _result == "test_value"
 
     def test_sync_set_json(self, redis_manager, mock_sync_client):
         """测试同步设置JSON"""
         redis_manager._sync_client = mock_sync_client
         test_data = {"id": 123, "name": "test"}
 
-        result = redis_manager.set("test_json", test_data)
+        _result = redis_manager.set("test_json", test_data)
         assert result is True
 
     def test_sync_get_json(self, redis_manager, mock_sync_client):
@@ -88,7 +88,7 @@ class TestRedisManagerFixedV2:
         redis_manager._sync_client = mock_sync_client
         mock_sync_client.get.return_value = b'{"id": 123, "name": "test"}'
 
-        result = redis_manager.get("test_json")
+        _result = redis_manager.get("test_json")
         assert isinstance(result, dict)
         assert result["id"] == 123
 
@@ -96,21 +96,21 @@ class TestRedisManagerFixedV2:
         """测试同步删除"""
         redis_manager._sync_client = mock_sync_client
 
-        result = redis_manager.delete("test_key")
-        assert result == 1
+        _result = redis_manager.delete("test_key")
+        assert _result == 1
 
     def test_sync_exists(self, redis_manager, mock_sync_client):
         """测试同步检查存在"""
         redis_manager._sync_client = mock_sync_client
 
-        result = redis_manager.exists("test_key")
-        assert result == 1
+        _result = redis_manager.exists("test_key")
+        assert _result == 1
 
     def test_sync_expire(self, redis_manager, mock_sync_client):
         """测试同步设置过期时间"""
         redis_manager._sync_client = mock_sync_client
 
-        result = redis_manager.expire("test_key", 60)
+        _result = redis_manager.expire("test_key", 60)
         assert result is True
 
     def test_sync_ping(self, redis_manager, mock_sync_client):
@@ -118,7 +118,7 @@ class TestRedisManagerFixedV2:
         redis_manager._sync_client = mock_sync_client
         mock_sync_client.ping.return_value = True
 
-        result = redis_manager.ping()
+        _result = redis_manager.ping()
         assert result is True
 
     def test_sync_ping_failure(self, redis_manager, mock_sync_client):
@@ -126,14 +126,14 @@ class TestRedisManagerFixedV2:
         redis_manager._sync_client = mock_sync_client
         mock_sync_client.ping.side_effect = Exception("Connection failed")
 
-        result = redis_manager.ping()
+        _result = redis_manager.ping()
         assert result is False
 
     def test_sync_get_info(self, redis_manager, mock_sync_client):
         """测试同步获取信息"""
         redis_manager._sync_client = mock_sync_client
 
-        result = redis_manager.get_info()
+        _result = redis_manager.get_info()
         assert result is not None
         assert "connected_clients" in result
 
@@ -141,7 +141,7 @@ class TestRedisManagerFixedV2:
         """测试批量获取"""
         redis_manager._sync_client = mock_sync_client
 
-        result = redis_manager.mget(["key1", "key2", "key3"])
+        _result = redis_manager.mget(["key1", "key2", "key3"])
         assert len(result) == 3
         assert result[0]["id"] == 1
         assert result[1]["id"] == 2
@@ -151,8 +151,8 @@ class TestRedisManagerFixedV2:
         """测试批量设置"""
         redis_manager._sync_client = mock_sync_client
 
-        data = {"key1": {"id": 1}, "key2": "test"}
-        result = redis_manager.mset(data)
+        _data = {"key1": {"id": 1}, "key2": "test"}
+        _result = redis_manager.mset(data)
         assert result is True
 
     @pytest.mark.asyncio
@@ -160,27 +160,27 @@ class TestRedisManagerFixedV2:
         """测试异步设置和获取"""
         redis_manager._async_client = mock_async_client
 
-        result = await redis_manager.aset("test_key", "test_value")
+        _result = await redis_manager.aset("test_key", "test_value")
         assert result is True
 
         mock_async_client.get.return_value = b"test_value"
-        result = await redis_manager.aget("test_key")
-        assert result == "test_value"
+        _result = await redis_manager.aget("test_key")
+        assert _result == "test_value"
 
     @pytest.mark.asyncio
     async def test_async_exists(self, redis_manager, mock_async_client):
         """测试异步检查存在"""
         redis_manager._async_client = mock_async_client
 
-        result = await redis_manager.aexists("test_key")
-        assert result == 1
+        _result = await redis_manager.aexists("test_key")
+        assert _result == 1
 
     @pytest.mark.asyncio
     async def test_async_expire(self, redis_manager, mock_async_client):
         """测试异步设置过期时间"""
         redis_manager._async_client = mock_async_client
 
-        result = await redis_manager.aexpire("test_key", 60)
+        _result = await redis_manager.aexpire("test_key", 60)
         assert result is True
 
     @pytest.mark.asyncio
@@ -188,15 +188,15 @@ class TestRedisManagerFixedV2:
         """测试异步删除"""
         redis_manager._async_client = mock_async_client
 
-        result = await redis_manager.adelete("test_key")
-        assert result == 1
+        _result = await redis_manager.adelete("test_key")
+        assert _result == 1
 
     @pytest.mark.asyncio
     async def test_async_ping(self, redis_manager, mock_async_client):
         """测试异步ping"""
         redis_manager._async_client = mock_async_client
 
-        result = await redis_manager.aping()
+        _result = await redis_manager.aping()
         assert result is True
 
     def test_close_sync(self, redis_manager, mock_sync_client):
@@ -220,7 +220,7 @@ class TestRedisManagerFixedV2:
         redis_manager._sync_client = mock_sync_client
         mock_sync_client.get.side_effect = Exception("Redis error")
 
-        result = redis_manager.get("test_key")
+        _result = redis_manager.get("test_key")
         assert result is None
 
     @pytest.mark.asyncio
@@ -229,7 +229,7 @@ class TestRedisManagerFixedV2:
         redis_manager._async_client = mock_async_client
         mock_async_client.get.side_effect = Exception("Redis error")
 
-        result = await redis_manager.aget("test_key")
+        _result = await redis_manager.aget("test_key")
         assert result is None
 
     def test_cache_key_manager(self):

@@ -210,7 +210,7 @@ class PredictionService:
     ) -> Dict[str, Any]:
         """提交预测（会失效用户相关缓存）"""
         logger.info(
-            f"提交预测: user={user_id}, match={match_id}, prediction={prediction}"
+            f"提交预测: _user ={user_id}, match={match_id}, _prediction ={prediction}"
         )
 
         # 保存预测到数据库...
@@ -231,7 +231,7 @@ async def run_examples():
     logger.info("1. 基础结果缓存:")
     result1 = expensive_computation(10, 20)
     logger.info(f"结果: {result1}")
-    result2 = expensive_computation(10, 20)  # 应该从缓存获取
+    _result2 = expensive_computation(10, 20)  # 应该从缓存获取
     logger.info(f"结果: {result2}\n")
 
     # 示例2: 异步缓存

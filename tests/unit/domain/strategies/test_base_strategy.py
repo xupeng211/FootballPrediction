@@ -50,7 +50,7 @@ class MockStrategy(PredictionStrategy):
         confidence = 0.75
 
         return PredictionOutput(
-            prediction=(home_goals, away_goals),
+            _prediction =(home_goals, away_goals),
             confidence=confidence,
             reasoning=f"Mock prediction based on form: {processed_input.home_team_form} vs {processed_input.away_team_form}",
         )
@@ -104,7 +104,7 @@ class TestPredictionStrategy:
     @pytest.mark.asyncio
     async def test_strategy_configuration(self, mock_strategy):
         """测试策略配置"""
-        config = {"param1": "value1", "param2": 42, "model_path": "/path/to/model"}
+        _config = {"param1": "value1", "param2": 42, "model_path": "/path/to/model"}
 
         await mock_strategy.initialize(config)
 
@@ -120,7 +120,7 @@ class TestPredictionStrategy:
         await mock_strategy.initialize({})
 
         # 执行预测
-        result = await mock_strategy.predict(valid_prediction_input)
+        _result = await mock_strategy.predict(valid_prediction_input)
 
         # 验证结果
         assert isinstance(result, PredictionOutput)
@@ -187,7 +187,7 @@ class TestPredictionStrategy:
         # 执行预测并修改置信度
         predictions = []
         for i in range(3):
-            result = await mock_strategy.predict(valid_prediction_input)
+            _result = await mock_strategy.predict(valid_prediction_input)
             predictions.append(result)
 
         metrics = await mock_strategy.get_metrics()
@@ -232,7 +232,7 @@ class TestPredictionStrategy:
         """测试后处理修改"""
         await mock_strategy.initialize({})
 
-        result = await mock_strategy.predict(valid_prediction_input)
+        _result = await mock_strategy.predict(valid_prediction_input)
 
         # 验证后处理标记被添加
         assert "[Post-processed]" in result.reasoning
@@ -243,7 +243,7 @@ class TestPredictionStrategy:
         await mock_strategy.initialize({})
 
         with patch("time.time", side_effect=[0.0, 0.1]):
-            result = await mock_strategy.predict_with_timing(valid_prediction_input)
+            _result = await mock_strategy.predict_with_timing(valid_prediction_input)
 
         # 验证结果包含计时信息
         assert result[0] is not None  # PredictionOutput

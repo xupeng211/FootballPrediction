@@ -69,7 +69,7 @@ class TestGetCurrentUser:
             scheme="bearer", credentials=valid_token
         )
 
-        user = await get_current_user(credentials)
+        _user = await get_current_user(credentials)
 
         assert user["id"] == 123
         assert user["role"] == "user"
@@ -82,7 +82,7 @@ class TestGetCurrentUser:
             scheme="bearer", credentials=admin_token
         )
 
-        user = await get_current_user(credentials)
+        _user = await get_current_user(credentials)
 
         assert user["id"] == 456
         assert user["role"] == "admin"
@@ -134,7 +134,7 @@ class TestGetCurrentUser:
 
         credentials = HTTPAuthorizationCredentials(scheme="bearer", credentials=token)
 
-        user = await get_current_user(credentials)
+        _user = await get_current_user(credentials)
 
         assert user["id"] == 999
         assert user["role"] == "user"  # 默认角色
@@ -148,9 +148,9 @@ class TestGetAdminUser:
         """测试管理员用户验证成功"""
         admin_user = {"id": 456, "role": "admin", "token": "admin_token"}
 
-        result = await get_admin_user(admin_user)
+        _result = await get_admin_user(admin_user)
 
-        assert result == admin_user
+        assert _result == admin_user
 
     @pytest.mark.asyncio
     async def test_get_admin_user_insufficient_privileges(self):
@@ -231,10 +231,10 @@ class TestVerifyPredictionPermission:
     @pytest.mark.asyncio
     async def test_verify_prediction_permission_success(self):
         """测试权限验证成功"""
-        user = {"id": 123, "role": "user"}
+        _user = {"id": 123, "role": "user"}
         match_id = 456
 
-        result = await verify_prediction_permission(match_id, user)
+        _result = await verify_prediction_permission(match_id, user)
 
         assert result is True
 
@@ -244,18 +244,18 @@ class TestVerifyPredictionPermission:
         admin = {"id": 456, "role": "admin"}
         match_id = 789
 
-        result = await verify_prediction_permission(match_id, admin)
+        _result = await verify_prediction_permission(match_id, admin)
 
         assert result is True
 
     @pytest.mark.asyncio
     async def test_verify_prediction_permission_different_matches(self):
         """测试不同比赛的权限"""
-        user = {"id": 123, "role": "user"}
-        matches = [100, 200, 300, 400]
+        _user = {"id": 123, "role": "user"}
+        _matches = [100, 200, 300, 400]
 
         for match_id in matches:
-            result = await verify_prediction_permission(match_id, user)
+            _result = await verify_prediction_permission(match_id, user)
             assert result is True
 
 
@@ -265,9 +265,9 @@ class TestRateLimitCheck:
     @pytest.mark.asyncio
     async def test_rate_limit_check_success(self):
         """测试速率限制检查通过"""
-        user = {"id": 123, "role": "user"}
+        _user = {"id": 123, "role": "user"}
 
-        result = await rate_limit_check(user)
+        _result = await rate_limit_check(user)
 
         assert result is True
 
@@ -276,18 +276,18 @@ class TestRateLimitCheck:
         """测试管理员速率限制"""
         admin = {"id": 456, "role": "admin"}
 
-        result = await rate_limit_check(admin)
+        _result = await rate_limit_check(admin)
 
         assert result is True
 
     @pytest.mark.asyncio
     async def test_rate_limit_check_multiple_requests(self):
         """测试多次请求的速率限制"""
-        user = {"id": 789, "role": "user"}
+        _user = {"id": 789, "role": "user"}
 
         # 模拟多次请求
         for _ in range(10):
-            result = await rate_limit_check(user)
+            _result = await rate_limit_check(user)
             assert result is True
 
 

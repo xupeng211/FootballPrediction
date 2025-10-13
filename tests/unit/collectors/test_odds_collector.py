@@ -237,7 +237,7 @@ class TestOddsCollectorIntegration:
                         if callable(method):
                             try:
                                 # 尝试传入None
-                                result = method(None)
+                                _result = method(None)
                                 # 应该优雅地处理None或抛出适当的异常
                                 assert result is not None or True
                             except (TypeError, ValueError, AttributeError):

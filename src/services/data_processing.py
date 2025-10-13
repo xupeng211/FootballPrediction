@@ -158,7 +158,7 @@ class BronzeToSilverProcessor:
 
         # 处理缺失数据
         for handler in self.handlers:
-            data = handler.handle(data)
+            _data = handler.handle(data)
 
         return {**data, "processed_at": datetime.utcnow(), "layer": "silver"}
 
@@ -195,9 +195,9 @@ class DataProcessingService:
         processor = self.processors.get(data_type)
 
         if processor:
-            result = await processor.process(data)
+            _result = await processor.process(data)
         else:
-            result = {**data, "processed_at": datetime.utcnow(), "status": "processed"}
+            _result = {**data, "processed_at": datetime.utcnow(), "status": "processed"}
 
         return result
 
@@ -207,7 +207,7 @@ class DataProcessingService:
         """批量处理数据"""
         results = []
         for data in data_list:
-            result = await self.process_data(data)
+            _result = await self.process_data(data)
             results.append(result)
         return results
 

@@ -67,7 +67,7 @@ class TestEventsModule:
 
         event = Event(
             event_type="test_event",
-            data={"message": "test"},
+            _data ={"message": "test"},
             timestamp=datetime.utcnow(),
         )
         assert event.event_type == "test_event"
@@ -107,7 +107,7 @@ class TestEventsModule:
 
         manager.register("test_event", handler)
 
-        event = Event(event_type="test_event", data={"test": True})
+        event = Event(event_type="test_event", _data ={"test": True})
         manager.publish(event)
 
         assert len(handled_events) == 1
@@ -151,7 +151,7 @@ class TestCQRSModuleExtended:
         from src.api.cqrs import CommandResponse
 
         response = CommandResponse(
-            success=True, message="Command executed", data={"id": 123}
+            success=True, message="Command executed", _data ={"id": 123}
         )
         assert response.success is True
         assert response.data["id"] == 123
@@ -160,7 +160,7 @@ class TestCQRSModuleExtended:
         """测试查询响应创建"""
         from src.api.cqrs import QueryResponse
 
-        response = QueryResponse(data=[{"id": 1, "name": "test"}], total=1, page=1)
+        response = QueryResponse(_data =[{"id": 1, "name": "test"}], total=1, page=1)
         assert len(response.data) == 1
         assert response.total == 1
 
@@ -177,8 +177,8 @@ class TestDecoratorsModule:
         def test_function():
             return "success"
 
-        result = test_function()
-        assert result == "success"
+        _result = test_function()
+        assert _result == "success"
 
     def test_cache_result_decorator(self):
         """测试缓存结果装饰器"""
@@ -189,8 +189,8 @@ class TestDecoratorsModule:
             return x * x
 
         result1 = expensive_function(5)
-        result2 = expensive_function(5)
-        assert result1 == result2 == 25
+        _result2 = expensive_function(5)
+        assert result1 == _result2 == 25
 
     def test_timeout_decorator(self):
         """测试超时装饰器"""
@@ -200,8 +200,8 @@ class TestDecoratorsModule:
         def quick_function():
             return "done"
 
-        result = quick_function()
-        assert result == "done"
+        _result = quick_function()
+        assert _result == "done"
 
     def test_retry_decorator(self):
         """测试重试装饰器"""
@@ -217,8 +217,8 @@ class TestDecoratorsModule:
                 raise ValueError("Failed")
             return "success"
 
-        result = flaky_function()
-        assert result == "success"
+        _result = flaky_function()
+        assert _result == "success"
         assert attempts == 3
 
     def test_log_requests_decorator(self):
@@ -229,7 +229,7 @@ class TestDecoratorsModule:
         def test_endpoint():
             return {"message": "ok"}
 
-        result = test_endpoint()
+        _result = test_endpoint()
         assert result["message"] == "ok"
 
 
@@ -291,7 +291,7 @@ class TestObserversModule:
 
         class TestObserver(Observer):
             def update(self, data):
-                self.data = data
+                self._data = data
 
         observer = TestObserver()
         assert observer is not None
@@ -379,7 +379,7 @@ class TestFeaturesModule:
         from src.api.features import FeatureExtractor
 
         extractor = FeatureExtractor()
-        data = {
+        _data = {
             "home_team": "Team A",
             "away_team": "Team B",
             "home_score": 2,
@@ -460,7 +460,7 @@ class TestFacadesModule:
                 return {"prediction": "home_win", "confidence": 0.75}
 
         facade = PredictionFacade(prediction_service=MockService())
-        result = facade.make_prediction({"match_id": 123})
+        _result = facade.make_prediction({"match_id": 123})
         assert result is not None
 
 
@@ -647,7 +647,7 @@ class TestIntegrationScenarios:
         subject.attach(observer)
 
         # 发布事件并通知观察者
-        event = Event(event_type="prediction_created", data={"id": 123})
+        event = Event(event_type="prediction_created", _data ={"id": 123})
         event_manager.register("prediction_created", lambda e: subject.notify(e))
         event_manager.publish(event)
 

@@ -79,7 +79,7 @@ class TestAPIIntegrationEnhanced:
             )
 
             assert response.status_code == 201
-            prediction = response.json()
+            _prediction = response.json()
             assert prediction["prediction"] == "home_win"
 
         # 2. 获取预测历史
@@ -348,7 +348,7 @@ class TestAPIIntegrationEnhanced:
         # 测试无效JSON
         response = api_client.post(
             "/api/v1/predictions",
-            data="invalid json",
+            _data ="invalid json",
             headers={"Content-Type": "application/json"},
         )
         assert response.status_code == 422
@@ -370,7 +370,7 @@ class TestAPIIntegrationEnhanced:
         assert response.headers["content-type"] == "application/json"
 
         # 验证响应结构
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, dict)
         assert "status" in data
 

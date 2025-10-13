@@ -110,7 +110,7 @@ class MetricsObserver(Observer):
 
     def get_metrics(self) -> Dict[str, Any]:
         """获取聚合后的指标"""
-        result = {
+        _result = {
             "counters": dict(self._counters),
             "gauges": dict(self._gauges),
             "aggregations": {},
@@ -152,7 +152,7 @@ class MetricsObserver(Observer):
 
     def get_stats(self) -> Dict[str, Any]:
         """获取观察者统计信息"""
-        stats = super().get_stats()
+        _stats = super().get_stats()
         stats.update(
             {
                 "metrics_count": len(self._metrics)
@@ -241,7 +241,7 @@ class LoggingObserver(Observer):
 
     def get_stats(self) -> Dict[str, Any]:
         """获取观察者统计信息"""
-        stats = super().get_stats()
+        _stats = super().get_stats()
         stats.update(
             {
                 "total_logs": sum(self._log_counts.values()),
@@ -405,7 +405,7 @@ class AlertingObserver(Observer):
 
     def get_stats(self) -> Dict[str, Any]:
         """获取观察者统计信息"""
-        stats = super().get_stats()
+        _stats = super().get_stats()
         stats.update(
             {
                 "alert_rules_count": len(self._alert_rules),
@@ -493,7 +493,7 @@ class PerformanceObserver(Observer):
 
     def get_performance_metrics(self) -> Dict[str, Any]:
         """获取性能指标"""
-        result = {}
+        _result = {}
 
         # 响应时间统计
         if self._response_times:
@@ -529,7 +529,7 @@ class PerformanceObserver(Observer):
 
     def get_stats(self) -> Dict[str, Any]:
         """获取观察者统计信息"""
-        stats = super().get_stats()
+        _stats = super().get_stats()
         stats.update(
             {
                 "response_times_count": len(self._response_times),

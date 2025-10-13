@@ -112,11 +112,11 @@ class TeamDomainService:
         """记录一场比赛的结果并更新球队统计。"""
         team.add_match_result(result, goals_for, goals_against)
 
-        stats = team.stats  # type: ignore[assignment]
+        _stats = team.stats  # type: ignore[assignment]
         if stats:
             event = TeamStatsEvent(
                 team_id=team.id or 0,
-                result=result,
+                _result =result,
                 goals_for=goals_for,
                 goals_against=goals_against,
                 matches_played=stats.matches_played,
@@ -130,7 +130,7 @@ class TeamDomainService:
 
     def reset_team_performance(self, team: Team) -> None:
         """重置球队的统计和状态信息。"""
-        team.stats = TeamStats()
+        team._stats = TeamStats()
         team.form = TeamForm()
         self._events.append(TeamPerformanceResetEvent(team_id=team.id or 0))
         self._persist(team)
@@ -139,7 +139,7 @@ class TeamDomainService:
         """根据球队当前统计生成积分榜。"""
         table = []
         for team in teams:
-            stats = team.stats or TeamStats()
+            _stats = team.stats or TeamStats()
             table.append(
                 {
                     "team_id": team.id,

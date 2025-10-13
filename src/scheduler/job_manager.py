@@ -53,7 +53,7 @@ class JobExecutionResult:
         self.success = success
         self.start_time = start_time
         self.end_time = end_time
-        self.result = result
+        self._result = result
         self.error = error
         self.execution_time = execution_time
         self.memory_usage = memory_usage
@@ -228,9 +228,9 @@ class JobManager:
 
             # 判断是否为异步函数
             if asyncio.iscoroutinefunction(task_function):
-                result = self._execute_async_job(task_function, args, kwargs, timeout)
+                _result = self._execute_async_job(task_function, args, kwargs, timeout)
             else:
-                result = self._execute_sync_job(task_function, args, kwargs, timeout)
+                _result = self._execute_sync_job(task_function, args, kwargs, timeout)
 
             # 停止资源监控
             avg_memory, avg_cpu = resource_monitor.stop_monitoring()
@@ -244,7 +244,7 @@ class JobManager:
                 success=True,
                 start_time=start_time,
                 end_time=end_time,
-                result=result,
+                _result =result,
                 execution_time=execution_time,
                 memory_usage=avg_memory,
                 cpu_usage=avg_cpu,

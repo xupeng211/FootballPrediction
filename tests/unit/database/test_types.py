@@ -33,7 +33,7 @@ class TestSQLiteCompatibleJSONB:
         pg_dialect.type_descriptor.return_value = pg_type_descriptor
 
         # 测试PostgreSQL
-        result = json_type.load_dialect_impl(pg_dialect)
+        _result = json_type.load_dialect_impl(pg_dialect)
         pg_dialect.type_descriptor.assert_called_once()
         assert result is not None
 
@@ -44,7 +44,7 @@ class TestSQLiteCompatibleJSONB:
         sqlite_dialect.type_descriptor.return_value = text_type_descriptor
 
         # 测试SQLite
-        result = json_type.load_dialect_impl(sqlite_dialect)
+        _result = json_type.load_dialect_impl(sqlite_dialect)
         sqlite_dialect.type_descriptor.assert_called_once()
         assert result is not None
 
@@ -54,7 +54,7 @@ class TestSQLiteCompatibleJSONB:
         dialect = Mock()
         dialect.name = "sqlite"
 
-        result = json_type.process_bind_param(None, dialect)
+        _result = json_type.process_bind_param(None, dialect)
         assert result is None
 
     def test_process_bind_param_postgresql(self):
@@ -64,14 +64,14 @@ class TestSQLiteCompatibleJSONB:
         dialect.name = "postgresql"
 
         # 测试字典
-        data = {"key": "value"}
-        result = json_type.process_bind_param(data, dialect)
-        assert result == data
+        _data = {"key": "value"}
+        _result = json_type.process_bind_param(data, dialect)
+        assert _result == data
 
         # 测试列表
         data_list = [1, 2, 3]
-        result = json_type.process_bind_param(data_list, dialect)
-        assert result == data_list
+        _result = json_type.process_bind_param(data_list, dialect)
+        assert _result == data_list
 
     def test_process_bind_param_sqlite(self):
         """测试：处理绑定参数（SQLite）"""
@@ -80,15 +80,15 @@ class TestSQLiteCompatibleJSONB:
         dialect.name = "sqlite"
 
         # 测试字典
-        data = {"key": "value", "number": 123}
-        result = json_type.process_bind_param(data, dialect)
+        _data = {"key": "value", "number": 123}
+        _result = json_type.process_bind_param(data, dialect)
         assert isinstance(result, str)
         parsed = json.loads(result)
         assert parsed == data
 
         # 测试列表
         data_list = [1, 2, 3]
-        result = json_type.process_bind_param(data_list, dialect)
+        _result = json_type.process_bind_param(data_list, dialect)
         assert isinstance(result, str)
         parsed = json.loads(result)
         assert parsed == data_list
@@ -98,7 +98,7 @@ class TestSQLiteCompatibleJSONB:
         json_type = SQLiteCompatibleJSONB()
         dialect = Mock()
 
-        result = json_type.process_result_value(None, dialect)
+        _result = json_type.process_result_value(None, dialect)
         assert result is None
 
     def test_process_result_value_postgresql(self):
@@ -107,9 +107,9 @@ class TestSQLiteCompatibleJSONB:
         dialect = Mock()
         dialect.name = "postgresql"
 
-        data = {"key": "value"}
-        result = json_type.process_result_value(data, dialect)
-        assert result == data
+        _data = {"key": "value"}
+        _result = json_type.process_result_value(data, dialect)
+        assert _result == data
 
     def test_process_result_value_sqlite(self):
         """测试：处理结果值（SQLite）"""
@@ -119,13 +119,13 @@ class TestSQLiteCompatibleJSONB:
 
         # 测试有效JSON字符串
         json_str = '{"key": "value"}'
-        result = json_type.process_result_value(json_str, dialect)
-        assert result == {"key": "value"}
+        _result = json_type.process_result_value(json_str, dialect)
+        assert _result == {"key": "value"}
 
         # 测试无效JSON字符串
         invalid_str = "not a json"
-        result = json_type.process_result_value(invalid_str, dialect)
-        assert result == invalid_str
+        _result = json_type.process_result_value(invalid_str, dialect)
+        assert _result == invalid_str
 
     def test_unicode_handling(self):
         """测试：Unicode处理"""
@@ -133,8 +133,8 @@ class TestSQLiteCompatibleJSONB:
         dialect = Mock()
         dialect.name = "sqlite"
 
-        data = {"中文": "测试", "emoji": "😀"}
-        result = json_type.process_bind_param(data, dialect)
+        _data = {"中文": "测试", "emoji": "😀"}
+        _result = json_type.process_bind_param(data, dialect)
 
         # 应该保持Unicode字符
         parsed = json.loads(result)
@@ -149,14 +149,14 @@ class TestSQLiteCompatibleJSONB:
         # 空字典
         empty_dict = {}
         bound = json_type.process_bind_param(empty_dict, dialect)
-        result = json_type.process_result_value(bound, dialect)
-        assert result == {}
+        _result = json_type.process_result_value(bound, dialect)
+        assert _result == {}
 
         # 空列表
         empty_list = []
         bound = json_type.process_bind_param(empty_list, dialect)
-        result = json_type.process_result_value(bound, dialect)
-        assert result == []
+        _result = json_type.process_result_value(bound, dialect)
+        assert _result == []
 
 
 class TestCompatibleJSON:
@@ -179,7 +179,7 @@ class TestCompatibleJSON:
         pg_type_descriptor = Mock()
         pg_dialect.type_descriptor.return_value = pg_type_descriptor
 
-        result = json_type.load_dialect_impl(pg_dialect)
+        _result = json_type.load_dialect_impl(pg_dialect)
         pg_dialect.type_descriptor.assert_called_once()
         assert result is not None
 
@@ -189,12 +189,12 @@ class TestCompatibleJSON:
         dialect = Mock()
 
         # 测试None
-        result = json_type.process_bind_param(None, dialect)
+        _result = json_type.process_bind_param(None, dialect)
         assert result is None
 
         # 测试非None值
-        data = {"test": "data"}
-        result = json_type.process_bind_param(data, dialect)
+        _data = {"test": "data"}
+        _result = json_type.process_bind_param(data, dialect)
         assert result is not None
 
     def test_process_result_value_with_mock(self):
@@ -203,12 +203,12 @@ class TestCompatibleJSON:
         dialect = Mock()
 
         # 测试None
-        result = json_type.process_result_value(None, dialect)
+        _result = json_type.process_result_value(None, dialect)
         assert result is None
 
         # 测试非None值
-        data = {"test": "data"}
-        result = json_type.process_result_value(data, dialect)
+        _data = {"test": "data"}
+        _result = json_type.process_result_value(data, dialect)
         assert result is not None
 
 
@@ -255,8 +255,8 @@ class TestJSONTypeIntegration:
         assert isinstance(bound, str)
 
         # 结果值（数据库 -> Python）
-        result = json_type.process_result_value(bound, sqlite_dialect)
-        assert result == original_data
+        _result = json_type.process_result_value(bound, sqlite_dialect)
+        assert _result == original_data
 
     def test_invalid_json_handling(self):
         """测试：无效JSON处理"""
@@ -277,7 +277,7 @@ class TestJSONTypeIntegration:
         sqlite_dialect = Mock()
         sqlite_dialect.name = "sqlite"
 
-        data = {
+        _data = {
             "quotes": 'Single "and" double quotes',
             "backslashes": r"\n\t\r\\",
             "special": "!@#$%^&*()",
@@ -287,5 +287,5 @@ class TestJSONTypeIntegration:
         bound = json_type.process_bind_param(data, sqlite_dialect)
 
         # 反序列化
-        result = json_type.process_result_value(bound, sqlite_dialect)
-        assert result == data
+        _result = json_type.process_result_value(bound, sqlite_dialect)
+        assert _result == data

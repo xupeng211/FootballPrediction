@@ -55,7 +55,7 @@ class TestJSONBType:
             from src.database.sql_compatibility import get_jsonb_type
 
             # 测试基本调用
-            result = get_jsonb_type()
+            _result = get_jsonb_type()
             assert result is not None
         except ImportError:
             pytest.skip("get_jsonb_type函数不可用")
@@ -77,7 +77,7 @@ class TestJSONBFunctions:
 
             # 测试基本调用（可能需要SQLAlchemy列对象）
             mock_column = Mock()
-            result = jsonb_as_text(mock_column)
+            _result = jsonb_as_text(mock_column)
             assert result is not None
         except ImportError:
             pytest.skip("jsonb_as_text函数不可用")
@@ -91,7 +91,7 @@ class TestJSONBFunctions:
 
             mock_column = Mock()
             mock_value = Mock()
-            result = jsonb_contains(mock_column, mock_value)
+            _result = jsonb_contains(mock_column, mock_value)
             assert result is not None
         except ImportError:
             pytest.skip("jsonb_contains函数不可用")
@@ -105,7 +105,7 @@ class TestJSONBFunctions:
 
             mock_column = Mock()
             mock_key = Mock()
-            result = jsonb_exists(mock_column, mock_key)
+            _result = jsonb_exists(mock_column, mock_key)
             assert result is not None
         except ImportError:
             pytest.skip("jsonb_exists函数不可用")
@@ -119,7 +119,7 @@ class TestJSONBFunctions:
 
             mock_column = Mock()
             mock_path = Mock()
-            result = jsonb_extract_path(mock_column, mock_path)
+            _result = jsonb_extract_path(mock_column, mock_path)
             assert result is not None
         except ImportError:
             pytest.skip("jsonb_extract_path函数不可用")
@@ -133,7 +133,7 @@ class TestJSONBFunctions:
 
             mock_column = Mock()
             mock_path = Mock()
-            result = jsonb_extract_path_text(mock_column, mock_path)
+            _result = jsonb_extract_path_text(mock_column, mock_path)
             assert result is not None
         except ImportError:
             pytest.skip("jsonb_extract_path_text函数不可用")
@@ -146,7 +146,7 @@ class TestJSONBFunctions:
             assert callable(jsonb_array_elements)
 
             mock_column = Mock()
-            result = jsonb_array_elements(mock_column)
+            _result = jsonb_array_elements(mock_column)
             assert result is not None
         except ImportError:
             pytest.skip("jsonb_array_elements函数不可用")
@@ -159,7 +159,7 @@ class TestJSONBFunctions:
             assert callable(jsonb_each)
 
             mock_column = Mock()
-            result = jsonb_each(mock_column)
+            _result = jsonb_each(mock_column)
             assert result is not None
         except ImportError:
             pytest.skip("jsonb_each函数不可用")
@@ -172,7 +172,7 @@ class TestJSONBFunctions:
             assert callable(jsonb_object_keys)
 
             mock_column = Mock()
-            result = jsonb_object_keys(mock_column)
+            _result = jsonb_object_keys(mock_column)
             assert result is not None
         except ImportError:
             pytest.skip("jsonb_object_keys函数不可用")
@@ -185,7 +185,7 @@ class TestJSONBFunctions:
             assert callable(jsonb_typeof)
 
             mock_column = Mock()
-            result = jsonb_typeof(mock_column)
+            _result = jsonb_typeof(mock_column)
             assert result is not None
         except ImportError:
             pytest.skip("jsonb_typeof函数不可用")
@@ -205,7 +205,7 @@ class TestJSONBAggregateFunctions:
             result1 = jsonb_build_object("key", "value")
             assert result1 is not None
 
-            result2 = jsonb_build_object("k1", "v1", "k2", "v2")
+            _result2 = jsonb_build_object("k1", "v1", "k2", "v2")
             assert result2 is not None
         except ImportError:
             pytest.skip("jsonb_build_object函数不可用")
@@ -218,7 +218,7 @@ class TestJSONBAggregateFunctions:
             assert callable(jsonb_agg)
 
             mock_column = Mock()
-            result = jsonb_agg(mock_column)
+            _result = jsonb_agg(mock_column)
             assert result is not None
         except ImportError:
             pytest.skip("jsonb_agg函数不可用")
@@ -231,7 +231,7 @@ class TestJSONBAggregateFunctions:
             assert callable(to_jsonb)
 
             mock_value = Mock()
-            result = to_jsonb(mock_value)
+            _result = to_jsonb(mock_value)
             assert result is not None
         except ImportError:
             pytest.skip("to_jsonb函数不可用")
@@ -244,7 +244,7 @@ class TestJSONBAggregateFunctions:
             assert callable(cast_to_jsonb)
 
             mock_value = Mock()
-            result = cast_to_jsonb(mock_value)
+            _result = cast_to_jsonb(mock_value)
             assert result is not None
         except ImportError:
             pytest.skip("cast_to_jsonb函数不可用")
@@ -369,7 +369,7 @@ class TestSQLiteCompatibility:
             mock_dialect.name = "postgresql"
 
             try:
-                result = get_jsonb_type(mock_dialect)
+                _result = get_jsonb_type(mock_dialect)
                 # 如果成功，结果应该不是None
                 assert result is not None
             except Exception:

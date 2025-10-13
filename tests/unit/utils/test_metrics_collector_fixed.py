@@ -73,7 +73,7 @@ class TestMetricsCollectorFixed:
                     )
                     if not values:
                         return {}
-                    result = {}
+                    _result = {}
                     for p in percentiles:
                         index = int(len(values) * p / 100)
                         result[p] = values[min(index, len(values) - 1)]
@@ -382,7 +382,7 @@ class TestMetricsCollectorFixed:
             assert rate_limited is False  # 第二次应该被限制
 
             # 测试统计信息
-            stats = manager.get_alert_statistics()
+            _stats = manager.get_alert_statistics()
             assert stats["total_rules"] == 1
             assert "alert_counts" in stats
 

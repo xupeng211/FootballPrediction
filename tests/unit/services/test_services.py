@@ -21,7 +21,7 @@ class TestServiceConfig:
 
     def test_service_config_creation(self):
         """测试服务配置创建"""
-        config = ServiceConfig("test_service")
+        _config = ServiceConfig("test_service")
 
         assert config.service_name == "test_service"
         assert config.enabled is True
@@ -31,7 +31,7 @@ class TestServiceConfig:
 
     def test_service_config_custom(self):
         """测试自定义服务配置"""
-        config = ServiceConfig(
+        _config = ServiceConfig(
             "custom_service",
             enabled=False,
             retry_attempts=5,
@@ -61,7 +61,7 @@ class TestEnhancedBaseService:
 
     def test_enhanced_service_init(self, enhanced_service, service_config):
         """测试增强服务初始化"""
-        assert enhanced_service.config == service_config
+        assert enhanced_service._config == service_config
         assert enhanced_service.service_name == "test_service"
         assert enhanced_service.metrics is not None
         assert enhanced_service.is_running is False
@@ -139,7 +139,7 @@ class TestMatchService:
             return_value=mock_matches
         )
 
-        result = await match_service.get_upcoming_matches(days=7)
+        _result = await match_service.get_upcoming_matches(days=7)
         assert len(result) == 2
         match_service.match_repo.get_upcoming_matches.assert_called_once_with(days=7)
 
@@ -149,7 +149,7 @@ class TestMatchService:
         mock_matches = [MagicMock()]
         match_service.match_repo.get_live_matches = AsyncMock(return_value=mock_matches)
 
-        result = await match_service.get_live_matches()
+        _result = await match_service.get_live_matches()
         assert len(result) == 1
         match_service.match_repo.get_live_matches.assert_called_once()
 
@@ -165,7 +165,7 @@ class TestMatchService:
         mock_match = MagicMock(id=123)
         match_service.match_repo.create = AsyncMock(return_value=mock_match)
 
-        result = await match_service.create_match(match_data)
+        _result = await match_service.create_match(match_data)
         assert result.id == 123
         match_service.match_repo.create.assert_called_once()
 
@@ -176,7 +176,7 @@ class TestMatchService:
         match_service.match_repo.get_by_id = AsyncMock(return_value=mock_match)
         match_service.match_repo.update = AsyncMock(return_value=mock_match)
 
-        result = await match_service.update_match_score(123, 2, 1)
+        _result = await match_service.update_match_score(123, 2, 1)
         assert result.id == 123
         match_service.match_repo.get_by_id.assert_called_once_with(123)
         match_service.match_repo.update.assert_called_once()
@@ -210,7 +210,7 @@ class TestPredictionService:
             return_value=mock_prediction
         )
 
-        result = await prediction_service.make_prediction(prediction_data)
+        _result = await prediction_service.make_prediction(prediction_data)
         assert result.id == 789
         prediction_service.prediction_repo.create.assert_called_once()
 
@@ -222,7 +222,7 @@ class TestPredictionService:
             return_value=mock_predictions
         )
 
-        result = await prediction_service.get_user_predictions(user_id=456, limit=10)
+        _result = await prediction_service.get_user_predictions(user_id=456, limit=10)
         assert len(result) == 2
         prediction_service.prediction_repo.get_user_predictions.assert_called_once_with(
             456, limit=10
@@ -239,7 +239,7 @@ class TestPredictionService:
             return_value=mock_prediction
         )
 
-        result = await prediction_service.settle_prediction(789, "home_win", True)
+        _result = await prediction_service.settle_prediction(789, "home_win", True)
         assert result.is_correct is True
         assert result.settled_at is not None
 
@@ -251,7 +251,7 @@ class TestPredictionService:
             return_value=65.0
         )
 
-        result = await prediction_service.get_prediction_statistics(
+        _result = await prediction_service.get_prediction_statistics(
             user_id=456, days=30
         )
         assert result["total_predictions"] == 100

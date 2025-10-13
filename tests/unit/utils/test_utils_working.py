@@ -242,20 +242,20 @@ class TestDictUtils:
         """测试深度合并字典"""
         dict1 = {"a": {"b": 1}, "c": 2}
         dict2 = {"a": {"b": 3, "d": 4}, "e": 5}
-        result = DictUtils.deep_merge(dict1, dict2)
-        assert result == {"a": {"b": 3, "d": 4}, "c": 2, "e": 5}
+        _result = DictUtils.deep_merge(dict1, dict2)
+        assert _result == {"a": {"b": 3, "d": 4}, "c": 2, "e": 5}
 
     def test_flatten_dict(self):
         """测试扁平化字典"""
-        data = {"a": {"b": {"c": 1}}, "d": 2}
-        result = DictUtils.flatten_dict(data)
-        assert result == {"a.b.c": 1, "d": 2}
+        _data = {"a": {"b": {"c": 1}}, "d": 2}
+        _result = DictUtils.flatten_dict(data)
+        assert _result == {"a.b.c": 1, "d": 2}
 
     def test_filter_none_values(self):
         """测试过滤None值"""
-        data = {"a": 1, "b": 2, "c": None, "d": ""}
-        result = DictUtils.filter_none_values(data)
-        assert result == {"a": 1, "b": 2, "d": ""}
+        _data = {"a": 1, "b": 2, "c": None, "d": ""}
+        _result = DictUtils.filter_none_values(data)
+        assert _result == {"a": 1, "b": 2, "d": ""}
 
 
 class TestFileUtils:
@@ -269,14 +269,14 @@ class TestFileUtils:
 
     def test_write_json(self, tmp_path):
         """测试写入JSON文件"""
-        data = {"test": "data", "number": 123}
+        _data = {"test": "data", "number": 123}
         file_path = tmp_path / "test.json"
         FileUtils.write_json(data, file_path)
         assert file_path.exists()
 
     def test_read_json(self, tmp_path):
         """测试读取JSON文件"""
-        data = {"test": "data", "number": 123}
+        _data = {"test": "data", "number": 123}
         file_path = tmp_path / "test.json"
         FileUtils.write_json(data, file_path)
 
@@ -308,7 +308,7 @@ class TestFileUtils:
     def test_read_json_file(self, tmp_path):
         """测试读取JSON文件（别名）"""
         # 测试存在的文件
-        data = {"test": "data"}
+        _data = {"test": "data"}
         file_path = tmp_path / "test.json"
         FileUtils.write_json(data, file_path)
 
@@ -320,10 +320,10 @@ class TestFileUtils:
 
     def test_write_json_file(self, tmp_path):
         """测试写入JSON文件（别名）"""
-        data = {"test": "data"}
+        _data = {"test": "data"}
         file_path = tmp_path / "test.json"
 
-        result = FileUtils.write_json_file(data, file_path)
+        _result = FileUtils.write_json_file(data, file_path)
         assert result is True
         assert file_path.exists()
 
@@ -376,7 +376,7 @@ class TestDataValidator:
 
     def test_validate_required_fields(self):
         """测试验证必需字段"""
-        data = {"name": "test", "age": 25}
+        _data = {"name": "test", "age": 25}
 
         # 所有必需字段都存在
         missing = DataValidator.validate_required_fields(data, ["name", "age"])
@@ -393,7 +393,7 @@ class TestDataValidator:
 
     def test_validate_data_types(self):
         """测试验证数据类型"""
-        data = {"name": "test", "age": 25, "active": True}
+        _data = {"name": "test", "age": 25, "active": True}
         type_specs = {"name": str, "age": int, "active": bool}
 
         # 所有类型都正确

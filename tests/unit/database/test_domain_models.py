@@ -94,14 +94,14 @@ class TestMatch:
             home_team_id=1, away_team_id=2, league_id=10, scheduled_at=datetime.now()
         )
 
-        data = match.to_dict()
+        _data = match.to_dict()
         assert data["home_team_id"] == 1
         assert data["away_team_id"] == 2
         assert data["status"] == "scheduled"
 
     def test_from_dict(self):
         """测试从字典创建"""
-        data = {
+        _data = {
             "home_team_id": 1,
             "away_team_id": 2,
             "league_id": 10,
@@ -166,7 +166,7 @@ class TestTeam:
     def test_to_dict(self):
         """测试转换为字典"""
         team = Team(name="Test Team", league_id=10)
-        data = team.to_dict()
+        _data = team.to_dict()
 
         assert data["name"] == "Test Team"
         assert data["league_id"] == 10
@@ -178,7 +178,7 @@ class TestPrediction:
 
     def test_prediction_creation(self):
         """测试预测创建"""
-        prediction = Prediction(
+        _prediction = Prediction(
             match_id=123,
             user_id=456,
             prediction_type="match_result",
@@ -191,7 +191,7 @@ class TestPrediction:
 
     def test_settle_prediction_correct(self):
         """测试结算预测（正确）"""
-        prediction = Prediction(
+        _prediction = Prediction(
             match_id=123,
             user_id=456,
             prediction_type="match_result",
@@ -207,7 +207,7 @@ class TestPrediction:
 
     def test_settle_prediction_incorrect(self):
         """测试结算预测（错误）"""
-        prediction = Prediction(
+        _prediction = Prediction(
             match_id=123,
             user_id=456,
             prediction_type="match_result",
@@ -222,7 +222,7 @@ class TestPrediction:
 
     def test_cancel_prediction(self):
         """测试取消预测"""
-        prediction = Prediction(
+        _prediction = Prediction(
             match_id=123,
             user_id=456,
             prediction_type="match_result",
@@ -235,7 +235,7 @@ class TestPrediction:
 
     def test_calculate_confidence(self):
         """测试计算置信度"""
-        prediction = Prediction(
+        _prediction = Prediction(
             match_id=123,
             user_id=456,
             prediction_type="match_result",
@@ -248,7 +248,7 @@ class TestPrediction:
 
     def test_get_potential_return(self):
         """测试获取潜在回报"""
-        prediction = Prediction(match_id=123, user_id=456, stake=100, odds=2.0)
+        _prediction = Prediction(match_id=123, user_id=456, stake=100, odds=2.0)
 
         potential_return = prediction.get_potential_return()
         assert potential_return == 200.0
@@ -293,7 +293,7 @@ class TestLeague:
     def test_to_dict(self):
         """测试转换为字典"""
         league = League(name="Test League", country="Test Country")
-        data = league.to_dict()
+        _data = league.to_dict()
 
         assert data["name"] == "Test League"
         assert data["country"] == "Test Country"
@@ -305,7 +305,7 @@ class TestUser:
 
     def test_user_creation(self):
         """测试用户创建"""
-        user = User(username="testuser", email="test@example.com")
+        _user = User(username="testuser", email="test@example.com")
 
         assert user.username == "testuser"
         assert user.email == "test@example.com"
@@ -315,7 +315,7 @@ class TestUser:
 
     def test_is_premium(self):
         """测试是否为高级用户"""
-        user = User(username="test", role=UserRole.USER)
+        _user = User(username="test", role=UserRole.USER)
         assert not user.is_premium()
 
         premium_user = User(username="premium", role=UserRole.PREMIUM)
@@ -323,7 +323,7 @@ class TestUser:
 
     def test_is_admin(self):
         """测试是否为管理员"""
-        user = User(username="test", role=UserRole.USER)
+        _user = User(username="test", role=UserRole.USER)
         assert not user.is_admin()
 
         admin_user = User(username="admin", role=UserRole.ADMIN)
@@ -331,7 +331,7 @@ class TestUser:
 
     def test_add_experience(self):
         """测试添加经验值"""
-        user = User(username="test")
+        _user = User(username="test")
         user.add_experience(150)
 
         assert user.experience_points == 150
@@ -339,14 +339,14 @@ class TestUser:
 
     def test_add_achievement(self):
         """测试添加成就"""
-        user = User(username="test")
+        _user = User(username="test")
         user.add_achievement("first_prediction")
 
         assert "first_prediction" in user.achievements
 
     def test_get_full_name(self):
         """测试获取全名"""
-        user = User(username="test", first_name="John", last_name="Doe")
+        _user = User(username="test", first_name="John", last_name="Doe")
 
         full_name = user.get_full_name()
         assert full_name == "John Doe"
@@ -357,8 +357,8 @@ class TestUser:
 
     def test_to_dict(self):
         """测试转换为字典"""
-        user = User(username="testuser", email="test@example.com")
-        data = user.to_dict()
+        _user = User(username="testuser", email="test@example.com")
+        _data = user.to_dict()
 
         assert data["username"] == "testuser"
         assert data["email"] == "test@example.com"

@@ -71,11 +71,11 @@ class TestAdaptee:
 
         # 测试方法调用
         async def test():
-            result = await adaptee.get_data()
-            assert result == "data"
+            _result = await adaptee.get_data()
+            assert _result == "data"
 
-            result = await adaptee.send_data("test")
-            assert result == "sent: test"
+            _result = await adaptee.send_data("test")
+            assert _result == "sent: test"
 
         asyncio.run(test())
 
@@ -105,8 +105,8 @@ class TestTarget:
 
         # 测试方法调用
         async def test():
-            result = await target.request()
-            assert result == "response"
+            _result = await target.request()
+            assert _result == "response"
 
         asyncio.run(test())
 
@@ -330,8 +330,8 @@ class TestAdapter:
         adapter = ConcreteAdapter(mock_adaptee)
         adapter.status = AdapterStatus.ACTIVE
 
-        result = await adapter.request()
-        assert result == "response"
+        _result = await adapter.request()
+        assert _result == "response"
 
     @pytest.mark.asyncio
     async def test_adapter_request_inactive(self):
@@ -399,7 +399,7 @@ class TestAdapter:
         adapter = ConcreteAdapter(mock_adaptee)
         adapter.status = AdapterStatus.ACTIVE
 
-        result = await adapter.request(1, 2, param="value")
+        _result = await adapter.request(1, 2, param="value")
         assert result["args"] == (1, 2)
         assert result["kwargs"] == {"param": "value"}
 
@@ -413,14 +413,14 @@ class TestAdapterConcreteImplementation:
 
         class TestAdaptee(Adaptee):
             def __init__(self):
-                self.data = "initial"
+                self._data = "initial"
                 self.initialized = False
 
             async def get_data(self, *args, **kwargs):
                 return self.data
 
             async def send_data(self, data):
-                self.data = data
+                self._data = data
                 return f"updated: {data}"
 
         class TestAdapter(Adapter):
@@ -432,7 +432,7 @@ class TestAdapterConcreteImplementation:
                 await self.adaptee.send_data("cleaned")
                 self.cleaned = True
 
-            async def _request(self, operation="get", data=None):
+            async def _request(self, operation="get", _data =None):
                 if operation == "get":
                     return await self.adaptee.get_data()
                 elif operation == "set":
@@ -451,12 +451,12 @@ class TestAdapterConcreteImplementation:
         assert await adaptee.get_data() == "initialized"
 
         # 请求操作
-        result = await adapter.request("set", "new_data")
-        assert result == "updated: new_data"
+        _result = await adapter.request("set", "new_data")
+        assert _result == "updated: new_data"
         assert await adaptee.get_data() == "new_data"
 
-        result = await adapter.request("get")
-        assert result == "new_data"
+        _result = await adapter.request("get")
+        assert _result == "new_data"
 
         # 清理
         await adapter.cleanup()
@@ -473,7 +473,7 @@ class TestAdapterConcreteImplementation:
                 raise ValueError("Data error")
 
             async def send_data(self, data):
-                if data == "error":
+                if _data == "error":
                     raise RuntimeError("Send error")
                 return f"sent: {data}"
 
@@ -530,7 +530,7 @@ class TestAdapterConcreteImplementation:
                 pass
 
             async def _request(self, *args, **kwargs):
-                data = await self.adaptee.get_data()
+                _data = await self.adaptee.get_data()
                 # 转换数据
                 return {"converted": True, "source": data}
 
@@ -560,7 +560,7 @@ class TestAdapterConcreteImplementation:
         await target_adapter.initialize()
 
         # 请求
-        result = await target_adapter.request()
+        _result = await target_adapter.request()
         assert result["final"] is True
         assert result["data"]["converted"] is True
         assert "source" in result["data"]

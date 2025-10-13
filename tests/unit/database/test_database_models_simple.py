@@ -15,7 +15,7 @@ class TestUserSimple:
     def test_user_model_exists(self):
         """测试用户模型存在"""
         # 只测试模型类可以实例化（不需要所有字段）
-        user = User(username="test", email="test@example.com")
+        _user = User(username="test", email="test@example.com")
         assert user is not None
         assert user.username == "test"
         assert user.email == "test@example.com"
@@ -90,7 +90,7 @@ class TestModelRelationships:
 
     def test_model_attributes(self):
         """测试模型属性"""
-        user = User(username="test", email="test@example.com")
+        _user = User(username="test", email="test@example.com")
 
         # 检查是否有基本属性
         assert hasattr(user, "username")

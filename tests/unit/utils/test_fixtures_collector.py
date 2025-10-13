@@ -48,7 +48,7 @@ class TestFixturesCollector:
     async def test_collect_fixtures(self, collector, mock_http_client):
         """测试收集比赛数据"""
         with patch.object(collector, "_get_http_client", return_value=mock_http_client):
-            result = await collector.collect_fixtures(league_id=1)
+            _result = await collector.collect_fixtures(league_id=1)
 
             assert result is not None
             assert len(result) == 1
@@ -62,7 +62,7 @@ class TestFixturesCollector:
         end_date = start_date + timedelta(days=7)
 
         with patch.object(collector, "_get_http_client", return_value=mock_http_client):
-            result = await collector.collect_fixtures(
+            _result = await collector.collect_fixtures(
                 league_id=1, start_date=start_date, end_date=end_date
             )
 
@@ -76,9 +76,9 @@ class TestFixturesCollector:
         mock_http_client.get.side_effect = Exception("Network error")
 
         with patch.object(collector, "_get_http_client", return_value=mock_http_client):
-            result = await collector.collect_fixtures(league_id=1)
+            _result = await collector.collect_fixtures(league_id=1)
 
-            assert result == []
+            assert _result == []
             collector.logger.error.assert_called()
 
     @pytest.mark.asyncio
@@ -133,7 +133,7 @@ class TestFixturesCollector:
         mock_cache.set.return_value = True
 
         with patch.object(collector, "get_cache_manager", return_value=mock_cache):
-            result = await collector._cache_fixture_data(fixture_data)
+            _result = await collector._cache_fixture_data(fixture_data)
 
             assert result is True
             mock_cache.set.assert_called_once()
@@ -149,9 +149,9 @@ class TestFixturesCollector:
         mock_cache.get.return_value = cached_data
 
         with patch.object(collector, "get_cache_manager", return_value=mock_cache):
-            result = await collector.get_cached_fixtures(league_id=1)
+            _result = await collector.get_cached_fixtures(league_id=1)
 
-            assert result == cached_data
+            assert _result == cached_data
             mock_cache.get.assert_called_once()
 
     @pytest.mark.asyncio
@@ -163,10 +163,10 @@ class TestFixturesCollector:
 
         with patch.object(collector, "_get_http_client", return_value=mock_http_client):
             with patch("asyncio.sleep") as mock_sleep:
-                result = await collector.collect_fixtures(league_id=1)
+                _result = await collector.collect_fixtures(league_id=1)
 
                 mock_sleep.assert_called_once_with(60)
-                assert result == []
+                assert _result == []
 
     def test_validate_fixture_data(self, collector):
         """测试验证比赛数据"""
@@ -187,7 +187,7 @@ class TestFixturesCollector:
     async def test_collect_league_fixtures(self, collector, mock_http_client):
         """测试收集联赛比赛"""
         with patch.object(collector, "_get_http_client", return_value=mock_http_client):
-            result = await collector.collect_league_fixtures(
+            _result = await collector.collect_league_fixtures(
                 league_id=1, season="2024-25"
             )
 
@@ -201,7 +201,7 @@ class TestFixturesCollector:
     async def test_collect_team_fixtures(self, collector, mock_http_client):
         """测试收集球队比赛"""
         with patch.object(collector, "_get_http_client", return_value=mock_http_client):
-            result = await collector.collect_team_fixtures(team_id=10)
+            _result = await collector.collect_team_fixtures(team_id=10)
 
             assert result is not None
             call_args = mock_http_client.get.call_args[0][0]
@@ -210,7 +210,7 @@ class TestFixturesCollector:
     def test_extract_match_time(self, collector):
         """测试提取比赛时间"""
         date_string = "2025-10-05T15:00:00Z"
-        result = collector._extract_match_time(date_string)
+        _result = collector._extract_match_time(date_string)
 
         assert isinstance(result, datetime)
         assert result.year == 2025
@@ -236,9 +236,9 @@ class TestFixturesCollector:
         ]
 
         with patch.object(collector, "_get_http_client", return_value=mock_http_client):
-            result = await collector.collect_fixtures(league_id=1)
+            _result = await collector.collect_fixtures(league_id=1)
 
-            assert result == []
+            assert _result == []
             assert mock_http_client.get.call_count == 3
 
     def test_build_cache_key(self, collector):
@@ -262,7 +262,7 @@ class TestFixturesCollector:
         ]
 
         # 只获取未开始的比赛
-        result = collector._filter_fixtures_by_status(
+        _result = collector._filter_fixtures_by_status(
             fixtures, include_status=["SCHEDULED"]
         )
         assert len(result) == 2

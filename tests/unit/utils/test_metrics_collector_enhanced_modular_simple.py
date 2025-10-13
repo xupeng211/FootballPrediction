@@ -242,10 +242,10 @@ def test_decorators():
             return "value"
         return None
 
-    result = cache_get("exists")
-    assert result == "value"
+    _result = cache_get("exists")
+    assert _result == "value"
 
-    result = cache_get("not_exists", cache_type="redis")
+    _result = cache_get("not_exists", cache_type="redis")
     assert result is None
 
     # 测试通用性能装饰器
@@ -253,8 +253,8 @@ def test_decorators():
     def test_function():
         return "test"
 
-    result = test_function()
-    assert result == "test"
+    _result = test_function()
+    assert _result == "test"
 
 
 def test_alert_handlers():

@@ -63,7 +63,7 @@ class TestEventAPIRoutes:
         with patch("src.api.events.get_event_application", return_value=mock_event_app):
             # 由于是端点函数，直接调用逻辑
             app = mock_event_app
-            result = await app.health_check()
+            _result = await app.health_check()
 
             assert result["status"] == "healthy"
             assert result["uptime"] == 3600
@@ -82,7 +82,7 @@ class TestEventAPIRoutes:
                 # 直接调用函数逻辑
                 from src.api.events import MetricsEventHandler, AnalyticsEventHandler
 
-                stats = mock_event_bus.get_stats()
+                _stats = mock_event_bus.get_stats()
                 detailed_stats = stats.copy()
 
                 # 添加指标数据
@@ -164,7 +164,7 @@ class TestEventAPIRoutes:
 
         with patch("src.api.events.get_event_bus", return_value=mock_bus):
             with patch("src.api.events._find_handler", return_value=None):
-                stats = mock_bus.get_stats()
+                _stats = mock_bus.get_stats()
                 detailed_stats = stats.copy()
 
                 # 没有处理器时应该只返回基础统计
@@ -200,7 +200,7 @@ class TestEventAPIRoutes:
 
                 from src.api.events import MetricsEventHandler, AnalyticsEventHandler
 
-                stats = mock_bus.get_stats()
+                _stats = mock_bus.get_stats()
                 detailed_stats = stats.copy()
 
                 # 添加指标数据

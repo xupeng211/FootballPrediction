@@ -64,7 +64,7 @@ class LoggingDecorator(Decorator):
 
         try:
             # 执行被装饰的函数
-            result = await self.component.execute(*args, **kwargs)
+            _result = await self.component.execute(*args, **kwargs)
 
             # 记录函数执行成功
             if self.log_result:

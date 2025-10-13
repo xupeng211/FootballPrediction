@@ -91,7 +91,7 @@ class FacadeFactory:
         if facade_name in self._instance_cache:
             return self._instance_cache[facade_name]
 
-        config = self._config_cache.get(facade_name)
+        _config = self._config_cache.get(facade_name)
         if not config:
             raise ValueError(f"No configuration found for facade: {facade_name}")
 
@@ -109,32 +109,32 @@ class FacadeFactory:
         # 根据文件扩展名选择解析器
         if file_path.suffix.lower() in [".yaml", ".yml"]:
             with open(file_path, "r", encoding="utf-8") as f:
-                data = yaml.safe_load(f)
+                _data = yaml.safe_load(f)
         elif file_path.suffix.lower() == ".json":
             with open(file_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
+                _data = json.load(f)
         else:
             raise ValueError(f"Unsupported config file format: {file_path.suffix}")
 
         # 解析门面配置
         if "facades" in data:
             for facade_data in data["facades"]:
-                config = FacadeConfig(**facade_data)
+                _config = FacadeConfig(**facade_data)
                 # 环境变量替换
-                config = self._resolve_environment_variables(config)
+                _config = self._resolve_environment_variables(config)
                 self._config_cache[config.name] = config
 
     def load_config_from_dict(self, data: Dict) -> None:
         """从字典加载门面配置"""
         if "facades" in data:
             for facade_data in data["facades"]:
-                config = FacadeConfig(**facade_data)
-                config = self._resolve_environment_variables(config)
+                _config = FacadeConfig(**facade_data)
+                _config = self._resolve_environment_variables(config)
                 self._config_cache[config.name] = config
 
     def register_config(self, config: FacadeConfig) -> None:
         """注册门面配置"""
-        config = self._resolve_environment_variables(config)
+        _config = self._resolve_environment_variables(config)
         self._config_cache[config.name] = config
 
     def get_config(self, name: str) -> Optional[FacadeConfig]:
@@ -281,7 +281,7 @@ class FacadeFactory:
         """保存配置到文件"""
         file_path = Path(file_path)
 
-        data = {
+        _data = {
             "facades": [
                 {
                     "name": config.name,

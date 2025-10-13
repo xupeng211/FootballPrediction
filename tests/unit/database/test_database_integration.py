@@ -60,14 +60,14 @@ class TestDatabaseIntegration:
     def test_database_connection(self, db_engine):
         """测试数据库连接"""
         with db_engine.connect() as conn:
-            result = conn.execute(text("SELECT 1 as test"))
+            _result = conn.execute(text("SELECT 1 as test"))
             assert result.scalar() == 1
 
     def test_check_tables_exist(self, db_engine):
         """检查核心表是否存在"""
         with db_engine.connect() as conn:
             # 获取所有表名
-            result = conn.execute(
+            _result = conn.execute(
                 text(
                     "SELECT table_name FROM information_schema.tables "
                     "WHERE table_schema = 'public' AND table_type = 'BASE TABLE'"
@@ -180,7 +180,7 @@ class TestDatabaseIntegration:
         """测试分页查询"""
 
         # 创建多个球队
-        teams = []
+        _teams = []
         for i in range(5):
             team = Team(
                 team_name=f"Team {i + 1}", team_code=f"T{i + 1}", country="Testland"

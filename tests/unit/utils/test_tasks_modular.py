@@ -266,7 +266,7 @@ async def test_integration_example():
     task = BaseDataTask()
 
     # 测试get_retry_config方法
-    config = task.get_retry_config("test_task")
+    _config = task.get_retry_config("test_task")
     assert isinstance(config, dict)
     assert "max_retries" in config
     assert "retry_delay" in config

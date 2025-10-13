@@ -19,17 +19,17 @@ class TestFileUtils:
         with tempfile.TemporaryDirectory() as tmpdir:
             # 创建新目录
             new_dir = Path(tmpdir) / "new" / "sub" / "dir"
-            result = FileUtils.ensure_dir(new_dir)
+            _result = FileUtils.ensure_dir(new_dir)
             assert result.exists()
             assert result.is_dir()
 
             # 目录已存在
-            result = FileUtils.ensure_dir(new_dir)
+            _result = FileUtils.ensure_dir(new_dir)
             assert result.exists()
 
             # 使用字符串路径
             str_dir = os.path.join(tmpdir, "string", "dir")
-            result = FileUtils.ensure_dir(str_dir)
+            _result = FileUtils.ensure_dir(str_dir)
             assert isinstance(result, Path)
             assert result.exists()
 
@@ -37,7 +37,7 @@ class TestFileUtils:
         """测试ensure_directory别名方法"""
         with tempfile.TemporaryDirectory() as tmpdir:
             new_dir = Path(tmpdir) / "alias" / "dir"
-            result = FileUtils.ensure_directory(new_dir)
+            _result = FileUtils.ensure_directory(new_dir)
             assert result.exists()
             assert result.is_dir()
 
@@ -45,7 +45,7 @@ class TestFileUtils:
         """测试JSON文件读写"""
         with tempfile.TemporaryDirectory() as tmpdir:
             file_path = Path(tmpdir) / "test.json"
-            data = {"name": "John", "age": 30, "active": True, "scores": [90, 85, 95]}
+            _data = {"name": "John", "age": 30, "active": True, "scores": [90, 85, 95]}
 
             # 写入JSON
             FileUtils.write_json(data, file_path)
@@ -64,7 +64,7 @@ class TestFileUtils:
         """测试写入JSON时自动创建目录"""
         with tempfile.TemporaryDirectory() as tmpdir:
             file_path = Path(tmpdir) / "nested" / "dirs" / "test.json"
-            data = {"test": "data"}
+            _data = {"test": "data"}
 
             # 确保目录不存在
             assert not file_path.parent.exists()
@@ -82,7 +82,7 @@ class TestFileUtils:
         """测试不自动创建目录时写入JSON"""
         with tempfile.TemporaryDirectory() as tmpdir:
             file_path = Path(tmpdir) / "nonexistent" / "test.json"
-            data = {"test": "data"}
+            _data = {"test": "data"}
 
             # 确保目录不存在
             assert not file_path.parent.exists()
@@ -155,25 +155,25 @@ class TestFileUtils:
         """测试read_json_file别名方法"""
         with tempfile.TemporaryDirectory() as tmpdir:
             file_path = Path(tmpdir) / "test.json"
-            data = {"test": "data"}
+            _data = {"test": "data"}
 
             # 文件不存在
-            result = FileUtils.read_json_file(file_path)
+            _result = FileUtils.read_json_file(file_path)
             assert result is None
 
             # 文件存在
             FileUtils.write_json(data, file_path)
-            result = FileUtils.read_json_file(file_path)
-            assert result == data
+            _result = FileUtils.read_json_file(file_path)
+            assert _result == data
 
     def test_write_json_file_alias(self):
         """测试write_json_file别名方法"""
         with tempfile.TemporaryDirectory() as tmpdir:
             file_path = Path(tmpdir) / "test.json"
-            data = {"test": "data"}
+            _data = {"test": "data"}
 
             # 成功写入
-            result = FileUtils.write_json_file(data, file_path)
+            _result = FileUtils.write_json_file(data, file_path)
             assert result is True
             assert file_path.exists()
 
@@ -184,7 +184,7 @@ class TestFileUtils:
     def test_write_json_file_alias_failure(self):
         """测试write_json_file失败情况"""
         # 尝试写入到无效路径
-        result = FileUtils.write_json_file({"test": "data"}, "/invalid/path/file.json")
+        _result = FileUtils.write_json_file({"test": "data"}, "/invalid/path/file.json")
         assert result is False
 
     def test_cleanup_old_files(self):
@@ -243,7 +243,7 @@ class TestFileUtils:
         with tempfile.TemporaryDirectory() as tmpdir:
             # 使用Path对象
             path_obj = Path(tmpdir) / "path_obj" / "test.json"
-            data = {"test": "path object"}
+            _data = {"test": "path object"}
             FileUtils.write_json(data, path_obj)
             loaded = FileUtils.read_json(path_obj)
             assert loaded == data
@@ -258,7 +258,7 @@ class TestFileUtils:
         """测试Unicode处理"""
         with tempfile.TemporaryDirectory() as tmpdir:
             file_path = Path(tmpdir) / "unicode.json"
-            data = {"chinese": "你好，世界！", "emoji": "🌍🚀", "special": "αβγδε"}
+            _data = {"chinese": "你好，世界！", "emoji": "🌍🚀", "special": "αβγδε"}
 
             # 写入和读取Unicode数据
             FileUtils.write_json(data, file_path)

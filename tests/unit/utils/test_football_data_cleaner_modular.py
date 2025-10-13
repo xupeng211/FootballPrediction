@@ -342,17 +342,17 @@ async def test_error_handling():
 
         # 测试无效比赛数据
         invalid_data = {"id": "123"}  # 缺少必需字段
-        result = await cleaner.clean_match_data(invalid_data)
+        _result = await cleaner.clean_match_data(invalid_data)
         assert result is None
 
         # 测试验证失败的情况
         cleaner.data_validator.validate_match_data = Mock(return_value=False)
-        result = await cleaner.clean_match_data({"id": "123"})
+        _result = await cleaner.clean_match_data({"id": "123"})
         assert result is None
 
         # 测试异常处理
         cleaner.data_validator.validate_match_data = Mock(
             side_effect=Exception("Test error")
         )
-        result = await cleaner.clean_match_data({"id": "123"})
+        _result = await cleaner.clean_match_data({"id": "123"})
         assert result is None

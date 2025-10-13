@@ -33,7 +33,7 @@ class TestTeamInitialization:
 
 class TestTeamStats:
     def test_should_compute_points_and_goal_difference(self):
-        stats = TeamStats(
+        _stats = TeamStats(
             matches_played=10, wins=6, draws=2, losses=2, goals_for=20, goals_against=10
         )
 
@@ -103,7 +103,7 @@ class TestTeamBehaviour:
         team.stats.goals_against = 12
         team.form.add_result("W")
 
-        data = team.to_dict()
+        _data = team.to_dict()
         restored = Team.from_dict(data)
 
         assert restored.name == team.name

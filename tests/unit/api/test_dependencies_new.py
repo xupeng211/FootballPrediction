@@ -45,7 +45,7 @@ class TestGetCurrentUser:
                 "email": "test@example.com",
             }
 
-            result = await get_current_user(mock_credentials)
+            _result = await get_current_user(mock_credentials)
 
             assert result["sub"] == "user123"
             assert result["username"] == "testuser"
@@ -137,7 +137,7 @@ class TestVerifyAdminPermission:
 
         # 如果函数存在，测试它
         if "verify_admin_permission" in globals():
-            result = await verify_admin_permission(admin_user)
+            _result = await verify_admin_permission(admin_user)
             assert result is admin_user
 
     @pytest.mark.asyncio
@@ -180,8 +180,8 @@ class TestValidateRequestData:
 
         # 如果函数存在，测试它
         if "validate_request_data" in globals():
-            result = await validate_request_data(valid_data)
-            assert result == valid_data
+            _result = await validate_request_data(valid_data)
+            assert _result == valid_data
 
     @pytest.mark.asyncio
     async def test_validate_invalid_data_missing_field(self):
@@ -235,7 +235,7 @@ class TestDependenciesIntegration:
             }
 
             # 获取当前用户
-            user = await get_current_user(mock_credentials)
+            _user = await get_current_user(mock_credentials)
             assert user["role"] == "admin"
 
             # 如果有验证管理员权限的函数，测试它

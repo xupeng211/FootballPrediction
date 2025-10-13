@@ -39,13 +39,13 @@ class TestConfigModule:
 
     def test_get_config_function(self):
         """测试 get_config 函数"""
-        config = get_config()
+        _config = get_config()
         assert config is not None
         assert hasattr(config, "get")
 
     def test_config_get_method(self):
         """测试配置获取方法"""
-        config = get_config()
+        _config = get_config()
 
         # 测试默认值
         assert config.get("nonexistent", "default") == "default"
@@ -58,14 +58,14 @@ class TestConfigModule:
     def test_config_environment_override(self):
         """测试环境变量覆盖"""
         with patch.dict(os.environ, {"APP_DEBUG": "true"}):
-            config = get_config()
+            _config = get_config()
             # 模拟测试
             assert config is not None
 
     def test_testing_config(self):
         """测试测试配置"""
         with patch.dict(os.environ, {"TESTING": "true"}):
-            config = get_config()
+            _config = get_config()
             assert config is not None
 
     def test_config_singleton(self):
@@ -76,7 +76,7 @@ class TestConfigModule:
 
     def test_default_values(self):
         """测试默认值"""
-        config = get_config()
+        _config = get_config()
 
         # 测试默认值返回
         default_value = config.get("nonexistent_key", "default_value")
@@ -87,7 +87,7 @@ class TestConfigModule:
 
     def test_nested_config_access(self):
         """测试嵌套配置访问"""
-        config = get_config()
+        _config = get_config()
 
         # 测试嵌套访问
         database_config = config.get("database", {})
@@ -105,5 +105,5 @@ class TestConfigModule:
             mock_open.return_value.__enter__.return_value.read.return_value = (
                 '{"test": "value"}'
             )
-            config = get_config()
+            _config = get_config()
             assert config is not None

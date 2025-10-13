@@ -139,7 +139,7 @@ class TestHealthEndpoints:
         """测试：健康检查响应内容"""
         response = client.get("/health")
         if response.status_code == 200:
-            data = response.json()
+            _data = response.json()
             assert "status" in data
             assert data["status"] in ["healthy", "unhealthy", "degraded"]
 
@@ -147,21 +147,21 @@ class TestHealthEndpoints:
         """测试：存活探针"""
         response = client.get("/health/live")
         if response.status_code == 200:
-            data = response.json()
+            _data = response.json()
             assert "status" in data
 
     def test_readiness_probe(self, client):
         """测试：就绪探针"""
         response = client.get("/health/ready")
         if response.status_code == 200:
-            data = response.json()
+            _data = response.json()
             assert "status" in data
 
     def test_startup_probe(self, client):
         """测试：启动探针"""
         response = client.get("/health/startup")
         if response.status_code == 200:
-            data = response.json()
+            _data = response.json()
             assert "status" in data
 
 

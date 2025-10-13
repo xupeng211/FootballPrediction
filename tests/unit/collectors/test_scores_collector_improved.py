@@ -144,7 +144,7 @@ class TestScoresCollector:
             with patch.object(collector, "_process_score_data") as mock_process:
                 mock_process.return_value = True
 
-                result = await collector.collect_match_score(match_id)
+                _result = await collector.collect_match_score(match_id)
 
                 assert result is True
                 mock_fetch.assert_called_once_with(match_id)
@@ -163,7 +163,7 @@ class TestScoresCollector:
         with patch.object(collector, "_fetch_match_score_from_api") as mock_fetch:
             mock_fetch.return_value = None
 
-            result = await collector.collect_match_score(match_id)
+            _result = await collector.collect_match_score(match_id)
 
             assert result is False
 
@@ -193,7 +193,7 @@ class TestScoresCollector:
         with patch.object(collector, "_get_live_matches") as mock_get:
             mock_get.return_value = live_matches
 
-            result = await collector.collect_live_matches()
+            _result = await collector.collect_live_matches()
 
             assert len(result) == 2
             assert result[0]["match_id"] == 1
@@ -342,9 +342,9 @@ class TestScoresCollector:
         with patch.object(collector, "_fetch_from_football_api") as mock_football:
             mock_football.return_value = {"score": "2-1"}
 
-            result = await collector._fetch_match_score_from_api(match_id)
+            _result = await collector._fetch_match_score_from_api(match_id)
 
-            assert result == {"score": "2-1"}
+            assert _result == {"score": "2-1"}
             mock_football.assert_called_once_with(match_id)
 
         # 测试fallback到其他API
@@ -353,9 +353,9 @@ class TestScoresCollector:
                 mock_football.return_value = None
                 mock_sports.return_value = {"score": "1-2"}
 
-                result = await collector._fetch_match_score_from_api(match_id)
+                _result = await collector._fetch_match_score_from_api(match_id)
 
-                assert result == {"score": "1-2"}
+                assert _result == {"score": "1-2"}
                 mock_sports.assert_called_once_with(match_id)
 
     @pytest.mark.asyncio
@@ -385,7 +385,7 @@ class TestScoresCollector:
             }
             mock_get.return_value.__aenter__.return_value = mock_response
 
-            result = await collector._fetch_from_football_api(match_id)
+            _result = await collector._fetch_from_football_api(match_id)
 
             assert result is not None
             assert "match" in result
@@ -415,7 +415,7 @@ class TestScoresCollector:
             }
             mock_get.return_value.__aenter__.return_value = mock_response
 
-            result = await collector._fetch_from_api_sports(match_id)
+            _result = await collector._fetch_from_api_sports(match_id)
 
             assert result is not None
             assert "response" in result
@@ -442,7 +442,7 @@ class TestScoresCollector:
             ]
             mock_get.return_value.__aenter__.return_value = mock_response
 
-            result = await collector._fetch_from_scorebat(match_id)
+            _result = await collector._fetch_from_scorebat(match_id)
 
             assert result is not None
             assert len(result) == 1
@@ -467,7 +467,7 @@ class TestScoresCollector:
             }
         }
 
-        result = collector._transform_football_api_data(api_data)
+        _result = collector._transform_football_api_data(api_data)
 
         assert result["match_id"] == 123
         assert result["home_score"] == 2
@@ -491,7 +491,7 @@ class TestScoresCollector:
             ]
         }
 
-        result = collector._transform_api_sports_data(api_data)
+        _result = collector._transform_api_sports_data(api_data)
 
         assert result["match_id"] == 123
         assert result["home_score"] == 2
@@ -530,7 +530,7 @@ class TestScoresCollector:
                     mock_save.return_value = True
                     mock_publish.return_value = True
 
-                    result = await collector._process_score_data(score_data)
+                    _result = await collector._process_score_data(score_data)
 
                     assert result is True
                     mock_change.assert_called_once()
@@ -557,8 +557,8 @@ class TestScoresCollector:
         ]
 
         for api_status, expected in test_cases:
-            result = collector._map_status(api_status)
-            assert result == expected
+            _result = collector._map_status(api_status)
+            assert _result == expected
 
     def test_has_significant_change(self):
         """测试：检查是否有显著变化"""
@@ -689,7 +689,7 @@ class TestScoresCollector:
         mock_result.scalars.return_value.all.return_value = mock_matches
         db_session.execute.return_value = mock_result
 
-        result = await collector._get_live_matches()
+        _result = await collector._get_live_matches()
 
         assert len(result) == 2
         assert result[0]["match_id"] == 1
@@ -736,7 +736,7 @@ class TestScoresCollector:
             3: datetime.now() - timedelta(minutes=10),
         }
 
-        stats = collector.get_stats()
+        _stats = collector.get_stats()
 
         assert stats["cached_matches"] == 3
         assert stats["running"] is False
@@ -852,7 +852,7 @@ class TestScoresCollectorIntegration:
                     # 4. 发布更新
                     with patch.object(collector, "_publish_score_update"):
                         # 执行收集
-                        matches = await collector.collect_live_matches()
+                        _matches = await collector.collect_live_matches()
                         for match in matches:
                             await collector.collect_match_score(match["match_id"])
 
@@ -882,11 +882,11 @@ class TestScoresCollectorIntegration:
                 mock_sports.return_value = None  # fallback也失败
 
                 # 第一次调用，应该失败
-                result = await collector._fetch_match_score_from_api(123)
+                _result = await collector._fetch_match_score_from_api(123)
                 assert result is None
 
                 # 第二次调用，应该成功
-                result = await collector._fetch_match_score_from_api(123)
+                _result = await collector._fetch_match_score_from_api(123)
                 assert result is not None
                 assert result["match_id"] == 123
 

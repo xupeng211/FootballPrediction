@@ -170,7 +170,7 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
 
     def get_performance_stats(self) -> Dict:
         """获取性能统计信息"""
-        stats = {
+        _stats = {
             "total_requests": self.total_requests,
             "current_concurrent_requests": len(self.active_requests),
             "max_concurrent_requests": self.max_concurrent_requests,
@@ -239,7 +239,7 @@ class DatabasePerformanceMiddleware:
                 "error_count": 0,
             }
 
-        stats = self.query_stats[query_type]
+        _stats = self.query_stats[query_type]
         stats["count"] += 1
         stats["total_time"] += duration
         stats["rows_total"] += rows_affected
@@ -264,7 +264,7 @@ class DatabasePerformanceMiddleware:
 
     def get_query_stats(self) -> Dict:
         """获取查询统计信息"""
-        stats = {"total_queries": self.total_queries, "query_types": {}}
+        _stats = {"total_queries": self.total_queries, "query_types": {}}
 
         for query_type, data in self.query_stats.items():
             stats["query_types"][query_type] = {
@@ -326,7 +326,7 @@ class CachePerformanceMiddleware:
             self.cache_stats["hits"] / total_requests if total_requests > 0 else 0
         )
 
-        stats = {
+        _stats = {
             "hit_rate": hit_rate,
             "total_requests": total_requests,
             "hits": self.cache_stats["hits"],
@@ -380,7 +380,7 @@ class BackgroundTaskPerformanceMonitor:
                 "max_time": 0,
             }
 
-        stats = self.task_stats[task_name]
+        _stats = self.task_stats[task_name]
         stats["total_count"] += 1
         stats["total_time"] += duration
         stats["min_time"] = min(stats["min_time"], duration)
@@ -407,7 +407,7 @@ class BackgroundTaskPerformanceMonitor:
 
     def get_task_stats(self) -> Dict:
         """获取任务统计信息"""
-        stats = {"active_tasks": len(self.active_tasks), "task_types": {}}
+        _stats = {"active_tasks": len(self.active_tasks), "task_types": {}}
 
         for task_name, data in self.task_stats.items():
             stats["task_types"][task_name] = {  # type: ignore

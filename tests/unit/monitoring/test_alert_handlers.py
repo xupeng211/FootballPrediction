@@ -51,10 +51,10 @@ class TestAlertHandler:
 
     def test_alert_handler_configuration(self):
         """测试：警报处理器配置"""
-        config = {"enabled": True, "retry_attempts": 3, "timeout": 30}
+        _config = {"enabled": True, "retry_attempts": 3, "timeout": 30}
 
         handler = AlertHandler(config)
-        assert handler.config == config
+        assert handler._config == config
         assert handler.is_active() is True
 
     @pytest.mark.asyncio
@@ -69,7 +69,7 @@ class TestAlertHandler:
             "timestamp": datetime.now().isoformat(),
         }
 
-        result = await handler.handle_alert(alert)
+        _result = await handler.handle_alert(alert)
         assert result is True or result is None  # 可能返回True或None
 
 
@@ -81,7 +81,7 @@ class TestEmailAlertHandler:
 
     def test_email_handler_creation(self):
         """测试：邮件处理器创建"""
-        config = {
+        _config = {
             "smtp_server": "smtp.example.com",
             "smtp_port": 587,
             "username": "alerts@example.com",
@@ -96,7 +96,7 @@ class TestEmailAlertHandler:
     @pytest.mark.asyncio
     async def test_send_email_alert(self):
         """测试：发送邮件警报"""
-        config = {
+        _config = {
             "smtp_server": "smtp.test.com",
             "smtp_port": 587,
             "username": "test@test.com",
@@ -115,12 +115,12 @@ class TestEmailAlertHandler:
         }
 
         with patch.object(handler, "_send_email", return_value=True):
-            result = await handler.handle_alert(alert)
+            _result = await handler.handle_alert(alert)
             assert result is True
 
     def test_email_formatting(self):
         """测试：邮件格式化"""
-        config = {"smtp_server": "smtp.test.com", "recipients": ["admin@test.com"]}
+        _config = {"smtp_server": "smtp.test.com", "recipients": ["admin@test.com"]}
 
         handler = EmailAlertHandler(config)
 
@@ -147,7 +147,7 @@ class TestSlackAlertHandler:
 
     def test_slack_handler_creation(self):
         """测试：Slack处理器创建"""
-        config = {
+        _config = {
             "webhook_url": "https://hooks.slack.com/services/...",
             "channel": "#alerts",
             "username": "AlertBot",
@@ -160,7 +160,7 @@ class TestSlackAlertHandler:
     @pytest.mark.asyncio
     async def test_send_slack_alert(self):
         """测试：发送Slack警报"""
-        config = {"webhook_url": "https://hooks.slack.com/test", "channel": "#alerts"}
+        _config = {"webhook_url": "https://hooks.slack.com/test", "channel": "#alerts"}
 
         handler = SlackAlertHandler(config)
 
@@ -176,12 +176,12 @@ class TestSlackAlertHandler:
             mock_response.status = 200
             mock_post.return_value.__aenter__.return_value = mock_response
 
-            result = await handler.handle_alert(alert)
+            _result = await handler.handle_alert(alert)
             assert result is True
 
     def test_slack_payload_format(self):
         """测试：Slack载荷格式"""
-        config = {"webhook_url": "https://hooks.slack.com/test", "channel": "#alerts"}
+        _config = {"webhook_url": "https://hooks.slack.com/test", "channel": "#alerts"}
 
         handler = SlackAlertHandler(config)
 
@@ -208,7 +208,7 @@ class TestWebhookAlertHandler:
 
     def test_webhook_handler_creation(self):
         """测试：Webhook处理器创建"""
-        config = {
+        _config = {
             "url": "https://api.example.com/alerts",
             "method": "POST",
             "headers": {
@@ -224,7 +224,7 @@ class TestWebhookAlertHandler:
     @pytest.mark.asyncio
     async def test_send_webhook_alert(self):
         """测试：发送Webhook警报"""
-        config = {
+        _config = {
             "url": "https://api.example.com/webhook",
             "method": "POST",
             "headers": {"Authorization": "Bearer token"},
@@ -244,12 +244,12 @@ class TestWebhookAlertHandler:
             mock_response.status = 200
             mock_request.return_value.__aenter__.return_value = mock_response
 
-            result = await handler.handle_alert(alert)
+            _result = await handler.handle_alert(alert)
             assert result is True
 
     def test_webhook_retry_logic(self):
         """测试：Webhook重试逻辑"""
-        config = {
+        _config = {
             "url": "https://api.example.com/webhook",
             "retry_attempts": 3,
             "retry_delay": 1,

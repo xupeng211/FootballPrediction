@@ -95,7 +95,7 @@ async def auth_tokens(api_client) -> Dict[str, str]:
 
     # 登录获取 token
     login_data = {"username": user_data["username"], "password": user_data["password"]}
-    response = await api_client.post("/api/v1/auth/login", data=login_data)
+    response = await api_client.post("/api/v1/auth/login", _data =login_data)
     if response.status_code == 200:
         tokens["user"] = response.json()["access_token"]
         logger.info("✅ 用户 token 获取成功")
@@ -119,7 +119,7 @@ async def auth_tokens(api_client) -> Dict[str, str]:
         "username": admin_data["username"],
         "password": admin_data["password"],
     }
-    response = await api_client.post("/api/v1/auth/login", data=admin_login)
+    response = await api_client.post("/api/v1/auth/login", _data =admin_login)
     if response.status_code == 200:
         tokens["admin"] = response.json()["access_token"]
         logger.info("✅ 管理员 token 获取成功")
@@ -143,7 +143,7 @@ async def auth_tokens(api_client) -> Dict[str, str]:
         "username": analyst_data["username"],
         "password": analyst_data["password"],
     }
-    response = await api_client.post("/api/v1/auth/login", data=analyst_login)
+    response = await api_client.post("/api/v1/auth/login", _data =analyst_login)
     if response.status_code == 200:
         tokens["analyst"] = response.json()["access_token"]
         logger.info("✅ 分析师 token 获取成功")

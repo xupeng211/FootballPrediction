@@ -159,7 +159,7 @@ class TestTaskErrorLogger:
             mock_db.get_session.return_value.__aenter__.return_value = mock_session
 
             # 获取统计
-            stats = await logger.get_error_statistics(
+            _stats = await logger.get_error_statistics(
                 start_date=datetime.now().date(), end_date=datetime.now().date()
             )
 

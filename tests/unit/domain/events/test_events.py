@@ -41,7 +41,7 @@ class TestBaseEvent:
 class TestMatchEvents:
     def test_match_started_event_data(self):
         event = MatchStartedEvent(match_id=1, home_team_id=2, away_team_id=3)
-        data = event.to_dict()["data"]
+        _data = event.to_dict()["data"]
 
         assert data["match_id"] == 1
         assert data["home_team_id"] == 2
@@ -54,7 +54,7 @@ class TestMatchEvents:
             home_team_id=1,
             away_team_id=2,
             final_score=score,
-            result=MatchResult.HOME_WIN,
+            _result =MatchResult.HOME_WIN,
         )
 
         payload = event.to_dict()["data"]
@@ -87,7 +87,7 @@ class TestPredictionEvents:
             confidence=0.75,
         )
 
-        data = event.to_dict()["data"]
+        _data = event.to_dict()["data"]
         assert data["predicted_home"] == 2
         assert data["confidence"] == 0.75
 
@@ -142,6 +142,6 @@ class TestPredictionEvents:
             adjustment_reason="manual correction",
         )
 
-        data = event.to_dict()["data"]
+        _data = event.to_dict()["data"]
         assert data["points_difference"] == 5
         assert data["adjustment_reason"] == "manual correction"

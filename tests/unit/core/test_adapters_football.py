@@ -17,11 +17,11 @@ from src.adapters.base import Adapter
 class MockFootballDataAdapter(Adapter):
     """Mock足球数据适配器"""
 
-    def __init__(self, config=None):
+    def __init__(self, _config =None):
         self.mock_adaptee = Mock()
         self.mock_adaptee.request = AsyncMock(return_value={"status": "ok"})
         super().__init__(self.mock_adaptee, "MockFootballAdapter")
-        self.config = config or {}
+        self._config = config or {}
 
     async def _initialize(self):
         self.initialized = True
@@ -45,7 +45,7 @@ class TestFootballDataAdapter:
 
     def test_configuration_validation(self):
         """测试配置验证"""
-        config = {"api_key": "test", "base_url": "https://api.football.com"}
+        _config = {"api_key": "test", "base_url": "https://api.football.com"}
         adapter = MockFootballDataAdapter(config)
         assert adapter.config["api_key"] == "test"
 
@@ -53,14 +53,14 @@ class TestFootballDataAdapter:
     async def test_get_match_data(self):
         """测试获取比赛数据"""
         adapter = MockFootballDataAdapter()
-        result = await adapter._request("/matches")
+        _result = await adapter._request("/matches")
         assert result is not None
 
     @pytest.mark.asyncio
     async def test_get_team_data(self):
         """测试获取队伍数据"""
         adapter = MockFootballDataAdapter()
-        result = await adapter._request("/teams")
+        _result = await adapter._request("/teams")
         assert result is not None
 
     def test_build_url_with_params(self):

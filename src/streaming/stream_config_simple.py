@@ -33,7 +33,7 @@ class StreamConfig:
 
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
-        config = {
+        _config = {
             "name": self.name,
             "bootstrap_servers": self.bootstrap_servers,
             "topics": self.topics,
@@ -81,7 +81,7 @@ class StreamConfig:
     @staticmethod
     def _substitute_env_vars(config: Dict[str, Any]) -> Dict[str, Any]:
         """替换环境变量"""
-        result = {}
+        _result = {}
         for key, value in config.items():
             if (
                 isinstance(value, str)

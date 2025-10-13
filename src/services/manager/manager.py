@@ -76,7 +76,7 @@ class ServiceManager:
         for service in self._services.values():
             try:
                 # 每个服务独立初始化，失败不影响其他服务的尝试
-                result = await service.initialize()
+                _result = await service.initialize()
                 if not result:
                     success = False
                     self.logger.error(f"服务初始化失败: {service.name}")

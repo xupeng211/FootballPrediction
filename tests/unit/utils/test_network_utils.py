@@ -95,7 +95,7 @@ class NetworkUtils:
     def parse_content_type(content_type: str) -> Dict[str, str]:
         """解析Content-Type头"""
         parts = content_type.split(";")
-        result = {"type": parts[0].strip()}
+        _result = {"type": parts[0].strip()}
 
         for part in parts[1:]:
             if "=" in part:

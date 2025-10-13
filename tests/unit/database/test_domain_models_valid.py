@@ -93,7 +93,7 @@ class TestTeam:
 
     def test_team_statistics(self):
         """测试球队统计"""
-        stats = TeamStatistics()
+        _stats = TeamStatistics()
 
         assert stats.matches_played == 0
         assert stats.wins == 0
@@ -105,7 +105,7 @@ class TestTeam:
 
     def test_update_team_stats(self):
         """测试更新球队统计"""
-        stats = TeamStatistics()
+        _stats = TeamStatistics()
         stats.record_match(2, 1, True)  # 主队2:1获胜
 
         assert stats.matches_played == 1
@@ -125,7 +125,7 @@ class TestPrediction:
 
     def test_prediction_creation(self):
         """测试预测创建"""
-        prediction = Prediction(
+        _prediction = Prediction(
             match_id=123,
             user_id=456,
             prediction_type=PredictionType.MATCH_RESULT,
@@ -150,7 +150,7 @@ class TestPrediction:
 
     def test_settle_prediction(self):
         """测试结算预测"""
-        prediction = Prediction(
+        _prediction = Prediction(
             match_id=123, user_id=456, predicted_outcome="home_win", confidence=0.8
         )
 
@@ -192,7 +192,7 @@ class TestUser:
 
     def test_user_creation(self):
         """测试用户创建"""
-        user = User(username="testuser", email="test@example.com")
+        _user = User(username="testuser", email="test@example.com")
 
         assert user.username == "testuser"
         assert user.email == "test@example.com"
@@ -218,7 +218,7 @@ class TestUser:
 
     def test_add_experience(self):
         """测试添加经验值"""
-        user = User(username="test")
+        _user = User(username="test")
         initial_level = user.level
         user.add_experience(150)
 
@@ -227,7 +227,7 @@ class TestUser:
 
     def test_add_achievement(self):
         """测试添加成就"""
-        user = User(username="test")
+        _user = User(username="test")
         user.add_achievement("first_prediction")
 
         assert "first_prediction" in user.achievements
@@ -235,7 +235,7 @@ class TestUser:
     def test_get_full_name(self):
         """测试获取全名"""
         # 通过profile设置名字
-        user = User(username="test")
+        _user = User(username="test")
         user.profile.first_name = "John"
         user.profile.last_name = "Doe"
 

@@ -141,8 +141,8 @@ class FixturesCollector:
             .order_by(Match.start_time)
         )
 
-        result = await self.db_session.execute(query)
-        matches = result.scalars().all()
+        _result = await self.db_session.execute(query)
+        _matches = result.scalars().all()
 
         fixtures = []
         for match in matches:
@@ -266,7 +266,7 @@ class FixturesCollector:
         Returns:
             收集统计信息
         """
-        stats = {
+        _stats = {
             "total_fixtures": 0,
             "new_fixtures": 0,
             "updated_fixtures": 0,
@@ -275,10 +275,10 @@ class FixturesCollector:
 
         try:
             # 获取所有活跃的球队
-            result = await self.db_session.execute(
+            _result = await self.db_session.execute(
                 select(Team).where(Team.is_active is True)
             )
-            teams = result.scalars().all()
+            _teams = result.scalars().all()
 
             # 为每个球队收集赛程
             for team in teams:

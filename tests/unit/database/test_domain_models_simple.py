@@ -73,7 +73,7 @@ class TestTeam:
 
     def test_team_statistics(self):
         """测试球队统计"""
-        stats = TeamStatistics()
+        _stats = TeamStatistics()
 
         assert stats.played == 0
         assert stats.won == 0
@@ -83,7 +83,7 @@ class TestTeam:
 
     def test_update_team_stats(self):
         """测试更新球队统计"""
-        stats = TeamStatistics()
+        _stats = TeamStatistics()
         stats.update(won=1, goals_for=2, goals_against=0)
 
         assert stats.won == 1
@@ -97,7 +97,7 @@ class TestPrediction:
 
     def test_prediction_creation(self):
         """测试预测创建"""
-        prediction = Prediction(
+        _prediction = Prediction(
             match_id=123,
             user_id=456,
             prediction_type=PredictionType.MATCH_RESULT,
@@ -145,7 +145,7 @@ class TestUser:
 
     def test_user_creation(self):
         """测试用户创建"""
-        user = User(username="testuser", email="test@example.com")
+        _user = User(username="testuser", email="test@example.com")
 
         assert user.username == "testuser"
         assert user.email == "test@example.com"
@@ -168,7 +168,7 @@ class TestUser:
 
     def test_add_experience(self):
         """测试添加经验值"""
-        user = User(username="test")
+        _user = User(username="test")
         user.add_experience(150)
 
         assert user.experience_points == 150
@@ -176,14 +176,14 @@ class TestUser:
 
     def test_add_achievement(self):
         """测试添加成就"""
-        user = User(username="test")
+        _user = User(username="test")
         user.add_achievement("first_prediction")
 
         assert "first_prediction" in user.achievements
 
     def test_get_full_name(self):
         """测试获取全名"""
-        user = User(username="test", first_name="John", last_name="Doe")
+        _user = User(username="test", first_name="John", last_name="Doe")
 
         full_name = user.get_full_name()
         assert full_name == "John Doe"

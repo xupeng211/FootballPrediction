@@ -236,7 +236,7 @@ class StatisticsUtils:
         if not data or window <= 0:
             return []
 
-        result = []
+        _result = []
         for i in range(len(data) - window + 1):
             window_data = data[i : i + window]
             result.append(StatisticsUtils.mean(window_data))
@@ -316,7 +316,7 @@ class TestStatisticsUtils:
 
     def test_mode_multiple(self):
         """测试众数-多个众数"""
-        result = StatisticsUtils.mode([1, 1, 2, 2, 3])
+        _result = StatisticsUtils.mode([1, 1, 2, 2, 3])
         assert set(result) == {1, 2}
 
     def test_mode_empty(self):
@@ -325,25 +325,25 @@ class TestStatisticsUtils:
 
     def test_variance_population(self):
         """测试方差-总体方差"""
-        data = [2, 4, 4, 4, 5, 5, 7, 9]
-        result = StatisticsUtils.variance(data, sample=False)
+        _data = [2, 4, 4, 4, 5, 5, 7, 9]
+        _result = StatisticsUtils.variance(data, sample=False)
         assert abs(result - 4) < 0.001
 
     def test_variance_sample(self):
         """测试方差-样本方差"""
-        data = [2, 4, 4, 4, 5, 5, 7, 9]
-        result = StatisticsUtils.variance(data, sample=True)
+        _data = [2, 4, 4, 4, 5, 5, 7, 9]
+        _result = StatisticsUtils.variance(data, sample=True)
         assert abs(result - 4.571) < 0.001
 
     def test_standard_deviation(self):
         """测试标准差"""
-        data = [2, 4, 4, 4, 5, 5, 7, 9]
-        result = StatisticsUtils.standard_deviation(data, sample=True)
+        _data = [2, 4, 4, 4, 5, 5, 7, 9]
+        _result = StatisticsUtils.standard_deviation(data, sample=True)
         assert abs(result - 2.138) < 0.001
 
     def test_percentile(self):
         """测试百分位数"""
-        data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        _data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
         assert StatisticsUtils.percentile(data, 25) == 3.25
         assert StatisticsUtils.percentile(data, 50) == 5.5
         assert StatisticsUtils.percentile(data, 75) == 7.75
@@ -351,7 +351,7 @@ class TestStatisticsUtils:
 
     def test_quartiles(self):
         """测试四分位数"""
-        data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+        _data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
         Q1, Q2, Q3 = StatisticsUtils.quartiles(data)
         assert Q1 == 3.5
         assert Q2 == 6.5
@@ -359,27 +359,27 @@ class TestStatisticsUtils:
 
     def test_interquartile_range(self):
         """测试四分位距"""
-        data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        result = StatisticsUtils.interquartile_range(data)
-        assert result == 5  # Q3=7.5, Q1=2.5
+        _data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        _result = StatisticsUtils.interquartile_range(data)
+        assert _result == 5  # Q3=7.5, Q1=2.5
 
     def test_outliers_iqr(self):
         """测试IQR异常值检测"""
-        data = [1, 2, 2, 3, 4, 5, 5, 6, 100]  # 100是异常值
+        _data = [1, 2, 2, 3, 4, 5, 5, 6, 100]  # 100是异常值
         outliers = StatisticsUtils.outliers_iqr(data)
         assert 100 in outliers
         assert len(outliers) == 1
 
     def test_z_score(self):
         """测试Z分数"""
-        data = [10, 12, 14, 16, 18]
+        _data = [10, 12, 14, 16, 18]
         # 10的Z分数应该是-1.264
         z = StatisticsUtils.z_score(10, data)
         assert abs(z + 1.264) < 0.001
 
     def test_outliers_zscore(self):
         """测试Z分数异常值检测"""
-        data = [10, 12, 14, 16, 18, 100]  # 100是异常值
+        _data = [10, 12, 14, 16, 18, 100]  # 100是异常值
         outliers = StatisticsUtils.outliers_zscore(data, threshold=2.0)
         assert 100 in outliers
 
@@ -408,7 +408,7 @@ class TestStatisticsUtils:
     def test_skewness(self):
         """测试偏度"""
         # 右偏（正偏）
-        data = [1, 2, 3, 4, 100]
+        _data = [1, 2, 3, 4, 100]
         skew = StatisticsUtils.skewness(data)
         assert skew > 0
 
@@ -431,7 +431,7 @@ class TestStatisticsUtils:
 
     def test_summary_statistics(self):
         """测试汇总统计"""
-        data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        _data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
         summary = StatisticsUtils.summary_statistics(data)
 
         assert summary["count"] == 10
@@ -447,18 +447,18 @@ class TestStatisticsUtils:
 
     def test_moving_average(self):
         """测试移动平均"""
-        data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-        result = StatisticsUtils.moving_average(data, 3)
+        _data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        _result = StatisticsUtils.moving_average(data, 3)
         expected = [2, 3, 4, 5, 6, 7, 8, 9]
-        assert result == expected
+        assert _result == expected
 
         # 窗口大于数据长度
         assert StatisticsUtils.moving_average(data, 20) == []
 
     def test_exponential_smoothing(self):
         """测试指数平滑"""
-        data = [10, 20, 30, 40, 50]
-        result = StatisticsUtils.exponential_smoothing(data, alpha=0.5)
+        _data = [10, 20, 30, 40, 50]
+        _result = StatisticsUtils.exponential_smoothing(data, alpha=0.5)
         assert len(result) == 5
         assert result[0] == 10  # 第一个值不变
         assert result[1] == 15  # 0.5*20 + 0.5*10
@@ -496,7 +496,7 @@ class TestStatisticsUtils:
 
     def test_single_value(self):
         """测试单个值"""
-        data = [5]
+        _data = [5]
         assert StatisticsUtils.mean(data) == 5
         assert StatisticsUtils.median(data) == 5
         assert StatisticsUtils.mode(data) == [5]

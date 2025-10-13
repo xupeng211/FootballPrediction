@@ -67,7 +67,7 @@ class MatchRepository(BaseRepository[Match]):
             if limit:
                 stmt = stmt.limit(limit)
 
-            result = await sess.execute(stmt)
+            _result = await sess.execute(stmt)
             return result.scalars().all()  # type: ignore
 
     async def get_by_status(
@@ -130,7 +130,7 @@ class MatchRepository(BaseRepository[Match]):
             if limit:
                 stmt = stmt.limit(limit)
 
-            result = await sess.execute(stmt)
+            _result = await sess.execute(stmt)
             return result.scalars().all()  # type: ignore
 
     async def get_live_matches(
@@ -184,7 +184,7 @@ class MatchRepository(BaseRepository[Match]):
             if limit:
                 stmt = stmt.limit(limit)
 
-            result = await sess.execute(stmt)
+            _result = await sess.execute(stmt)
             return result.scalars().all()  # type: ignore
 
     async def get_by_team(
@@ -224,7 +224,7 @@ class MatchRepository(BaseRepository[Match]):
             if limit:
                 stmt = stmt.limit(limit)
 
-            result = await sess.execute(stmt)
+            _result = await sess.execute(stmt)
             return result.scalars().all()  # type: ignore
 
     async def get_head_to_head(
@@ -270,7 +270,7 @@ class MatchRepository(BaseRepository[Match]):
             if limit:
                 stmt = stmt.limit(limit)
 
-            result = await sess.execute(stmt)
+            _result = await sess.execute(stmt)
             return result.scalars().all()  # type: ignore
 
     async def get_matches_by_league(
@@ -383,11 +383,11 @@ class MatchRepository(BaseRepository[Match]):
         # 自动判断比赛结果
         if not result:
             if home_score > away_score:
-                result = MatchResult.HOME_WIN
+                _result = MatchResult.HOME_WIN
             elif away_score > home_score:
-                result = MatchResult.AWAY_WIN
+                _result = MatchResult.AWAY_WIN
             else:
-                result = MatchResult.DRAW
+                _result = MatchResult.DRAW
 
         update_data["result"] = result.value
 
@@ -446,7 +446,7 @@ class MatchRepository(BaseRepository[Match]):
             else:
                 return None
 
-            result = await sess.execute(stmt)
+            _result = await sess.execute(stmt)
             match = result.scalar_one_or_none()
 
             if match:
@@ -474,11 +474,11 @@ class MatchRepository(BaseRepository[Match]):
         Returns:
             包含胜负平统计的字典
         """
-        matches = await self.get_by_team(
+        _matches = await self.get_by_team(
             team_id=team_id, limit=last_matches, session=session
         )
 
-        stats = {
+        _stats = {
             "played": 0,
             "wins": 0,
             "draws": 0,

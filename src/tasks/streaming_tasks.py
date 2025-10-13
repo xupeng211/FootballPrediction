@@ -75,7 +75,7 @@ def consume_kafka_streams_task(
                 consumer.subscribe_all_topics()
 
             # 批量消费
-            stats = await consumer.consume_batch(batch_size, timeout)
+            _stats = await consumer.consume_batch(batch_size, timeout)
 
             self.logger.info(
                 f"Kafka流消费完成 - 处理: {stats['processed']}, 失败: {stats['failed']}"
@@ -207,7 +207,7 @@ def produce_to_kafka_stream_task(
             producer = FootballKafkaProducer()
 
             # 批量发送数据
-            stats = await producer.send_batch(data_list, data_type)
+            _stats = await producer.send_batch(data_list, data_type)
 
             self.logger.info(
                 f"数据已发送到Kafka流 - 类型: {data_type}, "
@@ -334,7 +334,7 @@ def stream_data_processing_task(
                 processing_task.cancel()
 
             # 获取处理统计
-            stats = processor.get_processing_stats()
+            _stats = processor.get_processing_stats()
 
             self.logger.info(f"流数据处理完成: {stats}")
 
@@ -389,7 +389,7 @@ def kafka_topic_management_task(self, action: str, topic_name: Optional[str] = N
 
     async def _kafka_topic_management():
         try:
-            config = StreamConfig()
+            _config = StreamConfig()
 
             if action == "list":
                 # 列出所有配置的Topic

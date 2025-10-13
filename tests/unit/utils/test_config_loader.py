@@ -45,15 +45,15 @@ class TestConfigLoader:
         }
         mock_json_load.return_value = mock_config
 
-        config = load_config("test_config.json")
+        _config = load_config("test_config.json")
 
-        assert config == mock_config
+        assert _config == mock_config
         assert config["database"]["host"] == "localhost"
         assert config["redis"]["port"] == 6379
 
     def test_get_config_value(self):
         """测试：获取配置值"""
-        config = {"app": {"name": "test_app", "version": "1.0.0"}, "debug": True}
+        _config = {"app": {"name": "test_app", "version": "1.0.0"}, "debug": True}
 
         # 获取嵌套值
         assert get_config_value(config, "app.name") == "test_app"
@@ -67,7 +67,7 @@ class TestConfigLoader:
 
     def test_set_config_value(self):
         """测试：设置配置值"""
-        config = {"app": {"name": "old_name"}}
+        _config = {"app": {"name": "old_name"}}
 
         # 设置嵌套值
         set_config_value(config, "app.name", "new_name")
@@ -107,7 +107,7 @@ class TestConfigLoader:
             },
         }
 
-        result = validate_config(valid_config, schema)
+        _result = validate_config(valid_config, schema)
         assert result is True
 
     def test_validate_config_invalid(self):
@@ -130,7 +130,7 @@ class TestConfigLoader:
             }
         }
 
-        result = validate_config(invalid_config, schema)
+        _result = validate_config(invalid_config, schema)
         assert result is False
 
     @patch("src.utils.config_loader.os.path.exists")
@@ -143,7 +143,7 @@ class TestConfigLoader:
 
     def test_get_config_value_with_default(self):
         """测试：获取配置值带默认值"""
-        config = {"existing_key": "value"}
+        _config = {"existing_key": "value"}
 
         # 存在的键
         assert get_config_value(config, "existing_key", "default") == "value"
@@ -156,21 +156,21 @@ class TestConfigLoader:
 
     def test_set_config_value_create_nested(self):
         """测试：设置嵌套配置值创建路径"""
-        config = {}
+        _config = {}
 
         # 创建嵌套结构
         set_config_value(config, "new.nested.key", "value")
-        assert config == {"new": {"nested": {"key": "value"}}}
+        assert _config == {"new": {"nested": {"key": "value"}}}
 
     def test_environment_variable_override(self):
         """测试：环境变量覆盖"""
-        config = {"database": {"host": "localhost"}}
+        _config = {"database": {"host": "localhost"}}
 
         with patch.dict(os.environ, {"CONFIG_DATABASE_HOST": "prod_host"}):
             # 如果实现了环境变量覆盖
             if hasattr(load_config, "__code__"):
                 # 函数存在，测试环境变量功能
-                result = get_config_value(config, "database.host", override_env=True)
+                _result = get_config_value(config, "database.host", override_env=True)
                 assert result in ["localhost", "prod_host"]
 
 
@@ -248,7 +248,7 @@ class TestConfigLoaderAdvanced:
 
     def test_config_validation_types(self):
         """测试：配置验证类型"""
-        config = {
+        _config = {
             "string_value": "test",
             "int_value": 42,
             "float_value": 3.14,
@@ -267,7 +267,7 @@ class TestConfigLoaderAdvanced:
 
     def test_config_sensitive_data(self):
         """测试：敏感配置数据"""
-        config = {
+        _config = {
             "database": {
                 "host": "localhost",
                 "username": "user",
@@ -304,7 +304,7 @@ class TestConfigLoaderAdvanced:
         # 模拟配置文件监听
         import time
 
-        config = {"value": 1}
+        _config = {"value": 1}
 
         # 模拟配置更新
         def update_config():
@@ -328,7 +328,7 @@ class TestConfigLoaderAdvanced:
         # 根据环境变量选择配置
         with patch.dict(os.environ, {"APP_PROFILE": "production"}):
             profile = os.getenv("APP_PROFILE", "development")
-            config = profiles.get(profile, profiles["development"])
+            _config = profiles.get(profile, profiles["development"])
 
             assert config["debug"] is False
             assert config["database"]["host"] == "prod-server"

@@ -24,14 +24,14 @@ class TestBasicAPI:
         """测试根端点"""
         response = client.get("/")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "message" in data
 
     def test_health_endpoint(self, client):
         """测试健康端点"""
         response = client.get("/api/health")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["status"] == "healthy"
 
     def test_metrics_endpoint(self, client):
@@ -44,7 +44,7 @@ class TestBasicAPI:
         """测试测试端点"""
         response = client.get("/api/test")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "message" in data
 
     def test_docs_endpoints(self, client):
@@ -61,7 +61,7 @@ class TestBasicAPI:
         """测试OpenAPI JSON"""
         response = client.get("/openapi.json")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "openapi" in data
         assert "info" in data
 
@@ -69,7 +69,7 @@ class TestBasicAPI:
         """测试404处理"""
         response = client.get("/nonexistent")
         assert response.status_code == 404
-        data = response.json()
+        _data = response.json()
         assert "error" in data
 
     def test_method_not_allowed(self, client):
@@ -90,14 +90,14 @@ class TestPredictionEndpoints:
         """测试预测健康检查"""
         response = client.get("/predictions/health")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["status"] == "healthy"
 
     def test_get_prediction(self, client):
         """测试获取预测"""
         response = client.get("/predictions/12345")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "match_id" in data
         assert "predicted_outcome" in data
 
@@ -105,7 +105,7 @@ class TestPredictionEndpoints:
         """测试创建预测"""
         response = client.post("/predictions/12345/predict")
         assert response.status_code == 201
-        data = response.json()
+        _data = response.json()
         assert "match_id" in data
         assert "predicted_outcome" in data
 
@@ -113,7 +113,7 @@ class TestPredictionEndpoints:
         """测试预测历史"""
         response = client.get("/predictions/history/12345")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "predictions" in data
         assert "total_predictions" in data
 
@@ -121,7 +121,7 @@ class TestPredictionEndpoints:
         """测试验证预测"""
         response = client.post("/predictions/12345/verify?actual_result=home")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "match_id" in data
         assert "is_correct" in data
 
@@ -138,14 +138,14 @@ class TestDataEndpoints:
         """测试获取联赛"""
         response = client.get("/data/leagues")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list)
 
     def test_get_league_by_id(self, client):
         """测试根据ID获取联赛"""
         response = client.get("/data/leagues/1")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "id" in data
         assert "name" in data
 
@@ -153,14 +153,14 @@ class TestDataEndpoints:
         """测试获取球队"""
         response = client.get("/data/teams")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list)
 
     def test_get_team_by_id(self, client):
         """测试根据ID获取球队"""
         response = client.get("/data/teams/1")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "id" in data
         assert "name" in data
 
@@ -168,7 +168,7 @@ class TestDataEndpoints:
         """测试获取球队统计"""
         response = client.get("/data/teams/1/statistics")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "team_id" in data
         assert "matches_played" in data
 
@@ -176,14 +176,14 @@ class TestDataEndpoints:
         """测试获取比赛"""
         response = client.get("/data/matches")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list)
 
     def test_get_match_by_id(self, client):
         """测试根据ID获取比赛"""
         response = client.get("/data/matches/1")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "id" in data
         assert "home_team_name" in data
         assert "away_team_name" in data
@@ -192,21 +192,21 @@ class TestDataEndpoints:
         """测试获取比赛统计"""
         response = client.get("/data/matches/1/statistics")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "match_id" in data
 
     def test_get_odds(self, client):
         """测试获取赔率"""
         response = client.get("/data/odds")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list)
 
     def test_get_match_odds(self, client):
         """测试获取比赛赔率"""
         response = client.get("/data/odds/1")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list)
 
 
@@ -378,7 +378,7 @@ class TestPydanticModels:
         """测试预测结果模型"""
         from src.api.predictions.router import PredictionResult
 
-        result = PredictionResult(
+        _result = PredictionResult(
             match_id=123,
             home_win_prob=0.45,
             draw_prob=0.30,

@@ -62,7 +62,7 @@ class PredictionDomainService:
         if match.id is None:
             raise ValueError("比赛ID不能为空")
 
-        prediction = Prediction(
+        _prediction = Prediction(
             user_id=user_id,
             match_id=match.id,
         )

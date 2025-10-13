@@ -44,7 +44,7 @@ class TestFinalCoverageBoost:
         try:
             from src.database.config import DatabaseConfig
 
-            config = DatabaseConfig()
+            _config = DatabaseConfig()
             assert config is not None
         except ImportError:
             pytest.skip("DatabaseConfig not available")

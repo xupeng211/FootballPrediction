@@ -94,7 +94,7 @@ class TestHelpers:
 
     def test_safe_get(self):
         """测试安全获取字典值"""
-        data = {
+        _data = {
             "name": "John",
             "age": 30,
             "profile": {

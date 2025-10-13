@@ -24,7 +24,7 @@ class TestCoreAPIEndpoints:
         """测试根端点消息内容"""
         response = client.get("/")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "Football Prediction API" in data["message"]
         assert "version" in data
 
@@ -32,7 +32,7 @@ class TestCoreAPIEndpoints:
         """测试健康检查详细信息"""
         response = client.get("/api/health")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["status"] == "healthy"
         assert "timestamp" in data
         assert "service" in data
@@ -52,7 +52,7 @@ class TestCoreAPIEndpoints:
         """测试测试端点消息"""
         response = client.get("/api/test")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "API is working!" in data["message"]
         assert "timestamp" in data
 
@@ -79,7 +79,7 @@ class TestErrorHandling:
         """测试404错误格式"""
         response = client.get("/definitely-does-not-exist")
         assert response.status_code == 404
-        data = response.json()
+        _data = response.json()
         assert "error" in data
         assert "type" in data["error"]
         assert "message" in data["error"]
@@ -93,7 +93,7 @@ class TestErrorHandling:
         """测试验证错误格式"""
         response = client.get("/predictions/invalid-id")
         assert response.status_code == 422
-        data = response.json()
+        _data = response.json()
         assert "detail" in data
 
 
@@ -244,7 +244,7 @@ class TestModelsAndSchemas:
         """测试标准响应模型"""
         from src.api.predictions.models import PredictionRequest, PredictionResponse
 
-        result = standard_response(True, "Test message", {"data": "test"})
+        _result = standard_response(True, "Test message", {"data": "test"})
         assert result["success"] is True
         assert result["message"] == "Test message"
         assert result["data"]["data"] == "test"
@@ -253,7 +253,7 @@ class TestModelsAndSchemas:
         """测试错误响应模型"""
         from src.api.predictions.models import PredictionRequest, PredictionResponse
 
-        result = error_response("Test error", {"detail": "Error details"})
+        _result = error_response("Test error", {"detail": "Error details"})
         assert result["error"]["type"] == "Test error"
         assert result["error"]["message"] == "Error details"
 
@@ -307,7 +307,7 @@ class TestSecurityFeatures:
     def test_no_sensitive_data_leakage(self, client):
         """测试不泄露敏感数据"""
         response = client.get("/api/health")
-        data = response.json()
+        _data = response.json()
 
         # 确保没有敏感信息泄露
         sensitive_keys = ["password", "secret", "key", "token", "auth"]

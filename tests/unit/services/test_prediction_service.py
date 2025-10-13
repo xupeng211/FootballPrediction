@@ -140,7 +140,7 @@ class TestPredictionService:
         mock_service.db_manager.get_async_session.return_value.__aexit__.return_value = None
 
         # 调用方法
-        result = await mock_service._get_match_info(12345)
+        _result = await mock_service._get_match_info(12345)
 
         # 验证结果
         assert result is not None
@@ -160,7 +160,7 @@ class TestPredictionService:
         mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
         mock_service.db_manager.get_async_session.return_value.__aexit__.return_value = None
 
-        result = await mock_service._get_match_info(99999)
+        _result = await mock_service._get_match_info(99999)
 
         assert result is None
 
@@ -252,7 +252,7 @@ class TestPredictionService:
             mock_features.return_value = {"home_recent_wins": 2, "away_recent_wins": 1}
 
             # 执行预测
-            result = await mock_service.predict_match(12345)
+            _result = await mock_service.predict_match(12345)
 
             # 验证结果
             assert isinstance(result, PredictionResult)
@@ -276,7 +276,7 @@ class TestPredictionService:
         await mock_service.prediction_cache.set(cache_key, cached_result)
 
         # 执行预测
-        result = await mock_service.predict_match(12345)
+        _result = await mock_service.predict_match(12345)
 
         # 应该返回缓存的结果
         assert result is cached_result
@@ -301,7 +301,7 @@ class TestPredictionService:
             # 特征获取失败
             mock_features.side_effect = Exception("Feature service unavailable")
 
-            result = await mock_service.predict_match(12345)
+            _result = await mock_service.predict_match(12345)
 
             # 应该使用默认特征继续预测
             assert isinstance(result, PredictionResult)
@@ -331,7 +331,7 @@ class TestPredictionService:
 
             # Mock单个预测结果
             result1 = PredictionResult(match_id=12345, model_version="1.0")
-            result2 = PredictionResult(match_id=12346, model_version="1.0")
+            _result2 = PredictionResult(match_id=12346, model_version="1.0")
             mock_predict.side_effect = [result1, result2]
 
             # 执行批量预测
@@ -356,7 +356,7 @@ class TestPredictionService:
             patch.object(mock_service, "predict_match") as mock_predict,
         ):
             mock_get_model.return_value = (mock_model, "1.0")
-            result2 = PredictionResult(match_id=12346, model_version="1.0")
+            _result2 = PredictionResult(match_id=12346, model_version="1.0")
             mock_predict.return_value = result2
 
             results = await mock_service.batch_predict_matches([12345, 12346])
@@ -475,7 +475,7 @@ class TestPredictionService:
 
         mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
 
-        stats = await mock_service.get_prediction_statistics(30)
+        _stats = await mock_service.get_prediction_statistics(30)
 
         assert stats["period_days"] == 30
         assert len(stats["statistics"]) == 1
@@ -538,7 +538,7 @@ class TestPredictionService:
             }
             mock_features.return_value = {"feature1": 1.0, "feature2": 2.0}
 
-            result = await mock_service.predict_match(12345)
+            _result = await mock_service.predict_match(12345)
 
             # 验证元数据
             assert result.prediction_metadata is not None

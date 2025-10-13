@@ -170,7 +170,7 @@ class MathUtils:
         if window_size <= 0 or window_size > len(numbers):
             return []
 
-        result = []
+        _result = []
         for i in range(len(numbers) - window_size + 1):
             window = numbers[i : i + window_size]
             result.append(MathUtils.average(window))
@@ -272,8 +272,8 @@ class TestMathUtils:
 
     def test_standard_deviation(self):
         """测试标准差"""
-        data = [2, 4, 4, 4, 5, 5, 7, 9]
-        result = MathUtils.standard_deviation(data)
+        _data = [2, 4, 4, 4, 5, 5, 7, 9]
+        _result = MathUtils.standard_deviation(data)
         assert abs(result - 2) < 0.001
         assert MathUtils.standard_deviation([]) == 0.0
 
@@ -358,18 +358,18 @@ class TestMathUtils:
 
     def test_moving_average(self):
         """测试移动平均"""
-        data = [1, 2, 3, 4, 5]
-        result = MathUtils.moving_average(data, 3)
-        assert result == [2.0, 3.0, 4.0]
+        _data = [1, 2, 3, 4, 5]
+        _result = MathUtils.moving_average(data, 3)
+        assert _result == [2.0, 3.0, 4.0]
 
-        result = MathUtils.moving_average(data, 2)
-        assert result == [1.5, 2.5, 3.5, 4.5]
+        _result = MathUtils.moving_average(data, 2)
+        assert _result == [1.5, 2.5, 3.5, 4.5]
 
         assert MathUtils.moving_average(data, 6) == []
 
     def test_find_min_max(self):
         """测试查找最小值和最大值"""
-        data = [3, 1, 4, 1, 5, 9, 2, 6]
+        _data = [3, 1, 4, 1, 5, 9, 2, 6]
         min_val, max_val = MathUtils.find_min_max(data)
         assert min_val == 1
         assert max_val == 9
@@ -378,8 +378,8 @@ class TestMathUtils:
 
     def test_geometric_mean(self):
         """测试几何平均数"""
-        data = [2, 8]
-        result = MathUtils.geometric_mean(data)
+        _data = [2, 8]
+        _result = MathUtils.geometric_mean(data)
         assert abs(result - 4) < 0.001
 
         # 包含0的情况
@@ -388,8 +388,8 @@ class TestMathUtils:
 
     def test_harmonic_mean(self):
         """测试调和平均数"""
-        data = [1, 2, 4]
-        result = MathUtils.harmonic_mean(data)
+        _data = [1, 2, 4]
+        _result = MathUtils.harmonic_mean(data)
         assert abs(result - 1.714) < 0.001
 
         # 包含0的情况

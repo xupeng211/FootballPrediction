@@ -33,7 +33,7 @@ class TestAuditServiceCoverage:
         assert isinstance(hashed_data, str)
 
         # 测试清理数据（字典）
-        data = {"username": "john", "password": "secret", "email": "john@example.com"}
+        _data = {"username": "john", "password": "secret", "email": "john@example.com"}
         sanitized = sanitizer._sanitize_data(data)
         assert sanitized["username"] == "john"
         assert sanitized["password"] != "secret"

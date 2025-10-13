@@ -116,14 +116,14 @@ class TestAdapter:
 
         class TestAdaptee:
             def __init__(self, config):
-                self.config = config
+                self._config = config
 
             async def request(self, *args, **kwargs):
                 return {"config": self.config}
 
         class ConfigurableAdapter(Adapter):
-            def __init__(self, adaptee, config=None):
-                self.config = config or {}
+            def __init__(self, adaptee, _config =None):
+                self._config = config or {}
                 super().__init__(adaptee)
 
             async def _initialize(self):
@@ -135,10 +135,10 @@ class TestAdapter:
             async def _cleanup(self):
                 self.initialized = False
 
-        config = {"timeout": 30, "retries": 3}
+        _config = {"timeout": 30, "retries": 3}
         adaptee = TestAdaptee(config)
         adapter = ConfigurableAdapter(adaptee, config)
-        assert adapter.config == config
+        assert adapter._config == config
 
     def test_adapter_metadata(self):
         """测试适配器元数据"""
@@ -148,8 +148,8 @@ class TestAdapter:
                 return {"metadata": {"version": "1.0", "type": "test"}}
 
         class MetaAdapter(Adapter):
-            def __init__(self, adaptee, metadata=None):
-                self.metadata = metadata or {"version": "1.0", "type": "test"}
+            def __init__(self, adaptee, _metadata =None):
+                self._metadata = metadata or {"version": "1.0", "type": "test"}
                 super().__init__(adaptee)
 
             async def _initialize(self):

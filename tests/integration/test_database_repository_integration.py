@@ -57,7 +57,7 @@ class TestRepositoryDatabaseIntegration:
     async def test_prediction_crud_operations(self, prediction_repo, mock_session):
         """测试预测的CRUD操作"""
         # 创建测试数据
-        prediction = Prediction(
+        _prediction = Prediction(
             match_id=1,
             user_id=1,
             predicted_home_score=2,
@@ -78,9 +78,9 @@ class TestRepositoryDatabaseIntegration:
 
         # 测试查询
         mock_session.get.return_value = prediction
-        result = await prediction_repo.get_by_id(1)
+        _result = await prediction_repo.get_by_id(1)
         mock_session.get.assert_called_once_with(Prediction, 1)
-        assert result == prediction
+        assert _result == prediction
 
         # 测试更新
         prediction.predicted_home_score = 3
@@ -118,21 +118,21 @@ class TestRepositoryDatabaseIntegration:
         ]
 
         # 测试按状态查询
-        matches = await match_repo.get_by_status("live")
+        _matches = await match_repo.get_by_status("live")
         mock_query.filter.assert_called()
         assert isinstance(matches, list)
 
         # 测试按日期范围查询
         start_date = datetime.now(timezone.utc)
         end_date = start_date + timedelta(days=7)
-        matches = await match_repo.get_by_date_range(start_date, end_date)
+        _matches = await match_repo.get_by_date_range(start_date, end_date)
         assert isinstance(matches, list)
 
     @pytest.mark.asyncio
     async def test_user_repository_authentication(self, user_repo, mock_session):
         """测试用户仓储认证功能"""
         # 创建测试用户
-        user = User(
+        _user = User(
             username="testuser",
             email="test@example.com",
             hashed_password="hashed_password",
@@ -141,12 +141,12 @@ class TestRepositoryDatabaseIntegration:
 
         # 测试按用户名查询
         mock_session.execute.return_value = Mock(scalar_one_or_none=user)
-        result = await user_repo.get_by_username("testuser")
-        assert result == user if result else True  # 允许None返回
+        _result = await user_repo.get_by_username("testuser")
+        assert _result == user if result else True  # 允许None返回
 
         # 测试按邮箱查询
-        result = await user_repo.get_by_email("test@example.com")
-        assert result == user if result else True
+        _result = await user_repo.get_by_email("test@example.com")
+        assert _result == user if result else True
 
         # 测试密码验证（如果存在）
         if hasattr(user_repo, "verify_password"):
@@ -239,7 +239,7 @@ class TestRelationshipIntegration:
     async def test_user_predictions_relationship(self):
         """测试用户与预测的关系"""
         # 模拟用户和其预测
-        user = User(
+        _user = User(
             id=1,
             username="testuser",
             email="test@example.com",
@@ -356,7 +356,6 @@ class TestConnectionPoolIntegration:
     async def test_connection_timeout_handling(self):
         """测试连接超时处理"""
         # 模拟连接超时
-        connection_timeout = 30  # 秒
         connection_acquired = False
         timeout_occurred = False
 

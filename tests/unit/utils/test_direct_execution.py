@@ -42,7 +42,7 @@ class TestDirectExecution:
             from src.database.sql_compatibility import SQLCompat  # noqa: F401
 
             # 测试转义函数
-            result = SQLCompat.escape_identifier("test_table")
+            _result = SQLCompat.escape_identifier("test_table")
             assert isinstance(result, str)
 
             # 测试SQL生成函数
@@ -75,7 +75,7 @@ class TestDirectExecution:
             # from src.utils.time_utils import get_current_time  # noqa: F401
 
             # 调用函数
-            result = get_current_time()
+            _result = get_current_time()
             assert isinstance(result, datetime)
             assert result <= datetime.now()
 
@@ -92,7 +92,7 @@ class TestDirectExecution:
             # 测试深度合并
             dict1 = {"a": {"b": 1}}
             dict2 = {"a": {"c": 2}}
-            result = deep_merge(dict1, dict2)
+            _result = deep_merge(dict1, dict2)
             assert isinstance(result, dict)
 
             # 测试扁平化
@@ -174,8 +174,8 @@ class TestDirectExecution:
                     raise ValueError("Retry test")
                 return "success"
 
-            result = test_function()
-            assert result == "success"
+            _result = test_function()
+            assert _result == "success"
             assert call_count == 2
 
         except ImportError:

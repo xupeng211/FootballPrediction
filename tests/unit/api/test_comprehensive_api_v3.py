@@ -112,7 +112,7 @@ class TestComprehensiveAPI:
         # 测试404
         response = client.get("/nonexistent-endpoint")
         assert response.status_code == 404
-        data = response.json()
+        _data = response.json()
         assert "error" in data
 
         # 测试方法不允许
@@ -135,7 +135,7 @@ class TestComprehensiveAPI:
         batch_data = {"match_ids": [1, 2, 3], "model_version": "default"}
         response = client.post("/predictions/batch", json=batch_data)
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "predictions" in data
         assert "total" in data
         assert "success_count" in data
@@ -145,14 +145,14 @@ class TestComprehensiveAPI:
         # 测试联赛分页
         response = client.get("/data/leagues?limit=5")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list)
         assert len(data) <= 5
 
         # 测试球队分页
         response = client.get("/data/teams?limit=10")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list)
         assert len(data) <= 10
 
@@ -161,19 +161,19 @@ class TestComprehensiveAPI:
         # 按国家筛选联赛
         response = client.get("/data/leagues?country=England")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list)
 
         # 按联赛筛选球队
         response = client.get("/data/teams?league_id=1")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list)
 
         # 按状态筛选比赛
         response = client.get("/data/matches?status=pending")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list)
 
     def test_statistics_endpoints(self, client):
@@ -181,7 +181,7 @@ class TestComprehensiveAPI:
         # 球队统计
         response = client.get("/data/teams/1/statistics")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         required_fields = [
             "team_id",
             "matches_played",
@@ -198,7 +198,7 @@ class TestComprehensiveAPI:
         # 比赛统计
         response = client.get("/data/matches/1/statistics")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "match_id" in data
         assert "possession_home" in data
         assert "shots_home" in data
@@ -210,7 +210,7 @@ class TestComprehensiveAPI:
         # 1. 创建预测
         response = client.post(f"/predictions/{match_id}/predict")
         assert response.status_code == 201
-        prediction = response.json()
+        _prediction = response.json()
         assert "match_id" in prediction
         assert "predicted_outcome" in prediction
 
@@ -245,7 +245,7 @@ class TestComprehensiveAPI:
             # 获取该联赛的球队
             response = client.get(f"/data/teams?league_id={league_id}")
             assert response.status_code == 200
-            teams = response.json()
+            _teams = response.json()
 
             # 验证球队属于该联赛
             for team in teams:
@@ -278,7 +278,7 @@ class TestComprehensiveAPI:
         match_id = 12345
         response = client.get(f"/predictions/{match_id}")
         assert response.status_code == 200
-        prediction = response.json()
+        _prediction = response.json()
 
         # 概率之和应该等于1
         prob_sum = (
@@ -328,7 +328,7 @@ class TestComprehensiveAPI:
         }
         response = client.post("/predictions/batch", json=large_batch)
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["total"] == 50
 
     def test_concurrent_requests_simulation(self, client):
@@ -369,7 +369,7 @@ class TestComprehensiveAPI:
         # 使用可能返回空结果的参数
         response = client.get("/data/teams?search=NonExistentTeam12345")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list)
         # 可能为空列表或有默认数据
 
@@ -378,7 +378,7 @@ class TestComprehensiveAPI:
         # 测试最大限制
         response = client.get("/data/leagues?limit=100")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert len(data) <= 100
 
         # 测试超出限制
@@ -390,7 +390,7 @@ class TestComprehensiveAPI:
         # 测试最小限制
         response = client.get("/data/leagues?limit=1")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert len(data) >= 0
 
         # 测试低于限制

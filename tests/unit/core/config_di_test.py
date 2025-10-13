@@ -45,11 +45,11 @@ class TestServiceConfig:
             # Try with required arguments
             try:
                 return ServiceConfig(test_param="test_value")
-            except:
+            except Exception:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate ServiceConfig")
+                pytest.skip("Cannot instantiate ServiceConfig")
         except Exception:
-            pytest.skip(f"Error creating ServiceConfig instance")
+            pytest.skip("Error creating ServiceConfig instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -198,11 +198,11 @@ class TestDIConfiguration:
             # Try with required arguments
             try:
                 return DIConfiguration(test_param="test_value")
-            except:
+            except Exception:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate DIConfiguration")
+                pytest.skip("Cannot instantiate DIConfiguration")
         except Exception:
-            pytest.skip(f"Error creating DIConfiguration instance")
+            pytest.skip("Error creating DIConfiguration instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -307,11 +307,11 @@ class TestConfigurationBinder:
             # Try with required arguments
             try:
                 return ConfigurationBinder(test_param="test_value")
-            except:
+            except Exception:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate ConfigurationBinder")
+                pytest.skip("Cannot instantiate ConfigurationBinder")
         except Exception:
-            pytest.skip(f"Error creating ConfigurationBinder instance")
+            pytest.skip("Error creating ConfigurationBinder instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -401,11 +401,11 @@ class TestConfigurationBuilder:
             # Try with required arguments
             try:
                 return ConfigurationBuilder(test_param="test_value")
-            except:
+            except Exception:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate ConfigurationBuilder")
+                pytest.skip("Cannot instantiate ConfigurationBuilder")
         except Exception:
-            pytest.skip(f"Error creating ConfigurationBuilder instance")
+            pytest.skip("Error creating ConfigurationBuilder instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -508,14 +508,14 @@ def test_create_config_from_file_with_args(self):
     if func:
         try:
             # Try calling with minimal arguments
-            result = func()
+            _result = func()
             assert result is not None
         except TypeError:
             # Try with some arguments
             try:
-                result = func("test_arg")
+                _result = func("test_arg")
                 assert result is not None
-            except:
+            except Exception:
                 # Function might require specific arguments
                 pass
         except Exception:
@@ -542,14 +542,14 @@ def test_create_config_from_dict_with_args(self):
     if func:
         try:
             # Try calling with minimal arguments
-            result = func()
+            _result = func()
             assert result is not None
         except TypeError:
             # Try with some arguments
             try:
-                result = func("test_arg")
+                _result = func("test_arg")
                 assert result is not None
-            except:
+            except Exception:
                 # Function might require specific arguments
                 pass
         except Exception:
@@ -576,14 +576,14 @@ def test_generate_sample_config_with_args(self):
     if func:
         try:
             # Try calling with minimal arguments
-            result = func()
+            _result = func()
             assert result is not None
         except TypeError:
             # Try with some arguments
             try:
-                result = func("test_arg")
+                _result = func("test_arg")
                 assert result is not None
-            except:
+            except Exception:
                 # Function might require specific arguments
                 pass
         except Exception:
@@ -654,6 +654,6 @@ class TestModuleIntegration:
         mock_service = Mock()
         mock_service.process.return_value = {"status": "success"}
 
-        result = mock_service.process("test_data")
+        _result = mock_service.process("test_data")
         assert result["status"] == "success"
         mock_service.process.assert_called_once_with("test_data")

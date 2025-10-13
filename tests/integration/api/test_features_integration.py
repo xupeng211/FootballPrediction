@@ -71,7 +71,7 @@ class TestFeaturesIntegration:
 
             # 缓存命中时应该返回数据
             if response.status_code == 200:
-                data = response.json()
+                _data = response.json()
                 assert "features" in data
                 assert data["match_id"] == 12345
 
@@ -113,7 +113,7 @@ class TestFeaturesIntegration:
             )
 
             if response.status_code == 200:
-                data = response.json()
+                _data = response.json()
                 assert "features" in data
                 assert "home_form" in data["features"]
                 assert "statistics" in data["features"]
@@ -157,7 +157,7 @@ class TestFeaturesIntegration:
             )
 
             if response.status_code == 200:
-                data = response.json()
+                _data = response.json()
                 assert len(data["features"]) == 3
                 assert all("match_id" in feat for feat in data["features"])
 
@@ -231,7 +231,7 @@ class TestFeaturesIntegration:
             )
 
             if response.status_code == 200:
-                data = response.json()
+                _data = response.json()
                 assert "external_features" in data.get("features", {})
 
     @pytest.mark.asyncio
@@ -250,7 +250,7 @@ class TestFeaturesIntegration:
             )
 
             if response.status_code == 200:
-                data = response.json()
+                _data = response.json()
                 assert "performance" in data
                 assert "calculation_time" in data["performance"]
 
@@ -268,7 +268,7 @@ class TestFeaturesIntegration:
 
             # 不同的版本可能有不同的响应结构
             if response.status_code == 200:
-                data = response.json()
+                _data = response.json()
                 assert "features" in data
                 assert "version" in data
                 assert data["version"] == version
@@ -290,7 +290,7 @@ class TestFeaturesIntegration:
             )
 
             if response.status_code == 200:
-                data = response.json()
+                _data = response.json()
                 assert "real_time_features" in data.get("features", {})
 
     @pytest.mark.asyncio
@@ -344,6 +344,6 @@ class TestFeaturesIntegration:
             )
 
             if response.status_code == 200:
-                data = response.json()
+                _data = response.json()
                 assert "prediction" in data
                 assert "feature_importance" in data["prediction"]

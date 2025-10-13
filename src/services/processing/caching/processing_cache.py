@@ -31,7 +31,7 @@ class ProcessingCache:
         }
 
         # 缓存统计
-        self.stats = {
+        self._stats = {
             "hits": 0,
             "misses": 0,
             "sets": 0,
@@ -153,7 +153,7 @@ class ProcessingCache:
             cache_key = self._generate_cache_key(operation, data_hash, params)
 
             # 尝试获取缓存
-            result = await self.redis_manager.get(cache_key)
+            _result = await self.redis_manager.get(cache_key)
 
             if result is not None:
                 # 反序列化结果
@@ -403,7 +403,7 @@ class ProcessingCache:
                     cached = await self.get_cached_result(operation, data)
                     if cached is None:
                         # 处理并缓存结果
-                        result = await process_func(data)  # type: ignore
+                        _result = await process_func(data)  # type: ignore
                         await self.cache_result(operation, data, result)
 
                 except (RedisError, ConnectionError, TimeoutError, ValueError) as e:

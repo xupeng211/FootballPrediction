@@ -63,7 +63,7 @@ class TestCQRSAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["success"] is True
         assert "prediction_id" in data["data"]
         assert data["message"] == "预测创建成功"
@@ -110,7 +110,7 @@ class TestCQRSAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["success"] is True
 
     @patch("src.api.cqrs.get_prediction_cqrs_service")
@@ -131,7 +131,7 @@ class TestCQRSAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["success"] is True
 
     @patch("src.api.cqrs.get_prediction_cqrs_service")
@@ -176,7 +176,7 @@ class TestCQRSAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["id"] == "pred_123"
 
     @patch("src.api.cqrs.get_prediction_cqrs_service")
@@ -212,7 +212,7 @@ class TestCQRSAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list)
         assert len(data) == 3
 
@@ -231,7 +231,7 @@ class TestCQRSAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list)
 
     # ==================== 用户命令测试 ====================
@@ -262,7 +262,7 @@ class TestCQRSAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["success"] is True
         assert "user_id" in data["data"]
 
@@ -326,7 +326,7 @@ class TestCQRSAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["success"] is True
         assert "match_id" in data["data"]
 
@@ -367,7 +367,7 @@ class TestCQRSAPI:
 
         # Then
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "total_predictions" in data
         assert "success_rate" in data
         assert "average_confidence" in data

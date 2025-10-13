@@ -258,8 +258,8 @@ class TestExceptionHandling:
                     raise
             raise last_exception
 
-        result = retry_wrapper(flaky_function)
-        assert result == "success"
+        _result = retry_wrapper(flaky_function)
+        assert _result == "success"
         assert call_count == 3
 
     def test_exception_fallback(self):
@@ -279,8 +279,8 @@ class TestExceptionHandling:
             except Exception:
                 raise
 
-        result = execute_with_fallback(primary_operation, fallback_operation)
-        assert result == "fallback_result"
+        _result = execute_with_fallback(primary_operation, fallback_operation)
+        assert _result == "fallback_result"
 
     def test_exception_aggregation(self):
         """测试异常聚合"""
@@ -326,8 +326,8 @@ class TestExceptionHandling:
 
         async def test():
             # 这个应该成功
-            result = await with_timeout(lambda: slow_operation(0.1), 1.0)
-            assert result == "done"
+            _result = await with_timeout(lambda: slow_operation(0.1), 1.0)
+            assert _result == "done"
 
             # 这个应该超时
             with pytest.raises(ExternalServiceError) as exc_info:
@@ -362,12 +362,12 @@ class TestErrorRecovery:
                         raise ExternalServiceError("Circuit breaker is open")
 
                 try:
-                    result = func(*args, **kwargs)
+                    _result = func(*args, **kwargs)
                     if self.state == "half-open":
                         self.state = "closed"
                         self.failure_count = 0
                     return result
-                except Exception as e:
+                except Exception:
                     self.failure_count += 1
                     self.last_failure_time = datetime.now()
 

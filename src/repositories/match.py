@@ -45,7 +45,7 @@ class ReadOnlyMatchRepository(ReadOnlyRepository[Match, int]):
             if query_spec.include:
                 query = self._apply_includes(query, query_spec.include)
 
-        result = await self.session.execute(query)
+        _result = await self.session.execute(query)
         return result.scalars().first()
 
     async def find_many(self, query_spec: QuerySpec) -> List[Match]:
@@ -64,13 +64,13 @@ class ReadOnlyMatchRepository(ReadOnlyRepository[Match, int]):
             if query_spec.include:
                 query = self._apply_includes(query, query_spec.include)
 
-        result = await self.session.execute(query)
+        _result = await self.session.execute(query)
         return result.scalars().all()  # type: ignore
 
     async def get_by_id(self, id: int) -> Optional[Match]:
         """根据ID获取比赛"""
         query = select(Match).where(Match.id == id)
-        result = await self.session.execute(query)
+        _result = await self.session.execute(query)
         return result.scalars().first()
 
     async def get_all(self, query_spec: Optional[QuerySpec] = None) -> List[Match]:
@@ -88,7 +88,7 @@ class ReadOnlyMatchRepository(ReadOnlyRepository[Match, int]):
     async def exists(self, id: int) -> bool:
         """检查比赛是否存在"""
         query = select(func.count(Match.id)).where(Match.id == id)
-        result = await self.session.execute(query)
+        _result = await self.session.execute(query)
         return result.scalar() > 0  # type: ignore
 
     async def get_matches_by_date_range(
@@ -201,7 +201,7 @@ class MatchRepository(MatchRepositoryInterface):
     async def get_by_id(self, id: int) -> Optional[Match]:
         """根据ID获取比赛"""
         query = select(Match).where(Match.id == id)
-        result = await self.session.execute(query)
+        _result = await self.session.execute(query)
         return result.scalars().first()
 
     async def get_all(self, query_spec: Optional[QuerySpec] = None) -> List[Match]:
@@ -220,7 +220,7 @@ class MatchRepository(MatchRepositoryInterface):
             if query_spec.include:
                 query = self._apply_includes(query, query_spec.include)
 
-        result = await self.session.execute(query)
+        _result = await self.session.execute(query)
         return result.scalars().all()  # type: ignore
 
     async def find_one(self, query_spec: QuerySpec) -> Optional[Match]:
@@ -233,7 +233,7 @@ class MatchRepository(MatchRepositoryInterface):
             if query_spec.include:
                 query = self._apply_includes(query, query_spec.include)
 
-        result = await self.session.execute(query)
+        _result = await self.session.execute(query)
         return result.scalars().first()
 
     async def find_many(self, query_spec: QuerySpec) -> List[Match]:
@@ -264,7 +264,7 @@ class MatchRepository(MatchRepositoryInterface):
     async def exists(self, id: int) -> bool:
         """检查比赛是否存在"""
         query = select(func.count(Match.id)).where(Match.id == id)
-        result = await self.session.execute(query)
+        _result = await self.session.execute(query)
         return result.scalar() > 0  # type: ignore
 
     async def create(self, entity_data: Dict[str, Any]) -> Match:
@@ -313,7 +313,7 @@ class MatchRepository(MatchRepositoryInterface):
         for key, value in update_data.items():
             query = query.values({getattr(Match, key): value})
 
-        result = await self.session.execute(query)
+        _result = await self.session.execute(query)
         await self.session.commit()
 
         if result.rowcount > 0:
@@ -327,13 +327,13 @@ class MatchRepository(MatchRepositoryInterface):
             .where(Match.id == id)
             .values(status=MatchStatus.CANCELLED.value, updated_at=datetime.utcnow())
         )
-        result = await self.session.execute(query)
+        _result = await self.session.execute(query)
         await self.session.commit()
         return result.rowcount > 0
 
     async def bulk_create(self, entities_data: List[Dict[str, Any]]) -> List[Match]:
         """批量创建比赛"""
-        matches = []
+        _matches = []
         for data in entities_data:
             match = Match(
                 home_team_id=data["home_team_id"],

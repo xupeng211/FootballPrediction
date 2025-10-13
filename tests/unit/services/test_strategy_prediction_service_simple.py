@@ -37,7 +37,7 @@ class TestStrategyPredictionServiceSimple:
     @pytest.fixture
     def sample_prediction(self):
         """示例预测"""
-        prediction = Mock()
+        _prediction = Mock()
         prediction.id = 456
         prediction.user_id = 789
         prediction.match_id = 123
@@ -87,10 +87,10 @@ class TestStrategyPredictionServiceSimple:
         mock_service.predict_match = AsyncMock(return_value=sample_prediction)
 
         # When
-        result = await mock_service.predict_match(match_id=123, user_id=456)
+        _result = await mock_service.predict_match(match_id=123, user_id=456)
 
         # Then
-        assert result == sample_prediction
+        assert _result == sample_prediction
         mock_service.predict_match.assert_called_once_with(match_id=123, user_id=456)
 
     @pytest.mark.asyncio
@@ -160,11 +160,11 @@ class TestStrategyPredictionServiceSimple:
         match_ids = [101, 102, 103]
 
         # When
-        result = await mock_service.batch_predict(match_ids, user_id=456)
+        _result = await mock_service.batch_predict(match_ids, user_id=456)
 
         # Then
         assert len(result) == 3
-        assert result == predictions
+        assert _result == predictions
         mock_service.batch_predict.assert_called_once_with(match_ids, user_id=456)
 
     @pytest.mark.asyncio
@@ -190,10 +190,10 @@ class TestStrategyPredictionServiceSimple:
         mock_service.batch_predict = AsyncMock(return_value=[])
 
         # When
-        result = await mock_service.batch_predict([], user_id=456)
+        _result = await mock_service.batch_predict([], user_id=456)
 
         # Then
-        assert result == []
+        assert _result == []
         mock_service.batch_predict.assert_called_once_with([], user_id=456)
 
     @pytest.mark.asyncio
@@ -203,7 +203,7 @@ class TestStrategyPredictionServiceSimple:
         mock_service.compare_strategies = AsyncMock(return_value={})
 
         # When
-        result = await mock_service.compare_strategies(match_id=123)
+        _result = await mock_service.compare_strategies(match_id=123)
 
         # Then
         assert isinstance(result, dict)
@@ -217,7 +217,7 @@ class TestStrategyPredictionServiceSimple:
         strategies = ["strategy1", "strategy2"]
 
         # When
-        result = await mock_service.compare_strategies(
+        _result = await mock_service.compare_strategies(
             match_id=123, strategy_names=strategies
         )
 

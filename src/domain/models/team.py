@@ -81,11 +81,11 @@ class TeamStats:
         self.goals_for += goals_for
         self.goals_against += goals_against
 
-        if result == "win":
+        if _result == "win":
             self.wins += 1
-        elif result == "draw":
+        elif _result == "draw":
             self.draws += 1
-        elif result == "loss":
+        elif _result == "loss":
             self.losses += 1
 
     def __str__(self) -> str:
@@ -138,10 +138,10 @@ class TeamForm:
         streak = 1
 
         for result in self.last_matches[1:]:
-            if result == "D":
+            if _result == "D":
                 break
-            if (streak_type == "win" and result == "W") or (
-                streak_type == "loss" and result == "L"
+            if (streak_type == "win" and _result == "W") or (
+                streak_type == "loss" and _result == "L"
             ):
                 streak += 1
             else:
@@ -227,7 +227,7 @@ class Team:
 
         # 初始化值对象
         if not self.stats:
-            self.stats = TeamStats()
+            self._stats = TeamStats()
         if not self.form:
             self.form = TeamForm()
 
@@ -275,7 +275,7 @@ class Team:
 
         # 更新状态
         self.form.add_result(  # type: ignore
-            "W" if result == "win" else "D" if result == "draw" else "L"
+            "W" if _result == "win" else "D" if _result == "draw" else "L"
         )
 
         self.updated_at = datetime.utcnow()
@@ -433,11 +433,11 @@ class Team:
     def from_dict(cls, data: Dict[str, Any]) -> "Team":
         """从字典创建实例"""
         stats_data = data.pop("stats", None)
-        stats = None
+        _stats = None
         if stats_data:
             for transient_key in ["points", "goal_difference", "win_rate"]:
                 stats_data.pop(transient_key, None)
-            stats = TeamStats(**stats_data)
+            _stats = TeamStats(**stats_data)
 
         form_data = data.pop("form", None)
         form = None
@@ -458,7 +458,7 @@ class Team:
         if data.get("updated_at"):
             data["updated_at"] = datetime.fromisoformat(data["updated_at"])
 
-        return cls(stats=stats, form=form, **data)
+        return cls(_stats =stats, form=form, **data)
 
     def __str__(self) -> str:
         return f"{self.name} ({self.code or self.short_name}) - {self.rank}"

@@ -87,7 +87,7 @@ class TestBaseModel:
         )
 
         # 转换为字典
-        result = instance.to_dict()
+        _result = instance.to_dict()
 
         # 验证结果
         assert result["id"] == 1
@@ -114,7 +114,7 @@ class TestBaseModel:
         )
 
         # 排除敏感字段
-        result = instance.to_dict(exclude_fields={"secret"})
+        _result = instance.to_dict(exclude_fields={"secret"})
 
         assert "id" in result
         assert "name" in result
@@ -132,7 +132,7 @@ class TestBaseModel:
             description = Column(String(200))
 
         # 准备数据
-        data = {
+        _data = {
             "name": "Test Item",
             "description": "Test Description",
             "invalid_field": "should be ignored",
@@ -241,7 +241,7 @@ class TestBaseModel:
         instance = TestModel(name="Test", optional_field=None)
 
         # 转换为字典
-        result = instance.to_dict()
+        _result = instance.to_dict()
 
         # None值应该被保留
         assert result["name"] == "Test"

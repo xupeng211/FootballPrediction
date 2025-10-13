@@ -485,7 +485,7 @@ class TestLeagueStandings:
         team.played = 30
         standings.add_team(team)
 
-        prediction = standings.predict_final_position(1)
+        _prediction = standings.predict_final_position(1)
         assert "current_position" in prediction
         assert "best_possible" in prediction
         assert "max_points" in prediction
@@ -528,7 +528,7 @@ class TestLeagueStandings:
             team.goals_against = 40
             standings.add_team(team)
 
-        stats = standings.get_statistics()
+        _stats = standings.get_statistics()
         assert stats["total_teams"] == 20
         assert stats["total_goals"] == 1000  # 20 * 50
         assert stats["total_matches"] == 380  # 20 * 38 / 2

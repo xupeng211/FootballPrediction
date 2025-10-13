@@ -29,7 +29,7 @@ class TestEventDrivenPredictionServiceSimple:
     @pytest.fixture
     def sample_prediction(self):
         """示例预测对象"""
-        prediction = Mock()
+        _prediction = Mock()
         prediction.id = 123
         prediction.match_id = 456
         prediction.user_id = 789
@@ -54,12 +54,12 @@ class TestEventDrivenPredictionServiceSimple:
         mock_service.predict_match = AsyncMock(return_value=sample_prediction)
 
         # When
-        result = await mock_service.predict_match(
+        _result = await mock_service.predict_match(
             match_id=456, user_id=789, strategy_name="test_strategy", confidence=0.85
         )
 
         # Then
-        assert result == sample_prediction
+        assert _result == sample_prediction
         mock_service.predict_match.assert_called_once()
 
     @pytest.mark.asyncio
@@ -69,12 +69,12 @@ class TestEventDrivenPredictionServiceSimple:
         mock_service.update_prediction = AsyncMock(return_value=sample_prediction)
 
         # When
-        result = await mock_service.update_prediction(
+        _result = await mock_service.update_prediction(
             prediction_id=123, user_id=789, new_predicted_home=3
         )
 
         # Then
-        assert result == sample_prediction
+        assert _result == sample_prediction
         mock_service.update_prediction.assert_called_once()
 
     @pytest.mark.asyncio
@@ -85,7 +85,7 @@ class TestEventDrivenPredictionServiceSimple:
         mock_service.batch_predict = AsyncMock(return_value=predictions)
 
         # When
-        result = await mock_service.batch_predict(
+        _result = await mock_service.batch_predict(
             match_ids=[101, 102, 103], user_id=1001
         )
 
@@ -112,10 +112,10 @@ class TestEventDrivenPredictionServiceSimple:
         mock_service.predict_match = AsyncMock(return_value=sample_prediction)
 
         # When
-        result = await mock_service.predict_match(match_id=456, user_id=789)
+        _result = await mock_service.predict_match(match_id=456, user_id=789)
 
         # Then
-        assert result == sample_prediction
+        assert _result == sample_prediction
         mock_service.predict_match.assert_called_once_with(match_id=456, user_id=789)
 
     @pytest.mark.asyncio
@@ -125,7 +125,7 @@ class TestEventDrivenPredictionServiceSimple:
         mock_service.predict_match = AsyncMock(return_value=sample_prediction)
 
         # When
-        result = await mock_service.predict_match(
+        _result = await mock_service.predict_match(
             match_id=456,
             user_id=789,
             strategy_name="ml_strategy",
@@ -134,7 +134,7 @@ class TestEventDrivenPredictionServiceSimple:
         )
 
         # Then
-        assert result == sample_prediction
+        assert _result == sample_prediction
         mock_service.predict_match.assert_called_once()
 
     @pytest.mark.asyncio
@@ -144,12 +144,12 @@ class TestEventDrivenPredictionServiceSimple:
         mock_service.predict_match = AsyncMock(return_value=sample_prediction)
 
         # When
-        result = await mock_service.predict_match(
+        _result = await mock_service.predict_match(
             match_id=456, user_id=789, strategy_name=None
         )
 
         # Then
-        assert result == sample_prediction
+        assert _result == sample_prediction
 
     @pytest.mark.asyncio
     async def test_handle_zero_confidence(self, mock_service, sample_prediction):
@@ -158,12 +158,12 @@ class TestEventDrivenPredictionServiceSimple:
         mock_service.predict_match = AsyncMock(return_value=sample_prediction)
 
         # When
-        result = await mock_service.predict_match(
+        _result = await mock_service.predict_match(
             match_id=456, user_id=789, confidence=0.0
         )
 
         # Then
-        assert result == sample_prediction
+        assert _result == sample_prediction
 
     def test_service_attributes_exist(self, mock_service):
         """测试：服务属性存在"""
@@ -199,7 +199,7 @@ class TestEventDrivenPredictionServiceSimple:
         mock_service.update_prediction = AsyncMock(return_value=updated)
 
         # When
-        result = await mock_service.update_prediction(
+        _result = await mock_service.update_prediction(
             prediction_id=123, user_id=789, new_predicted_home=3
         )
 
@@ -221,7 +221,7 @@ class TestEventDrivenPredictionServiceSimple:
         mock_service.update_prediction = AsyncMock(return_value=updated)
 
         # When
-        result = await mock_service.update_prediction(
+        _result = await mock_service.update_prediction(
             prediction_id=123,
             user_id=789,
             new_predicted_home=3,
@@ -275,7 +275,7 @@ class TestEventDrivenMatchServiceSimple:
         mock_match_service.create_match = AsyncMock(return_value=match)
 
         # When
-        result = await mock_match_service.create_match(
+        _result = await mock_match_service.create_match(
             home_team_id=1, away_team_id=2, league_id=3, match_time=datetime.utcnow()
         )
 
@@ -309,11 +309,11 @@ class TestEventDrivenUserServiceSimple:
     async def test_register_user_workflow(self, mock_user_service):
         """测试：注册用户工作流程"""
         # Given
-        user = {"id": 789, "username": "testuser"}
+        _user = {"id": 789, "username": "testuser"}
         mock_user_service.register_user = AsyncMock(return_value=user)
 
         # When
-        result = await mock_user_service.register_user(
+        _result = await mock_user_service.register_user(
             username="testuser", email="test@example.com", password_hash="hashed"
         )
 

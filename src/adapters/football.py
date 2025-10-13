@@ -303,10 +303,10 @@ class FootballApiAdapter(Adapter):
             params["live"] = "all"
 
         endpoint = "fixtures"
-        data = await self.adaptee.get_data(endpoint, params)
+        _data = await self.adaptee.get_data(endpoint, params)
 
         # 转换数据
-        matches = []
+        _matches = []
         for match_data in data.get("response", []):
             match = await self.transformer.transform(match_data, target_type="match")
             matches.append(match)
@@ -316,7 +316,7 @@ class FootballApiAdapter(Adapter):
     async def get_match(self, match_id: str) -> Optional[FootballMatch]:
         """获取单个比赛"""
         endpoint = f"fixtures?id={match_id}"
-        data = await self.adaptee.get_data(endpoint)
+        _data = await self.adaptee.get_data(endpoint)
 
         if data.get("response"):
             match_data = data["response"][0]
@@ -330,9 +330,9 @@ class FootballApiAdapter(Adapter):
             params["league"] = league_id
 
         endpoint = "teams"
-        data = await self.adaptee.get_data(endpoint, params)
+        _data = await self.adaptee.get_data(endpoint, params)
 
-        teams = []
+        _teams = []
         for team_data in data.get("response", []):
             team = await self.transformer.transform(team_data, target_type="team")
             teams.append(team)
@@ -342,7 +342,7 @@ class FootballApiAdapter(Adapter):
     async def get_team(self, team_id: str) -> Optional[FootballTeam]:
         """获取单个球队"""
         endpoint = f"teams?id={team_id}"
-        data = await self.adaptee.get_data(endpoint)
+        _data = await self.adaptee.get_data(endpoint)
 
         if data.get("response"):
             team_data = data["response"][0]
@@ -358,7 +358,7 @@ class FootballApiAdapter(Adapter):
             params["season"] = season
 
         endpoint = f"players/squads?team={team_id}"
-        data = await self.adaptee.get_data(endpoint, params)
+        _data = await self.adaptee.get_data(endpoint, params)
 
         players = []
         for player_data in data.get("response", []):
@@ -372,7 +372,7 @@ class FootballApiAdapter(Adapter):
     async def get_player(self, player_id: str) -> Optional[FootballPlayer]:
         """获取单个球员"""
         endpoint = f"players?id={player_id}&season=2023"
-        data = await self.adaptee.get_data(endpoint)
+        _data = await self.adaptee.get_data(endpoint)
 
         if data.get("response"):
             player_data = data["response"][0]
@@ -383,7 +383,7 @@ class FootballApiAdapter(Adapter):
         """获取积分榜"""
         params = {"league": league_id, "season": season}
         endpoint = "standings"
-        data = await self.adaptee.get_data(endpoint, params)
+        _data = await self.adaptee.get_data(endpoint, params)
         return data.get("response", [])  # type: ignore
 
     async def _request(self, *args, **kwargs) -> Any:
@@ -484,7 +484,7 @@ class CompositeFootballAdapter(Adapter):
 
         for name, task in tasks:
             try:
-                matches = await task
+                _matches = await task
                 results[name] = matches
             except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 results[name] = f"Error: {str(e)}"  # type: ignore
@@ -496,7 +496,7 @@ class FootballDataAdapter:
     """足球数据适配器（简化版用于测试）"""
 
     def __init__(self, config: Dict[str, Any]):
-        self.config = config
+        self._config = config
         self.initialized = False
         self.client = None
 
@@ -592,7 +592,7 @@ class FootballDataAdapter:
         """批量获取比赛"""
         results = []
         for match_id in match_ids:
-            result = await self.get_match_data(match_id)
+            _result = await self.get_match_data(match_id)
             results.append(result)
         return results
 

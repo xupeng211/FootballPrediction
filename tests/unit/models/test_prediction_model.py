@@ -112,7 +112,7 @@ class TestPredictionModel:
         y = pd.Series([0, 1, 0, 1, 1])
 
         # 训练模型
-        result = model.train(X, y)
+        _result = model.train(X, y)
 
         # 验证训练结果
         assert result is True or result is None  # 可能返回True或None
@@ -333,7 +333,7 @@ class TestPredictionModelAdvanced:
         model = PredictionModel("metadata_test")
 
         # 添加元数据
-        metadata = {
+        _metadata = {
             "created_at": datetime.now().isoformat(),
             "version": "1.0.0",
             "description": "Test model for prediction",
@@ -342,7 +342,7 @@ class TestPredictionModelAdvanced:
 
         if hasattr(model, "set_metadata"):
             model.set_metadata(metadata)
-            assert model.metadata == metadata
+            assert model._metadata == metadata
 
     def test_model_performance_tracking(self):
         """测试：模型性能跟踪"""

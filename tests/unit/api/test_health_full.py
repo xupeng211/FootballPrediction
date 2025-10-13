@@ -60,7 +60,7 @@ class TestHealthModule:
 
         # 如果函数存在，调用它
         if hasattr(health, "get_health_status"):
-            result = get_health_status()
+            _result = get_health_status()
             assert isinstance(result, dict)
 
     def test_health_routes(self):

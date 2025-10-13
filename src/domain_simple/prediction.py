@@ -202,7 +202,7 @@ class Prediction:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Prediction":
         """从字典创建实例"""
-        prediction = cls(
+        _prediction = cls(
             id=data.get("id"),
             match_id=data.get("match_id", 0),
             user_id=data.get("user_id", 0),

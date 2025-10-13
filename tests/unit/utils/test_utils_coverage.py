@@ -211,7 +211,7 @@ def test_async_functions():
 
     # 测试异步执行
     try:
-        result = asyncio.run(simple_async())
-        assert result == "async result"
+        _result = asyncio.run(simple_async())
+        assert _result == "async result"
     except Exception:
         pass  # 如果事件循环有问题，跳过

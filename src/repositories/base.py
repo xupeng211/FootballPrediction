@@ -73,7 +73,7 @@ class BaseRepository(Generic[T, ID], ABC):
         if query_spec and query_spec.filters:
             query = self._apply_filters(query, query_spec.filters)
 
-        result = await self.session.execute(query)
+        _result = await self.session.execute(query)
         return len(result.fetchall())
 
     def _apply_filters(self, query, filters: Dict[str, Any]):
@@ -150,7 +150,7 @@ class ReadOnlyRepository(BaseRepository[T, ID], ABC):
 
         if conditions:
             query = select(self.model_class).where(or_(*conditions))
-            result = await self.session.execute(query)
+            _result = await self.session.execute(query)
             return result.scalars().all()  # type: ignore
         return []
 
@@ -191,7 +191,7 @@ class WriteOnlyRepository(BaseRepository[T, ID], ABC):
     async def bulk_delete(self, ids: List[ID]) -> int:
         """批量删除实体"""
         query = delete(self.model_class).where(self.model_class.id.in_(ids))  # type: ignore
-        result = await self.session.execute(query)
+        _result = await self.session.execute(query)
         return result.rowcount
 
 

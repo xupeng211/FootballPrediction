@@ -60,7 +60,7 @@ async def get_adapter_configs() -> Dict[str, Any]:
     """获取所有适配器配置"""
     configs = {}
     for name in adapter_factory.list_configs():
-        config = adapter_factory.get_config(name)
+        _config = adapter_factory.get_config(name)
         if config:
             configs[name] = {
                 "type": config.adapter_type,
@@ -94,7 +94,7 @@ async def load_adapter_config(config_data: Dict[str, Any]) -> Dict[str, str]:
     from ..adapters.factory import AdapterConfig
 
     if "adapter_name" in config_data:
-        config = AdapterConfig(
+        _config = AdapterConfig(
             name=config_data["adapter_name"],
             adapter_type=config_data.get("adapter_type", "api-football"),
             enabled=config_data.get("enabled", True),
@@ -178,7 +178,7 @@ async def get_football_matches(
         match_date = date_from or datetime.now().date()
 
         # 获取比赛数据
-        matches = await adapter.get_matches(
+        _matches = await adapter.get_matches(
             date=datetime.combine(match_date, datetime.min.time()),
             league_id=league_id,
             team_id=team_id,
@@ -338,11 +338,11 @@ async def get_football_teams(
         }
 
     try:
-        teams = await adapter.get_teams(league_id=league_id)
+        _teams = await adapter.get_teams(league_id=league_id)
 
         # 如果有搜索关键词，过滤结果
         if search:
-            teams = [t for t in teams if search.lower() in t.name.lower()]
+            _teams = [t for t in teams if search.lower() in t.name.lower()]
 
         # 转换为字典格式
         team_dicts = []

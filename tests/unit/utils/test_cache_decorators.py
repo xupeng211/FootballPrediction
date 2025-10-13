@@ -76,8 +76,8 @@ class TestCacheDecorators:
                 return x * 2
 
             # 第一次调用
-            result = expensive_function(5)
-            assert result == 10
+            _result = expensive_function(5)
+            assert _result == 10
             mock_redis.get.assert_called()
             mock_redis.set.assert_called()
 
@@ -99,8 +99,8 @@ class TestCacheDecorators:
                 return x * 2
 
             async def test():
-                result = await expensive_async_function(5)
-                assert result == 10
+                _result = await expensive_async_function(5)
+                assert _result == 10
                 mock_redis.aget.assert_called()
                 mock_redis.aset.assert_called()
 
@@ -143,8 +143,8 @@ class TestCacheDecorators:
             def test_function(x):
                 return x + 1
 
-            result = test_function(10)
-            assert result == 11
+            _result = test_function(10)
+            assert _result == 11
 
             # 验证TTL被正确转换
             mock_redis.set.assert_called()
@@ -166,8 +166,8 @@ class TestCacheDecorators:
 
             # 模拟用户上下文
             with patch("src.cache.decorators.get_current_user_id", return_value=123):
-                result = user_specific_data("profile")
-                assert result == "data_123_profile"
+                _result = user_specific_data("profile")
+                assert _result == "data_123_profile"
 
     def test_cache_invalidate(self):
         """测试缓存失效"""
@@ -181,8 +181,8 @@ class TestCacheDecorators:
             def update_data(key):
                 return f"updated_{key}"
 
-            result = update_data("test_key")
-            assert result == "updated_test_key"
+            _result = update_data("test_key")
+            assert _result == "updated_test_key"
             # 缓存失效应该被调用
             mock_redis.delete.assert_called()
 
@@ -204,8 +204,8 @@ class TestCacheDecorators:
                     return self.value + x
 
             obj = TestClass(10)
-            result = obj.compute(5)
-            assert result == 15
+            _result = obj.compute(5)
+            assert _result == 15
 
     def test_cache_key_uniqueness(self):
         """测试缓存键的唯一性"""
@@ -243,8 +243,8 @@ class TestCacheDecorators:
                 return x * 2
 
             # 即使Redis出错，函数也应该正常工作
-            result = test_function(5)
-            assert result == 10
+            _result = test_function(5)
+            assert _result == 10
 
     def test_cache_with_none_value(self):
         """测试缓存None值"""
@@ -268,6 +268,6 @@ class TestCacheDecorators:
             assert call_count == 1
 
             # 第二次调用（如果缓存了None值）
-            result2 = returns_none()
+            _result2 = returns_none()
             assert result2 is None
             # 取决于实现，None值可能被缓存也可能不被缓存

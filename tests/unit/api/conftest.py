@@ -191,7 +191,7 @@ def sample_match_finished():
 def sample_prediction():
     """创建一个示例预测"""
 
-    prediction = MagicMock(spec=Predictions)
+    _prediction = MagicMock(spec=Predictions)
     prediction.id = 1
     prediction.match_id = 12345
     prediction.model_version = "1.0"

@@ -21,7 +21,7 @@ class CollectionUtils:
     @staticmethod
     def flatten(nested_list: List[Any]) -> List[Any]:
         """展平嵌套列表"""
-        result = []
+        _result = []
         for item in nested_list:
             if isinstance(item, list):
                 result.extend(CollectionUtils.flatten(item))
@@ -33,7 +33,7 @@ class CollectionUtils:
     def unique(lst: List[T]) -> List[T]:
         """去重并保持顺序"""
         seen = set()
-        result = []
+        _result = []
         for item in lst:
             if item not in seen:
                 seen.add(item)
@@ -73,7 +73,7 @@ class CollectionUtils:
     @staticmethod
     def deep_merge(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Dict[str, Any]:
         """深度合并字典"""
-        result = dict1.copy()
+        _result = dict1.copy()
         for key, value in dict2.items():
             if (
                 key in result
@@ -98,7 +98,7 @@ class CollectionUtils:
     @staticmethod
     def map_keys(dictionary: Dict[str, Any], key_map: Dict[str, str]) -> Dict[str, Any]:
         """映射字典的键"""
-        result = {}
+        _result = {}
         for old_key, value in dictionary.items():
             new_key = key_map.get(old_key, old_key)
             result[new_key] = value
@@ -136,17 +136,17 @@ class CollectionUtils:
         """多个列表的交集"""
         if not lists:
             return []
-        result = set(lists[0])
+        _result = set(lists[0])
         for lst in lists[1:]:
-            result = result.intersection(lst)
+            _result = result.intersection(lst)
         return list(result)
 
     @staticmethod
     def union(*lists: List[T]) -> List[T]:
         """多个列表的并集"""
-        result = set()
+        _result = set()
         for lst in lists:
-            result = result.union(lst)
+            _result = result.union(lst)
         return list(result)
 
     @staticmethod
@@ -163,7 +163,7 @@ class CollectionUtils:
     @staticmethod
     def zip_dicts(*dicts: Dict[str, Any]) -> Dict[str, List[Any]]:
         """将多个字典的值按键组合成列表"""
-        result = {}
+        _result = {}
         all_keys = set()
         for d in dicts:
             all_keys.update(d.keys())
@@ -180,7 +180,7 @@ class CollectionUtils:
         dictionary: Dict[str, Any], separator: str = "."
     ) -> Dict[str, Any]:
         """展平嵌套字典"""
-        result = {}
+        _result = {}
 
         def _flatten(obj: Any, parent_key: str = ""):
             if isinstance(obj, dict):
@@ -198,7 +198,7 @@ class CollectionUtils:
         dictionary: Dict[str, Any], separator: str = "."
     ) -> Dict[str, Any]:
         """恢复展平的字典"""
-        result = {}
+        _result = {}
 
         for key, value in dictionary.items():
             parts = key.split(separator)
@@ -227,7 +227,7 @@ class CollectionUtils:
         """打乱列表"""
         import random
 
-        result = lst.copy()
+        _result = lst.copy()
         random.shuffle(result)
         return result
 
@@ -402,8 +402,8 @@ class TestCollectionUtils:
     def test_without(self):
         """测试移除指定元素"""
         lst = [1, 2, 3, 2, 4, 2, 5]
-        result = CollectionUtils.without(lst, 2, 4)
-        assert result == [1, 3, 5]
+        _result = CollectionUtils.without(lst, 2, 4)
+        assert _result == [1, 3, 5]
 
     def test_intersection(self):
         """测试多个列表的交集"""
@@ -411,7 +411,7 @@ class TestCollectionUtils:
         list2 = [3, 4, 5, 6]
         list3 = [4, 5, 6, 7]
 
-        result = CollectionUtils.intersection(list1, list2, list3)
+        _result = CollectionUtils.intersection(list1, list2, list3)
         assert set(result) == {4}
 
         # 空列表
@@ -423,7 +423,7 @@ class TestCollectionUtils:
         list2 = [3, 4, 5]
         list3 = [5, 6, 7]
 
-        result = CollectionUtils.union(list1, list2, list3)
+        _result = CollectionUtils.union(list1, list2, list3)
         assert set(result) == {1, 2, 3, 4, 5, 6, 7}
 
     def test_difference(self):
@@ -431,7 +431,7 @@ class TestCollectionUtils:
         list1 = [1, 2, 3, 4, 5]
         list2 = [4, 5, 6, 7]
 
-        result = CollectionUtils.difference(list1, list2)
+        _result = CollectionUtils.difference(list1, list2)
         assert set(result) == {1, 2, 3}
 
     def test_symmetric_difference(self):
@@ -439,7 +439,7 @@ class TestCollectionUtils:
         list1 = [1, 2, 3, 4]
         list2 = [3, 4, 5, 6]
 
-        result = CollectionUtils.symmetric_difference(list1, list2)
+        _result = CollectionUtils.symmetric_difference(list1, list2)
         assert set(result) == {1, 2, 5, 6}
 
     def test_zip_dicts(self):
@@ -448,7 +448,7 @@ class TestCollectionUtils:
         dict2 = {"a": 10, "b": 20, "c": 30}
         dict3 = {"b": 200, "c": 300}
 
-        result = CollectionUtils.zip_dicts(dict1, dict2, dict3)
+        _result = CollectionUtils.zip_dicts(dict1, dict2, dict3)
         assert result["a"] == [1, 10, None]
         assert result["b"] == [2, 20, 200]
         assert result["c"] == [None, 30, 300]

@@ -84,7 +84,7 @@ class TestFootballDataCleaner:
         cleaner._map_league_id = AsyncMock(return_value=1)
         cleaner._map_team_id = AsyncMock(side_effect=[1, 2])
 
-        result = await cleaner.clean_match_data(sample_match_data)
+        _result = await cleaner.clean_match_data(sample_match_data)
 
         assert result is not None
         assert result["external_match_id"] == "123456"
@@ -106,7 +106,7 @@ class TestFootballDataCleaner:
         """测试清洗无效比赛数据"""
         invalid_data = {"id": "123"}  # 缺少必需字段
 
-        result = await cleaner.clean_match_data(invalid_data)
+        _result = await cleaner.clean_match_data(invalid_data)
 
         assert result is None
 
@@ -116,7 +116,7 @@ class TestFootballDataCleaner:
         # Mock抛出异常
         cleaner._map_league_id = AsyncMock(side_effect=Exception("Database error"))
 
-        result = await cleaner.clean_match_data(sample_match_data)
+        _result = await cleaner.clean_match_data(sample_match_data)
 
         assert result is None
         cleaner.logger.error.assert_called()
@@ -126,7 +126,7 @@ class TestFootballDataCleaner:
     @pytest.mark.asyncio
     async def test_clean_odds_data_success(self, cleaner, sample_odds_data):
         """测试成功清洗赔率数据"""
-        result = await cleaner.clean_odds_data(sample_odds_data)
+        _result = await cleaner.clean_odds_data(sample_odds_data)
 
         assert len(result) == 2
 
@@ -151,8 +151,8 @@ class TestFootballDataCleaner:
     @pytest.mark.asyncio
     async def test_clean_odds_data_empty_list(self, cleaner):
         """测试清洗空赔率数据列表"""
-        result = await cleaner.clean_odds_data([])
-        assert result == []
+        _result = await cleaner.clean_odds_data([])
+        assert _result == []
 
     @pytest.mark.asyncio
     async def test_clean_odds_data_invalid_item(self, cleaner):
@@ -175,7 +175,7 @@ class TestFootballDataCleaner:
             },
         ]
 
-        result = await cleaner.clean_odds_data(invalid_odds)
+        _result = await cleaner.clean_odds_data(invalid_odds)
 
         # 只应该返回有效的数据
         assert len(result) == 1
@@ -225,19 +225,19 @@ class TestFootballDataCleaner:
     def test_to_utc_time_valid(self, cleaner):
         """测试转换有效UTC时间"""
         time_str = "2024-01-15T15:00:00Z"
-        result = cleaner._to_utc_time(time_str)
+        _result = cleaner._to_utc_time(time_str)
         # 返回的时间格式可能不同
         assert "2024-01-15T15:00:00" in result
 
     def test_to_utc_time_invalid(self, cleaner):
         """测试转换无效时间"""
         invalid_time = "invalid-date"
-        result = cleaner._to_utc_time(invalid_time)
+        _result = cleaner._to_utc_time(invalid_time)
         assert result is None
 
     def test_to_utc_time_none(self, cleaner):
         """测试转换None时间"""
-        result = cleaner._to_utc_time(None)
+        _result = cleaner._to_utc_time(None)
         assert result is None
 
     def test_standardize_match_status(self, cleaner):
@@ -298,12 +298,12 @@ class TestFootballDataCleaner:
         """测试标准化博彩公司名称"""
         # 测试实际实现：转换为小写并用下划线替换空格
         result1 = cleaner._standardize_bookmaker_name("Bet365")
-        result2 = cleaner._standardize_bookmaker_name("William Hill")
+        _result2 = cleaner._standardize_bookmaker_name("William Hill")
         result3 = cleaner._standardize_bookmaker_name("BETFAIR")
         result4 = cleaner._standardize_bookmaker_name(None)
 
         assert result1 == "bet365"
-        assert result2 == "william_hill"
+        assert _result2 == "william_hill"
         assert result3 == "betfair"
         assert result4 == "unknown"
 
@@ -337,8 +337,8 @@ class TestFootballDataCleaner:
         """测试清洗裁判名称"""
         referees = [{"name": "Michael Oliver"}]
         # 实际方法可能返回第一个裁判的名称
-        result = cleaner._clean_referee_name(referees)
-        assert result == "Michael Oliver" or result is None
+        _result = cleaner._clean_referee_name(referees)
+        assert _result == "Michael Oliver" or result is None
 
         referees_empty = []
         assert cleaner._clean_referee_name(referees_empty) is None
@@ -400,7 +400,7 @@ class TestFootballDataCleaner:
         cleaner._team_id_cache[cache_key] = 1
 
         # 调用方法
-        result = await cleaner._map_team_id({"name": "Man United"}, league_id=1)
+        _result = await cleaner._map_team_id({"name": "Man United"}, league_id=1)
 
         # 验证结果
         assert result is not None
@@ -417,7 +417,7 @@ class TestFootballDataCleaner:
         cleaner._league_id_cache[cache_key] = 39
 
         # 调用方法（只接受一个参数）
-        result = await cleaner._map_league_id({"name": "Premier League"})
+        _result = await cleaner._map_league_id({"name": "Premier League"})
 
         # 验证结果
         assert result is not None
@@ -441,7 +441,7 @@ class TestFootballDataCleaner:
             }
         ]
 
-        result = await cleaner.clean_odds_data(odds_with_invalid_price)
+        _result = await cleaner.clean_odds_data(odds_with_invalid_price)
 
         # 实际实现可能过滤掉整个赔率项
         assert len(result) >= 0
@@ -463,7 +463,7 @@ class TestFootballDataCleaner:
             }
         ]
 
-        result = await cleaner.clean_odds_data(odds_inconsistent)
+        _result = await cleaner.clean_odds_data(odds_inconsistent)
 
         # 不一致的赔率应该被过滤掉
         assert len(result) == 0

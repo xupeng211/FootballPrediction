@@ -60,7 +60,7 @@ class TestMaintenanceTaskManager:
             task = DatabaseMaintenanceTask()
             scheduled_time = datetime.now() + timedelta(hours=1)
 
-            result = await manager.schedule_task(task, scheduled_time)
+            _result = await manager.schedule_task(task, scheduled_time)
 
             assert result is True or result is not None
             mock_scheduler.add_job.assert_called_once()
@@ -74,7 +74,7 @@ class TestMaintenanceTaskManager:
             task = CacheCleanupTask()
             mock_execute.return_value = {"status": "success", "cleaned_items": 100}
 
-            result = await manager.execute_task(task)
+            _result = await manager.execute_task(task)
 
             assert result["status"] == "success"
             assert result["cleaned_items"] == 100
@@ -137,7 +137,7 @@ class TestDatabaseMaintenanceTask:
                 "duration": 30,
             }
 
-            result = await task.execute_backup()
+            _result = await task.execute_backup()
 
             assert result["backup_file"].endswith(".sql")
             assert result["size"] == "1.5GB"
@@ -151,7 +151,7 @@ class TestDatabaseMaintenanceTask:
         with patch.object(task, "run_vacuum") as mock_vacuum:
             mock_vacuum.return_value = {"space_freed": "500MB", "duration": 120}
 
-            result = await task.execute_vacuum()
+            _result = await task.execute_vacuum()
 
             assert result["space_freed"] == "500MB"
             assert result["duration"] == 120
@@ -171,7 +171,7 @@ class TestDatabaseMaintenanceTask:
                 "unused_indexes": ["idx_unused1", "idx_unused2"],
             }
 
-            result = await task.execute_analyze()
+            _result = await task.execute_analyze()
 
             assert "table_stats" in result
             assert "unused_indexes" in result
@@ -194,7 +194,7 @@ class TestCacheCleanupTask:
             mock_redis.scan_iter.return_value = [f"expired_key_{i}" for i in range(10)]
             mock_redis.delete.return_value = 10
 
-            result = await task.cleanup_expired_keys()
+            _result = await task.cleanup_expired_keys()
 
             assert result["cleaned_keys"] == 10
             assert result["time_taken"] > 0
@@ -208,7 +208,7 @@ class TestCacheCleanupTask:
             # 模拟大值检测
             mock_redis.memory_usage.return_value = 1048576  # 1MB
 
-            result = await task.cleanup_large_values()
+            _result = await task.cleanup_large_values()
 
             assert "cleaned_keys" in result
             assert result["memory_freed"] > 0
@@ -221,7 +221,7 @@ class TestCacheCleanupTask:
         with patch.object(task, "redis_client") as mock_redis:
             mock_redis.rebuild_index.return_value = True
 
-            result = await task.rebuild_index("user_index")
+            _result = await task.rebuild_index("user_index")
 
             assert result is True
             mock_redis.rebuild_index.assert_called_once_with("user_index")
@@ -242,7 +242,7 @@ class TestLogRotationTask:
             with patch("os.path.getsize", return_value=1073741824):  # 1GB
                 with patch("shutil.move") as mock_move:
                     with patch("gzip.open") as mock_gzip:
-                        result = await task.rotate_application_logs("/var/log/app.log")
+                        _result = await task.rotate_application_logs("/var/log/app.log")
 
                         assert result["original_size"] == 1073741824
                         assert "compressed_file" in result
@@ -261,7 +261,7 @@ class TestLogRotationTask:
                 "access.log.2024-01-03",
             ]
 
-            result = await task.rotate_access_logs("/var/log/nginx/")
+            _result = await task.rotate_access_logs("/var/log/nginx/")
 
             assert "deleted_files" in result
             assert result["deleted_files"] >= 0
@@ -283,7 +283,7 @@ class TestLogRotationTask:
                 now = datetime.now()
                 mock_mtime.side_effect = lambda path: now - timedelta(days=7)
 
-                result = await task.cleanup_old_logs("/var/log/app", keep_days=5)
+                _result = await task.cleanup_old_logs("/var/log/app", keep_days=5)
 
                 assert "deleted_files" in result
                 assert result["deleted_files"] >= 0
@@ -313,7 +313,7 @@ class TestBackupTask:
                         "file": "config.tar.gz",
                     }
 
-                    result = await task.full_backup("/backups")
+                    _result = await task.full_backup("/backups")
 
                     assert result["status"] == "success"
                     assert "database" in result
@@ -332,7 +332,7 @@ class TestBackupTask:
                 "changes_since": "20240115_01.tar.gz",
             }
 
-            result = await task.incremental_backup("/backups", "20240115_01.tar.gz")
+            _result = await task.incremental_backup("/backups", "20240115_01.tar.gz")
 
             assert result["status"] == "success"
             assert "backup_file" in result
@@ -344,7 +344,7 @@ class TestBackupTask:
 
         with patch("os.path.exists", return_value=True):
             with patch("tarfile.is_tarfile", return_value=True):
-                result = await task.verify_backup("/backups/full_backup.tar.gz")
+                _result = await task.verify_backup("/backups/full_backup.tar.gz")
 
                 assert result["valid"] is True
                 assert result["checksum"] is not None
@@ -356,7 +356,7 @@ class TestBackupTask:
 
         with patch("tarfile.extractall") as mock_extract:
             with patch("subprocess.run") as mock_subprocess:
-                result = await task.restore_backup(
+                _result = await task.restore_backup(
                     "/backups/full_backup.tar.gz", "/tmp/restore"
                 )
 
@@ -420,7 +420,7 @@ class TestHealthCheckTask:
                 "total": 15,
             }
 
-            result = await task.check_database_health()
+            _result = await task.check_database_health()
 
             assert result["status"] == "healthy"
             assert result["connection_pool"]["active"] == 5
@@ -437,7 +437,7 @@ class TestHealthCheckTask:
                 "connected_clients": 25,
             }
 
-            result = await task.check_redis_health()
+            _result = await task.check_redis_health()
 
             assert result["status"] == "healthy"
             assert result["memory_usage"] == "100MB"
@@ -450,7 +450,7 @@ class TestHealthCheckTask:
         with patch("shutil.disk_usage") as mock_usage:
             mock_usage.return_value = (1000000000000, 800000000000, 500000000000)
 
-            result = await task.check_disk_space("/")
+            _result = await task.check_disk_space("/")
 
             assert result["total"] == 1000000000000  # 100GB
             assert result["used"] == 800000000000  # 80GB
@@ -471,7 +471,7 @@ class TestHealthCheckTask:
                     "percent": 50.0,
                 }
 
-                result = await task.check_system_metrics()
+                _result = await task.check_system_metrics()
 
                 assert result["cpu_percent"] == 45.5
                 assert result["memory_percent"] == 50.0
@@ -528,7 +528,7 @@ class TestMaintenanceTasksIntegration:
 
             results = []
             for task in tasks:
-                result = await manager.execute_task(task)
+                _result = await manager.execute_task(task)
                 results.append(result)
 
             # 验证所有任务成功
@@ -566,7 +566,7 @@ class TestMaintenanceTasksIntegration:
         with patch.object(task, "run_vacuum") as mock_vacuum:
             mock_vacuum.side_effect = Exception("Vacuum failed")
 
-            result = await manager.execute_task(task)
+            _result = await manager.execute_task(task)
 
             # 应该处理错误并返回错误信息
             assert result["status"] == "failed"
@@ -617,7 +617,7 @@ class TestMaintenanceTasksIntegration:
             mock_cleanup.side_effect = long_running_task
 
             # 设置超时为5秒
-            result = await manager.execute_task_with_timeout(task, timeout=5)
+            _result = await manager.execute_task_with_timeout(task, timeout=5)
 
             # 应该超时
             assert result["status"] == "timeout"

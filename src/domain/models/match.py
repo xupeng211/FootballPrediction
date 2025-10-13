@@ -164,7 +164,7 @@ class Match:
                 home_team_id=self.home_team_id,
                 away_team_id=self.away_team_id,
                 final_score=self.score,
-                result=self.score.result,
+                _result =self.score.result,
             )
         )
 

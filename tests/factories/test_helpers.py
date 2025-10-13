@@ -23,7 +23,7 @@ class TestDataManager:
         """创建测试用户"""
         from tests.factories import UserFactory
 
-        user = UserFactory.create(**overrides)
+        _user = UserFactory.create(**overrides)
         self.users.append(user)
         return user
 
@@ -47,7 +47,7 @@ class TestDataManager:
         """创建测试预测"""
         from tests.factories import PredictionFactory
 
-        prediction = PredictionFactory.create(**overrides)
+        _prediction = PredictionFactory.create(**overrides)
         self.predictions.append(prediction)
         return prediction
 

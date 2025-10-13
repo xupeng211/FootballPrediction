@@ -137,7 +137,7 @@ class TestPredictionDomainService:
         mock_prediction_class.return_value = mock_pred
 
         # When
-        prediction = service.create_prediction(
+        _prediction = service.create_prediction(
             user_id=1001,
             match=scheduled_match,
             predicted_home=2,
@@ -146,7 +146,7 @@ class TestPredictionDomainService:
         )
 
         # Then
-        assert prediction == mock_pred
+        assert _prediction == mock_pred
         mock_pred.make_prediction.assert_called_once_with(
             predicted_home=2, predicted_away=1, confidence=0.8
         )
@@ -165,7 +165,7 @@ class TestPredictionDomainService:
 
         # When
         service.update_prediction(
-            prediction=mock_prediction,
+            _prediction =mock_prediction,
             new_predicted_home=3,
             new_predicted_away=1,
             new_confidence=0.9,
@@ -186,7 +186,7 @@ class TestPredictionDomainService:
         # When / Then
         with pytest.raises(ValueError, match="只能更新待处理的预测"):
             service.update_prediction(
-                prediction=mock_prediction, new_predicted_home=3, new_predicted_away=1
+                _prediction =mock_prediction, new_predicted_home=3, new_predicted_away=1
             )
 
     def test_update_prediction_should_raise_when_negative_scores(
@@ -199,7 +199,7 @@ class TestPredictionDomainService:
         # When / Then
         with pytest.raises(ValueError, match="预测比分不能为负数"):
             service.update_prediction(
-                prediction=mock_prediction, new_predicted_home=-1, new_predicted_away=1
+                _prediction =mock_prediction, new_predicted_home=-1, new_predicted_away=1
             )
 
     def test_evaluate_prediction(self, service, mock_prediction):
@@ -342,7 +342,7 @@ class TestPredictionDomainService:
 
         # When
         errors = service.validate_prediction_rules(
-            prediction=mock_prediction,
+            _prediction =mock_prediction,
             user_predictions_today=5,
             max_predictions_per_day=10,
         )
@@ -361,7 +361,7 @@ class TestPredictionDomainService:
 
         # When
         errors = service.validate_prediction_rules(
-            prediction=mock_pred, user_predictions_today=10, max_predictions_per_day=10
+            _prediction =mock_pred, user_predictions_today=10, max_predictions_per_day=10
         )
 
         # Then
@@ -379,7 +379,7 @@ class TestPredictionDomainService:
 
         # When
         errors = service.validate_prediction_rules(
-            prediction=mock_pred, user_predictions_today=5, max_predictions_per_day=10
+            _prediction =mock_pred, user_predictions_today=5, max_predictions_per_day=10
         )
 
         # Then
@@ -400,7 +400,7 @@ class TestPredictionDomainService:
 
         # When
         errors = service.validate_prediction_rules(
-            prediction=mock_prediction,
+            _prediction =mock_prediction,
             user_predictions_today=5,
             max_predictions_per_day=10,
         )

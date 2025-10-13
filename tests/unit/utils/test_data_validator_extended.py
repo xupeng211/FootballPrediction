@@ -38,24 +38,24 @@ class TestDataValidator:
 
     def test_validate_required_fields(self):
         """测试必填字段验证"""
-        data = {"name": "test", "email": "test@example.com"}
+        _data = {"name": "test", "email": "test@example.com"}
         required = ["name", "email"]
         missing = DataValidator.validate_required_fields(data, required)
         assert missing == []  # 没有缺失字段
 
-        data = {"name": "test"}
+        _data = {"name": "test"}
         missing = DataValidator.validate_required_fields(data, required)
         assert "email" in missing
 
     def test_validate_data_types(self):
         """测试数据类型验证"""
-        data = {"name": "test", "age": 25, "active": True}
+        _data = {"name": "test", "age": 25, "active": True}
         types = {"name": str, "age": int, "active": bool}
         invalid = DataValidator.validate_data_types(data, types)
         assert invalid == []  # 类型正确
 
         # 错误类型
-        data = {"name": "test", "age": "25"}  # age应该是int
+        _data = {"name": "test", "age": "25"}  # age应该是int
         types = {"name": str, "age": int}
         invalid = DataValidator.validate_data_types(data, types)
         assert len(invalid) == 1
@@ -75,5 +75,5 @@ class TestDataValidator:
     def test_sanitize_input_long(self):
         """测试长输入截断"""
         long_text = "a" * 1500
-        result = DataValidator.sanitize_input(long_text)
+        _result = DataValidator.sanitize_input(long_text)
         assert len(result) == 1000

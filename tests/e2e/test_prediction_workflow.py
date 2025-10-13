@@ -124,7 +124,7 @@ class TestPredictionWorkflow:
         # 应该返回404或空结果
         assert response.status_code in [404, 200]
         if response.status_code == 200:
-            data = response.json()
+            _data = response.json()
             assert "predictions" in data
             assert len(data["predictions"]) == 0
 
@@ -179,7 +179,7 @@ class TestPredictionWorkflow:
         assert response.headers["content-type"] == "application/json"
 
         # 验证JSON结构
-        data = response.json()
+        _data = response.json()
         required_fields = ["prediction", "match_id", "timestamp"]
         for field in required_fields:
             assert field in data
@@ -311,7 +311,7 @@ class TestSystemIntegration:
             # 测试预测
             async def test_prediction():
                 service = mock_service()
-                result = await service.predict(match_id=123)
+                _result = await service.predict(match_id=123)
                 assert result["home_win"] == 0.5
 
             # 运行异步测试

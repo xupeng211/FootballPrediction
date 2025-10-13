@@ -17,7 +17,7 @@ class TestPredictionModel:
     @pytest.fixture
     def sample_prediction(self):
         """创建示例预测"""
-        prediction = Predictions()
+        _prediction = Predictions()
         prediction.id = 1
         prediction.match_id = 12345
         prediction.model_version = "1.0"
@@ -197,7 +197,7 @@ class TestPredictionModel:
         mock_session = AsyncMock()
 
         if hasattr(sample_prediction, "async_save"):
-            result = await sample_prediction.async_save(mock_session)
+            _result = await sample_prediction.async_save(mock_session)
             assert result is not None
 
     def test_prediction_model_comparison(self, sample_prediction):

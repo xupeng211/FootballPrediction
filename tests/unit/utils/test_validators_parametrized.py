@@ -71,8 +71,8 @@ class TestValidatorsParametrized:
     def test_validate_email(self, email, expected):
         """测试：邮箱验证（参数化）"""
         if validate_email is not None:
-            result = validate_email(email)
-            assert result == expected
+            _result = validate_email(email)
+            assert _result == expected
 
     @pytest.mark.parametrize(
         "phone,expected",
@@ -96,8 +96,8 @@ class TestValidatorsParametrized:
     def test_validate_phone(self, phone, expected):
         """测试：电话验证（参数化）"""
         if validate_phone is not None:
-            result = validate_phone(phone)
-            assert result == expected
+            _result = validate_phone(phone)
+            assert _result == expected
 
     @pytest.mark.parametrize(
         "url,expected",
@@ -122,8 +122,8 @@ class TestValidatorsParametrized:
     def test_validate_url(self, url, expected):
         """测试：URL验证（参数化）"""
         if validate_url is not None:
-            result = validate_url(url)
-            assert result == expected
+            _result = validate_url(url)
+            assert _result == expected
 
     @pytest.mark.parametrize(
         "username,expected",
@@ -147,8 +147,8 @@ class TestValidatorsParametrized:
     def test_validate_username(self, username, expected):
         """测试：用户名验证（参数化）"""
         if validate_username is not None:
-            result = validate_username(username)
-            assert result == expected
+            _result = validate_username(username)
+            assert _result == expected
 
     @pytest.mark.parametrize(
         "password,expected",
@@ -171,8 +171,8 @@ class TestValidatorsParametrized:
     def test_validate_password(self, password, expected):
         """测试：密码验证（参数化）"""
         if validate_password is not None:
-            result = validate_password(password)
-            assert result == expected
+            _result = validate_password(password)
+            assert _result == expected
 
     @pytest.mark.parametrize(
         "card,expected",
@@ -194,8 +194,8 @@ class TestValidatorsParametrized:
     def test_validate_credit_card(self, card, expected):
         """测试：信用卡验证（参数化）"""
         if validate_credit_card is not None:
-            result = validate_credit_card(card)
-            assert result == expected
+            _result = validate_credit_card(card)
+            assert _result == expected
 
     @pytest.mark.parametrize(
         "ip,expected",
@@ -219,8 +219,8 @@ class TestValidatorsParametrized:
     def test_validate_ipv4_address(self, ip, expected):
         """测试：IPv4地址验证（参数化）"""
         if validate_ipv4_address is not None:
-            result = validate_ipv4_address(ip)
-            assert result == expected
+            _result = validate_ipv4_address(ip)
+            assert _result == expected
 
     @pytest.mark.parametrize(
         "mac,expected",
@@ -241,8 +241,8 @@ class TestValidatorsParametrized:
     def test_validate_mac_address(self, mac, expected):
         """测试：MAC地址验证（参数化）"""
         if validate_mac_address is not None:
-            result = validate_mac_address(mac)
-            assert result == expected
+            _result = validate_mac_address(mac)
+            assert _result == expected
 
     @pytest.mark.parametrize(
         "date_str,format,expected",
@@ -263,8 +263,8 @@ class TestValidatorsParametrized:
     def test_validate_date_string(self, date_str, format, expected):
         """测试：日期字符串验证（参数化）"""
         if validate_date_string is not None:
-            result = validate_date_string(date_str, format)
-            assert result == expected
+            _result = validate_date_string(date_str, format)
+            assert _result == expected
 
     @pytest.mark.parametrize(
         "json_str,expected",
@@ -285,8 +285,8 @@ class TestValidatorsParametrized:
     def test_validate_json_string(self, json_str, expected):
         """测试：JSON字符串验证（参数化）"""
         if validate_json_string is not None:
-            result = validate_json_string(json_str)
-            assert result == expected
+            _result = validate_json_string(json_str)
+            assert _result == expected
 
 
 @pytest.mark.skipif(
@@ -372,8 +372,8 @@ class TestValidatorsComplex:
 
             return True
 
-        result = validate_complex(data, field_rules)
-        assert result == expected
+        _result = validate_complex(data, field_rules)
+        assert _result == expected
 
     @pytest.mark.parametrize(
         "input_data,sanitizer,expected",
@@ -447,8 +447,8 @@ class TestValidatorsComplex:
 
             return True
 
-        result = validate_business(data, business_rules)
-        assert result == expected
+        _result = validate_business(data, business_rules)
+        assert _result == expected
 
 
 @pytest.mark.skipif(not VALIDATORS_AVAILABLE, reason="Validators module not available")
@@ -480,11 +480,11 @@ class TestValidatorsEdgeCases:
         """测试：边界情况输入（参数化）"""
         # 测试各种输入类型是否能被正确处理
         if validate_email is not None:
-            result = validate_email(input_value)
+            _result = validate_email(input_value)
             assert isinstance(result, bool)
 
         if validate_username is not None:
-            result = validate_username(input_value)
+            _result = validate_username(input_value)
             assert isinstance(result, bool)
 
     @pytest.mark.parametrize(
@@ -503,7 +503,7 @@ class TestValidatorsEdgeCases:
         if validate_email is not None:
             # 某些验证器可能不支持Unicode
             try:
-                result = validate_email(unicode_input)
+                _result = validate_email(unicode_input)
                 assert isinstance(result, bool)
             except UnicodeError:
                 # 处理Unicode错误

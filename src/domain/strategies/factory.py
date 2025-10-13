@@ -116,7 +116,7 @@ class PredictionStrategyFactory:
 
         # 获取策略配置
         if config is None:
-            config = self._get_strategy_config(strategy_name)
+            _config = self._get_strategy_config(strategy_name)
 
         # 获取策略类型
         if strategy_type is None:
@@ -239,7 +239,7 @@ class PredictionStrategyFactory:
 
             try:
                 strategy = await self.create_strategy(
-                    strategy_name=strategy_name, config=config
+                    strategy_name=strategy_name, _config =config
                 )
                 created_strategies[strategy_name] = strategy
             except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
@@ -256,7 +256,7 @@ class PredictionStrategyFactory:
             if strategy_name and strategy_name not in self._strategies:
                 try:
                     await self.create_strategy(
-                        strategy_name=strategy_name, config=config
+                        strategy_name=strategy_name, _config =config
                     )
                 except (
                     ValueError,
@@ -294,9 +294,9 @@ class PredictionStrategyFactory:
         try:
             with open(config_path, "r", encoding="utf-8") as f:
                 if config_path.suffix.lower() in [".yaml", ".yml"]:
-                    config = yaml.safe_load(f)
+                    _config = yaml.safe_load(f)
                 elif config_path.suffix.lower() == ".json":
-                    config = json.load(f)
+                    _config = json.load(f)
                 else:
                     raise ValueError(f"不支持的配置文件格式: {config_path.suffix}")
 
@@ -440,14 +440,14 @@ class PredictionStrategyFactory:
         """
         # 从策略配置中获取
         if strategy_name in self._strategy_configs:
-            config = self._strategy_configs[strategy_name].copy()
+            _config = self._strategy_configs[strategy_name].copy()
         else:
             # 从默认策略中查找
             default_strategies = self._default_config.get("default_strategies", [])
-            config = None
+            _config = None
             for strategy in default_strategies:
                 if strategy.get("name") == strategy_name:
-                    config = strategy.copy()
+                    _config = strategy.copy()
                     break
 
             if not config:

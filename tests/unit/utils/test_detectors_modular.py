@@ -21,7 +21,7 @@ class TestBaseModule:
         """测试异常检测结果创建"""
         from src.data.quality.detectors.base import AnomalyDetectionResult
 
-        result = AnomalyDetectionResult(
+        _result = AnomalyDetectionResult(
             table_name="test_table",
             detection_method="3sigma",
             anomaly_type="statistical_outlier",
@@ -40,7 +40,7 @@ class TestBaseModule:
         """测试异常检测结果方法"""
         from src.data.quality.detectors.base import AnomalyDetectionResult
 
-        result = AnomalyDetectionResult(
+        _result = AnomalyDetectionResult(
             table_name="test_table",
             detection_method="3sigma",
             anomaly_type="statistical_outlier",
@@ -52,7 +52,7 @@ class TestBaseModule:
         assert result.anomalous_records[0]["index"] == 1
 
         # 测试设置统计信息
-        stats = {"mean": 50.0, "std": 10.0, "outliers_count": 1}
+        _stats = {"mean": 50.0, "std": 10.0, "outliers_count": 1}
         result.set_statistics(stats)
         assert result.statistics == stats
 
@@ -91,7 +91,7 @@ class TestStatisticalDetector:
         outliers = [150, -50]  # 明显的异常值
         test_data = pd.Series(normal_data + outliers)
 
-        result = detector.detect_outliers_3sigma(test_data, "test_table", "test_column")
+        _result = detector.detect_outliers_3sigma(test_data, "test_table", "test_column")
 
         assert result.table_name == "test_table"
         assert result.detection_method == "3sigma"
@@ -108,7 +108,7 @@ class TestStatisticalDetector:
         # 创建测试数据
         test_data = pd.Series([10, 12, 11, 13, 9, 14, 100, 8, 15, 11])
 
-        result = detector.detect_outliers_iqr(test_data, "test_table", "test_column")
+        _result = detector.detect_outliers_iqr(test_data, "test_table", "test_column")
 
         assert result.detection_method == "iqr"
         assert result.anomaly_type == "statistical_outlier"
@@ -125,7 +125,7 @@ class TestStatisticalDetector:
         baseline_data = pd.Series(np.random.normal(0, 1, 1000))
         current_data = pd.Series(np.random.normal(2, 1, 1000))  # 均值偏移
 
-        result = detector.detect_distribution_shift(
+        _result = detector.detect_distribution_shift(
             baseline_data, current_data, "test_table", "test_column"
         )
 
@@ -175,7 +175,7 @@ class TestMachineLearningDetector:
             columns=["feature1", "feature2", "feature3"],
         )
 
-        result = detector.detect_anomalies_isolation_forest(test_data, "test_table")
+        _result = detector.detect_anomalies_isolation_forest(test_data, "test_table")
 
         assert result.table_name == "test_table"
         assert result.detection_method == "isolation_forest"
@@ -197,7 +197,7 @@ class TestMachineLearningDetector:
         noise = np.random.uniform(-5, 5, (10, 2))  # 噪声点
         test_data = pd.DataFrame(np.vstack([cluster_data, noise]), columns=["x", "y"])
 
-        result = detector.detect_anomalies_clustering(test_data, "test_table", eps=0.5)
+        _result = detector.detect_anomalies_clustering(test_data, "test_table", eps=0.5)
 
         assert result.detection_method == "dbscan_clustering"
         assert result.anomaly_type == "clustering_outlier"

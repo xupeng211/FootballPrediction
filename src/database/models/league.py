@@ -47,11 +47,11 @@ class League(BaseModel):
     is_active = Column(Boolean, default=True, nullable=False, comment="是否活跃")
 
     # 关系定义
-    teams = relationship(
+    _teams = relationship(
         "Team", back_populates="league", lazy="dynamic", cascade="all, delete-orphan"
     )
 
-    matches = relationship("Match", back_populates="league", lazy="dynamic")
+    _matches = relationship("Match", back_populates="league", lazy="dynamic")
 
     # 索引定义
     __table_args__ = (

@@ -73,7 +73,7 @@ def get_all_stats() -> dict:
     Returns:
         dict: 统计信息字典
     """
-    stats = {}
+    _stats = {}
     for name, cache in CACHES.items():
         stats[name] = cache.get_stats()
     return stats

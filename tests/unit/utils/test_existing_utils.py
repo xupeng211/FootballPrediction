@@ -84,11 +84,11 @@ class TestExistingModules:
         # 测试可能的格式化函数
         if hasattr(formatters, "format_datetime"):
             dt = datetime.now(timezone.utc)
-            result = formatters.format_datetime(dt)
+            _result = formatters.format_datetime(dt)
             assert isinstance(result, str)
 
         if hasattr(formatters, "format_currency"):
-            result = formatters.format_currency(123.45, "USD")
+            _result = formatters.format_currency(123.45, "USD")
             assert isinstance(result, str)
             assert "123" in result or "USD" in result
 
@@ -101,15 +101,15 @@ class TestExistingModules:
 
         # 测试辅助函数
         if hasattr(helpers, "generate_id"):
-            result = helpers.generate_id()
+            _result = helpers.generate_id()
             assert isinstance(result, (str, int))
 
         if hasattr(helpers, "is_valid_email"):
-            result = helpers.is_valid_email("test@example.com")
+            _result = helpers.is_valid_email("test@example.com")
             assert isinstance(result, bool)
 
         if hasattr(helpers, "safe_filename"):
-            result = helpers.safe_filename("test file.txt")
+            _result = helpers.safe_filename("test file.txt")
             assert isinstance(result, str)
             assert " " not in result
 
@@ -122,7 +122,7 @@ class TestExistingModules:
 
         # 测试国际化功能
         if hasattr(i18n, "translate"):
-            result = i18n.translate("hello")
+            _result = i18n.translate("hello")
             assert isinstance(result, str)
 
         if hasattr(i18n, "set_language"):
@@ -141,15 +141,15 @@ class TestExistingModules:
 
         # 测试响应创建函数
         if hasattr(response, "success_response"):
-            result = response.success_response({"data": "test"})
+            _result = response.success_response({"data": "test"})
             assert isinstance(result, dict)
 
         if hasattr(response, "error_response"):
-            result = response.error_response("Error message")
+            _result = response.error_response("Error message")
             assert isinstance(result, dict)
 
         if hasattr(response, "json_response"):
-            result = response.json_response({"key": "value"})
+            _result = response.json_response({"key": "value"})
             assert isinstance(result, dict)
 
     def test_retry_module(self):
@@ -171,8 +171,8 @@ class TestExistingModules:
                     raise Exception("Fail")
                 return "success"
 
-            result = failing_function()
-            assert result == "success"
+            _result = failing_function()
+            assert _result == "success"
             assert call_count == 3
 
     def test_warning_filters_module(self):
@@ -235,7 +235,7 @@ class TestPythonBuiltins:
 
     def test_json_operations(self):
         """测试JSON操作"""
-        data = {"name": "test", "items": [1, 2, 3]}
+        _data = {"name": "test", "items": [1, 2, 3]}
         json_str = json.dumps(data)
         parsed = json.loads(json_str)
         assert parsed == data
@@ -307,11 +307,11 @@ class TestPythonBuiltins:
         from itertools import chain, combinations
 
         # chain
-        result = list(chain([1, 2], [3, 4]))
-        assert result == [1, 2, 3, 4]
+        _result = list(chain([1, 2], [3, 4]))
+        assert _result == [1, 2, 3, 4]
 
         # combinations
-        result = list(combinations([1, 2, 3], 2))
+        _result = list(combinations([1, 2, 3], 2))
         assert (1, 2) in result
 
     def test_hash_operations(self):
@@ -338,8 +338,8 @@ class TestPythonBuiltins:
 
         pattern = r"\d+"
         text = "abc123def"
-        matches = re.findall(pattern, text)
-        assert matches == ["123"]
+        _matches = re.findall(pattern, text)
+        assert _matches == ["123"]
 
     def test_decimal_operations(self):
         """测试Decimal操作"""
@@ -361,7 +361,7 @@ class TestPythonBuiltins:
         """测试统计操作"""
         import statistics
 
-        data = [1, 2, 3, 4, 5]
+        _data = [1, 2, 3, 4, 5]
         assert statistics.mean(data) == 3
         assert statistics.median(data) == 3
         assert statistics.mode(data) == 1
@@ -370,7 +370,7 @@ class TestPythonBuiltins:
         """测试二分查找操作"""
         import bisect
 
-        data = [1, 3, 5, 7, 9]
+        _data = [1, 3, 5, 7, 9]
         index = bisect.bisect_left(data, 5)
         assert index == 2
         index = bisect.bisect_right(data, 5)
@@ -380,7 +380,7 @@ class TestPythonBuiltins:
         """测试堆操作"""
         import heapq
 
-        data = [5, 1, 3, 2, 4]
+        _data = [5, 1, 3, 2, 4]
         heapq.heapify(data)
         assert data[0] == 1
 
@@ -400,7 +400,7 @@ class TestPythonBuiltins:
         """测试序列化操作"""
         import pickle
 
-        data = {"key": "value", "number": 42}
+        _data = {"key": "value", "number": 42}
         serialized = pickle.dumps(data)
         deserialized = pickle.loads(serialized)
         assert deserialized == data
@@ -412,8 +412,8 @@ class TestPythonBuiltins:
         sio = StringIO()
         sio.write("Hello")
         sio.write(" World")
-        result = sio.getvalue()
-        assert result == "Hello World"
+        _result = sio.getvalue()
+        assert _result == "Hello World"
 
     def test_sys_operations(self):
         """测试系统操作"""
@@ -451,8 +451,8 @@ class TestPythonBuiltins:
         from functools import reduce, lru_cache
 
         # reduce
-        result = reduce(lambda x, y: x + y, [1, 2, 3, 4])
-        assert result == 10
+        _result = reduce(lambda x, y: x + y, [1, 2, 3, 4])
+        assert _result == 10
 
         # lru_cache
         @lru_cache(maxsize=128)

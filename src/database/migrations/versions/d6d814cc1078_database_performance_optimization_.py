@@ -496,7 +496,7 @@ def upgrade() -> None:
     logger.info("5. 验证基础表存在并重新创建外键约束...")
 
     # 首先验证基础表是否存在
-    result = conn.execute(
+    _result = conn.execute(
         text(  # type: ignore
             """
         SELECT table_name

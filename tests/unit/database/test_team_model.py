@@ -217,7 +217,7 @@ class TestTeamModel:
     def test_team_statistics(self, sample_team):
         """测试球队统计信息"""
         # 添加统计属性
-        stats = {
+        _stats = {
             "matches_played": 38,
             "wins": 20,
             "draws": 10,
@@ -244,12 +244,12 @@ class TestTeamModel:
 
         # 测试异步保存（如果有）
         if hasattr(sample_team, "async_save"):
-            result = await sample_team.async_save(mock_session)
+            _result = await sample_team.async_save(mock_session)
             assert result is not None
 
     def test_team_batch_creation(self):
         """测试批量创建球队"""
-        teams = []
+        _teams = []
         countries = ["England", "Spain", "Germany", "France", "Italy"]
 
         for i in range(5):

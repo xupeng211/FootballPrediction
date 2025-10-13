@@ -44,7 +44,7 @@ class TestEventHealthCheck:
         with patch("src.api.events.get_event_application") as mock_get_app:
             mock_get_app.return_value = mock_app
 
-            result = await event_health_check()
+            _result = await event_health_check()
 
             assert result["status"] == "healthy"
             assert result["event_handlers"] == 5
@@ -63,7 +63,7 @@ class TestEventHealthCheck:
         with patch("src.api.events.get_event_application") as mock_get_app:
             mock_get_app.return_value = mock_app
 
-            result = await event_health_check()
+            _result = await event_health_check()
 
             assert result["status"] == "unhealthy"
             assert "error" in result
@@ -102,7 +102,7 @@ class TestGetEventStatistics:
             mock_get_bus.return_value = mock_bus
             mock_find_handler.side_effect = [None, None]  # 没有找到处理器
 
-            result = await get_event_statistics()
+            _result = await get_event_statistics()
 
             assert result["total_events"] == 1000
             assert result["events_per_second"] == 10.5
@@ -140,7 +140,7 @@ class TestGetEventStatistics:
                 mock_analytics_handler,
             ]
 
-            result = await get_event_statistics()
+            _result = await get_event_statistics()
 
             assert result["total_events"] == 500
             assert result["metrics"]["cpu_usage"] == 45.5
@@ -162,7 +162,7 @@ class TestGetEventStatistics:
             mock_get_bus.return_value = mock_bus
             mock_find_handler.return_value = None  # 没有找到任何处理器
 
-            result = await get_event_statistics()
+            _result = await get_event_statistics()
 
             assert result["total_events"] == 100
             assert "metrics" not in result
@@ -310,7 +310,7 @@ class TestEventsAPIIntegration:
 
             # 多次调用统计
             for i in range(3):
-                result = await get_event_statistics()
+                _result = await get_event_statistics()
                 assert result["metrics"]["requests"] == 100 * (i + 1)
 
     def test_router_tags_and_metadata(self):
@@ -379,7 +379,7 @@ class TestEventsAPIIntegration:
                 mock_analytics_handler,
             ]
 
-            result = await get_event_statistics()
+            _result = await get_event_statistics()
 
             # 验证基础统计
             assert result["total_events"] == 10000

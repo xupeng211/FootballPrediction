@@ -25,7 +25,7 @@ class TestUserProfileService:
     @pytest.fixture
     def sample_user(self):
         """示例用户"""
-        user = Mock(spec=User)
+        _user = Mock(spec=User)
         user.id = "user_123"
         user.username = "testuser"
         user.display_name = "Test User"
@@ -34,7 +34,7 @@ class TestUserProfileService:
     @pytest.fixture
     def sample_user_with_profile(self):
         """示例用户（带profile属性）"""
-        user = Mock()
+        _user = Mock()
         user.id = "user_456"
         user.username = "user456"
         user.profile = Mock()
@@ -52,7 +52,7 @@ class TestUserProfileService:
     async def test_initialize_success(self, service):
         """测试：成功初始化"""
         # When
-        result = await service.initialize()
+        _result = await service.initialize()
 
         # Then
         assert result is True
@@ -64,7 +64,7 @@ class TestUserProfileService:
         # Given
         with patch.object(service, "_on_initialize", return_value=False):
             # When
-            result = await service.initialize()
+            _result = await service.initialize()
 
             # Then
             assert result is False
@@ -187,7 +187,7 @@ class TestUserProfileService:
         await service.initialize()
 
         # When
-        result = await service.update_profile("nonexistent", {"test": "value"})
+        _result = await service.update_profile("nonexistent", {"test": "value"})
 
         # Then
         assert result is None
@@ -259,7 +259,7 @@ class TestUserProfileService:
         }
 
         # When
-        result = service.create_profile(user_data)
+        _result = service.create_profile(user_data)
 
         # Then
         assert result["status"] == "created"
@@ -270,7 +270,7 @@ class TestUserProfileService:
     def test_create_profile_empty_data(self, service):
         """测试：创建画像（空数据）"""
         # When
-        result = service.create_profile({})
+        _result = service.create_profile({})
 
         # Then
         assert result["status"] == "error"
@@ -282,7 +282,7 @@ class TestUserProfileService:
         user_data = {"name": "Test", "email": "test@example.com"}
 
         # When
-        result = service.create_profile(user_data)
+        _result = service.create_profile(user_data)
 
         # Then
         assert result["status"] == "error"
@@ -294,7 +294,7 @@ class TestUserProfileService:
         service.create_profile(user_data)
 
         # When
-        result = service.delete_profile("delete_me")
+        _result = service.delete_profile("delete_me")
 
         # Then
         assert result["status"] == "deleted"
@@ -303,7 +303,7 @@ class TestUserProfileService:
     def test_delete_profile_not_exists(self, service):
         """测试：删除不存在的画像"""
         # When
-        result = service.delete_profile("nonexistent")
+        _result = service.delete_profile("nonexistent")
 
         # Then
         assert result["status"] == "not_found"
@@ -377,7 +377,7 @@ class TestUserProfileService:
     def test_user_model(self):
         """测试：User模型"""
         # When
-        user = User(id="user123", username="testuser")
+        _user = User(id="user123", username="testuser")
 
         # Then
         assert user.id == "user123"

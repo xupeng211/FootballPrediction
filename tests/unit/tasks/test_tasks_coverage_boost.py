@@ -117,7 +117,7 @@ class TestDataCollectionTasksCoverage:
             if hasattr(collect_fixtures, "delay"):
                 with patch.object(collect_fixtures, "delay") as mock_delay:
                     mock_delay.return_value = Mock(id="task-123")
-                    result = collect_fixtures.delay(league_id=1)
+                    _result = collect_fixtures.delay(league_id=1)
                     assert result.id == "task-123"
                     mock_delay.assert_called_once_with(league_id=1)
 
@@ -137,7 +137,7 @@ class TestDataCollectionTasksCoverage:
             if hasattr(collect_odds, "delay"):
                 with patch.object(collect_odds, "delay") as mock_delay:
                     mock_delay.return_value = Mock(id="odds-task-456")
-                    result = collect_odds.delay(match_id=123)
+                    _result = collect_odds.delay(match_id=123)
                     assert result.id == "odds-task-456"
 
         except ImportError:
@@ -155,7 +155,7 @@ class TestDataCollectionTasksCoverage:
             if hasattr(collect_scores, "delay"):
                 with patch.object(collect_scores, "delay") as mock_delay:
                     mock_delay.return_value = Mock(status="SUCCESS")
-                    result = collect_scores.delay(date="2025-01-13")
+                    _result = collect_scores.delay(date="2025-01-13")
                     assert result.status == "SUCCESS"
 
         except ImportError:
@@ -173,7 +173,7 @@ class TestDataCollectionTasksCoverage:
             if hasattr(collect_stats, "apply_async"):
                 with patch.object(collect_stats, "apply_async") as mock_apply:
                     mock_apply.return_value = Mock(id="stats-789")
-                    result = collect_stats.apply_async(
+                    _result = collect_stats.apply_async(
                         kwargs={"team_id": 42}, countdown=60
                     )
                     assert result.id == "stats-789"
@@ -225,9 +225,9 @@ class TestMaintenanceTasksCoverage:
             # 模拟清理任务
             with patch.object(cleanup_old_data, "delay") as mock_delay:
                 mock_delay.return_value = Mock(
-                    id="cleanup-123", result={"deleted_records": 1000}
+                    id="cleanup-123", _result ={"deleted_records": 1000}
                 )
-                result = cleanup_old_data.delay(days=30)
+                _result = cleanup_old_data.delay(days=30)
                 assert result.result["deleted_records"] == 1000
 
         except ImportError:
@@ -247,9 +247,9 @@ class TestMaintenanceTasksCoverage:
                 with patch.object(backup_database, "delay") as mock_delay:
                     mock_delay.return_value = Mock(
                         id=f"backup-{backup_type}-456",
-                        result={"backup_file": f"backup_{backup_type}.sql"},
+                        _result ={"backup_file": f"backup_{backup_type}.sql"},
                     )
-                    result = backup_database.delay(type=backup_type)
+                    _result = backup_database.delay(type=backup_type)
                     assert result.result["backup_file"] == f"backup_{backup_type}.sql"
 
         except ImportError:
@@ -265,9 +265,9 @@ class TestMaintenanceTasksCoverage:
             # 模拟统计更新
             with patch.object(update_statistics, "apply_async") as mock_apply:
                 mock_apply.return_value = Mock(
-                    id="stats-789", result={"updated_stats": 50}
+                    id="stats-789", _result ={"updated_stats": 50}
                 )
-                result = update_statistics.apply_async(
+                _result = update_statistics.apply_async(
                     kwargs={"force": True}, countdown=300
                 )
                 assert result.result["updated_stats"] == 50
@@ -316,8 +316,8 @@ class TestMonitoringTasksCoverage:
             }
 
             with patch.object(check_system_health, "delay") as mock_delay:
-                mock_delay.return_value = Mock(id="health-123", result=health_status)
-                result = check_system_health.delay()
+                mock_delay.return_value = Mock(id="health-123", _result =health_status)
+                _result = check_system_health.delay()
                 assert result.result["database"] == "healthy"
                 assert result.result["queue"] == "warning"
 
@@ -335,9 +335,9 @@ class TestMonitoringTasksCoverage:
             for level in alert_levels:
                 with patch.object(send_alert, "delay") as mock_delay:
                     mock_delay.return_value = Mock(
-                        id=f"alert-{level}-456", result={"sent": True, "recipients": 3}
+                        id=f"alert-{level}-456", _result ={"sent": True, "recipients": 3}
                     )
-                    result = send_alert.delay(
+                    _result = send_alert.delay(
                         level=level,
                         message=f"Test {level} alert",
                         service="test-service",
@@ -362,8 +362,8 @@ class TestMonitoringTasksCoverage:
             }
 
             with patch.object(collect_metrics, "delay") as mock_delay:
-                mock_delay.return_value = Mock(id="metrics-789", result=metrics)
-                result = collect_metrics.delay()
+                mock_delay.return_value = Mock(id="metrics-789", _result =metrics)
+                _result = collect_metrics.delay()
                 assert result.result["cpu_usage"] == 45.5
                 assert result.result["active_users"] == 150
 
@@ -482,7 +482,7 @@ class TestTaskUtilsCoverage:
                     "status": "SUCCESS",
                     "result": {"processed": 100},
                 }
-                result = get_task_status("test-123")
+                _result = get_task_status("test-123")
                 assert result["status"] == "SUCCESS"
 
         except ImportError:
@@ -555,7 +555,7 @@ class TestTaskSchedulingCoverage:
                         "task_id": f"scheduled-{schedule['name']}-123",
                         "next_run": datetime.now() + timedelta(hours=1),
                     }
-                    result = schedule_task(
+                    _result = schedule_task(
                         task_name="test_task", schedule=schedule["schedule"]
                     )
                     assert "task_id" in result
@@ -619,7 +619,7 @@ class TestTaskErrorHandlingCoverage:
             # 测试错误日志
             with patch.object(log_error, "__call__") as mock_log:
                 mock_log.return_value = {"logged": True, "level": "ERROR"}
-                result = log_error(
+                _result = log_error(
                     message="Test error",
                     task_id="task-123",
                     exception=ValueError("Test exception"),
@@ -633,7 +633,7 @@ class TestTaskErrorHandlingCoverage:
                     "level": "CRITICAL",
                     "notification_sent": True,
                 }
-                result = log_critical(
+                _result = log_critical(
                     message="Critical system error",
                     context={"service": "data_collector"},
                 )
@@ -685,19 +685,19 @@ class TestTaskQueueManagementCoverage:
             # 测试清空队列
             with patch.object(clear_queue, "__call__") as mock_clear:
                 mock_clear.return_value = {"cleared": 42}
-                result = clear_queue("default")
+                _result = clear_queue("default")
                 assert result["cleared"] == 42
 
             # 测试暂停队列
             with patch.object(pause_queue, "__call__") as mock_pause:
                 mock_pause.return_value = {"paused": True}
-                result = pause_queue("high_priority")
+                _result = pause_queue("high_priority")
                 assert result["paused"] is True
 
             # 测试恢复队列
             with patch.object(resume_queue, "__call__") as mock_resume:
                 mock_resume.return_value = {"resumed": True}
-                result = resume_queue("high_priority")
+                _result = resume_queue("high_priority")
                 assert result["resumed"] is True
 
         except ImportError:
@@ -729,7 +729,7 @@ class TestTasksIntegrationCoverage:
 
                         # 模拟链式调用
                         result1 = collect_all_data.apply_async()
-                        result2 = update_statistics.apply_async()
+                        _result2 = update_statistics.apply_async()
 
                         assert result1.id == "collect-123"
                         assert result2.id == "update-456"
@@ -769,19 +769,19 @@ class TestTasksIntegrationCoverage:
             # 测试成功回调
             with patch.object(on_task_success, "__call__") as mock_success:
                 mock_success.return_value = {"callback": "executed"}
-                result = on_task_success(task_id="123", result="success")
+                _result = on_task_success(task_id="123", _result ="success")
                 assert result["callback"] == "executed"
 
             # 测试失败回调
             with patch.object(on_task_failure, "__call__") as mock_failure:
                 mock_failure.return_value = {"callback": "executed", "alert_sent": True}
-                result = on_task_failure(task_id="456", error="error message")
+                _result = on_task_failure(task_id="456", error="error message")
                 assert result["alert_sent"] is True
 
             # 测试重试回调
             with patch.object(on_task_retry, "__call__") as mock_retry:
                 mock_retry.return_value = {"callback": "executed", "retry_count": 1}
-                result = on_task_retry(task_id="789", reason="timeout")
+                _result = on_task_retry(task_id="789", reason="timeout")
                 assert result["retry_count"] == 1
 
         except ImportError:
@@ -804,7 +804,7 @@ class TestTasksIntegrationCoverage:
 
             with patch.object(check_task_queue_health, "__call__") as mock_health:
                 mock_health.return_value = health_data
-                result = check_task_queue_health()
+                _result = check_task_queue_health()
                 assert result["queue_length"] == 150
                 assert result["workers_active"] == 5
 
@@ -823,7 +823,7 @@ class TestTasksIntegrationCoverage:
             # 记录执行时间
             with patch.object(record_task_execution_time, "__call__") as mock_record:
                 mock_record.return_value = {"recorded": True}
-                result = record_task_execution_time(
+                _result = record_task_execution_time(
                     task_name="collect_data", duration=45.2
                 )
                 assert result["recorded"] is True
@@ -835,7 +835,7 @@ class TestTasksIntegrationCoverage:
                     "average_duration": 25.5,
                     "success_rate": 0.98,
                 }
-                stats = get_task_performance_stats()
+                _stats = get_task_performance_stats()
                 assert stats["success_rate"] == 0.98
 
             # 获取最慢任务

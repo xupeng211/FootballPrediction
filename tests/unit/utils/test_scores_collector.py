@@ -81,7 +81,7 @@ class TestScoresCollector:
         }
 
         with patch.object(collector, "_get_http_client", return_value=mock_http_client):
-            result = await collector.collect_live_matches()
+            _result = await collector.collect_live_matches()
 
             assert result is not None
             assert len(result) == 1
@@ -97,7 +97,7 @@ class TestScoresCollector:
         mock_http_client.get.return_value.json.return_value = mock_live_score_data
 
         with patch.object(collector, "_get_http_client", return_value=mock_http_client):
-            result = await collector.collect_match_score(match_id=12345)
+            _result = await collector.collect_match_score(match_id=12345)
 
             assert result is not None
             assert result["match_id"] == 12345
@@ -115,7 +115,7 @@ class TestScoresCollector:
         }
 
         with patch.object(collector, "_get_http_client", return_value=mock_http_client):
-            result = await collector.collect_finished_matches(date="2025-10-05")
+            _result = await collector.collect_finished_matches(date="2025-10-05")
 
             assert result is not None
             assert len(result) == 1
@@ -148,7 +148,7 @@ class TestScoresCollector:
     @pytest.mark.asyncio
     async def test_collect_match_statistics(self, collector, mock_live_score_data):
         """测试收集比赛统计数据"""
-        stats = await collector._collect_match_statistics(mock_live_score_data)
+        _stats = await collector._collect_match_statistics(mock_live_score_data)
 
         assert stats is not None
         assert "possession" in stats
@@ -175,7 +175,7 @@ class TestScoresCollector:
         }
 
         with patch.object(collector, "_get_http_client", return_value=mock_http_client):
-            result = await collector.collect_fixtures(date="2025-10-05")
+            _result = await collector.collect_fixtures(date="2025-10-05")
 
             assert result is not None
             assert len(result) == 1
@@ -201,7 +201,7 @@ class TestScoresCollector:
         }
 
         with patch.object(collector, "_get_http_client", return_value=mock_http_client):
-            result = await collector.collect_historical_scores(
+            _result = await collector.collect_historical_scores(
                 team_id=10, start_date="2025-09-01", end_date="2025-09-30"
             )
 
@@ -296,7 +296,7 @@ class TestScoresCollector:
         }
 
         with patch.object(collector, "_get_http_client", return_value=mock_http_client):
-            result = await collector.collect_lineup(match_id=12345)
+            _result = await collector.collect_lineup(match_id=12345)
 
             assert result is not None
             assert result["home_team"]["formation"] == "4-3-3"
@@ -327,7 +327,7 @@ class TestScoresCollector:
         }
 
         with patch.object(collector, "_get_http_client", return_value=mock_http_client):
-            result = await collector.collect_head_to_head(
+            _result = await collector.collect_head_to_head(
                 home_team_id=10, away_team_id=20
             )
 
@@ -342,7 +342,7 @@ class TestScoresCollector:
         mock_cache.set.return_value = True
 
         with patch.object(collector, "get_cache_manager", return_value=mock_cache):
-            result = await collector._cache_score_data(mock_live_score_data)
+            _result = await collector._cache_score_data(mock_live_score_data)
 
             assert result is True
             mock_cache.set.assert_called_once()
@@ -359,9 +359,9 @@ class TestScoresCollector:
         mock_cache.get.return_value = cached_data
 
         with patch.object(collector, "get_cache_manager", return_value=mock_cache):
-            result = await collector.get_cached_score(match_id=12345)
+            _result = await collector.get_cached_score(match_id=12345)
 
-            assert result == cached_data
+            assert _result == cached_data
             mock_cache.get.assert_called_once()
 
     @pytest.mark.asyncio
@@ -371,7 +371,7 @@ class TestScoresCollector:
         mock_http_client.get.side_effect = Exception("API error")
 
         with patch.object(collector, "_get_http_client", return_value=mock_http_client):
-            result = await collector.collect_match_score(match_id=12345)
+            _result = await collector.collect_match_score(match_id=12345)
 
             assert result is None
             collector.logger.error.assert_called()
@@ -407,7 +407,7 @@ class TestScoresCollector:
         }
 
         with patch.object(collector, "_get_http_client", return_value=mock_http_client):
-            result = await collector.collect_player_stats(match_id=12345)
+            _result = await collector.collect_player_stats(match_id=12345)
 
             assert result is not None
             assert len(result["player_stats"]) == 1
@@ -438,7 +438,7 @@ class TestScoresCollector:
         minute = 65
         home_advantage = 0.2
 
-        prediction = collector._predict_final_score(
+        _prediction = collector._predict_final_score(
             current_score=current_score, minute=minute, home_advantage=home_advantage
         )
 

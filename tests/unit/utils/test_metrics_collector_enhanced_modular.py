@@ -340,10 +340,10 @@ def test_decorators():
             return "value"
         return None
 
-    result = cache_get("exists")
-    assert result == "value"
+    _result = cache_get("exists")
+    assert _result == "value"
 
-    result = cache_get("not_exists")
+    _result = cache_get("not_exists")
     assert result is None
 
     # 测试通用性能装饰器
@@ -351,8 +351,8 @@ def test_decorators():
     def test_function():
         return "test"
 
-    result = test_function()
-    assert result == "test"
+    _result = test_function()
+    assert _result == "test"
 
 
 @pytest.mark.asyncio
@@ -373,6 +373,6 @@ async def test_async_decorators():
 
         return Result()
 
-    result = await predict_match(123)
+    _result = await predict_match(123)
     assert result.predicted_result == "home"
     assert result.confidence_score == 0.85

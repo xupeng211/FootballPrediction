@@ -110,7 +110,7 @@ class AuditEvent:
         self, action: str, user: str, severity: AuditSeverity, details: Dict[str, Any]
     ):
         self.action = action
-        self.user = user
+        self._user = user
         self.severity = severity
         self.details = details
         self.timestamp = datetime.utcnow()

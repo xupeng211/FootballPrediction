@@ -20,38 +20,38 @@ class TestCompatibility:
 
     def test_normalize_column_name_sqlite(self):
         """测试：SQLite列名规范化"""
-        result = Compatibility.normalize_column_name("TestColumn", "sqlite")
-        assert result == "testcolumn"
+        _result = Compatibility.normalize_column_name("TestColumn", "sqlite")
+        assert _result == "testcolumn"
 
     def test_normalize_column_name_postgresql(self):
         """测试：PostgreSQL列名规范化"""
-        result = Compatibility.normalize_column_name("TestColumn", "postgresql")
-        assert result == "testcolumn"
+        _result = Compatibility.normalize_column_name("TestColumn", "postgresql")
+        assert _result == "testcolumn"
 
     def test_normalize_column_name_default(self):
         """测试：默认列名规范化"""
-        result = Compatibility.normalize_column_name("TestColumn")
-        assert result == "testcolumn"
+        _result = Compatibility.normalize_column_name("TestColumn")
+        assert _result == "testcolumn"
 
     def test_get_datetime_string_postgresql(self):
         """测试：获取PostgreSQL日期时间字符串"""
-        result = Compatibility.get_datetime_string("postgresql")
-        assert result == "NOW()"
+        _result = Compatibility.get_datetime_string("postgresql")
+        assert _result == "NOW()"
 
     def test_get_datetime_string_sqlite(self):
         """测试：获取SQLite日期时间字符串"""
-        result = Compatibility.get_datetime_string("sqlite")
-        assert result == "datetime('now')"
+        _result = Compatibility.get_datetime_string("sqlite")
+        assert _result == "datetime('now')"
 
     def test_get_datetime_string_default(self):
         """测试：获取默认日期时间字符串"""
-        result = Compatibility.get_datetime_string()
-        assert result == "datetime('now')"
+        _result = Compatibility.get_datetime_string()
+        assert _result == "datetime('now')"
 
     def test_get_datetime_string_mysql(self):
         """测试：获取MySQL日期时间字符串"""
-        result = Compatibility.get_datetime_string("mysql")
-        assert result == "datetime('now')"  # 默认到SQLite格式
+        _result = Compatibility.get_datetime_string("mysql")
+        assert _result == "datetime('now')"  # 默认到SQLite格式
 
 
 class TestCompatibleQueryBuilder:
@@ -68,14 +68,14 @@ class TestCompatibleQueryBuilder:
     def test_build_insert_query_single_field(self):
         """测试：构建插入查询（单字段）"""
         builder = CompatibleQueryBuilder()
-        data = {"name": "test"}
+        _data = {"name": "test"}
         query = builder.build_insert_query("users", data)
         assert query == "INSERT INTO users (name) VALUES (:name)"
 
     def test_build_insert_query_multiple_fields(self):
         """测试：构建插入查询（多字段）"""
         builder = CompatibleQueryBuilder()
-        data = {"name": "test", "age": 25, "email": "test@example.com"}
+        _data = {"name": "test", "age": 25, "email": "test@example.com"}
         query = builder.build_insert_query("users", data)
         expected = "INSERT INTO users (name, age, email) VALUES (:name, :age, :email)"
         assert query == expected
@@ -83,21 +83,21 @@ class TestCompatibleQueryBuilder:
     def test_build_insert_query_empty_data(self):
         """测试：构建插入查询（空数据）"""
         builder = CompatibleQueryBuilder()
-        data = {}
+        _data = {}
         query = builder.build_insert_query("users", data)
         assert query == "INSERT INTO users () VALUES ()"
 
     def test_build_update_query_single_field(self):
         """测试：构建更新查询（单字段）"""
         builder = CompatibleQueryBuilder()
-        data = {"name": "updated"}
+        _data = {"name": "updated"}
         query = builder.build_update_query("users", data, "id = 1")
         assert query == "UPDATE users SET name = :name WHERE id = 1"
 
     def test_build_update_query_multiple_fields(self):
         """测试：构建更新查询（多字段）"""
         builder = CompatibleQueryBuilder()
-        data = {"name": "updated", "age": 30}
+        _data = {"name": "updated", "age": 30}
         query = builder.build_update_query("users", data, "id = 1")
         expected = "UPDATE users SET name = :name, age = :age WHERE id = 1"
         assert query == expected
@@ -105,14 +105,14 @@ class TestCompatibleQueryBuilder:
     def test_build_update_query_empty_data(self):
         """测试：构建更新查询（空数据）"""
         builder = CompatibleQueryBuilder()
-        data = {}
+        _data = {}
         query = builder.build_update_query("users", data, "id = 1")
         assert query == "UPDATE users SET  WHERE id = 1"
 
     def test_build_update_query_complex_where(self):
         """测试：构建更新查询（复杂WHERE条件）"""
         builder = CompatibleQueryBuilder()
-        data = {"status": "active"}
+        _data = {"status": "active"}
         where_clause = "id = 1 AND status IN ('pending', 'inactive')"
         query = builder.build_update_query("users", data, where_clause)
         expected = "UPDATE users SET status = :status WHERE id = 1 AND status IN ('pending', 'inactive')"
@@ -204,7 +204,7 @@ class TestModuleStructure:
 
         # 静态方法可以在类上直接调用，不需要实例
         result1 = Compatibility.normalize_column_name("test")
-        result2 = Compatibility.get_datetime_string("sqlite")
+        _result2 = Compatibility.get_datetime_string("sqlite")
 
         assert result1 is not None
         assert result2 is not None
@@ -231,7 +231,7 @@ class TestQueryBuilderDialectHandling:
 
     def test_query_building_ignores_dialect(self):
         """测试：查询构建忽略方言（当前实现）"""
-        data = {"name": "test"}
+        _data = {"name": "test"}
 
         sqlite_builder = CompatibleQueryBuilder("sqlite")
         pg_builder = CompatibleQueryBuilder("postgresql")
@@ -248,7 +248,7 @@ class TestQueryBuilderDialectHandling:
         builder = CompatibleQueryBuilder()
 
         # 带模式的表名
-        data = {"value": 1}
+        _data = {"value": 1}
         query = builder.build_insert_query("schema.table_name", data)
         assert query == "INSERT INTO schema.table_name (value) VALUES (:value)"
 
@@ -261,12 +261,12 @@ class TestQueryBuilderDialectHandling:
         builder = CompatibleQueryBuilder()
 
         # 带空格的列名
-        data = {"column name": "value"}
+        _data = {"column name": "value"}
         query = builder.build_insert_query("table", data)
         assert query == "INSERT INTO table (column name) VALUES (:column name)"
 
         # 带特殊字符的列名
-        data = {"column-name": "value"}
+        _data = {"column-name": "value"}
         query = builder.build_insert_query("table", data)
         assert query == "INSERT INTO table (column-name) VALUES (:column-name)"
 
@@ -276,8 +276,8 @@ class TestCompatibilityEdgeCases:
 
     def test_normalize_empty_column_name(self):
         """测试：规范化空列名"""
-        result = Compatibility.normalize_column_name("")
-        assert result == ""
+        _result = Compatibility.normalize_column_name("")
+        assert _result == ""
 
     def test_normalize_none_column_name(self):
         """测试：规范化None列名"""
@@ -286,16 +286,16 @@ class TestCompatibilityEdgeCases:
 
     def test_datetime_string_empty_dialect(self):
         """测试：空方言的日期时间字符串"""
-        result = Compatibility.get_datetime_string("")
-        assert result == "datetime('now')"  # 默认到SQLite
+        _result = Compatibility.get_datetime_string("")
+        assert _result == "datetime('now')"  # 默认到SQLite
 
     def test_datetime_string_case_insensitive(self):
         """测试：日期时间字符串（大小写不敏感）"""
         # 实际实现是简单的字符串比较，不是大小写不敏感的
         result1 = Compatibility.get_datetime_string("PostgreSQL")
-        result2 = Compatibility.get_datetime_string("postgresql")
+        _result2 = Compatibility.get_datetime_string("postgresql")
         # 只有精确匹配"postgresql"才会返回NOW()
-        assert result2 == "NOW()"
+        assert _result2 == "NOW()"
         # 大写版本会返回默认的SQLite格式
         assert result1 == "datetime('now')"
 
@@ -307,7 +307,7 @@ class TestCompatibilityEdgeCases:
     def test_builder_methods_with_none_dialect(self):
         """测试：None方言的构建器方法"""
         builder = CompatibleQueryBuilder(None)
-        data = {"name": "test"}
+        _data = {"name": "test"}
 
         insert_query = builder.build_insert_query("users", data)
         update_query = builder.build_update_query("users", data, "id = 1")

@@ -43,7 +43,7 @@ class FastAsyncSession:
     """快速异步会话 Mock"""
 
     def __init__(self):
-        self.data = {}
+        self._data = {}
         self.committed = False
         self.rolled_back = False
 
@@ -92,7 +92,7 @@ class FastRedisManager:
     """快速 Redis 管理器 Mock"""
 
     def __init__(self):
-        self.data = {}
+        self._data = {}
         self.expiry = {}
         self.operation_count = 0
 

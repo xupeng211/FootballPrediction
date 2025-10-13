@@ -70,7 +70,7 @@ class TestAPIWithServiceIntegration:
 
         # 断言
         if response.status_code == 200:
-            data = response.json()
+            _data = response.json()
             assert "id" in data
             assert data["match_id"] == 1
             assert data["predicted_home_score"] == 2
@@ -109,7 +109,7 @@ class TestAPIWithServiceIntegration:
 
         # 断言
         if response.status_code == 200:
-            data = response.json()
+            _data = response.json()
             assert "matches" in data
             assert len(data["matches"]) >= 0
         else:
@@ -141,7 +141,7 @@ class TestAPIWithServiceIntegration:
 
         # 断言
         if response.status_code in [200, 201]:
-            data = response.json()
+            _data = response.json()
             assert "id" in data or "message" in data
         else:
             # 验证服务层交互
@@ -181,7 +181,7 @@ class TestServiceWithRepositoryIntegration:
             mock_repo_class.return_value = self.mock_prediction_repo
             service = PredictionService()
 
-            result = await service.create_prediction(
+            _result = await service.create_prediction(
                 match_id=1,
                 user_id=1,
                 predicted_home_score=2,
