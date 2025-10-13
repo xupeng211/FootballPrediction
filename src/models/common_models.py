@@ -26,7 +26,7 @@ data_models = api_models  # 别名以保持兼容性
 utils = None  # 临时设置为 None 以避免导入错误
 
 warnings.warn(
-    "直接从 common_models 导入已弃用。" "请从 src/models/common 导入相关类。",
+    "直接从 common_models 导入已弃用。请从 src/models/common 导入相关类。",
     DeprecationWarning,
     stacklevel=2,
 )

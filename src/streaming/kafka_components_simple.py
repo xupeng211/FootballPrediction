@@ -172,7 +172,7 @@ class KafkaCluster:
         return {
             "healthy": True,
             "brokers": {
-                f"broker{i+1}": {"status": "online"} for i in range(len(self.brokers))
+                f"broker{i + 1}": {"status": "online"} for i in range(len(self.brokers))
             },
         }
 

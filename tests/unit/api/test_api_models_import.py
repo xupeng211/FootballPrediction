@@ -4,9 +4,9 @@ def test_api_models_import():
         from src.api.predictions.models import PredictionRequest, PredictionResponse
         from src.api.schemas import HealthResponse
 
-        assert True
+        assert True  # Basic assertion - consider enhancing
     except ImportError:
-        assert True
+        assert True  # Basic assertion - consider enhancing
 
 
 def test_api_models_creation():
@@ -16,4 +16,4 @@ def test_api_models_creation():
         response = APIResponse(success=True)
         assert response.success is True
     except Exception:
-        assert True
+        assert True  # Basic assertion - consider enhancing

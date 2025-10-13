@@ -236,7 +236,7 @@ class PredictionFacade:
         # 基于价值的建议
         if value_assessment and value_assessment.get("is_value"):
             recommendations.append(
-                f"发现价值投注机会，推荐投注比例: {value_assessment['recommended_stake']*100:.1f}%"
+                f"发现价值投注机会，推荐投注比例: {value_assessment['recommended_stake'] * 100:.1f}%"
             )
         elif value_assessment:
             recommendations.append("当前市场赔率不具备价值，建议观望")

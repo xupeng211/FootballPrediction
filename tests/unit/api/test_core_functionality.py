@@ -218,7 +218,7 @@ class TestDependencyInjection:
         # 获取预测引擎实例
         get_prediction_engine()
         # 可能返回None或实际实例
-        assert True  # 如果没有异常就算通过
+        assert True  # Basic assertion - consider enhancing
 
     def test_redis_manager_dependency(self):
         """测试Redis管理器依赖"""
@@ -227,7 +227,7 @@ class TestDependencyInjection:
         # 获取Redis管理器实例
         get_redis_manager()
         # 可能返回None或实际实例
-        assert True  # 如果没有异常就算通过
+        assert True  # Basic assertion - consider enhancing
 
 
 @pytest.mark.unit
@@ -312,9 +312,9 @@ class TestSecurityFeatures:
         # 确保没有敏感信息泄露
         sensitive_keys = ["password", "secret", "key", "token", "auth"]
         for key in sensitive_keys:
-            assert (
-                key not in str(data).lower()
-            ), f"Sensitive key {key} found in response"
+            assert key not in str(data).lower(), (
+                f"Sensitive key {key} found in response"
+            )
 
     def test_secure_headers(self, client):
         """测试安全头"""

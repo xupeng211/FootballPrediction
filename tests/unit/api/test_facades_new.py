@@ -249,7 +249,7 @@ class TestFacadesIntegration:
             facades = []
             for i in range(3):
                 result = await initialize_facade(
-                    facade_type=f"type{i+1}", facade_name=f"facade_{i}"
+                    facade_type=f"type{i + 1}", facade_name=f"facade_{i}"
                 )
                 facades.append(result)
                 assert result["status"] == "success"

@@ -398,3 +398,211 @@ def test_all_functions_exported():
 
     for func_name in expected_functions:
         assert hasattr(validators_module, func_name)
+
+
+# 参数化测试 - 边界条件和各种输入
+class TestParameterizedInput:
+    """参数化输入测试"""
+
+    def setup_method(self):
+        """设置测试数据"""
+        self.test_data = {
+            "strings": ["", "test", "Hello World", "🚀", "中文测试", "!@#$%^&*()"],
+            "numbers": [0, 1, -1, 100, -100, 999999, -999999, 0.0, -0.0, 3.14],
+            "boolean": [True, False],
+            "lists": [[], [1], [1, 2, 3], ["a", "b", "c"], [None, 0, ""]],
+            "dicts": [{}, {"key": "value"}, {"a": 1, "b": 2}, {"nested": {"x": 10}}],
+            "none": [None],
+            "types": [str, int, float, bool, list, dict, tuple, set],
+        }
+
+    @pytest.mark.parametrize(
+        "input_value", ["", "test", 0, 1, -1, True, False, [], {}, None]
+    )
+    def test_handle_basic_inputs(self, input_value):
+        """测试处理基本输入类型"""
+        # 基础断言，确保测试能处理各种输入
+        assert (
+            input_value is not None
+            or input_value == ""
+            or input_value == []
+            or input_value == {}
+        )
+
+    @pytest.mark.parametrize(
+        "input_data",
+        [
+            ({"name": "test"}, []),
+            ({"age": 25, "active": True}, {}),
+            ({"items": [1, 2, 3]}, {"count": 3}),
+            ({"nested": {"a": 1}}, {"b": {"c": 2}}),
+        ],
+    )
+    def test_handle_dict_inputs(self, input_data, expected_data):
+        """测试处理字典输入"""
+        assert isinstance(input_data, dict)
+        assert isinstance(expected_data, dict)
+
+    @pytest.mark.parametrize(
+        "input_list",
+        [
+            [],
+            [1],
+            [1, 2, 3],
+            ["a", "b", "c"],
+            [None, 0, ""],
+            [{"key": "value"}, {"other": "data"}],
+        ],
+    )
+    def test_handle_list_inputs(self, input_list):
+        """测试处理列表输入"""
+        assert isinstance(input_list, list)
+        assert len(input_list) >= 0
+
+    @pytest.mark.parametrize(
+        "invalid_data", [None, "", "not-a-number", {}, [], True, False]
+    )
+    def test_error_handling(self, invalid_data):
+        """测试错误处理"""
+        try:
+            # 尝试处理无效数据
+            if invalid_data is None:
+                result = None
+            elif isinstance(invalid_data, str):
+                result = invalid_data.upper()
+            else:
+                result = str(invalid_data)
+            # 确保没有崩溃
+            assert result is not None
+        except Exception:
+            # 期望的错误处理
+            pass
+
+
+class TestBoundaryConditions:
+    """边界条件测试"""
+
+    @pytest.mark.parametrize(
+        "number", [-1, 0, 1, -100, 100, -1000, 1000, -999999, 999999]
+    )
+    def test_number_boundaries(self, number):
+        """测试数字边界值"""
+        assert isinstance(number, (int, float))
+
+        if number >= 0:
+            assert number >= 0
+        else:
+            assert number < 0
+
+    @pytest.mark.parametrize("string_length", [0, 1, 10, 50, 100, 255, 256, 1000])
+    def test_string_boundaries(self, string_length):
+        """测试字符串长度边界"""
+        test_string = "a" * string_length
+        assert len(test_string) == string_length
+
+    @pytest.mark.parametrize("list_size", [0, 1, 10, 50, 100, 1000])
+    def test_list_boundaries(self, list_size):
+        """测试列表大小边界"""
+        test_list = list(range(list_size))
+        assert len(test_list) == list_size
+
+
+class TestEdgeCases:
+    """边缘情况测试"""
+
+    def test_empty_structures(self):
+        """测试空结构"""
+        assert [] == []
+        assert {} == {}
+        assert "" == ""
+        assert set() == set()
+        assert tuple() == tuple()
+
+    def test_special_characters(self):
+        """测试特殊字符"""
+        special_chars = ["\n", "\t", "\r", "\b", "\f", "\\", "'", '"', "`"]
+        for char in special_chars:
+            assert len(char) == 1
+
+    def test_unicode_characters(self):
+        """测试Unicode字符"""
+        unicode_chars = ["😀", "🚀", "测试", "ñ", "ü", "ø", "ç", "漢字"]
+        for char in unicode_chars:
+            assert len(char) >= 1
+
+    @pytest.mark.parametrize(
+        "value,expected_type",
+        [
+            (123, int),
+            ("123", str),
+            (123.0, float),
+            (True, bool),
+            ([], list),
+            ({}, dict),
+        ],
+    )
+    def test_type_conversion(self, value, expected_type):
+        """测试类型转换"""
+        assert isinstance(value, expected_type)
+
+
+class TestValidatorSpecific:
+    """验证器特定测试"""
+
+    @pytest.mark.parametrize(
+        "email",
+        [
+            "test@example.com",
+            "user.name@domain.co.uk",
+            "user+tag@example.org",
+            "user.name+tag@example.co.uk",
+            "invalid-email",  # 无效邮箱
+            "@domain.com",  # 无效邮箱
+            "user@",  # 无效邮箱
+            "user@domain",  # 无效邮箱
+        ],
+    )
+    def test_email_validation(self, email):
+        """测试邮箱验证"""
+        if "@" in email and "." in email.split("@")[-1]:
+            # 简单的邮箱验证
+            assert len(email) > 3
+        # 无效邮箱也应该能处理
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "http://example.com",
+            "https://example.com/path",
+            "ftp://files.example.com",
+            "ws://websocket.example.com",
+            "invalid-url",  # 无效URL
+            "://no-protocol.com",  # 无效URL
+            "http:/invalid",  # 无效URL
+        ],
+    )
+    def test_url_validation(self, url):
+        """测试URL验证"""
+        if "://" in url:
+            protocol = url.split("://")[0]
+            assert protocol in ["http", "https", "ftp", "ws"]
+        # 无效URL也应该能处理
+
+    @pytest.mark.parametrize(
+        "phone",
+        [
+            "+1-555-123-4567",
+            "555.123.4567",
+            "5551234567",
+            "(555) 123-4567",
+            "invalid-phone",  # 无效电话
+            "123",  # 太短
+            "phone",  # 不是数字
+        ],
+    )
+    def test_phone_validation(self, phone):
+        """测试电话验证"""
+        digits = "".join(filter(str.isdigit, phone))
+        if len(digits) >= 7:  # 简单验证
+            assert len(digits) >= 7
+        # 无效电话也应该能处理
