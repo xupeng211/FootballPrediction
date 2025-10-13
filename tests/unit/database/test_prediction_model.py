@@ -180,9 +180,9 @@ class TestPredictionModel:
             pred.match_id = 12345 + i
             pred.model_version = "1.0"
             pred.model_name = "ensemble"
-            pred.home_win_probability = Decimal(f"0.{4+i}0")
-            pred.draw_probability = Decimal(f"0.{3-i}0")
-            pred.away_win_probability = Decimal(f"0.{3-i}5")
+            pred.home_win_probability = Decimal(f"0.{4 + i}0")
+            pred.draw_probability = Decimal(f"0.{3 - i}0")
+            pred.away_win_probability = Decimal(f"0.{3 - i}5")
             pred.confidence_score = Decimal("0.80")
             predictions.append(pred)
 

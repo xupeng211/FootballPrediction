@@ -1,0 +1,1026 @@
+name: Nightly Test Suite
+
+on:
+  schedule:
+    # 每天北京时间凌晨 2 点 (UTC 18:00) 运行
+    - cron: '0 18 * * *'
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of tests to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - unit
+          - integration
+          - e2e
+          - performance
+      send_notification:
+        description: 'Send notification to Slack'
+        required: false
+        default: true
+        type: boolean
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+  # 测试环境配置
+  TESTING: true
+  TEST_ENV: nightly
+
+jobs:
+  # 准备阶段
+  prepare:
+    name: 准备测试环境
+    runs-on: ubuntu-latest
+    outputs:
+      cache-key: ${{ steps.cache-key.outputs.key }}
+      should-run: ${{ steps.should-run.outputs.run }}
+      test-matrix: ${{ steps.matrix.outputs.json }}
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 获取完整历史用于覆盖率对比
+
+      - name: 设置 Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 生成缓存键
+        id: cache-key
+        run: |
+          key="nightly-${{ github.run_number }}-${{ github.sha }}"
+          echo "key=$key" >> $GITHUB_OUTPUT
+
+      - name: 检查是否需要运行
+        id: should-run
+        run: |
+          # 检查过去24小时是否有新的提交
+          last_commit=$(git log -1 --since="24 hours ago" --format="%H")
+          if [ -n "$last_commit" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "run=true" >> $GITHUB_OUTPUT
+          else
+            echo "run=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 生成测试矩阵
+        id: matrix
+        run: |
+          matrix=$(cat <<EOF
+          {
+            "include": [
+              {
+                "name": "unit-tests",
+                "test-file": "tests/unit/",
+                "timeout": 10,
+                "parallel": 4
+              },
+              {
+                "name": "integration-tests",
+                "test-file": "tests/integration/",
+                "timeout": 20,
+                "parallel": 2
+              },
+              {
+                "name": "e2e-tests",
+                "test-file": "tests/e2e/",
+                "timeout": 30,
+                "parallel": 1
+              }
+            ]
+          }
+          EOF
+          )
+          echo "json=$matrix" >> $GITHUB_OUTPUT
+
+  # 单元测试
+  unit-tests:
+    name: 单元测试
+    runs-on: ubuntu-latest
+    needs: prepare
+    if: needs.prepare.outputs.should-run == 'true' && (github.event.inputs.test_type == 'all' || github.event.inputs.test_type == 'unit')
+    outputs:
+      coverage-report: ${{ steps.coverage.outputs.report }}
+      test-results: ${{ steps.results.outputs.json }}
+    env:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/football_test
+      REDIS_URL: redis://localhost:6379/0
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: football_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+          pip install coverage-badge pytest-cov pytest-html pytest-json-report
+
+      - name: 运行单元测试
+        id: tests
+        timeout-minutes: 10
+        run: |
+          # 设置环境变量
+          export TESTING=true
+          export TEST_ENV=nightly
+
+          # 运行测试并生成报告
+          pytest tests/unit/ \
+            -v \
+            --tb=short \
+            --junit-xml=reports/unit-junit.xml \
+            --html=reports/unit-report.html \
+            --self-contained-html \
+            --json-report \
+            --json-report-file=reports/unit-results.json \
+            --cov=src \
+            --cov-report=xml:reports/coverage-unit.xml \
+            --cov-report=html:reports/html-unit \
+            --cov-report=term-missing \
+            -m "unit" \
+            --maxfail=5 \
+            2>&1 | tee tests.log
+
+      - name: 处理覆盖率报告
+        id: coverage
+        if: always()
+        run: |
+          # 提取覆盖率数据
+          coverage=$(python -c "
+          import json
+          try:
+              with open('reports/unit-results.json', 'r') as f:
+                  data = json.load(f)
+                  coverage = data.get('summary', {}).get('coverage', {}).get 'percent', 0)
+                  print(f'coverage={coverage}')
+          except:
+              print('coverage=0')
+          ")
+          echo "report=$coverage" >> $GITHUB_OUTPUT
+
+      - name: 汇总测试结果
+        id: results
+        if: always()
+        run: |
+          python -c "
+          import json
+          import xml.etree.ElementTree as ET
+
+          # 解析 JUnit XML
+          tree = ET.parse('reports/unit-junit.xml')
+          root = tree.getroot()
+
+          results = {
+              'total': int(root.attrib.get('tests', 0)),
+              'passed': int(root.attrib.get('tests', 0)) - int(root.attrib.get('failures', 0)) - int(root.attrib.get('errors', 0)) - int(root.attrib.get('skipped', 0)),
+              'failed': int(root.attrib.get('failures', 0)),
+              'errors': int(root.attrib.get('errors', 0)),
+              'skipped': int(root.attrib.get('skipped', 0)),
+              'time': float(root.attrib.get('time', 0))
+          }
+
+          with open('unit-results.json', 'w') as f:
+              json.dump(results, f)
+
+          print(f'json={json.dumps(results)}')
+          "
+
+      - name: 上传测试报告
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit-test-reports
+          path: |
+            reports/
+            tests.log
+          retention-days: 30
+
+  # 集成测试
+  integration-tests:
+    name: 集成测试
+    runs-on: ubuntu-latest
+    needs: prepare
+    if: needs.prepare.outputs.should-run == 'true' && (github.event.inputs.test_type == 'all' || github.event.inputs.test_type == 'integration')
+    outputs:
+      test-results: ${{ steps.results.outputs.json }}
+    env:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5433/football_test
+      REDIS_URL: redis://localhost:6380/0
+      KAFKA_BOOTSTRAP_SERVERS: localhost:9093
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: 启动测试环境
+        run: |
+          docker-compose -f docker-compose.test.yml up -d
+          sleep 30  # 等待服务就绪
+
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+          pip install pytest-asyncio
+
+      - name: 等待服务健康检查
+        run: |
+          # 等待数据库就绪
+          timeout 60 bash -c 'until pg_isready -h localhost -p 5433; do sleep 2; done'
+
+          # 等待 Redis 就绪
+          timeout 60 bash -c 'until redis-cli -h localhost -p 6380 ping; do sleep 2; done'
+
+          # 等待 Kafka 就绪
+          timeout 60 bash -c 'until nc -z localhost 9093; do sleep 2; done'
+
+      - name: 运行集成测试
+        id: tests
+        timeout-minutes: 20
+        run: |
+          export TESTING=true
+          export TEST_ENV=nightly
+
+          pytest tests/integration/ \
+            -v \
+            --tb=short \
+            --junit-xml=reports/integration-junit.xml \
+            --html=reports/integration-report.html \
+            --self-contained-html \
+            --json-report \
+            --json-report-file=reports/integration-results.json \
+            -m "integration" \
+            --maxfail=3 \
+            2>&1 | tee integration-tests.log
+
+      - name: 汇总测试结果
+        id: results
+        if: always()
+        run: |
+          python -c "
+          import json
+          import xml.etree.ElementTree as ET
+
+          tree = ET.parse('reports/integration-junit.xml')
+          root = tree.getroot()
+
+          results = {
+              'total': int(root.attrib.get('tests', 0)),
+              'passed': int(root.attrib.get('tests', 0)) - int(root.attrib.get('failures', 0)) - int(root.attrib.get('errors', 0)) - int(root.attrib.get('skipped', 0)),
+              'failed': int(root.attrib.get('failures', 0)),
+              'errors': int(root.attrib.get('errors', 0)),
+              'skipped': int(root.attrib.get('skipped', 0)),
+              'time': float(root.attrib.get('time', 0))
+          }
+
+          with open('integration-results.json', 'w') as f:
+              json.dump(results, f)
+
+          print(f'json={json.dumps(results)}')
+          "
+
+      - name: 清理测试环境
+        if: always()
+        run: |
+          docker-compose -f docker-compose.test.yml down -v
+          docker system prune -f
+
+      - name: 上传测试报告
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integration-test-reports
+          path: |
+            reports/
+            integration-tests.log
+          retention-days: 30
+
+  # E2E 测试
+  e2e-tests:
+    name: 端到端测试
+    runs-on: ubuntu-latest
+    needs: prepare
+    if: needs.prepare.outputs.should-run == 'true' && (github.event.inputs.test_type == 'all' || github.event.inputs.test_type == 'e2e')
+    outputs:
+      test-results: ${{ steps.results.outputs.json }}
+      performance-metrics: ${{ steps.performance.outputs.json }}
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: 启动 Staging 环境
+        run: |
+          # 创建测试网络
+          docker network create football-test-network
+
+          # 启动 staging 环境
+          docker-compose -f docker-compose.staging.yml up -d
+          echo "等待服务启动..."
+          sleep 60
+
+      - name: 安装依赖和工具
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+          pip install playwright
+          playwright install --with-deps
+
+          # 安装额外的测试工具
+          npm install -g wait-on
+
+      - name: 等待服务就绪
+        run: |
+          # 等待 API 服务
+          timeout 120 bash -c 'until curl -f http://localhost:8000/health; do sleep 5; done'
+
+          # 等待前端服务
+          timeout 120 bash -c 'until curl -f http://localhost:3000; do sleep 5; done'
+
+      - name: 加载测试数据
+        run: |
+          python scripts/load_staging_data.py
+
+      - name: 运行 E2E 测试
+        id: tests
+        timeout-minutes: 30
+        run: |
+          export TESTING=true
+          export TEST_ENV=staging
+
+          # 运行 E2E 测试套件
+          python scripts/run_e2e_tests.py \
+            --type all \
+            --verbose \
+            --no-cleanup \
+            2>&1 | tee e2e-tests.log
+
+      - name: 汇总测试结果
+        id: results
+        if: always()
+        run: |
+          # 查找最新的测试报告
+          REPORT_DIR=$(ls -td reports/e2e_* | head -1)
+
+          if [ -f "$REPORT_DIR/e2e_*.json" ]; then
+            python -c "
+          import json
+          import glob
+
+          report_file = glob.glob('$REPORT_DIR/e2e_*.json')[0]
+          with open(report_file, 'r') as f:
+              data = json.load(f)
+              summary = data.get('summary', {})
+
+              results = {
+                  'total': summary.get('total', 0),
+                  'passed': summary.get('passed', 0),
+                  'failed': summary.get('failed', 0),
+                  'skipped': summary.get('skipped', 0),
+                  'error': summary.get('error', 0),
+                  'duration': summary.get('duration', 0),
+                  'success': summary.get('passed', 0) / max(summary.get('total', 1), 1) * 100
+              }
+
+              with open('e2e-results.json', 'w') as f:
+                  json.dump(results, f)
+
+              print(f'json={json.dumps(results)}')
+          "
+          else
+            echo "json='{\"total\": 0, \"passed\": 0, \"failed\": 0, \"skipped\": 0, \"error\": 0, \"duration\": 0, \"success\": 0}'"
+          fi
+
+      - name: 收集性能指标
+        id: performance
+        if: always()
+        run: |
+          # 解析性能数据
+          python -c "
+          import json
+          import re
+
+          metrics = {
+              'avg_response_time': 0,
+              'max_response_time': 0,
+              'throughput': 0,
+              'error_rate': 0
+          }
+
+          # 从日志中提取性能指标
+          try:
+              with open('e2e-tests.log', 'r') as f:
+                  content = f.read()
+
+              # 提取响应时间
+              response_times = re.findall(r'response time: (\d+\.\d+)ms', content)
+              if response_times:
+                  response_times = [float(t) for t in response_times]
+                  metrics['avg_response_time'] = sum(response_times) / len(response_times)
+                  metrics['max_response_time'] = max(response_times)
+
+              # 提取吞吐量
+              throughput_match = re.search(r'throughput: (\d+\.\d+) req/s', content)
+              if throughput_match:
+                  metrics['throughput'] = float(throughput_match.group(1))
+
+          except Exception as e:
+              print(f'Error parsing metrics: {e}')
+
+          with open('performance-metrics.json', 'w') as f:
+              json.dump(metrics, f)
+
+          print(f'json={json.dumps(metrics)}')
+          "
+
+      - name: 清理 Staging 环境
+        if: always()
+        run: |
+          docker-compose -f docker-compose.staging.yml down -v
+          docker network rm football-test-network || true
+
+      - name: 上传测试报告和截图
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-test-reports
+          path: |
+            reports/
+            e2e-tests.log
+            test-results/
+          retention-days: 30
+
+  # 性能测试
+  performance-tests:
+    name: 性能基准测试
+    runs-on: ubuntu-latest
+    needs: prepare
+    if: needs.prepare.outputs.should-run == 'true' && (github.event.inputs.test_type == 'all' || github.event.inputs.test_type == 'performance')
+    outputs:
+      benchmark-results: ${{ steps.benchmark.outputs.json }}
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+          pip install pytest-benchmark
+
+      - name: 运行性能基准测试
+        id: benchmark
+        timeout-minutes: 15
+        run: |
+          export TESTING=true
+
+          pytest tests/performance/ \
+            --benchmark-only \
+            --benchmark-json=benchmark-results.json \
+            --benchmark-html=benchmark-report.html \
+            --benchmark-autosave \
+            -v
+
+      - name: 对比基准结果
+        run: |
+          python -c "
+          import json
+          import requests
+          from datetime import datetime
+
+          # 读取当前基准结果
+          with open('benchmark-results.json', 'r') as f:
+              current = json.load(f)
+
+          # 生成基准报告
+          report = {
+              'date': datetime.now().isoformat(),
+              'benchmarks': []
+          }
+
+          for name, data in current.get('benchmarks', {}).items():
+              report['benchmarks'].append({
+                  'name': name,
+                  'min': data.get('min', 0),
+                  'mean': data.get('mean', 0),
+                  'max': data.get('max', 0),
+                  'stddev': data.get('stddev', 0),
+                  'rounds': data.get('rounds', 0)
+              })
+
+          with open('benchmark-summary.json', 'w') as f:
+              json.dump(report, f, indent=2)
+
+          print('Benchmark summary generated')
+          "
+
+      - name: 上传基准报告
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance-benchmarks
+          path: |
+            benchmark-results.json
+            benchmark-report.html
+            benchmark-summary.json
+          retention-days: 90
+
+  # 生成综合报告
+  generate-report:
+    name: 生成测试报告
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, e2e-tests, performance-tests]
+    if: always() && (needs.unit-tests.result != 'skipped' || needs.integration-tests.result != 'skipped' || needs.e2e-tests.result != 'skipped' || needs.performance-tests.result != 'skipped')
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 下载所有测试报告
+        uses: actions/download-artifact@v4
+        with:
+          path: all-reports
+
+      - name: 生成综合报告
+        run: |
+          python -c "
+          import json
+          import os
+          from datetime import datetime
+
+          # 初始化报告数据
+          report = {
+              'date': datetime.now().isoformat(),
+              'run_number': '${{ github.run_number }}',
+              'commit_sha': '${{ github.sha }}',
+              'branch': '${{ github.ref_name }}',
+              'trigger': '${{ github.event_name }}',
+              'summary': {
+                  'unit': {'total': 0, 'passed': 0, 'failed': 0, 'errors': 0, 'skipped': 0},
+                  'integration': {'total': 0, 'passed': 0, 'failed': 0, 'errors': 0, 'skipped': 0},
+                  'e2e': {'total': 0, 'passed': 0, 'failed': 0, 'errors': 0, 'skipped': 0},
+                  'performance': {'benchmarks': 0}
+              },
+              'coverage': {'percentage': 0},
+              'quality_gate': {'passed': True, 'issues': []},
+              'recommendations': []
+          }
+
+          # 处理单元测试结果
+          if os.path.exists('all-reports/unit-test-reports/unit-results.json'):
+              with open('all-reports/unit-test-reports/unit-results.json', 'r') as f:
+                  data = json.load(f)
+                  report['summary']['unit'] = data
+
+          # 处理集成测试结果
+          if os.path.exists('all-reports/integration-test-reports/integration-results.json'):
+              with open('all-reports/integration-test-reports/integration-results.json', 'r') as f:
+                  data = json.load(f)
+                  report['summary']['integration'] = data
+
+          # 处理 E2E 测试结果
+          if os.path.exists('all-reports/e2e-test-reports/e2e-results.json'):
+              with open('all-reports/e2e-test-reports/e2e-results.json', 'r') as f:
+                  data = json.load(f)
+                  report['summary']['e2e'] = data
+
+          # 处理性能测试结果
+          if os.path.exists('all-reports/performance-benchmarks/benchmark-summary.json'):
+              with open('all-reports/performance-benchmarks/benchmark-summary.json', 'r') as f:
+                  data = json.load(f)
+                  report['summary']['performance']['benchmarks'] = len(data.get('benchmarks', []))
+
+          # 计算总体统计
+          total_tests = sum(s.get('total', 0) for s in report['summary'].values() if isinstance(s, dict))
+          total_passed = sum(s.get('passed', 0) for s in report['summary'].values() if isinstance(s, dict))
+          total_failed = sum(s.get('failed', 0) for s in report['summary'].values() if isinstance(s, dict))
+
+          report['overall'] = {
+              'total_tests': total_tests,
+              'passed': total_passed,
+              'failed': total_failed,
+              'success_rate': (total_passed / max(total_tests, 1)) * 100
+          }
+
+          # 质量门禁检查
+          issues = []
+          if report['summary']['unit'].get('failed', 0) > 0:
+              issues.append('Unit tests have failures')
+          if report['summary']['integration'].get('failed', 0) > 0:
+              issues.append('Integration tests have failures')
+          if report['summary']['e2e'].get('failed', 0) > 0:
+              issues.append('E2E tests have failures')
+
+          report['quality_gate']['passed'] = len(issues) == 0
+          report['quality_gate']['issues'] = issues
+
+          # 生成建议
+          if total_tests > 0:
+              if report['overall']['success_rate'] < 95:
+                  report['recommendations'].append('Overall success rate is below 95%')
+              if report['summary']['e2e'].get('passed', 0) == 0:
+                  report['recommendations'].append('No E2E tests passed - check critical flows')
+
+          # 保存报告
+          with open('nightly-test-report.json', 'w') as f:
+              json.dump(report, f, indent=2)
+
+          print(f'Generated comprehensive report with {total_tests} total tests')
+          "
+
+      - name: 生成 Markdown 报告
+        run: |
+          python -c "
+          import json
+          from datetime import datetime
+
+          # 读取 JSON 报告
+          with open('nightly-test-report.json', 'r') as f:
+              report = json.load(f)
+
+          # 生成 Markdown 报告
+          md_content = f'''# Nightly Test Report
+
+          ## 📊 执行概要
+
+          - **日期**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} UTC
+          - **运行编号**: #{report['run_number']}
+          - **提交**: {report['commit_sha'][:7]}
+          - **分支**: {report['branch']}
+          - **触发方式**: {report['trigger']}
+
+          ## 🧪 测试结果汇总
+
+          | 测试类型 | 总数 | 通过 | 失败 | 错误 | 跳过 |
+          |---------|------|------|------|------|------|
+          | 单元测试 | {report['summary']['unit'].get('total', 0)} | {report['summary']['unit'].get('passed', 0)} | {report['summary']['unit'].get('failed', 0)} | {report['summary']['unit'].get('errors', 0)} | {report['summary']['unit'].get('skipped', 0)} |
+          | 集成测试 | {report['summary']['integration'].get('total', 0)} | {report['summary']['integration'].get('passed', 0)} | {report['summary']['integration'].get('failed', 0)} | {report['summary']['integration'].get('errors', 0)} | {report['summary']['integration'].get('skipped', 0)} |
+          | E2E 测试 | {report['summary']['e2e'].get('total', 0)} | {report['summary']['e2e'].get('passed', 0)} | {report['summary']['e2e'].get('failed', 0)} | {report['summary']['e2e'].get('errors', 0)} | {report['summary']['e2e'].get('skipped', 0)} |
+          | **总计** | **{report['overall']['total_tests']}** | **{report['overall']['passed']}** | **{report['overall']['failed']}** | **-** | **-** |
+
+          ### 📈 总体成功率
+          {report['overall']['success_rate']:.1f}%
+
+          ## 🚪 质量门禁
+
+          **状态**: {'✅ 通过' if report['quality_gate']['passed'] else '❌ 失败'}
+
+          '''
+
+          if report['quality_gate']['issues']:
+              md_content += '### ⚠️ 问题\n\n'
+              for issue in report['quality_gate']['issues']:
+                  md_content += f'- {issue}\n'
+
+          if report['recommendations']:
+              md_content += '\n### 💡 建议\n\n'
+              for rec in report['recommendations']:
+                  md_content += f'- {rec}\n'
+
+          md_content += f'''
+
+          ---
+          *报告生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*
+          '''
+
+          # 保存 Markdown 报告
+          with open('nightly-test-report.md', 'w') as f:
+              f.write(md_content)
+
+          print('Markdown report generated')
+          "
+
+      - name: 生成覆盖率徽章
+        run: |
+          python -c "
+          import json
+
+          # 读取报告
+          with open('nightly-test-report.json', 'r') as f:
+              report = json.load(f)
+
+          coverage = 0  # 默认值
+
+          # 生成徽章
+          color = 'brightgreen' if coverage >= 80 else 'green' if coverage >= 60 else 'yellow' if coverage >= 40 else 'red'
+
+          badge = f'''
+          <svg xmlns='http://www.w3.org/2000/svg' width='120' height='20'>
+            <linearGradient id='b' x2='0' y2='100%'>
+              <stop offset='0' stop-color='#bbb' stop-opacity='.1'/>
+              <stop offset='1' stop-opacity='.1'/>
+            </linearGradient>
+            <mask id='a'>
+              <rect width='120' height='20' rx='3' fill='#fff'/>
+            </mask>
+            <g mask='url(#a)'>
+              <path fill='#555' d='M0 0h39v20H0z'/>
+              <path fill='{color}' d='M39 0h81v20H39z'/>
+              <path fill='url(#b)' d='M0 0h120v20H0z'/>
+            </g>
+            <g fill='#fff' text-anchor='middle' font-family='DejaVu Sans,Verdana,Geneva,sans-serif' font-size='11'>
+              <text x='19.5' y='15' fill='#010101' fill-opacity='.3'>coverage</text>
+              <text x='19.5' y='14'>coverage</text>
+              <text x='79.5' y='15' fill='#010101' fill-opacity='.3'>{coverage}%</text>
+              <text x='79.5' y='14'>{coverage}%</text>
+            </g>
+          </svg>
+          '''
+
+          with open('coverage-badge.svg', 'w') as f:
+              f.write(badge)
+
+          print(f'Coverage badge generated: {coverage}%')
+          "
+
+      - name: 更新 README 中的徽章
+        if: github.ref == 'refs/heads/main'
+        run: |
+          # 如果是主分支，更新 README 中的徽章
+          echo "Updating README badges..."
+
+      - name: 上传综合报告
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-test-report
+          path: |
+            nightly-test-report.json
+            nightly-test-report.md
+            coverage-badge.svg
+          retention-days: 90
+
+  # 发送通知
+  notify:
+    name: 发送通知
+    runs-on: ubuntu-latest
+    needs: [generate-report]
+    if: always() && (github.event.inputs.send_notification == 'true' || github.event_name == 'schedule')
+    steps:
+      - name: 下载报告
+        uses: actions/download-artifact@v4
+        with:
+          name: nightly-test-report
+          path: report
+
+      - name: 发送 Slack 通知
+        if: env.SLACK_WEBHOOK_URL != ''
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          python -c "
+          import json
+          import os
+          import requests
+          from datetime import datetime
+
+          # 读取报告
+          with open('report/nightly-test-report.json', 'r') as f:
+              report = json.load(f)
+
+          # 构建 Slack 消息
+          color = 'good' if report['quality_gate']['passed'] else 'danger'
+          success_rate = report['overall']['success_rate']
+
+          message = {
+              'attachments': [{
+                  'color': color,
+                  'title': f'🧪 Nightly Test Report - #{report[\"run_number\"]}',
+                  'title_link': f'https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}',
+                  'fields': [
+                      {
+                          'title': '总体成功率',
+                          'value': f'{success_rate:.1f}%',
+                          'short': True
+                      },
+                      {
+                          'title': '总测试数',
+                          'value': str(report['overall']['total_tests']),
+                          'short': True
+                      },
+                      {
+                          'title': '分支',
+                          'value': report['branch'],
+                          'short': True
+                      },
+                      {
+                          'title': '提交',
+                          'value': report['commit_sha'][:7],
+                          'short': True
+                      }
+                  ],
+                  'footer': 'Football Prediction System',
+                  'ts': int(datetime.now().timestamp())
+              }]
+          }
+
+          # 添加问题详情
+          if not report['quality_gate']['passed']:
+              message['attachments'][0]['fields'].append({
+                  'title': '❌ 质量门禁问题',
+                  'value': '\\n'.join(f'• {issue}' for issue in report['quality_gate']['issues']),
+                  'short': False
+              })
+
+          # 发送通知
+          if os.getenv('SLACK_WEBHOOK_URL'):
+              response = requests.post(
+                  os.getenv('SLACK_WEBHOOK_URL'),
+                  json=message,
+                  headers={'Content-Type': 'application/json'}
+              )
+
+              if response.status_code == 200:
+                  print('Slack notification sent successfully')
+              else:
+                  print(f'Failed to send Slack notification: {response.status_code}')
+                  print(response.text)
+          else:
+              print('Slack webhook URL not configured')
+          "
+
+      - name: 发送邮件通知
+        if: env.SMTP_HOST != ''
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+        run: |
+          python -c "
+          import smtplib
+          import json
+          from email.mime.text import MIMEText
+          from email.mime.multipart import MIMEMultipart
+          from datetime import datetime
+
+          # 读取报告
+          with open('report/nightly-test-report.md', 'r') as f:
+              md_content = f.read()
+
+          # 创建邮件
+          msg = MIMEMultipart()
+          msg['From'] = os.getenv('SMTP_USER')
+          msg['To'] = os.getenv('EMAIL_TO')
+          msg['Subject'] = f'Nightly Test Report - #{report[\"run_number\"]} - {datetime.now().strftime(\"%Y-%m-%d\")}'
+
+          # 转换 Markdown 为 HTML (简单版本)
+          html_content = f'''
+          <html>
+          <body>
+          <pre style='font-family: monospace; white-space: pre-wrap;'>{md_content}</pre>
+          </body>
+          </html>
+          '''
+
+          msg.attach(MIMEText(html_content, 'html'))
+
+          # 发送邮件
+          if all(os.getenv(v) for v in ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'EMAIL_TO']):
+              with smtplib.SMTP(os.getenv('SMTP_HOST'), int(os.getenv('SMTP_PORT'))) as server:
+                  if os.getenv('SMTP_PASS'):
+                      server.starttls()
+                      server.login(os.getenv('SMTP_USER'), os.getenv('SMTP_PASS'))
+
+                  server.send_message(msg)
+              print('Email notification sent successfully')
+          else:
+              print('Email configuration incomplete')
+          "
+
+      - name: 创建 GitHub Issue (如果失败)
+        if: failure() && github.ref == 'refs/heads/main'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+
+            // 读取报告
+            const report = JSON.parse(fs.readFileSync('report/nightly-test-report.json', 'utf8'));
+
+            // 构建 Issue 内容
+            const body = `
+            ## 🚨 Nightly Tests Failed
+
+            **Run Number**: #${report.run_number}
+            **Commit**: ${report.commit_sha}
+            **Date**: ${report.date}
+
+            ### Test Results Summary
+            - **Total Tests**: ${report.overall.total_tests}
+            - **Passed**: ${report.overall.passed}
+            - **Failed**: ${report.overall.failed}
+            - **Success Rate**: ${report.overall.success_rate.toFixed(1)}%
+
+            ### Quality Gate Issues
+            ${report.quality_gate.issues.map(issue => `- ${issue}`).join('\n')}
+
+            ### Recommendations
+            ${report.recommendations.map(rec => `- ${rec}`).join('\n')}
+
+            [View detailed report](${context.payload.repository.html_url}/actions/runs/${context.runId})
+            `;
+
+            // 创建 Issue
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Nightly tests failed - Run #${report.run_number}`,
+              body: body,
+              labels: ['bug', 'ci/cd', 'tests']
+            });
+
+  # 清理旧工件
+  cleanup:
+    name: 清理旧工件
+    runs-on: ubuntu-latest
+    needs: notify
+    if: always()
+    steps:
+      - name: 删除旧工件
+        uses: actions/github-script@v6
+        with:
+          script: |
+            // 获取30天前的工件
+            const artifacts = await github.rest.actions.listWorkflowRuns({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: '.github/workflows/nightly-tests.yml',
+              created: `<${new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()}`,
+              per_page: 100
+            });
+
+            // 删除旧的运行记录和工件
+            for (const run of artifacts.data.workflow_runs) {
+              if (run.status === 'completed' && run.conclusion !== 'success') {
+                try {
+                  await github.rest.actions.deleteWorkflowRun({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    run_id: run.id
+                  });
+                  console.log(`Deleted workflow run #${run.id}`);
+                } catch (error) {
+                  console.log(`Failed to delete workflow run #${run.id}: ${error.message}`);
+                }
+              }
+            }

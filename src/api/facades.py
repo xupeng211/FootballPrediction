@@ -196,9 +196,9 @@ async def demo_batch_processing(
     # 为每个项目生成缓存键
     for i, item in enumerate(items):
         if "cache_key" not in item:
-            item[
-                "cache_key"
-            ] = f"batch_item_{i}_{hash(str(item.get('input_data', {})))}"
+            item["cache_key"] = (
+                f"batch_item_{i}_{hash(str(item.get('input_data', {})))}"
+            )
 
     start_time = datetime.utcnow()
     results = await facade.execute("batch_process", items=items)

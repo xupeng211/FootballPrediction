@@ -209,7 +209,7 @@ class TestDataCollectionWorkflow:
                 "status": "success",
                 "collected": 10,
                 "matches": [
-                    {"id": i, "home": f"Team {i}", "away": f"Team {i+1}"}
+                    {"id": i, "home": f"Team {i}", "away": f"Team {i + 1}"}
                     for i in range(10)
                 ],
             }

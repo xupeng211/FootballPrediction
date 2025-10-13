@@ -24,6 +24,12 @@ except ImportError:
 
     FootballKafkaConsumer = FootballKafkaConsumer
 
+# 尝试导入StreamConfig
+try:
+    from .stream_config import StreamConfig
+except ImportError:
+    StreamConfig = None
+
 # 创建占位符类以避免类型错误
 if StreamConfig is None:
 
@@ -35,6 +41,13 @@ if StreamConfig is None:
 
     StreamConfig: Type = StreamConfig
 
+# 尝试导入StreamProcessor
+try:
+    from .stream_processor import StreamProcessor
+except ImportError:
+    StreamProcessor = None
+
+# 创建占位符类以避免类型错误
 if StreamProcessor is None:
 
     class StreamProcessor:

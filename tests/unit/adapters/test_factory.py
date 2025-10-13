@@ -516,7 +516,7 @@ class TestModuleNotAvailable:
     def test_module_import_error(self):
         """测试：模块导入错误"""
         assert not FACTORY_AVAILABLE
-        assert True  # 表明测试意识到模块不可用
+        assert True  # Basic assertion - consider enhancing
 
 
 # 测试模块级别的功能

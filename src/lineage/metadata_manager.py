@@ -12,7 +12,7 @@ For backward compatibility, this file re-exports all classes from the modules.
 import warnings
 
 warnings.warn(
-    "直接从 metadata_manager 导入已弃用。" "请从 lineage.metadata 导入相关类。",
+    "直接从 metadata_manager 导入已弃用。请从 lineage.metadata 导入相关类。",
     DeprecationWarning,
     stacklevel=2,
 )
