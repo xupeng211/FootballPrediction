@@ -340,7 +340,7 @@ class TestComprehensiveAPI:
 
         # 快速连续创建预测
         for i in range(3):
-            response = client.post(f"/predictions/{1000+i}/predict")
+            response = client.post(f"/predictions/{1000 + i}/predict")
             assert response.status_code == 201
 
     def test_unicode_handling(self, client):

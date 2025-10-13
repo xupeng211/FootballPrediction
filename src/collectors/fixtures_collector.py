@@ -252,7 +252,7 @@ class FixturesCollector:
                 "away_team_id": 20 + i,
                 "league_id": league_id,
                 "start_time": match_date,
-                "venue": f"Stadium {i+1}",
+                "venue": f"Stadium {i + 1}",
                 "match_status": "scheduled",
             }
             fixtures.append(fixture)

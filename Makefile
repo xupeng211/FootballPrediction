@@ -23,6 +23,9 @@ GIT_SHA := $(shell git rev-parse --short HEAD)
 ENV_FILE ?= .env
 ENV_EXAMPLE ?= .env.example
 
+# CPU core count for parallel execution
+NCPU := $(shell nproc 2>/dev/null || echo 4)
+
 # Required environment variables for production
 REQUIRED_ENV_VARS := DATABASE_URL REDIS_URL SECRET_KEY
 
@@ -263,6 +266,28 @@ coverage-unit: ## Test: Unit test coverage only
 	pytest -m "unit" --cov=src --cov-report=html --cov-report=term --maxfail=5 && \
 	echo "$(GREEN)✅ Unit coverage completed$(RESET)"
 
+coverage-parallel: ## Test: Run coverage with parallel execution
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Running parallel coverage tests ($(NCPU) workers)...$(RESET)" && \
+	pytest tests/unit --cov=src --cov-report=term-missing --cov-report=html --cov-report=xml -n auto --dist=loadfile && \
+	echo "$(GREEN)✅ Parallel coverage completed$(RESET)"
+
+coverage-optimized: ## Test: Run optimized coverage (fast tests only)
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Running optimized coverage (fast tests only)...$(RESET)" && \
+	pytest tests/unit -m "fast or unit" --cov=src --cov-report=term-missing --cov-fail-under=$(COVERAGE_THRESHOLD_MIN) --maxfail=10 -q && \
+	echo "$(GREEN)✅ Optimized coverage passed$(RESET)"
+
+coverage-targeted: ## Test: Run targeted coverage for specific modules
+	@if [ -z "$(MODULE)" ]; then \
+		echo "$(RED)Error: Please specify MODULE=src.utils.config_loader or similar$(RESET)"; \
+		exit 1; \
+	fi
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Running targeted coverage for $(MODULE)...$(RESET)" && \
+	pytest tests/unit/utils/test_config_loader_comprehensive.py tests/unit/utils/test_edge_cases_coverage.py --cov=$(MODULE) --cov-report=term-missing --cov-report=html -v && \
+	echo "$(GREEN)✅ Targeted coverage completed$(RESET)"
+
 test.unit: ## Test: Run unit tests only (marked with 'unit')
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Running unit tests only...$(RESET)" && \
@@ -280,6 +305,39 @@ test.e2e: ## Test: Run end-to-end tests only (marked with 'e2e')
 	echo "$(YELLOW)Running end-to-end tests only...$(RESET)" && \
 	pytest -m "e2e" && \
 	echo "$(GREEN)✅ End-to-end tests passed$(RESET)"
+
+# Nightly Testing Commands
+nightly-test: ## 🌙 Run nightly test suite locally
+	@$(ACTIVATE) && \
+	echo "$(BLUE)Running nightly test suite...$(RESET)" && \
+	python scripts/schedule_nightly_tests.py run
+
+nightly-schedule: ## 📅 Start nightly test scheduler
+	@$(ACTIVATE) && \
+	echo "$(BLUE)Starting nightly test scheduler...$(RESET)" && \
+	python scripts/schedule_nightly_tests.py start
+
+nightly-status: ## 📊 Show nightly test scheduler status
+	@$(ACTIVATE) && \
+	echo "$(BLUE)Nightly test scheduler status:$(RESET)" && \
+	python scripts/schedule_nightly_tests.py status
+
+nightly-monitor: ## 👀 Monitor and report nightly test results
+	@$(ACTIVATE) && \
+	echo "$(BLUE)Monitoring nightly tests...$(RESET)" && \
+	python scripts/nightly_test_monitor.py --dry-run
+
+nightly-report: ## 📄 Generate nightly test report
+	@$(ACTIVATE) && \
+	echo "$(BLUE)Generating nightly test report...$(RESET)" && \
+	python scripts/nightly_test_monitor.py --dry-run && \
+	echo "$(GREEN)Report generated: reports/nightly-test-report.md$(RESET)"
+
+nightly-cleanup: ## 🧹 Clean up old nightly test artifacts
+	@$(ACTIVATE) && \
+	echo "$(BLUE)Cleaning up old nightly test artifacts...$(RESET)" && \
+	python scripts/schedule_nightly_tests.py cleanup && \
+	python scripts/nightly_test_monitor.py --cleanup --cleanup-days 30
 
 test.slow: ## Test: Run slow tests only (marked with 'slow')
 	@$(ACTIVATE) && \
@@ -455,6 +513,152 @@ down: ## Container: Stop docker-compose services
 
 logs: ## Container: Show docker-compose logs
 	@docker-compose logs -f
+
+# ============================================================================
+# 🧪 Test Environment Management
+# ============================================================================
+
+test-env-start: ## Test: Start integration/E2E test environment
+	@echo "$(YELLOW)Starting test environment...$(RESET)" && \
+	./scripts/manage_test_env.sh start
+
+test-env-stop: ## Test: Stop test environment
+	@echo "$(YELLOW)Stopping test environment...$(RESET)" && \
+	./scripts/manage_test_env.sh stop
+
+test-env-restart: ## Test: Restart test environment
+	@echo "$(YELLOW)Restarting test environment...$(RESET)" && \
+	./scripts/manage_test_env.sh restart
+
+test-env-status: ## Test: Check test environment status
+	@./scripts/manage_test_env.sh status
+
+test-env-logs: ## Test: Show test environment logs
+	@if [ -n "$(SERVICE)" ]; then \
+		./scripts/manage_test_env.sh logs $(SERVICE); \
+	else \
+		./scripts/manage_test_env.sh logs; \
+	fi
+
+test-env-shell: ## Test: Enter test container shell
+	@./scripts/manage_test_env.sh shell
+
+test-env-reset: ## Test: Reset test environment (delete all data)
+	@./scripts/manage_test_env.sh reset
+
+test-env-init: ## Test: Initialize test data
+	@./scripts/manage_test_env.sh init
+
+test-env-check: ## Test: Check test environment health
+	@./scripts/manage_test_env.sh check
+
+test-env-clean: ## Test: Clean Docker resources
+	@./scripts/manage_test_env.sh clean
+
+# Integration tests in test environment
+test-integration: ## Test: Run integration tests
+	@./scripts/manage_test_env.sh test integration
+
+test-e2e: ## Test: Run E2E tests
+	@./scripts/manage_test_env.sh test e2e
+
+test-all: ## Test: Run all tests in test environment
+	@./scripts/manage_test_env.sh test all
+
+test-coverage-env: ## Test: Generate coverage report in test environment
+	@./scripts/manage_test_env.sh test coverage
+
+# ============================================================================
+# 🚀 Staging Environment Management
+# ============================================================================
+
+staging-start: ## Staging: Start staging environment for E2E testing
+	@echo "$(YELLOW)Starting staging environment...$(RESET)" && \
+	./scripts/manage_staging_env.sh start
+
+staging-stop: ## Staging: Stop staging environment
+	@echo "$(YELLOW)Stopping staging environment...$(RESET)" && \
+	./scripts/manage_staging_env.sh stop
+
+staging-restart: ## Staging: Restart staging environment
+	@echo "$(YELLOW)Restarting staging environment...$(RESET)" && \
+	./scripts/manage_staging_env.sh restart
+
+staging-status: ## Staging: Check staging environment status
+	@./scripts/manage_staging_env.sh status
+
+staging-logs: ## Staging: Show staging environment logs
+	@if [ -n "$(SERVICE)" ]; then \
+		./scripts/manage_staging_env.sh logs $(SERVICE); \
+	else \
+		./scripts/manage_staging_env.sh logs; \
+	fi
+
+staging-shell: ## Staging: Enter staging container shell
+	@./scripts/manage_staging_env.sh shell
+
+staging-migrate: ## Staging: Run database migrations
+	@./scripts/manage_staging_env.sh migrate
+
+staging-seed: ## Staging: Load seed data
+	@./scripts/manage_staging_env.sh seed
+
+staging-backup: ## Staging: Backup staging database
+	@./scripts/manage_staging_env.sh backup
+
+staging-restore: ## Staging: Restore database (use FILE=<backup_file>)
+	@if [ -z "$(FILE)" ]; then \
+		echo "$(RED)❌ FILE is required. Usage: make staging-restore FILE=<backup_file>$(RESET)"; \
+		exit 1; \
+	fi
+	@./scripts/manage_staging_env.sh restore $(FILE)
+
+staging-health: ## Staging: Check staging environment health
+	@./scripts/manage_staging_env.sh health
+
+staging-monitor: ## Staging: Open monitoring dashboards
+	@./scripts/manage_staging_env.sh monitor
+
+staging-test: ## Staging: Run E2E tests
+	@./scripts/manage_staging_env.sh test
+
+staging-reset: ## Staging: Reset staging environment (dangerous!)
+	@echo "$(RED)⚠️ This will delete all staging data!$(RESET)"
+	@./scripts/manage_staging_env.sh reset
+
+staging-cleanup: ## Staging: Clean up staging resources
+	@./scripts/manage_staging_env.sh cleanup
+
+# E2E 测试快速命令
+e2e-run: ## E2E: Quick E2E test run
+	@echo "$(YELLOW)Running E2E tests...$(RESET)" && \
+	./scripts/run_e2e_tests.py --type critical --no-cleanup
+
+e2e-setup: ## E2E: Setup E2E test environment
+	@echo "$(YELLOW)Setting up E2E test environment...$(RESET)" && \
+	./scripts/manage_staging_env.sh start && \
+	./scripts/manage_staging_env.sh migrate && \
+	./scripts/manage_staging_env.sh seed
+
+e2e-smoke: ## E2E: Run smoke tests
+	@echo "$(YELLOW)Running E2E smoke tests...$(RESET)" && \
+	./scripts/run_e2e_tests.py --type smoke --no-cleanup
+
+e2e-critical: ## E2E: Run critical path tests
+	@echo "$(YELLOW)Running E2E critical path tests...$(RESET)" && \
+	./scripts/run_e2e_tests.py --type critical --no-cleanup
+
+e2e-performance: ## E2E: Run performance tests
+	@echo "$(YELLOW)Running E2E performance tests...$(RESET)" && \
+	./scripts/run_e2e_tests.py --type performance --no-cleanup
+
+e2e-full: ## E2E: Run full test suite
+	@echo "$(YELLOW)Running full E2E test suite...$(RESET)" && \
+	./scripts/run_e2e_tests.py --type all --no-cleanup
+
+e2e-report: ## E2E: Generate test report only
+	@echo "$(YELLOW)Generating E2E test report...$(RESET)" && \
+	./scripts/run_e2e_tests.py --type critical --skip-setup --no-cleanup
 
 deploy: ## CI/Container: Build & start containers with immutable git-sha tag
 	@echo "$(YELLOW)Deploying image $(IMAGE_NAME):$(GIT_SHA)...$(RESET)" && \

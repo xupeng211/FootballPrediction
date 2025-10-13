@@ -255,8 +255,8 @@ class TestTeamModel:
         for i in range(5):
             team = Team()
             team.id = i + 1
-            team.name = f"Team {i+1} FC"
-            team.short_name = f"T{i+1}"
+            team.name = f"Team {i + 1} FC"
+            team.short_name = f"T{i + 1}"
             team.country = countries[i]
             team.founded_year = 1900 + i * 10
             teams.append(team)

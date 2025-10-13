@@ -118,9 +118,9 @@ class TestPredictionFlow:
                 "league_id": 1,
                 "match_time": datetime.now() + timedelta(hours=2 + i),
                 "match_status": "scheduled",
-                "venue": f"Stadium {i+1}",
-                "home_team": f"Team {chr(65+i)}",
-                "away_team": f"Team {chr(68+i)}",
+                "venue": f"Stadium {i + 1}",
+                "home_team": f"Team {chr(65 + i)}",
+                "away_team": f"Team {chr(68 + i)}",
                 "league": "Test League",
             }
 
