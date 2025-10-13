@@ -487,7 +487,7 @@ class CompositeFootballAdapter(Adapter):
                 _matches = await task
                 results[name] = matches
             except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-                results[name] = f"Error: {str(e)}"  # type: ignore
+                results[name] = f"Error: {str(e)}"
 
         return results
 

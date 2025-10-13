@@ -471,22 +471,44 @@ test-quick: ## Test: Quick test run (unit tests with timeout)
 	pytest -m "unit and not slow" --maxfail=5 && \
 	echo "$(GREEN)✅ Quick tests passed$(RESET)"
 
-type-check: ## Quality: Run type checking with mypy
+type-check: ## Quality: Run layered type checking (core strict, aux relaxed)
 	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running mypy type checking...$(RESET)" && \
-	mypy src --ignore-missing-imports --no-strict-optional --no-error-summary --allow-untyped-defs --allow-untyped-calls || true && \
-	echo "$(GREEN)✅ Type checking completed (warnings suppressed)$(RESET)"
+	echo "$(BLUE)🔍 Running layered MyPy type checks...$(RESET)" && \
+	echo "$(YELLOW)📍 Phase 1: Core modules (strict mode)...$(RESET)" && \
+	mypy src/core src/services src/api src/domain src/repositories src/database/repositories --strict || { echo "$(RED)❌ Core modules type check failed$(RESET)"; exit 1; } && \
+	echo "$(GREEN)✅ Core modules passed strict type checking$(RESET)" && \
+	echo "$(YELLOW)📍 Phase 2: Auxiliary modules (relaxed mode)...$(RESET)" && \
+	mypy src/utils src/monitoring src/tasks src/cache src/collectors src/data src/features src/ml src/scheduler src/security || echo "$(YELLOW)⚠️ Auxiliary modules completed with warnings$(RESET)" && \
+	echo "$(GREEN)✅ Type checking completed$(RESET)"
+
+typecheck-core: ## Quality: Run type checking on core modules only (strict)
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Running MyPy on core modules (strict)...$(RESET)" && \
+	mypy src/core src/services src/api src/domain src/repositories src/database/repositories --strict && \
+	echo "$(GREEN)✅ Core modules type check passed$(RESET)"
+
+typecheck-aux: ## Quality: Run type checking on auxiliary modules (relaxed)
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Running MyPy on auxiliary modules (relaxed)...$(RESET)" && \
+	mypy src/utils src/monitoring src/tasks src/cache src/collectors src/data src/features src/ml src/scheduler src/security || true && \
+	echo "$(GREEN)✅ Auxiliary modules type check completed$(RESET)"
+
+typecheck-full: ## Quality: Run type checking on all modules
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Running MyPy on all modules...$(RESET)" && \
+	mypy src || echo "$(YELLOW)⚠️ Full type check completed with warnings$(RESET)" && \
+	echo "$(GREEN)✅ Full type check completed$(RESET)"
 
 # ============================================================================
 # 🔄 CI Simulation
 # ============================================================================
-prepush: ## Quality: Complete pre-push validation (ruff + mypy + pytest)
+prepush: ## Quality: Complete pre-push validation (ruff + mypy core + pytest)
 	@echo "$(BLUE)🔄 Running pre-push quality gate...$(RESET)" && \
 	$(ACTIVATE) && \
 	echo "$(YELLOW)📋 Running Ruff check...$(RESET)" && \
 	ruff check src/ tests/unit/ tests/integration/ tests/e2e/ || { echo "$(RED)❌ Ruff check failed$(RESET)"; exit 1; } && \
-	echo "$(YELLOW)🔍 Running MyPy type check...$(RESET)" && \
-	mypy src/ --ignore-missing-imports --no-strict-optional --no-error-summary --allow-untyped-defs --allow-untyped-calls || { echo "$(YELLOW)⚠️ MyPy check completed with warnings$(RESET)"; } && \
+	echo "$(YELLOW)🔍 Running MyPy type check on core modules...$(RESET)" && \
+	$(MAKE) typecheck-core || { echo "$(RED)❌ Core modules type check failed$(RESET)"; exit 1; } && \
 	echo "$(YELLOW)🧪 Running Pytest basic validation...$(RESET)" && \
 	pytest tests/unit --maxfail=5 --disable-warnings --tb=short -q || { echo "$(RED)❌ Pytest validation failed$(RESET)"; exit 1; } && \
 	echo "$(GREEN)✅ Pre-push quality gate passed$(RESET)"
@@ -494,9 +516,18 @@ prepush: ## Quality: Complete pre-push validation (ruff + mypy + pytest)
 ci: ## CI: Simulate GitHub Actions CI pipeline
 	@echo "$(BLUE)🔄 Running CI simulation...$(RESET)" && \
 	$(MAKE) lint && \
+	$(MAKE) typecheck-core && \
 	$(MAKE) test-quick && \
 	$(MAKE) coverage-fast && \
 	echo "$(GREEN)✅ CI simulation passed$(RESET)"
+
+ci-full: ## CI: Full CI pipeline with all type checks
+	@echo "$(BLUE)🔄 Running full CI simulation...$(RESET)" && \
+	$(MAKE) lint && \
+	$(MAKE) type-check && \
+	$(MAKE) test && \
+	$(MAKE) coverage && \
+	echo "$(GREEN)✅ Full CI simulation passed$(RESET)"
 
 # ============================================================================
 # 🐳 Container Management

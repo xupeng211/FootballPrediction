@@ -226,7 +226,7 @@ class User:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "User":
         """从字典创建实例"""
-        _user = cls(
+        user = cls(
             id=data.get("id"),
             username=data.get("username", ""),
             email=data.get("email", ""),

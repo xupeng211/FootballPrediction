@@ -9,6 +9,7 @@
 """
 
 import asyncio
+import redis
 import logging
 import os
 import shutil
@@ -16,6 +17,7 @@ from datetime import datetime
 from typing import Any, Dict
 
 from src.database.connection import DatabaseManager
+from sqlalchemy import text
 from src.tasks.celery_app import app
 
 logger = logging.getLogger(__name__)
@@ -59,7 +61,7 @@ def quality_check_task() -> Dict[str, Any]:
                 )
 
                 _result = await session.execute(match_integrity_query)
-                incomplete_matches = (await result.scalar()) or 0
+                incomplete_matches = _result.scalar() or 0  # type: ignore
                 check_results["incomplete_matches"] = incomplete_matches
                 if incomplete_matches > 0:
                     issues_found += 1
@@ -78,7 +80,7 @@ def quality_check_task() -> Dict[str, Any]:
                 )
 
                 _result = await session.execute(duplicate_matches_query)
-                duplicate_matches = (await result.scalar()) or 0
+                duplicate_matches = _result.scalar() or 0  # type: ignore
                 check_results["duplicate_matches"] = duplicate_matches
                 if duplicate_matches > 0:
                     issues_found += 1
@@ -98,7 +100,7 @@ def quality_check_task() -> Dict[str, Any]:
                 )
 
                 _result = await session.execute(abnormal_odds_query)
-                abnormal_odds = (await result.scalar()) or 0
+                abnormal_odds = _result.scalar() or 0  # type: ignore
                 check_results["abnormal_odds"] = abnormal_odds
                 if abnormal_odds > 0:
                     issues_found += 1
@@ -115,7 +117,7 @@ def quality_check_task() -> Dict[str, Any]:
                 )
 
                 _result = await session.execute(orphan_matches_query)
-                orphan_matches = (await result.scalar()) or 0
+                orphan_matches = _result.scalar() or 0  # type: ignore
                 check_results["orphan_matches"] = orphan_matches
                 if orphan_matches > 0:
                     issues_found += 1
@@ -131,7 +133,7 @@ def quality_check_task() -> Dict[str, Any]:
                 )
 
                 _result = await session.execute(stale_data_query)
-                stale_logs = (await result.scalar()) or 0
+                stale_logs = _result.scalar() or 0  # type: ignore
                 check_results["stale_collection_logs"] = stale_logs
                 if stale_logs > 0:
                     issues_found += 1
@@ -362,7 +364,7 @@ def database_maintenance_task() -> Dict[str, Any]:
                 )
 
                 _result = await session.execute(cleanup_query)
-                cleaned_sessions = result.rowcount
+                cleaned_sessions = _result.rowcount  # type: ignore
                 maintenance_results["cleaned_stale_sessions"] = cleaned_sessions
 
                 # 3. 获取表大小信息
@@ -380,7 +382,7 @@ def database_maintenance_task() -> Dict[str, Any]:
                 )
 
                 _result = await session.execute(table_size_query)
-                rows = await result.fetchall()
+                rows = _result.fetchall()
                 table_sizes = [
                     {"table": row.table_name, "size": row.size} for row in rows
                 ]

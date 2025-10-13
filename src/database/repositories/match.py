@@ -68,7 +68,7 @@ class MatchRepository(BaseRepository[Match]):
                 stmt = stmt.limit(limit)
 
             _result = await sess.execute(stmt)
-            return result.scalars().all()  # type: ignore
+            return _result.scalars().all()  # type: ignore  # type: ignore
 
     async def get_by_status(
         self,
@@ -131,7 +131,7 @@ class MatchRepository(BaseRepository[Match]):
                 stmt = stmt.limit(limit)
 
             _result = await sess.execute(stmt)
-            return result.scalars().all()  # type: ignore
+            return _result.scalars().all()  # type: ignore  # type: ignore
 
     async def get_live_matches(
         self, session: Optional[AsyncSession] = None
@@ -185,7 +185,7 @@ class MatchRepository(BaseRepository[Match]):
                 stmt = stmt.limit(limit)
 
             _result = await sess.execute(stmt)
-            return result.scalars().all()  # type: ignore
+            return _result.scalars().all()  # type: ignore  # type: ignore
 
     async def get_by_team(
         self,
@@ -225,7 +225,7 @@ class MatchRepository(BaseRepository[Match]):
                 stmt = stmt.limit(limit)
 
             _result = await sess.execute(stmt)
-            return result.scalars().all()  # type: ignore
+            return _result.scalars().all()  # type: ignore  # type: ignore
 
     async def get_head_to_head(
         self,
@@ -271,7 +271,7 @@ class MatchRepository(BaseRepository[Match]):
                 stmt = stmt.limit(limit)
 
             _result = await sess.execute(stmt)
-            return result.scalars().all()  # type: ignore
+            return _result.scalars().all()  # type: ignore  # type: ignore
 
     async def get_matches_by_league(
         self,
@@ -489,7 +489,7 @@ class MatchRepository(BaseRepository[Match]):
         }
 
         for match in matches:
-            if match.status != MatchStatus.FINISHED.value:  # type: ignore
+            if match.status != MatchStatus.FINISHED.value:
                 continue
 
             stats["played"] += 1  # type: ignore

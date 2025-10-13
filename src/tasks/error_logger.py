@@ -287,7 +287,7 @@ class TaskErrorLogger:
                     query_builder.build_error_statistics_query(hours)  # type: ignore
                 )
                 _result = await session.execute(error_count_sql)
-                total_errors = result.scalar() or 0
+                total_errors = _result.scalar() or 0  # type: ignore
 
                 # 按任务类型统计错误
                 task_errors_sql = text(query_builder.build_task_errors_query(hours))  # type: ignore
@@ -342,7 +342,7 @@ class TaskErrorLogger:
                 _result = await session.execute(cleanup_sql)
                 await session.commit()
 
-                deleted_count = result.rowcount
+                deleted_count = result.rowcount  # type: ignore
                 logger.info(f"清理了 {deleted_count} 条旧的错误日志记录")
 
                 return deleted_count  # type: ignore

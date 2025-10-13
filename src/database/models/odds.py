@@ -319,7 +319,7 @@ class Odds(BaseModel):
         query = session.query(cls).filter(cls.match_id == match_id)
         if bookmaker:
             query = query.filter(cls.bookmaker == bookmaker)
-        return query.order_by(cls.updated_at.desc()).all()
+        return query.order_by(cls.updated_at.desc()).all()  # type: ignore
 
     @classmethod
     def get_odds_history(cls, session, match_id: int, market_type: MarketType):
@@ -328,7 +328,7 @@ class Odds(BaseModel):
             session.query(cls)
             .filter(cls.match_id == match_id, cls.market_type == market_type)
             .order_by(cls.collected_at.asc())
-            .all()
+            .all()  # type: ignore
         )
 
     @classmethod
@@ -338,7 +338,7 @@ class Odds(BaseModel):
             session.query(cls)
             .filter(cls.match_id == match_id, cls.bookmaker == bookmaker)
             .order_by(cls.collected_at.desc())
-            .first()
+            .first()  # type: ignore
         )
 
     @classmethod
@@ -353,7 +353,7 @@ class Odds(BaseModel):
                     func.avg(cls.away_odds).label("avg_away"),
                 )
                 .filter(cls.match_id == match_id, cls.market_type == market_type)
-                .first()
+                .first()  # type: ignore
             )
 
             return {
@@ -369,7 +369,7 @@ class Odds(BaseModel):
                     func.avg(cls.under_odds).label("avg_under"),
                 )
                 .filter(cls.match_id == match_id, cls.market_type == market_type)
-                .first()
+                .first()  # type: ignore
             )
 
             return {

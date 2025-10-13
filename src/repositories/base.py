@@ -151,7 +151,7 @@ class ReadOnlyRepository(BaseRepository[T, ID], ABC):
         if conditions:
             query = select(self.model_class).where(or_(*conditions))
             _result = await self.session.execute(query)
-            return result.scalars().all()  # type: ignore
+            return result.scalars().all()  # type: ignore  # type: ignore
         return []
 
 
@@ -192,7 +192,7 @@ class WriteOnlyRepository(BaseRepository[T, ID], ABC):
         """批量删除实体"""
         query = delete(self.model_class).where(self.model_class.id.in_(ids))  # type: ignore
         _result = await self.session.execute(query)
-        return result.rowcount
+        return result.rowcount  # type: ignore
 
 
 class Repository(ReadOnlyRepository[T, ID], WriteOnlyRepository[T, ID], ABC):

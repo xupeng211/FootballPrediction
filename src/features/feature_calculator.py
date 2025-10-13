@@ -95,7 +95,7 @@ class FeatureCalculator:
         )
 
         _result = await session.execute(recent_matches_query)
-        recent_matches = result.scalars().all()
+        recent_matches = result.scalars().all()  # type: ignore
 
         # 初始化特征
         features = RecentPerformanceFeatures(
@@ -237,7 +237,7 @@ class FeatureCalculator:
         )
 
         _result = await session.execute(h2h_query)
-        h2h_matches = result.scalars().all()
+        h2h_matches = result.scalars().all()  # type: ignore
 
         # 初始化特征
         features = HistoricalMatchupFeatures(
@@ -336,7 +336,7 @@ class FeatureCalculator:
         )
 
         _result = await session.execute(odds_query)
-        odds_list = result.scalars().all()
+        odds_list = result.scalars().all()  # type: ignore
 
         # 初始化特征
         features = OddsFeatures(match_id=match_id, calculation_date=calculation_date)

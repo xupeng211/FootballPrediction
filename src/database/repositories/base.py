@@ -87,9 +87,9 @@ class BaseRepository(ABC, Generic[T]):
 
             stmt = select(self.model_class).where(
                 getattr(self.model_class, "id") == obj_id
-            )  # type: ignore
+            )
             _result = await sess.execute(stmt)
-            return result.scalar_one_or_none()
+            return _result.scalar_one_or_none()
 
     async def get_all(
         self,
@@ -120,7 +120,7 @@ class BaseRepository(ABC, Generic[T]):
                 stmt = stmt.limit(limit)
 
             _result = await sess.execute(stmt)
-            return list(result.scalars().all())  # type: ignore
+            return list(_result.scalars().all())  # type: ignore
 
     async def update(
         self,
@@ -145,7 +145,7 @@ class BaseRepository(ABC, Generic[T]):
 
             stmt = (
                 update(self.model_class)
-                .where(getattr(self.model_class, "id") == obj_id)  # type: ignore
+                .where(getattr(self.model_class, "id") == obj_id)
                 .values(**obj_data)
                 .returning(self.model_class)
             )
@@ -153,7 +153,7 @@ class BaseRepository(ABC, Generic[T]):
             _result = await sess.execute(stmt)
             await sess.commit()
 
-            return result.scalar_one_or_none()
+            return _result.scalar_one_or_none()
 
     async def delete(
         self, obj_id: Union[int, str], session: Optional[AsyncSession] = None
@@ -174,11 +174,11 @@ class BaseRepository(ABC, Generic[T]):
 
             stmt = delete(self.model_class).where(
                 getattr(self.model_class, "id") == obj_id
-            )  # type: ignore
+            )
             _result = await sess.execute(stmt)
             await sess.commit()
 
-            return result.rowcount > 0
+            return _result.rowcount > 0  # type: ignore
 
     # ========================================
     # 查询方法
@@ -227,7 +227,7 @@ class BaseRepository(ABC, Generic[T]):
                 stmt = stmt.limit(limit)
 
             _result = await sess.execute(stmt)
-            return list(result.scalars().all())  # type: ignore
+            return list(_result.scalars().all())  # type: ignore
 
     async def find_one_by(
         self, filters: Dict[str, Any], session: Optional[AsyncSession] = None
@@ -273,7 +273,7 @@ class BaseRepository(ABC, Generic[T]):
                         stmt = stmt.where(getattr(self.model_class, key) == value)
 
             _result = await sess.execute(stmt)
-            return len(result.scalars().all())
+            return len(_result.scalars().all())  # type: ignore
 
     async def exists(
         self, filters: Dict[str, Any], session: Optional[AsyncSession] = None
@@ -346,11 +346,11 @@ class BaseRepository(ABC, Generic[T]):
                     obj_id = update_data.pop("id")
                     stmt = (
                         update(self.model_class)
-                        .where(getattr(self.model_class, "id") == obj_id)  # type: ignore
+                        .where(getattr(self.model_class, "id") == obj_id)
                         .values(**update_data)
                     )
                     _result = await sess.execute(stmt)
-                    updated_count += result.rowcount
+                    updated_count += result.rowcount  # type: ignore
 
             await sess.commit()
             return updated_count
@@ -374,11 +374,11 @@ class BaseRepository(ABC, Generic[T]):
 
             stmt = delete(self.model_class).where(
                 getattr(self.model_class, "id").in_(ids)
-            )  # type: ignore
+            )
             _result = await sess.execute(stmt)
             await sess.commit()
 
-            return result.rowcount
+            return _result.rowcount  # type: ignore
 
     # ========================================
     # 事务方法
@@ -410,7 +410,7 @@ class BaseRepository(ABC, Generic[T]):
                     results.append(result)
 
                 await sess.commit()
-                return results
+                return _results
             except (
                 SQLAlchemyExc.SQLAlchemyError,
                 SQLAlchemyExc.DatabaseError,

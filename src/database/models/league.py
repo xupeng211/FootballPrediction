@@ -82,14 +82,14 @@ class League(BaseModel):
     @classmethod
     def get_by_code(cls, session, league_code: str):
         """根据联赛代码获取联赛"""
-        return session.query(cls).filter(cls.league_code == league_code).first()
+        return session.query(cls).filter(cls.league_code == league_code).first()  # type: ignore
 
     @classmethod
     def get_by_country(cls, session, country: str):
         """获取指定国家的所有联赛"""
-        return session.query(cls).filter(cls.country == country).all()
+        return session.query(cls).filter(cls.country == country).all()  # type: ignore
 
     @classmethod
     def get_active_leagues(cls, session):
         """获取所有活跃的联赛"""
-        return session.query(cls).filter(cls.is_active is True).all()
+        return session.query(cls).filter(cls.is_active is True).all()  # type: ignore

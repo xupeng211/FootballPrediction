@@ -215,7 +215,7 @@ class PerformanceProfiler:
             name="database_query_duration",
             value=execution_time,
             unit="seconds",
-            _metadata ={"query": query[:100], "rows": rows_affected},
+            _metadata={"query": query[:100], "rows": rows_affected},
         )
         self.metrics.append(metric)
 
@@ -363,7 +363,7 @@ class DatabaseQueryProfiler:
             # 尝试获取影响行数
             rows_affected = 0
             if hasattr(result, "rowcount"):
-                rows_affected = result.rowcount
+                rows_affected = result.rowcount  # type: ignore
             elif isinstance(result, list):
                 rows_affected = len(result)
 
@@ -442,7 +442,7 @@ class APIEndpointProfiler:
             name=f"api_endpoint_duration_{key}",
             value=duration,
             unit="seconds",
-            _metadata ={
+            _metadata={
                 "endpoint": endpoint,
                 "method": method,
                 "status_code": status_code,

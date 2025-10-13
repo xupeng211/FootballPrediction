@@ -314,9 +314,9 @@ class AuditLog(BaseModel):
             elif action in [AuditAction.BACKUP, AuditAction.RESTORE]:
                 kwargs["compliance_category"] = "DATA_PROTECTION"
             elif kwargs.get("is_sensitive"):
-                kwargs["compliance_category"] = (
-                    "PII"  # Personally Identifiable Information
-                )
+                kwargs[
+                    "compliance_category"
+                ] = "PII"  # Personally Identifiable Information
             else:
                 kwargs["compliance_category"] = "GENERAL"
 
@@ -360,7 +360,7 @@ class AuditLogSummary:
                 and_(AuditLog.user_id == user_id, AuditLog.timestamp >= cutoff_date)
             )
             .group_by(AuditLog.action)
-            .all()
+            .all()  # type: ignore
         )
 
         # 按严重级别统计
@@ -372,7 +372,7 @@ class AuditLogSummary:
                 and_(AuditLog.user_id == user_id, AuditLog.timestamp >= cutoff_date)
             )
             .group_by(AuditLog.severity)
-            .all()
+            .all()  # type: ignore
         )
 
         # 高风险操作
@@ -442,7 +442,7 @@ class AuditLogSummary:
                 )
             )
             .group_by(AuditLog.action)
-            .all()
+            .all()  # type: ignore
         )
 
         # 按用户统计
@@ -454,7 +454,7 @@ class AuditLogSummary:
                 )
             )
             .group_by(AuditLog.user_id)
-            .all()
+            .all()  # type: ignore
         )
 
         return {

@@ -46,7 +46,7 @@ class StreamProcessor:
                 start_time = datetime.utcnow()
 
                 # 处理消息
-                _result = await process_func(message)
+                result = await process_func(message)
 
                 # 发送结果
                 if result:
@@ -95,7 +95,7 @@ class StreamProcessor:
 
             if len(batch) >= batch_size:
                 try:
-                    _result = await batch_func(batch)
+                    result = await batch_func(batch)
                     self.metrics["messages_processed"] += len(batch)
                     yield result
                     batch = []
@@ -106,7 +106,7 @@ class StreamProcessor:
         # 处理剩余的消息
         if batch:
             try:
-                _result = await batch_func(batch)
+                result = await batch_func(batch)
                 self.metrics["messages_processed"] += len(batch)
                 yield result
             except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
@@ -116,7 +116,7 @@ class StreamProcessor:
         self, message: Dict[str, Any], transformation: Dict[str, Any]
     ) -> Dict[str, Any]:
         """转换消息"""
-        _result = {"key": message["key"], "value": {}, "topic": message.get("topic")}
+        result = {"key": message["key"], "value": {}, "topic": message.get("topic")}
 
         # 应用映射
         if "mapping" in transformation:
@@ -156,7 +156,7 @@ class StreamProcessor:
             if timestamp - windows[window_key]["window_start"] > window_size:
                 batch = windows.pop(window_key)
                 try:
-                    _result = await aggregate_func(batch["key"], batch["messages"])
+                    result = await aggregate_func(batch["key"], batch["messages"])
                     yield result
                 except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
                     self.metrics["messages_failed"] += len(batch["messages"])
@@ -184,7 +184,7 @@ class StreamProcessor:
             # 检查是否有匹配的键
             key = message["key"]
             if key in stream1_buffer and key in stream2_buffer:
-                _result = await join_func(stream1_buffer[key], stream2_buffer[key])
+                result = await join_func(stream1_buffer[key], stream2_buffer[key])
                 if result:
                     yield result
                 # 清理已处理的键
@@ -224,7 +224,7 @@ class StreamProcessor:
             for wid in closed_windows:
                 window = windows.pop(wid)
                 if window["messages"]:
-                    _result = await window_func(window["messages"])
+                    result = await window_func(window["messages"])
                     yield result
 
 

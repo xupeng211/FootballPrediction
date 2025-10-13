@@ -112,11 +112,11 @@ class TeamDomainService:
         """记录一场比赛的结果并更新球队统计。"""
         team.add_match_result(result, goals_for, goals_against)
 
-        _stats = team.stats  # type: ignore[assignment]
+        _stats = team.stats
         if stats:
             event = TeamStatsEvent(
                 team_id=team.id or 0,
-                _result =result,
+                _result=result,
                 goals_for=goals_for,
                 goals_against=goals_against,
                 matches_played=stats.matches_played,

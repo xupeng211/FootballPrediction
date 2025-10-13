@@ -15,6 +15,7 @@
 
 from typing import Dict, List, Optional, Any
 from datetime import datetime
+from decimal import Decimal
 
 from .base_collector import DataCollector, CollectionResult
 

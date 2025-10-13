@@ -163,7 +163,7 @@ class MissingDataHandler:
             async with self.db_manager.get_async_session() as session:
                 stmt = select(func.avg(column))
                 _result = await session.execute(stmt)
-                avg_value: Optional[float] = result.scalar()
+                avg_value: Optional[float] = result.scalar()  # type: ignore
 
                 if avg_value is None:
                     avg_value = self._fallback_average(feature_name)

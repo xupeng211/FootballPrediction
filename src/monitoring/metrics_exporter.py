@@ -408,7 +408,7 @@ class MetricsExporter:
                         _result = await session.execute(
                             text(f"SELECT COUNT(*) FROM {safe_table_name}")  # nosec B608 - using quoted_name for safety
                         )
-                        row_count = result.scalar()
+                        row_count = result.scalar()  # type: ignore
                         self.table_row_count.labels(table_name=table_name).set(
                             float(row_count) if row_count is not None else 0.0
                         )

@@ -134,7 +134,7 @@ class Team(BaseModel):
             .filter(or_(Match.home_team_id == self.id, Match.away_team_id == self.id))
             .order_by(desc(Match.match_time))
             .limit(limit)
-            .all()
+            .all()  # type: ignore
         )
 
     def get_home_record(self, session: Session) -> Dict[str, int]:
@@ -225,7 +225,7 @@ class Team(BaseModel):
                 Match.season == season,
                 Match.match_status == "finished",
             )
-            .all()
+            .all()  # type: ignore
         )
 
         _stats = {
@@ -293,7 +293,7 @@ class Team(BaseModel):
         Returns:
             Optional[Team]: 匹配的球队对象，未找到则返回None。
         """
-        return session.query(cls).filter(cls.team_code == team_code).first()
+        return session.query(cls).filter(cls.team_code == team_code).first()  # type: ignore
 
     @classmethod
     def get_by_league(cls, session: Session, league_id: int) -> List["Team"]:
@@ -306,7 +306,7 @@ class Team(BaseModel):
         Returns:
             List[Team]: 该联赛下的所有球队列表。
         """
-        return session.query(cls).filter(cls.league_id == league_id).all()
+        return session.query(cls).filter(cls.league_id == league_id).all()  # type: ignore
 
     @classmethod
     def get_active_teams(cls, session: Session) -> List["Team"]:
@@ -318,4 +318,4 @@ class Team(BaseModel):
         Returns:
             List[Team]: 所有活跃状态的球队列表。
         """
-        return session.query(cls).filter(cls.is_active is True).all()  # type: ignore
+        return session.query(cls).filter(cls.is_active is True).all()  # type: ignore  # type: ignore

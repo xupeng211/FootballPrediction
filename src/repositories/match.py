@@ -46,7 +46,7 @@ class ReadOnlyMatchRepository(ReadOnlyRepository[Match, int]):
                 query = self._apply_includes(query, query_spec.include)
 
         _result = await self.session.execute(query)
-        return result.scalars().first()
+        return _result.scalars().first()  # type: ignore
 
     async def find_many(self, query_spec: QuerySpec) -> List[Match]:
         """查找多个比赛"""
@@ -65,13 +65,13 @@ class ReadOnlyMatchRepository(ReadOnlyRepository[Match, int]):
                 query = self._apply_includes(query, query_spec.include)
 
         _result = await self.session.execute(query)
-        return result.scalars().all()  # type: ignore
+        return _result.scalars().all()  # type: ignore
 
     async def get_by_id(self, id: int) -> Optional[Match]:
         """根据ID获取比赛"""
         query = select(Match).where(Match.id == id)
         _result = await self.session.execute(query)
-        return result.scalars().first()
+        return _result.scalars().first()  # type: ignore
 
     async def get_all(self, query_spec: Optional[QuerySpec] = None) -> List[Match]:
         """获取所有比赛"""
@@ -89,7 +89,7 @@ class ReadOnlyMatchRepository(ReadOnlyRepository[Match, int]):
         """检查比赛是否存在"""
         query = select(func.count(Match.id)).where(Match.id == id)
         _result = await self.session.execute(query)
-        return result.scalar() > 0  # type: ignore
+        return _result.scalar() > 0  # type: ignore
 
     async def get_matches_by_date_range(
         self,
@@ -202,7 +202,7 @@ class MatchRepository(MatchRepositoryInterface):
         """根据ID获取比赛"""
         query = select(Match).where(Match.id == id)
         _result = await self.session.execute(query)
-        return result.scalars().first()
+        return _result.scalars().first()  # type: ignore
 
     async def get_all(self, query_spec: Optional[QuerySpec] = None) -> List[Match]:
         """获取所有比赛"""
@@ -221,7 +221,7 @@ class MatchRepository(MatchRepositoryInterface):
                 query = self._apply_includes(query, query_spec.include)
 
         _result = await self.session.execute(query)
-        return result.scalars().all()  # type: ignore
+        return _result.scalars().all()  # type: ignore
 
     async def find_one(self, query_spec: QuerySpec) -> Optional[Match]:
         """查找单个比赛"""
@@ -234,7 +234,7 @@ class MatchRepository(MatchRepositoryInterface):
                 query = self._apply_includes(query, query_spec.include)
 
         _result = await self.session.execute(query)
-        return result.scalars().first()
+        return _result.scalars().first()  # type: ignore
 
     async def find_many(self, query_spec: QuerySpec) -> List[Match]:
         """查找多个比赛"""
@@ -248,7 +248,7 @@ class MatchRepository(MatchRepositoryInterface):
             entity.updated_at = datetime.utcnow()  # type: ignore
 
         await self.session.commit()
-        await self.session.refresh(entity)
+        await self.session.refresh(entity)  # type: ignore
         return entity
 
     async def delete(self, entity: Match) -> bool:
@@ -265,7 +265,7 @@ class MatchRepository(MatchRepositoryInterface):
         """检查比赛是否存在"""
         query = select(func.count(Match.id)).where(Match.id == id)
         _result = await self.session.execute(query)
-        return result.scalar() > 0  # type: ignore
+        return _result.scalar() > 0  # type: ignore
 
     async def create(self, entity_data: Dict[str, Any]) -> Match:
         """创建新比赛"""
@@ -282,9 +282,9 @@ class MatchRepository(MatchRepositoryInterface):
             created_at=datetime.utcnow(),
         )
 
-        self.session.add(match)
+        self.session.add(match)  # type: ignore
         await self.session.commit()
-        await self.session.refresh(match)
+        await self.session.refresh(match)  # type: ignore
         return match
 
     async def update_by_id(
@@ -316,7 +316,7 @@ class MatchRepository(MatchRepositoryInterface):
         _result = await self.session.execute(query)
         await self.session.commit()
 
-        if result.rowcount > 0:
+        if _result.rowcount > 0:  # type: ignore
             return await self.get_by_id(id)
         return None
 
@@ -329,11 +329,11 @@ class MatchRepository(MatchRepositoryInterface):
         )
         _result = await self.session.execute(query)
         await self.session.commit()
-        return result.rowcount > 0
+        return _result.rowcount > 0  # type: ignore
 
     async def bulk_create(self, entities_data: List[Dict[str, Any]]) -> List[Match]:
         """批量创建比赛"""
-        _matches = []
+        matches = []
         for data in entities_data:
             match = Match(
                 home_team_id=data["home_team_id"],
@@ -354,7 +354,7 @@ class MatchRepository(MatchRepositoryInterface):
 
         # 刷新所有实体
         for match in matches:
-            await self.session.refresh(match)
+            await self.session.refresh(match)  # type: ignore
 
         return matches
 
@@ -437,7 +437,7 @@ class MatchRepository(MatchRepositoryInterface):
         # 获取预测统计
         prediction_query = select(
             func.count(Prediction.id).label("total_predictions"),
-            func.avg(Prediction.confidence).label("avg_confidence"),  # type: ignore
+            func.avg(Prediction.confidence).label("avg_confidence"),
             func.sum(
                 func.case(
                     (
@@ -471,7 +471,7 @@ class MatchRepository(MatchRepositoryInterface):
         ).where(Prediction.match_id == match_id)
 
         prediction_result = await self.session.execute(prediction_query)
-        prediction_stats = prediction_result.first()
+        prediction_stats = prediction_result.first()  # type: ignore
 
         # 获取实际结果分布
         actual_result = None

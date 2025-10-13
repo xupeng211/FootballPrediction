@@ -142,7 +142,7 @@ class FixturesCollector:
         )
 
         _result = await self.db_session.execute(query)
-        _matches = result.scalars().all()
+        _matches = result.scalars().all()  # type: ignore
 
         fixtures = []
         for match in matches:
@@ -278,7 +278,7 @@ class FixturesCollector:
             _result = await self.db_session.execute(
                 select(Team).where(Team.is_active is True)
             )
-            _teams = result.scalars().all()
+            _teams = result.scalars().all()  # type: ignore
 
             # 为每个球队收集赛程
             for team in teams:

@@ -183,7 +183,7 @@ class CreateUserCommand(ValidatableCommand):
                 "SELECT id FROM users WHERE username = :username",
                 {"username": self.username},
             )
-            if existing_user.scalar():
+            if existing_user.scalar():  # type: ignore
                 errors.append("用户名已存在")
 
         return (

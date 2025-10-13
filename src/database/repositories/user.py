@@ -141,7 +141,7 @@ class UserRepository(BaseRepository[User]):
                 stmt = stmt.limit(limit)
 
             _result = await sess.execute(stmt)
-            return result.scalars().all()  # type: ignore
+            return _result.scalars().all()  # type: ignore  # type: ignore
 
     async def get_inactive_users(
         self,
@@ -178,7 +178,7 @@ class UserRepository(BaseRepository[User]):
                 stmt = stmt.limit(limit)
 
             _result = await sess.execute(stmt)
-            return result.scalars().all()  # type: ignore
+            return _result.scalars().all()  # type: ignore  # type: ignore
 
     async def search_users(
         self,
@@ -218,7 +218,7 @@ class UserRepository(BaseRepository[User]):
                 stmt = stmt.limit(limit)
 
             _result = await sess.execute(stmt)
-            return result.scalars().all()  # type: ignore
+            return _result.scalars().all()  # type: ignore  # type: ignore
 
     async def update_last_login(
         self, user_id: Union[int, str], session: Optional[AsyncSession] = None
@@ -343,7 +343,7 @@ class UserRepository(BaseRepository[User]):
                 total_stmt = total_stmt.where(User.created_at >= start_date)
 
             total_result = await sess.execute(total_stmt)
-            total_users = total_result.scalar()
+            total_users = total_result.scalar()  # type: ignore
 
             # 活跃用户数（最近30天登录）
             thirty_days_ago = datetime.utcnow() - timedelta(days=30)
@@ -354,14 +354,14 @@ class UserRepository(BaseRepository[User]):
                 active_stmt = active_stmt.where(User.created_at >= start_date)
 
             active_result = await sess.execute(active_stmt)
-            active_users = active_result.scalar()
+            active_users = active_result.scalar()  # type: ignore
 
             # 新注册用户数（今天）
             today = datetime.utcnow().date()
             today_start = datetime.combine(today, datetime.min.time())
             new_stmt = select(func.count(User.id)).where(User.created_at >= today_start)
             new_result = await sess.execute(new_stmt)
-            new_users_today = new_result.scalar()
+            new_users_today = new_result.scalar()  # type: ignore
 
             # 计算比率
             activity_rate = 0.0
@@ -414,7 +414,7 @@ class UserRepository(BaseRepository[User]):
             )
 
             _result = await sess.execute(stmt)
-            rows = result.all()
+            rows = result.all()  # type: ignore
 
             # 转换为字典列表
             growth_stats = []

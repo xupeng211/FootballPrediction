@@ -21,15 +21,15 @@ class UserService:
 
     def get(self, user_id: int) -> Optional[User]:
         """根据ID获取用户"""
-        return self.db.query(User).filter(User.id == user_id).first()
+        return self.db.query(User).filter(User.id == user_id).first()  # type: ignore
 
     def get_by_username(self, username: str) -> Optional[User]:
         """根据用户名获取用户"""
-        return self.db.query(User).filter(User.username == username).first()
+        return self.db.query(User).filter(User.username == username).first()  # type: ignore
 
     def get_by_email(self, email: str) -> Optional[User]:
         """根据邮箱获取用户"""
-        return self.db.query(User).filter(User.email == email).first()
+        return self.db.query(User).filter(User.email == email).first()  # type: ignore
 
     def create(self, user_data: UserCreate) -> User:
         """创建新用户"""

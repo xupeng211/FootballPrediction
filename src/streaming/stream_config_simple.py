@@ -81,7 +81,7 @@ class StreamConfig:
     @staticmethod
     def _substitute_env_vars(config: Dict[str, Any]) -> Dict[str, Any]:
         """替换环境变量"""
-        _result = {}
+        result = {}
         for key, value in config.items():
             if (
                 isinstance(value, str)

@@ -159,7 +159,7 @@ def _implement_postgresql_partitioning_and_indexes():
         """
                 )
             )
-            .scalar()
+            .scalar()  # type: ignore
         )
 
         if _result == 0:
@@ -338,7 +338,7 @@ def _create_index_if_not_exists(name, table, columns, method="btree", condition=
             ),
             {"index_name": name},
         )
-        .scalar()
+        .scalar()  # type: ignore
     )
 
     if exists > 0:

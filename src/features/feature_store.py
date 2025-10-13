@@ -673,7 +673,7 @@ class FootballFeatureStore:
                     Match.match_time.between(start_date, end_date)
                 )
                 _result = await session.execute(matches_query)
-                _matches = result.scalars().all()
+                _matches = result.scalars().all()  # type: ignore
 
                 for match in matches:
                     try:

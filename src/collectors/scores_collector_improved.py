@@ -530,7 +530,7 @@ class ScoresCollector:
             raw_data = RawScoresData(
                 match_id=score_data["match_id"],
                 source="real_time_collector",
-                _data =score_data,
+                _data=score_data,
                 collected_at=score_data["last_updated"],
             )
             self.db_session.add(raw_data)
@@ -598,7 +598,7 @@ class ScoresCollector:
         )
 
         _result = await self.db_session.execute(query)
-        _matches = result.scalars().all()
+        _matches = result.scalars().all()  # type: ignore
 
         return [
             {

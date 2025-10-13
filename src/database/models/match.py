@@ -320,7 +320,7 @@ class Match(BaseModel):
                 cls.away_team_id == away_team_id,
                 cls.match_time == match_date,
             )
-            .first()
+            .first()  # type: ignore
         )
 
     @classmethod
@@ -337,7 +337,7 @@ class Match(BaseModel):
                 cls.match_time.between(start_date, end_date),
             )
             .order_by(cls.match_time)
-            .all()
+            .all()  # type: ignore
         )
 
     @classmethod
@@ -352,7 +352,7 @@ class Match(BaseModel):
         if season:
             query = query.filter(cls.season == season)
 
-        return query.order_by(cls.match_time.desc()).all()
+        return query.order_by(cls.match_time.desc()).all()  # type: ignore
 
     @classmethod
     def get_team_matches(cls, session, team_id: int, season: Optional[str] = None):
@@ -365,4 +365,4 @@ class Match(BaseModel):
         if season:
             query = query.filter(cls.season == season)
 
-        return query.order_by(cls.match_time.desc()).all()
+        return query.order_by(cls.match_time.desc()).all()  # type: ignore

@@ -413,7 +413,7 @@ class Predictions(BaseModel):
             session.query(cls)
             .filter(cls.match_id == match_id)
             .order_by(cls.predicted_at.desc())
-            .all()
+            .all()  # type: ignore
         )
 
     @classmethod
@@ -424,7 +424,7 @@ class Predictions(BaseModel):
         query = session.query(cls).filter(cls.match_id == match_id)
         if model_name:
             query = query.filter(cls.model_name == model_name)
-        return query.order_by(cls.predicted_at.desc()).first()  # type: ignore
+        return query.order_by(cls.predicted_at.desc()).first()  # type: ignore  # type: ignore
 
     @classmethod
     def get_model_predictions(cls, session, model_name: str, limit: int = 100):
@@ -434,7 +434,7 @@ class Predictions(BaseModel):
             .filter(cls.model_name == model_name)
             .order_by(cls.predicted_at.desc())
             .limit(limit)
-            .all()
+            .all()  # type: ignore
         )
 
     @classmethod
@@ -464,7 +464,7 @@ class Predictions(BaseModel):
                     Match.match_status == "finished",  # type: ignore
                 )
             )
-            .all()
+            .all()  # type: ignore
         )
 
         if not predictions:

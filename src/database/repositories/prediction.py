@@ -167,18 +167,18 @@ class PredictionRepository(BaseRepository[Predictions]):
                 select(Prediction)
                 .where(
                     and_(
-                        Prediction.predicted_at >= start_date,  # type: ignore
+                        Prediction.predicted_at >= start_date,
                         Prediction.status == PredictionStatus.COMPLETED,
                     )
                 )
-                .order_by(desc(Prediction.predicted_at))  # type: ignore
+                .order_by(desc(Prediction.predicted_at))
             )
 
             if limit:
                 stmt = stmt.limit(limit)
 
             _result = await sess.execute(stmt)
-            return result.scalars().all()
+            return _result.scalars().all()  # type: ignore
 
     async def get_user_prediction_for_match(
         self,
@@ -343,7 +343,7 @@ class PredictionRepository(BaseRepository[Predictions]):
 
             # 执行查询
             _result = await sess.execute(query)
-            predictions = result.scalars().all()
+            predictions = _result.scalars().all()  # type: ignore
 
             # 计算统计数据
             _stats = {
@@ -510,7 +510,7 @@ class PredictionRepository(BaseRepository[Predictions]):
                 )
                 .where(
                     and_(
-                        Prediction.predicted_at >= start_date,  # type: ignore
+                        Prediction.predicted_at >= start_date,
                         Prediction.status == PredictionStatus.COMPLETED,
                     )
                 )
@@ -520,7 +520,7 @@ class PredictionRepository(BaseRepository[Predictions]):
             )
 
             _result = await sess.execute(stmt)
-            rows = result.all()
+            rows = result.all()  # type: ignore
 
             # 转换为字典列表
             predictors = []

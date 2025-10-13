@@ -64,7 +64,7 @@ def collect_fixtures_task(self) -> Dict[str, Any]:
         collector = task.orchestrator.get_collector("fixtures")
         if collector:
             # 使用asyncio.run在同步上下文中运行异步代码
-            _result = asyncio.run(collector.collect_async(days_ahead=30))  # type: ignore
+            _result = asyncio.run(collector.collect_async(days_ahead=30))
             return result  # type: ignore
         else:
             return {"error": "Fixtures collector not found"}
@@ -90,7 +90,7 @@ def collect_odds_task(self) -> Dict[str, Any]:
         collector = task.orchestrator.get_collector("odds")
         if collector:
             # 使用asyncio.run在同步上下文中运行异步代码
-            _result = asyncio.run(collector.collect_async())  # type: ignore
+            _result = asyncio.run(collector.collect_async())
             return result  # type: ignore
         else:
             return {"error": "Odds collector not found"}
@@ -116,7 +116,7 @@ def collect_scores_task(self) -> Dict[str, Any]:
         collector = task.orchestrator.get_collector("scores")
         if collector:
             # 使用asyncio.run在同步上下文中运行异步代码
-            _result = asyncio.run(collector.collect_async())  # type: ignore
+            _result = asyncio.run(collector.collect_async())
             return result  # type: ignore
         else:
             return {"error": "Scores collector not found"}
@@ -126,7 +126,7 @@ def collect_scores_task(self) -> Dict[str, Any]:
         raise
 
 
-@celery_app.task  # type: ignore
+@celery_app.task
 def manual_collect_all_data() -> Dict[str, Any]:
     """手动收集所有数据任务
 
@@ -144,7 +144,7 @@ def manual_collect_all_data() -> Dict[str, Any]:
         task.set_database_manager(db_manager)
 
         # 使用asyncio.run在同步上下文中运行异步代码
-        results = asyncio.run(task.orchestrator.collect_all_data())  # type: ignore
+        results = asyncio.run(task.orchestrator.collect_all_data())
         return results  # type: ignore
 
     except (RuntimeError, ValueError, ConnectionError) as e:
@@ -152,7 +152,7 @@ def manual_collect_all_data() -> Dict[str, Any]:
         return {"error": str(e), "collected_at": datetime.utcnow().isoformat()}
 
 
-@celery_app.task  # type: ignore
+@celery_app.task
 def emergency_data_collection_task(
     data_types: Optional[List[str]] = None, priority: int = 1
 ) -> Dict[str, Any]:
@@ -178,7 +178,7 @@ def emergency_data_collection_task(
         # 使用asyncio.run在同步上下文中运行异步代码
         results = asyncio.run(
             task.orchestrator.collect_all_data(data_types=critical_types)
-        )  # type: ignore
+        )
 
         # 标记为紧急收集
         results["emergency"] = True
@@ -196,7 +196,7 @@ def emergency_data_collection_task(
 
 
 # 定时任务定义
-@celery_app.task  # type: ignore
+@celery_app.task
 def collect_historical_data_task():
     """定期收集历史数据任务"""
     task = DataCollectionTask()
@@ -213,7 +213,7 @@ def collect_historical_data_task():
         if historical_collector:
             # 使用asyncio.run在同步上下文中运行异步代码
             results = asyncio.run(
-                historical_collector.collect_historical_data(  # type: ignore
+                historical_collector.collect_historical_data(
                     data_type="matches",
                     start_date=datetime.utcnow() - timedelta(days=30),
                     end_date=datetime.utcnow(),
@@ -221,7 +221,7 @@ def collect_historical_data_task():
             )
 
             # 保存到数据库
-            asyncio.run(_save_historical_data(results, "matches"))  # type: ignore
+            asyncio.run(_save_historical_data(results, "matches"))
             return results
 
         return {"error": "Historical collector not found"}

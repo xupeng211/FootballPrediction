@@ -55,7 +55,7 @@ class CreatePredictionHandler(CommandHandler):
                     "SELECT id FROM predictions WHERE match_id = :match_id AND user_id = :user_id",
                     {"match_id": command.match_id, "user_id": command.user_id},
                 )
-                if existing.scalar():
+                if existing.scalar():  # type: ignore
                     return CommandResult.failure_result(
                         ["用户已经对该比赛进行了预测"], "预测已存在"
                     )
@@ -79,7 +79,7 @@ class CreatePredictionHandler(CommandHandler):
                 logger.info(f"创建预测成功: ID={prediction.id}")
 
                 return CommandResult.success_result(
-                    _data =PredictionDTO(
+                    _data=PredictionDTO(
                         id=prediction.id,  # type: ignore
                         match_id=prediction.match_id,
                         user_id=prediction.user_id,  # type: ignore
@@ -133,7 +133,7 @@ class UpdatePredictionHandler(CommandHandler):
                 logger.info(f"更新预测成功: ID={prediction.id}")
 
                 return CommandResult.success_result(
-                    _data =PredictionDTO(
+                    _data=PredictionDTO(
                         id=prediction.id,
                         match_id=prediction.match_id,
                         user_id=prediction.user_id,
@@ -174,7 +174,7 @@ class DeletePredictionHandler(CommandHandler):
                 logger.info(f"删除预测成功: ID={command.prediction_id}")
 
                 return CommandResult.success_result(
-                    _data ={"deleted_id": command.prediction_id}, message="预测删除成功"
+                    _data={"deleted_id": command.prediction_id}, message="预测删除成功"
                 )
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
@@ -209,7 +209,7 @@ class CreateUserHandler(CommandHandler):
                 logger.info(f"创建用户成功: ID={user.id}")
 
                 return CommandResult.success_result(
-                    _data =UserDTO(
+                    _data=UserDTO(
                         id=user.id,  # type: ignore
                         username=user.username,  # type: ignore
                         email=user.email,  # type: ignore

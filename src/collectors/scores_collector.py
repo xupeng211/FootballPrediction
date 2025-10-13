@@ -93,7 +93,7 @@ class ScoresCollector:
                 or_(Match.match_status == "live", Match.match_status == "half_time")
             )
         )
-        return result.scalars().all()
+        return result.scalars().all()  # type: ignore
 
     async def _get_match_score(self, match: Match) -> Dict[str, int]:
         """获取比赛比分"""

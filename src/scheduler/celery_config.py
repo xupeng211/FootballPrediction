@@ -154,7 +154,7 @@ def is_match_day() -> bool:
         #         WHERE DATE(match_date) = :today
         #     """)
         #     _result = await session.execute(query, {"today": today})
-        #     match_count = result.scalar()
+        #     match_count = result.scalar()  # type: ignore
         #     return match_count > 0
 
         # 当前返回True以确保任务调度正常运行

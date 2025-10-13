@@ -40,7 +40,7 @@ class RedisManager:
     def get_sync_client(self) -> redis.Redis:
         """获取同步Redis客户端"""
         if not self._sync_client:
-            self._sync_client = redis.from_url(self.redis_url, decode_responses=True)  # type: ignore
+            self._sync_client = redis.from_url(self.redis_url, decode_responses=True)
             self.sync_ops = RedisSyncOperations(self._sync_client)  # type: ignore
         return self._sync_client  # type: ignore
 

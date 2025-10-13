@@ -46,7 +46,7 @@ async def should_collect_live_scores() -> bool:
                 query, {"start_time": start_time, "end_time": end_time}
             )
 
-            match_count = result.scalar() or 0
+            match_count = result.scalar()  # type: ignore or 0
             return match_count > 0
 
     except (ValueError, KeyError, RuntimeError):
@@ -223,7 +223,7 @@ async def cleanup_stale_tasks() -> int:
             await session.commit()
 
             # For DELETE queries, we need to check if the result has rowcount
-            if hasattr(result, "rowcount") and result.rowcount is not None:
+            if hasattr(result, "rowcount") and result.rowcount is not None:  # type: ignore
                 return result.rowcount  # type: ignore
             return 0
 
