@@ -1,3 +1,12 @@
+import sys
+from pathlib import Path
+
+# 添加项目路径
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+sys.path.insert(0, "src")
+
+# 尝试导入模式模块
+
 """
 设计模式实现的单元测试
 """
@@ -236,7 +245,9 @@ class TestDecoratorPattern:
             nonlocal attempt_count
             attempt_count += 1
             if attempt_count < 3:
-                raise Exception("Temporary failure")
+                raise RuntimeError(
+                    "Temporary failure"
+                )  # 使用RuntimeError而不是Exception
             return "success"
 
         result = await failing_function()
