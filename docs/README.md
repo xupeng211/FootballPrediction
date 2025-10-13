@@ -1,12 +1,24 @@
-# 📚 文档首页
+# Football Prediction System
 
-- [architecture/](architecture/) 架构与设计
-- [how-to/](how-to/) 使用指南
-- [reference/](reference/) API 与配置参考
-- [testing/](testing/) 测试策略与报告
-- [data/](data/) 数据采集与设计
-- [ml/](ml/) 特征工程与模型
-- [ops/](ops/) 部署与运维
-- [release/](release/) 发布与变更
-- [staging/](staging/) 上线前预演
-- [reference/glossary.md](reference/glossary.md) 术语表
+足球预测系统文档
+
+## 快速开始
+
+- [项目说明](project/README.md)
+- [快速开发指南](QUICK_START_FOR_DEVELOPERS.md)
+- [架构文档](architecture/README.md)
+
+## 文档索引
+
+- [完整文档索引](INDEX_MINIMAL.md)
+- [测试指南](TESTING_GUIDE.md)
+
+## 开发指南
+
+- [开发工作流](project/DEVELOPMENT_WORKFLOW.md)
+- [部署指南](how-to/DEPLOYMENT.md)
+- [测试命令](testing/TESTING_COMMANDS.md)
+
+---
+
+*文档自动生成于清理脚本*
