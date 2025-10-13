@@ -12,7 +12,7 @@ For backward compatibility, this file re-exports all classes from the modules.
 import warnings
 
 warnings.warn(
-    "直接从 error_handler 导入已弃用。" "请从 core.error_handling 导入相关类。",
+    "直接从 error_handler 导入已弃用。请从 core.error_handling 导入相关类。",
     DeprecationWarning,
     stacklevel=2,
 )

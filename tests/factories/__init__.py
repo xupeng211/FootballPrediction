@@ -4,6 +4,8 @@ from .match_factory import MatchFactory
 from .odds_factory import OddsFactory
 from .prediction_factory import PredictionFactory
 from .user_factory import UserFactory
+from .data_factory import DataFactory
+from .mock_factory import MockFactory
 
 """
 测试数据工厂
@@ -20,4 +22,6 @@ __all__ = [
     "OddsFactory",
     "PredictionFactory",
     "UserFactory",
+    "DataFactory",
+    "MockFactory",
 ]

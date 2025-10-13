@@ -88,7 +88,7 @@ class TestPredictionBenchmarks:
 
             print(f"\n批量大小: {batch_size}")
             print(f"  吞吐量: {throughput:.2f} predictions/sec")
-            print(f"  平均延迟: {duration/batch_size*1000:.2f}ms/prediction")
+            print(f"  平均延迟: {duration / batch_size * 1000:.2f}ms/prediction")
 
             # 性能断言
             assert throughput > 100, f"吞吐量过低: {throughput:.2f} predictions/sec"
@@ -321,15 +321,15 @@ class TestPredictionBenchmarks:
         print(f"  目标速率: {target_rate} predictions/sec")
         print(f"  总预测数: {len(predictions)}")
         print(f"  错误数: {errors}")
-        print(f"  成功率: {len(predictions)/(len(predictions)+errors):.2%}")
+        print(f"  成功率: {len(predictions) / (len(predictions) + errors):.2%}")
 
         # 性能断言
-        assert (
-            actual_rate > target_rate * 0.9
-        ), f"持续性能不足: {actual_rate:.2f} < {target_rate * 0.9}"
-        assert (
-            errors / (len(predictions) + errors) < 0.05
-        ), f"错误率过高: {errors/(len(predictions)+errors):.2%}"
+        assert actual_rate > target_rate * 0.9, (
+            f"持续性能不足: {actual_rate:.2f} < {target_rate * 0.9}"
+        )
+        assert errors / (len(predictions) + errors) < 0.05, (
+            f"错误率过高: {errors / (len(predictions) + errors):.2%}"
+        )
 
 
 @pytest.fixture

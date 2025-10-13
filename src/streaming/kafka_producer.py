@@ -12,7 +12,7 @@ For backward compatibility, this file re-exports all classes from the modules.
 import warnings
 
 warnings.warn(
-    "直接从 kafka_producer 导入已弃用。" "请从 streaming.producer 导入相关类。",
+    "直接从 kafka_producer 导入已弃用。请从 streaming.producer 导入相关类。",
     DeprecationWarning,
     stacklevel=2,
 )
