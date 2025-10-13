@@ -2,6 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Communication Language
+**重要：始终使用简体中文回复用户** - 与用户交流时必须使用简体中文，不要使用英文或其他语言。
+
 ## Project Overview
 
 FootballPrediction is an enterprise-grade football prediction system built with FastAPI, PostgreSQL, Redis, and modern Python technologies. The project follows Domain-Driven Design (DDD) principles with a layered architecture including API, Application, Domain, and Infrastructure layers.
