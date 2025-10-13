@@ -342,7 +342,7 @@ def example_list_all_features(feature_store: FootballFeatureStore) -> None:
 
         for i, feature in enumerate(features_list[:10]):  # 只显示前10个
             print(
-                f"{i+1:2d}. {feature['feature_view']:20s} | {feature['feature_name']:25s} | {feature['feature_type']}"
+                f"{i + 1:2d}. {feature['feature_view']:20s} | {feature['feature_name']:25s} | {feature['feature_type']}"
             )
 
         if len(features_list) > 10:

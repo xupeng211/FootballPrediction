@@ -185,6 +185,6 @@ class TestServiceIntegration:
         with open(init_file, "r") as f:
             content = f.read()
             # 检查是否有导出语句
-            assert (
-                "import" in content or "from" in content
-            ), "__init__.py should have imports"
+            assert "import" in content or "from" in content, (
+                "__init__.py should have imports"
+            )

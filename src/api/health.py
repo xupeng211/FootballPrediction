@@ -14,7 +14,7 @@ import warnings
 from .health import router
 
 warnings.warn(
-    "直接从 health 导入已弃用。" "请从 api.health 导入相关类。",
+    "直接从 health 导入已弃用。请从 api.health 导入相关类。",
     DeprecationWarning,
     stacklevel=2,
 )

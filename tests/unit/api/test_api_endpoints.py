@@ -17,21 +17,31 @@ try:
     from src.api.data_router import router as data_router
     from src.api.health import router as health_router
     from src.api.predictions.models import PredictionRequest, PredictionResponse
+
     # 从 schemas 或其他地方导入基本模型
     try:
-        from src.api.schemas import MatchSchema, TeamSchema, PredictionSchema, UserSchema
+        from src.api.schemas import (
+            MatchSchema,
+            TeamSchema,
+            PredictionSchema,
+            UserSchema,
+        )
     except ImportError:
         # 创建简单的模型类用于测试
         from pydantic import BaseModel
+
         class MatchSchema(BaseModel):
             id: int
             name: str
+
         class TeamSchema(BaseModel):
             id: int
             name: str
+
         class PredictionSchema(BaseModel):
             id: int
             match_id: int
+
         class UserSchema(BaseModel):
             id: int
             username: str

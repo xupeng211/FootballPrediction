@@ -69,8 +69,8 @@ class UserFactory(BaseFactory):
     def create_batch_with_prefix(cls, count: int, prefix: str, **kwargs):
         return [
             cls.create(
-                username=f"{prefix}_{index+1:03d}",
-                email=f"{prefix}_{index+1:03d}@example.com",
+                username=f"{prefix}_{index + 1:03d}",
+                email=f"{prefix}_{index + 1:03d}@example.com",
                 **kwargs,
             )
             for index in range(count)
