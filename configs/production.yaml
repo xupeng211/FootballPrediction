@@ -1,0 +1,118 @@
+# 生产环境配置
+environment: production
+debug: false
+log_level: WARNING
+
+# 数据库配置
+database:
+  # 使用密钥管理器中的实际值
+  host: ${DB_HOST}
+  port: ${DB_PORT}
+  name: ${DB_NAME}
+  user: ${DB_USER}
+  password: ${DB_PASSWORD}
+  pool_size: 20
+  max_overflow: 30
+  pool_timeout: 30
+
+# Redis配置
+redis:
+  host: ${REDIS_HOST}
+  port: ${REDIS_PORT}
+  password: ${REDIS_PASSWORD}
+  db: 0
+  max_connections: 20
+
+# JWT配置
+jwt:
+  secret_key: ${JWT_SECRET_KEY}
+  algorithm: HS256
+  access_token_expire_minutes: 30
+  refresh_token_expire_days: 7
+
+# API配置
+api:
+  host: 0.0.0.0
+  port: 8000
+  workers: 4
+  timeout: 60
+
+# 安全配置
+security:
+  cors_origins:
+    - https://yourdomain.com
+    - https://www.yourdomain.com
+  allowed_hosts:
+    - yourdomain.com
+    - www.yourdomain.com
+  rate_limit:
+    per_minute: 60
+    per_hour: 1000
+    per_day: 10000
+
+# SSL配置
+ssl:
+  cert_path: ${SSL_CERT_PATH}
+  key_path: ${SSL_KEY_PATH}
+  enabled: true
+
+# 监控配置
+monitoring:
+  enabled: true
+  prometheus:
+    enabled: true
+    port: 9090
+  grafana:
+    enabled: true
+    port: 3000
+  loki:
+    enabled: true
+    port: 3100
+
+# 备份配置
+backup:
+  enabled: true
+  schedule: "0 2 * * *"  # 每天凌晨2点
+  retention_days: 30
+  s3:
+    bucket: ${BACKUP_S3_BUCKET}
+    access_key: ${BACKUP_S3_ACCESS_KEY}
+    secret_key: ${BACKUP_S3_SECRET_KEY}
+    region: ${BACKUP_S3_REGION}
+
+# 第三方服务
+external_apis:
+  football_api:
+    key: ${FOOTBALL_API_TOKEN}
+    url: https://api.football-data.org/v4
+  weather_api:
+    key: ${WEATHER_API_KEY}
+    url: https://api.openweathermap.org/data/2.5
+
+# 通知配置
+notifications:
+  slack:
+    webhook_url: ${SLACK_WEBHOOK_URL}
+  email:
+    smtp_host: ${SMTP_HOST}
+    smtp_port: ${SMTP_PORT}
+    username: ${SMTP_USERNAME}
+    password: ${SMTP_PASSWORD}
+
+# 缓存配置
+cache:
+  ttl: 3600
+  max_size: 10000
+  strategy: lru
+
+# 日志配置
+logging:
+  level: WARNING
+  format: json
+  outputs:
+    - type: file
+      path: /var/log/football-prediction/app.log
+      max_size: 100MB
+      max_files: 10
+    - type: loki
+      url: http://loki:3100/loki/api/v1/push
