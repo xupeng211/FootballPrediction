@@ -47,7 +47,7 @@ class TestUserPredictionFlow:
             "password": user_data["password"],
         }
 
-        response = await api_client.post("/api/v1/auth/login", data=login_data)
+        response = await api_client.post("/api/v1/auth/login", _data =login_data)
         assert response.status_code == 200, f"登录失败: {response.text}"
         login_info = response.json()
         assert "access_token" in login_info
@@ -74,8 +74,8 @@ class TestUserPredictionFlow:
         performance_metrics.start_timer("get_upcoming_matches")
 
         # 先创建测试数据
-        teams = await test_data_loader.create_teams()
-        matches = await test_data_loader.create_matches()
+        _teams = await test_data_loader.create_teams()
+        _matches = await test_data_loader.create_matches()
 
         response = await api_client.get("/api/v1/matches/upcoming", headers=headers)
         assert response.status_code == 200
@@ -112,7 +112,7 @@ class TestUserPredictionFlow:
             "/api/v1/predictions", json=prediction_data, headers=headers
         )
         assert response.status_code == 201, f"创建预测失败: {response.text}"
-        prediction = response.json()
+        _prediction = response.json()
         assert prediction["match_id"] == match_id
         assert prediction["prediction"] == "HOME_WIN"
         assert prediction["confidence"] == 0.85
@@ -152,7 +152,7 @@ class TestUserPredictionFlow:
 
         response = await api_client.get("/api/v1/users/me/statistics", headers=headers)
         assert response.status_code == 200
-        stats = response.json()
+        _stats = response.json()
         assert "total_predictions" in stats
         assert stats["total_predictions"] >= 1
 
@@ -167,7 +167,7 @@ class TestUserPredictionFlow:
             + performance_metrics.get_duration("create_prediction")
         )
 
-        print(f"\n📊 流程性能指标:")
+        print("\n📊 流程性能指标:")
         print(
             f"  - 注册时间: {performance_metrics.get_duration('user_registration'):.2f}s"
         )
@@ -192,7 +192,7 @@ class TestUserPredictionFlow:
     ):
         """测试用户创建多个预测的流程"""
         # 准备测试数据
-        teams = await test_data_loader.create_teams()
+        _teams = await test_data_loader.create_teams()
 
         # 创建多个即将到来的比赛
         matches_data = []
@@ -213,7 +213,7 @@ class TestUserPredictionFlow:
         admin_token = (
             await api_client.post(
                 "/api/v1/auth/login",
-                data={"username": "e2e_admin", "password": "E2EAdminPass123!"},
+                _data ={"username": "e2e_admin", "password": "E2EAdminPass123!"},
             )
         ).json()["access_token"]
         admin_headers = {"Authorization": f"Bearer {admin_token}"}
@@ -274,8 +274,8 @@ class TestUserPredictionFlow:
     ):
         """测试预测更新流程（在比赛开始前修改预测）"""
         # 创建测试数据
-        teams = await test_data_loader.create_teams()
-        matches = await test_data_loader.create_matches()
+        _teams = await test_data_loader.create_teams()
+        _matches = await test_data_loader.create_matches()
 
         # 选择一个未来的比赛
         upcoming_match = None
@@ -297,7 +297,7 @@ class TestUserPredictionFlow:
             "/api/v1/predictions", json=pred_data, headers=user_headers
         )
         assert response.status_code == 201
-        prediction = response.json()
+        _prediction = response.json()
 
         # 等待一段时间后更新预测（模拟用户改变主意）
         await asyncio.sleep(0.1)
@@ -337,8 +337,8 @@ class TestUserPredictionFlow:
         self, api_client: AsyncClient, user_headers, test_data_loader
     ):
         """测试各种无效预测场景"""
-        teams = await test_data_loader.create_teams()
-        matches = await test_data_loader.create_matches()
+        _teams = await test_data_loader.create_teams()
+        _matches = await test_data_loader.create_matches()
 
         # 测试1: 对已完成的比赛创建预测
         completed_match = None
@@ -417,7 +417,7 @@ class TestUserPredictionFlow:
     ):
         """测试并发创建预测的性能"""
         # 准备测试数据
-        teams = await test_data_loader.create_teams()
+        _teams = await test_data_loader.create_teams()
 
         # 创建多个用户
         users = []
@@ -435,7 +435,7 @@ class TestUserPredictionFlow:
         user_tokens = []
         for user in users:
             login_data = {"username": user["username"], "password": user["password"]}
-            response = await api_client.post("/api/v1/auth/login", data=login_data)
+            response = await api_client.post("/api/v1/auth/login", _data =login_data)
             if response.status_code == 200:
                 user_tokens.append(response.json()["access_token"])
 
@@ -460,7 +460,7 @@ class TestUserPredictionFlow:
         admin_token = (
             await api_client.post(
                 "/api/v1/auth/login",
-                data={"username": "e2e_admin", "password": "E2EAdminPass123!"},
+                _data ={"username": "e2e_admin", "password": "E2EAdminPass123!"},
             )
         ).json()["access_token"]
         admin_headers = {"Authorization": f"Bearer {admin_token}"}

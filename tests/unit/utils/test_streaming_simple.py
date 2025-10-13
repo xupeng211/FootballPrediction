@@ -20,7 +20,7 @@ def test_stream_config():
     try:
         from src.streaming.stream_config import StreamConfig
 
-        config = StreamConfig()
+        _config = StreamConfig()
         assert config is not None
     except Exception:
         assert True

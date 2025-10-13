@@ -180,7 +180,7 @@ async def get_teams(
 
     try:
         # TODO: 从数据库获取
-        teams = [
+        _teams = [
             TeamInfo(
                 id=i,
                 name=f"Team {i}",
@@ -225,7 +225,7 @@ async def get_team_statistics(
     logger.info(f"获取球队 {team_id} 统计")
 
     try:
-        stats = TeamStatistics(
+        _stats = TeamStatistics(
             team_id=team_id,
             matches_played=30,
             wins=18,
@@ -264,7 +264,7 @@ async def get_matches(
 
     try:
         # TODO: 从数据库获取
-        matches = [
+        _matches = [
             MatchInfo(
                 id=i,
                 home_team_id=i * 2,
@@ -316,7 +316,7 @@ async def get_match_statistics(match_id: int):
     logger.info(f"获取比赛 {match_id} 统计")
 
     try:
-        stats = MatchStatistics(
+        _stats = MatchStatistics(
             match_id=match_id,
             possession_home=55.5,
             possession_away=44.5,

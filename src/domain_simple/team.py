@@ -134,9 +134,9 @@ class Team:
         # 从最新结果往前数
         for result in reversed(self.recent_form):
             if (
-                (streak_type == "win" and result == "W")
-                or (streak_type == "lose" and result == "L")
-                or (streak_type == "draw" and result == "D")
+                (streak_type == "win" and _result == "W")
+                or (streak_type == "lose" and _result == "L")
+                or (streak_type == "draw" and _result == "D")
             ):
                 streak_count += 1
             else:
@@ -149,9 +149,9 @@ class Team:
         # 基于近期表现调整实力评分
         recent_points = 0
         for result in self.recent_form[-5:]:
-            if result == "W":
+            if _result == "W":
                 recent_points += 3
-            elif result == "D":
+            elif _result == "D":
                 recent_points += 1
 
         # 简单的实力评分计算
@@ -174,9 +174,9 @@ class Team:
         count = min(last_n, len(self.recent_form))
 
         for result in self.recent_form[-count:]:
-            if result == "W":
+            if _result == "W":
                 points += 3
-            elif result == "D":
+            elif _result == "D":
                 points += 1
 
         return points

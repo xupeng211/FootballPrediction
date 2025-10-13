@@ -268,7 +268,7 @@ class Match(BaseModel):
 
     def get_match_stats(self) -> Dict[str, Any]:
         """获取比赛统计信息"""
-        stats = {
+        _stats = {
             "match_id": self.id,
             "home_team": self.home_team.team_name if self.home_team else None,
             "away_team": self.away_team.team_name if self.away_team else None,

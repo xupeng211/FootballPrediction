@@ -242,7 +242,7 @@ class TestBasicFunctionality:
         import json
 
         # 序列化
-        data = {"key": "value"}
+        _data = {"key": "value"}
         json_str = json.dumps(data)
         assert "key" in json_str
 

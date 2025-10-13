@@ -63,7 +63,7 @@ def main():
     print(f"运行命令: {' '.join(cmd)}\n")
 
     # 运行测试
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    _result = subprocess.run(cmd, capture_output=True, text=True)
 
     # 分析结果
     output = result.stdout + result.stderr
@@ -97,7 +97,7 @@ def main():
                         print("需要大幅增加测试覆盖")
 
                     # 显示报告位置
-                    print(f"\n📊 详细报告: htmlcov_final/index.html")
+                    print("\n📊 详细报告: htmlcov_final/index.html")
                     break
 
     if not coverage_found:

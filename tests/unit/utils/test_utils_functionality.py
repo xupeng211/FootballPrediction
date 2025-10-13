@@ -23,7 +23,7 @@ class TestUtilsFunctionality:
             # from src.utils.time_utils import get_current_time
 
             # 调用实际函数
-            result = get_current_time()
+            _result = get_current_time()
             assert isinstance(result, datetime)
             # 检查时间是否合理（不能是未来时间）
             assert result <= datetime.now()
@@ -39,7 +39,7 @@ class TestUtilsFunctionality:
             # from src.utils.time_utils import format_duration
 
             # 测试格式化秒数
-            result = format_duration(3661)  # 1小时1分钟1秒
+            _result = format_duration(3661)  # 1小时1分钟1秒
             assert isinstance(result, str)
             # 结果应该包含时间信息
             assert (
@@ -60,7 +60,7 @@ class TestUtilsFunctionality:
             dict1 = {"a": 1, "b": 2}
             dict2 = {"b": 3, "c": 4}
 
-            result = merge_dicts(dict1, dict2)
+            _result = merge_dicts(dict1, dict2)
             assert isinstance(result, dict)
             assert "a" in result
             assert "c" in result
@@ -75,7 +75,7 @@ class TestUtilsFunctionality:
             # from src.utils.dict_utils import flatten_dict
 
             nested = {"a": {"b": {"c": 1}}, "d": 2}
-            result = flatten_dict(nested)
+            _result = flatten_dict(nested)
             assert isinstance(result, dict)
             # 扁平化后的字典应该有点号分隔的键
             assert len(result) >= 1
@@ -89,7 +89,7 @@ class TestUtilsFunctionality:
         try:
             # from src.utils.crypto_utils import encrypt_data, decrypt_data
 
-            data = "test message"
+            _data = "test message"
             key = "test_key_12345"
 
             # 加密
@@ -120,8 +120,8 @@ class TestUtilsFunctionality:
                     raise ValueError("Failed")
                 return "success"
 
-            result = failing_function()
-            assert result == "success"
+            _result = failing_function()
+            assert _result == "success"
             assert call_count == 3
         except ImportError:
             pytest.skip("Retry utils not available")
@@ -160,7 +160,7 @@ class TestUtilsFunctionality:
         try:
             # from src.utils.string_utils import slugify
 
-            result = slugify("Hello World! This is a Test")
+            _result = slugify("Hello World! This is a Test")
             assert isinstance(result, str)
             assert "hello-world" in result.lower()
         except ImportError:

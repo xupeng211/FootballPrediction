@@ -58,7 +58,7 @@ class TestFeaturesProcessor:
         # 如果有process方法，测试它
         if hasattr(processor, "process"):
             try:
-                result = await processor.process(input_data)
+                _result = await processor.process(input_data)
                 assert result is not None
                 # 验证输出结构
                 if isinstance(result, dict):
@@ -81,7 +81,7 @@ class TestFeaturesProcessor:
 
         if hasattr(processor, "process_dataframe"):
             try:
-                result = await processor.process_dataframe(df)
+                _result = await processor.process_dataframe(df)
                 assert result is not None
                 if isinstance(result, pd.DataFrame):
                     assert len(result) == len(df)
@@ -102,14 +102,14 @@ class TestFeaturesProcessor:
         }
 
         if hasattr(processor, "validate"):
-            result = processor.validate(valid_features)
+            _result = processor.validate(valid_features)
             assert result is True or isinstance(result, dict)
 
         # 测试无效特征
         invalid_features = {}  # 空数据
 
         if hasattr(processor, "validate"):
-            result = processor.validate(invalid_features)
+            _result = processor.validate(invalid_features)
             assert (
                 result is False or isinstance(result, dict) and "errors" in str(result)
             )
@@ -138,7 +138,7 @@ class TestFeaturesProcessor:
         }
 
         if hasattr(processor, "transform_features"):
-            result = processor.transform_features(raw_features)
+            _result = processor.transform_features(raw_features)
             assert result is not None
             # 验证转换后的特征
             if isinstance(result, dict):
@@ -172,7 +172,7 @@ class TestFeaturesProcessor:
         }
 
         if hasattr(processor, "process_time_series"):
-            result = await processor.process_time_series(time_series_data)
+            _result = await processor.process_time_series(time_series_data)
             assert result is not None
             if isinstance(result, dict):
                 assert "trend" in result or "moving_average" in result
@@ -249,7 +249,7 @@ class TestFeaturesProcessor:
             import time
 
             start_time = time.time()
-            result = await processor.process_batch(large_dataset)
+            _result = await processor.process_batch(large_dataset)
             end_time = time.time()
 
             # 验证结果
@@ -305,9 +305,9 @@ class TestFeaturesProcessorIntegration:
         # 步骤4：处理特征
         if hasattr(processor, "process"):
             if "engineered" in locals():
-                result = await processor.process(engineered)
+                _result = await processor.process(engineered)
             else:
-                result = await processor.process(raw_data)
+                _result = await processor.process(raw_data)
             assert result is not None
 
     def test_processor_factory_pattern(self):

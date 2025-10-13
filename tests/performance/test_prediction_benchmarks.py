@@ -257,7 +257,7 @@ class TestPredictionBenchmarks:
 
         for match_id in match_ids:
             try:
-                result = await prediction_engine.predict_match(match_id)
+                _result = await prediction_engine.predict_match(match_id)
                 results.append(result)
                 total_predictions += 1
             except Exception:
@@ -303,7 +303,7 @@ class TestPredictionBenchmarks:
         match_id = 50000
         while time.time() < end_time:
             try:
-                result = await prediction_engine.predict_match(match_id)
+                _result = await prediction_engine.predict_match(match_id)
                 predictions.append(result)
                 match_id += 1
 

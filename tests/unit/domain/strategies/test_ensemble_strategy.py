@@ -31,7 +31,7 @@ def mock_sub_strategies():
     historical.type = StrategyType.HISTORICAL
     historical.predict = AsyncMock(
         return_value=PredictionOutput(
-            prediction=(1, 0),
+            _prediction =(1, 0),
             confidence=0.75,
             reasoning="Historical analysis shows home advantage",
         )
@@ -44,7 +44,7 @@ def mock_sub_strategies():
     statistical.type = StrategyType.STATISTICAL
     statistical.predict = AsyncMock(
         return_value=PredictionOutput(
-            prediction=(2, 1),
+            _prediction =(2, 1),
             confidence=0.68,
             reasoning="Statistical models predict moderate win",
         )
@@ -57,7 +57,7 @@ def mock_sub_strategies():
     ml_model.type = StrategyType.ML_MODEL
     ml_model.predict = AsyncMock(
         return_value=PredictionOutput(
-            prediction=(3, 1), confidence=0.82, reasoning="ML model predicts strong win"
+            _prediction =(3, 1), confidence=0.82, reasoning="ML model predicts strong win"
         )
     )
     strategies["ml_model"] = ml_model
@@ -85,7 +85,7 @@ async def test_ensemble_strategy_initialization():
     """测试集成策略初始化"""
     strategy = EnsembleStrategy()
 
-    config = {
+    _config = {
         "ensemble_method": "weighted_average",
         "consensus_threshold": 0.8,
         "max_disagreement": 1.5,
@@ -125,7 +125,7 @@ async def test_weighted_average_prediction(ensemble_strategy):
     )
 
     # 预测
-    result = await ensemble_strategy.predict(input_data)
+    _result = await ensemble_strategy.predict(input_data)
 
     # 验证结果
     assert isinstance(result, PredictionOutput)
@@ -148,17 +148,17 @@ async def test_majority_voting_prediction(ensemble_strategy):
     # 修改子策略返回值以产生明确的多数
     ensemble_strategy._sub_strategies[
         "historical"
-    ].predict.return_value = PredictionOutput(prediction=(2, 1), confidence=0.75)
+    ].predict.return_value = PredictionOutput(_prediction =(2, 1), confidence=0.75)
     ensemble_strategy._sub_strategies[
         "statistical"
-    ].predict.return_value = PredictionOutput(prediction=(2, 1), confidence=0.68)
+    ].predict.return_value = PredictionOutput(_prediction =(2, 1), confidence=0.68)
 
     input_data = PredictionInput(match_id=123, home_team_id=1, away_team_id=2)
 
-    result = await ensemble_strategy.predict(input_data)
+    _result = await ensemble_strategy.predict(input_data)
 
     # 多数投票应该选择(2, 1)
-    assert result.prediction == (2, 1)
+    assert result._prediction == (2, 1)
     assert result.confidence > 0.5  # 多数投票的置信度应该大于0.5
 
 
@@ -177,7 +177,7 @@ async def test_dynamic_weighting(ensemble_strategy):
 
     input_data = PredictionInput(match_id=123, home_team_id=1, away_team_id=2)
 
-    result = await ensemble_strategy.predict(input_data)
+    _result = await ensemble_strategy.predict(input_data)
 
     # 验证动态权重已调整
     assert isinstance(result, PredictionOutput)
@@ -197,17 +197,17 @@ async def test_consensus_score_calculation(ensemble_strategy):
     # 所有策略给出相似预测
     ensemble_strategy._sub_strategies[
         "historical"
-    ].predict.return_value = PredictionOutput(prediction=(2, 1), confidence=0.75)
+    ].predict.return_value = PredictionOutput(_prediction =(2, 1), confidence=0.75)
     ensemble_strategy._sub_strategies[
         "statistical"
-    ].predict.return_value = PredictionOutput(prediction=(2, 1), confidence=0.72)
+    ].predict.return_value = PredictionOutput(_prediction =(2, 1), confidence=0.72)
     ensemble_strategy._sub_strategies[
         "ml_model"
-    ].predict.return_value = PredictionOutput(prediction=(2, 1), confidence=0.78)
+    ].predict.return_value = PredictionOutput(_prediction =(2, 1), confidence=0.78)
 
     input_data = PredictionInput(match_id=123, home_team_id=1, away_team_id=2)
 
-    result = await ensemble_strategy.predict(input_data)
+    _result = await ensemble_strategy.predict(input_data)
 
     # 高共识应该反映在结果中
     assert (
@@ -222,17 +222,17 @@ async def test_disagreement_handling(ensemble_strategy):
     # 设置高度分歧的预测
     ensemble_strategy._sub_strategies[
         "historical"
-    ].predict.return_value = PredictionOutput(prediction=(1, 0), confidence=0.8)
+    ].predict.return_value = PredictionOutput(_prediction =(1, 0), confidence=0.8)
     ensemble_strategy._sub_strategies[
         "statistical"
-    ].predict.return_value = PredictionOutput(prediction=(0, 0), confidence=0.7)
+    ].predict.return_value = PredictionOutput(_prediction =(0, 0), confidence=0.7)
     ensemble_strategy._sub_strategies[
         "ml_model"
-    ].predict.return_value = PredictionOutput(prediction=(4, 0), confidence=0.85)
+    ].predict.return_value = PredictionOutput(_prediction =(4, 0), confidence=0.85)
 
     input_data = PredictionInput(match_id=123, home_team_id=1, away_team_id=2)
 
-    result = await ensemble_strategy.predict(input_data)
+    _result = await ensemble_strategy.predict(input_data)
 
     # 高分歧应该降低置信度
     assert result.confidence < 0.7  # 分歧时置信度应该降低
@@ -253,7 +253,7 @@ async def test_strategy_failure_handling(ensemble_strategy):
     input_data = PredictionInput(match_id=123, home_team_id=1, away_team_id=2)
 
     # 应该仍然能够预测，使用剩余的策略
-    result = await ensemble_strategy.predict(input_data)
+    _result = await ensemble_strategy.predict(input_data)
 
     assert isinstance(result, PredictionOutput)
     assert result.prediction is not None
@@ -280,7 +280,7 @@ async def test_single_sub_strategy():
     mock_strategy = MagicMock()
     mock_strategy.predict = AsyncMock(
         return_value=PredictionOutput(
-            prediction=(2, 1), confidence=0.8, reasoning="Single strategy prediction"
+            _prediction =(2, 1), confidence=0.8, reasoning="Single strategy prediction"
         )
     )
 
@@ -291,10 +291,10 @@ async def test_single_sub_strategy():
 
     input_data = PredictionInput(match_id=123, home_team_id=1, away_team_id=2)
 
-    result = await strategy.predict(input_data)
+    _result = await strategy.predict(input_data)
 
     # 应该直接返回子策略的结果
-    assert result.prediction == (2, 1)
+    assert result._prediction == (2, 1)
     assert result.confidence == 0.8
     assert "single" in result.reasoning.lower()
 
@@ -318,7 +318,7 @@ def test_strategy_weight_creation():
 
 def test_ensemble_result_creation():
     """测试集成结果创建"""
-    result = EnsembleResult(
+    _result = EnsembleResult(
         final_prediction=(2, 1),
         confidence=0.8,
         strategy_contributions={

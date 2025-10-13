@@ -437,7 +437,7 @@ class TestDataRouter:
             response = client.get("/data/matches/1")
             # 可能返回 200 或 500
             if response.status_code == 200:
-                data = response.json()
+                _data = response.json()
                 # 验证必需字段
                 required_fields = ["id", "home_team", "away_team", "match_date"]
                 for field in required_fields:

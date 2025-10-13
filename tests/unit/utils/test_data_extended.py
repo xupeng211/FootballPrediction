@@ -25,7 +25,7 @@ class TestAPIDataExtended:
 
             response = client.get("/api/data/matches")
             assert response.status_code == 200
-            data = response.json()
+            _data = response.json()
             assert len(data) == 2
 
     def test_get_matches_with_filters(self, client):
@@ -59,7 +59,7 @@ class TestAPIDataExtended:
 
             response = client.get("/api/data/matches/1")
             assert response.status_code == 200
-            data = response.json()
+            _data = response.json()
             assert data["id"] == 1
             assert "score" in data
 
@@ -73,7 +73,7 @@ class TestAPIDataExtended:
 
             response = client.get("/api/data/teams")
             assert response.status_code == 200
-            data = response.json()
+            _data = response.json()
             assert len(data) == 2
 
     def test_export_data_csv(self, client):
@@ -92,7 +92,7 @@ class TestAPIDataExtended:
 
             response = client.get("/api/data/export/json")
             assert response.status_code == 200
-            data = response.json()
+            _data = response.json()
             assert "matches" in data
 
     def test_data_validation_error(self, client):

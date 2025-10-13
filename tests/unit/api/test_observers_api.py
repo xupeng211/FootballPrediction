@@ -29,7 +29,7 @@ class TestObserverEndpoints:
             pytest.skip("观察者状态端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "status" in data or "system" in data
 
     def test_get_all_metrics(self, client):
@@ -40,7 +40,7 @@ class TestObserverEndpoints:
             pytest.skip("获取所有指标端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, dict) or "metrics" in data
 
     def test_get_observers(self, client):
@@ -51,7 +51,7 @@ class TestObserverEndpoints:
             pytest.skip("获取观察者端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list) or "observers" in data
 
     def test_get_subjects(self, client):
@@ -62,7 +62,7 @@ class TestObserverEndpoints:
             pytest.skip("获取被观察者端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list) or "subjects" in data
 
     def test_get_alerts(self, client):
@@ -73,7 +73,7 @@ class TestObserverEndpoints:
             pytest.skip("获取告警历史端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list) or "alerts" in data
 
     @patch("src.api.observers.AlertManager.create_alert")
@@ -99,7 +99,7 @@ class TestObserverEndpoints:
             pytest.skip("创建告警端点未实现")
 
         assert response.status_code in [200, 201]
-        data = response.json()
+        _data = response.json()
         assert "alert_id" in data or "success" in data
 
     def test_get_alert_rules(self, client):
@@ -110,7 +110,7 @@ class TestObserverEndpoints:
             pytest.skip("获取告警规则端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list) or "rules" in data
 
     @patch("src.api.observers.MetricsObserver.update_metric")
@@ -131,7 +131,7 @@ class TestObserverEndpoints:
             pytest.skip("更新指标端点未实现")
 
         assert response.status_code in [200, 202]
-        data = response.json()
+        _data = response.json()
         assert "success" in data or "status" in data
 
     def test_get_prediction_stats(self, client):
@@ -142,7 +142,7 @@ class TestObserverEndpoints:
             pytest.skip("获取预测统计端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "statistics" in data or "predictions" in data
 
     @patch("src.api.observers.PredictionObserver.record_prediction")
@@ -167,7 +167,7 @@ class TestObserverEndpoints:
             pytest.skip("记录预测事件端点未实现")
 
         assert response.status_code in [200, 201]
-        data = response.json()
+        _data = response.json()
         assert "event_id" in data or "success" in data
 
     def test_get_cache_stats(self, client):
@@ -178,7 +178,7 @@ class TestObserverEndpoints:
             pytest.skip("获取缓存统计端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "statistics" in data or "cache" in data
 
     @patch("src.api.observers.CacheObserver.record_hit")
@@ -198,7 +198,7 @@ class TestObserverEndpoints:
             pytest.skip("记录缓存命中端点未实现")
 
         assert response.status_code in [200, 202]
-        data = response.json()
+        _data = response.json()
         assert "success" in data or "status" in data
 
     @patch("src.api.observers.CacheObserver.record_miss")
@@ -218,7 +218,7 @@ class TestObserverEndpoints:
             pytest.skip("记录缓存未命中端点未实现")
 
         assert response.status_code in [200, 202]
-        data = response.json()
+        _data = response.json()
         assert "success" in data or "status" in data
 
     def test_get_performance_metrics(self, client):
@@ -229,7 +229,7 @@ class TestObserverEndpoints:
             pytest.skip("获取性能指标端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "performance" in data or "metrics" in data
 
     @patch("src.api.observers.SystemObserver.collect_metrics")
@@ -248,7 +248,7 @@ class TestObserverEndpoints:
             pytest.skip("收集系统指标端点未实现")
 
         assert response.status_code in [200, 202]
-        data = response.json()
+        _data = response.json()
         assert "metrics" in data or "success" in data
 
     @patch("src.api.observers.PerformanceObserver.check_performance")
@@ -266,7 +266,7 @@ class TestObserverEndpoints:
             pytest.skip("性能检查端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "performance_score" in data or "status" in data
 
     def test_get_event_types(self, client):
@@ -277,7 +277,7 @@ class TestObserverEndpoints:
             pytest.skip("获取事件类型端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list) or "types" in data
 
     @patch("src.api.observers.ObserverManager.enable_observer")
@@ -292,7 +292,7 @@ class TestObserverEndpoints:
             pytest.skip("启用观察者端点未实现")
 
         assert response.status_code in [200, 202]
-        data = response.json()
+        _data = response.json()
         assert "success" in data or "status" in data
 
     @patch("src.api.observers.ObserverManager.disable_observer")
@@ -307,7 +307,7 @@ class TestObserverEndpoints:
             pytest.skip("禁用观察者端点未实现")
 
         assert response.status_code in [200, 202]
-        data = response.json()
+        _data = response.json()
         assert "success" in data or "status" in data
 
     @patch("src.api.observers.SubjectManager.clear_history")
@@ -324,7 +324,7 @@ class TestObserverEndpoints:
             pytest.skip("清空事件历史端点未实现")
 
         assert response.status_code in [200, 202]
-        data = response.json()
+        _data = response.json()
         assert "success" in data or "status" in data
 
 

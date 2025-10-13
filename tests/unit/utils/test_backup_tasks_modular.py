@@ -41,7 +41,7 @@ class TestBaseModule:
 
         with patch("src.tasks.backup.base.REGISTRY") as mock_registry:
             mock_registry._collector_to_names = {}
-            result = get_backup_metrics()
+            _result = get_backup_metrics()
 
             assert isinstance(result, dict)
             assert result["status"] in ["success", "error"]

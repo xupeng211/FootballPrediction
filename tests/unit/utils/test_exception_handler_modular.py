@@ -195,7 +195,7 @@ def test_exception_handler_initialization():
         assert handler.statistics_provider is not None
 
         # 验证配置
-        config = handler.get_config_summary()
+        _config = handler.get_config_summary()
         assert "missing_values" in config
         assert "suspicious_odds" in config
         assert "invalid_data" in config
@@ -243,16 +243,16 @@ async def test_exception_handler_methods():
         )
 
         # 测试方法调用
-        result = await handler.handle_missing_values("matches", [{}])
-        assert result == [{"id": 1}]
+        _result = await handler.handle_missing_values("matches", [{}])
+        assert _result == [{"id": 1}]
 
-        result = await handler.handle_suspicious_odds([{}])
+        _result = await handler.handle_suspicious_odds([{}])
         assert result["total_processed"] == 1
 
-        result = await handler.handle_invalid_data("matches", [{}], "invalid")
+        _result = await handler.handle_invalid_data("matches", [{}], "invalid")
         assert result["logged_count"] == 1
 
-        result = await handler.get_handling_statistics()
+        _result = await handler.get_handling_statistics()
         assert result["total_issues"] == 0
 
 

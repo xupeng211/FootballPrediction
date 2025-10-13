@@ -54,7 +54,7 @@ class MockMatchRepository:
     """模拟比赛仓储"""
 
     def __init__(self):
-        self.matches = {}
+        self._matches = {}
         self._setup_test_data()
 
     def _setup_test_data(self):
@@ -107,7 +107,7 @@ class MockPredictionDomainService:
 
     def create_prediction(self, **kwargs):
         """创建预测"""
-        prediction = Mock(spec=Prediction)
+        _prediction = Mock(spec=Prediction)
         prediction.id = None  # 将在仓储中设置
         prediction.user_id = kwargs.get("user_id")
         prediction.match_id = kwargs.get("match")
@@ -201,7 +201,7 @@ class TestStrategyPredictionServiceReal:
         await service.initialize()
 
         # When
-        result = await service.predict_match(
+        _result = await service.predict_match(
             match_id=123,
             user_id=456,
             strategy_name="mock_strategy",
@@ -223,7 +223,7 @@ class TestStrategyPredictionServiceReal:
         await service.initialize()
 
         # When
-        result = await service.predict_match(match_id=123, user_id=456)
+        _result = await service.predict_match(match_id=123, user_id=456)
 
         # Then
         assert result is not None
@@ -283,7 +283,7 @@ class TestStrategyPredictionServiceReal:
         strategy = service._current_strategies["mock_strategy"]
 
         # When
-        result = await service._get_or_create_strategy("mock_strategy")
+        _result = await service._get_or_create_strategy("mock_strategy")
 
         # Then
         assert result is strategy
@@ -299,7 +299,7 @@ class TestStrategyPredictionServiceReal:
         service._strategy_factory.get_strategy = AsyncMock(return_value=new_strategy)
 
         # When
-        result = await service._get_or_create_strategy("new_test_strategy")
+        _result = await service._get_or_create_strategy("new_test_strategy")
 
         # Then
         assert result is new_strategy
@@ -316,7 +316,7 @@ class TestStrategyPredictionServiceReal:
         match = await service._match_repository.get_by_id(123)
 
         # When
-        result = await service._prepare_prediction_input(match)
+        _result = await service._prepare_prediction_input(match)
 
         # Then
         assert result.match == match

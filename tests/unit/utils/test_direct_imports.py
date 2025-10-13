@@ -259,7 +259,7 @@ def test_i18n():
         from utils.i18n import _, set_language, get_current_language
 
         # 测试翻译
-        result = _("hello")
+        _result = _("hello")
         assert isinstance(result, str)
 
         # 测试设置语言
@@ -309,8 +309,8 @@ def test_retry():
                 raise Exception("Fail")
             return "success"
 
-        result = flaky_function()
-        assert result == "success"
+        _result = flaky_function()
+        assert _result == "success"
         assert attempts == 3
     except ImportError:
         pytest.skip("retry not available")
@@ -322,7 +322,7 @@ def test_config_loader():
         from utils.config_loader import load_config, get_config_value
 
         # 测试加载配置
-        config = load_config()
+        _config = load_config()
         assert isinstance(config, dict)
 
         # 测试获取配置值

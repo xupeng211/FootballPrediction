@@ -262,11 +262,11 @@ class DataValidator:
         result: Dict[str, List[str]] = {"errors": [], "warnings": []}
 
         if data_type == "match_data":
-            result = await self._validate_match_business_rules(df)
+            _result = await self._validate_match_business_rules(df)
         elif data_type == "odds_data":
-            result = await self._validate_odds_business_rules(df)
+            _result = await self._validate_odds_business_rules(df)
         elif data_type == "features_data":
-            result = await self._validate_features_business_rules(df)
+            _result = await self._validate_features_business_rules(df)
 
         return result
 
@@ -379,7 +379,7 @@ class DataValidator:
         Returns:
             统计信息
         """
-        stats = {
+        _stats = {
             "total_records": len(df),
             "total_columns": len(df.columns),
             "missing_values": df.isnull().sum().to_dict(),
@@ -423,7 +423,7 @@ class DataValidator:
             )
 
         # 记录统计信息
-        stats = results.get("statistics", {})
+        _stats = results.get("statistics", {})
         if "total_records" in stats:
             self.logger.info(f"验证记录数: {stats['total_records']}")
 

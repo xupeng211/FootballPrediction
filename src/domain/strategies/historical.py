@@ -213,7 +213,7 @@ class HistoricalStrategy(PredictionStrategy):
             confidence=confidence,
             probability_distribution=probability_distribution,
             feature_importance=feature_importance,
-            metadata={
+            _metadata ={
                 "method": "historical_analysis",
                 "h2h_matches": len(
                     await self._get_head_to_head_matches(
@@ -567,7 +567,7 @@ class HistoricalStrategy(PredictionStrategy):
         self, team_id: int, limit: int
     ) -> List[HistoricalMatch]:
         """获取最近的主场比赛"""
-        matches = self._historical_matches.get(team_id, [])
+        _matches = self._historical_matches.get(team_id, [])
         home_matches = [m for m in matches if m.home_team_id == team_id]
         home_matches.sort(key=lambda x: x.match_date, reverse=True)
         return home_matches[:limit]
@@ -576,7 +576,7 @@ class HistoricalStrategy(PredictionStrategy):
         self, team_id: int, limit: int
     ) -> List[HistoricalMatch]:
         """获取最近的客场比赛"""
-        matches = self._historical_matches.get(team_id, [])
+        _matches = self._historical_matches.get(team_id, [])
         away_matches = [m for m in matches if m.away_team_id == team_id]
         away_matches.sort(key=lambda x: x.match_date, reverse=True)
         return away_matches[:limit]

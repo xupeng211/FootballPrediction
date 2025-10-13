@@ -54,7 +54,7 @@ class PredictionFactory(BaseFactory):
 
     @classmethod
     def create_for_match(cls, match_id: int, **kwargs) -> Predictions:
-        data = cls._attach_match({"match_id": match_id, **kwargs})
+        _data = cls._attach_match({"match_id": match_id, **kwargs})
         return cls(**data)
 
     @classmethod
@@ -101,28 +101,28 @@ class PredictionFactory(BaseFactory):
         cls, actual_home_score: int, actual_away_score: int, **kwargs
     ):
         if actual_home_score > actual_away_score:
-            result = PredictedResult.HOME_WIN
+            _result = PredictedResult.HOME_WIN
         elif actual_home_score < actual_away_score:
-            result = PredictedResult.AWAY_WIN
+            _result = PredictedResult.AWAY_WIN
         else:
-            result = PredictedResult.DRAW
+            _result = PredictedResult.DRAW
         base = {
             "predicted_result": result,
             "home_win_probability": Decimal("0.60")
-            if result == PredictedResult.HOME_WIN
+            if _result == PredictedResult.HOME_WIN
             else Decimal("0.20"),
             "draw_probability": Decimal("0.60")
-            if result == PredictedResult.DRAW
+            if _result == PredictedResult.DRAW
             else Decimal("0.20"),
             "away_win_probability": Decimal("0.60")
-            if result == PredictedResult.AWAY_WIN
+            if _result == PredictedResult.AWAY_WIN
             else Decimal("0.20"),
             "predicted_home_score": Decimal(str(actual_home_score)),
             "predicted_away_score": Decimal(str(actual_away_score)),
             "is_correct": True,
         }
         base.update(kwargs)
-        data = cls._attach_match(base)
+        _data = cls._attach_match(base)
         return cls(**data)
 
     @classmethod
@@ -147,7 +147,7 @@ class PredictionFactory(BaseFactory):
             "is_correct": False,
         }
         base.update(kwargs)
-        data = cls._attach_match(base)
+        _data = cls._attach_match(base)
         return cls(**data)
 
 

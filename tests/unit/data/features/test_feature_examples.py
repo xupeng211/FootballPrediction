@@ -144,7 +144,7 @@ class TestFeatureExamples:
                 }
                 mock_get_store.return_value = mock_store
 
-                stats = await example_feature_statistics()
+                _stats = await example_feature_statistics()
 
                 assert isinstance(stats, dict)
                 assert "total_features" in stats
@@ -409,7 +409,7 @@ class TestFeatureExamplesAdvanced:
                 # 第一次调用
                 result1 = await example_get_online_features(match_id)
                 # 第二次调用（应该使用缓存）
-                result2 = await example_get_online_features(match_id)
+                _result2 = await example_get_online_features(match_id)
 
                 assert result1 == result2
                 assert result1["cached"] is True
@@ -430,7 +430,7 @@ class TestFeatureExamplesAdvanced:
                 }
                 mock_get_store.return_value = mock_store
 
-                stats = await example_feature_statistics()
+                _stats = await example_feature_statistics()
 
                 assert stats["total_features"] == 1000
                 assert "feature_health" in stats
@@ -501,7 +501,7 @@ class TestFeatureExamplesAdvanced:
                     }
                     mock_get_store.return_value = mock_store
 
-                    result = await example_feature_validation(
+                    _result = await example_feature_validation(
                         valid_features, schema=valid_schema
                     )
                     assert result["valid"] is True

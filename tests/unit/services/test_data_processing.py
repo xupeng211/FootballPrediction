@@ -76,7 +76,7 @@ class TestMatchDataProcessor:
             "status": "FINISHED",
         }
 
-        result = await match_processor.process(input_data)
+        _result = await match_processor.process(input_data)
 
         # 验证所有原始数据都被保留
         assert result["id"] == 123
@@ -96,7 +96,7 @@ class TestMatchDataProcessor:
         """测试处理空比赛数据"""
         input_data = {}
 
-        result = await match_processor.process(input_data)
+        _result = await match_processor.process(input_data)
 
         # 空数据仍然会添加processed_at和type字段
         assert result["type"] == "match"
@@ -114,7 +114,7 @@ class TestMatchDataProcessor:
             "away_score": 0,
         }
 
-        result = await match_processor.process(input_data)
+        _result = await match_processor.process(input_data)
 
         assert result["status"] == "IN_PLAY"
         assert result["minute"] == 65
@@ -126,7 +126,7 @@ class TestMatchDataProcessor:
         input_data = {"id": 789}
 
         with patch("src.services.data_processing.logger") as mock_logger:
-            result = await match_processor.process(input_data)
+            _result = await match_processor.process(input_data)
 
             mock_logger.debug.assert_called_once_with("Processing match data: 789")
             assert result["id"] == 789
@@ -155,7 +155,7 @@ class TestOddsDataProcessor:
             "timestamp": "2024-01-15T10:00:00Z",
         }
 
-        result = await odds_processor.process(input_data)
+        _result = await odds_processor.process(input_data)
 
         # 验证所有原始数据都被保留
         assert result["match_id"] == 123
@@ -184,7 +184,7 @@ class TestOddsDataProcessor:
             ],
         }
 
-        result = await odds_processor.process(input_data)
+        _result = await odds_processor.process(input_data)
 
         assert result["match_id"] == 789
         assert len(result["bookmakers"]) == 2
@@ -196,7 +196,7 @@ class TestOddsDataProcessor:
         input_data = {"match_id": 999}
 
         with patch("src.services.data_processing.logger") as mock_logger:
-            result = await odds_processor.process(input_data)
+            _result = await odds_processor.process(input_data)
 
             mock_logger.debug.assert_called_once_with("Processing odds data: 999")
             assert result["match_id"] == 999
@@ -225,7 +225,7 @@ class TestScoresDataProcessor:
             "assist": "Player B",
         }
 
-        result = await scores_processor.process(input_data)
+        _result = await scores_processor.process(input_data)
 
         # 验证所有原始数据都被保留
         assert result["match_id"] == 123
@@ -253,7 +253,7 @@ class TestScoresDataProcessor:
             ],
         }
 
-        result = await scores_processor.process(input_data)
+        _result = await scores_processor.process(input_data)
 
         assert result["status"] == "LIVE"
         assert len(result["events"]) == 2
@@ -264,7 +264,7 @@ class TestScoresDataProcessor:
         """测试处理空比分数据"""
         input_data = {}
 
-        result = await scores_processor.process(input_data)
+        _result = await scores_processor.process(input_data)
 
         assert result["type"] == "scores"
         assert "processed_at" in result
@@ -291,7 +291,7 @@ class TestFeaturesDataProcessor:
             "calculated_at": "2024-01-15T10:00:00Z",
         }
 
-        result = await features_processor.process(input_data)
+        _result = await features_processor.process(input_data)
 
         # 验证所有原始数据都被保留
         assert result["match_id"] == 123
@@ -324,7 +324,7 @@ class TestFeaturesDataProcessor:
             },
         }
 
-        result = await features_processor.process(input_data)
+        _result = await features_processor.process(input_data)
 
         assert len(result["features"]) == 7
         assert "goals_avg_5" in result["features"]
@@ -336,7 +336,7 @@ class TestFeaturesDataProcessor:
         """测试处理空特征数据"""
         input_data = {}
 
-        result = await features_processor.process(input_data)
+        _result = await features_processor.process(input_data)
 
         assert result["type"] == "features"
         assert "processed_at" in result
@@ -401,7 +401,7 @@ class TestDataProcessingIntegration:
         results = []
 
         for data in batch_data:
-            result = await processor.process(data)
+            _result = await processor.process(data)
             results.append(result)
 
         assert len(results) == 3
@@ -418,7 +418,7 @@ class TestDataProcessingIntegration:
                 raise ValueError("Processing error")
 
         processors = [ErrorProcessor()]
-        data = {"id": 123}
+        _data = {"id": 123}
 
         processor = processors[0]
         with pytest.raises(ValueError, match="Processing error"):
@@ -436,7 +436,7 @@ class TestDataProcessingIntegration:
             "home_team": "Team A",
         }
 
-        result = await processor.process(input_data)
+        _result = await processor.process(input_data)
 
         # 处理器应该保留原始时间戳并添加处理时间
         assert "match_time" in result
@@ -522,7 +522,7 @@ class TestDataProcessingIntegration:
             "features": {f"feature_{i}": i for i in range(1000)},
         }
 
-        result = await processor.process(large_data)
+        _result = await processor.process(large_data)
 
         assert len(result["features"]) == 1000
         assert result["type"] == "features"
@@ -550,7 +550,7 @@ class TestDataProcessingIntegration:
             "attendance": 50000,
         }
 
-        result = await processor.process(complex_data)
+        _result = await processor.process(complex_data)
 
         # 验证所有数据都被保留且类型正确
         assert result["id"] == 123

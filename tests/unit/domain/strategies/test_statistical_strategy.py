@@ -20,7 +20,7 @@ def statistical_strategy():
     """创建统计策略实例"""
     strategy = StatisticalStrategy("test_statistical")
 
-    config = {
+    _config = {
         "min_sample_size": 5,
         "weight_recent_games": 0.7,
         "home_advantage_factor": 1.2,
@@ -89,7 +89,7 @@ async def test_statistical_strategy_initialization():
     """测试统计策略初始化"""
     strategy = StatisticalStrategy()
 
-    config = {
+    _config = {
         "min_sample_size": 10,
         "weight_recent_games": 0.8,
         "home_advantage_factor": 1.3,
@@ -108,7 +108,7 @@ async def test_statistical_strategy_initialization():
 @pytest.mark.asyncio
 async def test_prediction_output_structure(statistical_strategy, prediction_input):
     """测试预测输出结构"""
-    result = await statistical_strategy.predict(prediction_input)
+    _result = await statistical_strategy.predict(prediction_input)
 
     assert isinstance(result, PredictionOutput)
     assert isinstance(result.prediction, tuple)
@@ -122,7 +122,7 @@ async def test_prediction_output_structure(statistical_strategy, prediction_inpu
 @pytest.mark.asyncio
 async def test_poisson_prediction(statistical_strategy, prediction_input):
     """测试泊松分布预测"""
-    result = await statistical_strategy._poisson_prediction(prediction_input)
+    _result = await statistical_strategy._poisson_prediction(prediction_input)
 
     assert isinstance(result, tuple)
     assert len(result) == 2
@@ -138,7 +138,7 @@ async def test_poisson_prediction(statistical_strategy, prediction_input):
 @pytest.mark.asyncio
 async def test_historical_average_prediction(statistical_strategy, prediction_input):
     """测试历史平均预测"""
-    result = await statistical_strategy._historical_average_prediction(prediction_input)
+    _result = await statistical_strategy._historical_average_prediction(prediction_input)
 
     assert isinstance(result, tuple)
     assert len(result) == 2
@@ -148,7 +148,7 @@ async def test_historical_average_prediction(statistical_strategy, prediction_in
 @pytest.mark.asyncio
 async def test_team_form_prediction(statistical_strategy, prediction_input):
     """测试球队状态预测"""
-    result = await statistical_strategy._team_form_prediction(prediction_input)
+    _result = await statistical_strategy._team_form_prediction(prediction_input)
 
     assert isinstance(result, tuple)
     assert len(result) == 2
@@ -161,7 +161,7 @@ async def test_team_form_prediction(statistical_strategy, prediction_input):
 @pytest.mark.asyncio
 async def test_head_to_head_prediction(statistical_strategy, prediction_input):
     """测试对战历史预测"""
-    result = await statistical_strategy._head_to_head_prediction(prediction_input)
+    _result = await statistical_strategy._head_to_head_prediction(prediction_input)
 
     assert isinstance(result, tuple)
     assert len(result) == 2
@@ -180,7 +180,7 @@ async def test_ensemble_predictions(statistical_strategy, prediction_input):
         "head_to_head": (1.8, 1.1),
     }
 
-    result = await statistical_strategy._ensemble_predictions(predictions)
+    _result = await statistical_strategy._ensemble_predictions(predictions)
 
     assert isinstance(result, tuple)
     assert len(result) == 2

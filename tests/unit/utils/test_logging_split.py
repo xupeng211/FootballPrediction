@@ -107,8 +107,8 @@ def test_performance_decorator():
     def test_function():
         return "test_result"
 
-    result = test_function()
-    assert result == "test_result"
+    _result = test_function()
+    assert _result == "test_result"
 
 
 def test_audit_decorator():
@@ -119,8 +119,8 @@ def test_audit_decorator():
     def test_function():
         return "test_result"
 
-    result = test_function()
-    assert result == "test_result"
+    _result = test_function()
+    assert _result == "test_result"
 
 
 # 测试向后兼容性

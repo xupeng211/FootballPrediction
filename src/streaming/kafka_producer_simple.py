@@ -21,7 +21,7 @@ class KafkaMessageProducer:
         self.bootstrap_servers = config["bootstrap_servers"]
         self.topic = config["topic"]
         self.producer = None
-        self.stats = {"messages_sent": 0, "errors": 0}
+        self._stats = {"messages_sent": 0, "errors": 0}
 
     async def start(self):
         """启动生产者"""
@@ -56,7 +56,7 @@ class KafkaMessageProducer:
         """批量发送消息"""
         results = []
         for msg in messages:
-            result = await self.send_message(msg)
+            _result = await self.send_message(msg)
             results.append(result)
         return results
 

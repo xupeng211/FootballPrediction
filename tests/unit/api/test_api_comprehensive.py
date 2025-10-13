@@ -32,7 +32,7 @@ class TestAPIComprehensive:
         # 测试主健康检查端点
         response = client.get("/api/health")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["status"] == "healthy"
         assert "timestamp" in data
         assert "service" in data
@@ -40,7 +40,7 @@ class TestAPIComprehensive:
         # 测试健康路由端点
         response = client.get("/api/v1/health")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "checks" in data or "status" in data
 
     def test_api_documentation(self, client):
@@ -77,7 +77,7 @@ class TestAPIComprehensive:
         """测试测试端点"""
         response = client.get("/api/test")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "API is working!" in data["message"]
         assert "timestamp" in data
 
@@ -86,7 +86,7 @@ class TestAPIComprehensive:
         # 测试 404 错误
         response = client.get("/nonexistent")
         assert response.status_code == 404
-        data = response.json()
+        _data = response.json()
         assert "error" in data
         assert data["error"]["type"] == "http_error"
 

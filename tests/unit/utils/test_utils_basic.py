@@ -155,7 +155,7 @@ class TestDictUtils:
 
     def test_flatten_dict(self):
         """测试扁平化字典"""
-        data = {
+        _data = {
             "user": {"name": "John", "address": {"city": "New York", "country": "USA"}},
             "active": True,
         }
@@ -171,7 +171,7 @@ class TestDictUtils:
 
     def test_flatten_dict_with_separator(self):
         """测试使用自定义分隔符扁平化字典"""
-        data = {"a": {"b": {"c": 1}}}
+        _data = {"a": {"b": {"c": 1}}}
 
         flattened = dict_utils.DictUtils.flatten_dict(data, sep="_")
         expected = {"a_b_c": 1}
@@ -184,7 +184,7 @@ class TestDictUtils:
 
     def test_filter_none_values(self):
         """测试过滤None值"""
-        data = {"a": 1, "b": None, "c": "test", "d": None, "e": 0, "f": False}
+        _data = {"a": 1, "b": None, "c": "test", "d": None, "e": 0, "f": False}
 
         filtered = dict_utils.DictUtils.filter_none_values(data)
         expected = {"a": 1, "c": "test", "e": 0, "f": False}
@@ -192,7 +192,7 @@ class TestDictUtils:
 
     def test_filter_none_values_all_none(self):
         """测试过滤全部为None的字典"""
-        data = {"a": None, "b": None, "c": None}
+        _data = {"a": None, "b": None, "c": None}
 
         filtered = dict_utils.DictUtils.filter_none_values(data)
         assert filtered == {}

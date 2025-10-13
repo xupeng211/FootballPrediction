@@ -50,8 +50,8 @@ class TestCacheExamples:
         assert result1 == 15
 
         # 第二次调用应该使用缓存
-        result2 = expensive_computation(5, 10)
-        assert result2 == 15
+        _result2 = expensive_computation(5, 10)
+        assert _result2 == 15
 
         # 不同参数应该重新计算
         result3 = expensive_computation(3, 7)
@@ -69,8 +69,8 @@ class TestCacheExamples:
         assert result1["age"] == 25
 
         # 第二次调用应该使用缓存
-        result2 = await fetch_user_data(user_id)
-        assert result2 == result1
+        _result2 = await fetch_user_data(user_id)
+        assert _result2 == result1
 
     def test_get_user_profile(self):
         """测试：获取用户档案"""
@@ -100,7 +100,7 @@ class TestCacheExamples:
         """测试：获取团队统计"""
         if get_team_statistics:
             team_id = "team_123"
-            stats = get_team_statistics(team_id, season="2024")
+            _stats = get_team_statistics(team_id, season="2024")
 
             assert isinstance(stats, dict)
             assert "team_id" in stats
@@ -116,7 +116,7 @@ class TestCacheExamples:
                 get_user_profile(user_id)
 
             # 清除缓存
-            result = clear_user_cache(user_id)
+            _result = clear_user_cache(user_id)
             assert result is True or result is None  # 可能返回True或None
 
     @pytest.mark.asyncio
@@ -137,7 +137,7 @@ class TestCacheExamples:
             assert isinstance(result1, dict)
 
             # 第二次调用应该使用缓存
-            result2 = cached_api_call("test_endpoint", {"param": "value"})
+            _result2 = cached_api_call("test_endpoint", {"param": "value"})
             assert result1 == result2
 
 
@@ -178,7 +178,7 @@ class TestCacheExamplesAdvanced:
         """测试：缓存键生成"""
         # 测试不同参数生成不同的缓存键
         result1 = expensive_computation(1, 2)
-        result2 = expensive_computation(2, 1)
+        _result2 = expensive_computation(2, 1)
         result3 = expensive_computation(1, 2)  # 相同参数
 
         assert result1 != result2  # 不同结果
@@ -194,7 +194,7 @@ class TestCacheExamplesAdvanced:
         result1 = await fetch_user_data(user_id)
 
         # 立即再次获取（应该命中缓存）
-        result2 = await fetch_user_data(user_id)
+        _result2 = await fetch_user_data(user_id)
         assert result1 == result2
 
     def test_cache_invalidation(self):
@@ -219,7 +219,7 @@ class TestCacheExamplesAdvanced:
         result1 = expensive_computation("5", "10")
 
         # 数字参数
-        result2 = expensive_computation(5, 10)
+        _result2 = expensive_computation(5, 10)
 
         # 缓存应该基于参数类型区分
         assert result1 != result2
@@ -235,7 +235,7 @@ class TestCacheExamplesAdvanced:
 
         # 第二次调用（使用缓存）
         start = time.time()
-        result2 = expensive_computation(100, 200)
+        _result2 = expensive_computation(100, 200)
         second_call_time = time.time() - start
 
         # 缓存调用应该更快（或至少不慢太多）
@@ -252,7 +252,7 @@ class TestCacheExamplesAdvanced:
         results = await asyncio.gather(*tasks)
 
         # 所有结果应该相同
-        assert all(result == results[0] for result in results)
+        assert all(_result == results[0] for result in results)
 
     def test_cache_with_complex_objects(self):
         """测试：复杂对象的缓存"""
@@ -261,7 +261,7 @@ class TestCacheExamplesAdvanced:
 
         # 如果有接受复杂对象的函数
         try:
-            result = expensive_computation(complex_param, 10)
+            _result = expensive_computation(complex_param, 10)
             assert result is not None
         except (TypeError, ValueError):
             # 可能不支持复杂对象作为参数
@@ -297,7 +297,7 @@ class TestCacheExamplesAdvanced:
         """测试：缓存None值"""
         # 测试缓存None返回值
         try:
-            result = expensive_computation(0, 0)
+            _result = expensive_computation(0, 0)
             # 某些实现可能缓存None值
             assert result is not None or result is None
         except Exception:
@@ -319,7 +319,7 @@ class TestCacheExamplesAdvanced:
         user_id = -1  # 可能导致错误的用户ID
 
         try:
-            result = await fetch_user_data(user_id)
+            _result = await fetch_user_data(user_id)
             # 应该能处理无效ID
             assert isinstance(result, dict)
         except Exception:

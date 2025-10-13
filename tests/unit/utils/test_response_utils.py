@@ -9,7 +9,7 @@ class TestResponseUtils:
 
     def test_create_success_response(self):
         """测试创建成功响应"""
-        data = {"message": "Success"}
+        _data = {"message": "Success"}
         response = APIResponse.success(data)
 
         assert response["success"] is True
@@ -30,7 +30,7 @@ class TestResponseUtils:
         """测试API响应模型"""
         if hasattr(APIResponseModel, "__init__"):
             response = APIResponseModel(
-                success=True, message="OK", data={"test": "data"}
+                success=True, message="OK", _data ={"test": "data"}
             )
             assert response.success is True
-            assert response.data == {"test": "data"}
+            assert response._data == {"test": "data"}

@@ -42,7 +42,7 @@ class TestMockRedisManager:
         redis = MockRedisManager()
 
         # 设置值
-        result = redis.set("test_key", "test_value")
+        _result = redis.set("test_key", "test_value")
         assert result is True
 
         # 获取值
@@ -61,7 +61,7 @@ class TestMockRedisManager:
         redis = MockRedisManager()
 
         # 设置带TTL的值（1秒）
-        result = redis.setex("ttl_key", 1, "ttl_value")
+        _result = redis.setex("ttl_key", 1, "ttl_value")
         assert result is True
 
         # 立即获取应该成功
@@ -125,7 +125,7 @@ class TestMockRedisManager:
         redis.set("expire_key", "value")
 
         # 设置过期时间（2秒）
-        result = redis.expire("expire_key", 2)
+        _result = redis.expire("expire_key", 2)
         assert result is True
 
         # 获取TTL
@@ -241,7 +241,7 @@ class TestMockRedisManager:
         redis.hset("hash1", "field", "value")
 
         # 清空所有
-        result = redis.flushall()
+        _result = redis.flushall()
         assert result is True
 
         # 验证所有数据已清除
@@ -433,11 +433,11 @@ class TestMockRedisManagerAdvanced:
             results = []
             for op in operations:
                 if op[0] == "SET":
-                    result = redis.set(op[1], op[2])
+                    _result = redis.set(op[1], op[2])
                 elif op[0] == "INCR":
-                    result = redis.incr(op[1])
+                    _result = redis.incr(op[1])
                 elif op[0] == "HSET":
-                    result = redis.hset(op[1], op[2], op[3])
+                    _result = redis.hset(op[1], op[2], op[3])
                 results.append(result)
 
             # 如果所有操作成功，提交；否则回滚
@@ -453,7 +453,7 @@ class TestMockRedisManagerAdvanced:
                 return None
 
         # 执行事务
-        result = transaction()
+        _result = transaction()
         assert result is not None
         assert len(result) == 3
         assert redis.get("t1") == "value1"
@@ -541,11 +541,11 @@ class TestMockRedisManagerAdvanced:
             return None
 
         # 执行脚本
-        result = script_eval(
+        _result = script_eval(
             "return redis.call('INCRBY', KEYS[1], ARGV[1])", ["script_counter"], ["10"]
         )
 
-        assert result == 10
+        assert _result == 10
         assert redis.get("script_counter") == "10"
 
     def test_connection_pool_simulation(self):
@@ -662,11 +662,11 @@ class TestMockRedisManagerAdvanced:
             def write_to_master(self, command, *args):
                 # 执行主节点写操作
                 if command == "SET":
-                    result = self.master.set(args[0], args[1])
+                    _result = self.master.set(args[0], args[1])
                 elif command == "INCR":
-                    result = self.master.incr(args[0])
+                    _result = self.master.incr(args[0])
                 else:
-                    result = None
+                    _result = None
 
                 # 记录命令用于复制
                 self.sync_commands.append((command, args))

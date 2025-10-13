@@ -70,7 +70,7 @@ def test_pause_partition():
     if not IMPORT_SUCCESS:
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
-    # result = pause_partition()
+    # _result = pause_partition()
     # assert result is not None
     assert True
 
@@ -80,7 +80,7 @@ def test_resume_partition():
     if not IMPORT_SUCCESS:
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
-    # result = resume_partition()
+    # _result = resume_partition()
     # assert result is not None
     assert True
 
@@ -90,7 +90,7 @@ def test_get_assignment():
     if not IMPORT_SUCCESS:
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
-    # result = get_assignment()
+    # _result = get_assignment()
     # assert result is not None
     assert True
 
@@ -100,7 +100,7 @@ def test_get_position():
     if not IMPORT_SUCCESS:
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
-    # result = get_position()
+    # _result = get_position()
     # assert result is not None
     assert True
 
@@ -110,7 +110,7 @@ def test_get_stats():
     if not IMPORT_SUCCESS:
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
-    # result = get_stats()
+    # _result = get_stats()
     # assert result is not None
     assert True
 

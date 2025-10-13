@@ -37,7 +37,7 @@ class TestMonitoringEndpoints:
             pytest.skip("监控状态端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "status" in data or "system" in data
 
     def test_collector_health(self, client):
@@ -48,7 +48,7 @@ class TestMonitoringEndpoints:
             pytest.skip("收集器健康检查端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "health" in data or "status" in data
 
     @patch(
@@ -71,7 +71,7 @@ class TestMonitoringEndpoints:
             pytest.skip("收集指标端点未实现")
 
         assert response.status_code in [200, 202]
-        data = response.json()
+        _data = response.json()
         assert "metrics" in data or "success" in data
 
     def test_collector_status(self, client):
@@ -82,7 +82,7 @@ class TestMonitoringEndpoints:
             pytest.skip("收集器状态端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "status" in data or "collector" in data
 
     @patch(
@@ -98,7 +98,7 @@ class TestMonitoringEndpoints:
             pytest.skip("开始收集端点未实现")
 
         assert response.status_code in [200, 202]
-        data = response.json()
+        _data = response.json()
         assert "success" in data or "status" in data
 
     @patch(
@@ -114,7 +114,7 @@ class TestMonitoringEndpoints:
             pytest.skip("停止收集端点未实现")
 
         assert response.status_code in [200, 202]
-        data = response.json()
+        _data = response.json()
         assert "success" in data or "status" in data
 
     @patch("src.monitoring.system_monitor.SystemHealthChecker.get_health_status")
@@ -136,7 +136,7 @@ class TestMonitoringEndpoints:
             pytest.skip("系统健康检查端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "status" in data or "health" in data
 
     @patch("src.monitoring.alert_manager.AlertManager.get_active_alerts")
@@ -158,7 +158,7 @@ class TestMonitoringEndpoints:
             pytest.skip("获取告警端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list) or "alerts" in data
 
     @patch("src.monitoring.alert_manager.AlertManager.create_alert")
@@ -179,7 +179,7 @@ class TestMonitoringEndpoints:
             pytest.skip("创建告警端点未实现")
 
         assert response.status_code in [200, 201]
-        data = response.json()
+        _data = response.json()
         assert "alert_id" in data or "success" in data
 
     def test_get_logs(self, client):
@@ -190,7 +190,7 @@ class TestMonitoringEndpoints:
             pytest.skip("获取日志端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list) or "logs" in data
 
     def test_get_performance_metrics(self, client):
@@ -201,7 +201,7 @@ class TestMonitoringEndpoints:
             pytest.skip("获取性能指标端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "performance" in data or "metrics" in data
 
 

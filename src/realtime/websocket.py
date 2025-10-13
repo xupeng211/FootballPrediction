@@ -27,7 +27,7 @@ class WebSocketMessage:
     """WebSocket 消息类"""
 
     def __init__(self, data: Any, message_type: str = "message"):
-        self.data = data
+        self._data = data
         self.type = message_type
         self.timestamp = datetime.now()
         self.id = id(self)

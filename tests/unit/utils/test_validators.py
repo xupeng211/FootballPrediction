@@ -149,28 +149,28 @@ class TestRequiredFieldsValidator:
 
     def test_all_fields_present(self):
         """测试：所有字段都存在"""
-        data = {"name": "John", "email": "john@example.com", "age": 30}
+        _data = {"name": "John", "email": "john@example.com", "age": 30}
         required = ["name", "email", "age"]
         missing = validate_required_fields(data, required)
         assert missing == []
 
     def test_missing_fields(self):
         """测试：缺少字段"""
-        data = {"name": "John", "email": "john@example.com"}
+        _data = {"name": "John", "email": "john@example.com"}
         required = ["name", "email", "age", "address"]
         missing = validate_required_fields(data, required)
         assert set(missing) == {"age", "address"}
 
     def test_none_values(self):
         """测试：字段值为None"""
-        data = {"name": "John", "email": None, "age": 30, "address": ""}
+        _data = {"name": "John", "email": None, "age": 30, "address": ""}
         required = ["name", "email", "age", "address"]
         missing = validate_required_fields(data, required)
         assert set(missing) == {"email", "address"}
 
     def test_empty_string_values(self):
         """测试：字段值为空字符串"""
-        data = {"name": "John", "email": "", "age": 0, "address": "   "}
+        _data = {"name": "John", "email": "", "age": 0, "address": "   "}
         required = ["name", "email", "age", "address"]
         missing = validate_required_fields(data, required)
         # 注意：0不算空值，空格字符串不算空值（只有空字符串和None算）
@@ -178,21 +178,21 @@ class TestRequiredFieldsValidator:
 
     def test_empty_required_list(self):
         """测试：空的必填字段列表"""
-        data = {"name": "John"}
+        _data = {"name": "John"}
         required = []
         missing = validate_required_fields(data, required)
         assert missing == []
 
     def test_empty_data_dict(self):
         """测试：空的数据字典"""
-        data = {}
+        _data = {}
         required = ["name", "email"]
         missing = validate_required_fields(data, required)
         assert set(missing) == {"name", "email"}
 
     def test_nested_fields(self):
         """测试：嵌套字段（只检查顶层）"""
-        data = {"user": {"name": "John", "email": "john@example.com"}}
+        _data = {"user": {"name": "John", "email": "john@example.com"}}
         required = ["user", "user.name"]
         # user存在，user.name不存在（是嵌套的）
         missing = validate_required_fields(data, required)
@@ -204,7 +204,7 @@ class TestDataTypesValidator:
 
     def test_correct_types(self):
         """测试：正确的数据类型"""
-        data = {
+        _data = {
             "name": "John",
             "age": 30,
             "active": True,
@@ -223,7 +223,7 @@ class TestDataTypesValidator:
 
     def test_incorrect_types(self):
         """测试：错误的数据类型"""
-        data = {
+        _data = {
             "name": 123,  # Should be str
             "age": "30",  # Should be int
             "active": "true",  # Should be bool
@@ -247,7 +247,7 @@ class TestDataTypesValidator:
 
     def test_partial_schema(self):
         """测试：部分schema（只验证指定字段）"""
-        data = {"name": "John", "age": "30", "city": "New York", "active": True}
+        _data = {"name": "John", "age": "30", "city": "New York", "active": True}
         schema = {"name": str, "age": int}
         errors = validate_data_types(data, schema)
         assert len(errors) == 1
@@ -255,7 +255,7 @@ class TestDataTypesValidator:
 
     def test_missing_fields_in_data(self):
         """测试：数据中缺少schema中的字段"""
-        data = {"name": "John"}
+        _data = {"name": "John"}
         schema = {"name": str, "age": int, "email": str}
         errors = validate_data_types(data, schema)
         # 缺少的字段不会被报告为类型错误
@@ -270,7 +270,7 @@ class TestDataTypesValidator:
         class Admin(User):
             pass
 
-        data = {"user": Admin(), "admin": Admin()}
+        _data = {"user": Admin(), "admin": Admin()}
         schema = {"user": User, "admin": Admin}
         errors = validate_data_types(data, schema)
         assert errors == []  # Admin是User的子类
@@ -280,7 +280,7 @@ class TestDataTypesValidator:
         import datetime
         from typing import Any
 
-        data = {"date": datetime.datetime.now(), "items": [1, 2, 3], "value": Any}
+        _data = {"date": datetime.datetime.now(), "items": [1, 2, 3], "value": Any}
         schema = {
             "date": datetime.datetime,
             "items": list,
@@ -291,7 +291,7 @@ class TestDataTypesValidator:
 
     def test_none_values(self):
         """测试：None值的类型检查"""
-        data = {"name": None, "age": None, "active": None}
+        _data = {"name": None, "age": None, "active": None}
         schema = {"name": str, "age": int, "active": bool}
         errors = validate_data_types(data, schema)
         # None会被认为是错误的类型
@@ -301,7 +301,7 @@ class TestDataTypesValidator:
         """测试：联合类型（需要使用typing.Union）"""
         from typing import Union
 
-        data = {"value": 123, "identifier": "abc123"}
+        _data = {"value": 123, "identifier": "abc123"}
         schema = {
             "value": int,  # 只测试单一类型
             "identifier": str,
@@ -327,7 +327,7 @@ class TestValidatorEdgeCases:
 
     def test_data_with_whitespace(self):
         """测试：包含空白字符的数据"""
-        data = {"name": " John ", "email": "  ", "age": " 30 "}
+        _data = {"name": " John ", "email": "  ", "age": " 30 "}
 
         # 必填字段验证
         required = ["name", "email", "age"]
@@ -355,7 +355,7 @@ class TestValidatorEdgeCases:
         import time
 
         # 大量数据验证
-        data = {f"field_{i}": f"value_{i}" for i in range(1000)}
+        _data = {f"field_{i}": f"value_{i}" for i in range(1000)}
         schema = {f"field_{i}": str for i in range(1000)}
 
         start_time = time.time()
@@ -467,11 +467,11 @@ class TestParameterizedInput:
         try:
             # 尝试处理无效数据
             if invalid_data is None:
-                result = None
+                _result = None
             elif isinstance(invalid_data, str):
-                result = invalid_data.upper()
+                _result = invalid_data.upper()
             else:
-                result = str(invalid_data)
+                _result = str(invalid_data)
             # 确保没有崩溃
             assert result is not None
         except Exception:

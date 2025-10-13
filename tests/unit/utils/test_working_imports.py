@@ -154,14 +154,14 @@ class TestDataValidatorWorking:
             "+86 138 0013 8000",
         ]
         for phone in valid_phones:
-            result = validator.validate_phone(phone)
+            _result = validator.validate_phone(phone)
             # 结果可能是True或False，取决于实现
             assert isinstance(result, bool)
 
         # 无效电话
         invalid_phones = ["", "abc", "123"]
         for phone in invalid_phones:
-            result = validator.validate_phone(phone)
+            _result = validator.validate_phone(phone)
             assert isinstance(result, bool)
 
     def test_validate_url(self):
@@ -177,7 +177,7 @@ class TestDataValidatorWorking:
             "ftp://files.example.com",
         ]
         for url in valid_urls:
-            result = validator.validate_url(url)
+            _result = validator.validate_url(url)
             assert isinstance(result, bool)
 
         # 无效URL
@@ -187,7 +187,7 @@ class TestDataValidatorWorking:
             "www.example.com",  # 缺少协议
         ]
         for url in invalid_urls:
-            result = validator.validate_url(url)
+            _result = validator.validate_url(url)
             assert isinstance(result, bool)
 
 
@@ -401,7 +401,7 @@ class TestHelpersWorking:
         """测试深度获取字典值"""
         from utils.helpers import Helpers
 
-        data = {"a": {"b": {"c": 123}}}
+        _data = {"a": {"b": {"c": 123}}}
 
         value = Helpers.deep_get(data, "a.b.c")
         assert value == 123
@@ -428,7 +428,7 @@ class TestI18nWorking:
         i18n = I18n()
 
         # 测试翻译
-        result = i18n.translate("hello")
+        _result = i18n.translate("hello")
         assert isinstance(result, str)
 
     def test_language_switching(self):
@@ -667,8 +667,8 @@ class TestValidatorsWorking:
         ]
 
         for value, expected in test_values:
-            result = validator.validate_required(value)
-            assert result == expected
+            _result = validator.validate_required(value)
+            assert _result == expected
 
     def test_validate_range(self):
         """测试范围验证"""
@@ -773,7 +773,7 @@ class TestConfigLoaderWorking:
         """测试加载配置"""
         from utils.config_loader import ConfigLoader
 
-        config = ConfigLoader.load_config()
+        _config = ConfigLoader.load_config()
         assert isinstance(config, dict)
         assert len(config) >= 0
 
@@ -830,8 +830,8 @@ class TestRetryWorking:
                 raise ValueError("Not yet")
             return "success"
 
-        result = eventually_success()
-        assert result == "success"
+        _result = eventually_success()
+        assert _result == "success"
         assert attempts == 3
 
     def test_exponential_backoff(self):

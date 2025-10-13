@@ -25,7 +25,7 @@ class TestPredictionsAPIV2:
         """测试预测服务健康检查"""
         response = client.get("/predictions/health")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["status"] == "healthy"
         assert data["service"] == "predictions"
 
@@ -36,7 +36,7 @@ class TestPredictionsAPIV2:
 
         # 现在这个端点应该工作了
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
 
         # 验证响应结构
         assert "match_id" in data
@@ -64,7 +64,7 @@ class TestPredictionsAPIV2:
         )
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["model_version"] == "v2.0"
 
     def test_create_prediction(self, client):
@@ -74,7 +74,7 @@ class TestPredictionsAPIV2:
         # 测试不带请求体
         response = client.post(f"/predictions/{match_id}/predict")
         assert response.status_code == 201
-        data = response.json()
+        _data = response.json()
 
         # 验证响应结构
         assert "match_id" in data
@@ -98,7 +98,7 @@ class TestPredictionsAPIV2:
 
         response = client.post("/predictions/batch", json=request_data)
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
 
         # 验证批量响应结构
         assert "predictions" in data
@@ -127,7 +127,7 @@ class TestPredictionsAPIV2:
 
         response = client.get(f"/predictions/history/{match_id}")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
 
         # 验证历史响应结构
         assert "match_id" in data
@@ -144,7 +144,7 @@ class TestPredictionsAPIV2:
 
         response = client.get(f"/predictions/history/{match_id}?limit=3")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert len(data["predictions"]) <= 3
 
     def test_get_recent_predictions(self, client):
@@ -164,7 +164,7 @@ class TestPredictionsAPIV2:
 
         response = client.post(f"/predictions/{match_id}/verify?actual_result=home")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
 
         # 验证验证响应结构
         assert "match_id" in data
@@ -184,7 +184,7 @@ class TestPredictionsAPIV2:
 
         response = client.post(f"/predictions/{match_id}/verify?actual_result=away")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["is_correct"] is False
 
     def test_verify_prediction_invalid_result(self, client):
@@ -199,7 +199,7 @@ class TestPredictionsAPIV2:
         match_id = 12345
 
         response = client.get(f"/predictions/{match_id}")
-        data = response.json()
+        _data = response.json()
 
         # 概率之和应该接近1.0（允许小的浮点误差）
         prob_sum = data["home_win_prob"] + data["draw_prob"] + data["away_win_prob"]

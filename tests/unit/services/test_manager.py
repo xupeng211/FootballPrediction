@@ -105,15 +105,15 @@ class TestServiceManager:
         manager.register_service("test_service", mock_service)
 
         # When
-        result = manager.get_service("test_service")
+        _result = manager.get_service("test_service")
 
         # Then
-        assert result == mock_service
+        assert _result == mock_service
 
     def test_get_service_not_exists(self, manager):
         """测试：获取不存在的服务"""
         # When
-        result = manager.get_service("nonexistent")
+        _result = manager.get_service("nonexistent")
 
         # Then
         assert result is None
@@ -127,7 +127,7 @@ class TestServiceManager:
         manager.register_service("service2", service2)
 
         # When
-        result = manager.list_services()
+        _result = manager.list_services()
 
         # Then
         assert isinstance(result, dict)
@@ -165,7 +165,7 @@ class TestServiceManager:
         manager.register_service("service2", service2)
 
         # When
-        result = await manager.initialize_all()
+        _result = await manager.initialize_all()
 
         # Then
         assert result is True
@@ -187,7 +187,7 @@ class TestServiceManager:
         manager.register_service("service2", service2)
 
         # When
-        result = await manager.initialize_all()
+        _result = await manager.initialize_all()
 
         # Then
         assert result is False
@@ -206,7 +206,7 @@ class TestServiceManager:
         manager.register_service("error_service", service)
 
         # When
-        result = await manager.initialize_all()
+        _result = await manager.initialize_all()
 
         # Then
         assert result is False
@@ -216,7 +216,7 @@ class TestServiceManager:
     async def test_initialize_all_empty(self, manager):
         """测试：初始化空服务列表"""
         # When
-        result = await manager.initialize_all()
+        _result = await manager.initialize_all()
 
         # Then
         assert result is True

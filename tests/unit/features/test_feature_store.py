@@ -131,7 +131,7 @@ class TestFeatureStore:
         entity_rows = [{"team_id": 1}, {"team_id": 2}]
 
         # When
-        result = mock_store.get_online_features(features, entity_rows)
+        _result = mock_store.get_online_features(features, entity_rows)
 
         # Then
         assert isinstance(result, _MockFeastResult)
@@ -150,7 +150,7 @@ class TestFeatureStore:
         ]
 
         # When
-        result = mock_store.get_online_features(features, entity_rows)
+        _result = mock_store.get_online_features(features, entity_rows)
 
         # Then
         df = result.to_df()
@@ -167,7 +167,7 @@ class TestFeatureStore:
         features = ["team:avg_goals", "team:win_rate"]
 
         # When
-        result = mock_store.get_historical_features(
+        _result = mock_store.get_historical_features(
             entity_df=entity_df, features=features, full_feature_names=False
         )
 
@@ -183,7 +183,7 @@ class TestFeatureStore:
         features = ["match:home_score", "match:away_score"]
 
         # When
-        result = mock_store.get_historical_features(
+        _result = mock_store.get_historical_features(
             entity_df=entity_df, features=features, full_feature_names=True
         )
 
@@ -202,7 +202,7 @@ class TestFeatureStore:
         )
 
         # When
-        result = mock_store.push(test_data)
+        _result = mock_store.push(test_data)
 
         # Then
         assert result is None
@@ -213,7 +213,7 @@ class TestFeatureStore:
         rows = [{"team_id": 1, "avg_goals": 1.5}, {"team_id": 2, "avg_goals": 2.0}]
 
         # When
-        result = _MockFeastResult(rows)
+        _result = _MockFeastResult(rows)
 
         # Then
         df = result.to_df()
@@ -225,7 +225,7 @@ class TestFeatureStore:
     def test_mock_feast_result_empty(self):
         """测试：空的Mock Feast结果"""
         # Given
-        result = _MockFeastResult([])
+        _result = _MockFeastResult([])
 
         # When
         df = result.to_df()
@@ -256,7 +256,7 @@ class TestFeatureStore:
         ]
 
         # When
-        result = mock_store.get_online_features(features, entity_rows)
+        _result = mock_store.get_online_features(features, entity_rows)
 
         # Then
         df = result.to_df()
@@ -269,13 +269,13 @@ class TestFeatureStore:
     def test_feature_store_with_config(self):
         """测试：使用配置创建特征存储"""
         # Given
-        config = {
+        _config = {
             "offline_store": {"type": "postgres", "host": "localhost", "port": 5432},
             "online_store": {"type": "redis", "host": "localhost", "port": 6379},
         }
 
         # When
-        store = FeatureStore(config=config)
+        store = FeatureStore(_config =config)
 
         # Then
         assert store is not None

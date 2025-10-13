@@ -16,14 +16,14 @@ class TestDatabaseWithContainers:
     def test_database_connection(self, test_database_engine):
         """测试数据库连接"""
         with test_database_engine.connect() as conn:
-            result = conn.execute(text("SELECT 1"))
+            _result = conn.execute(text("SELECT 1"))
             assert result.scalar() == 1
 
     def test_database_tables_created(self, test_database_engine):
         """测试数据库表是否正确创建"""
         # 检查表是否存在
         with test_database_engine.connect() as conn:
-            result = conn.execute(
+            _result = conn.execute(
                 text(
                     "SELECT table_name FROM information_schema.tables "
                     "WHERE table_schema = 'public'"
@@ -105,7 +105,7 @@ class TestDatabaseWithContainers:
 
         # 查询联赛下的比赛
         league = sample_test_data["league"]
-        matches = test_db_session.query(Match).filter_by(league_id=league.id).all()
+        _matches = test_db_session.query(Match).filter_by(league_id=league.id).all()
 
         assert len(matches) == 1
         assert matches[0].home_team_id == sample_test_data["home_team"].id
@@ -150,10 +150,10 @@ class TestRedisWithContainers:
         assert test_redis_client.exists("test:delete") == 1
 
         # 删除值
-        result = test_redis_client.delete("test:delete")
+        _result = test_redis_client.delete("test:delete")
 
         # 确保值被删除
-        assert result == 1
+        assert _result == 1
         assert test_redis_client.exists("test:delete") == 0
 
     def test_redis_hash_operations(self, test_redis_client):

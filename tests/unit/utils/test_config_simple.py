@@ -1,6 +1,6 @@
 # 配置简单测试
 def test_config_import():
-    config = [
+    _config = [
         "src.core.config",
         "src.config.openapi_config",
         "src.config.fastapi_config",
@@ -18,7 +18,7 @@ def test_config_creation():
     try:
         from src.core.config import get_config
 
-        config = get_config()
+        _config = get_config()
         assert config is not None
     except Exception:
         assert True

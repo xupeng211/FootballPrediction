@@ -31,7 +31,7 @@ class TestAPIPredictions:
 
             response = client.get("/api/predictions", headers=auth_headers)
             assert response.status_code == 200
-            data = response.json()
+            _data = response.json()
             assert len(data) == 2
 
     def test_create_prediction(self, client, auth_headers):
@@ -50,7 +50,7 @@ class TestAPIPredictions:
                 "/api/predictions", json=prediction_data, headers=auth_headers
             )
             assert response.status_code == 201
-            data = response.json()
+            _data = response.json()
             assert data["id"] == 999
             assert data["match_id"] == 123
 
@@ -66,7 +66,7 @@ class TestAPIPredictions:
 
             response = client.get("/api/predictions/1", headers=auth_headers)
             assert response.status_code == 200
-            data = response.json()
+            _data = response.json()
             assert data["id"] == 1
 
     def test_prediction_not_found(self, client, auth_headers):

@@ -29,7 +29,7 @@ class TestRepositoryEndpoints:
             pytest.skip("获取预测列表端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list) or "predictions" in data
 
     def test_get_prediction_by_id(self, client):
@@ -44,7 +44,7 @@ class TestRepositoryEndpoints:
         assert response.status_code in [200, 404]
 
         if response.status_code == 200:
-            data = response.json()
+            _data = response.json()
             assert "prediction_id" in data or "id" in data
 
     def test_get_user_prediction_statistics(self, client):
@@ -59,7 +59,7 @@ class TestRepositoryEndpoints:
             pytest.skip("获取用户预测统计端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "statistics" in data or "stats" in data
 
     def test_get_match_prediction_statistics(self, client):
@@ -74,7 +74,7 @@ class TestRepositoryEndpoints:
             pytest.skip("获取比赛预测统计端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "statistics" in data or "stats" in data
 
     @patch(
@@ -104,7 +104,7 @@ class TestRepositoryEndpoints:
             pytest.skip("创建预测端点未实现")
 
         assert response.status_code in [200, 201]
-        data = response.json()
+        _data = response.json()
         assert "id" in data or "prediction_id" in data
 
     @patch(
@@ -133,7 +133,7 @@ class TestRepositoryEndpoints:
             pytest.skip("更新预测端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "id" in data or "status" in data
 
     def test_get_users(self, client):
@@ -144,7 +144,7 @@ class TestRepositoryEndpoints:
             pytest.skip("获取用户列表端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list) or "users" in data
 
     def test_get_user_by_id(self, client):
@@ -159,7 +159,7 @@ class TestRepositoryEndpoints:
         assert response.status_code in [200, 404]
 
         if response.status_code == 200:
-            data = response.json()
+            _data = response.json()
             assert "user_id" in data or "id" in data
 
     def test_get_user_statistics(self, client):
@@ -172,7 +172,7 @@ class TestRepositoryEndpoints:
             pytest.skip("获取用户统计端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "statistics" in data or "stats" in data
 
     def test_search_users(self, client):
@@ -185,7 +185,7 @@ class TestRepositoryEndpoints:
             pytest.skip("搜索用户端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list) or "users" in data
 
     def test_get_active_users(self, client):
@@ -196,7 +196,7 @@ class TestRepositoryEndpoints:
             pytest.skip("获取活跃用户端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list) or "users" in data
 
     @patch("src.database.repositories.user_repository.UserRepository.create")
@@ -220,7 +220,7 @@ class TestRepositoryEndpoints:
             pytest.skip("创建用户端点未实现")
 
         assert response.status_code in [200, 201]
-        data = response.json()
+        _data = response.json()
         assert "id" in data or "user_id" in data
 
     def test_get_matches(self, client):
@@ -231,7 +231,7 @@ class TestRepositoryEndpoints:
             pytest.skip("获取比赛列表端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list) or "matches" in data
 
     def test_get_upcoming_matches(self, client):
@@ -242,7 +242,7 @@ class TestRepositoryEndpoints:
             pytest.skip("获取即将到来的比赛端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list) or "matches" in data
 
     def test_get_live_matches(self, client):
@@ -253,7 +253,7 @@ class TestRepositoryEndpoints:
             pytest.skip("获取正在进行的比赛端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list) or "matches" in data
 
     def test_get_match_by_id(self, client):
@@ -268,7 +268,7 @@ class TestRepositoryEndpoints:
         assert response.status_code in [200, 404]
 
         if response.status_code == 200:
-            data = response.json()
+            _data = response.json()
             assert "match_id" in data or "id" in data
 
     def test_get_match_statistics(self, client):
@@ -281,7 +281,7 @@ class TestRepositoryEndpoints:
             pytest.skip("获取比赛统计端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "statistics" in data or "stats" in data
 
     def test_search_matches(self, client):
@@ -294,7 +294,7 @@ class TestRepositoryEndpoints:
             pytest.skip("搜索比赛端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list) or "matches" in data
 
     def test_get_matches_by_date_range(self, client):
@@ -307,7 +307,7 @@ class TestRepositoryEndpoints:
             pytest.skip("获取日期范围比赛端点未实现")
 
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list) or "matches" in data
 
     @patch("src.database.repositories.match_repository.MatchRepository.start_match")
@@ -322,7 +322,7 @@ class TestRepositoryEndpoints:
             pytest.skip("开始比赛端点未实现")
 
         assert response.status_code in [200, 202]
-        data = response.json()
+        _data = response.json()
         assert "success" in data or "status" in data
 
     @patch("src.database.repositories.match_repository.MatchRepository.finish_match")
@@ -345,7 +345,7 @@ class TestRepositoryEndpoints:
             pytest.skip("结束比赛端点未实现")
 
         assert response.status_code in [200, 202]
-        data = response.json()
+        _data = response.json()
         assert "success" in data or "status" in data
 
 

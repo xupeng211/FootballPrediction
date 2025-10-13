@@ -218,7 +218,7 @@ class Team(BaseModel):
         from .match import Match
         from sqlalchemy import or_
 
-        matches = (
+        _matches = (
             session.query(Match)
             .filter(
                 or_(Match.home_team_id == self.id, Match.away_team_id == self.id),
@@ -228,7 +228,7 @@ class Team(BaseModel):
             .all()
         )
 
-        stats = {
+        _stats = {
             "matches_played": len(matches),
             "wins": 0,
             "draws": 0,

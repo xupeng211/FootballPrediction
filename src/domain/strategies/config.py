@@ -147,11 +147,11 @@ class StrategyConfigManager:
 
         try:
             with open(self._strategies_file, "r", encoding="utf-8") as f:
-                data = yaml.safe_load(f)
+                _data = yaml.safe_load(f)
 
             if data and "strategies" in data:
                 for strategy_data in data["strategies"]:
-                    config = self._parse_strategy_config(strategy_data)
+                    _config = self._parse_strategy_config(strategy_data)
                     if config:
                         self._configs[config.name] = config
 
@@ -195,7 +195,7 @@ class StrategyConfigManager:
 
     def save_strategies(self) -> None:
         """保存策略配置"""
-        data = {
+        _data = {
             "version": "1.0.0",
             "updated_at": datetime.utcnow().isoformat(),
             "strategies": [
@@ -246,7 +246,7 @@ class StrategyConfigManager:
         if strategy_name not in self._configs:
             return False
 
-        config = self._configs[strategy_name]
+        _config = self._configs[strategy_name]
 
         # 更新字段
         for key, value in updates.items():
@@ -407,15 +407,15 @@ class StrategyConfigManager:
         try:
             with open(config_path, "r", encoding="utf-8") as f:
                 if config_path.suffix.lower() in [".yaml", ".yml"]:
-                    data = yaml.safe_load(f)
+                    _data = yaml.safe_load(f)
                 else:
-                    data = json.load(f)
+                    _data = json.load(f)
 
             imported_count = 0
 
             if "strategies" in data:
                 for strategy_data in data["strategies"]:
-                    config = self._parse_strategy_config(strategy_data)
+                    _config = self._parse_strategy_config(strategy_data)
                     if config:
                         if config.name in self._configs and not overwrite:
                             logger.warning(f"策略已存在，跳过: {config.name}")
@@ -435,7 +435,7 @@ class StrategyConfigManager:
         """解析策略配置数据"""
         try:
             # 基础字段
-            config = StrategyConfig(
+            _config = StrategyConfig(
                 name=data["name"],
                 type=data["type"],
                 enabled=data.get("enabled", True),
@@ -473,7 +473,7 @@ class StrategyConfigManager:
 
     def _serialize_strategy_config(self, config: StrategyConfig) -> Dict[str, Any]:
         """序列化策略配置"""
-        data = {
+        _data = {
             "name": config.name,
             "type": config.type,
             "enabled": config.enabled,

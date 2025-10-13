@@ -30,7 +30,7 @@ class TestPredictionEngine:
             engine = PredictionEngine()
             # 假设有一个predict_match方法
             if hasattr(engine, "predict_match"):
-                result = engine.predict_match(
+                _result = engine.predict_match(
                     home_team="Team A", away_team="Team B", league="Test League"
                 )
                 assert result is not None

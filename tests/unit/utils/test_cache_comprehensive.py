@@ -179,8 +179,8 @@ class TestCacheComprehensive:
                 manager.set("dict_key", serialized)
 
                 # 测试反序列化读取
-                result = manager.get("dict_key")
-                assert result == '{"key": "value"}'
+                _result = manager.get("dict_key")
+                assert _result == '{"key": "value"}'
 
                 # 手动反序列化
                 deserialized = json.loads(result)

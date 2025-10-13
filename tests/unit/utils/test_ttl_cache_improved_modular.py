@@ -83,13 +83,13 @@ def test_ttl_cache_batch_operations():
     cache = TTLCache(max_size=10)
 
     # 批量设置
-    data = {"key1": "value1", "key2": "value2", "key3": "value3"}
+    _data = {"key1": "value1", "key2": "value2", "key3": "value3"}
     cache.set_many(data)
     assert cache.size() == 3
 
     # 批量获取
-    result = cache.get_many(["key1", "key2", "key4"])
-    assert result == {"key1": "value1", "key2": "value2"}
+    _result = cache.get_many(["key1", "key2", "key4"])
+    assert _result == {"key1": "value1", "key2": "value2"}
 
     # 批量删除
     deleted = cache.delete_many(["key1", "key3"])
@@ -104,13 +104,13 @@ def test_ttl_cache_increment():
     cache = TTLCache()
 
     # 递增不存在的键
-    result = cache.increment("counter", delta=1, default=0)
-    assert result == 1
+    _result = cache.increment("counter", delta=1, default=0)
+    assert _result == 1
     assert cache.get("counter") == 1
 
     # 再次递增
-    result = cache.increment("counter", delta=5)
-    assert result == 6
+    _result = cache.increment("counter", delta=5)
+    assert _result == 6
     assert cache.get("counter") == 6
 
     # 测试非数字值
@@ -148,7 +148,7 @@ def test_ttl_cache_stats():
     cache = TTLCache()
 
     # 初始统计
-    stats = cache.get_stats()
+    _stats = cache.get_stats()
     assert stats["hits"] == 0
     assert stats["misses"] == 0
     assert stats["sets"] == 0
@@ -159,7 +159,7 @@ def test_ttl_cache_stats():
     cache.get("key1")  # hit
     cache.get("nonexistent")  # miss
 
-    stats = cache.get_stats()
+    _stats = cache.get_stats()
     assert stats["hits"] == 1
     assert stats["misses"] == 1
     assert stats["sets"] == 1
@@ -168,7 +168,7 @@ def test_ttl_cache_stats():
 
     # 重置统计
     cache.reset_stats()
-    stats = cache.get_stats()
+    _stats = cache.get_stats()
     assert stats["hits"] == 0
     assert stats["misses"] == 0
 
@@ -187,7 +187,7 @@ def test_async_cache():
         assert value == "value1"
 
         # 批量操作
-        data = {"key2": "value2", "key3": "value3"}
+        _data = {"key2": "value2", "key3": "value3"}
         await cache.set_many(data)
         results = await cache.get_many(["key1", "key2", "key4"])
         assert results == {"key1": "value1", "key2": "value2"}

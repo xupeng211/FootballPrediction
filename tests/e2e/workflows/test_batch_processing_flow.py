@@ -28,8 +28,8 @@ class TestBatchProcessingFlow:
     ):
         """测试批量导入预测"""
         # 1. 准备测试数据
-        teams = await test_data_loader.create_teams()
-        matches = await test_data_loader.create_matches()
+        _teams = await test_data_loader.create_teams()
+        _matches = await test_data_loader.create_matches()
 
         # 创建批量预测数据 (CSV格式)
         batch_predictions = []
@@ -116,7 +116,7 @@ class TestBatchProcessingFlow:
         assert "details" in results
 
         summary = results["summary"]
-        print(f"✅ 处理结果摘要:")
+        print("✅ 处理结果摘要:")
         print(f"   - 总数: {summary.get('total', 0)}")
         print(f"   - 成功: {summary.get('successful', 0)}")
         print(f"   - 失败: {summary.get('failed', 0)}")
@@ -154,14 +154,14 @@ class TestBatchProcessingFlow:
     ):
         """测试批量数据导出"""
         # 1. 准备测试数据
-        teams = await test_data_loader.create_teams()
-        matches = await test_data_loader.create_matches()
+        _teams = await test_data_loader.create_teams()
+        _matches = await test_data_loader.create_matches()
 
         # 创建一些预测数据
         user_token = (
             await api_client.post(
                 "/api/v1/auth/login",
-                data={"username": "e2e_user", "password": "E2ETestPass123!"},
+                _data ={"username": "e2e_user", "password": "E2ETestPass123!"},
             )
         ).json()["access_token"]
         user_headers = {"Authorization": f"Bearer {user_token}"}
@@ -249,7 +249,7 @@ class TestBatchProcessingFlow:
         # 1. 创建批量用户数据
         users_data = []
         for i in range(50):
-            user = {
+            _user = {
                 "username": f"bulk_user_{i:03d}",
                 "email": f"bulkuser{i:03d}@example.com",
                 "password": "BulkUser123!",
@@ -320,7 +320,7 @@ class TestBatchProcessingFlow:
         results = response.json()
         summary = results.get("summary", {})
 
-        print(f"✅ 用户导入完成:")
+        print("✅ 用户导入完成:")
         print(f"   - 成功: {summary.get('successful', 0)}")
         print(f"   - 失败: {summary.get('failed', 0)}")
         print(f"   - 跳过: {summary.get('skipped', 0)}")
@@ -464,7 +464,7 @@ class TestBatchProcessingFlow:
             if response.status_code == 200:
                 results = response.json()
                 summary = results.get("summary", {})
-                print(f"✅ 通知发送结果:")
+                print("✅ 通知发送结果:")
                 print(f"   - 总数: {summary.get('total', 0)}")
                 print(f"   - 成功: {summary.get('sent', 0)}")
                 print(f"   - 失败: {summary.get('failed', 0)}")

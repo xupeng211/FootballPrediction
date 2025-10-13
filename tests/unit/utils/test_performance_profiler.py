@@ -48,7 +48,7 @@ class TestPerformanceProfiler:
     def test_stop_profiling(self):
         """测试停止性能分析"""
         self.profiler.start_profiling()
-        result = self.profiler.stop_profiling()
+        _result = self.profiler.stop_profiling()
 
         assert self.profiler.active_profiling is False
         assert isinstance(result, dict)
@@ -209,7 +209,7 @@ class TestAPIEndpointProfiler:
 
         # 检查端点统计
         assert "/api/test" in self.api_profiler.endpoint_stats
-        stats = self.api_profiler.endpoint_stats["/api/test"]
+        _stats = self.api_profiler.endpoint_stats["/api/test"]
         assert stats["request_count"] == 1
         assert stats["total_duration"] == 0.05
         assert stats["average_duration"] == 0.05
@@ -221,7 +221,7 @@ class TestAPIEndpointProfiler:
         self.api_profiler.record_endpoint_request("/api/test", "GET", 200, 0.2)
         self.api_profiler.record_endpoint_request("/api/other", "POST", 201, 0.15)
 
-        stats = self.api_profiler.get_endpoint_stats()
+        _stats = self.api_profiler.get_endpoint_stats()
 
         assert len(stats) == 2
         assert stats["/api/test"]["request_count"] == 2
@@ -292,8 +292,8 @@ class TestProfileDecorators:
             return x + y
 
         # 调用函数
-        result = test_function(1, 2)
-        assert result == 3
+        _result = test_function(1, 2)
+        assert _result == 3
 
         # 验证函数被分析
         profiler = get_profiler()
@@ -309,8 +309,8 @@ class TestProfileDecorators:
                 return value * 2
 
         obj = TestClass()
-        result = obj.test_method(5)
-        assert result == 10
+        _result = obj.test_method(5)
+        assert _result == 10
 
         # 验证方法被分析
         profiler = get_profiler()

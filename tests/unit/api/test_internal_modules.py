@@ -18,7 +18,7 @@ class TestCQRSModule:
         from src.api.cqrs import CommandResponse
 
         response = CommandResponse(
-            success=True, message="Command executed successfully", data={"id": 123}
+            success=True, message="Command executed successfully", _data ={"id": 123}
         )
         assert response.success is True
         assert response.message == "Command executed successfully"
@@ -39,7 +39,7 @@ class TestCQRSModule:
         from src.api.cqrs import QueryResponse
 
         response = QueryResponse(
-            data=[{"id": 1, "name": "test"}], total=1, page=1, per_page=10
+            _data =[{"id": 1, "name": "test"}], total=1, page=1, per_page=10
         )
         assert len(response.data) == 1
         assert response.total == 1
@@ -50,7 +50,7 @@ class TestCQRSModule:
         from src.api.cqrs import CreateCommand
 
         command = CreateCommand(
-            aggregate_id="test_123", data={"name": "test", "value": 100}
+            aggregate_id="test_123", _data ={"name": "test", "value": 100}
         )
         assert command.aggregate_id == "test_123"
         assert command.data["name"] == "test"
@@ -59,7 +59,7 @@ class TestCQRSModule:
         """测试更新命令"""
         from src.api.cqrs import UpdateCommand
 
-        command = UpdateCommand(aggregate_id="test_123", data={"name": "updated"})
+        command = UpdateCommand(aggregate_id="test_123", _data ={"name": "updated"})
         assert command.aggregate_id == "test_123"
         assert command.data["name"] == "updated"
 
@@ -114,7 +114,7 @@ class TestEventsModule:
 
         event = Event(
             event_type="test_event",
-            data={"message": "test"},
+            _data ={"message": "test"},
             timestamp=datetime.utcnow(),
         )
         assert event.event_type == "test_event"
@@ -134,7 +134,7 @@ class TestEventsModule:
 
         event = Mock()
         event.event_type = "test"
-        result = handler.handle(event)
+        _result = handler.handle(event)
         assert "test" in result
 
     def test_event_manager_initialization(self):
@@ -165,14 +165,14 @@ class TestEventsModule:
 
         class TestObserver(Observer):
             def update(self, data):
-                self.data = data
+                self._data = data
 
         observer = TestObserver()
         assert hasattr(observer, "update")
 
         test_data = {"message": "test"}
         observer.update(test_data)
-        assert observer.data == test_data
+        assert observer._data == test_data
 
     def test_event_subject_interface(self):
         """测试事件主题接口"""
@@ -330,7 +330,7 @@ class TestAdaptersModule:
         adapter = TestAdapter()
         assert hasattr(adapter, "get_data")
 
-        result = adapter.get_data({})
+        _result = adapter.get_data({})
         assert result["test"] == "data"
 
     def test_football_data_adapter(self):

@@ -45,11 +45,11 @@ class TestEventBus:
             # Try with required arguments
             try:
                 return EventBus(test_param="test_value")
-            except:
+            except Exception:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate EventBus")
+                pytest.skip("Cannot instantiate EventBus")
         except Exception:
-            pytest.skip(f"Error creating EventBus instance")
+            pytest.skip("Error creating EventBus instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -132,14 +132,14 @@ def test_get_event_bus_with_args(self):
     if func:
         try:
             # Try calling with minimal arguments
-            result = func()
+            _result = func()
             assert result is not None
         except TypeError:
             # Try with some arguments
             try:
-                result = func("test_arg")
+                _result = func("test_arg")
                 assert result is not None
-            except:
+            except Exception:
                 # Function might require specific arguments
                 pass
         except Exception:
@@ -166,14 +166,14 @@ def test_event_handler_with_args(self):
     if func:
         try:
             # Try calling with minimal arguments
-            result = func()
+            _result = func()
             assert result is not None
         except TypeError:
             # Try with some arguments
             try:
-                result = func("test_arg")
+                _result = func("test_arg")
                 assert result is not None
-            except:
+            except Exception:
                 # Function might require specific arguments
                 pass
         except Exception:
@@ -200,14 +200,14 @@ def test_decorator_with_args(self):
     if func:
         try:
             # Try calling with minimal arguments
-            result = func()
+            _result = func()
             assert result is not None
         except TypeError:
             # Try with some arguments
             try:
-                result = func("test_arg")
+                _result = func("test_arg")
                 assert result is not None
-            except:
+            except Exception:
                 # Function might require specific arguments
                 pass
         except Exception:
@@ -234,14 +234,14 @@ def test___init___with_args(self):
     if func:
         try:
             # Try calling with minimal arguments
-            result = func()
+            _result = func()
             assert result is not None
         except TypeError:
             # Try with some arguments
             try:
-                result = func("test_arg")
+                _result = func("test_arg")
                 assert result is not None
-            except:
+            except Exception:
                 # Function might require specific arguments
                 pass
         except Exception:
@@ -268,14 +268,14 @@ def test_get_handled_events_with_args(self):
     if func:
         try:
             # Try calling with minimal arguments
-            result = func()
+            _result = func()
             assert result is not None
         except TypeError:
             # Try with some arguments
             try:
-                result = func("test_arg")
+                _result = func("test_arg")
                 assert result is not None
-            except:
+            except Exception:
                 # Function might require specific arguments
                 pass
         except Exception:
@@ -328,7 +328,7 @@ class TestModuleIntegration:
             await asyncio.sleep(0.001)
             return True
 
-        result = await async_test()
+        _result = await async_test()
         assert result is True
 
     @pytest.mark.parametrize(
@@ -359,6 +359,6 @@ class TestModuleIntegration:
         mock_service = Mock()
         mock_service.process.return_value = {"status": "success"}
 
-        result = mock_service.process("test_data")
+        _result = mock_service.process("test_data")
         assert result["status"] == "success"
         mock_service.process.assert_called_once_with("test_data")

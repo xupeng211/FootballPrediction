@@ -315,7 +315,7 @@ class Settings(SettingsClass):
 
 
 # 全局配置实例
-config = Config()
+_config = Config()
 
 
 def get_config() -> Config:

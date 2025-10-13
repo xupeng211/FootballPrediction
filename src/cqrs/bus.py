@@ -59,7 +59,7 @@ class CommandBus:
                 raise ValueError(f"命令验证失败: {', '.join(validation_result.errors)}")
 
         # 处理命令
-        result = await handler.handle(command)
+        _result = await handler.handle(command)
 
         logger.info(f"命令处理完成: {command_type.__name__}")
 
@@ -117,7 +117,7 @@ class QueryBus:
                 raise ValueError(f"查询验证失败: {', '.join(validation_result.errors)}")
 
         # 处理查询
-        result = await handler.handle(query)
+        _result = await handler.handle(query)
 
         logger.info(f"查询处理完成: {query_type.__name__}")
 

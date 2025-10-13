@@ -65,7 +65,7 @@ class PredictionFacade:
             external_data = await self._collect_external_data(request.match_id)
 
             # 3. 生成预测
-            prediction = await self._generate_prediction(match, external_data, request)
+            _prediction = await self._generate_prediction(match, external_data, request)
 
             # 4. 评估价值
             value_assessment = await self._assess_value(prediction, external_data)
@@ -79,7 +79,7 @@ class PredictionFacade:
             await self._save_prediction(prediction, request.user_id)
 
             return PredictionResult(
-                prediction=prediction,
+                _prediction =prediction,
                 confidence=prediction.get("confidence", 0.0),
                 value_assessment=value_assessment,
                 recommendations=recommendations,
@@ -451,7 +451,7 @@ class SystemFacade:
             raise RuntimeError("System not initialized")
 
         request = PredictionRequest(match_id=match_id, user_id=user_id)
-        result = await self._prediction_facade.make_prediction(request)
+        _result = await self._prediction_facade.make_prediction(request)
 
         # 只返回最关键的信息
         return {

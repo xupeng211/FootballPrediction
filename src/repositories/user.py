@@ -34,7 +34,7 @@ class ReadOnlyUserRepository(ReadOnlyRepository[User, int]):
             if query_spec.include:
                 query = self._apply_includes(query, query_spec.include)
 
-        result = await self.session.execute(query)
+        _result = await self.session.execute(query)
         return result.scalars().first()
 
     async def find_many(self, query_spec: QuerySpec) -> List[User]:
@@ -53,13 +53,13 @@ class ReadOnlyUserRepository(ReadOnlyRepository[User, int]):
             if query_spec.include:
                 query = self._apply_includes(query, query_spec.include)
 
-        result = await self.session.execute(query)
+        _result = await self.session.execute(query)
         return result.scalars().all()  # type: ignore
 
     async def get_by_id(self, id: int) -> Optional[User]:
         """根据ID获取用户"""
         query = select(User).where(User.id == id)
-        result = await self.session.execute(query)
+        _result = await self.session.execute(query)
         return result.scalars().first()
 
     async def get_all(self, query_spec: Optional[QuerySpec] = None) -> List[User]:
@@ -77,19 +77,19 @@ class ReadOnlyUserRepository(ReadOnlyRepository[User, int]):
     async def exists(self, id: int) -> bool:
         """检查用户是否存在"""
         query = select(func.count(User.id)).where(User.id == id)
-        result = await self.session.execute(query)
+        _result = await self.session.execute(query)
         return result.scalar() > 0  # type: ignore
 
     async def get_by_username(self, username: str) -> Optional[User]:
         """根据用户名获取用户"""
         query = select(User).where(User.username == username)
-        result = await self.session.execute(query)
+        _result = await self.session.execute(query)
         return result.scalars().first()
 
     async def get_by_email(self, email: str) -> Optional[User]:
         """根据邮箱获取用户"""
         query = select(User).where(User.email == email)
-        result = await self.session.execute(query)
+        _result = await self.session.execute(query)
         return result.scalars().first()
 
     async def search_users(self, keyword: str) -> List[User]:
@@ -127,7 +127,7 @@ class UserRepository(UserRepositoryInterface):
     async def get_by_id(self, id: int) -> Optional[User]:
         """根据ID获取用户"""
         query = select(User).where(User.id == id)
-        result = await self.session.execute(query)
+        _result = await self.session.execute(query)
         return result.scalars().first()
 
     async def get_all(self, query_spec: Optional[QuerySpec] = None) -> List[User]:
@@ -146,7 +146,7 @@ class UserRepository(UserRepositoryInterface):
             if query_spec.include:
                 query = self._apply_includes(query, query_spec.include)
 
-        result = await self.session.execute(query)
+        _result = await self.session.execute(query)
         return result.scalars().all()  # type: ignore
 
     async def find_one(self, query_spec: QuerySpec) -> Optional[User]:
@@ -159,7 +159,7 @@ class UserRepository(UserRepositoryInterface):
             if query_spec.include:
                 query = self._apply_includes(query, query_spec.include)
 
-        result = await self.session.execute(query)
+        _result = await self.session.execute(query)
         return result.scalars().first()
 
     async def find_many(self, query_spec: QuerySpec) -> List[User]:
@@ -190,12 +190,12 @@ class UserRepository(UserRepositoryInterface):
     async def exists(self, id: int) -> bool:
         """检查用户是否存在"""
         query = select(func.count(User.id)).where(User.id == id)
-        result = await self.session.execute(query)
+        _result = await self.session.execute(query)
         return result.scalar() > 0  # type: ignore
 
     async def create(self, entity_data: Dict[str, Any]) -> User:
         """创建新用户"""
-        user = User(
+        _user = User(
             username=entity_data["username"],
             email=entity_data["email"],
             password_hash=entity_data["password_hash"],
@@ -231,7 +231,7 @@ class UserRepository(UserRepositoryInterface):
         for key, value in update_data.items():
             query = query.values({getattr(User, key): value})
 
-        result = await self.session.execute(query)
+        _result = await self.session.execute(query)
         await self.session.commit()
 
         if result.rowcount > 0:
@@ -241,7 +241,7 @@ class UserRepository(UserRepositoryInterface):
     async def delete_by_id(self, id: int) -> bool:
         """根据ID删除用户"""
         query = update(User).where(User.id == id).values(is_active=False)
-        result = await self.session.execute(query)
+        _result = await self.session.execute(query)
         await self.session.commit()
         return result.rowcount > 0
 
@@ -249,7 +249,7 @@ class UserRepository(UserRepositoryInterface):
         """批量创建用户"""
         users = []
         for data in entities_data:
-            user = User(
+            _user = User(
                 username=data["username"],
                 email=data["email"],
                 password_hash=data["password_hash"],
@@ -285,7 +285,7 @@ class UserRepository(UserRepositoryInterface):
         prediction_stats = prediction_result.first()
 
         # 获取用户信息
-        user = await self.get_by_id(user_id)
+        _user = await self.get_by_id(user_id)
         if not user:
             return {}
 
@@ -318,7 +318,7 @@ class UserRepository(UserRepositoryInterface):
             .where(User.id == user_id)
             .values(last_login_at=datetime.utcnow())
         )
-        result = await self.session.execute(query)
+        _result = await self.session.execute(query)
         await self.session.commit()
         return result.rowcount > 0
 
@@ -329,7 +329,7 @@ class UserRepository(UserRepositoryInterface):
             .where(User.id == user_id)
             .values(is_active=False, updated_at=datetime.utcnow())
         )
-        result = await self.session.execute(query)
+        _result = await self.session.execute(query)
         await self.session.commit()
         return result.rowcount > 0
 
@@ -340,7 +340,7 @@ class UserRepository(UserRepositoryInterface):
             .where(User.id == user_id)
             .values(is_active=True, updated_at=datetime.utcnow())
         )
-        result = await self.session.execute(query)
+        _result = await self.session.execute(query)
         await self.session.commit()
         return result.rowcount > 0
 

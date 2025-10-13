@@ -11,7 +11,7 @@ class TestTimeUtils:
     def test_format_duration(self):
         """测试格式化持续时间"""
         seconds = 3665
-        result = TimeUtils.format_duration(seconds)
+        _result = TimeUtils.format_duration(seconds)
         assert "1 hour" in result or "61 minutes" in result
 
     def test_is_future(self):
@@ -25,8 +25,8 @@ class TestTimeUtils:
         """测试计算天数差"""
         date1 = datetime(2024, 1, 1)
         date2 = datetime(2024, 1, 3)
-        result = TimeUtils.days_between(date1, date2)
-        assert result == 2
+        _result = TimeUtils.days_between(date1, date2)
+        assert _result == 2
 
     def test_start_of_day(self):
         """测试获取一天开始时间"""
@@ -39,6 +39,6 @@ class TestTimeUtils:
     def test_add_working_days(self):
         """测试添加工作日"""
         start = datetime(2024, 1, 1)  # 周一
-        result = TimeUtils.add_working_days(start, 5)
+        _result = TimeUtils.add_working_days(start, 5)
         # 5个工作日后应该是下周一
         assert result.weekday() == 0  # 周一

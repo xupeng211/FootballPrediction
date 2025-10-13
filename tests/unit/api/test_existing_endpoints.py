@@ -25,7 +25,7 @@ class TestExistingAPIEndpoints:
         """测试根端点"""
         response = client.get("/")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "message" in data
         assert "Football Prediction API" in data["message"]
         assert "version" in data
@@ -36,7 +36,7 @@ class TestExistingAPIEndpoints:
         """测试健康检查端点"""
         response = client.get("/api/health")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["status"] == "healthy"
         assert "timestamp" in data
         assert "service" in data
@@ -54,7 +54,7 @@ class TestExistingAPIEndpoints:
         """测试测试端点"""
         response = client.get("/api/test")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "API is working!" in data["message"]
         assert "timestamp" in data
 
@@ -74,7 +74,7 @@ class TestExistingAPIEndpoints:
         """测试OpenAPI端点"""
         response = client.get("/openapi.json")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "openapi" in data
         assert "info" in data
         assert data["info"]["title"] == "Football Prediction API"
@@ -83,7 +83,7 @@ class TestExistingAPIEndpoints:
         """测试404错误"""
         response = client.get("/nonexistent")
         assert response.status_code == 404
-        data = response.json()
+        _data = response.json()
         assert "error" in data
         assert data["error"]["type"] == "http_error"
 
@@ -134,7 +134,7 @@ class TestHealthAPIRoutes:
         if response.status_code == 404:
             pytest.skip("健康路由器端点未实现")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "checks" in data or "status" in data
 
 
@@ -230,7 +230,7 @@ class TestSecurityFeatures:
         """测试错误中不包含敏感信息"""
         response = client.get("/nonexistent")
         assert response.status_code == 404
-        data = response.json()
+        _data = response.json()
         error_msg = str(data)
         # 确保不包含路径信息或其他敏感信息
         assert "src" not in error_msg.lower()

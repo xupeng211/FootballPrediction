@@ -3,8 +3,8 @@ try:
 except ImportError:
     # 如果导入失败，创建简单的mock类用于测试
     class BaseResponse:
-        def __init__(self, data=None, success=True, message="OK"):
-            self.data = data or {}
+        def __init__(self, _data =None, success=True, message="OK"):
+            self._data = data or {}
             self.success = success
             self.message = message
 
@@ -13,8 +13,8 @@ except ImportError:
 
 
 def test_base_response():
-    response = BaseResponse(data={"test": "data"})
-    assert response.data == {"test": "data"}
+    response = BaseResponse(_data ={"test": "data"})
+    assert response._data == {"test": "data"}
 
 
 def test_response_serialization():

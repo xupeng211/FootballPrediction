@@ -52,7 +52,7 @@ class TestScoringService:
 
     def test_calculate_exact_score_points_custom_multiplier(self):
         """测试：计算精确比分得分（自定义倍数）"""
-        config = {"exact_score": {"points": 10, "multiplier": 2.0}}
+        _config = {"exact_score": {"points": 10, "multiplier": 2.0}}
         service = ScoringService(config)
         points = service._calculate_exact_score_points(2, 1, 2, 1)
         assert points == 20
@@ -125,7 +125,7 @@ class TestScoringService:
 
     def test_calculate_streak_bonus_disabled(self):
         """测试：计算连胜奖励（禁用）"""
-        config = {"streak_bonus": {"enabled": False}}
+        _config = {"streak_bonus": {"enabled": False}}
         service = ScoringService(config)
         bonus = service._calculate_streak_bonus(5)
         assert bonus == 0
@@ -150,7 +150,7 @@ class TestScoringService:
 
     def test_calculate_difficulty_bonus_disabled(self):
         """测试：计算难度奖励（禁用）"""
-        config = {"difficulty_multiplier": {"enabled": False}}
+        _config = {"difficulty_multiplier": {"enabled": False}}
         service = ScoringService(config)
         bonus = service._calculate_difficulty_bonus(0.5, 2, 1)
         assert bonus == 0

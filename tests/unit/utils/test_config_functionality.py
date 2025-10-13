@@ -22,7 +22,7 @@ class TestConfigFunctionality:
         try:
             from src.core.config import Config
 
-            config = Config()
+            _config = Config()
             assert config is not None
         except ImportError:
             pytest.skip("Config module not available")
@@ -36,7 +36,7 @@ class TestConfigFunctionality:
 
             # 使用测试环境变量
             with patch.dict(os.environ, {"DATABASE_URL": "sqlite:///test.db"}):
-                config = Config()
+                _config = Config()
                 # 检查是否有数据库相关属性
                 assert hasattr(config, "DATABASE_URL") or hasattr(
                     config, "database_url"
@@ -52,7 +52,7 @@ class TestConfigFunctionality:
             from src.core.config import Config
 
             with patch.dict(os.environ, {"REDIS_URL": "redis://localhost:6379/0"}):
-                config = Config()
+                _config = Config()
                 # 检查是否有Redis相关属性
                 assert hasattr(config, "REDIS_URL") or hasattr(config, "redis_url")
         except ImportError:
@@ -66,7 +66,7 @@ class TestConfigFunctionality:
             from src.core.config import Config
 
             with patch.dict(os.environ, {"DEBUG": "true"}):
-                config = Config()
+                _config = Config()
                 # 检查调试模式
                 debug_value = getattr(config, "DEBUG", getattr(config, "debug", False))
                 assert debug_value is True
@@ -81,7 +81,7 @@ class TestConfigFunctionality:
             from src.core.config import Config
 
             with patch.dict(os.environ, {"LOG_LEVEL": "INFO"}):
-                config = Config()
+                _config = Config()
                 # 检查日志级别
                 log_level = getattr(
                     config, "LOG_LEVEL", getattr(config, "log_level", None)
@@ -100,7 +100,7 @@ class TestConfigFunctionality:
         try:
             from src.core.config import Config
 
-            config = Config()
+            _config = Config()
             # 检查是否有应用名称
             app_name = getattr(config, "APP_NAME", getattr(config, "app_name", None))
             assert app_name is None or isinstance(app_name, str)
@@ -115,7 +115,7 @@ class TestConfigFunctionality:
             from src.core.config import Config
 
             with patch.dict(os.environ, {"ENVIRONMENT": "development"}):
-                config = Config()
+                _config = Config()
                 env = getattr(
                     config, "ENVIRONMENT", getattr(config, "environment", None)
                 )

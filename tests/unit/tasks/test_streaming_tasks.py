@@ -58,7 +58,7 @@ class TestStreamMessage:
 
     def test_message_serialization(self):
         """测试：消息序列化"""
-        data = {"event": "test", "data": {"id": 1}}
+        _data = {"event": "test", "data": {"id": 1}}
         msg = StreamMessage("test_topic", b"key", json.dumps(data).encode())
 
         # 验证可以反序列化
@@ -81,15 +81,15 @@ class TestKafkaProducer:
 
     def test_producer_creation(self):
         """测试：生产者创建"""
-        config = {"bootstrap_servers": ["localhost:9092"], "client_id": "test_producer"}
+        _config = {"bootstrap_servers": ["localhost:9092"], "client_id": "test_producer"}
         producer = KafkaProducer(config)
         assert producer is not None
-        assert producer.config == config
+        assert producer._config == config
 
     @pytest.mark.asyncio
     async def test_produce_message(self):
         """测试：生产消息"""
-        config = {"bootstrap_servers": ["localhost:9092"], "client_id": "test_producer"}
+        _config = {"bootstrap_servers": ["localhost:9092"], "client_id": "test_producer"}
         producer = KafkaProducer(config)
 
         message = StreamMessage("test_topic", b"test_key", b'{"event": "test"}')
@@ -101,7 +101,7 @@ class TestKafkaProducer:
                 "offset": 100,
             }
 
-            result = await producer.produce(message)
+            _result = await producer.produce(message)
 
             assert result["topic"] == "test_topic"
             assert result["partition"] == 0
@@ -110,7 +110,7 @@ class TestKafkaProducer:
     @pytest.mark.asyncio
     async def test_produce_batch(self):
         """测试：批量生产消息"""
-        config = {"bootstrap_servers": ["localhost:9092"], "client_id": "test_producer"}
+        _config = {"bootstrap_servers": ["localhost:9092"], "client_id": "test_producer"}
         producer = KafkaProducer(config)
 
         with patch.object(producer, "kafka_client") as mock_client:
@@ -134,7 +134,7 @@ class TestKafkaProducer:
     @pytest.mark.asyncio
     async def test_producer_error_handling(self):
         """测试：生产者错误处理"""
-        config = {"bootstrap_servers": ["localhost:9092"], "client_id": "test_producer"}
+        _config = {"bootstrap_servers": ["localhost:9092"], "client_id": "test_producer"}
         producer = KafkaProducer(config)
 
         with patch.object(producer, "kafka_client") as mock_client:
@@ -142,14 +142,14 @@ class TestKafkaProducer:
 
             message = StreamMessage("test_topic", b"key", b"value")
 
-            result = await producer.produce(message)
+            _result = await producer.produce(message)
 
             assert result["status"] == "failed"
             assert "error" in result
 
     def test_producer_connection_health(self):
         """测试：生产者连接健康检查"""
-        config = {"bootstrap_servers": ["localhost:9092"], "client_id": "test_producer"}
+        _config = {"bootstrap_servers": ["localhost:9092"], "client_id": "test_producer"}
         producer = KafkaProducer(config)
 
         with patch.object(producer, "kafka_client") as mock_client:
@@ -168,20 +168,20 @@ class TestKafkaConsumer:
 
     def test_consumer_creation(self):
         """测试：消费者创建"""
-        config = {
+        _config = {
             "bootstrap_servers": ["localhost:9092"],
             "group_id": "test_group",
             "topics": ["test_topic"],
         }
         consumer = KafkaConsumer(config)
         assert consumer is not None
-        assert consumer.config == config
+        assert consumer._config == config
         assert consumer.topics == ["test_topic"]
 
     @pytest.mark.asyncio
     async def test_consume_messages(self):
         """测试：消费消息"""
-        config = {
+        _config = {
             "bootstrap_servers": ["localhost:9092"],
             "group_id": "test_group",
             "topics": ["test_topic"],
@@ -219,7 +219,7 @@ class TestKafkaConsumer:
     @pytest.mark.asyncio
     async def test_consumer_commit_offsets(self):
         """测试：提交偏移量"""
-        config = {
+        _config = {
             "bootstrap_servers": ["localhost:9092"],
             "group_id": "test_group",
             "topics": ["test_topic"],
@@ -236,7 +236,7 @@ class TestKafkaConsumer:
                 }
             }
 
-            result = await consumer.commit_offsets(offsets)
+            _result = await consumer.commit_offsets(offsets)
 
             assert result is True
             mock_client.commit.assert_called_once_with(offsets)
@@ -244,7 +244,7 @@ class TestKafkaConsumer:
     @pytest.mark.asyncio
     async def test_consumer_pause_resume(self):
         """测试：暂停和恢复消费"""
-        config = {
+        _config = {
             "bootstrap_servers": ["localhost:9092"],
             "group_id": "test_group",
             "topics": ["test_topic"],
@@ -269,14 +269,14 @@ class TestStreamProcessor:
 
     def test_processor_creation(self):
         """测试：处理器创建"""
-        config = {
+        _config = {
             "input_topics": ["input_topic"],
             "output_topic": "output_topic",
             "processing_function": lambda x: x,
         }
         processor = StreamProcessor(config)
         assert processor is not None
-        assert processor.config == config
+        assert processor._config == config
 
     @pytest.mark.asyncio
     async def test_process_message(self):
@@ -286,7 +286,7 @@ class TestStreamProcessor:
             data["processed"] = True
             return data
 
-        config = {
+        _config = {
             "input_topics": ["input_topic"],
             "output_topic": "output_topic",
             "processing_function": process_func,
@@ -301,7 +301,7 @@ class TestStreamProcessor:
                 "offset": 200,
             }
 
-            result = await processor.process_message(message)
+            _result = await processor.process_message(message)
 
             assert result is True
             # 验证输出消息
@@ -324,7 +324,7 @@ class TestStreamProcessor:
             data["batch_processed"] = True
             return data
 
-        config = {
+        _config = {
             "input_topics": ["input_topic"],
             "output_topic": "output_topic",
             "processing_function": process_func,
@@ -354,7 +354,7 @@ class TestStreamProcessor:
         def failing_func(data):
             raise ValueError("Processing failed")
 
-        config = {
+        _config = {
             "input_topics": ["input_topic"],
             "output_topic": "output_topic",
             "processing_function": failing_func,
@@ -364,7 +364,7 @@ class TestStreamProcessor:
         message = StreamMessage("input_topic", b"key", b'{"test": "data"}')
 
         # 应该捕获错误并记录
-        result = await processor.process_message(message)
+        _result = await processor.process_message(message)
         # 根据实现，可能返回False或者将消息发送到死信队列
         assert result in [False, True]  # 取决于错误处理策略
 
@@ -377,19 +377,19 @@ class TestStreamMonitor:
 
     def test_monitor_creation(self):
         """测试：监控器创建"""
-        config = {
+        _config = {
             "metrics_interval": 60,
             "health_check_interval": 30,
             "alert_thresholds": {"lag": 1000, "error_rate": 0.05, "throughput": 1000},
         }
         monitor = StreamMonitor(config)
         assert monitor is not None
-        assert monitor.config == config
+        assert monitor._config == config
 
     @pytest.mark.asyncio
     async def test_monitor_consumer_lag(self):
         """测试：监控消费者延迟"""
-        config = {"metrics_interval": 60, "topics": ["test_topic"]}
+        _config = {"metrics_interval": 60, "topics": ["test_topic"]}
         monitor = StreamMonitor(config)
 
         with patch.object(monitor, "kafka_admin") as mock_admin:
@@ -416,7 +416,7 @@ class TestStreamMonitor:
     @pytest.mark.asyncio
     async def test_monitor_throughput(self):
         """测试：监控吞吐量"""
-        config = {"metrics_interval": 60, "topics": ["test_topic"]}
+        _config = {"metrics_interval": 60, "topics": ["test_topic"]}
         monitor = StreamMonitor(config)
 
         with patch.object(monitor, "metrics_collector") as mock_collector:
@@ -432,7 +432,7 @@ class TestStreamMonitor:
     @pytest.mark.asyncio
     async def test_trigger_alert(self):
         """测试：触发警报"""
-        config = {"alert_thresholds": {"lag": 100, "error_rate": 0.05}}
+        _config = {"alert_thresholds": {"lag": 100, "error_rate": 0.05}}
         monitor = StreamMonitor(config)
 
         with patch.object(monitor, "alert_handler") as mock_alert:
@@ -530,7 +530,7 @@ class TestStreamingTasksIntegration:
             lambda x: {**x, "stage3": True},
         ]
 
-        config = {
+        _config = {
             "input_topic": "input",
             "output_topic": "output",
             "processors": processors,
@@ -544,7 +544,7 @@ class TestStreamingTasksIntegration:
         with patch.object(pipeline, "producer") as mock_producer:
             mock_producer.produce.return_value = {"topic": "output", "offset": 300}
 
-            result = await pipeline.process_message(message)
+            _result = await pipeline.process_message(message)
 
             assert result is True
             # 验证消息经过所有处理阶段
@@ -558,7 +558,7 @@ class TestStreamingTasksIntegration:
     @pytest.mark.asyncio
     async def test_error_recovery(self):
         """测试：错误恢复"""
-        config = {
+        _config = {
             "input_topics": ["input"],
             "output_topic": "output",
             "processing_function": lambda x: x,
@@ -579,7 +579,7 @@ class TestStreamingTasksIntegration:
             # 第一次失败
             mock_producer.produce.side_effect = Exception("Failed")
 
-            result = await processor.process_message(message)
+            _result = await processor.process_message(message)
 
             # 验证错误处理或重试逻辑
             assert isinstance(result, bool)
@@ -590,7 +590,7 @@ class TestStreamingTasksIntegration:
         # 创建多个消费者实例
         consumers = []
         for i in range(3):
-            config = {
+            _config = {
                 "bootstrap_servers": ["localhost:9092"],
                 "group_id": "scaled_group",
                 "topics": ["topic1", "topic2"],

@@ -42,9 +42,9 @@ class TestConfigLoaderModule:
 
             with patch("builtins.open", mock_open(read_data=json.dumps(mock_config))):
                 with patch("json.load", return_value=mock_config):
-                    config = ConfigLoader.load_config()
+                    _config = ConfigLoader.load_config()
                     assert config is not None
-                    assert "database" in config or config == {}  # 可能返回空字典
+                    assert "database" in config or _config == {}  # 可能返回空字典
         except ImportError:
             pytest.skip("ConfigLoader not available")
         except Exception:
@@ -74,7 +74,7 @@ class TestConfigLoaderModule:
             from src.utils.config_loader import ConfigLoader
 
             # 测试设置值
-            result = ConfigLoader.set_config_value("test_key", "test_value")
+            _result = ConfigLoader.set_config_value("test_key", "test_value")
             # 可能返回None或其他值
             assert result is None or isinstance(result, (bool, dict, str))
         except ImportError:
@@ -85,7 +85,7 @@ class TestConfigLoaderModule:
         try:
             from src.utils.config_loader import ConfigLoader
 
-            result = ConfigLoader.reload_config()
+            _result = ConfigLoader.reload_config()
             # 可能返回None或配置字典
             assert result is None or isinstance(result, dict)
         except ImportError:
@@ -99,7 +99,7 @@ class TestConfigLoaderModule:
             # 设置环境变量
             os.environ["TEST_CONFIG_VAR"] = "test_value"
 
-            config = ConfigLoader.get_env_config()
+            _config = ConfigLoader.get_env_config()
             assert isinstance(config, dict)
 
             # 清理
@@ -286,13 +286,13 @@ class TestFileUtilsModule:
                 test_dir = os.path.join(tmpdir, "test_dir", "sub_dir")
 
                 # 创建目录
-                result = FileUtils.ensure_dir(test_dir)
+                _result = FileUtils.ensure_dir(test_dir)
                 assert os.path.exists(test_dir)
                 assert os.path.isdir(test_dir)
                 # 返回值可能是str或Path对象
 
                 # 再次调用应该不会失败
-                result2 = FileUtils.ensure_dir(test_dir)
+                _result2 = FileUtils.ensure_dir(test_dir)
                 # 返回值可能是str或Path对象
         except ImportError:
             pytest.skip("FileUtils not available")
@@ -346,8 +346,8 @@ class TestFileUtilsModule:
                 tmpfile_path = tmpfile.name
 
             try:
-                data = FileUtils.read_json(tmpfile_path)
-                assert data == test_data
+                _data = FileUtils.read_json(tmpfile_path)
+                assert _data == test_data
             finally:
                 os.unlink(tmpfile_path)
         except ImportError:
@@ -369,8 +369,8 @@ class TestFileUtilsModule:
                 import json
 
                 with open(tmpfile_path, "r") as f:
-                    data = json.load(f)
-                assert data == test_data
+                    _data = json.load(f)
+                assert _data == test_data
             finally:
                 os.unlink(tmpfile_path)
         except ImportError:
@@ -383,7 +383,7 @@ class TestFileUtilsModule:
 
             with tempfile.TemporaryDirectory() as tmpdir:
                 test_dir = os.path.join(tmpdir, "test_dir")
-                result = FileUtils.ensure_directory(test_dir)
+                _result = FileUtils.ensure_directory(test_dir)
                 assert os.path.exists(test_dir)
         except ImportError:
             pytest.skip("FileUtils not available")
@@ -402,8 +402,8 @@ class TestFileUtilsModule:
                 tmpfile_path = tmpfile.name
 
             try:
-                data = FileUtils.read_json_file(tmpfile_path)
-                assert data == test_data
+                _data = FileUtils.read_json_file(tmpfile_path)
+                assert _data == test_data
             finally:
                 os.unlink(tmpfile_path)
         except ImportError:
@@ -420,7 +420,7 @@ class TestFileUtilsModule:
                 tmpfile_path = tmpfile.name
 
             try:
-                result = FileUtils.write_json_file(test_data, tmpfile_path)
+                _result = FileUtils.write_json_file(test_data, tmpfile_path)
                 assert result is True
             finally:
                 os.unlink(tmpfile_path)
@@ -571,7 +571,7 @@ class TestCryptoUtilsModule:
         try:
             from src.utils.crypto_utils import CryptoUtils
 
-            data = "secret message"
+            _data = "secret message"
 
             # 测试加密
             encrypted = CryptoUtils.encrypt(data)
@@ -657,7 +657,7 @@ class TestWarningFiltersModule:
             from src.utils.warning_filters import WarningFilters
 
             # 调用过滤函数
-            result = WarningFilters.filter_deprecation_warnings()
+            _result = WarningFilters.filter_deprecation_warnings()
             # 可能返回None或布尔值
             assert result is None or isinstance(result, bool)
         except ImportError:
@@ -668,7 +668,7 @@ class TestWarningFiltersModule:
         try:
             from src.utils.warning_filters import WarningFilters
 
-            result = WarningFilters.filter_import_warnings()
+            _result = WarningFilters.filter_import_warnings()
             assert result is None or isinstance(result, bool)
         except ImportError:
             pytest.skip("WarningFilters not available")
@@ -678,7 +678,7 @@ class TestWarningFiltersModule:
         try:
             from src.utils.warning_filters import WarningFilters
 
-            result = WarningFilters.filter_user_warnings()
+            _result = WarningFilters.filter_user_warnings()
             assert result is None or isinstance(result, bool)
         except ImportError:
             pytest.skip("WarningFilters not available")
@@ -688,7 +688,7 @@ class TestWarningFiltersModule:
         try:
             from src.utils.warning_filters import WarningFilters
 
-            result = WarningFilters.setup_warnings()
+            _result = WarningFilters.setup_warnings()
             assert result is None or isinstance(result, bool)
         except ImportError:
             pytest.skip("WarningFilters not available")
@@ -701,7 +701,7 @@ class TestWarningFiltersModule:
 
             # 如果有自定义过滤方法
             if hasattr(WarningFilters, "filter_custom_warnings"):
-                result = WarningFilters.filter_custom_warnings()
+                _result = WarningFilters.filter_custom_warnings()
                 assert result is None or isinstance(result, bool)
         except ImportError:
             pytest.skip("WarningFilters not available")

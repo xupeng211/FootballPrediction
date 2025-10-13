@@ -21,7 +21,7 @@ class TestMatchUpdateFlow:
     ):
         """测试完整的比赛生命周期：计划 -> 进行中 -> 结束"""
         # 1. 创建测试比赛
-        teams = await test_data_loader.create_teams()
+        _teams = await test_data_loader.create_teams()
 
         match_data = {
             "home_team_id": teams[0]["id"],
@@ -216,10 +216,10 @@ class TestMatchUpdateFlow:
     ):
         """测试批量比赛更新（模拟比赛日）"""
         # 创建多个队伍和比赛
-        teams = await test_data_loader.create_teams()
+        _teams = await test_data_loader.create_teams()
 
         # 创建10场比赛（模拟一个比赛日）
-        matches = []
+        _matches = []
         for i in range(10):
             match_data = {
                 "home_team_id": teams[i % len(teams)]["id"],
@@ -288,7 +288,7 @@ class TestMatchUpdateFlow:
     ):
         """测试实时统计数据更新"""
         # 创建测试比赛
-        teams = await test_data_loader.create_teams()
+        _teams = await test_data_loader.create_teams()
 
         match_data = {
             "home_team_id": teams[0]["id"],
@@ -356,7 +356,7 @@ class TestMatchUpdateFlow:
 
             if response.status_code == 200:
                 updated_match = response.json()
-                stats = updated_match.get("statistics", {})
+                _stats = updated_match.get("statistics", {})
                 print(
                     f"✅ 第{stats_update['minute']}分钟统计更新: "
                     f"控球率 {stats.get('possession', {}).get('home', 0)}%"
@@ -376,7 +376,7 @@ class TestMatchUpdateFlow:
     ):
         """测试比赛中断和恢复"""
         # 创建测试比赛
-        teams = await test_data_loader.create_teams()
+        _teams = await test_data_loader.create_teams()
 
         match_data = {
             "home_team_id": teams[0]["id"],

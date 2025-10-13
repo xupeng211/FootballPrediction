@@ -22,7 +22,7 @@ class TestStreamConfig:
 
     def test_stream_config_creation(self):
         """测试创建流配置"""
-        config = StreamConfig(
+        _config = StreamConfig(
             name="test_stream",
             bootstrap_servers=["localhost:9092"],
             topics=["topic1", "topic2"],
@@ -35,7 +35,7 @@ class TestStreamConfig:
     def test_stream_config_validation(self):
         """测试配置验证"""
         # 有效配置
-        config = StreamConfig(
+        _config = StreamConfig(
             name="test", bootstrap_servers=["localhost:9092"], topics=["topic"]
         )
         assert config.is_valid() is True
@@ -48,7 +48,7 @@ class TestStreamConfig:
 
     def test_stream_config_to_dict(self):
         """测试配置转字典"""
-        config = StreamConfig(
+        _config = StreamConfig(
             name="test",
             bootstrap_servers=["localhost:9092"],
             topics=["topic1", "topic2"],
@@ -68,7 +68,7 @@ class TestStreamConfig:
             "group_id": "test_group",
         }
 
-        config = StreamConfig.from_dict(config_dict)
+        _config = StreamConfig.from_dict(config_dict)
         assert config.name == "test"
         assert config.group_id == "test_group"
 
@@ -91,7 +91,7 @@ class TestKafkaConfig:
 
     def test_kafka_config_defaults(self):
         """测试Kafka默认配置"""
-        config = KafkaConfig(bootstrap_servers=["localhost:9092"])
+        _config = KafkaConfig(bootstrap_servers=["localhost:9092"])
 
         assert config.port == 9092
         assert config.protocol == "PLAINTEXT"
@@ -99,7 +99,7 @@ class TestKafkaConfig:
 
     def test_kafka_config_with_ssl(self):
         """测试SSL配置"""
-        config = KafkaConfig(
+        _config = KafkaConfig(
             bootstrap_servers=["kafka.example.com:9093"],
             protocol="SSL",
             ssl_cafile="/path/to/ca.crt",
@@ -114,7 +114,7 @@ class TestKafkaConfig:
 
     def test_kafka_config_with_sasl(self):
         """测试SASL配置"""
-        config = KafkaConfig(
+        _config = KafkaConfig(
             bootstrap_servers=["kafka.example.com:9092"],
             security_protocol="SASL_SSL",
             sasl_mechanism="PLAIN",
@@ -129,7 +129,7 @@ class TestKafkaConfig:
 
     def test_kafka_config_to_aiokafka(self):
         """测试转换为aiokafka配置"""
-        config = KafkaConfig(
+        _config = KafkaConfig(
             bootstrap_servers=["kafka1:9092", "kafka2:9092"],
             client_id="test_client",
             request_timeout_ms=30000,
@@ -145,7 +145,7 @@ class TestKafkaConfig:
     def test_kafka_config_validation(self):
         """测试Kafka配置验证"""
         # 有效配置
-        config = KafkaConfig(bootstrap_servers=["localhost:9092"])
+        _config = KafkaConfig(bootstrap_servers=["localhost:9092"])
         assert config.validate() is True
 
         # 无效配置（没有服务器）
@@ -162,7 +162,7 @@ class TestConsumerConfig:
 
     def test_consumer_config_defaults(self):
         """测试消费者默认配置"""
-        config = ConsumerConfig(
+        _config = ConsumerConfig(
             bootstrap_servers=["localhost:9092"],
             group_id="test_group",
             topics=["test_topic"],
@@ -174,7 +174,7 @@ class TestConsumerConfig:
 
     def test_consumer_config_earliest_offset(self):
         """测试从最早偏移量开始"""
-        config = ConsumerConfig(
+        _config = ConsumerConfig(
             bootstrap_servers=["localhost:9092"],
             group_id="test_group",
             topics=["test_topic"],
@@ -185,7 +185,7 @@ class TestConsumerConfig:
 
     def test_consumer_config_manual_commit(self):
         """测试手动提交配置"""
-        config = ConsumerConfig(
+        _config = ConsumerConfig(
             bootstrap_servers=["localhost:9092"],
             group_id="test_group",
             topics=["test_topic"],
@@ -196,7 +196,7 @@ class TestConsumerConfig:
 
     def test_consumer_config_with_session_timeout(self):
         """测试会话超时配置"""
-        config = ConsumerConfig(
+        _config = ConsumerConfig(
             bootstrap_servers=["localhost:9092"],
             group_id="test_group",
             topics=["test_topic"],
@@ -207,7 +207,7 @@ class TestConsumerConfig:
 
     def test_consumer_config_to_aiokafka(self):
         """测试转换为aiokafka消费者配置"""
-        config = ConsumerConfig(
+        _config = ConsumerConfig(
             bootstrap_servers=["kafka1:9092"],
             group_id="test_group",
             topics=["topic1", "topic2"],
@@ -237,7 +237,7 @@ class TestProducerConfig:
 
     def test_producer_config_defaults(self):
         """测试生产者默认配置"""
-        config = ProducerConfig(bootstrap_servers=["localhost:9092"])
+        _config = ProducerConfig(bootstrap_servers=["localhost:9092"])
 
         assert config.acks == 1
         assert config.retries == 3
@@ -246,19 +246,19 @@ class TestProducerConfig:
 
     def test_producer_config_all_acks(self):
         """测试所有确认配置"""
-        config = ProducerConfig(bootstrap_servers=["localhost:9092"], acks="all")
+        _config = ProducerConfig(bootstrap_servers=["localhost:9092"], acks="all")
 
         assert config.acks == "all"
 
     def test_producer_config_no_retries(self):
         """测试不重试配置"""
-        config = ProducerConfig(bootstrap_servers=["localhost:9092"], retries=0)
+        _config = ProducerConfig(bootstrap_servers=["localhost:9092"], retries=0)
 
         assert config.retries == 0
 
     def test_producer_config_with_compression(self):
         """测试压缩配置"""
-        config = ProducerConfig(
+        _config = ProducerConfig(
             bootstrap_servers=["localhost:9092"], compression_type="gzip"
         )
 
@@ -266,7 +266,7 @@ class TestProducerConfig:
 
     def test_producer_config_with_idempotence(self):
         """测试幂等性配置"""
-        config = ProducerConfig(
+        _config = ProducerConfig(
             bootstrap_servers=["localhost:9092"], enable_idempotence=True
         )
 
@@ -274,7 +274,7 @@ class TestProducerConfig:
 
     def test_producer_config_to_aiokafka(self):
         """测试转换为aiokafka生产者配置"""
-        config = ProducerConfig(
+        _config = ProducerConfig(
             bootstrap_servers=["kafka1:9092"],
             acks="all",
             retries=5,
@@ -317,7 +317,7 @@ class TestConfigLoading:
         }
 
         with patch("builtins.open", mock_open(read_data=json.dumps(json_content))):
-            config = StreamConfig.from_file("config.json")
+            _config = StreamConfig.from_file("config.json")
 
         assert config.name == "test_stream"
         assert config.group_id == "test_group"
@@ -348,7 +348,7 @@ class TestConfigLoading:
                     "auto_offset_reset": "earliest",
                 },
             ):
-                config = StreamConfig.from_file("config.yaml")
+                _config = StreamConfig.from_file("config.yaml")
 
         assert config.name == "test_stream"
         assert len(config.bootstrap_servers) == 2
@@ -372,14 +372,14 @@ class TestConfigLoading:
             os.environ,
             {"KAFKA_SERVER": "kafka.example.com:9092", "KAFKA_GROUP": "prod_group"},
         ):
-            config = ConsumerConfig.from_dict(config_dict)
+            _config = ConsumerConfig.from_dict(config_dict)
 
         assert config.bootstrap_servers == ["kafka.example.com:9092"]
         assert config.group_id == "prod_group"
 
     def test_save_config_to_file(self):
         """测试保存配置到文件"""
-        config = ConsumerConfig(
+        _config = ConsumerConfig(
             bootstrap_servers=["localhost:9092"],
             group_id="test_group",
             topics=["topic1"],
@@ -453,7 +453,7 @@ class TestConfigLoading:
             config_str = config_str.replace(f"{{{{{key}}}}}", value)
 
         config_dict = json.loads(config_str)
-        config = ConsumerConfig.from_dict(config_dict)
+        _config = ConsumerConfig.from_dict(config_dict)
 
         assert config.bootstrap_servers == ["kafka.example.com:9092"]
         assert config.group_id == "event_consumer"

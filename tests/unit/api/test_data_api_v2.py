@@ -27,7 +27,7 @@ class TestDataAPIV2:
         """测试获取联赛列表"""
         response = client.get("/data/leagues")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
 
         # 验证是列表
         assert isinstance(data, list)
@@ -45,7 +45,7 @@ class TestDataAPIV2:
         """测试带筛选的联赛列表"""
         response = client.get("/data/leagues?country=England&season=2024-25&limit=5")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert len(data) <= 5
 
     def test_get_leagues_limit_validation(self, client):
@@ -63,7 +63,7 @@ class TestDataAPIV2:
         league_id = 1
         response = client.get(f"/data/leagues/{league_id}")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
 
         # 验证联赛结构
         assert data["id"] == league_id
@@ -77,7 +77,7 @@ class TestDataAPIV2:
         response = client.get(f"/data/leagues/{league_id}")
         # 模拟数据总是返回200，而不是404
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["id"] == league_id
 
     # ==================== Teams Tests ====================
@@ -86,7 +86,7 @@ class TestDataAPIV2:
         """测试获取球队列表"""
         response = client.get("/data/teams")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
 
         # 验证是列表
         assert isinstance(data, list)
@@ -105,7 +105,7 @@ class TestDataAPIV2:
             "/data/teams?league_id=1&country=Spain&search=Madrid&limit=10"
         )
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list)
 
     def test_get_team(self, client):
@@ -113,7 +113,7 @@ class TestDataAPIV2:
         team_id = 1
         response = client.get(f"/data/teams/{team_id}")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
 
         # 验证球队结构
         assert data["id"] == team_id
@@ -126,7 +126,7 @@ class TestDataAPIV2:
         team_id = 1
         response = client.get(f"/data/teams/{team_id}/statistics")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
 
         # 验证统计结构
         assert data["team_id"] == team_id
@@ -150,7 +150,7 @@ class TestDataAPIV2:
         response = client.get(f"/data/teams/{team_id}")
         # 模拟数据总是返回200
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["id"] == team_id
 
     # ==================== Matches Tests ====================
@@ -159,7 +159,7 @@ class TestDataAPIV2:
         """测试获取比赛列表"""
         response = client.get("/data/matches")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
 
         # 验证是列表
         assert isinstance(data, list)
@@ -186,7 +186,7 @@ class TestDataAPIV2:
             f"/data/matches?league_id=1&team_id=1&date_from={today}&date_to={tomorrow}&status=pending&limit=10"
         )
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list)
 
     def test_get_match(self, client):
@@ -194,7 +194,7 @@ class TestDataAPIV2:
         match_id = 1
         response = client.get(f"/data/matches/{match_id}")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
 
         # 验证比赛结构
         assert data["id"] == match_id
@@ -209,7 +209,7 @@ class TestDataAPIV2:
         match_id = 1
         response = client.get(f"/data/matches/{match_id}/statistics")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
 
         # 验证统计结构
         assert data["match_id"] == match_id
@@ -232,7 +232,7 @@ class TestDataAPIV2:
         response = client.get(f"/data/matches/{match_id}")
         # 模拟数据总是返回200
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["id"] == match_id
 
     # ==================== Odds Tests ====================
@@ -241,7 +241,7 @@ class TestDataAPIV2:
         """测试获取赔率数据"""
         response = client.get("/data/odds")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
 
         # 验证是列表
         assert isinstance(data, list)
@@ -266,7 +266,7 @@ class TestDataAPIV2:
         """测试带筛选的赔率数据"""
         response = client.get("/data/odds?match_id=1&bookmaker=Bet365&limit=5")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list)
 
     def test_get_match_odds(self, client):
@@ -274,7 +274,7 @@ class TestDataAPIV2:
         match_id = 1
         response = client.get(f"/data/odds/{match_id}")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
 
         # 验证是列表
         assert isinstance(data, list)
@@ -289,7 +289,7 @@ class TestDataAPIV2:
     def test_odds_probability_check(self, client):
         """测试赔率概率计算"""
         response = client.get("/data/odds")
-        data = response.json()
+        _data = response.json()
 
         if data:
             odds = data[0]
@@ -333,7 +333,7 @@ class TestDataAPIV2:
         # 使用不存在的参数来获取空列表
         response = client.get("/data/teams?search=NonExistentTeam12345")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list)
         # 可能为空列表或有默认数据
 
@@ -353,7 +353,7 @@ class TestDataAPIV2:
         """测试球队分页"""
         response = client.get("/data/teams?limit=3")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert len(data) <= 3
 
     # ==================== Search Tests ====================
@@ -362,14 +362,14 @@ class TestDataAPIV2:
         """测试球队搜索"""
         response = client.get("/data/teams?search=Team")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list)
 
     def test_search_leagues_by_country(self, client):
         """测试按国家搜索联赛"""
         response = client.get("/data/leagues?country=England")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list)
 
         # 验证所有联赛都是指定国家的
@@ -382,7 +382,7 @@ class TestDataAPIV2:
         """测试球队联赛一致性"""
         response = client.get("/data/teams?league_id=1")
         assert response.status_code == 200
-        teams = response.json()
+        _teams = response.json()
 
         for team in teams:
             assert team["league_id"] == 1
@@ -391,7 +391,7 @@ class TestDataAPIV2:
         """测试比赛状态一致性"""
         response = client.get("/data/matches?status=pending")
         assert response.status_code == 200
-        matches = response.json()
+        _matches = response.json()
 
         for match in matches:
             assert match["status"] == "pending"
@@ -420,7 +420,7 @@ class TestDataAPIIntegration:
             # 2. 获取联赛的球队
             response = client.get(f"/data/teams?league_id={league_id}")
             assert response.status_code == 200
-            teams = response.json()
+            _teams = response.json()
 
             if teams:
                 team = teams[0]
@@ -433,7 +433,7 @@ class TestDataAPIIntegration:
         # 4. 获取比赛
         response = client.get("/data/matches")
         assert response.status_code == 200
-        matches = response.json()
+        _matches = response.json()
 
         if matches:
             match = matches[0]
@@ -452,7 +452,7 @@ class TestDataAPIIntegration:
         # 获取比赛
         response = client.get("/data/matches")
         assert response.status_code == 200
-        matches = response.json()
+        _matches = response.json()
 
         if matches:
             match = matches[0]

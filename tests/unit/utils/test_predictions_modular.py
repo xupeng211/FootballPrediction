@@ -109,7 +109,7 @@ async def test_get_match_prediction_handler():
             mock_session.execute.return_value = mock_pred_result
 
             # 执行处理器
-            result = await get_match_prediction_handler(
+            _result = await get_match_prediction_handler(
                 mock_request, 123, force_predict=False, session=mock_session
             )
 
@@ -180,7 +180,7 @@ async def test_batch_predict_matches_handler():
             ]
 
             # 执行处理器
-            result = await batch_predict_matches_handler(
+            _result = await batch_predict_matches_handler(
                 mock_request, match_ids, session=mock_session
             )
 
@@ -257,7 +257,7 @@ async def test_get_match_prediction_history_handler():
         mock_session.execute.side_effect = execute_results
 
         # 执行处理器
-        result = await get_match_prediction_history_handler(
+        _result = await get_match_prediction_history_handler(
             123, limit=10, session=mock_session
         )
 
@@ -299,7 +299,7 @@ async def test_get_recent_predictions_handler():
         mock_session.execute.return_value = mock_result
 
         # 执行处理器
-        result = await get_recent_predictions_handler(
+        _result = await get_recent_predictions_handler(
             hours=24, limit=50, session=mock_session
         )
 

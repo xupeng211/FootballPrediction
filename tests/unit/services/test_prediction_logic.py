@@ -129,7 +129,7 @@ class TestPredictionCalculations:
             current = results[-1]
 
             for result in reversed(results):
-                if result == current:
+                if _result == current:
                     streak += 1
                 else:
                     break

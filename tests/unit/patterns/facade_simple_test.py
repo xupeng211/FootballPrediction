@@ -45,11 +45,11 @@ class TestPredictionRequest:
             # Try with required arguments
             try:
                 return PredictionRequest(test_param="test_value")
-            except:
+            except Exception:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate PredictionRequest")
+                pytest.skip("Cannot instantiate PredictionRequest")
         except Exception:
-            pytest.skip(f"Error creating PredictionRequest instance")
+            pytest.skip("Error creating PredictionRequest instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -143,11 +143,11 @@ class TestPredictionResult:
             # Try with required arguments
             try:
                 return PredictionResult(test_param="test_value")
-            except:
+            except Exception:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate PredictionResult")
+                pytest.skip("Cannot instantiate PredictionResult")
         except Exception:
-            pytest.skip(f"Error creating PredictionResult instance")
+            pytest.skip("Error creating PredictionResult instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -241,11 +241,11 @@ class TestDataCollectionConfig:
             # Try with required arguments
             try:
                 return DataCollectionConfig(test_param="test_value")
-            except:
+            except Exception:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate DataCollectionConfig")
+                pytest.skip("Cannot instantiate DataCollectionConfig")
         except Exception:
-            pytest.skip(f"Error creating DataCollectionConfig instance")
+            pytest.skip("Error creating DataCollectionConfig instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -328,11 +328,11 @@ class TestPredictionFacade:
             # Try with required arguments
             try:
                 return PredictionFacade(test_param="test_value")
-            except:
+            except Exception:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate PredictionFacade")
+                pytest.skip("Cannot instantiate PredictionFacade")
         except Exception:
-            pytest.skip(f"Error creating PredictionFacade instance")
+            pytest.skip("Error creating PredictionFacade instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -382,11 +382,11 @@ class TestDataCollectionFacade:
             # Try with required arguments
             try:
                 return DataCollectionFacade(test_param="test_value")
-            except:
+            except Exception:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate DataCollectionFacade")
+                pytest.skip("Cannot instantiate DataCollectionFacade")
         except Exception:
-            pytest.skip(f"Error creating DataCollectionFacade instance")
+            pytest.skip("Error creating DataCollectionFacade instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -436,11 +436,11 @@ class TestAnalyticsFacade:
             # Try with required arguments
             try:
                 return AnalyticsFacade(test_param="test_value")
-            except:
+            except Exception:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate AnalyticsFacade")
+                pytest.skip("Cannot instantiate AnalyticsFacade")
         except Exception:
-            pytest.skip(f"Error creating AnalyticsFacade instance")
+            pytest.skip("Error creating AnalyticsFacade instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -490,11 +490,11 @@ class TestFacadeFactory:
             # Try with required arguments
             try:
                 return FacadeFactory(test_param="test_value")
-            except:
+            except Exception:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate FacadeFactory")
+                pytest.skip("Cannot instantiate FacadeFactory")
         except Exception:
-            pytest.skip(f"Error creating FacadeFactory instance")
+            pytest.skip("Error creating FacadeFactory instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -574,11 +574,11 @@ class TestSystemFacade:
             # Try with required arguments
             try:
                 return SystemFacade(test_param="test_value")
-            except:
+            except Exception:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate SystemFacade")
+                pytest.skip("Cannot instantiate SystemFacade")
         except Exception:
-            pytest.skip(f"Error creating SystemFacade instance")
+            pytest.skip("Error creating SystemFacade instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -667,7 +667,7 @@ class TestModuleIntegration:
             await asyncio.sleep(0.001)
             return True
 
-        result = await async_test()
+        _result = await async_test()
         assert result is True
 
     @pytest.mark.parametrize(
@@ -698,6 +698,6 @@ class TestModuleIntegration:
         mock_service = Mock()
         mock_service.process.return_value = {"status": "success"}
 
-        result = mock_service.process("test_data")
+        _result = mock_service.process("test_data")
         assert result["status"] == "success"
         mock_service.process.assert_called_once_with("test_data")

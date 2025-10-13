@@ -21,5 +21,5 @@ def test_streaming_imports():
 def test_stream_config():
     from src.streaming.stream_config import StreamConfig
 
-    config = StreamConfig()
+    _config = StreamConfig()
     assert config is not None

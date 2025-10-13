@@ -46,27 +46,27 @@ class OddsFactory(BaseFactory):
 
     @classmethod
     def create_for_match(cls, match_id: int, **kwargs) -> Odds:
-        data = cls._attach_match({"match_id": match_id, **kwargs})
+        _data = cls._attach_match({"match_id": match_id, **kwargs})
         return cls(**data)
 
     @classmethod
     def create_bet365_odds(cls, **kwargs) -> Odds:
-        data = cls._attach_match({"bookmaker": "Bet365", **kwargs})
+        _data = cls._attach_match({"bookmaker": "Bet365", **kwargs})
         return cls(**data)
 
     @classmethod
     def create_william_hill_odds(cls, **kwargs) -> Odds:
-        data = cls._attach_match({"bookmaker": "William Hill", **kwargs})
+        _data = cls._attach_match({"bookmaker": "William Hill", **kwargs})
         return cls(**data)
 
     @classmethod
     def create_betfair_odds(cls, **kwargs) -> Odds:
-        data = cls._attach_match({"bookmaker": "Betfair", **kwargs})
+        _data = cls._attach_match({"bookmaker": "Betfair", **kwargs})
         return cls(**data)
 
     @classmethod
     def create_balanced_odds(cls, **kwargs) -> Odds:
-        data = cls._attach_match(
+        _data = cls._attach_match(
             {
                 "home_odds": Decimal("2.50"),
                 "draw_odds": Decimal("2.50"),

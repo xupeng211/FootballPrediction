@@ -38,7 +38,7 @@ def test_statistics_utils():
     from src.features.feature_calculator_mod.statistics_utils import StatisticsUtils
 
     # 测试基础统计函数
-    data = [1, 2, 3, 4, 5]
+    _data = [1, 2, 3, 4, 5]
 
     assert StatisticsUtils.calculate_mean(data) == 3.0
     assert StatisticsUtils.calculate_min(data) == 1.0
@@ -56,7 +56,7 @@ def test_feature_calculator_initialization():
 
     calculator = FeatureCalculator()
     assert calculator.db_manager is not None
-    assert calculator.config == {}
+    assert calculator._config == {}
     assert calculator.features == []
     assert calculator.recent_calculator is not None
     assert calculator.historical_calculator is not None
@@ -75,7 +75,7 @@ def test_recent_performance_calculator():
     assert calculator.db_manager is not None
 
     # 测试静态方法
-    matches = [
+    _matches = [
         {"result": "win"},
         {"result": "draw"},
         {"result": "loss"},
@@ -95,7 +95,7 @@ def test_historical_matchup_calculator():
     assert calculator.db_manager is not None
 
     # 测试趋势分析
-    matches = [
+    _matches = [
         Mock(home_score=2, away_score=1),
         Mock(home_score=1, away_score=1),
         Mock(home_score=1, away_score=2),
@@ -151,7 +151,7 @@ def test_rolling_statistics():
     """测试滚动统计"""
     from src.features.feature_calculator_mod.statistics_utils import StatisticsUtils
 
-    data = [1, 2, 3, 4, 5]
+    _data = [1, 2, 3, 4, 5]
 
     # 测试滚动平均
     rolling_mean = StatisticsUtils.calculate_rolling_mean(data, window=3)
@@ -162,9 +162,9 @@ def test_distribution_stats():
     """测试分布统计"""
     from src.features.feature_calculator_mod.statistics_utils import StatisticsUtils
 
-    data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    _data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
-    stats = StatisticsUtils.calculate_distribution_stats(data)
+    _stats = StatisticsUtils.calculate_distribution_stats(data)
 
     assert "count" in stats
     assert "mean" in stats
@@ -179,7 +179,7 @@ def test_outlier_detection():
     """测试异常值检测"""
     from src.features.feature_calculator_mod.statistics_utils import StatisticsUtils
 
-    data = [1, 2, 3, 4, 5, 100]  # 100是异常值
+    _data = [1, 2, 3, 4, 5, 100]  # 100是异常值
 
     # IQR方法
     outliers_iqr = StatisticsUtils.detect_outliers(data, method="iqr")
@@ -206,7 +206,7 @@ def test_backward_compatibility():
     )
 
     # 测试统计函数
-    data = [1, 2, 3, 4, 5]
+    _data = [1, 2, 3, 4, 5]
     assert calculate_mean(data) == 3.0
     assert calculate_min(data) == 1.0
     assert calculate_max(data) == 5.0

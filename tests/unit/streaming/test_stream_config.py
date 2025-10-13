@@ -94,7 +94,7 @@ def test_get_producer_config():
     if not IMPORT_SUCCESS:
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
-    # result = get_producer_config()
+    # _result = get_producer_config()
     # assert result is not None
     assert True
 
@@ -104,7 +104,7 @@ def test_get_consumer_config():
     if not IMPORT_SUCCESS:
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
-    # result = get_consumer_config()
+    # _result = get_consumer_config()
     # assert result is not None
     assert True
 
@@ -114,7 +114,7 @@ def test_get_topic_config():
     if not IMPORT_SUCCESS:
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
-    # result = get_topic_config()
+    # _result = get_topic_config()
     # assert result is not None
     assert True
 
@@ -124,7 +124,7 @@ def test_get_all_topics():
     if not IMPORT_SUCCESS:
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
-    # result = get_all_topics()
+    # _result = get_all_topics()
     # assert result is not None
     assert True
 
@@ -134,7 +134,7 @@ def test_is_valid_topic():
     if not IMPORT_SUCCESS:
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
-    # result = is_valid_topic()
+    # _result = is_valid_topic()
     # assert result is not None
     assert True
 

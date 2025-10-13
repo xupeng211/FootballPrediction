@@ -64,7 +64,7 @@ class TestRedisConnectionManager:
         mock_redis.Redis.return_value = mock_client
 
         manager = RedisConnectionManager()
-        result = manager.ping()
+        _result = manager.ping()
 
         assert result is True
 
@@ -92,7 +92,7 @@ class TestRedisConnectionManager:
         mock_redis.Redis.return_value = mock_client
 
         manager = RedisConnectionManager()
-        result = manager.health_check()
+        _result = manager.health_check()
 
         assert result is True
 

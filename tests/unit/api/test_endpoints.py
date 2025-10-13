@@ -45,7 +45,7 @@ class TestUserEndpoints:
         mocks["repository"].get.return_value = Mock(**user_data)
 
         # 模拟调用
-        result = mocks["repository"].get(user_id)
+        _result = mocks["repository"].get(user_id)
 
         # 断言
         assert result is not None
@@ -62,7 +62,7 @@ class TestUserEndpoints:
         mocks["repository"].get.return_value = None
 
         # 模拟调用
-        result = mocks["repository"].get(user_id)
+        _result = mocks["repository"].get(user_id)
 
         # 断言
         assert result is None
@@ -82,7 +82,7 @@ class TestUserEndpoints:
         mocks["repository"].create.return_value = created_user
 
         # 模拟调用
-        result = mocks["repository"].create(user_data)
+        _result = mocks["repository"].create(user_data)
 
         # 断言
         assert result is not None
@@ -106,7 +106,7 @@ class TestUserEndpoints:
         mocks["repository"].update.return_value = updated_user
 
         # 模拟调用
-        result = mocks["repository"].update(user_id, update_data)
+        _result = mocks["repository"].update(user_id, update_data)
 
         # 断言
         assert result is not None
@@ -123,7 +123,7 @@ class TestUserEndpoints:
         mocks["repository"].delete.return_value = True
 
         # 模拟调用
-        result = mocks["repository"].delete(user_id)
+        _result = mocks["repository"].delete(user_id)
 
         # 断言
         assert result is True
@@ -140,7 +140,7 @@ class TestUserEndpoints:
         mocks["repository"].count.return_value = 100
 
         # 模拟调用
-        result = mocks["repository"].filter()
+        _result = mocks["repository"].filter()
         count = mocks["repository"].count()
 
         # 断言
@@ -156,13 +156,13 @@ class TestMatchEndpoints:
     def test_get_matches_success(self, mocks):
         """测试获取比赛列表成功"""
         # 准备测试数据
-        matches = [Mock(**DataFactory.match_data()) for _ in range(10)]
+        _matches = [Mock(**DataFactory.match_data()) for _ in range(10)]
 
         # 设置Mock返回值
         mocks["repository"].get_all.return_value = matches
 
         # 模拟调用
-        result = mocks["repository"].get_all()
+        _result = mocks["repository"].get_all()
 
         # 断言
         assert len(result) == 10
@@ -180,7 +180,7 @@ class TestMatchEndpoints:
         mocks["repository"].get.return_value = Mock(**match_data)
 
         # 模拟调用
-        result = mocks["repository"].get(match_id)
+        _result = mocks["repository"].get(match_id)
 
         # 断言
         assert result is not None
@@ -201,7 +201,7 @@ class TestMatchEndpoints:
         mocks["repository"].create.return_value = created_match
 
         # 模拟调用
-        result = mocks["repository"].create(match_data)
+        _result = mocks["repository"].create(match_data)
 
         # 断言
         assert result is not None
@@ -227,7 +227,7 @@ class TestPredictionEndpoints:
         mocks["repository"].filter.return_value = predictions
 
         # 模拟调用
-        result = mocks["repository"].filter()
+        _result = mocks["repository"].filter()
 
         # 断言
         assert len(result) == 5
@@ -244,15 +244,15 @@ class TestPredictionEndpoints:
         created_prediction = Mock()
         created_prediction.id = DataFactory.random_string(10)
         created_prediction.match_id = prediction_data["match_id"]
-        created_prediction.prediction = prediction_data["prediction"]
+        created_prediction._prediction = prediction_data["prediction"]
         mocks["repository"].create.return_value = created_prediction
 
         # 模拟调用
-        result = mocks["repository"].create(prediction_data)
+        _result = mocks["repository"].create(prediction_data)
 
         # 断言
         assert result is not None
-        assert result.prediction == prediction_data["prediction"]
+        assert result._prediction == prediction_data["prediction"]
         mocks["repository"].create.assert_called_once_with(prediction_data)
         mocks["event_bus"].publish.assert_called()
         mocks["logger"].info.assert_called()
@@ -280,7 +280,7 @@ class TestAnalyticsEndpoints:
         # 模拟调用
         cache_result = mocks["cache"].get("analytics")
         if not cache_result:
-            result = mocks["repository"].aggregate()
+            _result = mocks["repository"].aggregate()
             mocks["cache"].set("analytics", result)
 
         # 断言
@@ -305,7 +305,7 @@ class TestAnalyticsEndpoints:
         mocks["repository"].filter.return_value = user_analytics
 
         # 模拟调用
-        result = mocks["repository"].filter()
+        _result = mocks["repository"].filter()
 
         # 断言
         assert result["user_id"] == user_id
@@ -320,7 +320,7 @@ class TestAdminEndpoints:
     def test_admin_get_system_stats(self, mocks):
         """测试管理员获取系统统计"""
         # 准备测试数据
-        stats = {
+        _stats = {
             "total_users": 10000,
             "active_users": 2500,
             "total_matches": 500,

@@ -19,7 +19,7 @@ class TestHealthAPI:
         """测试基本健康检查"""
         response = client.get("/api/health")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["status"] == "healthy"
         assert "timestamp" in data
         assert data["service"] == "football-prediction-api"
@@ -29,14 +29,14 @@ class TestHealthAPI:
         # 当前API不支持数据库检查参数，但可以测试基本功能
         response = client.get("/api/health")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["status"] == "healthy"
 
     def test_readiness_check(self, client):
         """就绪检查 - 测试v1路径"""
         response = client.get("/api/v1/health/readiness")
         if response.status_code == 200:
-            data = response.json()
+            _data = response.json()
             assert "ready" in data
         else:
             # 如果端点不存在，至少测试健康检查
@@ -47,7 +47,7 @@ class TestHealthAPI:
         """存活检查 - 测试v1路径"""
         response = client.get("/api/v1/health/liveness")
         if response.status_code == 200:
-            data = response.json()
+            _data = response.json()
             assert data.get("alive") is True or data.get("status") == "alive"
         else:
             # 如果端点不存在，至少测试健康检查
@@ -58,7 +58,7 @@ class TestHealthAPI:
         """测试根端点"""
         response = client.get("/")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "message" in data
         assert "health" in data
         assert data["health"] == "/api/health"

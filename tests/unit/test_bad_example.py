@@ -14,29 +14,29 @@ class TestBadExample:
 
     def test_badly_formatted_function_positive(self):
         """测试：格式不良的函数（正数输入）"""
-        result = badly_formatted_function(5, 3, 2)
-        assert result == 10
+        _result = badly_formatted_function(5, 3, 2)
+        assert _result == 10
 
     def test_badly_formatted_function_zero(self):
         """测试：格式不良的函数（零输入）"""
-        result = badly_formatted_function(0, 5, 5)
+        _result = badly_formatted_function(0, 5, 5)
         assert result is None
 
     def test_badly_formatted_function_negative(self):
         """测试：格式不良的函数（负数输入）"""
-        result = badly_formatted_function(-1, 5, 5)
+        _result = badly_formatted_function(-1, 5, 5)
         assert result is None
 
     def test_badly_formatted_function_edge_cases(self):
         """测试：格式不良的函数（边界情况）"""
         # 测试大正数
-        result = badly_formatted_function(999999, 1, 1)
-        assert result == 1000001
+        _result = badly_formatted_function(999999, 1, 1)
+        assert _result == 1000001
 
         # 测试浮点数（如果有）
         try:
-            result = badly_formatted_function(1.5, 2.5, 3.5)
-            assert result == 7.5
+            _result = badly_formatted_function(1.5, 2.5, 3.5)
+            assert _result == 7.5
         except (TypeError, ValueError):
             # 如果不支持浮点数，这是预期的
             pass
@@ -64,27 +64,27 @@ class TestBadExample:
         ]
 
         for x, y, z, expected in test_cases:
-            result = badly_formatted_function(x, y, z)
-            assert result == expected
+            _result = badly_formatted_function(x, y, z)
+            assert _result == expected
 
     def test_function_return_types(self):
         """测试：函数返回类型"""
         # 正数返回整数
-        result = badly_formatted_function(5, 5, 5)
+        _result = badly_formatted_function(5, 5, 5)
         assert isinstance(result, int)
 
         # 非正数返回None
-        result = badly_formatted_function(0, 5, 5)
+        _result = badly_formatted_function(0, 5, 5)
         assert result is None
 
     def test_function_parameter_order(self):
         """测试：函数参数顺序"""
         # 参数顺序很重要
         result1 = badly_formatted_function(1, 2, 3)
-        result2 = badly_formatted_function(3, 2, 1)
+        _result2 = badly_formatted_function(3, 2, 1)
 
         assert result1 == 6
-        assert result2 == 6  # 加法是可交换的
+        assert _result2 == 6  # 加法是可交换的
 
     def test_line_content_encoding(self):
         """测试：行内容编码"""

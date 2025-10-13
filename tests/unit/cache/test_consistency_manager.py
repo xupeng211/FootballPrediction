@@ -40,7 +40,7 @@ class TestCacheConsistencyManager:
         """测试：同步缓存到数据库（成功）"""
         manager = CacheConsistencyManager()
 
-        result = await manager.sync_cache_with_db("match", 123)
+        _result = await manager.sync_cache_with_db("match", 123)
         assert result is True
 
     @pytest.mark.asyncio
@@ -49,7 +49,7 @@ class TestCacheConsistencyManager:
         mock_db = Mock()
         manager = CacheConsistencyManager(db_manager=mock_db)
 
-        result = await manager.sync_cache_with_db("prediction", 456)
+        _result = await manager.sync_cache_with_db("prediction", 456)
         assert result is True
 
     @pytest.mark.asyncio
@@ -61,7 +61,7 @@ class TestCacheConsistencyManager:
             mock_get_redis.side_effect = redis.RedisError("Connection failed")
 
             manager = CacheConsistencyManager()
-            result = await manager.sync_cache_with_db("match", 123)
+            _result = await manager.sync_cache_with_db("match", 123)
             assert result is False
 
     @pytest.mark.asyncio
@@ -71,7 +71,7 @@ class TestCacheConsistencyManager:
             mock_get_redis.side_effect = ConnectionError("Cannot connect")
 
             manager = CacheConsistencyManager()
-            result = await manager.sync_cache_with_db("match", 123)
+            _result = await manager.sync_cache_with_db("match", 123)
             assert result is False
 
     @pytest.mark.asyncio
@@ -81,7 +81,7 @@ class TestCacheConsistencyManager:
             mock_adelete.return_value = True
 
             manager = CacheConsistencyManager()
-            result = await manager.invalidate_cache("test:key")
+            _result = await manager.invalidate_cache("test:key")
 
             assert result is True
             mock_adelete.assert_called_once_with("test:key")
@@ -94,7 +94,7 @@ class TestCacheConsistencyManager:
 
             manager = CacheConsistencyManager()
             keys = ["test:key1", "test:key2", "test:key3"]
-            result = await manager.invalidate_cache(keys)
+            _result = await manager.invalidate_cache(keys)
 
             assert result is True
             assert mock_adelete.call_count == 3
@@ -106,7 +106,7 @@ class TestCacheConsistencyManager:
     async def test_invalidate_cache_empty_list(self):
         """测试：失效空键列表"""
         manager = CacheConsistencyManager()
-        result = await manager.invalidate_cache([])
+        _result = await manager.invalidate_cache([])
         assert result is True
 
     @pytest.mark.asyncio
@@ -117,7 +117,7 @@ class TestCacheConsistencyManager:
 
             manager = CacheConsistencyManager()
             keys = ["test:key1", "test:key2", "test:key3"]
-            result = await manager.invalidate_cache(keys)
+            _result = await manager.invalidate_cache(keys)
 
             assert result is False  # 不是全部成功
 
@@ -130,7 +130,7 @@ class TestCacheConsistencyManager:
             mock_adelete.side_effect = redis.RedisError("Redis error")
 
             manager = CacheConsistencyManager()
-            result = await manager.invalidate_cache("test:key")
+            _result = await manager.invalidate_cache("test:key")
             assert result is False
 
     @pytest.mark.asyncio
@@ -139,14 +139,14 @@ class TestCacheConsistencyManager:
         manager = CacheConsistencyManager()
 
         ids = [1, 2, 3]
-        result = await manager.warm_cache("match", ids)
+        _result = await manager.warm_cache("match", ids)
         assert result is True
 
     @pytest.mark.asyncio
     async def test_warm_cache_empty_ids(self):
         """测试：预热空ID列表"""
         manager = CacheConsistencyManager()
-        result = await manager.warm_cache("match", [])
+        _result = await manager.warm_cache("match", [])
         assert result is True
 
     @pytest.mark.asyncio
@@ -157,7 +157,7 @@ class TestCacheConsistencyManager:
 
             manager = CacheConsistencyManager()
             ids = [1, 2, 3]
-            result = await manager.warm_cache("match", ids)
+            _result = await manager.warm_cache("match", ids)
 
             # 即使部分失败，仍然应该返回成功（因为大部分成功了）
             assert result is True
@@ -170,7 +170,7 @@ class TestCacheConsistencyManager:
 
             manager = CacheConsistencyManager()
             ids = [1, 2, 3]
-            result = await manager.warm_cache("match", ids)
+            _result = await manager.warm_cache("match", ids)
 
             # 全部失败应该返回False
             assert result is False
@@ -184,7 +184,7 @@ class TestCacheConsistencyManager:
         entity_types = ["match", "prediction", "user", "team"]
 
         for entity_type in entity_types:
-            result = await manager.warm_cache(entity_type, [1, 2])
+            _result = await manager.warm_cache(entity_type, [1, 2])
             assert result is True
 
     def test_manager_logger_configuration(self):
@@ -297,7 +297,7 @@ class TestCacheConsistencyManagerIntegration:
 
             # 恢复正常
             mock_sync.return_value = True
-            result2 = await manager.sync_cache_with_db("match", 124)
+            _result2 = await manager.sync_cache_with_db("match", 124)
             assert result2 is True
 
     @pytest.mark.asyncio

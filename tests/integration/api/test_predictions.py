@@ -30,7 +30,7 @@ class TestPredictionAPIIntegration:
 
         # 验证响应
         assert response.status_code == 201
-        data = response.json()
+        _data = response.json()
         assert data["match_id"] == request_data["match_id"]
         assert data["prediction"] == request_data["prediction"]
         assert data["confidence"] == request_data["confidence"]
@@ -40,9 +40,9 @@ class TestPredictionAPIIntegration:
         # 验证数据库中的数据
         from src.database.models import Prediction
 
-        result = await db_session.get(Prediction, data["id"])
+        _result = await db_session.get(Prediction, data["id"])
         assert result is not None
-        assert result.prediction == request_data["prediction"]
+        assert result._prediction == request_data["prediction"]
         assert result.confidence == request_data["confidence"]
 
     @pytest.mark.asyncio
@@ -54,7 +54,7 @@ class TestPredictionAPIIntegration:
         auth_headers: dict,
     ):
         """测试获取单个预测"""
-        prediction = sample_prediction_data["prediction"]
+        _prediction = sample_prediction_data["prediction"]
 
         # 发送请求
         response = await api_client.get(
@@ -63,7 +63,7 @@ class TestPredictionAPIIntegration:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["id"] == prediction.id
         assert data["prediction"] == prediction.prediction
         assert data["confidence"] == prediction.confidence
@@ -77,7 +77,7 @@ class TestPredictionAPIIntegration:
         auth_headers: dict,
     ):
         """测试获取用户预测列表"""
-        user = sample_prediction_data["user"]
+        _user = sample_prediction_data["user"]
 
         # 创建更多预测
         from src.database.models import Prediction
@@ -86,7 +86,7 @@ class TestPredictionAPIIntegration:
             pred = Prediction(
                 user_id=user.id,
                 match_id=sample_prediction_data["prediction"].match_id,
-                prediction="DRAW" if i % 2 == 0 else "AWAY_WIN",
+                _prediction ="DRAW" if i % 2 == 0 else "AWAY_WIN",
                 confidence=0.5 + (i * 0.1),
                 created_at=datetime.now(timezone.utc),
             )
@@ -100,7 +100,7 @@ class TestPredictionAPIIntegration:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "data" in data
         assert len(data["data"]) == 6  # 1个初始 + 5个新创建
         assert data["total"] == 6
@@ -115,7 +115,7 @@ class TestPredictionAPIIntegration:
         auth_headers: dict,
     ):
         """测试更新预测状态"""
-        prediction = sample_prediction_data["prediction"]
+        _prediction = sample_prediction_data["prediction"]
 
         # 先更新比赛结果
         from src.database.models import Match
@@ -135,14 +135,14 @@ class TestPredictionAPIIntegration:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["status"] == "COMPLETED"
-        assert data["is_correct"] == True
+        assert data["is_correct"] is True
 
         # 验证数据库
         await db_session.refresh(prediction)
         assert prediction.status == "COMPLETED"
-        assert prediction.is_correct == True
+        assert prediction.is_correct is True
 
     @pytest.mark.asyncio
     async def test_prediction_validation(
@@ -245,7 +245,7 @@ class TestPredictionAPIIntegration:
         auth_headers: dict,
     ):
         """测试删除预测"""
-        prediction = sample_prediction_data["prediction"]
+        _prediction = sample_prediction_data["prediction"]
 
         # 删除预测
         response = await api_client.delete(
@@ -256,7 +256,7 @@ class TestPredictionAPIIntegration:
         # 验证已删除
         from src.database.models import Prediction
 
-        result = await db_session.get(Prediction, prediction.id)
+        _result = await db_session.get(Prediction, prediction.id)
         assert result is None
 
     @pytest.mark.asyncio
@@ -268,7 +268,7 @@ class TestPredictionAPIIntegration:
         auth_headers: dict,
     ):
         """测试预测统计"""
-        user = sample_prediction_data["user"]
+        _user = sample_prediction_data["user"]
 
         # 创建更多预测数据
         from src.database.models import Prediction, Match
@@ -294,7 +294,7 @@ class TestPredictionAPIIntegration:
             pred = Prediction(
                 user_id=user.id,
                 match_id=match.id,
-                prediction="HOME_WIN" if i % 2 == 0 else "DRAW",
+                _prediction ="HOME_WIN" if i % 2 == 0 else "DRAW",
                 confidence=0.5 + (i * 0.05),
                 status="COMPLETED",
                 is_correct=(i % 3 == 0),  # 每3个预测中1个正确
@@ -314,7 +314,7 @@ class TestPredictionAPIIntegration:
 
         # 验证响应
         assert response.status_code == 200
-        stats = response.json()
+        _stats = response.json()
         assert "total_predictions" in stats
         assert "correct_predictions" in stats
         assert "accuracy" in stats

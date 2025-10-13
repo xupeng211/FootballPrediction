@@ -27,7 +27,7 @@ class ServiceConfig:
         self.version = version
         self.description = description
         self.dependencies = dependencies or []
-        self.config = config or {}
+        self._config = config or {}
         self.created_at = datetime.now()
 
 
@@ -70,7 +70,7 @@ class EnhancedBaseService(ABC):
         Args:
             config: 服务配置
         """
-        self.config = config or ServiceConfig(self.__class__.__name__)
+        self._config = config or ServiceConfig(self.__class__.__name__)
         self.name = self.config.name
         self.version = self.config.version
         self.description = self.config.description
@@ -191,7 +191,7 @@ class EnhancedBaseService(ABC):
 
         try:
             self.logger.debug(f"Executing operation: {operation_name}")
-            result = await func(*args, **kwargs)
+            _result = await func(*args, **kwargs)
             return result
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             success = False
@@ -247,7 +247,7 @@ class BaseService(EnhancedBaseService):
     """向后兼容的基础服务类"""
 
     def __init__(self, name: str = "BaseService"):
-        config = ServiceConfig(name=name)
+        _config = ServiceConfig(name=name)
         super().__init__(config)
 
     async def initialize(self) -> None:
@@ -264,7 +264,7 @@ class AbstractBaseService(EnhancedBaseService):
     """抽象基础服务类 - 强制子类实现所有方法"""
 
     def __init__(self, name: str):
-        config = ServiceConfig(name=name)
+        _config = ServiceConfig(name=name)
         super().__init__(config)
 
 

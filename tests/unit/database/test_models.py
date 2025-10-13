@@ -19,7 +19,7 @@ class TestUserModel:
         user_data = DataFactory.user_data()
 
         # 创建模拟用户对象
-        user = Mock()
+        _user = Mock()
         user.id = DataFactory.random_string(10)
         user.username = user_data["username"]
         user.email = user_data["email"]
@@ -41,7 +41,7 @@ class TestUserModel:
         password = "test_password_123"
         hashed_password = "hashed_" + password
 
-        user = Mock()
+        _user = Mock()
         user.password_hash = hashed_password
 
         # 模拟密码验证
@@ -56,7 +56,7 @@ class TestUserModel:
 
     def test_user_roles(self):
         """测试用户角色"""
-        user = Mock()
+        _user = Mock()
         user.is_admin = False
         user.is_analyst = True
         user.is_premium = True
@@ -74,7 +74,7 @@ class TestUserModel:
 
     def test_user_subscription_status(self):
         """测试用户订阅状态"""
-        user = Mock()
+        _user = Mock()
         user.subscription_plan = "premium"
         user.subscription_expires_at = datetime.now() + timedelta(days=30)
 
@@ -181,11 +181,11 @@ class TestPredictionModel:
         """测试预测创建"""
         prediction_data = DataFactory.prediction_data()
 
-        prediction = Mock()
+        _prediction = Mock()
         prediction.id = DataFactory.random_string(10)
         prediction.user_id = prediction_data["user_id"]
         prediction.match_id = prediction_data["match_id"]
-        prediction.prediction = prediction_data["prediction"]
+        prediction._prediction = prediction_data["prediction"]
         prediction.confidence = prediction_data["confidence"]
         prediction.odds = prediction_data["odds"]
         prediction.stake = prediction_data["stake"]
@@ -199,20 +199,20 @@ class TestPredictionModel:
 
     def test_prediction_result(self):
         """测试预测结果"""
-        prediction = Mock()
-        prediction.prediction = "home_win"
+        _prediction = Mock()
+        prediction._prediction = "home_win"
         prediction.odds = 2.5
         prediction.stake = 100
 
         # 模拟结果计算方法
         def calculate_result(match_result):
-            if prediction.prediction == match_result:
+            if prediction._prediction == match_result:
                 return prediction.stake * prediction.odds
             else:
                 return 0
 
         def calculate_profit(match_result):
-            if prediction.prediction == match_result:
+            if prediction._prediction == match_result:
                 return prediction.stake * (prediction.odds - 1)
             else:
                 return -prediction.stake
@@ -221,15 +221,15 @@ class TestPredictionModel:
         prediction.calculate_profit = Mock(side_effect=calculate_profit)
 
         # 断言正确预测
-        result = prediction.calculate_result("home_win")
+        _result = prediction.calculate_result("home_win")
         profit = prediction.calculate_profit("home_win")
-        assert result == 250  # 100 * 2.5
+        assert _result == 250  # 100 * 2.5
         assert profit == 150  # 100 * (2.5 - 1)
 
         # 断言错误预测
-        result = prediction.calculate_result("away_win")
+        _result = prediction.calculate_result("away_win")
         profit = prediction.calculate_profit("away_win")
-        assert result == 0
+        assert _result == 0
         assert profit == -100
 
 
@@ -330,7 +330,7 @@ class TestLeagueModel:
     def test_league_standings(self):
         """测试联赛积分榜"""
         league = Mock()
-        league.teams = []
+        league._teams = []
 
         # 创建模拟球队
         for i in range(5):

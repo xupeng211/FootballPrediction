@@ -489,7 +489,7 @@ class TestUtilsClassMethods:
             assert len(short_id) == 8
 
             # 测试数据加密解密
-            data = "secret data"
+            _data = "secret data"
             encrypted = CryptoUtils.encrypt(data)
             decrypted = CryptoUtils.decrypt(encrypted)
             assert decrypted == data
@@ -549,7 +549,7 @@ class TestUtilsClassMethods:
             assert not Helpers.is_json("not json")
 
             # 测试深度获取
-            data = {"a": {"b": {"c": 1}}}
+            _data = {"a": {"b": {"c": 1}}}
             value = Helpers.deep_get(data, "a.b.c")
             assert value == 1
 
@@ -679,7 +679,7 @@ class TestErrorHandling:
 
             # 测试None值处理
             try:
-                result = validate_email(None)
+                _result = validate_email(None)
                 # 如果返回False而不是抛出异常，也是可以接受的
                 assert result is False
             except (TypeError, AttributeError):
@@ -716,8 +716,8 @@ class TestAsyncFunctionality:
             await asyncio.sleep(0.01)
             return "async_result"
 
-        result = await mock_async_operation()
-        assert result == "async_result"
+        _result = await mock_async_operation()
+        assert _result == "async_result"
 
     def test_sync_async_compatibility(self):
         """测试同步异步兼容性"""
@@ -733,8 +733,8 @@ class TestAsyncFunctionality:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
 
-        result = loop.run_until_complete(async_func())
-        assert result == "sync_async_test"
+        _result = loop.run_until_complete(async_func())
+        assert _result == "sync_async_test"
 
 
 # 测试性能相关

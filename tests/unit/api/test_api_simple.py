@@ -229,7 +229,7 @@ class TestAPIUtils:
 
     def test_json_response_serialization(self):
         """测试JSON响应序列化"""
-        data = {
+        _data = {
             "id": 123,
             "name": "Test Item",
             "created_at": "2024-01-01T00:00:00Z",

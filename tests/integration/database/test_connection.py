@@ -20,7 +20,7 @@ class TestDatabaseConnection:
         # 创建多个并发连接
         async def make_query():
             async with test_db() as session:
-                result = await session.execute(text("SELECT 1"))
+                _result = await session.execute(text("SELECT 1"))
                 return result.scalar()
 
         # 并发执行查询
@@ -43,7 +43,7 @@ class TestDatabaseConnection:
             await db_session.flush()  # 获取 ID
 
             # 验证数据已插入
-            result = await db_session.execute(
+            _result = await db_session.execute(
                 select(Team).where(Team.name == "Rollback Team")
             )
             assert result.scalar_one_or_none() is not None
@@ -52,7 +52,7 @@ class TestDatabaseConnection:
             raise Exception("Trigger rollback")
 
         # 验证数据已被回滚
-        result = await db_session.execute(
+        _result = await db_session.execute(
             select(Team).where(Team.name == "Rollback Team")
         )
         assert result.scalar_one_or_none() is None
@@ -68,7 +68,7 @@ class TestDatabaseConnection:
             db_session.add(team)
 
         # 验证数据已提交
-        result = await db_session.execute(
+        _result = await db_session.execute(
             select(Team).where(Team.name == "Commit Team")
         )
         saved_team = result.scalar_one_or_none()
@@ -95,13 +95,13 @@ class TestDatabaseConnection:
                 pass  # 内层回滚
 
             # 验证外层数据仍在
-            result = await db_session.execute(
+            _result = await db_session.execute(
                 select(Team).where(Team.name == "Outer Team")
             )
             assert result.scalar_one_or_none() is not None
 
         # 验证内层数据被回滚
-        result = await db_session.execute(select(Team).where(Team.name == "Inner Team"))
+        _result = await db_session.execute(select(Team).where(Team.name == "Inner Team"))
         assert result.scalar_one_or_none() is None
 
     @pytest.mark.asyncio
@@ -116,16 +116,16 @@ class TestDatabaseConnection:
             while retry_count < max_retries:
                 try:
                     async with test_db() as session:
-                        result = await session.execute(text("SELECT 1"))
+                        _result = await session.execute(text("SELECT 1"))
                         return result.scalar()
-                except Exception as e:
+                except Exception:
                     retry_count += 1
                     if retry_count >= max_retries:
                         raise
                     await asyncio.sleep(0.1)  # 短暂等待后重试
 
-        result = await query_with_retry()
-        assert result == 1
+        _result = await query_with_retry()
+        assert _result == 1
 
     @pytest.mark.asyncio
     async def test_batch_operations(self, db_session):
@@ -133,7 +133,7 @@ class TestDatabaseConnection:
         from src.database.models import Team
 
         # 批量插入
-        teams = []
+        _teams = []
         for i in range(100):
             team = Team(
                 name=f"Batch Team {i}", city=f"Batch City {i}", founded=2000 + i
@@ -144,7 +144,7 @@ class TestDatabaseConnection:
         await db_session.commit()
 
         # 验证批量插入
-        result = await db_session.execute(
+        _result = await db_session.execute(
             select(func.count(Team.id)).where(Team.name.like("Batch Team%"))
         )
         count = result.scalar()
@@ -157,7 +157,7 @@ class TestDatabaseConnection:
         await db_session.commit()
 
         # 验证批量更新
-        result = await db_session.execute(
+        _result = await db_session.execute(
             select(func.count(Team.id)).where(Team.city == "Updated City")
         )
         count = result.scalar()
@@ -170,7 +170,7 @@ class TestDatabaseConnection:
         await db_session.commit()
 
         # 验证批量删除
-        result = await db_session.execute(
+        _result = await db_session.execute(
             select(func.count(Team.id)).where(Team.name.like("Batch Team%"))
         )
         count = result.scalar()
@@ -183,7 +183,7 @@ class TestDatabaseConnection:
         import time
 
         # 创建测试数据
-        teams = []
+        _teams = []
         for i in range(50):
             team = Team(name=f"Perf Team {i}", city=f"Perf City {i}", founded=2000 + i)
             teams.append(team)
@@ -191,7 +191,7 @@ class TestDatabaseConnection:
         await db_session.commit()
 
         # 插入比赛数据
-        matches = []
+        _matches = []
         for i in range(500):
             match = Match(
                 home_team_id=teams[i % 50].id,
@@ -211,7 +211,7 @@ class TestDatabaseConnection:
         start_time = time.time()
 
         # 复杂查询
-        result = await db_session.execute(
+        _result = await db_session.execute(
             text("""
             SELECT t.name, COUNT(m.id) as match_count
             FROM teams t
@@ -240,7 +240,7 @@ class TestDatabaseConnection:
         # 创建用户和预测数据
         users = []
         for i in range(10):
-            user = User(
+            _user = User(
                 username=f"index_user_{i}",
                 email=f"user{i}@index.com",
                 password_hash="hashed",
@@ -257,7 +257,7 @@ class TestDatabaseConnection:
                 pred = Prediction(
                     user_id=user.id,
                     match_id=1,
-                    prediction="HOME_WIN" if i % 2 == 0 else "AWAY_WIN",
+                    _prediction ="HOME_WIN" if i % 2 == 0 else "AWAY_WIN",
                     confidence=0.5 + (i * 0.01),
                     created_at=datetime.now(timezone.utc),
                 )
@@ -268,7 +268,7 @@ class TestDatabaseConnection:
         # 测试索引查询
         start_time = time.time()
 
-        result = await db_session.execute(
+        _result = await db_session.execute(
             select(Prediction).where(Prediction.user_id == users[0].id)
         )
         user_predictions = result.scalars().all()
@@ -289,10 +289,10 @@ class TestDatabaseConnection:
 
             # 使用 pg_sleep 模拟长时间查询（PostgreSQL）
             try:
-                result = await session.execute(text("SELECT pg_sleep(2)"))
+                _result = await session.execute(text("SELECT pg_sleep(2)"))
             except Exception:
                 # 如果 pg_sleep 不可用，使用正常查询
-                result = await session.execute(text("SELECT 1"))
+                _result = await session.execute(text("SELECT 1"))
 
             elapsed = (datetime.now() - start_time).total_seconds()
 
@@ -325,7 +325,7 @@ class TestDatabaseConnection:
 
         # 验证数据库中的数据
         async with test_db() as session:
-            result = await session.execute(
+            _result = await session.execute(
                 select(func.count(Team.id)).where(Team.name.like("Concurrent Team%"))
             )
             count = result.scalar()
@@ -353,8 +353,8 @@ class TestDatabaseConnection:
         await db_session.rollback()
 
         # 验证只有第一个队伍存在
-        result = await db_session.execute(
+        _result = await db_session.execute(
             select(Team).where(Team.name == "Unique Team")
         )
-        teams = result.scalars().all()
+        _teams = result.scalars().all()
         assert len(teams) == 1

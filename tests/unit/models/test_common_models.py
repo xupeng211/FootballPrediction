@@ -17,13 +17,13 @@ from src.models.common_models import (
 def test_data_validation_result():
     """测试数据验证结果"""
     # 测试有效的验证结果
-    result = DataValidationResult(is_valid=True)
+    _result = DataValidationResult(is_valid=True)
     assert result.is_valid is True
     assert result.errors == []
     assert result.warnings == []
 
     # 测试无效的验证结果
-    result = DataValidationResult(is_valid=False)
+    _result = DataValidationResult(is_valid=False)
     assert result.is_valid is False
 
     # 测试添加错误

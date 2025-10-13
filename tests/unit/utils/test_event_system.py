@@ -260,7 +260,7 @@ async def test_event_bus_stats(event_bus):
     await event_bus.subscribe("prediction.made", handler2)
 
     # 获取统计信息
-    stats = event_bus.get_stats()
+    _stats = event_bus.get_stats()
 
     assert stats["running"] is True
     assert stats["event_types"] == 2  # prediction.made, match.created

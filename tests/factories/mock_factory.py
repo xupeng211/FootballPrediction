@@ -49,7 +49,7 @@ class MockFactory:
     def mock_repository(model_class: Any = None) -> Mock:
         """创建Mock仓储对象"""
         mock = Mock()
-        mock.data = {}
+        mock._data = {}
 
         # 仓储方法
         mock.get = Mock(side_effect=lambda id: mock.data.get(id))
@@ -99,7 +99,7 @@ class MockFactory:
     def mock_redis_client() -> Mock:
         """创建Mock Redis客户端"""
         mock = Mock()
-        mock.data = {}
+        mock._data = {}
 
         mock.get = Mock(side_effect=lambda key: mock.data.get(key))
         mock.set = Mock(side_effect=lambda key, value, ex=None: mock._set(key, value))
@@ -329,7 +329,7 @@ class MockFactory:
         def _send_bulk(emails):
             results = []
             for email in emails:
-                result = mock._send(
+                _result = mock._send(
                     email.get("to"), email.get("subject"), email.get("body")
                 )
                 results.append(result)

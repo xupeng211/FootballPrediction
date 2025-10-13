@@ -35,7 +35,7 @@ class Player:
         self.age = 25
         self.height = 180  # cm
         self.weight = 75  # kg
-        self.stats = PlayerStats()
+        self._stats = PlayerStats()
 
     def update_match_stats(
         self,
@@ -174,7 +174,7 @@ class PlayerAnalyzer:
         if not player:
             return {"error": "Player not found"}
 
-        stats = player.stats
+        _stats = player.stats
         if stats.matches_played == 0:
             return {"error": "No matches played"}
 

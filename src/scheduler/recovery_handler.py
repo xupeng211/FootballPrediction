@@ -351,7 +351,7 @@ class RecoveryHandler:
         Returns:
             bool: 恢复是否成功
         """
-        config = self.recovery_configs[failure.failure_type]
+        _config = self.recovery_configs[failure.failure_type]
         strategy = config["strategy"]
 
         logger.info(f"执行恢复策略: {task.task_id}, 策略: {strategy.value}")
@@ -579,7 +579,7 @@ class RecoveryHandler:
             task: 任务对象
             failure: 失败记录
         """
-        config = self.recovery_configs[failure.failure_type]
+        _config = self.recovery_configs[failure.failure_type]
         alert_threshold = config["alert_threshold"]
 
         # 检查是否达到告警阈值

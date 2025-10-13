@@ -83,7 +83,7 @@ class TestPredictionFlow:
         )
 
         # 2. 执行预测
-        result = await prediction_engine.predict_match(match_id, include_features=True)
+        _result = await prediction_engine.predict_match(match_id, include_features=True)
 
         # 3. 验证结果
         assert result["match_id"] == match_id
@@ -235,7 +235,7 @@ class TestPredictionFlow:
         result1 = await prediction_engine.predict_match(match_id)
 
         # 第二次预测（应该从缓存获取）
-        result2 = await prediction_engine.predict_match(match_id)
+        _result2 = await prediction_engine.predict_match(match_id)
 
         # 验证结果一致
         assert result1["prediction"] == result2["prediction"]
@@ -269,7 +269,7 @@ class TestPredictionFlow:
             await prediction_engine.predict_match(match_id)
 
         # 第二次调用应该成功
-        result = await prediction_engine.predict_match(match_id)
+        _result = await prediction_engine.predict_match(match_id)
         assert result["prediction"] == "home"
 
     @pytest.mark.asyncio
@@ -287,7 +287,7 @@ class TestPredictionFlow:
         )
 
         # 执行验证
-        stats = await prediction_engine.verify_predictions([match_id])
+        _stats = await prediction_engine.verify_predictions([match_id])
 
         # 验证结果
         assert stats["total_matches"] == 1
@@ -322,7 +322,7 @@ class TestPredictionFlow:
         assert total_time < 1.0  # 应该在1秒内完成（并发执行）
 
         # 获取性能统计
-        stats = prediction_engine.get_performance_stats()
+        _stats = prediction_engine.get_performance_stats()
         assert stats["total_predictions"] >= 10
         assert stats["avg_prediction_time"] > 0
 

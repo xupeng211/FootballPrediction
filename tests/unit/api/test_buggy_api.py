@@ -36,7 +36,7 @@ class TestBuggyAPI:
         """测试：修复后的查询端点"""
         response = client.get("/test/fixed_query")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "limit" in data
         assert "type" in data
         assert data["limit"] == 10  # 默认值
@@ -46,7 +46,7 @@ class TestBuggyAPI:
         """测试：带限制参数的查询端点"""
         response = client.get("/test/fixed_query?limit=50")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["limit"] == 50
         assert data["type"] == "int"
 
@@ -80,7 +80,7 @@ class TestBuggyAPI:
         """测试：修复后的buggy查询端点"""
         response = client.get("/test/buggy_query")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "limit" in data
         assert "type" in data
         assert isinstance(data["limit"], int)
@@ -90,7 +90,7 @@ class TestBuggyAPI:
         """测试：带参数的buggy查询端点"""
         response = client.get("/test/buggy_query?limit=25")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["limit"] == 25
         assert isinstance(data["limit"], int)  # 确保类型转换正确
 
@@ -101,7 +101,7 @@ class TestBuggyAPI:
 
         response = client.get("/test/buggy_async")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["status"] == "test_status"
         mock_service.get_status.assert_called_once()
 
@@ -235,7 +235,7 @@ class TestBuggyAPIEdgeCases:
         response = client.get("/test/fixed_query")
         assert response.headers["content-type"] == "application/json"
 
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, dict)
         assert set(data.keys()) == {"limit", "type"}
 

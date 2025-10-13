@@ -45,7 +45,7 @@ class TestListFacades:
             global_facades.clear()
             global_facades["test_facade"] = Mock()
 
-            result = await list_facades()
+            _result = await list_facades()
 
             assert result["available_types"] == [
                 "prediction",
@@ -67,7 +67,7 @@ class TestListFacades:
         with patch("src.api.facades.facade_factory", mock_factory):
             global_facades.clear()
 
-            result = await list_facades()
+            _result = await list_facades()
 
             assert result["available_types"] == []
             assert result["configured_facades"] == []
@@ -103,7 +103,7 @@ class TestInitializeFacade:
         with patch("src.api.facades.facade_factory", mock_factory):
             global_facades.clear()
 
-            result = await initialize_facade(
+            _result = await initialize_facade(
                 facade_type="prediction",
                 facade_name="test_facade",
                 auto_initialize=True,
@@ -122,7 +122,7 @@ class TestInitializeFacade:
         existing_facade.is_initialized = True
         global_facades["existing_facade"] = existing_facade
 
-        result = await initialize_facade(
+        _result = await initialize_facade(
             facade_type="prediction",
             facade_name="existing_facade",
             auto_initialize=True,
@@ -141,7 +141,7 @@ class TestInitializeFacade:
         with patch("src.api.facades.facade_factory", mock_factory):
             global_facades.clear()
 
-            result = await initialize_facade(
+            _result = await initialize_facade(
                 facade_type="prediction",
                 facade_name="lazy_facade",
                 auto_initialize=False,
@@ -248,7 +248,7 @@ class TestFacadesIntegration:
             # 创建多个门面
             facades = []
             for i in range(3):
-                result = await initialize_facade(
+                _result = await initialize_facade(
                     facade_type=f"type{i + 1}", facade_name=f"facade_{i}"
                 )
                 facades.append(result)
@@ -315,7 +315,7 @@ class TestFacadesIntegration:
                 )
 
             # 第二次尝试成功
-            result = await initialize_facade(
+            _result = await initialize_facade(
                 facade_type="test_type", facade_name="recover_test_2"
             )
             assert result["status"] == "success"
@@ -383,7 +383,7 @@ class TestFacadesIntegration:
             ]
 
             for name in test_names:
-                result = await initialize_facade(
+                _result = await initialize_facade(
                     facade_type="test_type", facade_name=name
                 )
                 assert result["facade_name"] == name

@@ -71,7 +71,7 @@ class TestGetMatchFeatures:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["success"] is True
         assert "data" in data
         assert data["data"]["match_info"]["match_id"] == 12345
@@ -89,7 +89,7 @@ class TestGetMatchFeatures:
 
         # 验证响应
         assert response.status_code == 400
-        data = response.json()
+        _data = response.json()
         assert data["error"] is True
         assert "比赛ID必须大于0" in data["message"]
 
@@ -108,7 +108,7 @@ class TestGetMatchFeatures:
 
         # 验证响应
         assert response.status_code == 404
-        data = response.json()
+        _data = response.json()
         assert "比赛 99999 不存在" in data["message"]
 
     @pytest.mark.asyncio
@@ -134,7 +134,7 @@ class TestGetMatchFeatures:
 
         # 验证响应
         assert response.status_code == 503
-        data = response.json()
+        _data = response.json()
         assert data["error"] is True
         assert "特征存储服务暂时不可用" in data["message"]
 
@@ -151,7 +151,7 @@ class TestGetMatchFeatures:
 
         # 验证响应
         assert response.status_code == 500
-        data = response.json()
+        _data = response.json()
         assert data["error"] is True
         assert "Database connection failed" in data["message"]
 
@@ -183,7 +183,7 @@ class TestGetMatchFeatures:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["success"] is True
         assert "features" in data["data"]
         assert "raw_features" not in data["data"]
@@ -229,7 +229,7 @@ class TestGetTeamFeatures:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["success"] is True
         assert data["data"]["team_info"]["team_id"] == 10
         assert data["data"]["team_info"]["team_name"] == "Test Team FC"
@@ -270,7 +270,7 @@ class TestGetTeamFeatures:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["success"] is True
         assert "2025-09-15T15:00:00" in data["data"]["calculation_date"]
 
@@ -289,7 +289,7 @@ class TestGetTeamFeatures:
 
         # 验证响应
         assert response.status_code == 404
-        data = response.json()
+        _data = response.json()
         assert "球队 99999 不存在" in data["message"]
 
     @pytest.mark.asyncio
@@ -316,7 +316,7 @@ class TestGetTeamFeatures:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["success"] is True
         assert data["data"]["features"] == {}
 
@@ -353,7 +353,7 @@ class TestCalculateMatchFeatures:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["success"] is True
         assert data["data"]["match_id"] == 12345
         assert data["data"]["match_features_stored"] is True
@@ -388,7 +388,7 @@ class TestCalculateMatchFeatures:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["success"] is True
 
     @pytest.mark.asyncio
@@ -406,7 +406,7 @@ class TestCalculateMatchFeatures:
 
         # 验证响应
         assert response.status_code == 404
-        data = response.json()
+        _data = response.json()
         assert "比赛 99999 不存在" in data["message"]
 
 
@@ -437,7 +437,7 @@ class TestCalculateTeamFeatures:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["success"] is True
         assert data["data"]["team_id"] == 10
         assert data["data"]["features_stored"] is True
@@ -470,7 +470,7 @@ class TestCalculateTeamFeatures:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["success"] is True
         assert "2025-09-15T15:00:00" in data["data"]["calculation_date"]
 
@@ -489,7 +489,7 @@ class TestCalculateTeamFeatures:
 
         # 验证响应
         assert response.status_code == 404
-        data = response.json()
+        _data = response.json()
         assert "球队 99999 不存在" in data["message"]
 
 
@@ -517,7 +517,7 @@ class TestBatchCalculateFeatures:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["success"] is True
         assert data["data"]["date_range"]["start_date"] == "2025-09-01T00:00:00"
         assert data["data"]["date_range"]["end_date"] == "2025-09-07T23:59:59"
@@ -536,7 +536,7 @@ class TestBatchCalculateFeatures:
 
         # 验证响应
         assert response.status_code == 400
-        data = response.json()
+        _data = response.json()
         assert "开始日期必须早于结束日期" in data["message"]
 
     @pytest.mark.asyncio
@@ -549,7 +549,7 @@ class TestBatchCalculateFeatures:
 
         # 验证响应
         assert response.status_code == 400
-        data = response.json()
+        _data = response.json()
         assert "时间范围不能超过30天" in data["message"]
 
     @pytest.mark.asyncio
@@ -572,7 +572,7 @@ class TestBatchCalculateFeatures:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["success"] is True
 
 
@@ -616,7 +616,7 @@ class TestGetHistoricalFeatures:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["success"] is True
         assert data["data"]["feature_refs"] == ["feature1", "feature2"]
         assert (
@@ -664,7 +664,7 @@ class TestGetHistoricalFeatures:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["success"] is True
         assert len(data["data"]["feature_refs"]) == 2
 
@@ -685,7 +685,7 @@ class TestGetHistoricalFeatures:
 
         # 验证响应
         assert response.status_code == 404
-        data = response.json()
+        _data = response.json()
         assert "比赛 99999 不存在" in data["message"]
 
     @pytest.mark.asyncio
@@ -713,7 +713,7 @@ class TestGetHistoricalFeatures:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert data["success"] is True
         assert data["data"]["feature_count"] == 0
         assert data["data"]["record_count"] == 0
@@ -730,7 +730,7 @@ class TestFeaturesHealthCheck:
 
         # 验证响应
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "status" in data
         assert "components" in data
         assert "timestamp" in data
@@ -743,7 +743,7 @@ class TestFeaturesHealthCheck:
 
         # 验证响应基本结构
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "status" in data
         assert "components" in data
         assert "timestamp" in data
@@ -756,7 +756,7 @@ class TestFeaturesHealthCheck:
 
         # 验证响应基本结构
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "status" in data
         assert "components" in data
         assert "timestamp" in data

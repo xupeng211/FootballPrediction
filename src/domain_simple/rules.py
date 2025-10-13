@@ -75,7 +75,7 @@ class BusinessRule(Rule):
 
     def validate(self, obj: Any) -> ValidationResult:
         """验证业务规则"""
-        result = ValidationResult()
+        _result = ValidationResult()
 
         if not self.enabled:
             result.add_warning(f"Rule {self.name} is disabled")
@@ -127,7 +127,7 @@ class ValidationEngine:
 
     def validate(self, obj: Any, entity_type: Optional[str] = None) -> ValidationResult:
         """验证对象"""
-        result = ValidationResult()
+        _result = ValidationResult()
 
         # 获取相关规则
         rules = self.get_rules(entity_type)
@@ -161,7 +161,7 @@ class ValidationEngine:
         results = []
 
         for obj in objects:
-            result = self.validate(obj, entity_type)
+            _result = self.validate(obj, entity_type)
             results.append(result)
 
         return results

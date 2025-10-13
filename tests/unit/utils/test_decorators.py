@@ -31,7 +31,7 @@ class MockRedis:
     """模拟Redis客户端"""
 
     def __init__(self):
-        self.data = {}
+        self._data = {}
         self.expirations = {}
 
     def get(self, key):
@@ -158,8 +158,8 @@ class TestCacheResult:
         assert call_count == 1
 
         # 第二次调用（应该从缓存获取）
-        result2 = compute(1, 2)
-        assert result2 == 3
+        _result2 = compute(1, 2)
+        assert _result2 == 3
         assert call_count == 1  # 没有再次调用
 
         # 不同参数
@@ -185,8 +185,8 @@ class TestCacheResult:
         assert call_count == 1
 
         # 第二次调用（应该从缓存获取）
-        result2 = await async_compute(3, 4)
-        assert result2 == 12
+        _result2 = await async_compute(3, 4)
+        assert _result2 == 12
         assert call_count == 1
 
     def test_cache_with_prefix(self, mock_redis):
@@ -320,8 +320,8 @@ class TestCacheInvalidate:
             return f"updated {user_id}"
 
         # 执行更新
-        result = update_user(1)
-        assert result == "updated 1"
+        _result = update_user(1)
+        assert _result == "updated 1"
 
         # 检查缓存
         assert mock_redis.get("user:1:data") is None
@@ -366,7 +366,7 @@ class TestCacheInvalidate:
         mock_redis.set("user:200:profile", "other_profile")
 
         # 执行更新
-        result = update_user_profile(100, name="New Name")
+        _result = update_user_profile(100, name="New Name")
         assert result["updated"] is True
         assert call_count == 1
 
@@ -516,8 +516,8 @@ class TestErrorHandling:
             return x * 2
 
         # 应该继续执行函数
-        result = compute(5)
-        assert result == 10
+        _result = compute(5)
+        assert _result == 10
         assert call_count == 1
 
     def test_cache_serialization_error(self, mock_redis):
@@ -559,8 +559,8 @@ class TestAsyncSupport:
         async def async_operation():
             return "async_done"
 
-        result = await async_operation()
-        assert result == "async_done"
+        _result = await async_operation()
+        assert _result == "async_done"
 
         # 检查缓存
         assert await mock_redis.aget("async:key1") is None

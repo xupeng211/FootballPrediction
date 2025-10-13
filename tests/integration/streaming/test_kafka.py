@@ -95,7 +95,7 @@ class TestKafkaIntegration:
         )
 
         # 模拟预测创建事件
-        prediction = sample_prediction_data["prediction"]
+        _prediction = sample_prediction_data["prediction"]
         event_data = {
             "event_id": str(uuid.uuid4()),
             "event_type": "prediction_created",
@@ -299,7 +299,7 @@ class TestKafkaIntegration:
 
         # 验证审计事件
         assert len(consumed_events) == 3
-        assert consumed_events["user_login"]["success"] == True
+        assert consumed_events["user_login"]["success"] is True
         assert consumed_events["prediction_created"]["resource_id"] == "prediction_456"
         assert consumed_events["data_export"]["record_count"] == 1000
 
@@ -354,7 +354,7 @@ class TestKafkaIntegration:
 
         # 验证序列化结果
         assert consumed_message is not None
-        assert consumed_message["data"]["nested"]["boolean"] == True
+        assert consumed_message["data"]["nested"]["boolean"] is True
         assert consumed_message["data"]["nested"]["unicode"] == "测试中文"
         assert isinstance(consumed_message["data"]["set_data"], list)
 
@@ -393,7 +393,7 @@ class TestKafkaIntegration:
                 key=msg["key"],
                 value={"message": msg["value"], "key": msg["key"]},
             )
-            metadata = future.get(timeout=10)
+            _metadata = future.get(timeout=10)
             partition_info.append(
                 {
                     "key": msg["key"],
@@ -433,7 +433,7 @@ class TestKafkaIntegration:
         # 尝试发送到不存在的主题
         try:
             future = producer.send(topic, key="test_error", value={"error": "test"})
-            metadata = future.get(timeout=10)
+            _metadata = future.get(timeout=10)
             # 如果主题不存在且设置了自动创建，这里可能成功
         except KafkaError as e:
             # 预期的错误
@@ -471,7 +471,7 @@ class TestKafkaIntegration:
                 future = producer.send(
                     topic, key=f"producer_{producer_id}", value=message
                 )
-                metadata = future.get(timeout=10)
+                _metadata = future.get(timeout=10)
                 messages.append(metadata)
             return messages
 

@@ -45,11 +45,11 @@ class TestUserRepositoryInterface:
             # Try with required arguments
             try:
                 return UserRepositoryInterface(test_param="test_value")
-            except:
+            except Exception:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate UserRepositoryInterface")
+                pytest.skip("Cannot instantiate UserRepositoryInterface")
         except Exception:
-            pytest.skip(f"Error creating UserRepositoryInterface instance")
+            pytest.skip("Error creating UserRepositoryInterface instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -99,11 +99,11 @@ class TestReadOnlyUserRepository:
             # Try with required arguments
             try:
                 return ReadOnlyUserRepository(test_param="test_value")
-            except:
+            except Exception:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate ReadOnlyUserRepository")
+                pytest.skip("Cannot instantiate ReadOnlyUserRepository")
         except Exception:
-            pytest.skip(f"Error creating ReadOnlyUserRepository instance")
+            pytest.skip("Error creating ReadOnlyUserRepository instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -153,11 +153,11 @@ class TestUserRepository:
             # Try with required arguments
             try:
                 return UserRepository(test_param="test_value")
-            except:
+            except Exception:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate UserRepository")
+                pytest.skip("Cannot instantiate UserRepository")
         except Exception:
-            pytest.skip(f"Error creating UserRepository instance")
+            pytest.skip("Error creating UserRepository instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -234,7 +234,7 @@ class TestModuleIntegration:
             await asyncio.sleep(0.001)
             return True
 
-        result = await async_test()
+        _result = await async_test()
         assert result is True
 
     @pytest.mark.parametrize(
@@ -265,6 +265,6 @@ class TestModuleIntegration:
         mock_service = Mock()
         mock_service.process.return_value = {"status": "success"}
 
-        result = mock_service.process("test_data")
+        _result = mock_service.process("test_data")
         assert result["status"] == "success"
         mock_service.process.assert_called_once_with("test_data")

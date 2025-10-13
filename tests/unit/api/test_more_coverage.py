@@ -65,7 +65,7 @@ class TestEventsModuleWorking:
 
         event = Event(
             event_type="test_event",
-            data={"message": "test"},
+            _data ={"message": "test"},
             timestamp=datetime.utcnow(),
         )
         assert event.event_type == "test_event"
@@ -106,28 +106,28 @@ class TestCQRSModuleWorking:
         """测试命令响应"""
         from src.api.cqrs import CommandResponse
 
-        response = CommandResponse(success=True, message="Success", data={"id": 123})
+        response = CommandResponse(success=True, message="Success", _data ={"id": 123})
         assert response.success is True
 
     def test_query_response(self):
         """测试查询响应"""
         from src.api.cqrs import QueryResponse
 
-        response = QueryResponse(data=[{"id": 1}], total=1, page=1)
+        response = QueryResponse(_data =[{"id": 1}], total=1, page=1)
         assert response.total == 1
 
     def test_create_command(self):
         """测试创建命令"""
         from src.api.cqrs import CreateCommand
 
-        command = CreateCommand(aggregate_id="test123", data={"name": "test"})
+        command = CreateCommand(aggregate_id="test123", _data ={"name": "test"})
         assert command.aggregate_id == "test123"
 
     def test_update_command(self):
         """测试更新命令"""
         from src.api.cqrs import UpdateCommand
 
-        command = UpdateCommand(aggregate_id="test123", data={"name": "updated"})
+        command = UpdateCommand(aggregate_id="test123", _data ={"name": "updated"})
         assert command.aggregate_id == "test123"
 
     def test_delete_command(self):
@@ -352,7 +352,7 @@ class TestAppModuleWorking:
         # 测试404错误被正确处理
         response = client.get("/nonexistent-endpoint")
         assert response.status_code == 404
-        data = response.json()
+        _data = response.json()
         assert "error" in data
 
     def test_exception_handling(self, client):
@@ -412,7 +412,7 @@ class TestPydanticModelsWorking:
         assert odds.home_win > 1.0
 
         # 创建MatchStatistics
-        stats = MatchStatistics(
+        _stats = MatchStatistics(
             match_id=1,
             possession_home=60.0,
             possession_away=40.0,
@@ -446,7 +446,7 @@ class TestPydanticModelsWorking:
         )
 
         # 创建PredictionResult
-        result = PredictionResult(
+        _result = PredictionResult(
             match_id=123,
             home_win_prob=0.45,
             draw_prob=0.30,
@@ -484,7 +484,7 @@ class TestPydanticModelsWorking:
             match_id=123,
             home_team="Team A",
             away_team="Team B",
-            prediction=result,
+            _prediction =result,
             match_date=datetime.utcnow(),
         )
         assert recent.id == 1
@@ -492,7 +492,7 @@ class TestPydanticModelsWorking:
         # 创建PredictionVerification
         verification = PredictionVerification(
             match_id=123,
-            prediction=result,
+            _prediction =result,
             actual_result="home",
             is_correct=True,
             accuracy_score=0.75,
@@ -525,13 +525,13 @@ class TestAdditionalCoverage:
         # 测试联赛过滤
         response = client.get("/data/leagues?country=England")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list)
 
         # 测试限制
         response = client.get("/data/teams?limit=5")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert len(data) <= 5
 
     def test_prediction_validation(self, client):
@@ -539,7 +539,7 @@ class TestAdditionalCoverage:
         # 测试验证端点
         response = client.post("/predictions/123/verify?actual_result=home")
         assert response.status_code == 200
-        data = response.json()
+        _data = response.json()
         assert "is_correct" in data
 
     def test_batch_operations(self, client):

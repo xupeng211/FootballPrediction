@@ -109,7 +109,7 @@ class TestDatabaseOperations:
 
             # 测试查询所有球队
             mock_session.scalars.return_value.all.return_value = [team]
-            teams = mock_session.scalars(select(Team)).all()
+            _teams = mock_session.scalars(select(Team)).all()
             assert len(teams) == 1
             assert teams[0].name == "Test Team"
 
@@ -136,7 +136,7 @@ class TestDatabaseOperations:
             from src.database.models.predictions import Prediction
 
             # 创建预测
-            prediction = Prediction(
+            _prediction = Prediction(
                 match_id=1,
                 model_id="test_model_v1",
                 home_win_prob=0.5,
@@ -175,8 +175,8 @@ class TestDatabaseOperations:
             stats_query = select(Prediction.model_id, Prediction.accuracy).where(
                 Prediction.model_id == "test_model_v1"
             )
-            stats = mock_session.execute(stats_query).fetchone()
-            assert stats == (100, 75)
+            _stats = mock_session.execute(stats_query).fetchone()
+            assert _stats == (100, 75)
 
         except ImportError:
             pytest.skip("Prediction model not available")
@@ -350,7 +350,7 @@ class TestDatabaseOperations:
 
             mock_session.scalars.return_value.all.return_value = []
 
-            matches = mock_session.scalars(
+            _matches = mock_session.scalars(
                 select(Match)
                 .where(Match.match_date >= start_date)
                 .where(Match.match_date <= end_date)

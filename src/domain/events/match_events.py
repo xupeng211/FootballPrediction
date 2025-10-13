@@ -45,7 +45,7 @@ class MatchFinishedEvent(DomainEvent):
         self.home_team_id = home_team_id
         self.away_team_id = away_team_id
         self.final_score = final_score
-        self.result = result
+        self._result = result
 
     def _get_event_data(self) -> Dict[str, Any]:
         return {

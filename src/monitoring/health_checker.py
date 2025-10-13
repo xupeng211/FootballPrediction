@@ -53,7 +53,7 @@ class HealthChecker:
 
             # 执行简单查询
             start_time = datetime.utcnow()
-            result = await self.db_manager.fetch_one("SELECT 1 as test")  # type: ignore
+            _result = await self.db_manager.fetch_one("SELECT 1 as test")  # type: ignore
             duration = (datetime.utcnow() - start_time).total_seconds()
 
             if result and duration < 1.0:
@@ -105,7 +105,7 @@ class HealthChecker:
 
             # 执行ping
             start_time = datetime.utcnow()
-            result = await self.redis_manager.redis.ping()  # type: ignore
+            _result = await self.redis_manager.redis.ping()  # type: ignore
             duration = (datetime.utcnow() - start_time).total_seconds()
 
             if result and duration < 0.5:

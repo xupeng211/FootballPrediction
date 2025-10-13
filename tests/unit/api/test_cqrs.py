@@ -142,7 +142,7 @@ def test_get_prediction_cqrs_service():
     if not IMPORT_SUCCESS:
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
-    # result = get_prediction_cqrs_service()
+    # _result = get_prediction_cqrs_service()
     # assert result is not None
     assert True
 
@@ -152,7 +152,7 @@ def test_get_match_cqrs_service():
     if not IMPORT_SUCCESS:
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
-    # result = get_match_cqrs_service()
+    # _result = get_match_cqrs_service()
     # assert result is not None
     assert True
 
@@ -162,7 +162,7 @@ def test_get_user_cqrs_service():
     if not IMPORT_SUCCESS:
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
-    # result = get_user_cqrs_service()
+    # _result = get_user_cqrs_service()
     # assert result is not None
     assert True
 
@@ -172,7 +172,7 @@ def test_get_analytics_cqrs_service():
     if not IMPORT_SUCCESS:
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
-    # result = get_analytics_cqrs_service()
+    # _result = get_analytics_cqrs_service()
     # assert result is not None
     assert True
 
@@ -267,11 +267,11 @@ class TestParameterizedInput:
         try:
             # 尝试处理无效数据
             if invalid_data is None:
-                result = None
+                _result = None
             elif isinstance(invalid_data, str):
-                result = invalid_data.upper()
+                _result = invalid_data.upper()
             else:
-                result = str(invalid_data)
+                _result = str(invalid_data)
             # 确保没有崩溃
             assert result is not None
         except Exception:

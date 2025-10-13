@@ -96,7 +96,7 @@ class TestUserModel:
             "updated_at": datetime.now(),
         }
 
-        user = User(**user_data)
+        _user = User(**user_data)
 
         assert user.id == 1
         assert user.username == "testuser"
@@ -118,7 +118,7 @@ class TestUserModel:
         if User is Mock:
             pytest.skip("User model not available")
 
-        user = User()
+        _user = User()
 
         # 检查关系是否存在
         assert hasattr(user, "predictions") or hasattr(user, "prediction")
@@ -128,7 +128,7 @@ class TestUserModel:
         if User is Mock:
             pytest.skip("User model not available")
 
-        user = User()
+        _user = User()
         password = "plain_password"
 
         # 模拟密码哈希
@@ -144,13 +144,13 @@ class TestUserModel:
         if User is Mock:
             pytest.skip("User model not available")
 
-        user = User()
+        _user = User()
         user.password_hash = "hashed_password"
 
         with patch("src.database.models.user.check_password") as mock_check:
             mock_check.return_value = True
 
-            result = user.check_password("plain_password")
+            _result = user.check_password("plain_password")
             assert result is True
             mock_check.assert_called_once_with("hashed_password", "plain_password")
 
@@ -419,7 +419,7 @@ class TestPredictionModel:
             "created_at": datetime.now(),
         }
 
-        prediction = Prediction(**prediction_data)
+        _prediction = Prediction(**prediction_data)
 
         assert prediction.id == 1
         assert prediction.user_id == 1
@@ -432,7 +432,7 @@ class TestPredictionModel:
             pytest.skip("Prediction model not available")
 
         # 测试置信度范围
-        prediction = Prediction(confidence=0.85)
+        _prediction = Prediction(confidence=0.85)
         assert 0 <= prediction.confidence <= 1
 
     def test_prediction_relationships(self):
@@ -440,7 +440,7 @@ class TestPredictionModel:
         if Prediction is Mock:
             pytest.skip("Prediction model not available")
 
-        prediction = Prediction()
+        _prediction = Prediction()
 
         # 检查关系
         assert hasattr(prediction, "user")
@@ -451,7 +451,7 @@ class TestPredictionModel:
         if Prediction is Mock:
             pytest.skip("Prediction model not available")
 
-        prediction = Prediction(predicted_home_score=2, predicted_away_score=1)
+        _prediction = Prediction(predicted_home_score=2, predicted_away_score=1)
 
         with patch.object(prediction, "calculate_accuracy") as mock_accuracy:
             mock_accuracy.return_value = True
@@ -464,7 +464,7 @@ class TestPredictionModel:
         if Prediction is Mock:
             pytest.skip("Prediction model not available")
 
-        prediction = Prediction(predicted_home_score=2, predicted_away_score=1)
+        _prediction = Prediction(predicted_home_score=2, predicted_away_score=1)
 
         with patch.object(prediction, "get_predicted_outcome") as mock_outcome:
             mock_outcome.return_value = "home_win"
@@ -602,7 +602,7 @@ class TestFeaturesModel:
         with patch.object(features, "to_dict") as mock_dict:
             mock_dict.return_value = {"id": 1, "feature_data": {"key": "value"}}
 
-            result = features.to_dict()
+            _result = features.to_dict()
             assert result["feature_data"]["key"] == "value"
 
     def test_features_calculation(self):
@@ -615,7 +615,7 @@ class TestFeaturesModel:
         with patch.object(features, "calculate") as mock_calc:
             mock_calc.return_value = {"calculated_feature": 0.75}
 
-            result = features.calculate()
+            _result = features.calculate()
             assert result["calculated_feature"] == 0.75
 
 
@@ -738,7 +738,7 @@ class TestDataQualityLogModel:
         with patch.object(log, "improve_quality") as mock_improve:
             mock_improve.return_value = {"new_score": 0.98}
 
-            result = log.improve_quality()
+            _result = log.improve_quality()
             assert result["new_score"] == 0.98
 
 
@@ -823,7 +823,7 @@ class TestRawDataModel:
             "received_at": datetime.now(),
         }
 
-        data = RawData(**raw_data)
+        _data = RawData(**raw_data)
 
         assert data.id == 1
         assert data.source == "api"
@@ -834,12 +834,12 @@ class TestRawDataModel:
         if RawData is Mock:
             pytest.skip("RawData model not available")
 
-        data = RawData(processed=False)
+        _data = RawData(processed=False)
 
         with patch.object(data, "mark_processed") as mock_mark:
             mock_mark.return_value = True
 
-            result = data.mark_processed()
+            _result = data.mark_processed()
             assert result is True
 
     def test_raw_data_content_validation(self):
@@ -848,7 +848,7 @@ class TestRawDataModel:
             pytest.skip("RawData model not available")
 
         content = {"valid": "json", "data": 123}
-        data = RawData(raw_content=content)
+        _data = RawData(raw_content=content)
 
         assert isinstance(data.raw_content, dict)
 
@@ -857,12 +857,12 @@ class TestRawDataModel:
         if RawData is Mock:
             pytest.skip("RawData model not available")
 
-        data = RawData()
+        _data = RawData()
 
         with patch.object(data, "archive") as mock_archive:
             mock_archive.return_value = {"archived": True, "date": datetime.now()}
 
-            result = data.archive()
+            _result = data.archive()
             assert result["archived"] is True
 
 
@@ -874,8 +874,8 @@ class TestModelRelationships:
         if User is Mock or Prediction is Mock:
             pytest.skip("User or Prediction model not available")
 
-        user = User(id=1, username="testuser")
-        prediction = Prediction(id=1, user_id=1)
+        _user = User(id=1, username="testuser")
+        _prediction = Prediction(id=1, user_id=1)
 
         # 验证关系
         assert prediction.user_id == user.id
@@ -909,7 +909,7 @@ class TestModelRelationships:
         if Prediction is Mock or Odds is Mock:
             pytest.skip("Prediction or Odds model not available")
 
-        prediction = Prediction(id=1, match_id=1)
+        _prediction = Prediction(id=1, match_id=1)
         odds = Odds(id=1, match_id=1)
 
         # 验证关系
@@ -926,7 +926,7 @@ class TestModelConstraints:
             with patch("src.database.models.user.db.session") as mock_session:
                 mock_session.commit.side_effect = IntegrityError(None, None, None)
 
-                user = User(username="duplicate")
+                _user = User(username="duplicate")
                 mock_session.add(user)
 
                 with pytest.raises(IntegrityError):
@@ -1000,7 +1000,7 @@ class TestModelQueries:
             mock_query.all.return_value = []
 
             # 分页查询
-            matches = (
+            _matches = (
                 Match.query.order_by(Match.match_date.desc()).limit(10).offset(0).all()
             )
             assert isinstance(matches, list)

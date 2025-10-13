@@ -54,7 +54,7 @@ class TestRealAPIIntegration:
         response = client.get("/health")
         assert response.status_code == 200
 
-        data = response.json()
+        _data = response.json()
         assert "status" in data
         assert "timestamp" in data
         assert data["status"] in ["healthy", "degraded", "unhealthy"]
@@ -64,7 +64,7 @@ class TestRealAPIIntegration:
         response = client.get("/")
         assert response.status_code == 200
 
-        data = response.json()
+        _data = response.json()
         assert "message" in data
         assert "version" in data
         assert "endpoints" in data
@@ -86,7 +86,7 @@ class TestRealAPIIntegration:
         response = client.get("/api/data/matches")
         assert response.status_code == 200
 
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list)
         assert len(data) >= 0  # 可能为空列表
 
@@ -155,7 +155,7 @@ class TestRealAPIIntegration:
 
         assert response.status_code == 200
 
-        data = response.json()
+        _data = response.json()
         assert "prediction" in data
         assert "confidence" in data
 
@@ -178,7 +178,7 @@ class TestRealAPIIntegration:
         response = client.get("/api/models")
         assert response.status_code == 200
 
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list)
 
     @patch("src.database.connection.get_async_session")
@@ -243,7 +243,7 @@ class TestRealAPIIntegration:
         response = client.get("/api/data/matches?page=1&size=5")
         assert response.status_code == 200
 
-        data = response.json()
+        _data = response.json()
         assert isinstance(data, list)
 
     @patch("src.database.connection.get_async_session")
@@ -263,7 +263,7 @@ class TestRealAPIIntegration:
         response = client.get("/api/data/matches?status=completed")
         assert response.status_code == 200
 
-        data = response.json()
+        _data = response.json()
         # 如果有数据，应该都是completed状态
         for match in data:
             if "status" in match:
@@ -312,7 +312,7 @@ class TestRealAPIIntegration:
         for endpoint in endpoints:
             response = client.get(endpoint)
             if response.status_code == 200:
-                data = response.json()
+                _data = response.json()
                 # 响应该是JSON对象或数组
                 assert isinstance(data, (dict, list))
 

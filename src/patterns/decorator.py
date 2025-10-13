@@ -54,7 +54,7 @@ class LoggingDecorator(BaseDecorator):
         )
 
         try:
-            result = await self._component.execute(*args, **kwargs)
+            _result = await self._component.execute(*args, **kwargs)
             duration = time.time() - start_time
 
             self.logger.log(
@@ -150,7 +150,7 @@ class MetricsDecorator(BaseDecorator):
 
         try:
             self.metrics["calls"] += 1
-            result = await self._component.execute(*args, **kwargs)
+            _result = await self._component.execute(*args, **kwargs)
             return result
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
@@ -211,7 +211,7 @@ class ValidationDecorator(BaseDecorator):
                 raise ValueError(f"Invalid input: {str(e)}")
 
         # 执行组件
-        result = await self._component.execute(*args, **kwargs)
+        _result = await self._component.execute(*args, **kwargs)
 
         # 验证输出
         if self.validate_result:
@@ -269,7 +269,7 @@ class CacheDecorator(BaseDecorator):
 
         # 缓存未命中，执行组件
         self.logger.debug(f"Cache miss for {cache_key}")
-        result = await self._component.execute(*args, **kwargs)
+        _result = await self._component.execute(*args, **kwargs)
 
         # 存储到缓存
         self.cache[cache_key] = result
@@ -338,7 +338,7 @@ def async_log(log_level: int = logging.INFO):
             logger.log(log_level, f"Starting {func.__name__}")
 
             try:
-                result = await func(*args, **kwargs)
+                _result = await func(*args, **kwargs)
                 duration = time.time() - start_time
                 logger.log(log_level, f"Completed {func.__name__} in {duration:.3f}s")
                 return result
@@ -377,7 +377,7 @@ def async_metrics(metrics_store: Optional[Dict[str, Dict]] = None):
 
             try:
                 metrics["calls"] += 1
-                result = await func(*args, **kwargs)
+                _result = await func(*args, **kwargs)
                 return result
 
             except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):

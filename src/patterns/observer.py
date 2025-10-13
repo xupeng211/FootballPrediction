@@ -299,7 +299,7 @@ class PredictionService(ObservableService):
         try:
             # 模拟预测逻辑
             await asyncio.sleep(0.1)
-            prediction = {
+            _prediction = {
                 "match_id": match_id,
                 "prediction": "home_win",
                 "confidence": 0.75,
