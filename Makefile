@@ -234,7 +234,7 @@ test: ## Test: Run pytest unit tests
 test-phase1: ## Test: Run Phase 1 core API tests (data, features, predictions)
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Running Phase 1 core tests...$(RESET)" && \
-	pytest tests/unit/api/test_data.py tests/unit/api/test_features.py tests/unit/api/test_predictions.py -v --cov=src --cov-report=term-missing && \
+	pytest tests/unit/api/test_data_api_v2.py tests/unit/api/test_features.py tests/unit/api/test_predictions_api.py -v --cov=src --cov-report=term-missing && \
 	echo "$(GREEN)✅ Phase 1 tests passed$(RESET)"
 
 test-api: ## Test: Run all API tests

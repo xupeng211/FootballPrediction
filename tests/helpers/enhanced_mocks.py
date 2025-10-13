@@ -313,8 +313,8 @@ class MockDataGenerator:
             "season": "2024-25",
         }
         if overrides:
-            data.update(overrides)
-        return data
+            _data.update(overrides)
+        return _data
 
     @staticmethod
     def create_team_data(overrides: Optional[Dict] = None) -> Dict:
@@ -329,8 +329,8 @@ class MockDataGenerator:
             "is_active": True,
         }
         if overrides:
-            data.update(overrides)
-        return data
+            _data.update(overrides)
+        return _data
 
     @staticmethod
     def create_prediction_data(overrides: Optional[Dict] = None) -> Dict:
@@ -346,8 +346,8 @@ class MockDataGenerator:
             "created_at": datetime.now().isoformat(),
         }
         if overrides:
-            data.update(overrides)
-        return data
+            _data.update(overrides)
+        return _data
 
     @staticmethod
     def create_odds_data(overrides: Optional[Dict] = None) -> Dict:
@@ -361,8 +361,8 @@ class MockDataGenerator:
             "timestamp": datetime.now().isoformat(),
         }
         if overrides:
-            data.update(overrides)
-        return data
+            _data.update(overrides)
+        return _data
 
 
 # 常用的Mock对象实例

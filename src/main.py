@@ -42,6 +42,7 @@ except ImportError:
     _rate_limit_exceeded_handler = None
     RateLimitExceeded = None
 
+from src.api.auth import router as auth_router
 from src.api.health import router as health_router
 from src.api.schemas import RootResponse
 from src.config.openapi_config import setup_openapi
@@ -180,6 +181,8 @@ app.add_middleware(CORSMiddleware, **get_cors_config())
 
 # 注册路由
 app.include_router(health_router, prefix="/api/health")
+app.include_router(auth_router, prefix="/api/auth", tags=["认证"])
+
 if MINIMAL_API_MODE:
     logger.info("MINIMAL_API_MODE 启用，仅注册健康检查路由")
 else:
