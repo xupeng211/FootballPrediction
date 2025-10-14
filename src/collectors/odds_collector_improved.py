@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 改进的赔率收集器（向后兼容）
 Improved Odds Collector (Backward Compatible)

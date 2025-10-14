@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 缓存工厂类
 Cache Factory
@@ -6,7 +7,6 @@ Cache Factory
 Provides factory methods for creating different types of caches.
 """
 
-from typing import Any, Optional, Union
 
 from .async_cache import AsyncTTLCache
 from .ttl_cache import TTLCache

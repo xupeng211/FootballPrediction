@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 # mypy: ignore-errors
 """
 缓存装饰器模块
@@ -15,7 +16,6 @@ import hashlib
 import inspect
 import json
 import logging
-from typing import Any,  Union, Dict[str, Any],  Any, Optional, Union, TypeVar, Tuple
 from redis.exceptions import RedisError
 
 try:
@@ -36,7 +36,7 @@ def _make_cache_key(
     args: Tuple[Any, ...],
     kwargs: Dict[str, Any],
     prefix: Optional[str] = None,
-    user_id: Optional[Union[str, int]] = None,
+    user_id: Optional[Union[str, int] = None,
     *,
     exclude_args: Optional[list] = None,
 ) -> str:
@@ -103,7 +103,7 @@ def cache_result(
     ttl: Optional[int] = None,
     prefix: Optional[str] = None,
     key_generator: Optional[Callable] = None,
-    unless: Optional[Callable[..., bool]] = None,
+    unless: Optional[Callable[..., bool] = None,
     use_cache_when_unavailable: bool = True,
 ) -> Callable[[F], F]:
     """基础结果缓存装饰器

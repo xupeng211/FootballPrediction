@@ -1,9 +1,9 @@
+from typing import Any, Dict, List, Optional, Union
 """
 审计服务（兼容版本）
 Audit Service (Compatibility Version)
 """
 
-from typing import Any, Dict[str, Any], List[Any], Optional
 from datetime import datetime
 import logging
 import uuid

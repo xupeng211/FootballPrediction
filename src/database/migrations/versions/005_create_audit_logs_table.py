@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 from datetime import datetime, timezone
 增强权限审计功能 - 创建audit_logs表

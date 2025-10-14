@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 统一日志访问接口
 
@@ -5,7 +6,6 @@
 """
 
 import logging
-from typing import Any, Optional
 
 from .logger import Logger as _BaseLogger
 

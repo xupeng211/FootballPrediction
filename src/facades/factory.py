@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 门面工厂
 Facade Factory
@@ -6,7 +7,6 @@ Facade Factory
 Used to create and configure facade instances.
 """
 
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Type[Any], Union
 from dataclasses import dataclass, field
 import os
 from pathlib import Path
@@ -34,13 +34,11 @@ class FacadeConfig:
     subsystems: List[str] = field(default_factory=list)
     parameters: Dict[str, Any] = field(default_factory=dict[str, Any])
     environment: Optional[str] = None
-
-
 class FacadeFactory:
     """门面工厂类"""
 
     # 注册的门面类型
-    FACADE_TYPES: Dict[str, Type[Any][SystemFacade]] = {
+    FACADE_TYPES: Dict[str, Type[Any, SystemFacade] = {
         "main": MainSystemFacade,
         "prediction": PredictionFacade,
         "data_collection": DataCollectionFacade,
@@ -149,7 +147,7 @@ class FacadeFactory:
         """列出所有可用的门面类型"""
         return list(self.FACADE_TYPES.keys())
 
-    def register_facade_type(self, name: str, facade_class: Type[Any][SystemFacade]) -> None:
+    def register_facade_type(self, name: str, facade_class: Type[Any, SystemFacade]) -> None:
         """注册新的门面类型"""
         self.FACADE_TYPES[name] = facade_class
 

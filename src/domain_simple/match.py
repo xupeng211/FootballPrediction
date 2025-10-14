@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 比赛领域模型
 
@@ -5,7 +6,6 @@
 """
 
 from datetime import datetime
-from typing import Any,  Dict[str, Any],  Any, Any
 from enum import Enum
 
 

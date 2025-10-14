@@ -1,12 +1,11 @@
+from typing import Any, Dict, List, Optional, Union
 """
-from typing import Any, Dict[str, Any], List[Any], Optional, Union
 数据湖存储模块
 Data Lake Storage Module
 """
 
 import json
 import logging
-from typing import Any, Dict[str, Any], List[Any], Optional, Union
 from datetime import datetime
 from pathlib import Path
 

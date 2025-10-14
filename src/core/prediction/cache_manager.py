@@ -1,9 +1,9 @@
+from typing import Any, Dict, List, Optional, Union
 """
 Prediction cache manager
 """
 
 import logging
-from typing import Any,  Dict[str], Any], Any, Optional[from] src.core.logging import get_logger
 
 logger = get_logger(__name__)
 

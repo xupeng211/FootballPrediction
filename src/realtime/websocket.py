@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 WebSocket 模块 - 桩实现
 
@@ -9,7 +10,6 @@ Temporary implementation to resolve import errors.
 
 import json
 import logging
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Set, Union
 from datetime import datetime
 from enum import Enum
 
@@ -55,7 +55,7 @@ class WebSocketManager:
         """初始化 WebSocket 管理器"""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.connections: Dict[str, "WebSocketConnection"] = {}
-        self.rooms: Dict[str, Set[str]] = {}
+        self.rooms: Dict[str, Set[str] = {}
         self.message_handlers: List[Callable] = []
         self.logger.info("WebSocketManager initialized (stub implementation)")
 
@@ -290,8 +290,6 @@ class WebSocketConnection:
 
 # 全局 WebSocket 管理器实例
 _global_manager: Optional[WebSocketManager] = None
-
-
 def get_websocket_manager() -> WebSocketManager:
     """
     获取全局 WebSocket 管理器

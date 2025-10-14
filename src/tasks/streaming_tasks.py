@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 实时数据流任务
 
@@ -9,7 +10,6 @@
 
 import asyncio
 import logging
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 from celery import Task
 
@@ -48,7 +48,7 @@ class StreamingTask(Task):
 @app.task(base=StreamingTask, bind=True)
 def consume_kafka_streams_task(
     self,
-    topics: Optional[List[str] = None,
+    topics: Optional[List[str]] = None,
     batch_size: int = 100,
     timeout: float = 30.0,
 ):
@@ -120,7 +120,7 @@ def consume_kafka_streams_task(
 
 @app.task(base=StreamingTask, bind=True)
 def start_continuous_consumer_task(
-    self, topics: Optional[List[str] = None, consumer_group_id: Optional[str] = None
+    self, topics: Optional[List[str]] = None, consumer_group_id: Optional[str] = None
 ):
     """
     启动持续Kafka消费任务
@@ -300,7 +300,7 @@ def stream_health_check_task(self):
 @app.task(base=StreamingTask, bind=True)
 def stream_data_processing_task(
     self,
-    topics: Optional[List[str] = None,
+    topics: Optional[List[str]] = None,
     processing_duration: int = 300,  # 5分钟
 ):
     """

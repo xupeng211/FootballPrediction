@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 from redis.exceptions import RedisError
 
 """
@@ -6,7 +7,6 @@ Redis synchronous operations
 
 import json
 import logging
-from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 

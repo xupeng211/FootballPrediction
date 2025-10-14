@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 性能监控中间件
 Performance Monitoring Middleware
@@ -11,7 +12,6 @@ Performance Monitoring Middleware
 """
 
 import time
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -214,7 +214,7 @@ class DatabasePerformanceMiddleware:
     """数据库性能监控中间件"""
 
     def __init__(self):
-        self.query_stats: Dict[str, Dict[str, Any][str, Any] = {}
+        self.query_stats: Dict[str, Dict[str, Any] = {}
         self.slow_queries: List[Dict[str, Any] = []
         self.total_queries = 0
 
@@ -352,7 +352,7 @@ class BackgroundTaskPerformanceMonitor:
     """后台任务性能监控器"""
 
     def __init__(self):
-        self.task_stats: Dict[str, Dict[str, Any][str, Any] = {}
+        self.task_stats: Dict[str, Dict[str, Any] = {}
         self.active_tasks: Dict[str, float] = {}
         self.failed_tasks: List[Dict[str, Any] = []
 

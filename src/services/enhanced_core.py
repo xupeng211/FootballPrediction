@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 增强的服务核心模块
 
@@ -6,7 +7,6 @@
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Callable
 import time
 
 from src.core.logging import get_logger
@@ -81,8 +81,7 @@ class EnhancedBaseService(ABC):
         # 服务状态
         self._running = False
         self._initialized = False
-        self._startup_time: Optional[datetime] ] = None
-
+        self._startup_time: Optional[datetime] = None
         # 指标收集
         self.metrics = ServiceMetrics()
         self._health_status: Any = {
@@ -218,7 +217,7 @@ class EnhancedBaseService(ABC):
         return self.config.config.get(key, default)
 
     def _update_health_status(
-        self, status: str, message: str, details: Optional[Dict[str, Any] ] ] ] = None
+        self, status: str, message: str, details: Optional[Dict[str, Any] ] = None
     ):
         """更新健康状态"""
         self._health_status.update(

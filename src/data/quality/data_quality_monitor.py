@@ -1,5 +1,5 @@
+from typing import Any, Dict, List, Optional, Union
 """
-from typing import Any,  Dict[str, Any],  Any, List[Any]
 数据质量监控器
 
 实现数据质量检查与异常检测功能。
@@ -14,7 +14,6 @@ from typing import Any,  Dict[str, Any],  Any, List[Any]
 基于 DATA_DESIGN.md 第5.1节设计。
 """
 
-from typing import Any,  Dict[str, Any],  Any, List[Any]
 import logging
 from datetime import datetime
 

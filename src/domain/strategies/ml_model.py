@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 机器学习模型策略
 ML Model Strategy
@@ -7,7 +8,6 @@ Strategy implementation using machine learning models for prediction.
 """
 
 import time
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Tuple
 import numpy as np
 from datetime import datetime
 import logging
@@ -266,11 +266,11 @@ class MLModelStrategy(PredictionStrategy):
         elif advantage < -0.5:
             delta = min(0.15, abs(advantage) * 0.05)
             base[2] += delta
-            base[[0, 1]] -= delta / 2
+            base[[0, 1] -= delta / 2
         else:
             delta = min(0.1, abs(advantage) * 0.03)
             base[1] += delta
-            base[[0, 2]] -= delta / 2
+            base[[0, 2] -= delta / 2
 
         base = np.clip(base, 0.05, 0.9)
         base = base / base.sum()

@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 仓储提供者
 Repository Provider
@@ -6,7 +7,6 @@ Repository Provider
 Provides creation and dependency injection configuration for repository instances.
 """
 
-from typing import Any,  TypeVar, Type[Any], Protocol, runtime_checkable
 from functools import lru_cache
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -151,7 +151,7 @@ def set_repository_provider(provider: RepositoryProvider) -> None:
 @lru_cache(maxsize=32)
 def _get_repository_cached(
     repository_type: str, session_id: int, read_only: bool
-) -> Type[Any][BaseRepository]:
+) -> Type[Any, BaseRepository]:
     """缓存的仓储类型获取"""
     if repository_type == "prediction":
         return ReadOnlyPredictionRepository if read_only else PredictionRepository

@@ -1,10 +1,10 @@
+from typing import Any, Dict, List, Optional, Union
 """
 比赛相关模型
 Match Related Models
 """
 
 from datetime import datetime
-from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 

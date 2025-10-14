@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 SQLAlchemy基础模型
 
@@ -5,7 +6,6 @@ SQLAlchemy基础模型
 """
 
 from datetime import datetime
-from typing import Any,  Dict[str, Any],  Any, Optional
 
 from sqlalchemy import Column, DateTime, Integer
 from sqlalchemy.orm import DeclarativeBase

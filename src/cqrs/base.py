@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 CQRS基础类
 CQRS Base Classes
@@ -7,7 +8,6 @@ Defines base interfaces for commands, queries, and handlers.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict[str, Any], Generic, List[Any], Optional, TypeVar
 from datetime import datetime
 from dataclasses import dataclass
 import uuid
@@ -25,7 +25,7 @@ class BaseMessage:
     timestamp: datetime
     metadata: Dict[str, Any]
 
-    def __init__(self, metadata: Optional[Dict[str, Any] = None):
+    def __init__(self, metadata: Optional[Dict[str, Any]] = None):
         self.message_id = str(uuid.uuid4())
         self.timestamp = datetime.utcnow()
         self._metadata = metadata or {}
@@ -38,12 +38,10 @@ class Command(BaseMessage, ABC):
     Commands represent intentions to change system state.
     """
 
-    def __init__(self, metadata: Optional[Dict[str, Any] = None):
+    def __init__(self, metadata: Optional[Dict[str, Any]] = None):
         super().__init__(metadata)
         self.correlation_id: Optional[str] = None
         self.causation_id: Optional[str] = None
-
-
 class Query(BaseMessage, ABC):
     """查询基类
 
@@ -51,7 +49,7 @@ class Query(BaseMessage, ABC):
     Queries represent requests to retrieve system data.
     """
 
-    def __init__(self, metadata: Optional[Dict[str, Any] = None):
+    def __init__(self, metadata: Optional[Dict[str, Any]] = None):
         super().__init__(metadata)
 
 

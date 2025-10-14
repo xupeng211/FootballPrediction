@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """implement_partitioned_tables_and_indexes
 
 
@@ -16,7 +17,6 @@ Create Date: 2025-09-12 12:48:23.849021
 """
 # mypy: ignore-errors
 
-from typing import Any, Sequence, Union
 
 from alembic import context, op
 from sqlalchemy.exc import SQLAlchemyError, DatabaseError
@@ -26,10 +26,8 @@ from sqlalchemy import text
 # revision identifiers, used by Alembic.
 revision: str = "09d03cebf664"
 down_revision: Union[str, None] = "c1d8ae5075f0"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
-
-
+branch_labels: Union[str, Sequence[str], None = None
+depends_on: Union[str, Sequence[str], None = None
 def is_sqlite():
     """检测当前是否为SQLite数据库"""
     if context.is_offline_mode():

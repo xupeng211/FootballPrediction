@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 预测模块
 Prediction Module
@@ -8,7 +9,6 @@ Provides prediction-related data models and services.
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 from ..services.base_unified import SimpleService
 

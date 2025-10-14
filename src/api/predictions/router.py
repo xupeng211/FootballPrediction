@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 预测API路由器
 Predictions API Router
@@ -7,7 +8,6 @@ Predictions API Router
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any,  List[Any], Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field

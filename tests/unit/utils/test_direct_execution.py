@@ -60,7 +60,7 @@ class TestDirectExecution:
     def test_warning_filters_setup(self):
         """测试警告过滤器设置"""
         try:
-            # from src.utils.warning_filters import setup_warning_filters  # noqa: F401
+from src.utils.warning_filters import setup_warning_filters  # noqa: F401
 
             # 调用设置函数
             setup_warning_filters()
@@ -74,7 +74,7 @@ class TestDirectExecution:
     def test_time_utils_get_time(self):
         """测试时间工具获取时间"""
         try:
-            # from src.utils.time_utils import get_current_time  # noqa: F401
+from src.utils.time_utils import get_current_time  # noqa: F401
 
             # 调用函数
             _result = get_current_time()
@@ -89,7 +89,7 @@ class TestDirectExecution:
     def test_dict_utils_operations(self):
         """测试字典操作工具"""
         try:
-            # from src.utils.dict_utils import deep_merge, flatten_dict  # noqa: F401
+from src.utils.dict_utils import deep_merge, flatten_dict  # noqa: F401
 
             # 测试深度合并
             dict1 = {"a": {"b": 1}}
@@ -132,7 +132,7 @@ class TestDirectExecution:
     def test_crypto_utils_hash(self):
         """测试加密工具哈希功能"""
         try:
-            # from src.utils.crypto_utils import hash_password  # noqa: F401
+from src.utils.crypto_utils import hash_password  # noqa: F401
 
             # 哈希密码
             password = "test123"
@@ -164,7 +164,7 @@ class TestDirectExecution:
     def test_retry_decorator(self):
         """测试重试装饰器"""
         try:
-            # from src.utils.retry import retry  # noqa: F401
+from src.utils.retry import retry  # noqa: F401
 
             call_count = 0
 
@@ -188,7 +188,7 @@ class TestDirectExecution:
     def test_string_utils(self):
         """测试字符串工具"""
         try:
-            # from src.utils.string_utils import to_snake_case, to_camel_case  # noqa: F401
+from src.utils.string_utils import to_snake_case, to_camel_case  # noqa: F401
 
             # 转换为蛇形命名
             snake = to_snake_case("CamelCaseString")

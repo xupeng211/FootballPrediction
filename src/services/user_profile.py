@@ -1,10 +1,10 @@
+from typing import Any, Dict, List, Optional, Union
 """
 足球预测系统用户画像服务模块
 
 提供用户画像生成和管理功能。
 """
 
-from typing import Any,  Dict[str, Any],  Any, Optional, List[Any]
 from datetime import datetime
 from .base_unified import SimpleService
 

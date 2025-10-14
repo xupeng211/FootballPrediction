@@ -1,8 +1,8 @@
+from typing import Any, Dict, List, Optional, Union
 """
 OpenAPI 配置和文档增强
 """
 
-from typing import Any,  Dict[str, Any],  Any, List[Any]
 from fastapi import FastAPI
 
 

@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 高级日志过滤器
 用于生产环境的日志处理
@@ -9,7 +10,6 @@ import time
 import hashlib
 import logging
 import asyncio
-from typing import Any, Dict, List, Optional, Set, Union
 from collections import defaultdict, deque
 import threading
 from datetime import datetime, timedelta
@@ -321,7 +321,7 @@ class StructuredFilter(logging.Filter):
 class EnrichmentFilter(logging.Filter):
     """增强过滤器 - 添加额外的元数据"""
 
-    def __init__(self, metadata: Optional[Dict[str, Any] = None):
+    def __init__(self, metadata: Optional[Dict[str, Any]] = None):
         super().__init__()
         self.metadata = metadata or {}
 

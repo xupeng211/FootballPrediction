@@ -24,7 +24,7 @@ def test_utils_import():
 def test_utils_functionality():
     # 测试具体功能
     try:
-        # from src.utils.string_utils import StringUtils
+from src.utils.string_utils import StringUtils
 
         _result = StringUtils.truncate("Hello World", 5)
         assert "Hello" in result
@@ -32,7 +32,7 @@ def test_utils_functionality():
         assert True
 
     try:
-        # from src.utils.crypto_utils import CryptoUtils
+from src.utils.crypto_utils import CryptoUtils
 
         token = CryptoUtils.generate_id()
         assert isinstance(token, str)
@@ -40,7 +40,7 @@ def test_utils_functionality():
         assert True
 
     try:
-        # from src.utils.time_utils import TimeUtils
+from src.utils.time_utils import TimeUtils
         from datetime import datetime
 
         formatted = TimeUtils.format_datetime(datetime.now())

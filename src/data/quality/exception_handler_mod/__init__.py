@@ -1,9 +1,9 @@
+from typing import Any, Dict, List, Optional, Union
 """
 数据质量异常处理器（兼容版本）
 Data Quality Exception Handler (Compatibility Version)
 """
 
-from typing import Dict,  Dict, Any, List, Optional, Callable
 from datetime import datetime
 import logging
 
@@ -70,7 +70,7 @@ class DataQualityExceptionHandler:
         self.handlers[error_code] = handler
 
     def handle_exception(
-        self, exception: Exception, context: Optional[Dict[str, Any] = None
+        self, exception: Exception, context: Optional[Dict[str, Any]] = None
     ) -> bool:
         """处理异常
 

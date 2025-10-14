@@ -1,8 +1,8 @@
+from typing import Any, Dict, List, Optional, Union
 """
 简化的流处理器实现
 """
 
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Callable, AsyncIterator
 from datetime import datetime, timedelta
 
 
@@ -177,9 +177,9 @@ class StreamProcessor:
 
         async for message in self.consumer.consume():
             if message["topic"] == stream1:
-                stream1_buffer[message["key"]] = message
+                stream1_buffer[message["key"] = message
             elif message["topic"] == stream2:
-                stream2_buffer[message["key"]] = message
+                stream2_buffer[message["key"] = message
 
             # 检查是否有匹配的键
             key = message["key"]

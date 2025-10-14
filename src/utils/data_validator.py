@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 足球预测系统数据验证工具模块
 
@@ -6,7 +7,6 @@
 
 import re
 from datetime import datetime
-from typing import Any,  Dict[str, Any],  Any, List[Any]
 
 
 class DataValidator:

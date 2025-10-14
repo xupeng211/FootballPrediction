@@ -1,9 +1,9 @@
+from typing import Any, Dict, List, Optional, Union
 """
 认证相关API路由
 """
 
 from datetime import timedelta
-from typing import Any, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm

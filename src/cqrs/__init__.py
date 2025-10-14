@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 CQRS模式实现
 CQRS Pattern Implementation

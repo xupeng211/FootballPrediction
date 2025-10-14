@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 流数据处理器
 Stream Data Processor
@@ -5,7 +6,6 @@ Stream Data Processor
 
 import asyncio
 import logging
-from typing import Any,  Dict[str, Any],  Any
 
 from src.core.logging import get_logger
 

@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 CQRS应用服务
 CQRS Application Services
@@ -7,7 +8,6 @@ Provides high-level CQRS operation interfaces.
 """
 
 import logging
-from typing import Any,  Dict[str, Any],  Any, Any
 from datetime import datetime, date
 
 from .bus import get_command_bus, get_query_bus

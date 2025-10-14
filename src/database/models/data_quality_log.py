@@ -1,4 +1,4 @@
-from typing import Any,  Dict[str, Any],  Any, Optional
+from typing import Any, Dict, List, Optional, Union
 from datetime import datetime
 from ..base import BaseModel
 from sqlalchemy import Boolean, Column, DateTime, Integer, JSON, String, Text, func
@@ -15,7 +15,6 @@ from sqlalchemy import Boolean, Column, DateTime, Integer, JSON, String, Text, f
 - 支持数据治理决策
 """
 
-from typing import Any,  Dict[str, Any],  Any, Optional
 from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String, Text
 from sqlalchemy.sql import func
 from src.database.base import BaseModel

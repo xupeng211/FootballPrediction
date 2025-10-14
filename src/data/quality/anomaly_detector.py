@@ -1,9 +1,9 @@
+from typing import Any, Dict, List, Optional, Union
 """
 Data quality anomaly detector
 """
 
 import logging
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Union
 
 import numpy as np
 import pandas as pd

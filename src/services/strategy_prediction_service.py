@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 # mypy: ignore-errors
 """
 基于策略模式的预测服务
@@ -8,7 +9,6 @@ Refactored prediction service using strategy pattern for flexible algorithm sele
 """
 
 import logging
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 from ..domain.strategies import (
     PredictionStrategy,
@@ -139,7 +139,7 @@ class StrategyPredictionService:
         return prediction
 
     async def batch_predict(
-        self, match_ids: List[int], user_id: int, strategy_name: Optional[str] ] = None
+        self, match_ids: List[int], user_id: int, strategy_name: Optional[str] = None
     ) -> List[Prediction]:
         """批量预测比赛
 
@@ -199,7 +199,7 @@ class StrategyPredictionService:
         return predictions
 
     async def compare_strategies(
-        self, match_id: int, strategy_names: Optional[List[str] ] ] = None
+        self, match_id: int, strategy_names: Optional[List[str]] = None
     ) -> Dict[str, PredictionOutput]:
         """比较不同策略的预测结果
 
@@ -243,8 +243,7 @@ class StrategyPredictionService:
                 )
             except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"策略 {strategy_name} 预测失败: {e}")
-                results[strategy_name] = None
-
+                results[strategy_name = None
         return results
 
     async def get_strategy_performance(
@@ -318,7 +317,7 @@ class StrategyPredictionService:
         self._default_strategy = strategy_name
         logger.info(f"默认策略从 {old_strategy} 切换到 {strategy_name}")
 
-    async def get_available_strategies(self) -> Dict[str, Dict[str, Any][str, Any]:
+    async def get_available_strategies(self) -> Dict[str, Dict[str, Any]:
         """获取所有可用策略信息"""
         health_report = await self._strategy_factory.health_check()
 

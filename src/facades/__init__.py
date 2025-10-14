@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 门面模式模块
 Facade Pattern Module

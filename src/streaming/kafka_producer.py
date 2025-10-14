@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 kafka_producer.py
 Kafka_Producer

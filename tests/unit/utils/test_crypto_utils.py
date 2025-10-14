@@ -1,5 +1,5 @@
 import pytest
-# from src.utils.crypto_utils import CryptoUtils
+from src.utils.crypto_utils import CryptoUtils
 
 """
 测试加密工具模块

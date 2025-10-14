@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 性能分析器
 Performance Analyzer
@@ -12,7 +13,6 @@ Performance Analyzer
 
 import json
 from datetime import datetime
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Tuple
 
 import numpy as np
 from pydantic import BaseModel
@@ -54,7 +54,7 @@ class PerformanceAnalyzer:
         self.trends: Dict[str, PerformanceTrend] = {}
         self.thresholds = self._load_default_thresholds()
 
-    def _load_default_thresholds(self) -> Dict[str, Dict[str, Any][str, Any]:
+    def _load_default_thresholds(self) -> Dict[str, Dict[str, Any]:
         """加载默认的性能阈值"""
         return {
             "response_time": {
@@ -298,7 +298,7 @@ class PerformanceAnalyzer:
 
         return insights
 
-    def analyze_memory_usage(self, memory_data: List[Dict[str, Any][str], Any]) -> List[PerformanceInsight]:
+    def analyze_memory_usage(self, memory_data: List[Dict[str, Any]) -> List[PerformanceInsight]:
         """分析内存使用情况"""
         insights = []  # type: ignore
 
@@ -579,11 +579,11 @@ class PerformanceAnalyzer:
 
     def generate_performance_report(
         self,
-        api_stats: Optional[Dict[str, Any] = None,
-        db_stats: Optional[Dict[str, Any] = None,
-        cache_stats: Optional[Dict[str, Any] = None,
-        memory_data: Optional[List[Dict[str, Any] = None,
-        task_stats: Optional[Dict[str, Any] = None,
+        api_stats: Optional[Dict[str, Any]] = None,
+        db_stats: Optional[Dict[str, Any]] = None,
+        cache_stats: Optional[Dict[str, Any]] = None,
+        memory_data: Optional[List[Dict[str, Any]] = None,
+        task_stats: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """生成综合性能报告"""
         report = {

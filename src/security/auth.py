@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 JWT认证和RBAC权限控制模块
 """
@@ -5,7 +6,6 @@ JWT认证和RBAC权限控制模块
 import logging
 import os
 from datetime import datetime, timedelta
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Union
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -223,8 +223,6 @@ class AuthManager:
 
 # 全局认证管理器实例
 auth_manager: Optional[AuthManager] = None
-
-
 def get_auth_manager() -> AuthManager:
     """获取认证管理器实例"""
     global auth_manager

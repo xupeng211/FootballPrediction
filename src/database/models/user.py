@@ -1,7 +1,7 @@
+from typing import Any, Dict, List, Optional, Union
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any,  List[Any], Optional
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, JSON, String, Text
 from sqlalchemy.orm import relationship

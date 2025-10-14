@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """球队领域服务
 
 提供围绕球队聚合的高级业务操作，例如比赛结果更新、
@@ -8,7 +9,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any,  Dict[str, Any], Any, List[Any], Optional, Protocol
 
 from ..models.team import Team, TeamForm, TeamStats
 

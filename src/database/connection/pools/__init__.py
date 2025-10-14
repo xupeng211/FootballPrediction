@@ -1,9 +1,9 @@
+from typing import Any, Dict, List, Optional, Union
 """
 Database connection pools
 """
 
 import logging
-# from typing import Any, Dict, Optional
 
 from src.core.logging import get_logger
 

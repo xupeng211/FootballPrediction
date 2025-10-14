@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 查询定义
 Query Definitions
@@ -6,7 +7,6 @@ Query Definitions
 Defines all read operation queries.
 """
 
-from typing import Any,  Dict[str, Any],  Any, Any
 from datetime import date
 from .base import ValidatableQuery, ValidationResult
 
@@ -17,7 +17,7 @@ class GetPredictionByIdQuery(ValidatableQuery):
     def __init__(
         self,
         prediction_id: int,
-        metadata: Optional[Dict[str, Any] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(metadata)
         self.prediction_id = prediction_id
@@ -46,7 +46,7 @@ class GetPredictionsByUserQuery(ValidatableQuery):
         offset: Optional[int] = None,
         start_date: Optional[date] = None,
         end_date: Optional[date] = None,
-        metadata: Optional[Dict[str, Any] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(metadata)
         self.user_id = user_id
@@ -85,7 +85,7 @@ class GetMatchPredictionsQuery(ValidatableQuery):
         self,
         match_id: int,
         include_user_details: bool = False,
-        metadata: Optional[Dict[str, Any] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(metadata)
         self.match_id = match_id
@@ -112,7 +112,7 @@ class GetUserStatsQuery(ValidatableQuery):
         self,
         user_id: int,
         include_predictions: bool = False,
-        metadata: Optional[Dict[str, Any] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(metadata)
         self.user_id = user_id
@@ -139,7 +139,7 @@ class GetMatchByIdQuery(ValidatableQuery):
         self,
         match_id: int,
         include_predictions: bool = False,
-        metadata: Optional[Dict[str, Any] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(metadata)
         self.match_id = match_id
@@ -168,7 +168,7 @@ class GetUpcomingMatchesQuery(ValidatableQuery):
         competition: Optional[str] = None,
         limit: Optional[int] = None,
         offset: Optional[int] = None,
-        metadata: Optional[Dict[str, Any] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(metadata)
         self.days_ahead = days_ahead
@@ -205,7 +205,7 @@ class GetPredictionAnalyticsQuery(ValidatableQuery):
         end_date: Optional[date] = None,
         strategy_filter: Optional[str] = None,
         user_id: Optional[int] = None,
-        metadata: Optional[Dict[str, Any] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(metadata)
         self.start_date = start_date
@@ -238,7 +238,7 @@ class GetLeaderboardQuery(ValidatableQuery):
         period: str = "all_time",  # all_time, monthly, weekly
         limit: Optional[int] = 10,
         offset: Optional[int] = None,
-        metadata: Optional[Dict[str, Any] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(metadata)
         self.period = period

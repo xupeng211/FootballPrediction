@@ -1,9 +1,9 @@
+from typing import Any, Dict, List, Optional, Union
 """
 预测领域模型
 """
 
 from datetime import datetime
-from typing import Any,  Dict[str, Any],  Any, Any
 from enum import Enum
 
 
@@ -60,7 +60,6 @@ class Prediction:
         self.created_at = datetime.now()
         self.updated_at = datetime.now()
         self.settled_at: Optional[datetime] = None
-
         # 附加信息
         self.reasoning: str = ""
         self.analysis_data: Dict[str, Any] = {}
@@ -68,7 +67,6 @@ class Prediction:
         # 兼容性属性
         self.predicted_home: Optional[int] = None
         self.predicted_away: Optional[int] = None
-
         # 如果 predicted_value 包含比分，解析它
         if ":" in predicted_value:
             try:

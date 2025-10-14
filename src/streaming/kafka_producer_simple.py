@@ -1,10 +1,10 @@
+from typing import Any, Dict, List, Optional, Union
 """
 简化的Kafka生产者实现
 """
 
 import asyncio
 import json
-from typing import Any,  Dict[str, Any],  Any, Optional, List[Any]
 
 from src.core.exceptions import StreamingError
 
@@ -52,7 +52,7 @@ class KafkaMessageProducer:
             self.stats["errors"] += 1
             raise StreamingError(f"Failed to send message: {str(e)}")
 
-    async def send_batch(self, messages: List[Dict[str, Any][str], Any]) -> List[Any]:
+    async def send_batch(self, messages: List[Dict[str, Any]) -> List[Any]:
         """批量发送消息"""
         results = []
         for msg in messages:

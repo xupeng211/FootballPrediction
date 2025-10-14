@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 日志系统（向后兼容）
 Logging System (Backward Compatible)

@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 预测领域服务
 Prediction Domain Service
@@ -6,7 +7,6 @@ Prediction Domain Service
 Handles complex business logic related to predictions.
 """
 
-from typing import Any, Dict[str, Any], List[Any], Optional
 from datetime import datetime
 from decimal import Decimal
 
@@ -168,7 +168,7 @@ class PredictionDomainService:
         self._events.append(event)
 
     def cancel_prediction(
-        self, prediction: Prediction, reason: str, cancelled_by: Optional[int] ] = None
+        self, prediction: Prediction, reason: str, cancelled_by: Optional[int] = None
     ) -> None:
         """取消预测"""
         if prediction.status != PredictionStatus.PENDING:

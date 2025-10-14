@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 数据库类型适配模块
 
@@ -5,7 +6,6 @@
 """
 
 import json
-from typing import Any, Union
 
 from sqlalchemy import JSON, Text, TypeDecorator
 from sqlalchemy.dialects.postgresql import JSONB

@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 足球数据清洗器
 
@@ -13,7 +14,6 @@
 """
 
 import logging
-from typing import Any,  Dict[str, Any],  Any, Optional, List[Any]
 from datetime import datetime
 from enum import Enum
 
@@ -74,7 +74,7 @@ class FootballDataCleaner:
 
         return len(errors) == 0, errors
 
-    def batch_clean(self, data_list: List[Dict[str, Any][str], Any]) -> List[Dict[str, Any]:
+    def batch_clean(self, data_list: List[Dict[str, Any]) -> List[Dict[str, Any]:
         """批量清洗数据"""
         return [self.clean_match_data(data) for data in data_list]
 

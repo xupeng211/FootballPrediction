@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 事件总线实现
 Event Bus Implementation
@@ -9,7 +10,6 @@ Provides event publishing, subscription, and routing functionality.
 import asyncio
 import logging
 from collections import defaultdict
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Type[Any]
 from concurrent.futures import ThreadPoolExecutor
 
 from .base import Event, EventHandler, EventFilter
@@ -104,7 +104,7 @@ class EventBus:
         self,
         event_type: str,
         handler: EventHandler,
-        filters: Optional[List[EventFilter] = None,
+        filters: Optional[List[EventFilter]] = None,
     ) -> None:
         """订阅事件
 
@@ -342,8 +342,6 @@ class EventBus:
 
 # 全局事件总线实例
 _event_bus: Optional[EventBus] = None
-
-
 def get_event_bus() -> EventBus:
     """获取全局事件总线实例
 
@@ -378,7 +376,7 @@ def event_handler(event_types: List[str]):
         event_types: 处理的事件类型列表
     """
 
-    def decorator(cls: Type[Any][EventHandler]) -> Type[Any][EventHandler]:
+    def decorator(cls: Type[Any, EventHandler]) -> Type[Any, EventHandler]:
         original_init = cls.__init__
 
         def __init__(self, *args, **kwargs):

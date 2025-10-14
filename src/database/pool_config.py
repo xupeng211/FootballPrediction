@@ -1,10 +1,10 @@
+from typing import Any, Dict, List, Optional, Union
 """
 数据库连接池配置优化
 """
 
 import os
 import asyncio
-from typing import Any,  Dict[str, Any], Any, Optional
 import asyncpg
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine
 from sqlalchemy.pool import QueuePool, NullPool
@@ -23,7 +23,6 @@ class DatabasePoolConfig:
     def __init__(self):
         self.settings = get_settings()
         self._engine: Optional[AsyncEngine] = None
-
     def get_pool_config(self) -> Dict[str, Any]:
         """获取优化的连接池配置"""
         # 基于系统资源动态调整
@@ -193,7 +192,7 @@ class AsyncpgPoolConfig:
             "server_settings": {
                 "application_name": "football_prediction",
                 "timezone": "UTC",
-                "jit": "off"  # 关闭JIT以提高简单查询性能
+                "jit": "of"  # 关闭JIT以提高简单查询性能
             }
         }
 

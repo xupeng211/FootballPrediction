@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 门面模式实现（简化版）
 
@@ -5,7 +6,6 @@
 """
 
 import asyncio
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 from datetime import datetime, timedelta
 from dataclasses import dataclass
 
@@ -19,9 +19,7 @@ class PredictionRequest:
     match_id: int
     user_id: int
     algorithm: str = "ensemble"
-    features: Optional[Dict[str, Any] = None
-
-
+    features: Optional[Dict[str, Any]] = None
 @dataclass
 class PredictionResult:
     """预测结果"""

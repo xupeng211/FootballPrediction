@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 维护任务模块
 
@@ -14,7 +15,6 @@ import logging
 import os
 import shutil
 from datetime import datetime
-from typing import Any,  Dict[str, Any],  Any
 
 from src.database.connection import DatabaseManager
 from sqlalchemy import text

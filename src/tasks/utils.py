@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 任务工具函数
 
@@ -8,7 +9,6 @@
 """
 
 from datetime import datetime, timedelta
-from typing import Any,  List[Any], Optional
 
 from sqlalchemy import text
 

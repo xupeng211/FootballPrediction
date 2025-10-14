@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 import asyncio
 统计学异常检测器
@@ -11,7 +12,6 @@ Z-score分析等多种异常检测算法。
 import logging
 from datetime import datetime
 from enum import Enum
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 import numpy as np
 import pandas as pd
@@ -155,8 +155,8 @@ class AnomalyDetector:
 
     async def detect_anomalies(
         self,
-        table_names: Optional[List[str] = None,
-        methods: Optional[List[str] = None,
+        table_names: Optional[List[str]] = None,
+        methods: Optional[List[str]] = None,
     ) -> List[AnomalyResult]:
         """
         执行异常检测

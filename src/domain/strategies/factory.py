@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 预测策略工厂
 Prediction Strategy Factory
@@ -9,7 +10,6 @@ Responsible for creating and managing prediction strategy instances.
 import os
 import json
 import yaml  # type: ignore
-from typing import Any,  Union, Dict[str, Any],  Any, List[Any], Optional, Type[Any], Union
 from pathlib import Path
 from datetime import datetime
 import logging
@@ -42,7 +42,7 @@ class PredictionStrategyFactory:
     负责根据配置创建和管理各种预测策略实例。
     """
 
-    def __init__(self, config_path: Optional[Union[str, Path]] ] ] = None) -> None:
+    def __init__(self, config_path: Optional[Union[str, Path] ] ] = None) -> None:
         """初始化策略工厂
 
         Args:
@@ -50,12 +50,12 @@ class PredictionStrategyFactory:
         """
         self._config_path = config_path or "configs/strategies.yaml"
         self._strategies: Dict[str, PredictionStrategy] = {}}
-        self._strategy_configs: Dict[str, Union[str, Dict[str, Any][str, Any] = {}
+        self._strategy_configs: Dict[str, Union[str, Dict[str, Any] = {}
         self._default_config: Dict[str, Any] = {}}
         self._environment_overrides: Dict[str, Any] = {}}
 
         # 策略类型映射
-        self._strategy_registry: Dict[str, Type[Any][PredictionStrategy] = {
+        self._strategy_registry: Dict[str, Type[Any, PredictionStrategy] = {
             "ml_model": MLModelStrategy,
             "statistical": StatisticalStrategy,
             "historical": HistoricalStrategy,
@@ -66,7 +66,7 @@ class PredictionStrategyFactory:
         self._load_configuration()
 
     def register_strategy(
-        self, strategy_type: str, strategy_class: Type[Any][PredictionStrategy]
+        self, strategy_type: str, strategy_class: Type[Any, PredictionStrategy]
     ) -> None:
         """注册新的策略类型
 
@@ -463,7 +463,7 @@ class PredictionStrategyFactory:
                     if k not in current:
                         current[k] = {}
                     current = current[k]
-                current[keys[-1]] = value
+                current[keys[-1] = value
             else:
                 config[key] = value  # type: ignore
 
@@ -516,11 +516,11 @@ class PredictionStrategyFactory:
 
         return errors
 
-    async def health_check(self) -> Dict[str, Dict[str, Any][str, Any]:
+    async def health_check(self) -> Dict[str, Dict[str, Any]:
         """检查所有策略的健康状态
 
         Returns:
-            Dict[str, Dict[str, Any][str, Any]: 策略健康状态报告
+            Dict[str, Dict[str, Any]: 策略健康状态报告
         """
         health_report = {}
 

@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 Celery 应用配置
 
@@ -15,6 +16,7 @@ import os
 
 from celery import Celery
 from celery.schedules import crontab
+
 
 # 配置日志记录器（用于测试支持）
 logger = logging.getLogger(__name__)

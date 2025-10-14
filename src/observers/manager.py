@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 观察者管理器
 Observer Manager
@@ -8,7 +9,6 @@ Manages observers and subjects centrally.
 
 import asyncio
 import logging
-from typing import Any,  Dict[str, Any],  Any, Optional
 from datetime import datetime
 
 from .base import Observer, Subject, ObservableEventType
@@ -296,7 +296,7 @@ class ObserverManager:
         severity: str,
         message: str,
         source: Optional[str] = None,
-        data: Optional[Dict[str, Any] = None,
+        data: Optional[Dict[str, Any]] = None,
     ) -> None:
         """触发告警"""
         subject = self._subjects.get("alert")
@@ -369,8 +369,6 @@ class ObserverManager:
 
 # 全局实例
 _observer_manager: Optional[ObserverManager] = None
-
-
 def get_observer_manager() -> ObserverManager:
     """获取全局观察者管理器实例"""
     global _observer_manager

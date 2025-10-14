@@ -1,9 +1,9 @@
+from typing import Any, Dict, List, Optional, Union
 """
 用户领域模型
 """
 
 from datetime import datetime
-from typing import Any,  Dict[str, Any],  Any, List[Any]
 from enum import Enum
 
 
@@ -129,7 +129,6 @@ class User:
         self.is_active = True
         self.is_verified = False
         self.last_login: Optional[datetime] = None
-
         # 偏好和统计
         self.preferences = UserPreferences()
         self.statistics = UserStatistics()

@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 Manager - 服务模块
 
@@ -14,7 +15,6 @@ Manager - 服务模块
 - [待补充 - 使用注意事项]
 """
 
-from typing import Any,  Dict[str, Any],  Any, Optional
 
 from src.core import logger
 from src.core.config import get_settings

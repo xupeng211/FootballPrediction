@@ -1,9 +1,9 @@
+from typing import Any, Dict, List, Optional, Union
 """
 Data validators
 """
 
 import re
-from typing import Any,  Dict[str, Any],  Any, List[Any]
 
 
 def is_valid_email(email: str) -> bool:

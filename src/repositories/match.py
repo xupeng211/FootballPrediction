@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 比赛仓储
 Match Repository
@@ -6,7 +7,6 @@ Match Repository
 Implements data access logic for matches.
 """
 
-from typing import Any, Dict[str, Any], List[Any], Optional
 from datetime import datetime, date, timedelta
 from enum import Enum
 
@@ -402,7 +402,7 @@ class MatchRepository(MatchRepositoryInterface):
         return await self.update_by_id(match_id, update_data)
 
     async def postpone_match(
-        self, match_id: int, reason: Optional[str] ] = None
+        self, match_id: int, reason: Optional[str] = None
     ) -> Optional[Match]:
         """推迟比赛"""
         update_data = {
@@ -414,7 +414,7 @@ class MatchRepository(MatchRepositoryInterface):
         return await self.update_by_id(match_id, update_data)
 
     async def cancel_match(
-        self, match_id: int, reason: Optional[str] ] = None
+        self, match_id: int, reason: Optional[str] = None
     ) -> Optional[Match]:
         """取消比赛"""
         update_data = {

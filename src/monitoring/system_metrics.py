@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 系统指标收集器
 System Metrics Collector
@@ -7,7 +8,6 @@ System Metrics Collector
 
 import psutil
 from datetime import datetime
-from typing import Any,  Dict[str, Any],  Any, Optional
 
 from prometheus_client import CollectorRegistry, Counter, Gauge, Histogram
 
@@ -22,7 +22,6 @@ class SystemMetricsCollector:
         self.registry = registry or CollectorRegistry()
         self.db_manager: Optional[DatabaseManager] = None
         self.redis_manager: Optional[RedisConnectionManager] = None
-
         # 系统指标
         self.cpu_usage = Gauge(
             "system_cpu_usage_percent", "CPU usage percentage", registry=self.registry

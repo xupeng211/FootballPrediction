@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 Predictions - 数据库模块
 
@@ -17,7 +18,6 @@ Predictions - 数据库模块
 from datetime import datetime, timedelta
 from decimal import Decimal
 from enum import Enum
-from typing import Any,  Dict[str, Any],  Any, List[Any], Any
 from ..base import BaseModel
 
 from enum import Enum
@@ -69,7 +69,7 @@ class Predictions(BaseModel):
     )
 
     # 用户关联
-    user_id: Mapped[Optional[int]] = mapped_column(
+    user_id: Mapped[Optional[int] = mapped_column(
         Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=True,
@@ -85,7 +85,7 @@ class Predictions(BaseModel):
     )
 
     # 得分
-    points_earned: Mapped[Optional[int]] = mapped_column(
+    points_earned: Mapped[Optional[int] = mapped_column(
         Integer, nullable=True, default=0, comment="获得积分"
     )
 
@@ -115,28 +115,28 @@ class Predictions(BaseModel):
     )
 
     # 置信度和比分
-    confidence_score: Mapped[Optional[Decimal]] = mapped_column(
+    confidence_score: Mapped[Optional[Decimal] = mapped_column(
         DECIMAL(5, 4), nullable=True, comment="预测置信度"
     )
 
-    predicted_home_score: Mapped[Optional[Decimal]] = mapped_column(
+    predicted_home_score: Mapped[Optional[Decimal] = mapped_column(
         DECIMAL(4, 2), nullable=True, comment="预测主队比分"
     )
 
-    predicted_away_score: Mapped[Optional[Decimal]] = mapped_column(
+    predicted_away_score: Mapped[Optional[Decimal] = mapped_column(
         DECIMAL(4, 2), nullable=True, comment="预测客队比分"
     )
 
-    over_under_prediction: Mapped[Optional[Decimal]] = mapped_column(
+    over_under_prediction: Mapped[Optional[Decimal] = mapped_column(
         DECIMAL(4, 2), nullable=True, comment="大小球预测"
     )
 
-    btts_probability: Mapped[Optional[Decimal]] = mapped_column(
+    btts_probability: Mapped[Optional[Decimal] = mapped_column(
         DECIMAL(5, 4), nullable=True, comment="双方进球概率"
     )
 
     # 特征重要性
-    feature_importance: Mapped[Optional[JSON]] = mapped_column(
+    feature_importance: Mapped[Optional[JSON] = mapped_column(
         JSON, nullable=True, comment="特征重要性"
     )
 
@@ -146,25 +146,25 @@ class Predictions(BaseModel):
     )
 
     # 验证相关字段
-    actual_result: Mapped[Optional[str]] = mapped_column(
+    actual_result: Mapped[Optional[str] = mapped_column(
         String(10), nullable=True, comment="实际比赛结果"
     )
 
-    is_correct: Mapped[Optional[bool]] = mapped_column(
+    is_correct: Mapped[Optional[bool] = mapped_column(
         nullable=True, comment="预测是否正确"
     )
 
-    verified_at: Mapped[Optional[DateTime]] = mapped_column(
+    verified_at: Mapped[Optional[DateTime] = mapped_column(
         DateTime, nullable=True, comment="验证时间"
     )
 
     # 特征数据（用于存储预测时使用的特征）
-    features_used: Mapped[Optional[JSON]] = mapped_column(
+    features_used: Mapped[Optional[JSON] = mapped_column(
         JSON, nullable=True, comment="预测时使用的特征数据"
     )
 
     # 预测元数据
-    prediction_metadata: Mapped[Optional[JSON]] = mapped_column(
+    prediction_metadata: Mapped[Optional[JSON] = mapped_column(
         JSON, nullable=True, comment="预测相关的元数据"
     )
 
@@ -248,7 +248,7 @@ class Predictions(BaseModel):
             return f"{self.predicted_home_score:.1f}-{self.predicted_away_score:.1f}"
         return None
 
-    def get_feature_importance_dict(self) -> Optional[Dict[str, float]]:
+    def get_feature_importance_dict(self) -> Optional[Dict[str, float]:
         """获取特征重要性字典"""
         if self.feature_importance:
             if isinstance(self.feature_importance, str):

@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 # mypy: ignore-errors
 """
 性能监控API端点
@@ -13,7 +14,6 @@ Performance Monitoring API Endpoints
 
 import asyncio
 from datetime import datetime
-from typing import Any, Optional
 
 from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
 from pydantic import BaseModel, Field

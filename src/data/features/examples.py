@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 特征仓库使用示例
 
@@ -17,7 +18,6 @@ import asyncio
 import logging
 import os
 from datetime import datetime, timedelta
-from typing import Any,  Dict[str, Any],  Any
 
 import pandas as pd
 

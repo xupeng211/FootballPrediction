@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 告警管理器
 Alert Manager
@@ -7,7 +8,6 @@ Alert Manager
 
 import logging
 from enum import Enum
-from typing import Any, List[Any], Optional
 from datetime import datetime
 
 logger = logging.getLogger(__name__)

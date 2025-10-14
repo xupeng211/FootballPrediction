@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 # mypy: ignore-errors
 """
 特征定义
@@ -11,7 +12,6 @@
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
-from typing import Any,  Dict[str, Any],  Any, List[Any]
 
 from .entities import MatchEntity, TeamEntity
 

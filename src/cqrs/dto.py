@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 数据传输对象
 Data Transfer Objects
@@ -7,7 +8,6 @@ Defines DTOs used in CQRS pattern.
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict[str, Any], List[Any], Optional
 from datetime import datetime
 
 
@@ -27,7 +27,6 @@ class PredictionDTO:
     notes: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
-
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         return {
@@ -61,7 +60,6 @@ class UserDTO:
     success_rate: float
     created_at: Optional[datetime] = None
     last_login: Optional[datetime] = None
-
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         return {
@@ -92,7 +90,6 @@ class MatchDTO:
     venue: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
-
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         return {
@@ -120,7 +117,7 @@ class PredictionStatsDTO:
     success_rate: float
     total_points: int
     average_confidence: float
-    strategy_breakdown: Dict[str, Dict[str, Any][str, Any]
+    strategy_breakdown: Dict[str, Dict[str, Any]
     recent_performance: List[Dict[str, Any]
 
     def to_dict(self) -> Dict[str, Any]:
@@ -170,7 +167,6 @@ class CommandResult:
     message: Optional[str] = None
     data: Optional[Any] = None
     errors: Optional[List[str] = None
-
     @classmethod
     def success_result(
         cls, data: Any = None, message: str = "操作成功"

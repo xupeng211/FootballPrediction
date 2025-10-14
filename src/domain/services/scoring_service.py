@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 计分领域服务
 Scoring Domain Service
@@ -7,7 +8,6 @@ Handles complex business logic related to prediction scoring.
 """
 
 from decimal import Decimal
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 from ..models.prediction import PredictionPoints
 

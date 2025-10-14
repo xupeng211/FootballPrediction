@@ -1,10 +1,10 @@
+from typing import Any, Dict, List, Optional, Union
 """
 Prediction data loader
 """
 
 import asyncio
 import logging
-from typing import Any, Dict[str, Any], List[Any], Optional
 
 from src.core.logging import get_logger
 

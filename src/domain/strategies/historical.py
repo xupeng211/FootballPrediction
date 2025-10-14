@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 import logging
 
 """
@@ -9,7 +10,6 @@ Strategy based on historical match data and similar scenarios.
 """
 
 import time
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Tuple
 from datetime import datetime
 import numpy as np
 from dataclasses import dataclass
@@ -252,7 +252,7 @@ class HistoricalStrategy(PredictionStrategy):
 
     async def _predict_from_head_to_head(
         self, input_data: PredictionInput
-    ) -> Optional[Tuple[int, int]]:
+    ) -> Optional[Tuple[int, int]:
         """基于直接对战历史预测"""
         # 检查球队ID是否为空
         if input_data.home_team.id is None or input_data.away_team.id is None:
@@ -298,7 +298,7 @@ class HistoricalStrategy(PredictionStrategy):
 
     async def _predict_from_similar_scores(
         self, input_data: PredictionInput
-    ) -> Optional[Tuple[int, int]]:
+    ) -> Optional[Tuple[int, int]:
         """基于相似比分模式预测"""
         # 检查球队ID是否为空
         if input_data.home_team.id is None or input_data.away_team.id is None:
@@ -351,7 +351,7 @@ class HistoricalStrategy(PredictionStrategy):
 
     async def _predict_from_season_patterns(
         self, input_data: PredictionInput
-    ) -> Optional[Tuple[int, int]]:
+    ) -> Optional[Tuple[int, int]:
         """基于赛季表现模式预测"""
         # 检查球队ID是否为空
         if input_data.home_team.id is None:
@@ -390,7 +390,7 @@ class HistoricalStrategy(PredictionStrategy):
 
     async def _predict_from_time_patterns(
         self, input_data: PredictionInput
-    ) -> Optional[Tuple[int, int]]:
+    ) -> Optional[Tuple[int, int]:
         """基于时间模式预测"""
         # 检查球队ID是否为空
         if input_data.home_team.id is None:
@@ -437,7 +437,7 @@ class HistoricalStrategy(PredictionStrategy):
         return None
 
     async def _combine_predictions(
-        self, predictions: Dict[str, Optional[Tuple[int, int]]]
+        self, predictions: Dict[str, Optional[Tuple[int, int]
     ) -> Tuple[int, int]:
         """组合多个预测结果"""
         valid_predictions = {k: v for k, v in predictions.items() if v is not None}

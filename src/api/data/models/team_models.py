@@ -1,9 +1,9 @@
+from typing import Any, Dict, List, Optional, Union
 """
 球队相关模型
 Team Related Models
 """
 
-from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 

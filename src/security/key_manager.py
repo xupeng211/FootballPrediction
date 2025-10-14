@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 密钥管理模块 - 桩实现
 
@@ -9,7 +10,6 @@ Temporary implementation to resolve import errors.
 
 import logging
 import os
-from typing import Any,  Dict[str, Any],  Any, Optional
 
 
 class KeyManager:
@@ -167,8 +167,6 @@ class KeyManager:
 
 # 全局实例
 _global_key_manager: Optional[KeyManager] = None
-
-
 def get_key_manager() -> KeyManager:
     """
     获取全局密钥管理器实例

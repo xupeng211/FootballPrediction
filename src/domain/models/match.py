@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 比赛领域模型
 Match Domain Model
@@ -9,7 +10,6 @@ Encapsulates match-related business logic and invariants.
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict[str, Any], List[Any], Optional
 
 from ...core.exceptions import DomainError
 
@@ -75,18 +75,18 @@ class Match:
     封装比赛的核心业务逻辑和不变性约束。
     """
 
-    id: Optional[int] ] = None
+    id: Optional[int] = None
     home_team_id: int = 0
     away_team_id: int = 0
     league_id: int = 0
     season: str = ""
     match_date: datetime = field(default_factory=datetime.utcnow)
     status: MatchStatus = MatchStatus.SCHEDULED
-    score: Optional[MatchScore] ] = None
-    venue: Optional[str] ] = None
-    referee: Optional[str] ] = None
-    weather: Optional[str] ] = None
-    attendance: Optional[int] ] = None
+    score: Optional[MatchScore] = None
+    venue: Optional[str] = None
+    referee: Optional[str] = None
+    weather: Optional[str] = None
+    attendance: Optional[int] = None
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)
 

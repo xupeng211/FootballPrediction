@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 作业管理器
 
@@ -13,7 +14,6 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from datetime import datetime
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Tuple
 
 from src.database.connection import DatabaseManager
 
@@ -196,7 +196,7 @@ class JobManager:
         task_id: str,
         task_function: Callable,
         args: tuple = (),
-        kwargs: Optional[Dict[str, Any] = None,
+        kwargs: Optional[Dict[str, Any]] = None,
         timeout: int = 300,
     ) -> bool:
         """

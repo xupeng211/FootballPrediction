@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 # mypy: ignore-errors
 """
 比赛赛程收集器
@@ -5,7 +6,6 @@
 """
 
 from datetime import datetime, timedelta
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 import os
 
 from sqlalchemy import select

@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 服务生命周期管理
 Service Lifecycle Management
@@ -7,7 +8,6 @@ Manages service creation, initialization, running and destruction.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict[str, Any], List[Any], Optional
 from enum import Enum
 from datetime import datetime
 import asyncio
@@ -42,10 +42,10 @@ class ServiceInfo:
     instance: Any
     state: ServiceState = ServiceState.UNINITIALIZED
     created_at: datetime = field(default_factory=datetime.utcnow)
-    started_at: Optional[datetime] ] = None
-    stopped_at: Optional[datetime] ] = None
+    started_at: Optional[datetime] = None
+    stopped_at: Optional[datetime] = None
     error_count: int = 0
-    last_error: Optional[Exception] ] = None
+    last_error: Optional[Exception] = None
     dependencies: List[str] = field(default_factory=list)
     dependents: List[str] = field(default_factory=list)
 
@@ -93,9 +93,8 @@ class ServiceLifecycleManager:
         self._lock = threading.RLock()
         self._shutdown_event = asyncio.Event()
         self._monitor_task: Optional[asyncio.Task] = None
-
     def register_service(
-        self, name: str, instance: Any, dependencies: Optional[List[str] ] ] = None
+        self, name: str, instance: Any, dependencies: Optional[List[str] = None
     ) -> None:
         """注册服务"""
         with self._lock:
@@ -516,9 +515,7 @@ class ServiceLifecycleManager:
 
 
 # 全局服务生命周期管理器
-_default_lifecycle_manager: Optional[ServiceLifecycleManager] ] = None
-
-
+_default_lifecycle_manager: Optional[ServiceLifecycleManager] = None
 def get_lifecycle_manager() -> ServiceLifecycleManager:
     """获取默认的生命周期管理器"""
     global _default_lifecycle_manager
@@ -529,7 +526,7 @@ def get_lifecycle_manager() -> ServiceLifecycleManager:
 
 # 生命周期装饰器
 def lifecycle_service(
-    name: Optional[str] ] = None, dependencies: Optional[List[str] ] ] = None
+    name: Optional[str] ] = None, dependencies: Optional[List[str] = None
 ):
     """服务生命周期装饰器"""
 

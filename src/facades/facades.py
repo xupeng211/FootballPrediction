@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 # mypy: ignore-errors
 """
 具体门面实现
@@ -9,7 +10,6 @@ Implements various system facades providing simplified interfaces.
 
 import asyncio
 from datetime import datetime, timedelta
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 import asyncio
 from datetime import datetime, timedelta
@@ -47,7 +47,7 @@ class DatabaseSubsystem(Subsystem):
         self.status = SubsystemStatus.INACTIVE
 
     async def execute_query(
-        self, query: str, params: Optional[Dict[str, Any] = None
+        self, query: str, params: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Any]:
         """执行查询"""
         if self.status != SubsystemStatus.ACTIVE:
@@ -229,7 +229,7 @@ class AnalyticsSubsystem(Subsystem):
         self.metrics["events_count"] = len(self.events)
 
     async def generate_report(
-        self, report_type: str, filters: Optional[Dict[str, Any] = None
+        self, report_type: str, filters: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """生成报告"""
         if self.status != SubsystemStatus.ACTIVE:
@@ -301,7 +301,7 @@ class PredictionSubsystem(Subsystem):
 
         return prediction
 
-    async def batch_predict(self, predictions: List[Dict[str, Any][str], Any]) -> List[Dict[str, Any]:
+    async def batch_predict(self, predictions: List[Dict[str, Any]) -> List[Dict[str, Any]:
         """批量预测"""
         results: List[Any] = []
         for pred in predictions:
@@ -405,7 +405,7 @@ class MainSystemFacade(SystemFacade):
 
         return prediction
 
-    async def batch_process(self, items: List[Dict[str, Any][str], Any]) -> List[Dict[str, Any]:
+    async def batch_process(self, items: List[Dict[str, Any]) -> List[Dict[str, Any]:
         """批量处理接口"""
         prediction_subsystem = self.subsystem_manager.get_subsystem("prediction")
         cache_subsystem = self.subsystem_manager.get_subsystem("cache")

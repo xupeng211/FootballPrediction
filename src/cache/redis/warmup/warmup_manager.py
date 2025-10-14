@@ -1,10 +1,10 @@
+from typing import Any, Dict, List, Optional, Union
 """
 Redis cache warmup manager
 """
 
 import asyncio
 import logging
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 from src.core.logging import get_logger
 
@@ -40,7 +40,7 @@ class WarmupManager:
 CacheWarmupManager = WarmupManager
 
 
-async def startup_warmup(patterns: Optional[List[str] = None) -> Dict[str, Any]:
+async def startup_warmup(patterns: Optional[List[str]] = None) -> Dict[str, Any]:
     """启动时预热缓存的便捷函数"""
     manager = WarmupManager()
     return await manager.warmup_cache(patterns)

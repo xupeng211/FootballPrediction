@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 事件系统基础类
 Event System Base Classes
@@ -10,7 +11,6 @@ import asyncio
 import uuid
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any,  Dict[str, Any],  Any, Optional, Type[Any], TypeVar
 import logging
 
 
@@ -28,7 +28,7 @@ class EventData:
         self,
         source: Optional[str] = None,
         version: str = "1.0",
-        metadata: Optional[Dict[str, Any] = None,
+        metadata: Optional[Dict[str, Any]] = None,
         event_id: Optional[str] = None,
         timestamp: Optional[datetime] = None,
     ):
@@ -106,7 +106,7 @@ class Event(ABC):
 
     @classmethod
     @abstractmethod
-    def from_dict(cls: Type[Any][T], data: Dict[str, Any]) -> T:
+    def from_dict(cls: Type[Any, T], data: Dict[str, Any]) -> T:
         """从字典创建事件
 
         Args:

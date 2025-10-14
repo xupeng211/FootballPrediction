@@ -6,7 +6,7 @@ import tempfile
 import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
-# from src.utils.file_utils import FileUtils
+from src.utils.file_utils import FileUtils
 
 
 class TestFileUtils:

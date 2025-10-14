@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 数据收集器模块
 负责从各种数据源收集足球相关数据

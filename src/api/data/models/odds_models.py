@@ -1,9 +1,9 @@
+from typing import Any, Dict, List, Optional, Union
 """
 赔率相关模型
 Odds Related Models
 """
 
-from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 

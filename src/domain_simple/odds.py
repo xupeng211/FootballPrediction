@@ -1,9 +1,9 @@
+from typing import Any, Dict, List, Optional, Union
 """
 赔率领域模型
 """
 
 from datetime import datetime
-from typing import Any,  Dict[str, Any],  Any, List[Any]
 from enum import Enum
 
 
@@ -91,7 +91,6 @@ class Odds:
         self.handicap: Optional[float] = None
         self.handicap_home_odds: Optional[float] = None
         self.handicap_away_odds: Optional[float] = None
-
         # 历史变化
         self.movements: List[OddsMovement] = []
 
@@ -103,7 +102,6 @@ class Odds:
         self.created_at = datetime.now()
         self.updated_at = datetime.now()
         self.last_movement: Optional[datetime] = None
-
     def update_odds(
         self,
         home_odds: Optional[float] = None,

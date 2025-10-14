@@ -1,10 +1,10 @@
+from typing import Any, Dict, List, Optional, Union
 """
 API响应模型定义
 
 为所有API端点提供标准化的响应模型，确保API文档的一致性和完整性。
 """
 
-from typing import Any,  Dict[str, Any],  Any, Optional
 
 from pydantic import BaseModel, Field
 

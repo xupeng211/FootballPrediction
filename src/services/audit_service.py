@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 审计服务
 Audit Service
@@ -7,7 +8,6 @@ Provides audit logging functionality for system operations.
 """
 
 import logging
-from typing import Any,  Dict[str, Any],  Any, Optional, List[Any]
 from datetime import datetime
 from enum import Enum
 

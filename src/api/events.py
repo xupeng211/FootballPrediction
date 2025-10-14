@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 事件系统API端点
 Event System API Endpoints
@@ -8,7 +9,6 @@ Provides management and monitoring interfaces for the event system.
 
 from fastapi import APIRouter, HTTPException, Query
 from requests.exceptions import HTTPError
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 from datetime import datetime, timedelta
 
 from ..core.event_application import get_event_application

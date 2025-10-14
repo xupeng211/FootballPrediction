@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 查询优化器
 提供查询优化建议和自动优化功能
@@ -6,7 +7,6 @@
 import re
 import time
 import asyncio
-from typing import Any,  List[Any], Dict[str, Any], Any, Optional, Tuple
 from dataclasses import dataclass
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession

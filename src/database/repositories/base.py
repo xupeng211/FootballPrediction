@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 基础仓储接口
 Base Repository Interface
@@ -7,7 +8,6 @@ Defines the base interface for the Repository pattern, providing standard CRUD o
 """
 
 from abc import ABC, abstractmethod
-from typing import Any,  Dict[str, Any],  Any, Generic, List[Any], Optional, Type[Any], TypeVar, Union, Callable
 
 from sqlalchemy import select, update, delete, exc as SQLAlchemyExc
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -28,7 +28,7 @@ class BaseRepository(ABC, Generic[T]):
     """
 
     def __init__(
-        self, model_class: Type[Any][T], db_manager: Optional[DatabaseManager] ] = None
+        self, model_class: Type[Any, T], db_manager: Optional[DatabaseManager] = None
     ):
         """
         初始化仓储
@@ -46,7 +46,7 @@ class BaseRepository(ABC, Generic[T]):
     # ========================================
 
     async def create(
-        self, obj_data: Dict[str, Any], session: Optional[AsyncSession] ] = None
+        self, obj_data: Dict[str, Any], session: Optional[AsyncSession] = None
     ) -> T:
         """
         创建新记录
@@ -69,7 +69,7 @@ class BaseRepository(ABC, Generic[T]):
             return db_obj
 
     async def get_by_id(
-        self, obj_id: Union[int, str], session: Optional[AsyncSession] ] = None
+        self, obj_id: Union[int, str], session: Optional[AsyncSession] = None
     ) -> Optional[T]:
         """
         根据ID获取记录
@@ -156,7 +156,7 @@ class BaseRepository(ABC, Generic[T]):
             return result.scalar_one_or_none()
 
     async def delete(
-        self, obj_id: Union[int, str], session: Optional[AsyncSession] ] = None
+        self, obj_id: Union[int, str], session: Optional[AsyncSession] = None
     ) -> bool:
         """
         删除记录
@@ -230,7 +230,7 @@ class BaseRepository(ABC, Generic[T]):
             return list(result.scalars().all())  # type: ignore
 
     async def find_one_by(
-        self, filters: Dict[str, Any], session: Optional[AsyncSession] ] = None
+        self, filters: Dict[str, Any], session: Optional[AsyncSession] = None
     ) -> Optional[T]:
         """
         根据条件查找单个记录
@@ -276,7 +276,7 @@ class BaseRepository(ABC, Generic[T]):
             return len(result.scalars().all())  # type: ignore
 
     async def exists(
-        self, filters: Dict[str, Any], session: Optional[AsyncSession] ] = None
+        self, filters: Dict[str, Any], session: Optional[AsyncSession] = None
     ) -> bool:
         """
         检查记录是否存在
@@ -296,7 +296,7 @@ class BaseRepository(ABC, Generic[T]):
     # ========================================
 
     async def bulk_create(
-        self, objects_data: List[Dict[str, Any], session: Optional[AsyncSession] ] = None
+        self, objects_data: List[Dict[str, Any], session: Optional[AsyncSession] = None
     ) -> List[T]:
         """
         批量创建记录
@@ -323,7 +323,7 @@ class BaseRepository(ABC, Generic[T]):
             return db_objects
 
     async def bulk_update(
-        self, updates: List[Dict[str, Any], session: Optional[AsyncSession] ] = None
+        self, updates: List[Dict[str, Any], session: Optional[AsyncSession] = None
     ) -> int:
         """
         批量更新记录
@@ -356,7 +356,7 @@ class BaseRepository(ABC, Generic[T]):
             return updated_count
 
     async def bulk_delete(
-        self, ids: List[Union[int, str], session: Optional[AsyncSession] ] = None
+        self, ids: List[Union[int, str], session: Optional[AsyncSession] = None
     ) -> int:
         """
         批量删除记录
@@ -444,7 +444,7 @@ class BaseRepository(ABC, Generic[T]):
         """
         pass
 
-    def get_model_class(self) -> Type[Any][T]:
+    def get_model_class(self) -> Type[Any, T]:
         """获取模型类"""
         return self.model_class
 

@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 用户仓储
 User Repository
@@ -6,7 +7,6 @@ User Repository
 Implements data access logic for users.
 """
 
-from typing import Any, Dict[str, Any], List[Any], Optional
 from datetime import datetime, date
 
 from sqlalchemy import select, func, update

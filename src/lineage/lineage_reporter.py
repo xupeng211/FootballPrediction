@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 数据血缘报告器
 
@@ -7,7 +8,6 @@
 
 import logging
 from datetime import datetime, timezone
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 from uuid import uuid4
 
 from openlineage.client import OpenLineageClient
@@ -50,7 +50,7 @@ class LineageReporter:
         self,
         job_name: str,
         job_type: str = "BATCH",
-        inputs: Optional[List[Dict[str, Any] = None,
+        inputs: Optional[List[Dict[str, Any]] = None,
         description: Optional[str] = None,
         source_location: Optional[str] = None,
         parent_run_id: Optional[str] = None,
@@ -144,8 +144,8 @@ class LineageReporter:
     def complete_job_run(
         self,
         job_name: str,
-        outputs: Optional[List[Dict[str, Any] = None,
-        metrics: Optional[Dict[str, Any] = None,
+        outputs: Optional[List[Dict[str, Any]] = None,
+        metrics: Optional[Dict[str, Any]] = None,
         run_id: Optional[str] = None,
     ) -> bool:
         """
@@ -288,7 +288,7 @@ class LineageReporter:
         target_table: str,
         records_collected: int,
         collection_time: datetime,
-        source_config: Optional[Dict[str, Any] = None,
+        source_config: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
         报告数据采集过程

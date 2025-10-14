@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 装饰器模式基类
 Decorator Pattern Base Classes
@@ -7,7 +8,6 @@ Define core interfaces and abstract classes for the decorator pattern.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any,  Dict[str, Any],  Any, Optional, Awaitable
 import inspect
 import time
 import uuid
@@ -234,7 +234,7 @@ class DecoratorRegistry:
     """装饰器注册表，用于管理全局装饰器"""
 
     def __init__(self):
-        self._decorators: Dict[str, type[Decorator]] = {}
+        self._decorators: Dict[str, type[Decorator] = {}
         self._instances: Dict[str, Decorator] = {}
 
     def register(self, name: str, decorator_class: type[Decorator]) -> None:
@@ -246,7 +246,7 @@ class DecoratorRegistry:
         self._decorators.pop(name, None)
         self._instances.pop(name, None)
 
-    def get_decorator_class(self, name: str) -> Optional[type[Decorator]]:
+    def get_decorator_class(self, name: str) -> Optional[type[Decorator]:
         """获取装饰器类"""
         return self._decorators.get(name)
 

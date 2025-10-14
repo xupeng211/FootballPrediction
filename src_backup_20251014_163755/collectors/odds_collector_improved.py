@@ -1,0 +1,30 @@
+"""
+改进的赔率收集器（向后兼容）
+Improved Odds Collector (Backward Compatible)
+
+为了保持向后兼容性，此文件重新导出新的模块化赔率收集器。
+
+Provides backward compatible exports for the modular odds collector.
+"""
+
+from .odds import (  # type: ignore
+    # 重新导出主要类和函数
+    OddsCollector,
+    OddsCollectorManager,
+    OddsSourceManager,
+    OddsProcessor,
+    OddsAnalyzer,
+    OddsStorage,
+    get_odds_manager,
+)
+
+# 导出所有符号
+__all__ = [
+    "OddsCollector",
+    "OddsCollectorManager",
+    "OddsSourceManager",
+    "OddsProcessor",
+    "OddsAnalyzer",
+    "OddsStorage",
+    "get_odds_manager",
+]

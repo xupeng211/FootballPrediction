@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 足球预测系统字符串处理工具模块
 
@@ -5,7 +6,6 @@
 """
 
 import re
-from typing import Any,  List[Any]
 
 
 class StringUtils:

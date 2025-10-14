@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 事件处理器实现
 Event Handlers Implementation
@@ -9,7 +10,6 @@ Provides implementations for various event handlers.
 import asyncio
 import logging
 from datetime import datetime
-from typing import Any,  Dict[str, Any],  Any, List[Any]
 
 from .base import EventHandler, Event
 from .types import (

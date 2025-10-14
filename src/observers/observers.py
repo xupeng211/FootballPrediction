@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 具体观察者实现
 Concrete Observer Implementations
@@ -10,7 +11,6 @@ import logging
 import time
 from collections import defaultdict, deque
 from datetime import datetime, timedelta
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Callable
 
 from .base import Observer, ObservableEvent, ObservableEventType
 
@@ -261,7 +261,7 @@ class AlertingObserver(Observer):
     def __init__(self):
         """初始化告警观察者"""
         super().__init__("AlertingObserver")
-        self._alert_rules: Dict[str, Dict[str, Any][str, Any] = {}
+        self._alert_rules: Dict[str, Dict[str, Any] = {}
         self._alert_history: deque = deque(maxlen=1000)
         self._alert_cooldown: Dict[str, datetime] = {}
         self._default_cooldown = timedelta(minutes=5)
@@ -391,7 +391,7 @@ class AlertingObserver(Observer):
         history.sort(key=lambda x: x["timestamp"], reverse=True)
         return history[:limit]
 
-    def get_alert_rules(self) -> Dict[str, Dict[str, Any][str, Any]:
+    def get_alert_rules(self) -> Dict[str, Dict[str, Any]:
         """获取所有告警规则"""
         return {
             name: {

@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 装饰器模式API端点
 Decorator Pattern API Endpoints
@@ -7,7 +8,6 @@ Demonstrates the usage and effects of the decorator pattern.
 """
 
 from fastapi import APIRouter, HTTPException, Query
-from typing import Any,  Dict[str, Any],  Any, Optional
 from datetime import datetime
 import asyncio
 from requests.exceptions import HTTPError
@@ -343,7 +343,7 @@ async def demo_decorator_context(
 
     # 创建装饰器函数，它会使用上下文
     async def context_aware_function(
-        x: int, decorator_context: Optional[DecoratorContext] ] = None
+        x: int, decorator_context: Optional[DecoratorContext] = None
     ) -> Dict[str, Any]:
         if decorator_context:
             decorator_context.add_execution_step("context_aware_function")

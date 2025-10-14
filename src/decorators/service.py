@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 装饰器服务
 Decorator Service
@@ -6,7 +7,6 @@ Decorator Service
 Provides high-level management and services for decorators.
 """
 
-from typing import Any,  Union, Dict[str, Any],  Any, List[Any], Optional, Union
 from pathlib import Path
 
 from ..core.logger import get_logger
@@ -53,7 +53,7 @@ class DecoratorService:
         self.factory._config_cache[config.name] = config
 
     def apply_decorators(
-        self, func: Callable, decorator_names: Optional[List[str] = None, **kwargs
+        self, func: Callable, decorator_names: Optional[List[str]] = None, **kwargs
     ) -> Callable:
         """应用装饰器到函数"""
         func_name = func.__name__
@@ -189,7 +189,7 @@ class DecoratorService:
 
 # 便捷装饰器函数
 def decorate(
-    decorator_names: Optional[List[str] = None, **decorator_kwargs
+    decorator_names: Optional[List[str]] = None, **decorator_kwargs
 ) -> Callable:
     """装饰器工厂函数，用于装饰其他函数"""
 
@@ -232,7 +232,7 @@ def with_retry(
 
 
 def with_metrics(
-    metric_name: Optional[str] = None, tags: Optional[Dict[str, str]] = None, **kwargs
+    metric_name: Optional[str] = None, tags: Optional[Dict[str, str] = None, **kwargs
 ) -> Callable:
     """添加指标装饰器"""
     return decorate(

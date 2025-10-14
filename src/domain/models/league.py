@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 联赛领域模型
 League Domain Model
@@ -9,7 +10,6 @@ Encapsulates league-related business logic and invariants.
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict[str, Any], List[Any], Optional
 from decimal import Decimal
 
 from ...core.exceptions import DomainError
@@ -161,19 +161,19 @@ class League:
     封装联赛的核心业务逻辑和不变性约束。
     """
 
-    id: Optional[int] ] = None
+    id: Optional[int] = None
     name: str = ""
-    short_name: Optional[str] ] = None
-    code: Optional[str] ] = None
+    short_name: Optional[str] = None
+    code: Optional[str] = None
     type: LeagueType = LeagueType.DOMESTIC_LEAGUE
     country: str = ""
     level: int = 1  # 联赛级别
     is_active: bool = True
-    founded_year: Optional[int] ] = None
-    website: Optional[str] ] = None
-    logo_url: Optional[str] ] = None
-    current_season: Optional[LeagueSeason] ] = None
-    settings: Optional[LeagueSettings] ] = None
+    founded_year: Optional[int] = None
+    website: Optional[str] = None
+    logo_url: Optional[str] = None
+    current_season: Optional[LeagueSeason] = None
+    settings: Optional[LeagueSettings] = None
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)
 

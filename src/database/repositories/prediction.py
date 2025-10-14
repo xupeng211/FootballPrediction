@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 预测仓储
 Prediction Repository
@@ -7,7 +8,6 @@ Provides prediction data access operations, implementing the Repository pattern.
 """
 
 from datetime import datetime, timedelta
-from typing import Any,  Dict[str, Any], Any, List[Any], Optional, Union
 
 from sqlalchemy import select, and_, desc, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -122,7 +122,7 @@ class PredictionRepository(BaseRepository[Predictions]):
         )
 
     async def get_pending_predictions(
-        self, limit: Optional[int] ] = None, session: Optional[AsyncSession] ] = None
+        self, limit: Optional[int] ] = None, session: Optional[AsyncSession] = None
     ) -> List[Prediction]:
         """
         获取待处理的预测
@@ -399,7 +399,7 @@ class PredictionRepository(BaseRepository[Predictions]):
             return stats
 
     async def get_match_prediction_summary(
-        self, match_id: Union[int, str], session: Optional[AsyncSession] ] = None
+        self, match_id: Union[int, str], session: Optional[AsyncSession] = None
     ) -> Dict[str, Any]:
         """
         获取比赛预测汇总
@@ -478,7 +478,7 @@ class PredictionRepository(BaseRepository[Predictions]):
             return summary
 
     async def get_top_predictors(
-        self, days: int = 30, limit: int = 10, session: Optional[AsyncSession] ] = None
+        self, days: int = 30, limit: int = 10, session: Optional[AsyncSession] = None
     ) -> List[Dict[str, Any]:
         """
         获取顶级预测者排行榜

@@ -1,9 +1,9 @@
+from typing import Any, Dict, List, Optional, Union
 """
 球队领域模型
 """
 
 from datetime import datetime
-from typing import Any,  Dict[str, Any],  Any, List[Any]
 
 
 class TeamStatistics:

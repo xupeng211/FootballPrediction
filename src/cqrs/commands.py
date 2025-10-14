@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 命令定义
 Command Definitions
@@ -6,7 +7,6 @@ Command Definitions
 Defines all write operation commands.
 """
 
-from typing import Any,  Dict[str, Any],  Any, Any
 from datetime import datetime
 from .base import ValidatableCommand, ValidationResult
 from ..database.models import User, Match, Prediction
@@ -24,7 +24,7 @@ class CreatePredictionCommand(ValidatableCommand):
         confidence: float,
         strategy_used: Optional[str] = None,
         notes: Optional[str] = None,
-        metadata: Optional[Dict[str, Any] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(metadata)
         self.match_id = match_id
@@ -71,7 +71,7 @@ class UpdatePredictionCommand(ValidatableCommand):
         confidence: Optional[float] = None,
         strategy_used: Optional[str] = None,
         notes: Optional[str] = None,
-        metadata: Optional[Dict[str, Any] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(metadata)
         self.prediction_id = prediction_id
@@ -118,7 +118,7 @@ class DeletePredictionCommand(ValidatableCommand):
     def __init__(
         self,
         prediction_id: int,
-        metadata: Optional[Dict[str, Any] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(metadata)
         self.prediction_id = prediction_id
@@ -152,7 +152,7 @@ class CreateUserCommand(ValidatableCommand):
         username: str,
         email: str,
         password_hash: str,
-        metadata: Optional[Dict[str, Any] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(metadata)
         self.username = username
@@ -202,7 +202,7 @@ class UpdateUserCommand(ValidatableCommand):
         username: Optional[str] = None,
         email: Optional[str] = None,
         is_active: Optional[bool] = None,
-        metadata: Optional[Dict[str, Any] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(metadata)
         self.user_id = user_id
@@ -239,7 +239,7 @@ class CreateMatchCommand(ValidatableCommand):
         match_date: datetime,
         competition: Optional[str] = None,
         venue: Optional[str] = None,
-        metadata: Optional[Dict[str, Any] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(metadata)
         self.home_team = home_team
@@ -282,7 +282,7 @@ class UpdateMatchCommand(ValidatableCommand):
         status: Optional[str] = None,
         competition: Optional[str] = None,
         venue: Optional[str] = None,
-        metadata: Optional[Dict[str, Any] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ):
         super().__init__(metadata)
         self.match_id = match_id

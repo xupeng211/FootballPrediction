@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 数据质量异常处理机制
 
@@ -8,7 +9,6 @@
 """
 
 import logging
-from typing import Any,  Dict[str, Any],  Any, Callable, Dict[str, Any], List[Any], Optional
 from datetime import datetime
 from enum import Enum
 

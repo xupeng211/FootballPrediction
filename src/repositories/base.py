@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 仓储基类
 Repository Base Classes
@@ -7,7 +8,6 @@ Defines base interfaces and implementations for repository pattern.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict[str, Any], List[Any], Optional, Generic, TypeVar
 from dataclasses import dataclass
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,13 +23,11 @@ ID = TypeVar("ID")
 class QuerySpec:
     """查询规范"""
 
-    filters: Optional[Dict[str, Any] ] ] = None
-    order_by: Optional[List[str] ] ] = None
-    limit: Optional[int] ] = None
-    offset: Optional[int] ] = None
-    include: Optional[List[str] ] ] = None
-
-
+    filters: Optional[Dict[str, Any]] = None
+    order_by: Optional[List[str]] = None
+    limit: Optional[int] = None
+    offset: Optional[int] = None
+    include: Optional[List[str]] = None
 class BaseRepository(Generic[T, ID], ABC):
     """仓储基类
 

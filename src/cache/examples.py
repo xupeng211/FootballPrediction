@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 缓存装饰器使用示例
 Cache Decorators Usage Examples
@@ -6,7 +7,6 @@ Cache Decorators Usage Examples
 """
 
 import asyncio
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 import logging
 
 from .decorators import (

@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, patch
 # 测试导入
 def test_import_retry_config():
     """测试能否正常导入重试配置"""
-    # from src.utils.retry import RetryConfig
+from src.utils.retry import RetryConfig
 
     assert RetryConfig is not None
 
@@ -38,7 +38,7 @@ def test_import_strategies():
 
 def test_import_decorators():
     """测试能否正常导入重试装饰器"""
-    # from src.utils.retry import retry, retry_async, retry_sync
+from src.utils.retry import retry, retry_async, retry_sync
 
     assert retry is not None
     assert retry_async is not None
@@ -47,7 +47,7 @@ def test_import_decorators():
 
 def test_import_circuit():
     """测试能否正常导入熔断器"""
-    # from src.utils.retry import CircuitState, CircuitBreaker
+from src.utils.retry import CircuitState, CircuitBreaker
 
     assert CircuitState is not None
     assert CircuitBreaker is not None
@@ -131,7 +131,7 @@ def test_retry_config_creation():
 # 测试重试装饰器
 def test_retry_decorator_sync():
     """测试同步重试装饰器"""
-    # from src.utils.retry import retry, RetryConfig
+from src.utils.retry import retry, RetryConfig
 
     _config = RetryConfig(max_attempts=3, base_delay=0.01, jitter=False)
     call_count = 0
@@ -152,7 +152,7 @@ def test_retry_decorator_sync():
 @pytest.mark.asyncio
 async def test_retry_decorator_async():
     """测试异步重试装饰器"""
-    # from src.utils.retry import retry, RetryConfig
+from src.utils.retry import retry, RetryConfig
 
     _config = RetryConfig(max_attempts=3, base_delay=0.01, jitter=False)
     call_count = 0
@@ -172,7 +172,7 @@ async def test_retry_decorator_async():
 
 def test_retry_decorator_with_callback():
     """测试带回调的重试装饰器"""
-    # from src.utils.retry import retry, RetryConfig
+from src.utils.retry import retry, RetryConfig
 
     _config = RetryConfig(max_attempts=2, base_delay=0.01)
     callback_calls = []
@@ -302,7 +302,7 @@ def test_backward_compatibility_import():
 
 def test_backward_compatibility_usage():
     """测试向后兼容的使用方式"""
-    # from src.utils.retry import retry, RetryConfig
+from src.utils.retry import retry, RetryConfig
 
     _config = RetryConfig(max_attempts=2, base_delay=0.01)
 

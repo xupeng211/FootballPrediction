@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 # mypy: ignore-errors
 """
 比赛数据处理器
@@ -7,7 +8,6 @@
 
 import logging
 from datetime import datetime
-from typing import Any,  Union, Dict[str, Any],  Any, List[Any], Optional, Any, Union
 
 import pandas as pd
 
@@ -38,7 +38,7 @@ class MatchProcessor:
     async def process_raw_match_data(
         self,
         raw_data: Union[Dict[str, Any], List[Dict[str, Any]  # type: ignore
-    ) -> Optional[Union[Dict[str, Any], pd.DataFrame]]:  # type: ignore
+    ) -> Optional[Union[Dict[str, Any], pd.DataFrame]:  # type: ignore
         """
         处理原始比赛数据
 

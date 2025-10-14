@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 CQRS API端点
 CQRS API Endpoints
@@ -7,7 +8,6 @@ Provides HTTP interface for CQRS pattern.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
-from typing import Any, Dict[str, Any], List[Any], Optional
 from datetime import date, datetime
 from pydantic import BaseModel, Field
 
@@ -63,10 +63,8 @@ class CommandResponse(BaseModel):
 
     success: bool
     message: str
-    data: Optional[Dict[str, Any] ] ] ] = None
-    errors: Optional[List[str] ] ] ] = None
-
-
+    data: Optional[Dict[str, Any] ] = None
+    errors: Optional[List[str] ] = None
 # 依赖注入
 def get_prediction_cqrs_service() -> None:
     """获取预测CQRS服务"""

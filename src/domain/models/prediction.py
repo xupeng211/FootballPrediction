@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 预测领域模型
 Prediction Domain Model
@@ -10,7 +11,6 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
-from typing import Any,  Union, Any, Dict[str, Any], List[Any], Optional, Union
 
 from ...core.exceptions import DomainError
 
@@ -57,9 +57,8 @@ class PredictionScore:
 
     predicted_home: int
     predicted_away: int
-    actual_home: Optional[int] ] = None
-    actual_away: Optional[int] ] = None
-
+    actual_home: Optional[int] = None
+    actual_away: Optional[int] = None
     def __post_init__(self) -> None:
         """验证比分"""
         if self.predicted_home < 0 or self.predicted_away < 0:
@@ -135,7 +134,7 @@ class PredictionPoints:
         self.confidence_bonus = self.confidence_bonus.quantize(Decimal("0.01"))
 
     @property
-    def breakdown(self) -> Dict[str, Union[str, Decimal]]:
+    def breakdown(self) -> Dict[str, Union[str, Decimal]:
         """积分明细"""
         return {
             "score_bonus": self.score_bonus,
@@ -156,19 +155,18 @@ class Prediction:
     封装预测的核心业务逻辑和不变性约束。
     """
 
-    id: Optional[int] ] = None
+    id: Optional[int] = None
     user_id: int = 0
     match_id: int = 0
-    score: Optional[PredictionScore] ] = None
-    confidence: Optional[ConfidenceScore] ] = None
+    score: Optional[PredictionScore] = None
+    confidence: Optional[ConfidenceScore] = None
     status: PredictionStatus = PredictionStatus.PENDING
-    model_version: Optional[str] ] = None
-    points: Optional[PredictionPoints] ] = None
+    model_version: Optional[str] = None
+    points: Optional[PredictionPoints] = None
     created_at: datetime = field(default_factory=datetime.utcnow)
-    evaluated_at: Optional[datetime] ] = None
-    cancelled_at: Optional[datetime] ] = None
-    cancellation_reason: Optional[str] ] = None
-
+    evaluated_at: Optional[datetime] = None
+    cancelled_at: Optional[datetime] = None
+    cancellation_reason: Optional[str] = None
     # 领域事件
     _domain_events: List[Any] = field(default_factory=list, init=False)
 
@@ -222,7 +220,7 @@ class Prediction:
         self,
         actual_home: int,
         actual_away: int,
-        scoring_rules: Optional[Dict[str, Union[str, Decimal]]] ] ] = None,
+        scoring_rules: Optional[Dict[str, Union[str, Decimal] ] ] = None,
     ) -> None:
         """评估预测结果"""
         if self.status != PredictionStatus.PENDING:
@@ -275,7 +273,7 @@ class Prediction:
         self.status = PredictionStatus.EXPIRED
 
     @staticmethod
-    def _default_scoring_rules() -> Dict[str, Union[str, Decimal]]:
+    def _default_scoring_rules() -> Dict[str, Union[str, Decimal]:
         """默认积分规则"""
         return {
             "exact_score": Decimal("10"),  # 精确比分
@@ -283,7 +281,7 @@ class Prediction:
             "confidence_multiplier": Decimal("1"),  # 置信度倍数
         }
 
-    def _calculate_points(self, rules: Dict[str, Union[str, Decimal]]) -> PredictionPoints:
+    def _calculate_points(self, rules: Dict[str, Union[str, Decimal]) -> PredictionPoints:
         """计算积分"""
         points = PredictionPoints()
 

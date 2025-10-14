@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 基准模型训练器 - 兼容性包装器
 

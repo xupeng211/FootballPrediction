@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 足球API适配器
 Football API Adapters
@@ -8,7 +9,6 @@ Integrate various football data APIs.
 
 import asyncio
 import aiohttp
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 from datetime import datetime
 from dataclasses import dataclass
 from enum import Enum
@@ -43,9 +43,7 @@ class FootballMatch:
     home_score: Optional[int] = None
     away_score: Optional[int] = None
     venue: Optional[str] = None
-    weather: Optional[Dict[str, Any] = None
-
-
+    weather: Optional[Dict[str, Any]] = None
 @dataclass
 class FootballTeam:
     """足球队数据模型"""
@@ -57,8 +55,6 @@ class FootballTeam:
     founded: Optional[int] = None
     stadium: Optional[str] = None
     logo_url: Optional[str] = None
-
-
 @dataclass
 class FootballPlayer:
     """足球运动员数据模型"""
@@ -72,8 +68,6 @@ class FootballPlayer:
     height: Optional[float] = None
     weight: Optional[float] = None
     photo_url: Optional[str] = None
-
-
 class FootballApiAdaptee(Adaptee):
     """足球API被适配者基类"""
 
@@ -81,7 +75,6 @@ class FootballApiAdaptee(Adaptee):
         self.api_key = api_key
         self.base_url = base_url
         self.session: Optional[aiohttp.ClientSession] = None
-
     async def initialize(self) -> None:
         """初始化HTTP会话"""
         self.session = aiohttp.ClientSession()
@@ -91,7 +84,7 @@ class FootballApiAdaptee(Adaptee):
         if self.session:
             await self.session.close()
 
-    async def get_data(self, endpoint: str, params: Optional[Dict[str, Any] = None) -> Dict[str, Any]:
+    async def get_data(self, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """获取API数据"""
         if not self.session:
             raise RuntimeError("Adapter not initialized")
@@ -422,7 +415,6 @@ class CompositeFootballAdapter(Adapter):
         super().__init__(None, "CompositeFootballAdapter")
         self.adapters: List[FootballApiAdapter] = []
         self.primary_source: Optional[FootballApiAdapter] = None
-
     def add_adapter(
         self, adapter: FootballApiAdapter, is_primary: bool = False
     ) -> None:
@@ -602,7 +594,7 @@ class FootballDataAdapter:
         if self.client:
             await self.client.close()
 
-    def _build_url(self, path: str, params: Optional[Dict[str, Any] = None) -> str:
+    def _build_url(self, path: str, params: Optional[Dict[str, Any]] = None) -> str:
         """构建URL"""
         if params:
             query_str = "&".join([f"{k}={v}" for k, v in params.items()])

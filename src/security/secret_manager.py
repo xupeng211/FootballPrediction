@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 生产环境密钥管理系统
 """
@@ -5,7 +6,6 @@
 import os
 import json
 import logging
-from typing import Any,  Dict[str, Any], Any, Optional
 from abc import ABC, abstractmethod
 
 logger = logging.getLogger(__name__)
@@ -215,8 +215,6 @@ class SecretManager:
 
 # 全局密钥管理器实例
 _secret_manager: Optional[SecretManager] = None
-
-
 def get_secret_manager() -> SecretManager:
     """获取全局密钥管理器实例"""
     global _secret_manager

@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 # mypy: ignore-errors
 """
 性能监控集成模块
@@ -10,7 +11,6 @@ Performance Monitoring Integration Module
 - 性能监控初始化
 """
 
-from typing import Any, Optional
 
 from fastapi import FastAPI
 

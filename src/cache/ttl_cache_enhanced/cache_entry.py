@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 缓存条目定义
 Cache Entry Definition
@@ -6,7 +7,6 @@ Cache Entry Definition
 """
 
 import time
-from typing import Any, Optional
 
 
 class CacheEntry:

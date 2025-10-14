@@ -1,10 +1,10 @@
+from typing import Any, Dict, List, Optional, Union
 """
 重试机制模块 / Retry Mechanism Module
 
 包含所有重试相关的类和函数。
 """
 
-from typing import Callable, Optional, TypeVar
 import asyncio
 import functools
 import time

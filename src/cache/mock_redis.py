@@ -1,10 +1,10 @@
+from typing import Any, Dict, List, Optional, Union
 """
 模拟Redis管理器（用于测试和开发）
 Mock Redis Manager for Testing and Development
 """
 
 import time
-from typing import Any,  Union, Dict[str, Any],  Any, List[Any], Optional, Union
 
 
 class MockRedisManager:

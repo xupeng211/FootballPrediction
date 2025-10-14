@@ -1,10 +1,10 @@
+from typing import Any, Dict, List, Optional, Union
 """
 Confluent Kafka Mock 实现
 用于测试环境，避免真实的Kafka依赖
 """
 
 import logging
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ class MockMessage:
         topic: str,
         value: Any = None,
         key: Any = None,
-        headers: Optional[List[tuple[str, bytes] = None,
+        headers: Optional[List[tuple[str, bytes]] = None,
     ):
         self._topic = topic
         self._value = value
@@ -100,7 +100,7 @@ class MockConsumer:
         """轮询消息"""
         for topic in self._topics:
             if self._current_offset[topic] < len(self._messages[topic]):
-                msg = self._messages[topic][self._current_offset[topic]]
+                msg = self._messages[topic][self._current_offset[topic]
                 self._current_offset[topic] += 1
                 return msg
         return None
@@ -154,7 +154,7 @@ class MockProducer:
         topic: str,
         value: Any = None,
         key: Any = None,
-        headers: Optional[List[tuple[str, bytes] = None,
+        headers: Optional[List[tuple[str, bytes]] = None,
         partition: int = 0,
         on_delivery: Callable = None,
     ) -> None:
@@ -287,7 +287,7 @@ class MockSerializingProducer(MockProducer):
         topic: str,
         value: Any = None,
         key: Any = None,
-        headers: Optional[List[tuple[str, bytes] = None,
+        headers: Optional[List[tuple[str, bytes]] = None,
         partition: int = 0,
         on_delivery: Callable = None,
     ) -> None:

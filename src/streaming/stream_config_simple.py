@@ -1,10 +1,10 @@
+from typing import Any, Dict, List, Optional, Union
 """
 简化的流配置实现
 """
 
 import json
 import os
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 from pathlib import Path
 
 

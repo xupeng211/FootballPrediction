@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 预测领域事件
 Prediction Domain Events
@@ -6,7 +7,6 @@ Prediction Domain Events
 Defines domain events related to predictions.
 """
 
-from typing import Any,  Dict[str, Any],  Any, Optional
 from .base import DomainEvent
 
 

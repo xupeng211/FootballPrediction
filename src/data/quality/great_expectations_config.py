@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 Great Expectations 配置模块
 
@@ -14,7 +15,6 @@ Great Expectations 配置模块
 import logging
 import os
 from datetime import datetime
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 from src.database.connection import DatabaseManager
 

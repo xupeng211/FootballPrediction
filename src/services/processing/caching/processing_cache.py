@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 # mypy: ignore-errors
 """
 数据处理缓存管理
@@ -6,7 +7,6 @@
 """
 
 from src.cache.redis import RedisManager, CacheKeyManager
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Any
 import logging
 from redis.exceptions import RedisError
 

@@ -8,7 +8,7 @@ import os
 import tempfile
 import time
 from pathlib import Path
-# from src.utils.file_utils import FileUtils
+from src.utils.file_utils import FileUtils
 
 
 class TestFileUtils:

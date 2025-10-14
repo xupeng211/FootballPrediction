@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 球队领域模型
 Team Domain Model
@@ -9,7 +10,6 @@ Encapsulates team-related business logic and invariants.
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict[str, Any], List[Any], Optional
 
 from ...core.exceptions import DomainError
 
@@ -202,7 +202,6 @@ class Team:
     # 值对象
     stats: Optional[{}] = None
     form: Optional[{}] = None
-
     # 领域事件
     _domain_events: List[Any] = field(default_factory=list, init=False)
 

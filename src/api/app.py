@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 FastAPI主应用
 FastAPI Main Application
@@ -9,7 +10,6 @@ Integrates all API routes and middleware.
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Any, Union
 
 from requests.exceptions import HTTPError
 
@@ -32,9 +32,7 @@ from src.api.auth import router as auth_router
 logger = get_logger(__name__)
 
 # 全局预测引擎实例
-prediction_engine: Union[PredictionEngine, None] = None
-
-
+prediction_engine: Union[PredictionEngine, None = None
 async def init_prediction_engine() -> None:
     """初始化预测引擎"""
     global prediction_engine

@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 # mypy: ignore-errors
 """
 改进的实时比分收集器
@@ -23,7 +24,6 @@ import json
 import logging
 import os
 from datetime import datetime, timedelta
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 import aiohttp
 import websockets
@@ -95,7 +95,7 @@ class ScoresCollector:
 
         # 数据缓存
         self.match_cache: Dict[str, Any][int, Dict[str, Any] = {}
-        self.last_update_cache: Dict[str, Any][int, datetime] = {}
+        self.last_update_cache: Dict[int, datetime] = {}
 
         # 性能统计
         self._stats = {
@@ -658,7 +658,7 @@ class ScoresCollectorManager:
     """比分收集器管理器"""
 
     def __init__(self):
-        self.collectors: Dict[str, Any][int, ScoresCollector] = {}
+        self.collectors: Dict[int, ScoresCollector] = {}
         self.redis_manager = RedisManager()
 
     async def get_collector(self, session_id: int) -> ScoresCollector:
@@ -689,8 +689,6 @@ class ScoresCollectorManager:
 
 # 全局管理器实例
 _scores_manager: Optional[ScoresCollectorManager] = None
-
-
 def get_scores_manager() -> ScoresCollectorManager:
     """获取全局比分收集器管理器"""
     global _scores_manager

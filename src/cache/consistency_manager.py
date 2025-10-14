@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 缓存一致性管理器
 负责协调Redis缓存和PostgreSQL数据库之间的数据一致性
@@ -6,7 +7,6 @@
 from src.cache.redis import get_redis_manager
 
 import logging
-from typing import Any,  Union, Dict[str, Any],  Any, List[Any], Union
 from redis.exceptions import RedisError
 
 try:

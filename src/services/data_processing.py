@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 数据处理服务
 Data Processing Service
@@ -7,7 +8,6 @@ Provides data processing and transformation functionality.
 """
 
 import logging
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 from datetime import datetime
 from abc import ABC, abstractmethod
 

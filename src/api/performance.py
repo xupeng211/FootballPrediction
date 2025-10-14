@@ -1,10 +1,10 @@
+from typing import Any, Dict, List, Optional, Union
 """
 API性能优化配置和中间件
 """
 
 import time
 import asyncio
-from typing import Any,  Callable, Dict[str, Any], Any, Optional
 from fastapi import Request, Response, HTTPException
 from fastapi.middleware import Middleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -128,7 +128,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.requests_per_minute = requests_per_minute
         self.burst = burst
-        self.clients: Dict[str, Dict[str, Any][str, Any] = {}
+        self.clients: Dict[str, Dict[str, Any] = {}
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         client_ip = self.get_client_ip(request)

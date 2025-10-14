@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 Redis cache module - 提供完整的Redis缓存管理功能
 """
@@ -5,7 +6,6 @@ Redis cache module - 提供完整的Redis缓存管理功能
 # import asyncio
 import json
 import logging
-from typing import Dict,  Optional, Any, List, Dict
 
 import redis
 import redis.asyncio as aioredis
@@ -55,8 +55,6 @@ class RedisManager:
 
 # 全局实例
 _redis_manager: Optional[RedisManager] = None
-
-
 def get_redis_manager() -> RedisManager:
     """获取全局Redis管理器实例"""
     global _redis_manager

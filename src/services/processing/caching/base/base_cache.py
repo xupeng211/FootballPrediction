@@ -1,10 +1,10 @@
+from typing import Any, Dict, List, Optional, Union
 """
 基础缓存类
 Base Cache Classes
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, List[Any], Optional
 import logging
 
 

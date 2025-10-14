@@ -1,10 +1,10 @@
+from typing import Any, Dict, List, Optional, Union
 """
 预测统计模块
 Prediction Statistics Module
 """
 
 from datetime import datetime
-from typing import Dict,  Dict, List
 
 
 class PredictionStatistics:

@@ -1,9 +1,9 @@
+from typing import Any, Dict, List, Optional, Union
 """
 简化的Kafka消费者实现
 """
 
 import json
-from typing import Any,  Dict[str, Any],  Any, Optional, Callable, AsyncIterator
 from datetime import datetime
 
 from src.core.exceptions import StreamingError
@@ -100,7 +100,7 @@ class KafkaMessageConsumer:
                 return True
         return False
 
-    async def commit(self, offsets: Optional[Dict[str, Any] = None):
+    async def commit(self, offsets: Optional[Dict[str, Any]] = None):
         """提交偏移量"""
         if self.consumer is None:
             raise StreamingError("Consumer not started")

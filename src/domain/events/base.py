@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 基础领域事件
 Base Domain Event
@@ -8,7 +9,6 @@ Defines the base structure for domain events.
 
 from abc import ABC
 from datetime import datetime
-from typing import Any,  Dict[str, Any],  Any, Optional
 from uuid import uuid4
 
 

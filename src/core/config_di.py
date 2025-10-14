@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 配置驱动的依赖注入
 Configuration-driven Dependency Injection
@@ -8,7 +9,6 @@ Manages dependency injection through configuration files.
 
 import json
 import yaml  # type: ignore
-from typing import Any,  Dict[str, Any], Any, List[Any], Type[Any], Optional, Union
 from pathlib import Path
 import logging
 from dataclasses import dataclass, field
@@ -25,16 +25,14 @@ class ServiceConfig:
     """服务配置"""
 
     name: str
-    implementation: Optional[str] ] = None
+    implementation: Optional[str] = None
     lifetime: str = "transient"  # singleton, scoped, transient
-    factory: Optional[str] ] = None
-    instance: Optional[str] ] = None
+    factory: Optional[str] = None
+    instance: Optional[str] = None
     dependencies: List[str] = field(default_factory=list)
     parameters: Dict[str, Any] = field(default_factory=dict[str, Any])
     enabled: bool = True
-    condition: Optional[str] ] = None
-
-
+    condition: Optional[str] = None
 @dataclass
 class DIConfiguration:
     """依赖注入配置"""
@@ -52,9 +50,8 @@ class ConfigurationBinder:
     def __init__(self, container: DIContainer):
         self.container = container
         self.auto_binder = AutoBinder(container)
-        self._config: Optional[DIConfiguration] ] = None
-        self._active_profile: Optional[str] ] = None
-
+        self._config: Optional[DIConfiguration] = None
+        self._active_profile: Optional[str] = None
     def load_from_file(self, config_path: Union[str, Path]) -> None:
         """从文件加载配置"""
         config_path = Path(config_path)

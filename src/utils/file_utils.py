@@ -1,16 +1,15 @@
+from typing import Any, Dict, List, Optional, Union
 """
 足球预测系统文件处理工具模块
 
 提供文件操作相关的工具函数。
 """
 
-from typing import Any,  Dict[str, Any], Any, Union
 
 import hashlib
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict[str, Any], Optional
 import time
 
 
@@ -23,6 +22,11 @@ class FileUtils:
         path = Path(path)
         path.mkdir(parents=True, exist_ok=True)
         return path
+
+    @staticmethod
+    def ensure_directory(path: Union[str, Path]) -> Path:
+        """确保目录存在（ensure_dir的别名）"""
+        return FileUtils.ensure_dir(path)
 
     @staticmethod
     def read_json(file_path: Union[str, Path]) -> Dict[str, Any]:
@@ -70,7 +74,7 @@ class FileUtils:
         return FileUtils.ensure_dir(path)
 
     @staticmethod
-    def read_json_file(file_path: Union[str, Path]) -> Optional[Dict[str, Any]:
+    def read_json_file(file_path: Union[str, Path]) -> Optional[Dict[str, Any]]:
         """读取JSON文件（别名方法）"""
         try:
             return FileUtils.read_json(file_path)
@@ -108,3 +112,11 @@ class FileUtils:
             pass
 
         return removed_count
+
+    @staticmethod
+    def get_file_size(file_path: Union[str, Path]) -> int:
+        """获取文件大小（字节）"""
+        try:
+            return Path(file_path).stat().st_size
+        except (FileNotFoundError, OSError):
+            return 0

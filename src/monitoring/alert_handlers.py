@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 告警处理器
 Alert Handlers
@@ -6,7 +7,6 @@ Alert Handlers
 """
 
 import logging
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 from prometheus_client import CollectorRegistry, Counter, Gauge, Histogram
 
@@ -136,7 +136,7 @@ class PrometheusHandler(AlertHandler):
 class WebhookHandler(AlertHandler):
     """Webhook 告警处理器"""
 
-    def __init__(self, url: str, headers: Optional[Dict[str, str]] = None) -> None:
+    def __init__(self, url: str, headers: Optional[Dict[str, str] = None) -> None:
         super().__init__(AlertChannel.WEBHOOK)
         self.url = url
         self.headers = headers or {}

@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 比赛领域事件
 Match Domain Events
@@ -6,7 +7,6 @@ Match Domain Events
 Defines domain events related to matches.
 """
 
-from typing import Any,  Dict[str, Any],  Any, Any
 from .base import DomainEvent
 from ..models.match import MatchScore, MatchResult
 

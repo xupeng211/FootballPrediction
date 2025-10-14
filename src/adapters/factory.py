@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 适配器工厂
 Adapter Factory
@@ -7,7 +8,6 @@ Used to create and configure adapter instances.
 """
 
 import os
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Type[Any], Union
 from dataclasses import dataclass, field
 import yaml  # type: ignore
 import json
@@ -30,11 +30,9 @@ class AdapterConfig:
     enabled: bool = True
     priority: int = 0
     parameters: Dict[str, Any] = field(default_factory=dict[str, Any])
-    rate_limits: Optional[Dict[str, int]] = None
-    cache_config: Optional[Dict[str, Any] = None
-    retry_config: Optional[Dict[str, Any] = None
-
-
+    rate_limits: Optional[Dict[str, int] = None
+    cache_config: Optional[Dict[str, Any]] = None
+    retry_config: Optional[Dict[str, Any]] = None
 @dataclass
 class AdapterGroupConfig:
     """适配器组配置"""
@@ -49,7 +47,7 @@ class AdapterFactory:
     """适配器工厂，用于创建适配器实例"""
 
     def __init__(self):
-        self._adapter_types: Dict[str, Type[Any][Adapter]] = {}
+        self._adapter_types: Dict[str, Type[Any, Adapter] = {}
         self._configs: Dict[str, AdapterConfig] = {}
         self._group_configs: Dict[str, AdapterGroupConfig] = {}
 
@@ -62,7 +60,7 @@ class AdapterFactory:
         self.register_adapter_type("opta-data", OptaDataAdapter)
         self.register_adapter_type("composite-football", CompositeFootballAdapter)
 
-    def register_adapter_type(self, name: str, adapter_class: Type[Any][Adapter]) -> None:
+    def register_adapter_type(self, name: str, adapter_class: Type[Any, Adapter]) -> None:
         """注册适配器类型"""
         self._adapter_types[name] = adapter_class
 

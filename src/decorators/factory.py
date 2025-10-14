@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 装饰器工厂
 Decorator Factory
@@ -6,7 +7,6 @@ Decorator Factory
 Used to create and configure decorator instances.
 """
 
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Union
 from dataclasses import dataclass, field
 import yaml  # type: ignore
 import json
@@ -24,9 +24,7 @@ class DecoratorConfig:
     enabled: bool = True
     priority: int = 0
     parameters: Dict[str, Any] = field(default_factory=dict[str, Any])
-    conditions: Optional[Dict[str, Any] = None
-
-
+    conditions: Optional[Dict[str, Any]] = None
 @dataclass
 class DecoratorChainConfig:
     """装饰器链配置"""
@@ -271,7 +269,6 @@ class DecoratorBuilder:
         self.component = component
         self.parameters: Dict[str, Any] = {}
         self.name: Optional[str] = None
-
     def with_name(self, name: str) -> "DecoratorBuilder":
         """设置装饰器名称"""
         self.name = name

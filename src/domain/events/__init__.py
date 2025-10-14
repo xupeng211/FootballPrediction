@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 领域事件
 Domain Events

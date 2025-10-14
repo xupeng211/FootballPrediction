@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 # mypy: ignore-errors
 """
 监控API路由
@@ -11,7 +12,6 @@
 
 from sqlalchemy.orm import Session
 import psutil
-from typing import Any, Dict[str, Any], Optional
 from datetime import datetime, date, timedelta
 from fastapi import APIRouter, Depends, Response
 from fastapi.responses import PlainTextResponse

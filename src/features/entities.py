@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 特征实体定义
 
@@ -8,7 +9,6 @@
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any,  Dict[str, Any],  Any, Optional
 
 
 @dataclass
@@ -62,7 +62,6 @@ class TeamEntity:
     team_name: str
     league_id: int
     home_venue: Optional[str] = None
-
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典格式"""
         return {

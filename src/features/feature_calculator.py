@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 # mypy: ignore-errors
 """
 import asyncio
@@ -14,7 +15,6 @@ import asyncio
 import statistics
 from datetime import datetime
 from decimal import Decimal
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 from sqlalchemy import and_, desc, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -43,7 +43,7 @@ class FeatureCalculator:
     - 批量计算和缓存优化
     """
 
-    def __init__(self, config: Optional[Dict[str, Any] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.db_manager = DatabaseManager()
         self._config = config or {}
         self.features: list = []  # 存储特征定义
@@ -437,7 +437,6 @@ class FeatureCalculator:
             results = await asyncio.gather(*tasks)
 
             # 类型转换确保正确的类型匹配
-            from typing import Any,  Dict[str, Any],  Any,  cast
 
             return AllMatchFeatures(
                 match_entity=match_entity,
@@ -473,7 +472,7 @@ class FeatureCalculator:
 
     async def batch_calculate_team_features(
         self, team_ids: List[int], calculation_date: Optional[datetime] = None
-    ) -> Dict[str, Any][int, RecentPerformanceFeatures]:
+    ) -> Dict[int, RecentPerformanceFeatures]:
         """
         批量计算球队特征
 
@@ -482,7 +481,7 @@ class FeatureCalculator:
             calculation_date: 计算日期
 
         Returns:
-            Dict[str, Any][int, RecentPerformanceFeatures]: 球队ID到特征的映射
+            Dict[int, RecentPerformanceFeatures]: 球队ID到特征的映射
         """
         if calculation_date is None:
             calculation_date = datetime.now()

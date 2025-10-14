@@ -1,4 +1,4 @@
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
+from typing import Any, Dict, List, Optional, Union
 from sqlalchemy import Boolean, Column, ForeignKey, Index, Integer, String
 from sqlalchemy.orm import Session, relationship
 from ..base import BaseModel

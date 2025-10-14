@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 # mypy: ignore-errors
 """
 自动绑定系统
@@ -9,7 +10,6 @@ Provides automatic binding from interfaces to implementations.
 
 import inspect
 import importlib
-from typing import Any, Dict[str, Any], List[Any], Optional, Type[Any], TypeVar, Callable
 from pathlib import Path
 import logging
 from dataclasses import dataclass
@@ -77,7 +77,7 @@ class AutoBinder:
         else:
             raise DependencyInjectionError(f"未知的绑定约定: {convention}")
 
-    def bind_interface_to_implementations(self, interface: Type[Any][T]) -> None:
+    def bind_interface_to_implementations(self, interface: Type[Any, T]) -> None:
         """绑定接口到所有实现"""
         implementations = self._find_implementations(interface)
 
@@ -245,7 +245,7 @@ class AutoBinder:
 
     def _select_primary_implementation(
         self, interface: Type[Any], implementations: List[Type[Any]
-    ) -> Optional[Type[Any]]:
+    ) -> Optional[Type[Any]:
         """选择主要实现"""
         # 优先级规则：
         # 1. 类名以接口名结尾的
@@ -269,7 +269,7 @@ class AutoBinder:
 
     def _select_default_implementation(
         self, interface: Type[Any], implementations: List[Type[Any]
-    ) -> Optional[Type[Any]]:
+    ) -> Optional[Type[Any]:
         """选择默认实现"""
         return self._select_primary_implementation(interface, implementations)
 
@@ -344,7 +344,7 @@ class ConventionBinder:
 def auto_bind(lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT):
     """自动绑定装饰器"""
 
-    def decorator(cls: Type[Any][T]) -> Type[Any][T]:
+    def decorator(cls: Type[Any, T]) -> Type[Any, T]:
         # 将类标记为可自动绑定
         cls.__auto_bind__ = True  # type: ignore
         cls.__bind_lifetime__ = lifetime  # type: ignore
@@ -353,10 +353,10 @@ def auto_bind(lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT):
     return decorator
 
 
-def bind_to(interface: Type[Any][T]):
+def bind_to(interface: Type[Any, T]):
     """绑定到接口装饰器"""
 
-    def decorator(cls: Type[Any][T]) -> Type[Any][T]:
+    def decorator(cls: Type[Any, T]) -> Type[Any, T]:
         # 将类标记为接口的实现
         cls.__bind_to__ = interface  # type: ignore
         return cls

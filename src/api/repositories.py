@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 # mypy: ignore-errors
 """
 仓储模式API端点
@@ -8,7 +9,6 @@ Demonstrates query and management features of the repository pattern.
 """
 
 from fastapi import APIRouter, HTTPException, Query
-from typing import Any,  Dict[str, Any],  Any, Optional
 from datetime import date
 
 from ..repositories import (

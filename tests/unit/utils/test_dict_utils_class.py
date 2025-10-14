@@ -1,7 +1,7 @@
 # noqa: F401,F811,F821,E402
 """字典工具类测试"""
 
-# from src.utils.dict_utils import DictUtils
+from src.utils.dict_utils import DictUtils
 
 
 class TestDictUtils:

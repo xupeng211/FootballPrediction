@@ -1,9 +1,9 @@
+from typing import Any, Dict, List, Optional, Union
 """
 联赛领域模型
 """
 
 from datetime import datetime
-from typing import Any,  Dict[str, Any],  Any, List[Any]
 from enum import Enum
 
 

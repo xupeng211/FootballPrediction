@@ -1,8 +1,8 @@
+from typing import Any, Dict, List, Optional, Union
 """
 简化的适配器工厂
 """
 
-from typing import Any, Dict[str, Any], List[Any], Optional, Type[Any]
 from src.core.exceptions import AdapterError
 
 
@@ -10,7 +10,7 @@ class AdapterFactory:
     """适配器工厂"""
 
     def __init__(self):
-        self._adapters: Dict[str, Type[Any]] = {}
+        self._adapters: Dict[str, Type[Any] = {}
         self._instances: Dict[str, Any] = {}
 
     def register_adapter(self, name: str, adapter_class: Type[Any], **kwargs):
@@ -24,7 +24,7 @@ class AdapterFactory:
         }
 
     def create_adapter(
-        self, name: str, config: Optional[Dict[str, Any] = None, singleton: bool = False
+        self, name: str, config: Optional[Dict[str, Any]] = None, singleton: bool = False
     ):
         """创建适配器实例"""
         if name not in self._adapters:
@@ -89,7 +89,7 @@ def get_global_factory() -> AdapterFactory:
 
 
 def get_adapter(
-    adapter_type: str, config: Optional[Dict[str, Any] = None, singleton: bool = False
+    adapter_type: str, config: Optional[Dict[str, Any]] = None, singleton: bool = False
 ):
     """便捷函数：获取适配器"""
     factory = get_global_factory()

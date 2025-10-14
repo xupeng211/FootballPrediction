@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 策略配置管理
 Strategy Configuration Management
@@ -8,7 +9,6 @@ Manages configuration parameters for prediction strategies.
 
 import json
 import yaml  # type: ignore
-from typing import Any,  Union, Dict[str, Any],  Any, Optional, Union, List[Any]
 from pathlib import Path
 from datetime import datetime
 from dataclasses import dataclass, field, asdict
@@ -91,18 +91,17 @@ class StrategyConfig:
     name: str
     type: str
     enabled: bool = True
-    description: Optional[str] ] = None
+    description: Optional[str] = None
     priority: int = 100
     tags: List[str] = field(default_factory=list)
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)
 
     # 策略特定配置
-    ml_config: Optional[MLModelConfig] ] = None
-    statistical_config: Optional[StatisticalConfig] ] = None
-    historical_config: Optional[HistoricalConfig] ] = None
-    ensemble_config: Optional[EnsembleConfig] ] = None
-
+    ml_config: Optional[MLModelConfig] = None
+    statistical_config: Optional[StatisticalConfig] = None
+    historical_config: Optional[HistoricalConfig] = None
+    ensemble_config: Optional[EnsembleConfig] = None
     # 自定义配置
     custom_config: Dict[str, Any] = field(default_factory=dict[str, Any])
 
@@ -127,8 +126,8 @@ class StrategyConfigManager:
         self._environments_file = self.config_dir / "environments.yaml"
 
         self._configs: Dict[str, StrategyConfig] = {}}
-        self._profiles: Dict[str, Union[str, Dict[str, Any][str, Any] = {}
-        self._environments: Dict[str, Union[str, Dict[str, Any][str, Any] = {}
+        self._profiles: Dict[str, Union[str, Dict[str, Any] = {}
+        self._environments: Dict[str, Union[str, Dict[str, Any] = {}
 
         # 加载所有配置
         self.load_all()
@@ -300,7 +299,7 @@ class StrategyConfigManager:
         return configs
 
     def apply_profile(
-        self, profile_name: str, strategy_names: Optional[List[str] ] ] = None
+        self, profile_name: str, strategy_names: Optional[List[str]] = None
     ) -> None:
         """应用配置档案
 

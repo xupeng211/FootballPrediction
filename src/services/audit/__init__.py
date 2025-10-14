@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 audit 模块
 
@@ -9,7 +10,6 @@ audit 模块
 - audit_repository: 审计数据访问层
 """
 
-from typing import Optional
 from enum import Enum
 from datetime import datetime
 
@@ -38,7 +38,7 @@ class AuditContext:
     """审计上下文"""
 
     def __init__(
-        self, user_id: Optional[str] ] = None, action: Optional[AuditAction] ] = None
+        self, user_id: Optional[str] ] = None, action: Optional[AuditAction] = None
     ):
         self.user_id = user_id
         self.action = action

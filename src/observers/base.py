@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 观察者模式基础类
 Observer Pattern Base Classes
@@ -9,7 +10,6 @@ Defines core interfaces for observers and subjects.
 import asyncio
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, TypeVar, Callable
 from enum import Enum
 from dataclasses import dataclass, field
 import logging

@@ -1,8 +1,8 @@
+from typing import Any, Dict, List, Optional, Union
 """
 简化的适配器注册表
 """
 
-from typing import Any, Dict[str, Any], List[Any], Optional, Type[Any]
 from src.core.exceptions import AdapterError
 
 
@@ -10,7 +10,7 @@ class AdapterRegistry:
     """适配器注册表"""
 
     def __init__(self):
-        self._registry: Dict[str, Dict[str, Any][str, Any] = {}
+        self._registry: Dict[str, Dict[str, Any] = {}
         self._instances: Dict[str, Any] = {}
 
     def register(self, name: str, adapter_class: Type[Any], **kwargs):
@@ -25,7 +25,7 @@ class AdapterRegistry:
         if name in self._instances:
             del self._instances[name]
 
-    def create(self, name: str, config: Optional[Dict[str, Any] = None):
+    def create(self, name: str, config: Optional[Dict[str, Any]] = None):
         """创建适配器实例"""
         if name not in self._registry:
             raise AdapterError(f"No adapter registered with name '{name}'")

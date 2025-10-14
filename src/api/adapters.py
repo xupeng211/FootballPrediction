@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 适配器模式API端点
 Adapter Pattern API Endpoints
@@ -7,7 +8,6 @@ Demonstrates the usage and effects of the adapter pattern.
 """
 
 from fastapi import APIRouter, HTTPException, Query, Path
-from typing import Any,  Dict[str, Any],  Any, Optional
 from datetime import datetime, date, timedelta
 from requests.exceptions import HTTPError, RequestException
 

@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 API依赖注入
 API Dependencies
@@ -15,7 +16,6 @@ Provides FastAPI dependency injection functions, including:
 - Request validation
 """
 
-from typing import Any,  Dict[str, Any],  Any, Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials

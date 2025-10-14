@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 适配器模式基类
 Adapter Pattern Base Classes
@@ -7,7 +8,6 @@ Define core interfaces and abstract classes for the adapter pattern.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 from datetime import datetime
 from enum import Enum
 import asyncio
@@ -331,7 +331,7 @@ class DataTransformer(ABC):
 class BaseAdapter(ABC):
     """基础适配器抽象类"""
 
-    def __init__(self, config: Optional[Dict[str, Any] = None):
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
         self._config = config or {}
         self.is_initialized = False
 

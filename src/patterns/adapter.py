@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 适配器模式实现
 
@@ -6,7 +7,6 @@
 
 import asyncio
 from abc import ABC, abstractmethod
-from typing import Any,  Dict[str, Any],  Any, Optional
 from datetime import datetime
 from dataclasses import dataclass
 import aiohttp
@@ -69,7 +69,6 @@ class FootballAPIImpl(ExternalAPI):
         self.base_url = base_url
         self.logger = get_logger("api.football")
         self.session: Optional[aiohttp.ClientSession] = None
-
     async def _get_session(self) -> aiohttp.ClientSession:
         """获取或创建会话"""
         if self.session is None or self.session.closed:
@@ -125,7 +124,6 @@ class WeatherAPIImpl(ExternalAPI):
         self.base_url = base_url
         self.logger = get_logger("api.weather")
         self.session: Optional[aiohttp.ClientSession] = None
-
     async def _get_session(self) -> aiohttp.ClientSession:
         """获取或创建会话"""
         if self.session is None or self.session.closed:
@@ -169,7 +167,6 @@ class OddsAPIImpl(ExternalAPI):
         self.base_url = base_url
         self.logger = get_logger("api.odds")
         self.session: Optional[aiohttp.ClientSession] = None
-
     async def _get_session(self) -> aiohttp.ClientSession:
         """获取或创建会话"""
         if self.session is None or self.session.closed:

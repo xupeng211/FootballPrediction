@@ -1,10 +1,10 @@
+from typing import Any, Dict, List, Optional, Union
 """
 Kafka组件模块 - 兼容性包装器
 
 为了保持向后兼容性，此文件重新导出Kafka相关的类和函数。
 """
 
-from typing import Any, Any
 
 # 尝试导入Kafka组件
 try:

@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 足球特征仓库管理器
 
@@ -19,7 +20,6 @@ import os
 import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 import pandas as pd
 
@@ -68,8 +68,8 @@ class FootballFeatureStore:
         self,
         project_name: str = "football_prediction",
         repo_path: Optional[str] = None,
-        postgres_config: Optional[Dict[str, Any] = None,
-        redis_config: Optional[Dict[str, Any] = None,
+        postgres_config: Optional[Dict[str, Any]] = None,
+        redis_config: Optional[Dict[str, Any]] = None,
     ):
         """
         初始化特征仓库
@@ -81,7 +81,7 @@ class FootballFeatureStore:
             redis_config: Redis配置（在线存储）
         """
         self.project_name = project_name
-        self._temp_dir: Optional[tempfile.TemporaryDirectory[str]] = None
+        self._temp_dir: Optional[tempfile.TemporaryDirectory[str] = None
         self._temp_dir_cleaned = False
 
         if repo_path:
@@ -108,7 +108,6 @@ class FootballFeatureStore:
         }
 
         self._store: Optional[FeatureStore] = None
-
     def initialize(self) -> None:
         """初始化特征仓库"""
         try:
@@ -305,7 +304,7 @@ class FootballFeatureStore:
         self,
         start_date: datetime,
         end_date: datetime,
-        match_ids: Optional[List[int] = None,
+        match_ids: Optional[List[int]] = None,
     ) -> pd.DataFrame:
         """
         创建训练数据集
@@ -465,8 +464,6 @@ class FootballFeatureStore:
 
 # 全局特征仓库实例
 _feature_store: Optional[FootballFeatureStore] = None
-
-
 def get_feature_store() -> FootballFeatureStore:
     """获取特征仓库实例"""
     global _feature_store
@@ -479,8 +476,8 @@ def get_feature_store() -> FootballFeatureStore:
 def initialize_feature_store(
     project_name: str = "football_prediction",
     repo_path: Optional[str] = None,
-    postgres_config: Optional[Dict[str, Any] = None,
-    redis_config: Optional[Dict[str, Any] = None,
+    postgres_config: Optional[Dict[str, Any]] = None,
+    redis_config: Optional[Dict[str, Any]] = None,
 ) -> FootballFeatureStore:
     """
     初始化全局特征仓库实例

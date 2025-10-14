@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 性能分析器模块
 Performance Profiler Module
@@ -21,7 +22,6 @@ from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
 from functools import wraps
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 import psutil
 
@@ -63,9 +63,7 @@ class QueryProfile:
     execution_time: float
     rows_affected: int
     index_used: Optional[str] = None
-    explain_plan: Optional[Dict[str, Any] = None
-
-
+    explain_plan: Optional[Dict[str, Any]] = None
 class PerformanceProfiler:
     """性能分析器主类"""
 
@@ -198,7 +196,7 @@ class PerformanceProfiler:
         execution_time: float,
         rows_affected: int = 0,
         index_used: Optional[str] = None,
-        explain_plan: Optional[Dict[str, Any] = None,
+        explain_plan: Optional[Dict[str, Any]] = None,
     ):
         """记录数据库查询性能"""
         profile = QueryProfile(
@@ -393,7 +391,7 @@ class APIEndpointProfiler:
 
     def __init__(self, profiler: PerformanceProfiler):
         self.profiler = profiler
-        self.endpoint_stats: Dict[str, Dict[str, Any][str, Any] = {}
+        self.endpoint_stats: Dict[str, Dict[str, Any] = {}
 
     def record_endpoint_request(
         self,
@@ -450,7 +448,7 @@ class APIEndpointProfiler:
         )
         self.profiler.metrics.append(metric)
 
-    def get_endpoint_stats(self) -> Dict[str, Dict[str, Any][str, Any]:
+    def get_endpoint_stats(self) -> Dict[str, Dict[str, Any]:
         """获取端点性能统计"""
         # 计算平均持续时间
         for stats in self.endpoint_stats.values():

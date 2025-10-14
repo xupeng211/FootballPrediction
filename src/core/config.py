@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 足球预测系统配置管理模块
 
@@ -8,7 +9,6 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, ClassVar
 
 # Pydantic compatibility logic
 try:

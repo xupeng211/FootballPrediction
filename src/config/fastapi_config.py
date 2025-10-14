@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 FastAPI 中文配置
 """
@@ -35,7 +36,7 @@ def create_chinese_app() -> FastAPI:
         )
 
         # 添加中文标签
-        openapi_schema["tags"]] = [
+        openapi_schema["tags"] = [
             {"name": "基础", "description": "基础接口"},
             {"name": "预测", "description": "预测相关接口"},
             {"name": "数据", "description": "数据管理接口"},

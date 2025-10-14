@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 门面模式API端点
 Facade Pattern API Endpoints
@@ -7,7 +8,6 @@ Demonstrates the usage and effects of the facade pattern.
 """
 
 from fastapi import APIRouter, HTTPException, Query, Body
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 from datetime import datetime
 
 from ..facades.factory import facade_factory

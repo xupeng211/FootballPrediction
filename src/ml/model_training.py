@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 模型训练模块 - 桩实现
 
@@ -12,7 +13,6 @@ import os
 import json
 import numpy as np
 import pandas as pd
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Tuple
 from datetime import datetime
 from enum import Enum
 import asyncio
@@ -95,7 +95,6 @@ class ModelTrainer:
         self._config = config or TrainingConfig()
         import logging
         from datetime import datetime
-        from typing import Any,  Dict[str, Any],  Any, Optional, Tuple
 
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.model = None
@@ -113,7 +112,7 @@ class ModelTrainer:
         self,
         data: pd.DataFrame,
         target_column: str,
-        feature_columns: Optional[List[str] = None,
+        feature_columns: Optional[List[str]] = None,
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
         """
         准备训练数据
@@ -387,14 +386,14 @@ class ModelRegistry:
         self.registry_dir = Path(registry_dir)
         self.registry_dir.mkdir(parents=True, exist_ok=True)
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
-        self._models: Dict[str, Dict[str, Any][str, Any] = {}
+        self._models: Dict[str, Dict[str, Any] = {}
 
     def register_model(
         self,
         model: PredictionModel,
         name: str,
         version: str = "1.0.0",
-        metadata: Optional[Dict[str, Any] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
         注册模型
@@ -491,8 +490,6 @@ class ModelRegistry:
 
 # 全局模型注册表
 _global_registry: Optional[ModelRegistry] = None
-
-
 def get_model_registry() -> ModelRegistry:
     """获取全局模型注册表"""
     global _global_registry
@@ -505,7 +502,7 @@ def get_model_registry() -> ModelRegistry:
 async def train_football_model(
     data: pd.DataFrame,
     target_column: str = "result",
-    feature_columns: Optional[List[str] = None,
+    feature_columns: Optional[List[str]] = None,
     model_name: str = "football_prediction_model",
 ) -> Tuple[PredictionModel, Dict[str, Any]:
     """

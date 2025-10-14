@@ -1,10 +1,10 @@
+from typing import Any, Dict, List, Optional, Union
 """
 Redis asynchronous operations
 """
 
 import json
 import logging
-from typing import Any, Optional
 
 import redis.asyncio as aioredis
 from redis.exceptions import RedisError

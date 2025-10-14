@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 依赖注入设置
 Dependency Injection Setup
@@ -8,7 +9,6 @@ Provides initialization and configuration for dependency injection.
 
 import os
 from pathlib import Path
-from typing import Any,  Optional
 import logging
 
 from .di import DIContainer, ServiceCollection, ServiceLifetime
@@ -25,9 +25,8 @@ class DISetup:
 
     def __init__(self, profile: Optional[str] ] = None) -> None:
         self.profile = profile or os.getenv("APP_PROFILE", "development")
-        self.container: Optional[DIContainer] ] = None
-        self.lifecycle_manager: Optional[ServiceLifecycleManager] ] = None
-
+        self.container: Optional[DIContainer] = None
+        self.lifecycle_manager: Optional[ServiceLifecycleManager] = None
     def initialize(
         self,
         config_file: Optional[str] ] = None,
@@ -126,9 +125,7 @@ class DISetup:
 
 
 # 全局DI设置实例
-_di_setup: Optional[DISetup] ] = None
-
-
+_di_setup: Optional[DISetup] = None
 def get_di_setup() -> DISetup:
     """获取DI设置实例"""
     global _di_setup

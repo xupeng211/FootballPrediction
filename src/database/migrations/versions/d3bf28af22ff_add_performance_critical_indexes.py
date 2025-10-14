@@ -1,5 +1,7 @@
+from typing import Any, Dict, List, Optional, Union
 # mypy: ignore-errors
 from sqlalchemy.exc import SQLAlchemyError, DatabaseError
+
 
 """add_performance_critical_indexes
 
@@ -21,10 +23,8 @@ Create Date: 2025-09-29 23:08:00.000000
 # revision identifiers, used by Alembic.
 revision: str = "d3bf28af22ff"
 down_revision: Union[str, None] = "006_missing_indexes"
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
-
-
+branch_labels: Union[str, Sequence[str], None = None
+depends_on: Union[str, Sequence[str], None = None
 def _create_predictions_indexes(conn) -> None:
     """创建预测表索引"""
     logger.info("1. 创建预测表性能索引...")

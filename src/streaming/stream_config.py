@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 流式处理配置管理
 
@@ -10,7 +11,6 @@
 
 import os
 from dataclasses import dataclass
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 
 @dataclass

@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 比赛领域服务
 Match Domain Service
@@ -6,7 +7,6 @@ Match Domain Service
 Handles complex business logic related to matches.
 """
 
-from typing import Any, List[Any], Optional
 from datetime import datetime
 
 from ..models.match import MatchScore, MatchResult

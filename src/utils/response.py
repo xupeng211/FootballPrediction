@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 API响应工具类
 
@@ -5,7 +6,6 @@ API响应工具类
 """
 
 from datetime import datetime
-from typing import Any,  Dict[str, Any],  Any, Optional
 
 from pydantic import BaseModel
 
@@ -17,8 +17,6 @@ class APIResponseModel(BaseModel):
     message: str
     data: Optional[Any] = None
     code: Optional[str] = None
-
-
 class APIResponse:
     """API响应格式化工具"""
 

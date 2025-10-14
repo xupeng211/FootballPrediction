@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 足球预测系统加密工具模块
 
@@ -7,7 +8,6 @@
 import hashlib
 import secrets
 import uuid
-from typing import Any, Optional
 
 try:
     import bcrypt
@@ -33,7 +33,7 @@ class CryptoUtils:
 
         # 对于大长度，需要生成多个UUID
         if length > 32:
-            _result = ""
+            result = ""
             while len(result) < length:
                 result += str(uuid.uuid4()).replace("-", "")
             return result[:length]

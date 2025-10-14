@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 数据验证器
 
@@ -7,7 +8,6 @@
 from datetime import datetime, timedelta
 
 import logging
-from typing import Any,  Dict[str, Any],  Any, List[Any], Union
 
 import pandas as pd
 

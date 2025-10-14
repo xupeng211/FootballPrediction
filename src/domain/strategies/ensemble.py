@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 # mypy: ignore-errors
 """
 集成策略
@@ -10,7 +11,6 @@ Combines multiple prediction strategies through weighted voting or other ensembl
 import asyncio
 import logging
 import time
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Tuple
 from datetime import datetime
 import numpy as np
 from dataclasses import dataclass
@@ -45,18 +45,16 @@ class StrategyWeight:
 
     strategy_name: str
     base_weight: float
-    dynamic_weight: Optional[float] ] = None
-    performance_weight: Optional[float] ] = None
-    recent_accuracy: Optional[float] ] = None
-
-
+    dynamic_weight: Optional[float] = None
+    performance_weight: Optional[float] = None
+    recent_accuracy: Optional[float] = None
 @dataclass
 class EnsembleResult:
     """集成结果"""
 
     final_prediction: Tuple[int, int]
     confidence: float
-    strategy_contributions: Dict[str, Dict[str, Any][str, Any]
+    strategy_contributions: Dict[str, Dict[str, Any]
     consensus_score: float
     disagreement_level: float
 

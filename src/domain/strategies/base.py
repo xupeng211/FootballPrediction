@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 预测策略基础接口
 Prediction Strategy Base Interface
@@ -7,7 +8,6 @@ Defines abstract base classes and data structures for prediction strategies.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -33,7 +33,7 @@ class PredictionInput:
     match: Match
     home_team: Team
     away_team: Team
-    historical_data: Optional[Dict[str, Any] ] ] = None
+    historical_data: Optional[Dict[str, Any]] = None
     additional_features: Optional[Dict[str, Any] = field(default_factory=dict[str, Any])
     timestamp: datetime = field(default_factory=datetime.utcnow)
 
@@ -45,13 +45,11 @@ class PredictionOutput:
     predicted_home_score: int
     predicted_away_score: int
     confidence: float
-    probability_distribution: Optional[Dict[str, float]] ] ] = None
-    feature_importance: Optional[Dict[str, float]] ] ] = None
+    probability_distribution: Optional[Dict[str, float] = None
+    feature_importance: Optional[Dict[str, float] = None
     metadata: Optional[Dict[str, Any] = field(default_factory=dict[str, Any])
-    strategy_used: Optional[str] ] = None
-    execution_time_ms: Optional[float] ] = None
-
-
+    strategy_used: Optional[str] = None
+    execution_time_ms: Optional[float] = None
 @dataclass
 class StrategyMetrics:
     """策略性能指标"""
@@ -70,7 +68,7 @@ class PredictionStrategy(ABC):
     def __init__(self, name: str, strategy_type: StrategyType) -> None:
         self.name = name
         self.strategy_type = strategy_type
-        self._metrics: Optional[StrategyMetrics] ] = None
+        self._metrics: Optional[StrategyMetrics] = None
         self._is_initialized = False
         self.config: Dict[str, Any] = {}}
 
@@ -204,13 +202,12 @@ class PredictionContext:
     global_config: Dict[str, Any] = field(default_factory=dict[str, Any])
 
     # 中间数据
-    historical_data: Optional[Dict[str, Any] ] ] = None
-    team_form: Optional[Dict[str, Any] ] ] = None
-    head_to_head: Optional[List[Dict[str, Any] ] ] = None
-
+    historical_data: Optional[Dict[str, Any]] = None
+    team_form: Optional[Dict[str, Any]] = None
+    head_to_head: Optional[List[Dict[str, Any]] = None
     # 元数据
-    request_id: Optional[str] ] = None
-    user_id: Optional[int] ] = None
+    request_id: Optional[str] = None
+    user_id: Optional[int] = None
     timestamp: datetime = field(default_factory=datetime.utcnow)
 
     def to_prediction_input(self) -> PredictionInput:

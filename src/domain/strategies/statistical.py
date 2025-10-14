@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 import logging
 
 """
@@ -10,7 +11,6 @@ Strategy implementation using statistical methods and mathematical models for pr
 
 import time
 import math
-from typing import Any,  Dict[str, Any],  Any, List[Any], Tuple
 import numpy as np
 from datetime import datetime
 
@@ -305,7 +305,7 @@ class StatisticalStrategy(PredictionStrategy):
         return (int(round(avg_home)), int(round(avg_away)))
 
     async def _ensemble_predictions(
-        self, predictions: Dict[str, Tuple[int, int]]
+        self, predictions: Dict[str, Tuple[int, int]
     ) -> Tuple[int, int]:
         """集成多个预测结果"""
         weights = self._model_params["model_weights"]

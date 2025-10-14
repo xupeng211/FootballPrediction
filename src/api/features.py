@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 改进版特征获取API
 
@@ -7,7 +8,6 @@
 from requests.exceptions import HTTPError, RequestException
 
 import logging
-from typing import Any,  Dict[str, Any],  Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
@@ -23,9 +23,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/features", tags=["特征管理"])
 
 # 全局特征存储实例（惰性初始化，避免导入时报错）
-feature_store: Optional[FootballFeatureStore] ] = None
-
-
+feature_store: Optional[FootballFeatureStore] = None
 def get_feature_store() -> Optional[FootballFeatureStore]:
     """获取（或初始化）特征存储实例。"""
     global feature_store

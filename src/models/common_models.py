@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 common_models.py
 common_models
@@ -10,7 +11,6 @@ For backward compatibility, this file re-exports all classes from the modules.
 """
 
 import warnings
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 from datetime import datetime
 from pydantic import BaseModel, Field
 
@@ -109,10 +109,8 @@ class MatchData(BaseModel):
     status: str
     home_score: Optional[int] = None
     away_score: Optional[int] = None
-    odds: Optional[Dict[str, float]] = None
+    odds: Optional[Dict[str, float] = None
     features: Optional[FeatureVector] = None
-
-
 class ModelMetrics(BaseModel):
     """模型指标"""
 

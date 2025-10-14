@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 观察者系统API端点
 Observer System API Endpoints
@@ -7,7 +8,6 @@ Provides management and monitoring interfaces for the observer system.
 """
 
 from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 from datetime import datetime, timedelta
 from pydantic import BaseModel
 
@@ -23,10 +23,8 @@ class AlertRequest(BaseModel):
     alert_type: str
     severity: str
     message: str
-    source: Optional[str] ] = None
-    data: Optional[Dict[str, Any] ] ] = None
-
-
+    source: Optional[str] = None
+    data: Optional[Dict[str, Any]] = None
 class MetricUpdateRequest(BaseModel):
     """指标更新请求模型"""
 

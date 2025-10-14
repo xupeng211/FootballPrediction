@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 # mypy: ignore-errors
 """
 具体装饰器实现
@@ -10,7 +11,6 @@ Implements various decorators for functionality enhancement and cross-cutting co
 import asyncio
 import time
 import json
-from typing import Any,  Union, Dict[str, Any],  Any, List[Any], Optional, Union, Type[Any]
 from datetime import datetime, timedelta
 import logging
 
@@ -272,7 +272,7 @@ class MetricsDecorator(Decorator):
         name: Optional[str] = None,
         metrics_collector=None,
         metric_name: Optional[str] = None,
-        tags: Optional[Dict[str, str]] = None,
+        tags: Optional[Dict[str, str] = None,
         track_args: bool = False,
     ):
         super().__init__(component, name)
@@ -355,8 +355,8 @@ class ValidationDecorator(Decorator):
         self,
         component,
         name: Optional[str] = None,
-        input_validators: Optional[List[Validator] = None,
-        output_validators: Optional[List[Validator] = None,
+        input_validators: Optional[List[Validator]] = None,
+        output_validators: Optional[List[Validator]] = None,
         validate_args: bool = True,
         validate_kwargs: bool = True,
         validate_result: bool = True,
@@ -476,7 +476,7 @@ class AuthDecorator(Decorator):
         component,
         name: Optional[str] = None,
         auth_service=None,
-        required_permissions: Optional[List[str] = None,
+        required_permissions: Optional[List[str]] = None,
         require_auth: bool = True,
         token_arg_name: str = "token",
         user_arg_name: str = "user",
@@ -604,7 +604,7 @@ class TimeoutDecorator(Decorator):
         component,
         name: Optional[str] = None,
         timeout_seconds: float = 30.0,
-        timeout_exception: Type[Any][Exception] = TimeoutError,
+        timeout_exception: Type[Any, Exception] = TimeoutError,
     ):
         super().__init__(component, name)
         self.timeout_seconds = timeout_seconds

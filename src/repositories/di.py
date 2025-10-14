@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 仓储依赖注入配置
 Repository Dependency Injection Configuration
@@ -6,7 +7,6 @@ Repository Dependency Injection Configuration
 Provides dependency injection for repository instances in FastAPI.
 """
 
-from typing import Any, Annotated
 
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession

@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 可选依赖管理模块
 
@@ -8,7 +9,6 @@
 import logging
 import sys
 import warnings
-from typing import Any, Optional, TypeVar, Union
 
 logger = logging.getLogger(__name__)
 

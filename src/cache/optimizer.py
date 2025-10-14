@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 Redis缓存优化器
 提供缓存策略、性能优化和监控功能
@@ -7,7 +8,6 @@ import asyncio
 import json
 import time
 import logging
-from typing import Any,  Dict[str, Any], List[Any], Any, Optional, Union, Callable
 from dataclasses import dataclass, asdict
 from enum import Enum
 import aioredis

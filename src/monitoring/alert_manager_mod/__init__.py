@@ -1,10 +1,10 @@
+from typing import Any, Dict, List, Optional, Union
 """
 告警管理模块（兼容版本）
 Alert Manager Module (Compatibility Version)
 """
 
 from enum import Enum
-from typing import Dict,  List, Dict, Any, Optional, Callable
 from dataclasses import dataclass
 from datetime import datetime
 import uuid
@@ -67,8 +67,7 @@ class Alert:
     message: str
     timestamp: datetime
     status: AlertStatus = AlertStatus.ACTIVE
-    metadata: Optional[Dict[str, Any] = None
-
+    metadata: Optional[Dict[str, Any]] = None
     def __post_init__(self):
         if self.metadata is None:
             self._metadata = {}
@@ -166,7 +165,7 @@ class AlertManager:
         name: str,
         level: AlertLevel,
         message: str,
-        metadata: Optional[Dict[str, Any] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> Alert:
         """创建告警"""
         alert_id = str(uuid.uuid4())
@@ -222,7 +221,7 @@ class AlertRuleEngine:
                         _metadata ={"rule": rule["name"], "metrics": metrics},
                     )
                     alerts.append(alert)
-                    self.rule_results[rule["name"]] = {
+                    self.rule_results[rule["name"] = {
                         "triggered": True,
                         "timestamp": datetime.utcnow(),
                     }

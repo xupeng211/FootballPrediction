@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 比赛仓储
 Match Repository
@@ -7,7 +8,6 @@ Provides match data access operations, implementing the Repository pattern.
 """
 
 from datetime import datetime, timedelta
-from typing import Any,  Dict[str, Any], Any, List[Any], Optional, Union
 
 from sqlalchemy import select, and_, or_, desc
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -134,7 +134,7 @@ class MatchRepository(BaseRepository[Match]):
             return result.scalars().all()  # type: ignore  # type: ignore
 
     async def get_live_matches(
-        self, session: Optional[AsyncSession] ] = None
+        self, session: Optional[AsyncSession] = None
     ) -> List[Match]:
         """
         获取正在进行的比赛

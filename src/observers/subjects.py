@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 具体被观察者实现
 Concrete Subject Implementations
@@ -9,7 +10,6 @@ Provides concrete implementations for various subjects.
 import asyncio
 import time
 from datetime import datetime, timedelta
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 from collections import defaultdict
 
 from .base import Subject, ObservableEvent, ObservableEventType
@@ -26,7 +26,7 @@ class SystemMetricsSubject(Subject):
         """初始化系统指标被观察者"""
         super().__init__("SystemMetrics")
         self._metrics: Dict[str, float] = {}
-        self._thresholds: Dict[str, Dict[str, Any][str, float]] = {}
+        self._thresholds: Dict[str, Dict[str, float] = {}
         self._last_notification: Dict[str, float] = {}
         self._notification_interval = 60  # 秒
 
@@ -168,7 +168,7 @@ class PredictionMetricsSubject(Subject):
         self._prediction_counts: Dict[str, int] = defaultdict(int)
         self._accuracy_metrics: Dict[str, List[float] = defaultdict(list)
         self._response_times: List[float] = []
-        self._strategy_performance: Dict[str, Dict[str, Any][str, Any] = defaultdict(Dict[str, Any])
+        self._strategy_performance: Dict[str, Dict[str, Any] = defaultdict(Dict[str, Any])
 
     async def record_prediction(
         self,
@@ -176,7 +176,7 @@ class PredictionMetricsSubject(Subject):
         response_time_ms: float,
         success: bool = True,
         confidence: Optional[float] = None,
-        actual_result: Optional[Dict[str, Any] = None,
+        actual_result: Optional[Dict[str, Any]] = None,
     ) -> None:
         """记录预测事件
 
@@ -225,7 +225,7 @@ class PredictionMetricsSubject(Subject):
         strategy_name: str,
         success: bool,
         confidence: Optional[float],
-        actual_result: Optional[Dict[str, Any] = None,
+        actual_result: Optional[Dict[str, Any]] = None,
     ) -> None:
         """更新策略性能统计"""
         perf = self._strategy_performance[strategy_name]
@@ -324,7 +324,7 @@ class AlertSubject(Subject):
         super().__init__("AlertManager")
         self._alert_counts: Dict[str, int] = defaultdict(int)
         self._alert_levels: Dict[str, List[datetime] = defaultdict(list)
-        self._suppression_rules: Dict[str, Dict[str, Any][str, Any] = {}
+        self._suppression_rules: Dict[str, Dict[str, Any] = {}
 
     async def trigger_alert(
         self,
@@ -332,7 +332,7 @@ class AlertSubject(Subject):
         severity: str,
         message: str,
         source: Optional[str] = None,
-        data: Optional[Dict[str, Any] = None,
+        data: Optional[Dict[str, Any]] = None,
     ) -> None:
         """触发告警
 

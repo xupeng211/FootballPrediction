@@ -12,8 +12,8 @@ import pytest
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 from src.services.enhanced_core import EnhancedBaseService, ServiceConfig
-# from src.services.match_service import MatchService
-# from src.services.prediction_service import PredictionService
+from src.services.match_service import MatchService
+from src.services.prediction_service import PredictionService
 
 
 class TestServiceConfig:

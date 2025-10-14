@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 健康检查器
 Health Checker
@@ -6,7 +7,6 @@ Health Checker
 """
 
 from datetime import datetime
-from typing import Any,  Dict[str, Any],  Any, Optional
 
 from src.database.connection import DatabaseManager
 from src.cache.redis.core.connection_manager import RedisConnectionManager

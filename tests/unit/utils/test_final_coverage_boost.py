@@ -80,9 +80,9 @@ class TestFinalCoverageBoost:
     def test_util_functions(self):
         """测试工具函数"""
         try:
-            # from src.utils.dict_utils import DictUtils
-            # from src.utils.string_utils import StringUtils
-            # from src.utils.time_utils import TimeUtils
+from src.utils.dict_utils import DictUtils
+from src.utils.string_utils import StringUtils
+from src.utils.time_utils import TimeUtils
 
             assert DictUtils is not None
             assert StringUtils is not None

@@ -1,4 +1,4 @@
-from typing import Any,  Dict[str, Any],  Any, Optional
+from typing import Any, Dict, List, Optional, Union
 from sqlalchemy import Boolean, Column, DateTime, Integer, String, func
 from sqlalchemy.exc import SQLAlchemyError, DatabaseError
 from sqlalchemy.orm import validates
@@ -143,7 +143,7 @@ class RawOddsData(BaseModel):
         """标记为已处理"""
         self.processed = True  # type: ignore
 
-    def get_odds_values(self) -> Optional[Dict[str, float]]:
+    def get_odds_values(self) -> Optional[Dict[str, float]:
         """
         提取赔率值
 

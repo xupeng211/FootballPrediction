@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 Health Utils - API模块
 
@@ -19,7 +20,6 @@ Health Utils - API模块
 
 import asyncio
 import time
-from typing import Any,  Dict[str, Any],  Any, Optional
 from datetime import datetime
 
 

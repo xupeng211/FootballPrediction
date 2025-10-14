@@ -1,10 +1,9 @@
+from typing import Any, Dict, List, Optional, Union
 """数据库配置模块"""
 
-from __future__ import annotations
 
 import os
 from dataclasses import dataclass
-from typing import Any, Optional
 
 
 @dataclass

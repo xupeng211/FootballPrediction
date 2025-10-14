@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 数据收集核心
 Data Collection Core
@@ -7,7 +8,6 @@ Data Collection Core
 
 import asyncio
 from datetime import datetime, timedelta
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 from celery import Celery
 
@@ -154,7 +154,7 @@ def manual_collect_all_data() -> Dict[str, Any]:
 
 @celery_app.task
 def emergency_data_collection_task(
-    data_types: Optional[List[str] = None, priority: int = 1
+    data_types: Optional[List[str]] = None, priority: int = 1
 ) -> Dict[str, Any]:
     """
     紧急数据收集任务

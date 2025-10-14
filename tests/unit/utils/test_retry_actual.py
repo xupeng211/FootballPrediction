@@ -1,7 +1,7 @@
 """重试功能测试（实际可用功能）"""
 
 import pytest
-# from src.utils.retry import RetryConfig, retry
+from src.utils.retry import RetryConfig, retry
 
 
 class TestRetryActual:

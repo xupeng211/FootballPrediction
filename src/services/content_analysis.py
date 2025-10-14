@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 足球预测系统内容分析服务模块
 
@@ -7,7 +8,6 @@
 from .base_unified import SimpleService
 from datetime import datetime
 from enum import Enum
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 
 class ContentType(Enum):
@@ -55,7 +55,7 @@ class AnalysisResult:
         analysis_type: str = "",
         result: Dict[str, Any] = None,
         confidence: float = 0.0,
-        timestamp: Optional[datetime] ] = None,
+        timestamp: Optional[datetime] = None,
         content_id: str = "",
     ):
         self.id = id

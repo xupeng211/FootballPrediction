@@ -13,7 +13,7 @@ def test_services_import():
     """测试所有服务模块可以正常导入"""
     # 测试基础服务可以导入
     try:
-        # from src.services.audit_service import AuditService
+from src.services.audit_service import AuditService
 
         assert AuditService is not None
     except ImportError as e:
@@ -40,13 +40,13 @@ class TestAuditServiceSimple:
 
     def test_audit_service_class_exists(self):
         """测试审计服务类存在"""
-        # from src.services.audit_service import AuditService
+from src.services.audit_service import AuditService
 
         assert AuditService is not None
 
     def test_audit_service_methods(self):
         """测试审计服务方法存在"""
-        # from src.services.audit_service import AuditService
+from src.services.audit_service import AuditService
 
         # 检查是否有基本方法
         if hasattr(AuditService, "log_action"):

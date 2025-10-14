@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 分布式追踪配置模块
 使用OpenTelemetry进行分布式追踪
@@ -5,7 +6,6 @@
 
 import os
 import time
-from typing import Any,  Dict[str, Any], Any, Optional, List[Any]
 from functools import wraps
 from contextlib import contextmanager
 
@@ -55,7 +55,6 @@ class TracingConfig:
 
         self._tracer: Optional[trace.Tracer] = None
         self._provider: Optional[TracerProvider] = None
-
     def initialize(self) -> None:
         """初始化追踪系统"""
         if not self.enabled:
@@ -224,7 +223,7 @@ def get_tracer(name: str = None) -> trace.Tracer:
 def trace_span(
     name: str = None,
     kind: trace.SpanKind = trace.SpanKind.INTERNAL,
-    attributes: Dict[str, types.AttributeValue] = None
+    attributes: Dict[str, types.AttributeValue = None
 ):
     """装饰器：创建追踪span"""
     def decorator(func):
@@ -262,7 +261,7 @@ def trace_span(
 def trace_async_span(
     name: str = None,
     kind: trace.SpanKind = trace.SpanKind.INTERNAL,
-    attributes: Dict[str, types.AttributeValue] = None
+    attributes: Dict[str, types.AttributeValue = None
 ):
     """装饰器：创建异步追踪span"""
     def decorator(func):
@@ -302,7 +301,7 @@ def trace_async_span(
 def trace_context(
     name: str,
     kind: trace.SpanKind = trace.SpanKind.INTERNAL,
-    attributes: Dict[str, types.AttributeValue] = None
+    attributes: Dict[str, types.AttributeValue = None
 ):
     """上下文管理器：创建追踪span"""
     tracer = get_tracer()

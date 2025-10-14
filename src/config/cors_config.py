@@ -1,7 +1,7 @@
+from typing import Any, Dict, List, Optional, Union
 """CORS配置管理"""
 
 import os
-from typing import Any,  List[Any]
 
 
 def get_cors_origins() -> List[str]:

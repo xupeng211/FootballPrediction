@@ -1,8 +1,8 @@
+from typing import Any, Dict, List, Optional, Union
 """
 API依赖注入
 """
 
-from typing import Any, Generator
 
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session

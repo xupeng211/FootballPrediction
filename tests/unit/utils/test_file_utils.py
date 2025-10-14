@@ -8,7 +8,7 @@ import tempfile
 import os
 from pathlib import Path
 from unittest.mock import patch, MagicMock
-# from src.utils.file_utils import FileUtils
+from src.utils.file_utils import FileUtils
 
 
 class TestFileUtils:

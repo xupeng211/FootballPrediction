@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 预定义的缓存实例
 Predefined Cache Instances
@@ -7,6 +8,7 @@ Provides commonly used cache instances, ready to use.
 """
 
 from .ttl_cache import TTLCache
+
 
 # 预定义的缓存实例
 # Predefined cache instances

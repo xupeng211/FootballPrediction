@@ -1,10 +1,10 @@
+from typing import Any, Dict, List, Optional, Union
 """
 比分收集器
 实时收集比赛比分和事件
 """
 
 from datetime import datetime
-from typing import Any,  Dict[str, Any],  Any, List[Any]
 import os
 
 from sqlalchemy import or_, select

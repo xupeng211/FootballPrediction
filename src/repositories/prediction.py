@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 预测仓储
 Prediction Repository
@@ -6,7 +7,6 @@ Prediction Repository
 Implements data access logic for predictions.
 """
 
-from typing import Any, Dict[str, Any], List[Any], Optional
 from datetime import datetime, date
 from decimal import Decimal
 
@@ -122,7 +122,7 @@ class ReadOnlyPredictionRepository(ReadOnlyRepository[Prediction, int]):
         return await self.find_many(query_spec)
 
     async def get_user_statistics(
-        self, user_id: int, period_days: Optional[int] ] = None
+        self, user_id: int, period_days: Optional[int] = None
     ) -> Dict[str, Any]:
         """获取用户统计信息"""
         query = select(

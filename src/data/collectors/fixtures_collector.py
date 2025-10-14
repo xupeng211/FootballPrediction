@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 赛程数据采集器
 
@@ -13,7 +14,6 @@
 基于 DATA_DESIGN.md 第1.1节设计。
 """
 
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Any
 from datetime import datetime
 
 from .base_collector import DataCollector, CollectionResult
@@ -53,7 +53,7 @@ class FixturesCollector(DataCollector):
 
     async def collect_fixtures(
         self,
-        leagues: Optional[List[str] = None,
+        leagues: Optional[List[str]] = None,
         date_from: Optional[datetime] = None,
         date_to: Optional[datetime] = None,
         **kwargs,

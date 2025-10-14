@@ -2,7 +2,7 @@
 
 import pytest
 import warnings
-# from src.utils.warning_filters import setup_warning_filters
+from src.utils.warning_filters import setup_warning_filters
 
 
 class TestWarningFilters:
@@ -11,7 +11,7 @@ class TestWarningFilters:
     def test_setup_warning_filters_import(self):
         """测试警告过滤器导入"""
         try:
-            # from src.utils.warning_filters import setup_warning_filters
+from src.utils.warning_filters import setup_warning_filters
 
             assert setup_warning_filters is not None
         except ImportError:

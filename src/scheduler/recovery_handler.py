@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 恢复处理器
 
@@ -10,7 +11,6 @@
 import logging
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +46,7 @@ class TaskFailure:
         failure_type: FailureType,
         error_message: str,
         retry_count: int = 0,
-        context: Optional[Dict[str, Any] = None,
+        context: Optional[Dict[str, Any]] = None,
     ):
         """
         初始化任务失败记录

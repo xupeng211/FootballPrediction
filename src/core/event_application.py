@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 事件驱动应用程序初始化
 Event-Driven Application Initialization
@@ -7,7 +8,6 @@ Provides event system initialization and lifecycle management.
 """
 
 import logging
-from typing import Any,  Optional
 
 from ..events import get_event_bus, start_event_bus, stop_event_bus
 from ..events.handlers import register_default_handlers
@@ -126,9 +126,7 @@ class EventDrivenApplication:
 
 
 # 全局应用程序实例
-_app_instance: Optional[EventDrivenApplication] ] = None
-
-
+_app_instance: Optional[EventDrivenApplication] = None
 def get_event_application() -> EventDrivenApplication:
     """获取全局事件应用程序实例"""
     global _app_instance

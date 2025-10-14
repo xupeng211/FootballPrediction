@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 Helper functions
 """
@@ -5,7 +6,6 @@ Helper functions
 import hashlib
 import uuid
 from datetime import datetime
-from typing import Any,  Dict[str, Any],  Any, Optional
 
 
 def generate_uuid() -> str:

@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 观察者模式实现
 
@@ -5,7 +6,6 @@
 """
 
 from abc import ABC, abstractmethod
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 from datetime import datetime
 import asyncio
 import logging
@@ -165,7 +165,7 @@ class AlertingObserver(Observer):
     """告警通知观察者"""
 
     def __init__(self):
-        self.alert_rules: Dict[str, Dict[str, Any][str, Any] = {}
+        self.alert_rules: Dict[str, Dict[str, Any] = {}
         self.alert_history: List[Dict[str, Any] = []
         self.logger = get_logger("observer.alerting")
 

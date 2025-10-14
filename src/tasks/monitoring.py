@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 任务监控模块
 
@@ -10,7 +11,6 @@
 
 import logging
 from datetime import datetime
-from typing import Any,  Dict[str, Any],  Any, Optional, cast
 
 from prometheus_client import REGISTRY, CollectorRegistry, Counter, Gauge, Histogram
 from sqlalchemy import text
@@ -41,7 +41,6 @@ class TaskMonitor:
         """
         self._db_type: Optional[str] = None
         self._query_builder: Optional[CompatibleQueryBuilder] = None
-
         # 使用传入的注册表或默认全局注册表
         self.registry = registry or REGISTRY
 

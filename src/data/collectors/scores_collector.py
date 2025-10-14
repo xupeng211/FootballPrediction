@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 实时比分采集器
 
@@ -13,7 +14,6 @@
 基于 DATA_DESIGN.md 第1.1节设计。
 """
 
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Any
 from datetime import datetime
 from enum import Enum
 import asyncio
@@ -109,7 +109,7 @@ class ScoresCollector(DataCollector):
 
     async def collect_live_scores(
         self,
-        match_ids: Optional[List[str] = None,
+        match_ids: Optional[List[str]] = None,
         use_websocket: bool = True,
         **kwargs,
     ) -> CollectionResult:
@@ -454,7 +454,7 @@ class ScoresCollector(DataCollector):
         return status.upper() in finished_statuses
 
     async def start_continuous_monitoring(
-        self, match_ids: Optional[List[str] = None, use_websocket: bool = True
+        self, match_ids: Optional[List[str]] = None, use_websocket: bool = True
     ) -> None:
         """
         启动持续监控模式（后台任务）

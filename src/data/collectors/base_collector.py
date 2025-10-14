@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 数据采集器抽象基类
 
@@ -14,7 +15,6 @@ import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 import aiohttp
 
@@ -43,9 +43,7 @@ class CollectionResult:
     error_count: int
     status: str  # success/failed/partial
     error_message: Optional[str] = None
-    collected_data: Optional[List[Dict[str, Any] = None
-
-
+    collected_data: Optional[List[Dict[str, Any]] = None
 class DataCollector(ABC):
     """
     数据采集器抽象基类
@@ -126,9 +124,9 @@ class DataCollector(ABC):
         self,
         url: str,
         method: str = "GET",
-        headers: Optional[Dict[str, str]] = None,
-        params: Optional[Dict[str, Any] = None,
-        json_data: Optional[Dict[str, Any] = None,
+        headers: Optional[Dict[str, str] = None,
+        params: Optional[Dict[str, Any]] = None,
+        json_data: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         发起HTTP请求（带重试机制） / Make HTTP Request (with Retry Mechanism)
@@ -186,9 +184,9 @@ class DataCollector(ABC):
         self,
         url: str,
         method: str = "GET",
-        headers: Optional[Dict[str, str]] = None,
-        params: Optional[Dict[str, Any] = None,
-        json_data: Optional[Dict[str, Any] = None,
+        headers: Optional[Dict[str, str] = None,
+        params: Optional[Dict[str, Any]] = None,
+        json_data: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         发起HTTP请求（带重试机制） / Make HTTP Request (with Retry Mechanism)

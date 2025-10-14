@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 门面模式基础类
 Facade Pattern Base Classes
@@ -7,7 +8,6 @@ Defines core components of the facade pattern.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Set
 import logging
 from datetime import datetime
 from enum import Enum
@@ -74,14 +74,14 @@ class SubsystemManager:
 
     def __init__(self):
         self._subsystems: Dict[str, Subsystem] = {}
-        self._dependencies: Dict[str, Set[str]] = {}
+        self._dependencies: Dict[str, Set[str] = {}
         self._initialization_order: List[str] = []
 
     def register(
         self, subsystem: Subsystem, dependencies: Optional[List[str] = None
     ) -> None:
         """注册子系统"""
-        self._subsystems[subsystem.name] = subsystem
+        self._subsystems[subsystem.name]] = subsystem
         self._dependencies[subsystem.name] = set(dependencies or [])
         self._calculate_initialization_order()
 
@@ -164,7 +164,7 @@ class SubsystemManager:
             results[name] = await subsystem.health_check()
         return results
 
-    def get_all_status(self) -> Dict[str, Dict[str, Any][str, Any]:
+    def get_all_status(self) -> Dict[str, Dict[str, Any]:
         """获取所有子系统状态"""
         return {
             name: subsystem.get_status() for name, subsystem in self._subsystems.items()

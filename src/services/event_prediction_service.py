@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 # mypy: ignore-errors
 """
 事件驱动的预测服务
@@ -8,7 +9,6 @@ Prediction service integrated with event system, publishing prediction-related e
 """
 
 import logging
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 from datetime import datetime
 
 from .strategy_prediction_service import StrategyPredictionService
@@ -129,7 +129,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
         return original_prediction
 
     async def batch_predict(
-        self, match_ids: List[int], user_id: int, strategy_name: Optional[str] ] = None
+        self, match_ids: List[int], user_id: int, strategy_name: Optional[str] = None
     ) -> List[Prediction]:
         """批量预测并发布事件
 
@@ -270,7 +270,7 @@ class EventDrivenMatchService:
         venue: Optional[str] ] = None,
         weather: Optional[Dict[str, Any] ] ] = None,
         created_by: Optional[int] ] = None,
-        initial_odds: Optional[Dict[str, float]] ] ] = None,
+        initial_odds: Optional[Dict[str, float] ] ] = None,
     ) -> Match:
         """创建比赛并发布事件
 
@@ -310,7 +310,7 @@ class EventDrivenMatchService:
         self,
         match: Match,
         created_by: Optional[int],
-        initial_odds: Optional[Dict[str, float]],
+        initial_odds: Optional[Dict[str, float],
         weather: Optional[Dict[str, Any],
     ) -> None:
         """发布比赛创建事件"""

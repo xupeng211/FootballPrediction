@@ -1,8 +1,8 @@
+from typing import Any, Dict, List, Optional, Union
 """
 业务规则和验证引擎
 """
 
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Callable
 from abc import ABC, abstractmethod
 from datetime import datetime
 
@@ -110,7 +110,7 @@ class ValidationEngine:
     def remove_rule(self, entity_type: str, rule_name: str) -> bool:
         """移除规则"""
         if entity_type in self._rules:
-            self._rules[entity_type]] = [
+            self._rules[entity_type] = [
                 rule for rule in self._rules[entity_type] if rule.name != rule_name
             ]
             return True

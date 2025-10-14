@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 Feast Feature Store Mock 实现
 用于测试环境，避免真实的Feast依赖
@@ -5,7 +6,6 @@ Feast Feature Store Mock 实现
 
 import logging
 from datetime import datetime, timedelta
-from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Any, Tuple
 from dataclasses import dataclass
 from collections import defaultdict
 
@@ -22,9 +22,7 @@ class FeatureView:
     ttl: Optional[timedelta] = None
     batch_source: Optional[str] = None
     stream_source: Optional[str] = None
-    tags: Optional[Dict[str, str]] = None
-
-
+    tags: Optional[Dict[str, str] = None
 @dataclass
 class Entity:
     """实体"""
@@ -32,18 +30,14 @@ class Entity:
     name: str
     value_type: str
     description: Optional[str] = None
-    tags: Optional[Dict[str, str]] = None
-
-
+    tags: Optional[Dict[str, str] = None
 @dataclass
 class FeatureService:
     """特征服务"""
 
     name: str
     features: List[str]
-    tags: Optional[Dict[str, str]] = None
-
-
+    tags: Optional[Dict[str, str] = None
 class ValueType:
     """值类型常量"""
 
@@ -68,7 +62,7 @@ class MockFeatureStore:
         self._feature_views: Dict[str, FeatureView] = {}
         self._entities: Dict[str, Entity] = {}
         self._feature_services: Dict[str, FeatureService] = {}
-        self._feature_data: Dict[str, Dict[str, Any][str, Any] = defaultdict(dict[str, Any][str, Any])
+        self._feature_data: Dict[str, Dict[str, Any] = defaultdict(dict[str, Any][str, Any])
         self._initialized = False
 
     def init(self) -> None:
@@ -175,7 +169,7 @@ class MockFeatureStore:
         # Mock实现 - 不实际写入
 
     def materialize_incremental(
-        self, start_date: datetime, end_date: datetime, feature_views: List[str] = None
+        self, start_date: datetime, end_date: datetime, feature_views: List[str = None
     ) -> None:
         """增量物化"""
         logger.info(
@@ -206,8 +200,7 @@ class MockFeatureService:
     def __init__(self, name: str, feature_store: MockFeatureStore):
         self.name = name
         self.feature_store = feature_store
-        self._service_config: Optional[Dict[str, Any] = None
-
+        self._service_config: Optional[Dict[str, Any]] = None
     def get_feature_vector(
         self, entity_id: str, feature_refs: List[str]
     ) -> Dict[str, Any]:
@@ -318,8 +311,6 @@ def generate_test_features(entity_id: str) -> Dict[str, Any]:
 
 # 创建全局实例
 global_feast_store: Optional[MockFeatureStore] = None
-
-
 def get_feast_store() -> MockFeatureStore:
     """获取全局特征存储实例"""
     global global_feast_store

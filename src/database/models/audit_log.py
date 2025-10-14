@@ -1,4 +1,4 @@
-from typing import Any,  Dict[str, Any],  Any, Optional
+from typing import Any, Dict, List, Optional, Union
 from datetime import datetime
 from datetime import timedelta
 from enum import Enum
@@ -14,7 +14,6 @@ from sqlalchemy import Boolean, Column, DateTime, Index, Integer, String, Text, 
 """
 
 from datetime import datetime, timedelta
-from typing import Any,  Dict[str, Any],  Any, Optional
 from sqlalchemy import Boolean, Column, DateTime, Index, Integer, String, Text
 from sqlalchemy.sql import func
 from ..base import BaseModel
@@ -202,7 +201,7 @@ class AuditLog(BaseModel):
 
         return min(base_score, 100)  # type: ignore
 
-    def to_dict(self, exclude_fields: Optional[set[Any]] = None) -> Dict[str, Any]:
+    def to_dict(self, exclude_fields: Optional[set[Any] = None) -> Dict[str, Any]:
         """转换为字典格式"""
         return {
             "id": self.id,

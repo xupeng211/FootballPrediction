@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 模型指标导出器
 
@@ -6,7 +7,6 @@
 
 import logging
 from datetime import datetime
-from typing import Any,  Dict[str, Any],  Any
 
 from prometheus_client import CollectorRegistry, Counter, Gauge, Histogram
 

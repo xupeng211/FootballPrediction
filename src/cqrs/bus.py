@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional, Union
 """
 命令和查询总线
 Command and Query Bus
@@ -7,7 +8,6 @@ Implements dispatching mechanism for commands and queries.
 """
 
 import logging
-from typing import Any,  Dict[str, Any],  Any, Type[Any], Optional
 from .base import Command, Query, CommandHandler, QueryHandler
 
 logger = logging.getLogger(__name__)
@@ -21,11 +21,11 @@ class CommandBus:
     """
 
     def __init__(self):
-        self._handlers: Dict[str, Any][Type[Any][Command], CommandHandler] = {}
+        self._handlers: Dict[str, Any][Type[Any, Command], CommandHandler] = {}
         self._middleware: list = []
 
     def register_handler(
-        self, command_type: Type[Any][Command], handler: CommandHandler
+        self, command_type: Type[Any, Command], handler: CommandHandler
     ) -> None:
         """注册命令处理器"""
         self._handlers[command_type] = handler
@@ -81,10 +81,10 @@ class QueryBus:
     """
 
     def __init__(self):
-        self._handlers: Dict[str, Any][Type[Any][Query], QueryHandler] = {}
+        self._handlers: Dict[str, Any][Type[Any, Query], QueryHandler] = {}
         self._middleware: list = []
 
-    def register_handler(self, query_type: Type[Any][Query], handler: QueryHandler) -> None:
+    def register_handler(self, query_type: Type[Any, Query], handler: QueryHandler) -> None:
         """注册查询处理器"""
         self._handlers[query_type] = handler
         logger.info(
@@ -134,8 +134,6 @@ class QueryBus:
 # 全局实例
 _command_bus: Optional[CommandBus] = None
 _query_bus: Optional[QueryBus] = None
-
-
 def get_command_bus() -> CommandBus:
     """获取命令总线实例"""
     global _command_bus

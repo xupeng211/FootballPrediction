@@ -138,7 +138,7 @@ def test_invalid_data_handler():
 async def test_quality_logger():
     """测试质量日志记录器"""
     from src.data.quality.exception_handler_mod import QualityLogger
-    # from src.database.connection_mod import DatabaseManager
+from src.database.connection_mod import DatabaseManager
 
     # Mock database manager
     db_manager = Mock(spec=DatabaseManager)
