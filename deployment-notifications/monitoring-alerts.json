@@ -1,0 +1,106 @@
+{
+  "alert_rules": {
+    "api_errors": {
+      "condition": "error_rate > 5%",
+      "duration": "5m",
+      "severity": "critical",
+      "channels": [
+        "slack",
+        "email",
+        "sms"
+      ],
+      "escalation": {
+        "level1": {
+          "time": "5m",
+          "notify": [
+            "oncall_engineer"
+          ]
+        },
+        "level2": {
+          "time": "15m",
+          "notify": [
+            "tech_lead",
+            "ops_manager"
+          ]
+        },
+        "level3": {
+          "time": "30m",
+          "notify": [
+            "cto"
+          ]
+        }
+      }
+    },
+    "high_response_time": {
+      "condition": "p95_response_time > 1s",
+      "duration": "10m",
+      "severity": "warning",
+      "channels": [
+        "slack",
+        "email"
+      ]
+    },
+    "database_connections": {
+      "condition": "db_connections > 80%",
+      "duration": "5m",
+      "severity": "warning",
+      "channels": [
+        "slack"
+      ]
+    },
+    "memory_usage": {
+      "condition": "memory_usage > 85%",
+      "duration": "10m",
+      "severity": "critical",
+      "channels": [
+        "slack",
+        "email"
+      ]
+    },
+    "disk_space": {
+      "condition": "disk_usage > 90%",
+      "duration": "5m",
+      "severity": "critical",
+      "channels": [
+        "slack",
+        "email",
+        "sms"
+      ]
+    },
+    "service_down": {
+      "condition": "service_health == 0",
+      "duration": "1m",
+      "severity": "critical",
+      "channels": [
+        "slack",
+        "email",
+        "sms",
+        "phone_call"
+      ],
+      "auto_rollback": true
+    }
+  },
+  "notification_channels": {
+    "slack": {
+      "webhook_url": "${SLACK_WEBHOOK_URL}",
+      "channel": "#alerts-football-prediction",
+      "mention": [
+        "@here"
+      ]
+    },
+    "email": {
+      "smtp_server": "smtp.example.com",
+      "recipients": [
+        "ops-team@example.com",
+        "tech-lead@example.com"
+      ]
+    },
+    "sms": {
+      "provider": "twilio",
+      "recipients": [
+        "+1234567890",
+        "+0987654321"
+      ]
+    }
+  }
+}

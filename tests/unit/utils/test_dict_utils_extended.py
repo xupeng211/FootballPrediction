@@ -5,6 +5,8 @@ Extended Tests for Dict Utils
 基于DictUtils实际存在的方法创建测试。
 """
 
+from typing import Dict
+
 import pytest
 from src.utils.dict_utils import DictUtils
 

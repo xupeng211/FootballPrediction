@@ -4,6 +4,8 @@
 直接调用函数执行代码，避免mock
 """
 
+from typing import Dict
+
 import pytest
 import sys
 import os

@@ -13,7 +13,7 @@
 基于 DATA_DESIGN.md 第1.1节设计。
 """
 
-from typing import Dict, List, Optional, Any
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Any
 from datetime import datetime
 from decimal import Decimal
 
@@ -53,7 +53,7 @@ class OddsCollector(DataCollector):
         # 赔率去重：记录最近采集的赔率键值
         self._recent_odds_keys: Set[str] = set()  # type: ignore
         # 赔率变化：记录上次赔率值
-        self._last_odds_values: Dict[str, Dict[str, Decimal]] = {}  # type: ignore
+        self._last_odds_values: Dict[str, Dict[str, Any][str, Decimal]] = {}  # type: ignore
 
     async def collect_fixtures(self, **kwargs) -> CollectionResult:
         """赔率采集器不处理赛程数据"""
@@ -68,9 +68,9 @@ class OddsCollector(DataCollector):
 
     async def collect_odds(
         self,
-        match_ids: Optional[List[str]] = None,
-        bookmakers: Optional[List[str]] = None,
-        markets: Optional[List[str]] = None,
+        match_ids: Optional[List[str] = None,
+        bookmakers: Optional[List[str] = None,
+        markets: Optional[List[str] = None,
         **kwargs,
     ) -> CollectionResult:
         """
@@ -268,7 +268,7 @@ class OddsCollector(DataCollector):
 
     async def _collect_match_odds(
         self, match_id: str, bookmakers: List[str], markets: List[str]
-    ) -> List[Dict[str, Any]]:
+    ) -> List[Dict[str, Any]:
         """
         采集指定比赛的赔率数据
 
@@ -278,7 +278,7 @@ class OddsCollector(DataCollector):
             markets: 市场类型列表
 
         Returns:
-            List[Dict]: 赔率数据列表
+            List[Dict[str, Any]: 赔率数据列表
         """
         all_odds = []
 
@@ -384,7 +384,7 @@ class OddsCollector(DataCollector):
 
     async def _clean_odds_data(
         self, raw_odds: Dict[str, Any]
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[Dict[str, Any]:
         """
         清洗和标准化赔率数据
 
@@ -392,7 +392,7 @@ class OddsCollector(DataCollector):
             raw_odds: 原始赔率数据
 
         Returns:
-            Optional[Dict]: 清洗后的数据，无效则返回None
+            Optional[Dict[str, Any]: 清洗后的数据，无效则返回None
         """
         try:
             # 基础字段验证

@@ -19,7 +19,7 @@ import os
 import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 import pandas as pd
 
@@ -68,8 +68,8 @@ class FootballFeatureStore:
         self,
         project_name: str = "football_prediction",
         repo_path: Optional[str] = None,
-        postgres_config: Optional[Dict[str, Any]] = None,
-        redis_config: Optional[Dict[str, Any]] = None,
+        postgres_config: Optional[Dict[str, Any] = None,
+        redis_config: Optional[Dict[str, Any] = None,
     ):
         """
         初始化特征仓库
@@ -258,7 +258,7 @@ class FootballFeatureStore:
 
             return (
                 feature_vector.to_df()
-                if isinstance(feature_vector.to_df(), dict)
+                if isinstance(feature_vector.to_df(), Dict[str, Any])
                 else {}
             )
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
@@ -296,7 +296,7 @@ class FootballFeatureStore:
                 full_feature_names=full_feature_names,
             )
 
-            return training_df.to_df() if isinstance(training_df.to_df(), dict) else {}
+            return training_df.to_df() if isinstance(training_df.to_df(), Dict[str, Any]) else {}
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"获取历史特征失败: {str(e)}")
             raise
@@ -305,7 +305,7 @@ class FootballFeatureStore:
         self,
         start_date: datetime,
         end_date: datetime,
-        match_ids: Optional[List[int]] = None,
+        match_ids: Optional[List[int] = None,
     ) -> pd.DataFrame:
         """
         创建训练数据集
@@ -350,7 +350,7 @@ class FootballFeatureStore:
             )
 
             self.logger.info(f"创建训练数据集成功，包含 {len(training_df)} 条记录")
-            return training_df if isinstance(training_df, dict) else {}
+            return training_df if isinstance(training_df, Dict[str, Any]) else {}
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"创建训练数据集失败: {str(e)}")
             raise
@@ -363,7 +363,7 @@ class FootballFeatureStore:
             feature_view_name: 特征视图名称
 
         Returns:
-            Dict: 特征统计信息
+            Dict[str, Any]: 特征统计信息
         """
         if not self._store:
             raise RuntimeError("特征仓库未初始化，请先调用 initialize()")
@@ -382,17 +382,17 @@ class FootballFeatureStore:
                 "tags": feature_view.tags,
             }
 
-            return stats if isinstance(stats, dict) else {}
+            return stats if isinstance(stats, Dict[str, Any]) else {}
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"获取特征统计失败: {str(e)}")
             return {"error": str(e)}
 
-    def list_features(self) -> List[Dict[str, Any]]:
+    def list_features(self) -> List[Dict[str, Any]:
         """
         列出所有特征
 
         Returns:
-            List[Dict]: 特征列表信息
+            List[Dict[str, Any]: 特征列表信息
         """
         if not self._store:
             raise RuntimeError("特征仓库未初始化，请先调用 initialize()")
@@ -419,10 +419,10 @@ class FootballFeatureStore:
                         }
                     )
 
-            return features_list if isinstance(features_list, dict) else {}
+            return features_list if isinstance(features_list, Dict[str, Any]) else {}
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"列出特征失败: {str(e)}")
-            return [] if isinstance([], dict) else {}
+            return [] if isinstance([], Dict[str, Any]) else {}
 
     def cleanup_old_features(self, older_than_days: int = 30) -> None:
         """
@@ -473,14 +473,14 @@ def get_feature_store() -> FootballFeatureStore:
     if _feature_store is None:
         _feature_store = FootballFeatureStore()
         _feature_store.initialize()
-    return _feature_store if isinstance(_feature_store, dict) else {}
+    return _feature_store if isinstance(_feature_store, Dict[str, Any]) else {}
 
 
 def initialize_feature_store(
     project_name: str = "football_prediction",
     repo_path: Optional[str] = None,
-    postgres_config: Optional[Dict[str, Any]] = None,
-    redis_config: Optional[Dict[str, Any]] = None,
+    postgres_config: Optional[Dict[str, Any] = None,
+    redis_config: Optional[Dict[str, Any] = None,
 ) -> FootballFeatureStore:
     """
     初始化全局特征仓库实例
@@ -503,4 +503,4 @@ def initialize_feature_store(
     )
     _feature_store.initialize()
     _feature_store.apply_features()
-    return _feature_store if isinstance(_feature_store, dict) else {}
+    return _feature_store if isinstance(_feature_store, Dict[str, Any]) else {}

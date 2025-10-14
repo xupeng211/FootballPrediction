@@ -1,0 +1,93 @@
+groups:
+  - name: system_alerts
+    rules:
+      - alert: HighCPUUsage
+        expr: 100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "CPU使用率过高"
+          description: "CPU使用率为 {{ $value | printf \"%.2f\" }}%，超过80%"
+          runbook_url: "https://wiki.company.com/runbooks/high-cpu"
+
+      - alert: CriticalCPUUsage
+        expr: 100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 95
+        for: 2m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "CPU使用率严重过高"
+          description: "CPU使用率为 {{ $value | printf \"%.2f\" }}%，超过95%"
+
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "内存使用率过高"
+          description: "内存使用率为 {{ $value | printf \"%.2f\" }}%，超过85%"
+
+      - alert: CriticalMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 95
+        for: 2m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "内存使用率严重过高"
+          description: "内存使用率为 {{ $value | printf \"2f\" }}%，超过95%"
+
+      - alert: LowDiskSpace
+        expr: (node_filesystem_avail_bytes{fstype!="tmpfs"} / node_filesystem_size_bytes{fstype!="tmpfs"}) * 100 < 10
+        for: 5m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "磁盘空间不足"
+          description: "挂载点 {{ $labels.mount }} 剩余空间 {{ $value | printf \"%.2f\" }}%"
+
+      - root: HighDiskSpaceUsage
+        expr: (node_filesystem_avail_bytes{mount="/"} / node_filesystem_size_bytes{mount="/"}) * 100 < 20
+        for: 10m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "根磁盘空间使用率过高"
+          description: "根磁盘剩余空间 {{ $value | printf \"%.2f\" }}%"
+
+      - alert: DiskIOWaitHigh
+        expr: 100 - (avg(rate(node_cpu_seconds_total{mode=~"^(idle|iowait)"})[5m]) * 100) - 100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 30
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "磁盘I/O等待过高"
+          description: "I/O等待时间为 {{ $value | printf \"%.2f\" }}%，可能存在磁盘瓶颈"
+
+      - alert: NodeExporterDown
+        expr: up{job="node-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "节点监控服务不可用"
+          description: "节点 {{ $labels.instance }} 的node-exporter已停止响应"
+
+      - alert: NetworkErrors
+        expr: increase(node_network_receive_errs_total[5m]) + increase(node_network_transmit_errs_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "网络错误增加"
+          description: "网络接口 {{ $labels.device }} 在过去5分钟内发生了 {{ $value }} 次错误"

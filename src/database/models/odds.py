@@ -15,7 +15,7 @@ Odds - 数据库模块
 """
 
 from ..base import BaseModel
-from typing import Any, Dict, Optional
+from typing import Any,  Dict[str, Any],  Any, Optional
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
@@ -37,7 +37,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 存储不同博彩公司的赔率信息，包括胜平负、大小球、让球等市场。
 """
 
-from typing import Any, Dict, Optional
+from typing import Any,  Dict[str, Any],  Any, Optional
 from sqlalchemy import DECIMAL, CheckConstraint, DateTime
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy import ForeignKey, Index, String, func
@@ -202,12 +202,12 @@ class Odds(BaseModel):
 
         return None
 
-    def get_best_value_bet(self) -> Optional[Dict[str, Any]]:
+    def get_best_value_bet(self) -> Optional[Dict[str, Any]:
         """
         获取最佳价值投注建议
 
         Returns:
-            Optional[Dict[str, Any]]: 包含投注建议的字典
+            Optional[Dict[str, Any]: 包含投注建议的字典
         """
         probabilities = self.get_implied_probabilities()
         if not probabilities:

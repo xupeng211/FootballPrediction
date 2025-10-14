@@ -1,11 +1,11 @@
 """
-from typing import Dict, List, Optional
+from typing import Any, Dict[str, Any], List[Any], Optional
 Prometheus 导出器模块
 Prometheus Exporter Module
 """
 
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict[str, Any], List[Any], Optional
 
 
 class PrometheusCollector:

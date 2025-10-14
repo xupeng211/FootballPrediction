@@ -5,7 +5,7 @@
 """
 
 import asyncio
-from typing import Any, Dict, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 from datetime import datetime, timedelta
 from dataclasses import dataclass
 
@@ -19,7 +19,7 @@ class PredictionRequest:
     match_id: int
     user_id: int
     algorithm: str = "ensemble"
-    features: Optional[Dict[str, Any]] = None
+    features: Optional[Dict[str, Any] = None
 
 
 @dataclass
@@ -28,7 +28,7 @@ class PredictionResult:
 
     prediction: Dict[str, Any]
     confidence: float
-    value_assessment: Optional[Dict[str, Any]]
+    value_assessment: Optional[Dict[str, Any]
     recommendations: List[str]
 
 
@@ -91,7 +91,7 @@ class PredictionFacade:
 
     async def get_prediction_history(
         self, user_id: Optional[int] = None, limit: int = 100
-    ) -> List[Dict[str, Any]]:
+    ) -> List[Dict[str, Any]:
         """获取预测历史"""
         # 模拟实现
         return [
@@ -116,7 +116,7 @@ class PredictionFacade:
             "roi": 15.5,
         }
 
-    async def _get_match_data(self, match_id: int) -> Optional[Dict[str, Any]]:
+    async def _get_match_data(self, match_id: int) -> Optional[Dict[str, Any]:
         """获取比赛数据"""
         # 模拟从服务获取数据
         return {
@@ -159,7 +159,7 @@ class PredictionFacade:
 
     async def _assess_value(
         self, prediction: Dict[str, Any], external_data: Dict[str, Any]
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[Dict[str, Any]:
         """评估投注价值"""
         odds = external_data.get("odds", {})
         home_odds = odds.get("home_win")
@@ -179,7 +179,7 @@ class PredictionFacade:
         return None
 
     async def _generate_recommendations(
-        self, prediction: Dict[str, Any], value_assessment: Optional[Dict[str, Any]]
+        self, prediction: Dict[str, Any], value_assessment: Optional[Dict[str, Any]
     ) -> List[str]:
         """生成建议"""
         recommendations = []

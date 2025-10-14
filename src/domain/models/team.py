@@ -9,7 +9,7 @@ Encapsulates team-related business logic and invariants.
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict[str, Any], List[Any], Optional
 
 from ...core.exceptions import DomainError
 
@@ -32,7 +32,7 @@ class TeamStats:
     goals_for: int = 0
     goals_against: int = 0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """验证统计数据"""
         if any(
             x < 0
@@ -81,15 +81,15 @@ class TeamStats:
         self.goals_for += goals_for
         self.goals_against += goals_against
 
-        if _result == "win":
+        if result == "win":
             self.wins += 1
-        elif _result == "draw":
+        elif result == "draw":
             self.draws += 1
-        elif _result == "loss":
+        elif result == "loss":
             self.losses += 1
 
     def __str__(self) -> str:
-        return f"{self.matches_played}场 {self.wins}胜 {self.draws}平 {self.losses}负"
+        return f"{self.matches_played"场 {self.wins}胜 {self.draws}平 {self.losses}负"
 
 
 @dataclass
@@ -100,7 +100,7 @@ class TeamForm:
     current_streak: int = 0  # 当前连续纪录（胜/负为正数，平为0）
     streak_type: str = ""  # 连续类型：win/draw/loss/none
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """验证状态数据"""
         if len(self.last_matches) > 10:
             raise DomainError("最近比赛记录最多保留10场")
@@ -138,10 +138,10 @@ class TeamForm:
         streak = 1
 
         for result in self.last_matches[1:]:
-            if _result == "D":
+            if result == "D":
                 break
-            if (streak_type == "win" and _result == "W") or (
-                streak_type == "loss" and _result == "L"
+            if (streak_type == "win" and result == "W") or (
+                streak_type == "loss" and result == "L"
             ):
                 streak += 1
             else:
@@ -169,7 +169,7 @@ class TeamForm:
 
     def __str__(self) -> str:
         streak_str = (
-            f"{self.current_streak}{self.streak_type[0].upper()}"
+            f"{self.current_streak"{self.streak_type[0].upper()}"
             if self.streak_type != "none"
             else "无"
         )
@@ -184,29 +184,29 @@ class Team:
     封装球队的核心业务逻辑和不变性约束。
     """
 
-    id: Optional[int] = None
+    id: Optional[{}] = None
     name: str = ""
-    short_name: Optional[str] = None
-    code: Optional[str] = None
+    short_name: Optional[{}] = None
+    code: Optional[{}] = None
     type: TeamType = TeamType.CLUB
     country: str = ""
-    founded_year: Optional[int] = None
-    stadium: Optional[str] = None
-    capacity: Optional[int] = None
-    website: Optional[str] = None
-    logo_url: Optional[str] = None
+    founded_year: Optional[{}] = None
+    stadium: Optional[{}] = None
+    capacity: Optional[{}] = None
+    website: Optional[{}] = None
+    logo_url: Optional[{}] = None
     is_active: bool = True
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)
 
     # 值对象
-    stats: Optional[TeamStats] = None
-    form: Optional[TeamForm] = None
+    stats: Optional[{}] = None
+    form: Optional[{}] = None
 
     # 领域事件
     _domain_events: List[Any] = field(default_factory=list, init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """初始化后的验证"""
         if not self.name or len(self.name.strip()) == 0:
             raise DomainError("球队名称不能为空")
@@ -227,7 +227,7 @@ class Team:
 
         # 初始化值对象
         if not self.stats:
-            self._stats = TeamStats()
+            self.stats = TeamStats()
         if not self.form:
             self.form = TeamForm()
 
@@ -237,10 +237,10 @@ class Team:
 
     def update_info(
         self,
-        name: Optional[str] = None,
-        short_name: Optional[str] = None,
-        stadium: Optional[str] = None,
-        capacity: Optional[int] = None,
+        name: Optional[{}] = None,
+        short_name: Optional[{}] = None,
+        stadium: Optional[{}] = None,
+        capacity: Optional[{}] = None,
     ) -> None:
         """更新球队信息"""
         if name:
@@ -261,7 +261,7 @@ class Team:
         result: str,
         goals_for: int,
         goals_against: int,
-        is_home: Optional[bool] = None,
+        is_home: Optional[{}] = None,
     ) -> None:
         """添加比赛结果"""
         if result not in ["win", "draw", "loss"]:
@@ -275,7 +275,7 @@ class Team:
 
         # 更新状态
         self.form.add_result(  # type: ignore
-            "W" if _result == "win" else "D" if _result == "draw" else "L"
+            "W" if result == "win" else "D" if result == "draw" else "L"
         )
 
         self.updated_at = datetime.utcnow()
@@ -432,14 +432,14 @@ class Team:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Team":
         """从字典创建实例"""
-        stats_data = data.pop("stats", None)
-        _stats = None
+        statsdata= data.pop("stats", None)
+        stats = None
         if stats_data:
             for transient_key in ["points", "goal_difference", "win_rate"]:
                 stats_data.pop(transient_key, None)
-            _stats = TeamStats(**stats_data)
+            stats = TeamStats(**stats_data)
 
-        form_data = data.pop("form", None)
+        formdata= data.pop("form", None)
         form = None
         if form_data:
             form_data.pop("recent_form_string", None)
@@ -458,7 +458,7 @@ class Team:
         if data.get("updated_at"):
             data["updated_at"] = datetime.fromisoformat(data["updated_at"])
 
-        return cls(_stats =stats, form=form, **data)
+        return cls(stats=stats, form=form, **data)
 
     def __str__(self) -> str:
-        return f"{self.name} ({self.code or self.short_name}) - {self.rank}"
+        return f"{self.name" ({self.code or self.short_name}) - {self.rank}"

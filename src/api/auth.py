@@ -3,7 +3,7 @@
 """
 
 from datetime import timedelta
-from typing import Any
+from typing import Any, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -169,7 +169,7 @@ async def refresh_token(
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(
-    current_user: dict = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> Any:
     """获取当前用户信息"""
@@ -185,7 +185,7 @@ async def get_current_user_info(
 
 @router.post("/logout")
 async def logout(
-    current_user: dict = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ) -> Any:
     """用户登出"""
     # 这里可以实现token黑名单机制
@@ -197,7 +197,7 @@ async def logout(
 async def change_password(
     current_password: str,
     new_password: str,
-    current_user: dict = Depends(get_current_user),
+    current_user: Dict[str, Any] = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> Any:
     """修改密码"""

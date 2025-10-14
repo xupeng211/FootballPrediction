@@ -3,7 +3,7 @@ Data quality anomaly detector
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Union
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -40,7 +40,7 @@ class AnomalyDetector:
         return problematic_cols.to_dict()  # type: ignore
 
     def detect_duplicates(
-        self, df: pd.DataFrame, subset: Optional[List[str]] = None
+        self, df: pd.DataFrame, subset: Optional[List[str] = None
     ) -> Dict[str, Any]:
         """Detect duplicate rows"""
         duplicates = df.duplicated(subset=subset)

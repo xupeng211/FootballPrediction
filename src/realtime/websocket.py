@@ -9,7 +9,7 @@ Temporary implementation to resolve import errors.
 
 import json
 import logging
-from typing import Any, Callable, Dict, List, Optional, Set, Union
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Set, Union
 from datetime import datetime
 from enum import Enum
 
@@ -93,7 +93,7 @@ class WebSocketManager:
             del self.connections[connection_id]
 
     async def send_to_connection(
-        self, connection_id: str, message: Union[str, dict, WebSocketMessage]
+        self, connection_id: str, message: Union[str, Dict[str, Any], WebSocketMessage]
     ) -> bool:
         """
         发送消息到特定连接
@@ -113,7 +113,7 @@ class WebSocketManager:
         return await connection.send(message)
 
     async def broadcast(
-        self, message: Union[str, dict, WebSocketMessage], room: Optional[str] = None
+        self, message: Union[str, Dict[str, Any], WebSocketMessage], room: Optional[str] = None
     ) -> int:
         """
         广播消息
@@ -242,7 +242,7 @@ class WebSocketConnection:
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.last_activity = datetime.now()
 
-    async def send(self, message: Union[str, dict, WebSocketMessage]) -> bool:
+    async def send(self, message: Union[str, Dict[str, Any], WebSocketMessage]) -> bool:
         """
         发送消息
 
@@ -254,7 +254,7 @@ class WebSocketConnection:
         """
         self.last_activity = datetime.now()
 
-        if isinstance(message, dict):
+        if isinstance(message, Dict[str, Any]):
             message = json.dumps(message)
         elif isinstance(message, WebSocketMessage):
             message = message.to_json()

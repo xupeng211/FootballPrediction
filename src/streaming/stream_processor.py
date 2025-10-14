@@ -5,7 +5,7 @@ Stream Data Processor
 
 import asyncio
 import logging
-from typing import Any, Dict
+from typing import Any,  Dict[str, Any],  Any
 
 from src.core.logging import get_logger
 

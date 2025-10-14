@@ -13,7 +13,7 @@
 基于 DATA_DESIGN.md 第1.1节设计。
 """
 
-from typing import Dict, List, Optional, Any
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Any
 from datetime import datetime
 
 from .base_collector import DataCollector, CollectionResult
@@ -49,11 +49,11 @@ class FixturesCollector(DataCollector):
         # 防重复：记录已处理的比赛ID
         self._processed_matches: Set[str] = set()  # type: ignore
         # 防丢失：记录应该存在但缺失的比赛
-        self._missing_matches: List[Dict[str, Any]] = []
+        self._missing_matches: List[Dict[str, Any] = []
 
     async def collect_fixtures(
         self,
-        leagues: Optional[List[str]] = None,
+        leagues: Optional[List[str] = None,
         date_from: Optional[datetime] = None,
         date_to: Optional[datetime] = None,
         **kwargs,
@@ -291,7 +291,7 @@ class FixturesCollector(DataCollector):
 
     async def _collect_league_fixtures(
         self, league_code: str, date_from: datetime, date_to: datetime
-    ) -> List[Dict[str, Any]]:
+    ) -> List[Dict[str, Any]:
         """
         采集指定联赛的赛程数据
 
@@ -301,7 +301,7 @@ class FixturesCollector(DataCollector):
             date_to: 结束日期
 
         Returns:
-            List[Dict]: 赛程数据列表
+            List[Dict[str, Any]: 赛程数据列表
         """
         try:
             url = f"{self.base_url}/competitions/{league_code}/matches"
@@ -346,7 +346,7 @@ class FixturesCollector(DataCollector):
 
     async def _clean_fixture_data(
         self, raw_fixture: Dict[str, Any]
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[Dict[str, Any]:
         """
         清洗和标准化赛程数据
 
@@ -354,7 +354,7 @@ class FixturesCollector(DataCollector):
             raw_fixture: 原始赛程数据
 
         Returns:
-            Optional[Dict]: 清洗后的数据，无效则返回None
+            Optional[Dict[str, Any]: 清洗后的数据，无效则返回None
         """
         try:
             # 基础字段验证
@@ -392,7 +392,7 @@ class FixturesCollector(DataCollector):
 
     async def _detect_missing_matches(
         self,
-        collected_data: List[Dict[str, Any]],
+        collected_data: List[Dict[str, Any],
         date_from: datetime,
         date_to: datetime,
     ) -> None:

@@ -8,7 +8,7 @@
 """
 
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import Any,  List[Any], Optional
 
 from sqlalchemy import text
 
@@ -54,7 +54,7 @@ async def should_collect_live_scores() -> bool:
         return False
 
 
-async def get_upcoming_matches(hours: int = 24) -> List[dict]:
+async def get_upcoming_matches(hours: int = 24) -> List[Dict[str, Any]:
     """
     获取未来N小时内的比赛
 

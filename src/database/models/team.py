@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 from sqlalchemy import Boolean, Column, ForeignKey, Index, Integer, String
 from sqlalchemy.orm import Session, relationship
 from ..base import BaseModel
@@ -116,7 +116,7 @@ class Team(BaseModel):
         # 这需要在调用时传入session
         return None  # 实际使用时需要session参数
 
-    def get_recent_matches(self, session: Session, limit: int = 5) -> List:
+    def get_recent_matches(self, session: Session, limit: int = 5) -> List[Any]:
         """获取最近的比赛。
 
         Args:

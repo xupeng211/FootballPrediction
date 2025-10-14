@@ -5,7 +5,7 @@ JWT认证和RBAC权限控制模块
 import logging
 import os
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Union
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -229,11 +229,10 @@ def get_auth_manager() -> AuthManager:
     """获取认证管理器实例"""
     global auth_manager
     if auth_manager is None:
-        from src.core.config import config
+        from src.security.secret_manager import get_secret_manager
 
-        secret_key = getattr(config, "SECRET_KEY", None) or os.getenv("SECRET_KEY")
-        if not secret_key:
-            raise ValueError("SECRET_KEY must be set")
+        secret_manager = get_secret_manager()
+        secret_key = secret_manager.get_jwt_secret()
 
         auth_manager = AuthManager(secret_key=secret_key)
 
@@ -270,7 +269,7 @@ async def get_current_user(
     }
 
 
-def require_permissions(required_permissions: Union[str, List[str]]):
+def require_permissions(required_permissions: Union[str, List[str]):
     """权限装饰器工厂"""
     if isinstance(required_permissions, str):
         required_permissions = [required_permissions]
@@ -301,7 +300,7 @@ def require_permissions(required_permissions: Union[str, List[str]]):
     return permission_checker
 
 
-def require_roles(required_roles: Union[str, List[str]]):
+def require_roles(required_roles: Union[str, List[str]):
     """角色装饰器工厂"""
     if isinstance(required_roles, str):
         required_roles = [required_roles]

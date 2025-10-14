@@ -8,7 +8,7 @@
 """
 
 import logging
-from typing import Dict, Any, List, Optional, Callable
+from typing import Any,  Dict[str, Any],  Any, Callable, Dict[str, Any], List[Any], Optional
 from datetime import datetime
 from enum import Enum
 
@@ -102,7 +102,7 @@ class InvalidDataHandler:
     def handle(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """处理无效数据"""
         # 标记无效数据
-        if not isinstance(data, dict):
+        if not isinstance(data, Dict[str, Any]):
             logger.error("Invalid data format: not a dictionary")
             return {"valid": False, "data": str(data)}
 
@@ -126,7 +126,7 @@ class QualityLogger:
         self.logs.append(log_entry)
         logger.warning(f"Quality issue: {issue_type} for {data_id} - {description}")
 
-    def get_logs(self, limit: int = 100) -> List[Dict[str, Any]]:
+    def get_logs(self, limit: int = 100) -> List[Dict[str, Any]:
         """获取日志"""
         return self.logs[-limit:]
 

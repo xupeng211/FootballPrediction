@@ -1,6 +1,6 @@
 # mypy: ignore-errors
 from ..base import BaseModel
-from typing import Any, Dict, Optional
+from typing import Any,  Dict[str, Any],  Any, Optional
 from datetime import datetime
 from enum import Enum
 from sqlalchemy import Column, DateTime, Integer, String, Text, func
@@ -14,7 +14,7 @@ from sqlalchemy import Column, DateTime, Integer, String, Text, func
 基于 DATA_DESIGN.md 第1.3节设计。
 """
 
-from typing import Any, Dict, Optional
+from typing import Any,  Dict[str, Any],  Any, Optional
 from sqlalchemy.orm import validates
 from src.database.base import BaseModel
 from sqlalchemy import DateTime

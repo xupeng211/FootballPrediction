@@ -9,7 +9,7 @@ Encapsulates match-related business logic and invariants.
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict[str, Any], List[Any], Optional
 
 from ...core.exceptions import DomainError
 
@@ -39,7 +39,7 @@ class MatchScore:
     home_score: int = 0
     away_score: int = 0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.home_score < 0 or self.away_score < 0:
             raise DomainError("比分不能为负数")
 
@@ -64,7 +64,7 @@ class MatchScore:
             return MatchResult.DRAW
 
     def __str__(self) -> str:
-        return f"{self.home_score}-{self.away_score}"
+        return f"{self.home_score"-{self.away_score}"
 
 
 @dataclass
@@ -75,25 +75,25 @@ class Match:
     封装比赛的核心业务逻辑和不变性约束。
     """
 
-    id: Optional[int] = None
+    id: Optional[int] ] = None
     home_team_id: int = 0
     away_team_id: int = 0
     league_id: int = 0
     season: str = ""
     match_date: datetime = field(default_factory=datetime.utcnow)
     status: MatchStatus = MatchStatus.SCHEDULED
-    score: Optional[MatchScore] = None
-    venue: Optional[str] = None
-    referee: Optional[str] = None
-    weather: Optional[str] = None
-    attendance: Optional[int] = None
+    score: Optional[MatchScore] ] = None
+    venue: Optional[str] ] = None
+    referee: Optional[str] ] = None
+    weather: Optional[str] ] = None
+    attendance: Optional[int] ] = None
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)
 
     # 领域事件
     _domain_events: List[Any] = field(default_factory=list, init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """初始化后的验证"""
         if self.home_team_id == self.away_team_id:
             raise DomainError("主队和客队不能相同")
@@ -164,11 +164,11 @@ class Match:
                 home_team_id=self.home_team_id,
                 away_team_id=self.away_team_id,
                 final_score=self.score,
-                _result =self.score.result,
+                result=self.score.result,
             )
         )
 
-    def cancel_match(self, reason: Optional[str] = None) -> None:
+    def cancel_match(self, reason: Optional[str] ] = None) -> None:
         """取消比赛"""
         if self.status in [MatchStatus.FINISHED, MatchStatus.CANCELLED]:
             raise DomainError("已结束或已取消的比赛无法再次取消")
@@ -176,7 +176,7 @@ class Match:
         self.status = MatchStatus.CANCELLED
         self.updated_at = datetime.utcnow()
 
-    def postpone_match(self, new_date: Optional[datetime] = None) -> None:
+    def postpone_match(self, new_date: Optional[datetime] ] = None) -> None:
         """延期比赛"""
         if self.status in [MatchStatus.FINISHED, MatchStatus.CANCELLED]:
             raise DomainError("已结束或已取消的比赛无法延期")
@@ -295,7 +295,7 @@ class Match:
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Match":
         """从字典创建实例"""
-        score_data = data.pop("score", None)
+        scoredata= data.pop("score", None)
         score = None
         if score_data:
             score_data.pop("result", None)
@@ -318,4 +318,4 @@ class Match:
     def __str__(self) -> str:
         team_names = f"Team{self.home_team_id} vs Team{self.away_team_id}"
         score_str = f" ({self.score})" if self.score else ""
-        return f"{team_names}{score_str} - {self.status.value}"
+        return f"{team_names"{score_str} - {self.status.value}"

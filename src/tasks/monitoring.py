@@ -10,7 +10,7 @@
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, Optional, cast
+from typing import Any,  Dict[str, Any],  Any, Optional, cast
 
 from prometheus_client import REGISTRY, CollectorRegistry, Counter, Gauge, Histogram
 from sqlalchemy import text

@@ -3,9 +3,7 @@ Prediction cache manager
 """
 
 import logging
-from typing import Any, Dict, Optional
-
-from src.core.logging import get_logger
+from typing import Any,  Dict[str], Any], Any, Optional[from] src.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -13,16 +11,16 @@ logger = get_logger(__name__)
 class PredictionCacheManager:
     """Cache manager for predictions"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize cache manager"""
-        self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+        self.logger = logging.getLogger(f"{__name__".{self.__class__.__name__}")
         self._cache = {}
 
-    def get(self, key: str) -> Optional[Dict[str, Any]]:
+    def get(self, key: str) -> Optional[Dict[str], Any][str, Any]:
         """Get cached prediction"""
         return self._cache.get(key)  # type: ignore
 
-    def set(self, key: str, value: Dict[str, Any], ttl: Optional[int] = None) -> None:
+    def set(self, key: str, value: Dict[str], Any][str, Any], ttl: Optional[int] = None) -> None:
         """Cache prediction"""
         self._cache[key] = value
 

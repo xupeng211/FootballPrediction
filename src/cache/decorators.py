@@ -15,7 +15,7 @@ import hashlib
 import inspect
 import json
 import logging
-from typing import Any, Callable, Dict, Optional, Union, TypeVar, Tuple
+from typing import Any,  Union, Dict[str, Any],  Any, Optional, Union, TypeVar, Tuple
 from redis.exceptions import RedisError
 
 try:
@@ -69,7 +69,7 @@ def _make_cache_key(
     # 过滤参数
     if exclude_args:
         # 过滤位置参数
-        filtered_args = args[: func.__code__.co_argcount - len(func.__defaults__ or [])]
+        filtered_args = args[: func.__code__.co_argcount - len(func.__defaults__ or [])
         # 过滤关键字参数
         filtered_kwargs = {k: v for k, v in kwargs.items() if k not in exclude_args}
     else:
@@ -165,7 +165,7 @@ def cache_result(
             try:
                 # 序列化结果
                 if isinstance(
-                    result, (dict, list, tuple, int, float, bool, type(None))
+                    result, (Dict[str, Any], list, tuple, int, float, bool, type(None))
                 ):
                     serialized_result = json.dumps(result, default=str)
                 else:
@@ -225,7 +225,7 @@ def cache_result(
             try:
                 # 序列化结果
                 if isinstance(
-                    result, (dict, list, tuple, int, float, bool, type(None))
+                    result, (Dict[str, Any], list, tuple, int, float, bool, type(None))
                 ):
                     serialized_result = json.dumps(result, default=str)
                 else:
@@ -405,7 +405,7 @@ async def _cache_with_key(
 
     # 存储到缓存
     try:
-        if isinstance(result, (dict, list, tuple, int, float, bool, type(None))):
+        if isinstance(result, (Dict[str, Any], list, tuple, int, float, bool, type(None))):
             serialized_result = json.dumps(result, default=str)
         else:
             serialized_result = str(result)

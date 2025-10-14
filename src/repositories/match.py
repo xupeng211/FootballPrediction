@@ -6,7 +6,7 @@ Match Repository
 Implements data access logic for matches.
 """
 
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict[str, Any], List[Any], Optional
 from datetime import datetime, date, timedelta
 from enum import Enum
 
@@ -45,8 +45,8 @@ class ReadOnlyMatchRepository(ReadOnlyRepository[Match, int]):
             if query_spec.include:
                 query = self._apply_includes(query, query_spec.include)
 
-        _result = await self.session.execute(query)
-        return _result.scalars().first()  # type: ignore
+        result = await self.session.execute(query)
+        return result.scalars().first()  # type: ignore
 
     async def find_many(self, query_spec: QuerySpec) -> List[Match]:
         """查找多个比赛"""
@@ -64,16 +64,16 @@ class ReadOnlyMatchRepository(ReadOnlyRepository[Match, int]):
             if query_spec.include:
                 query = self._apply_includes(query, query_spec.include)
 
-        _result = await self.session.execute(query)
-        return _result.scalars().all()  # type: ignore
+        result = await self.session.execute(query)
+        return result.scalars().all()  # type: ignore
 
     async def get_by_id(self, id: int) -> Optional[Match]:
         """根据ID获取比赛"""
         query = select(Match).where(Match.id == id)
-        _result = await self.session.execute(query)
-        return _result.scalars().first()  # type: ignore
+        result = await self.session.execute(query)
+        return result.scalars().first()  # type: ignore
 
-    async def get_all(self, query_spec: Optional[QuerySpec] = None) -> List[Match]:
+    async def get_all(self, query_spec: Optional[QuerySpec] ] = None) -> List[Match]:
         """获取所有比赛"""
         return await self.find_many(query_spec or QuerySpec())
 
@@ -88,14 +88,14 @@ class ReadOnlyMatchRepository(ReadOnlyRepository[Match, int]):
     async def exists(self, id: int) -> bool:
         """检查比赛是否存在"""
         query = select(func.count(Match.id)).where(Match.id == id)
-        _result = await self.session.execute(query)
-        return _result.scalar() > 0  # type: ignore
+        result = await self.session.execute(query)
+        return result.scalar() > 0  # type: ignore
 
     async def get_matches_by_date_range(
         self,
         start_date: date,
         end_date: date,
-        status: Optional[MatchStatus] = None,
+        status: Optional[MatchStatus] ] = None,
         limit: int = 100,
     ) -> List[Match]:
         """获取指定日期范围内的比赛"""
@@ -147,7 +147,7 @@ class ReadOnlyMatchRepository(ReadOnlyRepository[Match, int]):
         return await self.find_many(query_spec)
 
     async def get_matches_by_competition(
-        self, competition_id: int, season: Optional[str] = None, limit: int = 100
+        self, competition_id: int, season: Optional[str] ] = None, limit: int = 100
     ) -> List[Match]:
         """获取指定联赛的比赛"""
         filters = {"competition_id": competition_id}
@@ -201,10 +201,10 @@ class MatchRepository(MatchRepositoryInterface):
     async def get_by_id(self, id: int) -> Optional[Match]:
         """根据ID获取比赛"""
         query = select(Match).where(Match.id == id)
-        _result = await self.session.execute(query)
-        return _result.scalars().first()  # type: ignore
+        result = await self.session.execute(query)
+        return result.scalars().first()  # type: ignore
 
-    async def get_all(self, query_spec: Optional[QuerySpec] = None) -> List[Match]:
+    async def get_all(self, query_spec: Optional[QuerySpec] ] = None) -> List[Match]:
         """获取所有比赛"""
         query = select(Match)
 
@@ -220,8 +220,8 @@ class MatchRepository(MatchRepositoryInterface):
             if query_spec.include:
                 query = self._apply_includes(query, query_spec.include)
 
-        _result = await self.session.execute(query)
-        return _result.scalars().all()  # type: ignore
+        result = await self.session.execute(query)
+        return result.scalars().all()  # type: ignore
 
     async def find_one(self, query_spec: QuerySpec) -> Optional[Match]:
         """查找单个比赛"""
@@ -233,8 +233,8 @@ class MatchRepository(MatchRepositoryInterface):
             if query_spec.include:
                 query = self._apply_includes(query, query_spec.include)
 
-        _result = await self.session.execute(query)
-        return _result.scalars().first()  # type: ignore
+        result = await self.session.execute(query)
+        return result.scalars().first()  # type: ignore
 
     async def find_many(self, query_spec: QuerySpec) -> List[Match]:
         """查找多个比赛"""
@@ -264,8 +264,8 @@ class MatchRepository(MatchRepositoryInterface):
     async def exists(self, id: int) -> bool:
         """检查比赛是否存在"""
         query = select(func.count(Match.id)).where(Match.id == id)
-        _result = await self.session.execute(query)
-        return _result.scalar() > 0  # type: ignore
+        result = await self.session.execute(query)
+        return result.scalar() > 0  # type: ignore
 
     async def create(self, entity_data: Dict[str, Any]) -> Match:
         """创建新比赛"""
@@ -313,10 +313,10 @@ class MatchRepository(MatchRepositoryInterface):
         for key, value in update_data.items():
             query = query.values({getattr(Match, key): value})
 
-        _result = await self.session.execute(query)
+        result = await self.session.execute(query)
         await self.session.commit()
 
-        if _result.rowcount > 0:  # type: ignore
+        if result.rowcount > 0:  # type: ignore
             return await self.get_by_id(id)
         return None
 
@@ -327,11 +327,11 @@ class MatchRepository(MatchRepositoryInterface):
             .where(Match.id == id)
             .values(status=MatchStatus.CANCELLED.value, updated_at=datetime.utcnow())
         )
-        _result = await self.session.execute(query)
+        result = await self.session.execute(query)
         await self.session.commit()
-        return _result.rowcount > 0  # type: ignore
+        return result.rowcount > 0  # type: ignore
 
-    async def bulk_create(self, entities_data: List[Dict[str, Any]]) -> List[Match]:
+    async def bulk_create(self, entities_data: List[Dict[str, Any]) -> List[Match]:
         """批量创建比赛"""
         matches = []
         for data in entities_data:
@@ -363,7 +363,7 @@ class MatchRepository(MatchRepositoryInterface):
         match_id: int,
         home_score: int,
         away_score: int,
-        status: Optional[MatchStatus] = None,
+        status: Optional[MatchStatus] ] = None,
     ) -> Optional[Match]:
         """更新比赛比分"""
         update_data = {
@@ -402,7 +402,7 @@ class MatchRepository(MatchRepositoryInterface):
         return await self.update_by_id(match_id, update_data)
 
     async def postpone_match(
-        self, match_id: int, reason: Optional[str] = None
+        self, match_id: int, reason: Optional[str] ] = None
     ) -> Optional[Match]:
         """推迟比赛"""
         update_data = {
@@ -414,7 +414,7 @@ class MatchRepository(MatchRepositoryInterface):
         return await self.update_by_id(match_id, update_data)
 
     async def cancel_match(
-        self, match_id: int, reason: Optional[str] = None
+        self, match_id: int, reason: Optional[str] ] = None
     ) -> Optional[Match]:
         """取消比赛"""
         update_data = {

@@ -13,7 +13,7 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Tuple
 
 from src.database.connection import DatabaseManager
 
@@ -81,7 +81,7 @@ class ResourceMonitor:
         """初始化资源监控器"""
         self.monitoring = False
         self.monitor_thread: Optional[threading.Thread] = None
-        self.resource_stats: Dict[str, List[float]] = {
+        self.resource_stats: Dict[str, List[float] = {
             "memory": [],
             "cpu": [],
         }
@@ -196,7 +196,7 @@ class JobManager:
         task_id: str,
         task_function: Callable,
         args: tuple = (),
-        kwargs: Optional[Dict[str, Any]] = None,
+        kwargs: Optional[Dict[str, Any] = None,
         timeout: int = 300,
     ) -> bool:
         """
@@ -480,7 +480,7 @@ class JobManager:
             },
         }
 
-    def get_execution_history(self, limit: int = 20) -> List[Dict[str, Any]]:
+    def get_execution_history(self, limit: int = 20) -> List[Dict[str, Any]:
         """
         获取执行历史记录
 
@@ -488,7 +488,7 @@ class JobManager:
             limit: 返回记录数量限制
 
         Returns:
-            List[Dict[str, Any]]: 执行历史记录
+            List[Dict[str, Any]: 执行历史记录
         """
         recent_history = (
             self.execution_history[-limit:] if self.execution_history else []

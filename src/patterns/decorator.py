@@ -8,7 +8,7 @@ import asyncio
 import time
 import functools
 import logging
-from typing import Any, Callable, Dict, List, Optional, TypeVar
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, TypeVar
 from abc import ABC, abstractmethod
 
 from src.core.logging import get_logger
@@ -83,7 +83,7 @@ class RetryDecorator(BaseDecorator):
         max_retries: int = 3,
         delay: float = 1.0,
         backoff_factor: float = 2.0,
-        exceptions: Optional[List[Exception]] = None,
+        exceptions: Optional[List[Exception] = None,
     ):
         super().__init__(component)
         self.max_retries = max_retries
@@ -191,7 +191,7 @@ class ValidationDecorator(BaseDecorator):
     def __init__(
         self,
         component: Component,
-        validators: Optional[List[Callable]] = None,
+        validators: Optional[List[Callable] = None,
         validate_result: Optional[Callable] = None,
     ):
         super().__init__(component)
@@ -232,7 +232,7 @@ class CacheDecorator(BaseDecorator):
     def __init__(
         self,
         component: Component,
-        cache_store: Optional[Dict[str, Any]] = None,
+        cache_store: Optional[Dict[str, Any] = None,
         ttl: Optional[float] = None,
     ):
         super().__init__(component)
@@ -283,7 +283,7 @@ def async_retry(
     max_retries: int = 3,
     delay: float = 1.0,
     backoff_factor: float = 2.0,
-    exceptions: Optional[List[Exception]] = None,
+    exceptions: Optional[List[Exception] = None,
 ):
     """异步重试装饰器"""
 
@@ -353,7 +353,7 @@ def async_log(log_level: int = logging.INFO):
     return decorator
 
 
-def async_metrics(metrics_store: Optional[Dict[str, Dict]] = None):
+def async_metrics(metrics_store: Optional[Dict[str, Dict[str, Any][str, Any] = None):
     """异步指标装饰器"""
     if metrics_store is None:
         metrics_store = {}
@@ -427,7 +427,7 @@ def create_decorated_service(service_name: str) -> Component:
     service = ValidationDecorator(  # type: ignore
         service,
         validators=[lambda q: isinstance(q, str) and len(q) > 0],
-        validate_result=lambda r: isinstance(r, dict) and "result" in r,
+        validate_result=lambda r: isinstance(r, Dict[str, Any]) and "result" in r,
     )
 
     return service

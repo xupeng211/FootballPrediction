@@ -10,7 +10,7 @@
 import logging
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ class RecoveryStrategy(Enum):
     """恢复策略枚举"""
 
     IMMEDIATE_RETRY = "immediate_retry"
-    EXPONENTIAL_BACKOFF = "exponential_backoff"
+    EXPONENTIAL_BACKOFF = "exponential_backof"
     FIXED_DELAY = "fixed_delay"
     MANUAL_INTERVENTION = "manual_intervention"
     SKIP_AND_CONTINUE = "skip_and_continue"
@@ -46,7 +46,7 @@ class TaskFailure:
         failure_type: FailureType,
         error_message: str,
         retry_count: int = 0,
-        context: Optional[Dict[str, Any]] = None,
+        context: Optional[Dict[str, Any] = None,
     ):
         """
         初始化任务失败记录
@@ -65,7 +65,7 @@ class TaskFailure:
         self.error_message = error_message
         self.retry_count = retry_count
         self.context = context or {}
-        self.recovery_attempts: List[Dict[str, Any]] = []
+        self.recovery_attempts: List[Dict[str, Any] = []
 
     def add_recovery_attempt(
         self,
@@ -120,7 +120,7 @@ class RecoveryHandler:
     def __init__(self):
         """初始化恢复处理器"""
         self.failure_history: List[TaskFailure] = []
-        self.failure_patterns: Dict[str, List[FailureType]] = {}
+        self.failure_patterns: Dict[str, List[FailureType] = {}
         self.recovery_configs = self._init_recovery_configs()
         self.alert_handlers: List[Callable] = []
 
@@ -131,12 +131,12 @@ class RecoveryHandler:
 
         logger.info("恢复处理器初始化完成")
 
-    def _init_recovery_configs(self) -> Dict[FailureType, Dict[str, Any]]:
+    def _init_recovery_configs(self) -> Dict[str, Any][FailureType, Dict[str, Any]:
         """
         初始化恢复配置
 
         Returns:
-            Dict[FailureType, Dict[str, Any]]: 失败类型对应的恢复配置
+            Dict[str, Any][FailureType, Dict[str, Any]: 失败类型对应的恢复配置
         """
         return {
             FailureType.TIMEOUT: {
@@ -654,7 +654,7 @@ class RecoveryHandler:
             except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"告警处理器执行失败: {e}")
 
-    def register_alert_handler(self, handler: Callable[[Dict[str, Any]], None]) -> None:
+    def register_alert_handler(self, handler: Callable[[Dict[str, Any], None]) -> None:
         """
         注册告警处理器
 
@@ -708,7 +708,7 @@ class RecoveryHandler:
             },
         }
 
-    def get_recent_failures(self, limit: int = 20) -> List[Dict[str, Any]]:
+    def get_recent_failures(self, limit: int = 20) -> List[Dict[str, Any]:
         """
         获取最近的失败记录
 
@@ -716,7 +716,7 @@ class RecoveryHandler:
             limit: 返回记录数量限制
 
         Returns:
-            List[Dict[str, Any]]: 最近的失败记录
+            List[Dict[str, Any]: 最近的失败记录
         """
         recent_failures = sorted(
             self.failure_history, key=lambda f: f.failure_time, reverse=True

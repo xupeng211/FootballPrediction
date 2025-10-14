@@ -7,7 +7,7 @@ Defines base interfaces and implementations for repository pattern.
 """
 
 from abc import ABC, abstractmethod
-from typing import TypeVar, Generic, List, Optional, Dict, Any
+from typing import Any, Dict[str, Any], List[Any], Optional, Generic, TypeVar
 from dataclasses import dataclass
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,11 +23,11 @@ ID = TypeVar("ID")
 class QuerySpec:
     """查询规范"""
 
-    filters: Optional[Dict[str, Any]] = None
-    order_by: Optional[List[str]] = None
-    limit: Optional[int] = None
-    offset: Optional[int] = None
-    include: Optional[List[str]] = None
+    filters: Optional[Dict[str, Any] ] ] = None
+    order_by: Optional[List[str] ] ] = None
+    limit: Optional[int] ] = None
+    offset: Optional[int] ] = None
+    include: Optional[List[str] ] ] = None
 
 
 class BaseRepository(Generic[T, ID], ABC):
@@ -37,7 +37,7 @@ class BaseRepository(Generic[T, ID], ABC):
     Provides basic data access functionality.
     """
 
-    def __init__(self, session: AsyncSession, model_class: type[T]):
+    def __init__(self, session: AsyncSession, model_class: type[T]) -> None:
         self.session = session
         self.model_class = model_class
 
@@ -47,7 +47,7 @@ class BaseRepository(Generic[T, ID], ABC):
         pass
 
     @abstractmethod
-    async def get_all(self, query_spec: Optional[QuerySpec] = None) -> List[T]:
+    async def get_all(self, query_spec: Optional[QuerySpec] ] = None) -> List[T]:
         """获取所有实体"""
         pass
 
@@ -66,20 +66,20 @@ class BaseRepository(Generic[T, ID], ABC):
         """检查实体是否存在"""
         pass
 
-    async def count(self, query_spec: Optional[QuerySpec] = None) -> int:
+    async def count(self, query_spec: Optional[QuerySpec] ] = None) -> int:
         """计算实体数量"""
         query = select(self.model_class)
 
         if query_spec and query_spec.filters:
             query = self._apply_filters(query, query_spec.filters)
 
-        _result = await self.session.execute(query)
+        result = await self.session.execute(query)
         return len(result.fetchall())
 
-    def _apply_filters(self, query, filters: Dict[str, Any]):
+    def _apply_filters(self, query, filters: Dict[str, Any]) -> None:
         """应用过滤器"""
         for key, value in filters.items():
-            if isinstance(value, dict):
+            if isinstance(value, dict[str, Any]):
                 # 支持嵌套条件
                 for operator, val in value.items():
                     if operator == "$gt":
@@ -100,7 +100,7 @@ class BaseRepository(Generic[T, ID], ABC):
                 query = query.where(getattr(self.model_class, key) == value)
         return query
 
-    def _apply_order_by(self, query, order_by: List[str]):
+    def _apply_order_by(self, query, order_by: List[str]) -> None:
         """应用排序"""
         for order in order_by:
             if order.startswith("-"):
@@ -110,7 +110,7 @@ class BaseRepository(Generic[T, ID], ABC):
                 query = query.order_by(getattr(self.model_class, order))
         return query
 
-    def _apply_pagination(self, query, limit: int, offset: int):
+    def _apply_pagination(self, query, limit: int, offset: int) -> None:
         """应用分页"""
         if offset:
             query = query.offset(offset)
@@ -118,7 +118,7 @@ class BaseRepository(Generic[T, ID], ABC):
             query = query.limit(limit)
         return query
 
-    def _apply_includes(self, query, includes: List[str]):
+    def _apply_includes(self, query, includes: List[str]) -> None:
         """应用预加载"""
         for include in includes:
             if hasattr(self.model_class, include):
@@ -150,7 +150,7 @@ class ReadOnlyRepository(BaseRepository[T, ID], ABC):
 
         if conditions:
             query = select(self.model_class).where(or_(*conditions))
-            _result = await self.session.execute(query)
+            result = await self.session.execute(query)
             return result.scalars().all()  # type: ignore  # type: ignore
         return []
 
@@ -174,11 +174,11 @@ class WriteOnlyRepository(BaseRepository[T, ID], ABC):
         pass
 
     @abstractmethod
-    async def bulk_create(self, entities_data: List[Dict[str, Any]]) -> List[T]:
+    async def bulk_create(self, entities_data: List[Dict[str, Any]) -> List[T]:
         """批量创建实体"""
         pass
 
-    async def bulk_update(self, updates: List[Dict[str, Any]]) -> List[T]:
+    async def bulk_update(self, updates: List[Dict[str, Any]) -> List[T]:
         """批量更新实体"""
         updated_entities = []
         for update_data in updates:
@@ -191,7 +191,7 @@ class WriteOnlyRepository(BaseRepository[T, ID], ABC):
     async def bulk_delete(self, ids: List[ID]) -> int:
         """批量删除实体"""
         query = delete(self.model_class).where(self.model_class.id.in_(ids))  # type: ignore
-        _result = await self.session.execute(query)
+        result = await self.session.execute(query)
         return result.rowcount  # type: ignore
 
 
@@ -217,7 +217,7 @@ class Repository(ReadOnlyRepository[T, ID], WriteOnlyRepository[T, ID], ABC):
         self,
         find_spec: QuerySpec,
         update_data: Dict[str, Any],
-        create_data: Optional[Dict[str, Any]] = None,
+        create_data: Optional[Dict[str, Any] ] ] = None,
     ) -> tuple[T, bool]:
         """更新或创建实体"""
         entity = await self.find_one(find_spec)

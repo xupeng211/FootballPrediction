@@ -8,7 +8,7 @@ Create Date: 2025-09-07 20:13:08.860093
 """
 # mypy: ignore-errors
 
-from typing import Sequence, Union
+from typing import Any, Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa

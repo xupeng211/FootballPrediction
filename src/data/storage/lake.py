@@ -1,12 +1,12 @@
 """
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict[str, Any], List[Any], Optional, Union
 数据湖存储模块
 Data Lake Storage Module
 """
 
 import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict[str, Any], List[Any], Optional, Union
 from datetime import datetime
 from pathlib import Path
 
@@ -115,7 +115,7 @@ class MetadataManager:
         metadata_key = f"{key}.metadata"
         return self.storage.save(metadata_key, metadata, format="json")  # type: ignore
 
-    def load_metadata(self, key: str) -> Optional[Dict[str, Any]]:
+    def load_metadata(self, key: str) -> Optional[Dict[str, Any]:
         """加载元数据"""
         metadata_key = f"{key}.metadata"
         return self.storage.load(metadata_key, format="json")  # type: ignore

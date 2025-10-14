@@ -11,7 +11,7 @@
 
 from sqlalchemy.orm import Session
 import psutil
-from typing import Dict, Any
+from typing import Any, Dict[str, Any], Optional
 from datetime import datetime, date, timedelta
 from fastapi import APIRouter, Depends, Response
 from fastapi.responses import PlainTextResponse
@@ -48,7 +48,7 @@ async def _get_database_metrics(db: Session) -> Dict[str, Any]:  # type: ignore
     }
     """
     start = time.time()  # type: ignore
-    stats: Dict[str, Any] = {  # type: ignore
+    stats: Dict[str, Any] = {}  # type: ignore
         "healthy": False,
         "statistics": {
             "teams_count": 0,
@@ -105,7 +105,7 @@ async def _get_business_metrics(db: Session) -> Dict[str, Any]:  # type: ignore
         "last_updated": str
     }
     """
-    result: Dict[str, Any] = {  # type: ignore
+    result: Dict[str, Any] = {}  # type: ignore
         "24h_predictions": None,
         "upcoming_matches_7d": None,
         "model_accuracy_30d": None,
@@ -175,7 +175,7 @@ async def _get_business_metrics(db: Session) -> Dict[str, Any]:  # type: ignore
 async def get_metrics(db: Session = Depends(get_db_session)) -> Dict[str, Any]:  # type: ignore
     """应用综合指标（JSON）。异常时返回 status=error 但HTTP 200。"""
     start = time.time()  # type: ignore
-    response: Dict[str, Any] = {  # type: ignore
+    response: Dict[str, Any] = {}  # type: ignore
         "status": "ok",
         "response_time_ms": 0.0,
         "system": {},
@@ -278,7 +278,7 @@ async def get_service_status(db: Session = Depends(get_db_session)) -> Dict[str,
 
 
 @router.get(str("/metrics/prometheus"), response_class=PlainTextResponse)  # type: ignore
-async def prometheus_metrics():
+async def prometheus_metrics() -> None:
     """Prometheus 指标端点（文本）。"""
     try:
         metrics_exporter = get_metrics_exporter()
@@ -311,7 +311,7 @@ async def collector_health() -> Dict[str, Any]:  # type: ignore
 async def manual_collect() -> Dict[str, Any]:  # type: ignore
     try:
         collector = get_metrics_collector()  # type: ignore
-        _result = await collector.collect_once()
+        result = await collector.collect_once()
         return result
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"手动指标收集失败: {e}", exc_info=True)

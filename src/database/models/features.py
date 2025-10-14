@@ -16,7 +16,7 @@ Features - 数据库模块
 - 使用SQLAlchemy 2.0语法
 """
 
-from typing import Optional, Dict, Any
+from typing import Any, Optional
 from decimal import Decimal
 from enum import Enum
 from sqlalchemy import (

@@ -8,7 +8,7 @@ Demonstrates query and management features of the repository pattern.
 """
 
 from fastapi import APIRouter, HTTPException, Query
-from typing import Dict, Any, Optional
+from typing import Any,  Dict[str, Any],  Any, Optional
 from datetime import date
 
 from ..repositories import (
@@ -94,7 +94,7 @@ async def get_user_prediction_statistics(
     days: Optional[int] = Query(None, ge=1, le=365, description="统计天数"),
 ) -> Dict[str, Any]:
     """获取用户预测统计信息"""
-    _stats = await repo.get_user_statistics(user_id, period_days=days)
+    stats = await repo.get_user_statistics(user_id, period_days=days)
     return stats
 
 
@@ -103,7 +103,7 @@ async def get_match_prediction_statistics(
     match_id: int, repo: ReadOnlyPredictionRepoDep
 ) -> Dict[str, Any]:
     """获取比赛预测统计信息"""
-    _stats = await repo.get_match_statistics(match_id)
+    stats = await repo.get_match_statistics(match_id)
     return stats
 
 
@@ -205,7 +205,7 @@ async def get_user(user_id: int, repo: ReadOnlyUserRepoDep) -> Dict[str, Any]:
 @router.get("/users/{user_id}/statistics", summary="获取用户完整统计")
 async def get_user_statistics(user_id: int, repo: UserRepoDep) -> Dict[str, Any]:
     """获取用户完整统计信息（使用读写仓储的统计方法）"""
-    _stats = await repo.get_user_statistics(user_id)
+    stats = await repo.get_user_statistics(user_id)
     return stats
 
 
@@ -380,7 +380,7 @@ async def get_match(match_id: int, repo: ReadOnlyMatchRepoDep) -> Dict[str, Any]
 @router.get("/matches/{match_id}/statistics", summary="获取比赛统计")
 async def get_match_statistics(match_id: int, repo: MatchRepoDep) -> Dict[str, Any]:
     """获取比赛统计信息"""
-    _stats = await repo.get_match_statistics(match_id)
+    stats = await repo.get_match_statistics(match_id)
     return stats
 
 

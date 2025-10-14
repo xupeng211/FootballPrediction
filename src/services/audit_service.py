@@ -7,7 +7,7 @@ Provides audit logging functionality for system operations.
 """
 
 import logging
-from typing import Dict, Any, Optional, List
+from typing import Any,  Dict[str, Any],  Any, Optional, List[Any]
 from datetime import datetime
 from enum import Enum
 
@@ -41,8 +41,8 @@ class AuditContext:
     def __init__(
         self,
         user_id: str,
-        session_id: Optional[str] = None,
-        ip_address: Optional[str] = None,
+        session_id: Optional[str] ] = None,
+        ip_address: Optional[str] ] = None,
     ):
         self.user_id = user_id
         self.session_id = session_id
@@ -70,7 +70,7 @@ class AuditLog:
 class AuditLogSummary:
     """审计日志摘要"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.total_logs = 0
         self.by_severity = {}
         self.by_action = {}
@@ -119,12 +119,12 @@ class AuditEvent:
 class AuditService:
     """审计服务 - 简化版本"""
 
-    def __init__(self):
-        self.events: List[AuditEvent] = []
+    def __init__(self) -> None:
+        self.events: List[AuditEvent] = {}]
         self.sanitizer = DataSanitizer()
         self.analyzer = SeverityAnalyzer()
 
-    def log_event(self, action: str, user: str, details: Dict[str, Any]):
+    def log_event(self, action: str, user: str, details: Dict[str, Any]) -> None:
         """记录审计事件"""
         # 清理数据
         sanitized_details = self.sanitizer.sanitize(details)

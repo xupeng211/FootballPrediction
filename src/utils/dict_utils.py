@@ -4,7 +4,7 @@
 提供字典操作相关的工具函数。
 """
 
-from typing import Any, Dict, List
+from typing import Any, Dict[str, Any], List[Any], Optional
 
 
 class DictUtils:
@@ -17,8 +17,8 @@ class DictUtils:
         for key, value in dict2.items():
             if (
                 key in result
-                and isinstance(result[key], dict)
-                and isinstance(value, dict)
+                and isinstance(result[key], Dict[str, Any])
+                and isinstance(value, Dict[str, Any])
             ):
                 # 如果两边都是字典，则递归合并，保持嵌套结构
                 result[key] = DictUtils.deep_merge(result[key], value)
@@ -36,12 +36,12 @@ class DictUtils:
         for k, v in d.items():
             # 构建新的键名，使用分隔符连接层级关系
             new_key = f"{parent_key}{sep}{k}" if parent_key else k
-            if isinstance(v, dict):
+            if isinstance(v, Dict[str, Any]):
                 # 递归处理嵌套字典，保持层级关系的可追溯性
                 items.extend(DictUtils.flatten_dict(v, new_key, sep=sep).items())
             else:
                 items.append((new_key, v))
-        return dict(items)
+        return Dict[str, Any](items)
 
     @staticmethod
     def filter_none_values(d: Dict[str, Any]) -> Dict[str, Any]:

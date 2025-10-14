@@ -2,7 +2,7 @@
 OpenAPI 配置和文档增强
 """
 
-from typing import Dict, Any, List
+from typing import Any,  Dict[str, Any],  Any, List[Any]
 from fastapi import FastAPI
 
 
@@ -116,7 +116,7 @@ curl http://localhost:8000/predictions/{match_id}
         }
 
     @staticmethod
-    def get_servers() -> List[Dict[str, str]]:
+    def get_servers() -> List[Dict[str, str]:
         """获取服务器配置"""
         return [
             {"url": "http://localhost:8000", "description": "开发环境 - 本地开发"},
@@ -131,7 +131,7 @@ curl http://localhost:8000/predictions/{match_id}
         ]
 
     @staticmethod
-    def get_tags() -> List[Dict[str, str]]:
+    def get_tags() -> List[Dict[str, str]:
         """获取API标签定义"""
         return [
             {

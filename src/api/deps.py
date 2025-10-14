@@ -2,7 +2,7 @@
 API依赖注入
 """
 
-from typing import Generator
+from typing import Any, Generator
 
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -22,8 +22,8 @@ def get_db() -> Generator:
 
 # 认证相关的依赖
 async def get_current_active_user(
-    current_user: dict = Depends(get_current_user),
-) -> dict:
+    current_user: Dict[str, Any] = Depends(get_current_user),
+) -> Dict[str, Any]:
     """获取当前活跃用户"""
     if not current_user.get("is_active", True):
         raise HTTPException(
@@ -33,8 +33,8 @@ async def get_current_active_user(
 
 
 async def get_current_admin_user(
-    current_user: dict = Depends(get_current_active_user),
-) -> dict:
+    current_user: Dict[str, Any] = Depends(get_current_active_user),
+) -> Dict[str, Any]:
     """获取当前管理员用户"""
     if "admin" not in current_user.get("roles", []):
         raise HTTPException(

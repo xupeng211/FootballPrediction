@@ -6,7 +6,7 @@ Health Checker
 """
 
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any,  Dict[str, Any],  Any, Optional
 
 from src.database.connection import DatabaseManager
 from src.cache.redis.core.connection_manager import RedisConnectionManager

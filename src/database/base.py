@@ -5,7 +5,7 @@ SQLAlchemy基础模型
 """
 
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any,  Dict[str, Any],  Any, Optional
 
 from sqlalchemy import Column, DateTime, Integer
 from sqlalchemy.orm import DeclarativeBase

@@ -203,7 +203,7 @@ def get_dependency_version(dependency_name: str) -> Optional[str]:
         return None
 
 
-def check_optional_dependencies() -> dict:
+def check_optional_dependencies() -> Dict[str, Any]:
     """
     检查所有可选依赖的状态
 

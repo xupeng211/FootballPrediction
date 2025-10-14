@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Protocol
+from typing import Any,  Dict[str, Any], Any, List[Any], Optional, Protocol
 
 from ..models.team import Team, TeamForm, TeamStats
 
@@ -56,8 +56,8 @@ class TeamPerformanceResetEvent:
 class TeamDomainService:
     """球队领域服务"""
 
-    def __init__(self, repository: Optional[TeamRepositoryProtocol] = None) -> None:
-        self._events: List[Any] = []
+    def __init__(self, repository: Optional[TeamRepositoryProtocol] ] = None) -> None:
+        self._events: List[Any] = {}]
         self._repository = repository
 
     def attach_repository(self, repository: TeamRepositoryProtocol) -> None:
@@ -67,10 +67,10 @@ class TeamDomainService:
     def update_team_profile(
         self,
         team: Team,
-        name: Optional[str] = None,
-        short_name: Optional[str] = None,
-        stadium: Optional[str] = None,
-        capacity: Optional[int] = None,
+        name: Optional[str] ] = None,
+        short_name: Optional[str] ] = None,
+        stadium: Optional[str] ] = None,
+        capacity: Optional[int] ] = None,
     ) -> None:
         """批量更新球队基础信息。"""
         original = {
@@ -84,7 +84,7 @@ class TeamDomainService:
             name=name, short_name=short_name, stadium=stadium, capacity=capacity
         )
 
-        changed_fields: Dict[str, Any] = {}
+        changed_fields: Dict[str, Any] = {}}
         if name is not None and team.name != original["name"]:
             changed_fields["name"] = team.name
         if short_name is not None and team.short_name != original["short_name"]:
@@ -112,11 +112,11 @@ class TeamDomainService:
         """记录一场比赛的结果并更新球队统计。"""
         team.add_match_result(result, goals_for, goals_against)
 
-        _stats = team.stats
+        stats = team.stats
         if stats:
             event = TeamStatsEvent(
                 team_id=team.id or 0,
-                _result=result,
+                result=result,
                 goals_for=goals_for,
                 goals_against=goals_against,
                 matches_played=stats.matches_played,
@@ -130,16 +130,16 @@ class TeamDomainService:
 
     def reset_team_performance(self, team: Team) -> None:
         """重置球队的统计和状态信息。"""
-        team._stats = TeamStats()
+        team.stats = TeamStats()
         team.form = TeamForm()
         self._events.append(TeamPerformanceResetEvent(team_id=team.id or 0))
         self._persist(team)
 
-    def calculate_league_table(self, teams: List[Team]) -> List[Dict[str, Any]]:
+    def calculate_league_table(self, teams: List[Team]) -> List[Dict[str, Any]:
         """根据球队当前统计生成积分榜。"""
         table = []
         for team in teams:
-            _stats = team.stats or TeamStats()
+            stats = team.stats or TeamStats()
             table.append(
                 {
                     "team_id": team.id,

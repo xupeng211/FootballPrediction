@@ -9,7 +9,7 @@ Responsible for creating and managing prediction strategy instances.
 import os
 import json
 import yaml  # type: ignore
-from typing import Dict, Any, List, Optional, Type, Union
+from typing import Any,  Union, Dict[str, Any],  Any, List[Any], Optional, Type[Any], Union
 from pathlib import Path
 from datetime import datetime
 import logging
@@ -42,20 +42,20 @@ class PredictionStrategyFactory:
     负责根据配置创建和管理各种预测策略实例。
     """
 
-    def __init__(self, config_path: Optional[Union[str, Path]] = None):
+    def __init__(self, config_path: Optional[Union[str, Path]] ] ] = None) -> None:
         """初始化策略工厂
 
         Args:
             config_path: 策略配置文件路径
         """
         self._config_path = config_path or "configs/strategies.yaml"
-        self._strategies: Dict[str, PredictionStrategy] = {}
-        self._strategy_configs: Dict[str, Dict[str, Any]] = {}
-        self._default_config: Dict[str, Any] = {}
-        self._environment_overrides: Dict[str, Any] = {}
+        self._strategies: Dict[str, PredictionStrategy] = {}}
+        self._strategy_configs: Dict[str, Union[str, Dict[str, Any][str, Any] = {}
+        self._default_config: Dict[str, Any] = {}}
+        self._environment_overrides: Dict[str, Any] = {}}
 
         # 策略类型映射
-        self._strategy_registry: Dict[str, Type[PredictionStrategy]] = {
+        self._strategy_registry: Dict[str, Type[Any][PredictionStrategy] = {
             "ml_model": MLModelStrategy,
             "statistical": StatisticalStrategy,
             "historical": HistoricalStrategy,
@@ -66,7 +66,7 @@ class PredictionStrategyFactory:
         self._load_configuration()
 
     def register_strategy(
-        self, strategy_type: str, strategy_class: Type[PredictionStrategy]
+        self, strategy_type: str, strategy_class: Type[Any][PredictionStrategy]
     ) -> None:
         """注册新的策略类型
 
@@ -90,8 +90,8 @@ class PredictionStrategyFactory:
     async def create_strategy(
         self,
         strategy_name: str,
-        strategy_type: Optional[str] = None,
-        config: Optional[Dict[str, Any]] = None,
+        strategy_type: Optional[str] ] = None,
+        config: Optional[Dict[str, Any] ] ] = None,
         overwrite: bool = False,
     ) -> PredictionStrategy:
         """创建策略实例
@@ -116,7 +116,7 @@ class PredictionStrategyFactory:
 
         # 获取策略配置
         if config is None:
-            _config = self._get_strategy_config(strategy_name)
+            config = self._get_strategy_config(strategy_name)
 
         # 获取策略类型
         if strategy_type is None:
@@ -154,7 +154,7 @@ class PredictionStrategyFactory:
         ensemble = EnsembleStrategy(strategy_name)
 
         # 先创建子策略
-        sub_strategies_config = config.get("sub_strategies", [])
+        sub_strategies_config= config.get("sub_strategies", [])
         created_sub_strategies = {}
 
         for sub_config in sub_strategies_config:
@@ -165,7 +165,7 @@ class PredictionStrategyFactory:
                 try:
                     # 创建子策略但不缓存到主字典
                     sub_strategy = await self.create_strategy(
-                        f"{strategy_name}_{sub_name}",
+                        f"{strategy_name"_{sub_name}",
                         sub_type,
                         sub_config.get("config", {}),
                         overwrite=True,
@@ -219,7 +219,7 @@ class PredictionStrategyFactory:
         ]
 
     async def create_multiple_strategies(
-        self, strategy_configs: List[Dict[str, Any]]
+        self, strategy_configs: List[Dict[str, Any]
     ) -> Dict[str, PredictionStrategy]:
         """批量创建策略
 
@@ -239,7 +239,7 @@ class PredictionStrategyFactory:
 
             try:
                 strategy = await self.create_strategy(
-                    strategy_name=strategy_name, _config=config
+                    strategy_name=strategy_name, config=config
                 )
                 created_strategies[strategy_name] = strategy
             except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
@@ -256,7 +256,7 @@ class PredictionStrategyFactory:
             if strategy_name and strategy_name not in self._strategies:
                 try:
                     await self.create_strategy(
-                        strategy_name=strategy_name, _config=config
+                        strategy_name=strategy_name, config=config
                     )
                 except (
                     ValueError,
@@ -294,14 +294,14 @@ class PredictionStrategyFactory:
         try:
             with open(config_path, "r", encoding="utf-8") as f:
                 if config_path.suffix.lower() in [".yaml", ".yml"]:
-                    _config = yaml.safe_load(f)
+                    config = yaml.safe_load(f)
                 elif config_path.suffix.lower() == ".json":
-                    _config = json.load(f)
+                    config = json.load(f)
                 else:
                     raise ValueError(f"不支持的配置文件格式: {config_path.suffix}")
 
             self._strategy_configs = config.get("strategies", {})
-            self._default_config = config.get("defaults", {})
+            self._default_config =  config.get("defaults", {})
 
             # 应用环境变量覆盖
             self._apply_environment_overrides()
@@ -314,7 +314,7 @@ class PredictionStrategyFactory:
 
     def _create_default_config(self) -> None:
         """创建默认配置"""
-        self._default_config = {
+        self._default_config =  {
             "default_strategies": [
                 {
                     "name": "ml_predictor",
@@ -391,7 +391,7 @@ class PredictionStrategyFactory:
         config_path = Path(self._config_path)
         config_path.parent.mkdir(parents=True, exist_ok=True)
 
-        default_config = {
+        default_config =  {
             "strategies": {},
             "defaults": self._default_config,
             "version": "1.0.0",
@@ -440,14 +440,14 @@ class PredictionStrategyFactory:
         """
         # 从策略配置中获取
         if strategy_name in self._strategy_configs:
-            _config = self._strategy_configs[strategy_name].copy()
+            config = self._strategy_configs[strategy_name].copy()
         else:
             # 从默认策略中查找
             default_strategies = self._default_config.get("default_strategies", [])
-            _config = None
+            config = None
             for strategy in default_strategies:
                 if strategy.get("name") == strategy_name:
-                    _config = strategy.copy()
+                    config = strategy.copy()
                     break
 
             if not config:
@@ -500,7 +500,7 @@ class PredictionStrategyFactory:
 
         # 检查策略特定配置
         if "config" in config and config["config"]:
-            strategy_config = config["config"]
+            strategyconfig= config["config"]
 
             # ML模型策略验证
             if config.get("type") == "ml_model":
@@ -516,11 +516,11 @@ class PredictionStrategyFactory:
 
         return errors
 
-    async def health_check(self) -> Dict[str, Dict[str, Any]]:
+    async def health_check(self) -> Dict[str, Dict[str, Any][str, Any]:
         """检查所有策略的健康状态
 
         Returns:
-            Dict[str, Dict[str, Any]]: 策略健康状态报告
+            Dict[str, Dict[str, Any][str, Any]: 策略健康状态报告
         """
         health_report = {}
 

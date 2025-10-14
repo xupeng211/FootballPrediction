@@ -13,7 +13,7 @@
 import logging
 import traceback
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any,  Dict[str, Any],  Any, Optional
 
 from sqlalchemy import text
 
@@ -41,7 +41,7 @@ class TaskErrorLogger:
         task_name: str,
         task_id: str,
         error: Exception,
-        context: Optional[Dict[str, Any]] = None,
+        context: Optional[Dict[str, Any] = None,
         retry_count: int = 0,
     ) -> None:
         """
@@ -96,7 +96,7 @@ class TaskErrorLogger:
         http_status: Optional[int],
         error_message: str,
         retry_count: int = 0,
-        response_data: Optional[Dict[str, Any]] = None,
+        response_data: Optional[Dict[str, Any] = None,
     ) -> None:
         """
         记录 API 调用失败日志

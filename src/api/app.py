@@ -9,7 +9,7 @@ Integrates all API routes and middleware.
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Union
+from typing import Any, Union
 
 from requests.exceptions import HTTPError
 
@@ -27,6 +27,7 @@ from src.config.openapi_config import setup_openapi
 from src.api.health import router as health_router
 from src.api.predictions import router as predictions_router
 from src.api.data_router import router as data_router
+from src.api.auth import router as auth_router
 
 logger = get_logger(__name__)
 
@@ -34,7 +35,7 @@ logger = get_logger(__name__)
 prediction_engine: Union[PredictionEngine, None] = None
 
 
-async def init_prediction_engine():
+async def init_prediction_engine() -> None:
     """初始化预测引擎"""
     global prediction_engine
     try:
@@ -45,7 +46,21 @@ async def init_prediction_engine():
         # 不抛出异常，允许应用继续启动
 
 
-async def close_prediction_engine():
+async def init_secrets() -> None:
+    """初始化密钥管理"""
+    try:
+        from src.security.secret_manager import init_secrets
+
+        init_secrets()
+        logger.info("密钥管理器初始化成功")
+    except Exception as e:
+        logger.error(f"密钥管理器初始化失败: {e}")
+        # 生产环境下应该抛出异常
+        if os.getenv("ENVIRONMENT", "development").lower() == "production":
+            raise
+
+
+async def close_prediction_engine() -> None:
     """关闭预测引擎"""
     global prediction_engine
     if prediction_engine:
@@ -58,11 +73,17 @@ async def close_prediction_engine():
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> None:
     """应用生命周期管理"""
     # 启动时初始化
     logger.info("启动足球预测API服务...")
+
+    # 优先初始化密钥管理
+    await init_secrets()
+
+    # 初始化预测引擎
     await init_prediction_engine()
+
     logger.info("服务启动完成")
 
     yield
@@ -103,7 +124,7 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """请求日志中间件"""
 
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(self, request: Request, call_next) -> None:
         start_time = None
         try:
             # 记录请求开始
@@ -146,13 +167,14 @@ app.add_middleware(RequestLoggingMiddleware)
 
 # 注册路由
 app.include_router(health_router, prefix="/api/v1/health", tags=["health"])
-app.include_router(predictions_router)
-app.include_router(data_router)
+app.include_router(auth_router, prefix="/api/v1/auth", tags=["authentication"])
+app.include_router(predictions_router, prefix="/api/v1", tags=["predictions"])
+app.include_router(data_router, prefix="/api/v1", tags=["data"])
 
 
 # 全局异常处理
 @app.exception_handler(StarletteHTTPException)
-async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> None:
     """HTTP异常处理"""
     logger.warning(
         f"HTTP exception: {exc.status_code} {exc.detail} "
@@ -172,7 +194,9 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
 
 
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> None:
     """请求验证异常处理"""
     logger.warning(
         f"Validation error at {request.method} {request.url.path}: {exc.errors()}"
@@ -192,7 +216,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 
 @app.exception_handler(Exception)
-async def general_exception_handler(request: Request, exc: Exception):
+async def general_exception_handler(request: Request, exc: Exception) -> None:
     """通用异常处理"""
     logger.error(
         f"Unhandled exception at {request.method} {request.url.path}: {str(exc)}",
@@ -213,7 +237,7 @@ async def general_exception_handler(request: Request, exc: Exception):
 
 # 根路径
 @app.get("/")
-async def root():
+async def root() -> None:
     """根路径"""
     return {
         "message": "Football Prediction API",
@@ -225,7 +249,7 @@ async def root():
 
 # 健康检查
 @app.get("/api/health")
-async def health_check():
+async def health_check() -> None:
     """健康检查端点"""
     return {
         "status": "healthy",
@@ -236,29 +260,15 @@ async def health_check():
 
 # Metrics 端点
 @app.get("/metrics")
-async def metrics_endpoint():
+async def metrics_endpoint() -> None:
     """Prometheus 格式的指标端点"""
     # 简单的占位符指标
-    metrics_data = """# HELP http_requests_total Total number of HTTP requests
-# TYPE http_requests_total counter
-http_requests_total{method="GET",endpoint="/api/health"} 1
-
-# HELP request_duration_seconds Request duration in seconds
-# TYPE request_duration_seconds histogram
-request_duration_seconds_bucket{le="0.1"} 1
-request_duration_seconds_bucket{le="1.0"} 1
-request_duration_seconds_bucket{le="+Inf"} 1
-
-# HELP api_health_status API health status
-# TYPE api_health_status gauge
-api_health_status 1
-"""
     return Response(content=metrics_data, media_type="text/plain")
 
 
 # 测试端点
 @app.get("/api/test")
-async def test_endpoint():
+async def test_endpoint() -> None:
     """测试端点"""
     return {
         "message": "API is working!",

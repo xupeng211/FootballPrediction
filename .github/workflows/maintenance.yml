@@ -1,0 +1,285 @@
+name: Maintenance Tasks
+
+on:
+  schedule:
+    # 每天凌晨2点运行健康检查
+    - cron: '0 2 * * *'
+    # 每周一早上9点生成周报
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Task to run'
+        required: true
+        type: choice
+        options:
+          - health-check
+          - performance-report
+          - security-scan
+          - database-backup
+          - cleanup
+          - update-dependencies
+
+jobs:
+  health-check:
+    name: Health Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.task == 'health-check')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          make install-locked
+
+      - name: Check API health
+        run: |
+          # 这里添加实际的API健康检查URL
+          if curl -f "https://api.footballprediction.com/api/v1/health"; then
+            echo "✅ API is healthy"
+          else
+            echo "❌ API is unhealthy"
+            exit 1
+          fi
+
+      - name: Check database health
+        run: |
+          # 这里添加数据库健康检查
+          echo "Checking database connectivity..."
+
+      - name: Check Redis health
+        run: |
+          # 这里添加Redis健康检查
+          echo "Checking Redis connectivity..."
+
+      - name: Generate health report
+        run: |
+          echo "Generating health report..."
+          python scripts/generate_health_report.py
+
+      - name: Upload health report
+        uses: actions/upload-artifact@v3
+        with:
+          name: health-report
+          path: health_report.json
+
+      - name: Notify health status
+        if: failure()
+        run: |
+          # 发送告警通知
+          curl -X POST "${{ secrets.ALERT_WEBHOOK }}" \
+            -H 'Content-type: application/json' \
+            -d '{"text": "🚨 FootballPrediction health check failed", "priority": "high"}'
+
+  performance-report:
+    name: Performance Report
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.task == 'performance-report')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          make install-locked
+          pip install locust psutil
+
+      - name: Run performance tests
+        run: |
+          echo "Running performance tests..."
+          make benchmark
+
+      - name: Generate performance report
+        run: |
+          python scripts/generate_performance_report.py
+
+      - name: Upload performance report
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-report
+          path: performance_report.json
+
+      - name: Check performance thresholds
+        run: |
+          # 检查性能是否在阈值内
+          python scripts/check_performance_thresholds.py
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.task == 'security-scan')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Bandit security scan
+        run: |
+          pip install bandit safety
+          bandit -r src/ -f json -o bandit-report.json
+          safety check --json --output safety-report.json
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-reports
+          path: |
+            bandit-report.json
+            safety-report.json
+            trivy-results.sarif
+
+      - name: Create security summary
+        run: |
+          python scripts/create_security_summary.py
+
+      - name: Notify security issues
+        if: failure()
+        run: |
+          curl -X POST "${{ secrets.ALERT_WEBHOOK }}" \
+            -H 'Content-type: application/json' \
+            -d '{"text": "🔒 Security scan found vulnerabilities", "priority": "high"}'
+
+  database-backup:
+    name: Database Backup
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.task == 'database-backup')
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          make install-locked
+
+      - name: Run database backup
+        run: |
+          echo "Starting database backup..."
+          python scripts/backup_database.py
+
+      - name: Verify backup
+        run: |
+          echo "Verifying backup integrity..."
+          python scripts/verify_backup.py
+
+      - name: Clean old backups
+        run: |
+          echo "Cleaning backups older than 30 days..."
+          python scripts/clean_old_backups.py
+
+      - name: Notify backup status
+        run: |
+          echo "Database backup completed successfully!"
+
+  cleanup:
+    name: Cleanup Tasks
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.task == 'cleanup')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cleanup old logs
+        run: |
+          echo "Cleaning logs older than 7 days..."
+          find logs/ -name "*.log" -mtime +7 -delete || true
+
+      - name: Cleanup cache
+        run: |
+          echo "Cleaning expired cache entries..."
+          python scripts/cleanup_cache.py
+
+      - name: Cleanup temporary files
+        run: |
+          echo "Cleaning temporary files..."
+          find . -name "*.tmp" -delete || true
+          find . -name "*.pyc" -delete || true
+          find . -name "__pycache__" -type d -exec rm -rf {} + || true
+
+      - name: Cleanup Docker images
+        run: |
+          echo "Cleaning old Docker images..."
+          docker system prune -f
+          docker image prune -f
+
+  update-dependencies:
+    name: Update Dependencies
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.task == 'update-dependencies')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for updates
+        run: |
+          echo "Checking for package updates..."
+          pip list --outdated
+
+      - name: Update requirements
+        run: |
+          echo "Updating requirements..."
+          pip-compile requirements/requirements.in
+
+      - name: Create PR for updates
+        if: steps.check.outputs.out != ""
+        run: |
+          echo "Creating pull request for dependency updates..."
+          # 这里可以添加自动创建PR的逻辑
+
+      - name: Notify dependency updates
+        run: |
+          echo "Dependencies check completed"
+
+  weekly-report:
+    name: Weekly Report
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' && github.event_name == 'schedule' && github.event.schedule == '0 9 * * 1'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Generate weekly report
+        run: |
+          python scripts/generate_weekly_report.py
+
+      - name: Send weekly report
+        run: |
+          python scripts/send_weekly_report.py
+
+      -name: Upload weekly report
+        uses: actions/upload-artifact@v3
+        with:
+          name: weekly-report
+          path: weekly_report.md

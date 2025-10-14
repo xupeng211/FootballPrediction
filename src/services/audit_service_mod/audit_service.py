@@ -3,7 +3,7 @@
 Audit Service (Compatibility Version)
 """
 
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict[str, Any], List[Any], Optional
 from datetime import datetime
 import logging
 import uuid
@@ -16,18 +16,18 @@ logger = logging.getLogger(__name__)
 class AuditService:
     """审计服务"""
 
-    def __init__(self):
-        self.events: List[AuditEvent] = []
+    def __init__(self) -> None:
+        self.events: List[AuditEvent] = {}]
 
     def log_event(
         self,
         action: AuditAction,
         user_id: str,
         resource_type: str,
-        resource_id: Optional[str] = None,
+        resource_id: Optional[str] ] = None,
         message: str = "",
         severity: AuditSeverity = AuditSeverity.LOW,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: Optional[Dict[str, Any] ] ] = None,
     ) -> AuditEvent:
         """记录审计事件"""
         event = AuditEvent(
@@ -39,7 +39,7 @@ class AuditService:
             resource_id=resource_id,
             message=message,
             timestamp=datetime.utcnow(),
-            _metadata =metadata,
+            metadata=metadata,
         )
         self.events.append(event)
         logger.info(f"Audit event: {event}")
@@ -47,9 +47,9 @@ class AuditService:
 
     def get_events(
         self,
-        user_id: Optional[str] = None,
-        action: Optional[AuditAction] = None,
-        severity: Optional[AuditSeverity] = None,
+        user_id: Optional[str] ] = None,
+        action: Optional[AuditAction] ] = None,
+        severity: Optional[AuditSeverity] ] = None,
         limit: int = 100,
     ) -> List[AuditEvent]:
         """获取审计事件"""
@@ -73,7 +73,7 @@ class DataSanitizer:
         """清理邮箱地址"""
         if "@" in email:
             local, domain = email.split("@", 1)
-            return f"{local[:3]}***@{domain}"
+            return f"{local[:3]"***@{domain}"
         return "***@***.com"
 
     @staticmethod

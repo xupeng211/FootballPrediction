@@ -6,7 +6,7 @@ Cache Factory
 Provides factory methods for creating different types of caches.
 """
 
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 from .async_cache import AsyncTTLCache
 from .ttl_cache import TTLCache
@@ -169,12 +169,12 @@ class CacheFactory:
         return ["sync", "async"]
 
     @staticmethod
-    def get_preset_configs() -> dict:
+    def get_preset_configs() -> Dict[str, Any]:
         """
         获取预设配置
 
         Returns:
-            dict: 预设配置字典
+            Dict[str, Any]: 预设配置字典
         """
         return {
             "prediction": {"max_size": 10000, "default_ttl": 1800},

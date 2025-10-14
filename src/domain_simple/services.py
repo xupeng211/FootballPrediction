@@ -7,7 +7,7 @@ import logging
 """
 
 from datetime import datetime
-from typing import Dict, List, Optional, Any, Type, TypeVar, Generic
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Any, Type[Any], TypeVar, Generic
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
@@ -27,7 +27,7 @@ class ServiceConfig:
     name: str
     version: str = "1.0.0"
     enabled: bool = True
-    config: Optional[Dict[str, Any]] = None
+    config: Optional[Dict[str, Any] = None
 
     def __post_init__(self):
         if self.config is None:
@@ -291,7 +291,7 @@ class DomainServiceFactory:
         self._repositories[name] = repository
 
     def create_service(
-        self, service_type: Type[DomainService], config: Optional[ServiceConfig] = None
+        self, service_type: Type[Any][DomainService], config: Optional[ServiceConfig] = None
     ) -> DomainService:
         """创建服务实例"""
         service = service_type(config)

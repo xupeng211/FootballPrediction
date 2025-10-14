@@ -9,7 +9,7 @@ Provides event publishing, subscription, and routing functionality.
 import asyncio
 import logging
 from collections import defaultdict
-from typing import Any, Dict, List, Optional, Type
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Type[Any]
 from concurrent.futures import ThreadPoolExecutor
 
 from .base import Event, EventHandler, EventFilter
@@ -30,8 +30,8 @@ class EventBus:
         Args:
             max_workers: 最大工作线程数
         """
-        self._subscribers: Dict[str, List[EventHandler]] = defaultdict(list)
-        self._filters: Dict[EventHandler, List[EventFilter]] = {}
+        self._subscribers: Dict[str, List[EventHandler] = defaultdict(list)
+        self._filters: Dict[str, Any] = {}
         self._queues: Dict[str, asyncio.Queue] = {}
         self._running = False
         self._tasks: List[asyncio.Task] = []
@@ -104,7 +104,7 @@ class EventBus:
         self,
         event_type: str,
         handler: EventHandler,
-        filters: Optional[List[EventFilter]] = None,
+        filters: Optional[List[EventFilter] = None,
     ) -> None:
         """订阅事件
 
@@ -378,7 +378,7 @@ def event_handler(event_types: List[str]):
         event_types: 处理的事件类型列表
     """
 
-    def decorator(cls: Type[EventHandler]) -> Type[EventHandler]:
+    def decorator(cls: Type[Any][EventHandler]) -> Type[Any][EventHandler]:
         original_init = cls.__init__
 
         def __init__(self, *args, **kwargs):
@@ -392,7 +392,7 @@ def event_handler(event_types: List[str]):
         cls._handled_events = event_types  # type: ignore
 
         # 重写get_handled_events方法
-        def get_handled_events(self) -> list[str]:
+        def get_handled_events(self) -> List[str]:
             return event_types
 
         cls.get_handled_events = get_handled_events  # type: ignore

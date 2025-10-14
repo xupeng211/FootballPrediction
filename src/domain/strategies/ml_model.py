@@ -7,7 +7,7 @@ Strategy implementation using machine learning models for prediction.
 """
 
 import time
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Tuple
 import numpy as np
 from datetime import datetime
 import logging
@@ -29,7 +29,7 @@ class MLModelStrategy(PredictionStrategy):
     Uses trained machine learning models for match prediction.
     """
 
-    def __init__(self, model_name: str = "default_ml_model"):
+    def __init__(self, model_name: str = "default_ml_model") -> None:
         super().__init__(model_name, StrategyType.ML_MODEL)
         self._model = None
         self._feature_processor = None
@@ -49,7 +49,7 @@ class MLModelStrategy(PredictionStrategy):
                 - model_stage: 模型阶段（Production, Staging等）
                 - feature_config: 特征配置
         """
-        self._config = config
+        self.config = config
 
         # 初始化MLflow客户端
         try:
@@ -352,7 +352,7 @@ class MLModelStrategy(PredictionStrategy):
             predicted_away_score=pred_away,
             confidence=confidence,
             probability_distribution=probability_distribution,
-            _metadata ={
+            metadata={
                 "model_version": self._model_version,
                 "model_loaded_at": self._model_loaded_at.isoformat()
                 if self._model_loaded_at
@@ -379,7 +379,7 @@ class MLModelStrategy(PredictionStrategy):
         return home_goals, away_goals
 
     async def update_metrics(
-        self, actual_results: List[Tuple[Prediction, Dict[str, Any]]]
+        self, actual_results: List[Tuple[Prediction, Dict[str, Any]
     ) -> None:
         """更新策略性能指标"""
         if not actual_results:

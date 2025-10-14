@@ -8,7 +8,7 @@ Defines the base structure for domain events.
 
 from abc import ABC
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any,  Dict[str, Any],  Any, Optional
 from uuid import uuid4
 
 
@@ -20,7 +20,7 @@ class DomainEvent(ABC):
     All domain events should inherit from this class.
     """
 
-    def __init__(self, aggregate_id: Optional[int] = None):
+    def __init__(self, aggregate_id: Optional[int] ] = None) -> None:
         """
         初始化领域事件
 
@@ -53,4 +53,4 @@ class DomainEvent(ABC):
         return {}
 
     def __str__(self) -> str:
-        return f"{self.__class__.__name__}({self.event_id})"
+        return f"{self.__class__.__name__"({self.event_id})"

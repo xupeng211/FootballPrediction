@@ -2,7 +2,7 @@
 
 import os
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 import logging
 
 ENABLE_FEAST = os.getenv("ENABLE_FEAST", "true").lower() == "true"
@@ -25,7 +25,7 @@ except ImportError:  # pragma: no cover - 可选依赖在测试中常被禁用
     class _MockFeastResult:
         """轻量的Feast查询结果，仅实现 to_df 方法。"""
 
-        def __init__(self, rows: List[Dict[str, Any]]):
+        def __init__(self, rows: List[Dict[str, Any]):
             self._rows = rows
 
         def to_df(self):
@@ -70,11 +70,11 @@ except ImportError:  # pragma: no cover - 可选依赖在测试中常被禁用
             self.applied_objects.append(obj)
 
         def get_online_features(
-            self, features: List[str], entity_rows: List[Dict[str, Any]]
+            self, features: List[str], entity_rows: List[Dict[str, Any]
         ) -> _MockFeastResult:
-            enriched_rows: List[Dict[str, Any]] = []
+            enriched_rows: List[Dict[str, Any] = []
             for row in entity_rows:
-                enriched = dict(row)
+                enriched = Dict[str, Any](row)
                 for feature in features:
                     short_name = feature.split(":")[-1]
                     enriched.setdefault(short_name, 0.0)
@@ -324,7 +324,7 @@ class FootballFeatureStore:
             return False
 
     async def get_online_features(
-        self, feature_refs: List[str], entity_rows: List[Dict[str, Any]]
+        self, feature_refs: List[str], entity_rows: List[Dict[str, Any]
     ) -> pd.DataFrame:
         """
         获取在线特征（实时查询）
@@ -561,7 +561,7 @@ class FootballFeatureStore:
 
     async def get_match_features_for_prediction(
         self, match_id: int, home_team_id: int, away_team_id: int
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[Dict[str, Any]:
         """
         获取用于预测的比赛特征
 
@@ -571,7 +571,7 @@ class FootballFeatureStore:
             away_team_id: 客队ID
 
         Returns:
-            Optional[Dict[str, Any]]: 特征字典
+            Optional[Dict[str, Any]: 特征字典
         """
         try:
             # 生成缓存Key

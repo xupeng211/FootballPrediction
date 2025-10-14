@@ -1,0 +1,305 @@
+version: '3.8'
+
+services:
+  # Redis主节点
+  redis-master:
+    image: redis:7.2-alpine
+    container_name: football-redis-master
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+      - "16379:16379"
+    volumes:
+      - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf
+      - redis-master-data:/data
+      - ./logs/redis:/var/log/redis
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      - redis-cluster
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis123456}
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Redis从节点1
+  redis-replica-1:
+    image: redis:7.2-alpine
+    container_name: football-redis-replica-1
+    restart: unless-stopped
+    ports:
+      - "6380:6379"
+      - "16380:16379"
+    volumes:
+      - redis-replica-1-data:/data
+      - ./logs/redis:/var/log/redis
+    command: >
+      redis-server
+      --port 6379
+      --bind 0.0.0.0
+      --requirepass ${REDIS_PASSWORD:-redis123456}
+      --masterauth ${REDIS_PASSWORD:-redis123456}
+      --replicaof redis-master 6379
+      --replica-read-only yes
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+      --appendonly yes
+      --maxmemory 1gb
+      --maxmemory-policy allkeys-lru
+    networks:
+      - redis-cluster
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis123456}
+    depends_on:
+      redis-master:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Redis从节点2
+  redis-replica-2:
+    image: redis:7.2-alpine
+    container_name: football-redis-replica-2
+    restart: unless-stopped
+    ports:
+      - "6381:6379"
+      - "16381:16379"
+    volumes:
+      - redis-replica-2-data:/data
+      - ./logs/redis:/var/log/redis
+    command: >
+      redis-server
+      --port 6379
+      --bind 0.0.0.0
+      --requirepass ${REDIS_PASSWORD:-redis123456}
+      --masterauth ${REDIS_PASSWORD:-redis123456}
+      --replicaof redis-master 6379
+      --replica-read-only yes
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+      --appendonly yes
+      --maxmemory 1gb
+      --maxmemory-policy allkeys-lru
+    networks:
+      - redis-cluster
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis123456}
+    depends_on:
+      redis-master:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Redis Sentinel 1
+  redis-sentinel-1:
+    image: redis:7.2-alpine
+    container_name: football-redis-sentinel-1
+    restart: unless-stopped
+    ports:
+      - "26379:26379"
+    volumes:
+      - ./config/redis/sentinel.conf:/usr/local/etc/redis/sentinel.conf
+      - redis-sentinel-1-data:/data
+      - ./logs/redis:/var/log/redis
+    command: redis-sentinel /usr/local/etc/redis/sentinel.conf
+    networks:
+      - redis-cluster
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis123456}
+    depends_on:
+      redis-master:
+        condition: service_healthy
+
+  # Redis Sentinel 2
+  redis-sentinel-2:
+    image: redis:7.2-alpine
+    container_name: football-redis-sentinel-2
+    restart: unless-stopped
+    ports:
+      - "26380:26379"
+    volumes:
+      - ./config/redis/sentinel.conf:/usr/local/etc/redis/sentinel.conf
+      - redis-sentinel-2-data:/data
+      - ./logs/redis:/var/log/redis
+    command: redis-sentinel /usr/local/etc/redis/sentinel.conf
+    networks:
+      - redis-cluster
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis123456}
+    depends_on:
+      redis-master:
+        condition: service_healthy
+
+  # Redis Sentinel 3
+  redis-sentinel-3:
+    image: redis:7.2-alpine
+    container_name: football-redis-sentinel-3
+    restart: unless-stopped
+    ports:
+      - "26381:26379"
+    volumes:
+      - ./config/redis/sentinel.conf:/usr/local/etc/redis/sentinel.conf
+      - redis-sentinel-3-data:/data
+      - ./logs/redis:/var/log/redis
+    command: redis-sentinel /usr/local/etc/redis/sentinel.conf
+    networks:
+      - redis-cluster
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis123456}
+    depends_on:
+      redis-master:
+        condition: service_healthy
+
+  # Redis Cluster模式（可选）
+  redis-cluster-node-1:
+    image: redis:7.2-alpine
+    container_name: football-redis-cluster-1
+    restart: unless-stopped
+    ports:
+      - "7001:6379"
+      - "17001:16379"
+    volumes:
+      - redis-cluster-1-data:/data
+      - ./config/redis/cluster.conf:/usr/local/etc/redis/cluster.conf
+    command: redis-server /usr/local/etc/redis/cluster.conf
+    networks:
+      - redis-cluster
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis123456}
+    profiles:
+      - cluster
+
+  redis-cluster-node-2:
+    image: redis:7.2-alpine
+    container_name: football-redis-cluster-2
+    restart: unless-stopped
+    ports:
+      - "7002:6379"
+      - "17002:16379"
+    volumes:
+      - redis-cluster-2-data:/data
+      - ./config/redis/cluster.conf:/usr/local/etc/redis/cluster.conf
+    command: redis-server /usr/local/etc/redis/cluster.conf
+    networks:
+      - redis-cluster
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis123456}
+    profiles:
+      - cluster
+
+  redis-cluster-node-3:
+    image: redis:7.2-alpine
+    container_name: football-redis-cluster-3
+    restart: unless-stopped
+    ports:
+      - "7003:6379"
+      - "17003:16379"
+    volumes:
+      - redis-cluster-3-data:/data
+      - ./config/redis/cluster.conf:/usr/local/etc/redis/cluster.conf
+    command: redis-server /usr/local/etc/redis/cluster.conf
+    networks:
+      - redis-cluster
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis123456}
+    profiles:
+      - cluster
+
+  # Redis Commander（Redis管理界面）
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: football-redis-commander
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_HOSTS=local:redis-master:6379:0:${REDIS_PASSWORD:-redis123456},replica1:redis-replica-1:6379:0:${REDIS_PASSWORD:-redis123456},replica2:redis-replica-2:6379:0:${REDIS_PASSWORD:-redis123456}
+      - HTTP_USER=admin
+      - HTTP_PASSWORD=${REDIS_COMMANDER_PASSWORD:-admin123}
+    networks:
+      - redis-cluster
+    depends_on:
+      - redis-master
+      - redis-replica-1
+      - redis-replica-2
+
+  # Redis Exporter（Prometheus监控）
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.45.0
+    container_name: football-redis-exporter
+    restart: unless-stopped
+    ports:
+      - "9121:9121"
+    environment:
+      - REDIS_ADDR=redis://redis-master:6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis123456}
+      - REDIS_EXPORTER_LOG_FORMAT=txt
+      - REDIS_EXPORTER_DEBUG=false
+      - REDIS_EXPORTER_CHECK_KEYS=
+      - REDIS_EXPORTER_CHECK_SINGLE_KEYS=
+      - REDIS_EXPORTER_SCRIPT=
+      - REDIS_EXPORTER_CONNECTION_TIMEOUT=15s
+      - REDIS_EXPORTER_WEB_LISTEN_ADDRESS=:9121
+      - REDIS_EXPORTER_WEB_TELEMETRY_PATH=/metrics
+      - REDIS_EXPORTER_REDIS_ONLY=true
+    networks:
+      - redis-cluster
+    depends_on:
+      redis-master:
+        condition: service_healthy
+
+  # Redis Benchmark（性能测试）
+  redis-benchmark:
+    image: redis:7.2-alpine
+    container_name: football-redis-benchmark
+    networks:
+      - redis-cluster
+    profiles:
+      - benchmark
+    command: >
+      redis-benchmark
+      -h redis-master
+      -p 6379
+      -a ${REDIS_PASSWORD:-redis123456}
+      -c 50
+      -n 10000
+      -d 1024
+      -t set,get,lpush,lpop
+      -q
+
+volumes:
+  redis-master-data:
+    driver: local
+  redis-replica-1-data:
+    driver: local
+  redis-replica-2-data:
+    driver: local
+  redis-sentinel-1-data:
+    driver: local
+  redis-sentinel-2-data:
+    driver: local
+  redis-sentinel-3-data:
+    driver: local
+  redis-cluster-1-data:
+    driver: local
+  redis-cluster-2-data:
+    driver: local
+  redis-cluster-3-data:
+    driver: local
+
+networks:
+  redis-cluster:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16

@@ -6,7 +6,7 @@
 """
 
 import asyncio
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, TYPE_CHECKING
 from datetime import datetime, timedelta
 from dataclasses import dataclass
 
@@ -38,7 +38,7 @@ class PredictionRequest:
     match_id: int
     user_id: int
     algorithm: str = "ensemble"
-    features: Optional[Dict[str, Any]] = None
+    features: Optional[Dict[str, Any] = None
 
 
 @dataclass
@@ -47,7 +47,7 @@ class PredictionResult:
 
     prediction: Dict[str, Any]
     confidence: float
-    value_assessment: Optional[Dict[str, Any]]
+    value_assessment: Optional[Dict[str, Any]
     recommendations: List[str]
 
 
@@ -119,7 +119,7 @@ class PredictionFacade:
 
     async def get_prediction_history(
         self, user_id: Optional[int] = None, limit: int = 100
-    ) -> List[Dict[str, Any]]:
+    ) -> List[Dict[str, Any]:
         """获取预测历史"""
         filters = {}
         if user_id:
@@ -199,7 +199,7 @@ class PredictionFacade:
 
     async def _assess_value(
         self, prediction: Dict[str, Any], external_data: Dict[str, Any]
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[Dict[str, Any]:
         """评估投注价值"""
         # 检查是否有赔率数据
         if "odds" in external_data.get("external", {}):
@@ -221,7 +221,7 @@ class PredictionFacade:
         return None
 
     async def _generate_recommendations(
-        self, prediction: Dict[str, Any], value_assessment: Optional[Dict[str, Any]]
+        self, prediction: Dict[str, Any], value_assessment: Optional[Dict[str, Any]
     ) -> List[str]:
         """生成建议"""
         recommendations = []
@@ -504,7 +504,7 @@ class AnalyticsFacade:
 
     async def _get_daily_predictions(
         self, since: datetime, user_id: Optional[int]
-    ) -> List[Dict[str, Any]]:
+    ) -> List[Dict[str, Any]:
         """获取每日预测数"""
         # 实现每日预测统计
         return []

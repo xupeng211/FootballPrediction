@@ -35,7 +35,7 @@ async def buggy_query(
 
 
 class SomeAsyncService:
-    async def get_status(self):
+    async def get_status(self) -> Optional[Any]:
         return "real_status"
 
 
@@ -43,6 +43,6 @@ service = SomeAsyncService()
 
 
 @router.get("/buggy_async")
-async def buggy_async():
+async def buggy_async() -> None:
     status = await service.get_status()
     return {"status": status}

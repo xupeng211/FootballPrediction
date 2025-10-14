@@ -19,7 +19,7 @@ Health Utils - API模块
 
 import asyncio
 import time
-from typing import Dict, Any, Optional
+from typing import Any,  Dict[str, Any],  Any, Optional
 from datetime import datetime
 
 
@@ -32,7 +32,7 @@ class HealthChecker:
     - 预测服务
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.timeout = 5.0  # 默认超时时间（秒）
 
     async def check_all_services(self) -> Dict[str, Any]:

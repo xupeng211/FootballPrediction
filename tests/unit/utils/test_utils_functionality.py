@@ -4,6 +4,8 @@
 测试实际执行函数而不是仅仅导入
 """
 
+from typing import Dict
+
 import pytest
 from datetime import datetime
 import sys

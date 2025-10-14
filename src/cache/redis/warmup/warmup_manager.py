@@ -4,7 +4,7 @@ Redis cache warmup manager
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 from src.core.logging import get_logger
 
@@ -21,7 +21,7 @@ class WarmupManager:
         self.is_warming_up = False
 
     async def warmup_cache(
-        self, patterns: Optional[List[str]] = None
+        self, patterns: Optional[List[str] = None
     ) -> Dict[str, Any]:
         """Warm up cache with common data"""
         if self.is_warming_up:
@@ -40,7 +40,7 @@ class WarmupManager:
 CacheWarmupManager = WarmupManager
 
 
-async def startup_warmup(patterns: Optional[List[str]] = None) -> Dict[str, Any]:
+async def startup_warmup(patterns: Optional[List[str] = None) -> Dict[str, Any]:
     """启动时预热缓存的便捷函数"""
     manager = WarmupManager()
     return await manager.warmup_cache(patterns)

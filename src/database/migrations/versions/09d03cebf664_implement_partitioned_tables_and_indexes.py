@@ -16,7 +16,7 @@ Create Date: 2025-09-12 12:48:23.849021
 """
 # mypy: ignore-errors
 
-from typing import Sequence, Union
+from typing import Any, Sequence, Union
 
 from alembic import context, op
 from sqlalchemy.exc import SQLAlchemyError, DatabaseError

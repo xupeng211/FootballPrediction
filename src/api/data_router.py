@@ -12,7 +12,7 @@ Provides complete data management API endpoints, including:
 
 import logging
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -141,7 +141,7 @@ async def get_leagues(
 
 
 @router.get("/leagues/{league_id}", response_model=LeagueInfo)
-async def get_league(league_id: int):
+async def get_league(league_id: int) -> Optional[Any]:
     """获取单个联赛详情"""
     logger.info(f"获取联赛 {league_id} 详情")
 
@@ -191,8 +191,8 @@ async def get_teams(
             for i in range(1, min(limit + 1, 11))
         ]
 
-        logger.info(f"成功获取 {len(teams)} 支球队")
-        return teams
+        logger.info(f"成功获取 {len(_teams)} 支球队")
+        return _teams
 
     except Exception as e:
         logger.error(f"获取球队失败: {e}")
@@ -200,7 +200,7 @@ async def get_teams(
 
 
 @router.get("/teams/{team_id}", response_model=TeamInfo)
-async def get_team(team_id: int):
+async def get_team(team_id: int) -> Optional[Any]:
     """获取单个球队详情"""
     logger.info(f"获取球队 {team_id} 详情")
 
@@ -225,7 +225,7 @@ async def get_team_statistics(
     logger.info(f"获取球队 {team_id} 统计")
 
     try:
-        _stats = TeamStatistics(
+        stats = TeamStatistics(
             team_id=team_id,
             matches_played=30,
             wins=18,
@@ -279,8 +279,8 @@ async def get_matches(
             for i in range(1, min(limit + 1, 11))
         ]
 
-        logger.info(f"成功获取 {len(matches)} 场比赛")
-        return matches
+        logger.info(f"成功获取 {len(_matches)} 场比赛")
+        return _matches
 
     except Exception as e:
         logger.error(f"获取比赛失败: {e}")
@@ -288,7 +288,7 @@ async def get_matches(
 
 
 @router.get("/matches/{match_id}", response_model=MatchInfo)
-async def get_match(match_id: int):
+async def get_match(match_id: int) -> Optional[Any]:
     """获取单场比赛详情"""
     logger.info(f"获取比赛 {match_id} 详情")
 
@@ -311,12 +311,12 @@ async def get_match(match_id: int):
 
 
 @router.get("/matches/{match_id}/statistics", response_model=MatchStatistics)
-async def get_match_statistics(match_id: int):
+async def get_match_statistics(match_id: int) -> Optional[Any]:
     """获取比赛统计数据"""
     logger.info(f"获取比赛 {match_id} 统计")
 
     try:
-        _stats = MatchStatistics(
+        stats = MatchStatistics(
             match_id=match_id,
             possession_home=55.5,
             possession_away=44.5,
@@ -374,7 +374,7 @@ async def get_odds(
 
 
 @router.get("/odds/{match_id}", response_model=List[OddsInfo])
-async def get_match_odds(match_id: int):
+async def get_match_odds(match_id: int) -> Optional[Any]:
     """获取指定比赛的所有赔率"""
     logger.info(f"获取比赛 {match_id} 的赔率")
 

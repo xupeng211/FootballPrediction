@@ -16,7 +16,7 @@ Provides comprehensive business and system metrics collection:
 """
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Any,  Dict[str, Any],  Any, Optional
 from datetime import datetime
 
 logger = logging.getLogger(__name__)

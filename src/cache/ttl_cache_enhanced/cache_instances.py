@@ -66,12 +66,12 @@ def get_cache(name: str):
     return CACHES.get(name)
 
 
-def get_all_stats() -> dict:
+def get_all_stats() -> Dict[str, Any]:
     """
     获取所有缓存的统计信息
 
     Returns:
-        dict: 统计信息字典
+        Dict[str, Any]: 统计信息字典
     """
     _stats = {}
     for name, cache in CACHES.items():

@@ -9,7 +9,7 @@ Provides implementations for various event handlers.
 import asyncio
 import logging
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any,  Dict[str, Any],  Any, List[Any]
 
 from .base import EventHandler, Event
 from .types import (
@@ -214,7 +214,7 @@ class NotificationEventHandler(EventHandler):
             UserRegisteredEvent.get_event_type(),
         ]
 
-    async def get_notifications(self) -> List[Dict[str, Any]]:
+    async def get_notifications(self) -> List[Dict[str, Any]:
         """获取待发送的通知"""
         notifications = []
         while not self.notification_queue.empty():

@@ -6,7 +6,7 @@
 
 import asyncio
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any,  Dict[str, Any],  Any, Optional
 from datetime import datetime
 from dataclasses import dataclass
 import aiohttp
@@ -258,7 +258,7 @@ class FootballApiAdapter(APIAdapter):
 
     def transform_data(self, raw_data: Any) -> Dict[str, Any]:
         """转换足球数据格式"""
-        if isinstance(raw_data, dict):
+        if isinstance(raw_data, Dict[str, Any]):
             return {
                 "id": raw_data.get("id"),
                 "name": raw_data.get("name"),
@@ -307,7 +307,7 @@ class WeatherApiAdapter(APIAdapter):
 
     def transform_data(self, raw_data: Any) -> Dict[str, Any]:
         """转换天气数据格式"""
-        if isinstance(raw_data, dict):
+        if isinstance(raw_data, Dict[str, Any]):
             main = raw_data.get("main", {})
             weather = raw_data.get("weather", [{}])[0]
             wind = raw_data.get("wind", {})
@@ -364,7 +364,7 @@ class OddsApiAdapter(APIAdapter):
 
     def transform_data(self, raw_data: Any) -> Dict[str, Any]:
         """转换赔率数据格式"""
-        if isinstance(raw_data, dict):
+        if isinstance(raw_data, Dict[str, Any]):
             bookmakers = raw_data.get("bookmakers", [])
             odds_data = {}  # type: ignore
 

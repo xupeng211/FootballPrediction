@@ -7,7 +7,7 @@ Demonstrates the usage and effects of the facade pattern.
 """
 
 from fastapi import APIRouter, HTTPException, Query, Body
-from typing import Dict, Any, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 from datetime import datetime
 
 from ..facades.factory import facade_factory
@@ -17,7 +17,7 @@ from requests.exceptions import RequestException
 router = APIRouter(prefix="/facades", tags=["门面模式"])
 
 # 创建全局门面实例
-global_facades: Dict[str, Any] = {}
+global_facades: Dict[str, Any] = {}}
 
 
 # ==================== 门面管理端点 ====================
@@ -166,9 +166,9 @@ async def demo_main_system_prediction(
     # 准备操作参数
     cache_key = f"demo_pred_{hash(str(input_data))}" if use_cache else None
 
-    _result = await facade.execute(
+    result = await facade.execute(
         "store_and_predict",
-        _data =input_data,
+        data=input_data,
         cache_key=cache_key,
         model=model,
     )
@@ -185,7 +185,7 @@ async def demo_main_system_prediction(
 
 @router.post("/demo/batch-process", summary="批量处理演示")
 async def demo_batch_processing(
-    items: List[Dict[str, Any]] = Body(..., description="批量处理项"),
+    items: List[Dict[str, Any] = Body(..., description="批量处理项"),
 ) -> Dict[str, Any]:
     """演示主系统门面的批量处理功能"""
     if "main" not in global_facades:
@@ -228,10 +228,10 @@ async def demo_prediction_facade(
 
     facade = global_facades["prediction"]
 
-    _result = await facade.execute(
+    result = await facade.execute(
         "predict",
         model=model,
-        input_data=input_data,
+        inputdata=input_data,
         cache_key=cache_key,
     )
 
@@ -247,7 +247,7 @@ async def demo_prediction_facade(
 
 @router.post("/demo/batch-predict", summary="批量预测演示")
 async def demo_batch_prediction(
-    predictions: List[Dict[str, Any]] = Body(..., description="批量预测请求"),
+    predictions: List[Dict[str, Any] = Body(..., description="批量预测请求"),
 ) -> Dict[str, Any]:
     """演示预测门面的批量预测功能"""
     if "prediction" not in global_facades:
@@ -297,9 +297,9 @@ async def demo_data_storage(
 
     facade = global_facades["data_collection"]
 
-    _result = await facade.execute(
+    result = await facade.execute(
         "store_data",
-        _data =data,
+        data=data,
         table=table,
     )
 
@@ -324,7 +324,7 @@ async def demo_data_query(
     facade = global_facades["data_collection"]
 
     start_time = datetime.utcnow()
-    _result = await facade.execute("query_data", query=query, use_cache=use_cache)
+    result = await facade.execute("query_data", query=query, use_cache=use_cache)
     end_time = datetime.utcnow()
 
     return {
@@ -352,7 +352,7 @@ async def demo_event_tracking(
 
     facade = global_facades["analytics"]
 
-    _result = await facade.execute(
+    result = await facade.execute(
         "track_event",
         event_name=event_name,
         properties=properties,
@@ -370,7 +370,7 @@ async def demo_event_tracking(
 @router.post("/demo/generate-report", summary="报告生成演示")
 async def demo_report_generation(
     report_type: str = Body("summary", description="报告类型"),
-    filters: Optional[Dict[str, Any]] = Body(None, description="过滤条件"),
+    filters: Optional[Dict[str, Any] = Body(None, description="过滤条件"),
 ) -> Dict[str, Any]:
     """演示分析门面的报告生成功能"""
     if "analytics" not in global_facades:
@@ -426,7 +426,7 @@ async def demo_send_notification(
 
     facade = global_facades["notification"]
 
-    _result = await facade.execute(
+    result = await facade.execute(
         "send_notification",
         recipient=recipient,
         message=message,
@@ -453,7 +453,7 @@ async def demo_queue_notification(
 
     facade = global_facades["notification"]
 
-    _result = await facade.execute("queue_notification", notification=notification)
+    result = await facade.execute("queue_notification", notification=notification)
 
     return {
         "operation": "queue_notification",
@@ -470,7 +470,7 @@ async def get_notification_stats() -> Dict[str, Any]:
         await initialize_facade("notification", "notification", True)
 
     facade = global_facades["notification"]
-    _stats = await facade.execute("get_notification_stats")
+    stats = await facade.execute("get_notification_stats")
 
     return {
         "stats": stats,
@@ -486,7 +486,7 @@ async def get_facade_configs() -> Dict[str, Any]:
     """获取所有门面配置"""
     configs = {}
     for name in facade_factory.list_configs():
-        _config = facade_factory.get_config(name)
+        config = facade_factory.get_config(name)
         if config:
             configs[name] = {
                 "type": config.facade_type,
@@ -534,7 +534,7 @@ async def demo_complete_workflow(
 
         data_facade = global_facades["data_collection"]
         store_result = await data_facade.execute(
-            "store_data", _data =input_data, table="workflow_inputs"
+            "store_data", data=input_data, table="workflow_inputs"
         )
         workflow_results["data_storage"] = store_result
 
@@ -558,7 +558,7 @@ async def demo_complete_workflow(
         prediction_result = await prediction_facade.execute(
             "predict",
             model="neural_network",
-            input_data=input_data,
+            inputdata=input_data,
             cache_key=f"workflow_{hash(str(input_data))}",
         )
         workflow_results["prediction"] = prediction_result

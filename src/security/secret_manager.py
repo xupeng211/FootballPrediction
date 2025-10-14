@@ -1,12 +1,11 @@
 """
-生产环境密钥管理模块
-支持环境变量、AWS Secrets Manager、Azure Key Vault等
+生产环境密钥管理系统
 """
 
 import os
 import json
 import logging
-from typing import Any, Dict, Optional
+from typing import Any,  Dict[str, Any], Any, Optional
 from abc import ABC, abstractmethod
 
 logger = logging.getLogger(__name__)
@@ -21,235 +20,197 @@ class SecretProvider(ABC):
         pass
 
     @abstractmethod
-    def get_all_secrets(self) -> Dict[str, str]:
-        """获取所有密钥"""
+    def set_secret(self, key: str, value: str) -> bool:
+        """设置密钥"""
+        pass
+
+    @abstractmethod
+    def delete_secret(self, key: str) -> bool:
+        """删除密钥"""
         pass
 
 
 class EnvironmentSecretProvider(SecretProvider):
     """环境变量密钥提供者"""
 
+    def __init__(self, prefix: str = "FP_"):
+        self.prefix = prefix
+
     def get_secret(self, key: str) -> Optional[str]:
         """从环境变量获取密钥"""
-        return os.getenv(key)
+        env_key = f"{self.prefix}{key}"
+        return os.getenv(env_key)
 
-    def get_all_secrets(self) -> Dict[str, str]:
-        """获取所有环境变量中的密钥"""
-        return dict(os.environ)
+    def set_secret(self, key: str, value: str) -> bool:
+        """设置环境变量密钥（仅在当前进程有效）"""
+        env_key = f"{self.prefix}{key}"
+        os.environ[env_key] = value
+        return True
+
+    def delete_secret(self, key: str) -> bool:
+        """删除环境变量密钥"""
+        env_key = f"{self.prefix}{key}"
+        if env_key in os.environ:
+            del os.environ[env_key]
+            return True
+        return False
+
+
+class FileSecretProvider(SecretProvider):
+    """文件密钥提供者（仅用于开发环境）"""
+
+    def __init__(self, file_path: str = ".secrets.json"):
+        self.file_path = file_path
+        self._secrets = self._load_secrets()
+
+    def _load_secrets(self) -> Dict[str, str]:
+        """从文件加载密钥"""
+        if os.path.exists(self.file_path):
+            try:
+                with open(self.file_path, 'r') as f:
+                    return json.load(f)
+            except Exception as e:
+                logger.error(f"Failed to load secrets from {self.file_path}: {e}")
+        return {}
+
+    def _save_secrets(self) -> bool:
+        """保存密钥到文件"""
+        try:
+            with open(self.file_path, 'w') as f:
+                json.dump(self._secrets, f, indent=2)
+            # 设置文件权限（仅所有者可读写）
+            os.chmod(self.file_path, 0o600)
+            return True
+        except Exception as e:
+            logger.error(f"Failed to save secrets to {self.file_path}: {e}")
+            return False
+
+    def get_secret(self, key: str) -> Optional[str]:
+        """从文件获取密钥"""
+        return self._secrets.get(key)
+
+    def set_secret(self, key: str, value: str) -> bool:
+        """设置密钥到文件"""
+        self._secrets[key] = value
+        return self._save_secrets()
+
+    def delete_secret(self, key: str) -> bool:
+        """从文件删除密钥"""
+        if key in self._secrets:
+            del self._secrets[key]
+            return self._save_secrets()
+        return False
 
 
 class AWSSecretsManagerProvider(SecretProvider):
-    """AWS Secrets Manager密钥提供者"""
+    """AWS Secrets Manager 密钥提供者"""
 
-    def __init__(
-        self, region_name: str = "us-east-1", secret_name: Optional[str] = None
-    ):
+    def __init__(self, region_name: str = None, secret_name: str = None):
         try:
             import boto3
             from botocore.exceptions import ClientError
-
-            self.client = boto3.client("secretsmanager", region_name=region_name)
-            self.secret_name = secret_name or os.getenv("AWS_SECRET_NAME")
+            self.client = boto3.client('secretsmanager', region_name=region_name)
+            self.secret_name = secret_name or os.getenv('AWS_SECRET_NAME')
             self.ClientError = ClientError
         except ImportError:
             logger.error("boto3 not installed. Install with: pip install boto3")
-            raise
+            self.client = None
 
     def get_secret(self, key: str) -> Optional[str]:
         """从AWS Secrets Manager获取密钥"""
-        if not self.secret_name:
-            logger.warning("AWS_SECRET_NAME not configured")
+        if not self.client or not self.secret_name:
             return None
 
         try:
             response = self.client.get_secret_value(SecretId=self.secret_name)
-            secrets = json.loads(response["SecretString"])
+            secrets = json.loads(response['SecretString'])
             return secrets.get(key)
         except self.ClientError as e:
-            logger.error(f"Failed to get secret from AWS: {e}")
+            logger.error(f"Failed to get secret {key} from AWS Secrets Manager: {e}")
             return None
 
-    def get_all_secrets(self) -> Dict[str, str]:
-        """从AWS Secrets Manager获取所有密钥"""
-        if not self.secret_name:
-            logger.warning("AWS_SECRET_NAME not configured")
-            return {}
+    def set_secret(self, key: str, value: str) -> bool:
+        """设置密钥到AWS Secrets Manager"""
+        # 实现略 - 需要更复杂的逻辑来更新整个secret
+        logger.warning("AWSSecretsManagerProvider.set_secret not implemented")
+        return False
 
-        try:
-            response = self.client.get_secret_value(SecretId=self.secret_name)
-            return json.loads(response["SecretString"])
-        except self.ClientError as e:
-            logger.error(f"Failed to get secrets from AWS: {e}")
-            return {}
-
-
-class AzureKeyVaultProvider(SecretProvider):
-    """Azure Key Vault密钥提供者"""
-
-    def __init__(self, vault_url: Optional[str] = None):
-        try:
-            from azure.keyvault.secrets import SecretClient
-            from azure.identity import DefaultAzureCredential
-
-            self.vault_url = vault_url or os.getenv("AZURE_VAULT_URL")
-            if not self.vault_url:
-                raise ValueError("AZURE_VAULT_URL not configured")
-
-            credential = DefaultAzureCredential()
-            self.client = SecretClient(vault_url=self.vault_url, credential=credential)
-        except ImportError:
-            logger.error(
-                "Azure SDK not installed. Install with: pip install azure-keyvault-secrets azure-identity"
-            )
-            raise
-
-    def get_secret(self, key: str) -> Optional[str]:
-        """从Azure Key Vault获取密钥"""
-        try:
-            secret = self.client.get_secret(key)
-            return secret.value
-        except Exception as e:
-            logger.error(f"Failed to get secret from Azure Key Vault: {e}")
-            return None
-
-    def get_all_secrets(self) -> Dict[str, str]:
-        """从Azure Key Vault获取所有密钥（需要列出所有密钥）"""
-        secrets = {}
-        try:
-            secret_properties = self.client.list_properties_of_secrets()
-            for secret_prop in secret_properties:
-                if secret_prop.enabled:
-                    secret = self.client.get_secret(secret_prop.name)
-                    secrets[secret_prop.name] = secret.value
-        except Exception as e:
-            logger.error(f"Failed to list secrets from Azure Key Vault: {e}")
-        return secrets
-
-
-class HashiCorpVaultProvider(SecretProvider):
-    """HashiCorp Vault密钥提供者"""
-
-    def __init__(
-        self,
-        url: Optional[str] = None,
-        token: Optional[str] = None,
-        secret_path: str = "secret",
-    ):
-        try:
-            import hvac
-
-            self.url = url or os.getenv("VAULT_URL", "https://vault.example.com")
-            self.token = token or os.getenv("VAULT_TOKEN")
-            self.secret_path = secret_path
-
-            if not self.token:
-                raise ValueError("VAULT_TOKEN not configured")
-
-            self.client = hvac.Client(url=self.url, token=self.token)
-        except ImportError:
-            logger.error("hvac not installed. Install with: pip install hvac")
-            raise
-
-    def get_secret(self, key: str) -> Optional[str]:
-        """从HashiCorp Vault获取密钥"""
-        try:
-            response = self.client.secrets.kv.v2.read_secret_version(
-                path=f"{self.secret_path}/{key}"
-            )
-            return response["data"]["data"].get(key)
-        except Exception as e:
-            logger.error(f"Failed to get secret from Vault: {e}")
-            return None
-
-    def get_all_secrets(self) -> Dict[str, str]:
-        """从HashiCorp Vault获取所有密钥"""
-        try:
-            response = self.client.secrets.kv.v2.read_secret_version(
-                path=self.secret_path
-            )
-            return response["data"]["data"]
-        except Exception as e:
-            logger.error(f"Failed to get secrets from Vault: {e}")
-            return {}
+    def delete_secret(self, key: str) -> bool:
+        """从AWS Secrets Manager删除密钥"""
+        # 实现略 - 需要更复杂的逻辑来更新整个secret
+        logger.warning("AWSSecretsManagerProvider.delete_secret not implemented")
+        return False
 
 
 class SecretManager:
     """密钥管理器"""
 
-    def __init__(self, provider: Optional[SecretProvider] = None):
-        """初始化密钥管理器"""
+    def __init__(self, provider: SecretProvider = None):
         if provider is None:
             # 根据环境自动选择提供者
-            self.provider = self._get_default_provider()
+            env = os.getenv('ENVIRONMENT', 'development').lower()
+            if env == 'production':
+                # 生产环境优先使用AWS Secrets Manager
+                self.provider = AWSSecretsManagerProvider()
+                if not hasattr(self.provider, 'client') or not self.provider.client:
+                    logger.warning("AWS Secrets Manager not available, falling back to environment variables")
+                    self.provider = EnvironmentSecretProvider()
+            elif env == 'staging':
+                # 测试环境使用环境变量
+                self.provider = EnvironmentSecretProvider()
+            else:
+                # 开发环境使用文件（如果存在）
+                if os.path.exists('.secrets.json'):
+                    self.provider = FileSecretProvider()
+                else:
+                    self.provider = EnvironmentSecretProvider()
         else:
             self.provider = provider
 
-    def _get_default_provider(self) -> SecretProvider:
-        """根据环境获取默认的密钥提供者"""
-        env = os.getenv("ENVIRONMENT", "development").lower()
+        logger.info(f"Using secret provider: {self.provider.__class__.__name__}")
 
-        # 生产环境优先使用云密钥管理服务
-        if env == "production":
-            # 检查AWS配置
-            if os.getenv("AWS_SECRET_NAME") or os.getenv("AWS_ACCESS_KEY_ID"):
-                try:
-                    return AWSSecretsManagerProvider()
-                except Exception:
-                    logger.warning(
-                        "Failed to initialize AWS Secrets Manager, falling back to environment variables"
-                    )
-
-            # 检查Azure配置
-            if os.getenv("AZURE_VAULT_URL"):
-                try:
-                    return AzureKeyVaultProvider()
-                except Exception:
-                    logger.warning(
-                        "Failed to initialize Azure Key Vault, falling back to environment variables"
-                    )
-
-            # 检查Vault配置
-            if os.getenv("VAULT_TOKEN"):
-                try:
-                    return HashiCorpVaultProvider()
-                except Exception:
-                    logger.warning(
-                        "Failed to initialize HashiCorp Vault, falling back to environment variables"
-                    )
-
-        # 默认使用环境变量
-        return EnvironmentSecretProvider()
-
-    def get_secret(self, key: str, default: Optional[str] = None) -> Optional[str]:
+    def get_secret(self, key: str, default: str = None) -> Optional[str]:
         """获取密钥"""
         value = self.provider.get_secret(key)
-        if value is None:
-            value = default
-            if value is None:
-                logger.warning(f"Secret not found: {key}")
-        return value
+        return value if value is not None else default
 
-    def get_required_secret(self, key: str) -> str:
-        """获取必需的密钥，如果不存在则抛出异常"""
-        value = self.get_secret(key)
-        if value is None:
-            raise ValueError(f"Required secret not found: {key}")
-        return value
+    def set_secret(self, key: str, value: str) -> bool:
+        """设置密钥"""
+        return self.provider.set_secret(key, value)
 
-    def get_all_secrets(self) -> Dict[str, str]:
-        """获取所有密钥"""
-        return self.provider.get_all_secrets()
+    def delete_secret(self, key: str) -> bool:
+        """删除密钥"""
+        return self.provider.delete_secret(key)
 
-    def verify_required_secrets(self, required_keys: list) -> Dict[str, bool]:
-        """验证必需的密钥是否存在"""
-        results = {}
-        for key in required_keys:
-            try:
-                self.get_required_secret(key)
-                results[key] = True
-            except ValueError:
-                results[key] = False
-        return results
+    def get_database_url(self) -> str:
+        """获取数据库连接URL"""
+        return self.get_secret('DATABASE_URL', 'sqlite:///./data/football_prediction.db')
+
+    def get_redis_url(self) -> str:
+        """获取Redis连接URL"""
+        return self.get_secret('REDIS_URL', 'redis://localhost:6379')
+
+    def get_jwt_secret(self) -> str:
+        """获取JWT密钥"""
+        secret = self.get_secret('JWT_SECRET_KEY')
+        if not secret:
+            # 生成一个临时的密钥用于开发
+            import secrets
+            secret = secrets.token_urlsafe(32)
+            logger.warning("Generated temporary JWT secret key. Set JWT_SECRET_KEY in production!")
+        return secret
+
+    def get_api_key(self, service: str) -> Optional[str]:
+        """获取第三方服务API密钥"""
+        return self.get_secret(f'{service.upper()}_API_KEY')
+
+    def get_ssl_cert_path(self) -> Optional[str]:
+        """获取SSL证书路径"""
+        return self.get_secret('SSL_CERT_PATH')
+
+    def get_ssl_key_path(self) -> Optional[str]:
+        """获取SSL私钥路径"""
+        return self.get_secret('SSL_KEY_PATH')
 
 
 # 全局密钥管理器实例
@@ -264,11 +225,29 @@ def get_secret_manager() -> SecretManager:
     return _secret_manager
 
 
-def get_secret(key: str, default: Optional[str] = None) -> Optional[str]:
-    """便捷函数：获取密钥"""
-    return get_secret_manager().get_secret(key, default)
+def init_secrets():
+    """初始化必要的密钥"""
+    manager = get_secret_manager()
 
+    # 检查必要的密钥
+    required_secrets = []
+    env = os.getenv('ENVIRONMENT', 'development').lower()
 
-def get_required_secret(key: str) -> str:
-    """便捷函数：获取必需的密钥"""
-    return get_secret_manager().get_required_secret(key)
+    if env == 'production':
+        required_secrets = [
+            'DATABASE_URL',
+            'REDIS_URL',
+            'JWT_SECRET_KEY',
+        ]
+
+    missing_secrets = []
+    for secret in required_secrets:
+        if not manager.get_secret(secret):
+            missing_secrets.append(secret)
+
+    if missing_secrets:
+        logger.error(f"Missing required secrets: {missing_secrets}")
+        if env == 'production':
+            raise RuntimeError(f"Missing required secrets: {missing_secrets}")
+    else:
+        logger.info("All required secrets are configured")

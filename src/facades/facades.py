@@ -9,7 +9,7 @@ Implements various system facades providing simplified interfaces.
 
 import asyncio
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 import asyncio
 from datetime import datetime, timedelta
@@ -47,8 +47,8 @@ class DatabaseSubsystem(Subsystem):
         self.status = SubsystemStatus.INACTIVE
 
     async def execute_query(
-        self, query: str, params: Optional[Dict] = None
-    ) -> List[Dict]:
+        self, query: str, params: Optional[Dict[str, Any] = None
+    ) -> List[Dict[str, Any]:
         """执行查询"""
         if self.status != SubsystemStatus.ACTIVE:
             raise RuntimeError("Database subsystem is not active")
@@ -61,7 +61,7 @@ class DatabaseSubsystem(Subsystem):
         # 返回模拟结果
         return [{"id": 1, "data": f"Result for query: {query[:50]}"}]
 
-    async def execute_transaction(self, queries: List[Dict]) -> bool:
+    async def execute_transaction(self, queries: List[Dict[str, Any]) -> bool:
         """执行事务"""
         if self.status != SubsystemStatus.ACTIVE:
             raise RuntimeError("Database subsystem is not active")
@@ -152,7 +152,7 @@ class NotificationSubsystem(Subsystem):
     def __init__(self):
         super().__init__("notification", "1.2.0")
         self.channels = ["email", "sms", "push"]
-        self.message_queue: List[Dict] = []
+        self.message_queue: List[Dict[str, Any] = []
 
     async def initialize(self) -> None:
         """初始化通知系统"""
@@ -185,7 +185,7 @@ class NotificationSubsystem(Subsystem):
         self.metrics["sent_messages"] += 1
         return True
 
-    async def queue_notification(self, notification: Dict) -> None:
+    async def queue_notification(self, notification: Dict[str, Any]) -> None:
         """排队通知"""
         self.message_queue.append(notification)
         self.metrics["queued_messages"] = len(self.message_queue)
@@ -196,7 +196,7 @@ class AnalyticsSubsystem(Subsystem):
 
     def __init__(self):
         super().__init__("analytics", "2.1.0")
-        self.events: List[Dict] = []
+        self.events: List[Dict[str, Any] = []
         self.reports: Dict[str, Any] = {}
 
     async def initialize(self) -> None:
@@ -215,7 +215,7 @@ class AnalyticsSubsystem(Subsystem):
         self.reports.clear()
         self.status = SubsystemStatus.INACTIVE
 
-    async def track_event(self, event_name: str, properties: Dict) -> None:
+    async def track_event(self, event_name: str, properties: Dict[str, Any]) -> None:
         """跟踪事件"""
         if self.status != SubsystemStatus.ACTIVE:
             return
@@ -229,8 +229,8 @@ class AnalyticsSubsystem(Subsystem):
         self.metrics["events_count"] = len(self.events)
 
     async def generate_report(
-        self, report_type: str, filters: Optional[Dict] = None
-    ) -> Dict:
+        self, report_type: str, filters: Optional[Dict[str, Any] = None
+    ) -> Dict[str, Any]:
         """生成报告"""
         if self.status != SubsystemStatus.ACTIVE:
             return {}
@@ -260,7 +260,7 @@ class PredictionSubsystem(Subsystem):
     def __init__(self):
         super().__init__("prediction", "3.0.0")
         self.models = {"neural_network": "v1.0", "random_forest": "v2.1"}
-        self.predictions: List[Dict] = []
+        self.predictions: List[Dict[str, Any] = []
 
     async def initialize(self) -> None:
         """初始化预测系统"""
@@ -277,7 +277,7 @@ class PredictionSubsystem(Subsystem):
         self.predictions.clear()
         self.status = SubsystemStatus.INACTIVE
 
-    async def predict(self, model_name: str, input_data: Dict) -> Dict:
+    async def predict(self, model_name: str, input_data: Dict[str, Any]) -> Dict[str, Any]:
         """执行预测"""
         if self.status != SubsystemStatus.ACTIVE:
             raise RuntimeError("Prediction subsystem is not active")
@@ -301,7 +301,7 @@ class PredictionSubsystem(Subsystem):
 
         return prediction
 
-    async def batch_predict(self, predictions: List[Dict]) -> List[Dict]:
+    async def batch_predict(self, predictions: List[Dict[str, Any][str], Any]) -> List[Dict[str, Any]:
         """批量预测"""
         results: List[Any] = []
         for pred in predictions:
@@ -355,7 +355,7 @@ class MainSystemFacade(SystemFacade):
         else:
             raise ValueError(f"Unknown operation: {operation}")
 
-    async def get_comprehensive_status(self) -> Dict:
+    async def get_comprehensive_status(self) -> Dict[str, Any]:
         """获取系统综合状态"""
         subsystems_status = self.subsystem_manager.get_all_status()
 
@@ -372,13 +372,13 @@ class MainSystemFacade(SystemFacade):
         }
 
     async def quick_predict(
-        self, input_data: Dict, model: str = "neural_network"
-    ) -> Dict:
+        self, input_data: Dict[str, Any], model: str = "neural_network"
+    ) -> Dict[str, Any]:
         """快速预测接口"""
         prediction_subsystem = self.subsystem_manager.get_subsystem("prediction")
         return await prediction_subsystem.predict(model, input_data)  # type: ignore
 
-    async def store_and_predict(self, data: Dict, cache_key: str, model: str) -> Dict:
+    async def store_and_predict(self, data: Dict[str, Any], cache_key: str, model: str) -> Dict[str, Any]:
         """存储数据并预测"""
         # 尝试从缓存获取
         cache_subsystem = self.subsystem_manager.get_subsystem("cache")
@@ -405,7 +405,7 @@ class MainSystemFacade(SystemFacade):
 
         return prediction
 
-    async def batch_process(self, items: List[Dict]) -> List[Dict]:
+    async def batch_process(self, items: List[Dict[str, Any][str], Any]) -> List[Dict[str, Any]:
         """批量处理接口"""
         prediction_subsystem = self.subsystem_manager.get_subsystem("prediction")
         cache_subsystem = self.subsystem_manager.get_subsystem("cache")
@@ -479,9 +479,9 @@ class PredictionFacade(SystemFacade):
         pred_subsystem: PredictionSubsystem,
         cache_subsystem: CacheSubsystem,
         model: str,
-        input_data: Dict,
+        input_data: Dict[str, Any],
         cache_key: Optional[str] = None,
-    ) -> Dict:
+    ) -> Dict[str, Any]:
         """带缓存的预测"""
         if cache_key:
             cached = await cache_subsystem.get(cache_key)

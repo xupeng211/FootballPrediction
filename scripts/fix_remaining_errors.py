@@ -1,156 +1,129 @@
 #!/usr/bin/env python3
 """
 修复剩余的语法错误
-Fix remaining syntax errors
 """
 
+import os
+import re
 from pathlib import Path
 
 
-def fix_specific_files():
-    """修复特定的文件"""
-    fixes = {
-        "src/__init__.py": '''"""
-Football Prediction System
-足球预测系统
-"""
+def fix_file(file_path: str, patterns: list):
+    """修复单个文件"""
+    path = Path(file_path)
+    if not path.exists():
+        print(f"⚠️  文件不存在: {file_path}")
+        return False
 
-__version__ = "0.1.0"
-import os
-''',
-        "src/api/__init__.py": '''"""
-API Module
-"""
+    with open(path, "r", encoding="utf-8") as f:
+        content = f.read()
 
-from .data_api import router as data_router
-from .health_api import router as health_router
-from .predictions_api import router as predictions_router
+    modified = False
 
-__all__ = ["data_router", "health_router", "predictions_router"]
-''',
-        "src/utils/warning_filters.py": '''"""
-警告过滤器设置
-Warning Filters Setup
-"""
+    for search_pattern, replace_pattern in patterns:
+        if re.search(search_pattern, content):
+            content = re.sub(search_pattern, replace_pattern, content)
+            modified = True
+            print(f"  - 修复: {search_pattern}")
 
-import warnings
-import sys
-
-def setup_warning_filters():
-    """设置警告过滤器"""
-    # 忽略一些常见的警告
-    warnings.filterwarnings("ignore", category=UserWarning, module="tensorflow.*")
-    warnings.filterwarnings("ignore", category=DeprecationWarning, module="sklearn.*")
-    warnings.filterwarnings("ignore", category=FutureWarning, module="pandas.*")
-    warnings.filterwarnings("ignore", category=PendingDeprecationWarning)
-
-# 只在非测试环境下自动设置
-if "pytest" not in sys.modules:
-    try:
-        setup_warning_filters()
-    except Exception as e:
-        # 如果自动设置失败，不要影响应用启动
-        print(f"⚠️  警告过滤器自动设置失败: {e}")
-''',
-        "src/utils/i18n.py": '''"""
-国际化支持
-Internationalization Support
-"""
-
-import gettext
-import os
-from pathlib import Path
-
-# 支持的语言
-supported_languages = {
-    "zh": "zh_CN",
-    "zh-CN": "zh_CN",
-    "en": "en_US",
-    "en-US": "en_US",
-}
-
-# 翻译文件目录
-LOCALE_DIR = Path(__file__).parent / "locales"
-
-def init_i18n():
-    """初始化国际化"""
-    # 确保翻译目录存在
-    LOCALE_DIR.mkdir(exist_ok=True)
-
-    # 设置默认语言
-    lang = os.getenv("LANGUAGE", "zh_CN")
-
-    try:
-        # 设置gettext
-        gettext.bindtextdomain("football_prediction", str(LOCALE_DIR))
-        gettext.textdomain("football_prediction")
-
-        # 安装gettext
-        gettext.install("football_prediction", localedir=str(LOCALE_DIR))
-    except Exception:
-        # 如果初始化失败，使用默认语言
-        pass
-
-# 初始化
-init_i18n()
-''',
-    }
-
-    for file_path, content in fixes.items():
-        path = Path(file_path)
-        if path.exists():
-            print(f"修复 {file_path}")
-            with open(path, "w", encoding="utf-8") as f:
-                f.write(content)
-
-
-def fix_indentation_errors():
-    """修复缩进错误"""
-    files_to_fix = [
-        "src/utils/file_utils.py",
-        "src/utils/string_utils.py",
-        "src/utils/time_utils.py",
-        "src/utils/_retry/config.py",
-        "src/utils/_retry/strategies.py",
-        "src/utils/_retry/decorators.py",
-    ]
-
-    for file_path in files_to_fix:
-        path = Path(file_path)
-        if not path.exists():
-            continue
-
-        with open(path, "r", encoding="utf-8") as f:
-            lines = f.readlines()
-
-        # 移除文件末尾的import语句
-        new_lines = []
-        for line in lines:
-            stripped = line.strip()
-            # 如果是import语句且在文件末尾（后几行），跳过
-            if (stripped.startswith("import ") or stripped.startswith("from ")) and len(
-                new_lines
-            ) > 10:
-                # 检查是否在文件末尾的10行内
-                if len(lines) - lines.index(line) < 10:
-                    continue
-            new_lines.append(line)
-
-        # 写回文件
+    if modified:
         with open(path, "w", encoding="utf-8") as f:
-            f.writelines(new_lines)
+            f.write(content)
+        return True
 
-        print(f"清理 {file_path}")
+    return False
 
 
 def main():
     """主函数"""
-    print("🔧 修复剩余的语法错误...")
+    # 切换到项目根目录
+    script_dir = Path(__file__).parent
+    project_root = script_dir.parent
+    os.chdir(project_root)
 
-    fix_specific_files()
-    fix_indentation_errors()
+    print("修复剩余的语法错误...")
+    print("-" * 50)
 
-    print("\n✅ 完成！")
+    # 定义修复模式
+    fixes = [
+        # 文件路径，搜索模式，替换模式
+        (
+            "src/facades/facades.py",
+            [
+                r"dependencies: Optional\[List\[str\]\] = None",
+                r"list_subsystems\(\)\s*-\>\s*List\[str\]\]\]",
+            ],
+            [
+                r"dependencies: Optional[List[str]] = None",
+                r"list_subsystems() -> List[str]",
+            ],
+        ),
+        (
+            "src/facades/subsystems/database.py",
+            [r"dependencies: Optional\[List\[str\]\] = None"],
+            [r"dependencies: Optional[List[str]] = None"],
+        ),
+        (
+            "src/facades/base.py",
+            [r"_initialization_order: List\[str\]\]\s*=\s*\[\]"],
+            [r"_initialization_order: List[str] = []"],
+        ),
+        (
+            "src/patterns/decorator.py",
+            [r"dependencies: Optional\[List\[Any\]\] = None"],
+            [r"dependencies: Optional[List[Any]] = None"],
+        ),
+        (
+            "src/patterns/facade.py",
+            [r"dependencies: Optional\[List\[str\]\] = None"],
+            [r"dependencies: Optional[List[str]] = None"],
+        ),
+        (
+            "src/patterns/facade_simple.py",
+            [r"config: Optional\[Dict\[str, Any\]\] = None"],
+            [r"config: Optional[Dict[str, Any]] = None"],
+        ),
+        (
+            "src/monitoring/alert_manager_mod/__init__.py",
+            [r"dependencies: Optional\[List\[str\]\] = None"],
+            [r"dependencies: Optional[List[str]] = None"],
+        ),
+        (
+            "src/performance/analyzer.py",
+            [r"dependencies: Optional\[List\[str\]\] = None"],
+            [r"dependencies: Optional[List[str]] = None"],
+        ),
+        (
+            "src/ml/model_training.py",
+            [r"params: Optional\[Dict\[str, Any\]\] = None"],
+            [r"params: Optional[Dict[str, Any]] = None"],
+        ),
+        (
+            "src/models/prediction_model.py",
+            [r"config: Optional\[Dict\[str, Any\]\] = None"],
+            [r"config: Optional[Dict[str, Any]] = None"],
+        ),
+        (
+            "src/decorators/decorators.py",
+            [r"dependencies: Optional\[List\[Any\]\] = None"],
+            [r"dependencies: Optional[List[Any]] = None"],
+        ),
+        (
+            "src/domain/models/prediction.py",
+            [r"metadata: Optional\[Dict\[str, Any\]\] = None"],
+            [r"metadata: Optional[Dict[str, Any]] = None"],
+        ),
+    ]
+
+    fixed_count = 0
+    for file_path, search_patterns, replace_patterns in fixes:
+        print(f"\n检查文件: {file_path}")
+        if fix_file(file_path, list(zip(search_patterns, replace_patterns))):
+            fixed_count += 1
+            print(f"✓ 已修复: {file_path}")
+
+    print("\n" + "=" * 50)
+    print(f"修复完成！总共修复了 {fixed_count} 个文件")
 
 
 if __name__ == "__main__":

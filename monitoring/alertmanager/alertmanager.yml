@@ -1,0 +1,140 @@
+global:
+  smtp_smarthost: 'localhost:587'
+  smtp_from: 'alerts@footballprediction.com'
+  smtp_auth_username: 'alerts@footballprediction.com'
+  smtp_auth_password: 'your-email-password'
+
+# Slack配置
+  slack_api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+
+# 路由配置
+route:
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 12h
+  receiver: 'default'
+  routes:
+    # Critical告警立即发送
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      continue: true
+    # 系统告警发送给运维团队
+    - match:
+        service: system
+      receiver: 'ops-team'
+    # 数据库告警发送给DBA
+    - match:
+        service: database
+      receiver: 'dba-team'
+    # 业务告警在工作时间发送给产品团队
+    - match:
+        service: business
+      receiver: 'product-team'
+      active_time_intervals:
+        - business-hours
+
+# 接收器配置
+receivers:
+  - name: 'default'
+    email_configs:
+      - to: 'alerts@footballprediction.com'
+        subject: '[{{ .Status | toUpper }}] {{ .GroupLabels.alertname }}'
+        body: |
+          {{ range .Alerts }}
+          告警名称: {{ .Annotations.summary }}
+          告警描述: {{ .Annotations.description }}
+          严重级别: {{ .Labels.severity }}
+          开始时间: {{ .StartsAt }}
+          跳转链接: {{ .GeneratorURL }}
+          {{ end }}
+
+  - name: 'critical-alerts'
+    email_configs:
+      - to: 'oncall@footballprediction.com,manager@footballprediction.com'
+        subject: '🚨 [CRITICAL] {{ .GroupLabels.alertname }}'
+        body: |
+          🚨 CRITICAL ALERT 🚨
+
+          {{ range .Alerts }}
+          告警: {{ .Annotations.summary }}
+          详情: {{ .Annotations.description }}
+          实例: {{ .Labels.instance }}
+          时间: {{ .StartsAt }}
+          跳转: {{ .GeneratorURL }}
+          {{ end }}
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#alerts-critical'
+        title: '🚨 Critical Alert'
+        text: |
+          *{{ .GroupLabels.alertname }}*
+          {{ range .Alerts }}
+          {{ .Annotations.description }}
+          {{ end }}
+        color: 'danger'
+
+  - name: 'ops-team'
+    email_configs:
+      - to: 'ops-team@footballprediction.com'
+        subject: '[OPS] {{ .GroupLabels.alertname }}'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#ops-alerts'
+        title: 'Ops Alert'
+        text: |
+          *{{ .GroupLabels.alertname }}*
+          {{ range .Alerts }}
+          {{ .Annotations.description }}
+          {{ end }}
+        color: 'warning'
+
+  - name: 'dba-team'
+    email_configs:
+      - to: 'dba-team@footballprediction.com'
+        subject: '[DBA] {{ .GroupLabels.alertname }}'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#db-alerts'
+        title: 'Database Alert'
+        text: |
+          *{{ .GroupLabels.alertname }}*
+          {{ range .Alerts }}
+          {{ .Annotations.description }}
+          {{ end }}
+        color: 'warning'
+
+  - name: 'product-team'
+    email_configs:
+      - to: 'product-team@footballprediction.com'
+        subject: '[PRODUCT] {{ .GroupLabels.alertname }}'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#product-alerts'
+        title: 'Product Alert'
+        text: |
+          *{{ .GroupLabels.alertname }}*
+          {{ range .Alerts }}
+          {{ .Annotations.description }}
+          {{ end }}
+        color: 'good'
+
+# 抑制规则
+inhibit_rules:
+  # 如果API服务完全宕机，抑制其他API相关告警
+  - source_match:
+      - alertname: 'ServiceDown'
+      service: 'api'
+    target_match:
+      - service: 'api'
+    equal: ['alertname']
+
+# 时间间隔配置
+time_intervals:
+  - name: business-hours
+    time_intervals:
+      - times:
+          - start_time: '09:00'
+          end_time: '18:00'
+        weekdays: ['monday:friday']

@@ -17,7 +17,7 @@ import asyncio
 import logging
 import os
 from datetime import datetime, timedelta
-from typing import Any, Dict
+from typing import Any,  Dict[str, Any],  Any
 
 import pandas as pd
 
@@ -406,7 +406,7 @@ def example_integration_with_ml_pipeline() -> Dict[str, Any]:
     展示如何在ML训练和预测流程中使用特征仓库。
 
     Returns:
-        Dict: 集成示例结果
+        Dict[str, Any]: 集成示例结果
     """
     logger.info("🤖 特征仓库与ML流水线集成示例...")
 

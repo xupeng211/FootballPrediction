@@ -5,7 +5,7 @@
 """
 
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 import os
 
 from sqlalchemy import select
@@ -39,7 +39,7 @@ class FixturesCollector:
 
     async def collect_team_fixtures(
         self, team_id: int, days_ahead: int = 30, force_refresh: bool = False
-    ) -> List[Dict[str, Any]]:
+    ) -> List[Dict[str, Any]:
         """
         收集指定球队的未来比赛
 
@@ -89,7 +89,7 @@ class FixturesCollector:
         league_id: int,
         matchday: Optional[int] = None,
         force_refresh: bool = False,
-    ) -> List[Dict[str, Any]]:
+    ) -> List[Dict[str, Any]:
         """
         收集联赛的比赛赛程
 
@@ -126,7 +126,7 @@ class FixturesCollector:
 
     async def _get_fixtures_from_db(
         self, team_id: int, days_ahead: int
-    ) -> List[Dict[str, Any]]:
+    ) -> List[Dict[str, Any]:
         """从数据库获取比赛信息"""
         start_date = datetime.now().date()
         end_date = start_date + timedelta(days=days_ahead)
@@ -162,19 +162,19 @@ class FixturesCollector:
 
     async def _fetch_fixtures_from_api(
         self, team_id: int, days_ahead: int
-    ) -> List[Dict[str, Any]]:
+    ) -> List[Dict[str, Any]:
         """从API获取比赛信息"""
         # 模拟数据，实际使用时替换为真实API调用
         return await self._get_mock_fixtures(team_id, days_ahead)
 
     async def _fetch_league_fixtures_from_api(
         self, league_id: int, matchday: Optional[int] = None
-    ) -> List[Dict[str, Any]]:
+    ) -> List[Dict[str, Any]:
         """从API获取联赛比赛信息"""
         # 模拟API调用
         return await self._get_mock_league_fixtures(league_id, matchday)
 
-    async def _save_fixtures_to_db(self, fixtures: List[Dict[str, Any]]) -> None:
+    async def _save_fixtures_to_db(self, fixtures: List[Dict[str, Any]) -> None:
         """保存比赛信息到数据库"""
         for fixture_data in fixtures:
             # 检查是否已存在
@@ -197,7 +197,7 @@ class FixturesCollector:
 
         await self.db_session.commit()
 
-    def _transform_api_data(self, api_data: Dict) -> List[Dict[str, Any]]:
+    def _transform_api_data(self, api_data: Dict[str, Any]) -> List[Dict[str, Any]:
         """转换API数据格式"""
         fixtures = []
 
@@ -217,7 +217,7 @@ class FixturesCollector:
 
     async def _get_mock_fixtures(
         self, team_id: int, days_ahead: int
-    ) -> List[Dict[str, Any]]:
+    ) -> List[Dict[str, Any]:
         """生成模拟数据（仅用于测试）"""
         fixtures = []
         base_date = datetime.now()
@@ -239,7 +239,7 @@ class FixturesCollector:
 
     async def _get_mock_league_fixtures(
         self, league_id: int, matchday: Optional[int] = None
-    ) -> List[Dict[str, Any]]:
+    ) -> List[Dict[str, Any]:
         """生成联赛模拟数据（仅用于测试）"""
         fixtures = []
 

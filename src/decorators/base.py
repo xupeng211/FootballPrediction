@@ -7,7 +7,7 @@ Define core interfaces and abstract classes for the decorator pattern.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, Optional, Awaitable
+from typing import Any,  Dict[str, Any],  Any, Optional, Awaitable
 import inspect
 import time
 import uuid
@@ -121,7 +121,7 @@ class DecoratorComponent(Decorator):
     def __init__(
         self,
         func: Callable,
-        decorators: list[Decorator],
+        decorators: List[Decorator],
         name: Optional[str] = None,
     ):
         # 创建具体组件
@@ -156,7 +156,7 @@ class DecoratorChain:
     """装饰器链，用于管理多个装饰器的执行顺序"""
 
     def __init__(self):
-        self.decorators: list[Decorator] = []
+        self.decorators: List[Decorator] = []
 
     def add_decorator(self, decorator: Decorator) -> "DecoratorChain":
         """添加装饰器到链中"""
@@ -197,7 +197,7 @@ class DecoratorContext:
         self.data: Dict[str, Any] = {}
         self.start_time = time.time()
         self.trace_id = str(uuid.uuid4())
-        self.execution_path: list[str] = []
+        self.execution_path: List[str] = []
 
     def set(self, key: str, value: Any) -> None:
         """设置上下文数据"""
@@ -264,7 +264,7 @@ class DecoratorRegistry:
 
         return self._instances[instance_key]
 
-    def list_decorators(self) -> list[str]:
+    def list_decorators(self) -> List[str]:
         """列出所有注册的装饰器"""
         return list(self._decorators.keys())
 

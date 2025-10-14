@@ -7,7 +7,7 @@ Manages adapter registration, discovery, and lifecycle.
 """
 
 import asyncio
-from typing import Any, Dict, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 from datetime import datetime
 from enum import Enum
 import logging
@@ -34,7 +34,7 @@ class AdapterRegistry:
         self.status = RegistryStatus.INACTIVE
         self.health_check_interval: float = 60.0  # 秒
         self._health_check_task: Optional[asyncio.Task] = None
-        self._metrics_collector: Optional[Dict[str, Any]] = None
+        self._metrics_collector: Optional[Dict[str, Any] = None
 
     async def initialize(self) -> None:
         """初始化注册表"""

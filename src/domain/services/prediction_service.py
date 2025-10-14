@@ -6,7 +6,7 @@ Prediction Domain Service
 Handles complex business logic related to predictions.
 """
 
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict[str, Any], List[Any], Optional
 from datetime import datetime
 from decimal import Decimal
 
@@ -29,8 +29,8 @@ from ..events.prediction_events import (
 class PredictionDomainService:
     """预测领域服务"""
 
-    def __init__(self):
-        self._events: List[Any] = []
+    def __init__(self) -> None:
+        self._events: List[Any] = {}]
 
     def create_prediction(
         self,
@@ -38,8 +38,8 @@ class PredictionDomainService:
         match: Match,
         predicted_home: int,
         predicted_away: int,
-        confidence: Optional[float] = None,
-        notes: Optional[str] = None,
+        confidence: Optional[float] ] = None,
+        notes: Optional[str] ] = None,
     ) -> Prediction:
         """创建预测"""
         # 验证比赛状态
@@ -95,8 +95,8 @@ class PredictionDomainService:
         prediction: Prediction,
         new_predicted_home: int,
         new_predicted_away: int,
-        new_confidence: Optional[float] = None,
-        new_notes: Optional[str] = None,
+        new_confidence: Optional[float] ] = None,
+        new_notes: Optional[str] ] = None,
     ) -> None:
         """更新预测"""
         # 验证预测状态
@@ -134,7 +134,7 @@ class PredictionDomainService:
         prediction: Prediction,
         actual_home: int,
         actual_away: int,
-        scoring_rules: Optional[Dict[str, Any]] = None,
+        scoring_rules: Optional[Dict[str, Any] ] ] ] = None,
     ) -> None:
         """评估预测"""
         if prediction.status != PredictionStatus.PENDING:
@@ -168,7 +168,7 @@ class PredictionDomainService:
         self._events.append(event)
 
     def cancel_prediction(
-        self, prediction: Prediction, reason: str, cancelled_by: Optional[int] = None
+        self, prediction: Prediction, reason: str, cancelled_by: Optional[int] ] = None
     ) -> None:
         """取消预测"""
         if prediction.status != PredictionStatus.PENDING:
@@ -236,8 +236,8 @@ class PredictionDomainService:
     def calculate_prediction_confidence(
         self,
         user_history: Dict[str, Any],
-        match重要性: float,
-        team_form_diff: Optional[float] = None,
+        match_importance: float,
+        team_form_diff: Optional[float] ] = None,
     ) -> float:
         """计算预测信心度"""
         base_confidence = 0.5

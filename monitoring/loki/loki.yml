@@ -1,0 +1,96 @@
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9096
+
+ingester:
+  lifecycle_manager:
+    address: 127.0.0.1
+    port: 3101
+
+  batch_config:
+    max_batch_wait: 1s
+    max_batch_size: 1048576
+
+  chunk_store_config:
+    max_chunk_age: 1h
+    max_look_back_period: 0s
+
+  target_config:
+    sync_period: 10s
+
+  wal:
+    enabled: true
+    dir: /loki/wal
+
+  schema_config:
+    configs:
+      - from: 2024-01-01
+        store: tsdb
+        object_store: s3
+        schema: v13
+        index:
+          period: 24h
+          prefix: index_
+
+  storage_config:
+    shared_store: s3
+    s3:
+      s3: http://minio:9000
+      bucket_name: loki-chunks
+      access_key_id: minioadmin
+      secret_access_key: minioadmin123
+      s3force_path_style: true
+      endpoint: http://minio:9000
+
+  table_manager:
+    retention_deletes_enabled: true
+    retention_period: 30d
+
+limits_config:
+  enforce_metric_name: false
+  reject_old_samples: true
+  allow_structured_metadata: false
+  max_entries_limit_per_query: 5000
+
+compactor:
+  working_directory: /loki/compactor
+  compaction_interval: 10m
+  retention_enabled: true
+  delete_request_cancel_period: 5m
+  retention_delete_delay: 2h
+
+# 查询限制
+query_scheduler:
+  max_outstanding_requests_per_tenant: 4096
+  max_concurrent_requests: 10
+
+# 前端配置
+frontend:
+  server:
+    http_listen_port: 3101
+    grpc_listen_port: 9097
+
+  compress_responses: true
+
+# 规则配置
+ruler:
+  storage:
+    type: local
+    local:
+      directory: /loki/rules
+
+  rule_path: /loki/rules-temp
+  alertmanager_url: http://alertmanager:9093
+  ring:
+    kvstore:
+      store: consul
+      prefix: loki/rules/
+      consul:
+        host: consul
+        port: 8500
+
+  query_frontend:
+  max_outstanding_requests_per_tenant: 2048
+  max_concurrent_requests: 4

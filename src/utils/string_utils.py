@@ -5,7 +5,7 @@
 """
 
 import re
-from typing import List
+from typing import Any,  List[Any]
 
 
 class StringUtils:

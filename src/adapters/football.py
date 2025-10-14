@@ -8,7 +8,7 @@ Integrate various football data APIs.
 
 import asyncio
 import aiohttp
-from typing import Any, Dict, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 from datetime import datetime
 from dataclasses import dataclass
 from enum import Enum
@@ -43,7 +43,7 @@ class FootballMatch:
     home_score: Optional[int] = None
     away_score: Optional[int] = None
     venue: Optional[str] = None
-    weather: Optional[Dict[str, Any]] = None
+    weather: Optional[Dict[str, Any] = None
 
 
 @dataclass
@@ -91,7 +91,7 @@ class FootballApiAdaptee(Adaptee):
         if self.session:
             await self.session.close()
 
-    async def get_data(self, endpoint: str, params: Optional[Dict] = None) -> Dict:
+    async def get_data(self, endpoint: str, params: Optional[Dict[str, Any] = None) -> Dict[str, Any]:
         """获取API数据"""
         if not self.session:
             raise RuntimeError("Adapter not initialized")
@@ -111,7 +111,7 @@ class FootballApiAdaptee(Adaptee):
         """获取请求头"""
         return {
             "X-Auth-Token": self.api_key,
-            "Content-Type": "application/json",
+            "Content-Type[Any]": "application/json",
         }
 
 
@@ -139,7 +139,7 @@ class OptaDataAdaptee(FootballApiAdaptee):
         return {
             "X-Auth-Token": self.api_key,
             "X-Customer-ID": self.customer_id,
-            "Content-Type": "application/json",
+            "Content-Type[Any]": "application/json",
         }
 
 
@@ -160,7 +160,7 @@ class FootballDataTransformer(DataTransformer):
         else:
             raise ValueError(f"Unknown target type: {target_type}")
 
-    async def _transform_match(self, data: Dict) -> FootballMatch:
+    async def _transform_match(self, data: Dict[str, Any]) -> FootballMatch:
         """转换比赛数据"""
         if self.source_format == "api-football":
             return FootballMatch(
@@ -197,7 +197,7 @@ class FootballDataTransformer(DataTransformer):
         else:
             raise ValueError(f"Unknown source format: {self.source_format}")
 
-    async def _transform_team(self, data: Dict) -> FootballTeam:
+    async def _transform_team(self, data: Dict[str, Any]) -> FootballTeam:
         """转换球队数据"""
         if self.source_format == "api-football":
             return FootballTeam(
@@ -212,7 +212,7 @@ class FootballDataTransformer(DataTransformer):
         else:
             raise ValueError(f"Unknown source format: {self.source_format}")
 
-    async def _transform_player(self, data: Dict) -> FootballPlayer:
+    async def _transform_player(self, data: Dict[str, Any]) -> FootballPlayer:
         """转换球员数据"""
         if self.source_format == "api-football":
             return FootballPlayer(
@@ -379,7 +379,7 @@ class FootballApiAdapter(Adapter):
             return await self.transformer.transform(player_data, target_type="player")  # type: ignore
         return None
 
-    async def get_standings(self, league_id: str, season: str) -> List[Dict[str, Any]]:
+    async def get_standings(self, league_id: str, season: str) -> List[Dict[str, Any]:
         """获取积分榜"""
         params = {"league": league_id, "season": season}
         endpoint = "standings"
@@ -470,7 +470,7 @@ class CompositeFootballAdapter(Adapter):
         self,
         date: Optional[datetime] = None,
         league_id: Optional[str] = None,
-    ) -> Dict[str, List[FootballMatch]]:
+    ) -> Dict[str, List[FootballMatch]:
         """从多个数据源聚合比赛数据"""
         results = {}
         tasks = []
@@ -588,7 +588,7 @@ class FootballDataAdapter:
             )
         return {"scorers": []}
 
-    async def batch_get_matches(self, match_ids: List[int]) -> List[Dict[str, Any]]:
+    async def batch_get_matches(self, match_ids: List[int]) -> List[Dict[str, Any]:
         """批量获取比赛"""
         results = []
         for match_id in match_ids:
@@ -602,7 +602,7 @@ class FootballDataAdapter:
         if self.client:
             await self.client.close()
 
-    def _build_url(self, path: str, params: Optional[Dict] = None) -> str:
+    def _build_url(self, path: str, params: Optional[Dict[str, Any] = None) -> str:
         """构建URL"""
         if params:
             query_str = "&".join([f"{k}={v}" for k, v in params.items()])

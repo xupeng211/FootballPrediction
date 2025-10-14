@@ -10,7 +10,7 @@ import asyncio
 import uuid
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Dict, Optional, Type, TypeVar
+from typing import Any,  Dict[str, Any],  Any, Optional, Type[Any], TypeVar
 import logging
 
 
@@ -28,7 +28,7 @@ class EventData:
         self,
         source: Optional[str] = None,
         version: str = "1.0",
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: Optional[Dict[str, Any] = None,
         event_id: Optional[str] = None,
         timestamp: Optional[datetime] = None,
     ):
@@ -106,7 +106,7 @@ class Event(ABC):
 
     @classmethod
     @abstractmethod
-    def from_dict(cls: Type[T], data: Dict[str, Any]) -> T:
+    def from_dict(cls: Type[Any][T], data: Dict[str, Any]) -> T:
         """从字典创建事件
 
         Args:
@@ -150,11 +150,11 @@ class EventHandler(ABC):
         pass
 
     @abstractmethod
-    def get_handled_events(self) -> list[str]:
+    def get_handled_events(self) -> List[str]:
         """获取处理器能处理的事件类型
 
         Returns:
-            list[str]: 事件类型列表
+            List[str]: 事件类型列表
         """
         pass
 
@@ -242,7 +242,7 @@ class EventFilter(ABC):
 class EventTypeFilter(EventFilter):
     """基于事件类型的过滤器"""
 
-    def __init__(self, allowed_types: list[str]):
+    def __init__(self, allowed_types: List[str]):
         """初始化过滤器
 
         Args:
@@ -257,7 +257,7 @@ class EventTypeFilter(EventFilter):
 class EventSourceFilter(EventFilter):
     """基于事件源的过滤器"""
 
-    def __init__(self, allowed_sources: list[str]):
+    def __init__(self, allowed_sources: List[str]):
         """初始化过滤器
 
         Args:
@@ -272,7 +272,7 @@ class EventSourceFilter(EventFilter):
 class CompositeEventFilter(EventFilter):
     """组合过滤器，支持AND和OR逻辑"""
 
-    def __init__(self, filters: list[EventFilter], operator: str = "AND"):
+    def __init__(self, filters: List[EventFilter], operator: str = "AND"):
         """初始化组合过滤器
 
         Args:

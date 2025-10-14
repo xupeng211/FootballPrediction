@@ -7,7 +7,7 @@ Provides HTTP interface for CQRS pattern.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict[str, Any], List[Any], Optional
 from datetime import date, datetime
 from pydantic import BaseModel, Field
 
@@ -63,27 +63,27 @@ class CommandResponse(BaseModel):
 
     success: bool
     message: str
-    data: Optional[Dict[str, Any]] = None
-    errors: Optional[List[str]] = None
+    data: Optional[Dict[str, Any] ] ] ] = None
+    errors: Optional[List[str] ] ] ] = None
 
 
 # 依赖注入
-def get_prediction_cqrs_service():
+def get_prediction_cqrs_service() -> None:
     """获取预测CQRS服务"""
     return CQRSServiceFactory.create_prediction_service()
 
 
-def get_match_cqrs_service():
+def get_match_cqrs_service() -> None:
     """获取比赛CQRS服务"""
     return CQRSServiceFactory.create_match_service()
 
 
-def get_user_cqrs_service():
+def get_user_cqrs_service() -> None:
     """获取用户CQRS服务"""
     return CQRSServiceFactory.create_user_service()
 
 
-def get_analytics_cqrs_service():
+def get_analytics_cqrs_service() -> None:
     """获取分析CQRS服务"""
     return CQRSServiceFactory.create_analytics_service()
 
@@ -96,7 +96,7 @@ async def create_prediction(
     service=Depends(get_prediction_cqrs_service),
 ):
     """创建新的预测"""
-    _result = await service.create_prediction(
+    result = await service.create_prediction(
         match_id=request.match_id,
         user_id=request.user_id or 1,  # 从认证中获取，默认为1
         predicted_home=request.predicted_home,
@@ -109,13 +109,13 @@ async def create_prediction(
     return CommandResponse(
         success=result.success,
         message=result.message,
-        _data =result.data.to_dict() if result.data else None,
+        data=result.data.to_dict() if result.data else None,
         errors=result.errors,
     )
 
 
 @router.put(
-    "/predictions/{prediction_id}", response_model=CommandResponse, summary="更新预测"
+    f"/predictions/{prediction_id}", response_model=CommandResponse, summary="更新预测"
 )
 async def update_prediction(
     prediction_id: int,
@@ -123,7 +123,7 @@ async def update_prediction(
     service=Depends(get_prediction_cqrs_service),
 ):
     """更新预测"""
-    _result = await service.update_prediction(
+    result = await service.update_prediction(
         prediction_id=prediction_id,
         predicted_home=request.predicted_home,
         predicted_away=request.predicted_away,
@@ -135,24 +135,24 @@ async def update_prediction(
     return CommandResponse(
         success=result.success,
         message=result.message,
-        _data =result.data.to_dict() if result.data else None,
+        data=result.data.to_dict() if result.data else None,
         errors=result.errors,
     )
 
 
 @router.delete(
-    "/predictions/{prediction_id}", response_model=CommandResponse, summary="删除预测"
+    f"/predictions/{prediction_id}", response_model=CommandResponse, summary="删除预测"
 )
 async def delete_prediction(
     prediction_id: int, service=Depends(get_prediction_cqrs_service)
 ):
     """删除预测"""
-    _result = await service.delete_prediction(prediction_id)
+    result = await service.delete_prediction(prediction_id)
 
     return CommandResponse(
         success=result.success,
         message=result.message,
-        _data =result.data,
+        data=result.data,
         errors=result.errors,
     )
 
@@ -203,7 +203,7 @@ async def get_user_statistics(
     service=Depends(get_prediction_cqrs_service),
 ):
     """获取用户统计信息"""
-    _stats = await service.get_user_stats(user_id, include_predictions)
+    stats = await service.get_user_stats(user_id, include_predictions)
     if not stats:
         raise HTTPException(status_code=404, detail="用户统计不存在")
 
@@ -216,7 +216,7 @@ async def create_match(
     request: CreateMatchRequest, service=Depends(get_match_cqrs_service)
 ):
     """创建新的比赛"""
-    _result = await service.create_match(
+    result = await service.create_match(
         home_team=request.home_team,
         away_team=request.away_team,
         match_date=request.match_date,
@@ -227,7 +227,7 @@ async def create_match(
     return CommandResponse(
         success=result.success,
         message=result.message,
-        _data =result.data.to_dict() if result.data else None,
+        data=result.data.to_dict() if result.data else None,
         errors=result.errors,
     )
 
@@ -273,7 +273,7 @@ async def create_user(
     request: CreateUserRequest, service=Depends(get_user_cqrs_service)
 ):
     """创建新用户"""
-    _result = await service.create_user(
+    result = await service.create_user(
         username=request.username,
         email=request.email,
         password_hash=request.password_hash,
@@ -282,14 +282,14 @@ async def create_user(
     return CommandResponse(
         success=result.success,
         message=result.message,
-        _data =result.data.to_dict() if result.data else None,
+        data=result.data.to_dict() if result.data else None,
         errors=result.errors,
     )
 
 
 # 系统端点
 @router.get("/system/status", summary="获取CQRS系统状态")
-async def get_cqrs_system_status():
+async def get_cqrs_system_status() -> Optional[Any]:
     """获取CQRS系统状态"""
     from ..cqrs.bus import get_command_bus, get_query_bus
 

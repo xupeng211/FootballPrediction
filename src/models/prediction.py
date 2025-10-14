@@ -8,7 +8,7 @@ Provides prediction-related data models and services.
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 from ..services.base_unified import SimpleService
 

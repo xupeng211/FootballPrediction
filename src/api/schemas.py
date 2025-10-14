@@ -4,7 +4,7 @@ API响应模型定义
 为所有API端点提供标准化的响应模型，确保API文档的一致性和完整性。
 """
 
-from typing import Any, Dict, Optional
+from typing import Any,  Dict[str, Any],  Any, Optional
 
 from pydantic import BaseModel, Field
 
@@ -14,7 +14,7 @@ class ServiceCheck(BaseModel):
 
     status: str = Field(..., description="服务状态")
     response_time_ms: float = Field(..., description="响应时间(毫秒)")
-    details: Optional[Dict[str, Any]] = Field(None, description="详细信息")
+    details: Optional[Dict[str, Any] = Field(None, description="详细信息")
 
 
 class HealthCheckResponse(BaseModel):

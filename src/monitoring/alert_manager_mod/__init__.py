@@ -4,7 +4,7 @@ Alert Manager Module (Compatibility Version)
 """
 
 from enum import Enum
-from typing import List, Dict, Any, Optional, Callable
+from typing import Dict,  List, Dict, Any, Optional, Callable
 from dataclasses import dataclass
 from datetime import datetime
 import uuid
@@ -67,7 +67,7 @@ class Alert:
     message: str
     timestamp: datetime
     status: AlertStatus = AlertStatus.ACTIVE
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: Optional[Dict[str, Any] = None
 
     def __post_init__(self):
         if self.metadata is None:
@@ -126,7 +126,7 @@ class AlertAggregator:
         aggregated = []
 
         # 按告警名称分组
-        grouped: Dict[str, List[Alert]] = {}
+        grouped: Dict[str, List[Alert] = {}
         for alert in alerts:
             if alert.name not in grouped:
                 grouped[alert.name] = []
@@ -166,7 +166,7 @@ class AlertManager:
         name: str,
         level: AlertLevel,
         message: str,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: Optional[Dict[str, Any] = None,
     ) -> Alert:
         """创建告警"""
         alert_id = str(uuid.uuid4())

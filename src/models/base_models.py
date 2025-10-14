@@ -3,7 +3,7 @@ Base models
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 from pydantic import BaseModel
 import types
 

@@ -4,7 +4,7 @@ Kafka组件模块 - 兼容性包装器
 为了保持向后兼容性，此文件重新导出Kafka相关的类和函数。
 """
 
-from typing import List, Type, Any
+from typing import Any, Any
 
 # 尝试导入Kafka组件
 try:
@@ -39,7 +39,7 @@ if StreamConfig is None:
         def __init__(self, *args, **kwargs):
             pass
 
-    StreamConfig: Type = StreamConfig
+    StreamConfig: Type[Any] = StreamConfig
 
 # 尝试导入StreamProcessor
 try:
@@ -56,7 +56,7 @@ if StreamProcessor is None:
         def __init__(self, *args, **kwargs):
             pass
 
-    StreamProcessor: Type = StreamProcessor
+    StreamProcessor: Type[Any] = StreamProcessor
 
 # Kafka可用性标志
 KAFKA_AVAILABLE = True  # 如果导入成功，设置为True

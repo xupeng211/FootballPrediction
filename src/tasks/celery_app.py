@@ -225,32 +225,32 @@ class TaskRetryConfig:
         "collect_fixtures_task": {
             "max_retries": 3,
             "retry_delay": 300,  # 5分钟
-            "retry_backoff": True,
+            "retry_backof": True,
             "retry_jitter": True,
         },
         "collect_odds_task": {
             "max_retries": 3,
             "retry_delay": 60,  # 1分钟
-            "retry_backoff": True,
+            "retry_backof": True,
             "retry_jitter": False,
         },
         "collect_scores_task": {
             "max_retries": 3,
             "retry_delay": 30,  # 30秒
-            "retry_backoff": False,  # 实时数据不需要退避
+            "retry_backof": False,  # 实时数据不需要退避
             "retry_jitter": False,
         },
     }
 
     @classmethod
-    def get_retry_config(cls, task_name: str) -> dict:
+    def get_retry_config(cls, task_name: str) -> Dict[str, Any]:
         """获取任务的重试配置"""
         return cls.TASK_RETRY_CONFIGS.get(
             task_name,
             {
                 "max_retries": cls.DEFAULT_MAX_RETRIES,
                 "retry_delay": cls.DEFAULT_RETRY_DELAY,
-                "retry_backoff": False,
+                "retry_backof": False,
                 "retry_jitter": False,
             },
         )

@@ -8,7 +8,7 @@ Refactored prediction service using strategy pattern for flexible algorithm sele
 """
 
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 from ..domain.strategies import (
     PredictionStrategy,
@@ -54,7 +54,7 @@ class StrategyPredictionService:
         self._match_repository = match_repository
         self._prediction_repository = prediction_repository
         self._default_strategy = default_strategy
-        self._current_strategies: Dict[str, PredictionStrategy] = {}
+        self._current_strategies: Dict[str, PredictionStrategy] = {}}
 
     async def initialize(self) -> None:
         """初始化服务"""
@@ -73,9 +73,9 @@ class StrategyPredictionService:
         self,
         match_id: int,
         user_id: int,
-        strategy_name: Optional[str] = None,
-        confidence: Optional[float] = None,
-        notes: Optional[str] = None,
+        strategy_name: Optional[str] ] = None,
+        confidence: Optional[float] ] = None,
+        notes: Optional[str] ] = None,
     ) -> Prediction:
         """预测单场比赛
 
@@ -139,7 +139,7 @@ class StrategyPredictionService:
         return prediction
 
     async def batch_predict(
-        self, match_ids: List[int], user_id: int, strategy_name: Optional[str] = None
+        self, match_ids: List[int], user_id: int, strategy_name: Optional[str] ] = None
     ) -> List[Prediction]:
         """批量预测比赛
 
@@ -199,7 +199,7 @@ class StrategyPredictionService:
         return predictions
 
     async def compare_strategies(
-        self, match_id: int, strategy_names: Optional[List[str]] = None
+        self, match_id: int, strategy_names: Optional[List[str] ] ] = None
     ) -> Dict[str, PredictionOutput]:
         """比较不同策略的预测结果
 
@@ -249,7 +249,7 @@ class StrategyPredictionService:
 
     async def get_strategy_performance(
         self, strategy_name: str, days: int = 30
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[Dict[str, Any]:
         """获取策略性能指标
 
         Args:
@@ -257,7 +257,7 @@ class StrategyPredictionService:
             days: 统计天数
 
         Returns:
-            Optional[Dict[str, Any]]: 性能指标
+            Optional[Dict[str, Any]: 性能指标
         """
         strategy = self._strategy_factory.get_strategy(strategy_name)
         if not strategy:
@@ -318,7 +318,7 @@ class StrategyPredictionService:
         self._default_strategy = strategy_name
         logger.info(f"默认策略从 {old_strategy} 切换到 {strategy_name}")
 
-    async def get_available_strategies(self) -> Dict[str, Dict[str, Any]]:
+    async def get_available_strategies(self) -> Dict[str, Dict[str, Any][str, Any]:
         """获取所有可用策略信息"""
         health_report = await self._strategy_factory.health_check()
 
@@ -411,7 +411,7 @@ class StrategyPredictionService:
         details = {
             "prediction_id": prediction.id,
             "strategy_used": strategy_name,
-            "predicted_score": f"{prediction_output.predicted_home_score}:{prediction_output.predicted_away_score}",
+            "predicted_score": f"{prediction_output.predicted_home_score":{prediction_output.predicted_away_score}",
             "confidence": prediction_output.confidence,
             "execution_time_ms": prediction_output.execution_time_ms,
             "probability_distribution": prediction_output.probability_distribution,

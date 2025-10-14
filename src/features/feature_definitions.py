@@ -11,7 +11,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional, Dict, Any, List
+from typing import Any,  Dict[str, Any],  Any, List[Any]
 
 from .entities import MatchEntity, TeamEntity
 
@@ -218,7 +218,7 @@ class OddsFeatures:
                 self.away_implied_probability,
             ]
         ):
-            # Type assertions since we've checked for None above
+            # Type[Any] assertions since we've checked for None above
             home_prob = self.home_implied_probability
             draw_prob = self.draw_implied_probability
             away_prob = self.away_implied_probability

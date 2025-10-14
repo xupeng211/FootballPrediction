@@ -13,7 +13,7 @@
 """
 
 import logging
-from typing import Dict, Any, Optional, List
+from typing import Any,  Dict[str, Any],  Any, Optional, List[Any]
 from datetime import datetime
 from enum import Enum
 
@@ -61,7 +61,7 @@ class FootballDataCleaner:
         logger.debug(f"Cleaned match data: {cleaned.get('id')}")
         return cleaned
 
-    def validate_data(self, data: Dict[str, Any]) -> tuple[bool, List[str]]:
+    def validate_data(self, data: Dict[str, Any]) -> tuple[bool, List[str]:
         """验证数据"""
         errors = []
 
@@ -74,7 +74,7 @@ class FootballDataCleaner:
 
         return len(errors) == 0, errors
 
-    def batch_clean(self, data_list: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def batch_clean(self, data_list: List[Dict[str, Any][str], Any]) -> List[Dict[str, Any]:
         """批量清洗数据"""
         return [self.clean_match_data(data) for data in data_list]
 

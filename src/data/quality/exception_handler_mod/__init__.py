@@ -3,7 +3,7 @@
 Data Quality Exception Handler (Compatibility Version)
 """
 
-from typing import Dict, Any, List, Optional, Callable
+from typing import Dict,  Dict, Any, List, Optional, Callable
 from datetime import datetime
 import logging
 
@@ -70,7 +70,7 @@ class DataQualityExceptionHandler:
         self.handlers[error_code] = handler
 
     def handle_exception(
-        self, exception: Exception, context: Optional[Dict[str, Any]] = None
+        self, exception: Exception, context: Optional[Dict[str, Any] = None
     ) -> bool:
         """处理异常
 
@@ -167,7 +167,7 @@ class StatisticsProvider:
             "max": max(data),
         }
 
-    def calculate_distribution(self, data: List[Any]) -> Dict[str, int]:
+    def calculate_distribution(self, data: List) -> Dict[str, int]:
         """计算分布"""
         from collections import Counter
 
@@ -197,7 +197,7 @@ class QualityLogger:
 
     def __init__(self, name: str = "data_quality"):
         self.logger = logging.getLogger(name)
-        self.quality_issues: List[Dict[str, Any]] = []
+        self.quality_issues: List[Dict[str, Any] = []
 
     def log_issue(self, issue_type: str, message: str, data: Dict[str, Any] = None):
         """记录质量问题"""
@@ -210,7 +210,7 @@ class QualityLogger:
         self.quality_issues.append(issue)
         self.logger.warning(f"Quality Issue [{issue_type}]: {message}")
 
-    def get_issues(self, issue_type: str = None) -> List[Dict[str, Any]]:
+    def get_issues(self, issue_type: str = None) -> List[Dict[str, Any]:
         """获取问题列表"""
         if issue_type:
             return [i for i in self.quality_issues if i["type"] == issue_type]
@@ -251,7 +251,7 @@ class InvalidDataHandler:
 
         return errors
 
-    def get_invalid_records(self) -> List[Dict[str, Any]]:
+    def get_invalid_records(self) -> List[Dict[str, Any]:
         """获取无效记录"""
         return self.invalid_records  # type: ignore
 

@@ -7,7 +7,7 @@
 from .base_unified import SimpleService
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 
 class ContentType(Enum):
@@ -32,16 +32,16 @@ class UserRole(Enum):
 class Content:
     """内容类"""
 
-    def __init__(self, content_id: str, content_type: str, data: Dict[str, Any]):
+    def __init__(self, content_id: str, content_type: str, data: Dict[str, Any]) -> None:
         self.id = content_id
         self.content_type = content_type
-        self._data = data
+        self.data= data
 
 
 class UserProfile:
     """用户配置文件类"""
 
-    def __init__(self, user_id: str, preferences: Dict[str, Any] = None):
+    def __init__(self, user_id: str, preferences: Dict[str, Any] = None) -> None:
         self.user_id = user_id
         self.preferences = preferences or {}
 
@@ -55,12 +55,12 @@ class AnalysisResult:
         analysis_type: str = "",
         result: Dict[str, Any] = None,
         confidence: float = 0.0,
-        timestamp: Optional[datetime] = None,
+        timestamp: Optional[datetime] ] = None,
         content_id: str = "",
     ):
         self.id = id
         self.analysis_type = analysis_type
-        self._result = result or {}
+        self.result = result or {}
         self.confidence = confidence
         self.timestamp = timestamp or datetime.now()
         self.content_id = content_id
@@ -69,7 +69,7 @@ class AnalysisResult:
 class ContentAnalysisService(SimpleService):
     """内容分析服务"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("ContentAnalysisService")
         self._models_loaded = False
 
@@ -110,7 +110,7 @@ class ContentAnalysisService(SimpleService):
         # 这里提供基本的文本分析功能，生产环境可扩展为ML模型分析
         if content.content_type == "text":
             text_analysis = self.analyze_text(content.data.get("text", ""))
-            analysis_data = {
+            analysisdata= {
                 "sentiment": text_analysis.get("sentiment", "neutral"),
                 "keywords": text_analysis.get("keywords", []),
                 "category": self._categorize_content(content.data.get("text", "")),
@@ -120,7 +120,7 @@ class ContentAnalysisService(SimpleService):
             }
         else:
             # 非文本内容的默认分析
-            analysis_data = {
+            analysisdata= {
                 "sentiment": "neutral",
                 "keywords": [],
                 "category": "general",
@@ -130,7 +130,7 @@ class ContentAnalysisService(SimpleService):
         return AnalysisResult(
             id=f"analysis_{content.id}",
             analysis_type="content_analysis",
-            _result =analysis_data,
+            result=analysis_data,
             confidence=0.85,
             timestamp=datetime.now(),
             content_id=content.id,
@@ -138,9 +138,9 @@ class ContentAnalysisService(SimpleService):
 
     async def batch_analyze(self, contents: List[Content]) -> List[AnalysisResult]:
         """批量分析内容"""
-        results: List[AnalysisResult] = []
+        results: List[AnalysisResult] = {}]
         for content in contents:
-            _result = await self.analyze_content(content)
+            result = await self.analyze_content(content)
             if result:
                 results.append(result)
         return results
@@ -179,7 +179,7 @@ class ContentAnalysisService(SimpleService):
             return min(base_score + keyword_bonus + length_bonus, 1.0)
         return 0.5
 
-    def analyze_text(self, text: str) -> dict:
+    def analyze_text(self, text: str) -> Dict[str, Any]:
         """分析文本内容 - 同步版本用于测试"""
         if not text:
             return {"error": "Empty text"}
@@ -213,7 +213,7 @@ class ContentAnalysisService(SimpleService):
 
         return entities[:10]  # 限制返回数量
 
-    def classify_content(self, content: str) -> dict:
+    def classify_content(self, content: str) -> Dict[str, Any]:
         """内容分类"""
         if not content:
             return {"category": "unknown", "confidence": 0.0}
@@ -248,7 +248,7 @@ class ContentAnalysisService(SimpleService):
 
         return {"category": "general", "confidence": 0.5}
 
-    def analyze_sentiment(self, text: str) -> dict:
+    def analyze_sentiment(self, text: str) -> Dict[str, Any]:
         """情感分析"""
         if not text:
             return {"sentiment": "neutral", "score": 0.0}

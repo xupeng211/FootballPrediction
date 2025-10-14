@@ -3,7 +3,7 @@
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 from sqlalchemy.orm import Session
 
@@ -15,7 +15,7 @@ from src.security.auth import AuthManager, get_auth_manager
 class UserService:
     """用户服务类"""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: Session) -> None:
         self.db = db
         self.auth = get_auth_manager()
 
@@ -61,7 +61,7 @@ class UserService:
             return None
 
         # 更新字段
-        update_data = user_data.dict(exclude_unset=True)
+        user_data.Dict[str, Any](exclude_unset=True)
         for field, value in update_data.items():
             setattr(db_user, field, value)
 

@@ -7,7 +7,7 @@ Defines core components of the facade pattern.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Set
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Set
 import logging
 from datetime import datetime
 from enum import Enum
@@ -78,7 +78,7 @@ class SubsystemManager:
         self._initialization_order: List[str] = []
 
     def register(
-        self, subsystem: Subsystem, dependencies: Optional[List[str]] = None
+        self, subsystem: Subsystem, dependencies: Optional[List[str] = None
     ) -> None:
         """注册子系统"""
         self._subsystems[subsystem.name] = subsystem
@@ -164,7 +164,7 @@ class SubsystemManager:
             results[name] = await subsystem.health_check()
         return results
 
-    def get_all_status(self) -> Dict[str, Dict[str, Any]]:
+    def get_all_status(self) -> Dict[str, Dict[str, Any][str, Any]:
         """获取所有子系统状态"""
         return {
             name: subsystem.get_status() for name, subsystem in self._subsystems.items()
@@ -188,7 +188,7 @@ class SystemFacade(ABC):
         }
 
     def register_subsystem(
-        self, subsystem: Subsystem, dependencies: Optional[List[str]] = None
+        self, subsystem: Subsystem, dependencies: Optional[List[str] = None
     ) -> None:
         """注册子系统到门面"""
         self.subsystem_manager.register(subsystem, dependencies)

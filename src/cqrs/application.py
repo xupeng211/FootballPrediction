@@ -7,7 +7,7 @@ Provides high-level CQRS operation interfaces.
 """
 
 import logging
-from typing import List, Optional, Dict, Any
+from typing import Any,  Dict[str, Any],  Any, Any
 from datetime import datetime, date
 
 from .bus import get_command_bus, get_query_bus
@@ -280,7 +280,7 @@ class AnalyticsCQRSService:
         period: str = "all_time",
         limit: Optional[int] = 10,
         offset: Optional[int] = None,
-    ) -> List[Dict[str, Any]]:
+    ) -> List[Dict[str, Any]:
         """获取排行榜"""
         query = GetLeaderboardQuery(period=period, limit=limit, offset=offset)
         return await self.query_bus.dispatch(query)  # type: ignore

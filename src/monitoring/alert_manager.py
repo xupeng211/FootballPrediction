@@ -7,7 +7,7 @@ Alert Manager
 
 import logging
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, List[Any], Optional
 from datetime import datetime
 
 logger = logging.getLogger(__name__)

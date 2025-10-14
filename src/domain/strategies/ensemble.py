@@ -10,7 +10,7 @@ Combines multiple prediction strategies through weighted voting or other ensembl
 import asyncio
 import logging
 import time
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Tuple
 from datetime import datetime
 import numpy as np
 from dataclasses import dataclass
@@ -45,9 +45,9 @@ class StrategyWeight:
 
     strategy_name: str
     base_weight: float
-    dynamic_weight: Optional[float] = None
-    performance_weight: Optional[float] = None
-    recent_accuracy: Optional[float] = None
+    dynamic_weight: Optional[float] ] = None
+    performance_weight: Optional[float] ] = None
+    recent_accuracy: Optional[float] ] = None
 
 
 @dataclass
@@ -56,7 +56,7 @@ class EnsembleResult:
 
     final_prediction: Tuple[int, int]
     confidence: float
-    strategy_contributions: Dict[str, Dict[str, Any]]
+    strategy_contributions: Dict[str, Dict[str, Any][str, Any]
     consensus_score: float
     disagreement_level: float
 
@@ -68,12 +68,12 @@ class EnsembleStrategy(PredictionStrategy):
     Combines predictions from multiple sub-strategies through intelligent weighting.
     """
 
-    def __init__(self, name: str = "ensemble_predictor"):
+    def __init__(self, name: str = "ensemble_predictor") -> None:
         super().__init__(name, StrategyType.ENSEMBLE)
-        self._sub_strategies: Dict[str, PredictionStrategy] = {}
-        self._strategy_weights: Dict[str, StrategyWeight] = {}
+        self._sub_strategies: Dict[str, PredictionStrategy] = {}}
+        self._strategy_weights: Dict[str, StrategyWeight] = {}}
         self._ensemble_method = EnsembleMethod.WEIGHTED_AVERAGE
-        self._performance_history: Dict[str, List[float]] = {}
+        self._performance_history: Dict[str, List[float] = {}
         self._consensus_threshold = 0.7
         self._max_disagreement = 2.0
 
@@ -88,7 +88,7 @@ class EnsembleStrategy(PredictionStrategy):
                 - consensus_threshold: 共识阈值
                 - performance_window: 性能评估窗口
         """
-        self._config = config
+        self.config = config
         self._ensemble_method = EnsembleMethod(
             config.get("ensemble_method", "weighted_average")
         )
@@ -108,7 +108,7 @@ class EnsembleStrategy(PredictionStrategy):
         )
 
     async def _initialize_sub_strategies(
-        self, strategies_config: List[Dict[str, Any]]
+        self, strategies_config: List[Dict[str, Any]
     ) -> None:
         """初始化子策略"""
         from .ml_model import MLModelStrategy
@@ -222,7 +222,7 @@ class EnsembleStrategy(PredictionStrategy):
             confidence=final_confidence,
             probability_distribution=probability_distribution,
             feature_importance=feature_importance,
-            _metadata ={
+            metadata={
                 "method": f"ensemble_{self._ensemble_method.value}",
                 "strategies_used": list(strategy_predictions.keys()),
                 "consensus_score": ensemble_result.consensus_score,
@@ -573,7 +573,7 @@ class EnsembleStrategy(PredictionStrategy):
         return ensemble_probs  # type: ignore
 
     async def update_metrics(
-        self, actual_results: List[Tuple[Prediction, Dict[str, Any]]]
+        self, actual_results: List[Tuple[Prediction, Dict[str, Any]
     ) -> None:
         """更新集成策略性能指标"""
         if not actual_results:

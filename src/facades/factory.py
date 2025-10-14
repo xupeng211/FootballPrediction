@@ -6,7 +6,7 @@ Facade Factory
 Used to create and configure facade instances.
 """
 
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Type[Any], Union
 from dataclasses import dataclass, field
 import os
 from pathlib import Path
@@ -32,7 +32,7 @@ class FacadeConfig:
     enabled: bool = True
     auto_initialize: bool = True
     subsystems: List[str] = field(default_factory=list)
-    parameters: Dict[str, Any] = field(default_factory=dict)
+    parameters: Dict[str, Any] = field(default_factory=dict[str, Any])
     environment: Optional[str] = None
 
 
@@ -40,7 +40,7 @@ class FacadeFactory:
     """门面工厂类"""
 
     # 注册的门面类型
-    FACADE_TYPES: Dict[str, Type[SystemFacade]] = {
+    FACADE_TYPES: Dict[str, Type[Any][SystemFacade]] = {
         "main": MainSystemFacade,
         "prediction": PredictionFacade,
         "data_collection": DataCollectionFacade,
@@ -124,7 +124,7 @@ class FacadeFactory:
                 _config = self._resolve_environment_variables(config)
                 self._config_cache[config.name] = config
 
-    def load_config_from_dict(self, data: Dict) -> None:
+    def load_config_from_dict(self, data: Dict[str, Any]) -> None:
         """从字典加载门面配置"""
         if "facades" in data:
             for facade_data in data["facades"]:
@@ -149,7 +149,7 @@ class FacadeFactory:
         """列出所有可用的门面类型"""
         return list(self.FACADE_TYPES.keys())
 
-    def register_facade_type(self, name: str, facade_class: Type[SystemFacade]) -> None:
+    def register_facade_type(self, name: str, facade_class: Type[Any][SystemFacade]) -> None:
         """注册新的门面类型"""
         self.FACADE_TYPES[name] = facade_class
 

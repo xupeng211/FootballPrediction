@@ -12,7 +12,7 @@ import os
 import json
 import numpy as np
 import pandas as pd
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Tuple
 from datetime import datetime
 from enum import Enum
 import asyncio
@@ -95,12 +95,12 @@ class ModelTrainer:
         self._config = config or TrainingConfig()
         import logging
         from datetime import datetime
-        from typing import List, Dict, Any, Optional, Tuple
+        from typing import Any,  Dict[str, Any],  Any, Optional, Tuple
 
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.model = None
 
-        self.training_history: List[Dict[str, Any]] = []
+        self.training_history: List[Dict[str, Any] = []
         self.metrics_history: Dict[str, Any] = {}
         self.feature_importance: Dict[str, float] = {}
         self.status = TrainingStatus.PENDING
@@ -113,7 +113,7 @@ class ModelTrainer:
         self,
         data: pd.DataFrame,
         target_column: str,
-        feature_columns: Optional[List[str]] = None,
+        feature_columns: Optional[List[str] = None,
     ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
         """
         准备训练数据
@@ -387,14 +387,14 @@ class ModelRegistry:
         self.registry_dir = Path(registry_dir)
         self.registry_dir.mkdir(parents=True, exist_ok=True)
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
-        self._models: Dict[str, Dict[str, Any]] = {}
+        self._models: Dict[str, Dict[str, Any][str, Any] = {}
 
     def register_model(
         self,
         model: PredictionModel,
         name: str,
         version: str = "1.0.0",
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: Optional[Dict[str, Any] = None,
     ) -> str:
         """
         注册模型
@@ -431,7 +431,7 @@ class ModelRegistry:
         self.logger.info(f"Model registered: {model_id}")
         return model_id
 
-    def list_models(self, name: Optional[str] = None) -> List[Dict[str, Any]]:
+    def list_models(self, name: Optional[str] = None) -> List[Dict[str, Any]:
         """
         列出模型
 
@@ -448,7 +448,7 @@ class ModelRegistry:
 
         return sorted(models, key=lambda x: x["created_at"], reverse=True)
 
-    def get_model(self, model_id: str) -> Optional[Dict[str, Any]]:
+    def get_model(self, model_id: str) -> Optional[Dict[str, Any]:
         """
         获取模型信息
 
@@ -505,9 +505,9 @@ def get_model_registry() -> ModelRegistry:
 async def train_football_model(
     data: pd.DataFrame,
     target_column: str = "result",
-    feature_columns: Optional[List[str]] = None,
+    feature_columns: Optional[List[str] = None,
     model_name: str = "football_prediction_model",
-) -> Tuple[PredictionModel, Dict[str, Any]]:
+) -> Tuple[PredictionModel, Dict[str, Any]:
     """
     训练足球预测模型
 

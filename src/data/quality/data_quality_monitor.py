@@ -1,5 +1,5 @@
 """
-from typing import Dict, List
+from typing import Any,  Dict[str, Any],  Any, List[Any]
 数据质量监控器
 
 实现数据质量检查与异常检测功能。
@@ -14,7 +14,7 @@ from typing import Dict, List
 基于 DATA_DESIGN.md 第5.1节设计。
 """
 
-from typing import Any, Dict, List
+from typing import Any,  Dict[str, Any],  Any, List[Any]
 import logging
 from datetime import datetime
 
@@ -49,7 +49,7 @@ class DataQualityMonitor:
         检查数据新鲜度
 
         Returns:
-            Dict: 新鲜度检查结果
+            Dict[str, Any]: 新鲜度检查结果
         """
         try:
             freshness_report: Dict[str, Any] = {
@@ -102,12 +102,12 @@ class DataQualityMonitor:
                 "error": str(e),
             }
 
-    async def detect_anomalies(self) -> List[Dict[str, Any]]:
+    async def detect_anomalies(self) -> List[Dict[str, Any]:
         """
         异常检测
 
         Returns:
-            List[Dict]: 检测到的异常列表
+            List[Dict[str, Any]: 检测到的异常列表
         """
         anomalies: List[Any] = []
 
@@ -220,7 +220,7 @@ class DataQualityMonitor:
             self.logger.error(f"查找缺失比赛失败: {str(e)}")
             return {"count": 0, "error": str(e)}
 
-    async def _find_suspicious_odds(self, session) -> List[Dict[str, Any]]:
+    async def _find_suspicious_odds(self, session) -> List[Dict[str, Any]:
         """查找可疑赔率"""
         suspicious_odds: List[Any] = []
 
@@ -271,7 +271,7 @@ class DataQualityMonitor:
             self.logger.error(f"查找可疑赔率失败: {str(e)}")
             return []
 
-    async def _find_unusual_scores(self, session) -> List[Dict[str, Any]]:
+    async def _find_unusual_scores(self, session) -> List[Dict[str, Any]:
         """查找异常比分"""
         unusual_scores: List[Any] = []
 
@@ -310,7 +310,7 @@ class DataQualityMonitor:
             self.logger.error(f"查找异常比分失败: {str(e)}")
             return []
 
-    async def _check_data_consistency(self, session) -> List[Dict[str, Any]]:
+    async def _check_data_consistency(self, session) -> List[Dict[str, Any]:
         """检查数据一致性"""
         consistency_issues: List[Any] = []
 
@@ -348,7 +348,7 @@ class DataQualityMonitor:
         生成完整的数据质量报告
 
         Returns:
-            Dict: 质量报告
+            Dict[str, Any]: 质量报告
         """
         try:
             self.logger.info("开始生成数据质量报告")
@@ -398,7 +398,7 @@ class DataQualityMonitor:
                 "error": str(e),
             }
 
-    def _calculate_quality_score(self, freshness_check: Dict, anomalies: List) -> float:
+    def _calculate_quality_score(self, freshness_check: Dict[str, Any], anomalies: List[Any]) -> float:
         """计算质量评分（0-100）"""
         score = 100.0
 
@@ -421,7 +421,7 @@ class DataQualityMonitor:
 
         return max(0.0, score)
 
-    def _determine_overall_status(self, freshness_check: Dict, anomalies: List) -> str:
+    def _determine_overall_status(self, freshness_check: Dict[str, Any], anomalies: List[Any]) -> str:
         """确定总体状态"""
         high_severity_count = len([a for a in anomalies if a.get("severity") == "high"])
 
@@ -433,7 +433,7 @@ class DataQualityMonitor:
             return "healthy"
 
     def _generate_recommendations(
-        self, freshness_check: Dict, anomalies: List
+        self, freshness_check: Dict[str, Any], anomalies: List[Any]
     ) -> List[str]:
         """生成改进建议"""
         recommendations: List[Any] = []

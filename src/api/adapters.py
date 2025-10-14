@@ -7,7 +7,7 @@ Demonstrates the usage and effects of the adapter pattern.
 """
 
 from fastapi import APIRouter, HTTPException, Query, Path
-from typing import Dict, Any, Optional
+from typing import Any,  Dict[str, Any],  Any, Optional
 from datetime import datetime, date, timedelta
 from requests.exceptions import HTTPError, RequestException
 
@@ -60,7 +60,7 @@ async def get_adapter_configs() -> Dict[str, Any]:
     """获取所有适配器配置"""
     configs = {}
     for name in adapter_factory.list_configs():
-        _config = adapter_factory.get_config(name)
+        config = adapter_factory.get_config(name)
         if config:
             configs[name] = {
                 "type": config.adapter_type,
@@ -94,7 +94,7 @@ async def load_adapter_config(config_data: Dict[str, Any]) -> Dict[str, str]:
     from ..adapters.factory import AdapterConfig
 
     if "adapter_name" in config_data:
-        _config = AdapterConfig(
+        config = AdapterConfig(
             name=config_data["adapter_name"],
             adapter_type=config_data.get("adapter_type", "api-football"),
             enabled=config_data.get("enabled", True),
@@ -458,13 +458,13 @@ async def demo_adapter_comparison(
     对比不同API返回的数据格式。
     """
     # 模拟不同API的原始数据格式
-    api_football_data = {
+    api_footballdata= {
         "fixture": {"id": 12345, "date": "2023-12-01T19:00:00+00:00"},
         "teams": {"home": {"name": "Team A"}, "away": {"name": "Team B"}},
         "goals": {"home": 2, "away": 1},
     }
 
-    opta_data = {
+    optadata= {
         "match_id": "M12345",
         "date": "2023-12-01 19:00",
         "home_team": {"id": "111", "name": "Team A"},

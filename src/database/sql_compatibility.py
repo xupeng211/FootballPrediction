@@ -5,7 +5,7 @@ sql_compatibility
 SQL兼容性工具模块 - 为各种SQL操作提供兼容性支持
 """
 
-from typing import Any, Dict
+from typing import Any,  Dict[str, Any],  Any
 from sqlalchemy.engine import Engine
 
 

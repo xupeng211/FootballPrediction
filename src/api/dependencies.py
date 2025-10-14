@@ -15,7 +15,7 @@ Provides FastAPI dependency injection functions, including:
 - Request validation
 """
 
-from typing import Dict, Optional
+from typing import Any,  Dict[str, Any],  Any, Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -33,7 +33,7 @@ security = HTTPBearer()
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-) -> Dict:
+) -> Dict[str, Any]:
     """
     获取当前用户
 
@@ -41,7 +41,7 @@ async def get_current_user(
         credentials: HTTP认证凭据
 
     Returns:
-        Dict: 用户信息
+        Dict[str, Any]: 用户信息
 
     Raises:
         HTTPException: 认证失败
@@ -69,7 +69,7 @@ async def get_current_user(
         raise credentials_exception
 
 
-async def get_admin_user(current_user: Dict = Depends(get_current_user)) -> Dict:
+async def get_admin_user(current_user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
     """
     获取管理员用户
 
@@ -77,7 +77,7 @@ async def get_admin_user(current_user: Dict = Depends(get_current_user)) -> Dict
         current_user: 当前用户
 
     Returns:
-        Dict: 管理员用户信息
+        Dict[str, Any]: 管理员用户信息
 
     Raises:
         HTTPException: 权限不足
@@ -101,7 +101,7 @@ async def get_prediction_engine() -> Optional["PredictionEngine"]:
     return await get_prediction_engine()  # type: ignore
 
 
-async def get_redis_manager():
+async def get_redis_manager() -> Optional[Any]:
     """获取Redis管理器"""
     from src.cache.redis_manager import get_redis_manager
 
@@ -109,7 +109,7 @@ async def get_redis_manager():
 
 
 async def verify_prediction_permission(
-    match_id: int, current_user: Dict = Depends(get_current_user)
+    match_id: int, current_user: Dict[str, Any] = Depends(get_current_user)
 ):
     """
     验证预测权限
@@ -126,7 +126,7 @@ async def verify_prediction_permission(
     return True
 
 
-async def rate_limit_check(current_user: Dict = Depends(get_current_user)):
+async def rate_limit_check(current_user: Dict[str, Any] = Depends(get_current_user)) -> None:
     """
     速率限制检查
 

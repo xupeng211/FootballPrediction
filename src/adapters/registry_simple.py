@@ -2,7 +2,7 @@
 简化的适配器注册表
 """
 
-from typing import Any, Dict, Optional, Type, List
+from typing import Any, Dict[str, Any], List[Any], Optional, Type[Any]
 from src.core.exceptions import AdapterError
 
 
@@ -10,10 +10,10 @@ class AdapterRegistry:
     """适配器注册表"""
 
     def __init__(self):
-        self._registry: Dict[str, Dict] = {}
+        self._registry: Dict[str, Dict[str, Any][str, Any] = {}
         self._instances: Dict[str, Any] = {}
 
-    def register(self, name: str, adapter_class: Type, **kwargs):
+    def register(self, name: str, adapter_class: Type[Any], **kwargs):
         """注册适配器"""
         self._registry[name] = {"class": adapter_class, **kwargs}
 
@@ -25,7 +25,7 @@ class AdapterRegistry:
         if name in self._instances:
             del self._instances[name]
 
-    def create(self, name: str, config: Optional[Dict] = None):
+    def create(self, name: str, config: Optional[Dict[str, Any] = None):
         """创建适配器实例"""
         if name not in self._registry:
             raise AdapterError(f"No adapter registered with name '{name}'")
@@ -41,7 +41,7 @@ class AdapterRegistry:
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             raise AdapterError(f"Failed to create adapter '{name}': {str(e)}")
 
-    def get_info(self, name: str) -> Dict:
+    def get_info(self, name: str) -> Dict[str, Any]:
         """获取适配器信息"""
         if name not in self._registry:
             raise AdapterError(f"No adapter registered with name '{name}'")
@@ -77,7 +77,7 @@ class AdapterRegistry:
         self._registry.clear()
         self._instances.clear()
 
-    def validate_config(self, name: str, config: Dict) -> bool:
+    def validate_config(self, name: str, config: Dict[str, Any]) -> bool:
         """验证配置"""
         # 简化实现，总是返回True
         return True
@@ -93,7 +93,7 @@ class AdapterRegistry:
         # 简化实现
         return [name]
 
-    def get_statistics(self) -> Dict:
+    def get_statistics(self) -> Dict[str, Any]:
         """获取统计信息"""
         return {
             "total": len(self._registry),
@@ -102,11 +102,11 @@ class AdapterRegistry:
             ),
         }
 
-    def export(self) -> Dict:
+    def export(self) -> Dict[str, Any]:
         """导出注册表"""
         return self._registry.copy()
 
-    def import_data(self, data: Dict):
+    def import_data(self, data: Dict[str, Any]):
         """导入数据"""
         self._registry.update(data)
 

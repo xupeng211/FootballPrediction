@@ -8,7 +8,7 @@ Manages dependency injection through configuration files.
 
 import json
 import yaml  # type: ignore
-from typing import Dict, Any, List, Type, Optional, Union
+from typing import Any,  Dict[str, Any], Any, List[Any], Type[Any], Optional, Union
 from pathlib import Path
 import logging
 from dataclasses import dataclass, field
@@ -25,21 +25,21 @@ class ServiceConfig:
     """服务配置"""
 
     name: str
-    implementation: Optional[str] = None
+    implementation: Optional[str] ] = None
     lifetime: str = "transient"  # singleton, scoped, transient
-    factory: Optional[str] = None
-    instance: Optional[str] = None
+    factory: Optional[str] ] = None
+    instance: Optional[str] ] = None
     dependencies: List[str] = field(default_factory=list)
-    parameters: Dict[str, Any] = field(default_factory=dict)
+    parameters: Dict[str, Any] = field(default_factory=dict[str, Any])
     enabled: bool = True
-    condition: Optional[str] = None
+    condition: Optional[str] ] = None
 
 
 @dataclass
 class DIConfiguration:
     """依赖注入配置"""
 
-    services: Dict[str, ServiceConfig] = field(default_factory=dict)
+    services: Dict[str, ServiceConfig] = field(default_factory=dict[str, Any])
     auto_scan: List[str] = field(default_factory=list)
     conventions: List[str] = field(default_factory=list)
     profiles: List[str] = field(default_factory=list)
@@ -52,8 +52,8 @@ class ConfigurationBinder:
     def __init__(self, container: DIContainer):
         self.container = container
         self.auto_binder = AutoBinder(container)
-        self._config: Optional[DIConfiguration] = None
-        self._active_profile: Optional[str] = None
+        self._config: Optional[DIConfiguration] ] = None
+        self._active_profile: Optional[str] ] = None
 
     def load_from_file(self, config_path: Union[str, Path]) -> None:
         """从文件加载配置"""
@@ -73,7 +73,7 @@ class ConfigurationBinder:
                         f"不支持的配置文件格式: {config_path.suffix}"
                     )
 
-            self._config = self._parse_config(data)
+            self._config = self._parse_config(_data)
             logger.info(f"加载配置文件: {config_path}")
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
@@ -142,25 +142,25 @@ class ConfigurationBinder:
                     enabled=service_data.get("enabled", True),
                     condition=service_data.get("condition"),
                 )
-                config.services[service_name] = service_config
+                _config.services[service_name] = service_config
 
         # 解析自动扫描配置
         if "auto_scan" in data:
-            config.auto_scan = data["auto_scan"]
+            _config.auto_scan = data["auto_scan"]
 
         # 解析约定配置
         if "conventions" in data:
-            config.conventions = data["conventions"]
+            _config.conventions = data["conventions"]
 
         # 解析配置文件
         if "profiles" in data:
-            config.profiles = data["profiles"]
+            _config.profiles = data["profiles"]
 
         # 解析导入
         if "imports" in data:
-            config.imports = data["imports"]
+            _config.imports = data["imports"]
 
-        return config
+        return _config
 
     def _import_configuration(self, import_path: str) -> None:
         """导入配置"""
@@ -223,7 +223,7 @@ class ConfigurationBinder:
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"注册服务失败 {service_name}: {e}")
 
-    def _get_type(self, type_name: str) -> Type:
+    def _get_type(self, type_name: str) -> Type[Any]:
         """获取类型"""
         # 尝试导入类型
         module_path, class_name = type_name.rsplit(".", 1)
@@ -278,7 +278,7 @@ class ConfigurationBuilder:
     def add_service(
         self,
         name: str,
-        implementation: Optional[str] = None,
+        implementation: Optional[str] ] = None,
         lifetime: str = "transient",
         **kwargs,
     ) -> "ConfigurationBuilder":
@@ -388,7 +388,7 @@ imports:
     "database_service": {
       "implementation": "src.services.database.DatabaseService",
       "lifetime": "singleton"
-    },
+    ",
     "user_repository": {
       "implementation": "src.database.repositories.UserRepository",
       "lifetime": "scoped"

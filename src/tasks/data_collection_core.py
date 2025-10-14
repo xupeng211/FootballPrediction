@@ -7,7 +7,7 @@ Data Collection Core
 
 import asyncio
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 from celery import Celery
 
@@ -154,7 +154,7 @@ def manual_collect_all_data() -> Dict[str, Any]:
 
 @celery_app.task
 def emergency_data_collection_task(
-    data_types: Optional[List[str]] = None, priority: int = 1
+    data_types: Optional[List[str] = None, priority: int = 1
 ) -> Dict[str, Any]:
     """
     紧急数据收集任务
@@ -280,7 +280,7 @@ def _validate_fixtures_data(data: Dict[str, Any]) -> Dict[str, Any]:
 
     fixtures = data.get("fixtures", [])
     for i, fixture in enumerate(fixtures):
-        if not isinstance(fixture, dict):
+        if not isinstance(fixture, Dict[str, Any]):
             errors.append(f"Fixture {i} is not a dictionary")
             continue
 

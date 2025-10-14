@@ -1,5 +1,5 @@
 """
-from typing import Dict, Optional, Any
+from typing import Any,  Dict[str, Any],  Any, Optional, Any
 命令和查询处理器
 Command and Query Handlers
 
@@ -8,7 +8,7 @@ Implements handlers for all commands and queries.
 """
 
 import logging
-from typing import List, Optional, Dict, Any
+from typing import Any,  Dict[str, Any],  Any, Any
 from datetime import datetime
 from decimal import Decimal
 

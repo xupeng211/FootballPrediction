@@ -5,7 +5,7 @@ Helper functions
 import hashlib
 import uuid
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any,  Dict[str, Any],  Any, Optional
 
 
 def generate_uuid() -> str:
@@ -19,7 +19,7 @@ def generate_hash(data: str) -> str:
 
 
 def safe_get(data: Dict[str, Any], key: str, default: Any = None) -> Any:
-    """Safely get value from dict"""
+    """Safely get value from Dict[str, Any]"""
     return data.get(key, default)
 
 

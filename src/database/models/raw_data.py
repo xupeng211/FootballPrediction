@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any,  Dict[str, Any],  Any, Optional
 from sqlalchemy import Boolean, Column, DateTime, Integer, String, func
 from sqlalchemy.exc import SQLAlchemyError, DatabaseError
 from sqlalchemy.orm import validates
@@ -78,7 +78,7 @@ class RawMatchData(BaseModel):
         try:
             value = self.raw_data
             for field in field_path.split("."):
-                if isinstance(value, dict) and field in value:
+                if isinstance(value, Dict[str, Any]) and field in value:
                     value = value[field]
                 else:
                     return None
@@ -244,7 +244,7 @@ class RawScoresData(BaseModel):
         """是否为已结束的比赛"""
         return self.match_status in ["finished", "full_time", "ft"]
 
-    def get_score_info(self) -> Optional[Dict[str, Any]]:
+    def get_score_info(self) -> Optional[Dict[str, Any]:
         """
         提取比分信息
 

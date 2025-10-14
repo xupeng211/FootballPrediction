@@ -8,7 +8,7 @@ Manages configuration parameters for prediction strategies.
 
 import json
 import yaml  # type: ignore
-from typing import Dict, Any, Optional, Union, List
+from typing import Any,  Union, Dict[str, Any],  Any, Optional, Union, List[Any]
 from pathlib import Path
 from datetime import datetime
 from dataclasses import dataclass, field, asdict
@@ -80,8 +80,8 @@ class EnsembleConfig:
     consensus_threshold: float = 0.7
     max_disagreement: float = 2.0
     performance_window: int = 50
-    sub_strategies: List[Dict[str, Any]] = field(default_factory=list)
-    strategy_weights: Dict[str, float] = field(default_factory=dict)
+    sub_strategies: List[Dict[str, Any] = field(default_factory=list)
+    strategy_weights: Dict[str, float] = field(default_factory=dict[str, Any])
 
 
 @dataclass
@@ -91,20 +91,20 @@ class StrategyConfig:
     name: str
     type: str
     enabled: bool = True
-    description: Optional[str] = None
+    description: Optional[str] ] = None
     priority: int = 100
     tags: List[str] = field(default_factory=list)
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)
 
     # 策略特定配置
-    ml_config: Optional[MLModelConfig] = None
-    statistical_config: Optional[StatisticalConfig] = None
-    historical_config: Optional[HistoricalConfig] = None
-    ensemble_config: Optional[EnsembleConfig] = None
+    ml_config: Optional[MLModelConfig] ] = None
+    statistical_config: Optional[StatisticalConfig] ] = None
+    historical_config: Optional[HistoricalConfig] ] = None
+    ensemble_config: Optional[EnsembleConfig] ] = None
 
     # 自定义配置
-    custom_config: Dict[str, Any] = field(default_factory=dict)
+    custom_config: Dict[str, Any] = field(default_factory=dict[str, Any])
 
 
 class StrategyConfigManager:
@@ -113,7 +113,7 @@ class StrategyConfigManager:
     负责加载、保存和管理策略配置。
     """
 
-    def __init__(self, config_dir: Union[str, Path] = "configs"):
+    def __init__(self, config_dir: Union[str, Path] = "configs") -> None:
         """初始化配置管理器
 
         Args:
@@ -126,9 +126,9 @@ class StrategyConfigManager:
         self._profiles_file = self.config_dir / "strategy_profiles.yaml"
         self._environments_file = self.config_dir / "environments.yaml"
 
-        self._configs: Dict[str, StrategyConfig] = {}
-        self._profiles: Dict[str, Dict[str, Any]] = {}
-        self._environments: Dict[str, Dict[str, Any]] = {}
+        self._configs: Dict[str, StrategyConfig] = {}}
+        self._profiles: Dict[str, Union[str, Dict[str, Any][str, Any] = {}
+        self._environments: Dict[str, Union[str, Dict[str, Any][str, Any] = {}
 
         # 加载所有配置
         self.load_all()
@@ -147,11 +147,11 @@ class StrategyConfigManager:
 
         try:
             with open(self._strategies_file, "r", encoding="utf-8") as f:
-                _data = yaml.safe_load(f)
+                data = yaml.safe_load(f)
 
             if data and "strategies" in data:
                 for strategy_data in data["strategies"]:
-                    _config = self._parse_strategy_config(strategy_data)
+                    config = self._parse_strategy_config(strategy_data)
                     if config:
                         self._configs[config.name] = config
 
@@ -195,7 +195,7 @@ class StrategyConfigManager:
 
     def save_strategies(self) -> None:
         """保存策略配置"""
-        _data = {
+        data = {
             "version": "1.0.0",
             "updated_at": datetime.utcnow().isoformat(),
             "strategies": [
@@ -246,7 +246,7 @@ class StrategyConfigManager:
         if strategy_name not in self._configs:
             return False
 
-        _config = self._configs[strategy_name]
+        config = self._configs[strategy_name]
 
         # 更新字段
         for key, value in updates.items():
@@ -275,7 +275,7 @@ class StrategyConfigManager:
         return False
 
     def list_configs(
-        self, strategy_type: Optional[str] = None, enabled_only: bool = False
+        self, strategy_type: Optional[str] ] = None, enabled_only: bool = False
     ) -> List[StrategyConfig]:
         """列出策略配置
 
@@ -300,7 +300,7 @@ class StrategyConfigManager:
         return configs
 
     def apply_profile(
-        self, profile_name: str, strategy_names: Optional[List[str]] = None
+        self, profile_name: str, strategy_names: Optional[List[str] ] ] = None
     ) -> None:
         """应用配置档案
 
@@ -360,7 +360,7 @@ class StrategyConfigManager:
         output_path = Path(output_path)
 
         # 收集要导出的配置
-        export_data = {
+        exportdata = {
             "version": "1.0.0",
             "exported_at": datetime.utcnow().isoformat(),
             "strategies": [],
@@ -368,7 +368,7 @@ class StrategyConfigManager:
 
         for name in strategy_names:
             if name in self._configs:
-                config_data = self._serialize_strategy_config(self._configs[name])
+                configdata = self._serialize_strategy_config(self._configs[name])
                 export_data["strategies"].append(config_data)  # type: ignore
 
         # 保存文件
@@ -407,15 +407,15 @@ class StrategyConfigManager:
         try:
             with open(config_path, "r", encoding="utf-8") as f:
                 if config_path.suffix.lower() in [".yaml", ".yml"]:
-                    _data = yaml.safe_load(f)
+                    data = yaml.safe_load(f)
                 else:
-                    _data = json.load(f)
+                    data = json.load(f)
 
             imported_count = 0
 
             if "strategies" in data:
                 for strategy_data in data["strategies"]:
-                    _config = self._parse_strategy_config(strategy_data)
+                    config = self._parse_strategy_config(strategy_data)
                     if config:
                         if config.name in self._configs and not overwrite:
                             logger.warning(f"策略已存在，跳过: {config.name}")
@@ -435,7 +435,7 @@ class StrategyConfigManager:
         """解析策略配置数据"""
         try:
             # 基础字段
-            _config = StrategyConfig(
+            config = StrategyConfig(
                 name=data["name"],
                 type=data["type"],
                 enabled=data.get("enabled", True),
@@ -473,7 +473,7 @@ class StrategyConfigManager:
 
     def _serialize_strategy_config(self, config: StrategyConfig) -> Dict[str, Any]:
         """序列化策略配置"""
-        _data = {
+        data = {
             "name": config.name,
             "type": config.type,
             "enabled": config.enabled,
@@ -509,7 +509,7 @@ class StrategyConfigManager:
             description="基于机器学习模型的预测策略",
             priority=1,
             tags=["ml", "model", "prediction"],
-            ml_config=MLModelConfig(),
+            ml_config = MLModelConfig(),
         )
 
         # 统计分析配置
@@ -519,7 +519,7 @@ class StrategyConfigManager:
             description="基于统计分析的预测策略",
             priority=2,
             tags=["statistical", "analysis"],
-            statistical_config=StatisticalConfig(),
+            statistical_config = StatisticalConfig(),
         )
 
         # 历史数据配置
@@ -529,7 +529,7 @@ class StrategyConfigManager:
             description="基于历史数据的预测策略",
             priority=3,
             tags=["historical", "data"],
-            historical_config=HistoricalConfig(),
+            historical_config = HistoricalConfig(),
         )
 
         # 集成策略配置
@@ -539,7 +539,7 @@ class StrategyConfigManager:
             description="集成多种策略的综合预测",
             priority=10,
             tags=["ensemble", "combined"],
-            ensemble_config=EnsembleConfig(
+            ensemble_config = EnsembleConfig(
                 sub_strategies=[
                     {"name": "ml_ensemble", "type": "ml_model", "enabled": True},
                     {

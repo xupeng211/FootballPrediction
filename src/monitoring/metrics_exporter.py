@@ -8,7 +8,7 @@
 import logging
 import time
 from datetime import datetime
-from typing import List, Optional, Tuple
+from typing import Any,  List[Any], Optional, Tuple
 
 from prometheus_client import (
     CONTENT_TYPE_LATEST,
@@ -44,7 +44,7 @@ class MetricsExporter:
     def __init__(
         self,
         registry: Optional[CollectorRegistry] = None,
-        tables_to_monitor: Optional[List[str]] = None,
+        tables_to_monitor: Optional[List[str] = None,
     ):
         """
         初始化指标导出器
@@ -361,7 +361,7 @@ class MetricsExporter:
                 task_name=task_name, failure_reason="test_failure"
             ).inc()
 
-    def update_table_row_counts(self, table_counts: Optional[dict] = None) -> None:
+    def update_table_row_counts(self, table_counts: Optional[Dict[str, Any] = None) -> None:
         """
         更新数据表行数统计 - 兼容测试接口
 

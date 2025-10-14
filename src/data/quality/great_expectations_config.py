@@ -14,7 +14,7 @@ Great Expectations 配置模块
 import logging
 import os
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 from src.database.connection import DatabaseManager
 
@@ -269,12 +269,12 @@ class GreatExpectationsConfig:
         创建期望套件（断言规则集合）
 
         Returns:
-            Dict: 创建结果统计
+            Dict[str, Any]: 创建结果统计
         """
         if not self.context:
             await self.initialize_context()
 
-        results: Dict[str, List[Any]] = {"created_suites": [], "errors": []}
+        results: Dict[str, List[Any] = {"created_suites": [], "errors": []}
 
         try:
             for table_name, suite_config in self.data_assertions.items():
@@ -335,7 +335,7 @@ class GreatExpectationsConfig:
             limit_rows: 限制行数
 
         Returns:
-            Dict: 安全的查询参数
+            Dict[str, Any]: 安全的查询参数
         """
         # 白名单验证表名
         allowed_tables = ["matches", "odds", "predictions", "teams", "leagues"]
@@ -387,7 +387,7 @@ class GreatExpectationsConfig:
             limit_rows: 限制检查行数
 
         Returns:
-            Dict: 验证结果
+            Dict[str, Any]: 验证结果
         """
         try:
             if not self.context:
@@ -473,7 +473,7 @@ class GreatExpectationsConfig:
         验证所有配置的表
 
         Returns:
-            Dict: 全部验证结果汇总
+            Dict[str, Any]: 全部验证结果汇总
         """
         all_results = []
         overall_stats = {
@@ -511,7 +511,7 @@ class GreatExpectationsConfig:
         自定义断言：检查赔率隐含概率总和在合理范围内
 
         Returns:
-            Dict: 自定义断言配置
+            Dict[str, Any]: 自定义断言配置
         """
         return {
             "expectation_type": "expect_table_column_count_to_be_between",

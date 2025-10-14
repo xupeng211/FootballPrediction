@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
-from typing import Optional, Dict, Any, List
+from typing import Any,  Union, Any, Dict[str, Any], List[Any], Optional, Union
 
 from ...core.exceptions import DomainError
 
@@ -30,7 +30,7 @@ class ConfidenceScore:
 
     value: Decimal
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """验证置信度范围"""
         if self.value < 0 or self.value > 1:
             raise DomainError("置信度必须在 0 到 1 之间")
@@ -48,7 +48,7 @@ class ConfidenceScore:
             return "low"
 
     def __str__(self) -> str:
-        return f"{self.value:.2f} ({self.level})"
+        return f"{self.value:.2f" ({self.level})"
 
 
 @dataclass
@@ -57,10 +57,10 @@ class PredictionScore:
 
     predicted_home: int
     predicted_away: int
-    actual_home: Optional[int] = None
-    actual_away: Optional[int] = None
+    actual_home: Optional[int] ] = None
+    actual_away: Optional[int] ] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """验证比分"""
         if self.predicted_home < 0 or self.predicted_away < 0:
             raise DomainError("预测比分不能为负数")
@@ -114,8 +114,8 @@ class PredictionScore:
 
     def __str__(self) -> str:
         if self.is_evaluated:
-            return f"{self.predicted_home}-{self.predicted_away} (实际: {self.actual_home}-{self.actual_away})"
-        return f"{self.predicted_home}-{self.predicted_away}"
+            return f"{self.predicted_home"-{self.predicted_away} (实际: {self.actual_home}-{self.actual_away})"
+        return f"{self.predicted_home"-{self.predicted_away}"
 
 
 @dataclass
@@ -127,7 +127,7 @@ class PredictionPoints:
     result_bonus: Decimal = Decimal("0")  # 结果正确奖励
     confidence_bonus: Decimal = Decimal("0")  # 置信度奖励
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """四舍五入到两位小数"""
         self.total = self.total.quantize(Decimal("0.01"))
         self.score_bonus = self.score_bonus.quantize(Decimal("0.01"))
@@ -135,7 +135,7 @@ class PredictionPoints:
         self.confidence_bonus = self.confidence_bonus.quantize(Decimal("0.01"))
 
     @property
-    def breakdown(self) -> Dict[str, Decimal]:
+    def breakdown(self) -> Dict[str, Union[str, Decimal]]:
         """积分明细"""
         return {
             "score_bonus": self.score_bonus,
@@ -145,7 +145,7 @@ class PredictionPoints:
         }
 
     def __str__(self) -> str:
-        return f"{self.total} 分"
+        return f"{self.total" 分"
 
 
 @dataclass
@@ -156,23 +156,23 @@ class Prediction:
     封装预测的核心业务逻辑和不变性约束。
     """
 
-    id: Optional[int] = None
+    id: Optional[int] ] = None
     user_id: int = 0
     match_id: int = 0
-    score: Optional[PredictionScore] = None
-    confidence: Optional[ConfidenceScore] = None
+    score: Optional[PredictionScore] ] = None
+    confidence: Optional[ConfidenceScore] ] = None
     status: PredictionStatus = PredictionStatus.PENDING
-    model_version: Optional[str] = None
-    points: Optional[PredictionPoints] = None
+    model_version: Optional[str] ] = None
+    points: Optional[PredictionPoints] ] = None
     created_at: datetime = field(default_factory=datetime.utcnow)
-    evaluated_at: Optional[datetime] = None
-    cancelled_at: Optional[datetime] = None
-    cancellation_reason: Optional[str] = None
+    evaluated_at: Optional[datetime] ] = None
+    cancelled_at: Optional[datetime] ] = None
+    cancellation_reason: Optional[str] ] = None
 
     # 领域事件
     _domain_events: List[Any] = field(default_factory=list, init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """初始化后的验证"""
         if self.user_id <= 0:
             raise DomainError("用户ID必须大于0")
@@ -187,8 +187,8 @@ class Prediction:
         self,
         predicted_home: int,
         predicted_away: int,
-        confidence: Optional[float] = None,
-        model_version: Optional[str] = None,
+        confidence: Optional[float] ] = None,
+        model_version: Optional[str] ] = None,
     ) -> None:
         """创建预测"""
         if self.status != PredictionStatus.PENDING:
@@ -222,7 +222,7 @@ class Prediction:
         self,
         actual_home: int,
         actual_away: int,
-        scoring_rules: Optional[Dict[str, Decimal]] = None,
+        scoring_rules: Optional[Dict[str, Union[str, Decimal]]] ] ] = None,
     ) -> None:
         """评估预测结果"""
         if self.status != PredictionStatus.PENDING:
@@ -258,7 +258,7 @@ class Prediction:
             )
         )
 
-    def cancel(self, reason: Optional[str] = None) -> None:
+    def cancel(self, reason: Optional[str] ] = None) -> None:
         """取消预测"""
         if self.status in [PredictionStatus.EVALUATED, PredictionStatus.CANCELLED]:
             raise DomainError(f"预测状态为 {self.status.value}，无法取消")
@@ -275,7 +275,7 @@ class Prediction:
         self.status = PredictionStatus.EXPIRED
 
     @staticmethod
-    def _default_scoring_rules() -> Dict[str, Decimal]:
+    def _default_scoring_rules() -> Dict[str, Union[str, Decimal]]:
         """默认积分规则"""
         return {
             "exact_score": Decimal("10"),  # 精确比分
@@ -283,7 +283,7 @@ class Prediction:
             "confidence_multiplier": Decimal("1"),  # 置信度倍数
         }
 
-    def _calculate_points(self, rules: Dict[str, Decimal]) -> PredictionPoints:
+    def _calculate_points(self, rules: Dict[str, Union[str, Decimal]]) -> PredictionPoints:
         """计算积分"""
         points = PredictionPoints()
 
@@ -355,8 +355,8 @@ class Prediction:
             return {"status": "no_prediction"}
 
         return {
-            "predicted": f"{self.score.predicted_home}-{self.score.predicted_away}",
-            "actual": f"{self.score.actual_home}-{self.score.actual_away}"
+            "predicted": f"{self.score.predicted_home"-{self.score.predicted_away}",
+            "actual": f"{self.score.actual_home"-{self.score.actual_away}"
             if self.score.is_evaluated
             else None,
             "confidence": str(self.confidence) if self.confidence else None,

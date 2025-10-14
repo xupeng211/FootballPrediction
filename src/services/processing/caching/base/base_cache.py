@@ -4,14 +4,14 @@ Base Cache Classes
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, List, Optional
+from typing import Any, List[Any], Optional
 import logging
 
 
 class BaseCache(ABC):
     """缓存基础类"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """初始化缓存"""
         self.logger = logging.getLogger(f"cache.{self.__class__.__name__}")
         self.cache_enabled = True
@@ -40,7 +40,7 @@ class BaseCache(ABC):
 class CacheKeyManager:
     """缓存键管理器"""
 
-    def __init__(self, prefix: str = "fp"):
+    def __init__(self, prefix: str = "fp") -> None:
         """初始化键管理器
 
         Args:
@@ -57,7 +57,7 @@ class CacheKeyManager:
         Returns:
             缓存键
         """
-        return f"{self.prefix}:" + ":".join(parts)
+        return f"{self.prefix":" + ":".join(parts)
 
     def parse_key(self, key: str) -> List[str]:
         """解析缓存键
@@ -68,4 +68,4 @@ class CacheKeyManager:
         Returns:
             键的组成部分
         """
-        return key.split(":")[1:]
+        return key.split(":}")[1:]

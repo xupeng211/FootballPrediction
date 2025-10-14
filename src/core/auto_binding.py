@@ -9,7 +9,7 @@ Provides automatic binding from interfaces to implementations.
 
 import inspect
 import importlib
-from typing import Dict, List, Type, TypeVar, Optional
+from typing import Any, Dict[str, Any], List[Any], Optional, Type[Any], TypeVar, Callable
 from pathlib import Path
 import logging
 from dataclasses import dataclass
@@ -25,20 +25,20 @@ logger = logging.getLogger(__name__)
 class BindingRule:
     """绑定规则"""
 
-    interface: Type
-    implementation: Type
+    interface: Type[Any]
+    implementation: Type[Any]
     lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT
-    condition: Optional[callable] = None  # type: ignore
+    condition: Optional[Callable] ] = None  # type: ignore
 
 
 class AutoBinder:
     """自动绑定器"""
 
-    def __init__(self, container: DIContainer):
+    def __init__(self, container: DIContainer) -> None:
         self.container = container
-        self._binding_rules: List[BindingRule] = []
-        self._scanned_modules: List[str] = []
-        self._implementation_cache: Dict[Type, List[Type]] = {}
+        self._binding_rules: List[BindingRule] = {}]
+        self._scanned_modules: List[str] = {}]
+        self._implementation_cache: Dict[str, Any][Type[Any], List[Type[Any] = {}
 
     def add_binding_rule(self, rule: BindingRule) -> None:
         """添加绑定规则"""
@@ -77,7 +77,7 @@ class AutoBinder:
         else:
             raise DependencyInjectionError(f"未知的绑定约定: {convention}")
 
-    def bind_interface_to_implementations(self, interface: Type[T]) -> None:
+    def bind_interface_to_implementations(self, interface: Type[Any][T]) -> None:
         """绑定接口到所有实现"""
         implementations = self._find_implementations(interface)
 
@@ -88,7 +88,7 @@ class AutoBinder:
         if len(implementations) == 1:
             # 只有一个实现，直接绑定
             self.container.register_transient(interface, implementations[0])
-            logger.info(f"绑定 {interface.__name__} -> {implementations[0].name__}")
+            logger.info(f"绑定 {interface.__name__} -> {implementations[0].__name__}")
         else:
             # 多个实现，需要进一步选择
             primary = self._select_primary_implementation(interface, implementations)
@@ -134,7 +134,7 @@ class AutoBinder:
         self, directory: Path, module_prefix: str, pattern: str, recursive: bool
     ) -> None:
         """扫描目录"""
-        for file_path in directory.glob(f"{pattern}.py"):
+        for file_path in directory.glob(f"{pattern".py"):
             if file_path.name.startswith("_"):
                 continue
 
@@ -173,7 +173,7 @@ class AutoBinder:
                 # 检查是否实现了某个接口
                 self._check_class_implementations(obj)
 
-    def _bind_interface_implementations(self, interface: Type) -> None:
+    def _bind_interface_implementations(self, interface: Type[Any]) -> None:
         """绑定接口实现"""
         implementations = self._find_implementations(interface)
 
@@ -194,7 +194,7 @@ class AutoBinder:
                         f"自动绑定: {interface.__name__} -> {default_impl.__name__}"
                     )
 
-    def _check_class_implementations(self, cls: Type) -> None:
+    def _check_class_implementations(self, cls: Type[Any]) -> None:
         """检查类的实现"""
         # 获取类的所有父类
         bases = cls.__bases__
@@ -211,7 +211,7 @@ class AutoBinder:
                     self.container.register_transient(base, cls)
                     logger.debug(f"自动绑定: {base.__name__} -> {cls.__name__}")
 
-    def _find_implementations(self, interface: Type) -> List[Type]:
+    def _find_implementations(self, interface: Type[Any]) -> List[Type[Any]:
         """查找接口的实现"""
         implementations = []
 
@@ -236,7 +236,7 @@ class AutoBinder:
         self._implementation_cache[interface] = implementations
         return implementations
 
-    def _is_implementation(self, cls: Type, interface: Type) -> bool:
+    def _is_implementation(self, cls: Type[Any], interface: Type[Any]) -> bool:
         """检查是否是接口的实现"""
         try:
             return issubclass(cls, interface) and not inspect.isabstract(cls)
@@ -244,8 +244,8 @@ class AutoBinder:
             return False
 
     def _select_primary_implementation(
-        self, interface: Type, implementations: List[Type]
-    ) -> Optional[Type]:
+        self, interface: Type[Any], implementations: List[Type[Any]
+    ) -> Optional[Type[Any]]:
         """选择主要实现"""
         # 优先级规则：
         # 1. 类名以接口名结尾的
@@ -268,8 +268,8 @@ class AutoBinder:
         return implementations[0] if implementations else None
 
     def _select_default_implementation(
-        self, interface: Type, implementations: List[Type]
-    ) -> Optional[Type]:
+        self, interface: Type[Any], implementations: List[Type[Any]
+    ) -> Optional[Type[Any]]:
         """选择默认实现"""
         return self._select_primary_implementation(interface, implementations)
 
@@ -344,7 +344,7 @@ class ConventionBinder:
 def auto_bind(lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT):
     """自动绑定装饰器"""
 
-    def decorator(cls: Type[T]) -> Type[T]:
+    def decorator(cls: Type[Any][T]) -> Type[Any][T]:
         # 将类标记为可自动绑定
         cls.__auto_bind__ = True  # type: ignore
         cls.__bind_lifetime__ = lifetime  # type: ignore
@@ -353,10 +353,10 @@ def auto_bind(lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT):
     return decorator
 
 
-def bind_to(interface: Type[T]):
+def bind_to(interface: Type[Any][T]):
     """绑定到接口装饰器"""
 
-    def decorator(cls: Type[T]) -> Type[T]:
+    def decorator(cls: Type[Any][T]) -> Type[Any][T]:
         # 将类标记为接口的实现
         cls.__bind_to__ = interface  # type: ignore
         return cls
@@ -367,7 +367,7 @@ def bind_to(interface: Type[T]):
 def primary_implementation():
     """主要实现装饰器"""
 
-    def decorator(cls) -> Type:
+    def decorator(cls) -> Type[Any]:
         # 将类标记为主要实现
         cls.__primary_implementation__ = True
         return cls  # type: ignore

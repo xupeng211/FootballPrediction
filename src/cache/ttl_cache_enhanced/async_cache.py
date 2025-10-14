@@ -6,7 +6,7 @@ Async TTL Cache Wrapper
 Provides async interface for TTLCache.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 from .ttl_cache import TTLCache
 

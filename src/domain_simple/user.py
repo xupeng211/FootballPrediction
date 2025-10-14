@@ -3,7 +3,7 @@
 """
 
 from datetime import datetime
-from typing import Optional, Dict, Any, List
+from typing import Any,  Dict[str, Any],  Any, List[Any]
 from enum import Enum
 
 
@@ -283,7 +283,7 @@ class UserProfile:
 
     def __init__(self, user: User):
         self._user = user
-        self.prediction_history: List[Dict[str, Any]] = []
+        self.prediction_history: List[Dict[str, Any] = []
         self.following: List[int] = []  # 关注的用户ID列表
         self.followers: List[int] = []  # 粉丝列表
         self.reputation_score = 0.0

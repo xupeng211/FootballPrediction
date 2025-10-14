@@ -5,7 +5,7 @@ Redis cache module - 提供完整的Redis缓存管理功能
 # import asyncio
 import json
 import logging
-from typing import Optional, Any, List, Dict
+from typing import Dict,  Optional, Any, List, Dict
 
 import redis
 import redis.asyncio as aioredis
@@ -100,7 +100,7 @@ async def attl_cache(key: str) -> Optional[int]:
         return None
 
 
-async def amget_cache(keys: List[str]) -> List[Optional[Any]]:
+async def amget_cache(keys: List[str]) -> List[Optional[Any]:
     """异步批量获取缓存"""
     try:
         client = await get_redis_manager().get_async_client()
@@ -168,7 +168,7 @@ def ttl_cache(key: str) -> Optional[int]:
         return None
 
 
-def mget_cache(keys: List[str]) -> List[Optional[Any]]:
+def mget_cache(keys: List[str]) -> List[Optional[Any]:
     """同步批量获取缓存"""
     try:
         client = get_redis_manager().get_sync_client()

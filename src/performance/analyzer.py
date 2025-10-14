@@ -12,7 +12,7 @@ Performance Analyzer
 
 import json
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Tuple
 
 import numpy as np
 from pydantic import BaseModel
@@ -39,7 +39,7 @@ class PerformanceTrend(BaseModel):
     """性能趋势数据"""
 
     metric_name: str
-    time_series: List[Tuple[datetime, float]]
+    time_series: List[Tuple[datetime, float]
     trend: str  # improving, stable, degrading
     slope: float
     confidence: float
@@ -54,7 +54,7 @@ class PerformanceAnalyzer:
         self.trends: Dict[str, PerformanceTrend] = {}
         self.thresholds = self._load_default_thresholds()
 
-    def _load_default_thresholds(self) -> Dict[str, Dict]:
+    def _load_default_thresholds(self) -> Dict[str, Dict[str, Any][str, Any]:
         """加载默认的性能阈值"""
         return {
             "response_time": {
@@ -89,7 +89,7 @@ class PerformanceAnalyzer:
             },
         }
 
-    def analyze_api_performance(self, api_stats: Dict) -> List[PerformanceInsight]:
+    def analyze_api_performance(self, api_stats: Dict[str, Any]) -> List[PerformanceInsight]:
         """分析API性能"""
         insights = []
 
@@ -175,7 +175,7 @@ class PerformanceAnalyzer:
 
         return insights
 
-    def analyze_database_performance(self, db_stats: Dict) -> List[PerformanceInsight]:
+    def analyze_database_performance(self, db_stats: Dict[str, Any]) -> List[PerformanceInsight]:
         """分析数据库性能"""
         insights = []
 
@@ -233,7 +233,7 @@ class PerformanceAnalyzer:
 
         return insights
 
-    def analyze_cache_performance(self, cache_stats: Dict) -> List[PerformanceInsight]:
+    def analyze_cache_performance(self, cache_stats: Dict[str, Any]) -> List[PerformanceInsight]:
         """分析缓存性能"""
         insights = []
 
@@ -298,7 +298,7 @@ class PerformanceAnalyzer:
 
         return insights
 
-    def analyze_memory_usage(self, memory_data: List[Dict]) -> List[PerformanceInsight]:
+    def analyze_memory_usage(self, memory_data: List[Dict[str, Any][str], Any]) -> List[PerformanceInsight]:
         """分析内存使用情况"""
         insights = []  # type: ignore
 
@@ -366,7 +366,7 @@ class PerformanceAnalyzer:
 
         return insights
 
-    def analyze_task_performance(self, task_stats: Dict) -> List[PerformanceInsight]:
+    def analyze_task_performance(self, task_stats: Dict[str, Any]) -> List[PerformanceInsight]:
         """分析后台任务性能"""
         insights = []
 
@@ -437,7 +437,7 @@ class PerformanceAnalyzer:
         return insights
 
     def analyze_performance_trend(
-        self, metric_data: Dict[str, List[Tuple[datetime, float]]]
+        self, metric_data: Dict[str, List[Tuple[datetime, float]
     ) -> Dict[str, PerformanceTrend]:
         """分析性能趋势"""
         trends = {}
@@ -486,7 +486,7 @@ class PerformanceAnalyzer:
 
     def generate_optimization_recommendations(
         self, insights: List[PerformanceInsight]
-    ) -> List[Dict]:
+    ) -> List[Dict[str, Any]:
         """生成优化建议"""
         recommendations = []
 
@@ -579,12 +579,12 @@ class PerformanceAnalyzer:
 
     def generate_performance_report(
         self,
-        api_stats: Optional[Dict] = None,
-        db_stats: Optional[Dict] = None,
-        cache_stats: Optional[Dict] = None,
-        memory_data: Optional[List[Dict]] = None,
-        task_stats: Optional[Dict] = None,
-    ) -> Dict:
+        api_stats: Optional[Dict[str, Any] = None,
+        db_stats: Optional[Dict[str, Any] = None,
+        cache_stats: Optional[Dict[str, Any] = None,
+        memory_data: Optional[List[Dict[str, Any] = None,
+        task_stats: Optional[Dict[str, Any] = None,
+    ) -> Dict[str, Any]:
         """生成综合性能报告"""
         report = {
             "timestamp": datetime.now().isoformat(),
@@ -649,7 +649,7 @@ class PerformanceAnalyzer:
 
         return report
 
-    def _calculate_performance_score(self, insights: List[PerformanceInsight]) -> Dict:
+    def _calculate_performance_score(self, insights: List[PerformanceInsight]) -> Dict[str, Any]:
         """计算性能评分（0-100）"""
         if not insights:
             return {"score": 100, "grade": "A"}
@@ -681,7 +681,7 @@ class PerformanceAnalyzer:
             },
         }
 
-    def export_report(self, report: Dict, format: str = "json") -> str:
+    def export_report(self, report: Dict[str, Any], format: str = "json") -> str:
         """导出性能报告"""
         if format == "json":
             return json.dumps(report, indent=2, default=str)
@@ -690,7 +690,7 @@ class PerformanceAnalyzer:
         else:
             return str(report)
 
-    def _generate_html_report(self, report: Dict) -> str:
+    def _generate_html_report(self, report: Dict[str, Any]) -> str:
         """生成HTML格式的报告"""
         html = f"""
         <!DOCTYPE html>

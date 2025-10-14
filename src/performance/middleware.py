@@ -11,7 +11,7 @@ Performance Monitoring Middleware
 """
 
 import time
-from typing import Callable, Dict, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -168,7 +168,7 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
             if self.track_concurrency and request_id in self.active_requests:
                 del self.active_requests[request_id]
 
-    def get_performance_stats(self) -> Dict:
+    def get_performance_stats(self) -> Dict[str, Any]:
         """获取性能统计信息"""
         _stats = {
             "total_requests": self.total_requests,
@@ -214,8 +214,8 @@ class DatabasePerformanceMiddleware:
     """数据库性能监控中间件"""
 
     def __init__(self):
-        self.query_stats: Dict[str, Dict] = {}
-        self.slow_queries: List[Dict] = []
+        self.query_stats: Dict[str, Dict[str, Any][str, Any] = {}
+        self.slow_queries: List[Dict[str, Any] = []
         self.total_queries = 0
 
     async def track_query(
@@ -262,7 +262,7 @@ class DatabasePerformanceMiddleware:
             if len(self.slow_queries) > 100:
                 self.slow_queries = self.slow_queries[-100:]
 
-    def get_query_stats(self) -> Dict:
+    def get_query_stats(self) -> Dict[str, Any]:
         """获取查询统计信息"""
         _stats = {"total_queries": self.total_queries, "query_types": {}}
 
@@ -319,7 +319,7 @@ class CachePerformanceMiddleware:
         """记录缓存删除"""
         self.cache_stats["deletes"] += 1
 
-    def get_cache_stats(self) -> Dict:
+    def get_cache_stats(self) -> Dict[str, Any]:
         """获取缓存统计信息"""
         total_requests = self.cache_stats["hits"] + self.cache_stats["misses"]
         hit_rate = (
@@ -352,9 +352,9 @@ class BackgroundTaskPerformanceMonitor:
     """后台任务性能监控器"""
 
     def __init__(self):
-        self.task_stats: Dict[str, Dict] = {}
+        self.task_stats: Dict[str, Dict[str, Any][str, Any] = {}
         self.active_tasks: Dict[str, float] = {}
-        self.failed_tasks: List[Dict] = []
+        self.failed_tasks: List[Dict[str, Any] = []
 
     def start_task(self, task_id: str, task_name: str):
         """开始任务跟踪"""
@@ -405,7 +405,7 @@ class BackgroundTaskPerformanceMonitor:
 
         del self.active_tasks[task_id]
 
-    def get_task_stats(self) -> Dict:
+    def get_task_stats(self) -> Dict[str, Any]:
         """获取任务统计信息"""
         _stats = {"active_tasks": len(self.active_tasks), "task_types": {}}
 

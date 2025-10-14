@@ -10,7 +10,7 @@ Implements various decorators for functionality enhancement and cross-cutting co
 import asyncio
 import time
 import json
-from typing import Any, Callable, Dict, List, Optional, Union, Type
+from typing import Any,  Union, Dict[str, Any],  Any, List[Any], Optional, Union, Type[Any]
 from datetime import datetime, timedelta
 import logging
 
@@ -145,7 +145,7 @@ class LoggingDecorator(Decorator):
         sanitized = []
 
         for arg in args:
-            if isinstance(arg, dict):
+            if isinstance(arg, Dict[str, Any]):
                 sanitized.append(self._sanitize_dict(arg))
             elif isinstance(arg, (list, tuple)):
                 sanitized.append(self._sanitize_sequence(arg))  # type: ignore
@@ -154,11 +154,11 @@ class LoggingDecorator(Decorator):
 
         return sanitized
 
-    def _sanitize_kwargs(self, kwargs: dict) -> dict:
+    def _sanitize_kwargs(self, kwargs: Dict[str, Any]) -> Dict[str, Any]:
         """清理关键字参数，移除敏感信息"""
         return self._sanitize_dict(kwargs)
 
-    def _sanitize_dict(self, data: dict) -> dict:
+    def _sanitize_dict(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """清理字典，移除敏感信息"""
         sensitive_keys = ["password", "token", "secret", "key", "auth"]
         sanitized = {}
@@ -166,7 +166,7 @@ class LoggingDecorator(Decorator):
         for key, value in data.items():
             if any(sensitive in key.lower() for sensitive in sensitive_keys):
                 sanitized[key] = "***"
-            elif isinstance(value, dict):
+            elif isinstance(value, Dict[str, Any]):
                 sanitized[key] = self._sanitize_dict(value)  # type: ignore
             elif isinstance(value, (list, tuple)):
                 sanitized[key] = self._sanitize_sequence(value)  # type: ignore
@@ -180,7 +180,7 @@ class LoggingDecorator(Decorator):
         sanitized = []
 
         for item in seq:
-            if isinstance(item, dict):
+            if isinstance(item, Dict[str, Any]):
                 sanitized.append(self._sanitize_dict(item))
             elif isinstance(item, (list, tuple)):
                 sanitized.append(self._sanitize_sequence(item))  # type: ignore
@@ -191,7 +191,7 @@ class LoggingDecorator(Decorator):
 
     def _sanitize_result(self, result: Any) -> Any:
         """清理结果，移除敏感信息"""
-        if isinstance(result, dict):
+        if isinstance(result, Dict[str, Any]):
             return self._sanitize_dict(result)
         elif isinstance(result, (list, tuple)):
             return self._sanitize_sequence(result)
@@ -355,8 +355,8 @@ class ValidationDecorator(Decorator):
         self,
         component,
         name: Optional[str] = None,
-        input_validators: Optional[List[Validator]] = None,
-        output_validators: Optional[List[Validator]] = None,
+        input_validators: Optional[List[Validator] = None,
+        output_validators: Optional[List[Validator] = None,
         validate_args: bool = True,
         validate_kwargs: bool = True,
         validate_result: bool = True,
@@ -476,7 +476,7 @@ class AuthDecorator(Decorator):
         component,
         name: Optional[str] = None,
         auth_service=None,
-        required_permissions: Optional[List[str]] = None,
+        required_permissions: Optional[List[str] = None,
         require_auth: bool = True,
         token_arg_name: str = "token",
         user_arg_name: str = "user",
@@ -540,7 +540,7 @@ class RateLimitDecorator(Decorator):
         self.time_window = time_window
         self.key_generator = key_generator or self._default_key_generator
         self.key_arg_name = key_arg_name
-        self._requests: Dict[str, List[datetime]] = {}
+        self._requests: Dict[str, List[datetime] = {}
 
     async def _execute(self, *args, **kwargs) -> Any:
         """执行限流装饰器"""
@@ -604,7 +604,7 @@ class TimeoutDecorator(Decorator):
         component,
         name: Optional[str] = None,
         timeout_seconds: float = 30.0,
-        timeout_exception: Type[Exception] = TimeoutError,
+        timeout_exception: Type[Any][Exception] = TimeoutError,
     ):
         super().__init__(component, name)
         self.timeout_seconds = timeout_seconds

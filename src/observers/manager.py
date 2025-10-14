@@ -8,7 +8,7 @@ Manages observers and subjects centrally.
 
 import asyncio
 import logging
-from typing import Any, Dict, Optional
+from typing import Any,  Dict[str, Any],  Any, Optional
 from datetime import datetime
 
 from .base import Observer, Subject, ObservableEventType
@@ -296,7 +296,7 @@ class ObserverManager:
         severity: str,
         message: str,
         source: Optional[str] = None,
-        data: Optional[Dict[str, Any]] = None,
+        data: Optional[Dict[str, Any] = None,
     ) -> None:
         """触发告警"""
         subject = self._subjects.get("alert")

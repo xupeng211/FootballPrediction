@@ -6,7 +6,7 @@ Prediction Domain Events
 Defines domain events related to predictions.
 """
 
-from typing import Dict, Any, Optional
+from typing import Any,  Dict[str, Any],  Any, Optional
 from .base import DomainEvent
 
 
@@ -20,7 +20,7 @@ class PredictionCreatedEvent(DomainEvent):
         match_id: int,
         predicted_home: int,
         predicted_away: int,
-        confidence: Optional[float] = None,
+        confidence: Optional[float] ] = None,
         **kwargs,
     ):
         super().__init__(aggregate_id=prediction_id)
@@ -84,8 +84,8 @@ class PredictionEvaluatedEvent(DomainEvent):
         actual_home: int,
         actual_away: int,
         is_correct: bool,
-        points_earned: Optional[int] = None,
-        accuracy_score: Optional[float] = None,
+        points_earned: Optional[int] ] = None,
+        accuracy_score: Optional[float] ] = None,
         **kwargs,
     ):
         super().__init__(aggregate_id=prediction_id)
@@ -113,7 +113,7 @@ class PredictionCancelledEvent(DomainEvent):
         self,
         prediction_id: int,
         reason: str,
-        cancelled_by: Optional[int] = None,
+        cancelled_by: Optional[int] ] = None,
         **kwargs,
     ):
         super().__init__(aggregate_id=prediction_id)
@@ -132,7 +132,7 @@ class PredictionCancelledEvent(DomainEvent):
 class PredictionExpiredEvent(DomainEvent):
     """预测过期事件"""
 
-    def __init__(self, prediction_id: int, match_id: int, expired_at: str, **kwargs):
+    def __init__(self, prediction_id: int, match_id: int, expired_at: str, **kwargs) -> None:
         super().__init__(aggregate_id=prediction_id)
         self.prediction_id = prediction_id
         self.match_id = match_id

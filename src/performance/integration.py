@@ -10,7 +10,7 @@ Performance Monitoring Integration Module
 - 性能监控初始化
 """
 
-from typing import Optional
+from typing import Any, Optional
 
 from fastapi import FastAPI
 
@@ -139,7 +139,7 @@ class PerformanceMonitoringIntegration:
         except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"Failed to stop profiling: {str(e)}")
 
-    def get_performance_config(self) -> dict:
+    def get_performance_config(self) -> Dict[str, Any]:
         """获取性能监控配置"""
         return {
             "enabled": self.enabled,
@@ -164,7 +164,7 @@ class PerformanceMonitoringIntegration:
             },
         }
 
-    def update_config(self, config: dict) -> None:
+    def update_config(self, config: Dict[str, Any]) -> None:
         """更新性能监控配置"""
         try:
             # 更新采样率
@@ -201,10 +201,10 @@ class PerformanceMonitoringIntegration:
             get_profiler()
 
             # 收集性能数据
-            api_stats: dict = {}  # 从中间件获取  # type: ignore
-            db_stats: dict = {}  # 从db_monitor获取  # type: ignore
-            cache_stats: dict = {}  # 从cache_monitor获取  # type: ignore
-            task_stats: dict = {}  # 从task_monitor获取  # type: ignore
+            api_stats: Dict[str, Any] = {}  # 从中间件获取  # type: ignore
+            db_stats: Dict[str, Any] = {}  # 从db_monitor获取  # type: ignore
+            cache_stats: Dict[str, Any] = {}  # 从cache_monitor获取  # type: ignore
+            task_stats: Dict[str, Any] = {}  # 从task_monitor获取  # type: ignore
 
             # 生成报告
             report = analyzer.generate_performance_report(

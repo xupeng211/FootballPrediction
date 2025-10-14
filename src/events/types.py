@@ -1,6 +1,6 @@
 # mypy: ignore-errors
 """
-from typing import Dict, Optional
+from typing import Any,  Dict[str, Any],  Any, Optional
 核心事件类型定义
 Core Event Types
 
@@ -9,7 +9,7 @@ Defines core event types in the system.
 """
 
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any,  Dict[str, Any],  Any, Optional
 
 from .base import Event, EventData
 
@@ -27,7 +27,7 @@ class MatchEventData(EventData):
         match_time: datetime,
         status: str = "upcoming",
         venue: Optional[str] = None,
-        weather: Optional[Dict[str, Any]] = None,
+        weather: Optional[Dict[str, Any] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -77,7 +77,7 @@ class MatchUpdatedEventData(MatchEventData):
         away_team_id: int,
         league_id: int,
         match_time: datetime,
-        updated_fields: Optional[Dict[str, Any]] = None,
+        updated_fields: Optional[Dict[str, Any] = None,
         previous_status: Optional[str] = None,
         **kwargs,
     ):
@@ -159,7 +159,7 @@ class PredictionUpdatedEventData(PredictionEventData):
         predicted_home: int,
         predicted_away: int,
         confidence: float,
-        previous_prediction: Optional[Dict[str, Any]] = None,
+        previous_prediction: Optional[Dict[str, Any] = None,
         update_reason: Optional[str] = None,
         strategy_used: Optional[str] = None,
         **kwargs,

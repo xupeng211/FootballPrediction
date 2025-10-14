@@ -6,7 +6,7 @@ Cache Decorators Usage Examples
 """
 
 import asyncio
-from typing import Any, Dict, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 import logging
 
 from .decorators import (
@@ -60,7 +60,7 @@ def get_user_profile(user_id: int, include_sensitive: bool = False) -> Dict[str,
     prefix="search_results",
     unless=lambda query, limit: len(query) < 3,  # 查询长度小于3时不缓存
 )
-def search_documents(query: str, limit: int = 10) -> List[Dict[str, Any]]:
+def search_documents(query: str, limit: int = 10) -> List[Dict[str, Any]:
     """搜索文档（查询长度小于3时不缓存）"""
     logger.info(f"搜索文档: query='{query}', limit={limit}")
     # 模拟搜索结果
@@ -97,7 +97,7 @@ def update_user_profile(user_id: int, **updates) -> Dict[str, Any]:
 
 # 示例6: 便捷装饰器使用
 @cache_user_predictions(ttl_seconds=3600)
-def get_user_predictions(user_id: int, match_id: Optional[int] = None) -> List[Dict]:
+def get_user_predictions(user_id: int, match_id: Optional[int] = None) -> List[Dict[str, Any]:
     """获取用户预测（使用便捷装饰器）"""
     logger.info(f"获取用户预测: user_id={user_id}, match_id={match_id}")
     return [
@@ -108,7 +108,7 @@ def get_user_predictions(user_id: int, match_id: Optional[int] = None) -> List[D
 
 
 @cache_match_data(ttl_seconds=1800)
-async def get_match_details(match_id: int) -> Dict:
+async def get_match_details(match_id: int) -> Dict[str, Any]:
     """获取比赛详情（使用便捷装饰器）"""
     logger.info(f"获取比赛详情: {match_id}")
     await asyncio.sleep(0.5)
@@ -116,12 +116,12 @@ async def get_match_details(match_id: int) -> Dict:
         "match_id": match_id,
         "home_team": "Team A",
         "away_team": "Team B",
-        "kickoff": "2024-01-01T20:00:00Z",
+        "kickof": "2024-01-01T20:00:00Z",
     }
 
 
 @cache_team_stats(ttl_seconds=7200)
-def calculate_team_statistics(team_id: int, season: str) -> Dict:
+def calculate_team_statistics(team_id: int, season: str) -> Dict[str, Any]:
     """计算球队统计（使用便捷装饰器）"""
     logger.info(f"计算球队统计: team_id={team_id}, season={season}")
     return {
@@ -158,7 +158,7 @@ def custom_key_generator(func, args, kwargs, user_id=None):
     prefix="custom",
     key_generator=custom_key_generator,
 )
-def get_team_form(team_id: int, season: str, last_n: int = 5) -> List[Dict]:
+def get_team_form(team_id: int, season: str, last_n: int = 5) -> List[Dict[str, Any]:
     """获取球队近期表现（使用自定义键生成器）"""
     logger.info(f"获取球队表现: team_id={team_id}, season={season}, last_n={last_n}")
     return [

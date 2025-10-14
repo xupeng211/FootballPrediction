@@ -3,7 +3,7 @@
 """
 
 import json
-from typing import Any, Dict, Optional, Callable, AsyncIterator
+from typing import Any,  Dict[str, Any],  Any, Optional, Callable, AsyncIterator
 from datetime import datetime
 
 from src.core.exceptions import StreamingError
@@ -56,7 +56,7 @@ class KafkaMessageConsumer:
         batch_size: int = None,
         filter_func: Callable = None,
         filter_type: str = None,
-    ) -> AsyncIterator[Dict[str, Any]]:
+    ) -> AsyncIterator[Dict[str, Any]:
         """消费消息"""
         if self.consumer is None:
             raise StreamingError("Consumer not started")
@@ -100,7 +100,7 @@ class KafkaMessageConsumer:
                 return True
         return False
 
-    async def commit(self, offsets: Optional[Dict] = None):
+    async def commit(self, offsets: Optional[Dict[str, Any] = None):
         """提交偏移量"""
         if self.consumer is None:
             raise StreamingError("Consumer not started")

@@ -1,7 +1,7 @@
 """CORS配置管理"""
 
 import os
-from typing import List
+from typing import Any,  List[Any]
 
 
 def get_cors_origins() -> List[str]:
@@ -20,7 +20,7 @@ def get_cors_origins() -> List[str]:
         ]
 
 
-def get_cors_config() -> dict:
+def get_cors_config() -> Dict[str, Any]:
     """获取完整的CORS配置"""
     return {
         "allow_origins": get_cors_origins(),

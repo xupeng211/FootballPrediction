@@ -7,10 +7,11 @@ Predictions API Router
 
 import logging
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import Any,  List[Any], Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
+from src.security.auth import get_current_user, require_permissions, Permission
 
 # 创建路由器
 router = APIRouter(prefix="/predictions", tags=["predictions"])
@@ -98,7 +99,7 @@ class PredictionVerification(BaseModel):
 
 
 @router.get("/health")
-async def health_check():
+async def health_check() -> None:
     """健康检查"""
     return {"status": "healthy", "service": "predictions"}
 
@@ -108,6 +109,7 @@ async def get_prediction(
     match_id: int,
     model_version: str = Query("default", description="模型版本"),
     include_details: bool = Query(False, description="包含详细信息"),
+    current_user: dict[str, Any] = Depends(require_permissions(Permission.READ_PREDICTION)),
 ):
     """
     获取指定比赛的预测结果
@@ -120,7 +122,7 @@ async def get_prediction(
     try:
         # TODO: 从数据库或缓存中获取预测结果
         # 这里返回模拟数据作为占位符
-        _result = PredictionResult(
+        result = PredictionResult(
             match_id=match_id,
             home_win_prob=0.45,
             draw_prob=0.30,
@@ -140,7 +142,7 @@ async def get_prediction(
 
 
 @router.post("/{match_id}/predict", response_model=PredictionResult, status_code=201)
-async def create_prediction(match_id: int, request: Optional[PredictionRequest] = None):
+async def create_prediction(match_id: int, request: Optional[PredictionRequest] ] = None) -> Any:
     """
     实时生成比赛预测
 
@@ -153,11 +155,11 @@ async def create_prediction(match_id: int, request: Optional[PredictionRequest] 
         # TODO: 调用预测引擎生成预测
         # from src.api.dependencies import get_prediction_engine
         # engine = await get_prediction_engine()
-        # _result = await engine.predict(match_id)
+        # result = await engine.predict(match_id)
 
         # 模拟预测结果
         model_version = request.model_version if request else "default"
-        _result = PredictionResult(
+        result = PredictionResult(
             match_id=match_id,
             home_win_prob=0.50,
             draw_prob=0.28,
@@ -177,7 +179,7 @@ async def create_prediction(match_id: int, request: Optional[PredictionRequest] 
 
 
 @router.post("/batch", response_model=BatchPredictionResponse)
-async def batch_predict(request: BatchPredictionRequest):
+async def batch_predict(request: BatchPredictionRequest) -> None:
     """
     批量预测比赛结果
 
@@ -193,7 +195,7 @@ async def batch_predict(request: BatchPredictionRequest):
         for match_id in request.match_ids:
             try:
                 # TODO: 实际预测逻辑
-                _prediction = PredictionResult(
+                prediction = PredictionResult(
                     match_id=match_id,
                     home_win_prob=0.45,
                     draw_prob=0.30,
@@ -291,7 +293,7 @@ async def get_recent_predictions(
                 match_id=1000 + i,
                 home_team=f"Team A{i}",
                 away_team=f"Team B{i}",
-                _prediction =PredictionResult(
+                prediction = PredictionResult(
                     match_id=1000 + i,
                     home_win_prob=0.45,
                     draw_prob=0.30,
@@ -332,7 +334,7 @@ async def verify_prediction(
     try:
         # TODO: 获取原始预测并进行验证
         # 模拟验证
-        _prediction = PredictionResult(
+        prediction = PredictionResult(
             match_id=match_id,
             home_win_prob=0.45,
             draw_prob=0.30,
@@ -350,7 +352,7 @@ async def verify_prediction(
 
         verification = PredictionVerification(
             match_id=match_id,
-            _prediction =prediction,
+            prediction = prediction,
             actual_result=actual_result,
             is_correct=is_correct,
             accuracy_score=accuracy_score,

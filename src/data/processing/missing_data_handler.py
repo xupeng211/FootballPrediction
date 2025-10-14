@@ -16,7 +16,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 import pandas as pd
 from sqlalchemy import func, select
@@ -244,7 +244,7 @@ class MissingDataHandler:
             self.logger.warning("解析默认均值 JSON 失败（来源: %s）: %s", source, exc)
             return
 
-        if not isinstance(payload, dict):
+        if not isinstance(payload, Dict[str, Any]):
             self.logger.warning("默认均值配置必须是对象（来源: %s）", source)
             return
 

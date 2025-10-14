@@ -23,7 +23,7 @@ import json
 import logging
 import os
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 import aiohttp
 import websockets
@@ -94,8 +94,8 @@ class ScoresCollector:
         self.processing_lock = asyncio.Lock()
 
         # 数据缓存
-        self.match_cache: Dict[int, Dict[str, Any]] = {}
-        self.last_update_cache: Dict[int, datetime] = {}
+        self.match_cache: Dict[str, Any][int, Dict[str, Any] = {}
+        self.last_update_cache: Dict[str, Any][int, datetime] = {}
 
         # 性能统计
         self._stats = {
@@ -157,7 +157,7 @@ class ScoresCollector:
 
     async def collect_match_score(
         self, match_id: int, force: bool = False
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[Dict[str, Any]:
         """
         收集指定比赛的比分数据
 
@@ -166,7 +166,7 @@ class ScoresCollector:
             force: 是否强制更新
 
         Returns:
-            Optional[Dict[str, Any]]: 比分数据
+            Optional[Dict[str, Any]: 比分数据
         """
         # 检查缓存
         if not force and match_id in self.match_cache:
@@ -201,12 +201,12 @@ class ScoresCollector:
             logger.error(f"收集比赛 {match_id} 比分失败: {e}")
             return None
 
-    async def collect_live_matches(self) -> List[Dict[str, Any]]:
+    async def collect_live_matches(self) -> List[Dict[str, Any]:
         """
         收集所有进行中的比赛比分
 
         Returns:
-            List[Dict[str, Any]]: 比分数据列表
+            List[Dict[str, Any]: 比分数据列表
         """
         try:
             # 获取进行中的比赛
@@ -325,7 +325,7 @@ class ScoresCollector:
 
     async def _fetch_match_score_from_api(
         self, match_id: int
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[Dict[str, Any]:
         """从API获取比赛比分"""
         # 尝试多个数据源
         for source_name, base_url in self.api_endpoints.items():
@@ -342,7 +342,7 @@ class ScoresCollector:
     @retry(lambda: None)
     async def _fetch_from_source(
         self, source: str, match_id: int
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[Dict[str, Any]:
         """从指定数据源获取数据"""
         if source == "football_api":
             return await self._fetch_from_football_api(match_id)
@@ -353,7 +353,7 @@ class ScoresCollector:
 
         return None
 
-    async def _fetch_from_football_api(self, match_id: int) -> Optional[Dict[str, Any]]:
+    async def _fetch_from_football_api(self, match_id: int) -> Optional[Dict[str, Any]:
         """从Football-Data API获取比分"""
         if not self.api_key:
             return None
@@ -370,7 +370,7 @@ class ScoresCollector:
                     logger.warning(f"Football API请求失败: {response.status}")
                     return None
 
-    async def _fetch_from_api_sports(self, match_id: int) -> Optional[Dict[str, Any]]:
+    async def _fetch_from_api_sports(self, match_id: int) -> Optional[Dict[str, Any]:
         """从API-Sports获取比分"""
         if not self.api_key:
             return None
@@ -386,7 +386,7 @@ class ScoresCollector:
                         return self._transform_api_sports_data(data["response"][0])
                 return None
 
-    async def _fetch_from_scorebat(self, match_id: int) -> Optional[Dict[str, Any]]:
+    async def _fetch_from_scorebat(self, match_id: int) -> Optional[Dict[str, Any]:
         """从Scorebat获取比分（简化实现）"""
         # Scorebat主要提供视频，这里作为备用数据源
         return None
@@ -424,7 +424,7 @@ class ScoresCollector:
 
     async def _process_score_data(
         self, match_id: int, score_data: Dict[str, Any]
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[Dict[str, Any]:
         """处理和验证比分数据"""
         try:
             # 获取数据库中的比赛信息
@@ -584,7 +584,7 @@ class ScoresCollector:
         # 实现事件处理逻辑
         pass
 
-    async def _get_live_matches(self) -> List[Dict[str, Any]]:
+    async def _get_live_matches(self) -> List[Dict[str, Any]:
         """获取进行中的比赛"""
         query = (
             select(Match)
@@ -658,7 +658,7 @@ class ScoresCollectorManager:
     """比分收集器管理器"""
 
     def __init__(self):
-        self.collectors: Dict[int, ScoresCollector] = {}
+        self.collectors: Dict[str, Any][int, ScoresCollector] = {}
         self.redis_manager = RedisManager()
 
     async def get_collector(self, session_id: int) -> ScoresCollector:

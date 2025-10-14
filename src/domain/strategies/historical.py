@@ -9,7 +9,7 @@ Strategy based on historical match data and similar scenarios.
 """
 
 import time
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Tuple
 from datetime import datetime
 import numpy as np
 from dataclasses import dataclass
@@ -58,12 +58,12 @@ class HistoricalStrategy(PredictionStrategy):
     - 相似时间段的表现
     """
 
-    def __init__(self, name: str = "historical_analyzer"):
+    def __init__(self, name: str = "historical_analyzer") -> None:
         super().__init__(name, StrategyType.HISTORICAL)
-        self._historical_matches: Dict[int, List[HistoricalMatch]] = {}
-        self._team_vs_team: Dict[Tuple[int, int], List[HistoricalMatch]] = {}
-        self._score_patterns: Dict[Tuple[int, int], List[HistoricalMatch]] = {}
-        self._season_patterns: Dict[str, List[HistoricalMatch]] = {}
+        self._historical_matches: Dict[str, Any][int, List[HistoricalMatch] = {}
+        self._team_vs_team: Dict[str, Any][Tuple[int, int], List[HistoricalMatch] = {}
+        self._score_patterns: Dict[str, Any][Tuple[int, int], List[HistoricalMatch] = {}
+        self._season_patterns: Dict[str, List[HistoricalMatch] = {}
         self._min_historical_matches = 3
         self._similarity_threshold = 0.7
         self.logger = logging.getLogger(__name__)
@@ -80,7 +80,7 @@ class HistoricalStrategy(PredictionStrategy):
                 - max_historical_years: 考虑的历史年数
                 - weight_factors: 各种历史因素的权重
         """
-        self._config = config
+        self.config = config
         self._min_historical_matches = config.get("min_historical_matches", 3)
         self._similarity_threshold = config.get("similarity_threshold", 0.7)
         self._max_historical_years = config.get("max_historical_years", 5)
@@ -110,7 +110,7 @@ class HistoricalStrategy(PredictionStrategy):
         current_year = datetime.now().year
 
         for year in range(current_year - self._max_historical_years, current_year + 1):
-            season = f"{year - 1}/{year}"
+            season = f"{year - 1"/{year}"
             self._season_patterns[season] = []
 
             # 模拟生成历史比赛数据
@@ -213,7 +213,7 @@ class HistoricalStrategy(PredictionStrategy):
             confidence=confidence,
             probability_distribution=probability_distribution,
             feature_importance=feature_importance,
-            _metadata ={
+            metadata={
                 "method": "historical_analysis",
                 "h2h_matches": len(
                     await self._get_head_to_head_matches(
@@ -624,7 +624,7 @@ class HistoricalStrategy(PredictionStrategy):
         return min(1.0, total_matches / 100)  # 假设100场为完整覆盖
 
     async def update_metrics(
-        self, actual_results: List[Tuple[Prediction, Dict[str, Any]]]
+        self, actual_results: List[Tuple[Prediction, Dict[str, Any]
     ) -> None:
         """更新策略性能指标"""
         if not actual_results:

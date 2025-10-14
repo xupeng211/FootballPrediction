@@ -3,7 +3,7 @@
 """
 
 from datetime import datetime
-from typing import List, Optional
+from typing import Any,  List[Any], Optional
 
 from pydantic import BaseModel, EmailStr, Field, validator
 
@@ -11,19 +11,19 @@ from pydantic import BaseModel, EmailStr, Field, validator
 class User(BaseModel):
     """用户模型"""
 
-    id: Optional[int] = None
+    id: Optional[int] ] = None
     username: str = Field(..., min_length=3, max_length=50)
     email: EmailStr
-    full_name: Optional[str] = None
+    full_name: Optional[str] ] = None
     is_active: bool = True
     is_verified: bool = False
-    roles: List[str] = ["user"]
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
-    last_login: Optional[datetime] = None
+    roles: List[str] = {}"user"]
+    created_at: Optional[datetime] ] = None
+    updated_at: Optional[datetime] ] = None
+    last_login: Optional[datetime] ] = None
 
     @validator("username")
-    def validate_username(cls, v):
+    def validate_username(cls, v) -> None:
         if not v.isalnum() and "_" not in v:
             raise ValueError("Username must be alphanumeric or contain underscores")
         return v
@@ -38,10 +38,10 @@ class UserCreate(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     email: EmailStr
     password: str = Field(..., min_length=8)
-    full_name: Optional[str] = None
+    full_name: Optional[str] ] = None
 
     @validator("password")
-    def validate_password(cls, v):
+    def validate_password(cls, v) -> None:
         if len(v) < 8:
             raise ValueError("Password must be at least 8 characters long")
         return v
@@ -50,9 +50,9 @@ class UserCreate(BaseModel):
 class UserUpdate(BaseModel):
     """更新用户请求模型"""
 
-    full_name: Optional[str] = None
-    email: Optional[EmailStr] = None
-    is_active: Optional[bool] = None
+    full_name: Optional[str] ] = None
+    email: Optional[EmailStr] ] = None
+    is_active: Optional[bool] ] = None
 
 
 class UserLogin(BaseModel):
@@ -74,9 +74,9 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     """Token数据模型"""
 
-    user_id: Optional[str] = None
-    roles: List[str] = []
-    permissions: List[str] = []
+    user_id: Optional[str] ] = None
+    roles: List[str] = {}]
+    permissions: List[str] = {}]
 
 
 class UserPasswordChange(BaseModel):
@@ -86,7 +86,7 @@ class UserPasswordChange(BaseModel):
     new_password: str = Field(..., min_length=8)
 
     @validator("new_password")
-    def validate_new_password(cls, v):
+    def validate_new_password(cls, v) -> None:
         if len(v) < 8:
             raise ValueError("Password must be at least 8 characters long")
         return v

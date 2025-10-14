@@ -178,6 +178,6 @@ __all__ = [
     "CircuitState",
     "CircuitBreaker",
     "RetryError",
-    "retry_with_exponential_backoff",
+    "retry_with_exponential_backof",
     "async_retry_with_exponential_backoff",
 ]

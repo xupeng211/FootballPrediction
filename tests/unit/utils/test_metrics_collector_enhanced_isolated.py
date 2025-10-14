@@ -3,6 +3,8 @@
 测试各个模块的独立功能，避免导入依赖问题
 """
 
+from typing import List, Callable, Optional, Dict, Any
+
 import pytest
 from datetime import datetime
 from unittest.mock import Mock

@@ -4,7 +4,7 @@ Mock Redis Manager for Testing and Development
 """
 
 import time
-from typing import Any, Dict, List, Optional, Union
+from typing import Any,  Union, Dict[str, Any],  Any, List[Any], Optional, Union
 
 
 class MockRedisManager:
@@ -202,7 +202,7 @@ def ttl_cache(key: str) -> int:
     return get_redis_manager().ttl(key)
 
 
-def mget_cache(*keys: str) -> List[Optional[str]]:
+def mget_cache(*keys: str) -> List[Optional[str]:
     """批量获取缓存"""
     manager = get_redis_manager()
     return [manager.get(k) for k in keys]
@@ -248,7 +248,7 @@ async def attl_cache(key: str) -> int:
     return await get_redis_manager().attl(key)
 
 
-async def amget_cache(*keys: str) -> List[Optional[str]]:
+async def amget_cache(*keys: str) -> List[Optional[str]:
     """异步批量获取缓存"""
     manager = get_redis_manager()
     return [await manager.aget(k) for k in keys]

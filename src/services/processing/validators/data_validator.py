@@ -7,7 +7,7 @@
 from datetime import datetime, timedelta
 
 import logging
-from typing import Any, Dict, List, Union
+from typing import Any,  Dict[str, Any],  Any, List[Any], Union
 
 import pandas as pd
 
@@ -19,7 +19,7 @@ import pandas as pd
 class DataValidator:
     """数据验证器"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """初始化验证器"""
         self.logger = logging.getLogger(f"processing.{self.__class__.__name__}")
         # self.missing_handler = MissingDataHandler()  # type: ignore
@@ -64,7 +64,7 @@ class DataValidator:
 
     async def validate_data_quality(
         self,
-        data: Union[Dict[str, Any], List[Dict[str, Any]], pd.DataFrame],
+        data: Union[Dict[str, Any], List[Dict[str, Any], pd.DataFrame],
         data_type: str = "match_data",
     ) -> Dict[str, Any]:
         """
@@ -79,7 +79,7 @@ class DataValidator:
         """
         try:
             # 转换为DataFrame
-            if isinstance(data, dict):
+            if isinstance(data, Dict[str, Any]):
                 df = pd.DataFrame([data])
             elif isinstance(data, list):
                 df = pd.DataFrame(data)
@@ -150,7 +150,7 @@ class DataValidator:
         Returns:
             结构验证结果
         """
-        result: Dict[str, List[str]] = {"errors": [], "warnings": []}
+        result: Dict[str, Any] = {}"errors": [], "warnings": []}
 
         rules = self.validation_rules.get(data_type, {})
         required_fields = rules.get("required_fields", [])
@@ -206,7 +206,7 @@ class DataValidator:
         Returns:
             内容验证结果
         """
-        result: Dict[str, List[str]] = {"errors": [], "warnings": []}
+        result: Dict[str, Any] = {}"errors": [], "warnings": []}
 
         # 检查重复记录
         duplicates = df.duplicated()
@@ -259,20 +259,20 @@ class DataValidator:
         Returns:
             业务规则验证结果
         """
-        result: Dict[str, List[str]] = {"errors": [], "warnings": []}
+        result: Dict[str, Any] = {}"errors": [], "warnings": []}
 
         if data_type == "match_data":
-            _result = await self._validate_match_business_rules(df)
+            result = await self._validate_match_business_rules(df)
         elif data_type == "odds_data":
-            _result = await self._validate_odds_business_rules(df)
+            result = await self._validate_odds_business_rules(df)
         elif data_type == "features_data":
-            _result = await self._validate_features_business_rules(df)
+            result = await self._validate_features_business_rules(df)
 
         return result
 
     async def _validate_match_business_rules(self, df: pd.DataFrame) -> Dict[str, Any]:
         """验证比赛数据业务规则"""
-        result: Dict[str, List[str]] = {"errors": [], "warnings": []}
+        result: Dict[str, Any] = {}"errors": [], "warnings": []}
 
         # 检查同一日期的重复比赛
         if (
@@ -313,7 +313,7 @@ class DataValidator:
 
     async def _validate_odds_business_rules(self, df: pd.DataFrame) -> Dict[str, Any]:
         """验证赔率数据业务规则"""
-        result: Dict[str, List[str]] = {"errors": [], "warnings": []}
+        result: Dict[str, Any] = {}"errors": [], "warnings": []}
 
         # 检查赔率值
         for outcome in ["home_win", "draw", "away_win"]:
@@ -321,12 +321,12 @@ class DataValidator:
                 # 检查赔率小于等于1
                 invalid_odds = df[outcome] <= 1
                 if invalid_odds.any():
-                    result["errors"].append(f"{outcome} 赔率值不能小于等于1")
+                    result["errors"].append(f"{outcome" 赔率值不能小于等于1")
 
                 # 检查过高的赔率
                 high_odds = df[outcome] > 1000
                 if high_odds.any():
-                    result["warnings"].append(f"{outcome} 赔率值异常高（>1000）")
+                    result["warnings"].append(f"{outcome" 赔率值异常高(>1000)")
 
         # 检查隐含概率
         if all(x in df.columns for x in ["home_win", "draw", "away_win"]):
@@ -347,7 +347,7 @@ class DataValidator:
         self, df: pd.DataFrame
     ) -> Dict[str, Any]:
         """验证特征数据业务规则"""
-        result: Dict[str, List[str]] = {"errors": [], "warnings": []}
+        result: Dict[str, Any] = {}"errors": [], "warnings": []}
 
         # 检查标准化特征的范围
         for col in df.columns:
@@ -355,7 +355,7 @@ class DataValidator:
                 # 标准化后的值应该在[-3, 3]范围内
                 out_of_range = (df[col] < -3) | (df[col] > 3)
                 if out_of_range.any():
-                    result["warnings"].append(f"标准化特征 {col} 存在超出±3标准差的值")
+                    result["warnings"].append(f"标准化特征 {col} 存在超出3标准差的值")
 
         # 检查比率型特征
         ratio_features = [
@@ -379,7 +379,7 @@ class DataValidator:
         Returns:
             统计信息
         """
-        _stats = {
+        stats = {
             "total_records": len(df),
             "total_columns": len(df.columns),
             "missing_values": df.isnull().sum().to_dict(),
@@ -411,19 +411,19 @@ class DataValidator:
     ) -> None:
         """记录验证结果"""
         if results["valid"]:
-            self.logger.info(f"{data_type} 数据验证通过")
+            self.logger.info(f"{data_type" 数据验证通过")
         else:
             self.logger.error(
-                f"{data_type} 数据验证失败，错误数: {len(results['errors'])}"
+                f"{data_type" 数据验证失败，错误数: {len(results['errors'])}"
             )
 
         if results["warnings"]:
             self.logger.warning(
-                f"{data_type} 数据验证警告数: {len(results['warnings'])}"
+                f"{data_type" 数据验证警告数: {len(results['warnings'])}"
             )
 
         # 记录统计信息
-        _stats = results.get("statistics", {})
+        stats = results.get("statistics", {})
         if "total_records" in stats:
             self.logger.info(f"验证记录数: {stats['total_records']}")
 
@@ -439,8 +439,7 @@ class DataValidator:
         Returns:
             一致性验证结果
         """
-        result: Dict[str, Any] = {
-            "consistent": True,
+        result: Dict[str, Any] = {}"consistent": True,
             "issues": [],
             "statistics": {
                 "total_batches": len(batches),

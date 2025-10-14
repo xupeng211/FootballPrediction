@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any,  Dict[str, Any],  Any, Optional
 from datetime import datetime
 from datetime import timedelta
 from enum import Enum
@@ -14,7 +14,7 @@ from sqlalchemy import Boolean, Column, DateTime, Index, Integer, String, Text, 
 """
 
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+from typing import Any,  Dict[str, Any],  Any, Optional
 from sqlalchemy import Boolean, Column, DateTime, Index, Integer, String, Text
 from sqlalchemy.sql import func
 from ..base import BaseModel

@@ -7,7 +7,7 @@ Manages service creation, initialization, running and destruction.
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict[str, Any], List[Any], Optional
 from enum import Enum
 from datetime import datetime
 import asyncio
@@ -42,14 +42,14 @@ class ServiceInfo:
     instance: Any
     state: ServiceState = ServiceState.UNINITIALIZED
     created_at: datetime = field(default_factory=datetime.utcnow)
-    started_at: Optional[datetime] = None
-    stopped_at: Optional[datetime] = None
+    started_at: Optional[datetime] ] = None
+    stopped_at: Optional[datetime] ] = None
     error_count: int = 0
-    last_error: Optional[Exception] = None
+    last_error: Optional[Exception] ] = None
     dependencies: List[str] = field(default_factory=list)
     dependents: List[str] = field(default_factory=list)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if isinstance(self.dependencies, str):
             self.dependencies = [self.dependencies]
 
@@ -86,16 +86,16 @@ class IServiceLifecycle(ABC):
 class ServiceLifecycleManager:
     """服务生命周期管理器"""
 
-    def __init__(self):
-        self._services: Dict[str, ServiceInfo] = {}
-        self._start_order: List[str] = []
-        self._stop_order: List[str] = []
+    def __init__(self) -> None:
+        self._services: Dict[str, ServiceInfo] = {}}
+        self._start_order: List[str] = {}]
+        self._stop_order: List[str] = {}]
         self._lock = threading.RLock()
         self._shutdown_event = asyncio.Event()
         self._monitor_task: Optional[asyncio.Task] = None
 
     def register_service(
-        self, name: str, instance: Any, dependencies: Optional[List[str]] = None
+        self, name: str, instance: Any, dependencies: Optional[List[str] ] ] = None
     ) -> None:
         """注册服务"""
         with self._lock:
@@ -353,7 +353,7 @@ class ServiceLifecycleManager:
                 if info.state == ServiceState.RUNNING
             ]
 
-    async def health_check(self, name: Optional[str] = None) -> Dict[str, bool]:
+    async def health_check(self, name: Optional[str] ] = None) -> Dict[str, bool]:
         """健康检查"""
         results = {}
 
@@ -516,7 +516,7 @@ class ServiceLifecycleManager:
 
 
 # 全局服务生命周期管理器
-_default_lifecycle_manager: Optional[ServiceLifecycleManager] = None
+_default_lifecycle_manager: Optional[ServiceLifecycleManager] ] = None
 
 
 def get_lifecycle_manager() -> ServiceLifecycleManager:
@@ -529,18 +529,18 @@ def get_lifecycle_manager() -> ServiceLifecycleManager:
 
 # 生命周期装饰器
 def lifecycle_service(
-    name: Optional[str] = None, dependencies: Optional[List[str]] = None
+    name: Optional[str] ] = None, dependencies: Optional[List[str] ] ] = None
 ):
     """服务生命周期装饰器"""
 
-    def decorator(cls):
+    def decorator(cls) -> None:
         # 获取服务名称
         service_name = name or cls.__name__
 
         # 保存原始的 __init__ 方法
         original_init = cls.__init__
 
-        def new_init(self, *args, **kwargs):
+        def new_init(self, *args, **kwargs) -> None:
             # 调用原始初始化
             original_init(self, *args, **kwargs)
 

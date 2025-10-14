@@ -21,7 +21,7 @@ from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 import psutil
 
@@ -38,7 +38,7 @@ class PerformanceMetric:
     value: float
     unit: str
     timestamp: datetime = field(default_factory=datetime.now)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: Dict[str, Any] = field(default_factory=dict[str, Any])
 
 
 @dataclass
@@ -63,7 +63,7 @@ class QueryProfile:
     execution_time: float
     rows_affected: int
     index_used: Optional[str] = None
-    explain_plan: Optional[Dict] = None
+    explain_plan: Optional[Dict[str, Any] = None
 
 
 class PerformanceProfiler:
@@ -198,7 +198,7 @@ class PerformanceProfiler:
         execution_time: float,
         rows_affected: int = 0,
         index_used: Optional[str] = None,
-        explain_plan: Optional[Dict] = None,
+        explain_plan: Optional[Dict[str, Any] = None,
     ):
         """记录数据库查询性能"""
         profile = QueryProfile(
@@ -393,7 +393,7 @@ class APIEndpointProfiler:
 
     def __init__(self, profiler: PerformanceProfiler):
         self.profiler = profiler
-        self.endpoint_stats: Dict[str, Dict] = {}
+        self.endpoint_stats: Dict[str, Dict[str, Any][str, Any] = {}
 
     def record_endpoint_request(
         self,
@@ -450,7 +450,7 @@ class APIEndpointProfiler:
         )
         self.profiler.metrics.append(metric)
 
-    def get_endpoint_stats(self) -> Dict[str, Dict]:
+    def get_endpoint_stats(self) -> Dict[str, Dict[str, Any][str, Any]:
         """获取端点性能统计"""
         # 计算平均持续时间
         for stats in self.endpoint_stats.values():
@@ -463,7 +463,7 @@ class APIEndpointProfiler:
 
         return self.endpoint_stats
 
-    def get_slow_endpoints(self, threshold: float = 1.0) -> List[Dict]:
+    def get_slow_endpoints(self, threshold: float = 1.0) -> List[Dict[str, Any]:
         """获取慢端点列表"""
         slow_endpoints = []
 
@@ -485,7 +485,7 @@ class MemoryProfiler:
     """内存使用分析器"""
 
     def __init__(self):
-        self.snapshots: List[Dict] = []
+        self.snapshots: List[Dict[str, Any] = []
 
     def take_snapshot(self, label: str = ""):
         """获取内存快照"""
@@ -504,7 +504,7 @@ class MemoryProfiler:
         self.snapshots.append(snapshot)
         return snapshot
 
-    def get_memory_trend(self) -> Dict[str, List]:
+    def get_memory_trend(self) -> Dict[str, List[Any]:
         """获取内存使用趋势"""
         if not self.snapshots:
             return {}

@@ -7,7 +7,7 @@ Provides data processing and transformation functionality.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 from datetime import datetime
 from abc import ABC, abstractmethod
 
@@ -62,7 +62,7 @@ class FeaturesDataProcessor(DataProcessor):
 class DataQualityValidator:
     """数据质量验证器"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.errors = []
 
     def validate(self, data: Dict[str, Any]) -> bool:
@@ -85,7 +85,7 @@ class DataQualityValidator:
 class AnomalyDetector:
     """异常检测器"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.threshold = 3.0  # 标准差阈值
 
     def detect(self, data: Dict[str, Any]) -> List[str]:
@@ -138,7 +138,7 @@ class MissingTeamHandler(MissingDataHandler):
 class BronzeToSilverProcessor:
     """青铜到银层数据处理器"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.validators = [DataQualityValidator()]
         self.detectors = [AnomalyDetector()]
         self.handlers = [MissingScoresHandler(), MissingTeamHandler()]
@@ -158,7 +158,7 @@ class BronzeToSilverProcessor:
 
         # 处理缺失数据
         for handler in self.handlers:
-            _data = handler.handle(data)
+            data= handler.handle(data)
 
         return {**data, "processed_at": datetime.utcnow(), "layer": "silver"}
 
@@ -166,7 +166,7 @@ class BronzeToSilverProcessor:
 class DataProcessingService:
     """数据处理服务 - 简化版本"""
 
-    def __init__(self, session=None):
+    def __init__(self, session=None) -> None:
         """初始化服务"""
         self.session = session
         self.initialized = False
@@ -178,7 +178,7 @@ class DataProcessingService:
         }
         self.bronze_to_silver = BronzeToSilverProcessor()
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """初始化服务"""
         if self.initialized:
             return
@@ -195,23 +195,23 @@ class DataProcessingService:
         processor = self.processors.get(data_type)
 
         if processor:
-            _result = await processor.process(data)
+            result = await processor.process(data)
         else:
-            _result = {**data, "processed_at": datetime.utcnow(), "status": "processed"}
+            result = {**data, "processed_at": datetime.utcnow(), "status": "processed"}
 
         return result
 
     async def batch_process(
-        self, data_list: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+        self, data_list: List[Dict[str, Any]
+    ) -> List[Dict[str, Any]:
         """批量处理数据"""
         results = []
         for data in data_list:
-            _result = await self.process_data(data)
+            result = await self.process_data(data)
             results.append(result)
         return results
 
-    async def cleanup(self):
+    async def cleanup(self) -> None:
         """清理资源"""
         logger.info("DataProcessingService cleaned up")
 

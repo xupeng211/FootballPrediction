@@ -6,7 +6,7 @@
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any,  Dict[str, Any],  Any, Optional
 from datetime import datetime
 
 from src.database.connection import DatabaseManager
@@ -138,11 +138,11 @@ class BaseService(ABC):
     # 数据库会话管理
     # ========================================
 
-    async def get_async_session(self):
+    async def get_async_session(self) -> Optional[Any]:
         """获取异步数据库会话"""
         return self.db_manager.get_async_session()
 
-    def get_sync_session(self):
+    def get_sync_session(self) -> None:
         """获取同步数据库会话"""
         return self.db_manager.get_session()
 
@@ -153,7 +153,7 @@ class BaseService(ABC):
     def log_operation(
         self,
         operation: str,
-        details: Optional[Dict[str, Any]] = None,
+        details: Optional[Dict[str, Any] ] ] ] = None,
         level: str = "info",
     ) -> None:
         """
@@ -171,7 +171,7 @@ class BaseService(ABC):
         getattr(self.logger, level)(message)
 
     def log_error(
-        self, operation: str, error: Exception, details: Optional[Dict[str, Any]] = None
+        self, operation: str, error: Exception, details: Optional[Dict[str, Any] ] ] ] = None
     ) -> None:
         """
         记录错误日志
@@ -216,7 +216,7 @@ class BaseService(ABC):
         获取详细的健康检查信息
 
         Returns:
-            Dict: 包含健康状态的详细信息
+            Dict[str, Any]: 包含健康状态的详细信息
         """
         return {
             "service": self.name,
@@ -291,7 +291,7 @@ class BaseService(ABC):
         子类必须实现此方法，返回服务的基本信息
 
         Returns:
-            Dict: 服务信息
+            Dict[str, Any]: 服务信息
         """
         return {
             "name": self.name,

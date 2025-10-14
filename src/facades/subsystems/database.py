@@ -6,7 +6,7 @@ Database Subsystem Implementation
 """
 
 import asyncio
-from typing import Any, Dict, Optional
+from typing import Any,  Dict[str, Any],  Any, Optional
 from datetime import datetime, date, timedelta
 
 from ..base import Subsystem, SubsystemStatus
@@ -39,7 +39,7 @@ class DatabaseSubsystem(Subsystem):
         self.status = SubsystemStatus.INACTIVE
 
     async def execute_query(
-        self, query: str, params: Optional[Dict] = None
+        self, query: str, params: Optional[Dict[str, Any] = None
     ) -> Dict[str, Any]:
         """执行查询"""
         if self.status != SubsystemStatus.ACTIVE:

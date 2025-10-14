@@ -4,7 +4,7 @@ Confluent Kafka Mock 实现
 """
 
 import logging
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ class MockMessage:
         topic: str,
         value: Any = None,
         key: Any = None,
-        headers: Optional[List[tuple[str, bytes]]] = None,
+        headers: Optional[List[tuple[str, bytes] = None,
     ):
         self._topic = topic
         self._value = value
@@ -58,11 +58,11 @@ class MockMessage:
         """获取偏移量"""
         return self._offset
 
-    def headers(self) -> List[tuple[str, bytes]]:
+    def headers(self) -> List[tuple[str, bytes]:
         """获取头部"""
         return self._headers
 
-    def set_headers(self, headers: List[tuple[str, bytes]]) -> None:
+    def set_headers(self, headers: List[tuple[str, bytes]) -> None:
         """设置头部"""
         self._headers = headers
 
@@ -73,7 +73,7 @@ class MockConsumer:
     def __init__(self, config: Dict[str, Any]):
         self._config = config
         self._topics: set[str] = set()
-        self._messages: Dict[str, List[MockMessage]] = defaultdict(list)  # type: ignore
+        self._messages: Dict[str, List[MockMessage] = defaultdict(list)  # type: ignore
         self._current_offset: Dict[str, int] = defaultdict(int)  # type: ignore
         self._subscribed = False
         self._running = False
@@ -144,7 +144,7 @@ class MockProducer:
 
     def __init__(self, config: Dict[str, Any]):
         self._config = config
-        self._messages: Dict[str, List[MockMessage]] = defaultdict(list)  # type: ignore
+        self._messages: Dict[str, List[MockMessage] = defaultdict(list)  # type: ignore
         self._callbacks: Dict[str, Callable] = {}
         self._flushed = True
         self._running = True
@@ -154,7 +154,7 @@ class MockProducer:
         topic: str,
         value: Any = None,
         key: Any = None,
-        headers: Optional[List[tuple[str, bytes]]] = None,
+        headers: Optional[List[tuple[str, bytes] = None,
         partition: int = 0,
         on_delivery: Callable = None,
     ) -> None:
@@ -287,7 +287,7 @@ class MockSerializingProducer(MockProducer):
         topic: str,
         value: Any = None,
         key: Any = None,
-        headers: Optional[List[tuple[str, bytes]]] = None,
+        headers: Optional[List[tuple[str, bytes] = None,
         partition: int = 0,
         on_delivery: Callable = None,
     ) -> None:

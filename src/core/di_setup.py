@@ -8,7 +8,7 @@ Provides initialization and configuration for dependency injection.
 
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Any,  Optional
 import logging
 
 from .di import DIContainer, ServiceCollection, ServiceLifetime
@@ -23,15 +23,15 @@ logger = logging.getLogger(__name__)
 class DISetup:
     """依赖注入设置类"""
 
-    def __init__(self, profile: Optional[str] = None):
+    def __init__(self, profile: Optional[str] ] = None) -> None:
         self.profile = profile or os.getenv("APP_PROFILE", "development")
-        self.container: Optional[DIContainer] = None
-        self.lifecycle_manager: Optional[ServiceLifecycleManager] = None
+        self.container: Optional[DIContainer] ] = None
+        self.lifecycle_manager: Optional[ServiceLifecycleManager] ] = None
 
     def initialize(
         self,
-        config_file: Optional[str] = None,
-        auto_scan_modules: Optional[list] = None,
+        config_file: Optional[str] ] = None,
+        auto_scan_modules: Optional[list] ] = None,
     ) -> DIContainer:
         """初始化依赖注入"""
         logger.info(f"初始化依赖注入，配置文件: {config_file}, 环境: {self.profile}")
@@ -126,7 +126,7 @@ class DISetup:
 
 
 # 全局DI设置实例
-_di_setup: Optional[DISetup] = None
+_di_setup: Optional[DISetup] ] = None
 
 
 def get_di_setup() -> DISetup:
@@ -138,9 +138,9 @@ def get_di_setup() -> DISetup:
 
 
 def configure_di(
-    config_file: Optional[str] = None,
-    profile: Optional[str] = None,
-    auto_scan_modules: Optional[list] = None,
+    config_file: Optional[str] ] = None,
+    profile: Optional[str] ] = None,
+    auto_scan_modules: Optional[list] ] = None,
 ) -> DIContainer:
     """配置依赖注入（便捷函数）"""
     setup = DISetup(profile)
@@ -150,12 +150,12 @@ def configure_di(
 # 装饰器：自动注册服务
 def register_service(
     lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT,
-    interface: Optional[type] = None,
-    name: Optional[str] = None,
+    interface: Optional[type] ] = None,
+    name: Optional[str] ] = None,
 ):
     """自动注册服务装饰器"""
 
-    def decorator(cls):
+    def decorator(cls) -> None:
         # 保存注册信息
         cls.__di_lifetime__ = lifetime
         cls.__di_interface__ = interface

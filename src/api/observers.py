@@ -7,7 +7,7 @@ Provides management and monitoring interfaces for the observer system.
 """
 
 from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
-from typing import Dict, Any, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 from datetime import datetime, timedelta
 from pydantic import BaseModel
 
@@ -23,8 +23,8 @@ class AlertRequest(BaseModel):
     alert_type: str
     severity: str
     message: str
-    source: Optional[str] = None
-    data: Optional[Dict[str, Any]] = None
+    source: Optional[str] ] = None
+    data: Optional[Dict[str, Any] ] ] = None
 
 
 class MetricUpdateRequest(BaseModel):
@@ -56,7 +56,7 @@ async def get_observers() -> Dict[str, Any]:
     observers = {}
 
     for name, observer in manager._observers.items():
-        _stats = observer.get_stats()
+        stats = observer.get_stats()
         stats["observed_event_types"] = [
             et.value for et in observer.get_observed_event_types()
         ]
@@ -75,7 +75,7 @@ async def get_subjects() -> Dict[str, Any]:
     subjects = {}
 
     for name, subject in manager._subjects.items():
-        _stats = subject.get_stats()
+        stats = subject.get_stats()
         subjects[name] = stats
 
     return {
@@ -127,7 +127,7 @@ async def trigger_alert(
         severity=request.severity,
         message=request.message,
         source=request.source,
-        _data =request.data,
+        data=request.data,
     )
 
     return {"message": "告警已触发", "alert_type": request.alert_type}
@@ -186,7 +186,7 @@ async def record_prediction(
     strategy_name: str,
     response_time_ms: float,
     success: bool = True,
-    confidence: Optional[float] = None,
+    confidence: Optional[float] ] = None,
     background_tasks: BackgroundTasks = None,
 ) -> Dict[str, str]:
     """记录一个预测事件"""

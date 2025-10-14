@@ -13,7 +13,7 @@ Performance Monitoring API Endpoints
 
 import asyncio
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
 from pydantic import BaseModel, Field
@@ -71,7 +71,7 @@ async def get_performance_metrics():
     """获取实时性能指标"""
     try:
         # 获取API性能统计
-        api_stats: dict = {}
+        api_stats: Dict[str, Any] = {}
         # 这里需要从中间件获取实际数据
         # api_stats = await get_api_middleware_stats()
 
@@ -231,7 +231,7 @@ async def get_performance_report(
     """生成性能报告"""
     try:
         # 收集性能数据
-        api_stats: dict = {}  # 从中间件获取  # type: ignore
+        api_stats: Dict[str, Any] = {}  # 从中间件获取  # type: ignore
         db_stats = db_monitor.get_query_stats()
         cache_stats = cache_monitor.get_cache_stats()
         task_stats = task_monitor.get_task_stats()
@@ -283,7 +283,7 @@ async def get_performance_insights(
     """获取性能洞察"""
     try:
         # 获取所有性能数据
-        api_stats: dict = {}  # type: ignore
+        api_stats: Dict[str, Any] = {}  # type: ignore
         db_stats = db_monitor.get_query_stats()
         cache_stats = cache_monitor.get_cache_stats()
         task_stats = task_monitor.get_task_stats()
@@ -341,7 +341,7 @@ async def get_performance_score():
     """获取性能评分"""
     try:
         # 获取所有性能数据
-        api_stats: dict = {}
+        api_stats: Dict[str, Any] = {}
         db_stats = db_monitor.get_query_stats()
         cache_stats = cache_monitor.get_cache_stats()
         task_stats = task_monitor.get_task_stats()

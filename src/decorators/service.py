@@ -6,7 +6,7 @@ Decorator Service
 Provides high-level management and services for decorators.
 """
 
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any,  Union, Dict[str, Any],  Any, List[Any], Optional, Union
 from pathlib import Path
 
 from ..core.logger import get_logger
@@ -27,7 +27,7 @@ class DecoratorService:
         self.factory = factory or DecoratorFactory()
         self._decorated_functions: Dict[str, DecoratorComponent] = {}
         self._global_decorators: List[DecoratorConfig] = []
-        self._function_decorators: Dict[str, List[DecoratorConfig]] = {}
+        self._function_decorators: Dict[str, List[DecoratorConfig] = {}
 
     def load_configuration(self, config_path: Union[str, Path]) -> None:
         """加载装饰器配置文件"""
@@ -53,7 +53,7 @@ class DecoratorService:
         self.factory._config_cache[config.name] = config
 
     def apply_decorators(
-        self, func: Callable, decorator_names: Optional[List[str]] = None, **kwargs
+        self, func: Callable, decorator_names: Optional[List[str] = None, **kwargs
     ) -> Callable:
         """应用装饰器到函数"""
         func_name = func.__name__
@@ -151,7 +151,7 @@ class DecoratorService:
 
         return wrapper
 
-    def get_function_stats(self, func_name: str) -> Optional[Dict[str, Any]]:
+    def get_function_stats(self, func_name: str) -> Optional[Dict[str, Any]:
         """获取函数的装饰器统计信息"""
         if func_name in self._decorated_functions:
             return self._decorated_functions[func_name].get_all_stats()
@@ -189,7 +189,7 @@ class DecoratorService:
 
 # 便捷装饰器函数
 def decorate(
-    decorator_names: Optional[List[str]] = None, **decorator_kwargs
+    decorator_names: Optional[List[str] = None, **decorator_kwargs
 ) -> Callable:
     """装饰器工厂函数，用于装饰其他函数"""
 

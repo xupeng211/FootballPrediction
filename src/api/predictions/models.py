@@ -2,7 +2,7 @@
 预测API模型定义
 """
 
-from typing import List, Optional
+from typing import Any,  List[Any], Optional
 
 from pydantic import BaseModel, Field
 
@@ -16,13 +16,13 @@ class MatchInfo(BaseModel):
     league_id: int
     match_time: str
     match_status: str
-    season: Optional[str] = None
+    season: Optional[str] ] = None
 
 
 class PredictionData(BaseModel):
     """预测数据模式"""
 
-    id: Optional[int] = None
+    id: Optional[int] ] = None
     model_version: str
     model_name: str
     home_win_probability: float = Field(ge=0.0, le=1.0)
@@ -30,17 +30,17 @@ class PredictionData(BaseModel):
     away_win_probability: float = Field(ge=0.0, le=1.0)
     predicted_result: str
     confidence_score: float = Field(ge=0.0, le=1.0)
-    created_at: Optional[str] = None
-    is_correct: Optional[bool] = None
-    actual_result: Optional[str] = None
+    created_at: Optional[str] ] = None
+    is_correct: Optional[bool] ] = None
+    actual_result: Optional[str] ] = None
 
 
 class PredictionRequest(BaseModel):
     """预测请求模式"""
 
     match_id: int
-    model_version: Optional[str] = None
-    model_name: Optional[str] = None
+    model_version: Optional[str] ] = None
+    model_name: Optional[str] ] = None
     include_confidence: bool = True
 
 
@@ -57,8 +57,8 @@ class BatchPredictionRequest(BaseModel):
     """批量预测请求模式"""
 
     match_ids: List[int] = Field(max_length=50)
-    model_version: Optional[str] = None
-    model_name: Optional[str] = None
+    model_version: Optional[str] ] = None
+    model_name: Optional[str] ] = None
     include_confidence: bool = True
 
 
@@ -75,8 +75,8 @@ class BatchPredictionResponse(BaseModel):
 class UpcomingMatchesRequest(BaseModel):
     """即将到来的比赛请求模式"""
 
-    league_id: Optional[int] = None
-    team_id: Optional[int] = None
+    league_id: Optional[int] ] = None
+    team_id: Optional[int] ] = None
     days_ahead: int = Field(default=7, ge=1, le=30)
     include_predictions: bool = False
 
@@ -86,7 +86,7 @@ class UpcomingMatchesResponse(BaseModel):
 
     total_matches: int
     matches: List[MatchInfo]
-    predictions: Optional[List[PredictionData]] = None
+    predictions: Optional[List[PredictionData] ] ] ] = None
 
 
 class ModelStats(BaseModel):
@@ -119,9 +119,9 @@ class HistoryPrediction(BaseModel):
     predicted_result: str
     confidence_score: float
     created_at: str
-    is_correct: Optional[bool] = None
-    actual_result: Optional[str] = None
-    verified_at: Optional[str] = None
+    is_correct: Optional[bool] ] = None
+    actual_result: Optional[str] ] = None
+    verified_at: Optional[str] ] = None
 
 
 class PredictionHistoryResponse(BaseModel):
@@ -142,7 +142,7 @@ class RecentPrediction(BaseModel):
     predicted_result: str
     confidence_score: float
     created_at: str
-    is_correct: Optional[bool] = None
+    is_correct: Optional[bool] ] = None
     match_info: MatchInfo
 
 
@@ -160,7 +160,7 @@ class PredictionOverview(BaseModel):
     total_predictions: int
     correct_predictions: int
     accuracy: float
-    last_prediction: Optional[str] = None
+    last_prediction: Optional[str] ] = None
     model_count: int
 
 

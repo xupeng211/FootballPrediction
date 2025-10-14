@@ -10,7 +10,7 @@ Temporary implementation to resolve import errors.
 import logging
 import numpy as np
 import pandas as pd
-from typing import Any, Dict, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 from datetime import datetime
 from enum import Enum
 import pickle
@@ -326,7 +326,7 @@ class FootballPredictionModel(PredictionModel):
 
         return result
 
-    def batch_predict(self, matches: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def batch_predict(self, matches: List[Dict[str, Any][str], Any]) -> List[Dict[str, Any]:
         """
         批量预测
 

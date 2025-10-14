@@ -6,7 +6,7 @@ Decorator Factory
 Used to create and configure decorator instances.
 """
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Union
 from dataclasses import dataclass, field
 import yaml  # type: ignore
 import json
@@ -23,8 +23,8 @@ class DecoratorConfig:
     decorator_type: str
     enabled: bool = True
     priority: int = 0
-    parameters: Dict[str, Any] = field(default_factory=dict)
-    conditions: Optional[Dict[str, Any]] = None
+    parameters: Dict[str, Any] = field(default_factory=dict[str, Any])
+    conditions: Optional[Dict[str, Any] = None
 
 
 @dataclass

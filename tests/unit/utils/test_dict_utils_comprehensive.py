@@ -9,6 +9,8 @@ Comprehensive Tests for Dict Utils
 - 路径操作
 """
 
+from typing import Dict
+
 import pytest
 from src.utils.dict_utils import DictUtils
 

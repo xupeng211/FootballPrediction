@@ -40,7 +40,7 @@ class SQLiteCompatibleJSONB(TypeDecorator):
             return value
         else:
             # SQLite需要序列化为JSON字符串
-            if isinstance(value, (dict, list)):
+            if isinstance(value, (Dict[str, Any], list)):
                 return json.dumps(value, ensure_ascii=False)
             elif isinstance(value, str):
                 # 如果已经是字符串，验证是否为有效JSON

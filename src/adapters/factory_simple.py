@@ -2,7 +2,7 @@
 简化的适配器工厂
 """
 
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict[str, Any], List[Any], Optional, Type[Any]
 from src.core.exceptions import AdapterError
 
 
@@ -10,10 +10,10 @@ class AdapterFactory:
     """适配器工厂"""
 
     def __init__(self):
-        self._adapters: Dict[str, Type] = {}
+        self._adapters: Dict[str, Type[Any]] = {}
         self._instances: Dict[str, Any] = {}
 
-    def register_adapter(self, name: str, adapter_class: Type, **kwargs):
+    def register_adapter(self, name: str, adapter_class: Type[Any], **kwargs):
         """注册适配器"""
         if name in self._adapters:
             raise AdapterError(f"Adapter '{name}' already registered")
@@ -24,7 +24,7 @@ class AdapterFactory:
         }
 
     def create_adapter(
-        self, name: str, config: Optional[Dict] = None, singleton: bool = False
+        self, name: str, config: Optional[Dict[str, Any] = None, singleton: bool = False
     ):
         """创建适配器实例"""
         if name not in self._adapters:
@@ -89,7 +89,7 @@ def get_global_factory() -> AdapterFactory:
 
 
 def get_adapter(
-    adapter_type: str, config: Optional[Dict] = None, singleton: bool = False
+    adapter_type: str, config: Optional[Dict[str, Any] = None, singleton: bool = False
 ):
     """便捷函数：获取适配器"""
     factory = get_global_factory()

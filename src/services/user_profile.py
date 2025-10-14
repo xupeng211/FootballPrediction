@@ -4,7 +4,7 @@
 提供用户画像生成和管理功能。
 """
 
-from typing import Any, Dict, Optional, List
+from typing import Any,  Dict[str, Any],  Any, Optional, List[Any]
 from datetime import datetime
 from .base_unified import SimpleService
 
@@ -31,7 +31,7 @@ class UserProfile:
 
 # 简化的User类定义
 class User:
-    def __init__(self, id: str, username: str):
+    def __init__(self, id: str, username: str) -> None:
         self.id = id
         self.username = username
 
@@ -41,7 +41,7 @@ class UserProfileService(SimpleService):
 
     def __init__(self) -> None:
         super().__init__("UserProfileService")
-        self._user_profiles: Dict[str, UserProfile] = {}
+        self._user_profiles: Dict[str, UserProfile] = {}}
 
     async def _on_initialize(self) -> bool:
         """初始化服务"""
@@ -192,7 +192,7 @@ class UserProfileService(SimpleService):
     @property
     def _profiles(self) -> Dict[str, Any]:
         """兼容测试代码的属性"""
-        # Convert UserProfile objects to dict for test compatibility
+        # Convert UserProfile objects to Dict[str, Any] for test compatibility
         return {
             user_id: profile.to_dict() if hasattr(profile, "to_dict") else profile
             for user_id, profile in self._user_profiles.items()

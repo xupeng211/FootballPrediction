@@ -4,7 +4,7 @@ Prediction data loader
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict[str, Any], List[Any], Optional
 
 from src.core.logging import get_logger
 
@@ -14,9 +14,9 @@ logger = get_logger(__name__)
 class PredictionDataLoader:
     """Data loader for predictions"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize data loader"""
-        self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
+        self.logger = logging.getLogger(f"{__name__".{self.__class__.__name__}")
 
     async def load_match_features(self, match_id: int) -> Dict[str, Any]:
         """Load features for a specific match"""
@@ -25,8 +25,8 @@ class PredictionDataLoader:
         return {"match_id": match_id, "features": {}}
 
     async def load_historical_matches(
-        self, team_id: Optional[int] = None, limit: int = 100
-    ) -> List[Dict[str, Any]]:
+        self, team_id: Optional[int] ] = None, limit: int = 100
+    ) -> List[Dict[str, Any]:
         """Load historical matches"""
         # Placeholder implementation
         await asyncio.sleep(0.01)

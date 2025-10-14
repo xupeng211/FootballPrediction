@@ -5,7 +5,7 @@ Database Compatibility Module
 提供数据库兼容性相关的类和函数。
 """
 
-from typing import Any, Dict
+from typing import Any,  Dict[str, Any],  Any
 from enum import Enum
 import re
 
@@ -104,7 +104,7 @@ class SQLCompatibilityHelper:
         self.target_dialect = target_dialect
         self.transformation_rules = self._load_transformation_rules()
 
-    def _load_transformation_rules(self) -> Dict[str, Dict[str, str]]:
+    def _load_transformation_rules(self) -> Dict[str, Dict[str, Any][str, str]]:
         """加载转换规则"""
         return {
             "postgresql_to_mysql": {

@@ -6,7 +6,7 @@
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Callable
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Callable
 import time
 
 from src.core.logging import get_logger
@@ -20,21 +20,21 @@ class ServiceConfig:
         name: str,
         version: str = "1.0.0",
         description: str = "",
-        dependencies: Optional[List[str]] = None,
-        config: Optional[Dict[str, Any]] = None,
+        dependencies: Optional[List[str] ] ] ] = None,
+        config: Optional[Dict[str, Any] ] ] ] = None,
     ):
         self.name = name
         self.version = version
         self.description = description
         self.dependencies = dependencies or []
-        self._config = config or {}
+        self.config = config or {}
         self.created_at = datetime.now()
 
 
 class ServiceMetrics:
     """服务指标收集器"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.metrics = {
             "calls": 0,
             "errors": 0,
@@ -43,7 +43,7 @@ class ServiceMetrics:
             "last_call": None,
         }
 
-    def record_call(self, duration: float, success: bool = True):
+    def record_call(self, duration: float, success: bool = True) -> None:
         """记录调用"""
         self.metrics["calls"] += 1
         self.metrics["total_time"] += duration
@@ -64,13 +64,13 @@ class EnhancedBaseService(ABC):
     并添加了指标收集、配置管理、健康检查等功能。
     """
 
-    def __init__(self, config: Optional[ServiceConfig] = None):
+    def __init__(self, config: Optional[ServiceConfig] ] = None) -> None:
         """初始化服务
 
         Args:
             config: 服务配置
         """
-        self._config = config or ServiceConfig(self.__class__.__name__)
+        self.config = config or ServiceConfig(self.__class__.__name__)
         self.name = self.config.name
         self.version = self.config.version
         self.description = self.config.description
@@ -81,7 +81,7 @@ class EnhancedBaseService(ABC):
         # 服务状态
         self._running = False
         self._initialized = False
-        self._startup_time: Optional[datetime] = None
+        self._startup_time: Optional[datetime] ] = None
 
         # 指标收集
         self.metrics = ServiceMetrics()
@@ -93,7 +93,7 @@ class EnhancedBaseService(ABC):
         }
 
         # 依赖管理
-        self._dependencies: Dict[str, "EnhancedBaseService"] = {}
+        self._dependencies: Dict[str, "EnhancedBaseService"] = {}}
 
     @abstractmethod
     async def initialize(self) -> None:
@@ -191,7 +191,7 @@ class EnhancedBaseService(ABC):
 
         try:
             self.logger.debug(f"Executing operation: {operation_name}")
-            _result = await func(*args, **kwargs)
+            result = await func(*args, **kwargs)
             return result
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             success = False
@@ -204,7 +204,7 @@ class EnhancedBaseService(ABC):
                 f"Operation {operation_name} completed in {duration:.3f}s"
             )
 
-    def add_dependency(self, name: str, service: "EnhancedBaseService"):
+    def add_dependency(self, name: str, service: "EnhancedBaseService") -> None:
         """添加依赖服务"""
         self._dependencies[name] = service
         self.logger.debug(f"Added dependency: {name}")
@@ -218,7 +218,7 @@ class EnhancedBaseService(ABC):
         return self.config.config.get(key, default)
 
     def _update_health_status(
-        self, status: str, message: str, details: Optional[Dict[str, Any]] = None
+        self, status: str, message: str, details: Optional[Dict[str, Any] ] ] ] = None
     ):
         """更新健康状态"""
         self._health_status.update(
@@ -246,8 +246,8 @@ class EnhancedBaseService(ABC):
 class BaseService(EnhancedBaseService):
     """向后兼容的基础服务类"""
 
-    def __init__(self, name: str = "BaseService"):
-        _config = ServiceConfig(name=name)
+    def __init__(self, name: str = "BaseService") -> None:
+        config = ServiceConfig(name=name)
         super().__init__(config)
 
     async def initialize(self) -> None:
@@ -263,8 +263,8 @@ class BaseService(EnhancedBaseService):
 class AbstractBaseService(EnhancedBaseService):
     """抽象基础服务类 - 强制子类实现所有方法"""
 
-    def __init__(self, name: str):
-        _config = ServiceConfig(name=name)
+    def __init__(self, name: str) -> None:
+        config = ServiceConfig(name=name)
         super().__init__(config)
 
 

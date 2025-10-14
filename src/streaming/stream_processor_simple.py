@@ -2,7 +2,7 @@
 简化的流处理器实现
 """
 
-from typing import Any, Dict, List, Optional, Callable, AsyncIterator
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Callable, AsyncIterator
 from datetime import datetime, timedelta
 
 
@@ -38,7 +38,7 @@ class StreamProcessor:
         max_messages: int = None,
         error_handler: Callable = None,
         dead_letter_topic: str = None,
-    ) -> AsyncIterator[Dict[str, Any]]:
+    ) -> AsyncIterator[Dict[str, Any]:
         """处理消息流"""
         processed = 0
         async for message in self.consumer.consume():
@@ -87,7 +87,7 @@ class StreamProcessor:
 
     async def process_batch(
         self, batch_func: Callable, batch_size: int = 10
-    ) -> AsyncIterator[Dict[str, Any]]:
+    ) -> AsyncIterator[Dict[str, Any]:
         """批量处理消息"""
         batch = []
         async for message in self.consumer.consume():
@@ -134,7 +134,7 @@ class StreamProcessor:
 
     async def aggregate(
         self, aggregate_func: Callable, window_size: timedelta, key_extractor: Callable
-    ) -> AsyncIterator[Dict[str, Any]]:
+    ) -> AsyncIterator[Dict[str, Any]:
         """聚合消息"""
         windows = {}
 
@@ -161,7 +161,7 @@ class StreamProcessor:
                 except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
                     self.metrics["messages_failed"] += len(batch["messages"])
 
-    async def filter(self, filter_func: Callable) -> AsyncIterator[Dict[str, Any]]:
+    async def filter(self, filter_func: Callable) -> AsyncIterator[Dict[str, Any]:
         """过滤消息"""
         async for message in self.consumer.consume():
             if filter_func(message):
@@ -169,7 +169,7 @@ class StreamProcessor:
 
     async def join(
         self, stream1: str, stream2: str, join_func: Callable, window: timedelta
-    ) -> AsyncIterator[Dict[str, Any]]:
+    ) -> AsyncIterator[Dict[str, Any]:
         """连接两个流"""
         # 简化实现
         stream1_buffer = {}
@@ -200,7 +200,7 @@ class StreamProcessor:
         window_func: Callable,
         window_size: timedelta,
         timestamp_extractor: Callable,
-    ) -> AsyncIterator[Dict[str, Any]]:
+    ) -> AsyncIterator[Dict[str, Any]:
         """窗口处理"""
         windows = {}
 
@@ -272,7 +272,7 @@ class BatchProcessor:
         """清空批次"""
         self.current_batch = []
 
-    def get_batch(self) -> List[Dict[str, Any]]:
+    def get_batch(self) -> List[Dict[str, Any]:
         """获取当前批次"""
         return self.current_batch.copy()
 

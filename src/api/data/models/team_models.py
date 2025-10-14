@@ -3,7 +3,7 @@
 Team Related Models
 """
 
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 

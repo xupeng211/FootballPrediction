@@ -17,7 +17,7 @@ Predictions - 数据库模块
 from datetime import datetime, timedelta
 from decimal import Decimal
 from enum import Enum
-from typing import Optional, Dict, List, Any
+from typing import Any,  Dict[str, Any],  Any, List[Any], Any
 from ..base import BaseModel
 
 from enum import Enum
@@ -256,12 +256,12 @@ class Predictions(BaseModel):
             # 如果是JSON类型，直接返回
             return (
                 self.feature_importance
-                if isinstance(self.feature_importance, dict)  # type: ignore
+                if isinstance(self.feature_importance, Dict[str, Any])  # type: ignore
                 else None
             )
         return None
 
-    def get_top_features(self, top_n: int = 5) -> List[Dict[str, Any]]:
+    def get_top_features(self, top_n: int = 5) -> List[Dict[str, Any]:
         """
         获取最重要的特征
 
@@ -269,7 +269,7 @@ class Predictions(BaseModel):
             top_n: 返回前N个重要特征
 
         Returns:
-            List[Dict[str, Any]]: 特征列表，按重要性降序排列
+            List[Dict[str, Any]: 特征列表，按重要性降序排列
         """
         feature_importance = self.get_feature_importance_dict()
         if not feature_importance:
@@ -327,7 +327,7 @@ class Predictions(BaseModel):
 
     def get_betting_recommendations(
         self, odds_data: Dict[str, float]
-    ) -> List[Dict[str, Any]]:
+    ) -> List[Dict[str, Any]:
         """
         基于预测概率和赔率给出投注建议
 
@@ -335,7 +335,7 @@ class Predictions(BaseModel):
             odds_data: 赔率数据，格式如 {'home_win': 2.1, 'draw': 3.2, 'away_win': 3.8}
 
         Returns:
-            List[Dict[str, Any]]: 投注建议列表
+            List[Dict[str, Any]: 投注建议列表
         """
         recommendations = []
         probabilities = self.get_probabilities_dict()

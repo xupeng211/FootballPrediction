@@ -7,7 +7,7 @@ Defines DTOs used in CQRS pattern.
 """
 
 from dataclasses import dataclass
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict[str, Any], List[Any], Optional
 from datetime import datetime
 
 
@@ -120,8 +120,8 @@ class PredictionStatsDTO:
     success_rate: float
     total_points: int
     average_confidence: float
-    strategy_breakdown: Dict[str, Dict[str, Any]]
-    recent_performance: List[Dict[str, Any]]
+    strategy_breakdown: Dict[str, Dict[str, Any][str, Any]
+    recent_performance: List[Dict[str, Any]
 
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
@@ -169,7 +169,7 @@ class CommandResult:
     success: bool
     message: Optional[str] = None
     data: Optional[Any] = None
-    errors: Optional[List[str]] = None
+    errors: Optional[List[str] = None
 
     @classmethod
     def success_result(

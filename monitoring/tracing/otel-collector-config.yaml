@@ -1,0 +1,132 @@
+receivers:
+  # OpenTelemetry Protocol (OTLP) receiver
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins:
+            - http://*
+            - https://*
+
+  # Jaeger receiver
+  jaeger:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:14250
+      thrift_http:
+        endpoint: 0.0.0.0:14268
+      thrift_compact:
+        endpoint: 0.0.0.0:6831
+      thrift_binary:
+        endpoint: 0.0.0.0:6832
+
+  # Zipkin receiver
+  zipkin:
+    endpoint: 0.0.0.0:9411
+
+  # Prometheus receiver for metrics
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: 'otel-collector'
+          static_configs:
+            - targets: ['localhost:8888']
+
+processors:
+  # Batch processor for performance
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+
+  # Memory limiter
+  memory_limiter:
+    limit_mib: 512
+    spike_limit_mib: 128
+    check_interval: 5s
+
+  # Resource detection
+  resourcedetection:
+    detectors: [env, system]
+    timeout: 2s
+    override: false
+
+  # Resource enrichment
+  resource:
+    attributes:
+      - key: service.name
+        value: football-prediction
+        action: upsert
+      - key: environment
+        value: production
+        action: upsert
+
+  # Attributes processor for filtering/modifying
+  attributes:
+    actions:
+      - key: sensitive_attribute
+        action: delete
+      - key: password
+        action: delete
+      - key: token
+        action: delete
+
+extensions:
+  # Health check extension
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+  # Metrics extension
+  prometheus:
+    endpoint: 0.0.0.0:8889
+
+exporters:
+  # Jaeger exporter
+  jaeger:
+    endpoint: jaeger:14250
+    tls:
+      insecure: true
+
+  # Zipkin exporter
+  zipkin:
+    endpoint: http://zipkin:9411/api/v2/spans
+    format: json
+
+  # Prometheus exporter for metrics
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    namespace: "otel"
+    const_labels:
+      service: "football-prediction"
+
+  # Logging exporter for debugging
+  logging:
+    loglevel: info
+
+service:
+  extensions: [health_check, prometheus]
+
+  pipelines:
+    traces:
+      receivers: [otlp, jaeger, zipkin]
+      processors: [memory_limiter, batch, resourcedetection, resource, attributes]
+      exporters: [jaeger, zipkin, logging]
+
+    metrics:
+      receivers: [otlp, prometheus]
+      processors: [memory_limiter, batch, resourcedetection, resource]
+      exporters: [prometheus, logging]
+
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch, resourcedetection, resource, attributes]
+      exporters: [logging]
+
+  # Telemetry configuration for the collector itself
+  telemetry:
+    logs:
+      level: info
+    metrics:
+      address: 0.0.0.0:8888

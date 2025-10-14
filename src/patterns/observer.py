@@ -5,7 +5,7 @@
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 from datetime import datetime
 import asyncio
 import logging
@@ -32,7 +32,7 @@ class Subject(ABC):
 
     def __init__(self):
         self._observers: List[Observer] = []
-        self._event_history: List[Dict[str, Any]] = []
+        self._event_history: List[Dict[str, Any] = []
         self.logger = get_logger(f"subject.{self.__class__.__name__}")
 
     def attach(self, observer: Observer) -> None:
@@ -89,7 +89,7 @@ class Subject(ABC):
         """获取所有观察者名称"""
         return [observer.get_name() for observer in self._observers]
 
-    def get_event_history(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
+    def get_event_history(self, limit: Optional[int] = None) -> List[Dict[str, Any]:
         """获取事件历史"""
         if limit:
             return self._event_history[-limit:]
@@ -165,8 +165,8 @@ class AlertingObserver(Observer):
     """告警通知观察者"""
 
     def __init__(self):
-        self.alert_rules: Dict[str, Dict[str, Any]] = {}
-        self.alert_history: List[Dict[str, Any]] = []
+        self.alert_rules: Dict[str, Dict[str, Any][str, Any] = {}
+        self.alert_history: List[Dict[str, Any] = []
         self.logger = get_logger("observer.alerting")
 
     def add_alert_rule(self, event_type: str, condition: str, message: str) -> None:
@@ -211,9 +211,9 @@ class AlertingObserver(Observer):
         # 这里可以实现更复杂的条件评估逻辑
         if condition == "always":
             return True
-        elif condition == "error" and isinstance(data, dict) and data.get("error"):
+        elif condition == "error" and isinstance(data, Dict[str, Any]) and data.get("error"):
             return True
-        elif condition == "timeout" and isinstance(data, dict) and data.get("timeout"):
+        elif condition == "timeout" and isinstance(data, Dict[str, Any]) and data.get("timeout"):
             return True
 
         return False
@@ -221,7 +221,7 @@ class AlertingObserver(Observer):
     def get_name(self) -> str:
         return "AlertingObserver"
 
-    def get_alert_history(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:
+    def get_alert_history(self, limit: Optional[int] = None) -> List[Dict[str, Any]:
         """获取告警历史"""
         if limit:
             return self.alert_history[-limit:]

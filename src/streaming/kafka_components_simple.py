@@ -2,7 +2,7 @@
 简化的Kafka组件实现
 """
 
-from typing import Any, Dict, List
+from typing import Any,  Dict[str, Any],  Any, List[Any]
 
 from src.core.exceptions import StreamingError
 
@@ -116,7 +116,7 @@ class KafkaConsumerGroup:
         self.group_id = group_id
         self.admin = admin_client
 
-    async def list_groups(self) -> List[Dict[str, Any]]:
+    async def list_groups(self) -> List[Dict[str, Any]:
         """列出消费者组"""
         return [
             {"group_id": "group1"},
@@ -194,7 +194,7 @@ class KafkaHealthChecker:
     def __init__(self, admin_client: KafkaAdminClient):
         self.admin = admin_client
 
-    async def check_broker_health(self) -> Dict[int, Dict[str, Any]]:
+    async def check_broker_health(self) -> Dict[str, Any][int, Dict[str, Any]:
         """检查代理健康状态"""
         return {
             1: {"host": "broker1", "port": 9092, "status": "online"},
@@ -210,7 +210,7 @@ class KafkaHealthChecker:
             "total_partitions": 3,
         }
 
-    async def check_disk_usage(self) -> Dict[str, Dict[str, Any]]:
+    async def check_disk_usage(self) -> Dict[str, Dict[str, Any][str, Any]:
         """检查磁盘使用情况"""
         return {
             "broker1": {
@@ -227,7 +227,7 @@ class KafkaHealthChecker:
             },
         }
 
-    async def check_consumer_lag(self, group_id: str) -> List[Dict[str, Any]]:
+    async def check_consumer_lag(self, group_id: str) -> List[Dict[str, Any]:
         """检查消费者延迟"""
         return [
             {"topic": "topic1", "partition": 0, "lag": 100},
@@ -241,7 +241,7 @@ class KafkaMetricsCollector:
     def __init__(self, admin_client: KafkaAdminClient):
         self.admin = admin_client
 
-    async def collect_broker_metrics(self) -> Dict[str, Dict[str, Any]]:
+    async def collect_broker_metrics(self) -> Dict[str, Dict[str, Any][str, Any]:
         """收集代理指标"""
         return {
             "broker1": {
@@ -254,7 +254,7 @@ class KafkaMetricsCollector:
 
     async def collect_topic_metrics(
         self, topics: List[str]
-    ) -> Dict[str, Dict[str, Any]]:
+    ) -> Dict[str, Dict[str, Any][str, Any]:
         """收集主题指标"""
         return {
             "topic1": {

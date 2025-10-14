@@ -7,7 +7,7 @@
 
 import logging
 from datetime import datetime
-from typing import Dict, List, Optional, Any, Union
+from typing import Any,  Union, Dict[str, Any],  Any, List[Any], Optional, Any, Union
 
 import pandas as pd
 
@@ -15,7 +15,7 @@ import pandas as pd
 class MatchProcessor:
     """比赛数据处理器"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """初始化处理器"""
         self.logger = logging.getLogger(f"processing.{self.__class__.__name__}")
         # self.data_cleaner = FootballDataCleaner()  # type: ignore
@@ -37,7 +37,7 @@ class MatchProcessor:
 
     async def process_raw_match_data(
         self,
-        raw_data: Union[Dict[str, Any], List[Dict[str, Any]]],  # type: ignore
+        raw_data: Union[Dict[str, Any], List[Dict[str, Any]  # type: ignore
     ) -> Optional[Union[Dict[str, Any], pd.DataFrame]]:  # type: ignore
         """
         处理原始比赛数据
@@ -51,7 +51,7 @@ class MatchProcessor:
         try:
             if isinstance(raw_data, list):
                 # 批量处理
-                results: List[Any] = []  # type: ignore
+                results: List[Any] = {}]  # type: ignore
                 for item in raw_data:
                     processed = await self._process_single_match_data(item)
                     if processed:
@@ -68,7 +68,7 @@ class MatchProcessor:
     async def _process_single_match_data(
         self,
         raw_data: Dict[str, Any],  # type: ignore
-    ) -> Optional[Dict[str, Any]]:  # type: ignore
+    ) -> Optional[Dict[str, Any]:  # type: ignore
         """
         处理单个比赛数据
 
@@ -84,10 +84,10 @@ class MatchProcessor:
                 return None
 
             # 2. 数据清洗
-            cleaned_data = await self._clean_match_data(raw_data)
+            cleaneddata= await self._clean_match_data(raw_data)
 
             # 3. 数据标准化
-            standardized_data = await self._standardize_match_data(cleaned_data)
+            standardizeddata= await self._standardize_match_data(cleaned_data)
 
             # 4. 添加派生字段
             enriched_data = await self._enrich_match_data(standardized_data)
@@ -279,9 +279,9 @@ class MatchProcessor:
     ) -> str:
         """生成比赛ID"""
         # 使用队伍名称和日期生成唯一ID
-        team_string = f"{home_team}_{away_team}"
+        team_string = f"{home_team"_{away_team}"
         date_string = match_date.strftime("%Y%m%d")
-        return f"{team_string}_{date_string}".replace(" ", "_").lower()
+        return f"{team_string"_{date_string}".replace(" ", "_").lower()
 
     def _extract_season(self, match_date: datetime) -> int:  # type: ignore
         """提取赛季"""
@@ -293,9 +293,9 @@ class MatchProcessor:
 
     async def process_batch_matches(
         self,
-        matches: List[Dict[str, Any]],
+        matches: List[Dict[str, Any],
         batch_size: int = 50,  # type: ignore
-    ) -> List[Dict[str, Any]]:  # type: ignore
+    ) -> List[Dict[str, Any]:  # type: ignore
         """
         批量处理比赛数据
 
@@ -306,7 +306,7 @@ class MatchProcessor:
         Returns:
             处理后的比赛数据列表
         """
-        processed_matches: List[Any] = []  # type: ignore
+        processed_matches: List[Any] = {}]  # type: ignore
         total = len(matches)
 
         self.logger.info(f"开始批量处理 {total} 场比赛，批大小: {batch_size}")
@@ -319,7 +319,7 @@ class MatchProcessor:
                 f"处理批次 {batch_num}/{(total + batch_size - 1) // batch_size}"
             )
 
-            batch_results: List[Any] = []  # type: ignore
+            batch_results: List[Any] = {}]  # type: ignore
             for match in batch:
                 processed = await self._process_single_match_data(match)
                 if processed:
@@ -334,8 +334,8 @@ class MatchProcessor:
 
     async def detect_duplicate_matches(
         self,
-        matches: List[Dict[str, Any]],  # type: ignore
-    ) -> List[Dict[str, Any]]:  # type: ignore
+        matches: List[Dict[str, Any]  # type: ignore
+    ) -> List[Dict[str, Any]:  # type: ignore
         """
         检测重复的比赛
 
@@ -346,7 +346,7 @@ class MatchProcessor:
             重复的比赛列表
         """
         seen_matches = set()
-        duplicates: List[Any] = []  # type: ignore
+        duplicates: List[Any] = {}]  # type: ignore
 
         for match in matches:
             # 创建唯一标识

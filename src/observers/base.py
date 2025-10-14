@@ -9,7 +9,7 @@ Defines core interfaces for observers and subjects.
 import asyncio
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Dict, List, Optional, TypeVar, Callable
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, TypeVar, Callable
 from enum import Enum
 from dataclasses import dataclass, field
 import logging
@@ -38,9 +38,9 @@ class ObservableEvent:
     event_type: ObservableEventType
     timestamp: datetime = field(default_factory=datetime.utcnow)
     source: Optional[str] = None
-    data: Dict[str, Any] = field(default_factory=dict)
+    data: Dict[str, Any] = field(default_factory=dict[str, Any])
     severity: str = "info"  # info, warning, error, critical
-    tags: Dict[str, str] = field(default_factory=dict)
+    tags: Dict[str, str] = field(default_factory=dict[str, Any])
 
     def __str__(self) -> str:
         return f"{self.event_type.value}[{self.severity}]: {self.source}"
@@ -61,7 +61,7 @@ class Observer(ABC):
         """
         self.name = name
         self._enabled = True
-        self._subscription_filters: List[Callable[[ObservableEvent], bool]] = []
+        self._subscription_filters: List[Callable[[ObservableEvent], bool] = []
 
     @abstractmethod
     async def update(self, event: ObservableEvent) -> None:

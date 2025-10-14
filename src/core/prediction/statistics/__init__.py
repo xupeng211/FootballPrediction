@@ -4,7 +4,7 @@ Prediction Statistics Module
 """
 
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict,  Dict, List
 
 
 class PredictionStatistics:
@@ -15,7 +15,7 @@ class PredictionStatistics:
         self.correct_predictions = 0
         self.incorrect_predictions = 0
         self.accuracy = 0.0
-        self.predictions_by_model: Dict[str, int] = {}
+        self.predictions_by_model: Dict[str, int] = {}}
         self.history: List[Dict] = []
 
     def add_prediction(self, is_correct: bool, model_version: str = "default"):

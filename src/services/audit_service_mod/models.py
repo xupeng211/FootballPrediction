@@ -5,7 +5,7 @@ Audit Service Models (Compatibility Version)
 
 from enum import Enum
 from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Any, Dict[str, Any], List[Any], Optional
 from dataclasses import dataclass
 
 
@@ -42,8 +42,8 @@ class AuditEvent:
     resource_id: Optional[str]
     message: str
     timestamp: datetime
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: Optional[Dict[str, Any] ] ] ] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.metadata is None:
-            self._metadata = {}
+            self.metadata= {}

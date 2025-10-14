@@ -6,7 +6,7 @@
 """
 
 from src.cache.redis import RedisManager, CacheKeyManager
-from typing import Dict, List, Optional, Any
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Any
 import logging
 from redis.exceptions import RedisError
 
@@ -14,7 +14,7 @@ from redis.exceptions import RedisError
 class ProcessingCache:
     """数据处理缓存管理器"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """初始化缓存管理器"""
         self.logger = logging.getLogger(f"processing.{self.__class__.__name__}")
         self.redis_manager = None
@@ -31,7 +31,7 @@ class ProcessingCache:
         }
 
         # 缓存统计
-        self._stats = {
+        self.stats = {
             "hits": 0,
             "misses": 0,
             "sets": 0,
@@ -66,7 +66,7 @@ class ProcessingCache:
         self,
         operation: str,
         data_hash: str,
-        params: Optional[Dict[str, Any]] = None,  # type: ignore
+        params: Optional[Dict[str, Any] ] ] = None,  # type: ignore
     ) -> str:
         """
         生成缓存键
@@ -114,7 +114,7 @@ class ProcessingCache:
             哈希值
         """
         try:
-            if isinstance(data, (dict, list)):
+            if isinstance(data, (Dict[str, Any], list)):
                 data_str = json.dumps(data, sort_keys=True)  # type: ignore
             else:
                 data_str = str(data)
@@ -128,7 +128,7 @@ class ProcessingCache:
         self,
         operation: str,
         data: Any,  # type: ignore
-        params: Optional[Dict[str, Any]] = None,  # type: ignore
+        params: Optional[Dict[str, Any] ] ] = None,  # type: ignore
     ) -> Optional[Any]:  # type: ignore
         """
         获取缓存的计算结果
@@ -153,24 +153,24 @@ class ProcessingCache:
             cache_key = self._generate_cache_key(operation, data_hash, params)
 
             # 尝试获取缓存
-            _result = await self.redis_manager.get(cache_key)
+            result = await self.redis_manager.get(cache_key)
 
             if result is not None:
                 # 反序列化结果
                 try:
                     deserialized_result = json.loads(result)  # type: ignore
                     self.stats["hits"] += 1
-                    self.logger.debug(f"缓存命中: {operation}")
+                    self.logger.debug(f"缓存命中: {cache_key}")
                     return deserialized_result
                 except json.JSONDecodeError:  # type: ignore
-                    self.logger.warning(f"缓存数据反序列化失败: {cache_key}")
+                    self.logger.warning(f"缓存反序列化失败: {cache_key}")
                     self.stats["errors"] += 1
 
             self.stats["misses"] += 1
             return None
 
         except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
-            self.logger.error(f"获取缓存结果失败: {e}")
+            self.logger.error(f"获取缓存失败: {e}")
             self.stats["errors"] += 1
             return None
 
@@ -179,8 +179,8 @@ class ProcessingCache:
         operation: str,
         data: Any,  # type: ignore
         result: Any,  # type: ignore
-        params: Optional[Dict[str, Any]] = None,  # type: ignore
-        ttl: Optional[int] = None,  # type: ignore
+        params: Optional[Dict[str, Any] ] ] = None,  # type: ignore
+        ttl: Optional[int] ] = None,  # type: ignore
     ) -> bool:
         """
         缓存计算结果
@@ -224,14 +224,14 @@ class ProcessingCache:
             return success  # type: ignore
 
         except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
-            self.logger.error(f"缓存结果失败: {e}")
+            self.logger.error(f"获取缓存失败: {e}")
             self.stats["errors"] += 1
             return False
 
     async def invalidate_cache(
         self,
-        operation: Optional[str] = None,  # type: ignore
-        data_hash: Optional[str] = None,  # type: ignore
+        operation: Optional[str] ] = None,  # type: ignore
+        data_hash: Optional[str] ] = None,  # type: ignore
     ) -> int:
         """
         使缓存失效
@@ -273,7 +273,7 @@ class ProcessingCache:
             return invalidated_count
 
         except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
-            self.logger.error(f"使缓存失效失败: {e}")
+            self.logger.error(f"获取缓存失败: {e}")
             self.stats["errors"] += 1
             return 0
 
@@ -308,7 +308,7 @@ class ProcessingCache:
                         "keyspace_misses": info.get("keyspace_misses", 0),
                     }
             except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
-                self.logger.error(f"获取Redis信息失败: {e}")
+                self.logger.error(f"获取缓存失败: {e}")
 
         return cache_stats
 
@@ -349,7 +349,7 @@ class ProcessingCache:
             return cleaned_count
 
         except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
-            self.logger.error(f"清理过期缓存失败: {e}")
+            self.logger.error(f"获取缓存失败: {e}")
             self.stats["errors"] += 1
             return 0
 
@@ -403,7 +403,7 @@ class ProcessingCache:
                     cached = await self.get_cached_result(operation, data)
                     if cached is None:
                         # 处理并缓存结果
-                        _result = await process_func(data)  # type: ignore
+                        result = await process_func(data)  # type: ignore
                         await self.cache_result(operation, data, result)
 
                 except (RedisError, ConnectionError, TimeoutError, ValueError) as e:

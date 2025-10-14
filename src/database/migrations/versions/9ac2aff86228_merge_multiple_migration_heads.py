@@ -7,7 +7,7 @@ Create Date: 2025-09-25 14:22:58.998396
 """
 # mypy: ignore-errors
 
-from typing import Sequence, Union
+from typing import Any, Sequence, Union
 
 # revision identifiers, used by Alembic.
 revision: str = "9ac2aff86228"

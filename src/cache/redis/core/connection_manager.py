@@ -5,7 +5,7 @@ Redis connection manager
 import os
 import redis.asyncio as aioredis
 from redis.exceptions import RedisError
-from typing import Optional
+from typing import Any, Optional
 
 
 class RedisConnectionManager:

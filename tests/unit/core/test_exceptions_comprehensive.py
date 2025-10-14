@@ -5,6 +5,8 @@ Comprehensive Tests for Core Exceptions
 测试src.core.exceptions模块的所有异常类
 """
 
+from typing import List
+
 import pytest
 from src.core.exceptions import (
     # 基础异常

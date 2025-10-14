@@ -6,7 +6,7 @@ Repository Provider
 Provides creation and dependency injection configuration for repository instances.
 """
 
-from typing import TypeVar, Type, Protocol, runtime_checkable
+from typing import Any,  TypeVar, Type[Any], Protocol, runtime_checkable
 from functools import lru_cache
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -83,7 +83,7 @@ class RepositoryProvider:
     Manages creation and lifecycle of repository instances.
     """
 
-    def __init__(self, factory: RepositoryFactory = None):
+    def __init__(self, factory: RepositoryFactory = None) -> None:
         self._factory = factory or DefaultRepositoryFactory()
         self._repositories = {}  # type: ignore
 
@@ -120,11 +120,11 @@ class RepositoryProvider:
             )
         return self._repositories[key]  # type: ignore
 
-    def clear_cache(self):
+    def clear_cache(self) -> None:
         """清除仓储缓存"""
         self._repositories.clear()
 
-    def set_factory(self, factory: RepositoryFactory):
+    def set_factory(self, factory: RepositoryFactory) -> None:
         """设置仓储工厂"""
         self._factory = factory
         self.clear_cache()
@@ -142,7 +142,7 @@ def get_repository_provider() -> RepositoryProvider:
     return _provider
 
 
-def set_repository_provider(provider: RepositoryProvider):
+def set_repository_provider(provider: RepositoryProvider) -> None:
     """设置全局仓储提供者"""
     global _provider
     _provider = provider
@@ -151,7 +151,7 @@ def set_repository_provider(provider: RepositoryProvider):
 @lru_cache(maxsize=32)
 def _get_repository_cached(
     repository_type: str, session_id: int, read_only: bool
-) -> Type[BaseRepository]:
+) -> Type[Any][BaseRepository]:
     """缓存的仓储类型获取"""
     if repository_type == "prediction":
         return ReadOnlyPredictionRepository if read_only else PredictionRepository

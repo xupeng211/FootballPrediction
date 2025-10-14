@@ -6,7 +6,7 @@ Match Domain Service
 Handles complex business logic related to matches.
 """
 
-from typing import List, Optional, Any
+from typing import Any, List[Any], Optional
 from datetime import datetime
 
 from ..models.match import MatchScore, MatchResult
@@ -23,16 +23,16 @@ from ..events.match_events import (
 class MatchDomainService:
     """比赛领域服务"""
 
-    def __init__(self):
-        self._events: List[Any] = []
+    def __init__(self) -> None:
+        self._events: List[Any] = {}]
 
     def schedule_match(
         self,
         home_team: Team,
         away_team: Team,
         match_time: datetime,
-        venue: Optional[str] = None,
-        round_number: Optional[int] = None,
+        venue: Optional[str] ] = None,
+        round_number: Optional[int] ] = None,
     ) -> Match:
         """安排新比赛"""
         if home_team.id == away_team.id:
@@ -76,7 +76,7 @@ class MatchDomainService:
         match: Match,
         home_score: int,
         away_score: int,
-        minute: Optional[int] = None,
+        minute: Optional[int] ] = None,
     ) -> None:
         """更新比赛比分"""
         if match.status != MatchStatus.LIVE:
@@ -105,7 +105,7 @@ class MatchDomainService:
                 home_team_id=match.home_team_id,
                 away_team_id=match.away_team_id,
                 final_score=match.score or MatchScore(0, 0),
-                _result =match.score.result if match.score else MatchResult.DRAW,
+                result =match.score.result if match.score else MatchResult.DRAW,
             )
             self._events.append(event)
 
@@ -165,9 +165,9 @@ class MatchDomainService:
     def calculate_match_importance(
         self,
         match: Match,
-        home_team_position: Optional[int] = None,
-        away_team_position: Optional[int] = None,
-        total_teams: Optional[int] = None,
+        home_team_position: Optional[int] ] = None,
+        away_team_position: Optional[int] ] = None,
+        total_teams: Optional[int] ] = None,
     ) -> float:
         """计算比赛重要性"""
         importance = 0.5  # 基础重要性

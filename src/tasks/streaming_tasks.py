@@ -9,7 +9,7 @@
 
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 from celery import Task
 
@@ -48,7 +48,7 @@ class StreamingTask(Task):
 @app.task(base=StreamingTask, bind=True)
 def consume_kafka_streams_task(
     self,
-    topics: Optional[List[str]] = None,
+    topics: Optional[List[str] = None,
     batch_size: int = 100,
     timeout: float = 30.0,
 ):
@@ -61,7 +61,7 @@ def consume_kafka_streams_task(
         timeout: 超时时间（秒）
 
     Returns:
-        Dict: 消费统计结果
+        Dict[str, Any]: 消费统计结果
     """
 
     async def _consume_streams():
@@ -120,7 +120,7 @@ def consume_kafka_streams_task(
 
 @app.task(base=StreamingTask, bind=True)
 def start_continuous_consumer_task(
-    self, topics: Optional[List[str]] = None, consumer_group_id: Optional[str] = None
+    self, topics: Optional[List[str] = None, consumer_group_id: Optional[str] = None
 ):
     """
     启动持续Kafka消费任务
@@ -130,7 +130,7 @@ def start_continuous_consumer_task(
         consumer_group_id: 消费者组ID
 
     Returns:
-        Dict: 任务状态
+        Dict[str, Any]: 任务状态
     """
 
     async def _start_continuous_consumer():
@@ -186,7 +186,7 @@ def start_continuous_consumer_task(
 @app.task(base=StreamingTask, bind=True)
 def produce_to_kafka_stream_task(
     self,
-    data_list: List[Dict[str, Any]],
+    data_list: List[Dict[str, Any],
     data_type: str,
     key_field: Optional[str] = None,
 ):
@@ -199,7 +199,7 @@ def produce_to_kafka_stream_task(
         key_field: 用作消息key的字段名
 
     Returns:
-        Dict: 发送统计结果
+        Dict[str, Any]: 发送统计结果
     """
 
     async def _produce_to_stream():
@@ -257,7 +257,7 @@ def stream_health_check_task(self):
     流处理健康检查任务
 
     Returns:
-        Dict: 健康检查结果
+        Dict[str, Any]: 健康检查结果
     """
 
     async def _stream_health_check():
@@ -300,7 +300,7 @@ def stream_health_check_task(self):
 @app.task(base=StreamingTask, bind=True)
 def stream_data_processing_task(
     self,
-    topics: Optional[List[str]] = None,
+    topics: Optional[List[str] = None,
     processing_duration: int = 300,  # 5分钟
 ):
     """
@@ -311,7 +311,7 @@ def stream_data_processing_task(
         processing_duration: 处理持续时间（秒）
 
     Returns:
-        Dict: 处理统计结果
+        Dict[str, Any]: 处理统计结果
     """
 
     async def _stream_data_processing():
@@ -384,7 +384,7 @@ def kafka_topic_management_task(self, action: str, topic_name: Optional[str] = N
         topic_name: Topic名称（create/delete时需要）
 
     Returns:
-        Dict: 操作结果
+        Dict[str, Any]: 操作结果
     """
 
     async def _kafka_topic_management():

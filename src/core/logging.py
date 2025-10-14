@@ -5,7 +5,7 @@
 """
 
 import logging
-from typing import Optional
+from typing import Any, Optional
 
 from .logger import Logger as _BaseLogger
 
@@ -37,27 +37,27 @@ LogCategory = {
 class StructuredLogger:
     """结构化日志记录器"""
 
-    def __init__(self, name: str, category: Optional[str] = None):
+    def __init__(self, name: str, category: Optional[str] = None) -> None:
         """初始化结构化日志记录器"""
         self.logger = logging.getLogger(name)
         self.category = category or LogCategory["SYSTEM"]
 
-    def info(self, message: str, **kwargs):
+    def info(self, message: str, **kwargs) -> None:
         """记录信息日志"""
         extra = {"category": self.category, **kwargs}
         self.logger.info(message, extra=extra)
 
-    def error(self, message: str, **kwargs):
+    def error(self, message: str, **kwargs) -> None:
         """记录错误日志"""
         extra = {"category": self.category, **kwargs}
         self.logger.error(message, extra=extra)
 
-    def warning(self, message: str, **kwargs):
+    def warning(self, message: str, **kwargs) -> None:
         """记录警告日志"""
         extra = {"category": self.category, **kwargs}
         self.logger.warning(message, extra=extra)
 
-    def debug(self, message: str, **kwargs):
+    def debug(self, message: str, **kwargs) -> None:
         """记录调试日志"""
         extra = {"category": self.category, **kwargs}
         self.logger.debug(message, extra=extra)

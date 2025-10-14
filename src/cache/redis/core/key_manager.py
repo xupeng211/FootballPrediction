@@ -2,7 +2,7 @@
 Redis key manager
 """
 
-from typing import Optional
+from typing import Any, Optional
 import hashlib
 import json
 
@@ -39,7 +39,7 @@ class RedisKeyManager:
             return self._make_key(f"metrics:{metric_name}:{timestamp}")
         return self._make_key(f"metrics:{metric_name}")
 
-    def generate_hash_key(self, data: dict) -> str:
+    def generate_hash_key(self, data: Dict[str, Any]) -> str:
         """为数据生成哈希键"""
         json_str = json.dumps(data, sort_keys=True)
         return hashlib.md5(json_str.encode()).hexdigest()

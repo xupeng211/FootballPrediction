@@ -1,0 +1,107 @@
+# Pre-commit hooks for security
+repos:
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.5
+    hooks:
+      - id: bandit
+        args: [-r, src/]
+        exclude: ^tests/
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-executables-have-shebangs
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: requirements-txt-fixer
+      - id: debug-statements
+        language: python
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        args: [--profile, black]
+
+  - repo: https://github.com/psf/black
+    rev: 23.7.0
+    hooks:
+      - id: black
+        language_version: python3.11
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.0.0
+    hooks:
+      - id: flake8
+        additional_dependencies:
+          - flake8-bugbear
+          - flake8-docstrings
+          - flake8-comprehensions
+          - flake8-simplify
+        args:
+          - --max-line-length=88
+          - --extend-ignore=E203,W503
+          - --per-file-ignores=__init__.py:D104
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.5.1
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - types-PyYAML
+          - types-all
+        args:
+          - --ignore-missing-imports
+          - --no-strict-optional
+          - --warn-return-any
+          - --warn-unused-ignores
+        exclude: ^tests/
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: ^tests/
+
+  - repo: https://github.com/zricethezav/znoyder
+    rev: 0.3.4
+    hooks:
+      - id: znoyder
+        args: [--skip-docstring]
+
+  - repo: local
+    hooks:
+      - id: pytest-check
+        name: pytest-check
+        entry: pytest --co -q
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: safety-check
+        name: safety-check
+        entry: safety check
+        language: system
+        files: requirements.*\.(txt|in)
+        pass_filenames: true
+
+      - id: bandit-security
+        name: bandit-security
+        entry: bandit -r src/ -f json -o bandit-report.json
+        language: system
+        files: ^src/.*\.py$
+
+  - repo: https://github.com/bridgecrewio/checkov
+    rev: 2.3.363
+    hooks:
+      - id: checkov
+        args: [--directory, ., --framework, dockerfile, terraform, kubernetes]
+        files: ^(Dockerfile|.*\.tf|k8s/.*\.yaml)$

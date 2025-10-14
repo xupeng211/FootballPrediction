@@ -8,7 +8,7 @@ Prediction service integrated with event system, publishing prediction-related e
 """
 
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 from datetime import datetime
 
 from .strategy_prediction_service import StrategyPredictionService
@@ -33,7 +33,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
     Inherits from strategy prediction service, adding event publishing capabilities.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         """初始化事件驱动预测服务"""
         super().__init__(*args, **kwargs)
         self._event_bus = get_event_bus()
@@ -43,9 +43,9 @@ class EventDrivenPredictionService(StrategyPredictionService):
         self,
         match_id: int,
         user_id: int,
-        strategy_name: Optional[str] = None,
-        confidence: Optional[float] = None,
-        notes: Optional[str] = None,
+        strategy_name: Optional[str] ] = None,
+        confidence: Optional[float] ] = None,
+        notes: Optional[str] ] = None,
     ) -> Prediction:
         """预测单场比赛并发布事件
 
@@ -73,11 +73,11 @@ class EventDrivenPredictionService(StrategyPredictionService):
         self,
         prediction_id: int,
         user_id: int,
-        new_predicted_home: Optional[int] = None,
-        new_predicted_away: Optional[int] = None,
-        new_confidence: Optional[float] = None,
-        new_notes: Optional[str] = None,
-        update_reason: Optional[str] = None,
+        new_predicted_home: Optional[int] ] = None,
+        new_predicted_away: Optional[int] ] = None,
+        new_confidence: Optional[float] ] = None,
+        new_notes: Optional[str] ] = None,
+        update_reason: Optional[str] ] = None,
     ) -> Prediction:
         """更新预测并发布事件
 
@@ -129,7 +129,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
         return original_prediction
 
     async def batch_predict(
-        self, match_ids: List[int], user_id: int, strategy_name: Optional[str] = None
+        self, match_ids: List[int], user_id: int, strategy_name: Optional[str] ] = None
     ) -> List[Prediction]:
         """批量预测并发布事件
 
@@ -139,7 +139,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
             strategy_name: 使用的策略名称
 
         Returns:
-            List[Prediction]: 创建的预测列表
+            List[Any]Prediction]: 创建的预测列表
         """
         # 执行批量预测
         predictions = await super().batch_predict(match_ids, user_id, strategy_name)
@@ -161,7 +161,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
         """
         try:
             # 创建事件数据
-            event_data = PredictionMadeEventData(
+            eventdata= PredictionMadeEventData(
                 prediction_id=prediction.id,
                 match_id=prediction.match_id,
                 user_id=prediction.user_id,
@@ -176,7 +176,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
                 else None,
                 strategy_used=strategy_name,
                 source=self._event_source,
-                _metadata ={
+                metadata={
                     "prediction_time": prediction.created_at.isoformat(),
                     "notes": prediction.notes,
                 },
@@ -208,7 +208,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
         """
         try:
             # 创建事件数据
-            event_data = PredictionUpdatedEventData(
+            eventdata= PredictionUpdatedEventData(
                 prediction_id=prediction.id,
                 match_id=prediction.match_id,
                 user_id=prediction.user_id,
@@ -225,7 +225,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
                 previous_prediction=previous_prediction,
                 update_reason=update_reason,
                 source=self._event_source,
-                _metadata ={
+                metadata={
                     "update_time": prediction.updated_at.isoformat(),
                     "notes": prediction.notes,
                 },
@@ -251,7 +251,7 @@ class EventDrivenMatchService:
     Handles match-related event publishing.
     """
 
-    def __init__(self, match_repository):
+    def __init__(self, match_repository) -> None:
         """初始化比赛服务
 
         Args:
@@ -267,10 +267,10 @@ class EventDrivenMatchService:
         away_team_id: int,
         league_id: int,
         match_time: datetime,
-        venue: Optional[str] = None,
-        weather: Optional[Dict[str, Any]] = None,
-        created_by: Optional[int] = None,
-        initial_odds: Optional[Dict[str, float]] = None,
+        venue: Optional[str] ] = None,
+        weather: Optional[Dict[str, Any] ] ] = None,
+        created_by: Optional[int] ] = None,
+        initial_odds: Optional[Dict[str, float]] ] ] = None,
     ) -> Match:
         """创建比赛并发布事件
 
@@ -311,12 +311,12 @@ class EventDrivenMatchService:
         match: Match,
         created_by: Optional[int],
         initial_odds: Optional[Dict[str, float]],
-        weather: Optional[Dict[str, Any]],
+        weather: Optional[Dict[str, Any],
     ) -> None:
         """发布比赛创建事件"""
         try:
             # 创建事件数据
-            event_data = MatchCreatedEventData(
+            eventdata= MatchCreatedEventData(
                 match_id=match.id,
                 home_team_id=match.home_team_id,
                 away_team_id=match.away_team_id,
@@ -328,7 +328,7 @@ class EventDrivenMatchService:
                 created_by=created_by,
                 initial_odds=initial_odds,
                 source=self._event_source,
-                _metadata ={
+                metadata={
                     "creation_time": datetime.utcnow().isoformat(),
                 },
             )
@@ -355,7 +355,7 @@ class EventDrivenUserService:
     Handles user-related event publishing.
     """
 
-    def __init__(self, user_repository):
+    def __init__(self, user_repository) -> None:
         """初始化用户服务
 
         Args:
@@ -370,9 +370,9 @@ class EventDrivenUserService:
         username: str,
         email: str,
         password_hash: str,
-        referral_code: Optional[str] = None,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
+        referral_code: Optional[str] ] = None,
+        ip_address: Optional[str] ] = None,
+        user_agent: Optional[str] ] = None,
     ) -> Any:
         """注册用户并发布事件
 
@@ -416,7 +416,7 @@ class EventDrivenUserService:
         """发布用户注册事件"""
         try:
             # 创建事件数据
-            event_data = UserRegisteredEventData(
+            eventdata= UserRegisteredEventData(
                 user_id=user["id"],
                 username=user["username"],
                 email=user["email"],
@@ -425,7 +425,7 @@ class EventDrivenUserService:
                 ip_address=ip_address,
                 user_agent=user_agent,
                 source=self._event_source,
-                _metadata ={
+                metadata={
                     "registration_method": "web",
                 },
             )

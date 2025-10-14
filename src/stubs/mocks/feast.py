@@ -5,7 +5,7 @@ Feast Feature Store Mock 实现
 
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Any, Tuple
 from dataclasses import dataclass
 from collections import defaultdict
 
@@ -68,7 +68,7 @@ class MockFeatureStore:
         self._feature_views: Dict[str, FeatureView] = {}
         self._entities: Dict[str, Entity] = {}
         self._feature_services: Dict[str, FeatureService] = {}
-        self._feature_data: Dict[str, Dict[str, Any]] = defaultdict(dict)
+        self._feature_data: Dict[str, Dict[str, Any][str, Any] = defaultdict(dict[str, Any][str, Any])
         self._initialized = False
 
     def init(self) -> None:
@@ -114,8 +114,8 @@ class MockFeatureStore:
         return list(self._feature_services.values())
 
     def get_online_features(
-        self, feature_refs: List[str], entity_rows: List[Dict[str, Any]]
-    ) -> Tuple[List[Dict[str, Any]], List[str]]:
+        self, feature_refs: List[str], entity_rows: List[Dict[str, Any]
+    ) -> Tuple[List[Dict[str, Any], List[str]:
         """获取在线特征"""
         features: List[Any] = []
         field_names = []
@@ -206,7 +206,7 @@ class MockFeatureService:
     def __init__(self, name: str, feature_store: MockFeatureStore):
         self.name = name
         self.feature_store = feature_store
-        self._service_config: Optional[Dict[str, Any]] = None
+        self._service_config: Optional[Dict[str, Any] = None
 
     def get_feature_vector(
         self, entity_id: str, feature_refs: List[str]
@@ -231,7 +231,7 @@ class MockFeastClient:
         self.feature_store.apply(objects)
 
     def get_online_features(
-        self, feature_refs: List[str], entity_rows: List[Dict[str, Any]]
+        self, feature_refs: List[str], entity_rows: List[Dict[str, Any]
     ) -> "MockOnlineResponse":
         """获取在线特征"""
         features, field_names = self.feature_store.get_online_features(
@@ -253,12 +253,12 @@ class MockFeastClient:
 class MockOnlineResponse:
     """模拟在线特征响应"""
 
-    def __init__(self, features: List[Dict[str, Any]], field_names: List[str]):
+    def __init__(self, features: List[Dict[str, Any], field_names: List[str]):
         self._features = features
         self._field_names = field_names
         self._to_dict_called = False
 
-    def to_dict(self) -> List[Dict[str, Any]]:
+    def to_dict(self) -> List[Dict[str, Any]:
         """转换为字典"""
         self._to_dict_called = True
         return self._features

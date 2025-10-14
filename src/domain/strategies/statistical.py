@@ -10,7 +10,7 @@ Strategy implementation using statistical methods and mathematical models for pr
 
 import time
 import math
-from typing import Dict, Any, List, Tuple
+from typing import Any,  Dict[str, Any],  Any, List[Any], Tuple
 import numpy as np
 from datetime import datetime
 
@@ -35,7 +35,7 @@ class StatisticalStrategy(PredictionStrategy):
     - 泊松分布模型
     """
 
-    def __init__(self, name: str = "statistical_analyzer"):
+    def __init__(self, name: str = "statistical_analyzer") -> None:
         super().__init__(name, StrategyType.STATISTICAL)
         self._team_stats = {}
         self._head_to_head_stats = {}
@@ -54,7 +54,7 @@ class StatisticalStrategy(PredictionStrategy):
                 - home_advantage_factor: 主场优势因子
                 - model_weights: 不同统计模型的权重
         """
-        self._config = config
+        self.config = config
         self._min_sample_size = config.get("min_sample_size", 5)
         self._model_params = {
             "weight_recent_games": config.get("weight_recent_games", 0.7),
@@ -119,7 +119,7 @@ class StatisticalStrategy(PredictionStrategy):
                 "team_form": self._model_params["model_weights"]["form"],
                 "head_to_head": self._model_params["model_weights"]["head_to_head"],
             },
-            _metadata ={
+            metadata={
                 "method": "statistical_ensemble",
                 "predictions_used": {
                     "poisson": poisson_pred,
@@ -403,31 +403,31 @@ class StatisticalStrategy(PredictionStrategy):
         # 模拟数据，实际应从数据库获取
         return 1.5 if is_home else 1.2
 
-    async def _get_team_home_scores(self, team_id: int) -> List[Tuple[int, int]]:
+    async def _get_team_home_scores(self, team_id: int) -> List[Tuple[int, int]:
         """获取球队主场比分历史"""
         # 模拟数据
         return [(2, 1), (1, 1), (3, 0), (1, 2), (2, 0)]
 
-    async def _get_team_away_scores(self, team_id: int) -> List[Tuple[int, int]]:
+    async def _get_team_away_scores(self, team_id: int) -> List[Tuple[int, int]:
         """获取球队客场比分历史"""
         # 模拟数据
         return [(1, 2), (0, 1), (2, 2), (1, 3), (0, 0)]
 
     async def _get_recent_games(
         self, team_id: int, limit: int
-    ) -> List[Tuple[int, int, bool]]:
+    ) -> List[Tuple[int, int, bool]:
         """获取最近比赛"""
         # 模拟数据，返回(主场得分, 客场得分, 是否主场)
         return [(2, 1, True), (1, 2, False), (3, 0, True), (0, 0, False), (2, 1, True)]
 
-    async def _get_team_games(self, team_id: int) -> List[Dict[str, Any]]:
+    async def _get_team_games(self, team_id: int) -> List[Dict[str, Any]:
         """获取球队所有比赛"""
         # 模拟数据
         return [{"game_id": i} for i in range(20)]
 
     async def _get_head_to_head_games(
         self, home_team_id: int, away_team_id: int, limit: int
-    ) -> List[Dict[str, Any]]:
+    ) -> List[Dict[str, Any]:
         """获取对战历史"""
         # 模拟数据
         return [
@@ -446,7 +446,7 @@ class StatisticalStrategy(PredictionStrategy):
         ]
 
     async def update_metrics(
-        self, actual_results: List[Tuple[Prediction, Dict[str, Any]]]
+        self, actual_results: List[Tuple[Prediction, Dict[str, Any]
     ) -> None:
         """更新策略性能指标"""
         if not actual_results:

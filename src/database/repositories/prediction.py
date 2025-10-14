@@ -7,7 +7,7 @@ Provides prediction data access operations, implementing the Repository pattern.
 """
 
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
+from typing import Any,  Dict[str, Any], Any, List[Any], Optional, Union
 
 from sqlalchemy import select, and_, desc, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -36,7 +36,7 @@ class PredictionRepository(BaseRepository[Predictions]):
     Provides CRUD operations and complex query methods for prediction data.
     """
 
-    def __init__(self, db_manager=None):
+    def __init__(self, db_manager=None) -> None:
         super().__init__(Predictions, db_manager)
 
     # ========================================
@@ -46,9 +46,9 @@ class PredictionRepository(BaseRepository[Predictions]):
     async def get_by_match(
         self,
         match_id: Union[int, str],
-        status: Optional[PredictionStatus] = None,
-        limit: Optional[int] = None,
-        session: Optional[AsyncSession] = None,
+        status: Optional[PredictionStatus] ] = None,
+        limit: Optional[int] ] = None,
+        session: Optional[AsyncSession] ] = None,
     ) -> List[Prediction]:
         """
         获取指定比赛的预测
@@ -73,9 +73,9 @@ class PredictionRepository(BaseRepository[Predictions]):
     async def get_by_user(
         self,
         user_id: Union[int, str],
-        status: Optional[PredictionStatus] = None,
-        limit: Optional[int] = None,
-        session: Optional[AsyncSession] = None,
+        status: Optional[PredictionStatus] ] = None,
+        limit: Optional[int] ] = None,
+        session: Optional[AsyncSession] ] = None,
     ) -> List[Prediction]:
         """
         获取指定用户的预测
@@ -100,8 +100,8 @@ class PredictionRepository(BaseRepository[Predictions]):
     async def get_by_status(
         self,
         status: PredictionStatus,
-        limit: Optional[int] = None,
-        session: Optional[AsyncSession] = None,
+        limit: Optional[int] ] = None,
+        session: Optional[AsyncSession] ] = None,
     ) -> List[Prediction]:
         """
         根据状态获取预测
@@ -122,7 +122,7 @@ class PredictionRepository(BaseRepository[Predictions]):
         )
 
     async def get_pending_predictions(
-        self, limit: Optional[int] = None, session: Optional[AsyncSession] = None
+        self, limit: Optional[int] ] = None, session: Optional[AsyncSession] ] = None
     ) -> List[Prediction]:
         """
         获取待处理的预测
@@ -143,8 +143,8 @@ class PredictionRepository(BaseRepository[Predictions]):
     async def get_completed_predictions(
         self,
         days: int = 7,
-        limit: Optional[int] = None,
-        session: Optional[AsyncSession] = None,
+        limit: Optional[int] ] = None,
+        session: Optional[AsyncSession] ] = None,
     ) -> List[Prediction]:
         """
         获取已完成的预测
@@ -177,14 +177,14 @@ class PredictionRepository(BaseRepository[Predictions]):
             if limit:
                 stmt = stmt.limit(limit)
 
-            _result = await sess.execute(stmt)
-            return _result.scalars().all()  # type: ignore
+            result = await sess.execute(stmt)
+            return result.scalars().all()  # type: ignore
 
     async def get_user_prediction_for_match(
         self,
         user_id: Union[int, str],
         match_id: Union[int, str],
-        session: Optional[AsyncSession] = None,
+        session: Optional[AsyncSession] ] = None,
     ) -> Optional[Prediction]:
         """
         获取用户对特定比赛的预测
@@ -207,9 +207,9 @@ class PredictionRepository(BaseRepository[Predictions]):
         match_id: Union[int, str],
         predicted_home_score: int,
         predicted_away_score: int,
-        confidence: Optional[float] = None,
-        model_version: Optional[str] = None,
-        session: Optional[AsyncSession] = None,
+        confidence: Optional[float] ] = None,
+        model_version: Optional[str] ] = None,
+        session: Optional[AsyncSession] ] = None,
     ) -> Prediction:
         """
         创建新预测
@@ -248,8 +248,8 @@ class PredictionRepository(BaseRepository[Predictions]):
         actual_home_score: int,
         actual_away_score: int,
         is_correct: bool,
-        points_earned: Optional[float] = None,
-        session: Optional[AsyncSession] = None,
+        points_earned: Optional[float] ] = None,
+        session: Optional[AsyncSession] ] = None,
     ) -> Optional[Prediction]:
         """
         更新预测结果
@@ -283,8 +283,8 @@ class PredictionRepository(BaseRepository[Predictions]):
     async def cancel_prediction(
         self,
         prediction_id: Union[int, str],
-        reason: Optional[str] = None,
-        session: Optional[AsyncSession] = None,
+        reason: Optional[str] ] = None,
+        session: Optional[AsyncSession] ] = None,
     ) -> Optional[Prediction]:
         """
         取消预测
@@ -316,8 +316,8 @@ class PredictionRepository(BaseRepository[Predictions]):
     async def get_user_prediction_stats(
         self,
         user_id: Union[int, str],
-        days: Optional[int] = None,
-        session: Optional[AsyncSession] = None,
+        days: Optional[int] ] = None,
+        session: Optional[AsyncSession] ] = None,
     ) -> Dict[str, Any]:
         """
         获取用户预测统计
@@ -342,11 +342,11 @@ class PredictionRepository(BaseRepository[Predictions]):
                 query = query.where(Prediction.created_at >= start_date)
 
             # 执行查询
-            _result = await sess.execute(query)
-            predictions = _result.scalars().all()  # type: ignore
+            result = await sess.execute(query)
+            predictions = result.scalars().all()  # type: ignore
 
             # 计算统计数据
-            _stats = {
+            stats = {
                 "total": len(predictions),
                 "pending": 0,
                 "completed": 0,
@@ -399,7 +399,7 @@ class PredictionRepository(BaseRepository[Predictions]):
             return stats
 
     async def get_match_prediction_summary(
-        self, match_id: Union[int, str], session: Optional[AsyncSession] = None
+        self, match_id: Union[int, str], session: Optional[AsyncSession] ] = None
     ) -> Dict[str, Any]:
         """
         获取比赛预测汇总
@@ -411,12 +411,12 @@ class PredictionRepository(BaseRepository[Predictions]):
         Returns:
             预测汇总数据
         """
-        async with self.db_manager.get_async_session():
+        async with self.db_manager.get_async_session() as sess:
             if session:
-                pass
+                sess = session
 
             # 获取所有预测
-            predictions = await self.get_by_match(match_id, session=session)
+            predictions = await self.get_by_match(match_id, session=sess)
 
             # 计算汇总数据
             summary = {
@@ -478,8 +478,8 @@ class PredictionRepository(BaseRepository[Predictions]):
             return summary
 
     async def get_top_predictors(
-        self, days: int = 30, limit: int = 10, session: Optional[AsyncSession] = None
-    ) -> List[Dict[str, Any]]:
+        self, days: int = 30, limit: int = 10, session: Optional[AsyncSession] ] = None
+    ) -> List[Dict[str, Any]:
         """
         获取顶级预测者排行榜
 
@@ -519,7 +519,7 @@ class PredictionRepository(BaseRepository[Predictions]):
                 .limit(limit)
             )
 
-            _result = await sess.execute(stmt)
+            result = await sess.execute(stmt)
             rows = result.all()  # type: ignore
 
             # 转换为字典列表
@@ -550,7 +550,7 @@ class PredictionRepository(BaseRepository[Predictions]):
         self,
         obj_id: Union[int, str],
         relation_name: str,
-        session: Optional[AsyncSession] = None,
+        session: Optional[AsyncSession] ] = None,
     ) -> Any:
         """
         获取预测的关联数据
@@ -583,8 +583,8 @@ class PredictionRepository(BaseRepository[Predictions]):
             else:
                 return None
 
-            _result = await sess.execute(stmt)
-            _prediction = result.scalar_one_or_none()
+            result = await sess.execute(stmt)
+            prediction = result.scalar_one_or_none()
 
             if prediction:
                 return getattr(prediction, relation_name, None)

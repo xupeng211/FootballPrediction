@@ -14,7 +14,7 @@ Manager - 服务模块
 - [待补充 - 使用注意事项]
 """
 
-from typing import Dict, Optional
+from typing import Any, Dict[str, Any], Optional
 
 from src.core import logger
 from src.core.config import get_settings
@@ -35,7 +35,7 @@ class ServiceManager:
     """服务管理器 - 负责统一管理所有业务服务的生命周期和依赖关系"""
 
     def __init__(self) -> None:
-        self._services: Dict[str, BaseService] = {}
+        self._services: Dict[str, BaseService] = {}}
         self.logger = logger
 
     def register_service(self, name: str, service: BaseService) -> None:
@@ -76,7 +76,7 @@ class ServiceManager:
         for service in self._services.values():
             try:
                 # 每个服务独立初始化，失败不影响其他服务的尝试
-                _result = await service.initialize()
+                result = await service.initialize()
                 if not result:
                     success = False
                     self.logger.error(f"服务初始化失败: {service.name}")

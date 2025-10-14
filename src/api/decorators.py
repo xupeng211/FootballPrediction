@@ -7,7 +7,7 @@ Demonstrates the usage and effects of the decorator pattern.
 """
 
 from fastapi import APIRouter, HTTPException, Query
-from typing import Dict, Any, Optional
+from typing import Any,  Dict[str, Any],  Any, Optional
 from datetime import datetime
 import asyncio
 from requests.exceptions import HTTPError
@@ -60,7 +60,7 @@ async def get_decorator_stats(
 ) -> Dict[str, Any]:
     """获取装饰器执行统计信息"""
     if function_name:
-        _stats = global_decorator_service.get_function_stats(function_name)
+        stats = global_decorator_service.get_function_stats(function_name)
         if not stats:
             raise HTTPException(
                 status_code=404, detail=f"函数 {function_name} 未找到或未装饰"
@@ -90,10 +90,10 @@ async def demo_logging_decorator(
         example_function_1, decorator_names=["default_logging"]
     )
 
-    _result = await decorated(input_value, input_value * 2)
+    result = await decorated(input_value, input_value * 2)
 
     # 获取统计信息
-    _stats = decorated.get_decorator_stats()
+    stats = decorated.get_decorator_stats()
 
     return {
         "input": input_value,
@@ -112,11 +112,11 @@ async def demo_retry_decorator() -> Dict[str, Any]:
     )
 
     start_time = datetime.utcnow()
-    _result = await decorated(retry_count=0)
+    result = await decorated(retry_count=0)
     end_time = datetime.utcnow()
 
     # 获取统计信息
-    _stats = decorated.get_decorator_stats()
+    stats = decorated.get_decorator_stats()
 
     return {
         "result": result,
@@ -191,11 +191,11 @@ async def demo_timeout_decorator(
     start_time = datetime.utcnow()
 
     try:
-        _result = await decorated(delay)
+        result = await decorated(delay)
         success = True
         error_message = None
     except (ValueError, KeyError, AttributeError, HTTPError) as e:
-        _result = None
+        result = None
         success = False
         error_message = str(e)
 
@@ -226,11 +226,11 @@ async def demo_metrics_decorator(
     # 执行多次
     results = []
     for i in range(iterations):
-        _result = await decorated(f"iteration_{i}")
+        result = await decorated(f"iteration_{i}")
         results.append(result)
 
     # 获取统计信息
-    _stats = decorated.get_decorator_stats()
+    stats = decorated.get_decorator_stats()
 
     return {
         "iterations": iterations,
@@ -294,7 +294,7 @@ async def get_decorator_configs() -> Dict[str, Any]:
 
     configs = {}
     for name in factory.list_configs():
-        _config = factory.get_config(name)
+        config = factory.get_config(name)
         if config:
             configs[name] = {
                 "type": config.decorator_type,
@@ -343,7 +343,7 @@ async def demo_decorator_context(
 
     # 创建装饰器函数，它会使用上下文
     async def context_aware_function(
-        x: int, decorator_context: Optional[DecoratorContext] = None
+        x: int, decorator_context: Optional[DecoratorContext] ] = None
     ) -> Dict[str, Any]:
         if decorator_context:
             decorator_context.add_execution_step("context_aware_function")
@@ -366,7 +366,7 @@ async def demo_decorator_context(
     # 执行多次，传递同一个上下文
     results = []
     for i in range(step_count):
-        _result = await decorated(i + 1, decorator_context=context)
+        result = await decorated(i + 1, decorator_context=context)
         results.append(result)
 
     return {

@@ -14,7 +14,7 @@ import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 import aiohttp
 
@@ -43,7 +43,7 @@ class CollectionResult:
     error_count: int
     status: str  # success/failed/partial
     error_message: Optional[str] = None
-    collected_data: Optional[List[Dict[str, Any]]] = None
+    collected_data: Optional[List[Dict[str, Any] = None
 
 
 class DataCollector(ABC):
@@ -127,8 +127,8 @@ class DataCollector(ABC):
         url: str,
         method: str = "GET",
         headers: Optional[Dict[str, str]] = None,
-        params: Optional[Dict[str, Any]] = None,
-        json_data: Optional[Dict[str, Any]] = None,
+        params: Optional[Dict[str, Any] = None,
+        json_data: Optional[Dict[str, Any] = None,
     ) -> Dict[str, Any]:
         """
         发起HTTP请求（带重试机制） / Make HTTP Request (with Retry Mechanism)
@@ -140,11 +140,11 @@ class DataCollector(ABC):
             url (str): 请求URL / Request URL
             method (str): HTTP方法 / HTTP method
                 Defaults to "GET"
-            headers (Optional[Dict[str, str]]): 请求头 / Request headers
+            headers (Optional[Dict[str, str]): 请求头 / Request headers
                 Defaults to None
-            params (Optional[Dict[str, Any]]): URL参数 / URL parameters
+            params (Optional[Dict[str, Any]): URL参数 / URL parameters
                 Defaults to None
-            json_data (Optional[Dict[str, Any]]): JSON数据 / JSON data
+            json_data (Optional[Dict[str, Any]): JSON数据 / JSON data
                 Defaults to None
 
         Returns:
@@ -187,8 +187,8 @@ class DataCollector(ABC):
         url: str,
         method: str = "GET",
         headers: Optional[Dict[str, str]] = None,
-        params: Optional[Dict[str, Any]] = None,
-        json_data: Optional[Dict[str, Any]] = None,
+        params: Optional[Dict[str, Any] = None,
+        json_data: Optional[Dict[str, Any] = None,
     ) -> Dict[str, Any]:
         """
         发起HTTP请求（带重试机制） / Make HTTP Request (with Retry Mechanism)
@@ -197,11 +197,11 @@ class DataCollector(ABC):
             url (str): 请求URL / Request URL
             method (str): HTTP方法 / HTTP method
                 Defaults to "GET"
-            headers (Optional[Dict[str, str]]): 请求头 / Request headers
+            headers (Optional[Dict[str, str]): 请求头 / Request headers
                 Defaults to None
-            params (Optional[Dict[str, Any]]): URL参数 / URL parameters
+            params (Optional[Dict[str, Any]): URL参数 / URL parameters
                 Defaults to None
-            json_data (Optional[Dict[str, Any]]): JSON数据 / JSON data
+            json_data (Optional[Dict[str, Any]): JSON数据 / JSON data
                 Defaults to None
 
         Returns:
@@ -244,7 +244,7 @@ class DataCollector(ABC):
                     raise e
 
     async def _save_to_bronze_layer(
-        self, table_name: str, raw_data: List[Dict[str, Any]]
+        self, table_name: str, raw_data: List[Dict[str, Any]
     ) -> None:
         """
         保存原始数据到Bronze层
@@ -360,7 +360,7 @@ class DataCollector(ABC):
     def _is_duplicate_record(
         self,
         new_record: Dict[str, Any],
-        existing_records: List[Dict[str, Any]],
+        existing_records: List[Dict[str, Any],
         key_fields: List[str],
     ) -> bool:
         """

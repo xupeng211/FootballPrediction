@@ -7,7 +7,7 @@ Logging Decorator Implementation
 
 import json
 import logging
-from typing import Any, Optional, List, Dict
+from typing import Any,  Dict[str, Any],  Any
 
 from ...core.logging import get_logger
 from ..base import Decorator, DecoratorContext
@@ -112,7 +112,7 @@ class LoggingDecorator(Decorator):
         sanitized: List[Any] = []
 
         for arg in args:
-            if isinstance(arg, dict):
+            if isinstance(arg, Dict[str, Any]):
                 sanitized.append(self._sanitize_dict(arg))
             elif isinstance(arg, (list, tuple)):
                 sanitized.append(self._sanitize_sequence(arg))
@@ -121,11 +121,11 @@ class LoggingDecorator(Decorator):
 
         return sanitized
 
-    def _sanitize_kwargs(self, kwargs: dict) -> Dict[str, Any]:
+    def _sanitize_kwargs(self, kwargs: Dict[str, Any]) -> Dict[str, Any]:
         """清理关键字参数，移除敏感信息"""
         return self._sanitize_dict(kwargs)
 
-    def _sanitize_dict(self, data: dict) -> Dict[str, Any]:
+    def _sanitize_dict(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """清理字典，移除敏感信息"""
         sensitive_keys = ["password", "token", "secret", "key", "auth"]
         sanitized: Dict[str, Any] = {}
@@ -133,7 +133,7 @@ class LoggingDecorator(Decorator):
         for key, value in data.items():
             if any(sensitive in key.lower() for sensitive in sensitive_keys):
                 sanitized[key] = "***"
-            elif isinstance(value, dict):
+            elif isinstance(value, Dict[str, Any]):
                 sanitized[key] = self._sanitize_dict(value)
             elif isinstance(value, (list, tuple)):
                 sanitized[key] = self._sanitize_sequence(value)
@@ -147,7 +147,7 @@ class LoggingDecorator(Decorator):
         sanitized: List[Any] = []
 
         for item in seq:
-            if isinstance(item, dict):
+            if isinstance(item, Dict[str, Any]):
                 sanitized.append(self._sanitize_dict(item))
             elif isinstance(item, (list, tuple)):
                 sanitized.append(self._sanitize_sequence(item))
@@ -158,7 +158,7 @@ class LoggingDecorator(Decorator):
 
     def _sanitize_result(self, result: Any) -> Any:
         """清理结果，移除敏感信息"""
-        if isinstance(result, dict):
+        if isinstance(result, Dict[str, Any]):
             return self._sanitize_dict(result)
         elif isinstance(result, (list, tuple)):
             return self._sanitize_sequence(result)

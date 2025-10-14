@@ -4,13 +4,13 @@
 提供文件操作相关的工具函数。
 """
 
-from typing import Any
+from typing import Any,  Dict[str, Any], Any, Union
 
 import hashlib
 import json
 import os
 from pathlib import Path
-from typing import Union, Dict, Any, Optional
+from typing import Any, Dict[str, Any], Optional
 import time
 
 
@@ -70,7 +70,7 @@ class FileUtils:
         return FileUtils.ensure_dir(path)
 
     @staticmethod
-    def read_json_file(file_path: Union[str, Path]) -> Optional[Dict[str, Any]]:
+    def read_json_file(file_path: Union[str, Path]) -> Optional[Dict[str, Any]:
         """读取JSON文件（别名方法）"""
         try:
             return FileUtils.read_json(file_path)

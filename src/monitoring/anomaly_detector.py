@@ -11,7 +11,7 @@ Z-score分析等多种异常检测算法。
 import logging
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 import numpy as np
 import pandas as pd
@@ -155,8 +155,8 @@ class AnomalyDetector:
 
     async def detect_anomalies(
         self,
-        table_names: Optional[List[str]] = None,
-        methods: Optional[List[str]] = None,
+        table_names: Optional[List[str] = None,
+        methods: Optional[List[str] = None,
     ) -> List[AnomalyResult]:
         """
         执行异常检测
@@ -279,7 +279,7 @@ class AnomalyDetector:
 
             # 转换为DataFrame
             rows = result.fetchall()
-            _data = pd.DataFrame([dict(row._mapping) for row in rows])
+            _data = pd.DataFrame([Dict[str, Any](row._mapping) for row in rows])
             return data
 
         except (ValueError, RuntimeError, TimeoutError) as e:

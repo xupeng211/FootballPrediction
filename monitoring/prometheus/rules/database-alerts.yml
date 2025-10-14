@@ -1,0 +1,92 @@
+groups:
+  - name: database_alerts
+    rules:
+      - alert: DatabaseDown
+        expr: up{job="postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: database
+        annotations:
+          summary: "数据库服务不可用"
+          description: "数据库实例 {{ $labels.instance }} 已停止响应"
+
+      - alert: TooManyConnections
+        expr: pg_stat_activity_count > (pg_settings_max_connections * 0.8)
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "数据库连接数过多"
+          description: "当前连接数 {{ $value }}，超过最大连接数的80%"
+
+      - alert: MaxConnectionsReached
+        expr: pg_stat_activity_count >= pg_settings_max_connections
+        for: 1m
+        labels:
+          severity: critical
+          service: database
+        annotations:
+          summary: "数据库连接池已满"
+          description: "已达到最大连接数 {{ $value }}，新连接将被拒绝"
+
+      - alert: SlowQueries
+        expr: histogram_quantile(0.95, rate(pg_stat_statements_mean_exec_time_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "数据库查询缓慢"
+          description: "P95查询时间为 {{ $value }}s，超过1秒阈值"
+
+      - alert: VerySlowQueries
+        expr: histogram_quantile(0.95, rate(pg_stat_statements_mean_exec_time_seconds_bucket[5m])) > 5
+        for: 2m
+        labels:
+          severity: critical
+          service: database
+        annotations:
+          summary: "数据库查询非常缓慢"
+          description: "P95查询时间为 {{ $value }}s，超过5秒阈值"
+
+      - alert: LowCacheHitRate
+        expr: (pg_stat_database_blks_hit{datname="football_prediction"} / (pg_stat_database_blks_hit{datname="football_prediction"} + pg_stat_database_blks_read{datname="football_prediction"})) * 100 < 90
+        for: 10m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "数据库缓存命中率低"
+          description: "缓存命中率为 {{ $value | printf \"%.2f\" }}%，低于90%"
+
+      - alert: HighDeadlockCount
+        expr: increase(pg_stat_database_deadlocks{datname="football_prediction"}[5m]) > 5
+        for: 2m
+        labels:
+          severity: critical
+          service: database
+        annotations:
+          summary: "数据库死锁频繁"
+          description: "过去5分钟内发生 {{ $value }} 次死锁"
+
+      - alert: DatabaseSizeGrowing
+        expr: increase(pg_stat_database_size_bytes{datname="football_prediction"}[1h]) > 1073741824
+        for: 15m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "数据库增长过快"
+          description: "数据库在过去1小时内增长了 {{ $value | humanizeBytes }}"
+
+      - alert: HighTempFiles
+        expr: pg_stat_database_temp_files{datname="football_prediction"} > 100
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "临时文件过多"
+          description: "临时文件数量为 {{ $value }}，可能影响性能"

@@ -13,7 +13,7 @@
 基于 DATA_DESIGN.md 第1.1节设计。
 """
 
-from typing import Dict, List, Optional, Any
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional, Any
 from datetime import datetime
 from enum import Enum
 import asyncio
@@ -109,7 +109,7 @@ class ScoresCollector(DataCollector):
 
     async def collect_live_scores(
         self,
-        match_ids: Optional[List[str]] = None,
+        match_ids: Optional[List[str] = None,
         use_websocket: bool = True,
         **kwargs,
     ) -> CollectionResult:
@@ -231,7 +231,7 @@ class ScoresCollector(DataCollector):
 
     async def _collect_websocket_scores(
         self, match_ids: List[str]
-    ) -> List[Dict[str, Any]]:
+    ) -> List[Dict[str, Any]:
         """
         通过WebSocket采集实时比分数据
 
@@ -239,7 +239,7 @@ class ScoresCollector(DataCollector):
             match_ids: 比赛ID列表
 
         Returns:
-            List[Dict[str, Any]]: 比分数据列表
+            List[Dict[str, Any]: 比分数据列表
         """
         return await self._collect_via_websocket(match_ids)
 
@@ -261,7 +261,7 @@ class ScoresCollector(DataCollector):
         self,
         match_ids: List[str],
         duration: int = 3600,  # 连接持续时间（秒）
-    ) -> List[Dict[str, Any]]:
+    ) -> List[Dict[str, Any]:
         """
         通过WebSocket采集实时数据
 
@@ -270,7 +270,7 @@ class ScoresCollector(DataCollector):
             duration: 连接持续时间（秒）
 
         Returns:
-            List[Dict]: 采集到的实时数据
+            List[Dict[str, Any]: 采集到的实时数据
         """
         collected_data = []
 
@@ -321,7 +321,7 @@ class ScoresCollector(DataCollector):
 
         return collected_data
 
-    async def _collect_via_polling(self, match_ids: List[str]) -> List[Dict[str, Any]]:
+    async def _collect_via_polling(self, match_ids: List[str]) -> List[Dict[str, Any]:
         """
         通过HTTP轮询采集实时数据
 
@@ -329,7 +329,7 @@ class ScoresCollector(DataCollector):
             match_ids: 需要监控的比赛ID列表
 
         Returns:
-            List[Dict]: 采集到的实时数据
+            List[Dict[str, Any]: 采集到的实时数据
         """
         collected_data = []
 
@@ -360,7 +360,7 @@ class ScoresCollector(DataCollector):
 
         return collected_data
 
-    async def _get_match_live_data(self, match_id: str) -> Optional[Dict[str, Any]]:
+    async def _get_match_live_data(self, match_id: str) -> Optional[Dict[str, Any]:
         """
         获取指定比赛的实时数据
 
@@ -368,7 +368,7 @@ class ScoresCollector(DataCollector):
             match_id: 比赛ID
 
         Returns:
-            Optional[Dict]: 比赛实时数据，失败返回None
+            Optional[Dict[str, Any]: 比赛实时数据，失败返回None
         """
         try:
             url = f"{self.base_url}/matches/{match_id}"
@@ -383,7 +383,7 @@ class ScoresCollector(DataCollector):
 
     async def _clean_live_data(
         self, raw_data: Dict[str, Any]
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[Dict[str, Any]:
         """
         清洗和标准化实时比分数据
 
@@ -391,7 +391,7 @@ class ScoresCollector(DataCollector):
             raw_data: 原始实时数据
 
         Returns:
-            Optional[Dict]: 清洗后的数据，无效则返回None
+            Optional[Dict[str, Any]: 清洗后的数据，无效则返回None
         """
         try:
             # 基础字段验证
@@ -454,7 +454,7 @@ class ScoresCollector(DataCollector):
         return status.upper() in finished_statuses
 
     async def start_continuous_monitoring(
-        self, match_ids: Optional[List[str]] = None, use_websocket: bool = True
+        self, match_ids: Optional[List[str] = None, use_websocket: bool = True
     ) -> None:
         """
         启动持续监控模式（后台任务）

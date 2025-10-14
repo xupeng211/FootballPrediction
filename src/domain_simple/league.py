@@ -3,7 +3,7 @@
 """
 
 from datetime import datetime
-from typing import Optional, Dict, Any, List
+from typing import Any,  Dict[str, Any],  Any, List[Any]
 from enum import Enum
 
 
@@ -20,10 +20,10 @@ class LeagueTable:
     """联赛积分榜"""
 
     def __init__(self):
-        self.standings: List[Dict[str, Any]] = []
+        self.standings: List[Dict[str, Any] = []
         self.last_updated = datetime.now()
 
-    def update_table(self, match_results: List[Dict[str, Any]]) -> None:
+    def update_table(self, match_results: List[Dict[str, Any]) -> None:
         """更新积分榜"""
         # 简化实现，实际会更复杂
         self.last_updated = datetime.now()

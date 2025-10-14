@@ -6,7 +6,7 @@ User Repository
 Implements data access logic for users.
 """
 
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict[str, Any], List[Any], Optional
 from datetime import datetime, date
 
 from sqlalchemy import select, func, update
@@ -34,8 +34,8 @@ class ReadOnlyUserRepository(ReadOnlyRepository[User, int]):
             if query_spec.include:
                 query = self._apply_includes(query, query_spec.include)
 
-        _result = await self.session.execute(query)
-        return _result.scalars().first()  # type: ignore
+        result = await self.session.execute(query)
+        return result.scalars().first()  # type: ignore
 
     async def find_many(self, query_spec: QuerySpec) -> List[User]:
         """查找多个用户"""
@@ -53,16 +53,16 @@ class ReadOnlyUserRepository(ReadOnlyRepository[User, int]):
             if query_spec.include:
                 query = self._apply_includes(query, query_spec.include)
 
-        _result = await self.session.execute(query)
-        return _result.scalars().all()  # type: ignore  # type: ignore
+        result = await self.session.execute(query)
+        return result.scalars().all()  # type: ignore  # type: ignore
 
     async def get_by_id(self, id: int) -> Optional[User]:
         """根据ID获取用户"""
         query = select(User).where(User.id == id)
-        _result = await self.session.execute(query)
-        return _result.scalars().first()  # type: ignore
+        result = await self.session.execute(query)
+        return result.scalars().first()  # type: ignore
 
-    async def get_all(self, query_spec: Optional[QuerySpec] = None) -> List[User]:
+    async def get_all(self, query_spec: Optional[QuerySpec] ] = None) -> List[User]:
         """获取所有用户"""
         return await self.find_many(query_spec or QuerySpec())
 
@@ -77,20 +77,20 @@ class ReadOnlyUserRepository(ReadOnlyRepository[User, int]):
     async def exists(self, id: int) -> bool:
         """检查用户是否存在"""
         query = select(func.count(User.id)).where(User.id == id)
-        _result = await self.session.execute(query)
-        return _result.scalar() > 0  # type: ignore
+        result = await self.session.execute(query)
+        return result.scalar() > 0  # type: ignore
 
     async def get_by_username(self, username: str) -> Optional[User]:
         """根据用户名获取用户"""
         query = select(User).where(User.username == username)
-        _result = await self.session.execute(query)
-        return _result.scalars().first()  # type: ignore
+        result = await self.session.execute(query)
+        return result.scalars().first()  # type: ignore
 
     async def get_by_email(self, email: str) -> Optional[User]:
         """根据邮箱获取用户"""
         query = select(User).where(User.email == email)
-        _result = await self.session.execute(query)
-        return _result.scalars().first()  # type: ignore
+        result = await self.session.execute(query)
+        return result.scalars().first()  # type: ignore
 
     async def search_users(self, keyword: str) -> List[User]:
         """搜索用户"""
@@ -127,10 +127,10 @@ class UserRepository(UserRepositoryInterface):
     async def get_by_id(self, id: int) -> Optional[User]:
         """根据ID获取用户"""
         query = select(User).where(User.id == id)
-        _result = await self.session.execute(query)
-        return _result.scalars().first()  # type: ignore
+        result = await self.session.execute(query)
+        return result.scalars().first()  # type: ignore
 
-    async def get_all(self, query_spec: Optional[QuerySpec] = None) -> List[User]:
+    async def get_all(self, query_spec: Optional[QuerySpec] ] = None) -> List[User]:
         """获取所有用户"""
         query = select(User)
 
@@ -146,8 +146,8 @@ class UserRepository(UserRepositoryInterface):
             if query_spec.include:
                 query = self._apply_includes(query, query_spec.include)
 
-        _result = await self.session.execute(query)
-        return _result.scalars().all()  # type: ignore  # type: ignore
+        result = await self.session.execute(query)
+        return result.scalars().all()  # type: ignore  # type: ignore
 
     async def find_one(self, query_spec: QuerySpec) -> Optional[User]:
         """查找单个用户"""
@@ -159,8 +159,8 @@ class UserRepository(UserRepositoryInterface):
             if query_spec.include:
                 query = self._apply_includes(query, query_spec.include)
 
-        _result = await self.session.execute(query)
-        return _result.scalars().first()  # type: ignore
+        result = await self.session.execute(query)
+        return result.scalars().first()  # type: ignore
 
     async def find_many(self, query_spec: QuerySpec) -> List[User]:
         """查找多个用户"""
@@ -190,8 +190,8 @@ class UserRepository(UserRepositoryInterface):
     async def exists(self, id: int) -> bool:
         """检查用户是否存在"""
         query = select(func.count(User.id)).where(User.id == id)
-        _result = await self.session.execute(query)
-        return _result.scalar() > 0  # type: ignore
+        result = await self.session.execute(query)
+        return result.scalar() > 0  # type: ignore
 
     async def create(self, entity_data: Dict[str, Any]) -> User:
         """创建新用户"""
@@ -231,21 +231,21 @@ class UserRepository(UserRepositoryInterface):
         for key, value in update_data.items():
             query = query.values({getattr(User, key): value})
 
-        _result = await self.session.execute(query)
+        result = await self.session.execute(query)
         await self.session.commit()
 
-        if _result.rowcount > 0:  # type: ignore
+        if result.rowcount > 0:  # type: ignore
             return await self.get_by_id(id)
         return None
 
     async def delete_by_id(self, id: int) -> bool:
         """根据ID删除用户"""
         query = update(User).where(User.id == id).values(is_active=False)
-        _result = await self.session.execute(query)
+        result = await self.session.execute(query)
         await self.session.commit()
-        return _result.rowcount > 0  # type: ignore
+        return result.rowcount > 0  # type: ignore
 
-    async def bulk_create(self, entities_data: List[Dict[str, Any]]) -> List[User]:
+    async def bulk_create(self, entities_data: List[Dict[str, Any]) -> List[User]:
         """批量创建用户"""
         users = []
         for data in entities_data:
@@ -286,12 +286,12 @@ class UserRepository(UserRepositoryInterface):
 
         # 获取用户信息
         _user = await self.get_by_id(user_id)
-        if not user:
+        if not _user:
             return {}
 
         # 计算活跃天数
-        if user.created_at:
-            active_days = (datetime.utcnow().date() - user.created_at.date()).days + 1
+        if _user.created_at:
+            active_days = (datetime.utcnow().date() - _user.created_at.date()).days + 1
         else:
             active_days = 0
 
@@ -318,9 +318,9 @@ class UserRepository(UserRepositoryInterface):
             .where(User.id == user_id)
             .values(last_login_at=datetime.utcnow())
         )
-        _result = await self.session.execute(query)
+        result = await self.session.execute(query)
         await self.session.commit()
-        return _result.rowcount > 0  # type: ignore
+        return result.rowcount > 0  # type: ignore
 
     async def deactivate_user(self, user_id: int) -> bool:
         """停用用户"""
@@ -329,9 +329,9 @@ class UserRepository(UserRepositoryInterface):
             .where(User.id == user_id)
             .values(is_active=False, updated_at=datetime.utcnow())
         )
-        _result = await self.session.execute(query)
+        result = await self.session.execute(query)
         await self.session.commit()
-        return _result.rowcount > 0  # type: ignore
+        return result.rowcount > 0  # type: ignore
 
     async def activate_user(self, user_id: int) -> bool:
         """激活用户"""
@@ -340,9 +340,9 @@ class UserRepository(UserRepositoryInterface):
             .where(User.id == user_id)
             .values(is_active=True, updated_at=datetime.utcnow())
         )
-        _result = await self.session.execute(query)
+        result = await self.session.execute(query)
         await self.session.commit()
-        return _result.rowcount > 0  # type: ignore
+        return result.rowcount > 0  # type: ignore
 
     def get_read_only_repository(self) -> ReadOnlyUserRepository:
         """获取只读仓储"""

@@ -7,7 +7,7 @@ Provides match data access operations, implementing the Repository pattern.
 """
 
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
+from typing import Any,  Dict[str, Any], Any, List[Any], Optional, Union
 
 from sqlalchemy import select, and_, or_, desc
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -26,7 +26,7 @@ class MatchRepository(BaseRepository[Match]):
     Provides CRUD operations and complex query methods for match data.
     """
 
-    def __init__(self, db_manager=None):
+    def __init__(self, db_manager=None) -> None:
         super().__init__(Match, db_manager)
 
     # ========================================
@@ -37,8 +37,8 @@ class MatchRepository(BaseRepository[Match]):
         self,
         start_date: datetime,
         end_date: datetime,
-        limit: Optional[int] = None,
-        session: Optional[AsyncSession] = None,
+        limit: Optional[int] ] = None,
+        session: Optional[AsyncSession] ] = None,
     ) -> List[Match]:
         """
         获取指定日期范围内的比赛
@@ -67,14 +67,14 @@ class MatchRepository(BaseRepository[Match]):
             if limit:
                 stmt = stmt.limit(limit)
 
-            _result = await sess.execute(stmt)
-            return _result.scalars().all()  # type: ignore  # type: ignore
+            result = await sess.execute(stmt)
+            return result.scalars().all()  # type: ignore  # type: ignore
 
     async def get_by_status(
         self,
         status: MatchStatus,
-        limit: Optional[int] = None,
-        session: Optional[AsyncSession] = None,
+        limit: Optional[int] ] = None,
+        session: Optional[AsyncSession] ] = None,
     ) -> List[Match]:
         """
         根据状态获取比赛
@@ -94,8 +94,8 @@ class MatchRepository(BaseRepository[Match]):
     async def get_upcoming_matches(
         self,
         days: int = 7,
-        limit: Optional[int] = None,
-        session: Optional[AsyncSession] = None,
+        limit: Optional[int] ] = None,
+        session: Optional[AsyncSession] ] = None,
     ) -> List[Match]:
         """
         获取即将到来的比赛
@@ -130,11 +130,11 @@ class MatchRepository(BaseRepository[Match]):
             if limit:
                 stmt = stmt.limit(limit)
 
-            _result = await sess.execute(stmt)
-            return _result.scalars().all()  # type: ignore  # type: ignore
+            result = await sess.execute(stmt)
+            return result.scalars().all()  # type: ignore  # type: ignore
 
     async def get_live_matches(
-        self, session: Optional[AsyncSession] = None
+        self, session: Optional[AsyncSession] ] = None
     ) -> List[Match]:
         """
         获取正在进行的比赛
@@ -150,8 +150,8 @@ class MatchRepository(BaseRepository[Match]):
     async def get_finished_matches(
         self,
         days: int = 7,
-        limit: Optional[int] = None,
-        session: Optional[AsyncSession] = None,
+        limit: Optional[int] ] = None,
+        session: Optional[AsyncSession] ] = None,
     ) -> List[Match]:
         """
         获取已结束的比赛
@@ -184,15 +184,15 @@ class MatchRepository(BaseRepository[Match]):
             if limit:
                 stmt = stmt.limit(limit)
 
-            _result = await sess.execute(stmt)
-            return _result.scalars().all()  # type: ignore  # type: ignore
+            result = await sess.execute(stmt)
+            return result.scalars().all()  # type: ignore  # type: ignore
 
     async def get_by_team(
         self,
         team_id: Union[int, str],
-        home_or_away: Optional[str] = None,
-        limit: Optional[int] = None,
-        session: Optional[AsyncSession] = None,
+        home_or_away: Optional[str] ] = None,
+        limit: Optional[int] ] = None,
+        session: Optional[AsyncSession] ] = None,
     ) -> List[Match]:
         """
         根据球队获取比赛
@@ -224,15 +224,15 @@ class MatchRepository(BaseRepository[Match]):
             if limit:
                 stmt = stmt.limit(limit)
 
-            _result = await sess.execute(stmt)
-            return _result.scalars().all()  # type: ignore  # type: ignore
+            result = await sess.execute(stmt)
+            return result.scalars().all()  # type: ignore  # type: ignore
 
     async def get_head_to_head(
         self,
         team1_id: Union[int, str],
         team2_id: Union[int, str],
-        limit: Optional[int] = None,
-        session: Optional[AsyncSession] = None,
+        limit: Optional[int] ] = None,
+        session: Optional[AsyncSession] ] = None,
     ) -> List[Match]:
         """
         获取两支球队的历史对战记录
@@ -270,15 +270,15 @@ class MatchRepository(BaseRepository[Match]):
             if limit:
                 stmt = stmt.limit(limit)
 
-            _result = await sess.execute(stmt)
-            return _result.scalars().all()  # type: ignore  # type: ignore
+            result = await sess.execute(stmt)
+            return result.scalars().all()  # type: ignore  # type: ignore
 
     async def get_matches_by_league(
         self,
         league_id: Union[int, str],
-        season: Optional[str] = None,
-        limit: Optional[int] = None,
-        session: Optional[AsyncSession] = None,
+        season: Optional[str] ] = None,
+        limit: Optional[int] ] = None,
+        session: Optional[AsyncSession] ] = None,
     ) -> List[Match]:
         """
         根据联赛获取比赛
@@ -304,7 +304,7 @@ class MatchRepository(BaseRepository[Match]):
         self,
         match_id: Union[int, str],
         status: MatchStatus,
-        session: Optional[AsyncSession] = None,
+        session: Optional[AsyncSession] ] = None,
     ) -> Optional[Match]:
         """
         更新比赛状态
@@ -326,7 +326,7 @@ class MatchRepository(BaseRepository[Match]):
         match_id: Union[int, str],
         home_score: Optional[int],
         away_score: Optional[int],
-        session: Optional[AsyncSession] = None,
+        session: Optional[AsyncSession] ] = None,
     ) -> Optional[Match]:
         """
         更新比赛比分
@@ -357,8 +357,8 @@ class MatchRepository(BaseRepository[Match]):
         match_id: Union[int, str],
         home_score: int,
         away_score: int,
-        result: Optional[MatchResult] = None,
-        session: Optional[AsyncSession] = None,
+        result: Optional[MatchResult] ] = None,
+        session: Optional[AsyncSession] ] = None,
     ) -> Optional[Match]:
         """
         结束比赛
@@ -383,11 +383,11 @@ class MatchRepository(BaseRepository[Match]):
         # 自动判断比赛结果
         if not result:
             if home_score > away_score:
-                _result = MatchResult.HOME_WIN
+                result = MatchResult.HOME_WIN
             elif away_score > home_score:
-                _result = MatchResult.AWAY_WIN
+                result = MatchResult.AWAY_WIN
             else:
-                _result = MatchResult.DRAW
+                result = MatchResult.DRAW
 
         update_data["result"] = result.value
 
@@ -401,7 +401,7 @@ class MatchRepository(BaseRepository[Match]):
         self,
         obj_id: Union[int, str],
         relation_name: str,
-        session: Optional[AsyncSession] = None,
+        session: Optional[AsyncSession] ] = None,
     ) -> Any:
         """
         获取比赛的关联数据
@@ -446,7 +446,7 @@ class MatchRepository(BaseRepository[Match]):
             else:
                 return None
 
-            _result = await sess.execute(stmt)
+            result = await sess.execute(stmt)
             match = result.scalar_one_or_none()
 
             if match:
@@ -461,7 +461,7 @@ class MatchRepository(BaseRepository[Match]):
         self,
         team_id: Union[int, str],
         last_matches: int = 5,
-        session: Optional[AsyncSession] = None,
+        session: Optional[AsyncSession] ] = None,
     ) -> Dict[str, Any]:
         """
         获取球队近期状态
@@ -474,11 +474,11 @@ class MatchRepository(BaseRepository[Match]):
         Returns:
             包含胜负平统计的字典
         """
-        _matches = await self.get_by_team(
+        matches = await self.get_by_team(
             team_id=team_id, limit=last_matches, session=session
         )
 
-        _stats = {
+        stats = {
             "played": 0,
             "wins": 0,
             "draws": 0,

@@ -7,7 +7,7 @@ Handles complex business logic related to prediction scoring.
 """
 
 from decimal import Decimal
-from typing import Dict, Any, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 from ..models.prediction import PredictionPoints
 
@@ -15,8 +15,8 @@ from ..models.prediction import PredictionPoints
 class ScoringService:
     """计分服务"""
 
-    def __init__(self, scoring_config: Optional[Dict[str, Any]] = None):
-        self._config = scoring_config or self._default_scoring_config()
+    def __init__(self, scoring_config: Optional[Dict[str, Any] ] ] ] = None) -> None:
+        self.config = scoring_config or self._default_scoring_config()
 
     def _default_scoring_config(self) -> Dict[str, Any]:
         """默认计分配置"""
@@ -35,7 +35,7 @@ class ScoringService:
         predicted_away: int,
         actual_home: int,
         actual_away: int,
-        confidence: Optional[float] = None,
+        confidence: Optional[float] ] = None,
         match_importance: float = 0.5,
         user_streak: int = 0,
     ) -> PredictionPoints:
@@ -235,9 +235,9 @@ class ScoringService:
     def get_scoring_rules_summary(self) -> Dict[str, Any]:
         """获取计分规则摘要"""
         return {
-            "exact_score": f"{self.config['exact_score']['points']}分",
-            "outcome_only": f"{self.config['outcome_only']['points']}分",
-            "goal_difference": f"{self.config['goal_difference']['points']}分",
+            "exact_score": f"{self.config['exact_score']['points']"分",
+            "outcome_only": f"{self.config['outcome_only']['points']"分",
+            "goal_difference": f"{self.config['goal_difference']['points']"分",
             "confidence_bonus": {
                 "max": self.config["confidence_bonus"]["max_bonus"],
                 "threshold": self.config["confidence_bonus"]["threshold"],

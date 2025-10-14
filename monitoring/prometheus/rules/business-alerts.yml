@@ -1,0 +1,93 @@
+groups:
+  - name: business_alerts
+    rules:
+      - alert: PredictionAccuracyLow
+        expr: predictions_accuracy_rate < 0.6
+        for: 15m
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "预测准确率过低"
+          description: "预测准确率为 {{ $value | humanizePercentage }}，低于60%"
+          runbook_url: "https://wiki.company.com/runbooks/low-accuracy"
+
+      - alert: NoPredictionsCreated
+        expr: rate(predictions_created_total[5m]) == 0
+        for: 10m
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "没有新的预测创建"
+          description: "过去10分钟内没有新预测创建，可能存在系统问题"
+
+      - alert: PredictionQueueBacklog
+        expr: predictions_queue_length > 1000
+        for: 5m
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "预测队列积压"
+          description: "预测队列中有 {{ $value }} 个待处理任务"
+
+      - alert: LowUserActivity
+        expr: rate(users_active_total[1h]) < 10
+        for: 30m
+        labels:
+          severity: info
+          service: business
+        annotations:
+          summary: "用户活跃度低"
+          description: "每小时活跃用户数低于10"
+
+      - alert: DataCollectionFailed
+        expr: increase(data_collection_errors_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "数据收集失败"
+          description: "过去5分钟内发生了 {{ $value }} 次数据收集错误"
+
+      - alert: OddsDataStale
+        expr: time() - odds_data_last_update_timestamp > 3600
+        for: 5m
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "赔率数据过时"
+          description: "赔率数据已超过1小时未更新"
+
+      - alert: MatchDataStale
+        expr: time() - match_data_last_update_timestamp > 7200
+        for: 10m
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "比赛数据过时"
+          description: "比赛数据已超过2小时未更新"
+
+      - alert: ModelPredictionDrift
+        expr: abs(model_accuracy_score - prediction_accuracy_rate) > 0.2
+        for: 30m
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "模型预测漂移"
+          description: "模型准确率与实际预测准确率差异超过20%"
+
+      - alert: HighUserChurn
+        expr: rate(users_churned_total[24h]) / rate(users_registered_total[24h]) > 0.1
+        for: 1h
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "用户流失率过高"
+          description: "24小时用户流失率为 {{ $value | humanizePercentage }}，超过10%"

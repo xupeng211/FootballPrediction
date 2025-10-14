@@ -7,7 +7,7 @@ System Metrics Collector
 
 import psutil
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any,  Dict[str, Any],  Any, Optional
 
 from prometheus_client import CollectorRegistry, Counter, Gauge, Histogram
 

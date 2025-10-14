@@ -6,7 +6,7 @@
 from src.cache.redis import get_redis_manager
 
 import logging
-from typing import Any, Dict, List, Union
+from typing import Any,  Union, Dict[str, Any],  Any, List[Any], Union
 from redis.exceptions import RedisError
 
 try:
@@ -122,7 +122,7 @@ class CacheConsistencyManager:
 
 # 便捷函数
 async def invalidate_entity_cache(
-    entity_type: str, entity_id: Union[int, List[int]]
+    entity_type: str, entity_id: Union[int, List[int]
 ) -> bool:
     """失效实体缓存的便捷函数"""
     manager = CacheConsistencyManager()

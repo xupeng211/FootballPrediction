@@ -8,7 +8,7 @@
 """
 
 from datetime import timedelta
-from typing import Dict, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 
 class FeatureDefinitions:
@@ -76,7 +76,7 @@ class MockFeatureView:
     def __init__(
         self,
         name: str,
-        entities: Optional[List[MockEntity]] = None,
+        entities: Optional[List[MockEntity] = None,
         ttl: Optional[timedelta] = None,
         source: Optional["MockFileSource"] = None,
         tags: Optional[Dict[str, str]] = None,

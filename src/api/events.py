@@ -8,7 +8,7 @@ Provides management and monitoring interfaces for the event system.
 
 from fastapi import APIRouter, HTTPException, Query
 from requests.exceptions import HTTPError
-from typing import Dict, Any, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 from datetime import datetime, timedelta
 
 from ..core.event_application import get_event_application
@@ -32,7 +32,7 @@ async def event_health_check() -> Dict[str, Any]:
 async def get_event_statistics() -> Dict[str, Any]:
     """获取事件系统统计信息"""
     bus = get_event_bus()
-    _stats = bus.get_stats()
+    stats = bus.get_stats()
 
     # 获取各处理器的指标
     detailed_stats = stats.copy()
@@ -115,7 +115,7 @@ async def get_detailed_metrics() -> Dict[str, Any]:
     # 获取分析数据
     analytics_handler = _find_handler(AnalyticsEventHandler)
     if analytics_handler:
-        analytics_data = analytics_handler.get_analytics_data()
+        analyticsdata= analytics_handler.get_analytics_data()
         metrics["daily_predictions"] = analytics_data.get("daily_predictions", {})
         metrics["user_activity"] = analytics_data.get("user_activity", {})
         metrics["match_predictions"] = analytics_data.get("match_predictions", {})
@@ -136,7 +136,7 @@ async def get_recent_prediction_stats(
     if not analytics_handler:
         raise HTTPException(status_code=404, detail="分析处理器未找到")
 
-    analytics_data = analytics_handler.get_analytics_data()
+    analyticsdata= analytics_handler.get_analytics_data()
     daily_predictions = analytics_data.get("daily_predictions", {})
 
     # 过滤指定天数的数据
@@ -172,7 +172,7 @@ async def get_user_activity_stats(
     if not analytics_handler:
         raise HTTPException(status_code=404, detail="分析处理器未找到")
 
-    analytics_data = analytics_handler.get_analytics_data()
+    analyticsdata= analytics_handler.get_analytics_data()
     user_activity = analytics_data.get("user_activity", {})
 
     # 按预测数量排序
@@ -199,7 +199,7 @@ async def get_user_activity_stats(
 
 
 # 辅助函数
-def _find_handler(handler_type):
+def _find_handler(handler_type) -> None:
     """查找特定类型的处理器"""
     bus = get_event_bus()
     for handlers in bus._subscribers.values():

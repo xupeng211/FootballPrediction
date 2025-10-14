@@ -6,7 +6,7 @@ Alert Handlers
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any,  Dict[str, Any],  Any, List[Any], Optional
 
 from prometheus_client import CollectorRegistry, Counter, Gauge, Histogram
 

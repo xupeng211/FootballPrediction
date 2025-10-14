@@ -1,0 +1,267 @@
+# 生产环境告警配置
+# 基于Prometheus Alertmanager的严重告警规则
+
+groups:
+  - name: critical-alerts
+    interval: 30s
+    rules:
+      # 服务完全不可用
+      - alert: ServiceDown
+        expr: up{job=~"football-prediction|postgres|redis|nginx"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          service: "{{ $labels.job }}"
+        annotations:
+          summary: "{{ $labels.job }} 服务已停止"
+          description: "{{ $labels.job }} 服务在 {{ $labels.instance }} 上已停止运行超过30秒"
+          runbook_url: "https://wiki.company.com/runbooks/service-down"
+
+      # API服务高错误率
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          service: api
+        annotations:
+          summary: "API错误率过高"
+          description: "API服务5xx错误率在过去5分钟内为 {{ $value | humanizePercentage }}"
+          runbook_url: "https://wiki.company.com/runbooks/high-error-rate"
+
+      # 数据库连接失败
+      - alert: DatabaseConnectionFailure
+        expr: pg_up{job="postgres"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          service: database
+        annotations:
+          summary: "数据库连接失败"
+          description: "无法连接到PostgreSQL数据库 {{ $labels.instance }}"
+          runbook_url: "https://wiki.company.com/runbooks/database-connection"
+
+      # 数据库连接池耗尽
+      - alert: DatabaseConnectionPoolExhausted
+        expr: pg_stat_activity_count / pg_settings_max_connections > 0.9
+        for: 1m
+        labels:
+          severity: critical
+          service: database
+        annotations:
+          summary: "数据库连接池即将耗尽"
+          description: "数据库连接使用率达到 {{ $value | humanizePercentage }}"
+          runbook_url: "https://wiki.company.com/runbooks/connection-pool"
+
+      # Redis连接失败
+      - alert: RedisConnectionFailure
+        expr: redis_up{job="redis"} == 0
+        for: 30s
+        labels:
+          severity: critical
+          service: cache
+        annotations:
+          summary: "Redis连接失败"
+          description: "无法连接到Redis实例 {{ $labels.instance }}"
+          runbook_url: "https://wiki.company.com/runbooks/redis-connection"
+
+      # 磁盘空间不足（严重）
+      - alert: DiskSpaceCritical
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.05
+        for: 2m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "磁盘空间严重不足"
+          description: "挂载点 {{ $labels.mountpoint }} 在 {{ $labels.instance }} 上只剩 {{ $value | humanizePercentage }} 空间"
+          runbook_url: "https://wiki.company.com/runbooks/disk-space"
+
+      # 内存使用率过高（严重）
+      - alert: MemoryUsageCritical
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.95
+        for: 2m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "内存使用率严重过高"
+          description: "{{ $labels.instance }} 内存使用率为 {{ $value | humanizePercentage }}"
+          runbook_url: "https://wiki.company.com/runbooks/high-memory"
+
+      # CPU负载过高（严重）
+      - alert: HighLoadCritical
+        expr: node_load15 > (count by (instance) (node_cpu_seconds_total{mode="idle"}) * 1.5)
+        for: 5m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "系统负载严重过高"
+          description: "{{ $labels.instance }} 15分钟平均负载为 {{ $value }}"
+          runbook_url: "https://wiki.company.com/runbooks/high-load"
+
+  - name: warning-alerts
+    interval: 60s
+    rules:
+      # API响应时间过长
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: api
+        annotations:
+          summary: "API响应时间过长"
+          description: "95%的请求响应时间超过2秒（当前: {{ $value }}秒）"
+          runbook_url: "https://wiki.company.com/runbooks/high-response-time"
+
+      # 数据库慢查询
+      - alert: SlowQueries
+        expr: rate(pg_stat_statements_mean_time_seconds[5m]) > 1
+        for: 3m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "检测到数据库慢查询"
+          description: "数据库平均查询时间超过1秒（当前: {{ $value }}秒）"
+          runbook_url: "https://wiki.company.com/runbooks/slow-queries"
+
+      # Redis内存使用率高
+      - alert: RedisMemoryHigh
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          service: cache
+        annotations:
+          summary: "Redis内存使用率过高"
+          description: "Redis内存使用率达到 {{ $value | humanizePercentage }}"
+          runbook_url: "https://wiki.company.com/runbooks/redis-memory"
+
+      # 磁盘空间不足（警告）
+      - alert: DiskSpaceWarning
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "磁盘空间不足"
+          description: "挂载点 {{ $labels.mountpoint }} 只剩 {{ $value | humanizePercentage }} 空间"
+          runbook_url: "https://wiki.company.com/runbooks/disk-space"
+
+      # SSL证书即将过期
+      - alert: SSLCertificateExpiring
+        expr: probe_ssl_earliest_cert_expiry - time() < 86400 * 7
+        for: 1h
+        labels:
+          severity: warning
+          service: security
+        annotations:
+          summary: "SSL证书即将过期"
+          description: "{{ $labels.instance }} 的SSL证书将在7天内过期"
+          runbook_url: "https://wiki.company.com/runbooks/ssl-certificate"
+
+      # 备份失败
+      - alert: BackupFailure
+        expr: time() - backup_last_success_timestamp > 86400 * 2
+        for: 1h
+        labels:
+          severity: warning
+          service: backup
+        annotations:
+          summary: "备份超过48小时未成功"
+          description: "上次成功备份时间为 {{ query \"backup_last_success_timestamp\" | first | value | humanizeTimestamp }}"
+          runbook_url: "https://wiki.company.com/runbooks/backup-failure"
+
+      # 容器重启频繁
+      - alert: ContainerRestarting
+        expr: increase(container_start_time_seconds[1h]) > 3
+        for: 0s
+        labels:
+          severity: warning
+          service: container
+        annotations:
+          summary: "容器重启频繁"
+          description: "容器 {{ $labels.name }} 在过去1小时内重启了 {{ $value }} 次"
+          runbook_url: "https://wiki.company.com/runbooks/container-restart"
+
+  - name: business-alerts
+    interval: 300s
+    rules:
+      # 用户注册率异常
+      - alert: LowUserRegistration
+        expr: rate(user_registrations_total[1h]) < 0.1
+        for: 2h
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "用户注册率异常低"
+          description: "过去1小时用户注册率为 {{ $value | humanizePercentage }}"
+          runbook_url: "https://wiki.company.com/runbooks/low-registration"
+
+      # 预测准确率下降
+      - alert: PredictionAccuracyDrop
+        expr: prediction_accuracy_rate < 0.7
+        for: 6h
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "预测准确率下降"
+          description: "预测准确率降至 {{ $value | humanizePercentage }}"
+          runbook_url: "https://wiki.company.com/runbooks/accuracy-drop"
+
+      # 支付失败率过高
+      - alert: HighPaymentFailureRate
+        expr: rate(payment_failures_total[5m]) / rate(payment_attempts_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+          service: business
+        annotations:
+          summary: "支付失败率过高"
+          description: "支付失败率为 {{ $value | humanizePercentage }}"
+          runbook_url: "https://wiki.company.com/runbooks/payment-failure"
+
+  - name: security-alerts
+    interval: 60s
+    rules:
+      # 异常登录尝试
+      - alert: SuspiciousLoginAttempts
+        expr: rate(failed_login_total[5m]) > 10
+        for: 1m
+        labels:
+          severity: warning
+          service: security
+        annotations:
+          summary: "检测到异常登录尝试"
+          description: "5分钟内失败登录尝试次数为 {{ $value }}"
+          runbook_url: "https://wiki.company.com/runbooks/suspicious-login"
+
+      # API密钥泄露
+      - alert: PotentialAPIKeyLeak
+        expr: rate(api_key_unauthorized_access[5m]) > 5
+        for: 1m
+        labels:
+          severity: critical
+          service: security
+        annotations:
+          summary: "可能的API密钥泄露"
+          description: "检测到API密钥被未授权使用，5分钟内 {{ $value }} 次"
+          runbook_url: "https://wiki.company.com/runbooks/api-key-leak"
+
+      # SQL注入尝试
+      - alert: SQLInjectionAttempt
+        expr: increase(sql_injection_attempts_total[5m]) > 0
+        for: 0s
+        labels:
+          severity: critical
+          service: security
+        annotations:
+          summary: "检测到SQL注入尝试"
+          description: "发现SQL注入攻击尝试"
+          runbook_url: "https://wiki.company.com/runbooks/sql-injection"

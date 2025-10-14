@@ -9,7 +9,7 @@ Encapsulates league-related business logic and invariants.
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict[str, Any], List[Any], Optional
 from decimal import Decimal
 
 from ...core.exceptions import DomainError
@@ -44,7 +44,7 @@ class LeagueSeason:
     total_rounds: int = 38  # 标准联赛轮次
     current_round: int = 0
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """验证赛季信息"""
         if not self.season:
             raise DomainError("赛季名称不能为空")
@@ -95,7 +95,7 @@ class LeagueSeason:
             self.current_round = self.total_rounds
 
     def __str__(self) -> str:
-        return f"{self.season} - 第 {self.current_round}/{self.total_rounds} 轮"
+        return f"{self.season" - 第 {self.current_round}/{self.total_rounds} 轮"
 
 
 @dataclass
@@ -113,7 +113,7 @@ class LeagueSettings:
     extra_time: bool = False  # 是否加时
     penalty_shootout: bool = False  # 是否点球
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """验证设置"""
         if any(
             x < 0
@@ -161,26 +161,26 @@ class League:
     封装联赛的核心业务逻辑和不变性约束。
     """
 
-    id: Optional[int] = None
+    id: Optional[int] ] = None
     name: str = ""
-    short_name: Optional[str] = None
-    code: Optional[str] = None
+    short_name: Optional[str] ] = None
+    code: Optional[str] ] = None
     type: LeagueType = LeagueType.DOMESTIC_LEAGUE
     country: str = ""
     level: int = 1  # 联赛级别
     is_active: bool = True
-    founded_year: Optional[int] = None
-    website: Optional[str] = None
-    logo_url: Optional[str] = None
-    current_season: Optional[LeagueSeason] = None
-    settings: Optional[LeagueSettings] = None
+    founded_year: Optional[int] ] = None
+    website: Optional[str] ] = None
+    logo_url: Optional[str] ] = None
+    current_season: Optional[LeagueSeason] ] = None
+    settings: Optional[LeagueSettings] ] = None
     created_at: datetime = field(default_factory=datetime.utcnow)
     updated_at: datetime = field(default_factory=datetime.utcnow)
 
     # 领域事件
     _domain_events: List[Any] = field(default_factory=list, init=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """初始化后的验证"""
         if not self.name or len(self.name.strip()) == 0:
             raise DomainError("联赛名称不能为空")
@@ -212,7 +212,7 @@ class League:
         season: str,
         start_date: datetime,
         end_date: datetime,
-        total_rounds: Optional[int] = None,
+        total_rounds: Optional[int] ] = None,
     ) -> LeagueSeason:
         """开始新赛季"""
         if self.current_season and self.current_season.is_active:
@@ -233,10 +233,10 @@ class League:
 
     def update_info(
         self,
-        name: Optional[str] = None,
-        short_name: Optional[str] = None,
-        website: Optional[str] = None,
-        logo_url: Optional[str] = None,
+        name: Optional[str] ] = None,
+        short_name: Optional[str] ] = None,
+        website: Optional[str] ] = None,
+        logo_url: Optional[str] ] = None,
     ) -> None:
         """更新联赛信息"""
         if name:
@@ -252,10 +252,10 @@ class League:
 
     def update_settings(
         self,
-        points_for_win: Optional[int] = None,
-        points_for_draw: Optional[int] = None,
-        points_for_loss: Optional[int] = None,
-        max_foreign_players: Optional[int] = None,
+        points_for_win: Optional[int] ] = None,
+        points_for_draw: Optional[int] ] = None,
+        points_for_loss: Optional[int] ] = None,
+        max_foreign_players: Optional[int] ] = None,
     ) -> None:
         """更新联赛设置"""
         if points_for_win is not None:
@@ -454,4 +454,4 @@ class League:
         return cls(current_season=current_season, settings=settings, **data)
 
     def __str__(self) -> str:
-        return f"{self.name} ({self.prestige}) - {self.country}"
+        return f"{self.name" ({self.prestige}) - {self.country}"
