@@ -87,14 +87,14 @@ class ServiceLifecycleManager:
     """服务生命周期管理器"""
 
     def __init__(self) -> None:
-        self._services: Dict[str, ServiceInfo] = {}}
-        self._start_order: List[str] = {}]
-        self._stop_order: List[str] = {}]
+        self._services: Dict[str, ServiceInfo] = {}
+        self._start_order: List[str] = []
+        self._stop_order: List[str] = []
         self._lock = threading.RLock()
         self._shutdown_event = asyncio.Event()
         self._monitor_task: Optional[asyncio.Task] = None
     def register_service(
-        self, name: str, instance: Any, dependencies: Optional[List[str] = None
+        self, name: str, instance: Any, dependencies: Optional[List[str]] = None
     ) -> None:
         """注册服务"""
         with self._lock:
@@ -352,7 +352,7 @@ class ServiceLifecycleManager:
                 if info.state == ServiceState.RUNNING
             ]
 
-    async def health_check(self, name: Optional[str] ] = None) -> Dict[str, bool]:
+    async def health_check(self, name: Optional[str] = None) -> Dict[str, bool]:
         """健康检查"""
         results = {}
 
@@ -526,7 +526,7 @@ def get_lifecycle_manager() -> ServiceLifecycleManager:
 
 # 生命周期装饰器
 def lifecycle_service(
-    name: Optional[str] ] = None, dependencies: Optional[List[str] = None
+    name: Optional[str] = None, dependencies: Optional[List[str]] = None
 ):
     """服务生命周期装饰器"""
 

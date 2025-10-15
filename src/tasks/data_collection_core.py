@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 数据收集核心
 Data Collection Core

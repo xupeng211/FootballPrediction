@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 告警管理器
 Alert Manager

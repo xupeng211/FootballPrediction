@@ -98,7 +98,7 @@ async def attl_cache(key: str) -> Optional[int]:
         return None
 
 
-async def amget_cache(keys: List[str]) -> List[Optional[Any]:
+async def amget_cache(keys: List[str]) -> List[Optional[Any]]:
     """异步批量获取缓存"""
     try:
         client = await get_redis_manager().get_async_client()
@@ -166,7 +166,7 @@ def ttl_cache(key: str) -> Optional[int]:
         return None
 
 
-def mget_cache(keys: List[str]) -> List[Optional[Any]:
+def mget_cache(keys: List[str]) -> List[Optional[Any]]:
     """同步批量获取缓存"""
     try:
         client = get_redis_manager().get_sync_client()

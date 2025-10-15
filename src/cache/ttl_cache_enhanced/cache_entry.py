@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 缓存条目定义
 Cache Entry Definition

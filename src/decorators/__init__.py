@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 装饰器模式实现
 Decorator Pattern Implementation

@@ -94,7 +94,7 @@ class TestHelpers:
 
     def test_safe_get(self):
         """测试安全获取字典值"""
-        _data = {
+        data = {
             "name": "John",
             "age": 30,
             "profile": {
@@ -242,18 +242,18 @@ class TestHelpers:
     def test_integration(self):
         """测试组合使用"""
         # 创建用户数据
-        user_data = {
+        userdata = {
             "name": "John Doe",
             "email": "john@example.com",
         }
 
         # 清理名称
-        clean_name = sanitize_string("  " + user_data["name"] + "  ")
+        clean_name = sanitize_string("  " + userdata["name"] + "  ")
         assert clean_name == "john doe"
 
         # 生成用户ID和哈希
         user_id = generate_uuid()
-        user_hash = generate_hash(user_data["email"])
+        user_hash = generate_hash(userdata["email"])
 
         # 创建时间戳
         created_at = format_timestamp()
@@ -262,7 +262,7 @@ class TestHelpers:
         user_record = {
             "id": user_id,
             "name": clean_name,
-            "email": safe_get(user_data, "email"),
+            "email": safe_get(userdata, "email"),
             "email_hash": user_hash,
             "created_at": created_at,
         }

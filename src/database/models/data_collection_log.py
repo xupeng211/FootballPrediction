@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 # mypy: ignore-errors
 from ..base import BaseModel
 from datetime import datetime

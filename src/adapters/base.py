@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 适配器模式基类
 Adapter Pattern Base Classes

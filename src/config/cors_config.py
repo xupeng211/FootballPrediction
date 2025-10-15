@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """CORS配置管理"""
 
 import os

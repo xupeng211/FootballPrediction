@@ -17,7 +17,7 @@ from src.adapters.base import Adapter
 class MockFootballDataAdapter(Adapter):
     """Mock足球数据适配器"""
 
-    def __init__(self, _config =None):
+    def __init__(self, config=None):
         self.mock_adaptee = Mock()
         self.mock_adaptee.request = AsyncMock(return_value={"status": "ok"})
         super().__init__(self.mock_adaptee, "MockFootballAdapter")

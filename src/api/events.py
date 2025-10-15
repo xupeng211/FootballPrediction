@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 事件系统API端点
 Event System API Endpoints
@@ -115,7 +116,7 @@ async def get_detailed_metrics() -> Dict[str, Any]:
     # 获取分析数据
     analytics_handler = _find_handler(AnalyticsEventHandler)
     if analytics_handler:
-        analyticsdata= analytics_handler.get_analytics_data()
+        analytics_handler.get_analytics_data()
         metrics["daily_predictions"] = analytics_data.get("daily_predictions", {})
         metrics["user_activity"] = analytics_data.get("user_activity", {})
         metrics["match_predictions"] = analytics_data.get("match_predictions", {})
@@ -136,7 +137,7 @@ async def get_recent_prediction_stats(
     if not analytics_handler:
         raise HTTPException(status_code=404, detail="分析处理器未找到")
 
-    analyticsdata= analytics_handler.get_analytics_data()
+    analytics_handler.get_analytics_data()
     daily_predictions = analytics_data.get("daily_predictions", {})
 
     # 过滤指定天数的数据
@@ -172,7 +173,7 @@ async def get_user_activity_stats(
     if not analytics_handler:
         raise HTTPException(status_code=404, detail="分析处理器未找到")
 
-    analyticsdata= analytics_handler.get_analytics_data()
+    analytics_handler.get_analytics_data()
     user_activity = analytics_data.get("user_activity", {})
 
     # 按预测数量排序

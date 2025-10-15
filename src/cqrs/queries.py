@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 查询定义
 Query Definitions

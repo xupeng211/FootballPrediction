@@ -10,7 +10,7 @@ class AdapterRegistry:
     """适配器注册表"""
 
     def __init__(self):
-        self._registry: Dict[str, Dict[str, Any] = {}
+        self._registry: Dict[str, Dict[str, Any]] = {}
         self._instances: Dict[str, Any] = {}
 
     def register(self, name: str, adapter_class: Type[Any], **kwargs):

@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 装饰器工厂
 Decorator Factory
@@ -25,6 +26,8 @@ class DecoratorConfig:
     priority: int = 0
     parameters: Dict[str, Any] = field(default_factory=dict[str, Any])
     conditions: Optional[Dict[str, Any]] = None
+
+
 @dataclass
 class DecoratorChainConfig:
     """装饰器链配置"""
@@ -269,6 +272,7 @@ class DecoratorBuilder:
         self.component = component
         self.parameters: Dict[str, Any] = {}
         self.name: Optional[str] = None
+
     def with_name(self, name: str) -> "DecoratorBuilder":
         """设置装饰器名称"""
         self.name = name

@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """数据库相关的定义，用于替代connection_mod"""
 
 from enum import Enum

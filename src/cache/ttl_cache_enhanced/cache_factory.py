@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 缓存工厂类
 Cache Factory

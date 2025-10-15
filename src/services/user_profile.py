@@ -41,7 +41,7 @@ class UserProfileService(SimpleService):
 
     def __init__(self) -> None:
         super().__init__("UserProfileService")
-        self._user_profiles: Dict[str, UserProfile] = {}}
+        self._user_profiles: Dict[str, UserProfile] = {}
 
     async def _on_initialize(self) -> bool:
         """初始化服务"""

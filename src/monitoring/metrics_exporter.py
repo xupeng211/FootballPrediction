@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 监控指标导出器
 
@@ -361,7 +362,9 @@ class MetricsExporter:
                 task_name=task_name, failure_reason="test_failure"
             ).inc()
 
-    def update_table_row_counts(self, table_counts: Optional[Dict[str, Any]] = None) -> None:
+    def update_table_row_counts(
+        self, table_counts: Optional[Dict[str, Any]] = None
+    ) -> None:
         """
         更新数据表行数统计 - 兼容测试接口
 

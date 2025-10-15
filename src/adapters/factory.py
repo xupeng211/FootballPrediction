@@ -29,8 +29,8 @@ class AdapterConfig:
     adapter_type: str
     enabled: bool = True
     priority: int = 0
-    parameters: Dict[str, Any] = field(default_factory=dict[str, Any])
-    rate_limits: Optional[Dict[str, int] = None
+    parameters: Dict[str, Any] = field(default_factory=dict)
+    rate_limits: Optional[Dict[str, int]] = None
     cache_config: Optional[Dict[str, Any]] = None
     retry_config: Optional[Dict[str, Any]] = None
 @dataclass
@@ -47,7 +47,7 @@ class AdapterFactory:
     """适配器工厂，用于创建适配器实例"""
 
     def __init__(self):
-        self._adapter_types: Dict[str, Type[Any, Adapter] = {}
+        self._adapter_types: Dict[str, Type[Adapter]] = {}
         self._configs: Dict[str, AdapterConfig] = {}
         self._group_configs: Dict[str, AdapterGroupConfig] = {}
 

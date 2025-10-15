@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 特征实体定义
 
@@ -62,6 +63,7 @@ class TeamEntity:
     team_name: str
     league_id: int
     home_venue: Optional[str] = None
+
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典格式"""
         return {

@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 仓储模式实现
 Repository Pattern Implementation

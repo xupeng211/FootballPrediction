@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 联赛相关模型
 League Related Models

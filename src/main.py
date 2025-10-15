@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 足球预测系统 FastAPI 主应用
 
@@ -43,7 +44,7 @@ except ImportError:
     _rate_limit_exceeded_handler = None
     RateLimitExceeded = None
 
-from src.api.auth import router as auth_router
+# from src.api.auth import router as auth_router  # Temporarily disabled
 from src.api.health import router as health_router
 from src.api.schemas import RootResponse
 from src.config.openapi_config import setup_openapi

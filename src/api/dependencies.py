@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 API依赖注入
 API Dependencies
@@ -69,7 +70,9 @@ async def get_current_user(
         raise credentials_exception
 
 
-async def get_admin_user(current_user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
+async def get_admin_user(
+    current_user: Dict[str, Any] = Depends(get_current_user),
+) -> Dict[str, Any]:
     """
     获取管理员用户
 
@@ -126,7 +129,9 @@ async def verify_prediction_permission(
     return True
 
 
-async def rate_limit_check(current_user: Dict[str, Any] = Depends(get_current_user)) -> None:
+async def rate_limit_check(
+    current_user: Dict[str, Any] = Depends(get_current_user),
+) -> None:
     """
     速率限制检查
 

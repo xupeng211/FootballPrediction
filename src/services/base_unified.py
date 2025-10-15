@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 统一的基础服务类
 
@@ -171,7 +172,7 @@ class BaseService(ABC):
         getattr(self.logger, level)(message)
 
     def log_error(
-        self, operation: str, error: Exception, details: Optional[Dict[str, Any] ] = None
+        self, operation: str, error: Exception, details: Optional[Dict[str, Any]] = None
     ) -> None:
         """
         记录错误日志

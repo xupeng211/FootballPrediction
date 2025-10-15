@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 观察者模式模块
 Observer Pattern Module

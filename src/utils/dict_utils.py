@@ -1,10 +1,10 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 足球预测系统字典处理工具模块
 
 提供字典操作相关的工具函数。
 """
-
 
 
 class DictUtils:
@@ -22,7 +22,7 @@ class DictUtils:
         Returns:
             找到的值或默认值
         """
-        keys = path.split('.')
+        keys = path.split(".")
         current = data
 
         try:
@@ -44,7 +44,7 @@ class DictUtils:
             path: 嵌套路径，使用点分隔，如 'a.b.c'
             value: 要设置的值
         """
-        keys = path.split('.')
+        keys = path.split(".")
         current = data
 
         # 遍历到倒数第二级
@@ -57,7 +57,9 @@ class DictUtils:
         current[keys[-1]] = value
 
     @staticmethod
-    def merge(dict1: Dict[str, Any], dict2: Dict[str, Any], deep: bool = False) -> Dict[str, Any]:
+    def merge(
+        dict1: Dict[str, Any], dict2: Dict[str, Any], deep: bool = False
+    ) -> Dict[str, Any]:
         """合并两个字典
 
         Args:
@@ -174,6 +176,7 @@ class DictUtils:
     def deep_copy(d: Dict[str, Any]) -> Dict[str, Any]:
         """深度复制字典"""
         import copy
+
         return copy.deepcopy(d)
 
     @staticmethod

@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, ClassVar
 """
 足球预测系统配置管理模块
 
@@ -205,7 +205,7 @@ class Settings(SettingsClass):
     if HAS_PYDANTIC:
         # Pydantic v2 configuration
         try:
-            model_config: ClassVar[Dict[str, Any] = {
+            model_config: ClassVar[Dict[str, Any]] = {
                 "env_file": ".env",
                 "env_file_encoding": "utf-8",
                 "case_sensitive": False,

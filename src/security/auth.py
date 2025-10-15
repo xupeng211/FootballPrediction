@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 """
 JWT认证和RBAC权限控制模块
 """
@@ -267,7 +267,7 @@ async def get_current_user(
     }
 
 
-def require_permissions(required_permissions: Union[str, List[str]):
+def require_permissions(required_permissions: Union[str, List[str]]) -> Callable:
     """权限装饰器工厂"""
     if isinstance(required_permissions, str):
         required_permissions = [required_permissions]
@@ -298,7 +298,7 @@ def require_permissions(required_permissions: Union[str, List[str]):
     return permission_checker
 
 
-def require_roles(required_roles: Union[str, List[str]):
+def require_roles(required_roles: Union[str, List[str]]) -> Callable:
     """角色装饰器工厂"""
     if isinstance(required_roles, str):
         required_roles = [required_roles]

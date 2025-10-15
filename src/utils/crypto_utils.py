@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 足球预测系统加密工具模块
 

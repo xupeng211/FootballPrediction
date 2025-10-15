@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 装饰器模式API端点
 Decorator Pattern API Endpoints

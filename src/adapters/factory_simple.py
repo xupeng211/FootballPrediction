@@ -10,7 +10,7 @@ class AdapterFactory:
     """适配器工厂"""
 
     def __init__(self):
-        self._adapters: Dict[str, Type[Any] = {}
+        self._adapters: Dict[str, Type[Any]] = {}
         self._instances: Dict[str, Any] = {}
 
     def register_adapter(self, name: str, adapter_class: Type[Any], **kwargs):

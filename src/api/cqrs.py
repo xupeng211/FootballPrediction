@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 CQRS API端点
 CQRS API Endpoints
@@ -63,8 +64,10 @@ class CommandResponse(BaseModel):
 
     success: bool
     message: str
-    data: Optional[Dict[str, Any] ] = None
-    errors: Optional[List[str] ] = None
+    data: Optional[Dict[str, Any]] = None
+    errors: Optional[List[str]] = None
+
+
 # 依赖注入
 def get_prediction_cqrs_service() -> None:
     """获取预测CQRS服务"""

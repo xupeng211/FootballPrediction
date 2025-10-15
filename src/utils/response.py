@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 API响应工具类
 
@@ -17,6 +18,8 @@ class APIResponseModel(BaseModel):
     message: str
     data: Optional[Any] = None
     code: Optional[str] = None
+
+
 class APIResponse:
     """API响应格式化工具"""
 

@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 比分收集器
 实时收集比赛比分和事件

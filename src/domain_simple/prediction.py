@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 预测领域模型
 """

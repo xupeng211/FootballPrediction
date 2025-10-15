@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 适配器注册表
 Adapter Registry
@@ -35,6 +36,7 @@ class AdapterRegistry:
         self.health_check_interval: float = 60.0  # 秒
         self._health_check_task: Optional[asyncio.Task] = None
         self._metrics_collector: Optional[Dict[str, Any]] = None
+
     async def initialize(self) -> None:
         """初始化注册表"""
         if self.status != RegistryStatus.INACTIVE:

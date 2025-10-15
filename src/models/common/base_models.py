@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 base_models
 基础模型类

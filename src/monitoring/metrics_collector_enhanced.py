@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 增强的指标收集器
 Enhanced Metrics Collector

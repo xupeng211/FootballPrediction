@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 预测API模型定义
 """
@@ -17,6 +18,8 @@ class MatchInfo(BaseModel):
     match_time: str
     match_status: str
     season: Optional[str] = None
+
+
 class PredictionData(BaseModel):
     """预测数据模式"""
 
@@ -31,6 +34,8 @@ class PredictionData(BaseModel):
     created_at: Optional[str] = None
     is_correct: Optional[bool] = None
     actual_result: Optional[str] = None
+
+
 class PredictionRequest(BaseModel):
     """预测请求模式"""
 
@@ -82,7 +87,9 @@ class UpcomingMatchesResponse(BaseModel):
 
     total_matches: int
     matches: List[MatchInfo]
-    predictions: Optional[List[PredictionData] ] = None
+    predictions: Optional[List[PredictionData]] = None
+
+
 class ModelStats(BaseModel):
     """模型统计模式"""
 
@@ -116,6 +123,8 @@ class HistoryPrediction(BaseModel):
     is_correct: Optional[bool] = None
     actual_result: Optional[str] = None
     verified_at: Optional[str] = None
+
+
 class PredictionHistoryResponse(BaseModel):
     """预测历史响应模式"""
 

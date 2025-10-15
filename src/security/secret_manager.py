@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 生产环境密钥管理系统
 """
@@ -67,7 +68,7 @@ class FileSecretProvider(SecretProvider):
         """从文件加载密钥"""
         if os.path.exists(self.file_path):
             try:
-                with open(self.file_path, 'r') as f:
+                with open(self.file_path, "r") as f:
                     return json.load(f)
             except Exception as e:
                 logger.error(f"Failed to load secrets from {self.file_path}: {e}")
@@ -76,7 +77,7 @@ class FileSecretProvider(SecretProvider):
     def _save_secrets(self) -> bool:
         """保存密钥到文件"""
         try:
-            with open(self.file_path, 'w') as f:
+            with open(self.file_path, "w") as f:
                 json.dump(self._secrets, f, indent=2)
             # 设置文件权限（仅所有者可读写）
             os.chmod(self.file_path, 0o600)
@@ -109,8 +110,9 @@ class AWSSecretsManagerProvider(SecretProvider):
         try:
             import boto3
             from botocore.exceptions import ClientError
-            self.client = boto3.client('secretsmanager', region_name=region_name)
-            self.secret_name = secret_name or os.getenv('AWS_SECRET_NAME')
+
+            self.client = boto3.client("secretsmanager", region_name=region_name)
+            self.secret_name = secret_name or os.getenv("AWS_SECRET_NAME")
             self.ClientError = ClientError
         except ImportError:
             logger.error("boto3 not installed. Install with: pip install boto3")
@@ -123,7 +125,7 @@ class AWSSecretsManagerProvider(SecretProvider):
 
         try:
             response = self.client.get_secret_value(SecretId=self.secret_name)
-            secrets = json.loads(response['SecretString'])
+            secrets = json.loads(response["SecretString"])
             return secrets.get(key)
         except self.ClientError as e:
             logger.error(f"Failed to get secret {key} from AWS Secrets Manager: {e}")
@@ -148,19 +150,21 @@ class SecretManager:
     def __init__(self, provider: SecretProvider = None):
         if provider is None:
             # 根据环境自动选择提供者
-            env = os.getenv('ENVIRONMENT', 'development').lower()
-            if env == 'production':
+            env = os.getenv("ENVIRONMENT", "development").lower()
+            if env == "production":
                 # 生产环境优先使用AWS Secrets Manager
                 self.provider = AWSSecretsManagerProvider()
-                if not hasattr(self.provider, 'client') or not self.provider.client:
-                    logger.warning("AWS Secrets Manager not available, falling back to environment variables")
+                if not hasattr(self.provider, "client") or not self.provider.client:
+                    logger.warning(
+                        "AWS Secrets Manager not available, falling back to environment variables"
+                    )
                     self.provider = EnvironmentSecretProvider()
-            elif env == 'staging':
+            elif env == "staging":
                 # 测试环境使用环境变量
                 self.provider = EnvironmentSecretProvider()
             else:
                 # 开发环境使用文件（如果存在）
-                if os.path.exists('.secrets.json'):
+                if os.path.exists(".secrets.json"):
                     self.provider = FileSecretProvider()
                 else:
                     self.provider = EnvironmentSecretProvider()
@@ -184,37 +188,44 @@ class SecretManager:
 
     def get_database_url(self) -> str:
         """获取数据库连接URL"""
-        return self.get_secret('DATABASE_URL', 'sqlite:///./data/football_prediction.db')
+        return self.get_secret(
+            "DATABASE_URL", "sqlite:///./data/football_prediction.db"
+        )
 
     def get_redis_url(self) -> str:
         """获取Redis连接URL"""
-        return self.get_secret('REDIS_URL', 'redis://localhost:6379')
+        return self.get_secret("REDIS_URL", "redis://localhost:6379")
 
     def get_jwt_secret(self) -> str:
         """获取JWT密钥"""
-        secret = self.get_secret('JWT_SECRET_KEY')
+        secret = self.get_secret("JWT_SECRET_KEY")
         if not secret:
             # 生成一个临时的密钥用于开发
             import secrets
+
             secret = secrets.token_urlsafe(32)
-            logger.warning("Generated temporary JWT secret key. Set JWT_SECRET_KEY in production!")
+            logger.warning(
+                "Generated temporary JWT secret key. Set JWT_SECRET_KEY in production!"
+            )
         return secret
 
     def get_api_key(self, service: str) -> Optional[str]:
         """获取第三方服务API密钥"""
-        return self.get_secret(f'{service.upper()}_API_KEY')
+        return self.get_secret(f"{service.upper()}_API_KEY")
 
     def get_ssl_cert_path(self) -> Optional[str]:
         """获取SSL证书路径"""
-        return self.get_secret('SSL_CERT_PATH')
+        return self.get_secret("SSL_CERT_PATH")
 
     def get_ssl_key_path(self) -> Optional[str]:
         """获取SSL私钥路径"""
-        return self.get_secret('SSL_KEY_PATH')
+        return self.get_secret("SSL_KEY_PATH")
 
 
 # 全局密钥管理器实例
 _secret_manager: Optional[SecretManager] = None
+
+
 def get_secret_manager() -> SecretManager:
     """获取全局密钥管理器实例"""
     global _secret_manager
@@ -229,13 +240,13 @@ def init_secrets():
 
     # 检查必要的密钥
     required_secrets = []
-    env = os.getenv('ENVIRONMENT', 'development').lower()
+    env = os.getenv("ENVIRONMENT", "development").lower()
 
-    if env == 'production':
+    if env == "production":
         required_secrets = [
-            'DATABASE_URL',
-            'REDIS_URL',
-            'JWT_SECRET_KEY',
+            "DATABASE_URL",
+            "REDIS_URL",
+            "JWT_SECRET_KEY",
         ]
 
     missing_secrets = []
@@ -245,7 +256,7 @@ def init_secrets():
 
     if missing_secrets:
         logger.error(f"Missing required secrets: {missing_secrets}")
-        if env == 'production':
+        if env == "production":
             raise RuntimeError(f"Missing required secrets: {missing_secrets}")
     else:
         logger.info("All required secrets are configured")

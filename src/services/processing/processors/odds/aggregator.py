@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 aggregator
 赔率数据聚合

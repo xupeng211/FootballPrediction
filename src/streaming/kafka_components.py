@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 Kafka组件模块 - 兼容性包装器
 

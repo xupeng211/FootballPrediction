@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 赔率领域模型
 """
@@ -102,6 +103,7 @@ class Odds:
         self.created_at = datetime.now()
         self.updated_at = datetime.now()
         self.last_movement: Optional[datetime] = None
+
     def update_odds(
         self,
         home_odds: Optional[float] = None,

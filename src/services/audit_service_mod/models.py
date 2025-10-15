@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 审计服务模型（兼容版本）
 Audit Service Models (Compatibility Version)
@@ -42,7 +43,8 @@ class AuditEvent:
     resource_id: Optional[str]
     message: str
     timestamp: datetime
-    metadata: Optional[Dict[str, Any] ] = None
+    metadata: Optional[Dict[str, Any]] = None
+
     def __post_init__(self) -> None:
         if self.metadata is None:
-            self.metadata= {}
+            self.metadata = {}

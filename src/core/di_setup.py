@@ -23,14 +23,14 @@ logger = logging.getLogger(__name__)
 class DISetup:
     """依赖注入设置类"""
 
-    def __init__(self, profile: Optional[str] ] = None) -> None:
+    def __init__(self, profile: Optional[str] = None) -> None:
         self.profile = profile or os.getenv("APP_PROFILE", "development")
         self.container: Optional[DIContainer] = None
         self.lifecycle_manager: Optional[ServiceLifecycleManager] = None
     def initialize(
         self,
-        config_file: Optional[str] ] = None,
-        auto_scan_modules: Optional[list] ] = None,
+        config_file: Optional[str] = None,
+        auto_scan_modules: Optional[list] = None,
     ) -> DIContainer:
         """初始化依赖注入"""
         logger.info(f"初始化依赖注入，配置文件: {config_file}, 环境: {self.profile}")
@@ -135,9 +135,9 @@ def get_di_setup() -> DISetup:
 
 
 def configure_di(
-    config_file: Optional[str] ] = None,
-    profile: Optional[str] ] = None,
-    auto_scan_modules: Optional[list] ] = None,
+    config_file: Optional[str] = None,
+    profile: Optional[str] = None,
+    auto_scan_modules: Optional[list] = None,
 ) -> DIContainer:
     """配置依赖注入（便捷函数）"""
     setup = DISetup(profile)
@@ -147,8 +147,8 @@ def configure_di(
 # 装饰器：自动注册服务
 def register_service(
     lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT,
-    interface: Optional[type] ] = None,
-    name: Optional[str] ] = None,
+    interface: Optional[type] = None,
+    name: Optional[str] = None,
 ):
     """自动注册服务装饰器"""
 

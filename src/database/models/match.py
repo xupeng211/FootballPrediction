@@ -91,36 +91,36 @@ class Match(BaseModel):
     )
 
     # 比分信息
-    home_score: Mapped[Optional[int] = mapped_column(
+    home_score: Mapped[Optional[int]] = mapped_column(
         Integer, nullable=True, comment="主队比分"
     )
 
-    away_score: Mapped[Optional[int] = mapped_column(
+    away_score: Mapped[Optional[int]] = mapped_column(
         Integer, nullable=True, comment="客队比分"
     )
 
-    home_ht_score: Mapped[Optional[int] = mapped_column(
+    home_ht_score: Mapped[Optional[int]] = mapped_column(
         Integer, nullable=True, comment="主队半场比分"
     )
 
-    away_ht_score: Mapped[Optional[int] = mapped_column(
+    away_ht_score: Mapped[Optional[int]] = mapped_column(
         Integer, nullable=True, comment="客队半场比分"
     )
 
-    minute: Mapped[Optional[int] = mapped_column(
+    minute: Mapped[Optional[int]] = mapped_column(
         Integer, nullable=True, comment="比赛进行时间（分钟）"
     )
 
     # 比赛详情
-    venue: Mapped[Optional[str] = mapped_column(
+    venue: Mapped[Optional[str]] = mapped_column(
         String(200), nullable=True, comment="比赛场地"
     )
 
-    referee: Mapped[Optional[str] = mapped_column(
+    referee: Mapped[Optional[str]] = mapped_column(
         String(100), nullable=True, comment="主裁判"
     )
 
-    weather: Mapped[Optional[str] = mapped_column(
+    weather: Mapped[Optional[str]] = mapped_column(
         String(100), nullable=True, comment="天气情况"
     )
 

@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 设计模式实现模块
 

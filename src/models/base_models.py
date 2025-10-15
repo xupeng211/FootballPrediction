@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 Base models
 """
@@ -14,6 +15,7 @@ class BaseModel(BaseModel):  # type: ignore
     id: Optional[int] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+
     class Config:
         from_attributes = True
 
@@ -31,6 +33,8 @@ class IdentifiableModel(BaseModel):
     id: int
     name: str
     description: Optional[str] = None
+
+
 class StatusModel(BaseModel):
     """Status base model"""
 

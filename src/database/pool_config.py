@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 数据库连接池配置优化
 """
@@ -23,6 +24,7 @@ class DatabasePoolConfig:
     def __init__(self):
         self.settings = get_settings()
         self._engine: Optional[AsyncEngine] = None
+
     def get_pool_config(self) -> Dict[str, Any]:
         """获取优化的连接池配置"""
         # 基于系统资源动态调整
@@ -66,12 +68,11 @@ class DatabasePoolConfig:
                 "创建数据库引擎",
                 pool_size=pool_config["pool_size"],
                 max_overflow=pool_config["max_overflow"],
-                pool_timeout=pool_config["pool_timeout"]
+                pool_timeout=pool_config["pool_timeout"],
             )
 
             self._engine = create_async_engine(
-                self.settings.database_url,
-                **pool_config
+                self.settings.database_url, **pool_config
             )
 
             # 注册事件监听器
@@ -96,7 +97,7 @@ class DatabasePoolConfig:
                 "连接从池中取出",
                 size=pool_status.size,
                 checked_out=pool_status.checkedout,
-                overflow=pool_status.overflow
+                overflow=pool_status.overflow,
             )
 
         @event.listens_for(self._engine.sync_engine, "checkin")
@@ -105,13 +106,17 @@ class DatabasePoolConfig:
             logger.debug("连接已返回池中")
 
         @event.listens_for(Engine, "before_execute")
-        def receive_before_execute(conn, clauseelement, multiparams, params, execution_options):
+        def receive_before_execute(
+            conn, clauseelement, multiparams, params, execution_options
+        ):
             """SQL执行前的回调"""
             if execution_options.get("log_query", False):
                 logger.info("执行SQL", sql=str(clauseelement))
 
         @event.listens_for(Engine, "after_execute")
-        def receive_after_execute(conn, clauseelement, multiparams, params, result, execution_options):
+        def receive_after_execute(
+            conn, clauseelement, multiparams, params, result, execution_options
+        ):
             """SQL执行后的回调"""
             if execution_options.get("log_query", False):
                 logger.info("SQL执行完成", rows=result.rowcount)
@@ -134,18 +139,22 @@ class DatabasePoolConfig:
                     size=status.size,
                     checked_out=status.checkedout,
                     overflow=status.overflow,
-                    checked_in=status.checkedin
+                    checked_in=status.checkedin,
                 )
 
                 # 检查连接池使用率
-                usage_rate = status.checkedout / (status.size + status.overflow) if (status.size + status.overflow) > 0 else 0
+                usage_rate = (
+                    status.checkedout / (status.size + status.overflow)
+                    if (status.size + status.overflow) > 0
+                    else 0
+                )
 
                 if usage_rate > 0.8:
                     logger.warning(
                         "连接池使用率过高",
                         usage_rate=f"{usage_rate:.2%}",
                         checked_out=status.checkedout,
-                        total=status.size + status.overflow
+                        total=status.size + status.overflow,
                     )
 
                 # 等待下次检查
@@ -192,8 +201,8 @@ class AsyncpgPoolConfig:
             "server_settings": {
                 "application_name": "football_prediction",
                 "timezone": "UTC",
-                "jit": "of"  # 关闭JIT以提高简单查询性能
-            }
+                "jit": "of",  # 关闭JIT以提高简单查询性能
+            },
         }
 
     async def create_pool(self):
@@ -203,12 +212,14 @@ class AsyncpgPoolConfig:
         logger.info(
             "创建AsyncPG连接池",
             min_size=config["min_size"],
-            max_size=config["max_size"]
+            max_size=config["max_size"],
         )
 
         return await asyncpg.create_pool(
-            self.settings.database_url.replace("postgresql+asyncpg://", "postgresql://"),
-            **config
+            self.settings.database_url.replace(
+                "postgresql+asyncpg://", "postgresql://"
+            ),
+            **config,
         )
 
 
@@ -220,6 +231,7 @@ asyncpg_config = AsyncpgPoolConfig()
 # 连接池健康检查装饰器
 def with_connection_pool_health_check(func):
     """连接池健康检查装饰器"""
+
     async def wrapper(*args, **kwargs):
         # 在执行前检查连接池健康状态
         if pool_config._engine:
@@ -230,7 +242,7 @@ def with_connection_pool_health_check(func):
             if status.checkedout >= (status.size + status.overflow) * 0.9:
                 logger.warning(
                     "连接池即将满载",
-                    usage=f"{status.checkedout}/{status.size + status.overflow}"
+                    usage=f"{status.checkedout}/{status.size + status.overflow}",
                 )
 
         try:
@@ -252,7 +264,7 @@ class PoolStatsCollector:
             "successful_requests": 0,
             "failed_requests": 0,
             "average_checkout_time": 0,
-            "peak_connections": 0
+            "peak_connections": 0,
         }
 
     async def collect_stats(self):
@@ -264,15 +276,14 @@ class PoolStatsCollector:
         status = pool.status()
 
         self.stats["peak_connections"] = max(
-            self.stats["peak_connections"],
-            status.checkedout
+            self.stats["peak_connections"], status.checkedout
         )
 
         logger.info(
             "连接池统计",
             current_connections=status.checkedout,
             peak_connections=self.stats["peak_connections"],
-            pool_size=status.size
+            pool_size=status.size,
         )
 
 

@@ -1,0 +1,93 @@
+# Prometheus告警规则
+groups:
+  - name: football-prediction-alerts
+    rules:
+      # 应用可用性告警
+      - alert: ApplicationDown
+        expr: up{job="football-prediction"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Football Prediction应用已停止"
+          description: "应用 {{ $labels.instance }} 已停止响应超过1分钟"
+
+      # 高错误率告警
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "高错误率"
+          description: "错误率超过10% (当前值: {{ $value }})"
+
+      # 高响应时间告警
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "响应时间过高"
+          description: "95%分位响应时间超过1秒 (当前值: {{ $value }}秒)"
+
+      # CPU使用率告警
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU使用率过高"
+          description: "CPU使用率超过80% (当前值: {{ $value }}%)"
+
+      # 内存使用率告警
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "内存使用率过高"
+          description: "内存使用率超过85% (当前值: {{ $value }}%)"
+
+      # Redis连接数告警
+      - alert: RedisHighConnections
+        expr: redis_connected_clients > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis连接数过多"
+          description: "Redis连接数超过100 (当前值: {{ $value }})"
+
+      # 磁盘空间告警
+      - alert: DiskSpaceLow
+        expr: (1 - (node_filesystem_avail_bytes / node_filesystem_size_bytes)) * 100 > 90
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "磁盘空间不足"
+          description: "磁盘使用率超过90% (当前值: {{ $value }}%)"
+
+      # 数据库连接告警
+      - alert: DatabaseConnectionHigh
+        expr: pg_stat_activity_count > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "数据库连接数过多"
+          description: "PostgreSQL连接数超过80 (当前值: {{ $value }})"
+
+      # 预测准确率告警
+      - alert: PredictionAccuracyLow
+        expr: prediction_accuracy < 0.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "预测准确率过低"
+          description: "预测准确率低于50% (当前值: {{ $value }})"

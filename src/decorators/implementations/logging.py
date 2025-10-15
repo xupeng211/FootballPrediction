@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 日志装饰器实现
 Logging Decorator Implementation

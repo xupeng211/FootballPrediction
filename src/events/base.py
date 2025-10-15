@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 事件系统基础类
 Event System Base Classes

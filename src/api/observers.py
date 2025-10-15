@@ -184,7 +184,7 @@ async def record_prediction(
     strategy_name: str,
     response_time_ms: float,
     success: bool = True,
-    confidence: Optional[float] ] = None,
+    confidence: Optional[float] = None,
     background_tasks: BackgroundTasks = None,
 ) -> Dict[str, str]:
     """记录一个预测事件"""

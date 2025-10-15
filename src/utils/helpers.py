@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 Helper functions
 """
@@ -18,8 +19,10 @@ def generate_hash(data: str) -> str:
     return hashlib.sha256(data.encode()).hexdigest()
 
 
-def safe_get(data: Dict[str, Any], key: str, default: Any = None) -> Any:
+def safe_get(data: Optional[Dict[str, Any]], key: str, default: Any = None) -> Any:
     """Safely get value from Dict[str, Any]"""
+    if data is None:
+        return default
     return data.get(key, default)
 
 

@@ -138,7 +138,7 @@ class ContentAnalysisService(SimpleService):
 
     async def batch_analyze(self, contents: List[Content]) -> List[AnalysisResult]:
         """批量分析内容"""
-        results: List[AnalysisResult] = {}]
+        results: List[AnalysisResult] = []
         for content in contents:
             result = await self.analyze_content(content)
             if result:

@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 观察者管理器
 Observer Manager
@@ -369,6 +370,8 @@ class ObserverManager:
 
 # 全局实例
 _observer_manager: Optional[ObserverManager] = None
+
+
 def get_observer_manager() -> ObserverManager:
     """获取全局观察者管理器实例"""
     global _observer_manager

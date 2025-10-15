@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 简化的流配置实现
 """

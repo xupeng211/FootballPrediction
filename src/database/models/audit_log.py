@@ -201,7 +201,7 @@ class AuditLog(BaseModel):
 
         return min(base_score, 100)  # type: ignore
 
-    def to_dict(self, exclude_fields: Optional[set[Any] = None) -> Dict[str, Any]:
+    def to_dict(self, exclude_fields: Optional[set[str]] = None) -> Dict[str, Any]:
         """转换为字典格式"""
         return {
             "id": self.id,

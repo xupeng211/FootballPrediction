@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 # mypy: ignore-errors
 import sqlalchemy as sa
 

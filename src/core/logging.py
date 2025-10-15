@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 统一日志访问接口
 

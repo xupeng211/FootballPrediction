@@ -142,7 +142,7 @@ async def get_prediction(
 
 
 @router.post("/{match_id}/predict", response_model=PredictionResult, status_code=201)
-async def create_prediction(match_id: int, request: Optional[PredictionRequest] ] = None) -> Any:
+async def create_prediction(match_id: int, request: Optional[PredictionRequest] = None) -> Any:
     """
     实时生成比赛预测
 

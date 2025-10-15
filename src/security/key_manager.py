@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 密钥管理模块 - 桩实现
 
@@ -167,6 +168,8 @@ class KeyManager:
 
 # 全局实例
 _global_key_manager: Optional[KeyManager] = None
+
+
 def get_key_manager() -> KeyManager:
     """
     获取全局密钥管理器实例

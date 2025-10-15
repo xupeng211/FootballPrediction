@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 改进版特征获取API
 
@@ -24,6 +25,8 @@ router = APIRouter(prefix="/features", tags=["特征管理"])
 
 # 全局特征存储实例（惰性初始化，避免导入时报错）
 feature_store: Optional[FootballFeatureStore] = None
+
+
 def get_feature_store() -> Optional[FootballFeatureStore]:
     """获取（或初始化）特征存储实例。"""
     global feature_store
@@ -152,7 +155,9 @@ def build_response_data(
     if include_raw and features:
         response_data["raw_features"] = {
             "feature_count": len(features),
-            "feature_keys": list(features.keys()) if isinstance(features, Dict[str, Any]) else [],
+            "feature_keys": list(features.keys())
+            if isinstance(features, Dict[str, Any])
+            else [],
         }
 
     return response_data

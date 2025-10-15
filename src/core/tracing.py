@@ -223,14 +223,14 @@ def get_tracer(name: str = None) -> trace.Tracer:
 def trace_span(
     name: str = None,
     kind: trace.SpanKind = trace.SpanKind.INTERNAL,
-    attributes: Dict[str, types.AttributeValue = None
+    attributes: Dict[str, types.AttributeValue] = None
 ):
     """装饰器：创建追踪span"""
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
             tracer = get_tracer()
-            span_name = name or f"{func.__module__".{func.__name__}"
+            span_name = name or f"{func.__module__}.{func.__name__}"
 
             with tracer.start_as_current_span(span_name, kind=kind) as span:
                 # 添加属性
@@ -261,14 +261,14 @@ def trace_span(
 def trace_async_span(
     name: str = None,
     kind: trace.SpanKind = trace.SpanKind.INTERNAL,
-    attributes: Dict[str, types.AttributeValue = None
+    attributes: Dict[str, types.AttributeValue] = None
 ):
     """装饰器：创建异步追踪span"""
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
             tracer = get_tracer()
-            span_name = name or f"{func.__module__".{func.__name__}"
+            span_name = name or f"{func.__module__}.{func.__name__}"
 
             with tracer.start_as_current_span(span_name, kind=kind) as span:
                 # 添加属性
@@ -301,7 +301,7 @@ def trace_async_span(
 def trace_context(
     name: str,
     kind: trace.SpanKind = trace.SpanKind.INTERNAL,
-    attributes: Dict[str, types.AttributeValue = None
+    attributes: Dict[str, types.AttributeValue] = None
 ):
     """上下文管理器：创建追踪span"""
     tracer = get_tracer()
@@ -373,7 +373,7 @@ def trace_performance(operation_name: str = None):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            op_name = operation_name or f"{func.__module__".{func.__name__}"
+            op_name = operation_name or f"{func.__module__}.{func.__name__}"
             start_time = time.time()
 
             with trace_context(f"performance.{op_name}", attributes={

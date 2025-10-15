@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 sql_compatibility.py
 sql_compatibility

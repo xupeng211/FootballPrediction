@@ -13,7 +13,7 @@ from datetime import datetime
 from dataclasses import dataclass
 from enum import Enum
 
-from .base import Adapter, Adaptee, DataTransformer, AdapterStatus
+from .base import Adapter, AdapterStatus, Adaptee, Target
 from src.core.exceptions import AdapterError
 
 
@@ -136,7 +136,7 @@ class OptaDataAdaptee(FootballApiAdaptee):
         }
 
 
-class FootballDataTransformer(DataTransformer):
+class FootballDataTransformer:
     """足球数据转换器"""
 
     def __init__(self, source_format: str):
@@ -265,7 +265,7 @@ class FootballDataTransformer(DataTransformer):
 class FootballApiAdapter(Adapter):
     """足球API适配器基类"""
 
-    def __init__(self, adaptee: FootballApiAdaptee, transformer: DataTransformer):
+    def __init__(self, adaptee: FootballApiAdaptee, transformer: Optional['FootballDataTransformer'] = None):
         super().__init__(adaptee)
         self.transformer = transformer
 
@@ -367,12 +367,12 @@ class FootballApiAdapter(Adapter):
         endpoint = f"players?id={player_id}&season=2023"
         _data = await self.adaptee.get_data(endpoint)
 
-        if data.get("response"):
-            player_data = data["response"][0]
+        if _data.get("response"):
+            player_data = _data["response"][0]
             return await self.transformer.transform(player_data, target_type="player")  # type: ignore
         return None
 
-    async def get_standings(self, league_id: str, season: str) -> List[Dict[str, Any]:
+    async def get_standings(self, league_id: str, season: str) -> List[Dict[str, Any]]:
         """获取积分榜"""
         params = {"league": league_id, "season": season}
         endpoint = "standings"
@@ -462,7 +462,7 @@ class CompositeFootballAdapter(Adapter):
         self,
         date: Optional[datetime] = None,
         league_id: Optional[str] = None,
-    ) -> Dict[str, List[FootballMatch]:
+    ) -> Dict[str, List[FootballMatch]]:
         """从多个数据源聚合比赛数据"""
         results = {}
         tasks = []
@@ -580,7 +580,7 @@ class FootballDataAdapter:
             )
         return {"scorers": []}
 
-    async def batch_get_matches(self, match_ids: List[int]) -> List[Dict[str, Any]:
+    async def batch_get_matches(self, match_ids: List[int]) -> List[Dict[str, Any]]:
         """批量获取比赛"""
         results = []
         for match_id in match_ids:

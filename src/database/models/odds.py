@@ -81,28 +81,28 @@ class Odds(BaseModel):
     )
 
     # 1x2市场赔率
-    home_odds: Mapped[Optional[Decimal] = mapped_column(
+    home_odds: Mapped[Optional[Decimal]] = mapped_column(
         DECIMAL(10, 3), nullable=True, comment="主队胜赔率"
     )
 
-    draw_odds: Mapped[Optional[Decimal] = mapped_column(
+    draw_odds: Mapped[Optional[Decimal]] = mapped_column(
         DECIMAL(10, 3), nullable=True, comment="平局赔率"
     )
 
-    away_odds: Mapped[Optional[Decimal] = mapped_column(
+    away_odds: Mapped[Optional[Decimal]] = mapped_column(
         DECIMAL(10, 3), nullable=True, comment="客队胜赔率"
     )
 
     # 大小球市场赔率
-    over_odds: Mapped[Optional[Decimal] = mapped_column(
+    over_odds: Mapped[Optional[Decimal]] = mapped_column(
         DECIMAL(10, 3), nullable=True, comment="大球赔率"
     )
 
-    under_odds: Mapped[Optional[Decimal] = mapped_column(
+    under_odds: Mapped[Optional[Decimal]] = mapped_column(
         DECIMAL(10, 3), nullable=True, comment="小球赔率"
     )
 
-    line_value: Mapped[Optional[Decimal] = mapped_column(
+    line_value: Mapped[Optional[Decimal]] = mapped_column(
         DECIMAL(5, 2), nullable=True, comment="盘口数值"
     )
 
@@ -164,12 +164,12 @@ class Odds(BaseModel):
         """检查是否为亚洲让球市场"""
         return self.market_type == MarketType.ASIAN_HANDICAP
 
-    def get_implied_probabilities(self) -> Optional[Dict[str, float]:
+    def get_implied_probabilities(self) -> Optional[Dict[str, float]]:
         """
         计算隐含概率
 
         Returns:
-            Optional[Dict[str, float]: 各结果的隐含概率
+            Optional[Dict[str, float]]: 各结果的隐含概率
         """
         if self.is_1x2_market and all([self.home_odds, self.draw_odds, self.away_odds]):
             # 安全的类型转换，这里我们已经检查了all()，所以值不为None
@@ -201,7 +201,7 @@ class Odds(BaseModel):
 
         return None
 
-    def get_best_value_bet(self) -> Optional[Dict[str, Any]:
+    def get_best_value_bet(self) -> Optional[Dict[str, Any]]:
         """
         获取最佳价值投注建议
 

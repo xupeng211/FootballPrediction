@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 简化的领域模型模块
 

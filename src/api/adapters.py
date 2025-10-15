@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 适配器模式API端点
 Adapter Pattern API Endpoints
@@ -458,19 +459,6 @@ async def demo_adapter_comparison(
     对比不同API返回的数据格式。
     """
     # 模拟不同API的原始数据格式
-    api_footballdata= {
-        "fixture": {"id": 12345, "date": "2023-12-01T19:00:00+00:00"},
-        "teams": {"home": {"name": "Team A"}, "away": {"name": "Team B"}},
-        "goals": {"home": 2, "away": 1},
-    }
-
-    optadata= {
-        "match_id": "M12345",
-        "date": "2023-12-01 19:00",
-        "home_team": {"id": "111", "name": "Team A"},
-        "away_team": {"id": "222", "name": "Team B"},
-        "score": {"home": 2, "away": 1},
-    }
 
     # 统一后的数据格式
     unified_format = {

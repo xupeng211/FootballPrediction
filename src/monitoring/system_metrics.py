@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 系统指标收集器
 System Metrics Collector

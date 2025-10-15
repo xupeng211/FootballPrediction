@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 缓存配置
 Cache Configuration
@@ -15,7 +16,7 @@ class CacheConfig:
     default_ttl: int = 3600
 
     # 各类型数据的TTL配置
-    ttl_config: Optional[Dict[str, int] ] = None
+    ttl_config: Optional[Dict[str, int]] = None
     # 缓存大小限制
     max_size: int = 10000
 
@@ -28,7 +29,7 @@ class CacheConfig:
     def __post_init__(self) -> None:
         """初始化后处理"""
         if self.ttl_config is None:
-            self.ttlconfig= {
+            self.ttlconfig = {
                 "match_processing": 3600,  # 1小时
                 "odds_processing": 1800,  # 30分钟
                 "features_processing": 7200,  # 2小时

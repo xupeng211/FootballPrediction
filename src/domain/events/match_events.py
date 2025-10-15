@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 比赛领域事件
 Match Domain Events
@@ -14,7 +15,9 @@ from ..models.match import MatchScore, MatchResult
 class MatchStartedEvent(DomainEvent):
     """比赛开始事件"""
 
-    def __init__(self, match_id: int, home_team_id: int, away_team_id: int, **kwargs) -> None:
+    def __init__(
+        self, match_id: int, home_team_id: int, away_team_id: int, **kwargs
+    ) -> None:
         super().__init__(aggregate_id=match_id)
         self.match_id = match_id
         self.home_team_id = home_team_id

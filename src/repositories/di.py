@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 仓储依赖注入配置
 Repository Dependency Injection Configuration

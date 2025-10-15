@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 足球预测引擎核心模块
 Football Prediction Engine Core Module
@@ -47,7 +48,6 @@ async def get_prediction_engine() -> Optional[Any]:
     if _prediction_engine_instance is None:
         # 创建预测引擎实例
         from .prediction.config import PredictionConfig
-
 
         config = PredictionConfig()
         _prediction_engine_instance = PredictionEngine(config)

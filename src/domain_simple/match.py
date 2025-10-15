@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 比赛领域模型
 

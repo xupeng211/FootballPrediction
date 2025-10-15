@@ -28,6 +28,7 @@ class ServiceConfig:
     version: str = "1.0.0"
     enabled: bool = True
     config: Optional[Dict[str, Any]] = None
+
     def __post_init__(self):
         if self.config is None:
             self._config = {}
@@ -289,7 +290,9 @@ class DomainServiceFactory:
         self._repositories[name] = repository
 
     def create_service(
-        self, service_type: Type[Any, DomainService], config: Optional[ServiceConfig] = None
+        self,
+        service_type: Type[Any, DomainService],
+        config: Optional[ServiceConfig] = None,
     ) -> DomainService:
         """创建服务实例"""
         service = service_type(config)

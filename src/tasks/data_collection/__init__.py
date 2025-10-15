@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 数据收集任务模块
 Data Collection Tasks Module

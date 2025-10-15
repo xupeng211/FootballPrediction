@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 数据API端点（向后兼容）
 Data API Endpoints (Backward Compatible)
@@ -34,6 +35,8 @@ class LeagueInfo(BaseModel):
     country: str
     logo_url: Optional[str] = None
     season: Optional[str] = None
+
+
 class TeamInfo(BaseModel):
     """球队信息"""
 
@@ -43,6 +46,8 @@ class TeamInfo(BaseModel):
     logo_url: Optional[str] = None
     country: Optional[str] = None
     league_id: Optional[int] = None
+
+
 class MatchInfo(BaseModel):
     """比赛信息"""
 
@@ -57,6 +62,8 @@ class MatchInfo(BaseModel):
     status: str = Field(..., description="pending|live|finished|cancelled")
     home_score: Optional[int] = None
     away_score: Optional[int] = None
+
+
 class OddsInfo(BaseModel):
     """赔率信息"""
 
@@ -81,6 +88,8 @@ class MatchStatistics(BaseModel):
     shots_on_target_away: Optional[int] = None
     corners_home: Optional[int] = None
     corners_away: Optional[int] = None
+
+
 class TeamStatistics(BaseModel):
     """球队统计"""
 

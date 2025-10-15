@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 CQRS基础类
 CQRS Base Classes
@@ -42,6 +43,8 @@ class Command(BaseMessage, ABC):
         super().__init__(metadata)
         self.correlation_id: Optional[str] = None
         self.causation_id: Optional[str] = None
+
+
 class Query(BaseMessage, ABC):
     """查询基类
 

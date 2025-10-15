@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 认证相关API路由
 """

@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
+
 """
 Celery 应用配置
 

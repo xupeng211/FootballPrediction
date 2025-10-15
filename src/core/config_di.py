@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, Type
 """
 配置驱动的依赖注入
 Configuration-driven Dependency Injection
@@ -275,7 +275,7 @@ class ConfigurationBuilder:
     def add_service(
         self,
         name: str,
-        implementation: Optional[str] ] = None,
+        implementation: Optional[str] = None,
         lifetime: str = "transient",
         **kwargs,
     ) -> "ConfigurationBuilder":
