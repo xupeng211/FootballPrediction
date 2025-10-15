@@ -2,10 +2,10 @@
 预测API模块化测试
 """
 
-import pytest
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from unittest.mock import AsyncMock, Mock, patch
 
+import pytest
 from fastapi import HTTPException
 
 
@@ -13,14 +13,14 @@ def test_module_imports():
     """测试模块导入"""
     # 测试导入新模块
     from src.api.predictions_mod import (
-        router,
-        get_rate_limiter,
-        is_rate_limit_available,
-        get_match_prediction_handler,
-        predict_match_handler,
         batch_predict_matches_handler,
+        get_match_prediction_handler,
         get_match_prediction_history_handler,
+        get_rate_limiter,
         get_recent_predictions_handler,
+        is_rate_limit_available,
+        predict_match_handler,
+        router,
         verify_prediction_handler,
     )
 
@@ -78,7 +78,7 @@ async def test_get_match_prediction_handler():
     mock_match.home_team_id = 1
     mock_match.away_team_id = 2
     mock_match.league_id = 10
-    mock_match.match_time = datetime.now(timezone.utc)
+    mock_match.match_time = datetime.now(UTC)
     mock_match.match_status = MatchStatus.SCHEDULED
     mock_match.season = "2024-25"
 
@@ -92,7 +92,7 @@ async def test_get_match_prediction_handler():
     mock_prediction.away_win_probability = 0.2
     mock_prediction.predicted_result = "home"
     mock_prediction.confidence_score = 0.5
-    mock_prediction.created_at = datetime.now(timezone.utc)
+    mock_prediction.created_at = datetime.now(UTC)
     mock_prediction.is_correct = None
     mock_prediction.actual_result = None
 
@@ -237,10 +237,10 @@ async def test_get_match_prediction_history_handler():
     mock_prediction.away_win_probability = 0.2
     mock_prediction.predicted_result = "home"
     mock_prediction.confidence_score = 0.5
-    mock_prediction.created_at = datetime.now(timezone.utc)
+    mock_prediction.created_at = datetime.now(UTC)
     mock_prediction.is_correct = True
     mock_prediction.actual_result = "home"
-    mock_prediction.verified_at = datetime.now(timezone.utc)
+    mock_prediction.verified_at = datetime.now(UTC)
 
     # Mock数据库查询
     with patch("src.api.predictions_mod.history_handlers.select"):
@@ -285,11 +285,11 @@ async def test_get_recent_predictions_handler():
             self.model_name = "test_model"
             self.predicted_result = "home"
             self.confidence_score = 0.5
-            self.created_at = datetime.now(timezone.utc)
+            self.created_at = datetime.now(UTC)
             self.is_correct = True
             self.home_team_id = 1
             self.away_team_id = 2
-            self.match_time = datetime.now(timezone.utc)
+            self.match_time = datetime.now(UTC)
             self.match_status = "finished"
 
     # Mock数据库查询

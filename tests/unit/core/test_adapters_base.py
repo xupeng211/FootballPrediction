@@ -9,8 +9,10 @@ sys.path.insert(0, "src")
 适配器基类测试 - 简化版
 """
 
+from unittest.mock import AsyncMock, Mock
+
 import pytest
-from unittest.mock import Mock, AsyncMock
+
 from src.adapters.base import Adapter, AdapterStatus
 
 

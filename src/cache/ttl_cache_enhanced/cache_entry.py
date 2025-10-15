@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 缓存条目定义
@@ -23,7 +23,7 @@ class CacheEntry:
         self,
         key: str,
         value: Any,
-        ttl: Optional[float] = None,
+        ttl: float | None = None,
     ):
         """
         初始化缓存条目
@@ -61,7 +61,7 @@ class CacheEntry:
         self.last_access = time.time()
         return self.value
 
-    def update_ttl(self, ttl: Optional[float] = None) -> None:
+    def update_ttl(self, ttl: float | None = None) -> None:
         """
         更新过期时间
 
@@ -73,7 +73,7 @@ class CacheEntry:
         else:
             self.expires_at = None
 
-    def get_remaining_ttl(self) -> Optional[int]:
+    def get_remaining_ttl(self) -> int | None:
         """
         获取剩余TTL
 

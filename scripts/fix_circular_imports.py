@@ -7,6 +7,7 @@ Fix Circular Import Issues
 import os
 from pathlib import Path
 
+
 def fix_services_init():
     """修复 services/__init__.py"""
     print("🔧 修复 services/__init__.py 循环导入...")
@@ -22,6 +23,7 @@ __all__ = [
 """
         init_file.write_text(content)
         print("  ✅ services/__init__.py 已简化")
+
 
 def fix_src_init():
     """修复 src/__init__.py"""
@@ -50,6 +52,7 @@ if TYPE_CHECKING:
         init_file.write_text(content)
         print("  ✅ src/__init__.py 已更新")
 
+
 def test_import(module_path: str, item_name: str = None) -> bool:
     """测试导入"""
     try:
@@ -62,6 +65,7 @@ def test_import(module_path: str, item_name: str = None) -> bool:
         return result == 0
     except:
         return False
+
 
 def main():
     """主函数"""
@@ -97,6 +101,7 @@ def main():
     if success >= 2:
         print("\n📊 可以运行基础测试了！")
         print("尝试: pytest tests/unit/utils/test_dict_utils.py -v")
+
 
 if __name__ == "__main__":
     main()

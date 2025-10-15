@@ -6,13 +6,15 @@ Cache Decorators
 """
 
 import functools
-import json
 import hashlib
-from typing import Any, Callable, Optional, Union
+import json
 import time
+from collections.abc import Callable
+from typing import Any
 
 # 简单的内存缓存实现
 _memory_cache = {}
+
 
 def memory_cache(ttl: int = 3600, max_size: int = 1000):
     """
@@ -22,6 +24,7 @@ def memory_cache(ttl: int = 3600, max_size: int = 1000):
         ttl: 生存时间（秒）
         max_size: 最大缓存条目数
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -41,8 +44,9 @@ def memory_cache(ttl: int = 3600, max_size: int = 1000):
 
             # 如果缓存过大，删除最旧的条目
             if len(_memory_cache) >= max_size:
-                oldest_key = min(_memory_cache.keys(),
-                               key=lambda k: _memory_cache[k][1])
+                oldest_key = min(
+                    _memory_cache.keys(), key=lambda k: _memory_cache[k][1]
+                )
                 del _memory_cache[oldest_key]
 
             # 执行函数并缓存结果
@@ -52,41 +56,42 @@ def memory_cache(ttl: int = 3600, max_size: int = 1000):
             return result
 
         return wrapper
+
     return decorator
+
 
 def _generate_cache_key(func_name: str, args: tuple, kwargs: dict) -> str:
     """生成缓存键"""
     # 将参数序列化为字符串
-    key_data = {
-        'args': args,
-        'kwargs': sorted(kwargs.items())
-    }
+    key_data = {"args": args, "kwargs": sorted(kwargs.items())}
     key_str = json.dumps(key_data, sort_keys=True, default=str)
     # 使用MD5哈希生成固定长度的键
     hash_key = hashlib.md5(key_str.encode()).hexdigest()
     return f"{func_name}:{hash_key}"
 
+
 def _cleanup_expired_cache(ttl: int):
     """清理过期的缓存条目"""
     current_time = time.time()
     expired_keys = [
-        key for key, (_, timestamp) in _memory_cache.items()
+        key
+        for key, (_, timestamp) in _memory_cache.items()
         if current_time - timestamp >= ttl
     ]
     for key in expired_keys:
         del _memory_cache[key]
+
 
 def clear_cache():
     """清空所有缓存"""
     global _memory_cache
     _memory_cache.clear()
 
+
 def get_cache_info() -> dict:
     """获取缓存信息"""
-    return {
-        'size': len(_memory_cache),
-        'keys': list(_memory_cache.keys())
-    }
+    return {"size": len(_memory_cache), "keys": list(_memory_cache.keys())}
+
 
 # Redis缓存装饰器（简化版，不需要实际的Redis）
 def redis_cache(key_prefix: str = "", ttl: int = 3600):
@@ -97,27 +102,35 @@ def redis_cache(key_prefix: str = "", ttl: int = 3600):
         key_prefix: 键前缀
         ttl: 生存时间（秒）
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             # 这里使用内存缓存模拟Redis
             # 在生产环境中，应该连接真实的Redis
             return memory_cache(ttl=ttl)(func)(*args, **kwargs)
+
         return wrapper
+
     return decorator
+
 
 # 批量缓存装饰器
 def batch_cache(ttl: int = 3600):
     """
     批量操作缓存装饰器
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             # 对于批量操作，缓存整个结果
             return memory_cache(ttl=ttl)(func)(*args, **kwargs)
+
         return wrapper
+
     return decorator
+
 
 # 缓存失效装饰器
 def cache_invalidate(pattern: str = ""):
@@ -128,6 +141,7 @@ def cache_invalidate(pattern: str = ""):
     Args:
         pattern: 要清除的缓存键模式
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -135,16 +149,16 @@ def cache_invalidate(pattern: str = ""):
 
             # 清除匹配的缓存
             if pattern:
-                keys_to_delete = [
-                    key for key in _memory_cache.keys()
-                    if pattern in key
-                ]
+                keys_to_delete = [key for key in _memory_cache.keys() if pattern in key]
                 for key in keys_to_delete:
                     del _memory_cache[key]
 
             return result
+
         return wrapper
+
     return decorator
+
 
 # 条件缓存装饰器
 def conditional_cache(condition: Callable[[Any], bool], ttl: int = 3600):
@@ -156,6 +170,7 @@ def conditional_cache(condition: Callable[[Any], bool], ttl: int = 3600):
         condition: 判断函数，接收结果，返回是否缓存
         ttl: 生存时间
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -166,8 +181,11 @@ def conditional_cache(condition: Callable[[Any], bool], ttl: int = 3600):
                 _memory_cache[cache_key] = (result, time.time())
 
             return result
+
         return wrapper
+
     return decorator
+
 
 # 示例使用
 if __name__ == "__main__":

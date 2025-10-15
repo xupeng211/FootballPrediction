@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 改进的赔率收集器（向后兼容）
 Improved Odds Collector (Backward Compatible)
@@ -10,12 +8,12 @@ Provides backward compatible exports for the modular odds collector.
 """
 
 from .odds import (  # type: ignore
+    OddsAnalyzer,
     # 重新导出主要类和函数
     OddsCollector,
     OddsCollectorManager,
-    OddsSourceManager,
     OddsProcessor,
-    OddsAnalyzer,
+    OddsSourceManager,
     OddsStorage,
     get_odds_manager,
 )

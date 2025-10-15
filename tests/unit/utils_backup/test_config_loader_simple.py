@@ -3,9 +3,10 @@
 专注于测试存在性而非复杂功能
 """
 
-import pytest
-from pathlib import Path
 import sys
+from pathlib import Path
+
+import pytest
 
 # 模块路径
 MODULE_PATH = Path("src") / "config/loader.py"
@@ -21,7 +22,7 @@ class TestTestConfigLoader:
     def test_module_has_content(self):
         """测试模块有内容"""
         if MODULE_PATH.exists():
-            with open(MODULE_PATH, "r", encoding="utf-8") as f:
+            with open(MODULE_PATH, encoding="utf-8") as f:
                 content = f.read()
                 assert len(content) > 10, "Module appears to be empty"
 
@@ -30,7 +31,7 @@ class TestTestConfigLoader:
         if MODULE_PATH.exists():
             import ast
 
-            with open(MODULE_PATH, "r", encoding="utf-8") as f:
+            with open(MODULE_PATH, encoding="utf-8") as f:
                 try:
                     ast.parse(f.read())
                 except SyntaxError as e:

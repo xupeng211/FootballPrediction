@@ -2,29 +2,30 @@
 增强指标收集器模块化测试
 """
 
-import pytest
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 
 def test_module_imports():
     """测试模块导入"""
     # 测试导入新模块
     from src.metrics.collector.enhanced import (
-        MetricPoint,
-        MetricSummary,
         AlertInfo,
-        MetricsAggregator,
-        PrometheusMetricsManager,
-        BusinessMetricsCollector,
-        SystemMetricsCollector,
         AlertManager,
+        BusinessMetricsCollector,
+        DefaultAlertHandlers,
         EnhancedMetricsCollector,
+        MetricPoint,
+        MetricsAggregator,
+        MetricSummary,
+        PrometheusMetricsManager,
+        SystemMetricsCollector,
         get_metrics_collector,
-        track_prediction_performance,
         track_cache_performance,
         track_database_performance,
-        DefaultAlertHandlers,
+        track_prediction_performance,
     )
 
     assert MetricPoint is not None
@@ -46,9 +47,9 @@ def test_module_imports():
 def test_metric_types():
     """测试指标数据类型"""
     from src.metrics.collector.enhanced import (
+        AlertInfo,
         MetricPoint,
         MetricSummary,
-        AlertInfo,
     )
 
     # 测试MetricPoint
@@ -86,8 +87,8 @@ def test_metric_types():
 def test_metrics_aggregator():
     """测试指标聚合器"""
     from src.metrics.collector.enhanced import (
-        MetricsAggregator,
         MetricPoint,
+        MetricsAggregator,
     )
 
     aggregator = MetricsAggregator(window_size=60)
@@ -115,8 +116,9 @@ def test_metrics_aggregator():
 
 def test_business_metrics_collector():
     """测试业务指标收集器"""
-    from src.metrics.collector.enhanced import BusinessMetricsCollector
     from unittest.mock import Mock
+
+    from src.metrics.collector.enhanced import BusinessMetricsCollector
 
     prometheus_manager = Mock()
     aggregator = Mock()
@@ -152,8 +154,9 @@ def test_business_metrics_collector():
 
 def test_system_metrics_collector():
     """测试系统指标收集器"""
-    from src.metrics.collector.enhanced import SystemMetricsCollector
     from unittest.mock import Mock
+
+    from src.metrics.collector.enhanced import SystemMetricsCollector
 
     prometheus_manager = Mock()
     aggregator = Mock()
@@ -307,8 +310,8 @@ def test_backward_compatibility():
     # 测试原始导入方式仍然有效
     from src.metrics.collector.enhanced import (
         EnhancedMetricsCollector,
-        MetricsAggregator,
         MetricPoint,
+        MetricsAggregator,
         get_metrics_collector,
         track_prediction_performance,
     )

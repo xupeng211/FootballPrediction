@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 模型预测服务 / Model Prediction Service
 
@@ -73,18 +71,18 @@ Provides real-time match prediction functionality, including:
 
 # 为了向后兼容性，从新的模块化结构中导入所有内容
 from .prediction import (
+    # 缓存
+    PredictionCache,
     # 数据模型
     PredictionResult,
     # 核心服务
     PredictionService,
-    # 缓存
-    PredictionCache,
+    cache_hit_ratio,
+    model_load_duration_seconds,
+    prediction_accuracy,
+    prediction_duration_seconds,
     # 监控指标
     predictions_total,
-    prediction_duration_seconds,
-    prediction_accuracy,
-    model_load_duration_seconds,
-    cache_hit_ratio,
 )
 
 # 重新导出以保持原始接口

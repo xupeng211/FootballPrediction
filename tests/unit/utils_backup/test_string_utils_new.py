@@ -6,6 +6,7 @@ Tests for String Utils
 """
 
 import pytest
+
 from src.utils.string_utils import StringUtils
 
 

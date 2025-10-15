@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 特征仓库使用示例
@@ -319,10 +319,10 @@ def example_feature_statistics(feature_store: FootballFeatureStore) -> None:
         try:
             _stats = feature_store.get_feature_statistics(fv_name)
             logger.info(f"\n🔍 特征视图: {fv_name}")
-            logger.info(f"  📈 特征数量: {stats.get(str('num_features'), 'N/A')}")
-            logger.info(f"  🏷️  实体: {', '.join(stats.get(str('entities'), []))}")
-            logger.info(f"  ⏰ TTL: {stats.get(str('ttl_days'), 'N/A')} 天")
-            logger.info(f"  🏷️  标签: {stats.get(str('tags'), {})}")
+            logger.info(f"  📈 特征数量: {stats.get('num_features', 'N/A')}")
+            logger.info(f"  🏷️  实体: {', '.join(stats.get('entities', []))}")
+            logger.info(f"  ⏰ TTL: {stats.get('ttl_days', 'N/A')} 天")
+            logger.info(f"  🏷️  标签: {stats.get('tags', {})}")
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.info(f"❌ 获取 {fv_name} 统计失败: {str(e)}")
 
@@ -400,7 +400,7 @@ async def run_complete_example() -> None:
         logger.error(f"Feature store example failed: {str(e)}", exc_info=True)
 
 
-def example_integration_with_ml_pipeline() -> Dict[str, Any]:
+def example_integration_with_ml_pipeline() -> dict[str, Any]:
     """
     示例：与机器学习流水线集成
 

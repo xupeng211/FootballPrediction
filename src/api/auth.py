@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 认证相关API路由
@@ -11,12 +11,11 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from src.api.deps import get_db
-from src.domain.user import Token, UserCreate, UserLogin, UserResponse
+from src.domain.user import Token, UserCreate, UserResponse
 from src.security.auth import (
-    Role,
     get_auth_manager,
-    get_user_permissions,
     get_current_user,
+    get_user_permissions,
 )
 from src.services.user_service import UserService
 
@@ -170,7 +169,7 @@ async def refresh_token(
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: dict[str, Any] = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> Any:
     """获取当前用户信息"""
@@ -186,7 +185,7 @@ async def get_current_user_info(
 
 @router.post("/logout")
 async def logout(
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: dict[str, Any] = Depends(get_current_user),
 ) -> Any:
     """用户登出"""
     # 这里可以实现token黑名单机制
@@ -198,7 +197,7 @@ async def logout(
 async def change_password(
     current_password: str,
     new_password: str,
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: dict[str, Any] = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> Any:
     """修改密码"""

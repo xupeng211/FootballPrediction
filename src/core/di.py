@@ -1,4 +1,6 @@
-from typing import Any, Dict, List, Optional, Union, Callable, Type, TypeVar, Generic
+from collections.abc import Callable
+from typing import Any, Generic, TypeVar
+
 """
 依赖注入容器
 Dependency Injection Container
@@ -6,16 +8,19 @@ Dependency Injection Container
 提供轻量级的依赖注入实现。
 Provides a lightweight dependency injection implementation.
 """
-from enum import Enum
 import inspect
+import logging
 from dataclasses import dataclass
 from datetime import datetime
-import logging
+from enum import Enum
+
 
 # 避免循环导入，在这里定义异常
 class DependencyInjectionError(Exception):
     """依赖注入错误"""
+
     pass
+
 
 T = TypeVar("T")
 logger = logging.getLogger(__name__)
@@ -33,12 +38,13 @@ class ServiceLifetime(Enum):
 class ServiceDescriptor:
     """服务描述符"""
 
-    interface: Type[Any]
-    implementation: Type[Any]
+    interface: type[Any]
+    implementation: type[Any]
     lifetime: ServiceLifetime
-    factory: Optional[Callable] = None
-    instance: Optional[Any] = None
-    dependencies: Optional[List[Type[Any]]] = None
+    factory: Callable | None = None
+    instance: Any | None = None
+    dependencies: list[type[Any]] | None = None
+
     def __post_init__(self) -> None:
         if self.dependencies is None:
             self.dependencies = []
@@ -49,18 +55,18 @@ class DIContainer(Generic[T]):
 
     def __init__(self, name: str = "default") -> None:
         self.name = name
-        self._services: Dict[Type[Any], ServiceDescriptor] = {}
-        self._singletons: Dict[Type[Any], Any] = {}
-        self._scoped_instances: Dict[str, Dict[Type[Any], Any]] = {}
-        self._current_scope: Optional[str] = None
-        self._building: List[Type[Any]] = []  # 用于检测循环依赖
+        self._services: dict[type[Any], ServiceDescriptor] = {}
+        self._singletons: dict[type[Any], Any] = {}
+        self._scoped_instances: dict[str, dict[type[Any], Any]] = {}
+        self._current_scope: str | None = None
+        self._building: list[type[Any]] = []  # 用于检测循环依赖
 
     def register_singleton(
         self,
-        interface: Type[T],
-        implementation: Optional[Type[T]] = None,
-        instance: Optional[T] = None,
-        factory: Optional[Callable[[], T] ] = None,
+        interface: type[T],
+        implementation: type[T] | None = None,
+        instance: T | None = None,
+        factory: Callable[[], T] | None = None,
     ) -> "DIContainer":
         """注册单例服务"""
         return self._register(
@@ -73,9 +79,9 @@ class DIContainer(Generic[T]):
 
     def register_scoped(
         self,
-        interface: Type[T],
-        implementation: Optional[Type[T]] = None,
-        factory: Optional[Callable[[], T] ] = None,
+        interface: type[T],
+        implementation: type[T] | None = None,
+        factory: Callable[[], T] | None = None,
     ) -> "DIContainer":
         """注册作用域服务"""
         return self._register(
@@ -87,9 +93,9 @@ class DIContainer(Generic[T]):
 
     def register_transient(
         self,
-        interface: Type[T],
-        implementation: Optional[Type[T]] = None,
-        factory: Optional[Callable[[], T] ] = None,
+        interface: type[T],
+        implementation: type[T] | None = None,
+        factory: Callable[[], T] | None = None,
     ) -> "DIContainer":
         """注册瞬时服务"""
         return self._register(
@@ -101,11 +107,11 @@ class DIContainer(Generic[T]):
 
     def _register(
         self,
-        interface: Type[Any],
-        implementation: Optional[Type[Any] ] = None,
+        interface: type[Any],
+        implementation: type[Any] | None = None,
         lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT,
-        instance: Optional[Any] = None,
-        factory: Optional[Callable] = None,
+        instance: Any | None = None,
+        factory: Callable | None = None,
     ) -> "DIContainer":
         """内部注册方法"""
         if implementation is None and interface is not None:
@@ -138,7 +144,7 @@ class DIContainer(Generic[T]):
 
         return self
 
-    def resolve(self, interface: Type[T]) -> T:
+    def resolve(self, interface: type[T]) -> T:
         """解析服务"""
         if interface not in self._services:
             raise DependencyInjectionError(f"服务未注册: {interface.__name__}")
@@ -212,7 +218,7 @@ class DIContainer(Generic[T]):
 
         raise DependencyInjectionError(f"无法创建实例: {descriptor.interface.__name__}")
 
-    def _analyze_dependencies(self, cls: Type[Any]) -> List[Type[Any]]:
+    def _analyze_dependencies(self, cls: type[Any]) -> list[type[Any]]:
         """分析类的依赖"""
         dependencies = []
 
@@ -229,7 +235,7 @@ class DIContainer(Generic[T]):
 
         return dependencies
 
-    def _get_constructor_params(self, cls: Type[Any]) -> Dict[str, Any]:
+    def _get_constructor_params(self, cls: type[Any]) -> dict[str, Any]:
         """获取构造函数参数"""
         params = {}
         sig = inspect.signature(cls.__init__)
@@ -259,7 +265,7 @@ class DIContainer(Generic[T]):
 
         return params
 
-    def create_scope(self, scope_name: Optional[str] = None) -> "DIScope":
+    def create_scope(self, scope_name: str | None = None) -> "DIScope":
         """创建新的作用域"""
         if scope_name is None:
             scope_name = f"scope_{datetime.now().timestamp()}"
@@ -273,9 +279,7 @@ class DIContainer(Generic[T]):
             scope_instances = self._scoped_instances[scope_name]
             for instance in scope_instances.values():
                 # 如果实例有 cleanup 方法
-                if hasattr(instance, "cleanup") and callable(
-                    getattr(instance, "cleanup")
-                ):
+                if hasattr(instance, "cleanup") and callable(instance.cleanup):
                     try:
                         instance.cleanup()
                     except (ValueError, TypeError, AttributeError, KeyError) as e:
@@ -284,11 +288,11 @@ class DIContainer(Generic[T]):
             del self._scoped_instances[scope_name]
             logger.debug(f"清除作用域: {scope_name}")
 
-    def is_registered(self, interface: Type[Any]) -> bool:
+    def is_registered(self, interface: type[Any]) -> bool:
         """检查服务是否已注册"""
         return interface in self._services
 
-    def get_registered_services(self) -> List[Type[Any]]:
+    def get_registered_services(self) -> list[type[Any]]:
         """获取所有已注册的服务"""
         return list(self._services.keys())
 
@@ -324,14 +328,14 @@ class ServiceCollection:
     """服务集合，用于批量注册服务"""
 
     def __init__(self) -> None:
-        self._registrations: List[Callable[[DIContainer], None]] = []
+        self._registrations: list[Callable[[DIContainer], None]] = []
 
     def add_singleton(
         self,
-        interface: Type[T],
-        implementation: Optional[Type[T]] = None,
-        instance: Optional[T] = None,
-        factory: Optional[Callable[[], T] ] = None,
+        interface: type[T],
+        implementation: type[T] | None = None,
+        instance: T | None = None,
+        factory: Callable[[], T] | None = None,
     ) -> "ServiceCollection":
         """添加单例服务"""
         self._registrations.append(
@@ -343,9 +347,9 @@ class ServiceCollection:
 
     def add_scoped(
         self,
-        interface: Type[T],
-        implementation: Optional[Type[T]] = None,
-        factory: Optional[Callable[[], T] ] = None,
+        interface: type[T],
+        implementation: type[T] | None = None,
+        factory: Callable[[], T] | None = None,
     ) -> "ServiceCollection":
         """添加作用域服务"""
         self._registrations.append(
@@ -357,9 +361,9 @@ class ServiceCollection:
 
     def add_transient(
         self,
-        interface: Type[T],
-        implementation: Optional[Type[T]] = None,
-        factory: Optional[Callable[[], T] ] = None,
+        interface: type[T],
+        implementation: type[T] | None = None,
+        factory: Callable[[], T] | None = None,
     ) -> "ServiceCollection":
         """添加瞬时服务"""
         self._registrations.append(
@@ -380,7 +384,9 @@ class ServiceCollection:
 
 
 # 全局容器实例
-_default_container: Optional[DIContainer] = None
+_default_container: DIContainer | None = None
+
+
 def get_default_container() -> DIContainer:
     """获取默认容器"""
     global _default_container
@@ -404,13 +410,13 @@ def configure_services(
     return container
 
 
-def resolve(service_type: Type[T]) -> T:
+def resolve(service_type: type[T]) -> T:
     """从默认容器解析服务"""
     return get_default_container().resolve(service_type)
 
 
 def inject(
-    service_type: Type[T], container: Optional[DIContainer] = None
+    service_type: type[T], container: DIContainer | None = None
 ) -> Callable[[Callable], Callable]:
     """依赖注入装饰器"""
 

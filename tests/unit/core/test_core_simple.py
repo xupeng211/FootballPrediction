@@ -1,7 +1,9 @@
 """核心模块简单测试"""
 
+from unittest.mock import AsyncMock, Mock
+
 import pytest
-from unittest.mock import Mock, AsyncMock
+
 from src.core.config import get_settings
 from src.core.exceptions import DependencyInjectionError
 
@@ -18,7 +20,6 @@ class TestCoreConfig:
         """测试设置包含必需的键"""
         settings = get_settings()
         # 测试是否有常见的配置键
-        common_keys = ["ENVIRONMENT", "DEBUG"]
         # 至少应该有一个配置键
         assert len(settings) >= 0
 
@@ -43,15 +44,17 @@ class TestCoreLogger:
     def test_logger_import(self):
         """测试日志模块导入"""
         from src.core.logging import get_logger
+
         logger = get_logger("test")
         assert logger is not None
 
     def test_logger_name(self):
         """测试日志器名称"""
         from src.core.logging import get_logger
+
         logger = get_logger("test_logger")
         # 检查日志器名称
-        assert hasattr(logger, 'name')
+        assert hasattr(logger, "name")
 
 
 class TestCoreDI:
@@ -60,12 +63,14 @@ class TestCoreDI:
     def test_di_container_import(self):
         """测试DI容器导入"""
         from src.core.di import DIContainer
+
         container = DIContainer()
         assert container is not None
 
     def test_di_container_name(self):
         """测试DI容器名称"""
         from src.core.di import DIContainer
+
         container = DIContainer("test_container")
         assert container.name == "test_container"
 

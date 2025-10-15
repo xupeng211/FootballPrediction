@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 简化的流配置实现
@@ -13,7 +13,7 @@ class StreamConfig:
     """流配置基类"""
 
     def __init__(
-        self, name: str, bootstrap_servers: List[str], topics: List[str], **kwargs
+        self, name: str, bootstrap_servers: list[str], topics: list[str], **kwargs
     ):
         if not name:
             raise ValueError("Name is required")
@@ -32,7 +32,7 @@ class StreamConfig:
         """验证配置是否有效"""
         return bool(self.name and self.bootstrap_servers)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         _config = {
             "name": self.name,
@@ -46,11 +46,11 @@ class StreamConfig:
         return config
 
     @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]) -> "StreamConfig":
+    def from_dict(cls, config_dict: dict[str, Any]) -> "StreamConfig":
         """从字典创建配置"""
         return cls(**config_dict)
 
-    def merge(self, override: Dict[str, Any]) -> "StreamConfig":
+    def merge(self, override: dict[str, Any]) -> "StreamConfig":
         """合并配置"""
         current = self.to_dict()
         current.update(override)
@@ -63,7 +63,7 @@ class StreamConfig:
         if not path.exists():
             raise FileNotFoundError(f"Config file not found: {file_path}")
 
-        with open(path, "r") as f:
+        with open(path) as f:
             if file_path.endswith(".json"):
                 config_dict = json.load(f)
             else:
@@ -80,7 +80,7 @@ class StreamConfig:
         return cls.from_dict(config_dict)
 
     @staticmethod
-    def _substitute_env_vars(config: Dict[str, Any]) -> Dict[str, Any]:
+    def _substitute_env_vars(config: dict[str, Any]) -> dict[str, Any]:
         """替换环境变量"""
         result = {}
         for key, value in config.items():
@@ -107,7 +107,7 @@ class KafkaConfig(StreamConfig):
 
     def __init__(
         self,
-        bootstrap_servers: List[str],
+        bootstrap_servers: list[str],
         port: int = 9092,
         protocol: str = "PLAINTEXT",
         **kwargs,
@@ -118,7 +118,7 @@ class KafkaConfig(StreamConfig):
         self.port = port
         self.protocol = protocol
 
-    def to_aiokafka_config(self) -> Dict[str, Any]:
+    def to_aiokafka_config(self) -> dict[str, Any]:
         """转换为aiokafka配置"""
         return {
             "bootstrap_servers": self.bootstrap_servers,
@@ -151,9 +151,9 @@ class ConsumerConfig(StreamConfig):
 
     def __init__(
         self,
-        bootstrap_servers: List[str],
+        bootstrap_servers: list[str],
         group_id: str,
-        topics: List[str],
+        topics: list[str],
         auto_offset_reset: str = "latest",
         enable_auto_commit: bool = True,
         auto_commit_interval_ms: int = 5000,
@@ -176,7 +176,7 @@ class ConsumerConfig(StreamConfig):
         self.enable_auto_commit = enable_auto_commit
         self.auto_commit_interval_ms = auto_commit_interval_ms
 
-    def to_aiokafka_config(self) -> Dict[str, Any]:
+    def to_aiokafka_config(self) -> dict[str, Any]:
         """转换为aiokafka消费者配置"""
         return {
             "bootstrap_servers": self.bootstrap_servers,
@@ -191,7 +191,7 @@ class ConsumerConfig(StreamConfig):
         }
 
     @staticmethod
-    def validate_with_rules(config: Dict[str, Any], rules: Dict[str, Any]) -> bool:
+    def validate_with_rules(config: dict[str, Any], rules: dict[str, Any]) -> bool:
         """使用规则验证配置"""
         for field, rule in rules.items():
             if rule.get("required") and field not in config:
@@ -233,12 +233,12 @@ class ProducerConfig(StreamConfig):
 
     def __init__(
         self,
-        bootstrap_servers: List[str],
+        bootstrap_servers: list[str],
         acks: int = 1,
         retries: int = 3,
         batch_size: int = 16384,
         linger_ms: int = 0,
-        compression_type: Optional[str] = None,
+        compression_type: str | None = None,
         **kwargs,
     ):
         super().__init__(
@@ -260,7 +260,7 @@ class ProducerConfig(StreamConfig):
         self.linger_ms = linger_ms
         self.compression_type = compression_type
 
-    def to_aiokafka_config(self) -> Dict[str, Any]:
+    def to_aiokafka_config(self) -> dict[str, Any]:
         """转换为aiokafka生产者配置"""
         return {
             "bootstrap_servers": self.bootstrap_servers,

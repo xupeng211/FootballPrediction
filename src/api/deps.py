@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 API依赖注入
@@ -6,10 +6,9 @@ API依赖注入
 
 
 from fastapi import Depends, HTTPException, status
-from sqlalchemy.orm import Session
 
 from src.database.session import SessionLocal
-from src.security.auth import get_auth_manager, get_current_user
+from src.security.auth import get_current_user
 
 
 def get_db() -> Generator:
@@ -23,8 +22,8 @@ def get_db() -> Generator:
 
 # 认证相关的依赖
 async def get_current_active_user(
-    current_user: Dict[str, Any] = Depends(get_current_user),
-) -> Dict[str, Any]:
+    current_user: dict[str, Any] = Depends(get_current_user),
+) -> dict[str, Any]:
     """获取当前活跃用户"""
     if not current_user.get("is_active", True):
         raise HTTPException(
@@ -34,8 +33,8 @@ async def get_current_active_user(
 
 
 async def get_current_admin_user(
-    current_user: Dict[str, Any] = Depends(get_current_active_user),
-) -> Dict[str, Any]:
+    current_user: dict[str, Any] = Depends(get_current_active_user),
+) -> dict[str, Any]:
     """获取当前管理员用户"""
     if "admin" not in current_user.get("roles", []):
         raise HTTPException(

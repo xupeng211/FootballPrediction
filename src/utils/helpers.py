@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 Helper functions
@@ -19,14 +19,14 @@ def generate_hash(data: str) -> str:
     return hashlib.sha256(data.encode()).hexdigest()
 
 
-def safe_get(data: Optional[Dict[str, Any]], key: str, default: Any = None) -> Any:
+def safe_get(data: dict[str, Any] | None, key: str, default: Any = None) -> Any:
     """Safely get value from Dict[str, Any]"""
     if data is None:
         return default
     return data.get(key, default)
 
 
-def format_timestamp(dt: Optional[datetime] = None) -> str:
+def format_timestamp(dt: datetime | None = None) -> str:
     """Format timestamp to ISO format"""
     if dt is None:
         dt = datetime.utcnow()

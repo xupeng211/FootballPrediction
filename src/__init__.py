@@ -9,9 +9,4 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     # Type hints only, no runtime imports
-    from . import services
-    from . import api
-    from . import core
-    from . import database
-    from . import cache
-    from . import adapters
+    pass

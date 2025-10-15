@@ -202,7 +202,7 @@ def ttl_cache(key: str) -> int:
     return get_redis_manager().ttl(key)
 
 
-def mget_cache(*keys: str) -> List[Optional[str]:
+def mget_cache(*keys: str) -> List[Optional[str]]:
     """批量获取缓存"""
     manager = get_redis_manager()
     return [manager.get(k) for k in keys]

@@ -5,13 +5,14 @@ Tests for Time Utils (Fixed Version)
 测试src.utils.time_utils模块的实际功能
 """
 
-import pytest
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from unittest.mock import patch
+
+import pytest
 
 # 测试导入
 try:
-    from src.utils.time_utils import TimeUtils, utc_now, parse_datetime
+    from src.utils.time_utils import TimeUtils, parse_datetime, utc_now
 
     TIME_UTILS_AVAILABLE = True
 except ImportError as e:
@@ -37,10 +38,10 @@ class TestTimeUtilsBasic:
         """测试：获取当前UTC时间"""
         utc_time = TimeUtils.now_utc()
         assert isinstance(utc_time, datetime)
-        assert utc_time.tzinfo == timezone.utc
+        assert utc_time.tzinfo == UTC
 
         # 应该是最近的时间（1秒内）
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         assert abs((utc_time - now).total_seconds()) < 1.0
 
     def test_timestamp_to_datetime(self):
@@ -52,11 +53,11 @@ class TestTimeUtilsBasic:
         assert dt.year == 2023
         assert dt.month == 1
         assert dt.day == 1
-        assert dt.tzinfo == timezone.utc
+        assert dt.tzinfo == UTC
 
     def test_datetime_to_timestamp(self):
         """测试：datetime转时间戳"""
-        dt = datetime(2023, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+        dt = datetime(2023, 1, 1, 0, 0, 0, tzinfo=UTC)
         timestamp = TimeUtils.datetime_to_timestamp(dt)
 
         assert isinstance(timestamp, float)
@@ -100,7 +101,7 @@ class TestTimeUtilsBasic:
     def test_roundtrip_conversion(self):
         """测试：往返转换"""
         # datetime -> timestamp -> datetime
-        original_dt = datetime(2023, 6, 15, 10, 30, 45, tzinfo=timezone.utc)
+        original_dt = datetime(2023, 6, 15, 10, 30, 45, tzinfo=UTC)
         timestamp = TimeUtils.datetime_to_timestamp(original_dt)
         converted_dt = TimeUtils.timestamp_to_datetime(timestamp)
 
@@ -108,7 +109,7 @@ class TestTimeUtilsBasic:
 
     def test_format_with_timezone(self):
         """测试：格式化带时区的时间"""
-        dt = datetime.now(timezone.utc)
+        dt = datetime.now(UTC)
         formatted = TimeUtils.format_datetime(dt)
         assert isinstance(formatted, str)
         assert len(formatted) == 19  # YYYY-MM-DD HH:MM:SS
@@ -126,7 +127,7 @@ class TestTimeUtilsEdgeCases:
         assert dt.year == 1970
         assert dt.month == 1
         assert dt.day == 1
-        assert dt.tzinfo == timezone.utc
+        assert dt.tzinfo == UTC
 
     def test_negative_timestamp(self):
         """测试：负时间戳（1970年前）"""
@@ -183,7 +184,7 @@ class TestBackwardCompatibility:
         """测试：utc_now函数"""
         utc_time = utc_now()
         assert isinstance(utc_time, datetime)
-        assert utc_time.tzinfo == timezone.utc
+        assert utc_time.tzinfo == UTC
 
     def test_utc_now_class_vs_function(self):
         """测试：类方法与函数一致性"""
@@ -255,7 +256,7 @@ class TestTimeUtilsPerformance:
 
     def test_performance_format(self):
         """测试：格式化性能"""
-        dt = datetime.now(timezone.utc)
+        dt = datetime.now(UTC)
         import time
 
         start_time = time.perf_counter()
@@ -296,7 +297,7 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if TIME_UTILS_AVAILABLE:
-        from src.utils.time_utils import TimeUtils, utc_now, parse_datetime
+        from src.utils.time_utils import TimeUtils, parse_datetime, utc_now
 
         assert TimeUtils is not None
         assert utc_now is not None

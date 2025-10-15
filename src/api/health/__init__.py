@@ -1,11 +1,10 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 Health check module
 """
 
-from fastapi import APIRouter
 import time
+
+from fastapi import APIRouter
 
 router = APIRouter(tags=["health"])
 

@@ -2,15 +2,16 @@
 
 from __future__ import annotations
 
-import pytest
+import itertools
 import json
 import os
-import tempfile
-from unittest.mock import Mock, patch, MagicMock, mock_open
-from pathlib import Path
-import itertools
-from collections import defaultdict, Counter
 import re
+import tempfile
+from collections import Counter, defaultdict
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, mock_open, patch
+
+import pytest
 
 
 class TestDeepNestingCoverage:
@@ -154,9 +155,9 @@ class TestDeepNestingCoverage:
     def test_conditional_logic_paths(self):
         """测试条件逻辑路径"""
         from src.utils.validators import (
-            validate_range,
-            validate_length,
             validate_choice,
+            validate_length,
+            validate_range,
         )
 
         # 测试边界条件
@@ -177,7 +178,7 @@ class TestDeepNestingCoverage:
 
     def test_exception_handling_paths(self):
         """测试异常处理路径"""
-        from src.utils.crypto_utils import hash_string, generate_uuid
+        from src.utils.crypto_utils import generate_uuid, hash_string
 
         # 测试各种输入类型
         inputs = [
@@ -213,10 +214,10 @@ class TestDeepNestingCoverage:
         """测试文件I/O边界情况"""
         from src.utils.file_utils import (
             ensure_dir,
-            get_file_size,
-            safe_filename,
             get_file_extension,
+            get_file_size,
             read_file_lines,
+            safe_filename,
         )
 
         # 测试目录创建
@@ -264,14 +265,15 @@ class TestDeepNestingCoverage:
 
     def test_time_utils_edge_cases(self):
         """测试时间工具边界情况"""
+        from datetime import datetime, timedelta
+
         from src.utils.time_utils import (
-            time_ago,
             duration_format,
             is_future,
             is_past,
             parse_datetime,
+            time_ago,
         )
-        from datetime import datetime, timedelta
 
         now = datetime.now()
 
@@ -336,12 +338,12 @@ class TestDeepNestingCoverage:
     def test_string_utils_complex_cases(self):
         """测试字符串工具复杂情况"""
         from src.utils.string_utils import (
-            slugify,
             camel_to_snake,
-            snake_to_camel,
-            pluralize,
-            truncate_words,
             clean_html,
+            pluralize,
+            slugify,
+            snake_to_camel,
+            truncate_words,
         )
 
         # 测试slugify的复杂输入
@@ -449,7 +451,7 @@ class TestDeepNestingCoverage:
 
     def test_collections_edge_cases(self):
         """测试集合类型的边界情况"""
-        from collections import defaultdict, Counter, deque, namedtuple
+        from collections import Counter, defaultdict, deque, namedtuple
 
         # 测试defaultdict的默认工厂
         dd_int = defaultdict(int)
@@ -678,7 +680,7 @@ class TestDeepNestingCoverage:
     def test_list_comprehensions_edge_cases(self):
         """测试列表推导式的边界情况"""
         # 空列表推导式
-        empty = [x for x in []]
+        empty = []
         assert empty == []
 
         # 嵌套推导式
@@ -702,7 +704,7 @@ class TestDeepNestingCoverage:
     def test_dict_comprehensions_edge_cases(self):
         """测试字典推导式的边界情况"""
         # 空字典推导式
-        empty = {k: v for k, v in []}
+        empty = {}
         assert empty == {}
 
         # 嵌套字典
@@ -798,7 +800,7 @@ class TestDeepNestingCoverage:
         def process_data(data):
             if isinstance(data, str):
                 return data.upper()
-            elif isinstance(data, (int, float)):
+            elif isinstance(data, int | float):
                 return str(data)
             elif isinstance(data, list):
                 return [process_data(item) for item in data]

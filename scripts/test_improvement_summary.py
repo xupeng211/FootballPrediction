@@ -3,8 +3,8 @@
 生成测试改进总结报告
 """
 
-import subprocess
 import re
+import subprocess
 
 
 def get_test_stats():

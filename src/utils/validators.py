@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 Data validators
@@ -26,8 +26,8 @@ def is_valid_url(url: str) -> bool:
 
 
 def validate_required_fields(
-    data: Dict[str, Any], required_fields: List[str]
-) -> List[str]:
+    data: dict[str, Any], required_fields: list[str]
+) -> list[str]:
     """Check if all required fields are present"""
     missing_fields = []
     for field in required_fields:
@@ -36,7 +36,7 @@ def validate_required_fields(
     return missing_fields
 
 
-def validate_data_types(data: Dict[str, Any], schema: Dict[str, type]) -> List[str]:
+def validate_data_types(data: dict[str, Any], schema: dict[str, type]) -> list[str]:
     """Validate data types against schema"""
     errors = []
     for field, expected_type in schema.items():

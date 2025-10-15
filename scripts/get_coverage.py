@@ -4,10 +4,10 @@
 Get Test Coverage
 """
 
-import subprocess
-import sys
 import re
+import subprocess
 from pathlib import Path
+
 
 def run_coverage_test():
     """运行覆盖率测试"""
@@ -17,9 +17,18 @@ def run_coverage_test():
 
     # 测试可用的模块
     modules_to_test = [
-        ("src.utils.dict_utils", "tests/unit/utils/test_dict_utils.py::TestDictUtils::test_deep_merge"),
-        ("src.utils.helpers", "tests/unit/utils/test_helpers.py::test_helper_functions"),
-        ("src.utils.string_utils", "tests/unit/utils/test_string_utils.py::TestStringUtils::test_string_operations"),
+        (
+            "src.utils.dict_utils",
+            "tests/unit/utils/test_dict_utils.py::TestDictUtils::test_deep_merge",
+        ),
+        (
+            "src.utils.helpers",
+            "tests/unit/utils/test_helpers.py::test_helper_functions",
+        ),
+        (
+            "src.utils.string_utils",
+            "tests/unit/utils/test_string_utils.py::TestStringUtils::test_string_operations",
+        ),
     ]
 
     total_coverage = 0
@@ -32,15 +41,17 @@ def run_coverage_test():
             # 运行单个测试
             result = subprocess.run(
                 [
-                    "python", "-m", "pytest",
+                    "python",
+                    "-m",
+                    "pytest",
                     test_path,
                     "--cov=" + module,
                     "--cov-report=term-missing",
-                    "-q"
+                    "-q",
                 ],
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
             # 解析输出
@@ -49,10 +60,10 @@ def run_coverage_test():
                 output += result.stderr
 
             # 查找覆盖率行
-            for line in output.split('\n'):
-                if module in line and '%' in line:
+            for line in output.split("\n"):
+                if module in line and "%" in line:
                     # 解析覆盖率
-                    match = re.search(r'(\d+)%', line)
+                    match = re.search(r"(\d+)%", line)
                     if match:
                         coverage = int(match.group(1))
                         total_coverage += coverage
@@ -95,6 +106,7 @@ def run_coverage_test():
     else:
         print("\n⚠️ 没有成功获取任何覆盖率数据")
 
+
 def check_project_coverage():
     """检查项目整体覆盖率"""
     print("\n" + "=" * 60)
@@ -105,18 +117,12 @@ def check_project_coverage():
     src_files = list(Path("src").rglob("*.py"))
     test_files = list(Path("tests").rglob("*.py"))
 
-    print(f"\n📁 项目文件统计:")
+    print("\n📁 项目文件统计:")
     print(f"   源代码文件: {len(src_files)}")
     print(f"   测试文件: {len(test_files)}")
 
     # 检查关键目录
-    key_dirs = [
-        "src/utils",
-        "src/core",
-        "src/api",
-        "src/domain",
-        "src/services"
-    ]
+    key_dirs = ["src/utils", "src/core", "src/api", "src/domain", "src/services"]
 
     print("\n📂 关键目录文件数:")
     for dir_path in key_dirs:
@@ -136,13 +142,13 @@ def check_project_coverage():
             ["python", "-m", "pytest", "--collect-only", "-q"],
             capture_output=True,
             text=True,
-            timeout=30
+            timeout=30,
         )
 
         if result.returncode == 0:
             # 统计测试数量
             output = result.stdout
-            match = re.search(r'collected (\d+) items', output)
+            match = re.search(r"collected (\d+) items", output)
             if match:
                 test_count = int(match.group(1))
                 print(f"   ✅ 可收集的测试: {test_count} 个")
@@ -157,6 +163,7 @@ def check_project_coverage():
 
     except Exception as e:
         print(f"   ❌ 检查失败: {e}")
+
 
 def main():
     """主函数"""
@@ -178,6 +185,7 @@ def main():
     print("2. 提高测试覆盖率")
     print("3. 进行性能优化")
     print("=" * 60)
+
 
 if __name__ == "__main__":
     main()

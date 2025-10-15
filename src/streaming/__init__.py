@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 流式数据处理模块
 
@@ -17,26 +15,26 @@ from typing import Any, Dict, List, Optional, Union
 
 # 尝试导入简化版本
 try:
-    from .kafka_producer_simple import KafkaMessageProducer
-    from .kafka_consumer_simple import KafkaMessageConsumer
-    from .stream_config_simple import (
-        StreamConfig,
-        KafkaConfig,
-        ConsumerConfig,
-        ProducerConfig,
-    )
-    from .stream_processor_simple import (
-        StreamProcessor,
-        MessageProcessor,
-        BatchProcessor,
-    )
     from .kafka_components_simple import (
         KafkaAdminClient,
-        KafkaTopicManager,
-        KafkaConsumerGroup,
         KafkaCluster,
+        KafkaConsumerGroup,
         KafkaHealthChecker,
         KafkaMetricsCollector,
+        KafkaTopicManager,
+    )
+    from .kafka_consumer_simple import KafkaMessageConsumer
+    from .kafka_producer_simple import KafkaMessageProducer
+    from .stream_config_simple import (
+        ConsumerConfig,
+        KafkaConfig,
+        ProducerConfig,
+        StreamConfig,
+    )
+    from .stream_processor_simple import (
+        BatchProcessor,
+        MessageProcessor,
+        StreamProcessor,
     )
 except ImportError:
     # 如果简化版本不存在，使用原始版本

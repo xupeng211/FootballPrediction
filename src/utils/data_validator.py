@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 足球预测系统数据验证工具模块
@@ -35,8 +35,8 @@ class DataValidator:
 
     @staticmethod
     def validate_required_fields(
-        data: Dict[str, Any], required_fields: List[str]
-    ) -> List[str]:
+        data: dict[str, Any], required_fields: list[str]
+    ) -> list[str]:
         """验证必需字段 - 检查数据完整性，返回缺失字段列表用于错误提示"""
         missing_fields = []
         for field in required_fields:
@@ -47,8 +47,8 @@ class DataValidator:
 
     @staticmethod
     def validate_data_types(
-        data: Dict[str, Any], type_specs: Dict[str, type]
-    ) -> List[str]:
+        data: dict[str, Any], type_specs: dict[str, type]
+    ) -> list[str]:
         """验证数据类型 - 确保输入数据符合预期类型，防止运行时类型错误"""
         invalid_fields = []
         for field, expected_type in type_specs.items():

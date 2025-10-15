@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 数据收集核心
@@ -28,7 +28,7 @@ class DataCollectionTask:
 
     def __init__(self):
         """初始化任务"""
-        self.db_manager: Optional[DatabaseManager] = None
+        self.db_manager: DatabaseManager | None = None
         self.orchestrator = DataCollectionOrchestrator()
 
     def set_database_manager(self, db_manager: DatabaseManager) -> None:
@@ -50,7 +50,7 @@ class DataCollectionTask:
 
 
 @celery_app.task(bind=True)
-def collect_fixtures_task(self) -> Dict[str, Any]:
+def collect_fixtures_task(self) -> dict[str, Any]:
     """收集赛程数据任务"""
     task = DataCollectionTask()
 
@@ -76,7 +76,7 @@ def collect_fixtures_task(self) -> Dict[str, Any]:
 
 
 @celery_app.task(bind=True)
-def collect_odds_task(self) -> Dict[str, Any]:
+def collect_odds_task(self) -> dict[str, Any]:
     """收集赔率数据任务"""
     task = DataCollectionTask()
 
@@ -102,7 +102,7 @@ def collect_odds_task(self) -> Dict[str, Any]:
 
 
 @celery_app.task(bind=True)
-def collect_scores_task(self) -> Dict[str, Any]:
+def collect_scores_task(self) -> dict[str, Any]:
     """收集比分数据任务"""
     task = DataCollectionTask()
 
@@ -128,7 +128,7 @@ def collect_scores_task(self) -> Dict[str, Any]:
 
 
 @celery_app.task
-def manual_collect_all_data() -> Dict[str, Any]:
+def manual_collect_all_data() -> dict[str, Any]:
     """手动收集所有数据任务
 
     手动触发所有数据收集
@@ -155,8 +155,8 @@ def manual_collect_all_data() -> Dict[str, Any]:
 
 @celery_app.task
 def emergency_data_collection_task(
-    data_types: Optional[List[str]] = None, priority: int = 1
-) -> Dict[str, Any]:
+    data_types: list[str] | None = None, priority: int = 1
+) -> dict[str, Any]:
     """
     紧急数据收集任务
 
@@ -232,7 +232,7 @@ def collect_historical_data_task():
         raise
 
 
-async def _save_historical_data(data: Dict[str, Any], data_type: str) -> None:
+async def _save_historical_data(data: dict[str, Any], data_type: str) -> None:
     """保存历史数据到数据库"""
     # 这里应该实现实际的数据库保存逻辑
     logger.info(f"Saving {len(data.get('data', []))} {data_type} records to database")
@@ -241,7 +241,7 @@ async def _save_historical_data(data: Dict[str, Any], data_type: str) -> None:
     await asyncio.sleep(0.1)
 
 
-def validate_collected_data(data: Dict[str, Any], data_type: str) -> Dict[str, Any]:
+def validate_collected_data(data: dict[str, Any], data_type: str) -> dict[str, Any]:
     """验证收集的数据"""
     validation_result = {
         "data_type": data_type,
@@ -274,14 +274,14 @@ def validate_collected_data(data: Dict[str, Any], data_type: str) -> Dict[str, A
     return validation_result
 
 
-def _validate_fixtures_data(data: Dict[str, Any]) -> Dict[str, Any]:
+def _validate_fixtures_data(data: dict[str, Any]) -> dict[str, Any]:
     """验证赛程数据"""
     errors = []
     recommendations = []  # type: ignore
 
     fixtures = data.get("fixtures", [])
     for i, fixture in enumerate(fixtures):
-        if not isinstance(fixture, Dict[str, Any]):
+        if not isinstance(fixture, dict[str, Any]):
             errors.append(f"Fixture {i} is not a dictionary")
             continue
 
@@ -301,7 +301,7 @@ def _validate_fixtures_data(data: Dict[str, Any]) -> Dict[str, Any]:
     return {"validation_errors": errors, "recommendations": recommendations}
 
 
-def _validate_odds_data(data: Dict[str, Any]) -> Dict[str, Any]:
+def _validate_odds_data(data: dict[str, Any]) -> dict[str, Any]:
     """验证赔率数据"""
     errors = []  # type: ignore
     recommendations = []  # type: ignore
@@ -310,7 +310,7 @@ def _validate_odds_data(data: Dict[str, Any]) -> Dict[str, Any]:
     return {"validation_errors": errors, "recommendations": recommendations}
 
 
-def _validate_scores_data(data: Dict[str, Any]) -> Dict[str, Any]:
+def _validate_scores_data(data: dict[str, Any]) -> dict[str, Any]:
     """验证比分数据"""
     errors = []  # type: ignore
     recommendations = []  # type: ignore
@@ -319,7 +319,7 @@ def _validate_scores_data(data: Dict[str, Any]) -> Dict[str, Any]:
     return {"validation_errors": errors, "recommendations": recommendations}
 
 
-def _validate_matches_data(data: Dict[str, Any]) -> Dict[str, Any]:
+def _validate_matches_data(data: dict[str, Any]) -> dict[str, Any]:
     """验证比赛数据"""
     errors = []  # type: ignore
     recommendations = []  # type: ignore

@@ -26,7 +26,7 @@ class SystemMetricsSubject(Subject):
         """初始化系统指标被观察者"""
         super().__init__("SystemMetrics")
         self._metrics: Dict[str, float] = {}
-        self._thresholds: Dict[str, Dict[str, float] = {}
+        self._thresholds: Dict[str, Dict[str, float]] = {}
         self._last_notification: Dict[str, float] = {}
         self._notification_interval = 60  # 秒
 
@@ -166,9 +166,9 @@ class PredictionMetricsSubject(Subject):
         """初始化预测指标被观察者"""
         super().__init__("PredictionMetrics")
         self._prediction_counts: Dict[str, int] = defaultdict(int)
-        self._accuracy_metrics: Dict[str, List[float] = defaultdict(list)
+        self._accuracy_metrics: Dict[str, List[float]] = defaultdict(list)
         self._response_times: List[float] = []
-        self._strategy_performance: Dict[str, Dict[str, Any] = defaultdict(Dict[str, Any])
+        self._strategy_performance: Dict[str, Dict[str, Any]] = defaultdict(Dict[str, Any])
 
     async def record_prediction(
         self,
@@ -323,8 +323,8 @@ class AlertSubject(Subject):
         """初始化告警被观察者"""
         super().__init__("AlertManager")
         self._alert_counts: Dict[str, int] = defaultdict(int)
-        self._alert_levels: Dict[str, List[datetime] = defaultdict(list)
-        self._suppression_rules: Dict[str, Dict[str, Any] = {}
+        self._alert_levels: Dict[str, List[datetime]] = defaultdict(list)
+        self._suppression_rules: Dict[str, Dict[str, Any]] = {}
 
     async def trigger_alert(
         self,

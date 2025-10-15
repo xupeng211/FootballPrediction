@@ -4,93 +4,92 @@
 Fix Import Errors Script
 """
 
-import os
 import re
 from pathlib import Path
+
 
 def fix_adapters_football_import():
     """修复src/adapters/football.py的导入错误"""
     print("🔧 修复 src/adapters/football.py 导入...")
 
     file_path = Path("src/adapters/football.py")
-    with open(file_path, 'r', encoding='utf-8') as f:
+    with open(file_path, encoding="utf-8") as f:
         content = f.read()
 
     original = content
 
     # FootballMatch已经在同一个文件中定义了，不需要从base导入
     content = re.sub(
-        r'from \.base import BaseAdapter, AdapterStatus, FootballMatch',
-        'from .base import BaseAdapter, AdapterStatus',
-        content
+        r"from \.base import BaseAdapter, AdapterStatus, FootballMatch",
+        "from .base import BaseAdapter, AdapterStatus",
+        content,
     )
 
     if content != original:
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(content)
         print("  ✅ 修复了导入")
         return True
     else:
         print("  ℹ️ 没有需要修复的导入")
         return False
+
 
 def fix_security_auth_imports():
     """修复src/security/auth.py的导入错误"""
     print("\n🔧 修复 src/security/auth.py 导入...")
 
     file_path = Path("src/security/auth.py")
-    with open(file_path, 'r', encoding='utf-8') as f:
+    with open(file_path, encoding="utf-8") as f:
         content = f.read()
 
     original = content
 
     # 添加缺失的导入
-    if 'from typing import' in content:
+    if "from typing import" in content:
         # 检查是否已导入Callable
-        if 'Callable' not in content:
+        if "Callable" not in content:
             content = re.sub(
-                r'from typing import (.*)',
-                r'from typing import \1, Callable',
-                content
+                r"from typing import (.*)", r"from typing import \1, Callable", content
             )
 
     if content != original:
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(content)
         print("  ✅ 修复了导入")
         return True
     else:
         print("  ℹ️ 没有需要修复的导入")
         return False
+
 
 def fix_core_config_imports():
     """修复src/core/config.py的导入错误"""
     print("\n🔧 修复 src/core/config.py 导入...")
 
     file_path = Path("src/core/config.py")
-    with open(file_path, 'r', encoding='utf-8') as f:
+    with open(file_path, encoding="utf-8") as f:
         content = f.read()
 
     original = content
 
     # 添加缺失的导入
-    if 'from typing import' in content:
+    if "from typing import" in content:
         # 检查是否已导入ClassVar
-        if 'ClassVar' not in content:
+        if "ClassVar" not in content:
             content = re.sub(
-                r'from typing import (.*)',
-                r'from typing import \1, ClassVar',
-                content
+                r"from typing import (.*)", r"from typing import \1, ClassVar", content
             )
 
     if content != original:
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(content)
         print("  ✅ 修复了导入")
         return True
     else:
         print("  ℹ️ 没有需要修复的导入")
         return False
+
 
 def fix_all_imports():
     """修复所有导入错误"""
@@ -108,6 +107,7 @@ def fix_all_imports():
 
     return files_fixed > 0
 
+
 def verify_fixes():
     """验证修复结果"""
     print("\n🔍 验证修复结果...")
@@ -118,7 +118,7 @@ def verify_fixes():
     files_to_check = [
         "src/adapters/football.py",
         "src/security/auth.py",
-        "src/core/config.py"
+        "src/core/config.py",
     ]
 
     all_good = True
@@ -133,7 +133,7 @@ def verify_fixes():
                 ["python", "-m", "py_compile", str(path)],
                 capture_output=True,
                 text=True,
-                timeout=10
+                timeout=10,
             )
 
             if result.returncode == 0:
@@ -148,6 +148,7 @@ def verify_fixes():
             all_good = False
 
     return all_good
+
 
 def main():
     """主函数"""
@@ -171,6 +172,7 @@ def main():
         print("=" * 60)
     else:
         print("\n⚠️ 仍有错误需要手动修复")
+
 
 if __name__ == "__main__":
     main()

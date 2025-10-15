@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 观察者管理器
@@ -12,18 +12,18 @@ import asyncio
 import logging
 from datetime import datetime
 
-from .base import Observer, Subject, ObservableEventType
+from .base import ObservableEventType, Observer, Subject
 from .observers import (
-    MetricsObserver,
-    LoggingObserver,
     AlertingObserver,
+    LoggingObserver,
+    MetricsObserver,
     PerformanceObserver,
 )
 from .subjects import (
-    SystemMetricsSubject,
-    PredictionMetricsSubject,
     AlertSubject,
     CacheSubject,
+    PredictionMetricsSubject,
+    SystemMetricsSubject,
 )
 
 logger = logging.getLogger(__name__)
@@ -38,8 +38,8 @@ class ObserverManager:
 
     def __init__(self):
         """初始化观察者管理器"""
-        self._observers: Dict[str, Observer] = {}
-        self._subjects: Dict[str, Subject] = {}
+        self._observers: dict[str, Observer] = {}
+        self._subjects: dict[str, Subject] = {}
         self._initialized = False
         self._running = False
 
@@ -233,31 +233,31 @@ class ObserverManager:
                 await asyncio.sleep(5)
 
     # 便捷方法
-    def get_observer(self, name: str) -> Optional[Observer]:
+    def get_observer(self, name: str) -> Observer | None:
         """获取观察者"""
         return self._observers.get(name)
 
-    def get_subject(self, name: str) -> Optional[Subject]:
+    def get_subject(self, name: str) -> Subject | None:
         """获取被观察者"""
         return self._subjects.get(name)
 
-    def get_metrics_observer(self) -> Optional[MetricsObserver]:
+    def get_metrics_observer(self) -> MetricsObserver | None:
         """获取指标观察者"""
         return self._observers.get("metrics")  # type: ignore
 
-    def get_alerting_observer(self) -> Optional[AlertingObserver]:
+    def get_alerting_observer(self) -> AlertingObserver | None:
         """获取告警观察者"""
         return self._observers.get("alerting")  # type: ignore
 
-    def get_system_metrics_subject(self) -> Optional[SystemMetricsSubject]:
+    def get_system_metrics_subject(self) -> SystemMetricsSubject | None:
         """获取系统指标被观察者"""
         return self._subjects.get("system_metrics")  # type: ignore
 
-    def get_prediction_metrics_subject(self) -> Optional[PredictionMetricsSubject]:
+    def get_prediction_metrics_subject(self) -> PredictionMetricsSubject | None:
         """获取预测指标被观察者"""
         return self._subjects.get("prediction_metrics")  # type: ignore
 
-    def get_cache_subject(self) -> Optional[CacheSubject]:
+    def get_cache_subject(self) -> CacheSubject | None:
         """获取缓存被观察者"""
         return self._subjects.get("cache")  # type: ignore
 
@@ -267,7 +267,7 @@ class ObserverManager:
         strategy_name: str,
         response_time_ms: float,
         success: bool = True,
-        confidence: Optional[float] = None,
+        confidence: float | None = None,
     ) -> None:
         """记录预测事件"""
         subject = self.get_prediction_metrics_subject()
@@ -296,15 +296,15 @@ class ObserverManager:
         alert_type: str,
         severity: str,
         message: str,
-        source: Optional[str] = None,
-        data: Optional[Dict[str, Any]] = None,
+        source: str | None = None,
+        data: dict[str, Any] | None = None,
     ) -> None:
         """触发告警"""
         subject = self._subjects.get("alert")
         if subject and isinstance(subject, AlertSubject):
             await subject.trigger_alert(alert_type, severity, message, source, data)
 
-    def get_all_metrics(self) -> Dict[str, Any]:
+    def get_all_metrics(self) -> dict[str, Any]:
         """获取所有指标"""
         _result = {}
 
@@ -337,7 +337,7 @@ class ObserverManager:
 
         return result
 
-    def get_system_status(self) -> Dict[str, Any]:
+    def get_system_status(self) -> dict[str, Any]:
         """获取系统状态"""
         _result = {
             "initialized": self._initialized,
@@ -369,7 +369,7 @@ class ObserverManager:
 
 
 # 全局实例
-_observer_manager: Optional[ObserverManager] = None
+_observer_manager: ObserverManager | None = None
 
 
 def get_observer_manager() -> ObserverManager:

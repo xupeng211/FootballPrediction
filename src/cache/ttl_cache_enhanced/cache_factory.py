@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 缓存工厂类
@@ -24,9 +24,9 @@ class CacheFactory:
     def create_cache(
         cache_type: str = "sync",
         max_size: int = 1000,
-        default_ttl: Optional[float] = None,
+        default_ttl: float | None = None,
         cleanup_interval: float = 60.0,
-    ) -> Union[TTLCache, AsyncTTLCache]:
+    ) -> TTLCache | AsyncTTLCache:
         """
         创建缓存实例
 
@@ -170,7 +170,7 @@ class CacheFactory:
         return ["sync", "async"]
 
     @staticmethod
-    def get_preset_configs() -> Dict[str, Any]:
+    def get_preset_configs() -> dict[str, Any]:
         """
         获取预设配置
 

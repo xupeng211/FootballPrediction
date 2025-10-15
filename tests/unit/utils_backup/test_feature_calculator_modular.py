@@ -2,26 +2,26 @@
 特征计算器模块化测试
 """
 
-import pytest
 from datetime import datetime
 from unittest.mock import Mock, patch
+
+import pytest
 
 
 def test_module_import():
     """测试模块导入"""
     # 测试导入新模块
-    from src.features.feature_calculator_mod import (
-        FeatureCalculator,
-        RecentPerformanceCalculator,
-        HistoricalMatchupCalculator,
-        OddsFeaturesCalculator,
-        BatchCalculator,
-        StatisticsUtils,
-    )
-
     # 测试导入兼容模块
     from src.features.feature_calculator import (
         FeatureCalculator as LegacyFeatureCalculator,
+    )
+    from src.features.feature_calculator_mod import (
+        BatchCalculator,
+        FeatureCalculator,
+        HistoricalMatchupCalculator,
+        OddsFeaturesCalculator,
+        RecentPerformanceCalculator,
+        StatisticsUtils,
     )
 
     assert FeatureCalculator is not None
@@ -199,10 +199,10 @@ def test_backward_compatibility():
     # 测试原始导入方式仍然有效
     from src.features.feature_calculator import (
         FeatureCalculator,
-        calculate_mean,
-        calculate_std,
-        calculate_min,
         calculate_max,
+        calculate_mean,
+        calculate_min,
+        calculate_std,
     )
 
     # 测试统计函数

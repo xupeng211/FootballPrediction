@@ -42,7 +42,7 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
             )
 
         # 添加请求ID
-        request_id = f"{int(time.time() * 1000)"-{self.request_count}"
+        request_id = f"{int(time.time() * 1000)}-{self.request_count}"
         request.state.request_id = request_id
 
         # 记录请求开始

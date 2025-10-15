@@ -5,13 +5,12 @@
 
 import ast
 import re
-from pathlib import Path
 
 
 def analyze_missing_methods(test_file_path: str):
     """分析测试文件中调用的缺失方法"""
 
-    with open(test_file_path, "r") as f:
+    with open(test_file_path) as f:
         content = f.read()
 
     # 查找所有方法调用
@@ -30,7 +29,7 @@ def read_existing_methods(class_file_path: str):
     """读取类中已存在的方法"""
 
     try:
-        with open(class_file_path, "r") as f:
+        with open(class_file_path) as f:
             content = f.read()
 
         tree = ast.parse(content)

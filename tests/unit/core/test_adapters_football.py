@@ -9,8 +9,10 @@ sys.path.insert(0, "src")
 足球数据适配器测试 - 简化版
 """
 
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
+
 from src.adapters.base import Adapter
 
 

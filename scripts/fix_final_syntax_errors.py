@@ -4,9 +4,9 @@
 Fix Final Syntax Errors Script
 """
 
-import os
 import re
 from pathlib import Path
+
 
 def fix_adapters_football():
     """修复src/adapters/football.py的语法错误"""
@@ -17,49 +17,42 @@ def fix_adapters_football():
         print(f"  ❌ 文件不存在: {file_path}")
         return False
 
-    with open(file_path, 'r', encoding='utf-8') as f:
+    with open(file_path, encoding="utf-8") as f:
         content = f.read()
 
     original = content
 
     # 修复第465行附近的语法错误
     # 可能是FootballMatch类型未定义
-    if 'from .base import' in content:
+    if "from .base import" in content:
         # 确保导入包含所有需要的类型
         content = re.sub(
-            r'from \.base import.*',
-            'from .base import BaseAdapter, AdapterStatus, FootballMatch',
-            content
+            r"from \.base import.*",
+            "from .base import BaseAdapter, AdapterStatus, FootballMatch",
+            content,
         )
 
     # 修复Dict类型注解
     content = re.sub(
-        r'-> Dict\[str, List\[FootballMatch\]:',
-        '-> Dict[str, List[FootballMatch]]:',
-        content
+        r"-> Dict\[str, List\[FootballMatch\]:",
+        "-> Dict[str, List[FootballMatch]]:",
+        content,
     )
 
     # 检查并修复其他类型注解
-    content = re.sub(
-        r'-> Dict\[str, Any\]:',
-        '-> Dict[str, Any]:',
-        content
-    )
+    content = re.sub(r"-> Dict\[str, Any\]:", "-> Dict[str, Any]:", content)
 
-    content = re.sub(
-        r'-> List\[Dict\[str, Any\]:',
-        '-> List[Dict[str, Any]]:',
-        content
-    )
+    content = re.sub(r"-> List\[Dict\[str, Any\]:", "-> List[Dict[str, Any]]:", content)
 
     if content != original:
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(content)
         print("  ✅ 修复了 src/adapters/football.py")
         return True
     else:
         print("  ℹ️ 没有需要修复的语法错误")
         return False
+
 
 def fix_cache_redis():
     """修复src/cache/redis/__init__.py的语法错误"""
@@ -70,33 +63,30 @@ def fix_cache_redis():
         print(f"  ❌ 文件不存在: {file_path}")
         return False
 
-    with open(file_path, 'r', encoding='utf-8') as f:
+    with open(file_path, encoding="utf-8") as f:
         content = f.read()
 
     original = content
 
     # 修复第101行的语法错误
     content = re.sub(
-        r'async def amget_cache\(keys: List\[str\]\) -> List\[Optional\[Any\]:',
-        'async def amget_cache(keys: List[str]) -> List[Optional[Any]]:',
-        content
+        r"async def amget_cache\(keys: List\[str\]\) -> List\[Optional\[Any\]:",
+        "async def amget_cache(keys: List[str]) -> List[Optional[Any]]:",
+        content,
     )
 
     # 修复其他可能的语法错误
-    content = re.sub(
-        r'-> List\[Optional\[Any\]:',
-        '-> List[Optional[Any]]:',
-        content
-    )
+    content = re.sub(r"-> List\[Optional\[Any\]:", "-> List[Optional[Any]]:", content)
 
     if content != original:
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(content)
         print("  ✅ 修复了 src/cache/redis/__init__.py")
         return True
     else:
         print("  ℹ️ 没有需要修复的语法错误")
         return False
+
 
 def fix_security_auth():
     """修复src/security/auth.py的语法错误"""
@@ -107,31 +97,32 @@ def fix_security_auth():
         print(f"  ❌ 文件不存在: {file_path}")
         return False
 
-    with open(file_path, 'r', encoding='utf-8') as f:
+    with open(file_path, encoding="utf-8") as f:
         content = f.read()
 
     original = content
 
     # 修复第270行附近的语法错误
-    lines = content.split('\n')
+    lines = content.split("\n")
     for i, line in enumerate(lines):
         # 查找并修复未闭合的括号
-        if 'def ' in line and '->' in line and not line.strip().endswith(':'):
+        if "def " in line and "->" in line and not line.strip().endswith(":"):
             # 检查是否缺少冒号
-            if ')' in line and ':' not in line[line.rfind(')'):]:
-                lines[i] = line + ':'
+            if ")" in line and ":" not in line[line.rfind(")") :]:
+                lines[i] = line + ":"
                 print(f"    修复第{i+1}行: 添加缺失的冒号")
 
-    content = '\n'.join(lines)
+    content = "\n".join(lines)
 
     if content != original:
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(content)
         print("  ✅ 修复了 src/security/auth.py")
         return True
     else:
         print("  ℹ️ 没有需要修复的语法错误")
         return False
+
 
 def verify_syntax():
     """验证语法修复结果"""
@@ -140,7 +131,7 @@ def verify_syntax():
     files_to_check = [
         "src/adapters/football.py",
         "src/cache/redis/__init__.py",
-        "src/security/auth.py"
+        "src/security/auth.py",
     ]
 
     all_good = True
@@ -153,11 +144,12 @@ def verify_syntax():
 
         try:
             import subprocess
+
             result = subprocess.run(
                 ["python", "-m", "py_compile", str(path)],
                 capture_output=True,
                 text=True,
-                timeout=10
+                timeout=10,
             )
 
             if result.returncode == 0:
@@ -172,6 +164,7 @@ def verify_syntax():
             all_good = False
 
     return all_good
+
 
 def main():
     """主函数"""
@@ -194,6 +187,7 @@ def main():
         print("=" * 60)
     else:
         print("\n⚠️ 仍有语法错误需要手动修复")
+
 
 if __name__ == "__main__":
     main()

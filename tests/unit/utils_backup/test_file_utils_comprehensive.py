@@ -2,12 +2,14 @@
 文件工具模块完整测试
 """
 
-import pytest
 import json
 import os
 import tempfile
 import time
 from pathlib import Path
+
+import pytest
+
 from src.utils.file_utils import FileUtils
 
 
@@ -96,7 +98,7 @@ class TestFileUtils:
             FileUtils.write_json(test_data, json_file)
 
             assert json_file.exists()
-            with open(json_file, "r", encoding="utf-8") as f:
+            with open(json_file, encoding="utf-8") as f:
                 loaded_data = json.load(f)
             assert loaded_data == test_data
 

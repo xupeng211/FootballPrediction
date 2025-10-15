@@ -143,7 +143,7 @@ class RawOddsData(BaseModel):
         """标记为已处理"""
         self.processed = True  # type: ignore
 
-    def get_odds_values(self) -> Optional[Dict[str, float]:
+    def get_odds_values(self) -> Optional[Dict[str, float]]:
         """
         提取赔率值
 

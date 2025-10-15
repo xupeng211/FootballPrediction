@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 事件驱动架构模块
 Event-Driven Architecture Module
@@ -8,30 +6,30 @@ Event-Driven Architecture Module
 Provides event system infrastructure for loosely coupled component communication.
 """
 
-from .base import Event, EventHandler, EventData
+from .base import Event, EventData, EventHandler
 from .bus import EventBus, get_event_bus, start_event_bus, stop_event_bus
+from .handlers import (
+    AlertEventHandler,
+    AnalyticsEventHandler,
+    CacheInvalidationHandler,
+    LoggingEventHandler,
+    MetricsEventHandler,
+    NotificationEventHandler,
+    register_default_handlers,
+)
 from .types import (
     MatchCreatedEvent,
-    MatchUpdatedEvent,
-    PredictionMadeEvent,
-    PredictionUpdatedEvent,
-    UserRegisteredEvent,
-    TeamStatsUpdatedEvent,
     MatchCreatedEventData,
+    MatchUpdatedEvent,
     MatchUpdatedEventData,
+    PredictionMadeEvent,
     PredictionMadeEventData,
+    PredictionUpdatedEvent,
     PredictionUpdatedEventData,
-    UserRegisteredEventData,
     TeamStatsEventData,
-)
-from .handlers import (
-    MetricsEventHandler,
-    LoggingEventHandler,
-    CacheInvalidationHandler,
-    NotificationEventHandler,
-    AnalyticsEventHandler,
-    AlertEventHandler,
-    register_default_handlers,
+    TeamStatsUpdatedEvent,
+    UserRegisteredEvent,
+    UserRegisteredEventData,
 )
 
 __all__ = [

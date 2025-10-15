@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Type
+
 """
 简化的适配器工厂
 """
@@ -10,8 +11,8 @@ class AdapterFactory:
     """适配器工厂"""
 
     def __init__(self):
-        self._adapters: Dict[str, Type[Any]] = {}
-        self._instances: Dict[str, Any] = {}
+        self._adapters: dict[str, Type[Any]] = {}
+        self._instances: dict[str, Any] = {}
 
     def register_adapter(self, name: str, adapter_class: Type[Any], **kwargs):
         """注册适配器"""
@@ -24,7 +25,7 @@ class AdapterFactory:
         }
 
     def create_adapter(
-        self, name: str, config: Optional[Dict[str, Any]] = None, singleton: bool = False
+        self, name: str, config: dict[str, Any] | None = None, singleton: bool = False
     ):
         """创建适配器实例"""
         if name not in self._adapters:
@@ -89,7 +90,7 @@ def get_global_factory() -> AdapterFactory:
 
 
 def get_adapter(
-    adapter_type: str, config: Optional[Dict[str, Any]] = None, singleton: bool = False
+    adapter_type: str, config: dict[str, Any] | None = None, singleton: bool = False
 ):
     """便捷函数：获取适配器"""
     factory = get_global_factory()

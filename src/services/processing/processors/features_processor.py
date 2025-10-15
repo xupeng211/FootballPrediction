@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 features_processor.py
 features_processor
@@ -13,10 +11,12 @@ For backward compatibility, this file re-exports all classes from the modules.
 
 import warnings
 
-from ............src.services.processing.processors.features import aggregator  # type: ignore
-from ............src.services.processing.processors.features import calculator  # type: ignore
-from ............src.services.processing.processors.features import processor  # type: ignore
-from ............src.services.processing.processors.features import validator  # type: ignore
+from ............src.services.processing.processors.features import (
+    aggregator,  # type: ignore
+    calculator,  # type: ignore
+    processor,  # type: ignore
+    validator,  # type: ignore
+)
 
 warnings.warn(
     "直接从 features_processor 导入已弃用。"

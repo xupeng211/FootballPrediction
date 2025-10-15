@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 数据质量监控器 / Data Quality Monitor
 
@@ -42,7 +40,10 @@ Supports real-time monitoring, historical trend analysis, and quality score calc
 """
 
 from .quality.core.monitor import QualityMonitor  # type: ignore
-from .quality.core.results import DataFreshnessResult, DataCompletenessResult  # type: ignore
+from .quality.core.results import (  # type: ignore
+    DataCompletenessResult,
+    DataFreshnessResult,
+)
 
 # 为了保持向后兼容，重新导出新模块化的类
 

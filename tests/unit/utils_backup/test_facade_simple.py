@@ -2,19 +2,20 @@
 门面模式单元测试（简化版）
 """
 
-import pytest
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
+
 from src.patterns.facade_simple import (
-    PredictionFacade,
-    DataCollectionFacade,
     AnalyticsFacade,
+    DataCollectionConfig,
+    DataCollectionFacade,
     FacadeFactory,
-    SystemFacade,
+    PredictionFacade,
     PredictionRequest,
     PredictionResult,
-    DataCollectionConfig,
+    SystemFacade,
 )
 
 
@@ -351,7 +352,7 @@ class TestPredictionRequestAndResult:
         """测试预测结果创建"""
         _prediction = {"match_id": 123, "prediction": "home_win"}
         _result = PredictionResult(
-            _prediction =prediction,
+            _prediction=prediction,
             confidence=0.75,
             value_assessment={"is_value": True},
             recommendations=["建议投注"],

@@ -3,8 +3,9 @@
 快速提升覆盖率到30%
 """
 
+from unittest.mock import MagicMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 
 
 class TestUtilsCoverage:
@@ -12,10 +13,10 @@ class TestUtilsCoverage:
 
     def test_system_utils(self):
         """测试系统工具"""
-        import sys
-        import os
-        import json
         import datetime
+        import json
+        import os
+        import sys
 
         # 测试系统模块功能
         assert hasattr(sys, "version")

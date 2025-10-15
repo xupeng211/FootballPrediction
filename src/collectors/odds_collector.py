@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 odds_collector.py
 odds_collector
@@ -13,10 +11,12 @@ For backward compatibility, this file re-exports all classes from the modules.
 
 import warnings
 
-from ......src.collectors.odds.basic import collector  # type: ignore
-from ......src.collectors.odds.basic import parser  # type: ignore
-from ......src.collectors.odds.basic import storage  # type: ignore
-from ......src.collectors.odds.basic import validator  # type: ignore
+from ......src.collectors.odds.basic import (
+    collector,  # type: ignore
+    parser,  # type: ignore
+    storage,  # type: ignore
+    validator,  # type: ignore
+)
 
 warnings.warn(
     "直接从 odds_collector 导入已弃用。请从 src/collectors/odds/basic 导入相关类。",

@@ -1,17 +1,18 @@
 # noqa: F401,F811,F821,E402
-import pytest
-from unittest.mock import MagicMock, patch
-import sys
-import os
-from datetime import timedelta
-import json
 import asyncio
+import gc
+import json
+import math
+import os
 import socket
+import sys
+import tempfile
 import urllib.error
 import urllib.request
-import gc
-import math
-import tempfile
+from datetime import timedelta
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 """
 边界情况和错误处理测试
@@ -37,7 +38,7 @@ class TestEdgeCasesAndErrorHandling:
         # 测试数值边界
         boundary_values = [0, -1, 1, 999999, -999999, 3.14159, -3.14159]
         for val in boundary_values:
-            assert isinstance(val, (int, float))
+            assert isinstance(val, int | float)
             if isinstance(val, float):
                 assert not (val != val)  # 检查NaN
 
@@ -50,7 +51,7 @@ class TestEdgeCasesAndErrorHandling:
         """测试文件操作错误"""
         # 测试不存在的文件
         with pytest.raises(FileNotFoundError):
-            with open("/nonexistent/file.txt", "r"):
+            with open("/nonexistent/file.txt"):
                 pass
 
         # 测试权限错误（模拟）
@@ -87,6 +88,7 @@ class TestEdgeCasesAndErrorHandling:
         """测试数据库约束违反"""
         try:
             from sqlalchemy.exc import IntegrityError
+
             from src.database.models.team import Team
 
             # 模拟唯一约束违反
@@ -259,8 +261,8 @@ class TestEdgeCasesAndErrorHandling:
 
     def test_api_rate_limiting(self):
         """测试API限流"""
-        from collections import defaultdict, deque
         import time
+        from collections import defaultdict, deque
 
         class RateLimiter:
             def __init__(self, max_requests, time_window):

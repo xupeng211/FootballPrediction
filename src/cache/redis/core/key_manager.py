@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 Redis key manager
@@ -34,13 +34,13 @@ class RedisKeyManager:
         """生成健康检查键"""
         return self._make_key(f"health:{service}")
 
-    def metrics_key(self, metric_name: str, timestamp: Optional[int] = None) -> str:
+    def metrics_key(self, metric_name: str, timestamp: int | None = None) -> str:
         """生成指标键"""
         if timestamp:
             return self._make_key(f"metrics:{metric_name}:{timestamp}")
         return self._make_key(f"metrics:{metric_name}")
 
-    def generate_hash_key(self, data: Dict[str, Any]) -> str:
+    def generate_hash_key(self, data: dict[str, Any]) -> str:
         """为数据生成哈希键"""
         json_str = json.dumps(data, sort_keys=True)
         return hashlib.md5(json_str.encode()).hexdigest()

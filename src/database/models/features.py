@@ -1,4 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
 """
 Features - 数据库模块
 
@@ -17,21 +16,24 @@ Features - 数据库模块
 - 使用SQLAlchemy 2.0语法
 """
 
-from decimal import Decimal
+from datetime import datetime
 from enum import Enum
+
 from sqlalchemy import (
-    Boolean,
     DECIMAL,
-    Enum as SQLEnum,
+    Boolean,
+    DateTime,
     ForeignKey,
     Integer,
     String,
-    DateTime,
     Text,
 )
+from sqlalchemy import (
+    Enum as SQLEnum,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from ..base import BaseModel
-from datetime import datetime
 
 
 class TeamType(str, Enum):
@@ -61,7 +63,7 @@ class FeatureEntity(BaseModel):
         SQLEnum(FeatureEntityType), nullable=False
     )
     value: Mapped[float] = mapped_column(DECIMAL(10, 4), nullable=True)
-    metadata_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    metadata_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
@@ -88,7 +90,7 @@ class FeatureMetadata(BaseModel):
         ForeignKey("feature_entities.id"), nullable=False
     )
     feature_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
     data_type: Mapped[str] = mapped_column(String(50), default="float")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
@@ -125,9 +127,9 @@ class Features(BaseModel):
     __tablename__ = "features"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    match_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    team_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    feature_data: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    match_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    team_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    feature_data: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     def __repr__(self) -> str:

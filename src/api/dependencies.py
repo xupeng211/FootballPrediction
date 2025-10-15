@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional
 
 """
 API依赖注入
@@ -19,10 +19,11 @@ Provides FastAPI dependency injection functions, including:
 
 
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
-from src.core.prediction_engine import PredictionEngine
+
 from src.core.logger import get_logger
+from src.core.prediction_engine import PredictionEngine
 
 logger = get_logger(__name__)
 
@@ -34,7 +35,7 @@ security = HTTPBearer()
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     获取当前用户
 
@@ -71,8 +72,8 @@ async def get_current_user(
 
 
 async def get_admin_user(
-    current_user: Dict[str, Any] = Depends(get_current_user),
-) -> Dict[str, Any]:
+    current_user: dict[str, Any] = Depends(get_current_user),
+) -> dict[str, Any]:
     """
     获取管理员用户
 
@@ -104,7 +105,7 @@ async def get_prediction_engine() -> Optional["PredictionEngine"]:
     return await get_prediction_engine()  # type: ignore
 
 
-async def get_redis_manager() -> Optional[Any]:
+async def get_redis_manager() -> Any | None:
     """获取Redis管理器"""
     from src.cache.redis_manager import get_redis_manager
 
@@ -112,7 +113,7 @@ async def get_redis_manager() -> Optional[Any]:
 
 
 async def verify_prediction_permission(
-    match_id: int, current_user: Dict[str, Any] = Depends(get_current_user)
+    match_id: int, current_user: dict[str, Any] = Depends(get_current_user)
 ):
     """
     验证预测权限
@@ -130,7 +131,7 @@ async def verify_prediction_permission(
 
 
 async def rate_limit_check(
-    current_user: Dict[str, Any] = Depends(get_current_user),
+    current_user: dict[str, Any] = Depends(get_current_user),
 ) -> None:
     """
     速率限制检查

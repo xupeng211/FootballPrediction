@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 适配器模式实现
@@ -8,8 +8,9 @@ from typing import Any, Dict, List, Optional, Union
 
 import asyncio
 from abc import ABC, abstractmethod
-from datetime import datetime
 from dataclasses import dataclass
+from datetime import datetime
+
 import aiohttp
 
 from src.core.logging import get_logger
@@ -22,14 +23,14 @@ class ExternalData:
     source: str
     data: Any
     timestamp: datetime
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
 
 
 class ExternalAPI(ABC):
     """外部API抽象接口"""
 
     @abstractmethod
-    async def fetch_data(self, endpoint: str, params: Dict[str, Any]) -> Any:
+    async def fetch_data(self, endpoint: str, params: dict[str, Any]) -> Any:
         """获取数据"""
         pass
 
@@ -57,7 +58,7 @@ class APIAdapter(ABC):
         pass
 
     @abstractmethod
-    def transform_data(self, raw_data: Any) -> Dict[str, Any]:
+    def transform_data(self, raw_data: Any) -> dict[str, Any]:
         """转换数据格式"""
         pass
 
@@ -69,7 +70,7 @@ class FootballAPIImpl(ExternalAPI):
         self.api_key = api_key
         self.base_url = base_url
         self.logger = get_logger("api.football")
-        self.session: Optional[aiohttp.ClientSession] = None
+        self.session: aiohttp.ClientSession | None = None
 
     async def _get_session(self) -> aiohttp.ClientSession:
         """获取或创建会话"""
@@ -80,7 +81,7 @@ class FootballAPIImpl(ExternalAPI):
             )
         return self.session
 
-    async def fetch_data(self, endpoint: str, params: Dict[str, Any]) -> Any:
+    async def fetch_data(self, endpoint: str, params: dict[str, Any]) -> Any:
         """获取数据"""
         session = await self._get_session()
         url = f"{self.base_url}/{endpoint}"
@@ -125,7 +126,7 @@ class WeatherAPIImpl(ExternalAPI):
         self.api_key = api_key
         self.base_url = base_url
         self.logger = get_logger("api.weather")
-        self.session: Optional[aiohttp.ClientSession] = None
+        self.session: aiohttp.ClientSession | None = None
 
     async def _get_session(self) -> aiohttp.ClientSession:
         """获取或创建会话"""
@@ -135,7 +136,7 @@ class WeatherAPIImpl(ExternalAPI):
             )
         return self.session
 
-    async def fetch_data(self, endpoint: str, params: Dict[str, Any]) -> Any:
+    async def fetch_data(self, endpoint: str, params: dict[str, Any]) -> Any:
         """获取天气数据"""
         session = await self._get_session()
         params["appid"] = self.api_key
@@ -169,7 +170,7 @@ class OddsAPIImpl(ExternalAPI):
         self.api_key = api_key
         self.base_url = base_url
         self.logger = get_logger("api.odds")
-        self.session: Optional[aiohttp.ClientSession] = None
+        self.session: aiohttp.ClientSession | None = None
 
     async def _get_session(self) -> aiohttp.ClientSession:
         """获取或创建会话"""
@@ -180,7 +181,7 @@ class OddsAPIImpl(ExternalAPI):
             )
         return self.session
 
-    async def fetch_data(self, endpoint: str, params: Dict[str, Any]) -> Any:
+    async def fetch_data(self, endpoint: str, params: dict[str, Any]) -> Any:
         """获取赔率数据"""
         session = await self._get_session()
         url = f"{self.base_url}/{endpoint}"
@@ -257,9 +258,9 @@ class FootballApiAdapter(APIAdapter):
             self.logger.error(f"Failed to get team stats for {team_id}: {str(e)}")
             raise
 
-    def transform_data(self, raw_data: Any) -> Dict[str, Any]:
+    def transform_data(self, raw_data: Any) -> dict[str, Any]:
         """转换足球数据格式"""
-        if isinstance(raw_data, Dict[str, Any]):
+        if isinstance(raw_data, dict[str, Any]):
             return {
                 "id": raw_data.get("id"),
                 "name": raw_data.get("name"),
@@ -306,9 +307,9 @@ class WeatherApiAdapter(APIAdapter):
         """不适用"""
         raise NotImplementedError("Weather API does not provide team stats")
 
-    def transform_data(self, raw_data: Any) -> Dict[str, Any]:
+    def transform_data(self, raw_data: Any) -> dict[str, Any]:
         """转换天气数据格式"""
-        if isinstance(raw_data, Dict[str, Any]):
+        if isinstance(raw_data, dict[str, Any]):
             main = raw_data.get("main", {})
             weather = raw_data.get("weather", [{}])[0]
             wind = raw_data.get("wind", {})
@@ -363,9 +364,9 @@ class OddsApiAdapter(APIAdapter):
         """不适用"""
         raise NotImplementedError("Odds API does not provide team stats")
 
-    def transform_data(self, raw_data: Any) -> Dict[str, Any]:
+    def transform_data(self, raw_data: Any) -> dict[str, Any]:
         """转换赔率数据格式"""
-        if isinstance(raw_data, Dict[str, Any]):
+        if isinstance(raw_data, dict[str, Any]):
             bookmakers = raw_data.get("bookmakers", [])
             odds_data = {}  # type: ignore
 
@@ -398,7 +399,7 @@ class OddsApiAdapter(APIAdapter):
 class AdapterFactory:
     """适配器工厂"""
 
-    _adapters: Dict[str, type] = {
+    _adapters: dict[str, type] = {
         "football": FootballApiAdapter,
         "weather": WeatherApiAdapter,
         "odds": OddsApiAdapter,
@@ -422,7 +423,7 @@ class UnifiedDataCollector:
     """统一数据收集器"""
 
     def __init__(self):
-        self.adapters: Dict[str, APIAdapter] = {}
+        self.adapters: dict[str, APIAdapter] = {}
         self.logger = get_logger("collector.unified")
 
     def add_adapter(self, name: str, adapter: APIAdapter):
@@ -430,7 +431,7 @@ class UnifiedDataCollector:
         self.adapters[name] = adapter
         self.logger.info(f"Added adapter: {name}")
 
-    async def collect_match_data(self, match_id: int) -> Dict[str, ExternalData]:
+    async def collect_match_data(self, match_id: int) -> dict[str, ExternalData]:
         """收集所有适配器的比赛数据"""
         results = {}
 
@@ -448,7 +449,7 @@ class UnifiedDataCollector:
         if tasks:
             responses = await asyncio.gather(*tasks, return_exceptions=True)
 
-            for name, response in zip(adapter_names, responses):
+            for name, response in zip(adapter_names, responses, strict=False):
                 if isinstance(response, Exception):
                     self.logger.error(f"Failed to collect from {name}: {str(response)}")
                 else:
@@ -456,7 +457,7 @@ class UnifiedDataCollector:
 
         return results  # type: ignore
 
-    async def collect_team_stats(self, team_id: int) -> Dict[str, ExternalData]:
+    async def collect_team_stats(self, team_id: int) -> dict[str, ExternalData]:
         """收集球队统计"""
         results = {}
 
@@ -480,7 +481,7 @@ class UnifiedDataCollector:
 
     async def collect_weather_data(
         self, location: str, date: datetime
-    ) -> Optional[ExternalData]:
+    ) -> ExternalData | None:
         """收集天气数据"""
         for name, adapter in self.adapters.items():
             if isinstance(adapter, WeatherApiAdapter):

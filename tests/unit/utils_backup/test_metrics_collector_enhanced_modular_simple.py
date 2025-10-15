@@ -2,16 +2,17 @@
 增强指标收集器模块化简化测试
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
 
 
 def test_metric_types():
     """测试指标数据类型"""
     from src.monitoring.metrics_collector_enhanced.metric_types import (
+        AlertInfo,
         MetricPoint,
         MetricSummary,
-        AlertInfo,
     )
 
     # 测试MetricPoint
@@ -121,10 +122,11 @@ def test_alert_manager():
 
 def test_system_metrics_collector():
     """测试系统指标收集器"""
+    from unittest.mock import Mock
+
     from src.monitoring.metrics_collector_enhanced.system_metrics import (
         SystemMetricsCollector,
     )
-    from unittest.mock import Mock
 
     prometheus_manager = Mock()
     aggregator = Mock()
@@ -160,10 +162,11 @@ def test_system_metrics_collector():
 
 def test_business_metrics_collector():
     """测试业务指标收集器"""
+    from unittest.mock import Mock
+
     from src.monitoring.metrics_collector_enhanced.business_metrics import (
         BusinessMetricsCollector,
     )
-    from unittest.mock import Mock
 
     prometheus_manager = Mock()
     aggregator = Mock()
@@ -213,8 +216,8 @@ def test_backward_compatibility():
     # 测试原始导入方式仍然有效
     from src.metrics.collector.enhanced import (
         EnhancedMetricsCollector,
-        MetricsAggregator,
         MetricPoint,
+        MetricsAggregator,
         get_metrics_collector,
     )
 
@@ -259,12 +262,13 @@ def test_decorators():
 
 def test_alert_handlers():
     """测试告警处理器"""
-    from src.monitoring.metrics_collector_enhanced.alerting import (
-        DefaultAlertHandlers,
-        AlertInfo,
-    )
     from datetime import datetime
     from unittest.mock import patch
+
+    from src.monitoring.metrics_collector_enhanced.alerting import (
+        AlertInfo,
+        DefaultAlertHandlers,
+    )
 
     # 创建测试告警
     alert = AlertInfo(
@@ -316,8 +320,9 @@ def test_metric_summary():
 
 def test_alert_info():
     """测试告警信息"""
-    from src.monitoring.metrics_collector_enhanced.metric_types import AlertInfo
     from datetime import datetime
+
+    from src.monitoring.metrics_collector_enhanced.metric_types import AlertInfo
 
     alert = AlertInfo(
         name="test_alert",

@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
+
 """
 Match - 数据库模块
 
@@ -17,18 +18,21 @@ Match - 数据库模块
 
 from datetime import datetime
 from enum import Enum
+
 from sqlalchemy import (
     CheckConstraint,
     DateTime,
-    Enum as SQLEnum,
     ForeignKey,
     Index,
     Integer,
     String,
 )
+from sqlalchemy import (
+    Enum as SQLEnum,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from ..base import BaseModel
 
+from ..base import BaseModel
 
 """
 比赛模型
@@ -91,36 +95,36 @@ class Match(BaseModel):
     )
 
     # 比分信息
-    home_score: Mapped[Optional[int]] = mapped_column(
+    home_score: Mapped[int | None] = mapped_column(
         Integer, nullable=True, comment="主队比分"
     )
 
-    away_score: Mapped[Optional[int]] = mapped_column(
+    away_score: Mapped[int | None] = mapped_column(
         Integer, nullable=True, comment="客队比分"
     )
 
-    home_ht_score: Mapped[Optional[int]] = mapped_column(
+    home_ht_score: Mapped[int | None] = mapped_column(
         Integer, nullable=True, comment="主队半场比分"
     )
 
-    away_ht_score: Mapped[Optional[int]] = mapped_column(
+    away_ht_score: Mapped[int | None] = mapped_column(
         Integer, nullable=True, comment="客队半场比分"
     )
 
-    minute: Mapped[Optional[int]] = mapped_column(
+    minute: Mapped[int | None] = mapped_column(
         Integer, nullable=True, comment="比赛进行时间（分钟）"
     )
 
     # 比赛详情
-    venue: Mapped[Optional[str]] = mapped_column(
+    venue: Mapped[str | None] = mapped_column(
         String(200), nullable=True, comment="比赛场地"
     )
 
-    referee: Mapped[Optional[str]] = mapped_column(
+    referee: Mapped[str | None] = mapped_column(
         String(100), nullable=True, comment="主裁判"
     )
 
-    weather: Mapped[Optional[str]] = mapped_column(
+    weather: Mapped[str | None] = mapped_column(
         String(100), nullable=True, comment="天气情况"
     )
 
@@ -217,20 +221,20 @@ class Match(BaseModel):
         )
 
     @property
-    def final_score(self) -> Optional[str]:
+    def final_score(self) -> str | None:
         """返回最终比分"""
         if self.home_score is not None and self.away_score is not None:
             return f"{self.home_score}-{self.away_score}"
         return None
 
     @property
-    def ht_score(self) -> Optional[str]:
+    def ht_score(self) -> str | None:
         """返回半场比分"""
         if self.home_ht_score is not None and self.away_ht_score is not None:
             return f"{self.home_ht_score}-{self.away_ht_score}"
         return None
 
-    def get_result(self) -> Optional[str]:
+    def get_result(self) -> str | None:
         """
         获取比赛结果
 
@@ -247,26 +251,26 @@ class Match(BaseModel):
         else:
             return "away_win"
 
-    def get_total_goals(self) -> Optional[int]:
+    def get_total_goals(self) -> int | None:
         """获取总进球数"""
         if self.home_score is not None and self.away_score is not None:
             return self.home_score + self.away_score
         return None
 
-    def is_over_2_5_goals(self) -> Optional[bool]:
+    def is_over_2_5_goals(self) -> bool | None:
         """判断是否大于2.5球"""
         total_goals = self.get_total_goals()
         if total_goals is not None:
             return total_goals > 2.5
         return None
 
-    def both_teams_scored(self) -> Optional[bool]:
+    def both_teams_scored(self) -> bool | None:
         """判断双方是否都有进球"""
         if self.home_score is not None and self.away_score is not None:
             return self.home_score > 0 and self.away_score > 0
         return None
 
-    def get_match_stats(self) -> Dict[str, Any]:
+    def get_match_stats(self) -> dict[str, Any]:
         """获取比赛统计信息"""
         _stats = {
             "match_id": self.id,
@@ -291,8 +295,8 @@ class Match(BaseModel):
         self,
         home_score: int,
         away_score: int,
-        home_ht: Optional[int] = None,
-        away_ht: Optional[int] = None,
+        home_ht: int | None = None,
+        away_ht: int | None = None,
     ):
         """更新比赛比分"""
         self.home_score = home_score
@@ -342,7 +346,7 @@ class Match(BaseModel):
 
     @classmethod
     def get_finished_matches(
-        cls, session, league_id: Optional[int] = None, season: Optional[str] = None
+        cls, session, league_id: int | None = None, season: str | None = None
     ):
         """获取已结束的比赛"""
         query = session.query(cls).filter(cls.match_status == MatchStatus.FINISHED)
@@ -355,7 +359,7 @@ class Match(BaseModel):
         return query.order_by(cls.match_time.desc()).all()  # type: ignore
 
     @classmethod
-    def get_team_matches(cls, session, team_id: int, season: Optional[str] = None):
+    def get_team_matches(cls, session, team_id: int, season: str | None = None):
         """获取某个球队的所有比赛"""
 
         query = session.query(cls).filter(

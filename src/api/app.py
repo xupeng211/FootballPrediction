@@ -1,4 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
 """
 FastAPI主应用
 FastAPI Main Application
@@ -11,28 +10,29 @@ import time
 from contextlib import asynccontextmanager
 from datetime import datetime
 
-from requests.exceptions import HTTPError
-
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse, Response
+from requests.exceptions import HTTPError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
-from fastapi.exceptions import RequestValidationError
 
-from src.core.logging import get_logger
-from src.core.prediction import PredictionEngine
-from src.config.openapi_config import setup_openapi
+from src.api.auth import router as auth_router
+from src.api.data_router import router as data_router
 from src.api.health import router as health_router
 from src.api.predictions import router as predictions_router
-from src.api.data_router import router as data_router
-from src.api.auth import router as auth_router
+from src.config.openapi_config import setup_openapi
+from src.core.logging import get_logger
+from src.core.prediction import PredictionEngine
 
 logger = get_logger(__name__)
 
 # 全局预测引擎实例
-prediction_engine: Union[PredictionEngine, None] = None
+prediction_engine: PredictionEngine | None = None
+
+
 async def init_prediction_engine() -> None:
     """初始化预测引擎"""
     global prediction_engine
@@ -275,8 +275,9 @@ async def test_endpoint() -> None:
 
 
 if __name__ == "__main__":
-    import uvicorn
     from datetime import datetime
+
+    import uvicorn
 
     # 开发环境配置
     uvicorn.run(

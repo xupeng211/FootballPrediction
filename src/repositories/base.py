@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Generic, List, Optional, TypeVar, Union
 """
 仓储基类
 Repository Base Classes
@@ -45,7 +45,7 @@ class BaseRepository(Generic[T, ID], ABC):
         pass
 
     @abstractmethod
-    async def get_all(self, query_spec: Optional[QuerySpec] ] = None) -> List[T]:
+    async def get_all(self, query_spec: Optional[QuerySpec] = None) -> List[T]:
         """获取所有实体"""
         pass
 
@@ -64,7 +64,7 @@ class BaseRepository(Generic[T, ID], ABC):
         """检查实体是否存在"""
         pass
 
-    async def count(self, query_spec: Optional[QuerySpec] ] = None) -> int:
+    async def count(self, query_spec: Optional[QuerySpec] = None) -> int:
         """计算实体数量"""
         query = select(self.model_class)
 
@@ -172,11 +172,11 @@ class WriteOnlyRepository(BaseRepository[T, ID], ABC):
         pass
 
     @abstractmethod
-    async def bulk_create(self, entities_data: List[Dict[str, Any]) -> List[T]:
+    async def bulk_create(self, entities_data: List[Dict[str, Any]]) -> List[T]:
         """批量创建实体"""
         pass
 
-    async def bulk_update(self, updates: List[Dict[str, Any]) -> List[T]:
+    async def bulk_update(self, updates: List[Dict[str, Any]]) -> List[T]:
         """批量更新实体"""
         updated_entities = []
         for update_data in updates:
@@ -215,7 +215,7 @@ class Repository(ReadOnlyRepository[T, ID], WriteOnlyRepository[T, ID], ABC):
         self,
         find_spec: QuerySpec,
         update_data: Dict[str, Any],
-        create_data: Optional[Dict[str, Any] ] ] = None,
+        create_data: Optional[Dict[str, Any]] = None,
     ) -> tuple[T, bool]:
         """更新或创建实体"""
         entity = await self.find_one(find_spec)

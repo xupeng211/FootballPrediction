@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 数据质量监控模块
 
@@ -19,14 +17,15 @@ from .anomaly_detector import (
     AnomalyDetectionResult,
     MachineLearningAnomalyDetector,
     StatisticalAnomalyDetector,
-    # AnomalyDetector,  # Simple version  # 未使用
 )
 
 # 如果 AdvancedAnomalyDetector 不存在，创建一个简单的实现
 try:
     from .advanced_anomaly_detector import AdvancedAnomalyDetector  # type: ignore
 except ImportError:
-    from .anomaly_detector import AnomalyDetector as AdvancedAnomalyDetector  # type: ignore
+    from .anomaly_detector import (
+        AnomalyDetector as AdvancedAnomalyDetector,  # type: ignore
+    )
 from .data_quality_monitor import DataQualityMonitor
 from .exception_handler import DataQualityExceptionHandler
 from .ge_prometheus_exporter import GEPrometheusExporter

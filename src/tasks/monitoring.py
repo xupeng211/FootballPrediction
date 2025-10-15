@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 任务监控模块
@@ -33,15 +33,15 @@ class TaskMonitor:
     在生产环境中使用默认的全局注册表，在测试环境中可以传入独立的注册表。
     """
 
-    def __init__(self, registry: Optional[CollectorRegistry] = None):
+    def __init__(self, registry: CollectorRegistry | None = None):
         """
         初始化任务监控器
 
         Args:
             registry: 可选的 Prometheus 注册表实例，主要用于测试隔离
         """
-        self._db_type: Optional[str] = None
-        self._query_builder: Optional[CompatibleQueryBuilder] = None
+        self._db_type: str | None = None
+        self._query_builder: CompatibleQueryBuilder | None = None
         # 使用传入的注册表或默认全局注册表
         self.registry = registry or REGISTRY
 
@@ -188,7 +188,7 @@ class TaskMonitor:
             self._query_builder = CompatibleQueryBuilder(db_type)
         return self._query_builder
 
-    async def calculate_error_rates(self) -> Dict[str, float]:
+    async def calculate_error_rates(self) -> dict[str, float]:
         """
         计算各任务的错误率
 
@@ -246,7 +246,7 @@ class TaskMonitor:
             logger.error(f"计算错误率失败: {str(e)}")
             return {}
 
-    async def get_task_statistics(self, hours: int = 24) -> Dict[str, Any]:
+    async def get_task_statistics(self, hours: int = 24) -> dict[str, Any]:
         """
         获取任务统计信息
 
@@ -322,14 +322,14 @@ class TaskMonitor:
             logger.error(f"获取任务统计失败: {str(e)}")
             return {"error": str(e), "statistics": []}
 
-    async def check_task_health(self) -> Dict[str, Any]:
+    async def check_task_health(self) -> dict[str, Any]:
         """
         检查任务系统健康状态
 
         Returns:
             健康状态信息
         """
-        health_status: Dict[str, Any] = {
+        health_status: dict[str, Any] = {
             "overall_status": "healthy",
             "issues": [],
             "metrics": {},
@@ -406,7 +406,7 @@ class TaskMonitor:
                 "issues": [{"type": "monitoring_error", "message": str(e)}],
             }
 
-    async def _get_queue_sizes(self) -> Dict[str, int]:
+    async def _get_queue_sizes(self) -> dict[str, int]:
         """获取队列大小"""
         try:
             import os
@@ -435,7 +435,7 @@ class TaskMonitor:
             logger.warning(f"获取队列大小失败: {str(e)}")
             return {}
 
-    async def _check_task_delays(self) -> Dict[str, float]:
+    async def _check_task_delays(self) -> dict[str, float]:
         """检查任务延迟"""
         try:
             db_manager = DatabaseManager()
@@ -456,7 +456,7 @@ class TaskMonitor:
             logger.warning(f"检查任务延迟失败: {str(e)}")
             return {}
 
-    def generate_monitoring_report(self) -> Dict[str, Any]:
+    def generate_monitoring_report(self) -> dict[str, Any]:
         """
         生成监控报告
 

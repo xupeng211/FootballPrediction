@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 适配器模式API端点
@@ -8,8 +8,9 @@ Adapter Pattern API Endpoints
 Demonstrates the usage and effects of the adapter pattern.
 """
 
-from fastapi import APIRouter, HTTPException, Query, Path
-from datetime import datetime, date, timedelta
+from datetime import date, datetime, timedelta
+
+from fastapi import APIRouter, HTTPException, Path, Query
 from requests.exceptions import HTTPError, RequestException
 
 from ..adapters import AdapterFactory, AdapterRegistry
@@ -25,7 +26,7 @@ adapter_registry = AdapterRegistry()
 
 
 @router.get("/registry/status", summary="获取适配器注册表状态")
-async def get_registry_status() -> Dict[str, Any]:
+async def get_registry_status() -> dict[str, Any]:
     """获取适配器注册表的整体状态"""
     if adapter_registry.status.value == "inactive":
         await adapter_registry.initialize()
@@ -40,14 +41,14 @@ async def get_registry_status() -> Dict[str, Any]:
 
 
 @router.post("/registry/initialize", summary="初始化适配器注册表")
-async def initialize_registry() -> Dict[str, str]:
+async def initialize_registry() -> dict[str, str]:
     """初始化适配器注册表"""
     await adapter_registry.initialize()
     return {"message": "适配器注册表已初始化"}
 
 
 @router.post("/registry/shutdown", summary="关闭适配器注册表")
-async def shutdown_registry() -> Dict[str, str]:
+async def shutdown_registry() -> dict[str, str]:
     """关闭适配器注册表"""
     await adapter_registry.shutdown()
     return {"message": "适配器注册表已关闭"}
@@ -57,7 +58,7 @@ async def shutdown_registry() -> Dict[str, str]:
 
 
 @router.get("/configs", summary="获取适配器配置")
-async def get_adapter_configs() -> Dict[str, Any]:
+async def get_adapter_configs() -> dict[str, Any]:
     """获取所有适配器配置"""
     configs = {}
     for name in adapter_factory.list_configs():
@@ -88,7 +89,7 @@ async def get_adapter_configs() -> Dict[str, Any]:
 
 
 @router.post("/configs/load", summary="加载适配器配置")
-async def load_adapter_config(config_data: Dict[str, Any]) -> Dict[str, str]:
+async def load_adapter_config(config_data: dict[str, Any]) -> dict[str, str]:
     """加载适配器配置"""
     # 这里简化处理，实际应用中应该从文件加载
     # 创建示例配置
@@ -112,12 +113,12 @@ async def load_adapter_config(config_data: Dict[str, Any]) -> Dict[str, str]:
 
 @router.get("/football/matches", summary="获取足球比赛数据")
 async def get_football_matches(
-    date_from: Optional[date] = Query(None, description="开始日期"),
-    date_to: Optional[date] = Query(None, description="结束日期"),
-    league_id: Optional[str] = Query(None, description="联赛ID"),
-    team_id: Optional[str] = Query(None, description="球队ID"),
+    date_from: date | None = Query(None, description="开始日期"),
+    date_to: date | None = Query(None, description="结束日期"),
+    league_id: str | None = Query(None, description="联赛ID"),
+    team_id: str | None = Query(None, description="球队ID"),
     live: bool = Query(False, description="仅获取正在进行中的比赛"),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     使用适配器获取足球比赛数据
 
@@ -232,7 +233,7 @@ async def get_football_matches(
 @router.get("/football/matches/{match_id}", summary="获取单个比赛详情")
 async def get_football_match(
     match_id: str = Path(..., description="比赛ID"),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """获取单个足球比赛的详细信息"""
     if adapter_registry.status.value == "inactive":
         await adapter_registry.initialize()
@@ -294,9 +295,9 @@ async def get_football_match(
 
 @router.get("/football/teams", summary="获取足球队数据")
 async def get_football_teams(
-    league_id: Optional[str] = Query(None, description="联赛ID"),
-    search: Optional[str] = Query(None, description="搜索关键词"),
-) -> Dict[str, Any]:
+    league_id: str | None = Query(None, description="联赛ID"),
+    search: str | None = Query(None, description="搜索关键词"),
+) -> dict[str, Any]:
     """获取足球队数据"""
     if adapter_registry.status.value == "inactive":
         await adapter_registry.initialize()
@@ -376,8 +377,8 @@ async def get_football_teams(
 @router.get("/football/teams/{team_id}/players", summary="获取球队球员")
 async def get_team_players(
     team_id: str = Path(..., description="球队ID"),
-    season: Optional[str] = Query(None, description="赛季"),
-) -> Dict[str, Any]:
+    season: str | None = Query(None, description="赛季"),
+) -> dict[str, Any]:
     """获取球队的球员列表"""
     if adapter_registry.status.value == "inactive":
         await adapter_registry.initialize()
@@ -452,7 +453,7 @@ async def get_team_players(
 @router.get("/demo/comparison", summary="多数据源对比演示")
 async def demo_adapter_comparison(
     match_id: str = Query("12345", description="比赛ID"),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     演示适配器模式如何统一多个数据源
 
@@ -489,7 +490,7 @@ async def demo_adapter_comparison(
 
 
 @router.get("/demo/fallback", summary="故障转移演示")
-async def demo_adapter_fallback() -> Dict[str, Any]:
+async def demo_adapter_fallback() -> dict[str, Any]:
     """
     演示适配器的故障转移机制
 
@@ -530,7 +531,7 @@ async def demo_adapter_fallback() -> Dict[str, Any]:
 
 
 @router.get("/demo/transformation", summary="数据转换演示")
-async def demo_data_transformation() -> Dict[str, Any]:
+async def demo_data_transformation() -> dict[str, Any]:
     """
     演示适配器的数据转换能力
 

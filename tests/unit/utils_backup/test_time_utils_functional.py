@@ -3,8 +3,9 @@
 time_utils_functional 模块测试
 """
 
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 
 class TestTimeUtilsFunctional:

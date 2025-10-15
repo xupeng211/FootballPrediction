@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 数据库类型适配模块
@@ -31,7 +31,7 @@ class SQLiteCompatibleJSONB(TypeDecorator):
             # 对于SQLite和其他数据库，使用TEXT
             return dialect.type_descriptor(Text())
 
-    def process_bind_param(self, value: Any, dialect) -> Union[str, Any]:
+    def process_bind_param(self, value: Any, dialect) -> str | Any:
         """处理绑定参数（Python值 -> 数据库值）"""
         if value is None:
             return None
@@ -41,7 +41,7 @@ class SQLiteCompatibleJSONB(TypeDecorator):
             return value
         else:
             # SQLite需要序列化为JSON字符串
-            if isinstance(value, (Dict[str, Any], list)):
+            if isinstance(value, dict[str, Any] | list):
                 return json.dumps(value, ensure_ascii=False)
             elif isinstance(value, str):
                 # 如果已经是字符串，验证是否为有效JSON
@@ -89,7 +89,7 @@ class CompatibleJSON(TypeDecorator):
         else:
             return dialect.type_descriptor(Text())
 
-    def process_bind_param(self, value: Any, dialect) -> Union[str, Any]:
+    def process_bind_param(self, value: Any, dialect) -> str | Any:
         """处理绑定参数"""
         if value is None:
             return None

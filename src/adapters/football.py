@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional
+
 """
 足球API适配器
 Football API Adapters
@@ -8,13 +9,15 @@ Integrate various football data APIs.
 """
 
 import asyncio
-import aiohttp
-from datetime import datetime
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
 
-from .base import Adapter, AdapterStatus, Adaptee, Target
+import aiohttp
+
 from src.core.exceptions import AdapterError
+
+from .base import Adaptee, Adapter, AdapterStatus
 
 
 class MatchStatus(Enum):
@@ -35,26 +38,30 @@ class FootballMatch:
     home_team: str
     away_team: str
     competition: str
-    home_team_id: Optional[str] = None
-    away_team_id: Optional[str] = None
-    competition_id: Optional[str] = None
-    match_date: Optional[datetime] = None
-    status: Optional[MatchStatus] = None
-    home_score: Optional[int] = None
-    away_score: Optional[int] = None
-    venue: Optional[str] = None
-    weather: Optional[Dict[str, Any]] = None
+    home_team_id: str | None = None
+    away_team_id: str | None = None
+    competition_id: str | None = None
+    match_date: datetime | None = None
+    status: MatchStatus | None = None
+    home_score: int | None = None
+    away_score: int | None = None
+    venue: str | None = None
+    weather: dict[str, Any] | None = None
+
+
 @dataclass
 class FootballTeam:
     """足球队数据模型"""
 
     id: str
     name: str
-    short_name: Optional[str] = None
-    country: Optional[str] = None
-    founded: Optional[int] = None
-    stadium: Optional[str] = None
-    logo_url: Optional[str] = None
+    short_name: str | None = None
+    country: str | None = None
+    founded: int | None = None
+    stadium: str | None = None
+    logo_url: str | None = None
+
+
 @dataclass
 class FootballPlayer:
     """足球运动员数据模型"""
@@ -62,19 +69,22 @@ class FootballPlayer:
     id: str
     name: str
     team_id: str
-    position: Optional[str] = None
-    age: Optional[int] = None
-    nationality: Optional[str] = None
-    height: Optional[float] = None
-    weight: Optional[float] = None
-    photo_url: Optional[str] = None
+    position: str | None = None
+    age: int | None = None
+    nationality: str | None = None
+    height: float | None = None
+    weight: float | None = None
+    photo_url: str | None = None
+
+
 class FootballApiAdaptee(Adaptee):
     """足球API被适配者基类"""
 
     def __init__(self, api_key: str, base_url: str):
         self.api_key = api_key
         self.base_url = base_url
-        self.session: Optional[aiohttp.ClientSession] = None
+        self.session: aiohttp.ClientSession | None = None
+
     async def initialize(self) -> None:
         """初始化HTTP会话"""
         self.session = aiohttp.ClientSession()
@@ -84,7 +94,9 @@ class FootballApiAdaptee(Adaptee):
         if self.session:
             await self.session.close()
 
-    async def get_data(self, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    async def get_data(
+        self, endpoint: str, params: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """获取API数据"""
         if not self.session:
             raise RuntimeError("Adapter not initialized")
@@ -100,7 +112,7 @@ class FootballApiAdaptee(Adaptee):
         """发送数据（足球API通常只读）"""
         raise NotImplementedError("Football APIs are typically read-only")
 
-    def _get_headers(self) -> Dict[str, str]:
+    def _get_headers(self) -> dict[str, str]:
         """获取请求头"""
         return {
             "X-Auth-Token": self.api_key,
@@ -114,7 +126,7 @@ class ApiFootballAdaptee(FootballApiAdaptee):
     def __init__(self, api_key: str):
         super().__init__(api_key, "https://v3.football.api-sports.io")
 
-    def _get_headers(self) -> Dict[str, str]:
+    def _get_headers(self) -> dict[str, str]:
         return {
             "x-apisports-key": self.api_key,
             "x-apisports-host": "v3.football.api-sports.io",
@@ -128,7 +140,7 @@ class OptaDataAdaptee(FootballApiAdaptee):
         super().__init__(api_key, "https://api.optasports.com")
         self.customer_id = customer_id
 
-    def _get_headers(self) -> Dict[str, str]:
+    def _get_headers(self) -> dict[str, str]:
         return {
             "X-Auth-Token": self.api_key,
             "X-Customer-ID": self.customer_id,
@@ -153,7 +165,7 @@ class FootballDataTransformer:
         else:
             raise ValueError(f"Unknown target type: {target_type}")
 
-    async def _transform_match(self, data: Dict[str, Any]) -> FootballMatch:
+    async def _transform_match(self, data: dict[str, Any]) -> FootballMatch:
         """转换比赛数据"""
         if self.source_format == "api-football":
             return FootballMatch(
@@ -190,7 +202,7 @@ class FootballDataTransformer:
         else:
             raise ValueError(f"Unknown source format: {self.source_format}")
 
-    async def _transform_team(self, data: Dict[str, Any]) -> FootballTeam:
+    async def _transform_team(self, data: dict[str, Any]) -> FootballTeam:
         """转换球队数据"""
         if self.source_format == "api-football":
             return FootballTeam(
@@ -205,7 +217,7 @@ class FootballDataTransformer:
         else:
             raise ValueError(f"Unknown source format: {self.source_format}")
 
-    async def _transform_player(self, data: Dict[str, Any]) -> FootballPlayer:
+    async def _transform_player(self, data: dict[str, Any]) -> FootballPlayer:
         """转换球员数据"""
         if self.source_format == "api-football":
             return FootballPlayer(
@@ -222,7 +234,7 @@ class FootballDataTransformer:
         else:
             raise ValueError(f"Unknown source format: {self.source_format}")
 
-    def get_source_schema(self) -> Dict[str, Any]:
+    def get_source_schema(self) -> dict[str, Any]:
         """获取源数据结构"""
         if self.source_format == "api-football":
             return {
@@ -244,7 +256,7 @@ class FootballDataTransformer:
         else:
             return {}
 
-    def get_target_schema(self) -> Dict[str, Any]:
+    def get_target_schema(self) -> dict[str, Any]:
         """获取目标数据结构"""
         return {
             "id": "str",
@@ -265,7 +277,11 @@ class FootballDataTransformer:
 class FootballApiAdapter(Adapter):
     """足球API适配器基类"""
 
-    def __init__(self, adaptee: FootballApiAdaptee, transformer: Optional['FootballDataTransformer'] = None):
+    def __init__(
+        self,
+        adaptee: FootballApiAdaptee,
+        transformer: Optional["FootballDataTransformer"] = None,
+    ):
         super().__init__(adaptee)
         self.transformer = transformer
 
@@ -279,11 +295,11 @@ class FootballApiAdapter(Adapter):
 
     async def get_matches(
         self,
-        date: Optional[datetime] = None,
-        league_id: Optional[str] = None,
-        team_id: Optional[str] = None,
+        date: datetime | None = None,
+        league_id: str | None = None,
+        team_id: str | None = None,
         live: bool = False,
-    ) -> List[FootballMatch]:
+    ) -> list[FootballMatch]:
         """获取比赛列表"""
         params = {}
         if date:
@@ -306,7 +322,7 @@ class FootballApiAdapter(Adapter):
 
         return matches
 
-    async def get_match(self, match_id: str) -> Optional[FootballMatch]:
+    async def get_match(self, match_id: str) -> FootballMatch | None:
         """获取单个比赛"""
         endpoint = f"fixtures?id={match_id}"
         _data = await self.adaptee.get_data(endpoint)
@@ -316,7 +332,7 @@ class FootballApiAdapter(Adapter):
             return await self.transformer.transform(match_data, target_type="match")  # type: ignore
         return None
 
-    async def get_teams(self, league_id: Optional[str] = None) -> List[FootballTeam]:
+    async def get_teams(self, league_id: str | None = None) -> list[FootballTeam]:
         """获取球队列表"""
         params = {}
         if league_id:
@@ -332,7 +348,7 @@ class FootballApiAdapter(Adapter):
 
         return teams
 
-    async def get_team(self, team_id: str) -> Optional[FootballTeam]:
+    async def get_team(self, team_id: str) -> FootballTeam | None:
         """获取单个球队"""
         endpoint = f"teams?id={team_id}"
         _data = await self.adaptee.get_data(endpoint)
@@ -343,8 +359,8 @@ class FootballApiAdapter(Adapter):
         return None
 
     async def get_players(
-        self, team_id: str, season: Optional[str] = None
-    ) -> List[FootballPlayer]:
+        self, team_id: str, season: str | None = None
+    ) -> list[FootballPlayer]:
         """获取球员列表"""
         params = {}
         if season:
@@ -362,7 +378,7 @@ class FootballApiAdapter(Adapter):
 
         return players
 
-    async def get_player(self, player_id: str) -> Optional[FootballPlayer]:
+    async def get_player(self, player_id: str) -> FootballPlayer | None:
         """获取单个球员"""
         endpoint = f"players?id={player_id}&season=2023"
         _data = await self.adaptee.get_data(endpoint)
@@ -372,7 +388,7 @@ class FootballApiAdapter(Adapter):
             return await self.transformer.transform(player_data, target_type="player")  # type: ignore
         return None
 
-    async def get_standings(self, league_id: str, season: str) -> List[Dict[str, Any]]:
+    async def get_standings(self, league_id: str, season: str) -> list[dict[str, Any]]:
         """获取积分榜"""
         params = {"league": league_id, "season": season}
         endpoint = "standings"
@@ -413,8 +429,9 @@ class CompositeFootballAdapter(Adapter):
 
     def __init__(self):
         super().__init__(None, "CompositeFootballAdapter")
-        self.adapters: List[FootballApiAdapter] = []
-        self.primary_source: Optional[FootballApiAdapter] = None
+        self.adapters: list[FootballApiAdapter] = []
+        self.primary_source: FootballApiAdapter | None = None
+
     def add_adapter(
         self, adapter: FootballApiAdapter, is_primary: bool = False
     ) -> None:
@@ -460,9 +477,9 @@ class CompositeFootballAdapter(Adapter):
 
     async def get_matches_aggregated(
         self,
-        date: Optional[datetime] = None,
-        league_id: Optional[str] = None,
-    ) -> Dict[str, List[FootballMatch]]:
+        date: datetime | None = None,
+        league_id: str | None = None,
+    ) -> dict[str, list[FootballMatch]]:
         """从多个数据源聚合比赛数据"""
         results = {}
         tasks = []
@@ -487,7 +504,7 @@ class CompositeFootballAdapter(Adapter):
 class FootballDataAdapter:
     """足球数据适配器（简化版用于测试）"""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         self._config = config
         self.initialized = False
         self.client = None
@@ -496,7 +513,7 @@ class FootballDataAdapter:
         """初始化适配器"""
         self.initialized = True
 
-    async def get_match_data(self, match_id: int, **kwargs) -> Dict[str, Any]:
+    async def get_match_data(self, match_id: int, **kwargs) -> dict[str, Any]:
         """获取比赛数据"""
         if not self.initialized:
             raise AdapterError("Adapter not initialized")
@@ -504,7 +521,7 @@ class FootballDataAdapter:
             return await self.client.get(f"/matches/{match_id}")  # type: ignore
         return {"matches": [{"id": match_id}]}
 
-    async def get_team_data(self, team_id: int, **kwargs) -> Dict[str, Any]:
+    async def get_team_data(self, team_id: int, **kwargs) -> dict[str, Any]:
         """获取队伍数据"""
         if not self.initialized:
             raise AdapterError("Adapter not initialized")
@@ -512,7 +529,7 @@ class FootballDataAdapter:
             return await self.client.get(f"/teams/{team_id}")  # type: ignore
         return {"id": team_id, "name": f"Team {team_id}"}
 
-    async def get_league_data(self, league_id: int, **kwargs) -> Dict[str, Any]:
+    async def get_league_data(self, league_id: int, **kwargs) -> dict[str, Any]:
         """获取联赛数据"""
         if not self.initialized:
             raise AdapterError("Adapter not initialized")
@@ -520,7 +537,7 @@ class FootballDataAdapter:
             return await self.client.get(f"/competitions/{league_id}")  # type: ignore
         return {"id": league_id, "name": f"League {league_id}"}
 
-    async def get_player_data(self, player_id: int, **kwargs) -> Dict[str, Any]:
+    async def get_player_data(self, player_id: int, **kwargs) -> dict[str, Any]:
         """获取球员数据"""
         if not self.initialized:
             raise AdapterError("Adapter not initialized")
@@ -528,7 +545,7 @@ class FootballDataAdapter:
             return await self.client.get(f"/players/{player_id}")  # type: ignore
         return {"id": player_id, "name": f"Player {player_id}"}
 
-    async def search_teams(self, name: str, **kwargs) -> Dict[str, Any]:
+    async def search_teams(self, name: str, **kwargs) -> dict[str, Any]:
         """搜索队伍"""
         if not self.initialized:
             raise AdapterError("Adapter not initialized")
@@ -536,7 +553,7 @@ class FootballDataAdapter:
             return await self.client.get(f"/teams?name={name}")  # type: ignore
         return {"teams": [{"name": f"{name} Team"}]}
 
-    async def get_upcoming_matches(self, team_id: int, **kwargs) -> Dict[str, Any]:
+    async def get_upcoming_matches(self, team_id: int, **kwargs) -> dict[str, Any]:
         """获取即将到来的比赛"""
         if not self.initialized:
             raise AdapterError("Adapter not initialized")
@@ -546,7 +563,7 @@ class FootballDataAdapter:
 
     async def get_historical_matches(
         self, team_id: int, limit: int = 10, **kwargs
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """获取历史比赛"""
         if not self.initialized:
             raise AdapterError("Adapter not initialized")
@@ -558,7 +575,7 @@ class FootballDataAdapter:
 
     async def get_standings(
         self, league_id: int, season: int, **kwargs
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """获取积分榜"""
         if not self.initialized:
             raise AdapterError("Adapter not initialized")
@@ -570,7 +587,7 @@ class FootballDataAdapter:
 
     async def get_top_scorers(
         self, league_id: int, season: int, limit: int = 10, **kwargs
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """获取射手榜"""
         if not self.initialized:
             raise AdapterError("Adapter not initialized")
@@ -580,7 +597,7 @@ class FootballDataAdapter:
             )
         return {"scorers": []}
 
-    async def batch_get_matches(self, match_ids: List[int]) -> List[Dict[str, Any]]:
+    async def batch_get_matches(self, match_ids: list[int]) -> list[dict[str, Any]]:
         """批量获取比赛"""
         results = []
         for match_id in match_ids:
@@ -594,7 +611,7 @@ class FootballDataAdapter:
         if self.client:
             await self.client.close()
 
-    def _build_url(self, path: str, params: Optional[Dict[str, Any]] = None) -> str:
+    def _build_url(self, path: str, params: dict[str, Any] | None = None) -> str:
         """构建URL"""
         if params:
             query_str = "&".join([f"{k}={v}" for k, v in params.items()])
@@ -605,6 +622,6 @@ class FootballDataAdapter:
         """解析日期"""
         return datetime.fromisoformat(date_str.replace("Z", "+00:00"))
 
-    def _validate_response(self, response: Dict[str, Any]) -> bool:
+    def _validate_response(self, response: dict[str, Any]) -> bool:
         """验证响应"""
         return "status" in response or "data" in response or "matches" in response

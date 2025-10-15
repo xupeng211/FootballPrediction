@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 重试机制模块 / Retry Mechanism Module
 
@@ -8,8 +6,9 @@ from typing import Any, Dict, List, Optional, Union
 
 import asyncio
 import functools
-import time
 import random
+import time
+from typing import Callable, TypeVar
 
 T = TypeVar("T")
 
@@ -106,7 +105,7 @@ async def async_retry_with_exponential_backoff(
     return decorator
 
 
-def retry(config: Optional[RetryConfig] = None):
+def retry(config: RetryConfig | None = None):
     """通用的重试装饰器"""
     if config is None:
         _config = RetryConfig()
@@ -118,7 +117,7 @@ def retry(config: Optional[RetryConfig] = None):
     )
 
 
-def async_retry(config: Optional[RetryConfig] = None):
+def async_retry(config: RetryConfig | None = None):
     """通用的异步重试装饰器"""
     if config is None:
         _config = RetryConfig()

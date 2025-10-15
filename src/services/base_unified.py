@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 统一的基础服务类
@@ -25,7 +25,7 @@ class BaseService(ABC):
     """
 
     def __init__(
-        self, name: Optional[str] = None, db_manager: Optional[DatabaseManager] = None
+        self, name: str | None = None, db_manager: DatabaseManager | None = None
     ):
         """
         初始化基础服务
@@ -139,7 +139,7 @@ class BaseService(ABC):
     # 数据库会话管理
     # ========================================
 
-    async def get_async_session(self) -> Optional[Any]:
+    async def get_async_session(self) -> Any | None:
         """获取异步数据库会话"""
         return self.db_manager.get_async_session()
 
@@ -154,7 +154,7 @@ class BaseService(ABC):
     def log_operation(
         self,
         operation: str,
-        details: Optional[Dict[str, Any]] = None,
+        details: dict[str, Any] | None = None,
         level: str = "info",
     ) -> None:
         """
@@ -172,7 +172,7 @@ class BaseService(ABC):
         getattr(self.logger, level)(message)
 
     def log_error(
-        self, operation: str, error: Exception, details: Optional[Dict[str, Any]] = None
+        self, operation: str, error: Exception, details: dict[str, Any] | None = None
     ) -> None:
         """
         记录错误日志
@@ -212,7 +212,7 @@ class BaseService(ABC):
         """
         return self._initialized and self._running
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """
         获取详细的健康检查信息
 
@@ -285,7 +285,7 @@ class BaseService(ABC):
     # ========================================
 
     @abstractmethod
-    async def _get_service_info(self) -> Dict[str, Any]:
+    async def _get_service_info(self) -> dict[str, Any]:
         """
         获取服务信息
 
@@ -309,7 +309,7 @@ class SimpleService(BaseService):
     适用于不需要复杂初始化逻辑的服务
     """
 
-    async def _get_service_info(self) -> Dict[str, Any]:
+    async def _get_service_info(self) -> dict[str, Any]:
         """获取服务信息"""
         return {
             "name": self.name,

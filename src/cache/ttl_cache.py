@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 TTL cache module - 使用增强版TTL缓存实现
 
@@ -21,23 +19,23 @@ Provides high-performance in-memory cache with:
 try:
     # 导入增强版的TTL缓存实现
     from .ttl_cache_enhanced import (
-        TTLCache,
+        CACHES,
         AsyncTTLCache,
         CacheEntry,
         CacheFactory,
-        prediction_cache,
-        feature_cache,
-        odds_cache,
-        session_cache,
-        config_cache,
-        temp_cache,
-        get_cache,
-        get_all_stats,
-        clear_all_caches,
+        TTLCache,
         cleanup_all_expired,
+        clear_all_caches,
+        config_cache,
+        feature_cache,
+        get_all_stats,
+        get_cache,
+        odds_cache,
+        prediction_cache,
+        session_cache,
         start_auto_cleanup,
         stop_auto_cleanup,
-        CACHES,
+        temp_cache,
     )
 except ImportError:
     # 如果导入失败，提供错误信息

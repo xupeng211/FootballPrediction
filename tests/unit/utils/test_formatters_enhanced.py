@@ -1,19 +1,21 @@
 """格式化工具增强测试"""
 
-import pytest
 from datetime import datetime, timedelta
 from decimal import Decimal
+
+import pytest
+
 from src.utils.formatters import (
+    escape_html,
     format_currency,
-    format_percentage,
     format_datetime,
-    format_file_size,
     format_duration,
-    format_number,
-    truncate_text,
-    format_phone_number,
+    format_file_size,
     format_json,
-    escape_html
+    format_number,
+    format_percentage,
+    format_phone_number,
+    truncate_text,
 )
 
 
@@ -22,18 +24,18 @@ class TestFormattersEnhanced:
 
     def test_format_currency_usd(self):
         """测试美元货币格式"""
-        assert format_currency(1234.56, 'USD') == "$1,234.56"
-        assert format_currency(0, 'USD') == "$0.00"
-        assert format_currency(1234567.89, 'USD') == "$1,234,567.89"
+        assert format_currency(1234.56, "USD") == "$1,234.56"
+        assert format_currency(0, "USD") == "$0.00"
+        assert format_currency(1234567.89, "USD") == "$1,234,567.89"
 
     def test_format_currency_eur(self):
         """测试欧元货币格式"""
-        assert format_currency(1234.56, 'EUR') == "€1,234.56"
-        assert format_currency(1234.56, 'EUR', locale='de-DE') == "1.234,56 €"
+        assert format_currency(1234.56, "EUR") == "€1,234.56"
+        assert format_currency(1234.56, "EUR", locale="de-DE") == "1.234,56 €"
 
     def test_format_currency_negative(self):
         """测试负数货币格式"""
-        assert format_currency(-123.45, 'USD') == "-$123.45"
+        assert format_currency(-123.45, "USD") == "-$123.45"
 
     def test_format_percentage(self):
         """测试百分比格式"""
@@ -138,7 +140,7 @@ class TestFormattersEnhanced:
         formatted = format_json(data, pretty=True)
         assert '"name": "John"' in formatted
         assert '"age": 30' in formatted
-        assert '{\n' in formatted or '{\r\n' in formatted
+        assert "{\n" in formatted or "{\r\n" in formatted
 
     def test_format_json_compact(self):
         """测试JSON格式化 - 紧凑"""

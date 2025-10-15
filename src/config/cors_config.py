@@ -1,11 +1,11 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """CORS配置管理"""
 
 import os
 
 
-def get_cors_origins() -> List[str]:
+def get_cors_origins() -> list[str]:
     """获取CORS允许的源"""
     env = os.getenv("ENVIRONMENT", "development")
 
@@ -21,7 +21,7 @@ def get_cors_origins() -> List[str]:
         ]
 
 
-def get_cors_config() -> Dict[str, Any]:
+def get_cors_config() -> dict[str, Any]:
     """获取完整的CORS配置"""
     return {
         "allow_origins": get_cors_origins(),

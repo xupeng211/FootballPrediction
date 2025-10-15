@@ -4,8 +4,9 @@ Test modular split of scheduler tasks
 """
 
 import json
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 
 class TestBaseModule:
@@ -38,8 +39,8 @@ class TestCollectionModule:
         """测试数据采集任务导入"""
         from src.scheduler.tasks.collection import (
             collect_fixtures,
-            collect_odds,
             collect_live_scores_conditional,
+            collect_odds,
         )
 
         assert collect_fixtures is not None
@@ -49,10 +50,11 @@ class TestCollectionModule:
     def test_collection_tasks_are_celery_tasks(self):
         """测试数据采集任务是Celery任务"""
         from celery import Task
+
         from src.scheduler.tasks.collection import (
             collect_fixtures,
-            collect_odds,
             collect_live_scores_conditional,
+            collect_odds,
         )
 
         assert isinstance(collect_fixtures, Task)
@@ -72,6 +74,7 @@ class TestFeaturesModule:
     def test_features_task_is_celery_task(self):
         """测试特征计算任务是Celery任务"""
         from celery import Task
+
         from src.scheduler.tasks.features import calculate_features_batch
 
         assert isinstance(calculate_features_batch, Task)
@@ -82,7 +85,7 @@ class TestMaintenanceModule:
 
     def test_maintenance_imports(self):
         """测试维护任务导入"""
-        from src.scheduler.tasks.maintenance import cleanup_data, backup_database
+        from src.scheduler.tasks.maintenance import backup_database, cleanup_data
 
         assert cleanup_data is not None
         assert backup_database is not None
@@ -90,7 +93,8 @@ class TestMaintenanceModule:
     def test_maintenance_tasks_are_celery_tasks(self):
         """测试维护任务是Celery任务"""
         from celery import Task
-        from src.scheduler.tasks.maintenance import cleanup_data, backup_database
+
+        from src.scheduler.tasks.maintenance import backup_database, cleanup_data
 
         assert isinstance(cleanup_data, Task)
         assert isinstance(backup_database, Task)
@@ -108,6 +112,7 @@ class TestQualityModule:
     def test_quality_task_is_celery_task(self):
         """测试质量检查任务是Celery任务"""
         from celery import Task
+
         from src.scheduler.tasks.quality import run_quality_checks
 
         assert isinstance(run_quality_checks, Task)
@@ -125,6 +130,7 @@ class TestPredictionsModule:
     def test_predictions_task_is_celery_task(self):
         """测试预测任务是Celery任务"""
         from celery import Task
+
         from src.scheduler.tasks.predictions import generate_predictions
 
         assert isinstance(generate_predictions, Task)
@@ -142,6 +148,7 @@ class TestProcessingModule:
     def test_processing_task_is_celery_task(self):
         """测试数据处理任务是Celery任务"""
         from celery import Task
+
         from src.scheduler.tasks.processing import process_bronze_to_silver
 
         assert isinstance(process_bronze_to_silver, Task)
@@ -154,15 +161,15 @@ class TestModularStructure:
         """测试从主模块导入"""
         from src.scheduler.tasks import (
             BaseDataTask,
-            collect_fixtures,
-            collect_odds,
-            collect_live_scores_conditional,
+            backup_database,
             calculate_features_batch,
             cleanup_data,
-            backup_database,
-            run_quality_checks,
+            collect_fixtures,
+            collect_live_scores_conditional,
+            collect_odds,
             generate_predictions,
             process_bronze_to_silver,
+            run_quality_checks,
         )
 
         assert BaseDataTask is not None
@@ -181,8 +188,12 @@ class TestModularStructure:
         # 从原始文件导入应该仍然有效
         from src.scheduler.tasks import (
             BaseDataTask as old_base,
-            collect_fixtures as old_fixtures,
+        )
+        from src.scheduler.tasks import (
             calculate_features_batch as old_features,
+        )
+        from src.scheduler.tasks import (
+            collect_fixtures as old_fixtures,
         )
 
         assert old_base is not None

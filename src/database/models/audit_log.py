@@ -1,7 +1,7 @@
-from typing import Any, Dict, List, Optional, Union
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from enum import Enum
+from typing import Any
+
 from sqlalchemy import Boolean, Column, DateTime, Index, Integer, String, Text, func
 
 """
@@ -14,17 +14,21 @@ from sqlalchemy import Boolean, Column, DateTime, Index, Integer, String, Text, 
 """
 
 from datetime import datetime, timedelta
-from sqlalchemy import Boolean, Column, DateTime, Index, Integer, String, Text
+
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Enum,  # type: ignore
+    Index,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.sql import func
+
 from ..base import BaseModel
 from ..types import SQLiteCompatibleJSONB
-from sqlalchemy import Column
-from sqlalchemy import DateTime
-from sqlalchemy import Enum  # type: ignore
-from sqlalchemy import Index
-from sqlalchemy import Integer
-from sqlalchemy import String
-from sqlalchemy import Text
 
 
 class AuditAction(str, Enum):
@@ -201,7 +205,7 @@ class AuditLog(BaseModel):
 
         return min(base_score, 100)  # type: ignore
 
-    def to_dict(self, exclude_fields: Optional[set[str]] = None) -> Dict[str, Any]:
+    def to_dict(self, exclude_fields: set[str] | None = None) -> dict[str, Any]:
         """转换为字典格式"""
         return {
             "id": self.id,
@@ -260,10 +264,10 @@ class AuditLog(BaseModel):
         cls,
         user_id: str,
         action: str,
-        table_name: Optional[str] = None,
-        column_name: Optional[str] = None,
-        old_value: Optional[str] = None,
-        new_value: Optional[str] = None,
+        table_name: str | None = None,
+        column_name: str | None = None,
+        old_value: str | None = None,
+        new_value: str | None = None,
         **kwargs,
     ) -> "AuditLog":
         """
@@ -337,7 +341,7 @@ class AuditLogSummary:
         """初始化"""
         self.session = session
 
-    def get_user_activity_summary(self, user_id: str, days: int = 30) -> Dict[str, Any]:
+    def get_user_activity_summary(self, user_id: str, days: int = 30) -> dict[str, Any]:
         """获取用户活动摘要"""
         from sqlalchemy import and_, func
 
@@ -404,10 +408,8 @@ class AuditLogSummary:
             "user_id": user_id,
             "period_days": days,
             "total_actions": total_actions,
-            "action_breakdown": {action: count for action, count in action_stats},
-            "severity_breakdown": {
-                severity: count for severity, count in severity_stats
-            },
+            "action_breakdown": dict(action_stats),
+            "severity_breakdown": dict(severity_stats),
             "high_risk_actions": high_risk_count,
             "failed_actions": failed_count,
             "risk_ratio": high_risk_count / max(total_actions, 1),
@@ -416,7 +418,7 @@ class AuditLogSummary:
 
     def get_table_activity_summary(
         self, table_name: str, days: int = 7
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """获取表操作活动摘要"""
 
         cutoff_date = datetime.now() - timedelta(days=days)
@@ -460,7 +462,7 @@ class AuditLogSummary:
             "table_name": table_name,
             "period_days": days,
             "total_operations": total_operations,
-            "operation_breakdown": {action: count for action, count in operation_stats},
-            "user_breakdown": {user_id: count for user_id, count in user_stats},
+            "operation_breakdown": dict(operation_stats),
+            "user_breakdown": dict(user_stats),
             "operations_per_day": total_operations / days,
         }

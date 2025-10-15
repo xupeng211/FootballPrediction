@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 数据库备份任务 / Database Backup Tasks
 
@@ -69,31 +67,31 @@ Integrates Prometheus monitoring metrics, supporting backup success rate and tim
 from .backup import (  # type: ignore
     # 基础类和指标
     DatabaseBackupTask,
-    get_backup_metrics,
-    backup_tasks_total,
-    backup_task_duration,
-    backup_last_success,
-    backup_size_bytes,
-    backup_failures_total,
-    # 数据库备份任务
-    daily_full_backup_task,
-    hourly_incremental_backup_task,
-    weekly_wal_archive_task,
+    backup_config_task,
     backup_database_task,
-    verify_backup_task,
-    # 维护任务
-    cleanup_old_backups_task,
-    verify_backup_integrity_task,
-    check_backup_storage_task,
+    backup_failures_total,
+    backup_last_success,
+    backup_logs_task,
     # 服务备份任务
     backup_redis_task,
-    backup_logs_task,
-    backup_config_task,
+    backup_size_bytes,
+    backup_task_duration,
+    backup_tasks_total,
+    check_backup_storage_task,
+    # 维护任务
+    cleanup_old_backups_task,
+    # 数据库备份任务
+    daily_full_backup_task,
+    get_backup_metrics,
+    get_backup_status,
+    hourly_incremental_backup_task,
+    list_backup_files,
     # 手动任务
     manual_backup_task,
-    get_backup_status,
-    list_backup_files,
     restore_backup,
+    verify_backup_integrity_task,
+    verify_backup_task,
+    weekly_wal_archive_task,
 )
 
 # 重新导出以保持原始接口

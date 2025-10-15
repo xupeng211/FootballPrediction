@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 足球预测引擎核心模块
@@ -33,7 +33,7 @@ def _lazy_import() -> None:
 _prediction_engine_instance = None
 
 
-async def get_prediction_engine() -> Optional[Any]:
+async def get_prediction_engine() -> Any | None:
     """
     获取预测引擎单例实例
 

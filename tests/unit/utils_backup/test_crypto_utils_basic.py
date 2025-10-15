@@ -1,7 +1,9 @@
 """加密工具基础测试"""
 
-import pytest
 import re
+
+import pytest
+
 from src.utils.crypto_utils import CryptoUtils
 
 

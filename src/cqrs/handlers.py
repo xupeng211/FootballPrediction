@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 命令和查询处理器
@@ -13,26 +13,26 @@ from datetime import datetime
 from decimal import Decimal
 
 from ..database.connection import get_session
-from ..database.models import User, Prediction
+from ..database.models import Prediction, User
 from .base import CommandHandler, QueryHandler
 from .commands import (
     CreatePredictionCommand,
-    UpdatePredictionCommand,
-    DeletePredictionCommand,
     CreateUserCommand,
+    DeletePredictionCommand,
+    UpdatePredictionCommand,
+)
+from .dto import (
+    CommandResult,
+    MatchDTO,
+    PredictionDTO,
+    PredictionStatsDTO,
+    UserDTO,
 )
 from .queries import (
     GetPredictionByIdQuery,
     GetPredictionsByUserQuery,
-    GetUserStatsQuery,
     GetUpcomingMatchesQuery,
-)
-from .dto import (
-    PredictionDTO,
-    UserDTO,
-    MatchDTO,
-    PredictionStatsDTO,
-    CommandResult,
+    GetUserStatsQuery,
 )
 
 logger = logging.getLogger(__name__)
@@ -236,7 +236,7 @@ class GetPredictionByIdHandler(QueryHandler):
     def query_type(self):
         return GetPredictionByIdQuery
 
-    async def handle(self, query: GetPredictionByIdQuery) -> Optional[PredictionDTO]:  # type: ignore
+    async def handle(self, query: GetPredictionByIdQuery) -> PredictionDTO | None:  # type: ignore
         """处理获取预测查询"""
         try:
             async with get_session() as session:  # type: ignore
@@ -271,7 +271,7 @@ class GetPredictionsByUserHandler(QueryHandler):
     def query_type(self):
         return GetPredictionsByUserQuery
 
-    async def handle(self, query: GetPredictionsByUserQuery) -> List[PredictionDTO]:  # type: ignore
+    async def handle(self, query: GetPredictionsByUserQuery) -> list[PredictionDTO]:  # type: ignore
         """处理获取用户预测列表查询"""
         try:
             async with get_session() as session:  # type: ignore
@@ -281,7 +281,7 @@ class GetPredictionsByUserHandler(QueryHandler):
                 JOIN matches m ON p.match_id = m.id
                 WHERE p.user_id = :user_id
                 """
-                params: Dict[str, Any] = {"user_id": query.user_id}
+                params: dict[str, Any] = {"user_id": query.user_id}
 
                 if query.start_date:
                     sql += " AND m.match_date >= :start_date"
@@ -334,7 +334,7 @@ class GetUserStatsHandler(QueryHandler):
     def query_type(self):
         return GetUserStatsQuery
 
-    async def handle(self, query: GetUserStatsQuery) -> Optional[PredictionStatsDTO]:  # type: ignore
+    async def handle(self, query: GetUserStatsQuery) -> PredictionStatsDTO | None:  # type: ignore
         """处理获取用户统计查询"""
         try:
             async with get_session() as session:  # type: ignore
@@ -383,7 +383,7 @@ class GetUserStatsHandler(QueryHandler):
                 )
                 strategy_rows = strategy_result.fetchall()
 
-                strategy_breakdown: Dict[str, Any] = {}
+                strategy_breakdown: dict[str, Any] = {}
                 for row in strategy_rows:
                     strategy_breakdown[row.strategy_used] = {
                         "count": row.count,
@@ -412,7 +412,7 @@ class GetUserStatsHandler(QueryHandler):
                 )
                 recent_rows = recent_result.fetchall()
 
-                recent_performance: List[Any] = []
+                recent_performance: list[Any] = []
                 for row in recent_rows:
                     recent_performance.append(
                         {
@@ -451,7 +451,7 @@ class GetUpcomingMatchesHandler(QueryHandler):
     def query_type(self):
         return GetUpcomingMatchesQuery
 
-    async def handle(self, query: GetUpcomingMatchesQuery) -> List[MatchDTO]:  # type: ignore
+    async def handle(self, query: GetUpcomingMatchesQuery) -> list[MatchDTO]:  # type: ignore
         """处理获取即将到来的比赛查询"""
         try:
             async with get_session() as session:  # type: ignore
@@ -461,7 +461,7 @@ class GetUpcomingMatchesHandler(QueryHandler):
                 WHERE match_date >= NOW()
                 AND match_date <= NOW() + INTERVAL ':days_ahead days'
                 """
-                params: Dict[str, Any] = {"days_ahead": query.days_ahead}
+                params: dict[str, Any] = {"days_ahead": query.days_ahead}
 
                 if query.competition:
                     sql += " AND competition = :competition"

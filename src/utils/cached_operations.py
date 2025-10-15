@@ -6,27 +6,24 @@ Cached Operations Examples
 """
 
 import time
-from typing import Dict, List, Optional
-from .cache_decorators import memory_cache, redis_cache, batch_cache, cache_invalidate
+
+from .cache_decorators import batch_cache, cache_invalidate, memory_cache, redis_cache
 from .dict_utils import DictUtils
+
 
 class DataProcessor:
     """数据处理器，使用缓存优化性能"""
 
     @memory_cache(ttl=300)  # 缓存5分钟
-    def process_user_data(self, user_id: int) -> Dict:
+    def process_user_data(self, user_id: int) -> dict:
         """处理用户数据"""
         print(f"处理用户数据: {user_id}")
         # 模拟耗时操作
         time.sleep(0.1)
-        return {
-            "user_id": user_id,
-            "processed": True,
-            "timestamp": time.time()
-        }
+        return {"user_id": user_id, "processed": True, "timestamp": time.time()}
 
     @batch_cache(ttl=600)  # 批量操作缓存10分钟
-    def batch_process_users(self, user_ids: List[int]) -> List[Dict]:
+    def batch_process_users(self, user_ids: list[int]) -> list[dict]:
         """批量处理用户数据"""
         print(f"批量处理 {len(user_ids)} 个用户")
         results = []
@@ -35,27 +32,31 @@ class DataProcessor:
         return results
 
     @cache_invalidate(pattern="user_data")
-    def update_user(self, user_id: int, data: Dict) -> Dict:
+    def update_user(self, user_id: int, data: dict) -> dict:
         """更新用户数据并清除缓存"""
         print(f"更新用户数据: {user_id}")
         # 执行更新操作
         return {"updated": True, "user_id": user_id}
 
+
 # 使用缓存的工具函数
 @memory_cache(ttl=1800)  # 缓存30分钟
-def get_nested_config(data: Dict, path: str, default=None):
+def get_nested_config(data: dict, path: str, default=None):
     """获取嵌套配置（带缓存）"""
     return DictUtils.get_nested(data, path, default)
 
+
 @memory_cache(ttl=300)
-def flatten_dict_cached(data: Dict, sep="."):
+def flatten_dict_cached(data: dict, sep="."):
     """扁平化字典（带缓存）"""
     return DictUtils.flatten(data, sep)
 
+
 @redis_cache(key_prefix="dict_merge", ttl=600)
-def merge_dicts_cached(dict1: Dict, dict2: Dict) -> Dict:
+def merge_dicts_cached(dict1: dict, dict2: dict) -> dict:
     """合并字典（带Redis缓存）"""
     return DictUtils.merge(dict1, dict2)
+
 
 # 缓存统计
 class CacheStats:
@@ -65,15 +66,19 @@ class CacheStats:
     def get_hit_ratio() -> float:
         """获取缓存命中率"""
         from .cache_decorators import _memory_cache
+
         # 简化实现，实际应该跟踪命中次数
         return len(_memory_cache) * 0.1  # 模拟值
 
     @staticmethod
     def get_memory_usage() -> int:
         """获取内存使用量（字节）"""
-        from .cache_decorators import _memory_cache
         import sys
+
+        from .cache_decorators import _memory_cache
+
         return sum(sys.getsizeof(v) for v in _memory_cache.values())
+
 
 # 缓存预热
 def warm_up_cache():
@@ -85,15 +90,9 @@ def warm_up_cache():
         "database": {
             "host": "localhost",
             "port": 5432,
-            "credentials": {
-                "username": "user",
-                "password": "pass"
-            }
+            "credentials": {"username": "user", "password": "pass"},
         },
-        "api": {
-            "version": "v1",
-            "timeout": 30
-        }
+        "api": {"version": "v1", "timeout": 30},
     }
 
     # 预热嵌套配置获取
@@ -102,6 +101,7 @@ def warm_up_cache():
     get_nested_config(sample_data, "api.version")
 
     print("缓存预热完成")
+
 
 if __name__ == "__main__":
     # 示例使用

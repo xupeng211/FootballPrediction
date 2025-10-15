@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 球队领域模型
@@ -60,10 +60,10 @@ class Team:
 
     def __init__(
         self,
-        id: Optional[int] = None,
+        id: int | None = None,
         name: str = "",
         short_name: str = "",
-        founded_year: Optional[int] = None,
+        founded_year: int | None = None,
         stadium: str = "",
         league_id: int = 0,
     ):
@@ -80,7 +80,7 @@ class Team:
         self.away_stats = TeamStatistics()
 
         # 近期状态
-        self.recent_form: List[str] = []  # W/D/L序列
+        self.recent_form: list[str] = []  # W/D/L序列
         self.current_streak = {"type": "", "count": 0}
 
         # 实力评分
@@ -133,7 +133,7 @@ class Team:
         streak_count = 0
 
         # 从最新结果往前数
-        for result in reversed(self.recent_form):
+        for _result in reversed(self.recent_form):
             if (
                 (streak_type == "win" and _result == "W")
                 or (streak_type == "lose" and _result == "L")
@@ -149,7 +149,7 @@ class Team:
         """更新实力评分"""
         # 基于近期表现调整实力评分
         recent_points = 0
-        for result in self.recent_form[-5:]:
+        for _result in self.recent_form[-5:]:
             if _result == "W":
                 recent_points += 3
             elif _result == "D":
@@ -174,7 +174,7 @@ class Team:
         points = 0
         count = min(last_n, len(self.recent_form))
 
-        for result in self.recent_form[-count:]:
+        for _result in self.recent_form[-count:]:
             if _result == "W":
                 points += 3
             elif _result == "D":
@@ -198,7 +198,7 @@ class Team:
 
         return wins >= 2 or (wins >= 1 and draws >= 2)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "id": self.id,
@@ -228,7 +228,7 @@ class Team:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Team":
+    def from_dict(cls, data: dict[str, Any]) -> "Team":
         """从字典创建实例"""
         team = cls(
             id=data.get("id"),

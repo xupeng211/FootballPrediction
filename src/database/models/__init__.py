@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 足球预测系统数据模型
 

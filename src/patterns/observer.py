@@ -32,7 +32,7 @@ class Subject(ABC):
 
     def __init__(self):
         self._observers: List[Observer] = []
-        self._event_history: List[Dict[str, Any] = []
+        self._event_history: List[Dict[str, Any]] = []
         self.logger = get_logger(f"subject.{self.__class__.__name__}")
 
     def attach(self, observer: Observer) -> None:

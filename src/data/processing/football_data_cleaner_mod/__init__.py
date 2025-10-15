@@ -1,14 +1,15 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 足球数据清理器（兼容版本）
 Football Data Cleaner (Compatibility Version)
 """
 
-import pandas as pd
-import numpy as np
 import logging
 from datetime import datetime
+
+import numpy as np
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +104,7 @@ class DataValidator:
             return False
 
     @staticmethod
-    def validate_odds(df: pd.DataFrame, odds_cols: List[str]) -> Dict[str, Any]:
+    def validate_odds(df: pd.DataFrame, odds_cols: list[str]) -> dict[str, Any]:
         """验证赔率数据"""
         results = {}
         for col in odds_cols:

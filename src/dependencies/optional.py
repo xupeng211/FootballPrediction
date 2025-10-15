@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 可选依赖管理模块
@@ -35,7 +35,7 @@ class MissingDependency:
 
 
 # 尝试导入可选依赖，失败则提供占位符
-def try_import(module_name: str, package: str = None) -> Union[Any, MissingDependency]:
+def try_import(module_name: str, package: str = None) -> Any | MissingDependency:
     """
     尝试导入模块，失败时返回占位符
 
@@ -144,7 +144,7 @@ dvc = try_import("dvc")
 great_expectations = try_import("great_expectations")
 
 
-def safe_import(module_path: str, default: Optional[T] = None) -> Optional[T]:
+def safe_import(module_path: str, default: T | None = None) -> T | None:
     """
     安全地导入模块，返回默认值
 
@@ -185,7 +185,7 @@ def has_dependency(dependency_name: str) -> bool:
         return False
 
 
-def get_dependency_version(dependency_name: str) -> Optional[str]:
+def get_dependency_version(dependency_name: str) -> str | None:
     """
     获取依赖版本
 
@@ -204,7 +204,7 @@ def get_dependency_version(dependency_name: str) -> Optional[str]:
         return None
 
 
-def check_optional_dependencies() -> Dict[str, Any]:
+def check_optional_dependencies() -> dict[str, Any]:
     """
     检查所有可选依赖的状态
 

@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 """
 具体观察者实现
 Concrete Observer Implementations
@@ -35,7 +35,7 @@ class MetricsObserver(Observer):
         self._metrics: Dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
         self._counters: Dict[str, int] = defaultdict(int)
         self._gauges: Dict[str, float] = {}
-        self._histograms: Dict[str, List[float] = defaultdict(list)
+        self._histograms: Dict[str, List[float]] = defaultdict(list)
         self._last_cleanup = time.time()
 
     async def update(self, event: ObservableEvent) -> None:
@@ -261,7 +261,7 @@ class AlertingObserver(Observer):
     def __init__(self):
         """初始化告警观察者"""
         super().__init__("AlertingObserver")
-        self._alert_rules: Dict[str, Dict[str, Any] = {}
+        self._alert_rules: Dict[str, Dict[str, Any]] = {}
         self._alert_history: deque = deque(maxlen=1000)
         self._alert_cooldown: Dict[str, datetime] = {}
         self._default_cooldown = timedelta(minutes=5)
@@ -375,7 +375,7 @@ class AlertingObserver(Observer):
         severity: Optional[str] = None,
         since: Optional[datetime] = None,
         limit: int = 50,
-    ) -> List[Dict[str, Any]:
+    ) -> List[Dict[str, Any]]:
         """获取告警历史"""
         history = list(self._alert_history)
 
@@ -391,7 +391,7 @@ class AlertingObserver(Observer):
         history.sort(key=lambda x: x["timestamp"], reverse=True)
         return history[:limit]
 
-    def get_alert_rules(self) -> Dict[str, Dict[str, Any]:
+    def get_alert_rules(self) -> Dict[str, Dict[str, Any]]:
         """获取所有告警规则"""
         return {
             name: {

@@ -1,12 +1,10 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 生产环境密钥管理系统
 """
 
-import os
 import json
 import logging
+import os
 from abc import ABC, abstractmethod
 
 logger = logging.getLogger(__name__)
@@ -16,7 +14,7 @@ class SecretProvider(ABC):
     """密钥提供者抽象基类"""
 
     @abstractmethod
-    def get_secret(self, key: str) -> Optional[str]:
+    def get_secret(self, key: str) -> str | None:
         """获取密钥"""
         pass
 
@@ -37,7 +35,7 @@ class EnvironmentSecretProvider(SecretProvider):
     def __init__(self, prefix: str = "FP_"):
         self.prefix = prefix
 
-    def get_secret(self, key: str) -> Optional[str]:
+    def get_secret(self, key: str) -> str | None:
         """从环境变量获取密钥"""
         env_key = f"{self.prefix}{key}"
         return os.getenv(env_key)
@@ -64,11 +62,11 @@ class FileSecretProvider(SecretProvider):
         self.file_path = file_path
         self._secrets = self._load_secrets()
 
-    def _load_secrets(self) -> Dict[str, str]:
+    def _load_secrets(self) -> dict[str, str]:
         """从文件加载密钥"""
         if os.path.exists(self.file_path):
             try:
-                with open(self.file_path, "r") as f:
+                with open(self.file_path) as f:
                     return json.load(f)
             except Exception as e:
                 logger.error(f"Failed to load secrets from {self.file_path}: {e}")
@@ -86,7 +84,7 @@ class FileSecretProvider(SecretProvider):
             logger.error(f"Failed to save secrets to {self.file_path}: {e}")
             return False
 
-    def get_secret(self, key: str) -> Optional[str]:
+    def get_secret(self, key: str) -> str | None:
         """从文件获取密钥"""
         return self._secrets.get(key)
 
@@ -118,7 +116,7 @@ class AWSSecretsManagerProvider(SecretProvider):
             logger.error("boto3 not installed. Install with: pip install boto3")
             self.client = None
 
-    def get_secret(self, key: str) -> Optional[str]:
+    def get_secret(self, key: str) -> str | None:
         """从AWS Secrets Manager获取密钥"""
         if not self.client or not self.secret_name:
             return None
@@ -173,7 +171,7 @@ class SecretManager:
 
         logger.info(f"Using secret provider: {self.provider.__class__.__name__}")
 
-    def get_secret(self, key: str, default: str = None) -> Optional[str]:
+    def get_secret(self, key: str, default: str = None) -> str | None:
         """获取密钥"""
         value = self.provider.get_secret(key)
         return value if value is not None else default
@@ -209,21 +207,21 @@ class SecretManager:
             )
         return secret
 
-    def get_api_key(self, service: str) -> Optional[str]:
+    def get_api_key(self, service: str) -> str | None:
         """获取第三方服务API密钥"""
         return self.get_secret(f"{service.upper()}_API_KEY")
 
-    def get_ssl_cert_path(self) -> Optional[str]:
+    def get_ssl_cert_path(self) -> str | None:
         """获取SSL证书路径"""
         return self.get_secret("SSL_CERT_PATH")
 
-    def get_ssl_key_path(self) -> Optional[str]:
+    def get_ssl_key_path(self) -> str | None:
         """获取SSL私钥路径"""
         return self.get_secret("SSL_KEY_PATH")
 
 
 # 全局密钥管理器实例
-_secret_manager: Optional[SecretManager] = None
+_secret_manager: SecretManager | None = None
 
 
 def get_secret_manager() -> SecretManager:

@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 国际化支持
 Internationalization Support

@@ -2,16 +2,17 @@
 
 from __future__ import annotations
 
-import pytest
-import os
-import tempfile
-import json
 import hashlib
+import json
+import os
 import secrets
+import tempfile
 import uuid
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, MagicMock, mock_open
 from pathlib import Path
+from unittest.mock import MagicMock, Mock, mock_open, patch
+
+import pytest
 
 from tests.factories import DataFactory
 
@@ -76,7 +77,7 @@ class TestConfigLoaderModule:
             # 测试设置值
             _result = ConfigLoader.set_config_value("test_key", "test_value")
             # 可能返回None或其他值
-            assert result is None or isinstance(result, (bool, dict, str))
+            assert result is None or isinstance(result, bool | dict | str)
         except ImportError:
             pytest.skip("ConfigLoader not available")
 
@@ -368,7 +369,7 @@ class TestFileUtilsModule:
 
                 import json
 
-                with open(tmpfile_path, "r") as f:
+                with open(tmpfile_path) as f:
                     _data = json.load(f)
                 assert _data == test_data
             finally:
@@ -576,7 +577,7 @@ class TestCryptoUtilsModule:
             # 测试加密
             encrypted = CryptoUtils.encrypt(data)
             assert encrypted != data
-            assert isinstance(encrypted, (str, bytes))
+            assert isinstance(encrypted, str | bytes)
 
             # 测试解密
             decrypted = CryptoUtils.decrypt(encrypted)
@@ -593,7 +594,7 @@ class TestCryptoUtilsModule:
             salt2 = CryptoUtils.generate_salt()
 
             assert salt1 != salt2
-            assert isinstance(salt1, (str, bytes))
+            assert isinstance(salt1, str | bytes)
 
             if isinstance(salt1, str):
                 assert len(salt1) > 0
@@ -697,6 +698,7 @@ class TestWarningFiltersModule:
         """测试自定义警告过滤"""
         try:
             import warnings
+
             from src.utils.warning_filters import WarningFilters
 
             # 如果有自定义过滤方法

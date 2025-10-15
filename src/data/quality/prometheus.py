@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 Prometheus 导出器模块
@@ -24,7 +24,7 @@ class PrometheusCollector:
         if name in self.metrics:
             self.metrics[name]["value"] = value
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """获取所有指标"""
         return self.metrics  # type: ignore
 
@@ -38,7 +38,7 @@ class PrometheusExporter:
 
     def export(self) -> str:
         """导出指标格式"""
-        output: List[Any] = []
+        output: list[Any] = []
         for name, metric in self.collector.get_metrics().items():
             output.append(f"# HELP {name} {metric['help']}")
             output.append(f"# TYPE {name} {metric['type']}")

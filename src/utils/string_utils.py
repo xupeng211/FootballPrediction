@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 足球预测系统字符串处理工具模块
 
@@ -46,7 +44,7 @@ class StringUtils:
         return text.strip()
 
     @staticmethod
-    def extract_numbers(text: str) -> List[float]:
+    def extract_numbers(text: str) -> list[float]:
         """从文本中提取数字"""
         pattern = r"-?\d+\.?\d*"
         numbers = re.findall(pattern, text)

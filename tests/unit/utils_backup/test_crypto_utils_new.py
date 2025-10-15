@@ -5,14 +5,15 @@ Tests for Crypto Utils (New Version)
 测试src.utils.crypto_utils模块的功能
 """
 
-import pytest
 import hashlib
 import secrets
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 # 测试导入
 try:
-    from src.utils.crypto_utils import CryptoUtils, HAS_BCRYPT
+    from src.utils.crypto_utils import HAS_BCRYPT, CryptoUtils
 
     CRYPTO_UTILS_AVAILABLE = True
 except ImportError as e:

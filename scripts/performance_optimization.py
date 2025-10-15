@@ -6,12 +6,12 @@ Performance Optimization Script
 优化应用程序性能
 """
 
-import os
-import time
 import cProfile
 import pstats
-from pathlib import Path
+import time
 from io import StringIO
+from pathlib import Path
+
 
 class PerformanceProfiler:
     """性能分析器"""
@@ -33,20 +33,22 @@ class PerformanceProfiler:
         # 获取统计信息
         s = StringIO()
         ps = pstats.Stats(pr, stream=s)
-        ps.sort_stats('cumulative')
+        ps.sort_stats("cumulative")
         ps.print_stats(10)  # 显示前10个最耗时的函数
 
         self.results[func.__name__] = {
-            'execution_time': end_time - start_time,
-            'profile_stats': s.getvalue()
+            "execution_time": end_time - start_time,
+            "profile_stats": s.getvalue(),
         }
 
         return result
 
+
 def benchmark_dict_utils():
     """基准测试DictUtils"""
     import sys
-    sys.path.insert(0, 'src')
+
+    sys.path.insert(0, "src")
     from utils.dict_utils import DictUtils
 
     print("\n📊 DictUtils性能基准测试")
@@ -63,9 +65,7 @@ def benchmark_dict_utils():
     profiler = PerformanceProfiler()
 
     # 小数据
-    result = profiler.profile_function(
-        DictUtils.get_nested, small_data, "a.b.c"
-    )
+    result = profiler.profile_function(DictUtils.get_nested, small_data, "a.b.c")
     print(f"   小数据: {result}")
 
     # 大数据
@@ -77,17 +77,14 @@ def benchmark_dict_utils():
     dict1 = {f"key{i}": i for i in range(500)}
     dict2 = {f"key{i}": i * 2 for i in range(500, 1000)}
 
-    result = profiler.profile_function(
-        DictUtils.merge, dict1, dict2
-    )
+    result = profiler.profile_function(DictUtils.merge, dict1, dict2)
     print(f"   合并1000个键: {len(result)}个结果")
 
     # 3. flatten性能
     print("\n3. flatten性能测试...")
-    result = profiler.profile_function(
-        DictUtils.flatten, nested_data
-    )
+    result = profiler.profile_function(DictUtils.flatten, nested_data)
     print(f"   扁平化结果: {len(result)}个键")
+
 
 def optimize_imports():
     """优化导入语句"""
@@ -98,19 +95,19 @@ def optimize_imports():
 
     for file_path in files_to_check:
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             # 检查常见的问题
             issues = []
 
             # 1. 未使用的导入
-            if 'import ' in content:
-                lines = content.split('\n')
+            if "import " in content:
+                lines = content.split("\n")
                 for line in lines:
-                    if line.strip().startswith('import ') and ' # ' not in line:
-                        module = line.strip().replace('import ', '').split('.')[0]
-                        if module not in content[content.find(line) + len(line):]:
+                    if line.strip().startswith("import ") and " # " not in line:
+                        module = line.strip().replace("import ", "").split(".")[0]
+                        if module not in content[content.find(line) + len(line) :]:
                             issues.append(f"可能未使用的导入: {module}")
 
             if issues:
@@ -121,6 +118,7 @@ def optimize_imports():
         except Exception as e:
             print(f"  ❌ {file_path}: {e}")
 
+
 def analyze_code_complexity():
     """分析代码复杂度"""
     print("\n📈 代码复杂度分析...")
@@ -129,38 +127,45 @@ def analyze_code_complexity():
 
     for file_path in list(Path("src").rglob("*.py"))[:20]:  # 只分析前20个文件
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             # 简单的复杂度指标
-            lines = content.split('\n')
+            lines = content.split("\n")
             total_lines = len(lines)
-            code_lines = len([l for l in lines if l.strip() and not l.strip().startswith('#')])
-            max_line_length = max(len(l) for l in lines) if lines else 0
+            code_lines = len(
+                [l for l in lines if l.strip() and not l.strip().startswith("#")]
+            )
+            max(len(l) for l in lines) if lines else 0
 
             # 检查函数数量和长度
-            function_count = content.count('def ')
-            class_count = content.count('class ')
+            function_count = content.count("def ")
+            class_count = content.count("class ")
 
             # 复杂度评分（简化版）
             complexity_score = code_lines / 10 + function_count * 2 + class_count * 3
 
             if complexity_score > 50:
-                complex_files.append({
-                    'file': str(file_path.relative_to(Path.cwd())),
-                    'score': complexity_score,
-                    'lines': total_lines,
-                    'functions': function_count,
-                    'classes': class_count
-                })
+                complex_files.append(
+                    {
+                        "file": str(file_path.relative_to(Path.cwd())),
+                        "score": complexity_score,
+                        "lines": total_lines,
+                        "functions": function_count,
+                        "classes": class_count,
+                    }
+                )
 
         except Exception as e:
             print(f"  ❌ {file_path}: {e}")
 
     if complex_files:
         print("\n  复杂度较高的文件（需要重构）:")
-        for file_info in sorted(complex_files, key=lambda x: x['score'], reverse=True)[:5]:
+        for file_info in sorted(complex_files, key=lambda x: x["score"], reverse=True)[
+            :5
+        ]:
             print(f"    - {file_info['file']}: 评分={file_info['score']:.1f}")
+
 
 def suggest_optimizations():
     """建议优化方案"""
@@ -183,6 +188,7 @@ def suggest_optimizations():
     print("   - 避免嵌套循环")
     print("   - 使用生成器处理大数据集")
     print("   - 选用合适的数据结构")
+
 
 def generate_performance_report():
     """生成性能报告"""
@@ -207,9 +213,11 @@ def generate_performance_report():
     print("4. pytest-benchmark: 测试基准")
     print("=" * 60)
 
+
 def main():
     """主函数"""
     generate_performance_report()
+
 
 if __name__ == "__main__":
     main()

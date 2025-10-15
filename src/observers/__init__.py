@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 观察者模式模块
 Observer Pattern Module
@@ -8,19 +6,19 @@ Observer Pattern Module
 Provides observer pattern implementation for monitoring and logging notifications.
 """
 
-from .base import Observer, Subject, ObservableEvent
+from .base import ObservableEvent, Observer, Subject
+from .manager import ObserverManager, get_observer_manager
 from .observers import (
-    MetricsObserver,
-    LoggingObserver,
     AlertingObserver,
+    LoggingObserver,
+    MetricsObserver,
     PerformanceObserver,
 )
 from .subjects import (
-    SystemMetricsSubject,
-    PredictionMetricsSubject,
     AlertSubject,
+    PredictionMetricsSubject,
+    SystemMetricsSubject,
 )
-from .manager import ObserverManager, get_observer_manager
 
 
 # 系统级便捷函数

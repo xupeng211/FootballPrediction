@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
+
 """
 Redis cache module - 提供完整的Redis缓存管理功能
 """
@@ -12,7 +13,7 @@ import redis.asyncio as aioredis
 from redis.exceptions import RedisError
 
 from .core.connection_manager import RedisConnectionManager
-from .core.key_manager import RedisKeyManager, CacheKeyManager
+from .core.key_manager import CacheKeyManager, RedisKeyManager
 from .operations.async_operations import RedisAsyncOperations
 from .operations.sync_operations import RedisSyncOperations
 from .warmup.warmup_manager import startup_warmup
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 class RedisManager:
     """Redis管理器主类，整合同步和异步操作"""
 
-    def __init__(self, redis_url: Optional[str] = None):
+    def __init__(self, redis_url: str | None = None):
         """初始化Redis管理器"""
         self.redis_url = redis_url or "redis://localhost:6379"
         self.connection_manager = RedisConnectionManager()
@@ -54,7 +55,9 @@ class RedisManager:
 
 
 # 全局实例
-_redis_manager: Optional[RedisManager] = None
+_redis_manager: RedisManager | None = None
+
+
 def get_redis_manager() -> RedisManager:
     """获取全局Redis管理器实例"""
     global _redis_manager
@@ -64,13 +67,13 @@ def get_redis_manager() -> RedisManager:
 
 
 # 便捷函数 - 异步版本
-async def aget_cache(key: str) -> Optional[Any]:
+async def aget_cache(key: str) -> Any | None:
     """异步获取缓存"""
     manager = get_redis_manager()
     return await manager.async_ops.get(key)
 
 
-async def aset_cache(key: str, value: Any, ttl: Optional[int] = None) -> bool:
+async def aset_cache(key: str, value: Any, ttl: int | None = None) -> bool:
     """异步设置缓存"""
     manager = get_redis_manager()
     return await manager.async_ops.set(key, value, ttl)
@@ -88,7 +91,7 @@ async def aexists_cache(key: str) -> bool:
     return await manager.async_ops.exists(key)
 
 
-async def attl_cache(key: str) -> Optional[int]:
+async def attl_cache(key: str) -> int | None:
     """异步获取TTL"""
     try:
         client = await get_redis_manager().get_async_client()
@@ -98,7 +101,7 @@ async def attl_cache(key: str) -> Optional[int]:
         return None
 
 
-async def amget_cache(keys: List[str]) -> List[Optional[Any]]:
+async def amget_cache(keys: list[str]) -> list[Any | None]:
     """异步批量获取缓存"""
     try:
         client = await get_redis_manager().get_async_client()
@@ -109,7 +112,7 @@ async def amget_cache(keys: List[str]) -> List[Optional[Any]]:
         return [None] * len(keys)
 
 
-async def amset_cache(mapping: Dict[str, Any], ttl: Optional[int] = None) -> bool:
+async def amset_cache(mapping: dict[str, Any], ttl: int | None = None) -> bool:
     """异步批量设置缓存"""
     try:
         client = await get_redis_manager().get_async_client()
@@ -128,14 +131,14 @@ async def amset_cache(mapping: Dict[str, Any], ttl: Optional[int] = None) -> boo
 
 
 # 便捷函数 - 同步版本
-def get_cache(key: str) -> Optional[Any]:
+def get_cache(key: str) -> Any | None:
     """同步获取缓存"""
     manager = get_redis_manager()
     manager.get_sync_client()
     return manager.sync_ops.get(key)  # type: ignore
 
 
-def set_cache(key: str, value: Any, ttl: Optional[int] = None) -> bool:
+def set_cache(key: str, value: Any, ttl: int | None = None) -> bool:
     """同步设置缓存"""
     manager = get_redis_manager()
     manager.get_sync_client()
@@ -156,7 +159,7 @@ def exists_cache(key: str) -> bool:
     return manager.sync_ops.exists(key)  # type: ignore
 
 
-def ttl_cache(key: str) -> Optional[int]:
+def ttl_cache(key: str) -> int | None:
     """同步获取TTL"""
     try:
         client = get_redis_manager().get_sync_client()
@@ -166,7 +169,7 @@ def ttl_cache(key: str) -> Optional[int]:
         return None
 
 
-def mget_cache(keys: List[str]) -> List[Optional[Any]]:
+def mget_cache(keys: list[str]) -> list[Any | None]:
     """同步批量获取缓存"""
     try:
         client = get_redis_manager().get_sync_client()
@@ -177,7 +180,7 @@ def mget_cache(keys: List[str]) -> List[Optional[Any]]:
         return [None] * len(keys)
 
 
-def mset_cache(mapping: Dict[str, Any], ttl: Optional[int] = None) -> bool:
+def mset_cache(mapping: dict[str, Any], ttl: int | None = None) -> bool:
     """同步批量设置缓存"""
     try:
         client = get_redis_manager().get_sync_client()

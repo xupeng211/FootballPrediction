@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 CQRS模式实现
 CQRS Pattern Implementation
@@ -8,42 +6,42 @@ CQRS Pattern Implementation
 Implements Command Query Responsibility Segregation pattern.
 """
 
-from .base import Command, Query, CommandHandler, QueryHandler
+from .base import Command, CommandHandler, Query, QueryHandler
 from .bus import CommandBus, QueryBus, get_command_bus, get_query_bus
 from .commands import (
-    CreatePredictionCommand,
-    UpdatePredictionCommand,
-    DeletePredictionCommand,
-    CreateUserCommand,
-    UpdateUserCommand,
     CreateMatchCommand,
+    CreatePredictionCommand,
+    CreateUserCommand,
+    DeletePredictionCommand,
     UpdateMatchCommand,
+    UpdatePredictionCommand,
+    UpdateUserCommand,
 )
-from .queries import (
-    GetPredictionByIdQuery,
-    GetPredictionsByUserQuery,
-    GetMatchPredictionsQuery,
-    GetUserStatsQuery,
-    GetMatchByIdQuery,
-    GetUpcomingMatchesQuery,
-    # GetPredictionAnalyticsQuery,  # 未使用
-    # GetLeaderboardQuery,  # 未使用
+from .dto import (
+    MatchDTO,
+    MatchStatsDTO,
+    PredictionDTO,
+    PredictionStatsDTO,
+    UserDTO,
 )
+
+# GetPredictionAnalyticsQuery,  # 未使用
+# GetLeaderboardQuery,  # 未使用
 from .handlers import (
+    MatchCommandHandlers,
+    MatchQueryHandlers,
     PredictionCommandHandlers,
     PredictionQueryHandlers,
     UserCommandHandlers,
     UserQueryHandlers,
-    MatchCommandHandlers,
-    MatchQueryHandlers,
 )
-from .dto import (
-    PredictionDTO,
-    UserDTO,
-    MatchDTO,
-    PredictionStatsDTO,
-    MatchStatsDTO,
-    # CommandResult,  # 未使用
+from .queries import (
+    GetMatchByIdQuery,
+    GetMatchPredictionsQuery,
+    GetPredictionByIdQuery,
+    GetPredictionsByUserQuery,
+    GetUpcomingMatchesQuery,
+    GetUserStatsQuery,
 )
 
 __all__ = [

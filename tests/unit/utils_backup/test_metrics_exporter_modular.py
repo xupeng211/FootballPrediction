@@ -3,10 +3,11 @@
 Test Modular Metrics Exporter
 """
 
-import pytest
 import time
 from datetime import datetime
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
 from prometheus_client import CollectorRegistry
 
 
@@ -44,11 +45,11 @@ def test_metric_definitions():
 
 def test_data_collection_metrics():
     """测试数据采集指标记录"""
-    from src.monitoring.metrics_exporter_mod.metric_definitions import (
-        MetricsDefinitions,
-    )
     from src.monitoring.metrics_exporter_mod.data_collection_metrics import (
         DataCollectionMetrics,
+    )
+    from src.monitoring.metrics_exporter_mod.metric_definitions import (
+        MetricsDefinitions,
     )
 
     registry = CollectorRegistry()
@@ -92,11 +93,11 @@ def test_data_collection_metrics():
 
 def test_data_cleaning_metrics():
     """测试数据清洗指标记录"""
-    from src.monitoring.metrics_exporter_mod.metric_definitions import (
-        MetricsDefinitions,
-    )
     from src.monitoring.metrics_exporter_mod.data_cleaning_metrics import (
         DataCleaningMetrics,
+    )
+    from src.monitoring.metrics_exporter_mod.metric_definitions import (
+        MetricsDefinitions,
     )
 
     registry = CollectorRegistry()
@@ -162,10 +163,10 @@ def test_scheduler_metrics():
 
 def test_database_metrics():
     """测试数据库指标记录"""
+    from src.monitoring.metrics_exporter_mod.database_metrics import DatabaseMetrics
     from src.monitoring.metrics_exporter_mod.metric_definitions import (
         MetricsDefinitions,
     )
-    from src.monitoring.metrics_exporter_mod.database_metrics import DatabaseMetrics
 
     registry = CollectorRegistry()
     defs = MetricsDefinitions(registry=registry)
@@ -256,10 +257,10 @@ def test_metrics_exporter():
 def test_utils():
     """测试工具函数"""
     from src.monitoring.metrics_exporter_mod.utils import (
-        validate_table_name,
         calculate_delay_seconds,
-        safe_cast_to_float,
         filter_metrics_by_prefix,
+        safe_cast_to_float,
+        validate_table_name,
     )
 
     # 测试表名验证
@@ -346,6 +347,7 @@ def test_backward_compatibility():
 def test_async_methods():
     """测试异步方法"""
     import asyncio
+
     from src.monitoring.metrics_exporter_mod.metrics_exporter import MetricsExporter
 
     registry = CollectorRegistry()

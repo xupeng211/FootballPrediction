@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 预定义的缓存实例
@@ -9,7 +9,6 @@ Provides commonly used cache instances, ready to use.
 """
 
 from .ttl_cache import TTLCache
-
 
 # 预定义的缓存实例
 # Predefined cache instances
@@ -69,7 +68,7 @@ def get_cache(name: str):
     return CACHES.get(name)
 
 
-def get_all_stats() -> Dict[str, Any]:
+def get_all_stats() -> dict[str, Any]:
     """
     获取所有缓存的统计信息
 

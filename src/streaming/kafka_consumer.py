@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 Kafka消费者模块 - 兼容性包装器
 

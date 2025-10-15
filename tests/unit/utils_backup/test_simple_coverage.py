@@ -3,15 +3,16 @@
 快速提升测试覆盖率的简单测试
 """
 
-import pytest
+import base64
+import hashlib
 import json
 import os
-import hashlib
-import base64
-from datetime import datetime, timezone, timedelta
-from typing import Any, Dict, List, Optional, Union
 import tempfile
+from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
+
+import pytest
 
 
 class TestBasicCoverage:
@@ -94,9 +95,9 @@ class TestBasicCoverage:
 
     def test_datetime_operations(self):
         """测试日期时间操作"""
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         assert isinstance(now, datetime)
-        assert now.tzinfo == timezone.utc
+        assert now.tzinfo == UTC
 
         future = now + timedelta(days=1)
         past = now - timedelta(days=1)
@@ -308,14 +309,17 @@ class TestBasicCoverage:
 
     def test_lambda_functions(self):
         """测试lambda函数"""
+
         # 简单lambda
         def add(x, y):
             return x + y
+
         assert add(2, 3) == 5
 
         # 带条件lambda
         def get_sign(x):
             return "positive" if x > 0 else "negative" if x < 0 else "zero"
+
         assert get_sign(5) == "positive"
         assert get_sign(-5) == "negative"
         assert get_sign(0) == "zero"
@@ -383,7 +387,7 @@ class TestBasicCoverage:
     def test_truthiness(self):
         """测试真值判断"""
         # 真值
-        assert bool(True) is True
+        assert True is True
         assert bool(1) is True
         assert bool(-1) is True
         assert bool("text") is True
@@ -391,7 +395,7 @@ class TestBasicCoverage:
         assert bool({"key": "value"}) is True
 
         # 假值
-        assert bool(False) is False
+        assert False is False
         assert bool(0) is False
         assert bool(0.0) is False
         assert bool("") is False
@@ -410,8 +414,8 @@ class TestBasicCoverage:
         assert "Hello {name}!".format(name="World") == "Hello World!"
 
         # %格式化
-        assert "Hello %s!" % "World" == "Hello World!"
-        assert "Hello %s!" % ("World",) == "Hello World!"
+        assert "Hello {}!".format("World") == "Hello World!"
+        assert "Hello {}!".format("World") == "Hello World!"
 
     def test_enumerate_and_zip(self):
         """测试enumerate和zip"""
@@ -436,7 +440,7 @@ class TestBasicCoverage:
         """测试map和filter"""
         # map
         numbers = [1, 2, 3, 4]
-        squared = list(map(lambda x: x**2, numbers))
+        squared = [x**2 for x in numbers]
         assert squared == [1, 4, 9, 16]
 
         # filter

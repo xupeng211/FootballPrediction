@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 validator
 赔率数据验证

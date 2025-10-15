@@ -1,10 +1,9 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 Redis connection manager
 """
 
 import os
+
 import redis.asyncio as aioredis
 from redis.exceptions import RedisError
 
@@ -13,8 +12,8 @@ class RedisConnectionManager:
     """管理Redis连接的类"""
 
     def __init__(self):
-        self._pool: Optional[aioredis.ConnectionPool] = None
-        self._redis: Optional[aioredis.Redis] = None
+        self._pool: aioredis.ConnectionPool | None = None
+        self._redis: aioredis.Redis | None = None
 
     async def connect(self) -> aioredis.Redis:
         """建立Redis连接"""

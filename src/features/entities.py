@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 特征实体定义
@@ -27,7 +27,7 @@ class MatchEntity:
     match_time: datetime
     season: str
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
             "match_id": self.match_id,
@@ -39,7 +39,7 @@ class MatchEntity:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "MatchEntity":
+    def from_dict(cls, data: dict[str, Any]) -> "MatchEntity":
         """从字典创建实体"""
         return cls(
             match_id=data["match_id"],
@@ -62,9 +62,9 @@ class TeamEntity:
     team_id: int
     team_name: str
     league_id: int
-    home_venue: Optional[str] = None
+    home_venue: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
             "team_id": self.team_id,
@@ -74,7 +74,7 @@ class TeamEntity:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "TeamEntity":
+    def from_dict(cls, data: dict[str, Any]) -> "TeamEntity":
         """从字典创建实体"""
         return cls(
             team_id=data["team_id"],

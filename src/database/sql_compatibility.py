@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 sql_compatibility.py
@@ -32,14 +32,14 @@ class CompatibleQueryBuilder:
     def __init__(self, dialect: str = "sqlite"):
         self.dialect = dialect
 
-    def build_insert_query(self, table: str, data: Dict[str, Any]) -> str:
+    def build_insert_query(self, table: str, data: dict[str, Any]) -> str:
         """构建插入查询"""
         columns = ", ".join(data.keys())
         placeholders = ", ".join([f":{key}" for key in data.keys()])
         return f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
 
     def build_update_query(
-        self, table: str, data: Dict[str, Any], where_clause: str
+        self, table: str, data: dict[str, Any], where_clause: str
     ) -> str:
         """构建更新查询"""
         set_clause = ", ".join([f"{key} = :{key}" for key in data.keys()])

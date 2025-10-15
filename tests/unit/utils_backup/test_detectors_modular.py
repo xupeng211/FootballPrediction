@@ -3,9 +3,10 @@
 Test modular split of anomaly detectors
 """
 
+from unittest.mock import MagicMock, patch
+
 import pandas as pd
 import pytest
-from unittest.mock import MagicMock, patch
 
 
 class TestBaseModule:
@@ -91,7 +92,9 @@ class TestStatisticalDetector:
         outliers = [150, -50]  # 明显的异常值
         test_data = pd.Series(normal_data + outliers)
 
-        _result = detector.detect_outliers_3sigma(test_data, "test_table", "test_column")
+        _result = detector.detect_outliers_3sigma(
+            test_data, "test_table", "test_column"
+        )
 
         assert result.table_name == "test_table"
         assert result.detection_method == "3sigma"
@@ -116,8 +119,9 @@ class TestStatisticalDetector:
 
     def test_detect_distribution_shift(self):
         """测试分布偏移检测"""
-        from src.data.quality.detectors.statistical import StatisticalAnomalyDetector
         import numpy as np
+
+        from src.data.quality.detectors.statistical import StatisticalAnomalyDetector
 
         detector = StatisticalAnomalyDetector()
 
@@ -159,10 +163,11 @@ class TestMachineLearningDetector:
 
     def test_detect_anomalies_isolation_forest(self):
         """测试Isolation Forest异常检测"""
+        import numpy as np
+
         from src.data.quality.detectors.machine_learning import (
             MachineLearningAnomalyDetector,
         )
-        import numpy as np
 
         detector = MachineLearningAnomalyDetector()
 
@@ -184,10 +189,11 @@ class TestMachineLearningDetector:
 
     def test_detect_anomalies_clustering(self):
         """测试DBSCAN聚类异常检测"""
+        import numpy as np
+
         from src.data.quality.detectors.machine_learning import (
             MachineLearningAnomalyDetector,
         )
-        import numpy as np
 
         detector = MachineLearningAnomalyDetector()
 
@@ -247,9 +253,9 @@ class TestMetricsModule:
         """测试监控指标导入"""
         from src.data.quality.detectors.metrics import (
             anomalies_detected_total,
-            data_drift_score,
-            anomaly_detection_duration_seconds,
             anomaly_detection_coverage,
+            anomaly_detection_duration_seconds,
+            data_drift_score,
         )
 
         assert anomalies_detected_total is not None
@@ -277,10 +283,10 @@ class TestModularStructure:
     def test_import_from_main_module(self):
         """测试从主模块导入"""
         from src.data.quality.detectors import (
-            AnomalyDetectionResult,
-            StatisticalAnomalyDetector,
-            MachineLearningAnomalyDetector,
             AdvancedAnomalyDetector,
+            AnomalyDetectionResult,
+            MachineLearningAnomalyDetector,
+            StatisticalAnomalyDetector,
             anomalies_detected_total,
         )
 
@@ -294,9 +300,13 @@ class TestModularStructure:
         """测试向后兼容性导入"""
         # 从原始文件导入应该仍然有效
         from src.data.quality.anomaly_detector_original import (
-            AnomalyDetectionResult as old_result,
-            StatisticalAnomalyDetector as old_statistical,
             AdvancedAnomalyDetector as old_advanced,
+        )
+        from src.data.quality.anomaly_detector_original import (
+            AnomalyDetectionResult as old_result,
+        )
+        from src.data.quality.anomaly_detector_original import (
+            StatisticalAnomalyDetector as old_statistical,
         )
 
         assert old_result is not None

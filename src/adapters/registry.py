@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 适配器注册表
@@ -11,10 +11,9 @@ Manages adapter registration, discovery, and lifecycle.
 import asyncio
 from datetime import datetime
 from enum import Enum
-import logging
 
 from .base import Adapter, AdapterStatus
-from .factory import AdapterFactory, AdapterConfig, AdapterGroupConfig
+from .factory import AdapterConfig, AdapterFactory, AdapterGroupConfig
 
 
 class RegistryStatus(Enum):
@@ -28,14 +27,14 @@ class RegistryStatus(Enum):
 class AdapterRegistry:
     """适配器注册表，管理所有适配器的生命周期"""
 
-    def __init__(self, factory: Optional[AdapterFactory] = None):
+    def __init__(self, factory: AdapterFactory | None = None):
         self.factory = factory or AdapterFactory()
-        self.adapters: Dict[str, Adapter] = {}
-        self.groups: Dict[str, Adapter] = {}
+        self.adapters: dict[str, Adapter] = {}
+        self.groups: dict[str, Adapter] = {}
         self.status = RegistryStatus.INACTIVE
         self.health_check_interval: float = 60.0  # 秒
-        self._health_check_task: Optional[asyncio.Task] = None
-        self._metrics_collector: Optional[Dict[str, Any]] = None
+        self._health_check_task: asyncio.Task | None = None
+        self._metrics_collector: dict[str, Any] | None = None
 
     async def initialize(self) -> None:
         """初始化注册表"""
@@ -129,23 +128,23 @@ class AdapterRegistry:
             await group.cleanup()
             del self.groups[name]
 
-    def get_adapter(self, name: str) -> Optional[Adapter]:
+    def get_adapter(self, name: str) -> Adapter | None:
         """获取适配器"""
         return self.adapters.get(name)
 
-    def get_group(self, name: str) -> Optional[Adapter]:
+    def get_group(self, name: str) -> Adapter | None:
         """获取适配器组"""
         return self.groups.get(name)
 
-    def list_adapters(self) -> List[str]:
+    def list_adapters(self) -> list[str]:
         """列出所有适配器名称"""
         return list(self.adapters.keys())
 
-    def list_groups(self) -> List[str]:
+    def list_groups(self) -> list[str]:
         """列出所有组名称"""
         return list(self.groups.keys())
 
-    def get_adapters_by_type(self, adapter_type: str) -> List[Adapter]:
+    def get_adapters_by_type(self, adapter_type: str) -> list[Adapter]:
         """按类型获取适配器"""
         return [
             adapter
@@ -153,7 +152,7 @@ class AdapterRegistry:
             if adapter.__class__.__name__ == adapter_type
         ]
 
-    def get_active_adapters(self) -> List[Adapter]:
+    def get_active_adapters(self) -> list[Adapter]:
         """获取所有活跃的适配器"""
         return [
             adapter
@@ -161,7 +160,7 @@ class AdapterRegistry:
             if adapter.status == AdapterStatus.ACTIVE
         ]
 
-    def get_inactive_adapters(self) -> List[Adapter]:
+    def get_inactive_adapters(self) -> list[Adapter]:
         """获取所有非活跃的适配器"""
         return [
             adapter
@@ -250,7 +249,7 @@ class AdapterRegistry:
             self._metrics_collector["last_health_check"] = datetime.utcnow()
             self._metrics_collector["health_results"] = health_results
 
-    async def get_health_status(self) -> Dict[str, Any]:
+    async def get_health_status(self) -> dict[str, Any]:
         """获取整体健康状态"""
         if self.status != RegistryStatus.ACTIVE:
             return {
@@ -259,7 +258,7 @@ class AdapterRegistry:
                 "groups": {},
             }
 
-        health_status: Dict[str, Any] = {
+        health_status: dict[str, Any] = {
             "registry_status": "active",
             "total_adapters": len(self.adapters),
             "active_adapters": len(self.get_active_adapters()),
@@ -292,12 +291,12 @@ class AdapterRegistry:
 
         return health_status
 
-    def get_metrics_summary(self) -> Dict[str, Any]:
+    def get_metrics_summary(self) -> dict[str, Any]:
         """获取指标摘要"""
         total_requests = 0
         total_successful = 0
         total_failed = 0
-        adapter_types: Dict[str, int] = {}
+        adapter_types: dict[str, int] = {}
 
         for adapter in self.adapters.values():
             metrics = adapter.get_metrics()
@@ -322,10 +321,10 @@ class AdapterRegistry:
 
     async def find_best_adapter(
         self,
-        adapter_type: Optional[str] = None,
-        max_response_time: Optional[float] = None,
-        min_success_rate: Optional[float] = None,
-    ) -> Optional[Adapter]:
+        adapter_type: str | None = None,
+        max_response_time: float | None = None,
+        min_success_rate: float | None = None,
+    ) -> Adapter | None:
         """找到最佳的适配器"""
         candidates = []
 

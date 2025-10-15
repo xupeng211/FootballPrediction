@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 装饰器工厂
@@ -8,12 +8,13 @@ Decorator Factory
 Used to create and configure decorator instances.
 """
 
-from dataclasses import dataclass, field
-import yaml  # type: ignore
 import json
+from dataclasses import dataclass, field
 from pathlib import Path
 
-from .base import Decorator, Component, decorator_registry
+import yaml  # type: ignore
+
+from .base import Component, Decorator, decorator_registry
 
 
 @dataclass
@@ -24,8 +25,8 @@ class DecoratorConfig:
     decorator_type: str
     enabled: bool = True
     priority: int = 0
-    parameters: Dict[str, Any] = field(default_factory=dict[str, Any])
-    conditions: Optional[Dict[str, Any]] = None
+    parameters: dict[str, Any] = field(default_factory=dict[str, Any])
+    conditions: dict[str, Any] | None = None
 
 
 @dataclass
@@ -33,8 +34,8 @@ class DecoratorChainConfig:
     """装饰器链配置"""
 
     name: str
-    target_functions: List[str]
-    decorators: List[DecoratorConfig]
+    target_functions: list[str]
+    decorators: list[DecoratorConfig]
     is_global: bool = False
 
 
@@ -42,8 +43,8 @@ class DecoratorFactory:
     """装饰器工厂，用于创建装饰器实例"""
 
     def __init__(self):
-        self._config_cache: Dict[str, DecoratorConfig] = {}
-        self._chain_configs: Dict[str, DecoratorChainConfig] = {}
+        self._config_cache: dict[str, DecoratorConfig] = {}
+        self._chain_configs: dict[str, DecoratorChainConfig] = {}
 
     def create_decorator(
         self, decorator_type: str, component: Component, **kwargs
@@ -69,8 +70,8 @@ class DecoratorFactory:
         )
 
     def create_chain(
-        self, configs: List[DecoratorConfig], component: Component
-    ) -> List[Decorator]:
+        self, configs: list[DecoratorConfig], component: Component
+    ) -> list[Decorator]:
         """创建装饰器链"""
         # 按优先级排序
         sorted_configs = sorted(configs, key=lambda x: x.priority)
@@ -83,7 +84,7 @@ class DecoratorFactory:
 
         return decorators
 
-    def load_config_from_file(self, file_path: Union[str, Path]) -> None:
+    def load_config_from_file(self, file_path: str | Path) -> None:
         """从文件加载装饰器配置"""
         file_path = Path(file_path)
 
@@ -92,10 +93,10 @@ class DecoratorFactory:
 
         # 根据文件扩展名选择解析器
         if file_path.suffix.lower() == ".yaml" or file_path.suffix.lower() == ".yml":
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 _data = yaml.safe_load(f)
         elif file_path.suffix.lower() == ".json":
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 _data = json.load(f)
         else:
             raise ValueError(f"Unsupported config file format: {file_path.suffix}")
@@ -112,23 +113,23 @@ class DecoratorFactory:
                 chain_config = DecoratorChainConfig(**chain_data)
                 self._chain_configs[chain_config.name] = chain_config
 
-    def get_config(self, name: str) -> Optional[DecoratorConfig]:
+    def get_config(self, name: str) -> DecoratorConfig | None:
         """获取装饰器配置"""
         return self._config_cache.get(name)
 
-    def get_chain_config(self, name: str) -> Optional[DecoratorChainConfig]:
+    def get_chain_config(self, name: str) -> DecoratorChainConfig | None:
         """获取装饰器链配置"""
         return self._chain_configs.get(name)
 
-    def list_configs(self) -> List[str]:
+    def list_configs(self) -> list[str]:
         """列出所有配置的装饰器"""
         return list(self._config_cache.keys())
 
-    def list_chain_configs(self) -> List[str]:
+    def list_chain_configs(self) -> list[str]:
         """列出所有配置的装饰器链"""
         return list(self._chain_configs.keys())
 
-    def save_config_to_file(self, file_path: Union[str, Path]) -> None:
+    def save_config_to_file(self, file_path: str | Path) -> None:
         """保存配置到文件"""
         file_path = Path(file_path)
 
@@ -270,8 +271,8 @@ class DecoratorBuilder:
     def __init__(self, decorator_type: str, component: Component):
         self.decorator_type = decorator_type
         self.component = component
-        self.parameters: Dict[str, Any] = {}
-        self.name: Optional[str] = None
+        self.parameters: dict[str, Any] = {}
+        self.name: str | None = None
 
     def with_name(self, name: str) -> "DecoratorBuilder":
         """设置装饰器名称"""

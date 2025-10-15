@@ -1,10 +1,11 @@
-from typing import Any, Dict, List, Optional, Union
+from datetime import datetime
+from enum import Enum
+from typing import Any
+
+from sqlalchemy import Column, DateTime, Integer, String, Text, func
 
 # mypy: ignore-errors
 from ..base import BaseModel
-from datetime import datetime
-from enum import Enum
-from sqlalchemy import Column, DateTime, Integer, String, Text, func
 
 """
 数据采集日志模型
@@ -15,13 +16,16 @@ from sqlalchemy import Column, DateTime, Integer, String, Text, func
 基于 DATA_DESIGN.md 第1.3节设计。
 """
 
+from sqlalchemy import (
+    DateTime,
+    Enum,  # type: ignore
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.orm import validates
+
 from src.database.base import BaseModel
-from sqlalchemy import DateTime
-from sqlalchemy import Enum  # type: ignore
-from sqlalchemy import Integer
-from sqlalchemy import String
-from sqlalchemy import Text
 
 
 class CollectionStatus(Enum):
@@ -96,7 +100,7 @@ class DataCollectionLog(BaseModel):
         return status
 
     @property
-    def duration_seconds(self) -> Optional[float]:
+    def duration_seconds(self) -> float | None:
         """计算采集耗时（秒）"""
         if self.start_time and self.end_time:
             return (self.end_time - self.start_time).total_seconds()  # type: ignore[return-value]
@@ -135,7 +139,7 @@ class DataCollectionLog(BaseModel):
         records_collected: int = 0,
         success_count: int = 0,
         error_count: int = 0,
-        error_message: Optional[str] = None,
+        error_message: str | None = None,
     ) -> None:
         """
         标记采集完成
@@ -167,7 +171,7 @@ class DataCollectionLog(BaseModel):
             f")>"
         )
 
-    def to_dict(self, exclude_fields: Optional[set] = None) -> Dict[str, Any]:
+    def to_dict(self, exclude_fields: set | None = None) -> dict[str, Any]:
         """转换为字典格式"""
         return {
             "id": self.id,

@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 缓存配置
 Cache Configuration
@@ -16,7 +14,7 @@ class CacheConfig:
     default_ttl: int = 3600
 
     # 各类型数据的TTL配置
-    ttl_config: Optional[Dict[str, int]] = None
+    ttl_config: dict[str, int] | None = None
     # 缓存大小限制
     max_size: int = 10000
 

@@ -9,9 +9,9 @@ def test_module_imports():
     """测试模块导入"""
     # 测试导入新模块
     from src.api.predictions_mod import (
-        router,
         get_rate_limiter,
         is_rate_limit_available,
+        router,
     )
 
     assert router is not None
@@ -52,6 +52,8 @@ def test_batch_handlers_import():
     """测试批量处理器导入"""
     from src.api.predictions_mod.batch_handlers import (
         batch_predict_matches_handler,
+    )
+    from src.api.predictions_mod.batch_handlers import (
         get_prediction_service as get_batch_prediction_service,
     )
 
@@ -73,10 +75,10 @@ def test_history_handlers_import():
 def test_schemas_import():
     """测试模式导入"""
     from src.api.predictions_mod.schemas import (
+        BatchPredictionRequest,
         MatchInfo,
         PredictionData,
         PredictionResponse,
-        BatchPredictionRequest,
         VerificationResponse,
     )
 
@@ -116,9 +118,11 @@ def test_router_endpoints():
 @pytest.mark.asyncio
 async def test_batch_predict_too_many_matches():
     """测试批量预测超过限制"""
-    from src.api.predictions_mod.batch_handlers import batch_predict_matches_handler
-    from fastapi import HTTPException
     from unittest.mock import AsyncMock, Mock
+
+    from fastapi import HTTPException
+
+    from src.api.predictions_mod.batch_handlers import batch_predict_matches_handler
 
     mock_request = Mock()
     mock_session = AsyncMock()
@@ -171,7 +175,7 @@ def test_prediction_response_schema():
     response = PredictionResponse(
         match_id=123,
         match_info=match_info,
-        _prediction =prediction_data,
+        _prediction=prediction_data,
         source="cached",
     )
 

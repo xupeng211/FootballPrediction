@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
+
 """
 服务生命周期管理
 Service Lifecycle Management
@@ -7,13 +8,13 @@ Service Lifecycle Management
 Manages service creation, initialization, running and destruction.
 """
 
-from abc import ABC, abstractmethod
-from enum import Enum
-from datetime import datetime
 import asyncio
 import logging
 import threading
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
 
 from ..core.exceptions import ServiceLifecycleError
 
@@ -42,12 +43,12 @@ class ServiceInfo:
     instance: Any
     state: ServiceState = ServiceState.UNINITIALIZED
     created_at: datetime = field(default_factory=datetime.utcnow)
-    started_at: Optional[datetime] = None
-    stopped_at: Optional[datetime] = None
+    started_at: datetime | None = None
+    stopped_at: datetime | None = None
     error_count: int = 0
-    last_error: Optional[Exception] = None
-    dependencies: List[str] = field(default_factory=list)
-    dependents: List[str] = field(default_factory=list)
+    last_error: Exception | None = None
+    dependencies: list[str] = field(default_factory=list)
+    dependents: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         if isinstance(self.dependencies, str):
@@ -87,14 +88,15 @@ class ServiceLifecycleManager:
     """服务生命周期管理器"""
 
     def __init__(self) -> None:
-        self._services: Dict[str, ServiceInfo] = {}
-        self._start_order: List[str] = []
-        self._stop_order: List[str] = []
+        self._services: dict[str, ServiceInfo] = {}
+        self._start_order: list[str] = []
+        self._stop_order: list[str] = []
         self._lock = threading.RLock()
         self._shutdown_event = asyncio.Event()
-        self._monitor_task: Optional[asyncio.Task] = None
+        self._monitor_task: asyncio.Task | None = None
+
     def register_service(
-        self, name: str, instance: Any, dependencies: Optional[List[str]] = None
+        self, name: str, instance: Any, dependencies: list[str] | None = None
     ) -> None:
         """注册服务"""
         with self._lock:
@@ -338,12 +340,12 @@ class ServiceLifecycleManager:
                 raise ServiceLifecycleError(f"服务未注册: {name}")
             return self._services[name]
 
-    def get_all_services(self) -> Dict[str, ServiceInfo]:
+    def get_all_services(self) -> dict[str, ServiceInfo]:
         """获取所有服务信息"""
         with self._lock:
             return self._services.copy()
 
-    def get_running_services(self) -> List[str]:
+    def get_running_services(self) -> list[str]:
         """获取正在运行的服务"""
         with self._lock:
             return [
@@ -352,7 +354,7 @@ class ServiceLifecycleManager:
                 if info.state == ServiceState.RUNNING
             ]
 
-    async def health_check(self, name: Optional[str] = None) -> Dict[str, bool]:
+    async def health_check(self, name: str | None = None) -> dict[str, bool]:
         """健康检查"""
         results = {}
 
@@ -464,7 +466,7 @@ class ServiceLifecycleManager:
 
         logger.info("服务生命周期管理器已关闭")
 
-    def _check_circular_dependency(self, name: str, dependencies: List[str]) -> None:
+    def _check_circular_dependency(self, name: str, dependencies: list[str]) -> None:
         """检查循环依赖"""
         visited = set()
         stack = [(name, dependencies.copy())]
@@ -515,7 +517,9 @@ class ServiceLifecycleManager:
 
 
 # 全局服务生命周期管理器
-_default_lifecycle_manager: Optional[ServiceLifecycleManager] = None
+_default_lifecycle_manager: ServiceLifecycleManager | None = None
+
+
 def get_lifecycle_manager() -> ServiceLifecycleManager:
     """获取默认的生命周期管理器"""
     global _default_lifecycle_manager
@@ -525,9 +529,7 @@ def get_lifecycle_manager() -> ServiceLifecycleManager:
 
 
 # 生命周期装饰器
-def lifecycle_service(
-    name: Optional[str] = None, dependencies: Optional[List[str]] = None
-):
+def lifecycle_service(name: str | None = None, dependencies: list[str] | None = None):
     """服务生命周期装饰器"""
 
     def decorator(cls) -> None:

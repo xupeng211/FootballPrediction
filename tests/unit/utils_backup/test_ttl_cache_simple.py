@@ -1,8 +1,9 @@
 """TTL 缓存简单测试"""
 
-import pytest
 import time
 from unittest.mock import patch
+
+import pytest
 
 
 class TestTTLCache:

@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 预测引擎配置模块
 Prediction Engine Configuration Module
@@ -14,7 +12,7 @@ class PredictionConfig(BaseModel):
 
     # 模型配置
     model_version: str = Field(default="v1.0", description="模型版本")
-    model_path: Optional[str] = Field(default=None, description="模型文件路径")
+    model_path: str | None = Field(default=None, description="模型文件路径")
 
     # 性能配置
     batch_size: int = Field(default=32, description="批处理大小")

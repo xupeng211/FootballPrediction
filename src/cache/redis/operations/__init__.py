@@ -1,10 +1,8 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 Redis operations module
 """
 
-from .sync_operations import RedisSyncOperations
 from .async_operations import RedisAsyncOperations
+from .sync_operations import RedisSyncOperations
 
 __all__ = ["RedisSyncOperations", "RedisAsyncOperations"]

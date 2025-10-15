@@ -1,13 +1,13 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 审计服务模型（兼容版本）
 Audit Service Models (Compatibility Version)
 """
 
-from enum import Enum
-from datetime import datetime
 from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
 
 
 class AuditAction(Enum):
@@ -40,10 +40,10 @@ class AuditEvent:
     severity: AuditSeverity
     user_id: str
     resource_type: str
-    resource_id: Optional[str]
+    resource_id: str | None
     message: str
     timestamp: datetime
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: dict[str, Any] | None = None
 
     def __post_init__(self) -> None:
         if self.metadata is None:

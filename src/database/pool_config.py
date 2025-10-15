@@ -1,19 +1,20 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 数据库连接池配置优化
 """
 
-import os
 import asyncio
+import os
+
 import asyncpg
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine
-from sqlalchemy.pool import QueuePool, NullPool
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
+from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from sqlalchemy.pool import QueuePool
 
-from src.core.logging import get_logger
 from src.core.config import get_settings
+from src.core.logging import get_logger
 
 logger = get_logger(__name__)
 
@@ -23,9 +24,9 @@ class DatabasePoolConfig:
 
     def __init__(self):
         self.settings = get_settings()
-        self._engine: Optional[AsyncEngine] = None
+        self._engine: AsyncEngine | None = None
 
-    def get_pool_config(self) -> Dict[str, Any]:
+    def get_pool_config(self) -> dict[str, Any]:
         """获取优化的连接池配置"""
         # 基于系统资源动态调整
         cpu_count = os.cpu_count() or 4
@@ -189,7 +190,7 @@ class AsyncpgPoolConfig:
     def __init__(self):
         self.settings = get_settings()
 
-    def get_pool_config(self) -> Dict[str, Any]:
+    def get_pool_config(self) -> dict[str, Any]:
         """获取AsyncPG连接池配置"""
         return {
             "min_size": 5,

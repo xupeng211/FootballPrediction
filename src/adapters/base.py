@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 适配器模式基类
@@ -8,10 +8,10 @@ Adapter Pattern Base Classes
 Define core interfaces and abstract classes for the adapter pattern.
 """
 
+import asyncio
 from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
-import asyncio
 
 
 class AdapterStatus(Enum):
@@ -49,11 +49,11 @@ class Target(ABC):
 class Adapter(Target):
     """适配器基类，将Adaptee接口转换为Target接口"""
 
-    def __init__(self, adaptee: Adaptee, name: Optional[str] = None):
+    def __init__(self, adaptee: Adaptee, name: str | None = None):
         self.adaptee = adaptee
         self.name = name or self.__class__.__name__
         self.status = AdapterStatus.INACTIVE
-        self.last_error: Optional[str] = None
+        self.last_error: str | None = None
         self.metrics = {
             "total_requests": 0,
             "successful_requests": 0,
@@ -129,7 +129,7 @@ class Adapter(Target):
         """具体的请求处理逻辑"""
         pass
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """健康检查"""
         try:
             # 执行简单的健康检查请求
@@ -155,7 +155,7 @@ class Adapter(Target):
         """具体的健康检查逻辑"""
         pass
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """获取适配器指标"""
         return {
             "name": self.name,
@@ -175,7 +175,7 @@ class Adapter(Target):
 class CompositeAdapter(Adapter):
     """组合适配器，可以管理多个子适配器"""
 
-    def __init__(self, name: str, adapters: List[Adapter] = None):
+    def __init__(self, name: str, adapters: list[Adapter] = None):
         """初始化组合适配器
 
         Args:
@@ -183,8 +183,8 @@ class CompositeAdapter(Adapter):
             adapters: 子适配器列表
         """
         super().__init__(name)
-        self.adapters: List[Adapter] = adapters or []
-        self.adapter_registry: Dict[str, Adapter] = {}
+        self.adapters: list[Adapter] = adapters or []
+        self.adapter_registry: dict[str, Adapter] = {}
         self._register_adapters()
 
     def _register_adapters(self):
@@ -217,7 +217,7 @@ class CompositeAdapter(Adapter):
             return True
         return False
 
-    def get_adapter(self, adapter_name: str) -> Optional[Adapter]:
+    def get_adapter(self, adapter_name: str) -> Adapter | None:
         """获取子适配器
 
         Args:
@@ -261,7 +261,7 @@ class CompositeAdapter(Adapter):
         """具体的请求处理逻辑（Composite使用并行请求）"""
         return await self.request(*args, **kwargs)
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """检查所有子适配器的健康状态"""
         health_results = {}
 
@@ -319,12 +319,12 @@ class DataTransformer(ABC):
         pass
 
     @abstractmethod
-    def get_source_schema(self) -> Dict[str, Any]:
+    def get_source_schema(self) -> dict[str, Any]:
         """获取源数据结构"""
         pass
 
     @abstractmethod
-    def get_target_schema(self) -> Dict[str, Any]:
+    def get_target_schema(self) -> dict[str, Any]:
         """获取目标数据结构"""
         pass
 
@@ -332,7 +332,7 @@ class DataTransformer(ABC):
 class BaseAdapter(ABC):
     """基础适配器抽象类"""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         self._config = config or {}
         self.is_initialized = False
 

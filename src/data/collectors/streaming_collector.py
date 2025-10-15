@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 streaming_collector.py
 streaming_collector
@@ -13,10 +11,12 @@ For backward compatibility, this file re-exports all classes from the modules.
 
 import warnings
 
-from .........src.data.collectors.streaming import kafka_collector  # type: ignore
-from .........src.data.collectors.streaming import manager  # type: ignore
-from .........src.data.collectors.streaming import processor  # type: ignore
-from .........src.data.collectors.streaming import websocket_collector  # type: ignore
+from .........src.data.collectors.streaming import (
+    kafka_collector,  # type: ignore
+    manager,  # type: ignore
+    processor,  # type: ignore
+    websocket_collector,  # type: ignore
+)
 
 warnings.warn(
     "直接从 streaming_collector 导入已弃用。"

@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
+
 """
 足球预测系统用户画像服务模块
 
@@ -6,20 +7,21 @@ from typing import Any, Dict, List, Optional, Union
 """
 
 from datetime import datetime
+
 from .base_unified import SimpleService
 
 
 # 简化的UserProfile类定义
 class UserProfile:
     def __init__(
-        self, user_id: str, display_name: str, email: str, preferences: Dict[str, Any]
+        self, user_id: str, display_name: str, email: str, preferences: dict[str, Any]
     ):
         self.user_id = user_id
         self.display_name = display_name
         self.email = email
         self.preferences = preferences
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "user_id": self.user_id,
@@ -41,7 +43,7 @@ class UserProfileService(SimpleService):
 
     def __init__(self) -> None:
         super().__init__("UserProfileService")
-        self._user_profiles: Dict[str, UserProfile] = {}
+        self._user_profiles: dict[str, UserProfile] = {}
 
     async def _on_initialize(self) -> bool:
         """初始化服务"""
@@ -60,7 +62,7 @@ class UserProfileService(SimpleService):
         self.logger.info(f"正在关闭 {self.name}")
         self._user_profiles.clear()
 
-    async def _get_service_info(self) -> Dict[str, Any]:
+    async def _get_service_info(self) -> dict[str, Any]:
         """获取服务信息"""
         return {
             "name": self.name,
@@ -86,8 +88,8 @@ class UserProfileService(SimpleService):
             ),
             preferences={
                 "interests": interests,
-                "content_type": content_preferences.get(str("preferred_type"), "text"),
-                "language": content_preferences.get(str("language"), "zh"),
+                "content_type": content_preferences.get("preferred_type", "text"),
+                "language": content_preferences.get("language", "zh"),
                 "behavior_patterns": behavior_patterns,
                 "notification_settings": self._get_notification_settings(user),
                 "created_at": datetime.now(),
@@ -96,13 +98,13 @@ class UserProfileService(SimpleService):
         self._user_profiles[user.id] = profile
         return profile
 
-    async def get_profile(self, user_id: str) -> Optional[UserProfile]:
+    async def get_profile(self, user_id: str) -> UserProfile | None:
         """获取用户画像"""
         return self._user_profiles.get(user_id)
 
     async def update_profile(
-        self, user_id: str, updates: Dict[str, Any]
-    ) -> Optional[UserProfile]:
+        self, user_id: str, updates: dict[str, Any]
+    ) -> UserProfile | None:
         """更新用户画像"""
         profile = await self.get_profile(user_id)
         if not profile:
@@ -116,7 +118,7 @@ class UserProfileService(SimpleService):
                 profile.preferences[key] = value
         return profile
 
-    def _analyze_user_interests(self, user: User) -> List[str]:
+    def _analyze_user_interests(self, user: User) -> list[str]:
         """分析用户兴趣"""
         # 在实际系统中，这里会基于用户行为分析兴趣
         # 现在提供默认的兴趣列表
@@ -124,12 +126,12 @@ class UserProfileService(SimpleService):
         # 可以根据用户属性调整兴趣
         if hasattr(user, "profile") and hasattr(user.profile, "favorite_teams"):
             if user.profile.favorite_teams and isinstance(
-                user.profile.favorite_teams, (list, tuple)
+                user.profile.favorite_teams, list | tuple
             ):
                 default_interests.extend(user.profile.favorite_teams)
         return list(set(default_interests))  # 去重
 
-    def _analyze_behavior_patterns(self, user: User) -> Dict[str, Any]:
+    def _analyze_behavior_patterns(self, user: User) -> dict[str, Any]:
         """分析用户行为模式"""
         # 在实际系统中，这里会基于用户日志分析行为模式
         return {
@@ -139,7 +141,7 @@ class UserProfileService(SimpleService):
             "prediction_activity": "regular",
         }
 
-    def _analyze_content_preferences(self, user: User) -> Dict[str, Any]:
+    def _analyze_content_preferences(self, user: User) -> dict[str, Any]:
         """分析内容偏好"""
         return {
             "preferred_type": "text",
@@ -148,7 +150,7 @@ class UserProfileService(SimpleService):
             "preferred_leagues": ["PL", "PD", "SA"],  # 英超、西甲、意甲
         }
 
-    def _get_notification_settings(self, user: User) -> Dict[str, Any]:
+    def _get_notification_settings(self, user: User) -> dict[str, Any]:
         """获取通知设置"""
         return {
             "email_notifications": True,
@@ -157,23 +159,23 @@ class UserProfileService(SimpleService):
             "prediction_updates": True,
         }
 
-    def create_profile(self, user_data: Dict[str, Any]) -> Dict[str, Any]:
+    def create_profile(self, user_data: dict[str, Any]) -> dict[str, Any]:
         """创建用户画像 - 同步版本用于测试"""
         if not user_data or not user_data.get("user_id"):
             return {"status": "error", "message": "Empty or invalid user data"}
 
         user_id = user_data["user_id"]
-        interests = user_data.get(str("interests"), ["足球", "体育"])
+        interests = user_data.get("interests", ["足球", "体育"])
         preferences = {
             "interests": interests,
-            "language": user_data.get(str("language"), "zh"),
-            "content_type": user_data.get(str("content_type"), "text"),
+            "language": user_data.get("language", "zh"),
+            "content_type": user_data.get("content_type", "text"),
             "behavior_patterns": {"active_hours": [9, 10, 11, 14, 15, 16]},
         }
         profile = UserProfile(
             user_id=user_id,
-            display_name=user_data.get(str("name"), "Anonymous"),
-            email=user_data.get(str("email"), ""),
+            display_name=user_data.get("name", "Anonymous"),
+            email=user_data.get("email", ""),
             preferences={
                 **preferences,
                 "created_at": datetime.now(),
@@ -182,7 +184,7 @@ class UserProfileService(SimpleService):
         self._user_profiles[user_id] = profile
         return {"status": "created", "profile": profile.to_dict()}
 
-    def delete_profile(self, user_id: str) -> Dict[str, Any]:
+    def delete_profile(self, user_id: str) -> dict[str, Any]:
         """删除用户画像"""
         if user_id in self._user_profiles:
             del self._user_profiles[user_id]
@@ -190,7 +192,7 @@ class UserProfileService(SimpleService):
         return {"status": "not_found"}
 
     @property
-    def _profiles(self) -> Dict[str, Any]:
+    def _profiles(self) -> dict[str, Any]:
         """兼容测试代码的属性"""
         # Convert UserProfile objects to Dict[str, Any] for test compatibility
         return {

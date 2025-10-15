@@ -2,7 +2,8 @@
 
 import os
 from unittest.mock import patch
-from src.core.config import Settings, get_settings, config
+
+from src.core.config import Settings, config, get_settings
 
 
 class TestConfigExtended:

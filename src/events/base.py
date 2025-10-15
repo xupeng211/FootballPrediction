@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Type, TypeVar
 
 """
 事件系统基础类
@@ -9,11 +9,10 @@ Defines core interfaces for events and event handlers.
 """
 
 import asyncio
+import logging
 import uuid
 from abc import ABC, abstractmethod
 from datetime import datetime
-import logging
-
 
 T = TypeVar("T", bound="Event")
 
@@ -27,11 +26,11 @@ class EventData:
 
     def __init__(
         self,
-        source: Optional[str] = None,
+        source: str | None = None,
         version: str = "1.0",
-        metadata: Optional[Dict[str, Any]] = None,
-        event_id: Optional[str] = None,
-        timestamp: Optional[datetime] = None,
+        metadata: dict[str, Any] | None = None,
+        event_id: str | None = None,
+        timestamp: datetime | None = None,
     ):
         """初始化事件数据"""
         self.event_id = event_id or str(uuid.uuid4())
@@ -72,7 +71,7 @@ class Event(ABC):
         return self._data.timestamp
 
     @property
-    def source(self) -> Optional[str]:
+    def source(self) -> str | None:
         """获取事件源"""
         return self._data.source
 
@@ -82,7 +81,7 @@ class Event(ABC):
         return self._data.version
 
     @property
-    def metadata(self) -> Dict[str, Any]:
+    def metadata(self) -> dict[str, Any]:
         """获取事件元数据"""
         return self._data.metadata
 
@@ -97,7 +96,7 @@ class Event(ABC):
         pass
 
     @abstractmethod
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """将事件转换为字典
 
         Returns:
@@ -107,7 +106,7 @@ class Event(ABC):
 
     @classmethod
     @abstractmethod
-    def from_dict(cls: Type[Any, T], data: Dict[str, Any]) -> T:
+    def from_dict(cls: Type[T], data: dict[str, Any]) -> T:
         """从字典创建事件
 
         Args:
@@ -132,14 +131,14 @@ class EventHandler(ABC):
     Defines the interface that all event handlers must implement.
     """
 
-    def __init__(self, name: Optional[str] = None):
+    def __init__(self, name: str | None = None):
         """初始化事件处理器
 
         Args:
             name: 处理器名称
         """
         self.name = name or self.__class__.__name__
-        self._subscribed_events: Dict[str, asyncio.Queue] = {}
+        self._subscribed_events: dict[str, asyncio.Queue] = {}
 
     @abstractmethod
     async def handle(self, event: Event) -> None:
@@ -151,7 +150,7 @@ class EventHandler(ABC):
         pass
 
     @abstractmethod
-    def get_handled_events(self) -> List[str]:
+    def get_handled_events(self) -> list[str]:
         """获取处理器能处理的事件类型
 
         Returns:
@@ -243,7 +242,7 @@ class EventFilter(ABC):
 class EventTypeFilter(EventFilter):
     """基于事件类型的过滤器"""
 
-    def __init__(self, allowed_types: List[str]):
+    def __init__(self, allowed_types: list[str]):
         """初始化过滤器
 
         Args:
@@ -258,7 +257,7 @@ class EventTypeFilter(EventFilter):
 class EventSourceFilter(EventFilter):
     """基于事件源的过滤器"""
 
-    def __init__(self, allowed_sources: List[str]):
+    def __init__(self, allowed_sources: list[str]):
         """初始化过滤器
 
         Args:
@@ -273,7 +272,7 @@ class EventSourceFilter(EventFilter):
 class CompositeEventFilter(EventFilter):
     """组合过滤器，支持AND和OR逻辑"""
 
-    def __init__(self, filters: List[EventFilter], operator: str = "AND"):
+    def __init__(self, filters: list[EventFilter], operator: str = "AND"):
         """初始化组合过滤器
 
         Args:

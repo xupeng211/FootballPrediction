@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 缺失数据处理器
@@ -43,7 +43,7 @@ class MissingDataHandler:
         "odds": "market_consensus",  # 市场共识
     }
 
-    _DEFAULT_FALLBACK_AVERAGES: Dict[str, float] = {
+    _DEFAULT_FALLBACK_AVERAGES: dict[str, float] = {
         "avg_possession": 50.0,
         "avg_shots_per_game": 12.5,
         "avg_goals_per_game": 1.5,
@@ -54,13 +54,13 @@ class MissingDataHandler:
         """初始化缺失数据处理器"""
         self.db_manager = DatabaseManager()
         self.logger = logging.getLogger(f"handler.{self.__class__.__name__}")
-        self._feature_average_cache: Dict[str, float] = {}
+        self._feature_average_cache: dict[str, float] = {}
         self._settings = get_settings()
         self._fallback_defaults = self._load_fallback_defaults()
 
     async def handle_missing_match_data(
-        self, match_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, match_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         处理比赛数据中的缺失值
 
@@ -111,7 +111,7 @@ class MissingDataHandler:
             # 遍历所有特征列
             for col in features_df.columns:
                 if features_df[col].isnull().any():
-                    fill_strategy = self.FILL_STRATEGIES.get(str("team_stats"), "zero")
+                    fill_strategy = self.FILL_STRATEGIES.get("team_stats", "zero")
 
                     if fill_strategy == "historical_average":
                         # 使用历史平均值填充
@@ -164,7 +164,7 @@ class MissingDataHandler:
             async with self.db_manager.get_async_session() as session:
                 stmt = select(func.avg(column))
                 _result = await session.execute(stmt)
-                avg_value: Optional[float] = result.scalar()  # type: ignore
+                avg_value: float | None = result.scalar()  # type: ignore
 
                 if avg_value is None:
                     avg_value = self._fallback_average(feature_name)
@@ -197,7 +197,7 @@ class MissingDataHandler:
 
         self._fallback_defaults[feature_name] = numeric_value
 
-    def _load_fallback_defaults(self) -> Dict[str, float]:
+    def _load_fallback_defaults(self) -> dict[str, float]:
         """加载缺失值默认均值配置，支持环境变量或JSON配置文件。"""
 
         defaults = self._DEFAULT_FALLBACK_AVERAGES.copy()
@@ -206,7 +206,7 @@ class MissingDataHandler:
         if settings_json:
             self._merge_default_source(defaults, settings_json, source="settings")
 
-        candidate_paths: List[Path] = []
+        candidate_paths: list[Path] = []
         settings_path = getattr(self._settings, "missing_data_defaults_path", None)
         if settings_path:
             candidate_paths.append(Path(settings_path))
@@ -235,7 +235,7 @@ class MissingDataHandler:
         return defaults
 
     def _merge_default_source(
-        self, defaults: Dict[str, float], raw_json: str, *, source: str
+        self, defaults: dict[str, float], raw_json: str, *, source: str
     ) -> None:
         """将来自字符串的 JSON 数据合并到默认映射。"""
 
@@ -245,7 +245,7 @@ class MissingDataHandler:
             self.logger.warning("解析默认均值 JSON 失败（来源: %s）: %s", source, exc)
             return
 
-        if not isinstance(payload, Dict[str, Any]):
+        if not isinstance(payload, dict[str, Any]):
             self.logger.warning("默认均值配置必须是对象（来源: %s）", source)
             return
 
@@ -275,7 +275,7 @@ class MissingDataHandler:
             return data
 
     def remove_rows_with_missing_critical_data(
-        self, df: pd.DataFrame, critical_columns: List[str]
+        self, df: pd.DataFrame, critical_columns: list[str]
     ) -> pd.DataFrame:
         """
         删除包含关键数据缺失的行

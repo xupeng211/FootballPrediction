@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional
+
 """
 Predictions - 数据库模块
 
@@ -18,23 +19,22 @@ Predictions - 数据库模块
 from datetime import datetime, timedelta
 from decimal import Decimal
 from enum import Enum
-from ..base import BaseModel
-
-from enum import Enum
-from ..base import BaseModel
 
 from sqlalchemy import (
     DECIMAL,
+    JSON,
     DateTime,
-    Enum as SQLEnum,
     ForeignKey,
     Index,
     Integer,
-    JSON,
     String,
+)
+from sqlalchemy import (
+    Enum as SQLEnum,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from ..base import BaseModel
 
 """
 预测结果数据模型
@@ -69,7 +69,7 @@ class Predictions(BaseModel):
     )
 
     # 用户关联
-    user_id: Mapped[Optional[int]] = mapped_column(
+    user_id: Mapped[int | None] = mapped_column(
         Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=True,
@@ -85,7 +85,7 @@ class Predictions(BaseModel):
     )
 
     # 得分
-    points_earned: Mapped[Optional[int]] = mapped_column(
+    points_earned: Mapped[int | None] = mapped_column(
         Integer, nullable=True, default=0, comment="获得积分"
     )
 
@@ -115,28 +115,28 @@ class Predictions(BaseModel):
     )
 
     # 置信度和比分
-    confidence_score: Mapped[Optional[Decimal]] = mapped_column(
+    confidence_score: Mapped[Decimal | None] = mapped_column(
         DECIMAL(5, 4), nullable=True, comment="预测置信度"
     )
 
-    predicted_home_score: Mapped[Optional[Decimal]] = mapped_column(
+    predicted_home_score: Mapped[Decimal | None] = mapped_column(
         DECIMAL(4, 2), nullable=True, comment="预测主队比分"
     )
 
-    predicted_away_score: Mapped[Optional[Decimal]] = mapped_column(
+    predicted_away_score: Mapped[Decimal | None] = mapped_column(
         DECIMAL(4, 2), nullable=True, comment="预测客队比分"
     )
 
-    over_under_prediction: Mapped[Optional[Decimal]] = mapped_column(
+    over_under_prediction: Mapped[Decimal | None] = mapped_column(
         DECIMAL(4, 2), nullable=True, comment="大小球预测"
     )
 
-    btts_probability: Mapped[Optional[Decimal]] = mapped_column(
+    btts_probability: Mapped[Decimal | None] = mapped_column(
         DECIMAL(5, 4), nullable=True, comment="双方进球概率"
     )
 
     # 特征重要性
-    feature_importance: Mapped[Optional[JSON]] = mapped_column(
+    feature_importance: Mapped[JSON | None] = mapped_column(
         JSON, nullable=True, comment="特征重要性"
     )
 
@@ -146,25 +146,25 @@ class Predictions(BaseModel):
     )
 
     # 验证相关字段
-    actual_result: Mapped[Optional[str]] = mapped_column(
+    actual_result: Mapped[str | None] = mapped_column(
         String(10), nullable=True, comment="实际比赛结果"
     )
 
-    is_correct: Mapped[Optional[bool]] = mapped_column(
+    is_correct: Mapped[bool | None] = mapped_column(
         nullable=True, comment="预测是否正确"
     )
 
-    verified_at: Mapped[Optional[DateTime]] = mapped_column(
+    verified_at: Mapped[DateTime | None] = mapped_column(
         DateTime, nullable=True, comment="验证时间"
     )
 
     # 特征数据（用于存储预测时使用的特征）
-    features_used: Mapped[Optional[JSON]] = mapped_column(
+    features_used: Mapped[JSON | None] = mapped_column(
         JSON, nullable=True, comment="预测时使用的特征数据"
     )
 
     # 预测元数据
-    prediction_metadata: Mapped[Optional[JSON]] = mapped_column(
+    prediction_metadata: Mapped[JSON | None] = mapped_column(
         JSON, nullable=True, comment="预测相关的元数据"
     )
 
@@ -177,7 +177,7 @@ class Predictions(BaseModel):
         return self.predicted_at  # type: ignore
 
     @property
-    def confidence(self) -> Optional[float]:
+    def confidence(self) -> float | None:
         """兼容性属性：获取置信度"""
         if self.confidence_score:
             return float(self.confidence_score)
@@ -231,7 +231,7 @@ class Predictions(BaseModel):
         else:
             return "Low"
 
-    def get_probabilities_dict(self) -> Dict[str, float]:
+    def get_probabilities_dict(self) -> dict[str, float]:
         """获取概率字典"""
         return {
             "home_win": float(self.home_win_probability),
@@ -239,7 +239,7 @@ class Predictions(BaseModel):
             "away_win": float(self.away_win_probability),
         }
 
-    def get_predicted_score(self) -> Optional[str]:
+    def get_predicted_score(self) -> str | None:
         """获取预测比分"""
         if (
             self.predicted_home_score is not None
@@ -248,7 +248,7 @@ class Predictions(BaseModel):
             return f"{self.predicted_home_score:.1f}-{self.predicted_away_score:.1f}"
         return None
 
-    def get_feature_importance_dict(self) -> Optional[Dict[str, float]]:
+    def get_feature_importance_dict(self) -> dict[str, float] | None:
         """获取特征重要性字典"""
         if self.feature_importance:
             if isinstance(self.feature_importance, str):
@@ -256,12 +256,12 @@ class Predictions(BaseModel):
             # 如果是JSON类型，直接返回
             return (
                 self.feature_importance
-                if isinstance(self.feature_importance, Dict[str, Any])  # type: ignore
+                if isinstance(self.feature_importance, dict[str, Any])  # type: ignore
                 else None
             )
         return None
 
-    def get_top_features(self, top_n: int = 5) -> List[Dict[str, Any]]:
+    def get_top_features(self, top_n: int = 5) -> list[dict[str, Any]]:
         """
         获取最重要的特征
 
@@ -289,7 +289,7 @@ class Predictions(BaseModel):
             for feature, importance in sorted_features[:top_n]
         ]
 
-    def calculate_accuracy(self, actual_result: str) -> Dict[str, Any]:
+    def calculate_accuracy(self, actual_result: str) -> dict[str, Any]:
         """
         计算预测准确性
 
@@ -326,8 +326,8 @@ class Predictions(BaseModel):
         }
 
     def get_betting_recommendations(
-        self, odds_data: Dict[str, float]
-    ) -> List[Dict[str, Any]]:
+        self, odds_data: dict[str, float]
+    ) -> list[dict[str, Any]]:
         """
         基于预测概率和赔率给出投注建议
 
@@ -376,7 +376,7 @@ class Predictions(BaseModel):
 
         return recommendations
 
-    def generate_explanation(self) -> Dict[str, Any]:
+    def generate_explanation(self) -> dict[str, Any]:
         """生成预测解释"""
         top_features = self.get_top_features()
         probabilities = self.get_probabilities_dict()
@@ -418,7 +418,7 @@ class Predictions(BaseModel):
 
     @classmethod
     def get_latest_prediction(
-        cls, session, match_id: int, model_name: Optional[str] = None
+        cls, session, match_id: int, model_name: str | None = None
     ) -> Optional["Predictions"]:
         """获取最新预测"""
         query = session.query(cls).filter(cls.match_id == match_id)

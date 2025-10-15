@@ -5,9 +5,11 @@ Tests for Time Utils
 测试src.utils.time_utils模块的功能
 """
 
+from datetime import UTC, datetime, timedelta, timezone
+
 import pytest
-from datetime import datetime, timezone, timedelta
-from src.utils.time_utils import TimeUtils, utc_now, parse_datetime
+
+from src.utils.time_utils import TimeUtils, parse_datetime, utc_now
 
 
 class TestTimeUtils:
@@ -23,13 +25,13 @@ class TestTimeUtils:
     def test_now_utc_is_utc(self):
         """测试：返回UTC时间"""
         _result = TimeUtils.now_utc()
-        assert result.tzinfo == timezone.utc
+        assert result.tzinfo == UTC
 
     def test_now_utc_is_recent(self):
         """测试：时间是最近的"""
-        before = datetime.now(timezone.utc)
+        before = datetime.now(UTC)
         _result = TimeUtils.now_utc()
-        after = datetime.now(timezone.utc)
+        after = datetime.now(UTC)
         assert before <= result <= after
 
     # ==================== timestamp_to_datetime测试 ====================
@@ -39,7 +41,7 @@ class TestTimeUtils:
         timestamp = 1609459200.0  # 2021-01-01 00:00:00 UTC
         _result = TimeUtils.timestamp_to_datetime(timestamp)
         assert isinstance(result, datetime)
-        assert result.tzinfo == timezone.utc
+        assert result.tzinfo == UTC
         assert result.year == 2021
         assert result.month == 1
         assert result.day == 1
@@ -48,7 +50,7 @@ class TestTimeUtils:
         """测试：时间戳为0"""
         _result = TimeUtils.timestamp_to_datetime(0.0)
         assert isinstance(result, datetime)
-        assert result.tzinfo == timezone.utc
+        assert result.tzinfo == UTC
         assert result.year == 1970
         assert result.month == 1
 
@@ -57,7 +59,7 @@ class TestTimeUtils:
         timestamp = -86400.0  # 1969-12-31 00:00:00 UTC
         _result = TimeUtils.timestamp_to_datetime(timestamp)
         assert isinstance(result, datetime)
-        assert result.tzinfo == timezone.utc
+        assert result.tzinfo == UTC
         assert result.year == 1969
         assert result.month == 12
         assert result.day == 31
@@ -72,14 +74,14 @@ class TestTimeUtils:
 
     def test_datetime_to_timestamp_utc(self):
         """测试：UTC时间转时间戳"""
-        dt = datetime(2021, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+        dt = datetime(2021, 1, 1, 0, 0, 0, tzinfo=UTC)
         _result = TimeUtils.datetime_to_timestamp(dt)
         assert isinstance(result, float)
         assert _result == 1609459200.0
 
     def test_datetime_to_timestamp_with_microseconds(self):
         """测试：包含微秒的时间转换"""
-        dt = datetime(2021, 1, 1, 0, 0, 0, 123456, tzinfo=timezone.utc)
+        dt = datetime(2021, 1, 1, 0, 0, 0, 123456, tzinfo=UTC)
         _result = TimeUtils.datetime_to_timestamp(dt)
         assert isinstance(result, float)
         assert _result == 1609459200.123456
@@ -161,7 +163,7 @@ class TestTimeUtils:
         """测试：utc_now函数"""
         _result = utc_now()
         assert isinstance(result, datetime)
-        assert result.tzinfo == timezone.utc
+        assert result.tzinfo == UTC
 
     def test_utc_now_same_as_class_method(self):
         """测试：utc_now与类方法返回相同类型"""
@@ -276,7 +278,7 @@ class TestTimeUtils:
     def test_timezone_handling(self):
         """测试：时区处理"""
         # UTC时间
-        utc_dt = datetime(2021, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+        utc_dt = datetime(2021, 1, 1, 12, 0, 0, tzinfo=UTC)
         timestamp = TimeUtils.datetime_to_timestamp(utc_dt)
         result_dt = TimeUtils.timestamp_to_datetime(timestamp)
-        assert result_dt.tzinfo == timezone.utc
+        assert result_dt.tzinfo == UTC

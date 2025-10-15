@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 CQRS基础类
@@ -8,10 +8,10 @@ CQRS Base Classes
 Defines base interfaces for commands, queries, and handlers.
 """
 
-from abc import ABC, abstractmethod
-from datetime import datetime
-from dataclasses import dataclass
 import uuid
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from datetime import datetime
 
 # 定义泛型类型
 CommandResultType = TypeVar("CommandResultType")
@@ -24,9 +24,9 @@ class BaseMessage:
 
     message_id: str
     timestamp: datetime
-    metadata: Dict[str, Any]
+    metadata: dict[str, Any]
 
-    def __init__(self, metadata: Optional[Dict[str, Any]] = None):
+    def __init__(self, metadata: dict[str, Any] | None = None):
         self.message_id = str(uuid.uuid4())
         self.timestamp = datetime.utcnow()
         self._metadata = metadata or {}
@@ -39,10 +39,10 @@ class Command(BaseMessage, ABC):
     Commands represent intentions to change system state.
     """
 
-    def __init__(self, metadata: Optional[Dict[str, Any]] = None):
+    def __init__(self, metadata: dict[str, Any] | None = None):
         super().__init__(metadata)
-        self.correlation_id: Optional[str] = None
-        self.causation_id: Optional[str] = None
+        self.correlation_id: str | None = None
+        self.causation_id: str | None = None
 
 
 class Query(BaseMessage, ABC):
@@ -52,7 +52,7 @@ class Query(BaseMessage, ABC):
     Queries represent requests to retrieve system data.
     """
 
-    def __init__(self, metadata: Optional[Dict[str, Any]] = None):
+    def __init__(self, metadata: dict[str, Any] | None = None):
         super().__init__(metadata)
 
 
@@ -97,7 +97,7 @@ class QueryHandler(ABC, Generic[QueryResultType]):
 class ValidationResult:
     """验证结果"""
 
-    def __init__(self, is_valid: bool, errors: Optional[list] = None):
+    def __init__(self, is_valid: bool, errors: list | None = None):
         self.is_valid = is_valid
         self.errors = errors or []
 

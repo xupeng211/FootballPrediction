@@ -1,4 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
 """
 依赖注入设置
 Dependency Injection Setup
@@ -7,15 +6,15 @@ Dependency Injection Setup
 Provides initialization and configuration for dependency injection.
 """
 
+import logging
 import os
 from pathlib import Path
-import logging
 
+from ..database.repositories.base import BaseRepository
+from .auto_binding import AutoBinder
+from .config_di import ConfigurationBinder
 from .di import DIContainer, ServiceCollection, ServiceLifetime
 from .service_lifecycle import ServiceLifecycleManager, get_lifecycle_manager
-from .config_di import ConfigurationBinder
-from .auto_binding import AutoBinder
-from ..database.repositories.base import BaseRepository
 
 logger = logging.getLogger(__name__)
 
@@ -23,14 +22,15 @@ logger = logging.getLogger(__name__)
 class DISetup:
     """依赖注入设置类"""
 
-    def __init__(self, profile: Optional[str] = None) -> None:
+    def __init__(self, profile: str | None = None) -> None:
         self.profile = profile or os.getenv("APP_PROFILE", "development")
-        self.container: Optional[DIContainer] = None
-        self.lifecycle_manager: Optional[ServiceLifecycleManager] = None
+        self.container: DIContainer | None = None
+        self.lifecycle_manager: ServiceLifecycleManager | None = None
+
     def initialize(
         self,
-        config_file: Optional[str] = None,
-        auto_scan_modules: Optional[list] = None,
+        config_file: str | None = None,
+        auto_scan_modules: list | None = None,
     ) -> DIContainer:
         """初始化依赖注入"""
         logger.info(f"初始化依赖注入，配置文件: {config_file}, 环境: {self.profile}")
@@ -81,11 +81,15 @@ class DISetup:
         # 这里可以扫描并自动注册所有仓储类
         # 简化示例，手动注册主要仓储
         try:
-            from ..database.repositories.match_repository import MatchRepository  # type: ignore
+            from ..database.repositories.match_repository import (
+                MatchRepository,  # type: ignore
+            )
             from ..database.repositories.prediction_repository import (  # type: ignore
                 PredictionRepository,
             )
-            from ..database.repositories.user_repository import UserRepository  # type: ignore
+            from ..database.repositories.user_repository import (
+                UserRepository,  # type: ignore
+            )
 
             self.container.register_scoped(BaseRepository, MatchRepository)  # type: ignore
             self.container.register_scoped(BaseRepository, PredictionRepository)  # type: ignore
@@ -99,9 +103,9 @@ class DISetup:
         """自动注册服务"""
         # 这里可以扫描并自动注册所有服务类
         try:
+            from ..services.cache import CacheService  # type: ignore
             from ..services.database import DatabaseService  # type: ignore
             from ..services.prediction import PredictionService  # type: ignore
-            from ..services.cache import CacheService  # type: ignore
 
             self.container.register_singleton(DatabaseService)  # type: ignore
             self.container.register_scoped(PredictionService)  # type: ignore
@@ -125,7 +129,9 @@ class DISetup:
 
 
 # 全局DI设置实例
-_di_setup: Optional[DISetup] = None
+_di_setup: DISetup | None = None
+
+
 def get_di_setup() -> DISetup:
     """获取DI设置实例"""
     global _di_setup
@@ -135,9 +141,9 @@ def get_di_setup() -> DISetup:
 
 
 def configure_di(
-    config_file: Optional[str] = None,
-    profile: Optional[str] = None,
-    auto_scan_modules: Optional[list] = None,
+    config_file: str | None = None,
+    profile: str | None = None,
+    auto_scan_modules: list | None = None,
 ) -> DIContainer:
     """配置依赖注入（便捷函数）"""
     setup = DISetup(profile)
@@ -147,8 +153,8 @@ def configure_di(
 # 装饰器：自动注册服务
 def register_service(
     lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT,
-    interface: Optional[type] = None,
-    name: Optional[str] = None,
+    interface: type | None = None,
+    name: str | None = None,
 ):
     """自动注册服务装饰器"""
 

@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 Celery 应用配置
@@ -17,7 +17,6 @@ import os
 
 from celery import Celery
 from celery.schedules import crontab
-
 
 # 配置日志记录器（用于测试支持）
 logger = logging.getLogger(__name__)
@@ -246,7 +245,7 @@ class TaskRetryConfig:
     }
 
     @classmethod
-    def get_retry_config(cls, task_name: str) -> Dict[str, Any]:
+    def get_retry_config(cls, task_name: str) -> dict[str, Any]:
         """获取任务的重试配置"""
         return cls.TASK_RETRY_CONFIGS.get(
             task_name,

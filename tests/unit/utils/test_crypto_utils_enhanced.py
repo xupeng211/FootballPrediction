@@ -1,21 +1,23 @@
 """加密工具增强测试"""
 
-import pytest
+import base64
 import hashlib
 import hmac
-import base64
+
+import pytest
+
 from src.utils.crypto_utils import (
-    generate_hash,
-    verify_hash,
-    encrypt_data,
+    decode_base64,
     decrypt_data,
-    generate_salt,
-    hash_password,
-    verify_password,
-    generate_api_key,
-    generate_secure_token,
     encode_base64,
-    decode_base64
+    encrypt_data,
+    generate_api_key,
+    generate_hash,
+    generate_salt,
+    generate_secure_token,
+    hash_password,
+    verify_hash,
+    verify_password,
 )
 
 
@@ -27,7 +29,7 @@ class TestCryptoUtilsEnhanced:
         data = "test data"
 
         # 测试不同算法
-        algorithms = ['sha256', 'sha512', 'md5']
+        algorithms = ["sha256", "sha512", "md5"]
         for algo in algorithms:
             hash_value = generate_hash(data, algorithm=algo)
             assert isinstance(hash_value, str)
@@ -169,9 +171,7 @@ class TestCryptoUtilsEnhanced:
 
         # 生成签名
         signature = hmac.new(
-            secret_key.encode(),
-            message.encode(),
-            hashlib.sha256
+            secret_key.encode(), message.encode(), hashlib.sha256
         ).hexdigest()
 
         assert isinstance(signature, str)

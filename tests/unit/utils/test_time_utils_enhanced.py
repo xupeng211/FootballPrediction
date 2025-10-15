@@ -1,7 +1,9 @@
 """时间工具增强测试"""
 
+from datetime import UTC, datetime, timedelta, timezone
+
 import pytest
-from datetime import datetime, timedelta, timezone
+
 from src.utils.time_utils import TimeUtils
 
 
@@ -16,7 +18,7 @@ class TestTimeUtilsEnhanced:
 
     def test_format_timestamp_with_timezone(self):
         """测试时区时间戳格式化"""
-        dt = datetime(2025, 1, 15, 14, 30, 45, tzinfo=timezone.utc)
+        dt = datetime(2025, 1, 15, 14, 30, 45, tzinfo=UTC)
         formatted = TimeUtils.format_timestamp(dt)
         assert "2025-01-15T14:30:45" in formatted
 

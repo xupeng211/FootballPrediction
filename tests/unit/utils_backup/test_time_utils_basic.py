@@ -1,7 +1,8 @@
 """时间工具基础测试"""
 
-from datetime import datetime, timezone, timedelta
-from src.utils.time_utils import TimeUtils, utc_now, parse_datetime
+from datetime import UTC, datetime, timedelta, timezone
+
+from src.utils.time_utils import TimeUtils, parse_datetime, utc_now
 
 
 class TestTimeUtilsBasic:
@@ -11,7 +12,7 @@ class TestTimeUtilsBasic:
         """测试获取UTC时间"""
         result = TimeUtils.now_utc()
         assert isinstance(result, datetime)
-        assert result.tzinfo == timezone.utc
+        assert result.tzinfo == UTC
 
     def test_timestamp_to_datetime(self):
         """测试时间戳转datetime"""
@@ -20,14 +21,14 @@ class TestTimeUtilsBasic:
         result = TimeUtils.timestamp_to_datetime(timestamp)
 
         assert isinstance(result, datetime)
-        assert result.tzinfo == timezone.utc
+        assert result.tzinfo == UTC
         assert result.year == 2022
         assert result.month == 1
         assert result.day == 1
 
     def test_datetime_to_timestamp(self):
         """测试datetime转时间戳"""
-        dt = datetime(2022, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+        dt = datetime(2022, 1, 1, 0, 0, 0, tzinfo=UTC)
         result = TimeUtils.datetime_to_timestamp(dt)
 
         assert isinstance(result, float)
@@ -35,7 +36,7 @@ class TestTimeUtilsBasic:
 
     def test_format_datetime(self):
         """测试格式化日期时间"""
-        dt = datetime(2022, 1, 1, 12, 30, 45, tzinfo=timezone.utc)
+        dt = datetime(2022, 1, 1, 12, 30, 45, tzinfo=UTC)
 
         # 默认格式
         result = TimeUtils.format_datetime(dt)
@@ -63,7 +64,7 @@ class TestTimeUtilsBasic:
         """测试向后兼容函数"""
         result = utc_now()
         assert isinstance(result, datetime)
-        assert result.tzinfo == timezone.utc
+        assert result.tzinfo == UTC
 
     def test_parse_datetime_function(self):
         """测试向后兼容解析函数"""

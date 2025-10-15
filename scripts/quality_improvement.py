@@ -6,12 +6,11 @@ Code Quality Improvement Script
 批量修复常见的代码质量问题
 """
 
-import os
-import re
 import ast
-from pathlib import Path
-from typing import List, Dict, Tuple
+import re
 import subprocess
+from pathlib import Path
+
 
 class CodeQualityFixer:
     """代码质量修复器"""
@@ -26,7 +25,7 @@ class CodeQualityFixer:
         print(f"  ✅ {file_path}: {message}")
         self.fixes_applied += 1
 
-    def find_python_files(self) -> List[Path]:
+    def find_python_files(self) -> list[Path]:
         """查找所有Python文件"""
         python_files = []
         for pattern in ["src/**/*.py", "tests/**/*.py"]:
@@ -36,7 +35,7 @@ class CodeQualityFixer:
     def fix_type_annotations(self, file_path: Path) -> bool:
         """修复类型注解错误"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             original_content = content
@@ -44,48 +43,37 @@ class CodeQualityFixer:
 
             # 1. 修复 Optional[Type] 语法
             content = re.sub(
-                r': Optional\[([^\]]+)\] = None',
-                r': Optional[\1] = None',
-                content
+                r": Optional\[([^\]]+)\] = None", r": Optional[\1] = None", content
             )
 
             # 2. 修复 List[Type] 语法
-            content = re.sub(
-                r': List\[([^\]]+)\] = \{\}',
-                r': List[\1] = []',
-                content
-            )
+            content = re.sub(r": List\[([^\]]+)\] = \{\}", r": List[\1] = []", content)
 
             # 3. 修复 Dict[Type, Type] 语法
-            content = re.sub(
-                r': Dict\[([^\]]+)\] = \[\]',
-                r': Dict[\1] = {}',
-                content
-            )
+            content = re.sub(r": Dict\[([^\]]+)\] = \[\]", r": Dict[\1] = {}", content)
 
             # 4. 修复 Union[Type] 语法
-            content = re.sub(
-                r': Union\[([^\]]+)\] =',
-                r': Union[\1] =',
-                content
-            )
+            content = re.sub(r": Union\[([^\]]+)\] =", r": Union[\1] =", content)
 
             # 5. 修复嵌套类型注解中的括号不匹配
-            content = re.sub(r'\] \]', ']]', content)
-            content = re.sub(r'\} \}', '}}', content)
+            content = re.sub(r"\] \]", "]]", content)
+            content = re.sub(r"\} \}", "}}", content)
 
             # 6. 修复函数参数中的类型注解
             content = re.sub(
-                r'def (\w+)\([^)]*)(: Optional\[([^\]]+)\] = None|: List\[([^\]]+)\] = None|: Dict\[([^\]]+)\] = None)([^)]*) ->',
-                r'def \1\2\5 ->',
-                content
+                r"def (\w+)\([^)]*)(: Optional\[([^\]]+)\] = None|: List\[([^\]]+)\] = None|: Dict\[([^\]]+)\] = None)([^)]*) ->",
+                r"def \1\2\5 ->",
+                content,
             )
 
             if content != original_content:
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write(content)
                 fixes = len(content) - len(original_content)  # 简单统计
-                self.log_fix(str(file_path.relative_to(self.root_path)), f"修复了 {fixes} 处类型注解")
+                self.log_fix(
+                    str(file_path.relative_to(self.root_path)),
+                    f"修复了 {fixes} 处类型注解",
+                )
                 return True
 
         except Exception as e:
@@ -96,35 +84,35 @@ class CodeQualityFixer:
     def fix_import_errors(self, file_path: Path) -> bool:
         """修复导入错误"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             original_content = content
 
             # 1. 添加缺失的导入
-            if 'ClassVar' in content and 'from typing import' in content and 'ClassVar' not in content:
+            if (
+                "ClassVar" in content
+                and "from typing import" in content
+                and "ClassVar" not in content
+            ):
                 content = re.sub(
-                    r'from typing import ([^\n]+)',
-                    r'from typing import \1, ClassVar',
-                    content
+                    r"from typing import ([^\n]+)",
+                    r"from typing import \1, ClassVar",
+                    content,
                 )
 
             # 2. 修复相对导入
-            content = re.sub(
-                r'from \.\.(\w+)',
-                r'from src.\1',
-                content
-            )
+            content = re.sub(r"from \.\.(\w+)", r"from src.\1", content)
 
             # 3. 修复导入语句中的类型注解
             content = re.sub(
-                r'from typing import Optional, Dict, List, Union, Any',
-                r'from typing import Optional, Dict, List, Union, Any, ClassVar, Type, Callable, TypeVar',
-                content
+                r"from typing import Optional, Dict, List, Union, Any",
+                r"from typing import Optional, Dict, List, Union, Any, ClassVar, Type, Callable, TypeVar",
+                content,
             )
 
             if content != original_content:
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write(content)
                 self.log_fix(str(file_path.relative_to(self.root_path)), "修复导入错误")
                 return True
@@ -134,11 +122,11 @@ class CodeQualityFixer:
 
         return False
 
-    def check_syntax_errors(self, file_path: Path) -> List[str]:
+    def check_syntax_errors(self, file_path: Path) -> list[str]:
         """检查语法错误"""
         errors = []
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
             ast.parse(content)
         except SyntaxError as e:
@@ -194,17 +182,23 @@ class CodeQualityFixer:
         try:
             subprocess.run(["python", "-m", "ruff", "check", "src/"], check=True)
             print("  ✅ ruff检查通过")
-        except subprocess.CalledProcessError as e:
+        except subprocess.CalledProcessError:
             print("  ⚠️ ruff检查发现问题")
 
         # 6. 运行类型检查
         print("\n🔍 运行类型检查（mypy）...")
         try:
             result = subprocess.run(
-                ["python", "-m", "mypy", "src/core/config.py", "src/utils/dict_utils.py"],
+                [
+                    "python",
+                    "-m",
+                    "mypy",
+                    "src/core/config.py",
+                    "src/utils/dict_utils.py",
+                ],
                 capture_output=True,
                 text=True,
-                check=False
+                check=False,
             )
             if result.returncode == 0:
                 print("  ✅ mypy检查通过")
@@ -217,10 +211,16 @@ class CodeQualityFixer:
         print("\n🧪 运行基础测试...")
         try:
             result = subprocess.run(
-                ["python", "-m", "pytest", "tests/unit/utils/test_dict_utils_basic.py", "-q"],
+                [
+                    "python",
+                    "-m",
+                    "pytest",
+                    "tests/unit/utils/test_dict_utils_basic.py",
+                    "-q",
+                ],
                 capture_output=True,
                 text=True,
-                check=False
+                check=False,
             )
             if result.returncode == 0:
                 print("  ✅ 基础测试通过")
@@ -251,6 +251,7 @@ class CodeQualityFixer:
 
         return len(syntax_errors) == 0
 
+
 def main():
     """主函数"""
     fixer = CodeQualityFixer()
@@ -260,6 +261,7 @@ def main():
         print("\n🎉 所有代码质量问题已修复！")
     else:
         print("\n⚠️ 仍有部分问题需要手动修复")
+
 
 if __name__ == "__main__":
     main()

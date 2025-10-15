@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, List
+
 """
 简化的适配器注册表
 """
@@ -10,8 +11,8 @@ class AdapterRegistry:
     """适配器注册表"""
 
     def __init__(self):
-        self._registry: Dict[str, Dict[str, Any]] = {}
-        self._instances: Dict[str, Any] = {}
+        self._registry: dict[str, dict[str, Any]] = {}
+        self._instances: dict[str, Any] = {}
 
     def register(self, name: str, adapter_class: Type[Any], **kwargs):
         """注册适配器"""
@@ -25,7 +26,7 @@ class AdapterRegistry:
         if name in self._instances:
             del self._instances[name]
 
-    def create(self, name: str, config: Optional[Dict[str, Any]] = None):
+    def create(self, name: str, config: dict[str, Any] | None = None):
         """创建适配器实例"""
         if name not in self._registry:
             raise AdapterError(f"No adapter registered with name '{name}'")
@@ -41,13 +42,13 @@ class AdapterRegistry:
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             raise AdapterError(f"Failed to create adapter '{name}': {str(e)}")
 
-    def get_info(self, name: str) -> Dict[str, Any]:
+    def get_info(self, name: str) -> dict[str, Any]:
         """获取适配器信息"""
         if name not in self._registry:
             raise AdapterError(f"No adapter registered with name '{name}'")
         return self._registry[name].copy()
 
-    def list(self, **filters) -> List[tuple]:
+    def list(self, **filters) -> list[tuple]:
         """列出适配器，支持过滤条件"""
         adapters = []
         for name, info in self._registry.items():
@@ -77,7 +78,7 @@ class AdapterRegistry:
         self._registry.clear()
         self._instances.clear()
 
-    def validate_config(self, name: str, config: Dict[str, Any]) -> bool:
+    def validate_config(self, name: str, config: dict[str, Any]) -> bool:
         """验证配置"""
         # 简化实现，总是返回True
         return True
@@ -93,7 +94,7 @@ class AdapterRegistry:
         # 简化实现
         return [name]
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """获取统计信息"""
         return {
             "total": len(self._registry),
@@ -102,11 +103,11 @@ class AdapterRegistry:
             ),
         }
 
-    def export(self) -> Dict[str, Any]:
+    def export(self) -> dict[str, Any]:
         """导出注册表"""
         return self._registry.copy()
 
-    def import_data(self, data: Dict[str, Any]):
+    def import_data(self, data: dict[str, Any]):
         """导入数据"""
         self._registry.update(data)
 

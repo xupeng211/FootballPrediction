@@ -1,14 +1,15 @@
-from typing import Any, Callable, Dict, List, Optional, Union
+from collections.abc import Callable
+from typing import Any
+
 """
 JWT认证和RBAC权限控制模块
 """
 
 import logging
-import os
 from datetime import datetime, timedelta
 
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
@@ -123,7 +124,7 @@ class AuthManager:
         self.refresh_token_expire_days = refresh_token_expire_days
 
     def create_access_token(
-        self, data: Dict[str, Any], expires_delta: Optional[timedelta] = None
+        self, data: dict[str, Any], expires_delta: timedelta | None = None
     ) -> str:
         """创建访问令牌"""
         to_encode = data.copy()
@@ -146,7 +147,7 @@ class AuthManager:
         return jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
 
     def create_refresh_token(
-        self, data: Dict[str, Any], expires_delta: Optional[timedelta] = None
+        self, data: dict[str, Any], expires_delta: timedelta | None = None
     ) -> str:
         """创建刷新令牌"""
         to_encode = data.copy()
@@ -168,7 +169,7 @@ class AuthManager:
 
     def verify_token(
         self, token: str, token_type: str = TokenType.ACCESS
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """验证令牌"""
         try:
             payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
@@ -222,7 +223,9 @@ class AuthManager:
 
 
 # 全局认证管理器实例
-auth_manager: Optional[AuthManager] = None
+auth_manager: AuthManager | None = None
+
+
 def get_auth_manager() -> AuthManager:
     """获取认证管理器实例"""
     global auth_manager
@@ -238,8 +241,8 @@ def get_auth_manager() -> AuthManager:
 
 
 async def get_current_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
-) -> Dict[str, Any]:
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
+) -> dict[str, Any]:
     """获取当前用户"""
     if credentials is None:
         raise HTTPException(
@@ -267,12 +270,12 @@ async def get_current_user(
     }
 
 
-def require_permissions(required_permissions: Union[str, List[str]]) -> Callable:
+def require_permissions(required_permissions: str | list[str]) -> Callable:
     """权限装饰器工厂"""
     if isinstance(required_permissions, str):
         required_permissions = [required_permissions]
 
-    def permission_checker(current_user: Dict[str, Any] = Depends(get_current_user)):
+    def permission_checker(current_user: dict[str, Any] = Depends(get_current_user)):
         user_permissions = current_user.get("permissions", [])
         user_roles = current_user.get("roles", [])
 
@@ -298,12 +301,12 @@ def require_permissions(required_permissions: Union[str, List[str]]) -> Callable
     return permission_checker
 
 
-def require_roles(required_roles: Union[str, List[str]]) -> Callable:
+def require_roles(required_roles: str | list[str]) -> Callable:
     """角色装饰器工厂"""
     if isinstance(required_roles, str):
         required_roles = [required_roles]
 
-    def role_checker(current_user: Dict[str, Any] = Depends(get_current_user)):
+    def role_checker(current_user: dict[str, Any] = Depends(get_current_user)):
         user_roles = current_user.get("roles", [])
 
         # 检查用户是否有任一必需的角色
@@ -318,7 +321,7 @@ def require_roles(required_roles: Union[str, List[str]]) -> Callable:
     return role_checker
 
 
-def get_user_permissions(roles: List[str]) -> List[str]:
+def get_user_permissions(roles: list[str]) -> list[str]:
     """获取用户所有权限"""
     permissions = set()
     for role in roles:

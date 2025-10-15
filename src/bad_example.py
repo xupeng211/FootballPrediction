@@ -1,6 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
-
 # 故意写的格式很差的代码
 def badly_formatted_function(x, y, z):
     if x > 0:

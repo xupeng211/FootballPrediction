@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 Database connection core utilities
 """
@@ -18,7 +16,7 @@ class ConnectionCore:
         """Initialize core utilities"""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
-    async def execute_query(self, query: str, params: Optional[Dict] = None):
+    async def execute_query(self, query: str, params: dict | None = None):
         """Execute a database query"""
         # Placeholder implementation
         pass

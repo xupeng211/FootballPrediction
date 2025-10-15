@@ -1,12 +1,13 @@
 # noqa: F401,F811,F821,E402
+import importlib
 import json
 import os
 import sys
 from pathlib import Path
-from unittest.mock import patch, mock_open
-from src.core.config import Config, Settings, HAS_PYDANTIC
-import importlib
+from unittest.mock import mock_open, patch
+
 import src.core.config
+from src.core.config import HAS_PYDANTIC, Config, Settings
 from src.core.config import Settings as SettingsNoPydantic
 
 """
@@ -254,7 +255,7 @@ class TestPydanticCompatibility:
 
         if not HAS_PYDANTIC:
             # 验证回退类存在
-            from src.core.config import SettingsClass, Field
+            from src.core.config import Field, SettingsClass
 
             assert SettingsClass is object
             assert callable(Field)

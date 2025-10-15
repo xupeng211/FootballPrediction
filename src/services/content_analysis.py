@@ -1,13 +1,15 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
+
 """
 足球预测系统内容分析服务模块
 
 提供内容分析和处理功能。
 """
 
-from .base_unified import SimpleService
 from datetime import datetime
 from enum import Enum
+
+from .base_unified import SimpleService
 
 
 class ContentType(Enum):
@@ -32,16 +34,18 @@ class UserRole(Enum):
 class Content:
     """内容类"""
 
-    def __init__(self, content_id: str, content_type: str, data: Dict[str, Any]) -> None:
+    def __init__(
+        self, content_id: str, content_type: str, data: dict[str, Any]
+    ) -> None:
         self.id = content_id
         self.content_type = content_type
-        self.data= data
+        self.data = data
 
 
 class UserProfile:
     """用户配置文件类"""
 
-    def __init__(self, user_id: str, preferences: Dict[str, Any] = None) -> None:
+    def __init__(self, user_id: str, preferences: dict[str, Any] = None) -> None:
         self.user_id = user_id
         self.preferences = preferences or {}
 
@@ -53,9 +57,9 @@ class AnalysisResult:
         self,
         id: str = "",
         analysis_type: str = "",
-        result: Dict[str, Any] = None,
+        result: dict[str, Any] = None,
         confidence: float = 0.0,
-        timestamp: Optional[datetime] = None,
+        timestamp: datetime | None = None,
         content_id: str = "",
     ):
         self.id = id
@@ -91,7 +95,7 @@ class ContentAnalysisService(SimpleService):
         self.logger.info(f"正在关闭 {self.name}")
         self._models_loaded = False
 
-    async def _get_service_info(self) -> Dict[str, Any]:
+    async def _get_service_info(self) -> dict[str, Any]:
         """获取服务信息"""
         return {
             "name": self.name,
@@ -101,7 +105,7 @@ class ContentAnalysisService(SimpleService):
             "models_loaded": self._models_loaded,
         }
 
-    async def analyze_content(self, content: Content) -> Optional[AnalysisResult]:
+    async def analyze_content(self, content: Content) -> AnalysisResult | None:
         """分析内容"""
         if not self._initialized:
             raise RuntimeError("服务未初始化")
@@ -110,7 +114,7 @@ class ContentAnalysisService(SimpleService):
         # 这里提供基本的文本分析功能，生产环境可扩展为ML模型分析
         if content.content_type == "text":
             text_analysis = self.analyze_text(content.data.get("text", ""))
-            analysisdata= {
+            {
                 "sentiment": text_analysis.get("sentiment", "neutral"),
                 "keywords": text_analysis.get("keywords", []),
                 "category": self._categorize_content(content.data.get("text", "")),
@@ -120,13 +124,7 @@ class ContentAnalysisService(SimpleService):
             }
         else:
             # 非文本内容的默认分析
-            analysisdata= {
-                "sentiment": "neutral",
-                "keywords": [],
-                "category": "general",
-                "quality_score": 0.5,
-                "language": "unknown",
-            }
+            pass
         return AnalysisResult(
             id=f"analysis_{content.id}",
             analysis_type="content_analysis",
@@ -136,9 +134,9 @@ class ContentAnalysisService(SimpleService):
             content_id=content.id,
         )
 
-    async def batch_analyze(self, contents: List[Content]) -> List[AnalysisResult]:
+    async def batch_analyze(self, contents: list[Content]) -> list[AnalysisResult]:
         """批量分析内容"""
-        results: List[AnalysisResult] = []
+        results: list[AnalysisResult] = []
         for content in contents:
             result = await self.analyze_content(content)
             if result:
@@ -179,7 +177,7 @@ class ContentAnalysisService(SimpleService):
             return min(base_score + keyword_bonus + length_bonus, 1.0)
         return 0.5
 
-    def analyze_text(self, text: str) -> Dict[str, Any]:
+    def analyze_text(self, text: str) -> dict[str, Any]:
         """分析文本内容 - 同步版本用于测试"""
         if not text:
             return {"error": "Empty text"}
@@ -200,7 +198,15 @@ class ContentAnalysisService(SimpleService):
         # 简单的实体提取逻辑
         entities = []
         # 提取球队名称
-        _teams = ["曼联", "切尔西", "阿森纳", "利物浦", "曼城", "巴塞罗那", "皇家马德里"]
+        _teams = [
+            "曼联",
+            "切尔西",
+            "阿森纳",
+            "利物浦",
+            "曼城",
+            "巴塞罗那",
+            "皇家马德里",
+        ]
         for team in teams:
             if team in text:
                 entities.append({"text": team, "type": "TEAM", "confidence": 0.9})
@@ -213,7 +219,7 @@ class ContentAnalysisService(SimpleService):
 
         return entities[:10]  # 限制返回数量
 
-    def classify_content(self, content: str) -> Dict[str, Any]:
+    def classify_content(self, content: str) -> dict[str, Any]:
         """内容分类"""
         if not content:
             return {"category": "unknown", "confidence": 0.0}
@@ -248,7 +254,7 @@ class ContentAnalysisService(SimpleService):
 
         return {"category": "general", "confidence": 0.5}
 
-    def analyze_sentiment(self, text: str) -> Dict[str, Any]:
+    def analyze_sentiment(self, text: str) -> dict[str, Any]:
         """情感分析"""
         if not text:
             return {"sentiment": "neutral", "score": 0.0}

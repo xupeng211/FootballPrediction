@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 足球预测系统加密工具模块
 
@@ -52,7 +50,7 @@ class CryptoUtils:
             raise ValueError(f"不支持的哈希算法: {algorithm}")
 
     @staticmethod
-    def hash_password(password: str, salt: Optional[str] = None) -> str:
+    def hash_password(password: str, salt: str | None = None) -> str:
         """密码哈希"""
         if HAS_BCRYPT:
             # 使用bcrypt进行密码哈希

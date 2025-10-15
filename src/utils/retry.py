@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 重试机制（向后兼容）
 Retry Mechanism (Backward Compatible)
@@ -10,18 +8,18 @@ Provides backward compatible exports for the modular retry system.
 """
 
 from ._retry import (
-    # 重新导出主要类和函数
-    RetryConfig,
     BackoffStrategy,
+    CircuitBreaker,
+    CircuitState,
     ExponentialBackoffStrategy,
     FixedBackoffStrategy,
     LinearBackoffStrategy,
     PolynomialBackoffStrategy,
+    # 重新导出主要类和函数
+    RetryConfig,
     retry,
     retry_async,
     retry_sync,
-    CircuitState,
-    CircuitBreaker,
 )
 
 # 导出所有符号

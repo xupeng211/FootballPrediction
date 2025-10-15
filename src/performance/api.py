@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 # mypy: ignore-errors
 """
@@ -16,17 +16,17 @@ Performance Monitoring API Endpoints
 import asyncio
 from datetime import datetime
 
-from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from src.performance.profiler import get_profiler
+from src.core.logging import get_logger
 from src.performance.analyzer import PerformanceAnalyzer
 from src.performance.middleware import (
-    DatabasePerformanceMiddleware,
-    CachePerformanceMiddleware,
     BackgroundTaskPerformanceMonitor,
+    CachePerformanceMiddleware,
+    DatabasePerformanceMiddleware,
 )
-from src.core.logging import get_logger
+from src.performance.profiler import get_profiler
 
 logger = get_logger(__name__)
 
@@ -72,7 +72,7 @@ async def get_performance_metrics():
     """获取实时性能指标"""
     try:
         # 获取API性能统计
-        api_stats: Dict[str, Any] = {}
+        api_stats: dict[str, Any] = {}
         # 这里需要从中间件获取实际数据
         # api_stats = await get_api_middleware_stats()
 
@@ -232,7 +232,7 @@ async def get_performance_report(
     """生成性能报告"""
     try:
         # 收集性能数据
-        api_stats: Dict[str, Any] = {}  # 从中间件获取  # type: ignore
+        api_stats: dict[str, Any] = {}  # 从中间件获取  # type: ignore
         db_stats = db_monitor.get_query_stats()
         cache_stats = cache_monitor.get_cache_stats()
         task_stats = task_monitor.get_task_stats()
@@ -278,13 +278,13 @@ async def get_performance_report(
 
 @router.get("/insights")
 async def get_performance_insights(
-    severity: Optional[str] = Query(None, regex="^(critical|high|medium|low)$"),
-    category: Optional[str] = Query(None, regex="^(api|database|cache|memory|tasks)$"),
+    severity: str | None = Query(None, regex="^(critical|high|medium|low)$"),
+    category: str | None = Query(None, regex="^(api|database|cache|memory|tasks)$"),
 ):
     """获取性能洞察"""
     try:
         # 获取所有性能数据
-        api_stats: Dict[str, Any] = {}  # type: ignore
+        api_stats: dict[str, Any] = {}  # type: ignore
         db_stats = db_monitor.get_query_stats()
         cache_stats = cache_monitor.get_cache_stats()
         task_stats = task_monitor.get_task_stats()
@@ -342,7 +342,7 @@ async def get_performance_score():
     """获取性能评分"""
     try:
         # 获取所有性能数据
-        api_stats: Dict[str, Any] = {}
+        api_stats: dict[str, Any] = {}
         db_stats = db_monitor.get_query_stats()
         cache_stats = cache_monitor.get_cache_stats()
         task_stats = task_monitor.get_task_stats()
@@ -387,8 +387,9 @@ async def get_performance_trends(
         # Note: 从数据库或时序数据库获取历史数据
         # 当前返回模拟数据，生产环境应连接到时序数据库
 
-        import numpy as np
         from datetime import datetime, timedelta
+
+        import numpy as np
 
         # 生成模拟数据点
         end_time = datetime.now()
@@ -433,7 +434,7 @@ async def get_performance_trends(
             "max_value": np.max(values),
             "data_points": [
                 {"timestamp": t.isoformat(), "value": float(v)}
-                for t, v in zip(time_points, values)
+                for t, v in zip(time_points, values, strict=False)
             ],
         }
 

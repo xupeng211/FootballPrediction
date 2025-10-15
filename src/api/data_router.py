@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 数据API端点（向后兼容）
@@ -33,8 +33,8 @@ class LeagueInfo(BaseModel):
     id: int
     name: str
     country: str
-    logo_url: Optional[str] = None
-    season: Optional[str] = None
+    logo_url: str | None = None
+    season: str | None = None
 
 
 class TeamInfo(BaseModel):
@@ -42,10 +42,10 @@ class TeamInfo(BaseModel):
 
     id: int
     name: str
-    short_name: Optional[str] = None
-    logo_url: Optional[str] = None
-    country: Optional[str] = None
-    league_id: Optional[int] = None
+    short_name: str | None = None
+    logo_url: str | None = None
+    country: str | None = None
+    league_id: int | None = None
 
 
 class MatchInfo(BaseModel):
@@ -60,8 +60,8 @@ class MatchInfo(BaseModel):
     league_name: str
     match_date: datetime
     status: str = Field(..., description="pending|live|finished|cancelled")
-    home_score: Optional[int] = None
-    away_score: Optional[int] = None
+    home_score: int | None = None
+    away_score: int | None = None
 
 
 class OddsInfo(BaseModel):
@@ -80,14 +80,14 @@ class MatchStatistics(BaseModel):
     """比赛统计"""
 
     match_id: int
-    possession_home: Optional[float] = None
-    possession_away: Optional[float] = None
-    shots_home: Optional[int] = None
-    shots_away: Optional[int] = None
-    shots_on_target_home: Optional[int] = None
-    shots_on_target_away: Optional[int] = None
-    corners_home: Optional[int] = None
-    corners_away: Optional[int] = None
+    possession_home: float | None = None
+    possession_away: float | None = None
+    shots_home: int | None = None
+    shots_away: int | None = None
+    shots_on_target_home: int | None = None
+    shots_on_target_away: int | None = None
+    corners_home: int | None = None
+    corners_away: int | None = None
 
 
 class TeamStatistics(BaseModel):
@@ -108,10 +108,10 @@ class TeamStatistics(BaseModel):
 # ============================================================================
 
 
-@router.get("/leagues", response_model=List[LeagueInfo])
+@router.get("/leagues", response_model=list[LeagueInfo])
 async def get_leagues(
-    country: Optional[str] = Query(None, description="国家筛选"),
-    season: Optional[str] = Query(None, description="赛季"),
+    country: str | None = Query(None, description="国家筛选"),
+    season: str | None = Query(None, description="赛季"),
     limit: int = Query(20, ge=1, le=100, description="返回数量"),
 ):
     """
@@ -142,7 +142,7 @@ async def get_leagues(
 
 
 @router.get("/leagues/{league_id}", response_model=LeagueInfo)
-async def get_league(league_id: int) -> Optional[Any]:
+async def get_league(league_id: int) -> Any | None:
     """获取单个联赛详情"""
     logger.info(f"获取联赛 {league_id} 详情")
 
@@ -165,11 +165,11 @@ async def get_league(league_id: int) -> Optional[Any]:
 # ============================================================================
 
 
-@router.get("/teams", response_model=List[TeamInfo])
+@router.get("/teams", response_model=list[TeamInfo])
 async def get_teams(
-    league_id: Optional[int] = Query(None, description="联赛ID"),
-    country: Optional[str] = Query(None, description="国家"),
-    search: Optional[str] = Query(None, description="搜索关键词"),
+    league_id: int | None = Query(None, description="联赛ID"),
+    country: str | None = Query(None, description="国家"),
+    search: str | None = Query(None, description="搜索关键词"),
     limit: int = Query(20, ge=1, le=100),
 ):
     """
@@ -201,7 +201,7 @@ async def get_teams(
 
 
 @router.get("/teams/{team_id}", response_model=TeamInfo)
-async def get_team(team_id: int) -> Optional[Any]:
+async def get_team(team_id: int) -> Any | None:
     """获取单个球队详情"""
     logger.info(f"获取球队 {team_id} 详情")
 
@@ -220,7 +220,7 @@ async def get_team(team_id: int) -> Optional[Any]:
 
 @router.get("/teams/{team_id}/statistics", response_model=TeamStatistics)
 async def get_team_statistics(
-    team_id: int, season: Optional[str] = Query(None, description="赛季")
+    team_id: int, season: str | None = Query(None, description="赛季")
 ):
     """获取球队统计数据"""
     logger.info(f"获取球队 {team_id} 统计")
@@ -247,13 +247,13 @@ async def get_team_statistics(
 # ============================================================================
 
 
-@router.get("/matches", response_model=List[MatchInfo])
+@router.get("/matches", response_model=list[MatchInfo])
 async def get_matches(
-    league_id: Optional[int] = Query(None, description="联赛ID"),
-    team_id: Optional[int] = Query(None, description="球队ID"),
-    date_from: Optional[str] = Query(None, description="开始日期 YYYY-MM-DD"),
-    date_to: Optional[str] = Query(None, description="结束日期 YYYY-MM-DD"),
-    status: Optional[str] = Query(None, description="比赛状态"),
+    league_id: int | None = Query(None, description="联赛ID"),
+    team_id: int | None = Query(None, description="球队ID"),
+    date_from: str | None = Query(None, description="开始日期 YYYY-MM-DD"),
+    date_to: str | None = Query(None, description="结束日期 YYYY-MM-DD"),
+    status: str | None = Query(None, description="比赛状态"),
     limit: int = Query(20, ge=1, le=100),
 ):
     """
@@ -289,7 +289,7 @@ async def get_matches(
 
 
 @router.get("/matches/{match_id}", response_model=MatchInfo)
-async def get_match(match_id: int) -> Optional[Any]:
+async def get_match(match_id: int) -> Any | None:
     """获取单场比赛详情"""
     logger.info(f"获取比赛 {match_id} 详情")
 
@@ -312,7 +312,7 @@ async def get_match(match_id: int) -> Optional[Any]:
 
 
 @router.get("/matches/{match_id}/statistics", response_model=MatchStatistics)
-async def get_match_statistics(match_id: int) -> Optional[Any]:
+async def get_match_statistics(match_id: int) -> Any | None:
     """获取比赛统计数据"""
     logger.info(f"获取比赛 {match_id} 统计")
 
@@ -339,10 +339,10 @@ async def get_match_statistics(match_id: int) -> Optional[Any]:
 # ============================================================================
 
 
-@router.get("/odds", response_model=List[OddsInfo])
+@router.get("/odds", response_model=list[OddsInfo])
 async def get_odds(
-    match_id: Optional[int] = Query(None, description="比赛ID"),
-    bookmaker: Optional[str] = Query(None, description="博彩公司"),
+    match_id: int | None = Query(None, description="比赛ID"),
+    bookmaker: str | None = Query(None, description="博彩公司"),
     limit: int = Query(20, ge=1, le=100),
 ):
     """
@@ -374,8 +374,8 @@ async def get_odds(
         raise HTTPException(status_code=500, detail=f"获取赔率失败: {str(e)}")
 
 
-@router.get("/odds/{match_id}", response_model=List[OddsInfo])
-async def get_match_odds(match_id: int) -> Optional[Any]:
+@router.get("/odds/{match_id}", response_model=list[OddsInfo])
+async def get_match_odds(match_id: int) -> Any | None:
     """获取指定比赛的所有赔率"""
     logger.info(f"获取比赛 {match_id} 的赔率")
 

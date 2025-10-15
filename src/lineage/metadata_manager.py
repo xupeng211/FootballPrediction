@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 metadata_manager.py
 Metadata_Manager

@@ -3,9 +3,10 @@
 Test Modular TTL Cache
 """
 
-import pytest
 import time
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 
 def test_cache_entry():
@@ -176,6 +177,7 @@ def test_ttl_cache_stats():
 def test_async_cache():
     """测试异步缓存"""
     import asyncio
+
     from src.cache.ttl_cache_improved_mod.async_cache import AsyncTTLCache
 
     async def test_async():
@@ -246,16 +248,16 @@ def test_cache_factory():
 def test_cache_instances():
     """测试预定义缓存实例"""
     from src.cache.ttl_cache_improved_mod.cache_instances import (
-        prediction_cache,
-        feature_cache,
-        odds_cache,
-        session_cache,
-        config_cache,
-        temp_cache,
-        get_cache,
-        get_all_stats,
-        clear_all_caches,
         cleanup_all_expired,
+        clear_all_caches,
+        config_cache,
+        feature_cache,
+        get_all_stats,
+        get_cache,
+        odds_cache,
+        prediction_cache,
+        session_cache,
+        temp_cache,
     )
 
     # 测试预定义实例
@@ -291,13 +293,13 @@ def test_cache_instances():
 def test_module_import():
     """测试模块导入"""
     from src.cache.ttl_cache_improved_mod import (
-        TTLCache,
         AsyncTTLCache,
         CacheEntry,
         CacheFactory,
-        prediction_cache,
+        TTLCache,
         feature_cache,
         odds_cache,
+        prediction_cache,
     )
 
     assert TTLCache is not None
@@ -310,7 +312,7 @@ def test_module_import():
 def test_backward_compatibility():
     """测试向后兼容性"""
     # 应该能从原始位置导入
-    from src.cache.ttl_cache_improved_mod import TTLCache, CacheFactory
+    from src.cache.ttl_cache_improved_mod import CacheFactory, TTLCache
 
     cache = TTLCache(max_size=100)
     cache.set("test", "value")
@@ -323,8 +325,8 @@ def test_backward_compatibility():
 
 def test_cache_repr():
     """测试缓存的字符串表示"""
-    from src.cache.ttl_cache_improved_mod.ttl_cache import TTLCache
     from src.cache.ttl_cache_improved_mod.cache_entry import CacheEntry
+    from src.cache.ttl_cache_improved_mod.ttl_cache import TTLCache
 
     cache = TTLCache(max_size=100)
     cache.set("test", "value")

@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 密钥管理模块 - 桩实现
 
@@ -20,7 +18,7 @@ class KeyManager:
     Key Manager (Stub Implementation)
     """
 
-    def __init__(self, key_file: Optional[str] = None):
+    def __init__(self, key_file: str | None = None):
         """
         初始化密钥管理器
 
@@ -29,7 +27,7 @@ class KeyManager:
         """
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.key_file = key_file or os.getenv("KEY_FILE_PATH", ".keys")
-        self._keys: Dict[str, str] = {}
+        self._keys: dict[str, str] = {}
         self.logger.info("KeyManager initialized (stub implementation)")
 
     def get_key(self, key_name: str) -> str:
@@ -73,7 +71,7 @@ class KeyManager:
             return True
         return False
 
-    def list_keys(self) -> Dict[str, str]:
+    def list_keys(self) -> dict[str, str]:
         """
         列出所有密钥
 
@@ -143,7 +141,7 @@ class KeyManager:
         """
         return key_name in self._keys or key_name.startswith("dummy_")
 
-    def load_keys_from_file(self, file_path: Optional[str] = None) -> None:
+    def load_keys_from_file(self, file_path: str | None = None) -> None:
         """
         从文件加载密钥
 
@@ -154,7 +152,7 @@ class KeyManager:
         self.logger.info(f"Loading keys from: {file_path}")
         # 桩实现：不实际加载
 
-    def save_keys_to_file(self, file_path: Optional[str] = None) -> None:
+    def save_keys_to_file(self, file_path: str | None = None) -> None:
         """
         保存密钥到文件
 
@@ -167,7 +165,7 @@ class KeyManager:
 
 
 # 全局实例
-_global_key_manager: Optional[KeyManager] = None
+_global_key_manager: KeyManager | None = None
 
 
 def get_key_manager() -> KeyManager:

@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 # mypy: ignore-errors
 """
@@ -48,8 +48,8 @@ class PerformanceMonitoringIntegration:
 
         try:
             # 导入中间件
-            from .middleware import PerformanceMonitoringMiddleware
             from .api import router as performance_router
+            from .middleware import PerformanceMonitoringMiddleware
 
             # 添加性能监控中间件
             app.add_middleware(
@@ -73,7 +73,7 @@ class PerformanceMonitoringIntegration:
             return
 
         try:
-            from .profiler import get_profiler, DatabaseQueryProfiler
+            from .profiler import DatabaseQueryProfiler, get_profiler
 
             # 创建数据库查询分析器
             DatabaseQueryProfiler(get_profiler())
@@ -140,7 +140,7 @@ class PerformanceMonitoringIntegration:
         except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"Failed to stop profiling: {str(e)}")
 
-    def get_performance_config(self) -> Dict[str, Any]:
+    def get_performance_config(self) -> dict[str, Any]:
         """获取性能监控配置"""
         return {
             "enabled": self.enabled,
@@ -165,7 +165,7 @@ class PerformanceMonitoringIntegration:
             },
         }
 
-    def update_config(self, config: Dict[str, Any]) -> None:
+    def update_config(self, config: dict[str, Any]) -> None:
         """更新性能监控配置"""
         try:
             # 更新采样率
@@ -189,7 +189,7 @@ class PerformanceMonitoringIntegration:
         except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"Failed to update performance monitoring config: {str(e)}")
 
-    def create_performance_report(self) -> Optional[str]:
+    def create_performance_report(self) -> str | None:
         """创建性能报告"""
         if not self.enabled:
             return None
@@ -202,10 +202,10 @@ class PerformanceMonitoringIntegration:
             get_profiler()
 
             # 收集性能数据
-            api_stats: Dict[str, Any] = {}  # 从中间件获取  # type: ignore
-            db_stats: Dict[str, Any] = {}  # 从db_monitor获取  # type: ignore
-            cache_stats: Dict[str, Any] = {}  # 从cache_monitor获取  # type: ignore
-            task_stats: Dict[str, Any] = {}  # 从task_monitor获取  # type: ignore
+            api_stats: dict[str, Any] = {}  # 从中间件获取  # type: ignore
+            db_stats: dict[str, Any] = {}  # 从db_monitor获取  # type: ignore
+            cache_stats: dict[str, Any] = {}  # 从cache_monitor获取  # type: ignore
+            task_stats: dict[str, Any] = {}  # 从task_monitor获取  # type: ignore
 
             # 生成报告
             report = analyzer.generate_performance_report(
@@ -270,7 +270,7 @@ def get_performance_integration() -> PerformanceMonitoringIntegration:
 
 
 def setup_performance_monitoring(
-    app: Optional[FastAPI] = None,
+    app: FastAPI | None = None,
 ) -> PerformanceMonitoringIntegration:
     """设置性能监控"""
     integration = get_performance_integration()
@@ -310,6 +310,6 @@ def stop_performance_profiling() -> None:
     get_performance_integration().stop_profiling()
 
 
-def generate_performance_report() -> Optional[str]:
+def generate_performance_report() -> str | None:
     """生成性能报告（便捷函数）"""
     return get_performance_integration().create_performance_report()

@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 Redis缓存管理器
 
@@ -8,9 +6,8 @@ Redis缓存管理器
 
 try:
     from .redis import (
-        RedisManager,
         CacheKeyManager,
-        get_redis_manager,
+        RedisManager,
         # 便捷函数 - 异步
         adelete_cache,
         aexists_cache,
@@ -23,19 +20,18 @@ try:
         delete_cache,
         exists_cache,
         get_cache,
+        get_redis_manager,
         mget_cache,
         mset_cache,
         set_cache,
-        ttl_cache,
         # 其他功能
         startup_warmup,
+        ttl_cache,
     )
 except ImportError:
     # 如果redis模块不可用，使用mock_redis
-    from .mock_redis import (  # type: ignore
-        MockRedisManager as RedisManager,
+    from .mock_redis import (
         CacheKeyManager,
-        get_redis_manager,
         adelete_cache,
         aexists_cache,
         aget_cache,
@@ -46,11 +42,15 @@ except ImportError:
         delete_cache,
         exists_cache,
         get_cache,
+        get_redis_manager,
         mget_cache,
         mset_cache,
         set_cache,
         startup_warmup,
         ttl_cache,
+    )
+    from .mock_redis import (  # type: ignore
+        MockRedisManager as RedisManager,
     )
 
 # 导出所有公共接口

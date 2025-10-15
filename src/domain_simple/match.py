@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 比赛领域模型
@@ -34,11 +34,11 @@ class Match:
 
     def __init__(
         self,
-        id: Optional[int] = None,
+        id: int | None = None,
         home_team_id: int = 0,
         away_team_id: int = 0,
         league_id: int = 0,
-        scheduled_time: Optional[datetime] = None,
+        scheduled_time: datetime | None = None,
         status: MatchStatus = MatchStatus.SCHEDULED,
     ):
         self.id = id
@@ -118,13 +118,13 @@ class Match:
             self.prediction_result = prediction
             self.confidence_score = confidence
 
-    def get_result(self) -> Optional[MatchResult]:
+    def get_result(self) -> MatchResult | None:
         """获取比赛结果"""
         if self.status != MatchStatus.COMPLETED:
             return None
         return self.prediction_result
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "id": self.id,
@@ -145,7 +145,7 @@ class Match:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Match":
+    def from_dict(cls, data: dict[str, Any]) -> "Match":
         """从字典创建实例"""
         match = cls(
             id=data.get("id"),

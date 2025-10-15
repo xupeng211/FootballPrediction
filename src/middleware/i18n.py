@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 国际化中间件
 """
@@ -15,7 +13,7 @@ class I18nMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
         # 从请求头获取语言偏好
-        accept_language = request.headers.get(str("accept-language"), "zh-CN")
+        accept_language = request.headers.get("accept-language", "zh-CN")
 
         # 设置环境变量
         if "zh" in accept_language:

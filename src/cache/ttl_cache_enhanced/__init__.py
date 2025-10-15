@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 改进的TTL缓存模块
 Improved TTL Cache Module
@@ -24,8 +22,8 @@ from .cache_entry import CacheEntry
 from .cache_factory import CacheFactory
 from .cache_instances import (
     CACHES,
-    clear_all_caches,
     cleanup_all_expired,
+    clear_all_caches,
     config_cache,
     feature_cache,
     get_all_stats,

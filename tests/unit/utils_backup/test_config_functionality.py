@@ -4,10 +4,11 @@
 测试配置读取和验证
 """
 
-import pytest
 import os
 import sys
 from unittest.mock import patch
+
+import pytest
 
 # 添加src目录到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))

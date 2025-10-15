@@ -1,12 +1,10 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 足球预测系统时间处理工具模块
 
 提供时间和日期处理相关的工具函数。
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 
 class TimeUtils:
@@ -15,12 +13,12 @@ class TimeUtils:
     @staticmethod
     def now_utc() -> datetime:
         """获取当前UTC时间"""
-        return datetime.now(timezone.utc)
+        return datetime.now(UTC)
 
     @staticmethod
     def timestamp_to_datetime(timestamp: float) -> datetime:
         """时间戳转datetime"""
-        return datetime.fromtimestamp(timestamp, timezone.utc)
+        return datetime.fromtimestamp(timestamp, UTC)
 
     @staticmethod
     def datetime_to_timestamp(dt: datetime) -> float:
@@ -43,7 +41,7 @@ class TimeUtils:
 # 为了向后兼容，添加常用函数别名
 def utc_now() -> datetime:
     """获取当前UTC时间（向后兼容性函数）"""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def parse_datetime(date_str: str, format_str: str = "%Y-%m-%d %H:%M:%S") -> datetime:

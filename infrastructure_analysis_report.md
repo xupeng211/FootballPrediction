@@ -8,9 +8,9 @@
 
 #### 1. 语法错误（9个文件）
 - **问题类型**: 括号不匹配、类型注解错误、无效语法
-- **影响文件**: 
+- **影响文件**:
   - src/adapters/registry_simple.py:13 - `]` 缺失
-  - src/adapters/factory_simple.py:13 - `]` 缺失  
+  - src/adapters/factory_simple.py:13 - `]` 缺失
   - src/adapters/factory.py:33 - 类型注解错误
   - src/adapters/football.py:375 - 缺少冒号
   - src/api/schemas.py:17 - `]` 未闭合
@@ -39,7 +39,7 @@
 
 #### 2. 测试覆盖率极低
 - **整体覆盖率**: 约1-2%
-- **原因**: 
+- **原因**:
   - 大量测试文件存在导入错误
   - 许多模块存在语法错误无法测试
   - 测试与代码不同步

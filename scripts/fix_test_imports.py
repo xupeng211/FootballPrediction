@@ -3,7 +3,6 @@
 批量修复测试文件中被注释的导入语句
 """
 
-import os
 import re
 from pathlib import Path
 
@@ -26,13 +25,13 @@ def fix_test_imports(test_dir: str = "tests"):
     for py_file in test_path.rglob("*.py"):
         if py_file.name.startswith("test_"):
             try:
-                with open(py_file, "r", encoding="utf-8") as f:
+                with open(py_file, encoding="utf-8") as f:
                     content = f.read()
 
                 original_content = content
 
                 # 修复被注释的导入语句
-                for pattern, replacement in import_patterns:
+                for pattern, _replacement in import_patterns:
                     lines = content.split("\n")
                     for i, line in enumerate(lines):
                         if re.match(pattern, line.strip()):

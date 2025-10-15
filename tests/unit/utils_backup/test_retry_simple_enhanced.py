@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.utils.retry import RetryConfig, retry, CircuitBreaker, CircuitState
+from src.utils.retry import CircuitBreaker, CircuitState, RetryConfig, retry
 
 
 class TestRetrySimpleEnhanced:

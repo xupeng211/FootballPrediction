@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 维护任务模块
@@ -11,21 +11,22 @@ from typing import Any, Dict, List, Optional, Union
 """
 
 import asyncio
-import redis
 import logging
 import os
 import shutil
 from datetime import datetime
 
-from src.database.connection import DatabaseManager
+import redis
 from sqlalchemy import text
+
+from src.database.connection import DatabaseManager
 from src.tasks.celery_app import app
 
 logger = logging.getLogger(__name__)
 
 
 @app.task
-def quality_check_task() -> Dict[str, Any]:
+def quality_check_task() -> dict[str, Any]:
     """
     数据质量检查任务
 
@@ -168,7 +169,7 @@ def quality_check_task() -> Dict[str, Any]:
 
 
 @app.task
-def cleanup_error_logs_task(days: int = 7) -> Dict[str, Any]:
+def cleanup_error_logs_task(days: int = 7) -> dict[str, Any]:
     """
     错误日志清理任务
 
@@ -212,7 +213,7 @@ def cleanup_error_logs_task(days: int = 7) -> Dict[str, Any]:
 
 
 @app.task
-def system_health_check_task() -> Dict[str, Any]:
+def system_health_check_task() -> dict[str, Any]:
     """
     系统健康检查任务
 
@@ -317,7 +318,7 @@ def system_health_check_task() -> Dict[str, Any]:
 
 
 @app.task
-def database_maintenance_task() -> Dict[str, Any]:
+def database_maintenance_task() -> dict[str, Any]:
     """
     数据库维护任务
 

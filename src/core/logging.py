@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 统一日志访问接口
 
@@ -38,7 +36,7 @@ LogCategory = {
 class StructuredLogger:
     """结构化日志记录器"""
 
-    def __init__(self, name: str, category: Optional[str] = None) -> None:
+    def __init__(self, name: str, category: str | None = None) -> None:
         """初始化结构化日志记录器"""
         self.logger = logging.getLogger(name)
         self.category = category or LogCategory["SYSTEM"]
@@ -64,7 +62,7 @@ class StructuredLogger:
         self.logger.debug(message, extra=extra)
 
 
-def get_logger(name: str, level: Optional[str] = "INFO") -> logging.Logger:
+def get_logger(name: str, level: str | None = "INFO") -> logging.Logger:
     """获取指定名称的日志器。
 
     Args:

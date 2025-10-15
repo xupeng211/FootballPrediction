@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 足球预测系统字典处理工具模块
@@ -11,7 +11,7 @@ class DictUtils:
     """字典处理工具类"""
 
     @staticmethod
-    def get_nested(data: Dict[str, Any], path: str, default: Any = None) -> Any:
+    def get_nested(data: dict[str, Any], path: str, default: Any = None) -> Any:
         """获取嵌套字典的值
 
         Args:
@@ -36,7 +36,7 @@ class DictUtils:
             return default
 
     @staticmethod
-    def set_nested(data: Dict[str, Any], path: str, value: Any) -> None:
+    def set_nested(data: dict[str, Any], path: str, value: Any) -> None:
         """设置嵌套字典的值
 
         Args:
@@ -58,8 +58,8 @@ class DictUtils:
 
     @staticmethod
     def merge(
-        dict1: Dict[str, Any], dict2: Dict[str, Any], deep: bool = False
-    ) -> Dict[str, Any]:
+        dict1: dict[str, Any], dict2: dict[str, Any], deep: bool = False
+    ) -> dict[str, Any]:
         """合并两个字典
 
         Args:
@@ -78,7 +78,7 @@ class DictUtils:
             return result
 
     @staticmethod
-    def deep_merge(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Dict[str, Any]:
+    def deep_merge(dict1: dict[str, Any], dict2: dict[str, Any]) -> dict[str, Any]:
         """深度合并字典 - 递归合并嵌套字典，dict2的值会覆盖dict1中的同名键"""
         result = dict1.copy()
         for key, value in dict2.items():
@@ -96,10 +96,10 @@ class DictUtils:
 
     @staticmethod
     def flatten(
-        d: Dict[str, Any], parent_key: str = "", sep: str = "."
-    ) -> Dict[str, Any]:
+        d: dict[str, Any], parent_key: str = "", sep: str = "."
+    ) -> dict[str, Any]:
         """扁平化嵌套字典 - 将多层嵌套结构转为单层，便于配置管理和数据传输"""
-        items: List[tuple] = []
+        items: list[tuple] = []
         for k, v in d.items():
             # 构建新的键名，使用分隔符连接层级关系
             new_key = f"{parent_key}{sep}{k}" if parent_key else k
@@ -112,43 +112,43 @@ class DictUtils:
 
     @staticmethod
     def flatten_dict(
-        d: Dict[str, Any], parent_key: str = "", sep: str = "."
-    ) -> Dict[str, Any]:
+        d: dict[str, Any], parent_key: str = "", sep: str = "."
+    ) -> dict[str, Any]:
         """扁平化嵌套字典的别名方法"""
         return DictUtils.flatten(d, parent_key, sep)
 
     @staticmethod
-    def filter_none_values(d: Dict[str, Any]) -> Dict[str, Any]:
+    def filter_none_values(d: dict[str, Any]) -> dict[str, Any]:
         """过滤掉值为None的键值对"""
         return {k: v for k, v in d.items() if v is not None}
 
     @staticmethod
-    def pick(d: Dict[str, Any], keys: List[str]) -> Dict[str, Any]:
+    def pick(d: dict[str, Any], keys: list[str]) -> dict[str, Any]:
         """从字典中选择指定的键"""
         return {k: d[k] for k in keys if k in d}
 
     @staticmethod
-    def omit(d: Dict[str, Any], keys: List[str]) -> Dict[str, Any]:
+    def omit(d: dict[str, Any], keys: list[str]) -> dict[str, Any]:
         """从字典中移除指定的键"""
         return {k: v for k, v in d.items() if k not in keys}
 
     @staticmethod
-    def rename_keys(d: Dict[str, Any], mapping: Dict[str, str]) -> Dict[str, Any]:
+    def rename_keys(d: dict[str, Any], mapping: dict[str, str]) -> dict[str, Any]:
         """重命名字典的键"""
         return {mapping.get(k, k): v for k, v in d.items()}
 
     @staticmethod
-    def filter_by_value(d: Dict[str, Any], predicate) -> Dict[str, Any]:
+    def filter_by_value(d: dict[str, Any], predicate) -> dict[str, Any]:
         """根据值过滤字典"""
         return {k: v for k, v in d.items() if predicate(v)}
 
     @staticmethod
-    def filter_by_key(d: Dict[str, Any], predicate) -> Dict[str, Any]:
+    def filter_by_key(d: dict[str, Any], predicate) -> dict[str, Any]:
         """根据键过滤字典"""
         return {k: v for k, v in d.items() if predicate(k)}
 
     @staticmethod
-    def invert(d: Dict[str, Any]) -> Dict[Any, str]:
+    def invert(d: dict[str, Any]) -> dict[Any, str]:
         """反转字典（值作为键，键作为值）"""
         result = {}
         for k, v in d.items():
@@ -162,7 +162,7 @@ class DictUtils:
         return result
 
     @staticmethod
-    def group_by_key(d: Dict[str, Any], key_func) -> Dict[Any, List[Any]]:
+    def group_by_key(d: dict[str, Any], key_func) -> dict[Any, list[Any]]:
         """根据键的某个属性分组"""
         result = {}
         for k, v in d.items():
@@ -173,14 +173,14 @@ class DictUtils:
         return result
 
     @staticmethod
-    def deep_copy(d: Dict[str, Any]) -> Dict[str, Any]:
+    def deep_copy(d: dict[str, Any]) -> dict[str, Any]:
         """深度复制字典"""
         import copy
 
         return copy.deepcopy(d)
 
     @staticmethod
-    def get_path(d: Dict[str, Any], path: List[str], default: Any = None) -> Any:
+    def get_path(d: dict[str, Any], path: list[str], default: Any = None) -> Any:
         """通过路径列表获取值"""
         current = d
         for key in path:
@@ -191,7 +191,7 @@ class DictUtils:
         return current
 
     @staticmethod
-    def set_path(d: Dict[str, Any], path: List[str], value: Any) -> None:
+    def set_path(d: dict[str, Any], path: list[str], value: Any) -> None:
         """通过路径列表设置值"""
         current = d
         for key in path[:-1]:

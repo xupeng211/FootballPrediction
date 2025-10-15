@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 SQLAlchemy基础模型
@@ -46,7 +46,7 @@ class BaseModel(Base, TimestampMixin):
 
     id = Column(Integer, primary_key=True, autoincrement=True, comment="主键ID")
 
-    def to_dict(self, exclude_fields: Optional[set] = None) -> Dict[str, Any]:
+    def to_dict(self, exclude_fields: set | None = None) -> dict[str, Any]:
         """
         将模型对象转换为字典
 
@@ -59,7 +59,7 @@ class BaseModel(Base, TimestampMixin):
         if exclude_fields is None:
             exclude_fields = set()
 
-        result: Dict[str, Any] = {}
+        result: dict[str, Any] = {}
         for column in self.__table__.columns:
             column_name = column.name
             if column_name not in exclude_fields:
@@ -72,7 +72,7 @@ class BaseModel(Base, TimestampMixin):
         return result
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]):
+    def from_dict(cls, data: dict[str, Any]):
         """
         从字典创建模型实例
 
@@ -90,7 +90,7 @@ class BaseModel(Base, TimestampMixin):
         return cls(**filtered_data)
 
     def update_from_dict(
-        self, data: Dict[str, Any], exclude_fields: Optional[set] = None
+        self, data: dict[str, Any], exclude_fields: set | None = None
     ) -> None:
         """
         从字典更新模型对象

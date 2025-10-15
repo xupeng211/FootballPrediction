@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 足球预测系统核心功能模块
 
@@ -11,25 +9,25 @@ from typing import Any, Dict, List, Optional, Union
 """
 
 from .config import Config, Settings, config, get_settings
-from .exceptions import (
-    ConfigError,
-    DataError,
-    FootballPredictionError,
-    ModelError,
-    PredictionError,
-    DependencyInjectionError,
-)
-from .logger import Logger, logger
+from .config_di import ConfigurationBinder
 from .di import (
     DIContainer,
     ServiceCollection,
     ServiceLifetime,
     configure_services,
-    resolve,
     inject,
+    resolve,
 )
+from .exceptions import (
+    ConfigError,
+    DataError,
+    DependencyInjectionError,
+    FootballPredictionError,
+    ModelError,
+    PredictionError,
+)
+from .logger import Logger, logger
 from .service_lifecycle import ServiceLifecycleManager, get_lifecycle_manager
-from .config_di import ConfigurationBinder
 
 __all__ = [
     # 配置管理

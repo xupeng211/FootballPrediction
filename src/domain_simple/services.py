@@ -1,5 +1,5 @@
-from typing import Any, Dict, List, Optional, Union
 import logging
+from typing import Any, Optional
 
 """
 域服务工厂
@@ -7,15 +7,15 @@ import logging
 提供领域服务的工厂模式实现，管理服务依赖和生命周期。
 """
 
-from datetime import datetime
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from datetime import datetime
 
 from ..database.repositories.base import BaseRepository
 from .match import Match
-from .team import Team
 from .prediction import Prediction
 from .rules import ValidationEngine, get_validation_engine
+from .team import Team
 
 T = TypeVar("T")
 
@@ -27,7 +27,7 @@ class ServiceConfig:
     name: str
     version: str = "1.0.0"
     enabled: bool = True
-    config: Optional[Dict[str, Any]] = None
+    config: dict[str, Any] | None = None
 
     def __post_init__(self):
         if self.config is None:
@@ -37,7 +37,7 @@ class ServiceConfig:
 class DomainService(ABC, Generic[T]):
     """域服务基类"""
 
-    def __init__(self, config: Optional[ServiceConfig] = None):
+    def __init__(self, config: ServiceConfig | None = None):
         self._config = config or ServiceConfig(self.__class__.__name__)
         self.name = self.config.name
         self.version = self.config.version
@@ -45,11 +45,11 @@ class DomainService(ABC, Generic[T]):
         self.config_data = self.config.config
 
         # 依赖注入
-        self._dependencies: Dict[str, "DomainService"] = {}
-        self._repositories: Dict[str, BaseRepository] = {}
+        self._dependencies: dict[str, "DomainService"] = {}
+        self._repositories: dict[str, BaseRepository] = {}
 
         # 验证引擎
-        self._validation_engine: Optional[ValidationEngine] = None
+        self._validation_engine: ValidationEngine | None = None
         # 状态管理
         self._initialized = False
         self._started = False
@@ -81,7 +81,7 @@ class DomainService(ABC, Generic[T]):
         """获取依赖服务"""
         return self._dependencies.get(name)
 
-    def get_repository(self, name: str) -> Optional[BaseRepository]:
+    def get_repository(self, name: str) -> BaseRepository | None:
         """获取仓储"""
         return self._repositories.get(name)
 
@@ -103,10 +103,10 @@ class DomainService(ABC, Generic[T]):
 class MatchDomainService(DomainService[Match]):
     """比赛域服务"""
 
-    def __init__(self, config: Optional[ServiceConfig] = None):
+    def __init__(self, config: ServiceConfig | None = None):
         super().__init__(config or ServiceConfig("MatchDomainService"))
-        self.match_repo: Optional[BaseRepository] = None
-        self.team_repo: Optional[BaseRepository] = None
+        self.match_repo: BaseRepository | None = None
+        self.team_repo: BaseRepository | None = None
         self.logger = logging.getLogger(__name__)
 
     async def initialize(self) -> bool:
@@ -141,7 +141,7 @@ class MatchDomainService(DomainService[Match]):
         self._started = False
         return True
 
-    async def get_upcoming_matches(self, days: int = 7, limit: int = 50) -> List[Match]:
+    async def get_upcoming_matches(self, days: int = 7, limit: int = 50) -> list[Match]:
         """获取即将到来的比赛"""
         if not self._started:
             raise RuntimeError("服务未启动")
@@ -149,7 +149,7 @@ class MatchDomainService(DomainService[Match]):
         # 简化实现
         return []
 
-    async def create_match(self, match_data: Dict[str, Any]) -> Match:
+    async def create_match(self, match_data: dict[str, Any]) -> Match:
         """创建比赛"""
         if not self._started:
             raise RuntimeError("服务未启动")
@@ -170,9 +170,9 @@ class MatchDomainService(DomainService[Match]):
 class TeamDomainService(DomainService[Team]):
     """球队域服务"""
 
-    def __init__(self, config: Optional[ServiceConfig] = None):
+    def __init__(self, config: ServiceConfig | None = None):
         super().__init__(config or ServiceConfig("TeamDomainService"))
-        self.team_repo: Optional[BaseRepository] = None
+        self.team_repo: BaseRepository | None = None
         self.logger = logging.getLogger(__name__)
 
     async def initialize(self) -> bool:
@@ -202,7 +202,7 @@ class TeamDomainService(DomainService[Team]):
         self._started = False
         return True
 
-    async def create_team(self, team_data: Dict[str, Any]) -> Team:
+    async def create_team(self, team_data: dict[str, Any]) -> Team:
         """创建球队"""
         if not self._started:
             raise RuntimeError("服务未启动")
@@ -223,9 +223,9 @@ class TeamDomainService(DomainService[Team]):
 class PredictionDomainService(DomainService[Prediction]):
     """预测域服务"""
 
-    def __init__(self, config: Optional[ServiceConfig] = None):
+    def __init__(self, config: ServiceConfig | None = None):
         super().__init__(config or ServiceConfig("PredictionDomainService"))
-        self.prediction_repo: Optional[BaseRepository] = None
+        self.prediction_repo: BaseRepository | None = None
         self.logger = logging.getLogger(__name__)
 
     async def initialize(self) -> bool:
@@ -255,7 +255,7 @@ class PredictionDomainService(DomainService[Prediction]):
         self._started = False
         return True
 
-    async def create_prediction(self, prediction_data: Dict[str, Any]) -> Prediction:
+    async def create_prediction(self, prediction_data: dict[str, Any]) -> Prediction:
         """创建预测"""
         if not self._started:
             raise RuntimeError("服务未启动")
@@ -280,8 +280,8 @@ class DomainServiceFactory:
     """
 
     def __init__(self):
-        self._services: Dict[str, DomainService] = {}
-        self._repositories: Dict[str, BaseRepository] = {}
+        self._services: dict[str, DomainService] = {}
+        self._repositories: dict[str, BaseRepository] = {}
         self._validation_engine = get_validation_engine()
         self.logger = logging.getLogger(__name__)
 
@@ -292,7 +292,7 @@ class DomainServiceFactory:
     def create_service(
         self,
         service_type: Type[Any, DomainService],
-        config: Optional[ServiceConfig] = None,
+        config: ServiceConfig | None = None,
     ) -> DomainService:
         """创建服务实例"""
         service = service_type(config)
@@ -306,7 +306,7 @@ class DomainServiceFactory:
 
         return service
 
-    def create_all_services(self) -> Dict[str, DomainService]:
+    def create_all_services(self) -> dict[str, DomainService]:
         """创建所有域服务"""
         services = {}
 
@@ -347,17 +347,17 @@ class DomainServiceFactory:
         logger.info("所有域服务已停止")
         return True
 
-    def get_service(self, name: str) -> Optional[DomainService]:
+    def get_service(self, name: str) -> DomainService | None:
         """获取服务"""
         return self._services.get(name)
 
-    def get_services(self) -> Dict[str, DomainService]:
+    def get_services(self) -> dict[str, DomainService]:
         """获取所有服务"""
         return self._services.copy()
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """健康检查"""
-        status: Dict[str, Any] = {
+        status: dict[str, Any] = {
             "factory": "healthy",
             "services": {},
             "repositories": len(self._repositories),

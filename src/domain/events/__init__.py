@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 领域事件
 Domain Events
@@ -9,23 +7,18 @@ Defines domain event classes for recording and propagating important events in t
 """
 
 from .match_events import (
-    MatchStartedEvent,
-    MatchFinishedEvent,
     MatchCancelledEvent,
+    MatchFinishedEvent,
     MatchPostponedEvent,
+    MatchStartedEvent,
 )
 from .prediction_events import (
-    PredictionCreatedEvent,
-    PredictionUpdatedEvent,
-    PredictionEvaluatedEvent,
     PredictionCancelledEvent,
+    PredictionCreatedEvent,
+    PredictionEvaluatedEvent,
     PredictionExpiredEvent,
     PredictionPointsAdjustedEvent,
-)
-from .prediction_events import (
-    PredictionCreatedEvent,
-    PredictionEvaluatedEvent,
-    PredictionCancelledEvent,
+    PredictionUpdatedEvent,
 )
 
 __all__ = [

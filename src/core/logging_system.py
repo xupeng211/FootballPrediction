@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 日志系统（向后兼容）
 Logging System (Backward Compatible)
@@ -12,15 +10,15 @@ Provides backward compatible exports for the modular logging system.
 import os
 
 from .logging import (  # type: ignore
+    LogCategory,
+    LoggerManager,
     # 重新导出主要类和函数
     LogLevel,
-    LogCategory,
     StructuredLogger,
-    LoggerManager,
     get_logger,
-    log_performance,
     log_async_performance,
     log_audit,
+    log_performance,
 )
 
 # 初始化默认配置

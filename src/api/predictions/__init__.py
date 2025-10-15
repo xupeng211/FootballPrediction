@@ -1,25 +1,23 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 预测API模块
 """
 
 from .models import (
-    PredictionRequest,
-    PredictionResponse,
     BatchPredictionRequest,
     BatchPredictionResponse,
-    UpcomingMatchesRequest,
-    UpcomingMatchesResponse,
+    HistoryPrediction,
+    MatchInfo,
     ModelStatsResponse,
+    PredictionData,
     PredictionHistoryResponse,
     PredictionOverviewResponse,
-    RecentPredictionsResponse,
-    VerificationResponse,
-    MatchInfo,
-    PredictionData,
-    HistoryPrediction,
+    PredictionRequest,
+    PredictionResponse,
     RecentPrediction,
+    RecentPredictionsResponse,
+    UpcomingMatchesRequest,
+    UpcomingMatchesResponse,
+    VerificationResponse,
 )
 from .router import router
 

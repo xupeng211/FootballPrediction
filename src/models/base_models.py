@@ -1,20 +1,21 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 Base models
 """
 
-from datetime import datetime
-from pydantic import BaseModel
 import types
+from datetime import datetime
+
+from pydantic import BaseModel
 
 
 class BaseModel(BaseModel):  # type: ignore
     """Base model class"""
 
-    id: Optional[int] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    id: int | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
     class Config:
         from_attributes = True
@@ -32,7 +33,7 @@ class IdentifiableModel(BaseModel):
 
     id: int
     name: str
-    description: Optional[str] = None
+    description: str | None = None
 
 
 class StatusModel(BaseModel):
@@ -45,8 +46,8 @@ class StatusModel(BaseModel):
 class MetadataModel(BaseModel):
     """Metadata base model"""
 
-    metadata: Dict[str, Any] = {}
-    tags: List[str] = []
+    metadata: dict[str, Any] = {}
+    tags: list[str] = []
 
 
 # 创建一个简单的模块对象以保持向后兼容

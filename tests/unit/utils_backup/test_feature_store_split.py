@@ -3,9 +3,10 @@
 Test Split Feature Store
 """
 
-import pytest
-from unittest.mock import MagicMock, patch
 from datetime import datetime
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 
 # 测试导入
@@ -51,12 +52,12 @@ def test_import_dataset_manager():
 def test_import_feature_definitions():
     """测试能否正常导入特征定义"""
     from src.data.features.feature_store.utils import (
-        match_entity,
-        team_entity,
-        match_features_view,
-        team_recent_stats_view,
-        odds_features_view,
         head_to_head_features_view,
+        match_entity,
+        match_features_view,
+        odds_features_view,
+        team_entity,
+        team_recent_stats_view,
     )
 
     assert match_entity is not None
@@ -72,7 +73,9 @@ def test_feature_store_config():
     """测试特征仓库配置"""
     from src.data.features.feature_store.config import FeatureStoreConfig
 
-    _config = FeatureStoreConfig(project_name="test_project", repo_path="/tmp/test_repo")
+    _config = FeatureStoreConfig(
+        project_name="test_project", repo_path="/tmp/test_repo"
+    )
 
     assert config.project_name == "test_project"
     assert config.repo_path == "/tmp/test_repo"
@@ -172,6 +175,7 @@ def test_initialize_feature_store():
 def test_write_features():
     """测试写入特征数据"""
     import pandas as pd
+
     from src.data.features.feature_store.storage import FeatureStorageManager
 
     # 创建模拟的store
@@ -198,6 +202,7 @@ def test_write_features():
 def test_get_online_features():
     """测试获取在线特征"""
     import pandas as pd
+
     from src.data.features.feature_store.query import FeatureQueryManager
 
     # 创建模拟的store和storage_manager
@@ -232,6 +237,7 @@ def test_get_online_features():
 def test_create_training_dataset():
     """测试创建训练数据集"""
     from datetime import datetime
+
     from src.data.features.feature_store.computation import FeatureDatasetManager
 
     # 创建模拟的query_manager

@@ -3,6 +3,7 @@
 """
 
 import pytest
+
 from src.utils.crypto_utils import CryptoUtils
 
 

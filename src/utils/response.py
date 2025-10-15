@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 API响应工具类
@@ -16,15 +16,15 @@ class APIResponseModel(BaseModel):
 
     success: bool
     message: str
-    data: Optional[Any] = None
-    code: Optional[str] = None
+    data: Any | None = None
+    code: str | None = None
 
 
 class APIResponse:
     """API响应格式化工具"""
 
     @staticmethod
-    def success(data: Any = None, message: str = "操作成功") -> Dict[str, Any]:
+    def success(data: Any = None, message: str = "操作成功") -> dict[str, Any]:
         """
         成功响应
 
@@ -47,14 +47,14 @@ class APIResponse:
         return response
 
     @staticmethod
-    def success_response(data: Any = None, message: str = "操作成功") -> Dict[str, Any]:
+    def success_response(data: Any = None, message: str = "操作成功") -> dict[str, Any]:
         """成功响应（别名方法）"""
         return APIResponse.success(data, message)
 
     @staticmethod
     def error(
-        message: str = "操作失败", code: Optional[int] = None, data: Any = None
-    ) -> Dict[str, Any]:
+        message: str = "操作失败", code: int | None = None, data: Any = None
+    ) -> dict[str, Any]:
         """
         错误响应
 
@@ -84,8 +84,8 @@ class APIResponse:
 
     @staticmethod
     def error_response(
-        message: str = "操作失败", code: Optional[int] = None, data: Any = None
-    ) -> Dict[str, Any]:
+        message: str = "操作失败", code: int | None = None, data: Any = None
+    ) -> dict[str, Any]:
         """错误响应（别名方法）"""
         return APIResponse.error(message, code, data)
 

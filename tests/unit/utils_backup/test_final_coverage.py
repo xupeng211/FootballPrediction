@@ -2,17 +2,18 @@
 
 from __future__ import annotations
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-from datetime import datetime, timedelta
+import asyncio
+import base64
+import hashlib
 import json
-import uuid
 import re
 import secrets
-import hashlib
-import base64
-import asyncio
+import uuid
+from datetime import datetime, timedelta
 from typing import Any, Dict, List
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 
 class TestCryptoUtilsModule:
@@ -517,7 +518,7 @@ class TestRetryModule:
 
             # 测试抖动退避
             jitter = RetryHelper.jitter_backoff(1, 1.0)
-            assert isinstance(jitter, (int, float))
+            assert isinstance(jitter, int | float)
         except (ImportError, AttributeError):
             pytest.skip("RetryHelper methods not available")
 
@@ -643,7 +644,7 @@ class TestConfigLoaderModule:
             if hasattr(ConfigLoader, "get_config_value"):
                 value = ConfigLoader.get_config_value("test_key", "default")
                 assert value == "default" or isinstance(
-                    value, (str, int, bool, dict, list)
+                    value, str | int | bool | dict | list
                 )
 
             # 测试设置配置值
@@ -717,7 +718,7 @@ class TestUtilsInitExports:
     def test_exported_functions_exist(self):
         """测试导出的函数存在"""
         try:
-            from src.utils import generate_uuid, hash_string, deep_merge, slugify
+            from src.utils import deep_merge, generate_uuid, hash_string, slugify
 
             # 函数应该存在且可调用
             assert callable(generate_uuid)
@@ -730,7 +731,7 @@ class TestUtilsInitExports:
     def test_exported_functions_work(self):
         """测试导出的函数工作"""
         try:
-            from src.utils import generate_uuid, generate_short_id, format_datetime
+            from src.utils import format_datetime, generate_short_id, generate_uuid
 
             # 测试UUID生成
             uuid1 = generate_uuid()
@@ -808,8 +809,9 @@ class TestPerformanceAndEdgeCases:
     def test_time_edge_cases(self):
         """测试时间边界情况"""
         try:
-            from src.utils.time_utils import TimeUtils
             from datetime import datetime, timedelta
+
+            from src.utils.time_utils import TimeUtils
 
             # 测试零时间差
             now = datetime.now()

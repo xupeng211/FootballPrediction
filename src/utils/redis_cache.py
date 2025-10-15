@@ -4,10 +4,12 @@ Real Redis Cache Implementation
 """
 
 import json
-import pickle
+from typing import Any
+
 import redis
-from typing import Any, Optional, Union
+
 from .cache_decorators import _generate_cache_key
+
 
 class RedisCache:
     """Redis缓存客户端"""
@@ -17,9 +19,9 @@ class RedisCache:
         host: str = "localhost",
         port: int = 6379,
         db: int = 0,
-        password: Optional[str] = None,
+        password: str | None = None,
         decode_responses: bool = True,
-        **kwargs
+        **kwargs,
     ):
         """
         初始化Redis客户端
@@ -38,11 +40,11 @@ class RedisCache:
             db=db,
             password=password,
             decode_responses=decode_responses,
-            **kwargs
+            **kwargs,
         )
         self.default_ttl = 3600  # 默认1小时
 
-    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
+    def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
         """
         设置缓存
 
@@ -56,7 +58,7 @@ class RedisCache:
         """
         try:
             # 序列化值
-            if not isinstance(value, (str, int, float)):
+            if not isinstance(value, str | int | float):
                 value = json.dumps(value, default=str)
 
             # 设置TTL
@@ -148,8 +150,10 @@ class RedisCache:
             print(f"Redis ping error: {e}")
             return False
 
+
 # 全局Redis实例
-_redis_cache: Optional[RedisCache] = None
+_redis_cache: RedisCache | None = None
+
 
 def get_redis_client(**kwargs) -> RedisCache:
     """获取Redis客户端（单例模式）"""
@@ -157,6 +161,7 @@ def get_redis_client(**kwargs) -> RedisCache:
     if _redis_cache is None:
         _redis_cache = RedisCache(**kwargs)
     return _redis_cache
+
 
 def redis_cache_decorator(key_prefix: str = "", ttl: int = 3600):
     """
@@ -166,6 +171,7 @@ def redis_cache_decorator(key_prefix: str = "", ttl: int = 3600):
         key_prefix: 键前缀
         ttl: 生存时间
     """
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             # 获取Redis客户端
@@ -177,7 +183,9 @@ def redis_cache_decorator(key_prefix: str = "", ttl: int = 3600):
                 return func(*args, **kwargs)
 
             # 生成缓存键
-            cache_key = f"{key_prefix}:{_generate_cache_key(func.__name__, args, kwargs)}"
+            cache_key = (
+                f"{key_prefix}:{_generate_cache_key(func.__name__, args, kwargs)}"
+            )
 
             # 尝试从缓存获取
             cached_value = redis_client.get(cache_key)
@@ -191,8 +199,11 @@ def redis_cache_decorator(key_prefix: str = "", ttl: int = 3600):
             redis_client.set(cache_key, result, ttl)
 
             return result
+
         return wrapper
+
     return decorator
+
 
 # 使用示例
 if __name__ == "__main__":

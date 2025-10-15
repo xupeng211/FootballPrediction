@@ -2,9 +2,11 @@
 时间工具模块完整测试
 """
 
+from datetime import UTC, datetime, timedelta, timezone
+
 import pytest
-from datetime import datetime, timezone, timedelta
-from src.utils.time_utils import TimeUtils, utc_now, parse_datetime
+
+from src.utils.time_utils import TimeUtils, parse_datetime, utc_now
 
 
 class TestTimeUtils:
@@ -15,9 +17,9 @@ class TestTimeUtils:
         _result = TimeUtils.now_utc()
 
         assert isinstance(result, datetime)
-        assert result.tzinfo == timezone.utc
+        assert result.tzinfo == UTC
         # 确保时间在合理范围内（前后5秒）
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         assert abs((result - now).total_seconds()) < 5
 
     def test_timestamp_to_datetime(self):
@@ -27,7 +29,7 @@ class TestTimeUtils:
         _result = TimeUtils.timestamp_to_datetime(timestamp)
 
         assert isinstance(result, datetime)
-        assert result.tzinfo == timezone.utc
+        assert result.tzinfo == UTC
         assert result.year == 2022
         assert result.month == 1
         assert result.day == 1
@@ -37,7 +39,7 @@ class TestTimeUtils:
 
     def test_datetime_to_timestamp(self):
         """测试datetime转时间戳"""
-        dt = datetime(2022, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+        dt = datetime(2022, 1, 1, 12, 0, 0, tzinfo=UTC)
         _result = TimeUtils.datetime_to_timestamp(dt)
 
         assert isinstance(result, float)
@@ -56,14 +58,14 @@ class TestTimeUtils:
 
     def test_format_datetime_default(self):
         """测试格式化日期时间（默认格式）"""
-        dt = datetime(2022, 1, 15, 14, 30, 45, tzinfo=timezone.utc)
+        dt = datetime(2022, 1, 15, 14, 30, 45, tzinfo=UTC)
         _result = TimeUtils.format_datetime(dt)
 
         assert _result == "2022-01-15 14:30:45"
 
     def test_format_datetime_custom(self):
         """测试格式化日期时间（自定义格式）"""
-        dt = datetime(2022, 1, 15, 14, 30, 45, tzinfo=timezone.utc)
+        dt = datetime(2022, 1, 15, 14, 30, 45, tzinfo=UTC)
 
         # 测试不同格式
         assert TimeUtils.format_datetime(dt, "%Y-%m-%d") == "2022-01-15"
@@ -107,8 +109,8 @@ class TestTimeUtils:
 
         assert isinstance(result1, datetime)
         assert isinstance(result2, datetime)
-        assert result1.tzinfo == timezone.utc
-        assert result2.tzinfo == timezone.utc
+        assert result1.tzinfo == UTC
+        assert result2.tzinfo == UTC
         # 时间应该很接近
         assert abs((result1 - result2).total_seconds()) < 1
 
@@ -233,7 +235,7 @@ class TestTimeUtils:
     def test_format_and_parse_roundtrip(self):
         """测试格式化和解析的往返转换"""
         # 使用固定时间避免时区问题
-        original_dt = datetime(2022, 1, 15, 14, 30, 45, tzinfo=timezone.utc)
+        original_dt = datetime(2022, 1, 15, 14, 30, 45, tzinfo=UTC)
 
         # 格式化
         formatted = TimeUtils.format_datetime(original_dt)

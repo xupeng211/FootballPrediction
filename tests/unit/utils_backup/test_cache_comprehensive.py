@@ -1,12 +1,14 @@
 # noqa: F401,F811,F821,E402
-import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
-import sys
+import json
 import os
+import sys
 import time
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
 from src.cache.redis_manager import RedisManager
 from src.cache.ttl_cache import TTLCache
-import json
 
 """
 缓存综合测试

@@ -30,7 +30,7 @@ class EventBus:
         Args:
             max_workers: 最大工作线程数
         """
-        self._subscribers: Dict[str, List[EventHandler] = defaultdict(list)
+        self._subscribers: Dict[str, List[EventHandler]] = defaultdict(list)
         self._filters: Dict[str, Any] = {}
         self._queues: Dict[str, asyncio.Queue] = {}
         self._running = False

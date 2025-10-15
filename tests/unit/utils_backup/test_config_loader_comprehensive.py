@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-
-import pytest
 import json
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import patch, mock_open, MagicMock
+from unittest.mock import MagicMock, mock_open, patch
+
+import pytest
 import yaml
 
 
@@ -436,8 +436,9 @@ class TestConfigLoaderEdgeCases:
 
     def test_load_config_file_like_object(self):
         """测试传入类文件对象路径"""
-        from src.utils.config_loader import load_config_from_file
         import io
+
+        from src.utils.config_loader import load_config_from_file
 
         # 注意：load_config_from_file期望文件路径，不是文件对象
         # 这个测试确保它能优雅地处理错误输入
@@ -626,6 +627,7 @@ class TestConfigLoaderPerformance:
     def test_load_config_performance_small(self):
         """测试加载小配置文件的性能"""
         import time
+
         from src.utils.config_loader import load_config_from_file
 
         config_data = {"small": "config", "number": 42}
@@ -648,6 +650,7 @@ class TestConfigLoaderPerformance:
     def test_load_config_performance_large(self):
         """测试加载大配置文件的性能"""
         import time
+
         from src.utils.config_loader import load_config_from_file
 
         # 创建大型配置

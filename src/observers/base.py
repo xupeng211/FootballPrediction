@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
 """
 观察者模式基础类
 Observer Pattern Base Classes
@@ -61,7 +61,7 @@ class Observer(ABC):
         """
         self.name = name
         self._enabled = True
-        self._subscription_filters: List[Callable[[ObservableEvent], bool] = []
+        self._subscription_filters: List[Callable[[ObservableEvent], bool]] = []
 
     @abstractmethod
     async def update(self, event: ObservableEvent) -> None:

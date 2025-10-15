@@ -214,7 +214,7 @@ class NotificationEventHandler(EventHandler):
             UserRegisteredEvent.get_event_type(),
         ]
 
-    async def get_notifications(self) -> List[Dict[str, Any]:
+    async def get_notifications(self) -> List[Dict[str, Any]]:
         """获取待发送的通知"""
         notifications = []
         while not self.notification_queue.empty():

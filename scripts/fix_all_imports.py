@@ -4,10 +4,9 @@
 Comprehensive Import Error Fixer
 """
 
-import os
-import re
-from pathlib import Path
 import subprocess
+from pathlib import Path
+
 
 def check_import(module_path: str) -> bool:
     """检查模块是否可以导入"""
@@ -16,11 +15,12 @@ def check_import(module_path: str) -> bool:
             ["python", "-c", f"import {module_path}"],
             capture_output=True,
             text=True,
-            timeout=5
+            timeout=5,
         )
         return result.returncode == 0
     except:
         return False
+
 
 def fix_cache_modules():
     """修复缓存相关模块"""
@@ -29,23 +29,26 @@ def fix_cache_modules():
     # 修复 mock_redis.py
     mock_redis = Path("src/cache/mock_redis.py")
     if mock_redis.exists():
-        with open(mock_redis, 'r') as f:
+        with open(mock_redis) as f:
             content = f.read()
 
         # 修复类定义
-        if 'class MockRedisManager:' not in content:
+        if "class MockRedisManager:" not in content:
             content += "\n\nclass MockRedisManager:\n    pass\n"
 
-        with open(mock_redis, 'w') as f:
+        with open(mock_redis, "w") as f:
             f.write(content)
         print("  ✅ mock_redis.py 已更新")
+
 
 def create_missing_modules():
     """创建缺失的模块"""
     print("\n🔧 创建缺失的模块...")
 
     modules = [
-        ("src/utils/response.py", """from typing import Any, Dict, Optional
+        (
+            "src/utils/response.py",
+            """from typing import Any, Dict, Optional
 
 class Response:
     def __init__(self, data: Any, status_code: int = 200):
@@ -58,8 +61,11 @@ def success(data: Any = None) -> Response:
 
 def error(message: str, status_code: int = 400) -> Response:
     return Response({"error": message}, status_code)
-"""),
-        ("src/utils/crypto_utils.py", """import hashlib
+""",
+        ),
+        (
+            "src/utils/crypto_utils.py",
+            """import hashlib
 import hmac
 from typing import Optional
 
@@ -71,8 +77,11 @@ def hash_password(password: str, salt: Optional[str] = None) -> str:
 def verify_password(password: str, hashed: str) -> bool:
     salt = hashed[:32]
     return hash_password(password, salt) == hashed
-"""),
-        ("src/utils/file_utils.py", """import os
+""",
+        ),
+        (
+            "src/utils/file_utils.py",
+            """import os
 import json
 from pathlib import Path
 from typing import Any, Dict
@@ -87,8 +96,11 @@ def write_json(file_path: str, data: Dict[str, Any]) -> None:
 
 def ensure_dir(path: str) -> None:
     Path(path).mkdir(parents=True, exist_ok=True)
-"""),
-        ("src/utils/helpers.py", """import os
+""",
+        ),
+        (
+            "src/utils/helpers.py",
+            """import os
 from typing import Any, Dict, List, Optional
 
 def get_env(key: str, default: Any = None) -> Any:
@@ -106,16 +118,18 @@ def flatten(nested_list: List) -> List:
         else:
             result.append(item)
     return result
-"""),
+""",
+        ),
     ]
 
     for file_path, content in modules:
         path = Path(file_path)
         if not path.exists():
             path.parent.mkdir(parents=True, exist_ok=True)
-            with open(path, 'w') as f:
+            with open(path, "w") as f:
                 f.write(content)
             print(f"  ✅ 创建 {file_path}")
+
 
 def fix_adapters_module():
     """修复 adapters 模块"""
@@ -123,8 +137,8 @@ def fix_adapters_module():
 
     adapters_init = Path("src/adapters/__init__.py")
     if adapters_init.exists():
-        with open(adapters_init, 'r') as f:
-            content = f.read()
+        with open(adapters_init) as f:
+            f.read()
 
         # 简化导入
         new_content = """# Adapters module
@@ -138,9 +152,10 @@ __all__ = [
 ]
 """
 
-        with open(adapters_init, 'w') as f:
+        with open(adapters_init, "w") as f:
             f.write(new_content)
         print("  ✅ adapters/__init__.py 已简化")
+
 
 def run_test_imports():
     """运行测试导入"""
@@ -168,6 +183,7 @@ def run_test_imports():
     print(f"\n导入成功率: {success}/{len(test_modules)}")
     return success / len(test_modules) >= 0.7
 
+
 def main():
     """主函数"""
     print("=" * 60)
@@ -188,6 +204,7 @@ def main():
         print("\n⚠️ 仍有部分导入问题")
 
     print("=" * 60)
+
 
 if __name__ == "__main__":
     main()

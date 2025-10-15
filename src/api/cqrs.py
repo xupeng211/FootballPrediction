@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 CQRS API端点
@@ -8,8 +8,9 @@ CQRS API Endpoints
 Provides HTTP interface for CQRS pattern.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
 from datetime import date, datetime
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from ..cqrs.application import CQRSServiceFactory
@@ -22,22 +23,22 @@ class CreatePredictionRequest(BaseModel):
     """创建预测请求"""
 
     match_id: int = Field(..., description="比赛ID")
-    user_id: Optional[int] = Field(None, description="用户ID")
+    user_id: int | None = Field(None, description="用户ID")
     predicted_home: int = Field(..., ge=0, description="主队预测得分")
     predicted_away: int = Field(..., ge=0, description="客队预测得分")
     confidence: float = Field(..., ge=0, le=1, description="置信度")
-    strategy_used: Optional[str] = Field(None, description="使用的策略")
-    notes: Optional[str] = Field(None, description="备注")
+    strategy_used: str | None = Field(None, description="使用的策略")
+    notes: str | None = Field(None, description="备注")
 
 
 class UpdatePredictionRequest(BaseModel):
     """更新预测请求"""
 
-    predicted_home: Optional[int] = Field(None, ge=0, description="主队预测得分")
-    predicted_away: Optional[int] = Field(None, ge=0, description="客队预测得分")
-    confidence: Optional[float] = Field(None, ge=0, le=1, description="置信度")
-    strategy_used: Optional[str] = Field(None, description="使用的策略")
-    notes: Optional[str] = Field(None, description="备注")
+    predicted_home: int | None = Field(None, ge=0, description="主队预测得分")
+    predicted_away: int | None = Field(None, ge=0, description="客队预测得分")
+    confidence: float | None = Field(None, ge=0, le=1, description="置信度")
+    strategy_used: str | None = Field(None, description="使用的策略")
+    notes: str | None = Field(None, description="备注")
 
 
 class CreateUserRequest(BaseModel):
@@ -54,8 +55,8 @@ class CreateMatchRequest(BaseModel):
     home_team: str = Field(..., description="主队名称")
     away_team: str = Field(..., description="客队名称")
     match_date: datetime = Field(..., description="比赛时间")
-    competition: Optional[str] = Field(None, description="赛事")
-    venue: Optional[str] = Field(None, description="场地")
+    competition: str | None = Field(None, description="赛事")
+    venue: str | None = Field(None, description="场地")
 
 
 # 响应模型
@@ -64,8 +65,8 @@ class CommandResponse(BaseModel):
 
     success: bool
     message: str
-    data: Optional[Dict[str, Any]] = None
-    errors: Optional[List[str]] = None
+    data: dict[str, Any] | None = None
+    errors: list[str] | None = None
 
 
 # 依赖注入
@@ -174,10 +175,10 @@ async def get_prediction(
 @router.get("/users/{user_id}/predictions", summary="获取用户预测列表")
 async def get_user_predictions(
     user_id: int,
-    limit: Optional[int] = Query(10, ge=1, le=100),
-    offset: Optional[int] = Query(0, ge=0),
-    start_date: Optional[date] = Query(None),
-    end_date: Optional[date] = Query(None),
+    limit: int | None = Query(10, ge=1, le=100),
+    offset: int | None = Query(0, ge=0),
+    start_date: date | None = Query(None),
+    end_date: date | None = Query(None),
     service=Depends(get_prediction_cqrs_service),
 ):
     """获取用户的所有预测"""
@@ -251,9 +252,9 @@ async def get_match(
 @router.get("/matches/upcoming", summary="获取即将到来的比赛")
 async def get_upcoming_matches(
     days_ahead: int = Query(7, ge=1, le=30),
-    competition: Optional[str] = Query(None),
-    limit: Optional[int] = Query(10, ge=1, le=100),
-    offset: Optional[int] = Query(0, ge=0),
+    competition: str | None = Query(None),
+    limit: int | None = Query(10, ge=1, le=100),
+    offset: int | None = Query(0, ge=0),
     service=Depends(get_match_cqrs_service),
 ):
     """获取即将到来的比赛列表"""
@@ -290,7 +291,7 @@ async def create_user(
 
 # 系统端点
 @router.get("/system/status", summary="获取CQRS系统状态")
-async def get_cqrs_system_status() -> Optional[Any]:
+async def get_cqrs_system_status() -> Any | None:
     """获取CQRS系统状态"""
     from ..cqrs.bus import get_command_bus, get_query_bus
 

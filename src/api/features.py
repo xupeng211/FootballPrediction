@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 改进版特征获取API
@@ -6,11 +6,10 @@ from typing import Any, Dict, List, Optional, Union
 提供更可靠、更详细的特征获取接口，包含完善的错误处理和日志记录。
 """
 
-from requests.exceptions import HTTPError, RequestException
-
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from requests.exceptions import HTTPError, RequestException
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,10 +23,10 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/features", tags=["特征管理"])
 
 # 全局特征存储实例（惰性初始化，避免导入时报错）
-feature_store: Optional[FootballFeatureStore] = None
+feature_store: FootballFeatureStore | None = None
 
 
-def get_feature_store() -> Optional[FootballFeatureStore]:
+def get_feature_store() -> FootballFeatureStore | None:
     """获取（或初始化）特征存储实例。"""
     global feature_store
     if feature_store is not None:
@@ -95,7 +94,7 @@ async def get_match_info(session: AsyncSession, match_id: int) -> Match:
         raise HTTPException(status_code=500, detail="查询比赛信息失败")
 
 
-async def get_features_data(match_id: int, match: Match) -> tuple[Dict[str, Any], str]:
+async def get_features_data(match_id: int, match: Match) -> tuple[dict[str, Any], str]:
     """获取特征数据（支持优雅降级）"""
     store = get_feature_store()
     if store is None:
@@ -129,10 +128,10 @@ async def get_features_data(match_id: int, match: Match) -> tuple[Dict[str, Any]
 
 def build_response_data(
     match: Match,
-    features: Dict[str, Any],
+    features: dict[str, Any],
     features_error: str,
     include_raw: bool,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """构造响应数据"""
     response_data = {
         "match_id": match.id,
@@ -156,7 +155,7 @@ def build_response_data(
         response_data["raw_features"] = {
             "feature_count": len(features),
             "feature_keys": list(features.keys())
-            if isinstance(features, Dict[str, Any])
+            if isinstance(features, dict[str, Any])
             else [],
         }
 
@@ -172,7 +171,7 @@ async def get_match_features_improved(
     match_id: int,
     include_raw: bool = Query(default=False, description="是否包含原始特征数据"),
     session: AsyncSession = Depends(get_async_session),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     改进版本：获取比赛特征
 
@@ -205,7 +204,7 @@ async def get_match_features_improved(
 
 
 @router.get("/health", summary="特征服务健康检查")
-async def health_check() -> Dict[str, Any]:
+async def health_check() -> dict[str, Any]:
     """特征服务健康检查"""
     return {
         "service": "特征获取服务",

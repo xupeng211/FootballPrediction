@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """数据库配置模块"""
 
 
@@ -15,7 +13,7 @@ class DatabaseConfig:
     port: int
     database: str
     username: str
-    password: Optional[str]
+    password: str | None
     pool_size: int = 10
     max_overflow: int = 20
     pool_timeout: int = 30
@@ -83,7 +81,7 @@ def _parse_int(key: str, default: int) -> int:
         return default
 
 
-def get_database_config(environment: Optional[str] = None) -> DatabaseConfig:
+def get_database_config(environment: str | None = None) -> DatabaseConfig:
     """根据环境返回数据库配置。"""
 
     env = (

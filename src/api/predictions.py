@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 预测API端点 / Prediction API Endpoints
 

@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
+
 """
 Odds - 数据库模块
 
@@ -15,21 +16,25 @@ Odds - 数据库模块
 - [待补充 - 使用注意事项]
 """
 
-from ..base import BaseModel
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
+
 from sqlalchemy import (
-    CheckConstraint,
     DECIMAL,
+    CheckConstraint,
     DateTime,
-    Enum as SQLEnum,
     ForeignKey,
     Index,
     String,
     func,
 )
+from sqlalchemy import (
+    Enum as SQLEnum,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from ..base import BaseModel
 
 """
 足球比赛赔率数据模型
@@ -37,15 +42,19 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 存储不同博彩公司的赔率信息，包括胜平负、大小球、让球等市场。
 """
 
-from sqlalchemy import DECIMAL, CheckConstraint, DateTime
+from sqlalchemy import (
+    DECIMAL,
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Index,
+    String,
+    func,
+)
 from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import ForeignKey, Index, String, func
+from sqlalchemy.orm import mapped_column, relationship
+
 from src.database.base import BaseModel
-from sqlalchemy import DateTime
-from sqlalchemy import Index
-from sqlalchemy import String
-from sqlalchemy.orm import mapped_column
-from sqlalchemy.orm import relationship
 
 
 class MarketType(Enum):
@@ -81,28 +90,28 @@ class Odds(BaseModel):
     )
 
     # 1x2市场赔率
-    home_odds: Mapped[Optional[Decimal]] = mapped_column(
+    home_odds: Mapped[Decimal | None] = mapped_column(
         DECIMAL(10, 3), nullable=True, comment="主队胜赔率"
     )
 
-    draw_odds: Mapped[Optional[Decimal]] = mapped_column(
+    draw_odds: Mapped[Decimal | None] = mapped_column(
         DECIMAL(10, 3), nullable=True, comment="平局赔率"
     )
 
-    away_odds: Mapped[Optional[Decimal]] = mapped_column(
+    away_odds: Mapped[Decimal | None] = mapped_column(
         DECIMAL(10, 3), nullable=True, comment="客队胜赔率"
     )
 
     # 大小球市场赔率
-    over_odds: Mapped[Optional[Decimal]] = mapped_column(
+    over_odds: Mapped[Decimal | None] = mapped_column(
         DECIMAL(10, 3), nullable=True, comment="大球赔率"
     )
 
-    under_odds: Mapped[Optional[Decimal]] = mapped_column(
+    under_odds: Mapped[Decimal | None] = mapped_column(
         DECIMAL(10, 3), nullable=True, comment="小球赔率"
     )
 
-    line_value: Mapped[Optional[Decimal]] = mapped_column(
+    line_value: Mapped[Decimal | None] = mapped_column(
         DECIMAL(5, 2), nullable=True, comment="盘口数值"
     )
 
@@ -164,7 +173,7 @@ class Odds(BaseModel):
         """检查是否为亚洲让球市场"""
         return self.market_type == MarketType.ASIAN_HANDICAP
 
-    def get_implied_probabilities(self) -> Optional[Dict[str, float]]:
+    def get_implied_probabilities(self) -> dict[str, float] | None:
         """
         计算隐含概率
 
@@ -201,7 +210,7 @@ class Odds(BaseModel):
 
         return None
 
-    def get_best_value_bet(self) -> Optional[Dict[str, Any]]:
+    def get_best_value_bet(self) -> dict[str, Any] | None:
         """
         获取最佳价值投注建议
 
@@ -220,7 +229,7 @@ class Odds(BaseModel):
             best_outcome = None
             best_odds = None
 
-            for outcome, odds in zip(outcomes, odds_values):
+            for outcome, odds in zip(outcomes, odds_values, strict=False):
                 if outcome in probabilities and odds:
                     # 计算期望价值 (Expected Value)
                     implied_prob = probabilities[outcome]
@@ -259,7 +268,7 @@ class Odds(BaseModel):
             previous_odds.away_odds,
         ]
 
-        for curr, prev in zip(current_odds, prev_odds):
+        for curr, prev in zip(current_odds, prev_odds, strict=False):
             if curr and prev:
                 # 确保传递Decimal类型而不是Column对象
                 change_pct = self._calculate_percentage_change(
@@ -313,7 +322,7 @@ class Odds(BaseModel):
         return False
 
     @classmethod
-    def get_latest_odds(cls, session, match_id: int, bookmaker: Optional[str] = None):
+    def get_latest_odds(cls, session, match_id: int, bookmaker: str | None = None):
         """获取比赛最新赔率"""
         query = session.query(cls).filter(cls.match_id == match_id)
         if bookmaker:

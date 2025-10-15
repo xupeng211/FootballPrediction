@@ -4,12 +4,12 @@
 """
 
 import ast
-import os
-import re
-from pathlib import Path
-from collections import defaultdict, Counter
-import subprocess
 import json
+import re
+import subprocess
+from collections import Counter
+from pathlib import Path
+
 
 def analyze_syntax_errors():
     """分析语法错误"""
@@ -17,31 +17,31 @@ def analyze_syntax_errors():
 
     # 使用Python AST解析器检查语法错误
     syntax_errors = []
-    python_files = list(Path('src').rglob('*.py'))
+    python_files = list(Path("src").rglob("*.py"))
 
     for file_path in python_files[:50]:  # 检查前50个文件
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
             ast.parse(content)
         except SyntaxError as e:
-            syntax_errors.append({
-                'file': str(file_path),
-                'line': e.lineno,
-                'error': str(e),
-                'type': 'SyntaxError'
-            })
+            syntax_errors.append(
+                {
+                    "file": str(file_path),
+                    "line": e.lineno,
+                    "error": str(e),
+                    "type": "SyntaxError",
+                }
+            )
         except Exception as e:
-            syntax_errors.append({
-                'file': str(file_path),
-                'error': str(e),
-                'type': 'OtherError'
-            })
+            syntax_errors.append(
+                {"file": str(file_path), "error": str(e), "type": "OtherError"}
+            )
 
     print(f"发现 {len(syntax_errors)} 个语法错误")
 
     # 统计错误类型
-    error_types = Counter([err['type'] for err in syntax_errors])
+    error_types = Counter([err["type"] for err in syntax_errors])
     print(f"错误类型分布: {dict(error_types)}")
 
     # 显示前10个错误
@@ -49,6 +49,7 @@ def analyze_syntax_errors():
         print(f"{i+1}. {err['file']}: {err['error']}")
 
     return syntax_errors
+
 
 def analyze_import_issues():
     """分析导入问题"""
@@ -63,17 +64,17 @@ def analyze_import_issues():
             ["python", "-m", "pytest", "--collect-only", "tests/", "-q"],
             capture_output=True,
             text=True,
-            timeout=30
+            timeout=30,
         )
 
         error_output = result.stderr
         # 提取ImportError
-        import_errors = re.findall(r'ImportError: (.+)', error_output)
+        import_errors = re.findall(r"ImportError: (.+)", error_output)
         for error in import_errors:
             if "cannot import name" in error:
                 import_issues.append(error)
                 # 提取缺失的模块/函数名
-                match = re.search(r'cannot import name \'(.+?)\'', error)
+                match = re.search(r"cannot import name \'(.+?)\'", error)
                 if match:
                     missing_modules.add(match.group(1))
 
@@ -86,20 +87,21 @@ def analyze_import_issues():
     print(f"缺失的模块/函数: {list(missing_modules)[:10]}...")
 
     # 检查src目录中的导入问题
-    src_files = list(Path('src').rglob('*.py'))
+    src_files = list(Path("src").rglob("*.py"))
     for file_path in src_files[:20]:
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             # 查找循环导入
-            if 'from .' in content or 'import .' in content:
+            if "from ." in content or "import ." in content:
                 import_issues.append(f"{file_path}: 可能的循环导入")
 
         except Exception:
             pass
 
     return import_issues
+
 
 def analyze_type_annotation_issues():
     """分析类型注解问题"""
@@ -110,15 +112,22 @@ def analyze_type_annotation_issues():
     # 检查mypy错误
     try:
         result = subprocess.run(
-            ["python", "-m", "mypy", "src/utils", "--ignore-missing-imports", "--no-error-summary"],
+            [
+                "python",
+                "-m",
+                "mypy",
+                "src/utils",
+                "--ignore-missing-imports",
+                "--no-error-summary",
+            ],
             capture_output=True,
             text=True,
-            timeout=30
+            timeout=30,
         )
 
         mypy_output = result.stdout
         # 提取类型错误
-        type_errors = re.findall(r'error:(.+)', mypy_output)
+        type_errors = re.findall(r"error:(.+)", mypy_output)
 
         for error in type_errors[:20]:
             type_issues.append(error)
@@ -146,6 +155,7 @@ def analyze_type_annotation_issues():
 
     return type_issues
 
+
 def analyze_dependency_issues():
     """分析依赖问题"""
     print("\n=== 4. 依赖问题分析 ===")
@@ -154,10 +164,10 @@ def analyze_dependency_issues():
 
     # 检查requirements文件
     req_files = [
-        'requirements.txt',
-        'requirements/requirements.txt',
-        'requirements/requirements.lock',
-        'pyproject.toml'
+        "requirements.txt",
+        "requirements/requirements.txt",
+        "requirements/requirements.lock",
+        "pyproject.toml",
     ]
 
     missing_deps = []
@@ -172,13 +182,20 @@ def analyze_dependency_issues():
 
     # 检查常见依赖
     common_deps = [
-        'fastapi', 'sqlalchemy', 'redis', 'celery',
-        'pydantic', 'pytest', 'mypy', 'ruff'
+        "fastapi",
+        "sqlalchemy",
+        "redis",
+        "celery",
+        "pydantic",
+        "pytest",
+        "mypy",
+        "ruff",
     ]
 
     installed_deps = []
     try:
         import pkg_resources
+
         installed = {pkg.key for pkg in pkg_resources.working_set}
         for dep in common_deps:
             if dep in installed:
@@ -193,6 +210,7 @@ def analyze_dependency_issues():
 
     return dependency_issues
 
+
 def analyze_configuration_issues():
     """分析配置问题"""
     print("\n=== 5. 配置问题分析 ===")
@@ -201,15 +219,15 @@ def analyze_configuration_issues():
 
     # 检查关键配置文件
     config_files = [
-        '.env.example',
-        '.env',
-        'pytest.ini',
-        'mypy.ini',
-        '.ruff.toml',
-        'pyproject.toml',
-        '.gitignore',
-        'Dockerfile',
-        'docker-compose.yml'
+        ".env.example",
+        ".env",
+        "pytest.ini",
+        "mypy.ini",
+        ".ruff.toml",
+        "pyproject.toml",
+        ".gitignore",
+        "Dockerfile",
+        "docker-compose.yml",
     ]
 
     existing_configs = []
@@ -222,22 +240,23 @@ def analyze_configuration_issues():
     print(f"存在的配置文件: {existing_configs}")
 
     # 检查pytest配置
-    if Path('pytest.ini').exists():
-        with open('pytest.ini', 'r') as f:
+    if Path("pytest.ini").exists():
+        with open("pytest.ini") as f:
             pytest_config = f.read()
-            if 'python_files' not in pytest_config:
+            if "python_files" not in pytest_config:
                 config_issues.append("pytest.ini缺少python_files配置")
 
     # 检查mypy配置
-    if Path('mypy.ini').exists():
-        with open('mypy.ini', 'r') as f:
+    if Path("mypy.ini").exists():
+        with open("mypy.ini") as f:
             mypy_config = f.read()
-            if '[mypy]' not in mypy_config:
+            if "[mypy]" not in mypy_config:
                 config_issues.append("mypy.ini缺少[mypy]配置")
 
     print(f"配置问题: {len(config_issues)} 个")
 
     return config_issues
+
 
 def analyze_project_structure():
     """分析项目结构问题"""
@@ -247,27 +266,27 @@ def analyze_project_structure():
 
     # 检查目录结构
     src_structure = {
-        'api': Path('src/api'),
-        'core': Path('src/core'),
-        'domain': Path('src/domain'),
-        'database': Path('src/database'),
-        'services': Path('src/services'),
-        'utils': Path('src/utils'),
-        'tests': Path('tests'),
-        'scripts': Path('scripts'),
+        "api": Path("src/api"),
+        "core": Path("src/core"),
+        "domain": Path("src/domain"),
+        "database": Path("src/database"),
+        "services": Path("src/services"),
+        "utils": Path("src/utils"),
+        "tests": Path("tests"),
+        "scripts": Path("scripts"),
     }
 
     for name, path in src_structure.items():
         if path.exists():
-            file_count = len(list(path.rglob('*.py')))
+            file_count = len(list(path.rglob("*.py")))
             print(f"{name}/: {file_count} 个Python文件")
         else:
             structure_issues.append(f"缺失目录: {name}/")
 
     # 检查__init__.py文件
     missing_inits = []
-    for dir_path in Path('src').rglob('*/'):
-        if not (dir_path / '__init__.py').exists() and dir_path != Path('src'):
+    for dir_path in Path("src").rglob("*/"):
+        if not (dir_path / "__init__.py").exists() and dir_path != Path("src"):
             missing_inits.append(str(dir_path))
 
     if missing_inits[:5]:
@@ -275,7 +294,7 @@ def analyze_project_structure():
         structure_issues.extend(missing_inits[:5])
 
     # 检查重复文件
-    backup_dirs = list(Path('.').glob('src_backup_*'))
+    backup_dirs = list(Path(".").glob("src_backup_*"))
     if backup_dirs:
         print(f"发现 {len(backup_dirs)} 个备份目录")
         structure_issues.append(f"存在备份目录: {backup_dirs}")
@@ -283,6 +302,7 @@ def analyze_project_structure():
     print(f"结构问题: {len(structure_issues)} 个")
 
     return structure_issues
+
 
 def generate_report():
     """生成完整的问题报告"""
@@ -292,12 +312,12 @@ def generate_report():
     print("=" * 80)
 
     issues = {
-        'syntax_errors': analyze_syntax_errors(),
-        'import_issues': analyze_import_issues(),
-        'type_issues': analyze_type_annotation_issues(),
-        'dependency_issues': analyze_dependency_issues(),
-        'configuration_issues': analyze_configuration_issues(),
-        'structure_issues': analyze_project_structure()
+        "syntax_errors": analyze_syntax_errors(),
+        "import_issues": analyze_import_issues(),
+        "type_issues": analyze_type_annotation_issues(),
+        "dependency_issues": analyze_dependency_issues(),
+        "configuration_issues": analyze_configuration_issues(),
+        "structure_issues": analyze_project_structure(),
     }
 
     print("\n" + "=" * 80)
@@ -331,12 +351,13 @@ def generate_report():
     print("  3. 添加更多测试 - 提升代码质量保障")
 
     # 保存详细报告
-    with open('infrastructure_issues_report.json', 'w', encoding='utf-8') as f:
+    with open("infrastructure_issues_report.json", "w", encoding="utf-8") as f:
         json.dump(issues, f, ensure_ascii=False, indent=2, default=str)
 
-    print(f"\n详细报告已保存到: infrastructure_issues_report.json")
+    print("\n详细报告已保存到: infrastructure_issues_report.json")
 
     return issues
+
 
 if __name__ == "__main__":
     generate_report()

@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 告警管理器
 Alert Manager
@@ -8,8 +6,8 @@ Alert Manager
 """
 
 import logging
-from enum import Enum
 from datetime import datetime
+from enum import Enum
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +56,7 @@ class AlertManager:
     """警报管理器 - 简化版本"""
 
     def __init__(self):
-        self.alerts: List[Alert] = []
+        self.alerts: list[Alert] = []
         self.alert_rules = {}
 
     def create_alert(
@@ -70,7 +68,7 @@ class AlertManager:
         logger.info(f"Created alert: {name} - {message}")
         return alert
 
-    def get_active_alerts(self) -> List[Alert]:
+    def get_active_alerts(self) -> list[Alert]:
         """获取活跃警报"""
         return self.alerts[-10:]  # 返回最近10个
 

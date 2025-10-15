@@ -2,18 +2,19 @@
 工具模块工作测试 - 基于实际API创建的准确测试
 """
 
-import pytest
 import os
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta, timezone
 
+import pytest
+
+from src.utils import warning_filters
 from src.utils.crypto_utils import CryptoUtils
-from src.utils.string_utils import StringUtils
-from src.utils.time_utils import TimeUtils, utc_now, parse_datetime
+from src.utils.data_validator import DataValidator
 from src.utils.dict_utils import DictUtils
 from src.utils.file_utils import FileUtils
-from src.utils.data_validator import DataValidator
 from src.utils.response import APIResponse
-from src.utils import warning_filters
+from src.utils.string_utils import StringUtils
+from src.utils.time_utils import TimeUtils, parse_datetime, utc_now
 
 
 class TestCryptoUtils:
@@ -173,19 +174,19 @@ class TestTimeUtils:
         """测试获取当前UTC时间"""
         now = TimeUtils.now_utc()
         assert isinstance(now, datetime)
-        assert now.tzinfo == timezone.utc
+        assert now.tzinfo == UTC
 
     def test_timestamp_to_datetime(self):
         """测试时间戳转datetime"""
         timestamp = 1609459200.0  # 2021-01-01 00:00:00 UTC
         dt = TimeUtils.timestamp_to_datetime(timestamp)
         assert isinstance(dt, datetime)
-        assert dt.tzinfo == timezone.utc
+        assert dt.tzinfo == UTC
         assert dt.year == 2021
 
     def test_datetime_to_timestamp(self):
         """测试datetime转时间戳"""
-        dt = datetime(2021, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+        dt = datetime(2021, 1, 1, 0, 0, 0, tzinfo=UTC)
         timestamp = TimeUtils.datetime_to_timestamp(dt)
         assert isinstance(timestamp, float)
         assert timestamp == 1609459200.0
@@ -213,7 +214,7 @@ class TestTimeUtils:
         """测试向后兼容函数"""
         now = utc_now()
         assert isinstance(now, datetime)
-        assert now.tzinfo == timezone.utc
+        assert now.tzinfo == UTC
 
     def test_parse_datetime_compatibility(self):
         """测试向后兼容解析函数"""

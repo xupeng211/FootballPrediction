@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 缓存模块 - 提供统一的缓存管理功能
 
@@ -20,10 +18,29 @@ from typing import Any, Dict, List, Optional, Union
 """
 
 # Redis缓存管理
+# 缓存一致性管理
+from .consistency_manager import (
+    CacheConsistencyManager,
+    invalidate_entity_cache,
+    sync_entity_cache,
+)
+
+# 缓存装饰器
+from .decorators import (
+    CacheDecorator,
+    InvalidateCacheDecorator,
+    UserCacheDecorator,
+    cache_by_user,
+    cache_invalidate,
+    cache_match_data,
+    cache_result,
+    cache_team_stats,
+    cache_user_predictions,
+    cache_with_ttl,
+)
 from .redis_manager import (
-    RedisManager,
     CacheKeyManager,
-    get_redis_manager,
+    RedisManager,
     # 便捷函数 - 异步
     adelete_cache,
     aexists_cache,
@@ -36,54 +53,36 @@ from .redis_manager import (
     delete_cache,
     exists_cache,
     get_cache,
+    get_redis_manager,
     mget_cache,
     mset_cache,
     set_cache,
-    ttl_cache,
     # 其他功能
     startup_warmup,
+    ttl_cache,
 )
 
 # TTL缓存（内存缓存）
 from .ttl_cache import (
-    TTLCache,
+    CACHES,
     AsyncTTLCache,
     CacheEntry,
     CacheFactory,
-    prediction_cache,
-    feature_cache,
-    odds_cache,
-    session_cache,
-    config_cache,
-    temp_cache,
-    get_cache as get_ttl_cache,
-    get_all_stats,
-    clear_all_caches,
+    TTLCache,
     cleanup_all_expired,
+    clear_all_caches,
+    config_cache,
+    feature_cache,
+    get_all_stats,
+    odds_cache,
+    prediction_cache,
+    session_cache,
     start_auto_cleanup,
     stop_auto_cleanup,
-    CACHES,
+    temp_cache,
 )
-
-# 缓存装饰器
-from .decorators import (
-    cache_result,
-    cache_with_ttl,
-    cache_by_user,
-    cache_invalidate,
-    cache_user_predictions,
-    cache_match_data,
-    cache_team_stats,
-    CacheDecorator,
-    UserCacheDecorator,
-    InvalidateCacheDecorator,
-)
-
-# 缓存一致性管理
-from .consistency_manager import (
-    CacheConsistencyManager,
-    invalidate_entity_cache,
-    sync_entity_cache,
+from .ttl_cache import (
+    get_cache as get_ttl_cache,
 )
 
 # 向后兼容别名

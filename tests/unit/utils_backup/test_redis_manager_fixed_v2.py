@@ -1,7 +1,9 @@
-import pytest
-from unittest.mock import MagicMock, AsyncMock
-import sys
 import os
+import sys
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+
 from src.cache.redis_manager import RedisManager
 
 """

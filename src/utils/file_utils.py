@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 足球预测系统文件处理工具模块
@@ -10,37 +10,37 @@ from typing import Any, Dict, List, Optional, Union
 import hashlib
 import json
 import os
-from pathlib import Path
 import time
+from pathlib import Path
 
 
 class FileUtils:
     """文件处理工具类"""
 
     @staticmethod
-    def ensure_dir(path: Union[str, Path]) -> Path:
+    def ensure_dir(path: str | Path) -> Path:
         """确保目录存在"""
         path = Path(path)
         path.mkdir(parents=True, exist_ok=True)
         return path
 
     @staticmethod
-    def ensure_directory(path: Union[str, Path]) -> Path:
+    def ensure_directory(path: str | Path) -> Path:
         """确保目录存在（ensure_dir的别名）"""
         return FileUtils.ensure_dir(path)
 
     @staticmethod
-    def read_json(file_path: Union[str, Path]) -> Dict[str, Any]:
+    def read_json(file_path: str | Path) -> dict[str, Any]:
         """读取JSON文件"""
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 return json.load(f)
         except (FileNotFoundError, json.JSONDecodeError) as e:
             raise FileNotFoundError(f"无法读取JSON文件 {file_path}: {e}")
 
     @staticmethod
     def write_json(
-        data: Dict[str, Any], file_path: Union[str, Path], ensure_dir: bool = True
+        data: dict[str, Any], file_path: str | Path, ensure_dir: bool = True
     ) -> None:
         """写入JSON文件"""
         file_path = Path(file_path)
@@ -51,7 +51,7 @@ class FileUtils:
             json.dump(data, f, ensure_ascii=False, indent=2)
 
     @staticmethod
-    def get_file_hash(file_path: Union[str, Path]) -> str:
+    def get_file_hash(file_path: str | Path) -> str:
         """获取文件MD5哈希值"""
         hash_md5 = hashlib.md5(usedforsecurity=False)
         with open(file_path, "rb") as f:
@@ -60,7 +60,7 @@ class FileUtils:
         return hash_md5.hexdigest()
 
     @staticmethod
-    def get_file_size(file_path: Union[str, Path]) -> int:
+    def get_file_size(file_path: str | Path) -> int:
         """获取文件大小（字节）"""
         try:
             if not os.path.exists(file_path):
@@ -70,12 +70,12 @@ class FileUtils:
             return 0
 
     @staticmethod
-    def ensure_directory(path: Union[str, Path]) -> Path:
+    def ensure_directory(path: str | Path) -> Path:
         """确保目录存在（别名方法）"""
         return FileUtils.ensure_dir(path)
 
     @staticmethod
-    def read_json_file(file_path: Union[str, Path]) -> Optional[Dict[str, Any]]:
+    def read_json_file(file_path: str | Path) -> dict[str, Any] | None:
         """读取JSON文件（别名方法）"""
         try:
             return FileUtils.read_json(file_path)
@@ -84,7 +84,7 @@ class FileUtils:
 
     @staticmethod
     def write_json_file(
-        data: Dict[str, Any], file_path: Union[str, Path], ensure_dir: bool = True
+        data: dict[str, Any], file_path: str | Path, ensure_dir: bool = True
     ) -> bool:
         """写入JSON文件（别名方法）"""
         try:
@@ -94,7 +94,7 @@ class FileUtils:
             return False
 
     @staticmethod
-    def cleanup_old_files(directory: Union[str, Path], days: int = 30) -> int:
+    def cleanup_old_files(directory: str | Path, days: int = 30) -> int:
         """清理旧文件"""
 
         directory = Path(directory)
@@ -115,7 +115,7 @@ class FileUtils:
         return removed_count
 
     @staticmethod
-    def get_file_size(file_path: Union[str, Path]) -> int:
+    def get_file_size(file_path: str | Path) -> int:
         """获取文件大小（字节）"""
         try:
             return Path(file_path).stat().st_size

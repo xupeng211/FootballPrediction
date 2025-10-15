@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 仓储提供者
@@ -12,12 +12,11 @@ from functools import lru_cache
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..database.models import Match, Prediction, User
 from .base import BaseRepository, Repository
-from .prediction import PredictionRepository, ReadOnlyPredictionRepository
-from .user import UserRepository, ReadOnlyUserRepository
 from .match import MatchRepository, ReadOnlyMatchRepository
-from ..database.models import Prediction, User, Match
-
+from .prediction import PredictionRepository, ReadOnlyPredictionRepository
+from .user import ReadOnlyUserRepository, UserRepository
 
 T = TypeVar("T")
 ID = TypeVar("ID")

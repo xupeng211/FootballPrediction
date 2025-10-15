@@ -1,16 +1,15 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 用户服务层
 """
 
-from datetime import datetime
 
 from sqlalchemy.orm import Session
 
 from src.database.models.user import User
 from src.domain.user import UserCreate, UserUpdate
-from src.security.auth import AuthManager, get_auth_manager
+from src.security.auth import get_auth_manager
 
 
 class UserService:
@@ -20,15 +19,15 @@ class UserService:
         self.db = db
         self.auth = get_auth_manager()
 
-    def get(self, user_id: int) -> Optional[User]:
+    def get(self, user_id: int) -> User | None:
         """根据ID获取用户"""
         return self.db.query(User).filter(User.id == user_id).first()  # type: ignore
 
-    def get_by_username(self, username: str) -> Optional[User]:
+    def get_by_username(self, username: str) -> User | None:
         """根据用户名获取用户"""
         return self.db.query(User).filter(User.username == username).first()  # type: ignore
 
-    def get_by_email(self, email: str) -> Optional[User]:
+    def get_by_email(self, email: str) -> User | None:
         """根据邮箱获取用户"""
         return self.db.query(User).filter(User.email == email).first()  # type: ignore
 
@@ -55,7 +54,7 @@ class UserService:
 
         return db_user
 
-    def update(self, user_id: int, user_data: UserUpdate) -> Optional[User]:
+    def update(self, user_id: int, user_data: UserUpdate) -> User | None:
         """更新用户信息"""
         db_user = self.get(user_id)
         if not db_user:
@@ -83,7 +82,7 @@ class UserService:
 
         return True
 
-    def authenticate(self, username: str, password: str) -> Optional[User]:
+    def authenticate(self, username: str, password: str) -> User | None:
         """验证用户登录"""
         # 通过用户名或邮箱查找用户
         user = self.get_by_username(username)

@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 # mypy: ignore-errors
 """
@@ -9,17 +9,18 @@ Repository Pattern API Endpoints
 Demonstrates query and management features of the repository pattern.
 """
 
-from fastapi import APIRouter, HTTPException, Query
 from datetime import date
 
+from fastapi import APIRouter, HTTPException, Query
+
 from ..repositories import (
-    PredictionRepoDep,
-    ReadOnlyPredictionRepoDep,
-    UserRepoDep,
-    ReadOnlyUserRepoDep,
     MatchRepoDep,
-    ReadOnlyMatchRepoDep,
+    PredictionRepoDep,
     QuerySpec,
+    ReadOnlyMatchRepoDep,
+    ReadOnlyPredictionRepoDep,
+    ReadOnlyUserRepoDep,
+    UserRepoDep,
 )
 
 router = APIRouter(prefix="/repositories", tags=["仓储模式"])
@@ -33,9 +34,9 @@ async def get_predictions(
     repo: ReadOnlyPredictionRepoDep,
     limit: int = Query(100, ge=1, le=1000, description="返回数量限制"),
     offset: int = Query(0, ge=0, description="偏移量"),
-    user_id: Optional[int] = Query(None, description="用户ID筛选"),
-    match_id: Optional[int] = Query(None, description="比赛ID筛选"),
-) -> Dict[str, Any]:
+    user_id: int | None = Query(None, description="用户ID筛选"),
+    match_id: int | None = Query(None, description="比赛ID筛选"),
+) -> dict[str, Any]:
     """获取预测列表（使用只读仓储）"""
     filters = {}
     if user_id:
@@ -68,7 +69,7 @@ async def get_predictions(
 @router.get("/predictions/{prediction_id}", summary="获取单个预测")
 async def get_prediction(
     prediction_id: int, repo: ReadOnlyPredictionRepoDep
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """获取单个预测详情"""
     _prediction = await repo.get_by_id(prediction_id)
     if not prediction:
@@ -92,8 +93,8 @@ async def get_prediction(
 async def get_user_prediction_statistics(
     user_id: int,
     repo: ReadOnlyPredictionRepoDep,
-    days: Optional[int] = Query(None, ge=1, le=365, description="统计天数"),
-) -> Dict[str, Any]:
+    days: int | None = Query(None, ge=1, le=365, description="统计天数"),
+) -> dict[str, Any]:
     """获取用户预测统计信息"""
     stats = await repo.get_user_statistics(user_id, period_days=days)
     return stats
@@ -102,7 +103,7 @@ async def get_user_prediction_statistics(
 @router.get("/predictions/match/{match_id}/statistics", summary="获取比赛预测统计")
 async def get_match_prediction_statistics(
     match_id: int, repo: ReadOnlyPredictionRepoDep
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """获取比赛预测统计信息"""
     stats = await repo.get_match_statistics(match_id)
     return stats
@@ -110,9 +111,9 @@ async def get_match_prediction_statistics(
 
 @router.post("/predictions", summary="创建预测")
 async def create_prediction(
-    prediction_data: Dict[str, Any],
+    prediction_data: dict[str, Any],
     repo: PredictionRepoDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """创建新预测（使用写仓储）"""
     try:
         _prediction = await repo.create(prediction_data)
@@ -134,8 +135,8 @@ async def create_prediction(
 
 @router.put("/predictions/{prediction_id}", summary="更新预测")
 async def update_prediction(
-    prediction_id: int, update_data: Dict[str, Any], repo: PredictionRepoDep
-) -> Dict[str, Any]:
+    prediction_id: int, update_data: dict[str, Any], repo: PredictionRepoDep
+) -> dict[str, Any]:
     """更新预测（使用写仓储）"""
     _prediction = await repo.update_by_id(prediction_id, update_data)
     if not prediction:
@@ -155,8 +156,8 @@ async def get_users(
     repo: ReadOnlyUserRepoDep,
     limit: int = Query(100, ge=1, le=1000, description="返回数量限制"),
     offset: int = Query(0, ge=0, description="偏移量"),
-    is_active: Optional[bool] = Query(None, description="是否活跃"),
-) -> Dict[str, Any]:
+    is_active: bool | None = Query(None, description="是否活跃"),
+) -> dict[str, Any]:
     """获取用户列表"""
     filters = {}
     if is_active is not None:
@@ -185,7 +186,7 @@ async def get_users(
 
 
 @router.get("/users/{user_id}", summary="获取用户详情")
-async def get_user(user_id: int, repo: ReadOnlyUserRepoDep) -> Dict[str, Any]:
+async def get_user(user_id: int, repo: ReadOnlyUserRepoDep) -> dict[str, Any]:
     """获取用户详情"""
     _user = await repo.get_by_id(user_id)
     if not user:
@@ -204,7 +205,7 @@ async def get_user(user_id: int, repo: ReadOnlyUserRepoDep) -> Dict[str, Any]:
 
 
 @router.get("/users/{user_id}/statistics", summary="获取用户完整统计")
-async def get_user_statistics(user_id: int, repo: UserRepoDep) -> Dict[str, Any]:
+async def get_user_statistics(user_id: int, repo: UserRepoDep) -> dict[str, Any]:
     """获取用户完整统计信息（使用读写仓储的统计方法）"""
     stats = await repo.get_user_statistics(user_id)
     return stats
@@ -215,7 +216,7 @@ async def search_users(
     repo: ReadOnlyUserRepoDep,
     keyword: str = Query(..., min_length=1, description="搜索关键词"),
     limit: int = Query(20, ge=1, le=100, description="返回数量限制"),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """搜索用户"""
     users = await repo.search_users(keyword)
     return {
@@ -237,7 +238,7 @@ async def search_users(
 async def get_active_users(
     repo: ReadOnlyUserRepoDep,
     limit: int = Query(50, ge=1, le=100, description="返回数量限制"),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """获取活跃用户列表"""
     users = await repo.get_active_users(limit)
     return {
@@ -255,7 +256,7 @@ async def get_active_users(
 
 
 @router.post("/users", summary="创建用户")
-async def create_user(user_data: Dict[str, Any], repo: UserRepoDep) -> Dict[str, Any]:
+async def create_user(user_data: dict[str, Any], repo: UserRepoDep) -> dict[str, Any]:
     """创建新用户"""
     try:
         _user = await repo.create(user_data)
@@ -280,8 +281,8 @@ async def get_matches(
     repo: ReadOnlyMatchRepoDep,
     limit: int = Query(100, ge=1, le=1000, description="返回数量限制"),
     offset: int = Query(0, ge=0, description="偏移量"),
-    status: Optional[str] = Query(None, description="比赛状态筛选"),
-) -> Dict[str, Any]:
+    status: str | None = Query(None, description="比赛状态筛选"),
+) -> dict[str, Any]:
     """获取比赛列表"""
     filters = {}
     if status:
@@ -316,7 +317,7 @@ async def get_upcoming_matches(
     repo: ReadOnlyMatchRepoDep,
     days: int = Query(7, ge=1, le=30, description="未来天数"),
     limit: int = Query(50, ge=1, le=100, description="返回数量限制"),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """获取即将到来的比赛"""
     _matches = await repo.get_upcoming_matches(days, limit)
     return {
@@ -336,7 +337,7 @@ async def get_upcoming_matches(
 
 
 @router.get("/matches/live", summary="获取正在进行的比赛")
-async def get_live_matches(repo: ReadOnlyMatchRepoDep) -> Dict[str, Any]:
+async def get_live_matches(repo: ReadOnlyMatchRepoDep) -> dict[str, Any]:
     """获取正在进行的比赛"""
     _matches = await repo.get_live_matches()
     return {
@@ -357,7 +358,7 @@ async def get_live_matches(repo: ReadOnlyMatchRepoDep) -> Dict[str, Any]:
 
 
 @router.get("/matches/{match_id}", summary="获取比赛详情")
-async def get_match(match_id: int, repo: ReadOnlyMatchRepoDep) -> Dict[str, Any]:
+async def get_match(match_id: int, repo: ReadOnlyMatchRepoDep) -> dict[str, Any]:
     """获取比赛详情"""
     match = await repo.get_by_id(match_id)
     if not match:
@@ -379,7 +380,7 @@ async def get_match(match_id: int, repo: ReadOnlyMatchRepoDep) -> Dict[str, Any]
 
 
 @router.get("/matches/{match_id}/statistics", summary="获取比赛统计")
-async def get_match_statistics(match_id: int, repo: MatchRepoDep) -> Dict[str, Any]:
+async def get_match_statistics(match_id: int, repo: MatchRepoDep) -> dict[str, Any]:
     """获取比赛统计信息"""
     stats = await repo.get_match_statistics(match_id)
     return stats
@@ -390,7 +391,7 @@ async def search_matches(
     repo: ReadOnlyMatchRepoDep,
     keyword: str = Query(..., min_length=1, description="搜索关键词"),
     limit: int = Query(20, ge=1, le=100, description="返回数量限制"),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """搜索比赛"""
     _matches = await repo.search_matches(keyword)
     return {
@@ -415,9 +416,9 @@ async def get_matches_by_date_range(
     repo: ReadOnlyMatchRepoDep,
     start_date: date = Query(..., description="开始日期"),
     end_date: date = Query(..., description="结束日期"),
-    status: Optional[str] = Query(None, description="比赛状态"),
+    status: str | None = Query(None, description="比赛状态"),
     limit: int = Query(100, ge=1, le=1000, description="返回数量限制"),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """获取指定日期范围内的比赛"""
     _matches = await repo.get_matches_by_date_range(start_date, end_date, status, limit)  # type: ignore
     return {
@@ -440,7 +441,7 @@ async def get_matches_by_date_range(
 
 
 @router.post("/matches/{match_id}/start", summary="开始比赛")
-async def start_match(match_id: int, repo: MatchRepoDep) -> Dict[str, Any]:
+async def start_match(match_id: int, repo: MatchRepoDep) -> dict[str, Any]:
     """开始比赛（更新状态为LIVE）"""
     match = await repo.start_match(match_id)
     if not match:
@@ -460,7 +461,7 @@ async def finish_match(
     repo: MatchRepoDep,
     home_score: int = Query(..., ge=0, description="主队得分"),
     away_score: int = Query(..., ge=0, description="客队得分"),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """结束比赛并记录比分"""
     match = await repo.finish_match(match_id, home_score, away_score)
     if not match:
@@ -480,7 +481,7 @@ async def finish_match(
 @router.get("/demo/query-spec", summary="QuerySpec查询演示")
 async def demo_query_spec(
     repo: ReadOnlyPredictionRepoDep,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """演示QuerySpec的灵活查询能力"""
     from datetime import date, timedelta
 
@@ -523,7 +524,7 @@ async def demo_read_only_vs_write(
     read_only_repo: ReadOnlyPredictionRepoDep,
     write_repo: PredictionRepoDep,
     prediction_id: int = Query(1, ge=1, description="预测ID"),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """演示只读仓储和读写仓储的区别"""
     # 只读仓储查询
     _prediction = await read_only_repo.get_by_id(prediction_id)

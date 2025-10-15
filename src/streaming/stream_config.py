@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 流式处理配置管理
@@ -88,7 +88,7 @@ class StreamConfig:
             ),
         )
 
-    def _init_topics(self) -> Dict[str, TopicConfig]:
+    def _init_topics(self) -> dict[str, TopicConfig]:
         """初始化Topic配置"""
         return {
             # 比赛数据流
@@ -117,7 +117,7 @@ class StreamConfig:
             ),
         }
 
-    def get_producer_config(self) -> Dict[str, Any]:
+    def get_producer_config(self) -> dict[str, Any]:
         """获取生产者配置"""
         return {
             "bootstrap.servers": self.kafka_config.bootstrap_servers,
@@ -133,8 +133,8 @@ class StreamConfig:
         }
 
     def get_consumer_config(
-        self, consumer_group_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, consumer_group_id: str | None = None
+    ) -> dict[str, Any]:
         """获取消费者配置"""
         group_id = consumer_group_id or self.kafka_config.consumer_group_id
 
@@ -152,11 +152,11 @@ class StreamConfig:
             "heartbeat.interval.ms": 3000,
         }
 
-    def get_topic_config(self, topic_name: str) -> Optional[TopicConfig]:
+    def get_topic_config(self, topic_name: str) -> TopicConfig | None:
         """获取指定Topic配置"""
         return self.topics.get(topic_name)
 
-    def get_all_topics(self) -> List[str]:
+    def get_all_topics(self) -> list[str]:
         """获取所有Topic名称"""
         return list(self.topics.keys())
 

@@ -3,16 +3,17 @@
 覆盖所有工具模块的核心功能
 """
 
-import pytest
-import json
-import re
-import os
 import hashlib
+import json
+import os
+import re
 import secrets
-from datetime import datetime, timezone, timedelta
-from typing import Any, Dict, List, Optional, Union
 import tempfile
+from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
+
+import pytest
 
 
 # 测试字符串工具
@@ -69,7 +70,7 @@ class TestStringUtils:
     def test_extract_numbers(self):
         """测试提取数字"""
 
-        def extract_numbers(text: str) -> List[int]:
+        def extract_numbers(text: str) -> list[int]:
             """从文本中提取所有数字"""
             return [int(num) for num in re.findall(r"\d+", text)]
 
@@ -188,10 +189,10 @@ class TestTimeUtils:
     def test_time_ago(self):
         """测试时间差计算"""
 
-        def time_ago(dt: datetime, relative_to: Optional[datetime] = None) -> str:
+        def time_ago(dt: datetime, relative_to: datetime | None = None) -> str:
             """计算时间差"""
             if relative_to is None:
-                relative_to = datetime.now(timezone.utc)
+                relative_to = datetime.now(UTC)
 
             diff = relative_to - dt
             seconds = diff.total_seconds()
@@ -208,7 +209,7 @@ class TestTimeUtils:
                 days = int(seconds // 86400)
                 return f"{days} day{'s' if days > 1 else ''} ago"
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         test_cases = [
             (now - timedelta(seconds=30), "just now"),
@@ -237,15 +238,15 @@ class TestTimeUtils:
             return 9 <= dt.hour < 17
 
         # 工作日工作时间
-        work_time = datetime(2024, 1, 1, 14, 0, tzinfo=timezone.utc)  # 周一14:00
+        work_time = datetime(2024, 1, 1, 14, 0, tzinfo=UTC)  # 周一14:00
         assert is_business_hours(work_time) is True
 
         # 工作日非工作时间
-        non_work_time = datetime(2024, 1, 1, 20, 0, tzinfo=timezone.utc)  # 周一20:00
+        non_work_time = datetime(2024, 1, 1, 20, 0, tzinfo=UTC)  # 周一20:00
         assert is_business_hours(non_work_time) is False
 
         # 周末
-        weekend = datetime(2024, 1, 6, 14, 0, tzinfo=timezone.utc)  # 周六14:00
+        weekend = datetime(2024, 1, 6, 14, 0, tzinfo=UTC)  # 周六14:00
         assert is_business_hours(weekend) is False
 
 
@@ -340,7 +341,7 @@ class TestFileUtils:
             # 验证文件存在
             assert os.path.exists(temp_path)
             # 验证内容
-            with open(temp_path, "r") as f:
+            with open(temp_path) as f:
                 assert f.read() == content
             # 验证后缀
             assert temp_path.endswith(".txt")
@@ -389,7 +390,7 @@ class TestDataConversion:
     def test_parse_query_string(self):
         """测试解析查询字符串"""
 
-        def parse_query_string(query: str) -> Dict[str, List[str]]:
+        def parse_query_string(query: str) -> dict[str, list[str]]:
             """解析查询字符串"""
             params = {}
             if not query:
@@ -431,7 +432,7 @@ class TestDataConversion:
     def test_deep_merge_dicts(self):
         """测试深度合并字典"""
 
-        def deep_merge(dict1: Dict, dict2: Dict) -> Dict:
+        def deep_merge(dict1: dict, dict2: dict) -> dict:
             """深度合并两个字典"""
             _result = dict1.copy()
             for key, value in dict2.items():
@@ -457,7 +458,7 @@ class TestDataConversion:
     def test_flatten_dict(self):
         """测试扁平化字典"""
 
-        def flatten_dict(d: Dict, parent_key: str = "", sep: str = ".") -> Dict:
+        def flatten_dict(d: dict, parent_key: str = "", sep: str = ".") -> dict:
             """扁平化嵌套字典"""
             items = []
             for k, v in d.items():
@@ -515,7 +516,7 @@ class TestCryptoUtils:
     def test_hash_password(self):
         """测试密码哈希"""
 
-        def hash_password(password: str, salt: Optional[str] = None) -> Tuple[str, str]:
+        def hash_password(password: str, salt: str | None = None) -> Tuple[str, str]:
             """哈希密码"""
             if salt is None:
                 salt = secrets.token_hex(16)

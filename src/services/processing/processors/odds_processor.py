@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 odds_processor.py
 odds_processor
@@ -13,10 +11,12 @@ For backward compatibility, this file re-exports all classes from the modules.
 
 import warnings
 
-from ............src.services.processing.processors.odds import aggregator  # type: ignore
-from ............src.services.processing.processors.odds import processor  # type: ignore
-from ............src.services.processing.processors.odds import transformer  # type: ignore
-from ............src.services.processing.processors.odds import validator  # type: ignore
+from ............src.services.processing.processors.odds import (
+    aggregator,  # type: ignore
+    processor,  # type: ignore
+    transformer,  # type: ignore
+    validator,  # type: ignore
+)
 
 warnings.warn(
     "直接从 odds_processor 导入已弃用。"

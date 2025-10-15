@@ -1,5 +1,3 @@
-from typing import Any, Dict, List, Optional, Union
-
 """
 足球预测系统 FastAPI 主应用
 
@@ -48,22 +46,22 @@ except ImportError:
 from src.api.health import router as health_router
 from src.api.schemas import RootResponse
 from src.config.openapi_config import setup_openapi
+from src.core.event_application import (
+    initialize_event_system,
+    shutdown_event_system,
+)
+from src.cqrs.application import initialize_cqrs
 from src.database.connection import initialize_database
 from src.middleware.i18n import I18nMiddleware
 from src.monitoring.metrics_collector import (
     start_metrics_collection,
     stop_metrics_collection,
 )
-from src.core.event_application import (
-    initialize_event_system,
-    shutdown_event_system,
-)
 from src.observers import (
     initialize_observer_system,
     start_observer_system,
     stop_observer_system,
 )
-from src.cqrs.application import initialize_cqrs
 from src.performance.integration import setup_performance_monitoring
 
 # 配置日志
@@ -188,19 +186,21 @@ app.include_router(auth_router, prefix="/api/auth", tags=["认证"])
 if MINIMAL_API_MODE:
     logger.info("MINIMAL_API_MODE 启用，仅注册健康检查路由")
 else:
+    from src.api.adapters import router as adapters_router
+    from src.api.cqrs import router as cqrs_router
     from src.api.data_router import (
         router as data_router,
-    )  # runtime import for minimal mode
+    )
+    from src.api.decorators import router as decorators_router
+    from src.api.events import router as events_router
+    from src.api.facades import router as facades_router
+
+    # runtime import for minimal mode
     from src.api.features import router as features_router
     from src.api.monitoring import router as monitoring_router
-    from src.api.predictions import router as predictions_router
-    from src.api.events import router as events_router
     from src.api.observers import router as observers_router
-    from src.api.cqrs import router as cqrs_router
+    from src.api.predictions import router as predictions_router
     from src.api.repositories import router as repositories_router
-    from src.api.decorators import router as decorators_router
-    from src.api.adapters import router as adapters_router
-    from src.api.facades import router as facades_router
 
     app.include_router(monitoring_router, prefix="/api/v1")
     app.include_router(features_router, prefix="/api/v1")
@@ -215,7 +215,7 @@ else:
     app.include_router(facades_router, prefix="/api/v1")
 
 
-@app.get(str("/"), summary="根路径", tags=["基础"], response_model=RootResponse)
+@app.get("/", summary="根路径", tags=["基础"], response_model=RootResponse)
 async def root():
     """
     API服务根路径

@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 """
 TTL缓存实现
@@ -13,6 +13,7 @@ import logging
 import time
 from collections import OrderedDict
 from threading import RLock
+
 from redis.exceptions import RedisError
 
 from .cache_entry import CacheEntry
@@ -32,7 +33,7 @@ class TTLCache:
     def __init__(
         self,
         max_size: int = 1000,
-        default_ttl: Optional[float] = None,
+        default_ttl: float | None = None,
         cleanup_interval: float = 60.0,
     ):
         """
@@ -49,7 +50,7 @@ class TTLCache:
 
         # 存储结构
         self._cache: OrderedDict[str, CacheEntry] = OrderedDict()
-        self._expiration_heap: List[CacheEntry] = []
+        self._expiration_heap: list[CacheEntry] = []
         self._lock = RLock()
 
         # 统计信息
@@ -63,7 +64,7 @@ class TTLCache:
         }
 
         # 清理任务
-        self._cleanup_task: Optional[asyncio.Task] = None
+        self._cleanup_task: asyncio.Task | None = None
         self._running = False
 
     def get(self, key: str, default: Any = None) -> Any:
@@ -99,7 +100,7 @@ class TTLCache:
         self,
         key: str,
         value: Any,
-        ttl: Optional[float] = None,
+        ttl: float | None = None,
     ) -> None:
         """
         设置缓存值
@@ -186,25 +187,25 @@ class TTLCache:
             self._stats["deletes"] += 1
             return entry.value
 
-    def keys(self) -> List[str]:
+    def keys(self) -> list[str]:
         """获取所有键"""
         with self._lock:
             self._cleanup_expired()
             return list(self._cache.keys())
 
-    def values(self) -> List[Any]:
+    def values(self) -> list[Any]:
         """获取所有值"""
         with self._lock:
             self._cleanup_expired()
             return [entry.value for entry in self._cache.values()]
 
-    def items(self) -> List[tuple]:
+    def items(self) -> list[tuple]:
         """获取所有键值对"""
         with self._lock:
             self._cleanup_expired()
             return [(key, entry.value) for key, entry in self._cache.items()]
 
-    def get_many(self, keys: List[str]) -> Dict[str, Any]:
+    def get_many(self, keys: list[str]) -> dict[str, Any]:
         """
         批量获取
 
@@ -214,14 +215,14 @@ class TTLCache:
         Returns:
             Dict[str, Any]: 键值对字典
         """
-        result: Dict[str, Any] = {}
+        result: dict[str, Any] = {}
         for key in keys:
             value = self.get(key)
             if value is not None:
                 result[key] = value
         return result
 
-    def set_many(self, mapping: Dict[str, Any], ttl: Optional[float] = None) -> None:
+    def set_many(self, mapping: dict[str, Any], ttl: float | None = None) -> None:
         """
         批量设置
 
@@ -232,7 +233,7 @@ class TTLCache:
         for key, value in mapping.items():
             self.set(key, value, ttl)
 
-    def delete_many(self, keys: List[str]) -> int:
+    def delete_many(self, keys: list[str]) -> int:
         """
         批量删除
 
@@ -262,13 +263,13 @@ class TTLCache:
         """
         with self._lock:
             value = self.get(key, default)
-            if not isinstance(value, (int, float)):
+            if not isinstance(value, int | float):
                 raise TypeError(f"缓存值必须是数字类型: {type(value)}")
             new_value = value + delta
             self.set(key, new_value)
             return int(new_value)
 
-    def touch(self, key: str, ttl: Optional[float] = None) -> bool:
+    def touch(self, key: str, ttl: float | None = None) -> bool:
         """
         更新缓存项的TTL
 
@@ -292,7 +293,7 @@ class TTLCache:
             entry.access()
             return True
 
-    def ttl(self, key: str) -> Optional[int]:
+    def ttl(self, key: str) -> int | None:
         """
         获取剩余TTL
 
@@ -369,7 +370,7 @@ class TTLCache:
             # 从过期堆中移除（标记为已删除）
             entry.key = None  # type: ignore
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取统计信息"""
         with self._lock:
             total_requests = self._stats["hits"] + self._stats["misses"]

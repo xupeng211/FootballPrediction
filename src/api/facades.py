@@ -17,7 +17,7 @@ from requests.exceptions import RequestException
 router = APIRouter(prefix="/facades", tags=["门面模式"])
 
 # 创建全局门面实例
-global_facades: Dict[str, Any] = {}}
+global_facades: Dict[str, Any] = {}
 
 
 # ==================== 门面管理端点 ====================
@@ -185,7 +185,7 @@ async def demo_main_system_prediction(
 
 @router.post("/demo/batch-process", summary="批量处理演示")
 async def demo_batch_processing(
-    items: List[Dict[str, Any] = Body(..., description="批量处理项"),
+    items: List[Dict[str, Any]] = Body(..., description="批量处理项"),
 ) -> Dict[str, Any]:
     """演示主系统门面的批量处理功能"""
     if "main" not in global_facades:

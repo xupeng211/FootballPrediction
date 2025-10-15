@@ -3,10 +3,12 @@
 专注于实际存在的函数和类
 """
 
-import pytest
-import sys
 import os
+import sys
+from datetime import UTC
 from pathlib import Path
+
+import pytest
 
 # 添加src目录到Python路径
 src_path = Path(__file__).parent.parent.parent.parent / "src"
@@ -271,9 +273,10 @@ class TestFileUtilsWorking:
 
     def test_ensure_dir(self):
         """测试确保目录存在"""
-        from utils.file_utils import FileUtils
-        import tempfile
         import shutil
+        import tempfile
+
+        from utils.file_utils import FileUtils
 
         test_dir = tempfile.mkdtemp()
         try:
@@ -285,8 +288,9 @@ class TestFileUtilsWorking:
 
     def test_get_file_size(self):
         """测试获取文件大小"""
-        from utils.file_utils import FileUtils
         import tempfile
+
+        from utils.file_utils import FileUtils
 
         with tempfile.NamedTemporaryFile() as tmp:
             content = b"test content for size"
@@ -317,10 +321,11 @@ class TestFormattersWorking:
 
     def test_format_datetime(self):
         """测试格式化日期时间"""
-        from utils.formatters import Formatters
         from datetime import datetime, timezone
 
-        dt = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+        from utils.formatters import Formatters
+
+        dt = datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC)
         formatted = Formatters.format_datetime(dt)
 
         assert isinstance(formatted, str)
@@ -581,10 +586,11 @@ class TestTimeUtilsWorking:
 
     def test_time_ago(self):
         """测试时间差计算"""
-        from utils.time_utils import TimeUtils
-        from datetime import datetime, timezone, timedelta
+        from datetime import datetime, timedelta, timezone
 
-        now = datetime.now(timezone.utc)
+        from utils.time_utils import TimeUtils
+
+        now = datetime.now(UTC)
 
         # 测试不同时间差
         times = [
@@ -615,10 +621,11 @@ class TestTimeUtilsWorking:
 
     def test_is_future(self):
         """测试未来时间判断"""
-        from utils.time_utils import TimeUtils
-        from datetime import datetime, timezone, timedelta
+        from datetime import datetime, timedelta, timezone
 
-        now = datetime.now(timezone.utc)
+        from utils.time_utils import TimeUtils
+
+        now = datetime.now(UTC)
         future = now + timedelta(hours=1)
         past = now - timedelta(hours=1)
 
@@ -627,10 +634,11 @@ class TestTimeUtilsWorking:
 
     def test_format_datetime(self):
         """测试格式化日期时间"""
-        from utils.time_utils import TimeUtils
         from datetime import datetime, timezone
 
-        dt = datetime.now(timezone.utc)
+        from utils.time_utils import TimeUtils
+
+        dt = datetime.now(UTC)
 
         # 测试不同格式
         formats = ["%Y-%m-%d", "%H:%M:%S", "%Y-%m-%d %H:%M:%S"]
@@ -731,8 +739,9 @@ class TestWarningFiltersWorking:
 
     def test_filter_deprecation_warnings(self):
         """测试过滤废弃警告"""
-        from utils.warning_filters import WarningFilters
         import warnings
+
+        from utils.warning_filters import WarningFilters
 
         # 测试过滤功能存在
         WarningFilters.filter_deprecation_warnings()
@@ -839,7 +848,7 @@ class TestRetryWorking:
         from utils.retry import RetryHelper
 
         delay = RetryHelper.exponential_backoff(1, 1.0)  # attempt=1, base_delay=1.0
-        assert isinstance(delay, (int, float))
+        assert isinstance(delay, int | float)
         assert delay >= 0
 
     def test_linear_backoff(self):
@@ -847,7 +856,7 @@ class TestRetryWorking:
         from utils.retry import RetryHelper
 
         delay = RetryHelper.linear_backoff(2, 0.5)  # attempt=2, base_delay=0.5
-        assert isinstance(delay, (int, float))
+        assert isinstance(delay, int | float)
         assert delay >= 0
 
     def test_jitter_backoff(self):
@@ -855,5 +864,5 @@ class TestRetryWorking:
         from utils.retry import RetryHelper
 
         delay = RetryHelper.jitter_backoff(1, 1.0)  # attempt=1, base_delay=1.0
-        assert isinstance(delay, (int, float))
+        assert isinstance(delay, int | float)
         assert delay >= 0

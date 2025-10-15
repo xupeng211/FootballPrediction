@@ -174,7 +174,7 @@ class FixturesCollector:
         # 模拟API调用
         return await self._get_mock_league_fixtures(league_id, matchday)
 
-    async def _save_fixtures_to_db(self, fixtures: List[Dict[str, Any]) -> None:
+    async def _save_fixtures_to_db(self, fixtures: List[Dict[str, Any]]) -> None:
         """保存比赛信息到数据库"""
         for fixture_data in fixtures:
             # 检查是否已存在

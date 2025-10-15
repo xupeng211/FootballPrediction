@@ -51,7 +51,7 @@ class MatchCreatedEventData(MatchEventData):
         league_id: int,
         match_time: datetime,
         created_by: Optional[int] = None,
-        initial_odds: Optional[Dict[str, float] = None,
+        initial_odds: Optional[Dict[str, float]] = None,
         **kwargs,
     ):
         super().__init__(
