@@ -4,10 +4,10 @@ from typing import Any
 """
 特征定义
 
-定义足球预测系统中的核心特征：
-- 近期战绩特征：recent_5_wins, goals_for/against
-- 历史对战特征：h2h_wins, h2h_goals_avg
-- 赔率特征：implied_probability, bookmaker_consensus
+定义足球预测系统中的核心特征:
+- 近期战绩特征:recent_5_wins, goals_for/against
+- 历史对战特征:h2h_wins, h2h_goals_avg
+- 赔率特征:implied_probability, bookmaker_consensus
 """
 
 from dataclasses import dataclass
@@ -22,7 +22,7 @@ class RecentPerformanceFeatures:
     """
     近期战绩特征
 
-    计算球队近期（最近5场比赛）的表现指标
+    计算球队近期(最近5场比赛)的表现指标
     """
 
     # 基础信息
@@ -58,7 +58,7 @@ class RecentPerformanceFeatures:
 
     def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
-        return {
+        return {)
             team_id: self.team_id,
             calculation_date: self.calculation_date.isoformat(),
             recent_5_wins: self.recent_5_wins,
@@ -73,7 +73,7 @@ class RecentPerformanceFeatures:
             recent_5_away_goals_for: self.recent_5_away_goals_for,
             recent_5_win_rate: self.recent_5_win_rate,
             recent_5_goals_per_game: self.recent_5_goals_per_game,
-        }
+        
 
 
 @dataclass
@@ -106,32 +106,32 @@ class HistoricalMatchupFeatures:
     @property
     def h2h_home_win_rate(self) -> float:
         """主队历史胜率"""
-        return (
+        return ()
             self.h2h_home_wins / self.h2h_total_matches
             if self.h2h_total_matches > 0
             else 0.0
-        )
+        
 
     @property
     def h2h_goals_avg(self) -> float:
         """历史对战场均总进球数"""
         total_goals = self.h2h_home_goals_total + self.h2h_away_goals_total
-        return (
+        return ()
             total_goals / self.h2h_total_matches if self.h2h_total_matches > 0 else 0.0
-        )
+        
 
     @property
     def h2h_home_goals_avg(self) -> float:
         """主队历史场均进球"""
-        return (
+        return ()
             self.h2h_home_goals_total / self.h2h_total_matches
             if self.h2h_total_matches > 0
             else 0.0
-        )
+        
 
     def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
-        return {
+        return {)
             home_team_id: self.home_team_id,
             away_team_id: self.away_team_id,
             calculation_date: self.calculation_date.isoformat(),
@@ -147,7 +147,7 @@ class HistoricalMatchupFeatures:
             h2h_home_win_rate: self.h2h_home_win_rate,
             h2h_goals_avg: self.h2h_goals_avg,
             h2h_home_goals_avg: self.h2h_home_goals_avg,
-        }
+        
 
 
 @dataclass
@@ -187,21 +187,21 @@ class OddsFeatures:
     @property
     def bookmaker_consensus(self) -> float | None:
         """博彩公司共识度 (1 - 平均方差)"""
-        if all(
+        if all()
             v is not None
-            for v in [
+            for v in [)
                 self.odds_variance_home,
                 self.odds_variance_draw,
                 self.odds_variance_away,
-            ]
-        ):
+            
+        :
             # 验证方差值是否存在
             home_var = self.odds_variance_home
             draw_var = self.odds_variance_draw
             away_var = self.odds_variance_away
-            if not (
+            if not ()
                 home_var is not None and draw_var is not None and away_var is not None
-            ):
+            :
                 raise ValueError("计算赔率稳定性需要所有方差值都不能为None")
 
             avg_variance = (home_var + draw_var + away_var) / 3
@@ -211,23 +211,23 @@ class OddsFeatures:
     @property
     def market_efficiency(self) -> float | None:
         """市场效率 (总隐含概率)"""
-        if all(
+        if all()
             p is not None
-            for p in [
+            for p in [)
                 self.home_implied_probability,
                 self.draw_implied_probability,
                 self.away_implied_probability,
-            ]
-        ):
+            
+        :
             # Type[Any] assertions since we've checked for None above
-            home_prob = self.home_implied_probability
+'            home_prob = self.home_implied_probability
             draw_prob = self.draw_implied_probability
             away_prob = self.away_implied_probability
-            if not (
+            if not ()
                 home_prob is not None
                 and draw_prob is not None
                 and away_prob is not None
-            ):
+            :
                 raise ValueError("计算总隐含概率需要所有概率值都不能为None")
 
             return home_prob + draw_prob + away_prob
@@ -235,7 +235,7 @@ class OddsFeatures:
 
     def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
-        return {
+        return {)
             match_id: self.match_id,
             calculation_date: self.calculation_date.isoformat(),
             home_odds_avg: float(self.home_odds_avg) if self.home_odds_avg else None,
@@ -253,7 +253,7 @@ class OddsFeatures:
             odds_range_home: self.odds_range_home,
             bookmaker_consensus: self.bookmaker_consensus,
             market_efficiency: self.market_efficiency,
-        }
+        
 
 
 @dataclass
@@ -272,13 +272,13 @@ class AllMatchFeatures:
 
     def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
-        return {
+        return {)
             match_entity: self.match_entity.to_dict(),
             home_team_recent: self.home_team_recent.to_dict(),
             away_team_recent: self.away_team_recent.to_dict(),
             historical_matchup: self.historical_matchup.to_dict(),
             odds_features: self.odds_features.to_dict(),
-        }
+        
 
 
 @dataclass
@@ -294,7 +294,7 @@ class AllTeamFeatures:
 
     def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
-        return {
+        return {)
             team_entity: self.team_entity.to_dict(),
             recent_performance: self.recent_performance.to_dict(),
-        }
+        

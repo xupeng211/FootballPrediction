@@ -2,125 +2,150 @@ from typing import Any, Dict, List, Optional, Union
 import sqlalchemy as sa
 
 
+
 # mypy: ignore-errors
-"""add_business_constraints"
-
-
-Revision ID: a20f91c49306
+"""add_business_constraints Revision ID: a20f91c49306
     "Revises": d82ea26f05d0
-Create Date: 2025-09-11 23:59:32.853716
+Create Date: 2025-09-11 23:5,
+    9:32.853716
 
-为关键表添加业务逻辑约束和触发器：
-1. 比分字段必须 >=0 且 <=99
+"" 为
+"" 1. 比分字段必须 >=0 且 <=99
 2. 赔率必须 >1.01
 3. 比赛时间必须大于 2000-01-01
 4. 外键引用一致性触发器
-"""
-
-# revision identifiers, used by Alembic.
-    "revision": str = "a20f91c49306"
-    "down_revision": Union[str, None] = "d82ea26f05d0"  # type: ignore
+"" # revision identifiers, used by Alembic.
+    "revision": str = "a20f91c49306 "down_revision": Union[str, None] = "d82ea26f05d0"  # type: ignore
     "branch_labels": Union[str, Sequence[str], None] = None  # type: ignore
     "depends_on": Union[str, Sequence[str], None] = None  # type: ignore
 
 
 def upgrade() -> None:
-    """添加业务逻辑约束和触发器"""
-
-    # 1. 添加比分字段CHECK约束（0-99）
-    op.create_check_constraint(  # type: ignore
+    """添加业务逻辑约束和触发器"" # 1. 添加比分字段CHECK约束(0-99)
+    op.create_check_constraint(  # type: ignore)
         "ck_matches_home_score_range",
         "matches",
-        sa.and_(  # type: ignore
-            sa.or_(  # type: ignore
-                sa.column("home_score").is_(None),  # type: ignore
-                sa.and_(sa.column("home_score") >= 0, sa.column("home_score") <= 99),  # type: ignore
-            )
-        ),
-    )
+        sa.and_(  # type: ignoresa.or_(  # type: ignore))
 
-    op.create_check_constraint(  # type: ignore
+                sa.column("home_score")
+.is_(None)
+,  # type: ignoresa.and_(sa.column("home_score") >= 0, sa.column("home_score") <= 99)
+,  # type: ignore
+
+            
+        
+,
+    
+
+    op.create_check_constraint(  # type: ignore)
         "ck_matches_away_score_range",
         "matches",
-        sa.and_(  # type: ignore
-            sa.or_(  # type: ignore
-                sa.column("away_score").is_(None),  # type: ignore
-                sa.and_(sa.column("away_score") >= 0, sa.column("away_score") <= 99),  # type: ignore
-            )
-        ),
-    )
+        sa.and_(  # type: ignoresa.or_(  # type: ignore))
 
-    op.create_check_constraint(  # type: ignore
+                sa.column("away_score")
+.is_(None)
+,  # type: ignoresa.and_(sa.column("away_score") >= 0, sa.column("away_score") <= 99)
+,  # type: ignore
+
+            
+        
+,
+    
+
+    op.create_check_constraint(  # type: ignore)
         "ck_matches_home_ht_score_range",
         "matches",
-        sa.and_(  # type: ignore
-            sa.or_(  # type: ignore
-                sa.column("home_ht_score").is_(None),  # type: ignore
-                sa.and_(  # type: ignore
+        sa.and_(  # type: ignoresa.or_(  # type: ignore))
+
+                sa.column("home_ht_score")
+.is_(None)
+,  # type: ignoresa.and_(  # type: ignore)
+
                     sa.column("home_ht_score") >= 0,
                     sa.column("home_ht_score") <= 99,  # type: ignore
-                ),
-            )
-        ),
-    )
+                
+,
+            
+        
+,
+    
 
-    op.create_check_constraint(  # type: ignore
+    op.create_check_constraint(  # type: ignore)
         "ck_matches_away_ht_score_range",
         "matches",
-        sa.and_(  # type: ignore
-            sa.or_(  # type: ignore
-                sa.column("away_ht_score").is_(None),  # type: ignore
-                sa.and_(  # type: ignore
+        sa.and_(  # type: ignoresa.or_(  # type: ignore))
+
+                sa.column("away_ht_score")
+.is_(None)
+,  # type: ignoresa.and_(  # type: ignore)
+
                     sa.column("away_ht_score") >= 0,
                     sa.column("away_ht_score") <= 99,  # type: ignore
-                ),
-            )
-        ),
-    )
+                
+,
+            
+        
+,
+    
 
-    # 2. 添加赔率字段CHECK约束（>1.01）
-    op.create_check_constraint(  # type: ignore
+    # 2. 添加赔率字段CHECK约束(>1.01)
+    op.create_check_constraint(  # type: ignore)
         "ck_odds_home_odds_range",
         "odds",
-        sa.or_(sa.column("home_odds").is_(None), sa.column("home_odds") > 1.01),  # type: ignore
-    )
+        sa.or_(sa.column("home_odds"))
+.is_(None)
+, sa.column("home_odds") > 1.01
+,  # type: ignore
+    
 
-    op.create_check_constraint(  # type: ignore
+    op.create_check_constraint(  # type: ignore)
         "ck_odds_draw_odds_range",
         "odds",
-        sa.or_(sa.column("draw_odds").is_(None), sa.column("draw_odds") > 1.01),  # type: ignore
-    )
+        sa.or_(sa.column("draw_odds"))
+.is_(None)
+, sa.column("draw_odds") > 1.01
+,  # type: ignore
+    
 
-    op.create_check_constraint(  # type: ignore
+    op.create_check_constraint(  # type: ignore)
         "ck_odds_away_odds_range",
         "odds",
-        sa.or_(sa.column("away_odds").is_(None), sa.column("away_odds") > 1.01),  # type: ignore
-    )
+        sa.or_(sa.column("away_odds"))
+.is_(None)
+, sa.column("away_odds") > 1.01
+,  # type: ignore
+    
 
-    op.create_check_constraint(  # type: ignore
+    op.create_check_constraint(  # type: ignore)
         "ck_odds_over_odds_range",
         "odds",
-        sa.or_(sa.column("over_odds").is_(None), sa.column("over_odds") > 1.01),  # type: ignore
-    )
+        sa.or_(sa.column("over_odds"))
+.is_(None)
+, sa.column("over_odds") > 1.01
+,  # type: ignore
+    
 
-    op.create_check_constraint(
+    op.create_check_constraint()
         "ck_odds_under_odds_range",
         "odds",
-        sa.or_(sa.column("under_odds").is_(None), sa.column("under_odds") > 1.01),
-    )
+        sa.or_(sa.column("under_odds"))
+.is_(None)
+, sa.column("under_odds") > 1.01
+,
+    
 
-    # 3. 添加比赛时间CHECK约束（>2000-01-01）
-    op.create_check_constraint(
+    # 3. 添加比赛时间CHECK约束(>2000-01-01)
+    op.create_check_constraint()
         "ck_matches_match_time_range",
         "matches",
-        sa.column("match_time") > sa.text("'2000-01-01'::date"),
-    )
+        sa.column("match_time") > sa.text("'2000-01-01'::date")
+,
+    
 
-    # 4. 添加触发器函数和触发器（确保外键引用一致性）
-    # 4.1 创建触发器函数，确保主队和客队不能相同
-    op.execute(
-        """
-        CREATE OR REPLACE FUNCTION check_match_teams_consistency()
+    # 4. 添加触发器函数和触发器(确保外键引用一致性)
+    # 4.1 创建触发器函数,确保主队和客队不能相同
+    op.execute()
+        "" CREATE OR REPLACE FUNCTION check_match_teams_consistency()
         RETURNS TRIGGER AS $$
         BEGIN
             -- 检查主队和客队不能相同
@@ -145,23 +170,20 @@ def upgrade() -> None:
             RETURN NEW;
         END;
         $$ LANGUAGE plpgsql;
-    """
-    )
+    "" 
 
     # 4.2 创建触发器
-    op.execute(  # type: ignore
-        """
-        CREATE TRIGGER tr_check_match_teams_consistency
+    op.execute(  # type: ignore)
+        "" CREATE TRIGGER tr_check_match_teams_consistency
         BEFORE INSERT OR UPDATE ON matches
         FOR EACH ROW
-        EXECUTE FUNCTION check_match_teams_consistency();
-    """
-    )
+        EXECUTE FUNCTION check_match_teams_consistency()
+;
+    "" 
 
     # 4.3 创建赔率表的引用一致性触发器函数
-    op.execute(  # type: ignore
-        """
-        CREATE OR REPLACE FUNCTION check_odds_consistency()
+    op.execute(  # type: ignore)
+        "" CREATE OR REPLACE FUNCTION check_odds_consistency()
         RETURNS TRIGGER AS $$
         BEGIN
             -- 检查比赛是否存在
@@ -172,43 +194,43 @@ def upgrade() -> None:
             RETURN NEW;
         END;
         $$ LANGUAGE plpgsql;
-    """
-    )
+    "" 
 
     # 4.4 创建赔率表触发器
-    op.execute(  # type: ignore
-        """
-        CREATE TRIGGER tr_check_odds_consistency
+    op.execute(  # type: ignore)
+        "" CREATE TRIGGER tr_check_odds_consistency
         BEFORE INSERT OR UPDATE ON odds
         FOR EACH ROW
-        EXECUTE FUNCTION check_odds_consistency();
-    """
-    )
+        EXECUTE FUNCTION check_odds_consistency()
+;
+    "" 
 
 
 def downgrade() -> None:
-    """移除业务逻辑约束和触发器"""
+    """移除业务逻辑约束和触发器"" # 移除触发器
+    op.execute("DROP TRIGGER IF EXISTS tr_check_odds_consistency ON odds;)
+")  # type: ignoreop.execute("DROP TRIGGER IF EXISTS tr_check_match_teams_consistency ON matches;
+"  # type: ignore
 
-    # 移除触发器
-    op.execute("DROP TRIGGER IF EXISTS tr_check_odds_consistency ON odds;")  # type: ignore
-    op.execute("DROP TRIGGER IF EXISTS tr_check_match_teams_consistency ON matches;")  # type: ignore
 
     # 移除触发器函数
-    op.execute("DROP FUNCTION IF EXISTS check_odds_consistency();")  # type: ignore
-    op.execute("DROP FUNCTION IF EXISTS check_match_teams_consistency();")  # type: ignore
+    op.execute("DROP FUNCTION IF EXISTS check_odds_consistency())
+;")  # type: ignoreop.execute("DROP FUNCTION IF EXISTS check_match_teams_consistency()
+;"  # type: ignore
+
 
     # 移除CHECK约束
     op.drop_constraint("ck_matches_match_time_range", "matches", type_="check")  # type: ignore
 
     # 移除赔率约束
-    op.drop_constraint("ck_odds_under_odds_range", "odds", type_="check")  # type: ignore
-    op.drop_constraint("ck_odds_over_odds_range", "odds", type_="check")  # type: ignore
-    op.drop_constraint("ck_odds_away_odds_range", "odds", type_="check")  # type: ignore
-    op.drop_constraint("ck_odds_draw_odds_range", "odds", type_="check")  # type: ignore
+    op.drop_constraint("ck_odds_under_odds_range", "odds", type_="check")  # type: ignoreop.drop_constraint("ck_odds_over_odds_range", "odds", type_="check")  # type: ignore
+
+    op.drop_constraint("ck_odds_away_odds_range", "odds", type_="check")  # type: ignoreop.drop_constraint("ck_odds_draw_odds_range", "odds", type_="check")  # type: ignore
+
     op.drop_constraint("ck_odds_home_odds_range", "odds", type_="check")  # type: ignore
 
     # 移除比分约束
-    op.drop_constraint("ck_matches_away_ht_score_range", "matches", type_="check")  # type: ignore
-    op.drop_constraint("ck_matches_home_ht_score_range", "matches", type_="check")  # type: ignore
-    op.drop_constraint("ck_matches_away_score_range", "matches", type_="check")  # type: ignore
-    op.drop_constraint("ck_matches_home_score_range", "matches", type_="check")  # type: ignore
+    op.drop_constraint("ck_matches_away_ht_score_range", "matches", type_="check")  # type: ignoreop.drop_constraint("ck_matches_home_ht_score_range", "matches", type_="check")  # type: ignore
+
+    op.drop_constraint("ck_matches_away_score_range", "matches", type_="check")  # type: ignoreop.drop_constraint("ck_matches_home_score_range", "matches", type_="check")  # type: ignore
+

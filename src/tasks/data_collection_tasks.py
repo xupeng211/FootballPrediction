@@ -2,11 +2,11 @@
 数据收集任务
 Data Collection Tasks
 
-提供各种数据收集任务的定义和执行。
+提供各种数据收集任务的定义和执行.
 """
 
-# 导入所有必要的类，保持向后兼容
-from .data_collection_core import (
+# 导入所有必要的类,保持向后兼容
+from .data_collection_core import ()
     DataCollectionTask,
     collect_fixtures_task,
     collect_historical_data_task,
@@ -15,16 +15,16 @@ from .data_collection_core import (
     emergency_data_collection_task,
     manual_collect_all_data,
     validate_collected_data,
-)
-from .data_collectors import (  # type: ignore
+
+from .data_collectors import (  # type: ignore)
     DataCollectionOrchestrator,
     DataCollector,
     FixturesCollector,
     HistoricalDataCollector,
-)
+
 
 # 导出所有公共接口
-__all__ = [
+__all__ = [)
     # 类
     "DataCollectionTask",
     "DataCollector",
@@ -40,4 +40,4 @@ __all__ = [
     "collect_historical_data_task",
     # 函数
     "validate_collected_data",
-]
+

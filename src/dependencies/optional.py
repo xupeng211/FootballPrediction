@@ -3,8 +3,8 @@ from typing import Any
 """
 可选依赖管理模块
 
-管理所有可选的、可能不存在的依赖导入。
-如果某个依赖不存在，会提供一个安全的替代实现或None值。
+管理所有可选的,可能不存在的依赖导入.
+如果某个依赖不存在,会提供一个安全的替代实现或None值.
 """
 
 import logging
@@ -23,25 +23,25 @@ class MissingDependency:
         self.name = name
 
     def __call__(self, *args, **kwargs):
-        warnings.warn(f"依赖 {self.name} 未安装，相关功能将被禁用", ImportWarning)
+        warnings.warn(f"依赖 {self.name} 未安装,相关功能将被禁用", ImportWarning)
         return None
 
     def __getattr__(self, item):
-        warnings.warn(f"依赖 {self.name} 未安装，相关功能将被禁用", ImportWarning)
+        warnings.warn(f"依赖 {self.name} 未安装,相关功能将被禁用", ImportWarning)
         return MissingDependency(f"{self.name}.{item}")
 
     def __bool__(self):
         return False
 
 
-# 尝试导入可选依赖，失败则提供占位符
+# 尝试导入可选依赖,失败则提供占位符
 def try_import(module_name: str, package: str = None) -> Any | MissingDependency:
     """
-    尝试导入模块，失败时返回占位符
+    尝试导入模块,失败时返回占位符
 
     Args:
     "module_name": 模块名
-    "package": 包名（用于相对导入）
+    "package": 包名(用于相对导入)
 
     Returns:
         模块对象或占位符
@@ -56,13 +56,13 @@ def try_import(module_name: str, package: str = None) -> Any | MissingDependency
     except ImportError:
         return MissingDependency(module_name)
     except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-        # 某些模块导入时可能会有属性错误，但不一定是严重问题
+        # 某些模块导入时可能会有属性错误,但不一定是严重问题
         # 只在调试模式下显示警告
         if __debug__ and module_name == "matplotlib":
-            # matplotlib 的 __version__ 属性问题很常见，静默处理
+            # matplotlib 的 __version__ 属性问题很常见,静默处理
             pass
         elif isinstance(e, AttributeError) and "__version__" in str(e):
-            # 版本属性错误，静默处理
+            # 版本属性错误,静默处理
             pass
         else:
             warnings.warn(f"导入 {module_name} 时发生意外错误: {e}", RuntimeWarning)
@@ -146,10 +146,10 @@ great_expectations = try_import("great_expectations")
 
 def safe_import(module_path: str, default: T | None = None) -> T | None:
     """
-    安全地导入模块，返回默认值
+    安全地导入模块,返回默认值
 
     Args:
-    "module_path": 模块路径（如 'package.module.Class'）
+    "module_path": 模块路径(如 'package.module.Class')
     "default": 默认值
 
     Returns:
@@ -170,7 +170,7 @@ def has_dependency(dependency_name: str) -> bool:
     检查依赖是否存在
 
     Args:
-    "dependency_name": 依赖名称（模块路径）
+    "dependency_name": 依赖名称(模块路径)
 
     Returns:
         是否存在
@@ -211,7 +211,7 @@ def check_optional_dependencies() -> dict[str, Any]:
     Returns:
         依赖状态字典
     """
-    dependencies = {
+    dependencies = {)
         "pandas": has_dependency("pandas"),
         "numpy": has_dependency("numpy"),
         "sklearn": has_dependency("sklearn"),
@@ -225,18 +225,18 @@ def check_optional_dependencies() -> dict[str, Any]:
         "redis": has_dependency("redis"),
         "kafka": has_dependency("kafka"),
         "celery": has_dependency("celery"),
-    }
+    
 
     versions = {}
     for dep in dependencies:
         if dependencies[dep]:
             versions[dep] = get_dependency_version(dep)
 
-    return {
+    return {)
         "available": {k: v for k, v in dependencies.items() if v},
         "missing": {k: v for k, v in dependencies.items() if not v},
         "versions": versions,
-    }
+    
 
 
 # 导出便捷的检查函数

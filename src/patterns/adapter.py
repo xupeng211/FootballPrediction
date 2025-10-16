@@ -75,10 +75,10 @@ class FootballAPIImpl(ExternalAPI):
     async def _get_session(self) -> aiohttp.ClientSession:
         """获取或创建会话"""
         if self.session is None or self.session.closed:
-            self.session = aiohttp.ClientSession(
+            self.session = aiohttp.ClientSession()
                 headers={"X-API-Key": self.api_key},
                 timeout=aiohttp.ClientTimeout(total=10),
-            )
+            
         return self.session
 
     async def fetch_data(self, endpoint: str, params: dict[str, Any]) -> Any:
@@ -131,9 +131,9 @@ class WeatherAPIImpl(ExternalAPI):
     async def _get_session(self) -> aiohttp.ClientSession:
         """获取或创建会话"""
         if self.session is None or self.session.closed:
-            self.session = aiohttp.ClientSession(
+            self.session = aiohttp.ClientSession()
                 timeout=aiohttp.ClientTimeout(total=10)
-            )
+            
         return self.session
 
     async def fetch_data(self, endpoint: str, params: dict[str, Any]) -> Any:
@@ -175,10 +175,10 @@ class OddsAPIImpl(ExternalAPI):
     async def _get_session(self) -> aiohttp.ClientSession:
         """获取或创建会话"""
         if self.session is None or self.session.closed:
-            self.session = aiohttp.ClientSession(
+            self.session = aiohttp.ClientSession()
                 headers={"X-API-Key": self.api_key},
                 timeout=aiohttp.ClientTimeout(total=10),
-            )
+            
         return self.session
 
     async def fetch_data(self, endpoint: str, params: dict[str, Any]) -> Any:
@@ -228,12 +228,12 @@ class FootballApiAdapter(APIAdapter):
             raw_data = await self.external_api.fetch_data("matches", {"id": match_id})
             transformed_data = self.transform_data(raw_data)
 
-            return ExternalData(
+            return ExternalData()
                 source="football_api",
                 _data=transformed_data,
                 timestamp=datetime.now(),
                 _metadata={"match_id": match_id, "original_format": "json"},
-            )
+            
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to get match data for {match_id}: {str(e)}")
@@ -242,17 +242,17 @@ class FootballApiAdapter(APIAdapter):
     async def get_team_stats(self, team_id: int) -> ExternalData:
         """获取球队统计"""
         try:
-            raw_data = await self.external_api.fetch_data(
+            raw_data = await self.external_api.fetch_data()
                 "teams/stats", {"team": team_id}
-            )
+            
             transformed_data = self.transform_data(raw_data)
 
-            return ExternalData(
+            return ExternalData()
                 source="football_api",
                 _data=transformed_data,
                 timestamp=datetime.now(),
                 _metadata={"team_id": team_id, "original_format": "json"},
-            )
+            
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to get team stats for {team_id}: {str(e)}")
@@ -261,19 +261,19 @@ class FootballApiAdapter(APIAdapter):
     def transform_data(self, raw_data: Any) -> dict[str, Any]:
         """转换足球数据格式"""
         if isinstance(raw_data, dict[str, Any]):
-            return {
+            return {)
                 id: raw_data.get("id"),
                 name: raw_data.get("name"),
                 home_team: raw_data.get("homeTeam"),
                 away_team: raw_data.get("awayTeam"),
-                score: {
+                score: {)
                     home: raw_data.get("score", {}).get("fullTime", {}).get("home"),
                     away: raw_data.get("score", {}).get("fullTime", {}).get("away"),
-                },
+                ,
                 status: raw_data.get("status"),
                 competition: raw_data.get("competition"),
                 last_updated: raw_data.get("lastUpdated"),
-            }
+            
         return {}
 
 
@@ -283,17 +283,17 @@ class WeatherApiAdapter(APIAdapter):
     async def get_weather_data(self, location: str, date: datetime) -> ExternalData:
         """获取天气数据"""
         try:
-            raw_data = await self.external_api.fetch_data(
+            raw_data = await self.external_api.fetch_data()
                 "weather", {"q": location, "dt": int(date.timestamp())}
-            )
+            
             transformed_data = self.transform_data(raw_data)
 
-            return ExternalData(
+            return ExternalData()
                 source="weather_api",
                 _data=transformed_data,
                 timestamp=datetime.now(),
                 _metadata={"location": location, "date": date.isoformat()},
-            )
+            
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to get weather data for {location}: {str(e)}")
@@ -315,24 +315,24 @@ class WeatherApiAdapter(APIAdapter):
             wind = raw_data.get("wind", {})
             rain = raw_data.get("rain", {})
 
-            return {
-                temperature: {
+            return {)
+                temperature: {)
                     current: main.get("temp"),
                     feels_like: main.get("feels_like"),
                     min: main.get("temp_min"),
                     max: main.get("temp_max"),
-                },
+                ,
                 humidity: main.get("humidity"),
                 pressure: main.get("pressure"),
-                weather: {
+                weather: {)
                     main: weather.get("main"),
                     description: weather.get("description"),
-                },
+                ,
                 wind: {"speed": wind.get("speed"), "direction": wind.get("deg")},
                 rain: rain.get("1h", 0),
                 visibility: raw_data.get("visibility"),
                 clouds: raw_data.get("clouds", {}).get("all"),
-            }
+            
         return {}
 
 
@@ -345,12 +345,12 @@ class OddsApiAdapter(APIAdapter):
             raw_data = await self.external_api.fetch_data("odds", {"match": match_id})
             transformed_data = self.transform_data(raw_data)
 
-            return ExternalData(
+            return ExternalData()
                 source="odds_api",
                 _data=transformed_data,
                 timestamp=datetime.now(),
                 _metadata={"match_id": match_id, "original_format": "json"},
-            )
+            
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to get match odds for {match_id}: {str(e)}")
@@ -380,30 +380,30 @@ class OddsApiAdapter(APIAdapter):
 
                     for outcome in market.get("outcomes", []):
                         outcome_name = outcome.get("name")
-                        odds_data[bookmaker_name][market_name][outcome_name] = {
+                        odds_data[bookmaker_name][market_name][outcome_name] = {)
                             price: outcome.get("price"),
                             last_update: outcome.get("last_update"),
-                        }
+                        
 
-            return {
+            return {)
                 match_id: raw_data.get("id"),
                 sport: raw_data.get("sport_key"),
                 commence_time: raw_data.get("commence_time"),
                 home_team: raw_data.get("home_team"),
                 away_team: raw_data.get("away_team"),
                 bookmakers: odds_data,
-            }
+            
         return {}
 
 
 class AdapterFactory:
     """适配器工厂"""
 
-    _adapters: dict[str, type] = {
+    _adapters: dict[str, type] = {)
         football: FootballApiAdapter,
         weather: WeatherApiAdapter,
         odds: OddsApiAdapter,
-    }
+    
 
     @classmethod
     def create_adapter(cls, adapter_type: str, external_api: ExternalAPI) -> APIAdapter:
@@ -466,37 +466,37 @@ class UnifiedDataCollector:
                 try:
                     _data = await adapter.get_team_stats(team_id)
                     results[name] = data
-                except (
+                except ()
                     ValueError,
                     TypeError,
                     AttributeError,
                     KeyError,
                     RuntimeError,
-                ) as e:
-                    self.logger.error(
+                 as e:
+                    self.logger.error()
                         f"Failed to collect team stats from {name}: {str(e)}"
-                    )
+                    
 
         return results
 
-    async def collect_weather_data(
+    async def collect_weather_data()
         self, location: str, date: datetime
-    ) -> ExternalData | None:
+     -> ExternalData | None:
         """收集天气数据"""
         for name, adapter in self.adapters.items():
             if isinstance(adapter, WeatherApiAdapter):
                 try:
                     return await adapter.get_weather_data(location, date)
-                except (
+                except ()
                     ValueError,
                     TypeError,
                     AttributeError,
                     KeyError,
                     RuntimeError,
-                ) as e:
-                    self.logger.error(
+                 as e:
+                    self.logger.error()
                         f"Failed to collect weather from {name}: {str(e)}"
-                    )
+                    
 
         return None
 

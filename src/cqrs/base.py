@@ -4,7 +4,7 @@ from typing import Any
 CQRS基础类
 CQRS Base Classes
 
-定义命令、查询和处理器的基础接口。
+定义命令,查询和处理器的基础接口.
 Defines base interfaces for commands, queries, and handlers.
 """
 
@@ -35,7 +35,7 @@ class BaseMessage:
 class Command(BaseMessage, ABC):
     """命令基类"
 
-    命令表示改变系统状态的意图。
+    命令表示改变系统状态的意图.
     Commands represent intentions to change system state.
     """
 
@@ -48,7 +48,7 @@ class Command(BaseMessage, ABC):
 class Query(BaseMessage, ABC):
     """查询基类"
 
-    查询表示获取系统数据的请求。
+    查询表示获取系统数据的请求.
     Queries represent requests to retrieve system data.
     """
 
@@ -59,7 +59,7 @@ class Query(BaseMessage, ABC):
 class CommandHandler(ABC, Generic[CommandResultType]):
     """命令处理器基类"
 
-    处理特定类型的命令。
+    处理特定类型的命令.
     Handles specific types of commands.
     """
 
@@ -78,7 +78,7 @@ class CommandHandler(ABC, Generic[CommandResultType]):
 class QueryHandler(ABC, Generic[QueryResultType]):
     """查询处理器基类"
 
-    处理特定类型的查询。
+    处理特定类型的查询.
     Handles specific types of queries.
     """
 

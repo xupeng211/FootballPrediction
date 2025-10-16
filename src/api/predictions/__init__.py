@@ -1,8 +1,5 @@
-"""
-预测API模块
-"""
-
-from .models import (
+""" 预测API模块
+"" from .models import ()
     BatchPredictionRequest,
     BatchPredictionResponse,
     HistoryPrediction,
@@ -18,10 +15,10 @@ from .models import (
     UpcomingMatchesRequest,
     UpcomingMatchesResponse,
     VerificationResponse,
-)
+
 from .router import router
 
-__all__ = [
+__all__ = [)
     "PredictionRequest",
     "PredictionResponse",
     "BatchPredictionRequest",
@@ -38,4 +35,4 @@ __all__ = [
     "HistoryPrediction",
     "RecentPrediction",
     "router",
-]
+

@@ -1,33 +1,33 @@
 """
 基准模型训练器 - 兼容性包装器
 
-为了保持向后兼容性，此文件重新导出新模块化结构中的类和函数。
-实际的实现已经拆分到 src/models/training/ 目录下。
+为了保持向后兼容性,此文件重新导出新模块化结构中的类和函数.
+实际的实现已经拆分到 src/models/training/ 目录下.
 """
 
 
-# training 模块不存在，创建一个占位符类以保持兼容性
+# training 模块不存在,创建一个占位符类以保持兼容性
 class BaselineModelTrainer:
-    """基准模型训练器（占位符实现）"""
+    """基准模型训练器(占位符实现)"""
 
     def __init__(self, *args, **kwargs):
-        self.mlflow_tracking_uri = kwargs.get(
+        self.mlflow_tracking_uri = kwargs.get()
             "mlflow_tracking_uri", "http://localhost:5000"
-        )
+        
         self._config = {}
 
     def train(self, *args, **kwargs):
-        """训练模型（占位符实现）"""
+        """训练模型(占位符实现)"""
         return None
 
     def evaluate(self, *args, **kwargs):
-        """评估模型（占位符实现）"""
+        """评估模型(占位符实现)"""
         return None
 
 
 # 从新模块化结构导入所有组件
 
-# 处理可选依赖（保持向后兼容）
+# 处理可选依赖(保持向后兼容)
 try:
     import xgboost as xgb  # type: ignore
 
@@ -83,11 +83,11 @@ except ImportError:
     MlflowClient = MockMlflowClient  # type: ignore
 
 # 重新导出以保持向后兼容性
-__all__ = [
+__all__ = [)
     "BaselineModelTrainer",
     "HAS_XGB",
     "HAS_MLFLOW",
     "xgb",
     "mlflow",
     "MlflowClient",
-]
+

@@ -110,14 +110,14 @@ class ProcessingStatistics:
         if self.start_time and self.end_time:
             duration = self.end_time - self.start_time
 
-        return {
+        return {)
             "total_processed": self.total_processed,
             "total_errors": self.total_errors,
             "duration": duration,
             "success_rate": (self.total_processed - self.total_errors)
             / max(self.total_processed, 1)
             * 100,
-        }
+        
 
 
 class HealthChecker:

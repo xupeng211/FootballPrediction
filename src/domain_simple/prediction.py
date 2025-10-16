@@ -1,7 +1,9 @@
 from typing import Any
 
 """
-预测领域模型
+"""
+预
+"""
 """
 
 from datetime import datetime
@@ -25,13 +27,10 @@ class PredictionConfidence(Enum):
     MEDIUM = 0.6  # 中
     HIGH = 0.8  # 高
     VERY_HIGH = 0.95  # 极高
-
-
 class Prediction:
     """预测领域模型"""
 
-    def __init__(
-        self,
+    def __init__(self,)
     "id": int | None = None,
     "match_id": int = 0,
     "user_id": int = 0,
@@ -40,7 +39,7 @@ class Prediction:
     "confidence": float = 0.5,
     "odds": float | None = None,
     "stake": float = 1.0,
-    ):
+    :
         self.id = id
         self.match_id = match_id
         self.user_id = user_id
@@ -68,9 +67,9 @@ class Prediction:
         # 兼容性属性
         self.predicted_home: int | None = None
         self.predicted_away: int | None = None
-        # 如果 predicted_value 包含比分，解析它
-        if ":" in predicted_value:
-            try:
+        # 如果 predicted_value 包含比分,解析它
+        if ":" in predicted_value: tr,
+    y:
                 home, away = predicted_value.split(":")
                 self.predicted_home = int(home.strip())
                 self.predicted_away = int(away.strip())
@@ -104,9 +103,8 @@ class Prediction:
         if self.prediction_type == PredictionType.MATCH_RESULT:
             # 直接比较比赛结果
             return self.predicted_value.upper() == actual_value.upper()
-        elif self.prediction_type == PredictionType.OVER_UNDER:
-            # 大小球预测（例如 "Over 2.5" vs "3"）
-            try:
+        elif self.prediction_type == PredictionType.OVER_UNDER: # 大小球预测(例如 "Over 2.5" vs "3"),
+    try:
                 predicted_parts = self.predicted_value.split()
                 if len(predicted_parts) >= 2:
                     threshold = float(predicted_parts[1])
@@ -132,9 +130,8 @@ class Prediction:
             return PredictionConfidence.VERY_HIGH
         elif self.confidence >= PredictionConfidence.HIGH.value:
             return PredictionConfidence.HIGH
-        elif self.confidence >= PredictionConfidence.MEDIUM.value:
-            return PredictionConfidence.MEDIUM
-        else:
+        elif self.confidence >= PredictionConfidence.MEDIUM.value: return PredictionConfidence.MEDIUM,
+    else:
             return PredictionConfidence.LOW
 
     def is_value_bet(self, threshold: float = 1.0) -> bool:
@@ -142,7 +139,7 @@ class Prediction:
         if not self.odds or self.odds <= 1:
             return False
 
-        # 简单的价值计算：预测概率 * 赔率 > 1 + 阈值
+        # 简单的价值计算:预测概率 * 赔率 > 1 + 阈值
         expected_value = self.confidence * self.odds
         return expected_value > (1 + threshold)
 
@@ -173,7 +170,7 @@ class Prediction:
 
     def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
-        return {
+        return {)
             "id": self.id,
             "match_id": self.match_id,
             "user_id": self.user_id,
@@ -196,12 +193,12 @@ class Prediction:
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
             "settled_at": self.settled_at.isoformat() if self.settled_at else None,
-        }
+        
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Prediction":
         """从字典创建实例"""
-        _prediction = cls(
+        _prediction = cls()
             id=data.get("id"),
             match_id=data.get("match_id", 0),
             user_id=data.get("user_id", 0),
@@ -210,7 +207,7 @@ class Prediction:
             confidence=data.get("confidence", 0.5),
             odds=data.get("odds"),
             stake=data.get("stake", 1.0),
-        )
+        
 
         # 设置状态
         prediction.is_settled = data.get("is_settled", False)
@@ -238,3 +235,6 @@ class Prediction:
 
     def __repr__(self) -> str:
         return f"<Prediction(id={self.id}, match_id={self.match_id}, confidence={self.confidence})>"
+
+"""
+"""

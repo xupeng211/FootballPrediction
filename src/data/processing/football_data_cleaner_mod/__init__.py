@@ -1,7 +1,7 @@
 from typing import Any
 
 """
-足球数据清理器（兼容版本）
+足球数据清理器(兼容版本)
 Football Data Cleaner (Compatibility Version)
 """
 
@@ -36,26 +36,26 @@ class FootballDataCleaner:
         # 验证数据完整性
         df = self._validate_data(df)
 
-        self.cleaning_stats = {
+        self.cleaning_stats = {)
             "initial_records": initial_count,
             "duplicates_removed": duplicates_removed,
             "final_records": len(df),
             "cleaned_at": datetime.utcnow(),
-        }
+        
 
         logger.info(f"Cleaned match data: {initial_count} -> {len(df)} records")
         return df
 
     def _handle_missing_values(self, df: pd.DataFrame) -> pd.DataFrame:
         """处理缺失值"""
-        # 数值列：用中位数填充
+        # 数值列:用中位数填充
         numeric_cols = df.select_dtypes(include=[np.number]).columns
         for col in numeric_cols:
             if df[col].isnull().any():
                 median_val = df[col].median()
                 df[col] = df[col].fillna(median_val)
 
-        # 分类列：用众数填充
+        # 分类列:用众数填充
         categorical_cols = df.select_dtypes(include=["object"]).columns
         for col in categorical_cols:
             if df[col].isnull().any():
@@ -72,7 +72,7 @@ class FootballDataCleaner:
 
     def _validate_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """验证数据完整性"""
-        # 移除无效的行（例如：全为空值的行）
+        # 移除无效的行(例如:全为空值的行)
         df = df.dropna(how="all")
         return df
 

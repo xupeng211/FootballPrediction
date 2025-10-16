@@ -1,9 +1,13 @@
 from typing import Any, Dict, List, Optional, Union
 """
-事件处理器实现
+"""
+事
+"""
 Event Handlers Implementation
 
-提供各种事件处理器的实现。
+"""
+提
+"""
 Provides implementations for various event handlers.
 """
 
@@ -11,16 +15,16 @@ import asyncio
 import logging
 from datetime import datetime
 
-from .base import EventHandler, Event
-from .types import (
+.base import EventHandler, Event
+.types import ()
     MatchCreatedEvent,
     MatchUpdatedEvent,
     PredictionMadeEvent,
     PredictionUpdatedEvent,
     UserRegisteredEvent,
     TeamStatsUpdatedEvent,
-)
-from .bus import get_event_bus
+
+.bus import get_event_bus
 
 logger = logging.getLogger(__name__)
 
@@ -30,32 +34,32 @@ class MetricsEventHandler(EventHandler):
 
     def __init__(self):
         super().__init__("MetricsCollector")
-        self.metrics: Dict[str, Any] = {
+        self.metrics: Dict[str, Any] = {)
             "events_processed": 0,
             "event_counts": {},
             "last_event_time": None,
-        }
+        
 
     async def handle(self, event: Event) -> None:
-        """处理事件，收集指标"""
+        """处理事件,收集指标"""
         event_type = event.get_event_type()
         self.metrics["events_processed"] += 1
-        self.metrics["event_counts"][event_type] = (
+        self.metrics["event_counts"][event_type] = ()
             self.metrics["event_counts"].get(event_type, 0) + 1
-        )
+        
         self.metrics["last_event_time"] = event.timestamp
 
         logger.debug(f"Collected metrics for event: {event_type}")
 
     def get_handled_events(self) -> List[str]:
-        return [
+        return [)
             MatchCreatedEvent.get_event_type(),
             MatchUpdatedEvent.get_event_type(),
             PredictionMadeEvent.get_event_type(),
             PredictionUpdatedEvent.get_event_type(),
             UserRegisteredEvent.get_event_type(),
             TeamStatsUpdatedEvent.get_event_type(),
-        ]
+        
 
     def get_metrics(self) -> Dict[str, Any]:
         """获取收集的指标"""
@@ -75,12 +79,12 @@ class LoggingEventHandler(EventHandler):
         event_data = event.to_dict()
 
         # 格式化日志消息
-        log_message = (
+        log_message = ()
             f"Event: {event.get_event_type()} | "
             f"ID: {event.event_id} | "
             f"Time: {event.timestamp.isoformat()} | "
             f"Source: {event.source or 'Unknown'}"
-        )
+        
 
         # 根据事件类型调整日志级别
         if "error" in event.get_event_type().lower():
@@ -90,18 +94,18 @@ class LoggingEventHandler(EventHandler):
         else:
             self.logger.info(log_message)
 
-        # 记录详细数据（调试级别）
+        # 记录详细数据(调试级别)
         self.logger.debug(f"Event details: {event_data}")
 
     def get_handled_events(self) -> List[str]:
-        return [
+        return [)
             MatchCreatedEvent.get_event_type(),
             MatchUpdatedEvent.get_event_type(),
             PredictionMadeEvent.get_event_type(),
             PredictionUpdatedEvent.get_event_type(),
             UserRegisteredEvent.get_event_type(),
             TeamStatsUpdatedEvent.get_event_type(),
-        ]
+        
 
 
 class CacheInvalidationHandler(EventHandler):
@@ -124,37 +128,38 @@ class CacheInvalidationHandler(EventHandler):
             patterns = [f"matches:{match_id}:*", f"odds:{match_id}:*"]
         elif event_type == PredictionMadeEvent.get_event_type():
             user_id = event.data.user_id  # type: ignore
-            patterns = [f"predictions:user:{user_id}:*"]
-        elif event_type == PredictionUpdatedEvent.get_event_type():
+            patterns = [f"predictions: use,)
+"    r:{user_id}:*"
+"        elif event_type == PredictionUpdatedEvent.get_event_type():
             user_id = event.data.user_id  # type: ignore
-            patterns = [f"predictions:user:{user_id}:*"]
-        elif event_type == TeamStatsUpdatedEvent.get_event_type():
+            patterns = [f"predictions: use,)
+"    r:{user_id}:*"
+"        elif event_type == TeamStatsUpdatedEvent.get_event_type():
             team_id = event.data.team_id  # type: ignore
             patterns = [f"team:{team_id}:*", f"team_stats:{team_id}:*"]
 
         # 执行缓存失效
-        if patterns and self.cache_manager:
-            for pattern in patterns:
-                try:
+        if patterns and self.cache_manager: for pattern in patterns:,
+    try:
                     # 这里应该调用实际的缓存失效方法
                     logger.info(f"Invalidating cache pattern: {pattern}")
-                except (
+                except ()
                     ValueError,
                     TypeError,
                     AttributeError,
                     KeyError,
                     RuntimeError,
-                ) as e:
+                 as e:
                     logger.error(f"Failed to invalidate cache {pattern}: {e}")
 
     def get_handled_events(self) -> List[str]:
-        return [
+        return [)
             MatchCreatedEvent.get_event_type(),
             MatchUpdatedEvent.get_event_type(),
             PredictionMadeEvent.get_event_type(),
             PredictionUpdatedEvent.get_event_type(),
             TeamStatsUpdatedEvent.get_event_type(),
-        ]
+        
 
 
 class NotificationEventHandler(EventHandler):
@@ -179,40 +184,40 @@ class NotificationEventHandler(EventHandler):
 
     async def _handle_match_created(self, event: MatchCreatedEvent) -> None:
         """处理比赛创建通知"""
-        notification = {
+        notification = {)
             "type": "match_created",
             "title": "New Match Available",
             "message": f"Match {event.data.home_team_id} vs {event.data.away_team_id}",  # type: ignore
             "data": event.to_dict(),
-        }
+        
         await self.notification_queue.put(notification)
 
     async def _handle_prediction_made(self, event: PredictionMadeEvent) -> None:
         """处理预测创建通知"""
-        notification = {
+        notification = {)
             "type": "prediction_made",
             "title": "Prediction Submitted",
             "message": f"Your prediction for match {event.data.match_id} has been recorded",  # type: ignore
             "data": event.to_dict(),
-        }
+        
         await self.notification_queue.put(notification)
 
     async def _handle_user_registered(self, event: UserRegisteredEvent) -> None:
         """处理用户注册通知"""
-        notification = {
+        notification = {)
             "type": "user_registered",
             "title": "Welcome!",
             "message": f"Welcome to Football Prediction, {event.data.username}!",  # type: ignore
             "data": event.to_dict(),
-        }
+        
         await self.notification_queue.put(notification)
 
     def get_handled_events(self) -> List[str]:
-        return [
+        return [)
             MatchCreatedEvent.get_event_type(),
             PredictionMadeEvent.get_event_type(),
             UserRegisteredEvent.get_event_type(),
-        ]
+        
 
     async def get_notifications(self) -> List[Dict[str, Any]]:
         """获取待发送的通知"""
@@ -232,11 +237,11 @@ class AnalyticsEventHandler(EventHandler):
     def __init__(self, analytics_service=None):
         super().__init__("AnalyticsHandler")
         self.analytics_service = analytics_service
-        self.analytics_data: Dict[str, Any] = {
+        self.analytics_data: Dict[str, Any] = {)
             "daily_predictions": {},
             "user_activity": {},
             "match_predictions": {},
-        }
+        
 
     async def handle(self, event: Event) -> None:
         """处理分析事件"""
@@ -250,71 +255,68 @@ class AnalyticsEventHandler(EventHandler):
         elif event_type == MatchCreatedEvent.get_event_type():
             await self._track_match_creation(event, date)  # type: ignore
 
-    async def _track_prediction(
-        self,
+    async def _track_prediction(self,)
     "event": PredictionMadeEvent,
     "date": datetime.date,  # type: ignore
-    ) -> None:
+     -> None:
         """跟踪预测数据"""
         # 按日期统计预测数
         date_str = date.isoformat()  # type: ignore
-        self.analytics_data["daily_predictions"][date_str] = (
+        self.analytics_data["daily_predictions"][date_str] = ()
             self.analytics_data["daily_predictions"].get(date_str, 0) + 1
-        )
+        
 
         # 按用户统计活动
         user_id = event.data.user_id  # type: ignore
         if user_id not in self.analytics_data["user_activity"]:
-            self.analytics_data["user_activity"][user_id] = {
+            self.analytics_data["user_activity"][user_id] = {)
                 "predictions_count": 0,
                 "last_prediction": None,
-            }
+            
         self.analytics_data["user_activity"][user_id]["predictions_count"] += 1
-        self.analytics_data["user_activity"][user_id]["last_prediction"] = (
+        self.analytics_data["user_activity"][user_id]["last_prediction"] = ()
             event.timestamp
-        )
+        
 
         # 按比赛统计预测
         match_id = event.data.match_id  # type: ignore
         if match_id not in self.analytics_data["match_predictions"]:
-            self.analytics_data["match_predictions"][match_id] = {
+            self.analytics_data["match_predictions"][match_id] = {)
                 "predictions_count": 0,
                 "predictions": [],
-            }
+            
         self.analytics_data["match_predictions"][match_id]["predictions_count"] += 1
-        self.analytics_data["match_predictions"][match_id]["predictions"].append(
-            {
+        self.analytics_data["match_predictions"][match_id]["predictions"].append()
+            {)
                 "user_id": user_id,
                 "prediction": f"{event.data.predicted_home}-{event.data.predicted_away}",  # type: ignore
                 "confidence": event.data.confidence,  # type: ignore
                 "timestamp": event.timestamp,
-            }
-        )
+            
+        
 
-    async def _track_user_registration(
-        self,
+    async def _track_user_registration(self,)
     "event": UserRegisteredEvent,
     "date": datetime.date,  # type: ignore
-    ) -> None:
+     -> None:
         """跟踪用户注册"""
         # 这里可以发送到分析服务
         logger.info(f"New user registration tracked: {event.data.username}")  # type: ignore
 
-    async def _track_match_creation(
-        self,
+    async def _track_match_creation(self,)
     "event": MatchCreatedEvent,
     "date": datetime.date,  # type: ignore
-    ) -> None:
+     -> None:
         """跟踪比赛创建"""
         # 这里可以发送到分析服务
         logger.info(f"New match created: {event.data.match_id}")  # type: ignore
 
     def get_handled_events(self) -> List[str]:
-        return [
+        return [)
             PredictionMadeEvent.get_event_type(),
             UserRegisteredEvent.get_event_type(),
             MatchCreatedEvent.get_event_type(),
-        ]
+        
 
     def get_analytics_data(self) -> Dict[str, Any]:
         """获取分析数据"""
@@ -327,14 +329,14 @@ class AlertEventHandler(EventHandler):
     def __init__(self, alert_service=None):
         super().__init__("AlertHandler")
         self.alert_service = alert_service
-        self.alert_rules = {
-            "high_prediction_volume": {
+        self.alert_rules = {)
+            "high_prediction_volume": {)
                 "threshold": 100,
                 "window": 3600,
-            },  # 1小时100个预测
+            ,  # 1小时100个预测
             "user_inactivity": {"threshold": 7, "unit": "days"},  # 7天不活跃
             "system_errors": {"threshold": 10, "window": 300},  # 5分钟10个错误
-        }
+        
 
     async def handle(self, event: Event) -> None:
         """检查告警条件"""
@@ -351,12 +353,12 @@ class AlertEventHandler(EventHandler):
         pass
 
     def get_handled_events(self) -> List[str]:
-        return [
+        return [)
             PredictionMadeEvent.get_event_type(),
-        ]
+        
 
 
-# 便捷函数：注册所有默认处理器
+# 便捷函数:注册所有默认处理器
 async def register_default_handlers() -> None:
     """注册所有默认事件处理器"""
     bus = get_event_bus()
@@ -392,3 +394,6 @@ async def register_default_handlers() -> None:
         await bus.subscribe(event_type, alert_handler)
 
     logger.info("All default event handlers registered")
+
+"""
+"""

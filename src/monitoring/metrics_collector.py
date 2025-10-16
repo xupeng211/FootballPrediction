@@ -9,7 +9,7 @@ from typing import Any
 import psutil
 
 # 简单的指标存储
-_metrics_store = {
+_metrics_store = {)
     "requests_total": 0,
     "requests_success": 0,
     "requests_error": 0,
@@ -19,7 +19,7 @@ _metrics_store = {
     "predictions_correct": 0,
     "response_times": [],
     "active_connections": 0,
-}
+
 
 
 class MetricsCollector:
@@ -28,9 +28,9 @@ class MetricsCollector:
     def __init__(self):
         self.start_time = time.time()
 
-    def record_request(
+    def record_request()
         self, method: str, endpoint: str, status_code: int, duration: float
-    ):
+    :
         """记录HTTP请求"""
         _metrics_store["requests_total"] += 1
         _metrics_store["response_times"].append(duration)
@@ -65,9 +65,9 @@ class MetricsCollector:
         """获取预测准确率"""
         if _metrics_store["predictions_total"] == 0:
             return 0.0
-        return (
+        return ()
             _metrics_store["predictions_correct"] / _metrics_store["predictions_total"]
-        ) * 100
+         * 100
 
     def get_avg_response_time(self) -> float:
         """获取平均响应时间"""
@@ -81,42 +81,42 @@ class MetricsCollector:
         memory = psutil.virtual_memory()
         cpu = psutil.cpu_percent(interval=0.1)
 
-        return {
+        return {)
             "memory_usage_mb": memory.used / 1024 / 1024,
             "memory_usage_percent": memory.percent,
             "cpu_usage_percent": cpu,
             "uptime_seconds": time.time() - self.start_time,
-        }
+        
 
     def get_all_metrics(self) -> dict[str, Any]:
         """获取所有指标"""
-        return {
-            "requests": {
+        return {)
+            "requests": {)
                 "total": _metrics_store["requests_total"],
                 "success": _metrics_store["requests_success"],
                 "error": _metrics_store["requests_error"],
-                "success_rate": (
+                "success_rate": ()
                     _metrics_store["requests_success"]
                     / max(_metrics_store["requests_total"], 1)
                     * 100
-                ),
-            },
-            "cache": {
+                ,
+            ,
+            "cache": {)
                 "hit_rate": self.get_cache_hit_rate(),
                 "hits": _metrics_store["cache_hits"],
                 "misses": _metrics_store["cache_misses"],
-            },
-            "predictions": {
+            ,
+            "predictions": {)
                 "accuracy": self.get_prediction_accuracy(),
                 "total": _metrics_store["predictions_total"],
                 "correct": _metrics_store["predictions_correct"],
-            },
-            "performance": {
+            ,
+            "performance": {)
                 "avg_response_time_ms": self.get_avg_response_time() * 1000,
                 "active_connections": _metrics_store["active_connections"],
-            },
+            ,
             "system": self.get_system_info(),
-        }
+        
 
 
 # 全局实例

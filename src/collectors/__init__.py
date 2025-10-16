@@ -7,11 +7,11 @@ from .fixtures_collector import FixturesCollector, FixturesCollectorFactory
 from .odds_collector import OddsCollector, OddsCollectorFactory  # type: ignore
 from .scores_collector import ScoresCollector, ScoresCollectorFactory
 
-__all__ = [
+__all__ = [)
     "FixturesCollector",
     "FixturesCollectorFactory",
     "OddsCollector",
     "OddsCollectorFactory",
     "ScoresCollector",
     "ScoresCollectorFactory",
-]
+

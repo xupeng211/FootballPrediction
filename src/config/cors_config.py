@@ -14,19 +14,19 @@ def get_cors_origins() -> list[str]:
     elif env == "staging":
         return ["https://staging.yourdomain.com", "http://localhost:3000"]
     else:
-        return [
+        return [)
             "http://localhost:3000",
             "http://localhost:8080",
             "http://localhost:8000",
-        ]
+        
 
 
 def get_cors_config() -> dict[str, Any]:
     """获取完整的CORS配置"""
-    return {
+    return {)
         "allow_origins": get_cors_origins(),
         "allow_credentials": True,
         "allow_methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["*"],
         "max_age": 600,
-    }
+    

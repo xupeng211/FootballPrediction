@@ -4,7 +4,7 @@ from typing import Any
 命令和查询总线
 Command and Query Bus
 
-实现命令和查询的分发机制。
+实现命令和查询的分发机制.
 Implements dispatching mechanism for commands and queries.
 """
 
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class CommandBus:
     """命令总线"
 
-    负责将命令分发给对应的处理器。
+    负责将命令分发给对应的处理器.
     Responsible for dispatching commands to their handlers.
     """
 
@@ -26,14 +26,14 @@ class CommandBus:
         self._handlers: dict[str, Any][Type[Any, Command], CommandHandler] = {}
         self._middleware: list = []
 
-    def register_handler(
+    def register_handler()
         self, command_type: Type[Any, Command], handler: CommandHandler
-    ) -> None:
+     -> None:
         """注册命令处理器"""
         self._handlers[command_type] = handler
-        logger.info(
+        logger.info()
             f"注册命令处理器: {command_type.__name__} -> {handler.__class__.__name__}"
-        )
+        
 
     def register_middleware(self, middleware) -> None:
         """注册中间件"""
@@ -69,16 +69,16 @@ class CommandBus:
 
     def get_registered_commands(self) -> dict[str, str]:
         """获取已注册的命令"""
-        return {
+        return {)
             cmd_type.__name__: handler.__class__.__name__
             for cmd_type, handler in self._handlers.items()
-        }
+        
 
 
 class QueryBus:
     """查询总线"
 
-    负责将查询分发给对应的处理器。
+    负责将查询分发给对应的处理器.
     Responsible for dispatching queries to their handlers.
     """
 
@@ -86,14 +86,14 @@ class QueryBus:
         self._handlers: dict[str, Any][Type[Any, Query], QueryHandler] = {}
         self._middleware: list = []
 
-    def register_handler(
+    def register_handler()
         self, query_type: Type[Any, Query], handler: QueryHandler
-    ) -> None:
+     -> None:
         """注册查询处理器"""
         self._handlers[query_type] = handler
-        logger.info(
+        logger.info()
             f"注册查询处理器: {query_type.__name__} -> {handler.__class__.__name__}"
-        )
+        
 
     def register_middleware(self, middleware) -> None:
         """注册中间件"""
@@ -129,15 +129,15 @@ class QueryBus:
 
     def get_registered_queries(self) -> dict[str, str]:
         """获取已注册的查询"""
-        return {
+        return {)
             query_type.__name__: handler.__class__.__name__
             for query_type, handler in self._handlers.items()
-        }
+        
 
 
 # 全局实例
-    "_command_bus": CommandBus | None = None
-    "_query_bus": QueryBus | None = None
+    _command_bus: CommandBus | None = None
+    _query_bus: QueryBus | None = None
 
 
 def get_command_bus() -> CommandBus:
@@ -184,11 +184,11 @@ class MetricsMiddleware:
     """指标中间件"""
 
     def __init__(self):
-        self._metrics = {
+        self._metrics = {)
             "commands_processed": 0,
             "queries_processed": 0,
             "processing_times": [],
-        }
+        
 
     async def process(self, message):
         """处理消息"""

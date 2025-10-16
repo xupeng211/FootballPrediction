@@ -4,7 +4,7 @@ from typing import Any
 命令定义
 Command Definitions
 
-定义所有写操作命令。
+定义所有写操作命令.
 Defines all write operation commands.
 """
 
@@ -17,7 +17,7 @@ from .base import ValidatableCommand, ValidationResult
 class CreatePredictionCommand(ValidatableCommand):
     """创建预测命令"""
 
-    def __init__(
+    def __init__()
         self,
     match_id: int,
     user_id: int,
@@ -27,7 +27,7 @@ class CreatePredictionCommand(ValidatableCommand):
     strategy_used: str | None = None,
     notes: str | None = None,
     metadata: dict[str, Any] | None = None,
-    ):
+    :
         super().__init__(metadata)
         self.match_id = match_id
         self.user_id = user_id
@@ -52,20 +52,20 @@ class CreatePredictionCommand(ValidatableCommand):
             errors.append("置信度必须在0到1之间")
 
         # 验证比赛和用户是否存在
-        # 在实际应用中，这些验证应该在服务层处理
+        # 在实际应用中,这些验证应该在服务层处理
         # 这里仅做基本验证
 
-        return (
+        return ()
             ValidationResult.success()
             if not errors
             else ValidationResult.failure(errors)
-        )
+        
 
 
 class UpdatePredictionCommand(ValidatableCommand):
     """更新预测命令"""
 
-    def __init__(
+    def __init__()
         self,
     prediction_id: int,
     predicted_home: int | None = None,
@@ -74,7 +74,7 @@ class UpdatePredictionCommand(ValidatableCommand):
     strategy_used: str | None = None,
     notes: str | None = None,
     metadata: dict[str, Any] | None = None,
-    ):
+    :
         super().__init__(metadata)
         self.prediction_id = prediction_id
         self.predicted_home = predicted_home
@@ -107,21 +107,21 @@ class UpdatePredictionCommand(ValidatableCommand):
         if self.confidence is not None and not (0 <= self.confidence <= 1):
             errors.append("置信度必须在0到1之间")
 
-        return (
+        return ()
             ValidationResult.success()
             if not errors
             else ValidationResult.failure(errors)
-        )
+        
 
 
 class DeletePredictionCommand(ValidatableCommand):
     """删除预测命令"""
 
-    def __init__(
+    def __init__()
         self,
     prediction_id: int,
     metadata: dict[str, Any] | None = None,
-    ):
+    :
         super().__init__(metadata)
         self.prediction_id = prediction_id
 
@@ -139,23 +139,23 @@ class DeletePredictionCommand(ValidatableCommand):
             elif prediction.match.match_date < datetime.utcnow():
                 errors.append("无法删除已结束比赛的预测")
 
-        return (
+        return ()
             ValidationResult.success()
             if not errors
             else ValidationResult.failure(errors)
-        )
+        
 
 
 class CreateUserCommand(ValidatableCommand):
     """创建用户命令"""
 
-    def __init__(
+    def __init__()
         self,
     username: str,
     email: str,
     password_hash: str,
     metadata: dict[str, Any] | None = None,
-    ):
+    :
         super().__init__(metadata)
         self.username = username
         self.email = email
@@ -181,31 +181,31 @@ class CreateUserCommand(ValidatableCommand):
         from ..database.connection_mod import get_session
 
         async with get_session() as session:
-            existing_user = await session.execute(
+            existing_user = await session.execute()
                 "SELECT id FROM users WHERE username = :username",
                 {"username": self.username},
-            )
+            
             if existing_user.scalar():  # type: ignore
                 errors.append("用户名已存在")
 
-        return (
+        return ()
             ValidationResult.success()
             if not errors
             else ValidationResult.failure(errors)
-        )
+        
 
 
 class UpdateUserCommand(ValidatableCommand):
     """更新用户命令"""
 
-    def __init__(
+    def __init__()
         self,
     user_id: int,
     username: str | None = None,
     email: str | None = None,
     is_active: bool | None = None,
     metadata: dict[str, Any] | None = None,
-    ):
+    :
         super().__init__(metadata)
         self.user_id = user_id
         self.username = username
@@ -224,17 +224,17 @@ class UpdateUserCommand(ValidatableCommand):
             if not user:
                 errors.append("指定的用户不存在")
 
-        return (
+        return ()
             ValidationResult.success()
             if not errors
             else ValidationResult.failure(errors)
-        )
+        
 
 
 class CreateMatchCommand(ValidatableCommand):
     """创建比赛命令"""
 
-    def __init__(
+    def __init__()
         self,
     home_team: str,
     away_team: str,
@@ -242,7 +242,7 @@ class CreateMatchCommand(ValidatableCommand):
     competition: str | None = None,
     venue: str | None = None,
     metadata: dict[str, Any] | None = None,
-    ):
+    :
         super().__init__(metadata)
         self.home_team = home_team
         self.away_team = away_team
@@ -266,17 +266,17 @@ class CreateMatchCommand(ValidatableCommand):
         if self.match_date < datetime.utcnow():
             errors.append("比赛日期不能是过去的时间")
 
-        return (
+        return ()
             ValidationResult.success()
             if not errors
             else ValidationResult.failure(errors)
-        )
+        
 
 
 class UpdateMatchCommand(ValidatableCommand):
     """更新比赛命令"""
 
-    def __init__(
+    def __init__()
         self,
     match_id: int,
     home_score: int | None = None,
@@ -285,7 +285,7 @@ class UpdateMatchCommand(ValidatableCommand):
     competition: str | None = None,
     venue: str | None = None,
     metadata: dict[str, Any] | None = None,
-    ):
+    :
         super().__init__(metadata)
         self.match_id = match_id
         self.home_score = home_score
@@ -312,8 +312,8 @@ class UpdateMatchCommand(ValidatableCommand):
         if self.away_score is not None and self.away_score < 0:
             errors.append("客队得分不能为负数")
 
-        return (
+        return ()
             ValidationResult.success()
             if not errors
             else ValidationResult.failure(errors)
-        )
+        

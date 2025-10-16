@@ -1,43 +1,37 @@
 from typing import Any, Dict, List, Optional, Union
-""""""
-用户仓储
-User Repository
+"""" "" 用
+"" User Repository
 
-提供用户数据的访问操作,实现Repository模式.
-Provides user data access operations, implementing the Repository pattern.
-""""""
+"" 提
+"" Provides user data access operations, implementing the Repository pattern.
+"""" from datetime import datetime, timedelta
+"
+from sqlalchemy import select, and_, or_, desc, asc, funcfrom sqlalchemy.ext.asyncio import AsyncSession
 
-from datetime import datetime, timedelta
-
-from sqlalchemy import select, and_, or_, desc, asc, func
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from .base import BaseRepository
-from ..models.user import User
+.base import BaseRepository
+..models.user import User
 
 
-class UserRepository(BaseRepository[User]):
-    """"""
-    用户仓储类
+class UserRepository(BaseRepository[User])
+:
+    """" 用户仓储类
     User Repository Class
 
     提供用户数据的CRUD操作和复杂查询方法.
     Provides CRUD operations and complex query methods for user data.
-    """"""
-
-    def __init__(self, db_manager=None) -> None:
-        super().__init__(User, db_manager)
+    """" def __init__(self, db_manager=None) -> None:
+"        super()
+.__init__(User, db_manager)
 
     # ========================================
     # 用户特定的查询方法
     # ========================================
 
-    async def get_by_username(
-        self, username: str, session: Optional[AsyncSession] = None
-    ) -> Optional[User]:
-        """"""
-        根据用户名获取用户
+    async def get_by_username(self, username: str, session: Optional[AsyncSession] = None)
+    ) -> Optional[User:
+        """" 根据用户名获取用户
 
         Args:
     "username": 用户名
@@ -45,14 +39,11 @@ class UserRepository(BaseRepository[User]):
 
         Returns:
             用户对象或None
-        """"""
-        return await self.find_one_by(filters={"username": username}, session=session)
-
-    async def get_by_email(
-        self, email: str, session: Optional[AsyncSession] = None
-    ) -> Optional[User]:
-        """"""
-        根据邮箱获取用户
+        """" return await self.find_one_by(filters={"username": username}, session=session)
+"
+    async def get_by_email(self, email: str, session: Optional[AsyncSession] = None)
+    ) -> Optional[User:
+        """" 根据邮箱获取用户
 
         Args:
     "email": 邮箱地址
@@ -60,17 +51,14 @@ class UserRepository(BaseRepository[User]):
 
         Returns:
             用户对象或None
-        """"""
-        return await self.find_one_by(filters={"email": email}, session=session)
-
-    async def username_exists(
-        self,
+        """" return await self.find_one_by(filters={"email": email}, session=session)
+"
+    async def username_exists(self,)
     "username": str,
-    "exclude_id": Optional[Union[int, str] = None,
+    "exclude_id": Optional[Union[int, str] = None,)
     "session": Optional[AsyncSession]  = None,
-    ) -> bool:
-        """"""
-        检查用户名是否存在
+     -> bool:
+        """" 检查用户名是否存在
 
         Args:
     "username": 用户名
@@ -79,21 +67,19 @@ class UserRepository(BaseRepository[User]):
 
         Returns:
             是否存在
-        """"""
-        filters = {"username": username}
-        if exclude_id:
-            filters["id"] = {"ne": exclude_id}  # type: ignore
+        """" filters = {"username": username}
+"        if exclude_idfilters["id"] = {"ne exclude_id}  # typ,
+"
+    e: ignore
 
         return await self.exists(filters=filters, session=session)
 
-    async def email_exists(
-        self,
+    async def email_exists(self,)
     "email": str,
-    "exclude_id": Optional[Union[int, str] = None,
+    "exclude_id": Optional[Union[int, str] = None,)
     "session": Optional[AsyncSession]  = None,
-    ) -> bool:
-        """"""
-        检查邮箱是否存在
+     -> bool:
+        """" 检查邮箱是否存在
 
         Args:
     "email": 邮箱地址
@@ -102,18 +88,16 @@ class UserRepository(BaseRepository[User]):
 
         Returns:
             是否存在
-        """"""
-        filters = {"email": email}
-        if exclude_id:
-            filters["id"] = {"ne": exclude_id}  # type: ignore
+        """" filters = {"email": email}
+"        if exclude_idfilters["id"] = {"ne exclude_id}  # typ,
+"
+    e: ignore
 
         return await self.exists(filters=filters, session=session)
 
-    async def get_active_users(
-        self, limit: Optional[int]  = None, session: Optional[AsyncSession = None
-    ) -> List[User]:
-        """"""
-        获取活跃用户
+    async def get_active_users(self, limit: Optional[int]  = None, session: Optional[AsyncSession = None))
+    ) -> List[User:
+        """" 获取活跃用户
 
         Args:
     "limit": 限制返回数量
@@ -121,36 +105,36 @@ class UserRepository(BaseRepository[User]):
 
         Returns:
             活跃用户列表
-        """"""
-        async with self.db_manager.get_async_session() as sess:
-            if session:
+        """" async with self.db_manager.get_async_session() as sess: if sessio,
+"    n:
                 sess = session
 
-            # 定义活跃用户：最近30天内有登录
+            # 定义活跃用户:最近30天内有登录
             thirty_days_ago = datetime.utcnow() - timedelta(days=30)
 
-            stmt = (
+            stmt = ()
                 select(User)
-                .where(
+                .where()
                     and_(User.is_active is True, User.last_login_at >= thirty_days_ago)  # type: ignore
-                )
-                .order_by(desc(User.last_login_at))  # type: ignore
-            )
+                
+                .order_by(desc(User.last_login_at))
+  # type: ignore
+            
 
-            if limit:
-                stmt = stmt.limit(limit)
+            if limitstmt = stmt.limit(limit)
+
 
             result = await sess.execute(stmt)
-            return result.scalars().all()  # type: ignore  # type: ignore
+            return result.scalars()
+.all()  # type: ignore  # typ,
+    e: ignore
 
-    async def get_inactive_users(
-        self,
+    async def get_inactive_users(self,)
     "days": int = 90,
     "limit": Optional[int]  = None,
     "session": Optional[AsyncSession]  = None,
-    ) -> List[User]:
-        """"""
-        获取非活跃用户
+    ) -> List[User:
+        """" 获取非活跃用户
 
         Args:
     "days": 多少天未登录
@@ -159,36 +143,37 @@ class UserRepository(BaseRepository[User]):
 
         Returns:
             非活跃用户列表
-        """"""
-        async with self.db_manager.get_async_session() as sess:
-            if session:
+        """" async with self.db_manager.get_async_session() as sess: if sessio,
+"    n:
                 sess = session
 
             cutoff_date = datetime.utcnow() - timedelta(days=days)
 
-            stmt = (
+            stmt = ()
                 select(User)
-                .where(
-                    or_(User.last_login_at < cutoff_date, User.last_login_at.is_(None))  # type: ignore
-                )
-                .order_by(asc(User.last_login_at))  # type: ignore
-            )
+                .where()
+                    or_(User.last_login_at < cutoff_date, User.last_login_at.is_(None))
+  # type: ignore
+                
+                .order_by(asc(User.last_login_at))
+  # type: ignore
+            
 
-            if limit:
-                stmt = stmt.limit(limit)
+            if limitstmt = stmt.limit(limit)
+
 
             result = await sess.execute(stmt)
-            return result.scalars().all()  # type: ignore  # type: ignore
+            return result.scalars()
+.all()  # type: ignore  # typ,
+    e: ignore
 
-    async def search_users(
-        self,
+    async def search_users(self,)
     "query": str,
-    "search_fields": Optional[List[str] = None,
+    "search_fields": Optional[List[str] = None,)
     "limit": Optional[int]  = None,
     "session": Optional[AsyncSession]  = None,
-    ) -> List[User]:
-        """"""
-        搜索用户
+    ) -> List[User:
+        """" 搜索用户
 
         Args:
     "query": 搜索关键词
@@ -198,33 +183,36 @@ class UserRepository(BaseRepository[User]):
 
         Returns:
             匹配的用户列表
-        """"""
-        async with self.db_manager.get_async_session() as sess:
-            if session:
+        """" async with self.db_manager.get_async_session() as sess: if sessio,
+"    n:
                 sess = session
 
-            if not search_fields:
-                search_fields = ["username", "email", "display_name"]
+            if not search_fieldssearch_fields = ["username", "email", "display_name"]
+
 
             # 构建搜索条件
             search_conditions = []
             for field in search_fields:
-                if hasattr(User, field):
-                    search_conditions.append(getattr(User, field).ilike(f"%{query}%"))
+                if hasattr(User, field)
+    search_conditions.append(getattr(User, field))
+.ilike(f"%{query}%")
 
-            stmt = select(User).where(or_(*search_conditions))
 
-            if limit:
-                stmt = stmt.limit(limit)
+            stmt = select(User)
+.where(or_(*search_conditions))
+
+
+            if limitstmt = stmt.limit(limit)
+
 
             result = await sess.execute(stmt)
-            return result.scalars().all()  # type: ignore  # type: ignore
+            return result.scalars()
+.all()  # type: ignore  # typ,
+    e: ignore
 
-    async def update_last_login(
-        self, user_id: Union[int, str], session: Optional[AsyncSession = None
-    ) -> Optional[User]:
-        """"""
-        更新用户最后登录时间
+    async def update_last_login(self, user_id: Union[int, str], session: Optional[AsyncSession = None))
+    ) -> Optional[User:
+        """" 更新用户最后登录时间
 
         Args:
     "user_id": 用户ID
@@ -232,21 +220,19 @@ class UserRepository(BaseRepository[User]):
 
         Returns:
             更新后的用户对象
-        """"""
-        return await self.update(
-            obj_id=user_id,
-            obj_data={"last_login_at": datetime.utcnow()},
+        """" return await self.update()
+"            obj_id=user_id,
+            obj_data={"last_login_at": datetime.utcnow())
+,
             session=session,
-        )
+        
 
-    async def change_password(
-        self,
+    async def change_password(self,)
     "user_id": Union[int, str],
     "hashed_password": str,
     "session": Optional[AsyncSession]  = None,
-    ) -> Optional[User]:
-        """"""
-        修改用户密码
+    ) -> Optional[User:
+        """" 修改用户密码
 
         Args:
     "user_id": 用户ID
@@ -255,21 +241,17 @@ class UserRepository(BaseRepository[User]):
 
         Returns:
             更新后的用户对象
-        """"""
-        return await self.update(
-            obj_id=user_id,
-            obj_data={
-                "password_hash": hashed_password,","
-                "password_changed_at": datetime.utcnow(),""
-            },
-            session=session,
-        )
+        """" return await self.update()
+"            obj_id=user_id,
+            obj_data={)
+                "password_hash": hashed_password,", "password_changed_at": datetime.utcnow()
+"," ,
+"            session=session,
+        
 
-    async def activate_user(
-        self, user_id: Union[int, str], session: Optional[AsyncSession = None
-    ) -> Optional[User]:
-        """"""
-        激活用户
+    async def activate_user(self, user_id: Union[int, str], session: Optional[AsyncSession = None))
+    ) -> Optional[User:
+        """" 激活用户
 
         Args:
     "user_id": 用户ID
@@ -277,21 +259,19 @@ class UserRepository(BaseRepository[User]):
 
         Returns:
             更新后的用户对象
-        """"""
-        return await self.update(
-            obj_id=user_id,
-            obj_data={"is_active": True, "activated_at": datetime.utcnow()},
+        """" return await self.update()
+"            obj_id=user_id,
+            obj_data={"is_active": True, "activated_at": datetime.utcnow())
+,
             session=session,
-        )
+        
 
-    async def deactivate_user(
-        self,
+    async def deactivate_user(self,)
     "user_id": Union[int, str],
     "reason": Optional[str]  = None,
     "session": Optional[AsyncSession]  = None,
-    ) -> Optional[User]:
-        """"""
-        停用用户
+    ) -> Optional[User:
+        """" 停用用户
 
         Args:
     "user_id": 用户ID
@@ -300,11 +280,11 @@ class UserRepository(BaseRepository[User]):
 
         Returns:
             更新后的用户对象
-        """"""
-        update_data= {"is_active": False, "deactivated_at": datetime.utcnow()}
+        """" update_data= {"is_active": False, "deactivated_at": datetime.utcnow())
+"
 
-        if reason:
-            update_data["deactivation_reason"] = reason
+        if reasonupdate_data["deactivation_reason"] = reason
+
 
         return await self.update(obj_id=user_id, obj_data=update_data, session=session)
 
@@ -312,11 +292,9 @@ class UserRepository(BaseRepository[User]):
     # 统计方法
     # ========================================
 
-    async def get_user_stats(
-        self, days: Optional[int]  = None, session: Optional[AsyncSession = None
-    ) -> Dict[str, Any]:
-        """"""
-        获取用户统计信息
+    async def get_user_stats(self, days: Optional[int]  = None, session: Optional[AsyncSession = None))
+    ) -> Dict[str, Any:
+        """" 获取用户统计信息
 
         Args:
     "days": 统计天数(可选)
@@ -324,63 +302,62 @@ class UserRepository(BaseRepository[User]):
 
         Returns:
             统计数据字典
-        """"""
-        async with self.db_manager.get_async_session() as sess:
-            if session:
+        """" async with self.db_manager.get_async_session() as sess: if sessio,
+"    n:
                 sess = session
 
             # 基础查询
             base_query = select(User)
 
-            if days:
-                start_date = datetime.utcnow() - timedelta(days=days)
+            if daysstart_date = datetime.utcnow() - timedelta(days=days)
+
                 base_query = base_query.where(User.created_at >= start_date)
 
             # 总用户数
             total_stmt = select(func.count(User.id))
-            if days:
-                start_date = datetime.utcnow() - timedelta(days=days)
+
+            if daysstart_date = datetime.utcnow() - timedelta(days=days)
+
                 total_stmt = total_stmt.where(User.created_at >= start_date)
 
             total_result = await sess.execute(total_stmt)
             total_users = total_result.scalar()  # type: ignore
 
-            # 活跃用户数（最近30天登录）
+            # 活跃用户数(最近30天登录)
             thirty_days_ago = datetime.utcnow() - timedelta(days=30)
-            active_stmt = select(func.count(User.id)).where(
+            active_stmt = select(func.count(User.id))
+).where(
                 and_(User.is_active is True, User.last_login_at >= thirty_days_ago)  # type: ignore
-            )
-            if days:
-                active_stmt = active_stmt.where(User.created_at >= start_date)
+            
+            if daysactive_stmt = active_stmt.where(User.created_at >= start_date)
+
 
             active_result = await sess.execute(active_stmt)
             active_users = active_result.scalar()  # type: ignore
 
-            # 新注册用户数（今天）
-            today = datetime.utcnow().date()
+            # 新注册用户数(今天)
+            today = datetime.utcnow()
+.date()
             today_start = datetime.combine(today, datetime.min.time())
-            new_stmt = select(func.count(User.id)).where(User.created_at >= today_start)
+
+            new_stmt = select(func.count(User.id))
+).where(User.created_at >= today_start
             new_result = await sess.execute(new_stmt)
             new_users_today = new_result.scalar()  # type: ignore
 
             # 计算比率
             activity_rate = 0.0
-            if total_users > 0:  # type: ignore
-                activity_rate = active_users / total_users  # type: ignore
+            if total_users > 0
+    # typ,
+    e: ignoreactivity_rate = active_users / total_users  # type: ignore
 
-            return {
-                "total_users": total_users,","
-                "active_users": active_users,","
-                "new_users_today": new_users_today,","
-                "activity_rate": activity_rate,","
-                "inactive_users": total_users - active_users,  # type: ignore""
-            }
 
-    async def get_user_growth_stats(
-        self, days: int = 30, session: Optional[AsyncSession] = None
+            return {)
+                "total_users": total_users,", "active_users": active_users,", "new_users_today": new_users_today,", "activity_rate": activity_rate,", "inactive_users": total_users - active_users,  # type: ignore" 
+"
+    async def get_user_growth_stats(self, days: int = 30, session: Optional[AsyncSession] = None)
     ) -> List[Dict[str, Any]:
-        """"""
-        获取用户增长统计
+        """" 获取用户增长统计
 
         Args:
     "days": 统计天数
@@ -388,28 +365,35 @@ class UserRepository(BaseRepository[User]):
 
         Returns:
             每日增长数据列表
-        """"""
-        async with self.db_manager.get_async_session() as sess:
-            if session:
+        """" async with self.db_manager.get_async_session() as sess: if sessio,
+"    n:
                 sess = session
 
             # 计算日期范围
-            end_date = datetime.utcnow().date()
+            end_date = datetime.utcnow()
+.date()
             start_date = end_date - timedelta(days=days)
 
             # 查询每天的用户注册数
-            stmt = (
-                select(
-                    func.date(User.created_at).label("date"),
-                    func.count(User.id).label("new_users"))).where(
-                    and_(
+            stmt = ()
+                select()
+                    func.date(User.created_at)
+.label("date")
+,
+                    func.count(User.id)
+.label("new_users")
+
+.where()
+                    and_()
                         func.date(User.created_at) >= start_date,
                         func.date(User.created_at) <= end_date,
-                    )
-                )
+                    
+                
                 .group_by(func.date(User.created_at))
+
                 .order_by(func.date(User.created_at))
-            )
+
+            
 
             result = await sess.execute(stmt)
             rows = result.all()  # type: ignore
@@ -417,9 +401,10 @@ class UserRepository(BaseRepository[User]):
             # 转换为字典列表
             growth_stats = []
             for row in rows:
-                growth_stats.append(
-                    {"date": row.date.isoformat(), "new_users": row.new_users}
-                )
+                growth_stats.append()
+                    {"date": row.date.isoformat())
+, "new_users": row.new_users
+                
 
             return growth_stats
 
@@ -427,14 +412,12 @@ class UserRepository(BaseRepository[User]):
     # 实现抽象方法
     # ========================================
 
-    async def get_related_data(
-        self,
+    async def get_related_data(self,)
     "obj_id": Union[int, str],
     "relation_name": str,
     "session": Optional[AsyncSession]  = None,
-    ) -> Any:
-        """"""
-        获取用户的关联数据
+     -> Any:
+        """" 获取用户的关联数据
 
         Args:
     "obj_id": 用户ID
@@ -443,36 +426,36 @@ class UserRepository(BaseRepository[User]):
 
         Returns:
             关联数据
-        """"""
-        async with self.db_manager.get_async_session() as sess:
-            if session:
+        """" async with self.db_manager.get_async_session() as sess: if sessio,
+"    n:
                 sess = session
 
             # 根据关联名称加载不同的关联数据
-            if relation_name == "predictions":
-                stmt = (
-                    select(User)
-                    .options(selectinload(User.predictions))  # type: ignore
+            if relation_name == "predictions stmt = ()
+"                    select(User)
+                    .options(selectinload(User.predictions))
+  # type: ignore
                     .where(User.id == obj_id)
-                )
-            elif relation_name == "profile":
-                stmt = (
-                    select(User)
-                    .options(selectinload(User.profile))  # type: ignore
+                
+            elif relation_name == "profile stmt = ()
+"                    select(User)
+                    .options(selectinload(User.profile))
+  # type: ignore
                     .where(User.id == obj_id)
-                )
-            elif relation_name == "roles":
-                stmt = (
+                
+            elif relation_name == "roles"
+    stmt = ()
                     select(User)
-                    .options(selectinload(User.roles))  # type: ignore
+                    .options(selectinload(User.roles))
+  # type: ignore
                     .where(User.id == obj_id)
-                )
-            else:
-                return None
+                
+            elsereturn None
+
 
             result = await sess.execute(stmt)
             _user = result.scalar_one_or_none()
 
-            if _user:
-                return getattr(_user, relation_name, None)
+            if _userreturn getattr(_user, relation_name, None)
+
             return None

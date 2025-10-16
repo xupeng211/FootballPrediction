@@ -1,17 +1,11 @@
-"""
-validator
+""" validator
 特征验证器
 
-此模块从原始文件拆分而来。
+此模块从原始文件拆分而来.
 This module was split from the original file.
-"""
-
-
-# 示例代码结构
+"" # 示例代码结构
 class ExampleClass:
-    """示例类"""
-
-    pass
+    """示例类"" pass
 
 
 def example_function() -> None:

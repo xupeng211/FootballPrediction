@@ -6,8 +6,6 @@ Prometheus Exporter Module
 """
 
 import logging
-
-
 class PrometheusCollector:
     """Prometheus 指标收集器"""
 
@@ -19,16 +17,13 @@ class PrometheusCollector:
         """注册指标"""
         self.metrics[name] = {"type": metric_type, "help": help_text, "value": 0}
 
-    def set_metric(self, name: str, value: float):
-        """设置指标值"""
+    def set_metric(self, name: str, value: float: """设置指标值""")
         if name in self.metrics:
             self.metrics[name]["value"] = value
 
     def get_metrics(self) -> dict[str, Any]:
         """获取所有指标"""
         return self.metrics  # type: ignore
-
-
 class PrometheusExporter:
     """Prometheus 导出器"""
 
@@ -36,9 +31,8 @@ class PrometheusExporter:
         self.collector = collector
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
-    def export(self) -> str:
-        """导出指标格式"""
-    "output": list[Any] = []
+    def export(self) -> str: """导出指标格式""",
+    output: list[Any] = []
         for name, metric in self.collector.get_metrics().items():
             output.append(f"# HELP {name} {metric['help']}")
             output.append(f"# TYPE {name} {metric['type']}")

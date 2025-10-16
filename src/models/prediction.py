@@ -4,7 +4,7 @@ from typing import Any
 预测模块
 Prediction Module
 
-提供预测相关的数据模型和服务。
+提供预测相关的数据模型和服务.
 Provides prediction-related data models and services.
 """
 
@@ -60,17 +60,17 @@ class PredictionService(SimpleService):
     async def predict_match(self, match_id: int) -> PredictionResult:
         """预测单场比赛"""
         # 简单实现
-        return PredictionResult(
+        return PredictionResult()
             match_id=match_id,
             predicted_result="home_win",
             confidence=0.75,
             prediction_time=datetime.utcnow(),
             model_version="v1.0.0",
-        )
+        
 
-    async def batch_predict_matches(
+    async def batch_predict_matches()
         self, match_ids: list[int]
-    ) -> list[PredictionResult]:
+    ) -> list[PredictionResult:
         """批量预测比赛"""
         results = []
         for match_id in match_ids:
@@ -87,7 +87,7 @@ class PredictionService(SimpleService):
         return {"total_predictions": 0, "accuracy": 0.0, "model_version": "v1.0.0"}
 
 
-# Prometheus 监控指标（简单实现）
+# Prometheus 监控指标(简单实现)
 class Counter:
     def __init__(self, name: str, description: str):
         self.name = name
@@ -129,11 +129,11 @@ class Gauge:
 
 # 监控指标实例
 predictions_total = Counter("predictions_total", "Total number of predictions")
-prediction_duration_seconds = Histogram(
+prediction_duration_seconds = Histogram()
     "prediction_duration_seconds", "Prediction duration in seconds"
-)
+
 prediction_accuracy = Gauge("prediction_accuracy", "Prediction accuracy")
-model_load_duration_seconds = Histogram(
+model_load_duration_seconds = Histogram()
     "model_load_duration_seconds", "Model load duration in seconds"
-)
+
 cache_hit_ratio = Gauge("cache_hit_ratio", "Cache hit ratio")

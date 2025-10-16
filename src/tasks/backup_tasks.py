@@ -1,13 +1,13 @@
 """
 数据库备份任务 / Database Backup Tasks
 
-实现定时数据库备份任务，包括：
+实现定时数据库备份任务,包括:
 - 全量备份任务
 - 增量备份任务
 - 备份文件清理任务
 - 备份验证任务
 
-集成 Prometheus 监控指标，支持备份成功率和时间戳监控。
+集成 Prometheus 监控指标,支持备份成功率和时间戳监控.
 
 Implements scheduled database backup tasks, including:
 - Full backup tasks
@@ -17,9 +17,9 @@ Implements scheduled database backup tasks, including:
 
 Integrates Prometheus monitoring metrics, supporting backup success rate and timestamp monitoring.
 
-⚠️ 注意：此文件已重构为模块化结构。
-为了向后兼容性，这里保留了原始的导入接口。
-建议使用：from src.tasks.backup import <function_name>
+⚠️ 注意:此文件已重构为模块化结构.
+为了向后兼容性,这里保留了原始的导入接口.
+建议使用:from src.tasks.backup import <function_name>
 
 主要类 / Main Classes:
     "DatabaseBackupTask": 数据库备份任务基类 / Database backup task base class
@@ -54,17 +54,17 @@ Integrates Prometheus monitoring metrics, supporting backup success rate and tim
     - celery: 任务队列框架 / Task queue framework
 
 重构历史 / Refactoring History:
-    - 原始文件：1380行，包含所有备份相关功能
-    - 重构为模块化结构：
+    - 原始文件:1380行,包含所有备份相关功能
+    - 重构为模块化结构:
       - base.py: 基础类和指标定义
       - database.py: 数据库备份任务
-      - maintenance.py: 维护任务（清理、验证）
-      - services.py: 服务备份任务（Redis、日志）
+      - maintenance.py: 维护任务(清理,验证)
+      - services.py: 服务备份任务(Redis,日志)
       - manual.py: 手动备份和状态查询
 """
 
-# 为了向后兼容性，从新的模块化结构中导入所有内容
-from .backup import (  # type: ignore
+# 为了向后兼容性,从新的模块化结构中导入所有内容
+from .backup import (  # type: ignore)
     # 基础类和指标
     DatabaseBackupTask,
     backup_config_task,
@@ -92,10 +92,10 @@ from .backup import (  # type: ignore
     verify_backup_integrity_task,
     verify_backup_task,
     weekly_wal_archive_task,
-)
+
 
 # 重新导出以保持原始接口
-__all__ = [
+__all__ = [)
     # 基础类和指标
     "DatabaseBackupTask",
     "get_backup_metrics",
@@ -123,17 +123,17 @@ __all__ = [
     "get_backup_status",
     "list_backup_files",
     "restore_backup",
-]
+
 
 # 原始实现已移至 src/tasks/backup/ 模块
 # 此处保留仅用于向后兼容性
 # 请使用新的模块化结构以获得更好的维护性
 
-# 包含的所有功能：
+# 包含的所有功能:
 # - DatabaseBackupTask: 数据库备份任务基类
 # - get_backup_metrics: 获取备份相关指标
 # - daily_full_backup_task: 每日完整数据库备份任务
-# - hourly_incremental_backup_task: 每小时增量备份任务（基于WAL归档）
+# - hourly_incremental_backup_task: 每小时增量备份任务(基于WAL归档)
 # - weekly_wal_archive_task: 每周WAL归档任务
 # - backup_database_task: 通用数据库备份任务
 # - verify_backup_task: 验证备份文件完整性
@@ -146,4 +146,4 @@ __all__ = [
 # - manual_backup_task: 手动备份任务
 # - get_backup_status: 获取备份状态
 # - list_backup_files: 列出备份文件
-# - restore_backup: 恢复备份（紧急情况）
+# - restore_backup: 恢复备份(紧急情况)

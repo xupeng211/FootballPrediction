@@ -4,7 +4,7 @@ from typing import Any
 查询定义
 Query Definitions
 
-定义所有读操作查询。
+定义所有读操作查询.
 Defines all read operation queries.
 """
 
@@ -16,11 +16,11 @@ from .base import ValidatableQuery, ValidationResult
 class GetPredictionByIdQuery(ValidatableQuery):
     """根据ID获取预测查询"""
 
-    def __init__(
+    def __init__()
         self,
     prediction_id: int,
     metadata: dict[str, Any] | None = None,
-    ):
+    :
         super().__init__(metadata)
         self.prediction_id = prediction_id
 
@@ -31,17 +31,17 @@ class GetPredictionByIdQuery(ValidatableQuery):
         if self.prediction_id <= 0:
             errors.append("预测ID必须为正数")
 
-        return (
+        return ()
             ValidationResult.success()
             if not errors
             else ValidationResult.failure(errors)
-        )
+        
 
 
 class GetPredictionsByUserQuery(ValidatableQuery):
     """获取用户的所有预测查询"""
 
-    def __init__(
+    def __init__()
         self,
     user_id: int,
     limit: int | None = None,
@@ -49,7 +49,7 @@ class GetPredictionsByUserQuery(ValidatableQuery):
     start_date: date | None = None,
     end_date: date | None = None,
     metadata: dict[str, Any] | None = None,
-    ):
+    :
         super().__init__(metadata)
         self.user_id = user_id
         self.limit = limit
@@ -73,22 +73,22 @@ class GetPredictionsByUserQuery(ValidatableQuery):
         if self.start_date and self.end_date and self.start_date > self.end_date:
             errors.append("开始日期不能晚于结束日期")
 
-        return (
+        return ()
             ValidationResult.success()
             if not errors
             else ValidationResult.failure(errors)
-        )
+        
 
 
 class GetMatchPredictionsQuery(ValidatableQuery):
     """获取比赛的所有预测查询"""
 
-    def __init__(
+    def __init__()
         self,
     match_id: int,
     include_user_details: bool = False,
     metadata: dict[str, Any] | None = None,
-    ):
+    :
         super().__init__(metadata)
         self.match_id = match_id
         self.include_user_details = include_user_details
@@ -100,22 +100,22 @@ class GetMatchPredictionsQuery(ValidatableQuery):
         if self.match_id <= 0:
             errors.append("比赛ID必须为正数")
 
-        return (
+        return ()
             ValidationResult.success()
             if not errors
             else ValidationResult.failure(errors)
-        )
+        
 
 
 class GetUserStatsQuery(ValidatableQuery):
     """获取用户统计查询"""
 
-    def __init__(
+    def __init__()
         self,
     user_id: int,
     include_predictions: bool = False,
     metadata: dict[str, Any] | None = None,
-    ):
+    :
         super().__init__(metadata)
         self.user_id = user_id
         self.include_predictions = include_predictions
@@ -127,22 +127,22 @@ class GetUserStatsQuery(ValidatableQuery):
         if self.user_id <= 0:
             errors.append("用户ID必须为正数")
 
-        return (
+        return ()
             ValidationResult.success()
             if not errors
             else ValidationResult.failure(errors)
-        )
+        
 
 
 class GetMatchByIdQuery(ValidatableQuery):
     """根据ID获取比赛查询"""
 
-    def __init__(
+    def __init__()
         self,
     match_id: int,
     include_predictions: bool = False,
     metadata: dict[str, Any] | None = None,
-    ):
+    :
         super().__init__(metadata)
         self.match_id = match_id
         self.include_predictions = include_predictions
@@ -154,24 +154,24 @@ class GetMatchByIdQuery(ValidatableQuery):
         if self.match_id <= 0:
             errors.append("比赛ID必须为正数")
 
-        return (
+        return ()
             ValidationResult.success()
             if not errors
             else ValidationResult.failure(errors)
-        )
+        
 
 
 class GetUpcomingMatchesQuery(ValidatableQuery):
     """获取即将到来的比赛查询"""
 
-    def __init__(
+    def __init__()
         self,
     days_ahead: int = 7,
     competition: str | None = None,
     limit: int | None = None,
     offset: int | None = None,
     metadata: dict[str, Any] | None = None,
-    ):
+    :
         super().__init__(metadata)
         self.days_ahead = days_ahead
         self.competition = competition
@@ -191,24 +191,24 @@ class GetUpcomingMatchesQuery(ValidatableQuery):
         if self.offset is not None and self.offset < 0:
             errors.append("偏移量不能为负数")
 
-        return (
+        return ()
             ValidationResult.success()
             if not errors
             else ValidationResult.failure(errors)
-        )
+        
 
 
 class GetPredictionAnalyticsQuery(ValidatableQuery):
     """获取预测分析查询"""
 
-    def __init__(
+    def __init__()
         self,
     start_date: date | None = None,
     end_date: date | None = None,
     strategy_filter: str | None = None,
     user_id: int | None = None,
     metadata: dict[str, Any] | None = None,
-    ):
+    :
         super().__init__(metadata)
         self.start_date = start_date
         self.end_date = end_date
@@ -225,23 +225,23 @@ class GetPredictionAnalyticsQuery(ValidatableQuery):
         if self.user_id is not None and self.user_id <= 0:
             errors.append("用户ID必须为正数")
 
-        return (
+        return ()
             ValidationResult.success()
             if not errors
             else ValidationResult.failure(errors)
-        )
+        
 
 
 class GetLeaderboardQuery(ValidatableQuery):
     """获取排行榜查询"""
 
-    def __init__(
+    def __init__()
         self,
     period: str = "all_time",  # all_time, monthly, weekly
     limit: int | None = 10,
     offset: int | None = None,
     metadata: dict[str, Any] | None = None,
-    ):
+    :
         super().__init__(metadata)
         self.period = period
         self.limit = limit
@@ -253,7 +253,7 @@ class GetLeaderboardQuery(ValidatableQuery):
 
         valid_periods = ["all_time", "monthly", "weekly"]
         if self.period not in valid_periods:
-            errors.append(f"无效的时间段，必须是: {', '.join(valid_periods)}")
+            errors.append(f"无效的时间段,必须是: {', '.join(valid_periods)}")
 
         if self.limit is not None and self.limit <= 0:
             errors.append("限制数量必须为正数")
@@ -261,8 +261,8 @@ class GetLeaderboardQuery(ValidatableQuery):
         if self.offset is not None and self.offset < 0:
             errors.append("偏移量不能为负数")
 
-        return (
+        return ()
             ValidationResult.success()
             if not errors
             else ValidationResult.failure(errors)
-        )
+        

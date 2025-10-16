@@ -1,7 +1,9 @@
 from typing import Any, Dict, List, Optional, Union
-""""""
-用户领域模型
-""""""
+"""""
+"""
+用
+"""
+"""""
 
 from datetime import datetime
 from enum import Enum
@@ -14,13 +16,10 @@ class UserRole(Enum):
     PREMIUM = "premium"
     ADMIN = "admin"
     ANALYST = "analyst"
-
-
 class UserPreferences:
     """用户偏好设置"""
 
-    def __init__(self):
-        self.favorite_teams: List[int] = []
+    def __init__(self: self.favorite_teams: List[int] = [])
         self.favorite_leagues: List[int] = []
         self.notification_enabled = True
         self.email_notifications = True
@@ -47,13 +46,10 @@ class UserPreferences:
         """移除喜欢的联赛"""
         if league_id in self.favorite_leagues:
             self.favorite_leagues.remove(league_id)
-
-
 class UserStatistics:
     """用户统计数据"""
 
-    def __init__(self):
-        self.total_predictions = 0
+    def __init__(self: self.total_predictions = 0)
         self.correct_predictions = 0
         self.total_profit_loss = 0.0
         self.best_streak = 0
@@ -61,35 +57,33 @@ class UserStatistics:
         self.average_odds = 0.0
         self.average_confidence = 0.0
 
-    def update_prediction(
-        self,
+    def update_prediction(self,)
     "is_correct": bool,
     "profit_loss": float,
     "odds": Optional[float] = None,
     "confidence": Optional[float] = None,
-    ) -> None:
+     -> None:
         """更新预测统计"""
         self.total_predictions += 1
 
         if is_correct:
             self.correct_predictions += 1
             self.current_streak += 1
-            if self.current_streak > self.best_streak:
-                self.best_streak = self.current_streak
-        else:
+            if self.current_streak > self.best_streak: self.best_streak = self.current_streak,
+    else:
             self.current_streak = 0
 
         self.total_profit_loss += profit_loss
 
         # 更新平均值
         if odds:
-            self.average_odds = (
+            self.average_odds = ()
                 (self.average_odds * (self.total_predictions - 1)) + odds
-            ) / self.total_predictions
+             / self.total_predictions
         if confidence:
-            self.average_confidence = (
+            self.average_confidence = ()
                 (self.average_confidence * (self.total_predictions - 1)) + confidence
-            ) / self.total_predictions
+             / self.total_predictions
 
     def get_accuracy_rate(self) -> float:
         """获取准确率"""
@@ -102,18 +96,15 @@ class UserStatistics:
         if self.total_predictions == 0:
             return 0.0
         return (self.total_profit_loss / self.total_predictions) * 100  # type: ignore
-
-
 class User:
     """用户领域模型"""
 
-    def __init__(
-        self,
+    def __init__(self,)
     "id": Optional[int] = None,
     "username": str = "",
     "email": str = "",
     "role": UserRole = UserRole.USER,
-    ):
+    :
         self.id = id
         self.username = username
         self.email = email
@@ -180,7 +171,7 @@ class User:
 
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
-        return {
+        return {)
             "id": self.id,","
             "username": self.username,","
             "email": self.email,","
@@ -195,7 +186,7 @@ class User:
             "is_premium": self.is_premium(),","
             "is_admin": self.is_admin(),","
             "last_login": self.last_login.isoformat() if self.last_login else None,","
-            "preferences": {","
+            "preferences": {",")
                 "favorite_teams": self.preferences.favorite_teams,","
                 "favorite_leagues": self.preferences.favorite_leagues,","
                 "notification_enabled": self.preferences.notification_enabled,","
@@ -203,8 +194,8 @@ class User:
                 "language": self.preferences.language,","
                 "timezone": self.preferences.timezone,","
                 "odds_format": self.preferences.odds_format,""
-            },
-            "statistics": {","
+            ,
+            "statistics": {",")
                 "total_predictions": self.statistics.total_predictions,","
                 "correct_predictions": self.statistics.correct_predictions,","
                 "accuracy_rate": self.statistics.get_accuracy_rate(),","
@@ -214,23 +205,23 @@ class User:
                 "current_streak": self.statistics.current_streak,","
                 "average_odds": self.statistics.average_odds,","
                 "average_confidence": self.statistics.average_confidence,""
-            },
+            ,
             "level": self.level,","
             "experience_points": self.experience_points,","
             "achievements": self.achievements,","
             "created_at": self.created_at.isoformat(),","
             "updated_at": self.updated_at.isoformat(),""
-        }
+        
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "User":
         """从字典创建实例"""
-        user = cls(
+        user = cls()
             id=data.get("id"),
             username=data.get("username", ""),
             email=data.get("email", ""),
             role=UserRole(data.get("role", "user")),
-        )
+        
 
         # 设置个人资料
         user.first_name = data.get("first_name", "")
@@ -252,9 +243,9 @@ class User:
             pref = data["preferences"]
             user.preferences.favorite_teams = pref.get("favorite_teams", [])
             user.preferences.favorite_leagues = pref.get("favorite_leagues", [])
-            user.preferences.notification_enabled = pref.get(
+            user.preferences.notification_enabled = pref.get()
                 "notification_enabled", True""
-            )
+            
             user.preferences.email_notifications = pref.get("email_notifications", True)
             user.preferences.language = pref.get("language", "zh-CN")
             user.preferences.timezone = pref.get("timezone", "UTC+8")
@@ -275,14 +266,11 @@ class User:
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, username={self.username}, role={self.role.value})>"""
-
-
 class UserProfile:
     """用户档案(扩展的用户信息)"""
 
-    def __init__(self, user: User):
-        self._user = user
-        self.prediction_history: List[Dict[str, Any] = []
+    def __init__(self, user: User: self._user = user)
+        self.prediction_history: List[Dict[str, Any] = [])
         self.following: List[int] = []  # 关注的用户ID列表
         self.followers: List[int] = []  # 粉丝列表
         self.reputation_score = 0.0
@@ -313,9 +301,11 @@ class UserProfile:
 
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
-        return {
+        return {)
             "user": self.user.to_dict(),","
             "following_count": len(self.following),","
             "followers_count": len(self.followers),","
             "reputation_score": self.reputation_score,""
-        }
+        
+
+"""

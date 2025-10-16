@@ -1,11 +1,15 @@
 from typing import Any, Dict, List, Optional, Union
 
-数据传输对象
+"""
+数
+"""
 Data Transfer Objects
 
-定义CQRS模式中使用的DTO.
+"""
+定
+"""
 Defines DTOs used in CQRS pattern.
-""""""
+"""""
 
 from dataclasses import dataclass
 from datetime import datetime
@@ -29,7 +33,7 @@ class PredictionDTO:
     "updated_at": Optional[datetime] = None
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
-        return {
+        return {)
             "id": self.id,","
             "match_id": self.match_id,","
             "user_id": self.user_id,","
@@ -44,7 +48,7 @@ class PredictionDTO:
             "notes": self.notes,","
             "created_at": self.created_at.isoformat() if self.created_at else None,","
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,""
-        }
+        
 
 
 @dataclass
@@ -62,7 +66,7 @@ class UserDTO:
     "last_login": Optional[datetime] = None
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
-        return {
+        return {)
             "id": self.id,","
             "username": self.username,","
             "email": self.email,","
@@ -72,7 +76,7 @@ class UserDTO:
             "success_rate": float(self.success_rate),","
             "created_at": self.created_at.isoformat() if self.created_at else None,","
             "last_login": self.last_login.isoformat() if self.last_login else None,""
-        }
+        
 
 
 @dataclass
@@ -92,7 +96,7 @@ class MatchDTO:
     "updated_at": Optional[datetime] = None
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
-        return {
+        return {)
             "id": self.id,","
             "home_team": self.home_team,","
             "away_team": self.away_team,","
@@ -104,7 +108,7 @@ class MatchDTO:
             "venue": self.venue,","
             "created_at": self.created_at.isoformat() if self.created_at else None,","
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,""
-        }
+        
 
 
 @dataclass
@@ -117,12 +121,12 @@ class PredictionStatsDTO:
     "success_rate": float
     "total_points": int
     "average_confidence": float
-    "strategy_breakdown": Dict[str, Dict[str, Any]
-    "recent_performance": List[Dict[str, Any]
+    "strategy_breakdown": Dict[str, Dict[str, Any])
+    "recent_performance": List[Dict[str, Any])
 
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
-        return {
+        return {)
             "user_id": self.user_id,","
             "total_predictions": self.total_predictions,","
             "successful_predictions": self.successful_predictions,","
@@ -131,7 +135,7 @@ class PredictionStatsDTO:
             "average_confidence": float(self.average_confidence),","
             "strategy_breakdown": self.strategy_breakdown,","
             "recent_performance": self.recent_performance,""
-        }
+        
 
 
 @dataclass
@@ -148,7 +152,7 @@ class MatchStatsDTO:
 
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
-        return {
+        return {)
             "match_id": self.match_id,","
             "total_predictions": self.total_predictions,","
             "prediction_distribution": self.prediction_distribution,","
@@ -156,7 +160,7 @@ class MatchStatsDTO:
             "home_win_percentage": float(self.home_win_percentage),","
             "draw_percentage": float(self.draw_percentage),","
             "away_win_percentage": float(self.away_win_percentage),""
-        }
+        
 
 
 @dataclass
@@ -166,17 +170,15 @@ class CommandResult:
     "success": bool
     "message": Optional[str] = None
     "data": Optional[Any] = None
-    "errors": Optional[List[str] = None
+    "errors": Optional[List[str] = None)
     @classmethod
-    def success_result(
-        cls, data: Any = None, message: str = "操作成功",
-    ) -> "CommandResult":
+    def success_result(cls, data: Any = None, message: str = "操作成功",)
+     -> "CommandResult":
         """创建成功结果"""
         return cls(success=True, message=message, _data =data)
 
     @classmethod
-    def failure_result(
-        cls, errors: List[str], message: str = "操作失败",
-    ) -> "CommandResult":
+    def failure_result(cls, errors: List[str], message: str = "操作失败",)
+     -> "CommandResult":
         """创建失败结果"""
         return cls(success=False, message=message, errors=errors)

@@ -1,19 +1,16 @@
 from typing import Any
 
 # mypy: ignore-errors
-"""
-仓储模式API端点
+"" 仓储模式API端点
 Repository Pattern API Endpoints
 
-展示仓储模式的查询和管理功能。
+展示仓储模式的查询和管理功能.
 Demonstrates query and management features of the repository pattern.
-"""
-
-from datetime import date
+"" from datetime import date
 
 from fastapi import APIRouter, HTTPException, Query
 
-from ..repositories import (
+from ..repositories import ()
     MatchRepoDep,
     PredictionRepoDep,
     QuerySpec,
@@ -21,7 +18,7 @@ from ..repositories import (
     ReadOnlyPredictionRepoDep,
     ReadOnlyUserRepoDep,
     UserRepoDep,
-)
+
 
 router = APIRouter(prefix="/repositories", tags=["仓储模式"])
 
@@ -30,522 +27,521 @@ router = APIRouter(prefix="/repositories", tags=["仓储模式"])
 
 
 @router.get("/predictions", summary="获取预测列表")
-async def get_predictions(
+async def get_predictions()
     repo: ReadOnlyPredictionRepoDep,
-    limit: int = Query(100, ge=1, le=1000, description="返回数量限制"),
-    offset: int = Query(0, ge=0, description="偏移量"),
-    user_id: int | None = Query(None, description="用户ID筛选"),
-    match_id: int | None = Query(None, description="比赛ID筛选"),
-) -> dict[str, Any]:
-    """获取预测列表（使用只读仓储）"""
-    filters = {}
-    if user_id:
-        filters["user_id"] = user_id
-    if match_id:
-        filters["match_id"] = match_id
+    limit: int = Query(100, ge=1, le=1000, description="返回数量限制")
+,
+    offset: int = Query(0, ge=0, description="偏移量")
+,
+    user_id: int | None = Query(None, description="用户ID筛选")
+,
+    match_id: int | None = Query(None, description="比赛ID筛选")
+,
+) -> dict[str, Any:
+    """获取预测列表(使用只读仓储)
+"" filters = {}
+    if user_idfilters["user_id"] = user_id
 
-    query_spec = QuerySpec(
+    if match_idfilters["match_id"] = match_id
+
+
+    query_spec = QuerySpec()
         filters=filters, order_by=["-created_at"], limit=limit, offset=offset
-    )
+    
 
     predictions = await repo.find_many(query_spec)
-    return {
-        total: len(predictions),
-        "predictions": [
-            {
+    return {total: len(predictions))
+,
+        "predictions": [)
+            {)
                 id: p.id,
-                user_id: p.user_id,  # type: ignore
-                match_id: p.match_id,
-                predicted_home: p.predicted_home,  # type: ignore
-                predicted_away: p.predicted_away,  # type: ignore
-                confidence: float(p.confidence),  # type: ignore
-                created_at: p.created_at,
-            }
+                user_id: p.user_id,  # type: ignorematch_id: p.match_id,
+
+                predicted_home: p.predicted_home,  # type: ignorepredicted_away: p.predicted_away,  # type: ignore
+
+                confidence: float(p.confidence)
+,  # type: ignorecreated_at: p.created_at,
+
+            
             for p in predictions
-        ],
-    }
+        ,
+    
 
 
 @router.get("/predictions/{prediction_id}", summary="获取单个预测")
-async def get_prediction(
+async def get_prediction()
     prediction_id: int, repo: ReadOnlyPredictionRepoDep
-) -> dict[str, Any]:
-    """获取单个预测详情"""
-    _prediction = await repo.get_by_id(prediction_id)
-    if not prediction:
-        raise HTTPException(status_code=404, detail="预测不存在")
+) -> dict[str, Any:
+    """获取单个预测详情"" _prediction = await repo.get_by_id(prediction_id)
+    if not predictionraise HTTPException(status_code=404, detail="预测不存在")
 
-    return {
-        id: prediction.id,
-        user_id: prediction.user_id,  # type: ignore
-        match_id: prediction.match_id,
-        predicted_home: prediction.predicted_home,  # type: ignore
-        predicted_away: prediction.predicted_away,  # type: ignore
-        confidence: float(prediction.confidence),  # type: ignore
-        strategy_used: prediction.strategy_used,  # type: ignore
-        notes: prediction.notes,  # type: ignore
-        created_at: prediction.created_at,
+
+    return {id: prediction.id,)
+        user_id: prediction.user_id,  # type: ignorematch_id: prediction.match_id,
+
+        predicted_home: prediction.predicted_home,  # type: ignorepredicted_away: prediction.predicted_away,  # type: ignore
+
+        confidence: float(prediction.confidence)
+,  # type: ignorestrategy_used: prediction.strategy_used,  # type: ignore
+
+        notes: prediction.notes,  # type: ignorecreated_at: prediction.created_at,
+
         updated_at: prediction.updated_at,
-    }
+    
 
 
 @router.get("/predictions/user/{user_id}/statistics", summary="获取用户预测统计")
-async def get_user_prediction_statistics(
+async def get_user_prediction_statistics()
     user_id: int,
     repo: ReadOnlyPredictionRepoDep,
-    days: int | None = Query(None, ge=1, le=365, description="统计天数"),
-) -> dict[str, Any]:
-    """获取用户预测统计信息"""
-    stats = await repo.get_user_statistics(user_id, period_days=days)
+    days: int | None = Query(None, ge=1, le=365, description="统计天数")
+,
+) -> dict[str, Any:
+    """获取用户预测统计信息"" stats = await repo.get_user_statistics(user_id, period_days=days)
     return stats
 
 
 @router.get("/predictions/match/{match_id}/statistics", summary="获取比赛预测统计")
-async def get_match_prediction_statistics(
+async def get_match_prediction_statistics()
     match_id: int, repo: ReadOnlyPredictionRepoDep
-) -> dict[str, Any]:
-    """获取比赛预测统计信息"""
-    stats = await repo.get_match_statistics(match_id)
+) -> dict[str, Any:
+    """获取比赛预测统计信息"" stats = await repo.get_match_statistics(match_id)
     return stats
 
 
 @router.post("/predictions", summary="创建预测")
-async def create_prediction(
+async def create_prediction()
     prediction_data: dict[str, Any],
     repo: PredictionRepoDep,
-) -> dict[str, Any]:
-    """创建新预测（使用写仓储）"""
-    try:
-        _prediction = await repo.create(prediction_data)
-        return {
-            "message": "预测创建成功",
-            "prediction": {
+) -> dict[str, Any:
+    """创建新预测(使用写仓储)
+"" try:
+    _prediction = await repo.create(prediction_data)
+        return {"message": "预测创建成功",)
+        "prediction": {)
                 id: prediction.id,
-                user_id: prediction.user_id,  # type: ignore
-                match_id: prediction.match_id,
-                predicted_home: prediction.predicted_home,  # type: ignore
-                predicted_away: prediction.predicted_away,  # type: ignore
-                confidence: float(prediction.confidence),
+                user_id: prediction.user_id,  # type: ignorematch_id: prediction.match_id,
+
+                predicted_home: prediction.predicted_home,  # type: ignorepredicted_away: prediction.predicted_away,  # type: ignore
+
+                confidence: float(prediction.confidence)
+,
                 created_at: prediction.created_at,
-            },
-        }
+            ,
+        
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.put("/predictions/{prediction_id}", summary="更新预测")
-async def update_prediction(
-    prediction_id: int, update_data: dict[str, Any], repo: PredictionRepoDep
-) -> dict[str, Any]:
-    """更新预测（使用写仓储）"""
-    _prediction = await repo.update_by_id(prediction_id, update_data)
-    if not prediction:
-        raise HTTPException(status_code=404, detail="预测不存在")
 
-    return {
-        "message": "预测更新成功",
+@router.put("/predictions/{prediction_id}", summary="更新预测")
+async def update_prediction()
+    prediction_id: int, update_data: dict[str, Any], repo: PredictionRepoDep
+) -> dict[str, Any:
+    """更新预测(使用写仓储)
+"" _prediction = await repo.update_by_id(prediction_id, update_data)
+    if not predictionraise HTTPException(status_code=404, detail="预测不存在")
+
+
+    return {"message": "预测更新成功",)
         "prediction": {"id": prediction.id, "updated_at": prediction.updated_at},
-    }
+    
 
 
 # ==================== 用户仓储端点 ====================
 
 
 @router.get("/users", summary="获取用户列表")
-async def get_users(
+async def get_users()
     repo: ReadOnlyUserRepoDep,
-    limit: int = Query(100, ge=1, le=1000, description="返回数量限制"),
-    offset: int = Query(0, ge=0, description="偏移量"),
-    is_active: bool | None = Query(None, description="是否活跃"),
-) -> dict[str, Any]:
-    """获取用户列表"""
-    filters = {}
-    if is_active is not None:
-        filters["is_active"] = is_active
+    limit: int = Query(100, ge=1, le=1000, description="返回数量限制")
+,
+    offset: int = Query(0, ge=0, description="偏移量")
+,
+    is_active: bool | None = Query(None, description="是否活跃")
+,
+) -> dict[str, Any:
+    """获取用户列表"" filters = {}
+    if is_active is not Nonefilters["is_active"] = is_active
 
-    query_spec = QuerySpec(
+
+    query_spec = QuerySpec()
         filters=filters, order_by=["username"], limit=limit, offset=offset
-    )
+    
 
     users = await repo.find_many(query_spec)
-    return {
-        total: len(users),
-        "users": [
-            {
+    return {total: len(users))
+,
+        "users": [)
+            {)
                 id: u.id,
                 username: u.username,
                 email: u.email,
-                display_name: u.display_name,  # type: ignore
-                role: u.role,  # type: ignore
+                display_name: u.display_name,  # type: ignorerole: u.role,  # type: ignore
+
                 is_active: u.is_active,
                 created_at: u.created_at,
-            }
+            
             for u in users
-        ],
-    }
+        ,
+    
 
 
 @router.get("/users/{user_id}", summary="获取用户详情")
 async def get_user(user_id: int, repo: ReadOnlyUserRepoDep) -> dict[str, Any]:
-    """获取用户详情"""
-    _user = await repo.get_by_id(user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="用户不存在")
+    """获取用户详情"" _user = await repo.get_by_id(user_id)
+    if not userraise HTTPException(status_code=404, detail="用户不存在")
 
-    return {
-        id: user.id,
+
+    return {id: user.id,)
         username: user.username,
         email: user.email,
-        display_name: user.display_name,  # type: ignore
-        role: user.role,  # type: ignore
+        display_name: user.display_name,  # type: ignorerole: user.role,  # type: ignore
+
         is_active: user.is_active,
-        last_login_at: user.last_login_at,  # type: ignore
-        created_at: user.created_at,
-    }
+        last_login_at: user.last_login_at,  # type: ignorecreated_at: user.created_at,
+
+    
 
 
 @router.get("/users/{user_id}/statistics", summary="获取用户完整统计")
 async def get_user_statistics(user_id: int, repo: UserRepoDep) -> dict[str, Any]:
-    """获取用户完整统计信息（使用读写仓储的统计方法）"""
-    stats = await repo.get_user_statistics(user_id)
+    """获取用户完整统计信息(使用读写仓储的统计方法)
+"" stats = await repo.get_user_statistics(user_id)
     return stats
 
 
 @router.get("/users/search", summary="搜索用户")
-async def search_users(
+async def search_users()
     repo: ReadOnlyUserRepoDep,
-    keyword: str = Query(..., min_length=1, description="搜索关键词"),
-    limit: int = Query(20, ge=1, le=100, description="返回数量限制"),
-) -> dict[str, Any]:
-    """搜索用户"""
-    users = await repo.search_users(keyword)
-    return {
-        keyword: keyword,
-        total: len(users[:limit]),
-        "users": [
-            {
-                id: u.id,
-                username: u.username,
-                display_name: u.display_name,  # type: ignore
-                email: u.email,
-            }
+    keyword: str = Query(..., min_length=1, description="搜索关键词")
+,
+    limit: int = Query(20, ge=1, le=100, description="返回数量限制")
+,
+) -> dict[str, Any:
+    """搜索用户"" users = await repo.search_users(keyword)
+    return {keyword: keyword,)
+        total: len(users[:limit])
+,
+        "users": [)
+            {id: u.id,)
+        username: u.username,
+                display_name: u.display_name,  # type: ignoreemail: u.email,
+
+            
             for u in users[:limit]
-        ],
-    }
+        ,
+    
 
 
 @router.get("/users/active", summary="获取活跃用户")
-async def get_active_users(
+async def get_active_users()
     repo: ReadOnlyUserRepoDep,
-    limit: int = Query(50, ge=1, le=100, description="返回数量限制"),
-) -> dict[str, Any]:
-    """获取活跃用户列表"""
-    users = await repo.get_active_users(limit)
-    return {
-        total: len(users),
-        "active_users": [
-            {
+    limit: int = Query(50, ge=1, le=100, description="返回数量限制")
+,
+) -> dict[str, Any:
+    """获取活跃用户列表"" users = await repo.get_active_users(limit)
+    return {total: len(users))
+,
+        "active_users": [)
+            {)
                 id: u.id,
                 username: u.username,
-                display_name: u.display_name,  # type: ignore
-                last_login_at: u.last_login_at,  # type: ignore
-            }
+                display_name: u.display_name,  # type: ignorelast_login_at: u.last_login_at,  # type: ignore
+
+            
             for u in users
-        ],
-    }
+        ,
+    
 
 
 @router.post("/users", summary="创建用户")
 async def create_user(user_data: dict[str, Any], repo: UserRepoDep) -> dict[str, Any]:
-    """创建新用户"""
-    try:
-        _user = await repo.create(user_data)
-        return {
-            "message": "用户创建成功",
-            "user": {
+    """创建新用户"" try:
+    _user = await repo.create(user_data)
+        return {"message": "用户创建成功",)
+        "user": {)
                 id: user.id,
                 username: user.username,
                 email: user.email,
                 created_at: user.created_at,
-            },
-        }
+            ,
+        
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         raise HTTPException(status_code=400, detail=str(e))
+
 
 
 # ==================== 比赛仓储端点 ====================
 
 
 @router.get("/matches", summary="获取比赛列表")
-async def get_matches(
+async def get_matches()
     repo: ReadOnlyMatchRepoDep,
-    limit: int = Query(100, ge=1, le=1000, description="返回数量限制"),
-    offset: int = Query(0, ge=0, description="偏移量"),
-    status: str | None = Query(None, description="比赛状态筛选"),
-) -> dict[str, Any]:
-    """获取比赛列表"""
-    filters = {}
-    if status:
-        filters["status"] = status
+    limit: int = Query(100, ge=1, le=1000, description="返回数量限制")
+,
+    offset: int = Query(0, ge=0, description="偏移量")
+,
+    status: str | None = Query(None, description="比赛状态筛选")
+,
+) -> dict[str, Any:
+    """获取比赛列表"" filters = {}
+    if statusfilters["status"] = status
 
-    query_spec = QuerySpec(
+
+    query_spec = QuerySpec()
         filters=filters, order_by=["-match_date"], limit=limit, offset=offset
-    )
+    
 
     _matches = await repo.find_many(query_spec)
-    return {
-        total: len(matches),
-        "matches": [
-            {
+    return {total: len(matches))
+,
+        "matches": [)
+            {)
                 id: m.id,
-                home_team_name: m.home_team_name,  # type: ignore
-                away_team_name: m.away_team_name,  # type: ignore
-                competition_name: m.competition_name,  # type: ignore
-                match_date: m.match_date,  # type: ignore
+                home_team_name: m.home_team_name,  # type: ignoreaway_team_name: m.away_team_name,  # type: ignore
+
+                competition_name: m.competition_name,  # type: ignorematch_date: m.match_date,  # type: ignore
+
                 status: m.status,  # type: ignore
                 "score": {"home": m.home_score, "away": m.away_score}
-                if m.home_score is not None
-                else None,
-            }
+                if m.home_score is not Noneelse None,
+
+            
             for m in matches
-        ],
-    }
+        ,
+    
 
 
 @router.get("/matches/upcoming", summary="获取即将到来的比赛")
-async def get_upcoming_matches(
+async def get_upcoming_matches()
     repo: ReadOnlyMatchRepoDep,
-    days: int = Query(7, ge=1, le=30, description="未来天数"),
-    limit: int = Query(50, ge=1, le=100, description="返回数量限制"),
-) -> dict[str, Any]:
-    """获取即将到来的比赛"""
-    _matches = await repo.get_upcoming_matches(days, limit)
-    return {
-        days: days,
-        total: len(matches),
-        "matches": [
-            {
-                id: m.id,
-                home_team: m.home_team_name,  # type: ignore
-                away_team: m.away_team_name,  # type: ignore
-                competition: m.competition_name,  # type: ignore
-                match_date: m.match_date,  # type: ignore
-            }
+    days: int = Query(7, ge=1, le=30, description="未来天数")
+,
+    limit: int = Query(50, ge=1, le=100, description="返回数量限制")
+,
+) -> dict[str, Any:
+    """获取即将到来的比赛"" _matches = await repo.get_upcoming_matches(days, limit)
+    return {days: days,)
+        total: len(matches)
+,
+        "matches": [)
+            {id: m.id,)
+        home_team: m.home_team_name,  # type: ignoreaway_team: m.away_team_name,  # type: ignore
+
+                competition: m.competition_name,  # type: ignorematch_date: m.match_date,  # type: ignore
+
+            
             for m in matches
-        ],
-    }
+        ,
+    
 
 
 @router.get("/matches/live", summary="获取正在进行的比赛")
 async def get_live_matches(repo: ReadOnlyMatchRepoDep) -> dict[str, Any]:
-    """获取正在进行的比赛"""
-    _matches = await repo.get_live_matches()
-    return {
-        total: len(matches),
-        "live_matches": [
-            {
+    """获取正在进行的比赛"" _matches = await repo.get_live_matches()
+    return {total: len(matches))
+,
+        "live_matches": [)
+            {)
                 id: m.id,
-                home_team: m.home_team_name,  # type: ignore
-                away_team: m.away_team_name,  # type: ignore
+                home_team: m.home_team_name,  # type: ignoreaway_team: m.away_team_name,  # type: ignore
+
                 "score": {"home": m.home_score, "away": m.away_score}
-                if m.home_score is not None
-                else None,
+                if m.home_score is not Noneelse None,
+
                 started_at: m.started_at,  # type: ignore
-            }
+            
             for m in matches
-        ],
-    }
+        ,
+    
 
 
 @router.get("/matches/{match_id}", summary="获取比赛详情")
 async def get_match(match_id: int, repo: ReadOnlyMatchRepoDep) -> dict[str, Any]:
-    """获取比赛详情"""
-    match = await repo.get_by_id(match_id)
-    if not match:
-        raise HTTPException(status_code=404, detail="比赛不存在")
+    """获取比赛详情"" match = await repo.get_by_id(match_id)
+    if not matchraise HTTPException(status_code=404, detail="比赛不存在")
 
-    return {
-        id: match.id,
-        home_team_name: match.home_team_name,  # type: ignore
-        away_team_name: match.away_team_name,  # type: ignore
-        competition_name: match.competition_name,  # type: ignore
-        season: match.season,
-        match_date: match.match_date,  # type: ignore
-        status: match.status,  # type: ignore
+
+    return {id: match.id,)
+        home_team_name: match.home_team_name,  # type: ignoreaway_team_name: match.away_team_name,  # type: ignore
+
+        competition_name: match.competition_name,  # type: ignoreseason: match.season,
+
+        match_date: match.match_date,  # type: ignorestatus: match.status,  # type: ignore
+
         "score": {"home": match.home_score, "away": match.away_score}
-        if match.home_score is not None
-        else None,
+        if match.home_score is not Noneelse None,
+
         created_at: match.created_at,
-    }
+    
 
 
 @router.get("/matches/{match_id}/statistics", summary="获取比赛统计")
 async def get_match_statistics(match_id: int, repo: MatchRepoDep) -> dict[str, Any]:
-    """获取比赛统计信息"""
-    stats = await repo.get_match_statistics(match_id)
+    """获取比赛统计信息"" stats = await repo.get_match_statistics(match_id)
     return stats
 
 
 @router.get("/matches/search", summary="搜索比赛")
-async def search_matches(
+async def search_matches()
     repo: ReadOnlyMatchRepoDep,
-    keyword: str = Query(..., min_length=1, description="搜索关键词"),
-    limit: int = Query(20, ge=1, le=100, description="返回数量限制"),
-) -> dict[str, Any]:
-    """搜索比赛"""
-    _matches = await repo.search_matches(keyword)
-    return {
-        keyword: keyword,
-        total: len(matches[:limit]),
-        "matches": [
-            {
-                id: m.id,
-                home_team: m.home_team_name,  # type: ignore
-                away_team: m.away_team_name,  # type: ignore
-                competition: m.competition_name,  # type: ignore
-                match_date: m.match_date,  # type: ignore
+    keyword: str = Query(..., min_length=1, description="搜索关键词")
+,
+    limit: int = Query(20, ge=1, le=100, description="返回数量限制")
+,
+) -> dict[str, Any:
+    """搜索比赛"" _matches = await repo.search_matches(keyword)
+    return {keyword: keyword,)
+        total: len(matches[:limit])
+,
+        "matches": [)
+            {id: m.id,)
+        home_team: m.home_team_name,  # type: ignoreaway_team: m.away_team_name,  # type: ignore
+
+                competition: m.competition_name,  # type: ignorematch_date: m.match_date,  # type: ignore
+
                 status: m.status,  # type: ignore
-            }
+            
             for m in matches[:limit]
-        ],
-    }
+        ,
+    
 
 
 @router.get("/matches/date-range", summary="获取日期范围内的比赛")
-async def get_matches_by_date_range(
+async def get_matches_by_date_range()
     repo: ReadOnlyMatchRepoDep,
-    start_date: date = Query(..., description="开始日期"),
-    end_date: date = Query(..., description="结束日期"),
-    status: str | None = Query(None, description="比赛状态"),
-    limit: int = Query(100, ge=1, le=1000, description="返回数量限制"),
-) -> dict[str, Any]:
-    """获取指定日期范围内的比赛"""
-    _matches = await repo.get_matches_by_date_range(start_date, end_date, status, limit)  # type: ignore
-    return {
-        start_date: start_date,
+    start_date: date = Query(..., description="开始日期")
+,
+    end_date: date = Query(..., description="结束日期")
+,
+    status: str | None = Query(None, description="比赛状态")
+,
+    limit: int = Query(100, ge=1, le=1000, description="返回数量限制")
+,
+) -> dict[str, Any:
+    """获取指定日期范围内的比赛"" _matches = await repo.get_matches_by_date_range(start_date, end_date, status, limit)  # type: ignorereturn {start_date: start_date,)
         end_date: end_date,
         status: status,
-        total: len(matches),
-        "matches": [
-            {
-                id: m.id,
-                home_team: m.home_team_name,  # type: ignore
-                away_team: m.away_team_name,  # type: ignore
-                competition: m.competition_name,  # type: ignore
-                match_date: m.match_date,  # type: ignore
+        total: len(matches)
+,
+        "matches": [)
+            {id: m.id,)
+        home_team: m.home_team_name,  # type: ignoreaway_team: m.away_team_name,  # type: ignore
+
+                competition: m.competition_name,  # type: ignorematch_date: m.match_date,  # type: ignore
+
                 status: m.status,  # type: ignore
-            }
+            
             for m in matches
-        ],
-    }
+        ,
+    
 
 
 @router.post("/matches/{match_id}/start", summary="开始比赛")
 async def start_match(match_id: int, repo: MatchRepoDep) -> dict[str, Any]:
-    """开始比赛（更新状态为LIVE）"""
-    match = await repo.start_match(match_id)
-    if not match:
-        raise HTTPException(status_code=404, detail="比赛不存在")
+    """开始比赛(更新状态为LIVE)
+"" match = await repo.start_match(match_id)
+    if not matchraise HTTPException(status_code=404, detail="比赛不存在")
 
-    return {
-        "message": "比赛已开始",
+
+    return {"message": "比赛已开始",)
         match_id: match.id,
-        status: match.status,  # type: ignore
-        started_at: match.started_at,  # type: ignore
-    }
+        status: match.status,  # type: ignorestarted_at: match.started_at,  # type: ignore
+
+    
 
 
 @router.post("/matches/{match_id}/finish", summary="结束比赛")
-async def finish_match(
+async def finish_match()
     match_id: int,
     repo: MatchRepoDep,
-    home_score: int = Query(..., ge=0, description="主队得分"),
-    away_score: int = Query(..., ge=0, description="客队得分"),
-) -> dict[str, Any]:
-    """结束比赛并记录比分"""
-    match = await repo.finish_match(match_id, home_score, away_score)
-    if not match:
-        raise HTTPException(status_code=404, detail="比赛不存在")
+    home_score: int = Query(..., ge=0, description="主队得分")
+,
+    away_score: int = Query(..., ge=0, description="客队得分")
+,
+) -> dict[str, Any:
+    """结束比赛并记录比分"" match = await repo.finish_match(match_id, home_score, away_score)
+    if not matchraise HTTPException(status_code=404, detail="比赛不存在")
 
-    return {
-        "message": "比赛已结束",
+
+    return {"message": "比赛已结束",)
         match_id: match.id,
         "final_score": {"home": match.home_score, "away": match.away_score},
         finished_at: match.finished_at,  # type: ignore
-    }
+    
 
 
 # ==================== 仓储模式演示端点 ====================
 
 
 @router.get("/demo/query-spec", summary="QuerySpec查询演示")
-async def demo_query_spec(
+async def demo_query_spec()
     repo: ReadOnlyPredictionRepoDep,
-) -> dict[str, Any]:
-    """演示QuerySpec的灵活查询能力"""
-    from datetime import date, timedelta
+) -> dict[str, Any:
+    """演示QuerySpec的灵活查询能力"" from datetime import date, timedelta
 
-    # 示例1：基础筛选
+    # 示例1:基础筛选
     basic_filters = {"user_id": 1, "confidence": {"$gte": 0.8}}
     query_spec1 = QuerySpec(filters=basic_filters, order_by=["-created_at"], limit=10)
     results1 = await repo.find_many(query_spec1)
 
-    # 示例2：复杂筛选
-    complex_filters = {
-        "$and": [
-            {"created_at": {"$gte": date.today() - timedelta(days=7)}},
+    # 示例2:复杂筛选
+    complex_filters = {)
+        "$and": [)
+            {"created_at": {"$gte": date.today() - timedelta(days=7)))
+,
             {"$or": [{"predicted_home": {"$gt": 2}}, {"predicted_away": {"$gt": 2}}]},
-        ]
-    }
-    query_spec2 = QuerySpec(
+        
+    
+    query_spec2 = QuerySpec()
         filters=complex_filters, order_by=["confidence", "-created_at"], limit=20
-    )
+    
     results2 = await repo.find_many(query_spec2)
 
-    return {
-        "demo": "QuerySpec灵活查询演示",
-        "examples": [
-            {
+    return {"demo": "QuerySpec灵活查询演示",)
+        "examples": [)
+            {)
                 "name": "基础筛选",
                 filters: basic_filters,
-                results_count: len(results1),
-            },
-            {
-                "name": "复杂筛选",
-                filters: complex_filters,
-                results_count: len(results2),
-            },
-        ],
-    }
+                results_count: len(results1)
+,
+            ,
+            {"name": "复杂筛选",)
+        filters: complex_filters,
+                results_count: len(results2)
+,
+            ,
+        ,
+    
 
 
 @router.get("/demo/read-only-vs-write", summary="只读与读写仓储对比")
-async def demo_read_only_vs_write(
+async def demo_read_only_vs_write()
     read_only_repo: ReadOnlyPredictionRepoDep,
     write_repo: PredictionRepoDep,
-    prediction_id: int = Query(1, ge=1, description="预测ID"),
-) -> dict[str, Any]:
-    """演示只读仓储和读写仓储的区别"""
-    # 只读仓储查询
+    prediction_id: int = Query(1, ge=1, description="预测ID")
+,
+) -> dict[str, Any:
+    """演示只读仓储和读写仓储的区别"" # 只读仓储查询
     _prediction = await read_only_repo.get_by_id(prediction_id)
 
-    # 尝试使用只读仓储写入（会抛出异常）
-    can_write = False
-    error_message = None
+    # 尝试使用只读仓储写入(会抛出异常)
+    can_write = Falseerror_message = None
+
     try:
-        await read_only_repo.save(prediction)  # type: ignore
-    except NotImplementedError as e:
+    await read_only_repo.save(prediction)  # type: ignoreexcept NotImplementedError as e:
+
         error_message = str(e)
-    except (ValueError, KeyError, AttributeError, HTTPError, RequestException):
+    except (ValueError, KeyError, AttributeError, HTTPError, RequestException)
+:
         can_write = True
 
-    return {
-        prediction_id: prediction_id,
+    return {prediction_id: prediction_id,)
         prediction_exists: prediction is not None,
-        "read_only_repository": {
-            can_read: True,
-            can_write: can_write,
+        "read_only_repository": {can_read: True,)
+        can_write: can_write,
             error_on_write: error_message,
-        },
+        ,
         "write_repository": {"can_read": True, "can_write": True},
-    }
+    

@@ -2,7 +2,7 @@
 性能监控模块
 Performance Monitoring Module
 
-提供全面的性能监控功能：
+提供全面的性能监控功能:
 - 性能分析器
 - 监控中间件
 - 性能分析工具
@@ -11,13 +11,13 @@ Performance Monitoring Module
 
 from .analyzer import PerformanceAnalyzer, PerformanceInsight, PerformanceTrend
 from .api import router as performance_router
-from .middleware import (
+from .middleware import ()
     BackgroundTaskPerformanceMonitor,
     CachePerformanceMiddleware,
     DatabasePerformanceMiddleware,
     PerformanceMonitoringMiddleware,
-)
-from .profiler import (
+
+from .profiler import ()
     APIEndpointProfiler,
     DatabaseQueryProfiler,
     MemoryProfiler,
@@ -28,9 +28,9 @@ from .profiler import (
     profile_method,
     start_profiling,
     stop_profiling,
-)
 
-__all__ = [
+
+__all__ = [)
     # Profiler
     "PerformanceProfiler",
     "get_profiler",
@@ -53,4 +53,4 @@ __all__ = [
     "PerformanceTrend",
     # API
     "performance_router",
-]
+

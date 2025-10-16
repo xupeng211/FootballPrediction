@@ -1,11 +1,8 @@
 from typing import Any
-
-"""
-Configuration loader utilities
-"""
-
 import json
 import os
+
+"""Configuration loader utilities"""
 
 
 def load_config_from_file(file_path: str) -> dict[str, Any]:
@@ -19,7 +16,6 @@ def load_config_from_file(file_path: str) -> dict[str, Any]:
                 return json.load(f)  # type: ignore
             elif file_path.endswith(".yaml") or file_path.endswith(".yml"):
                 import yaml  # type: ignore
-
                 return yaml.safe_load(f) or {}
             else:
                 return {}

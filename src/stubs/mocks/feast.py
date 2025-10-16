@@ -1,7 +1,9 @@
 from typing import Any, Dict, List, Optional, Union
 
 Feast Feature Store Mock 实现
-用于测试环境,避免真实的Feast依赖
+"""
+用
+"""
 
 
 import logging
@@ -22,7 +24,7 @@ class FeatureView:
     "ttl": Optional[timedelta] = None
     "batch_source": Optional[str] = None
     "stream_source": Optional[str] = None
-    "tags": Optional[Dict[str, str] = None
+    "tags": Optional[Dict[str, str] = None)
 @dataclass
 class Entity:
     """实体"""
@@ -30,14 +32,14 @@ class Entity:
     "name": str
     "value_type": str
     "description": Optional[str] = None
-    "tags": Optional[Dict[str, str] = None
+    "tags": Optional[Dict[str, str] = None)
 @dataclass
 class FeatureService:
     """特征服务"""
 
     "name": str
     "features": List[str]
-    "tags": Optional[Dict[str, str] = None
+    "tags": Optional[Dict[str, str] = None)
 class ValueType:
     """值类型常量"""
 
@@ -49,20 +51,17 @@ class ValueType:
     BYTES = "BYTES"
     BOOL = "BOOL"
     UNIX_TIMESTAMP = "UNIX_TIMESTAMP"
-
-
 class MockFeatureStore:
     """模拟特征存储"""
 
-    def __init__(
-        self, repo_path: Optional[str] = None, config_path: Optional[str] = None
-    ):
+    def __init__(self, repo_path: Optional[str] = None, config_path: Optional[str] = None)
+    :
         self.repo_path = repo_path
         self.config_path = config_path
         self._feature_views: Dict[str, FeatureView] = {}
         self._entities: Dict[str, Entity] = {}
         self._feature_services: Dict[str, FeatureService] = {}
-        self._feature_data: Dict[str, Dict[str, Any] = defaultdict(dict[str, Any][str, Any])
+        self._feature_data: Dict[str, Dict[str, Any] = defaultdict(dict[str, Any][str, Any]))
         self._initialized = False
 
     def init(self) -> None:
@@ -107,9 +106,8 @@ class MockFeatureStore:
         """列出所有特征服务"""
         return list(self._feature_services.values())
 
-    def get_online_features(
-        self, feature_refs: List[str], entity_rows: List[Dict[str, Any]
-    ) -> Tuple[List[Dict[str, Any], List[str]:
+    def get_online_features(self, feature_refs: List[str], entity_rows: List[Dict[str, Any]))
+    ) -> Tuple[List[Dict[str, Any], List[str]:)
         """获取在线特征"""
     "features": List[Any] = []
         field_names = []
@@ -134,10 +132,10 @@ class MockFeatureStore:
                 key = f"{feature_view}__{feature_name}"
 
                 # 查找特征值
-                if (
+                if ()
                     entity_key in self._feature_data
                     and key in self._feature_data[entity_key]
-                ):
+                :
                     row_features[key] = self._feature_data[entity_key][key]
                 else:
                     # 返回默认值
@@ -158,23 +156,21 @@ class MockFeatureStore:
         else:
             return None
 
-    def write_to_online_store(
-        self,
+    def write_to_online_store(self,)
     "feature_view_name": str,
     "df": Any,  # DataFrame-like object
     "registry": Any = None,
-    ) -> None:
+     -> None:
         """写入在线存储"""
         logger.info(f"Writing to online store for {feature_view_name}")
         # Mock实现 - 不实际写入
 
-    def materialize_incremental(
-        self, start_date: datetime, end_date: datetime, feature_views: List[str = None
-    ) -> None:
+    def materialize_incremental(self, start_date: datetime, end_date: datetime, feature_views: List[str = None))
+     -> None:
         """增量物化"""
-        logger.info(
+        logger.info()
             f"Materializing incremental features from {start_date} to {end_date}"
-        )
+        
 
     def teardown(self) -> None:
         """清理特征存储"""
@@ -192,30 +188,23 @@ class MockFeatureStore:
     def clear_test_data(self) -> None:
         """清除测试数据"""
         self._feature_data.clear()
-
-
 class MockFeatureService:
     """模拟特征服务"""
 
-    def __init__(self, name: str, feature_store: MockFeatureStore):
-        self.name = name
+    def __init__(self, name: str, feature_store: MockFeatureStore: self.name = name)
         self.feature_store = feature_store
-        self._service_config: Optional[Dict[str, Any] = None
-    def get_feature_vector(
-        self, entity_id: str, feature_refs: List[str]
-    ) -> Dict[str, Any]:
+        self._service_config: Optional[Dict[str, Any] = None)
+    def get_feature_vector(self, entity_id: str, feature_refs: List[str])
+    ) -> Dict[str, Any:
         """获取特征向量"""
         entity_rows = [{"entity_id": entity_id}]
         features, _ = self.feature_store.get_online_features(feature_refs, entity_rows)
         return features[0] if features else {}
-
-
 class MockFeastClient:
     """模拟Feast客户端"""
 
-    def __init__(
-        self, repo_path: Optional[str] = None, config_path: Optional[str] = None
-    ):
+    def __init__(self, repo_path: Optional[str] = None, config_path: Optional[str] = None)
+    :
         self.feature_store = MockFeatureStore(repo_path, config_path)
         self._services: Dict[str, MockFeatureService] = {}
 
@@ -223,13 +212,12 @@ class MockFeastClient:
         """应用特征定义"""
         self.feature_store.apply(objects)
 
-    def get_online_features(
-        self, feature_refs: List[str], entity_rows: List[Dict[str, Any]
-    ) -> "MockOnlineResponse":
+    def get_online_features(self, feature_refs: List[str], entity_rows: List[Dict[str, Any]))
+     -> "MockOnlineResponse":
         """获取在线特征"""
-        features, field_names = self.feature_store.get_online_features(
+        features, field_names = self.feature_store.get_online_features()
             feature_refs, entity_rows
-        )
+        
         return MockOnlineResponse(features, field_names)
 
     def serve(self, port: int = 6566) -> None:
@@ -241,17 +229,14 @@ class MockFeastClient:
         if name not in self._services:
             self._services[name] = MockFeatureService(name, self.feature_store)
         return self._services[name]
-
-
 class MockOnlineResponse:
     """模拟在线特征响应"""
 
-    def __init__(self, features: List[Dict[str, Any], field_names: List[str]):
-        self._features = features
+    def __init__(self, features: List[Dict[str, Any], field_names: List[str]: self._features = features))
         self._field_names = field_names
         self._to_dict_called = False
 
-    def to_dict(self) -> List[Dict[str, Any]:
+    def to_dict(self) -> List[Dict[str, Any]:)
         """转换为字典"""
         self._to_dict_called = True
         return self._features
@@ -290,7 +275,7 @@ def Client(repo_path: str = None, config_path: str = None) -> MockFeastClient:
 # 测试数据生成器
 def generate_test_features(entity_id: str) -> Dict[str, Any]:
     """生成测试特征数据"""
-    return {
+    return {)
         "match_stats__goals_scored": 2,","
         "match_stats__goals_conceded": 1,","
         "match_stats__possession": 65.5,","
@@ -306,7 +291,7 @@ def generate_test_features(entity_id: str) -> Dict[str, Any]:
         "historical__head_to_head_wins": 5,","
         "historical__head_to_head_losses": 3,","
         "historical__head_to_head_draws": 2,""
-    }
+    
 
 
 # 创建全局实例

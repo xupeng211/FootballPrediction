@@ -2,23 +2,23 @@
 Celery调度任务
 Celery Scheduler Tasks
 
-实现足球数据采集和处理的定时任务。
+实现足球数据采集和处理的定时任务.
 
-⚠️ 注意：此文件已重构为模块化结构。
-为了向后兼容性，这里保留了原始的导入接口。
-建议使用：from src.scheduler.tasks import <task_name>
+⚠️ 注意:此文件已重构为模块化结构.
+为了向后兼容性,这里保留了原始的导入接口.
+建议使用:from src.scheduler.tasks import <task_name>
 
-基于 DATA_DESIGN.md 第3节设计。
+基于 DATA_DESIGN.md 第3节设计.
 """
 
-from .tasks import (  # type: ignore
-    # 为了向后兼容性，从新的模块化结构中导入所有任务
+from .tasks import (  # type: ignore)
+    # 为了向后兼容性,从新的模块化结构中导入所有任务
     # 基础类
     BaseDataTask,
     backup_database,
     # 特征计算任务
     calculate_features_batch,
-    # 任务别名（向后兼容）
+    # 任务别名(向后兼容)
     calculate_features_task,
     # 维护任务
     cleanup_data,
@@ -36,10 +36,10 @@ from .tasks import (  # type: ignore
     process_data_task,
     # 质量检查任务
     run_quality_checks,
-)
+
 
 # 重新导出以保持原始接口
-__all__ = [
+__all__ = [)
     # 基础类
     "BaseDataTask",
     # 数据采集任务
@@ -57,19 +57,19 @@ __all__ = [
     "generate_predictions",
     # 数据处理任务
     "process_bronze_to_silver",
-    # 任务别名（向后兼容）
+    # 任务别名(向后兼容)
     "calculate_features_task",
     "collect_fixtures_task",
     "collect_odds_task",
     "generate_predictions_task",
     "process_data_task",
-]
+
 
 # 原始实现已移至 src/scheduler/tasks/ 模块
 # 此处保留仅用于向后兼容性
 # 请使用新的模块化结构以获得更好的维护性
 
-# 包含的所有任务：
+# 包含的所有任务:
 # - collect_fixtures: 采集赛程数据
 # - collect_odds: 采集赔率数据
 # - collect_live_scores_conditional: 条件性实时比分采集

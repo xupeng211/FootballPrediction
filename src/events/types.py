@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, Union
 核心事件类型定义
 Core Event Types
 
-定义系统中的核心事件类型。
+定义系统中的核心事件类型.
 Defines core event types in the system.
 """
 
@@ -17,7 +17,7 @@ from .base import Event, EventData
 class MatchEventData(EventData):
     """比赛事件数据"""
 
-    def __init__(
+    def __init__()
         self,
     match_id: int,
     home_team_id: int,
@@ -28,7 +28,7 @@ class MatchEventData(EventData):
     venue: Optional[str] = None,
     weather: Optional[Dict[str, Any]] = None,
         **kwargs,
-    ):
+    :
         super().__init__(**kwargs)
         self.match_id = match_id
         self.home_team_id = home_team_id
@@ -43,7 +43,7 @@ class MatchEventData(EventData):
 class MatchCreatedEventData(MatchEventData):
     """比赛创建事件数据"""
 
-    def __init__(
+    def __init__()
         self,
     match_id: int,
     home_team_id: int,
@@ -53,15 +53,15 @@ class MatchCreatedEventData(MatchEventData):
     created_by: Optional[int] = None,
     initial_odds: Optional[Dict[str, float]] = None,
         **kwargs,
-    ):
-        super().__init__(
+    :
+        super().__init__()
             match_id=match_id,
             home_team_id=home_team_id,
             away_team_id=away_team_id,
             league_id=league_id,
             match_time=match_time,
             **kwargs,
-        )
+        
         self.created_by = created_by
         self.initial_odds = initial_odds
 
@@ -69,7 +69,7 @@ class MatchCreatedEventData(MatchEventData):
 class MatchUpdatedEventData(MatchEventData):
     """比赛更新事件数据"""
 
-    def __init__(
+    def __init__()
         self,
     match_id: int,
     home_team_id: int,
@@ -79,15 +79,15 @@ class MatchUpdatedEventData(MatchEventData):
     updated_fields: Optional[Dict[str, Any]] = None,
     previous_status: Optional[str] = None,
         **kwargs,
-    ):
-        super().__init__(
+    :
+        super().__init__()
             match_id=match_id,
             home_team_id=home_team_id,
             away_team_id=away_team_id,
             league_id=league_id,
             match_time=match_time,
             **kwargs,
-        )
+        
         self.updated_fields = updated_fields or {}
         self.previous_status = previous_status
 
@@ -96,7 +96,7 @@ class MatchUpdatedEventData(MatchEventData):
 class PredictionEventData(EventData):
     """预测事件数据"""
 
-    def __init__(
+    def __init__()
         self,
     prediction_id: int,
     match_id: int,
@@ -106,7 +106,7 @@ class PredictionEventData(EventData):
     confidence: float,
     strategy_used: Optional[str] = None,
         **kwargs,
-    ):
+    :
         super().__init__(**kwargs)
         self.prediction_id = prediction_id
         self.match_id = match_id
@@ -120,7 +120,7 @@ class PredictionEventData(EventData):
 class PredictionMadeEventData(PredictionEventData):
     """预测创建事件数据"""
 
-    def __init__(
+    def __init__()
         self,
     prediction_id: int,
     match_id: int,
@@ -132,8 +132,8 @@ class PredictionMadeEventData(PredictionEventData):
     accuracy_score: Optional[float] = None,
     strategy_used: Optional[str] = None,
         **kwargs,
-    ):
-        super().__init__(
+    :
+        super().__init__()
             prediction_id=prediction_id,
             match_id=match_id,
             user_id=user_id,
@@ -142,7 +142,7 @@ class PredictionMadeEventData(PredictionEventData):
             confidence=confidence,
             strategy_used=strategy_used,
             **kwargs,
-        )
+        
         self.points_earned = points_earned
         self.accuracy_score = accuracy_score
 
@@ -150,7 +150,7 @@ class PredictionMadeEventData(PredictionEventData):
 class PredictionUpdatedEventData(PredictionEventData):
     """预测更新事件数据"""
 
-    def __init__(
+    def __init__()
         self,
     prediction_id: int,
     match_id: int,
@@ -162,8 +162,8 @@ class PredictionUpdatedEventData(PredictionEventData):
     update_reason: Optional[str] = None,
     strategy_used: Optional[str] = None,
         **kwargs,
-    ):
-        super().__init__(
+    :
+        super().__init__()
             prediction_id=prediction_id,
             match_id=match_id,
             user_id=user_id,
@@ -172,7 +172,7 @@ class PredictionUpdatedEventData(PredictionEventData):
             confidence=confidence,
             strategy_used=strategy_used,
             **kwargs,
-        )
+        
         self.previous_prediction = previous_prediction
         self.update_reason = update_reason
 
@@ -181,14 +181,14 @@ class PredictionUpdatedEventData(PredictionEventData):
 class UserEventData(EventData):
     """用户事件数据"""
 
-    def __init__(
+    def __init__()
         self,
     user_id: int,
     username: str,
     email: str,
     registration_date: datetime,
         **kwargs,
-    ):
+    :
         super().__init__(**kwargs)
         self.user_id = user_id
         self.username = username
@@ -199,7 +199,7 @@ class UserEventData(EventData):
 class UserRegisteredEventData(UserEventData):
     """用户注册事件数据"""
 
-    def __init__(
+    def __init__()
         self,
     user_id: int,
     username: str,
@@ -209,14 +209,14 @@ class UserRegisteredEventData(UserEventData):
     ip_address: Optional[str] = None,
     user_agent: Optional[str] = None,
         **kwargs,
-    ):
-        super().__init__(
+    :
+        super().__init__()
             user_id=user_id,
             username=username,
             email=email,
             registration_date=registration_date,
             **kwargs,
-        )
+        
         self.referral_code = referral_code
         self.ip_address = ip_address
         self.user_agent = user_agent
@@ -226,7 +226,7 @@ class UserRegisteredEventData(UserEventData):
 class TeamStatsEventData(EventData):
     """球队统计事件数据"""
 
-    def __init__(
+    def __init__()
         self,
     team_id: int,
     season: str,
@@ -239,7 +239,7 @@ class TeamStatsEventData(EventData):
     points: int,
     last_updated: datetime,
         **kwargs,
-    ):
+    :
         super().__init__(**kwargs)
         self.team_id = team_id
         self.season = season
@@ -265,7 +265,7 @@ class MatchCreatedEvent(Event):
         return "match.created"
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
+        return {)
             event_type: self.get_event_type(),
             event_id: self.event_id,
             timestamp: self.timestamp.isoformat(),
@@ -282,11 +282,11 @@ class MatchCreatedEvent(Event):
             created_by: self.data.created_by,  # type: ignore
             initial_odds: self.data.initial_odds,  # type: ignore
             metadata: self.data.metadata,
-        }
+        
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "MatchCreatedEvent":
-        event_data = MatchCreatedEventData(
+        event_data = MatchCreatedEventData()
             event_id=data.get("event_id"),
             timestamp=datetime.fromisoformat(data["timestamp"]),
             source=data.get("source"),
@@ -302,7 +302,7 @@ class MatchCreatedEvent(Event):
             weather=data.get("weather"),
             created_by=data.get("created_by"),
             initial_odds=data.get("initial_odds"),
-        )
+        
         return cls(event_data)
 
 
@@ -317,7 +317,7 @@ class MatchUpdatedEvent(Event):
         return "match.updated"
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
+        return {)
             event_type: self.get_event_type(),
             event_id: self.event_id,
             timestamp: self.timestamp.isoformat(),
@@ -334,11 +334,11 @@ class MatchUpdatedEvent(Event):
             updated_fields: self.data.updated_fields,  # type: ignore
             previous_status: self.data.previous_status,  # type: ignore
             metadata: self.data.metadata,
-        }
+        
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "MatchUpdatedEvent":
-        event_data = MatchUpdatedEventData(
+        event_data = MatchUpdatedEventData()
             event_id=data.get("event_id"),
             timestamp=datetime.fromisoformat(data["timestamp"]),
             source=data.get("source"),
@@ -354,7 +354,7 @@ class MatchUpdatedEvent(Event):
             weather=data.get("weather"),
             updated_fields=data.get("updated_fields", {}),
             previous_status=data.get("previous_status"),
-        )
+        
         return cls(event_data)
 
 
@@ -369,7 +369,7 @@ class PredictionMadeEvent(Event):
         return "prediction.made"
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
+        return {)
             event_type: self.get_event_type(),
             event_id: self.event_id,
             timestamp: self.timestamp.isoformat(),
@@ -385,11 +385,11 @@ class PredictionMadeEvent(Event):
             points_earned: self.data.points_earned,  # type: ignore
             accuracy_score: self.data.accuracy_score,  # type: ignore
             metadata: self.data.metadata,
-        }
+        
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "PredictionMadeEvent":
-        event_data = PredictionMadeEventData(
+        event_data = PredictionMadeEventData()
             event_id=data.get("event_id"),
             timestamp=datetime.fromisoformat(data["timestamp"]),
             source=data.get("source"),
@@ -404,7 +404,7 @@ class PredictionMadeEvent(Event):
             strategy_used=data.get("strategy_used"),
             points_earned=data.get("points_earned"),
             accuracy_score=data.get("accuracy_score"),
-        )
+        
         return cls(event_data)
 
 
@@ -419,7 +419,7 @@ class PredictionUpdatedEvent(Event):
         return "prediction.updated"
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
+        return {)
             event_type: self.get_event_type(),
             event_id: self.event_id,
             timestamp: self.timestamp.isoformat(),
@@ -435,11 +435,11 @@ class PredictionUpdatedEvent(Event):
             previous_prediction: self.data.previous_prediction,  # type: ignore
             update_reason: self.data.update_reason,  # type: ignore
             metadata: self.data.metadata,
-        }
+        
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "PredictionUpdatedEvent":
-        event_data = PredictionUpdatedEventData(
+        event_data = PredictionUpdatedEventData()
             event_id=data.get("event_id"),
             timestamp=datetime.fromisoformat(data["timestamp"]),
             source=data.get("source"),
@@ -454,7 +454,7 @@ class PredictionUpdatedEvent(Event):
             strategy_used=data.get("strategy_used"),
             previous_prediction=data.get("previous_prediction"),
             update_reason=data.get("update_reason"),
-        )
+        
         return cls(event_data)
 
 
@@ -469,7 +469,7 @@ class UserRegisteredEvent(Event):
         return "user.registered"
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
+        return {)
             event_type: self.get_event_type(),
             event_id: self.event_id,
             timestamp: self.timestamp.isoformat(),
@@ -483,11 +483,11 @@ class UserRegisteredEvent(Event):
             ip_address: self.data.ip_address,  # type: ignore
             user_agent: self.data.user_agent,  # type: ignore
             metadata: self.data.metadata,
-        }
+        
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "UserRegisteredEvent":
-        event_data = UserRegisteredEventData(
+        event_data = UserRegisteredEventData()
             event_id=data.get("event_id"),
             timestamp=datetime.fromisoformat(data["timestamp"]),
             source=data.get("source"),
@@ -500,7 +500,7 @@ class UserRegisteredEvent(Event):
             referral_code=data.get("referral_code"),
             ip_address=data.get("ip_address"),
             user_agent=data.get("user_agent"),
-        )
+        
         return cls(event_data)
 
 
@@ -515,7 +515,7 @@ class TeamStatsUpdatedEvent(Event):
         return "team.stats_updated"
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
+        return {)
             event_type: self.get_event_type(),
             event_id: self.event_id,
             timestamp: self.timestamp.isoformat(),
@@ -532,11 +532,11 @@ class TeamStatsUpdatedEvent(Event):
             points: self.data.points,  # type: ignore
             last_updated: self.data.last_updated.isoformat(),  # type: ignore
             metadata: self.data.metadata,
-        }
+        
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "TeamStatsUpdatedEvent":
-        event_data = TeamStatsEventData(
+        event_data = TeamStatsEventData()
             event_id=data.get("event_id"),
             timestamp=datetime.fromisoformat(data["timestamp"]),
             source=data.get("source"),
@@ -552,5 +552,5 @@ class TeamStatsUpdatedEvent(Event):
             goals_against=data["goals_against"],
             points=data["points"],
             last_updated=datetime.fromisoformat(data["last_updated"]),
-        )
+        
         return cls(event_data)

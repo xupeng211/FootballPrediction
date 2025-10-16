@@ -1,15 +1,12 @@
-"""
-日志系统（向后兼容）
+""" 日志系统(向后兼容)
 Logging System (Backward Compatible)
 
-为了保持向后兼容性，此文件重新导出新的模块化日志系统。
+为了保持向后兼容性, 此文件重新导出新的模块化日志系统.
 
 Provides backward compatible exports for the modular logging system.
-"""
+"" import os
 
-import os
-
-from .logging import (  # type: ignore
+from .logging import (  # type: ignore)
     LogCategory,
     LoggerManager,
     # 重新导出主要类和函数
@@ -19,18 +16,20 @@ from .logging import (  # type: ignore
     log_async_performance,
     log_audit,
     log_performance,
-)
+
 
 # 初始化默认配置
 
-LoggerManager.configure(
-    level=LogLevel.INFO,  # type: ignore
-    enable_json=os.getenv("LOG_JSON", "true").lower() == "true",
-    log_dir=os.getenv("LOG_DIR", "logs"),
-)
+LoggerManager.configure()
+    level=LogLevel.INFO,  # type: ignoreenable_json=os.getenv("LOG_JSON", "true")
+.lower() == "true",
+
+    log_dir=os.getenv("LOG_DIR", "logs")
+,
+
 
 # 导出所有符号
-__all__ = [
+__all__ = [)
     "LogLevel",
     "LogCategory",
     "StructuredLogger",
@@ -39,4 +38,4 @@ __all__ = [
     "log_performance",
     "log_async_performance",
     "log_audit",
-]
+

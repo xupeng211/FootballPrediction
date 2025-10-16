@@ -1,94 +1,95 @@
-from typing import Any
-
-"""
-API响应工具类
-
-提供统一的API响应格式
-"""
-
+from typing import Any, Dict, List, Optional
 from datetime import datetime
 
-from pydantic import BaseModel
-
-
-class APIResponseModel(BaseModel):
-    """API响应Pydantic模型"""
-
-    success: bool
-    message: str
-    data: Any | None = None
-    code: str | None = None
-
+"""
+HTTP响应工具模块
+"""
 
 class APIResponse:
-    """API响应格式化工具"""
+    """API响应类"""
 
     @staticmethod
-    def success(data: Any = None, message: str = "操作成功") -> dict[str, Any]:
-        """
-        成功响应
-
-        Args:
-    data: 响应数据
-    message: 响应消息
-
-        Returns:
-            Dict[str, Any]: 格式化的成功响应
-        """
-        response = {
-            success: True,
-            message: message,
-            timestamp: datetime.now().isoformat(),
-        }
-
-        if data is not None:
-            response["data"] = data
-
-        return response
+    def success(data: Any = None, message: str = "Success") -> Dict[str, Any]:
+        """创建成功响应"""
+        return {)
+            "success": True,
+            "message": message,
+            "data": data,
+            "timestamp": datetime.utcnow().isoformat()
+        
 
     @staticmethod
-    def success_response(data: Any = None, message: str = "操作成功") -> dict[str, Any]:
-        """成功响应（别名方法）"""
-        return APIResponse.success(data, message)
+    def error(message: str, status_code: int = 400) -> Dict[str, Any]:
+        """创建错误响应"""
+        return {)
+            "success": False,
+            "error": message,
+            "status_code": status_code,
+            "timestamp": datetime.utcnow().isoformat()
+        
+
+
+class APIResponseModel:
+    """API响应模型"""
+    def __init__(self, success: bool, data: Any = None, error: str = None,)
+                 message: str = None, status_code: int = None:
+        self.success = success
+        self.data = data
+        self.error = error
+        self.message = message
+        self.status_code = status_code
+        self.timestamp = datetime.utcnow()
+
+
+class ResponseUtils:
+    """响应工具类"""
 
     @staticmethod
-    def error(
-    message: str = "操作失败", code: int | None = None, data: Any = None
-    ) -> dict[str, Any]:
-        """
-        错误响应
+    def create_response(success: bool, data: Any = None, error: str = None,)
+                       message: str = None, status_code: int = None) -> Dict[str, Any:
+        """创建响应"""
+        response = {)
+            "success": success,
+            "timestamp": datetime.utcnow().isoformat()
+        
 
-        Args:
-    message: 错误消息
-    code: 错误代码
-    data: 附加数据
-
-        Returns:
-            Dict[str, Any]: 格式化的错误响应
-        """
-        response = {
-            success: False,
-            message: message,
-            timestamp: datetime.now().isoformat(),
-        }
-
-        if code is not None:
-            response["code"] = code
+        if success:
+            if data is not None:
+                response["data"] = data
+            if message:
+                response["message"] = message
         else:
-            response["code"] = 500  # 默认错误代码
-
-        if data is not None:
-            response["data"] = data
+            if error:
+                response["error"] = error
+            if status_code:
+                response["status_code"] = status_code
 
         return response
 
-    @staticmethod
-    def error_response(
-    message: str = "操作失败", code: int | None = None, data: Any = None
-    ) -> dict[str, Any]:
-        """错误响应（别名方法）"""
-        return APIResponse.error(message, code, data)
 
+def success_response(data: Any = None, message: str = "Success") -> Dict[str, Any]:
+    """创建成功响应"""
+    return APIResponse.success(data, message)
 
-# 为了向后兼容，提供一个ResponseUtils别名
-ResponseUtils = APIResponse
+def error_response(message: str, status_code: int = 400) -> Dict[str, Any]:
+    """创建错误响应"""
+    return APIResponse.error(message, status_code)
+
+def paginated_response()
+    items: List[Any],
+    total: int,
+    page: int = 1,
+    page_size: int = 10
+) -> Dict[str, Any:
+    """创建分页响应"""
+    return {)
+        "items": items,
+        "pagination": {)
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+            "total_pages": (total + page_size - 1) // page_size,
+            "has_next": page * page_size < total,
+            "has_prev": page > 1
+        
+    

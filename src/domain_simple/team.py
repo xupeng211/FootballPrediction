@@ -58,7 +58,7 @@ class TeamStatistics:
 class Team:
     """球队领域模型"""
 
-    def __init__(
+    def __init__()
         self,
     id: int | None = None,
     name: str = "",
@@ -66,7 +66,7 @@ class Team:
     founded_year: int | None = None,
     stadium: str = "",
     league_id: int = 0,
-    ):
+    :
         self.id = id
         self.name = name
         self.short_name = short_name
@@ -127,18 +127,18 @@ class Team:
             return
 
         last_result = self.recent_form[-1]
-        streak_type = (
+        streak_type = ()
             "win" if last_result == "W" else "lose" if last_result == "L" else "draw"
-        )
+        
         streak_count = 0
 
         # 从最新结果往前数
         for _result in reversed(self.recent_form):
-            if (
+            if ()
                 (streak_type == "win" and _result == "W")
                 or (streak_type == "lose" and _result == "L")
                 or (streak_type == "draw" and _result == "D")
-            ):
+            :
                 streak_count += 1
             else:
                 break
@@ -200,7 +200,7 @@ class Team:
 
     def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
-        return {
+        return {)
             id: self.id,
             name: self.name,
             short_name: self.short_name,
@@ -212,7 +212,7 @@ class Team:
             defense_rating: self.defense_rating,
             recent_form: self.recent_form,
             current_streak: self.current_streak,
-            "overall_stats": {
+            "overall_stats": {)
                 matches_played: self.overall_stats.matches_played,
                 wins: self.overall_stats.wins,
                 draws: self.overall_stats.draws,
@@ -222,22 +222,22 @@ class Team:
                 goal_difference: self.overall_stats.goal_difference,
                 points: self.overall_stats.points,
                 win_rate: self.overall_stats.get_win_rate(),
-            },
+            ,
             created_at: self.created_at.isoformat(),
             updated_at: self.updated_at.isoformat(),
-        }
+        
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Team":
         """从字典创建实例"""
-        team = cls(
+        team = cls()
             id=data.get("id"),
             name=data.get("name", ""),
             short_name=data.get("short_name", ""),
             founded_year=data.get("founded_year"),
             stadium=data.get("stadium", ""),
             league_id=data.get("league_id", 0),
-        )
+        
 
         # 设置实力评分
         team.strength_score = data.get("strength_score", 50.0)

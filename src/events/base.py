@@ -1,10 +1,14 @@
 from typing import Any, Type, TypeVar
 
 """
-事件系统基础类
+"""
+事
+"""
 Event System Base Classes
 
-定义事件和事件处理器的核心接口。
+"""
+定
+"""
 Defines core interfaces for events and event handlers.
 """
 
@@ -15,23 +19,24 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 
 T = TypeVar("T", bound="Event")
-
-
 class EventData:
-    """事件数据基类
+    """
+"""
 
-    所有事件数据的基类，提供通用的元数据。
+事
+"""
+
+    所有事件数据的基类,提供通用的元数据.
     Base class for all event data, providing common metadata.
     """
 
-    def __init__(
-        self,
+    def __init__(self,)
     "source": str | None = None,
     "version": str = "1.0",
     "metadata": dict[str, Any] | None = None,
     "event_id": str | None = None,
     "timestamp": datetime | None = None,
-    ):
+    :
         """初始化事件数据"""
         self.event_id = event_id or str(uuid.uuid4())
         self.timestamp = timestamp or datetime.utcnow()
@@ -41,14 +46,19 @@ class EventData:
 
 
 class Event(ABC):
-    """事件抽象基类
+    """
+"""
+事
+"""
 
-    定义所有事件必须实现的接口。
+    定义所有事件必须实现的接口.
     Defines the interface that all events must implement.
     """
 
-    def __init__(self, data: EventData):
-        """初始化事件
+    def __init__(self, data: EventData: """)
+"""
+初
+"""
 
         Args:
     "data": 事件数据
@@ -88,7 +98,10 @@ class Event(ABC):
     @classmethod
     @abstractmethod
     def get_event_type(cls) -> str:
-        """获取事件类型
+        """
+"""
+获
+"""
 
         Returns:
     "str": 事件类型标识符
@@ -97,7 +110,10 @@ class Event(ABC):
 
     @abstractmethod
     def to_dict(self) -> dict[str, Any]:
-        """将事件转换为字典
+        """
+"""
+将
+"""
 
         Returns:
             Dict[str, Any]: 事件的字典表示
@@ -107,12 +123,13 @@ class Event(ABC):
     @classmethod
     @abstractmethod
     def from_dict(cls: Type[T], data: dict[str, Any]) -> T:
-        """从字典创建事件
+        """
+"""
+从
+"""
 
-        Args:
-    "data": 事件字典数据
-
-        Returns:
+        Args: "data": 事件字典数据,
+    Returns:
     "T": 事件实例
         """
         pass
@@ -125,14 +142,19 @@ class Event(ABC):
 
 
 class EventHandler(ABC):
-    """事件处理器抽象基类
+    """
+"""
+事
+"""
 
-    定义事件处理器必须实现的接口。
+    定义事件处理器必须实现的接口.
     Defines the interface that all event handlers must implement.
     """
 
-    def __init__(self, name: str | None = None):
-        """初始化事件处理器
+    def __init__(self, name: str | None = None: """)
+"""
+初
+"""
 
         Args:
     "name": 处理器名称
@@ -142,7 +164,10 @@ class EventHandler(ABC):
 
     @abstractmethod
     async def handle(self, event: Event) -> None:
-        """处理事件
+        """
+"""
+处
+"""
 
         Args:
     "event": 要处理的事件
@@ -151,7 +176,10 @@ class EventHandler(ABC):
 
     @abstractmethod
     def get_handled_events(self) -> list[str]:
-        """获取处理器能处理的事件类型
+        """
+"""
+获
+"""
 
         Returns:
             List[str]: 事件类型列表
@@ -170,7 +198,10 @@ class EventHandler(ABC):
         self._subscribed_events.clear()
 
     def add_subscription(self, event_type: str, queue: asyncio.Queue) -> None:
-        """添加事件订阅
+        """
+"""
+添
+"""
 
         Args:
     "event_type": 事件类型
@@ -179,7 +210,10 @@ class EventHandler(ABC):
         self._subscribed_events[event_type] = queue
 
     def remove_subscription(self, event_type: str) -> None:
-        """移除事件订阅
+        """
+"""
+移
+"""
 
         Args:
     "event_type": 事件类型
@@ -187,28 +221,32 @@ class EventHandler(ABC):
         self._subscribed_events.pop(event_type, None)
 
     def is_subscribed_to(self, event_type: str) -> bool:
-        """检查是否订阅了指定事件类型
+        """
+"""
+检
+"""
 
-        Args:
-    "event_type": 事件类型
-
-        Returns:
+        Args: "event_type": 事件类型,
+    Returns:
     "bool": 是否已订阅
         """
         return event_type in self._subscribed_events
 
     async def wait_for_events(self, event_type: str) -> None:
-        """等待并处理特定类型的事件
+        """
+"""
+等
+"""
 
         Args:
     "event_type": 事件类型
         """
         queue = self._subscribed_events.get(event_type)
-        if not queue:
-            raise ValueError(f"Not subscribed to event type: {event_type}")
-
-        while True:
-            try:
+        if not queue: raise ValueError(f"Not subscribed to event typ,)
+"    e: {event_type}"
+"
+        while True: tr,
+    y:
                 event = await queue.get()
                 if event is None:  # 停止信号
                     break
@@ -221,19 +259,23 @@ class EventHandler(ABC):
 
 
 class EventFilter(ABC):
-    """事件过滤器抽象基类
+    """
+"""
+事
+"""
 
-    用于过滤事件，决定是否应该处理某个事件。
+    用于过滤事件,决定是否应该处理某个事件.
     """
 
     @abstractmethod
     def should_process(self, event: Event) -> bool:
-        """判断是否应该处理事件
+        """
+"""
+判
+"""
 
-        Args:
-    "event": 事件
-
-        Returns:
+        Args: "event": 事件,
+    Returns:
     "bool": 是否应该处理
         """
         pass
@@ -243,7 +285,10 @@ class EventTypeFilter(EventFilter):
     """基于事件类型的过滤器"""
 
     def __init__(self, allowed_types: list[str]):
-        """初始化过滤器
+        """
+"""
+初
+"""
 
         Args:
     "allowed_types": 允许的事件类型列表
@@ -258,7 +303,10 @@ class EventSourceFilter(EventFilter):
     """基于事件源的过滤器"""
 
     def __init__(self, allowed_sources: list[str]):
-        """初始化过滤器
+        """
+"""
+初
+"""
 
         Args:
     "allowed_sources": 允许的事件源列表
@@ -270,14 +318,17 @@ class EventSourceFilter(EventFilter):
 
 
 class CompositeEventFilter(EventFilter):
-    """组合过滤器，支持AND和OR逻辑"""
+    """组合过滤器,支持AND和OR逻辑"""
 
     def __init__(self, filters: list[EventFilter], operator: str = "AND"):
-        """初始化组合过滤器
+        """
+"""
+初
+"""
 
         Args:
     "filters": 子过滤器列表
-    "operator": 逻辑操作符（"AND" 或 "OR"）
+    "operator": 逻辑操作符("AND" 或 "OR")
         """
         self.filters = filters
         self.operator = operator.upper()
@@ -285,8 +336,8 @@ class CompositeEventFilter(EventFilter):
         if self.operator not in ["AND", "OR"]:
             raise ValueError("Operator must be 'AND' or 'OR'")
 
-    def should_process(self, event: Event) -> bool:
-        if not self.filters:
+    def should_process(self, event: Event) -> bool: if not self.filter,
+    s:
             return True
 
         if self.operator == "AND":

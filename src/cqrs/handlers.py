@@ -1,10 +1,14 @@
 from typing import Any
 
 """
-命令和查询处理器
+"""
+命
+"""
 Command and Query Handlers
 
-实现所有命令和查询的处理器。
+"""
+实
+"""
 Implements handlers for all commands and queries.
 """
 
@@ -12,28 +16,28 @@ import logging
 from datetime import datetime
 from decimal import Decimal
 
-from ..database.connection import get_session
-from ..database.models import Prediction, User
-from .base import CommandHandler, QueryHandler
-from .commands import (
+..database.connection import get_session
+..database.models import Prediction, User
+.base import CommandHandler, QueryHandler
+.commands import ()
     CreatePredictionCommand,
     CreateUserCommand,
     DeletePredictionCommand,
     UpdatePredictionCommand,
-)
-from .dto import (
+
+.dto import ()
     CommandResult,
     MatchDTO,
     PredictionDTO,
     PredictionStatsDTO,
     UserDTO,
-)
-from .queries import (
+
+.queries import ()
     GetPredictionByIdQuery,
     GetPredictionsByUserQuery,
     GetUpcomingMatchesQuery,
     GetUserStatsQuery,
-)
+
 
 logger = logging.getLogger(__name__)
 
@@ -43,25 +47,26 @@ class CreatePredictionHandler(CommandHandler):
     """创建预测处理器"""
 
     @property
-    def command_type(self):
-        return CreatePredictionCommand
+    def command_type(self: return CreatePredictionCommand)
 
-    async def handle(self, command: CreatePredictionCommand) -> CommandResult:  # type: ignore
+    async def handle(self, command: CreatePredictionCommand) -> CommandResult: # typ,
+    e: ignore
         """处理创建预测命令"""
         try:
-            async with get_session() as session:  # type: ignore
+            async with get_session() as session: # typ,
+    e: ignore
                 # 检查是否已经存在预测
-                existing = await session.execute(
+                existing = await session.execute()
                     "SELECT id FROM predictions WHERE match_id = :match_id AND user_id = :user_id",
                     {"match_id": command.match_id, "user_id": command.user_id},
-                )
+                
                 if existing.scalar():  # type: ignore
-                    return CommandResult.failure_result(
+                    return CommandResult.failure_result()
                         ["用户已经对该比赛进行了预测"], "预测已存在"
-                    )
+                    
 
                 # 创建预测
-                _prediction = Prediction(
+                _prediction = Prediction()
                     match_id=command.match_id,
                     user_id=command.user_id,
                     predicted_home=command.predicted_home,
@@ -70,7 +75,7 @@ class CreatePredictionHandler(CommandHandler):
                     strategy_used=command.strategy_used,
                     notes=command.notes,
                     created_at=datetime.utcnow(),
-                )
+                
 
                 session.add(prediction)
                 await session.commit()
@@ -78,8 +83,8 @@ class CreatePredictionHandler(CommandHandler):
 
                 logger.info(f"创建预测成功: ID={prediction.id}")
 
-                return CommandResult.success_result(
-                    _data=PredictionDTO(
+                return CommandResult.success_result()
+                    _data=PredictionDTO()
                         id=prediction.id,  # type: ignore
                         match_id=prediction.match_id,
                         user_id=prediction.user_id,  # type: ignore
@@ -89,26 +94,27 @@ class CreatePredictionHandler(CommandHandler):
                         strategy_used=prediction.strategy_used,  # type: ignore
                         notes=prediction.notes,  # type: ignore
                         created_at=prediction.created_at,  # type: ignore
-                    ),
+                    ,
                     message="预测创建成功",
-                )
+                
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            logger.error(f"创建预测失败: {e}")
-            return CommandResult.failure_result([str(e)], "创建预测失败")
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e: logger.error(f"创建预测失,)
+"    败: {e}"
+"            return CommandResult.failure_result([str(e)], "创建预测失败")
 
 
 class UpdatePredictionHandler(CommandHandler):
     """更新预测处理器"""
 
     @property
-    def command_type(self):
-        return UpdatePredictionCommand
+    def command_type(self: return UpdatePredictionCommand)
 
-    async def handle(self, command: UpdatePredictionCommand) -> CommandResult:  # type: ignore
+    async def handle(self, command: UpdatePredictionCommand) -> CommandResult: # typ,
+    e: ignore
         """处理更新预测命令"""
         try:
-            async with get_session() as session:  # type: ignore
+            async with get_session() as session: # typ,
+    e: ignore
                 _prediction = await session.get(Prediction, command.prediction_id)
                 if not prediction:
                     return CommandResult.failure_result(["预测不存在"], "预测未找到")
@@ -132,8 +138,8 @@ class UpdatePredictionHandler(CommandHandler):
 
                 logger.info(f"更新预测成功: ID={prediction.id}")
 
-                return CommandResult.success_result(
-                    _data=PredictionDTO(
+                return CommandResult.success_result()
+                    _data=PredictionDTO()
                         id=prediction.id,
                         match_id=prediction.match_id,
                         user_id=prediction.user_id,
@@ -144,26 +150,27 @@ class UpdatePredictionHandler(CommandHandler):
                         notes=prediction.notes,
                         created_at=prediction.created_at,
                         updated_at=prediction.updated_at,
-                    ),
+                    ,
                     message="预测更新成功",
-                )
+                
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            logger.error(f"更新预测失败: {e}")
-            return CommandResult.failure_result([str(e)], "更新预测失败")
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e: logger.error(f"更新预测失,)
+"    败: {e}"
+"            return CommandResult.failure_result([str(e)], "更新预测失败")
 
 
 class DeletePredictionHandler(CommandHandler):
     """删除预测处理器"""
 
     @property
-    def command_type(self):
-        return DeletePredictionCommand
+    def command_type(self: return DeletePredictionCommand)
 
-    async def handle(self, command: DeletePredictionCommand) -> CommandResult:  # type: ignore
+    async def handle(self, command: DeletePredictionCommand) -> CommandResult: # typ,
+    e: ignore
         """处理删除预测命令"""
         try:
-            async with get_session() as session:  # type: ignore
+            async with get_session() as session: # typ,
+    e: ignore
                 _prediction = await session.get(Prediction, command.prediction_id)
                 if not prediction:
                     return CommandResult.failure_result(["预测不存在"], "预测未找到")
@@ -173,13 +180,13 @@ class DeletePredictionHandler(CommandHandler):
 
                 logger.info(f"删除预测成功: ID={command.prediction_id}")
 
-                return CommandResult.success_result(
+                return CommandResult.success_result()
                     _data={"deleted_id": command.prediction_id}, message="预测删除成功"
-                )
+                
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            logger.error(f"删除预测失败: {e}")
-            return CommandResult.failure_result([str(e)], "删除预测失败")
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e: logger.error(f"删除预测失,)
+"    败: {e}"
+"            return CommandResult.failure_result([str(e)], "删除预测失败")
 
 
 # 用户命令处理器
@@ -187,20 +194,21 @@ class CreateUserHandler(CommandHandler):
     """创建用户处理器"""
 
     @property
-    def command_type(self):
-        return CreateUserCommand
+    def command_type(self: return CreateUserCommand)
 
-    async def handle(self, command: CreateUserCommand) -> CommandResult:  # type: ignore
+    async def handle(self, command: CreateUserCommand) -> CommandResult: # typ,
+    e: ignore
         """处理创建用户命令"""
         try:
-            async with get_session() as session:  # type: ignore
-                _user = User(
+            async with get_session() as session: # typ,
+    e: ignore
+                _user = User()
                     username=command.username,
                     email=command.email,
                     password_hash=command.password_hash,
                     created_at=datetime.utcnow(),
                     last_login=datetime.utcnow(),
-                )
+                
 
                 session.add(user)
                 await session.commit()
@@ -208,8 +216,8 @@ class CreateUserHandler(CommandHandler):
 
                 logger.info(f"创建用户成功: ID={user.id}")
 
-                return CommandResult.success_result(
-                    _data=UserDTO(
+                return CommandResult.success_result()
+                    _data=UserDTO()
                         id=user.id,  # type: ignore
                         username=user.username,  # type: ignore
                         email=user.email,  # type: ignore
@@ -219,13 +227,13 @@ class CreateUserHandler(CommandHandler):
                         success_rate=0.0,
                         created_at=user.created_at,  # type: ignore
                         last_login=user.last_login,  # type: ignore
-                    ),
+                    ,
                     message="用户创建成功",
-                )
+                
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            logger.error(f"创建用户失败: {e}")
-            return CommandResult.failure_result([str(e)], "创建用户失败")
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e: logger.error(f"创建用户失,)
+"    败: {e}"
+"            return CommandResult.failure_result([str(e)], "创建用户失败")
 
 
 # 查询处理器
@@ -233,18 +241,19 @@ class GetPredictionByIdHandler(QueryHandler):
     """根据ID获取预测处理器"""
 
     @property
-    def query_type(self):
-        return GetPredictionByIdQuery
+    def query_type(self: return GetPredictionByIdQuery)
 
-    async def handle(self, query: GetPredictionByIdQuery) -> PredictionDTO | None:  # type: ignore
+    async def handle(self, query: GetPredictionByIdQuery) -> PredictionDTO | None: # typ,
+    e: ignore
         """处理获取预测查询"""
         try:
-            async with get_session() as session:  # type: ignore
+            async with get_session() as session: # typ,
+    e: ignore
                 _prediction = await session.get(Prediction, query.prediction_id)
                 if not prediction:
                     return None
 
-                return PredictionDTO(
+                return PredictionDTO()
                     id=prediction.id,
                     match_id=prediction.match_id,
                     user_id=prediction.user_id,
@@ -257,24 +266,24 @@ class GetPredictionByIdHandler(QueryHandler):
                     notes=prediction.notes,
                     created_at=prediction.created_at,
                     updated_at=prediction.updated_at,
-                )
+                
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            logger.error(f"获取预测失败: {e}")
-            return None
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e: logger.error(f"获取预测失,)
+"    败: {e}"
+"            return None
 
 
 class GetPredictionsByUserHandler(QueryHandler):
     """获取用户预测列表处理器"""
 
     @property
-    def query_type(self):
-        return GetPredictionsByUserQuery
+    def query_type(self: return GetPredictionsByUserQuery)
 
     async def handle(self, query: GetPredictionsByUserQuery) -> list[PredictionDTO]:  # type: ignore
         """处理获取用户预测列表查询"""
         try:
-            async with get_session() as session:  # type: ignore
+            async with get_session() as session: # typ,
+    e: ignore
                 # 构建查询
                 sql = """
                 SELECT p.* FROM predictions p
@@ -304,8 +313,8 @@ class GetPredictionsByUserHandler(QueryHandler):
                 _result = await session.execute(sql, params)
                 predictions = result.fetchall()
 
-                return [
-                    PredictionDTO(
+                return [)
+                    PredictionDTO()
                         id=p.id,
                         match_id=p.match_id,
                         user_id=p.user_id,
@@ -318,26 +327,27 @@ class GetPredictionsByUserHandler(QueryHandler):
                         notes=p.notes,
                         created_at=p.created_at,
                         updated_at=p.updated_at,
-                    )
+                    
                     for p in predictions
-                ]
+                
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            logger.error(f"获取用户预测列表失败: {e}")
-            return []
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e: logger.error(f"获取用户预测列表失,)
+"    败: {e}"
+"            return []
 
 
 class GetUserStatsHandler(QueryHandler):
     """获取用户统计处理器"""
 
     @property
-    def query_type(self):
-        return GetUserStatsQuery
+    def query_type(self: return GetUserStatsQuery)
 
-    async def handle(self, query: GetUserStatsQuery) -> PredictionStatsDTO | None:  # type: ignore
+    async def handle(self, query: GetUserStatsQuery) -> PredictionStatsDTO | None: # typ,
+    e: ignore
         """处理获取用户统计查询"""
         try:
-            async with get_session() as session:  # type: ignore
+            async with get_session() as session: # typ,
+    e: ignore
                 # 获取基本统计
                 stats_sql = """
                 SELECT
@@ -348,13 +358,13 @@ class GetUserStatsHandler(QueryHandler):
                 FROM predictions p
                 WHERE p.user_id = :user_id
                 """
-                stats_result = await session.execute(
+                stats_result = await session.execute()
                     stats_sql, {"user_id": query.user_id}
-                )
+                
                 _stats = stats_result.fetchone()
 
                 if not stats or stats.total_predictions == 0:
-                    return PredictionStatsDTO(
+                    return PredictionStatsDTO()
                         user_id=query.user_id,
                         total_predictions=0,
                         successful_predictions=0,
@@ -363,7 +373,7 @@ class GetUserStatsHandler(QueryHandler):
                         average_confidence=0.0,
                         strategy_breakdown={},
                         recent_performance=[],
-                    )
+                    
 
                 success_rate = stats.successful_predictions / stats.total_predictions
 
@@ -378,18 +388,18 @@ class GetUserStatsHandler(QueryHandler):
                 WHERE user_id = :user_id AND strategy_used IS NOT NULL
                 GROUP BY strategy_used
                 """
-                strategy_result = await session.execute(
+                strategy_result = await session.execute()
                     strategy_sql, {"user_id": query.user_id}
-                )
+                
                 strategy_rows = strategy_result.fetchall()
 
     "strategy_breakdown": dict[str, Any] = {}
                 for row in strategy_rows:
-                    strategy_breakdown[row.strategy_used] = {
+                    strategy_breakdown[row.strategy_used] = {)
                         "count": row.count,
                         "average_confidence": float(row.avg_confidence),
                         "total_points": row.total_points,
-                    }
+                    
 
                 # 获取最近表现
                 recent_sql = """
@@ -407,15 +417,15 @@ class GetUserStatsHandler(QueryHandler):
                 ORDER BY m.match_date DESC
                 LIMIT 10
                 """
-                recent_result = await session.execute(
+                recent_result = await session.execute()
                     recent_sql, {"user_id": query.user_id}
-                )
+                
                 recent_rows = recent_result.fetchall()
 
     "recent_performance": list[Any] = []
                 for row in recent_rows:
-                    recent_performance.append(
-                        {
+                    recent_performance.append()
+                        {)
                             "match_date": row.match_date.isoformat(),
                             "predicted_home": row.predicted_home,
                             "predicted_away": row.predicted_away,
@@ -425,10 +435,10 @@ class GetUserStatsHandler(QueryHandler):
                             "accuracy_score": float(row.accuracy_score)
                             if row.accuracy_score
                             else None,
-                        }
-                    )
+                        
+                    
 
-                return PredictionStatsDTO(
+                return PredictionStatsDTO()
                     user_id=query.user_id,
                     total_predictions=stats.total_predictions,
                     successful_predictions=stats.successful_predictions,
@@ -437,24 +447,24 @@ class GetUserStatsHandler(QueryHandler):
                     average_confidence=float(stats.average_confidence),
                     strategy_breakdown=strategy_breakdown,
                     recent_performance=recent_performance,
-                )
+                
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            logger.error(f"获取用户统计失败: {e}")
-            return None
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e: logger.error(f"获取用户统计失,)
+"    败: {e}"
+"            return None
 
 
 class GetUpcomingMatchesHandler(QueryHandler):
     """获取即将到来的比赛处理器"""
 
     @property
-    def query_type(self):
-        return GetUpcomingMatchesQuery
+    def query_type(self: return GetUpcomingMatchesQuery)
 
     async def handle(self, query: GetUpcomingMatchesQuery) -> list[MatchDTO]:  # type: ignore
         """处理获取即将到来的比赛查询"""
         try:
-            async with get_session() as session:  # type: ignore
+            async with get_session() as session: # typ,
+    e: ignore
                 # 构建查询
                 sql = """
                 SELECT * FROM matches
@@ -480,8 +490,8 @@ class GetUpcomingMatchesHandler(QueryHandler):
                 _result = await session.execute(sql, params)
                 _matches = result.fetchall()
 
-                return [
-                    MatchDTO(
+                return [)
+                    MatchDTO()
                         id=m.id,
                         home_team=m.home_team,
                         away_team=m.away_team,
@@ -493,13 +503,13 @@ class GetUpcomingMatchesHandler(QueryHandler):
                         venue=m.venue,
                         created_at=m.created_at,
                         updated_at=m.updated_at,
-                    )
+                    
                     for m in matches
-                ]
+                
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            logger.error(f"获取即将到来的比赛失败: {e}")
-            return []
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e: logger.error(f"获取即将到来的比赛失,)
+"    败: {e}"
+"            return []
 
 
 # 处理器集合类
@@ -510,8 +520,6 @@ class PredictionCommandHandlers:
         self.create = CreatePredictionHandler()
         self.update = UpdatePredictionHandler()
         self.delete = DeletePredictionHandler()
-
-
 class PredictionQueryHandlers:
     """预测查询处理器集合"""
 
@@ -520,32 +528,24 @@ class PredictionQueryHandlers:
         self.get_by_user = GetPredictionsByUserHandler()
         self.get_stats = GetUserStatsHandler()
         self.get_upcoming_matches = GetUpcomingMatchesHandler()
-
-
 class UserCommandHandlers:
     """用户命令处理器集合"""
 
     def __init__(self):
         self.create = CreateUserHandler()
         self.update = UpdateUserHandler()
-
-
 class UserQueryHandlers:
     """用户查询处理器集合"""
 
     def __init__(self):
         self.get_by_id = GetUserByIdHandler()
         self.get_stats = GetUserStatsHandler()
-
-
 class MatchCommandHandlers:
     """比赛命令处理器集合"""
 
     def __init__(self):
         self.create = CreateMatchHandler()
         self.update = UpdateMatchHandler()
-
-
 class MatchQueryHandlers:
     """比赛查询处理器集合"""
 

@@ -1,7 +1,7 @@
 """
 简化的领域模型模块
 
-包含核心业务逻辑和领域实体。
+包含核心业务逻辑和领域实体.
 """
 
 from .league import League, LeagueTable
@@ -13,7 +13,7 @@ from .services import DomainServiceFactory
 from .team import Team, TeamStatistics
 from .user import User, UserPreferences, UserProfile
 
-__all__ = [
+__all__ = [)
     # 核心实体
     "Match",
     "MatchStatus",
@@ -36,4 +36,4 @@ __all__ = [
     "ValidationEngine",
     # 工厂
     "DomainServiceFactory",
-]
+

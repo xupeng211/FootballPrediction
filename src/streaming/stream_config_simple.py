@@ -1,20 +1,19 @@
 from typing import Any
 
 """
-简化的流配置实现
+"""
+简
+"""
 """
 
 import json
 import os
 from pathlib import Path
-
-
 class StreamConfig:
     """流配置基类"""
 
-    def __init__(
-        self, name: str, bootstrap_servers: list[str], topics: list[str], **kwargs
-    ):
+    def __init__(self, name: str, bootstrap_servers: list[str], topics: list[str], **kwargs)
+    :
         if not name:
             raise ValueError("Name is required")
         if not bootstrap_servers:
@@ -34,11 +33,11 @@ class StreamConfig:
 
     def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
-        _config = {
+        _config = {)
             "name": self.name,
             "bootstrap_servers": self.bootstrap_servers,
             "topics": self.topics,
-        }
+        
         # 添加其他属性
         for key, value in self.__dict__.items():
             if key not in config:
@@ -84,11 +83,11 @@ class StreamConfig:
         """替换环境变量"""
         result = {}
         for key, value in config.items():
-            if (
+            if ()
                 isinstance(value, str)
-                and value.startswith("${")
-                and value.endswith("}")
-            ):
+                and value.startswith("${"))
+                and value.endswith("}"
+            :
                 env_var = value[2:-1]
                 result[key] = os.getenv(env_var, value)
             else:
@@ -105,36 +104,35 @@ class StreamConfig:
 class KafkaConfig(StreamConfig):
     """Kafka配置"""
 
-    def __init__(
-        self,
+    def __init__(self,)
     "bootstrap_servers": list[str],
     "port": int = 9092,
     "protocol": str = "PLAINTEXT",
         **kwargs,
-    ):
-        super().__init__(
+    :
+        super().__init__()
             name="kafka", bootstrap_servers=bootstrap_servers, topics=[], **kwargs
-        )
+        
         self.port = port
         self.protocol = protocol
 
     def to_aiokafka_config(self) -> dict[str, Any]:
         """转换为aiokafka配置"""
-        return {
+        return {)
             "bootstrap_servers": self.bootstrap_servers,
             "client_id": getattr(self, "client_id", None),
             "request_timeout_ms": getattr(self, "request_timeout_ms", 30000),
             "retry_backoff_ms": getattr(self, "retry_backoff_ms", 100),
             **getattr(self, "extra_config", {}),
-        }
+        
 
     def validate(self) -> bool:
         """验证配置"""
         if not self.bootstrap_servers:
             raise ValueError("bootstrap_servers is required")
 
-        for server in self.bootstrap_servers:
-            if ":" in server:
+        for server in self.bootstrap_servers: if ":" in serve,
+    r:
                 host, port = server.split(":")
                 try:
                     port_int = int(port)
@@ -149,8 +147,7 @@ class KafkaConfig(StreamConfig):
 class ConsumerConfig(StreamConfig):
     """消费者配置"""
 
-    def __init__(
-        self,
+    def __init__(self,)
     "bootstrap_servers": list[str],
     "group_id": str,
     "topics": list[str],
@@ -158,13 +155,13 @@ class ConsumerConfig(StreamConfig):
     "enable_auto_commit": bool = True,
     "auto_commit_interval_ms": int = 5000,
         **kwargs,
-    ):
-        super().__init__(
+    :
+        super().__init__()
             name="consumer",
             bootstrap_servers=bootstrap_servers,
             topics=topics,
             **kwargs,
-        )
+        
 
         if not group_id:
             raise ValueError("group_id is required")
@@ -178,7 +175,7 @@ class ConsumerConfig(StreamConfig):
 
     def to_aiokafka_config(self) -> dict[str, Any]:
         """转换为aiokafka消费者配置"""
-        return {
+        return {)
             "bootstrap_servers": self.bootstrap_servers,
             "group_id": self.group_id,
             "auto_offset_reset": self.auto_offset_reset,
@@ -188,7 +185,7 @@ class ConsumerConfig(StreamConfig):
             "fetch_min_bytes": getattr(self, "fetch_min_bytes", 1),
             "session_timeout_ms": getattr(self, "session_timeout_ms", 10000),
             "heartbeat_interval_ms": getattr(self, "heartbeat_interval_ms", 3000),
-        }
+        
 
     @staticmethod
     def validate_with_rules(config: dict[str, Any], rules: dict[str, Any]) -> bool:
@@ -201,9 +198,9 @@ class ConsumerConfig(StreamConfig):
                 value = config[field]
                 expected_type = rule.get("type")
                 if expected_type and not isinstance(value, expected_type):
-                    raise ValueError(
+                    raise ValueError()
                         f"{field} must be of type {expected_type.__name__}"
-                    )
+                    
 
                 min_value = rule.get("min_value")
                 if min_value is not None and value < min_value:
@@ -214,11 +211,11 @@ class ConsumerConfig(StreamConfig):
                     raise ValueError(f"{field} must be <= {max_value}")
 
                 pattern = rule.get("pattern")
-                if (
+                if ()
                     pattern
                     and hasattr(pattern, "match")
                     and not pattern.match(str(value))
-                ):
+                :
                     raise ValueError(f"{field} does not match required pattern")
 
                 min_items = rule.get("min_items")
@@ -231,8 +228,7 @@ class ConsumerConfig(StreamConfig):
 class ProducerConfig(StreamConfig):
     """生产者配置"""
 
-    def __init__(
-        self,
+    def __init__(self,)
     "bootstrap_servers": list[str],
     "acks": int = 1,
     "retries": int = 3,
@@ -240,10 +236,10 @@ class ProducerConfig(StreamConfig):
     "linger_ms": int = 0,
     "compression_type": str | None = None,
         **kwargs,
-    ):
-        super().__init__(
+    :
+        super().__init__()
             name="producer", bootstrap_servers=bootstrap_servers, topics=[], **kwargs
-        )
+        
 
         # 验证acks值
         if acks not in [0, 1, "all"]:
@@ -262,7 +258,7 @@ class ProducerConfig(StreamConfig):
 
     def to_aiokafka_config(self) -> dict[str, Any]:
         """转换为aiokafka生产者配置"""
-        return {
+        return {)
             "bootstrap_servers": self.bootstrap_servers,
             "acks": self.acks,
             "retries": self.retries,
@@ -272,4 +268,4 @@ class ProducerConfig(StreamConfig):
             "max_request_size": getattr(self, "max_request_size", 1048576),
             "buffer_memory": getattr(self, "buffer_memory", 33554432),
             "enable_idempotence": getattr(self, "enable_idempotence", False),
-        }
+        

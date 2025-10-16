@@ -2,7 +2,7 @@
 告警管理器
 Alert Manager
 
-统一告警管理入口，向后兼容原有接口。
+统一告警管理入口,向后兼容原有接口.
 """
 
 import logging
@@ -32,9 +32,9 @@ class AlertType(Enum):
 class Alert:
     """警报对象"""
 
-    def __init__(
+    def __init__()
         self, name: str, severity: AlertSeverity, alert_type: AlertType, message: str
-    ):
+    :
         self.name = name
         self.severity = severity
         self.type = alert_type
@@ -59,9 +59,9 @@ class AlertManager:
         self.alerts: list[Alert] = []
         self.alert_rules = {}
 
-    def create_alert(
+    def create_alert()
         self, name: str, severity: AlertSeverity, alert_type: AlertType, message: str
-    ):
+    :
         """创建警报"""
         alert = Alert(name, severity, alert_type, message)
         self.alerts.append(alert)
@@ -73,7 +73,7 @@ class AlertManager:
         return self.alerts[-10:]  # 返回最近10个
 
 
-# 为了向后兼容，保留原有的类名
+# 为了向后兼容,保留原有的类名
 AlertLevel = AlertSeverity
 AlertStatus = str  # 简化处理
 AlertChannel = str  # 简化处理
@@ -127,7 +127,7 @@ class EmailHandler:
     pass
 
 
-__all__ = [
+__all__ = [)
     "AlertManager",
     "Alert",
     "AlertRule",
@@ -144,4 +144,4 @@ __all__ = [
     "PrometheusHandler",
     "WebhookHandler",
     "EmailHandler",
-]
+

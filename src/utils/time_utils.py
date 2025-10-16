@@ -1,9 +1,6 @@
-"""
-足球预测系统时间处理工具模块
+"""足球预测系统时间处理工具模块
 
-提供时间和日期处理相关的工具函数。
-"""
-
+提供时间和日期处理相关的工具函数."""
 from datetime import UTC, datetime
 
 
@@ -31,21 +28,19 @@ class TimeUtils:
         return dt.strftime(format_str)
 
     @staticmethod
-    def parse_datetime(
-    date_str: str, format_str: str = "%Y-%m-%d %H:%M:%S"
-    ) -> datetime:
+    def parse_datetime(date_str: str, format_str: str = "%Y-%m-%d %H:%M:%S") -> datetime:
         """解析日期时间字符串"""
         return datetime.strptime(date_str, format_str)
 
 
-# 为了向后兼容，添加常用函数别名
+# 为了向后兼容, 添加常用函数别名
 def utc_now() -> datetime:
-    """获取当前UTC时间（向后兼容性函数）"""
+    """获取当前UTC时间(向后兼容性函数)"""
     return datetime.now(UTC)
 
 
 def parse_datetime(date_str: str, format_str: str = "%Y-%m-%d %H:%M:%S") -> datetime:
-    """解析日期时间字符串（向后兼容性函数）"""
+    """解析日期时间字符串(向后兼容性函数)"""
     if date_str is None:
         return None  # type: ignore
 
@@ -53,12 +48,12 @@ def parse_datetime(date_str: str, format_str: str = "%Y-%m-%d %H:%M:%S") -> date
         return datetime.strptime(date_str, format_str)
     except (ValueError, TypeError):
         # 尝试其他常见格式
-        formats = [
+        formats = [)
             "%Y-%m-%dT%H:%M:%S.%fZ",
             "%Y-%m-%dT%H:%M:%SZ",
             "%Y-%m-%dT%H:%M:%S",
             "%Y-%m-%d",
-        ]
+        
         for fmt in formats:
             try:
                 return datetime.strptime(date_str, fmt)

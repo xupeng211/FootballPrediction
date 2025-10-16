@@ -1,126 +1,38 @@
-"""
-使用缓存的操作示例
-Cached Operations Examples
-
-展示如何在实际应用中使用缓存装饰器。
-"""
-
+from typing import Any, Callable, TypeVar
+import functools
 import time
 
-from .cache_decorators import batch_cache, cache_invalidate, memory_cache, redis_cache
-from .dict_utils import DictUtils
+T = TypeVar('T')
 
+def cached(ttl: int = 300, max_size: int = 128):
+    """缓存装饰器"""
+    cache = {}
 
-class DataProcessor:
-    """数据处理器，使用缓存优化性能"""
+    def decorator(func: Callable[..., T]) -> Callable[..., T]:
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs) -> T:
+            # 创建缓存键
+            cache_key = str(args) + str(sorted(kwargs.items()))
 
-    @memory_cache(ttl=300)  # 缓存5分钟
-    def process_user_data(self, user_id: int) -> dict:
-        """处理用户数据"""
-        print(f"处理用户数据: {user_id}")
-        # 模拟耗时操作
-        time.sleep(0.1)
-        return {"user_id": user_id, "processed": True, "timestamp": time.time()}
+            # 检查缓存
+            if cache_key in cache:
+                item, timestamp = cache[cache_key]
+                if time.time() - timestamp < ttl:
+                    return item
+                else:
+                    del cache[cache_key]
 
-    @batch_cache(ttl=600)  # 批量操作缓存10分钟
-    def batch_process_users(self, user_ids: list[int]) -> list[dict]:
-        """批量处理用户数据"""
-        print(f"批量处理 {len(user_ids)} 个用户")
-        results = []
-        for uid in user_ids:
-            results.append(self.process_user_data(uid))
-        return results
+            # 执行函数并缓存结果
+            result = func(*args, **kwargs)
 
-    @cache_invalidate(pattern="user_data")
-    def update_user(self, user_id: int, data: dict) -> dict:
-        """更新用户数据并清除缓存"""
-        print(f"更新用户数据: {user_id}")
-        # 执行更新操作
-        return {"updated": True, "user_id": user_id}
+            # 添加到缓存
+            if len(cache) >= max_size:
+                # 删除最旧的项
+                oldest_key = min(cache.keys(), key=lambda k: cache[k][1])
+                del cache[oldest_key]
 
+            cache[cache_key] = (result, time.time())
+            return result
 
-# 使用缓存的工具函数
-@memory_cache(ttl=1800)  # 缓存30分钟
-def get_nested_config(data: dict, path: str, default=None):
-    """获取嵌套配置（带缓存）"""
-    return DictUtils.get_nested(data, path, default)
-
-
-@memory_cache(ttl=300)
-def flatten_dict_cached(data: dict, sep="."):
-    """扁平化字典（带缓存）"""
-    return DictUtils.flatten(data, sep)
-
-
-@redis_cache(key_prefix="dict_merge", ttl=600)
-def merge_dicts_cached(dict1: dict, dict2: dict) -> dict:
-    """合并字典（带Redis缓存）"""
-    return DictUtils.merge(dict1, dict2)
-
-
-# 缓存统计
-class CacheStats:
-    """缓存统计信息"""
-
-    @staticmethod
-    def get_hit_ratio() -> float:
-        """获取缓存命中率"""
-        from .cache_decorators import _memory_cache
-
-        # 简化实现，实际应该跟踪命中次数
-        return len(_memory_cache) * 0.1  # 模拟值
-
-    @staticmethod
-    def get_memory_usage() -> int:
-        """获取内存使用量（字节）"""
-        import sys
-
-        from .cache_decorators import _memory_cache
-
-        return sum(sys.getsizeof(v) for v in _memory_cache.values())
-
-
-# 缓存预热
-def warm_up_cache():
-    """预热缓存"""
-    print("预热缓存...")
-
-    # 预加载常用数据
-    sample_data = {
-        "database": {
-            "host": "localhost",
-            "port": 5432,
-            "credentials": {"username": "user", "password": "pass"},
-        },
-        "api": {"version": "v1", "timeout": 30},
-    }
-
-    # 预热嵌套配置获取
-    get_nested_config(sample_data, "database.host")
-    get_nested_config(sample_data, "database.credentials.username")
-    get_nested_config(sample_data, "api.version")
-
-    print("缓存预热完成")
-
-
-if __name__ == "__main__":
-    # 示例使用
-    processor = DataProcessor()
-
-    # 第一次调用（计算）
-    result1 = processor.process_user_data(123)
-    print("结果:", result1)
-
-    # 第二次调用（从缓存）
-    result2 = processor.process_user_data(123)
-    print("结果:", result2)
-
-    # 批量处理
-    batch_results = processor.batch_process_users([1, 2, 3, 4, 5])
-    print(f"批量处理结果: {len(batch_results)} 项")
-
-    # 缓存失效
-    processor.update_user(123, {"name": "John"})
-
-    # 预热缓存
-    warm_up_cache()
+        return wrapper
+    return decorator

@@ -1,14 +1,14 @@
 from typing import Any, Dict, List, Optional, Union
 
-简化的Kafka消费者实现
+"""
+简
+"""
 
 
 import json
 from datetime import datetime
 
 from src.core.exceptions import StreamingError
-
-
 class KafkaMessageConsumer:
     """Kafka消息消费者(简化版)"""
 
@@ -25,11 +25,11 @@ class KafkaMessageConsumer:
         self.topics = config["topics"]
         self.consumer = None
         self.is_closed = False
-        self._stats = {
+        self._stats = {)
             "messages_consumed": 0,","
             "partitions_assigned": 0,","
             "last_commit_offset": 0,""
-        }
+        
 
         # 可选配置
         self.auto_offset_reset = config.get("auto_offset_reset", "latest")
@@ -41,8 +41,7 @@ class KafkaMessageConsumer:
         self.consumer = True  # 简化实现
         self.stats["partitions_assigned"] = len(self.topics)
 
-    async def stop(self):
-        """停止消费者"""
+    async def stop(self: """停止消费者""")
         self.consumer = None
 
     async def close(self):
@@ -50,8 +49,7 @@ class KafkaMessageConsumer:
         await self.stop()
         self.is_closed = True
 
-    async def consume(
-        self,
+    async def consume(self,)
     "timeout_ms": int = 1000,
     "batch_size": int = None,
     "filter_func": Callable = None,
@@ -62,20 +60,20 @@ class KafkaMessageConsumer:
             raise StreamingError("Consumer not started")
 
         # 模拟消息
-        messages = [  # type: ignore
-            {
-                "topic": self.topics[0,","
+        messages = [  # type: ignore)
+            {)
+                "topic": self.topics[0,",")
                 "partition": 0,","
                 "offset": i,","
                 "key": f"key_{i}",
-                "value": {","
+                "value": {",")
                     "data": f"message_{i}",
                     "timestamp": datetime.utcnow().isoformat(),""
-                },
+                ,
                 "headers": [("source", b"test"), ("type", b"event")],""
-            }
+            
             for i in range(10)
-        ]
+        
 
         for msg in messages:
             # 应用过滤器
@@ -100,12 +98,13 @@ class KafkaMessageConsumer:
                 return True
         return False
 
-    async def commit(self, offsets: Optional[Dict[str, Any] = None):
+    async def commit(self, offsets: Optional[Dict[str, Any] = None):)
         """提交偏移量"""
         if self.consumer is None:
             raise StreamingError("Consumer not started")
 
-        if offsets:  # type: ignore
+        if offsets: # typ,
+    e: ignore
             self.stats["last_commit_offset"] = max(offsets.values())
         else:
             self.stats["last_commit_offset"] = self.stats["messages_consumed"]
@@ -116,12 +115,10 @@ class KafkaMessageConsumer:
             raise StreamingError("Consumer not started")
         pass  # 简化实现
 
-    def pause_partition(self, partition):
-        """暂停分区"""
+    def pause_partition(self, partition: """暂停分区""")
         pass  # 简化实现
 
-    def resume_partition(self, partition):
-        """恢复分区"""
+    def resume_partition(self, partition: """恢复分区""")
         pass  # 简化实现
 
     def get_assignment(self):
@@ -135,28 +132,27 @@ class KafkaMessageConsumer:
     def _deserialize_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
         """反序列化消息"""
         try:
-            deserialized = {
-                "topic": message["topic",","
-                "partition": message["partition",","
-                "offset": message["offset",","
-                "key": message["key".decode("utf-8") if message["key"] else None,","
-                "value": self._deserialize_value(message["value"),","
+            deserialized = {)
+                "topic": message["topic",",")
+                "partition": message["partition",",")
+                "offset": message["offset",",")
+                "key": message["key".decode("utf-8") if message["key"] else None,",")
+                "value": self._deserialize_value(message["value"),",")
                 "headers": {},""
-            }
+            
 
             # 处理头部
             if message.get("headers"):
-                deserialized["headers"] = {
+                deserialized["headers"] = {)
                     key.decode(): value.decode() for key, value in message["headers"]
-                }
+                
 
             return deserialized
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            raise StreamingError(f"Failed to deserialize message: {str(e)")
-
-    def _deserialize_value(self, value: bytes) -> Any:
-        """反序列化值"""
-        try:
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e: raise StreamingError(f"Failed to deserialize messag,)
+"    e: {str(e)")
+"
+    def _deserialize_value(self, value: bytes) -> Any: """反序列化值""",
+    try:
             # 尝试解析为JSON
             return json.loads(value.decode("utf-8"))
         except (json.JSONDecodeError, UnicodeDecodeError):
@@ -175,12 +171,10 @@ class KafkaMessageConsumer:
         """重置偏移量到末尾"""
         await self.seek(topic, partition, -1)
 
-    def _create_rebalance_listener(self):
-        """创建重平衡监听器"""
+    def _create_rebalance_listener(self: """创建重平衡监听器""")
 
         class RebalanceListener:
-            async def on_partitions_assigned(self, partitions):
-                pass
+            async def on_partitions_assigned(self, partitions: pass)
 
             async def on_partitions_revoked(self, partitions):
                 pass

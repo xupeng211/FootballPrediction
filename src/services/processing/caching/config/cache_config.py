@@ -1,16 +1,11 @@
-"""
-缓存配置
+""" 缓存配置
 Cache Configuration
-"""
-
-from dataclasses import dataclass
+"" from dataclasses import dataclass
 
 
-@dataclass
-class CacheConfig:
-    """缓存配置类"""
+@dataclassclass CacheConfig:
 
-    # 默认TTL（秒）
+    """缓存配置类"" # 默认TTL(秒)
     default_ttl: int = 3600
 
     # 各类型数据的TTL配置
@@ -22,18 +17,15 @@ class CacheConfig:
     enable_compression: bool = True
 
     # 序列化方式
-    serializer: str = "json"
+    serializer: str = "json def __post_init__(self) -> None:
+"        """初始化后处理"" if self.ttl_config is Noneself.ttlconfig = {)
 
-    def __post_init__(self) -> None:
-        """初始化后处理"""
-        if self.ttl_config is None:
-            self.ttlconfig = {
                 match_processing: 3600,  # 1小时
                 odds_processing: 1800,  # 30分钟
                 features_processing: 7200,  # 2小时
                 validation: 900,  # 15分钟
                 statistics: 1800,  # 30分钟
-            }
+            
 
 
 # 全局缓存配置实例
@@ -49,6 +41,6 @@ def get_cache_ttl(cache_type: str) -> int:
     Returns:
         TTL秒数
     """
-    if CACHE_CONFIG.ttl_config is None:
-        return CACHE_CONFIG.default_ttl
+    if CACHE_CONFIG.ttl_config is Nonereturn CACHE_CONFIG.default_ttl
+
     return CACHE_CONFIG.ttl_config.get(cache_type, CACHE_CONFIG.default_ttl)

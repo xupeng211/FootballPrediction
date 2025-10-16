@@ -1,12 +1,9 @@
 from typing import Any
-
-"""
-Helper functions
-"""
-
 import hashlib
 import uuid
 from datetime import datetime
+
+"""Helper functions"""
 
 
 def generate_uuid() -> str:
@@ -23,6 +20,7 @@ def safe_get(data: dict[str, Any] | None, key: str, default: Any = None) -> Any:
     """Safely get value from Dict[str, Any]"""
     if data is None:
         return default
+
     return data.get(key, default)
 
 
@@ -30,6 +28,7 @@ def format_timestamp(dt: datetime | None = None) -> str:
     """Format timestamp to ISO format"""
     if dt is None:
         dt = datetime.utcnow()
+
     return dt.isoformat()
 
 

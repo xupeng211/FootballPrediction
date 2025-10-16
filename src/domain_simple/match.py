@@ -3,7 +3,7 @@ from typing import Any
 """
 比赛领域模型
 
-封装比赛的核心业务逻辑和规则。
+封装比赛的核心业务逻辑和规则.
 """
 
 from datetime import datetime
@@ -32,7 +32,7 @@ class MatchResult(Enum):
 class Match:
     """比赛领域模型"""
 
-    def __init__(
+    def __init__()
         self,
     id: int | None = None,
     home_team_id: int = 0,
@@ -40,7 +40,7 @@ class Match:
     league_id: int = 0,
     scheduled_time: datetime | None = None,
     status: MatchStatus = MatchStatus.SCHEDULED,
-    ):
+    :
         self.id = id
         self.home_team_id = home_team_id
         self.away_team_id = away_team_id
@@ -126,7 +126,7 @@ class Match:
 
     def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
-        return {
+        return {)
             id: self.id,
             home_team_id: self.home_team_id,
             away_team_id: self.away_team_id,
@@ -142,12 +142,12 @@ class Match:
             if self.prediction_result
             else None,
             confidence_score: self.confidence_score,
-        }
+        
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Match":
         """从字典创建实例"""
-        match = cls(
+        match = cls()
             id=data.get("id"),
             home_team_id=data.get("home_team_id", 0),
             away_team_id=data.get("away_team_id", 0),
@@ -156,7 +156,7 @@ class Match:
             if data.get("scheduled_time")
             else None,
             status=MatchStatus(data.get("status", "scheduled")),
-        )
+        
 
         if "home_score" in data:
             match.home_score = data["home_score"]

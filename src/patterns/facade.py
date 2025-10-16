@@ -1,10 +1,14 @@
 from typing import Any, Dict, List, Optional, Union
 # mypy: ignore-errors
 
-门面模式实现
+"""
+门
+"""
 
-简化复杂子系统的接口,为客户端提供统一的入口
-""""""
+"""
+简
+"""
+"""""
 
 import asyncio
 from datetime import datetime, timedelta
@@ -13,20 +17,20 @@ from dataclasses import dataclass
 from src.core.logging import get_logger
 
 if TYPE_CHECKING:
-    from src.database.repositories import (
+    from src.database.repositories import ()
         MatchRepository,
         PredictionRepository,
         TeamRepository,
-    )
+    
 
-# 移除具体的导入，避免循环依赖
-# from src.database.repositories import (
+# 移除具体的导入,避免循环依赖
+# from src.database.repositories import ()
 #     MatchRepository,
 #     PredictionRepository,
 #     UserRepository,
 #     TeamRepository,
 #     LeagueRepository
-# )
+# 
 # from src.domain_simple import Match, Prediction, Team, League, User
 from src.patterns.adapter import UnifiedDataCollector
 
@@ -38,14 +42,14 @@ class PredictionRequest:
     "match_id": int
     "user_id": int
     "algorithm": str = "ensemble"
-    "features": Optional[Dict[str, Any] = None
+    "features": Optional[Dict[str, Any] = None)
 @dataclass
 class PredictionResult:
     """预测结果"""
 
     "prediction": Dict[str, Any]
     "confidence": float
-    "value_assessment": Optional[Dict[str, Any]
+    "value_assessment": Optional[Dict[str, Any])
     "recommendations": List[str]
 
 
@@ -56,21 +60,18 @@ class DataCollectionConfig:
     "sources": List[str]
     "refresh_interval": timedelta
     "batch_size": int = 100
-
-
 class PredictionFacade:
     """预测门面"""
 
     简化预测相关的复杂操作,提供统一的预测服务接口
-    """"""
+    """""
 
-    def __init__(
-        self,
+    def __init__(self,)
     "match_repo": MatchRepository,  # type: ignore
     "prediction_repo": PredictionRepository,  # type: ignore
     "team_repo": TeamRepository,  # type: ignore
     "data_collector": UnifiedDataCollector,
-    ):
+    :
         self.match_repo = match_repo
         self.prediction_repo = prediction_repo
         self.team_repo = team_repo
@@ -97,26 +98,25 @@ class PredictionFacade:
             value_assessment = await self._assess_value(prediction, external_data)
 
             # 5. 生成建议
-            recommendations = await self._generate_recommendations(
+            recommendations = await self._generate_recommendations()
                 prediction, value_assessment
-            )
+            
 
             # 6. 保存预测结果
             await self._save_prediction(prediction, request.user_id)
 
-            return PredictionResult(
+            return PredictionResult()
                 _prediction =prediction,
                 confidence=prediction.get("confidence", 0.0),
                 value_assessment=value_assessment,
                 recommendations=recommendations,
-            )
+            
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            self.logger.error(f"Prediction failed: {str(e)}")
-            raise
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e: self.logger.error(f"Prediction faile,)
+"    d: {str(e)}"
+"            raise
 
-    async def get_prediction_history(
-        self, user_id: Optional[int] = None, limit: int = 100
+    async def get_prediction_history(self, user_id: Optional[int] = None, limit: int = 100)
     ) -> List[Dict[str, Any]:
         """获取预测历史"""
         filters = {}
@@ -131,35 +131,35 @@ class PredictionFacade:
         since = datetime.now() - timedelta(days=days)
 
         # 获取预测统计
-        total_predictions = await self.prediction_repo.count(
+        total_predictions = await self.prediction_repo.count()
             {"created_at": {"$gte": since}}
-        )
+        
 
         # 获取准确率
-        correct_predictions = await self.prediction_repo.count(
+        correct_predictions = await self.prediction_repo.count()
             {"created_at": {"$gte": since}, "status": "settled", "is_correct": True}
-        )
+        
 
-        accuracy = (
+        accuracy = ()
             (correct_predictions / total_predictions * 100)
             if total_predictions > 0
             else 0
-        )
+        
 
         # 获取ROI
         profit_loss = await self._calculate_profit_loss(since)
 
-        return {
+        return {)
             "period_days": days,","
             "total_predictions": total_predictions,","
             "correct_predictions": correct_predictions,","
             "accuracy": round(accuracy, 2),","
             "profit_loss": round(profit_loss, 2),","
-            "roi": round(""
+            "roi": round("")
                 (profit_loss / total_predictions * 100) if total_predictions > 0 else 0,
                 2,
-            ),
-        }
+            ,
+        
 
     async def _collect_external_data(self, match_id: int) -> Dict[str, Any]:
         """收集外部数据"""
@@ -168,35 +168,33 @@ class PredictionFacade:
             # 收集比赛相关数据
             match_data = await self.data_collector.collect_match_data(match_id)
             data["external"] = match_data
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            self.logger.warning(f"Failed to collect external data: {str(e)}")
-
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e: self.logger.warning(f"Failed to collect external dat,)
+"    a: {str(e)}"
+"
         return data
 
-    async def _generate_prediction(
-        self, match: Any, external_data: Dict[str, Any], request: PredictionRequest
-    ) -> Dict[str, Any]:
+    async def _generate_prediction(self, match: Any, external_data: Dict[str, Any], request: PredictionRequest)
+    ) -> Dict[str, Any:
         """生成预测"""
         # 这里可以集成实际的预测算法
         # 现在返回模拟数据
-        _prediction = {
+        _prediction = {)
             "match_id": request.match_id,","
             "algorithm": request.algorithm,","
             "prediction": "home_win",","
             "confidence": 0.75,","
             "probabilities": {"home": 0.55, "draw": 0.25, "away": 0.20},","
-            "factors": {","
+            "factors": {",")
                 "team_form": 0.3,","
                 "head_to_head": 0.25,","
                 "external_factors": 0.2,","
                 "market_odds": 0.25,""
-            },
-        }
+            ,
+        
 
         return prediction
 
-    async def _assess_value(
-        self, prediction: Dict[str, Any], external_data: Dict[str, Any]
+    async def _assess_value(self, prediction: Dict[str, Any], external_data: Dict[str, Any])
     ) -> Optional[Dict[str, Any]:
         """评估投注价值"""
         # 检查是否有赔率数据
@@ -209,18 +207,17 @@ class PredictionFacade:
                 predicted_prob = prediction["probabilities"]["home"]
                 value = (predicted_prob * home_odds) - 1
 
-                return {
+                return {)
                     "is_value": value > 0,","
                     "value": round(value, 3),","
                     "expected_value": round(value, 3),","
                     "recommended_stake": min(0.05, value * 0.1) if value > 0 else 0,""
-                }
+                
 
         return None
 
-    async def _generate_recommendations(
-        self, prediction: Dict[str, Any], value_assessment: Optional[Dict[str, Any]
-    ) -> List[str]:
+    async def _generate_recommendations(self, prediction: Dict[str, Any], value_assessment: Optional[Dict[str, Any]))
+    ) -> List[str:
         """生成建议"""
         recommendations = []
 
@@ -233,9 +230,10 @@ class PredictionFacade:
 
         # 基于价值的建议
         if value_assessment and value_assessment.get("is_value"):
-            recommendations.append(
-                f"发现价值投注机会,推荐投注比例: {value_assessment[recommended_stake] * 100:.1f}%"
-            )
+            recommendations.append()
+                f"发现价值投注机会,推荐投注比例: {value_assessment[recommended_stake] * 10,)
+"    0:.1f%"
+"            
         elif value_assessment:
             recommendations.append("当前市场赔率不具备价值,建议观望")
 
@@ -246,13 +244,13 @@ class PredictionFacade:
 
     async def _save_prediction(self, prediction: Dict[str, Any], user_id: int):
         """保存预测结果"""
-        prediction_entity = Prediction(  # type: ignore
-            match_id=prediction["match_id"]"],"
+        prediction_entity = Prediction(  # type: ignore)
+            match_id=prediction["match_id"]","
             user_id=user_id,
-            prediction_type=prediction["algorithm"]"],"
-            predicted_outcome=prediction["prediction"]"],"
-            confidence=prediction["confidence"]"],"
-        )
+            prediction_type=prediction["algorithm"]","
+            predicted_outcome=prediction["prediction"]","
+            confidence=prediction["confidence"]","
+        
         await self.prediction_repo.create(prediction_entity)
 
     async def _calculate_profit_loss(self, since: datetime) -> float:
@@ -260,21 +258,18 @@ class PredictionFacade:
         # 这里应该根据实际的结算结果计算
         # 现在返回模拟数据
         return 125.50
-
-
 class DataCollectionFacade:
     """数据收集门面"""
 
     简化数据收集,更新和维护的复杂操作
-    """"""
+    """""
 
-    def __init__(
-        self,
+    def __init__(self,)
     "match_repo": MatchRepository,  # type: ignore
     "team_repo": TeamRepository,  # type: ignore
     "league_repo": LeagueRepository,  # type: ignore
     "data_collector": UnifiedDataCollector,
-    ):
+    :
         self.match_repo = match_repo
         self.team_repo = team_repo
         self.league_repo = league_repo
@@ -283,12 +278,12 @@ class DataCollectionFacade:
 
     async def sync_all_data(self, config: DataCollectionConfig) -> Dict[str, Any]:
         """同步所有数据(一站式数据同步)"""
-        results = {
-            "matches": {"updated": 0, "errors": [},","
-            "teams": {"updated": 0, "errors": [},","
-            "leagues": {"updated": 0, "errors": [},","
-            "external": {"updated": 0, "errors": [},""
-        }
+        results = {)
+            "matches": {"updated": 0, "errors": [},",")
+            "teams": {"updated": 0, "errors": [},",")
+            "leagues": {"updated": 0, "errors": [},",")
+            "external": {"updated": 0, "errors": [},"")
+        
 
         self.logger.info("Starting full data synchronization")
 
@@ -311,36 +306,36 @@ class DataCollectionFacade:
 
             self.logger.info(f"Data sync completed: {results}")
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            self.logger.error(f"Data sync failed: {str(e)}"),
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e: self.logger.error(f"Data sync faile,)
+    d: {str(e)}",
             results["error"] = str(e)  # type: ignore
 
         return results
 
     async def get_data_health(self) -> Dict[str, Any]:
         """获取数据健康状态"""
-        health = {
+        health = {)
             "total_matches": 0,","
             "stale_matches": 0,","
             "total_teams": 0,","
             "teams_without_stats": 0,","
             "last_sync": None,","
             "overall_health": "good",""
-        }
+        
 
         try:
             # 检查比赛数据
             health["total_matches"] = await self.match_repo.count({})
             week_ago = datetime.now() - timedelta(days=7)
-            health["stale_matches"] = await self.match_repo.count(
+            health["stale_matches"] = await self.match_repo.count()
                 {"updated_at": {"$lt": week_ago}}
-            )
+            
 
             # 检查球队数据
             health["total_teams"] = await self.team_repo.count({})
-            health["teams_without_stats"] = await self.team_repo.count(
+            health["teams_without_stats"] = await self.team_repo.count()
                 {"stats": {"$exists": False}}
-            )
+            
 
             # 计算整体健康度
             stale_ratio = health["stale_matches"] / max(health["total_matches"], 1)  # type: ignore
@@ -351,8 +346,8 @@ class DataCollectionFacade:
 
             health["last_sync"] = datetime.now()  # type: ignore
 
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            self.logger.error(f"Failed to get data health: {str(e)}")
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e: self.logger.error(f"Failed to get data healt,)
+    h: {str(e)}"
             health["overall_health"] = "error"
             health["error"] = str(e)
 
@@ -382,44 +377,39 @@ class DataCollectionFacade:
         # 实现外部数据同步逻辑
         await asyncio.sleep(0.1)
         return 100
-
-
 class AnalyticsFacade:
     """分析门面"""
 
     简化数据分析,报表生成和洞察提取的复杂操作
-    """"""
+    """""
 
-    def __init__(
-        self,
+    def __init__(self,)
     "match_repo": MatchRepository,  # type: ignore
     "prediction_repo": PredictionRepository,  # type: ignore
     "user_repo": UserRepository,  # type: ignore
-    ):
+    :
         self.match_repo = match_repo
         self.prediction_repo = prediction_repo
         self.user_repo = user_repo
         self.logger = get_logger("facade.analytics")
 
-    async def generate_dashboard_data(
-        self, days: int = 30, user_id: Optional[int] = None
-    ) -> Dict[str, Any]:
+    async def generate_dashboard_data(self, days: int = 30, user_id: Optional[int] = None)
+    ) -> Dict[str, Any:
         """生成仪表板数据(一站式分析服务)"""
         since = datetime.now() - timedelta(days=days)
 
-        dashboard = {
+        dashboard = {)
             "overview": await self._get_overview_stats(since, user_id),","
             "predictions": await self._get_prediction_analytics(since, user_id),","
             "performance": await self._get_performance_metrics(since, user_id),","
             "trends": await self._get_trend_analysis(since),","
             "insights": await self._generate_insights(since, user_id),""
-        }
+        
 
         return dashboard
 
-    async def generate_report(
-        self, report_type: str, params: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def generate_report(self, report_type: str, params: Dict[str, Any])
+    ) -> Dict[str, Any:
         """生成分析报告"""
         if report_type == "performance":
             return await self._generate_performance_report(params)
@@ -427,126 +417,117 @@ class AnalyticsFacade:
             return await self._generate_accuracy_report(params)
         elif report_type == "profitability":
             return await self._generate_profitability_report(params)
-        else:
-            raise ValueError(f"Unknown report type: {report_type}")
-
-    async def _get_overview_stats(
-        self, since: datetime, user_id: Optional[int]
-    ) -> Dict[str, Any]:
+        else: raise ValueError(f"Unknown report typ,)
+"    e: {report_type}"
+"
+    async def _get_overview_stats(self, since: datetime, user_id: Optional[int])
+    ) -> Dict[str, Any:
         """获取概览统计"""
         filters = {"created_at": {"$gte": since}}
-        if user_id:
-            filters["user_id"] = user_id  # type: ignore
+        if user_id: filters["user_id"] = user_id  # typ,
+    e: ignore
 
         total_predictions = await self.prediction_repo.count(filters)
-        correct_predictions = await self.prediction_repo.count(
+        correct_predictions = await self.prediction_repo.count()
             {**filters, "status": "settled", "is_correct": True}""
-        )
+        
 
-        return {
+        return {)
             "total_predictions": total_predictions,","
-            "accuracy": round(""
+            "accuracy": round("")
                 (correct_predictions / total_predictions * 100)
                 if total_predictions > 0
                 else 0,
                 2,
-            ),
+            ,
             "active_users": await self.user_repo.count({"last_login": {"$gte": since}}),""
-        }
+        
 
-    async def _get_prediction_analytics(
-        self, since: datetime, user_id: Optional[int]
-    ) -> Dict[str, Any]:
+    async def _get_prediction_analytics(self, since: datetime, user_id: Optional[int])
+    ) -> Dict[str, Any:
         """获取预测分析"""
         # 返回预测相关的分析数据
-        return {
+        return {)
             "daily_predictions": await self._get_daily_predictions(since, user_id),","
-            "algorithm_performance": await self._get_algorithm_performance(""
+            "algorithm_performance": await self._get_algorithm_performance("")
                 since, user_id
-            ),
-            "confidence_distribution": await self._get_confidence_distribution(""
+            ,
+            "confidence_distribution": await self._get_confidence_distribution("")
                 since, user_id
-            ),
-        }
+            ,
+        
 
-    async def _get_performance_metrics(
-        self, since: datetime, user_id: Optional[int]
-    ) -> Dict[str, Any]:
+    async def _get_performance_metrics(self, since: datetime, user_id: Optional[int])
+    ) -> Dict[str, Any:
         """获取性能指标"""
-        return {
+        return {)
             "roi": 15.5,","
             "sharpe_ratio": 1.2,","
             "max_drawdown": -5.3,","
             "win_rate": 0.65,","
             "avg_odds": 2.15,""
-        }
+        
 
     async def _get_trend_analysis(self, since: datetime) -> Dict[str, Any]:
         """获取趋势分析"""
-        return {
+        return {)
             "accuracy_trend": "improving",","
             "volume_trend": "stable",","
             "profit_trend": "increasing",""
-        }
+        
 
-    async def _generate_insights(
-        self, since: datetime, user_id: Optional[int]
-    ) -> List[str]:
+    async def _generate_insights(self, since: datetime, user_id: Optional[int])
+    ) -> List[str:
         """生成洞察"""
-        insights = [
+        insights = [)
             "您的预测准确率在过去30天提升了5%",""
             "主胜预测的准确率明显高于客胜",""
             "建议关注低联赛的比赛,价值机会更多",""
-        ]
+        
         return insights
 
-    async def _get_daily_predictions(
-        self, since: datetime, user_id: Optional[int]
+    async def _get_daily_predictions(self, since: datetime, user_id: Optional[int])
     ) -> List[Dict[str, Any]:
         """获取每日预测数"""
         # 实现每日预测统计
         return []
 
-    async def _get_algorithm_performance(
-        self, since: datetime, user_id: Optional[int]
-    ) -> Dict[str, float]:
+    async def _get_algorithm_performance(self, since: datetime, user_id: Optional[int])
+    ) -> Dict[str, float:
         """获取算法性能"""
-        return {
+        return {)
             "ensemble": 75.5,","
             "ml_model": 73.2,","
             "statistical": 68.9,","
             "historical": 65.4,""
-        }
+        
 
-    async def _get_confidence_distribution(
-        self, since: datetime, user_id: Optional[int]
-    ) -> Dict[str, int]:
+    async def _get_confidence_distribution(self, since: datetime, user_id: Optional[int])
+    ) -> Dict[str, int:
         """获取置信度分布"""
         return {"high": 45, "medium": 80, "low": 25}
 
-    async def _generate_performance_report(
-        self, params: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _generate_performance_report(self, params: Dict[str, Any])
+    ) -> Dict[str, Any:
         """生成性能报告"""
-        return {
+        return {)
             "report_type": "performance",","
             "period": params.get("period", "30d"),","
             "data": "Performance report data...",""
-        }
+        
 
     async def _generate_accuracy_report(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """生成准确率报告"""
-        return {
+        return {)
             "report_type": "accuracy",","
             "period": params.get("period", "30d"),","
             "data": "Accuracy report data...",""
-        }
+        
 
-    async def _generate_profitability_report(
-        self, params: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _generate_profitability_report(self, params: Dict[str, Any])
+    ) -> Dict[str, Any:
         """生成盈利报告"""
-        return {
+        return {)
             "report_type": "profitability",","
             "period": params.get("period", "30d"),","
             "data": "Profitability report data...",""
@@ -558,42 +539,39 @@ class FacadeFactory:
     """门面工厂"""
 
     @staticmethod
-    def create_prediction_facade(
-    "match_repo": MatchRepository,  # type: ignore
+    def create_prediction_facade("match_repo": MatchRepository,  # type: ignore)
     "prediction_repo": PredictionRepository,  # type: ignore
     "team_repo": TeamRepository,  # type: ignore
     "data_collector": UnifiedDataCollector,
-    ) -> PredictionFacade:
+     -> PredictionFacade:
         """创建预测门面"""
-        return PredictionFacade(
+        return PredictionFacade()
             match_repo=match_repo,
             prediction_repo=prediction_repo,
             team_repo=team_repo,
             data_collector=data_collector,
-        )
+        
 
     @staticmethod
-    def create_data_collection_facade(
-    "match_repo": MatchRepository,  # type: ignore
+    def create_data_collection_facade("match_repo": MatchRepository,  # type: ignore)
     "team_repo": TeamRepository,  # type: ignore
     "league_repo": LeagueRepository,  # type: ignore
     "data_collector": UnifiedDataCollector,
-    ) -> DataCollectionFacade:
+     -> DataCollectionFacade:
         """创建数据收集门面"""
-        return DataCollectionFacade(
+        return DataCollectionFacade()
             match_repo=match_repo,
             team_repo=team_repo,
             league_repo=league_repo,
             data_collector=data_collector,
-        )
+        
 
     @staticmethod
-    def create_analytics_facade(
-    "match_repo": MatchRepository,  # type: ignore
+    def create_analytics_facade("match_repo": MatchRepository,  # type: ignore)
     "prediction_repo": PredictionRepository,  # type: ignore
     "user_repo": UserRepository,  # type: ignore
-    ) -> AnalyticsFacade:
+     -> AnalyticsFacade:
         """创建分析门面"""
-        return AnalyticsFacade(
+        return AnalyticsFacade()
             match_repo=match_repo, prediction_repo=prediction_repo, user_repo=user_repo
-        )
+        

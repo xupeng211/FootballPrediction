@@ -1,10 +1,10 @@
 """
 设计模式实现模块
 
-包含各种设计模式的实现，用于提升代码的可维护性和扩展性。
+包含各种设计模式的实现,用于提升代码的可维护性和扩展性.
 """
 
-from .adapter import (
+from .adapter import ()
     AdapterFactory,
     APIAdapter,
     ExternalAPI,
@@ -13,8 +13,8 @@ from .adapter import (
     OddsApiAdapter,
     UnifiedDataCollector,
     WeatherApiAdapter,
-)
-from .decorator import (
+
+from .decorator import ()
     BaseDecorator,
     CacheDecorator,
     Component,
@@ -26,8 +26,8 @@ from .decorator import (
     async_metrics,
     async_retry,
     create_decorated_service,
-)
-from .observer import (
+
+from .observer import ()
     AlertingObserver,
     LoggingObserver,
     MetricsObserver,
@@ -36,9 +36,9 @@ from .observer import (
     Subject,
     create_observer_system,
     setup_service_observers,
-)
 
-__all__ = [
+
+__all__ = [)
     # Observer Pattern
     "Observer",
     "Subject",
@@ -69,4 +69,4 @@ __all__ = [
     "AdapterFactory",
     "UnifiedDataCollector",
     "ExternalData",
-]
+

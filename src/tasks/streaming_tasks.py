@@ -1,12 +1,16 @@
 from typing import Any, Dict, List, Optional, Union
-""""""
-实时数据流任务
+"""""
+"""
+实
+"""
 
-处理实时数据流,包括:
+"""
+处
+"""
 - WebSocket连接管理
 - 实时数据处理
 - 流数据持久化
-""""""
+"""""
 
 import asyncio
 import logging
@@ -21,14 +25,14 @@ logger = get_logger(__name__)
 
 
 class StreamingTask(Task):
-    """"""
+    """""
     流处理任务基类
 
     提供流处理任务的通用功能:
     - 异步任务执行
     - 错误处理和重试
     - 日志记录
-    """"""
+    """""
 
     def __init__(self):
         self.error_logger = TaskErrorLogger()
@@ -46,13 +50,12 @@ class StreamingTask(Task):
 
 
 @app.task(base=StreamingTask, bind=True)
-def consume_kafka_streams_task(
-    self,
-    "topics": Optional[List[str] = None,
+def consume_kafka_streams_task(self,)
+    "topics": Optional[List[str] = None,)
     "batch_size": int = 100,
     "timeout": float = 30.0,
-):
-    """"""
+:
+    """""
     消费Kafka流数据任务
 
     Args:
@@ -62,7 +65,7 @@ def consume_kafka_streams_task(
 
     Returns:
         Dict[str, Any]: 消费统计结果
-    """"""
+    """""
 
     async def _consume_streams():
         try:
@@ -77,38 +80,38 @@ def consume_kafka_streams_task(
             # 批量消费
             _stats = await consumer.consume_batch(batch_size, timeout)
 
-            self.logger.info(
+            self.logger.info()
                 f"Kafka流消费完成 - 处理: {stats[processed]}, 失败: {stats['failed']}"
-            )
+            
 
-            return {
+            return {)
                 "task_id": self.request.id,","
                 "status": "success",","
                 "topics": topics or "all",","
                 "statistics": stats,","
                 "batch_size": batch_size,","
                 "timeout": timeout,""
-            }
+            
 
-        except (RuntimeError, ValueError, ConnectionError) as e:
-            error_msg = f"Kafka流消费失败: {e}"
-            self.logger.error(error_msg)
+        except (RuntimeError, ValueError, ConnectionError) as e: error_msg = f"Kafka流消费失,
+"    败: {e}"
+"            self.logger.error(error_msg)
 
             # 记录错误
-            await self.error_logger.log_task_error(
+            await self.error_logger.log_task_error()
                 task_name="consume_kafka_streams_task",
                 task_id=self.request.id,
                 error=e,
                 context={"topics": topics, "batch_size": batch_size},
                 retry_count=self.request.retries,
-            )
+            
 
-            return {
+            return {)
                 "task_id": self.request.id,","
                 "status": "failed",","
                 "error": error_msg,","
                 "topics": topics or "all",""
-            }
+            
 
         finally:
             # 清理资源
@@ -119,10 +122,8 @@ def consume_kafka_streams_task(
 
 
 @app.task(base=StreamingTask, bind=True)
-def start_continuous_consumer_task(
-    self, topics: Optional[List[str] = None, consumer_group_id: Optional[str = None
-):
-    """"""
+def start_continuous_consumer_task(self, topics: Optional[List[str] = None, consumer_group_id: Optional[str = None)))
+: """""
     启动持续Kafka消费任务
 
     Args:
@@ -131,7 +132,7 @@ def start_continuous_consumer_task(
 
     Returns:
         Dict[str, Any]: 任务状态
-    """"""
+    """""
 
     async def _start_continuous_consumer():
         try:
@@ -145,35 +146,35 @@ def start_continuous_consumer_task(
 
             self.logger.info(f"启动持续Kafka消费 - Topics: {topics or all}")
 
-            # 启动持续消费（这将一直运行直到任务被取消）
+            # 启动持续消费(这将一直运行直到任务被取消)
             await consumer.start_consuming()
 
-            return {
+            return {)
                 "task_id": self.request.id,","
                 "status": "finished",","
                 "topics": topics or "all",","
                 "consumer_group_id": consumer_group_id,""
-            }
+            
 
-        except (RuntimeError, ValueError, ConnectionError) as e:
-            error_msg = f"持续Kafka消费失败: {e}"
-            self.logger.error(error_msg)
+        except (RuntimeError, ValueError, ConnectionError) as e: error_msg = f"持续Kafka消费失,
+"    败: {e}"
+"            self.logger.error(error_msg)
 
             # 记录错误
-            await self.error_logger.log_task_error(
+            await self.error_logger.log_task_error()
                 task_name="start_continuous_consumer_task",
                 task_id=self.request.id,
                 error=e,
                 context={"topics": topics, "consumer_group_id": consumer_group_id},
                 retry_count=self.request.retries,
-            )
+            
 
-            return {
+            return {)
                 "task_id": self.request.id,","
                 "status": "failed",","
                 "error": error_msg,","
                 "topics": topics or "all",""
-            }
+            
 
         finally:
             # 清理资源
@@ -184,13 +185,12 @@ def start_continuous_consumer_task(
 
 
 @app.task(base=StreamingTask, bind=True)
-def produce_to_kafka_stream_task(
-    self,
-    "data_list": List[Dict[str, Any],
+def produce_to_kafka_stream_task(self,)
+    "data_list": List[Dict[str, Any],)
     "data_type": str,
     "key_field": Optional[str] = None,
-):
-    """"""
+:
+    """""
     生产数据到Kafka流任务
 
     Args:
@@ -200,7 +200,7 @@ def produce_to_kafka_stream_task(
 
     Returns:
         Dict[str, Any]: 发送统计结果
-    """"""
+    """""
 
     async def _produce_to_stream():
         try:
@@ -209,39 +209,39 @@ def produce_to_kafka_stream_task(
             # 批量发送数据
             _stats = await producer.send_batch(data_list, data_type)
 
-            self.logger.info(
+            self.logger.info()
                 f"数据已发送到Kafka流 - 类型: {data_type}, ",
                 f"成功: {stats[success]}, 失败: {stats['failed']}"
-            )
+            
 
-            return {
+            return {)
                 "task_id": self.request.id,","
                 "status": "success",","
                 "data_type": data_type,","
                 "total_records": len(data_list),","
                 "statistics": stats,""
-            }
+            
 
-        except (RuntimeError, ValueError, ConnectionError) as e:
-            error_msg = f"发送数据到Kafka流失败: {e}"
-            self.logger.error(error_msg)
+        except (RuntimeError, ValueError, ConnectionError) as e: error_msg = f"发送数据到Kafka流失,
+"    败: {e}"
+"            self.logger.error(error_msg)
 
             # 记录错误
-            await self.error_logger.log_task_error(
+            await self.error_logger.log_task_error()
                 task_name="produce_to_kafka_stream_task",
                 task_id=self.request.id,
                 error=e,
                 context={"data_type": data_type, "record_count": len(data_list)},
                 retry_count=self.request.retries,
-            )
+            
 
-            return {
+            return {)
                 "task_id": self.request.id,","
                 "status": "failed",","
                 "error": error_msg,","
                 "data_type": data_type,","
                 "total_records": len(data_list),""
-            }
+            
 
         finally:
             # 清理资源
@@ -252,13 +252,12 @@ def produce_to_kafka_stream_task(
 
 
 @app.task(base=StreamingTask, bind=True)
-def stream_health_check_task(self):
-    """"""
+def stream_health_check_task(self: """"")
     流处理健康检查任务
 
     Returns:
         Dict[str, Any]: 健康检查结果
-    """"""
+    """""
 
     async def _stream_health_check():
         try:
@@ -267,25 +266,25 @@ def stream_health_check_task(self):
 
             self.logger.info(f"流处理健康检查完成: {health_status}")
 
-            return {
+            return {)
                 "task_id": self.request.id,","
                 "status": "success",","
                 "health_status": health_status,","
                 "timestamp": health_status.get("timestamp"),""
-            }
+            
 
-        except (RuntimeError, ValueError, ConnectionError) as e:
-            error_msg = f"流处理健康检查失败: {e}"
-            self.logger.error(error_msg)
+        except (RuntimeError, ValueError, ConnectionError) as e: error_msg = f"流处理健康检查失,
+"    败: {e}"
+"            self.logger.error(error_msg)
 
             # 记录错误
-            await self.error_logger.log_task_error(
+            await self.error_logger.log_task_error()
                 task_name="stream_health_check_task",
                 task_id=self.request.id,
                 error=e,
                 context={},
                 retry_count=self.request.retries,
-            )
+            
 
             return {"task_id": self.request.id, "status": "failed", "error": error_msg}
 
@@ -298,12 +297,11 @@ def stream_health_check_task(self):
 
 
 @app.task(base=StreamingTask, bind=True)
-def stream_data_processing_task(
-    self,
-    "topics": Optional[List[str] = None,
+def stream_data_processing_task(self,)
+    "topics": Optional[List[str] = None,)
     "processing_duration": int = 300,  # 5分钟
-):
-    """"""
+:
+    """""
     流数据处理任务
 
     Args:
@@ -312,16 +310,16 @@ def stream_data_processing_task(
 
     Returns:
         Dict[str, Any]: 处理统计结果
-    """"""
+    """""
 
     async def _stream_data_processing():
         try:
             processor = StreamProcessor()
 
             # 启动定时流处理
-            processing_task = asyncio.create_task(
+            processing_task = asyncio.create_task()
                 processor.start_continuous_processing(topics)
-            )
+            
 
             # 等待指定时间后停止
             await asyncio.sleep(processing_duration)
@@ -338,33 +336,33 @@ def stream_data_processing_task(
 
             self.logger.info(f"流数据处理完成: {stats}")
 
-            return {
+            return {)
                 "task_id": self.request.id,","
                 "status": "success",","
                 "topics": topics or "all",","
                 "processing_duration": processing_duration,","
                 "statistics": stats,""
-            }
+            
 
-        except (RuntimeError, ValueError, ConnectionError) as e:
-            error_msg = f"流数据处理失败: {e}"
-            self.logger.error(error_msg)
+        except (RuntimeError, ValueError, ConnectionError) as e: error_msg = f"流数据处理失,
+"    败: {e}"
+"            self.logger.error(error_msg)
 
             # 记录错误
-            await self.error_logger.log_task_error(
+            await self.error_logger.log_task_error()
                 task_name="stream_data_processing_task",
                 task_id=self.request.id,
                 error=e,
                 context={"topics": topics, "duration": processing_duration},
                 retry_count=self.request.retries,
-            )
+            
 
-            return {
+            return {)
                 "task_id": self.request.id,","
                 "status": "failed",","
                 "error": error_msg,","
                 "topics": topics or "all",""
-            }
+            
 
         finally:
             # 清理资源
@@ -376,7 +374,7 @@ def stream_data_processing_task(
 
 @app.task(base=StreamingTask, bind=True)
 def kafka_topic_management_task(self, action: str, topic_name: Optional[str] = None):
-    """"""
+    """""
     Kafka Topic管理任务
 
     Args:
@@ -385,7 +383,7 @@ def kafka_topic_management_task(self, action: str, topic_name: Optional[str] = N
 
     Returns:
         Dict[str, Any]: 操作结果
-    """"""
+    """""
 
     async def _kafka_topic_management():
         try:
@@ -397,12 +395,12 @@ def kafka_topic_management_task(self, action: str, topic_name: Optional[str] = N
 
                 self.logger.info(f"Kafka Topic列表: {topics}")
 
-                return {
+                return {)
                     "task_id": self.request.id,","
                     "status": "success",","
                     "action": action,","
                     "topics": topics,""
-                }
+                
 
             elif action == "create" and topic_name:
                 # 检查Topic是否已在配置中
@@ -411,48 +409,51 @@ def kafka_topic_management_task(self, action: str, topic_name: Optional[str] = N
 
                     self.logger.info(f"Topic {topic_name} 配置已存在: {topic_config}")
 
-                    return {
+                    return {)
                         "task_id": self.request.id,","
                         "status": "success",","
                         "action": action,","
                         "topic_name": topic_name,","
                         "message": "Topic配置已存在",""
-                    }
+                    
                 else:
-                    return {
+                    return {)
                         "task_id": self.request.id,","
                         "status": "failed",","
                         "action": action,","
                         "topic_name": topic_name,","
                         "error": "Topic不在配置中",""
-                    }
+                    
 
             else:
-                return {
+                return {)
                     "task_id": self.request.id,","
                     "status": "failed",","
                     "action": action,","
                     "error": "不支持的操作或缺少参数",""
-                }
+                
 
-        except (RuntimeError, ValueError, ConnectionError) as e:
-            error_msg = f"Kafka Topic管理失败: {e}"
-            self.logger.error(error_msg)
+        except (RuntimeError, ValueError, ConnectionError) as e: error_msg = f"Kafka Topic管理失,
+"    败: {e}"
+"            self.logger.error(error_msg)
 
             # 记录错误
-            await self.error_logger.log_task_error(
+            await self.error_logger.log_task_error()
                 task_name="kafka_topic_management_task",
                 task_id=self.request.id,
                 error=e,
                 context={"action": action, "topic_name": topic_name},
                 retry_count=self.request.retries,
-            )
+            
 
-            return {
+            return {)
                 "task_id": self.request.id,","
                 "status": "failed",","
                 "error": error_msg,","
                 "action": action,""
-            }
+            
 
     return self.run_async(_kafka_topic_management())
+
+"""
+"""

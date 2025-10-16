@@ -1,0 +1,888 @@
+{
+  "total_errors": 257,
+  "error_types": {
+    "invalid_character": 49,
+    "invalid_syntax": 48,
+    "unterminated_string": 75,
+    "other": 83,
+    "mismatched_parentheses": 2
+  },
+  "modules": {
+    "adapters": 3,
+    "config": 1,
+    "api": 17,
+    "api/predictions": 3,
+    "api/health": 2,
+    "api/data": 1,
+    "api/data/models": 4,
+    "utils/_retry": 1,
+    "repositories": 7,
+    "stubs/mocks": 2,
+    "facades": 3,
+    "patterns": 4,
+    "monitoring": 2,
+    "monitoring/alert_manager_mod": 1,
+    "performance": 5,
+    "ml": 1,
+    "models": 2,
+    "decorators": 4,
+    "decorators/implementations": 1,
+    "realtime": 1,
+    "domain": 2,
+    "domain/models": 5,
+    "domain/strategies": 8,
+    "domain/services": 5,
+    "domain/events": 4,
+    "cqrs": 3,
+    "streaming": 5,
+    "database": 10,
+    "database/repositories": 5,
+    "database/models": 12,
+    "database/connection": 2,
+    "database/connection/pools": 1,
+    "database/connection/core": 1,
+    "database/migrations": 1,
+    "database/migrations/versions": 14,
+    "cache": 8,
+    "cache/redis": 1,
+    "cache/redis/warmup": 2,
+    "cache/redis/core": 3,
+    "cache/redis/operations": 3,
+    "cache/ttl_cache_enhanced": 6,
+    "domain_simple": 5,
+    "collectors": 2,
+    "core": 15,
+    "core/logging": 1,
+    "core/prediction": 3,
+    "core/prediction/config": 1,
+    "core/prediction/statistics": 1,
+    "observers": 1,
+    "services": 10,
+    "services/manager": 1,
+    "services/audit": 1,
+    "services/audit_service_mod": 3,
+    "services/processing": 1,
+    "services/processing/processors": 4,
+    "services/processing/processors/odds": 4,
+    "services/processing/processors/features": 4,
+    "services/processing/validators": 2,
+    "services/processing/caching": 2,
+    "services/processing/caching/config": 1,
+    "services/processing/caching/base": 1,
+    "features": 2,
+    "tasks": 4,
+    "tasks/backup/executor": 1,
+    "tasks/backup/manual": 1,
+    "data/storage": 1,
+    "data/processing": 2,
+    "data/quality": 5,
+    "data/quality/exception_handler_mod": 1,
+    "data/collectors": 4,
+    "data/features": 2,
+    "lineage": 1,
+    "scheduler": 1,
+    "events": 3
+  },
+  "details": [
+    {
+      "file": "adapters/base.py",
+      "module": "adapters",
+      "line": 213,
+      "column": 21,
+      "message": "invalid character '（' (U+FF08)",
+      "text": "\"\"\"具体的请求处理逻辑（Composite使用并行请求）\"\" return await self.request(*args, **kwargs)"
+    },
+    {
+      "file": "adapters/factory.py",
+      "module": "adapters",
+      "line": 18,
+      "column": 31,
+      "message": "invalid syntax",
+      "text": "from .base import Adapterfrom .football import ("
+    },
+    {
+      "file": "adapters/registry.py",
+      "module": "adapters",
+      "line": 3,
+      "column": 7,
+      "message": "invalid syntax",
+      "text": "\"\" \"\" 适"
+    },
+    {
+      "file": "config/openapi_config.py",
+      "module": "config",
+      "line": 3,
+      "column": 9,
+      "message": "invalid syntax",
+      "text": "OpenAPI 配置和文档增强"
+    },
+    {
+      "file": "api/health.py",
+      "module": "api",
+      "line": 15,
+      "column": 5,
+      "message": "unterminated string literal (detected at line 15)",
+      "text": "\"直接从 health 导入已弃用。"
+    },
+    {
+      "file": "api/schemas.py",
+      "module": "api",
+      "line": 5,
+      "column": 36,
+      "message": "invalid character '。' (U+3002)",
+      "text": "为所有API端点提供标准化的响应模型, 确保API文档的一致性和完整性。"
+    },
+    {
+      "file": "api/performance.py",
+      "module": "api",
+      "line": 2,
+      "column": 4,
+      "message": "invalid syntax",
+      "text": "\"\" API性能优化配置和中间件"
+    },
+    {
+      "file": "api/cqrs.py",
+      "module": "api",
+      "line": 6,
+      "column": 16,
+      "message": "invalid character '。' (U+3002)",
+      "text": "提供CQRS模式的HTTP接口。"
+    },
+    {
+      "file": "api/buggy_api.py",
+      "module": "api",
+      "line": 15,
+      "column": 21,
+      "message": "invalid character '：' (U+FF1A)",
+      "text": "\"\" 修复后的 Query 参数："
+    },
+    {
+      "file": "api/dependencies.py",
+      "module": "api",
+      "line": 28,
+      "column": 13,
+      "message": "unterminated string literal (detected at line 28)",
+      "text": "ALGORITHM = \"HS256 security = HTTPBearer()"
+    },
+    {
+      "file": "api/data_router.py",
+      "module": "api",
+      "line": 3,
+      "column": 11,
+      "message": "invalid character '（' (U+FF08)",
+      "text": "\"\" 数据API端点（向后兼容）"
+    },
+    {
+      "file": "api/features.py",
+      "module": "api",
+      "line": 48,
+      "column": 20,
+      "message": "unterminated string literal (detected at line 48)",
+      "text": "logger.warning(f\"无效的比赛I,"
+    },
+    {
+      "file": "api/facades.py",
+      "module": "api",
+      "line": 2,
+      "column": 7,
+      "message": "invalid syntax",
+      "text": "\"\" \"\" 门"
+    },
+    {
+      "file": "api/predictions.py",
+      "module": "api",
+      "line": 1,
+      "column": 1,
+      "message": "unterminated triple-quoted string literal (detected at line 55)",
+      "text": "\"\"\" 预测API端点 / Prediction API Endpoints"
+    },
+    {
+      "file": "api/deps.py",
+      "module": "api",
+      "line": 25,
+      "column": 61,
+      "message": "unterminated string literal (detected at line 25)",
+      "text": "status_code=status.HTTP_400_BAD_REQUEST, detail=\"Inactive user )"
+    },
+    {
+      "file": "api/app.py",
+      "module": "api",
+      "line": 42,
+      "column": 17,
+      "message": "expected ':'",
+      "text": "async def root()"
+    },
+    {
+      "file": "api/decorators.py",
+      "module": "api",
+      "line": 34,
+      "column": 12,
+      "message": "unterminated string literal (detected at line 34)",
+      "text": "return f\"Processed: {text} async def failing_function(retry_count: int = 0) -> str:"
+    },
+    {
+      "file": "api/observers.py",
+      "module": "api",
+      "line": 6,
+      "column": 16,
+      "message": "invalid character '。' (U+3002)",
+      "text": "提供观察者系统的管理和监控接口。"
+    },
+    {
+      "file": "api/repositories.py",
+      "module": "api",
+      "line": 7,
+      "column": 15,
+      "message": "invalid character '。' (U+3002)",
+      "text": "展示仓储模式的查询和管理功能。"
+    },
+    {
+      "file": "api/events.py",
+      "module": "api",
+      "line": 6,
+      "column": 15,
+      "message": "invalid character '。' (U+3002)",
+      "text": "提供事件系统的管理和监控接口。"
+    },
+    {
+      "file": "api/monitoring.py",
+      "module": "api",
+      "line": 5,
+      "column": 20,
+      "message": "invalid character '、' (U+3001)",
+      "text": "\"\" - /metrics: 返回系统、数据库、业务与运行时指标（JSON）"
+    },
+    {
+      "file": "api/predictions/__init__.py",
+      "module": "api/predictions",
+      "line": 1,
+      "column": 1,
+      "message": "unterminated triple-quoted string literal (detected at line 38)",
+      "text": "\"\"\" 预测API模块"
+    },
+    {
+      "file": "api/predictions/models.py",
+      "module": "api/predictions",
+      "line": 156,
+      "column": 14,
+      "message": "unterminated triple-quoted string literal (detected at line 159)",
+      "text": "\"\"\"验证响应模式\"\"\""
+    },
+    {
+      "file": "api/predictions/router.py",
+      "module": "api/predictions",
+      "line": 6,
+      "column": 13,
+      "message": "invalid character '。' (U+3002)",
+      "text": "提供预测相关的API路由。"
+    },
+    {
+      "file": "api/health/__init__.py",
+      "module": "api/health",
+      "line": 11,
+      "column": 17,
+      "message": "invalid character '（' (U+FF08)",
+      "text": "\"\"\"检查数据库连接状态（内部函数）"
+    },
+    {
+      "file": "api/health/utils.py",
+      "module": "api/health",
+      "line": 5,
+      "column": 13,
+      "message": "invalid character '。' (U+3002)",
+      "text": "提供健康检查相关的工具类。"
+    },
+    {
+      "file": "api/data/__init__.py",
+      "module": "api/data",
+      "line": 1,
+      "column": 1,
+      "message": "unterminated triple-quoted string literal (detected at line 44)",
+      "text": "\"\"\" API data models package"
+    },
+    {
+      "file": "api/data/models/odds_models.py",
+      "module": "api/data/models",
+      "line": 8,
+      "column": 6,
+      "message": "invalid syntax",
+      "text": "\"\"\" 赔率相关模型\nOdds Related Models\n\"\" from pydantic import BaseModel, Field\n\n\nclass OddsQueryParams(BaseModel)\n:\n    \"\"\"赔率查询参数\"\" bookmaker: str | None = Field(None, description=\"博彩公司\")"
+    },
+    {
+      "file": "api/data/models/match_models.py",
+      "module": "api/data/models",
+      "line": 10,
+      "column": 6,
+      "message": "invalid syntax",
+      "text": "\"\"\" 比赛相关模型\nMatch Related Models\n\"\" from datetime import datetime\n\nfrom pydantic import BaseModel, Field\n\n\nclass MatchQueryParams(BaseModel)\n:\n    \"\"\"比赛查询参数\"\" league_id: int | None = Field(None, description=\"联赛ID\")"
+    },
+    {
+      "file": "api/data/models/league_models.py",
+      "module": "api/data/models",
+      "line": 21,
+      "column": 5,
+      "message": "unterminated triple-quoted string literal (detected at line 26)",
+      "text": "\"\"\"创建联赛请求\"\" name: str = Field(..., min_length=1, max_length=100, description=\"联赛名称\")"
+    },
+    {
+      "file": "api/data/models/team_models.py",
+      "module": "api/data/models",
+      "line": 8,
+      "column": 6,
+      "message": "invalid syntax",
+      "text": "\"\"\" 球队相关模型\nTeam Related Models\n\"\" from pydantic import BaseModel, Field\n\n\nclass TeamQueryParams(BaseModel)\n:\n    \"\"\"球队查询参数\"\" country:"
+    },
+    {
+      "file": "utils/_retry/__init__.py",
+      "module": "utils/_retry",
+      "line": 16,
+      "column": 17,
+      "message": "invalid syntax",
+      "text": "\"\"\"重试配置类\"\"\" def __init__("
+    },
+    {
+      "file": "repositories/base.py",
+      "module": "repositories",
+      "line": 5,
+      "column": 15,
+      "message": "invalid character '。' (U+3002)",
+      "text": "定义仓储模式的基础接口和实现。"
+    },
+    {
+      "file": "repositories/__init__.py",
+      "module": "repositories",
+      "line": 4,
+      "column": 11,
+      "message": "invalid character '。' (U+3002)",
+      "text": "提供数据访问的抽象层。"
+    },
+    {
+      "file": "repositories/prediction.py",
+      "module": "repositories",
+      "line": 3,
+      "column": 4,
+      "message": "invalid syntax",
+      "text": "\"\" 预"
+    },
+    {
+      "file": "repositories/user.py",
+      "module": "repositories",
+      "line": 3,
+      "column": 4,
+      "message": "invalid syntax",
+      "text": "\"\" 用"
+    },
+    {
+      "file": "repositories/provider.py",
+      "module": "repositories",
+      "line": 6,
+      "column": 17,
+      "message": "invalid character '。' (U+3002)",
+      "text": "提供仓储实例的创建和依赖注入配置。"
+    },
+    {
+      "file": "repositories/di.py",
+      "module": "repositories",
+      "line": 4,
+      "column": 20,
+      "message": "invalid character '。' (U+3002)",
+      "text": "为FastAPI提供仓储实例的依赖注入。"
+    },
+    {
+      "file": "repositories/match.py",
+      "module": "repositories",
+      "line": 18,
+      "column": 109,
+      "message": "unterminated string literal (detected at line 18)",
+      "text": "\"\"\"比赛状态枚举\"\" SCHEDULED = \"scheduled LIVE = \"live FINISHED = \"finished POSTPONED = \"postponed CANCELLED = \"cancelled class MatchRepositoryInterface(Repository[Match, int]):"
+    },
+    {
+      "file": "stubs/mocks/feast.py",
+      "module": "stubs/mocks",
+      "line": 110,
+      "column": 5,
+      "message": "closing parenthesis ')' does not match opening parenthesis '[' on line 109",
+      "text": ") -> Tuple[List[Dict[str, Any], List[str]:"
+    },
+    {
+      "file": "stubs/mocks/confluent_kafka.py",
+      "module": "stubs/mocks",
+      "line": 63,
+      "column": 58,
+      "message": "closing parenthesis ')' does not match opening parenthesis '['",
+      "text": "def set_headers(self, headers: List[tuple[str, bytes]) -> None:"
+    },
+    {
+      "file": "facades/base.py",
+      "module": "facades",
+      "line": 284,
+      "column": 1,
+      "message": "unterminated triple-quoted string literal (detected at line 284)",
+      "text": "\"\"\""
+    },
+    {
+      "file": "facades/facades.py",
+      "module": "facades",
+      "line": 663,
+      "column": 1,
+      "message": "unterminated triple-quoted string literal (detected at line 663)",
+      "text": "\"\"\""
+    },
+    {
+      "file": "facades/factory.py",
+      "module": "facades",
+      "line": 62,
+      "column": 67,
+      "message": "unterminated string literal (detected at line 62)",
+      "text": "if facade_type not in self.FACADE_TYPES: raise ValueError(f\"Unknown facade typ,"
+    },
+    {
+      "file": "patterns/decorator.py",
+      "module": "patterns",
+      "line": 436,
+      "column": 1,
+      "message": "unterminated triple-quoted string literal (detected at line 436)",
+      "text": "\"\"\""
+    },
+    {
+      "file": "patterns/facade.py",
+      "module": "patterns",
+      "line": 115,
+      "column": 104,
+      "message": "unterminated string literal (detected at line 115)",
+      "text": "except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e: self.logger.error(f\"Prediction faile,"
+    },
+    {
+      "file": "patterns/observer.py",
+      "module": "patterns",
+      "line": 332,
+      "column": 16,
+      "message": "unterminated triple-quoted string literal (detected at line 335)",
+      "text": "\"\"\"为服务设置观察者\"\"\""
+    },
+    {
+      "file": "patterns/facade_simple.py",
+      "module": "patterns",
+      "line": 88,
+      "column": 104,
+      "message": "unterminated string literal (detected at line 88)",
+      "text": "except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e: self.logger.error(f\"Prediction faile,"
+    },
+    {
+      "file": "monitoring/alert_handlers.py",
+      "module": "monitoring",
+      "line": 195,
+      "column": 13,
+      "message": "unterminated triple-quoted string literal (detected at line 215)",
+      "text": "\"\"\"\"\""
+    },
+    {
+      "file": "monitoring/anomaly_detector.py",
+      "module": "monitoring",
+      "line": 60,
+      "column": 21,
+      "message": "invalid syntax",
+      "text": "anomalous_valueslist[Any],"
+    },
+    {
+      "file": "monitoring/alert_manager_mod/__init__.py",
+      "module": "monitoring/alert_manager_mod",
+      "line": 164,
+      "column": 5,
+      "message": "closing parenthesis ')' does not match opening parenthesis '[' on line 163",
+      "text": ") -> Alert:"
+    },
+    {
+      "file": "performance/profiler.py",
+      "module": "performance",
+      "line": 533,
+      "column": 1,
+      "message": "unterminated triple-quoted string literal (detected at line 533)",
+      "text": "\"\"\""
+    },
+    {
+      "file": "performance/middleware.py",
+      "module": "performance",
+      "line": 6,
+      "column": 13,
+      "message": "invalid syntax",
+      "text": "Performance Monitoring Middleware"
+    },
+    {
+      "file": "performance/api.py",
+      "module": "performance",
+      "line": 114,
+      "column": 99,
+      "message": "unterminated string literal (detected at line 114)",
+      "text": "except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e: logger.error(f\"Failed to get performance metric,"
+    },
+    {
+      "file": "performance/analyzer.py",
+      "module": "performance",
+      "line": 481,
+      "column": 15,
+      "message": "invalid character '²' (U+00B2)",
+      "text": "\"\"\"计算R²值\"\"\""
+    },
+    {
+      "file": "performance/integration.py",
+      "module": "performance",
+      "line": 69,
+      "column": 76,
+      "message": "unterminated string literal (detected at line 69)",
+      "text": "except (ValueError, RuntimeError, TimeoutError) as e: logger.error(f\"Failed to integrate performance monitorin,"
+    },
+    {
+      "file": "ml/model_training.py",
+      "module": "ml",
+      "line": 7,
+      "column": 7,
+      "message": "invalid syntax",
+      "text": "Model Training Module - Stub Implementation"
+    },
+    {
+      "file": "models/prediction_model.py",
+      "module": "models",
+      "line": 197,
+      "column": 104,
+      "message": "unterminated string literal (detected at line 197)",
+      "text": "except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e: self.logger.error(f\"Failed to save mode,"
+    },
+    {
+      "file": "models/common_models.py",
+      "module": "models",
+      "line": 145,
+      "column": 1,
+      "message": "unterminated triple-quoted string literal (detected at line 145)",
+      "text": "\"\"\""
+    },
+    {
+      "file": "decorators/service.py",
+      "module": "decorators",
+      "line": 281,
+      "column": 1,
+      "message": "unterminated triple-quoted string literal (detected at line 281)",
+      "text": "\"\"\""
+    },
+    {
+      "file": "decorators/base.py",
+      "module": "decorators",
+      "line": 279,
+      "column": 1,
+      "message": "unterminated triple-quoted string literal (detected at line 279)",
+      "text": "\"\"\""
+    },
+    {
+      "file": "decorators/factory.py",
+      "module": "decorators",
+      "line": 51,
+      "column": 50,
+      "message": "unterminated string literal (detected at line 51)",
+      "text": "if not decorator_class: raise ValueError(f\"Unknown decorator typ,"
+    },
+    {
+      "file": "decorators/decorators.py",
+      "module": "decorators",
+      "line": 475,
+      "column": 5,
+      "message": "closing parenthesis ')' does not match opening parenthesis '[' on line 471",
+      "text": "):"
+    },
+    {
+      "file": "decorators/implementations/logging.py",
+      "module": "decorators/implementations",
+      "line": 17,
+      "column": 4,
+      "message": "invalid syntax",
+      "text": "...core.logging import get_logger"
+    },
+    {
+      "file": "realtime/websocket.py",
+      "module": "realtime",
+      "line": 3,
+      "column": 11,
+      "message": "invalid syntax",
+      "text": "WebSocket 模块 - 桩实现"
+    },
+    {
+      "file": "domain/__init__.py",
+      "module": "domain",
+      "line": 1,
+      "column": 1,
+      "message": "unterminated triple-quoted string literal (detected at line 109)",
+      "text": "\"\"\" 领域层"
+    },
+    {
+      "file": "domain/user.py",
+      "module": "domain",
+      "line": 83,
+      "column": 14,
+      "message": "unterminated triple-quoted string literal (detected at line 96)",
+      "text": "\"\"\"用户响应模型\"\"\""
+    },
+    {
+      "file": "domain/models/league.py",
+      "module": "domain/models",
+      "line": 134,
+      "column": 13,
+      "message": "unterminated string literal (detected at line 134)",
+      "text": "f\"胜{self.points_for_win} 平{self.points_for_draw} 负{self.points_for_loss} )"
+    },
+    {
+      "file": "domain/models/__init__.py",
+      "module": "domain/models",
+      "line": 1,
+      "column": 1,
+      "message": "unterminated triple-quoted string literal (detected at line 37)",
+      "text": "\"\"\" 领域模型"
+    },
+    {
+      "file": "domain/models/prediction.py",
+      "module": "domain/models",
+      "line": 38,
+      "column": 49,
+      "message": "unterminated string literal (detected at line 38)",
+      "text": "return \"high elif self.value >= Decimal(\"0.6\")"
+    },
+    {
+      "file": "domain/models/team.py",
+      "module": "domain/models",
+      "line": 3,
+      "column": 4,
+      "message": "invalid syntax",
+      "text": "\"\" 球"
+    },
+    {
+      "file": "domain/models/match.py",
+      "module": "domain/models",
+      "line": 58,
+      "column": 56,
+      "message": "unterminated string literal (detected at line 58)",
+      "text": "return f\"{self.home_score\"-{self.away_score}\"\"\"\" @dataclassclass Match:"
+    },
+    {
+      "file": "domain/strategies/config.py",
+      "module": "domain/strategies",
+      "line": 57,
+      "column": 80,
+      "message": "unterminated string literal (detected at line 57)",
+      "text": "\"\"\"集成策略配置\"\" \"ensemble_method\": str = \"weighted_average \"consensus_threshold\": float = 0.7"
+    },
+    {
+      "file": "domain/strategies/base.py",
+      "module": "domain/strategies",
+      "line": 72,
+      "column": 12,
+      "message": "unterminated string literal (detected at line 72)",
+      "text": "\"\"\"\" pass"
+    },
+    {
+      "file": "domain/strategies/__init__.py",
+      "module": "domain/strategies",
+      "line": 1,
+      "column": 1,
+      "message": "unterminated triple-quoted string literal (detected at line 37)",
+      "text": "\"\"\" 预测策略模块"
+    },
+    {
+      "file": "domain/strategies/historical.py",
+      "module": "domain/strategies",
+      "line": 72,
+      "column": 99,
+      "message": "unterminated string literal (detected at line 72)",
+      "text": "\"\"\"\" self.config = configself._min_historical_matches = config.get(\"min_historical_matches\", 3)"
+    },
+    {
+      "file": "domain/strategies/ensemble.py",
+      "module": "domain/strategies",
+      "line": 60,
+      "column": 60,
+      "message": "unterminated string literal (detected at line 60)",
+      "text": "\"\"\"\" def __init__(self, name: str = \"ensemble_predictor\") -> None:"
+    },
+    {
+      "file": "domain/strategies/statistical.py",
+      "module": "domain/strategies",
+      "line": 55,
+      "column": 85,
+      "message": "unterminated string literal (detected at line 55)",
+      "text": "\"\"\"\" self.config = configself._min_sample_size = config.get(\"min_sample_size\", 5)"
+    },
+    {
+      "file": "domain/strategies/ml_model.py",
+      "module": "domain/strategies",
+      "line": 47,
+      "column": 12,
+      "message": "unterminated string literal (detected at line 47)",
+      "text": "\"\"\"\" self.config = config"
+    },
+    {
+      "file": "domain/strategies/factory.py",
+      "module": "domain/strategies",
+      "line": 48,
+      "column": 149,
+      "message": "closing parenthesis ']' does not match opening parenthesis '{' on line 47",
+      "text": "\"ml_model\": MLModelStrategy,\", \"statistical\": StatisticalStrategy,\", \"historical\": HistoricalStrategy,\", \"ensemble\": EnsembleStrategy,\" ]"
+    },
+    {
+      "file": "domain/services/__init__.py",
+      "module": "domain/services",
+      "line": 1,
+      "column": 1,
+      "message": "unterminated triple-quoted string literal (detected at line 16)",
+      "text": "\"\"\" 领域服务"
+    },
+    {
+      "file": "domain/services/prediction_service.py",
+      "module": "domain/services",
+      "line": 5,
+      "column": 14,
+      "message": "invalid character '。' (U+3002)",
+      "text": "处理预测相关的复杂业务逻辑。"
+    },
+    {
+      "file": "domain/services/match_service.py",
+      "module": "domain/services",
+      "line": 5,
+      "column": 14,
+      "message": "invalid character '。' (U+3002)",
+      "text": "处理比赛相关的复杂业务逻辑。"
+    },
+    {
+      "file": "domain/services/scoring_service.py",
+      "module": "domain/services",
+      "line": 12,
+      "column": 80,
+      "message": "closing parenthesis ')' does not match opening parenthesis '['",
+      "text": "\"\"\"计分服务\"\" def __init__(self, scoring_config: Optional[Dict[str, Any] = None) -> None:"
+    },
+    {
+      "file": "domain/services/team_service.py",
+      "module": "domain/services",
+      "line": 4,
+      "column": 7,
+      "message": "unterminated string literal (detected at line 4)",
+      "text": "\"\" \"\"\"\" from __future__ import annotations"
+    },
+    {
+      "file": "domain/events/base.py",
+      "module": "domain/events",
+      "line": 31,
+      "column": 9,
+      "message": "unterminated triple-quoted string literal (detected at line 49)",
+      "text": "\"\"\"转换为字典\"\" return {\"event_id\": self.event_id,"
+    },
+    {
+      "file": "domain/events/__init__.py",
+      "module": "domain/events",
+      "line": 1,
+      "column": 1,
+      "message": "unterminated triple-quoted string literal (detected at line 34)",
+      "text": "\"\"\" 领域事件"
+    },
+    {
+      "file": "domain/events/prediction_events.py",
+      "module": "domain/events",
+      "line": 3,
+      "column": 4,
+      "message": "invalid syntax",
+      "text": "\"\" 预"
+    },
+    {
+      "file": "domain/events/match_events.py",
+      "module": "domain/events",
+      "line": 6,
+      "column": 13,
+      "message": "invalid character '。' (U+3002)",
+      "text": "定义与比赛相关的领域事件。"
+    },
+    {
+      "file": "cqrs/dto.py",
+      "module": "cqrs",
+      "line": 183,
+      "column": 18,
+      "message": "unterminated triple-quoted string literal (detected at line 184)",
+      "text": "\"\"\"创建失败结果\"\"\""
+    },
+    {
+      "file": "cqrs/handlers.py",
+      "module": "cqrs",
+      "line": 101,
+      "column": 99,
+      "message": "unterminated string literal (detected at line 101)",
+      "text": "except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e: logger.error(f\"创建预测失,"
+    },
+    {
+      "file": "cqrs/application.py",
+      "module": "cqrs",
+      "line": 298,
+      "column": 17,
+      "message": "unterminated triple-quoted string literal (detected at line 338)",
+      "text": "\"\"\"初始化CQRS系统\"\"\""
+    },
+    {
+      "file": "streaming/kafka_consumer_simple.py",
+      "module": "streaming",
+      "line": 74,
+      "column": 13,
+      "message": "closing parenthesis '}' does not match opening parenthesis '[' on line 65",
+      "text": "}"
+    },
+    {
+      "file": "streaming/stream_processor_simple.py",
+      "module": "streaming",
+      "line": 114,
+      "column": 83,
+      "message": "closing parenthesis '}' does not match opening parenthesis '['",
+      "text": "result = {\"key\": message[\"key\", \"value\": {}, \"topic\": message.get(\"topic\")}"
+    },
+    {
+      "file": "streaming/stream_config_simple.py",
+      "module": "streaming",
+      "line": 108,
+      "column": 5,
+      "message": "invalid syntax",
+      "text": "\"bootstrap_servers\": list[str],"
+    },
+    {
+      "file": "streaming/kafka_producer_simple.py",
+      "module": "streaming",
+      "line": 48,
+      "column": 13,
+      "message": "closing parenthesis '}' does not match opening parenthesis '[' on line 47",
+      "text": "}"
+    },
+    {
+      "file": "streaming/kafka_components_simple.py",
+      "module": "streaming",
+      "line": 125,
+      "column": 69,
+      "message": "closing parenthesis '}' does not match opening parenthesis '['",
+      "text": "{\"consumer_id\": \"consumer1\", \"assignment\": [\"topic1\"}\"\"],"
+    },
+    {
+      "file": "database/config.py",
+      "module": "database",
+      "line": 22,
+      "column": 66,
+      "message": "unterminated string literal (detected at line 22)",
+      "text": "return self.database.endswith(\".db\") or self.database == \":memory: @propertydef sync_url(self) -> str:"
+    },
+    {
+      "file": "database/sql_compatibility.py",
+      "module": "database",
+      "line": 3,
+      "column": 4,
+      "message": "invalid syntax",
+      "text": "\"\" sql_compatibility.pysql_compatibility"
+    },
+    {
+      "file": "database/base.py",
+      "module": "database",
+      "line": 17,
+      "column": 68,
+      "message": "unterminated string literal (detected at line 17)",
+      "text": "DateTime, default=datetime.utcnow, nullable=False, comment=\"创建时间 )"
+    }
+  ]
+}

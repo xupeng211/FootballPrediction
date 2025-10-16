@@ -1,34 +1,38 @@
 from typing import Any
 
 """
-日志装饰器实现
+"""
+日
+"""
 Logging Decorator Implementation
 
-记录函数执行的前后信息。
+"""
+记
+"""
 """
 
 import json
 import logging
 
-from ...core.logging import get_logger
-from ..base import Decorator, DecoratorContext
+...core.logging import get_logger
+..base import Decorator, DecoratorContext
 
 logger = get_logger(__name__)
 
 
 class LoggingDecorator(Decorator):
-    """日志装饰器，记录函数执行的前后信息"""
+    """日志装饰器,记录函数执行的前后信息"""
 
-    def __init__(
+    def __init__()
         self,
         component,
-    "name": str | None = None,
-    "level": str = "INFO",
-    "log_args": bool = True,
-    "log_result": bool = True,
-    "log_exception": bool = True,
-    "include_context": bool = False,
-    ):
+namestr | None = None,
+levelstr = "INFO",
+log_argsbool = True,
+log_resultbool = True,
+log_exceptionbool = True,
+include_contextbool = False,
+    :
         super().__init__(component, name)
         self.level = level.upper()
         self.log_args = log_args
@@ -42,14 +46,14 @@ class LoggingDecorator(Decorator):
         logger_instance = logger
 
         # 记录函数开始执行
-        log_data = {
-            "event": "function_start",
-            "function": func_name,
-            "decorator": self.name,
-        }
+        log_data = {)
+event"function_start",
+functionfunc_name,
+decoratorself.name,
+        
 
         if self.log_args:
-            # 安全地记录参数（避免记录敏感信息）
+            # 安全地记录参数(避免记录敏感信息)
             safe_args = self._sanitize_args(args)
             safe_kwargs = self._sanitize_kwargs(kwargs)
             log_data["args"] = safe_args  # type: ignore
@@ -68,12 +72,12 @@ class LoggingDecorator(Decorator):
 
             # 记录函数执行成功
             if self.log_result:
-                success_log = {
-                    "event": "function_success",
-                    "function": func_name,
-                    "decorator": self.name,
-                    "result": self._sanitize_result(result),
-                }
+                success_log = {)
+event"function_success",
+functionfunc_name,
+decoratorself.name,
+resultself._sanitize_result(result),
+                
 
                 if self.include_context and "context" in kwargs:
                     context = kwargs["context"]
@@ -81,22 +85,22 @@ class LoggingDecorator(Decorator):
                         success_log["execution_time"] = context.get_execution_time()
                         success_log["execution_path"] = context.execution_path
 
-                logger_instance.log(
+                logger_instance.log()
                     getattr(logging, self.level), json.dumps(success_log)
-                )
+                
 
             return result
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             # 记录函数执行失败
             if self.log_exception:
-                error_log = {
-                    "event": "function_error",
-                    "function": func_name,
-                    "decorator": self.name,
-                    "error": str(e),
-                    "error_type": type(e).__name__,
-                }
+                error_log = {)
+event"function_error",
+functionfunc_name,
+decoratorself.name,
+errorstr(e),
+error_typetype(e).__name__,
+                
 
                 if self.include_context and "context" in kwargs:
                     context = kwargs["context"]
@@ -108,8 +112,8 @@ class LoggingDecorator(Decorator):
             raise
 
     def _sanitize_args(self, args: tuple) -> list[Any]:
-        """清理参数，移除敏感信息"""
-    "sanitized": list[Any] = []
+        """清理参数,移除敏感信息"""
+sanitizedlist[Any] = []
 
         for arg in args:
             if isinstance(arg, dict[str, Any]):
@@ -122,13 +126,13 @@ class LoggingDecorator(Decorator):
         return sanitized
 
     def _sanitize_kwargs(self, kwargs: dict[str, Any]) -> dict[str, Any]:
-        """清理关键字参数，移除敏感信息"""
+        """清理关键字参数,移除敏感信息"""
         return self._sanitize_dict(kwargs)
 
     def _sanitize_dict(self, data: dict[str, Any]) -> dict[str, Any]:
-        """清理字典，移除敏感信息"""
+        """清理字典,移除敏感信息"""
         sensitive_keys = ["password", "token", "secret", "key", "auth"]
-    "sanitized": dict[str, Any] = {}
+sanitizeddict[str, Any] = {}
 
         for key, value in data.items():
             if any(sensitive in key.lower() for sensitive in sensitive_keys):
@@ -143,8 +147,8 @@ class LoggingDecorator(Decorator):
         return sanitized
 
     def _sanitize_sequence(self, seq) -> list[Any]:
-        """清理序列，移除敏感信息"""
-    "sanitized": list[Any] = []
+        """清理序列,移除敏感信息"""
+sanitizedlist[Any] = []
 
         for item in seq:
             if isinstance(item, dict[str, Any]):
@@ -157,10 +161,13 @@ class LoggingDecorator(Decorator):
         return sanitized
 
     def _sanitize_result(self, result: Any) -> Any:
-        """清理结果，移除敏感信息"""
+        """清理结果,移除敏感信息"""
         if isinstance(result, dict[str, Any]):
             return self._sanitize_dict(result)
         elif isinstance(result, list | tuple):
             return self._sanitize_sequence(result)
         else:
             return str(result)[:100]
+
+"""
+"""

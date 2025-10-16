@@ -1,32 +1,29 @@
-"""
-缓存模块 - 提供统一的缓存管理功能
+""" 缓存模块 - 提供统一的缓存管理功能
 
-提供Redis缓存功能，支持：
+提供Redis缓存功能, 支持:
 - Redis连接池管理
 - 同步和异步操作
 - 缓存Key命名规范
 - TTL过期策略
 - 缓存装饰器
-- 内存缓存（TTL Cache）
+- 内存缓存(TTL Cache)
 - 缓存一致性管理
 
-统一接口：
+统一接口:
 - redis_manager: Redis缓存管理
 - ttl_cache: 高性能内存缓存
 - decorators: 缓存装饰器
 - consistency_manager: 缓存一致性
-"""
-
-# Redis缓存管理
+"" # Redis缓存管理
 # 缓存一致性管理
-from .consistency_manager import (
+from .consistency_manager import ()
     CacheConsistencyManager,
     invalidate_entity_cache,
     sync_entity_cache,
-)
+
 
 # 缓存装饰器
-from .decorators import (
+from .decorators import ()
     CacheDecorator,
     InvalidateCacheDecorator,
     UserCacheDecorator,
@@ -37,8 +34,8 @@ from .decorators import (
     cache_team_stats,
     cache_user_predictions,
     cache_with_ttl,
-)
-from .redis_manager import (
+
+from .redis_manager import ()
     CacheKeyManager,
     RedisManager,
     # 便捷函数 - 异步
@@ -60,10 +57,10 @@ from .redis_manager import (
     # 其他功能
     startup_warmup,
     ttl_cache,
-)
 
-# TTL缓存（内存缓存）
-from .ttl_cache import (
+
+# TTL缓存(内存缓存)
+from .ttl_cache import ()
     CACHES,
     AsyncTTLCache,
     CacheEntry,
@@ -80,29 +77,28 @@ from .ttl_cache import (
     start_auto_cleanup,
     stop_auto_cleanup,
     temp_cache,
-)
-from .ttl_cache import (
+
+from .ttl_cache import ()
     get_cache as get_ttl_cache,
-)
+
 
 # 向后兼容别名
-# 为了保持向后兼容，提供一些常用别名
+# 为了保持向后兼容, 提供一些常用别名
 TTLCacheEntry = CacheEntry
 
 
-def get_prediction_cache():
-    return prediction_cache
+def get_prediction_cache(: return prediction_cache)
 
 
-def get_feature_cache():
-    return feature_cache
+def get_feature_cache(: return feature_cache)
 
 
-def get_odds_cache():
+def get_odds_cache()
+:
     return odds_cache
 
 
-__all__ = [
+__all__ = [)
     # Redis管理器
     "RedisManager",
     "CacheKeyManager",
@@ -165,4 +161,4 @@ __all__ = [
     "get_prediction_cache",
     "get_feature_cache",
     "get_odds_cache",
-]
+

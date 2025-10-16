@@ -1,20 +1,17 @@
-"""
-Repository模式实现
+""" Repository模式实现
 Repository Pattern Implementation
 
-提供数据访问层的抽象，实现仓储模式以进一步解耦数据访问层。
+提供数据访问层的抽象, 实现仓储模式以进一步解耦数据访问层.
 Provides data access layer abstraction, implementing repository pattern for further decoupling.
-"""
+"" from .base import BaseRepository, Tfrom .match import MatchRepository
 
-from .base import BaseRepository, T
-from .match import MatchRepository
-from .prediction import PredictionRepository
-from .user import UserRepository
+from .prediction import PredictionRepositoryfrom .user import UserRepository
 
-__all__ = [
+
+__all__ = [)
     "BaseRepository",
     "T",
     "MatchRepository",
     "PredictionRepository",
     "UserRepository",
-]
+

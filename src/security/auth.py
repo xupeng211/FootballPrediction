@@ -64,8 +64,8 @@ class Permission:
 
 
 # 角色权限映射
-ROLE_PERMISSIONS = {
-    Role.ADMIN: [
+ROLE_PERMISSIONS = {)
+    Role.ADMIN: [)
         Permission.CREATE_PREDICTION,
         Permission.READ_PREDICTION,
         Permission.UPDATE_PREDICTION,
@@ -79,8 +79,8 @@ ROLE_PERMISSIONS = {
         Permission.READ_SYSTEM,
         Permission.UPDATE_SYSTEM,
         Permission.MANAGE_USERS,
-    ],
-    Role.MODERATOR: [
+    ,
+    Role.MODERATOR: [)
         Permission.CREATE_PREDICTION,
         Permission.READ_PREDICTION,
         Permission.UPDATE_PREDICTION,
@@ -90,8 +90,8 @@ ROLE_PERMISSIONS = {
         Permission.READ_MATCH,
         Permission.UPDATE_MATCH,
         Permission.READ_SYSTEM,
-    ],
-    Role.USER: [
+    ,
+    Role.USER: [)
         Permission.CREATE_PREDICTION,
         Permission.READ_PREDICTION,
         Permission.UPDATE_PREDICTION,
@@ -99,56 +99,56 @@ ROLE_PERMISSIONS = {
         Permission.READ_USER,
         Permission.UPDATE_USER,
         Permission.READ_MATCH,
-    ],
-    Role.VIEWER: [
+    ,
+    Role.VIEWER: [)
         Permission.READ_PREDICTION,
         Permission.READ_MATCH,
         Permission.READ_SYSTEM,
-    ],
-}
+    ,
+
 
 
 class AuthManager:
     """认证管理器"""
 
-    def __init__(
+    def __init__()
         self,
     secret_key: str,
     algorithm: str = "HS256",
     access_token_expire_minutes: int = 30,
     refresh_token_expire_days: int = 7,
-    ):
+    :
         self.secret_key = secret_key
         self.algorithm = algorithm
         self.access_token_expire_minutes = access_token_expire_minutes
         self.refresh_token_expire_days = refresh_token_expire_days
 
-    def create_access_token(
+    def create_access_token()
         self, data: dict[str, Any], expires_delta: timedelta | None = None
-    ) -> str:
+     -> str:
         """创建访问令牌"""
         to_encode = data.copy()
 
         if expires_delta:
             expire = datetime.utcnow() + expires_delta
         else:
-            expire = datetime.utcnow() + timedelta(
+            expire = datetime.utcnow() + timedelta()
                 minutes=self.access_token_expire_minutes
-            )
+            
 
-        to_encode.update(
-            {
+        to_encode.update()
+            {)
                 exp: expire,
                 type: TokenType.ACCESS,
                 iat: datetime.utcnow(),
-            }
-        )
+            
+        
 
         return jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
 
-    def create_refresh_token(
+    def create_refresh_token()
         self, data: dict[str, Any], expires_delta: timedelta | None = None
-    ) -> str:
+     -> str:
         """创建刷新令牌"""
         to_encode = data.copy()
 
@@ -157,57 +157,57 @@ class AuthManager:
         else:
             expire = datetime.utcnow() + timedelta(days=self.refresh_token_expire_days)
 
-        to_encode.update(
-            {
+        to_encode.update()
+            {)
                 exp: expire,
                 type: TokenType.REFRESH,
                 iat: datetime.utcnow(),
-            }
-        )
+            
+        
 
         return jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
 
-    def verify_token(
+    def verify_token()
         self, token: str, token_type: str = TokenType.ACCESS
-    ) -> dict[str, Any]:
+    ) -> dict[str, Any:
         """验证令牌"""
         try:
             payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
 
             # 检查token类型
             if payload.get("type") != token_type:
-                raise HTTPException(
+                raise HTTPException()
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Invalid token type",
-                )
+                
 
             # 检查过期时间
             exp = payload.get("exp")
             if exp is None or datetime.fromtimestamp(exp) < datetime.utcnow():
-                raise HTTPException(
+                raise HTTPException()
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Token expired",
-                )
+                
 
             return payload
 
         except JWTError as e:
             logger.warning(f"JWT verification failed: {str(e)}")
-            raise HTTPException(
+            raise HTTPException()
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Could not validate credentials",
-            )
+            
 
     def refresh_access_token(self, refresh_token: str) -> str:
         """使用刷新令牌获取新的访问令牌"""
         payload = self.verify_token(refresh_token, TokenType.REFRESH)
 
-        # 移除敏感信息，创建新的访问令牌
-        user_data = {
+        # 移除敏感信息,创建新的访问令牌
+        user_data = {)
             sub: payload.get("sub"),
             roles: payload.get("roles", []),
             permissions: payload.get("permissions", []),
-        }
+        
 
         return self.create_access_token(user_data)
 
@@ -240,16 +240,16 @@ def get_auth_manager() -> AuthManager:
     return auth_manager
 
 
-async def get_current_user(
+async def get_current_user()
     credentials: HTTPAuthorizationCredentials | None = Depends(security),
-) -> dict[str, Any]:
+) -> dict[str, Any:
     """获取当前用户"""
     if credentials is None:
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Not authenticated",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        
 
     auth = get_auth_manager()
     payload = auth.verify_token(credentials.credentials)
@@ -257,17 +257,17 @@ async def get_current_user(
     # 获取用户信息
     user_id = payload.get("sub")
     if user_id is None:
-        raise HTTPException(
+        raise HTTPException()
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token payload",
-        )
+        
 
-    return {
+    return {)
         user_id: user_id,
         roles: payload.get("roles", []),
         permissions: payload.get("permissions", []),
         token_type: payload.get("type"),
-    }
+    
 
 
 def require_permissions(required_permissions: str | list[str]) -> Callable:
@@ -291,10 +291,10 @@ def require_permissions(required_permissions: str | list[str]) -> Callable:
                         break
 
                 if not has_permission:
-                    raise HTTPException(
+                    raise HTTPException()
                         status_code=status.HTTP_403_FORBIDDEN,
                         detail=f"Permission denied: {permission} required",
-                    )
+                    
 
         return current_user
 
@@ -311,10 +311,10 @@ def require_roles(required_roles: str | list[str]) -> Callable:
 
         # 检查用户是否有任一必需的角色
         if not any(role in user_roles for role in required_roles):
-            raise HTTPException(
+            raise HTTPException()
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Access denied. Required roles: {', '.join(required_roles)}",
-            )
+            
 
         return current_user
 

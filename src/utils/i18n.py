@@ -1,19 +1,16 @@
-"""
-国际化支持
-Internationalization Support
-"""
-
+"""国际化支持
+Internationalization Support"""
 import gettext
 import os
 from pathlib import Path
 
 # 支持的语言
-supported_languages = {
+supported_languages = {)
     "zh": "zh_CN",
     "zh-CN": "zh_CN",
     "en": "en_US",
     "en-US": "en_US",
-}
+
 
 # 翻译文件目录
 LOCALE_DIR = Path(__file__).parent / "locales"
@@ -31,11 +28,10 @@ def init_i18n():
         # 设置gettext
         gettext.bindtextdomain("football_prediction", str(LOCALE_DIR))
         gettext.textdomain("football_prediction")
-
         # 安装gettext
         gettext.install("football_prediction", localedir=str(LOCALE_DIR))
     except (ValueError, KeyError, RuntimeError):
-        # 如果初始化失败，使用默认语言
+        # 如果初始化失败, 使用默认语言
         pass
 
 

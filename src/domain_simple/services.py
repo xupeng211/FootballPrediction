@@ -2,40 +2,40 @@ import logging
 from typing import Any, Optional
 
 """
-域服务工厂
+"""
+域
+"""
 
-提供领域服务的工厂模式实现，管理服务依赖和生命周期。
+"""
+提
+"""
 """
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 
-from ..database.repositories.base import BaseRepository
-from .match import Match
-from .prediction import Prediction
-from .rules import ValidationEngine, get_validation_engine
-from .team import Team
+..database.repositories.base import BaseRepository
+.match import Match
+.prediction import Prediction
+.rules import ValidationEngine, get_validation_engine
+.team import Team
 
 T = TypeVar("T")
 
 
 @dataclass
-class ServiceConfig:
-    """服务配置"""
+class ServiceConfig: """服务配置""",
+    name: str
+    version: str = "1.0.0",
+    enabled: bool = True
+    config: dict[str, Any] | None = None
 
-    "name": str
-    "version": str = "1.0.0"
-    "enabled": bool = True
-    "config": dict[str, Any] | None = None
-
-    def __post_init__(self):
-        if self.config is None:
+    def __post_init__(self: if self.config is None:)
             self._config = {}
 
 
-class DomainService(ABC, Generic[T]):
-    """域服务基类"""
+class DomainService(ABC, Generic[T]: """域服务基类""")
 
     def __init__(self, config: ServiceConfig | None = None):
         self._config = config or ServiceConfig(self.__class__.__name__)
@@ -69,12 +69,10 @@ class DomainService(ABC, Generic[T]):
         """停止服务"""
         pass
 
-    def add_dependency(self, name: str, service: "DomainService"):
-        """添加依赖服务"""
+    def add_dependency(self, name: str, service: "DomainService": """添加依赖服务""")
         self._dependencies[name] = service
 
-    def add_repository(self, name: str, repository: BaseRepository):
-        """添加仓储"""
+    def add_repository(self, name: str, repository: BaseRepository: """添加仓储""")
         self._repositories[name] = repository
 
     def get_dependency(self, name: str) -> Optional["DomainService"]:
@@ -85,8 +83,7 @@ class DomainService(ABC, Generic[T]):
         """获取仓储"""
         return self._repositories.get(name)
 
-    def set_validation_engine(self, engine: ValidationEngine):
-        """设置验证引擎"""
+    def set_validation_engine(self, engine: ValidationEngine: """设置验证引擎""")
         self._validation_engine = engine
 
     @property
@@ -109,9 +106,8 @@ class MatchDomainService(DomainService[Match]):
         self.team_repo: BaseRepository | None = None
         self.logger = logging.getLogger(__name__)
 
-    async def initialize(self) -> bool:
-        """初始化服务"""
-        try:
+    async def initialize(self) -> bool: """初始化服务""",
+    try:
             self.match_repo = self.get_repository("match")
             self.team_repo = self.get_repository("team")
 
@@ -120,21 +116,19 @@ class MatchDomainService(DomainService[Match]):
 
             self._initialized = True
             return True
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            logger.info(f"MatchDomainService 初始化失败: {e}")
-            return False
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e: logger.info(f"MatchDomainService 初始化失,)
+"    败: {e}"
+"            return False
 
     async def start(self) -> bool:
         """启动服务"""
-        if not self._initialized:
-            return False
-
-        try:
+        if not self._initialized: return False,
+    try:
             self._started = True
             return True
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            logger.info(f"MatchDomainService 启动失败: {e}")
-            return False
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e: logger.info(f"MatchDomainService 启动失,)
+"    败: {e}"
+"            return False
 
     async def stop(self) -> bool:
         """停止服务"""
@@ -159,9 +153,9 @@ class MatchDomainService(DomainService[Match]):
         # 验证
         if self._validation_engine:
             _result = self._validation_engine.validate(match, "match")
-            if not result.is_valid:
-                raise ValueError(f"比赛验证失败: {result.errors}")
-
+            if not result.is_valid: raise ValueError(f"比赛验证失,)
+"    败: {result.errors}"
+"
         # 保存
         created = await self.match_repo.create(match.to_dict())
         return Match.from_dict(created)
@@ -175,9 +169,8 @@ class TeamDomainService(DomainService[Team]):
         self.team_repo: BaseRepository | None = None
         self.logger = logging.getLogger(__name__)
 
-    async def initialize(self) -> bool:
-        """初始化服务"""
-        try:
+    async def initialize(self) -> bool: """初始化服务""",
+    try:
             self.team_repo = self.get_repository("team")
 
             if not self.team_repo:
@@ -185,9 +178,9 @@ class TeamDomainService(DomainService[Team]):
 
             self._initialized = True
             return True
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            logger.info(f"TeamDomainService 初始化失败: {e}")
-            return False
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e: logger.info(f"TeamDomainService 初始化失,)
+"    败: {e}"
+"            return False
 
     async def start(self) -> bool:
         """启动服务"""
@@ -212,9 +205,9 @@ class TeamDomainService(DomainService[Team]):
         # 验证
         if self._validation_engine:
             _result = self._validation_engine.validate(team, "team")
-            if not result.is_valid:
-                raise ValueError(f"球队验证失败: {result.errors}")
-
+            if not result.is_valid: raise ValueError(f"球队验证失,)
+"    败: {result.errors}"
+"
         # 保存
         created = await self.team_repo.create(team.to_dict())
         return Team.from_dict(created)
@@ -228,9 +221,8 @@ class PredictionDomainService(DomainService[Prediction]):
         self.prediction_repo: BaseRepository | None = None
         self.logger = logging.getLogger(__name__)
 
-    async def initialize(self) -> bool:
-        """初始化服务"""
-        try:
+    async def initialize(self) -> bool: """初始化服务""",
+    try:
             self.prediction_repo = self.get_repository("prediction")
 
             if not self.prediction_repo:
@@ -238,9 +230,9 @@ class PredictionDomainService(DomainService[Prediction]):
 
             self._initialized = True
             return True
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            logger.info(f"PredictionDomainService 初始化失败: {e}")
-            return False
+        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e: logger.info(f"PredictionDomainService 初始化失,)
+"    败: {e}"
+"            return False
 
     async def start(self) -> bool:
         """启动服务"""
@@ -265,9 +257,9 @@ class PredictionDomainService(DomainService[Prediction]):
         # 验证
         if self._validation_engine:
             _result = self._validation_engine.validate(prediction, "prediction")
-            if not result.is_valid:
-                raise ValueError(f"预测验证失败: {result.errors}")
-
+            if not result.is_valid: raise ValueError(f"预测验证失,)
+"    败: {result.errors}"
+"
         # 保存
         created = await self.prediction_repo.create(prediction.to_dict())
         return Prediction.from_dict(created)
@@ -276,7 +268,7 @@ class PredictionDomainService(DomainService[Prediction]):
 class DomainServiceFactory:
     """域服务工厂"
 
-    负责创建、配置和管理所有域服务实例。
+    负责创建,配置和管理所有域服务实例.
     """
 
     def __init__(self):
@@ -285,15 +277,13 @@ class DomainServiceFactory:
         self._validation_engine = get_validation_engine()
         self.logger = logging.getLogger(__name__)
 
-    def register_repository(self, name: str, repository: BaseRepository):
-        """注册仓储"""
+    def register_repository(self, name: str, repository: BaseRepository: """注册仓储""")
         self._repositories[name] = repository
 
-    def create_service(
-        self,
-    "service_type": Type[Any, DomainService],
-    "config": ServiceConfig | None = None,
-    ) -> DomainService:
+    def create_service(self,)
+    service_type: Type[Any, DomainService],
+    config: ServiceConfig | None = None,
+     -> DomainService:
         """创建服务实例"""
         service = service_type(config)
 
@@ -357,19 +347,19 @@ class DomainServiceFactory:
 
     async def health_check(self) -> dict[str, Any]:
         """健康检查"""
-    "status": dict[str, Any] = {
-            "factory": "healthy",
-            "services": {},
-            "repositories": len(self._repositories),
-            "timestamp": datetime.now().isoformat(),
-        }
+    status: dict[str, Any] = {)
+            factory: "healthy",
+            services: {},
+            repositories: len(self._repositories),
+            timestamp: datetime.now().isoformat(),
+        
 
         for name, service in self._services.items():
-            status["services"][name] = {
-                "initialized": service.is_initialized,
-                "started": service.is_started,
-                "enabled": service.enabled,
-            }
+            status["services"][name] = {)
+                initialized: service.is_initialized,
+                started: service.is_started,
+                enabled: service.enabled,
+            
 
         return status
 

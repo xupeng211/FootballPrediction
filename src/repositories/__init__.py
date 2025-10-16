@@ -1,19 +1,16 @@
-"""
-仓储模式实现
+"" 仓储模式实现
 Repository Pattern Implementation
 
-提供数据访问的抽象层。
+提供数据访问的抽象层.
 Provides abstraction layer for data access.
-"""
-
-from .base import (
+"" from .base import ()
     BaseRepository,
     QuerySpec,
     ReadOnlyRepository,
     Repository,
     WriteOnlyRepository,
-)
-from .di import (
+
+from .di import ()
     MatchRepoDep,
     PredictionRepoDep,
     ReadOnlyMatchRepoDep,
@@ -24,27 +21,27 @@ from .di import (
     get_read_only_match_repository,
     get_read_only_prediction_repository,
     get_read_only_user_repository,
-)
-from .di import (
+
+from .di import ()
     get_match_repository as get_match_repo_dep,
-)
-from .di import (
+
+from .di import ()
     get_prediction_repository as get_prediction_repo_dep,
-)
-from .di import (
+
+from .di import ()
     get_user_repository as get_user_repo_dep,
-)
-from .match import (
+
+from .match import ()
     MatchRepository,
     MatchRepositoryInterface,
     ReadOnlyMatchRepository,
-)
-from .prediction import (
+
+from .prediction import ()
     PredictionRepository,
     PredictionRepositoryInterface,
     ReadOnlyPredictionRepository,
-)
-from .provider import (
+
+from .provider import ()
     DefaultRepositoryFactory,
     RepositoryFactory,
     RepositoryProvider,
@@ -53,14 +50,14 @@ from .provider import (
     get_repository_provider,
     get_user_repository,
     set_repository_provider,
-)
-from .user import (
+
+from .user import ()
     ReadOnlyUserRepository,
     UserRepository,
     UserRepositoryInterface,
-)
 
-__all__ = [
+
+__all__ = [)
     # Base classes
     "BaseRepository",
     "Repository",
@@ -101,4 +98,4 @@ __all__ = [
     "MatchRepoDep",
     "ReadOnlyMatchRepoDep",
     "RepositoryDep",
-]
+

@@ -4,7 +4,7 @@ from typing import Any
 健康检查器
 Health Checker
 
-检查各个系统的健康状态。
+检查各个系统的健康状态.
 """
 
 from datetime import datetime
@@ -40,11 +40,11 @@ class HealthChecker:
 
     async def check_database(self) -> dict[str, Any]:
         """检查数据库健康状态"""
-        health = {
+        health = {)
             "status": HealthStatus.HEALTHY,
             "timestamp": datetime.utcnow().isoformat(),
             "details": {},
-        }
+        
 
         try:
             if not self.db_manager:
@@ -70,19 +70,19 @@ class HealthChecker:
             # 检查连接池
             if self.db_manager.pool:  # type: ignore
                 pool = self.db_manager.pool  # type: ignore
-                health["details"]["pool"] = {  # type: ignore
+                health["details"]["pool"] = {  # type: ignore)
                     "size": pool.size,
                     "checked_in": pool.checkedin,
                     "checked_out": pool.checkedout,
                     "overflow": pool.overflow,
-                }
+                
 
                 if pool.overflow > 0:
                     if health["status"] == HealthStatus.HEALTHY:
                         health["status"] = HealthStatus.DEGRADED
-                    health["details"][  # type: ignore
+                    health["details"][  # type: ignore)
                         "warning"
-                    ] = f"Connection pool overflow: {pool.overflow}"
+                    ] = f"Connection pool overflow: {pool.overflow"
 
         except (ValueError, RuntimeError, TimeoutError) as e:
             health["status"] = HealthStatus.UNHEALTHY
@@ -92,11 +92,11 @@ class HealthChecker:
 
     async def check_redis(self) -> dict[str, Any]:
         """检查Redis健康状态"""
-        health = {
+        health = {)
             "status": HealthStatus.HEALTHY,
             "timestamp": datetime.utcnow().isoformat(),
             "details": {},
-        }
+        
 
         try:
             if not self.redis_manager:
@@ -121,10 +121,10 @@ class HealthChecker:
 
             # 获取Redis信息
             info = await self.redis_manager.redis.info()  # type: ignore
-            health["details"]["memory"] = {  # type: ignore
+            health["details"]["memory"] = {  # type: ignore)
                 "used": info.get("used_memory_human"),
                 "peak": info.get("used_memory_peak_human"),
-            }
+            
 
             health["details"]["clients"] = info.get("connected_clients", 0)  # type: ignore
 
@@ -137,15 +137,15 @@ class HealthChecker:
 
                 if memory_percent > 90:
                     health["status"] = HealthStatus.UNHEALTHY
-                    health["details"][  # type: ignore
+                    health["details"][  # type: ignore)
                         "error"
-                    ] = f"High memory usage: {memory_percent:.2f}%"
+                    ] = f"High memory usage: {memory_percent:.2f%"
                 elif memory_percent > 80:
                     if health["status"] == HealthStatus.HEALTHY:
                         health["status"] = HealthStatus.DEGRADED
-                    health["details"][  # type: ignore
+                    health["details"][  # type: ignore)
                         "warning"
-                    ] = f"High memory usage: {memory_percent:.2f}%"
+                    ] = f"High memory usage: {memory_percent:.2f%"
 
         except (ValueError, RuntimeError, TimeoutError) as e:
             health["status"] = HealthStatus.UNHEALTHY
@@ -157,11 +157,11 @@ class HealthChecker:
         """检查系统资源健康状态"""
         import psutil
 
-        health = {
+        health = {)
             "status": HealthStatus.HEALTHY,
             "timestamp": datetime.utcnow().isoformat(),
             "details": {},
-        }
+        
 
         try:
             # CPU
@@ -177,21 +177,21 @@ class HealthChecker:
 
             # 内存
             memory = psutil.virtual_memory()
-            health["details"]["memory"] = {  # type: ignore
+            health["details"]["memory"] = {  # type: ignore)
                 "usage_percent": memory.percent,
                 "available_gb": memory.available / (1024**3),
-            }
+            
 
             if memory.percent > 90:
                 health["status"] = HealthStatus.UNHEALTHY
-                health["details"]["memory"][  # type: ignore
+                health["details"]["memory"][  # type: ignore)
                     "error"
-                ] = f"High memory usage: {memory.percent}%"
+                ] = f"High memory usage: {memory.percent%"
             elif memory.percent > 80:
                 health["status"] = HealthStatus.DEGRADED
-                health["details"]["memory"][  # type: ignore
+                health["details"]["memory"][  # type: ignore)
                     "warning"
-                ] = f"High memory usage: {memory.percent}%"
+                ] = f"High memory usage: {memory.percent%"
 
             # 磁盘
             disk_issues = []
@@ -201,15 +201,15 @@ class HealthChecker:
                         usage = psutil.disk_usage(partition.mountpoint)
                         percent = (usage.used / usage.total) * 100
                         health["details"]["disk"] = health["details"].get("disk", {})  # type: ignore
-                        health["details"]["disk"][partition.mountpoint] = {  # type: ignore
+                        health["details"]["disk"][partition.mountpoint] = {  # type: ignore)
                             "usage_percent": percent,
                             "free_gb": usage.free / (1024**3),
-                        }
+                        
 
                         if percent > 95:
-                            disk_issues.append(
+                            disk_issues.append()
                                 f"{partition.mountpoint}: {percent:.1f}%"
-                            )
+                            
                         elif percent > 85:
                             health["status"] = HealthStatus.DEGRADED
                     except PermissionError:
@@ -217,25 +217,25 @@ class HealthChecker:
 
             if disk_issues:
                 health["status"] = HealthStatus.UNHEALTHY
-                health["details"]["disk"][  # type: ignore
+                health["details"]["disk"][  # type: ignore)
                     "error"
-                ] = f"Disk full: {', '.join(disk_issues)}"
+                ] = f"Disk full: {', '.join(disk_issues)"
 
             # 负载
             load_avg = psutil.getloadavg()
-            health["details"]["load"] = {  # type: ignore
+            health["details"]["load"] = {  # type: ignore)
                 "1min": load_avg[0],
                 "5min": load_avg[1],
                 "15min": load_avg[2],
-            }
+            
 
-            # 判断负载是否过高（基于CPU核心数）
+            # 判断负载是否过高(基于CPU核心数)
             cpu_count = psutil.cpu_count()
             if load_avg[0] > cpu_count * 2:
                 health["status"] = HealthStatus.UNHEALTHY
-                health["details"]["load"][  # type: ignore
+                health["details"]["load"][  # type: ignore)
                     "error"
-                ] = f"High load: {load_avg[0]:.2f} (cores: {cpu_count})"
+                ] = f"High load: {load_avg[0]:.2f} (cores: {cpu_count}"
 
         except (ValueError, RuntimeError, TimeoutError) as e:
             health["status"] = HealthStatus.UNHEALTHY
@@ -245,11 +245,11 @@ class HealthChecker:
 
     async def check_application_health(self) -> dict[str, Any]:
         """检查应用程序健康状态"""
-        health = {
+        health = {)
             "status": HealthStatus.HEALTHY,
             "timestamp": datetime.utcnow().isoformat(),
             "details": {},
-        }
+        
 
         try:
             # 检查进程
@@ -273,18 +273,18 @@ class HealthChecker:
                 soft_limit, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
                 if num_fds > soft_limit * 0.9:
                     health["status"] = HealthStatus.DEGRADED
-                    health["details"][  # type: ignore
+                    health["details"][  # type: ignore)
                         "file_descriptors_warning"
-                    ] = f"Approaching limit: {num_fds}/{soft_limit}"
+                    ] = f"Approaching limit: {num_fds}/{soft_limit"
             except (AttributeError, OSError):
                 pass
 
             # 内存使用
             mem_info = process.memory_info()
-            health["details"]["memory"] = {  # type: ignore
+            health["details"]["memory"] = {  # type: ignore)
                 "rss_mb": mem_info.rss / (1024**2),
                 "vms_mb": mem_info.vms / (1024**2),
-            }
+            
 
             # 运行时间
             create_time = datetime.fromtimestamp(process.create_time())

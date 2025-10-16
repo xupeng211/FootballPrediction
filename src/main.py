@@ -8,22 +8,22 @@ import logging
 import os
 from contextlib import asynccontextmanager
 
-# 🔧 在应用启动前设置警告过滤器，确保测试日志清洁
+# 🔧 在应用启动前设置警告过滤器,确保测试日志清洁
 try:
     from src.utils.warning_filters import setup_warning_filters
 
     setup_warning_filters()
 except ImportError:
-    # 如果警告过滤器模块不可用，手动设置基本过滤器
+    # 如果警告过滤器模块不可用,手动设置基本过滤器
     import warnings
 
     # Marshmallow 4.x 已经移除了 warnings 模块
     # 使用通用的消息过滤器
-    warnings.filterwarnings(
+    warnings.filterwarnings()
         "ignore",
         message=r".*Number.*field.*should.*not.*be.*instantiated.*",
         category=DeprecationWarning,
-    )
+    
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -46,48 +46,48 @@ except ImportError:
 from src.api.health import router as health_router
 from src.api.schemas import RootResponse
 from src.config.openapi_config import setup_openapi
-from src.core.event_application import (
+from src.core.event_application import ()
     initialize_event_system,
     shutdown_event_system,
-)
+
 from src.cqrs.application import initialize_cqrs
 from src.database.connection import initialize_database
 from src.middleware.i18n import I18nMiddleware
-from src.monitoring.metrics_collector import (
+from src.monitoring.metrics_collector import ()
     start_metrics_collection,
     stop_metrics_collection,
-)
-from src.observers import (
+
+from src.observers import ()
     initialize_observer_system,
     start_observer_system,
     stop_observer_system,
-)
+
 from src.performance.integration import setup_performance_monitoring
 
 # 配置日志
-logging.basicConfig(
+logging.basicConfig()
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+
 logger = logging.getLogger(__name__)
 
 MINIMAL_API_MODE = os.getenv("MINIMAL_API_MODE", "false").lower() == "true"
 
-# 配置API速率限制（如果可用）
+# 配置API速率限制(如果可用)
 if RATE_LIMIT_AVAILABLE:
-    limiter = Limiter(
+    limiter = Limiter()
         key_func=get_remote_address,
-        default_limits=[
+        default_limits=[)
             "100/minute",
             "1000/hour",
-        ],  # 默认限制：每分钟100次，每小时1000次
-        storage_uri=os.getenv("REDIS_URL", "memory://"),  # 使用Redis存储，回退到内存
+        ,  # 默认限制:每分钟100次,每小时1000次
+        storage_uri=os.getenv("REDIS_URL", "memory://"),  # 使用Redis存储,回退到内存
         headers_enabled=True,  # 在响应头中返回速率限制信息
-    )
+    
 else:
     limiter = None
-    logger.warning(
-        "⚠️  slowapi 未安装，API速率限制功能已禁用。安装方法: pip install slowapi"
-    )
+    logger.warning()
+        "⚠️  slowapi 未安装,API速率限制功能已禁用.安装方法: pip install slowapi"
+    
 
 
 @asynccontextmanager
@@ -153,15 +153,15 @@ async def lifespan(app: FastAPI):
     performance_integration.cleanup()
 
 
-# 创建FastAPI应用（详细信息在 openapi_config.py 中配置）
-app = FastAPI(
+# 创建FastAPI应用(详细信息在 openapi_config.py 中配置)
+app = FastAPI()
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
     lifespan=lifespan,
-)
 
-# 配置速率限制（如果可用）
+
+# 配置速率限制(如果可用)
 if RATE_LIMIT_AVAILABLE and limiter:
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -170,13 +170,13 @@ if RATE_LIMIT_AVAILABLE and limiter:
 # 配置 OpenAPI 文档
 setup_openapi(app)
 
-# 配置CORS（使用统一配置）
+# 配置CORS(使用统一配置)
 from src.config.cors_config import get_cors_config
 
 # 添加国际化中间件
 app.add_middleware(I18nMiddleware)
 
-# 添加CORS中间件（统一配置）
+# 添加CORS中间件(统一配置)
 app.add_middleware(CORSMiddleware, **get_cors_config())
 
 # 注册路由
@@ -184,13 +184,13 @@ app.include_router(health_router, prefix="/api/health")
 app.include_router(auth_router, prefix="/api/auth", tags=["认证"])
 
 if MINIMAL_API_MODE:
-    logger.info("MINIMAL_API_MODE 启用，仅注册健康检查路由")
+    logger.info("MINIMAL_API_MODE 启用,仅注册健康检查路由")
 else:
     from src.api.adapters import router as adapters_router
     from src.api.cqrs import router as cqrs_router
-    from src.api.data_router import (
+    from src.api.data_router import ()
         router as data_router,
-    )
+    
     from src.api.decorators import router as decorators_router
     from src.api.events import router as events_router
     from src.api.facades import router as facades_router
@@ -220,16 +220,16 @@ async def root():
     """
     API服务根路径
 
-    提供服务基本信息，包括版本号、文档地址等。
-    适用于服务发现和基本信息查询。
+    提供服务基本信息,包括版本号,文档地址等.
+    适用于服务发现和基本信息查询.
     """
-    return {
+    return {)
         "service": "足球预测API",
         "version": "1.0.0",
         "status": "运行中",
         "docs_url": "/docs",
         "health_check": "/api/health",
-    }
+    
 
 
 @app.exception_handler(HTTPException)
@@ -237,18 +237,18 @@ async def http_exception_handler(request, exc: HTTPException):
     """
     HTTP异常处理器
 
-    统一处理HTTP异常，返回标准错误格式。
+    统一处理HTTP异常,返回标准错误格式.
     """
     logger.error(f"HTTP异常: {exc.status_code} - {exc.detail}")
-    return JSONResponse(
+    return JSONResponse()
         status_code=exc.status_code,
-        content={
+        content={)
             "error": True,
             "status_code": exc.status_code,
             "message": exc.detail,
             "path": str(request.url),
-        },
-    )
+        ,
+    
 
 
 @app.exception_handler(Exception)
@@ -256,37 +256,37 @@ async def general_exception_handler(request, exc: Exception):
     """
     通用异常处理器
 
-    处理所有未被捕获的异常，确保返回标准错误格式。
-    记录详细错误信息用于调试。
+    处理所有未被捕获的异常,确保返回标准错误格式.
+    记录详细错误信息用于调试.
     """
     logger.error(f"未处理异常: {type(exc).__name__}: {exc}")
-    return JSONResponse(
+    return JSONResponse()
         status_code=500,
-        content={
+        content={)
             "error": True,
             "status_code": 500,
             "message": "内部服务器错误",
             "path": str(request.url),
-        },
-    )
+        ,
+    
 
 
 if __name__ == "__main__":
     import uvicorn
 
     port = int(os.getenv("API_PORT", 8000))
-    # 安全修复：根据环境设置默认主机地址
-    # 开发环境允许所有接口访问，生产环境只允许本地访问
+    # 安全修复:根据环境设置默认主机地址
+    # 开发环境允许所有接口访问,生产环境只允许本地访问
     if os.getenv("ENVIRONMENT") == "development":
         default_host = "0.0.0.0"  # nosec B104 # 开发环境允许绑定所有接口
     else:
         default_host = "127.0.0.1"
     host = os.getenv("API_HOST", default_host)
 
-    uvicorn.run(
+    uvicorn.run()
         "src.main:app",
         host=host,
         port=port,
         reload=os.getenv("ENVIRONMENT") == "development",
         log_level="info",
-    )
+    

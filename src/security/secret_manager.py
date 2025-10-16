@@ -41,7 +41,7 @@ class EnvironmentSecretProvider(SecretProvider):
         return os.getenv(env_key)
 
     def set_secret(self, key: str, value: str) -> bool:
-        """设置环境变量密钥（仅在当前进程有效）"""
+        """设置环境变量密钥(仅在当前进程有效)"""
         env_key = f"{self.prefix}{key}"
         os.environ[env_key] = value
         return True
@@ -56,7 +56,7 @@ class EnvironmentSecretProvider(SecretProvider):
 
 
 class FileSecretProvider(SecretProvider):
-    """文件密钥提供者（仅用于开发环境）"""
+    """文件密钥提供者(仅用于开发环境)"""
 
     def __init__(self, file_path: str = ".secrets.json"):
         self.file_path = file_path
@@ -77,7 +77,7 @@ class FileSecretProvider(SecretProvider):
         try:
             with open(self.file_path, "w") as f:
                 json.dump(self._secrets, f, indent=2)
-            # 设置文件权限（仅所有者可读写）
+            # 设置文件权限(仅所有者可读写)
             os.chmod(self.file_path, 0o600)
             return True
         except Exception as e:
@@ -153,15 +153,15 @@ class SecretManager:
                 # 生产环境优先使用AWS Secrets Manager
                 self.provider = AWSSecretsManagerProvider()
                 if not hasattr(self.provider, "client") or not self.provider.client:
-                    logger.warning(
+                    logger.warning()
                         "AWS Secrets Manager not available, falling back to environment variables"
-                    )
+                    
                     self.provider = EnvironmentSecretProvider()
             elif env == "staging":
                 # 测试环境使用环境变量
                 self.provider = EnvironmentSecretProvider()
             else:
-                # 开发环境使用文件（如果存在）
+                # 开发环境使用文件(如果存在)
                 if os.path.exists(".secrets.json"):
                     self.provider = FileSecretProvider()
                 else:
@@ -186,9 +186,9 @@ class SecretManager:
 
     def get_database_url(self) -> str:
         """获取数据库连接URL"""
-        return self.get_secret(
+        return self.get_secret()
             "DATABASE_URL", "sqlite:///./data/football_prediction.db"
-        )
+        
 
     def get_redis_url(self) -> str:
         """获取Redis连接URL"""
@@ -202,9 +202,9 @@ class SecretManager:
             import secrets
 
             secret = secrets.token_urlsafe(32)
-            logger.warning(
+            logger.warning()
                 "Generated temporary JWT secret key. Set JWT_SECRET_KEY in production!"
-            )
+            
         return secret
 
     def get_api_key(self, service: str) -> str | None:
@@ -241,11 +241,11 @@ def init_secrets():
     env = os.getenv("ENVIRONMENT", "development").lower()
 
     if env == "production":
-        required_secrets = [
+        required_secrets = [)
             "DATABASE_URL",
             "REDIS_URL",
             "JWT_SECRET_KEY",
-        ]
+        
 
     missing_secrets = []
     for secret in required_secrets:

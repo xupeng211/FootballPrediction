@@ -1,25 +1,23 @@
 from typing import Any, Dict, List, Optional, Union
 
 Confluent Kafka Mock 实现
-用于测试环境,避免真实的Kafka依赖
+"""
+用
+"""
 
 
 import logging
 
 logger = logging.getLogger(__name__)
-
-
 class MockMessage:
     """模拟Kafka消息"""
 
-    def __init__(
-        self,
+    def __init__(self,)
     "topic": str,
     "value": Any = None,
     "key": Any = None,
-    "headers": Optional[List[tuple[str, bytes] = None,
-    ):
-        self._topic = topic
+    "headers": Optional[List[tuple[str, bytes] = None,))
+    : self._topic = topic
         self._value = value
         self._key = key
         self._headers = headers or []
@@ -58,22 +56,20 @@ class MockMessage:
         """获取偏移量"""
         return self._offset
 
-    def headers(self) -> List[tuple[str, bytes]:
+    def headers(self) -> List[tuple[str, bytes]:)
         """获取头部"""
         return self._headers
 
-    def set_headers(self, headers: List[tuple[str, bytes]) -> None:
+    def set_headers(self, headers: List[tuple[str, bytes]) -> None:)
         """设置头部"""
         self._headers = headers
-
-
 class MockConsumer:
     """模拟Kafka消费者"""
 
     def __init__(self, config: Dict[str, Any]):
         self._config = config
         self._topics: set[str] = set()
-        self._messages: Dict[str, List[MockMessage] = defaultdict(list)  # type: ignore
+        self._messages: Dict[str, List[MockMessage] = defaultdict(list)  # type: ignore)
         self._current_offset: Dict[str, int] = defaultdict(int)  # type: ignore
         self._subscribed = False
         self._running = False
@@ -100,7 +96,7 @@ class MockConsumer:
         """轮询消息"""
         for topic in self._topics:
             if self._current_offset[topic] < len(self._messages[topic]):
-                msg = self._messages[topic][self._current_offset[topic]
+                msg = self._messages[topic][self._current_offset[topic])
                 self._current_offset[topic] += 1
                 return msg
         return None
@@ -137,45 +133,42 @@ class MockConsumer:
     def add_messages(self, topic: str, messages: List[MockMessage]) -> None:
         """批量添加测试消息"""
         self._messages[topic].extend(messages)
-
-
 class MockProducer:
     """模拟Kafka生产者"""
 
     def __init__(self, config: Dict[str, Any]):
         self._config = config
-        self._messages: Dict[str, List[MockMessage] = defaultdict(list)  # type: ignore
+        self._messages: Dict[str, List[MockMessage] = defaultdict(list)  # type: ignore)
         self._callbacks: Dict[str, Callable] = {}
         self._flushed = True
         self._running = True
 
-    def produce(
-        self,
+    def produce(self,)
     "topic": str,
     "value": Any = None,
     "key": Any = None,
-    "headers": Optional[List[tuple[str, bytes] = None,
+    "headers": Optional[List[tuple[str, bytes] = None,))
     "partition": int = 0,
     "on_delivery": Callable = None,
-    ) -> None:
+     -> None:
         """生产消息"""
         message = MockMessage(topic, value, key, headers)
         self._messages[topic].append(message)
 
         # 模拟异步回调
-        if on_delivery:
-            try:
+        if on_delivery: tr,
+    y:
                 # 简单的延迟模拟
-                if (
+                if ()
                     hasattr(asyncio, "get_event_loop")  # type: ignore
                     and asyncio.get_event_loop().is_running()  # type: ignore
-                ):
-                    asyncio.get_event_loop().call_soon(on_delivery, None, message)  # type: ignore
-                else:
+                :
+                    asyncio.get_event_loop().call_soon(on_delivery, None, message)  # type: ignore,
+    else:
                     on_delivery(None, message)
-            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-                logger.error(f"Delivery callback error: {e}")
-
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e: logger.error(f"Delivery callback erro,)
+"    r: {e}"
+"
         self._flushed = False
         logger.debug(f"Mock producer produced message to {topic}")
 
@@ -188,7 +181,7 @@ class MockProducer:
 
     def poll(self, timeout: float = 0) -> None:
         """轮询事件"""
-        # Mock实现，不需要做任何事
+        # Mock实现,不需要做任何事
         pass
 
     def close(self) -> None:
@@ -207,15 +200,12 @@ class MockProducer:
             self._messages[topic].clear()
         else:
             self._messages.clear()
-
-
 class MockAdminClient:
     """模拟Kafka管理客户端"""
 
-    def __init__(self, config: Dict[str, Any]):
-        self._config = config
-        self._metadata = {
-            "topics": {}, "brokers": {"1": "localhost:9093"}}
+    def __init__(self, config: Dict[str, Any]: self._config = config)
+        self._metadata = {)
+            "topics": {}, "brokers": {"1": "localhost:9093"}
 
     def create_topics(self, new_topics: List[Any]) -> Dict[str, Any]:
         """创建主题"""
@@ -225,7 +215,7 @@ class MockAdminClient:
             self._metadata["topics"][topic_name] = {  # type: ignore"],"
                 "partitions": 1,","
                 "replication_factor": 1,""
-            }
+            
             results[topic_name] = f"Created topic {topic_name}"
         return results
 
@@ -258,20 +248,20 @@ class MockDeserializingConsumer(MockConsumer):
     def poll(self, timeout: float = 1.0) -> Optional[MockMessage]:
         """轮询并反序列化消息"""
         message = super().poll(timeout)
-        if message and self._value_deserializer:
-            try:
+        if message and self._value_deserializer: tr,
+    y:
                 if isinstance(message._value, bytes):
                     message._value = self._value_deserializer(message._value)
-            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-                logger.error(f"Value deserialization error: {e}")
-
-        if message and self._key_deserializer:
-            try:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e: logger.error(f"Value deserialization erro,)
+"    r: {e}"
+"
+        if message and self._key_deserializer: tr,
+    y:
                 if isinstance(message._key, bytes):
                     message._key = self._key_deserializer(message._key)
-            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-                logger.error(f"Key deserialization error: {e}")
-
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e: logger.error(f"Key deserialization erro,)
+"    r: {e}"
+"
         return message
 
 
@@ -283,39 +273,38 @@ class MockSerializingProducer(MockProducer):
         self._key_serializer = config.get("key.serializer")
         self._value_serializer = config.get("value.serializer")
 
-    def produce(
-        self,
+    def produce(self,)
     "topic": str,
     "value": Any = None,
     "key": Any = None,
-    "headers": Optional[List[tuple[str, bytes] = None,
+    "headers": Optional[List[tuple[str, bytes] = None,))
     "partition": int = 0,
     "on_delivery": Callable = None,
-    ) -> None:
+     -> None:
         """序列化并发送消息"""
         serialized_key = key
         serialized_value = value
 
-        if self._key_serializer and key is not None:
-            try:
+        if self._key_serializer and key is not None: tr,
+    y:
                 serialized_key = self._key_serializer(key, None)
-            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-                logger.error(f"Key serialization error: {e}")
-
-        if self._value_serializer and value is not None:
-            try:
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e: logger.error(f"Key serialization erro,)
+"    r: {e}"
+"
+        if self._value_serializer and value is not None: tr,
+    y:
                 serialized_value = self._value_serializer(value, None)
-            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-                logger.error(f"Value serialization error: {e}")
-
-        super().produce(
+            except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e: logger.error(f"Value serialization erro,)
+"    r: {e}"
+"
+        super().produce()
             topic=topic,
             value=serialized_value,
             key=serialized_key,
             headers=headers,
             partition=partition,
             on_delivery=on_delivery,
-        )
+        
 
 
 # 方便的工厂函数
@@ -351,22 +340,18 @@ class KafkaError(Exception):
     def __init__(self, code: int, name: str):
         self.code = code
         self.name = name
-        super().__init__(f"KafkaError: {name} (code: {code})")
-
-
-class TopicPartition:
+        super().__init__(f"KafkaError: {name} (cod,))
+"    e: {code}"
+"class TopicPartition:
     """主题分区"""
 
-    def __init__(self, topic: str, partition: int = 0):
-        self.topic = topic
+    def __init__(self, topic: str, partition: int = 0: self.topic = topic)
         self.partition = partition
 
     def __repr__(self):
         return f"TopicPartition(topic={self.topic}, partition={self.partition})"""
 
-    def __eq__(self, other):
-        if not isinstance(other, TopicPartition):
-            return False
+    def __eq__(self, other: if not isinstance(other, TopicPartition: return False))
         return self.topic == other.topic and self.partition == other.partition
 
     def __hash__(self):
@@ -378,3 +363,5 @@ KAFKA_UNKNOWN_TOPIC_OR_PART = 3
 KAFKA_LEADER_NOT_AVAILABLE = 5
 KAFKA_OFFSET_OUT_OF_RANGE = 1
 KAFKA_GROUP_AUTHORIZATION_FAILED = 30
+
+"""

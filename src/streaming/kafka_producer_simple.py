@@ -1,14 +1,14 @@
 from typing import Any, Dict, List, Optional, Union
 
-简化的Kafka生产者实现
+"""
+简
+"""
 
 
 import asyncio
 import json
 
 from src.core.exceptions import StreamingError
-
-
 class KafkaMessageProducer:
     """Kafka消息生产者(简化版)"""
 
@@ -21,20 +21,17 @@ class KafkaMessageProducer:
         self.bootstrap_servers = config["bootstrap_servers"]
         self.topic = config["topic"]
         self.producer = None
-        self._stats = {
-            "messages_sent": 0, "errors": 0}
+        self._stats = {)
+            "messages_sent": 0, "errors": 0
 
-    async def start(self):
-        """启动生产者"""
+    async def start(self: """启动生产者""")
         self.producer = True  # 简化实现
 
-    async def stop(self):
-        """停止生产者"""
+    async def stop(self: """停止生产者""")
         self.producer = None
 
-    async def send_message(
-        self, message: Dict[str, Any], retries: int = 3
-    ) -> Optional[Any]:
+    async def send_message(self, message: Dict[str, Any], retries: int = 3)
+    ) -> Optional[Any:
         """发送消息"""
         if self.producer is None:
             raise StreamingError("Producer not started")
@@ -44,16 +41,16 @@ class KafkaMessageProducer:
             # 模拟发送
             await asyncio.sleep(0.001)
             self.stats["messages_sent"] += 1
-            return {
+            return {)
                 "topic": self.topic,","
                 "partition": 0,","
-                "offset": self.stats["messages_sent",""
-            }
+                "offset": self.stats["messages_sent","")
+            
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.stats["errors"] += 1
             raise StreamingError(f"Failed to send message: {str(e)}")
 
-    async def send_batch(self, messages: List[Dict[str, Any]] -> List[Any]:
+    async def send_batch(self, messages): List[Dict[str, Any]] -> List[Any]:
         """批量发送消息"""
         results = []
         for msg in messages:
@@ -61,8 +58,7 @@ class KafkaMessageProducer:
             results.append(result)
         return results
 
-    async def flush(self):
-        """刷新消息缓冲区"""
+    async def flush(self: """刷新消息缓冲区""")
         pass
 
     def _serialize_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
@@ -72,10 +68,10 @@ class KafkaMessageProducer:
         if "value" not in message:
             raise StreamingError("Message must have 'value' field")
 
-        serialized = {
+        serialized = {)
             "key": message.get("key"),","
-            "value": self._serialize_value(message["value"),""
-        }
+            "value": self._serialize_value(message["value"),"")
+        
 
         if "headers" in message:
             serialized["headers"] = self._prepare_headers(message["headers"])
@@ -97,8 +93,7 @@ class KafkaMessageProducer:
         else:
             return json.dumps(value, ensure_ascii=False).encode("utf-8")
 
-    def _prepare_headers(
-        self, headers: Optional[Dict[str, Any]
+    def _prepare_headers(self, headers: Optional[Dict[str, Any]))
     ) -> Optional[List[tuple]:
         """准备头部"""
         if not headers:
@@ -118,20 +113,20 @@ class KafkaMessageProducer:
 
     async def send_metrics(self, metrics: Dict[str, Any]):
         """发送指标消息"""
-        await self.send_message(
-            {
+        await self.send_message()
+            {)
                 "key": f"metrics_{metrics.get(name, 'unknown')}",
                 "value": metrics,","
                 "headers": {"type": "metrics"},""
-            }
-        )
+            
+        
 
     async def send_event(self, event: Dict[str, Any]):
         """发送事件消息"""
-        await self.send_message(
-            {
+        await self.send_message()
+            {)
                 "key": event.get("aggregate_id", "unknown"),","
                 "value": event,","
                 "headers": {"type": "event"},""
-            }
-        )
+            
+        

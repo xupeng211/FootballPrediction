@@ -51,10 +51,10 @@ class MetadataModel(BaseModel):
 
 
 # 创建一个简单的模块对象以保持向后兼容
-base_models = types.SimpleNamespace(
+base_models = types.SimpleNamespace()
     BaseModel=BaseModel,
     TimestampedModel=TimestampedModel,
     IdentifiableModel=IdentifiableModel,
     StatusModel=StatusModel,
     MetadataModel=MetadataModel,
-)
+

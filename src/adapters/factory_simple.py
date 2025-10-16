@@ -1,97 +1,57 @@
-from typing import Any, Type
+from typing import Any, Dict, List, Optional
 
 """
-简化的适配器工厂
+适配器工厂(简化版)
+Simplified Adapter Factory
 """
 
-from src.core.exceptions import AdapterError
+class AdapterConfig:
+    """适配器配置"""
+    def __init__()
+        self,
+        name: str,
+        adapter_type: str,
+        config: Dict[str, Any] | None = None
+    :
+        self.name = name
+        self.adapter_type = adapter_type
+        self.config = config or {}
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "AdapterConfig":
+        """从字典创建配置"""
+        return cls()
+            name=data["name"],
+            adapter_type=data["adapter_type"],
+            config=data.get("config", {})
+        
 
 
-class AdapterFactory:
-    """适配器工厂"""
+class SimpleAdapterFactory:
+    """简单适配器工厂"""
 
     def __init__(self):
-        self._adapters: dict[str, Type[Any]] = {}
-        self._instances: dict[str, Any] = {}
+        self._adapters: Dict[str, Any] = {}
 
-    def register_adapter(self, name: str, adapter_class: Type[Any], **kwargs):
-        """注册适配器"""
-        if name in self._adapters:
-            raise AdapterError(f"Adapter '{name}' already registered")
-        self._adapters[name] = {  # type: ignore
-            "class": adapter_class,
-            "singleton": kwargs.get("singleton", False),
-            **kwargs,
-        }
+    def register_adapter(self, name: str, adapter_class: type) -> None:
+        """注册适配器类"""
+        self._adapters[name] = adapter_class
 
-    def create_adapter(
-        self, name: str, config: dict[str, Any] | None = None, singleton: bool = False
-    ):
+    def create_adapter(self, config: AdapterConfig) -> Any:
         """创建适配器实例"""
-        if name not in self._adapters:
-            raise AdapterError(f"No adapter registered for '{name}'")
+        adapter_class = self._adapters.get(config.adapter_type)
+        if not adapter_class:
+            raise ValueError(f"Unknown adapter type: {config.adapter_type}")
 
-        adapter_info = self._adapters[name]
-        adapter_class = adapter_info["class"]
+        return adapter_class(config.config)
 
-        try:
-            if singleton or adapter_info["singleton"]:
-                if name not in self._instances:
-                    self._instances[name] = adapter_class(config)
-                return self._instances[name]
-            else:
-                return adapter_class(config)
-        except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            raise AdapterError(f"Failed to create adapter '{name}': {str(e)}")
-
-    def get_instance(self):
-        """获取全局工厂实例"""
-        return self
-
-    def list_adapters(self):
-        """列出所有已注册的适配器"""
-        return [(name, info["class"]) for name, info in self._adapters.items()]
-
-    def list(self, **filters):
-        """列出适配器，支持过滤条件"""
-        adapters = []
-        for name, info in self._adapters.items():
-            match = True
-            for key, value in filters.items():
-                if key in info and info[key] != value:
-                    match = False
-                    break
-            if match:
-                adapters.append((name, info))
-        return adapters
-
-    def unregister_adapter(self, name: str):
-        """注销适配器"""
-        self._adapters.pop(name, None)
-        self._instances.pop(name, None)
-
-    def get_adapter_type(self, name: str):
-        """获取适配器类型"""
-        if name in self._adapters:
-            return self._adapters[name]["class"]
-        return None
+    def create_from_dict(self, data: Dict[str, Any]) -> Any:
+        """从字典创建适配器"""
+        config = AdapterConfig.from_dict(data)
+        return self.create_adapter(config)
 
 
-# 全局工厂实例
-_global_factory = None
-
-
-def get_global_factory() -> AdapterFactory:
-    """获取全局工厂实例"""
-    global _global_factory
-    if _global_factory is None:
-        _global_factory = AdapterFactory()
-    return _global_factory
-
-
-def get_adapter(
-    "adapter_type": str, config: dict[str, Any] | None = None, singleton: bool = False
-):
-    """便捷函数：获取适配器"""
-    factory = get_global_factory()
-    return factory.create_adapter(adapter_type, config, singleton)
+def create_adapter(config: Dict[str, Any]) -> Any:
+    """便捷函数:获取适配器"""
+    factory = SimpleAdapterFactory()
+    return factory.create_from_dict(config)

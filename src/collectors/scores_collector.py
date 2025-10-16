@@ -25,11 +25,11 @@ class ScoresCollector:
     def __init__(self, db_session: AsyncSession, redis_client: RedisManager):
         self.db_session = db_session
         self.redis_client = redis_client
-        self.cache_timeout = 60  # 1分钟缓存，比分变化很快
-        self.api_endpoints = {
+        self.cache_timeout = 60  # 1分钟缓存,比分变化很快
+        self.api_endpoints = {)
             "live_scores": "https://api.football-data.org/v4/matches",
             "events": "https://api.football-data.org/v4/matches/{match_id}/events",
-        }
+        
         # 从环境变量读取 API Token
         api_token = os.getenv("FOOTBALL_API_TOKEN")
         if not api_token:
@@ -63,22 +63,22 @@ class ScoresCollector:
                 # 获取最新比分
                 score_data = await self._get_match_score(match)
 
-                live_scores[match.id] = {
-                    "match_info": {
+                live_scores[match.id] = {)
+                    "match_info": {)
                         "id": match.id,
                         "home_team_id": match.home_team_id,
                         "away_team_id": match.away_team_id,
                         "minute": match.minute,
                         "status": match.match_status,
-                    },
+                    ,
                     "score": score_data,
                     "last_updated": datetime.now().isoformat(),
-                }
+                
 
             # 缓存结果
-            await self.redis_client.set_cache_value(
+            await self.redis_client.set_cache_value()
                 cache_key, live_scores, expire=self.cache_timeout
-            )
+            
 
             logger.info(f"收集到 {len(live_scores)} 场实时比分")
             return {"live_matches_count": len(live_scores), "scores": live_scores}
@@ -89,11 +89,11 @@ class ScoresCollector:
 
     async def _get_live_matches_from_db(self) -> list[Match]:
         """从数据库获取正在进行的比赛"""
-        _result = await self.db_session.execute(
-            select(Match).where(
+        _result = await self.db_session.execute()
+            select(Match).where()
                 or_(Match.match_status == "live", Match.match_status == "half_time")
-            )
-        )
+            
+        
         return result.scalars().all()  # type: ignore
 
     async def _get_match_score(self, match: Match) -> dict[str, int]:
@@ -104,10 +104,10 @@ class ScoresCollector:
 
     async def _clear_match_cache(self, match_id: int) -> None:
         """清除比赛相关的缓存"""
-        keys_to_clear = [
+        keys_to_clear = [)
             "scores:live",
             f"events:match:{match_id}",
-        ]
+        
 
         for key in keys_to_clear:
             await self.redis_client.delete_cache(key)

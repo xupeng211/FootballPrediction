@@ -4,7 +4,7 @@ from typing import Any
 观察者管理器
 Observer Manager
 
-统一管理观察者和被观察者。
+统一管理观察者和被观察者.
 Manages observers and subjects centrally.
 """
 
@@ -13,18 +13,18 @@ import logging
 from datetime import datetime
 
 from .base import ObservableEventType, Observer, Subject
-from .observers import (
+from .observers import ()
     AlertingObserver,
     LoggingObserver,
     MetricsObserver,
     PerformanceObserver,
-)
-from .subjects import (
+
+from .subjects import ()
     AlertSubject,
     CacheSubject,
     PredictionMetricsSubject,
     SystemMetricsSubject,
-)
+
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 class ObserverManager:
     """观察者管理器
 
-    负责创建、管理和协调所有观察者和被观察者。
+    负责创建,管理和协调所有观察者和被观察者.
     Creates, manages, and coordinates all observers and subjects.
     """
 
@@ -99,7 +99,7 @@ class ObserverManager:
 
     async def _setup_observation_relationships(self) -> None:
         """建立观察关系"""
-        # 系统指标 -> 指标观察者、日志观察者、告警观察者、性能观察者
+        # 系统指标 -> 指标观察者,日志观察者,告警观察者,性能观察者
         system_subject = self._subjects["system_metrics"]
         await system_subject.attach(self._observers["metrics"])
         await system_subject.attach(self._observers["logging"])
@@ -111,12 +111,12 @@ class ObserverManager:
         for observer in self._observers.values():
             await prediction_subject.attach(observer)
 
-        # 告警 -> 日志观察者、告警观察者
+        # 告警 -> 日志观察者,告警观察者
         alert_subject = self._subjects["alert"]
         await alert_subject.attach(self._observers["logging"])
         await alert_subject.attach(self._observers["alerting"])
 
-        # 缓存 -> 指标观察者、日志观察者
+        # 缓存 -> 指标观察者,日志观察者
         cache_subject = self._subjects["cache"]
         await cache_subject.attach(self._observers["metrics"])
         await cache_subject.attach(self._observers["logging"])
@@ -128,55 +128,55 @@ class ObserverManager:
         alerting_observer = self._observers["alerting"]
 
         # CPU使用率告警
-        alerting_observer.add_alert_rule(  # type: ignore
+        alerting_observer.add_alert_rule(  # type: ignore)
             name="high_cpu_usage",
-            condition=lambda e: (
+            condition=lambda e: ()
                 e.event_type == ObservableEventType.THRESHOLD_EXCEEDED
                 and e.data.get("metric_name") == "cpu_usage"
                 and e.data.get("metric_value", 0) > 80
-            ),
+            ,
             severity="warning",
             message_template="CPU使用率过高: {metric_value}%",
             cooldown_minutes=5,
-        )
+        
 
         # 内存使用率告警
-        alerting_observer.add_alert_rule(  # type: ignore
+        alerting_observer.add_alert_rule(  # type: ignore)
             name="high_memory_usage",
-            condition=lambda e: (
+            condition=lambda e: ()
                 e.event_type == ObservableEventType.THRESHOLD_EXCEEDED
                 and e.data.get("metric_name") == "memory_usage"
                 and e.data.get("metric_value", 0) > 85
-            ),
+            ,
             severity="warning",
             message_template="内存使用率过高: {metric_value}%",
             cooldown_minutes=5,
-        )
+        
 
         # 错误率告警
-        alerting_observer.add_alert_rule(  # type: ignore
+        alerting_observer.add_alert_rule(  # type: ignore)
             name="high_error_rate",
-            condition=lambda e: (
+            condition=lambda e: ()
                 e.event_type == ObservableEventType.ERROR_OCCURRED
                 and e.data.get("error_count", 1) > 10
-            ),
+            ,
             severity="error",
             message_template="错误率过高: {error_count} 个错误",
             cooldown_minutes=2,
-        )
+        
 
         # 响应时间告警
-        alerting_observer.add_alert_rule(  # type: ignore
+        alerting_observer.add_alert_rule(  # type: ignore)
             name="slow_response",
-            condition=lambda e: (
+            condition=lambda e: ()
                 e.event_type == ObservableEventType.PERFORMANCE_DEGRADATION
                 and e.data.get("type") == "response_time"
                 and e.data.get("value", 0) > 2000
-            ),
+            ,
             severity="warning",
             message_template="响应时间过慢: {value}ms",
             cooldown_minutes=3,
-        )
+        
 
         logger.info("告警规则配置完成")
 
@@ -262,22 +262,22 @@ class ObserverManager:
         return self._subjects.get("cache")  # type: ignore
 
     # 监控接口
-    async def record_prediction(
+    async def record_prediction()
         self,
     strategy_name: str,
     response_time_ms: float,
     success: bool = True,
     confidence: float | None = None,
-    ) -> None:
+     -> None:
         """记录预测事件"""
         subject = self.get_prediction_metrics_subject()
         if subject:
-            await subject.record_prediction(
+            await subject.record_prediction()
                 strategy_name=strategy_name,
                 response_time_ms=response_time_ms,
                 success=success,
                 confidence=confidence,
-            )
+            
 
     async def record_cache_hit(self, cache_name: str, key: str) -> None:
         """记录缓存命中"""
@@ -291,14 +291,14 @@ class ObserverManager:
         if subject:
             await subject.record_cache_miss(cache_name, key)
 
-    async def trigger_alert(
+    async def trigger_alert()
         self,
     alert_type: str,
     severity: str,
     message: str,
     source: str | None = None,
     data: dict[str, Any] | None = None,
-    ) -> None:
+     -> None:
         """触发告警"""
         subject = self._subjects.get("alert")
         if subject and isinstance(subject, AlertSubject):
@@ -330,22 +330,22 @@ class ObserverManager:
 
         # 获取性能指标
         performance_observer = self._observers.get("performance")
-        if performance_observer and isinstance(
+        if performance_observer and isinstance()
             performance_observer, PerformanceObserver
-        ):
+        :
             result["performance"] = performance_observer.get_performance_metrics()
 
         return result
 
     def get_system_status(self) -> dict[str, Any]:
         """获取系统状态"""
-        _result = {
+        _result = {)
             initialized: self._initialized,
             running: self._running,
             "observers": {},
             "subjects": {},
             timestamp: datetime.utcnow().isoformat(),
-        }
+        
 
         # 获取观察者状态
         for name, observer in self._observers.items():

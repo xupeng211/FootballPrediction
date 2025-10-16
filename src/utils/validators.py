@@ -1,9 +1,4 @@
 from typing import Any
-
-"""
-Data validators
-"""
-
 import re
 
 
@@ -25,9 +20,9 @@ def is_valid_url(url: str) -> bool:
     return bool(re.match(pattern, url))
 
 
-def validate_required_fields(
-    "data": dict[str, Any], required_fields: list[str]
-) -> list[str]:
+def validate_required_fields()
+    data: dict[str, Any], required_fields: list[str]
+) -> list[str:
     """Check if all required fields are present"""
     missing_fields = []
     for field in required_fields:
@@ -41,7 +36,7 @@ def validate_data_types(data: dict[str, Any], schema: dict[str, type]) -> list[s
     errors = []
     for field, expected_type in schema.items():
         if field in data and not isinstance(data[field], expected_type):
-            errors.append(
+            errors.append()
                 f"Field '{field}' should be {expected_type.__name__}, got {type(data[field]).__name__}"
-            )
+            
     return errors

@@ -2,12 +2,18 @@ from typing import Any
 
 """
 import asyncio
-统计学异常检测器
+"""
+统
+"""
 
-实现基于统计学方法的数据异常检测，包括3σ规则、IQR方法、
-Z-score分析等多种异常检测算法。
+"""
+实
+"""
+Z-score分析等多种异常检测算法.
 
-基于 DATA_DESIGN.md 数据质量监控设计。
+"""
+基
+"""
 """
 
 import logging
@@ -42,35 +48,33 @@ class AnomalySeverity(Enum):
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
-
-
 class AnomalyResult:
     """异常检测结果"""
 
-    def __init__(
+    def __init__()
         self,
-    "table_name": str,
-    "column_name": str,
-    "anomaly_type": AnomalyType,
-    "severity": AnomalySeverity,
-    "anomalous_values": list[Any],
-    "anomaly_score": float,
-    "detection_method": str,
-    "description": str,
-    "detected_at": datetime | None = None,
-    ):
+table_namestr,
+column_namestr,
+anomaly_typeAnomalyType,
+severityAnomalySeverity,
+anomalous_valueslist[Any],
+anomaly_scorefloat,
+detection_methodstr,
+descriptionstr,
+detected_atdatetime | None = None,
+    :
         """
         初始化异常检测结果
 
         Args:
-    "table_name": 表名
-    "column_name": 列名
+table_name表名
+column_name列名
     "anomaly_type": 异常类型
-    "severity": 严重程度
+severity严重程度
     "anomalous_values": 异常值列表
-    "anomaly_score": 异常得分
+anomaly_score异常得分
     "detection_method": 检测方法
-    "description": 异常描述
+description异常描述
     "detected_at": 检测时间
         """
         self.table_name = table_name
@@ -85,24 +89,22 @@ class AnomalyResult:
 
     def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
-        return {
-            "table_name": self.table_name,
-            "column_name": self.column_name,
-            "anomaly_type": self.anomaly_type.value,
-            "severity": self.severity.value,
-            "anomalous_values": self.anomalous_values,
-            "anomaly_score": round(self.anomaly_score, 4),
-            "detection_method": self.detection_method,
-            "description": self.description,
-            "detected_at": self.detected_at.isoformat(),
-        }
-
-
+        return {)
+table_nameself.table_name,
+column_nameself.column_name,
+anomaly_typeself.anomaly_type.value,
+severityself.severity.value,
+anomalous_valuesself.anomalous_values,
+anomaly_scoreround(self.anomaly_score, 4),
+detection_methodself.detection_method,
+descriptionself.description,
+detected_atself.detected_at.isoformat(),
+        
 class AnomalyDetector:
     """
     统计学异常检测器主类
 
-    提供多种异常检测方法：
+    提供多种异常检测方法:
     - 3σ规则检测
     - IQR方法检测
     - Z-score分析
@@ -115,56 +117,56 @@ class AnomalyDetector:
         self.db_manager = DatabaseManager()
 
         # 检测配置
-        self.detection_config = {
-            "matches": {
-                "numeric_columns": ["home_score", "away_score", "minute"],
-                "time_columns": ["match_time"],
-                "categorical_columns": ["match_status"],
-                "thresholds": {
+        self.detection_config = {)
+matches{)
+numeric_columns["home_score", "away_score", "minute"],
+time_columns["match_time"],
+categorical_columns["match_status"],
+thresholds{)
                     "home_score": {"min": 0, "max": 20},
-                    "away_score": {"min": 0, "max": 20},
-                    "minute": {"min": 0, "max": 120},
-                },
-            },
-            "odds": {
-                "numeric_columns": ["home_odds", "draw_odds", "away_odds"],
-                "time_columns": ["collected_at"],
-                "categorical_columns": ["bookmaker", "market_type"],
-                "thresholds": {
+away_score{"min": 0, "max": 20},
+minute{"min": 0, "max": 120},
+                ,
+            ,
+odds{)
+numeric_columns["home_odds", "draw_odds", "away_odds"],
+time_columns["collected_at"],
+categorical_columns["bookmaker", "market_type"],
+thresholds{)
                     "home_odds": {"min": 1.01, "max": 100.0},
-                    "draw_odds": {"min": 1.01, "max": 100.0},
-                    "away_odds": {"min": 1.01, "max": 100.0},
-                },
-            },
-            "predictions": {
-                "numeric_columns": [
+draw_odds{"min": 1.01, "max": 100.0},
+away_odds{"min": 1.01, "max": 100.0},
+                ,
+            ,
+predictions{)
+numeric_columns[)
                     "home_win_probability",
                     "draw_probability",
                     "away_win_probability",
-                ],
-                "time_columns": ["created_at"],
-                "categorical_columns": ["model_name"],
-                "thresholds": {
+                ,
+time_columns["created_at"],
+categorical_columns["model_name"],
+thresholds{)
                     "home_win_probability": {"min": 0.0, "max": 1.0},
-                    "draw_probability": {"min": 0.0, "max": 1.0},
-                    "away_win_probability": {"min": 0.0, "max": 1.0},
-                },
-            },
-        }
+draw_probability{"min": 0.0, "max": 1.0},
+away_win_probability{"min": 0.0, "max": 1.0},
+                ,
+            ,
+        
 
         logger.info("异常检测器初始化完成")
 
-    async def detect_anomalies(
+    async def detect_anomalies()
         self,
-    "table_names": list[str] | None = None,
-    "methods": list[str] | None = None,
-    ) -> list[AnomalyResult]:
+table_nameslist[str] | None = None,
+methodslist[str] | None = None,
+    ) -> list[AnomalyResult:
         """
         执行异常检测
 
         Args:
-    "table_names": 要检测的表名列表
-    "methods": 要使用的检测方法列表
+table_names要检测的表名列表
+methods要使用的检测方法列表
 
         Returns:
             List[AnomalyResult]: 异常检测结果列表
@@ -177,37 +179,35 @@ class AnomalyDetector:
 
         all_anomalies = []
 
-        async with self.db_manager.get_async_session() as session:
-            for table_name in table_names:
-                try:
-                    table_anomalies = await self._detect_table_anomalies(
+        async with self.db_manager.get_async_session() as session: for table_name in table_names:,
+    try:
+                    table_anomalies = await self._detect_table_anomalies()
                         session, table_name, methods
-                    )
+                    
                     all_anomalies.extend(table_anomalies)
-                    logger.debug(
-                        f"表 {table_name} 异常检测完成，发现 {len(table_anomalies)} 个异常"
-                    )
-                except (ValueError, RuntimeError, TimeoutError) as e:
-                    logger.error(f"检测表 {table_name} 异常失败: {e}")
-
-        logger.info(f"异常检测完成，总共发现 {len(all_anomalies)} 个异常")
+                    logger.debug()
+                        f"表 {table_name} 异常检测完成,发现 {len(table_anomalies)} 个异常"
+                    
+                except (ValueError, RuntimeError, TimeoutError) as e: logger.error(f"检测表 {table_name} 异常失,)
+"    败: {e}"
+"
+        logger.info(f"异常检测完成,总共发现 {len(all_anomalies)} 个异常")
         return all_anomalies
 
-    async def _detect_table_anomalies(
-        self, session: AsyncSession, table_name: str, methods: list[str]
-    ) -> list[AnomalyResult]:
+    async def _detect_table_anomalies(self, session: AsyncSession, table_name: str, methods: list[str])
+    ) -> list[AnomalyResult:
         """
         检测单个表的异常
 
         Args:
-    "session": 数据库会话
-    "table_name": 表名
+session数据库会话
+table_name表名
     "methods": 检测方法列表
 
         Returns:
             List[AnomalyResult]: 异常检测结果
         """
-    "anomalies": list[AnomalyResult] = []
+anomalieslist[AnomalyResult] = []
         _config = self.detection_config.get(str(table_name), {})
 
         if not config:
@@ -223,92 +223,91 @@ class AnomalyDetector:
 
         # 数值列异常检测
         numeric_columns = config.get("numeric_columns", [])
-        for column in numeric_columns:
-            if column in table_data.columns:
-                column_anomalies = await self._detect_column_anomalies(
+        for column in numeric_columns: if column in table_data.column,
+    s:
+                column_anomalies = await self._detect_column_anomalies()
                     table_data, table_name, column, methods, "numeric"
-                )
+                
                 anomalies.extend(column_anomalies)
 
         # 分类列异常检测
         categorical_columns = config.get("categorical_columns", [])
-        for column in categorical_columns:
-            if column in table_data.columns:
-                column_anomalies = await self._detect_column_anomalies(
+        for column in categorical_columns: if column in table_data.column,
+    s:
+                column_anomalies = await self._detect_column_anomalies()
                     table_data, table_name, column, methods, "categorical"
-                )
+                
                 anomalies.extend(column_anomalies)
 
         # 时间列异常检测
         time_columns = config.get("time_columns", [])
-        for column in time_columns:
-            if column in table_data.columns:
-                column_anomalies = await self._detect_column_anomalies(
+        for column in time_columns: if column in table_data.column,
+    s:
+                column_anomalies = await self._detect_column_anomalies()
                     table_data, table_name, column, methods, "time"
-                )
+                
                 anomalies.extend(column_anomalies)
 
         return anomalies
 
-    async def _get_table_data(
-        self, session: AsyncSession, table_name: str
-    ) -> pd.DataFrame:
+    async def _get_table_data(self, session: AsyncSession, table_name: str)
+     -> pd.DataFrame:
         """
         获取表数据
 
         Args:
-    "session": 数据库会话
-    "table_name": 表名
+session数据库会话
+table_name表名
 
-        Returns:
-            pd.DataFrame: 表数据
+        Returns: pd.DataFram,
+    e: 表数据
         """
         try:
             # 获取最近1000条记录进行异常检测
             # Safe: table_name is validated against whitelist above
             # Note: Using f-string here is safe as table_name is validated against
             # whitelist
-            _result = await session.execute(
-                text(
+            _result = await session.execute()
+                text()
                     f"""
                     SELECT * FROM {table_name}
                     ORDER BY id DESC
                     LIMIT 1000
                 """  # nosec B608 - table_name is validated against whitelist"
-                )
-            )
+"                
+            
 
             # 转换为DataFrame
             rows = result.fetchall()
             _data = pd.DataFrame([dict[str, Any](row._mapping) for row in rows])
             return data
 
-        except (ValueError, RuntimeError, TimeoutError) as e:
-            logger.error(f"获取表 {table_name} 数据失败: {e}")
-            return pd.DataFrame()
+        except (ValueError, RuntimeError, TimeoutError) as e: logger.error(f"获取表 {table_name} 数据失,)
+"    败: {e}"
+"            return pd.DataFrame()
 
-    async def _detect_column_anomalies(
+    async def _detect_column_anomalies()
         self,
-    "data": pd.DataFrame,
-    "table_name": str,
-    "column_name": str,
-    "methods": list[str],
-    "column_type": str,
-    ) -> list[AnomalyResult]:
+datapd.DataFrame,
+table_namestr,
+column_namestr,
+methodslist[str],
+column_typestr,
+    ) -> list[AnomalyResult:
         """
         检测单列的异常
 
         Args:
-    "data": 数据框
-    "table_name": 表名
+data数据框
+table_name表名
     "column_name": 列名
-    "methods": 检测方法
+methods检测方法
     "column_type": 列类型
 
         Returns:
             List[AnomalyResult]: 异常结果列表
         """
-    "anomalies": list[AnomalyResult] = []
+anomalieslist[AnomalyResult] = []
         column_data = data[column_name].dropna()
 
         if len(column_data) == 0:
@@ -317,54 +316,53 @@ class AnomalyDetector:
         # 根据列类型和方法进行检测
         if column_type == "numeric":
             if "three_sigma" in methods:
-                anomalies.extend(
-                    self._detect_three_sigma_anomalies(
+                anomalies.extend()
+                    self._detect_three_sigma_anomalies()
                         column_data, table_name, column_name
-                    )
-                )
+                    
+                
 
             if "iqr" in methods:
-                anomalies.extend(
+                anomalies.extend()
                     self._detect_iqr_anomalies(column_data, table_name, column_name)
-                )
+                
 
             if "z_score" in methods:
-                anomalies.extend(
+                anomalies.extend()
                     self._detect_z_score_anomalies(column_data, table_name, column_name)
-                )
+                
 
             if "range_check" in methods:
-                anomalies.extend(
+                anomalies.extend()
                     self._detect_range_anomalies(column_data, table_name, column_name)
-                )
+                
 
         elif column_type == "categorical":
             if "frequency" in methods:
-                anomalies.extend(
-                    self._detect_frequency_anomalies(
+                anomalies.extend()
+                    self._detect_frequency_anomalies()
                         column_data, table_name, column_name
-                    )
-                )
+                    
+                
 
         elif column_type == "time":
             if "time_gap" in methods:
-                anomalies.extend(
-                    self._detect_time_gap_anomalies(
+                anomalies.extend()
+                    self._detect_time_gap_anomalies()
                         column_data, table_name, column_name
-                    )
-                )
+                    
+                
 
         return anomalies
 
-    def _detect_three_sigma_anomalies(
-        self, data: pd.Series, table_name: str, column_name: str
-    ) -> list[AnomalyResult]:
+    def _detect_three_sigma_anomalies(self, data: pd.Series, table_name: str, column_name: str)
+    ) -> list[AnomalyResult:
         """
         3σ规则异常检测
 
         Args:
-    "data": 数据序列
-    "table_name": 表名
+data数据序列
+table_name表名
     "column_name": 列名
 
         Returns:
@@ -389,8 +387,8 @@ class AnomalyDetector:
                 anomaly_score = len(outliers) / len(data)
                 severity = self._calculate_severity(anomaly_score)
 
-                return [
-                    AnomalyResult(
+                return [)
+                    AnomalyResult()
                         table_name=table_name,
                         column_name=column_name,
                         anomaly_type=AnomalyType.OUTLIER,
@@ -398,9 +396,9 @@ class AnomalyDetector:
                         anomalous_values=outliers.tolist(),
                         anomaly_score=anomaly_score,
                         detection_method="3sigma",
-                        description=f"发现 {len(outliers)} 个3σ规则异常值，超出范围 [{lower_bound:.2f}, {upper_bound:.2f}]",
-                    )
-                ]
+                        description=f"发现 {len(outliers)} 个3σ规则异常值,超出范围 [{lower_bound:.2f}, {upper_bound:.2f}]",
+                    
+                
 
             return []
 
@@ -408,15 +406,14 @@ class AnomalyDetector:
             logger.error(f"3σ规则检测失败 {table_name}.{column_name}: {e}")
             return []
 
-    def _detect_iqr_anomalies(
-        self, data: pd.Series, table_name: str, column_name: str
-    ) -> list[AnomalyResult]:
+    def _detect_iqr_anomalies(self, data: pd.Series, table_name: str, column_name: str)
+    ) -> list[AnomalyResult:
         """
         IQR方法异常检测
 
         Args:
-    "data": 数据序列
-    "table_name": 表名
+data数据序列
+table_name表名
     "column_name": 列名
 
         Returns:
@@ -441,8 +438,8 @@ class AnomalyDetector:
                 anomaly_score = len(outliers) / len(data)
                 severity = self._calculate_severity(anomaly_score)
 
-                return [
-                    AnomalyResult(
+                return [)
+                    AnomalyResult()
                         table_name=table_name,
                         column_name=column_name,
                         anomaly_type=AnomalyType.OUTLIER,
@@ -450,9 +447,9 @@ class AnomalyDetector:
                         anomalous_values=outliers.tolist(),
                         anomaly_score=anomaly_score,
                         detection_method="iqr",
-                        description=f"发现 {len(outliers)} 个IQR方法异常值，超出范围 [{lower_bound:.2f}, {upper_bound:.2f}]",
-                    )
-                ]
+                        description=f"发现 {len(outliers)} 个IQR方法异常值,超出范围 [{lower_bound:.2f}, {upper_bound:.2f}]",
+                    
+                
 
             return []
 
@@ -460,17 +457,16 @@ class AnomalyDetector:
             logger.error(f"IQR方法检测失败 {table_name}.{column_name}: {e}")
             return []
 
-    def _detect_z_score_anomalies(
-        self, data: pd.Series, table_name: str, column_name: str, threshold: float = 3.0
-    ) -> list[AnomalyResult]:
+    def _detect_z_score_anomalies(self, data: pd.Series, table_name: str, column_name: str, threshold: float = 3.0)
+    ) -> list[AnomalyResult:
         """
         Z-score异常检测
 
         Args:
-    "data": 数据序列
-    "table_name": 表名
+data数据序列
+table_name表名
     "column_name": 列名
-    "threshold": Z-score阈值
+thresholdZ-score阈值
 
         Returns:
             List[AnomalyResult]: 异常结果
@@ -493,8 +489,8 @@ class AnomalyDetector:
                 anomaly_score = len(outliers) / len(data)
                 severity = self._calculate_severity(anomaly_score)
 
-                return [
-                    AnomalyResult(
+                return [)
+                    AnomalyResult()
                         table_name=table_name,
                         column_name=column_name,
                         anomaly_type=AnomalyType.OUTLIER,
@@ -502,9 +498,9 @@ class AnomalyDetector:
                         anomalous_values=outliers.tolist(),
                         anomaly_score=anomaly_score,
                         detection_method="z_score",
-                        description=f"发现 {len(outliers)} 个Z-score异常值，最大Z-score: {outlier_scores.max():.2f}",
-                    )
-                ]
+                        description=f"发现 {len(outliers)} 个Z-score异常值,最大Z-score: {outlier_scores.max():.2f}",
+                    
+                
 
             return []
 
@@ -512,15 +508,14 @@ class AnomalyDetector:
             logger.error(f"Z-score检测失败 {table_name}.{column_name}: {e}")
             return []
 
-    def _detect_range_anomalies(
-        self, data: pd.Series, table_name: str, column_name: str
-    ) -> list[AnomalyResult]:
+    def _detect_range_anomalies(self, data: pd.Series, table_name: str, column_name: str)
+    ) -> list[AnomalyResult:
         """
         范围检查异常检测
 
         Args:
-    "data": 数据序列
-    "table_name": 表名
+data数据序列
+table_name表名
     "column_name": 列名
 
         Returns:
@@ -549,8 +544,8 @@ class AnomalyDetector:
                 anomaly_score = len(outliers) / len(data)
                 severity = self._calculate_severity(anomaly_score)
 
-                return [
-                    AnomalyResult(
+                return [)
+                    AnomalyResult()
                         table_name=table_name,
                         column_name=column_name,
                         anomaly_type=AnomalyType.VALUE_RANGE,
@@ -558,9 +553,9 @@ class AnomalyDetector:
                         anomalous_values=outliers,
                         anomaly_score=anomaly_score,
                         detection_method="range_check",
-                        description=f"发现 {len(outliers)} 个范围异常值，预期范围: [{min_val}, {max_val}]",
-                    )
-                ]
+                        description=f"发现 {len(outliers)} 个范围异常值,预期范围: [{min_val}, {max_val}]",
+                    
+                
 
             return []
 
@@ -568,15 +563,14 @@ class AnomalyDetector:
             logger.error(f"范围检查失败 {table_name}.{column_name}: {e}")
             return []
 
-    def _detect_frequency_anomalies(
-        self, data: pd.Series, table_name: str, column_name: str
-    ) -> list[AnomalyResult]:
+    def _detect_frequency_anomalies(self, data: pd.Series, table_name: str, column_name: str)
+    ) -> list[AnomalyResult:
         """
         频率分布异常检测
 
         Args:
-    "data": 数据序列
-    "table_name": 表名
+data数据序列
+table_name表名
     "column_name": 列名
 
         Returns:
@@ -587,12 +581,12 @@ class AnomalyDetector:
             value_counts = data.value_counts()
             total_count = len(data)
 
-            # 检测频率异常（出现次数过少或过多）
+            # 检测频率异常(出现次数过少或过多)
             expected_freq = total_count / len(value_counts)  # 平均频率
 
             anomalous_values = []
             for value, count in value_counts.items():
-                # 频率异常：大于平均频率的5倍或小于平均频率的1/10
+                # 频率异常:大于平均频率的5倍或小于平均频率的1/10
                 if count > expected_freq * 5 or count < expected_freq * 0.1:
                     anomalous_values.append(value)
 
@@ -600,8 +594,8 @@ class AnomalyDetector:
                 anomaly_score = len(anomalous_values) / len(value_counts)
                 severity = self._calculate_severity(anomaly_score)
 
-                return [
-                    AnomalyResult(
+                return [)
+                    AnomalyResult()
                         table_name=table_name,
                         column_name=column_name,
                         anomaly_type=AnomalyType.FREQUENCY,
@@ -609,9 +603,10 @@ class AnomalyDetector:
                         anomalous_values=anomalous_values,
                         anomaly_score=anomaly_score,
                         detection_method="frequency",
-                        description=f"发现 {len(anomalous_values)} 个频率异常值，预期频率: {expected_freq:.1f}",
-                    )
-                ]
+                        description=f"发现 {len(anomalous_values)} 个频率异常值,预期频率: {expected_fre,)
+"    q:.1f",
+"                    
+                
 
             return []
 
@@ -619,15 +614,14 @@ class AnomalyDetector:
             logger.error(f"频率检测失败 {table_name}.{column_name}: {e}")
             return []
 
-    def _detect_time_gap_anomalies(
-        self, data: pd.Series, table_name: str, column_name: str
-    ) -> list[AnomalyResult]:
+    def _detect_time_gap_anomalies(self, data: pd.Series, table_name: str, column_name: str)
+    ) -> list[AnomalyResult:
         """
         时间间隔异常检测
 
         Args:
-    "data": 时间数据序列
-    "table_name": 表名
+data时间数据序列
+table_name表名
     "column_name": 列名
 
         Returns:
@@ -655,16 +649,16 @@ class AnomalyDetector:
             upper_bound = Q3 + 1.5 * IQR
 
             # 检测异常时间间隔
-            anomalous_gaps = time_diffs[
+            anomalous_gaps = time_diffs[)
                 (time_diffs < lower_bound) | (time_diffs > upper_bound)
-            ]
+            
 
             if len(anomalous_gaps) > 0:
                 anomaly_score = len(anomalous_gaps) / len(time_diffs)
                 severity = self._calculate_severity(anomaly_score)
 
-                return [
-                    AnomalyResult(
+                return [)
+                    AnomalyResult()
                         table_name=table_name,
                         column_name=column_name,
                         anomaly_type=AnomalyType.PATTERN_BREAK,
@@ -672,9 +666,10 @@ class AnomalyDetector:
                         anomalous_values=anomalous_gaps.tolist(),
                         anomaly_score=anomaly_score,
                         detection_method="time_gap",
-                        description=f"发现 {len(anomalous_gaps)} 个时间间隔异常，正常范围: {lower_bound:.0f}-{upper_bound:.0f}秒",
-                    )
-                ]
+                        description=f"发现 {len(anomalous_gaps)} 个时间间隔异常,正常范围: {lower_bound:.0f}-{upper_boun,)
+"    d:.0f秒",
+"                    
+                
 
             return []
 
@@ -686,77 +681,74 @@ class AnomalyDetector:
         """
         计算异常严重程度
 
-        Args:
-    "anomaly_score": 异常得分（0-1）
-
-        Returns:
-    "AnomalySeverity": 严重程度
+        Args: anomaly_score异常得分(0-1),
+    Returns:
+AnomalySeverity严重程度
         """
         if anomaly_score >= 0.2:
             return AnomalySeverity.CRITICAL
         elif anomaly_score >= 0.1:
             return AnomalySeverity.HIGH
-        elif anomaly_score >= 0.05:
-            return AnomalySeverity.MEDIUM
-        else:
+        elif anomaly_score >= 0.05: return AnomalySeverity.MEDIUM,
+    else:
             return AnomalySeverity.LOW
 
-    async def get_anomaly_summary(
-        self, anomalies: list[AnomalyResult]
-    ) -> dict[str, Any]:
+    async def get_anomaly_summary(self, anomalies: list[AnomalyResult])
+    ) -> dict[str, Any:
         """
         获取异常摘要
 
-        Args:
-    "anomalies": 异常结果列表
-
-        Returns:
+        Args: anomalies异常结果列表,
+    Returns:
             Dict[str, Any]: 异常摘要
         """
         if not anomalies:
-            return {
-                "total_anomalies": 0,
-                "by_severity": {},
-                "by_type": {},
-                "by_table": {},
-                "summary_time": datetime.now().isoformat(),
-            }
+            return {)
+total_anomalies0,
+by_severity{},
+by_type{},
+by_table{},
+summary_timedatetime.now().isoformat(),
+            
 
         # 按严重程度统计
-    "by_severity": dict[str, int] = {}
+by_severitydict[str, int] = {}
         for anomaly in anomalies:
             severity = anomaly.severity.value
             by_severity[severity] = by_severity.get(str(severity), 0) + 1
 
         # 按类型统计
-    "by_type": dict[str, int] = {}
+by_typedict[str, int] = {}
         for anomaly in anomalies:
             anomaly_type = anomaly.anomaly_type.value
             by_type[anomaly_type] = by_type.get(str(anomaly_type), 0) + 1
 
         # 按表统计
-    "by_table": dict[str, int] = {}
+by_tabledict[str, int] = {}
         for anomaly in anomalies:
             table = anomaly.table_name
             by_table[table] = by_table.get(str(table), 0) + 1
 
-        return {
-            "total_anomalies": len(anomalies),
-            "by_severity": by_severity,
-            "by_type": by_type,
-            "by_table": by_table,
-            "critical_anomalies": len(
+        return {)
+total_anomalieslen(anomalies),
+by_severityby_severity,
+by_typeby_type,
+by_tableby_table,
+critical_anomalieslen()
                 [a for a in anomalies if a.severity == AnomalySeverity.CRITICAL]
-            ),
-            "high_priority_anomalies": len(
-                [
+            ,
+high_priority_anomalieslen()
+                [)
                     a
                     for a in anomalies
                     if a.severity in [AnomalySeverity.CRITICAL, AnomalySeverity.HIGH]
-                ]
-            ),
-            "most_affected_table": (
+                
+            ,
+most_affected_table()
                 max(by_table.items(), key=lambda x: x[1])[0] if by_table else None
-            ),
-            "summary_time": datetime.now().isoformat(),
-        }
+            ,
+summary_timedatetime.now().isoformat(),
+        
+
+"""
+"""

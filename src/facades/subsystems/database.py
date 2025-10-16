@@ -4,7 +4,7 @@ from typing import Any
 数据库子系统实现
 Database Subsystem Implementation
 
-提供数据库连接和查询功能。
+提供数据库连接和查询功能.
 """
 
 import asyncio
@@ -27,11 +27,11 @@ class DatabaseSubsystem(Subsystem):
         await asyncio.sleep(0.1)
         self.connection_pool = {"active_connections": 0, "max_connections": 100}
         self.status = SubsystemStatus.ACTIVE
-        self.metrics = {
+        self.metrics = {)
             "connection_pool_size": 100,
             "active_connections": 0,
             "query_count": 0,
-        }
+        
 
     async def shutdown(self) -> None:
         """关闭数据库连接"""
@@ -39,18 +39,18 @@ class DatabaseSubsystem(Subsystem):
             self.connection_pool = None
         self.status = SubsystemStatus.INACTIVE
 
-    async def execute_query(
+    async def execute_query()
         self, query: str, params: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
+    ) -> dict[str, Any:
         """执行查询"""
         if self.status != SubsystemStatus.ACTIVE:
             raise RuntimeError("Database subsystem is not active")
 
         self.query_count += 1
         self.metrics["query_count"] = self.query_count
-        self.metrics["active_connections"] = self.connection_pool.get(
+        self.metrics["active_connections"] = self.connection_pool.get()
             "active_connections", 0
-        )
+        
 
         # 模拟查询执行
         await asyncio.sleep(0.01)
@@ -71,8 +71,8 @@ class DatabaseSubsystem(Subsystem):
 
     async def get_detailed_status(self) -> dict[str, Any]:
         """获取详细状态"""
-        return {
+        return {)
             "status": self.status.value,
             "connection_pool": self.connection_pool is not None,
             "query_count": self.query_count,
-        }
+        

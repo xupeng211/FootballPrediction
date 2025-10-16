@@ -1,17 +1,13 @@
-"""
-比赛相关模型
+""" 比赛相关模型
 Match Related Models
-"""
-
-from datetime import datetime
+"" from datetime import datetime
 
 from pydantic import BaseModel, Field
 
 
-class MatchQueryParams(BaseModel):
-    """比赛查询参数"""
-
-    league_id: int | None = Field(None, description="联赛ID")
+class MatchQueryParams(BaseModel)
+:
+    """比赛查询参数"" league_id: int | None = Field(None, description="联赛ID")
     team_id: int | None = Field(None, description="球队ID")
     status: str | None = Field(None, description="比赛状态")
     start_date: datetime | None = Field(None, description="开始日期")
@@ -20,20 +16,18 @@ class MatchQueryParams(BaseModel):
     offset: int = Field(0, ge=0, description="偏移量")
 
 
-class MatchCreateRequest(BaseModel):
-    """创建比赛请求"""
-
-    home_team_id: int = Field(..., description="主队ID")
+class MatchCreateRequest(BaseModel)
+:
+    """创建比赛请求"" home_team_id: int = Field(..., description="主队ID")
     away_team_id: int = Field(..., description="客队ID")
     league_id: int = Field(..., description="联赛ID")
     match_time: datetime = Field(..., description="比赛时间")
     venue: str | None = Field(None, description="比赛场地")
 
 
-class MatchUpdateRequest(BaseModel):
-    """更新比赛请求"""
-
-    match_time: datetime | None = Field(None, description="比赛时间")
+class MatchUpdateRequest(BaseModel)
+:
+    """更新比赛请求"" match_time: datetime | None = Field(None, description="比赛时间")
     venue: str | None = Field(None, description="比赛场地")
     home_score: int | None = Field(None, ge=0, description="主队得分")
     away_score: int | None = Field(None, ge=0, description="客队得分")

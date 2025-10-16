@@ -1,8 +1,7 @@
-"""
-改进的TTL缓存模块
+""" 改进的TTL缓存模块
 Improved TTL Cache Module
 
-提供高性能的内存缓存功能，支持：
+提供高性能的内存缓存功能, 支持:
 - 自动过期
 - LRU淘汰策略
 - 批量操作
@@ -15,12 +14,10 @@ Provides high-performance in-memory cache with:
 - Batch operations
 - Async support
 - Statistics monitoring
-"""
+"" from .async_cache import AsyncTTLCachefrom .cache_entry import CacheEntry
 
-from .async_cache import AsyncTTLCache
-from .cache_entry import CacheEntry
-from .cache_factory import CacheFactory
-from .cache_instances import (
+from .cache_factory import CacheFactoryfrom .cache_instances import ()
+
     CACHES,
     cleanup_all_expired,
     clear_all_caches,
@@ -34,10 +31,10 @@ from .cache_instances import (
     start_auto_cleanup,
     stop_auto_cleanup,
     temp_cache,
-)
+
 from .ttl_cache import TTLCache
 
-__all__ = [
+__all__ = [)
     # Core classes
     "TTLCache",
     "AsyncTTLCache",
@@ -59,8 +56,7 @@ __all__ = [
     "stop_auto_cleanup",
     # Cache registry
     "CACHES",
-]
+
 
 # 版本信息
-__version__ = "1.0.0"
-__author__ = "Football Prediction Team"
+__version__ = "1.0.0 __author__ = "Football Prediction Team"

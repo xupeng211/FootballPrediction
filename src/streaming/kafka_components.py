@@ -3,7 +3,7 @@ from typing import Any
 """
 Kafka组件模块 - 兼容性包装器
 
-为了保持向后兼容性，此文件重新导出Kafka相关的类和函数。
+为了保持向后兼容性,此文件重新导出Kafka相关的类和函数.
 """
 
 
@@ -60,7 +60,7 @@ if StreamProcessor is None:
     StreamProcessor: Type[Any] = StreamProcessor
 
 # Kafka可用性标志
-KAFKA_AVAILABLE = True  # 如果导入成功，设置为True
+KAFKA_AVAILABLE = True  # 如果导入成功,设置为True
 
 # 默认主题
 DEFAULT_TOPICS = ["football_matches", "football_predictions", "football_odds"]
@@ -77,12 +77,12 @@ KafkaStream = None  # 流处理类
 
 
 def ensure_topics_exist(topics: list[str]) -> bool:
-    """确保主题存在（桩实现）"""
+    """确保主题存在(桩实现)"""
     return True
 
 
 # 重新导出以保持向后兼容性
-__all__ = [
+__all__ = [)
     "KafkaAdmin",
     "FootballKafkaProducer",
     "FootballKafkaConsumer",
@@ -98,4 +98,4 @@ __all__ = [
     "KafkaError",
     "KafkaException",
     "Producer",
-]
+

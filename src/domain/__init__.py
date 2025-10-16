@@ -1,19 +1,18 @@
-"""
-领域层
+""" 领域层
 Domain Layer
 
-实现领域驱动设计（DDD）的核心概念，包含：
-- 领域模型（Entities, Value Objects）
-- 领域服务（Domain Services）
-- 领域事件（Domain Events）
+实现领域驱动设计(DDD)
+的核心概念, 包含:
+- 领域模型(Entities, Value Objects)
+- 领域服务(Domain Services)
+- 领域事件(Domain Events)
 
-Implements core concepts of Domain-Driven Design (DDD), including:
+Implements core concepts of Domain-Driven Design (DDD)
+, including:
 - Domain models (Entities, Value Objects)
 - Domain services
 - Domain events
-"""
-
-from .events import (
+"" from .events import ()
     MatchCancelledEvent,
     MatchFinishedEvent,
     MatchPostponedEvent,
@@ -24,8 +23,8 @@ from .events import (
     PredictionExpiredEvent,
     PredictionPointsAdjustedEvent,
     PredictionUpdatedEvent,
-)
-from .models import (
+
+from .models import ()
     ConfidenceScore,
     League,
     LeagueSeason,
@@ -41,13 +40,13 @@ from .models import (
     Team,
     TeamForm,
     TeamStats,
-)
-from .services import (
+
+from .services import ()
     MatchDomainService,
     PredictionDomainService,
     ScoringService,
-)
-from .strategies import (
+
+from .strategies import ()
     EnsembleStrategy,
     HistoricalStrategy,
     MLModelStrategy,
@@ -60,9 +59,9 @@ from .strategies import (
     StrategyConfig,
     StrategyMetrics,
     StrategyType,
-)
 
-__all__ = [
+
+__all__ = [)
     # 领域模型
     "Match",
     "MatchStatus",
@@ -107,4 +106,4 @@ __all__ = [
     "EnsembleStrategy",
     "PredictionStrategyFactory",
     "StrategyConfig",
-]
+

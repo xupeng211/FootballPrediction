@@ -1,26 +1,23 @@
-"""
-足球预测系统数据模型
+""" 足球预测系统数据模型
 
-包含所有SQLAlchemy数据模型定义。
-"""
+包含所有SQLAlchemy数据模型定义.
+"" from ..base import Basefrom .audit_log import AuditAction, AuditLog, AuditLogSummary, AuditSeverity
 
-from ..base import Base
-from .audit_log import AuditAction, AuditLog, AuditLogSummary, AuditSeverity
-from .data_collection_log import CollectionStatus, CollectionType, DataCollectionLog
-from .features import Features, TeamType
-from .league import League
-from .match import Match, MatchStatus
-from .odds import MarketType, Odds
-from .predictions import PredictedResult, Predictions
-from .raw_data import RawMatchData, RawOddsData, RawScoresData
-from .team import Team
+from .data_collection_log import CollectionStatus, CollectionType, DataCollectionLogfrom .features import Features, TeamType
+
+from .league import Leaguefrom .match import Match, MatchStatus
+
+from .odds import MarketType, Oddsfrom .predictions import PredictedResult, Predictions
+
+from .raw_data import RawMatchData, RawOddsData, RawScoresDatafrom .team import Team
+
 from .user import User
 
 # 为API兼容性创建别名
 Prediction = Predictions
 
 # 导出所有模型和枚举类
-__all__ = [
+__all__ = [)
     # 基础类
     "Base",
     # 核心业务模型
@@ -49,4 +46,4 @@ __all__ = [
     "CollectionType",
     "AuditAction",
     "AuditSeverity",
-]
+

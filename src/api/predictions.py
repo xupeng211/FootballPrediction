@@ -1,7 +1,6 @@
-"""
-预测API端点 / Prediction API Endpoints
+""" 预测API端点 / Prediction API Endpoints
 
-提供比赛预测相关的API接口：
+提供比赛预测相关的API接口:
 - 获取比赛预测结果
 - 实时生成预测
 - 批量预测接口
@@ -17,18 +16,20 @@ Provides API endpoints for match prediction:
     POST /predictions/batch: 批量预测比赛 / Batch predict matches
     GET /predictions/history/{match_id}: 获取比赛历史预测 / Get match prediction history
     GET /predictions/recent: 获取最近的预测 / Get recent predictions
-    POST /predictions/{match_id}/verify: 验证预测结果 / Verify prediction result
+    POST /predictions/{match_id}/verify
+    验证预测结果 / Verify prediction result
 
 使用示例 / Usage Example:
     ```python
-    import requests
+import requests
+
 
     # 获取比赛预测
-    response = requests.get("http://localhost:8000/api/v1/predictions/12345")
+    response = requests.get("https://localhost:8000/api/v1/predictions/12345")
     _prediction = response.json()
 
     # 实时预测
-    response = requests.post("http://localhost:8000/api/v1/predictions/12345/predict")
+    response = requests.post("https://localhost:8000/api/v1/predictions/12345/predict")
     result = response.json()
     ```
 
@@ -37,7 +38,7 @@ Provides API endpoints for match prediction:
     - 400: 请求参数错误 / Bad request parameters
     - 500: 服务器内部错误 / Internal server error
 
-该文件已重构为模块化架构，原始功能现在通过以下模块提供：
+该文件已重构为模块化架构, 原始功能现在通过以下模块提供:
 - rate_limiter: 速率限制配置
 - prediction_handlers: 单个预测处理逻辑
 - batch_handlers: 批量预测处理
@@ -45,13 +46,11 @@ Provides API endpoints for match prediction:
 - schemas: API响应模式定义
 - predictions_router: 主路由器
 
-基于 API_DESIGN.md 第3.1节设计。
-"""
-
-# 为了向后兼容，从新的模块化实现重新导出路由器
+基于 API_DESIGN.md 第3.1节设计.
+"" # 为了向后兼容, 从新的模块化实现重新导出路由器
 from .predictions.router import router
 
 # 保持原有的导出
-__all__ = [
+__all__ = [)
     "router",
-]
+

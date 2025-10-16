@@ -3,10 +3,8 @@ from typing import Any
 """
 足球预测系统文件处理工具模块
 
-提供文件操作相关的工具函数。
+提供文件操作相关的工具函数.
 """
-
-
 import hashlib
 import json
 import os
@@ -26,98 +24,93 @@ class FileUtils:
 
     @staticmethod
     def ensure_directory(path: str | Path) -> Path:
-        """确保目录存在（ensure_dir的别名）"""
+        """确保目录存在(ensure_dir的别名)"""
         return FileUtils.ensure_dir(path)
 
     @staticmethod
-    def read_json(file_path: str | Path) -> dict[str, Any]:
+    def read_text(path: str | Path, encoding: str = "utf-8") -> str:
+        """读取文本文件"""
+        path = Path(path)
+        return path.read_text(encoding=encoding)
+
+    @staticmethod
+    def write_text(path: str | Path, content: str, encoding: str = "utf-8") -> None:
+        """写入文本文件"""
+        path = Path(path)
+        FileUtils.ensure_dir(path.parent)
+        path.write_text(content, encoding=encoding)
+
+    @staticmethod
+    def read_json(path: str | Path, encoding: str = "utf-8") -> dict[str, Any]:
         """读取JSON文件"""
-        try:
-            with open(file_path, encoding="utf-8") as f:
-                return json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError) as e:
-            raise FileNotFoundError(f"无法读取JSON文件 {file_path}: {e}")
+        content = FileUtils.read_text(path, encoding)
+        return json.loads(content)
 
     @staticmethod
-    def write_json(
-    data: dict[str, Any], file_path: str | Path, ensure_dir: bool = True
-    ) -> None:
+    def write_json(path: str | Path, data: dict[str, Any], encoding: str = "utf-8", indent: int = 2) -> None:
         """写入JSON文件"""
-        file_path = Path(file_path)
-        if ensure_dir:
-            file_path.parent.mkdir(parents=True, exist_ok=True)
-
-        with open(file_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
+        content = json.dumps(data, ensure_ascii=False, indent=indent)
+        FileUtils.write_text(path, content, encoding)
 
     @staticmethod
-    def get_file_hash(file_path: str | Path) -> str:
-        """获取文件MD5哈希值"""
-        hash_md5 = hashlib.md5(usedforsecurity=False)
-        with open(file_path, "rb") as f:
+    def get_file_hash(path: str | Path, algorithm: str = "md5") -> str:
+        """获取文件哈希值"""
+        path = Path(path)
+        hash_func = hashlib.new(algorithm)
+
+        with path.open("rb") as f:
             for chunk in iter(lambda: f.read(4096), b""):
-                hash_md5.update(chunk)
-        return hash_md5.hexdigest()
+                hash_func.update(chunk)
+
+        return hash_func.hexdigest()
 
     @staticmethod
-    def get_file_size(file_path: str | Path) -> int:
-        """获取文件大小（字节）"""
+    def get_file_size(path: str | Path) -> int:
+        """获取文件大小(字节)"""
+        path = Path(path)
+        return path.stat().st_size
+
+    @staticmethod
+    def get_file_mtime(path: str | Path) -> float:
+        """获取文件修改时间"""
+        path = Path(path)
+        return path.stat().st_mtime
+
+    @staticmethod
+    def exists(path: str | Path) -> bool:
+        """检查文件或目录是否存在"""
+        return Path(path).exists()
+
+    @staticmethod
+    def is_file(path: str | Path) -> bool:
+        """检查是否为文件"""
+        return Path(path).is_file()
+
+    @staticmethod
+    def is_dir(path: str | Path) -> bool:
+        """检查是否为目录"""
+        return Path(path).is_dir()
+
+    @staticmethod
+    def delete(path: str | Path) -> bool:
+        """删除文件或目录"""
+        path = Path(path)
         try:
-            if not os.path.exists(file_path):
-                return 0
-            return os.path.getsize(file_path)
-        except (FileNotFoundError, OSError):
-            return 0
-
-    @staticmethod
-    def ensure_directory(path: str | Path) -> Path:
-        """确保目录存在（别名方法）"""
-        return FileUtils.ensure_dir(path)
-
-    @staticmethod
-    def read_json_file(file_path: str | Path) -> dict[str, Any] | None:
-        """读取JSON文件（别名方法）"""
-        try:
-            return FileUtils.read_json(file_path)
-        except FileNotFoundError:
-            return None
-
-    @staticmethod
-    def write_json_file(
-    data: dict[str, Any], file_path: str | Path, ensure_dir: bool = True
-    ) -> bool:
-        """写入JSON文件（别名方法）"""
-        try:
-            FileUtils.write_json(data, file_path, ensure_dir)
+            if path.is_file():
+                path.unlink()
+            elif path.is_dir():
+                path.rmdir()
             return True
-        except (ValueError, KeyError, RuntimeError):
+        except OSError:
             return False
 
     @staticmethod
-    def cleanup_old_files(directory: str | Path, days: int = 30) -> int:
-        """清理旧文件"""
-
+    def list_files(directory: str | Path, pattern: str = "*") -> list[Path]:
+        """列出目录中的文件"""
         directory = Path(directory)
-        if not directory.exists():
-            return 0
-
-        cutoff_time = time.time() - (days * 24 * 60 * 60)
-        removed_count = 0
-
-        try:
-            for file_path in directory.iterdir():
-                if file_path.is_file() and file_path.stat().st_mtime < cutoff_time:
-                    file_path.unlink()
-                    removed_count += 1
-        except (ValueError, KeyError, RuntimeError):
-            pass
-
-        return removed_count
+        return list(directory.glob(pattern))
 
     @staticmethod
-    def get_file_size(file_path: str | Path) -> int:
-        """获取文件大小（字节）"""
-        try:
-            return Path(file_path).stat().st_size
-        except (FileNotFoundError, OSError):
-            return 0
+    def get_temp_dir() -> Path:
+        """获取临时目录"""
+        return Path("/tmp")

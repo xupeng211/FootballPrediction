@@ -4,7 +4,7 @@ from typing import Any
 数据收集核心
 Data Collection Core
 
-数据收集的核心逻辑和任务定义。
+数据收集的核心逻辑和任务定义.
 """
 
 import asyncio
@@ -133,7 +133,7 @@ def manual_collect_all_data() -> dict[str, Any]:
 
     手动触发所有数据收集
 
-    这是一个同步任务，用于立即收集所有类型的数据。
+    这是一个同步任务,用于立即收集所有类型的数据.
     """
     task = DataCollectionTask()
 
@@ -154,13 +154,13 @@ def manual_collect_all_data() -> dict[str, Any]:
 
 
 @celery_app.task
-def emergency_data_collection_task(
+def emergency_data_collection_task()
     data_types: list[str] | None = None, priority: int = 1
-) -> dict[str, Any]:
+) -> dict[str, Any:
     """
     紧急数据收集任务
 
-    用于在数据缺失时紧急收集关键数据。
+    用于在数据缺失时紧急收集关键数据.
     """
     task = DataCollectionTask()
 
@@ -177,9 +177,9 @@ def emergency_data_collection_task(
         logger.warning(f"Emergency data collection triggered for: {critical_types}")
 
         # 使用asyncio.run在同步上下文中运行异步代码
-        results = asyncio.run(
+        results = asyncio.run()
             task.orchestrator.collect_all_data(data_types=critical_types)
-        )
+        
 
         # 标记为紧急收集
         results["emergency"] = True
@@ -189,11 +189,11 @@ def emergency_data_collection_task(
 
     except (RuntimeError, ValueError, ConnectionError) as e:
         logger.error(f"Emergency data collection failed: {str(e)}")
-        return {
+        return {)
             error: str(e),
             emergency: True,
             collected_at: datetime.utcnow().isoformat(),
-        }
+        
 
 
 # 定时任务定义
@@ -213,13 +213,13 @@ def collect_historical_data_task():
         historical_collector = task.orchestrator.get_collector("historical")
         if historical_collector:
             # 使用asyncio.run在同步上下文中运行异步代码
-            results = asyncio.run(
-                historical_collector.collect_historical_data(
+            results = asyncio.run()
+                historical_collector.collect_historical_data()
                     data_type="matches",
                     start_date=datetime.utcnow() - timedelta(days=30),
                     end_date=datetime.utcnow(),
-                )
-            )
+                
+            
 
             # 保存到数据库
             asyncio.run(_save_historical_data(results, "matches"))
@@ -243,12 +243,12 @@ async def _save_historical_data(data: dict[str, Any], data_type: str) -> None:
 
 def validate_collected_data(data: dict[str, Any], data_type: str) -> dict[str, Any]:
     """验证收集的数据"""
-    validation_result = {
+    validation_result = {)
         data_type: data_type,
         is_valid: True,
         "validation_errors": [],
         "recommendations": [],
-    }
+    
 
     try:
         # 基本验证

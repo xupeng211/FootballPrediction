@@ -1,11 +1,16 @@
 from typing import Any, Dict, List, Optional, Union
 
-门面工厂
+"""
+"""
+门
+"""
 Facade Factory
 
-用于创建和配置门面实例.
+"""
+用
+"""
 Used to create and configure facade instances.
-""""""
+"""
 
 from dataclasses import dataclass, field
 import os
@@ -13,14 +18,14 @@ from pathlib import Path
 import yaml  # type: ignore
 import json
 
-from .base import SystemFacade
-from .facades import (
+.base import SystemFacade
+.facades import ()
     MainSystemFacade,
     PredictionFacade,
     DataCollectionFacade,
     AnalyticsFacade,
     NotificationFacade,
-)
+
 
 
 @dataclass
@@ -38,26 +43,25 @@ class FacadeFactory:
     """门面工厂类"""
 
     # 注册的门面类型
-    "FACADE_TYPES": Dict[str, Type[Any, SystemFacade] = {
+    "FACADE_TYPES": Dict[str, Type[Any, SystemFacade] = {))
         "main": MainSystemFacade,","
         "prediction": PredictionFacade,","
         "data_collection": DataCollectionFacade,","
         "analytics": AnalyticsFacade,","
         "notification": NotificationFacade,""
-    }
+    
 
     def __init__(self):
         self._config_cache: Dict[str, FacadeConfig] = {}
         self._instance_cache: Dict[str, SystemFacade] = {}
         self.default_environment = os.getenv("ENVIRONMENT", "development")
 
-    def create_facade(
-        self, facade_type: str, config: Optional[FacadeConfig] = None
-    ) -> SystemFacade:
+    def create_facade(self, facade_type: str, config: Optional[FacadeConfig] = None)
+     -> SystemFacade:
         """创建门面实例"""
-        if facade_type not in self.FACADE_TYPES:
-            raise ValueError(f"Unknown facade type: {facade_type}")
-
+        if facade_type not in self.FACADE_TYPES: raise ValueError(f"Unknown facade typ,)
+"    e: {facade_type}"
+"
         facade_class = self.FACADE_TYPES[facade_type]
         facade = facade_class()  # type: ignore
 
@@ -90,9 +94,9 @@ class FacadeFactory:
             return self._instance_cache[facade_name]
 
         _config = self._config_cache.get(facade_name)
-        if not config:
-            raise ValueError(f"No configuration found for facade: {facade_name}")
-
+        if not config: raise ValueError(f"No configuration found for facad,)
+"    e: {facade_name}"
+"
         facade = self.create_from_config(config)
         self._instance_cache[facade_name] = facade
         return facade
@@ -111,9 +115,9 @@ class FacadeFactory:
         elif file_path.suffix.lower() == ".json":,
             with open(file_path, "r", encoding="utf-8") as f:
                 _data = json.load(f)
-        else:
-            raise ValueError(f"Unsupported config file format: {file_path.suffix}")
-
+        else: raise ValueError(f"Unsupported config file forma,)
+"    t: {file_path.suffix}"
+"
         # 解析门面配置
         if "facades" in data:,
             for facade_data in data["facades"]:
@@ -170,9 +174,8 @@ class FacadeFactory:
                 if env_value is not None:
                     # 尝试转换类型
                     resolved_params[key] = self._convert_type(env_value)
-                else:
-                    resolved_params[key] = value
-            else:
+                else: resolved_params[key] = value,
+    else:
                 resolved_params[key] = value
 
         config.parameters = resolved_params
@@ -207,81 +210,81 @@ class FacadeFactory:
     def create_default_configs(self) -> None:
         """创建默认配置"""
         # 主系统门面配置
-        main_config = FacadeConfig(
+        main_config = FacadeConfig()
             name="main_facade",
             facade_type="main",
             enabled=True,
             auto_initialize=True,
-            parameters={
+            parameters={)
                 "timeout": 30,","
                 "retry_attempts": 3,","
                 "enable_metrics": True,""
-            },
-        )
+            ,
+        
         self._config_cache["main_facade"] = main_config
 
         # 预测门面配置
-        prediction_config = FacadeConfig(
+        prediction_config = FacadeConfig()
             name="prediction_facade",
             facade_type="prediction",
             enabled=True,
             auto_initialize=True,
-            parameters={
+            parameters={)
                 "default_model": "neural_network",","
                 "cache_ttl": 600,","
                 "batch_size": 100,""
-            },
-        )
+            ,
+        
         self._config_cache["prediction_facade"] = prediction_config
 
         # 数据收集门面配置
-        data_config = FacadeConfig(
+        data_config = FacadeConfig()
             name="data_collection_facade",
             facade_type="data_collection",
             enabled=True,
             auto_initialize=True,
-            parameters={
+            parameters={)
                 "batch_size": 50,","
                 "enable_compression": True,","
                 "backup_enabled": True,""
-            },
-        )
+            ,
+        
         self._config_cache["data_collection_facade"] = data_config
 
         # 分析门面配置
-        analytics_config = FacadeConfig(
+        analytics_config = FacadeConfig()
             name="analytics_facade",
             facade_type="analytics",
             enabled=True,
             auto_initialize=False,  # 按需初始化
-            parameters={
+            parameters={)
                 "retention_days": 90,","
                 "aggregation_interval": 3600,""
-            },
-        )
+            ,
+        
         self._config_cache["analytics_facade"] = analytics_config
 
         # 通知门面配置
-        notification_config = FacadeConfig(
+        notification_config = FacadeConfig()
             name="notification_facade",
             facade_type="notification",
             enabled=True,
             auto_initialize=True,
-            parameters={
+            parameters={)
                 "default_channel": "email",","
                 "queue_size": 1000,","
                 "retry_failed": True,""
-            },
-        )
+            ,
+        
         self._config_cache["notification_facade"] = notification_config
 
     def save_config_to_file(self, file_path: Union[str, Path]) -> None:
         """保存配置到文件"""
         file_path = Path(file_path)
 
-        _data = {
-            "facades": [""
-                {
+        _data = {)
+            "facades": ["")
+                {)
                     "name": config.name,","
                     "facade_type": config.facade_type,","
                     "enabled": config.enabled,","
@@ -289,10 +292,10 @@ class FacadeFactory:
                     "subsystems": config.subsystems,","
                     "parameters": config.parameters,","
                     "environment": config.environment,""
-                }
+                
                 for config in self._config_cache.values()
-            ]
-        }
+            
+        
 
         # 根据文件扩展名选择格式
         if file_path.suffix.lower() in [".yaml", ".yml"]:
@@ -301,9 +304,9 @@ class FacadeFactory:
         elif file_path.suffix.lower() == ".json":,
             with open(file_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
-        else:
-            raise ValueError(f"Unsupported config file format: {file_path.suffix")
-
+        else: raise ValueError(f"Unsupported config file forma,)
+"    t: {file_path.suffix")
+"
     def clear_cache(self) -> None:
         """清空实例缓存"""
         self._instance_cache.clear()

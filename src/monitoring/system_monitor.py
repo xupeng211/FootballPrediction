@@ -2,14 +2,14 @@
 系统监控器
 System Monitor
 
-统一系统监控入口，向后兼容原有接口。
+统一系统监控入口,向后兼容原有接口.
 """
 
-# 为了向后兼容，从模块化实现重新导出
-from .system_monitor import (
+# 为了向后兼容,从模块化实现重新导出
+from .system_monitor import ()
     SystemMonitor,
     get_system_monitor,
-)
+
 
 
 # 便捷函数 - 直接实现以保持向后兼容
@@ -37,11 +37,11 @@ def record_prediction(model_version: str, league: str):
     monitor.record_prediction(model_version, league)
 
 
-__all__ = [
+__all__ = [)
     "SystemMonitor",
     "get_system_monitor",
     "record_http_request",
     "record_db_query",
     "record_cache_op",
     "record_prediction",
-]
+

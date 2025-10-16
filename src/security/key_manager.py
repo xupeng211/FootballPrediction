@@ -3,7 +3,7 @@
 
 Key Management Module - Stub Implementation
 
-临时实现，用于解决导入错误。
+临时实现,用于解决导入错误.
 Temporary implementation to resolve import errors.
 """
 
@@ -13,7 +13,7 @@ import os
 
 class KeyManager:
     """
-    密钥管理器（桩实现）
+    密钥管理器(桩实现)
 
     Key Manager (Stub Implementation)
     """
@@ -38,9 +38,9 @@ class KeyManager:
     key_name: 密钥名称
 
         Returns:
-            密钥值（桩实现返回虚拟值）
+            密钥值(桩实现返回虚拟值)
         """
-        # 桩实现：返回虚拟密钥
+        # 桩实现:返回虚拟密钥
         self.logger.debug(f"Getting key: {key_name}")
         return f"dummy_key_{key_name}"
 
@@ -104,10 +104,10 @@ class KeyManager:
     key_name: 密钥名称
 
         Returns:
-            加密后的数据（桩实现）
+            加密后的数据(桩实现)
         """
         self.logger.debug(f"Encrypting data with key: {key_name}")
-        # 桩实现：简单返回 base64 编码
+        # 桩实现:简单返回 base64 编码
         import base64
 
         return base64.b64encode(data.encode()).decode()
@@ -121,10 +121,10 @@ class KeyManager:
     key_name: 密钥名称
 
         Returns:
-            解密后的数据（桩实现）
+            解密后的数据(桩实现)
         """
         self.logger.debug(f"Decrypting data with key: {key_name}")
-        # 桩实现：简单 base64 解码
+        # 桩实现:简单 base64 解码
         import base64
 
         return base64.b64decode(encrypted_data.encode()).decode()
@@ -150,7 +150,7 @@ class KeyManager:
         """
         file_path = file_path or self.key_file
         self.logger.info(f"Loading keys from: {file_path}")
-        # 桩实现：不实际加载
+        # 桩实现:不实际加载
 
     def save_keys_to_file(self, file_path: str | None = None) -> None:
         """
@@ -161,7 +161,7 @@ class KeyManager:
         """
         file_path = file_path or self.key_file
         self.logger.info(f"Saving keys to: {file_path}")
-        # 桩实现：不实际保存
+        # 桩实现:不实际保存
 
 
 # 全局实例

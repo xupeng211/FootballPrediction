@@ -1,11 +1,15 @@
 from typing import Any, Dict, List, Optional, Union
 
-装饰器模式基类
+"""
+装
+"""
 Decorator Pattern Base Classes
 
-定义装饰器模式的核心接口和抽象类.
+"""
+定
+"""
 Define core interfaces and abstract classes for the decorator pattern.
-""""""
+"""""
 
 from abc import ABC, abstractmethod
 import inspect
@@ -95,35 +99,34 @@ class Decorator(Component):
 
     def get_stats(self) -> Dict[str, Any]:
         """获取装饰器执行统计信息"""
-        return {
+        return {)
             "name": self.name,","
             "type": self.__class__.__name__,","
             "execution_count": self.execution_count,","
             "error_count": self.error_count,","
-            "success_rate": (""
+            "success_rate": ("")
                 (self.execution_count - self.error_count) / self.execution_count
                 if self.execution_count > 0
                 else 0
-            ),
+            ,
             "total_execution_time": self.total_execution_time,","
-            "average_execution_time": (""
+            "average_execution_time": ("")
                 self.total_execution_time / self.execution_count
                 if self.execution_count > 0
                 else 0
-            ),
+            ,
             "last_execution_time": self.last_execution_time,""
-        }
+        
 
 
 class DecoratorComponent(Decorator):
     """装饰器组件,用于装饰函数或方法"""
 
-    def __init__(
-        self,
+    def __init__(self,)
     "func": Callable,
     "decorators": List[Decorator],
     "name": Optional[str] = None,
-    ):
+    :
         # 创建具体组件
         component = ConcreteComponent(name or func.__name__, func)
         super().__init__(component, name)
@@ -144,19 +147,16 @@ class DecoratorComponent(Decorator):
 
     def get_all_stats(self) -> Dict[str, Any]:
         """获取所有装饰器的统计信息"""
-        _stats = {"function": self.func.__name__, "decorators": [}
+        _stats = {"function": self.func.__name__, "decorators": [})
 
         for decorator in self.decorators:
             stats["decorators"].append(decorator.get_stats())  # type: ignore
 
         return stats
-
-
 class DecoratorChain:
     """装饰器链,用于管理多个装饰器的执行顺序"""
 
-    def __init__(self):
-        self.decorators: List[Decorator] = []
+    def __init__(self: self.decorators: List[Decorator] = [])
 
     def add_decorator(self, decorator: Decorator) -> "DecoratorChain":
         """添加装饰器到链中"""
@@ -183,10 +183,10 @@ class DecoratorChain:
 
     def get_chain_stats(self) -> Dict[str, Any]:
         """获取装饰器链的统计信息"""
-        return {
+        return {)
             "chain_length": len(self.decorators),","
             "decorators": [d.get_stats() for d in self.decorators],""
-        }
+        
 
 
 # 装饰器上下文管理器
@@ -221,20 +221,19 @@ class DecoratorContext:
 
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
-        return {
+        return {)
             "trace_id": self.trace_id,","
             "execution_time": self.get_execution_time(),","
             "execution_path": self.execution_path,","
             "data": self.data,""
-        }
+        
 
 
 # 装饰器注册表
 class DecoratorRegistry:
     """装饰器注册表,用于管理全局装饰器"""
 
-    def __init__(self):
-        self._decorators: Dict[str, type[Decorator] = {}
+    def __init__(self: self._decorators: Dict[str, type[Decorator] = {}))
         self._instances: Dict[str, Decorator] = {}
 
     def register(self, name: str, decorator_class: type[Decorator]) -> None:
@@ -246,13 +245,12 @@ class DecoratorRegistry:
         self._decorators.pop(name, None)
         self._instances.pop(name, None)
 
-    def get_decorator_class(self, name: str) -> Optional[type[Decorator]:
+    def get_decorator_class(self, name: str) -> Optional[type[Decorator]:)
         """获取装饰器类"""
         return self._decorators.get(name)
 
-    def get_decorator_instance(
-        self, name: str, component: Component, **kwargs
-    ) -> Optional[Decorator]:
+    def get_decorator_instance(self, name: str, component: Component, **kwargs)
+    ) -> Optional[Decorator:
         """获取装饰器实例(单例模式)"""
         decorator_class = self._decorators.get(name)
         if not decorator_class:
@@ -276,3 +274,6 @@ class DecoratorRegistry:
 
 # 全局装饰器注册表
 decorator_registry = DecoratorRegistry()
+
+"""
+"""

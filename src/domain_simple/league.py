@@ -1,7 +1,9 @@
 from typing import Any, Dict, List, Optional, Union
-""""""
-联赛领域模型
-""""""
+"""""
+"""
+联
+"""
+"""""
 
 from datetime import datetime
 from enum import Enum
@@ -14,18 +16,16 @@ class LeagueStatus(Enum):
     INACTIVE = "inactive"
     COMPLETED = "completed"
     SUSPENDED = "suspended"
-
-
 class LeagueTable:
     """联赛积分榜"""
 
     def __init__(self):
-        self.standings: List[Dict[str, Any] = []
+        self.standings: List[Dict[str, Any] = [])
         self.last_updated = datetime.now()
 
-    def update_table(self, match_results: List[Dict[str, Any]] -> None:
+    def update_table(self, match_results): List[Dict[str, Any]] -> None:
         """更新积分榜"""
-        # 简化实现，实际会更复杂
+        # 简化实现,实际会更复杂
         self.last_updated = datetime.now()
 
     def get_position(self, team_id: int) -> Optional[int]:
@@ -37,23 +37,20 @@ class LeagueTable:
 
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
-        return {
+        return {)
             "standings": self.standings,","
             "last_updated": self.last_updated.isoformat(),""
-        }
-
-
+        
 class League:
     """联赛领域模型"""
 
-    def __init__(
-        self,
+    def __init__(self,)
     "id": Optional[int] = None,
     "name": str = "",
     "country": str = "",
     "season": str = "",
     "status": LeagueStatus = LeagueStatus.ACTIVE,
-    ):
+    :
         self.id = id
         self.name = name
         self.country = country
@@ -106,7 +103,7 @@ class League:
 
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
-        return {
+        return {)
             "id": self.id,","
             "name": self.name,","
             "country": self.country,","
@@ -122,18 +119,18 @@ class League:
             "completion_rate": self.get_completion_rate(),","
             "created_at": self.created_at.isoformat(),","
             "updated_at": self.updated_at.isoformat(),""
-        }
+        
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "League":
         """从字典创建实例"""
-        league = cls(
+        league = cls()
             id=data.get("id"),
             name=data.get("name", ""),
             country=data.get("country", ""),
             season=data.get("season", ""),
             status=LeagueStatus(data.get("status", "active")),
-        )
+        
 
         league.total_teams = data.get("total_teams", 0)
         league.matches_per_team = data.get("matches_per_team", 0)
@@ -157,3 +154,6 @@ class League:
 
     def __repr__(self) -> str:
         return f"<League(id={self.id}, name={self.name}, status={self.status.value})>"""
+
+"""
+"""

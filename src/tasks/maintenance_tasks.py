@@ -3,7 +3,7 @@ from typing import Any
 """
 维护任务模块
 
-包含系统维护相关的任务：
+包含系统维护相关的任务:
 - 数据质量检查
 - 错误日志清理
 - 系统健康监控
@@ -30,7 +30,7 @@ def quality_check_task() -> dict[str, Any]:
     """
     数据质量检查任务
 
-    执行定期的数据质量检查，包括：
+    执行定期的数据质量检查,包括:
     - 数据完整性检查
     - 数据一致性验证
     - 重复数据检查
@@ -51,7 +51,7 @@ def quality_check_task() -> dict[str, Any]:
                 logger.info("开始执行数据质量检查")
 
                 # 1. 检查比赛数据完整性
-                match_integrity_query = text(
+                match_integrity_query = text()
                     """
                     SELECT COUNT(*) as incomplete_matches
                     FROM matches
@@ -60,7 +60,7 @@ def quality_check_task() -> dict[str, Any]:
                     OR league_id IS NULL
                     OR match_time IS NULL
                 """
-                )
+                
 
                 _result = await session.execute(match_integrity_query)
                 incomplete_matches = _result.scalar() or 0  # type: ignore
@@ -69,17 +69,17 @@ def quality_check_task() -> dict[str, Any]:
                     issues_found += 1
 
                 # 2. 检查重复比赛记录
-                duplicate_matches_query = text(
+                duplicate_matches_query = text()
                     """
                     SELECT COUNT(*) as duplicate_count
-                    FROM (
+                    FROM ()
                         SELECT home_team_id, away_team_id, match_time, COUNT(*) as cnt
                         FROM matches
                         GROUP BY home_team_id, away_team_id, match_time
                         HAVING COUNT(*) > 1
-                    ) t
+                     t
                 """
-                )
+                
 
                 _result = await session.execute(duplicate_matches_query)
                 duplicate_matches = _result.scalar() or 0  # type: ignore
@@ -88,7 +88,7 @@ def quality_check_task() -> dict[str, Any]:
                     issues_found += 1
 
                 # 3. 检查赔率数据异常
-                abnormal_odds_query = text(
+                abnormal_odds_query = text()
                     """
                     SELECT COUNT(*) as abnormal_odds
                     FROM odds
@@ -99,7 +99,7 @@ def quality_check_task() -> dict[str, Any]:
                     OR draw_odds > 1000
                     OR away_odds > 1000
                 """
-                )
+                
 
                 _result = await session.execute(abnormal_odds_query)
                 abnormal_odds = _result.scalar() or 0  # type: ignore
@@ -107,8 +107,8 @@ def quality_check_task() -> dict[str, Any]:
                 if abnormal_odds > 0:
                     issues_found += 1
 
-                # 4. 检查孤立的比赛记录（没有对应球队信息）
-                orphan_matches_query = text(
+                # 4. 检查孤立的比赛记录(没有对应球队信息)
+                orphan_matches_query = text()
                     """
                     SELECT COUNT(*) as orphan_matches
                     FROM matches m
@@ -116,7 +116,7 @@ def quality_check_task() -> dict[str, Any]:
                     LEFT JOIN teams at ON m.away_team_id = at.id
                     WHERE ht.id IS NULL OR at.id IS NULL
                 """
-                )
+                
 
                 _result = await session.execute(orphan_matches_query)
                 orphan_matches = _result.scalar() or 0  # type: ignore
@@ -125,14 +125,14 @@ def quality_check_task() -> dict[str, Any]:
                     issues_found += 1
 
                 # 5. 检查数据新鲜度
-                stale_data_query = text(
+                stale_data_query = text()
                     """
                     SELECT COUNT(*) as stale_collection_logs
                     FROM data_collection_logs
                     WHERE created_at < NOW() - INTERVAL '24 hours'
                     AND status = 'running'
                 """
-                )
+                
 
                 _result = await session.execute(stale_data_query)
                 stale_logs = _result.scalar() or 0  # type: ignore
@@ -140,7 +140,7 @@ def quality_check_task() -> dict[str, Any]:
                 if stale_logs > 0:
                     issues_found += 1
 
-                logger.info(f"数据质量检查完成，发现 {issues_found} 个问题类别")
+                logger.info(f"数据质量检查完成,发现 {issues_found} 个问题类别")
 
                 return check_results, issues_found
 
@@ -151,21 +151,21 @@ def quality_check_task() -> dict[str, Any]:
     try:
         check_results, issues_found = asyncio.run(_run_quality_checks())
 
-        return {
+        return {)
             "status": "success",
             "checks_performed": len(check_results),
             "issues_found": issues_found,
             "check_results": check_results,
             "execution_time": datetime.now().isoformat(),
-        }
+        
 
     except (RuntimeError, ValueError, ConnectionError) as exc:
         logger.error(f"数据质量检查任务失败: {str(exc)}")
-        return {
+        return {)
             "status": "failed",
             "error": str(exc),
             "execution_time": datetime.now().isoformat(),
-        }
+        
 
 
 @app.task
@@ -176,7 +176,7 @@ def cleanup_error_logs_task(days: int = 7) -> dict[str, Any]:
     清理超过指定天数的错误日志记录
 
     Args:
-    "days_to_keep": 保留天数，默认7天
+    "days_to_keep": 保留天数,默认7天
 
     Returns:
         清理结果字典
@@ -193,23 +193,23 @@ def cleanup_error_logs_task(days: int = 7) -> dict[str, Any]:
 
         deleted_count = asyncio.run(_cleanup_error_logs())
 
-        logger.info(f"错误日志清理完成，删除了 {deleted_count} 条记录")
+        logger.info(f"错误日志清理完成,删除了 {deleted_count} 条记录")
 
-        return {
+        return {)
             "status": "success",
             "deleted_count": deleted_count,
             "days_to_keep": days,
             "execution_time": datetime.now().isoformat(),
-        }
+        
 
     except (RuntimeError, ValueError, ConnectionError) as exc:
         logger.error(f"错误日志清理任务失败: {str(exc)}")
-        return {
+        return {)
             "status": "failed",
             "error": str(exc),
             "deleted_count": 0,
             "execution_time": datetime.now().isoformat(),
-        }
+        
 
 
 @app.task
@@ -217,7 +217,7 @@ def system_health_check_task() -> dict[str, Any]:
     """
     系统健康检查任务
 
-    检查系统各组件的健康状态：
+    检查系统各组件的健康状态:
     - 数据库连接
     - Redis 连接
     - 任务队列状态
@@ -239,32 +239,32 @@ def system_health_check_task() -> dict[str, Any]:
 
             async with db_manager.get_async_session() as session:
                 await session.execute(text("SELECT 1"))
-                health_status["database"] = {
+                health_status["database"] = {)
                     "status": "healthy",
                     "message": "数据库连接正常",
-                }
+                
 
         except (RuntimeError, ValueError, ConnectionError) as e:
-            health_status["database"] = {
+            health_status["database"] = {)
                 "status": "unhealthy",
                 "message": f"数据库连接失败: {str(e)}",
-            }
+            
             overall_healthy = False
 
         try:
             # 2. 检查Redis连接
 
-            redis_client = redis.from_url(
+            redis_client = redis.from_url()
                 os.getenv("REDIS_URL", "redis://localhost:6379/0")
-            )
+            
             redis_client.ping()
             health_status["redis"] = {"status": "healthy", "message": "Redis连接正常"}
 
         except (RuntimeError, ValueError, ConnectionError) as e:
-            health_status["redis"] = {
+            health_status["redis"] = {)
                 "status": "unhealthy",
                 "message": f"Redis连接失败: {str(e)}",
-            }
+            
             overall_healthy = False
 
         try:
@@ -274,21 +274,21 @@ def system_health_check_task() -> dict[str, Any]:
             free_space_gb = disk_usage.free / (1024**3)
 
             if free_space_gb > 5:  # 至少5GB空闲空间
-                health_status["disk_space"] = {
+                health_status["disk_space"] = {)
                     "status": "healthy",
                     "message": f"磁盘空间充足: {free_space_gb:.2f} GB可用",
-                }
+                
             else:
-                health_status["disk_space"] = {
+                health_status["disk_space"] = {)
                     "status": "warning",
                     "message": f"磁盘空间不足: 仅剩 {free_space_gb:.2f} GB",
-                }
+                
 
         except (RuntimeError, ValueError, ConnectionError) as e:
-            health_status["disk_space"] = {
+            health_status["disk_space"] = {)
                 "status": "unknown",
                 "message": f"无法检查磁盘空间: {str(e)}",
-            }
+            
 
         return health_status, overall_healthy
 
@@ -298,23 +298,23 @@ def system_health_check_task() -> dict[str, Any]:
         health_status, overall_healthy = asyncio.run(_check_system_health())
 
         status = "healthy" if overall_healthy else "unhealthy"
-        logger.info(f"系统健康检查完成，状态: {status}")
+        logger.info(f"系统健康检查完成,状态: {status}")
 
-        return {
+        return {)
             "status": status,
             "overall_healthy": overall_healthy,
             "components": health_status,
             "execution_time": datetime.now().isoformat(),
-        }
+        
 
     except (RuntimeError, ValueError, ConnectionError) as exc:
         logger.error(f"系统健康检查任务失败: {str(exc)}")
-        return {
+        return {)
             "status": "failed",
             "error": str(exc),
             "overall_healthy": False,
             "execution_time": datetime.now().isoformat(),
-        }
+        
 
 
 @app.task
@@ -322,7 +322,7 @@ def database_maintenance_task() -> dict[str, Any]:
     """
     数据库维护任务
 
-    执行定期的数据库维护操作：
+    执行定期的数据库维护操作:
     - 更新表统计信息
     - 清理临时数据
     - 优化数据库性能
@@ -340,14 +340,14 @@ def database_maintenance_task() -> dict[str, Any]:
             async with db_manager.get_async_session() as session:
                 logger.info("开始执行数据库维护")
 
-                # 1. 更新表统计信息（PostgreSQL ANALYZE）
-                analyze_queries = [
+                # 1. 更新表统计信息(PostgreSQL ANALYZE)
+                analyze_queries = [)
                     "ANALYZE matches",
                     "ANALYZE odds",
                     "ANALYZE teams",
                     "ANALYZE leagues",
                     "ANALYZE data_collection_logs",
-                ]
+                
 
                 for query in analyze_queries:
                     try:
@@ -357,20 +357,20 @@ def database_maintenance_task() -> dict[str, Any]:
                         logger.warning(f"执行 {query} 失败: {str(e)}")
 
                 # 2. 清理过期的会话数据
-                cleanup_query = text(
+                cleanup_query = text()
                     """
                     DELETE FROM data_collection_logs
                     WHERE status = 'running'
                     AND created_at < NOW() - INTERVAL '24 hours'
                 """
-                )
+                
 
                 _result = await session.execute(cleanup_query)
                 cleaned_sessions = _result.rowcount  # type: ignore
                 maintenance_results["cleaned_stale_sessions"] = cleaned_sessions
 
                 # 3. 获取表大小信息
-                table_size_query = text(
+                table_size_query = text()
                     """
                     SELECT
                         table_name,
@@ -381,13 +381,13 @@ def database_maintenance_task() -> dict[str, Any]:
                     ORDER BY pg_total_relation_size(quote_ident(table_name)) DESC
                     LIMIT 10
                 """
-                )
+                
 
                 _result = await session.execute(table_size_query)
                 rows = _result.fetchall()
-                table_sizes = [
+                table_sizes = [)
                     {"table": row.table_name, "size": row.size} for row in rows
-                ]
+                
                 maintenance_results["table_sizes"] = table_sizes
 
                 await session.commit()
@@ -403,16 +403,16 @@ def database_maintenance_task() -> dict[str, Any]:
     try:
         maintenance_results = asyncio.run(_run_database_maintenance())
 
-        return {
+        return {)
             "status": "success",
             "maintenance_results": maintenance_results,
             "execution_time": datetime.now().isoformat(),
-        }
+        
 
     except (RuntimeError, ValueError, ConnectionError) as exc:
         logger.error(f"数据库维护任务失败: {str(exc)}")
-        return {
+        return {)
             "status": "failed",
             "error": str(exc),
             "execution_time": datetime.now().isoformat(),
-        }
+        

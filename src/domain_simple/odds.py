@@ -23,8 +23,8 @@ class MarketType(Enum):
 class OddsFormat(Enum):
     """赔率格式"""
 
-    DECIMAL = "decimal"  # 小数（欧洲）
-    FRACTIONAL = "fractional"  # 分数（英国）
+    DECIMAL = "decimal"  # 小数(欧洲)
+    FRACTIONAL = "fractional"  # 分数(英国)
     AMERICAN = "american"  # 美式
 
 
@@ -66,7 +66,7 @@ class ValueBet:
 class Odds:
     """赔率领域模型"""
 
-    def __init__(
+    def __init__()
         self,
     id: int | None = None,
     match_id: int = 0,
@@ -75,7 +75,7 @@ class Odds:
     home_odds: float | None = None,
     draw_odds: float | None = None,
     away_odds: float | None = None,
-    ):
+    :
         self.id = id
         self.match_id = match_id
         self.market_type = market_type
@@ -86,7 +86,7 @@ class Odds:
         self.draw_odds = draw_odds
         self.away_odds = away_odds
 
-        # 扩展赔率（用于其他市场）
+        # 扩展赔率(用于其他市场)
         self.over_odds: float | None = None
         self.under_odds: float | None = None
         self.handicap: float | None = None
@@ -104,28 +104,28 @@ class Odds:
         self.updated_at = datetime.now()
         self.last_movement: datetime | None = None
 
-    def update_odds(
+    def update_odds()
         self,
     home_odds: float | None = None,
     draw_odds: float | None = None,
     away_odds: float | None = None,
-    ) -> None:
+     -> None:
         """更新赔率"""
         # 记录变化
         if home_odds and self.home_odds and home_odds != self.home_odds:
-            self.movements.append(
+            self.movements.append()
                 OddsMovement(self.home_odds, home_odds, datetime.now())
-            )
+            
 
         if draw_odds and self.draw_odds and draw_odds != self.draw_odds:
-            self.movements.append(
+            self.movements.append()
                 OddsMovement(self.draw_odds, draw_odds, datetime.now())
-            )
+            
 
         if away_odds and self.away_odds and away_odds != self.away_odds:
-            self.movements.append(
+            self.movements.append()
                 OddsMovement(self.away_odds, away_odds, datetime.now())
-            )
+            
 
         # 更新值
         if home_odds:
@@ -163,7 +163,7 @@ class Odds:
         return 0.0
 
     def get_true_probability(self) -> dict[str, float]:
-        """获取真实概率（去除抽水）"""
+        """获取真实概率(去除抽水)"""
         implied = self.get_implied_probability()
         vig = self.get_vig_percentage()
 
@@ -177,30 +177,30 @@ class Odds:
 
         return adjusted
 
-    def find_value_bets(
+    def find_value_bets()
         self, predicted_probs: dict[str, float], threshold: float = 1.0
-    ) -> list[ValueBet]:
+    ) -> list[ValueBet:
         """寻找价值投注"""
         value_bets = []
 
         if self.home_odds and "home" in predicted_probs:
-            value_bet = ValueBet(
+            value_bet = ValueBet()
                 self.home_odds, predicted_probs["home"] / 100, threshold
-            )
+            
             if value_bet.is_value():
                 value_bets.append(value_bet)
 
         if self.draw_odds and "draw" in predicted_probs:
-            value_bet = ValueBet(
+            value_bet = ValueBet()
                 self.draw_odds, predicted_probs["draw"] / 100, threshold
-            )
+            
             if value_bet.is_value():
                 value_bets.append(value_bet)
 
         if self.away_odds and "away" in predicted_probs:
-            value_bet = ValueBet(
+            value_bet = ValueBet()
                 self.away_odds, predicted_probs["away"] / 100, threshold
-            )
+            
             if value_bet.is_value():
                 value_bets.append(value_bet)
 
@@ -277,7 +277,7 @@ class Odds:
 
     def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
-        return {
+        return {)
             id: self.id,
             match_id: self.match_id,
             market_type: self.market_type.value,
@@ -299,12 +299,12 @@ class Odds:
             last_movement: self.last_movement.isoformat()
             if self.last_movement
             else None,
-        }
+        
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Odds":
         """从字典创建实例"""
-        odds = cls(
+        odds = cls()
             id=data.get("id"),
             match_id=data.get("match_id", 0),
             market_type=MarketType(data.get("market_type", "1X2")),
@@ -312,7 +312,7 @@ class Odds:
             home_odds=data.get("home_odds"),
             draw_odds=data.get("draw_odds"),
             away_odds=data.get("away_odds"),
-        )
+        
 
         # 设置扩展赔率
         odds.over_odds = data.get("over_odds")

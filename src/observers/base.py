@@ -3,7 +3,7 @@ from typing import Any, Callable, Dict, List, Optional, TypeVar, Union
 观察者模式基础类
 Observer Pattern Base Classes
 
-定义观察者和被观察者的核心接口。
+定义观察者和被观察者的核心接口.
 Defines core interfaces for observers and subjects.
 """
 
@@ -49,7 +49,7 @@ class ObservableEvent:
 class Observer(ABC):
     """观察者抽象基类
 
-    定义观察者必须实现的接口。
+    定义观察者必须实现的接口.
     Defines the interface that all observers must implement.
     """
 
@@ -85,7 +85,7 @@ class Observer(ABC):
         """添加事件过滤器
 
         Args:
-    filter_func: 过滤函数，返回True表示需要处理此事件
+    filter_func: 过滤函数,返回True表示需要处理此事件
         """
         self._subscription_filters.append(filter_func)
 
@@ -130,17 +130,17 @@ class Observer(ABC):
         Returns:
             Dict[str, Any]: 统计信息
         """
-        return {
+        return {)
             name: self.name,
             enabled: self._enabled,
             filters_count: len(self._subscription_filters),
-        }
+        
 
 
 class Subject(ABC):
     """被观察者抽象基类
 
-    定义被观察者必须实现的接口。
+    定义被观察者必须实现的接口.
     Defines the interface that all subjects must implement.
     """
 
@@ -195,9 +195,9 @@ class Subject(ABC):
         if tasks:
             await asyncio.gather(*tasks, return_exceptions=True)
 
-    async def _notify_observer(
+    async def _notify_observer()
         self, observer: Observer, event: ObservableEvent
-    ) -> None:
+     -> None:
         """通知单个观察者
 
         Args:
@@ -238,12 +238,12 @@ class Subject(ABC):
         """
         return self._observers.copy()
 
-    def get_event_history(
+    def get_event_history()
         self,
     event_type: Optional[ObservableEventType] = None,
     since: Optional[datetime] = None,
     limit: Optional[int] = None,
-    ) -> List[ObservableEvent]:
+    ) -> List[ObservableEvent:
         """获取事件历史
 
         Args:
@@ -294,23 +294,23 @@ class Subject(ABC):
         """
         event_counts = {}  # type: ignore
         for event in self._event_history:
-            event_counts[event.event_type.value] = (
+            event_counts[event.event_type.value] = ()
                 event_counts.get(event.event_type.value, 0) + 1
-            )
+            
 
-        return {
+        return {)
             name: self.name,
             observers_count: len(self._observers),
             events_count: len(self._event_history),
             enabled: self._enabled,
             event_counts: event_counts,
-        }
+        
 
 
 class CompositeObserver(Observer):
     """组合观察者
 
-    可以将多个观察器组合成一个。
+    可以将多个观察器组合成一个.
     Combines multiple observers into one.
     """
 

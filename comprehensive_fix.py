@@ -1,174 +1,148 @@
 #!/usr/bin/env python3
 """
-全面修复所有模块的语法错误
+全面的语法错误修复工具
 """
 
-import ast
 import os
 import re
+from pathlib import Path
+from typing import List, Tuple
 
-def check_syntax(filepath):
-    """检查文件语法"""
+def fix_file_syntax(file_path: Path) -> Tuple[bool, List[str]]:
+    """修复单个文件的语法错误"""
+    errors = []
     try:
-        with open(filepath, 'r', encoding='utf-8') as f:
-            content = f.read()
-        ast.parse(content)
-        return True, None
-    except SyntaxError as e:
-        return False, f"Line {e.lineno}: {e.msg}"
-    except Exception as e:
-        return False, f"{type(e).__name__}: {e}"
+        content = file_path.read_text(encoding='utf-8')
+        original = content
 
-def fix_all_syntax_errors():
-    """修复所有语法错误"""
+        # 1. 修复最常见的错误模式
 
-    # 需要修复的文件列表
-    error_files = [
-        'src/domain/models/league.py',
-        'src/domain/models/prediction.py',
-        'src/domain/models/team.py',
-        'src/domain/models/match.py',
-        'src/domain/strategies/config.py',
-        'src/domain/strategies/base.py',
-        'src/domain/strategies/historical.py',
-        'src/domain/strategies/ensemble.py',
-        'src/domain/strategies/statistical.py',
-        'src/domain/strategies/ml_model.py',
-        'src/domain/strategies/factory.py',
-        'src/domain/services/scoring_service.py',
-        'src/domain/services/team_service.py',
-        'src/domain/events/base.py',
-        'src/domain/events/prediction_events.py',
-    ]
+        # 1.1 修复类定义中的多余右括号
+        content = re.sub(r'^(\s*)class\s+(\w+)\)\s*:', r'\1class \2:', content, flags=re.MULTILINE)
 
-    # 通用修复模式
-    common_fixes = [
-        # 修复类型注解中的括号不匹配
-        (r'(\w+: Optional\[.*?)\] = None,', r'\1] = None,'),
-        (r'(\w+: Optional\[.*?)\] = None\)', r'\1] = None)'),
-        (r'(\w+: Optional\[.*?)\] = None$', r'\1] = None'),
-        (r'(\w+: Dict\[.*?)\] = None', r'\1] = None'),
-        (r'(\w+: Dict\[.*?)\] = \{\}', r'\1] = {}'),
-        (r'(\w+: List\[.*?)\] = None', r'\1] = None'),
-        (r'(\w+: List\[.*?)\] = \{\}', r'\1] = {}'),
-        (r'(\w+: Union\[.*?)\] = None', r'\1] = None'),
+        # 1.2 修复函数定义中的参数类型错误
+        # 处理 def func(param): type) -> return_type:
+        content = re.sub(
+            r'def\s+(\w+)\(([^)]*?)\)\s*:\s*([^),]+)\)\s*->\s*([^:]+):',
+            r'def \1(\2: \3) -> \4:',
+            content
+        )
 
-        # 修复字典初始化
-        (r' = \]\]', r' = {}'),
-        (r' = \{\]', r' = {}'),
-        (r' = \[\}', r' = []'),
+        # 1.3 修复更简单的错误: def func(param): type):
+        content = re.sub(
+            r'def\s+(\w+)\(([^)]*?)\)\s*:\s*([^),]+)\)\s*:',
+            r'def \1(\2: \3):',
+            content
+        )
 
-        # 修复f-string
-        (r'f"([^"]*?)""([^"]*?)"', r'f"\1\2"'),
-        (r'f"([^}]*?)$([^}]*)"', r'f"\1\2"'),
+        # 1.4 修复参数列表中的错误
+        # def func(data): dict, fields): list -> def func(data: dict, fields: list)
+        content = re.sub(
+            r'def\s+(\w+)\(([^)]*?)\)\s*:\s*([^),]+?)\),\s*([^),]+?)\)\s*:',
+            r'def \1(\2: \3, \4):',
+            content
+        )
 
-        # 修复三引号字符串
-        (r'""""', r'"""'),
-        (r"''''", r"'''"),
+        # 1.5 修复URL断开问题
+        url_patterns = [
+            (r'postgresql\+asyncpg:\s*//', 'postgresql+asyncpg://'),
+            (r'redis:\s*//', 'redis://'),
+            (r'http:\s*//', 'http://'),
+            (r'https:\s*//', 'https://'),
+        ]
 
-        # 修复except子句
-        (r'except \(([^)]*)\) as e:', r'except (\1) as e:'),
-    ]
+        for pattern, replacement in url_patterns:
+            content = re.sub(pattern, replacement, content)
 
-    fixed_files = []
+        # 1.6 修复断开的字符串字面量
+        lines = content.split('\n')
+        fixed_lines = []
+        
+        for i, line in enumerate(lines):
+            # 修复未闭合的字符串
+            if line.count('"') % 2 == 1 and '"' in line and i + 1 < len(lines):
+                # 合并到下一行
+                next_line = lines[i + 1].lstrip()
+                line = line.rstrip() + ' ' + next_line
+                # 跳过下一行
+                lines[i + 1] = ''
+            
+            fixed_lines.append(line)
+        
+        content = '\n'.join(fixed_lines)
 
-    for filepath in error_files:
-        if not os.path.exists(filepath):
-            print(f"⚠ 文件不存在: {filepath}")
-            continue
-
-        # 读取文件
-        with open(filepath, 'r', encoding='utf-8') as f:
-            content = f.read()
-
-        original_content = content
-
-        # 应用通用修复
-        for pattern, replacement in common_fixes:
-            content = re.sub(pattern, replacement, content, flags=re.MULTILINE)
-
-        # 特定文件的修复
-        if 'team.py' in filepath:
-            content = re.sub(r'return f"\{self\.name\} \(\{self\.code or self\.short_name\}\) - \{self\.rank\}"',
-                           r'return f"{self.name} ({self.code or self.short_name}) - {self.rank}"', content)
-
-        if 'events/base.py' in filepath:
-            # 修复三引号文档字符串
-            content = re.sub(r'^"""$', '"""', content, flags=re.MULTILINE)
-            content = re.sub(r'f"\{self\.__class__\.__name__\}\(\{self\.event_id\}\)"""',
-                           r'return f"{self.__class__.__name__}({self.event_id})"', content)
-            if 'return f"' in content and '"""' not in content.split('return f"')[1].split('\n')[0]:
-                content = re.sub(r'return f"([^"]*)"', r'return f"\1"', content)
+        # 1.7 修复中文字符后的逗号
+        content = re.sub(r'，\s*\n\s*', ', ', content)
+        content = re.sub(r'，', ', ', content)
 
         # 写回文件
-        if content != original_content:
-            with open(filepath, 'w', encoding='utf-8') as f:
-                f.write(content)
-            fixed_files.append(filepath)
-            print(f"✓ 修复了 {filepath}")
+        if content != original:
+            file_path.write_text(content, encoding='utf-8')
 
-        # 验证修复
-        is_valid, error = check_syntax(filepath)
-        if not is_valid:
-            print(f"✗ {filepath} 仍有错误: {error}")
+            # 验证修复
+            try:
+                compile(content, str(file_path), 'exec')
+                return True, ["修复成功"]
+            except SyntaxError as e:
+                return False, [f"仍有语法错误: {e.msg} at line {e.lineno}"]
 
-    return fixed_files
+        return True, ["无需修复"]
 
-def verify_all_modules():
-    """验证所有模块的语法正确性"""
+    except Exception as e:
+        return False, [f"修复失败: {str(e)}"]
 
-    modules = {
-        'domain': 'src/domain',
-        'services': 'src/services',
-        'database': 'src/database',
-    }
+def main():
+    """主函数"""
+    src_dir = Path('src')
+    
+    print("=" * 60)
+    print("全面语法错误修复工具")
+    print("=" * 60)
+    
+    # 手动修复几个关键文件
+    key_files = [
+        'src/utils/dict_utils.py',
+        'src/utils/__init__.py',
+        'src/utils/string_utils.py',
+    ]
+    
+    print("\n1. 手动修复关键文件...")
+    
+    # 修复 dict_utils.py
+    dict_utils_path = Path('src/utils/dict_utils.py')
+    if dict_utils_path.exists():
+        content = dict_utils_path.read_text(encoding='utf-8')
+        # 修复特定错误
+        content = re.sub(r'keys = path\.split\("\."\)\s*\n\s*try: for key in key,\s*\n\s*s:', 
+                        'keys = path.split(".")\n        try:\n            for key in keys:', content)
+        dict_utils_path.write_text(content, encoding='utf-8')
+        print("✓ 修复 dict_utils.py")
+    
+    # 检查修复效果
+    print("\n2. 验证修复效果...")
+    test_files = [
+        'src/utils/data_validator.py',
+        'src/utils/dict_utils.py',
+        'src/utils/string_utils.py',
+    ]
+    
+    success_count = 0
+    for test_file in test_files:
+        path = Path(test_file)
+        if path.exists():
+            try:
+                compile(path.read_text(encoding='utf-8'), str(path), 'exec')
+                print(f"✓ {test_file} 语法正确")
+                success_count += 1
+            except SyntaxError as e:
+                print(f"✗ {test_file} 仍有错误: {e.msg[:50]}")
+    
+    # 尝试运行测试
+    if success_count >= 2:
+        print("\n3. 尝试运行测试...")
+        os.system("python -m pytest tests/unit/utils/test_string_utils.py::test_truncate -v --no-cov 2>&1 | grep -E 'PASSED|FAILED|ERROR'")
+    
+    print("\n" + "=" * 60)
 
-    total_files = 0
-    total_success = 0
-
-    for module_name, module_path in modules.items():
-        print(f"\n验证 {module_name} 模块:")
-        success_count = 0
-        file_count = 0
-
-        if os.path.exists(module_path):
-            for root, dirs, files in os.walk(module_path):
-                for file in files:
-                    if file.endswith('.py'):
-                        filepath = os.path.join(root, file)
-                        file_count += 1
-                        total_files += 1
-
-                        is_valid, error = check_syntax(filepath)
-                        if is_valid:
-                            success_count += 1
-                            total_success += 1
-                        else:
-                            print(f"  ✗ {filepath}: {error}")
-
-        print(f"  成功: {success_count}/{file_count} 文件语法正确")
-
-    print(f"\n总体结果:")
-    print(f"  总计: {total_success}/{total_files} 文件语法正确")
-    print(f"  成功率: {total_success/total_files*100:.1f}%")
-
-    return total_success == total_files
-
-if __name__ == "__main__":
-    print("=" * 50)
-    print("开始全面修复语法错误")
-    print("=" * 50)
-
-    fixed = fix_all_syntax_errors()
-    print(f"\n修复了 {len(fixed)} 个文件")
-
-    print("\n" + "=" * 50)
-    print("验证修复结果")
-    print("=" * 50)
-
-    all_good = verify_all_modules()
-
-    if all_good:
-        print("\n🎉 所有模块语法检查通过！")
-    else:
-        print("\n⚠ 仍有文件存在语法错误")
+if __name__ == '__main__':
+    main()
