@@ -262,28 +262,28 @@ class AuditLog(BaseModel):
     @classmethod
     def create_audit_entry(
         cls,
-        user_id: str,
-        action: str,
-        table_name: str | None = None,
-        column_name: str | None = None,
-        old_value: str | None = None,
-        new_value: str | None = None,
+    "user_id": str,
+    "action": str,
+    "table_name": str | None = None,
+    "column_name": str | None = None,
+    "old_value": str | None = None,
+    "new_value": str | None = None,
         **kwargs,
     ) -> "AuditLog":
         """
         创建审计日志条目的便捷方法
 
         Args:
-            user_id: 操作用户ID
-            action: 操作类型
-            table_name: 目标表名
-            column_name: 目标列名
-            old_value: 操作前值
-            new_value: 操作后值
+    "user_id": 操作用户ID
+    "action": 操作类型
+    "table_name": 目标表名
+    "column_name": 目标列名
+    "old_value": 操作前值
+    "new_value": 操作后值
             **kwargs: 其他属性
 
         Returns:
-            AuditLog: 审计日志实例
+    "AuditLog": 审计日志实例
         """
         # 自动确定严重级别
         if "severity" not in kwargs:

@@ -50,7 +50,7 @@ class DefaultRepositoryFactory:
 
     @staticmethod
     def create_prediction_repository(
-        session: AsyncSession, read_only: bool = False
+    session: AsyncSession, read_only: bool = False
     ) -> Repository[Prediction, int]:
         """创建预测仓储"""
         if read_only:
@@ -59,7 +59,7 @@ class DefaultRepositoryFactory:
 
     @staticmethod
     def create_user_repository(
-        session: AsyncSession, read_only: bool = False
+    session: AsyncSession, read_only: bool = False
     ) -> Repository[User, int]:
         """创建用户仓储"""
         if read_only:
@@ -68,7 +68,7 @@ class DefaultRepositoryFactory:
 
     @staticmethod
     def create_match_repository(
-        session: AsyncSession, read_only: bool = False
+    session: AsyncSession, read_only: bool = False
     ) -> Repository[Match, int]:
         """创建比赛仓储"""
         if read_only:
@@ -131,7 +131,7 @@ class RepositoryProvider:
 
 
 # 全局仓储提供者实例
-_provider: RepositoryProvider = None  # type: ignore
+    _provider: RepositoryProvider = None  # type: ignore
 
 
 def get_repository_provider() -> RepositoryProvider:

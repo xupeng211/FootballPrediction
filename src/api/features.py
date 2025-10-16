@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/features", tags=["特征管理"])
 
 # 全局特征存储实例（惰性初始化，避免导入时报错）
-feature_store: FootballFeatureStore | None = None
+    "feature_store": FootballFeatureStore | None = None
 
 
 def get_feature_store() -> FootballFeatureStore | None:
@@ -127,10 +127,10 @@ async def get_features_data(match_id: int, match: Match) -> tuple[dict[str, Any]
 
 
 def build_response_data(
-    match: Match,
-    features: dict[str, Any],
-    features_error: str,
-    include_raw: bool,
+    "match": Match,
+    "features": dict[str, Any],
+    "features_error": str,
+    "include_raw": bool,
 ) -> dict[str, Any]:
     """构造响应数据"""
     response_data = {
@@ -168,9 +168,9 @@ def build_response_data(
     description="获取指定比赛的所有特征，包括球队近期表现、历史对战、赔率等",
 )
 async def get_match_features_improved(
-    match_id: int,
-    include_raw: bool = Query(default=False, description="是否包含原始特征数据"),
-    session: AsyncSession = Depends(get_async_session),
+    "match_id": int,
+    "include_raw": bool = Query(default=False, description="是否包含原始特征数据"),
+    "session": AsyncSession = Depends(get_async_session),
 ) -> dict[str, Any]:
     """
     改进版本：获取比赛特征

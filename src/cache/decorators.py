@@ -1,15 +1,15 @@
 from typing import Any, Dict, List, Optional, Union
 # mypy: ignore-errors
-"""
+""""""
 缓存装饰器模块
 Cache Decorators Module
 
-提供各种缓存装饰器，支持同步和异步方法：
+提供各种缓存装饰器,支持同步和异步方法:
 - @cache_result: 基础结果缓存
 - @cache_with_ttl: 带TTL的缓存
 - @cache_by_user: 基于用户的缓存
 - @cache_invalidate: 缓存失效
-"""
+""""""
 
 import functools
 import hashlib
@@ -32,27 +32,27 @@ T = TypeVar("T")
 
 
 def _make_cache_key(
-    func: Callable,
-    args: Tuple[Any, ...],
-    kwargs: Dict[str, Any],
-    prefix: Optional[str] = None,
-    user_id: Optional[Union[str, int] = None,
+    "func": Callable,
+    "args": Tuple[Any, ...],
+    "kwargs": Dict[str, Any],
+    "prefix": Optional[str] = None,
+    "user_id": Optional[Union[str, int] = None,
     *,
-    exclude_args: Optional[list] = None,
+    "exclude_args": Optional[list] = None,
 ) -> str:
-    """生成缓存键
+    """生成缓存键"""
 
     Args:
-        func: 被装饰的函数
-        args: 位置参数
-        kwargs: 关键字参数
-        prefix: 键前缀
-        user_id: 用户ID
-        exclude_args: 要排除的参数列表
+    "func": 被装饰的函数
+    "args": 位置参数
+    "kwargs": 关键字参数
+    "prefix": 键前缀
+    "user_id": 用户ID
+    "exclude_args": 要排除的参数列表
 
     Returns:
-        str: 缓存键
-    """
+    "str": 缓存键
+    """"""
     # 构建基础键名
     module_name = func.__module__
     function_name = func.__qualname__
@@ -100,24 +100,24 @@ def _make_cache_key(
 
 def cache_result(
     *,
-    ttl: Optional[int] = None,
-    prefix: Optional[str] = None,
-    key_generator: Optional[Callable] = None,
-    unless: Optional[Callable[..., bool] = None,
-    use_cache_when_unavailable: bool = True,
-) -> Callable[[F], F]:
-    """基础结果缓存装饰器
+    "ttl": Optional[int] = None,
+    "prefix": Optional[str] = None,
+    "key_generator": Optional[Callable] = None,
+    "unless": Optional[Callable[..., bool] = None,
+    "use_cache_when_unavailable": bool = True,
+) -> Callable[F], F]:
+    """基础结果缓存装饰器"""
 
     Args:
-        ttl: 缓存过期时间（秒）
-        prefix: 缓存键前缀
-        key_generator: 自定义键生成函数
-        unless: 条件函数，返回True时不缓存
-        use_cache_when_unavailable: Redis不可用时是否使用函数结果
+    "ttl": 缓存过期时间(秒)
+    "prefix": 缓存键前缀
+    "key_generator": 自定义键生成函数
+    "unless": 条件函数,返回True时不缓存
+    "use_cache_when_unavailable": Redis不可用时是否使用函数结果
 
     Returns:
         装饰器函数
-    """
+    """"""
 
     def decorator(func: F) -> F:
         # 检查是否是异步函数
@@ -253,21 +253,21 @@ def cache_result(
 
 
 def cache_with_ttl(
-    ttl_seconds: int,
+    "ttl_seconds": int,
     *,
-    prefix: Optional[str] = None,
-    key_generator: Optional[Callable] = None,
-) -> Callable[[F], F]:
-    """带TTL的缓存装饰器
+    "prefix": Optional[str] = None,
+    "key_generator": Optional[Callable] = None,
+) -> Callable[F], F]:
+    """带TTL的缓存装饰器"""
 
     Args:
-        ttl_seconds: 缓存过期时间（秒）
-        prefix: 缓存键前缀
-        key_generator: 自定义键生成函数
+    "ttl_seconds": 缓存过期时间(秒)
+    "prefix": 缓存键前缀
+    "key_generator": 自定义键生成函数
 
     Returns:
         装饰器函数
-    """
+    """"""
     return cache_result(
         ttl=ttl_seconds,
         prefix=prefix,
@@ -277,22 +277,22 @@ def cache_with_ttl(
 
 def cache_by_user(
     *,
-    ttl: Optional[int] = None,
-    prefix: Optional[str] = None,
-    user_param: str = "user_id",
-    key_generator: Optional[Callable] = None,
-) -> Callable[[F], F]:
-    """基于用户的缓存装饰器
+    "ttl": Optional[int] = None,
+    "prefix": Optional[str] = None,
+    "user_param": str = "user_id",
+    "key_generator": Optional[Callable] = None,
+) -> Callable[F], F]:
+    """基于用户的缓存装饰器"""
 
     Args:
-        ttl: 缓存过期时间（秒）
-        prefix: 缓存键前缀
-        user_param: 用户ID参数名
-        key_generator: 自定义键生成函数
+    "ttl": 缓存过期时间(秒)
+    "prefix": 缓存键前缀
+    "user_param": 用户ID参数名
+    "key_generator": 自定义键生成函数
 
     Returns:
         装饰器函数
-    """
+    """"""
 
     def decorator(func: F) -> F:
         # 检查是否是异步函数
@@ -373,12 +373,12 @@ def cache_by_user(
 
 
 async def _cache_with_key(
-    cache_key: str,
-    func: Callable,
-    args: Tuple[Any, ...],
-    kwargs: Dict[str, Any],
-    ttl: Optional[int],
-    is_async: bool,
+    "cache_key": str,
+    "func": Callable,
+    "args": Tuple[Any, ...],
+    "kwargs": Dict[str, Any],
+    "ttl": Optional[int],
+    "is_async": bool,
 ) -> Any:
     """使用指定键进行缓存操作的内部函数"""
     redis = RedisManager.get_instance()  # type: ignore
@@ -429,24 +429,24 @@ async def _cache_with_key(
 
 def cache_invalidate(
     *,
-    pattern: Optional[str] = None,
-    keys: Optional[list] = None,
-    key_generator: Optional[Callable] = None,
-    prefix: Optional[str] = None,
-) -> Callable[[F], F]:
-    """缓存失效装饰器
+    "pattern": Optional[str] = None,
+    "keys": Optional[list] = None,
+    "key_generator": Optional[Callable] = None,
+    "prefix": Optional[str] = None,
+) -> Callable[F], F]:
+    """缓存失效装饰器"""
 
-    在函数执行后使指定的缓存失效。
+    在函数执行后使指定的缓存失效.
 
     Args:
-        pattern: 要失效的缓存键模式（支持通配符）
-        keys: 要失效的具体缓存键列表
-        key_generator: 根据函数参数生成失效键的函数
-        prefix: 键前缀
+    "pattern": 要失效的缓存键模式(支持通配符)
+    "keys": 要失效的具体缓存键列表
+    "key_generator": 根据函数参数生成失效键的函数
+    "prefix": 键前缀
 
     Returns:
         装饰器函数
-    """
+    """"""
 
     def decorator(func: F) -> F:
         # 检查是否是异步函数
@@ -554,54 +554,54 @@ def cache_invalidate(
 
 
 # 便捷函数
-def cache_user_predictions(ttl_seconds: int = 3600) -> Callable[[F], F]:
-    """缓存用户预测结果的便捷装饰器
+def cache_user_predictions(ttl_seconds: int = 3600) -> Callable[F], F]:
+    """缓存用户预测结果的便捷装饰器"""
 
     Args:
-        ttl_seconds: 缓存时间（默认1小时）
+    "ttl_seconds": 缓存时间(默认1小时)
 
     Returns:
         装饰器函数
-    """
+    """"""
     return cache_by_user(ttl=ttl_seconds, prefix="predictions", user_param="user_id")
 
 
-def cache_match_data(ttl_seconds: int = 1800) -> Callable[[F], F]:
-    """缓存比赛数据的便捷装饰器
+def cache_match_data(ttl_seconds: int = 1800) -> Callable[F], F]:
+    """缓存比赛数据的便捷装饰器"""
 
     Args:
-        ttl_seconds: 缓存时间（默认30分钟）
+    "ttl_seconds": 缓存时间(默认30分钟)
 
     Returns:
         装饰器函数
-    """
+    """"""
     return cache_with_ttl(ttl_seconds=ttl_seconds, prefix="matches")
 
 
-def cache_team_stats(ttl_seconds: int = 7200) -> Callable[[F], F]:
-    """缓存球队统计数据的便捷装饰器
+def cache_team_stats(ttl_seconds: int = 7200) -> Callable[F], F]:
+    """缓存球队统计数据的便捷装饰器"""
 
     Args:
-        ttl_seconds: 缓存时间（默认2小时）
+    "ttl_seconds": 缓存时间(默认2小时)
 
     Returns:
         装饰器函数
-    """
+    """"""
     return cache_with_ttl(ttl_seconds=ttl_seconds, prefix="team_stats")
 
 
 # 缓存装饰器类
 class CacheDecorator:
-    """缓存装饰器类，提供更灵活的配置"""
+    """缓存装饰器类,提供更灵活的配置"""
 
     def __init__(
         self,
         *,
-        ttl: Optional[int] = None,
-        prefix: Optional[str] = None,
-        key_generator: Optional[Callable] = None,
-        unless: Optional[Callable] = None,
-        use_cache_when_unavailable: bool = True,
+    "ttl": Optional[int] = None,
+    "prefix": Optional[str] = None,
+    "key_generator": Optional[Callable] = None,
+    "unless": Optional[Callable] = None,
+    "use_cache_when_unavailable": bool = True,
     ):
         self.ttl = ttl
         self.prefix = prefix
@@ -625,10 +625,10 @@ class UserCacheDecorator:
     def __init__(
         self,
         *,
-        ttl: Optional[int] = None,
-        prefix: Optional[str] = None,
-        user_param: str = "user_id",
-        key_generator: Optional[Callable] = None,
+    "ttl": Optional[int] = None,
+    "prefix": Optional[str] = None,
+    "user_param": str = "user_id",
+    "key_generator": Optional[Callable] = None,
     ):
         self.ttl = ttl
         self.prefix = prefix
@@ -650,10 +650,10 @@ class InvalidateCacheDecorator:
     def __init__(
         self,
         *,
-        pattern: Optional[str] = None,
-        keys: Optional[list] = None,
-        key_generator: Optional[Callable] = None,
-        prefix: Optional[str] = None,
+    "pattern": Optional[str] = None,
+    "keys": Optional[list] = None,
+    "key_generator": Optional[Callable] = None,
+    "prefix": Optional[str = None,
     ):
         self.pattern = pattern
         self.keys = keys

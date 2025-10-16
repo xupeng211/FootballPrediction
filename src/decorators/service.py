@@ -1,11 +1,11 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+
 装饰器服务
 Decorator Service
 
-提供装饰器的高层管理和服务。
+提供装饰器的高层管理和服务.
 Provides high-level management and services for decorators.
-"""
+""""""
 
 from pathlib import Path
 
@@ -21,7 +21,7 @@ logger = get_logger(__name__)
 
 
 class DecoratorService:
-    """装饰器服务，管理和应用装饰器"""
+    """装饰器服务,管理和应用装饰器"""
 
     def __init__(self, factory: Optional[DecoratorFactory] = None):
         self.factory = factory or DecoratorFactory()
@@ -53,7 +53,7 @@ class DecoratorService:
         self.factory._config_cache[config.name] = config
 
     def apply_decorators(
-        self, func: Callable, decorator_names: Optional[List[str]] = None, **kwargs
+        self, func: Callable, decorator_names: Optional[List[str] = None, **kwargs
     ) -> Callable:
         """应用装饰器到函数"""
         func_name = func.__name__
@@ -189,9 +189,9 @@ class DecoratorService:
 
 # 便捷装饰器函数
 def decorate(
-    decorator_names: Optional[List[str]] = None, **decorator_kwargs
+    "decorator_names": Optional[List[str] = None, **decorator_kwargs
 ) -> Callable:
-    """装饰器工厂函数，用于装饰其他函数"""
+    """装饰器工厂函数,用于装饰其他函数"""
 
     def decorator(func: Callable) -> Callable:
         # 获取装饰器服务
@@ -206,11 +206,11 @@ def decorate(
 
 
 def with_logging(
-    level: str = "INFO", log_args: bool = True, log_result: bool = True, **kwargs
+    "level": str = "INFO", log_args: bool = True, log_result: bool = True, **kwargs
 ) -> Callable:
     """添加日志装饰器"""
     return decorate(
-        decorator_names=["default_logging"],
+        decorator_names=["default_logging"]"],"
         level=level,
         log_args=log_args,
         log_result=log_result,
@@ -219,11 +219,11 @@ def with_logging(
 
 
 def with_retry(
-    max_attempts: int = 3, delay: float = 1.0, backoff_factor: float = 2.0, **kwargs
+    "max_attempts": int = 3, delay: float = 1.0, backoff_factor: float = 2.0, **kwargs
 ) -> Callable:
     """添加重试装饰器"""
     return decorate(
-        decorator_names=["default_retry"],
+        decorator_names=["default_retry"]"],"
         max_attempts=max_attempts,
         delay=delay,
         backoff_factor=backoff_factor,
@@ -232,11 +232,11 @@ def with_retry(
 
 
 def with_metrics(
-    metric_name: Optional[str] = None, tags: Optional[Dict[str, str] = None, **kwargs
+    "metric_name": Optional[str] = None, tags: Optional[Dict[str, str] = None, **kwargs
 ) -> Callable:
     """添加指标装饰器"""
     return decorate(
-        decorator_names=["default_metrics"],
+        decorator_names=["default_metrics"]"],"
         metric_name=metric_name,
         tags=tags,
         **kwargs,
@@ -256,20 +256,20 @@ def with_timeout(timeout_seconds: float = 30.0, **kwargs) -> Callable:
 
 
 def with_all(
-    log_level: str = "INFO",
-    retry_attempts: int = 3,
-    cache_ttl: Optional[int] = None,
-    timeout_seconds: float = 30.0,
+    "log_level": str = "INFO",
+    "retry_attempts": int = 3,
+    "cache_ttl": Optional[int] = None,
+    "timeout_seconds": float = 30.0,
     **kwargs,
 ) -> Callable:
     """添加所有常用装饰器"""
     return decorate(
         decorator_names=[
-            "default_logging",
-            "default_retry",
-            "default_metrics",
-            "default_cache",
-            "default_timeout",
+            "default_logging",""
+            "default_retry",""
+            "default_metrics",""
+            "default_cache",""
+            "default_timeout",""
         ],
         level=log_level,
         max_attempts=retry_attempts,

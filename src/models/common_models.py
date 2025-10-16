@@ -1,14 +1,14 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+
 common_models.py
 common_models
 
-此文件已被拆分为多个模块以提供更好的组织结构。
+此文件已被拆分为多个模块以提供更好的组织结构.
 This file has been split into multiple modules for better organization.
 
-为了向后兼容，此文件重新导出所有模块中的类。
+为了向后兼容,此文件重新导出所有模块中的类.
 For backward compatibility, this file re-exports all classes from the modules.
-"""
+""""""
 
 import warnings
 from datetime import datetime
@@ -26,7 +26,7 @@ data_models = api_models  # 别名以保持兼容性
 utils = None  # 临时设置为 None 以避免导入错误
 
 warnings.warn(
-    "直接从 common_models 导入已弃用。请从 src/models/common 导入相关类。",
+    "直接从 common_models 导入已弃用.请从 src/models/common 导入相关类.",""
     DeprecationWarning,
     stacklevel=2,
 )
@@ -47,27 +47,27 @@ from ..database.models import User
 
 # 导出所有类
 __all__ = [
-    "base_models",
-    "data_models",
-    "Content",
-    "ContentType",
-    "AnalysisResult",
-    "UserProfile",
-    "UserRole",
-    "User",
-    "DataValidationResult",
-    "FeatureVector",
-    "MatchData",
-    "ModelMetrics",
+    "base_models",""
+    "data_models",""
+    "Content",""
+    "ContentType",""
+    "AnalysisResult",""
+    "UserProfile",""
+    "UserRole",""
+    "User",""
+    "DataValidationResult",""
+    "FeatureVector",""
+    "MatchData",""
+    "ModelMetrics",""
 ]
 
 
 class DataValidationResult(BaseModel):
     """数据验证结果"""
 
-    is_valid: bool
-    errors: List[str] = Field(default_factory=list)
-    warnings: List[str] = Field(default_factory=list)
+    "is_valid": bool
+    "errors": List[str] = Field(default_factory=list)
+    "warnings": List[str] = Field(default_factory=list)
 
     def add_error(self, error: str):
         """添加错误"""
@@ -82,10 +82,10 @@ class DataValidationResult(BaseModel):
 class FeatureVector(BaseModel):
     """特征向量"""
 
-    match_id: int
-    features: Dict[str, float]
-    feature_names: List[str]
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    "match_id": int
+    "features": Dict[str, float]
+    "feature_names": List[str]
+    "created_at": datetime = Field(default_factory=datetime.utcnow)
 
     def get_feature(self, name: str) -> Optional[float]:
         """获取特征值"""
@@ -101,28 +101,28 @@ class FeatureVector(BaseModel):
 class MatchData(BaseModel):
     """比赛数据"""
 
-    match_id: int
-    home_team: str
-    away_team: str
-    league: str
-    match_date: datetime
-    status: str
-    home_score: Optional[int] = None
-    away_score: Optional[int] = None
-    odds: Optional[Dict[str, float] = None
-    features: Optional[FeatureVector] = None
+    "match_id": int
+    "home_team": str
+    "away_team": str
+    "league": str
+    "match_date": datetime
+    "status": str
+    "home_score": Optional[int] = None
+    "away_score": Optional[int] = None
+    "odds": Optional[Dict[str, float] = None
+    "features": Optional[FeatureVector] = None
 class ModelMetrics(BaseModel):
     """模型指标"""
 
-    model_name: str
-    model_version: str
-    accuracy: float = Field(ge=0, le=1)
-    precision: float = Field(ge=0, le=1)
-    recall: float = Field(ge=0, le=1)
-    f1_score: float = Field(ge=0, le=1)
-    total_predictions: int
-    correct_predictions: int
-    last_updated: datetime = Field(default_factory=datetime.utcnow)
+    "model_name": str
+    "model_version": str
+    "accuracy": float = Field(ge=0, le=1)
+    "precision": float = Field(ge=0, le=1)
+    "recall": float = Field(ge=0, le=1)
+    "f1_score": float = Field(ge=0, le=1)
+    "total_predictions": int
+    "correct_predictions": int
+    "last_updated": datetime = Field(default_factory=datetime.utcnow)
 
     @property
     def error_rate(self) -> float:

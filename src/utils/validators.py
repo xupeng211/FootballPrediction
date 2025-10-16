@@ -26,7 +26,7 @@ def is_valid_url(url: str) -> bool:
 
 
 def validate_required_fields(
-    data: dict[str, Any], required_fields: list[str]
+    "data": dict[str, Any], required_fields: list[str]
 ) -> list[str]:
     """Check if all required fields are present"""
     missing_fields = []

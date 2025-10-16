@@ -1,11 +1,11 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+
 比赛仓储
 Match Repository
 
-实现比赛相关的数据访问逻辑。
+实现比赛相关的数据访问逻辑.
 Implements data access logic for matches.
-"""
+""""""
 
 from datetime import datetime, date, timedelta
 from enum import Enum
@@ -73,7 +73,7 @@ class ReadOnlyMatchRepository(ReadOnlyRepository[Match, int]):
         result = await self.session.execute(query)
         return result.scalars().first()  # type: ignore
 
-    async def get_all(self, query_spec: Optional[QuerySpec] ] = None) -> List[Match]:
+    async def get_all(self, query_spec: Optional[QuerySpec]  = None) -> List[Match]:
         """获取所有比赛"""
         return await self.find_many(query_spec or QuerySpec())
 
@@ -93,10 +93,10 @@ class ReadOnlyMatchRepository(ReadOnlyRepository[Match, int]):
 
     async def get_matches_by_date_range(
         self,
-        start_date: date,
-        end_date: date,
-        status: Optional[MatchStatus] ] = None,
-        limit: int = 100,
+    "start_date": date,
+    "end_date": date,
+    "status": Optional[MatchStatus]  = None,
+    "limit": int = 100,
     ) -> List[Match]:
         """获取指定日期范围内的比赛"""
         filters = {"match_date": {"$gte": start_date, "$lte": end_date}}
@@ -112,8 +112,8 @@ class ReadOnlyMatchRepository(ReadOnlyRepository[Match, int]):
         end_date = start_date + timedelta(days=days)
 
         filters = {
-            "match_date": {"$gte": start_date, "$lte": end_date},
-            "status": MatchStatus.SCHEDULED.value,
+            "match_date": {"$gte": start_date, "$lte": end_date},","
+            "status": MatchStatus.SCHEDULED.value,""
         }
 
         query_spec = QuerySpec(filters=filters, order_by=["match_date"], limit=limit)
@@ -132,8 +132,8 @@ class ReadOnlyMatchRepository(ReadOnlyRepository[Match, int]):
         start_date = date.today() - timedelta(days=days)
 
         filters = {
-            "match_date": {"$gte": start_date},
-            "status": MatchStatus.FINISHED.value,
+            "match_date": {"$gte": start_date},","
+            "status": MatchStatus.FINISHED.value,""
         }
 
         query_spec = QuerySpec(filters=filters, order_by=["-match_date"], limit=limit)
@@ -141,13 +141,13 @@ class ReadOnlyMatchRepository(ReadOnlyRepository[Match, int]):
 
     async def get_matches_by_team(self, team_id: int, limit: int = 50) -> List[Match]:
         """获取指定队伍的比赛"""
-        filters = {"$or": [{"home_team_id": team_id}, {"away_team_id": team_id}]}
+        filters = {"$or": [{"home_team_id": team_id}, {"away_team_id": team_id}}
 
         query_spec = QuerySpec(filters=filters, order_by=["-match_date"], limit=limit)
         return await self.find_many(query_spec)
 
     async def get_matches_by_competition(
-        self, competition_id: int, season: Optional[str] ] = None, limit: int = 100
+        self, competition_id: int, season: Optional[str]  = None, limit: int = 100
     ) -> List[Match]:
         """获取指定联赛的比赛"""
         filters = {"competition_id": competition_id}
@@ -160,7 +160,7 @@ class ReadOnlyMatchRepository(ReadOnlyRepository[Match, int]):
     async def search_matches(self, keyword: str) -> List[Match]:
         """搜索比赛"""
         filters = {
-            "$or": [
+            "$or": [","
                 {"home_team_name": {"$ilike": f"%{keyword}%"}},
                 {"away_team_name": {"$ilike": f"%{keyword}%"}},
                 {"competition_name": {"$ilike": f"%{keyword}%"}},
@@ -174,21 +174,21 @@ class ReadOnlyMatchRepository(ReadOnlyRepository[Match, int]):
     ) -> List[Match]:
         """获取两队历史交锋记录"""
         filters = {
-            "$or": [
+            "$or": [""
                 {
-                    "$and": [
+                    "$and": [","
                         {"home_team_id": home_team_id},
                         {"away_team_id": away_team_id},
                     ]
                 },
                 {
-                    "$and": [
+                    "$and": [","
                         {"home_team_id": away_team_id},
                         {"away_team_id": home_team_id},
                     ]
                 },
             ],
-            "status": MatchStatus.FINISHED.value,
+            "status": MatchStatus.FINISHED.value,""
         }
 
         query_spec = QuerySpec(filters=filters, order_by=["-match_date"], limit=limit)
@@ -204,7 +204,7 @@ class MatchRepository(MatchRepositoryInterface):
         result = await self.session.execute(query)
         return result.scalars().first()  # type: ignore
 
-    async def get_all(self, query_spec: Optional[QuerySpec] ] = None) -> List[Match]:
+    async def get_all(self, query_spec: Optional[QuerySpec]  = None) -> List[Match]:
         """获取所有比赛"""
         query = select(Match)
 
@@ -270,14 +270,14 @@ class MatchRepository(MatchRepositoryInterface):
     async def create(self, entity_data: Dict[str, Any]) -> Match:
         """创建新比赛"""
         match = Match(
-            home_team_id=entity_data["home_team_id"],
-            away_team_id=entity_data["away_team_id"],
-            home_team_name=entity_data["home_team_name"],
-            away_team_name=entity_data["away_team_name"],
-            competition_id=entity_data["competition_id"],
+            home_team_id=entity_data["home_team_id"]"]",
+            away_team_id=entity_data["away_team_id"]"]",
+            home_team_name=entity_data["home_team_name"]"]",
+            away_team_name=entity_data["away_team_name"]"]",
+            competition_id=entity_data["competition_id"]"]",
             competition_name=entity_data.get("competition_name"),
             season=entity_data.get("season"),
-            match_date=entity_data["match_date"],
+            match_date=entity_data["match_date"]"]",
             status=entity_data.get("status", MatchStatus.SCHEDULED.value),
             created_at=datetime.utcnow(),
         )
@@ -331,19 +331,19 @@ class MatchRepository(MatchRepositoryInterface):
         await self.session.commit()
         return result.rowcount > 0  # type: ignore
 
-    async def bulk_create(self, entities_data: List[Dict[str, Any]) -> List[Match]:
+    async def bulk_create(self, entities_data: List[Dict[str, Any]] -> List[Match]:
         """批量创建比赛"""
         matches = []
         for data in entities_data:
             match = Match(
-                home_team_id=data["home_team_id"],
-                away_team_id=data["away_team_id"],
-                home_team_name=data["home_team_name"],
-                away_team_name=data["away_team_name"],
-                competition_id=data["competition_id"],
+                home_team_id=data["home_team_id"]"]",
+                away_team_id=data["away_team_id"]"]",
+                home_team_name=data["home_team_name"]"]",
+                away_team_name=data["away_team_name"]"]",
+                competition_id=data["competition_id"]"]",
                 competition_name=data.get("competition_name"),
                 season=data.get("season"),
-                match_date=data["match_date"],
+                match_date=data["match_date"]"]",
                 status=data.get("status", MatchStatus.SCHEDULED.value),
                 created_at=datetime.utcnow(),
             )
@@ -360,16 +360,16 @@ class MatchRepository(MatchRepositoryInterface):
 
     async def update_match_score(
         self,
-        match_id: int,
-        home_score: int,
-        away_score: int,
-        status: Optional[MatchStatus] ] = None,
+    "match_id": int,
+    "home_score": int,
+    "away_score": int,
+    "status": Optional[MatchStatus]  = None,
     ) -> Optional[Match]:
         """更新比赛比分"""
         update_data = {
-            "home_score": home_score,
-            "away_score": away_score,
-            "updated_at": datetime.utcnow(),
+            "home_score": home_score,","
+            "away_score": away_score,","
+            "updated_at": datetime.utcnow(),""
         }
 
         if status:
@@ -382,9 +382,9 @@ class MatchRepository(MatchRepositoryInterface):
     async def start_match(self, match_id: int) -> Optional[Match]:
         """开始比赛"""
         update_data = {
-            "status": MatchStatus.LIVE.value,
-            "started_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow(),
+            "status": MatchStatus.LIVE.value,","
+            "started_at": datetime.utcnow(),","
+            "updated_at": datetime.utcnow(),""
         }
         return await self.update_by_id(match_id, update_data)
 
@@ -393,11 +393,11 @@ class MatchRepository(MatchRepositoryInterface):
     ) -> Optional[Match]:
         """结束比赛"""
         update_data = {
-            "status": MatchStatus.FINISHED.value,
-            "home_score": home_score,
-            "away_score": away_score,
-            "finished_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow(),
+            "status": MatchStatus.FINISHED.value,","
+            "home_score": home_score,","
+            "away_score": away_score,","
+            "finished_at": datetime.utcnow(),","
+            "updated_at": datetime.utcnow(),""
         }
         return await self.update_by_id(match_id, update_data)
 
@@ -406,8 +406,8 @@ class MatchRepository(MatchRepositoryInterface):
     ) -> Optional[Match]:
         """推迟比赛"""
         update_data = {
-            "status": MatchStatus.POSTPONED.value,
-            "updated_at": datetime.utcnow(),
+            "status": MatchStatus.POSTPONED.value,","
+            "updated_at": datetime.utcnow(),""
         }
         if reason:
             update_data["notes"] = reason
@@ -418,14 +418,14 @@ class MatchRepository(MatchRepositoryInterface):
     ) -> Optional[Match]:
         """取消比赛"""
         update_data = {
-            "status": MatchStatus.CANCELLED.value,
-            "updated_at": datetime.utcnow(),
+            "status": MatchStatus.CANCELLED.value,","
+            "updated_at": datetime.utcnow(),""
         }
         if reason:
             update_data["notes"] = reason
         return await self.update_by_id(match_id, update_data)
 
-    async def get_match_statistics(self, match_id: int) -> Dict[str, Any]:
+    async def get_match_statistics(self, match_id: int) -> Dict[str, Any:
         """获取比赛统计信息"""
         from ..database.models import Prediction
 
@@ -467,8 +467,7 @@ class MatchRepository(MatchRepositoryInterface):
                     ),
                     else_=0,
                 )
-            ).label("draw_predictions"),
-        ).where(Prediction.match_id == match_id)
+            ).label("draw_predictions"))).where(Prediction.match_id == match_id)
 
         prediction_result = await self.session.execute(prediction_query)
         prediction_stats = prediction_result.first()  # type: ignore
@@ -484,27 +483,27 @@ class MatchRepository(MatchRepositoryInterface):
                 actual_result = "draw"
 
         return {
-            "match_id": match_id,
-            "match_info": {
-                "home_team": match.home_team_name,  # type: ignore
-                "away_team": match.away_team_name,  # type: ignore
-                "competition": match.competition_name,  # type: ignore
-                "match_date": match.match_date,  # type: ignore
-                "status": match.status,  # type: ignore
-                "score": {"home": match.home_score, "away": match.away_score}
+            "match_id": match_id,","
+            "match_info": {","
+                "home_team": match.home_team_name,  # type: ignore","
+                "away_team": match.away_team_name,  # type: ignore","
+                "competition": match.competition_name,  # type: ignore","
+                "match_date": match.match_date,  # type: ignore","
+                "status": match.status,  # type: ignore","
+                "score": {"home": match.home_score, "away": match.away_score}""
                 if match.home_score is not None
                 else None,
             },
-            "predictions": {
-                "total": prediction_stats.total_predictions or 0,
-                "average_confidence": float(prediction_stats.avg_confidence or 0),
-                "distribution": {
-                    "home_win": prediction_stats.home_win_predictions or 0,
-                    "away_win": prediction_stats.away_win_predictions or 0,
-                    "draw": prediction_stats.draw_predictions or 0,
+            "predictions": {","
+                "total": prediction_stats.total_predictions or 0,","
+                "average_confidence": float(prediction_stats.avg_confidence or 0),","
+                "distribution": {","
+                    "home_win": prediction_stats.home_win_predictions or 0,","
+                    "away_win": prediction_stats.away_win_predictions or 0,","
+                    "draw": prediction_stats.draw_predictions or 0,""
                 },
             },
-            "actual_result": actual_result,
+            "actual_result": actual_result,""
         }
 
     def get_read_only_repository(self) -> ReadOnlyMatchRepository:

@@ -1,18 +1,18 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+""""""
 赔率数据采集器
 
-实现足球赔率数据的采集逻辑。
-包含高频采集、时间窗口去重、赔率变化检测等功能。
+实现足球赔率数据的采集逻辑.
+包含高频采集,时间窗口去重,赔率变化检测等功能.
 
-采集策略：
+采集策略:
 - 每5分钟高频采集
 - 基于时间戳窗口去重
 - 只保存有变化的赔率
 - 多博彩公司数据聚合
 
-基于 DATA_DESIGN.md 第1.1节设计。
-"""
+基于 DATA_DESIGN.md 第1.1节设计.
+""""""
 
 from datetime import datetime
 from decimal import Decimal
@@ -21,30 +21,30 @@ from .base_collector import DataCollector, CollectionResult
 
 
 class OddsCollector(DataCollector):
-    """
+    """"""
     赔率数据采集器
 
-    负责从多个博彩公司API采集赔率数据，
-    实现高频更新和变化检测机制。
-    """
+    负责从多个博彩公司API采集赔率数据,
+    实现高频更新和变化检测机制.
+    """"""
 
     def __init__(
         self,
-        data_source: str = "odds_api",
-        api_key: Optional[str] = None,
-        base_url: str = "https://api.the-odds-api.com/v4",
-        time_window_minutes: int = 5,
+    "data_source": str = "odds_api",
+    "api_key": Optional[str] = None,
+    "base_url": str = "https://api.the-odds-api.com/v4",
+    "time_window_minutes": int = 5,
         **kwargs,
     ):
-        """
+        """"""
         初始化赔率采集器
 
         Args:
-            data_source: 数据源名称
-            api_key: API密钥
-            base_url: API基础URL
-            time_window_minutes: 去重时间窗口（分钟）
-        """
+    "data_source": 数据源名称
+    "api_key": API密钥
+    "base_url": API基础URL
+    "time_window_minutes": 去重时间窗口(分钟)
+        """"""
         super().__init__(data_source, **kwargs)
         self.api_key = api_key
         self.base_url = base_url
@@ -68,27 +68,27 @@ class OddsCollector(DataCollector):
 
     async def collect_odds(
         self,
-        match_ids: Optional[List[str]] = None,
-        bookmakers: Optional[List[str]] = None,
-        markets: Optional[List[str]] = None,
+    "match_ids": Optional[List[str] = None,
+    "bookmakers": Optional[List[str] = None,
+    "markets": Optional[List[str] = None,
         **kwargs,
     ) -> CollectionResult:
-        """
+        """"""
         采集赔率数据
 
-        去重策略：
+        去重策略:
         - 基于 match_id + bookmaker + market + timestamp 生成唯一键
         - 时间窗口内的重复数据跳过
         - 只保存有变化的赔率值
 
         Args:
-            match_ids: 需要采集的比赛ID列表
-            bookmakers: 博彩公司列表
-            markets: 市场类型列表（1x2、over_under等）
+    "match_ids": 需要采集的比赛ID列表
+    "bookmakers": 博彩公司列表
+    "markets": 市场类型列表(1x2,over_under等)
 
         Returns:
-            CollectionResult: 采集结果
-        """
+    "CollectionResult": 采集结果
+        """"""
         collected_data = []
         success_count = 0
         error_count = 0
@@ -99,7 +99,7 @@ class OddsCollector(DataCollector):
             if not bookmakers:
                 bookmakers = await self._get_active_bookmakers()
             if not markets:
-                markets = ["h2h", "spreads", "totals"]  # 1x2、让球、大小球
+                markets = ["h2h", "spreads", "totals"]  # 1x2,让球,大小球
             if not match_ids:
                 match_ids = await self._get_upcoming_matches()
 
@@ -153,7 +153,7 @@ class OddsCollector(DataCollector):
                             RuntimeError,
                         ) as e:
                             error_count += 1
-                            error_messages.append(f"Error processing odds: {str(e)}")
+                            error_messages.append(f"Error processing odds: {str(e)}"),
                             self.logger.error(f"Error processing odds: {str(e)}")
 
                 except (
@@ -224,33 +224,33 @@ class OddsCollector(DataCollector):
         )
 
     async def _get_active_bookmakers(self) -> List[str]:
-        """
+        """"""
         获取活跃的博彩公司列表
 
         Returns:
             List[str]: 博彩公司代码列表
-        """
+        """"""
         try:
             # 目前返回主要博彩公司作为示例
             return [
-                "bet365",
-                "pinnacle",
-                "williamhill",
-                "betfair",
-                "unibet",
-                "marathonbet",
+                "bet365","
+                "pinnacle","
+                "williamhill","
+                "betfair","
+                "unibet","
+                "marathonbet","
             ]
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to get active bookmakers: {str(e)}")
             return ["bet365", "pinnacle"]  # 默认返回主要的两家
 
     async def _get_upcoming_matches(self) -> List[str]:
-        """
+        """"""
         获取即将开始的比赛列表
 
         Returns:
             List[str]: 比赛ID列表
-        """
+        """"""
         try:
             # 目前返回空列表作为占位符
             return []
@@ -269,42 +269,42 @@ class OddsCollector(DataCollector):
     async def _collect_match_odds(
         self, match_id: str, bookmakers: List[str], markets: List[str]
     ) -> List[Dict[str, Any]:
-        """
+        """"""
         采集指定比赛的赔率数据
 
         Args:
-            match_id: 比赛ID
-            bookmakers: 博彩公司列表
-            markets: 市场类型列表
+    "match_id": 比赛ID
+    "bookmakers": 博彩公司列表
+    "markets": 市场类型列表
 
         Returns:
             List[Dict[str, Any]: 赔率数据列表
-        """
+        """"""
         all_odds = []
 
         try:
             for market in markets:
                 url = f"{self.base_url}/sports/soccer/odds"
                 params = {
-                    "apiKey": self.api_key,
-                    "markets": market,
-                    "bookmakers": ",".join(bookmakers),
-                    "eventIds": match_id,
+                    "apiKey": self.api_key,","
+                    "markets": market,","
+                    "bookmakers": ",".join(bookmakers),","
+                    "eventIds": match_id,""
                 }
 
                 response = await self._make_request(url=url, params=params)
 
                 # 处理响应数据
                 for event in response:
-                    for bookmaker in event.get(str("bookmakers"), []):  # type: ignore
+                    for bookmaker in event.get(str("bookmakers"), []):  # type: ignore,
                         for market_data in bookmaker.get(str("markets"), []):
                             odds_data = {
-                                "match_id": match_id,
-                                "bookmaker": bookmaker.get("key"),
-                                "market_type": market_data.get("key"),
-                                "outcomes": market_data.get(str("outcomes"), []),
-                                "last_update": market_data.get("last_update"),
-                                "event_data": event,
+                                "match_id": match_id,","
+                                "bookmaker": bookmaker.get("key"),","
+                                "market_type": market_data.get("key"),","
+                                "outcomes": market_data.get(str("outcomes"), []),","
+                                "last_update": market_data.get("last_update"),","
+                                "event_data": event,""
                             }
                             all_odds.append(odds_data)
 
@@ -314,15 +314,15 @@ class OddsCollector(DataCollector):
         return all_odds
 
     def _generate_odds_key(self, odds_data: Dict[str, Any]) -> str:
-        """
-        生成赔率唯一键（时间窗口去重）
+        """"""
+        生成赔率唯一键(时间窗口去重)
 
         Args:
-            odds_data: 赔率原始数据
+    "odds_data": 赔率原始数据
 
         Returns:
-            str: 赔率唯一键
-        """
+    "str": 赔率唯一键
+        """"""
         # 基于比赛、博彩公司、市场类型、时间窗口生成键
         timestamp = datetime.now()
         time_window = timestamp.replace(
@@ -343,21 +343,21 @@ class OddsCollector(DataCollector):
         return hashlib.md5(key_string.encode(), usedforsecurity=False).hexdigest()  # type: ignore
 
     async def _has_odds_changed(self, odds_data: Dict[str, Any]) -> bool:
-        """
+        """"""
         检查赔率是否发生变化
 
         Args:
-            odds_data: 新的赔率数据
+    "odds_data": 新的赔率数据
 
         Returns:
-            bool: 是否有变化
-        """
+    "bool": 是否有变化
+        """"""
         try:
-            odds_id = f"{odds_data.get('match_id')}:{odds_data.get('bookmaker')}:{odds_data.get('market_type')}"
+            odds_id = f"{odds_data.get(match_id)}:{odds_data.get('bookmaker')}:{odds_data.get('market_type')}"
 
             # 提取当前赔率值
             current_odds = {}
-            for outcome in odds_data.get(str("outcomes"), []):
+            for outcome in odds_data.get(str("outcomes"), []):,
                 current_odds[outcome.get(str("name"), "")] = Decimal(  # type: ignore
                     str(outcome.get(str("price"), 0))
                 )
@@ -385,15 +385,15 @@ class OddsCollector(DataCollector):
     async def _clean_odds_data(
         self, raw_odds: Dict[str, Any]
     ) -> Optional[Dict[str, Any]:
-        """
+        """"""
         清洗和标准化赔率数据
 
         Args:
-            raw_odds: 原始赔率数据
+    "raw_odds": 原始赔率数据
 
         Returns:
-            Optional[Dict[str, Any]: 清洗后的数据，无效则返回None
-        """
+            Optional[Dict[str, Any]: 清洗后的数据,无效则返回None
+        """"""
         try:
             # 基础字段验证
             required_fields = ["match_id", "bookmaker", "market_type", "outcomes"]
@@ -407,8 +407,8 @@ class OddsCollector(DataCollector):
                 if price and float(price) > 1.0:  # 赔率必须大于1
                     cleaned_outcomes.append(
                         {
-                            "name": outcome.get("name"),
-                            "price": round(float(price), 3),  # 保留3位小数
+                            "name": outcome.get("name"),","
+                            "price": round(float(price), 3),  # 保留3位小数""
                         }
                     )
 
@@ -416,14 +416,14 @@ class OddsCollector(DataCollector):
                 return None
 
             cleaned_data = {
-                "external_match_id": str(raw_odds["match_id"]),
-                "bookmaker": str(raw_odds["bookmaker"]),
-                "market_type": str(raw_odds["market_type"]),
-                "outcomes": cleaned_outcomes,
-                "last_update": raw_odds.get("last_update"),
-                "raw_data": raw_odds,
-                "collected_at": datetime.now().isoformat(),
-                "processed": False,
+                "external_match_id": str(raw_odds["match_id"),","
+                "bookmaker": str(raw_odds["bookmaker"),","
+                "market_type": str(raw_odds["market_type"),","
+                "outcomes": cleaned_outcomes,","
+                "last_update": raw_odds.get("last_update"),","
+                "raw_data": raw_odds,","
+                "collected_at": datetime.now().isoformat(),","
+                "processed": False,""
             }
 
             return cleaned_data

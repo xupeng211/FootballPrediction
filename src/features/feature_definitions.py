@@ -59,20 +59,20 @@ class RecentPerformanceFeatures:
     def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
-            "team_id": self.team_id,
-            "calculation_date": self.calculation_date.isoformat(),
-            "recent_5_wins": self.recent_5_wins,
-            "recent_5_draws": self.recent_5_draws,
-            "recent_5_losses": self.recent_5_losses,
-            "recent_5_goals_for": self.recent_5_goals_for,
-            "recent_5_goals_against": self.recent_5_goals_against,
-            "recent_5_points": self.recent_5_points,
-            "recent_5_home_wins": self.recent_5_home_wins,
-            "recent_5_away_wins": self.recent_5_away_wins,
-            "recent_5_home_goals_for": self.recent_5_home_goals_for,
-            "recent_5_away_goals_for": self.recent_5_away_goals_for,
-            "recent_5_win_rate": self.recent_5_win_rate,
-            "recent_5_goals_per_game": self.recent_5_goals_per_game,
+            team_id: self.team_id,
+            calculation_date: self.calculation_date.isoformat(),
+            recent_5_wins: self.recent_5_wins,
+            recent_5_draws: self.recent_5_draws,
+            recent_5_losses: self.recent_5_losses,
+            recent_5_goals_for: self.recent_5_goals_for,
+            recent_5_goals_against: self.recent_5_goals_against,
+            recent_5_points: self.recent_5_points,
+            recent_5_home_wins: self.recent_5_home_wins,
+            recent_5_away_wins: self.recent_5_away_wins,
+            recent_5_home_goals_for: self.recent_5_home_goals_for,
+            recent_5_away_goals_for: self.recent_5_away_goals_for,
+            recent_5_win_rate: self.recent_5_win_rate,
+            recent_5_goals_per_game: self.recent_5_goals_per_game,
         }
 
 
@@ -132,21 +132,21 @@ class HistoricalMatchupFeatures:
     def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
-            "home_team_id": self.home_team_id,
-            "away_team_id": self.away_team_id,
-            "calculation_date": self.calculation_date.isoformat(),
-            "h2h_total_matches": self.h2h_total_matches,
-            "h2h_home_wins": self.h2h_home_wins,
-            "h2h_away_wins": self.h2h_away_wins,
-            "h2h_draws": self.h2h_draws,
-            "h2h_home_goals_total": self.h2h_home_goals_total,
-            "h2h_away_goals_total": self.h2h_away_goals_total,
-            "h2h_recent_5_home_wins": self.h2h_recent_5_home_wins,
-            "h2h_recent_5_away_wins": self.h2h_recent_5_away_wins,
-            "h2h_recent_5_draws": self.h2h_recent_5_draws,
-            "h2h_home_win_rate": self.h2h_home_win_rate,
-            "h2h_goals_avg": self.h2h_goals_avg,
-            "h2h_home_goals_avg": self.h2h_home_goals_avg,
+            home_team_id: self.home_team_id,
+            away_team_id: self.away_team_id,
+            calculation_date: self.calculation_date.isoformat(),
+            h2h_total_matches: self.h2h_total_matches,
+            h2h_home_wins: self.h2h_home_wins,
+            h2h_away_wins: self.h2h_away_wins,
+            h2h_draws: self.h2h_draws,
+            h2h_home_goals_total: self.h2h_home_goals_total,
+            h2h_away_goals_total: self.h2h_away_goals_total,
+            h2h_recent_5_home_wins: self.h2h_recent_5_home_wins,
+            h2h_recent_5_away_wins: self.h2h_recent_5_away_wins,
+            h2h_recent_5_draws: self.h2h_recent_5_draws,
+            h2h_home_win_rate: self.h2h_home_win_rate,
+            h2h_goals_avg: self.h2h_goals_avg,
+            h2h_home_goals_avg: self.h2h_home_goals_avg,
         }
 
 
@@ -236,23 +236,23 @@ class OddsFeatures:
     def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
-            "match_id": self.match_id,
-            "calculation_date": self.calculation_date.isoformat(),
-            "home_odds_avg": float(self.home_odds_avg) if self.home_odds_avg else None,
-            "draw_odds_avg": float(self.draw_odds_avg) if self.draw_odds_avg else None,
-            "away_odds_avg": float(self.away_odds_avg) if self.away_odds_avg else None,
-            "home_implied_probability": self.home_implied_probability,
-            "draw_implied_probability": self.draw_implied_probability,
-            "away_implied_probability": self.away_implied_probability,
-            "bookmaker_count": self.bookmaker_count,
-            "odds_variance_home": self.odds_variance_home,
-            "odds_variance_draw": self.odds_variance_draw,
-            "odds_variance_away": self.odds_variance_away,
-            "max_home_odds": float(self.max_home_odds) if self.max_home_odds else None,
-            "min_home_odds": float(self.min_home_odds) if self.min_home_odds else None,
-            "odds_range_home": self.odds_range_home,
-            "bookmaker_consensus": self.bookmaker_consensus,
-            "market_efficiency": self.market_efficiency,
+            match_id: self.match_id,
+            calculation_date: self.calculation_date.isoformat(),
+            home_odds_avg: float(self.home_odds_avg) if self.home_odds_avg else None,
+            draw_odds_avg: float(self.draw_odds_avg) if self.draw_odds_avg else None,
+            away_odds_avg: float(self.away_odds_avg) if self.away_odds_avg else None,
+            home_implied_probability: self.home_implied_probability,
+            draw_implied_probability: self.draw_implied_probability,
+            away_implied_probability: self.away_implied_probability,
+            bookmaker_count: self.bookmaker_count,
+            odds_variance_home: self.odds_variance_home,
+            odds_variance_draw: self.odds_variance_draw,
+            odds_variance_away: self.odds_variance_away,
+            max_home_odds: float(self.max_home_odds) if self.max_home_odds else None,
+            min_home_odds: float(self.min_home_odds) if self.min_home_odds else None,
+            odds_range_home: self.odds_range_home,
+            bookmaker_consensus: self.bookmaker_consensus,
+            market_efficiency: self.market_efficiency,
         }
 
 
@@ -273,11 +273,11 @@ class AllMatchFeatures:
     def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
-            "match_entity": self.match_entity.to_dict(),
-            "home_team_recent": self.home_team_recent.to_dict(),
-            "away_team_recent": self.away_team_recent.to_dict(),
-            "historical_matchup": self.historical_matchup.to_dict(),
-            "odds_features": self.odds_features.to_dict(),
+            match_entity: self.match_entity.to_dict(),
+            home_team_recent: self.home_team_recent.to_dict(),
+            away_team_recent: self.away_team_recent.to_dict(),
+            historical_matchup: self.historical_matchup.to_dict(),
+            odds_features: self.odds_features.to_dict(),
         }
 
 
@@ -295,6 +295,6 @@ class AllTeamFeatures:
     def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
-            "team_entity": self.team_entity.to_dict(),
-            "recent_performance": self.recent_performance.to_dict(),
+            team_entity: self.team_entity.to_dict(),
+            recent_performance: self.recent_performance.to_dict(),
         }

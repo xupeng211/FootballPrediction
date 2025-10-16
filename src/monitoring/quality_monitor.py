@@ -8,9 +8,9 @@ Responsible for monitoring data quality metrics such as freshness, missing rates
 Supports real-time monitoring, historical trend analysis, and quality score calculation.
 
 主要类 / Main Classes:
-    QualityMonitor: 数据质量监控主类 / Main data quality monitoring class
-    DataFreshnessResult: 数据新鲜度检查结果 / Data freshness check result
-    DataCompletenessResult: 数据完整性检查结果 / Data completeness check result
+    "QualityMonitor": 数据质量监控主类 / Main data quality monitoring class
+    "DataFreshnessResult": 数据新鲜度检查结果 / Data freshness check result
+    "DataCompletenessResult": 数据完整性检查结果 / Data completeness check result
 
 主要方法 / Main Methods:
     QualityMonitor.check_data_freshness(): 检查数据新鲜度 / Check data freshness

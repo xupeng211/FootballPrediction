@@ -23,17 +23,17 @@ class AsyncTTLCache:
 
     def __init__(
         self,
-        max_size: int = 1000,
-        default_ttl: float | None = None,
-        cleanup_interval: float = 60.0,
+    max_size: int = 1000,
+    default_ttl: float | None = None,
+    cleanup_interval: float = 60.0,
     ):
         """
         初始化异步缓存
 
         Args:
-            max_size: 最大缓存项数
-            default_ttl: 默认TTL（秒）
-            cleanup_interval: 清理间隔（秒）
+    max_size: 最大缓存项数
+    default_ttl: 默认TTL（秒）
+    cleanup_interval: 清理间隔（秒）
         """
         self._cache = TTLCache(max_size, default_ttl, cleanup_interval)
 
@@ -42,27 +42,27 @@ class AsyncTTLCache:
         异步获取缓存值
 
         Args:
-            key: 缓存键
-            default: 默认值
+    key: 缓存键
+    default: 默认值
 
         Returns:
-            Any: 缓存值或默认值
+    Any: 缓存值或默认值
         """
         return self._cache.get(key, default)
 
     async def set(
         self,
-        key: str,
-        value: Any,
-        ttl: float | None = None,
+    key: str,
+    value: Any,
+    ttl: float | None = None,
     ) -> None:
         """
         异步设置缓存值
 
         Args:
-            key: 缓存键
-            value: 缓存值
-            ttl: 生存时间（秒）
+    key: 缓存键
+    value: 缓存值
+    ttl: 生存时间（秒）
         """
         self._cache.set(key, value, ttl)
 
@@ -71,10 +71,10 @@ class AsyncTTLCache:
         异步删除缓存项
 
         Args:
-            key: 缓存键
+    key: 缓存键
 
         Returns:
-            bool: 是否删除成功
+    bool: 是否删除成功
         """
         return self._cache.delete(key)
 
@@ -87,11 +87,11 @@ class AsyncTTLCache:
         异步弹出并删除缓存项
 
         Args:
-            key: 缓存键
-            default: 默认值
+    key: 缓存键
+    default: 默认值
 
         Returns:
-            Any: 缓存值或默认值
+    Any: 缓存值或默认值
         """
         return self._cache.pop(key, default)
 
@@ -112,7 +112,7 @@ class AsyncTTLCache:
         异步批量获取
 
         Args:
-            keys: 键列表
+    keys: 键列表
 
         Returns:
             Dict[str, Any]: 键值对字典
@@ -121,15 +121,15 @@ class AsyncTTLCache:
 
     async def set_many(
         self,
-        mapping: dict[str, Any],
-        ttl: float | None = None,
+    mapping: dict[str, Any],
+    ttl: float | None = None,
     ) -> None:
         """
         异步批量设置
 
         Args:
-            mapping: 键值对字典
-            ttl: 生存时间（秒）
+    mapping: 键值对字典
+    ttl: 生存时间（秒）
         """
         self._cache.set_many(mapping, ttl)
 
@@ -138,10 +138,10 @@ class AsyncTTLCache:
         异步批量删除
 
         Args:
-            keys: 键列表
+    keys: 键列表
 
         Returns:
-            int: 删除的数量
+    int: 删除的数量
         """
         return self._cache.delete_many(keys)
 
@@ -150,12 +150,12 @@ class AsyncTTLCache:
         异步递增数值
 
         Args:
-            key: 缓存键
-            delta: 递增量
-            default: 默认值
+    key: 缓存键
+    delta: 递增量
+    default: 默认值
 
         Returns:
-            int: 递增后的值
+    int: 递增后的值
         """
         return self._cache.increment(key, delta, default)
 
@@ -164,11 +164,11 @@ class AsyncTTLCache:
         异步更新缓存项的TTL
 
         Args:
-            key: 缓存键
-            ttl: 新的TTL（秒）
+    key: 缓存键
+    ttl: 新的TTL（秒）
 
         Returns:
-            bool: 是否更新成功
+    bool: 是否更新成功
         """
         return self._cache.touch(key, ttl)
 
@@ -177,7 +177,7 @@ class AsyncTTLCache:
         异步获取剩余TTL
 
         Args:
-            key: 缓存键
+    key: 缓存键
 
         Returns:
             Optional[int]: 剩余TTL（秒）
@@ -197,7 +197,7 @@ class AsyncTTLCache:
         异步清理过期项
 
         Returns:
-            int: 清理的数量
+    int: 清理的数量
         """
         return self._cache.cleanup_expired()
 

@@ -1,12 +1,12 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+""""""
 实时数据流任务
 
-处理实时数据流，包括：
+处理实时数据流,包括:
 - WebSocket连接管理
 - 实时数据处理
 - 流数据持久化
-"""
+""""""
 
 import asyncio
 import logging
@@ -21,14 +21,14 @@ logger = get_logger(__name__)
 
 
 class StreamingTask(Task):
-    """
+    """"""
     流处理任务基类
 
-    提供流处理任务的通用功能：
+    提供流处理任务的通用功能:
     - 异步任务执行
     - 错误处理和重试
     - 日志记录
-    """
+    """"""
 
     def __init__(self):
         self.error_logger = TaskErrorLogger()
@@ -48,21 +48,21 @@ class StreamingTask(Task):
 @app.task(base=StreamingTask, bind=True)
 def consume_kafka_streams_task(
     self,
-    topics: Optional[List[str]] = None,
-    batch_size: int = 100,
-    timeout: float = 30.0,
+    "topics": Optional[List[str] = None,
+    "batch_size": int = 100,
+    "timeout": float = 30.0,
 ):
-    """
+    """"""
     消费Kafka流数据任务
 
     Args:
-        topics: 要消费的Topic列表，None表示消费所有Topic
-        batch_size: 批量消费大小
-        timeout: 超时时间（秒）
+    "topics": 要消费的Topic列表,None表示消费所有Topic
+    "batch_size": 批量消费大小
+    "timeout": 超时时间(秒)
 
     Returns:
         Dict[str, Any]: 消费统计结果
-    """
+    """"""
 
     async def _consume_streams():
         try:
@@ -78,16 +78,16 @@ def consume_kafka_streams_task(
             _stats = await consumer.consume_batch(batch_size, timeout)
 
             self.logger.info(
-                f"Kafka流消费完成 - 处理: {stats['processed']}, 失败: {stats['failed']}"
+                f"Kafka流消费完成 - 处理: {stats[processed]}, 失败: {stats['failed']}"
             )
 
             return {
-                "task_id": self.request.id,
-                "status": "success",
-                "topics": topics or "all",
-                "statistics": stats,
-                "batch_size": batch_size,
-                "timeout": timeout,
+                "task_id": self.request.id,","
+                "status": "success",","
+                "topics": topics or "all",","
+                "statistics": stats,","
+                "batch_size": batch_size,","
+                "timeout": timeout,""
             }
 
         except (RuntimeError, ValueError, ConnectionError) as e:
@@ -104,10 +104,10 @@ def consume_kafka_streams_task(
             )
 
             return {
-                "task_id": self.request.id,
-                "status": "failed",
-                "error": error_msg,
-                "topics": topics or "all",
+                "task_id": self.request.id,","
+                "status": "failed",","
+                "error": error_msg,","
+                "topics": topics or "all",""
             }
 
         finally:
@@ -120,18 +120,18 @@ def consume_kafka_streams_task(
 
 @app.task(base=StreamingTask, bind=True)
 def start_continuous_consumer_task(
-    self, topics: Optional[List[str]] = None, consumer_group_id: Optional[str] = None
+    self, topics: Optional[List[str] = None, consumer_group_id: Optional[str = None
 ):
-    """
+    """"""
     启动持续Kafka消费任务
 
     Args:
-        topics: 要消费的Topic列表，None表示消费所有Topic
-        consumer_group_id: 消费者组ID
+    "topics": 要消费的Topic列表,None表示消费所有Topic
+    "consumer_group_id": 消费者组ID
 
     Returns:
         Dict[str, Any]: 任务状态
-    """
+    """"""
 
     async def _start_continuous_consumer():
         try:
@@ -143,16 +143,16 @@ def start_continuous_consumer_task(
             else:
                 consumer.subscribe_all_topics()
 
-            self.logger.info(f"启动持续Kafka消费 - Topics: {topics or 'all'}")
+            self.logger.info(f"启动持续Kafka消费 - Topics: {topics or all}")
 
             # 启动持续消费（这将一直运行直到任务被取消）
             await consumer.start_consuming()
 
             return {
-                "task_id": self.request.id,
-                "status": "finished",
-                "topics": topics or "all",
-                "consumer_group_id": consumer_group_id,
+                "task_id": self.request.id,","
+                "status": "finished",","
+                "topics": topics or "all",","
+                "consumer_group_id": consumer_group_id,""
             }
 
         except (RuntimeError, ValueError, ConnectionError) as e:
@@ -169,10 +169,10 @@ def start_continuous_consumer_task(
             )
 
             return {
-                "task_id": self.request.id,
-                "status": "failed",
-                "error": error_msg,
-                "topics": topics or "all",
+                "task_id": self.request.id,","
+                "status": "failed",","
+                "error": error_msg,","
+                "topics": topics or "all",""
             }
 
         finally:
@@ -186,21 +186,21 @@ def start_continuous_consumer_task(
 @app.task(base=StreamingTask, bind=True)
 def produce_to_kafka_stream_task(
     self,
-    data_list: List[Dict[str, Any],
-    data_type: str,
-    key_field: Optional[str] = None,
+    "data_list": List[Dict[str, Any],
+    "data_type": str,
+    "key_field": Optional[str] = None,
 ):
-    """
+    """"""
     生产数据到Kafka流任务
 
     Args:
-        data_list: 要发送的数据列表
-        data_type: 数据类型 (match/odds/scores)
-        key_field: 用作消息key的字段名
+    "data_list": 要发送的数据列表
+    "data_type": 数据类型 (match/odds/scores)
+    "key_field": 用作消息key的字段名
 
     Returns:
         Dict[str, Any]: 发送统计结果
-    """
+    """"""
 
     async def _produce_to_stream():
         try:
@@ -210,16 +210,16 @@ def produce_to_kafka_stream_task(
             _stats = await producer.send_batch(data_list, data_type)
 
             self.logger.info(
-                f"数据已发送到Kafka流 - 类型: {data_type}, "
-                f"成功: {stats['success']}, 失败: {stats['failed']}"
+                f"数据已发送到Kafka流 - 类型: {data_type}, ",
+                f"成功: {stats[success]}, 失败: {stats['failed']}"
             )
 
             return {
-                "task_id": self.request.id,
-                "status": "success",
-                "data_type": data_type,
-                "total_records": len(data_list),
-                "statistics": stats,
+                "task_id": self.request.id,","
+                "status": "success",","
+                "data_type": data_type,","
+                "total_records": len(data_list),","
+                "statistics": stats,""
             }
 
         except (RuntimeError, ValueError, ConnectionError) as e:
@@ -236,11 +236,11 @@ def produce_to_kafka_stream_task(
             )
 
             return {
-                "task_id": self.request.id,
-                "status": "failed",
-                "error": error_msg,
-                "data_type": data_type,
-                "total_records": len(data_list),
+                "task_id": self.request.id,","
+                "status": "failed",","
+                "error": error_msg,","
+                "data_type": data_type,","
+                "total_records": len(data_list),""
             }
 
         finally:
@@ -253,12 +253,12 @@ def produce_to_kafka_stream_task(
 
 @app.task(base=StreamingTask, bind=True)
 def stream_health_check_task(self):
-    """
+    """"""
     流处理健康检查任务
 
     Returns:
         Dict[str, Any]: 健康检查结果
-    """
+    """"""
 
     async def _stream_health_check():
         try:
@@ -268,10 +268,10 @@ def stream_health_check_task(self):
             self.logger.info(f"流处理健康检查完成: {health_status}")
 
             return {
-                "task_id": self.request.id,
-                "status": "success",
-                "health_status": health_status,
-                "timestamp": health_status.get("timestamp"),
+                "task_id": self.request.id,","
+                "status": "success",","
+                "health_status": health_status,","
+                "timestamp": health_status.get("timestamp"),""
             }
 
         except (RuntimeError, ValueError, ConnectionError) as e:
@@ -300,19 +300,19 @@ def stream_health_check_task(self):
 @app.task(base=StreamingTask, bind=True)
 def stream_data_processing_task(
     self,
-    topics: Optional[List[str]] = None,
-    processing_duration: int = 300,  # 5分钟
+    "topics": Optional[List[str] = None,
+    "processing_duration": int = 300,  # 5分钟
 ):
-    """
+    """"""
     流数据处理任务
 
     Args:
-        topics: 要处理的Topic列表
-        processing_duration: 处理持续时间（秒）
+    "topics": 要处理的Topic列表
+    "processing_duration": 处理持续时间(秒)
 
     Returns:
         Dict[str, Any]: 处理统计结果
-    """
+    """"""
 
     async def _stream_data_processing():
         try:
@@ -339,11 +339,11 @@ def stream_data_processing_task(
             self.logger.info(f"流数据处理完成: {stats}")
 
             return {
-                "task_id": self.request.id,
-                "status": "success",
-                "topics": topics or "all",
-                "processing_duration": processing_duration,
-                "statistics": stats,
+                "task_id": self.request.id,","
+                "status": "success",","
+                "topics": topics or "all",","
+                "processing_duration": processing_duration,","
+                "statistics": stats,""
             }
 
         except (RuntimeError, ValueError, ConnectionError) as e:
@@ -360,10 +360,10 @@ def stream_data_processing_task(
             )
 
             return {
-                "task_id": self.request.id,
-                "status": "failed",
-                "error": error_msg,
-                "topics": topics or "all",
+                "task_id": self.request.id,","
+                "status": "failed",","
+                "error": error_msg,","
+                "topics": topics or "all",""
             }
 
         finally:
@@ -376,16 +376,16 @@ def stream_data_processing_task(
 
 @app.task(base=StreamingTask, bind=True)
 def kafka_topic_management_task(self, action: str, topic_name: Optional[str] = None):
-    """
+    """"""
     Kafka Topic管理任务
 
     Args:
-        action: 操作类型 (create/list/delete)
-        topic_name: Topic名称（create/delete时需要）
+    "action": 操作类型 (create/list/delete)
+    "topic_name": Topic名称(create/delete时需要)
 
     Returns:
         Dict[str, Any]: 操作结果
-    """
+    """"""
 
     async def _kafka_topic_management():
         try:
@@ -398,10 +398,10 @@ def kafka_topic_management_task(self, action: str, topic_name: Optional[str] = N
                 self.logger.info(f"Kafka Topic列表: {topics}")
 
                 return {
-                    "task_id": self.request.id,
-                    "status": "success",
-                    "action": action,
-                    "topics": topics,
+                    "task_id": self.request.id,","
+                    "status": "success",","
+                    "action": action,","
+                    "topics": topics,""
                 }
 
             elif action == "create" and topic_name:
@@ -412,27 +412,27 @@ def kafka_topic_management_task(self, action: str, topic_name: Optional[str] = N
                     self.logger.info(f"Topic {topic_name} 配置已存在: {topic_config}")
 
                     return {
-                        "task_id": self.request.id,
-                        "status": "success",
-                        "action": action,
-                        "topic_name": topic_name,
-                        "message": "Topic配置已存在",
+                        "task_id": self.request.id,","
+                        "status": "success",","
+                        "action": action,","
+                        "topic_name": topic_name,","
+                        "message": "Topic配置已存在",""
                     }
                 else:
                     return {
-                        "task_id": self.request.id,
-                        "status": "failed",
-                        "action": action,
-                        "topic_name": topic_name,
-                        "error": "Topic不在配置中",
+                        "task_id": self.request.id,","
+                        "status": "failed",","
+                        "action": action,","
+                        "topic_name": topic_name,","
+                        "error": "Topic不在配置中",""
                     }
 
             else:
                 return {
-                    "task_id": self.request.id,
-                    "status": "failed",
-                    "action": action,
-                    "error": "不支持的操作或缺少参数",
+                    "task_id": self.request.id,","
+                    "status": "failed",","
+                    "action": action,","
+                    "error": "不支持的操作或缺少参数",""
                 }
 
         except (RuntimeError, ValueError, ConnectionError) as e:
@@ -449,10 +449,10 @@ def kafka_topic_management_task(self, action: str, topic_name: Optional[str] = N
             )
 
             return {
-                "task_id": self.request.id,
-                "status": "failed",
-                "error": error_msg,
-                "action": action,
+                "task_id": self.request.id,","
+                "status": "failed",","
+                "error": error_msg,","
+                "action": action,""
             }
 
     return self.run_async(_kafka_topic_management())

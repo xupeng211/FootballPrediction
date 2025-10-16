@@ -29,7 +29,7 @@ class QuerySpec:
     offset: Optional[int] = None
     include: Optional[List[str]] = None
 class BaseRepository(Generic[T, ID], ABC):
-    """仓储基类
+    """仓储基类"
 
     提供基本的数据访问功能。
     Provides basic data access functionality.
@@ -194,7 +194,7 @@ class WriteOnlyRepository(BaseRepository[T, ID], ABC):
 
 
 class Repository(ReadOnlyRepository[T, ID], WriteOnlyRepository[T, ID], ABC):
-    """完整仓储接口
+    """完整仓储接口"
 
     组合只读和只写接口。
     Combines read-only and write-only interfaces.
@@ -213,9 +213,9 @@ class Repository(ReadOnlyRepository[T, ID], WriteOnlyRepository[T, ID], ABC):
 
     async def update_or_create(
         self,
-        find_spec: QuerySpec,
-        update_data: Dict[str, Any],
-        create_data: Optional[Dict[str, Any]] = None,
+    find_spec: QuerySpec,
+    update_data: Dict[str, Any],
+    create_data: Optional[Dict[str, Any]] = None,
     ) -> tuple[T, bool]:
         """更新或创建实体"""
         entity = await self.find_one(find_spec)

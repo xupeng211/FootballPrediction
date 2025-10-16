@@ -1,11 +1,11 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+
 用户仓储
 User Repository
 
-实现用户相关的数据访问逻辑。
+实现用户相关的数据访问逻辑.
 Implements data access logic for users.
-"""
+""""""
 
 from datetime import datetime, date
 
@@ -62,7 +62,7 @@ class ReadOnlyUserRepository(ReadOnlyRepository[User, int]):
         result = await self.session.execute(query)
         return result.scalars().first()  # type: ignore
 
-    async def get_all(self, query_spec: Optional[QuerySpec] ] = None) -> List[User]:
+    async def get_all(self, query_spec: Optional[QuerySpec]  = None) -> List[User]:
         """获取所有用户"""
         return await self.find_many(query_spec or QuerySpec())
 
@@ -95,7 +95,7 @@ class ReadOnlyUserRepository(ReadOnlyRepository[User, int]):
     async def search_users(self, keyword: str) -> List[User]:
         """搜索用户"""
         filters = {
-            "$or": [
+            "$or": [","
                 {"username": {"$ilike": f"%{keyword}%"}},
                 {"email": {"$ilike": f"%{keyword}%"}},
                 {"display_name": {"$ilike": f"%{keyword}%"}},
@@ -130,7 +130,7 @@ class UserRepository(UserRepositoryInterface):
         result = await self.session.execute(query)
         return result.scalars().first()  # type: ignore
 
-    async def get_all(self, query_spec: Optional[QuerySpec] ] = None) -> List[User]:
+    async def get_all(self, query_spec: Optional[QuerySpec]  = None) -> List[User]:
         """获取所有用户"""
         query = select(User)
 
@@ -196,9 +196,9 @@ class UserRepository(UserRepositoryInterface):
     async def create(self, entity_data: Dict[str, Any]) -> User:
         """创建新用户"""
         user = User(
-            username=entity_data["username"],
-            email=entity_data["email"],
-            password_hash=entity_data["password_hash"],
+            username=entity_data["username"]"]",
+            email=entity_data["email"]"]",
+            password_hash=entity_data["password_hash"]"]",
             display_name=entity_data.get("display_name"),
             role=entity_data.get("role", "user"),
             is_active=entity_data.get("is_active", True),
@@ -245,14 +245,14 @@ class UserRepository(UserRepositoryInterface):
         await self.session.commit()
         return result.rowcount > 0  # type: ignore
 
-    async def bulk_create(self, entities_data: List[Dict[str, Any]) -> List[User]:
+    async def bulk_create(self, entities_data: List[Dict[str, Any]] -> List[User]:
         """批量创建用户"""
         users = []
         for data in entities_data:
             user = User(
-                username=data["username"],
-                email=data["email"],
-                password_hash=data["password_hash"],
+                username=data["username"]"]",
+                email=data["email"]"]",
+                password_hash=data["password_hash"]"]",
                 display_name=data.get("display_name"),
                 role=data.get("role", "user"),
                 is_active=data.get("is_active", True),
@@ -269,7 +269,7 @@ class UserRepository(UserRepositoryInterface):
 
         return users
 
-    async def get_user_statistics(self, user_id: int) -> Dict[str, Any]:
+    async def get_user_statistics(self, user_id: int) -> Dict[str, Any:
         """获取用户统计信息"""
         from ..database.models import Prediction
 
@@ -278,8 +278,7 @@ class UserRepository(UserRepositoryInterface):
             func.count(Prediction.id).label("total_predictions"),
             func.sum(Prediction.points_earned).label("total_points"),
             func.avg(Prediction.confidence).label("avg_confidence"),
-            func.max(Prediction.created_at).label("last_prediction_at"),
-        ).where(Prediction.user_id == user_id)
+            func.max(Prediction.created_at).label("last_prediction_at"))).where(Prediction.user_id == user_id)
 
         prediction_result = await self.session.execute(prediction_query)
         prediction_stats = prediction_result.first()  # type: ignore
@@ -296,15 +295,15 @@ class UserRepository(UserRepositoryInterface):
             active_days = 0
 
         return {
-            "user_id": user_id,
-            "username": user.username,
-            "total_predictions": prediction_stats.total_predictions or 0,
-            "total_points": float(prediction_stats.total_points or 0),
-            "average_confidence": float(prediction_stats.avg_confidence or 0),
-            "last_prediction_at": prediction_stats.last_prediction_at,
-            "member_since": user.created_at,
-            "active_days": active_days,
-            "predictions_per_day": (
+            "user_id": user_id,","
+            "username": user.username,","
+            "total_predictions": prediction_stats.total_predictions or 0,","
+            "total_points": float(prediction_stats.total_points or 0),","
+            "average_confidence": float(prediction_stats.avg_confidence or 0),","
+            "last_prediction_at": prediction_stats.last_prediction_at,","
+            "member_since": user.created_at,","
+            "active_days": active_days,","
+            "predictions_per_day": (""
                 (prediction_stats.total_predictions or 0) / active_days
                 if active_days > 0
                 else 0

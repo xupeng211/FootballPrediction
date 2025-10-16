@@ -42,7 +42,7 @@ class DatabasePoolConfig:
             max_overflow = min(30, pool_size * 1.5)
             pool_timeout = 20
             pool_recycle = 1800
-        else:  # development
+    "else":  # development
             pool_size = min(10, cpu_count * 2)
             max_overflow = 20
             pool_timeout = 10

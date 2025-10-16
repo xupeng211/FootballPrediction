@@ -23,7 +23,7 @@ class KeyManager:
         初始化密钥管理器
 
         Args:
-            key_file: 密钥文件路径
+    key_file: 密钥文件路径
         """
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.key_file = key_file or os.getenv("KEY_FILE_PATH", ".keys")
@@ -35,7 +35,7 @@ class KeyManager:
         获取密钥
 
         Args:
-            key_name: 密钥名称
+    key_name: 密钥名称
 
         Returns:
             密钥值（桩实现返回虚拟值）
@@ -49,8 +49,8 @@ class KeyManager:
         设置密钥
 
         Args:
-            key_name: 密钥名称
-            value: 密钥值
+    key_name: 密钥名称
+    value: 密钥值
         """
         self.logger.debug(f"Setting key: {key_name}")
         self._keys[key_name] = value
@@ -60,7 +60,7 @@ class KeyManager:
         删除密钥
 
         Args:
-            key_name: 密钥名称
+    key_name: 密钥名称
 
         Returns:
             是否成功删除
@@ -85,7 +85,7 @@ class KeyManager:
         轮换密钥
 
         Args:
-            key_name: 密钥名称
+    key_name: 密钥名称
 
         Returns:
             新密钥值
@@ -100,8 +100,8 @@ class KeyManager:
         加密数据
 
         Args:
-            data: 要加密的数据
-            key_name: 密钥名称
+    data: 要加密的数据
+    key_name: 密钥名称
 
         Returns:
             加密后的数据（桩实现）
@@ -117,8 +117,8 @@ class KeyManager:
         解密数据
 
         Args:
-            encrypted_data: 加密的数据
-            key_name: 密钥名称
+    encrypted_data: 加密的数据
+    key_name: 密钥名称
 
         Returns:
             解密后的数据（桩实现）
@@ -134,7 +134,7 @@ class KeyManager:
         验证密钥是否有效
 
         Args:
-            key_name: 密钥名称
+    key_name: 密钥名称
 
         Returns:
             是否有效
@@ -146,7 +146,7 @@ class KeyManager:
         从文件加载密钥
 
         Args:
-            file_path: 文件路径
+    file_path: 文件路径
         """
         file_path = file_path or self.key_file
         self.logger.info(f"Loading keys from: {file_path}")
@@ -157,7 +157,7 @@ class KeyManager:
         保存密钥到文件
 
         Args:
-            file_path: 文件路径
+    file_path: 文件路径
         """
         file_path = file_path or self.key_file
         self.logger.info(f"Saving keys to: {file_path}")
@@ -165,7 +165,7 @@ class KeyManager:
 
 
 # 全局实例
-_global_key_manager: KeyManager | None = None
+    _global_key_manager: KeyManager | None = None
 
 
 def get_key_manager() -> KeyManager:

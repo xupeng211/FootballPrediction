@@ -14,8 +14,8 @@ Integrates retry mechanisms to improve connection reliability.
 建议使用：from src.database.connection import <class_name>
 
 主要类 / Main Classes:
-    DatabaseManager: 单例数据库连接管理器 / Singleton database connection manager
-    MultiUserDatabaseManager: 多用户数据库连接管理器 / Multi-user database connection manager
+    "DatabaseManager": 单例数据库连接管理器 / Singleton database connection manager
+    "MultiUserDatabaseManager": 多用户数据库连接管理器 / Multi-user database connection manager
 
 主要方法 / Main Methods:
     DatabaseManager.initialize(): 初始化数据库连接 / Initialize database connection
@@ -42,13 +42,13 @@ Integrates retry mechanisms to improve connection reliability.
     ```
 
 环境变量 / Environment Variables:
-    DB_HOST: 数据库主机地址 / Database host address
-    DB_PORT: 数据库端口 / Database port
-    DB_NAME: 数据库名称 / Database name
-    DB_USER: 数据库用户名 / Database username
-    DB_PASSWORD: 数据库密码 / Database password
-    DATABASE_RETRY_MAX_ATTEMPTS: 数据库重试最大尝试次数，默认5 / Database retry max attempts, default 5
-    DATABASE_RETRY_BASE_DELAY: 数据库重试基础延迟秒数，默认1.0 / Database retry base delay in seconds, default 1.0
+    "DB_HOST": 数据库主机地址 / Database host address
+    "DB_PORT": 数据库端口 / Database port
+    "DB_NAME": 数据库名称 / Database name
+    "DB_USER": 数据库用户名 / Database username
+    "DB_PASSWORD": 数据库密码 / Database password
+    "DATABASE_RETRY_MAX_ATTEMPTS": 数据库重试最大尝试次数，默认5 / Database retry max attempts, default 5
+    "DATABASE_RETRY_BASE_DELAY": 数据库重试基础延迟秒数，默认1.0 / Database retry base delay in seconds, default 1.0
 
 依赖 / Dependencies:
     - sqlalchemy: 数据库ORM框架 / Database ORM framework

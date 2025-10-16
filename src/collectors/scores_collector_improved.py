@@ -1,10 +1,10 @@
 from typing import Any, Dict, List, Optional, Union
 # mypy: ignore-errors
-"""
+""""""
 改进的实时比分收集器
 Improved Real-time Scores Collector
 
-提供高性能的实时比分数据收集功能，支持：
+提供高性能的实时比分数据收集功能,支持:
 - 多数据源集成
 - WebSocket实时推送
 - 数据去重和验证
@@ -17,7 +17,7 @@ Provides high-performance real-time scores collection with:
 - Data deduplication and validation
 - Error handling and retry
 - Performance optimization
-"""
+""""""
 
 import asyncio
 import json
@@ -39,32 +39,32 @@ logger = logging.getLogger(__name__)
 
 
 class ScoresCollector:
-    """
+    """"""
     实时比分收集器
     Real-time Scores Collector
 
-    从多个数据源收集实时比分数据，支持WebSocket和HTTP轮询。
+    从多个数据源收集实时比分数据,支持WebSocket和HTTP轮询.
     Collects real-time scores from multiple sources, supporting WebSocket and HTTP polling.
-    """
+    """"""
 
     def __init__(
         self,
-        db_session: AsyncSession,
-        redis_manager: RedisManager,
-        api_key: Optional[str] = None,
-        websocket_url: Optional[str] = None,
-        poll_interval: int = 30,
+    "db_session": AsyncSession,
+    "redis_manager": RedisManager,
+    "api_key": Optional[str] = None,
+    "websocket_url": Optional[str] = None,
+    "poll_interval": int = 30,
     ):
-        """
+        """"""
         初始化比分收集器
 
         Args:
-            db_session: 数据库会话
-            redis_manager: Redis管理器
-            api_key: API密钥
-            websocket_url: WebSocket服务URL
-            poll_interval: HTTP轮询间隔（秒）
-        """
+    "db_session": 数据库会话
+    "redis_manager": Redis管理器
+    "api_key": API密钥
+    "websocket_url": WebSocket服务URL
+    "poll_interval": HTTP轮询间隔(秒)
+        """"""
         self.db_session = db_session
         self.redis_manager = redis_manager
         self.cache_manager = CacheKeyManager()
@@ -76,13 +76,13 @@ class ScoresCollector:
 
         # API端点
         self.api_endpoints = {
-            "football_api": os.getenv(
+            "football_api": os.getenv(","
                 "FOOTBALL_API_URL", "https://api.football-data.org/v4"
             ),
-            "api_sports": os.getenv(
+            "api_sports": os.getenv(","
                 "API_SPORTS_URL", "https://v3.football.api-sports.io"
             ),
-            "scorebat": os.getenv(
+            "scorebat": os.getenv(","
                 "SCOREBAT_URL", "https://www.scorebat.com/video/api/v1"
             ),
         }
@@ -99,12 +99,12 @@ class ScoresCollector:
 
         # 性能统计
         self._stats = {
-            "total_updates": 0,
-            "successful_updates": 0,
-            "failed_updates": 0,
-            "websocket_messages": 0,
-            "api_calls": 0,
-            "average_processing_time": 0.0,
+            "total_updates": 0,","
+            "successful_updates": 0,","
+            "failed_updates": 0,","
+            "websocket_messages": 0,","
+            "api_calls": 0,","
+            "average_processing_time": 0.0,""
         }
 
         # 重试配置
@@ -158,16 +158,16 @@ class ScoresCollector:
     async def collect_match_score(
         self, match_id: int, force: bool = False
     ) -> Optional[Dict[str, Any]:
-        """
+        """"""
         收集指定比赛的比分数据
 
         Args:
-            match_id: 比赛ID
-            force: 是否强制更新
+    "match_id": 比赛ID
+    "force": 是否强制更新
 
         Returns:
             Optional[Dict[str, Any]: 比分数据
-        """
+        """"""
         # 检查缓存
         if not force and match_id in self.match_cache:
             last_update = self.last_update_cache.get(match_id, utc_now())
@@ -202,12 +202,12 @@ class ScoresCollector:
             return None
 
     async def collect_live_matches(self) -> List[Dict[str, Any]:
-        """
+        """"""
         收集所有进行中的比赛比分
 
         Returns:
             List[Dict[str, Any]: 比分数据列表
-        """
+        """"""
         try:
             # 获取进行中的比赛
             live_matches = await self._get_live_matches()
@@ -223,7 +223,7 @@ class ScoresCollector:
             scores = []
             for i, result in enumerate(results):
                 if isinstance(result, Exception):
-                    logger.error(f"收集比赛 {live_matches[i]['id']} 比分失败: {result}")
+                    logger.error(f"收集比赛 {live_matches[i][id]} 比分失败: {result}")
                 elif result:
                     scores.append(result)
 
@@ -248,7 +248,7 @@ class ScoresCollector:
                     # 发送认证信息
                     if self.api_key:
                         await websocket.send(
-                            json.dumps({"type": "auth", "token": self.api_key})
+                            json.dumps({"type": "auth", "token": self.api_key})""
                         )
 
                     # 监听消息
@@ -272,7 +272,7 @@ class ScoresCollector:
                             logger.error(f"处理WebSocket消息失败: {e}")
 
             except websockets.exceptions.ConnectionClosed:
-                logger.warning("WebSocket连接已关闭，尝试重连...")
+                logger.warning("WebSocket连接已关闭,尝试重连...")
                 await asyncio.sleep(5)
             except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 logger.error(f"WebSocket连接失败: {e}")
@@ -358,7 +358,7 @@ class ScoresCollector:
         if not self.api_key:
             return None
 
-        url = f"{self.api_endpoints['football_api']}/matches/{match_id}"
+        url = f"{self.api_endpoints[football_api]}/matches/{match_id}"
         headers = {"X-Auth-Token": self.api_key}
 
         async with aiohttp.ClientSession() as session:
@@ -375,7 +375,7 @@ class ScoresCollector:
         if not self.api_key:
             return None
 
-        url = f"{self.api_endpoints['api_sports']}/fixtures?id={match_id}&live=all"
+        url = f"{self.api_endpoints[api_sports]}/fixtures?id={match_id}&live=all"
         headers = {"x-apisports-key": self.api_key}
 
         async with aiohttp.ClientSession() as session:
@@ -387,7 +387,7 @@ class ScoresCollector:
                 return None
 
     async def _fetch_from_scorebat(self, match_id: int) -> Optional[Dict[str, Any]:
-        """从Scorebat获取比分（简化实现）"""
+        """从Scorebat获取比分(简化实现)"""
         # Scorebat主要提供视频，这里作为备用数据源
         return None
 
@@ -397,29 +397,29 @@ class ScoresCollector:
         score = match.get("score", {})
 
         return {
-            "match_id": match.get("id"),
-            "home_score": score.get("fullTime", {}).get("home", 0),
-            "away_score": score.get("fullTime", {}).get("away", 0),
-            "home_half_score": score.get("halfTime", {}).get("home", 0),
-            "away_half_score": score.get("halfTime", {}).get("away", 0),
-            "match_time": match.get("utcDate"),
-            "match_status": match.get("status"),
-            "last_updated": utc_now().isoformat(),
-            "events": [],  # 可从其他端点获取
+            "match_id": match.get("id"),","
+            "home_score": score.get("fullTime", {}).get("home", 0),","
+            "away_score": score.get("fullTime", {}).get("away", 0),","
+            "home_half_score": score.get("halfTime", {}).get("home", 0),","
+            "away_half_score": score.get("halfTime", {}).get("away", 0),","
+            "match_time": match.get("utcDate"),","
+            "match_status": match.get("status"),","
+            "last_updated": utc_now().isoformat(),","
+            "events": [,  # 可从其他端点获取""
         }
 
     def _transform_api_sports_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """转换API-Sports数据格式"""
         return {
-            "match_id": data.get("fixture", {}).get("id"),
-            "home_score": data.get("goals", {}).get("home", 0),
-            "away_score": data.get("goals", {}).get("away", 0),
-            "home_half_score": data.get("score", {}).get("halftime", {}).get("home", 0),
-            "away_half_score": data.get("score", {}).get("halftime", {}).get("away", 0),
-            "match_time": data.get("fixture", {}).get("date"),
-            "match_status": data.get("fixture", {}).get("status", {}).get("long"),
-            "last_updated": utc_now().isoformat(),
-            "events": data.get("events", []),
+            "match_id": data.get("fixture", {}).get("id"),","
+            "home_score": data.get("goals", {}).get("home", 0),","
+            "away_score": data.get("goals", {}).get("away", 0),","
+            "home_half_score": data.get("score", {}).get("halftime", {}).get("home", 0),","
+            "away_half_score": data.get("score", {}).get("halftime", {}).get("away", 0),","
+            "match_time": data.get("fixture", {}).get("date"),","
+            "match_status": data.get("fixture", {}).get("status", {}).get("long"),","
+            "last_updated": utc_now().isoformat(),","
+            "events": data.get("events", []),""
         }
 
     async def _process_score_data(
@@ -445,16 +445,16 @@ class ScoresCollector:
             _new_status = self._map_status(score_data["match_status"])
 
             processed_data = {
-                "match_id": match_id,
-                "home_score": int(score_data["home_score"]),
-                "away_score": int(score_data["away_score"]),
-                "home_half_score": int(score_data.get("home_half_score", 0)),
-                "away_half_score": int(score_data.get("away_half_score", 0)),
-                "match_status": new_status.value,
-                "match_time": parse_datetime(score_data.get("match_time")),
-                "last_updated": parse_datetime(score_data.get("last_updated")),
-                "events": score_data.get("events", []),
-                "previous_status": old_status.value,
+                "match_id": match_id,","
+                "home_score": int(score_data["home_score"),","
+                "away_score": int(score_data["away_score"),","
+                "home_half_score": int(score_data.get("home_half_score", 0)),","
+                "away_half_score": int(score_data.get("away_half_score", 0)),","
+                "match_status": new_status.value,","
+                "match_time": parse_datetime(score_data.get("match_time")),","
+                "last_updated": parse_datetime(score_data.get("last_updated")),","
+                "events": score_data.get("events", []),","
+                "previous_status": old_status.value,""
             }
 
             # 检查是否有实质性更新
@@ -470,15 +470,15 @@ class ScoresCollector:
     def _map_status(self, api_status: str) -> MatchStatus:
         """映射API状态到内部状态"""
         status_mapping = {
-            "SCHEDULED": MatchStatus.SCHEDULED,
-            "TIMED": MatchStatus.SCHEDULED,
-            "POSTPONED": MatchStatus.POSTPONED,
-            "CANCELED": MatchStatus.CANCELLED,
-            "IN_PLAY": MatchStatus.IN_PROGRESS,
-            "LIVE": MatchStatus.IN_PROGRESS,
-            "PAUSED": MatchStatus.PAUSED,
-            "FINISHED": MatchStatus.FINISHED,
-            "AWARDED": MatchStatus.FINISHED,
+            "SCHEDULED": MatchStatus.SCHEDULED,","
+            "TIMED": MatchStatus.SCHEDULED,","
+            "POSTPONED": MatchStatus.POSTPONED,","
+            "CANCELED": MatchStatus.CANCELLED,","
+            "IN_PLAY": MatchStatus.IN_PROGRESS,","
+            "LIVE": MatchStatus.IN_PROGRESS,","
+            "PAUSED": MatchStatus.PAUSED,","
+            "FINISHED": MatchStatus.FINISHED,","
+            "AWARDED": MatchStatus.FINISHED,""
         }
 
         return status_mapping.get(api_status.upper(), MatchStatus.SCHEDULED)
@@ -515,11 +515,11 @@ class ScoresCollector:
                 update(Match)
                 .where(Match.id == score_data["match_id"])
                 .values(
-                    home_score=score_data["home_score"],
-                    away_score=score_data["away_score"],
-                    home_half_score=score_data["home_half_score"],
-                    away_half_score=score_data["away_half_score"],
-                    match_status=score_data["match_status"],
+                    home_score=score_data["home_score"]"],
+                    away_score=score_data["away_score"]"],
+                    home_half_score=score_data["home_half_score"]"],
+                    away_half_score=score_data["away_half_score"]"],
+                    match_status=score_data["match_status"]"],
                     updated_at=utc_now(),
                 )
             )
@@ -528,10 +528,10 @@ class ScoresCollector:
 
             # 保存原始数据（用于审计和分析）
             raw_data = RawScoresData(
-                match_id=score_data["match_id"],
+                match_id=score_data["match_id"]"],
                 source="real_time_collector",
                 _data=score_data,
-                collected_at=score_data["last_updated"],
+                collected_at=score_data["last_updated"]"],
             )
             self.db_session.add(raw_data)
 
@@ -548,7 +548,7 @@ class ScoresCollector:
                 + processing_time
             ) / self.stats["successful_updates"]
 
-            logger.debug(f"保存比赛 {score_data['match_id']} 比分数据成功")
+            logger.debug(f"保存比赛 {score_data[match_id]} 比分数据成功")
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             await self.db_session.rollback()
@@ -559,28 +559,28 @@ class ScoresCollector:
     async def _publish_score_update(self, score_data: Dict[str, Any]):
         """发布比分更新到Redis"""
         try:
-            channel = f"scores:match:{score_data['match_id']}"
+            channel = f"scores:match:{score_data[match_id]}"
             message = {
-                "type": "score_update",
-                "match_id": score_data["match_id"],
-                "home_score": score_data["home_score"],
-                "away_score": score_data["away_score"],
-                "status": score_data["match_status"],
-                "timestamp": utc_now().isoformat(),
+                "type": "score_update",","
+                "match_id": score_data["match_id",","
+                "home_score": score_data["home_score",","
+                "away_score": score_data["away_score",","
+                "status": score_data["match_status",","
+                "timestamp": utc_now().isoformat(),""
             }
 
             await self.redis_manager.client.publish(channel, json.dumps(message))
 
             # 发布到全局频道
             await self.redis_manager.client.publish(
-                "scores:global_updates", json.dumps(message)
+                "scores:global_updates", json.dumps(message)""
             )
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"发布比分更新失败: {e}")
 
     async def _handle_match_event(self, event_data: Dict[str, Any]):
-        """处理比赛事件（进球、红牌等）"""
+        """处理比赛事件(进球,红牌等)"""
         # 实现事件处理逻辑
         pass
 
@@ -602,10 +602,10 @@ class ScoresCollector:
 
         return [
             {
-                "id": match.id,
-                "home_team_id": match.home_team_id,
-                "away_team_id": match.away_team_id,
-                "match_time": match.match_time,
+                "id": match.id,","
+                "home_team_id": match.home_team_id,","
+                "away_team_id": match.away_team_id,","
+                "match_time": match.match_time,","
                 "current_score": f"{match.home_score}-{match.away_score}",
             }
             for match in matches
@@ -644,9 +644,9 @@ class ScoresCollector:
         """获取收集统计信息"""
         return {
             **self.stats,
-            "running": self.running,
-            "cached_matches": len(self.match_cache),
-            "success_rate": (
+            "running": self.running,","
+            "cached_matches": len(self.match_cache),","
+            "success_rate": (""
                 self.stats["successful_updates"] / self.stats["total_updates"]
                 if self.stats["total_updates"] > 0
                 else 0.0
@@ -658,7 +658,7 @@ class ScoresCollectorManager:
     """比分收集器管理器"""
 
     def __init__(self):
-        self.collectors: Dict[int, ScoresCollector] = {}
+        self.collectors: Dict[int, ScoresCollector] = {
         self.redis_manager = RedisManager()
 
     async def get_collector(self, session_id: int) -> ScoresCollector:
@@ -688,7 +688,7 @@ class ScoresCollectorManager:
 
 
 # 全局管理器实例
-_scores_manager: Optional[ScoresCollectorManager] = None
+    "_scores_manager": Optional[ScoresCollectorManager] = None
 def get_scores_manager() -> ScoresCollectorManager:
     """获取全局比分收集器管理器"""
     global _scores_manager

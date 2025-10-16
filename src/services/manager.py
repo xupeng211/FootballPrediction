@@ -35,7 +35,7 @@ class ServiceManager:
     """服务管理器 - 负责统一管理所有业务服务的生命周期和依赖关系"""
 
     def __init__(self) -> None:
-        self._services: Dict[str, BaseService] = {}}
+        self._services: Dict[str, BaseService] = {}
         self.logger = logger
 
     def register_service(self, name: str, service: BaseService) -> None:

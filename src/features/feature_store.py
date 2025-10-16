@@ -1,5 +1,5 @@
 from typing import Any, Dict, List, Optional, Union
-"""Feast 特征存储集成及其测试环境替身实现。"""
+"""Feast 特征存储集成及其测试环境替身实现."""
 
 import os
 from datetime import datetime, timedelta
@@ -23,9 +23,9 @@ except ImportError:  # pragma: no cover - 可选依赖在测试中常被禁用
     HAS_FEAST = False
 
     class _MockFeastResult:
-        """轻量的Feast查询结果，仅实现 to_df 方法。"""
+        """轻量的Feast查询结果,仅实现 to_df 方法."""
 
-        def __init__(self, rows: List[Dict[str, Any]):
+        def __init__(self, rows: List[Dict[str, Any]]:
             self._rows = rows
 
         def to_df(self):
@@ -61,7 +61,7 @@ except ImportError:  # pragma: no cover - 可选依赖在测试中常被禁用
         INT64 = "INT64"
 
     class MockFeatureStore:
-        """测试友好的Feast替代实现。"""
+        """测试友好的Feast替代实现."""
 
         def __init__(self, *args, **kwargs):
             self.applied_objects: List[Any] = []
@@ -72,20 +72,20 @@ except ImportError:  # pragma: no cover - 可选依赖在测试中常被禁用
         def get_online_features(
             self, features: List[str], entity_rows: List[Dict[str, Any]
         ) -> _MockFeastResult:
-            enriched_rows: List[Dict[str, Any] = []
+    "enriched_rows": List[Dict[str, Any] = []
             for row in entity_rows:
                 enriched = Dict[str, Any](row)
                 for feature in features:
-                    short_name = feature.split(":")[-1]
+                    short_name = feature.split(": ")[-1]""
                     enriched.setdefault(short_name, 0.0)
                 enriched_rows.append(enriched)
             return _MockFeastResult(enriched_rows)
 
         def get_historical_features(
-            self,
-            entity_df: Any,
-            features: List[str],
-            full_feature_names: bool = False,
+            self",
+    "entity_df": Any,
+    "features": List[str],
+    "full_feature_names": bool = False,
         ) -> _MockFeastResult:
             return _MockFeastResult([])
 
@@ -115,23 +115,23 @@ logger = logging.getLogger(__name__)
 
 
 class FootballFeatureStore:
-    """
+    """"""
     足球特征存储管理器
 
-    基于 Feast 实现的特征存储，支持：
-    - 在线特征查询（Redis）
-    - 离线特征查询（PostgreSQL）
+    基于 Feast 实现的特征存储,支持:
+    - 在线特征查询(Redis)
+    - 离线特征查询(PostgreSQL)
     - 特征注册和版本管理
     - 在线/离线特征同步
-    """
+    """"""
 
     def __init__(self, feature_store_path: str = "."):
-        """
+        """"""
         初始化特征存储
 
         Args:
-            feature_store_path: Feast 配置文件路径（默认为当前目录，包含feature_store.yaml）
-        """
+    "feature_store_path": Feast 配置文件路径(默认为当前目录,包含feature_store.yaml)
+        """"""
         self.feature_store_path = feature_store_path
         self.store: Optional[FeatureStore] = None
         self.calculator = FeatureCalculator()
@@ -150,36 +150,36 @@ class FootballFeatureStore:
             self.store = None
 
     def get_entity_definitions(self) -> Dict[str, Entity]:
-        """
+        """"""
         获取实体定义
 
         Returns:
             Dict[str, Entity]: 实体名称到实体对象的映射
-        """
+        """"""
         return {
-            "match": Entity(
+            "match": Entity(""
                 name="match",
                 value_type=ValueType.INT64,
-                description="比赛实体，用于比赛级别的特征",
+                description="比赛实体,用于比赛级别的特征",
             ),
-            "team": Entity(
+            "team": Entity(""
                 name="team",
                 value_type=ValueType.INT64,
-                description="球队实体，用于球队级别的特征",
+                description="球队实体,用于球队级别的特征",
             ),
         }
 
     def get_feature_view_definitions(self) -> Dict[str, FeatureView]:
-        """
+        """"""
         获取特征视图定义
 
         Returns:
             Dict[str, FeatureView]: 特征视图名称到视图对象的映射
-        """
+        """"""
         # PostgreSQL 数据源配置
         postgres_source = PostgreSQLSource(
             name="football_postgres",
-            query="""
+            query=""""""
                 SELECT
                     team_id,
                     recent_5_wins,
@@ -194,13 +194,13 @@ class FootballFeatureStore:
                     recent_5_away_goals_for,
                     calculation_date as event_timestamp
                 FROM team_recent_performance_features
-            """,
+            ""","""
             timestamp_field="event_timestamp",
         )
 
         match_postgres_source = PostgreSQLSource(
             name="football_match_postgres",
-            query="""
+            query=""""""
                 SELECT
                     match_id,
                     home_team_id,
@@ -213,13 +213,13 @@ class FootballFeatureStore:
                     h2h_away_goals_total,
                     calculation_date as event_timestamp
                 FROM historical_matchup_features
-            """,
+            ""","""
             timestamp_field="event_timestamp",
         )
 
         odds_postgres_source = PostgreSQLSource(
             name="football_odds_postgres",
-            query="""
+            query=""""""
                 SELECT
                     match_id,
                     home_odds_avg,
@@ -232,16 +232,16 @@ class FootballFeatureStore:
                     bookmaker_consensus,
                     calculation_date as event_timestamp
                 FROM odds_features
-            """,
+            ""","""
             timestamp_field="event_timestamp",
         )
 
         entities = self.get_entity_definitions()
 
         return {
-            "team_recent_performance": FeatureView(
+            "team_recent_performance": FeatureView(""
                 name="team_recent_performance",
-                entities=[entities["team"],
+                entities=[entities["team"]"],
                 ttl=timedelta(days=7),
                 schema=[
                     Field(name="recent_5_wins", dtype=Int64),
@@ -256,11 +256,11 @@ class FootballFeatureStore:
                     Field(name="recent_5_away_goals_for", dtype=Int64),
                 ],
                 source=postgres_source,
-                description="球队近期表现特征（最近5场比赛）",
+                description="球队近期表现特征(最近5场比赛)",
             ),
-            "historical_matchup": FeatureView(
+            "historical_matchup": FeatureView(""
                 name="historical_matchup",
-                entities=[entities["match"],
+                entities=[entities["match"]"],
                 ttl=timedelta(days=30),
                 schema=[
                     Field(name="home_team_id", dtype=Int64),
@@ -275,9 +275,9 @@ class FootballFeatureStore:
                 source=match_postgres_source,
                 description="球队历史对战特征",
             ),
-            "odds_features": FeatureView(
+            "odds_features": FeatureView(""
                 name="odds_features",
-                entities=[entities["match"],
+                entities=[entities["match"]"],
                 ttl=timedelta(hours=6),
                 schema=[
                     Field(name="home_odds_avg", dtype=Float64),
@@ -295,12 +295,12 @@ class FootballFeatureStore:
         }
 
     async def register_features(self) -> bool:
-        """
+        """"""
         注册特征到 Feast 存储
 
         Returns:
-            bool: 注册是否成功
-        """
+    "bool": 注册是否成功
+        """"""
         if not self.store:
             logger.info("Feast 存储未初始化")
             return False
@@ -326,16 +326,16 @@ class FootballFeatureStore:
     async def get_online_features(
         self, feature_refs: List[str], entity_rows: List[Dict[str, Any]
     ) -> pd.DataFrame:
-        """
-        获取在线特征（实时查询）
+        """"""
+        获取在线特征(实时查询)
 
         Args:
-            feature_refs: 特征引用列表，如 ["team_recent_performance:recent_5_wins"]
-            entity_rows: 实体行数据，如 [{"team_id": 1}, {"team_id": 2}]
+            feature_refs: 特征引用列表,如 ["team_recent_performance:recent_5_wins"]"]",
+    "entity_rows": 实体行数据,如 [{"team_id": 1}, {"team_id": 2}]
 
         Returns:
             pd.DataFrame: 特征数据
-        """
+        """"""
         if not self.store:
             raise ValueError("Feast 存储未初始化")
 
@@ -353,21 +353,21 @@ class FootballFeatureStore:
 
     async def get_historical_features(
         self,
-        entity_df: pd.DataFrame,
-        feature_refs: List[str],
-        full_feature_names: bool = False,
+    "entity_df": pd.DataFrame,
+    "feature_refs": List[str],
+    "full_feature_names": bool = False,
     ) -> pd.DataFrame:
-        """
-        获取历史特征（离线批量查询）
+        """"""
+        获取历史特征(离线批量查询)
 
         Args:
-            entity_df: 实体数据框，必须包含 entity_id 和 event_timestamp
-            feature_refs: 特征引用列表
-            full_feature_names: 是否返回完整特征名称
+    "entity_df": 实体数据框,必须包含 entity_id 和 event_timestamp
+    "feature_refs": 特征引用列表
+    "full_feature_names": 是否返回完整特征名称
 
         Returns:
             pd.DataFrame: 历史特征数据
-        """
+        """"""
         if not self.store:
             raise ValueError("Feast 存储未初始化")
 
@@ -376,8 +376,7 @@ class FootballFeatureStore:
             training_df = self.store.get_historical_features(
                 entity_df=entity_df,
                 features=feature_refs,
-                full_feature_names=full_feature_names,
-            ).to_df()
+                full_feature_names=full_feature_names)).to_df()
 
             return training_df
 
@@ -388,16 +387,16 @@ class FootballFeatureStore:
     async def push_features_to_online_store(
         self, feature_view_name: str, df: pd.DataFrame
     ) -> bool:
-        """
+        """"""
         推送特征到在线存储
 
         Args:
-            feature_view_name: 特征视图名称
-            df: 特征数据框
+    "feature_view_name": 特征视图名称
+    "df": 特征数据框
 
         Returns:
-            bool: 推送是否成功
-        """
+    "bool": 推送是否成功
+        """"""
         if not self.store:
             logger.info("Feast 存储未初始化")
             return False
@@ -422,16 +421,16 @@ class FootballFeatureStore:
     async def calculate_and_store_team_features(
         self, team_id: int, calculation_date: Optional[datetime] = None
     ) -> bool:
-        """
+        """"""
         计算并存储球队特征
 
         Args:
-            team_id: 球队ID
-            calculation_date: 计算日期
+    "team_id": 球队ID
+    "calculation_date": 计算日期
 
         Returns:
-            bool: 存储是否成功
-        """
+    "bool": 存储是否成功
+        """"""
         if calculation_date is None:
             calculation_date = datetime.now()
 
@@ -445,25 +444,25 @@ class FootballFeatureStore:
             df = pd.DataFrame(
                 [
                     {
-                        "team_id": features.team_id,
-                        "recent_5_wins": features.recent_5_wins,
-                        "recent_5_draws": features.recent_5_draws,
-                        "recent_5_losses": features.recent_5_losses,
-                        "recent_5_goals_for": features.recent_5_goals_for,
-                        "recent_5_goals_against": features.recent_5_goals_against,
-                        "recent_5_points": features.recent_5_points,
-                        "recent_5_home_wins": features.recent_5_home_wins,
-                        "recent_5_away_wins": features.recent_5_away_wins,
-                        "recent_5_home_goals_for": features.recent_5_home_goals_for,
-                        "recent_5_away_goals_for": features.recent_5_away_goals_for,
-                        "event_timestamp": calculation_date,
+                        "team_id": features.team_id,","
+                        "recent_5_wins": features.recent_5_wins,","
+                        "recent_5_draws": features.recent_5_draws,","
+                        "recent_5_losses": features.recent_5_losses,","
+                        "recent_5_goals_for": features.recent_5_goals_for,","
+                        "recent_5_goals_against": features.recent_5_goals_against,","
+                        "recent_5_points": features.recent_5_points,","
+                        "recent_5_home_wins": features.recent_5_home_wins,","
+                        "recent_5_away_wins": features.recent_5_away_wins,","
+                        "recent_5_home_goals_for": features.recent_5_home_goals_for,","
+                        "recent_5_away_goals_for": features.recent_5_away_goals_for,","
+                        "event_timestamp": calculation_date,""
                     }
                 ]
             )
 
             # 推送到在线存储
             return await self.push_features_to_online_store(
-                "team_recent_performance", df
+                "team_recent_performance", df"
             )
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
@@ -473,16 +472,16 @@ class FootballFeatureStore:
     async def calculate_and_store_match_features(
         self, match_entity: MatchEntity, calculation_date: Optional[datetime] = None
     ) -> bool:
-        """
+        """"""
         计算并存储比赛特征
 
         Args:
-            match_entity: 比赛实体
-            calculation_date: 计算日期
+    "match_entity": 比赛实体
+    "calculation_date": 计算日期
 
         Returns:
-            bool: 存储是否成功
-        """
+    "bool": 存储是否成功
+        """"""
         if calculation_date is None:
             calculation_date = match_entity.match_time
 
@@ -501,16 +500,16 @@ class FootballFeatureStore:
             h2h_df = pd.DataFrame(
                 [
                     {
-                        "match_id": match_entity.match_id,
-                        "home_team_id": h2h_features.home_team_id,
-                        "away_team_id": h2h_features.away_team_id,
-                        "h2h_total_matches": h2h_features.h2h_total_matches,
-                        "h2h_home_wins": h2h_features.h2h_home_wins,
-                        "h2h_away_wins": h2h_features.h2h_away_wins,
-                        "h2h_draws": h2h_features.h2h_draws,
-                        "h2h_home_goals_total": h2h_features.h2h_home_goals_total,
-                        "h2h_away_goals_total": h2h_features.h2h_away_goals_total,
-                        "event_timestamp": calculation_date,
+                        "match_id": match_entity.match_id,","
+                        "home_team_id": h2h_features.home_team_id,","
+                        "away_team_id": h2h_features.away_team_id,","
+                        "h2h_total_matches": h2h_features.h2h_total_matches,","
+                        "h2h_home_wins": h2h_features.h2h_home_wins,","
+                        "h2h_away_wins": h2h_features.h2h_away_wins,","
+                        "h2h_draws": h2h_features.h2h_draws,","
+                        "h2h_home_goals_total": h2h_features.h2h_home_goals_total,","
+                        "h2h_away_goals_total": h2h_features.h2h_away_goals_total,","
+                        "event_timestamp": calculation_date,""
                     }
                 ]
             )
@@ -519,38 +518,38 @@ class FootballFeatureStore:
             odds_df = pd.DataFrame(
                 [
                     {
-                        "match_id": odds_features.match_id,
-                        "home_odds_avg": (
+                        "match_id": odds_features.match_id,","
+                        "home_odds_avg": (""
                             float(odds_features.home_odds_avg)
                             if odds_features.home_odds_avg
                             else None
                         ),
-                        "draw_odds_avg": (
+                        "draw_odds_avg": (""
                             float(odds_features.draw_odds_avg)
                             if odds_features.draw_odds_avg
                             else None
                         ),
-                        "away_odds_avg": (
+                        "away_odds_avg": (""
                             float(odds_features.away_odds_avg)
                             if odds_features.away_odds_avg
                             else None
                         ),
-                        "home_implied_probability": odds_features.home_implied_probability,
-                        "draw_implied_probability": odds_features.draw_implied_probability,
-                        "away_implied_probability": odds_features.away_implied_probability,
-                        "bookmaker_count": odds_features.bookmaker_count,
-                        "bookmaker_consensus": odds_features.bookmaker_consensus,
-                        "event_timestamp": calculation_date,
+                        "home_implied_probability": odds_features.home_implied_probability,","
+                        "draw_implied_probability": odds_features.draw_implied_probability,","
+                        "away_implied_probability": odds_features.away_implied_probability,","
+                        "bookmaker_count": odds_features.bookmaker_count,","
+                        "bookmaker_consensus": odds_features.bookmaker_consensus,","
+                        "event_timestamp": calculation_date,""
                     }
                 ]
             )
 
             # 推送到在线存储
             h2h_success = await self.push_features_to_online_store(
-                "historical_matchup", h2h_df
+                "historical_matchup", h2h_df"
             )
             odds_success = await self.push_features_to_online_store(
-                "odds_features", odds_df
+                "odds_features", odds_df"
             )
 
             return h2h_success and odds_success
@@ -562,17 +561,17 @@ class FootballFeatureStore:
     async def get_match_features_for_prediction(
         self, match_id: int, home_team_id: int, away_team_id: int
     ) -> Optional[Dict[str, Any]:
-        """
+        """"""
         获取用于预测的比赛特征
 
         Args:
-            match_id: 比赛ID
-            home_team_id: 主队ID
-            away_team_id: 客队ID
+    "match_id": 比赛ID
+    "home_team_id": 主队ID
+    "away_team_id": 客队ID
 
         Returns:
             Optional[Dict[str, Any]: 特征字典
-        """
+        """"""
         try:
             # 生成缓存Key
             cache_key = CacheKeyManager.match_features_key(match_id)
@@ -586,12 +585,12 @@ class FootballFeatureStore:
             # 获取球队近期表现特征
             team_features = await self.get_online_features(
                 feature_refs=[
-                    "team_recent_performance:recent_5_wins",
-                    "team_recent_performance:recent_5_draws",
-                    "team_recent_performance:recent_5_losses",
-                    "team_recent_performance:recent_5_goals_for",
-                    "team_recent_performance:recent_5_goals_against",
-                    "team_recent_performance:recent_5_points",
+                    "team_recent_performance:recent_5_wins",","
+                    "team_recent_performance:recent_5_draws",","
+                    "team_recent_performance:recent_5_losses",","
+                    "team_recent_performance:recent_5_goals_for",","
+                    "team_recent_performance:recent_5_goals_against",","
+                    "team_recent_performance:recent_5_points",""
                 ],
                 entity_rows=[{"team_id": home_team_id}, {"team_id": away_team_id}],
             )
@@ -599,10 +598,10 @@ class FootballFeatureStore:
             # 获取历史对战特征
             h2h_features = await self.get_online_features(
                 feature_refs=[
-                    "historical_matchup:h2h_total_matches",
-                    "historical_matchup:h2h_home_wins",
-                    "historical_matchup:h2h_away_wins",
-                    "historical_matchup:h2h_draws",
+                    "historical_matchup:h2h_total_matches",","
+                    "historical_matchup:h2h_home_wins",","
+                    "historical_matchup:h2h_away_wins",","
+                    "historical_matchup:h2h_draws",""
                 ],
                 entity_rows=[{"match_id": match_id}],
             )
@@ -610,21 +609,21 @@ class FootballFeatureStore:
             # 获取赔率特征
             odds_features = await self.get_online_features(
                 feature_refs=[
-                    "odds_features:home_implied_probability",
-                    "odds_features:draw_implied_probability",
-                    "odds_features:away_implied_probability",
-                    "odds_features:bookmaker_consensus",
+                    "odds_features:home_implied_probability",","
+                    "odds_features:draw_implied_probability",","
+                    "odds_features:away_implied_probability",","
+                    "odds_features:bookmaker_consensus",""
                 ],
                 entity_rows=[{"match_id": match_id}],
             )
 
             # 合并特征
             features = {
-                "team_features": team_features.to_dict("records"),
-                "h2h_features": (
+                "team_features": team_features.to_dict("records"),","
+                "h2h_features": (""
                     h2h_features.to_dict("records")[0] if not h2h_features.empty else {}
                 ),
-                "odds_features": (
+                "odds_features": (""
                     odds_features.to_dict("records")[0]
                     if not odds_features.empty
                     else {}
@@ -645,21 +644,21 @@ class FootballFeatureStore:
     async def batch_calculate_features(
         self, start_date: datetime, end_date: datetime
     ) -> Dict[str, int]:
-        """
+        """"""
         批量计算特征
 
         Args:
-            start_date: 开始日期
-            end_date: 结束日期
+    "start_date": 开始日期
+    "end_date": 结束日期
 
         Returns:
             Dict[str, int]: 处理统计
-        """
+        """"""
         _stats = {
-            "matches_processed": 0,
-            "teams_processed": 0,
-            "features_stored": 0,
-            "errors": 0,
+            "matches_processed": 0,","
+            "teams_processed": 0,","
+            "features_stored": 0,","
+            "errors": 0,""
         }
 
         try:
@@ -717,6 +716,6 @@ class FootballFeatureStore:
             return stats
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            logger.info(f"批量计算特征失败: {e}")
+            logger.info(f"批量计算特征失败: {e")
             stats["errors"] += 1
             return stats

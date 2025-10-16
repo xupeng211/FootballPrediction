@@ -3,11 +3,11 @@ import sqlalchemy as sa
 
 
 # mypy: ignore-errors
-"""add_business_constraints
+"""add_business_constraints"
 
 
 Revision ID: a20f91c49306
-Revises: d82ea26f05d0
+    "Revises": d82ea26f05d0
 Create Date: 2025-09-11 23:59:32.853716
 
 为关键表添加业务逻辑约束和触发器：
@@ -18,10 +18,10 @@ Create Date: 2025-09-11 23:59:32.853716
 """
 
 # revision identifiers, used by Alembic.
-revision: str = "a20f91c49306"
-down_revision: Union[str, None] = "d82ea26f05d0"  # type: ignore
-branch_labels: Union[str, Sequence[str], None] = None  # type: ignore
-depends_on: Union[str, Sequence[str], None] = None  # type: ignore
+    "revision": str = "a20f91c49306"
+    "down_revision": Union[str, None] = "d82ea26f05d0"  # type: ignore
+    "branch_labels": Union[str, Sequence[str], None] = None  # type: ignore
+    "depends_on": Union[str, Sequence[str], None] = None  # type: ignore
 
 
 def upgrade() -> None:

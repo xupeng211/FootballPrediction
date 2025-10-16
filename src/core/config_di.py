@@ -26,26 +26,26 @@ logger = logging.getLogger(__name__)
 class ServiceConfig:
     """服务配置"""
 
-    name: str
-    implementation: str | None = None
-    lifetime: str = "transient"  # singleton, scoped, transient
-    factory: str | None = None
-    instance: str | None = None
-    dependencies: list[str] = field(default_factory=list)
-    parameters: dict[str, Any] = field(default_factory=dict[str, Any])
-    enabled: bool = True
-    condition: str | None = None
+    "name": str
+    "implementation": str | None = None
+    "lifetime": str = "transient"  # singleton, scoped, transient
+    "factory": str | None = None
+    "instance": str | None = None
+    "dependencies": list[str] = field(default_factory=list)
+    "parameters": dict[str, Any] = field(default_factory=dict[str, Any])
+    "enabled": bool = True
+    "condition": str | None = None
 
 
 @dataclass
 class DIConfiguration:
     """依赖注入配置"""
 
-    services: dict[str, ServiceConfig] = field(default_factory=dict[str, Any])
-    auto_scan: list[str] = field(default_factory=list)
-    conventions: list[str] = field(default_factory=list)
-    profiles: list[str] = field(default_factory=list)
-    imports: list[str] = field(default_factory=list)
+    "services": dict[str, ServiceConfig] = field(default_factory=dict[str, Any])
+    "auto_scan": list[str] = field(default_factory=list)
+    "conventions": list[str] = field(default_factory=list)
+    "profiles": list[str] = field(default_factory=list)
+    "imports": list[str] = field(default_factory=list)
 
 
 class ConfigurationBinder:
@@ -279,9 +279,9 @@ class ConfigurationBuilder:
 
     def add_service(
         self,
-        name: str,
-        implementation: str | None = None,
-        lifetime: str = "transient",
+    "name": str,
+    "implementation": str | None = None,
+    "lifetime": str = "transient",
         **kwargs,
     ) -> "ConfigurationBuilder":
         """添加服务配置"""
@@ -333,33 +333,33 @@ def generate_sample_config(format: str = "yaml") -> str:
 services:
   # 数据库服务
   database_service:
-    implementation: src.services.database.DatabaseService
-    lifetime: singleton
+    "implementation": src.services.database.DatabaseService
+    "lifetime": singleton
 
   # 仓储服务
   user_repository:
-    implementation: src.database.repositories.UserRepository
-    lifetime: scoped
+    "implementation": src.database.repositories.UserRepository
+    "lifetime": scoped
 
   match_repository:
-    implementation: src.database.repositories.MatchRepository
-    lifetime: scoped
+    "implementation": src.database.repositories.MatchRepository
+    "lifetime": scoped
 
   # 业务服务
   prediction_service:
-    implementation: src.services.prediction.PredictionService
-    lifetime: scoped
+    "implementation": src.services.prediction.PredictionService
+    "lifetime": scoped
     dependencies:
       - match_repository
       - user_repository
     parameters:
-      max_predictions_per_day: 10
+    "max_predictions_per_day": 10
 
   # 使用工厂
   cache_service:
-    factory: src.factories.create_cache_service
-    lifetime: singleton
-    condition: "profile == 'production'"
+    "factory": src.factories.create_cache_service
+    "lifetime": singleton
+    "condition": "profile == 'production'"
 
 # 自动扫描的模块
 auto_scan:
@@ -384,7 +384,7 @@ imports:
   - configs/di-services.yaml
   - configs/di-repositories.yaml
 """
-    else:  # JSON
+    "else":  # JSON
         return """{
   "services": {
     "database_service": {

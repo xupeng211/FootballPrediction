@@ -29,8 +29,8 @@ class DISetup:
 
     def initialize(
         self,
-        config_file: str | None = None,
-        auto_scan_modules: list | None = None,
+    config_file: str | None = None,
+    auto_scan_modules: list | None = None,
     ) -> DIContainer:
         """初始化依赖注入"""
         logger.info(f"初始化依赖注入，配置文件: {config_file}, 环境: {self.profile}")
@@ -129,7 +129,7 @@ class DISetup:
 
 
 # 全局DI设置实例
-_di_setup: DISetup | None = None
+    _di_setup: DISetup | None = None
 
 
 def get_di_setup() -> DISetup:

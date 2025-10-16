@@ -1,8 +1,8 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+
 Feast Feature Store Mock 实现
-用于测试环境，避免真实的Feast依赖
-"""
+用于测试环境,避免真实的Feast依赖
+
 
 import logging
 from datetime import datetime, timedelta
@@ -16,28 +16,28 @@ logger = logging.getLogger(__name__)
 class FeatureView:
     """特征视图"""
 
-    name: str
-    entities: List[str]
-    features: List[str]
-    ttl: Optional[timedelta] = None
-    batch_source: Optional[str] = None
-    stream_source: Optional[str] = None
-    tags: Optional[Dict[str, str] = None
+    "name": str
+    "entities": List[str]
+    "features": List[str]
+    "ttl": Optional[timedelta] = None
+    "batch_source": Optional[str] = None
+    "stream_source": Optional[str] = None
+    "tags": Optional[Dict[str, str] = None
 @dataclass
 class Entity:
     """实体"""
 
-    name: str
-    value_type: str
-    description: Optional[str] = None
-    tags: Optional[Dict[str, str] = None
+    "name": str
+    "value_type": str
+    "description": Optional[str] = None
+    "tags": Optional[Dict[str, str] = None
 @dataclass
 class FeatureService:
     """特征服务"""
 
-    name: str
-    features: List[str]
-    tags: Optional[Dict[str, str] = None
+    "name": str
+    "features": List[str]
+    "tags": Optional[Dict[str, str] = None
 class ValueType:
     """值类型常量"""
 
@@ -111,7 +111,7 @@ class MockFeatureStore:
         self, feature_refs: List[str], entity_rows: List[Dict[str, Any]
     ) -> Tuple[List[Dict[str, Any], List[str]:
         """获取在线特征"""
-        features: List[Any] = []
+    "features": List[Any] = []
         field_names = []
 
         # 解析特征引用
@@ -160,9 +160,9 @@ class MockFeatureStore:
 
     def write_to_online_store(
         self,
-        feature_view_name: str,
-        df: Any,  # DataFrame-like object
-        registry: Any = None,
+    "feature_view_name": str,
+    "df": Any,  # DataFrame-like object
+    "registry": Any = None,
     ) -> None:
         """写入在线存储"""
         logger.info(f"Writing to online store for {feature_view_name}")
@@ -200,7 +200,7 @@ class MockFeatureService:
     def __init__(self, name: str, feature_store: MockFeatureStore):
         self.name = name
         self.feature_store = feature_store
-        self._service_config: Optional[Dict[str, Any]] = None
+        self._service_config: Optional[Dict[str, Any] = None
     def get_feature_vector(
         self, entity_id: str, feature_refs: List[str]
     ) -> Dict[str, Any]:
@@ -257,7 +257,7 @@ class MockOnlineResponse:
         return self._features
 
     def to_df(self) -> Any:
-        """转换为DataFrame（mock）"""
+        """转换为DataFrame(mock)"""
         import pandas as pd
 
         return pd.DataFrame(self._features, columns=self._field_names)
@@ -291,26 +291,26 @@ def Client(repo_path: str = None, config_path: str = None) -> MockFeastClient:
 def generate_test_features(entity_id: str) -> Dict[str, Any]:
     """生成测试特征数据"""
     return {
-        "match_stats__goals_scored": 2,
-        "match_stats__goals_conceded": 1,
-        "match_stats__possession": 65.5,
-        "match_stats__shots": 12,
-        "match_stats__shots_on_target": 5,
-        "team_form__last_5_matches_wins": 3,
-        "team_form__last_5_matches_draws": 1,
-        "team_form__last_5_matches_losses": 1,
-        "team_form__current_streak": "W",
-        "player_stats__avg_rating": 7.2,
-        "player_stats__goals": 8,
-        "player_stats__assists": 3,
-        "historical__head_to_head_wins": 5,
-        "historical__head_to_head_losses": 3,
-        "historical__head_to_head_draws": 2,
+        "match_stats__goals_scored": 2,","
+        "match_stats__goals_conceded": 1,","
+        "match_stats__possession": 65.5,","
+        "match_stats__shots": 12,","
+        "match_stats__shots_on_target": 5,","
+        "team_form__last_5_matches_wins": 3,","
+        "team_form__last_5_matches_draws": 1,","
+        "team_form__last_5_matches_losses": 1,","
+        "team_form__current_streak": "W",","
+        "player_stats__avg_rating": 7.2,","
+        "player_stats__goals": 8,","
+        "player_stats__assists": 3,","
+        "historical__head_to_head_wins": 5,","
+        "historical__head_to_head_losses": 3,","
+        "historical__head_to_head_draws": 2,""
     }
 
 
 # 创建全局实例
-global_feast_store: Optional[MockFeatureStore] = None
+    "global_feast_store": Optional[MockFeatureStore] = None
 def get_feast_store() -> MockFeatureStore:
     """获取全局特征存储实例"""
     global global_feast_store

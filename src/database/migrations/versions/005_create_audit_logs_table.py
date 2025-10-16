@@ -7,8 +7,8 @@ from datetime import datetime, timezone
 创建新的权限审计日志表，支持详细的操作记录和合规要求。
 扩展原有的permission_audit_log功能，提供更全面的审计能力。
 
-迁移ID: 005
-创建时间: 2025-09-12
+    "迁移ID": 005
+    "创建时间": 2025-09-12
 """
 # mypy: ignore-errors
 

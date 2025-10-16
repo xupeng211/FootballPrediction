@@ -131,10 +131,10 @@ def get_json_type(use_jsonb: bool = True) -> TypeDecorator:
     获取兼容的JSON类型
 
     Args:
-        use_jsonb: 是否优先使用JSONB（仅在PostgreSQL中有效）
+    "use_jsonb": 是否优先使用JSONB（仅在PostgreSQL中有效）
 
     Returns:
-        TypeDecorator: 兼容的JSON类型
+    "TypeDecorator": 兼容的JSON类型
     """
     if use_jsonb:
         return SQLiteCompatibleJSONB()

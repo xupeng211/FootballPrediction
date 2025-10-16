@@ -1,11 +1,11 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+
 机器学习模型策略
 ML Model Strategy
 
-使用机器学习模型进行预测的策略实现。
+使用机器学习模型进行预测的策略实现.
 Strategy implementation using machine learning models for prediction.
-"""
+""""""
 
 import time
 import numpy as np
@@ -23,11 +23,11 @@ from ..models.prediction import Prediction
 
 
 class MLModelStrategy(PredictionStrategy):
-    """机器学习模型预测策略
+    """机器学习模型预测策略"""
 
-    使用训练好的机器学习模型进行比赛预测。
+    使用训练好的机器学习模型进行比赛预测.
     Uses trained machine learning models for match prediction.
-    """
+    """"""
 
     def __init__(self, model_name: str = "default_ml_model") -> None:
         super().__init__(model_name, StrategyType.ML_MODEL)
@@ -40,15 +40,15 @@ class MLModelStrategy(PredictionStrategy):
         self.logger = logging.getLogger(__name__)
 
     async def initialize(self, config: Dict[str, Any]) -> None:
-        """初始化ML模型策略
+        """初始化ML模型策略"""
 
         Args:
-            config: 配置参数，包含：
+    "config": 配置参数,包含:
                 - mlflow_tracking_uri: MLflow跟踪URI
                 - model_name: 模型名称
-                - model_stage: 模型阶段（Production, Staging等）
+                - model_stage: 模型阶段(Production, Staging等)
                 - feature_config: 特征配置
-        """
+        """"""
         self.config = config
 
         # 初始化MLflow客户端
@@ -74,7 +74,7 @@ class MLModelStrategy(PredictionStrategy):
         await self._initialize_feature_processor(config)
 
         self._is_initialized = True
-        self.logger.info(f"ML模型策略 '{self.name}' 初始化成功")
+        self.logger.info(f"ML模型策略 {self.name} 初始化成功")
 
     async def _load_model(self, config: Dict[str, Any]) -> None:
         """加载ML模型"""
@@ -116,18 +116,18 @@ class MLModelStrategy(PredictionStrategy):
         # 这里应该根据实际的特征处理器来初始化
         # 暂时使用简单的配置
         self._feature_columns = config.get(
-            "feature_columns",
+            "feature_columns",""
             [
-                "home_team_rating",
-                "away_team_rating",
-                "home_form",
-                "away_form",
-                "head_to_head_home_wins",
-                "head_to_head_away_wins",
-                "days_since_last_match_home",
-                "days_since_last_match_away",
-                "home_advantage",
-                "match_importance",
+                "home_team_rating",""
+                "away_team_rating",""
+                "home_form",""
+                "away_form",""
+                "head_to_head_home_wins",""
+                "head_to_head_away_wins",""
+                "days_since_last_match_home",""
+                "days_since_last_match_away",""
+                "home_advantage",""
+                "match_importance",""
             ],
         )
 
@@ -266,11 +266,11 @@ class MLModelStrategy(PredictionStrategy):
         elif advantage < -0.5:
             delta = min(0.15, abs(advantage) * 0.05)
             base[2] += delta
-            base[[0, 1] -= delta / 2
+            base[0, 1] -= delta / 2
         else:
             delta = min(0.1, abs(advantage) * 0.03)
             base[1] += delta
-            base[[0, 2] -= delta / 2
+            base[0, 2] -= delta / 2
 
         base = np.clip(base, 0.05, 0.9)
         base = base / base.sum()
@@ -305,9 +305,9 @@ class MLModelStrategy(PredictionStrategy):
 
     async def _format_output(
         self,
-        prediction_result: Any,
-        prediction_proba: Optional[Any],
-        input_data: PredictionInput,
+    "prediction_result": Any,
+    "prediction_proba": Optional[Any],
+    "input_data": PredictionInput,
     ) -> PredictionOutput:
         """格式化预测输出"""
         # 根据模型输出解析预测结果
@@ -342,9 +342,9 @@ class MLModelStrategy(PredictionStrategy):
         if prediction_proba is not None and hasattr(prediction_proba, "__len__"):
             if len(prediction_proba) == 3:  # 假设是赢/平/输的概率
                 probability_distribution = {
-                    "home_win": float(prediction_proba[0]),
-                    "draw": float(prediction_proba[1]),
-                    "away_win": float(prediction_proba[2]),
+                    "home_win": float(prediction_proba[0),","
+                    "draw": float(prediction_proba[1),","
+                    "away_win": float(prediction_proba[2),""
                 }
 
         return PredictionOutput(
@@ -352,13 +352,13 @@ class MLModelStrategy(PredictionStrategy):
             predicted_away_score=pred_away,
             confidence=confidence,
             probability_distribution=probability_distribution,
-            metadata={
-                "model_version": self._model_version,
-                "model_loaded_at": self._model_loaded_at.isoformat()
+            metadata]] = {
+                "model_version": self._model_version,","
+                "model_loaded_at": self._model_loaded_at.isoformat()""
                 if self._model_loaded_at
                 else None,
-                "features_used": self._feature_columns,
-            },
+                "features_used": self._feature_columns,""
+            ,
         )
 
     async def _convert_prediction_to_score(
@@ -379,7 +379,7 @@ class MLModelStrategy(PredictionStrategy):
         return home_goals, away_goals
 
     async def update_metrics(
-        self, actual_results: List[Tuple[Prediction, Dict[str, Any]
+        self, actual_results: List[Tuple[Prediction, Dict[str, Any]]
     ) -> None:
         """更新策略性能指标"""
         if not actual_results:
@@ -449,7 +449,7 @@ class MLModelStrategy(PredictionStrategy):
 
         # 检查是否有必需的特征数据
         if not input_data.historical_data and not input_data.additional_features:
-            self.logger.info("警告: 缺少特征数据，可能影响预测准确性")
+            self.logger.info("警告: 缺少特征数据,可能影响预测准确性")
 
         return True
 

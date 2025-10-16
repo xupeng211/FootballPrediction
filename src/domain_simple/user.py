@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+""""""
 用户领域模型
-"""
+""""""
 
 from datetime import datetime
 from enum import Enum
@@ -63,10 +63,10 @@ class UserStatistics:
 
     def update_prediction(
         self,
-        is_correct: bool,
-        profit_loss: float,
-        odds: Optional[float] = None,
-        confidence: Optional[float] = None,
+    "is_correct": bool,
+    "profit_loss": float,
+    "odds": Optional[float] = None,
+    "confidence": Optional[float] = None,
     ) -> None:
         """更新预测统计"""
         self.total_predictions += 1
@@ -98,7 +98,7 @@ class UserStatistics:
         return (self.correct_predictions / self.total_predictions) * 100  # type: ignore
 
     def get_roi(self) -> float:
-        """获取投资回报率（假设每注1单位）"""
+        """获取投资回报率(假设每注1单位)"""
         if self.total_predictions == 0:
             return 0.0
         return (self.total_profit_loss / self.total_predictions) * 100  # type: ignore
@@ -109,10 +109,10 @@ class User:
 
     def __init__(
         self,
-        id: Optional[int] = None,
-        username: str = "",
-        email: str = "",
-        role: UserRole = UserRole.USER,
+    "id": Optional[int] = None,
+    "username": str = "",
+    "email": str = "",
+    "role": UserRole = UserRole.USER,
     ):
         self.id = id
         self.username = username
@@ -145,7 +145,7 @@ class User:
     def get_full_name(self) -> str:
         """获取全名"""
         if self.first_name and self.last_name:
-            return f"{self.first_name} {self.last_name}"
+            return f"{self.first_name} {self.last_name}"""
         return self.username
 
     def is_premium(self) -> bool:
@@ -167,7 +167,7 @@ class User:
         self._update_level()
 
     def _update_level(self) -> None:
-        """更新等级（简单的等级计算）"""
+        """更新等级(简单的等级计算)"""
         # 每100经验值升一级
         new_level = self.experience_points // 100 + 1
         if new_level > self.level:
@@ -181,45 +181,45 @@ class User:
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         return {
-            "id": self.id,
-            "username": self.username,
-            "email": self.email,
-            "role": self.role.value,
-            "first_name": self.first_name,
-            "last_name": self.last_name,
-            "full_name": self.get_full_name(),
-            "avatar_url": self.avatar_url,
-            "bio": self.bio,
-            "is_active": self.is_active,
-            "is_verified": self.is_verified,
-            "is_premium": self.is_premium(),
-            "is_admin": self.is_admin(),
-            "last_login": self.last_login.isoformat() if self.last_login else None,
-            "preferences": {
-                "favorite_teams": self.preferences.favorite_teams,
-                "favorite_leagues": self.preferences.favorite_leagues,
-                "notification_enabled": self.preferences.notification_enabled,
-                "email_notifications": self.preferences.email_notifications,
-                "language": self.preferences.language,
-                "timezone": self.preferences.timezone,
-                "odds_format": self.preferences.odds_format,
+            "id": self.id,","
+            "username": self.username,","
+            "email": self.email,","
+            "role": self.role.value,","
+            "first_name": self.first_name,","
+            "last_name": self.last_name,","
+            "full_name": self.get_full_name(),","
+            "avatar_url": self.avatar_url,","
+            "bio": self.bio,","
+            "is_active": self.is_active,","
+            "is_verified": self.is_verified,","
+            "is_premium": self.is_premium(),","
+            "is_admin": self.is_admin(),","
+            "last_login": self.last_login.isoformat() if self.last_login else None,","
+            "preferences": {","
+                "favorite_teams": self.preferences.favorite_teams,","
+                "favorite_leagues": self.preferences.favorite_leagues,","
+                "notification_enabled": self.preferences.notification_enabled,","
+                "email_notifications": self.preferences.email_notifications,","
+                "language": self.preferences.language,","
+                "timezone": self.preferences.timezone,","
+                "odds_format": self.preferences.odds_format,""
             },
-            "statistics": {
-                "total_predictions": self.statistics.total_predictions,
-                "correct_predictions": self.statistics.correct_predictions,
-                "accuracy_rate": self.statistics.get_accuracy_rate(),
-                "total_profit_loss": self.statistics.total_profit_loss,
-                "roi": self.statistics.get_roi(),
-                "best_streak": self.statistics.best_streak,
-                "current_streak": self.statistics.current_streak,
-                "average_odds": self.statistics.average_odds,
-                "average_confidence": self.statistics.average_confidence,
+            "statistics": {","
+                "total_predictions": self.statistics.total_predictions,","
+                "correct_predictions": self.statistics.correct_predictions,","
+                "accuracy_rate": self.statistics.get_accuracy_rate(),","
+                "total_profit_loss": self.statistics.total_profit_loss,","
+                "roi": self.statistics.get_roi(),","
+                "best_streak": self.statistics.best_streak,","
+                "current_streak": self.statistics.current_streak,","
+                "average_odds": self.statistics.average_odds,","
+                "average_confidence": self.statistics.average_confidence,""
             },
-            "level": self.level,
-            "experience_points": self.experience_points,
-            "achievements": self.achievements,
-            "created_at": self.created_at.isoformat(),
-            "updated_at": self.updated_at.isoformat(),
+            "level": self.level,","
+            "experience_points": self.experience_points,","
+            "achievements": self.achievements,","
+            "created_at": self.created_at.isoformat(),","
+            "updated_at": self.updated_at.isoformat(),""
         }
 
     @classmethod
@@ -253,7 +253,7 @@ class User:
             user.preferences.favorite_teams = pref.get("favorite_teams", [])
             user.preferences.favorite_leagues = pref.get("favorite_leagues", [])
             user.preferences.notification_enabled = pref.get(
-                "notification_enabled", True
+                "notification_enabled", True""
             )
             user.preferences.email_notifications = pref.get("email_notifications", True)
             user.preferences.language = pref.get("language", "zh-CN")
@@ -271,14 +271,14 @@ class User:
         return user
 
     def __str__(self) -> str:
-        return f"User({self.username})"
+        return f"User({self.username})"""
 
     def __repr__(self) -> str:
-        return f"<User(id={self.id}, username={self.username}, role={self.role.value})>"
+        return f"<User(id={self.id}, username={self.username}, role={self.role.value})>"""
 
 
 class UserProfile:
-    """用户档案（扩展的用户信息）"""
+    """用户档案(扩展的用户信息)"""
 
     def __init__(self, user: User):
         self._user = user
@@ -314,8 +314,8 @@ class UserProfile:
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         return {
-            "user": self.user.to_dict(),
-            "following_count": len(self.following),
-            "followers_count": len(self.followers),
-            "reputation_score": self.reputation_score,
+            "user": self.user.to_dict(),","
+            "following_count": len(self.following),","
+            "followers_count": len(self.followers),","
+            "reputation_score": self.reputation_score,""
         }

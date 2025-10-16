@@ -68,13 +68,13 @@ class Odds:
 
     def __init__(
         self,
-        id: int | None = None,
-        match_id: int = 0,
-        market_type: MarketType = MarketType.MATCH_RESULT,
-        bookmaker: str = "",
-        home_odds: float | None = None,
-        draw_odds: float | None = None,
-        away_odds: float | None = None,
+    id: int | None = None,
+    match_id: int = 0,
+    market_type: MarketType = MarketType.MATCH_RESULT,
+    bookmaker: str = "",
+    home_odds: float | None = None,
+    draw_odds: float | None = None,
+    away_odds: float | None = None,
     ):
         self.id = id
         self.match_id = match_id
@@ -106,9 +106,9 @@ class Odds:
 
     def update_odds(
         self,
-        home_odds: float | None = None,
-        draw_odds: float | None = None,
-        away_odds: float | None = None,
+    home_odds: float | None = None,
+    draw_odds: float | None = None,
+    away_odds: float | None = None,
     ) -> None:
         """更新赔率"""
         # 记录变化
@@ -278,25 +278,25 @@ class Odds:
     def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
-            "id": self.id,
-            "match_id": self.match_id,
-            "market_type": self.market_type.value,
-            "bookmaker": self.bookmaker,
-            "home_odds": self.home_odds,
-            "draw_odds": self.draw_odds,
-            "away_odds": self.away_odds,
-            "over_odds": self.over_odds,
-            "under_odds": self.under_odds,
-            "handicap": self.handicap,
-            "implied_probability": self.get_implied_probability(),
-            "true_probability": self.get_true_probability(),
-            "vig_percentage": self.get_vig_percentage(),
-            "movements_count": len(self.movements),
-            "is_active": self.is_active,
-            "is_suspended": self.is_suspended,
-            "created_at": self.created_at.isoformat(),
-            "updated_at": self.updated_at.isoformat(),
-            "last_movement": self.last_movement.isoformat()
+            id: self.id,
+            match_id: self.match_id,
+            market_type: self.market_type.value,
+            bookmaker: self.bookmaker,
+            home_odds: self.home_odds,
+            draw_odds: self.draw_odds,
+            away_odds: self.away_odds,
+            over_odds: self.over_odds,
+            under_odds: self.under_odds,
+            handicap: self.handicap,
+            implied_probability: self.get_implied_probability(),
+            true_probability: self.get_true_probability(),
+            vig_percentage: self.get_vig_percentage(),
+            movements_count: len(self.movements),
+            is_active: self.is_active,
+            is_suspended: self.is_suspended,
+            created_at: self.created_at.isoformat(),
+            updated_at: self.updated_at.isoformat(),
+            last_movement: self.last_movement.isoformat()
             if self.last_movement
             else None,
         }

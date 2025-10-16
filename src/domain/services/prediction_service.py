@@ -30,16 +30,16 @@ class PredictionDomainService:
     """预测领域服务"""
 
     def __init__(self) -> None:
-        self._events: List[Any] = {}]
+        self._events: List[Any] = []
 
     def create_prediction(
         self,
-        user_id: int,
-        match: Match,
-        predicted_home: int,
-        predicted_away: int,
-        confidence: Optional[float] ] = None,
-        notes: Optional[str] ] = None,
+    user_id: int,
+    match: Match,
+    predicted_home: int,
+    predicted_away: int,
+    confidence: Optional[float] = None,
+    notes: Optional[str] = None,
     ) -> Prediction:
         """创建预测"""
         # 验证比赛状态
@@ -92,11 +92,11 @@ class PredictionDomainService:
 
     def update_prediction(
         self,
-        prediction: Prediction,
-        new_predicted_home: int,
-        new_predicted_away: int,
-        new_confidence: Optional[float] ] = None,
-        new_notes: Optional[str] ] = None,
+    prediction: Prediction,
+    new_predicted_home: int,
+    new_predicted_away: int,
+    new_confidence: Optional[float] = None,
+    new_notes: Optional[str] = None,
     ) -> None:
         """更新预测"""
         # 验证预测状态
@@ -131,10 +131,10 @@ class PredictionDomainService:
 
     def evaluate_prediction(
         self,
-        prediction: Prediction,
-        actual_home: int,
-        actual_away: int,
-        scoring_rules: Optional[Dict[str, Any] ] ] ] = None,
+    prediction: Prediction,
+    actual_home: int,
+    actual_away: int,
+    scoring_rules: Optional[Dict[str, Any]] = None,
     ) -> None:
         """评估预测"""
         if prediction.status != PredictionStatus.PENDING:
@@ -235,9 +235,9 @@ class PredictionDomainService:
 
     def calculate_prediction_confidence(
         self,
-        user_history: Dict[str, Any],
-        match_importance: float,
-        team_form_diff: Optional[float] ] = None,
+    user_history: Dict[str, Any],
+    match_importance: float,
+    team_form_diff: Optional[float] = None,
     ) -> float:
         """计算预测信心度"""
         base_confidence = 0.5
@@ -259,9 +259,9 @@ class PredictionDomainService:
 
     def validate_prediction_rules(
         self,
-        prediction: Prediction,
-        user_predictions_today: int,
-        max_predictions_per_day: int = 10,
+    prediction: Prediction,
+    user_predictions_today: int,
+    max_predictions_per_day: int = 10,
     ) -> List[str]:
         """验证预测规则"""
         errors = []

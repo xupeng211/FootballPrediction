@@ -57,20 +57,20 @@ class FeatureEntity(BaseModel):
 
     __tablename__ = "feature_entities"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    name: Mapped[str] = mapped_column(String(100), nullable=False)
-    entity_type: Mapped[FeatureEntityType] = mapped_column(
+    "id": Mapped[int] = mapped_column(Integer, primary_key=True)
+    "name": Mapped[str] = mapped_column(String(100), nullable=False)
+    "entity_type": Mapped[FeatureEntityType] = mapped_column(
         SQLEnum(FeatureEntityType), nullable=False
     )
-    value: Mapped[float] = mapped_column(DECIMAL(10, 4), nullable=True)
-    metadata_json: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(
+    "value": Mapped[float] = mapped_column(DECIMAL(10, 4), nullable=True)
+    "metadata_json": Mapped[str | None] = mapped_column(Text, nullable=True)
+    "created_at": Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    "updated_at": Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )
 
     # 关系
-    metadata_records: Mapped[list["FeatureMetadata"]] = relationship(
+    "metadata_records": Mapped[list["FeatureMetadata"]] = relationship(
         "FeatureMetadata", back_populates="feature_entity", cascade="all, delete-orphan"
     )
 
@@ -85,18 +85,18 @@ class FeatureMetadata(BaseModel):
 
     __tablename__ = "feature_metadata"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    feature_entity_id: Mapped[int] = mapped_column(
+    "id": Mapped[int] = mapped_column(Integer, primary_key=True)
+    "feature_entity_id": Mapped[int] = mapped_column(
         ForeignKey("feature_entities.id"), nullable=False
     )
-    feature_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    description: Mapped[str | None] = mapped_column(Text, nullable=True)
-    data_type: Mapped[str] = mapped_column(String(50), default="float")
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    "feature_name": Mapped[str] = mapped_column(String(100), nullable=False)
+    "description": Mapped[str | None] = mapped_column(Text, nullable=True)
+    "data_type": Mapped[str] = mapped_column(String(50), default="float")
+    "is_active": Mapped[bool] = mapped_column(Boolean, default=True)
+    "created_at": Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     # 关系
-    feature_entity: Mapped[FeatureEntity] = relationship(
+    "feature_entity": Mapped[FeatureEntity] = relationship(
         "FeatureEntity", back_populates="metadata_records"
     )
 
@@ -126,11 +126,11 @@ class Features(BaseModel):
 
     __tablename__ = "features"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    match_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    team_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    feature_data: Mapped[str | None] = mapped_column(Text, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    "id": Mapped[int] = mapped_column(Integer, primary_key=True)
+    "match_id": Mapped[int | None] = mapped_column(Integer, nullable=True)
+    "team_id": Mapped[int | None] = mapped_column(Integer, nullable=True)
+    "feature_data": Mapped[str | None] = mapped_column(Text, nullable=True)
+    "created_at": Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     def __repr__(self) -> str:
         return f"<Features(id={self.id})>"

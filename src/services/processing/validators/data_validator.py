@@ -1,9 +1,9 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+""""""
 数据验证器
 
-验证处理后的数据质量和完整性。
-"""
+验证处理后的数据质量和完整性.
+""""""
 
 from datetime import datetime, timedelta
 
@@ -26,57 +26,57 @@ class DataValidator:
 
         # 验证规则配置
         self.validation_rules = {
-            "match_data": {
-                "required_fields": [
-                    "match_id",
-                    "home_team",
-                    "away_team",
-                    "match_date",
+            "match_data": {","
+                "required_fields": [""
+                    "match_id",""
+                    "home_team",""
+                    "away_team",""
+                    "match_date",""
                 ],
-                "date_fields": ["match_date"],
-                "numeric_fields": ["home_score", "away_score"],
-                "string_fields": ["home_team", "away_team", "venue", "competition"],
+                "date_fields": ["match_date",","
+                "numeric_fields": ["home_score", "away_score"],","
+                "string_fields": ["home_team", "away_team", "venue", "competition"],""
             },
-            "odds_data": {
-                "required_fields": [
-                    "match_id",
-                    "bookmaker",
-                    "home_win",
-                    "draw",
-                    "away_win",
+            "odds_data": {","
+                "required_fields": [""
+                    "match_id","
+                    "bookmaker","
+                    "home_win","
+                    "draw","
+                    "away_win","
                 ],
-                "numeric_fields": [
-                    "home_win",
-                    "draw",
-                    "away_win",
-                    "bookmaker_margin",
+                "numeric_fields": [""
+                    "home_win","
+                    "draw","
+                    "away_win","
+                    "bookmaker_margin","
                 ],
-                "float_fields": ["home_win", "draw", "away_win"],
+                "float_fields": ["home_win", "draw", "away_win"],""
             },
-            "features_data": {
-                "numeric_range": {
-                    "form": (0, 1),
-                    "win_rate": (0, 1),
-                    "goals_avg": (0, 10),
+            "features_data": {","
+                "numeric_range": {","
+                    "form": (0, 1),","
+                    "win_rate": (0, 1),","
+                    "goals_avg": (0, 10),""
                 },
             },
         }
 
     async def validate_data_quality(
         self,
-        data: Union[Dict[str, Any], List[Dict[str, Any], pd.DataFrame],
-        data_type: str = "match_data",
+    "data": Union[Dict[str, Any], List[Dict[str, Any]], pd.DataFrame],
+    "data_type": str = "match_data",
     ) -> Dict[str, Any]:
-        """
+        """"""
         验证数据质量
 
         Args:
-            data: 要验证的数据
-            data_type: 数据类型
+    "data": 要验证的数据
+    "data_type": 数据类型
 
         Returns:
             验证结果报告
-        """
+        """"""
         try:
             # 转换为DataFrame
             if isinstance(data, Dict[str, Any]):
@@ -88,18 +88,18 @@ class DataValidator:
 
             if df.empty:
                 return {
-                    "valid": False,
-                    "errors": ["数据为空"],
-                    "warnings": [],
-                    "statistics": {},
+                    "valid": False,","
+                    "errors": ["数据为空"],","
+                    "warnings": []",
+                    "statistics": {},""
                 }
 
             # 执行各类验证
             validation_results = {
-                "valid": True,
-                "errors": [],
-                "warnings": [],
-                "statistics": {},
+                "valid": True,","
+                "errors": []",
+                "warnings": []",
+                "statistics": {},""
             }
 
             # 1. 结构验证
@@ -131,26 +131,26 @@ class DataValidator:
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"数据验证失败: {e}", exc_info=True)
             return {
-                "valid": False,
+                "valid": False,","
                 "errors": [f"验证过程出错: {str(e)}"],
-                "warnings": [],
-                "statistics": {},
+                "warnings": []",
+                "statistics": {},""
             }
 
     async def _validate_structure(
         self, df: pd.DataFrame, data_type: str
     ) -> Dict[str, Any]:
-        """
+        """"""
         验证数据结构
 
         Args:
-            df: 数据DataFrame
-            data_type: 数据类型
+    "df": 数据DataFrame
+    "data_type": 数据类型
 
         Returns:
             结构验证结果
-        """
-        result: Dict[str, Any] = {}"errors": [], "warnings": []}
+        """"""
+    "result": Dict[str, Any] = {"errors": [], "warnings": []}
 
         rules = self.validation_rules.get(data_type, {})
         required_fields = rules.get("required_fields", [])
@@ -167,13 +167,11 @@ class DataValidator:
                 if not pd.api.types.is_datetime64_any_dtype(df[field]):
                     try:
                         pd.to_datetime(df[field])
-                    except (
-                        ValueError,
+                    except (ValueError,
                         TypeError,
                         AttributeError,
                         KeyError,
-                        RuntimeError,
-                    ):
+                        RuntimeError,):
                         result["errors"].append(f"字段 {field} 不是有效的日期格式")
 
         numeric_fields = rules.get("numeric_fields", [])
@@ -182,13 +180,11 @@ class DataValidator:
                 if not pd.api.types.is_numeric_dtype(df[field]):
                     try:
                         pd.to_numeric(df[field])
-                    except (
-                        ValueError,
+                    except (ValueError,
                         TypeError,
                         AttributeError,
                         KeyError,
-                        RuntimeError,
-                    ):
+                        RuntimeError,):
                         result["warnings"].append(f"字段 {field} 包含非数值数据")
 
         return result
@@ -196,17 +192,17 @@ class DataValidator:
     async def _validate_content(
         self, df: pd.DataFrame, data_type: str
     ) -> Dict[str, Any]:
-        """
+        """"""
         验证数据内容
 
         Args:
-            df: 数据DataFrame
-            data_type: 数据类型
+    "df": 数据DataFrame
+    "data_type": 数据类型
 
         Returns:
             内容验证结果
-        """
-        result: Dict[str, Any] = {}"errors": [], "warnings": []}
+        """"""
+    "result": Dict[str, Any] = {"errors": [], "warnings": []}
 
         # 检查重复记录
         duplicates = df.duplicated()
@@ -215,14 +211,14 @@ class DataValidator:
 
         # 检查缺失值
         # missing_report = self.missing_handler.analyze_missing_data(df)  # type: ignore
-        missing_report = {"missing_percentage": 0}
+        missing_report = {"missing_percentage": 0},
         if missing_report["missing_percentage"] > 50:
             result["errors"].append(
-                f"数据缺失率过高: {missing_report['missing_percentage']:.1%}"
+                f"数据缺失率过高: {missing_report[missing_percentage]:.1%}"
             )
         elif missing_report["missing_percentage"] > 20:
             result["warnings"].append(
-                f"数据缺失率较高: {missing_report['missing_percentage']:.1%}"
+                f"数据缺失率较高: {missing_report[missing_percentage]:.1%}"
             )
 
         # 检查异常值
@@ -249,17 +245,17 @@ class DataValidator:
     async def _validate_business_rules(
         self, df: pd.DataFrame, data_type: str
     ) -> Dict[str, Any]:
-        """
+        """"""
         验证业务规则
 
         Args:
-            df: 数据DataFrame
-            data_type: 数据类型
+    "df": 数据DataFrame
+    "data_type": 数据类型
 
         Returns:
             业务规则验证结果
-        """
-        result: Dict[str, Any] = {}"errors": [], "warnings": []}
+        """"""
+    "result": Dict[str, Any] = {"errors": [], "warnings": []}
 
         if data_type == "match_data":
             result = await self._validate_match_business_rules(df)
@@ -272,11 +268,11 @@ class DataValidator:
 
     async def _validate_match_business_rules(self, df: pd.DataFrame) -> Dict[str, Any]:
         """验证比赛数据业务规则"""
-        result: Dict[str, Any] = {}"errors": [], "warnings": []}
+    "result": Dict[str, Any] = {"errors": [], "warnings": []}
 
         # 检查同一日期的重复比赛
         if (
-            "match_date" in df.columns
+            "match_date" in df.columns"
             and "home_team" in df.columns
             and "away_team" in df.columns
         ):
@@ -296,7 +292,7 @@ class DataValidator:
             # 检查异常高比分
             high_scores = (df["home_score"] > 20) | (df["away_score"] > 20)
             if high_scores.any():
-                result["warnings"].append("发现异常高比分（>20）")
+                result["warnings"].append("发现异常高比分(>20)")
 
         # 检查日期范围
         if "match_date" in df.columns:
@@ -313,7 +309,7 @@ class DataValidator:
 
     async def _validate_odds_business_rules(self, df: pd.DataFrame) -> Dict[str, Any]:
         """验证赔率数据业务规则"""
-        result: Dict[str, Any] = {}"errors": [], "warnings": []}
+    "result": Dict[str, Any] = {"errors": [], "warnings": []}
 
         # 检查赔率值
         for outcome in ["home_win", "draw", "away_win"]:
@@ -321,12 +317,12 @@ class DataValidator:
                 # 检查赔率小于等于1
                 invalid_odds = df[outcome] <= 1
                 if invalid_odds.any():
-                    result["errors"].append(f"{outcome" 赔率值不能小于等于1")
+                    result["errors"].append(f"{outcome" 赔率值不能小于等于1")"
 
                 # 检查过高的赔率
                 high_odds = df[outcome] > 1000
                 if high_odds.any():
-                    result["warnings"].append(f"{outcome" 赔率值异常高(>1000)")
+                    result["warnings"].append(f"{outcome" 赔率值异常高(>1000)")"
 
         # 检查隐含概率
         if all(x in df.columns for x in ["home_win", "draw", "away_win"]):
@@ -339,7 +335,7 @@ class DataValidator:
             # 检查隐含概率过高
             excessive_margin = implied_probs > 1.5
             if excessive_margin.any():
-                result["warnings"].append("庄家优势过高（>50%）")
+                result["warnings"].append("庄家优势过高(>50%)")
 
         return result
 
@@ -347,7 +343,7 @@ class DataValidator:
         self, df: pd.DataFrame
     ) -> Dict[str, Any]:
         """验证特征数据业务规则"""
-        result: Dict[str, Any] = {}"errors": [], "warnings": []}
+    "result": Dict[str, Any] = {"errors": [], "warnings": []}
 
         # 检查标准化特征的范围
         for col in df.columns:
@@ -370,20 +366,20 @@ class DataValidator:
         return result
 
     async def _generate_statistics(self, df: pd.DataFrame) -> Dict[str, Any]:
-        """
+        """"""
         生成数据统计信息
 
         Args:
-            df: 数据DataFrame
+    "df": 数据DataFrame
 
         Returns:
             统计信息
-        """
+        """"""
         stats = {
-            "total_records": len(df),
-            "total_columns": len(df.columns),
-            "missing_values": df.isnull().sum().to_dict(),
-            "data_types": df.dtypes.astype(str).to_dict(),
+            "total_records": len(df),","
+            "total_columns": len(df.columns),","
+            "missing_values": df.isnull().sum().to_dict(),","
+            "data_types": df.dtypes.astype(str).to_dict(),""
         }
 
         # 数值列统计
@@ -398,9 +394,9 @@ class DataValidator:
             date_stats = {}
             for col in date_cols:
                 date_stats[col] = {
-                    "min": df[col].min(),
-                    "max": df[col].max(),
-                    "range_days": (df[col].max() - df[col].min()).days,
+                    "min": df[col].min(),","
+                    "max": df[col].max(),","
+                    "range_days": (df[col].max() - df[col].min()).days,""
                 }
             stats["date_statistics"] = date_stats
 
@@ -411,39 +407,39 @@ class DataValidator:
     ) -> None:
         """记录验证结果"""
         if results["valid"]:
-            self.logger.info(f"{data_type" 数据验证通过")
+            self.logger.info(f"{data_type" 数据验证通过")"
         else:
             self.logger.error(
-                f"{data_type" 数据验证失败，错误数: {len(results['errors'])}"
+                f"{data_type" 数据验证失败,错误数: {len(results['errors'])}""
             )
 
         if results["warnings"]:
             self.logger.warning(
-                f"{data_type" 数据验证警告数: {len(results['warnings'])}"
+                f"{data_type" 数据验证警告数: {len(results['warnings'])}""
             )
 
         # 记录统计信息
         stats = results.get("statistics", {})
-        if "total_records" in stats:
-            self.logger.info(f"验证记录数: {stats['total_records']}")
+        if "total_records" in stats:,
+            self.logger.info(f"验证记录数: {stats[total_records]}")
 
     async def validate_batch_consistency(
         self, batches: List[pd.DataFrame]
     ) -> Dict[str, Any]:
-        """
+        """"""
         验证批次数据的一致性
 
         Args:
-            batches: 批次数据列表
+    "batches": 批次数据列表
 
         Returns:
             一致性验证结果
-        """
-        result: Dict[str, Any] = {}"consistent": True,
-            "issues": [],
-            "statistics": {
-                "total_batches": len(batches),
-                "total_records": sum(len(batch) for batch in batches),
+        """"""
+    "result": Dict[str, Any] = {}"consistent": True,
+            "issues": []",
+            "statistics": {","
+                "total_batches": len(batches),","
+                "total_records": sum(len(batch) for batch in batches),""
             },
         }
 

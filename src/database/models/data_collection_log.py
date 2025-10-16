@@ -135,21 +135,21 @@ class DataCollectionLog(BaseModel):
 
     def mark_completed(
         self,
-        status: CollectionStatus,
-        records_collected: int = 0,
-        success_count: int = 0,
-        error_count: int = 0,
-        error_message: str | None = None,
+    "status": CollectionStatus,
+    "records_collected": int = 0,
+    "success_count": int = 0,
+    "error_count": int = 0,
+    "error_message": str | None = None,
     ) -> None:
         """
         标记采集完成
 
         Args:
-            status: 最终状态
-            records_collected: 采集的记录数
-            success_count: 成功处理数量
-            error_count: 错误数量
-            error_message: 错误信息
+    "status": 最终状态
+    "records_collected": 采集的记录数
+    "success_count": 成功处理数量
+    "error_count": 错误数量
+    "error_message": 错误信息
         """
         self.end_time = datetime.now()  # type: ignore[assignment]
         self.status = status.value  # type: ignore[assignment]

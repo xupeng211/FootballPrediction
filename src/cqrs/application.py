@@ -1,11 +1,11 @@
 from typing import Any, Dict, List, Optional, Union
-"""
-CQRS应用服务
-CQRS Application Services
 
-提供高级的CQRS操作接口。
+CQRS应用服务
+"""CQRS Application Services"""
+
+提供高级的CQRS操作接口.
 Provides high-level CQRS operation interfaces.
-"""
+""""""
 
 import logging
 from datetime import datetime, date
@@ -45,11 +45,11 @@ logger = logging.getLogger(__name__)
 
 
 class PredictionCQRSService:
-    """预测CQRS服务
+    """预测CQRS服务"""
 
-    提供预测相关的命令和查询操作。
+    提供预测相关的命令和查询操作.
     Provides command and query operations for predictions.
-    """
+    """"""
 
     def __init__(self):
         self.command_bus = get_command_bus()
@@ -58,13 +58,13 @@ class PredictionCQRSService:
     # 命令操作
     async def create_prediction(
         self,
-        match_id: int,
-        user_id: int,
-        predicted_home: int,
-        predicted_away: int,
-        confidence: float,
-        strategy_used: Optional[str] = None,
-        notes: Optional[str] = None,
+    "match_id": int,
+    "user_id": int,
+    "predicted_home": int,
+    "predicted_away": int,
+    "confidence": float,
+    "strategy_used": Optional[str] = None,
+    "notes": Optional[str] = None,
     ) -> CommandResult:
         """创建预测"""
         command = CreatePredictionCommand(
@@ -80,12 +80,12 @@ class PredictionCQRSService:
 
     async def update_prediction(
         self,
-        prediction_id: int,
-        predicted_home: Optional[int] = None,
-        predicted_away: Optional[int] = None,
-        confidence: Optional[float] = None,
-        strategy_used: Optional[str] = None,
-        notes: Optional[str] = None,
+    "prediction_id": int,
+    "predicted_home": Optional[int] = None,
+    "predicted_away": Optional[int] = None,
+    "confidence": Optional[float] = None,
+    "strategy_used": Optional[str] = None,
+    "notes": Optional[str] = None,
     ) -> CommandResult:
         """更新预测"""
         command = UpdatePredictionCommand(
@@ -111,11 +111,11 @@ class PredictionCQRSService:
 
     async def get_predictions_by_user(
         self,
-        user_id: int,
-        limit: Optional[int] = None,
-        offset: Optional[int] = None,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
+    "user_id": int,
+    "limit": Optional[int] = None,
+    "offset": Optional[int] = None,
+    "start_date": Optional[date] = None,
+    "end_date": Optional[date] = None,
     ) -> List[PredictionDTO]:
         """获取用户的所有预测"""
         query = GetPredictionsByUserQuery(
@@ -138,11 +138,11 @@ class PredictionCQRSService:
 
 
 class MatchCQRSService:
-    """比赛CQRS服务
+    """比赛CQRS服务"""
 
-    提供比赛相关的命令和查询操作。
+    提供比赛相关的命令和查询操作.
     Provides command and query operations for matches.
-    """
+    """"""
 
     def __init__(self):
         self.command_bus = get_command_bus()
@@ -151,11 +151,11 @@ class MatchCQRSService:
     # 命令操作
     async def create_match(
         self,
-        home_team: str,
-        away_team: str,
-        match_date: datetime,
-        competition: Optional[str] = None,
-        venue: Optional[str] = None,
+    "home_team": str,
+    "away_team": str,
+    "match_date": datetime,
+    "competition": Optional[str] = None,
+    "venue": Optional[str] = None,
     ) -> CommandResult:
         """创建比赛"""
         command = CreateMatchCommand(
@@ -169,12 +169,12 @@ class MatchCQRSService:
 
     async def update_match(
         self,
-        match_id: int,
-        home_score: Optional[int] = None,
-        away_score: Optional[int] = None,
-        status: Optional[str] = None,
-        competition: Optional[str] = None,
-        venue: Optional[str] = None,
+    "match_id": int,
+    "home_score": Optional[int] = None,
+    "away_score": Optional[int] = None,
+    "status": Optional[str] = None,
+    "competition": Optional[str] = None,
+    "venue": Optional[str] = None,
     ) -> CommandResult:
         """更新比赛"""
         command = UpdateMatchCommand(
@@ -199,10 +199,10 @@ class MatchCQRSService:
 
     async def get_upcoming_matches(
         self,
-        days_ahead: int = 7,
-        competition: Optional[str] = None,
-        limit: Optional[int] = None,
-        offset: Optional[int] = None,
+    "days_ahead": int = 7,
+    "competition": Optional[str] = None,
+    "limit": Optional[int] = None,
+    "offset": Optional[int] = None,
     ) -> List[MatchDTO]:
         """获取即将到来的比赛"""
         query = GetUpcomingMatchesQuery(
@@ -212,11 +212,11 @@ class MatchCQRSService:
 
 
 class UserCQRSService:
-    """用户CQRS服务
+    """用户CQRS服务"""
 
-    提供用户相关的命令和查询操作。
+    提供用户相关的命令和查询操作.
     Provides command and query operations for users.
-    """
+    """"""
 
     def __init__(self):
         self.command_bus = get_command_bus()
@@ -225,9 +225,9 @@ class UserCQRSService:
     # 命令操作
     async def create_user(
         self,
-        username: str,
-        email: str,
-        password_hash: str,
+    "username": str,
+    "email": str,
+    "password_hash": str,
     ) -> CommandResult:
         """创建用户"""
         command = CreateUserCommand(
@@ -237,10 +237,10 @@ class UserCQRSService:
 
     async def update_user(
         self,
-        user_id: int,
-        username: Optional[str] = None,
-        email: Optional[str] = None,
-        is_active: Optional[bool] = None,
+    "user_id": int,
+    "username": Optional[str] = None,
+    "email": Optional[str] = None,
+    "is_active": Optional[bool] = None,
     ) -> CommandResult:
         """更新用户"""
         command = UpdateUserCommand(
@@ -250,21 +250,21 @@ class UserCQRSService:
 
 
 class AnalyticsCQRSService:
-    """分析CQRS服务
+    """分析CQRS服务"""
 
-    提供分析相关的查询操作。
+    提供分析相关的查询操作.
     Provides analytics-related query operations.
-    """
+    """"""
 
     def __init__(self):
         self.query_bus = get_query_bus()
 
     async def get_prediction_analytics(
         self,
-        start_date: Optional[date] = None,
-        end_date: Optional[date] = None,
-        strategy_filter: Optional[str] = None,
-        user_id: Optional[int] = None,
+    "start_date": Optional[date] = None,
+    "end_date": Optional[date] = None,
+    "strategy_filter": Optional[str] = None,
+    "user_id": Optional[int] = None,
     ) -> Dict[str, Any]:
         """获取预测分析"""
         query = GetPredictionAnalyticsQuery(
@@ -277,9 +277,9 @@ class AnalyticsCQRSService:
 
     async def get_leaderboard(
         self,
-        period: str = "all_time",
-        limit: Optional[int] = 10,
-        offset: Optional[int] = None,
+    "period": str = "all_time",
+    "limit": Optional[int] = 10,
+    "offset": Optional[int] = None,
     ) -> List[Dict[str, Any]:
         """获取排行榜"""
         query = GetLeaderboardQuery(period=period, limit=limit, offset=offset)

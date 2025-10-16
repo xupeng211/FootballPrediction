@@ -17,7 +17,7 @@ class User(BaseModel):
     full_name: Optional[str] = None
     is_active: bool = True
     is_verified: bool = False
-    roles: List[str] = {}"user"]
+    roles: List[str] = ["user"]
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     last_login: Optional[datetime] = None
@@ -71,8 +71,8 @@ class TokenData(BaseModel):
     """Token数据模型"""
 
     user_id: Optional[str] = None
-    roles: List[str] = {}]
-    permissions: List[str] = {}]
+    roles: List[str] = []
+    permissions: List[str] = []
 
 
 class UserPasswordChange(BaseModel):

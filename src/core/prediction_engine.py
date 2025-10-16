@@ -38,7 +38,7 @@ async def get_prediction_engine() -> Any | None:
     获取预测引擎单例实例
 
     Returns:
-        PredictionEngine: 预测引擎实例
+    "PredictionEngine": 预测引擎实例
     """
     global _prediction_engine_instance
 

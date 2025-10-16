@@ -115,8 +115,8 @@ class FootballApiAdaptee(Adaptee):
     def _get_headers(self) -> dict[str, str]:
         """获取请求头"""
         return {
-            "X-Auth-Token": self.api_key,
-            "Content-Type[Any]": "application/json",
+            X-Auth-Token: self.api_key,
+            Content-Type[Any]: "application/json",
         }
 
 
@@ -128,8 +128,8 @@ class ApiFootballAdaptee(FootballApiAdaptee):
 
     def _get_headers(self) -> dict[str, str]:
         return {
-            "x-apisports-key": self.api_key,
-            "x-apisports-host": "v3.football.api-sports.io",
+            x-apisports-key: self.api_key,
+            x-apisports-host: "v3.football.api-sports.io",
         }
 
 
@@ -142,9 +142,9 @@ class OptaDataAdaptee(FootballApiAdaptee):
 
     def _get_headers(self) -> dict[str, str]:
         return {
-            "X-Auth-Token": self.api_key,
-            "X-Customer-ID": self.customer_id,
-            "Content-Type[Any]": "application/json",
+            X-Auth-Token: self.api_key,
+            X-Customer-ID: self.customer_id,
+            Content-Type[Any]: "application/json",
         }
 
 
@@ -238,19 +238,19 @@ class FootballDataTransformer:
         """获取源数据结构"""
         if self.source_format == "api-football":
             return {
-                "fixture": {
-                    "id": "int",
-                    "date": "datetime",
-                    "status": "object",
-                    "venue": "object",
+                fixture: {
+                    id: "int",
+                    date: "datetime",
+                    status: "object",
+                    venue: "object",
                 },
-                "teams": {
-                    "home": "object",
-                    "away": "object",
+                teams: {
+                    home: "object",
+                    away: "object",
                 },
-                "goals": {
-                    "home": "int",
-                    "away": "int",
+                goals: {
+                    home: "int",
+                    away: "int",
                 },
             }
         else:
@@ -259,18 +259,18 @@ class FootballDataTransformer:
     def get_target_schema(self) -> dict[str, Any]:
         """获取目标数据结构"""
         return {
-            "id": "str",
-            "home_team": "str",
-            "away_team": "str",
-            "home_team_id": "str",
-            "away_team_id": "str",
-            "competition": "str",
-            "competition_id": "str",
-            "match_date": "datetime",
-            "status": "MatchStatus",
-            "home_score": "int",
-            "away_score": "int",
-            "venue": "str",
+            id: "str",
+            home_team: "str",
+            away_team: "str",
+            home_team_id: "str",
+            away_team_id: "str",
+            competition: "str",
+            competition_id: "str",
+            match_date: "datetime",
+            status: "MatchStatus",
+            home_score: "int",
+            away_score: "int",
+            venue: "str",
         }
 
 
@@ -279,8 +279,8 @@ class FootballApiAdapter(Adapter):
 
     def __init__(
         self,
-        adaptee: FootballApiAdaptee,
-        transformer: Optional["FootballDataTransformer"] = None,
+    adaptee: FootballApiAdaptee,
+    transformer: Optional["FootballDataTransformer"] = None,
     ):
         super().__init__(adaptee)
         self.transformer = transformer
@@ -295,10 +295,10 @@ class FootballApiAdapter(Adapter):
 
     async def get_matches(
         self,
-        date: datetime | None = None,
-        league_id: str | None = None,
-        team_id: str | None = None,
-        live: bool = False,
+    date: datetime | None = None,
+    league_id: str | None = None,
+    team_id: str | None = None,
+    live: bool = False,
     ) -> list[FootballMatch]:
         """获取比赛列表"""
         params = {}
@@ -477,8 +477,8 @@ class CompositeFootballAdapter(Adapter):
 
     async def get_matches_aggregated(
         self,
-        date: datetime | None = None,
-        league_id: str | None = None,
+    date: datetime | None = None,
+    league_id: str | None = None,
     ) -> dict[str, list[FootballMatch]]:
         """从多个数据源聚合比赛数据"""
         results = {}

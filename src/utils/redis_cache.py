@@ -16,22 +16,22 @@ class RedisCache:
 
     def __init__(
         self,
-        host: str = "localhost",
-        port: int = 6379,
-        db: int = 0,
-        password: str | None = None,
-        decode_responses: bool = True,
+    "host": str = "localhost",
+    "port": int = 6379,
+    "db": int = 0,
+    "password": str | None = None,
+    "decode_responses": bool = True,
         **kwargs,
     ):
         """
         初始化Redis客户端
 
         Args:
-            host: Redis主机地址
-            port: Redis端口
-            db: 数据库编号
-            password: 密码
-            decode_responses: 是否解码响应
+    "host": Redis主机地址
+    "port": Redis端口
+    "db": 数据库编号
+    "password": 密码
+    "decode_responses": 是否解码响应
             **kwargs: 其他redis.Redis参数
         """
         self.client = redis.Redis(
@@ -49,9 +49,9 @@ class RedisCache:
         设置缓存
 
         Args:
-            key: 缓存键
-            value: 缓存值
-            ttl: 生存时间（秒）
+    "key": 缓存键
+    "value": 缓存值
+    "ttl": 生存时间（秒）
 
         Returns:
             是否成功
@@ -74,8 +74,8 @@ class RedisCache:
         获取缓存
 
         Args:
-            key: 缓存键
-            default: 默认值
+    "key": 缓存键
+    "default": 默认值
 
         Returns:
             缓存值或默认值
@@ -152,7 +152,7 @@ class RedisCache:
 
 
 # 全局Redis实例
-_redis_cache: RedisCache | None = None
+    "_redis_cache": RedisCache | None = None
 
 
 def get_redis_client(**kwargs) -> RedisCache:
@@ -168,8 +168,8 @@ def redis_cache_decorator(key_prefix: str = "", ttl: int = 3600):
     Redis缓存装饰器
 
     Args:
-        key_prefix: 键前缀
-        ttl: 生存时间
+    "key_prefix": 键前缀
+    "ttl": 生存时间
     """
 
     def decorator(func):

@@ -72,7 +72,7 @@ async def get_performance_metrics():
     """获取实时性能指标"""
     try:
         # 获取API性能统计
-        api_stats: dict[str, Any] = {}
+    api_stats: dict[str, Any] = {}
         # 这里需要从中间件获取实际数据
         # api_stats = await get_api_middleware_stats()
 
@@ -92,18 +92,18 @@ async def get_performance_metrics():
         process_memory = psutil.Process().memory_info()
 
         metrics = {
-            "timestamp": datetime.now().isoformat(),
-            "system": {
-                "cpu_percent": psutil.cpu_percent(interval=1),
-                "memory_total": memory_info.total / 1024 / 1024,  # MB
-                "memory_available": memory_info.available / 1024 / 1024,
-                "memory_percent": memory_info.percent,
-                "process_memory": process_memory.rss / 1024 / 1024,
+            timestamp: datetime.now().isoformat(),
+            system: {
+                cpu_percent: psutil.cpu_percent(interval=1),
+                memory_total: memory_info.total / 1024 / 1024,  # MB
+                memory_available: memory_info.available / 1024 / 1024,
+                memory_percent: memory_info.percent,
+                process_memory: process_memory.rss / 1024 / 1024,
             },
-            "database": db_stats,
-            "cache": cache_stats,
-            "tasks": task_stats,
-            "api": api_stats,
+            database: db_stats,
+            cache: cache_stats,
+            tasks: task_stats,
+            api: api_stats,
         }
 
         return metrics
@@ -138,9 +138,9 @@ async def start_profiling(config: PerformanceRequest):
         asyncio.create_task(stop_profiling_task())
 
         return {
-            "message": "Performance profiling started",
-            "duration_minutes": config.duration_minutes,
-            "profiling_id": f"prof_{datetime.now().timestamp()}",
+            message: "Performance profiling started",
+            duration_minutes: config.duration_minutes,
+            profiling_id: f"prof_{datetime.now().timestamp()}",
         }
 
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
@@ -163,11 +163,11 @@ async def stop_profiling():
         results = profiler.stop_profiling()
 
         return {
-            "message": "Performance profiling stopped",
-            "results": {
-                "function_count": len(results.get("function_profiles", [])),
-                "memory_peak_mb": results.get("memory_peak", 0) / 1024 / 1024,
-                "top_slow_functions": results.get("function_profiles", [])[:5],
+            message: "Performance profiling stopped",
+            results: {
+                function_count: len(results.get("function_profiles", [])),
+                memory_peak_mb: results.get("memory_peak", 0) / 1024 / 1024,
+                top_slow_functions: results.get("function_profiles", [])[:5],
             },
         }
 
@@ -194,21 +194,21 @@ async def get_profiling_results():
         slow_queries = profiler.get_slow_queries()
 
         results = {
-            "timestamp": datetime.now().isoformat(),
-            "metrics_summary": metrics_summary,
-            "slow_functions": [
+            timestamp: datetime.now().isoformat(),
+            metrics_summary: metrics_summary,
+            slow_functions: [
                 {
-                    "name": f.function_name,
-                    "average_time": f.average_time,
-                    "call_count": f.call_count,
+                    name: f.function_name,
+                    average_time: f.average_time,
+                    call_count: f.call_count,
                 }
                 for f in slow_functions[:10]
             ],
-            "slow_queries": [
+            slow_queries: [
                 {
-                    "query": q.query[:100] + "..." if len(q.query) > 100 else q.query,
-                    "execution_time": q.execution_time,
-                    "rows_affected": q.rows_affected,
+                    query: q.query[:100] + "..." if len(q.query) > 100 else q.query,
+                    execution_time: q.execution_time,
+                    rows_affected: q.rows_affected,
                 }
                 for q in slow_queries[:10]
             ],
@@ -232,7 +232,7 @@ async def get_performance_report(
     """生成性能报告"""
     try:
         # 收集性能数据
-        api_stats: dict[str, Any] = {}  # 从中间件获取  # type: ignore
+    api_stats: dict[str, Any] = {}  # 从中间件获取  # type: ignore
         db_stats = db_monitor.get_query_stats()
         cache_stats = cache_monitor.get_cache_stats()
         task_stats = task_monitor.get_task_stats()
@@ -265,7 +265,7 @@ async def get_performance_report(
             content=report_content,
             media_type=media_type,
             headers={
-                "Content-Disposition": f"attachment; filename=performance_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{format}"
+                Content-Disposition: f"attachment; filename=performance_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{format}"
             },
         )
 
@@ -284,7 +284,7 @@ async def get_performance_insights(
     """获取性能洞察"""
     try:
         # 获取所有性能数据
-        api_stats: dict[str, Any] = {}  # type: ignore
+    api_stats: dict[str, Any] = {}  # type: ignore
         db_stats = db_monitor.get_query_stats()
         cache_stats = cache_monitor.get_cache_stats()
         task_stats = task_monitor.get_task_stats()
@@ -312,19 +312,19 @@ async def get_performance_insights(
         insights.sort(key=lambda x: severity_order.get(x.severity, 4))
 
         return {
-            "timestamp": datetime.now().isoformat(),
-            "total_insights": len(insights),
-            "insights": [
+            timestamp: datetime.now().isoformat(),
+            total_insights: len(insights),
+            insights: [
                 {
-                    "id": i.title.lower().replace(" ", "_"),
-                    "category": i.category,
-                    "severity": i.severity,
-                    "title": i.title,
-                    "description": i.description,
-                    "impact": i.impact,
-                    "recommendation": i.recommendation,
-                    "metrics": i.metrics,
-                    "timestamp": i.timestamp,
+                    id: i.title.lower().replace(" ", "_"),
+                    category: i.category,
+                    severity: i.severity,
+                    title: i.title,
+                    description: i.description,
+                    impact: i.impact,
+                    recommendation: i.recommendation,
+                    metrics: i.metrics,
+                    timestamp: i.timestamp,
                 }
                 for i in insights
             ],
@@ -342,7 +342,7 @@ async def get_performance_score():
     """获取性能评分"""
     try:
         # 获取所有性能数据
-        api_stats: dict[str, Any] = {}
+    api_stats: dict[str, Any] = {}
         db_stats = db_monitor.get_query_stats()
         cache_stats = cache_monitor.get_cache_stats()
         task_stats = task_monitor.get_task_stats()
@@ -356,18 +356,18 @@ async def get_performance_score():
         )
 
         return {
-            "timestamp": datetime.now().isoformat(),
-            "score": report["performance_score"]["score"],
-            "grade": report["performance_score"]["grade"],
-            "breakdown": report["performance_score"]["deduction_breakdown"],
-            "summary": {
-                "total_issues": report["summary"]["total_insights"],
-                "critical_issues": report["summary"]["critical_issues"],
-                "high_issues": report["summary"]["high_issues"],
-                "medium_issues": report["summary"]["medium_issues"],
-                "low_issues": report["summary"]["low_issues"],
+            timestamp: datetime.now().isoformat(),
+            score: report["performance_score"]["score"],
+            grade: report["performance_score"]["grade"],
+            breakdown: report["performance_score"]["deduction_breakdown"],
+            summary: {
+                total_issues: report["summary"]["total_insights"],
+                critical_issues: report["summary"]["critical_issues"],
+                high_issues: report["summary"]["high_issues"],
+                medium_issues: report["summary"]["medium_issues"],
+                low_issues: report["summary"]["low_issues"],
             },
-            "trend": "stable",  # 基于当前评分计算趋势
+            trend: "stable",  # 基于当前评分计算趋势
         }
 
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
@@ -420,19 +420,19 @@ async def get_performance_trends(
             trend = "decreasing"  # type: ignore
 
         return {
-            "metric": metric,
-            "time_range": {
-                "start": start_time.isoformat(),
-                "end": end_time.isoformat(),
-                "hours": hours,
+            metric: metric,
+            time_range: {
+                start: start_time.isoformat(),
+                end: end_time.isoformat(),
+                hours: hours,
             },
-            "trend": trend,
-            "slope": float(slope),
-            "current_value": values[-1],
-            "average_value": np.mean(values),
-            "min_value": np.min(values),
-            "max_value": np.max(values),
-            "data_points": [
+            trend: trend,
+            slope: float(slope),
+            current_value: values[-1],
+            average_value: np.mean(values),
+            min_value: np.min(values),
+            max_value: np.max(values),
+            data_points: [
                 {"timestamp": t.isoformat(), "value": float(v)}
                 for t, v in zip(time_points, values, strict=False)
             ],
@@ -457,11 +457,11 @@ async def update_threshold(threshold: ThresholdUpdate):
         )
 
         return {
-            "message": "Threshold updated successfully",
-            "category": threshold.category,
-            "metric": threshold.metric,
-            "new_value": threshold.value,
-            "updated_at": datetime.now().isoformat(),
+            message: "Threshold updated successfully",
+            category: threshold.category,
+            metric: threshold.metric,
+            new_value: threshold.value,
+            updated_at: datetime.now().isoformat(),
         }
 
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
@@ -477,24 +477,24 @@ async def get_thresholds():
         # 当前返回默认阈值配置
 
         thresholds = {
-            "response_time": {
-                "excellent": 0.1,
-                "good": 0.5,
-                "acceptable": 1.0,
-                "poor": 2.0,
+            response_time: {
+                excellent: 0.1,
+                good: 0.5,
+                acceptable: 1.0,
+                poor: 2.0,
             },
-            "memory_usage": {
-                "excellent": 50,
-                "good": 100,
-                "acceptable": 200,
-                "poor": 500,
+            memory_usage: {
+                excellent: 50,
+                good: 100,
+                acceptable: 200,
+                poor: 500,
             },
-            "cpu_usage": {"excellent": 20, "good": 50, "acceptable": 70, "poor": 90},
-            "error_rate": {
-                "excellent": 0.01,
-                "good": 0.1,
-                "acceptable": 1.0,
-                "poor": 5.0,
+            cpu_usage: {"excellent": 20, "good": 50, "acceptable": 70, "poor": 90},
+            error_rate: {
+                excellent: 0.01,
+                good: 0.1,
+                acceptable: 1.0,
+                poor: 5.0,
             },
         }
 
@@ -525,8 +525,8 @@ async def reset_performance_stats():
         logger.info("Performance statistics reset")
 
         return {
-            "message": "Performance statistics reset successfully",
-            "reset_at": datetime.now().isoformat(),
+            message: "Performance statistics reset successfully",
+            reset_at: datetime.now().isoformat(),
         }
 
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
@@ -546,25 +546,25 @@ async def get_performance_dashboard():
         insights = await get_performance_insights(severity="critical")
 
         dashboard = {
-            "timestamp": datetime.now().isoformat(),
-            "overview": {
-                "score": score["score"],
-                "grade": score["grade"],
-                "total_issues": score["summary"]["total_issues"],
-                "critical_issues": score["summary"]["critical_issues"],
+            timestamp: datetime.now().isoformat(),
+            overview: {
+                score: score["score"],
+                grade: score["grade"],
+                total_issues: score["summary"]["total_issues"],
+                critical_issues: score["summary"]["critical_issues"],
             },
-            "system_metrics": metrics["system"],
-            "service_metrics": {
-                "database": metrics["database"],
-                "cache": metrics["cache"],
-                "tasks": metrics["tasks"],
+            system_metrics: metrics["system"],
+            service_metrics: {
+                database: metrics["database"],
+                cache: metrics["cache"],
+                tasks: metrics["tasks"],
             },
-            "critical_alerts": insights["insights"][:5],  # 最多5个关键警告
-            "quick_stats": {
-                "total_queries": metrics["database"].get("total_queries", 0),
-                "cache_hit_rate": metrics["cache"].get("hit_rate", 0),
-                "active_tasks": metrics["tasks"].get("active_tasks", 0),
-                "memory_usage_mb": metrics["system"]["process_memory"],
+            critical_alerts: insights["insights"][:5],  # 最多5个关键警告
+            quick_stats: {
+                total_queries: metrics["database"].get("total_queries", 0),
+                cache_hit_rate: metrics["cache"].get("hit_rate", 0),
+                active_tasks: metrics["tasks"].get("active_tasks", 0),
+                memory_usage_mb: metrics["system"]["process_memory"],
             },
         }
 

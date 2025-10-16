@@ -38,12 +38,12 @@ class ServiceLifetime(Enum):
 class ServiceDescriptor:
     """服务描述符"""
 
-    interface: type[Any]
-    implementation: type[Any]
-    lifetime: ServiceLifetime
-    factory: Callable | None = None
-    instance: Any | None = None
-    dependencies: list[type[Any]] | None = None
+    "interface": type[Any]
+    "implementation": type[Any]
+    "lifetime": ServiceLifetime
+    "factory": Callable | None = None
+    "instance": Any | None = None
+    "dependencies": list[type[Any]] | None = None
 
     def __post_init__(self) -> None:
         if self.dependencies is None:
@@ -63,10 +63,10 @@ class DIContainer(Generic[T]):
 
     def register_singleton(
         self,
-        interface: type[T],
-        implementation: type[T] | None = None,
-        instance: T | None = None,
-        factory: Callable[[], T] | None = None,
+    "interface": type[T],
+    "implementation": type[T] | None = None,
+    "instance": T | None = None,
+    "factory": Callable[[], T] | None = None,
     ) -> "DIContainer":
         """注册单例服务"""
         return self._register(
@@ -79,9 +79,9 @@ class DIContainer(Generic[T]):
 
     def register_scoped(
         self,
-        interface: type[T],
-        implementation: type[T] | None = None,
-        factory: Callable[[], T] | None = None,
+    "interface": type[T],
+    "implementation": type[T] | None = None,
+    "factory": Callable[[], T] | None = None,
     ) -> "DIContainer":
         """注册作用域服务"""
         return self._register(
@@ -93,9 +93,9 @@ class DIContainer(Generic[T]):
 
     def register_transient(
         self,
-        interface: type[T],
-        implementation: type[T] | None = None,
-        factory: Callable[[], T] | None = None,
+    "interface": type[T],
+    "implementation": type[T] | None = None,
+    "factory": Callable[[], T] | None = None,
     ) -> "DIContainer":
         """注册瞬时服务"""
         return self._register(
@@ -107,11 +107,11 @@ class DIContainer(Generic[T]):
 
     def _register(
         self,
-        interface: type[Any],
-        implementation: type[Any] | None = None,
-        lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT,
-        instance: Any | None = None,
-        factory: Callable | None = None,
+    "interface": type[Any],
+    "implementation": type[Any] | None = None,
+    "lifetime": ServiceLifetime = ServiceLifetime.TRANSIENT,
+    "instance": Any | None = None,
+    "factory": Callable | None = None,
     ) -> "DIContainer":
         """内部注册方法"""
         if implementation is None and interface is not None:
@@ -162,7 +162,7 @@ class DIContainer(Generic[T]):
             return self._get_singleton(descriptor)  # type: ignore
         elif descriptor.lifetime == ServiceLifetime.SCOPED:
             return self._get_scoped(descriptor)  # type: ignore
-        else:  # TRANSIENT
+    "else":  # TRANSIENT
             return self._create_instance(descriptor)  # type: ignore
 
     def _get_singleton(self, descriptor: ServiceDescriptor) -> Any:
@@ -332,10 +332,10 @@ class ServiceCollection:
 
     def add_singleton(
         self,
-        interface: type[T],
-        implementation: type[T] | None = None,
-        instance: T | None = None,
-        factory: Callable[[], T] | None = None,
+    "interface": type[T],
+    "implementation": type[T] | None = None,
+    "instance": T | None = None,
+    "factory": Callable[[], T] | None = None,
     ) -> "ServiceCollection":
         """添加单例服务"""
         self._registrations.append(
@@ -347,9 +347,9 @@ class ServiceCollection:
 
     def add_scoped(
         self,
-        interface: type[T],
-        implementation: type[T] | None = None,
-        factory: Callable[[], T] | None = None,
+    "interface": type[T],
+    "implementation": type[T] | None = None,
+    "factory": Callable[[], T] | None = None,
     ) -> "ServiceCollection":
         """添加作用域服务"""
         self._registrations.append(
@@ -361,9 +361,9 @@ class ServiceCollection:
 
     def add_transient(
         self,
-        interface: type[T],
-        implementation: type[T] | None = None,
-        factory: Callable[[], T] | None = None,
+    "interface": type[T],
+    "implementation": type[T] | None = None,
+    "factory": Callable[[], T] | None = None,
     ) -> "ServiceCollection":
         """添加瞬时服务"""
         self._registrations.append(
@@ -384,7 +384,7 @@ class ServiceCollection:
 
 
 # 全局容器实例
-_default_container: DIContainer | None = None
+    "_default_container": DIContainer | None = None
 
 
 def get_default_container() -> DIContainer:
@@ -396,7 +396,7 @@ def get_default_container() -> DIContainer:
 
 
 def configure_services(
-    configurator: Callable[[ServiceCollection], None],
+    "configurator": Callable[[ServiceCollection], None],
 ) -> DIContainer:
     """配置服务"""
     collection = ServiceCollection()
@@ -416,7 +416,7 @@ def resolve(service_type: type[T]) -> T:
 
 
 def inject(
-    service_type: type[T], container: DIContainer | None = None
+    "service_type": type[T], container: DIContainer | None = None
 ) -> Callable[[Callable], Callable]:
     """依赖注入装饰器"""
 

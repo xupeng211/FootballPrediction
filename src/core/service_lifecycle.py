@@ -39,16 +39,16 @@ class ServiceState(Enum):
 class ServiceInfo:
     """服务信息"""
 
-    name: str
-    instance: Any
-    state: ServiceState = ServiceState.UNINITIALIZED
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    started_at: datetime | None = None
-    stopped_at: datetime | None = None
-    error_count: int = 0
-    last_error: Exception | None = None
-    dependencies: list[str] = field(default_factory=list)
-    dependents: list[str] = field(default_factory=list)
+    "name": str
+    "instance": Any
+    "state": ServiceState = ServiceState.UNINITIALIZED
+    "created_at": datetime = field(default_factory=datetime.utcnow)
+    "started_at": datetime | None = None
+    "stopped_at": datetime | None = None
+    "error_count": int = 0
+    "last_error": Exception | None = None
+    "dependencies": list[str] = field(default_factory=list)
+    "dependents": list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         if isinstance(self.dependencies, str):
@@ -517,7 +517,7 @@ class ServiceLifecycleManager:
 
 
 # 全局服务生命周期管理器
-_default_lifecycle_manager: ServiceLifecycleManager | None = None
+    "_default_lifecycle_manager": ServiceLifecycleManager | None = None
 
 
 def get_lifecycle_manager() -> ServiceLifecycleManager:

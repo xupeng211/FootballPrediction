@@ -19,14 +19,14 @@ class MatchEventData(EventData):
 
     def __init__(
         self,
-        match_id: int,
-        home_team_id: int,
-        away_team_id: int,
-        league_id: int,
-        match_time: datetime,
-        status: str = "upcoming",
-        venue: Optional[str] = None,
-        weather: Optional[Dict[str, Any]] = None,
+    match_id: int,
+    home_team_id: int,
+    away_team_id: int,
+    league_id: int,
+    match_time: datetime,
+    status: str = "upcoming",
+    venue: Optional[str] = None,
+    weather: Optional[Dict[str, Any]] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -45,13 +45,13 @@ class MatchCreatedEventData(MatchEventData):
 
     def __init__(
         self,
-        match_id: int,
-        home_team_id: int,
-        away_team_id: int,
-        league_id: int,
-        match_time: datetime,
-        created_by: Optional[int] = None,
-        initial_odds: Optional[Dict[str, float]] = None,
+    match_id: int,
+    home_team_id: int,
+    away_team_id: int,
+    league_id: int,
+    match_time: datetime,
+    created_by: Optional[int] = None,
+    initial_odds: Optional[Dict[str, float]] = None,
         **kwargs,
     ):
         super().__init__(
@@ -71,13 +71,13 @@ class MatchUpdatedEventData(MatchEventData):
 
     def __init__(
         self,
-        match_id: int,
-        home_team_id: int,
-        away_team_id: int,
-        league_id: int,
-        match_time: datetime,
-        updated_fields: Optional[Dict[str, Any]] = None,
-        previous_status: Optional[str] = None,
+    match_id: int,
+    home_team_id: int,
+    away_team_id: int,
+    league_id: int,
+    match_time: datetime,
+    updated_fields: Optional[Dict[str, Any]] = None,
+    previous_status: Optional[str] = None,
         **kwargs,
     ):
         super().__init__(
@@ -98,13 +98,13 @@ class PredictionEventData(EventData):
 
     def __init__(
         self,
-        prediction_id: int,
-        match_id: int,
-        user_id: int,
-        predicted_home: int,
-        predicted_away: int,
-        confidence: float,
-        strategy_used: Optional[str] = None,
+    prediction_id: int,
+    match_id: int,
+    user_id: int,
+    predicted_home: int,
+    predicted_away: int,
+    confidence: float,
+    strategy_used: Optional[str] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -122,15 +122,15 @@ class PredictionMadeEventData(PredictionEventData):
 
     def __init__(
         self,
-        prediction_id: int,
-        match_id: int,
-        user_id: int,
-        predicted_home: int,
-        predicted_away: int,
-        confidence: float,
-        points_earned: Optional[int] = None,
-        accuracy_score: Optional[float] = None,
-        strategy_used: Optional[str] = None,
+    prediction_id: int,
+    match_id: int,
+    user_id: int,
+    predicted_home: int,
+    predicted_away: int,
+    confidence: float,
+    points_earned: Optional[int] = None,
+    accuracy_score: Optional[float] = None,
+    strategy_used: Optional[str] = None,
         **kwargs,
     ):
         super().__init__(
@@ -152,15 +152,15 @@ class PredictionUpdatedEventData(PredictionEventData):
 
     def __init__(
         self,
-        prediction_id: int,
-        match_id: int,
-        user_id: int,
-        predicted_home: int,
-        predicted_away: int,
-        confidence: float,
-        previous_prediction: Optional[Dict[str, Any]] = None,
-        update_reason: Optional[str] = None,
-        strategy_used: Optional[str] = None,
+    prediction_id: int,
+    match_id: int,
+    user_id: int,
+    predicted_home: int,
+    predicted_away: int,
+    confidence: float,
+    previous_prediction: Optional[Dict[str, Any]] = None,
+    update_reason: Optional[str] = None,
+    strategy_used: Optional[str] = None,
         **kwargs,
     ):
         super().__init__(
@@ -183,10 +183,10 @@ class UserEventData(EventData):
 
     def __init__(
         self,
-        user_id: int,
-        username: str,
-        email: str,
-        registration_date: datetime,
+    user_id: int,
+    username: str,
+    email: str,
+    registration_date: datetime,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -201,13 +201,13 @@ class UserRegisteredEventData(UserEventData):
 
     def __init__(
         self,
-        user_id: int,
-        username: str,
-        email: str,
-        registration_date: datetime,
-        referral_code: Optional[str] = None,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
+    user_id: int,
+    username: str,
+    email: str,
+    registration_date: datetime,
+    referral_code: Optional[str] = None,
+    ip_address: Optional[str] = None,
+    user_agent: Optional[str] = None,
         **kwargs,
     ):
         super().__init__(
@@ -228,16 +228,16 @@ class TeamStatsEventData(EventData):
 
     def __init__(
         self,
-        team_id: int,
-        season: str,
-        matches_played: int,
-        wins: int,
-        draws: int,
-        losses: int,
-        goals_for: int,
-        goals_against: int,
-        points: int,
-        last_updated: datetime,
+    team_id: int,
+    season: str,
+    matches_played: int,
+    wins: int,
+    draws: int,
+    losses: int,
+    goals_for: int,
+    goals_against: int,
+    points: int,
+    last_updated: datetime,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -266,22 +266,22 @@ class MatchCreatedEvent(Event):
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "event_type": self.get_event_type(),
-            "event_id": self.event_id,
-            "timestamp": self.timestamp.isoformat(),
-            "source": self.source,
-            "version": self.version,
-            "match_id": self.data.match_id,  # type: ignore
-            "home_team_id": self.data.home_team_id,  # type: ignore
-            "away_team_id": self.data.away_team_id,  # type: ignore
-            "league_id": self.data.league_id,  # type: ignore
-            "match_time": self.data.match_time.isoformat(),  # type: ignore
-            "status": self.data.status,  # type: ignore
-            "venue": self.data.venue,  # type: ignore
-            "weather": self.data.weather,  # type: ignore
-            "created_by": self.data.created_by,  # type: ignore
-            "initial_odds": self.data.initial_odds,  # type: ignore
-            "metadata": self.data.metadata,
+            event_type: self.get_event_type(),
+            event_id: self.event_id,
+            timestamp: self.timestamp.isoformat(),
+            source: self.source,
+            version: self.version,
+            match_id: self.data.match_id,  # type: ignore
+            home_team_id: self.data.home_team_id,  # type: ignore
+            away_team_id: self.data.away_team_id,  # type: ignore
+            league_id: self.data.league_id,  # type: ignore
+            match_time: self.data.match_time.isoformat(),  # type: ignore
+            status: self.data.status,  # type: ignore
+            venue: self.data.venue,  # type: ignore
+            weather: self.data.weather,  # type: ignore
+            created_by: self.data.created_by,  # type: ignore
+            initial_odds: self.data.initial_odds,  # type: ignore
+            metadata: self.data.metadata,
         }
 
     @classmethod
@@ -318,22 +318,22 @@ class MatchUpdatedEvent(Event):
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "event_type": self.get_event_type(),
-            "event_id": self.event_id,
-            "timestamp": self.timestamp.isoformat(),
-            "source": self.source,
-            "version": self.version,
-            "match_id": self.data.match_id,  # type: ignore
-            "home_team_id": self.data.home_team_id,  # type: ignore
-            "away_team_id": self.data.away_team_id,  # type: ignore
-            "league_id": self.data.league_id,  # type: ignore
-            "match_time": self.data.match_time.isoformat(),  # type: ignore
-            "status": self.data.status,  # type: ignore
-            "venue": self.data.venue,  # type: ignore
-            "weather": self.data.weather,  # type: ignore
-            "updated_fields": self.data.updated_fields,  # type: ignore
-            "previous_status": self.data.previous_status,  # type: ignore
-            "metadata": self.data.metadata,
+            event_type: self.get_event_type(),
+            event_id: self.event_id,
+            timestamp: self.timestamp.isoformat(),
+            source: self.source,
+            version: self.version,
+            match_id: self.data.match_id,  # type: ignore
+            home_team_id: self.data.home_team_id,  # type: ignore
+            away_team_id: self.data.away_team_id,  # type: ignore
+            league_id: self.data.league_id,  # type: ignore
+            match_time: self.data.match_time.isoformat(),  # type: ignore
+            status: self.data.status,  # type: ignore
+            venue: self.data.venue,  # type: ignore
+            weather: self.data.weather,  # type: ignore
+            updated_fields: self.data.updated_fields,  # type: ignore
+            previous_status: self.data.previous_status,  # type: ignore
+            metadata: self.data.metadata,
         }
 
     @classmethod
@@ -370,21 +370,21 @@ class PredictionMadeEvent(Event):
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "event_type": self.get_event_type(),
-            "event_id": self.event_id,
-            "timestamp": self.timestamp.isoformat(),
-            "source": self.source,
-            "version": self.version,
-            "prediction_id": self.data.prediction_id,  # type: ignore
-            "match_id": self.data.match_id,  # type: ignore
-            "user_id": self.data.user_id,  # type: ignore
-            "predicted_home": self.data.predicted_home,
-            "predicted_away": self.data.predicted_away,
-            "confidence": self.data.confidence,  # type: ignore
-            "strategy_used": self.data.strategy_used,  # type: ignore
-            "points_earned": self.data.points_earned,  # type: ignore
-            "accuracy_score": self.data.accuracy_score,  # type: ignore
-            "metadata": self.data.metadata,
+            event_type: self.get_event_type(),
+            event_id: self.event_id,
+            timestamp: self.timestamp.isoformat(),
+            source: self.source,
+            version: self.version,
+            prediction_id: self.data.prediction_id,  # type: ignore
+            match_id: self.data.match_id,  # type: ignore
+            user_id: self.data.user_id,  # type: ignore
+            predicted_home: self.data.predicted_home,
+            predicted_away: self.data.predicted_away,
+            confidence: self.data.confidence,  # type: ignore
+            strategy_used: self.data.strategy_used,  # type: ignore
+            points_earned: self.data.points_earned,  # type: ignore
+            accuracy_score: self.data.accuracy_score,  # type: ignore
+            metadata: self.data.metadata,
         }
 
     @classmethod
@@ -420,21 +420,21 @@ class PredictionUpdatedEvent(Event):
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "event_type": self.get_event_type(),
-            "event_id": self.event_id,
-            "timestamp": self.timestamp.isoformat(),
-            "source": self.source,
-            "version": self.version,
-            "prediction_id": self.data.prediction_id,  # type: ignore
-            "match_id": self.data.match_id,  # type: ignore
-            "user_id": self.data.user_id,  # type: ignore
-            "predicted_home": self.data.predicted_home,  # type: ignore
-            "predicted_away": self.data.predicted_away,  # type: ignore
-            "confidence": self.data.confidence,  # type: ignore
-            "strategy_used": self.data.strategy_used,  # type: ignore
-            "previous_prediction": self.data.previous_prediction,  # type: ignore
-            "update_reason": self.data.update_reason,  # type: ignore
-            "metadata": self.data.metadata,
+            event_type: self.get_event_type(),
+            event_id: self.event_id,
+            timestamp: self.timestamp.isoformat(),
+            source: self.source,
+            version: self.version,
+            prediction_id: self.data.prediction_id,  # type: ignore
+            match_id: self.data.match_id,  # type: ignore
+            user_id: self.data.user_id,  # type: ignore
+            predicted_home: self.data.predicted_home,  # type: ignore
+            predicted_away: self.data.predicted_away,  # type: ignore
+            confidence: self.data.confidence,  # type: ignore
+            strategy_used: self.data.strategy_used,  # type: ignore
+            previous_prediction: self.data.previous_prediction,  # type: ignore
+            update_reason: self.data.update_reason,  # type: ignore
+            metadata: self.data.metadata,
         }
 
     @classmethod
@@ -470,19 +470,19 @@ class UserRegisteredEvent(Event):
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "event_type": self.get_event_type(),
-            "event_id": self.event_id,
-            "timestamp": self.timestamp.isoformat(),
-            "source": self.source,
-            "version": self.version,
-            "user_id": self.data.user_id,  # type: ignore
-            "username": self.data.username,  # type: ignore
-            "email": self.data.email,  # type: ignore
-            "registration_date": self.data.registration_date.isoformat(),  # type: ignore
-            "referral_code": self.data.referral_code,  # type: ignore
-            "ip_address": self.data.ip_address,  # type: ignore
-            "user_agent": self.data.user_agent,  # type: ignore
-            "metadata": self.data.metadata,
+            event_type: self.get_event_type(),
+            event_id: self.event_id,
+            timestamp: self.timestamp.isoformat(),
+            source: self.source,
+            version: self.version,
+            user_id: self.data.user_id,  # type: ignore
+            username: self.data.username,  # type: ignore
+            email: self.data.email,  # type: ignore
+            registration_date: self.data.registration_date.isoformat(),  # type: ignore
+            referral_code: self.data.referral_code,  # type: ignore
+            ip_address: self.data.ip_address,  # type: ignore
+            user_agent: self.data.user_agent,  # type: ignore
+            metadata: self.data.metadata,
         }
 
     @classmethod
@@ -516,22 +516,22 @@ class TeamStatsUpdatedEvent(Event):
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            "event_type": self.get_event_type(),
-            "event_id": self.event_id,
-            "timestamp": self.timestamp.isoformat(),
-            "source": self.source,
-            "version": self.version,
-            "team_id": self.data.team_id,  # type: ignore
-            "season": self.data.season,  # type: ignore
-            "matches_played": self.data.matches_played,  # type: ignore
-            "wins": self.data.wins,  # type: ignore
-            "draws": self.data.draws,  # type: ignore
-            "losses": self.data.losses,  # type: ignore
-            "goals_for": self.data.goals_for,  # type: ignore
-            "goals_against": self.data.goals_against,  # type: ignore
-            "points": self.data.points,  # type: ignore
-            "last_updated": self.data.last_updated.isoformat(),  # type: ignore
-            "metadata": self.data.metadata,
+            event_type: self.get_event_type(),
+            event_id: self.event_id,
+            timestamp: self.timestamp.isoformat(),
+            source: self.source,
+            version: self.version,
+            team_id: self.data.team_id,  # type: ignore
+            season: self.data.season,  # type: ignore
+            matches_played: self.data.matches_played,  # type: ignore
+            wins: self.data.wins,  # type: ignore
+            draws: self.data.draws,  # type: ignore
+            losses: self.data.losses,  # type: ignore
+            goals_for: self.data.goals_for,  # type: ignore
+            goals_against: self.data.goals_against,  # type: ignore
+            points: self.data.points,  # type: ignore
+            last_updated: self.data.last_updated.isoformat(),  # type: ignore
+            metadata: self.data.metadata,
         }
 
     @classmethod

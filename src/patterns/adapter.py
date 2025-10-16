@@ -262,17 +262,17 @@ class FootballApiAdapter(APIAdapter):
         """转换足球数据格式"""
         if isinstance(raw_data, dict[str, Any]):
             return {
-                "id": raw_data.get("id"),
-                "name": raw_data.get("name"),
-                "home_team": raw_data.get("homeTeam"),
-                "away_team": raw_data.get("awayTeam"),
-                "score": {
-                    "home": raw_data.get("score", {}).get("fullTime", {}).get("home"),
-                    "away": raw_data.get("score", {}).get("fullTime", {}).get("away"),
+                id: raw_data.get("id"),
+                name: raw_data.get("name"),
+                home_team: raw_data.get("homeTeam"),
+                away_team: raw_data.get("awayTeam"),
+                score: {
+                    home: raw_data.get("score", {}).get("fullTime", {}).get("home"),
+                    away: raw_data.get("score", {}).get("fullTime", {}).get("away"),
                 },
-                "status": raw_data.get("status"),
-                "competition": raw_data.get("competition"),
-                "last_updated": raw_data.get("lastUpdated"),
+                status: raw_data.get("status"),
+                competition: raw_data.get("competition"),
+                last_updated: raw_data.get("lastUpdated"),
             }
         return {}
 
@@ -316,22 +316,22 @@ class WeatherApiAdapter(APIAdapter):
             rain = raw_data.get("rain", {})
 
             return {
-                "temperature": {
-                    "current": main.get("temp"),
-                    "feels_like": main.get("feels_like"),
-                    "min": main.get("temp_min"),
-                    "max": main.get("temp_max"),
+                temperature: {
+                    current: main.get("temp"),
+                    feels_like: main.get("feels_like"),
+                    min: main.get("temp_min"),
+                    max: main.get("temp_max"),
                 },
-                "humidity": main.get("humidity"),
-                "pressure": main.get("pressure"),
-                "weather": {
-                    "main": weather.get("main"),
-                    "description": weather.get("description"),
+                humidity: main.get("humidity"),
+                pressure: main.get("pressure"),
+                weather: {
+                    main: weather.get("main"),
+                    description: weather.get("description"),
                 },
-                "wind": {"speed": wind.get("speed"), "direction": wind.get("deg")},
-                "rain": rain.get("1h", 0),
-                "visibility": raw_data.get("visibility"),
-                "clouds": raw_data.get("clouds", {}).get("all"),
+                wind: {"speed": wind.get("speed"), "direction": wind.get("deg")},
+                rain: rain.get("1h", 0),
+                visibility: raw_data.get("visibility"),
+                clouds: raw_data.get("clouds", {}).get("all"),
             }
         return {}
 
@@ -381,17 +381,17 @@ class OddsApiAdapter(APIAdapter):
                     for outcome in market.get("outcomes", []):
                         outcome_name = outcome.get("name")
                         odds_data[bookmaker_name][market_name][outcome_name] = {
-                            "price": outcome.get("price"),
-                            "last_update": outcome.get("last_update"),
+                            price: outcome.get("price"),
+                            last_update: outcome.get("last_update"),
                         }
 
             return {
-                "match_id": raw_data.get("id"),
-                "sport": raw_data.get("sport_key"),
-                "commence_time": raw_data.get("commence_time"),
-                "home_team": raw_data.get("home_team"),
-                "away_team": raw_data.get("away_team"),
-                "bookmakers": odds_data,
+                match_id: raw_data.get("id"),
+                sport: raw_data.get("sport_key"),
+                commence_time: raw_data.get("commence_time"),
+                home_team: raw_data.get("home_team"),
+                away_team: raw_data.get("away_team"),
+                bookmakers: odds_data,
             }
         return {}
 
@@ -400,9 +400,9 @@ class AdapterFactory:
     """适配器工厂"""
 
     _adapters: dict[str, type] = {
-        "football": FootballApiAdapter,
-        "weather": WeatherApiAdapter,
-        "odds": OddsApiAdapter,
+        football: FootballApiAdapter,
+        weather: WeatherApiAdapter,
+        odds: OddsApiAdapter,
     }
 
     @classmethod

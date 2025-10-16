@@ -40,8 +40,8 @@ def try_import(module_name: str, package: str = None) -> Any | MissingDependency
     尝试导入模块，失败时返回占位符
 
     Args:
-        module_name: 模块名
-        package: 包名（用于相对导入）
+    "module_name": 模块名
+    "package": 包名（用于相对导入）
 
     Returns:
         模块对象或占位符
@@ -149,8 +149,8 @@ def safe_import(module_path: str, default: T | None = None) -> T | None:
     安全地导入模块，返回默认值
 
     Args:
-        module_path: 模块路径（如 'package.module.Class'）
-        default: 默认值
+    "module_path": 模块路径（如 'package.module.Class'）
+    "default": 默认值
 
     Returns:
         导入的对象或默认值
@@ -170,7 +170,7 @@ def has_dependency(dependency_name: str) -> bool:
     检查依赖是否存在
 
     Args:
-        dependency_name: 依赖名称（模块路径）
+    "dependency_name": 依赖名称（模块路径）
 
     Returns:
         是否存在
@@ -190,7 +190,7 @@ def get_dependency_version(dependency_name: str) -> str | None:
     获取依赖版本
 
     Args:
-        dependency_name: 依赖名称
+    "dependency_name": 依赖名称
 
     Returns:
         版本号或None

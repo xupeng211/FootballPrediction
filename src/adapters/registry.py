@@ -227,9 +227,9 @@ class AdapterRegistry:
                 health_results[name] = result
             except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 health_results[name] = {
-                    "adapter": name,
-                    "status": "error",
-                    "error": str(e),
+                    adapter: name,
+                    status: "error",
+                    error: str(e),
                 }
 
         # 检查适配器组
@@ -239,9 +239,9 @@ class AdapterRegistry:
                 health_results[f"group:{name}"] = result
             except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 health_results[f"group:{name}"] = {
-                    "adapter": f"group:{name}",
-                    "status": "error",
-                    "error": str(e),
+                    adapter: f"group:{name}",
+                    status: "error",
+                    error: str(e),
                 }
 
         # 更新指标
@@ -253,34 +253,34 @@ class AdapterRegistry:
         """获取整体健康状态"""
         if self.status != RegistryStatus.ACTIVE:
             return {
-                "registry_status": "inactive",
-                "adapters": {},
-                "groups": {},
+                registry_status: "inactive",
+                adapters: {},
+                groups: {},
             }
 
-        health_status: dict[str, Any] = {
-            "registry_status": "active",
-            "total_adapters": len(self.adapters),
-            "active_adapters": len(self.get_active_adapters()),
-            "inactive_adapters": len(self.get_inactive_adapters()),
-            "total_groups": len(self.groups),
-            "last_health_check": None,
-            "adapters": {},
-            "groups": {},
+    health_status: dict[str, Any] = {
+            registry_status: "active",
+            total_adapters: len(self.adapters),
+            active_adapters: len(self.get_active_adapters()),
+            inactive_adapters: len(self.get_inactive_adapters()),
+            total_groups: len(self.groups),
+            last_health_check: None,
+            adapters: {},
+            groups: {},
         }
 
         # 获取各适配器状态
         for name, adapter in self.adapters.items():
             health_status["adapters"][name] = {
-                "status": adapter.status.value,
-                "metrics": adapter.get_metrics(),
+                status: adapter.status.value,
+                metrics: adapter.get_metrics(),
             }
 
         # 获取各组状态
         for name, group in self.groups.items():
             health_status["groups"][name] = {
-                "status": group.status.value,
-                "metrics": group.get_metrics(),
+                status: group.status.value,
+                metrics: group.get_metrics(),
             }
 
         # 获取最后健康检查时间
@@ -296,7 +296,7 @@ class AdapterRegistry:
         total_requests = 0
         total_successful = 0
         total_failed = 0
-        adapter_types: dict[str, int] = {}
+    adapter_types: dict[str, int] = {}
 
         for adapter in self.adapters.values():
             metrics = adapter.get_metrics()
@@ -308,22 +308,22 @@ class AdapterRegistry:
             adapter_types[adapter_type] = adapter_types.get(adapter_type, 0) + 1
 
         return {
-            "total_requests": total_requests,
-            "total_successful": total_successful,
-            "total_failed": total_failed,
-            "success_rate": (
+            total_requests: total_requests,
+            total_successful: total_successful,
+            total_failed: total_failed,
+            success_rate: (
                 total_successful / total_requests if total_requests > 0 else 0
             ),
-            "adapter_types": adapter_types,
-            "registered_adapters": len(self.adapters),
-            "registered_groups": len(self.groups),
+            adapter_types: adapter_types,
+            registered_adapters: len(self.adapters),
+            registered_groups: len(self.groups),
         }
 
     async def find_best_adapter(
         self,
-        adapter_type: str | None = None,
-        max_response_time: float | None = None,
-        min_success_rate: float | None = None,
+    adapter_type: str | None = None,
+    max_response_time: float | None = None,
+    min_success_rate: float | None = None,
     ) -> Adapter | None:
         """找到最佳的适配器"""
         candidates = []
@@ -358,9 +358,9 @@ class AdapterRegistry:
     def enable_metrics_collection(self) -> None:
         """启用指标收集"""
         self._metrics_collector = {
-            "start_time": datetime.utcnow(),
-            "health_checks": 0,
-            "adapter_failures": {},
+            start_time: datetime.utcnow(),
+            health_checks: 0,
+            adapter_failures: {},
         }
 
     def disable_metrics_collection(self) -> None:

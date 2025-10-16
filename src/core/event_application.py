@@ -119,15 +119,15 @@ class EventDrivenApplication:
             "status": "healthy"
             if self._initialized and stats["running"]
             else "unhealthy",
-            "initialized": self._initialized,
-            "event_bus_stats": stats,
-            "handlers_count": stats["total_subscribers"],
-            "active_tasks": stats["active_tasks"],
+            initialized: self._initialized,
+            event_bus_stats: stats,
+            handlers_count: stats["total_subscribers"],
+            active_tasks: stats["active_tasks"],
         }
 
 
 # 全局应用程序实例
-_app_instance: EventDrivenApplication | None = None
+    _app_instance: EventDrivenApplication | None = None
 
 
 def get_event_application() -> EventDrivenApplication:

@@ -1,8 +1,8 @@
 from typing import Any, Dict, List, Optional, Union
-"""
-模拟Redis管理器（用于测试和开发）
+""""""
+模拟Redis管理器(用于测试和开发)
 Mock Redis Manager for Testing and Development
-"""
+""""""
 
 import time
 
@@ -10,9 +10,9 @@ import time
 class MockRedisManager:
     """模拟Redis管理器"""
 
-    _instance: Optional["MockRedisManager"] = None
-    _data: Dict[str, Any]
-    _expirations: Dict[str, float]
+    "_instance": Optional["MockRedisManager"] = None
+    "_data": Dict[str, Any]
+    "_expirations": Dict[str, float]
 
     def __new__(cls) -> "MockRedisManager":
         if cls._instance is None:
@@ -165,7 +165,7 @@ class CacheKeyManager:
     @staticmethod
     def prediction_key(user_id: Union[int, str], match_id: Union[int, str]) -> str:
         """构建预测相关键"""
-        return f"prediction:{user_id}:{match_id}"
+        return f"prediction:{user_id}:{match_id}"""
 
 
 def get_redis_manager() -> MockRedisManager:
@@ -202,13 +202,13 @@ def ttl_cache(key: str) -> int:
     return get_redis_manager().ttl(key)
 
 
-def mget_cache(*keys: str) -> List[Optional[str]]:
+def mget_cache(*keys: str) -> List[Optional[str]:
     """批量获取缓存"""
     manager = get_redis_manager()
     return [manager.get(k) for k in keys]
 
 
-def mset_cache(mapping: Dict[str, str], ttl: Optional[int] = None) -> bool:
+def mset_cache(mapping: Dict[str, str], ttl: Optional[int = None) -> bool:
     """批量设置缓存"""
     manager = get_redis_manager()
     for key, value in mapping.items():
@@ -254,7 +254,7 @@ async def amget_cache(*keys: str) -> List[Optional[str]:
     return [await manager.aget(k) for k in keys]
 
 
-async def amset_cache(mapping: Dict[str, str], ttl: Optional[int] = None) -> bool:
+async def amset_cache(mapping: Dict[str, str], ttl: Optional[int = None) -> bool:
     """异步批量设置缓存"""
     manager = get_redis_manager()
     for key, value in mapping.items():

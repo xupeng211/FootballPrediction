@@ -16,16 +16,16 @@ from sqlalchemy.exc import SQLAlchemyError, DatabaseError
 - idx_odds_match_collected: 优化赔率数据的时间序列查询
 
 Revision ID: 006_missing_indexes
-Revises: d6d814cc1078
+    "Revises": d6d814cc1078
 Create Date: 2025-09-12 01:35:00.000000
 
 """
 
 # revision identifiers, used by Alembic.
-revision: str = "006_missing_indexes"
-down_revision: Union[str, None] = "d6d814cc1078"  # type: ignore
-branch_labels: Union[str, Sequence[str], None] = None  # type: ignore
-depends_on: Union[str, Sequence[str], None] = None  # type: ignore
+    "revision": str = "006_missing_indexes"
+    "down_revision": Union[str, None] = "d6d814cc1078"  # type: ignore
+    "branch_labels": Union[str, Sequence[str], None] = None  # type: ignore
+    "depends_on": Union[str, Sequence[str], None] = None  # type: ignore
 
 
 def upgrade() -> None:

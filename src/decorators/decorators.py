@@ -1,12 +1,12 @@
 from typing import Any, Dict, List, Optional, Union
 # mypy: ignore-errors
-"""
+
 具体装饰器实现
 Concrete Decorator Implementations
 
-实现了各种用于功能增强和横切关注点的装饰器。
+实现了各种用于功能增强和横切关注点的装饰器.
 Implements various decorators for functionality enhancement and cross-cutting concerns.
-"""
+""""""
 
 import asyncio
 import time
@@ -50,17 +50,17 @@ logger = get_logger(__name__)
 
 
 class LoggingDecorator(Decorator):
-    """日志装饰器，记录函数执行的前后信息"""
+    """日志装饰器,记录函数执行的前后信息"""
 
     def __init__(
         self,
         component,
-        name: Optional[str] = None,
-        level: str = "INFO",
-        log_args: bool = True,
-        log_result: bool = True,
-        log_exception: bool = True,
-        include_context: bool = False,
+    "name": Optional[str] = None,
+    "level": str = "INFO",
+    "log_args": bool = True,
+    "log_result": bool = True,
+    "log_exception": bool = True,
+    "include_context": bool = False,
     ):
         super().__init__(component, name)
         self.level = level.upper()
@@ -76,16 +76,16 @@ class LoggingDecorator(Decorator):
 
         # 记录函数开始执行
         log_data = {
-            "event": "function_start",
-            "function": func_name,
-            "decorator": self.name,
+            "event": "function_start",","
+            "function": func_name,","
+            "decorator": self.name,""
         }
 
         if self.log_args:
             # 安全地记录参数（避免记录敏感信息）
             safe_args = self._sanitize_args(args)
             safe_kwargs = self._sanitize_kwargs(kwargs)
-            log_data["args"] = safe_args  # type: ignore
+            log_data["args"] = safe_args  # type: ignore"],"
             log_data["kwargs"] = safe_kwargs  # type: ignore
 
         if self.include_context and "context" in kwargs:
@@ -102,10 +102,10 @@ class LoggingDecorator(Decorator):
             # 记录函数执行成功
             if self.log_result:
                 success_log = {
-                    "event": "function_success",
-                    "function": func_name,
-                    "decorator": self.name,
-                    "result": self._sanitize_result(result),
+                    "event": "function_success",","
+                    "function": func_name,","
+                    "decorator": self.name,","
+                    "result": self._sanitize_result(result),""
                 }
 
                 if self.include_context and "context" in kwargs:
@@ -124,11 +124,11 @@ class LoggingDecorator(Decorator):
             # 记录函数执行失败
             if self.log_exception:
                 error_log = {
-                    "event": "function_error",
-                    "function": func_name,
-                    "decorator": self.name,
-                    "error": str(e),
-                    "error_type": type(e).__name__,
+                    "event": "function_error",","
+                    "function": func_name,","
+                    "decorator": self.name,","
+                    "error": str(e),","
+                    "error_type": type(e).__name__,""
                 }
 
                 if self.include_context and "context" in kwargs:
@@ -141,7 +141,7 @@ class LoggingDecorator(Decorator):
             raise
 
     def _sanitize_args(self, args: tuple) -> list:
-        """清理参数，移除敏感信息"""
+        """清理参数,移除敏感信息"""
         sanitized = []
 
         for arg in args:
@@ -155,11 +155,11 @@ class LoggingDecorator(Decorator):
         return sanitized
 
     def _sanitize_kwargs(self, kwargs: Dict[str, Any]) -> Dict[str, Any]:
-        """清理关键字参数，移除敏感信息"""
+        """清理关键字参数,移除敏感信息"""
         return self._sanitize_dict(kwargs)
 
     def _sanitize_dict(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """清理字典，移除敏感信息"""
+        """清理字典,移除敏感信息"""
         sensitive_keys = ["password", "token", "secret", "key", "auth"]
         sanitized = {}
 
@@ -176,7 +176,7 @@ class LoggingDecorator(Decorator):
         return sanitized
 
     def _sanitize_sequence(self, seq: Union[list, tuple]) -> list:
-        """清理序列，移除敏感信息"""
+        """清理序列,移除敏感信息"""
         sanitized = []
 
         for item in seq:
@@ -190,7 +190,7 @@ class LoggingDecorator(Decorator):
         return sanitized
 
     def _sanitize_result(self, result: Any) -> Any:
-        """清理结果，移除敏感信息"""
+        """清理结果,移除敏感信息"""
         if isinstance(result, Dict[str, Any]):
             return self._sanitize_dict(result)
         elif isinstance(result, (list, tuple)):
@@ -200,18 +200,18 @@ class LoggingDecorator(Decorator):
 
 
 class RetryDecorator(Decorator):
-    """重试装饰器，在函数执行失败时自动重试"""
+    """重试装饰器,在函数执行失败时自动重试"""
 
     def __init__(
         self,
         component,
-        name: Optional[str] = None,
-        max_attempts: int = 3,
-        delay: float = 1.0,
-        backoff_factor: float = 2.0,
-        max_delay: float = 60.0,
-        exceptions: tuple = (Exception,),
-        jitter: bool = True,
+    "name": Optional[str] = None,
+    "max_attempts": int = 3,
+    "delay": float = 1.0,
+    "backoff_factor": float = 2.0,
+    "max_delay": float = 60.0,
+    "exceptions": tuple = (Exception,),
+    "jitter": bool = True,
     ):
         super().__init__(component, name)
         self.max_attempts = max_attempts
@@ -264,16 +264,16 @@ class RetryDecorator(Decorator):
 
 
 class MetricsDecorator(Decorator):
-    """指标收集装饰器，收集函数执行的性能指标"""
+    """指标收集装饰器,收集函数执行的性能指标"""
 
     def __init__(
         self,
         component,
-        name: Optional[str] = None,
+    "name": Optional[str] = None,
         metrics_collector=None,
-        metric_name: Optional[str] = None,
-        tags: Optional[Dict[str, str] = None,
-        track_args: bool = False,
+    "metric_name": Optional[str] = None,
+    "tags": Optional[Dict[str, str] = None,
+    "track_args": bool = False,
     ):
         super().__init__(component, name)
         self.metrics_collector = metrics_collector or (
@@ -305,9 +305,9 @@ class MetricsDecorator(Decorator):
 
             # 构建指标标签
             metric_tags = {
-                "function": self.component.get_name(),
-                "decorator": self.name,
-                "success": str(success),
+                "function": self.component.get_name(),","
+                "decorator": self.name,","
+                "success": str(success),""
                 **self.tags,
             }
 
@@ -349,17 +349,17 @@ class MetricsDecorator(Decorator):
 
 
 class ValidationDecorator(Decorator):
-    """验证装饰器，验证函数的输入和输出"""
+    """验证装饰器,验证函数的输入和输出"""
 
     def __init__(
         self,
         component,
-        name: Optional[str] = None,
-        input_validators: Optional[List[Validator]] = None,
-        output_validators: Optional[List[Validator]] = None,
-        validate_args: bool = True,
-        validate_kwargs: bool = True,
-        validate_result: bool = True,
+    "name": Optional[str] = None,
+    "input_validators": Optional[List[Validator] = None,
+    "output_validators": Optional[List[Validator] = None,
+    "validate_args": bool = True,
+    "validate_kwargs": bool = True,
+    "validate_result": bool = True,
     ):
         super().__init__(component, name)
         self.input_validators = input_validators or []
@@ -389,7 +389,7 @@ class ValidationDecorator(Decorator):
                 for validator in self.input_validators:
                     if not validator.validate(value):
                         raise ValidationError(
-                            f"Argument '{key}' validation failed: {validator.get_error_message()}"
+                            f"Argument {key} validation failed: {validator.get_error_message()}"
                         )
 
         # 执行被装饰的函数
@@ -407,16 +407,16 @@ class ValidationDecorator(Decorator):
 
 
 class CacheDecorator(Decorator):
-    """缓存装饰器，缓存函数的执行结果"""
+    """缓存装饰器,缓存函数的执行结果"""
 
     def __init__(
         self,
         component,
-        name: Optional[str] = None,
+    "name": Optional[str] = None,
         cache_manager=None,
-        ttl: Optional[int] = None,
-        key_generator: Optional[Callable] = None,
-        cache_empty: bool = False,
+    "ttl": Optional[int] = None,
+    "key_generator": Optional[Callable] = None,
+    "cache_empty": bool = False,
     ):
         super().__init__(component, name)
         self.cache_manager = cache_manager or (CacheManager() if CacheManager else None)
@@ -456,30 +456,30 @@ class CacheDecorator(Decorator):
 
         # 创建一个包含函数名和参数的字符串
         key_data = {
-            "function": self.component.get_name(),
-            "args": args,
-            "kwargs": sorted(kwargs.items()),
+            "function": self.component.get_name(),","
+            "args": args,","
+            "kwargs": sorted(kwargs.items()),""
         }
 
         # 序列化并哈希
         serialized = pickle.dumps(key_data, protocol=pickle.HIGHEST_PROTOCOL)
         hash_digest = hashlib.md5(serialized).hexdigest()
 
-        return f"{self.component.get_name()}:{hash_digest}"
+        return f"{self.component.get_name()}:{hash_digest}"""
 
 
 class AuthDecorator(Decorator):
-    """认证装饰器，验证用户身份和权限"""
+    """认证装饰器,验证用户身份和权限"""
 
     def __init__(
         self,
         component,
-        name: Optional[str] = None,
+    "name": Optional[str] = None,
         auth_service=None,
-        required_permissions: Optional[List[str]] = None,
-        require_auth: bool = True,
-        token_arg_name: str = "token",
-        user_arg_name: str = "user",
+    "required_permissions": Optional[List[str] = None,
+    "require_auth": bool = True,
+    "token_arg_name": str = "token",
+    "user_arg_name": str = "user",
     ):
         super().__init__(component, name)
         self.auth_service = auth_service or (AuthService() if AuthService else None)
@@ -524,16 +524,16 @@ class AuthDecorator(Decorator):
 
 
 class RateLimitDecorator(Decorator):
-    """限流装饰器，限制函数的调用频率"""
+    """限流装饰器,限制函数的调用频率"""
 
     def __init__(
         self,
         component,
-        name: Optional[str] = None,
-        rate_limit: int = 100,
-        time_window: int = 60,
-        key_generator: Optional[Callable] = None,
-        key_arg_name: str = "key",
+    "name": Optional[str] = None,
+    "rate_limit": int = 100,
+    "time_window": int = 60,
+    "key_generator": Optional[Callable] = None,
+    "key_arg_name": str = "key",
     ):
         super().__init__(component, name)
         self.rate_limit = rate_limit
@@ -597,14 +597,14 @@ class RateLimitDecorator(Decorator):
 
 
 class TimeoutDecorator(Decorator):
-    """超时装饰器，为函数执行设置超时限制"""
+    """超时装饰器,为函数执行设置超时限制"""
 
     def __init__(
         self,
         component,
-        name: Optional[str] = None,
-        timeout_seconds: float = 30.0,
-        timeout_exception: Type[Any, Exception] = TimeoutError,
+    "name": Optional[str] = None,
+    "timeout_seconds": float = 30.0,
+    "timeout_exception": Type[Any, Exception] = TimeoutError,
     ):
         super().__init__(component, name)
         self.timeout_seconds = timeout_seconds

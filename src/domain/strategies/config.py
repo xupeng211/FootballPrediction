@@ -1,11 +1,11 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+
 策略配置管理
 Strategy Configuration Management
 
-管理预测策略的配置参数。
+管理预测策略的配置参数.
 Manages configuration parameters for prediction strategies.
-"""
+""""""
 
 import json
 import yaml  # type: ignore
@@ -29,28 +29,28 @@ class ConfigFormat(Enum):
 class MLModelConfig:
     """ML模型策略配置"""
 
-    mlflow_tracking_uri: str = "http://localhost:5002"
-    model_name: str = "football_prediction_model"
-    model_stage: str = "Production"
-    feature_columns: List[str] = field(default_factory=list)
-    model_cache_ttl: int = 3600  # 秒
-    prediction_timeout: int = 30  # 秒
+    "mlflow_tracking_uri": str = "http://localhost:5002",
+    "model_name": str = "football_prediction_model",
+    "model_stage": str = "Production"
+    "feature_columns": List[str] = field(default_factory=list)
+    "model_cache_ttl": int = 3600  # 秒
+    "prediction_timeout": int = 30  # 秒
 
 
 @dataclass
 class StatisticalConfig:
     """统计分析策略配置"""
 
-    min_sample_size: int = 5
-    weight_recent_games: float = 0.7
-    home_advantage_factor: float = 1.2
-    poisson_lambda: float = 1.35
-    model_weights: Dict[str, float] = field(
+    "min_sample_size": int = 5
+    "weight_recent_games": float = 0.7
+    "home_advantage_factor": float = 1.2
+    "poisson_lambda": float = 1.35
+    "model_weights": Dict[str, float] = field(
         default_factory=lambda: {
-            "poisson": 0.4,
-            "historical": 0.3,
-            "form": 0.2,
-            "head_to_head": 0.1,
+            "poisson": 0.4,","
+            "historical": 0.3,","
+            "form": 0.2,","
+            "head_to_head": 0.1,""
         }
     )
 
@@ -59,15 +59,15 @@ class StatisticalConfig:
 class HistoricalConfig:
     """历史数据策略配置"""
 
-    min_historical_matches: int = 3
-    similarity_threshold: float = 0.7
-    max_historical_years: int = 5
-    weight_factors: Dict[str, float] = field(
+    "min_historical_matches": int = 3
+    "similarity_threshold": float = 0.7
+    "max_historical_years": int = 5
+    "weight_factors": Dict[str, float] = field(
         default_factory=lambda: {
-            "direct_h2h": 0.4,
-            "similar_score_patterns": 0.25,
-            "season_performance": 0.2,
-            "time_based_patterns": 0.15,
+            "direct_h2h": 0.4,","
+            "similar_score_patterns": 0.25,","
+            "season_performance": 0.2,","
+            "time_based_patterns": 0.15,""
         }
     )
 
@@ -76,48 +76,48 @@ class HistoricalConfig:
 class EnsembleConfig:
     """集成策略配置"""
 
-    ensemble_method: str = "weighted_average"
-    consensus_threshold: float = 0.7
-    max_disagreement: float = 2.0
-    performance_window: int = 50
-    sub_strategies: List[Dict[str, Any] = field(default_factory=list)
-    strategy_weights: Dict[str, float] = field(default_factory=dict[str, Any])
+    "ensemble_method": str = "weighted_average"
+    "consensus_threshold": float = 0.7
+    "max_disagreement": float = 2.0
+    "performance_window": int = 50
+    "sub_strategies": List[Dict[str, Any] = field(default_factory=list)
+    "strategy_weights": Dict[str, float] = field(default_factory=dict[str, Any])
 
 
 @dataclass
 class StrategyConfig:
     """策略配置"""
 
-    name: str
-    type: str
-    enabled: bool = True
-    description: Optional[str] = None
-    priority: int = 100
-    tags: List[str] = field(default_factory=list)
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    "name": str
+    "type": str
+    "enabled": bool = True
+    "description": Optional[str] = None
+    "priority": int = 100
+    "tags": List[str] = field(default_factory=list)
+    "created_at": datetime = field(default_factory=datetime.utcnow)
+    "updated_at": datetime = field(default_factory=datetime.utcnow)
 
     # 策略特定配置
-    ml_config: Optional[MLModelConfig] = None
-    statistical_config: Optional[StatisticalConfig] = None
-    historical_config: Optional[HistoricalConfig] = None
-    ensemble_config: Optional[EnsembleConfig] = None
+    "ml_config": Optional[MLModelConfig] = None
+    "statistical_config": Optional[StatisticalConfig] = None
+    "historical_config": Optional[HistoricalConfig] = None
+    "ensemble_config": Optional[EnsembleConfig] = None
     # 自定义配置
-    custom_config: Dict[str, Any] = field(default_factory=dict[str, Any])
+    "custom_config": Dict[str, Any] = field(default_factory=dict[str, Any])
 
 
 class StrategyConfigManager:
-    """策略配置管理器
+    """策略配置管理器"""
 
-    负责加载、保存和管理策略配置。
-    """
+    负责加载,保存和管理策略配置.
+    """"""
 
     def __init__(self, config_dir: Union[str, Path] = "configs") -> None:
-        """初始化配置管理器
+        """初始化配置管理器"""
 
         Args:
-            config_dir: 配置文件目录
-        """
+    "config_dir": 配置文件目录
+        """"""
         self.config_dir = Path(config_dir)
         self.config_dir.mkdir(parents=True, exist_ok=True)
 
@@ -125,9 +125,9 @@ class StrategyConfigManager:
         self._profiles_file = self.config_dir / "strategy_profiles.yaml"
         self._environments_file = self.config_dir / "environments.yaml"
 
-        self._configs: Dict[str, StrategyConfig] = {}}
-        self._profiles: Dict[str, Union[str, Dict[str, Any] = {}
-        self._environments: Dict[str, Union[str, Dict[str, Any] = {}
+        self._configs: Dict[str, StrategyConfig] = {}
+        self._profiles: Dict[str, Union[str, Dict[str, Any]] = {}
+        self._environments: Dict[str, Union[str, Dict[str, Any]] = {}
 
         # 加载所有配置
         self.load_all()
@@ -148,7 +148,7 @@ class StrategyConfigManager:
             with open(self._strategies_file, "r", encoding="utf-8") as f:
                 data = yaml.safe_load(f)
 
-            if data and "strategies" in data:
+            if data and "strategies" in data:,
                 for strategy_data in data["strategies"]:
                     config = self._parse_strategy_config(strategy_data)
                     if config:
@@ -195,9 +195,9 @@ class StrategyConfigManager:
     def save_strategies(self) -> None:
         """保存策略配置"""
         data = {
-            "version": "1.0.0",
-            "updated_at": datetime.utcnow().isoformat(),
-            "strategies": [
+            "version": "1.0.0",","
+            "updated_at": datetime.utcnow().isoformat(),","
+            "strategies": [""
                 self._serialize_strategy_config(config)
                 for config in self._configs.values()
             ],
@@ -212,36 +212,36 @@ class StrategyConfigManager:
             logger.error(f"保存策略配置失败: {e}")
 
     def get_config(self, strategy_name: str) -> Optional[StrategyConfig]:
-        """获取策略配置
+        """获取策略配置"""
 
         Args:
-            strategy_name: 策略名称
+    "strategy_name": 策略名称
 
         Returns:
             Optional[StrategyConfig]: 策略配置
-        """
+        """"""
         return self._configs.get(strategy_name)
 
     def add_config(self, config: StrategyConfig) -> None:
-        """添加策略配置
+        """添加策略配置"""
 
         Args:
-            config: 策略配置
-        """
+    "config": 策略配置
+        """"""
         config.updated_at = datetime.utcnow()
         self._configs[config.name] = config
         logger.info(f"添加策略配置: {config.name}")
 
     def update_config(self, strategy_name: str, updates: Dict[str, Any]) -> bool:
-        """更新策略配置
+        """更新策略配置"""
 
         Args:
-            strategy_name: 策略名称
-            updates: 更新的配置项
+    "strategy_name": 策略名称
+    "updates": 更新的配置项
 
         Returns:
-            bool: 是否更新成功
-        """
+    "bool": 是否更新成功
+        """"""
         if strategy_name not in self._configs:
             return False
 
@@ -259,14 +259,14 @@ class StrategyConfigManager:
         return True
 
     def remove_config(self, strategy_name: str) -> bool:
-        """删除策略配置
+        """删除策略配置"""
 
         Args:
-            strategy_name: 策略名称
+    "strategy_name": 策略名称
 
         Returns:
-            bool: 是否删除成功
-        """
+    "bool": 是否删除成功
+        """"""
         if strategy_name in self._configs:
             del self._configs[strategy_name]
             logger.info(f"删除策略配置: {strategy_name}")
@@ -274,17 +274,17 @@ class StrategyConfigManager:
         return False
 
     def list_configs(
-        self, strategy_type: Optional[str] ] = None, enabled_only: bool = False
+        self, strategy_type: Optional[str]  = None, enabled_only: bool = False
     ) -> List[StrategyConfig]:
-        """列出策略配置
+        """列出策略配置"""
 
         Args:
-            strategy_type: 策略类型过滤
-            enabled_only: 是否只返回启用的策略
+    "strategy_type": 策略类型过滤
+    "enabled_only": 是否只返回启用的策略
 
         Returns:
             List[StrategyConfig]: 策略配置列表
-        """
+        """"""
         configs = list(self._configs.values())
 
         if strategy_type:
@@ -299,14 +299,14 @@ class StrategyConfigManager:
         return configs
 
     def apply_profile(
-        self, profile_name: str, strategy_names: Optional[List[str]] = None
+        self, profile_name: str, strategy_names: Optional[List[str] = None
     ) -> None:
-        """应用配置档案
+        """应用配置档案"""
 
         Args:
-            profile_name: 档案名称
-            strategy_names: 要应用档案的策略列表，None表示所有策略
-        """
+    "profile_name": 档案名称
+    "strategy_names": 要应用档案的策略列表,None表示所有策略
+        """"""
         if profile_name not in self._profiles:
             logger.error(f"配置档案不存在: {profile_name}")
             return
@@ -320,11 +320,11 @@ class StrategyConfigManager:
         logger.info(f"应用配置档案: {profile_name}")
 
     def apply_environment(self, env_name: str) -> None:
-        """应用环境配置
+        """应用环境配置"""
 
         Args:
-            env_name: 环境名称
-        """
+    "env_name": 环境名称
+        """"""
         if env_name not in self._environments:
             logger.error(f"环境配置不存在: {env_name}")
             return
@@ -345,24 +345,24 @@ class StrategyConfigManager:
 
     def export_config(
         self,
-        strategy_names: List[str],
-        output_path: Union[str, Path],
-        format: ConfigFormat = ConfigFormat.YAML,
+    "strategy_names": List[str],
+    "output_path": Union[str, Path],
+    "format": ConfigFormat = ConfigFormat.YAML,
     ) -> None:
-        """导出策略配置
+        """导出策略配置"""
 
         Args:
-            strategy_names: 要导出的策略名称列表
-            output_path: 输出文件路径
-            format: 输出格式
-        """
+    "strategy_names": 要导出的策略名称列表
+    "output_path": 输出文件路径
+    "format": 输出格式
+        """"""
         output_path = Path(output_path)
 
         # 收集要导出的配置
         exportdata = {
-            "version": "1.0.0",
-            "exported_at": datetime.utcnow().isoformat(),
-            "strategies": [],
+            "version": "1.0.0",","
+            "exported_at": datetime.utcnow().isoformat(),","
+            "strategies": []",
         }
 
         for name in strategy_names:
@@ -388,15 +388,15 @@ class StrategyConfigManager:
     def import_config(
         self, config_path: Union[str, Path], overwrite: bool = False
     ) -> int:
-        """导入策略配置
+        """导入策略配置"""
 
         Args:
-            config_path: 配置文件路径
-            overwrite: 是否覆盖已存在的配置
+    "config_path": 配置文件路径
+    "overwrite": 是否覆盖已存在的配置
 
         Returns:
-            int: 导入的策略数量
-        """
+    "int": 导入的策略数量
+        """"""
         config_path = Path(config_path)
 
         if not config_path.exists():
@@ -412,12 +412,12 @@ class StrategyConfigManager:
 
             imported_count = 0
 
-            if "strategies" in data:
+            if "strategies" in data:,
                 for strategy_data in data["strategies"]:
                     config = self._parse_strategy_config(strategy_data)
                     if config:
                         if config.name in self._configs and not overwrite:
-                            logger.warning(f"策略已存在，跳过: {config.name}")
+                            logger.warning(f"策略已存在,跳过: {config.name}")
                             continue
 
                         self._configs[config.name] = config
@@ -435,8 +435,8 @@ class StrategyConfigManager:
         try:
             # 基础字段
             config = StrategyConfig(
-                name=data["name"],
-                type=data["type"],
+                name=data["name"]"],"
+                type=data["type"]"],"
                 enabled=data.get("enabled", True),
                 description=data.get("description"),
                 priority=data.get("priority", 100),
@@ -473,14 +473,14 @@ class StrategyConfigManager:
     def _serialize_strategy_config(self, config: StrategyConfig) -> Dict[str, Any]:
         """序列化策略配置"""
         data = {
-            "name": config.name,
-            "type": config.type,
-            "enabled": config.enabled,
-            "description": config.description,
-            "priority": config.priority,
-            "tags": config.tags,
-            "created_at": config.created_at.isoformat(),
-            "updated_at": config.updated_at.isoformat(),
+            "name": config.name,","
+            "type": config.type,","
+            "enabled": config.enabled,","
+            "description": config.description,","
+            "priority": config.priority,","
+            "tags": config.tags,","
+            "created_at": config.created_at.isoformat(),","
+            "updated_at": config.updated_at.isoformat(),""
         }
 
         # 序列化策略特定配置
@@ -507,7 +507,7 @@ class StrategyConfigManager:
             type="ml_model",
             description="基于机器学习模型的预测策略",
             priority=1,
-            tags=["ml", "model", "prediction"],
+            tags=["ml", "model", "prediction"]"],"
             ml_config = MLModelConfig(),
         )
 
@@ -517,7 +517,7 @@ class StrategyConfigManager:
             type="statistical",
             description="基于统计分析的预测策略",
             priority=2,
-            tags=["statistical", "analysis"],
+            tags=["statistical", "analysis"]"],"
             statistical_config = StatisticalConfig(),
         )
 
@@ -527,7 +527,7 @@ class StrategyConfigManager:
             type="historical",
             description="基于历史数据的预测策略",
             priority=3,
-            tags=["historical", "data"],
+            tags=["historical", "data"]"],"
             historical_config = HistoricalConfig(),
         )
 
@@ -537,25 +537,25 @@ class StrategyConfigManager:
             type="ensemble",
             description="集成多种策略的综合预测",
             priority=10,
-            tags=["ensemble", "combined"],
+            tags=["ensemble", "combined"]"],"
             ensemble_config = EnsembleConfig(
                 sub_strategies=[
-                    {"name": "ml_ensemble", "type": "ml_model", "enabled": True},
+                    {"name": "ml_ensemble", "type": "ml_model", "enabled": True}","
                     {
-                        "name": "statistical_ensemble",
-                        "type": "statistical",
-                        "enabled": True,
+                        "name": "statistical_ensemble",","
+                        "type": "statistical",","
+                        "enabled": True,""
                     },
                     {
-                        "name": "historical_ensemble",
-                        "type": "historical",
-                        "enabled": True,
+                        "name": "historical_ensemble",","
+                        "type": "historical",","
+                        "enabled": True,""
                     },
                 ],
                 strategy_weights={
-                    "ml_ensemble": 0.4,
-                    "statistical_ensemble": 0.35,
-                    "historical_ensemble": 0.25,
+                    "ml_ensemble": 0.4,","
+                    "statistical_ensemble": 0.35,","
+                    "historical_ensemble": 0.25,""
                 },
             ),
         )
@@ -572,42 +572,42 @@ class StrategyConfigManager:
     def _create_default_profiles(self) -> None:
         """创建默认配置档案"""
         self._profiles = {
-            "development": {
-                "ml_predictor": {
-                    "enabled": True,
-                    "ml_config": {"model_stage": "Staging", "prediction_timeout": 60},
+            "development": {","
+                "ml_predictor": {","
+                    "enabled": True,","
+                    "ml_config": {"model_stage": "Staging", "prediction_timeout": 60},""
                 },
-                "statistical_analyzer": {
-                    "enabled": True,
-                    "statistical_config": {"min_sample_size": 3},
+                "statistical_analyzer": {","
+                    "enabled": True,","
+                    "statistical_config": {"min_sample_size": 3},""
                 },
             },
-            "production": {
-                "ml_predictor": {
-                    "enabled": True,
-                    "ml_config": {
-                        "model_stage": "Production",
-                        "prediction_timeout": 30,
+            "production": {","
+                "ml_predictor": {","
+                    "enabled": True,","
+                    "ml_config": {","
+                        "model_stage": "Production",","
+                        "prediction_timeout": 30,""
                     },
                 },
-                "statistical_analyzer": {
-                    "enabled": True,
-                    "statistical_config": {"min_sample_size": 10},
+                "statistical_analyzer": {","
+                    "enabled": True,","
+                    "statistical_config": {"min_sample_size": 10},""
                 },
-                "historical_analyzer": {"enabled": False},
+                "historical_analyzer": {"enabled": False},""
             },
-            "testing": {
-                "ml_predictor": {"enabled": False},
-                "statistical_analyzer": {
-                    "enabled": True,
-                    "statistical_config": {
-                        "min_sample_size": 1,
-                        "weight_recent_games": 0.5,
+            "testing": {","
+                "ml_predictor": {"enabled": False},","
+                "statistical_analyzer": {","
+                    "enabled": True,","
+                    "statistical_config": {","
+                        "min_sample_size": 1,","
+                        "weight_recent_games": 0.5,""
                     },
                 },
-                "historical_analyzer": {"enabled": False},
-                "ensemble_predictor": {
-                    "ensemble_config": {"ensemble_method": "majority_voting"}
+                "historical_analyzer": {"enabled": False},","
+                "ensemble_predictor": {","
+                    "ensemble_config": {"ensemble_method": "majority_voting"}""
                 },
             },
         }
@@ -624,25 +624,25 @@ class StrategyConfigManager:
     def _create_default_environments(self) -> None:
         """创建默认环境配置"""
         self._environments = {
-            "development": {
-                "global": {"enabled": True, "priority": 100},
-                "ml_predictor": {
-                    "custom_config": {"debug_mode": True, "log_predictions": True}
+            "development": {","
+                "global": {"enabled": True, "priority": 100},","
+                "ml_predictor": {","
+                    "custom_config": {"debug_mode": True, "log_predictions": True}""
                 },
             },
-            "staging": {
-                "global": {"enabled": True},
-                "ensemble_predictor": {"ensemble_config": {"consensus_threshold": 0.6}},
+            "staging": {","
+                "global": {"enabled": True},","
+                "ensemble_predictor": {"ensemble_config": {"consensus_threshold": 0.6}},""
             },
-            "production": {
-                "global": {
-                    "enabled": True,
-                    "custom_config": {
-                        "cache_results": True,
-                        "monitor_performance": True,
+            "production": {","
+                "global": {","
+                    "enabled": True,","
+                    "custom_config": {","
+                        "cache_results": True,","
+                        "monitor_performance": True,""
                     },
                 },
-                "ml_predictor": {"custom_config": {"fallback_enabled": True}},
+                "ml_predictor": {"custom_config": {"fallback_enabled": True}},""
             },
         }
 

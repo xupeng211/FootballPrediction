@@ -8,7 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError, DatabaseError
 Phase 3 improvements migration
 
 Revision ID: 007_improve_phase3_implementations
-Revises: d3bf28af22ff
+    "Revises": d3bf28af22ff
 Create Date: 2024-01-10 10:00:00.000000
 
 """

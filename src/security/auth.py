@@ -113,10 +113,10 @@ class AuthManager:
 
     def __init__(
         self,
-        secret_key: str,
-        algorithm: str = "HS256",
-        access_token_expire_minutes: int = 30,
-        refresh_token_expire_days: int = 7,
+    secret_key: str,
+    algorithm: str = "HS256",
+    access_token_expire_minutes: int = 30,
+    refresh_token_expire_days: int = 7,
     ):
         self.secret_key = secret_key
         self.algorithm = algorithm
@@ -138,9 +138,9 @@ class AuthManager:
 
         to_encode.update(
             {
-                "exp": expire,
-                "type": TokenType.ACCESS,
-                "iat": datetime.utcnow(),
+                exp: expire,
+                type: TokenType.ACCESS,
+                iat: datetime.utcnow(),
             }
         )
 
@@ -159,9 +159,9 @@ class AuthManager:
 
         to_encode.update(
             {
-                "exp": expire,
-                "type": TokenType.REFRESH,
-                "iat": datetime.utcnow(),
+                exp: expire,
+                type: TokenType.REFRESH,
+                iat: datetime.utcnow(),
             }
         )
 
@@ -204,9 +204,9 @@ class AuthManager:
 
         # 移除敏感信息，创建新的访问令牌
         user_data = {
-            "sub": payload.get("sub"),
-            "roles": payload.get("roles", []),
-            "permissions": payload.get("permissions", []),
+            sub: payload.get("sub"),
+            roles: payload.get("roles", []),
+            permissions: payload.get("permissions", []),
         }
 
         return self.create_access_token(user_data)
@@ -223,7 +223,7 @@ class AuthManager:
 
 
 # 全局认证管理器实例
-auth_manager: AuthManager | None = None
+    auth_manager: AuthManager | None = None
 
 
 def get_auth_manager() -> AuthManager:
@@ -263,10 +263,10 @@ async def get_current_user(
         )
 
     return {
-        "user_id": user_id,
-        "roles": payload.get("roles", []),
-        "permissions": payload.get("permissions", []),
-        "token_type": payload.get("type"),
+        user_id: user_id,
+        roles: payload.get("roles", []),
+        permissions: payload.get("permissions", []),
+        token_type: payload.get("type"),
     }
 
 

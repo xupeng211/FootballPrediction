@@ -395,3 +395,51 @@ The project extensively uses async/await patterns:
 - Integration events for system communication
 - Observer pattern for decoupled components
 - Event sourcing for audit trails
+
+## TDD (Test-Driven Development) Culture
+
+This project has established a comprehensive TDD culture with the following resources:
+
+### TDD Learning Resources
+- **Quick Start Guide**: [TDD_QUICK_START.md](docs/TDD_QUICK_START.md) - 5-minute introduction
+- **Knowledge Base**: [TDD_KNOWLEDGE_BASE.md](docs/TDD_KNOWLEDGE_BASE.md) - Complete reference
+- **Code Review Checklist**: [TDD_CODE_REVIEW_CHECKLIST.md](docs/TDD_CODE_REVIEW_CHECKLIST.md)
+
+### TDD Sharing Sessions
+The project organizes regular TDD sharing sessions:
+- **Current Session**: "Mock与Stub在测试中的艺术"
+- **Materials**: [docs/tdd_presentations/](docs/tdd_presentations/)
+- **Execution Guide**: [CLAUDE_TDD_SESSION_GUIDE.md](CLAUDE_TDD_SESSION_GUIDE.md)
+
+### TDD Tools and Automation
+- **Coverage Monitor**: `scripts/monitor_coverage.py`
+- **Improvement Tracker**: `scripts/tdd_improvement_tracker.py`
+- **Presentation Generator**: `scripts/tdd_presentation_generator.py`
+- **Session Runner**: `scripts/run_tdd_sharing_session.py`
+
+### Current Test Coverage Status
+- **Overall Coverage**: 24.2% (Target: 50%)
+- **string_utils**: 100% ✅
+- **helpers**: 100% ✅
+- **predictions**: 93% ✅
+
+When users ask about TDD, Claude Code should:
+1. Check the latest TDD sharing session materials
+2. Provide examples from the knowledge base
+3. Suggest using the presentation generator for new topics
+4. Run the improvement tracker for suggestions
+
+### Quick TDD Commands
+```bash
+# Check TDD session preparation
+python scripts/check_tdd_session_prep.py
+
+# Run TDD sharing session
+python scripts/run_tdd_sharing_session.py
+
+# Generate TDD improvement report
+python scripts/tdd_improvement_tracker.py
+
+# Monitor coverage
+python scripts/simple_coverage_monitor.py
+```

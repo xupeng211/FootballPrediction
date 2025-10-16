@@ -76,7 +76,7 @@ class Settings(SettingsClass):
     """应用程序设置类 - 使用Pydantic进行配置管理和验证"""
 
     # 数据库配置
-    database_url: str = (
+    "database_url": str = (
         Field(
             default="sqlite+aiosqlite:///./data/football_prediction.db",
             description="数据库连接URL",
@@ -84,7 +84,7 @@ class Settings(SettingsClass):
         if HAS_PYDANTIC
         else "sqlite+aiosqlite:///./data/football_prediction.db"
     )
-    test_database_url: str = (
+    "test_database_url": str = (
         Field(
             default="postgresql+asyncpg://postgres:postgres@db:5432/football_prediction_test",
             description="测试数据库连接URL",
@@ -94,44 +94,44 @@ class Settings(SettingsClass):
     )
 
     # Redis配置
-    redis_url: str = (
+    "redis_url": str = (
         Field(default="redis://redis:6379/0", description="Redis连接URL")
         if HAS_PYDANTIC
         else "redis://redis:6379/0"
     )
 
     # API配置
-    api_host: str = (
+    "api_host": str = (
         Field(default="localhost", description="API服务器主机")
         if HAS_PYDANTIC
         else "localhost"
     )
-    api_port: int = (
+    "api_port": int = (
         Field(default=8000, description="API服务器端口") if HAS_PYDANTIC else 8000
     )
 
     # 环境配置
-    environment: str = (
+    "environment": str = (
         Field(default="development", description="运行环境")
         if HAS_PYDANTIC
         else "development"
     )
-    log_level: str = (
+    "log_level": str = (
         Field(default="INFO", description="日志级别") if HAS_PYDANTIC else "INFO"
     )
 
     # MLflow配置
-    mlflow_tracking_uri: str = (
+    "mlflow_tracking_uri": str = (
         Field(default="file:///tmp/mlflow", description="MLflow跟踪URI")
         if HAS_PYDANTIC
         else "file:///tmp/mlflow"
     )
 
     # 外部API配置
-    api_football_key: str | None = (
+    "api_football_key": str | None = (
         Field(default=None, description="API-Football密钥") if HAS_PYDANTIC else None
     )
-    api_football_url: str = (
+    "api_football_url": str = (
         Field(
             default="https://api-football-v1.p.rapidapi.com/v3",
             description="API-Football基础URL",
@@ -140,12 +140,12 @@ class Settings(SettingsClass):
         else "https://api-football-v1.p.rapidapi.com/v3"
     )
 
-    metrics_enabled: bool = (
+    "metrics_enabled": bool = (
         Field(default=True, description="是否启用监控指标收集")
         if HAS_PYDANTIC
         else True
     )
-    metrics_tables: list[str] = (
+    "metrics_tables": list[str] = (
         Field(
             default_factory=lambda: [
                 "matches",
@@ -173,20 +173,20 @@ class Settings(SettingsClass):
             "data_collection_logs",
         ]
     )
-    metrics_collection_interval: int = (
+    "metrics_collection_interval": int = (
         Field(default=30, description="指标收集间隔（秒）") if HAS_PYDANTIC else 30
     )
-    missing_data_defaults_path: str | None = (
+    "missing_data_defaults_path": str | None = (
         Field(default=None, description="缺失值默认配置文件路径")
         if HAS_PYDANTIC
         else None
     )
-    missing_data_defaults_json: str | None = (
+    "missing_data_defaults_json": str | None = (
         Field(default=None, description="缺失值默认配置JSON字符串")
         if HAS_PYDANTIC
         else None
     )
-    enabled_services: list[str] = (
+    "enabled_services": list[str] = (
         Field(
             default_factory=lambda: [
                 "ContentAnalysisService",
@@ -206,7 +206,7 @@ class Settings(SettingsClass):
     if HAS_PYDANTIC:
         # Pydantic v2 configuration
         try:
-            model_config: ClassVar[dict[str, Any]] = {
+    "model_config": ClassVar[dict[str, Any]] = {
                 "env_file": ".env",
                 "env_file_encoding": "utf-8",
                 "case_sensitive": False,

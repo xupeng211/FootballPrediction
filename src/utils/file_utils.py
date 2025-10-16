@@ -40,7 +40,7 @@ class FileUtils:
 
     @staticmethod
     def write_json(
-        data: dict[str, Any], file_path: str | Path, ensure_dir: bool = True
+    data: dict[str, Any], file_path: str | Path, ensure_dir: bool = True
     ) -> None:
         """写入JSON文件"""
         file_path = Path(file_path)
@@ -84,7 +84,7 @@ class FileUtils:
 
     @staticmethod
     def write_json_file(
-        data: dict[str, Any], file_path: str | Path, ensure_dir: bool = True
+    data: dict[str, Any], file_path: str | Path, ensure_dir: bool = True
     ) -> bool:
         """写入JSON文件（别名方法）"""
         try:

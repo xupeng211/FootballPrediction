@@ -1,11 +1,11 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+
 预测领域事件
 Prediction Domain Events
 
-定义与预测相关的领域事件。
+定义与预测相关的领域事件.
 Defines domain events related to predictions.
-"""
+""""""
 
 from .base import DomainEvent
 
@@ -15,12 +15,12 @@ class PredictionCreatedEvent(DomainEvent):
 
     def __init__(
         self,
-        prediction_id: int,
-        user_id: int,
-        match_id: int,
-        predicted_home: int,
-        predicted_away: int,
-        confidence: Optional[float] ] = None,
+    "prediction_id": int,
+    "user_id": int,
+    "match_id": int,
+    "predicted_home": int,
+    "predicted_away": int,
+    "confidence": Optional[float] = None,
         **kwargs,
     ):
         super().__init__(aggregate_id=prediction_id)
@@ -33,12 +33,12 @@ class PredictionCreatedEvent(DomainEvent):
 
     def _get_event_data(self) -> Dict[str, Any]:
         return {
-            "prediction_id": self.prediction_id,
-            "user_id": self.user_id,
-            "match_id": self.match_id,
-            "predicted_home": self.predicted_home,
-            "predicted_away": self.predicted_away,
-            "confidence": self.confidence,
+            "prediction_id": self.prediction_id,","
+            "user_id": self.user_id,","
+            "match_id": self.match_id,","
+            "predicted_home": self.predicted_home,","
+            "predicted_away": self.predicted_away,","
+            "confidence": self.confidence,""
         }
 
 
@@ -47,11 +47,11 @@ class PredictionUpdatedEvent(DomainEvent):
 
     def __init__(
         self,
-        prediction_id: int,
-        old_predicted_home: int,
-        old_predicted_away: int,
-        new_predicted_home: int,
-        new_predicted_away: int,
+    "prediction_id": int,
+    "old_predicted_home": int,
+    "old_predicted_away": int,
+    "new_predicted_home": int,
+    "new_predicted_away": int,
         **kwargs,
     ):
         super().__init__(aggregate_id=prediction_id)
@@ -63,14 +63,14 @@ class PredictionUpdatedEvent(DomainEvent):
 
     def _get_event_data(self) -> Dict[str, Any]:
         return {
-            "prediction_id": self.prediction_id,
-            "old_prediction": {
-                "home": self.old_predicted_home,
-                "away": self.old_predicted_away,
+            "prediction_id": self.prediction_id,","
+            "old_prediction": {","
+                "home": self.old_predicted_home,","
+                "away": self.old_predicted_away,""
             },
-            "new_prediction": {
-                "home": self.new_predicted_home,
-                "away": self.new_predicted_away,
+            "new_prediction": {","
+                "home": self.new_predicted_home,","
+                "away": self.new_predicted_away,""
             },
         }
 
@@ -80,12 +80,12 @@ class PredictionEvaluatedEvent(DomainEvent):
 
     def __init__(
         self,
-        prediction_id: int,
-        actual_home: int,
-        actual_away: int,
-        is_correct: bool,
-        points_earned: Optional[int] ] = None,
-        accuracy_score: Optional[float] ] = None,
+    "prediction_id": int,
+    "actual_home": int,
+    "actual_away": int,
+    "is_correct": bool,
+    "points_earned": Optional[int]  = None,
+    "accuracy_score": Optional[float]  = None,
         **kwargs,
     ):
         super().__init__(aggregate_id=prediction_id)
@@ -98,11 +98,11 @@ class PredictionEvaluatedEvent(DomainEvent):
 
     def _get_event_data(self) -> Dict[str, Any]:
         return {
-            "prediction_id": self.prediction_id,
-            "actual_score": {"home": self.actual_home, "away": self.actual_away},
-            "is_correct": self.is_correct,
-            "points_earned": self.points_earned,
-            "accuracy_score": self.accuracy_score,
+            "prediction_id": self.prediction_id,","
+            "actual_score": {"home": self.actual_home, "away": self.actual_away},","
+            "is_correct": self.is_correct,","
+            "points_earned": self.points_earned,","
+            "accuracy_score": self.accuracy_score,""
         }
 
 
@@ -111,9 +111,9 @@ class PredictionCancelledEvent(DomainEvent):
 
     def __init__(
         self,
-        prediction_id: int,
-        reason: str,
-        cancelled_by: Optional[int] ] = None,
+    "prediction_id": int,
+    "reason": str,
+    "cancelled_by": Optional[int]  = None,
         **kwargs,
     ):
         super().__init__(aggregate_id=prediction_id)
@@ -123,9 +123,9 @@ class PredictionCancelledEvent(DomainEvent):
 
     def _get_event_data(self) -> Dict[str, Any]:
         return {
-            "prediction_id": self.prediction_id,
-            "reason": self.reason,
-            "cancelled_by": self.cancelled_by,
+            "prediction_id": self.prediction_id,","
+            "reason": self.reason,","
+            "cancelled_by": self.cancelled_by,""
         }
 
 
@@ -140,9 +140,9 @@ class PredictionExpiredEvent(DomainEvent):
 
     def _get_event_data(self) -> Dict[str, Any]:
         return {
-            "prediction_id": self.prediction_id,
-            "match_id": self.match_id,
-            "expired_at": self.expired_at,
+            "prediction_id": self.prediction_id,","
+            "match_id": self.match_id,","
+            "expired_at": self.expired_at,""
         }
 
 
@@ -151,11 +151,11 @@ class PredictionPointsAdjustedEvent(DomainEvent):
 
     def __init__(
         self,
-        prediction_id: int,
-        user_id: int,
-        old_points: int,
-        new_points: int,
-        adjustment_reason: str,
+    "prediction_id": int,
+    "user_id": int,
+    "old_points": int,
+    "new_points": int,
+    "adjustment_reason": str,
         **kwargs,
     ):
         super().__init__(aggregate_id=prediction_id)
@@ -167,10 +167,9 @@ class PredictionPointsAdjustedEvent(DomainEvent):
 
     def _get_event_data(self) -> Dict[str, Any]:
         return {
-            "prediction_id": self.prediction_id,
-            "user_id": self.user_id,
-            "old_points": self.old_points,
-            "new_points": self.new_points,
-            "adjustment_reason": self.adjustment_reason,
-            "points_difference": self.new_points - self.old_points,
-        }
+            "prediction_id": self.prediction_id,","
+            "user_id": self.user_id,","
+            "old_points": self.old_points,","
+            "new_points": self.new_points,","
+            "adjustment_reason": self.adjustment_reason,","
+            "points_difference": self.new_points - self.old_points,""

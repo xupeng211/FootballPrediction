@@ -29,16 +29,16 @@ class APIResponse:
         成功响应
 
         Args:
-            data: 响应数据
-            message: 响应消息
+    data: 响应数据
+    message: 响应消息
 
         Returns:
             Dict[str, Any]: 格式化的成功响应
         """
         response = {
-            "success": True,
-            "message": message,
-            "timestamp": datetime.now().isoformat(),
+            success: True,
+            message: message,
+            timestamp: datetime.now().isoformat(),
         }
 
         if data is not None:
@@ -53,23 +53,23 @@ class APIResponse:
 
     @staticmethod
     def error(
-        message: str = "操作失败", code: int | None = None, data: Any = None
+    message: str = "操作失败", code: int | None = None, data: Any = None
     ) -> dict[str, Any]:
         """
         错误响应
 
         Args:
-            message: 错误消息
-            code: 错误代码
-            data: 附加数据
+    message: 错误消息
+    code: 错误代码
+    data: 附加数据
 
         Returns:
             Dict[str, Any]: 格式化的错误响应
         """
         response = {
-            "success": False,
-            "message": message,
-            "timestamp": datetime.now().isoformat(),
+            success: False,
+            message: message,
+            timestamp: datetime.now().isoformat(),
         }
 
         if code is not None:
@@ -84,7 +84,7 @@ class APIResponse:
 
     @staticmethod
     def error_response(
-        message: str = "操作失败", code: int | None = None, data: Any = None
+    message: str = "操作失败", code: int | None = None, data: Any = None
     ) -> dict[str, Any]:
         """错误响应（别名方法）"""
         return APIResponse.error(message, code, data)

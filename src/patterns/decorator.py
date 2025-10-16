@@ -1,9 +1,9 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+
 装饰器模式实现
 
 用于功能增强和横切关注点
-"""
+""""""
 
 import asyncio
 import time
@@ -59,7 +59,7 @@ class LoggingDecorator(BaseDecorator):
 
             self.logger.log(
                 self.log_level,
-                f"Completed execution: {self._component.__class__.__name__} "
+                f"Completed execution: {self._component.__class__.__name__} ",
                 f"in {duration:.3f}s",
             )
 
@@ -68,7 +68,7 @@ class LoggingDecorator(BaseDecorator):
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             duration = time.time() - start_time
             self.logger.error(
-                f"Failed execution: {self._component.__class__.__name__} "
+                f"Failed execution: {self._component.__class__.__name__} ",
                 f"in {duration:.3f}s | Error: {str(e)}"
             )
             raise
@@ -79,11 +79,11 @@ class RetryDecorator(BaseDecorator):
 
     def __init__(
         self,
-        component: Component,
-        max_retries: int = 3,
-        delay: float = 1.0,
-        backoff_factor: float = 2.0,
-        exceptions: Optional[List[Exception]] = None,
+    "component": Component,
+    "max_retries": int = 3,
+    "delay": float = 1.0,
+    "backoff_factor": float = 2.0,
+    "exceptions": Optional[List[Exception] = None,
     ):
         super().__init__(component)
         self.max_retries = max_retries
@@ -135,12 +135,12 @@ class MetricsDecorator(BaseDecorator):
         super().__init__(component)
         self.metrics_name = metrics_name or component.__class__.__name__
         self.metrics = {
-            "calls": 0,
-            "errors": 0,
-            "total_time": 0.0,
-            "avg_time": 0.0,
+            "calls": 0,","
+            "errors": 0,","
+            "total_time": 0.0,","
+            "avg_time": 0.0,","
             "min_time": float("inf"),
-            "max_time": 0.0,
+            "max_time": 0.0,""
         }
 
     async def execute(self, *args, **kwargs) -> Any:
@@ -170,8 +170,8 @@ class MetricsDecorator(BaseDecorator):
         self.metrics["max_time"] = max(self.metrics["max_time"], duration)
 
         self.logger.debug(
-            f"Metrics updated for {self.metrics_name}: "
-            f"duration={duration:.3f}s, success={success}"
+            f"Metrics updated for {self.metrics_name}: ",
+                    f"duration={duration:.3f}s, success={success}"
         )
 
     def get_metrics(self) -> Dict[str, Any]:
@@ -190,9 +190,9 @@ class ValidationDecorator(BaseDecorator):
 
     def __init__(
         self,
-        component: Component,
-        validators: Optional[List[Callable]] = None,
-        validate_result: Optional[Callable] = None,
+    "component": Component,
+    "validators": Optional[List[Callable] = None,
+    "validate_result": Optional[Callable] = None,
     ):
         super().__init__(component)
         self.validators = validators or []
@@ -231,14 +231,15 @@ class CacheDecorator(BaseDecorator):
 
     def __init__(
         self,
-        component: Component,
-        cache_store: Optional[Dict[str, Any]] = None,
-        ttl: Optional[float] = None,
+    "component": Component,
+    "cache_store": Optional[Dict[str, Any] = None,
+    "ttl": Optional[float] = None,
     ):
         super().__init__(component)
         self.cache = cache_store or {}
         self.ttl = ttl
-        self.timestamps = {}  # type: ignore
+        self.timestamps = {
+            }  # type: ignore
 
     def _get_cache_key(self, *args, **kwargs) -> str:
         """生成缓存键"""
@@ -280,10 +281,10 @@ class CacheDecorator(BaseDecorator):
 
 # 函数式装饰器
 def async_retry(
-    max_retries: int = 3,
-    delay: float = 1.0,
-    backoff_factor: float = 2.0,
-    exceptions: Optional[List[Exception]] = None,
+    "max_retries": int = 3,
+    "delay": float = 1.0,
+    "backoff_factor": float = 2.0,
+    "exceptions": Optional[List[Exception] = None,
 ):
     """异步重试装饰器"""
 
@@ -366,10 +367,10 @@ def async_metrics(metrics_store: Optional[Dict[str, Dict[str, Any] = None):
             # 初始化指标
             if func_name not in metrics_store:
                 metrics_store[func_name] = {
-                    "calls": 0,
-                    "errors": 0,
-                    "total_time": 0.0,
-                    "avg_time": 0.0,
+                    "calls": 0,","
+                    "errors": 0,","
+                    "total_time": 0.0,","
+                    "avg_time": 0.0,""
                 }
 
             metrics = metrics_store[func_name]

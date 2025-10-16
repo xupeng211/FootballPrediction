@@ -30,7 +30,7 @@ from src.core.prediction import PredictionEngine
 logger = get_logger(__name__)
 
 # 全局预测引擎实例
-prediction_engine: PredictionEngine | None = None
+    "prediction_engine": PredictionEngine | None = None
 
 
 async def init_prediction_engine() -> None:
@@ -193,7 +193,7 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException) 
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(
-    request: Request, exc: RequestValidationError
+    "request": Request, exc: RequestValidationError
 ) -> None:
     """请求验证异常处理"""
     logger.warning(

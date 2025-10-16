@@ -1,8 +1,8 @@
 from typing import Any, Dict, List, Optional, Union
-"""
-告警管理模块（兼容版本）
+
+告警管理模块(兼容版本)
 Alert Manager Module (Compatibility Version)
-"""
+
 
 from enum import Enum
 from dataclasses import dataclass
@@ -32,7 +32,7 @@ class AlertLevel(Enum):
 
 
 class AlertSeverity(Enum):
-    """告警严重程度（别名）"""
+    """告警严重程度(别名)"""
 
     INFO = "info"
     WARNING = "warning"
@@ -61,16 +61,17 @@ class AlertStatus(Enum):
 class Alert:
     """告警信息"""
 
-    id: str
-    name: str
-    level: AlertLevel
-    message: str
-    timestamp: datetime
-    status: AlertStatus = AlertStatus.ACTIVE
-    metadata: Optional[Dict[str, Any]] = None
+    "id": str
+    "name": str
+    "level": AlertLevel
+    "message": str
+    "timestamp": datetime
+    "status": AlertStatus = AlertStatus.ACTIVE
+    "metadata": Optional[Dict[str, Any] = None
     def __post_init__(self):
         if self.metadata is None:
-            self._metadata = {}
+            self._metadata = {
+            }
 
 
 class LogHandler:
@@ -99,24 +100,26 @@ class LogHandler:
             )
 
     def get_logs(self, level: AlertLevel = None, limit: int = 100) -> List[str]:
-        """获取日志（简化版本）"""
+        """获取日志(简化版本)"""
         # 在实际应用中，这里会从日志文件或日志系统读取
-        return [f"Log entry for {level.value if level else 'all'}"]
+        return [f"Log entry for {level.value if level else all}"]""
 
 
 class AlertAggregator:
     """告警聚合器"""
 
     def __init__(self):
-        self.aggregated_alerts = {}
-        self.aggregation_rules = {}
+        self.aggregated_alerts = {
+            }
+        self.aggregation_rules = {
+            }
 
     def add_rule(self, name: str, condition: str, aggregation_type: str):
         """添加聚合规则"""
         self.aggregation_rules[name] = {
-            "condition": condition,
-            "type": aggregation_type,  # count, sum, avg
-            "window": 300,  # 5分钟窗口
+            "condition": condition,","
+            "type": aggregation_type,  # count, sum, avg","
+            "window": 300,  # 5分钟窗口""
         }
 
     def aggregate_alerts(self, alerts: List[Alert]) -> List[Alert]:
@@ -125,7 +128,7 @@ class AlertAggregator:
         aggregated = []
 
         # 按告警名称分组
-        grouped: Dict[str, List[Alert] = {}
+    "grouped": Dict[str, List[Alert] = {}
         for alert in alerts:
             if alert.name not in grouped:
                 grouped[alert.name] = []
@@ -139,11 +142,11 @@ class AlertAggregator:
                     id=str(uuid.uuid4()),
                     name=f"Aggregated: {name}",
                     level=max(a.level for a in alert_list),
-                    message=f"{len(alert_list)} alerts of type '{name}'",
+                    message=f"{len(alert_list)} alerts of type {name}",
                     timestamp=datetime.utcnow(),
                     _metadata ={
-                        "count": len(alert_list),
-                        "original_alerts": [a.id for a in alert_list],
+                        "count": len(alert_list),","
+                        "original_alerts": [a.id for a in alert_list],""
                     },
                 )
                 aggregated.append(aggregated_alert)
@@ -162,10 +165,10 @@ class AlertManager:
 
     def create_alert(
         self,
-        name: str,
-        level: AlertLevel,
-        message: str,
-        metadata: Optional[Dict[str, Any]] = None,
+    "name": str,
+    "level": AlertLevel,
+    "message": str,
+    "metadata": Optional[Dict[str, Any] = None,
     ) -> Alert:
         """创建告警"""
         alert_id = str(uuid.uuid4())
@@ -195,7 +198,8 @@ class AlertRuleEngine:
 
     def __init__(self):
         self.rules = []
-        self.rule_results = {}
+        self.rule_results = {
+            }
 
     def add_rule(self, name: str, condition: Callable, level: AlertLevel):
         """添加规则"""
@@ -214,19 +218,19 @@ class AlertRuleEngine:
                 if rule["condition"](metrics):
                     alert = Alert(
                         id=str(uuid.uuid4()),
-                        name=f"Rule: {rule['name']}",
-                        level=rule["level"],
-                        message=f"Alert rule '{rule['name']}' triggered",
+                        name=f"Rule: {rule[name]}",
+                        level=rule["level"]"],"
+                        message=f"Alert rule {rule[name']}' triggered",
                         timestamp=datetime.utcnow(),
-                        _metadata ={"rule": rule["name"], "metrics": metrics},
+                        _metadata ={"rule": rule["name", "metrics": metrics}"],"
                     )
                     alerts.append(alert)
                     self.rule_results[rule["name"] = {
-                        "triggered": True,
-                        "timestamp": datetime.utcnow(),
+                        "triggered": True,","
+                        "timestamp": datetime.utcnow(),""
                     }
             except Exception as e:
-                logger.error(f"Error evaluating rule {rule['name']}: {e}")
+                logger.error(f"Error evaluating rule {rule[name]}: {e}")
 
         return alerts
 
@@ -251,7 +255,8 @@ class AlertChannelManager:
     """告警通道管理器"""
 
     def __init__(self):
-        self.channels = {}
+        self.channels = {
+            }
 
     def register_channel(self, channel_type: AlertChannel, handler: Callable):
         """注册通道处理器"""
@@ -312,19 +317,20 @@ class WebhookHandler:
     def __init__(self, endpoint_url: str, timeout: int = 30):
         self.endpoint_url = endpoint_url
         self.timeout = timeout
-        self.headers = {"Content-Type": "application/json"}
+        self.headers = {
+            "Content-Type": "application/json"}""
 
     def send_alert(self, alert: Alert):
         """发送告警到Webhook"""
         import json
 
         payload = {
-            "alert_id": alert.id,
-            "name": alert.name,
-            "level": alert.level.value,
-            "message": alert.message,
-            "timestamp": alert.timestamp.isoformat(),
-            "metadata": alert.metadata,
+            "alert_id": alert.id,","
+            "name": alert.name,","
+            "level": alert.level.value,","
+            "message": alert.message,","
+            "timestamp": alert.timestamp.isoformat(),","
+            "metadata": alert.metadata,""
         }
 
         # 简化的发送逻辑
@@ -338,7 +344,7 @@ class WebhookHandler:
 class PrometheusHandler:
     """Prometheus处理器"""
 
-    def __init__(self, metrics: "PrometheusMetrics"):
+    def __init__(self, metrics: "PrometheusMetrics"):""
         self.metrics = metrics
 
     def handle_alert(self, alert: Alert):
@@ -349,8 +355,8 @@ class PrometheusHandler:
     def get_metrics_summary(self) -> Dict[str, Any]:
         """获取指标摘要"""
         return {
-            "total_metrics": len(self.metrics.metrics),
-            "metrics": self.metrics.metrics,
+            "total_metrics": len(self.metrics.metrics),","
+            "metrics": self.metrics.metrics,""
         }
 
 
@@ -358,26 +364,27 @@ class PrometheusMetrics:
     """Prometheus指标管理"""
 
     def __init__(self):
-        self.metrics = {}
+        self.metrics = {
+            }
 
     def counter(self, name: str, documentation: str):
         """创建计数器"""
-        self.metrics[name] = {"type": "counter", "value": 0, "doc": documentation}
+        self.metrics[name] = {"type": "counter", "value": 0, "doc": documentation}""
         return self
 
     def gauge(self, name: str, documentation: str):
         """创建仪表盘"""
-        self.metrics[name] = {"type": "gauge", "value": 0, "doc": documentation}
+        self.metrics[name] = {"type": "gauge", "value": 0, "doc": documentation}""
         return self
 
     def histogram(self, name: str, documentation: str, buckets: List[float] = None):
         """创建直方图"""
         self.metrics[name] = {
-            "type": "histogram",
-            "value": 0,
-            "buckets": buckets or [0.1, 0.5, 1.0, 5.0, 10.0],
-            "doc": documentation,
-        }
+            "type": "histogram",","
+            "value": 0,","
+            "buckets": buckets or [0.1, 0.5, 1.0, 5.0, 10.0],","
+            "doc": documentation,""
+
         return self
 
     def inc(self, name: str, value: float = 1):
@@ -391,7 +398,7 @@ class PrometheusMetrics:
             self.metrics[name]["value"] = value
 
     def observe(self, name: str, value: float):
-        """观察值（直方图）"""
+        """观察值(直方图)"""
         if name in self.metrics:
             self.metrics[name]["value"] = value
 

@@ -18,12 +18,12 @@ class RetryConfig:
 
     def __init__(
         self,
-        max_attempts: int = 3,
-        base_delay: float = 1.0,
-        max_delay: float = 60.0,
-        exponential_base: float = 2.0,
-        jitter: bool = True,
-        retryable_exceptions: tuple = (Exception,),
+    "max_attempts": int = 3,
+    "base_delay": float = 1.0,
+    "max_delay": float = 60.0,
+    "exponential_base": float = 2.0,
+    "jitter": bool = True,
+    "retryable_exceptions": tuple = (Exception,),
     ):
         self.max_attempts = max_attempts
         self.base_delay = base_delay
@@ -40,10 +40,10 @@ class RetryError(Exception):
 
 
 def retry_with_exponential_backoff(
-    max_attempts: int = 3,
-    base_delay: float = 1.0,
-    max_delay: float = 60.0,
-    exceptions: tuple = (Exception,),
+    "max_attempts": int = 3,
+    "base_delay": float = 1.0,
+    "max_delay": float = 60.0,
+    "exceptions": tuple = (Exception,),
 ):
     """重试装饰器（同步版本）"""
 
@@ -73,10 +73,10 @@ def retry_with_exponential_backoff(
 
 
 async def async_retry_with_exponential_backoff(
-    max_attempts: int = 3,
-    base_delay: float = 1.0,
-    max_delay: float = 60.0,
-    exceptions: tuple = (Exception,),
+    "max_attempts": int = 3,
+    "base_delay": float = 1.0,
+    "max_delay": float = 60.0,
+    "exceptions": tuple = (Exception,),
 ):
     """重试装饰器（异步版本）"""
 
@@ -152,9 +152,9 @@ class CircuitBreaker:
 
     def __init__(
         self,
-        failure_threshold: int = 5,
-        recovery_timeout: float = 60.0,
-        expected_exception: type = Exception,
+    "failure_threshold": int = 5,
+    "recovery_timeout": float = 60.0,
+    "expected_exception": type = Exception,
     ):
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout

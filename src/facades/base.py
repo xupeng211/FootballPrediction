@@ -1,11 +1,11 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+
 门面模式基础类
 Facade Pattern Base Classes
 
-定义门面模式的核心组件。
+定义门面模式的核心组件.
 Defines core components of the facade pattern.
-"""
+""""""
 
 from abc import ABC, abstractmethod
 import logging
@@ -60,12 +60,12 @@ class Subsystem(ABC):
     def get_status(self) -> Dict[str, Any]:
         """获取子系统状态"""
         return {
-            "name": self.name,
-            "version": self.version,
-            "status": self.status.value,
-            "last_check": self.last_check.isoformat() if self.last_check else None,
-            "error_message": self.error_message,
-            "metrics": self.metrics,
+            "name": self.name,","
+            "version": self.version,","
+            "status": self.status.value,","
+            "last_check": self.last_check.isoformat() if self.last_check else None,","
+            "error_message": self.error_message,","
+            "metrics": self.metrics,""
         }
 
 
@@ -81,7 +81,7 @@ class SubsystemManager:
         self, subsystem: Subsystem, dependencies: Optional[List[str] = None
     ) -> None:
         """注册子系统"""
-        self._subsystems[subsystem.name]] = subsystem
+        self._subsystems[subsystem.name] = subsystem
         self._dependencies[subsystem.name] = set(dependencies or [])
         self._calculate_initialization_order()
 
@@ -102,7 +102,7 @@ class SubsystemManager:
         return list(self._subsystems.keys())
 
     def _calculate_initialization_order(self) -> None:
-        """计算初始化顺序（拓扑排序）"""
+        """计算初始化顺序(拓扑排序)"""
         # 简单的拓扑排序实现
         visited = set()
         temp_visited = set()
@@ -144,7 +144,7 @@ class SubsystemManager:
                 raise
 
     async def shutdown_all(self) -> None:
-        """关闭所有子系统（逆序）"""
+        """关闭所有子系统(逆序)"""
         logger.info("Shutting down all subsystems...")
 
         for name in reversed(self._initialization_order):
@@ -167,7 +167,7 @@ class SubsystemManager:
     def get_all_status(self) -> Dict[str, Dict[str, Any]:
         """获取所有子系统状态"""
         return {
-            name: subsystem.get_status() for name, subsystem in self._subsystems.items()
+    "name": subsystem.get_status() for name, subsystem in self._subsystems.items()
         }
 
 
@@ -180,11 +180,11 @@ class SystemFacade(ABC):
         self.subsystem_manager = SubsystemManager()
         self.initialized = False
         self.metrics: Dict[str, Any] = {
-            "requests_count": 0,
-            "errors_count": 0,
-            "average_response_time": 0.0,
-            "total_response_time": 0.0,
-            "last_request_time": None,
+            "requests_count": 0,","
+            "errors_count": 0,","
+            "average_response_time": 0.0,","
+            "total_response_time": 0.0,","
+            "last_request_time": None,""
         }
 
     def register_subsystem(
@@ -217,22 +217,22 @@ class SystemFacade(ABC):
         overall_health = all(subsystem_health.values())
 
         return {
-            "facade": self.name,
-            "initialized": self.initialized,
-            "overall_health": overall_health,
-            "subsystems": subsystem_health,
-            "subsystem_count": len(subsystem_health),
-            "healthy_subsystems": sum(subsystem_health.values()),
+            "facade": self.name,","
+            "initialized": self.initialized,","
+            "overall_health": overall_health,","
+            "subsystems": subsystem_health,","
+            "subsystem_count": len(subsystem_health),","
+            "healthy_subsystems": sum(subsystem_health.values()),""
         }
 
     def get_status(self) -> Dict[str, Any]:
         """获取门面状态"""
         return {
-            "name": self.name,
-            "description": self.description,
-            "initialized": self.initialized,
-            "subsystems": self.subsystem_manager.get_all_status(),
-            "metrics": self.metrics.copy(),
+            "name": self.name,","
+            "description": self.description,","
+            "initialized": self.initialized,","
+            "subsystems": self.subsystem_manager.get_all_status(),","
+            "metrics": self.metrics.copy(),""
         }
 
     async def _execute_with_metrics(self, operation_name: str, operation):
@@ -272,11 +272,11 @@ class SystemFacade(ABC):
     def reset_metrics(self) -> None:
         """重置指标"""
         self.metrics = {
-            "requests_count": 0,
-            "errors_count": 0,
-            "average_response_time": 0.0,
-            "total_response_time": 0.0,
-            "last_request_time": None,
+            "requests_count": 0,","
+            "errors_count": 0,","
+            "average_response_time": 0.0,","
+            "total_response_time": 0.0,","
+            "last_request_time": None,""
         }
 
     @abstractmethod

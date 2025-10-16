@@ -1,11 +1,11 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+""""""
 预测仓储
 Prediction Repository
 
-提供预测数据的访问操作，实现Repository模式。
+提供预测数据的访问操作,实现Repository模式.
 Provides prediction data access operations, implementing the Repository pattern.
-"""
+""""""
 
 from datetime import datetime, timedelta
 
@@ -28,13 +28,13 @@ class PredictionStatus:
 
 
 class PredictionRepository(BaseRepository[Predictions]):
-    """
+    """"""
     预测仓储类
     Prediction Repository Class
 
-    提供预测数据的CRUD操作和复杂查询方法。
+    提供预测数据的CRUD操作和复杂查询方法.
     Provides CRUD operations and complex query methods for prediction data.
-    """
+    """"""
 
     def __init__(self, db_manager=None) -> None:
         super().__init__(Predictions, db_manager)
@@ -45,23 +45,23 @@ class PredictionRepository(BaseRepository[Predictions]):
 
     async def get_by_match(
         self,
-        match_id: Union[int, str],
-        status: Optional[PredictionStatus] ] = None,
-        limit: Optional[int] ] = None,
-        session: Optional[AsyncSession] ] = None,
+    "match_id": Union[int, str],
+    "status": Optional[PredictionStatus]  = None,
+    "limit": Optional[int]  = None,
+    "session": Optional[AsyncSession]  = None,
     ) -> List[Prediction]:
-        """
+        """"""
         获取指定比赛的预测
 
         Args:
-            match_id: 比赛ID
-            status: 预测状态（可选）
-            limit: 限制返回数量
-            session: 数据库会话
+    "match_id": 比赛ID
+    "status": 预测状态(可选)
+    "limit": 限制返回数量
+    "session": 数据库会话
 
         Returns:
             预测列表
-        """
+        """"""
         filters = {"match_id": match_id}
         if status:
             filters["status"] = status if isinstance(status, str) else str(status)
@@ -72,23 +72,23 @@ class PredictionRepository(BaseRepository[Predictions]):
 
     async def get_by_user(
         self,
-        user_id: Union[int, str],
-        status: Optional[PredictionStatus] ] = None,
-        limit: Optional[int] ] = None,
-        session: Optional[AsyncSession] ] = None,
+    "user_id": Union[int, str],
+    "status": Optional[PredictionStatus]  = None,
+    "limit": Optional[int]  = None,
+    "session": Optional[AsyncSession]  = None,
     ) -> List[Prediction]:
-        """
+        """"""
         获取指定用户的预测
 
         Args:
-            user_id: 用户ID
-            status: 预测状态（可选）
-            limit: 限制返回数量
-            session: 数据库会话
+    "user_id": 用户ID
+    "status": 预测状态(可选)
+    "limit": 限制返回数量
+    "session": 数据库会话
 
         Returns:
             预测列表
-        """
+        """"""
         filters = {"user_id": user_id}
         if status:
             filters["status"] = status if isinstance(status, str) else str(status)
@@ -99,21 +99,21 @@ class PredictionRepository(BaseRepository[Predictions]):
 
     async def get_by_status(
         self,
-        status: PredictionStatus,
-        limit: Optional[int] ] = None,
-        session: Optional[AsyncSession] ] = None,
+    "status": PredictionStatus,
+    "limit": Optional[int]  = None,
+    "session": Optional[AsyncSession]  = None,
     ) -> List[Prediction]:
-        """
+        """"""
         根据状态获取预测
 
         Args:
-            status: 预测状态
-            limit: 限制返回数量
-            session: 数据库会话
+    "status": 预测状态
+    "limit": 限制返回数量
+    "session": 数据库会话
 
         Returns:
             预测列表
-        """
+        """"""
         return await self.find_by(
             filters={"status": status if isinstance(status, str) else str(status)},
             limit=limit,
@@ -122,18 +122,18 @@ class PredictionRepository(BaseRepository[Predictions]):
         )
 
     async def get_pending_predictions(
-        self, limit: Optional[int] ] = None, session: Optional[AsyncSession] = None
+        self, limit: Optional[int]  = None, session: Optional[AsyncSession = None
     ) -> List[Prediction]:
-        """
+        """"""
         获取待处理的预测
 
         Args:
-            limit: 限制返回数量
-            session: 数据库会话
+    "limit": 限制返回数量
+    "session": 数据库会话
 
         Returns:
             待处理预测列表
-        """
+        """"""
         return await self.get_by_status(
             status=PredictionStatus.PENDING,
             limit=limit,
@@ -142,21 +142,21 @@ class PredictionRepository(BaseRepository[Predictions]):
 
     async def get_completed_predictions(
         self,
-        days: int = 7,
-        limit: Optional[int] ] = None,
-        session: Optional[AsyncSession] ] = None,
+    "days": int = 7,
+    "limit": Optional[int]  = None,
+    "session": Optional[AsyncSession]  = None,
     ) -> List[Prediction]:
-        """
+        """"""
         获取已完成的预测
 
         Args:
-            days: 过去多少天
-            limit: 限制返回数量
-            session: 数据库会话
+    "days": 过去多少天
+    "limit": 限制返回数量
+    "session": 数据库会话
 
         Returns:
             已完成预测列表
-        """
+        """"""
         start_date = datetime.utcnow() - timedelta(days=days)
 
         async with self.db_manager.get_async_session() as sess:
@@ -182,57 +182,57 @@ class PredictionRepository(BaseRepository[Predictions]):
 
     async def get_user_prediction_for_match(
         self,
-        user_id: Union[int, str],
-        match_id: Union[int, str],
-        session: Optional[AsyncSession] ] = None,
+    "user_id": Union[int, str],
+    "match_id": Union[int, str],
+    "session": Optional[AsyncSession]  = None,
     ) -> Optional[Prediction]:
-        """
+        """"""
         获取用户对特定比赛的预测
 
         Args:
-            user_id: 用户ID
-            match_id: 比赛ID
-            session: 数据库会话
+    "user_id": 用户ID
+    "match_id": 比赛ID
+    "session": 数据库会话
 
         Returns:
             预测对象或None
-        """
+        """"""
         return await self.find_one_by(
             filters={"user_id": user_id, "match_id": match_id}, session=session
         )
 
     async def create_prediction(
         self,
-        user_id: Union[int, str],
-        match_id: Union[int, str],
-        predicted_home_score: int,
-        predicted_away_score: int,
-        confidence: Optional[float] ] = None,
-        model_version: Optional[str] ] = None,
-        session: Optional[AsyncSession] ] = None,
+    "user_id": Union[int, str],
+    "match_id": Union[int, str],
+    "predicted_home_score": int,
+    "predicted_away_score": int,
+    "confidence": Optional[float]  = None,
+    "model_version": Optional[str]  = None,
+    "session": Optional[AsyncSession]  = None,
     ) -> Prediction:
-        """
+        """"""
         创建新预测
 
         Args:
-            user_id: 用户ID
-            match_id: 比赛ID
-            predicted_home_score: 预测主队得分
-            predicted_away_score: 预测客队得分
-            confidence: 预测置信度（0-1）
-            model_version: 模型版本
-            session: 数据库会话
+    "user_id": 用户ID
+    "match_id": 比赛ID
+    "predicted_home_score": 预测主队得分
+    "predicted_away_score": 预测客队得分
+    "confidence": 预测置信度(0-1)
+    "model_version": 模型版本
+    "session": 数据库会话
 
         Returns:
             创建的预测对象
-        """
+        """"""
         prediction_data = {
-            "user_id": user_id,
-            "match_id": match_id,
-            "predicted_home_score": predicted_home_score,
-            "predicted_away_score": predicted_away_score,
-            "status": PredictionStatus.PENDING,
-            "created_at": datetime.utcnow(),
+            "user_id": user_id,","
+            "match_id": match_id,","
+            "predicted_home_score": predicted_home_score,","
+            "predicted_away_score": predicted_away_score,","
+            "status": PredictionStatus.PENDING,","
+            "created_at": datetime.utcnow(),""
         }
 
         if confidence is not None:
@@ -244,33 +244,33 @@ class PredictionRepository(BaseRepository[Predictions]):
 
     async def update_prediction_result(
         self,
-        prediction_id: Union[int, str],
-        actual_home_score: int,
-        actual_away_score: int,
-        is_correct: bool,
-        points_earned: Optional[float] ] = None,
-        session: Optional[AsyncSession] ] = None,
+    "prediction_id": Union[int, str],
+    "actual_home_score": int,
+    "actual_away_score": int,
+    "is_correct": bool,
+    "points_earned": Optional[float]  = None,
+    "session": Optional[AsyncSession]  = None,
     ) -> Optional[Prediction]:
-        """
+        """"""
         更新预测结果
 
         Args:
-            prediction_id: 预测ID
-            actual_home_score: 实际主队得分
-            actual_away_score: 实际客队得分
-            is_correct: 预测是否正确
-            points_earned: 获得积分
-            session: 数据库会话
+    "prediction_id": 预测ID
+    "actual_home_score": 实际主队得分
+    "actual_away_score": 实际客队得分
+    "is_correct": 预测是否正确
+    "points_earned": 获得积分
+    "session": 数据库会话
 
         Returns:
             更新后的预测对象
-        """
+        """"""
         update_data = {
-            "actual_home_score": actual_home_score,
-            "actual_away_score": actual_away_score,
-            "is_correct": is_correct,
-            "status": PredictionStatus.COMPLETED,
-            "evaluated_at": datetime.utcnow(),
+            "actual_home_score": actual_home_score,","
+            "actual_away_score": actual_away_score,","
+            "is_correct": is_correct,","
+            "status": PredictionStatus.COMPLETED,","
+            "evaluated_at": datetime.utcnow(),""
         }
 
         if points_earned is not None:
@@ -282,24 +282,24 @@ class PredictionRepository(BaseRepository[Predictions]):
 
     async def cancel_prediction(
         self,
-        prediction_id: Union[int, str],
-        reason: Optional[str] ] = None,
-        session: Optional[AsyncSession] ] = None,
+    "prediction_id": Union[int, str],
+    "reason": Optional[str]  = None,
+    "session": Optional[AsyncSession]  = None,
     ) -> Optional[Prediction]:
-        """
+        """"""
         取消预测
 
         Args:
-            prediction_id: 预测ID
-            reason: 取消原因
-            session: 数据库会话
+    "prediction_id": 预测ID
+    "reason": 取消原因
+    "session": 数据库会话
 
         Returns:
             更新后的预测对象
-        """
+        """"""
         update_data = {
-            "status": PredictionStatus.CANCELLED,
-            "cancelled_at": datetime.utcnow(),
+            "status": PredictionStatus.CANCELLED,","
+            "cancelled_at": datetime.utcnow(),""
         }
 
         if reason:
@@ -315,21 +315,21 @@ class PredictionRepository(BaseRepository[Predictions]):
 
     async def get_user_prediction_stats(
         self,
-        user_id: Union[int, str],
-        days: Optional[int] ] = None,
-        session: Optional[AsyncSession] ] = None,
+    "user_id": Union[int, str],
+    "days": Optional[int]  = None,
+    "session": Optional[AsyncSession]  = None,
     ) -> Dict[str, Any]:
-        """
+        """"""
         获取用户预测统计
 
         Args:
-            user_id: 用户ID
-            days: 统计天数（可选）
-            session: 数据库会话
+    "user_id": 用户ID
+    "days": 统计天数(可选)
+    "session": 数据库会话
 
         Returns:
             统计数据字典
-        """
+        """"""
         async with self.db_manager.get_async_session() as sess:
             if session:
                 sess = session
@@ -347,15 +347,15 @@ class PredictionRepository(BaseRepository[Predictions]):
 
             # 计算统计数据
             stats = {
-                "total": len(predictions),
-                "pending": 0,
-                "completed": 0,
-                "cancelled": 0,
-                "correct": 0,
-                "wrong": 0,
-                "accuracy": 0.0,
-                "total_points": 0.0,
-                "avg_confidence": 0.0,
+                "total": len(predictions),","
+                "pending": 0,","
+                "completed": 0,","
+                "cancelled": 0,","
+                "correct": 0,","
+                "wrong": 0,","
+                "accuracy": 0.0,","
+                "total_points": 0.0,","
+                "avg_confidence": 0.0,""
             }
 
             total_confidence = 0
@@ -399,18 +399,18 @@ class PredictionRepository(BaseRepository[Predictions]):
             return stats
 
     async def get_match_prediction_summary(
-        self, match_id: Union[int, str], session: Optional[AsyncSession] = None
+        self, match_id: Union[int, str], session: Optional[AsyncSession = None
     ) -> Dict[str, Any]:
-        """
+        """"""
         获取比赛预测汇总
 
         Args:
-            match_id: 比赛ID
-            session: 数据库会话
+    "match_id": 比赛ID
+    "session": 数据库会话
 
         Returns:
             预测汇总数据
-        """
+        """"""
         async with self.db_manager.get_async_session() as sess:
             if session:
                 sess = session
@@ -420,15 +420,15 @@ class PredictionRepository(BaseRepository[Predictions]):
 
             # 计算汇总数据
             summary = {
-                "total_predictions": len(predictions),
-                "pending": 0,
-                "completed": 0,
-                "avg_predicted_home_score": 0.0,
-                "avg_predicted_away_score": 0.0,
-                "home_win_predictions": 0,
-                "away_win_predictions": 0,
-                "draw_predictions": 0,
-                "avg_confidence": 0.0,
+                "total_predictions": len(predictions),","
+                "pending": 0,","
+                "completed": 0,","
+                "avg_predicted_home_score": 0.0,","
+                "avg_predicted_away_score": 0.0,","
+                "home_win_predictions": 0,","
+                "away_win_predictions": 0,","
+                "draw_predictions": 0,","
+                "avg_confidence": 0.0,""
             }
 
             total_home_score = 0
@@ -480,17 +480,17 @@ class PredictionRepository(BaseRepository[Predictions]):
     async def get_top_predictors(
         self, days: int = 30, limit: int = 10, session: Optional[AsyncSession] = None
     ) -> List[Dict[str, Any]:
-        """
+        """"""
         获取顶级预测者排行榜
 
         Args:
-            days: 统计天数
-            limit: 返回数量限制
-            session: 数据库会话
+    "days": 统计天数
+    "limit": 返回数量限制
+    "session": 数据库会话
 
         Returns:
             预测者排行列表
-        """
+        """"""
         async with self.db_manager.get_async_session() as sess:
             if session:
                 sess = session
@@ -506,9 +506,7 @@ class PredictionRepository(BaseRepository[Predictions]):
                         func.case([(Prediction.is_correct is True, 1)], else_=0)
                     ).label("correct_predictions"),
                     func.sum(Prediction.points_earned).label("total_points"),
-                    func.avg(Prediction.confidence).label("avg_confidence"),
-                )
-                .where(
+                    func.avg(Prediction.confidence).label("avg_confidence"))).where(
                     and_(
                         Prediction.predicted_at >= start_date,
                         Prediction.status == PredictionStatus.COMPLETED,
@@ -531,12 +529,12 @@ class PredictionRepository(BaseRepository[Predictions]):
 
                 predictors.append(
                     {
-                        "user_id": row.user_id,
-                        "total_predictions": row.total_predictions,
-                        "correct_predictions": row.correct_predictions,
-                        "accuracy": accuracy,
-                        "total_points": row.total_points or 0.0,
-                        "avg_confidence": float(row.avg_confidence or 0.0),
+                        "user_id": row.user_id,","
+                        "total_predictions": row.total_predictions,","
+                        "correct_predictions": row.correct_predictions,","
+                        "accuracy": accuracy,","
+                        "total_points": row.total_points or 0.0,","
+                        "avg_confidence": float(row.avg_confidence or 0.0),""
                     }
                 )
 
@@ -548,21 +546,21 @@ class PredictionRepository(BaseRepository[Predictions]):
 
     async def get_related_data(
         self,
-        obj_id: Union[int, str],
-        relation_name: str,
-        session: Optional[AsyncSession] ] = None,
+    "obj_id": Union[int, str],
+    "relation_name": str,
+    "session": Optional[AsyncSession]  = None,
     ) -> Any:
-        """
+        """"""
         获取预测的关联数据
 
         Args:
-            obj_id: 预测ID
-            relation_name: 关联名称（如 'user', 'match'）
-            session: 数据库会话
+    "obj_id": 预测ID
+    "relation_name": 关联名称(如 'user', 'match')
+    "session": 数据库会话
 
         Returns:
             关联数据
-        """
+        """"""
         async with self.db_manager.get_async_session() as sess:
             if session:
                 sess = session

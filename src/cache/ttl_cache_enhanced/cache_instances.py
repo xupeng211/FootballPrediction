@@ -60,10 +60,10 @@ def get_cache(name: str):
     根据名称获取缓存
 
     Args:
-        name: 缓存名称
+    "name": 缓存名称
 
     Returns:
-        TTLCache: 缓存实例，如果不存在返回None
+    "TTLCache": 缓存实例，如果不存在返回None
     """
     return CACHES.get(name)
 

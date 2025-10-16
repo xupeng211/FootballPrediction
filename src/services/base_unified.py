@@ -31,8 +31,8 @@ class BaseService(ABC):
         初始化基础服务
 
         Args:
-            name: 服务名称，默认使用类名
-            db_manager: 数据库管理器实例，可选
+    "name": 服务名称，默认使用类名
+    "db_manager": 数据库管理器实例，可选
         """
         self.name = name or self.__class__.__name__
         self.db_manager = db_manager or DatabaseManager()
@@ -52,7 +52,7 @@ class BaseService(ABC):
         子类可以重写此方法来实现自定义初始化逻辑
 
         Returns:
-            bool: 初始化是否成功
+    "bool": 初始化是否成功
         """
         if self._initialized:
             self.logger.warning(f"服务 {self.name} 已经初始化")
@@ -97,7 +97,7 @@ class BaseService(ABC):
         启动服务
 
         Returns:
-            bool: 启动是否成功
+    "bool": 启动是否成功
         """
         if not self._initialized:
             self.logger.error(f"服务 {self.name} 未初始化，无法启动")
@@ -153,17 +153,17 @@ class BaseService(ABC):
 
     def log_operation(
         self,
-        operation: str,
-        details: dict[str, Any] | None = None,
-        level: str = "info",
+    "operation": str,
+    "details": dict[str, Any] | None = None,
+    "level": str = "info",
     ) -> None:
         """
         记录操作日志
 
         Args:
-            operation: 操作名称
-            details: 操作详情
-            level: 日志级别 (info, warning, error)
+    "operation": 操作名称
+    "details": 操作详情
+    "level": 日志级别 (info, warning, error)
         """
         message = f"Operation: {operation}"
         if details:
@@ -178,9 +178,9 @@ class BaseService(ABC):
         记录错误日志
 
         Args:
-            operation: 操作名称
-            error: 错误对象
-            details: 额外详情
+    "operation": 操作名称
+    "error": 错误对象
+    "details": 额外详情
         """
         self.logger.error(
             f"Error in {operation}: {str(error)}",
@@ -208,7 +208,7 @@ class BaseService(ABC):
         子类可以重写此方法来实现自定义健康检查
 
         Returns:
-            bool: 服务是否健康
+    "bool": 服务是否健康
         """
         return self._initialized and self._running
 
@@ -249,7 +249,7 @@ class BaseService(ABC):
         子类重写此方法来实现自定义初始化逻辑
 
         Returns:
-            bool: 初始化是否成功
+    "bool": 初始化是否成功
         """
         return True
 
@@ -268,7 +268,7 @@ class BaseService(ABC):
         子类重写此方法来实现自定义启动逻辑
 
         Returns:
-            bool: 启动是否成功
+    "bool": 启动是否成功
         """
         return True
 

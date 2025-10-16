@@ -22,8 +22,8 @@ Provides real-time match prediction functionality, including:
 建议使用：from src.models.prediction import <class_name>
 
 主要类 / Main Classes:
-    PredictionService: 核心预测服务类 / Core prediction service class
-    PredictionResult: 预测结果数据类 / Prediction result data class
+    "PredictionService": 核心预测服务类 / Core prediction service class
+    "PredictionResult": 预测结果数据类 / Prediction result data class
 
 主要方法 / Main Methods:
     PredictionService.predict_match(): 对单场比赛进行预测 / Predict single match
@@ -40,15 +40,15 @@ Provides real-time match prediction functionality, including:
     ```
 
 环境变量 / Environment Variables:
-    MLFLOW_TRACKING_URI: MLflow跟踪服务器URI，默认为http://localhost:5002
+    "MLFLOW_TRACKING_URI": MLflow跟踪服务器URI，默认为http://localhost:5002
                      MLflow tracking server URI, defaults to http://localhost:5002
-    MODEL_CACHE_TTL_HOURS: 模型缓存TTL小时数，默认为1
+    "MODEL_CACHE_TTL_HOURS": 模型缓存TTL小时数，默认为1
                       Model cache TTL in hours, defaults to 1
-    PREDICTION_CACHE_TTL_MINUTES: 预测结果缓存TTL分钟数，默认为30
+    "PREDICTION_CACHE_TTL_MINUTES": 预测结果缓存TTL分钟数，默认为30
                               Prediction result cache TTL in minutes, defaults to 30
-    MLFLOW_RETRY_MAX_ATTEMPTS: MLflow重试最大尝试次数，默认3
+    "MLFLOW_RETRY_MAX_ATTEMPTS": MLflow重试最大尝试次数，默认3
                           MLflow retry max attempts, default 3
-    MLFLOW_RETRY_BASE_DELAY: MLflow重试基础延迟秒数，默认2.0
+    "MLFLOW_RETRY_BASE_DELAY": MLflow重试基础延迟秒数，默认2.0
                          MLflow retry base delay in seconds, default 2.0
 
 依赖 / Dependencies:

@@ -252,8 +252,8 @@ class AnalyticsEventHandler(EventHandler):
 
     async def _track_prediction(
         self,
-        event: PredictionMadeEvent,
-        date: datetime.date,  # type: ignore
+    "event": PredictionMadeEvent,
+    "date": datetime.date,  # type: ignore
     ) -> None:
         """跟踪预测数据"""
         # 按日期统计预测数
@@ -293,8 +293,8 @@ class AnalyticsEventHandler(EventHandler):
 
     async def _track_user_registration(
         self,
-        event: UserRegisteredEvent,
-        date: datetime.date,  # type: ignore
+    "event": UserRegisteredEvent,
+    "date": datetime.date,  # type: ignore
     ) -> None:
         """跟踪用户注册"""
         # 这里可以发送到分析服务
@@ -302,8 +302,8 @@ class AnalyticsEventHandler(EventHandler):
 
     async def _track_match_creation(
         self,
-        event: MatchCreatedEvent,
-        date: datetime.date,  # type: ignore
+    "event": MatchCreatedEvent,
+    "date": datetime.date,  # type: ignore
     ) -> None:
         """跟踪比赛创建"""
         # 这里可以发送到分析服务

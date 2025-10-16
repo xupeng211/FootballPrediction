@@ -1,10 +1,10 @@
 from typing import Any, Dict, List, Optional, Union
 # mypy: ignore-errors
-"""
+""""""
 数据处理缓存管理
 
-提供数据处理的缓存功能，避免重复计算。
-"""
+提供数据处理的缓存功能,避免重复计算.
+""""""
 
 from src.cache.redis import RedisManager, CacheKeyManager
 import logging
@@ -23,20 +23,20 @@ class ProcessingCache:
 
         # 缓存配置
         self.cache_ttl = {
-            "match_processing": 3600,  # 1小时
-            "odds_processing": 1800,  # 30分钟
-            "features_processing": 7200,  # 2小时
-            "validation": 900,  # 15分钟
-            "statistics": 1800,  # 30分钟
+            "match_processing": 3600,  # 1小时,""
+            "odds_processing": 1800,  # 30分钟","
+            "features_processing": 7200,  # 2小时","
+            "validation": 900,  # 15分钟","
+            "statistics": 1800,  # 30分钟""
         }
 
         # 缓存统计
         self.stats = {
-            "hits": 0,
-            "misses": 0,
-            "sets": 0,
-            "evictions": 0,
-            "errors": 0,
+            "hits": 0,","
+            "misses": 0,","
+            "sets": 0,","
+            "evictions": 0,","
+            "errors": 0,""
         }
 
     async def initialize(self) -> bool:
@@ -64,24 +64,24 @@ class ProcessingCache:
 
     def _generate_cache_key(
         self,
-        operation: str,
-        data_hash: str,
-        params: Optional[Dict[str, Any] ] ] = None,  # type: ignore
+    "operation": str,
+    "data_hash": str,
+    "params": Optional[Dict[str, Any]] = None  # type: ignore
     ) -> str:
-        """
+        """"""
         生成缓存键
 
         Args:
-            operation: 操作类型
-            data_hash: 数据哈希值
-            params: 参数字典
+    "operation": 操作类型
+    "data_hash": 数据哈希值
+    "params": 参数字典
 
         Returns:
             缓存键
-        """
+        """"""
         # 创建基础键
         key_parts = [
-            "processing",
+            "processing",""
             operation,
             data_hash,
         ]
@@ -93,7 +93,7 @@ class ProcessingCache:
             key_parts.append(params_hash)
 
         # 生成完整键
-        ":".join(key_parts)
+        ":".join(key_parts)""
 
         # 使用键管理器规范化
         return self.key_manager.create_key(  # type: ignore
@@ -104,15 +104,15 @@ class ProcessingCache:
         )
 
     def _calculate_data_hash(self, data: Any) -> str:  # type: ignore
-        """
+        """"""
         计算数据哈希值
 
         Args:
-            data: 数据对象
+    "data": 数据对象
 
         Returns:
             哈希值
-        """
+        """"""
         try:
             if isinstance(data, (Dict[str, Any], list)):
                 data_str = json.dumps(data, sort_keys=True)  # type: ignore
@@ -126,21 +126,21 @@ class ProcessingCache:
 
     async def get_cached_result(
         self,
-        operation: str,
-        data: Any,  # type: ignore
-        params: Optional[Dict[str, Any] ] ] = None,  # type: ignore
+    "operation": str,
+    "data": Any,  # type: ignore
+    "params": Optional[Dict[str, Any]] = None  # type: ignore
     ) -> Optional[Any]:  # type: ignore
-        """
+        """"""
         获取缓存的计算结果
 
         Args:
-            operation: 操作类型
-            data: 输入数据
-            params: 参数
+    "operation": 操作类型
+    "data": 输入数据
+    "params": 参数
 
         Returns:
             缓存的结果
-        """
+        """"""
         if not self.cache_enabled or not self.redis_manager:
             self.stats["misses"] += 1
             return None
@@ -176,25 +176,25 @@ class ProcessingCache:
 
     async def cache_result(
         self,
-        operation: str,
-        data: Any,  # type: ignore
-        result: Any,  # type: ignore
-        params: Optional[Dict[str, Any] ] ] = None,  # type: ignore
-        ttl: Optional[int] ] = None,  # type: ignore
+    "operation": str,
+    "data": Any,  # type: ignore
+    "result": Any,  # type: ignore
+    "params": Optional[Dict[str, Any]] = None  # type: ignore
+    "ttl": Optional[int]  = None,  # type: ignore
     ) -> bool:
-        """
+        """"""
         缓存计算结果
 
         Args:
-            operation: 操作类型
-            data: 输入数据
-            result: 计算结果
-            params: 参数
-            ttl: 过期时间（秒）
+    "operation": 操作类型
+    "data": 输入数据
+    "result": 计算结果
+    "params": 参数
+    "ttl": 过期时间(秒)
 
         Returns:
             是否缓存成功
-        """
+        """"""
         if not self.cache_enabled or not self.redis_manager:
             return False
 
@@ -230,19 +230,19 @@ class ProcessingCache:
 
     async def invalidate_cache(
         self,
-        operation: Optional[str] ] = None,  # type: ignore
-        data_hash: Optional[str] ] = None,  # type: ignore
+    "operation": Optional[str]  = None,  # type: ignore
+    "data_hash": Optional[str]  = None,  # type: ignore
     ) -> int:
-        """
+        """"""
         使缓存失效
 
         Args:
-            operation: 操作类型（None表示所有操作）
-            data_hash: 数据哈希（None表示所有数据）
+    "operation": 操作类型(None表示所有操作)
+    "data_hash": 数据哈希(None表示所有数据)
 
         Returns:
             失效的键数量
-        """
+        """"""
         if not self.cache_enabled or not self.redis_manager:
             return 0
 
@@ -278,12 +278,12 @@ class ProcessingCache:
             return 0
 
     async def get_cache_stats(self) -> Dict[str, Any]:  # type: ignore
-        """
+        """"""
         获取缓存统计信息
 
         Returns:
             缓存统计信息
-        """
+        """"""
         total_requests = self.stats["hits"] + self.stats["misses"]
         hit_rate = (
             self.stats["hits"] / total_requests * 100 if total_requests > 0 else 0
@@ -291,9 +291,9 @@ class ProcessingCache:
 
         cache_stats = {
             **self.stats,
-            "total_requests": total_requests,
-            "hit_rate": round(hit_rate, 2),
-            "cache_enabled": self.cache_enabled,
+            "total_requests": total_requests,","
+            "hit_rate": round(hit_rate, 2),","
+            "cache_enabled": self.cache_enabled,""
         }
 
         if self.redis_manager:
@@ -302,10 +302,10 @@ class ProcessingCache:
                 info = self.redis_manager.get_info()
                 if info:
                     cache_stats["redis_info"] = {
-                        "used_memory": info.get("used_memory", 0),
-                        "connected_clients": info.get("connected_clients", 0),
-                        "keyspace_hits": info.get("keyspace_hits", 0),
-                        "keyspace_misses": info.get("keyspace_misses", 0),
+                        "used_memory": info.get("used_memory", 0),","
+                        "connected_clients": info.get("connected_clients", 0),","
+                        "keyspace_hits": info.get("keyspace_hits", 0),","
+                        "keyspace_misses": info.get("keyspace_misses", 0),""
                     }
             except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
                 self.logger.error(f"获取缓存失败: {e}")
@@ -313,12 +313,12 @@ class ProcessingCache:
         return cache_stats
 
     async def cleanup_expired_cache(self) -> int:
-        """
+        """"""
         清理过期的缓存
 
         Returns:
             清理的键数量
-        """
+        """"""
         if not self.cache_enabled or not self.redis_manager:
             return 0
 
@@ -345,7 +345,7 @@ class ProcessingCache:
                     # 为永久键设置过期时间
                     await self.redis_manager.expire(key, 3600)
 
-            self.logger.info(f"清理过期缓存完成，处理了 {len(keys)} 个键")
+            self.logger.info(f"清理过期缓存完成,处理了 {len(keys)} 个键")
             return cleaned_count
 
         except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
@@ -364,38 +364,38 @@ class ProcessingCache:
         self.logger.info("数据处理缓存已禁用")
 
     def set_cache_ttl(self, operation: str, ttl: int) -> None:
-        """
+        """"""
         设置特定操作的缓存TTL
 
         Args:
-            operation: 操作类型
-            ttl: 过期时间（秒）
-        """
+    "operation": 操作类型
+    "ttl": 过期时间(秒)
+        """"""
         self.cache_ttl[operation] = ttl
         self.logger.info(f"设置 {operation} 的缓存TTL为 {ttl} 秒")
 
     async def warm_up_cache(
         self,
-        operations: List[str],  # type: ignore
-        sample_data: List[Any],  # type: ignore
-        process_func: callable,  # type: ignore
+    "operations": List[str],  # type: ignore
+    "sample_data": List[Any],  # type: ignore
+    "process_func": callable,  # type: ignore
     ) -> None:
-        """
+        """"""
         缓存预热
 
         Args:
-            operations: 操作列表
-            sample_data: 示例数据
-            process_func: 处理函数
-        """
+    "operations": 操作列表
+    "sample_data": 示例数据
+    "process_func": 处理函数
+        """"""
         if not self.cache_enabled:
-            self.logger.info("缓存已禁用，跳过预热")
+            self.logger.info("缓存已禁用,跳过预热")
             return
 
-        self.logger.info(f"开始缓存预热，共 {len(operations)} 个操作")
+        self.logger.info(f"开始缓存预热,共 {len(operations)} 个操作")
 
         for operation in operations:
-            for i, data in enumerate(sample_data[:5]):  # 每个操作预热5个样本
+            for i, data in enumerate(sample_data[:5):  # 每个操作预热5个样本
                 try:
                     self.logger.debug(f"预热 {operation} 样本 {i + 1}")
 

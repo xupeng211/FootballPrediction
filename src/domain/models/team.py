@@ -1,11 +1,11 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+
 球队领域模型
 Team Domain Model
 
-封装球队相关的业务逻辑和不变性约束。
+封装球队相关的业务逻辑和不变性约束.
 Encapsulates team-related business logic and invariants.
-"""
+""""""
 
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -25,12 +25,12 @@ class TeamType(Enum):
 class TeamStats:
     """球队统计值对象"""
 
-    matches_played: int = 0
-    wins: int = 0
-    draws: int = 0
-    losses: int = 0
-    goals_for: int = 0
-    goals_against: int = 0
+    "matches_played": int = 0
+    "wins": int = 0
+    "draws": int = 0
+    "losses": int = 0
+    "goals_for": int = 0
+    "goals_against": int = 0
 
     def __post_init__(self) -> None:
         """验证统计数据"""
@@ -54,7 +54,7 @@ class TeamStats:
 
     @property
     def points(self) -> int:
-        """积分（标准足球积分：胜3平1负0）"""
+        """积分(标准足球积分:胜3平1负0)"""
         return self.wins * 3 + self.draws
 
     @property
@@ -71,7 +71,7 @@ class TeamStats:
 
     @property
     def form(self) -> List[str]:
-        """最近状态（简化表示）"""
+        """最近状态(简化表示)"""
         # 这里应该从历史记录计算，简化处理
         return []
 
@@ -89,16 +89,16 @@ class TeamStats:
             self.losses += 1
 
     def __str__(self) -> str:
-        return f"{self.matches_played"场 {self.wins}胜 {self.draws}平 {self.losses}负"
+        return f"{self.matches_played}场 {self.wins}胜 {self.draws}平 {self.losses}负"""
 
 
 @dataclass
 class TeamForm:
     """球队状态值对象"""
 
-    last_matches: List[str] = field(default_factory=list)  # 最近比赛结果：W/D/L
-    current_streak: int = 0  # 当前连续纪录（胜/负为正数，平为0）
-    streak_type: str = ""  # 连续类型：win/draw/loss/none
+    "last_matches": List[str] = field(default_factory=list)  # 最近比赛结果:W/D/L
+    "current_streak": int = 0  # 当前连续纪录(胜/负为正数,平为0)
+    "streak_type": str = ""  # 连续类型:win/draw/loss/none
 
     def __post_init__(self) -> None:
         """验证状态数据"""
@@ -169,41 +169,41 @@ class TeamForm:
 
     def __str__(self) -> str:
         streak_str = (
-            f"{self.current_streak"{self.streak_type[0].upper()}"
+            f"{self.current_streak}{self.streak_type[0].upper()}"
             if self.streak_type != "none"
             else "无"
         )
-        return f"状态: {self.recent_form_string} ({streak_str})"
+        return f"状态: {self.recent_form_string} ({streak_str})"""
 
 
 @dataclass
 class Team:
-    """
+    """"""
     球队领域模型
 
-    封装球队的核心业务逻辑和不变性约束。
-    """
+    封装球队的核心业务逻辑和不变性约束.
+    """"""
 
-    id: Optional[{}] = None
-    name: str = ""
-    short_name: Optional[{}] = None
-    code: Optional[{}] = None
-    type: TeamType = TeamType.CLUB
-    country: str = ""
-    founded_year: Optional[{}] = None
-    stadium: Optional[{}] = None
-    capacity: Optional[{}] = None
-    website: Optional[{}] = None
-    logo_url: Optional[{}] = None
-    is_active: bool = True
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    "id": Optional[{} = None
+    "name": str = ""
+    "short_name": Optional[{} = None
+    "code": Optional[{} = None
+    "type": TeamType = TeamType.CLUB
+    "country": str = ""
+    "founded_year": Optional[{} = None
+    "stadium": Optional[{} = None
+    "capacity": Optional[{} = None
+    "website": Optional[{} = None
+    "logo_url": Optional[{} = None
+    "is_active": bool = True
+    "created_at": datetime = field(default_factory=datetime.utcnow)
+    "updated_at": datetime = field(default_factory=datetime.utcnow)
 
     # 值对象
-    stats: Optional[{}] = None
-    form: Optional[{}] = None
+    "stats": Optional[{} = None
+    "form": Optional[{} = None
     # 领域事件
-    _domain_events: List[Any] = field(default_factory=list, init=False)
+    "_domain_events": List[Any] = field(default_factory=list, init=False)
 
     def __post_init__(self) -> None:
         """初始化后的验证"""
@@ -236,10 +236,10 @@ class Team:
 
     def update_info(
         self,
-        name: Optional[{}] = None,
-        short_name: Optional[{}] = None,
-        stadium: Optional[{}] = None,
-        capacity: Optional[{}] = None,
+    "name": Optional[{} = None,
+    "short_name": Optional[{} = None,
+    "stadium": Optional[{} = None,
+    "capacity": Optional[{} = None,
     ) -> None:
         """更新球队信息"""
         if name:
@@ -257,10 +257,10 @@ class Team:
 
     def add_match_result(
         self,
-        result: str,
-        goals_for: int,
-        goals_against: int,
-        is_home: Optional[{}] = None,
+    "result": str,
+    "goals_for": int,
+    "goals_against": int,
+    "is_home": Optional[{} = None,
     ) -> None:
         """添加比赛结果"""
         if result not in ["win", "draw", "loss"]:
@@ -280,12 +280,12 @@ class Team:
         self.updated_at = datetime.utcnow()
 
     def promote(self) -> None:
-        """升级（用于联赛系统）"""
+        """升级(用于联赛系统)"""
         # 这里可以添加升级相关的业务逻辑
         self.updated_at = datetime.utcnow()
 
     def relegate(self) -> None:
-        """降级（用于联赛系统）"""
+        """降级(用于联赛系统)"""
         # 这里可以添加降级相关的业务逻辑
         self.updated_at = datetime.utcnow()
 
@@ -300,7 +300,7 @@ class Team:
         self.updated_at = datetime.utcnow()
 
     def calculate_strength(self) -> float:
-        """计算球队实力（0-100）"""
+        """计算球队实力(0-100)"""
         if not self.stats or self.stats.matches_played == 0:
             return 50.0  # 默认中等实力
 
@@ -358,7 +358,7 @@ class Team:
             return "保级"
 
     def get_rival_team_ids(self) -> List[int]:
-        """获取死敌球队ID（需要从外部配置）"""
+        """获取死敌球队ID(需要从外部配置)"""
         # 这里应该从配置或数据库获取
         return []
 
@@ -389,43 +389,43 @@ class Team:
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         return {
-            "id": self.id,
-            "name": self.name,
-            "short_name": self.short_name,
-            "code": self.code,
-            "type": self.type.value,
-            "country": self.country,
-            "founded_year": self.founded_year,
-            "stadium": self.stadium,
-            "capacity": self.capacity,
-            "website": self.website,
-            "logo_url": self.logo_url,
-            "is_active": self.is_active,
-            "stats": {
-                "matches_played": self.stats.matches_played,
-                "wins": self.stats.wins,
-                "draws": self.stats.draws,
-                "losses": self.stats.losses,
-                "goals_for": self.stats.goals_for,
-                "goals_against": self.stats.goals_against,
-                "points": self.stats.points,
-                "goal_difference": self.stats.goal_difference,
-                "win_rate": self.stats.win_rate,
+            "id": self.id,","
+            "name": self.name,","
+            "short_name": self.short_name,","
+            "code": self.code,","
+            "type": self.type.value,","
+            "country": self.country,","
+            "founded_year": self.founded_year,","
+            "stadium": self.stadium,","
+            "capacity": self.capacity,","
+            "website": self.website,","
+            "logo_url": self.logo_url,","
+            "is_active": self.is_active,","
+            "stats": {","
+                "matches_played": self.stats.matches_played,","
+                "wins": self.stats.wins,","
+                "draws": self.stats.draws,","
+                "losses": self.stats.losses,","
+                "goals_for": self.stats.goals_for,","
+                "goals_against": self.stats.goals_against,","
+                "points": self.stats.points,","
+                "goal_difference": self.stats.goal_difference,","
+                "win_rate": self.stats.win_rate,""
             }
             if self.stats
             else None,
-            "form": {
-                "last_matches": self.form.last_matches,
-                "current_streak": self.form.current_streak,
-                "streak_type": self.form.streak_type,
-                "recent_form_string": self.form.recent_form_string,
+            "form": {","
+                "last_matches": self.form.last_matches,","
+                "current_streak": self.form.current_streak,","
+                "streak_type": self.form.streak_type,","
+                "recent_form_string": self.form.recent_form_string,""
             }
             if self.form
             else None,
-            "strength": self.calculate_strength(),
-            "rank": self.rank,
-            "created_at": self.created_at.isoformat(),
-            "updated_at": self.updated_at.isoformat(),
+            "strength": self.calculate_strength(),","
+            "rank": self.rank,","
+            "created_at": self.created_at.isoformat(),","
+            "updated_at": self.updated_at.isoformat(),""
         }
 
     @classmethod
@@ -460,4 +460,4 @@ class Team:
         return cls(stats=stats, form=form, **data)
 
     def __str__(self) -> str:
-        return f"{self.name" ({self.code or self.short_name}) - {self.rank}"
+        return f"{self.name ({self.code or self.short_name}) - {self.rank

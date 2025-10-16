@@ -90,7 +90,7 @@ def get_global_factory() -> AdapterFactory:
 
 
 def get_adapter(
-    adapter_type: str, config: dict[str, Any] | None = None, singleton: bool = False
+    "adapter_type": str, config: dict[str, Any] | None = None, singleton: bool = False
 ):
     """便捷函数：获取适配器"""
     factory = get_global_factory()

@@ -1,8 +1,10 @@
 from typing import Any, Dict, List, Optional, Union
 """
+"
 高级日志过滤器
 用于生产环境的日志处理
 """
+"
 
 import re
 import json
@@ -18,7 +20,7 @@ from datetime import datetime, timedelta
 class SensitiveDataFilter(logging.Filter):
     """敏感数据过滤器"""
 
-    def __init__(self, patterns: Optional[List[str] = None):
+    def __init__(self, patterns: Optional[List[str]] = None):
         super().__init__()
         self.patterns = patterns or [
             "password",
@@ -32,7 +34,7 @@ class SensitiveDataFilter(logging.Filter):
             "private",
         ]
         self.regex_patterns = [
-            re.compile(rf'{pattern}["\']?\s*[:=]\s*["\']?([^"\']\s,]+)', re.IGNORECASE)
+            re.compile(rf'{pattern}["\']?\\s*[:=]\\s*["\']?([^"\'\\s,]+)', re.IGNORECASE)"
             for pattern in self.patterns
         ]
 
@@ -58,8 +60,8 @@ class SensitiveDataFilter(logging.Filter):
         patterns = [
             (r"Bearer\s+([a-zA-Z0-9\._-]+)", r"Bearer ***"),
             (r"Basic\s+([a-zA-Z0-9+/=]+)", r"Basic ***"),
-            (r'{"password":\s*"[^"]*"}', '{"password":"***"}'),
-            (r'"secret":\s*"[^"]*"', '"secret":"***"'),
+            (r'{"password":\s*"[^"]*"}', '{"password":"***"}')",
+            (r'"secret":\s*"[^"]*"', '"secret":"***"')",
         ]
 
         for pattern, replacement in patterns:
@@ -388,7 +390,7 @@ class PerformanceFilter(logging.Filter):
 
         return True
 
-    def get_slow_logs(self) -> List[Dict[str, Any]:
+    def get_slow_logs(self) -> List[Dict[str, Any]]:
         """获取慢日志列表"""
         with self.lock:
             return list(self.slow_logs)
@@ -401,7 +403,7 @@ class AggregateFilter(logging.Filter):
         super().__init__()
         self.window = window
         self.threshold = threshold
-        self.aggregated: Dict[str, Dict[str, Any] = {}
+        self.aggregated: Dict[str, Dict[str, Any]] = {}
         self.lock = threading.Lock()
 
     def filter(self, record: logging.LogRecord) -> bool:

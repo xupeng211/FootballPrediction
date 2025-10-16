@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+""""""
 业务规则和验证引擎
-"""
+""""""
 
 from abc import ABC, abstractmethod
 from datetime import datetime
@@ -37,11 +37,11 @@ class ValidationResult:
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         return {
-            "is_valid": self.is_valid,
-            "message": self.message,
-            "errors": self.errors,
-            "warnings": self.warnings,
-            "timestamp": self.timestamp.isoformat(),
+            "is_valid": self.is_valid,","
+            "message": self.message,","
+            "errors": self.errors,","
+            "warnings": self.warnings,","
+            "timestamp": self.timestamp.isoformat(),""
         }
 
 
@@ -64,10 +64,10 @@ class BusinessRule(Rule):
 
     def __init__(
         self,
-        name: str,
-        condition: Callable[[Any], bool],
-        error_message: str,
-        description: str = "",
+    "name": str,
+    "condition": Callable[Any], bool],
+    "error_message": str,
+    "description": str = "",
     ):
         super().__init__(name, description)
         self.condition = condition
@@ -104,7 +104,7 @@ class ValidationEngine:
         self._rules[entity_type].append(rule)
 
     def add_global_rule(self, rule: Rule) -> None:
-        """添加全局规则（适用于所有实体）"""
+        """添加全局规则(适用于所有实体)"""
         self._global_rules.append(rule)
 
     def remove_rule(self, entity_type: str, rule_name: str) -> bool:
@@ -116,7 +116,7 @@ class ValidationEngine:
             return True
         return False
 
-    def get_rules(self, entity_type: Optional[str] = None) -> List[Rule]:
+    def get_rules(self, entity_type: Optional[str = None) -> List[Rule]:
         """获取规则"""
         rules = self._global_rules.copy()
 
@@ -155,7 +155,7 @@ class ValidationEngine:
         return result
 
     def validate_batch(
-        self, objects: List[Any], entity_type: Optional[str] = None
+        self, objects: List[Any], entity_type: Optional[str = None
     ) -> List[ValidationResult]:
         """批量验证"""
         results = []

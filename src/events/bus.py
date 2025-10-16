@@ -18,17 +18,17 @@ logger = logging.getLogger(__name__)
 
 
 class EventBus:
-    """事件总线
+    """事件总线"
 
     负责事件的发布、订阅和分发。
     Responsible for event publishing, subscription, and distribution.
     """
 
     def __init__(self, max_workers: int = 10):
-        """初始化事件总线
+        """初始化事件总线"
 
         Args:
-            max_workers: 最大工作线程数
+    "max_workers": 最大工作线程数
         """
         self._subscribers: Dict[str, List[EventHandler]] = defaultdict(list)
         self._filters: Dict[str, Any] = {}
@@ -51,7 +51,7 @@ class EventBus:
             for event_type, handlers in self._subscribers.items():
                 for handler in handlers:
                     if not handler.is_subscribed_to(event_type):
-                        queue: Any = asyncio.Queue()
+    "queue": Any = asyncio.Queue()
                         self._queues[event_type] = queue
                         handler.add_subscription(event_type, queue)
 
@@ -102,16 +102,16 @@ class EventBus:
 
     async def subscribe(
         self,
-        event_type: str,
-        handler: EventHandler,
-        filters: Optional[List[EventFilter]] = None,
+    "event_type": str,
+    "handler": EventHandler,
+    "filters": Optional[List[EventFilter]] = None,
     ) -> None:
-        """订阅事件
+        """订阅事件"
 
         Args:
-            event_type: 事件类型
-            handler: 事件处理器
-            filters: 事件过滤器列表
+    "event_type": 事件类型
+    "handler": 事件处理器
+    "filters": 事件过滤器列表
         """
         async with self._lock:
             if handler not in self._subscribers[event_type]:
@@ -123,7 +123,7 @@ class EventBus:
 
                 # 如果总线已经在运行，立即启动处理器
                 if self._running and not handler.is_subscribed_to(event_type):
-                    queue: Any = asyncio.Queue()
+    "queue": Any = asyncio.Queue()
                     self._queues[event_type] = queue
                     handler.add_subscription(event_type, queue)
 
@@ -135,11 +135,11 @@ class EventBus:
                 logger.info(f"Handler {handler.name} subscribed to {event_type}")
 
     async def unsubscribe(self, event_type: str, handler: EventHandler) -> None:
-        """取消订阅事件
+        """取消订阅事件"
 
         Args:
-            event_type: 事件类型
-            handler: 事件处理器
+    "event_type": 事件类型
+    "handler": 事件处理器
         """
         async with self._lock:
             if handler in self._subscribers[event_type]:
@@ -153,10 +153,10 @@ class EventBus:
                 logger.info(f"Handler {handler.name} unsubscribed from {event_type}")
 
     async def publish(self, event: Event) -> None:
-        """发布事件
+        """发布事件"
 
         Args:
-            event: 要发布的事件
+    "event": 要发布的事件
         """
         if not self._running:
             logger.warning(f"EventBus not running. Dropping event: {event}")
@@ -177,10 +177,10 @@ class EventBus:
             await queue.put(event)
 
     async def publish_sync(self, event: Event) -> None:
-        """同步发布事件（立即处理）
+        """同步发布事件（立即处理）"
 
         Args:
-            event: 要发布的事件
+    "event": 要发布的事件
         """
         if not self._running:
             logger.warning(f"EventBus not running. Dropping event: {event}")
@@ -210,12 +210,12 @@ class EventBus:
     async def _run_handler(
         self, handler: EventHandler, event_type: str, queue: asyncio.Queue
     ) -> None:
-        """运行事件处理器
+        """运行事件处理器"
 
         Args:
-            handler: 事件处理器
-            event_type: 事件类型
-            queue: 事件队列
+    "handler": 事件处理器
+    "event_type": 事件类型
+    "queue": 事件队列
         """
         try:
             while self._running:
@@ -250,11 +250,11 @@ class EventBus:
             logger.error(f"Fatal error in handler {handler.name}: {e}")
 
     async def _handle_event(self, handler: EventHandler, event: Event) -> None:
-        """处理单个事件
+        """处理单个事件"
 
         Args:
-            handler: 事件处理器
-            event: 事件
+    "handler": 事件处理器
+    "event": 事件
         """
         try:
             # 在线程池中执行同步处理器
@@ -275,14 +275,14 @@ class EventBus:
             )
 
     def _should_handle(self, handler: EventHandler, event: Event) -> bool:
-        """检查处理器是否应该处理事件
+        """检查处理器是否应该处理事件"
 
         Args:
-            handler: 事件处理器
-            event: 事件
+    "handler": 事件处理器
+    "event": 事件
 
         Returns:
-            bool: 是否应该处理
+    "bool": 是否应该处理
         """
         # 检查处理器是否能处理此事件类型
         handled_events = handler.get_handled_events()
@@ -298,18 +298,18 @@ class EventBus:
         return True
 
     def get_subscribers_count(self, event_type: str) -> int:
-        """获取事件类型的订阅者数量
+        """获取事件类型的订阅者数量"
 
         Args:
-            event_type: 事件类型
+    "event_type": 事件类型
 
         Returns:
-            int: 订阅者数量
+    "int": 订阅者数量
         """
         return len(self._subscribers.get(event_type, []))
 
     def get_all_event_types(self) -> List[str]:
-        """获取所有已注册的事件类型
+        """获取所有已注册的事件类型"
 
         Returns:
             List[str]: 事件类型列表
@@ -324,7 +324,7 @@ class EventBus:
             logger.info("EventBus cleared")
 
     def get_stats(self) -> Dict[str, Any]:
-        """获取事件总线统计信息
+        """获取事件总线统计信息"
 
         Returns:
             Dict[str, Any]: 统计信息
@@ -341,12 +341,12 @@ class EventBus:
 
 
 # 全局事件总线实例
-_event_bus: Optional[EventBus] = None
+    "_event_bus": Optional[EventBus] = None
 def get_event_bus() -> EventBus:
-    """获取全局事件总线实例
+    """获取全局事件总线实例"
 
     Returns:
-        EventBus: 事件总线实例
+    "EventBus": 事件总线实例
     """
     global _event_bus
     if _event_bus is None:
@@ -370,10 +370,10 @@ async def stop_event_bus() -> None:
 
 # 装饰器：自动注册事件处理器
 def event_handler(event_types: List[str]):
-    """事件处理器装饰器
+    """事件处理器装饰器"
 
     Args:
-        event_types: 处理的事件类型列表
+    "event_types": 处理的事件类型列表
     """
 
     def decorator(cls: Type[Any, EventHandler]) -> Type[Any, EventHandler]:

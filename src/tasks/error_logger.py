@@ -39,21 +39,21 @@ class TaskErrorLogger:
 
     async def log_task_error(
         self,
-        task_name: str,
-        task_id: str,
-        error: Exception,
-        context: dict[str, Any] | None = None,
-        retry_count: int = 0,
+    "task_name": str,
+    "task_id": str,
+    "error": Exception,
+    "context": dict[str, Any] | None = None,
+    "retry_count": int = 0,
     ) -> None:
         """
         记录任务错误日志
 
         Args:
-            task_name: 任务名称
-            task_id: 任务ID
-            error: 异常对象
-            context: 错误上下文信息
-            retry_count: 当前重试次数
+    "task_name": 任务名称
+    "task_id": 任务ID
+    "error": 异常对象
+    "context": 错误上下文信息
+    "retry_count": 当前重试次数
         """
         try:
             error_message = str(error)
@@ -92,23 +92,23 @@ class TaskErrorLogger:
 
     async def log_api_failure(
         self,
-        task_name: str,
-        api_endpoint: str,
-        http_status: int | None,
-        error_message: str,
-        retry_count: int = 0,
-        response_data: dict[str, Any] | None = None,
+    "task_name": str,
+    "api_endpoint": str,
+    "http_status": int | None,
+    "error_message": str,
+    "retry_count": int = 0,
+    "response_data": dict[str, Any] | None = None,
     ) -> None:
         """
         记录 API 调用失败日志
 
         Args:
-            task_name: 任务名称
-            api_endpoint: API端点
-            http_status: HTTP状态码
-            error_message: 错误消息
-            retry_count: 重试次数
-            response_data: 响应数据
+    "task_name": 任务名称
+    "api_endpoint": API端点
+    "http_status": HTTP状态码
+    "error_message": 错误消息
+    "retry_count": 重试次数
+    "response_data": 响应数据
         """
         try:
             error_details = {
@@ -140,23 +140,23 @@ class TaskErrorLogger:
 
     async def log_data_collection_error(
         self,
-        data_source: str,
-        collection_type: str,
-        error_message: str,
-        records_processed: int = 0,
-        success_count: int = 0,
-        error_count: int = 0,
+    "data_source": str,
+    "collection_type": str,
+    "error_message": str,
+    "records_processed": int = 0,
+    "success_count": int = 0,
+    "error_count": int = 0,
     ) -> int | None:
         """
         记录数据采集错误到 data_collection_logs 表
 
         Args:
-            data_source: 数据源
-            collection_type: 采集类型
-            error_message: 错误信息
-            records_processed: 处理记录数
-            success_count: 成功数量
-            error_count: 错误数量
+    "data_source": 数据源
+    "collection_type": 采集类型
+    "error_message": 错误信息
+    "records_processed": 处理记录数
+    "success_count": 成功数量
+    "error_count": 错误数量
 
         Returns:
             日志记录ID
@@ -274,7 +274,7 @@ class TaskErrorLogger:
         获取错误统计信息
 
         Args:
-            hours: 统计时间范围（小时）
+    "hours": 统计时间范围（小时）
 
         Returns:
             错误统计数据
@@ -328,7 +328,7 @@ class TaskErrorLogger:
         清理旧的错误日志
 
         Args:
-            days_to_keep: 保留天数
+    "days_to_keep": 保留天数
 
         Returns:
             清理的记录数
@@ -357,7 +357,7 @@ class TaskErrorLogger:
         清理旧的错误日志（别名方法，兼容测试）
 
         Args:
-            days_to_keep: 保留天数
+    "days_to_keep": 保留天数
 
         Returns:
             清理的记录数

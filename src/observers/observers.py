@@ -18,17 +18,17 @@ logger = logging.getLogger(__name__)
 
 
 class MetricsObserver(Observer):
-    """指标收集观察者
+    """指标收集观察者"
 
     收集和聚合系统指标数据。
     Collects and aggregates system metrics.
     """
 
     def __init__(self, aggregation_window: int = 60):
-        """初始化指标观察者
+        """初始化指标观察者"
 
         Args:
-            aggregation_window: 聚合窗口大小（秒）
+    "aggregation_window": 聚合窗口大小（秒）
         """
         super().__init__("MetricsObserver")
         self._aggregation_window = aggregation_window
@@ -165,17 +165,17 @@ class MetricsObserver(Observer):
 
 
 class LoggingObserver(Observer):
-    """日志记录观察者
+    """日志记录观察者"
 
     将事件记录到日志系统。
     Logs events to the logging system.
     """
 
     def __init__(self, log_level: int = logging.INFO):
-        """初始化日志观察者
+        """初始化日志观察者"
 
         Args:
-            log_level: 日志级别
+    "log_level": 日志级别
         """
         super().__init__("LoggingObserver")
         self._logger = logging.getLogger(f"{__name__}.{self.name}")
@@ -221,7 +221,7 @@ class LoggingObserver(Observer):
 
         if event.data:
             key_data = {
-                k: v
+    "k": v
                 for k, v in event.data.items()
                 if k in ["message", "value", "count", "duration"]
             }
@@ -252,7 +252,7 @@ class LoggingObserver(Observer):
 
 
 class AlertingObserver(Observer):
-    """告警通知观察者
+    """告警通知观察者"
 
     监控事件并触发告警。
     Monitors events and triggers alerts.
@@ -268,20 +268,20 @@ class AlertingObserver(Observer):
 
     def add_alert_rule(
         self,
-        name: str,
-        condition: Callable[[ObservableEvent], bool],
-        severity: str = "warning",
-        message_template: str = None,
-        cooldown_minutes: int = 5,
+    "name": str,
+    "condition": Callable[[ObservableEvent], bool],
+    "severity": str = "warning",
+    "message_template": str = None,
+    "cooldown_minutes": int = 5,
     ) -> None:
-        """添加告警规则
+        """添加告警规则"
 
         Args:
-            name: 规则名称
-            condition: 触发条件函数
-            severity: 告警严重性
-            message_template: 消息模板
-            cooldown_minutes: 冷却时间（分钟）
+    "name": 规则名称
+    "condition": 触发条件函数
+    "severity": 告警严重性
+    "message_template": 消息模板
+    "cooldown_minutes": 冷却时间（分钟）
         """
         self._alert_rules[name] = {
             "condition": condition,
@@ -372,9 +372,9 @@ class AlertingObserver(Observer):
 
     def get_alert_history(
         self,
-        severity: Optional[str] = None,
-        since: Optional[datetime] = None,
-        limit: int = 50,
+    "severity": Optional[str] = None,
+    "since": Optional[datetime] = None,
+    "limit": int = 50,
     ) -> List[Dict[str, Any]]:
         """获取告警历史"""
         history = list(self._alert_history)
@@ -394,7 +394,7 @@ class AlertingObserver(Observer):
     def get_alert_rules(self) -> Dict[str, Dict[str, Any]]:
         """获取所有告警规则"""
         return {
-            name: {
+    "name": {
                 "severity": rule["severity"],
                 "trigger_count": rule["trigger_count"],
                 "last_triggered": rule["last_triggered"],
@@ -417,24 +417,24 @@ class AlertingObserver(Observer):
 
 
 class PerformanceObserver(Observer):
-    """性能监控观察者
+    """性能监控观察者"
 
     监控系统性能指标。
     Monitors system performance metrics.
     """
 
     def __init__(self, window_size: int = 100):
-        """初始化性能观察者
+        """初始化性能观察者"
 
         Args:
-            window_size: 滑动窗口大小
+    "window_size": 滑动窗口大小
         """
         super().__init__("PerformanceObserver")
         self._window_size = window_size
         self._response_times: deque = deque(maxlen=window_size)
         self._throughput_data: deque = deque(maxlen=window_size)
         self._error_rates: Dict[str, deque] = defaultdict(
-            lambda: deque(maxlen=window_size)
+    "lambda": deque(maxlen=window_size)
         )
         self._last_throughput_calc = time.time()
         self._request_count = 0

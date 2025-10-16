@@ -60,12 +60,12 @@ class Team:
 
     def __init__(
         self,
-        id: int | None = None,
-        name: str = "",
-        short_name: str = "",
-        founded_year: int | None = None,
-        stadium: str = "",
-        league_id: int = 0,
+    id: int | None = None,
+    name: str = "",
+    short_name: str = "",
+    founded_year: int | None = None,
+    stadium: str = "",
+    league_id: int = 0,
     ):
         self.id = id
         self.name = name
@@ -201,30 +201,30 @@ class Team:
     def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
-            "id": self.id,
-            "name": self.name,
-            "short_name": self.short_name,
-            "founded_year": self.founded_year,
-            "stadium": self.stadium,
-            "league_id": self.league_id,
-            "strength_score": self.strength_score,
-            "attack_rating": self.attack_rating,
-            "defense_rating": self.defense_rating,
-            "recent_form": self.recent_form,
-            "current_streak": self.current_streak,
+            id: self.id,
+            name: self.name,
+            short_name: self.short_name,
+            founded_year: self.founded_year,
+            stadium: self.stadium,
+            league_id: self.league_id,
+            strength_score: self.strength_score,
+            attack_rating: self.attack_rating,
+            defense_rating: self.defense_rating,
+            recent_form: self.recent_form,
+            current_streak: self.current_streak,
             "overall_stats": {
-                "matches_played": self.overall_stats.matches_played,
-                "wins": self.overall_stats.wins,
-                "draws": self.overall_stats.draws,
-                "losses": self.overall_stats.losses,
-                "goals_for": self.overall_stats.goals_for,
-                "goals_against": self.overall_stats.goals_against,
-                "goal_difference": self.overall_stats.goal_difference,
-                "points": self.overall_stats.points,
-                "win_rate": self.overall_stats.get_win_rate(),
+                matches_played: self.overall_stats.matches_played,
+                wins: self.overall_stats.wins,
+                draws: self.overall_stats.draws,
+                losses: self.overall_stats.losses,
+                goals_for: self.overall_stats.goals_for,
+                goals_against: self.overall_stats.goals_against,
+                goal_difference: self.overall_stats.goal_difference,
+                points: self.overall_stats.points,
+                win_rate: self.overall_stats.get_win_rate(),
             },
-            "created_at": self.created_at.isoformat(),
-            "updated_at": self.updated_at.isoformat(),
+            created_at: self.created_at.isoformat(),
+            updated_at: self.updated_at.isoformat(),
         }
 
     @classmethod

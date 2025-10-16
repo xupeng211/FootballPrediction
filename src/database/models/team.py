@@ -95,33 +95,33 @@ class Team(BaseModel):
 
     @property
     def display_name(self) -> str:
-        """返回用于显示的球队名称。
+        """返回用于显示的球队名称。"
 
         Returns:
-            str: 格式化的球队显示名称，包含联赛信息（如果有）。
+    "str": 格式化的球队显示名称，包含联赛信息（如果有）。
         """
         if self.country and hasattr(self, "league") and self.league:
             return f"{self.team_name} ({self.league.league_name})"
         return str(self.team_name)
 
     def get_all_matches(self) -> None:
-        """获取所有比赛（主场+客场）。
+        """获取所有比赛（主场+客场）。"
 
         Note:
             这需要在调用时传入session参数，当前实现返回None。
 
         Returns:
-            None: 实际使用时需要session参数。
+    "None": 实际使用时需要session参数。
         """
         # 这需要在调用时传入session
         return None  # 实际使用时需要session参数
 
     def get_recent_matches(self, session: Session, limit: int = 5) -> List[Any]:
-        """获取最近的比赛。
+        """获取最近的比赛。"
 
         Args:
-            session: 数据库会话对象。
-            limit: 返回的比赛数量限制，默认为5。
+    "session": 数据库会话对象。
+    "limit": 返回的比赛数量限制，默认为5。
 
         Returns:
             List[Match]: 按时间倒序排列的最近比赛列表。
@@ -138,10 +138,10 @@ class Team(BaseModel):
         )
 
     def get_home_record(self, session: Session) -> Dict[str, int]:
-        """获取主场战绩。
+        """获取主场战绩。"
 
         Args:
-            session: 数据库会话对象。
+    "session": 数据库会话对象。
 
         Returns:
             Dict[str, int]: 包含胜/平/负/总场次的字典。
@@ -168,10 +168,10 @@ class Team(BaseModel):
         }
 
     def get_away_record(self, session: Session) -> Dict[str, int]:
-        """获取客场战绩。
+        """获取客场战绩。"
 
         Args:
-            session: 数据库会话对象。
+    "session": 数据库会话对象。
 
         Returns:
             Dict[str, int]: 包含胜/平/负/总场次的字典。
@@ -198,11 +198,11 @@ class Team(BaseModel):
         }
 
     def get_season_stats(self, session: Session, season: str) -> Dict[str, int]:
-        """获取指定赛季的统计数据。
+        """获取指定赛季的统计数据。"
 
         Args:
-            session: 数据库会话对象。
-            season: 赛季字符串标识。
+    "session": 数据库会话对象。
+    "season": 赛季字符串标识。
 
         Returns:
             Dict[str, int]: 包含完整赛季统计的字典。
@@ -249,11 +249,11 @@ class Team(BaseModel):
         return stats
 
     def _process_home_match(self, match, stats: Dict[str, int]) -> None:
-        """处理主场比赛统计。
+        """处理主场比赛统计。"
 
         Args:
-            match: 比赛对象。
-            stats: 统计数据字典，将在原地修改。
+    "match": 比赛对象。
+    "stats": 统计数据字典，将在原地修改。
         """
         stats["goals_for"] += match.home_score or 0
         stats["goals_against"] += match.away_score or 0
@@ -266,11 +266,11 @@ class Team(BaseModel):
             stats["losses"] += 1
 
     def _process_away_match(self, match, stats: Dict[str, int]) -> None:
-        """处理客场比赛统计。
+        """处理客场比赛统计。"
 
         Args:
-            match: 比赛对象。
-            stats: 统计数据字典，将在原地修改。
+    "match": 比赛对象。
+    "stats": 统计数据字典，将在原地修改。
         """
         stats["goals_for"] += match.away_score or 0
         stats["goals_against"] += match.home_score or 0
@@ -284,11 +284,11 @@ class Team(BaseModel):
 
     @classmethod
     def get_by_code(cls, session: Session, team_code: str) -> Optional["Team"]:
-        """根据球队代码获取球队。
+        """根据球队代码获取球队。"
 
         Args:
-            session: 数据库会话对象。
-            team_code: 球队代码。
+    "session": 数据库会话对象。
+    "team_code": 球队代码。
 
         Returns:
             Optional[Team]: 匹配的球队对象，未找到则返回None。
@@ -297,11 +297,11 @@ class Team(BaseModel):
 
     @classmethod
     def get_by_league(cls, session: Session, league_id: int) -> List["Team"]:
-        """获取指定联赛的所有球队。
+        """获取指定联赛的所有球队。"
 
         Args:
-            session: 数据库会话对象。
-            league_id: 联赛ID。
+    "session": 数据库会话对象。
+    "league_id": 联赛ID。
 
         Returns:
             List[Team]: 该联赛下的所有球队列表。
@@ -310,10 +310,10 @@ class Team(BaseModel):
 
     @classmethod
     def get_active_teams(cls, session: Session) -> List["Team"]:
-        """获取所有活跃的球队。
+        """获取所有活跃的球队。"
 
         Args:
-            session: 数据库会话对象。
+    "session": 数据库会话对象。
 
         Returns:
             List[Team]: 所有活跃状态的球队列表。

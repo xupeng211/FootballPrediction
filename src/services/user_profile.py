@@ -196,6 +196,6 @@ class UserProfileService(SimpleService):
         """兼容测试代码的属性"""
         # Convert UserProfile objects to Dict[str, Any] for test compatibility
         return {
-            user_id: profile.to_dict() if hasattr(profile, "to_dict") else profile
+    "user_id": profile.to_dict() if hasattr(profile, "to_dict") else profile
             for user_id, profile in self._user_profiles.items()
         }

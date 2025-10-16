@@ -17,7 +17,7 @@ from requests.exceptions import RequestException
 router = APIRouter(prefix="/facades", tags=["门面模式"])
 
 # 创建全局门面实例
-global_facades: Dict[str, Any] = {}
+    "global_facades": Dict[str, Any] = {}
 
 
 # ==================== 门面管理端点 ====================
@@ -39,9 +39,9 @@ async def list_facades() -> Dict[str, Any]:
 
 @router.post("/initialize", summary="初始化门面")
 async def initialize_facade(
-    facade_type: str = Query(..., description="门面类型"),
-    facade_name: str = Query("default", description="门面实例名称"),
-    auto_initialize: bool = Query(True, description="是否自动初始化"),
+    "facade_type": str = Query(..., description="门面类型"),
+    "facade_name": str = Query("default", description="门面实例名称"),
+    "auto_initialize": bool = Query(True, description="是否自动初始化"),
 ) -> Dict[str, Any]:
     """初始化指定类型的门面"""
     try:
@@ -72,7 +72,7 @@ async def initialize_facade(
 
 @router.post("/shutdown", summary="关闭门面")
 async def shutdown_facade(
-    facade_name: str = Query(..., description="门面实例名称"),
+    "facade_name": str = Query(..., description="门面实例名称"),
 ) -> Dict[str, str]:
     """关闭指定的门面实例"""
     if facade_name not in global_facades:
@@ -91,7 +91,7 @@ async def shutdown_facade(
 
 @router.get("/status", summary="获取门面状态")
 async def get_facade_status(
-    facade_name: Optional[str] = Query(None, description="门面实例名称"),
+    "facade_name": Optional[str] = Query(None, description="门面实例名称"),
 ) -> Dict[str, Any]:
     """获取门面的详细状态信息"""
     if facade_name:
@@ -115,7 +115,7 @@ async def get_facade_status(
 
 @router.post("/health-check", summary="门面健康检查")
 async def health_check_facade(
-    facade_name: Optional[str] = Query(None, description="门面实例名称"),
+    "facade_name": Optional[str] = Query(None, description="门面实例名称"),
 ) -> Dict[str, Any]:
     """执行门面健康检查"""
     if facade_name:
@@ -152,9 +152,9 @@ async def health_check_facade(
 
 @router.post("/demo/main-system-predict", summary="主系统门面预测演示")
 async def demo_main_system_prediction(
-    input_data: Dict[str, Any] = Body(..., description="预测输入数据"),
-    model: str = Body("neural_network", description="使用的模型"),
-    use_cache: bool = Body(True, description="是否使用缓存"),
+    "input_data": Dict[str, Any] = Body(..., description="预测输入数据"),
+    "model": str = Body("neural_network", description="使用的模型"),
+    "use_cache": bool = Body(True, description="是否使用缓存"),
 ) -> Dict[str, Any]:
     """演示主系统门面的预测功能"""
     if "main" not in global_facades:
@@ -185,7 +185,7 @@ async def demo_main_system_prediction(
 
 @router.post("/demo/batch-process", summary="批量处理演示")
 async def demo_batch_processing(
-    items: List[Dict[str, Any]] = Body(..., description="批量处理项"),
+    "items": List[Dict[str, Any]] = Body(..., description="批量处理项"),
 ) -> Dict[str, Any]:
     """演示主系统门面的批量处理功能"""
     if "main" not in global_facades:
@@ -218,9 +218,9 @@ async def demo_batch_processing(
 
 @router.post("/demo/prediction", summary="预测门面演示")
 async def demo_prediction_facade(
-    model: str = Body("neural_network", description="预测模型"),
-    input_data: Dict[str, Any] = Body(..., description="输入数据"),
-    cache_key: Optional[str] = Body(None, description="缓存键"),
+    "model": str = Body("neural_network", description="预测模型"),
+    "input_data": Dict[str, Any] = Body(..., description="输入数据"),
+    "cache_key": Optional[str] = Body(None, description="缓存键"),
 ) -> Dict[str, Any]:
     """演示预测门面的功能"""
     if "prediction" not in global_facades:
@@ -247,7 +247,7 @@ async def demo_prediction_facade(
 
 @router.post("/demo/batch-predict", summary="批量预测演示")
 async def demo_batch_prediction(
-    predictions: List[Dict[str, Any] = Body(..., description="批量预测请求"),
+    "predictions": List[Dict[str, Any]] = Body(..., description="批量预测请求"),
 ) -> Dict[str, Any]:
     """演示预测门面的批量预测功能"""
     if "prediction" not in global_facades:
@@ -288,8 +288,8 @@ async def get_prediction_models() -> Dict[str, Any]:
 
 @router.post("/demo/store-data", summary="数据存储演示")
 async def demo_data_storage(
-    data: Dict[str, Any] = Body(..., description="要存储的数据"),
-    table: str = Body("demo_data", description="目标表名"),
+    "data": Dict[str, Any] = Body(..., description="要存储的数据"),
+    "table": str = Body("demo_data", description="目标表名"),
 ) -> Dict[str, Any]:
     """演示数据收集门面的存储功能"""
     if "data_collection" not in global_facades:
@@ -314,8 +314,8 @@ async def demo_data_storage(
 
 @router.post("/demo/query-data", summary="数据查询演示")
 async def demo_data_query(
-    query: str = Body(..., description="查询语句"),
-    use_cache: bool = Body(True, description="是否使用缓存"),
+    "query": str = Body(..., description="查询语句"),
+    "use_cache": bool = Body(True, description="是否使用缓存"),
 ) -> Dict[str, Any]:
     """演示数据收集门面的查询功能"""
     if "data_collection" not in global_facades:
@@ -343,8 +343,8 @@ async def demo_data_query(
 
 @router.post("/demo/track-event", summary="事件跟踪演示")
 async def demo_event_tracking(
-    event_name: str = Body(..., description="事件名称"),
-    properties: Dict[str, Any] = Body({}, description="事件属性"),
+    "event_name": str = Body(..., description="事件名称"),
+    "properties": Dict[str, Any] = Body({}, description="事件属性"),
 ) -> Dict[str, Any]:
     """演示分析门面的事件跟踪功能"""
     if "analytics" not in global_facades:
@@ -369,8 +369,8 @@ async def demo_event_tracking(
 
 @router.post("/demo/generate-report", summary="报告生成演示")
 async def demo_report_generation(
-    report_type: str = Body("summary", description="报告类型"),
-    filters: Optional[Dict[str, Any] = Body(None, description="过滤条件"),
+    "report_type": str = Body("summary", description="报告类型"),
+    "filters": Optional[Dict[str, Any]] = Body(None, description="过滤条件"),
 ) -> Dict[str, Any]:
     """演示分析门面的报告生成功能"""
     if "analytics" not in global_facades:
@@ -416,9 +416,9 @@ async def get_analytics_summary() -> Dict[str, Any]:
 
 @router.post("/demo/send-notification", summary="发送通知演示")
 async def demo_send_notification(
-    recipient: str = Body(..., description="接收者"),
-    message: str = Body(..., description="通知消息"),
-    channel: str = Body("email", description="通知渠道"),
+    "recipient": str = Body(..., description="接收者"),
+    "message": str = Body(..., description="通知消息"),
+    "channel": str = Body("email", description="通知渠道"),
 ) -> Dict[str, Any]:
     """演示通知门面的发送功能"""
     if "notification" not in global_facades:
@@ -445,7 +445,7 @@ async def demo_send_notification(
 
 @router.post("/demo/queue-notification", summary="排队通知演示")
 async def demo_queue_notification(
-    notification: Dict[str, Any] = Body(..., description="通知对象"),
+    "notification": Dict[str, Any] = Body(..., description="通知对象"),
 ) -> Dict[str, Any]:
     """演示通知门面的排队功能"""
     if "notification" not in global_facades:
@@ -521,7 +521,7 @@ async def reload_facade_configs() -> Dict[str, str]:
 
 @router.post("/demo/complete-workflow", summary="完整工作流演示")
 async def demo_complete_workflow(
-    input_data: Dict[str, Any] = Body(..., description="输入数据"),
+    "input_data": Dict[str, Any] = Body(..., description="输入数据"),
 ) -> Dict[str, Any]:
     """演示使用多个门面完成一个完整的工作流"""
     start_time = datetime.utcnow()

@@ -44,7 +44,7 @@ class CacheKeyManager:
         """初始化键管理器
 
         Args:
-            prefix: 键前缀
+    "prefix": 键前缀
         """
         self.prefix = prefix
 
@@ -57,13 +57,13 @@ class CacheKeyManager:
         Returns:
             缓存键
         """
-        return f"{self.prefix":" + ":".join(parts)
+        return f"{self.prefix}:" + ":".join(parts)
 
     def parse_key(self, key: str) -> List[str]:
         """解析缓存键
 
         Args:
-            key: 缓存键
+    "key": 缓存键
 
         Returns:
             键的组成部分

@@ -107,9 +107,9 @@ class KafkaConfig(StreamConfig):
 
     def __init__(
         self,
-        bootstrap_servers: list[str],
-        port: int = 9092,
-        protocol: str = "PLAINTEXT",
+    "bootstrap_servers": list[str],
+    "port": int = 9092,
+    "protocol": str = "PLAINTEXT",
         **kwargs,
     ):
         super().__init__(
@@ -151,12 +151,12 @@ class ConsumerConfig(StreamConfig):
 
     def __init__(
         self,
-        bootstrap_servers: list[str],
-        group_id: str,
-        topics: list[str],
-        auto_offset_reset: str = "latest",
-        enable_auto_commit: bool = True,
-        auto_commit_interval_ms: int = 5000,
+    "bootstrap_servers": list[str],
+    "group_id": str,
+    "topics": list[str],
+    "auto_offset_reset": str = "latest",
+    "enable_auto_commit": bool = True,
+    "auto_commit_interval_ms": int = 5000,
         **kwargs,
     ):
         super().__init__(
@@ -233,12 +233,12 @@ class ProducerConfig(StreamConfig):
 
     def __init__(
         self,
-        bootstrap_servers: list[str],
-        acks: int = 1,
-        retries: int = 3,
-        batch_size: int = 16384,
-        linger_ms: int = 0,
-        compression_type: str | None = None,
+    "bootstrap_servers": list[str],
+    "acks": int = 1,
+    "retries": int = 3,
+    "batch_size": int = 16384,
+    "linger_ms": int = 0,
+    "compression_type": str | None = None,
         **kwargs,
     ):
         super().__init__(

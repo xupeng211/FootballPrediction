@@ -32,14 +32,14 @@ class Prediction:
 
     def __init__(
         self,
-        id: int | None = None,
-        match_id: int = 0,
-        user_id: int = 0,
-        prediction_type: PredictionType = PredictionType.MATCH_RESULT,
-        predicted_value: str = "",
-        confidence: float = 0.5,
-        odds: float | None = None,
-        stake: float = 1.0,
+    "id": int | None = None,
+    "match_id": int = 0,
+    "user_id": int = 0,
+    "prediction_type": PredictionType = PredictionType.MATCH_RESULT,
+    "predicted_value": str = "",
+    "confidence": float = 0.5,
+    "odds": float | None = None,
+    "stake": float = 1.0,
     ):
         self.id = id
         self.match_id = match_id
@@ -113,7 +113,7 @@ class Prediction:
                     actual_goals = float(actual_value)
                     if predicted_parts[0].upper() == "OVER":
                         return actual_goals > threshold
-                    else:  # UNDER
+    "else":  # UNDER
                         return actual_goals < threshold
             except ValueError:
                 pass

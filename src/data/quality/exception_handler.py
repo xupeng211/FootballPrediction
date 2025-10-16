@@ -1,12 +1,12 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+""""""
 数据质量异常处理机制
 
-实现数据质量问题的自动化处理和修复策略：
-1. 缺失值处理：使用历史平均值填充
-2. 异常赔率处理：标记为可疑并记录
-3. 错误数据处理：写入质量日志供人工排查
-"""
+实现数据质量问题的自动化处理和修复策略:
+1. 缺失值处理:使用历史平均值填充
+2. 异常赔率处理:标记为可疑并记录
+3. 错误数据处理:写入质量日志供人工排查
+""""""
 
 import logging
 from datetime import datetime
@@ -29,8 +29,10 @@ class DataQualityExceptionHandler:
     """数据质量异常处理器 - 简化版本"""
 
     def __init__(self):
-        self.handlers = {}
-        self.statistics = {}
+        self.handlers = {
+            }
+        self.statistics = {
+            }
 
     def register_handler(self, issue_type: DataQualityIssueType, handler: Callable):
         """注册处理器"""
@@ -55,9 +57,9 @@ class MissingValueHandler:
 
     def __init__(self):
         self.default_values = {
-            "home_score": 0,
-            "away_score": 0,
-            "match_time": datetime.utcnow(),
+            "home_score": 0,","
+            "away_score": 0,","
+            "match_time": datetime.utcnow(),""
         }
 
     def handle(self, data: Dict[str, Any]) -> Dict[str, Any]:
@@ -73,9 +75,9 @@ class SuspiciousOddsHandler:
 
     def __init__(self):
         self.odds_limits = {
-            "home_win": (1.01, 50.0),
-            "draw": (1.01, 50.0),
-            "away_win": (1.01, 50.0),
+            "home_win": (1.01, 50.0),","
+            "draw": (1.01, 50.0),","
+            "away_win": (1.01, 50.0),""
         }
 
     def handle(self, data: Dict[str, Any]) -> Dict[str, Any]:
@@ -103,7 +105,7 @@ class InvalidDataHandler:
         """处理无效数据"""
         # 标记无效数据
         if not isinstance(data, Dict[str, Any]):
-            logger.error("Invalid data format: not a dictionary")
+            logger.error("Invalid data format: not a dictionary"),
             return {"valid": False, "data": str(data)}
 
         return {"valid": True, "data": data}
@@ -118,10 +120,10 @@ class QualityLogger:
     def log_issue(self, issue_type: str, data_id: str, description: str):
         """记录质量问题"""
         log_entry = {
-            "timestamp": datetime.utcnow(),
-            "issue_type": issue_type,
-            "data_id": data_id,
-            "description": description,
+            "timestamp": datetime.utcnow(),","
+            "issue_type": issue_type,","
+            "data_id": data_id,","
+            "description": description,""
         }
         self.logs.append(log_entry)
         logger.warning(f"Quality issue: {issue_type} for {data_id} - {description}")
@@ -136,9 +138,9 @@ class StatisticsProvider:
 
     def __init__(self):
         self._stats = {
-            "total_processed": 0,
-            "issues_found": 0,
-            "issues_fixed": 0,
+            "total_processed": 0,","
+            "issues_found": 0,","
+            "issues_fixed": 0,""
         }
 
     def increment(self, key: str, value: int = 1):
@@ -195,17 +197,17 @@ class StatisticsQueryException(DataQualityException):
 
 # 保持原有的 __all__ 导出以维持兼容性
 __all__ = [
-    "DataQualityExceptionHandler",
-    "MissingValueHandler",
-    "SuspiciousOddsHandler",
-    "InvalidDataHandler",
-    "QualityLogger",
-    "StatisticsProvider",
-    "DataQualityException",
-    "MissingValueException",
-    "SuspiciousOddsException",
-    "InvalidDataException",
-    "DataConsistencyException",
-    "QualityLogException",
-    "StatisticsQueryException",
+    "DataQualityExceptionHandler",""
+    "MissingValueHandler",""
+    "SuspiciousOddsHandler",""
+    "InvalidDataHandler",""
+    "QualityLogger",""
+    "StatisticsProvider",""
+    "DataQualityException",""
+    "MissingValueException",""
+    "SuspiciousOddsException",""
+    "InvalidDataException",""
+    "DataConsistencyException",""
+    "QualityLogException",""
+    "StatisticsQueryException",""
 ]

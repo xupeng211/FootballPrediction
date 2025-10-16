@@ -264,10 +264,10 @@ class ObserverManager:
     # 监控接口
     async def record_prediction(
         self,
-        strategy_name: str,
-        response_time_ms: float,
-        success: bool = True,
-        confidence: float | None = None,
+    strategy_name: str,
+    response_time_ms: float,
+    success: bool = True,
+    confidence: float | None = None,
     ) -> None:
         """记录预测事件"""
         subject = self.get_prediction_metrics_subject()
@@ -293,11 +293,11 @@ class ObserverManager:
 
     async def trigger_alert(
         self,
-        alert_type: str,
-        severity: str,
-        message: str,
-        source: str | None = None,
-        data: dict[str, Any] | None = None,
+    alert_type: str,
+    severity: str,
+    message: str,
+    source: str | None = None,
+    data: dict[str, Any] | None = None,
     ) -> None:
         """触发告警"""
         subject = self._subjects.get("alert")
@@ -340,11 +340,11 @@ class ObserverManager:
     def get_system_status(self) -> dict[str, Any]:
         """获取系统状态"""
         _result = {
-            "initialized": self._initialized,
-            "running": self._running,
+            initialized: self._initialized,
+            running: self._running,
             "observers": {},
             "subjects": {},
-            "timestamp": datetime.utcnow().isoformat(),
+            timestamp: datetime.utcnow().isoformat(),
         }
 
         # 获取观察者状态
@@ -369,7 +369,7 @@ class ObserverManager:
 
 
 # 全局实例
-_observer_manager: ObserverManager | None = None
+    _observer_manager: ObserverManager | None = None
 
 
 def get_observer_manager() -> ObserverManager:

@@ -14,16 +14,16 @@ from sqlalchemy.exc import SQLAlchemyError, DatabaseError
 基于 DATA_DESIGN.md 阶段二数据库性能优化设计。
 
 Revision ID: d6d814cc1078
-Revises: 004_configure_permissions
+    "Revises": 004_configure_permissions
 Create Date: 2025-09-10 21:51:46.967609
 
 """
 
 # revision identifiers, used by Alembic.
-revision: str = "d6d814cc1078"
-down_revision: Union[str, None] = "004_configure_permissions"  # type: ignore
-branch_labels: Union[str, Sequence[str], None] = None  # type: ignore
-depends_on: Union[str, Sequence[str], None] = None  # type: ignore
+    "revision": str = "d6d814cc1078"
+    "down_revision": Union[str, None] = "004_configure_permissions"  # type: ignore
+    "branch_labels": Union[str, Sequence[str], None] = None  # type: ignore
+    "depends_on": Union[str, Sequence[str], None] = None  # type: ignore
 
 
 def upgrade() -> None:

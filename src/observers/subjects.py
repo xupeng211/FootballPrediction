@@ -16,7 +16,7 @@ from .base import Subject, ObservableEvent, ObservableEventType
 
 
 class SystemMetricsSubject(Subject):
-    """系统指标被观察者
+    """系统指标被观察者"
 
     监控系统级别的指标变化。
     Monitors system-level metric changes.
@@ -31,11 +31,11 @@ class SystemMetricsSubject(Subject):
         self._notification_interval = 60  # 秒
 
     def set_metric(self, name: str, value: float) -> None:
-        """设置指标值
+        """设置指标值"
 
         Args:
-            name: 指标名称
-            value: 指标值
+    name: 指标名称
+    value: 指标值
         """
         old_value = self._metrics.get(name)
         self._metrics[name] = value
@@ -45,23 +45,23 @@ class SystemMetricsSubject(Subject):
 
     def set_threshold(
         self,
-        metric_name: str,
-        warning: Optional[float] = None,
-        critical: Optional[float] = None,
-        direction: str = "above",
+    metric_name: str,
+    warning: Optional[float] = None,
+    critical: Optional[float] = None,
+    direction: str = "above",
     ) -> None:
-        """设置指标阈值
+        """设置指标阈值"
 
         Args:
-            metric_name: 指标名称
-            warning: 警告阈值
-            critical: 严重阈值
-            direction: 方向（above/below）
+    metric_name: 指标名称
+    warning: 警告阈值
+    critical: 严重阈值
+    direction: 方向（above/below）
         """
         self._thresholds[metric_name] = {
-            "warning": warning,  # type: ignore
-            "critical": critical,  # type: ignore
-            "direction": direction,  # type: ignore
+            warning: warning,  # type: ignore
+            critical: critical,  # type: ignore
+            direction: direction,  # type: ignore
         }
 
     async def _check_thresholds(
@@ -90,11 +90,11 @@ class SystemMetricsSubject(Subject):
                     source=f"SystemMetrics:{metric_name}",
                     severity="critical",
                     _data ={
-                        "metric_name": metric_name,
-                        "metric_value": new_value,
-                        "threshold": threshold["critical"],
-                        "direction": threshold["direction"],
-                        "old_value": old_value,
+                        metric_name: metric_name,
+                        metric_value: new_value,
+                        threshold: threshold["critical"],
+                        direction: threshold["direction"],
+                        old_value: old_value,
                     },
                 )
                 await self.notify(event)
@@ -113,11 +113,11 @@ class SystemMetricsSubject(Subject):
                     source=f"SystemMetrics:{metric_name}",
                     severity="warning",
                     _data ={
-                        "metric_name": metric_name,
-                        "metric_value": new_value,
-                        "threshold": threshold["warning"],
-                        "direction": threshold["direction"],
-                        "old_value": old_value,
+                        metric_name: metric_name,
+                        metric_value: new_value,
+                        threshold: threshold["warning"],
+                        direction: threshold["direction"],
+                        old_value: old_value,
                     },
                 )
                 await self.notify(event)
@@ -141,10 +141,10 @@ class SystemMetricsSubject(Subject):
         import random
 
         metrics = {
-            "cpu_usage": random.uniform(20, 90),
-            "memory_usage": random.uniform(40, 85),
-            "disk_usage": random.uniform(30, 70),
-            "network_io": random.uniform(10, 100),
+            cpu_usage: random.uniform(20, 90),
+            memory_usage: random.uniform(40, 85),
+            disk_usage: random.uniform(30, 70),
+            network_io: random.uniform(10, 100),
         }
 
         for name, value in metrics.items():
@@ -156,7 +156,7 @@ class SystemMetricsSubject(Subject):
 
 
 class PredictionMetricsSubject(Subject):
-    """预测指标被观察者
+    """预测指标被观察者"
 
     监控预测相关的指标。
     Monitors prediction-related metrics.
@@ -172,20 +172,20 @@ class PredictionMetricsSubject(Subject):
 
     async def record_prediction(
         self,
-        strategy_name: str,
-        response_time_ms: float,
-        success: bool = True,
-        confidence: Optional[float] = None,
-        actual_result: Optional[Dict[str, Any]] = None,
+    strategy_name: str,
+    response_time_ms: float,
+    success: bool = True,
+    confidence: Optional[float] = None,
+    actual_result: Optional[Dict[str, Any]] = None,
     ) -> None:
-        """记录预测事件
+        """记录预测事件"
 
         Args:
-            strategy_name: 策略名称
-            response_time_ms: 响应时间（毫秒）
-            success: 是否成功
-            confidence: 预测置信度
-            actual_result: 实际结果（用于计算准确率）
+    strategy_name: 策略名称
+    response_time_ms: 响应时间（毫秒）
+    success: 是否成功
+    confidence: 预测置信度
+    actual_result: 实际结果（用于计算准确率）
         """
         timestamp = datetime.utcnow()
 
@@ -211,21 +211,21 @@ class PredictionMetricsSubject(Subject):
             event_type=ObservableEventType.PREDICTION_COMPLETED,
             source=f"PredictionMetrics:{strategy_name}",
             _data ={
-                "strategy_name": strategy_name,
-                "response_time_ms": response_time_ms,
-                "success": success,
-                "confidence": confidence,
-                "timestamp": timestamp.isoformat(),
+                strategy_name: strategy_name,
+                response_time_ms: response_time_ms,
+                success: success,
+                confidence: confidence,
+                timestamp: timestamp.isoformat(),
             },
         )
         await self.notify(event)
 
     def _update_strategy_performance(
         self,
-        strategy_name: str,
-        success: bool,
-        confidence: Optional[float],
-        actual_result: Optional[Dict[str, Any]] = None,
+    strategy_name: str,
+    success: bool,
+    confidence: Optional[float],
+    actual_result: Optional[Dict[str, Any]] = None,
     ) -> None:
         """更新策略性能统计"""
         perf = self._strategy_performance[strategy_name]
@@ -265,8 +265,8 @@ class PredictionMetricsSubject(Subject):
                     severity="warning",
                     _data ={
                         "type": "response_time",
-                        "value": avg_time,
-                        "threshold": 1000,
+                        value: avg_time,
+                        threshold: 1000,
                     },
                 )
                 await self.notify(event)
@@ -281,8 +281,8 @@ class PredictionMetricsSubject(Subject):
                     severity="warning",
                     _data ={
                         "type": "success_rate",
-                        "value": success_rate,
-                        "threshold": 0.9,
+                        value: success_rate,
+                        threshold: 0.9,
                     },
                 )
                 await self.notify(event)
@@ -290,30 +290,30 @@ class PredictionMetricsSubject(Subject):
     def get_prediction_metrics(self) -> Dict[str, Any]:
         """获取预测指标"""
         _result = {
-            "total_predictions": sum(
+            total_predictions: sum(
                 count
                 for key, count in self._prediction_counts.items()
                 if not key.endswith("_success") and not key.endswith("_failure")
             ),
-            "prediction_counts": Dict[str, Any](self._prediction_counts),
-            "strategy_performance": Dict[str, Any](self._strategy_performance),
+            prediction_counts: Dict[str, Any](self._prediction_counts),
+            strategy_performance: Dict[str, Any](self._strategy_performance),
         }
 
         # 响应时间统计
         if self._response_times:
             times = self._response_times[-100:]
             result["response_time"] = {
-                "avg": sum(times) / len(times),
-                "min": min(times),
-                "max": max(times),
-                "p95": sorted(times)[int(len(times) * 0.95)],
+                avg: sum(times) / len(times),
+                min: min(times),
+                max: max(times),
+                p95: sorted(times)[int(len(times) * 0.95)],
             }
 
         return result
 
 
 class AlertSubject(Subject):
-    """告警被观察者
+    """告警被观察者"
 
     管理告警事件。
     Manages alert events.
@@ -328,20 +328,20 @@ class AlertSubject(Subject):
 
     async def trigger_alert(
         self,
-        alert_type: str,
-        severity: str,
-        message: str,
-        source: Optional[str] = None,
-        data: Optional[Dict[str, Any]] = None,
+    alert_type: str,
+    severity: str,
+    message: str,
+    source: Optional[str] = None,
+    data: Optional[Dict[str, Any]] = None,
     ) -> None:
-        """触发告警
+        """触发告警"
 
         Args:
-            alert_type: 告警类型
-            severity: 严重性
-            message: 告警消息
-            source: 告警源
-            data: 附加数据
+    alert_type: 告警类型
+    severity: 严重性
+    message: 告警消息
+    source: 告警源
+    data: 附加数据
         """
         # 检查抑制规则
         if await self._is_suppressed(alert_type, severity, source):
@@ -361,8 +361,8 @@ class AlertSubject(Subject):
             source=source or f"AlertManager:{alert_type}",
             severity=severity,
             _data ={
-                "alert_type": alert_type,
-                "message": message,
+                alert_type: alert_type,
+                message: message,
                 **(data or {}),
             },
         )
@@ -392,40 +392,40 @@ class AlertSubject(Subject):
 
     def add_suppression_rule(
         self,
-        alert_type: str,
-        severity: str,
-        source: Optional[str] = None,
-        max_alerts: int = 5,
-        time_window: int = 300,
+    alert_type: str,
+    severity: str,
+    source: Optional[str] = None,
+    max_alerts: int = 5,
+    time_window: int = 300,
     ) -> None:
-        """添加告警抑制规则
+        """添加告警抑制规则"
 
         Args:
-            alert_type: 告警类型
-            severity: 严重性
-            source: 告警源
-            max_alerts: 时间窗口内最大告警数
-            time_window: 时间窗口（秒）
+    alert_type: 告警类型
+    severity: 严重性
+    source: 告警源
+    max_alerts: 时间窗口内最大告警数
+    time_window: 时间窗口（秒）
         """
         key = f"{alert_type}:{severity}:{source or 'default'}"
         self._suppression_rules[key] = {
-            "max_alerts": max_alerts,
-            "time_window": time_window,
+            max_alerts: max_alerts,
+            time_window: time_window,
         }
 
     def get_alert_statistics(self) -> Dict[str, Any]:
         """获取告警统计"""
         return {
-            "alert_counts": Dict[str, Any](self._alert_counts),
+            alert_counts: Dict[str, Any](self._alert_counts),
             "alert_levels": {
-                level: len(alerts) for level, alerts in self._alert_levels.items()
+    level: len(alerts) for level, alerts in self._alert_levels.items()
             },
-            "suppression_rules": len(self._suppression_rules),
+            suppression_rules: len(self._suppression_rules),
         }
 
 
 class CacheSubject(Subject):
-    """缓存被观察者
+    """缓存被观察者"
 
     监控缓存相关事件。
     Monitors cache-related events.
@@ -435,10 +435,10 @@ class CacheSubject(Subject):
         """初始化缓存被观察者"""
         super().__init__("CacheMonitor")
         self._cache_stats = {
-            "hits": 0,
-            "misses": 0,
-            "sets": 0,
-            "deletes": 0,
+            hits: 0,
+            misses: 0,
+            sets: 0,
+            deletes: 0,
         }
         self._cache_sizes: Dict[str, int] = {}
         self._hit_rates: Dict[str, float] = {}
@@ -452,8 +452,8 @@ class CacheSubject(Subject):
             event_type=ObservableEventType.CACHE_HIT,
             source=f"Cache:{cache_name}",
             _data ={
-                "cache_name": cache_name,
-                "key": key,
+                cache_name: cache_name,
+                key: key,
             },
         )
         await self.notify(event)
@@ -467,8 +467,8 @@ class CacheSubject(Subject):
             event_type=ObservableEventType.CACHE_MISS,
             source=f"Cache:{cache_name}",
             _data ={
-                "cache_name": cache_name,
-                "key": key,
+                cache_name: cache_name,
+                key: key,
             },
         )
         await self.notify(event)
@@ -500,8 +500,8 @@ class CacheSubject(Subject):
         )
 
         return {
-            "stats": Dict[str, Any](self._cache_stats),
-            "overall_hit_rate": hit_rate,
-            "cache_hit_rates": Dict[str, Any](self._hit_rates),
-            "total_requests": total_requests,
+            stats: Dict[str, Any](self._cache_stats),
+            overall_hit_rate: hit_rate,
+            cache_hit_rates: Dict[str, Any](self._hit_rates),
+            total_requests: total_requests,
         }

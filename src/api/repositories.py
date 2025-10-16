@@ -50,16 +50,16 @@ async def get_predictions(
 
     predictions = await repo.find_many(query_spec)
     return {
-        "total": len(predictions),
+        total: len(predictions),
         "predictions": [
             {
-                "id": p.id,
-                "user_id": p.user_id,  # type: ignore
-                "match_id": p.match_id,
-                "predicted_home": p.predicted_home,  # type: ignore
-                "predicted_away": p.predicted_away,  # type: ignore
-                "confidence": float(p.confidence),  # type: ignore
-                "created_at": p.created_at,
+                id: p.id,
+                user_id: p.user_id,  # type: ignore
+                match_id: p.match_id,
+                predicted_home: p.predicted_home,  # type: ignore
+                predicted_away: p.predicted_away,  # type: ignore
+                confidence: float(p.confidence),  # type: ignore
+                created_at: p.created_at,
             }
             for p in predictions
         ],
@@ -76,16 +76,16 @@ async def get_prediction(
         raise HTTPException(status_code=404, detail="预测不存在")
 
     return {
-        "id": prediction.id,
-        "user_id": prediction.user_id,  # type: ignore
-        "match_id": prediction.match_id,
-        "predicted_home": prediction.predicted_home,  # type: ignore
-        "predicted_away": prediction.predicted_away,  # type: ignore
-        "confidence": float(prediction.confidence),  # type: ignore
-        "strategy_used": prediction.strategy_used,  # type: ignore
-        "notes": prediction.notes,  # type: ignore
-        "created_at": prediction.created_at,
-        "updated_at": prediction.updated_at,
+        id: prediction.id,
+        user_id: prediction.user_id,  # type: ignore
+        match_id: prediction.match_id,
+        predicted_home: prediction.predicted_home,  # type: ignore
+        predicted_away: prediction.predicted_away,  # type: ignore
+        confidence: float(prediction.confidence),  # type: ignore
+        strategy_used: prediction.strategy_used,  # type: ignore
+        notes: prediction.notes,  # type: ignore
+        created_at: prediction.created_at,
+        updated_at: prediction.updated_at,
     }
 
 
@@ -120,13 +120,13 @@ async def create_prediction(
         return {
             "message": "预测创建成功",
             "prediction": {
-                "id": prediction.id,
-                "user_id": prediction.user_id,  # type: ignore
-                "match_id": prediction.match_id,
-                "predicted_home": prediction.predicted_home,  # type: ignore
-                "predicted_away": prediction.predicted_away,  # type: ignore
-                "confidence": float(prediction.confidence),
-                "created_at": prediction.created_at,
+                id: prediction.id,
+                user_id: prediction.user_id,  # type: ignore
+                match_id: prediction.match_id,
+                predicted_home: prediction.predicted_home,  # type: ignore
+                predicted_away: prediction.predicted_away,  # type: ignore
+                confidence: float(prediction.confidence),
+                created_at: prediction.created_at,
             },
         }
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
@@ -169,16 +169,16 @@ async def get_users(
 
     users = await repo.find_many(query_spec)
     return {
-        "total": len(users),
+        total: len(users),
         "users": [
             {
-                "id": u.id,
-                "username": u.username,
-                "email": u.email,
-                "display_name": u.display_name,  # type: ignore
-                "role": u.role,  # type: ignore
-                "is_active": u.is_active,
-                "created_at": u.created_at,
+                id: u.id,
+                username: u.username,
+                email: u.email,
+                display_name: u.display_name,  # type: ignore
+                role: u.role,  # type: ignore
+                is_active: u.is_active,
+                created_at: u.created_at,
             }
             for u in users
         ],
@@ -193,14 +193,14 @@ async def get_user(user_id: int, repo: ReadOnlyUserRepoDep) -> dict[str, Any]:
         raise HTTPException(status_code=404, detail="用户不存在")
 
     return {
-        "id": user.id,
-        "username": user.username,
-        "email": user.email,
-        "display_name": user.display_name,  # type: ignore
-        "role": user.role,  # type: ignore
-        "is_active": user.is_active,
-        "last_login_at": user.last_login_at,  # type: ignore
-        "created_at": user.created_at,
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        display_name: user.display_name,  # type: ignore
+        role: user.role,  # type: ignore
+        is_active: user.is_active,
+        last_login_at: user.last_login_at,  # type: ignore
+        created_at: user.created_at,
     }
 
 
@@ -220,14 +220,14 @@ async def search_users(
     """搜索用户"""
     users = await repo.search_users(keyword)
     return {
-        "keyword": keyword,
-        "total": len(users[:limit]),
+        keyword: keyword,
+        total: len(users[:limit]),
         "users": [
             {
-                "id": u.id,
-                "username": u.username,
-                "display_name": u.display_name,  # type: ignore
-                "email": u.email,
+                id: u.id,
+                username: u.username,
+                display_name: u.display_name,  # type: ignore
+                email: u.email,
             }
             for u in users[:limit]
         ],
@@ -242,13 +242,13 @@ async def get_active_users(
     """获取活跃用户列表"""
     users = await repo.get_active_users(limit)
     return {
-        "total": len(users),
+        total: len(users),
         "active_users": [
             {
-                "id": u.id,
-                "username": u.username,
-                "display_name": u.display_name,  # type: ignore
-                "last_login_at": u.last_login_at,  # type: ignore
+                id: u.id,
+                username: u.username,
+                display_name: u.display_name,  # type: ignore
+                last_login_at: u.last_login_at,  # type: ignore
             }
             for u in users
         ],
@@ -263,10 +263,10 @@ async def create_user(user_data: dict[str, Any], repo: UserRepoDep) -> dict[str,
         return {
             "message": "用户创建成功",
             "user": {
-                "id": user.id,
-                "username": user.username,
-                "email": user.email,
-                "created_at": user.created_at,
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                created_at: user.created_at,
             },
         }
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
@@ -294,15 +294,15 @@ async def get_matches(
 
     _matches = await repo.find_many(query_spec)
     return {
-        "total": len(matches),
+        total: len(matches),
         "matches": [
             {
-                "id": m.id,
-                "home_team_name": m.home_team_name,  # type: ignore
-                "away_team_name": m.away_team_name,  # type: ignore
-                "competition_name": m.competition_name,  # type: ignore
-                "match_date": m.match_date,  # type: ignore
-                "status": m.status,  # type: ignore
+                id: m.id,
+                home_team_name: m.home_team_name,  # type: ignore
+                away_team_name: m.away_team_name,  # type: ignore
+                competition_name: m.competition_name,  # type: ignore
+                match_date: m.match_date,  # type: ignore
+                status: m.status,  # type: ignore
                 "score": {"home": m.home_score, "away": m.away_score}
                 if m.home_score is not None
                 else None,
@@ -321,15 +321,15 @@ async def get_upcoming_matches(
     """获取即将到来的比赛"""
     _matches = await repo.get_upcoming_matches(days, limit)
     return {
-        "days": days,
-        "total": len(matches),
+        days: days,
+        total: len(matches),
         "matches": [
             {
-                "id": m.id,
-                "home_team": m.home_team_name,  # type: ignore
-                "away_team": m.away_team_name,  # type: ignore
-                "competition": m.competition_name,  # type: ignore
-                "match_date": m.match_date,  # type: ignore
+                id: m.id,
+                home_team: m.home_team_name,  # type: ignore
+                away_team: m.away_team_name,  # type: ignore
+                competition: m.competition_name,  # type: ignore
+                match_date: m.match_date,  # type: ignore
             }
             for m in matches
         ],
@@ -341,16 +341,16 @@ async def get_live_matches(repo: ReadOnlyMatchRepoDep) -> dict[str, Any]:
     """获取正在进行的比赛"""
     _matches = await repo.get_live_matches()
     return {
-        "total": len(matches),
+        total: len(matches),
         "live_matches": [
             {
-                "id": m.id,
-                "home_team": m.home_team_name,  # type: ignore
-                "away_team": m.away_team_name,  # type: ignore
+                id: m.id,
+                home_team: m.home_team_name,  # type: ignore
+                away_team: m.away_team_name,  # type: ignore
                 "score": {"home": m.home_score, "away": m.away_score}
                 if m.home_score is not None
                 else None,
-                "started_at": m.started_at,  # type: ignore
+                started_at: m.started_at,  # type: ignore
             }
             for m in matches
         ],
@@ -365,17 +365,17 @@ async def get_match(match_id: int, repo: ReadOnlyMatchRepoDep) -> dict[str, Any]
         raise HTTPException(status_code=404, detail="比赛不存在")
 
     return {
-        "id": match.id,
-        "home_team_name": match.home_team_name,  # type: ignore
-        "away_team_name": match.away_team_name,  # type: ignore
-        "competition_name": match.competition_name,  # type: ignore
-        "season": match.season,
-        "match_date": match.match_date,  # type: ignore
-        "status": match.status,  # type: ignore
+        id: match.id,
+        home_team_name: match.home_team_name,  # type: ignore
+        away_team_name: match.away_team_name,  # type: ignore
+        competition_name: match.competition_name,  # type: ignore
+        season: match.season,
+        match_date: match.match_date,  # type: ignore
+        status: match.status,  # type: ignore
         "score": {"home": match.home_score, "away": match.away_score}
         if match.home_score is not None
         else None,
-        "created_at": match.created_at,
+        created_at: match.created_at,
     }
 
 
@@ -395,16 +395,16 @@ async def search_matches(
     """搜索比赛"""
     _matches = await repo.search_matches(keyword)
     return {
-        "keyword": keyword,
-        "total": len(matches[:limit]),
+        keyword: keyword,
+        total: len(matches[:limit]),
         "matches": [
             {
-                "id": m.id,
-                "home_team": m.home_team_name,  # type: ignore
-                "away_team": m.away_team_name,  # type: ignore
-                "competition": m.competition_name,  # type: ignore
-                "match_date": m.match_date,  # type: ignore
-                "status": m.status,  # type: ignore
+                id: m.id,
+                home_team: m.home_team_name,  # type: ignore
+                away_team: m.away_team_name,  # type: ignore
+                competition: m.competition_name,  # type: ignore
+                match_date: m.match_date,  # type: ignore
+                status: m.status,  # type: ignore
             }
             for m in matches[:limit]
         ],
@@ -422,18 +422,18 @@ async def get_matches_by_date_range(
     """获取指定日期范围内的比赛"""
     _matches = await repo.get_matches_by_date_range(start_date, end_date, status, limit)  # type: ignore
     return {
-        "start_date": start_date,
-        "end_date": end_date,
-        "status": status,
-        "total": len(matches),
+        start_date: start_date,
+        end_date: end_date,
+        status: status,
+        total: len(matches),
         "matches": [
             {
-                "id": m.id,
-                "home_team": m.home_team_name,  # type: ignore
-                "away_team": m.away_team_name,  # type: ignore
-                "competition": m.competition_name,  # type: ignore
-                "match_date": m.match_date,  # type: ignore
-                "status": m.status,  # type: ignore
+                id: m.id,
+                home_team: m.home_team_name,  # type: ignore
+                away_team: m.away_team_name,  # type: ignore
+                competition: m.competition_name,  # type: ignore
+                match_date: m.match_date,  # type: ignore
+                status: m.status,  # type: ignore
             }
             for m in matches
         ],
@@ -449,9 +449,9 @@ async def start_match(match_id: int, repo: MatchRepoDep) -> dict[str, Any]:
 
     return {
         "message": "比赛已开始",
-        "match_id": match.id,
-        "status": match.status,  # type: ignore
-        "started_at": match.started_at,  # type: ignore
+        match_id: match.id,
+        status: match.status,  # type: ignore
+        started_at: match.started_at,  # type: ignore
     }
 
 
@@ -469,9 +469,9 @@ async def finish_match(
 
     return {
         "message": "比赛已结束",
-        "match_id": match.id,
+        match_id: match.id,
         "final_score": {"home": match.home_score, "away": match.away_score},
-        "finished_at": match.finished_at,  # type: ignore
+        finished_at: match.finished_at,  # type: ignore
     }
 
 
@@ -507,13 +507,13 @@ async def demo_query_spec(
         "examples": [
             {
                 "name": "基础筛选",
-                "filters": basic_filters,
-                "results_count": len(results1),
+                filters: basic_filters,
+                results_count: len(results1),
             },
             {
                 "name": "复杂筛选",
-                "filters": complex_filters,
-                "results_count": len(results2),
+                filters: complex_filters,
+                results_count: len(results2),
             },
         ],
     }
@@ -540,12 +540,12 @@ async def demo_read_only_vs_write(
         can_write = True
 
     return {
-        "prediction_id": prediction_id,
-        "prediction_exists": prediction is not None,
+        prediction_id: prediction_id,
+        prediction_exists: prediction is not None,
         "read_only_repository": {
-            "can_read": True,
-            "can_write": can_write,
-            "error_on_write": error_message,
+            can_read: True,
+            can_write: can_write,
+            error_on_write: error_message,
         },
         "write_repository": {"can_read": True, "can_write": True},
     }

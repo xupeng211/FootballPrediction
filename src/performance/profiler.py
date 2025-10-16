@@ -1,15 +1,15 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+
 性能分析器模块
 Performance Profiler Module
 
-提供多种性能分析工具：
+提供多种性能分析工具:
 - 函数级性能分析
 - 内存使用分析
 - 数据库查询分析
 - API端点性能跟踪
 - 异步任务性能分析
-"""
+""""""
 
 import asyncio
 import cProfile
@@ -34,36 +34,36 @@ logger = get_logger(__name__)
 class PerformanceMetric:
     """性能指标数据结构"""
 
-    name: str
-    value: float
-    unit: str
-    timestamp: datetime = field(default_factory=datetime.now)
-    metadata: Dict[str, Any] = field(default_factory=dict[str, Any])
+    "name": str
+    "value": float
+    "unit": str
+    "timestamp": datetime = field(default_factory=datetime.now)
+    "metadata": Dict[str, Any] = field(default_factory=dict[str, Any])
 
 
 @dataclass
 class FunctionProfile:
     """函数性能分析结果"""
 
-    function_name: str
-    call_count: int
-    total_time: float
-    average_time: float
-    min_time: float
-    max_time: float
-    cpu_time: float
-    memory_usage: int = 0
+    "function_name": str
+    "call_count": int
+    "total_time": float
+    "average_time": float
+    "min_time": float
+    "max_time": float
+    "cpu_time": float
+    "memory_usage": int = 0
 
 
 @dataclass
 class QueryProfile:
     """数据库查询性能分析结果"""
 
-    query: str
-    execution_time: float
-    rows_affected: int
-    index_used: Optional[str] = None
-    explain_plan: Optional[Dict[str, Any]] = None
+    "query": str
+    "execution_time": float
+    "rows_affected": int
+    "index_used": Optional[str] = None
+    "explain_plan": Optional[Dict[str, Any] = None
 class PerformanceProfiler:
     """性能分析器主类"""
 
@@ -97,10 +97,10 @@ class PerformanceProfiler:
         self.active_profiling = False
 
         _result = {
-            "stats": stats_stream.getvalue(),
-            "memory_current": current,
-            "memory_peak": peak,
-            "function_profiles": self._parse_function_stats(ps),
+            "stats": stats_stream.getvalue(),","
+            "memory_current": current,","
+            "memory_peak": peak,","
+            "function_profiles": self._parse_function_stats(ps),""
         }
 
         logger.info(
@@ -121,8 +121,8 @@ class PerformanceProfiler:
                     call_count=cc,
                     total_time=tt,
                     average_time=tt / cc if cc > 0 else 0,
-                    min_time=0,  # pstats doesn't provide min_time directly
-                    max_time=0,  # pstats doesn't provide max_time directly
+                    min_time=0,  # pstats doesn't provide min_time directly'
+                    max_time=0,  # pstats doesn't provide max_time directly'
                     cpu_time=tt,
                 )
                 profiles.append(profile)
@@ -192,11 +192,11 @@ class PerformanceProfiler:
 
     def record_query_profile(
         self,
-        query: str,
-        execution_time: float,
-        rows_affected: int = 0,
-        index_used: Optional[str] = None,
-        explain_plan: Optional[Dict[str, Any]] = None,
+    "query": str,
+    "execution_time": float,
+    "rows_affected": int = 0,
+    "index_used": Optional[str] = None,
+    "explain_plan": Optional[Dict[str, Any] = None,
     ):
         """记录数据库查询性能"""
         profile = QueryProfile(
@@ -213,7 +213,7 @@ class PerformanceProfiler:
             name="database_query_duration",
             value=execution_time,
             unit="seconds",
-            _metadata={"query": query[:100], "rows": rows_affected},
+            _metadata={"query": query[:100, "rows": rows_affected},
         )
         self.metrics.append(metric)
 
@@ -243,11 +243,11 @@ class PerformanceProfiler:
         summary = {}
         for name, values in grouped_metrics.items():
             summary[name] = {
-                "count": len(values),
-                "total": sum(values),
-                "average": sum(values) / len(values),
-                "min": min(values),
-                "max": max(values),
+                "count": len(values),","
+                "total": sum(values),","
+                "average": sum(values) / len(values),","
+                "min": min(values),","
+                "max": max(values),""
             }
 
         return summary
@@ -255,21 +255,21 @@ class PerformanceProfiler:
     def export_metrics(self, format: str = "json") -> str:
         """导出性能指标"""
         _data = {
-            "timestamp": datetime.now().isoformat(),
-            "metrics_summary": self.get_metrics_summary(),
-            "slow_functions": [
+            "timestamp": datetime.now().isoformat(),","
+            "metrics_summary": self.get_metrics_summary(),","
+            "slow_functions": [""
                 {
-                    "name": f.function_name,
-                    "average_time": f.average_time,
-                    "call_count": f.call_count,
+                    "name": f.function_name,","
+                    "average_time": f.average_time,","
+                    "call_count": f.call_count,""
                 }
                 for f in self.get_slow_functions()
             ],
-            "slow_queries": [
+            "slow_queries": [""
                 {
-                    "query": q.query[:100] + "..." if len(q.query) > 100 else q.query,
-                    "execution_time": q.execution_time,
-                    "rows_affected": q.rows_affected,
+                    "query": q.query[:100 + "..." if len(q.query) > 100 else q.query,","
+                    "execution_time": q.execution_time,","
+                    "rows_affected": q.rows_affected,""
                 }
                 for q in self.get_slow_queries()
             ],
@@ -325,7 +325,7 @@ def profile_function(name: Optional[str] = None):
 
 
 def profile_method(cls_attr: Optional[str] = None):
-    """方法性能分析装饰器（用于类方法）"""
+    """方法性能分析装饰器(用于类方法)"""
 
     def decorator(func: Callable) -> Callable:
         @wraps(func)
@@ -395,25 +395,25 @@ class APIEndpointProfiler:
 
     def record_endpoint_request(
         self,
-        endpoint: str,
-        method: str,
-        status_code: int,
-        duration: float,
-        request_size: int = 0,
-        response_size: int = 0,
+    "endpoint": str,
+    "method": str,
+    "status_code": int,
+    "duration": float,
+    "request_size": int = 0,
+    "response_size": int = 0,
     ):
         """记录API端点请求性能"""
         key = f"{method} {endpoint}"
 
         if key not in self.endpoint_stats:
             self.endpoint_stats[key] = {
-                "request_count": 0,
-                "total_duration": 0,
-                "status_codes": {},
-                "avg_request_size": 0,
-                "avg_response_size": 0,
+                "request_count": 0,","
+                "total_duration": 0,","
+                "status_codes": {},","
+                "avg_request_size": 0,","
+                "avg_response_size": 0,","
                 "min_duration": float("inf"),
-                "max_duration": 0,
+                "max_duration": 0,""
             }
 
         _stats = self.endpoint_stats[key]
@@ -441,9 +441,9 @@ class APIEndpointProfiler:
             value=duration,
             unit="seconds",
             _metadata={
-                "endpoint": endpoint,
-                "method": method,
-                "status_code": status_code,
+                "endpoint": endpoint,","
+                "method": method,","
+                "status_code": status_code,""
             },
         )
         self.profiler.metrics.append(metric)
@@ -469,10 +469,10 @@ class APIEndpointProfiler:
             if stats["average_duration"] > threshold:
                 slow_endpoints.append(
                     {
-                        "endpoint": endpoint,
-                        "average_duration": stats["average_duration"],
-                        "request_count": stats["request_count"],
-                        "max_duration": stats["max_duration"],
+                        "endpoint": endpoint,","
+                        "average_duration": stats["average_duration",","
+                        "request_count": stats["request_count",","
+                        "max_duration": stats["max_duration",""
                     }
                 )
 
@@ -491,12 +491,12 @@ class MemoryProfiler:
         memory_info = process.memory_info()
 
         snapshot = {
-            "timestamp": datetime.now(),
-            "label": label,
-            "rss": memory_info.rss,  # 物理内存
-            "vms": memory_info.vms,  # 虚拟内存
-            "percent": process.memory_percent(),
-            "available": psutil.virtual_memory().available,
+            "timestamp": datetime.now(),","
+            "label": label,","
+            "rss": memory_info.rss,  # 物理内存","
+            "vms": memory_info.vms,  # 虚拟内存","
+            "percent": process.memory_percent(),","
+            "available": psutil.virtual_memory().available,""
         }
 
         self.snapshots.append(snapshot)
@@ -507,16 +507,15 @@ class MemoryProfiler:
         if not self.snapshots:
             return {}
 
-        return {
-            "timestamps": [s["timestamp"].isoformat() for s in self.snapshots],
-            "rss": [s["rss"] / 1024 / 1024 for s in self.snapshots],  # MB
-            "vms": [s["vms"] / 1024 / 1024 for s in self.snapshots],  # MB
-            "percent": [s["percent"] for s in self.snapshots],
-            "labels": [s["label"] for s in self.snapshots],
-        }
+        return "timestamps": [s["timestamp".isoformat() for s in self.snapshots,""
+            "rss": [s["rss" / 1024 / 1024 for s in self.snapshots],  # MB","
+            "vms": [s["vms" / 1024 / 1024 for s in self.snapshots],  # MB","
+            "percent": [s["percent" for s in self.snapshots],","
+            "labels": [s["label" for s in self.snapshots],""
+
 
     def detect_memory_leaks(self, threshold: float = 50.0) -> bool:
-        """检测内存泄漏（MB）"""
+        """检测内存泄漏(MB)"""
         if len(self.snapshots) < 2:
             return False
 

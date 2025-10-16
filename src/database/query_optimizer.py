@@ -1,8 +1,8 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+
 查询优化器
 提供查询优化建议和自动优化功能
-"""
+
 
 import re
 import time
@@ -20,12 +20,12 @@ logger = get_logger(__name__)
 @dataclass
 class QueryMetrics:
     """查询指标"""
-    query: str
-    duration: float
-    rows: int
-    cache_hits: int
-    cache_misses: int
-    timestamp: float
+    "query": str
+    "duration": float
+    "rows": int
+    "cache_hits": int
+    "cache_misses": int
+    "timestamp": float
 
 
 class QueryOptimizer:
@@ -38,9 +38,9 @@ class QueryOptimizer:
 
     async def analyze_query_plan(
         self,
-        session: AsyncSession,
-        query: str,
-        params: Dict[str, Any] = None
+    "session": AsyncSession,
+    "query": str,
+    "params": Dict[str, Any] = None
     ) -> Dict[str, Any]:
         """分析查询执行计划"""
         try:
@@ -58,7 +58,7 @@ class QueryOptimizer:
             analysis = self._parse_execution_plan(plan_data)
 
             logger.info(
-                "查询计划分析完成",
+                "查询计划分析完成",""
                 query=query[:100],
                 total_cost=analysis.get('total_cost', 0),
                 planning_time=analysis.get('planning_time', 0),
@@ -71,7 +71,7 @@ class QueryOptimizer:
             logger.error("查询计划分析失败", query=query[:100], error=str(e))
             return {}
 
-    def _parse_execution_plan(self, plan_data: List[Dict[str, Any]) -> Dict[str, Any]:
+    def _parse_execution_plan(self, plan_data: List[Dict[str, Any]] -> Dict[str, Any]:
         """解析执行计划数据"""
         if not plan_data:
             return {}
@@ -130,7 +130,7 @@ class QueryOptimizer:
 
     def generate_optimization_suggestions(
         self,
-        query_plan: Dict[str, Any]
+    "query_plan": Dict[str, Any]
     ) -> List[str]:
         """生成优化建议"""
         suggestions = []
@@ -140,58 +140,58 @@ class QueryOptimizer:
             table_name = query_plan.get('relation_name', '')
             if table_name:
                 suggestions.append(
-                    f"建议为表 '{table_name}' 添加适当的索引以避免全表扫描"
+                    f"建议为表 {table_name} 添加适当的索引以避免全表扫描"
                 )
 
         # 检查嵌套循环连接
         if query_plan.get('node_type') == 'Nested Loop':
             suggestions.append(
-                "检测到嵌套循环连接，考虑使用哈希连接或归并连接替代"
+                "检测到嵌套循环连接,考虑使用哈希连接或归并连接替代"
             )
 
         # 检查低缓存命中率
         cache_hit_rate = query_plan.get('cache_hit_rate', 1)
         if cache_hit_rate < 0.9:
             suggestions.append(
-                f"缓存命中率较低({cache_hit_rate:.2%})，考虑增加shared_buffers或优化查询"
+                f"缓存命中率较低({cache_hit_rate:.2%}),考虑增加shared_buffers或优化查询"
             )
 
         # 检查高执行成本
         total_cost = query_plan.get('total_cost', 0)
         if total_cost > 1000:
             suggestions.append(
-                f"查询成本较高({total_cost:.2f})，考虑重写查询或添加索引"
+                f"查询成本较高({total_cost:.2f}),考虑重写查询或添加索引"
             )
 
         # 检查排序操作
         if query_plan.get('node_type') in ['Sort', 'Incremental Sort']:
             suggestions.append(
-                "检测到排序操作，如果结果集很大，考虑添加索引避免排序"
+                "检测到排序操作,如果结果集很大,考虑添加索引避免排序"
             )
 
         # 检查哈希聚合
         if query_plan.get('node_type') == 'HashAggregate':
             suggestions.append(
-                "检测到哈希聚合，确保work_mem配置足够大"
+                "检测到哈希聚合,确保work_mem配置足够大"
             )
 
         # 检查CTE（通用表表达式）
         if 'CTE Scan' in str(query_plan):
             suggestions.append(
-                "检测到CTE使用，对于复杂查询考虑使用子查询替代以优化性能"
+                "检测到CTE使用,对于复杂查询考虑使用子查询替代以优化性能"
             )
 
         return suggestions
 
     async def suggest_missing_indexes(
         self,
-        session: AsyncSession
+    "session": AsyncSession
     ) -> List[Dict[str, Any]:
         """建议缺失的索引"""
         suggestions = []
 
         # 查询频繁使用的列但没有索引的情况
-        query = text("""
+        query = text(""""""
             SELECT
                 schemaname,
                 tablename,
@@ -215,7 +215,7 @@ class QueryOptimizer:
             AND most_common_vals IS NOT NULL
             ORDER BY schemaname, tablename, n_distinct DESC
             LIMIT 20
-        """)
+        """)"""
 
         try:
             result = await session.execute(query)
@@ -226,7 +226,7 @@ class QueryOptimizer:
                         'table': row.tablename,
                         'column': row.attname,
                         'distinct_values': row.n_distinct,
-                        'reason': '高基数字段适合创建索引',
+                        'reason': '高基数字段适合创建索引''',
                         'sql': f'CREATE INDEX CONCURRENTLY idx_{row.tablename}_{row.attname} ON {row.tablename} ({row.attname})'
                     })
 
@@ -237,11 +237,11 @@ class QueryOptimizer:
 
     async def analyze_query_patterns(
         self,
-        session: AsyncSession
+    "session": AsyncSession
     ) -> Dict[str, Any]:
         """分析查询模式"""
         # 从pg_stat_statements获取查询统计
-        query = text("""
+        query = text(""""""
             SELECT
                 query,
                 calls,
@@ -253,7 +253,7 @@ class QueryOptimizer:
             WHERE calls > 10
             ORDER BY total_exec_time DESC
             LIMIT 50
-        """)
+        """)"""
 
         try:
             result = await session.execute(query)
@@ -299,7 +299,7 @@ class QueryOptimizer:
         # 1. 使用EXISTS替代IN（适用于子查询）
         optimized = re.sub(
             r'WHERE\s+(\w+)\s+IN\s*\((.*?)\)',
-            lambda m: f"WHERE EXISTS (SELECT 1 FROM {m.group(2).split('FROM')[1].strip()} WHERE {m.group(1)} = ...)",
+            lambda m: f"WHERE EXISTS (SELECT 1 FROM {m.group(2).split(FROM)[1].strip()} WHERE {m.group(1)} = ...)",
             optimized,
             flags=re.IGNORECASE | re.DOTALL
         )
@@ -327,10 +327,10 @@ class QueryOptimizer:
     @with_connection_pool_health_check
     async def execute_optimized_query(
         self,
-        session: AsyncSession,
-        query: str,
-        params: Dict[str, Any] = None,
-        auto_optimize: bool = True
+    "session": AsyncSession,
+    "query": str,
+    "params": Dict[str, Any] = None,
+    "auto_optimize": bool = True
     ) -> Tuple[Any, Dict[str, Any]:
         """执行优化的查询"""
         start_time = time.time()
@@ -365,7 +365,7 @@ class QueryOptimizer:
             # 如果是慢查询，生成优化建议
             if duration > self.slow_query_threshold:
                 logger.warning(
-                    "检测到慢查询",
+                    "检测到慢查询",""
                     duration=duration,
                     rows=len(rows),
                     query=query[:100]
@@ -399,7 +399,7 @@ class QueryOptimizer:
     def get_performance_report(self) -> Dict[str, Any]:
         """获取性能报告"""
         if not self.query_history:
-            return {"message": "暂无查询历史记录"}
+            return {"message": "暂无查询历史记录"}""
 
         # 计算统计指标
         total_queries = len(self.query_history)
@@ -453,16 +453,16 @@ class QueryOptimizer:
         avg_duration = sum(q.duration for q in self.query_history) / len(self.query_history)
 
         if avg_duration > 0.5:
-            recommendations.append("平均查询时间较长，建议全面审查查询性能")
+            recommendations.append("平均查询时间较长,建议全面审查查询性能")
 
         slow_rate = len(self.identify_slow_queries()) / len(self.query_history)
         if slow_rate > 0.1:
-            recommendations.append("慢查询比例较高，建议优化查询或增加数据库资源")
+            recommendations.append("慢查询比例较高,建议优化查询或增加数据库资源")
 
         # 检查是否有大量结果集的查询
         large_result_queries = [q for q in self.query_history if q.rows > 1000]
         if len(large_result_queries) > len(self.query_history) * 0.2:
-            recommendations.append("检测到大量返回大结果集的查询，考虑添加分页或限制条件")
+            recommendations.append("检测到大量返回大结果集的查询,考虑添加分页或限制条件")
 
         return recommendations
 

@@ -38,7 +38,7 @@ class TaskMonitor:
         初始化任务监控器
 
         Args:
-            registry: 可选的 Prometheus 注册表实例，主要用于测试隔离
+    "registry": 可选的 Prometheus 注册表实例，主要用于测试隔离
         """
         self._db_type: str | None = None
         self._query_builder: CompatibleQueryBuilder | None = None
@@ -142,10 +142,10 @@ class TaskMonitor:
         记录任务完成
 
         Args:
-            task_name: 任务名称
-            task_id: 任务ID
-            duration: 执行时长（秒）
-            status: 任务状态 (success / failed)
+    "task_name": 任务名称
+    "task_id": 任务ID
+    "duration": 执行时长（秒）
+    "status": 任务状态 (success / failed)
         """
         # 更新指标
         self.task_counter.labels(task_name=task_name, status=status).inc()
@@ -251,7 +251,7 @@ class TaskMonitor:
         获取任务统计信息
 
         Args:
-            hours: 统计时间范围（小时）
+    "hours": 统计时间范围（小时）
 
         Returns:
             任务统计数据
@@ -329,7 +329,7 @@ class TaskMonitor:
         Returns:
             健康状态信息
         """
-        health_status: dict[str, Any] = {
+    "health_status": dict[str, Any] = {
             "overall_status": "healthy",
             "issues": [],
             "metrics": {},

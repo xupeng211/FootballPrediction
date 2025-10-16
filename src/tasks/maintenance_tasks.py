@@ -176,7 +176,7 @@ def cleanup_error_logs_task(days: int = 7) -> dict[str, Any]:
     清理超过指定天数的错误日志记录
 
     Args:
-        days_to_keep: 保留天数，默认7天
+    "days_to_keep": 保留天数，默认7天
 
     Returns:
         清理结果字典

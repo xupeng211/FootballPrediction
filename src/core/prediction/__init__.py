@@ -46,7 +46,7 @@ class PredictionEngine:
         预测比赛结果
 
         Args:
-            match_id: 比赛ID
+    "match_id": 比赛ID
 
         Returns:
             预测结果字典
@@ -66,7 +66,7 @@ class PredictionEngine:
         批量预测
 
         Args:
-            match_ids: 比赛ID列表
+    "match_ids": 比赛ID列表
 
         Returns:
             预测结果列表

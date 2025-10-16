@@ -21,8 +21,8 @@ def memory_cache(ttl: int = 3600, max_size: int = 1000):
     内存缓存装饰器
 
     Args:
-        ttl: 生存时间（秒）
-        max_size: 最大缓存条目数
+    "ttl": 生存时间（秒）
+    "max_size": 最大缓存条目数
     """
 
     def decorator(func: Callable) -> Callable:
@@ -99,8 +99,8 @@ def redis_cache(key_prefix: str = "", ttl: int = 3600):
     Redis缓存装饰器（模拟实现）
 
     Args:
-        key_prefix: 键前缀
-        ttl: 生存时间（秒）
+    "key_prefix": 键前缀
+    "ttl": 生存时间（秒）
     """
 
     def decorator(func: Callable) -> Callable:
@@ -139,7 +139,7 @@ def cache_invalidate(pattern: str = ""):
     当函数执行成功后，清除匹配模式的缓存
 
     Args:
-        pattern: 要清除的缓存键模式
+    "pattern": 要清除的缓存键模式
     """
 
     def decorator(func: Callable) -> Callable:
@@ -167,8 +167,8 @@ def conditional_cache(condition: Callable[[Any], bool], ttl: int = 3600):
     只有满足条件时才缓存结果
 
     Args:
-        condition: 判断函数，接收结果，返回是否缓存
-        ttl: 生存时间
+    "condition": 判断函数，接收结果，返回是否缓存
+    "ttl": 生存时间
     """
 
     def decorator(func: Callable) -> Callable:

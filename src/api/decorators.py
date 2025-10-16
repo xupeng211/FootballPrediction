@@ -58,7 +58,7 @@ async def slow_function(delay: float = 0.1) -> str:
 
 @router.get("/stats", summary="获取装饰器统计信息")
 async def get_decorator_stats(
-    function_name: str | None = Query(None, description="函数名称"),
+    "function_name": str | None = Query(None, description="函数名称"),
 ) -> dict[str, Any]:
     """获取装饰器执行统计信息"""
     if function_name:
@@ -84,7 +84,7 @@ async def clear_decorator_stats() -> dict[str, str]:
 
 @router.get("/demo/logging", summary="日志装饰器演示")
 async def demo_logging_decorator(
-    input_value: int = Query(..., description="输入值"),
+    "input_value": int = Query(..., description="输入值"),
 ) -> dict[str, Any]:
     """演示日志装饰器的效果"""
     # 应用日志装饰器
@@ -130,8 +130,8 @@ async def demo_retry_decorator() -> dict[str, Any]:
 
 @router.get("/demo/cache", summary="缓存装饰器演示")
 async def demo_cache_decorator(
-    input_value: int = Query(..., description="输入值"),
-    use_cache: bool = Query(True, description="是否使用缓存"),
+    "input_value": int = Query(..., description="输入值"),
+    "use_cache": bool = Query(True, description="是否使用缓存"),
 ) -> dict[str, Any]:
     """演示缓存装饰器的效果"""
     if use_cache:
@@ -171,8 +171,8 @@ async def demo_cache_decorator(
 
 @router.get("/demo/timeout", summary="超时装饰器演示")
 async def demo_timeout_decorator(
-    delay: float = Query(0.05, ge=0, le=0.2, description="函数延迟时间"),
-    timeout_seconds: float = Query(0.1, ge=0.01, le=0.5, description="超时时间"),
+    "delay": float = Query(0.05, ge=0, le=0.2, description="函数延迟时间"),
+    "timeout_seconds": float = Query(0.1, ge=0.01, le=0.5, description="超时时间"),
 ) -> dict[str, Any]:
     """演示超时装饰器的效果"""
     # 创建自定义超时配置
@@ -217,7 +217,7 @@ async def demo_timeout_decorator(
 
 @router.get("/demo/metrics", summary="指标装饰器演示")
 async def demo_metrics_decorator(
-    iterations: int = Query(10, ge=1, le=100, description="执行次数"),
+    "iterations": int = Query(10, ge=1, le=100, description="执行次数"),
 ) -> dict[str, Any]:
     """演示指标装饰器的效果"""
     # 应用指标装饰器
@@ -245,7 +245,7 @@ async def demo_metrics_decorator(
 
 @router.get("/demo/combo", summary="组合装饰器演示")
 async def demo_combo_decorators(
-    input_value: int = Query(..., description="输入值"),
+    "input_value": int = Query(..., description="输入值"),
 ) -> dict[str, Any]:
     """演示多个装饰器组合使用的效果"""
     # 应用多个装饰器
@@ -335,7 +335,7 @@ async def reload_decorator_configs() -> dict[str, str]:
 
 @router.get("/demo/context", summary="装饰器上下文演示")
 async def demo_decorator_context(
-    step_count: int = Query(3, ge=1, le=10, description="执行步骤数"),
+    "step_count": int = Query(3, ge=1, le=10, description="执行步骤数"),
 ) -> dict[str, Any]:
     """演示装饰器上下文的传递"""
     # 创建上下文
@@ -345,7 +345,7 @@ async def demo_decorator_context(
 
     # 创建装饰器函数，它会使用上下文
     async def context_aware_function(
-        x: int, decorator_context: DecoratorContext | None = None
+    "x": int, decorator_context: DecoratorContext | None = None
     ) -> dict[str, Any]:
         if decorator_context:
             decorator_context.add_execution_step("context_aware_function")

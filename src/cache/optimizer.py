@@ -1,8 +1,8 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+""""""
 Redis缓存优化器
-提供缓存策略、性能优化和监控功能
-"""
+提供缓存策略,性能优化和监控功能
+""""""
 
 import asyncio
 import json
@@ -36,16 +36,16 @@ class CacheStrategy(Enum):
 @dataclass
 class CacheMetrics:
     """缓存指标"""
-    hits: int = 0
-    misses: int = 0
-    sets: int = 0
-    deletes: int = 0
-    errors: int = 0
-    avg_response_time: float = 0.0
-    memory_usage: int = 0
-    total_keys: int = 0
-    expired_keys: int = 0
-    evicted_keys: int = 0
+    "hits": int = 0
+    "misses": int = 0
+    "sets": int = 0
+    "deletes": int = 0
+    "errors": int = 0
+    "avg_response_time": float = 0.0
+    "memory_usage": int = 0
+    "total_keys": int = 0
+    "expired_keys": int = 0
+    "evicted_keys": int = 0
 
     @property
     def hit_rate(self) -> float:
@@ -66,7 +66,8 @@ class CacheOptimizer:
         self.settings = get_settings()
         self.redis: Optional[Redis] = None
         self.metrics = CacheMetrics()
-        self.key_patterns = {}
+        self.key_patterns = {
+            }
         self.compression_threshold = 1024  # 1KB以上启用压缩
         self.default_ttl = 3600  # 默认1小时
 
@@ -139,9 +140,9 @@ class CacheOptimizer:
 
     async def get(
         self,
-        key: str,
-        default: Any = None,
-        use_compression: bool = True
+    "key": str,
+    "default": Any = None,
+    "use_compression": bool = True
     ) -> Any:
         """获取缓存值"""
         start_time = time.time()
@@ -182,20 +183,20 @@ class CacheOptimizer:
 
     async def set(
         self,
-        key: str,
-        value: Any,
-        ttl: Optional[int] = None,
-        use_compression: bool = True,
-        serialize: str = 'json'
+    "key": str,
+    "value": Any,
+    "ttl": Optional[int] = None,
+    "use_compression": bool = True,
+    "serialize": str = 'json'
     ) -> bool:
         """设置缓存值"""
         try:
             self.metrics.sets += 1
 
             # 序列化值
-            if serialize == 'json':
-                serialized = 'JSON:' + json.dumps(value, default=str)
-            elif serialize == 'pickle':
+            if serialize == 'json':,
+                serialized = 'JSON:' + json.dumps(value, default=str),
+            elif serialize == 'pickle':,
                 serialized = 'PICKLE:' + pickle.dumps(value).hex()
             else:
                 serialized = str(value)
@@ -323,7 +324,7 @@ class CacheOptimizer:
                 usage_rate = memory_usage / max_memory
                 if usage_rate > 0.9:
                     # 内存使用率过高，建议调整策略
-                    results['actions'].append("内存使用率过高，建议增加max_memory或调整淘汰策略")
+                    results['actions'].append("内存使用率过高,建议增加max_memory或调整淘汰策略")
 
             logger.info("内存优化完成", actions=results['actions'])
             return results
@@ -379,7 +380,7 @@ class CacheOptimizer:
                     'id': entry[0],
                     'timestamp': datetime.fromtimestamp(entry[1]).isoformat(),
                     'duration': entry[2],
-                    'command': ' '.join(entry[3])
+                    'command': ' '.join(entry[3])''
                 }
                 for entry in slow_log
             ]
@@ -432,7 +433,7 @@ class CacheOptimizer:
         }
 
     async def flush_db(self) -> bool:
-        """清空数据库（谨慎使用）"""
+        """清空数据库(谨慎使用)"""
         logger.warning("准备清空Redis数据库")
         try:
             await self.redis.flushdb()
@@ -463,11 +464,11 @@ cache_optimizer = CacheOptimizer()
 
 # 缓存装饰器
 def cache_result(
-    prefix: str,
-    ttl: int = 3600,
-    use_compression: bool = True,
-    serialize: str = 'json',
-    key_func: Callable = None
+    "prefix": str,
+    "ttl": int = 3600,
+    "use_compression": bool = True,
+    "serialize": str = 'json',
+    "key_func": Callable = None
 ):
     """缓存结果装饰器"""
     def decorator(func):
@@ -503,9 +504,9 @@ def cache_result(
 
 # 分布式锁装饰器
 def distributed_lock(
-    lock_name: str,
-    timeout: int = 10,
-    retry_delay: float = 0.1
+    "lock_name": str,
+    "timeout": int = 10,
+    "retry_delay": float = 0.1
 ):
     """分布式锁装饰器"""
     def decorator(func):

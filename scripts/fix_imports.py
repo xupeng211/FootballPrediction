@@ -11,7 +11,7 @@ from pathlib import Path
 def create_simplified_tests():
     """创建简化版测试避免导入问题"""
     print("📝 创建简化版测试...")
-    
+
     # 测试目录列表
     test_configs = [
         ("tests/unit/api", "test_decorators_simple", "API装饰器"),
@@ -23,18 +23,18 @@ def create_simplified_tests():
         ("tests/unit/utils", "test_config_loader_simple", "配置加载器"),
         ("tests/unit/streaming", "test_stream_processor_simple", "流处理器"),
     ]
-    
+
     created = 0
-    
+
     for dir_path, test_name, description in test_configs:
         test_file = Path(dir_path) / f"{test_name}.py"
-        
+
         if test_file.exists():
             print(f"  ✅ 已存在: {test_name}")
             continue
-            
+
         test_file.parent.mkdir(parents=True, exist_ok=True)
-        
+
         # 生成简化测试
         test_content = f'''"""
 简化版测试 - {description}
@@ -50,18 +50,18 @@ MODULE_PATH = Path("src") / "{test_name.replace('_simple', '').replace('test_', 
 
 class Test{test_name.title().replace('_', '').replace('Simple', '')}:
     """简化测试类"""
-    
+
     def test_module_file_exists(self):
         """测试模块文件存在"""
         assert MODULE_PATH.exists(), f"Module file not found: {{MODULE_PATH}}"
-    
+
     def test_module_has_content(self):
         """测试模块有内容"""
         if MODULE_PATH.exists():
             with open(MODULE_PATH, 'r', encoding='utf-8') as f:
                 content = f.read()
                 assert len(content) > 10, "Module appears to be empty"
-    
+
     def test_module_syntax_valid(self):
         """测试模块语法有效"""
         if MODULE_PATH.exists():
@@ -71,7 +71,7 @@ class Test{test_name.title().replace('_', '').replace('Simple', '')}:
                     ast.parse(f.read())
                 except SyntaxError as e:
                     pytest.fail(f"Syntax error in module: {{e}}")
-    
+
     @pytest.mark.parametrize("input_data", [
         None, "", [], {{}}, 0, False, "test_string"
     ])
@@ -87,13 +87,13 @@ def test_basic_assertions():
     assert 1 == 1
     assert "test" == "test"
 '''
-        
+
         with open(test_file, 'w', encoding='utf-8') as f:
             f.write(test_content)
-            
+
         print(f"  📝 创建: {test_file}")
         created += 1
-    
+
     print(f"\n✅ 创建了 {created} 个简化测试")
     return created
 
@@ -101,11 +101,11 @@ def main():
     """主函数"""
     print("🚀 创建简化测试避免导入问题...")
     print("=" * 60)
-    
+
     created = create_simplified_tests()
-    
+
     print("\n🧪 测试创建的测试...")
-    
+
     # 测试一个文件
     test_file = Path("tests/unit/utils/test_config_loader_simple.py")
     if test_file.exists():
@@ -116,12 +116,12 @@ def main():
             text=True,
             timeout=30
         )
-        
+
         if "passed" in result.stdout:
             print("✅ 简化测试创建成功！")
         else:
             print("⚠️  测试可能需要调整")
-    
+
     print("\n📋 下一步:")
     print("1. 运行 pytest tests/unit/*_simple.py -v 测试简化版")
     print("2. 运行 make coverage-local 检查覆盖率")

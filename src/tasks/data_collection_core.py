@@ -129,7 +129,7 @@ def collect_scores_task(self) -> dict[str, Any]:
 
 @celery_app.task
 def manual_collect_all_data() -> dict[str, Any]:
-    """手动收集所有数据任务
+    """手动收集所有数据任务"
 
     手动触发所有数据收集
 
@@ -190,9 +190,9 @@ def emergency_data_collection_task(
     except (RuntimeError, ValueError, ConnectionError) as e:
         logger.error(f"Emergency data collection failed: {str(e)}")
         return {
-            "error": str(e),
-            "emergency": True,
-            "collected_at": datetime.utcnow().isoformat(),
+            error: str(e),
+            emergency: True,
+            collected_at: datetime.utcnow().isoformat(),
         }
 
 
@@ -244,8 +244,8 @@ async def _save_historical_data(data: dict[str, Any], data_type: str) -> None:
 def validate_collected_data(data: dict[str, Any], data_type: str) -> dict[str, Any]:
     """验证收集的数据"""
     validation_result = {
-        "data_type": data_type,
-        "is_valid": True,
+        data_type: data_type,
+        is_valid: True,
         "validation_errors": [],
         "recommendations": [],
     }

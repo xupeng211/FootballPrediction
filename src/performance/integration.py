@@ -202,10 +202,10 @@ class PerformanceMonitoringIntegration:
             get_profiler()
 
             # 收集性能数据
-            api_stats: dict[str, Any] = {}  # 从中间件获取  # type: ignore
-            db_stats: dict[str, Any] = {}  # 从db_monitor获取  # type: ignore
-            cache_stats: dict[str, Any] = {}  # 从cache_monitor获取  # type: ignore
-            task_stats: dict[str, Any] = {}  # 从task_monitor获取  # type: ignore
+    "api_stats": dict[str, Any] = {}  # 从中间件获取  # type: ignore
+    "db_stats": dict[str, Any] = {}  # 从db_monitor获取  # type: ignore
+    "cache_stats": dict[str, Any] = {}  # 从cache_monitor获取  # type: ignore
+    "task_stats": dict[str, Any] = {}  # 从task_monitor获取  # type: ignore
 
             # 生成报告
             report = analyzer.generate_performance_report(
@@ -270,7 +270,7 @@ def get_performance_integration() -> PerformanceMonitoringIntegration:
 
 
 def setup_performance_monitoring(
-    app: FastAPI | None = None,
+    "app": FastAPI | None = None,
 ) -> PerformanceMonitoringIntegration:
     """设置性能监控"""
     integration = get_performance_integration()

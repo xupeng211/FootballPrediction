@@ -66,8 +66,8 @@ def get_logger(name: str, level: str | None = "INFO") -> logging.Logger:
     """获取指定名称的日志器。
 
     Args:
-        name: 日志器名称（一般为 __name__）。
-        level: 日志级别，默认为 "INFO"。
+    "name": 日志器名称（一般为 __name__）。
+    "level": 日志级别，默认为 "INFO"。
 
     Returns:
         logging.Logger: 已配置处理器与格式的日志器。

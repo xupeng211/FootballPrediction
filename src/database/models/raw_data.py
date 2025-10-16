@@ -29,7 +29,7 @@ class RawMatchData(BaseModel):
     # 基础字段
     id = Column(Integer, primary_key=True, comment="主键ID")
     data_source = Column(String(100), nullable=False, comment="数据源标识")
-    raw_data: Any = Column(JsonbType, nullable=False, comment="原始JSON/JSONB数据")
+    "raw_data": Any = Column(JsonbType, nullable=False, comment="原始JSON/JSONB数据")
 
     # 时间字段
     collected_at = Column(DateTime, nullable=False, comment="采集时间")
@@ -67,7 +67,7 @@ class RawMatchData(BaseModel):
         从原始数据中获取指定字段
 
         Args:
-            field_path: 字段路径，如 "homeTeam.name"
+    "field_path": 字段路径，如 "homeTeam.name"
 
         Returns:
             字段值，不存在时返回None
@@ -111,7 +111,7 @@ class RawOddsData(BaseModel):
     # 基础字段
     id = Column(Integer, primary_key=True, comment="主键ID")
     data_source = Column(String(100), nullable=False, comment="数据源标识")
-    raw_data: Any = Column(JsonbType, nullable=False, comment="原始JSON/JSONB数据")
+    "raw_data": Any = Column(JsonbType, nullable=False, comment="原始JSON/JSONB数据")
 
     # 时间字段
     collected_at = Column(DateTime, nullable=False, comment="采集时间")
@@ -193,7 +193,7 @@ class RawScoresData(BaseModel):
     # 基础字段
     id = Column(Integer, primary_key=True, comment="主键ID")
     data_source = Column(String(100), nullable=False, comment="数据源标识")
-    raw_data: Any = Column(JsonbType, nullable=False, comment="原始JSON/JSONB数据")
+    "raw_data": Any = Column(JsonbType, nullable=False, comment="原始JSON/JSONB数据")
 
     # 时间字段
     collected_at = Column(DateTime, nullable=False, comment="采集时间")
@@ -244,7 +244,7 @@ class RawScoresData(BaseModel):
         """是否为已结束的比赛"""
         return self.match_status in ["finished", "full_time", "ft"]
 
-    def get_score_info(self) -> Optional[Dict[str, Any]:
+    def get_score_info(self) -> Optional[Dict[str, Any]]:
         """
         提取比分信息
 
@@ -275,7 +275,7 @@ class RawScoresData(BaseModel):
         获取最新比赛事件
 
         Args:
-            event_type: 事件类型过滤 (goal, card, substitution等)
+    "event_type": 事件类型过滤 (goal, card, substitution等)
 
         Returns:
             事件列表

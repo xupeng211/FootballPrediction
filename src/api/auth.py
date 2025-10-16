@@ -82,26 +82,26 @@ async def login(
 
     access_token = auth.create_access_token(
         data={
-            "sub": str(user.id),
-            "roles": user_roles,
-            "permissions": user_permissions,
+            sub: str(user.id),
+            roles: user_roles,
+            permissions: user_permissions,
         },
         expires_delta=timedelta(minutes=30),
     )
 
     refresh_token = auth.create_refresh_token(
         data={
-            "sub": str(user.id),
-            "roles": user_roles,
-            "permissions": user_permissions,
+            sub: str(user.id),
+            roles: user_roles,
+            permissions: user_permissions,
         }
     )
 
     return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
+        access_token: access_token,
+        refresh_token: refresh_token,
         "token_type": "bearer",
-        "expires_in": 1800,  # 30分钟
+        expires_in: 1800,  # 30分钟
     }
 
 
@@ -137,9 +137,9 @@ async def refresh_token(
 
         new_access_token = auth.create_access_token(
             data={
-                "sub": str(user.id),
-                "roles": user_roles,
-                "permissions": user_permissions,
+                sub: str(user.id),
+                roles: user_roles,
+                permissions: user_permissions,
             },
             expires_delta=timedelta(minutes=30),
         )
@@ -147,17 +147,17 @@ async def refresh_token(
         # 生成新的刷新令牌
         new_refresh_token = auth.create_refresh_token(
             data={
-                "sub": str(user.id),
-                "roles": user_roles,
-                "permissions": user_permissions,
+                sub: str(user.id),
+                roles: user_roles,
+                permissions: user_permissions,
             }
         )
 
         return {
-            "access_token": new_access_token,
-            "refresh_token": new_refresh_token,
+            access_token: new_access_token,
+            refresh_token: new_refresh_token,
             "token_type": "bearer",
-            "expires_in": 1800,
+            expires_in: 1800,
         }
 
     except Exception:

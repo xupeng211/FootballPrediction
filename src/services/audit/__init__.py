@@ -1,14 +1,14 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+""""""
 audit 模块
 
-提供审计功能和日志记录服务。
+提供审计功能和日志记录服务.
 
-模块结构：
+模块结构:
 - audit_service: 审计服务主实现
 - audit_models: 审计相关的数据模型
 - audit_repository: 审计数据访问层
-"""
+""""""
 
 from enum import Enum
 from datetime import datetime
@@ -38,7 +38,7 @@ class AuditContext:
     """审计上下文"""
 
     def __init__(
-        self, user_id: Optional[str] ] = None, action: Optional[AuditAction] = None
+        self, user_id: Optional[str]  = None, action: Optional[AuditAction = None
     ):
         self.user_id = user_id
         self.action = action
@@ -50,9 +50,9 @@ class AuditLog:
 
     def __init__(
         self,
-        context: AuditContext,
-        message: str,
-        severity: AuditSeverity = AuditSeverity.LOW,
+    "context": AuditContext,
+    "message": str,
+    "severity": AuditSeverity = AuditSeverity.LOW,
     ):
         self.context = context
         self.message = message
@@ -68,26 +68,26 @@ class AuditLogSummary:
 
 
 class AuditService:
-    """审计服务（简化版本）"""
+    """审计服务(简化版本)"""
 
     def __init__(self):
         self.name = "AuditService"
 
     def log(
         self,
-        context: AuditContext,
-        message: str,
-        severity: AuditSeverity = AuditSeverity.LOW,
+    "context": AuditContext,
+    "message": str,
+    "severity": AuditSeverity = AuditSeverity.LOW,
     ):
         """记录审计日志"""
         pass
 
 
 __all__ = [
-    "AuditService",
-    "AuditContext",
-    "AuditAction",
-    "AuditSeverity",
-    "AuditLog",
-    "AuditLogSummary",
+    "AuditService","
+    "AuditContext","
+    "AuditAction","
+    "AuditSeverity","
+    "AuditLog","
+    "AuditLogSummary","
 ]

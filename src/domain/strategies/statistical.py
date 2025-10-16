@@ -1,13 +1,13 @@
 from typing import Any, Dict, List, Optional, Union
 import logging
 
-"""
+
 统计分析策略
 Statistical Strategy
 
-使用统计方法和数学模型进行预测的策略实现。
+使用统计方法和数学模型进行预测的策略实现.
 Strategy implementation using statistical methods and mathematical models for prediction.
-"""
+""""""
 
 import time
 import math
@@ -25,49 +25,53 @@ from ..models.prediction import Prediction
 
 
 class StatisticalStrategy(PredictionStrategy):
-    """统计分析预测策略
+    """统计分析预测策略"""
 
-    基于历史数据的统计分析进行预测，包括：
+    基于历史数据的统计分析进行预测,包括:
     - 进球率统计
     - 主客场优势分析
     - 近期状态评估
     - 对战历史分析
     - 泊松分布模型
-    """
+    """"""
 
     def __init__(self, name: str = "statistical_analyzer") -> None:
         super().__init__(name, StrategyType.STATISTICAL)
-        self._team_stats = {}
-        self._head_to_head_stats = {}
-        self._league_stats = {}
-        self._model_params = {}
+        self._team_stats = {
+            }
+        self._head_to_head_stats = {
+            }
+        self._league_stats = {
+            }
+        self._model_params = {
+            }
         self._min_sample_size = 5
         self.logger = logging.getLogger(__name__)
 
     async def initialize(self, config: Dict[str, Any]) -> None:
-        """初始化统计策略
+        """初始化统计策略"""
 
         Args:
-            config: 配置参数，包含：
+    "config": 配置参数,包含:
                 - min_sample_size: 最小样本数量
                 - weight_recent_games: 近期比赛权重
                 - home_advantage_factor: 主场优势因子
                 - model_weights: 不同统计模型的权重
-        """
+        """"""
         self.config = config
         self._min_sample_size = config.get("min_sample_size", 5)
         self._model_params = {
-            "weight_recent_games": config.get("weight_recent_games", 0.7),
-            "home_advantage_factor": config.get("home_advantage_factor", 1.2),
-            "poisson_lambda": config.get("poisson_lambda", 1.35),
-            "model_weights": config.get(
-                "model_weights",
+            "weight_recent_games": config.get("weight_recent_games", 0.7),","
+            "home_advantage_factor": config.get("home_advantage_factor", 1.2),","
+            "poisson_lambda": config.get("poisson_lambda", 1.35),","
+            "model_weights": config.get(""
+                "model_weights",""
                 {"poisson": 0.4, "historical": 0.3, "form": 0.2, "head_to_head": 0.1},
             ),
         }
 
         self._is_initialized = True
-        self.logger.info(f"统计策略 '{self.name}' 初始化成功")
+        self.logger.info(f"统计策略 {self.name} 初始化成功")
 
     async def predict(self, input_data: PredictionInput) -> PredictionOutput:
         """执行单次预测"""
@@ -92,10 +96,10 @@ class StatisticalStrategy(PredictionStrategy):
         # 集成预测结果
         final_pred = await self._ensemble_predictions(
             {
-                "poisson": poisson_pred,
-                "historical": historical_pred,
-                "form": form_pred,
-                "head_to_head": h2h_pred,
+                "poisson": poisson_pred,","
+                "historical": historical_pred,","
+                "form": form_pred,","
+                "head_to_head": h2h_pred,""
             }
         )
 
@@ -113,19 +117,18 @@ class StatisticalStrategy(PredictionStrategy):
             predicted_away_score=final_pred[1],
             confidence=confidence,
             probability_distribution=probability_distribution,
-            feature_importance={
-                "poisson_model": self._model_params["model_weights"]["poisson"],
-                "historical_avg": self._model_params["model_weights"]["historical"],
-                "team_form": self._model_params["model_weights"]["form"],
-                "head_to_head": self._model_params["model_weights"]["head_to_head"],
+            feature_importance="poisson_model": self._model_params["model_weights"["poisson",""
+                "historical_avg": self._model_params["model_weights"]["historical",","
+                "team_form": self._model_params["model_weights"]["form",","
+                "head_to_head": self._model_params["model_weights"]["head_to_head",""
             },
             metadata={
-                "method": "statistical_ensemble",
-                "predictions_used": {
-                    "poisson": poisson_pred,
-                    "historical": historical_pred,
-                    "form": form_pred,
-                    "head_to_head": h2h_pred,
+                "method": "statistical_ensemble",","
+                "predictions_used": {","
+                    "poisson": poisson_pred,","
+                    "historical": historical_pred,","
+                    "form": form_pred,","
+                    "head_to_head": h2h_pred,""
                 },
             },
         )
@@ -432,17 +435,17 @@ class StatisticalStrategy(PredictionStrategy):
         # 模拟数据
         return [
             {
-                "home_team_id": home_team_id,
-                "away_team_id": away_team_id,
-                "home_score": 2,
-                "away_score": 1,
+                "home_team_id": home_team_id,","
+                "away_team_id": away_team_id,","
+                "home_score": 2,","
+                "away_score": 1,""
             },
             {
-                "home_team_id": away_team_id,
-                "away_team_id": home_team_id,
-                "home_score": 1,
-                "away_score": 1,
-            },
+                "home_team_id": away_team_id,","
+                "away_team_id": home_team_id,","
+                "home_score": 1,","
+                "away_score": 1,""
+            ,
         ]
 
     async def update_metrics(

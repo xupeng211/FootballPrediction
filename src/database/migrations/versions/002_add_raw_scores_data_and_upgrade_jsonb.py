@@ -4,20 +4,20 @@ from sqlalchemy.exc import SQLAlchemyError, DatabaseError
 
 
 # mypy: ignore-errors
-"""add_raw_scores_data_and_upgrade_jsonb
+"""add_raw_scores_data_and_upgrade_jsonb"
 
 
 Revision ID: 002_add_raw_scores_data_and_upgrade_jsonb
-Revises: f48d412852cc
+    "Revises": f48d412852cc
 Create Date: 2025-09-10 18:20:30.000000
 
 """
 
 # revision identifiers, used by Alembic.
-revision: str = "002_add_raw_scores_data_and_upgrade_jsonb"
-down_revision: Union[str, None] = "f48d412852cc"  # type: ignore
-branch_labels: Union[str, Sequence[str], None] = None  # type: ignore
-depends_on: Union[str, Sequence[str], None] = None  # type: ignore
+    "revision": str = "002_add_raw_scores_data_and_upgrade_jsonb"
+    "down_revision": Union[str, None] = "f48d412852cc"  # type: ignore
+    "branch_labels": Union[str, Sequence[str], None] = None  # type: ignore
+    "depends_on": Union[str, Sequence[str], None] = None  # type: ignore
 
 
 def upgrade() -> None:
@@ -149,8 +149,8 @@ def upgrade() -> None:
         end_date := start_date + INTERVAL '1 month';
 
         -- 创建分区表（仅作为示例，实际实现需要根据具体需求调整）
-        EXECUTE format('CREATE TABLE IF NOT EXISTS %I PARTITION OF %I
-                        FOR VALUES FROM (%L) TO (%L)',
+        EXECUTE format('CREATE TABLE IF NOT EXISTS %I PARTITION OF %I'
+                        FOR VALUES FROM (%L) TO (%L)','
                        partition_name, table_name, start_date, end_date);
     END;
     $$ LANGUAGE plpgsql;

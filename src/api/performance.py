@@ -65,7 +65,7 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
 
             # 添加响应头
             response.headers["X-Request-ID"] = request_id
-            response.headers["X-Process-Time"] = f"{process_time:.4f""
+            response.headers["X-Process-Time"] = f"{process_time:.4f}"
             response.headers["X-Request-Count"] = str(self.request_count)
 
             # 记录慢请求
@@ -128,7 +128,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.requests_per_minute = requests_per_minute
         self.burst = burst
-        self.clients: Dict[str, Dict[str, Any] = {}
+        self.clients: Dict[str, Dict[str, Any]] = {}
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         client_ip = self.get_client_ip(request)

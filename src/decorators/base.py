@@ -1,11 +1,11 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+
 装饰器模式基类
 Decorator Pattern Base Classes
 
-定义装饰器模式的核心接口和抽象类。
+定义装饰器模式的核心接口和抽象类.
 Define core interfaces and abstract classes for the decorator pattern.
-"""
+""""""
 
 from abc import ABC, abstractmethod
 import inspect
@@ -15,7 +15,7 @@ from datetime import datetime
 
 
 class Component(ABC):
-    """组件接口，定义了组件的基本操作"""
+    """组件接口,定义了组件的基本操作"""
 
     @abstractmethod
     async def execute(self, *args, **kwargs) -> Any:
@@ -29,7 +29,7 @@ class Component(ABC):
 
 
 class ConcreteComponent(Component):
-    """具体组件，实现了组件接口的基本功能"""
+    """具体组件,实现了组件接口的基本功能"""
 
     def __init__(self, name: str, func: Callable):
         self.name = name
@@ -56,7 +56,7 @@ class ConcreteComponent(Component):
 
 
 class Decorator(Component):
-    """装饰器基类，实现了组件接口并持有一个组件引用"""
+    """装饰器基类,实现了组件接口并持有一个组件引用"""
 
     def __init__(self, component: Component, name: Optional[str] = None):
         self.component = component
@@ -67,7 +67,7 @@ class Decorator(Component):
         self.error_count = 0
 
     async def execute(self, *args, **kwargs) -> Any:
-        """执行装饰器的操作，通常会调用被装饰组件的方法"""
+        """执行装饰器的操作,通常会调用被装饰组件的方法"""
         self.execution_count += 1
         start_time = time.time()
 
@@ -87,7 +87,7 @@ class Decorator(Component):
 
     @abstractmethod
     async def _execute(self, *args, **kwargs) -> Any:
-        """装饰器的具体实现，由子类重写"""
+        """装饰器的具体实现,由子类重写"""
         pass
 
     def get_name(self) -> str:
@@ -96,33 +96,33 @@ class Decorator(Component):
     def get_stats(self) -> Dict[str, Any]:
         """获取装饰器执行统计信息"""
         return {
-            "name": self.name,
-            "type": self.__class__.__name__,
-            "execution_count": self.execution_count,
-            "error_count": self.error_count,
-            "success_rate": (
+            "name": self.name,","
+            "type": self.__class__.__name__,","
+            "execution_count": self.execution_count,","
+            "error_count": self.error_count,","
+            "success_rate": (""
                 (self.execution_count - self.error_count) / self.execution_count
                 if self.execution_count > 0
                 else 0
             ),
-            "total_execution_time": self.total_execution_time,
-            "average_execution_time": (
+            "total_execution_time": self.total_execution_time,","
+            "average_execution_time": (""
                 self.total_execution_time / self.execution_count
                 if self.execution_count > 0
                 else 0
             ),
-            "last_execution_time": self.last_execution_time,
+            "last_execution_time": self.last_execution_time,""
         }
 
 
 class DecoratorComponent(Decorator):
-    """装饰器组件，用于装饰函数或方法"""
+    """装饰器组件,用于装饰函数或方法"""
 
     def __init__(
         self,
-        func: Callable,
-        decorators: List[Decorator],
-        name: Optional[str] = None,
+    "func": Callable,
+    "decorators": List[Decorator],
+    "name": Optional[str] = None,
     ):
         # 创建具体组件
         component = ConcreteComponent(name or func.__name__, func)
@@ -144,7 +144,7 @@ class DecoratorComponent(Decorator):
 
     def get_all_stats(self) -> Dict[str, Any]:
         """获取所有装饰器的统计信息"""
-        _stats = {"function": self.func.__name__, "decorators": []}
+        _stats = {"function": self.func.__name__, "decorators": [}
 
         for decorator in self.decorators:
             stats["decorators"].append(decorator.get_stats())  # type: ignore
@@ -153,7 +153,7 @@ class DecoratorComponent(Decorator):
 
 
 class DecoratorChain:
-    """装饰器链，用于管理多个装饰器的执行顺序"""
+    """装饰器链,用于管理多个装饰器的执行顺序"""
 
     def __init__(self):
         self.decorators: List[Decorator] = []
@@ -184,14 +184,14 @@ class DecoratorChain:
     def get_chain_stats(self) -> Dict[str, Any]:
         """获取装饰器链的统计信息"""
         return {
-            "chain_length": len(self.decorators),
-            "decorators": [d.get_stats() for d in self.decorators],
+            "chain_length": len(self.decorators),","
+            "decorators": [d.get_stats() for d in self.decorators],""
         }
 
 
 # 装饰器上下文管理器
 class DecoratorContext:
-    """装饰器执行上下文，用于在装饰器之间传递数据"""
+    """装饰器执行上下文,用于在装饰器之间传递数据"""
 
     def __init__(self):
         self.data: Dict[str, Any] = {}
@@ -222,16 +222,16 @@ class DecoratorContext:
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         return {
-            "trace_id": self.trace_id,
-            "execution_time": self.get_execution_time(),
-            "execution_path": self.execution_path,
-            "data": self.data,
+            "trace_id": self.trace_id,","
+            "execution_time": self.get_execution_time(),","
+            "execution_path": self.execution_path,","
+            "data": self.data,""
         }
 
 
 # 装饰器注册表
 class DecoratorRegistry:
-    """装饰器注册表，用于管理全局装饰器"""
+    """装饰器注册表,用于管理全局装饰器"""
 
     def __init__(self):
         self._decorators: Dict[str, type[Decorator] = {}
@@ -253,7 +253,7 @@ class DecoratorRegistry:
     def get_decorator_instance(
         self, name: str, component: Component, **kwargs
     ) -> Optional[Decorator]:
-        """获取装饰器实例（单例模式）"""
+        """获取装饰器实例(单例模式)"""
         decorator_class = self._decorators.get(name)
         if not decorator_class:
             return None

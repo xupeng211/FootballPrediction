@@ -1,10 +1,10 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+""""""
 数据血缘报告器
 
-集成 OpenLineage 标准，自动上报数据血缘信息到 Marquez。
-跟踪数据流转过程，包括采集、清洗、转换等各个环节。
-"""
+集成 OpenLineage 标准,自动上报数据血缘信息到 Marquez.
+跟踪数据流转过程,包括采集,清洗,转换等各个环节.
+""""""
 
 import logging
 from datetime import datetime, timezone
@@ -23,54 +23,54 @@ logger = logging.getLogger(__name__)
 
 
 class LineageReporter:
-    """
+    """"""
     数据血缘报告器
 
-    负责向 Marquez 报告数据血缘信息，跟踪数据流转过程。
-    支持多种数据处理场景：采集、清洗、转换、聚合等。
-    """
+    负责向 Marquez 报告数据血缘信息,跟踪数据流转过程.
+    支持多种数据处理场景:采集,清洗,转换,聚合等.
+    """"""
 
     def __init__(
         self,
-        marquez_url: str = "http://localhost:5000",
-        namespace: str = "football_prediction",
+    marquez_url: str = "http://localhost:5000,",
+    namespace: str = "football_prediction,",
     ):
-        """
+        """"""
         初始化数据血缘报告器
 
         Args:
-            marquez_url: Marquez 服务地址
-            namespace: 数据血缘命名空间
-        """
+    marquez_url: Marquez 服务地址
+    namespace: 数据血缘命名空间
+        """"""
         self.client = OpenLineageClient(url=marquez_url)
         self.namespace = namespace
         self._active_runs: Dict[str, str] = {}  # job_name -> run_id
 
     def start_job_run(
         self,
-        job_name: str,
-        job_type: str = "BATCH",
-        inputs: Optional[List[Dict[str, Any]] = None,
-        description: Optional[str] = None,
-        source_location: Optional[str] = None,
-        parent_run_id: Optional[str] = None,
-        transformation_sql: Optional[str] = None,
+    job_name: str,
+    job_type: str = "BATCH,",
+    inputs: Optional[List[Dict[str, Any] = None,
+    description: Optional[str] = None,
+    source_location: Optional[str] = None,
+    parent_run_id: Optional[str] = None,
+    transformation_sql: Optional[str] = None,
     ) -> str:
-        """
+        """"""
         开始一个作业运行
 
         Args:
-            job_name: 作业名称
-            job_type: 作业类型（BATCH/STREAM）
-            inputs: 输入数据集信息
-            description: 作业描述
-            source_location: 源码位置
-            parent_run_id: 父运行ID（如果是子作业）
-            transformation_sql: 转换SQL语句
+    job_name: 作业名称
+    job_type: 作业类型(BATCH/STREAM)
+    inputs: 输入数据集信息
+    description: 作业描述
+    source_location: 源码位置
+    parent_run_id: 父运行ID(如果是子作业)
+    transformation_sql: 转换SQL语句
 
         Returns:
-            str: 运行ID
-        """
+    str: 运行ID
+        """"""
         if inputs is None:
             inputs = []
 
@@ -84,14 +84,15 @@ class LineageReporter:
         if source_location:
             job_facets["sourceCodeLocation"] = (
                 source_code_location_job.SourceCodeLocationJobFacet(
-                    type="git", url=source_location
+                    type="git, url=source_location
+"
                 )
             )
         if transformation_sql:
             job_facets["sql"] = sql_job.SQLJobFacet(query=transformation_sql)
 
         # 构建运行信息
-        run_facets: Dict[str, Any] = {}
+    run_facets: Dict[str, Any] = {}
         # 实现parent_run功能
         if parent_run_id:
             from openlineage.client.facet_v2 import parent_run
@@ -124,13 +125,13 @@ class LineageReporter:
 
         # 发送开始事件
         event = RunEvent(
-            eventType="START",
+            eventType="START,",
             eventTime=datetime.now(timezone.utc).isoformat(),
             run=Run(runId=run_id, facets=run_facets),
             job=Job(namespace=self.namespace, name=job_name, facets=job_facets),
             inputs=input_datasets,
             outputs=[],
-            producer="football_prediction_lineage_reporter",
+            producer="football_prediction_lineage_reporter,",
         )
 
         try:
@@ -143,23 +144,23 @@ class LineageReporter:
 
     def complete_job_run(
         self,
-        job_name: str,
-        outputs: Optional[List[Dict[str, Any]] = None,
-        metrics: Optional[Dict[str, Any]] = None,
-        run_id: Optional[str] = None,
+    job_name: str,
+    outputs: Optional[List[Dict[str, Any] = None,
+    metrics: Optional[Dict[str, Any] = None,
+    run_id: Optional[str] = None,
     ) -> bool:
-        """
+        """"""
         完成一个作业运行
 
         Args:
-            job_name: 作业名称
-            outputs: 输出数据集信息
-            metrics: 运行指标
-            run_id: 运行ID（如果不提供，从活跃运行中获取）
+    job_name: 作业名称
+    outputs: 输出数据集信息
+    metrics: 运行指标
+    run_id: 运行ID(如果不提供,从活跃运行中获取)
 
         Returns:
-            bool: 是否成功
-        """
+    bool: 是否成功
+        """"""
         if outputs is None:
             outputs = []
 
@@ -183,7 +184,7 @@ class LineageReporter:
                 )
             if "statistics" in output_info:
                 dataset_facets["dataQualityMetrics"] = {
-                    "dataQualityMetrics": output_info["statistics"]
+                    dataQualityMetrics: output_info["statistics"""
                 }
 
             output_datasets.append(
@@ -195,25 +196,27 @@ class LineageReporter:
             )
 
         # 构建运行指标
-        run_facets: Dict[str, Any] = {}
+    run_facets: Dict[str, Any] = {}
         if metrics:
             run_facets["processing_engine"] = {
-                "processing_engine": {
-                    "version": "1.0.0",
-                    "name": "football_prediction_engine",
-                    "openlineageAdapterVersion": "1.0.0",
+                "processing_engine": {,"
+"
+                    "version": "1.0.0,,"
+                    "name": "football_prediction_engine,,"
+                    "openlineageAdapterVersion": "1.0.0,""
+"
                 }
             }
 
         # 发送完成事件
         event = RunEvent(
-            eventType="COMPLETE",
+            eventType="COMPLETE,",
             eventTime=datetime.now(timezone.utc).isoformat(),
             run=Run(runId=run_id, facets=run_facets),
             job=Job(namespace=self.namespace, name=job_name, facets={}),
             inputs=[],
             outputs=output_datasets,
-            producer="football_prediction_lineage_reporter",
+            producer="football_prediction_lineage_reporter,",
         )
 
         # 清理活跃运行记录
@@ -231,17 +234,17 @@ class LineageReporter:
     def fail_job_run(
         self, job_name: str, error_message: str, run_id: Optional[str] = None
     ) -> bool:
-        """
+        """"""
         标记作业运行失败
 
         Args:
-            job_name: 作业名称
-            error_message: 错误信息
-            run_id: 运行ID（如果不提供，从活跃运行中获取）
+    job_name: 作业名称
+    error_message: 错误信息
+    run_id: 运行ID(如果不提供,从活跃运行中获取)
 
         Returns:
-            bool: 是否成功
-        """
+    bool: 是否成功
+        """"""
         # 获取运行ID
         if run_id is None:
             run_id = self._active_runs.get(job_name)
@@ -251,20 +254,20 @@ class LineageReporter:
 
         # 构建错误信息
         run_facets = {
-            "errorMessage": error_message_run.ErrorMessageRunFacet(
+            errorMessage: error_message_run.ErrorMessageRunFacet(""
                 message=error_message, programmingLanguage="PYTHON"
             )
         }
 
         # 发送失败事件
         event = RunEvent(
-            eventType="FAIL",
+            eventType="FAIL,",
             eventTime=datetime.now(timezone.utc).isoformat(),
             run=Run(runId=run_id, facets=run_facets),
             job=Job(namespace=self.namespace, name=job_name, facets={}),
             inputs=[],
             outputs=[],
-            producer="football_prediction_lineage_reporter",
+            producer="football_prediction_lineage_reporter,",
         )
 
         try:
@@ -284,53 +287,57 @@ class LineageReporter:
 
     def report_data_collection(
         self,
-        source_name: str,
-        target_table: str,
-        records_collected: int,
-        collection_time: datetime,
-        source_config: Optional[Dict[str, Any]] = None,
+    source_name: str,
+    target_table: str,
+    records_collected: int,
+    collection_time: datetime,
+    source_config: Optional[Dict[str, Any] = None,
     ) -> str:
-        """
+        """"""
         报告数据采集过程
 
         Args:
-            source_name: 数据源名称
-            target_table: 目标表名
-            records_collected: 采集的记录数
-            collection_time: 采集时间
-            source_config: 数据源配置
+    source_name: 数据源名称
+    target_table: 目标表名
+    records_collected: 采集的记录数
+    collection_time: 采集时间
+    source_config: 数据源配置
 
         Returns:
-            str: 运行ID
-        """
+    str: 运行ID
+        """"""
         job_name = f"data_collection_{source_name}"
 
         # 输入数据集（外部数据源）
         inputs = [
             {
-                "name": source_name,
-                "namespace": "external",
-                "schema": source_config.get(str("schema"), {}) if source_config else {},
+                name: source_name,,"
+"
+                namespace: "external,,"
+                schema: source_config.get(str("schema"), {}) if source_config else {},""
             }
         ]
 
         # 开始作业
         run_id = self.start_job_run(
             job_name=job_name,
-            job_type="BATCH",
+            job_type="BATCH,",
             inputs=inputs,
-            description=f"Collect data from {source_name} to {target_table}",
-            source_location="src/data/collectors/",
+            description=f"Collect data from {source_name} to {target_table},",
+            source_location="src/data/collectors/,",
         )
 
         # 输出数据集（数据库表）
         outputs = [
             {
-                "name": target_table,
-                "namespace": "football_prediction_db",
-                "statistics": {
-                    "rowCount": records_collected,
-                    "collectionTime": collection_time.isoformat(),
+                name: target_table,,"
+"
+                namespace: "football_prediction_db,,"
+                "statistics": {,"
+"
+                    rowCount: records_collected,,"
+"
+                    collectionTime: collection_time.isoformat(),""
                 },
             }
         ]
@@ -340,8 +347,10 @@ class LineageReporter:
             job_name=job_name,
             outputs=outputs,
             metrics={
-                "records_collected": records_collected,
-                "collection_duration": "unknown",
+                records_collected: records_collected,,"
+"
+                "collection_duration": "unknown,""
+"
             },
             run_id=run_id,
         )
@@ -350,51 +359,54 @@ class LineageReporter:
 
     def report_data_transformation(
         self,
-        source_tables: List[str],
-        target_table: str,
-        transformation_sql: str,
-        records_processed: int,
-        transformation_type: str = "ETL",
+    source_tables: List[str],
+    target_table: str,
+    transformation_sql: str,
+    records_processed: int,
+    transformation_type: str = "ETL,",
     ) -> str:
-        """
+        """"""
         报告数据转换过程
 
         Args:
-            source_tables: 源表列表
-            target_table: 目标表
-            transformation_sql: 转换SQL
-            records_processed: 处理的记录数
-            transformation_type: 转换类型
+    source_tables: 源表列表
+    target_table: 目标表
+    transformation_sql: 转换SQL
+    records_processed: 处理的记录数
+    transformation_type: 转换类型
 
         Returns:
-            str: 运行ID
-        """
+    str: 运行ID
+        """"""
         job_name = f"data_transformation_{target_table}"
 
         # 输入数据集
         inputs = [
-            {"name": table, "namespace": "football_prediction_db"}
+            {"name": table, namespace: "football_prediction_db"}
             for table in source_tables
         ]
 
         # 开始作业
         run_id = self.start_job_run(
             job_name=job_name,
-            job_type="BATCH",
+            job_type="BATCH,",
             inputs=inputs,
-            description=f"{transformation_type} transformation to create {target_table}",
-            source_location="src/data/processing/",
+            description=f"{transformation_type} transformation to create {target_table},",
+            source_location="src/data/processing/,",
             transformation_sql=transformation_sql,
         )
 
         # 输出数据集
         outputs = [
             {
-                "name": target_table,
-                "namespace": "football_prediction_db",
-                "statistics": {
-                    "rowCount": records_processed,
-                    "transformationType": transformation_type,
+                name: target_table,,"
+"
+                namespace: "football_prediction_db,,"
+                "statistics": {,"
+"
+                    rowCount: records_processed,,"
+"
+                    transformationType: transformation_type,""
                 },
             }
         ]
@@ -404,8 +416,9 @@ class LineageReporter:
             job_name=job_name,
             outputs=outputs,
             metrics={
-                "records_processed": records_processed,
-                "transformation_type": transformation_type,
+                records_processed: records_processed,,"
+"
+                transformation_type: transformation_type,""
             },
             run_id=run_id,
         )
@@ -413,12 +426,12 @@ class LineageReporter:
         return run_id
 
     def get_active_runs(self) -> Dict[str, str]:
-        """
+        """"""
         获取当前活跃的运行
 
         Returns:
             Dict[str, str]: 作业名称到运行ID的映射
-        """
+        """"""
         return self._active_runs.copy()
 
     def clear_active_runs(self) -> None:

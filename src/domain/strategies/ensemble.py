@@ -1,12 +1,12 @@
 from typing import Any, Dict, List, Optional, Union
 # mypy: ignore-errors
-"""
+
 集成策略
 Ensemble Strategy
 
-组合多个预测策略的结果，通过加权投票或其他集成方法提高预测准确性。
+组合多个预测策略的结果,通过加权投票或其他集成方法提高预测准确性.
 Combines multiple prediction strategies through weighted voting or other ensemble methods.
-"""
+""""""
 
 import asyncio
 import logging
@@ -43,49 +43,49 @@ class EnsembleMethod(Enum):
 class StrategyWeight:
     """策略权重配置"""
 
-    strategy_name: str
-    base_weight: float
-    dynamic_weight: Optional[float] = None
-    performance_weight: Optional[float] = None
-    recent_accuracy: Optional[float] = None
+    "strategy_name": str
+    "base_weight": float
+    "dynamic_weight": Optional[float] = None
+    "performance_weight": Optional[float] = None
+    "recent_accuracy": Optional[float] = None
 @dataclass
 class EnsembleResult:
     """集成结果"""
 
-    final_prediction: Tuple[int, int]
-    confidence: float
-    strategy_contributions: Dict[str, Dict[str, Any]
-    consensus_score: float
-    disagreement_level: float
+    "final_prediction": Tuple[int, int]
+    "confidence": float
+    "strategy_contributions": Dict[str, Dict[str, Any]
+    "consensus_score": float
+    "disagreement_level": float
 
 
 class EnsembleStrategy(PredictionStrategy):
-    """集成预测策略
+    """集成预测策略"""
 
-    组合多个子策略的预测结果，通过智能加权提高整体准确性。
+    组合多个子策略的预测结果,通过智能加权提高整体准确性.
     Combines predictions from multiple sub-strategies through intelligent weighting.
-    """
+    """"""
 
     def __init__(self, name: str = "ensemble_predictor") -> None:
         super().__init__(name, StrategyType.ENSEMBLE)
-        self._sub_strategies: Dict[str, PredictionStrategy] = {}}
-        self._strategy_weights: Dict[str, StrategyWeight] = {}}
+        self._sub_strategies: Dict[str, PredictionStrategy] = {}
+        self._strategy_weights: Dict[str, StrategyWeight] = {}
         self._ensemble_method = EnsembleMethod.WEIGHTED_AVERAGE
-        self._performance_history: Dict[str, List[float] = {}
+        self._performance_history: Dict[str, List[float]] = {}
         self._consensus_threshold = 0.7
         self._max_disagreement = 2.0
 
     async def initialize(self, config: Dict[str, Any]) -> None:
-        """初始化集成策略
+        """初始化集成策略"""
 
         Args:
-            config: 配置参数，包含：
+    "config": 配置参数,包含:
                 - sub_strategies: 子策略配置列表
                 - ensemble_method: 集成方法
                 - strategy_weights: 策略权重配置
                 - consensus_threshold: 共识阈值
                 - performance_window: 性能评估窗口
-        """
+        """"""
         self.config = config
         self._ensemble_method = EnsembleMethod(
             config.get("ensemble_method", "weighted_average")
@@ -95,14 +95,14 @@ class EnsembleStrategy(PredictionStrategy):
         self._performance_window = config.get("performance_window", 50)
 
         # 初始化子策略
-        await self._initialize_sub_strategies(config.get("sub_strategies", []))
+        await self._initialize_sub_strategies(config.get("sub_strategies", [])))
 
         # 初始化策略权重
-        await self._initialize_strategy_weights(config.get("strategy_weights", {}))
+        await self._initialize_strategy_weights(config.get("strategy_weights", {]))
 
         self._is_initialized = True
         print(
-            f"集成策略 '{self.name}' 初始化成功，包含 {len(self._sub_strategies)} 个子策略"
+            f"集成策略 {self.name] 初始化成功,包含 {len(self._sub_strategies)] 个子策略"
         )
 
     async def _initialize_sub_strategies(
@@ -114,10 +114,10 @@ class EnsembleStrategy(PredictionStrategy):
         from .historical import HistoricalStrategy
 
         strategy_classes = {
-            "ml_model": MLModelStrategy,
-            "statistical": StatisticalStrategy,
-            "historical": HistoricalStrategy,
-        }
+            "ml_model": MLModelStrategy,","
+            "statistical": StatisticalStrategy,","
+            "historical": HistoricalStrategy,""
+        ]
 
         for strategy_config in strategies_config:
             strategy_type = strategy_config.get("type")
@@ -132,7 +132,7 @@ class EnsembleStrategy(PredictionStrategy):
                 strategy = strategy_classes[strategy_type](strategy_name)  # type: ignore
 
                 # 初始化策略
-                await strategy.initialize(strategy_config.get("config", {}))
+                await strategy.initialize(strategy_config.get("config", {]))
 
                 # 添加到子策略列表
                 self._sub_strategies[strategy_name] = strategy
@@ -140,14 +140,14 @@ class EnsembleStrategy(PredictionStrategy):
                 # 初始化性能历史
                 self._performance_history[strategy_name] = []
 
-                logger.info(f"子策略 '{strategy_name}' ({strategy_type}) 初始化成功")
+                logger.info(f"子策略 {strategy_name] ({strategy_type]) 初始化成功")
 
     async def _initialize_strategy_weights(
         self, weights_config: Dict[str, float]
     ) -> None:
         """初始化策略权重"""
         # 默认权重分配
-        default_weights = {"ml_model": 0.4, "statistical": 0.35, "historical": 0.25}
+        default_weights = {"ml_model": 0.4, "statistical": 0.35, "historical": 0.25
 
         # 使用配置中的权重，如果没有则使用默认值
         for strategy_name in self._sub_strategies.keys():
@@ -204,9 +204,9 @@ class EnsembleStrategy(PredictionStrategy):
 
         # 创建特征重要性（基于策略贡献）
         feature_importance = {
-            f"strategy_{name}": contribution.get("weight", 0)
+            f"strategy_{name]": contribution.get("weight", 0)
             for name, contribution in ensemble_result.strategy_contributions.items()
-        }
+        ]
 
         # 创建概率分布
         probability_distribution = await self._calculate_ensemble_probabilities(
@@ -221,21 +221,21 @@ class EnsembleStrategy(PredictionStrategy):
             probability_distribution=probability_distribution,
             feature_importance=feature_importance,
             metadata={
-                "method": f"ensemble_{self._ensemble_method.value}",
-                "strategies_used": list(strategy_predictions.keys()),
-                "consensus_score": ensemble_result.consensus_score,
-                "disagreement_level": ensemble_result.disagreement_level,
-                "strategy_predictions": {
-                    name: {
-                        "prediction": (
+                "method": f"ensemble_{self._ensemble_method.value",
+                "strategies_used": list(strategy_predictions.keys()),","
+                "consensus_score": ensemble_result.consensus_score,","
+                "disagreement_level": ensemble_result.disagreement_level,","
+                "strategy_predictions": {""
+    "name": {
+                        "prediction": (""
                             pred.predicted_home_score,
                             pred.predicted_away_score,
                         ),
-                        "confidence": pred.confidence,
-                    }
+                        "confidence": pred.confidence,""
+                    ]
                     for name, pred in strategy_predictions.items()
-                },
-            },
+                ],
+            ],
         )
 
         output.execution_time_ms = (time.time() - start_time) * 1000
@@ -275,7 +275,7 @@ class EnsembleStrategy(PredictionStrategy):
         predictions = {}
         for name, result in zip(strategy_names, results):
             if isinstance(result, Exception):
-                logger.info(f"策略 '{name}' 预测失败: {result}")
+                logger.info(f"策略 {name] 预测失败: {result]")
             else:
                 predictions[name] = result
 
@@ -283,8 +283,8 @@ class EnsembleStrategy(PredictionStrategy):
 
     async def _weighted_average_ensemble(
         self,
-        input_data: PredictionInput,
-        strategy_predictions: Dict[str, PredictionOutput],
+    "input_data": PredictionInput,
+    "strategy_predictions": Dict[str, PredictionOutput],
     ) -> EnsembleResult:
         """加权平均集成"""
         total_home = 0.0
@@ -303,13 +303,13 @@ class EnsembleStrategy(PredictionStrategy):
             total_weight += confidence_adjusted_weight
 
             strategy_contributions[name] = {
-                "weight": confidence_adjusted_weight,
-                "contribution": (
+                "weight": confidence_adjusted_weight,","
+                "contribution": (""
                     prediction.predicted_home_score * confidence_adjusted_weight,
                     prediction.predicted_away_score * confidence_adjusted_weight,
                 ),
-                "confidence": prediction.confidence,
-            }
+                "confidence": prediction.confidence,""
+            ]
 
         # 计算加权平均
         if total_weight > 0:
@@ -326,7 +326,7 @@ class EnsembleStrategy(PredictionStrategy):
 
         return EnsembleResult(
             final_prediction=(int(round(final_home)), int(round(final_away))),
-            confidence=np.mean([p.confidence for p in strategy_predictions.values()]),  # type: ignore
+            confidence=np.mean([p.confidence for p in strategy_predictions.values()),  # type: ignore
             strategy_contributions=strategy_contributions,
             consensus_score=consensus_score,
             disagreement_level=disagreement_level,
@@ -334,8 +334,8 @@ class EnsembleStrategy(PredictionStrategy):
 
     async def _majority_voting_ensemble(
         self,
-        input_data: PredictionInput,
-        strategy_predictions: Dict[str, PredictionOutput],
+    "input_data": PredictionInput,
+    "strategy_predictions": Dict[str, PredictionOutput],
     ) -> EnsembleResult:
         """多数投票集成"""
         # 收集所有预测结果
@@ -385,17 +385,17 @@ class EnsembleStrategy(PredictionStrategy):
         disagreement_level = 1 - consensus_score
 
         strategy_contributions = {
-            name: {
-                "weight": 1.0 / len(strategy_predictions),
-                "vote": (pred.predicted_home_score, pred.predicted_away_score),
-                "confidence": pred.confidence,
-            }
+    "name": {
+                "weight": 1.0 / len(strategy_predictions),","
+                "vote": (pred.predicted_home_score, pred.predicted_away_score),","
+                "confidence": pred.confidence,""
+            ]
             for name, pred in strategy_predictions.items()
-        }
+        ]
 
         return EnsembleResult(
             final_prediction=(final_home, final_away),
-            confidence=np.mean([p.confidence for p in strategy_predictions.values()]),  # type: ignore
+            confidence=np.mean([p.confidence for p in strategy_predictions.values()),  # type: ignore
             strategy_contributions=strategy_contributions,
             consensus_score=consensus_score,
             disagreement_level=disagreement_level,
@@ -403,8 +403,8 @@ class EnsembleStrategy(PredictionStrategy):
 
     async def _dynamic_weighting_ensemble(
         self,
-        input_data: PredictionInput,
-        strategy_predictions: Dict[str, PredictionOutput],
+    "input_data": PredictionInput,
+    "strategy_predictions": Dict[str, PredictionOutput],
     ) -> EnsembleResult:
         """动态权重集成"""
         # 根据策略最近的性能调整权重
@@ -437,11 +437,11 @@ class EnsembleStrategy(PredictionStrategy):
             total_weight += weight  # type: ignore
 
             strategy_contributions[name] = {
-                "weight": weight,
-                "dynamic_weight": self._strategy_weights[name].dynamic_weight,
-                "base_weight": self._strategy_weights[name].base_weight,
-                "confidence": prediction.confidence,
-            }
+                "weight": weight,","
+                "dynamic_weight": self._strategy_weights[name.dynamic_weight,","
+                "base_weight": self._strategy_weights[name.base_weight,","
+                "confidence": prediction.confidence,""
+            ]
 
         if total_weight > 0:
             final_home = total_home / total_weight
@@ -456,7 +456,7 @@ class EnsembleStrategy(PredictionStrategy):
 
         return EnsembleResult(
             final_prediction=(int(round(final_home)), int(round(final_away))),
-            confidence=np.mean([p.confidence for p in strategy_predictions.values()]),  # type: ignore
+            confidence=np.mean([p.confidence for p in strategy_predictions.values()),  # type: ignore
             strategy_contributions=strategy_contributions,
             consensus_score=consensus_score,
             disagreement_level=disagreement_level,
@@ -508,9 +508,7 @@ class EnsembleStrategy(PredictionStrategy):
         base_confidence = np.mean(
             [
                 contrib.get("confidence", 0.5)
-                for contrib in ensemble_result.strategy_contributions.values()
-            ]
-        )
+                for contrib in ensemble_result.strategy_contributions.values())
 
         # 根据共识度调整置信度
         consensus_bonus = ensemble_result.consensus_score * 0.2
@@ -547,10 +545,10 @@ class EnsembleStrategy(PredictionStrategy):
                 weights.append(self._strategy_weights[name].base_weight)
 
         if not all_probabilities:
-            return {"home_win": 0.33, "draw": 0.34, "away_win": 0.33}
+            return {"home_win": 0.33, "draw": 0.34, "away_win": 0.33
 
         # 加权平均概率
-        ensemble_probs = {"home_win": 0, "draw": 0, "away_win": 0}
+        ensemble_probs = {"home_win": 0, "draw": 0, "away_win": 0
         total_weight = sum(weights)
 
         for probs, weight in zip(all_probabilities, weights):
@@ -642,7 +640,7 @@ class EnsembleStrategy(PredictionStrategy):
             strategy_name=strategy.name, base_weight=weight
         )
         self._performance_history[strategy.name] = []
-        logger.info(f"动态添加子策略: {strategy.name}")
+        logger.info(f"动态添加子策略: {strategy.name]")
 
     def remove_strategy(self, strategy_name: str) -> None:
         """移除子策略"""
@@ -652,12 +650,12 @@ class EnsembleStrategy(PredictionStrategy):
             del self._strategy_weights[strategy_name]
         if strategy_name in self._performance_history:
             del self._performance_history[strategy_name]
-        logger.info(f"移除子策略: {strategy_name}")
+        logger.info(f"移除子策略: {strategy_name]")
 
     def update_strategy_weight(self, strategy_name: str, new_weight: float) -> None:
         """更新策略权重"""
         if strategy_name in self._strategy_weights:
-            self._strategy_weights[strategy_name].base_weight = new_weight
+            self._strategy_weights[strategy_name.base_weight = new_weight
             # 重新归一化所有权重
             total_weight = sum(w.base_weight for w in self._strategy_weights.values())
             if total_weight > 0:

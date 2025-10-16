@@ -221,7 +221,7 @@ class SecretManager:
 
 
 # 全局密钥管理器实例
-_secret_manager: SecretManager | None = None
+    _secret_manager: SecretManager | None = None
 
 
 def get_secret_manager() -> SecretManager:

@@ -12,12 +12,12 @@ class DictUtils:
 
     @staticmethod
     def get_nested(data: dict[str, Any], path: str, default: Any = None) -> Any:
-        """获取嵌套字典的值
+        """获取嵌套字典的值"
 
         Args:
-            data: 源字典
-            path: 嵌套路径，使用点分隔，如 'a.b.c'
-            default: 默认值，当路径不存在时返回
+    "data": 源字典
+    "path": 嵌套路径，使用点分隔，如 'a.b.c'
+    "default": 默认值，当路径不存在时返回
 
         Returns:
             找到的值或默认值
@@ -37,12 +37,12 @@ class DictUtils:
 
     @staticmethod
     def set_nested(data: dict[str, Any], path: str, value: Any) -> None:
-        """设置嵌套字典的值
+        """设置嵌套字典的值"
 
         Args:
-            data: 目标字典
-            path: 嵌套路径，使用点分隔，如 'a.b.c'
-            value: 要设置的值
+    "data": 目标字典
+    "path": 嵌套路径，使用点分隔，如 'a.b.c'
+    "value": 要设置的值
         """
         keys = path.split(".")
         current = data
@@ -58,14 +58,14 @@ class DictUtils:
 
     @staticmethod
     def merge(
-        dict1: dict[str, Any], dict2: dict[str, Any], deep: bool = False
+    "dict1": dict[str, Any], dict2: dict[str, Any], deep: bool = False
     ) -> dict[str, Any]:
-        """合并两个字典
+        """合并两个字典"
 
         Args:
-            dict1: 第一个字典
-            dict2: 第二个字典
-            deep: 是否深度合并
+    "dict1": 第一个字典
+    "dict2": 第二个字典
+    "deep": 是否深度合并
 
         Returns:
             合并后的字典
@@ -96,10 +96,10 @@ class DictUtils:
 
     @staticmethod
     def flatten(
-        d: dict[str, Any], parent_key: str = "", sep: str = "."
+    "d": dict[str, Any], parent_key: str = "", sep: str = "."
     ) -> dict[str, Any]:
         """扁平化嵌套字典 - 将多层嵌套结构转为单层，便于配置管理和数据传输"""
-        items: list[tuple] = []
+    "items": list[tuple] = []
         for k, v in d.items():
             # 构建新的键名，使用分隔符连接层级关系
             new_key = f"{parent_key}{sep}{k}" if parent_key else k
@@ -112,7 +112,7 @@ class DictUtils:
 
     @staticmethod
     def flatten_dict(
-        d: dict[str, Any], parent_key: str = "", sep: str = "."
+    "d": dict[str, Any], parent_key: str = "", sep: str = "."
     ) -> dict[str, Any]:
         """扁平化嵌套字典的别名方法"""
         return DictUtils.flatten(d, parent_key, sep)

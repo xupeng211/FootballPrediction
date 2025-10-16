@@ -36,7 +36,7 @@ def example_initialize_feature_store() -> FootballFeatureStore:
     示例：初始化特征仓库
 
     Returns:
-        FootballFeatureStore: 特征仓库实例
+    "FootballFeatureStore": 特征仓库实例
     """
     logger.info("🚀 初始化特征仓库...")
 
@@ -68,7 +68,7 @@ def example_write_team_features(feature_store: FootballFeatureStore) -> None:
     示例：写入球队特征数据
 
     Args:
-        feature_store: 特征仓库实例
+    "feature_store": 特征仓库实例
     """
     logger.info("📝 写入球队近期统计特征...")
 
@@ -141,7 +141,7 @@ def example_write_odds_features(feature_store: FootballFeatureStore) -> None:
     示例：写入赔率特征数据
 
     Args:
-        feature_store: 特征仓库实例
+    "feature_store": 特征仓库实例
     """
     logger.info("📝 写入赔率特征数据...")
 
@@ -210,7 +210,7 @@ def example_get_online_features(feature_store: FootballFeatureStore) -> pd.DataF
     示例：获取在线特征（用于实时预测）
 
     Args:
-        feature_store: 特征仓库实例
+    "feature_store": 特征仓库实例
 
     Returns:
         pd.DataFrame: 在线特征数据
@@ -234,13 +234,13 @@ def example_get_online_features(feature_store: FootballFeatureStore) -> pd.DataF
 
 
 def example_get_historical_features(
-    feature_store: FootballFeatureStore,
+    "feature_store": FootballFeatureStore,
 ) -> pd.DataFrame:
     """
     示例：获取历史特征（用于模型训练）
 
     Args:
-        feature_store: 特征仓库实例
+    "feature_store": 特征仓库实例
 
     Returns:
         pd.DataFrame: 历史特征数据
@@ -274,13 +274,13 @@ def example_get_historical_features(
 
 
 def example_create_training_dataset(
-    feature_store: FootballFeatureStore,
+    "feature_store": FootballFeatureStore,
 ) -> pd.DataFrame:
     """
     示例：创建机器学习训练数据集
 
     Args:
-        feature_store: 特征仓库实例
+    "feature_store": 特征仓库实例
 
     Returns:
         pd.DataFrame: 训练数据集
@@ -308,7 +308,7 @@ def example_feature_statistics(feature_store: FootballFeatureStore) -> None:
     示例：获取特征统计信息
 
     Args:
-        feature_store: 特征仓库实例
+    "feature_store": 特征仓库实例
     """
     logger.info("📊 获取特征统计信息...")
 
@@ -332,7 +332,7 @@ def example_list_all_features(feature_store: FootballFeatureStore) -> None:
     示例：列出所有特征
 
     Args:
-        feature_store: 特征仓库实例
+    "feature_store": 特征仓库实例
     """
     logger.info("📋 列出所有特征...")
 

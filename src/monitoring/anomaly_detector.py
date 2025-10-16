@@ -49,29 +49,29 @@ class AnomalyResult:
 
     def __init__(
         self,
-        table_name: str,
-        column_name: str,
-        anomaly_type: AnomalyType,
-        severity: AnomalySeverity,
-        anomalous_values: list[Any],
-        anomaly_score: float,
-        detection_method: str,
-        description: str,
-        detected_at: datetime | None = None,
+    "table_name": str,
+    "column_name": str,
+    "anomaly_type": AnomalyType,
+    "severity": AnomalySeverity,
+    "anomalous_values": list[Any],
+    "anomaly_score": float,
+    "detection_method": str,
+    "description": str,
+    "detected_at": datetime | None = None,
     ):
         """
         初始化异常检测结果
 
         Args:
-            table_name: 表名
-            column_name: 列名
-            anomaly_type: 异常类型
-            severity: 严重程度
-            anomalous_values: 异常值列表
-            anomaly_score: 异常得分
-            detection_method: 检测方法
-            description: 异常描述
-            detected_at: 检测时间
+    "table_name": 表名
+    "column_name": 列名
+    "anomaly_type": 异常类型
+    "severity": 严重程度
+    "anomalous_values": 异常值列表
+    "anomaly_score": 异常得分
+    "detection_method": 检测方法
+    "description": 异常描述
+    "detected_at": 检测时间
         """
         self.table_name = table_name
         self.column_name = column_name
@@ -156,15 +156,15 @@ class AnomalyDetector:
 
     async def detect_anomalies(
         self,
-        table_names: list[str] | None = None,
-        methods: list[str] | None = None,
+    "table_names": list[str] | None = None,
+    "methods": list[str] | None = None,
     ) -> list[AnomalyResult]:
         """
         执行异常检测
 
         Args:
-            table_names: 要检测的表名列表
-            methods: 要使用的检测方法列表
+    "table_names": 要检测的表名列表
+    "methods": 要使用的检测方法列表
 
         Returns:
             List[AnomalyResult]: 异常检测结果列表
@@ -200,14 +200,14 @@ class AnomalyDetector:
         检测单个表的异常
 
         Args:
-            session: 数据库会话
-            table_name: 表名
-            methods: 检测方法列表
+    "session": 数据库会话
+    "table_name": 表名
+    "methods": 检测方法列表
 
         Returns:
             List[AnomalyResult]: 异常检测结果
         """
-        anomalies: list[AnomalyResult] = []
+    "anomalies": list[AnomalyResult] = []
         _config = self.detection_config.get(str(table_name), {})
 
         if not config:
@@ -257,8 +257,8 @@ class AnomalyDetector:
         获取表数据
 
         Args:
-            session: 数据库会话
-            table_name: 表名
+    "session": 数据库会话
+    "table_name": 表名
 
         Returns:
             pd.DataFrame: 表数据
@@ -274,7 +274,7 @@ class AnomalyDetector:
                     SELECT * FROM {table_name}
                     ORDER BY id DESC
                     LIMIT 1000
-                """  # nosec B608 - table_name is validated against whitelist
+                """  # nosec B608 - table_name is validated against whitelist"
                 )
             )
 
@@ -289,26 +289,26 @@ class AnomalyDetector:
 
     async def _detect_column_anomalies(
         self,
-        data: pd.DataFrame,
-        table_name: str,
-        column_name: str,
-        methods: list[str],
-        column_type: str,
+    "data": pd.DataFrame,
+    "table_name": str,
+    "column_name": str,
+    "methods": list[str],
+    "column_type": str,
     ) -> list[AnomalyResult]:
         """
         检测单列的异常
 
         Args:
-            data: 数据框
-            table_name: 表名
-            column_name: 列名
-            methods: 检测方法
-            column_type: 列类型
+    "data": 数据框
+    "table_name": 表名
+    "column_name": 列名
+    "methods": 检测方法
+    "column_type": 列类型
 
         Returns:
             List[AnomalyResult]: 异常结果列表
         """
-        anomalies: list[AnomalyResult] = []
+    "anomalies": list[AnomalyResult] = []
         column_data = data[column_name].dropna()
 
         if len(column_data) == 0:
@@ -363,9 +363,9 @@ class AnomalyDetector:
         3σ规则异常检测
 
         Args:
-            data: 数据序列
-            table_name: 表名
-            column_name: 列名
+    "data": 数据序列
+    "table_name": 表名
+    "column_name": 列名
 
         Returns:
             List[AnomalyResult]: 异常结果
@@ -415,9 +415,9 @@ class AnomalyDetector:
         IQR方法异常检测
 
         Args:
-            data: 数据序列
-            table_name: 表名
-            column_name: 列名
+    "data": 数据序列
+    "table_name": 表名
+    "column_name": 列名
 
         Returns:
             List[AnomalyResult]: 异常结果
@@ -467,10 +467,10 @@ class AnomalyDetector:
         Z-score异常检测
 
         Args:
-            data: 数据序列
-            table_name: 表名
-            column_name: 列名
-            threshold: Z-score阈值
+    "data": 数据序列
+    "table_name": 表名
+    "column_name": 列名
+    "threshold": Z-score阈值
 
         Returns:
             List[AnomalyResult]: 异常结果
@@ -519,9 +519,9 @@ class AnomalyDetector:
         范围检查异常检测
 
         Args:
-            data: 数据序列
-            table_name: 表名
-            column_name: 列名
+    "data": 数据序列
+    "table_name": 表名
+    "column_name": 列名
 
         Returns:
             List[AnomalyResult]: 异常结果
@@ -575,9 +575,9 @@ class AnomalyDetector:
         频率分布异常检测
 
         Args:
-            data: 数据序列
-            table_name: 表名
-            column_name: 列名
+    "data": 数据序列
+    "table_name": 表名
+    "column_name": 列名
 
         Returns:
             List[AnomalyResult]: 异常结果
@@ -626,9 +626,9 @@ class AnomalyDetector:
         时间间隔异常检测
 
         Args:
-            data: 时间数据序列
-            table_name: 表名
-            column_name: 列名
+    "data": 时间数据序列
+    "table_name": 表名
+    "column_name": 列名
 
         Returns:
             List[AnomalyResult]: 异常结果
@@ -687,10 +687,10 @@ class AnomalyDetector:
         计算异常严重程度
 
         Args:
-            anomaly_score: 异常得分（0-1）
+    "anomaly_score": 异常得分（0-1）
 
         Returns:
-            AnomalySeverity: 严重程度
+    "AnomalySeverity": 严重程度
         """
         if anomaly_score >= 0.2:
             return AnomalySeverity.CRITICAL
@@ -708,7 +708,7 @@ class AnomalyDetector:
         获取异常摘要
 
         Args:
-            anomalies: 异常结果列表
+    "anomalies": 异常结果列表
 
         Returns:
             Dict[str, Any]: 异常摘要
@@ -723,19 +723,19 @@ class AnomalyDetector:
             }
 
         # 按严重程度统计
-        by_severity: dict[str, int] = {}
+    "by_severity": dict[str, int] = {}
         for anomaly in anomalies:
             severity = anomaly.severity.value
             by_severity[severity] = by_severity.get(str(severity), 0) + 1
 
         # 按类型统计
-        by_type: dict[str, int] = {}
+    "by_type": dict[str, int] = {}
         for anomaly in anomalies:
             anomaly_type = anomaly.anomaly_type.value
             by_type[anomaly_type] = by_type.get(str(anomaly_type), 0) + 1
 
         # 按表统计
-        by_table: dict[str, int] = {}
+    "by_table": dict[str, int] = {}
         for anomaly in anomalies:
             table = anomaly.table_name
             by_table[table] = by_table.get(str(table), 0) + 1

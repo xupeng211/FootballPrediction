@@ -55,12 +55,12 @@ class AnalysisResult:
 
     def __init__(
         self,
-        id: str = "",
-        analysis_type: str = "",
-        result: dict[str, Any] = None,
-        confidence: float = 0.0,
-        timestamp: datetime | None = None,
-        content_id: str = "",
+    "id": str = "",
+    "analysis_type": str = "",
+    "result": dict[str, Any] = None,
+    "confidence": float = 0.0,
+    "timestamp": datetime | None = None,
+    "content_id": str = "",
     ):
         self.id = id
         self.analysis_type = analysis_type
@@ -136,7 +136,7 @@ class ContentAnalysisService(SimpleService):
 
     async def batch_analyze(self, contents: list[Content]) -> list[AnalysisResult]:
         """批量分析内容"""
-        results: list[AnalysisResult] = []
+    "results": list[AnalysisResult] = []
         for content in contents:
             result = await self.analyze_content(content)
             if result:

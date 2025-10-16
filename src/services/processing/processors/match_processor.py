@@ -1,10 +1,10 @@
 from typing import Any, Dict, List, Optional, Union
 # mypy: ignore-errors
-"""
+""""""
 比赛数据处理器
 
-处理原始比赛数据的清洗、转换和标准化。
-"""
+处理原始比赛数据的清洗,转换和标准化.
+""""""
 
 import logging
 from datetime import datetime
@@ -20,38 +20,38 @@ class MatchProcessor:
         self.logger = logging.getLogger(f"processing.{self.__class__.__name__}")
         # self.data_cleaner = FootballDataCleaner()  # type: ignore
         self.required_fields = {
-            "match_id",
-            "home_team",
-            "away_team",
-            "match_date",
-            "competition",
+            "match_id",""
+            "home_team",""
+            "away_team",""
+            "match_date",""
+            "competition",""
         }
         self.optional_fields = {
-            "venue",
-            "attendance",
-            "referee",
-            "weather",
-            "home_formation",
-            "away_formation",
+            "venue",""
+            "attendance",""
+            "referee",""
+            "weather",""
+            "home_formation",""
+            "away_formation",""
         }
 
     async def process_raw_match_data(
         self,
-        raw_data: Union[Dict[str, Any], List[Dict[str, Any]  # type: ignore
+    "raw_data": Union[Dict[str, Any], List[Dict[str, Any]]] = None  # type: ignore
     ) -> Optional[Union[Dict[str, Any], pd.DataFrame]:  # type: ignore
-        """
+        """"""
         处理原始比赛数据
 
         Args:
-            raw_data: 原始比赛数据（字典或字典列表）
+    "raw_data": 原始比赛数据(字典或字典列表)
 
         Returns:
             处理后的数据
-        """
+        """"""
         try:
             if isinstance(raw_data, list):
                 # 批量处理
-                results: List[Any] = {}]  # type: ignore
+    "results": List[Any] = []  # type: ignore
                 for item in raw_data:
                     processed = await self._process_single_match_data(item)
                     if processed:
@@ -67,27 +67,27 @@ class MatchProcessor:
 
     async def _process_single_match_data(
         self,
-        raw_data: Dict[str, Any],  # type: ignore
+    "raw_data": Dict[str, Any],  # type: ignore
     ) -> Optional[Dict[str, Any]:  # type: ignore
-        """
+        """"""
         处理单个比赛数据
 
         Args:
-            raw_data: 原始比赛数据
+    "raw_data": 原始比赛数据
 
         Returns:
             处理后的数据
-        """
+        """"""
         try:
             # 1. 数据验证
             if not await self._validate_match_data(raw_data):
                 return None
 
             # 2. 数据清洗
-            cleaneddata= await self._clean_match_data(raw_data)
+            cleaned_data = await self._clean_match_data(raw_data)
 
             # 3. 数据标准化
-            standardizeddata= await self._standardize_match_data(cleaned_data)
+            standardized_data = await self._standardize_match_data(cleaned_data)
 
             # 4. 添加派生字段
             enriched_data = await self._enrich_match_data(standardized_data)
@@ -99,15 +99,15 @@ class MatchProcessor:
             return None
 
     async def _validate_match_data(self, data: Dict[str, Any]) -> bool:  # type: ignore
-        """
+        """"""
         验证比赛数据
 
         Args:
-            data: 原始数据
+    "data": 原始数据
 
         Returns:
             是否验证通过
-        """
+        """"""
         # 检查必需字段
         missing_fields = self.required_fields - set(data.keys())
         if missing_fields:
@@ -129,15 +129,15 @@ class MatchProcessor:
         return True
 
     async def _clean_match_data(self, data: Dict[str, Any]) -> Dict[str, Any]:  # type: ignore
-        """
+        """"""
         清洗比赛数据
 
         Args:
-            data: 原始数据
+    "data": 原始数据
 
         Returns:
             清洗后的数据
-        """
+        """"""
         cleaned = data.copy()
 
         # 清洗队伍名称
@@ -161,19 +161,19 @@ class MatchProcessor:
         return cleaned
 
     async def _standardize_match_data(self, data: Dict[str, Any]) -> Dict[str, Any]:  # type: ignore
-        """
+        """"""
         标准化比赛数据
 
         Args:
-            data: 清洗后的数据
+    "data": 清洗后的数据
 
         Returns:
             标准化后的数据
-        """
+        """"""
         standardized = data.copy()
 
         # 标准化日期格式
-        if isinstance(standardized.get("match_date"), str):
+        if isinstance(standardized.get("match_date"), str):,
             standardized["match_date"] = datetime.fromisoformat(  # type: ignore
                 standardized["match_date"]
             )
@@ -192,23 +192,23 @@ class MatchProcessor:
         return standardized
 
     async def _enrich_match_data(self, data: Dict[str, Any]) -> Dict[str, Any]:  # type: ignore
-        """
+        """"""
         丰富比赛数据
 
         Args:
-            data: 标准化后的数据
+    "data": 标准化后的数据
 
         Returns:
             丰富后的数据
-        """
+        """"""
         enriched = data.copy()
 
         # 添加比赛ID（如果没有）
         if "match_id" not in enriched:
             enriched["match_id"] = self._generate_match_id(
-                enriched["home_team"],
-                enriched["away_team"],
-                enriched["match_date"],
+                enriched["home_team"]"]",
+                enriched["away_team"]"]",
+                enriched["match_date"]"]",
             )
 
         # 添加赛季信息
@@ -236,10 +236,10 @@ class MatchProcessor:
         elif isinstance(date_value, str):
             # 尝试多种日期格式
             formats = [
-                "%Y-%m-%d %H:%M:%S",
-                "%Y-%m-%d",
-                "%d/%m/%Y",
-                "%d-%m-%Y",
+                "%Y-%m-%d %H:%M:%S",""
+                "%Y-%m-%d",""
+                "%d/%m/%Y",""
+                "%d-%m-%Y",""
             ]
             for fmt in formats:
                 try:
@@ -273,15 +273,15 @@ class MatchProcessor:
 
     def _generate_match_id(
         self,
-        home_team: str,
-        away_team: str,
-        match_date: datetime,  # type: ignore
+    "home_team": str,
+    "away_team": str,
+    "match_date": datetime,  # type: ignore
     ) -> str:
         """生成比赛ID"""
         # 使用队伍名称和日期生成唯一ID
-        team_string = f"{home_team"_{away_team}"
+        team_string = f"{home_team"_{away_team}""
         date_string = match_date.strftime("%Y%m%d")
-        return f"{team_string"_{date_string}".replace(" ", "_").lower()
+        return f"{team_string"_{date_string}".replace(" ", "_").lower()"""
 
     def _extract_season(self, match_date: datetime) -> int:  # type: ignore
         """提取赛季"""
@@ -293,23 +293,23 @@ class MatchProcessor:
 
     async def process_batch_matches(
         self,
-        matches: List[Dict[str, Any],
-        batch_size: int = 50,  # type: ignore
+    "matches": List[Dict[str, Any],
+    "batch_size": int = 50,  # type: ignore
     ) -> List[Dict[str, Any]:  # type: ignore
-        """
+        """"""
         批量处理比赛数据
 
         Args:
-            matches: 比赛数据列表
-            batch_size: 批处理大小
+    "matches": 比赛数据列表
+    "batch_size": 批处理大小
 
         Returns:
             处理后的比赛数据列表
-        """
-        processed_matches: List[Any] = {}]  # type: ignore
+        """"""
+    "processed_matches": List[Any] = []  # type: ignore
         total = len(matches)
 
-        self.logger.info(f"开始批量处理 {total} 场比赛，批大小: {batch_size}")
+        self.logger.info(f"开始批量处理 {total} 场比赛,批大小: {batch_size}")
 
         for i in range(0, total, batch_size):
             batch = matches[i : i + batch_size]
@@ -319,7 +319,7 @@ class MatchProcessor:
                 f"处理批次 {batch_num}/{(total + batch_size - 1) // batch_size}"
             )
 
-            batch_results: List[Any] = {}]  # type: ignore
+    "batch_results": List[Any] = []  # type: ignore
             for match in batch:
                 processed = await self._process_single_match_data(match)
                 if processed:
@@ -328,25 +328,25 @@ class MatchProcessor:
             processed_matches.extend(batch_results)
 
         self.logger.info(
-            f"批量处理完成，成功处理 {len(processed_matches)}/{total} 场比赛"
+            f"批量处理完成,成功处理 {len(processed_matches)}/{total} 场比赛"
         )
         return processed_matches
 
     async def detect_duplicate_matches(
         self,
-        matches: List[Dict[str, Any]  # type: ignore
+    "matches": List[Dict[str, Any]  # type: ignore
     ) -> List[Dict[str, Any]:  # type: ignore
-        """
+        """"""
         检测重复的比赛
 
         Args:
-            matches: 比赛数据列表
+    "matches": 比赛数据列表
 
         Returns:
             重复的比赛列表
-        """
+        """"""
         seen_matches = set()
-        duplicates: List[Any] = {}]  # type: ignore
+    "duplicates": List[Any] = []  # type: ignore
 
         for match in matches:
             # 创建唯一标识

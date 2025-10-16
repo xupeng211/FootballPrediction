@@ -57,7 +57,7 @@ class Observer(ABC):
         """初始化观察者
 
         Args:
-            name: 观察者名称
+    name: 观察者名称
         """
         self.name = name
         self._enabled = True
@@ -68,7 +68,7 @@ class Observer(ABC):
         """接收并处理事件通知
 
         Args:
-            event: 被通知的事件
+    event: 被通知的事件
         """
         pass
 
@@ -85,7 +85,7 @@ class Observer(ABC):
         """添加事件过滤器
 
         Args:
-            filter_func: 过滤函数，返回True表示需要处理此事件
+    filter_func: 过滤函数，返回True表示需要处理此事件
         """
         self._subscription_filters.append(filter_func)
 
@@ -93,10 +93,10 @@ class Observer(ABC):
         """判断是否应该处理事件
 
         Args:
-            event: 事件
+    event: 事件
 
         Returns:
-            bool: 是否应该处理
+    bool: 是否应该处理
         """
         if not self._enabled:
             return False
@@ -131,9 +131,9 @@ class Observer(ABC):
             Dict[str, Any]: 统计信息
         """
         return {
-            "name": self.name,
-            "enabled": self._enabled,
-            "filters_count": len(self._subscription_filters),
+            name: self.name,
+            enabled: self._enabled,
+            filters_count: len(self._subscription_filters),
         }
 
 
@@ -148,7 +148,7 @@ class Subject(ABC):
         """初始化被观察者
 
         Args:
-            name: 被观察者名称
+    name: 被观察者名称
         """
         self.name = name
         self._observers: List[Observer] = []
@@ -160,7 +160,7 @@ class Subject(ABC):
         """添加观察者
 
         Args:
-            observer: 要添加的观察者
+    observer: 要添加的观察者
         """
         if observer not in self._observers:
             self._observers.append(observer)
@@ -169,7 +169,7 @@ class Subject(ABC):
         """移除观察者
 
         Args:
-            observer: 要移除的观察者
+    observer: 要移除的观察者
         """
         if observer in self._observers:
             self._observers.remove(observer)
@@ -178,7 +178,7 @@ class Subject(ABC):
         """通知所有观察者
 
         Args:
-            event: 要通知的事件
+    event: 要通知的事件
         """
         if not self._enabled:
             return
@@ -201,8 +201,8 @@ class Subject(ABC):
         """通知单个观察者
 
         Args:
-            observer: 观察者
-            event: 事件
+    observer: 观察者
+    event: 事件
         """
         try:
             await observer.update(event)
@@ -215,7 +215,7 @@ class Subject(ABC):
         """记录事件到历史
 
         Args:
-            event: 事件
+    event: 事件
         """
         self._event_history.append(event)
         # 限制历史记录大小
@@ -226,7 +226,7 @@ class Subject(ABC):
         """获取观察者数量
 
         Returns:
-            int: 观察者数量
+    int: 观察者数量
         """
         return len(self._observers)
 
@@ -240,16 +240,16 @@ class Subject(ABC):
 
     def get_event_history(
         self,
-        event_type: Optional[ObservableEventType] = None,
-        since: Optional[datetime] = None,
-        limit: Optional[int] = None,
+    event_type: Optional[ObservableEventType] = None,
+    since: Optional[datetime] = None,
+    limit: Optional[int] = None,
     ) -> List[ObservableEvent]:
         """获取事件历史
 
         Args:
-            event_type: 过滤事件类型
-            since: 过滤起始时间
-            limit: 返回数量限制
+    event_type: 过滤事件类型
+    since: 过滤起始时间
+    limit: 返回数量限制
 
         Returns:
             List[ObservableEvent]: 事件列表
@@ -299,11 +299,11 @@ class Subject(ABC):
             )
 
         return {
-            "name": self.name,
-            "observers_count": len(self._observers),
-            "events_count": len(self._event_history),
-            "enabled": self._enabled,
-            "event_counts": event_counts,
+            name: self.name,
+            observers_count: len(self._observers),
+            events_count: len(self._event_history),
+            enabled: self._enabled,
+            event_counts: event_counts,
         }
 
 
@@ -318,8 +318,8 @@ class CompositeObserver(Observer):
         """初始化组合观察者
 
         Args:
-            name: 观察者名称
-            observers: 子观察者列表
+    name: 观察者名称
+    observers: 子观察者列表
         """
         super().__init__(name)
         self._observers = observers or []

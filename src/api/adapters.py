@@ -35,8 +35,8 @@ async def get_registry_status() -> dict[str, Any]:
     metrics_summary = adapter_registry.get_metrics_summary()
 
     return {
-        "registry": health_status,
-        "metrics": metrics_summary,
+        registry: health_status,
+        metrics: metrics_summary,
     }
 
 
@@ -65,11 +65,11 @@ async def get_adapter_configs() -> dict[str, Any]:
         config = adapter_factory.get_config(name)
         if config:
             configs[name] = {
-                "type": config.adapter_type,
-                "enabled": config.enabled,
-                "priority": config.priority,
-                "rate_limits": config.rate_limits,
-                "cache_config": config.cache_config,
+                type: config.adapter_type,
+                enabled: config.enabled,
+                priority: config.priority,
+                rate_limits: config.rate_limits,
+                cache_config: config.cache_config,
             }
 
     groups = {}
@@ -77,14 +77,14 @@ async def get_adapter_configs() -> dict[str, Any]:
         group = adapter_factory.get_group_config(name)
         if group:
             groups[name] = {
-                "adapters": group.adapters,
-                "primary": group.primary_adapter,
-                "fallback_strategy": group.fallback_strategy,
+                adapters: group.adapters,
+                primary: group.primary_adapter,
+                fallback_strategy: group.fallback_strategy,
             }
 
     return {
-        "adapters": configs,
-        "groups": groups,
+        adapters: configs,
+        groups: groups,
     }
 
 
@@ -144,10 +144,10 @@ async def get_football_matches(
                 "home_team": "Manchester United",
                 "away_team": "Liverpool",
                 "competition": "Premier League",
-                "match_date": datetime.now().isoformat(),
+                match_date: datetime.now().isoformat(),
                 "status": "SCHEDULED",
-                "home_score": None,
-                "away_score": None,
+                home_score: None,
+                away_score: None,
             },
             {
                 "id": "12346",
@@ -156,21 +156,21 @@ async def get_football_matches(
                 "competition": "La Liga",
                 "match_date": (datetime.now() + timedelta(hours=3)).isoformat(),
                 "status": "LIVE",
-                "home_score": 1,
-                "away_score": 1,
+                home_score: 1,
+                away_score: 1,
             },
         ]
 
         return {
             "source": "demo_adapter",
-            "total_matches": len(mock_matches),
-            "matches": mock_matches,
+            total_matches: len(mock_matches),
+            matches: mock_matches,
             "filters": {
-                "date_from": date_from.isoformat() if date_from else None,
-                "date_to": date_to.isoformat() if date_to else None,
-                "league_id": league_id,
-                "team_id": team_id,
-                "live": live,
+                date_from: date_from.isoformat() if date_from else None,
+                date_to: date_to.isoformat() if date_to else None,
+                league_id: league_id,
+                team_id: team_id,
+                live: live,
             },
             "message": "使用演示适配器返回模拟数据",
         }
@@ -191,21 +191,21 @@ async def get_football_matches(
         match_dicts = []
         for match in matches:
             match_dict = {
-                "id": match.id,
-                "home_team": match.home_team,
-                "away_team": match.away_team,
-                "home_team_id": match.home_team_id,
-                "away_team_id": match.away_team_id,
-                "competition": match.competition,
-                "competition_id": match.competition_id,
-                "match_date": match.match_date.isoformat()
+                id: match.id,
+                home_team: match.home_team,
+                away_team: match.away_team,
+                home_team_id: match.home_team_id,
+                away_team_id: match.away_team_id,
+                competition: match.competition,
+                competition_id: match.competition_id,
+                match_date: match.match_date.isoformat()
                 if match.match_date
                 else None,
-                "status": match.status.value if match.status else None,
-                "home_score": match.home_score,
-                "away_score": match.away_score,
-                "venue": match.venue,
-                "weather": match.weather,
+                status: match.status.value if match.status else None,
+                home_score: match.home_score,
+                away_score: match.away_score,
+                venue: match.venue,
+                weather: match.weather,
             }
             match_dicts.append(match_dict)
 
@@ -213,16 +213,16 @@ async def get_football_matches(
         adapter_metrics = adapter.get_metrics()
 
         return {
-            "source": adapter.name,
-            "total_matches": len(match_dicts),
-            "matches": match_dicts,
-            "adapter_metrics": adapter_metrics,
+            source: adapter.name,
+            total_matches: len(match_dicts),
+            matches: match_dicts,
+            adapter_metrics: adapter_metrics,
             "filters": {
-                "date_from": date_from.isoformat() if date_from else None,
-                "date_to": date_to.isoformat() if date_to else None,
-                "league_id": league_id,
-                "team_id": team_id,
-                "live": live,
+                date_from: date_from.isoformat() if date_from else None,
+                date_to: date_to.isoformat() if date_to else None,
+                league_id: league_id,
+                team_id: team_id,
+                live: live,
             },
         }
 
@@ -244,14 +244,14 @@ async def get_football_match(
         return {
             "source": "demo_adapter",
             "match": {
-                "id": match_id,
+                id: match_id,
                 "home_team": "Manchester United",
                 "away_team": "Liverpool",
                 "competition": "Premier League",
-                "match_date": datetime.now().isoformat(),
+                match_date: datetime.now().isoformat(),
                 "status": "SCHEDULED",
-                "home_score": None,
-                "away_score": None,
+                home_score: None,
+                away_score: None,
                 "venue": "Old Trafford",
                 "weather": {
                     "temperature": "15°C",
@@ -267,23 +267,23 @@ async def get_football_match(
             raise HTTPException(status_code=404, detail="比赛不存在")
 
         return {
-            "source": adapter.name,
+            source: adapter.name,
             "match": {
-                "id": match.id,
-                "home_team": match.home_team,
-                "away_team": match.away_team,
-                "home_team_id": match.home_team_id,
-                "away_team_id": match.away_team_id,
-                "competition": match.competition,
-                "competition_id": match.competition_id,
-                "match_date": match.match_date.isoformat()
+                id: match.id,
+                home_team: match.home_team,
+                away_team: match.away_team,
+                home_team_id: match.home_team_id,
+                away_team_id: match.away_team_id,
+                competition: match.competition,
+                competition_id: match.competition_id,
+                match_date: match.match_date.isoformat()
                 if match.match_date
                 else None,
-                "status": match.status.value if match.status else None,
-                "home_score": match.home_score,
-                "away_score": match.away_score,
-                "venue": match.venue,
-                "weather": match.weather,
+                status: match.status.value if match.status else None,
+                home_score: match.home_score,
+                away_score: match.away_score,
+                venue: match.venue,
+                weather: match.weather,
             },
         }
 
@@ -311,7 +311,7 @@ async def get_football_teams(
                 "name": "Manchester United",
                 "short_name": "MUFC",
                 "country": "England",
-                "founded": 1878,
+                founded: 1878,
                 "stadium": "Old Trafford",
             },
             {
@@ -319,7 +319,7 @@ async def get_football_teams(
                 "name": "Liverpool",
                 "short_name": "LFC",
                 "country": "England",
-                "founded": 1892,
+                founded: 1892,
                 "stadium": "Anfield",
             },
         ]
@@ -330,11 +330,11 @@ async def get_football_teams(
 
         return {
             "source": "demo_adapter",
-            "total_teams": len(mock_teams),
-            "teams": mock_teams,
+            total_teams: len(mock_teams),
+            teams: mock_teams,
             "filters": {
-                "league_id": league_id,
-                "search": search,
+                league_id: league_id,
+                search: search,
             },
             "message": "使用演示适配器返回模拟数据",
         }
@@ -350,23 +350,23 @@ async def get_football_teams(
         team_dicts = []
         for team in teams:
             team_dict = {
-                "id": team.id,
-                "name": team.name,
-                "short_name": team.short_name,
-                "country": team.country,
-                "founded": team.founded,
-                "stadium": team.stadium,
-                "logo_url": team.logo_url,
+                id: team.id,
+                name: team.name,
+                short_name: team.short_name,
+                country: team.country,
+                founded: team.founded,
+                stadium: team.stadium,
+                logo_url: team.logo_url,
             }
             team_dicts.append(team_dict)
 
         return {
-            "source": adapter.name,
-            "total_teams": len(team_dicts),
-            "teams": team_dicts,
+            source: adapter.name,
+            total_teams: len(team_dicts),
+            teams: team_dicts,
             "filters": {
-                "league_id": league_id,
-                "search": search,
+                league_id: league_id,
+                search: search,
             },
         }
 
@@ -390,29 +390,29 @@ async def get_team_players(
             {
                 "id": "1001",
                 "name": "Bruno Fernandes",
-                "team_id": team_id,
+                team_id: team_id,
                 "position": "Midfielder",
-                "age": 28,
+                age: 28,
                 "nationality": "Portugal",
-                "number": 8,
+                number: 8,
             },
             {
                 "id": "1002",
                 "name": "Marcus Rashford",
-                "team_id": team_id,
+                team_id: team_id,
                 "position": "Forward",
-                "age": 25,
+                age: 25,
                 "nationality": "England",
-                "number": 10,
+                number: 10,
             },
         ]
 
         return {
             "source": "demo_adapter",
-            "team_id": team_id,
-            "season": season,
-            "total_players": len(mock_players),
-            "players": mock_players,
+            team_id: team_id,
+            season: season,
+            total_players: len(mock_players),
+            players: mock_players,
             "message": "使用演示适配器返回模拟数据",
         }
 
@@ -423,24 +423,24 @@ async def get_team_players(
         player_dicts = []
         for player in players:
             player_dict = {
-                "id": player.id,
-                "name": player.name,
-                "team_id": player.team_id,
-                "position": player.position,
-                "age": player.age,
-                "nationality": player.nationality,
-                "height": player.height,
-                "weight": player.weight,
-                "photo_url": player.photo_url,
+                id: player.id,
+                name: player.name,
+                team_id: player.team_id,
+                position: player.position,
+                age: player.age,
+                nationality: player.nationality,
+                height: player.height,
+                weight: player.weight,
+                photo_url: player.photo_url,
             }
             player_dicts.append(player_dict)
 
         return {
-            "source": adapter.name,
-            "team_id": team_id,
-            "season": season,
-            "total_players": len(player_dicts),
-            "players": player_dicts,
+            source: adapter.name,
+            team_id: team_id,
+            season: season,
+            total_players: len(player_dicts),
+            players: player_dicts,
         }
 
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
@@ -469,22 +469,22 @@ async def demo_adapter_comparison(
         "home_team_id": "111",
         "away_team_id": "222",
         "match_date": "2023-12-01T19:00:00+00:00",
-        "home_score": 2,
-        "away_score": 1,
+        home_score: 2,
+        away_score: 1,
     }
 
     return {
         "comparison": {
             "api_football": {
-                "raw": api_football_data,
+                raw: api_football_data,
                 "issues": ["嵌套结构复杂", "ID在不同层级", "日期格式不统一"],
             },
             "opta": {
-                "raw": opta_data,
+                raw: opta_data,
                 "issues": ["字段命名不一致", "日期格式不同", "数据结构扁平化"],
             },
         },
-        "unified_format": unified_format,
+        unified_format: unified_format,
         "benefits": ["统一的数据接口", "自动格式转换", "屏蔽API差异", "易于切换数据源"],
     }
 
@@ -513,10 +513,10 @@ async def demo_adapter_fallback() -> dict[str, Any]:
 
     return {
         "scenario": "主数据源故障，自动故障转移",
-        "adapters": adapters_status,
-        "timeline": timeline,
+        adapters: adapters_status,
+        timeline: timeline,
         "result": {
-            "success": True,
+            success: True,
             "response_time": "10000ms",
             "data_source": "tertiary",
             "data": "成功获取数据",
@@ -549,8 +549,8 @@ async def demo_data_transformation() -> dict[str, Any]:
                 "id": "12345",
                 "homeTeam": "Manchester United",
                 "awayTeam": "Liverpool",
-                "homeScore": 2,
-                "awayScore": 1,
+                homeScore: 2,
+                awayScore: 1,
                 "status": "FINISHED",
             },
             "transformations": [
@@ -571,8 +571,8 @@ async def demo_data_transformation() -> dict[str, Any]:
                 "id": "12345",
                 "homeTeam": "Manchester United",
                 "awayTeam": "Liverpool",
-                "homeScore": 2,
-                "awayScore": 1,
+                homeScore: 2,
+                awayScore: 1,
                 "status": "FINISHED",
             },
             "transformations": [
@@ -584,6 +584,6 @@ async def demo_data_transformation() -> dict[str, Any]:
     ]
 
     return {
-        "examples": examples,
+        examples: examples,
         "benefits": ["数据标准化", "自动字段映射", "类型转换", "数据验证"],
     }

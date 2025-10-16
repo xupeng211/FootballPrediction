@@ -9,7 +9,7 @@ files=(
 
 for file in "${files[@]}"; do
     echo "Fixing $file..."
-    
+
     # Fix the function pattern
     sed -i '/def test_scripts_[^()]*():/,/# Hint: Use pytest-mock/ {
         /def test_scripts_[^()]*():/!{
@@ -28,7 +28,7 @@ for file in "${files[@]}"; do
             }
         }
     }' "$file"
-    
+
     # Replace the malformed try-except blocks
     sed -i '/def test_scripts_[^()]*():/,/# Hint: Use pytest-mock/ {
         /try:/,/assert result is None or result is not False/ {
@@ -50,7 +50,7 @@ for file in "${files[@]}"; do
             /elif hasattr(module,/d
         }
     }' "$file"
-    
+
     # Verify the fix
     if python -m py_compile "$file" 2>/dev/null; then
         echo "✓ Fixed $file"

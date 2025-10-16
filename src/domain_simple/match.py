@@ -34,12 +34,12 @@ class Match:
 
     def __init__(
         self,
-        id: int | None = None,
-        home_team_id: int = 0,
-        away_team_id: int = 0,
-        league_id: int = 0,
-        scheduled_time: datetime | None = None,
-        status: MatchStatus = MatchStatus.SCHEDULED,
+    id: int | None = None,
+    home_team_id: int = 0,
+    away_team_id: int = 0,
+    league_id: int = 0,
+    scheduled_time: datetime | None = None,
+    status: MatchStatus = MatchStatus.SCHEDULED,
     ):
         self.id = id
         self.home_team_id = home_team_id
@@ -127,21 +127,21 @@ class Match:
     def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
-            "id": self.id,
-            "home_team_id": self.home_team_id,
-            "away_team_id": self.away_team_id,
-            "league_id": self.league_id,
-            "scheduled_time": self.scheduled_time.isoformat()
+            id: self.id,
+            home_team_id: self.home_team_id,
+            away_team_id: self.away_team_id,
+            league_id: self.league_id,
+            scheduled_time: self.scheduled_time.isoformat()
             if self.scheduled_time
             else None,
-            "status": self.status.value,
-            "home_score": self.home_score,
-            "away_score": self.away_score,
-            "prediction_made": self.prediction_made,
-            "prediction_result": self.prediction_result.value  # type: ignore
+            status: self.status.value,
+            home_score: self.home_score,
+            away_score: self.away_score,
+            prediction_made: self.prediction_made,
+            prediction_result: self.prediction_result.value  # type: ignore
             if self.prediction_result
             else None,
-            "confidence_score": self.confidence_score,
+            confidence_score: self.confidence_score,
         }
 
     @classmethod

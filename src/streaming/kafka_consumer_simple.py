@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+
 简化的Kafka消费者实现
-"""
+
 
 import json
 from datetime import datetime
@@ -10,14 +10,14 @@ from src.core.exceptions import StreamingError
 
 
 class KafkaMessageConsumer:
-    """Kafka消息消费者（简化版）"""
+    """Kafka消息消费者(简化版)"""
 
     def __init__(self, config: Dict[str, Any]):
-        if "bootstrap_servers" not in config:
-            raise StreamingError("Missing required config: bootstrap_servers")
-        if "group_id" not in config:
-            raise StreamingError("Missing required config: group_id")
-        if "topics" not in config:
+        if "bootstrap_servers" not in config:,
+            raise StreamingError("Missing required config: bootstrap_servers"),
+        if "group_id" not in config:,
+            raise StreamingError("Missing required config: group_id"),
+        if "topics" not in config:,
             raise StreamingError("Missing required config: topics")
 
         self.bootstrap_servers = config["bootstrap_servers"]
@@ -26,9 +26,9 @@ class KafkaMessageConsumer:
         self.consumer = None
         self.is_closed = False
         self._stats = {
-            "messages_consumed": 0,
-            "partitions_assigned": 0,
-            "last_commit_offset": 0,
+            "messages_consumed": 0,","
+            "partitions_assigned": 0,","
+            "last_commit_offset": 0,""
         }
 
         # 可选配置
@@ -52,10 +52,10 @@ class KafkaMessageConsumer:
 
     async def consume(
         self,
-        timeout_ms: int = 1000,
-        batch_size: int = None,
-        filter_func: Callable = None,
-        filter_type: str = None,
+    "timeout_ms": int = 1000,
+    "batch_size": int = None,
+    "filter_func": Callable = None,
+    "filter_type": str = None,
     ) -> AsyncIterator[Dict[str, Any]:
         """消费消息"""
         if self.consumer is None:
@@ -64,15 +64,15 @@ class KafkaMessageConsumer:
         # 模拟消息
         messages = [  # type: ignore
             {
-                "topic": self.topics[0],
-                "partition": 0,
-                "offset": i,
+                "topic": self.topics[0,","
+                "partition": 0,","
+                "offset": i,","
                 "key": f"key_{i}",
-                "value": {
+                "value": {","
                     "data": f"message_{i}",
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.utcnow().isoformat(),""
                 },
-                "headers": [("source", b"test"), ("type", b"event")],
+                "headers": [("source", b"test"), ("type", b"event")],""
             }
             for i in range(10)
         ]
@@ -100,7 +100,7 @@ class KafkaMessageConsumer:
                 return True
         return False
 
-    async def commit(self, offsets: Optional[Dict[str, Any]] = None):
+    async def commit(self, offsets: Optional[Dict[str, Any] = None):
         """提交偏移量"""
         if self.consumer is None:
             raise StreamingError("Consumer not started")
@@ -136,12 +136,12 @@ class KafkaMessageConsumer:
         """反序列化消息"""
         try:
             deserialized = {
-                "topic": message["topic"],
-                "partition": message["partition"],
-                "offset": message["offset"],
-                "key": message["key"].decode("utf-8") if message["key"] else None,
-                "value": self._deserialize_value(message["value"]),
-                "headers": {},
+                "topic": message["topic",","
+                "partition": message["partition",","
+                "offset": message["offset",","
+                "key": message["key".decode("utf-8") if message["key"] else None,","
+                "value": self._deserialize_value(message["value"),","
+                "headers": {},""
             }
 
             # 处理头部
@@ -152,7 +152,7 @@ class KafkaMessageConsumer:
 
             return deserialized
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            raise StreamingError(f"Failed to deserialize message: {str(e)}")
+            raise StreamingError(f"Failed to deserialize message: {str(e)")
 
     def _deserialize_value(self, value: bytes) -> Any:
         """反序列化值"""

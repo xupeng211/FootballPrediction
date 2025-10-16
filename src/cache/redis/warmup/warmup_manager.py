@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+""""""
 Redis cache warmup manager
-"""
+""""""
 
 import asyncio
 import logging
@@ -25,13 +25,13 @@ class WarmupManager:
     ) -> Dict[str, Any]:
         """Warm up cache with common data"""
         if self.is_warming_up:
-            return {"status": "already_warming"}
+            return {"status": "already_warming"}""
 
         self.is_warming_up = True
         try:
             # Implementation placeholder
             await asyncio.sleep(0.1)
-            return {"status": "completed", "warmed_keys": 0}
+            return {"status": "completed", "warmed_keys": 0}""
         finally:
             self.is_warming_up = False
 
@@ -40,7 +40,7 @@ class WarmupManager:
 CacheWarmupManager = WarmupManager
 
 
-async def startup_warmup(patterns: Optional[List[str]] = None) -> Dict[str, Any]:
+async def startup_warmup(patterns: Optional[List[str] = None) -> Dict[str, Any]:
     """启动时预热缓存的便捷函数"""
     manager = WarmupManager()
     return await manager.warmup_cache(patterns)

@@ -32,17 +32,17 @@ class TTLCache:
 
     def __init__(
         self,
-        max_size: int = 1000,
-        default_ttl: float | None = None,
-        cleanup_interval: float = 60.0,
+    "max_size": int = 1000,
+    "default_ttl": float | None = None,
+    "cleanup_interval": float = 60.0,
     ):
         """
         初始化缓存
 
         Args:
-            max_size: 最大缓存项数
-            default_ttl: 默认TTL（秒）
-            cleanup_interval: 清理间隔（秒）
+    "max_size": 最大缓存项数
+    "default_ttl": 默认TTL（秒）
+    "cleanup_interval": 清理间隔（秒）
         """
         self.max_size = max_size
         self.default_ttl = default_ttl
@@ -72,11 +72,11 @@ class TTLCache:
         获取缓存值
 
         Args:
-            key: 缓存键
-            default: 默认值
+    "key": 缓存键
+    "default": 默认值
 
         Returns:
-            Any: 缓存值或默认值
+    "Any": 缓存值或默认值
         """
         with self._lock:
             entry = self._cache.get(key)
@@ -98,17 +98,17 @@ class TTLCache:
 
     def set(
         self,
-        key: str,
-        value: Any,
-        ttl: float | None = None,
+    "key": str,
+    "value": Any,
+    "ttl": float | None = None,
     ) -> None:
         """
         设置缓存值
 
         Args:
-            key: 缓存键
-            value: 缓存值
-            ttl: 生存时间（秒）
+    "key": 缓存键
+    "value": 缓存值
+    "ttl": 生存时间（秒）
         """
         with self._lock:
             # 如果键已存在，更新值
@@ -144,10 +144,10 @@ class TTLCache:
         删除缓存项
 
         Args:
-            key: 缓存键
+    "key": 缓存键
 
         Returns:
-            bool: 是否删除成功
+    "bool": 是否删除成功
         """
         with self._lock:
             if key in self._cache:
@@ -168,11 +168,11 @@ class TTLCache:
         弹出并删除缓存项
 
         Args:
-            key: 缓存键
-            default: 默认值
+    "key": 缓存键
+    "default": 默认值
 
         Returns:
-            Any: 缓存值或默认值
+    "Any": 缓存值或默认值
         """
         with self._lock:
             entry = self._cache.pop(key, None)
@@ -210,12 +210,12 @@ class TTLCache:
         批量获取
 
         Args:
-            keys: 键列表
+    "keys": 键列表
 
         Returns:
             Dict[str, Any]: 键值对字典
         """
-        result: dict[str, Any] = {}
+    "result": dict[str, Any] = {}
         for key in keys:
             value = self.get(key)
             if value is not None:
@@ -227,8 +227,8 @@ class TTLCache:
         批量设置
 
         Args:
-            mapping: 键值对字典
-            ttl: 生存时间（秒）
+    "mapping": 键值对字典
+    "ttl": 生存时间（秒）
         """
         for key, value in mapping.items():
             self.set(key, value, ttl)
@@ -238,10 +238,10 @@ class TTLCache:
         批量删除
 
         Args:
-            keys: 键列表
+    "keys": 键列表
 
         Returns:
-            int: 删除的数量
+    "int": 删除的数量
         """
         count = 0
         for key in keys:
@@ -254,12 +254,12 @@ class TTLCache:
         递增数值
 
         Args:
-            key: 缓存键
-            delta: 递增量
-            default: 默认值
+    "key": 缓存键
+    "delta": 递增量
+    "default": 默认值
 
         Returns:
-            int: 递增后的值
+    "int": 递增后的值
         """
         with self._lock:
             value = self.get(key, default)
@@ -274,11 +274,11 @@ class TTLCache:
         更新缓存项的TTL
 
         Args:
-            key: 缓存键
-            ttl: 新的TTL（秒）
+    "key": 缓存键
+    "ttl": 新的TTL（秒）
 
         Returns:
-            bool: 是否更新成功
+    "bool": 是否更新成功
         """
         with self._lock:
             entry = self._cache.get(key)
@@ -298,7 +298,7 @@ class TTLCache:
         获取剩余TTL
 
         Args:
-            key: 缓存键
+    "key": 缓存键
 
         Returns:
             Optional[int]: 剩余TTL（秒），None表示永不过期，-1表示不存在
@@ -329,7 +329,7 @@ class TTLCache:
         清理过期项
 
         Returns:
-            int: 清理的数量
+    "int": 清理的数量
         """
         with self._lock:
             return self._cleanup_expired()

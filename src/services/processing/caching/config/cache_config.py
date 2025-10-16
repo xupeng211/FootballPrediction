@@ -28,11 +28,11 @@ class CacheConfig:
         """初始化后处理"""
         if self.ttl_config is None:
             self.ttlconfig = {
-                "match_processing": 3600,  # 1小时
-                "odds_processing": 1800,  # 30分钟
-                "features_processing": 7200,  # 2小时
-                "validation": 900,  # 15分钟
-                "statistics": 1800,  # 30分钟
+                match_processing: 3600,  # 1小时
+                odds_processing: 1800,  # 30分钟
+                features_processing: 7200,  # 2小时
+                validation: 900,  # 15分钟
+                statistics: 1800,  # 30分钟
             }
 
 
@@ -44,7 +44,7 @@ def get_cache_ttl(cache_type: str) -> int:
     """获取指定类型的缓存TTL
 
     Args:
-        cache_type: 缓存类型
+    cache_type: 缓存类型
 
     Returns:
         TTL秒数

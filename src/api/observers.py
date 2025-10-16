@@ -65,8 +65,8 @@ async def get_observers() -> dict[str, Any]:
         observers[name] = stats
 
     return {
-        "observers": observers,
-        "total_count": len(observers),
+        observers: observers,
+        total_count: len(observers),
     }
 
 
@@ -81,8 +81,8 @@ async def get_subjects() -> dict[str, Any]:
         subjects[name] = stats
 
     return {
-        "subjects": subjects,
-        "total_count": len(subjects),
+        subjects: subjects,
+        total_count: len(subjects),
     }
 
 
@@ -105,12 +105,12 @@ async def get_alerts(
     )
 
     return {
-        "alerts": alerts,
-        "total_count": len(alerts),
-        "filters": {
-            "severity": severity,
-            "since": since.isoformat(),
-            "limit": limit,
+        alerts: alerts,
+        total_count: len(alerts),
+        filters: {
+            severity: severity,
+            since: since.isoformat(),
+            limit: limit,
         },
     }
 
@@ -145,8 +145,8 @@ async def get_alert_rules() -> dict[str, Any]:
         raise HTTPException(status_code=404, detail="告警观察者未找到")
 
     return {
-        "rules": alerting_observer.get_alert_rules(),
-        "total_count": len(alerting_observer._alert_rules),
+        rules: alerting_observer.get_alert_rules(),
+        total_count: len(alerting_observer._alert_rules),
     }
 
 
@@ -165,9 +165,9 @@ async def update_metric(
     system_subject.set_metric(request.metric_name, request.metric_value)
 
     return {
-        "message": "指标已更新",
-        "metric_name": request.metric_name,
-        "metric_value": request.metric_value,  # type: ignore
+        message: "指标已更新",
+        metric_name: request.metric_name,
+        metric_value: request.metric_value,  # type: ignore
     }
 
 
@@ -212,9 +212,9 @@ async def record_prediction(
         )
 
     return {
-        "message": "预测事件已记录",
-        "strategy_name": strategy_name,
-        "response_time_ms": response_time_ms,  # type: ignore
+        message: "预测事件已记录",
+        strategy_name: strategy_name,
+        response_time_ms: response_time_ms,  # type: ignore
     }
 
 
@@ -247,9 +247,9 @@ async def record_cache_hit(
         await manager.record_cache_hit(cache_name, key)
 
     return {
-        "message": "缓存命中已记录",
-        "cache_name": cache_name,
-        "key": key,
+        message: "缓存命中已记录",
+        cache_name: cache_name,
+        key: key,
     }
 
 
@@ -270,9 +270,9 @@ async def record_cache_miss(
         await manager.record_cache_miss(cache_name, key)
 
     return {
-        "message": "缓存未命中已记录",
-        "cache_name": cache_name,
-        "key": key,
+        message: "缓存未命中已记录",
+        cache_name: cache_name,
+        key: key,
     }
 
 

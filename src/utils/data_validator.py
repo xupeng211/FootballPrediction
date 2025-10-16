@@ -35,7 +35,7 @@ class DataValidator:
 
     @staticmethod
     def validate_required_fields(
-        data: dict[str, Any], required_fields: list[str]
+    "data": dict[str, Any], required_fields: list[str]
     ) -> list[str]:
         """验证必需字段 - 检查数据完整性，返回缺失字段列表用于错误提示"""
         missing_fields = []
@@ -47,7 +47,7 @@ class DataValidator:
 
     @staticmethod
     def validate_data_types(
-        data: dict[str, Any], type_specs: dict[str, type]
+    "data": dict[str, Any], type_specs: dict[str, type]
     ) -> list[str]:
         """验证数据类型 - 确保输入数据符合预期类型，防止运行时类型错误"""
         invalid_fields = []

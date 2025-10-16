@@ -1,70 +1,47 @@
-# Pre-commit hooks配置
-# 在提交前自动运行代码质量检查
-
 repos:
-  # Ruff - 快速Python linter和formatter
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.9
-    hooks:
-      - id: ruff
-        args: [--fix, --unsafe-fixes]
-        name: Ruff Linter
-      - id: ruff-format
-        name: Ruff Formatter
-
-  # 基础文件检查
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+    rev: v4.4.0
     hooks:
       - id: trailing-whitespace
-        name: 移除行尾空格
+        args: [--markdown-linebreak-ext=md]
       - id: end-of-file-fixer
-        name: 确保文件以换行符结尾
       - id: check-yaml
-        name: 检查YAML语法
-      - id: check-json
-        name: 检查JSON语法
-      - id: check-toml
-        name: 检查TOML语法
       - id: check-added-large-files
-        args: ['--maxkb=1000']
-        name: 防止提交大文件(>1MB)
+      - id: check-json
       - id: check-merge-conflict
-        name: 检查merge冲突标记
-      - id: detect-private-key
-        name: 检测私钥
+      - id: debug-statements
 
+  - repo: local
+    hooks:
+      - id: python-syntax-check
+        name: Python syntax check
+        entry: python -m py_compile
+        language: system
+        files: \.py$
 
-  # MyPy类型检查 (可选 - 如需启用请手动运行 make type-check)
-  # - repo: https://github.com/pre-commit/mirrors-mypy
-  #   rev: v1.8.0
-  #   hooks:
-  #     - id: mypy
-  #       name: MyPy类型检查
-  #       args: [--ignore-missing-imports, --no-error-summary]
-  #       additional_dependencies: [types-all]
-  #       exclude: ^(tests/|docs/)
+      - id: check-python-imports
+        name: Check Python imports
+        entry: python -c "import ast; [ast.parse(open(f).read()) for f in __import__('sys').argv[1:]]"
+        language: system
+        files: ^src/(core|api|utils)/
 
-  # Pytest - 运行快速测试 (暂时禁用)
-  # - repo: local
-  #   hooks:
-  #     - id: pytest-quick
-  #       name: 运行快速单元测试
-  #       entry: bash -c 'source .venv/bin/activate && pytest tests/unit -m "not slow" --maxfail=3 -q'
-  #       language: system
-  #       pass_filenames: false
-  #       always_run: true
+      - id: python-compile-check
+        name: Python compile check
+        entry: python -c "import py_compile, sys; [py_compile.compile(f, doraise=True) for f in sys.argv[1:]]"
+        language: system
+        files: \.py$
 
-# 全局配置
-default_language_version:
-  python: python3.11
+      - id: flake8
+        name: Flake8 linting
+        entry: flake8
+        language: system
+        types: [python]
+        args: [--max-line-length=88, --ignore=E203,W503,E501]
 
-# 文件排除
-exclude: |
-  (?x)^(
-      tests/_archived_legacy/.*|
-      htmlcov/.*|
-      .venv/.*|
-      .*\.pyc|
-      __pycache__/.*
-  )$
+      - id: mypy
+        name: MyPy type checking
+        entry: mypy
+        language: system
+        types: [python]
+        args: [--ignore-missing-imports, --no-strict-optional]
+        files: ^src/(core|api|utils)/

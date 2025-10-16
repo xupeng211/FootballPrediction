@@ -21,22 +21,22 @@ from .base import Component, Decorator, decorator_registry
 class DecoratorConfig:
     """装饰器配置"""
 
-    name: str
-    decorator_type: str
-    enabled: bool = True
-    priority: int = 0
-    parameters: dict[str, Any] = field(default_factory=dict[str, Any])
-    conditions: dict[str, Any] | None = None
+    "name": str
+    "decorator_type": str
+    "enabled": bool = True
+    "priority": int = 0
+    "parameters": dict[str, Any] = field(default_factory=dict[str, Any])
+    "conditions": dict[str, Any] | None = None
 
 
 @dataclass
 class DecoratorChainConfig:
     """装饰器链配置"""
 
-    name: str
-    target_functions: list[str]
-    decorators: list[DecoratorConfig]
-    is_global: bool = False
+    "name": str
+    "target_functions": list[str]
+    "decorators": list[DecoratorConfig]
+    "is_global": bool = False
 
 
 class DecoratorFactory:

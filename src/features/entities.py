@@ -30,12 +30,12 @@ class MatchEntity:
     def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
-            "match_id": self.match_id,
-            "home_team_id": self.home_team_id,
-            "away_team_id": self.away_team_id,
-            "league_id": self.league_id,
-            "match_time": self.match_time.isoformat(),
-            "season": self.season,
+            match_id: self.match_id,
+            home_team_id: self.home_team_id,
+            away_team_id: self.away_team_id,
+            league_id: self.league_id,
+            match_time: self.match_time.isoformat(),
+            season: self.season,
         }
 
     @classmethod
@@ -67,10 +67,10 @@ class TeamEntity:
     def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
-            "team_id": self.team_id,
-            "team_name": self.team_name,
-            "league_id": self.league_id,
-            "home_venue": self.home_venue,
+            team_id: self.team_id,
+            team_name: self.team_name,
+            league_id: self.league_id,
+            home_venue: self.home_venue,
         }
 
     @classmethod

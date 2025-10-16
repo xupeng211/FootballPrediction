@@ -70,8 +70,8 @@ async def get_subscribers_info(
         # 获取特定事件的订阅者
         count = bus.get_subscribers_count(event_type)
         return {
-            "event_type": event_type,
-            "subscribers_count": count,
+            event_type: event_type,
+            subscribers_count: count,
         }
     else:
         # 获取所有事件的订阅者信息
@@ -81,8 +81,8 @@ async def get_subscribers_info(
             subscriber_info[et] = bus.get_subscribers_count(et)
 
         return {
-            "total_event_types": len(all_types),
-            "subscribers": subscriber_info,
+            total_event_types: len(all_types),
+            subscribers: subscriber_info,
         }
 
 
@@ -158,10 +158,10 @@ async def get_recent_prediction_stats(
     total_predictions = sum(recent_stats.values())
 
     return {
-        "days": days,
-        "total_predictions": total_predictions,
-        "daily_breakdown": recent_stats,
-        "average_per_day": total_predictions / days if days > 0 else 0,
+        days: days,
+        total_predictions: total_predictions,
+        daily_breakdown: recent_stats,
+        average_per_day: total_predictions / days if days > 0 else 0,
     }
 
 
@@ -188,12 +188,12 @@ async def get_user_activity_stats(
     top_users = sorted_users[:limit]
 
     return {
-        "total_active_users": len(user_activity),
+        total_active_users: len(user_activity),
         "top_users": [
             {
-                "user_id": user_id,
-                "predictions_count": data.get("predictions_count", 0),
-                "last_prediction": data.get("last_prediction"),
+                user_id: user_id,
+                predictions_count: data.get("predictions_count", 0),
+                last_prediction: data.get("last_prediction"),
             }
             for user_id, data in top_users
         ],

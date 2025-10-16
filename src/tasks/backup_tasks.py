@@ -22,13 +22,13 @@ Integrates Prometheus monitoring metrics, supporting backup success rate and tim
 建议使用：from src.tasks.backup import <function_name>
 
 主要类 / Main Classes:
-    DatabaseBackupTask: 数据库备份任务基类 / Database backup task base class
+    "DatabaseBackupTask": 数据库备份任务基类 / Database backup task base class
 
 主要方法 / Main Methods:
-    daily_full_backup_task: 每日全量备份任务 / Daily full backup task
-    hourly_incremental_backup_task: 每小时增量备份任务 / Hourly incremental backup task
-    weekly_wal_archive_task: 每周WAL归档任务 / Weekly WAL archive task
-    cleanup_old_backups_task: 清理旧备份文件任务 / Clean up old backup files task
+    "daily_full_backup_task": 每日全量备份任务 / Daily full backup task
+    "hourly_incremental_backup_task": 每小时增量备份任务 / Hourly incremental backup task
+    "weekly_wal_archive_task": 每周WAL归档任务 / Weekly WAL archive task
+    "cleanup_old_backups_task": 清理旧备份文件任务 / Clean up old backup files task
 
 使用示例 / Usage Example:
     ```python
@@ -43,12 +43,12 @@ Integrates Prometheus monitoring metrics, supporting backup success rate and tim
     ```
 
 环境变量 / Environment Variables:
-    BACKUP_DIR: 备份文件存储目录 / Backup file storage directory
-    DB_HOST: 数据库主机地址 / Database host address
-    DB_PORT: 数据库端口 / Database port
-    DB_NAME: 数据库名称 / Database name
-    DB_USER: 数据库用户名 / Database username
-    DB_PASSWORD: 数据库密码 / Database password
+    "BACKUP_DIR": 备份文件存储目录 / Backup file storage directory
+    "DB_HOST": 数据库主机地址 / Database host address
+    "DB_PORT": 数据库端口 / Database port
+    "DB_NAME": 数据库名称 / Database name
+    "DB_USER": 数据库用户名 / Database username
+    "DB_PASSWORD": 数据库密码 / Database password
 
 依赖 / Dependencies:
     - celery: 任务队列框架 / Task queue framework

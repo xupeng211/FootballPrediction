@@ -104,7 +104,7 @@ class ModelMetricsExporter:
         导出预测指标
 
         Args:
-            result: PredictionResult对象
+    "result": PredictionResult对象
         """
         try:
             # 预测总数
@@ -134,19 +134,19 @@ class ModelMetricsExporter:
 
     def export_accuracy_metrics(
         self,
-        model_name: str,
-        model_version: str,
-        accuracy: float,
-        time_window: str = "7d",
+    "model_name": str,
+    "model_version": str,
+    "accuracy": float,
+    "time_window": str = "7d",
     ) -> None:
         """
         导出准确率指标
 
         Args:
-            model_name: 模型名称
-            model_version: 模型版本
-            accuracy: 准确率 (0-1)
-            time_window: 时间窗口
+    "model_name": 模型名称
+    "model_version": 模型版本
+    "accuracy": 准确率 (0-1)
+    "time_window": 时间窗口
         """
         try:
             self.prediction_accuracy.labels(
@@ -169,9 +169,9 @@ class ModelMetricsExporter:
         导出响应时间指标
 
         Args:
-            model_name: 模型名称
-            model_version: 模型版本
-            duration: 持续时间（秒）
+    "model_name": 模型名称
+    "model_version": 模型版本
+    "duration": 持续时间（秒）
         """
         try:
             self.prediction_duration.labels(
@@ -188,9 +188,9 @@ class ModelMetricsExporter:
         导出模型覆盖率指标
 
         Args:
-            model_name: 模型名称
-            model_version: 模型版本
-            coverage_rate: 覆盖率 (0-1)
+    "model_name": 模型名称
+    "model_version": 模型版本
+    "coverage_rate": 覆盖率 (0-1)
         """
         try:
             self.model_coverage_rate.labels(
@@ -207,9 +207,9 @@ class ModelMetricsExporter:
         导出错误指标
 
         Args:
-            model_name: 模型名称
-            model_version: 模型版本
-            error_type: 错误类型
+    "model_name": 模型名称
+    "model_version": 模型版本
+    "error_type": 错误类型
         """
         try:
             self.prediction_errors_total.labels(
@@ -228,9 +228,9 @@ class ModelMetricsExporter:
         导出模型加载时间指标
 
         Args:
-            model_name: 模型名称
-            model_version: 模型版本
-            duration: 加载时间（秒）
+    "model_name": 模型名称
+    "model_version": 模型版本
+    "duration": 加载时间（秒）
         """
         try:
             self.model_load_duration.labels(

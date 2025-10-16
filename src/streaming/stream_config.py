@@ -19,40 +19,40 @@ class KafkaConfig:
     """Kafka基础配置"""
 
     # 连接配置
-    bootstrap_servers: str = "localhost:9092"
-    security_protocol: str = "PLAINTEXT"
+    "bootstrap_servers": str = "localhost:9092"
+    "security_protocol": str = "PLAINTEXT"
 
     # 生产者配置
-    producer_client_id: str = "football-prediction-producer"
-    producer_acks: str = "all"  # 等待所有副本确认
-    producer_retries: int = 3
-    producer_retry_backoff_ms: int = 1000
-    producer_linger_ms: int = 5  # 批量发送延迟
-    producer_batch_size: int = 16384  # 16KB批量大小
+    "producer_client_id": str = "football-prediction-producer"
+    "producer_acks": str = "all"  # 等待所有副本确认
+    "producer_retries": int = 3
+    "producer_retry_backoff_ms": int = 1000
+    "producer_linger_ms": int = 5  # 批量发送延迟
+    "producer_batch_size": int = 16384  # 16KB批量大小
 
     # 消费者配置
-    consumer_group_id: str = "football-prediction-consumers"
-    consumer_client_id: str = "football-prediction-consumer"
-    consumer_auto_offset_reset: str = "latest"
-    consumer_enable_auto_commit: bool = True
-    consumer_auto_commit_interval_ms: int = 5000
-    consumer_max_poll_records: int = 500
+    "consumer_group_id": str = "football-prediction-consumers"
+    "consumer_client_id": str = "football-prediction-consumer"
+    "consumer_auto_offset_reset": str = "latest"
+    "consumer_enable_auto_commit": bool = True
+    "consumer_auto_commit_interval_ms": int = 5000
+    "consumer_max_poll_records": int = 500
 
     # 序列化配置
-    key_serializer: str = "string"
-    value_serializer: str = "json"
+    "key_serializer": str = "string"
+    "value_serializer": str = "json"
 
 
 @dataclass
 class TopicConfig:
     """Topic配置"""
 
-    name: str
-    partitions: int = 3
-    replication_factor: int = 1
-    cleanup_policy: str = "delete"
-    retention_ms: int = 604800000  # 7天
-    segment_ms: int = 86400000  # 1天
+    "name": str
+    "partitions": int = 3
+    "replication_factor": int = 1
+    "cleanup_policy": str = "delete"
+    "retention_ms": int = 604800000  # 7天
+    "segment_ms": int = 86400000  # 1天
 
 
 class StreamConfig:

@@ -35,26 +35,26 @@ async def _get_database_metrics(db: Session) -> Dict[str, Any]:  # type: ignore
 
     返回结构：
     {
-        "healthy": bool,
-        "response_time_ms": float,
-        "statistics": {
-            "teams_count": int,
-            "matches_count": int,
-            "predictions_count": int,
-            "active_connections": int
+        healthy: bool,
+        response_time_ms: float,
+        statistics: {
+            teams_count: int,
+            matches_count: int,
+            predictions_count: int,
+            active_connections: int
         },
         # 异常时包含
-        "error": str
+        error: str
     }
     """
     start = time.time()  # type: ignore
-    stats: Dict[str, Any] = {}  # type: ignore
-        "healthy": False,
-        "statistics": {
-            "teams_count": 0,
-            "matches_count": 0,
-            "predictions_count": 0,
-            "active_connections": 0,
+    stats: Dict[str, Any] = {  # type: ignore
+        healthy: False,
+        statistics: {
+            teams_count: 0,
+            matches_count: 0,
+            predictions_count: 0,
+            active_connections: 0,
         },
     }
     try:
@@ -99,17 +99,17 @@ async def _get_business_metrics(db: Session) -> Dict[str, Any]:  # type: ignore
 
     返回结构：
     {
-        "24h_predictions": Optional[int],
-        "upcoming_matches_7d": Optional[int],
-        "model_accuracy_30d": Optional[float],
-        "last_updated": str
+        24h_predictions: Optional[int],
+        upcoming_matches_7d: Optional[int],
+        model_accuracy_30d: Optional[float],
+        last_updated: str
     }
     """
-    result: Dict[str, Any] = {}  # type: ignore
-        "24h_predictions": None,
-        "upcoming_matches_7d": None,
-        "model_accuracy_30d": None,
-        "last_updated": datetime.utcnow().isoformat(),
+    result: Dict[str, Any] = {  # type: ignore
+        24h_predictions: None,
+        upcoming_matches_7d: None,
+        model_accuracy_30d: None,
+        last_updated: datetime.utcnow().isoformat(),
     }
     try:
         # 使用注释与时间窗口关键词，便于测试桩根据字符串匹配
@@ -175,13 +175,13 @@ async def _get_business_metrics(db: Session) -> Dict[str, Any]:  # type: ignore
 async def get_metrics(db: Session = Depends(get_db_session)) -> Dict[str, Any]:  # type: ignore
     """应用综合指标（JSON）。异常时返回 status=error 但HTTP 200。"""
     start = time.time()  # type: ignore
-    response: Dict[str, Any] = {}  # type: ignore
-        "status": "ok",
-        "response_time_ms": 0.0,
-        "system": {},
-        "database": {},
-        "runtime": {},
-        "business": {},
+    response: Dict[str, Any] = {  # type: ignore
+        status: "ok",
+        response_time_ms: 0.0,
+        system: {},
+        database: {},
+        runtime: {},
+        business: {},
     }
     try:
         # 系统指标
@@ -194,23 +194,23 @@ async def get_metrics(db: Session = Depends(get_db_session)) -> Dict[str, Any]: 
             load1, load5, load15 = 0.0, 0.0, 0.0
 
         response["system"] = {
-            "cpu_percent": cpu_percent,
-            "memory": {
-                "total": getattr(mem, "total", 0),
-                "available": getattr(mem, "available", 0),
-                "percent": getattr(mem, "percent", 0.0),
-                "used": getattr(mem, "used", 0),
+            cpu_percent: cpu_percent,
+            memory: {
+                total: getattr(mem, "total", 0),
+                available: getattr(mem, "available", 0),
+                percent: getattr(mem, "percent", 0.0),
+                used: getattr(mem, "used", 0),
             },
         }
         response["system"]["disk"] = {
-            "total": getattr(disk, "total", 0),
-            "free": getattr(disk, "free", 0),
-            "percent": getattr(disk, "percent", 0.0),
+            total: getattr(disk, "total", 0),
+            free: getattr(disk, "free", 0),
+            percent: getattr(disk, "percent", 0.0),
         }
         response["system"]["load_avg"] = {
-            "1m": load1,
-            "5m": load5,
-            "15m": load15,
+            1m: load1,
+            5m: load5,
+            15m: load15,
         }
 
         # 数据库与业务指标（允许mock为非协程）
@@ -226,9 +226,9 @@ async def get_metrics(db: Session = Depends(get_db_session)) -> Dict[str, Any]: 
 
         # 运行时信息
         response["runtime"] = {
-            "timestamp": datetime.utcnow().isoformat(),  # type: ignore
-            "python_version": os.getenv("PYTHON_VERSION", "unknown"),  # type: ignore
-            "env": os.getenv("ENVIRONMENT", "development"),  # type: ignore
+            timestamp: datetime.utcnow().isoformat(),  # type: ignore
+            python_version: os.getenv("PYTHON_VERSION", "unknown"),  # type: ignore
+            env: os.getenv("ENVIRONMENT", "development"),  # type: ignore
         }
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"获取应用指标失败: {e}", exc_info=True)
@@ -267,12 +267,12 @@ async def get_service_status(db: Session = Depends(get_db_session)) -> Dict[str,
     )
 
     return {
-        "status": overall,
-        "timestamp": datetime.utcnow().isoformat(),  # type: ignore
-        "services": {
-            "api": "healthy" if api_health else "unhealthy",
-            "database": "healthy" if db_health else "unhealthy",
-            "cache": "healthy" if cache_health else "unhealthy",
+        status: overall,
+        timestamp: datetime.utcnow().isoformat(),  # type: ignore
+        services: {
+            api: "healthy" if api_health else "unhealthy",
+            database: "healthy" if db_health else "unhealthy",
+            cache: "healthy" if cache_health else "unhealthy",
         },
     }
 
@@ -297,10 +297,10 @@ async def collector_health() -> Dict[str, Any]:  # type: ignore
         collector_status = collector.get_status()
 
         return {
-            "status": "healthy",
-            "timestamp": collector_status,
-            "metrics_collector": collector_status,
-            "message": "监控收集器运行正常",
+            status: "healthy",
+            timestamp: collector_status,
+            metrics_collector: collector_status,
+            message: "监控收集器运行正常",
         }
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"健康检查失败: {e}", exc_info=True)

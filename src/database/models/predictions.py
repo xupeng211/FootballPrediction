@@ -61,7 +61,7 @@ class Predictions(BaseModel):
     __tablename__ = "predictions"
 
     # 关联信息
-    match_id: Mapped[int] = mapped_column(
+    "match_id": Mapped[int] = mapped_column(
         Integer,
         ForeignKey("matches.id", ondelete="CASCADE"),
         nullable=False,
@@ -69,7 +69,7 @@ class Predictions(BaseModel):
     )
 
     # 用户关联
-    user_id: Mapped[int | None] = mapped_column(
+    "user_id": Mapped[int | None] = mapped_column(
         Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=True,
@@ -80,91 +80,91 @@ class Predictions(BaseModel):
     _user = relationship("User", back_populates="predictions")
 
     # 预测状态
-    status: Mapped[str] = mapped_column(
+    "status": Mapped[str] = mapped_column(
         String(20), nullable=False, default="pending", comment="预测状态"
     )
 
     # 得分
-    points_earned: Mapped[int | None] = mapped_column(
+    "points_earned": Mapped[int | None] = mapped_column(
         Integer, nullable=True, default=0, comment="获得积分"
     )
 
-    model_name: Mapped[str] = mapped_column(
+    "model_name": Mapped[str] = mapped_column(
         String(100), nullable=False, comment="模型名称"
     )
 
-    model_version: Mapped[str] = mapped_column(
+    "model_version": Mapped[str] = mapped_column(
         String(50), nullable=False, comment="模型版本"
     )
 
     # 预测结果
-    predicted_result: Mapped[PredictedResult] = mapped_column(
+    "predicted_result": Mapped[PredictedResult] = mapped_column(
         SQLEnum(PredictedResult), nullable=False, comment="预测结果"
     )
 
-    home_win_probability: Mapped[Decimal] = mapped_column(
+    "home_win_probability": Mapped[Decimal] = mapped_column(
         DECIMAL(5, 4), nullable=False, comment="主队胜利概率"
     )
 
-    draw_probability: Mapped[Decimal] = mapped_column(
+    "draw_probability": Mapped[Decimal] = mapped_column(
         DECIMAL(5, 4), nullable=False, comment="平局概率"
     )
 
-    away_win_probability: Mapped[Decimal] = mapped_column(
+    "away_win_probability": Mapped[Decimal] = mapped_column(
         DECIMAL(5, 4), nullable=False, comment="客队胜利概率"
     )
 
     # 置信度和比分
-    confidence_score: Mapped[Decimal | None] = mapped_column(
+    "confidence_score": Mapped[Decimal | None] = mapped_column(
         DECIMAL(5, 4), nullable=True, comment="预测置信度"
     )
 
-    predicted_home_score: Mapped[Decimal | None] = mapped_column(
+    "predicted_home_score": Mapped[Decimal | None] = mapped_column(
         DECIMAL(4, 2), nullable=True, comment="预测主队比分"
     )
 
-    predicted_away_score: Mapped[Decimal | None] = mapped_column(
+    "predicted_away_score": Mapped[Decimal | None] = mapped_column(
         DECIMAL(4, 2), nullable=True, comment="预测客队比分"
     )
 
-    over_under_prediction: Mapped[Decimal | None] = mapped_column(
+    "over_under_prediction": Mapped[Decimal | None] = mapped_column(
         DECIMAL(4, 2), nullable=True, comment="大小球预测"
     )
 
-    btts_probability: Mapped[Decimal | None] = mapped_column(
+    "btts_probability": Mapped[Decimal | None] = mapped_column(
         DECIMAL(5, 4), nullable=True, comment="双方进球概率"
     )
 
     # 特征重要性
-    feature_importance: Mapped[JSON | None] = mapped_column(
+    "feature_importance": Mapped[JSON | None] = mapped_column(
         JSON, nullable=True, comment="特征重要性"
     )
 
     # 预测时间
-    predicted_at: Mapped[DateTime] = mapped_column(
+    "predicted_at": Mapped[DateTime] = mapped_column(
         DateTime, nullable=False, comment="预测时间"
     )
 
     # 验证相关字段
-    actual_result: Mapped[str | None] = mapped_column(
+    "actual_result": Mapped[str | None] = mapped_column(
         String(10), nullable=True, comment="实际比赛结果"
     )
 
-    is_correct: Mapped[bool | None] = mapped_column(
+    "is_correct": Mapped[bool | None] = mapped_column(
         nullable=True, comment="预测是否正确"
     )
 
-    verified_at: Mapped[DateTime | None] = mapped_column(
+    "verified_at": Mapped[DateTime | None] = mapped_column(
         DateTime, nullable=True, comment="验证时间"
     )
 
     # 特征数据（用于存储预测时使用的特征）
-    features_used: Mapped[JSON | None] = mapped_column(
+    "features_used": Mapped[JSON | None] = mapped_column(
         JSON, nullable=True, comment="预测时使用的特征数据"
     )
 
     # 预测元数据
-    prediction_metadata: Mapped[JSON | None] = mapped_column(
+    "prediction_metadata": Mapped[JSON | None] = mapped_column(
         JSON, nullable=True, comment="预测相关的元数据"
     )
 
@@ -266,7 +266,7 @@ class Predictions(BaseModel):
         获取最重要的特征
 
         Args:
-            top_n: 返回前N个重要特征
+    "top_n": 返回前N个重要特征
 
         Returns:
             List[Dict[str, Any]]: 特征列表，按重要性降序排列
@@ -294,7 +294,7 @@ class Predictions(BaseModel):
         计算预测准确性
 
         Args:
-            actual_result: 实际比赛结果 ('home_win', 'draw', 'away_win')
+    "actual_result": 实际比赛结果 ('home_win', 'draw', 'away_win')
 
         Returns:
             Dict[str, Any]: 准确性分析结果
@@ -332,7 +332,7 @@ class Predictions(BaseModel):
         基于预测概率和赔率给出投注建议
 
         Args:
-            odds_data: 赔率数据，格式如 {'home_win': 2.1, 'draw': 3.2, 'away_win': 3.8}
+    "odds_data": 赔率数据，格式如 {'home_win': 2.1, 'draw': 3.2, 'away_win': 3.8}
 
         Returns:
             List[Dict[str, Any]]: 投注建议列表
@@ -443,9 +443,9 @@ class Predictions(BaseModel):
         计算模型在指定天数内的准确率
 
         Args:
-            session: 数据库会话
-            model_name: 模型名称
-            days: 天数
+    "session": 数据库会话
+    "model_name": 模型名称
+    "days": 天数
 
         Returns:
             Dict[str, Any]: 准确性统计

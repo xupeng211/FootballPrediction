@@ -191,10 +191,10 @@ async def get_user_predictions(
     )
 
     return {
-        "predictions": [p.to_dict() for p in predictions],
-        "total": len(predictions),
-        "limit": limit,
-        "offset": offset,
+        predictions: [p.to_dict() for p in predictions],
+        total: len(predictions),
+        limit: limit,
+        offset: offset,
     }
 
 
@@ -263,9 +263,9 @@ async def get_upcoming_matches(
     )
 
     return {
-        "matches": [m.to_dict() for m in matches],
-        "total": len(matches),
-        "filters": {"days_ahead": days_ahead, "competition": competition},
+        matches: [m.to_dict() for m in matches],
+        total: len(matches),
+        filters: {"days_ahead": days_ahead, "competition": competition},
     }
 
 
@@ -299,9 +299,9 @@ async def get_cqrs_system_status() -> Any | None:
     query_bus = get_query_bus()
 
     return {
-        "status": "运行中",
-        "commands": command_bus.get_registered_commands(),
-        "queries": query_bus.get_registered_queries(),
-        "total_commands": len(command_bus.get_registered_commands()),
-        "total_queries": len(query_bus.get_registered_queries()),
+        status: "运行中",
+        commands: command_bus.get_registered_commands(),
+        queries: query_bus.get_registered_queries(),
+        total_commands: len(command_bus.get_registered_commands()),
+        total_queries: len(query_bus.get_registered_queries()),
     }

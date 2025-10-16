@@ -1,7 +1,7 @@
-from typing import Any, Dict, List, Optional, Union
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any, Dict, List, Optional, Union
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, JSON, String, Text
 from sqlalchemy.orm import relationship
@@ -102,5 +102,5 @@ class User(BaseModel):
             roles.remove(role)
             self.set_roles(roles)
 
-    def __repr__(self) -> str:  # pragma: no cover - 调试友好
+    def __repr__(self) -> str:  # pragma: no cover - 调试友好:
         return f"<User(id={self.id}, username='{self.username}', email='{self.email}')>"

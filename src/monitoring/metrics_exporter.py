@@ -44,14 +44,14 @@ class MetricsExporter:
 
     def __init__(
         self,
-        registry: CollectorRegistry | None = None,
-        tables_to_monitor: list[str] | None = None,
+    registry: CollectorRegistry | None = None,
+    tables_to_monitor: list[str] | None = None,
     ):
         """
         初始化指标导出器
 
         Args:
-            registry: Prometheus 注册表，默认使用全局注册表
+    registry: Prometheus 注册表，默认使用全局注册表
                      在测试环境中，传入独立的 CollectorRegistry 实例可以：
                      1. 避免测试间的全局状态污染
                      2. 确保每个测试有干净的指标环境
@@ -190,23 +190,23 @@ class MetricsExporter:
 
     def record_data_collection(
         self,
-        data_source: str,
-        collection_type: str,
-        success: bool,
-        duration: float,
-        error_type: str | None = None,
-        records_count: int = 0,
+    data_source: str,
+    collection_type: str,
+    success: bool,
+    duration: float,
+    error_type: str | None = None,
+    records_count: int = 0,
     ) -> None:
         """
         记录数据采集指标
 
         Args:
-            data_source: 数据源名称
-            collection_type: 采集类型（fixtures/odds/scores）
-            success: 是否成功
-            duration: 采集耗时（秒）
-            error_type: 错误类型（如果失败）
-            records_count: 采集记录数
+    data_source: 数据源名称
+    collection_type: 采集类型（fixtures/odds/scores）
+    success: 是否成功
+    duration: 采集耗时（秒）
+    error_type: 错误类型（如果失败）
+    records_count: 采集记录数
         """
         # 增加采集总数
         self.data_collection_total.labels(
@@ -228,21 +228,21 @@ class MetricsExporter:
 
     def record_data_cleaning(
         self,
-        data_type: str,
-        success: bool,
-        duration: float,
-        error_type: str | None = None,
-        records_processed: int = 1,
+    data_type: str,
+    success: bool,
+    duration: float,
+    error_type: str | None = None,
+    records_processed: int = 1,
     ) -> None:
         """
         记录数据清洗指标
 
         Args:
-            data_type: 数据类型（match/odds/scores）
-            success: 是否成功
-            duration: 清洗耗时（秒）
-            error_type: 错误类型（如果失败）
-            records_processed: 处理记录数
+    data_type: 数据类型（match/odds/scores）
+    success: 是否成功
+    duration: 清洗耗时（秒）
+    error_type: 错误类型（如果失败）
+    records_processed: 处理记录数
         """
         # 增加清洗总数
         self.data_cleaning_total.labels(data_type=data_type).inc(records_processed)
@@ -263,8 +263,8 @@ class MetricsExporter:
         记录数据采集成功 - 兼容测试接口
 
         Args:
-            data_source: 数据源名称
-            records_count: 采集记录数
+    data_source: 数据源名称
+    records_count: 采集记录数
         """
         self.record_data_collection(
             data_source=data_source,
@@ -281,8 +281,8 @@ class MetricsExporter:
         记录数据采集失败 - 兼容测试接口
 
         Args:
-            data_source: 数据源名称
-            error_message: 错误信息
+    data_source: 数据源名称
+    error_message: 错误信息
         """
         self.record_data_collection(
             data_source=data_source,
@@ -297,7 +297,7 @@ class MetricsExporter:
         记录数据清洗成功 - 兼容测试接口
 
         Args:
-            records_processed: 处理记录数
+    records_processed: 处理记录数
         """
         self.record_data_cleaning(
             data_type="default",
@@ -308,23 +308,23 @@ class MetricsExporter:
 
     def record_scheduler_task(
         self,
-        task_name: str,
-        scheduled_time: datetime,
-        actual_start_time: datetime,
-        duration: float,
-        success: bool,
-        failure_reason: str | None = None,
+    task_name: str,
+    scheduled_time: datetime,
+    actual_start_time: datetime,
+    duration: float,
+    success: bool,
+    failure_reason: str | None = None,
     ) -> None:
         """
         记录调度任务指标
 
         Args:
-            task_name: 任务名称
-            scheduled_time: 计划执行时间
-            actual_start_time: 实际开始时间
-            duration: 执行耗时（秒）
-            success: 是否成功
-            failure_reason: 失败原因（如果失败）
+    task_name: 任务名称
+    scheduled_time: 计划执行时间
+    actual_start_time: 实际开始时间
+    duration: 执行耗时（秒）
+    success: 是否成功
+    failure_reason: 失败原因（如果失败）
         """
         # 计算延迟时间
         delay_seconds = (actual_start_time - scheduled_time).total_seconds()
@@ -346,9 +346,9 @@ class MetricsExporter:
         记录调度任务指标 - 简化接口，兼容测试
 
         Args:
-            task_name: 任务名称
-            status: 任务状态 ("success" 或 "failed")
-            duration: 执行耗时（秒）
+    task_name: 任务名称
+    status: 任务状态 ("success" 或 "failed")
+    duration: 执行耗时（秒）
         """
         # 将简化参数转换为完整参数格式
         success = status == "success"
@@ -369,7 +369,7 @@ class MetricsExporter:
         更新数据表行数统计 - 兼容测试接口
 
         Args:
-            table_counts: 表行数字典，格式为 {table_name: row_count}
+    table_counts: 表行数字典，格式为 {table_name: row_count}
         """
         if table_counts:
             # 测试模式：直接使用提供的数据
@@ -553,10 +553,10 @@ def get_metrics_exporter(
     在生产环境中，将使用全局单例实例。
 
     Args:
-        registry: 可选的 CollectorRegistry 实例，主要用于测试
+    registry: 可选的 CollectorRegistry 实例，主要用于测试
 
     Returns:
-        MetricsExporter: 指标导出器实例
+    MetricsExporter: 指标导出器实例
     """
     global _metrics_exporter_instance
 

@@ -21,23 +21,23 @@ except ImportError:
     from pydantic import BaseModel
 
     class LeagueInfo(BaseModel):  # type: ignore
-        id: int
-        name: str
-        country: str
+    "id": int
+    "name": str
+    "country": str
 
     class MatchInfo(BaseModel):  # type: ignore
-        id: int
-        home_team: str
-        away_team: str
+    "id": int
+    "home_team": str
+    "away_team": str
 
     class OddsInfo(BaseModel):  # type: ignore
-        id: int
-        match_id: int
-        home_win: float
+    "id": int
+    "match_id": int
+    "home_win": float
 
     class TeamInfo(BaseModel):  # type: ignore
-        id: int
-        name: str
+    "id": int
+    "name": str
 
 
 __all__ = ["LeagueInfo", "MatchInfo", "OddsInfo", "TeamInfo"]

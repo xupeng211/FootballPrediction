@@ -38,7 +38,7 @@ class PrometheusExporter:
 
     def export(self) -> str:
         """导出指标格式"""
-        output: list[Any] = []
+    "output": list[Any] = []
         for name, metric in self.collector.get_metrics().items():
             output.append(f"# HELP {name} {metric['help']}")
             output.append(f"# TYPE {name} {metric['type']}")

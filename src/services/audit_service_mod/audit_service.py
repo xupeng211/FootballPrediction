@@ -17,17 +17,17 @@ class AuditService:
     """审计服务"""
 
     def __init__(self) -> None:
-        self.events: List[AuditEvent] = {}]
+        self.events: List[AuditEvent] = []
 
     def log_event(
         self,
-        action: AuditAction,
-        user_id: str,
-        resource_type: str,
-        resource_id: Optional[str] ] = None,
-        message: str = "",
-        severity: AuditSeverity = AuditSeverity.LOW,
-        metadata: Optional[Dict[str, Any] ] ] = None,
+    action: AuditAction,
+    user_id: str,
+    resource_type: str,
+    resource_id: Optional[str] = None,
+    message: str = "",
+    severity: AuditSeverity = AuditSeverity.LOW,
+    metadata: Optional[Dict[str, Any]] = None,
     ) -> AuditEvent:
         """记录审计事件"""
         event = AuditEvent(
@@ -47,10 +47,10 @@ class AuditService:
 
     def get_events(
         self,
-        user_id: Optional[str] ] = None,
-        action: Optional[AuditAction] ] = None,
-        severity: Optional[AuditSeverity] ] = None,
-        limit: int = 100,
+    user_id: Optional[str] = None,
+    action: Optional[AuditAction] = None,
+    severity: Optional[AuditSeverity] = None,
+    limit: int = 100,
     ) -> List[AuditEvent]:
         """获取审计事件"""
         filtered = self.events
@@ -73,7 +73,7 @@ class DataSanitizer:
         """清理邮箱地址"""
         if "@" in email:
             local, domain = email.split("@", 1)
-            return f"{local[:3]"***@{domain}"
+            return f"{local[:3]}***@{domain}"
         return "***@***.com"
 
     @staticmethod
@@ -89,7 +89,7 @@ class SeverityAnalyzer:
 
     @staticmethod
     def analyze_severity(
-        action: AuditAction, resource_type: str, user_role: str = "user"
+    action: AuditAction, resource_type: str, user_role: str = "user"
     ) -> AuditSeverity:
         """分析事件严重程度"""
         if action == AuditAction.DELETE:

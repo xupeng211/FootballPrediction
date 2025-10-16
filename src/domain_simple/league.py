@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+""""""
 联赛领域模型
-"""
+""""""
 
 from datetime import datetime
 from enum import Enum
@@ -23,7 +23,7 @@ class LeagueTable:
         self.standings: List[Dict[str, Any] = []
         self.last_updated = datetime.now()
 
-    def update_table(self, match_results: List[Dict[str, Any]) -> None:
+    def update_table(self, match_results: List[Dict[str, Any]] -> None:
         """更新积分榜"""
         # 简化实现，实际会更复杂
         self.last_updated = datetime.now()
@@ -38,8 +38,8 @@ class LeagueTable:
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         return {
-            "standings": self.standings,
-            "last_updated": self.last_updated.isoformat(),
+            "standings": self.standings,","
+            "last_updated": self.last_updated.isoformat(),""
         }
 
 
@@ -48,11 +48,11 @@ class League:
 
     def __init__(
         self,
-        id: Optional[int] = None,
-        name: str = "",
-        country: str = "",
-        season: str = "",
-        status: LeagueStatus = LeagueStatus.ACTIVE,
+    "id": Optional[int] = None,
+    "name": str = "",
+    "country": str = "",
+    "season": str = "",
+    "status": LeagueStatus = LeagueStatus.ACTIVE,
     ):
         self.id = id
         self.name = name
@@ -107,21 +107,21 @@ class League:
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         return {
-            "id": self.id,
-            "name": self.name,
-            "country": self.country,
-            "season": self.season,
-            "status": self.status.value,
-            "total_teams": self.total_teams,
-            "matches_per_team": self.matches_per_team,
-            "points_for_win": self.points_for_win,
-            "points_for_draw": self.points_for_draw,
-            "table": self.table.to_dict(),
-            "total_matches": self.total_matches,
-            "completed_matches": self.completed_matches,
-            "completion_rate": self.get_completion_rate(),
-            "created_at": self.created_at.isoformat(),
-            "updated_at": self.updated_at.isoformat(),
+            "id": self.id,","
+            "name": self.name,","
+            "country": self.country,","
+            "season": self.season,","
+            "status": self.status.value,","
+            "total_teams": self.total_teams,","
+            "matches_per_team": self.matches_per_team,","
+            "points_for_win": self.points_for_win,","
+            "points_for_draw": self.points_for_draw,","
+            "table": self.table.to_dict(),","
+            "total_matches": self.total_matches,","
+            "completed_matches": self.completed_matches,","
+            "completion_rate": self.get_completion_rate(),","
+            "created_at": self.created_at.isoformat(),","
+            "updated_at": self.updated_at.isoformat(),""
         }
 
     @classmethod
@@ -153,7 +153,7 @@ class League:
         return league
 
     def __str__(self) -> str:
-        return f"League({self.name} - {self.season})"
+        return f"League({self.name} - {self.season})"""
 
     def __repr__(self) -> str:
-        return f"<League(id={self.id}, name={self.name}, status={self.status.value})>"
+        return f"<League(id={self.id}, name={self.name}, status={self.status.value})>"""

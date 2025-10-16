@@ -76,47 +76,47 @@ class Odds(BaseModel):
     __tablename__ = "odds"
 
     # 主键和外键
-    match_id: Mapped[int] = mapped_column(
+    "match_id": Mapped[int] = mapped_column(
         ForeignKey("matches.id", ondelete="CASCADE"), nullable=False, comment="比赛ID"
     )
 
-    bookmaker: Mapped[str] = mapped_column(
+    "bookmaker": Mapped[str] = mapped_column(
         String(100), nullable=False, comment="博彩公司名称"
     )
 
     # 市场类型
-    market_type: Mapped[MarketType] = mapped_column(
+    "market_type": Mapped[MarketType] = mapped_column(
         SQLEnum(MarketType), nullable=False, comment="市场类型"
     )
 
     # 1x2市场赔率
-    home_odds: Mapped[Decimal | None] = mapped_column(
+    "home_odds": Mapped[Decimal | None] = mapped_column(
         DECIMAL(10, 3), nullable=True, comment="主队胜赔率"
     )
 
-    draw_odds: Mapped[Decimal | None] = mapped_column(
+    "draw_odds": Mapped[Decimal | None] = mapped_column(
         DECIMAL(10, 3), nullable=True, comment="平局赔率"
     )
 
-    away_odds: Mapped[Decimal | None] = mapped_column(
+    "away_odds": Mapped[Decimal | None] = mapped_column(
         DECIMAL(10, 3), nullable=True, comment="客队胜赔率"
     )
 
     # 大小球市场赔率
-    over_odds: Mapped[Decimal | None] = mapped_column(
+    "over_odds": Mapped[Decimal | None] = mapped_column(
         DECIMAL(10, 3), nullable=True, comment="大球赔率"
     )
 
-    under_odds: Mapped[Decimal | None] = mapped_column(
+    "under_odds": Mapped[Decimal | None] = mapped_column(
         DECIMAL(10, 3), nullable=True, comment="小球赔率"
     )
 
-    line_value: Mapped[Decimal | None] = mapped_column(
+    "line_value": Mapped[Decimal | None] = mapped_column(
         DECIMAL(5, 2), nullable=True, comment="盘口数值"
     )
 
     # 收集时间
-    collected_at: Mapped[datetime] = mapped_column(
+    "collected_at": Mapped[datetime] = mapped_column(
         DateTime, nullable=False, comment="赔率收集时间"
     )
 
@@ -305,11 +305,11 @@ class Odds(BaseModel):
         检查赔率变化是否显著
 
         Args:
-            previous_odds: 之前的赔率数据
-            threshold: 显著变化的阈值
+    "previous_odds": 之前的赔率数据
+    "threshold": 显著变化的阈值
 
         Returns:
-            bool: 赔率变化是否显著
+    "bool": 赔率变化是否显著
         """
         if not previous_odds or self.market_type != previous_odds.market_type:
             return False

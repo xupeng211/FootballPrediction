@@ -22,12 +22,12 @@ class LoggingDecorator(Decorator):
     def __init__(
         self,
         component,
-        name: str | None = None,
-        level: str = "INFO",
-        log_args: bool = True,
-        log_result: bool = True,
-        log_exception: bool = True,
-        include_context: bool = False,
+    "name": str | None = None,
+    "level": str = "INFO",
+    "log_args": bool = True,
+    "log_result": bool = True,
+    "log_exception": bool = True,
+    "include_context": bool = False,
     ):
         super().__init__(component, name)
         self.level = level.upper()
@@ -109,7 +109,7 @@ class LoggingDecorator(Decorator):
 
     def _sanitize_args(self, args: tuple) -> list[Any]:
         """清理参数，移除敏感信息"""
-        sanitized: list[Any] = []
+    "sanitized": list[Any] = []
 
         for arg in args:
             if isinstance(arg, dict[str, Any]):
@@ -128,7 +128,7 @@ class LoggingDecorator(Decorator):
     def _sanitize_dict(self, data: dict[str, Any]) -> dict[str, Any]:
         """清理字典，移除敏感信息"""
         sensitive_keys = ["password", "token", "secret", "key", "auth"]
-        sanitized: dict[str, Any] = {}
+    "sanitized": dict[str, Any] = {}
 
         for key, value in data.items():
             if any(sensitive in key.lower() for sensitive in sensitive_keys):
@@ -144,7 +144,7 @@ class LoggingDecorator(Decorator):
 
     def _sanitize_sequence(self, seq) -> list[Any]:
         """清理序列，移除敏感信息"""
-        sanitized: list[Any] = []
+    "sanitized": list[Any] = []
 
         for item in seq:
             if isinstance(item, dict[str, Any]):

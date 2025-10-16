@@ -21,17 +21,17 @@ class CacheEntry:
 
     def __init__(
         self,
-        key: str,
-        value: Any,
-        ttl: float | None = None,
+    "key": str,
+    "value": Any,
+    "ttl": float | None = None,
     ):
         """
         初始化缓存条目
 
         Args:
-            key: 缓存键
-            value: 缓存值
-            ttl: 生存时间（秒）
+    "key": 缓存键
+    "value": 缓存值
+    "ttl": 生存时间（秒）
         """
         self.key = key
         self.value = value
@@ -44,7 +44,7 @@ class CacheEntry:
         检查是否过期
 
         Returns:
-            bool: 是否已过期
+    "bool": 是否已过期
         """
         return self.expires_at is not None and time.time() > self.expires_at
 
@@ -55,7 +55,7 @@ class CacheEntry:
         更新访问统计并返回值。
 
         Returns:
-            Any: 缓存值
+    "Any": 缓存值
         """
         self.access_count += 1
         self.last_access = time.time()
@@ -66,7 +66,7 @@ class CacheEntry:
         更新过期时间
 
         Args:
-            ttl: 新的TTL（秒），None表示永不过期
+    "ttl": 新的TTL（秒），None表示永不过期
         """
         if ttl is not None:
             self.expires_at = time.time() + ttl

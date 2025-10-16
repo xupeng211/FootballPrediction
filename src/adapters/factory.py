@@ -168,25 +168,25 @@ class AdapterFactory:
         file_path = Path(file_path)
 
         _data = {
-            "adapters": [
+            adapters: [
                 {
-                    "name": config.name,
-                    "adapter_type": config.adapter_type,
-                    "enabled": config.enabled,
-                    "priority": config.priority,
-                    "parameters": self._mask_sensitive_parameters(config.parameters),
-                    "rate_limits": config.rate_limits,
-                    "cache_config": config.cache_config,
-                    "retry_config": config.retry_config,
+                    name: config.name,
+                    adapter_type: config.adapter_type,
+                    enabled: config.enabled,
+                    priority: config.priority,
+                    parameters: self._mask_sensitive_parameters(config.parameters),
+                    rate_limits: config.rate_limits,
+                    cache_config: config.cache_config,
+                    retry_config: config.retry_config,
                 }
                 for config in self._configs.values()
             ],
-            "adapter_groups": [
+            adapter_groups: [
                 {
-                    "name": group.name,
-                    "adapters": group.adapters,
-                    "primary_adapter": group.primary_adapter,
-                    "fallback_strategy": group.fallback_strategy,
+                    name: group.name,
+                    adapters: group.adapters,
+                    primary_adapter: group.primary_adapter,
+                    fallback_strategy: group.fallback_strategy,
                 }
                 for group in self._group_configs.values()
             ],

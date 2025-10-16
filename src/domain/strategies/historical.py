@@ -1,13 +1,13 @@
 from typing import Any, Dict, List, Optional, Union
 import logging
 
-"""
+
 历史数据策略
 Historical Strategy
 
-基于历史比赛数据和相似场景进行预测的策略。
+基于历史比赛数据和相似场景进行预测的策略.
 Strategy based on historical match data and similar scenarios.
-"""
+""""""
 
 import time
 from datetime import datetime
@@ -28,35 +28,35 @@ from ..models.prediction import Prediction
 class HistoricalMatch:
     """历史比赛数据结构"""
 
-    match_id: int
-    home_team_id: int
-    away_team_id: int
-    home_score: int
-    away_score: int
-    match_date: datetime
-    league_id: int
-    season: str
-    importance: float = 1.0  # 比赛重要性权重
+    "match_id": int
+    "home_team_id": int
+    "away_team_id": int
+    "home_score": int
+    "away_score": int
+    "match_date": datetime
+    "league_id": int
+    "season": str
+    "importance": float = 1.0  # 比赛重要性权重
 
 
 @dataclass
 class SimilarScenario:
     """相似场景数据"""
 
-    matches: List[HistoricalMatch]
-    similarity_score: float
-    common_patterns: Dict[str, Any]
+    "matches": List[HistoricalMatch]
+    "similarity_score": float
+    "common_patterns": Dict[str, Any]
 
 
 class HistoricalStrategy(PredictionStrategy):
-    """历史数据预测策略
+    """历史数据预测策略"""
 
-    基于以下历史数据进行预测：
+    基于以下历史数据进行预测:
     - 相同对战的历史记录
     - 相似比分场景的历史记录
     - 同赛季类似情况
     - 相似时间段的表现
-    """
+    """"""
 
     def __init__(self, name: str = "historical_analyzer") -> None:
         super().__init__(name, StrategyType.HISTORICAL)
@@ -71,15 +71,15 @@ class HistoricalStrategy(PredictionStrategy):
         self._rng = np.random.default_rng(self._rng_seed)
 
     async def initialize(self, config: Dict[str, Any]) -> None:
-        """初始化历史策略
+        """初始化历史策略"""
 
         Args:
-            config: 配置参数，包含：
+    "config": 配置参数,包含:
                 - min_historical_matches: 最少历史比赛数
                 - similarity_threshold: 相似度阈值
                 - max_historical_years: 考虑的历史年数
                 - weight_factors: 各种历史因素的权重
-        """
+        """"""
         self.config = config
         self._min_historical_matches = config.get("min_historical_matches", 3)
         self._similarity_threshold = config.get("similarity_threshold", 0.7)
@@ -87,12 +87,12 @@ class HistoricalStrategy(PredictionStrategy):
         self._rng_seed = config.get("random_seed", self._rng_seed)
         self._rng = np.random.default_rng(self._rng_seed)
         self._weight_factors = config.get(
-            "weight_factors",
+            "weight_factors",""
             {
-                "direct_h2h": 0.4,  # 直接对战历史
-                "similar_score_patterns": 0.25,  # 相似比分模式
-                "season_performance": 0.2,  # 赛季表现
-                "time_based_patterns": 0.15,  # 时间模式
+                "direct_h2h": 0.4,  # 直接对战历史","
+                "similar_score_patterns": 0.25,  # 相似比分模式","
+                "season_performance": 0.2,  # 赛季表现","
+                "time_based_patterns": 0.15,  # 时间模式""
             },
         )
 
@@ -101,16 +101,16 @@ class HistoricalStrategy(PredictionStrategy):
             await self._load_historical_data()
 
         self._is_initialized = True
-        self.logger.info(f"历史策略 '{self.name}' 初始化成功")
+        self.logger.info(f"历史策略 {self.name} 初始化成功")
 
     async def _load_historical_data(self) -> None:
-        """加载历史数据（模拟）"""
+        """加载历史数据(模拟)"""
         # 实际实现中，这里应该从数据库查询历史比赛数据
         # 这里使用模拟数据
         current_year = datetime.now().year
 
         for year in range(current_year - self._max_historical_years, current_year + 1):
-            season = f"{year - 1"/{year}"
+            season = f"{year - 1"/{year}""
             self._season_patterns[season] = []
 
             # 模拟生成历史比赛数据
@@ -185,10 +185,10 @@ class HistoricalStrategy(PredictionStrategy):
         # 集成预测结果
         final_prediction = await self._combine_predictions(
             {
-                "h2h": h2h_prediction,
-                "similar_scores": similar_score_prediction,
-                "season": season_prediction,
-                "time_patterns": time_pattern_prediction,
+                "h2h": h2h_prediction,","
+                "similar_scores": similar_score_prediction,","
+                "season": season_prediction,","
+                "time_patterns": time_pattern_prediction,""
             }
         )
 
@@ -200,10 +200,10 @@ class HistoricalStrategy(PredictionStrategy):
 
         # 分析特征重要性
         feature_importance = {
-            "head_to_head_history": self._weight_factors["direct_h2h"],
-            "similar_score_patterns": self._weight_factors["similar_score_patterns"],
-            "season_performance": self._weight_factors["season_performance"],
-            "time_based_patterns": self._weight_factors["time_based_patterns"],
+            "head_to_head_history": self._weight_factors["direct_h2h",","
+            "similar_score_patterns": self._weight_factors["similar_score_patterns",","
+            "season_performance": self._weight_factors["season_performance",","
+            "time_based_patterns": self._weight_factors["time_based_patterns",""
         }
 
         # 创建输出
@@ -214,8 +214,8 @@ class HistoricalStrategy(PredictionStrategy):
             probability_distribution=probability_distribution,
             feature_importance=feature_importance,
             metadata={
-                "method": "historical_analysis",
-                "h2h_matches": len(
+                "method": "historical_analysis",","
+                "h2h_matches": len(""
                     await self._get_head_to_head_matches(
                         input_data.home_team.id or 0,
                         input_data.away_team.id or 0,
@@ -223,10 +223,10 @@ class HistoricalStrategy(PredictionStrategy):
                 )
                 if input_data.home_team.id and input_data.away_team.id
                 else 0,
-                "similar_scenarios": await self._count_similar_scenarios(
+                "similar_scenarios": await self._count_similar_scenarios(""
                     processed_input
                 ),
-                "historical_coverage": await self._calculate_historical_coverage(
+                "historical_coverage": await self._calculate_historical_coverage(""
                     processed_input
                 ),
             },
@@ -278,7 +278,7 @@ class HistoricalStrategy(PredictionStrategy):
                 home_goals.append(match.away_score)
                 away_goals.append(match.home_score)
 
-        # 考虑时间衰减（最近比赛权重更高）
+        # 考虑时间衰减(最近比赛权重更高)
         weights = []
         now = datetime.now()
         for match in h2h_matches:
@@ -437,7 +437,7 @@ class HistoricalStrategy(PredictionStrategy):
         return None
 
     async def _combine_predictions(
-        self, predictions: Dict[str, Optional[Tuple[int, int]
+        self, predictions: Dict[str, Optional[Tuple[int, int]]
     ) -> Tuple[int, int]:
         """组合多个预测结果"""
         valid_predictions = {k: v for k, v in predictions.items() if v is not None}
@@ -451,10 +451,10 @@ class HistoricalStrategy(PredictionStrategy):
 
         for method, pred in valid_predictions.items():
             weight_key = {
-                "h2h": "direct_h2h",
-                "similar_scores": "similar_score_patterns",
-                "season": "season_performance",
-                "time_patterns": "time_based_patterns",
+                "h2h": "direct_h2h",","
+                "similar_scores": "similar_score_patterns",","
+                "season": "season_performance",","
+                "time_patterns": "time_based_patterns",""
             }.get(method, 0.1)
 
             weight = self._weight_factors.get(weight_key, 0.1)
@@ -548,9 +548,9 @@ class HistoricalStrategy(PredictionStrategy):
         total = home_wins + draws + away_wins
         if total > 0:
             return {
-                "home_win": home_wins / total,
-                "draw": draws / total,
-                "away_win": away_wins / total,
+                "home_win": home_wins / total,","
+                "draw": draws / total,","
+                "away_win": away_wins / total,""
             }
 
         return {"home_win": 0.33, "draw": 0.34, "away_win": 0.33}

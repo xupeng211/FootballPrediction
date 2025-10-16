@@ -25,7 +25,7 @@ from datetime import datetime
 
 
 class HealthChecker:
-    """健康检查器类
+    """健康检查器类"
 
     用于检查系统中各个服务的健康状态，包括：
     - 数据库连接
@@ -37,7 +37,7 @@ class HealthChecker:
         self.timeout = 5.0  # 默认超时时间（秒）
 
     async def check_all_services(self) -> dict[str, Any]:
-        """检查所有服务的健康状态
+        """检查所有服务的健康状态"
 
         Returns:
             包含所有服务健康状态的字典
@@ -75,7 +75,7 @@ class HealthChecker:
         }
 
     async def check_database(self) -> dict[str, Any]:
-        """检查数据库连接健康状态
+        """检查数据库连接健康状态"
 
         Returns:
             数据库健康状态信息
@@ -103,7 +103,7 @@ class HealthChecker:
             }
 
     async def check_redis(self) -> dict[str, Any]:
-        """检查 Redis 连接健康状态
+        """检查 Redis 连接健康状态"
 
         Returns:
             Redis 健康状态信息
@@ -131,7 +131,7 @@ class HealthChecker:
             }
 
     async def check_prediction_service(self) -> dict[str, Any]:
-        """检查预测服务健康状态
+        """检查预测服务健康状态"
 
         Returns:
             预测服务健康状态信息

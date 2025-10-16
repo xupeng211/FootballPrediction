@@ -24,10 +24,10 @@ T = TypeVar("T")
 class ServiceConfig:
     """服务配置"""
 
-    name: str
-    version: str = "1.0.0"
-    enabled: bool = True
-    config: dict[str, Any] | None = None
+    "name": str
+    "version": str = "1.0.0"
+    "enabled": bool = True
+    "config": dict[str, Any] | None = None
 
     def __post_init__(self):
         if self.config is None:
@@ -274,7 +274,7 @@ class PredictionDomainService(DomainService[Prediction]):
 
 
 class DomainServiceFactory:
-    """域服务工厂
+    """域服务工厂"
 
     负责创建、配置和管理所有域服务实例。
     """
@@ -291,8 +291,8 @@ class DomainServiceFactory:
 
     def create_service(
         self,
-        service_type: Type[Any, DomainService],
-        config: ServiceConfig | None = None,
+    "service_type": Type[Any, DomainService],
+    "config": ServiceConfig | None = None,
     ) -> DomainService:
         """创建服务实例"""
         service = service_type(config)
@@ -357,7 +357,7 @@ class DomainServiceFactory:
 
     async def health_check(self) -> dict[str, Any]:
         """健康检查"""
-        status: dict[str, Any] = {
+    "status": dict[str, Any] = {
             "factory": "healthy",
             "services": {},
             "repositories": len(self._repositories),

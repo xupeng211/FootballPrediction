@@ -4,10 +4,10 @@
 fix_test_file() {
     local file="$1"
     echo "Fixing $file..."
-    
+
     # Fix function names with forward slashes
     sed -i 's|def test_src_\([^/]*\)/\([^)]*\)():|def test_src_\1_\2():|g' "$file"
-    
+
     # Fix the problematic pattern - replace the entire malformed function
     sed -i '/def test_src_[^()]*():/,/# Hint: Use pytest-mock/ {
         /def test_src_[^()]*():/!{
@@ -26,7 +26,7 @@ fix_test_file() {
             }
         }
     }' "$file"
-    
+
     # Fix indentation - replace the malformed try-except blocks with proper ones
     sed -i '/def test_src_[^()]*():/,/# Hint: Use pytest-mock/ {
         /try:/,/assert result is None or result is not False/ {
@@ -48,7 +48,7 @@ fix_test_file() {
             /elif hasattr(module,/d
         }
     }' "$file"
-    
+
     # Verify the fix
     if python -m py_compile "$file" 2>/dev/null; then
         echo "✓ Fixed $file"

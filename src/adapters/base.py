@@ -176,11 +176,11 @@ class CompositeAdapter(Adapter):
     """组合适配器，可以管理多个子适配器"""
 
     def __init__(self, name: str, adapters: list[Adapter] = None):
-        """初始化组合适配器
+        """初始化组合适配器"
 
         Args:
-            name: 适配器名称
-            adapters: 子适配器列表
+    "name": 适配器名称
+    "adapters": 子适配器列表
         """
         super().__init__(name)
         self.adapters: list[Adapter] = adapters or []
@@ -193,22 +193,22 @@ class CompositeAdapter(Adapter):
             self.adapter_registry[adapter.name] = adapter
 
     def add_adapter(self, adapter: Adapter):
-        """添加子适配器
+        """添加子适配器"
 
         Args:
-            adapter: 要添加的适配器
+    "adapter": 要添加的适配器
         """
         self.adapters.append(adapter)
         self.adapter_registry[adapter.name] = adapter
 
     def remove_adapter(self, adapter_name: str) -> bool:
-        """移除子适配器
+        """移除子适配器"
 
         Args:
-            adapter_name: 适配器名称
+    "adapter_name": 适配器名称
 
         Returns:
-            bool: 是否成功移除
+    "bool": 是否成功移除
         """
         if adapter_name in self.adapter_registry:
             adapter = self.adapter_registry[adapter_name]
@@ -218,25 +218,25 @@ class CompositeAdapter(Adapter):
         return False
 
     def get_adapter(self, adapter_name: str) -> Adapter | None:
-        """获取子适配器
+        """获取子适配器"
 
         Args:
-            adapter_name: 适配器名称
+    "adapter_name": 适配器名称
 
         Returns:
-            Adapter: 子适配器，如果不存在则返回None
+    "Adapter": 子适配器，如果不存在则返回None
         """
         return self.adapter_registry.get(adapter_name)
 
     async def request(self, *args, **kwargs) -> Any:
-        """并行请求所有适配器并合并结果
+        """并行请求所有适配器并合并结果"
 
         Args:
             *args: 位置参数
             **kwargs: 关键字参数
 
         Returns:
-            Any: 合并后的结果
+    "Any": 合并后的结果
         """
         results = []
 

@@ -1,18 +1,18 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+""""""
 足球特征仓库管理器
 
-基于Feast实现的特征存储服务，提供特征的注册、计算、存储和获取功能。
-支持在线和离线特征服务，用于机器学习模型训练和预测。
+基于Feast实现的特征存储服务,提供特征的注册,计算,存储和获取功能.
+支持在线和离线特征服务,用于机器学习模型训练和预测.
 
-主要功能：
+主要功能:
 - 特征仓库初始化和配置
 - 特征数据写入和读取
 - 在线特征服务
 - 批量特征计算
 
-基于 DATA_DESIGN.md 第6.1节特征仓库设计。
-"""
+基于 DATA_DESIGN.md 第6.1节特征仓库设计.
+""""""
 
 import atexit
 import logging
@@ -23,7 +23,8 @@ from pathlib import Path
 
 import pandas as pd
 
-ENABLE_FEAST = os.getenv("ENABLE_FEAST", "true").lower() == "true"
+ENABLE_FEAST = os.getenv("ENABLE_FEAST, "true").lower() == "true"
+"
 
 try:
     if not ENABLE_FEAST:
@@ -57,31 +58,31 @@ logger = logging.getLogger(__name__)
 
 
 class FootballFeatureStore:
-    """
+    """"""
     足球特征仓库管理器
 
-    管理足球预测系统的特征存储，包括特征定义、数据摄取、
-    在线服务和批量计算等功能。
-    """
+    管理足球预测系统的特征存储,包括特征定义,数据摄取,
+    在线服务和批量计算等功能.
+    """"""
 
     def __init__(
         self,
-        project_name: str = "football_prediction",
-        repo_path: Optional[str] = None,
-        postgres_config: Optional[Dict[str, Any]] = None,
-        redis_config: Optional[Dict[str, Any]] = None,
+    project_name: str = "football_prediction,",
+    repo_path: Optional[str] = None,
+    postgres_config: Optional[Dict[str, Any] = None,
+    redis_config: Optional[Dict[str, Any] = None,
     ):
-        """
+        """"""
         初始化特征仓库
 
         Args:
-            project_name: 项目名称
-            repo_path: 特征仓库路径
-            postgres_config: PostgreSQL配置（离线存储）
-            redis_config: Redis配置（在线存储）
-        """
+    project_name: 项目名称
+    "repo_path": 特征仓库路径
+    "postgres_config": PostgreSQL配置(离线存储)
+    "redis_config": Redis配置(在线存储)
+        """"""
         self.project_name = project_name
-        self._temp_dir: Optional[tempfile.TemporaryDirectory[str] = None
+        self._temp_dir: Optional[tempfile.TemporaryDirectory[str]] = None
         self._temp_dir_cleaned = False
 
         if repo_path:
@@ -96,15 +97,17 @@ class FootballFeatureStore:
 
         # 默认配置
         self.postgres_config = postgres_config or {
-            "host": os.getenv("DB_HOST", "localhost"),
-            "port": int(os.getenv("DB_PORT", 5432)),
-            "database": os.getenv("DB_NAME", "football_prediction_dev"),
-            "user": os.getenv("DB_READER_USER", "football_reader"),
-            "password": os.getenv("DB_READER_PASSWORD", ""),
+            host: os.getenv("DB_HOST, "localhost"),,"
+            port: int(os.getenv("DB_PORT, 5432)),,"
+            database: os.getenv("DB_NAME, "football_prediction_dev"),,"
+            user: os.getenv("DB_READER_USER, "football_reader"),,"
+            password: os.getenv("DB_READER_PASSWORD, ""),""
+"
         }
 
         self.redis_config = redis_config or {
-            "connection_string": os.getenv("REDIS_URL", "redis://localhost:6379/1")
+            connection_string: os.getenv("REDIS_URL, "redis://localhost:6379/1")""
+"
         }
 
         self._store: Optional[FeatureStore] = None
@@ -113,7 +116,7 @@ class FootballFeatureStore:
         try:
             if not HAS_FEAST:
                 self.logger.warning(
-                    "Feast 未安装，跳过特征仓库初始化。请安装 feast 以启用完整功能。"
+                    "Feast 未安装,跳过特征仓库初始化.请安装 feast 以启用完整功能."
                 )
                 self._store = None
                 return
@@ -125,18 +128,18 @@ class FootballFeatureStore:
             _config = RepoConfig(
                 registry=str(self.repo_path / "registry.db"),
                 project=self.project_name,
-                provider="local",
+                provider="local,",
                 offline_store=PostgreSQLOfflineStoreConfig(
-                    type="postgres",
-                    host=self.postgres_config["host"],
-                    port=self.postgres_config["port"],
-                    database=self.postgres_config["database"],
-                    _user =self.postgres_config["user"],
-                    password=self.postgres_config["password"],
+                    type="postgres,",
+                    host=self.postgres_config["host"]"],",
+                    port=self.postgres_config["port"]"],",
+                    database=self.postgres_config["database"]"],",
+                    _user =self.postgres_config["user"]"],",
+                    password=self.postgres_config["password"]"],",
                 ),
                 online_store=RedisOnlineStoreConfig(
-                    type="redis",
-                    connection_string=self.redis_config["connection_string"],
+                    type="redis,",
+                    connection_string=self.redis_config["connection_string"]"],",
                 ),
                 entity_key_serialization_version=2,
             )
@@ -149,14 +152,14 @@ class FootballFeatureStore:
             # 初始化FeatureStore实例
             self._store = FeatureStore(repo_path=str(self.repo_path))
 
-            self.logger.info(f"特征仓库初始化成功，路径: {self.repo_path}")
+            self.logger.info(f"特征仓库初始化成功,路径: {self.repo_path}")
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"特征仓库初始化失败: {str(e)}")
             raise
 
     def close(self) -> None:
-        """释放临时资源，供显式调用。"""
+        """释放临时资源,供显式调用."""
         self._cleanup_temp_dir()
 
     def _cleanup_temp_dir(self) -> None:
@@ -167,7 +170,7 @@ class FootballFeatureStore:
     def apply_features(self) -> None:
         """注册特征定义到特征仓库"""
         if not self._store:
-            raise RuntimeError("特征仓库未初始化，请先调用 initialize()")
+            raise RuntimeError("特征仓库未初始化,请先调用 initialize()")
 
         try:
             # 定义所有特征对象
@@ -193,20 +196,20 @@ class FootballFeatureStore:
 
     def write_features(
         self,
-        feature_view_name: str,
-        df: pd.DataFrame,
-        timestamp_column: str = "event_timestamp",
+    feature_view_name: str,
+    df: pd.DataFrame,
+    timestamp_column: str = "event_timestamp,",
     ) -> None:
-        """
+        """"""
         写入特征数据到特征仓库
 
         Args:
-            feature_view_name: 特征视图名称
-            df: 特征数据DataFrame
-            timestamp_column: 时间戳列名
-        """
+    feature_view_name: 特征视图名称
+    "df": 特征数据DataFrame
+    "timestamp_column": 时间戳列名
+        """"""
         if not self._store:
-            raise RuntimeError("特征仓库未初始化，请先调用 initialize()")
+            raise RuntimeError("特征仓库未初始化,请先调用 initialize()")
 
         try:
             # 确保时间戳列存在且格式正确
@@ -233,18 +236,18 @@ class FootballFeatureStore:
     def get_online_features(
         self, feature_service_name: str, entity_df: pd.DataFrame
     ) -> pd.DataFrame:
-        """
-        获取在线特征数据（用于实时预测）
+        """"""
+        获取在线特征数据(用于实时预测)
 
         Args:
-            feature_service_name: 特征服务名称
-            entity_df: 实体DataFrame，包含匹配键
+    feature_service_name: 特征服务名称
+    "entity_df": 实体DataFrame,包含匹配键
 
         Returns:
             pd.DataFrame: 包含特征的DataFrame
-        """
+        """"""
         if not self._store:
-            raise RuntimeError("特征仓库未初始化，请先调用 initialize()")
+            raise RuntimeError("特征仓库未初始化,请先调用 initialize()")
 
         try:
             # 获取特征服务
@@ -266,23 +269,23 @@ class FootballFeatureStore:
 
     def get_historical_features(
         self,
-        feature_service_name: str,
-        entity_df: pd.DataFrame,
-        full_feature_names: bool = False,
+    feature_service_name: str,
+    entity_df: pd.DataFrame,
+    full_feature_names: bool = False,
     ) -> pd.DataFrame:
-        """
-        获取历史特征数据（用于模型训练）
+        """"""
+        获取历史特征数据(用于模型训练)
 
         Args:
-            feature_service_name: 特征服务名称
-            entity_df: 实体DataFrame，必须包含时间戳列
-            full_feature_names: 是否使用完整特征名称
+    feature_service_name: 特征服务名称
+    "entity_df": 实体DataFrame,必须包含时间戳列
+    full_feature_names: 是否使用完整特征名称
 
         Returns:
             pd.DataFrame: 包含特征的DataFrame
-        """
+        """"""
         if not self._store:
-            raise RuntimeError("特征仓库未初始化，请先调用 initialize()")
+            raise RuntimeError("特征仓库未初始化,请先调用 initialize()")
 
         try:
             # 获取特征服务
@@ -302,21 +305,21 @@ class FootballFeatureStore:
 
     def create_training_dataset(
         self,
-        start_date: datetime,
-        end_date: datetime,
-        match_ids: Optional[List[int]] = None,
+    start_date: datetime,
+    end_date: datetime,
+    match_ids: Optional[List[int] = None,
     ) -> pd.DataFrame:
-        """
+        """"""
         创建训练数据集
 
         Args:
-            start_date: 开始日期
-            end_date: 结束日期
-            match_ids: 指定的比赛ID列表，如果为None则获取时间范围内所有比赛
+    start_date: 开始日期
+    "end_date": 结束日期
+    "match_ids": 指定的比赛ID列表,如果为None则获取时间范围内所有比赛
 
         Returns:
             pd.DataFrame: 训练数据集
-        """
+        """"""
         try:
             # 构建实体DataFrame
             entity_data = []
@@ -324,18 +327,20 @@ class FootballFeatureStore:
                 for match_id in match_ids:
                     entity_data.append(
                         {
-                            "match_id": match_id,
-                            "event_timestamp": end_date,  # 使用结束时间作为特征时间点
+                            match_id: match_id,,"
+"
+                            event_timestamp: end_date,  # 使用结束时间作为特征时间点""
                         }
                     )
             else:
                 # 如果没有指定比赛ID，从数据库获取时间范围内的比赛
                 # 这里提供一个示例
-                for i in range(1, 100):  # 示例：100场比赛
+                for i in range(1, 100):  # 示例:100场比赛
                     entity_data.append(
                         {
-                            "match_id": i,
-                            "event_timestamp": start_date + timedelta(days=i % 30),
+                            match_id: i,,"
+"
+                            event_timestamp: start_date + timedelta(days=i % 30),""
                         }
                     )
 
@@ -343,29 +348,29 @@ class FootballFeatureStore:
 
             # 获取训练特征
             training_df = self.get_historical_features(
-                feature_service_name="match_prediction_v1",
+                feature_service_name="match_prediction_v1,",
                 entity_df=entity_df,
                 full_feature_names=True,
             )
 
-            self.logger.info(f"创建训练数据集成功，包含 {len(training_df)} 条记录")
+            self.logger.info(f"创建训练数据集成功,包含 {len(training_df)} 条记录")
             return training_df if isinstance(training_df, Dict[str, Any]) else {}
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"创建训练数据集失败: {str(e)}")
             raise
 
     def get_feature_statistics(self, feature_view_name: str) -> Dict[str, Any]:
-        """
+        """"""
         获取特征统计信息
 
         Args:
-            feature_view_name: 特征视图名称
+    feature_view_name: 特征视图名称
 
         Returns:
             Dict[str, Any]: 特征统计信息
-        """
+        """"""
         if not self._store:
-            raise RuntimeError("特征仓库未初始化，请先调用 initialize()")
+            raise RuntimeError("特征仓库未初始化,请先调用 initialize()")
 
         try:
             # 获取特征视图
@@ -373,28 +378,33 @@ class FootballFeatureStore:
 
             # 这里可以添加更详细的统计逻辑
             _stats = {
-                "feature_view_name": feature_view_name,
-                "num_features": len(feature_view.features),
-                "feature_names": [f.name for f in feature_view.features],
-                "entities": [e.name for e in feature_view.entities],
-                "ttl_days": feature_view.ttl.days if feature_view.ttl else None,
-                "tags": feature_view.tags,
+                feature_view_name: feature_view_name,,"
+"
+                num_features: len(feature_view.features),,"
+"
+                feature_names: [f.name for f in feature_view.features],,"
+"
+                entities: [e.name for e in feature_view.entities],,"
+"
+                ttl_days: feature_view.ttl.days if feature_view.ttl else None,,"
+"
+                tags: feature_view.tags,""
             }
 
             return stats if isinstance(stats, Dict[str, Any]) else {}
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-            self.logger.error(f"获取特征统计失败: {str(e)}")
-            return {"error": str(e)}
+            self.logger.error(f"获取特征统计失败: {str(e)}"),
+            return {error: str(e)}
 
     def list_features(self) -> List[Dict[str, Any]:
-        """
+        """"""
         列出所有特征
 
         Returns:
             List[Dict[str, Any]: 特征列表信息
-        """
+        """"""
         if not self._store:
-            raise RuntimeError("特征仓库未初始化，请先调用 initialize()")
+            raise RuntimeError("特征仓库未初始化,请先调用 initialize()")
 
         try:
             features_list = []
@@ -405,16 +415,19 @@ class FootballFeatureStore:
                 for feature in fv.features:
                     features_list.append(
                         {
-                            "feature_view": fv.name,
-                            "feature_name": (
+                            feature_view: fv.name,,"
+"
+                            feature_name: (""
                                 str(feature.name)
                                 if hasattr(feature, "name")
                                 else str(feature)
                             ),
-                            "feature_type": str(feature.dtype),
-                            "description": feature.description or "",
-                            "entities": [e.name for e in fv.entities],
-                            "tags": fv.tags,
+                            feature_type: str(feature.dtype),,"
+"
+                            description: feature.description or ",,"
+                            entities: [e.name for e in fv.entities],,"
+"
+                            tags: fv.tags,""
                         }
                     )
 
@@ -424,12 +437,12 @@ class FootballFeatureStore:
             return [] if isinstance([], Dict[str, Any]) else {}
 
     def cleanup_old_features(self, older_than_days: int = 30) -> None:
-        """
+        """"""
         清理过期特征数据
 
         Args:
-            older_than_days: 保留天数，超过此天数的特征数据将被清理
-        """
+    older_than_days: 保留天数,超过此天数的特征数据将被清理
+        """"""
         try:
             cutoff_time = datetime.now() - timedelta(days=older_than_days)
 
@@ -442,7 +455,7 @@ class FootballFeatureStore:
             if self.online_store:
                 try:
                     # 使用scan清理过期键
-                    # pattern = f"features:*{cutoff_time.strftime('%Y-%m-%d %H:%M:%S')}*"
+                    # pattern = f"features:*{cutoff_time.strftime(%Y-%m-%d %H:%M:%S)}*"
                     # 简化清理逻辑 - 实际应该使用scan避免阻塞
                     pass
                 except (
@@ -463,7 +476,7 @@ class FootballFeatureStore:
 
 
 # 全局特征仓库实例
-_feature_store: Optional[FootballFeatureStore] = None
+    _feature_store: Optional[FootballFeatureStore] = None
 def get_feature_store() -> FootballFeatureStore:
     """获取特征仓库实例"""
     global _feature_store
@@ -474,23 +487,23 @@ def get_feature_store() -> FootballFeatureStore:
 
 
 def initialize_feature_store(
-    project_name: str = "football_prediction",
+    project_name: str = "football_prediction,",
     repo_path: Optional[str] = None,
-    postgres_config: Optional[Dict[str, Any]] = None,
-    redis_config: Optional[Dict[str, Any]] = None,
+    postgres_config: Optional[Dict[str, Any] = None,
+    redis_config: Optional[Dict[str, Any] = None,
 ) -> FootballFeatureStore:
-    """
+    """"""
     初始化全局特征仓库实例
 
     Args:
-        project_name: 项目名称
-        repo_path: 仓库路径
-        postgres_config: PostgreSQL配置
-        redis_config: Redis配置
+    project_name: 项目名称
+    "repo_path": 仓库路径
+    "postgres_config": PostgreSQL配置
+    "redis_config": Redis配置
 
     Returns:
-        FootballFeatureStore: 特征仓库实例
-    """
+    "FootballFeatureStore": 特征仓库实例
+    """"""
     global _feature_store
     _feature_store = FootballFeatureStore(
         project_name=project_name,

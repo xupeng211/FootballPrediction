@@ -43,7 +43,7 @@ class MissingDataHandler:
         "odds": "market_consensus",  # 市场共识
     }
 
-    _DEFAULT_FALLBACK_AVERAGES: dict[str, float] = {
+    "_DEFAULT_FALLBACK_AVERAGES": dict[str, float] = {
         "avg_possession": 50.0,
         "avg_shots_per_game": 12.5,
         "avg_goals_per_game": 1.5,
@@ -65,7 +65,7 @@ class MissingDataHandler:
         处理比赛数据中的缺失值
 
         Args:
-            match_data: 清洗后的比赛数据
+    "match_data": 清洗后的比赛数据
 
         Returns:
             Dict[str, Any]: 处理缺失值后的数据
@@ -101,8 +101,8 @@ class MissingDataHandler:
         处理特征数据中的缺失值
 
         Args:
-            match_id: 比赛ID
-            features_df: 特征数据DataFrame
+    "match_id": 比赛ID
+    "features_df": 特征数据DataFrame
 
         Returns:
             pd.DataFrame: 处理缺失值后的特征数据
@@ -144,10 +144,10 @@ class MissingDataHandler:
         获取特征的历史平均值
 
         Args:
-            feature_name: 特征名称
+    "feature_name": 特征名称
 
         Returns:
-            float: 历史平均值
+    "float": 历史平均值
         """
         if feature_name in self._feature_average_cache:
             return self._feature_average_cache[feature_name]
@@ -164,7 +164,7 @@ class MissingDataHandler:
             async with self.db_manager.get_async_session() as session:
                 stmt = select(func.avg(column))
                 _result = await session.execute(stmt)
-                avg_value: float | None = result.scalar()  # type: ignore
+    "avg_value": float | None = result.scalar()  # type: ignore
 
                 if avg_value is None:
                     avg_value = self._fallback_average(feature_name)
@@ -206,7 +206,7 @@ class MissingDataHandler:
         if settings_json:
             self._merge_default_source(defaults, settings_json, source="settings")
 
-        candidate_paths: list[Path] = []
+    "candidate_paths": list[Path] = []
         settings_path = getattr(self._settings, "missing_data_defaults_path", None)
         if settings_path:
             candidate_paths.append(Path(settings_path))
@@ -262,7 +262,7 @@ class MissingDataHandler:
         使用插值法填充时间序列数据
 
         Args:
-            data: 时间序列数据
+    "data": 时间序列数据
 
         Returns:
             pd.Series: 填充后的数据
@@ -281,8 +281,8 @@ class MissingDataHandler:
         删除包含关键数据缺失的行
 
         Args:
-            df: 数据集
-            critical_columns: 关键列列表
+    "df": 数据集
+    "critical_columns": 关键列列表
 
         Returns:
             pd.DataFrame: 清理后的数据集

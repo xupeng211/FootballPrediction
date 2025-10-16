@@ -1,11 +1,11 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+
 比赛领域模型
 Match Domain Model
 
-封装比赛相关的业务逻辑和不变性约束。
+封装比赛相关的业务逻辑和不变性约束.
 Encapsulates match-related business logic and invariants.
-"""
+""""""
 
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -36,8 +36,8 @@ class MatchResult(Enum):
 class MatchScore:
     """比赛比分值对象"""
 
-    home_score: int = 0
-    away_score: int = 0
+    "home_score": int = 0
+    "away_score": int = 0
 
     def __post_init__(self) -> None:
         if self.home_score < 0 or self.away_score < 0:
@@ -64,34 +64,34 @@ class MatchScore:
             return MatchResult.DRAW
 
     def __str__(self) -> str:
-        return f"{self.home_score"-{self.away_score}"
+        return f"{self.home_score"-{self.away_score}""""""
 
 
 @dataclass
 class Match:
-    """
+    """"""
     比赛领域模型
 
-    封装比赛的核心业务逻辑和不变性约束。
-    """
+    封装比赛的核心业务逻辑和不变性约束.
+    """"""
 
-    id: Optional[int] = None
-    home_team_id: int = 0
-    away_team_id: int = 0
-    league_id: int = 0
-    season: str = ""
-    match_date: datetime = field(default_factory=datetime.utcnow)
-    status: MatchStatus = MatchStatus.SCHEDULED
-    score: Optional[MatchScore] = None
-    venue: Optional[str] = None
-    referee: Optional[str] = None
-    weather: Optional[str] = None
-    attendance: Optional[int] = None
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    "id": Optional[int] = None
+    "home_team_id": int = 0
+    "away_team_id": int = 0
+    "league_id": int = 0
+    "season": str = ""
+    "match_date": datetime = field(default_factory=datetime.utcnow)
+    "status": MatchStatus = MatchStatus.SCHEDULED
+    "score": Optional[MatchScore] = None
+    "venue": Optional[str] = None
+    "referee": Optional[str] = None
+    "weather": Optional[str] = None
+    "attendance": Optional[int] = None
+    "created_at": datetime = field(default_factory=datetime.utcnow)
+    "updated_at": datetime = field(default_factory=datetime.utcnow)
 
     # 领域事件
-    _domain_events: List[Any] = field(default_factory=list, init=False)
+    "_domain_events": List[Any] = field(default_factory=list, init=False)
 
     def __post_init__(self) -> None:
         """初始化后的验证"""
@@ -99,7 +99,7 @@ class Match:
             raise DomainError("主队和客队不能相同")
 
         if self.season and not self._is_valid_season_format(self.season):
-            raise DomainError("赛季格式无效，应为 YYYY-YYYY 或 YYYY")
+            raise DomainError("赛季格式无效,应为 YYYY-YYYY 或 YYYY")
 
     @staticmethod
     def _is_valid_season_format(season: str) -> bool:
@@ -125,7 +125,7 @@ class Match:
     def start_match(self) -> None:
         """开始比赛"""
         if self.status != MatchStatus.SCHEDULED:
-            raise DomainError(f"比赛状态为 {self.status.value}，无法开始")
+            raise DomainError(f"比赛状态为 {self.status.value},无法开始")
 
         self.status = MatchStatus.LIVE
         self.updated_at = datetime.utcnow()
@@ -168,7 +168,7 @@ class Match:
             )
         )
 
-    def cancel_match(self, reason: Optional[str] ] = None) -> None:
+    def cancel_match(self, reason: Optional[str] = None) -> None:
         """取消比赛"""
         if self.status in [MatchStatus.FINISHED, MatchStatus.CANCELLED]:
             raise DomainError("已结束或已取消的比赛无法再次取消")
@@ -176,7 +176,7 @@ class Match:
         self.status = MatchStatus.CANCELLED
         self.updated_at = datetime.utcnow()
 
-    def postpone_match(self, new_date: Optional[datetime] ] = None) -> None:
+    def postpone_match(self, new_date: Optional[datetime]  = None) -> None:
         """延期比赛"""
         if self.status in [MatchStatus.FINISHED, MatchStatus.CANCELLED]:
             raise DomainError("已结束或已取消的比赛无法延期")
@@ -241,7 +241,7 @@ class Match:
         return 0
 
     def get_duration(self) -> Optional[int]:
-        """获取比赛时长（分钟）"""
+        """获取比赛时长(分钟)"""
         if self.status == MatchStatus.FINISHED and self.created_at:
             # 这里简化处理，实际应该记录开始时间
             return 90  # 标准足球比赛时长
@@ -270,26 +270,26 @@ class Match:
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         return {
-            "id": self.id,
-            "home_team_id": self.home_team_id,
-            "away_team_id": self.away_team_id,
-            "league_id": self.league_id,
-            "season": self.season,
-            "match_date": self.match_date.isoformat() if self.match_date else None,
-            "status": self.status.value,
-            "score": {
-                "home_score": self.score.home_score,
-                "away_score": self.score.away_score,
-                "result": self.score.result.value,
+            "id": self.id,","
+            "home_team_id": self.home_team_id,","
+            "away_team_id": self.away_team_id,","
+            "league_id": self.league_id,","
+            "season": self.season,","
+            "match_date": self.match_date.isoformat() if self.match_date else None,","
+            "status": self.status.value,","
+            "score": {","
+                "home_score": self.score.home_score,","
+                "away_score": self.score.away_score,","
+                "result": self.score.result.value,""
             }
             if self.score
             else None,
-            "venue": self.venue,
-            "referee": self.referee,
-            "weather": self.weather,
-            "attendance": self.attendance,
-            "created_at": self.created_at.isoformat(),
-            "updated_at": self.updated_at.isoformat(),
+            "venue": self.venue,","
+            "referee": self.referee,","
+            "weather": self.weather,","
+            "attendance": self.attendance,","
+            "created_at": self.created_at.isoformat(),","
+            "updated_at": self.updated_at.isoformat(),""
         }
 
     @classmethod
@@ -318,4 +318,4 @@ class Match:
     def __str__(self) -> str:
         team_names = f"Team{self.home_team_id} vs Team{self.away_team_id}"
         score_str = f" ({self.score})" if self.score else ""
-        return f"{team_names"{score_str} - {self.status.value}"
+        return f"{team_names"{score_str} - {self.status.value

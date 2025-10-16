@@ -1,12 +1,12 @@
 from typing import Any, Dict, List, Optional, Union
 # mypy: ignore-errors
-"""
+""""""
 基于策略模式的预测服务
 Strategy-based Prediction Service
 
-使用策略模式重构的预测服务，提供灵活的预测算法选择。
+使用策略模式重构的预测服务,提供灵活的预测算法选择.
 Refactored prediction service using strategy pattern for flexible algorithm selection.
-"""
+""""""
 
 import logging
 
@@ -26,35 +26,35 @@ logger = logging.getLogger(__name__)
 
 
 class StrategyPredictionService:
-    """基于策略模式的预测服务
+    """基于策略模式的预测服务"""
 
-    使用策略模式管理多种预测算法，提供灵活的预测服务。
+    使用策略模式管理多种预测算法,提供灵活的预测服务.
     Uses strategy pattern to manage multiple prediction algorithms.
-    """
+    """"""
 
     def __init__(
         self,
-        strategy_factory: PredictionStrategyFactory,
-        prediction_domain_service: PredictionDomainService,
-        match_repository: MatchRepository,
-        prediction_repository: PredictionRepository,
-        default_strategy: str = "ensemble_predictor",
+    "strategy_factory": PredictionStrategyFactory,
+    "prediction_domain_service": PredictionDomainService,
+    "match_repository": MatchRepository,
+    "prediction_repository": PredictionRepository,
+    "default_strategy": str = "ensemble_predictor",
     ):
-        """初始化预测服务
+        """初始化预测服务"""
 
         Args:
-            strategy_factory: 策略工厂
-            prediction_domain_service: 预测领域服务
-            match_repository: 比赛仓储
-            prediction_repository: 预测仓储
-            default_strategy: 默认策略名称
-        """
+    "strategy_factory": 策略工厂
+    "prediction_domain_service": 预测领域服务
+    "match_repository": 比赛仓储
+    "prediction_repository": 预测仓储
+    "default_strategy": 默认策略名称
+        """"""
         self._strategy_factory = strategy_factory
         self._prediction_domain_service = prediction_domain_service
         self._match_repository = match_repository
         self._prediction_repository = prediction_repository
         self._default_strategy = default_strategy
-        self._current_strategies: Dict[str, PredictionStrategy] = {}}
+        self._current_strategies: Dict[str, PredictionStrategy] = {}
 
     async def initialize(self) -> None:
         """初始化服务"""
@@ -71,24 +71,24 @@ class StrategyPredictionService:
 
     async def predict_match(
         self,
-        match_id: int,
-        user_id: int,
-        strategy_name: Optional[str] ] = None,
-        confidence: Optional[float] ] = None,
-        notes: Optional[str] ] = None,
+    "match_id": int,
+    "user_id": int,
+    "strategy_name": Optional[str] = None,
+    "confidence": Optional[float] = None,
+    "notes": Optional[str] = None,
     ) -> Prediction:
-        """预测单场比赛
+        """预测单场比赛"""
 
         Args:
-            match_id: 比赛ID
-            user_id: 用户ID
-            strategy_name: 使用的策略名称，None表示使用默认策略
-            confidence: 预测信心度
-            notes: 预测备注
+    "match_id": 比赛ID
+    "user_id": 用户ID
+    "strategy_name": 使用的策略名称,None表示使用默认策略
+    "confidence": 预测信心度
+    "notes": 预测备注
 
         Returns:
-            Prediction: 创建的预测
-        """
+    "Prediction": 创建的预测
+        """"""
         # 获取比赛信息
         match = await self._match_repository.get_by_id(match_id)
         if not match:
@@ -133,24 +133,24 @@ class StrategyPredictionService:
         await self._log_prediction_details(prediction, prediction_output, strategy_name)
 
         logger.info(
-            f"用户 {user_id} 对比赛 {match_id} 完成预测，使用策略: {strategy_name}"
+            f"用户 {user_id} 对比赛 {match_id} 完成预测,使用策略: {strategy_name}"
         )
 
         return prediction
 
     async def batch_predict(
-        self, match_ids: List[int], user_id: int, strategy_name: Optional[str] = None
+        self, match_ids: List[int], user_id: int, strategy_name: Optional[str = None
     ) -> List[Prediction]:
-        """批量预测比赛
+        """批量预测比赛"""
 
         Args:
-            match_ids: 比赛ID列表
-            user_id: 用户ID
-            strategy_name: 使用的策略名称
+    "match_ids": 比赛ID列表
+    "user_id": 用户ID
+    "strategy_name": 使用的策略名称
 
         Returns:
             List[Prediction]: 创建的预测列表
-        """
+        """"""
         # 选择策略
         strategy_name = strategy_name or self._default_strategy
         strategy = await self._get_or_create_strategy(strategy_name)
@@ -199,17 +199,17 @@ class StrategyPredictionService:
         return predictions
 
     async def compare_strategies(
-        self, match_id: int, strategy_names: Optional[List[str]] = None
+        self, match_id: int, strategy_names: Optional[List[str] = None
     ) -> Dict[str, PredictionOutput]:
-        """比较不同策略的预测结果
+        """比较不同策略的预测结果"""
 
         Args:
-            match_id: 比赛ID
-            strategy_names: 要比较的策略列表，None表示比较所有可用策略
+    "match_id": 比赛ID
+    "strategy_names": 要比较的策略列表,None表示比较所有可用策略
 
         Returns:
             Dict[str, PredictionOutput]: 各策略的预测结果
-        """
+        """"""
         # 获取比赛信息
         match = await self._match_repository.get_by_id(match_id)
         if not match:
@@ -249,15 +249,15 @@ class StrategyPredictionService:
     async def get_strategy_performance(
         self, strategy_name: str, days: int = 30
     ) -> Optional[Dict[str, Any]:
-        """获取策略性能指标
+        """获取策略性能指标"""
 
         Args:
-            strategy_name: 策略名称
-            days: 统计天数
+    "strategy_name": 策略名称
+    "days": 统计天数
 
         Returns:
             Optional[Dict[str, Any]: 性能指标
-        """
+        """"""
         strategy = self._strategy_factory.get_strategy(strategy_name)
         if not strategy:
             return None
@@ -277,26 +277,26 @@ class StrategyPredictionService:
         )
 
         return {
-            "strategy_name": strategy_name,
-            "strategy_type": strategy.strategy_type.value,
-            "metrics": {
-                "accuracy": metrics.accuracy,
-                "precision": metrics.precision,
-                "recall": metrics.recall,
-                "f1_score": metrics.f1_score,
-                "total_predictions": metrics.total_predictions,
-                "last_updated": metrics.last_updated.isoformat(),
+            "strategy_name": strategy_name,","
+            "strategy_type": strategy.strategy_type.value,","
+            "metrics": {","
+                "accuracy": metrics.accuracy,","
+                "precision": metrics.precision,","
+                "recall": metrics.recall,","
+                "f1_score": metrics.f1_score,","
+                "total_predictions": metrics.total_predictions,","
+                "last_updated": metrics.last_updated.isoformat(),""
             },
-            "actual_performance": actual_performance,
-            "recent_predictions_count": len(recent_predictions),
+            "actual_performance": actual_performance,","
+            "recent_predictions_count": len(recent_predictions),""
         }
 
     async def update_strategy_weights(self, strategy_weights: Dict[str, float]) -> None:
-        """更新集成策略的权重
+        """更新集成策略的权重"""
 
         Args:
-            strategy_weights: 策略权重字典
-        """
+    "strategy_weights": 策略权重字典
+        """"""
         ensemble_strategy = self._strategy_factory.get_strategy("ensemble_predictor")
         if ensemble_strategy:
             for strategy_name, weight in strategy_weights.items():
@@ -304,11 +304,11 @@ class StrategyPredictionService:
             logger.info("更新集成策略权重")
 
     async def switch_default_strategy(self, strategy_name: str) -> None:
-        """切换默认策略
+        """切换默认策略"""
 
         Args:
-            strategy_name: 新的默认策略名称
-        """
+    "strategy_name": 新的默认策略名称
+        """"""
         strategy = self._strategy_factory.get_strategy(strategy_name)
         if not strategy:
             raise ValueError(f"策略不存在: {strategy_name}")
@@ -324,14 +324,14 @@ class StrategyPredictionService:
         strategies_info = {}
         for name, strategy in self._strategy_factory.get_all_strategies().items():
             strategies_info[name] = {
-                "name": name,
-                "type": strategy.strategy_type.value,
-                "healthy": strategy.is_healthy(),
-                "is_default": name == self._default_strategy,
-                "metrics": strategy.get_metrics().__dict__
+                "name": name,","
+                "type": strategy.strategy_type.value,","
+                "healthy": strategy.is_healthy(),","
+                "is_default": name == self._default_strategy,","
+                "metrics": strategy.get_metrics().__dict__""
                 if strategy.get_metrics()
                 else None,
-                "health": health_report.get(name, {}),
+                "health": health_report.get(name, {}),""
             }
 
         return strategies_info
@@ -347,10 +347,10 @@ class StrategyPredictionService:
         return strategy
 
     async def _get_team_info(self, team_id: int) -> Team:
-        """获取球队信息（简化实现）"""
+        """获取球队信息(简化实现)"""
         # 实际应该从team repository获取
         # 这里返回模拟数据
-        return Team(id=team_id, name=f"Team_{team_id}", league_id=1)
+        return Team(id=team_id, name=f"Team_{team_id}", league_id=1)"
 
     async def _prepare_prediction_input(
         self, context: PredictionContext
@@ -366,8 +366,8 @@ class StrategyPredictionService:
             away_team=context.away_team,
             historical_data=historical_data,
             additional_features={
-                "user_id": context.user_id,
-                "request_time": context.timestamp.isoformat(),
+                "user_id": context.user_id,","
+                "request_time": context.timestamp.isoformat(),""
             },
         )
 
@@ -378,44 +378,44 @@ class StrategyPredictionService:
         # 这里应该从数据库或缓存获取历史数据
         # 简化实现，返回模拟数据
         return {
-            "home_team_recent_form": [
+            "home_team_recent_form": [","
                 {"goals_for": 2, "goals_against": 1, "result": "win"},
                 {"goals_for": 1, "goals_against": 1, "result": "draw"},
                 {"goals_for": 3, "goals_against": 0, "result": "win"},
             ],
-            "away_team_recent_form": [
+            "away_team_recent_form": [","
                 {"goals_for": 1, "goals_against": 2, "result": "loss"},
                 {"goals_for": 0, "goals_against": 1, "result": "loss"},
                 {"goals_for": 2, "goals_against": 2, "result": "draw"},
             ],
-            "head_to_head": [
+            "head_to_head": [","
                 {"home_score": 2, "away_score": 1},
                 {"home_score": 1, "away_score": 1},
                 {"home_score": 0, "away_score": 2},
             ],
-            "features": {
-                "home_team_rating": 85.5,
-                "away_team_rating": 78.2,
-                "home_advantage": 1.15,
+            "features": {","
+                "home_team_rating": 85.5,","
+                "away_team_rating": 78.2,","
+                "home_advantage": 1.15,""
             },
         }
 
     async def _log_prediction_details(
         self,
-        prediction: Prediction,
-        prediction_output: PredictionOutput,
-        strategy_name: str,
+    "prediction": Prediction,
+    "prediction_output": PredictionOutput,
+    "strategy_name": str,
     ) -> None:
         """记录预测详情"""
         details = {
-            "prediction_id": prediction.id,
-            "strategy_used": strategy_name,
-            "predicted_score": f"{prediction_output.predicted_home_score":{prediction_output.predicted_away_score}",
-            "confidence": prediction_output.confidence,
-            "execution_time_ms": prediction_output.execution_time_ms,
-            "probability_distribution": prediction_output.probability_distribution,
-            "feature_importance": prediction_output.feature_importance,
-            "metadata": prediction_output.metadata,
+            "prediction_id": prediction.id,","
+            "strategy_used": strategy_name,","
+            "predicted_score": f"{prediction_output.predicted_home_score":{prediction_output.predicted_away_score}",",
+            "confidence": prediction_output.confidence,","
+            "execution_time_ms": prediction_output.execution_time_ms,","
+            "probability_distribution": prediction_output.probability_distribution,","
+            "feature_importance": prediction_output.feature_importance,","
+            "metadata": prediction_output.metadata,""
         }
 
         logger.info(f"预测详情: {details}")
@@ -456,10 +456,10 @@ class StrategyPredictionService:
         )
 
         return {
-            "accuracy": accuracy,
-            "correct_predictions": correct_predictions,
-            "total_predictions": total_predictions,
-            "average_score_difference": avg_score_diff,
+            "accuracy": accuracy,","
+            "correct_predictions": correct_predictions,","
+            "total_predictions": total_predictions,","
+            "average_score_difference": avg_score_diff,""
         }
 
 

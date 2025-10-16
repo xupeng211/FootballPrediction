@@ -41,7 +41,7 @@ class ScoresCollector:
         收集所有正在进行的比赛比分
 
         Args:
-            force_refresh: 是否强制刷新
+    "force_refresh": 是否强制刷新
 
         Returns:
             实时比分数据

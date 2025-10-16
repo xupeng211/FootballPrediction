@@ -1,11 +1,11 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+
 预测仓储
 Prediction Repository
 
-实现预测相关的数据访问逻辑。
+实现预测相关的数据访问逻辑.
 Implements data access logic for predictions.
-"""
+""""""
 
 from datetime import datetime, date
 from decimal import Decimal
@@ -63,7 +63,7 @@ class ReadOnlyPredictionRepository(ReadOnlyRepository[Prediction, int]):
         result = await self.session.execute(query)
         return result.scalars().first()  # type: ignore
 
-    async def get_all(self, query_spec: Optional[QuerySpec] ] = None) -> List[Prediction]:
+    async def get_all(self, query_spec: Optional[QuerySpec]  = None) -> List[Prediction]:
         """获取所有预测"""
         return await self.find_many(query_spec or QuerySpec())
 
@@ -83,11 +83,11 @@ class ReadOnlyPredictionRepository(ReadOnlyRepository[Prediction, int]):
 
     async def get_predictions_by_user(
         self,
-        user_id: int,
-        start_date: Optional[date] ] = None,
-        end_date: Optional[date] ] = None,
-        limit: int = 100,
-        offset: int = 0,
+    "user_id": int,
+    "start_date": Optional[date]  = None,
+    "end_date": Optional[date]  = None,
+    "limit": int = 100,
+    "offset": int = 0,
     ) -> List[Prediction]:
         """获取用户的所有预测"""
         filters = {"user_id": user_id}
@@ -98,10 +98,10 @@ class ReadOnlyPredictionRepository(ReadOnlyRepository[Prediction, int]):
 
         query_spec = QuerySpec(
             filters=filters,
-            order_by=["-created_at"],
+            order_by=["-created_at"]"]",
             limit=limit,
             offset=offset,
-            include=["match"],
+            include=["match"]"]",
         )
 
         return await self.find_many(query_spec)
@@ -131,8 +131,7 @@ class ReadOnlyPredictionRepository(ReadOnlyRepository[Prediction, int]):
             func.avg(Prediction.confidence).label("avg_confidence"),
             func.sum(func.case((Prediction.points_earned > 0, 1), else_=0)).label(
                 "successful_predictions"
-            ),
-        ).where(Prediction.user_id == user_id)
+            ))).where(Prediction.user_id == user_id)
 
         if period_days:
             from datetime import timedelta
@@ -145,31 +144,30 @@ class ReadOnlyPredictionRepository(ReadOnlyRepository[Prediction, int]):
 
         if not stats or stats.total_predictions == 0:
             return {
-                "total_predictions": 0,
-                "successful_predictions": 0,
-                "success_rate": 0.0,
-                "total_points": 0,
-                "average_confidence": 0.0,
+                "total_predictions": 0,","
+                "successful_predictions": 0,","
+                "success_rate": 0.0,","
+                "total_points": 0,","
+                "average_confidence": 0.0,""
             }
 
         return {
-            "total_predictions": stats.total_predictions,
-            "successful_predictions": stats.successful_predictions or 0,
-            "success_rate": (
+            "total_predictions": stats.total_predictions,","
+            "successful_predictions": stats.successful_predictions or 0,","
+            "success_rate": (""
                 (stats.successful_predictions / stats.total_predictions)
                 if stats.total_predictions > 0
                 else 0.0
             ),
-            "total_points": stats.total_points or 0,
-            "average_confidence": float(stats.avg_confidence or 0),
+            "total_points": stats.total_points or 0,","
+            "average_confidence": float(stats.avg_confidence or 0),""
         }
 
     async def get_match_statistics(self, match_id: int) -> Dict[str, Any]:
         """获取比赛统计信息"""
         query = select(
             func.count(Prediction.id).label("total_predictions"),
-            func.avg(Prediction.confidence).label("avg_confidence"),
-        ).where(Prediction.match_id == match_id)
+            func.avg(Prediction.confidence).label("avg_confidence"))).where(Prediction.match_id == match_id)
 
         result = await self.session.execute(query)
         stats = result.first()  # type: ignore
@@ -179,26 +177,24 @@ class ReadOnlyPredictionRepository(ReadOnlyRepository[Prediction, int]):
             select(
                 Prediction.predicted_home,  # type: ignore
                 Prediction.predicted_away,  # type: ignore
-                func.count(Prediction.id).label("count"),
-            )
-            .where(Prediction.match_id == match_id)
+                func.count(Prediction.id).label("count"))).where(Prediction.match_id == match_id)
             .group_by(Prediction.predicted_home, Prediction.predicted_away)  # type: ignore
         )
 
         distribution_result = await self.session.execute(distribution_query)
         distribution = [
             {
-                "predicted_home": row.predicted_home,
-                "predicted_away": row.predicted_away,
-                "count": row.count,
+                "predicted_home": row.predicted_home,","
+                "predicted_away": row.predicted_away,","
+                "count": row.count,""
             }
             for row in distribution_result.fetchall()
         ]
 
         return {
-            "total_predictions": stats.total_predictions or 0,
-            "average_confidence": float(stats.avg_confidence or 0),
-            "prediction_distribution": distribution,
+            "total_predictions": stats.total_predictions or 0,","
+            "average_confidence": float(stats.avg_confidence or 0),","
+            "prediction_distribution": distribution,""
         }
 
 
@@ -211,7 +207,7 @@ class PredictionRepository(PredictionRepositoryInterface):
         result = await self.session.execute(query)
         return result.scalars().first()  # type: ignore
 
-    async def get_all(self, query_spec: Optional[QuerySpec] ] = None) -> List[Prediction]:
+    async def get_all(self, query_spec: Optional[QuerySpec]  = None) -> List[Prediction]:
         """获取所有预测"""
         query = select(Prediction)
 
@@ -277,11 +273,11 @@ class PredictionRepository(PredictionRepositoryInterface):
     async def create(self, entity_data: Dict[str, Any]) -> Prediction:
         """创建新预测"""
         prediction = Prediction(
-            match_id=entity_data["match_id"],
-            user_id=entity_data["user_id"],
-            predicted_home=entity_data["predicted_home"],
-            predicted_away=entity_data["predicted_away"],
-            confidence=Decimal(str(entity_data["confidence"])),
+            match_id=entity_data["match_id"]"],"
+            user_id=entity_data["user_id"]"],"
+            predicted_home=entity_data["predicted_home"]"],"
+            predicted_away=entity_data["predicted_away"]"],"
+            confidence=Decimal(str(entity_data["confidence"]))"],"
             strategy_used=entity_data.get("strategy_used"),
             notes=entity_data.get("notes"),
             created_at=datetime.utcnow(),
@@ -330,11 +326,11 @@ class PredictionRepository(PredictionRepositoryInterface):
         predictions = []
         for data in entities_data:
             prediction = Prediction(
-                match_id=data["match_id"],
-                user_id=data["user_id"],
-                predicted_home=data["predicted_home"],
-                predicted_away=data["predicted_away"],
-                confidence=Decimal(str(data["confidence"])),
+                match_id=data["match_id"]"],"
+                user_id=data["user_id"]"],"
+                predicted_home=data["predicted_home"]"],"
+                predicted_away=data["predicted_away"]"],"
+                confidence=Decimal(str(data["confidence"]))","
                 strategy_used=data.get("strategy_used"),
                 notes=data.get("notes"),
                 created_at=datetime.utcnow(),

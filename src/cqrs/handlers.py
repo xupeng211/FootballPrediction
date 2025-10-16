@@ -281,7 +281,7 @@ class GetPredictionsByUserHandler(QueryHandler):
                 JOIN matches m ON p.match_id = m.id
                 WHERE p.user_id = :user_id
                 """
-                params: dict[str, Any] = {"user_id": query.user_id}
+    "params": dict[str, Any] = {"user_id": query.user_id}
 
                 if query.start_date:
                     sql += " AND m.match_date >= :start_date"
@@ -383,7 +383,7 @@ class GetUserStatsHandler(QueryHandler):
                 )
                 strategy_rows = strategy_result.fetchall()
 
-                strategy_breakdown: dict[str, Any] = {}
+    "strategy_breakdown": dict[str, Any] = {}
                 for row in strategy_rows:
                     strategy_breakdown[row.strategy_used] = {
                         "count": row.count,
@@ -412,7 +412,7 @@ class GetUserStatsHandler(QueryHandler):
                 )
                 recent_rows = recent_result.fetchall()
 
-                recent_performance: list[Any] = []
+    "recent_performance": list[Any] = []
                 for row in recent_rows:
                     recent_performance.append(
                         {
@@ -461,7 +461,7 @@ class GetUpcomingMatchesHandler(QueryHandler):
                 WHERE match_date >= NOW()
                 AND match_date <= NOW() + INTERVAL ':days_ahead days'
                 """
-                params: dict[str, Any] = {"days_ahead": query.days_ahead}
+    "params": dict[str, Any] = {"days_ahead": query.days_ahead}
 
                 if query.competition:
                     sql += " AND competition = :competition"

@@ -18,16 +18,16 @@ from sqlalchemy.exc import SQLAlchemyError, DatabaseError
 4. 添加兼容性检查和验证
 
 Revision ID: c1d8ae5075f0
-Revises: 006_missing_indexes
+    "Revises": 006_missing_indexes
 Create Date: 2025-09-12 12:41:21.259691
 
 """
 
 # revision identifiers, used by Alembic.
-revision: str = "c1d8ae5075f0"
-down_revision: Union[str, None] = "006_missing_indexes"  # type: ignore
-branch_labels: Union[str, Sequence[str], None] = None  # type: ignore
-depends_on: Union[str, Sequence[str], None] = None  # type: ignore
+    "revision": str = "c1d8ae5075f0"
+    "down_revision": Union[str, None] = "006_missing_indexes"  # type: ignore
+    "branch_labels": Union[str, Sequence[str], None] = None  # type: ignore
+    "depends_on": Union[str, Sequence[str], None] = None  # type: ignore
 
 
 def is_sqlite():

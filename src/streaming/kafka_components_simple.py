@@ -1,14 +1,14 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+
 简化的Kafka组件实现
-"""
+
 
 
 from src.core.exceptions import StreamingError
 
 
 class KafkaAdminClient:
-    """Kafka管理客户端（简化版）"""
+    """Kafka管理客户端(简化版)"""
 
     def __init__(self, bootstrap_servers: List[str]):
         self.bootstrap_servers = bootstrap_servers
@@ -45,8 +45,8 @@ class KafkaAdminClient:
         if not self.is_running:
             raise StreamingError("Admin client not started")
         return {
-            topic_name: {
-                "partitions": [
+    "topic_name": {
+                "partitions": [","
                     {"id": 0, "leader": 1},
                     {"id": 1, "leader": 2},
                     {"id": 2, "leader": 3},
@@ -95,10 +95,10 @@ class KafkaTopicManager:
         if source_topic in description:
             source_config = description[source_topic]
             new_config = {
-                "name": target_topic,
-                "partitions": len(source_config.get("partitions", [])),
-                "replication_factor": 2,  # 默认值
-                "config": source_config.get("config", {}),
+                "name": target_topic,","
+                "partitions": len(source_config.get("partitions", [])),","
+                "replication_factor": 2,  # 默认值","
+                "config": source_config.get("config", {}),""
             }
             await self.create_topic(new_config)
 
@@ -119,19 +119,19 @@ class KafkaConsumerGroup:
     async def list_groups(self) -> List[Dict[str, Any]:
         """列出消费者组"""
         return [
-            {"group_id": "group1"},
-            {"group_id": "group2"},
+            {"group_id": "group1"}"",
+            {"group_id": "group2"}"",
             {"group_id": self.group_id},
         ]
 
     async def describe_group(self) -> Dict[str, Any]:
         """描述消费者组"""
         return {
-            "group_id": self.group_id,
-            "state": "Stable",
-            "members": [
-                {"consumer_id": "consumer1", "assignment": ["topic1"]},
-                {"consumer_id": "consumer2", "assignment": ["topic2"]},
+            "group_id": self.group_id,","
+            "state": "Stable",","
+            "members": [","
+                {"consumer_id": "consumer1", "assignment": ["topic1"}""],
+                {"consumer_id": "consumer2", "assignment": ["topic2"}""],
             ],
         }
 
@@ -159,10 +159,10 @@ class KafkaCluster:
     def get_metadata(self) -> Dict[str, Any]:
         """获取集群元数据"""
         return {
-            "name": self.name,
-            "brokers": self.brokers,
-            "broker_count": len(self.brokers),
-            "controller": self.brokers[0] if self.brokers else None,
+            "name": self.name,","
+            "brokers": self.brokers,","
+            "broker_count": len(self.brokers),","
+            "controller": self.brokers[0 if self.brokers else None,""
         }
 
     async def check_health(self) -> Dict[str, Any]:
@@ -170,8 +170,8 @@ class KafkaCluster:
         if self.health_checker:
             return await self.health_checker.check_cluster_health()  # type: ignore
         return {
-            "healthy": True,
-            "brokers": {
+            "healthy": True,","
+            "brokers": {","
                 f"broker{i + 1}": {"status": "online"} for i in range(len(self.brokers))
             },
         }
@@ -181,10 +181,10 @@ class KafkaCluster:
         if self.metrics_collector:
             return await self.metrics_collector.get_throughput_metrics()  # type: ignore
         return {
-            "bytes_in_per_sec": 1024000,
-            "bytes_out_per_sec": 2048000,
-            "messages_in_per_sec": 1000,
-            "messages_out_per_sec": 500,
+            "bytes_in_per_sec": 1024000,","
+            "bytes_out_per_sec": 2048000,","
+            "messages_in_per_sec": 1000,","
+            "messages_out_per_sec": 500,""
         }
 
 
@@ -197,41 +197,41 @@ class KafkaHealthChecker:
     async def check_broker_health(self) -> Dict[str, Any][int, Dict[str, Any]:
         """检查代理健康状态"""
         return {
-            1: {"host": "broker1", "port": 9092, "status": "online"},
-            2: {"host": "broker2", "port": 9092, "status": "online"},
-            3: {"host": "broker3", "port": 9092, "status": "online"},
+    "1": {"host": "broker1", "port": 9092, "status": "online"},
+    "2": {"host": "broker2", "port": 9092, "status": "online"},
+    "3": {"host": "broker3", "port": 9092, "status": "online"},
         }
 
     async def check_topic_health(self, topic_name: str) -> Dict[str, Any]:
         """检查主题健康状态"""
         return {
-            "under_replicated_partitions": 0,
-            "offline_partitions": 0,
-            "total_partitions": 3,
+            "under_replicated_partitions": 0,","
+            "offline_partitions": 0,","
+            "total_partitions": 3,""
         }
 
     async def check_disk_usage(self) -> Dict[str, Dict[str, Any]:
         """检查磁盘使用情况"""
         return {
-            "broker1": {
-                "total": 1000000,
-                "used": 500000,
-                "free": 500000,
-                "usage_percent": 50,
+            "broker1": {","
+                "total": 1000000,","
+                "used": 500000,","
+                "free": 500000,","
+                "usage_percent": 50,""
             },
-            "broker2": {
-                "total": 1000000,
-                "used": 700000,
-                "free": 300000,
-                "usage_percent": 70,
+            "broker2": {","
+                "total": 1000000,","
+                "used": 700000,","
+                "free": 300000,","
+                "usage_percent": 70,""
             },
         }
 
     async def check_consumer_lag(self, group_id: str) -> List[Dict[str, Any]:
         """检查消费者延迟"""
         return [
-            {"topic": "topic1", "partition": 0, "lag": 100},
-            {"topic": "topic1", "partition": 1, "lag": 50},
+            {"topic": "topic1", "partition": 0, "lag": 100}","
+            {"topic": "topic1", "partition": 1, "lag": 50}","
         ]
 
 
@@ -244,11 +244,11 @@ class KafkaMetricsCollector:
     async def collect_broker_metrics(self) -> Dict[str, Dict[str, Any]:
         """收集代理指标"""
         return {
-            "broker1": {
-                "messages_in": 10000,
-                "bytes_in": 1024000,
-                "bytes_out": 2048000,
-                "request_queue_size": 10,
+            "broker1": {","
+                "messages_in": 10000,","
+                "bytes_in": 1024000,","
+                "bytes_out": 2048000,","
+                "request_queue_size": 10,""
             }
         }
 
@@ -257,31 +257,31 @@ class KafkaMetricsCollector:
     ) -> Dict[str, Dict[str, Any]:
         """收集主题指标"""
         return {
-            "topic1": {
-                "bytes_in_per_sec": 1024,
-                "bytes_out_per_sec": 2048,
-                "messages_in_per_sec": 10,
-                "size": 1048576,
+            "topic1": {","
+                "bytes_in_per_sec": 1024,","
+                "bytes_out_per_sec": 2048,","
+                "messages_in_per_sec": 10,","
+                "size": 1048576,""
             }
         }
 
     async def collect_jvm_metrics(self) -> Dict[str, Any]:
         """收集JVM指标"""
         return {
-            "heap_used": 512000000,
-            "heap_max": 1024000000,
-            "heap_used_percent": 50,
-            "gc_count": 1000,
-            "gc_time": 5000,
+            "heap_used": 512000000,","
+            "heap_max": 1024000000,","
+            "heap_used_percent": 50,","
+            "gc_count": 1000,","
+            "gc_time": 5000,""
         }
 
     async def get_throughput_metrics(self) -> Dict[str, Any]:
         """获取吞吐量指标"""
         return {
-            "bytes_in_per_sec": 1024000,
-            "bytes_out_per_sec": 2048000,
-            "messages_in_per_sec": 1000,
-            "messages_out_per_sec": 500,
+            "bytes_in_per_sec": 1024000,","
+            "bytes_out_per_sec": 2048000,","
+            "messages_in_per_sec": 1000,","
+            "messages_out_per_sec": 500,""
         }
 
     def export_to_prometheus(self, metrics: Dict[str, Any]) -> str:
@@ -289,6 +289,6 @@ class KafkaMetricsCollector:
         lines = []
         for key, value in metrics.items():
             if isinstance(value, (int, float)):
-                prom_key = f"kafka_{key.replace('.', '_').replace(' ', '_')}"
+                prom_key = f"kafka_{key.replace(., '_').replace(' ', '_')}"
                 lines.append(f"{prom_key} {value}")
         return "\n".join(lines)

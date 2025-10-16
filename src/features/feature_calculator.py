@@ -1,15 +1,15 @@
 from typing import Any, Dict, List, Optional, Union
 # mypy: ignore-errors
-"""
+""""""
 import asyncio
 特征计算器
 
-实现足球预测系统的核心特征计算逻辑：
+实现足球预测系统的核心特征计算逻辑:
 - 近期战绩特征计算
 - 历史对战特征计算
 - 赔率特征计算
 - 批量特征计算和缓存
-"""
+""""""
 
 import asyncio
 import statistics
@@ -33,38 +33,38 @@ from .feature_definitions import (
 
 
 class FeatureCalculator:
-    """
+    """"""
     特征计算器
 
-    负责计算各种特征的核心类，支持：
+    负责计算各种特征的核心类,支持:
     - 近期战绩特征计算
     - 历史对战特征计算
     - 赔率特征计算
     - 批量计算和缓存优化
-    """
+    """"""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: Optional[Dict[str, Any] = None):
         self.db_manager = DatabaseManager()
         self._config = config or {}
         self.features: list = []  # 存储特征定义
 
     async def calculate_recent_performance_features(
         self,
-        team_id: int,
-        calculation_date: datetime,
-        session: Optional[AsyncSession] = None,
+    "team_id": int,
+    "calculation_date": datetime,
+    "session": Optional[AsyncSession] = None,
     ) -> RecentPerformanceFeatures:
-        """
+        """"""
         计算球队近期战绩特征
 
         Args:
-            team_id: 球队ID
-            calculation_date: 计算日期
-            session: 数据库会话（可选）
+    "team_id": 球队ID
+    "calculation_date": 计算日期
+    "session": 数据库会话(可选)
 
         Returns:
-            RecentPerformanceFeatures: 近期战绩特征
-        """
+    "RecentPerformanceFeatures": 近期战绩特征
+        """"""
         if session is None:
             async with self.db_manager.get_async_session() as session:
                 return await self._calculate_recent_performance(
@@ -159,8 +159,8 @@ class FeatureCalculator:
         return features
 
     @staticmethod
-    def _calculate_form(matches: List[Dict[str, Any]) -> float:
-        """根据比赛结果计算球队状态评分，范围 0-1。"""
+    def _calculate_form(matches: List[Dict[str, Any]] -> float:
+        """根据比赛结果计算球队状态评分,范围 0-1."""
 
         if not matches:
             return 0.0
@@ -178,23 +178,23 @@ class FeatureCalculator:
 
     async def calculate_historical_matchup_features(
         self,
-        home_team_id: int,
-        away_team_id: int,
-        calculation_date: datetime,
-        session: Optional[AsyncSession] = None,
+    "home_team_id": int,
+    "away_team_id": int,
+    "calculation_date": datetime,
+    "session": Optional[AsyncSession] = None,
     ) -> HistoricalMatchupFeatures:
-        """
+        """"""
         计算历史对战特征
 
         Args:
-            home_team_id: 主队ID
-            away_team_id: 客队ID
-            calculation_date: 计算日期
-            session: 数据库会话（可选）
+    "home_team_id": 主队ID
+    "away_team_id": 客队ID
+    "calculation_date": 计算日期
+    "session": 数据库会话(可选)
 
         Returns:
-            HistoricalMatchupFeatures: 历史对战特征
-        """
+    "HistoricalMatchupFeatures": 历史对战特征
+        """"""
         if session is None:
             async with self.db_manager.get_async_session() as session:
                 return await self._calculate_historical_matchup(
@@ -207,10 +207,10 @@ class FeatureCalculator:
 
     async def _calculate_historical_matchup(
         self,
-        session: AsyncSession,
-        home_team_id: int,
-        away_team_id: int,
-        calculation_date: datetime,
+    "session": AsyncSession,
+    "home_team_id": int,
+    "away_team_id": int,
+    "calculation_date": datetime,
     ) -> HistoricalMatchupFeatures:
         """内部历史对战计算逻辑"""
 
@@ -296,21 +296,21 @@ class FeatureCalculator:
 
     async def calculate_odds_features(
         self,
-        match_id: int,
-        calculation_date: datetime,
-        session: Optional[AsyncSession] = None,
+    "match_id": int,
+    "calculation_date": datetime,
+    "session": Optional[AsyncSession] = None,
     ) -> OddsFeatures:
-        """
+        """"""
         计算赔率特征
 
         Args:
-            match_id: 比赛ID
-            calculation_date: 计算日期
-            session: 数据库会话（可选）
+    "match_id": 比赛ID
+    "calculation_date": 计算日期
+    "session": 数据库会话(可选)
 
         Returns:
-            OddsFeatures: 赔率特征
-        """
+    "OddsFeatures": 赔率特征
+        """"""
         if session is None:
             async with self.db_manager.get_async_session() as session:
                 return await self._calculate_odds_features(
@@ -401,16 +401,16 @@ class FeatureCalculator:
     async def calculate_all_match_features(
         self, match_entity: MatchEntity, calculation_date: Optional[datetime] = None
     ) -> AllMatchFeatures:
-        """
+        """"""
         计算比赛的所有特征
 
         Args:
-            match_entity: 比赛实体
-            calculation_date: 计算日期（默认为比赛时间）
+    "match_entity": 比赛实体
+    "calculation_date": 计算日期(默认为比赛时间)
 
         Returns:
-            AllMatchFeatures: 完整比赛特征
-        """
+    "AllMatchFeatures": 完整比赛特征
+        """"""
         if calculation_date is None:
             calculation_date = match_entity.match_time
 
@@ -449,16 +449,16 @@ class FeatureCalculator:
     async def calculate_all_team_features(
         self, team_entity: TeamEntity, calculation_date: Optional[datetime] = None
     ) -> AllTeamFeatures:
-        """
+        """"""
         计算球队的所有特征
 
         Args:
-            team_entity: 球队实体
-            calculation_date: 计算日期（默认为当前时间）
+    "team_entity": 球队实体
+    "calculation_date": 计算日期(默认为当前时间)
 
         Returns:
-            AllTeamFeatures: 完整球队特征
-        """
+    "AllTeamFeatures": 完整球队特征
+        """"""
         if calculation_date is None:
             calculation_date = datetime.now()
 
@@ -471,18 +471,18 @@ class FeatureCalculator:
         )
 
     async def batch_calculate_team_features(
-        self, team_ids: List[int], calculation_date: Optional[datetime] = None
+        self, team_ids: List[int], calculation_date: Optional[datetime = None
     ) -> Dict[int, RecentPerformanceFeatures]:
-        """
+        """"""
         批量计算球队特征
 
         Args:
-            team_ids: 球队ID列表
-            calculation_date: 计算日期
+    "team_ids": 球队ID列表
+    "calculation_date": 计算日期
 
         Returns:
             Dict[int, RecentPerformanceFeatures]: 球队ID到特征的映射
-        """
+        """"""
         if calculation_date is None:
             calculation_date = datetime.now()
 
@@ -501,24 +501,24 @@ class FeatureCalculator:
         return results
 
     def add_feature(self, feature_def: Dict[str, Any]) -> None:
-        """
+        """"""
         添加特征定义
 
         Args:
-            feature_def: 特征定义字典，包含name, type, calculation等字段
-        """
+    "feature_def": 特征定义字典,包含name, type, calculation等字段
+        """"""
         self.features.append(feature_def)
 
     def calculate_mean(self, data) -> Optional[float]:
-        """
+        """"""
         计算均值
 
         Args:
-            data: 数据列表或Series
+    "data": 数据列表或Series
 
         Returns:
-            均值，如果数据为空或无效则返回None
-        """
+            均值,如果数据为空或无效则返回None
+        """"""
         try:
             if data is None or len(data) == 0:
                 return None
@@ -527,15 +527,15 @@ class FeatureCalculator:
             return None
 
     def calculate_std(self, data) -> Optional[float]:
-        """
+        """"""
         计算标准差
 
         Args:
-            data: 数据列表或Series
+    "data": 数据列表或Series
 
         Returns:
-            标准差，如果数据为空或无效则返回None
-        """
+            标准差,如果数据为空或无效则返回None
+        """"""
         try:
             if data is None or len(data) <= 1:
                 return None
@@ -544,15 +544,15 @@ class FeatureCalculator:
             return None
 
     def calculate_min(self, data) -> Optional[float]:
-        """
+        """"""
         计算最小值
 
         Args:
-            data: 数据列表或Series
+    "data": 数据列表或Series
 
         Returns:
-            最小值，如果数据为空或无效则返回None
-        """
+            最小值,如果数据为空或无效则返回None
+        """"""
         try:
             if data is None or len(data) == 0:
                 return None
@@ -561,15 +561,15 @@ class FeatureCalculator:
             return None
 
     def calculate_max(self, data) -> Optional[float]:
-        """
+        """"""
         计算最大值
 
         Args:
-            data: 数据列表或Series
+    "data": 数据列表或Series
 
         Returns:
-            最大值，如果数据为空或无效则返回None
-        """
+            最大值,如果数据为空或无效则返回None
+        """"""
         try:
             if data is None or len(data) == 0:
                 return None
@@ -578,16 +578,16 @@ class FeatureCalculator:
             return None
 
     def calculate_rolling_mean(self, data, window: int = 3):
-        """
+        """"""
         计算滚动均值
 
         Args:
-            data: 数据Series或列表
-            window: 窗口大小
+    "data": 数据Series或列表
+    "window": 窗口大小
 
         Returns:
             滚动均值Series
-        """
+        """"""
         try:
             import pandas as pd
 

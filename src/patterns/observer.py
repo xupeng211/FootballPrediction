@@ -1,9 +1,9 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+
 观察者模式实现
 
 用于监控和日志系统的通知机制
-"""
+""""""
 
 from abc import ABC, abstractmethod
 from datetime import datetime
@@ -17,7 +17,7 @@ class Observer(ABC):
     """观察者抽象基类"""
 
     @abstractmethod
-    async def update(self, subject: "Subject", event_type: str, data: Any) -> None:
+    async def update(self, subject: "Subject", event_type: str, data: Any) -> None:""
         """接收通知的抽象方法"""
         pass
 
@@ -32,7 +32,7 @@ class Subject(ABC):
 
     def __init__(self):
         self._observers: List[Observer] = []
-        self._event_history: List[Dict[str, Any]] = []
+        self._event_history: List[Dict[str, Any] = []
         self.logger = get_logger(f"subject.{self.__class__.__name__}")
 
     def attach(self, observer: Observer) -> None:
@@ -50,10 +50,10 @@ class Subject(ABC):
     async def notify(self, event_type: str, data: Any) -> None:
         """通知所有观察者"""
         event = {
-            "timestamp": datetime.now(),
-            "type": event_type,
-            "data": data,
-            "subject": self.__class__.__name__,
+            "timestamp": datetime.now(),","
+            "type": event_type,","
+            "data": data,","
+            "subject": self.__class__.__name__,""
         }
         self._event_history.append(event)
 
@@ -89,7 +89,7 @@ class Subject(ABC):
         """获取所有观察者名称"""
         return [observer.get_name() for observer in self._observers]
 
-    def get_event_history(self, limit: Optional[int] = None) -> List[Dict[str, Any]:
+    def get_event_history(self, limit: Optional[int = None) -> List[Dict[str, Any]:
         """获取事件历史"""
         if limit:
             return self._event_history[-limit:]
@@ -101,9 +101,9 @@ class MetricsObserver(Observer):
 
     def __init__(self):
         self.metrics: Dict[str, Any] = {
-            "event_counts": {},
-            "last_events": {},
-            "total_events": 0,
+            "event_counts": {},","
+            "last_events": {},","
+            "total_events": 0,""
         }
         self.logger = get_logger("observer.metrics")
 
@@ -116,9 +116,9 @@ class MetricsObserver(Observer):
 
         # 记录最后事件
         self.metrics["last_events"][event_type] = {
-            "timestamp": datetime.now(),
-            "subject": subject.__class__.__name__,
-            "data_summary": str(data)[:100] if data else None,
+            "timestamp": datetime.now(),","
+            "subject": subject.__class__.__name__,","
+            "data_summary": str(data)[:100 if data else None,""
         }
 
         # 更新总计数
@@ -172,9 +172,9 @@ class AlertingObserver(Observer):
     def add_alert_rule(self, event_type: str, condition: str, message: str) -> None:
         """添加告警规则"""
         self.alert_rules[event_type] = {
-            "condition": condition,
-            "message": message,
-            "created_at": datetime.now(),
+            "condition": condition,","
+            "message": message,","
+            "created_at": datetime.now(),""
         }
         self.logger.info(f"Added alert rule for event: {event_type}")
 
@@ -188,18 +188,18 @@ class AlertingObserver(Observer):
 
             if should_alert:
                 alert = {
-                    "timestamp": datetime.now(),
-                    "subject": subject.__class__.__name__,
-                    "event_type": event_type,
-                    "message": rule["message"],
-                    "data": data,
+                    "timestamp": datetime.now(),","
+                    "subject": subject.__class__.__name__,","
+                    "event_type": event_type,","
+                    "message": rule["message",","
+                    "data": data,""
                 }
 
                 self.alert_history.append(alert)
 
                 # 记录告警
                 self.logger.warning(
-                    f"ALERT: {rule['message']} | Event: {event_type} | Subject: {subject.__class__.__name__}"
+                    f"ALERT: {rule[message]} | Event: {event_type} | Subject: {subject.__class__.__name__}"
                 )
 
                 # 限制告警历史
@@ -207,7 +207,7 @@ class AlertingObserver(Observer):
                     self.alert_history = self.alert_history[-50:]
 
     def _evaluate_condition(self, condition: str, data: Any) -> bool:
-        """评估告警条件（简单实现）"""
+        """评估告警条件(简单实现)"""
         # 这里可以实现更复杂的条件评估逻辑
         if condition == "always":
             return True
@@ -221,7 +221,7 @@ class AlertingObserver(Observer):
     def get_name(self) -> str:
         return "AlertingObserver"
 
-    def get_alert_history(self, limit: Optional[int] = None) -> List[Dict[str, Any]:
+    def get_alert_history(self, limit: Optional[int = None) -> List[Dict[str, Any]:
         """获取告警历史"""
         if limit:
             return self.alert_history[-limit:]
@@ -234,7 +234,8 @@ class ObservableService(Subject):
     def __init__(self, service_name: str):
         super().__init__()
         self.service_name = service_name
-        self._metrics = {"calls": 0, "errors": 0, "last_activity": None}
+        self._metrics = {
+            "calls": 0, "errors": 0, "last_activity": None}
 
     async def on_service_start(self) -> None:
         """服务启动事件"""
@@ -250,11 +251,11 @@ class ObservableService(Subject):
         """服务错误事件"""
         self._metrics["errors"] += 1  # type: ignore
         await self.notify(
-            "service.error",
+            "service.error",""
             {
-                "service": self.service_name,
-                "error": str(error),
-                "error_type": type(error).__name__,
+                "service": self.service_name,","
+                "error": str(error),","
+                "error_type": type(error).__name__,""
             },
         )
 
@@ -262,7 +263,7 @@ class ObservableService(Subject):
         """操作开始事件"""
         self._metrics["calls"] += 1  # type: ignore
         await self.notify(
-            "operation.start",
+            "operation.start",""
             {"service": self.service_name, "operation": operation, "params": params},
         )
 
@@ -271,12 +272,12 @@ class ObservableService(Subject):
     ) -> None:
         """操作完成事件"""
         await self.notify(
-            "operation.complete",
+            "operation.complete",""
             {
-                "service": self.service_name,
-                "operation": operation,
-                "duration": duration,
-                "result_type": type(result).__name__,
+                "service": self.service_name,","
+                "operation": operation,","
+                "duration": duration,","
+                "result_type": type(result).__name__,""
             },
         )
 
@@ -300,9 +301,9 @@ class PredictionService(ObservableService):
             # 模拟预测逻辑
             await asyncio.sleep(0.1)
             _prediction = {
-                "match_id": match_id,
-                "prediction": "home_win",
-                "confidence": 0.75,
+                "match_id": match_id,","
+                "prediction": "home_win",","
+                "confidence": 0.75,""
             }
 
             await self.on_operation_complete("predict_match", prediction, 0.1)
@@ -317,17 +318,17 @@ class PredictionService(ObservableService):
 def create_observer_system() -> Dict[str, Observer]:
     """创建观察者系统"""
     return {
-        "metrics": MetricsObserver(),
-        "logging": LoggingObserver(),
-        "alerting": AlertingObserver(),
+        "metrics": MetricsObserver(),","
+        "logging": LoggingObserver(),","
+        "alerting": AlertingObserver(),""
     }
 
 
 # 便捷函数
 async def setup_service_observers(
-    service: ObservableService, observers: List[Observer]
+    "service": ObservableService, observers: List[Observer]
 ) -> None:
     """为服务设置观察者"""
     for observer in observers:
         service.attach(observer)
-        await service.notify("observer.attached", {"observer": observer.get_name()})
+        await service.notify("observer.attached", {"observer": observer.get_name())

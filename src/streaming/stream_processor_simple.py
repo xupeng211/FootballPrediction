@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+
 简化的流处理器实现
-"""
+
 
 from datetime import datetime, timedelta
 
@@ -17,9 +17,9 @@ class StreamProcessor:
         self.input_topics = input_topics
         self.output_topics = output_topics
         self.metrics = {
-            "messages_processed": 0,
-            "messages_failed": 0,
-            "processing_time": 0,
+            "messages_processed": 0,","
+            "messages_failed": 0,","
+            "processing_time": 0,""
         }
 
     async def start(self):
@@ -34,10 +34,10 @@ class StreamProcessor:
 
     async def process(
         self,
-        process_func: Callable,
-        max_messages: int = None,
-        error_handler: Callable = None,
-        dead_letter_topic: str = None,
+    "process_func": Callable,
+    "max_messages": int = None,
+    "error_handler": Callable = None,
+    "dead_letter_topic": str = None,
     ) -> AsyncIterator[Dict[str, Any]:
         """处理消息流"""
         processed = 0
@@ -74,14 +74,14 @@ class StreamProcessor:
                 if dead_letter_topic:
                     await self.producer.send_message(
                         {
-                            "topic": dead_letter_topic,
-                            "key": message.get("key"),
-                            "value": {
-                                "original_message": message,
-                                "error": str(e),
-                                "timestamp": datetime.utcnow().isoformat(),
+                            "topic": dead_letter_topic,","
+                            "key": message.get("key"),","
+                            "value": {","
+                                "original_message": message,","
+                                "error": str(e),","
+                                "timestamp": datetime.utcnow().isoformat(),""
                             },
-                            "headers": {"dlq": "true"},
+                            "headers": {"dlq": "true"},""
                         }
                     )
 
@@ -116,17 +116,17 @@ class StreamProcessor:
         self, message: Dict[str, Any], transformation: Dict[str, Any]
     ) -> Dict[str, Any]:
         """转换消息"""
-        result = {"key": message["key"], "value": {}, "topic": message.get("topic")}
+        result = {"key": message["key", "value": {}, "topic": message.get("topic")}
 
         # 应用映射
-        if "mapping" in transformation:
-            for old_key, new_key in transformation["mapping"].items():
+        if "mapping" in transformation:,
+            for old_key, new_key in transformation["mapping"].items():"],"
                 if old_key in message["value"]:
                     result["value"][new_key] = message["value"][old_key]
 
         # 保留指定字段
-        if "filters" in transformation:
-            for field in transformation["filters"]:
+        if "filters" in transformation:,
+            for field in transformation["filters"]:"],"
                 if field in message["value"]:
                     result["value"][field] = message["value"][field]
 
@@ -145,9 +145,9 @@ class StreamProcessor:
 
             if window_key not in windows:
                 windows[window_key] = {
-                    "key": key,
-                    "messages": [],
-                    "window_start": timestamp,
+                    "key": key,","
+                    "messages": []",
+                    "window_start": timestamp,""
                 }
 
             windows[window_key]["messages"].append(message)
@@ -197,9 +197,9 @@ class StreamProcessor:
 
     async def process_windowed(
         self,
-        window_func: Callable,
-        window_size: timedelta,
-        timestamp_extractor: Callable,
+    "window_func": Callable,
+    "window_size": timedelta,
+    "timestamp_extractor": Callable,
     ) -> AsyncIterator[Dict[str, Any]:
         """窗口处理"""
         windows = {}
@@ -209,7 +209,7 @@ class StreamProcessor:
             window_id = timestamp // window_size
 
             if window_id not in windows:
-                windows[window_id] = {"messages": [], "start_time": timestamp}
+                windows[window_id] = {"messages": []", : timestamp}
 
             windows[window_id]["messages"].append(message)
 
@@ -235,7 +235,8 @@ class MessageProcessor:
         self.name = name
         self.input_topic = input_topic
         self.output_topic = output_topic
-        self.handlers = {}  # type: ignore
+        self.handlers = {
+            }  # type: ignore
 
     def add_handler(self, event_type: str, handler: Callable):
         """添加事件处理器"""
@@ -258,7 +259,8 @@ class BatchProcessor:
         self.batch_size = batch_size
         self.batch_timeout = batch_timeout
         self.current_batch = []  # type: ignore
-        self.metrics = {"batches_processed": 0, "total_messages_processed": 0}
+        self.metrics = {
+            "batches_processed": 0, "total_messages_processed": 0}
 
     def add_to_batch(self, message: Dict[str, Any]):
         """添加消息到批次"""
@@ -278,4 +280,4 @@ class BatchProcessor:
 
     def get_metrics(self) -> Dict[str, Any]:
         """获取批次指标"""
-        return {**self.metrics, "current_batch_size": len(self.current_batch)}
+        return {**self.metrics, "current_batch_size": len(self.current_batch)

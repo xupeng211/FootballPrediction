@@ -27,10 +27,10 @@ logger = logging.getLogger(__name__)
 class BindingRule:
     """绑定规则"""
 
-    interface: type[Any]
-    implementation: type[Any]
-    lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT
-    condition: Callable | None = None  # type: ignore
+    "interface": type[Any]
+    "implementation": type[Any]
+    "lifetime": ServiceLifetime = ServiceLifetime.TRANSIENT
+    "condition": Callable | None = None  # type: ignore
 
 
 class AutoBinder:
@@ -321,10 +321,10 @@ class ConventionBinder:
 
     @staticmethod
     def bind_by_name_pattern(
-        container: DIContainer,
-        interface_pattern: str,
-        implementation_pattern: str,
-        lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT,
+    "container": DIContainer,
+    "interface_pattern": str,
+    "implementation_pattern": str,
+    "lifetime": ServiceLifetime = ServiceLifetime.TRANSIENT,
     ) -> None:
         """按名称模式绑定"""
         # 这里可以实现更复杂的名称模式匹配
@@ -332,10 +332,10 @@ class ConventionBinder:
 
     @staticmethod
     def bind_by_namespace(
-        container: DIContainer,
-        interface_namespace: str,
-        implementation_namespace: str,
-        lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT,
+    "container": DIContainer,
+    "interface_namespace": str,
+    "implementation_namespace": str,
+    "lifetime": ServiceLifetime = ServiceLifetime.TRANSIENT,
     ) -> None:
         """按命名空间绑定"""
         # 这里可以实现命名空间绑定

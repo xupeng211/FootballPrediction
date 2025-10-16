@@ -1,11 +1,11 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+
 计分领域服务
 Scoring Domain Service
 
-处理预测计分相关的复杂业务逻辑。
+处理预测计分相关的复杂业务逻辑.
 Handles complex business logic related to prediction scoring.
-"""
+""""""
 
 from decimal import Decimal
 
@@ -15,29 +15,29 @@ from ..models.prediction import PredictionPoints
 class ScoringService:
     """计分服务"""
 
-    def __init__(self, scoring_config: Optional[Dict[str, Any] ] ] ] = None) -> None:
+    def __init__(self, scoring_config: Optional[Dict[str, Any] = None) -> None:
         self.config = scoring_config or self._default_scoring_config()
 
     def _default_scoring_config(self) -> Dict[str, Any]:
         """默认计分配置"""
         return {
-            "exact_score": {"points": 10, "multiplier": 1.0},
-            "outcome_only": {"points": 3, "multiplier": 1.0},
-            "goal_difference": {"points": 5, "multiplier": 1.0},
-            "confidence_bonus": {"max_bonus": 3, "threshold": 0.8},
-            "streak_bonus": {"enabled": True, "bonus_per_streak": 1, "max_bonus": 5},
-            "difficulty_multiplier": {"enabled": True, "base_multiplier": 1.0},
+            "exact_score": {"points": 10, "multiplier": 1.0},","
+            "outcome_only": {"points": 3, "multiplier": 1.0},","
+            "goal_difference": {"points": 5, "multiplier": 1.0},","
+            "confidence_bonus": {"max_bonus": 3, "threshold": 0.8},","
+            "streak_bonus": {"enabled": True, "bonus_per_streak": 1, "max_bonus": 5},","
+            "difficulty_multiplier": {"enabled": True, "base_multiplier": 1.0},""
         }
 
     def calculate_prediction_points(
         self,
-        predicted_home: int,
-        predicted_away: int,
-        actual_home: int,
-        actual_away: int,
-        confidence: Optional[float] ] = None,
-        match_importance: float = 0.5,
-        user_streak: int = 0,
+    "predicted_home": int,
+    "predicted_away": int,
+    "actual_home": int,
+    "actual_away": int,
+    "confidence": Optional[float]  = None,
+    "match_importance": float = 0.5,
+    "user_streak": int = 0,
     ) -> PredictionPoints:
         """计算预测得分"""
         # 计算基础得分
@@ -77,10 +77,10 @@ class ScoringService:
 
     def _calculate_exact_score_points(
         self,
-        predicted_home: int,
-        predicted_away: int,
-        actual_home: int,
-        actual_away: int,
+    "predicted_home": int,
+    "predicted_away": int,
+    "actual_home": int,
+    "actual_away": int,
     ) -> int:
         """计算精确比分得分"""
         if predicted_home == actual_home and predicted_away == actual_away:
@@ -92,10 +92,10 @@ class ScoringService:
 
     def _calculate_outcome_points(
         self,
-        predicted_home: int,
-        predicted_away: int,
-        actual_home: int,
-        actual_away: int,
+    "predicted_home": int,
+    "predicted_away": int,
+    "actual_home": int,
+    "actual_away": int,
     ) -> int:
         """计算胜负平得分"""
         predicted_outcome = self._get_outcome(predicted_home, predicted_away)
@@ -110,10 +110,10 @@ class ScoringService:
 
     def _calculate_goal_difference_points(
         self,
-        predicted_home: int,
-        predicted_away: int,
-        actual_home: int,
-        actual_away: int,
+    "predicted_home": int,
+    "predicted_away": int,
+    "actual_home": int,
+    "actual_away": int,
     ) -> int:
         """计算净胜球得分"""
         predicted_diff = predicted_home - predicted_away
@@ -174,7 +174,7 @@ class ScoringService:
         difficulty_multiplier *= 1 + match_importance
 
         # 返回整数奖励分
-        return int(difficulty_multiplier * 2)  # 基础2分，根据难度调整
+        return int(difficulty_multiplier * 2)  # 基础2分,根据难度调整
 
     def _get_outcome(self, home: int, away: int) -> str:
         """获取比赛结果"""
@@ -189,7 +189,7 @@ class ScoringService:
         self, user_points: int, all_users_points: List[int]
     ) -> int:
         """计算排行榜位置"""
-        # 排序（降序）
+        # 排序(降序)
         sorted_points = sorted(all_users_points, reverse=True)
 
         # 找到位置（从1开始）
@@ -203,7 +203,7 @@ class ScoringService:
         if total_users == 0:
             return 0.0
 
-        # 百分位计算（越小越好）
+        # 百分位计算(越小越好)
         percentile = (position - 1) / total_users * 100
         return round(percentile, 2)
 
@@ -234,17 +234,15 @@ class ScoringService:
 
     def get_scoring_rules_summary(self) -> Dict[str, Any]:
         """获取计分规则摘要"""
-        return {
-            "exact_score": f"{self.config['exact_score']['points']"分",
-            "outcome_only": f"{self.config['outcome_only']['points']"分",
-            "goal_difference": f"{self.config['goal_difference']['points']"分",
-            "confidence_bonus": {
-                "max": self.config["confidence_bonus"]["max_bonus"],
-                "threshold": self.config["confidence_bonus"]["threshold"],
+        return "exact_score": f"{self.config[exact_score['points'"分","
+            "outcome_only": f"{self.config[outcome_only]['points'"分","
+            "goal_difference": f"{self.config[goal_difference]['points'"分","
+            "confidence_bonus": {","
+                "max": self.config["confidence_bonus"]["max_bonus",","
+                "threshold": self.config["confidence_bonus"]["threshold",""
             },
-            "streak_bonus": {
-                "enabled": self.config["streak_bonus"]["enabled"],
-                "per_streak": self.config["streak_bonus"]["bonus_per_streak"],
-                "max": self.config["streak_bonus"]["max_bonus"],
+            "streak_bonus": {","
+                "enabled": self.config["streak_bonus"]["enabled",","
+                "per_streak": self.config["streak_bonus"]["bonus_per_streak",","
+                "max": self.config["streak_bonus"]["max_bonus",""
             },
-        }

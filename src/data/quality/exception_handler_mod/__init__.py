@@ -1,8 +1,8 @@
 from typing import Any, Dict, List, Optional, Union
-"""
-数据质量异常处理器（兼容版本）
+""""""
+数据质量异常处理器(兼容版本)
 Data Quality Exception Handler (Compatibility Version)
-"""
+""""""
 
 from datetime import datetime
 import logging
@@ -70,13 +70,13 @@ class DataQualityExceptionHandler:
         self.handlers[error_code] = handler
 
     def handle_exception(
-        self, exception: Exception, context: Optional[Dict[str, Any]] = None
+        self, exception: Exception, context: Optional[Dict[str, Any] = None
     ) -> bool:
-        """处理异常
+        """处理异常"""
 
         Returns:
-            bool: True表示异常已处理，False表示未处理
-        """
+    "bool": True表示异常已处理,False表示未处理
+        """"""
         if isinstance(exception, DataQualityException):
             # 记录异常
             self.exceptions.append(exception)
@@ -149,7 +149,8 @@ class StatisticsProvider:
     """统计信息提供者"""
 
     def __init__(self):
-        self._stats = {}
+        self._stats = {
+            }
 
     def calculate_basic_stats(self, data: List[float]) -> Dict[str, float]:
         """计算基础统计信息"""
@@ -159,12 +160,12 @@ class StatisticsProvider:
         import statistics as stats
 
         return {
-            "count": len(data),
-            "mean": stats.mean(data),
-            "median": stats.median(data),
-            "std": stats.stdev(data) if len(data) > 1 else 0,
-            "min": min(data),
-            "max": max(data),
+            "count": len(data),","
+            "mean": stats.mean(data),","
+            "median": stats.median(data),","
+            "std": stats.stdev(data) if len(data) > 1 else 0,","
+            "min": min(data),","
+            "max": max(data),""
         }
 
     def calculate_distribution(self, data: List) -> Dict[str, int]:
@@ -174,7 +175,7 @@ class StatisticsProvider:
         return dict(Counter(data))
 
     def detect_anomalies(self, data: List[float], threshold: float = 2.0) -> List[int]:
-        """检测异常值（基于Z-score）"""
+        """检测异常值(基于Z-score)"""
         if len(data) < 2:
             return []
 
@@ -202,10 +203,10 @@ class QualityLogger:
     def log_issue(self, issue_type: str, message: str, data: Dict[str, Any] = None):
         """记录质量问题"""
         issue = {
-            "type": issue_type,
-            "message": message,
-            "data": data or {},
-            "timestamp": datetime.utcnow(),
+            "type": issue_type,","
+            "message": message,","
+            "data": data or {},","
+            "timestamp": datetime.utcnow(),""
         }
         self.quality_issues.append(issue)
         self.logger.warning(f"Quality Issue [{issue_type}]: {message}")
@@ -226,7 +227,8 @@ class InvalidDataHandler:
 
     def __init__(self):
         self.invalid_records = []
-        self.validation_rules = {}
+        self.validation_rules = {
+            }
 
     def add_validation_rule(self, field: str, rule: Callable):
         """添加验证规则"""

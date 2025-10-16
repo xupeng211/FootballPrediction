@@ -9,19 +9,19 @@ from dataclasses import dataclass
 class DatabaseConfig:
     """封装数据库连接配置及常用连接URL。"""
 
-    host: str
-    port: int
-    database: str
-    username: str
-    password: str | None
-    pool_size: int = 10
-    max_overflow: int = 20
-    pool_timeout: int = 30
-    pool_recycle: int = 1800
-    async_pool_size: int = 10
-    async_max_overflow: int = 20
-    echo: bool = False
-    echo_pool: bool = False
+    "host": str
+    "port": int
+    "database": str
+    "username": str
+    "password": str | None
+    "pool_size": int = 10
+    "max_overflow": int = 20
+    "pool_timeout": int = 30
+    "pool_recycle": int = 1800
+    "async_pool_size": int = 10
+    "async_max_overflow": int = 20
+    "echo": bool = False
+    "echo_pool": bool = False
 
     def _is_sqlite(self) -> bool:
         return self.database.endswith(".db") or self.database == ":memory:"
@@ -56,8 +56,8 @@ class DatabaseConfig:
 
 
 _ENV_PREFIX = {
-    "development": "",
-    "dev": "",
+    "development": ",",
+    "dev": ",",
     "test": "TEST_",
     "production": "PROD_",
     "prod": "PROD_",

@@ -1,20 +1,20 @@
 from typing import Any, Dict, List, Optional, Union
-"""implement_partitioned_tables_and_indexes
+"""implement_partitioned_tables_and_indexes"""
 
 
 实现分区表和索引优化策略
 
-基于 architecture.md 第3.4节和第3.3节的设计要求，实现：
+基于 architecture.md 第3.4节和第3.3节的设计要求,实现:
 1. 比赛表按年份分区
 2. 预测表按月分区
 3. 补充缺失的查询优化索引
 4. 添加特征工程优化索引
 
-Revision ID: 09d03cebf664
-Revises: c1d8ae5075f0
+Revision ID: 9d03cebf664
+    "Revises": c1d8ae5075f0
 Create Date: 2025-09-12 12:48:23.849021
 
-"""
+""""""
 # mypy: ignore-errors
 
 
@@ -24,10 +24,10 @@ from sqlalchemy.exc import SQLAlchemyError, DatabaseError
 from sqlalchemy import text
 
 # revision identifiers, used by Alembic.
-revision: str = "09d03cebf664"
-down_revision: Union[str, None] = "c1d8ae5075f0"
-branch_labels: Union[str, Sequence[str], None = None
-depends_on: Union[str, Sequence[str], None = None
+    "revision": str = "09d03cebf664",
+    "down_revision": Union[str, None] = "c1d8ae5075f0"
+    "branch_labels": Union[str, Sequence[str], None = None
+    "depends_on": Union[str, Sequence[str], None = None
 def is_sqlite():
     """检测当前是否为SQLite数据库"""
     if context.is_offline_mode():
@@ -45,17 +45,17 @@ def is_postgresql():
 
 
 def upgrade() -> None:
-    """
-    升级数据库：实现分区表和索引优化
+    """"""
+    升级数据库:实现分区表和索引优化
 
-    SQLite不支持分区表，但会创建相应的索引来优化查询性能。
-    PostgreSQL将实现完整的分区表策略和高级索引。
-    """
+    SQLite不支持分区表,但会创建相应的索引来优化查询性能.
+    PostgreSQL将实现完整的分区表策略和高级索引.
+    """"""
     # 检查是否在离线模式
     if context.is_offline_mode():
-        logger.info("⚠️  离线模式：跳过分区表实现")
+        logger.info("⚠️  离线模式:跳过分区表实现")
         # 在离线模式下执行注释，确保 SQL 生成正常
-        op.execute("-- offline mode: skipped partitioned tables implementation")
+        op.execute("-- offline mode: skipped partitioned tables implementation"),
         op.execute("-- offline mode: skipped advanced indexes creation")
         return
 
@@ -64,13 +64,13 @@ def upgrade() -> None:
     logger.info(f"当前数据库类型: {bind.dialect.name}")
 
     if is_postgresql():
-        logger.info("PostgreSQL环境：实现分区表和高级索引...")
+        logger.info("PostgreSQL环境:实现分区表和高级索引...")
         _implement_postgresql_partitioning_and_indexes()
     elif is_sqlite():
-        logger.info("SQLite环境：实现优化索引（不支持分区表）...")
+        logger.info("SQLite环境:实现优化索引(不支持分区表)...")
         _implement_sqlite_optimized_indexes()
     else:
-        logger.info(f"其他数据库类型 {bind.dialect.name}：实现基础索引...")
+        logger.info(f"其他数据库类型 {bind.dialect.name}:实现基础索引...")
         _implement_basic_indexes()
 
     logger.info("分区表和索引优化实施完成")
@@ -82,7 +82,7 @@ def _implement_postgresql_partitioning_and_indexes():
     # 1. 创建分区管理函数
     op.execute(
         text(
-            """
+            """"""
         CREATE OR REPLACE FUNCTION create_match_partition(year_val INTEGER)
         RETURNS void AS $$
         DECLARE
@@ -90,8 +90,8 @@ def _implement_postgresql_partitioning_and_indexes():
             start_date DATE;
             end_date DATE;
         BEGIN
-            partition_name := 'matches_y' || year_val::TEXT;
-            start_date := (year_val::TEXT || '-01-01')::DATE;
+            partition_name := 'matches_y' || year_val::TEXT;,
+            start_date := (year_val::TEXT || '-01-01')::DATE;,
             end_date := ((year_val + 1)::TEXT || '-01-01')::DATE;
 
             -- 检查分区是否已存在
@@ -106,14 +106,14 @@ def _implement_postgresql_partitioning_and_indexes():
             END IF;
         END;
         $$ LANGUAGE plpgsql;
-    """
+    """"""
         )
     )
 
     # 2. 创建预测表月度分区管理函数
     op.execute(
         text(
-            """
+            """"""
         CREATE OR REPLACE FUNCTION create_prediction_partition(year_val INTEGER, month_val INTEGER)
         RETURNS void AS $$
         DECLARE
@@ -139,11 +139,11 @@ def _implement_postgresql_partitioning_and_indexes():
             END IF;
         END;
         $$ LANGUAGE plpgsql;
-    """
+    """"""
         )
     )
 
-    # 3. 为现有表添加分区（需要先备份数据）
+    # 3. 为现有表添加分区(需要先备份数据)
     # 注意：在生产环境中，这需要谨慎操作
     try:
         # 检查表是否已分区
@@ -151,17 +151,17 @@ def _implement_postgresql_partitioning_and_indexes():
             op.get_bind()
             .execute(
                 text(
-                    """
+                    """"""
             SELECT COUNT(*) FROM pg_partitioned_table
             WHERE partrelid = 'matches'::regclass
-        """
+        """"""
                 )
             )
             .scalar()  # type: ignore
         )
 
         if _result == 0:
-            logger.info("  提醒：matches表尚未分区，建议在维护窗口期间手动执行分区操作")
+            logger.info("  提醒:matches表尚未分区,建议在维护窗口期间手动执行分区操作")
             # 在实际部署中，需要先创建分区表，再迁移数据
 
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
@@ -195,48 +195,48 @@ def _create_postgresql_advanced_indexes():
     advanced_indexes = [
         # JSONB字段的GIN索引（如果尚未存在）
         {
-            "name": "idx_raw_match_data_jsonb_gin",
-            "table": "raw_match_data",
-            "columns": ["raw_data"],
-            "method": "gin",
-            "condition": None,
+            "name": "idx_raw_match_data_jsonb_gin",","
+            "table": "raw_match_data",","
+            "columns": ["raw_data",","
+            "method": "gin",","
+            "condition": None,""
         },
         {
-            "name": "idx_predictions_feature_importance_gin",
-            "table": "predictions",
-            "columns": ["feature_importance"],
-            "method": "gin",
-            "condition": "feature_importance IS NOT NULL",
+            "name": "idx_predictions_feature_importance_gin",","
+            "table": "predictions",","
+            "columns": ["feature_importance",","
+            "method": "gin",","
+            "condition": "feature_importance IS NOT NULL",""
         },
         # 复合索引优化查询
         {
-            "name": "idx_matches_league_date_teams",
-            "table": "matches",
-            "columns": ["league_id", "match_date", "home_team_id", "away_team_id"],
-            "method": "btree",
-            "condition": None,
+            "name": "idx_matches_league_date_teams",","
+            "table": "matches",","
+            "columns": ["league_id", "match_date", "home_team_id", "away_team_id"],","
+            "method": "btree",","
+            "condition": None,""
         },
         {
-            "name": "idx_odds_match_bookmaker_collected",
-            "table": "odds",
-            "columns": ["match_id", "bookmaker", "collected_at DESC"],
-            "method": "btree",
-            "condition": None,
+            "name": "idx_odds_match_bookmaker_collected",","
+            "table": "odds",","
+            "columns": ["match_id", "bookmaker", "collected_at DESC"],","
+            "method": "btree",","
+            "condition": None,""
         },
         {
-            "name": "idx_predictions_model_confidence",
-            "table": "predictions",
-            "columns": ["model_name", "confidence_score DESC", "predicted_at DESC"],
-            "method": "btree",
-            "condition": "confidence_score IS NOT NULL",
+            "name": "idx_predictions_model_confidence",","
+            "table": "predictions",","
+            "columns": ["model_name", "confidence_score DESC", "predicted_at DESC"],","
+            "method": "btree",","
+            "condition": "confidence_score IS NOT NULL",""
         },
         # 部分索引（仅索引活跃数据）
         {
-            "name": "idx_matches_recent_finished",
-            "table": "matches",
-            "columns": ["match_date DESC", "league_id"],
-            "method": "btree",
-            "condition": "match_status = 'finished' AND match_date >= CURRENT_DATE - INTERVAL '2 years'",
+            "name": "idx_matches_recent_finished",","
+            "table": "matches",","
+            "columns": ["match_date DESC", "league_id"],","
+            "method": "btree",","
+            "condition": "match_status = 'finished' AND match_date >= CURRENT_DATE - INTERVAL '2 years'",""
         },
     ]
 
@@ -244,7 +244,7 @@ def _create_postgresql_advanced_indexes():
         try:
             _create_index_if_not_exists(**idx)
         except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
-            logger.info(f"  创建索引 {idx['name']} 失败: {e}")
+            logger.info(f"  创建索引 {idx[name]} 失败: {e}")
 
 
 def _implement_sqlite_optimized_indexes():
@@ -253,41 +253,41 @@ def _implement_sqlite_optimized_indexes():
     sqlite_indexes = [
         # 基础查询优化索引
         {
-            "name": "idx_matches_date_league",
-            "table": "matches",
-            "columns": ["match_date DESC", "league_id"],
+            "name": "idx_matches_date_league",","
+            "table": "matches",","
+            "columns": ["match_date DESC", "league_id"],""
         },
         {
-            "name": "idx_matches_teams_date",
-            "table": "matches",
-            "columns": ["home_team_id", "away_team_id", "match_date"],
+            "name": "idx_matches_teams_date",","
+            "table": "matches",","
+            "columns": ["home_team_id", "away_team_id", "match_date"],""
         },
         {
-            "name": "idx_predictions_match_model_date",
-            "table": "predictions",
-            "columns": ["match_id", "model_name", "predicted_at DESC"],
+            "name": "idx_predictions_match_model_date",","
+            "table": "predictions",","
+            "columns": ["match_id", "model_name", "predicted_at DESC"],""
         },
         {
-            "name": "idx_odds_match_bookmaker_time",
-            "table": "odds",
-            "columns": ["match_id", "bookmaker", "collected_at"],
+            "name": "idx_odds_match_bookmaker_time",","
+            "table": "odds",","
+            "columns": ["match_id", "bookmaker", "collected_at"],""
         },
         # 特征工程查询优化
         {
-            "name": "idx_features_team_match",
-            "table": "features",
-            "columns": ["team_id", "match_id"],
+            "name": "idx_features_team_match",","
+            "table": "features",","
+            "columns": ["team_id", "match_id"],""
         },
         # Bronze层数据查询优化
         {
-            "name": "idx_raw_match_external_id",
-            "table": "raw_match_data",
-            "columns": ["external_match_id", "data_source"],
+            "name": "idx_raw_match_external_id",","
+            "table": "raw_match_data",","
+            "columns": ["external_match_id", "data_source"],""
         },
         {
-            "name": "idx_raw_odds_external_bookmaker",
-            "table": "raw_odds_data",
-            "columns": ["external_match_id", "bookmaker"],
+            "name": "idx_raw_odds_external_bookmaker",","
+            "table": "raw_odds_data",","
+            "columns": ["external_match_id", "bookmaker"],""
         },
     ]
 
@@ -295,22 +295,22 @@ def _implement_sqlite_optimized_indexes():
         try:
             _create_simple_index(**idx)
         except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
-            logger.info(f"  创建SQLite索引 {idx['name']} 失败: {e}")
+            logger.info(f"  创建SQLite索引 {idx[name]} 失败: {e}")
 
 
 def _implement_basic_indexes():
-    """实现基础索引（通用数据库）"""
+    """实现基础索引(通用数据库)"""
 
     basic_indexes = [
         {
-            "name": "idx_matches_basic_lookup",
-            "table": "matches",
-            "columns": ["match_date", "league_id"],
+            "name": "idx_matches_basic_lookup",","
+            "table": "matches",","
+            "columns": ["match_date", "league_id"],""
         },
         {
-            "name": "idx_predictions_basic_lookup",
-            "table": "predictions",
-            "columns": ["match_id", "predicted_at"],
+            "name": "idx_predictions_basic_lookup",","
+            "table": "predictions",","
+            "columns": ["match_id", "predicted_at"],""
         },
     ]
 
@@ -318,29 +318,27 @@ def _implement_basic_indexes():
         try:
             _create_simple_index(**idx)
         except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
-            logger.info(f"  创建基础索引 {idx['name']} 失败: {e}")
+            logger.info(f"  创建基础索引 {idx[name]} 失败: {e}")
 
 
 def _create_index_if_not_exists(name, table, columns, method="btree", condition=None):
-    """创建PostgreSQL索引（如果不存在）"""
+    """创建PostgreSQL索引(如果不存在)"""
 
     # 检查索引是否存在
     exists = (
         op.get_bind()
         .execute(
             text(
-                """
+                """"""
         SELECT COUNT(*) FROM pg_indexes
         WHERE indexname = :index_name
-    """
+    """"""
             ),
-            {"index_name": name},
-        )
-        .scalar()  # type: ignore
+            {"index_name": name})).scalar()  # type: ignore
     )
 
     if exists > 0:
-        logger.info(f"  索引 {name} 已存在，跳过创建")
+        logger.info(f"  索引 {name} 已存在,跳过创建")
         return
 
     # 构建索引创建语句
@@ -365,22 +363,22 @@ def _create_simple_index(name, table, columns):
         logger.info(f"  ✓ 已创建索引: {name}")
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         if "already exists" in str(e).lower():
-            logger.info(f"  索引 {name} 已存在，跳过创建")
+            logger.info(f"  索引 {name} 已存在,跳过创建")
         else:
             raise
 
 
 def downgrade() -> None:
-    """
-    降级操作：移除分区表和索引
+    """"""
+    降级操作:移除分区表和索引
 
-    注意：分区表的降级需要谨慎操作，可能需要数据迁移
-    """
+    注意:分区表的降级需要谨慎操作,可能需要数据迁移
+    """"""
     # 检查是否在离线模式
     if context.is_offline_mode():
-        logger.info("⚠️  离线模式：跳过分区表降级")
+        logger.info("⚠️  离线模式:跳过分区表降级")
         # 在离线模式下执行注释，确保 SQL 生成正常
-        op.execute("-- offline mode: skipped partitioned tables downgrade")
+        op.execute("-- offline mode: skipped partitioned tables downgrade"),
         op.execute("-- offline mode: skipped advanced indexes removal")
         return
 
@@ -405,12 +403,12 @@ def _downgrade_postgresql_features():
 
     # 删除创建的索引
     indexes_to_drop = [
-        "idx_raw_match_data_jsonb_gin",
-        "idx_predictions_feature_importance_gin",
-        "idx_matches_league_date_teams",
-        "idx_odds_match_bookmaker_collected",
-        "idx_predictions_model_confidence",
-        "idx_matches_recent_finished",
+        "idx_raw_match_data_jsonb_gin","
+        "idx_predictions_feature_importance_gin","
+        "idx_matches_league_date_teams","
+        "idx_odds_match_bookmaker_collected","
+        "idx_predictions_model_confidence","
+        "idx_matches_recent_finished","
     ]
 
     for idx_name in indexes_to_drop:
@@ -425,13 +423,13 @@ def _downgrade_sqlite_features():
     """降级SQLite特性"""
 
     indexes_to_drop = [
-        "idx_matches_date_league",
-        "idx_matches_teams_date",
-        "idx_predictions_match_model_date",
-        "idx_odds_match_bookmaker_time",
-        "idx_features_team_match",
-        "idx_raw_match_external_id",
-        "idx_raw_odds_external_bookmaker",
+        "idx_matches_date_league","
+        "idx_matches_teams_date","
+        "idx_predictions_match_model_date","
+        "idx_odds_match_bookmaker_time","
+        "idx_features_team_match","
+        "idx_raw_match_external_id","
+        "idx_raw_odds_external_bookmaker","
     ]
 
     for idx_name in indexes_to_drop:

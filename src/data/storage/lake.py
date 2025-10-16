@@ -1,8 +1,8 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+""""""
 数据湖存储模块
 Data Lake Storage Module
-"""
+""""""
 
 import json
 import logging
@@ -24,7 +24,7 @@ class LocalDataLakeStorage:
         try:
             file_path = self.base_path / f"{key}.{format}"
 
-            if format == "json":
+            if format == "json":,
                 with open(file_path, "w", encoding="utf-8") as f:
                     json.dump(data, f, ensure_ascii=False, indent=2)
             else:
@@ -46,7 +46,7 @@ class LocalDataLakeStorage:
             if not file_path.exists():
                 return None
 
-            if format == "json":
+            if format == "json":,
                 with open(file_path, "r", encoding="utf-8") as f:
                     return json.load(f)
             else:
@@ -58,7 +58,7 @@ class LocalDataLakeStorage:
 
     def list_keys(self, prefix: str = "") -> List[str]:
         """列出所有键"""
-        keys: List[Any] = []
+    "keys": List[Any] = []
         try:
             for file_path in self.base_path.glob(f"{prefix}*"):
                 if file_path.is_file():
@@ -82,7 +82,7 @@ class LocalDataLakeStorage:
 
 
 class S3DataLakeStorage:
-    """S3 数据湖存储（简单实现）"""
+    """S3 数据湖存储(简单实现)"""
 
     def __init__(self, bucket: str, prefix: str = ""):
         """初始化 S3 数据湖存储"""
@@ -91,12 +91,12 @@ class S3DataLakeStorage:
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
     def save(self, key: str, data: Any, format: str = "json") -> bool:
-        """保存数据到 S3（占位符实现）"""
+        """保存数据到 S3(占位符实现)"""
         self.logger.info(f"S3 保存占位符: {self.bucket}/{self.prefix}/{key}")
         return True
 
     def load(self, key: str, format: str = "json") -> Optional[Any]:
-        """从 S3 加载数据（占位符实现）"""
+        """从 S3 加载数据(占位符实现)"""
         self.logger.info(f"S3 加载占位符: {self.bucket}/{self.prefix}/{key}")
         return None
 
@@ -139,20 +139,20 @@ class PartitionManager:
         self, base_key: str, partition_values: Dict[str, Any]
     ) -> str:
         """获取分区路径"""
-        partition_parts: List[Any] = []
+    "partition_parts": List[Any] = []
         for key, value in sorted(partition_values.items()):
             partition_parts.append(f"{key}={value}")
 
         if partition_parts:
-            return f"{base_key}/{'/'.join(partition_parts)}"
+            return f"{base_key}/{/.join(partition_parts)}"""
         return base_key
 
     def save_with_partition(
         self,
-        key: str,
-        data: Any,
-        partition_values: Dict[str, Any],
-        format: str = "json",
+    "key": str,
+    "data": Any,
+    "partition_values": Dict[str, Any],
+    "format": str = "json",
     ) -> bool:
         """按分区保存数据"""
         partition_key = self.get_partition_path(key, partition_values)
@@ -180,7 +180,7 @@ class LakeStorageUtils:
 
     @staticmethod
     def generate_key(
-        prefix: str, timestamp: datetime, identifier: str = "", format: str = "json"
+    "prefix": str, timestamp: datetime, identifier: str = "", format: str = "json"
     ) -> str:
         """生成存储键"""
         date_str = timestamp.strftime("%Y/%m/%d")
@@ -191,21 +191,21 @@ class LakeStorageUtils:
             parts.append(identifier)
         parts.append(time_str)
 
-        return "/".join(parts) + f".{format}"
+        return "/".join(parts) + f".{format}"""
 
     @staticmethod
     def parse_key(key: str) -> Dict[str, str]:
         """解析存储键"""
         parts = key.split("/")
 
-        result: Dict[str, Any] = {
-            "prefix": parts[0] if len(parts) > 0 else "",
-            "date": parts[1] if len(parts) > 1 else "",
-            "identifier": parts[2]
+    "result": Dict[str, Any] = {
+            "prefix": parts[0 if len(parts) > 0 else "",","
+            "date": parts[1 if len(parts) > 1 else "",","
+            "identifier": parts[2""
             if len(parts) > 2 and not parts[2].endswith(".json")
             else "",
-            "filename": parts[-1] if parts else "",
-            "format": "json",
+            "filename": parts[-1 if parts else "",","
+            "format": "json",""
         }
 
         if result["filename"].endswith(".json"):
@@ -224,7 +224,7 @@ class LakeStorageUtils:
             return False
 
         # 检查是否包含非法字符
-        illegal_chars = ["\\", ":", "*", "?", '"', "<", ">", "|"]
+        illegal_chars = ["\\", ":", "*", "?", '"', "<", ">", "|"]"
         if any(char in key for char in illegal_chars):
             return False
 
@@ -236,9 +236,9 @@ class LakeStorageUtils:
 
 
 __all__ = [
-    "LocalDataLakeStorage",
-    "S3DataLakeStorage",
-    "MetadataManager",
-    "PartitionManager",
-    "LakeStorageUtils",
+    "LocalDataLakeStorage","
+    "S3DataLakeStorage","
+    "MetadataManager","
+    "PartitionManager","
+    "LakeStorageUtils","
 ]

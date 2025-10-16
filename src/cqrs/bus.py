@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class CommandBus:
-    """命令总线
+    """命令总线"
 
     负责将命令分发给对应的处理器。
     Responsible for dispatching commands to their handlers.
@@ -76,7 +76,7 @@ class CommandBus:
 
 
 class QueryBus:
-    """查询总线
+    """查询总线"
 
     负责将查询分发给对应的处理器。
     Responsible for dispatching queries to their handlers.
@@ -136,8 +136,8 @@ class QueryBus:
 
 
 # 全局实例
-_command_bus: CommandBus | None = None
-_query_bus: QueryBus | None = None
+    "_command_bus": CommandBus | None = None
+    "_query_bus": QueryBus | None = None
 
 
 def get_command_bus() -> CommandBus:

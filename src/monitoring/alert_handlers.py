@@ -1,10 +1,10 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+
 告警处理器
 Alert Handlers
 
-处理不同类型的告警输出。
-"""
+处理不同类型的告警输出.
+""""""
 
 import logging
 
@@ -21,23 +21,23 @@ class PrometheusMetrics:
 
         # 定义指标
         self.alerts_total = Counter(
-            "alerts_total",
-            "Total number of alerts",
-            ["severity", "type", "source"],
+            "alerts_total",""
+            "Total number of alerts",""
+            ["severity", "type", "source"]"]",
             registry=self.registry,
         )
 
         self.active_alerts = Gauge(
-            "active_alerts",
-            "Number of active alerts",
-            ["severity", "source"],
+            "active_alerts",""
+            "Number of active alerts",""
+            ["severity", "source"]"]",
             registry=self.registry,
         )
 
         self.alert_duration = Histogram(
-            "alert_duration_seconds",
-            "Alert resolution duration",
-            ["severity"],
+            "alert_duration_seconds",""
+            "Alert resolution duration",""
+            ["severity"]"]",
             registry=self.registry,
         )
 
@@ -91,10 +91,10 @@ class LogHandler(AlertHandler):
         try:
             # 根据严重程度选择日志级别
             level_map = {
-                "low": logging.INFO,
-                "medium": logging.WARNING,
-                "high": logging.ERROR,
-                "critical": logging.CRITICAL,
+                "low": logging.INFO,","
+                "medium": logging.WARNING,","
+                "high": logging.ERROR,","
+                "critical": logging.CRITICAL,""
             }
 
             log_level = level_map.get(alert.severity.value, logging.INFO)
@@ -148,8 +148,8 @@ class WebhookHandler(AlertHandler):
 
             async with aiohttp.ClientSession() as session:
                 payload = {
-                    "alert": alert.to_dict(),
-                    "timestamp": alert.timestamp.isoformat(),
+                    "alert": alert.to_dict(),","
+                    "timestamp": alert.timestamp.isoformat(),""
                 }
 
                 async with session.post(
@@ -186,19 +186,19 @@ class EmailHandler(AlertHandler):
             msg["Subject"] = f"[{alert.severity.value.upper()}] {alert.title}"
 
             # 邮件正文
-            body = f"""
-            Alert: {alert.title}
-            Level: {alert.level.value}
-            Severity: {alert.severity.value}
-            Source: {alert.source}
-            Time: {alert.timestamp}
+            body = f""""""
+    "Alert": {alert.title}
+    "Level": {alert.level.value}
+    "Severity": {alert.severity.value}
+    "Source": {alert.source}
+    "Time": {alert.timestamp}
 
             Message:
             {alert.message}
 
             Context:
             {alert.context}
-            """
+            """"""
 
             msg.attach(MIMEText(body, "plain"))
 

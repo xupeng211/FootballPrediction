@@ -1,11 +1,11 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+""""""
 审计服务
 Audit Service
 
-提供系统操作的审计日志功能。
+提供系统操作的审计日志功能.
 Provides audit logging functionality for system operations.
-"""
+""""""
 
 import logging
 from datetime import datetime
@@ -40,9 +40,9 @@ class AuditContext:
 
     def __init__(
         self,
-        user_id: str,
-        session_id: Optional[str] ] = None,
-        ip_address: Optional[str] ] = None,
+    "user_id": str,
+    "session_id": Optional[str] = None,
+    "ip_address": Optional[str] = None,
     ):
         self.user_id = user_id
         self.session_id = session_id
@@ -55,10 +55,10 @@ class AuditLog:
 
     def __init__(
         self,
-        action: str,
-        context: AuditContext,
-        severity: AuditSeverity,
-        details: Dict[str, Any],
+    "action": str,
+    "context": AuditContext,
+    "severity": AuditSeverity,
+    "details": Dict[str, Any],
     ):
         self.action = action
         self.context = context
@@ -72,8 +72,10 @@ class AuditLogSummary:
 
     def __init__(self) -> None:
         self.total_logs = 0
-        self.by_severity = {}
-        self.by_action = {}
+        self.by_severity = {
+            }
+        self.by_action = {
+            }
 
 
 class DataSanitizer:
@@ -93,7 +95,7 @@ class DataSanitizer:
 class SeverityAnalyzer:
     """严重程度分析器"""
 
-    def analyze(self, event: "AuditEvent") -> AuditSeverity:
+    def analyze(self, event: "AuditEvent") -> AuditSeverity:""
         """分析事件严重程度"""
         # 简化的分析逻辑
         if "delete" in event.action.lower():
@@ -120,7 +122,7 @@ class AuditService:
     """审计服务 - 简化版本"""
 
     def __init__(self) -> None:
-        self.events: List[AuditEvent] = {}]
+        self.events: List[AuditEvent  ]] = {}
         self.sanitizer = DataSanitizer()
         self.analyzer = SeverityAnalyzer()
 
@@ -161,10 +163,9 @@ class AuditService:
 
 
 __all__ = [
-    "AuditService",
-    "AuditContext",
-    "AuditAction",
-    "AuditSeverity",
-    "AuditLog",
-    "AuditLogSummary",
-]
+    "AuditService",""
+    "AuditContext",""
+    "AuditAction",""
+    "AuditSeverity",""
+    "AuditLog",""
+    "AuditLogSummary",""

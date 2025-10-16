@@ -1,10 +1,10 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+
 数据库兼容性模块
 Database Compatibility Module
 
-提供数据库兼容性相关的类和函数。
-"""
+提供数据库兼容性相关的类和函数.
+""""""
 
 from enum import Enum
 import re
@@ -22,84 +22,84 @@ class CompatibleQueryBuilder:
     """兼容性查询构建器"""
 
     def __init__(self, dialect: str = "postgresql"):
-        """初始化查询构建器
+        """初始化查询构建器"""
 
         Args:
-            dialect: 数据库方言（postgresql, mysql, sqlite）
-        """
+    "dialect": 数据库方言(postgresql, mysql, sqlite)
+        """"""
         self.dialect = dialect
         self.compatibility_rules = self._get_compatibility_rules()
 
     def _get_compatibility_rules(self) -> Dict[str, Any]:
         """获取兼容性规则"""
         rules = {
-            "postgresql": {
-                "limit_syntax": "LIMIT {limit}",
-                "offset_syntax": "OFFSET {offset}",
-                "json_extract": "jsonb_extract_path_text",
-                "json_contains": "jsonb_contains",
+            "postgresql": {","
+                "limit_syntax": "LIMIT {limit}",","""
+                "offset_syntax": "OFFSET {offset}",","""
+                "json_extract": "jsonb_extract_path_text",","
+                "json_contains": "jsonb_contains",""
             },
-            "mysql": {
-                "limit_syntax": "LIMIT {limit}",
-                "offset_syntax": "OFFSET {offset}",
-                "json_extract": "JSON_EXTRACT",
-                "json_contains": "JSON_CONTAINS",
+            "mysql": {","
+                "limit_syntax": "LIMIT {limit}",","""
+                "offset_syntax": "OFFSET {offset}",","""
+                "json_extract": "JSON_EXTRACT",","
+                "json_contains": "JSON_CONTAINS",""
             },
-            "sqlite": {
-                "limit_syntax": "LIMIT {limit}",
-                "offset_syntax": "OFFSET {offset}",
-                "json_extract": "json_extract",
-                "json_contains": "json_extract",
+            "sqlite": {","
+                "limit_syntax": "LIMIT {limit}",","""
+                "offset_syntax": "OFFSET {offset}",","""
+                "json_extract": "json_extract",","
+                "json_contains": "json_extract",""
             },
         }
         return rules.get(self.dialect, rules["postgresql"])
 
     def build_limit_query(self, base_query: str, limit: int, offset: int = 0) -> str:
-        """构建带限制的查询
+        """构建带限制的查询"""
 
         Args:
-            base_query: 基础查询
-            limit: 限制数量
-            offset: 偏移量
+    "base_query": 基础查询
+    "limit": 限制数量
+    "offset": 偏移量
 
         Returns:
-            str: 构建后的查询
-        """
+    "str": 构建后的查询
+        """"""
         query = base_query
         if limit is not None:
-            query += f" {self.compatibility_rules['limit_syntax'].format(limit=limit)}"
+            query += f" {self.compatibility_rules[limit_syntax].format(limit=limit)}"
         if offset is not None and offset > 0:
             query += (
-                f" {self.compatibility_rules['offset_syntax'].format(offset=offset)}"
+                f" {self.compatibility_rules[offset_syntax].format(offset=offset)}"
             )
         return query
 
     def build_json_query(self, column: str, path: str) -> str:
-        """构建JSON查询
+        """构建JSON查询"""
 
         Args:
-            column: JSON列名
-            path: JSON路径
+    "column": JSON列名
+    "path": JSON路径
 
         Returns:
-            str: 构建后的查询片段
-        """
+    "str": 构建后的查询片段
+        """"""
         if self.dialect == "postgresql":
-            return f"{self.compatibility_rules['json_extract']}({column}, '{{{path}}}')"
+            return f"{self.compatibility_rules[json_extract]}({column}, '{{{path}}})""'"
         else:
-            return f"{self.compatibility_rules['json_extract']}({column}, '$.{path}')"
+            return f"{self.compatibility_rules[json_extract]}({column}, '$.{path})""'"
 
 
 class SQLCompatibilityHelper:
     """SQL兼容性助手"""
 
     def __init__(self, source_dialect: str, target_dialect: str):
-        """初始化兼容性助手
+        """初始化兼容性助手"""
 
         Args:
-            source_dialect: 源数据库方言
-            target_dialect: 目标数据库方言
-        """
+    "source_dialect": 源数据库方言
+    "target_dialect": 目标数据库方言
+        """"""
         self.source_dialect = source_dialect
         self.target_dialect = target_dialect
         self.transformation_rules = self._load_transformation_rules()
@@ -107,57 +107,57 @@ class SQLCompatibilityHelper:
     def _load_transformation_rules(self) -> Dict[str, Dict[str, str]:
         """加载转换规则"""
         return {
-            "postgresql_to_mysql": {
-                "SERIAL": "INT AUTO_INCREMENT",
-                "TIMESTAMP WITH TIME ZONE": "DATETIME",
-                "JSONB": "JSON",
-                "TRUE": "1",
-                "FALSE": "0",
+            "postgresql_to_mysql": {","
+                "SERIAL": "INT AUTO_INCREMENT",","
+                "TIMESTAMP WITH TIME ZONE": "DATETIME",","
+                "JSONB": "JSON",","
+                "TRUE": "1",","
+                "FALSE": "0",""
             },
-            "postgresql_to_sqlite": {
-                "SERIAL": "INTEGER PRIMARY KEY AUTOINCREMENT",
-                "TIMESTAMP WITH TIME ZONE": "DATETIME",
-                "JSONB": "TEXT",
-                "TRUE": "1",
-                "FALSE": "0",
+            "postgresql_to_sqlite": {","
+                "SERIAL": "INTEGER PRIMARY KEY AUTOINCREMENT",","
+                "TIMESTAMP WITH TIME ZONE": "DATETIME",","
+                "JSONB": "TEXT",","
+                "TRUE": "1",","
+                "FALSE": "0",""
             },
-            "mysql_to_postgresql": {
-                "INT AUTO_INCREMENT": "SERIAL",
-                "DATETIME": "TIMESTAMP",
-                "JSON": "JSONB",
-                "`": '"',
+            "mysql_to_postgresql": {","
+                "INT AUTO_INCREMENT": "SERIAL",","
+                "DATETIME": "TIMESTAMP",","
+                "JSON": "JSONB",","
+                "`": '"',"""
             },
-            "mysql_to_sqlite": {
-                "INT AUTO_INCREMENT": "INTEGER PRIMARY KEY AUTOINCREMENT",
-                "DATETIME": "DATETIME",
-                "JSON": "TEXT",
-                "`": '"',
+            "mysql_to_sqlite": {","
+                "INT AUTO_INCREMENT": "INTEGER PRIMARY KEY AUTOINCREMENT",","
+                "DATETIME": "DATETIME",","
+                "JSON": "TEXT",","
+                "`": '"',"""
             },
-            "sqlite_to_postgresql": {
-                "INTEGER PRIMARY KEY AUTOINCREMENT": "SERIAL",
-                "TEXT": "TEXT",
-                "TRUE": "TRUE",
-                "FALSE": "FALSE",
+            "sqlite_to_postgresql": {","
+                "INTEGER PRIMARY KEY AUTOINCREMENT": "SERIAL",","
+                "TEXT": "TEXT",","
+                "TRUE": "TRUE",","
+                "FALSE": "FALSE",","
                 '"': '"',
             },
-            "sqlite_to_mysql": {
-                "INTEGER PRIMARY KEY AUTOINCREMENT": "INT AUTO_INCREMENT",
-                "TEXT": "TEXT",
-                "TRUE": "1",
-                "FALSE": "0",
-                '"': "`",
+            "sqlite_to_mysql": {","
+                "INTEGER PRIMARY KEY AUTOINCREMENT": "INT AUTO_INCREMENT",","
+                "TEXT": "TEXT",","
+                "TRUE": "1",","
+                "FALSE": "0",","
+                '"': "`","""
             },
         }
 
     def convert_datatype(self, datatype: str) -> str:
-        """转换数据类型
+        """转换数据类型"""
 
         Args:
-            datatype: 源数据类型
+    "datatype": 源数据类型
 
         Returns:
-            str: 目标数据类型
-        """
+    "str": 目标数据类型
+        """"""
         rule_key = f"{self.source_dialect}_to_{self.target_dialect}"
         rules = self.transformation_rules.get(rule_key, {})
 
@@ -173,14 +173,14 @@ class SQLCompatibilityHelper:
         return datatype
 
     def convert_sql(self, sql: str) -> str:
-        """转换SQL语句
+        """转换SQL语句"""
 
         Args:
-            sql: 源SQL语句
+    "sql": 源SQL语句
 
         Returns:
-            str: 转换后的SQL语句
-        """
+    "str": 转换后的SQL语句
+        """"""
         rule_key = f"{self.source_dialect}_to_{self.target_dialect}"
         rules = self.transformation_rules.get(rule_key, {})
 
@@ -197,19 +197,19 @@ class SQLCompatibilityHelper:
         return converted
 
     def check_compatibility(self, sql: str) -> Compatibility:
-        """检查SQL兼容性
+        """检查SQL兼容性"""
 
         Args:
-            sql: SQL语句
+    "sql": SQL语句
 
         Returns:
-            Compatibility: 兼容性级别
-        """
+    "Compatibility": 兼容性级别
+        """"""
         # 简单的兼容性检查
         incompatible_patterns = {
-            "postgresql": ["JSONB", "SERIAL", "TIMESTAMP WITH TIME ZONE"],
-            "mysql": ["JSON", "AUTO_INCREMENT", "DATETIME"],
-            "sqlite": ["AUTOINCREMENT", "WITHOUT ROWID"],
+            "postgresql": ["JSONB", "SERIAL", "TIMESTAMP WITH TIME ZONE"],","
+            "mysql": ["JSON", "AUTO_INCREMENT", "DATETIME"],","
+            "sqlite": ["AUTOINCREMENT", "WITHOUT ROWID"],""
         }
 
         patterns = incompatible_patterns.get(self.target_dialect, [])
@@ -223,17 +223,17 @@ class SQLCompatibilityHelper:
             return Compatibility.NONE
 
     def get_migration_script(self, source_ddl: str) -> str:
-        """获取迁移脚本
+        """获取迁移脚本"""
 
         Args:
-            source_ddl: 源DDL语句
+    "source_ddl": 源DDL语句
 
         Returns:
-            str: 迁移脚本
-        """
+    "str": 迁移脚本
+        """"""
         converted_ddl = self.convert_sql(source_ddl)
 
-        script = f"""-- Migration from {self.source_dialect} to {self.target_dialect}
+        script = f"""-- Migration from {self.source_dialect} to {self.target_dialect}"""
 -- Source DDL:
 -- {source_ddl}
 
@@ -241,5 +241,5 @@ class SQLCompatibilityHelper:
 {converted_ddl}
 
 -- Please review and test before applying!
-"""
+""""""
         return script

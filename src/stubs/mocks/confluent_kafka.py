@@ -1,8 +1,8 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+
 Confluent Kafka Mock 实现
-用于测试环境，避免真实的Kafka依赖
-"""
+用于测试环境,避免真实的Kafka依赖
+
 
 import logging
 
@@ -14,10 +14,10 @@ class MockMessage:
 
     def __init__(
         self,
-        topic: str,
-        value: Any = None,
-        key: Any = None,
-        headers: Optional[List[tuple[str, bytes]] = None,
+    "topic": str,
+    "value": Any = None,
+    "key": Any = None,
+    "headers": Optional[List[tuple[str, bytes] = None,
     ):
         self._topic = topic
         self._value = value
@@ -151,12 +151,12 @@ class MockProducer:
 
     def produce(
         self,
-        topic: str,
-        value: Any = None,
-        key: Any = None,
-        headers: Optional[List[tuple[str, bytes]] = None,
-        partition: int = 0,
-        on_delivery: Callable = None,
+    "topic": str,
+    "value": Any = None,
+    "key": Any = None,
+    "headers": Optional[List[tuple[str, bytes] = None,
+    "partition": int = 0,
+    "on_delivery": Callable = None,
     ) -> None:
         """生产消息"""
         message = MockMessage(topic, value, key, headers)
@@ -214,16 +214,17 @@ class MockAdminClient:
 
     def __init__(self, config: Dict[str, Any]):
         self._config = config
-        self._metadata = {"topics": {}, "brokers": {"1": "localhost:9093"}}
+        self._metadata = {
+            "topics": {}, "brokers": {"1": "localhost:9093"}}
 
     def create_topics(self, new_topics: List[Any]) -> Dict[str, Any]:
         """创建主题"""
-        results: Dict[str, Any] = {}
+    "results": Dict[str, Any] = {}
         for topic in new_topics:
             topic_name = getattr(topic, "topic", str(topic))
-            self._metadata["topics"][topic_name] = {  # type: ignore
-                "partitions": 1,
-                "replication_factor": 1,
+            self._metadata["topics"][topic_name] = {  # type: ignore"],"
+                "partitions": 1,","
+                "replication_factor": 1,""
             }
             results[topic_name] = f"Created topic {topic_name}"
         return results
@@ -284,12 +285,12 @@ class MockSerializingProducer(MockProducer):
 
     def produce(
         self,
-        topic: str,
-        value: Any = None,
-        key: Any = None,
-        headers: Optional[List[tuple[str, bytes]] = None,
-        partition: int = 0,
-        on_delivery: Callable = None,
+    "topic": str,
+    "value": Any = None,
+    "key": Any = None,
+    "headers": Optional[List[tuple[str, bytes] = None,
+    "partition": int = 0,
+    "on_delivery": Callable = None,
     ) -> None:
         """序列化并发送消息"""
         serialized_key = key
@@ -361,7 +362,7 @@ class TopicPartition:
         self.partition = partition
 
     def __repr__(self):
-        return f"TopicPartition(topic='{self.topic}', partition={self.partition})"
+        return f"TopicPartition(topic={self.topic}, partition={self.partition})"""
 
     def __eq__(self, other):
         if not isinstance(other, TopicPartition):

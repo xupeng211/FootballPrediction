@@ -51,7 +51,7 @@ class BaseModel(Base, TimestampMixin):
         将模型对象转换为字典
 
         Args:
-            exclude_fields: 需要排除的字段集合
+    "exclude_fields": 需要排除的字段集合
 
         Returns:
             Dict[str, Any]: 模型字典表示
@@ -59,7 +59,7 @@ class BaseModel(Base, TimestampMixin):
         if exclude_fields is None:
             exclude_fields = set()
 
-        result: dict[str, Any] = {}
+    "result": dict[str, Any] = {}
         for column in self.__table__.columns:
             column_name = column.name
             if column_name not in exclude_fields:
@@ -77,15 +77,15 @@ class BaseModel(Base, TimestampMixin):
         从字典创建模型实例
 
         Args:
-            data: 包含模型数据的字典
+    "data": 包含模型数据的字典
 
         Returns:
-            BaseModel: 模型实例
+    "BaseModel": 模型实例
         """
         # 过滤掉不属于模型的字段
         valid_columns = {column.name for column in cls.__table__.columns}
         filtered_data = {
-            key: value for key, value in data.items() if key in valid_columns
+    "key": value for key, value in data.items() if key in valid_columns
         }
         return cls(**filtered_data)
 
@@ -96,8 +96,8 @@ class BaseModel(Base, TimestampMixin):
         从字典更新模型对象
 
         Args:
-            data: 更新数据字典
-            exclude_fields: 需要排除的字段集合
+    "data": 更新数据字典
+    "exclude_fields": 需要排除的字段集合
         """
         if exclude_fields is None:
             exclude_fields = {"id", "created_at"}  # 默认排除ID和创建时间

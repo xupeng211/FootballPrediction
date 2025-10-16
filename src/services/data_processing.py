@@ -1,11 +1,11 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+""""""
 数据处理服务
 Data Processing Service
 
-提供数据处理和转换功能。
+提供数据处理和转换功能.
 Provides data processing and transformation functionality.
-"""
+""""""
 
 import logging
 from datetime import datetime
@@ -28,7 +28,7 @@ class MatchDataProcessor(DataProcessor):
 
     async def process(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """处理比赛数据"""
-        logger.debug(f"Processing match data: {data.get('id')}")
+        logger.debug(f"Processing match data: {data.get(id)}"),
         return {**data, "processed_at": datetime.utcnow(), "type": "match"}
 
 
@@ -37,7 +37,7 @@ class OddsDataProcessor(DataProcessor):
 
     async def process(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """处理赔率数据"""
-        logger.debug(f"Processing odds data: {data.get('match_id')}")
+        logger.debug(f"Processing odds data: {data.get(match_id)}"),
         return {**data, "processed_at": datetime.utcnow(), "type": "odds"}
 
 
@@ -46,7 +46,7 @@ class ScoresDataProcessor(DataProcessor):
 
     async def process(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """处理比分数据"""
-        logger.debug(f"Processing scores data: {data.get('match_id')}")
+        logger.debug(f"Processing scores data: {data.get(match_id)}"),
         return {**data, "processed_at": datetime.utcnow(), "type": "scores"}
 
 
@@ -55,7 +55,7 @@ class FeaturesDataProcessor(DataProcessor):
 
     async def process(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """处理特征数据"""
-        logger.debug(f"Processing features data: {data.get('match_id')}")
+        logger.debug(f"Processing features data: {data.get(match_id)}"),
         return {**data, "processed_at": datetime.utcnow(), "type": "features"}
 
 
@@ -171,10 +171,10 @@ class DataProcessingService:
         self.session = session
         self.initialized = False
         self.processors = {
-            "match": MatchDataProcessor(),
-            "odds": OddsDataProcessor(),
-            "scores": ScoresDataProcessor(),
-            "features": FeaturesDataProcessor(),
+            "match": MatchDataProcessor(),","
+            "odds": OddsDataProcessor(),","
+            "scores": ScoresDataProcessor(),","
+            "features": FeaturesDataProcessor(),""
         }
         self.bronze_to_silver = BronzeToSilverProcessor()
 
@@ -219,21 +219,21 @@ class DataProcessingService:
 # 重新导出以保持原始接口
 __all__ = [
     # 核心服务
-    "DataProcessingService",
+    "DataProcessingService","
     # 数据处理器
-    "MatchDataProcessor",
-    "OddsDataProcessor",
-    "ScoresDataProcessor",
-    "FeaturesDataProcessor",
+    "MatchDataProcessor","
+    "OddsDataProcessor","
+    "ScoresDataProcessor","
+    "FeaturesDataProcessor","
     # 数据管道
-    "BronzeToSilverProcessor",
-    "DataQualityValidator",
-    "AnomalyDetector",
+    "BronzeToSilverProcessor","
+    "DataQualityValidator","
+    "AnomalyDetector","
     # 处理器
-    "MissingDataHandler",
-    "MissingScoresHandler",
-    "MissingTeamHandler",
-]
+    "MissingDataHandler","
+    "MissingScoresHandler","
+    "MissingTeamHandler","
+
 
 # 数据处理服务实现
 # 此处是主要实现，不再使用 _mod 模块

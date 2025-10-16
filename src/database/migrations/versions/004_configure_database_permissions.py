@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional, Union
 
 # mypy: ignore-errors
-"""配置数据库权限
+"""配置数据库权限"
 
 配置三类数据库用户的权限：
 - football_reader: 只读用户（分析、前端）
@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional, Union
 基于 DATA_DESIGN.md 第5.3节设计。
 
 Revision ID: 004_configure_permissions
-Revises: f48d412852cc
+    "Revises": f48d412852cc
 Create Date: 2025-09-10 16:40:00.000000
 """
 

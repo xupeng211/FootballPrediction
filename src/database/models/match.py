@@ -68,26 +68,26 @@ class Match(BaseModel):
     __tablename__ = "matches"
 
     # 外键关联
-    home_team_id: Mapped[int] = mapped_column(
+    "home_team_id": Mapped[int] = mapped_column(
         ForeignKey("teams.id", ondelete="CASCADE"), nullable=False, comment="主队ID"
     )
 
-    away_team_id: Mapped[int] = mapped_column(
+    "away_team_id": Mapped[int] = mapped_column(
         ForeignKey("teams.id", ondelete="CASCADE"), nullable=False, comment="客队ID"
     )
 
-    league_id: Mapped[int] = mapped_column(
+    "league_id": Mapped[int] = mapped_column(
         ForeignKey("leagues.id", ondelete="CASCADE"), nullable=False, comment="联赛ID"
     )
 
-    season: Mapped[str] = mapped_column(String(20), nullable=False, comment="赛季")
+    "season": Mapped[str] = mapped_column(String(20), nullable=False, comment="赛季")
 
     # 比赛时间
-    match_time: Mapped[datetime] = mapped_column(
+    "match_time": Mapped[datetime] = mapped_column(
         DateTime, nullable=False, comment="比赛时间"
     )
 
-    match_status: Mapped[MatchStatus] = mapped_column(
+    "match_status": Mapped[MatchStatus] = mapped_column(
         SQLEnum(MatchStatus),
         nullable=False,
         default=MatchStatus.SCHEDULED,
@@ -95,36 +95,36 @@ class Match(BaseModel):
     )
 
     # 比分信息
-    home_score: Mapped[int | None] = mapped_column(
+    "home_score": Mapped[int | None] = mapped_column(
         Integer, nullable=True, comment="主队比分"
     )
 
-    away_score: Mapped[int | None] = mapped_column(
+    "away_score": Mapped[int | None] = mapped_column(
         Integer, nullable=True, comment="客队比分"
     )
 
-    home_ht_score: Mapped[int | None] = mapped_column(
+    "home_ht_score": Mapped[int | None] = mapped_column(
         Integer, nullable=True, comment="主队半场比分"
     )
 
-    away_ht_score: Mapped[int | None] = mapped_column(
+    "away_ht_score": Mapped[int | None] = mapped_column(
         Integer, nullable=True, comment="客队半场比分"
     )
 
-    minute: Mapped[int | None] = mapped_column(
+    "minute": Mapped[int | None] = mapped_column(
         Integer, nullable=True, comment="比赛进行时间（分钟）"
     )
 
     # 比赛详情
-    venue: Mapped[str | None] = mapped_column(
+    "venue": Mapped[str | None] = mapped_column(
         String(200), nullable=True, comment="比赛场地"
     )
 
-    referee: Mapped[str | None] = mapped_column(
+    "referee": Mapped[str | None] = mapped_column(
         String(100), nullable=True, comment="主裁判"
     )
 
-    weather: Mapped[str | None] = mapped_column(
+    "weather": Mapped[str | None] = mapped_column(
         String(100), nullable=True, comment="天气情况"
     )
 
@@ -293,10 +293,10 @@ class Match(BaseModel):
 
     def update_score(
         self,
-        home_score: int,
-        away_score: int,
-        home_ht: int | None = None,
-        away_ht: int | None = None,
+    "home_score": int,
+    "away_score": int,
+    "home_ht": int | None = None,
+    "away_ht": int | None = None,
     ):
         """更新比赛比分"""
         self.home_score = home_score

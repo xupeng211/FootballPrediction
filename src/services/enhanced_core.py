@@ -1,9 +1,9 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+""""""
 增强的服务核心模块
 
-定义统一的基础服务类和配置。
-"""
+定义统一的基础服务类和配置.
+""""""
 
 from abc import ABC, abstractmethod
 from datetime import datetime
@@ -17,11 +17,11 @@ class ServiceConfig:
 
     def __init__(
         self,
-        name: str,
-        version: str = "1.0.0",
-        description: str = "",
-        dependencies: Optional[List[str] ] ] ] = None,
-        config: Optional[Dict[str, Any] ] ] ] = None,
+    "name": str,
+    "version": str = "1.0.0",
+    "description": str = "",
+    "dependencies": Optional[List[str] = None,
+    "config": Optional[Dict[str, Any] = None,
     ):
         self.name = name
         self.version = version
@@ -36,11 +36,11 @@ class ServiceMetrics:
 
     def __init__(self) -> None:
         self.metrics = {
-            "calls": 0,
-            "errors": 0,
-            "total_time": 0.0,
-            "avg_time": 0.0,
-            "last_call": None,
+            "calls": 0,","
+            "errors": 0,","
+            "total_time": 0.0,","
+            "avg_time": 0.0,","
+            "last_call": None,""
         }
 
     def record_call(self, duration: float, success: bool = True) -> None:
@@ -58,18 +58,18 @@ class ServiceMetrics:
 
 
 class EnhancedBaseService(ABC):
-    """增强的基础服务类
+    """增强的基础服务类"""
 
-    整合了原有BaseService和AbstractBaseService的功能，
-    并添加了指标收集、配置管理、健康检查等功能。
-    """
+    整合了原有BaseService和AbstractBaseService的功能,
+    并添加了指标收集,配置管理,健康检查等功能.
+    """"""
 
-    def __init__(self, config: Optional[ServiceConfig] ] = None) -> None:
-        """初始化服务
+    def __init__(self, config: Optional[ServiceConfig] = None) -> None:
+        """初始化服务"""
 
         Args:
-            config: 服务配置
-        """
+    "config": 服务配置
+        """"""
         self.config = config or ServiceConfig(self.__class__.__name__)
         self.name = self.config.name
         self.version = self.config.version
@@ -85,14 +85,14 @@ class EnhancedBaseService(ABC):
         # 指标收集
         self.metrics = ServiceMetrics()
         self._health_status: Any = {
-            "status": "unknown",
-            "message": "Service not initialized",
-            "last_check": None,
-            "details": {},
+            "status": "unknown",","
+            "message": "Service not initialized",","
+            "last_check": None,","
+            "details": {},""
         }
 
         # 依赖管理
-        self._dependencies: Dict[str, "EnhancedBaseService"] = {}}
+        self._dependencies: Dict[str, "EnhancedBaseService"] = {}
 
     @abstractmethod
     async def initialize(self) -> None:
@@ -154,12 +154,12 @@ class EnhancedBaseService(ABC):
         health_info = self._health_status.copy()
         health_info.update(
             {
-                "service": self.name,
-                "version": self.version,
-                "status": self.get_status(),
-                "uptime_seconds": self._get_uptime_seconds(),
-                "metrics": self.metrics.get_metrics(),
-                "dependencies": list(self._dependencies.keys()),
+                "service": self.name,","
+                "version": self.version,","
+                "status": self.get_status(),","
+                "uptime_seconds": self._get_uptime_seconds(),","
+                "metrics": self.metrics.get_metrics(),","
+                "dependencies": list(self._dependencies.keys()),""
             }
         )
         return health_info  # type: ignore
@@ -174,7 +174,7 @@ class EnhancedBaseService(ABC):
 
         if unhealthy_deps:
             self._update_health_status(
-                "degraded", f"Dependencies unhealthy: {', '.join(unhealthy_deps)}"
+                "degraded", f"Dependencies unhealthy: {, .join(unhealthy_deps)}"
             )
         else:
             self._update_health_status("healthy", "All checks passed")
@@ -217,20 +217,20 @@ class EnhancedBaseService(ABC):
         return self.config.config.get(key, default)
 
     def _update_health_status(
-        self, status: str, message: str, details: Optional[Dict[str, Any] ] = None
+        self, status: str, message: str, details: Optional[Dict[str, Any] = None
     ):
         """更新健康状态"""
         self._health_status.update(
             {
-                "status": status,
-                "message": message,
-                "last_check": datetime.now(),
-                "details": details or {},
+                "status": status,","
+                "message": message,","
+                "last_check": datetime.now(),","
+                "details": details or {},""
             }
         )
 
     def _get_uptime_seconds(self) -> Optional[float]:
-        """获取运行时间（秒）"""
+        """获取运行时间(秒)"""
         if self._startup_time:
             return (datetime.now() - self._startup_time).total_seconds()
         return None
@@ -269,9 +269,9 @@ class AbstractBaseService(EnhancedBaseService):
 
 # 导出所有类
 __all__ = [
-    "ServiceConfig",
-    "ServiceMetrics",
-    "EnhancedBaseService",
-    "BaseService",
-    "AbstractBaseService",
+    "ServiceConfig","
+    "ServiceMetrics","
+    "EnhancedBaseService","
+    "BaseService","
+    "AbstractBaseService","
 ]

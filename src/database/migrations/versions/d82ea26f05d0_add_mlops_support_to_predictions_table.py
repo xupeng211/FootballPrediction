@@ -6,7 +6,7 @@ import sqlalchemy as sa
 """Add MLOps support to predictions table
 
 Revision ID: d82ea26f05d0
-Revises: d6d814cc1078
+    "Revises": d6d814cc1078
 Create Date: 2025-09-10 23:15:00.000000
 
 """

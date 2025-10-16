@@ -1,15 +1,15 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+
 性能分析器
 Performance Analyzer
 
-提供性能数据分析和优化建议：
+提供性能数据分析和优化建议:
 - 性能瓶颈识别
 - 资源使用分析
 - 趋势分析
 - 优化建议生成
 - 性能报告生成
-"""
+""""""
 
 import json
 from datetime import datetime
@@ -25,24 +25,24 @@ logger = get_logger(__name__)
 class PerformanceInsight(BaseModel):
     """性能洞察数据结构"""
 
-    category: str
-    severity: str  # low, medium, high, critical
-    title: str
-    description: str
-    impact: str
-    recommendation: str
-    metrics: Dict[str, Any] = {}
-    timestamp: datetime
+    "category": str
+    "severity": str  # low, medium, high, critical
+    "title": str
+    "description": str
+    "impact": str
+    "recommendation": str
+    "metrics": Dict[str, Any] = {}
+    "timestamp": datetime
 
 
 class PerformanceTrend(BaseModel):
     """性能趋势数据"""
 
-    metric_name: str
-    time_series: List[Tuple[datetime, float]
-    trend: str  # improving, stable, degrading
-    slope: float
-    confidence: float
+    "metric_name": str
+    "time_series": List[Tuple[datetime, float]
+    "trend": str  # improving, stable, degrading
+    "slope": float
+    "confidence": float
 
 
 class PerformanceAnalyzer:
@@ -57,35 +57,35 @@ class PerformanceAnalyzer:
     def _load_default_thresholds(self) -> Dict[str, Dict[str, Any]:
         """加载默认的性能阈值"""
         return {
-            "response_time": {
-                "excellent": 0.1,  # 100ms
-                "good": 0.5,  # 500ms
-                "acceptable": 1.0,  # 1s
-                "poor": 2.0,  # 2s
+            "response_time": {","
+                "excellent": 0.1,  # 100ms","
+                "good": 0.5,  # 500ms","
+                "acceptable": 1.0,  # 1s","
+                "poor": 2.0,  # 2s""
             },
-            "memory_usage": {
-                "excellent": 50,  # 50MB
-                "good": 100,  # 100MB
-                "acceptable": 200,  # 200MB
-                "poor": 500,  # 500MB
+            "memory_usage": {","
+                "excellent": 50,  # 50MB","
+                "good": 100,  # 100MB","
+                "acceptable": 200,  # 200MB","
+                "poor": 500,  # 500MB""
             },
-            "cpu_usage": {
-                "excellent": 20,  # 20%
-                "good": 50,  # 50%
-                "acceptable": 70,  # 70%
-                "poor": 90,  # 90%
+            "cpu_usage": {","
+                "excellent": 20,  # 20%","
+                "good": 50,  # 50%","
+                "acceptable": 70,  # 70%","
+                "poor": 90,  # 90%""
             },
-            "error_rate": {
-                "excellent": 0.01,  # 0.01%
-                "good": 0.1,  # 0.1%
-                "acceptable": 1.0,  # 1%
-                "poor": 5.0,  # 5%
+            "error_rate": {","
+                "excellent": 0.01,  # 0.01%","
+                "good": 0.1,  # 0.1%","
+                "acceptable": 1.0,  # 1%","
+                "poor": 5.0,  # 5%""
             },
-            "throughput": {
-                "excellent": 1000,  # 1000 req/s
-                "good": 500,  # 500 req/s
-                "acceptable": 100,  # 100 req/s
-                "poor": 50,  # 50 req/s
+            "throughput": {","
+                "excellent": 1000,  # 1000 req/s","
+                "good": 500,  # 500 req/s","
+                "acceptable": 100,  # 100 req/s","
+                "poor": 50,  # 50 req/s""
             },
         }
 
@@ -106,12 +106,12 @@ class PerformanceAnalyzer:
                         category="api",
                         severity="critical",
                         title="API响应时间过慢",
-                        description=f"平均响应时间为{avg_time:.2f}秒，超过可接受阈值",
-                        impact="严重影响用户体验，可能导致请求超时",
-                        recommendation="优化数据库查询、添加缓存、减少不必要的计算",
+                        description=f"平均响应时间为{avg_time:.2f}秒,超过可接受阈值",
+                        impact="严重影响用户体验,可能导致请求超时",
+                        recommendation="优化数据库查询,添加缓存,减少不必要的计算",
                         metrics={
-                            "avg_response_time": avg_time,
-                            "threshold": self.thresholds["response_time"]["poor"],
+                            "avg_response_time": avg_time,","
+                            "threshold": self.thresholds["response_time"]["poor",""
                         },
                     )
                 )
@@ -121,9 +121,9 @@ class PerformanceAnalyzer:
                         category="api",
                         severity="medium",
                         title="API响应时间需要优化",
-                        description=f"平均响应时间为{avg_time:.2f}秒，接近可接受阈值上限",
-                        impact="影响用户体验，需要关注",
-                        recommendation="检查慢查询、优化算法、考虑异步处理",
+                        description=f"平均响应时间为{avg_time:.2f}秒,接近可接受阈值上限",
+                        impact="影响用户体验,需要关注",
+                        recommendation="检查慢查询,优化算法,考虑异步处理",
                         metrics={"avg_response_time": avg_time},
                     )
                 )
@@ -136,8 +136,8 @@ class PerformanceAnalyzer:
                         severity="high",
                         title="API响应时间不稳定",
                         description=f"P95响应时间({p95_time:.2f}s)是平均值的{p95_time / avg_time:.1f}倍",
-                        impact="部分用户响应时间过长，体验不一致",
-                        recommendation="检查是否存在性能尖峰，优化异常情况处理",
+                        impact="部分用户响应时间过长,体验不一致",
+                        recommendation="检查是否存在性能尖峰,优化异常情况处理",
                         metrics={"p95_time": p95_time, "avg_time": avg_time},
                     )
                 )
@@ -152,7 +152,7 @@ class PerformanceAnalyzer:
                     title="高并发请求",
                     description=f"最大并发请求数达到{max_concurrent}",
                     impact="可能导致服务器资源耗尽",
-                    recommendation="考虑使用负载均衡、限流、或垂直扩展",
+                    recommendation="考虑使用负载均衡,限流,或垂直扩展",
                     metrics={"max_concurrent": max_concurrent},
                 )
             )
@@ -165,10 +165,10 @@ class PerformanceAnalyzer:
                     PerformanceInsight(  # type: ignore
                         category="api",
                         severity="high",
-                        title=f"慢端点: {endpoint['endpoint']}",
-                        description=f"端点{endpoint['endpoint']}平均响应时间{endpoint['average_duration']:.2f}秒",
-                        impact="该端点性能较差，影响整体系统性能",
-                        recommendation="优化该端点的业务逻辑、数据库查询或添加缓存",
+                        title=f"慢端点: {endpoint[endpoint]}",
+                        description=f"端点{endpoint[endpoint]}平均响应时间{endpoint['average_duration']:.2f}秒",
+                        impact="该端点性能较差,影响整体系统性能",
+                        recommendation="优化该端点的业务逻辑,数据库查询或添加缓存",
                         metrics=endpoint,
                     )
                 )
@@ -180,7 +180,7 @@ class PerformanceAnalyzer:
         insights = []
 
         # 分析查询统计
-        if "query_types" in db_stats:
+        if "query_types" in db_stats:,
             for query_type, stats in db_stats["query_types"].items():
                 avg_time = stats["average_time"]
                 error_rate = stats["error_rate"]
@@ -193,8 +193,8 @@ class PerformanceAnalyzer:
                             severity="high" if avg_time > 1.0 else "medium",
                             title=f"{query_type}查询过慢",
                             description=f"{query_type}查询平均耗时{avg_time:.2f}秒",
-                            impact="影响API响应时间，降低系统吞吐量",
-                            recommendation="优化SQL语句、添加索引、考虑使用查询缓存",
+                            impact="影响API响应时间,降低系统吞吐量",
+                            recommendation="优化SQL语句,添加索引,考虑使用查询缓存",
                             metrics={"query_type": query_type, "avg_time": avg_time},
                         )
                     )
@@ -207,11 +207,11 @@ class PerformanceAnalyzer:
                             severity="critical" if error_rate > 0.1 else "high",
                             title=f"{query_type}查询错误率过高",
                             description=f"{query_type}查询错误率为{error_rate:.2%}",
-                            impact="数据操作失败，影响系统可靠性",
-                            recommendation="检查数据库连接、SQL语法、数据完整性约束",
+                            impact="数据操作失败,影响系统可靠性",
+                            recommendation="检查数据库连接,SQL语法,数据完整性约束",
                             metrics={
-                                "query_type": query_type,
-                                "error_rate": error_rate,
+                                "query_type": query_type,","
+                                "error_rate": error_rate,""
                             },
                         )
                     )
@@ -226,7 +226,7 @@ class PerformanceAnalyzer:
                     title="慢查询数量过多",
                     description=f"发现{len(slow_queries)}个慢查询",
                     impact="影响数据库整体性能",
-                    recommendation="定期分析慢查询日志，优化查询语句",
+                    recommendation="定期分析慢查询日志,优化查询语句",
                     metrics={"slow_query_count": len(slow_queries)},
                 )
             )
@@ -247,9 +247,9 @@ class PerformanceAnalyzer:
                     category="cache",
                     severity="medium",
                     title="缓存命中率过低",
-                    description=f"缓存命中率为{hit_rate:.2%}，低于理想值",
-                    impact="增加数据库负载，降低响应速度",
-                    recommendation="优化缓存策略、调整TTL、增加缓存预热",
+                    description=f"缓存命中率为{hit_rate:.2%},低于理想值",
+                    impact="增加数据库负载,降低响应速度",
+                    recommendation="优化缓存策略,调整TTL,增加缓存预热",
                     metrics={"hit_rate": hit_rate, "total_requests": total_requests},
                 )
             )
@@ -259,9 +259,9 @@ class PerformanceAnalyzer:
                     category="cache",
                     severity="low",
                     title="缓存命中率可提升",
-                    description=f"缓存命中率为{hit_rate:.2%}，有提升空间",
+                    description=f"缓存命中率为{hit_rate:.2%},有提升空间",
                     impact="适度影响性能",
-                    recommendation="分析缓存未命中的原因，优化缓存键设计",
+                    recommendation="分析缓存未命中的原因,优化缓存键设计",
                     metrics={"hit_rate": hit_rate},
                 )
             )
@@ -277,8 +277,8 @@ class PerformanceAnalyzer:
                     severity="medium",
                     title="缓存读取时间过长",
                     description=f"缓存平均读取时间{avg_hit_time * 1000:.2f}ms",
-                    impact="影响缓存效果，增加请求延迟",
-                    recommendation="检查缓存服务器性能、网络延迟、序列化方式",
+                    impact="影响缓存效果,增加请求延迟",
+                    recommendation="检查缓存服务器性能,网络延迟,序列化方式",
                     metrics={"avg_hit_time": avg_hit_time},
                 )
             )
@@ -291,14 +291,14 @@ class PerformanceAnalyzer:
                     title="缓存写入时间过长",
                     description=f"缓存平均写入时间{avg_set_time * 1000:.2f}ms",
                     impact="影响写操作性能",
-                    recommendation="优化缓存写入策略、考虑批量写入、异步写入",
+                    recommendation="优化缓存写入策略,考虑批量写入,异步写入",
                     metrics={"avg_set_time": avg_set_time},
                 )
             )
 
         return insights
 
-    def analyze_memory_usage(self, memory_data: List[Dict[str, Any]) -> List[PerformanceInsight]:
+    def analyze_memory_usage(self, memory_data: List[Dict[str, Any]] -> List[PerformanceInsight]:
         """分析内存使用情况"""
         insights = []  # type: ignore
 
@@ -319,11 +319,11 @@ class PerformanceAnalyzer:
                     severity="critical",
                     title="内存使用过高",
                     description=f"最大内存使用达到{max_memory:.1f}MB",
-                    impact="可能导致OOM错误，系统不稳定",
-                    recommendation="检查内存泄漏、优化数据结构、增加内存配置",
+                    impact="可能导致OOM错误,系统不稳定",
+                    recommendation="检查内存泄漏,优化数据结构,增加内存配置",
                     metrics={
-                        "max_memory": max_memory,
-                        "threshold": self.thresholds["memory_usage"]["poor"],
+                        "max_memory": max_memory,","
+                        "threshold": self.thresholds["memory_usage"]["poor",""
                     },
                 )
             )
@@ -335,7 +335,7 @@ class PerformanceAnalyzer:
                     title="内存使用较高",
                     description=f"平均内存使用为{avg_memory:.1f}MB",
                     impact="可能影响系统性能",
-                    recommendation="监控内存增长趋势，优化内存使用",
+                    recommendation="监控内存增长趋势,优化内存使用",
                     metrics={"avg_memory": avg_memory},
                 )
             )
@@ -357,9 +357,9 @@ class PerformanceAnalyzer:
                         impact="可能存在内存泄漏",
                         recommendation="使用内存分析工具检查泄漏点",
                         metrics={
-                            "growth_rate": growth_rate,
-                            "start_memory": start_memory,
-                            "end_memory": end_memory,
+                            "growth_rate": growth_rate,","
+                            "start_memory": start_memory,","
+                            "end_memory": end_memory,""
                         },
                     )
                 )
@@ -380,7 +380,7 @@ class PerformanceAnalyzer:
                     title="活跃后台任务过多",
                     description=f"当前有{active_tasks}个活跃的后台任务",
                     impact="可能影响系统响应性能",
-                    recommendation="检查任务队列长度，考虑增加工作进程",
+                    recommendation="检查任务队列长度,考虑增加工作进程",
                     metrics={"active_tasks": active_tasks},
                 )
             )
@@ -399,8 +399,8 @@ class PerformanceAnalyzer:
                         severity="high" if success_rate < 0.8 else "medium",
                         title=f"任务{task_name}成功率低",
                         description=f"任务{task_name}成功率为{success_rate:.2%}",
-                        impact="任务执行失败，影响业务流程",
-                        recommendation="检查任务失败原因，增加重试机制",
+                        impact="任务执行失败,影响业务流程",
+                        recommendation="检查任务失败原因,增加重试机制",
                         metrics={"task_name": task_name, "success_rate": success_rate},
                     )
                 )
@@ -414,7 +414,7 @@ class PerformanceAnalyzer:
                         title=f"任务{task_name}执行时间过长",
                         description=f"任务{task_name}平均执行时间{avg_time / 60:.1f}分钟",
                         impact="占用系统资源时间过长",
-                        recommendation="优化任务逻辑，考虑拆分为小任务",
+                        recommendation="优化任务逻辑,考虑拆分为小任务",
                         metrics={"task_name": task_name, "avg_time": avg_time},
                     )
                 )
@@ -429,7 +429,7 @@ class PerformanceAnalyzer:
                     title="任务失败频繁",
                     description=f"最近有{len(recent_failures)}个任务失败",
                     impact="影响系统可靠性",
-                    recommendation="检查失败原因，修复问题或增加容错机制",
+                    recommendation="检查失败原因,修复问题或增加容错机制",
                     metrics={"failure_count": len(recent_failures)},
                 )
             )
@@ -461,7 +461,7 @@ class PerformanceAnalyzer:
                 if abs(slope) < 0.001:
                     trend = "stable"
                 elif slope > 0:
-                    trend = "degrading"  # 值越大越差（如响应时间）
+                    trend = "degrading"  # 值越大越差(如响应时间)
                 else:
                     trend = "improving"
 
@@ -499,22 +499,22 @@ class PerformanceAnalyzer:
         if critical_issues:
             recommendations.append(
                 {
-                    "priority": "critical",
-                    "title": "立即处理关键性能问题",
+                    "priority": "critical",","
+                    "title": "立即处理关键性能问题",","
                     "description": f"发现{len(critical_issues)}个关键性能问题需要立即处理",
-                    "actions": ["分配专人处理", "制定修复计划", "监控修复效果"],
-                    "related_issues": [i.title for i in critical_issues],
+                    "actions": ["分配专人处理", "制定修复计划", "监控修复效果"],","
+                    "related_issues": [i.title for i in critical_issues],""
                 }
             )
 
         if high_issues:
             recommendations.append(
                 {
-                    "priority": "high",
-                    "title": "优先处理高优先级问题",
+                    "priority": "high",","
+                    "title": "优先处理高优先级问题",","
                     "description": f"发现{len(high_issues)}个高优先级性能问题",
-                    "actions": ["纳入迭代计划", "评估影响范围", "准备回滚方案"],
-                    "related_issues": [i.title for i in high_issues],
+                    "actions": ["纳入迭代计划", "评估影响范围", "准备回滚方案"],","
+                    "related_issues": [i.title for i in high_issues],""
                 }
             )
 
@@ -524,13 +524,13 @@ class PerformanceAnalyzer:
             category_issues = [i for i in insights if i.category == category]
             recommendations.append(
                 {
-                    "priority": "optimization",
+                    "priority": "optimization",","
                     "title": f"{category.upper()}模块优化建议",
                     "description": f"针对{category}模块的{len(category_issues)}个问题进行优化",
-                    "optimization_strategies": self._get_category_optimization_strategies(
+                    "optimization_strategies": self._get_category_optimization_strategies(""
                         category
                     ),
-                    "related_issues": [i.title for i in category_issues],
+                    "related_issues": [i.title for i in category_issues],""
                 }
             )
 
@@ -539,65 +539,65 @@ class PerformanceAnalyzer:
     def _get_category_optimization_strategies(self, category: str) -> List[str]:
         """获取特定类别的优化策略"""
         strategies = {
-            "api": [
-                "实施请求缓存",
-                "优化数据库查询",
-                "使用CDN加速静态资源",
-                "实现响应压缩",
-                "考虑异步处理",
+            "api": [""
+                "实施请求缓存",""
+                "优化数据库查询",""
+                "使用CDN加速静态资源",""
+                "实现响应压缩",""
+                "考虑异步处理",""
             ],
-            "database": [
-                "优化SQL查询",
-                "添加合适的索引",
-                "使用查询缓存",
-                "考虑读写分离",
-                "优化表结构",
+            "database": [""
+                "优化SQL查询",""
+                "添加合适的索引",""
+                "使用查询缓存",""
+                "考虑读写分离",""
+                "优化表结构",""
             ],
-            "cache": [
-                "调整缓存策略",
-                "优化缓存键设计",
-                "实现缓存预热",
-                "考虑多级缓存",
-                "监控缓存效果",
+            "cache": [""
+                "调整缓存策略",""
+                "优化缓存键设计",""
+                "实现缓存预热",""
+                "考虑多级缓存",""
+                "监控缓存效果",""
             ],
-            "memory": [
-                "修复内存泄漏",
-                "优化数据结构",
-                "使用内存池",
-                "实现对象复用",
-                "调整JVM/Python内存配置",
+            "memory": [""
+                "修复内存泄漏",""
+                "优化数据结构",""
+                "使用内存池",""
+                "实现对象复用",""
+                "调整JVM/Python内存配置",""
             ],
-            "tasks": [
-                "优化任务队列",
-                "实现任务优先级",
-                "增加重试机制",
-                "使用批处理",
-                "监控任务执行",
+            "tasks": [""
+                "优化任务队列",""
+                "实现任务优先级",""
+                "增加重试机制",""
+                "使用批处理",""
+                "监控任务执行",""
             ],
         }
         return strategies.get(category, ["分析性能瓶颈", "优化代码逻辑", "增加监控"])
 
     def generate_performance_report(
         self,
-        api_stats: Optional[Dict[str, Any]] = None,
-        db_stats: Optional[Dict[str, Any]] = None,
-        cache_stats: Optional[Dict[str, Any]] = None,
-        memory_data: Optional[List[Dict[str, Any]] = None,
-        task_stats: Optional[Dict[str, Any]] = None,
+    "api_stats": Optional[Dict[str, Any] = None,
+    "db_stats": Optional[Dict[str, Any] = None,
+    "cache_stats": Optional[Dict[str, Any] = None,
+    "memory_data": Optional[List[Dict[str, Any] = None,
+    "task_stats": Optional[Dict[str, Any] = None,
     ) -> Dict[str, Any]:
         """生成综合性能报告"""
         report = {
-            "timestamp": datetime.now().isoformat(),
-            "summary": {
-                "total_insights": 0,
-                "critical_issues": 0,
-                "high_issues": 0,
-                "medium_issues": 0,
-                "low_issues": 0,
+            "timestamp": datetime.now().isoformat(),","
+            "summary": {","
+                "total_insights": 0,","
+                "critical_issues": 0,","
+                "high_issues": 0,","
+                "medium_issues": 0,","
+                "low_issues": 0,""
             },
-            "insights": [],
-            "trends": {},
-            "recommendations": [],
+            "insights": []",
+            "trends": {},","
+            "recommendations": []",
         }
 
         # 收集各类洞察
@@ -619,7 +619,7 @@ class PerformanceAnalyzer:
             all_insights.extend(self.analyze_task_performance(task_stats))
 
         # 统计洞察
-        report["insights"] = all_insights  # type: ignore
+        report["insights"] = all_insights  # type: ignore"],"
         report["summary"]["total_insights"] = len(all_insights)  # type: ignore
         report["summary"]["critical_issues"] = len(  # type: ignore
             [i for i in all_insights if i.severity == "critical"]
@@ -650,7 +650,7 @@ class PerformanceAnalyzer:
         return report
 
     def _calculate_performance_score(self, insights: List[PerformanceInsight]) -> Dict[str, Any]:
-        """计算性能评分（0-100）"""
+        """计算性能评分(0-100)"""
         if not insights:
             return {"score": 100, "grade": "A"}
 
@@ -673,10 +673,10 @@ class PerformanceAnalyzer:
             grade = "F"
 
         return {
-            "score": score,
-            "grade": grade,
-            "deduction_breakdown": {
-                severity: sum(1 for i in insights if i.severity == severity)
+            "score": score,","
+            "grade": grade,","
+            "deduction_breakdown": {""
+    "severity": sum(1 for i in insights if i.severity == severity)
                 for severity in ["critical", "high", "medium", "low"]
             },
         }
@@ -692,7 +692,7 @@ class PerformanceAnalyzer:
 
     def _generate_html_report(self, report: Dict[str, Any]) -> str:
         """生成HTML格式的报告"""
-        html = f"""
+        html = f""""""
         <!DOCTYPE html>
         <html>
         <head>
@@ -717,7 +717,7 @@ class PerformanceAnalyzer:
                 <h1>性能分析报告</h1>
                 <p>生成时间: {report["timestamp"]}</p>
                 <div class="score">
-                    性能评分: {report["performance_score"]["score"]}/100 ({report["performance_score"]["grade"]})
+    "性能评分": {report["performance_score"]["score"]}/100 ({report["performance_score"]["grade"]})
                 </div>
             </div>
 
@@ -730,21 +730,21 @@ class PerformanceAnalyzer:
             </ul>
 
             <h2>性能洞察</h2>
-        """
+        """"""
 
         for insight in report["insights"]:
-            html += f"""
+            html += f""""""
             <div class="insight {insight["severity"]}">
                 <h3 class="{insight["severity"]}">{insight["title"]}</h3>
-                <p><strong>描述:</strong> {insight["description"]}</p>
-                <p><strong>影响:</strong> {insight["impact"]}</p>
+                <p><strong>描述:</strong> {insight["description"]}</p>"],"
+                <p><strong>影响:</strong> {insight["impact"]}</p>"],"
                 <p><strong>建议:</strong> {insight["recommendation"]}</p>
             </div>
-            """
+            """"""
 
-        html += """
+        html += """"""
         </body>
         </html>
-        """
+        """"""
 
         return html

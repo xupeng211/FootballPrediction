@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+""""""
 Data quality anomaly detector
-"""
+""""""
 
 import logging
 
@@ -45,9 +45,9 @@ class AnomalyDetector:
         """Detect duplicate rows"""
         duplicates = df.duplicated(subset=subset)
         return {
-            "count": duplicates.sum(),
-            "ratio": duplicates.mean(),
-            "indices": df[duplicates].index.tolist(),
+            "count": duplicates.sum(),","
+            "ratio": duplicates.mean(),","
+            "indices": df[duplicates.index.tolist(),""
         }
 
 
@@ -57,12 +57,11 @@ class AdvancedAnomalyDetector(AnomalyDetector):
 
     def detect_all(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Detect all types of anomalies"""
-        return {
-            "outliers": self.detect_statistical_outliers(
-                df.select_dtypes(include=[np.number])
+        return "outliers": self.detect_statistical_outliers(""
+                df.select_dtypes(include=[np.number)
             ),
-            "missing_values": self.detect_missing_values(df),
-            "duplicates": self.detect_duplicates(df),
+            "missing_values": self.detect_missing_values(df),","
+            "duplicates": self.detect_duplicates(df),""
         }
 
 

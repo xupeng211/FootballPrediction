@@ -32,14 +32,14 @@ class TracingConfig:
 
     def __init__(
         self,
-        service_name: str = None,
-        service_version: str = None,
-        environment: str = None,
-        jaeger_endpoint: str = None,
-        zipkin_endpoint: str = None,
-        otlp_endpoint: str = None,
-        sample_rate: float = None,
-        enabled: bool = True,
+    "service_name": str = None,
+    "service_version": str = None,
+    "environment": str = None,
+    "jaeger_endpoint": str = None,
+    "zipkin_endpoint": str = None,
+    "otlp_endpoint": str = None,
+    "sample_rate": float = None,
+    "enabled": bool = True,
     ):
         self.service_name = service_name or os.getenv(
             "SERVICE_NAME", "football-prediction"
@@ -120,7 +120,7 @@ class TracingConfig:
 
     def _setup_exporters(self) -> None:
         """设置追踪导出器"""
-        exporters: list[SpanExporter] = []
+    "exporters": list[SpanExporter] = []
 
         # Jaeger导出器
         if os.getenv("JAEGER_ENABLED", "true").lower() == "true":
@@ -227,9 +227,9 @@ def get_tracer(name: str = None) -> trace.Tracer:
 
 
 def trace_span(
-    name: str = None,
-    kind: trace.SpanKind = trace.SpanKind.INTERNAL,
-    attributes: dict[str, types.AttributeValue] = None,
+    "name": str = None,
+    "kind": trace.SpanKind = trace.SpanKind.INTERNAL,
+    "attributes": dict[str, types.AttributeValue] = None,
 ):
     """装饰器：创建追踪span"""
 
@@ -267,9 +267,9 @@ def trace_span(
 
 
 def trace_async_span(
-    name: str = None,
-    kind: trace.SpanKind = trace.SpanKind.INTERNAL,
-    attributes: dict[str, types.AttributeValue] = None,
+    "name": str = None,
+    "kind": trace.SpanKind = trace.SpanKind.INTERNAL,
+    "attributes": dict[str, types.AttributeValue] = None,
 ):
     """装饰器：创建异步追踪span"""
 
@@ -309,9 +309,9 @@ def trace_async_span(
 
 @contextmanager
 def trace_context(
-    name: str,
-    kind: trace.SpanKind = trace.SpanKind.INTERNAL,
-    attributes: dict[str, types.AttributeValue] = None,
+    "name": str,
+    "kind": trace.SpanKind = trace.SpanKind.INTERNAL,
+    "attributes": dict[str, types.AttributeValue] = None,
 ):
     """上下文管理器：创建追踪span"""
     tracer = get_tracer()
@@ -330,7 +330,7 @@ def add_span_attribute(key: str, value: types.AttributeValue) -> None:
 
 
 def add_span_event(
-    name: str, attributes: dict[str, types.AttributeValue] = None
+    "name": str, attributes: dict[str, types.AttributeValue] = None
 ) -> None:
     """添加事件到当前span"""
     span = trace.get_current_span()

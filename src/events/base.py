@@ -26,11 +26,11 @@ class EventData:
 
     def __init__(
         self,
-        source: str | None = None,
-        version: str = "1.0",
-        metadata: dict[str, Any] | None = None,
-        event_id: str | None = None,
-        timestamp: datetime | None = None,
+    "source": str | None = None,
+    "version": str = "1.0",
+    "metadata": dict[str, Any] | None = None,
+    "event_id": str | None = None,
+    "timestamp": datetime | None = None,
     ):
         """初始化事件数据"""
         self.event_id = event_id or str(uuid.uuid4())
@@ -51,7 +51,7 @@ class Event(ABC):
         """初始化事件
 
         Args:
-            data: 事件数据
+    "data": 事件数据
         """
         self._data = data
 
@@ -91,7 +91,7 @@ class Event(ABC):
         """获取事件类型
 
         Returns:
-            str: 事件类型标识符
+    "str": 事件类型标识符
         """
         pass
 
@@ -110,10 +110,10 @@ class Event(ABC):
         """从字典创建事件
 
         Args:
-            data: 事件字典数据
+    "data": 事件字典数据
 
         Returns:
-            T: 事件实例
+    "T": 事件实例
         """
         pass
 
@@ -135,7 +135,7 @@ class EventHandler(ABC):
         """初始化事件处理器
 
         Args:
-            name: 处理器名称
+    "name": 处理器名称
         """
         self.name = name or self.__class__.__name__
         self._subscribed_events: dict[str, asyncio.Queue] = {}
@@ -145,7 +145,7 @@ class EventHandler(ABC):
         """处理事件
 
         Args:
-            event: 要处理的事件
+    "event": 要处理的事件
         """
         pass
 
@@ -173,8 +173,8 @@ class EventHandler(ABC):
         """添加事件订阅
 
         Args:
-            event_type: 事件类型
-            queue: 事件队列
+    "event_type": 事件类型
+    "queue": 事件队列
         """
         self._subscribed_events[event_type] = queue
 
@@ -182,7 +182,7 @@ class EventHandler(ABC):
         """移除事件订阅
 
         Args:
-            event_type: 事件类型
+    "event_type": 事件类型
         """
         self._subscribed_events.pop(event_type, None)
 
@@ -190,10 +190,10 @@ class EventHandler(ABC):
         """检查是否订阅了指定事件类型
 
         Args:
-            event_type: 事件类型
+    "event_type": 事件类型
 
         Returns:
-            bool: 是否已订阅
+    "bool": 是否已订阅
         """
         return event_type in self._subscribed_events
 
@@ -201,7 +201,7 @@ class EventHandler(ABC):
         """等待并处理特定类型的事件
 
         Args:
-            event_type: 事件类型
+    "event_type": 事件类型
         """
         queue = self._subscribed_events.get(event_type)
         if not queue:
@@ -231,10 +231,10 @@ class EventFilter(ABC):
         """判断是否应该处理事件
 
         Args:
-            event: 事件
+    "event": 事件
 
         Returns:
-            bool: 是否应该处理
+    "bool": 是否应该处理
         """
         pass
 
@@ -246,7 +246,7 @@ class EventTypeFilter(EventFilter):
         """初始化过滤器
 
         Args:
-            allowed_types: 允许的事件类型列表
+    "allowed_types": 允许的事件类型列表
         """
         self.allowed_types = set(allowed_types)
 
@@ -261,7 +261,7 @@ class EventSourceFilter(EventFilter):
         """初始化过滤器
 
         Args:
-            allowed_sources: 允许的事件源列表
+    "allowed_sources": 允许的事件源列表
         """
         self.allowed_sources = set(allowed_sources)
 
@@ -276,8 +276,8 @@ class CompositeEventFilter(EventFilter):
         """初始化组合过滤器
 
         Args:
-            filters: 子过滤器列表
-            operator: 逻辑操作符（"AND" 或 "OR"）
+    "filters": 子过滤器列表
+    "operator": 逻辑操作符（"AND" 或 "OR"）
         """
         self.filters = filters
         self.operator = operator.upper()
@@ -291,5 +291,5 @@ class CompositeEventFilter(EventFilter):
 
         if self.operator == "AND":
             return all(f.should_process(event) for f in self.filters)
-        else:  # OR
+    "else":  # OR
             return any(f.should_process(event) for f in self.filters)

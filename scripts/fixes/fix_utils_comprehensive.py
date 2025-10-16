@@ -6,7 +6,7 @@ Fix indentation issues in test_utils_comprehensive.py
 def fix_file():
     with open('tests/unit/test_utils_comprehensive.py', 'r') as f:
         lines = f.readlines()
-    
+
     fixed_lines = []
     for line in lines:
         stripped = line.lstrip()
@@ -15,10 +15,10 @@ def fix_file():
             fixed_lines.append('            ' + stripped)
         else:
             fixed_lines.append(line)
-    
+
     with open('tests/unit/test_utils_comprehensive.py', 'w') as f:
         f.writelines(fixed_lines)
-    
+
     print("File fixed")
 
 if __name__ == "__main__":

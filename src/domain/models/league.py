@@ -1,11 +1,11 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+
 联赛领域模型
 League Domain Model
 
-封装联赛相关的业务逻辑和不变性约束。
+封装联赛相关的业务逻辑和不变性约束.
 Encapsulates league-related business logic and invariants.
-"""
+""""""
 
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -37,12 +37,12 @@ class LeagueStatus(Enum):
 class LeagueSeason:
     """联赛赛季值对象"""
 
-    season: str
-    start_date: datetime
-    end_date: datetime
-    status: LeagueStatus = LeagueStatus.UPCOMING
-    total_rounds: int = 38  # 标准联赛轮次
-    current_round: int = 0
+    "season": str
+    "start_date": datetime
+    "end_date": datetime
+    "status": LeagueStatus = LeagueStatus.UPCOMING
+    "total_rounds": int = 38  # 标准联赛轮次
+    "current_round": int = 0
 
     def __post_init__(self) -> None:
         """验证赛季信息"""
@@ -73,7 +73,7 @@ class LeagueSeason:
     def start_season(self) -> None:
         """开始赛季"""
         if self.status != LeagueStatus.UPCOMING:
-            raise DomainError(f"赛季状态为 {self.status.value}，无法开始")
+            raise DomainError(f"赛季状态为 {self.status.value},无法开始")
 
         self.status = LeagueStatus.ACTIVE
         self.current_round = 1
@@ -95,23 +95,23 @@ class LeagueSeason:
             self.current_round = self.total_rounds
 
     def __str__(self) -> str:
-        return f"{self.season" - 第 {self.current_round}/{self.total_rounds} 轮"
+        return f"{self.season" - 第 {self.current_round}/{self.total_rounds} 轮""""""
 
 
 @dataclass
 class LeagueSettings:
     """联赛设置值对象"""
 
-    points_for_win: int = 3
-    points_for_draw: int = 1
-    points_for_loss: int = 0
-    promotion_places: int = 3  # 升级名额
-    relegation_places: int = 3  # 降级名额
-    max_foreign_players: int = 5  # 外援名额
-    match_duration: int = 90  # 比赛时长（分钟）
-    halftime_duration: int = 15  # 中场休息时长
-    extra_time: bool = False  # 是否加时
-    penalty_shootout: bool = False  # 是否点球
+    "points_for_win": int = 3
+    "points_for_draw": int = 1
+    "points_for_loss": int = 0
+    "promotion_places": int = 3  # 升级名额
+    "relegation_places": int = 3  # 降级名额
+    "max_foreign_players": int = 5  # 外援名额
+    "match_duration": int = 90  # 比赛时长(分钟)
+    "halftime_duration": int = 15  # 中场休息时长
+    "extra_time": bool = False  # 是否加时
+    "penalty_shootout": bool = False  # 是否点球
 
     def __post_init__(self) -> None:
         """验证设置"""
@@ -155,30 +155,30 @@ class LeagueSettings:
 
 @dataclass
 class League:
-    """
+    """"""
     联赛领域模型
 
-    封装联赛的核心业务逻辑和不变性约束。
-    """
+    封装联赛的核心业务逻辑和不变性约束.
+    """"""
 
-    id: Optional[int] = None
-    name: str = ""
-    short_name: Optional[str] = None
-    code: Optional[str] = None
-    type: LeagueType = LeagueType.DOMESTIC_LEAGUE
-    country: str = ""
-    level: int = 1  # 联赛级别
-    is_active: bool = True
-    founded_year: Optional[int] = None
-    website: Optional[str] = None
-    logo_url: Optional[str] = None
-    current_season: Optional[LeagueSeason] = None
-    settings: Optional[LeagueSettings] = None
-    created_at: datetime = field(default_factory=datetime.utcnow)
-    updated_at: datetime = field(default_factory=datetime.utcnow)
+    "id": Optional[int] = None
+    "name": str = ""
+    "short_name": Optional[str] = None
+    "code": Optional[str] = None
+    "type": LeagueType = LeagueType.DOMESTIC_LEAGUE
+    "country": str = ""
+    "level": int = 1  # 联赛级别
+    "is_active": bool = True
+    "founded_year": Optional[int] = None
+    "website": Optional[str] = None
+    "logo_url": Optional[str] = None
+    "current_season": Optional[LeagueSeason] = None
+    "settings": Optional[LeagueSettings] = None
+    "created_at": datetime = field(default_factory=datetime.utcnow)
+    "updated_at": datetime = field(default_factory=datetime.utcnow)
 
     # 领域事件
-    _domain_events: List[Any] = field(default_factory=list, init=False)
+    "_domain_events": List[Any] = field(default_factory=list, init=False)
 
     def __post_init__(self) -> None:
         """初始化后的验证"""
@@ -209,10 +209,10 @@ class League:
 
     def start_new_season(
         self,
-        season: str,
-        start_date: datetime,
-        end_date: datetime,
-        total_rounds: Optional[int] ] = None,
+    "season": str,
+    "start_date": datetime,
+    "end_date": datetime,
+    "total_rounds": Optional[int] = None,
     ) -> LeagueSeason:
         """开始新赛季"""
         if self.current_season and self.current_season.is_active:
@@ -233,10 +233,10 @@ class League:
 
     def update_info(
         self,
-        name: Optional[str] ] = None,
-        short_name: Optional[str] ] = None,
-        website: Optional[str] ] = None,
-        logo_url: Optional[str] ] = None,
+    "name": Optional[str] = None,
+    "short_name": Optional[str] = None,
+    "website": Optional[str] = None,
+    "logo_url": Optional[str] = None,
     ) -> None:
         """更新联赛信息"""
         if name:
@@ -252,10 +252,10 @@ class League:
 
     def update_settings(
         self,
-        points_for_win: Optional[int] ] = None,
-        points_for_draw: Optional[int] ] = None,
-        points_for_loss: Optional[int] ] = None,
-        max_foreign_players: Optional[int] ] = None,
+    "points_for_win": Optional[int] = None,
+    "points_for_draw": Optional[int] = None,
+    "points_for_loss": Optional[int] = None,
+    "max_foreign_players": Optional[int]  = None,
     ) -> None:
         """更新联赛设置"""
         if points_for_win is not None:
@@ -293,7 +293,7 @@ class League:
         self.updated_at = datetime.utcnow()
 
     def calculate_revenue_sharing(self, position: int, total_teams: int) -> Decimal:
-        """计算收入分成（基于排名）"""
+        """计算收入分成(基于排名)"""
         if position < 1 or position > total_teams:
             raise DomainError("排名无效")
 
@@ -348,7 +348,7 @@ class League:
         return self.type == LeagueType.INTERNATIONAL
 
     def get_seasons_count(self) -> int:
-        """获取赛季数量（简化处理）"""
+        """获取赛季数量(简化处理)"""
         if self.founded_year:
             return datetime.utcnow().year - self.founded_year + 1
         return 0
@@ -381,41 +381,41 @@ class League:
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         return {
-            "id": self.id,
-            "name": self.name,
-            "short_name": self.short_name,
-            "code": self.code,
-            "type": self.type.value,
-            "country": self.country,
-            "level": self.level,
-            "is_active": self.is_active,
-            "founded_year": self.founded_year,
-            "website": self.website,
-            "logo_url": self.logo_url,
-            "prestige": self.prestige,
-            "current_season": {
-                "season": self.current_season.season,
-                "start_date": self.current_season.start_date.isoformat(),
-                "end_date": self.current_season.end_date.isoformat(),
-                "status": self.current_season.status.value,
-                "total_rounds": self.current_season.total_rounds,
-                "current_round": self.current_season.current_round,
-                "progress": self.current_season.progress,
+            "id": self.id,","
+            "name": self.name,","
+            "short_name": self.short_name,","
+            "code": self.code,","
+            "type": self.type.value,","
+            "country": self.country,","
+            "level": self.level,","
+            "is_active": self.is_active,","
+            "founded_year": self.founded_year,","
+            "website": self.website,","
+            "logo_url": self.logo_url,","
+            "prestige": self.prestige,","
+            "current_season": {","
+                "season": self.current_season.season,","
+                "start_date": self.current_season.start_date.isoformat(),","
+                "end_date": self.current_season.end_date.isoformat(),","
+                "status": self.current_season.status.value,","
+                "total_rounds": self.current_season.total_rounds,","
+                "current_round": self.current_season.current_round,","
+                "progress": self.current_season.progress,""
             }
             if self.current_season
             else None,
-            "settings": {
-                "points_for_win": self.settings.points_for_win,
-                "points_for_draw": self.settings.points_for_draw,
-                "points_for_loss": self.settings.points_for_loss,
-                "promotion_places": self.settings.promotion_places,
-                "relegation_places": self.settings.relegation_places,
-                "max_foreign_players": self.settings.max_foreign_players,
+            "settings": {","
+                "points_for_win": self.settings.points_for_win,","
+                "points_for_draw": self.settings.points_for_draw,","
+                "points_for_loss": self.settings.points_for_loss,","
+                "promotion_places": self.settings.promotion_places,","
+                "relegation_places": self.settings.relegation_places,","
+                "max_foreign_players": self.settings.max_foreign_players,""
             }
             if self.settings
             else None,
-            "created_at": self.created_at.isoformat(),
-            "updated_at": self.updated_at.isoformat(),
+            "created_at": self.created_at.isoformat(),","
+            "updated_at": self.updated_at.isoformat(),""
         }
 
     @classmethod
@@ -454,4 +454,4 @@ class League:
         return cls(current_season=current_season, settings=settings, **data)
 
     def __str__(self) -> str:
-        return f"{self.name" ({self.prestige}) - {self.country}"
+        return f"{self.name" ({self.prestige}) - {self.country

@@ -1,10 +1,10 @@
 from typing import Any, Dict, List, Optional, Union
-"""
+""""""
 缓存装饰器使用示例
 Cache Decorators Usage Examples
 
-展示如何在项目中使用各种缓存装饰器。
-"""
+展示如何在项目中使用各种缓存装饰器.
+""""""
 
 import asyncio
 import logging
@@ -34,19 +34,19 @@ async def fetch_user_data(user_id: int) -> Dict[str, Any]:
     """模拟API调用获取用户数据"""
     logger.info(f"获取用户数据: {user_id}")
     await asyncio.sleep(1)  # 模拟网络延迟
-    return {"id": user_id, "name": f"User {user_id}", "age": 25}
+    return {"id": user_id, "name": f"User {user_id}", "age": 25}""
 
 
 # 示例3: 基于用户的缓存
 @cache_by_user(ttl=7200, prefix="user_profile", user_param="user_id")
 def get_user_profile(user_id: int, include_sensitive: bool = False) -> Dict[str, Any]:
-    """获取用户档案（基于用户缓存）"""
+    """获取用户档案(基于用户缓存)"""
     logger.info(f"获取用户档案: {user_id}, 敏感信息: {include_sensitive}")
     profile = {
-        "user_id": user_id,
+        "user_id": user_id,","
         "username": f"user_{user_id}",
         "email": f"user{user_id}@example.com",
-        "profile_completed": True,
+        "profile_completed": True,""
     }
     if include_sensitive:
         profile["phone"] = f"123-456-{user_id:04d}"
@@ -61,8 +61,8 @@ def get_user_profile(user_id: int, include_sensitive: bool = False) -> Dict[str,
     unless=lambda query, limit: len(query) < 3,  # 查询长度小于3时不缓存
 )
 def search_documents(query: str, limit: int = 10) -> List[Dict[str, Any]:
-    """搜索文档（查询长度小于3时不缓存）"""
-    logger.info(f"搜索文档: query='{query}', limit={limit}")
+    """搜索文档(查询长度小于3时不缓存)"""
+    logger.info(f"搜索文档: query={query}, limit={limit}")
     # 模拟搜索结果
     return [
         {"id": i, "title": f"Document {i} for {query}", "score": 0.9 - i * 0.1}
@@ -89,7 +89,7 @@ def generate_invalidation_keys(func, args, kwargs, result):
     key_generator=generate_invalidation_keys,
 )
 def update_user_profile(user_id: int, **updates) -> Dict[str, Any]:
-    """更新用户档案（会失效相关缓存）"""
+    """更新用户档案(会失效相关缓存)"""
     logger.info(f"更新用户档案: {user_id}, 更新: {updates}")
     # 模拟更新操作
     return {"user_id": user_id, "updated_fields": list(updates.keys())}
@@ -97,8 +97,8 @@ def update_user_profile(user_id: int, **updates) -> Dict[str, Any]:
 
 # 示例6: 便捷装饰器使用
 @cache_user_predictions(ttl_seconds=3600)
-def get_user_predictions(user_id: int, match_id: Optional[int] = None) -> List[Dict[str, Any]:
-    """获取用户预测（使用便捷装饰器）"""
+def get_user_predictions(user_id: int, match_id: Optional[int = None) -> List[Dict[str, Any]:
+    """获取用户预测(使用便捷装饰器)"""
     logger.info(f"获取用户预测: user_id={user_id}, match_id={match_id}")
     return [
         {"match_id": i, "prediction": "2-1", "confidence": 0.85}
@@ -109,31 +109,31 @@ def get_user_predictions(user_id: int, match_id: Optional[int] = None) -> List[D
 
 @cache_match_data(ttl_seconds=1800)
 async def get_match_details(match_id: int) -> Dict[str, Any]:
-    """获取比赛详情（使用便捷装饰器）"""
+    """获取比赛详情(使用便捷装饰器)"""
     logger.info(f"获取比赛详情: {match_id}")
     await asyncio.sleep(0.5)
     return {
-        "match_id": match_id,
-        "home_team": "Team A",
-        "away_team": "Team B",
-        "kickof": "2024-01-01T20:00:00Z",
+        "match_id": match_id,","
+        "home_team": "Team A",","
+        "away_team": "Team B",","
+        "kickof": "2024-01-01T20:00:00Z""",
     }
 
 
 @cache_team_stats(ttl_seconds=7200)
 def calculate_team_statistics(team_id: int, season: str) -> Dict[str, Any]:
-    """计算球队统计（使用便捷装饰器）"""
+    """计算球队统计(使用便捷装饰器)"""
     logger.info(f"计算球队统计: team_id={team_id}, season={season}")
     return {
-        "team_id": team_id,
-        "season": season,
-        "played": 20,
-        "won": 12,
-        "drawn": 5,
-        "lost": 3,
-        "goals_for": 35,
-        "goals_against": 18,
-        "points": 41,
+        "team_id": team_id,","
+        "season": season,","
+        "played": 20,","
+        "won": 12,","
+        "drawn": 5,","
+        "lost": 3,","
+        "goals_for": 35,","
+        "goals_against": 18,","
+        "points": 41,""
     }
 
 
@@ -146,49 +146,49 @@ def custom_key_generator(func, args, kwargs, user_id=None):
 
     # 添加特定的参数
     if "team_id" in kwargs:
-        key_parts.append(f"team_{kwargs['team_id']}")
+        key_parts.append(f"team_{kwargs[team_id]}")
     if "season" in kwargs:
-        key_parts.append(f"season_{kwargs['season']}")
+        key_parts.append(f"season_{kwargs[season]}")
 
-    return ":".join(key_parts)
+    return ": ".join(key_parts)""
 
 
 @cache_result(
-    ttl=3600,
-    prefix="custom",
+    ttl=3600",
+            prefix="custom",
     key_generator=custom_key_generator,
 )
 def get_team_form(team_id: int, season: str, last_n: int = 5) -> List[Dict[str, Any]:
-    """获取球队近期表现（使用自定义键生成器）"""
+    """获取球队近期表现(使用自定义键生成器)"""
     logger.info(f"获取球队表现: team_id={team_id}, season={season}, last_n={last_n}")
     return [
-        {"result": "W", "goals_for": 2, "goals_against": 1},
-        {"result": "D", "goals_for": 1, "goals_against": 1},
-        {"result": "W", "goals_for": 3, "goals_against": 0},
-        {"result": "L", "goals_for": 0, "goals_against": 2},
-        {"result": "W", "goals_for": 2, "goals_against": 0},
+        {"result": "W", "goals_for": 2, "goals_against": 1}"",
+        {"result": "D", "goals_for": 1, "goals_against": 1}"",
+        {"result": "W", "goals_for": 3, "goals_against": 0}"",
+        {"result": "L", "goals_for": 0, "goals_against": 2}"",
+        {"result": "W", "goals_for": 2, "goals_against": 0}"",
     ][:last_n]
 
 
 # 示例8: 组合使用装饰器
 class PredictionService:
-    """预测服务类，展示装饰器的组合使用"""
+    """预测服务类,展示装饰器的组合使用"""
 
     @cache_match_data(ttl_seconds=600)
     async def get_match_odds(self, match_id: int) -> Dict[str, float]:
         """获取比赛赔率"""
         await asyncio.sleep(0.3)
         return {
-            "home_win": 2.10,
-            "draw": 3.40,
-            "away_win": 3.20,
+            "home_win": 2.10,","
+            "draw": 3.40,","
+            "away_win": 3.20,""
         }
 
     @cache_by_user(ttl=300, user_param="user_id")
     async def calculate_user_prediction(
         self, user_id: int, match_id: int, model_type: str = "default"
     ) -> Dict[str, Any]:
-        """计算用户预测（基于用户缓存）"""
+        """计算用户预测(基于用户缓存)"""
         # 获取比赛数据
         odds = await self.get_match_odds(match_id)
 
@@ -196,19 +196,19 @@ class PredictionService:
         await asyncio.sleep(0.5)
 
         return {
-            "user_id": user_id,
-            "match_id": match_id,
-            "model_type": model_type,
-            "prediction": "2-1",
-            "confidence": 0.78,
-            "used_odds": odds,
+            "user_id": user_id,","
+            "match_id": match_id,","
+            "model_type": model_type,","
+            "prediction": "2-1",","
+            "confidence": 0.78,","
+            "used_odds": odds,""
         }
 
     @cache_invalidate(pattern="predictions:user:{user_id}:*")
     async def submit_prediction(
         self, user_id: int, match_id: int, prediction: str
     ) -> Dict[str, Any]:
-        """提交预测（会失效用户相关缓存）"""
+        """提交预测(会失效用户相关缓存)"""
         logger.info(
             f"提交预测: _user ={user_id}, match={match_id}, _prediction ={prediction}"
         )
@@ -216,7 +216,7 @@ class PredictionService:
         # 保存预测到数据库...
 
         return {
-            "success": True,
+            "success": True,","
             "prediction_id": f"pred_{match_id}_{user_id}",
             "invalidated_cache": f"predictions:user:{user_id}:*",
         }
@@ -245,8 +245,8 @@ async def run_examples():
     logger.info("3. 基于用户的缓存:")
     profile = get_user_profile(200)
     logger.info(f"用户档案: {profile}")
-    profile2 = get_user_profile(200, include_sensitive=True)  # 不同的参数，新缓存
-    logger.info(f"用户档案（含敏感信息）: {profile2}\n")
+    profile2 = get_user_profile(200, include_sensitive=True)  # 不同的参数,新缓存
+    logger.info(f"用户档案(含敏感信息): {profile2}\n")
 
     # 示例4: 条件缓存
     logger.info("4. 条件缓存:")
@@ -254,7 +254,7 @@ async def run_examples():
     logger.info(f"搜索结果: {docs1}")
     docs2 = search_documents("test", limit=5)  # 从缓存获取
     logger.info(f"搜索结果: {docs2}")
-    docs3 = search_documents("ab", limit=5)  # 查询太短，不会被缓存
+    docs3 = search_documents("ab", limit=5)  # 查询太短,不会被缓存
     logger.info(f"搜索结果: {docs3}\n")
 
     # 示例5: 缓存失效
@@ -281,7 +281,7 @@ async def run_examples():
     pred = await service.calculate_user_prediction(500, 601)
     logger.info(f"用户预测: {pred}")
     submit = await service.submit_prediction(500, 601, "2-1")
-    logger.info(f"提交结果: {submit}\n")
+    logger.info(f"提交结果: {submit\n")
 
 
 if __name__ == "__main__":

@@ -55,7 +55,7 @@ class RedisManager:
 
 
 # 全局实例
-_redis_manager: RedisManager | None = None
+    _redis_manager: RedisManager | None = None
 
 
 def get_redis_manager() -> RedisManager:
