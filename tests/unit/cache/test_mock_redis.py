@@ -21,7 +21,6 @@ except ImportError as e:
     MockRedisManager = None
 
 
-@pytest.mark.skipif(not MOCK_REDIS_AVAILABLE, reason="Mock Redis module not available")
 class TestMockRedisManager:
     """模拟Redis管理器测试"""
 
@@ -408,7 +407,6 @@ def test_module_imports():
         assert MockRedisManager is not None
 
 
-@pytest.mark.skipif(not MOCK_REDIS_AVAILABLE, reason="Mock Redis module not available")
 class TestMockRedisManagerAdvanced:
     """模拟Redis管理器高级测试"""
 

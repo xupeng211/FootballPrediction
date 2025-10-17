@@ -18,7 +18,7 @@ def test_string_utils_coverage():
         from utils.string_utils import (
             clean_string,
             normalize_text,
-            validate_email_format,
+            is_valid_email_format,
             generate_slug,
             truncate_text,
         )
@@ -32,9 +32,9 @@ def test_string_utils_coverage():
         assert normalize_text("hello") == "Hello"
         assert normalize_text("HELLO") == "Hello"
 
-        # 测试validate_email_format
-        assert validate_email_format("test@example.com") is True
-        assert validate_email_format("invalid-email") is False
+        # 测试is_valid_email_format
+        assert is_valid_email_format("test@example.com") is True
+        assert is_valid_email_format("invalid-email") is False
 
         # 测试generate_slug
         assert generate_slug("Hello World") == "hello-world"

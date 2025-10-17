@@ -35,7 +35,6 @@ except ImportError as e:
     global_decorator_service = None
 
 
-@pytest.mark.skipif(not DECORATORS_AVAILABLE, reason="Decorators module not available")
 class TestAPIDecorators:
     """API装饰器测试"""
 
@@ -148,7 +147,6 @@ class TestAPIDecorators:
         mock_service.clear_stats.assert_called_once()
 
 
-@pytest.mark.skipif(not DECORATORS_AVAILABLE, reason="Decorators module not available")
 class TestDecoratorDemos:
     """装饰器演示测试"""
 
@@ -325,7 +323,6 @@ class TestDecoratorDemos:
         assert data["message"] == "同时应用了日志、指标、超时和缓存装饰器"
 
 
-@pytest.mark.skipif(not DECORATORS_AVAILABLE, reason="Decorators module not available")
 class TestDecoratorConfigManagement:
     """装饰器配置管理测试"""
 
@@ -400,7 +397,6 @@ class TestDecoratorConfigManagement:
         mock_service.reload_configuration.assert_called_once()
 
 
-@pytest.mark.skipif(not DECORATORS_AVAILABLE, reason="Decorators module not available")
 class TestDecoratorContext:
     """装饰器上下文测试"""
 

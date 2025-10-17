@@ -32,7 +32,6 @@ except ImportError as e:
     adapter_factory = None
 
 
-@pytest.mark.skipif(not FACTORY_AVAILABLE, reason="Factory module not available")
 class TestAdapterConfig:
     """适配器配置测试"""
 
@@ -70,7 +69,6 @@ class TestAdapterConfig:
         assert config.retry_config is None
 
 
-@pytest.mark.skipif(not FACTORY_AVAILABLE, reason="Factory module not available")
 class TestAdapterGroupConfig:
     """适配器组配置测试"""
 
@@ -96,7 +94,6 @@ class TestAdapterGroupConfig:
         assert group.fallback_strategy == "sequential"
 
 
-@pytest.mark.skipif(not FACTORY_AVAILABLE, reason="Factory module not available")
 class TestAdapterFactory:
     """适配器工厂测试"""
 
@@ -490,7 +487,6 @@ class TestAdapterFactory:
         assert "api_football_main" in group_config.adapters
 
 
-@pytest.mark.skipif(not FACTORY_AVAILABLE, reason="Factory module not available")
 class TestGlobalAdapterFactory:
     """全局适配器工厂测试"""
 

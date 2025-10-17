@@ -365,7 +365,7 @@ class TestEnvironmentVariables:
 class TestConfigValidation:
     """配置验证测试"""
 
-    def test_validate_url_format(self):
+    def test_is_valid_url_format(self):
         """验证URL格式"""
 
         def is_valid_url(url: str) -> bool:

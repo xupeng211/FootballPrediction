@@ -23,7 +23,6 @@ except ImportError as e:
     FORMATTERS_AVAILABLE = False
 
 
-@pytest.mark.skipif(not FORMATTERS_AVAILABLE, reason="Formatters module not available")
 class TestFormatDatetime:
     """日期时间格式化测试"""
 
@@ -76,7 +75,6 @@ class TestFormatDatetime:
         assert result == "12-30-45"
 
 
-@pytest.mark.skipif(not FORMATTERS_AVAILABLE, reason="Formatters module not available")
 class TestFormatJSON:
     """JSON格式化测试"""
 
@@ -134,7 +132,6 @@ class TestFormatJSON:
         assert "null" in result
 
 
-@pytest.mark.skipif(not FORMATTERS_AVAILABLE, reason="Formatters module not available")
 class TestFormatCurrency:
     """货币格式化测试"""
 
@@ -184,7 +181,6 @@ class TestFormatCurrency:
         assert result == "123.46 USD"  # 应该四舍五入到2位小数
 
 
-@pytest.mark.skipif(not FORMATTERS_AVAILABLE, reason="Formatters module not available")
 class TestFormatPercentage:
     """百分比格式化测试"""
 

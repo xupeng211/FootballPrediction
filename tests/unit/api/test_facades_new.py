@@ -25,7 +25,6 @@ except ImportError as e:
     FACADES_AVAILABLE = False
 
 
-@pytest.mark.skipif(not FACADES_AVAILABLE, reason="Facades API module not available")
 class TestListFacades:
     """获取门面列表测试"""
 
@@ -86,7 +85,6 @@ class TestListFacades:
                 await list_facades()
 
 
-@pytest.mark.skipif(not FACADES_AVAILABLE, reason="Facades API module not available")
 class TestInitializeFacade:
     """初始化门面测试"""
 
@@ -194,7 +192,6 @@ class TestInitializeFacade:
                 )
 
 
-@pytest.mark.skipif(not FACADES_AVAILABLE, reason="Facades API module not available")
 class TestFacadesIntegration:
     """门面集成测试"""
 

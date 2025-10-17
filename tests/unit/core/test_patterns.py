@@ -48,7 +48,6 @@ except ImportError:
     PATTERNS_AVAILABLE = False
 
 
-@pytest.mark.skipif(not PATTERNS_AVAILABLE, reason="Patterns module not available")
 class TestObserverPattern:
     """观察者模式测试"""
 
@@ -132,7 +131,6 @@ class TestObserverPattern:
         assert len(service.get_observers()) == 0
 
 
-@pytest.mark.skipif(not PATTERNS_AVAILABLE, reason="Patterns module not available")
 class TestDecoratorPattern:
     """装饰器模式测试"""
 
@@ -266,7 +264,6 @@ class TestDecoratorPattern:
         assert result == 10
 
 
-@pytest.mark.skipif(not PATTERNS_AVAILABLE, reason="Patterns module not available")
 class TestAdapterPattern:
     """适配器模式测试"""
 

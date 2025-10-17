@@ -19,8 +19,7 @@ except ImportError as e:
     __all__ = []
 
 
-# @pytest.mark.skipif(not HEALTH_AVAILABLE, reason="Health module not available")
-class TestHealthCompatibility:
+# class TestHealthCompatibility:
     """健康API兼容性测试"""
 
     def test_router_import(self):
@@ -105,7 +104,6 @@ class TestHealthCompatibility:
         assert actual_exports == {"router"}
 
 
-@pytest.mark.skipif(not HEALTH_AVAILABLE, reason="Health module not available")
 class TestHealthFunctionality:
     """健康功能测试"""
 
@@ -138,7 +136,6 @@ class TestHealthFunctionality:
                 assert "GET" in route.methods
 
 
-@pytest.mark.skipif(not HEALTH_AVAILABLE, reason="Health module not available")
 class TestHealthIntegration:
     """健康集成测试"""
 

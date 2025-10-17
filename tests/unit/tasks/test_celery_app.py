@@ -23,7 +23,6 @@ except ImportError as e:
     logger = None
 
 
-@pytest.mark.skipif(not CELERY_APP_AVAILABLE, reason="Celery app module not available")
 class TestCeleryApp:
     """Celery应用测试"""
 
@@ -127,7 +126,6 @@ class TestCeleryApp:
             assert time_limit > 0
 
 
-@pytest.mark.skipif(not CELERY_APP_AVAILABLE, reason="Celery app module not available")
 class TestDatabaseManager:
     """数据库管理器测试"""
 
@@ -160,7 +158,6 @@ class TestDatabaseManager:
         db_manager.close_connection()
 
 
-@pytest.mark.skipif(not CELERY_APP_AVAILABLE, reason="Celery app module not available")
 class TestRedisManager:
     """Redis管理器测试"""
 
@@ -193,7 +190,6 @@ class TestRedisManager:
         redis_manager.close_connection()
 
 
-@pytest.mark.skipif(not CELERY_APP_AVAILABLE, reason="Celery app module not available")
 class TestCeleryAppIntegration:
     """Celery应用集成测试"""
 
@@ -237,7 +233,6 @@ class TestCeleryAppIntegration:
         assert isinstance(celery_app.main, str)
 
 
-@pytest.mark.skipif(not CELERY_APP_AVAILABLE, reason="Celery app module not available")
 class TestCeleryAppErrorHandling:
     """Celery应用错误处理测试"""
 

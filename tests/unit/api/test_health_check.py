@@ -24,7 +24,6 @@ except ImportError as e:
     _check_database = None
 
 
-@pytest.mark.skipif(not HEALTH_AVAILABLE, reason="Health module not available")
 class TestHealthCheck:
     """健康检查测试"""
 
@@ -120,7 +119,6 @@ class TestHealthCheck:
         assert "memory_usage" in system_status
 
 
-@pytest.mark.skipif(not HEALTH_AVAILABLE, reason="Health module not available")
 class TestHealthCheckMocked:
     """使用模拟的健康检查测试"""
 
@@ -182,7 +180,6 @@ class TestHealthCheckMocked:
         assert time2 > time1
 
 
-@pytest.mark.skipif(not HEALTH_AVAILABLE, reason="Health module not available")
 class TestHealthCheckIntegration:
     """健康检查集成测试"""
 

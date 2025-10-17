@@ -28,7 +28,6 @@ except ImportError:
     TTL_AVAILABLE = False
 
 
-@pytest.mark.skipif(not TTL_AVAILABLE, reason="TTL cache enhanced module not available")
 class TestCacheEntry:
     """缓存条目测试"""
 
@@ -83,7 +82,6 @@ class TestCacheEntry:
         assert "last_accessed" in data
 
 
-@pytest.mark.skipif(not TTL_AVAILABLE, reason="TTL cache enhanced module not available")
 class TestTTLCache:
     """TTL缓存测试"""
 
@@ -267,7 +265,6 @@ class TestTTLCache:
         assert "value2" in values
 
 
-@pytest.mark.skipif(not TTL_AVAILABLE, reason="TTL cache enhanced module not available")
 class TestAsyncTTLCache:
     """异步TTL缓存测试"""
 
@@ -323,7 +320,6 @@ class TestAsyncTTLCache:
         assert len(cache) == 0
 
 
-@pytest.mark.skipif(not TTL_AVAILABLE, reason="TTL cache enhanced module not available")
 class TestCacheFactory:
     """缓存工厂测试"""
 
@@ -347,7 +343,6 @@ class TestCacheFactory:
         assert isinstance(cache, AsyncTTLCache)
 
 
-@pytest.mark.skipif(not TTL_AVAILABLE, reason="TTL cache enhanced module not available")
 class TestGlobalCacheFunctions:
     """全局缓存函数测试"""
 
@@ -407,7 +402,6 @@ class TestGlobalCacheFunctions:
         assert total_cleaned >= 1
 
 
-@pytest.mark.skipif(not TTL_AVAILABLE, reason="TTL cache enhanced module not available")
 class TestCacheThreadSafety:
     """缓存线程安全测试"""
 
@@ -490,7 +484,6 @@ class TestCacheThreadSafety:
         assert len(errors) == 0
 
 
-@pytest.mark.skipif(not TTL_AVAILABLE, reason="TTL cache enhanced module not available")
 class TestCacheEdgeCases:
     """缓存边界情况测试"""
 

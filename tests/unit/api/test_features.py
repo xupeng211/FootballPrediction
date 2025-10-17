@@ -38,7 +38,6 @@ except ImportError as e:
     feature_store = None
 
 
-@pytest.mark.skipif(not FEATURES_AVAILABLE, reason="Features module not available")
 class TestFeatureStore:
     """特征存储测试"""
 
@@ -87,7 +86,6 @@ class TestFeatureStore:
         assert store is not None
 
 
-@pytest.mark.skipif(not FEATURES_AVAILABLE, reason="Features module not available")
 class TestValidationFunctions:
     """验证函数测试"""
 
@@ -132,7 +130,6 @@ class TestValidationFunctions:
             assert "特征存储服务暂时不可用" in exc_info.value.detail
 
 
-@pytest.mark.skipif(not FEATURES_AVAILABLE, reason="Features module not available")
 @pytest.mark.asyncio
 class TestMatchInfo:
     """比赛信息测试"""
@@ -195,7 +192,6 @@ class TestMatchInfo:
         assert "查询比赛信息失败" in exc_info.value.detail
 
 
-@pytest.mark.skipif(not FEATURES_AVAILABLE, reason="Features module not available")
 @pytest.mark.asyncio
 class TestFeaturesData:
     """特征数据测试"""
@@ -270,7 +266,6 @@ class TestFeaturesData:
             assert "Feature calculation failed" in error or error is not None
 
 
-@pytest.mark.skipif(not FEATURES_AVAILABLE, reason="Features module not available")
 class TestResponseBuilder:
     """响应构建器测试"""
 
@@ -362,7 +357,6 @@ class TestResponseBuilder:
         assert "raw_features" not in response  # 空特征时不包含原始数据
 
 
-@pytest.mark.skipif(not FEATURES_AVAILABLE, reason="Features module not available")
 @pytest.mark.asyncio
 class TestAPIEndpoints:
     """API端点测试"""

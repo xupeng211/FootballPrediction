@@ -21,7 +21,6 @@ except ImportError as e:
     KAFKA_AVAILABLE = False
 
 
-@pytest.mark.skipif(not KAFKA_AVAILABLE, reason="Kafka consumer module not available")
 class TestKafkaConsumerImports:
     """Kafka消费者导入测试"""
 
@@ -57,7 +56,6 @@ class TestKafkaConsumerImports:
             assert "get_session" in kafka_module.__all__
 
 
-@pytest.mark.skipif(not KAFKA_AVAILABLE, reason="Kafka consumer module not available")
 class TestKafkaConsumerCompatibility:
     """Kafka消费者兼容性测试"""
 
@@ -92,7 +90,6 @@ class TestKafkaConsumerCompatibility:
         assert "FootballKafkaConsumer" not in kafka_module.__all__
 
 
-@pytest.mark.skipif(not KAFKA_AVAILABLE, reason="Kafka consumer module not available")
 class TestKafkaConsumerFunctionality:
     """Kafka消费者功能测试"""
 
@@ -132,7 +129,6 @@ class TestKafkaConsumerFunctionality:
             pytest.skip("MessageProcessor is not a class")
 
 
-@pytest.mark.skipif(not KAFKA_AVAILABLE, reason="Kafka consumer module not available")
 class TestKafkaConsumerIntegration:
     """Kafka消费者集成测试"""
 

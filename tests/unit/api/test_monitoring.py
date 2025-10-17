@@ -21,7 +21,6 @@ except ImportError as e:
     router = None
 
 
-@pytest.mark.skipif(not MONITORING_AVAILABLE, reason="Monitoring module not available")
 class TestMonitoringRouter:
     """监控路由器测试"""
 
@@ -41,7 +40,6 @@ class TestMonitoringRouter:
         assert "/metrics" in routes
 
 
-@pytest.mark.skipif(not MONITORING_AVAILABLE, reason="Monitoring module not available")
 class TestMonitoringModule:
     """监控模块测试"""
 
@@ -71,7 +69,6 @@ class TestMonitoringModule:
         mock_logger.info.assert_called_with("Test message")
 
 
-@pytest.mark.skipif(not MONITORING_AVAILABLE, reason="Monitoring module not available")
 class TestDatabaseMetrics:
     """数据库指标测试"""
 
@@ -148,7 +145,6 @@ class TestDatabaseMetrics:
                 assert metrics["response_time_ms"] == 100.0
 
 
-@pytest.mark.skipif(not MONITORING_AVAILABLE, reason="Monitoring module not available")
 class TestBusinessMetrics:
     """业务指标测试"""
 
@@ -226,7 +222,6 @@ class TestBusinessMetrics:
                 assert metrics["last_updated"] == "2023-01-01T12:00:00"
 
 
-@pytest.mark.skipif(not MONITORING_AVAILABLE, reason="Monitoring module not available")
 class TestMonitoringEndpoints:
     """监控端点测试"""
 

@@ -445,7 +445,7 @@ class TestValidationUtils:
         """测试异步验证模拟"""
         import asyncio
 
-        async def async_validate_email(email):
+        async def async_is_valid_email(email):
             """模拟异步邮箱验证（检查域名MX记录）"""
             await asyncio.sleep(0.01)  # 模拟网络延迟
             if not email or "@" not in email:
@@ -462,10 +462,10 @@ class TestValidationUtils:
 
             # 并行验证多个字段
             if "email" in data:
-                tasks.append(async_validate_email(data["email"]))
+                tasks.append(async_is_valid_email(data["email"]))
 
             # 可以添加更多异步验证任务
-            # tasks.append(async_validate_phone(data["phone"]))
+            # tasks.append(async_is_valid_phone(data["phone"]))
             # tasks.append(async_check_username(data["username"]))
 
             results = await asyncio.gather(*tasks, return_exceptions=True)

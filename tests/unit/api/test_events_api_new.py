@@ -27,7 +27,6 @@ except ImportError as e:
     EVENTS_AVAILABLE = False
 
 
-@pytest.mark.skipif(not EVENTS_AVAILABLE, reason="Events API module not available")
 class TestEventHealthCheck:
     """事件健康检查测试"""
 
@@ -81,7 +80,6 @@ class TestEventHealthCheck:
                 await event_health_check()
 
 
-@pytest.mark.skipif(not EVENTS_AVAILABLE, reason="Events API module not available")
 class TestGetEventStatistics:
     """获取事件统计测试"""
 
@@ -181,7 +179,6 @@ class TestGetEventStatistics:
                 await get_event_statistics()
 
 
-@pytest.mark.skipif(not EVENTS_AVAILABLE, reason="Events API module not available")
 class TestFindHandler:
     """查找处理器测试"""
 
@@ -204,7 +201,6 @@ class TestFindHandler:
                 # 测试逻辑取决于实际实现
 
 
-@pytest.mark.skipif(not EVENTS_AVAILABLE, reason="Events API module not available")
 class TestEventsAPIIntegration:
     """事件API集成测试"""
 

@@ -7,7 +7,7 @@ import pytest
 class TestDataValidator:
     """数据验证器测试"""
 
-    def test_validate_email(self):
+    def test_is_valid_email(self):
         """测试邮箱验证"""
         assert DataValidator.is_valid_email("test@example.com") is True
         assert DataValidator.is_valid_email("invalid") is False
@@ -19,7 +19,7 @@ class TestDataValidator:
         assert DataValidator.validate_phone("13812345678") is True
         assert DataValidator.validate_phone("abc") is False
 
-    def test_validate_url(self):
+    def test_is_valid_url(self):
         """测试URL验证"""
         assert DataValidator.is_valid_url("https://example.com") is True
         assert DataValidator.is_valid_url("http://test.org") is True

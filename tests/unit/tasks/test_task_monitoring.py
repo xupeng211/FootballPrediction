@@ -22,7 +22,6 @@ except ImportError as e:
     logger = None
 
 
-@pytest.mark.skipif(not MONITORING_AVAILABLE, reason="Monitoring module not available")
 class TestTaskMonitor:
     """任务监控器测试"""
 
@@ -115,7 +114,6 @@ class TestTaskMonitor:
             assert gauge is not None
 
 
-@pytest.mark.skipif(not MONITORING_AVAILABLE, reason="Monitoring module not available")
 class TestTaskMonitorMethods:
     """任务监控器方法测试"""
 
@@ -169,7 +167,6 @@ class TestTaskMonitorMethods:
             assert isinstance(summary, dict)
 
 
-@pytest.mark.skipif(not MONITORING_AVAILABLE, reason="Monitoring module not available")
 class TestTaskMonitorIntegration:
     """任务监控器集成测试"""
 
@@ -263,7 +260,6 @@ def test_prometheus_integration():
         assert monitor.registry is registry
 
 
-@pytest.mark.skipif(not MONITORING_AVAILABLE, reason="Monitoring module not available")
 class TestTaskMonitorEdgeCases:
     """任务监控器边界情况测试"""
 

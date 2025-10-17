@@ -37,7 +37,6 @@ except ImportError as e:
     AUDIT_AVAILABLE = False
 
 
-@pytest.mark.skipif(not AUDIT_AVAILABLE, reason="Audit service module not available")
 class TestAuditSeverity:
     """审计严重程度测试"""
 
@@ -63,7 +62,6 @@ class TestAuditSeverity:
         assert AuditSeverity.CRITICAL in severities
 
 
-@pytest.mark.skipif(not AUDIT_AVAILABLE, reason="Audit service module not available")
 class TestAuditAction:
     """审计动作测试"""
 
@@ -88,7 +86,6 @@ class TestAuditAction:
         assert len(set(actions)) == 4  # 确保没有重复
 
 
-@pytest.mark.skipif(not AUDIT_AVAILABLE, reason="Audit service module not available")
 class TestAuditContext:
     """审计上下文测试"""
 
@@ -121,7 +118,6 @@ class TestAuditContext:
         assert before <= context.timestamp <= after
 
 
-@pytest.mark.skipif(not AUDIT_AVAILABLE, reason="Audit service module not available")
 class TestAuditLog:
     """审计日志测试"""
 
@@ -181,7 +177,6 @@ class TestAuditLog:
         assert log.details["metadata"]["source"] == "api"
 
 
-@pytest.mark.skipif(not AUDIT_AVAILABLE, reason="Audit service module not available")
 class TestAuditEvent:
     """审计事件测试"""
 
@@ -229,7 +224,6 @@ class TestAuditEvent:
         assert before <= event.timestamp <= after
 
 
-@pytest.mark.skipif(not AUDIT_AVAILABLE, reason="Audit service module not available")
 class TestDataSanitizer:
     """数据清理器测试"""
 
@@ -289,7 +283,6 @@ class TestDataSanitizer:
         assert sanitized["user"]["password"] == "secret"  # 未清理嵌套字段
 
 
-@pytest.mark.skipif(not AUDIT_AVAILABLE, reason="Audit service module not available")
 class TestSeverityAnalyzer:
     """严重程度分析器测试"""
 
@@ -335,7 +328,6 @@ class TestSeverityAnalyzer:
         assert severity == AuditSeverity.HIGH
 
 
-@pytest.mark.skipif(not AUDIT_AVAILABLE, reason="Audit service module not available")
 class TestAuditService:
     """审计服务测试"""
 
@@ -559,7 +551,6 @@ class TestAuditService:
         assert len(audit_service.events) == 1000
 
 
-@pytest.mark.skipif(not AUDIT_AVAILABLE, reason="Audit service module not available")
 class TestAuditLogSummary:
     """审计日志摘要测试"""
 

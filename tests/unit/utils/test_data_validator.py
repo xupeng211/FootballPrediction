@@ -161,19 +161,19 @@ class TestDataValidator:
 
     # ==================== 邮箱验证（高级）测试 ====================
 
-    def test_validate_email_with_check(self):
+    def test_is_valid_email_with_check(self):
         """测试：邮箱验证（别名方法）"""
         # 有效邮箱
-        assert self.validator.validate_email("test@example.com") is True
+        assert self.validator.is_valid_email("test@example.com") is True
 
         # 无效格式
-        assert self.validator.validate_email("invalid-email") is False
+        assert self.validator.is_valid_email("invalid-email") is False
 
-    def test_validate_email_without_check(self):
+    def test_is_valid_email_without_check(self):
         """测试：邮箱验证（与is_valid_email对比）"""
         # 两个方法应该返回相同的结果
         email = "test@example.com"
-        assert self.validator.validate_email(email) == self.validator.is_valid_email(
+        assert self.validator.is_valid_email(email) == self.validator.is_valid_email(
             email
         )
 

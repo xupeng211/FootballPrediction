@@ -20,7 +20,6 @@ except ImportError as e:
     TimeUtils = None
 
 
-@pytest.mark.skipif(not TIME_UTILS_AVAILABLE, reason="Time utils module not available")
 class TestTimeUtilsBasic:
     """时间工具基础功能测试"""
 
@@ -114,7 +113,6 @@ class TestTimeUtilsBasic:
         assert len(formatted) == 19  # YYYY-MM-DD HH:MM:SS
 
 
-@pytest.mark.skipif(not TIME_UTILS_AVAILABLE, reason="Time utils module not available")
 class TestTimeUtilsEdgeCases:
     """时间工具边界情况测试"""
 
@@ -175,7 +173,6 @@ class TestTimeUtilsEdgeCases:
             TimeUtils.parse_datetime(dt_str)
 
 
-@pytest.mark.skipif(not TIME_UTILS_AVAILABLE, reason="Time utils module not available")
 class TestBackwardCompatibility:
     """向后兼容性测试"""
 
@@ -237,7 +234,6 @@ class TestBackwardCompatibility:
             assert result is None
 
 
-@pytest.mark.skipif(not TIME_UTILS_AVAILABLE, reason="Time utils module not available")
 class TestTimeUtilsPerformance:
     """时间工具性能测试"""
 

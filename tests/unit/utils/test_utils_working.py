@@ -368,7 +368,7 @@ class TestDataValidator:
         assert DataValidator.validate_phone("12345") is False
         assert DataValidator.validate_phone("abc123") is False
 
-    def test_validate_url(self):
+    def test_is_valid_url(self):
         """测试验证URL"""
         assert DataValidator.is_valid_url("https://example.com") is True
         assert DataValidator.is_valid_url("http://localhost:8000") is True

@@ -25,7 +25,6 @@ except ImportError as e:
     HELPERS_AVAILABLE = False
 
 
-@pytest.mark.skipif(not HELPERS_AVAILABLE, reason="Helpers module not available")
 class TestGenerateUUID:
     """UUID生成测试"""
 
@@ -58,7 +57,6 @@ class TestGenerateUUID:
             assert uuid.count("-") == 4
 
 
-@pytest.mark.skipif(not HELPERS_AVAILABLE, reason="Helpers module not available")
 class TestGenerateHash:
     """哈希生成测试"""
 
@@ -103,7 +101,6 @@ class TestGenerateHash:
         assert len(hash_value) == 64
 
 
-@pytest.mark.skipif(not HELPERS_AVAILABLE, reason="Helpers module not available")
 class TestSafeGet:
     """安全获取字典值测试"""
 
@@ -143,7 +140,6 @@ class TestSafeGet:
         assert safe_get(data, "nonexistent", "default") == "default"
 
 
-@pytest.mark.skipif(not HELPERS_AVAILABLE, reason="Helpers module not available")
 class TestFormatTimestamp:
     """时间戳格式化测试"""
 
@@ -190,7 +186,6 @@ class TestFormatTimestamp:
         assert "T" in formatted
 
 
-@pytest.mark.skipif(not HELPERS_AVAILABLE, reason="Helpers module not available")
 class TestSanitizeString:
     """字符串清理测试"""
 

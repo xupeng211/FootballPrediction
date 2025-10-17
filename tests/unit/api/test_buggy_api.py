@@ -19,7 +19,6 @@ except ImportError as e:
     BUGGY_API_AVAILABLE = False
 
 
-@pytest.mark.skipif(not BUGGY_API_AVAILABLE, reason="Buggy API module not available")
 class TestBuggyAPI:
     """Buggy API测试"""
 
@@ -106,7 +105,6 @@ class TestBuggyAPI:
         mock_service.get_status.assert_called_once()
 
 
-@pytest.mark.skipif(not BUGGY_API_AVAILABLE, reason="Buggy API module not available")
 class TestSomeAsyncService:
     """异步服务测试"""
 
@@ -125,7 +123,6 @@ class TestSomeAsyncService:
         assert service is not service2  # 不是单例，每次创建新实例
 
 
-@pytest.mark.skipif(not BUGGY_API_AVAILABLE, reason="Buggy API module not available")
 class TestBuggyAPIIntegration:
     """Buggy API集成测试"""
 
@@ -174,7 +171,6 @@ class TestBuggyAPIIntegration:
         assert route_count >= 3  # 至少包含3个新路由
 
 
-@pytest.mark.skipif(not BUGGY_API_AVAILABLE, reason="Buggy API module not available")
 class TestBuggyAPIEdgeCases:
     """Buggy API边界情况测试"""
 

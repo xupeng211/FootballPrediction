@@ -29,7 +29,6 @@ except ImportError as e:
     AdapterGroupConfig = None
 
 
-@pytest.mark.skipif(not REGISTRY_AVAILABLE, reason="Registry module not available")
 @pytest.mark.asyncio
 class TestAdapterRegistry:
     """适配器注册表测试"""
@@ -442,7 +441,6 @@ class TestAdapterRegistry:
         await registry.shutdown()
 
 
-@pytest.mark.skipif(not REGISTRY_AVAILABLE, reason="Registry module not available")
 class TestRegistryStatus:
     """注册表状态测试"""
 
@@ -453,7 +451,6 @@ class TestRegistryStatus:
         assert RegistryStatus.SHUTTING_DOWN.value == "shutting_down"
 
 
-@pytest.mark.skipif(not REGISTRY_AVAILABLE, reason="Registry module not available")
 class TestGlobalRegistry:
     """全局注册表测试"""
 
