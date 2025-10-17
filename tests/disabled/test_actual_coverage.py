@@ -9,6 +9,7 @@ from pathlib import Path
 # 添加src到路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
+
 # pytest.mark.unit  # 暂时注释，避免未知标记警告
 class TestActualCoverage:
     """测试实际存在的函数"""
@@ -17,11 +18,16 @@ class TestActualCoverage:
         """测试验证器函数"""
         try:
             from utils.validators import (
-                is_valid_email, is_valid_phone, is_valid_url,
-                is_valid_username, is_valid_password,
-                is_valid_credit_card, is_valid_ipv4_address,
-                is_valid_mac_address, validate_date_string,
-                validate_json_string
+                is_valid_email,
+                is_valid_phone,
+                is_valid_url,
+                is_valid_username,
+                is_valid_password,
+                is_valid_credit_card,
+                is_valid_ipv4_address,
+                is_valid_mac_address,
+                validate_date_string,
+                validate_json_string,
             )
 
             # 测试邮箱验证
@@ -64,7 +70,7 @@ class TestActualCoverage:
 
             # 测试JSON字符串验证
             assert validate_json_string('{"key": "value"}') is True
-            assert validate_json_string('invalid') is False
+            assert validate_json_string("invalid") is False
 
         except ImportError:
             pytest.skip("validators not available")
@@ -73,9 +79,14 @@ class TestActualCoverage:
         """测试字符串工具函数"""
         try:
             from utils.string_utils import (
-                slugify, camel_to_snake, snake_to_camel,
-                pluralize, singularize, truncate_words,
-                clean_html, capitalize_first
+                slugify,
+                camel_to_snake,
+                snake_to_camel,
+                pluralize,
+                singularize,
+                truncate_words,
+                clean_html,
+                capitalize_first,
             )
 
             # 测试slugify
@@ -118,8 +129,11 @@ class TestActualCoverage:
         """测试字典工具函数"""
         try:
             from utils.dict_utils import (
-                deep_merge, flatten_dict, filter_none,
-                pick_keys, exclude_keys
+                deep_merge,
+                flatten_dict,
+                filter_none,
+                pick_keys,
+                exclude_keys,
             )
 
             # 测试深度合并
@@ -158,8 +172,11 @@ class TestActualCoverage:
         """测试加密工具函数"""
         try:
             from utils.crypto_utils import (
-                generate_uuid, generate_short_id, hash_string,
-                hash_password, verify_password
+                generate_uuid,
+                generate_short_id,
+                hash_string,
+                hash_password,
+                verify_password,
             )
 
             # 测试UUID生成
@@ -195,8 +212,12 @@ class TestActualCoverage:
         """测试时间工具函数"""
         try:
             from utils.time_utils import (
-                time_ago, duration_format, is_future,
-                is_past, get_timezone_offset, parse_datetime
+                time_ago,
+                duration_format,
+                is_future,
+                is_past,
+                get_timezone_offset,
+                parse_datetime,
             )
             from datetime import datetime, timedelta
 
@@ -232,7 +253,9 @@ class TestActualCoverage:
         """测试响应函数"""
         try:
             from utils.response import (
-                success_response, error_response, created_response
+                success_response,
+                error_response,
+                created_response,
             )
 
             # 测试成功响应
@@ -256,8 +279,10 @@ class TestActualCoverage:
         """测试格式化器函数"""
         try:
             from utils.formatters import (
-                format_datetime, format_currency,
-                format_bytes, format_percentage
+                format_datetime,
+                format_currency,
+                format_bytes,
+                format_percentage,
             )
             from datetime import datetime
 
@@ -286,7 +311,9 @@ class TestActualCoverage:
         """测试数据验证器函数"""
         try:
             from utils.data_validator import (
-                validate_email, validate_phone, validate_url
+                validate_email,
+                validate_phone,
+                validate_url,
             )
 
             # 测试邮箱验证
@@ -308,8 +335,10 @@ class TestActualCoverage:
         """测试文件工具函数"""
         try:
             from utils.file_utils import (
-                ensure_dir, get_file_size, safe_filename,
-                get_file_extension
+                ensure_dir,
+                get_file_size,
+                safe_filename,
+                get_file_extension,
             )
 
             # 测试安全文件名
@@ -324,6 +353,7 @@ class TestActualCoverage:
             # 测试目录确保
             import tempfile
             import os
+
             test_dir = tempfile.mkdtemp()
             try:
                 ensure_dir(test_dir)
@@ -337,9 +367,7 @@ class TestActualCoverage:
     def test_helpers_functions(self):
         """测试助手函数"""
         try:
-            from utils.helpers import (
-                deep_get, deep_set, chunk_list
-            )
+            from utils.helpers import deep_get, deep_set, chunk_list
 
             # 测试深度获取
             data = {"a": {"b": {"c": 1}}}
@@ -378,9 +406,7 @@ class TestActualCoverage:
     def test_retry_functions(self):
         """测试重试函数"""
         try:
-            from utils.retry import (
-                retry, exponential_backoff, linear_backoff
-            )
+            from utils.retry import retry, exponential_backoff, linear_backoff
 
             # 测试指数退避
             delay1 = exponential_backoff(1, 1.0)
@@ -403,7 +429,9 @@ class TestActualCoverage:
 
             # 创建测试配置文件
             config_data = {"test": {"value": 123}}
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".json", delete=False
+            ) as f:
                 json.dump(config_data, f)
                 temp_file = f.name
 
@@ -422,7 +450,7 @@ class TestActualCoverage:
             from utils.warning_filters import (
                 filter_deprecation_warnings,
                 filter_import_warnings,
-                filter_user_warnings
+                filter_user_warnings,
             )
 
             # 测试过滤器存在

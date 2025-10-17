@@ -7,7 +7,8 @@ Provides management and monitoring interfaces for the event system.
 """
 
 from fastapi import APIRouter, HTTPException, Query
-from requests.exceptions import HTTPError
+
+# from requests.exceptions import HTTPError  # 临时注释以避免导入错误
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta
 

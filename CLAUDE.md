@@ -940,3 +940,35 @@ make test-core-modules    # 测试核心模块
 - **渐进式改进**：先让CI通过，再逐步提升
 - **快速反馈**：使用 `make test-quick` 获取即时反馈
 - **质量优先**：代码质量评分8.5/10
+
+## 🔍 重要补充说明
+
+### CI/CD 验证流程
+项目使用 `./scripts/ci-verify.sh` 进行完整的本地CI验证：
+- 重建虚拟环境确保依赖一致性
+- 启动Docker服务栈（app、db、redis、nginx）
+- 运行完整测试套件并验证覆盖率
+- **必须输出"🎉 CI 绿灯验证成功！"才能推送**
+
+### Docker 服务配置
+- **开发环境**: `docker-compose up`（默认）
+- **测试环境**: `ENV=test docker-compose run --rm app pytest`
+- **生产环境**: `ENV=production docker-compose up`
+- **服务端口**: PostgreSQL(5432), Redis(6379), FastAPI(8000), Nginx(80/443)
+
+### 代码质量工具配置
+- **Ruff**: 替代 black/flake8/isort，配置文件 `pyproject.toml`
+- **MyPy**: 静态类型检查，配置文件 `mypy.ini`
+- **pytest**: 测试框架，配置文件 `pytest.ini`
+- **覆盖率阈值**: CI环境30%，开发环境25%，最低20%
+
+### 关键环境变量
+必需的环境变量：
+- `DATABASE_URL`: PostgreSQL连接字符串
+- `REDIS_URL`: Redis连接字符串
+- `SECRET_KEY`: 应用密钥
+
+推荐的环境变量：
+- `ENVIRONMENT`: 环境标识（development/test/production）
+- `LOG_LEVEL`: 日志级别
+- `API_HOSTNAME`: API主机名

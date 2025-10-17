@@ -559,7 +559,7 @@ class TestFinalBoost:
                 try:
                     offset = get_timezone_offset(tz)
                     assert isinstance(offset, (int, float))
-                except:
+                except Exception:
                     pass  # 某些时区可能不支持
 
             # 测试解析日期时间
@@ -573,7 +573,7 @@ class TestFinalBoost:
                 try:
                     parsed = parse_datetime(date_str)
                     assert isinstance(parsed, datetime)
-                except:
+                except Exception:
                     pass  # 某些格式可能不支持
         except ImportError:
             pytest.skip("time_utils not available")
