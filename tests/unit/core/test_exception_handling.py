@@ -367,7 +367,7 @@ class TestErrorRecovery:
                         self.state = "closed"
                         self.failure_count = 0
                     return result
-                except Exception as e:
+                except Exception:
                     self.failure_count += 1
                     self.last_failure_time = datetime.now()
 

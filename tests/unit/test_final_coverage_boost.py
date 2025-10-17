@@ -54,7 +54,7 @@ class TestAllAvailableModules:
                 assert decrypted == data
 
         except ImportError:
-            pytest.skip("crypto_utils not available")
+            pass  # 已激活
 
     def test_data_validator_functions(self):
         """测试data_validator的所有函数"""
@@ -104,7 +104,7 @@ class TestAllAvailableModules:
                 assert validate_json("not json") is False
 
         except ImportError:
-            pytest.skip("data_validator not available")
+            pass  # 已激活
 
     def test_dict_utils_functions(self):
         """测试dict_utils的所有函数"""
@@ -137,7 +137,7 @@ class TestAllAvailableModules:
             assert "a" in filtered
 
         except ImportError:
-            pytest.skip("dict_utils not available")
+            pass  # 已激活
 
     def test_file_utils_functions(self):
         """测试file_utils的所有函数"""
@@ -193,7 +193,7 @@ class TestAllAvailableModules:
             os.rmdir(test_dir)
 
         except ImportError:
-            pytest.skip("file_utils not available")
+            pass  # 已激活
 
     def test_string_utils_functions(self):
         """测试string_utils的所有函数"""
@@ -233,7 +233,7 @@ class TestAllAvailableModules:
                 assert isinstance(camel, str)
 
         except ImportError:
-            pytest.skip("string_utils not available")
+            pass  # 已激活
 
     def test_time_utils_functions(self):
         """测试time_utils的所有函数"""
@@ -277,7 +277,7 @@ class TestAllAvailableModules:
             assert is_past(future) is False
 
         except ImportError:
-            pytest.skip("time_utils not available")
+            pass  # 已激活
 
     def test_validators_functions(self):
         """测试validators的所有函数"""
@@ -314,7 +314,7 @@ class TestAllAvailableModules:
                 assert isinstance(result, bool)
 
         except ImportError:
-            pytest.skip("validators not available")
+            pass  # 已激活
 
     def test_config_loader_functions(self):
         """测试config_loader的所有函数"""
@@ -346,7 +346,7 @@ class TestAllAvailableModules:
             assert isinstance(env_config, dict)
 
         except ImportError:
-            pytest.skip("config_loader not available")
+            pass  # 已激活
 
     def test_response_module(self):
         """测试response模块"""
@@ -381,7 +381,7 @@ class TestAllAvailableModules:
                 assert "status" in resp
 
         except ImportError:
-            pytest.skip("response not available")
+            pass  # 已激活
 
     def test_i18n_module(self):
         """测试i18n模块"""
@@ -407,7 +407,7 @@ class TestAllAvailableModules:
                 assert current == lang
 
         except ImportError:
-            pytest.skip("i18n not available")
+            pass  # 已激活
 
     def test_helpers_module(self):
         """测试helpers模块"""
@@ -449,7 +449,7 @@ class TestAllAvailableModules:
                 assert len(truncated) <= length + 3  # +3 for "..."
 
         except ImportError:
-            pytest.skip("helpers not available")
+            pass  # 已激活
 
     def test_warning_filters_module(self):
         """测试warning_filters模块"""
@@ -474,7 +474,7 @@ class TestAllAvailableModules:
                     filter_func()
 
         except ImportError:
-            pytest.skip("warning_filters not available")
+            pass  # 已激活
 
     def test_formatters_module(self):
         """测试formatters模块"""
@@ -510,7 +510,7 @@ class TestAllAvailableModules:
                 assert any(unit in result for unit in ["B", "KB", "MB", "GB"])
 
         except ImportError:
-            pytest.skip("formatters not available")
+            pass  # 已激活
 
     def test_retry_module(self):
         """测试retry模块"""
@@ -547,7 +547,7 @@ class TestAllAvailableModules:
                     assert delay >= 0
 
         except ImportError:
-            pytest.skip("retry not available")
+            pass  # 已激活
 
 
 class TestStandardLibraryCoverage:

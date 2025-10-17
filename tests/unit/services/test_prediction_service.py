@@ -10,8 +10,10 @@ from datetime import datetime, timezone
 try:
     from src.services.prediction_service import PredictionService
 except ImportError:
+
     class PredictionService:
         """模拟预测服务"""
+
         async def predict_match(self, match_id: int, model_type: str = "default"):
             """预测比赛结果"""
             return {
@@ -19,7 +21,7 @@ except ImportError:
                 "model_type": model_type,
                 "prediction": {"home_win": 0.5, "draw": 0.3, "away_win": 0.2},
                 "confidence": 0.75,
-                "timestamp": datetime.now(timezone.utc).isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
 
@@ -45,10 +47,9 @@ class TestPredictionService:
         service = PredictionService()
 
         # 模拟批量预测
-        if hasattr(service, 'predict_batch'):
+        if hasattr(service, "predict_batch"):
             results = await service.predict_batch(
-                match_ids=[1, 2, 3],
-                model_type="ensemble"
+                match_ids=[1, 2, 3], model_type="ensemble"
             )
             assert len(results) == 3
         else:
@@ -76,6 +77,6 @@ class TestPredictionService:
 
         models = ["default", "ensemble", "ml", "statistical"]
         for model in models:
-            if hasattr(service, 'predict_match'):
+            if hasattr(service, "predict_match"):
                 result = await service.predict_match(match_id=1, model_type=model)
                 assert result is not None

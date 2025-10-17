@@ -47,9 +47,9 @@ class TestTaskMonitor:
                 return TaskMonitor(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate TaskMonitor")
+                pytest.skip("Cannot instantiate TaskMonitor")
         except Exception:
-            pytest.skip(f"Error creating TaskMonitor instance")
+            pytest.skip("Error creating TaskMonitor instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""

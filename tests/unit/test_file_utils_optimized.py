@@ -17,7 +17,7 @@ class TestFileOperations:
         """测试读取JSON文件"""
         test_data = {"name": "test", "value": 123, "items": ["a", "b", "c"]}
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(test_data, f)
             temp_path = f.name
 
@@ -31,13 +31,13 @@ class TestFileOperations:
         """测试写入JSON文件"""
         test_data = {"name": "write_test", "value": 456}
 
-        with tempfile.NamedTemporaryFile(suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as f:
             temp_path = f.name
 
         try:
             FileUtils.write_json(temp_path, test_data)
             # 验证文件是否正确写入
-            with open(temp_path, 'r') as f:
+            with open(temp_path, "r") as f:
                 loaded_data = json.load(f)
             assert loaded_data == test_data
         finally:
@@ -105,7 +105,7 @@ class TestFileOperations:
 
         try:
             FileUtils.copy_file(src_path, dst_path)
-            with open(dst_path, 'rb') as f:
+            with open(dst_path, "rb") as f:
                 copied_content = f.read()
             assert copied_content == test_content
         finally:
@@ -130,7 +130,7 @@ class TestFileOperations:
             FileUtils.move_file(src_path, dst_path)
             assert not os.path.exists(src_path)
             assert os.path.exists(dst_path)
-            with open(dst_path, 'rb') as f:
+            with open(dst_path, "rb") as f:
                 moved_content = f.read()
             assert moved_content == test_content
         finally:
@@ -189,7 +189,7 @@ class TestFileOperations:
 
     def test_is_text_file(self):
         """测试判断是否为文本文件"""
-        text_extensions = ['.txt', '.py', '.json', '.md', '.csv']
+        text_extensions = [".txt", ".py", ".json", ".md", ".csv"]
         for ext in text_extensions:
             assert FileUtils.is_text_file(f"test{ext}") is True
 
@@ -210,7 +210,7 @@ class TestFileOperations:
             assert os.path.exists(backup_path)
 
             # 验证备份内容
-            with open(backup_path, 'rb') as f:
+            with open(backup_path, "rb") as f:
                 backup_content = f.read()
             assert backup_content == test_content
         finally:

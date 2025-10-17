@@ -47,9 +47,9 @@ class TestMatchStatus:
                 return MatchStatus(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate MatchStatus")
+                pytest.skip("Cannot instantiate MatchStatus")
         except Exception:
-            pytest.skip(f"Error creating MatchStatus instance")
+            pytest.skip("Error creating MatchStatus instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -101,9 +101,9 @@ class TestEventType:
                 return EventType(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate EventType")
+                pytest.skip("Cannot instantiate EventType")
         except Exception:
-            pytest.skip(f"Error creating EventType instance")
+            pytest.skip("Error creating EventType instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -155,9 +155,9 @@ class TestScoresCollector:
                 return ScoresCollector(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate ScoresCollector")
+                pytest.skip("Cannot instantiate ScoresCollector")
         except Exception:
-            pytest.skip(f"Error creating ScoresCollector instance")
+            pytest.skip("Error creating ScoresCollector instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""

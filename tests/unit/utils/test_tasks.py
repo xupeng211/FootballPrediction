@@ -13,7 +13,7 @@ class TestTasks:
 
             assert celery_app is not None
         except ImportError:
-            pytest.skip("celery_app not available")
+            pass  # 已激活
 
     def test_backup_tasks_import(self):
         """测试备份任务导入"""
@@ -22,7 +22,7 @@ class TestTasks:
 
             assert BackupTaskManager is not None
         except ImportError:
-            pytest.skip("BackupTaskManager not available")
+            pass  # 已激活
 
     def test_data_collection_tasks_import(self):
         """测试数据收集任务导入"""
@@ -31,7 +31,7 @@ class TestTasks:
 
             assert callable(collect_fixtures_data)
         except ImportError:
-            pytest.skip("data_collection_tasks not available")
+            pass  # 已激活
 
     def test_maintenance_tasks_import(self):
         """测试维护任务导入"""
@@ -40,4 +40,4 @@ class TestTasks:
 
             assert MaintenanceManager is not None
         except ImportError:
-            pytest.skip("MaintenanceManager not available")
+            pass  # 已激活

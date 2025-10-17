@@ -14,6 +14,7 @@ except ImportError:
     # 创建模拟类
     class Prediction:
         """预测模型"""
+
         def __init__(self, match_id, prediction_type, confidence, metadata=None):
             self.match_id = match_id
             self.prediction_type = prediction_type
@@ -23,6 +24,7 @@ except ImportError:
 
     class Match:
         """比赛模型"""
+
         def __init__(self, match_id, home_team, away_team, match_date):
             self.match_id = match_id
             self.home_team = home_team
@@ -39,7 +41,7 @@ class TestDomainModels:
             match_id=123,
             prediction_type="HOME_WIN",
             confidence=0.85,
-            metadata={"model_version": "1.0"}
+            metadata={"model_version": "1.0"},
         )
 
         assert prediction.match_id == 123
@@ -53,7 +55,7 @@ class TestDomainModels:
             match_id=456,
             home_team="Team A",
             away_team="Team B",
-            match_date="2024-01-01T15:00:00Z"
+            match_date="2024-01-01T15:00:00Z",
         )
 
         assert match.match_id == 456
@@ -67,13 +69,11 @@ class TestDomainModels:
             Prediction(
                 match_id=None,
                 prediction_type="HOME_WIN",
-                confidence=1.5  # 无效的置信度
+                confidence=1.5,  # 无效的置信度
             )
 
         # 测试正常情况
         prediction = Prediction(
-            match_id=123,
-            prediction_type="HOME_WIN",
-            confidence=0.75
+            match_id=123, prediction_type="HOME_WIN", confidence=0.75
         )
         assert prediction.confidence == 0.75

@@ -43,7 +43,7 @@ class TestDatabaseQueries:
         # 创建测试数据
         teams = []
         for i in range(6):
-            team = Team(name=f"Join Team {i}", city=f"Join City", founded=2000 + i)
+            team = Team(name=f"Join Team {i}", city="Join City", founded=2000 + i)
             teams.append(team)
         db_session.add_all(teams)
         await db_session.commit()
@@ -92,7 +92,8 @@ class TestDatabaseQueries:
 
         # 复杂连接查询
         result = await db_session.execute(
-            text("""
+            text(
+                """
             SELECT
                 t.name as team_name,
                 COUNT(m.id) as total_matches,
@@ -104,7 +105,8 @@ class TestDatabaseQueries:
             WHERE t.name LIKE 'Join Team%'
             GROUP BY t.id, t.name
             ORDER BY total_matches DESC
-        """)
+        """
+            )
         )
 
         rows = result.fetchall()
@@ -199,7 +201,8 @@ class TestDatabaseQueries:
 
         # 使用窗口函数查询
         result = await db_session.execute(
-            text("""
+            text(
+                """
             SELECT
                 u.username,
                 p.confidence,
@@ -210,7 +213,8 @@ class TestDatabaseQueries:
             FROM users u
             JOIN predictions p ON u.id = p.user_id
             ORDER BY u.id, p.created_at
-        """)
+        """
+            )
         )
 
         rows = result.fetchall()
@@ -284,7 +288,8 @@ class TestDatabaseQueries:
 
         # 使用子查询查找预测准确率高于平均的用户
         result = await db_session.execute(
-            text("""
+            text(
+                """
             SELECT u.username, u.email
             FROM users u
             WHERE u.id IN (
@@ -298,7 +303,8 @@ class TestDatabaseQueries:
                     WHERE p2.status = 'COMPLETED'
                 )
             )
-        """)
+        """
+            )
         )
 
         rows = result.fetchall()
@@ -335,7 +341,8 @@ class TestDatabaseQueries:
 
         # 使用 CTE 查询
         result = await db_session.execute(
-            text("""
+            text(
+                """
             WITH team_stats AS (
                 SELECT
                     t.id,
@@ -360,7 +367,8 @@ class TestDatabaseQueries:
             FROM team_stats ts
             CROSS JOIN avg_goals ag
             WHERE ts.total_goals > ag.avg_goals_per_team
-        """)
+        """
+            )
         )
 
         rows = result.fetchall()

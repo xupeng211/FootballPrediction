@@ -6,9 +6,11 @@ import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime, timedelta
 
+
 # 模拟任务
 class MockTask:
     """模拟任务"""
+
     def __init__(self, task_id, name, status="pending"):
         self.task_id = task_id
         self.name = name
@@ -21,18 +23,22 @@ class MockTask:
         self.status = "running"
         # 模拟任务执行
         import time
+
         time.sleep(0.1)
         self.status = "completed"
         self.completed_at = datetime.now()
         return True
 
+
 class MockCelery:
     """模拟Celery"""
+
     def __init__(self):
         self.tasks = {}
 
     def task(self, name):
         """任务装饰器"""
+
         def decorator(func):
             def wrapper(*args, **kwargs):
                 task_id = f"task_{name}_{len(self.tasks)}"
@@ -42,11 +48,15 @@ class MockCelery:
                 # 执行任务
                 task.execute()
                 return task
+
             return wrapper
+
         return decorator
+
 
 # 创建模拟的celery实例
 mock_celery = MockCelery()
+
 
 class TestTaskSystem:
     """测试任务系统"""
@@ -72,6 +82,7 @@ class TestTaskSystem:
 
     def test_celery_task_decorator(self):
         """测试Celery任务装饰器"""
+
         @mock_celery.task
         def example_task(x, y):
             return x + y
@@ -84,6 +95,7 @@ class TestTaskSystem:
 
     def test_scheduled_tasks(self):
         """测试定时任务"""
+
         # 模拟定时任务调度器
         class Scheduler:
             def __init__(self):
@@ -91,11 +103,7 @@ class TestTaskSystem:
 
             def schedule(self, task, interval):
                 """调度任务"""
-                schedule = {
-                    "task": task,
-                    "interval": interval,
-                    "last_run": None
-                }
+                schedule = {"task": task, "interval": interval, "last_run": None}
                 self.schedules.append(schedule)
 
         scheduler = Scheduler()
@@ -108,6 +116,7 @@ class TestTaskSystem:
     @pytest.mark.asyncio
     async def test_async_tasks(self):
         """测试异步任务"""
+
         class AsyncTask:
             async def execute(self):
                 await asyncio.sleep(0.1)
@@ -142,6 +151,7 @@ class TestTaskSystem:
 
     def test_task_dependencies(self):
         """测试任务依赖"""
+
         class TaskManager:
             def __init__(self):
                 self.completed_tasks = set()
@@ -159,7 +169,7 @@ class TestTaskSystem:
         manager = TaskManager()
 
         # 测试依赖链
-        result = manager.execute_with_deps("task3", ["task1", "task2"])
+        manager.execute_with_deps("task3", ["task1", "task2"])
 
         assert "task1" in manager.completed_tasks
         assert "task2" in manager.completed_tasks

@@ -68,8 +68,8 @@ class TestBasicCoverage:
         assert True and False is False
         assert True or False is True
         assert False or False is False
-        assert not True is False
-        assert not False is True
+        assert True is not False
+        assert False is not True
 
     def test_comparisons(self):
         """测试比较操作"""
@@ -308,12 +308,17 @@ class TestBasicCoverage:
 
     def test_lambda_functions(self):
         """测试lambda函数"""
+
         # 简单lambda
-        add = lambda x, y: x + y
+        def add(x, y):
+            return x + y
+
         assert add(2, 3) == 5
 
         # 带条件lambda
-        get_sign = lambda x: "positive" if x > 0 else "negative" if x < 0 else "zero"
+        def get_sign(x):
+            return "positive" if x > 0 else "negative" if x < 0 else "zero"
+
         assert get_sign(5) == "positive"
         assert get_sign(-5) == "negative"
         assert get_sign(0) == "zero"
@@ -367,9 +372,9 @@ class TestBasicCoverage:
     def test_none_handling(self):
         """测试None处理"""
         assert None is None
-        assert None is not 0
+        assert None != 0
         assert None is not False
-        assert None is not ""
+        assert None != ""
 
         # 三元运算符
         result = None or "default"

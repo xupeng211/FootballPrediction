@@ -85,7 +85,7 @@ def main():
     else:
         print("\n✅ 所有测试通过！")
 
-    print(f"\n详细报告已生成到: htmlcov/index.html")
+    print("\n详细报告已生成到: htmlcov/index.html")
 
     return returncode
 

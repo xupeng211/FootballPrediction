@@ -70,7 +70,7 @@ async def test_db():
             async with engine.begin() as conn:
                 await conn.execute(text("SELECT 1"))
             break
-        except Exception as e:
+        except Exception:
             if i == max_retries - 1:
                 raise
             logger.info(f"Waiting for database... ({i + 1}/{max_retries})")
@@ -113,7 +113,7 @@ async def test_redis():
             try:
                 await client.ping()
                 break
-            except Exception as e:
+            except Exception:
                 if i == max_retries - 1:
                     raise
                 logger.info(f"Waiting for Redis... ({i + 1}/{max_retries})")
@@ -167,7 +167,7 @@ async def test_kafka():
                 admin_client.list_topics()
                 admin_client.close()
                 break
-            except Exception as e:
+            except Exception:
                 if i == max_retries - 1:
                     raise
                 logger.info(f"Waiting for Kafka... ({i + 1}/{max_retries})")

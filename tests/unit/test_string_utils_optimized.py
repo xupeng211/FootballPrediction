@@ -5,6 +5,7 @@
 import pytest
 from src.utils.string_utils import StringUtils
 
+
 class TestStringOperations:
     """字符串操作测试"""
 
@@ -47,7 +48,7 @@ class TestStringOperations:
         test_cases = [
             ("camelCase", "camel_case"),
             ("PascalCase", "pascal_case"),
-            ("already_snake", "already_snake")
+            ("already_snake", "already_snake"),
         ]
 
         for input_str, expected in test_cases:
@@ -57,10 +58,7 @@ class TestStringOperations:
 
     def test_snake_to_camel(self):
         """测试下划线转驼峰"""
-        test_cases = [
-            "snake_case",
-            "alreadyCamel"
-        ]
+        test_cases = ["snake_case", "alreadyCamel"]
 
         for input_str in test_cases:
             result = StringUtils.snake_to_camel(input_str)
@@ -76,6 +74,7 @@ class TestStringOperations:
         assert len(result) > 0
         # 检查是否提取到数字
         print(f"  提取的数字: {result}")
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

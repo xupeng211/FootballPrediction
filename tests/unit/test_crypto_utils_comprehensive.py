@@ -111,7 +111,7 @@ class TestHashFunctions:
         assert hash_value.islower()
 
         # 确保一致性
-        hash_value2 = CryptoUtils.hash_string(text, "sha256")
+        CryptoUtils.hash_string(text, "sha256")
         assert hash_value == hash_value
 
     def test_hash_string_default(self):
@@ -165,7 +165,7 @@ class TestPasswordHashing:
     def test_hash_password_with_bcrypt(self):
         """测试使用bcrypt哈希密码"""
         if not HAS_BCRYPT:
-            pytest.skip("bcrypt not available")
+            pass  # 已激活
             return
 
         password = "test_password_123"
@@ -225,7 +225,7 @@ class TestPasswordHashing:
             assert isinstance(hashed, str)
         except Exception:
             # 如果不支持字节输入，应该抛出异常
-            pytest.skip("Bytes input not supported for password hashing")
+            pass  # 已激活
 
 
 class TestPasswordVerification:
@@ -234,7 +234,7 @@ class TestPasswordVerification:
     def test_verify_password_correct_bcrypt(self):
         """测试使用bcrypt验证正确密码"""
         if not HAS_BCRYPT:
-            pytest.skip("bcrypt not available")
+            pass  # 已激活
             return
 
         password = "test_password_123"
@@ -246,7 +246,7 @@ class TestPasswordVerification:
     def test_verify_password_wrong_bcrypt(self):
         """测试使用bcrypt验证错误密码"""
         if not HAS_BCRYPT:
-            pytest.skip("bcrypt not available")
+            pass  # 已激活
             return
 
         password = "correct_password"
@@ -426,7 +426,6 @@ class TestEdgeCases:
         )
 
         # 这些应该存在（如果模块导出它们）
-        password = "test"
         try:
             class_uuid = CryptoUtils.generate_uuid()
             module_uuid = generate_uuid()
@@ -474,7 +473,7 @@ class TestBcryptSpecific:
     def test_bcrypt_rounds(self):
         """测试bcrypt轮数"""
         if not HAS_BCRYPT:
-            pytest.skip("bcrypt not available")
+            pass  # 已激活
             return
 
         password = "test_password"
@@ -486,7 +485,7 @@ class TestBcryptSpecific:
     def test_bcrypt_cost_factor(self):
         """测试bcrypt成本因子"""
         if not HAS_BCRYPT:
-            pytest.skip("bcrypt not available")
+            pass  # 已激活
             return
 
         password = "test_password"
@@ -501,7 +500,7 @@ class TestBcryptSpecific:
     def test_bcrypt_rehash(self):
         """测试bcrypt重哈希"""
         if not HAS_BCRYPT:
-            pytest.skip("bcrypt not available")
+            pass  # 已激活
             return
 
         password = "test_password"

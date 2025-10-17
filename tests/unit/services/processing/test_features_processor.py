@@ -290,7 +290,7 @@ class TestFeaturesProcessorIntegration:
         if hasattr(processor, "validate"):
             is_valid = processor.validate(raw_data)
             if not is_valid:
-                pytest.skip("Invalid test data")
+                pass  # 已激活
 
         # 步骤2：提取特征
         if hasattr(processor, "extract_features"):

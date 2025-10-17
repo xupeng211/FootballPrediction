@@ -47,9 +47,9 @@ class TestUserRepositoryInterface:
                 return UserRepositoryInterface(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate UserRepositoryInterface")
+                pytest.skip("Cannot instantiate UserRepositoryInterface")
         except Exception:
-            pytest.skip(f"Error creating UserRepositoryInterface instance")
+            pytest.skip("Error creating UserRepositoryInterface instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -101,9 +101,9 @@ class TestReadOnlyUserRepository:
                 return ReadOnlyUserRepository(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate ReadOnlyUserRepository")
+                pytest.skip("Cannot instantiate ReadOnlyUserRepository")
         except Exception:
-            pytest.skip(f"Error creating ReadOnlyUserRepository instance")
+            pytest.skip("Error creating ReadOnlyUserRepository instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -155,9 +155,9 @@ class TestUserRepository:
                 return UserRepository(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate UserRepository")
+                pytest.skip("Cannot instantiate UserRepository")
         except Exception:
-            pytest.skip(f"Error creating UserRepository instance")
+            pytest.skip("Error creating UserRepository instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""

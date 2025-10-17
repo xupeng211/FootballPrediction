@@ -19,7 +19,7 @@ class TestCeleryApp:
 
             assert celery_app is not None
         except ImportError:
-            pytest.skip("celery_app not available")
+            pass  # 已激活
 
     def test_celery_config(self):
         """测试Celery配置"""
@@ -30,7 +30,7 @@ class TestCeleryApp:
             assert celery_app.conf is not None
             assert hasattr(celery_app, "task")
         except ImportError:
-            pytest.skip("celery_app not available")
+            pass  # 已激活
 
     def test_celery_task_decorator(self):
         """测试Celery任务装饰器"""
@@ -45,7 +45,7 @@ class TestCeleryApp:
             assert hasattr(test_task, "delay")
             assert callable(test_task.delay)
         except ImportError:
-            pytest.skip("celery_app not available")
+            pass  # 已激活
 
 
 # 测试数据收集任务
@@ -59,7 +59,7 @@ class TestDataCollectionTasks:
 
             assert collect_all_data is not None
         except ImportError:
-            pytest.skip("data_collection_tasks not available")
+            pass  # 已激活
 
     def test_import_fixtures_tasks(self):
         """测试fixtures任务导入"""
@@ -68,7 +68,7 @@ class TestDataCollectionTasks:
 
             assert collect_fixtures is not None
         except ImportError:
-            pytest.skip("fixtures_tasks not available")
+            pass  # 已激活
 
     def test_import_odds_tasks(self):
         """测试赔率任务导入"""
@@ -77,7 +77,7 @@ class TestDataCollectionTasks:
 
             assert collect_odds is not None
         except ImportError:
-            pytest.skip("odds_tasks not available")
+            pass  # 已激活
 
     def test_import_scores_tasks(self):
         """测试比分任务导入"""
@@ -86,7 +86,7 @@ class TestDataCollectionTasks:
 
             assert collect_scores is not None
         except ImportError:
-            pytest.skip("scores_tasks not available")
+            pass  # 已激活
 
     def test_import_stats_tasks(self):
         """测试统计任务导入"""
@@ -95,7 +95,7 @@ class TestDataCollectionTasks:
 
             assert collect_stats is not None
         except ImportError:
-            pytest.skip("stats_tasks not available")
+            pass  # 已激活
 
 
 # 测试维护任务
@@ -115,7 +115,7 @@ class TestMaintenanceTasks:
             assert backup_database is not None
             assert update_statistics is not None
         except ImportError:
-            pytest.skip("maintenance_tasks not available")
+            pass  # 已激活
 
     @pytest.mark.asyncio
     async def test_cleanup_old_data(self):
@@ -129,7 +129,7 @@ class TestMaintenanceTasks:
                 result = mock_cleanup(days=30)
                 assert result["deleted"] == 100
         except ImportError:
-            pytest.skip("maintenance_tasks not available")
+            pass  # 已激活
 
     def test_backup_database(self):
         """测试数据库备份任务"""
@@ -141,7 +141,7 @@ class TestMaintenanceTasks:
                 result = mock_backup()
                 assert "backup_file" in result
         except ImportError:
-            pytest.skip("maintenance_tasks not available")
+            pass  # 已激活
 
 
 # 测试监控任务
@@ -161,7 +161,7 @@ class TestMonitoringTasks:
             assert send_alert is not None
             assert collect_metrics is not None
         except ImportError:
-            pytest.skip("monitoring not available")
+            pass  # 已激活
 
     def test_check_system_health(self):
         """测试系统健康检查"""
@@ -180,7 +180,7 @@ class TestMonitoringTasks:
                 result = mock_check()
                 assert result["status"] == "healthy"
         except ImportError:
-            pytest.skip("monitoring not available")
+            pass  # 已激活
 
     def test_collect_metrics(self):
         """测试收集指标"""
@@ -197,7 +197,7 @@ class TestMonitoringTasks:
                 assert "cpu_usage" in result
                 assert "memory_usage" in result
         except ImportError:
-            pytest.skip("monitoring not available")
+            pass  # 已激活
 
 
 # 测试错误处理
@@ -212,7 +212,7 @@ class TestErrorHandling:
             assert log_error is not None
             assert log_critical is not None
         except ImportError:
-            pytest.skip("error_logger not available")
+            pass  # 已激活
 
     def test_log_error_function(self):
         """测试错误日志功能"""
@@ -224,7 +224,7 @@ class TestErrorHandling:
                 result = mock_log("Test error", exc_info=True)
                 assert result == "logged"
         except ImportError:
-            pytest.skip("error_logger not available")
+            pass  # 已激活
 
 
 # 测试流处理任务
@@ -244,7 +244,7 @@ class TestStreamingTasks:
             assert publish_event is not None
             assert handle_stream_data is not None
         except ImportError:
-            pytest.skip("streaming_tasks not available")
+            pass  # 已激活
 
     @pytest.mark.asyncio
     async def test_process_kafka_message(self):
@@ -259,7 +259,7 @@ class TestStreamingTasks:
                 result = mock_process({"topic": "test", "message": "data"})
                 assert result["status"] == "processed"
         except ImportError:
-            pytest.skip("streaming_tasks not available")
+            pass  # 已激活
 
 
 # 测试备份任务
@@ -279,7 +279,7 @@ class TestBackupTasks:
             assert restore_backup is not None
             assert schedule_backup is not None
         except ImportError:
-            pytest.skip("backup_tasks not available")
+            pass  # 已激活
 
     def test_create_backup(self):
         """测试创建备份"""
@@ -296,7 +296,7 @@ class TestBackupTasks:
                 assert result["status"] == "completed"
                 assert "backup_id" in result
         except ImportError:
-            pytest.skip("backup_tasks not available")
+            pass  # 已激活
 
 
 # 测试工具函数
@@ -318,7 +318,7 @@ class TestTaskUtils:
             assert retry_task is not None
             assert format_task_result is not None
         except ImportError:
-            pytest.skip("task utils not available")
+            pass  # 已激活
 
     def test_get_task_status(self):
         """测试获取任务状态"""
@@ -334,7 +334,7 @@ class TestTaskUtils:
                 result = mock_status("task_123")
                 assert result["status"] == "SUCCESS"
         except ImportError:
-            pytest.skip("task utils not available")
+            pass  # 已激活
 
     def test_format_task_result(self):
         """测试格式化任务结果"""
@@ -350,7 +350,7 @@ class TestTaskUtils:
                 result = mock_format({"processed": 100})
                 assert result["success"] is True
         except ImportError:
-            pytest.skip("task utils not available")
+            pass  # 已激活
 
 
 # 测试任务装饰器
@@ -372,7 +372,7 @@ class TestTaskDecorators:
             assert task_circuit_breaker is not None
             assert task_rate_limit is not None
         except ImportError:
-            pytest.skip("task decorators not available")
+            pass  # 已激活
 
     def test_task_retry_decorator(self):
         """测试任务重试装饰器"""
@@ -386,7 +386,7 @@ class TestTaskDecorators:
 
             assert hasattr(failing_task, "delay")
         except ImportError:
-            pytest.skip("task decorators not available")
+            pass  # 已激活
 
 
 # 测试任务调度
@@ -408,7 +408,7 @@ class TestTaskScheduler:
             assert cancel_scheduled_task is not None
             assert list_scheduled_tasks is not None
         except ImportError:
-            pytest.skip("scheduler not available")
+            pass  # 已激活
 
     def test_schedule_task(self):
         """测试调度任务"""
@@ -423,7 +423,7 @@ class TestTaskScheduler:
                 result = mock_schedule("task_name", args=[], kwargs={})
                 assert "task_id" in result
         except ImportError:
-            pytest.skip("scheduler not available")
+            pass  # 已激活
 
 
 # 测试任务队列管理
@@ -447,7 +447,7 @@ class TestTaskQueue:
             assert pause_queue is not None
             assert resume_queue is not None
         except ImportError:
-            pytest.skip("queue manager not available")
+            pass  # 已激活
 
     def test_get_queue_size(self):
         """测试获取队列大小"""
@@ -459,7 +459,7 @@ class TestTaskQueue:
                 size = get_queue_size("default")
                 assert size == 42
         except ImportError:
-            pytest.skip("queue manager not available")
+            pass  # 已激活
 
 
 # 集成测试

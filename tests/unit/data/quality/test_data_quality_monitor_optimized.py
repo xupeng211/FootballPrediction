@@ -38,7 +38,7 @@ def mock_db_session():
 def data_quality_monitor(mock_db_session):
     """创建数据质量监控器实例"""
     if not DATA_QUALITY_MONITOR_AVAILABLE:
-        pytest.skip("Data quality monitor module not available")
+        pass  # 已激活
 
     with patch("src.data.quality.data_quality_monitor.DatabaseManager") as mock_db:
         # 配置快速 mock

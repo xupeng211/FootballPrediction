@@ -17,6 +17,7 @@ src_path = Path(__file__).parent.parent.parent / "src"
 sys.path.insert(0, str(src_path))
 
 
+@pytest.mark.unit
 class TestAllUtilsComprehensive:
     """全面测试所有utils模块中的所有函数"""
 
@@ -413,12 +414,6 @@ class TestAllUtilsComprehensive:
             assert isinstance(chunks, list)
 
         # 测试列表展平
-        nested_lists = [
-            [[1, 2], [3, 4], [5]],
-            [[[]], [[1]], [[2, 3]]],
-            [],
-            [[1], [2], [3, [4, [5]]]],
-        ]
         for nested in nested:
             flat = Helpers.flatten_list(nested)
             assert isinstance(flat, list)
@@ -790,7 +785,7 @@ class TestAllUtilsComprehensive:
         WarningFilters.setup_warnings()
 
         # 测试过滤特定警告
-        with warnings.catch_warnings(record=True) as w:
+        with warnings.catch_warnings(record=True):
             warnings.warn("Test deprecation warning", DeprecationWarning)
             WarningFilters.filter_deprecation_warnings()
             # 过滤后应该没有警告或被过滤
@@ -887,6 +882,7 @@ class TestAllUtilsComprehensive:
 
 
 # 标准库测试
+@pytest.mark.unit
 class TestStandardLibraryExtensive:
     """全面测试标准库功能"""
 
@@ -1134,7 +1130,7 @@ class TestStandardLibraryExtensive:
         for angle in angles:
             sin_val = math.sin(angle)
             cos_val = math.cos(angle)
-            tan_val = math.tan(angle) if abs(math.cos(angle)) > 1e-10 else None
+            math.tan(angle) if abs(math.cos(angle)) > 1e-10 else None
             assert isinstance(sin_val, float)
             assert isinstance(cos_val, float)
 
@@ -1440,7 +1436,7 @@ class TestStandardLibraryExtensive:
 
         # 创建XML树
         root = ET.Element("root")
-        child1 = ET.SubElement(root, "child1", attrib={"id": "1"})
+        ET.SubElement(root, "child1", attrib={"id": "1"})
         child2 = ET.SubElement(root, "child2")
         child2.text = "Text content"
 
@@ -1463,7 +1459,7 @@ class TestStandardLibraryExtensive:
         # 命名空间处理
         ns = {"ns": "http://example.com/namespace"}
         ns_root = ET.Element(f"{{{ns['ns']}}}root")
-        ns_child = ET.SubElement(ns_root, f"{{{ns['ns']}}}child")
+        ET.SubElement(ns_root, f"{{{ns['ns']}}}child")
         ns_str = ET.tostring(ns_root, encoding="unicode")
         assert "http://example.com/namespace" in ns_str or ns_str.count("ns:") > 0
 

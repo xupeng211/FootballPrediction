@@ -47,9 +47,9 @@ class TestServiceConfig:
                 return ServiceConfig(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate ServiceConfig")
+                pytest.skip("Cannot instantiate ServiceConfig")
         except Exception:
-            pytest.skip(f"Error creating ServiceConfig instance")
+            pytest.skip("Error creating ServiceConfig instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -200,9 +200,9 @@ class TestDIConfiguration:
                 return DIConfiguration(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate DIConfiguration")
+                pytest.skip("Cannot instantiate DIConfiguration")
         except Exception:
-            pytest.skip(f"Error creating DIConfiguration instance")
+            pytest.skip("Error creating DIConfiguration instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -309,9 +309,9 @@ class TestConfigurationBinder:
                 return ConfigurationBinder(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate ConfigurationBinder")
+                pytest.skip("Cannot instantiate ConfigurationBinder")
         except Exception:
-            pytest.skip(f"Error creating ConfigurationBinder instance")
+            pytest.skip("Error creating ConfigurationBinder instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -403,9 +403,9 @@ class TestConfigurationBuilder:
                 return ConfigurationBuilder(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate ConfigurationBuilder")
+                pytest.skip("Cannot instantiate ConfigurationBuilder")
         except Exception:
-            pytest.skip(f"Error creating ConfigurationBuilder instance")
+            pytest.skip("Error creating ConfigurationBuilder instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""

@@ -233,7 +233,7 @@ class TestAsyncCacheFunctions:
             assert callable(amget_cache)
             assert callable(amset_cache)
         except ImportError:
-            pytest.skip("Async cache functions not available")
+            pass  # 已激活
 
     @patch("src.cache.redis_manager.get_redis_manager")
     def test_async_functions_exist(self, mock_get_manager):

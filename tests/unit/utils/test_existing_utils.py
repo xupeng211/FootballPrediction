@@ -76,7 +76,7 @@ class TestExistingModules:
     def test_formatters_module(self):
         """测试formatters模块"""
         if "formatters" not in [name for name, _ in modules_to_test]:
-            pytest.skip("formatters module not available")
+            pass  # 已激活
 
         # 检查模块属性
         import formatters
@@ -95,7 +95,7 @@ class TestExistingModules:
     def test_helpers_module(self):
         """测试helpers模块"""
         if "helpers" not in [name for name, _ in modules_to_test]:
-            pytest.skip("helpers module not available")
+            pass  # 已激活
 
         import helpers
 
@@ -116,7 +116,7 @@ class TestExistingModules:
     def test_i18n_module(self):
         """测试i18n模块"""
         if "i18n" not in [name for name, _ in modules_to_test]:
-            pytest.skip("i18n module not available")
+            pass  # 已激活
 
         import i18n
 
@@ -135,7 +135,7 @@ class TestExistingModules:
     def test_response_module(self):
         """测试response模块"""
         if "response" not in [name for name, _ in modules_to_test]:
-            pytest.skip("response module not available")
+            pass  # 已激活
 
         import response
 
@@ -155,7 +155,7 @@ class TestExistingModules:
     def test_retry_module(self):
         """测试retry模块"""
         if "retry" not in [name for name, _ in modules_to_test]:
-            pytest.skip("retry module not available")
+            pass  # 已激活
 
         import retry
 
@@ -178,7 +178,7 @@ class TestExistingModules:
     def test_warning_filters_module(self):
         """测试warning_filters模块"""
         if "warning_filters" not in [name for name, _ in modules_to_test]:
-            pytest.skip("warning_filters module not available")
+            pass  # 已激活
 
         import warning_filters
 

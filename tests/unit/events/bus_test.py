@@ -47,9 +47,9 @@ class TestEventBus:
                 return EventBus(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate EventBus")
+                pytest.skip("Cannot instantiate EventBus")
         except Exception:
-            pytest.skip(f"Error creating EventBus instance")
+            pytest.skip("Error creating EventBus instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""

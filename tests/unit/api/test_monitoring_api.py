@@ -34,7 +34,7 @@ class TestMonitoringEndpoints:
         response = client.get("/api/v1/monitoring/status")
 
         if response.status_code == 404:
-            pytest.skip("监控状态端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -45,7 +45,7 @@ class TestMonitoringEndpoints:
         response = client.get("/api/v1/monitoring/collector/health")
 
         if response.status_code == 404:
-            pytest.skip("收集器健康检查端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -68,7 +68,7 @@ class TestMonitoringEndpoints:
         response = client.post("/api/v1/monitoring/collector/collect")
 
         if response.status_code == 404:
-            pytest.skip("收集指标端点未实现")
+            pass  # 已激活
 
         assert response.status_code in [200, 202]
         data = response.json()
@@ -79,7 +79,7 @@ class TestMonitoringEndpoints:
         response = client.get("/api/v1/monitoring/collector/status")
 
         if response.status_code == 404:
-            pytest.skip("收集器状态端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -95,7 +95,7 @@ class TestMonitoringEndpoints:
         response = client.post("/api/v1/monitoring/collector/start")
 
         if response.status_code == 404:
-            pytest.skip("开始收集端点未实现")
+            pass  # 已激活
 
         assert response.status_code in [200, 202]
         data = response.json()
@@ -111,7 +111,7 @@ class TestMonitoringEndpoints:
         response = client.post("/api/v1/monitoring/collector/stop")
 
         if response.status_code == 404:
-            pytest.skip("停止收集端点未实现")
+            pass  # 已激活
 
         assert response.status_code in [200, 202]
         data = response.json()
@@ -133,7 +133,7 @@ class TestMonitoringEndpoints:
         response = client.get("/api/v1/monitoring/health")
 
         if response.status_code == 404:
-            pytest.skip("系统健康检查端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -155,7 +155,7 @@ class TestMonitoringEndpoints:
         response = client.get("/api/v1/monitoring/alerts")
 
         if response.status_code == 404:
-            pytest.skip("获取告警端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -176,7 +176,7 @@ class TestMonitoringEndpoints:
         response = client.post("/api/v1/monitoring/alerts", json=alert_data)
 
         if response.status_code == 404:
-            pytest.skip("创建告警端点未实现")
+            pass  # 已激活
 
         assert response.status_code in [200, 201]
         data = response.json()
@@ -187,7 +187,7 @@ class TestMonitoringEndpoints:
         response = client.get("/api/v1/monitoring/logs")
 
         if response.status_code == 404:
-            pytest.skip("获取日志端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -198,7 +198,7 @@ class TestMonitoringEndpoints:
         response = client.get("/api/v1/monitoring/performance")
 
         if response.status_code == 404:
-            pytest.skip("获取性能指标端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()

@@ -18,8 +18,7 @@ except ImportError as e:
     router = None
     __all__ = []
 
-
-# class TestHealthCompatibility:
+    # class TestHealthCompatibility:
     """健康API兼容性测试"""
 
     def test_router_import(self):

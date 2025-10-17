@@ -47,9 +47,9 @@ class TestProcessingCache:
                 return ProcessingCache(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate ProcessingCache")
+                pytest.skip("Cannot instantiate ProcessingCache")
         except Exception:
-            pytest.skip(f"Error creating ProcessingCache instance")
+            pytest.skip("Error creating ProcessingCache instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""

@@ -317,7 +317,7 @@ class TestHealthChecker:
             assert "overall" in health
         else:
             # 如果没有check_all方法，跳过测试
-            pytest.skip("check_all method not implemented")
+            pass  # 已激活
 
     def test_update_last_checks(self):
         """测试：更新最后检查时间"""

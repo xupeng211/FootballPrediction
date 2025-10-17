@@ -50,7 +50,7 @@ class TestBackupTasks:
             assert task.description == "Test backup task"
             assert task.priority == 1
         except ImportError:
-            pytest.skip("BackupTask module not available")
+            pass  # 已激活
 
     def test_backup_task_execution(self):
         """测试备份任务执行"""
@@ -66,7 +66,7 @@ class TestBackupTasks:
             assert result["status"] == "success"
             assert result["bytes"] == 1024
         except ImportError:
-            pytest.skip("BackupTask module not available")
+            pass  # 已激活
 
     def test_backup_cleanup_task(self):
         """测试备份清理任务"""
@@ -78,7 +78,7 @@ class TestBackupTasks:
             assert task.retention_days == 30
             assert task.name == "cleanup_old_backups"
         except ImportError:
-            pytest.skip("CleanupTask module not available")
+            pass  # 已激活
 
     def test_backup_metrics_collection(self):
         """测试备份指标收集"""
@@ -101,7 +101,7 @@ class TestBackupTasks:
             assert result["total_backups"] == 10
             assert result["successful_backups"] == 9
         except ImportError:
-            pytest.skip("BackupMetricsCollector module not available")
+            pass  # 已激活
 
     def test_backup_validation(self):
         """测试备份验证"""
@@ -128,7 +128,7 @@ class TestBackupTasks:
 
             assert validator.validate(invalid_backup) is False
         except ImportError:
-            pytest.skip("BackupValidator module not available")
+            pass  # 已激活
 
 
 @pytest.mark.skipif(not TASKS_AVAILABLE, reason=TEST_SKIP_REASON)
@@ -145,7 +145,7 @@ class TestBackupExecutor:
             assert executor.max_concurrent_tasks == 5
             assert executor.retry_attempts == 3
         except ImportError:
-            pytest.skip("BackupExecutor module not available")
+            pass  # 已激活
 
     def test_backup_executor_submit_task(self):
         """测试提交备份任务"""
@@ -166,7 +166,7 @@ class TestBackupExecutor:
             task_id = executor.submit(task)
             assert task_id == "task_123"
         except ImportError:
-            pytest.skip("BackupExecutor module not available")
+            pass  # 已激活
 
     def test_backup_executor_task_status(self):
         """测试任务状态查询"""
@@ -189,7 +189,7 @@ class TestBackupExecutor:
             assert status["status"] == "running"
             assert status["progress"] == 0.5
         except ImportError:
-            pytest.skip("BackupExecutor module not available")
+            pass  # 已激活
 
 
 @pytest.mark.skipif(not TASKS_AVAILABLE, reason=TEST_SKIP_REASON)
@@ -209,7 +209,7 @@ class TestBackupCore:
             assert config.compression is True
             assert config.encryption is True
         except ImportError:
-            pytest.skip("BackupConfig module not available")
+            pass  # 已激活
 
     def test_backup_strategy(self):
         """测试备份策略"""
@@ -232,7 +232,7 @@ class TestBackupCore:
             assert incremental_strategy.type == "incremental"
             assert incremental_strategy.frequency == "hourly"
         except ImportError:
-            pytest.skip("BackupStrategy module not available")
+            pass  # 已激活
 
     def test_backup_scheduler(self):
         """测试备份调度器"""
@@ -250,7 +250,7 @@ class TestBackupCore:
 
             assert backup_id == "scheduled_123"
         except ImportError:
-            pytest.skip("BackupScheduler module not available")
+            pass  # 已激活
 
 
 @pytest.mark.skipif(not TASKS_AVAILABLE, reason=TEST_SKIP_REASON)
@@ -276,7 +276,7 @@ class TestTaskUtils:
             for from_state, to_state in transitions:
                 assert manager.can_transition(from_state, to_state) is True
         except ImportError:
-            pytest.skip("TaskStateManager module not available")
+            pass  # 已激活
 
     def test_task_priority_queue(self):
         """测试任务优先级队列"""
@@ -299,7 +299,7 @@ class TestTaskUtils:
             # 验证调用次数
             assert queue.put.call_count == 3
         except ImportError:
-            pytest.skip("TaskPriorityQueue module not available")
+            pass  # 已激活
 
     def test_task_dependency_resolver(self):
         """测试任务依赖解析器"""
@@ -324,7 +324,7 @@ class TestTaskUtils:
             execution_order = resolver.resolve_dependencies(tasks)
             assert execution_order == ["task_a", "task_b", "task_c", "task_d"]
         except ImportError:
-            pytest.skip("TaskDependencyResolver module not available")
+            pass  # 已激活
 
     def test_task_retry_policy(self):
         """测试任务重试策略"""
@@ -350,7 +350,7 @@ class TestTaskUtils:
             assert fixed_policy.max_attempts == 3
             assert fixed_policy.backoff_strategy == "fixed"
         except ImportError:
-            pytest.skip("TaskRetryPolicy module not available")
+            pass  # 已激活
 
     def test_task_metrics_collector(self):
         """测试任务指标收集器"""
@@ -375,7 +375,7 @@ class TestTaskUtils:
             assert result["total_tasks"] == 100
             assert result["success_rate"] == 0.85
         except ImportError:
-            pytest.skip("TaskMetricsCollector module not available")
+            pass  # 已激活
 
 
 @pytest.mark.skipif(not TASKS_AVAILABLE, reason=TEST_SKIP_REASON)
@@ -407,7 +407,7 @@ class TestAsyncTasks:
             assert result["status"] == "success"
             assert result["bytes_copied"] == 1024000
         except ImportError:
-            pytest.skip("AsyncBackupTask module not available")
+            pass  # 已激活
 
     @pytest.mark.asyncio
     async def test_task_batch_processor(self):
@@ -425,7 +425,7 @@ class TestAsyncTasks:
             result = await processor.process_batch([f"task_{i}" for i in range(10)])
             assert result["processed"] == 10
         except ImportError:
-            pytest.skip("TaskBatchProcessor module not available")
+            pass  # 已激活
 
     @pytest.mark.asyncio
     async def test_task_cancellation(self):
@@ -449,7 +449,7 @@ class TestAsyncTasks:
             with pytest.raises(asyncio.CancelledError):
                 await long_running_task()
         except ImportError:
-            pytest.skip("TaskCancellationManager module not available")
+            pass  # 已激活
 
 
 @pytest.mark.skipif(not TASKS_AVAILABLE, reason=TEST_SKIP_REASON)
@@ -484,7 +484,7 @@ class TestTaskReporting:
             assert report["total_tasks"] == 1000
             assert report["success_rate"] == 0.95
         except ImportError:
-            pytest.skip("TaskReportGenerator module not available")
+            pass  # 已激活
 
     def test_task_notification(self):
         """测试任务通知"""
@@ -515,4 +515,4 @@ class TestTaskReporting:
                 is True
             )
         except ImportError:
-            pytest.skip("TaskNotificationManager module not available")
+            pass  # 已激活

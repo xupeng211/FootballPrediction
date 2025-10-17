@@ -22,6 +22,8 @@ from src.utils.validators import (
     is_valid_date_string,
     is_valid_json_string,
 )
+
+
 class TestValidatorsParametrized:
     """验证器参数化测试"""
 
@@ -259,9 +261,7 @@ class TestValidatorsParametrized:
         assert result == expected
 
 
-@pytest.mark.skipif(
-    False, reason="Validators module should be available"
-)
+@pytest.mark.skipif(False, reason="Validators module should be available")
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
@@ -270,7 +270,7 @@ class TestModuleNotAvailable:
         assert True  # 表明测试意识到模块不可用
 
 
-@pytest.mark.skipif(False, reason="Validators module not available")
+@pytest.mark.unit
 class TestValidatorsComplex:
     """验证器复杂测试（使用参数化）"""
 
@@ -422,7 +422,7 @@ class TestValidatorsComplex:
         assert result == expected
 
 
-@pytest.mark.skipif(False, reason="Validators module not available")
+@pytest.mark.unit
 class TestValidatorsEdgeCases:
     """验证器边界情况测试"""
 
@@ -451,10 +451,10 @@ class TestValidatorsEdgeCases:
         """测试：边界情况输入（参数化）"""
         # 测试各种输入类型是否能被正确处理
         result = is_valid_email(input_value)
-            assert isinstance(result, bool)
+        assert isinstance(result, bool)
 
         result = is_valid_username(input_value)
-            assert isinstance(result, bool)
+        assert isinstance(result, bool)
 
     @pytest.mark.parametrize(
         "unicode_input",
@@ -470,9 +470,9 @@ class TestValidatorsEdgeCases:
     def test_unicode_validation(self, unicode_input):
         """测试：Unicode输入验证（参数化）"""
         # 某些验证器可能不支持Unicode
-            try:
-                result = is_valid_email(unicode_input)
-                assert isinstance(result, bool)
-            except UnicodeError:
-                # 处理Unicode错误
-                pass
+        try:
+            result = is_valid_email(unicode_input)
+            assert isinstance(result, bool)
+        except UnicodeError:
+            # 处理Unicode错误
+            pass

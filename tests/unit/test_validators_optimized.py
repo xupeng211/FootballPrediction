@@ -8,8 +8,9 @@ from src.utils.validators import (
     is_valid_phone,
     is_valid_url,
     validate_required_fields,
-    validate_data_types
+    validate_data_types,
 )
+
 
 class TestBasicValidation:
     """基础验证功能测试"""
@@ -20,7 +21,7 @@ class TestBasicValidation:
             "test@example.com",
             "user.name@domain.co.uk",
             "user+tag@example.org",
-            "user123@test-domain.com"
+            "user123@test-domain.com",
         ]
 
         for email in valid_emails:
@@ -29,11 +30,7 @@ class TestBasicValidation:
     def test_simple_phone_validation(self):
         """测试简单电话验证（只测试明确的）"""
         # 只测试应该工作的基本格式
-        working_phones = [
-            "+1234567890",
-            "123-456-7890",
-            "(123) 456-7890"
-        ]
+        working_phones = ["+1234567890", "123-456-7890", "(123) 456-7890"]
 
         for phone in working_phones:
             result = is_valid_phone(phone)
@@ -45,7 +42,7 @@ class TestBasicValidation:
         valid_urls = [
             "https://www.example.com",
             "https://api.example.com/v1",
-            "https://example.com/path?query=value"
+            "https://example.com/path?query=value",
         ]
 
         for url in valid_urls:
@@ -59,21 +56,14 @@ class TestBasicValidation:
         missing = validate_required_fields(data, required)
         assert missing == [], f"No fields should be missing, got {missing}"
 
+
 class TestDataValidation:
     """数据类型验证测试"""
 
     def test_correct_data_types(self):
         """测试正确的数据类型"""
-        data = {
-            "name": "John",
-            "age": 30,
-            "active": True
-        }
-        schema = {
-            "name": str,
-            "age": int,
-            "active": bool
-        }
+        data = {"name": "John", "age": 30, "active": True}
+        schema = {"name": str, "age": int, "active": bool}
 
         errors = validate_data_types(data, schema)
         assert len(errors) == 0, f"Type validation should pass, got errors: {errors}"
@@ -85,6 +75,7 @@ class TestDataValidation:
 
         errors = validate_data_types(data, schema)
         assert len(errors) > 0, "Should detect type mismatch"
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

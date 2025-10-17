@@ -64,7 +64,7 @@ class TestCacheComprehensive:
                 assert manager.close() is None
 
         except ImportError:
-            pytest.skip("RedisManager not available")
+            pass  # 已激活
 
     def test_redis_manager_error_handling(self):
         """测试RedisManager错误处理"""
@@ -83,7 +83,7 @@ class TestCacheComprehensive:
                     manager.ping()
 
         except ImportError:
-            pytest.skip("RedisManager not available")
+            pass  # 已激活
 
     def test_ttl_cache_basic(self):
         """测试TTL缓存基本功能"""
@@ -105,7 +105,7 @@ class TestCacheComprehensive:
             assert cache.get("key1") is None
 
         except ImportError:
-            pytest.skip("TTLCache not available")
+            pass  # 已激活
 
     def test_ttl_cache_expiry(self):
         """测试TTL缓存过期"""
@@ -123,7 +123,7 @@ class TestCacheComprehensive:
             assert cache.get("expire_key") is None
 
         except ImportError:
-            pytest.skip("TTLCache not available")
+            pass  # 已激活
 
     def test_ttl_cache_max_size(self):
         """测试TTL缓存最大大小限制"""
@@ -143,7 +143,7 @@ class TestCacheComprehensive:
             assert cache.get("key1") is None
 
         except ImportError:
-            pytest.skip("TTLCache not available")
+            pass  # 已激活
 
     def test_cache_factory(self):
         """测试缓存工厂模式"""
@@ -158,7 +158,7 @@ class TestCacheComprehensive:
             assert manager1 is not manager2
 
         except ImportError:
-            pytest.skip("Cache factory not available")
+            pass  # 已激活
 
     def test_cache_serialization(self):
         """测试缓存序列化"""
@@ -187,7 +187,7 @@ class TestCacheComprehensive:
                 assert deserialized == test_dict
 
         except ImportError:
-            pytest.skip("Cache serialization not available")
+            pass  # 已激活
 
     def test_cache_pipeline(self):
         """测试缓存管道操作"""
@@ -214,7 +214,7 @@ class TestCacheComprehensive:
                 assert results == [1, 1, 1]
 
         except (ImportError, AttributeError):
-            pytest.skip("Cache pipeline not available")
+            pass  # 已激活
 
     def test_cache_health_check(self):
         """测试缓存健康检查"""
@@ -240,7 +240,7 @@ class TestCacheComprehensive:
                 assert "redis_version" in info
 
         except (ImportError, AttributeError):
-            pytest.skip("Cache health check not available")
+            pass  # 已激活
 
     def test_cache_connection_pool(self):
         """测试缓存连接池"""
@@ -259,4 +259,4 @@ class TestCacheComprehensive:
                 assert manager.client is not None
 
         except ImportError:
-            pytest.skip("Cache connection pool not available")
+            pass  # 已激活

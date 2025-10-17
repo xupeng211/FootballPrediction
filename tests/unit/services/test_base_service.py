@@ -18,6 +18,7 @@ class TestBaseService:
 
     def test_concrete_service(self):
         """测试具体服务实现"""
+
         class ConcreteService(BaseService):
             def __init__(self):
                 super().__init__()
@@ -25,12 +26,13 @@ class TestBaseService:
 
         service = ConcreteService()
         assert service.name == "test_service"
-        assert hasattr(service, 'logger')
-        assert hasattr(service, 'metrics')
+        assert hasattr(service, "logger")
+        assert hasattr(service, "metrics")
 
     @pytest.mark.asyncio
     async def test_async_methods(self):
         """测试异步方法"""
+
         class AsyncService(BaseService):
             async def test_method(self):
                 return "result"

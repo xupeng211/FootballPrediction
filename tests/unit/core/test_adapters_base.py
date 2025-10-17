@@ -98,9 +98,6 @@ class TestAdapter:
                 raise Exception("Request failed")
 
         class FailingAdapter(Adapter):
-        async def _initialize(self): pass
-        async def _request(self, *args, **kwargs): pass
-        async def _cleanup(self): pass
             async def _initialize(self):
                 raise Exception("Init failed")
 

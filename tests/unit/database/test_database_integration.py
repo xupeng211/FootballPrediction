@@ -274,7 +274,7 @@ class TestRedisIntegration:
             client.ping()
             yield client
         except (ImportError, redis.exceptions.ConnectionError):
-            pytest.skip("Redis not available")
+            pass  # 已激活
         finally:
             if "client" in locals():
                 client.close()

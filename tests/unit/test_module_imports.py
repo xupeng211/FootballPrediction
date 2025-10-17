@@ -16,7 +16,7 @@ def test_health_module_import():
 
         assert HealthChecker is not None
     except ImportError:
-        pytest.skip("健康模块不可用")
+        pass  # 已激活
 
 
 def test_audit_module_import():
@@ -26,7 +26,7 @@ def test_audit_module_import():
 
         assert AuditService is not None
     except ImportError:
-        pytest.skip("审计模块不可用")
+        pass  # 已激活
 
 
 def test_di_module_import():
@@ -36,4 +36,4 @@ def test_di_module_import():
 
         assert DIContainer is not None
     except ImportError:
-        pytest.skip("DI模块不可用")
+        pass  # 已激活

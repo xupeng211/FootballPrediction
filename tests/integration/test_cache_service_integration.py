@@ -245,7 +245,7 @@ class TestCacheInvalidationIntegration:
             f"prediction:*:user:{user_id}",
             f"prediction:match:{match_id}:*",
             f"user:stats:{user_id}",
-            f"leaderboard:season:2024",
+            "leaderboard:season:2024",
         ]
 
         # 设置缓存
@@ -266,13 +266,12 @@ class TestCacheInvalidationIntegration:
         """测试比赛更新时的缓存失效"""
         match_id = 1
         old_status = "upcoming"
-        new_status = "live"
 
         # 设置相关缓存
         cache_keys = [
             f"match:{match_id}",
             f"matches:status:{old_status}:*",
-            f"matches:upcoming",
+            "matches:upcoming",
             f"predictions:match:{match_id}:*",
         ]
 
@@ -283,7 +282,7 @@ class TestCacheInvalidationIntegration:
         patterns_to_invalidate = [
             f"match:{match_id}",
             f"matches:status:{old_status}:*",
-            f"matches:upcoming",
+            "matches:upcoming",
         ]
 
         for pattern in patterns_to_invalidate:
@@ -303,7 +302,7 @@ class TestCacheInvalidationIntegration:
         cache_keys = [
             f"user:{user_id}",
             f"user:username:{username}",
-            f"user:email:test@example.com",
+            "user:email:test@example.com",
             f"user:stats:{user_id}",
             f"user:predictions:{user_id}:*",
         ]
@@ -315,7 +314,7 @@ class TestCacheInvalidationIntegration:
         # 更新用户资料时失效相关缓存
         await self.mock_redis.delete(f"user:{user_id}")
         await self.mock_redis.delete(f"user:username:{username}")
-        await self.mock_redis.delete(f"user:email:test@example.com")
+        await self.mock_redis.delete("user:email:test@example.com")
 
         # 验证缓存被清理
         assert f"user:{user_id}" not in self.cache_data

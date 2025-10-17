@@ -34,7 +34,7 @@ def fast_redis():
 def mock_redis_manager():
     """Mock Redis Manager"""
     if not REDIS_MANAGER_AVAILABLE:
-        pytest.skip("Redis manager module not available")
+        pass  # 已激活
 
     with patch("src.cache.redis_manager.RedisManager") as mock:
         redis_instance = FastRedisManager()

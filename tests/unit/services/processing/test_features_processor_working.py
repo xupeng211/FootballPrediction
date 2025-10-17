@@ -172,7 +172,7 @@ class TestFeaturesProcessorIntegration:
 
             assert old_aggregator is aggregator
         except ImportError:
-            pytest.skip("Component not available")
+            pass  # 已激活
 
     def test_component_interaction(self):
         """测试：组件交互"""

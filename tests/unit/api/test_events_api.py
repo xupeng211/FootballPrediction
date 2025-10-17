@@ -26,7 +26,7 @@ class TestEventEndpoints:
         response = client.get("/api/v1/events/health")
 
         if response.status_code == 404:
-            pytest.skip("事件健康检查端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -37,7 +37,7 @@ class TestEventEndpoints:
         response = client.get("/api/v1/events/stats")
 
         if response.status_code == 404:
-            pytest.skip("事件统计端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -48,7 +48,7 @@ class TestEventEndpoints:
         response = client.get("/api/v1/events/types")
 
         if response.status_code == 404:
-            pytest.skip("事件类型端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -59,7 +59,7 @@ class TestEventEndpoints:
         response = client.get("/api/v1/events/subscribers")
 
         if response.status_code == 404:
-            pytest.skip("订阅者端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -73,7 +73,7 @@ class TestEventEndpoints:
         response = client.post("/api/v1/events/restart")
 
         if response.status_code == 404:
-            pytest.skip("重启事件系统端点未实现")
+            pass  # 已激活
 
         assert response.status_code in [200, 202]
         data = response.json()
@@ -84,7 +84,7 @@ class TestEventEndpoints:
         response = client.get("/api/v1/events/metrics")
 
         if response.status_code == 404:
-            pytest.skip("事件指标端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -95,7 +95,7 @@ class TestEventEndpoints:
         response = client.get("/api/v1/events/predictions/recent")
 
         if response.status_code == 404:
-            pytest.skip("最近预测统计端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -106,7 +106,7 @@ class TestEventEndpoints:
         response = client.get("/api/v1/events/users/activity")
 
         if response.status_code == 404:
-            pytest.skip("用户活动统计端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -129,7 +129,7 @@ class TestEventEndpoints:
         response = client.post("/api/v1/events/publish", json=event_data)
 
         if response.status_code == 404:
-            pytest.skip("发布事件端点未实现")
+            pass  # 已激活
 
         assert response.status_code in [200, 201]
         data = response.json()
@@ -149,7 +149,7 @@ class TestEventEndpoints:
         response = client.post("/api/v1/events/subscribe", json=subscription_data)
 
         if response.status_code == 404:
-            pytest.skip("订阅事件端点未实现")
+            pass  # 已激活
 
         assert response.status_code in [200, 201]
         data = response.json()
@@ -160,7 +160,7 @@ class TestEventEndpoints:
         response = client.get("/api/v1/events/history")
 
         if response.status_code == 404:
-            pytest.skip("事件历史端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()

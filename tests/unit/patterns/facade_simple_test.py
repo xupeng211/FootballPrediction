@@ -47,9 +47,9 @@ class TestPredictionRequest:
                 return PredictionRequest(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate PredictionRequest")
+                pytest.skip("Cannot instantiate PredictionRequest")
         except Exception:
-            pytest.skip(f"Error creating PredictionRequest instance")
+            pytest.skip("Error creating PredictionRequest instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -145,9 +145,9 @@ class TestPredictionResult:
                 return PredictionResult(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate PredictionResult")
+                pytest.skip("Cannot instantiate PredictionResult")
         except Exception:
-            pytest.skip(f"Error creating PredictionResult instance")
+            pytest.skip("Error creating PredictionResult instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -243,9 +243,9 @@ class TestDataCollectionConfig:
                 return DataCollectionConfig(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate DataCollectionConfig")
+                pytest.skip("Cannot instantiate DataCollectionConfig")
         except Exception:
-            pytest.skip(f"Error creating DataCollectionConfig instance")
+            pytest.skip("Error creating DataCollectionConfig instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -330,9 +330,9 @@ class TestPredictionFacade:
                 return PredictionFacade(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate PredictionFacade")
+                pytest.skip("Cannot instantiate PredictionFacade")
         except Exception:
-            pytest.skip(f"Error creating PredictionFacade instance")
+            pytest.skip("Error creating PredictionFacade instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -384,9 +384,9 @@ class TestDataCollectionFacade:
                 return DataCollectionFacade(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate DataCollectionFacade")
+                pytest.skip("Cannot instantiate DataCollectionFacade")
         except Exception:
-            pytest.skip(f"Error creating DataCollectionFacade instance")
+            pytest.skip("Error creating DataCollectionFacade instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -438,9 +438,9 @@ class TestAnalyticsFacade:
                 return AnalyticsFacade(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate AnalyticsFacade")
+                pytest.skip("Cannot instantiate AnalyticsFacade")
         except Exception:
-            pytest.skip(f"Error creating AnalyticsFacade instance")
+            pytest.skip("Error creating AnalyticsFacade instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -492,9 +492,9 @@ class TestFacadeFactory:
                 return FacadeFactory(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate FacadeFactory")
+                pytest.skip("Cannot instantiate FacadeFactory")
         except Exception:
-            pytest.skip(f"Error creating FacadeFactory instance")
+            pytest.skip("Error creating FacadeFactory instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -576,9 +576,9 @@ class TestSystemFacade:
                 return SystemFacade(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate SystemFacade")
+                pytest.skip("Cannot instantiate SystemFacade")
         except Exception:
-            pytest.skip(f"Error creating SystemFacade instance")
+            pytest.skip("Error creating SystemFacade instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""

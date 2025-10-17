@@ -118,7 +118,7 @@ class TestDatabaseConnection:
                     async with test_db() as session:
                         result = await session.execute(text("SELECT 1"))
                         return result.scalar()
-                except Exception as e:
+                except Exception:
                     retry_count += 1
                     if retry_count >= max_retries:
                         raise
@@ -212,7 +212,8 @@ class TestDatabaseConnection:
 
         # 复杂查询
         result = await db_session.execute(
-            text("""
+            text(
+                """
             SELECT t.name, COUNT(m.id) as match_count
             FROM teams t
             LEFT JOIN matches m ON (t.id = m.home_team_id OR t.id = m.away_team_id)
@@ -221,7 +222,8 @@ class TestDatabaseConnection:
             HAVING COUNT(m.id) > 5
             ORDER BY match_count DESC
             LIMIT 10
-        """)
+        """
+            )
         )
 
         rows = result.fetchall()
@@ -289,10 +291,10 @@ class TestDatabaseConnection:
 
             # 使用 pg_sleep 模拟长时间查询（PostgreSQL）
             try:
-                result = await session.execute(text("SELECT pg_sleep(2)"))
+                await session.execute(text("SELECT pg_sleep(2)"))
             except Exception:
                 # 如果 pg_sleep 不可用，使用正常查询
-                result = await session.execute(text("SELECT 1"))
+                await session.execute(text("SELECT 1"))
 
             elapsed = (datetime.now() - start_time).total_seconds()
 

@@ -45,11 +45,13 @@ def validate_data_types(data: Dict[str, Any], schema: Dict[str, type]) -> List[s
             )
     return errors
 
+
 # Additional validators for compatibility
 def validate_username(username: str) -> bool:
     """Validate username"""
-    pattern = r'^[a-zA-Z0-9_]{3,20}$'
+    pattern = r"^[a-zA-Z0-9_]{3,20}$"
     return bool(re.match(pattern, username))
+
 
 def validate_password(password: str) -> bool:
     """Validate password - at least 8 characters with letter and number"""
@@ -59,17 +61,19 @@ def validate_password(password: str) -> bool:
     has_number = any(c.isdigit() for c in password)
     return has_letter and has_number
 
+
 def validate_credit_card(card: str) -> bool:
     """Validate credit card number (basic Luhn algorithm)"""
-    card = card.replace(' ', '').replace('-', '')
+    card = card.replace(" ", "").replace("-", "")
     if not card.isdigit() or len(card) < 13 or len(card) > 19:
         return False
     # Simple check - could implement full Luhn algorithm
     return len(card) >= 13
 
+
 def validate_ipv4_address(ip: str) -> bool:
     """Validate IPv4 address"""
-    parts = ip.split('.')
+    parts = ip.split(".")
     if len(parts) != 4:
         return False
     try:
@@ -77,23 +81,28 @@ def validate_ipv4_address(ip: str) -> bool:
     except ValueError:
         return False
 
+
 def validate_mac_address(mac: str) -> bool:
     """Validate MAC address"""
-    pattern = r'^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$'
+    pattern = r"^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$"
     return bool(re.match(pattern, mac))
+
 
 def validate_date_string(date_str: str) -> bool:
     """Validate date string (YYYY-MM-DD format)"""
     import datetime
+
     try:
-        datetime.datetime.strptime(date_str, '%Y-%m-%d')
+        datetime.datetime.strptime(date_str, "%Y-%m-%d")
         return True
     except ValueError:
-            return False
+        return False
+
 
 def validate_json_string(json_str: str) -> bool:
     """Validate JSON string"""
     import json
+
     try:
         json.loads(json_str)
         return True

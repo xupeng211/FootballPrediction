@@ -328,7 +328,10 @@ class TestAdapter:
 
         mock_adaptee = Mock(spec=Adaptee)
         adapter = ConcreteAdapter(mock_adaptee)
-        adapter.status = AdapterStatus.ACTIVE
+
+        # 初始化适配器使其变为活跃状态
+        await adapter.initialize()
+        assert adapter.status == AdapterStatus.ACTIVE
 
         result = await adapter.request()
         assert result == "response"

@@ -7,6 +7,7 @@ import pytest
 from src.utils.string_utils import StringUtils
 
 
+@pytest.mark.unit
 class TestTruncate:
     """测试字符串截断功能"""
 
@@ -80,6 +81,7 @@ class TestTruncate:
         assert result.endswith("...")
 
 
+@pytest.mark.unit
 class TestSlugify:
     """测试URL友好字符串转换功能"""
 
@@ -154,6 +156,7 @@ class TestSlugify:
         assert result == "caf-naïve-résumé"
 
 
+@pytest.mark.unit
 class TestCamelToSnake:
     """测试驼峰命名转下划线命名功能"""
 
@@ -208,6 +211,7 @@ class TestCamelToSnake:
         assert result == "x_m_l_http_request"
 
 
+@pytest.mark.unit
 class TestSnakeToCamel:
     """测试下划线命名转驼峰命名功能"""
 
@@ -264,6 +268,7 @@ class TestSnakeToCamel:
         assert result == "__PrivateVariable"
 
 
+@pytest.mark.unit
 class TestCleanText:
     """测试文本清理功能"""
 
@@ -334,6 +339,7 @@ class TestCleanText:
         assert result == "Paragraph 1 Paragraph 2"
 
 
+@pytest.mark.unit
 class TestExtractNumbers:
     """测试数字提取功能"""
 
@@ -422,6 +428,7 @@ class TestExtractNumbers:
         assert result == [10.0, 2.5, 3.0]
 
 
+@pytest.mark.unit
 class TestEdgeCases:
     """测试边界情况"""
 

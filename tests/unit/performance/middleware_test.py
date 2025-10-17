@@ -47,9 +47,9 @@ class TestPerformanceMonitoringMiddleware:
                 return PerformanceMonitoringMiddleware(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate PerformanceMonitoringMiddleware")
+                pytest.skip("Cannot instantiate PerformanceMonitoringMiddleware")
         except Exception:
-            pytest.skip(f"Error creating PerformanceMonitoringMiddleware instance")
+            pytest.skip("Error creating PerformanceMonitoringMiddleware instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -121,9 +121,9 @@ class TestDatabasePerformanceMiddleware:
                 return DatabasePerformanceMiddleware(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate DatabasePerformanceMiddleware")
+                pytest.skip("Cannot instantiate DatabasePerformanceMiddleware")
         except Exception:
-            pytest.skip(f"Error creating DatabasePerformanceMiddleware instance")
+            pytest.skip("Error creating DatabasePerformanceMiddleware instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -185,9 +185,9 @@ class TestCachePerformanceMiddleware:
                 return CachePerformanceMiddleware(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate CachePerformanceMiddleware")
+                pytest.skip("Cannot instantiate CachePerformanceMiddleware")
         except Exception:
-            pytest.skip(f"Error creating CachePerformanceMiddleware instance")
+            pytest.skip("Error creating CachePerformanceMiddleware instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -289,9 +289,9 @@ class TestBackgroundTaskPerformanceMonitor:
                 return BackgroundTaskPerformanceMonitor(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate BackgroundTaskPerformanceMonitor")
+                pytest.skip("Cannot instantiate BackgroundTaskPerformanceMonitor")
         except Exception:
-            pytest.skip(f"Error creating BackgroundTaskPerformanceMonitor instance")
+            pytest.skip("Error creating BackgroundTaskPerformanceMonitor instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""

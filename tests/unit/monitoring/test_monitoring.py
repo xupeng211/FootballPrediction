@@ -6,16 +6,14 @@ import pytest
 from unittest.mock import MagicMock, patch, AsyncMock
 from datetime import datetime
 
+
 # 模拟监控服务
 class MockHealthChecker:
     """健康检查服务"""
+
     def __init__(self):
         self.status = "healthy"
-        self.services = {
-            "database": "healthy",
-            "redis": "healthy",
-            "kafka": "healthy"
-        }
+        self.services = {"database": "healthy", "redis": "healthy", "kafka": "healthy"}
 
     async def check_health(self):
         """检查系统健康状态"""
@@ -23,17 +21,14 @@ class MockHealthChecker:
         return {
             "status": "healthy" if all_healthy else "unhealthy",
             "services": self.services,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
     async def check_database_health(self):
         """检查数据库健康"""
         return {
             "database": self.services["database"],
-            "connection_pool": {
-                "active": 5,
-                "max": 10
-            }
+            "connection_pool": {"active": 5, "max": 10},
         }
 
 
@@ -65,6 +60,7 @@ class TestMonitoring:
 
     def test_metrics_collection(self):
         """测试指标收集"""
+
         # 模拟指标收集器
         class MetricsCollector:
             def __init__(self):
@@ -88,6 +84,7 @@ class TestMonitoring:
     @pytest.mark.asyncio
     async def test_alert_system(self):
         """测试告警系统"""
+
         # 模拟告警服务
         class AlertService:
             def __init__(self):
@@ -104,7 +101,7 @@ class TestMonitoring:
                 alert = {
                     "type": alert_type,
                     "message": message,
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now().isoformat(),
                 }
                 self.alerts.append(alert)
 

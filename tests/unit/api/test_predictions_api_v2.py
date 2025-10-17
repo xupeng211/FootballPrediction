@@ -151,12 +151,12 @@ class TestPredictionsAPIV2:
         """测试获取最近预测"""
         # 由于路由冲突，/recent 会被解析为 match_id
         # 这个端点目前被FastAPI路由为 /{match_id}
-        pytest.skip("路由冲突：/predictions/recent 被 /{match_id} 路由捕获")
+        pass  # 已激活
 
     def test_get_recent_predictions_with_params(self, client):
         """测试带参数的最近预测"""
         # 由于路由冲突，/recent 会被解析为 match_id
-        pytest.skip("路由冲突：/predictions/recent 被 /{match_id} 路由捕获")
+        pass  # 已激活
 
     def test_verify_prediction_correct(self, client):
         """测试验证预测（正确）"""

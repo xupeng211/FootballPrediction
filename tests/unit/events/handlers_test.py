@@ -47,9 +47,9 @@ class TestMetricsEventHandler:
                 return MetricsEventHandler(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate MetricsEventHandler")
+                pytest.skip("Cannot instantiate MetricsEventHandler")
         except Exception:
-            pytest.skip(f"Error creating MetricsEventHandler instance")
+            pytest.skip("Error creating MetricsEventHandler instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -121,9 +121,9 @@ class TestLoggingEventHandler:
                 return LoggingEventHandler(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate LoggingEventHandler")
+                pytest.skip("Cannot instantiate LoggingEventHandler")
         except Exception:
-            pytest.skip(f"Error creating LoggingEventHandler instance")
+            pytest.skip("Error creating LoggingEventHandler instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -185,9 +185,9 @@ class TestCacheInvalidationHandler:
                 return CacheInvalidationHandler(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate CacheInvalidationHandler")
+                pytest.skip("Cannot instantiate CacheInvalidationHandler")
         except Exception:
-            pytest.skip(f"Error creating CacheInvalidationHandler instance")
+            pytest.skip("Error creating CacheInvalidationHandler instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -249,9 +249,9 @@ class TestNotificationEventHandler:
                 return NotificationEventHandler(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate NotificationEventHandler")
+                pytest.skip("Cannot instantiate NotificationEventHandler")
         except Exception:
-            pytest.skip(f"Error creating NotificationEventHandler instance")
+            pytest.skip("Error creating NotificationEventHandler instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -313,9 +313,9 @@ class TestAnalyticsEventHandler:
                 return AnalyticsEventHandler(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate AnalyticsEventHandler")
+                pytest.skip("Cannot instantiate AnalyticsEventHandler")
         except Exception:
-            pytest.skip(f"Error creating AnalyticsEventHandler instance")
+            pytest.skip("Error creating AnalyticsEventHandler instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -387,9 +387,9 @@ class TestAlertEventHandler:
                 return AlertEventHandler(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate AlertEventHandler")
+                pytest.skip("Cannot instantiate AlertEventHandler")
         except Exception:
-            pytest.skip(f"Error creating AlertEventHandler instance")
+            pytest.skip("Error creating AlertEventHandler instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""

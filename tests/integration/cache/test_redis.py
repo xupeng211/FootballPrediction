@@ -349,11 +349,11 @@ class TestRedisIntegration:
         # 前5个请求应该通过
         for i in range(5):
             allowed = await is_allowed(user_id, limit, window)
-            assert allowed == True, f"Request {i + 1} should be allowed"
+            assert allowed is True, f"Request {i + 1} should be allowed"
 
         # 第6个请求应该被拒绝
         allowed = await is_allowed(user_id, limit, window)
-        assert allowed == False
+        assert allowed is False
 
     @pytest.mark.asyncio
     async def test_distributed_lock(self, test_redis):
@@ -383,20 +383,20 @@ class TestRedisIntegration:
 
         # 获取锁
         acquired = await acquire_lock(lock_key, lock_value, lock_ttl)
-        assert acquired == True
+        assert acquired is True
 
         # 尝试再次获取锁（应该失败）
         lock_value2 = str(uuid.uuid4())
         acquired2 = await acquire_lock(lock_key, lock_value2, lock_ttl)
-        assert acquired2 == False
+        assert acquired2 is False
 
         # 释放锁
         released = await release_lock(lock_key, lock_value)
-        assert released == True
+        assert released is True
 
         # 现在应该可以获取锁
         acquired3 = await acquire_lock(lock_key, lock_value2, lock_ttl)
-        assert acquired3 == True
+        assert acquired3 is True
 
     @pytest.mark.asyncio
     async def test_pub_sub(self, test_redis):
@@ -457,9 +457,9 @@ class TestRedisIntegration:
         results = await pipe.execute()
 
         # 验证结果
-        assert results[0] == True  # SET result
-        assert results[1] == True
-        assert results[2] == True
+        assert results[0] is True  # SET result
+        assert results[1] is True
+        assert results[2] is True
         assert results[3] == "value1"  # GET result
         assert results[4] == "value2"
         assert results[5] == "value3"
@@ -489,6 +489,6 @@ class TestRedisIntegration:
             await test_redis.delete(key)
 
         # 验证清理后的内存（可能不会立即释放）
-        keys_after = await test_redis.dbsize()
+        await test_redis.dbsize()
         initial_keys = await test_redis.keys("*")
-        assert f"large_data:" not in str(initial_keys)
+        assert "large_data:" not in str(initial_keys)

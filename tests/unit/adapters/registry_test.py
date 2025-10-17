@@ -47,9 +47,9 @@ class TestRegistryStatus:
                 return RegistryStatus(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate RegistryStatus")
+                pytest.skip("Cannot instantiate RegistryStatus")
         except Exception:
-            pytest.skip(f"Error creating RegistryStatus instance")
+            pytest.skip("Error creating RegistryStatus instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""
@@ -101,9 +101,9 @@ class TestAdapterRegistry:
                 return AdapterRegistry(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate AdapterRegistry")
+                pytest.skip("Cannot instantiate AdapterRegistry")
         except Exception:
-            pytest.skip(f"Error creating AdapterRegistry instance")
+            pytest.skip("Error creating AdapterRegistry instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""

@@ -26,7 +26,7 @@ class TestRepositoryEndpoints:
         response = client.get("/api/v1/repositories/predictions")
 
         if response.status_code == 404:
-            pytest.skip("获取预测列表端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -39,7 +39,7 @@ class TestRepositoryEndpoints:
         response = client.get(f"/api/v1/repositories/predictions/{prediction_id}")
 
         if response.status_code == 404:
-            pytest.skip("获取单个预测端点未实现")
+            pass  # 已激活
 
         assert response.status_code in [200, 404]
 
@@ -56,7 +56,7 @@ class TestRepositoryEndpoints:
         )
 
         if response.status_code == 404:
-            pytest.skip("获取用户预测统计端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -71,7 +71,7 @@ class TestRepositoryEndpoints:
         )
 
         if response.status_code == 404:
-            pytest.skip("获取比赛预测统计端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -101,7 +101,7 @@ class TestRepositoryEndpoints:
         response = client.post("/api/v1/repositories/predictions", json=prediction_data)
 
         if response.status_code == 404:
-            pytest.skip("创建预测端点未实现")
+            pass  # 已激活
 
         assert response.status_code in [200, 201]
         data = response.json()
@@ -130,7 +130,7 @@ class TestRepositoryEndpoints:
         )
 
         if response.status_code == 404:
-            pytest.skip("更新预测端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -141,7 +141,7 @@ class TestRepositoryEndpoints:
         response = client.get("/api/v1/repositories/users")
 
         if response.status_code == 404:
-            pytest.skip("获取用户列表端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -154,7 +154,7 @@ class TestRepositoryEndpoints:
         response = client.get(f"/api/v1/repositories/users/{user_id}")
 
         if response.status_code == 404:
-            pytest.skip("获取用户详情端点未实现")
+            pass  # 已激活
 
         assert response.status_code in [200, 404]
 
@@ -169,7 +169,7 @@ class TestRepositoryEndpoints:
         response = client.get(f"/api/v1/repositories/users/{user_id}/statistics")
 
         if response.status_code == 404:
-            pytest.skip("获取用户统计端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -182,7 +182,7 @@ class TestRepositoryEndpoints:
         response = client.get("/api/v1/repositories/users/search", params=params)
 
         if response.status_code == 404:
-            pytest.skip("搜索用户端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -193,7 +193,7 @@ class TestRepositoryEndpoints:
         response = client.get("/api/v1/repositories/users/active")
 
         if response.status_code == 404:
-            pytest.skip("获取活跃用户端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -217,7 +217,7 @@ class TestRepositoryEndpoints:
         response = client.post("/api/v1/repositories/users", json=user_data)
 
         if response.status_code == 404:
-            pytest.skip("创建用户端点未实现")
+            pass  # 已激活
 
         assert response.status_code in [200, 201]
         data = response.json()
@@ -228,7 +228,7 @@ class TestRepositoryEndpoints:
         response = client.get("/api/v1/repositories/matches")
 
         if response.status_code == 404:
-            pytest.skip("获取比赛列表端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -239,7 +239,7 @@ class TestRepositoryEndpoints:
         response = client.get("/api/v1/repositories/matches/upcoming")
 
         if response.status_code == 404:
-            pytest.skip("获取即将到来的比赛端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -250,7 +250,7 @@ class TestRepositoryEndpoints:
         response = client.get("/api/v1/repositories/matches/live")
 
         if response.status_code == 404:
-            pytest.skip("获取正在进行的比赛端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -263,7 +263,7 @@ class TestRepositoryEndpoints:
         response = client.get(f"/api/v1/repositories/matches/{match_id}")
 
         if response.status_code == 404:
-            pytest.skip("获取比赛详情端点未实现")
+            pass  # 已激活
 
         assert response.status_code in [200, 404]
 
@@ -278,7 +278,7 @@ class TestRepositoryEndpoints:
         response = client.get(f"/api/v1/repositories/matches/{match_id}/statistics")
 
         if response.status_code == 404:
-            pytest.skip("获取比赛统计端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -291,7 +291,7 @@ class TestRepositoryEndpoints:
         response = client.get("/api/v1/repositories/matches/search", params=params)
 
         if response.status_code == 404:
-            pytest.skip("搜索比赛端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -304,7 +304,7 @@ class TestRepositoryEndpoints:
         response = client.get("/api/v1/repositories/matches/date-range", params=params)
 
         if response.status_code == 404:
-            pytest.skip("获取日期范围比赛端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -319,7 +319,7 @@ class TestRepositoryEndpoints:
         response = client.post(f"/api/v1/repositories/matches/{match_id}/start")
 
         if response.status_code == 404:
-            pytest.skip("开始比赛端点未实现")
+            pass  # 已激活
 
         assert response.status_code in [200, 202]
         data = response.json()
@@ -342,7 +342,7 @@ class TestRepositoryEndpoints:
         )
 
         if response.status_code == 404:
-            pytest.skip("结束比赛端点未实现")
+            pass  # 已激活
 
         assert response.status_code in [200, 202]
         data = response.json()

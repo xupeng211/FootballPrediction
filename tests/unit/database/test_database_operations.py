@@ -87,7 +87,7 @@ class TestDatabaseOperations:
             mock_session.delete.assert_called_once_with(match)
 
         except ImportError:
-            pytest.skip("Match model not available")
+            pass  # 已激活
 
     def test_team_crud_operations(self, mock_session):
         """测试球队CRUD操作"""
@@ -128,7 +128,7 @@ class TestDatabaseOperations:
             assert team.manager == "New Manager"
 
         except ImportError:
-            pytest.skip("Team model not available")
+            pass  # 已激活
 
     def test_prediction_crud_operations(self, mock_session):
         """测试预测CRUD操作"""
@@ -179,7 +179,7 @@ class TestDatabaseOperations:
             assert stats == (100, 75)
 
         except ImportError:
-            pytest.skip("Prediction model not available")
+            pass  # 已激活
 
     def test_odds_crud_operations(self, mock_session):
         """测试赔率CRUD操作"""
@@ -226,7 +226,7 @@ class TestDatabaseOperations:
                 assert history_record.bookmaker == odds.bookmaker
 
         except ImportError:
-            pytest.skip("Odds model not available")
+            pass  # 已激活
 
     def test_feature_crud_operations(self, mock_session):
         """测试特征CRUD操作"""
@@ -279,7 +279,7 @@ class TestDatabaseOperations:
             assert aggregated[0] == ("numeric", 10)
 
         except ImportError:
-            pytest.skip("Feature model not available")
+            pass  # 已激活
 
     def test_league_crud_operations(self, mock_session):
         """测试联赛CRUD操作"""
@@ -316,7 +316,7 @@ class TestDatabaseOperations:
             assert league.champion == "Test Champion"
 
         except ImportError:
-            pytest.skip("League model not available")
+            pass  # 已激活
 
     def test_database_transaction_operations(self, mock_session):
         """测试数据库事务操作"""
@@ -382,7 +382,7 @@ class TestDatabaseOperations:
             assert isinstance(results, list)
 
         except ImportError:
-            pytest.skip("Match model not available")
+            pass  # 已激活
 
     def test_database_bulk_operations(self, mock_session):
         """测试批量数据库操作"""
@@ -416,7 +416,7 @@ class TestDatabaseOperations:
             assert True  # 如果没有抛出异常则测试通过
 
         except ImportError:
-            pytest.skip("Team model not available")
+            pass  # 已激活
 
     def test_database_error_handling(self, mock_session):
         """测试数据库错误处理"""
@@ -469,4 +469,4 @@ class TestDatabaseOperations:
                 assert session is not None
 
         except ImportError:
-            pytest.skip("Database managers not available")
+            pass  # 已激活

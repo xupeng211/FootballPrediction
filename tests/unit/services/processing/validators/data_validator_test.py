@@ -47,9 +47,9 @@ class TestDataValidator:
                 return DataValidator(test_param="test_value")
             except:
                 # Skip if instantiation fails
-                pytest.skip(f"Cannot instantiate DataValidator")
+                pytest.skip("Cannot instantiate DataValidator")
         except Exception:
-            pytest.skip(f"Error creating DataValidator instance")
+            pytest.skip("Error creating DataValidator instance")
 
     def test_class_exists(self):
         """Test class exists and is callable"""

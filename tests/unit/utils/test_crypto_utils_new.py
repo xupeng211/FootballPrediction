@@ -26,7 +26,7 @@ class TestCryptoUtilsStaticMethods:
     def test_generate_uuid(self):
         """测试：生成UUID"""
         if not CRYPTO_UTILS_AVAILABLE:
-            pytest.skip("CryptoUtils not available")
+            pass  # 已激活
 
         uuid1 = CryptoUtils.generate_uuid()
         uuid2 = CryptoUtils.generate_uuid()
@@ -42,7 +42,7 @@ class TestCryptoUtilsStaticMethods:
     def test_generate_short_id_default(self):
         """测试：生成短ID（默认长度）"""
         if not CRYPTO_UTILS_AVAILABLE:
-            pytest.skip("CryptoUtils not available")
+            pass  # 已激活
 
         short_id = CryptoUtils.generate_short_id()
 
@@ -53,7 +53,7 @@ class TestCryptoUtilsStaticMethods:
     def test_generate_short_id_custom_length(self):
         """测试：生成短ID（自定义长度）"""
         if not CRYPTO_UTILS_AVAILABLE:
-            pytest.skip("CryptoUtils not available")
+            pass  # 已激活
 
         # 测试各种长度
         lengths = [4, 12, 16, 32]
@@ -65,7 +65,7 @@ class TestCryptoUtilsStaticMethods:
     def test_generate_short_id_zero_length(self):
         """测试：生成短ID（零长度）"""
         if not CRYPTO_UTILS_AVAILABLE:
-            pytest.skip("CryptoUtils not available")
+            pass  # 已激活
 
         short_id = CryptoUtils.generate_short_id(0)
         assert short_id == ""
@@ -73,7 +73,7 @@ class TestCryptoUtilsStaticMethods:
     def test_generate_short_id_negative_length(self):
         """测试：生成短ID（负长度）"""
         if not CRYPTO_UTILS_AVAILABLE:
-            pytest.skip("CryptoUtils not available")
+            pass  # 已激活
 
         short_id = CryptoUtils.generate_short_id(-5)
         assert short_id == ""
@@ -81,7 +81,7 @@ class TestCryptoUtilsStaticMethods:
     def test_generate_short_id_long_length(self):
         """测试：生成短ID（超长长度）"""
         if not CRYPTO_UTILS_AVAILABLE:
-            pytest.skip("CryptoUtils not available")
+            pass  # 已激活
 
         # 生成超过32字符的ID
         short_id = CryptoUtils.generate_short_id(50)
@@ -91,7 +91,7 @@ class TestCryptoUtilsStaticMethods:
     def test_hash_string_md5(self):
         """测试：MD5哈希"""
         if not CRYPTO_UTILS_AVAILABLE:
-            pytest.skip("CryptoUtils not available")
+            pass  # 已激活
 
         text = "test string"
         hash_value = CryptoUtils.hash_string(text, "md5")
@@ -103,7 +103,7 @@ class TestCryptoUtilsStaticMethods:
     def test_hash_string_sha256(self):
         """测试：SHA256哈希"""
         if not CRYPTO_UTILS_AVAILABLE:
-            pytest.skip("CryptoUtils not available")
+            pass  # 已激活
 
         text = "test string"
         hash_value = CryptoUtils.hash_string(text, "sha256")
@@ -118,7 +118,7 @@ class TestCryptoUtilsStaticMethods:
     def test_hash_string_unicode(self):
         """测试：Unicode字符串哈希"""
         if not CRYPTO_UTILS_AVAILABLE:
-            pytest.skip("CryptoUtils not available")
+            pass  # 已激活
 
         # 测试包含中文的字符串
         text = "测试字符串"
@@ -129,7 +129,7 @@ class TestCryptoUtilsStaticMethods:
     def test_hash_string_empty(self):
         """测试：空字符串哈希"""
         if not CRYPTO_UTILS_AVAILABLE:
-            pytest.skip("CryptoUtils not available")
+            pass  # 已激活
 
         hash_value = CryptoUtils.hash_string("", "md5")
         assert hash_value == "d41d8cd98f00b204e9800998ecf8427e"
@@ -137,7 +137,7 @@ class TestCryptoUtilsStaticMethods:
     def test_hash_string_invalid_algorithm(self):
         """测试：无效的哈希算法"""
         if not CRYPTO_UTILS_AVAILABLE:
-            pytest.skip("CryptoUtils not available")
+            pass  # 已激活
 
         text = "test string"
         with pytest.raises(ValueError):

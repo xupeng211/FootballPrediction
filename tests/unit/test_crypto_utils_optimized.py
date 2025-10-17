@@ -5,6 +5,7 @@
 import pytest
 from src.utils.crypto_utils import CryptoUtils, HAS_BCRYPT
 
+
 class TestBasicCryptoOperations:
     """基础加密操作测试"""
 
@@ -16,7 +17,7 @@ class TestBasicCryptoOperations:
         assert isinstance(uuid1, str)
         assert len(uuid1) == 36
         assert uuid1 != uuid2
-        assert uuid1.count('-') == 4
+        assert uuid1.count("-") == 4
 
     def test_hash_string_basic(self):
         """测试基础字符串哈希"""
@@ -66,6 +67,7 @@ class TestBasicCryptoOperations:
 
         # 验证密码
         assert CryptoUtils.verify_password(password, hashed)
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

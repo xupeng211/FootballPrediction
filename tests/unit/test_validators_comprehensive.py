@@ -14,6 +14,7 @@ from src.utils.validators import (
 )
 
 
+@pytest.mark.unit
 class TestEmailValidation:
     """测试邮箱验证功能"""
 
@@ -72,6 +73,7 @@ class TestEmailValidation:
             print(f"Unicode email {email}: {result}")
 
 
+@pytest.mark.unit
 class TestPhoneValidation:
     """测试电话号码验证"""
 
@@ -126,6 +128,7 @@ class TestPhoneValidation:
             assert is_valid_phone(phone) == expected
 
 
+@pytest.mark.unit
 class TestUrlValidation:
     """测试URL验证"""
 
@@ -174,6 +177,7 @@ class TestUrlValidation:
         assert is_valid_url(url)
 
 
+@pytest.mark.unit
 class TestRequiredFieldsValidation:
     """测试必填字段验证"""
 
@@ -236,6 +240,7 @@ class TestRequiredFieldsValidation:
         assert set(missing) == {"name", "email"}
 
 
+@pytest.mark.unit
 class TestDataTypesValidation:
     """测试数据类型验证"""
 
@@ -319,6 +324,7 @@ class TestDataTypesValidation:
         assert errors == [], "Numeric types should match"
 
 
+@pytest.mark.unit
 class TestEdgeCases:
     """测试边界情况"""
 
@@ -346,7 +352,7 @@ class TestEdgeCases:
         long_email = "a" * 100 + "@example.com"
         assert not is_valid_email(long_email), "Very long email should be invalid"
 
-        long_url = "https://" + "a" * 2000 + ".com"
+        "https://" + "a" * 2000 + ".com"
         # URL长度限制取决于正则表达式实现
 
     def test_special_characters(self):

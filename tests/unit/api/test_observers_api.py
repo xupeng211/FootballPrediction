@@ -26,7 +26,7 @@ class TestObserverEndpoints:
         response = client.get("/api/v1/observers/status")
 
         if response.status_code == 404:
-            pytest.skip("观察者状态端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -37,7 +37,7 @@ class TestObserverEndpoints:
         response = client.get("/api/v1/observers/metrics")
 
         if response.status_code == 404:
-            pytest.skip("获取所有指标端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -48,7 +48,7 @@ class TestObserverEndpoints:
         response = client.get("/api/v1/observers/observers")
 
         if response.status_code == 404:
-            pytest.skip("获取观察者端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -59,7 +59,7 @@ class TestObserverEndpoints:
         response = client.get("/api/v1/observers/subjects")
 
         if response.status_code == 404:
-            pytest.skip("获取被观察者端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -70,7 +70,7 @@ class TestObserverEndpoints:
         response = client.get("/api/v1/observers/alerts")
 
         if response.status_code == 404:
-            pytest.skip("获取告警历史端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -96,7 +96,7 @@ class TestObserverEndpoints:
         response = client.post("/api/v1/observers/alerts", json=alert_data)
 
         if response.status_code == 404:
-            pytest.skip("创建告警端点未实现")
+            pass  # 已激活
 
         assert response.status_code in [200, 201]
         data = response.json()
@@ -107,7 +107,7 @@ class TestObserverEndpoints:
         response = client.get("/api/v1/observers/alerts/rules")
 
         if response.status_code == 404:
-            pytest.skip("获取告警规则端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -128,7 +128,7 @@ class TestObserverEndpoints:
         response = client.post("/api/v1/observers/metrics/update", json=metric_data)
 
         if response.status_code == 404:
-            pytest.skip("更新指标端点未实现")
+            pass  # 已激活
 
         assert response.status_code in [200, 202]
         data = response.json()
@@ -139,7 +139,7 @@ class TestObserverEndpoints:
         response = client.get("/api/v1/observers/predictions")
 
         if response.status_code == 404:
-            pytest.skip("获取预测统计端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -164,7 +164,7 @@ class TestObserverEndpoints:
         )
 
         if response.status_code == 404:
-            pytest.skip("记录预测事件端点未实现")
+            pass  # 已激活
 
         assert response.status_code in [200, 201]
         data = response.json()
@@ -175,7 +175,7 @@ class TestObserverEndpoints:
         response = client.get("/api/v1/observers/cache")
 
         if response.status_code == 404:
-            pytest.skip("获取缓存统计端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -195,7 +195,7 @@ class TestObserverEndpoints:
         response = client.post("/api/v1/observers/cache/hit", json=cache_data)
 
         if response.status_code == 404:
-            pytest.skip("记录缓存命中端点未实现")
+            pass  # 已激活
 
         assert response.status_code in [200, 202]
         data = response.json()
@@ -215,7 +215,7 @@ class TestObserverEndpoints:
         response = client.post("/api/v1/observers/cache/miss", json=cache_data)
 
         if response.status_code == 404:
-            pytest.skip("记录缓存未命中端点未实现")
+            pass  # 已激活
 
         assert response.status_code in [200, 202]
         data = response.json()
@@ -226,7 +226,7 @@ class TestObserverEndpoints:
         response = client.get("/api/v1/observers/performance")
 
         if response.status_code == 404:
-            pytest.skip("获取性能指标端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -245,7 +245,7 @@ class TestObserverEndpoints:
         response = client.post("/api/v1/observers/system/collect")
 
         if response.status_code == 404:
-            pytest.skip("收集系统指标端点未实现")
+            pass  # 已激活
 
         assert response.status_code in [200, 202]
         data = response.json()
@@ -263,7 +263,7 @@ class TestObserverEndpoints:
         response = client.post("/api/v1/observers/system/check")
 
         if response.status_code == 404:
-            pytest.skip("性能检查端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -274,7 +274,7 @@ class TestObserverEndpoints:
         response = client.get("/api/v1/observers/event-types")
 
         if response.status_code == 404:
-            pytest.skip("获取事件类型端点未实现")
+            pass  # 已激活
 
         assert response.status_code == 200
         data = response.json()
@@ -289,7 +289,7 @@ class TestObserverEndpoints:
         response = client.post(f"/api/v1/observers/observer/{observer_name}/enable")
 
         if response.status_code == 404:
-            pytest.skip("启用观察者端点未实现")
+            pass  # 已激活
 
         assert response.status_code in [200, 202]
         data = response.json()
@@ -304,7 +304,7 @@ class TestObserverEndpoints:
         response = client.post(f"/api/v1/observers/observer/{observer_name}/disable")
 
         if response.status_code == 404:
-            pytest.skip("禁用观察者端点未实现")
+            pass  # 已激活
 
         assert response.status_code in [200, 202]
         data = response.json()
@@ -321,7 +321,7 @@ class TestObserverEndpoints:
         )
 
         if response.status_code == 404:
-            pytest.skip("清空事件历史端点未实现")
+            pass  # 已激活
 
         assert response.status_code in [200, 202]
         data = response.json()

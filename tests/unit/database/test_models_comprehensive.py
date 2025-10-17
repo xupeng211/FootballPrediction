@@ -84,7 +84,7 @@ class TestUserModel:
     def test_user_creation(self):
         """测试用户创建"""
         if User is Mock:
-            pytest.skip("User model not available")
+            pass  # 已激活
 
         user_data = {
             "id": 1,
@@ -106,7 +106,7 @@ class TestUserModel:
     def test_user_validation(self):
         """测试用户验证"""
         if User is Mock:
-            pytest.skip("User model not available")
+            pass  # 已激活
 
         # 测试必填字段
         with pytest.raises(Exception):
@@ -116,7 +116,7 @@ class TestUserModel:
     def test_user_relationships(self):
         """测试用户关系"""
         if User is Mock:
-            pytest.skip("User model not available")
+            pass  # 已激活
 
         user = User()
 
@@ -126,7 +126,7 @@ class TestUserModel:
     def test_user_password_hashing(self):
         """测试密码哈希"""
         if User is Mock:
-            pytest.skip("User model not available")
+            pass  # 已激活
 
         user = User()
         password = "plain_password"
@@ -142,7 +142,7 @@ class TestUserModel:
     def test_user_check_password(self):
         """测试密码验证"""
         if User is Mock:
-            pytest.skip("User model not available")
+            pass  # 已激活
 
         user = User()
         user.password_hash = "hashed_password"
@@ -161,7 +161,7 @@ class TestTeamModel:
     def test_team_creation(self):
         """测试球队创建"""
         if Team is Mock:
-            pytest.skip("Team model not available")
+            pass  # 已激活
 
         team_data = {
             "id": 1,
@@ -183,7 +183,7 @@ class TestTeamModel:
     def test_team_validation(self):
         """测试球队验证"""
         if Team is Mock:
-            pytest.skip("Team model not available")
+            pass  # 已激活
 
         # 测试唯一名称约束
         Team(name="Team A", code="TA")
@@ -194,7 +194,7 @@ class TestTeamModel:
     def test_team_relationships(self):
         """测试球队关系"""
         if Team is Mock:
-            pytest.skip("Team model not available")
+            pass  # 已激活
 
         team = Team()
 
@@ -205,7 +205,7 @@ class TestTeamModel:
     def test_team_statistics(self):
         """测试球队统计"""
         if Team is Mock:
-            pytest.skip("Team model not available")
+            pass  # 已激活
 
         team = Team()
 
@@ -219,7 +219,7 @@ class TestTeamModel:
     def test_team_update_info(self):
         """测试球队信息更新"""
         if Team is Mock:
-            pytest.skip("Team model not available")
+            pass  # 已激活
 
         team = Team(name="Old Name")
 
@@ -236,7 +236,7 @@ class TestMatchModel:
     def test_match_creation(self):
         """测试比赛创建"""
         if Match is Mock:
-            pytest.skip("Match model not available")
+            pass  # 已激活
 
         match_data = {
             "id": 1,
@@ -260,7 +260,7 @@ class TestMatchModel:
     def test_match_validation(self):
         """测试比赛验证"""
         if Match is Mock:
-            pytest.skip("Match model not available")
+            pass  # 已激活
 
         # 测试日期验证
         with pytest.raises(Exception):
@@ -270,7 +270,7 @@ class TestMatchModel:
     def test_match_relationships(self):
         """测试比赛关系"""
         if Match is Mock:
-            pytest.skip("Match model not available")
+            pass  # 已激活
 
         match = Match()
 
@@ -283,7 +283,7 @@ class TestMatchModel:
     def test_match_update_score(self):
         """测试更新比分"""
         if Match is Mock:
-            pytest.skip("Match model not available")
+            pass  # 已激活
 
         match = Match(home_score=0, away_score=0)
 
@@ -296,7 +296,7 @@ class TestMatchModel:
     def test_match_status_transitions(self):
         """测试比赛状态转换"""
         if Match is Mock:
-            pytest.skip("Match model not available")
+            pass  # 已激活
 
         match = Match(status="upcoming")
 
@@ -310,7 +310,7 @@ class TestMatchModel:
     def test_match_duration(self):
         """测试比赛时长计算"""
         if Match is Mock:
-            pytest.skip("Match model not available")
+            pass  # 已激活
 
         start_time = datetime.now() - timedelta(hours=2)
         end_time = datetime.now()
@@ -330,7 +330,7 @@ class TestLeagueModel:
     def test_league_creation(self):
         """测试联赛创建"""
         if League is Mock:
-            pytest.skip("League model not available")
+            pass  # 已激活
 
         league_data = {
             "id": 1,
@@ -350,7 +350,7 @@ class TestLeagueModel:
     def test_league_validation(self):
         """测试联赛验证"""
         if League is Mock:
-            pytest.skip("League model not available")
+            pass  # 已激活
 
         # 测试赛季格式
         league = League(season="2023/2024")
@@ -359,7 +359,7 @@ class TestLeagueModel:
     def test_league_relationships(self):
         """测试联赛关系"""
         if League is Mock:
-            pytest.skip("League model not available")
+            pass  # 已激活
 
         league = League()
 
@@ -370,7 +370,7 @@ class TestLeagueModel:
     def test_league_standings(self):
         """测试联赛积分榜"""
         if League is Mock:
-            pytest.skip("League model not available")
+            pass  # 已激活
 
         league = League()
 
@@ -387,7 +387,7 @@ class TestLeagueModel:
     def test_league_active_season(self):
         """测试当前赛季"""
         if League is Mock:
-            pytest.skip("League model not available")
+            pass  # 已激活
 
         today = date.today()
         league = League(
@@ -406,7 +406,7 @@ class TestPredictionModel:
     def test_prediction_creation(self):
         """测试预测创建"""
         if Prediction is Mock:
-            pytest.skip("Prediction model not available")
+            pass  # 已激活
 
         prediction_data = {
             "id": 1,
@@ -429,7 +429,7 @@ class TestPredictionModel:
     def test_prediction_validation(self):
         """测试预测验证"""
         if Prediction is Mock:
-            pytest.skip("Prediction model not available")
+            pass  # 已激活
 
         # 测试置信度范围
         prediction = Prediction(confidence=0.85)
@@ -438,7 +438,7 @@ class TestPredictionModel:
     def test_prediction_relationships(self):
         """测试预测关系"""
         if Prediction is Mock:
-            pytest.skip("Prediction model not available")
+            pass  # 已激活
 
         prediction = Prediction()
 
@@ -449,7 +449,7 @@ class TestPredictionModel:
     def test_prediction_accuracy(self):
         """测试预测准确性"""
         if Prediction is Mock:
-            pytest.skip("Prediction model not available")
+            pass  # 已激活
 
         prediction = Prediction(predicted_home_score=2, predicted_away_score=1)
 
@@ -462,7 +462,7 @@ class TestPredictionModel:
     def test_prediction_outcome(self):
         """测试预测结果"""
         if Prediction is Mock:
-            pytest.skip("Prediction model not available")
+            pass  # 已激活
 
         prediction = Prediction(predicted_home_score=2, predicted_away_score=1)
 
@@ -479,7 +479,7 @@ class TestOddsModel:
     def test_odds_creation(self):
         """测试赔率创建"""
         if Odds is Mock:
-            pytest.skip("Odds model not available")
+            pass  # 已激活
 
         odds_data = {
             "id": 1,
@@ -501,7 +501,7 @@ class TestOddsModel:
     def test_odds_validation(self):
         """测试赔率验证"""
         if Odds is Mock:
-            pytest.skip("Odds model not available")
+            pass  # 已激活
 
         # 测试赔率必须为正数
         odds = Odds(home_win=Decimal("2.50"))
@@ -510,7 +510,7 @@ class TestOddsModel:
     def test_odds_relationships(self):
         """测试赔率关系"""
         if Odds is Mock:
-            pytest.skip("Odds model not available")
+            pass  # 已激活
 
         odds = Odds()
 
@@ -520,7 +520,7 @@ class TestOddsModel:
     def test_odds_implied_probability(self):
         """测试隐含概率计算"""
         if Odds is Mock:
-            pytest.skip("Odds model not available")
+            pass  # 已激活
 
         odds = Odds(
             home_win=Decimal("2.00"), draw=Decimal("3.00"), away_win=Decimal("3.00")
@@ -535,7 +535,7 @@ class TestOddsModel:
     def test_odds_margin(self):
         """测试赔率利润率"""
         if Odds is Mock:
-            pytest.skip("Odds model not available")
+            pass  # 已激活
 
         odds = Odds()
 
@@ -552,7 +552,7 @@ class TestFeaturesModel:
     def test_features_creation(self):
         """测试特征创建"""
         if Features is Mock:
-            pytest.skip("Features model not available")
+            pass  # 已激活
 
         features_data = {
             "id": 1,
@@ -576,7 +576,7 @@ class TestFeaturesModel:
     def test_features_validation(self):
         """测试特征验证"""
         if Features is Mock:
-            pytest.skip("Features model not available")
+            pass  # 已激活
 
         features = Features(feature_data={"valid": "data"})
         assert isinstance(features.feature_data, dict)
@@ -584,7 +584,7 @@ class TestFeaturesModel:
     def test_features_relationships(self):
         """测试特征关系"""
         if Features is Mock:
-            pytest.skip("Features model not available")
+            pass  # 已激活
 
         features = Features()
 
@@ -595,7 +595,7 @@ class TestFeaturesModel:
     def test_features_serialization(self):
         """测试特征序列化"""
         if Features is Mock:
-            pytest.skip("Features model not available")
+            pass  # 已激活
 
         features = Features(feature_data={"key": "value"})
 
@@ -608,7 +608,7 @@ class TestFeaturesModel:
     def test_features_calculation(self):
         """测试特征计算"""
         if Features is Mock:
-            pytest.skip("Features model not available")
+            pass  # 已激活
 
         features = Features()
 
@@ -625,7 +625,7 @@ class TestAuditLogModel:
     def test_audit_log_creation(self):
         """测试审计日志创建"""
         if AuditLog is Mock:
-            pytest.skip("AuditLog model not available")
+            pass  # 已激活
 
         audit_data = {
             "id": 1,
@@ -649,7 +649,7 @@ class TestAuditLogModel:
     def test_audit_log_validation(self):
         """测试审计日志验证"""
         if AuditLog is Mock:
-            pytest.skip("AuditLog model not available")
+            pass  # 已激活
 
         audit_log = AuditLog(action="CREATE", resource_type="prediction")
         assert audit_log.action in ["CREATE", "UPDATE", "DELETE"]
@@ -657,7 +657,7 @@ class TestAuditLogModel:
     def test_audit_log_relationships(self):
         """测试审计日志关系"""
         if AuditLog is Mock:
-            pytest.skip("AuditLog model not available")
+            pass  # 已激活
 
         audit_log = AuditLog()
 
@@ -667,7 +667,7 @@ class TestAuditLogModel:
     def test_audit_log_filtering(self):
         """测试审计日志过滤"""
         if AuditLog is Mock:
-            pytest.skip("AuditLog model not available")
+            pass  # 已激活
 
         # 模拟查询过滤
         with patch("src.database.models.audit_log.AuditLog.query") as mock_query:
@@ -684,7 +684,7 @@ class TestDataQualityLogModel:
     def test_data_quality_log_creation(self):
         """测试数据质量日志创建"""
         if DataQualityLog is Mock:
-            pytest.skip("DataQualityLog model not available")
+            pass  # 已激活
 
         log_data = {
             "id": 1,
@@ -710,7 +710,7 @@ class TestDataQualityLogModel:
     def test_data_quality_validation(self):
         """测试数据质量验证"""
         if DataQualityLog is Mock:
-            pytest.skip("DataQualityLog model not available")
+            pass  # 已激活
 
         log = DataQualityLog(quality_score=0.95)
         assert 0 <= log.quality_score <= 1
@@ -718,7 +718,7 @@ class TestDataQualityLogModel:
     def test_data_quality_issues(self):
         """测试数据质量问题"""
         if DataQualityLog is Mock:
-            pytest.skip("DataQualityLog model not available")
+            pass  # 已激活
 
         issues = [
             {"field": "home_score", "issue": "negative_value"},
@@ -731,7 +731,7 @@ class TestDataQualityLogModel:
     def test_data_quality_improvement(self):
         """测试数据质量改进"""
         if DataQualityLog is Mock:
-            pytest.skip("DataQualityLog model not available")
+            pass  # 已激活
 
         log = DataQualityLog()
 
@@ -748,7 +748,7 @@ class TestDataCollectionLogModel:
     def test_data_collection_log_creation(self):
         """测试数据收集日志创建"""
         if DataCollectionLog is Mock:
-            pytest.skip("DataCollectionLog model not available")
+            pass  # 已激活
 
         log_data = {
             "id": 1,
@@ -771,7 +771,7 @@ class TestDataCollectionLogModel:
     def test_data_collection_status(self):
         """测试数据收集状态"""
         if DataCollectionLog is Mock:
-            pytest.skip("DataCollectionLog model not available")
+            pass  # 已激活
 
         log = DataCollectionLog(status="success")
         assert log.status in ["success", "failed", "partial"]
@@ -779,7 +779,7 @@ class TestDataCollectionLogModel:
     def test_data_collection_metrics(self):
         """测试数据收集指标"""
         if DataCollectionLog is Mock:
-            pytest.skip("DataCollectionLog model not available")
+            pass  # 已激活
 
         log = DataCollectionLog(
             records_collected=100, records_processed=95, duration_ms=1500
@@ -791,7 +791,7 @@ class TestDataCollectionLogModel:
     def test_data_collection_errors(self):
         """测试数据收集错误"""
         if DataCollectionLog is Mock:
-            pytest.skip("DataCollectionLog model not available")
+            pass  # 已激活
 
         errors = [
             {"record_id": 5, "error": "invalid_data"},
@@ -808,7 +808,7 @@ class TestRawDataModel:
     def test_raw_data_creation(self):
         """测试原始数据创建"""
         if RawData is Mock:
-            pytest.skip("RawData model not available")
+            pass  # 已激活
 
         raw_data = {
             "id": 1,
@@ -832,7 +832,7 @@ class TestRawDataModel:
     def test_raw_data_processing(self):
         """测试原始数据处理"""
         if RawData is Mock:
-            pytest.skip("RawData model not available")
+            pass  # 已激活
 
         data = RawData(processed=False)
 
@@ -845,7 +845,7 @@ class TestRawDataModel:
     def test_raw_data_content_validation(self):
         """测试原始数据内容验证"""
         if RawData is Mock:
-            pytest.skip("RawData model not available")
+            pass  # 已激活
 
         content = {"valid": "json", "data": 123}
         data = RawData(raw_content=content)
@@ -855,7 +855,7 @@ class TestRawDataModel:
     def test_raw_data_archiving(self):
         """测试原始数据归档"""
         if RawData is Mock:
-            pytest.skip("RawData model not available")
+            pass  # 已激活
 
         data = RawData()
 
@@ -872,7 +872,7 @@ class TestModelRelationships:
     def test_user_predictions_relationship(self):
         """测试用户-预测关系"""
         if User is Mock or Prediction is Mock:
-            pytest.skip("User or Prediction model not available")
+            pass  # 已激活
 
         user = User(id=1, username="testuser")
         prediction = Prediction(id=1, user_id=1)
@@ -883,7 +883,7 @@ class TestModelRelationships:
     def test_match_teams_relationship(self):
         """测试比赛-球队关系"""
         if Match is Mock or Team is Mock:
-            pytest.skip("Match or Team model not available")
+            pass  # 已激活
 
         match = Match(id=1, home_team_id=1, away_team_id=2)
         home_team = Team(id=1, name="Home Team")
@@ -896,7 +896,7 @@ class TestModelRelationships:
     def test_league_match_relationship(self):
         """测试联赛-比赛关系"""
         if League is Mock or Match is Mock:
-            pytest.skip("League or Match model not available")
+            pass  # 已激活
 
         league = League(id=1, name="Test League")
         match = Match(id=1, league_id=1)
@@ -907,7 +907,7 @@ class TestModelRelationships:
     def test_prediction_odds_relationship(self):
         """测试预测-赔率关系"""
         if Prediction is Mock or Odds is Mock:
-            pytest.skip("Prediction or Odds model not available")
+            pass  # 已激活
 
         prediction = Prediction(id=1, match_id=1)
         odds = Odds(id=1, match_id=1)
@@ -962,7 +962,7 @@ class TestModelQueries:
     def test_complex_queries(self):
         """测试复杂查询"""
         if User is Mock or Match is Mock:
-            pytest.skip("Models not available")
+            pass  # 已激活
 
         # 模拟复杂查询
         with patch("src.database.models.user.User.query") as mock_query:
@@ -980,7 +980,7 @@ class TestModelQueries:
     def test_aggregate_queries(self):
         """测试聚合查询"""
         if Team is Mock:
-            pytest.skip("Team model not available")
+            pass  # 已激活
 
         with patch("src.database.models.team.Team.query") as mock_query:
             mock_query.count.return_value = 20
@@ -991,7 +991,7 @@ class TestModelQueries:
     def test_ordering_and_pagination(self):
         """测试排序和分页"""
         if Match is Mock:
-            pytest.skip("Match model not available")
+            pass  # 已激活
 
         with patch("src.database.models.match.Match.query") as mock_query:
             mock_query.order_by.return_value = mock_query
