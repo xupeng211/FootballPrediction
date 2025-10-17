@@ -18,7 +18,7 @@ def test_crypto_utils():
     import utils.crypto_utils as crypto
 
     # 检查 CryptoUtils 类
-    assert hasattr(crypto, 'CryptoUtils')
+    assert hasattr(crypto, "CryptoUtils")
     CryptoUtils = crypto.CryptoUtils
 
     # 测试密码哈希
@@ -47,7 +47,7 @@ def test_string_utils():
     import utils.string_utils as su
 
     # 检查 StringUtils 类
-    assert hasattr(su, 'StringUtils')
+    assert hasattr(su, "StringUtils")
     StringUtils = su.StringUtils
 
     # 测试截断
@@ -81,19 +81,19 @@ def test_basic_imports():
     """测试基本导入"""
     # 测试所有 utils 模块是否可以导入
     modules = [
-        'utils.string_utils',
-        'utils.crypto_utils',
-        'utils.time_utils',
-        'utils.file_utils',
-        'utils.data_validator',
-        'utils.dict_utils',
-        'utils.helpers',
-        'utils.formatters',
-        'utils.cache_decorators',
-        'utils.cached_operations',
-        'utils.config_loader',
-        'utils.predictions',
-        'utils.warning_filters'
+        "utils.string_utils",
+        "utils.crypto_utils",
+        "utils.time_utils",
+        "utils.file_utils",
+        "utils.data_validator",
+        "utils.dict_utils",
+        "utils.helpers",
+        "utils.formatters",
+        "utils.cache_decorators",
+        "utils.cached_operations",
+        "utils.config_loader",
+        "utils.predictions",
+        "utils.warning_filters",
     ]
 
     imported = []
@@ -193,6 +193,7 @@ def test_error_handling():
 
 def test_type_conversions():
     """测试类型转换"""
+
     # 测试安全的类型转换
     def safe_int(value, default=0):
         try:
@@ -232,6 +233,7 @@ def test_string_operations():
 
     # 测试路径操作
     from pathlib import Path
+
     path = Path("/tmp/test/file.txt")
     assert path.name == "file.txt"
     assert path.suffix == ".txt"
@@ -274,6 +276,7 @@ def test_math_operations():
 
     # 随机数
     import random
+
     num = random.random()
     assert 0 <= num <= 1
 
@@ -293,6 +296,7 @@ def test_logging():
 
     # 测试日志记录（不输出到控制台）
     import io
+
     log_capture = io.StringIO()
     handler = logging.StreamHandler(log_capture)
     logger.addHandler(handler)
@@ -308,6 +312,7 @@ def test_config_loading():
     """测试配置加载"""
     # 测试环境变量
     import os
+
     os.environ["TEST_VAR"] = "test_value"
     assert os.getenv("TEST_VAR") == "test_value"
 
@@ -315,11 +320,7 @@ def test_config_loading():
     del os.environ["TEST_VAR"]
 
     # 测试简单的配置字典
-    config = {
-        "debug": True,
-        "port": 8000,
-        "host": "localhost"
-    }
+    config = {"debug": True, "port": 8000, "host": "localhost"}
 
     assert config["debug"] is True
     assert config["port"] == 8000

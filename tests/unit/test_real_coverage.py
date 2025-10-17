@@ -20,7 +20,7 @@ def test_string_utils_coverage():
             normalize_text,
             validate_email_format,
             generate_slug,
-            truncate_text
+            truncate_text,
         )
 
         # 测试clean_string
@@ -98,17 +98,12 @@ def test_time_utils_coverage():
         assert parsed.day == 15
 
         # 测试计算时间差
-        diff = time_utils.time_diff_hours(
-            "2024-01-15 10:00:00",
-            "2024-01-15 12:00:00"
-        )
+        diff = time_utils.time_diff_hours("2024-01-15 10:00:00", "2024-01-15 12:00:00")
         assert diff == 2
 
         # 测试时区转换
         converted = time_utils.convert_timezone(
-            "2024-01-15 10:00:00",
-            "UTC",
-            "Asia/Shanghai"
+            "2024-01-15 10:00:00", "UTC", "Asia/Shanghai"
         )
         assert converted is not None
 
@@ -160,7 +155,8 @@ def test_file_utils_coverage():
 
         # 测试获取文件大小
         import tempfile
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as tmp:
+
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as tmp:
             tmp.write("test content")
             tmp_path = tmp.name
 
@@ -200,10 +196,7 @@ def test_response_utils_coverage():
 
         # 测试分页响应
         paginated = ResponseUtils.paginated(
-            items=[1, 2, 3],
-            page=1,
-            per_page=10,
-            total=3
+            items=[1, 2, 3], page=1, per_page=10, total=3
         )
         assert paginated["success"] is True
         assert paginated["pagination"]["page"] == 1
@@ -221,7 +214,7 @@ def test_validators_coverage():
             is_valid_phone,
             is_valid_url,
             validate_required_fields,
-            validate_data_types
+            validate_data_types,
         )
 
         # 测试邮箱验证

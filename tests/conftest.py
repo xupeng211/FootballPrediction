@@ -539,3 +539,86 @@ def test_prediction_data():
         "away_win_prob": 0.15,
         "created_at": "2024-01-15T18:00:00Z",
     }
+
+
+@pytest.fixture
+def api_client():
+    """HTTP 客户端 fixture"""
+    from unittest.mock import AsyncMock, Mock
+
+    # 创建 mock 客户端
+    mock_client = AsyncMock()
+    mock_client.get.return_value = Mock()
+    mock_client.post.return_value = Mock()
+
+    # 设置默认响应
+    def setup_response(method):
+        method.return_value.status_code = 200
+        method.return_value.json.return_value = {"status": "success"}
+
+    setup_response(mock_client.get)
+    setup_response(mock_client.post)
+    setup_response(mock_client.put)
+    setup_response(mock_client.delete)
+
+    return mock_client
+
+
+@pytest.fixture
+def performance_metrics():
+    """性能指标收集器 fixture"""
+    from collections import defaultdict
+    import time
+
+    class PerformanceMetrics:
+        def __init__(self):
+            self.timers = {}
+            self.counters = defaultdict(int)
+
+        def start_timer(self, name):
+            self.timers[name] = time.time()
+
+        def end_timer(self, name):
+            if name in self.timers:
+                duration = time.time() - self.timers[name]
+                del self.timers[name]
+                return duration
+            return 0
+
+        def increment(self, name):
+            self.counters[name] += 1
+
+    return PerformanceMetrics()
+
+
+@pytest.fixture
+def test_data_loader():
+    """测试数据加载器 fixture"""
+
+    class TestDataLoader:
+        def create_teams(self):
+            return [
+                {"id": 1, "name": "Team A", "short_name": "TA"},
+                {"id": 2, "name": "Team B", "short_name": "TB"},
+            ]
+
+        def create_matches(self):
+            return [
+                {
+                    "id": 1,
+                    "home_team_id": 1,
+                    "away_team_id": 2,
+                    "match_time": "2024-01-15T20:00:00Z",
+                    "status": "upcoming",
+                }
+            ]
+
+        def create_odds(self, match_id):
+            return {
+                "match_id": match_id,
+                "home_odds": 2.50,
+                "draw_odds": 3.20,
+                "away_odds": 2.80,
+            }
+
+    return TestDataLoader()

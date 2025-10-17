@@ -467,9 +467,9 @@ class TestGetTaskPriority:
 
         for task_name, expected_priority in known_tasks:
             priority = get_task_priority(task_name)
-            assert priority == expected_priority, (
-                f"Task {task_name} should have priority {expected_priority}"
-            )
+            assert (
+                priority == expected_priority
+            ), f"Task {task_name} should have priority {expected_priority}"
 
 
 @pytest.mark.skipif(

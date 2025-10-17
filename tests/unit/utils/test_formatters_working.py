@@ -13,6 +13,7 @@ def test_format_currency():
     # 测试基本功能（如果有）
     try:
         from src.utils.formatters import format_currency
+
         result = format_currency(1234.56)
         assert isinstance(result, str)
         assert "1234" in result or "1,234" in result
@@ -39,11 +40,7 @@ def test_format_percentage():
 
 def test_format_bytes():
     """测试字节格式化"""
-    sizes = [
-        (1024, "1.0 KB"),
-        (1024 * 1024, "1.0 MB"),
-        (1024 * 1024 * 1024, "1.0 GB")
-    ]
+    sizes = [(1024, "1.0 KB"), (1024 * 1024, "1.0 MB"), (1024 * 1024 * 1024, "1.0 GB")]
 
     for bytes_val, expected in sizes:
         # 简单的格式化逻辑

@@ -312,9 +312,9 @@ class TestSecurityFeatures:
         # 确保没有敏感信息泄露
         sensitive_keys = ["password", "secret", "key", "token", "auth"]
         for key in sensitive_keys:
-            assert key not in str(data).lower(), (
-                f"Sensitive key {key} found in response"
-            )
+            assert (
+                key not in str(data).lower()
+            ), f"Sensitive key {key} found in response"
 
     def test_secure_headers(self, client):
         """测试安全头"""

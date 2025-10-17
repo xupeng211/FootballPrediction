@@ -1,0 +1,112 @@
+{
+  "timestamp": "2025-10-17T15:07:31.430604",
+  "python_version": "3.11.9 (main, Aug  8 2025, 00:29:36) [GCC 11.4.0]",
+  "tests": {
+    "validators": {
+      "status": "FAILED",
+      "test_count": 2,
+      "output": ".F....                                                                   [100%]\n=========================== short test summary info ============================\nFAILED tests/unit/test_validators_optimized.py::TestBasicValidation::test_simple_phone_validation\n1 failed, 5 passed in 0.15s\n"
+    },
+    "crypto_utils": {
+      "status": "FAILED",
+      "test_count": 2,
+      "output": "..F..                                                                    [100%]\n=========================== short test summary info ============================\nFAILED tests/unit/test_crypto_utils_optimized.py::TestBasicCryptoOperations::test_file_hash_basic\n1 failed, 4 passed in 0.45s\n"
+    },
+    "string_utils": {
+      "status": "PASSED",
+      "test_count": 1,
+      "output": "......                                                                   [100%]\n6 passed in 0.15s\n"
+    },
+    "time_utils": {
+      "status": "FAILED",
+      "test_count": 2,
+      "output": "stTimeUtilsBasic::test_from_timestamp\nFAILED tests/unit/test_time_utils_optimized.py::TestTimeUtilsBasic::test_add_timedelta\nFAILED tests/unit/test_time_utils_optimized.py::TestTimeUtilsBasic::test_is_future\nFAILED tests/unit/test_time_utils_optimized.py::TestTimeUtilsBasic::test_is_past\nFAILED tests/unit/test_time_utils_optimized.py::TestTimeUtilsBasic::test_days_between\nFAILED tests/unit/test_time_utils_optimized.py::TestTimeUtilsBasic::test_human_readable_duration\n7 failed, 3 passed in 0.16s\n"
+    },
+    "file_utils": {
+      "status": "FAILED",
+      "test_count": 2,
+      "output": "y::TestFileOperations::test_delete_file\nFAILED tests/unit/test_file_utils_optimized.py::TestFileOperations::test_list_files\nFAILED tests/unit/test_file_utils_optimized.py::TestFileOperations::test_clean_directory\nFAILED tests/unit/test_file_utils_optimized.py::TestFileOperations::test_get_extension\nFAILED tests/unit/test_file_utils_optimized.py::TestFileOperations::test_is_text_file\nFAILED tests/unit/test_file_utils_optimized.py::TestFileOperations::test_backup_file\n11 failed, 3 passed in 0.20s\n"
+    }
+  },
+  "summary": {
+    "total_tests": 9,
+    "passed": 1,
+    "failed": 8,
+    "success_rate": "11.1%"
+  },
+  "coverage": {
+    "total_coverage": 31.54639175257732,
+    "files": {
+      "config_loader.py": {
+        "statements": 16,
+        "missing": 16,
+        "coverage": 0.0
+      },
+      "crypto_utils.py": {
+        "statements": 67,
+        "missing": 45,
+        "coverage": 24.719101123595507
+      },
+      "data_validator.py": {
+        "statements": 48,
+        "missing": 28,
+        "coverage": 32.25806451612903
+      },
+      "dict_utils.py": {
+        "statements": 22,
+        "missing": 14,
+        "coverage": 26.666666666666668
+      },
+      "file_utils.py": {
+        "statements": 73,
+        "missing": 47,
+        "coverage": 30.58823529411765
+      },
+      "formatters.py": {
+        "statements": 11,
+        "missing": 11,
+        "coverage": 0.0
+      },
+      "helpers.py": {
+        "statements": 16,
+        "missing": 16,
+        "coverage": 0.0
+      },
+      "i18n.py": {
+        "statements": 15,
+        "missing": 15,
+        "coverage": 0.0
+      },
+      "response.py": {
+        "statements": 31,
+        "missing": 31,
+        "coverage": 0.0
+      },
+      "retry.py": {
+        "statements": 2,
+        "missing": 2,
+        "coverage": 0.0
+      },
+      "string_utils.py": {
+        "statements": 29,
+        "missing": 0,
+        "coverage": 100.0
+      },
+      "time_utils.py": {
+        "statements": 32,
+        "missing": 15,
+        "coverage": 47.22222222222222
+      },
+      "validators.py": {
+        "statements": 23,
+        "missing": 1,
+        "coverage": 93.54838709677419
+      },
+      "warning_filters.py": {
+        "statements": 14,
+        "missing": 14,
+        "coverage": 0.0
+      }
+    }
+  }
+}

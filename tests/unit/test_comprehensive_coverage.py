@@ -67,9 +67,10 @@ def test_all_string_utils():
     try:
         # 直接测试函数而不是类
         import importlib.util
+
         spec = importlib.util.spec_from_file_location(
             "string_utils",
-            Path(__file__).parent.parent / "src" / "utils" / "string_utils.py"
+            Path(__file__).parent.parent / "src" / "utils" / "string_utils.py",
         )
 
         if spec and spec.loader:
@@ -83,7 +84,7 @@ def test_all_string_utils():
             assert string_utils.clean_string("") == ""
 
             # 测试normalize_text（如果存在）
-            if hasattr(string_utils, 'normalize_text'):
+            if hasattr(string_utils, "normalize_text"):
                 assert string_utils.normalize_text("hello") == "Hello"
 
             # 测试其他常用函数
@@ -91,7 +92,7 @@ def test_all_string_utils():
             assert string_utils.truncate_text("short", 10) == "short"
 
             # 测试slugify（如果存在）
-            if hasattr(string_utils, 'slugify'):
+            if hasattr(string_utils, "slugify"):
                 assert string_utils.slugify("Hello World!") == "hello-world"
 
     except Exception as e:
@@ -102,9 +103,10 @@ def test_all_file_utils():
     """全面测试file_utils模块"""
     try:
         import importlib.util
+
         spec = importlib.util.spec_from_file_location(
             "file_utils",
-            Path(__file__).parent.parent / "src" / "utils" / "file_utils.py"
+            Path(__file__).parent.parent / "src" / "utils" / "file_utils.py",
         )
 
         if spec and spec.loader:
@@ -112,8 +114,8 @@ def test_all_file_utils():
             spec.loader.exec_module(file_utils)
 
             # 测试安全文件名
-            unsafe_chars = ['<', '>', ':', '"', '/', '\\', '|', '?', '*']
-            unsafe = "file<>:\"/\\|?*.txt"
+            unsafe_chars = ["<", ">", ":", '"', "/", "\\", "|", "?", "*"]
+            unsafe = 'file<>:"/\\|?*.txt'
             safe = file_utils.safe_filename(unsafe)
 
             for char in unsafe_chars:
@@ -134,6 +136,7 @@ def test_all_file_utils():
 
             # 测试临时文件操作
             import tempfile
+
             with tempfile.TemporaryDirectory() as tmpdir:
                 test_file = Path(tmpdir) / "test.txt"
                 test_file.write_text("test content")
@@ -163,7 +166,7 @@ def test_all_time_utils():
 
         spec = importlib.util.spec_from_file_location(
             "time_utils",
-            Path(__file__).parent.parent / "src" / "utils" / "time_utils.py"
+            Path(__file__).parent.parent / "src" / "utils" / "time_utils.py",
         )
 
         if spec and spec.loader:
@@ -174,31 +177,31 @@ def test_all_time_utils():
             now = datetime.now()
 
             # 测试格式化（需要传入datetime对象）
-            if hasattr(time_utils, 'format_datetime'):
+            if hasattr(time_utils, "format_datetime"):
                 formatted = time_utils.format_datetime(now)
                 assert len(formatted) > 0
 
             # 测试解析时间
-            if hasattr(time_utils, 'parse_datetime'):
+            if hasattr(time_utils, "parse_datetime"):
                 parsed = time_utils.parse_datetime("2024-01-15 10:30:00")
                 assert parsed.year == 2024
                 assert parsed.month == 1
                 assert parsed.day == 15
 
             # 测试时间差计算
-            if hasattr(time_utils, 'time_diff_hours'):
+            if hasattr(time_utils, "time_diff_hours"):
                 later = now + timedelta(hours=2)
                 diff = time_utils.time_diff_hours(later, now)
                 assert abs(diff - 2) < 0.001
 
             # 测试时间戳
-            if hasattr(time_utils, 'get_timestamp'):
+            if hasattr(time_utils, "get_timestamp"):
                 ts = time_utils.get_timestamp()
                 assert isinstance(ts, (int, float))
                 assert ts > 0
 
             # 测试时间格式化
-            if hasattr(time_utils, 'format_duration'):
+            if hasattr(time_utils, "format_duration"):
                 duration = time_utils.format_duration(3661)  # 1小时1分钟1秒
                 assert "1 hour" in duration or "1 hr" in duration
 
@@ -213,7 +216,7 @@ def test_all_dict_utils():
 
         spec = importlib.util.spec_from_file_location(
             "dict_utils",
-            Path(__file__).parent.parent / "src" / "utils" / "dict_utils.py"
+            Path(__file__).parent.parent / "src" / "utils" / "dict_utils.py",
         )
 
         if spec and spec.loader:
@@ -223,22 +226,22 @@ def test_all_dict_utils():
             # 测试深度操作（如果存在）
             data = {"a": {"b": {"c": 123}}}
 
-            if hasattr(dict_utils, 'deep_get'):
+            if hasattr(dict_utils, "deep_get"):
                 assert dict_utils.deep_get(data, "a.b.c") == 123
                 assert dict_utils.deep_get(data, "a.b.x", "default") == "default"
 
-            if hasattr(dict_utils, 'deep_set'):
+            if hasattr(dict_utils, "deep_set"):
                 dict_utils.deep_set(data, "a.b.d", 456)
                 assert data["a"]["b"]["d"] == 456
 
             # 测试扁平化
-            if hasattr(dict_utils, 'flatten_dict'):
+            if hasattr(dict_utils, "flatten_dict"):
                 flat = dict_utils.flatten_dict({"a": {"b": 1}, "c": 2})
                 assert flat["a.b"] == 1
                 assert flat["c"] == 2
 
             # 测试合并
-            if hasattr(dict_utils, 'merge_dicts'):
+            if hasattr(dict_utils, "merge_dicts"):
                 dict1 = {"a": 1, "b": 2}
                 dict2 = {"b": 3, "c": 4}
                 merged = dict_utils.merge_dicts(dict1, dict2)
@@ -247,7 +250,7 @@ def test_all_dict_utils():
                 assert merged["c"] == 4
 
             # 测试过滤
-            if hasattr(dict_utils, 'filter_dict'):
+            if hasattr(dict_utils, "filter_dict"):
                 data = {"a": 1, "b": 2, "c": 3}
                 filtered = dict_utils.filter_dict(data, ["a", "c"])
                 assert filtered == {"a": 1, "c": 3}
@@ -263,7 +266,7 @@ def test_all_data_validator():
 
         spec = importlib.util.spec_from_file_location(
             "data_validator",
-            Path(__file__).parent.parent / "src" / "utils" / "data_validator.py"
+            Path(__file__).parent.parent / "src" / "utils" / "data_validator.py",
         )
 
         if spec and spec.loader:
@@ -271,19 +274,19 @@ def test_all_data_validator():
             spec.loader.exec_module(validator)
 
             # 测试邮箱验证
-            if hasattr(validator, 'validate_email'):
+            if hasattr(validator, "validate_email"):
                 assert validator.validate_email("test@example.com") is True
                 assert validator.validate_email("invalid-email") is False
                 assert validator.validate_email("@example.com") is False
 
             # 测试URL验证
-            if hasattr(validator, 'validate_url'):
+            if hasattr(validator, "validate_url"):
                 assert validator.validate_url("https://example.com") is True
                 assert validator.validate_url("http://localhost:8000") is True
                 assert validator.validate_url("not-a-url") is False
 
             # 测试数据类型验证
-            if hasattr(validator, 'validate_types'):
+            if hasattr(validator, "validate_types"):
                 data = {"name": "John", "age": 25, "email": "john@example.com"}
                 schema = {"name": str, "age": int, "email": str}
                 assert validator.validate_types(data, schema) is True
@@ -292,7 +295,7 @@ def test_all_data_validator():
                 assert validator.validate_types(data2, schema) is False
 
             # 测试必填字段
-            if hasattr(validator, 'validate_required'):
+            if hasattr(validator, "validate_required"):
                 data = {"name": "John", "email": "john@example.com"}
                 missing = validator.validate_required(data, ["name", "email", "phone"])
                 assert "phone" in missing
@@ -310,7 +313,7 @@ def test_cache_decorators():
 
         spec = importlib.util.spec_from_file_location(
             "cache_decorators",
-            Path(__file__).parent.parent / "src" / "utils" / "cache_decorators.py"
+            Path(__file__).parent.parent / "src" / "utils" / "cache_decorators.py",
         )
 
         if spec and spec.loader:
@@ -318,7 +321,8 @@ def test_cache_decorators():
             spec.loader.exec_module(cache_decorators)
 
             # 测试TTL缓存装饰器
-            if hasattr(cache_decorators, 'ttl_cache'):
+            if hasattr(cache_decorators, "ttl_cache"):
+
                 @cache_decorators.ttl_cache(ttl=1)
                 def slow_function(x):
                     return x * 2
@@ -347,7 +351,7 @@ def test_cached_operations():
 
         spec = importlib.util.spec_from_file_location(
             "cached_operations",
-            Path(__file__).parent.parent / "src" / "utils" / "cached_operations.py"
+            Path(__file__).parent.parent / "src" / "utils" / "cached_operations.py",
         )
 
         if spec and spec.loader:
@@ -355,7 +359,7 @@ def test_cached_operations():
             spec.loader.exec_module(cached_ops)
 
             # 测试缓存类
-            if hasattr(cached_ops, 'CachedOperations'):
+            if hasattr(cached_ops, "CachedOperations"):
                 cache = cached_ops.CachedOperations(max_size=10)
 
                 # 设置缓存
@@ -387,7 +391,7 @@ def test_warning_filters():
 
         spec = importlib.util.spec_from_file_location(
             "warning_filters",
-            Path(__file__).parent.parent / "src" / "utils" / "warning_filters.py"
+            Path(__file__).parent.parent / "src" / "utils" / "warning_filters.py",
         )
 
         if spec and spec.loader:
@@ -395,8 +399,8 @@ def test_warning_filters():
             spec.loader.exec_module(warning_filters)
 
             # 测试过滤函数
-            if hasattr(warning_filters, 'filter_warnings'):
-                with warnings.catch_warnings(record=True) as w:
+            if hasattr(warning_filters, "filter_warnings"):
+                with warnings.catch_warnings(record=True):
                     warnings.simplefilter("always")
                     warning_filters.filter_warnings()
                     warnings.warn("Test warning", UserWarning)
@@ -417,7 +421,7 @@ def test_config_loader():
 
         spec = importlib.util.spec_from_file_location(
             "config_loader",
-            Path(__file__).parent.parent / "src" / "utils" / "config_loader.py"
+            Path(__file__).parent.parent / "src" / "utils" / "config_loader.py",
         )
 
         if spec and spec.loader:
@@ -425,31 +429,32 @@ def test_config_loader():
             spec.loader.exec_module(config_loader)
 
             # 创建临时配置文件
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".json", delete=False
+            ) as f:
                 config_data = {
-                    "database": {
-                        "host": "localhost",
-                        "port": 5432
-                    },
-                    "debug": True
+                    "database": {"host": "localhost", "port": 5432},
+                    "debug": True,
                 }
                 json.dump(config_data, f)
                 config_file = f.name
 
             try:
                 # 测试加载配置
-                if hasattr(config_loader, 'load_config'):
+                if hasattr(config_loader, "load_config"):
                     loaded = config_loader.load_config(config_file)
                     assert loaded["database"]["host"] == "localhost"
                     assert loaded["debug"] is True
 
                 # 测试获取配置值
-                if hasattr(config_loader, 'get_config_value'):
+                if hasattr(config_loader, "get_config_value"):
                     host = config_loader.get_config_value(config_file, "database.host")
                     assert host == "localhost"
 
                     # 测试默认值
-                    missing = config_loader.get_config_value(config_file, "missing.key", "default")
+                    missing = config_loader.get_config_value(
+                        config_file, "missing.key", "default"
+                    )
                     assert missing == "default"
 
             finally:
@@ -466,7 +471,7 @@ def test_formatters():
 
         spec = importlib.util.spec_from_file_location(
             "formatters",
-            Path(__file__).parent.parent / "src" / "utils" / "formatters.py"
+            Path(__file__).parent.parent / "src" / "utils" / "formatters.py",
         )
 
         if spec and spec.loader:
@@ -474,14 +479,14 @@ def test_formatters():
             spec.loader.exec_module(formatters)
 
             # 测试各种格式化函数
-            if hasattr(formatters, 'format_bytes'):
+            if hasattr(formatters, "format_bytes"):
                 assert formatters.format_bytes(1024) == "1.0 KB"
                 assert formatters.format_bytes(1048576) == "1.0 MB"
 
-            if hasattr(formatters, 'format_currency'):
+            if hasattr(formatters, "format_currency"):
                 assert "$" in formatters.format_currency(100, "USD")
 
-            if hasattr(formatters, 'format_percentage'):
+            if hasattr(formatters, "format_percentage"):
                 assert "%" in formatters.format_percentage(0.75)
 
     except Exception as e:
@@ -494,8 +499,7 @@ def test_helpers():
         import importlib.util
 
         spec = importlib.util.spec_from_file_location(
-            "helpers",
-            Path(__file__).parent.parent / "src" / "utils" / "helpers.py"
+            "helpers", Path(__file__).parent.parent / "src" / "utils" / "helpers.py"
         )
 
         if spec and spec.loader:
@@ -503,18 +507,18 @@ def test_helpers():
             spec.loader.exec_module(helpers)
 
             # 测试各种辅助函数
-            if hasattr(helpers, 'generate_id'):
+            if hasattr(helpers, "generate_id"):
                 id1 = helpers.generate_id()
                 id2 = helpers.generate_id()
                 assert id1 != id2
                 assert len(id1) > 0
 
-            if hasattr(helpers, 'is_empty'):
+            if hasattr(helpers, "is_empty"):
                 assert helpers.is_empty("") is True
                 assert helpers.is_empty(None) is True
                 assert helpers.is_empty("test") is False
 
-            if hasattr(helpers, 'safe_int'):
+            if hasattr(helpers, "safe_int"):
                 assert helpers.safe_int("123") == 123
                 assert helpers.safe_int("abc") == 0
                 assert helpers.safe_int("abc", 10) == 10
@@ -530,7 +534,7 @@ def test_predictions_util():
 
         spec = importlib.util.spec_from_file_location(
             "predictions",
-            Path(__file__).parent.parent / "src" / "utils" / "predictions.py"
+            Path(__file__).parent.parent / "src" / "utils" / "predictions.py",
         )
 
         if spec and spec.loader:
@@ -538,11 +542,11 @@ def test_predictions_util():
             spec.loader.exec_module(predictions)
 
             # 测试预测相关函数
-            if hasattr(predictions, 'calculate_confidence'):
+            if hasattr(predictions, "calculate_confidence"):
                 confidence = predictions.calculate_confidence(0.8, 10)
                 assert 0 <= confidence <= 1
 
-            if hasattr(predictions, 'format_prediction'):
+            if hasattr(predictions, "format_prediction"):
                 result = predictions.format_prediction("team1", "team2", 0.7)
                 assert "team1" in result or "team2" in result
 

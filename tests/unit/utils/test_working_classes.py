@@ -14,12 +14,12 @@ def test_string_utils_class():
     from src.utils.string_utils import StringUtils
 
     # 测试所有静态方法
-    assert hasattr(StringUtils, 'truncate')
-    assert hasattr(StringUtils, 'slugify')
-    assert hasattr(StringUtils, 'camel_to_snake')
-    assert hasattr(StringUtils, 'snake_to_camel')
-    assert hasattr(StringUtils, 'clean_text')
-    assert hasattr(StringUtils, 'extract_numbers')
+    assert hasattr(StringUtils, "truncate")
+    assert hasattr(StringUtils, "slugify")
+    assert hasattr(StringUtils, "camel_to_snake")
+    assert hasattr(StringUtils, "snake_to_camel")
+    assert hasattr(StringUtils, "clean_text")
+    assert hasattr(StringUtils, "extract_numbers")
 
     # 测试截断
     result = StringUtils.truncate("Hello World Test", 8)
@@ -172,7 +172,7 @@ def test_file_utils_class():
     assert size >= 0
 
     # 测试文件读写
-    with tempfile.NamedTemporaryFile(mode='w', delete=False) as tmp:
+    with tempfile.NamedTemporaryFile(mode="w", delete=False) as tmp:
         tmp_path = tmp.name
         tmp.write("test content")
 
@@ -199,22 +199,22 @@ def test_data_validator_class():
     assert DataValidator.is_valid_number(None) is False
 
     # 测试邮箱验证
-    if hasattr(DataValidator, 'is_valid_email'):
+    if hasattr(DataValidator, "is_valid_email"):
         assert DataValidator.is_valid_email("test@example.com") is True
         assert DataValidator.is_valid_email("invalid") is False
 
     # 测试 URL 验证
-    if hasattr(DataValidator, 'is_valid_url'):
+    if hasattr(DataValidator, "is_valid_url"):
         assert DataValidator.is_valid_url("https://example.com") is True
         assert DataValidator.is_valid_url("not-a-url") is False
 
     # 测试范围验证
-    if hasattr(DataValidator, 'is_in_range'):
+    if hasattr(DataValidator, "is_in_range"):
         assert DataValidator.is_in_range(5, 1, 10) is True
         assert DataValidator.is_in_range(0, 1, 10) is False
 
     # 测试长度验证
-    if hasattr(DataValidator, 'has_valid_length'):
+    if hasattr(DataValidator, "has_valid_length"):
         assert DataValidator.has_valid_length("test", 1, 10) is True
         assert DataValidator.has_valid_length("test", 5, 10) is False
 

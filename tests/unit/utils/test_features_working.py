@@ -17,19 +17,16 @@ def test_config_loader():
     config_data = {
         "debug": True,
         "port": 8000,
-        "database": {
-            "host": "localhost",
-            "port": 5432
-        }
+        "database": {"host": "localhost", "port": 5432},
     }
 
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
         json.dump(config_data, f)
         config_path = f.name
 
     try:
         # 读取配置
-        with open(config_path, 'r') as f:
+        with open(config_path, "r") as f:
             loaded_config = json.load(f)
 
         assert loaded_config["debug"] is True
@@ -41,6 +38,7 @@ def test_config_loader():
 
 def test_cache_operations():
     """测试缓存操作"""
+
     # 简单的内存缓存实现
     class SimpleCache:
         def __init__(self):
@@ -77,6 +75,7 @@ def test_cache_operations():
 
 def test_retry_mechanism():
     """测试重试机制"""
+
     def retry(operation, max_attempts=3, delay=0.1):
         """简单的重试机制"""
         for attempt in range(max_attempts):
@@ -97,6 +96,7 @@ def test_retry_mechanism():
 
     # 测试失败的操作（前两次失败，第三次成功）
     attempt_count = 0
+
     def flaky_op():
         nonlocal attempt_count
         attempt_count += 1
@@ -153,6 +153,7 @@ def test_time_operations():
 def test_file_monitoring():
     """测试文件监控"""
     import time
+
     # 创建测试目录
     with tempfile.TemporaryDirectory() as tmpdir:
         test_file = Path(tmpdir) / "test.txt"
@@ -176,21 +177,24 @@ def test_file_monitoring():
 
 def test_data_validation():
     """测试数据验证"""
+
     def validate_email(email):
         """简单的邮箱验证"""
         import re
-        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+
+        pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         return re.match(pattern, email) is not None
 
     def validate_phone(phone):
         """简单的电话号码验证"""
         import re
-        pattern = r'^[\d\s\-\(\)]+$'
+
+        pattern = r"^[\d\s\-\(\)]+$"
         return re.match(pattern, phone) is not None
 
     def validate_url(url):
         """简单的URL验证"""
-        return url.startswith(('http://', 'https://'))
+        return url.startswith(("http://", "https://"))
 
     # 测试邮箱验证
     assert validate_email("test@example.com") is True

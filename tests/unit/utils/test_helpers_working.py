@@ -24,6 +24,7 @@ def test_generate_uuid():
 
 def test_is_json():
     """测试 JSON 验证"""
+
     def is_json(s):
         try:
             json.loads(s)
@@ -32,20 +33,21 @@ def test_is_json():
             return False
 
     assert is_json('{"key": "value"}') is True
-    assert is_json('[1, 2, 3]') is True
-    assert is_json('not json') is False
-    assert is_json('') is False
+    assert is_json("[1, 2, 3]") is True
+    assert is_json("not json") is False
+    assert is_json("") is False
 
 
 def test_deep_get():
     """测试深度获取字典值"""
+
     def deep_get(d, keys, default=None):
         """深度获取嵌套字典的值"""
         if not keys:
             return d
 
         current = d
-        for key in keys.split('.'):
+        for key in keys.split("."):
             if isinstance(current, dict) and key in current:
                 current = current[key]
             else:
@@ -60,6 +62,7 @@ def test_deep_get():
 
 def test_merge_dicts():
     """测试字典合并"""
+
     def merge_dicts(*dicts):
         """合并多个字典"""
         result = {}
@@ -75,6 +78,7 @@ def test_merge_dicts():
 
 def test_remove_duplicates():
     """测试列表去重"""
+
     def remove_duplicates(lst):
         """移除列表中的重复项"""
         return list(dict.fromkeys(lst))
@@ -86,9 +90,10 @@ def test_remove_duplicates():
 
 def test_chunk_list():
     """测试列表分块"""
+
     def chunk_list(lst, size):
         """将列表分成指定大小的块"""
-        return [lst[i:i + size] for i in range(0, len(lst), size)]
+        return [lst[i : i + size] for i in range(0, len(lst), size)]
 
     lst = list(range(10))
     chunks = chunk_list(lst, 3)
@@ -97,19 +102,20 @@ def test_chunk_list():
 
 def test_safe_filename():
     """测试安全文件名"""
+
     def safe_filename(filename):
         """生成安全的文件名"""
         # 替换不安全的字符
         unsafe_chars = '<>:"/\|?*'
         for char in unsafe_chars:
-            filename = filename.replace(char, '_')
+            filename = filename.replace(char, "_")
         return filename
 
     unsafe = "file<>:|?.txt"
     safe = safe_filename(unsafe)
     assert safe == "file_____.txt"
-    assert '/' not in safe
-    assert '\\' not in safe
+    assert "/" not in safe
+    assert "\\" not in safe
 
 
 def test_temp_file_operations():
@@ -117,12 +123,12 @@ def test_temp_file_operations():
     import tempfile
 
     # 创建临时文件
-    with tempfile.NamedTemporaryFile(mode='w', delete=False) as tmp:
+    with tempfile.NamedTemporaryFile(mode="w", delete=False) as tmp:
         tmp_path = tmp.name
         tmp.write("test content")
 
     # 读取文件
-    with open(tmp_path, 'r') as f:
+    with open(tmp_path, "r") as f:
         content = f.read()
         assert content == "test content"
 

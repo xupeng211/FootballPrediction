@@ -281,15 +281,17 @@ def run_coverage_test():
 
     result = subprocess.run(
         [
-            sys.executable, "-m", "pytest",
+            sys.executable,
+            "-m",
+            "pytest",
             "tests/unit/test_real_coverage.py",
             "-v",
             "--cov=src/utils",
             "--cov-report=term-missing",
-            "--cov-report=html:htmlcov_real"
+            "--cov-report=html:htmlcov_real",
         ],
         capture_output=True,
-        text=True
+        text=True,
     )
 
     print(result.stdout)
