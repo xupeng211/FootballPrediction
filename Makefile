@@ -11,9 +11,9 @@ VENV_BIN := $(VENV)/bin
 ACTIVATE := . $(VENV_BIN)/activate
 
 # Coverage thresholds for different environments
-COVERAGE_THRESHOLD_CI ?= 22      # CI environment (gradually improving)
-COVERAGE_THRESHOLD_DEV ?= 20     # Development environment (current coverage)
-COVERAGE_THRESHOLD_MIN ?= 18     # Minimum acceptable coverage
+COVERAGE_THRESHOLD_CI ?= 25      # CI environment (gradually improving) - 阶段A完成
+COVERAGE_THRESHOLD_DEV ?= 25     # Development environment (current coverage)
+COVERAGE_THRESHOLD_MIN ?= 20     # Minimum acceptable coverage
 COVERAGE_THRESHOLD ?= $(COVERAGE_THRESHOLD_CI)  # Default to CI level
 
 IMAGE_NAME ?= football-prediction

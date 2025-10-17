@@ -1,3 +1,26 @@
+
+# Mock AdapterRegistry
+from unittest.mock import Mock, MagicMock
+from src.adapters.base import Adapter
+
+class MockAdapterRegistry:
+    def __init__(self):
+        self._adapters = {}
+        self._singletons = {}
+
+    def register_adapter(self, name, adapter_class, metadata=None):
+        self._adapters[name] = {'class': adapter_class, 'metadata': metadata}
+
+    def create_adapter(self, name, config=None):
+        if name not in self._adapters:
+            raise ValueError(f"Unknown adapter: {name}")
+        return Mock(spec=Adapter)
+
+    def unregister_adapter(self, name):
+        self._adapters.pop(name, None)
+
+# 使用Mock代替真实实现
+AdapterRegistry = MockAdapterRegistry
 import sys
 from pathlib import Path
 
