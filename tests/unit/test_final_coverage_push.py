@@ -126,7 +126,7 @@ class TestUtilsExtra:
 
         for func_name in functions_to_test:
             try:
-                from utils import func_name
+                from src.utils import func_name
 
                 func = (
                     globals()[func_name]
@@ -144,7 +144,17 @@ class TestUtilsExtra:
     def test_utils_response_helpers(self):
         """测试响应助手函数"""
         try:
-            from utils import success_response, error_response, created_response
+            from src.utils.response import (
+                success_response,
+                error_response,
+                created_response,
+                updated_response,
+                deleted_response,
+                not_found_response,
+                bad_request_response,
+                unauthorized_response,
+                forbidden_response,
+            )
 
             # 测试成功响应
             resp = success_response({"data": "test"})
