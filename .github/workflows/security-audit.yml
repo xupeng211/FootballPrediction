@@ -1,0 +1,320 @@
+name: Security Audit
+
+on:
+  schedule:
+    # 每周一凌晨2点运行
+    - cron: '0 2 * * 1'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'requirements/**'
+      - 'Dockerfile*'
+      - 'docker-compose*.yml'
+      - '.github/workflows/**'
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cache pip packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements/**') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install safety bandit semgrep trufflehog3 git-secrets
+          pip install -r requirements/requirements.txt
+
+      - name: Install npm packages
+        run: |
+          npm install -g snyk retire
+
+      - name: Run Bandit security scan
+        id: bandit
+        run: |
+          bandit -r src/ -f json -o bandit-report.json
+          bandit -r src/
+        continue-on-error: true
+
+      - name: Run Safety dependency check
+        id: safety
+        run: |
+          safety check --json --output safety-report.json
+          safety check
+        continue-on-error: true
+
+      - name: Run Semgrep static analysis
+        id: semgrep
+        run: |
+          semgrep --config=auto --json --output semgrep-report.json src/
+          semgrep --config=auto src/
+        continue-on-error: true
+
+      - name: Run TruffleHog secrets scan
+        id: trufflehog
+        run: |
+          trufflehog filesystem . --json --output trufflehog-report.json
+        continue-on-error: true
+
+      - name: Run git-secrets scan
+        id: gitsecrets
+        run: |
+          git secrets --scan --baseline .secrets.baseline --all-files
+        continue-on-error: true
+
+      - name: Run Snyk dependency check
+        id: snyk
+        run: |
+          snyk test --json --output-file=snyk-report.json || true
+          snyk test
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        continue-on-error: true
+
+      - name: Run Trivy container scan
+        id: trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+        continue-on-error: true
+
+      - name: Run OWASP ZAP Baseline Scan
+        id: zap
+        uses: zaproxy/baseline-action@v0.7.0
+        with:
+          target: 'http://localhost:8000'
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a'
+        continue-on-error: true
+
+      - name: Run retire.js for npm audit
+        id: retire
+        run: |
+          retire --outputformat json --outputpath retire-report.json
+          retire --outputpath retire-report.txt
+        continue-on-error: true
+
+      - name: Generate Security Score
+        id: security-score
+        run: |
+          python scripts/security/calculate-security-score.py \
+            --bandit-report bandit-report.json \
+            --safety-report safety-report.json \
+            --semgrep-report semgrep-report.json \
+            --output security-score.json
+
+      - name: Upload Security Reports
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: security-reports
+          path: |
+            bandit-report.json
+            safety-report.json
+            semgrep-report.json
+            trufflehog-report.json
+            snyk-report.json
+            trivy-results.sarif
+            retire-report.json
+            security-score.json
+
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: trivy-results.sarif
+
+      - file: security-score.json
+        name: security-score
+        tool: security-score-calculator
+
+      - name: Create Security Issue
+        uses: actions/github-script@v6
+        if: failure()
+        with:
+          script: |
+            const score = require('./security-score.json');
+            const threshold = 70;
+
+            if (score.overall_score < threshold) {
+              github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `Security Scan Failed - Score: ${score.overall_score}/100`,
+                body: `## Security Score: ${score.overall_score}/100
+
+            ### Scan Results:
+            - **Dependencies**: ${score.dependency_score}/100
+            - **Code Analysis**: ${score.code_score}/100
+            - **Secrets**: ${score.secrets_score}/100
+            - **Container**: ${score.container_score}/100
+
+            ### Top Issues:
+            ${score.top_issues.slice(0, 5).map(issue => `- ${issue}`).join('\n')}
+
+            ### Recommendations:
+            1. Review and fix all high and critical security issues
+            2. Update dependencies to latest secure versions
+            3. Remove any hardcoded secrets or API keys
+            4. Implement proper input validation and sanitization
+
+            [View Full Report](${{ steps.upload-security-reports.outputs.artifact-url }})
+
+            ---
+            This issue was automatically created by the security audit workflow.
+            `,
+                labels: ['security', 'high-priority']
+              });
+            }
+
+  container-scan:
+    runs-on: ubuntu-latest
+    needs: security-scan
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build -t football-prediction:security-scan .
+
+      - name: Run Trivy image scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'football-prediction:security-scan'
+          format: 'sarif'
+          output: 'trivy-image-results.sarif'
+
+      - name: Upload Image Scan Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: container-scan-reports
+          path: trivy-image-results.sarif
+
+      - name: Upload SARIF to GitHub Security
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: trivy-image-results.sarif
+
+  compliance-check:
+    runs-on: ubuntu-latest
+    needs: security-scan
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Checkov compliance scan
+        id: checkov
+        run: |
+          docker run --volume $(pwd):/volume bridgecrew/checkov \
+            --directory /volume --framework all --quiet --output json > checkov-report.json
+          docker run --volume $(pwd):/volume bridgecrew/checkov \
+            --directory /volume --framework all
+
+      - name: Run Prowler AWS compliance (if applicable)
+        id: prowler
+        run: |
+          if [[ "${{ secrets.AWS_ACCESS_KEY_ID }}" != "" ]]; then
+            pip install prowler
+            prowler --profile default --region us-east-1 \
+              --output-format json --output-file prowler-report.json
+          fi
+
+      - name: Upload Compliance Reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: compliance-reports
+          path: |
+            checkov-report.json
+            prowler-report.json
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: [security-scan, container-scan, compliance-check]
+    if: always()
+    steps:
+      - name: Download security reports
+        uses: actions/download-artifact@v3
+        with:
+          name: security-reports
+
+      - name: Generate Security Report
+        run: |
+          python scripts/security/generate-security-report.py \
+            --reports-dir security-reports \
+            --output security-report.md
+
+      - name: Send Slack Notification
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: "Security scan failed! See reports for details."
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Send Email Notification
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "Security Scan Failed - ${{ github.repository }}"
+          to: ${{ secrets.NOTIFICATION_EMAIL }}
+          from: GitHub Actions <${{ secrets.EMAIL_USERNAME }}>
+          body: |
+            Security scan failed for repository ${{ github.repository }}.
+
+            Repository: ${{ github.repository }}
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+            Actor: ${{ github.actor }}
+
+            View the security reports: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - name: Post Security Score to Slack
+        run: |
+          if [ -f "security-score.json" ]; then
+            score=$(python -c "import json; print(json.load(open('security-score.json'))['overall_score'])")
+            curl -X POST -H 'Content-type: application/json' \
+              --data "{\"text\":\"🔒 Security Score: $score/100\"}" \
+              ${{ secrets.SLACK_WEBHOOK }}
+          fi

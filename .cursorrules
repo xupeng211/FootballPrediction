@@ -1,0 +1,30 @@
+# Football Prediction Project Rules
+
+## Core Development Principles
+1. Always use make commands from the Makefile, never run pytest directly on individual files
+2. Run `make env-check` to validate environment before starting work
+3. Use `make context` to load project state
+4. Run `make ci` for quality verification before commits
+
+## Code Quality Standards
+- Ruff is used for BOTH linting and formatting (not Black)
+- Line length: 88 characters
+- MyPy strict mode for type checking
+- Test coverage threshold: 80%
+
+## Testing Requirements
+- 385 test cases across multiple categories
+- Use test markers: unit, integration, api, database, slow, smoke, e2e, performance, critical
+- Phase 1 tests cover core functionality (data, features, predictions)
+
+## Architecture Notes
+- Domain-Driven Design (DDD) with layered architecture
+- SQLAlchemy 2.0 with async support
+- FastAPI with async/await patterns
+- Redis for caching
+- Celery for background tasks
+
+## Important
+- Python 3.11+ required
+- Always activate virtual environment
+- Use Docker Compose for consistent environment

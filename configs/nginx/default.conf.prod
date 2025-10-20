@@ -1,0 +1,17 @@
+# 默认站点配置（HTTPS重定向）
+
+server {
+    listen 80 default_server;
+    server_name _;
+
+    # Let's Encrypt验证
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+        try_files $uri =404;
+    }
+
+    # 重定向所有HTTP请求到HTTPS
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}

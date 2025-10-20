@@ -1,0 +1,379 @@
+# 生产环境日志配置
+version: 1
+disable_existing_loggers: false
+
+# 格式化器
+formatters:
+  # JSON格式化器（推荐用于生产）
+  json:
+    class: pythonjsonlogger.jsonlogger.JsonFormatter
+    format: >-
+      {
+        "timestamp": "%(asctime)s",
+        "level": "%(levelname)s",
+        "logger": "%(name)s",
+        "module": "%(module)s",
+        "function": "%(funcName)s",
+        "line": %(lineno)d,
+        "process": %(process)d,
+        "thread": %(thread)d,
+        "service": "%(service)s",
+        "environment": "%(environment)s",
+        "version": "%(version)s",
+        "trace_id": "%(trace_id)s",
+        "span_id": "%(span_id)s",
+        "user_id": "%(user_id)s",
+        "request_id": "%(request_id)s",
+        "message": "%(message)s",
+        "exc_info": "%(exc_info)s"
+      }
+
+  # 结构化日志格式化器
+  structured:
+    class: pythonjsonlogger.jsonlogger.JsonFormatter
+    format: >-
+      {
+        "time": "%(asctime)s.%(msecs)03dZ",
+        "level": "%(levelname)s",
+        "service": "football-prediction",
+        "module": "%(name)s",
+        "msg": "%(message)s",
+        "props": {
+          "function": "%(funcName)s",
+          "line": %(lineno)d,
+          "process": %(process)d,
+          "thread": %(thread)d
+        }
+      }
+    datefmt: "%Y-%m-%dT%H:%M:%S"
+
+  # 访问日志格式化器
+  access:
+    class: pythonjsonlogger.jsonlogger.JsonFormatter
+    format: >-
+      {
+        "timestamp": "%(asctime)s",
+        "level": "%(levelname)s",
+        "logger": "access",
+        "method": "%(method)s",
+        "url": "%(url)s",
+        "status": %(status)d,
+        "duration": %(duration)s,
+        "user_agent": "%(user_agent)s",
+        "remote_addr": "%(remote_addr)s",
+        "user_id": "%(user_id)s",
+        "request_id": "%(request_id)s",
+        "size": %(size_bytes)s
+      }
+
+  # 错误日志格式化器
+  error:
+    class: pythonjsonlogger.jsonlogger.JsonFormatter
+    format: >-
+      {
+        "timestamp": "%(asctime)s",
+        "level": "%(levelname)s",
+        "logger": "%(name)s",
+        "error": {
+          "type": "%(exc_info)s",
+          "message": "%(message)s",
+          "traceback": "%(exc_text)s"
+        },
+        "context": {
+          "module": "%(module)s",
+          "function": "%(funcName)s",
+          "line": %(lineno)d
+        },
+        "request": {
+          "method": "%(method)s",
+          "url": "%(url)s",
+          "user_id": "%(user_id)s",
+          "request_id": "%(request_id)s"
+        }
+      }
+
+# 过滤器
+filters:
+  # 添加上下文信息
+  context:
+    class: src.core.logging.ContextFilter
+
+  # 敏感信息过滤器
+  sensitive:
+    class: src.core.logging.SensitiveDataFilter
+    patterns:
+      - "password"
+      - "token"
+      - "secret"
+      - "key"
+      - "authorization"
+      - "cookie"
+      - "session"
+
+  # 请求ID过滤器
+  request_id:
+    class: src.core.logging.RequestIDFilter
+    header_name: X-Request-ID
+
+  # 速率限制过滤器（避免日志洪水）
+  rate_limit:
+    class: src.core.logging.RateLimitFilter
+    rate: 100  # 每分钟最多100条相同消息
+    window: 60
+
+# 处理器
+handlers:
+  # 控制台处理器（开发时使用）
+  console:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: json
+    stream: ext://sys.stdout
+    filters: [context, sensitive]
+
+  # 主应用日志文件
+  app_file:
+    class: logging.handlers.RotatingFileHandler
+    level: INFO
+    formatter: json
+    filters: [context, sensitive, rate_limit]
+    filename: /var/log/football-prediction/app.log
+    maxBytes: 104857600  # 100MB
+    backupCount: 30
+    encoding: utf-8
+    mode: 0644
+
+  # 错误日志文件
+  error_file:
+    class: logging.handlers.RotatingFileHandler
+    level: ERROR
+    formatter: error
+    filters: [context, sensitive]
+    filename: /var/log/football-prediction/error.log
+    maxBytes: 104857600  # 100MB
+    backupCount: 30
+    encoding: utf-8
+    mode: 0644
+
+  # 访问日志文件
+  access_file:
+    class: logging.handlers.RotatingFileHandler
+    level: INFO
+    formatter: access
+    filters: [context]
+    filename: /var/log/football-prediction/access.log
+    maxBytes: 104857600  # 100MB
+    backupCount: 30
+    encoding: utf-8
+    mode: 0644
+
+  # 审计日志文件
+  audit_file:
+    class: logging.handlers.RotatingFileHandler
+    level: INFO
+    formatter: json
+    filters: [context, sensitive]
+    filename: /var/log/football-prediction/audit.log
+    maxBytes: 104857600  # 100MB
+    backupCount: 90  # 审计日志保留更久
+    encoding: utf-8
+    mode: 0644
+
+  # 安全日志文件
+  security_file:
+    class: logging.handlers.RotatingFileHandler
+    level: INFO
+    formatter: json
+    filters: [context, sensitive]
+    filename: /var/log/football-prediction/security.log
+    maxBytes: 104857600  # 100MB
+    backupCount: 365  # 安全日志保留1年
+    encoding: utf-8
+    mode: 0644
+
+  # 性能日志文件
+  performance_file:
+    class: logging.handlers.RotatingFileHandler
+    level: INFO
+    formatter: json
+    filters: [context]
+    filename: /var/log/football-prediction/performance.log
+    maxBytes: 52428800  # 50MB
+    backupCount: 14
+    encoding: utf-8
+    mode: 0644
+
+  # 业务日志文件
+  business_file:
+    class: logging.handlers.RotatingFileHandler
+    level: INFO
+    formatter: json
+    filters: [context]
+    filename: /var/log/football-prediction/business.log
+    maxBytes: 104857600  # 100MB
+    backupCount: 30
+    encoding: utf-8
+    mode: 0644
+
+  # Syslog处理器（集中日志）
+  syslog:
+    class: logging.handlers.SysLogHandler
+    level: INFO
+    formatter: json
+    filters: [context, sensitive]
+    address: [localhost, 514]
+    facility: local0
+
+  # Loki处理器（直接发送到Loki）
+  loki:
+    class: src.core.logging.LokiHandler
+    level: INFO
+    formatter: json
+    filters: [context, sensitive]
+    url: http://loki:3100/loki/api/v1/push
+    labels:
+      service: football-prediction
+      environment: production
+      version: "1.0.0"
+    batch_size: 100
+    timeout: 10
+
+# 日志记录器
+loggers:
+  # 根日志记录器
+  "":
+    level: WARNING
+    handlers: [console]
+    propagate: false
+
+  # 应用主日志
+  src:
+    level: INFO
+    handlers: [console, app_file, loki]
+    propagate: false
+
+  # API日志
+  src.api:
+    level: INFO
+    handlers: [console, app_file, access_file, loki]
+    propagate: false
+
+  # 认证日志
+  src.api.auth:
+    level: INFO
+    handlers: [console, app_file, audit_file, security_file, loki]
+    propagate: false
+
+  # 安全相关日志
+  src.security:
+    level: INFO
+    handlers: [console, app_file, security_file, loki]
+    propagate: false
+
+  # 数据库日志
+  src.database:
+    level: INFO
+    handlers: [console, app_file, loki]
+    propagate: false
+
+  # 缓存日志
+  src.cache:
+    level: INFO
+    handlers: [console, app_file, loki]
+    propagate: false
+
+  # 任务队列日志
+  src.tasks:
+    level: INFO
+    handlers: [console, app_file, loki]
+    propagate: false
+
+  # 监控日志
+  src.monitoring:
+    level: INFO
+    handlers: [console, app_file, performance_file, loki]
+    propagate: false
+
+  # 业务逻辑日志
+  src.services:
+    level: INFO
+    handlers: [console, app_file, business_file, loki]
+    propagate: false
+
+  # UVicorn日志
+  uvicorn:
+    level: INFO
+    handlers: [console, app_file]
+    propagate: false
+
+  uvicorn.access:
+    level: INFO
+    handlers: [console, access_file]
+    propagate: false
+
+  # SQLAlchemy日志
+  sqlalchemy:
+    level: WARNING
+    handlers: [console, app_file]
+    propagate: false
+
+  # Redis日志
+  redis:
+    level: WARNING
+    handlers: [console, app_file]
+    propagate: false
+
+  # Celery日志
+  celery:
+    level: INFO
+    handlers: [console, app_file]
+    propagate: false
+
+  # 第三方库日志
+  requests:
+    level: WARNING
+    handlers: [console, app_file]
+    propagate: false
+
+  httpx:
+    level: WARNING
+    handlers: [console, app_file]
+    propagate: false
+
+  # 错误日志
+  error:
+    level: ERROR
+    handlers: [console, error_file, loki]
+    propagate: false
+
+# 根日志记录器配置
+root:
+  level: INFO
+  handlers: [console, app_file]
+
+# 日志配置
+logging:
+  version: 1
+  disable_existing_loggers: false
+
+  # 性能配置
+  performance:
+    disable_existing_loggers: false
+    propagate: false
+    filters:
+      - name: context
+      - name: sensitive
+
+  # 审计配置
+  audit:
+    disable_existing_loggers: false
+    handlers: [audit_file]
+    level: INFO
+    propagate: false
+
+  # 调试配置（仅在需要时启用）
+  debug:
+    disable_existing_loggers: false
+    handlers: [console, app_file]
+    level: DEBUG
+    propagate: false

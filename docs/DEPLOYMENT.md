@@ -1,61 +1,85 @@
-# 🚀 部署指南
-
-本文档提供了 FootballPrediction 系统的完整部署指南。
+# FootballPrediction 系统部署指南
 
 ## 目录
 
-- [环境要求](#环境要求)
-- [本地开发环境](#本地开发环境)
-- [Docker 部署](#docker-部署)
-- [生产环境部署](#生产环境部署)
-- [监控和日志](#监控和日志)
-- [故障排除](#故障排除)
+1. [环境准备](#环境准备)
+2. [依赖要求](#依赖要求)
+3. [配置说明](#配置说明)
+4. [部署方式](#部署方式)
+5. [环境变量](#环境变量)
+6. [SSL证书配置](#ssl证书配置)
+7. [数据库设置](#数据库设置)
+8. [Redis配置](#redis配置)
+9. [监控系统](#监控系统)
+10. [故障排除](#故障排除)
 
-## 环境要求
+## 环境准备
 
 ### 系统要求
-- **操作系统**: Linux (Ubuntu 20.04+), macOS, 或 WSL2
-- **Python**: 3.11 或更高版本
-- **内存**: 最少 4GB RAM，推荐 8GB+
-- **存储**: 最少 20GB 可用空间
 
-### 依赖服务
-- **PostgreSQL**: 15.0 或更高版本
-- **Redis**: 7.0 或更高版本
-- **Docker**: 20.10 或更高版本
-- **Docker Compose**: 2.0 或更高版本
+- **操作系统**: Ubuntu 20.04+ / CentOS 8+ / Amazon Linux 2
+- **Python**: 3.11+
+- **内存**: 最低 2GB，推荐 4GB+
+- **存储**: 最低 20GB，推荐 50GB+
+- **网络**: 稳定的互联网连接
 
-## 本地开发环境
+### 端口要求
 
-### 1. 克隆项目
+- **API服务**: 8000 (HTTP) / 8443 (HTTPS)
+- **PostgreSQL**: 5432
+- **Redis**: 6379
+- **Prometheus**: 9090
+- **Grafana**: 3000
+- **Nginx**: 80, 443
+
+## 依赖要求
+
+### 系统依赖
 
 ```bash
-git clone https://github.com/xupeng211/FootballPrediction.git
+# Ubuntu/Debian
+sudo apt update
+sudo apt install -y python3.11 python3.11-venv python3-pip nginx postgresql redis-server
+
+# CentOS/RHEL
+sudo yum update
+sudo yum install -y python3.11 python3-pip nginx postgresql-server redis
+```
+
+### Docker依赖（可选）
+
+```bash
+# 安装Docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+
+# 安装Docker Compose
+sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+```
+
+## 配置说明
+
+### 1. 克隆代码
+
+```bash
+git clone https://github.com/your-org/FootballPrediction.git
 cd FootballPrediction
 ```
 
-### 2. 设置 Python 环境
+### 2. 创建虚拟环境
 
 ```bash
-# 使用 pyenv 推荐
-pyenv install 3.11.9
-pyenv local 3.11.9
-
-# 或使用系统 Python
-python -m venv .venv
-source .venv/bin/activate  # Linux/macOS
+python3.11 -m venv venv
+source venv/bin/activate  # Linux/Mac
 # 或
-.venv\Scripts\activate  # Windows
+venv\Scripts\activate     # Windows
 ```
 
 ### 3. 安装依赖
 
 ```bash
-# 从锁文件安装依赖
-make install
-
-# 或手动安装
-pip install -r requirements/requirements.lock
+make install-locked
 ```
 
 ### 4. 环境配置
@@ -68,271 +92,232 @@ cp .env.example .env
 nano .env
 ```
 
-必需的环境变量：
+## 部署方式
+
+### 方式一：直接部署（开发/测试环境）
+
 ```bash
-# 数据库配置
-DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/football_db
+# 1. 设置环境变量
+export ENVIRONMENT=development
+export DATABASE_URL=postgresql://user:password@localhost:5432/football_prediction
+export REDIS_URL=redis://localhost:6379/0
 
-# Redis 配置
-REDIS_URL=redis://:password@localhost:6379/0
+# 2. 初始化数据库
+make db-init
 
-# API 密钥
-FOOTBALL_API_TOKEN=your-football-api-token
+# 3. 运行数据库迁移
+make db-upgrade
+
+# 4. 启动应用
+make serve
 ```
 
-### 5. 启动依赖服务
+### 方式二：Docker部署（推荐）
 
 ```bash
-# 使用 Docker Compose 启动
-docker-compose up -d postgres redis
-
-# 或使用系统服务
-sudo systemctl start postgresql
-sudo systemctl start redis-server
-```
-
-### 6. 运行数据库迁移
-
-```bash
-# 运行迁移
-make migrate
-
-# 或手动运行
-alembic upgrade head
-```
-
-### 7. 启动应用
-
-```bash
-# 开发模式启动
-make run
-
-# 或使用 uvicorn
-uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
-```
-
-访问 http://localhost:8000/docs 查看 API 文档。
-
-## Docker 部署
-
-### 1. 构建镜像
-
-```bash
-# 构建生产镜像
-make build
-
-# 或手动构建
+# 1. 构建镜像
 docker build -t football-prediction:latest .
+
+# 2. 使用Docker Compose启动
+docker-compose up -d
+
+# 3. 查看日志
+docker-compose logs -f
 ```
 
-### 2. 使用 Docker Compose
+### 方式三：生产环境部署（蓝绿部署）
 
 ```bash
-# 启动所有服务
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# 1. 使用部署脚本
+python scripts/deploy.py \
+    --environment production \
+    --version v1.0.0 \
+    --blue-green
 
-# 查看服务状态
-docker-compose ps
+# 2. 检查部署状态
+curl -f https://api.footballprediction.com/api/v1/health
 
-# 查看日志
-docker-compose logs -f app
+# 3. 如需回滚
+python scripts/deploy.py \
+    --action rollback \
+    --environment production
 ```
 
-### 3. Docker Compose 配置
+## 环境变量
 
-生产环境示例 (`docker-compose.prod.yml`):
-
-```yaml
-version: '3.8'
-
-services:
-  app:
-    image: football-prediction:latest
-    ports:
-      - "8000:8000"
-    environment:
-      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/football_prod
-      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
-      - ENVIRONMENT=production
-      - DEBUG=false
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-
-  postgres:
-    image: postgres:15
-    environment:
-      - POSTGRES_DB=football_prod
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
-    ports:
-      - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  redis:
-    image: redis:7-alpine
-    command: redis-server --requirepass ${REDIS_PASSWORD}
-    volumes:
-      - redis_data:/data
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./ssl:/etc/nginx/ssl:ro
-    depends_on:
-      - app
-
-volumes:
-  postgres_data:
-  redis_data:
-```
-
-## 生产环境部署
-
-### 1. 使用 Kubernetes
-
-#### Helm Chart 安装
+### 必需变量
 
 ```bash
-# 添加 Helm 仓库
-helm repo add football-prediction https://charts.football-prediction.com
+# 环境
+ENVIRONMENT=production  # development, staging, production
 
-# 安装
-helm install football-prediction football-prediction/football-prediction \
-  --namespace football-prediction \
-  --create-namespace \
-  --set database.password=${DB_PASSWORD} \
-  --set redis.password=${REDIS_PASSWORD} \
-  --set api.footballToken=${FOOTBALL_API_TOKEN}
+# 数据库
+DATABASE_URL=postgresql://user:password@host:5432/database
+
+# Redis
+REDIS_URL=redis://host:6379/0
+
+# JWT密钥
+JWT_SECRET_KEY=your-super-secret-jwt-key-min-32-chars
 ```
 
-#### Kustomize 部署
+### 可选变量
 
 ```bash
-# 应用配置
-kubectl apply -k k8s/overlays/production
+# API密钥
+FOOTBALL_API_KEY=your-football-api-key
 
-# 查看状态
-kubectl get pods -n football-prediction
-```
+# 监控
+PROMETHEUS_ENABLED=true
+GRAFANA_ENABLED=true
 
-### 2. 使用云服务
+# 缓存
+CACHE_TTL=3600
+CACHE_MAX_SIZE=1000
 
-#### AWS ECS
-
-```bash
-# 构建并推送镜像
-docker build -t football-prediction:latest .
-docker tag football-prediction:latest ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/football-prediction:latest
-docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/football-prediction:latest
-
-# 使用 ECS CLI 部署
-ecs-cli compose --project-name football-prediction \
-  --file docker-compose.prod.yml \
-  --cluster-config football-prediction \
-  --ecs-profile football-prediction \
-  up --create-log-groups
-```
-
-#### Google Cloud Run
-
-```bash
-# 构建并推送
-gcloud builds submit --tag gcr.io/PROJECT_ID/football-prediction
-
-# 部署
-gcloud run deploy football-prediction \
-  --image gcr.io/PROJECT_ID/football-prediction \
-  --platform managed \
-  --region us-central1 \
-  --allow-unauthenticated
-```
-
-### 3. 蓝绿部署
-
-使用 Nginx 实现蓝绿部署：
-
-```nginx
-upstream blue {
-    server blue-app:8000;
-}
-
-upstream green {
-    server green-app:8000;
-}
-
-server {
-    listen 80;
-    server_name football-prediction.com;
-
-    location / {
-        proxy_pass http://blue;  # 或 green
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    }
-}
-```
-
-## 环境变量配置
-
-### 开发环境 (.env.dev)
-
-```bash
-ENVIRONMENT=development
-DEBUG=true
-LOG_LEVEL=DEBUG
-
-DATABASE_URL=postgresql+asyncpg://dev_user:dev_pass@localhost:5432/football_dev
-REDIS_URL=redis://:dev_redis_pass@localhost:6379/0
-
-FOOTBALL_API_TOKEN=dev_token_here
-```
-
-### 生产环境 (.env.prod)
-
-```bash
-ENVIRONMENT=production
-DEBUG=false
+# 日志
 LOG_LEVEL=INFO
+LOG_FORMAT=json
 
-DATABASE_URL=postgresql+asyncpg://prod_user:${PROD_DB_PASSWORD}@prod-db:5432/football_prod
-REDIS_URL=redis://:${PROD_REDIS_PASSWORD}@prod-redis:6379/0
-
-FOOTBALL_API_TOKEN=${FOOTBALL_API_TOKEN}
-
-# 安全配置
-SECRET_KEY=${SECRET_KEY}
-JWT_SECRET_KEY=${JWT_SECRET_KEY}
-
-# 监控配置
-SENTRY_DSN=${SENTRY_DSN}
-PROMETHEUS_ENDPOINT=http://prometheus:9090
+# SSL
+SSL_CERT_PATH=/path/to/cert.pem
+SSL_KEY_PATH=/path/to/key.pem
 ```
 
-## 监控和日志
+## SSL证书配置
 
-### 1. Prometheus 监控
+### Let's Encrypt（推荐）
+
+```bash
+# 1. 安装Certbot
+sudo apt install certbot python3-certbot-nginx
+
+# 2. 获取证书
+sudo certbot --nginx -d api.footballprediction.com
+
+# 3. 设置自动续期
+sudo crontab -e
+# 添加：0 12 * * * /usr/bin/certbot renew --quiet
+```
+
+### 自签名证书（开发环境）
+
+```bash
+# 1. 生成证书
+openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes
+
+# 2. 配置Nginx
+sudo cp cert.pem /etc/ssl/certs/
+sudo cp key.pem /etc/ssl/private/
+sudo chmod 600 /etc/ssl/private/key.pem
+```
+
+### 使用SSL配置脚本
+
+```bash
+# 自动配置SSL
+sudo bash scripts/setup_ssl.sh \
+    --domain api.footballprediction.com \
+    --email admin@footballprediction.com \
+    --method letsencrypt
+```
+
+## 数据库设置
+
+### PostgreSQL安装与配置
+
+```bash
+# 1. 安装PostgreSQL
+sudo apt install postgresql postgresql-contrib
+
+# 2. 创建数据库和用户
+sudo -u postgres psql
+CREATE DATABASE football_prediction;
+CREATE USER fp_user WITH PASSWORD 'secure_password';
+GRANT ALL PRIVILEGES ON DATABASE football_prediction TO fp_user;
+\q
+
+# 3. 配置PostgreSQL
+sudo nano /etc/postgresql/14/main/postgresql.conf
+# 修改：listen_addresses = 'localhost'
+
+# 4. 重启PostgreSQL
+sudo systemctl restart postgresql
+```
+
+### 数据库迁移
+
+```bash
+# 初始化迁移
+make db-init
+
+# 运行迁移
+make db-upgrade
+
+# 创建迁移文件
+make db-revision message="添加新功能"
+
+# 回滚迁移
+make db-downgrade
+```
+
+### 数据库备份
+
+```bash
+# 手动备份
+pg_dump -h localhost -U fp_user football_prediction > backup.sql
+
+# 使用备份脚本
+python scripts/backup_database.py \
+    --output-dir /backup \
+    --compress \
+    --encrypt
+```
+
+## Redis配置
+
+### Redis安装与配置
+
+```bash
+# 1. 安装Redis
+sudo apt install redis-server
+
+# 2. 配置Redis
+sudo nano /etc/redis/redis.conf
+# 重要配置：
+# bind 127.0.0.1
+# requirepass your_redis_password
+# maxmemory 256mb
+# maxmemory-policy allkeys-lru
+
+# 3. 重启Redis
+sudo systemctl restart redis-server
+
+# 4. 测试连接
+redis-cli ping
+```
+
+### Redis集群（生产环境）
+
+```bash
+# 1. 创建Redis集群配置
+mkdir -p /etc/redis/cluster
+cp scripts/redis-cluster.conf /etc/redis/cluster/
+
+# 2. 启动集群节点
+for port in 7000 7001 7002; do
+    redis-server /etc/redis/cluster/redis-${port}.conf &
+done
+
+# 3. 创建集群
+redis-cli --cluster create \
+    127.0.0.1:7000 127.0.0.1:7001 127.0.0.1:7002 \
+    --cluster-replicas 0
+```
+
+## 监控系统
+
+### Prometheus配置
 
 ```yaml
 # prometheus.yml
@@ -342,242 +327,276 @@ global:
 scrape_configs:
   - job_name: 'football-prediction'
     static_configs:
-      - targets: ['football-prediction:8000']
+      - targets: ['localhost:8000']
     metrics_path: '/metrics'
+    scrape_interval: 5s
+
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['localhost:9187']
+
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['localhost:9121']
 ```
 
-### 2. Grafana 仪表板
-
-预配置的 Grafana 仪表板包括：
-- API 响应时间
-- 数据库连接数
-- Redis 使用率
-- 预测准确性指标
-
-### 3. 日志聚合
-
-使用 ELK Stack：
+### Grafana仪表板
 
 ```bash
-# Filebeat 配置
-filebeat.inputs:
-- type: log
-  enabled: true
-  paths:
-    - /var/log/football-prediction/*.log
-  fields:
-    app: football-prediction
-  fields_under_root: true
+# 1. 启动Grafana
+docker run -d \
+  --name=grafana \
+  -p 3000:3000 \
+  -v grafana-storage:/var/lib/grafana \
+  grafana/grafana-enterprise
 
-output.elasticsearch:
-  hosts: ["elasticsearch:9200"]
+# 2. 导入预配置仪表板
+curl -X POST \
+  http://admin:admin@localhost:3000/api/dashboards/db \
+  -H 'Content-Type: application/json' \
+  -d @monitoring/grafana/dashboards/football-prediction.json
 ```
 
-## 健康检查
+### 日志聚合（ELK Stack）
 
-### 应用健康检查
+```yaml
+# docker-compose.monitoring.yml
+version: '3.8'
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.5.0
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
 
-```bash
-# HTTP 健康检查
-curl http://localhost:8000/health
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.5.0
+    volumes:
+      - ./monitoring/logstash/pipeline:/usr/share/logstash/pipeline
+    ports:
+      - "5044:5044"
 
-# 详细的健康检查
-curl http://localhost:8000/health/full
-```
-
-### 数据库健康检查
-
-```bash
-# PostgreSQL
-pg_isready -h localhost -p 5432 -U postgres
-
-# Redis
-redis-cli -h localhost -p 6379 ping
-```
-
-## 性能调优
-
-### 1. 数据库优化
-
-```sql
--- 创建索引示例
-CREATE INDEX CONCURRENTLY idx_matches_date ON matches(start_time);
-CREATE INDEX CONCURRENTLY idx_predictions_match_id ON predictions(match_id);
-```
-
-### 2. Redis 配置
-
-```ini
-# redis.conf
-maxmemory 512mb
-maxmemory-policy allkeys-lru
-save 900 1
-save 300 10
-save 60 10000
-```
-
-### 3. 应用优化
-
-```python
-# uvicorn 配置
-workers = (cpu_count * 2) + 1
-limit_concurrency = 1000
-timeout_keep_alive = 30
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.5.0
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
 ```
 
 ## 故障排除
 
 ### 常见问题
 
-#### 1. 数据库连接失败
-
-```bash
-# 检查数据库状态
-docker-compose logs postgres
-
-# 检查连接字符串
-echo $DATABASE_URL
-
-# 测试连接
-psql $DATABASE_URL -c "SELECT 1"
-```
-
-#### 2. Redis 连接失败
-
-```bash
-# 检查 Redis 状态
-docker-compose logs redis
-
-# 测试连接
-redis-cli -h localhost -p 6379 ping
-```
-
-#### 3. API 响应慢
+#### 1. 应用无法启动
 
 ```bash
 # 检查日志
-docker-compose logs app | grep ERROR
+docker-compose logs app
+# 或
+journalctl -u football-prediction -f
 
-# 检查资源使用
-docker stats
+# 检查端口占用
+netstat -tlnp | grep :8000
 
-# 检查数据库慢查询
-SELECT query, mean_time, calls FROM pg_stat_statements ORDER BY mean_time DESC LIMIT 10;
+# 检查环境变量
+printenv | grep -E "(DATABASE|REDIS|JWT)"
 ```
 
-#### 4. 内存泄漏
+#### 2. 数据库连接失败
 
 ```bash
-# 使用内存分析工具
-pip install memory-profiler
-python -m memory_profiler src/main.py
+# 测试数据库连接
+psql -h localhost -U fp_user -d football_prediction
 
-# 或使用 tracemalloc
-python -m tracemalloc src/main.py
+# 检查PostgreSQL状态
+sudo systemctl status postgresql
+
+# 查看数据库日志
+sudo tail -f /var/log/postgresql/postgresql-14-main.log
 ```
 
-### 日志分析
+#### 3. Redis连接问题
 
 ```bash
-# 查看错误日志
-docker-compose logs app | grep ERROR
+# 测试Redis连接
+redis-cli -h localhost -p 6379 ping
 
-# 查看特定端点的错误
-docker-compose logs app | grep "/predictions" | grep ERROR
+# 检查Redis状态
+sudo systemctl status redis-server
 
-# 查看性能相关日志
-docker-compose logs app | grep "Slow query"
+# 监控Redis
+redis-cli --latency-history -i 1
 ```
 
-### 重启服务
+#### 4. SSL证书问题
 
 ```bash
-# 重启单个服务
-docker-compose restart app
+# 验证证书
+openssl x509 -in /path/to/cert.pem -text -noout
 
-# 重启所有服务
-docker-compose restart
+# 检查证书有效期
+openssl x509 -in /path/to/cert.pem -noout -dates
+
+# 测试HTTPS连接
+curl -v https://api.footballprediction.com
 ```
 
-## 备份和恢复
-
-### 数据库备份
+#### 5. 高CPU/内存使用
 
 ```bash
-# 创建备份
-docker exec postgres pg_dump -U postgres football_prod > backup.sql
+# 查看进程资源使用
+htop
 
-# 恢复
-docker exec -i postgres psql -U postgres football_prod < backup.sql
+# 查看Python进程详情
+ps aux | grep python
+
+# 分析内存使用
+memory_profiler python -m memory_profiler src/api/app.py
+
+# 生成性能报告
+make benchmark-full
 ```
 
-### Redis 备份
+### 性能优化
+
+#### 1. 数据库优化
+
+```sql
+-- 创建索引
+CREATE INDEX CONCURRENTLY idx_matches_date ON matches(date);
+CREATE INDEX CONCURRENTLY idx_predictions_user_id ON predictions(user_id);
+
+-- 分析慢查询
+SELECT query, mean_time, calls
+FROM pg_stat_statements
+ORDER BY mean_time DESC
+LIMIT 10;
+
+-- 更新表统计信息
+ANALYZE;
+```
+
+#### 2. Redis优化
 
 ```bash
-# 创建快照
-docker exec redis redis-cli BGSAVE
+# 监控Redis性能
+redis-cli --latency
+redis-cli info memory
+redis-cli info stats
 
-# 拷贝快照文件
-docker cp redis:/data/dump.rdb ./backup/
+# 优化内存使用
+redis-cli MEMORY USAGE key
+redis-cli --bigkeys
 ```
 
-## 安全配置
+#### 3. 应用优化
 
-### SSL/TLS 配置
+```python
+# 使用连接池
+DATABASE_POOL_SIZE = 20
+DATABASE_MAX_OVERFLOW = 30
 
-```nginx
-server {
-    listen 443 ssl;
-    server_name football-prediction.com;
-
-    ssl_certificate /path/to/cert.pem;
-    ssl_certificate_key /path/to/key.pem;
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers HIGH:!aNULL:!MD5;
+# 配置缓存
+CACHE_CONFIG = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'CONNECTION_POOL_KWARGS': {
+                'max_connections': 50,
+                'retry_on_timeout': True,
+            }
+        }
+    }
 }
 ```
 
-### 防火墙配置
+### 应急响应
+
+#### 1. 服务中断
 
 ```bash
-# 使用 ufw
-sudo ufw allow 22/tcp    # SSH
-sudo ufw allow 80/tcp    # HTTP
-sudo ufw allow 443/tcp   # HTTPS
-sudo ufw enable
+# 快速健康检查
+curl -f http://localhost:8000/api/v1/health || echo "Service down"
+
+# 快速重启
+docker-compose restart app
+# 或
+sudo systemctl restart football-prediction
+
+# 回滚到上一个版本
+python scripts/deploy.py --action rollback --environment production
 ```
 
-## 更新和维护
-
-### 0 停机更新
+#### 2. 数据库问题
 
 ```bash
-# 使用蓝绿部署
-kubectl rollout status deployment/football-prediction-blue
-kubectl rollout status deployment/football-prediction-green
+# 紧急备份
+pg_dump -h localhost -U fp_user football_prediction > emergency_backup.sql
 
-# 切换流量
-kubectl patch service football-prediction -p '{"spec":{"selector":{"version":"green"}}}'
+# 恢复备份
+psql -h localhost -U fp_user football_prediction < backup.sql
+
+# 进入紧急模式
+export EMERGENCY_MODE=true
+make serve
 ```
 
-### 数据库迁移
+#### 3. 安全事件
 
 ```bash
-# 运行迁移
-alembic upgrade head
+# 检查异常登录
+sudo tail -f /var/log/auth.log | grep -i "failed\|invalid"
 
-# 回滚
-alembic downgrade -1
+# 检查应用日志
+grep -i "error\|exception\|failed" /var/log/football-prediction/app.log
+
+# 立即撤销所有会话
+redis-cli FLUSHDB
+
+# 强制重新认证
+export FORCE_REAUTH=true
 ```
 
-### 依赖更新
+## 部署检查清单
 
-```bash
-# 更新依赖
-pip-compile requirements/dev.in
-pip install -r requirements/dev.lock
+### 部署前检查
 
-# 提交变更
-git add requirements/
-git commit -m "Update dependencies"
-```
+- [ ] 代码已通过所有测试
+- [ ] 安全扫描通过
+- [ ] 性能测试通过
+- [ ] 数据库备份已完成
+- [ ] SSL证书已配置
+- [ ] 监控系统已启用
+- [ ] 日志系统正常
+- [ ] 环境变量已设置
+- [ ] 依赖已安装
+- [ ] 防火墙规则已配置
+
+### 部署后验证
+
+- [ ] 应用正常启动
+- [ ] 健康检查通过
+- [ ] API端点响应正常
+- [ ] 数据库连接正常
+- [ ] Redis缓存正常
+- [ ] 监控指标正常
+- [ ] 日志无错误
+- [ ] SSL证书有效
+- [ ] 性能指标正常
+- [ ] 备份计划已设置
+
+### 联系信息
+
+- **技术负责人**: [姓名] <email@example.com>
+- **运维团队**: <ops@example.com>
+- **紧急联系**: <emergency@example.com>
+
+---
+
+更新时间: 2025-01-14
+版本: v1.0.0

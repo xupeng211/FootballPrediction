@@ -1,179 +1,194 @@
-name: 部署
+name: Deploy to Production
 
 on:
-  workflow_call:
+  workflow_run:
     inputs:
       environment:
-        description: "部署环境"
+        description: 'Deployment environment (staging or production)'
         required: true
-        default: "staging"
-        type: choice
-        options:
-          - staging
-          - production
-      image_tag:
-        description: "镜像标签"
-        required: false
-        type: string
+        default: 'staging'
+      version:
+        description: 'Version to deploy'
+        required: true
   workflow_dispatch:
     inputs:
       environment:
-        description: "部署环境"
+        description: 'Deployment environment (staging or production)'
         required: true
-        default: "staging"
-        type: choice
-        options:
-          - staging
-          - production
-      image_tag:
-        description: "镜像标签"
+        default: 'staging'
+      version:
+        description: 'Version to deploy (auto-detect if not provided)'
         required: false
-        type: string
 
 jobs:
   deploy:
-    name: 部署到 ${{ inputs.environment }}
+    name: Deploy to ${{ github.event.inputs.environment || 'staging' }}
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
-    timeout-minutes: 30
-
-    strategy:
-      matrix:
-        environment: [${{ inputs.environment }}]
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+    concurrency: ${{ github.event.inputs.environment || 'staging' }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4.1.6
-
-      - name: 准备部署配置
-        run: |
-          echo "准备部署到 ${{ inputs.environment }} 环境"
-
-          # 创建部署配置
-          cat > deploy-config.json << EOF
-          {
-            "environment": "${{ inputs.environment }}",
-            "image_tag": "${{ inputs.image_tag || 'latest' }}",
-            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "branch": "${{ github.ref_name }}",
-            "commit": "${{ github.sha }}"
-          }
-          EOF
-
-      - name: 验证镜像存在
-        if: inputs.image_tag != ''
-        run: |
-          echo "验证镜像: ${{ secrets.DOCKER_USERNAME }}/football-prediction:${{ inputs.image_tag }}"
-          docker manifest inspect ${{ secrets.DOCKER_USERNAME }}/football-prediction:${{ inputs.image_tag }} || echo "使用默认镜像"
-
-      - name: 部署到 Staging
-        if: matrix.environment == 'staging'
-        run: |
-          echo "=== 部署到 Staging 环境 ==="
-
-          # 这里可以添加实际的部署命令
-          # 例如：使用 kubectl, helm, 或其他部署工具
-
-          # 模拟部署过程
-          echo "1. 停止旧服务..."
-          sleep 5
-          echo "2. 拉取新镜像..."
-          sleep 3
-          echo "3. 启动新服务..."
-          sleep 5
-          echo "4. 健康检查..."
-          sleep 3
-          echo "✅ 部署到 Staging 完成"
-
-      - name: 部署到 Production
-        if: matrix.environment == 'production'
-        run: |
-          echo "=== 部署到 Production 环境 ==="
-
-          # Production 部署需要额外的安全检查
-          echo "1. 验证部署权限..."
-          sleep 2
-          echo "2. 备份当前版本..."
-          sleep 10
-          echo "3. 执行蓝绿部署或滚动更新..."
-          sleep 15
-          echo "4. 验证新版本健康状态..."
-          sleep 5
-          echo "✅ 部署到 Production 完成"
-
-      - name: 运行烟雾测试
-        run: |
-          echo "=== 运行烟雾测试 ==="
-          echo "测试 ${{ inputs.environment }} 环境的服务可用性..."
-
-          # 这里可以添加实际的烟雾测试
-          # 例如：curl 健康检查端点、API 测试等
-
-          sleep 5
-          echo "✅ 烟雾测试通过"
-
-      - name: 部署后验证
-        run: |
-          echo "=== 部署后验证 ==="
-
-          # 验证服务状态
-          echo "服务状态: 健康"
-          echo "响应时间: 正常"
-          echo "错误率: 0%"
-
-          # 生成部署报告
-          cat > deployment-report.md << EOF
-          # 部署报告
-
-          ## 基本信息
-          - **环境**: ${{ inputs.environment }}
-          - **镜像**: ${{ inputs.image_tag || 'latest' }}
-          - **部署时间**: $(date -u +%Y-%m-%dT%H:%M:%SZ)
-          - **提交**: [${{ github.sha }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
-
-          ## 部署结果
-          - **状态**: ✅ 成功
-          - **持续时间**: $(date +%s)秒
-
-          ## 验证结果
-          - **健康检查**: ✅ 通过
-          - **烟雾测试**: ✅ 通过
-          - **性能指标**: ✅ 正常
-          EOF
-
-      - name: 上传部署报告
-        uses: actions/upload-artifact@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
-          name: deployment-report-${{ inputs.environment }}
-          path: deployment-report.md
+          fetch-depth: 0
 
-      - name: 通知部署结果
-        if: always()
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Configure AWS credentials
+        if: github.event.inputs.environment == 'production'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Install dependencies
         run: |
-          # 这里可以添加通知逻辑
-          # 例如：发送 Slack 通知、邮件等
-          echo "部署通知已发送"
+          python -m pip install --upgrade pip
+          make install-locked
+          npm install -g serverless
 
-  # 回滚任务（仅在失败时可用）
+      - name: Run pre-deploy checks
+        run: |
+          echo "Running pre-deploy checks..."
+          make env-check
+          make test-quick
+          make lint
+          make type-check
+
+      - name: Build application
+        run: |
+          echo "Building application..."
+          make build
+
+      - name: Deploy to ${{ github.event.inputs.environment || 'staging' }}
+        run: |
+          echo "Deploying to ${{ github.event.inputs.environment || 'staging' }}..."
+          python scripts/deploy.py \
+            --environment ${{ github.event.inputs.environment || 'staging' }} \
+            --version ${{ github.event.inputs.version || 'latest' }}
+
+      - name: Health check
+        run: |
+          echo "Running health check..."
+          sleep 30  # 等待服务启动
+
+          if [[ "${{ github.event.inputs.environment || 'staging' }}" == "production" ]]; then
+            URL="https://api.footballprediction.com"
+          else
+            URL="https://staging-api.footballprediction.com"
+          fi
+
+          for i in {1..30}; do
+            if curl -f "$URL/api/v1/health" > /dev/null; then
+              echo "✅ Health check passed"
+              break
+            fi
+            echo "Attempt $i/30: waiting for service..."
+            sleep 10
+          done
+
+          if [[ $i -eq 30 ]]; then
+            echo "❌ Health check failed"
+            exit 1
+          fi
+
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests..."
+          make smoke-test
+
+          # 测试认证端点
+          if [[ "${{ github.event.inputs.environment || 'staging' }}" == "production" ]]; then
+            URL="https://api.footballprediction.com"
+          else
+            URL="https://staging-api.footballprediction.com"
+          fi
+
+          # 测试健康检查
+          curl -f "$URL/api/v1/health"
+
+          # 测试认证（如果可用）
+          # curl -X POST "$URL/api/v1/auth/login" \
+          #   -H "Content-Type: application/x-www-form-urlencoded" \
+          #   -d "username=test&password=test"
+
+      - name: Notify deployment success
+        run: |
+          echo "Deployment to ${{ github.event.inputs.environment || 'staging' }} completed successfully!"
+
+          # 发送Slack通知
+          if [ "${{ secrets.SLACK_WEBHOOK }}" ]; then
+            curl -X POST "${{ secrets.SLACK_WEBHOOK }}" \
+              -H 'Content-type: application/json' \
+              --data "{
+                \"text\": \"✅ FootballPrediction deployed to ${{ github.event.inputs.environment || 'staging' }}\",
+                \"attachments\": [{
+                  \"color\": \"good\",
+                  \"fields\": [{
+                    \"title\": \"Version\",
+                    \"value\": \"${{ github.event.inputs.version || 'latest' }}\",
+                    \"short\": true
+                  }, {
+                    \"title\": \"Commit\",
+                    \"value\": \"$GITHUB_SHA\",
+                    \"short\": true
+                  }]
+                }]
+              }"
+          fi
+
   rollback:
-    name: 回滚部署
+    name: Rollback deployment
     runs-on: ubuntu-latest
     needs: deploy
-    if: failure() && needs.deploy.result == 'failure'
-    environment: ${{ inputs.environment }}
-    timeout-minutes: 15
+    if: failure() && github.event.inputs.environment == 'production'
+    environment: production
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4.1.6
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: 执行回滚
-        run: |
-          echo "=== 执行回滚到 ${{ inputs.environment }} 环境 ==="
-          echo "回滚到上一个版本..."
-          sleep 10
-          echo "✅ 回滚完成"
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: 通知回滚
+      - name: Rollback deployment
         run: |
-          echo "回滚通知已发送"
+          echo "Rolling back deployment..."
+          python scripts/deploy.py \
+            --action rollback \
+            --environment production
+
+      - name: Notify rollback
+        run: |
+          echo "Deployment rolled back!"
+
+          # 发送Slack通知
+          if [ "${{ secrets.SLACK_WEBHOOK }}" ]; then
+            curl -X POST "${{ secrets.SLACK_WEBHOOK }}" \
+              -H 'Content-type: application/json' \
+              --data "{
+                \"text\": \"🚨 FootballPrediction deployment rolled back\",
+                \"attachments\": [{
+                  \"color\": \"danger\",
+                  \"fields\": [{
+                    \"title\": \"Environment\",
+                    \"value\": \"production\",
+                    \"short\": true
+                  }]
+                }]
+              }"
+          fi

@@ -1,0 +1,70 @@
+{
+  "schedule_period": "2025-01-15 to 2025-02-12",
+  "rotation_type": "weekly",
+  "handover_time": "09:00 UTC+8",
+  "escalation_policy": {
+    "level1": "oncall_engineer",
+    "level2": "tech_lead",
+    "level3": "engineering_manager"
+  },
+  "on_call_engineers": [
+    {
+      "week": "2025-01-15 to 2025-01-22",
+      "primary": "Alice Wang",
+      "secondary": "Bob Chen",
+      "contact": {
+        "primary": "+86-138-xxxx-xxxx",
+        "secondary": "+86-139-xxxx-xxxx",
+        "email": "alice.wang@example.com"
+      }
+    },
+    {
+      "week": "2025-01-22 to 2025-01-29",
+      "primary": "Charlie Zhang",
+      "secondary": "David Liu",
+      "contact": {
+        "primary": "+86-136-xxxx-xxxx",
+        "secondary": "+86-137-xxxx-xxxx",
+        "email": "charlie.zhang@example.com"
+      }
+    },
+    {
+      "week": "2025-01-29 to 2025-02-05",
+      "primary": "Eva Zhou",
+      "secondary": "Frank Wu",
+      "contact": {
+        "primary": "+86-135-xxxx-xxxx",
+        "secondary": "+86-134-xxxx-xxxx",
+        "email": "eva.zhou@example.com"
+      }
+    },
+    {
+      "week": "2025-02-05 to 2025-02-12",
+      "primary": "Grace Li",
+      "secondary": "Henry Ma",
+      "contact": {
+        "primary": "+86-133-xxxx-xxxx",
+        "secondary": "+86-132-xxxx-xxxx",
+        "email": "grace.li@example.com"
+      }
+    }
+  ],
+  "response_sla": {
+    "critical": {
+      "response_time": "5 minutes",
+      "resolution_time": "30 minutes"
+    },
+    "high": {
+      "response_time": "15 minutes",
+      "resolution_time": "2 hours"
+    },
+    "medium": {
+      "response_time": "1 hour",
+      "resolution_time": "4 hours"
+    },
+    "low": {
+      "response_time": "4 hours",
+      "resolution_time": "1 business day"
+    }
+  }
+}
