@@ -8,6 +8,7 @@ import re
 from pathlib import Path
 from typing import List, Set, Dict, Optional, Tuple
 
+
 class SyntaxErrorFixer:
     """语法错误修复器"""
 
@@ -18,7 +19,7 @@ class SyntaxErrorFixer:
     def fix_file(self, file_path: Path) -> bool:
         """修复单个文件的语法错误"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             original_content = content
@@ -37,7 +38,7 @@ class SyntaxErrorFixer:
 
             # 如果内容有变化，写回文件
             if content != original_content:
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write(content)
                 self.fixes_applied += 1
                 print(f"✓ Fixed: {file_path}")
@@ -55,34 +56,23 @@ class SyntaxErrorFixer:
         """修复缺失的右括号"""
         # 修复 Optional[Dict[str, Any  -> Optional[Dict[str, Any]]
         content = re.sub(
-            r'Optional\[Dict\[str,\s*Any\s*$',
-            'Optional[Dict[str, Any]]',
+            r"Optional\[Dict\[str,\s*Any\s*$",
+            "Optional[Dict[str, Any]]",
             content,
-            flags=re.MULTILINE
+            flags=re.MULTILINE,
         )
 
         # 修复 Dict[str, Any  -> Dict[str, Any]
         content = re.sub(
-            r'Dict\[str,\s*Any\s*$',
-            'Dict[str, Any]',
-            content,
-            flags=re.MULTILINE
+            r"Dict\[str,\s*Any\s*$", "Dict[str, Any]", content, flags=re.MULTILINE
         )
 
         # 修复 List[Any  -> List[Any]
-        content = re.sub(
-            r'List\[Any\s*$',
-            'List[Any]',
-            content,
-            flags=re.MULTILINE
-        )
+        content = re.sub(r"List\[Any\s*$", "List[Any]", content, flags=re.MULTILINE)
 
         # 修复 Union[str, Path  -> Union[str, Path]
         content = re.sub(
-            r'Union\[str,\s*Path\s*$',
-            'Union[str, Path]',
-            content,
-            flags=re.MULTILINE
+            r"Union\[str,\s*Path\s*$", "Union[str, Path]", content, flags=re.MULTILINE
         )
 
         return content
@@ -90,62 +80,63 @@ class SyntaxErrorFixer:
     def fix_extra_brackets(self, content: str) -> str:
         """修复多余的右括号"""
         # 修复 ]] -> ]
-        content = re.sub(r'\]\]', ']', content)
+        content = re.sub(r"\]\]", "]", content)
 
         # 修复 ]]] -> ]
-        content = re.sub(r'\]\]\]', ']', content)
+        content = re.sub(r"\]\]\]", "]", content)
 
         # 修复 ]] = None -> ] = None
-        content = re.sub(r'\]\]\s*=\s*None', '] = None', content)
+        content = re.sub(r"\]\]\s*=\s*None", "] = None", content)
 
         # 修复 ]]] = None -> ] = None
-        content = re.sub(r'\]\]\]\s*=\s*None', '] = None', content)
+        content = re.sub(r"\]\]\]\s*=\s*None", "] = None", content)
 
         return content
 
     def fix_mismatched_brackets(self, content: str) -> str:
         """修复括号不匹配"""
-        lines = content.split('\n')
+        lines = content.split("\n")
         new_lines = []
 
         for line in lines:
             # 修复 Optional[Dict[str, Any] ]] = None
-            line = re.sub(r'Optional\[Dict\[str,\s*Any\]\s*\]\]\s*=\s*None',
-                         'Optional[Dict[str, Any]] = None', line)
+            line = re.sub(
+                r"Optional\[Dict\[str,\s*Any\]\s*\]\]\s*=\s*None",
+                "Optional[Dict[str, Any]] = None",
+                line,
+            )
 
             # 修复 Dict[str, Any] ]] = None
-            line = re.sub(r'Dict\[str,\s*Any\]\s*\]\]\s*=\s*None',
-                         'Dict[str, Any] = None', line)
+            line = re.sub(
+                r"Dict\[str,\s*Any\]\s*\]\]\s*=\s*None", "Dict[str, Any] = None", line
+            )
 
             # 修复 List[Any] ]] = None
-            line = re.sub(r'List\[Any\]\s*\]\]\s*=\s*None',
-                         'List[Any] = None', line)
+            line = re.sub(r"List\[Any\]\s*\]\]\s*=\s*None", "List[Any] = None", line)
 
             new_lines.append(line)
 
-        return '\n'.join(new_lines)
+        return "\n".join(new_lines)
 
     def fix_optional_type_annotations(self, content: str) -> str:
         """修复Optional类型注解"""
         # 修复 Optional[Dict[str, Any] = None
         content = re.sub(
-            r'Optional\[Dict\[str,\s*Any\]\s*=\s*None',
-            'Optional[Dict[str, Any]] = None',
-            content
+            r"Optional\[Dict\[str,\s*Any\]\s*=\s*None",
+            "Optional[Dict[str, Any]] = None",
+            content,
         )
 
         # 修复 Optional[List[Any] = None
         content = re.sub(
-            r'Optional\[List\[Any\]\s*=\s*None',
-            'Optional[List[Any]] = None',
-            content
+            r"Optional\[List\[Any\]\s*=\s*None", "Optional[List[Any]] = None", content
         )
 
         # 修复 Optional[Union[str, int] = None
         content = re.sub(
-            r'Optional\[Union\[([^\]]+)\]\s*=\s*None',
-            r'Optional[Union[\1]] = None',
-            content
+            r"Optional\[Union\[([^\]]+)\]\s*=\s*None",
+            r"Optional[Union[\1]] = None",
+            content,
         )
 
         return content
@@ -154,16 +145,12 @@ class SyntaxErrorFixer:
         """修复Dict类型注解"""
         # 修复 Dict[str, Any = None
         content = re.sub(
-            r'Dict\[str,\s*Any\]\s*=\s*None',
-            'Dict[str, Any] = None',
-            content
+            r"Dict\[str,\s*Any\]\s*=\s*None", "Dict[str, Any] = None", content
         )
 
         # 修复 Dict[str, Any] = None
         content = re.sub(
-            r'Dict\[str,\s*Any\]\s*=\s*None',
-            'Dict[str, Any] = None',
-            content
+            r"Dict\[str,\s*Any\]\s*=\s*None", "Dict[str, Any] = None", content
         )
 
         return content
@@ -171,11 +158,7 @@ class SyntaxErrorFixer:
     def fix_list_type_annotations(self, content: str) -> str:
         """修复List类型注解"""
         # 修复 List[Any = None
-        content = re.sub(
-            r'List\[Any\]\s*=\s*None',
-            'List[Any] = None',
-            content
-        )
+        content = re.sub(r"List\[Any\]\s*=\s*None", "List[Any] = None", content)
 
         return content
 
@@ -183,9 +166,7 @@ class SyntaxErrorFixer:
         """修复Union类型注解"""
         # 修复 Union[str, Path = None
         content = re.sub(
-            r'Union\[str,\s*Path\]\s*=\s*None',
-            'Union[str, Path] = None',
-            content
+            r"Union\[str,\s*Path\]\s*=\s*None", "Union[str, Path] = None", content
         )
 
         return content
@@ -195,16 +176,16 @@ class SyntaxErrorFixer:
         # 修复函数参数中的类型注解
         # param: Optional[Dict[str, Any = None -> param: Optional[Dict[str, Any]] = None
         content = re.sub(
-            r'(\w+):\s*Optional\[Dict\[str,\s*Any\]\s*=\s*None',
-            r'\1: Optional[Dict[str, Any]] = None',
-            content
+            r"(\w+):\s*Optional\[Dict\[str,\s*Any\]\s*=\s*None",
+            r"\1: Optional[Dict[str, Any]] = None",
+            content,
         )
 
         # param: Dict[str, Any = None -> param: Dict[str, Any] = None
         content = re.sub(
-            r'(\w+):\s*Dict\[str,\s*Any\]\s*=\s*None',
-            r'\1: Dict[str, Any] = None',
-            content
+            r"(\w+):\s*Dict\[str,\s*Any\]\s*=\s*None",
+            r"\1: Dict[str, Any] = None",
+            content,
         )
 
         return content
@@ -214,25 +195,25 @@ class SyntaxErrorFixer:
         # 修复类属性定义中的类型注解
         # attr: Optional[Dict[str, Any = None -> attr: Optional[Dict[str, Any]] = None
         content = re.sub(
-            r'(\w+):\s*Optional\[Dict\[str,\s*Any\]\s*=\s*None',
-            r'\1: Optional[Dict[str, Any]] = None',
-            content
+            r"(\w+):\s*Optional\[Dict\[str,\s*Any\]\s*=\s*None",
+            r"\1: Optional[Dict[str, Any]] = None",
+            content,
         )
 
         # 修复类属性中的多重括号
         # details: Optional[Dict[str, Any] ]] = None -> details: Optional[Dict[str, Any]] = None
         content = re.sub(
-            r'(\w+):\s*Optional\[Dict\[str,\s*Any\]\s*\]\]\s*=\s*None',
-            r'\1: Optional[Dict[str, Any]] = None',
-            content
+            r"(\w+):\s*Optional\[Dict\[str,\s*Any\]\s*\]\]\s*=\s*None",
+            r"\1: Optional[Dict[str, Any]] = None",
+            content,
         )
 
         # 修复三重括号
         # details: Optional[Dict[str, Any] ]]] = None -> details: Optional[Dict[str, Any]] = None
         content = re.sub(
-            r'(\w+):\s*Optional\[Dict\[str,\s*Any\]\s*\]\]\]\s*=\s*None',
-            r'\1: Optional[Dict[str, Any]] = None',
-            content
+            r"(\w+):\s*Optional\[Dict\[str,\s*Any\]\s*\]\]\]\s*=\s*None",
+            r"\1: Optional[Dict[str, Any]] = None",
+            content,
         )
 
         return content
@@ -240,13 +221,15 @@ class SyntaxErrorFixer:
     def fix_generic_type_annotations(self, content: str) -> str:
         """修复泛型类型注解"""
         # 修复 Type[Any][T] -> Type[Any, T]
-        content = re.sub(r'Type\[Any\]\[(\w+)\]', r'Type[Any, \1]', content)
+        content = re.sub(r"Type\[Any\]\[(\w+)\]", r"Type[Any, \1]", content)
 
         # 修复 Dict[str, Any][Type] -> Dict[Type
-        content = re.sub(r'Dict\[str,\s*Any\]\[(\w+)\]', r'Dict[\1', content)
+        content = re.sub(r"Dict\[str,\s*Any\]\[(\w+)\]", r"Dict[\1", content)
 
         # 修复 Dict[str, Any][Type, Service] -> Dict[Type, Service]
-        content = re.sub(r'Dict\[str,\s*Any\]\[(\w+),\s*(\w+)\]', r'Dict[\1, \2]', content)
+        content = re.sub(
+            r"Dict\[str,\s*Any\]\[(\w+),\s*(\w+)\]", r"Dict[\1, \2]", content
+        )
 
         return content
 
@@ -268,6 +251,7 @@ class SyntaxErrorFixer:
         print(f"模块 {module_name} 修复完成，共修复 {fixed_count} 个文件")
         return fixed_count
 
+
 def main():
     """主函数"""
     fixer = SyntaxErrorFixer()
@@ -283,7 +267,7 @@ def main():
         "domain",
         "cache",
         "tasks",
-        "monitoring"
+        "monitoring",
     ]
 
     print("开始修复Python语法错误...")
@@ -294,13 +278,14 @@ def main():
         total_fixed += fixer.fix_module(module)
 
     print("\n" + "=" * 50)
-    print(f"修复完成！")
+    print("修复完成！")
     print(f"总计修复文件数: {total_fixed}")
 
     if fixer.errors_fixed:
         print("\n仍有错误的文件:")
         for file_path, error in fixer.errors_fixed.items():
             print(f"  {file_path}: {error}")
+
 
 if __name__ == "__main__":
     main()
