@@ -499,6 +499,40 @@ ci: ## CI: Simulate GitHub Actions CI pipeline
 	echo "$(GREEN)✅ CI simulation passed$(RESET)"
 
 # ============================================================================
+# 📊 Coverage Optimization
+# ============================================================================
+
+coverage-optimizer: ## Coverage: Run coverage optimization tool
+	@echo "$(BLUE)🚀 Running coverage optimizer...$(RESET)" && \
+	$(ACTIVATE) && \
+	python scripts/coverage_optimizer.py
+
+coverage-analyze: ## Coverage: Analyze uncovered modules
+	@echo "$(BLUE)📊 Analyzing uncovered modules...$(RESET)" && \
+	$(ACTIVATE) && \
+	python scripts/coverage_optimizer.py --analyze
+
+coverage-generate-tests: ## Coverage: Generate test templates for uncovered modules
+	@echo "$(BLUE)📝 Generating test templates...$(RESET)" && \
+	$(ACTIVATE) && \
+	python scripts/coverage_optimizer.py --generate-tests
+
+coverage-phase1: ## Coverage: Execute Phase 1 tests (quick wins)
+	@echo "$(BLUE)🎯 Executing Phase 1 coverage improvement...$(RESET)" && \
+	$(ACTIVATE) && \
+	python scripts/coverage_optimizer.py --phase1
+
+coverage-report: ## Coverage: Generate detailed coverage report
+	@echo "$(BLUE)📈 Generating coverage report...$(RESET)" && \
+	$(ACTIVATE) && \
+	python scripts/coverage_optimizer.py --report
+
+coverage-boost: ## Coverage: Quick coverage boost to 15%
+	@echo "$(BLUE)⚡ Quick coverage boost to 15%...$(RESET)" && \
+	$(ACTIVATE) && \
+	pytest tests/unit/utils/ tests/api/test_api_core_functional.py tests/services/test_services_core_functional.py --cov=src --cov-report=term-missing -q
+
+# ============================================================================
 # 🐳 Container Management
 # ============================================================================
 up: ## Container: Start docker-compose services

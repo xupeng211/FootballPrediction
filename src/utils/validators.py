@@ -14,7 +14,7 @@ def is_valid_email(email: str) -> bool:
 
 def is_valid_phone(phone: str) -> bool:
     """Validate phone number"""
-    pattern = r"^\+?[\d\s-()]+$"
+    pattern = r"^\+?[\d\s\-\(\)]+$"
     return bool(re.match(pattern, phone))
 
 

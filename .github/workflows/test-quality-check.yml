@@ -1,0 +1,169 @@
+name: Test Quality Check
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test-quality:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # 获取完整历史
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        make install
+        pip install pytest pytest-cov pytest-xdist
+
+    - name: Run test quality check
+      run: |
+        echo "Running comprehensive test quality check..."
+        python scripts/check_test_quality.py tests/
+
+        # 保存质量报告
+        python scripts/check_test_quality.py tests/ --output json > test-quality-report.json
+
+    - name: Upload quality report
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-quality-report
+        path: test-quality-report.json
+        retention-days: 30
+
+    - name: Comment PR with quality score
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const report = JSON.parse(fs.readFileSync('test-quality-report.json', 'utf8'));
+
+          const score = report.stats.issues_found;
+          const files = report.stats.files_checked;
+          const errors = report.stats.errors;
+          const warnings = report.stats.warnings;
+
+          // 质量评分计算（简化版）
+          const qualityScore = Math.max(0, 100 - errors * 10 - warnings * 3);
+
+          let message = `## 📊 测试质量报告\n\n`;
+          message += `- **检查文件数**: ${files}\n`;
+          message += `- **问题总数**: ${score}\n`;
+          message += `- **错误**: ${errors}\n`;
+          message += `- **警告**: ${warnings}\n`;
+          message += `- **质量评分**: ${qualityScore}/100\n\n`;
+
+          if (qualityScore >= 90) {
+            message += `🏆 **优秀**！测试质量很高。\n`;
+          } else if (qualityScore >= 80) {
+            message += `👍 **良好**！测试质量不错。\n`;
+          } else if (qualityScore >= 70) {
+            message += `👌 **一般**。建议改进测试质量。\n`;
+          } else {
+            message += `⚠️ **需要改进**。请优先修复测试问题。\n`;
+          }
+
+          if (errors > 0) {
+            message += `\n⚠️ 有 ${errors} 个错误需要修复。`;
+          }
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: message
+          });
+
+    - name: Check quality gate
+      run: |
+        # 获取质量评分
+        SCORE=$(python scripts/check_test_quality.py tests/ 2>&1 | grep "总分:" | sed 's/.*总分: \([0-9]*\)\/100.*/\1/')
+
+        # 设置质量门禁
+        if [ "$SCORE" -lt 70 ]; then
+          echo "❌ 测试质量评分过低 ($SCORE/100)，请修复问题"
+          exit 1
+        else
+          echo "✅ 测试质量评分通过 ($SCORE/100)"
+        fi
+
+    - name: Run unit tests
+      run: |
+        echo "Running unit tests..."
+        make test-unit
+
+    - name: Check test coverage
+      run: |
+        echo "Checking test coverage..."
+        make coverage-local
+        # 确保覆盖率不低于25%
+        COVERAGE=$(coverage report --format=json | jq -r '.totals.percent_covered')
+        if (( $(echo "$COVERAGE < 25" | bc -l) )); then
+          echo "❌ 覆盖率过低 ($COVERAGE%)，需要至少25%"
+          exit 1
+        fi
+        echo "✅ 覆盖率检查通过 ($COVERAGE%)"
+
+  quality-report:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        make install
+        pip install pytest pytest-cov pytest-xdist matplotlib
+
+    - name: Run comprehensive quality check
+      run: |
+        # 运行质量检查
+        python scripts/check_test_quality.py tests/ > quality-report.txt
+
+        # 生成趋势报告
+        python scripts/generate_quality_trend.py
+
+        # 生成HTML报告
+        mkdir -p reports
+        python scripts/generate_quality_html.py > reports/quality-report.html
+
+    - name: Upload quality reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: quality-reports
+        path: |
+          quality-report.txt
+          reports/
+          test-quality-report.json
+        retention-days: 90
+
+    - name: Update README with badge
+      run: |
+        # 更新README中的质量徽章
+        SCORE=$(python scripts/check_test_quality.py tests/ 2>&1 | grep "总分:" | sed 's/.*总分: \([0-9]*\)\/100.*/\1/')
+
+        # 这里可以更新README或其他文档中的徽章
+        echo "Current quality score: $SCORE/100"

@@ -8,7 +8,12 @@ import os
 import tempfile
 import time
 from pathlib import Path
-# from src.utils.file_utils import FileUtils
+import sys
+
+# 添加src到路径
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../src"))
+
+from src.utils.file_utils import FileUtils
 
 
 class TestFileUtils:
@@ -124,9 +129,21 @@ class TestFileUtils:
 
     def test_write_json_file_alias_failure(self):
         """测试写入JSON文件别名方法 - 失败"""
-        # 尝试写入到只读目录（模拟失败）
-        result = FileUtils.write_json_file({"test": "data"}, "/root/test.json")
-        assert result is False
+        # 测试write_json_file会捕获ValueError并返回False
+        from unittest.mock import patch
+
+        with patch.object(
+            FileUtils, "write_json", side_effect=ValueError("Test error")
+        ):
+            result = FileUtils.write_json_file({"test": "data"}, "/test/path.json")
+            assert result is False
+
+        # 测试write_json_file会捕获RuntimeError并返回False
+        with patch.object(
+            FileUtils, "write_json", side_effect=RuntimeError("Runtime error")
+        ):
+            result = FileUtils.write_json_file({"test": "data"}, "/test/path.json")
+            assert result is False
 
     def test_get_file_hash_existing(self):
         """测试获取存在文件的哈希值"""

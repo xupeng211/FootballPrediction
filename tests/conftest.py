@@ -38,12 +38,36 @@ def configure_warnings():
         module=r"src\.dependencies\.optional",
     )
 
+    # 过滤 Pydantic 弃用警告（主要来自第三方库如MLflow）
+    warnings.filterwarnings(
+        "ignore",
+        category=DeprecationWarning,
+        message=".*Support for class-based.*config.*is deprecated.*",
+        module=r".*pydantic.*",
+    )
+    warnings.filterwarnings(
+        "ignore",
+        category=DeprecationWarning,
+        message=".*Pydantic V1 style.*@validator.*validators are deprecated.*",
+        module=r".*mlflow.*",
+    )
+    warnings.filterwarnings(
+        "ignore",
+        category=DeprecationWarning,
+        message=".*Pydantic V1 style.*@root_validator.*validators are deprecated.*",
+        module=r".*mlflow.*",
+    )
+
+    # 过滤 pytest asyncio 警告
+    warnings.filterwarnings(
+        "ignore",
+        category=pytest.PytestDeprecationWarning,
+        message=".*The configuration option.*asyncio_default_fixture_loop_scope.*is unset.*",
+    )
+
     # 设置环境变量
     os.environ["GEVENT_SUPPRESS_RAGWARN"] = "1"
 
-
-# 立即配置警告
-configure_warnings()
 
 import asyncio
 import tempfile
@@ -51,6 +75,9 @@ from typing import Any, Generator
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+
+# 立即配置警告（在pytest导入后）
+configure_warnings()
 
 
 # 设置异步测试模式
@@ -140,14 +167,177 @@ def api_client():
 
 
 @pytest.fixture
-def api_client_full(test_db, test_redis_client):
-    """完整API客户端fixture（包含数据库和Redis）"""
-    from fastapi.testclient import TestClient
+def auth_headers():
+    """认证头fixture"""
+    return {"Authorization": "Bearer mock_token", "Content-Type": "application/json"}
 
-    from src.main import app
 
-    with TestClient(app) as client:
-        yield client
+@pytest.fixture
+def mock_prediction_engine():
+    """模拟预测引擎fixture"""
+    from unittest.mock import MagicMock, AsyncMock
+
+    engine = MagicMock()
+    engine.predict = AsyncMock(
+        return_value={
+            "match_id": 123,
+            "home_win_prob": 0.5,
+            "draw_prob": 0.3,
+            "away_win_prob": 0.2,
+            "predicted_outcome": "home",
+            "confidence": 0.75,
+            "model_version": "v1.0",
+        }
+    )
+    return engine
+
+
+@pytest.fixture
+def sample_user_data():
+    """示例用户数据"""
+    return {
+        "id": 1,
+        "username": "testuser",
+        "email": "test@example.com",
+        "is_active": True,
+        "created_at": "2025-01-17T10:00:00Z",
+    }
+
+
+@pytest.fixture
+def sample_team_data():
+    """示例队伍数据"""
+    return {
+        "id": 1,
+        "name": "Team A",
+        "league": "Premier League",
+        "country": "England",
+        "founded": 1886,
+    }
+
+
+@pytest.fixture
+def sample_league_data():
+    """示例联赛数据"""
+    return {
+        "id": 1,
+        "name": "Premier League",
+        "country": "England",
+        "season": "2024-2025",
+        "total_teams": 20,
+    }
+
+
+@pytest.fixture
+def sample_odds_data():
+    """示例赔率数据"""
+    return {
+        "match_id": 123,
+        "home_win": 2.10,
+        "draw": 3.40,
+        "away_win": 3.20,
+        "over_under_2_5": {"over": 1.85, "under": 1.95},
+    }
+
+
+@pytest.fixture
+def mock_external_apis():
+    """模拟外部API fixture"""
+    from unittest.mock import MagicMock
+
+    return {
+        "football_api": MagicMock(),
+        "odds_api": MagicMock(),
+        "weather_api": MagicMock(),
+    }
+
+
+@pytest.fixture
+def temp_file():
+    """临时文件fixture"""
+    import tempfile
+    import os
+
+    fd, path = tempfile.mkstemp(suffix=".json")
+    os.close(fd)
+
+    yield path
+
+    if os.path.exists(path):
+        os.unlink(path)
+
+
+@pytest.fixture
+def mock_database_session():
+    """模拟数据库会话fixture"""
+    from unittest.mock import MagicMock
+    from sqlalchemy.orm import Session
+
+    session = MagicMock(spec=Session)
+    session.commit.return_value = None
+    session.rollback.return_value = None
+    session.flush.return_value = None
+
+    return session
+
+
+# === Helper Fixtures ===
+@pytest.fixture
+def make_prediction_request():
+    """创建预测请求的工厂函数"""
+
+    def _make_request(match_id=123, model_version="v1.0", **kwargs):
+        data = {
+            "match_id": match_id,
+            "model_version": model_version,
+            "include_details": kwargs.get("include_details", False),
+        }
+        data.update(kwargs)
+        return data
+
+    return _make_request
+
+
+@pytest.fixture
+def make_user_request():
+    """创建用户请求的工厂函数"""
+
+    def _make_request(username="testuser", email="test@example.com", **kwargs):
+        data = {
+            "username": username,
+            "email": email,
+            "password": kwargs.get("password", "securepassword"),
+        }
+        data.update(kwargs)
+        return data
+
+    return _make_request
+
+
+# === Performance Fixtures ===
+@pytest.fixture
+def benchmark_timer():
+    """性能计时器fixture"""
+    import time
+
+    class Timer:
+        def __init__(self):
+            self.start_time = None
+            self.end_time = None
+
+        def start(self):
+            self.start_time = time.time()
+
+        def stop(self):
+            self.end_time = time.time()
+
+        @property
+        def elapsed(self):
+            if self.start_time and self.end_time:
+                return self.end_time - self.start_time
+            return 0
+
+    return Timer()
 
 
 # === Database Fixtures ===
@@ -184,6 +374,68 @@ def test_env(monkeypatch):
     monkeypatch.setenv("SECRET_KEY", "test-secret-key")
     monkeypatch.setenv("DEBUG", "true")
     monkeypatch.setenv("TESTING", "true")
+
+
+# === Faker Fixtures ===
+@pytest.fixture
+def fake_match():
+    """生成假比赛数据的fixture"""
+    from tests.factories.fake_data import FootballDataFactory
+
+    return FootballDataFactory.match()
+
+
+@pytest.fixture
+def fake_prediction():
+    """生成假预测数据的fixture"""
+    from tests.factories.fake_data import FootballDataFactory
+
+    return FootballDataFactory.prediction()
+
+
+@pytest.fixture
+def fake_user():
+    """生成假用户数据的fixture"""
+    from tests.factories.fake_data import FootballDataFactory
+
+    return FootballDataFactory.user()
+
+
+@pytest.fixture
+def fake_team():
+    """生成假球队数据的fixture"""
+    from tests.factories.fake_data import FootballDataFactory
+
+    return FootballDataFactory.team()
+
+
+@pytest.fixture
+def fake_batch_data():
+    """生成批量假数据的fixture工厂"""
+    from tests.factories.fake_data import create_batch_fake_data
+
+    def _create_batch(data_type, count=10):
+        return create_batch_fake_data(data_type, count)
+
+    return _create_batch
+
+
+@pytest.fixture
+def fake_api_request():
+    """生成API假请求数据的fixture工厂"""
+    from tests.factories.fake_data import APIDataFactory
+
+    def _create_request(request_type, **kwargs):
+        if request_type == "prediction":
+            return APIDataFactory.prediction_request()
+        elif request_type == "batch_prediction":
+            return APIDataFactory.batch_prediction_request(**kwargs)
+        elif request_type == "verification":
+            return APIDataFactory.verification_request()
+        else:
+            raise ValueError(f"Unknown request type: {request_type}")
+
+    return _create_request
 
 
 # === 自动应用Mock ===
@@ -622,3 +874,10 @@ def test_data_loader():
             }
 
     return TestDataLoader()
+
+
+# === 配置pytest标记 ===
+def pytest_configure(config):
+    """配置pytest标记"""
+    config.addinivalue_line("markers", "smoke: mark test as a smoke test")
+    config.addinivalue_line("markers", "fast: mark test as a fast test")

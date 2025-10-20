@@ -8,7 +8,9 @@ from pathlib import Path
 import sys
 
 # 模块路径
-MODULE_PATH = Path("src") / "config/loader.py"
+MODULE_PATH = (
+    Path(__file__).parent.parent.parent.parent / "src" / "utils" / "config_loader.py"
+)
 
 
 class TestTestConfigLoader:
@@ -46,7 +48,7 @@ class TestTestConfigLoader:
             or input_data == []
             or input_data == {}
             or input_data == 0
-            or input_data == False
+            or input_data is False
             or input_data == "test_string"
         )
 

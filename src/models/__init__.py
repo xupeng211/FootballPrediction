@@ -8,14 +8,19 @@
 - 通用数据模型: Content, AnalysisResult, User等
 """
 
-from .common_models import (
-    AnalysisResult,
-    Content,
-    ContentType,
-    User,
-    UserProfile,
-    UserRole,
-)
+import warnings
+
+# 抑制弃用警告，因为新的模块结构尚未完全实现
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", DeprecationWarning)
+    from .common_models import (
+        AnalysisResult,
+        Content,
+        ContentType,
+        User,
+        UserProfile,
+        UserRole,
+    )
 from .metrics_exporter import ModelMetricsExporter
 from .model_training import BaselineModelTrainer
 from .prediction_service import PredictionResult, PredictionService

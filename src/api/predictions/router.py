@@ -42,6 +42,7 @@ class PredictionResult(BaseModel):
     confidence: float = Field(..., ge=0, le=1, description="预测置信度")
     model_version: str = Field(..., description="使用的模型版本")
     predicted_at: datetime = Field(default_factory=datetime.utcnow)
+    features: Optional[dict] = Field(None, description="特征详情")
 
 
 class BatchPredictionRequest(BaseModel):
@@ -90,6 +91,59 @@ class PredictionVerification(BaseModel):
     actual_result: str
     is_correct: bool
     accuracy_score: float
+
+
+# ============================================================================
+# Root Endpoint for Predictions
+# ============================================================================
+
+
+@router.post("/", response_model=PredictionResult, status_code=201)
+async def create_prediction_root(request: PredictionRequest):
+    """
+    创建预测（根端点）
+
+    接收预测请求并返回预测结果。
+    这是主要的预测API入口点。
+    """
+    logger.info(f"接收预测请求: match_id={request.match_id}")
+
+    try:
+        # TODO: 调用预测引擎
+        # from src.api.dependencies import get_prediction_engine
+        # engine = await get_prediction_engine()
+        # result = await engine.predict(request.match_id)
+
+        # 模拟预测结果
+        result = PredictionResult(
+            match_id=request.match_id,
+            home_win_prob=0.52,
+            draw_prob=0.28,
+            away_win_prob=0.20,
+            predicted_outcome="home",
+            confidence=0.76,
+            model_version=request.model_version or "default",
+            predicted_at=datetime.utcnow(),
+            features=request.include_details
+            and {
+                "team_form": {"home": "WWLDW", "away": "DLWDD"},
+                "head_to_head": {"wins": 3, "draws": 2, "losses": 1},
+                "injuries": {"home": 0, "away": 1},
+            }
+            or None,
+        )
+
+        logger.info(
+            f"成功生成预测: {result.predicted_outcome} (confidence: {result.confidence})"
+        )
+        return result
+
+    except ValueError as e:
+        logger.error(f"预测请求验证失败: {e}")
+        raise HTTPException(status_code=422, detail=f"Invalid request: {str(e)}")
+    except Exception as e:
+        logger.error(f"生成预测失败: {e}")
+        raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
 
 
 # ============================================================================
@@ -318,7 +372,7 @@ async def get_recent_predictions(
 async def verify_prediction(
     match_id: int,
     actual_result: str = Query(
-        ..., regex="^(home|draw|away)$", description="实际比赛结果"
+        ..., pattern="^(home|draw|away)$", description="实际比赛结果"
     ),
 ):
     """
