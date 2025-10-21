@@ -8,20 +8,22 @@ import subprocess
 import sys
 import os
 
+
 def run_script(script_name, description):
     """运行修复脚本"""
     print(f"\n{'='*80}")
     print(f"🚀 执行: {description}")
     print(f"📄 脚本: {script_name}")
-    print('='*80)
+    print("=" * 80)
 
     try:
         # 使脚本可执行
         os.chmod(script_name, 0o755)
 
         # 运行脚本
-        result = subprocess.run([sys.executable, script_name],
-                              capture_output=True, text=True, check=False)
+        result = subprocess.run(
+            [sys.executable, script_name], capture_output=True, text=True, check=False
+        )
 
         if result.returncode == 0:
             print(f"✅ {description} - 成功")
@@ -35,11 +37,12 @@ def run_script(script_name, description):
     except Exception as e:
         print(f"❌ 执行 {script_name} 时出错: {e}")
 
+
 def check_ruff_errors():
     """检查剩余的 ruff 错误"""
     print(f"\n{'='*80}")
     print("🔍 检查剩余的 Ruff 错误")
-    print('='*80)
+    print("=" * 80)
 
     try:
         # 统计错误
@@ -53,17 +56,20 @@ def check_ruff_errors():
             # 统计错误类型
             try:
                 import json
+
                 errors = json.loads(result.stdout)
                 error_counts = {}
                 for error in errors:
-                    code = error.get('code', 'UNKNOWN')
+                    code = error.get("code", "UNKNOWN")
                     error_counts[code] = error_counts.get(code, 0) + 1
 
                 print(f"❌ 仍有 {len(errors)} 个错误:")
-                for code, count in sorted(error_counts.items(), key=lambda x: x[1], reverse=True):
+                for code, count in sorted(
+                    error_counts.items(), key=lambda x: x[1], reverse=True
+                ):
                     print(f"  - {code}: {count} 个")
 
-            except:
+            except Exception:
                 print("❌ 无法解析错误输出")
 
             return False
@@ -72,11 +78,12 @@ def check_ruff_errors():
         print(f"❌ 检查错误时出错: {e}")
         return False
 
+
 def run_make_lint():
     """运行 make lint 验证"""
     print(f"\n{'='*80}")
     print("🧪 运行 make lint 验证")
-    print('='*80)
+    print("=" * 80)
 
     try:
         result = subprocess.run(["make", "lint"], capture_output=True, text=True)
@@ -94,10 +101,11 @@ def run_make_lint():
         print(f"❌ 运行 make lint 时出错: {e}")
         return False
 
+
 def main():
     """主函数"""
     print("🔧 Ruff 错误修复 - 一键解决方案")
-    print("="*80)
+    print("=" * 80)
     print("\n本脚本将按顺序执行以下修复步骤：")
     print("1. Phase 1: 修复简单错误（F541, E712 等）")
     print("2. Phase 2: 修复复杂错误（E731, E714, E722 等）")
@@ -107,7 +115,7 @@ def main():
 
     # 确认继续
     response = input("\n是否继续？(y/N): ")
-    if response.lower() not in ['y', 'yes']:
+    if response.lower() not in ["y", "yes"]:
         print("已取消")
         return
 
@@ -125,17 +133,18 @@ def main():
         try:
             os.remove("fix_unused_vars.py")
             print("🗑️ 已清理临时脚本: fix_unused_vars.py")
-        except:
+        except Exception:
             pass
 
     # 运行 ruff 自动修复
     print(f"\n{'='*80}")
     print("🔧 运行 ruff 自动修复剩余错误")
-    print('='*80)
+    print("=" * 80)
 
     try:
-        result = subprocess.run(["ruff", "check", "--fix", "src/", "tests/"],
-                              capture_output=True, text=True)
+        result = subprocess.run(
+            ["ruff", "check", "--fix", "src/", "tests/"], capture_output=True, text=True
+        )
         if result.returncode == 0:
             print("✅ ruff 自动修复完成")
         else:
@@ -152,7 +161,7 @@ def main():
     # 总结
     print(f"\n{'='*80}")
     print("📊 修复总结")
-    print('='*80)
+    print("=" * 80)
 
     if not has_errors and lint_passed:
         print("🎉 恭喜！所有 Ruff 错误已修复，make lint 通过！")
@@ -169,6 +178,7 @@ def main():
         print("- 裸露 except：改为 except Exception:")
         print("- lambda 赋值：改为 def 函数定义")
         print("- 类型比较：使用 is/isnot 或 isinstance()")
+
 
 if __name__ == "__main__":
     main()

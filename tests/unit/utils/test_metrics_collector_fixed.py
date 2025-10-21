@@ -76,7 +76,7 @@ class TestMetricsCollectorFixed:
                     _result = {}
                     for p in percentiles:
                         index = int(len(values) * p / 100)
-                        result[p] = values[min(index, len(values) - 1)]
+                        _result[p] = values[min(index, len(values) - 1)]
                     return result
 
                 def calculate_rate(self, metric_name, time_window=60):

@@ -348,7 +348,7 @@ class TestAPIIntegrationEnhanced:
         # 测试无效JSON
         response = api_client.post(
             "/api/v1/predictions",
-            _data ="invalid json",
+            _data="invalid json",
             headers={"Content-Type": "application/json"},
         )
         assert response.status_code == 422

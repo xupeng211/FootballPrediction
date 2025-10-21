@@ -18,17 +18,17 @@ def test_data_validation_result():
     """测试数据验证结果"""
     # 测试有效的验证结果
     _result = DataValidationResult(is_valid=True)
-    assert result.is_valid is True
-    assert result.errors == []
-    assert result.warnings == []
+    assert _result.is_valid is True
+    assert _result.errors == []
+    assert _result.warnings == []
 
     # 测试无效的验证结果
     _result = DataValidationResult(is_valid=False)
-    assert result.is_valid is False
+    assert _result.is_valid is False
 
     # 测试添加错误
     result.add_error("Invalid email format")
-    assert result.is_valid is False
+    assert _result.is_valid is False
     assert "Invalid email format" in result.errors
 
     # 测试添加警告

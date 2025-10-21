@@ -25,14 +25,14 @@ class TestBasicAPI:
         response = client.get("/")
         assert response.status_code == 200
         _data = response.json()
-        assert "message" in data
+        assert "message" in _data
 
     def test_health_endpoint(self, client):
         """测试健康端点"""
         response = client.get("/api/health")
         assert response.status_code == 200
         _data = response.json()
-        assert data["status"] == "healthy"
+        assert _data["status"] == "healthy"
 
     def test_metrics_endpoint(self, client):
         """测试指标端点"""
@@ -45,7 +45,7 @@ class TestBasicAPI:
         response = client.get("/api/test")
         assert response.status_code == 200
         _data = response.json()
-        assert "message" in data
+        assert "message" in _data
 
     def test_docs_endpoints(self, client):
         """测试文档端点"""
@@ -62,15 +62,16 @@ class TestBasicAPI:
         response = client.get("/openapi.json")
         assert response.status_code == 200
         _data = response.json()
-        assert "openapi" in data
-        assert "info" in data
+        assert "openapi" in _data
+
+        assert "info" in _data
 
     def test_404_handling(self, client):
         """测试404处理"""
         response = client.get("/nonexistent")
         assert response.status_code == 404
         _data = response.json()
-        assert "error" in data
+        assert "error" in _data
 
     def test_method_not_allowed(self, client):
         """测试方法不允许"""
@@ -91,39 +92,43 @@ class TestPredictionEndpoints:
         response = client.get("/predictions/health")
         assert response.status_code == 200
         _data = response.json()
-        assert data["status"] == "healthy"
+        assert _data["status"] == "healthy"
 
     def test_get_prediction(self, client):
         """测试获取预测"""
         response = client.get("/predictions/12345")
         assert response.status_code == 200
         _data = response.json()
-        assert "match_id" in data
-        assert "predicted_outcome" in data
+        assert "match_id" in _data
+
+        assert "predicted_outcome" in _data
 
     def test_create_prediction(self, client):
         """测试创建预测"""
         response = client.post("/predictions/12345/predict")
         assert response.status_code == 201
         _data = response.json()
-        assert "match_id" in data
-        assert "predicted_outcome" in data
+        assert "match_id" in _data
+
+        assert "predicted_outcome" in _data
 
     def test_prediction_history(self, client):
         """测试预测历史"""
         response = client.get("/predictions/history/12345")
         assert response.status_code == 200
         _data = response.json()
-        assert "predictions" in data
-        assert "total_predictions" in data
+        assert "predictions" in _data
+
+        assert "total_predictions" in _data
 
     def test_verify_prediction(self, client):
         """测试验证预测"""
         response = client.post("/predictions/12345/verify?actual_result=home")
         assert response.status_code == 200
         _data = response.json()
-        assert "match_id" in data
-        assert "is_correct" in data
+        assert "match_id" in _data
+
+        assert "is_correct" in _data
 
 
 @pytest.mark.unit
@@ -146,8 +151,9 @@ class TestDataEndpoints:
         response = client.get("/data/leagues/1")
         assert response.status_code == 200
         _data = response.json()
-        assert "id" in data
-        assert "name" in data
+        assert "id" in _data
+
+        assert "name" in _data
 
     def test_get_teams(self, client):
         """测试获取球队"""
@@ -161,16 +167,18 @@ class TestDataEndpoints:
         response = client.get("/data/teams/1")
         assert response.status_code == 200
         _data = response.json()
-        assert "id" in data
-        assert "name" in data
+        assert "id" in _data
+
+        assert "name" in _data
 
     def test_get_team_statistics(self, client):
         """测试获取球队统计"""
         response = client.get("/data/teams/1/statistics")
         assert response.status_code == 200
         _data = response.json()
-        assert "team_id" in data
-        assert "matches_played" in data
+        assert "team_id" in _data
+
+        assert "matches_played" in _data
 
     def test_get_matches(self, client):
         """测试获取比赛"""
@@ -184,16 +192,18 @@ class TestDataEndpoints:
         response = client.get("/data/matches/1")
         assert response.status_code == 200
         _data = response.json()
-        assert "id" in data
-        assert "home_team_name" in data
-        assert "away_team_name" in data
+        assert "id" in _data
+
+        assert "home_team_name" in _data
+
+        assert "away_team_name" in _data
 
     def test_get_match_statistics(self, client):
         """测试获取比赛统计"""
         response = client.get("/data/matches/1/statistics")
         assert response.status_code == 200
         _data = response.json()
-        assert "match_id" in data
+        assert "match_id" in _data
 
     def test_get_odds(self, client):
         """测试获取赔率"""
@@ -387,8 +397,8 @@ class TestPydanticModels:
             confidence=0.75,
             model_version="default",
         )
-        assert result.match_id == 123
-        assert result.predicted_outcome == "home"
+        assert _result.match_id == 123
+        assert _result.predicted_outcome == "home"
         assert (
             abs(result.home_win_prob + result.draw_prob + result.away_win_prob - 1.0)
             < 0.001

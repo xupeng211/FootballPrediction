@@ -107,8 +107,8 @@ class TestPerformanceMonitoringMiddleware:
 
         # 验证响应
         assert _result == response
-        assert result.headers["X-Process-Time"] is not None
-        assert result.headers["X-Request-ID"] is not None
+        assert _result.headers["X-Process-Time"] is not None
+        assert _result.headers["X-Request-ID"] is not None
 
         # 验证统计
         assert middleware.total_requests == 1

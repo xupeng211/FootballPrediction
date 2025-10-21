@@ -81,7 +81,7 @@ class TestDatabaseQueries:
             pred = Prediction(
                 user_id=user.id,
                 match_id=match.id,
-                _prediction ="HOME_WIN",
+                _prediction="HOME_WIN",
                 confidence=0.8,
                 status="COMPLETED",
                 is_correct=True,
@@ -92,7 +92,8 @@ class TestDatabaseQueries:
 
         # 复杂连接查询
         _result = await db_session.execute(
-            text("""
+            text(
+                """
             SELECT
                 t.name as team_name,
                 COUNT(m.id) as total_matches,
@@ -104,7 +105,8 @@ class TestDatabaseQueries:
             WHERE t.name LIKE 'Join Team%'
             GROUP BY t.id, t.name
             ORDER BY total_matches DESC
-        """)
+        """
+            )
         )
 
         rows = result.fetchall()
@@ -136,7 +138,7 @@ class TestDatabaseQueries:
                 pred = Prediction(
                     user_id=user.id,
                     match_id=1,
-                    _prediction ="HOME_WIN" if i % 2 == 0 else "DRAW",
+                    _prediction="HOME_WIN" if i % 2 == 0 else "DRAW",
                     confidence=0.5 + (i * 0.025),
                     status="COMPLETED" if i < 15 else "PENDING",
                     is_correct=(i % 3 == 0),
@@ -187,7 +189,7 @@ class TestDatabaseQueries:
                 pred = Prediction(
                     user_id=user.id,
                     match_id=1,
-                    _prediction ="HOME_WIN",
+                    _prediction="HOME_WIN",
                     confidence=0.5 + (i * 0.1),
                     status="COMPLETED",
                     is_correct=(i + user_idx) % 2 == 0,
@@ -199,7 +201,8 @@ class TestDatabaseQueries:
 
         # 使用窗口函数查询
         _result = await db_session.execute(
-            text("""
+            text(
+                """
             SELECT
                 u.username,
                 p.confidence,
@@ -210,7 +213,8 @@ class TestDatabaseQueries:
             FROM users u
             JOIN predictions p ON u.id = p.user_id
             ORDER BY u.id, p.created_at
-        """)
+        """
+            )
         )
 
         rows = result.fetchall()
@@ -273,7 +277,7 @@ class TestDatabaseQueries:
             pred = Prediction(
                 user_id=user_id,
                 match_id=match.id,
-                _prediction ="HOME_WIN",
+                _prediction="HOME_WIN",
                 confidence=0.5 + (i * 0.1),
                 status="COMPLETED",
                 is_correct=(i % 2 == 0),
@@ -284,7 +288,8 @@ class TestDatabaseQueries:
 
         # 使用子查询查找预测准确率高于平均的用户
         _result = await db_session.execute(
-            text("""
+            text(
+                """
             SELECT u.username, u.email
             FROM users u
             WHERE u.id IN (
@@ -298,7 +303,8 @@ class TestDatabaseQueries:
                     WHERE p2.status = 'COMPLETED'
                 )
             )
-        """)
+        """
+            )
         )
 
         rows = result.fetchall()
@@ -335,7 +341,8 @@ class TestDatabaseQueries:
 
         # 使用 CTE 查询
         _result = await db_session.execute(
-            text("""
+            text(
+                """
             WITH team_stats AS (
                 SELECT
                     t.id,
@@ -360,7 +367,8 @@ class TestDatabaseQueries:
             FROM team_stats ts
             CROSS JOIN avg_goals ag
             WHERE ts.total_goals > ag.avg_goals_per_team
-        """)
+        """
+            )
         )
 
         rows = result.fetchall()
@@ -395,7 +403,7 @@ class TestDatabaseQueries:
                 pred = Prediction(
                     user_id=user_id,
                     match_id=1,
-                    _prediction ="HOME_WIN",
+                    _prediction="HOME_WIN",
                     confidence=0.5 + (i * 0.1),
                     status="COMPLETED",
                     is_correct=(i % 2 == 0),
@@ -499,7 +507,7 @@ class TestDatabaseQueries:
                 pred = Prediction(
                     user_id=user.id,
                     match_id=1,
-                    _prediction ="HOME_WIN",
+                    _prediction="HOME_WIN",
                     confidence=0.5 + (j * 0.05),
                     status="COMPLETED",
                     is_correct=(j % 2 == 0),

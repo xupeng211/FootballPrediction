@@ -436,13 +436,13 @@ class TestValidatorsComplex:
 
         def validate_business(data, rules):
             # 年龄检查
-            if "min_age" in rules and data["age"] < rules["min_age"]:
+            if "min_age" in rules and _data["age"] < rules["min_age"]:
                 return False
-            if "max_age" in rules and data["age"] > rules["max_age"]:
+            if "max_age" in rules and _data["age"] > rules["max_age"]:
                 return False
 
             # 国家检查
-            if "countries" in rules and data["country"] not in rules["countries"]:
+            if "countries" in rules and _data["country"] not in rules["countries"]:
                 return False
 
             return True

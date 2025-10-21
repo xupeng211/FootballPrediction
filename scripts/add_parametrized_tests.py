@@ -7,6 +7,7 @@
 import os
 from pathlib import Path
 
+
 def add_parametrized_tests():
     """添加参数化测试"""
     print("🚀 添加参数化测试...")
@@ -39,30 +40,31 @@ def add_parametrized_tests():
 
         # 读取现有内容
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
-        except:
-            print(f"  ❌ 读取失败: {test_file}")
+        except Exception as e:
+            print(f"  ❌ 读取失败: {test_file} - 错误: {e}")
             continue
 
         # 检查是否已经有参数化测试
         if "@pytest.mark.parametrize" in content:
-            print(f"  ℹ️  已有参数化测试")
+            print("  ℹ️  已有参数化测试")
             continue
 
         # 在文件末尾添加参数化测试
         additional_tests = generate_parametrized_tests(description)
 
         # 写入文件
-        with open(file_path, 'a', encoding='utf-8') as f:
-            f.write('\n\n')
+        with open(file_path, "a", encoding="utf-8") as f:
+            f.write("\n\n")
             f.write(additional_tests)
 
-        print(f"  ✅ 添加了参数化测试")
+        print("  ✅ 添加了参数化测试")
         enhanced_count += 1
 
     print(f"\n✅ 增强了 {enhanced_count} 个测试文件")
     return enhanced_count
+
 
 def generate_parametrized_tests(description: str) -> str:
     """生成参数化测试内容"""
@@ -359,6 +361,7 @@ class TestValidatorSpecific:
 '''
 
     return base_tests
+
 
 def create_comprehensive_test_suite():
     """创建综合测试套件"""
@@ -670,11 +673,12 @@ def test_generic_handling(test_input):
     test_file = Path("tests/unit/test_comprehensive_parametrized.py")
     test_file.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(test_file, 'w', encoding='utf-8') as f:
+    with open(test_file, "w", encoding="utf-8") as f:
         f.write(test_content)
 
     print(f"  📝 创建: {test_file}")
     return test_file
+
 
 def main():
     """主函数"""
@@ -687,17 +691,27 @@ def main():
     # 创建综合测试套件
     comprehensive_file = create_comprehensive_test_suite()
 
-    print(f"\n✅ 完成参数化测试添加")
+    print("\n✅ 完成参数化测试添加")
     print(f"   - 增强了 {enhanced} 个现有文件")
-    print(f"   - 创建了综合测试套件")
+    print("   - 创建了综合测试套件")
 
     print("\n🧪 测试参数化测试...")
     import subprocess
+
     result = subprocess.run(
-        ["python", "-m", "pytest", str(comprehensive_file), "-v", "--tb=no", "-q", "--maxfail=5"],
+        [
+            "python",
+            "-m",
+            "pytest",
+            str(comprehensive_file),
+            "-v",
+            "--tb=no",
+            "-q",
+            "--maxfail=5",
+        ],
         capture_output=True,
         text=True,
-        timeout=60
+        timeout=60,
     )
 
     if "passed" in result.stdout:
@@ -709,6 +723,7 @@ def main():
     print("1. 运行 pytest tests/unit/test_comprehensive_parametrized.py -v")
     print("2. 检查覆盖率: make coverage-local")
     print("3. 添加集成测试")
+
 
 if __name__ == "__main__":
     main()

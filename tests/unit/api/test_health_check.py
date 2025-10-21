@@ -51,8 +51,8 @@ class TestHealthCheck:
         assert isinstance(result, dict)
         assert "status" in result
         assert "latency_ms" in result
-        assert result["status"] == "healthy"
-        assert isinstance(result["latency_ms"], int)
+        assert _result["status"] == "healthy"
+        assert isinstance(_result["latency_ms"], int)
 
     def test_health_check_endpoint(self, client):
         """测试：基础健康检查端点"""
@@ -60,12 +60,14 @@ class TestHealthCheck:
         assert response.status_code == 200
 
         _data = response.json()
-        assert "status" in data
-        assert "timestamp" in data
-        assert "checks" in data
+        assert "status" in _data
 
-        assert data["status"] in ["healthy", "unhealthy"]
-        assert "database" in data["checks"]
+        assert "timestamp" in _data
+
+        assert "checks" in _data
+
+        assert _data["status"] in ["healthy", "unhealthy"]
+        assert "database" in _data["checks"]
 
     def test_liveness_check_endpoint(self, client):
         """测试：存活检查端点"""
@@ -73,12 +75,14 @@ class TestHealthCheck:
         assert response.status_code == 200
 
         _data = response.json()
-        assert "status" in data
-        assert "timestamp" in data
-        assert "service" in data
+        assert "status" in _data
 
-        assert data["status"] == "alive"
-        assert data["service"] == "football-prediction-api"
+        assert "timestamp" in _data
+
+        assert "service" in _data
+
+        assert _data["status"] == "alive"
+        assert _data["service"] == "football-prediction-api"
 
     def test_readiness_check_endpoint(self, client):
         """测试：就绪检查端点"""
@@ -86,12 +90,14 @@ class TestHealthCheck:
         assert response.status_code == 200
 
         _data = response.json()
-        assert "status" in data
-        assert "timestamp" in data
-        assert "checks" in data
+        assert "status" in _data
 
-        assert data["status"] in ["ready", "not_ready"]
-        assert "database" in data["checks"]
+        assert "timestamp" in _data
+
+        assert "checks" in _data
+
+        assert _data["status"] in ["ready", "not_ready"]
+        assert "database" in _data["checks"]
 
     def test_detailed_health_endpoint(self, client):
         """测试：详细健康检查端点"""
@@ -99,22 +105,24 @@ class TestHealthCheck:
         assert response.status_code == 200
 
         _data = response.json()
-        assert "status" in data
-        assert "timestamp" in data
-        assert "checks" in data
+        assert "status" in _data
+
+        assert "timestamp" in _data
+
+        assert "checks" in _data
 
         # 应该包含多个检查项
-        assert "database" in data["checks"]
-        assert "redis" in data["checks"]
-        assert "system" in data["checks"]
+        assert "database" in _data["checks"]
+        assert "redis" in _data["checks"]
+        assert "system" in _data["checks"]
 
         # 检查Redis状态
-        redis_status = data["checks"]["redis"]
+        redis_status = _data["checks"]["redis"]
         assert redis_status["status"] == "ok"
         assert "latency_ms" in redis_status
 
         # 检查系统状态
-        system_status = data["checks"]["system"]
+        system_status = _data["checks"]["system"]
         assert system_status["status"] == "ok"
         assert "cpu_usage" in system_status
         assert "memory_usage" in system_status
@@ -138,8 +146,8 @@ class TestHealthCheckMocked:
             assert response.status_code == 200
 
             _data = response.json()
-            assert data["status"] == "unhealthy"
-            assert data["checks"]["database"]["status"] == "unhealthy"
+            assert _data["status"] == "unhealthy"
+            assert _data["checks"]["database"]["status"] == "unhealthy"
 
     def test_readiness_check_with_unhealthy_database(self):
         """测试：数据库不健康时的就绪状态"""
@@ -157,8 +165,8 @@ class TestHealthCheckMocked:
             assert response.status_code == 200
 
             _data = response.json()
-            assert data["status"] == "not_ready"
-            assert data["checks"]["database"]["status"] == "unhealthy"
+            assert _data["status"] == "not_ready"
+            assert _data["checks"]["database"]["status"] == "unhealthy"
 
     def test_health_check_timestamp_changes(self):
         """测试：健康检查时间戳变化"""
@@ -225,12 +233,12 @@ class TestHealthCheckIntegration:
         # 验证必需字段
         required_fields = ["status", "timestamp", "checks"]
         for field in required_fields:
-            assert field in data, f"Missing field: {field}"
+            assert field in _data, f"Missing field: {field}"
 
         # 验证数据类型
-        assert isinstance(data["status"], str)
-        assert isinstance(data["timestamp"], float)
-        assert isinstance(data["checks"], dict)
+        assert isinstance(_data["status"], str)
+        assert isinstance(_data["timestamp"], float)
+        assert isinstance(_data["checks"], dict)
 
     def test_database_check_consistency(self):
         """测试：数据库检查一致性"""
@@ -294,15 +302,15 @@ async def test_async_endpoints():
 
         # 测试liveness_check
         _result = await liveness_check()
-        assert result["status"] == "alive"
+        assert _result["status"] == "alive"
         assert "service" in result
 
         # 测试readiness_check
         _result = await readiness_check()
-        assert result["status"] in ["ready", "not_ready"]
+        assert _result["status"] in ["ready", "not_ready"]
 
         # 测试detailed_health
         _result = await detailed_health()
-        assert "database" in result["checks"]
-        assert "redis" in result["checks"]
-        assert "system" in result["checks"]
+        assert "database" in _result["checks"]
+        assert "redis" in _result["checks"]
+        assert "system" in _result["checks"]

@@ -35,7 +35,7 @@ def sample_event():
         event_type=ObservableEventType.METRIC_UPDATE,
         source="test_source",
         severity="info",
-        _data ={"metric_name": "cpu_usage", "metric_value": 75.5},
+        _data={"metric_name": "cpu_usage", "metric_value": 75.5},
     )
 
 
@@ -46,7 +46,7 @@ def sample_error_event():
         event_type=ObservableEventType.ERROR_OCCURRED,
         source="test_service",
         severity="error",
-        _data ={"error_message": "Test error", "error_count": 1},
+        _data={"error_message": "Test error", "error_count": 1},
     )
 
 
@@ -102,14 +102,14 @@ class TestObserver:
         # 符合过滤器条件的事件
         event1 = ObservableEvent(
             event_type=ObservableEventType.METRIC_UPDATE,
-            _data ={"metric_value": 75},
+            _data={"metric_value": 75},
         )
         assert observer.should_handle_event(event1) is True
 
         # 不符合过滤器条件的事件
         event2 = ObservableEvent(
             event_type=ObservableEventType.METRIC_UPDATE,
-            _data ={"metric_value": 25},
+            _data={"metric_value": 25},
         )
         assert observer.should_handle_event(event2) is False
 
@@ -253,7 +253,7 @@ class TestMetricsObserver:
         """测试处理指标更新事件"""
         event = ObservableEvent(
             event_type=ObservableEventType.METRIC_UPDATE,
-            _data ={
+            _data={
                 "metric_name": "cpu_usage",
                 "metric_value": 75.5,
                 "metric_type": "gauge",
@@ -271,7 +271,7 @@ class TestMetricsObserver:
         """测试处理预测完成事件"""
         event = ObservableEvent(
             event_type=ObservableEventType.PREDICTION_COMPLETED,
-            _data ={"latency_ms": 150.0},
+            _data={"latency_ms": 150.0},
         )
 
         await observer.update(event)
@@ -327,7 +327,7 @@ class TestLoggingObserver:
         info_event = ObservableEvent(
             event_type=ObservableEventType.METRIC_UPDATE,
             severity="info",
-            _data ={"message": "Test info"},
+            _data={"message": "Test info"},
         )
         await observer.update(info_event)
         mock_info.assert_called_once()
@@ -336,7 +336,7 @@ class TestLoggingObserver:
         warning_event = ObservableEvent(
             event_type=ObservableEventType.THRESHOLD_EXCEEDED,
             severity="warning",
-            _data ={"message": "Test warning"},
+            _data={"message": "Test warning"},
         )
         await observer.update(warning_event)
         mock_warning.assert_called_once()
@@ -345,7 +345,7 @@ class TestLoggingObserver:
         error_event = ObservableEvent(
             event_type=ObservableEventType.ERROR_OCCURRED,
             severity="error",
-            _data ={"message": "Test error"},
+            _data={"message": "Test error"},
         )
         await observer.update(error_event)
         mock_error.assert_called_once()
@@ -404,7 +404,7 @@ class TestAlertingObserver:
         # 触发条件的事件
         event = ObservableEvent(
             event_type=ObservableEventType.THRESHOLD_EXCEEDED,
-            _data ={"metric_name": "cpu_usage", "metric_value": 85.0},
+            _data={"metric_name": "cpu_usage", "metric_value": 85.0},
         )
 
         await observer.update(event)
@@ -447,7 +447,7 @@ class TestPerformanceObserver:
         """测试处理预测完成事件"""
         event = ObservableEvent(
             event_type=ObservableEventType.PREDICTION_COMPLETED,
-            _data ={"response_time_ms": 150.0},
+            _data={"response_time_ms": 150.0},
         )
 
         await observer.update(event)
@@ -610,7 +610,7 @@ class TestAlertSubject:
             severity="warning",
             message="Test alert message",
             source="test_source",
-            _data ={"key": "value"},
+            _data={"key": "value"},
         )
 
         # 验证观察者收到通知
@@ -618,7 +618,7 @@ class TestAlertSubject:
         event = observer.update.call_args[0][0]
         assert event.event_type == ObservableEventType.SYSTEM_ALERT
         assert event.severity == "warning"
-        assert event.data["alert_type"] == "test_alert"
+        assert event._data["alert_type"] == "test_alert"
 
     def test_add_suppression_rule(self, subject):
         """测试添加抑制规则"""
@@ -785,7 +785,7 @@ class TestObserverManager:
                     event_type=ObservableEventType.SYSTEM_ALERT,
                     source="test_source",
                     severity="warning",
-                    _data ={"alert_type": "test_alert", "message": "Test alert"},
+                    _data={"alert_type": "test_alert", "message": "Test alert"},
                 )
                 await alerting_observer.update(event)
                 await asyncio.sleep(0.01)
@@ -908,7 +908,7 @@ class TestObserverIntegration:
         # 发送事件不应该抛出异常
         event = ObservableEvent(
             event_type=ObservableEventType.METRIC_UPDATE,
-            _data ={"test": True},
+            _data={"test": True},
         )
         await subject.notify(event)
 

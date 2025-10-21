@@ -25,18 +25,20 @@ class TestCoreAPIEndpoints:
         response = client.get("/")
         assert response.status_code == 200
         _data = response.json()
-        assert "Football Prediction API" in data["message"]
-        assert "version" in data
+        assert "Football Prediction API" in _data["message"]
+        assert "version" in _data
 
     def test_health_check_detailed(self, client):
         """测试健康检查详细信息"""
         response = client.get("/api/health")
         assert response.status_code == 200
         _data = response.json()
-        assert data["status"] == "healthy"
-        assert "timestamp" in data
-        assert "service" in data
-        assert "checks" in data or "version" in data
+        assert _data["status"] == "healthy"
+        assert "timestamp" in _data
+
+        assert "service" in _data
+
+        assert "checks" in _data or "version" in _data
 
     def test_metrics_content(self, client):
         """测试指标内容"""
@@ -53,8 +55,8 @@ class TestCoreAPIEndpoints:
         response = client.get("/api/test")
         assert response.status_code == 200
         _data = response.json()
-        assert "API is working!" in data["message"]
-        assert "timestamp" in data
+        assert "API is working!" in _data["message"]
+        assert "timestamp" in _data
 
     def test_openapi_structure(self, client):
         """测试OpenAPI结构"""
@@ -80,9 +82,10 @@ class TestErrorHandling:
         response = client.get("/definitely-does-not-exist")
         assert response.status_code == 404
         _data = response.json()
-        assert "error" in data
-        assert "type" in data["error"]
-        assert "message" in data["error"]
+        assert "error" in _data
+
+        assert "type" in _data["error"]
+        assert "message" in _data["error"]
 
     def test_method_not_allowed(self, client):
         """测试方法不允许"""
@@ -94,7 +97,7 @@ class TestErrorHandling:
         response = client.get("/predictions/invalid-id")
         assert response.status_code == 422
         _data = response.json()
-        assert "detail" in data
+        assert "detail" in _data
 
 
 @pytest.mark.unit
@@ -245,17 +248,17 @@ class TestModelsAndSchemas:
         from src.api.predictions.models import PredictionRequest, PredictionResponse
 
         _result = standard_response(True, "Test message", {"data": "test"})
-        assert result["success"] is True
-        assert result["message"] == "Test message"
-        assert result["data"]["data"] == "test"
+        assert _result["success"] is True
+        assert _result["message"] == "Test message"
+        assert _result["data"]["data"] == "test"
 
     def test_error_response_model(self):
         """测试错误响应模型"""
         from src.api.predictions.models import PredictionRequest, PredictionResponse
 
         _result = error_response("Test error", {"detail": "Error details"})
-        assert result["error"]["type"] == "Test error"
-        assert result["error"]["message"] == "Error details"
+        assert _result["error"]["type"] == "Test error"
+        assert _result["error"]["message"] == "Error details"
 
     def test_import_schemas(self):
         """测试导入模式"""
@@ -278,7 +281,7 @@ class TestConfiguration:
 
     def test_cors_configuration(self):
         """测试CORS配置"""
-        from src.config.cors_config import get_cors_origins
+        from src._config.cors_config import get_cors_origins
 
         origins = get_cors_origins()
         assert isinstance(origins, list)
@@ -287,7 +290,7 @@ class TestConfiguration:
 
     def test_openapi_configuration(self):
         """测试OpenAPI配置"""
-        from src.config.openapi_config import custom_openapi
+        from src._config.openapi_config import custom_openapi
 
         # 调用自定义OpenAPI配置
         openapi_schema = custom_openapi()
@@ -312,9 +315,9 @@ class TestSecurityFeatures:
         # 确保没有敏感信息泄露
         sensitive_keys = ["password", "secret", "key", "token", "auth"]
         for key in sensitive_keys:
-            assert key not in str(data).lower(), (
-                f"Sensitive key {key} found in response"
-            )
+            assert (
+                key not in str(data).lower()
+            ), f"Sensitive key {key} found in response"
 
     def test_secure_headers(self, client):
         """测试安全头"""

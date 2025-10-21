@@ -437,12 +437,12 @@ class TestDataConversion:
             for key, value in dict2.items():
                 if (
                     key in result
-                    and isinstance(result[key], dict)
+                    and isinstance(_result[key], dict)
                     and isinstance(value, dict)
                 ):
-                    result[key] = deep_merge(result[key], value)
+                    _result[key] = deep_merge(_result[key], value)
                 else:
-                    result[key] = value
+                    _result[key] = value
             return result
 
         dict1 = {"a": 1, "b": {"x": 10, "y": 20}, "c": [1, 2, 3]}

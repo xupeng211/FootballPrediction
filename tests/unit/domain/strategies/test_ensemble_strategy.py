@@ -31,7 +31,7 @@ def mock_sub_strategies():
     historical.type = StrategyType.HISTORICAL
     historical.predict = AsyncMock(
         return_value=PredictionOutput(
-            _prediction =(1, 0),
+            _prediction=(1, 0),
             confidence=0.75,
             reasoning="Historical analysis shows home advantage",
         )
@@ -44,7 +44,7 @@ def mock_sub_strategies():
     statistical.type = StrategyType.STATISTICAL
     statistical.predict = AsyncMock(
         return_value=PredictionOutput(
-            _prediction =(2, 1),
+            _prediction=(2, 1),
             confidence=0.68,
             reasoning="Statistical models predict moderate win",
         )
@@ -57,7 +57,9 @@ def mock_sub_strategies():
     ml_model.type = StrategyType.ML_MODEL
     ml_model.predict = AsyncMock(
         return_value=PredictionOutput(
-            _prediction =(3, 1), confidence=0.82, reasoning="ML model predicts strong win"
+            _prediction=(3, 1),
+            confidence=0.82,
+            reasoning="ML model predicts strong win",
         )
     )
     strategies["ml_model"] = ml_model
@@ -129,10 +131,10 @@ async def test_weighted_average_prediction(ensemble_strategy):
 
     # 验证结果
     assert isinstance(result, PredictionOutput)
-    assert result.prediction is not None
+    assert _result.prediction is not None
     assert len(result.prediction) == 2  # (home_goals, away_goals)
     assert 0 <= result.confidence <= 1
-    assert result.reasoning is not None
+    assert _result.reasoning is not None
 
     # 验证所有子策略都被调用
     for strategy in ensemble_strategy._sub_strategies.values():
@@ -148,18 +150,18 @@ async def test_majority_voting_prediction(ensemble_strategy):
     # 修改子策略返回值以产生明确的多数
     ensemble_strategy._sub_strategies[
         "historical"
-    ].predict.return_value = PredictionOutput(_prediction =(2, 1), confidence=0.75)
+    ].predict.return_value = PredictionOutput(_prediction=(2, 1), confidence=0.75)
     ensemble_strategy._sub_strategies[
         "statistical"
-    ].predict.return_value = PredictionOutput(_prediction =(2, 1), confidence=0.68)
+    ].predict.return_value = PredictionOutput(_prediction=(2, 1), confidence=0.68)
 
     input_data = PredictionInput(match_id=123, home_team_id=1, away_team_id=2)
 
     _result = await ensemble_strategy.predict(input_data)
 
     # 多数投票应该选择(2, 1)
-    assert result._prediction == (2, 1)
-    assert result.confidence > 0.5  # 多数投票的置信度应该大于0.5
+    assert _result._prediction == (2, 1)
+    assert _result.confidence > 0.5  # 多数投票的置信度应该大于0.5
 
 
 @pytest.mark.asyncio
@@ -197,13 +199,13 @@ async def test_consensus_score_calculation(ensemble_strategy):
     # 所有策略给出相似预测
     ensemble_strategy._sub_strategies[
         "historical"
-    ].predict.return_value = PredictionOutput(_prediction =(2, 1), confidence=0.75)
+    ].predict.return_value = PredictionOutput(_prediction=(2, 1), confidence=0.75)
     ensemble_strategy._sub_strategies[
         "statistical"
-    ].predict.return_value = PredictionOutput(_prediction =(2, 1), confidence=0.72)
+    ].predict.return_value = PredictionOutput(_prediction=(2, 1), confidence=0.72)
     ensemble_strategy._sub_strategies[
         "ml_model"
-    ].predict.return_value = PredictionOutput(_prediction =(2, 1), confidence=0.78)
+    ].predict.return_value = PredictionOutput(_prediction=(2, 1), confidence=0.78)
 
     input_data = PredictionInput(match_id=123, home_team_id=1, away_team_id=2)
 
@@ -222,20 +224,20 @@ async def test_disagreement_handling(ensemble_strategy):
     # 设置高度分歧的预测
     ensemble_strategy._sub_strategies[
         "historical"
-    ].predict.return_value = PredictionOutput(_prediction =(1, 0), confidence=0.8)
+    ].predict.return_value = PredictionOutput(_prediction=(1, 0), confidence=0.8)
     ensemble_strategy._sub_strategies[
         "statistical"
-    ].predict.return_value = PredictionOutput(_prediction =(0, 0), confidence=0.7)
+    ].predict.return_value = PredictionOutput(_prediction=(0, 0), confidence=0.7)
     ensemble_strategy._sub_strategies[
         "ml_model"
-    ].predict.return_value = PredictionOutput(_prediction =(4, 0), confidence=0.85)
+    ].predict.return_value = PredictionOutput(_prediction=(4, 0), confidence=0.85)
 
     input_data = PredictionInput(match_id=123, home_team_id=1, away_team_id=2)
 
     _result = await ensemble_strategy.predict(input_data)
 
     # 高分歧应该降低置信度
-    assert result.confidence < 0.7  # 分歧时置信度应该降低
+    assert _result.confidence < 0.7  # 分歧时置信度应该降低
     assert (
         "disagreement" in result.reasoning.lower()
         or "uncertain" in result.reasoning.lower()
@@ -256,7 +258,7 @@ async def test_strategy_failure_handling(ensemble_strategy):
     _result = await ensemble_strategy.predict(input_data)
 
     assert isinstance(result, PredictionOutput)
-    assert result.prediction is not None
+    assert _result.prediction is not None
     assert "historical" not in result.reasoning or "failed" in result.reasoning.lower()
 
 
@@ -280,7 +282,7 @@ async def test_single_sub_strategy():
     mock_strategy = MagicMock()
     mock_strategy.predict = AsyncMock(
         return_value=PredictionOutput(
-            _prediction =(2, 1), confidence=0.8, reasoning="Single strategy prediction"
+            _prediction=(2, 1), confidence=0.8, reasoning="Single strategy prediction"
         )
     )
 
@@ -294,8 +296,8 @@ async def test_single_sub_strategy():
     _result = await strategy.predict(input_data)
 
     # 应该直接返回子策略的结果
-    assert result._prediction == (2, 1)
-    assert result.confidence == 0.8
+    assert _result._prediction == (2, 1)
+    assert _result.confidence == 0.8
     assert "single" in result.reasoning.lower()
 
 
@@ -330,11 +332,11 @@ def test_ensemble_result_creation():
         disagreement_level=0.5,
     )
 
-    assert result.final_prediction == (2, 1)
-    assert result.confidence == 0.8
+    assert _result.final_prediction == (2, 1)
+    assert _result.confidence == 0.8
     assert len(result.strategy_contributions) == 3
-    assert result.consensus_score == 0.75
-    assert result.disagreement_level == 0.5
+    assert _result.consensus_score == 0.75
+    assert _result.disagreement_level == 0.5
 
 
 @pytest.mark.asyncio

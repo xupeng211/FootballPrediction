@@ -57,7 +57,7 @@ class TestRedisSyncOperations:
 
         _result = self.sync_ops.set("test_key", "test_value")
 
-        assert result is True
+        assert _result is True
 
     def test_set_with_dict(self):
         """测试设置字典值"""
@@ -67,7 +67,7 @@ class TestRedisSyncOperations:
 
         _result = self.sync_ops.set("test_key", {"key": "value"})
 
-        assert result is True
+        assert _result is True
         # 验证JSON序列化
         mock_client.set.assert_called_once()
         args, kwargs = mock_client.set.call_args
@@ -126,7 +126,7 @@ class TestRedisSyncOperations:
         mapping = {"key1": {"a": 1}, "key2": "value"}
         _result = self.sync_ops.mset(mapping, ttl=60)
 
-        assert result is True
+        assert _result is True
 
     def test_clear_all(self):
         """测试清空数据库"""
@@ -136,7 +136,7 @@ class TestRedisSyncOperations:
 
         _result = self.sync_ops.clear_all()
 
-        assert result is True
+        assert _result is True
 
 
 class TestRedisAsyncOperations:
@@ -167,7 +167,7 @@ class TestRedisAsyncOperations:
 
         _result = await self.async_ops.aset("test_key", {"key": "value"})
 
-        assert result is True
+        assert _result is True
 
     @pytest.mark.asyncio
     async def test_adelete_success(self):
@@ -224,4 +224,4 @@ class TestRedisAsyncOperations:
         mapping = {"key1": {"a": 1}, "key2": {"b": 2}}
         _result = await self.async_ops.amset(mapping)
 
-        assert result is True
+        assert _result is True

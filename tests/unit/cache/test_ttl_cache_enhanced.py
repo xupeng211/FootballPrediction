@@ -76,11 +76,15 @@ class TestCacheEntry:
         entry = CacheEntry("test_value", ttl=60)
         _data = entry.to_dict()
 
-        assert "value" in data
-        assert "ttl" in data
-        assert "created_at" in data
-        assert "access_count" in data
-        assert "last_accessed" in data
+        assert "value" in _data
+
+        assert "ttl" in _data
+
+        assert "created_at" in _data
+
+        assert "access_count" in _data
+
+        assert "last_accessed" in _data
 
 
 @pytest.mark.skipif(not TTL_AVAILABLE, reason="TTL cache enhanced module not available")

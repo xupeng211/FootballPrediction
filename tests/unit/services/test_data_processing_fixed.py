@@ -52,9 +52,9 @@ class TestDataProcessor:
 
         _result = await processor.process(input_data)
 
-        assert result["id"] == 123
-        assert result["value"] == "test"
-        assert result["mock_processed"] is True
+        assert _result["id"] == 123
+        assert _result["value"] == "test"
+        assert _result["mock_processed"] is True
         assert "processed_at" in result
 
 
@@ -81,17 +81,17 @@ class TestMatchDataProcessor:
         _result = await match_processor.process(input_data)
 
         # 验证所有原始数据都被保留
-        assert result["id"] == 123
-        assert result["home_team"] == "Team A"
-        assert result["away_team"] == "Team B"
-        assert result["home_score"] == 2
-        assert result["away_score"] == 1
-        assert result["status"] == "FINISHED"
+        assert _result["id"] == 123
+        assert _result["home_team"] == "Team A"
+        assert _result["away_team"] == "Team B"
+        assert _result["home_score"] == 2
+        assert _result["away_score"] == 1
+        assert _result["status"] == "FINISHED"
 
         # 验证添加的处理信息
         assert "processed_at" in result
-        assert result["type"] == "match"
-        assert isinstance(result["processed_at"], datetime)
+        assert _result["type"] == "match"
+        assert isinstance(_result["processed_at"], datetime)
 
     @pytest.mark.asyncio
     async def test_process_empty_match_data(self, match_processor):
@@ -101,9 +101,9 @@ class TestMatchDataProcessor:
         _result = await match_processor.process(input_data)
 
         # 空数据仍然会添加processed_at和type字段
-        assert result["type"] == "match"
+        assert _result["type"] == "match"
         assert "processed_at" in result
-        assert isinstance(result["processed_at"], datetime)
+        assert isinstance(_result["processed_at"], datetime)
 
 
 class TestOddsDataProcessor:
@@ -129,15 +129,15 @@ class TestOddsDataProcessor:
         _result = await odds_processor.process(input_data)
 
         # 验证所有原始数据都被保留
-        assert result["match_id"] == 123
-        assert result["bookmaker"] == "Bet365"
-        assert result["home_win"] == 2.10
-        assert result["draw"] == 3.20
-        assert result["away_win"] == 3.50
+        assert _result["match_id"] == 123
+        assert _result["bookmaker"] == "Bet365"
+        assert _result["home_win"] == 2.10
+        assert _result["draw"] == 3.20
+        assert _result["away_win"] == 3.50
 
         # 验证添加的处理信息
         assert "processed_at" in result
-        assert result["type"] == "odds"
+        assert _result["type"] == "odds"
 
 
 class TestScoresDataProcessor:
@@ -163,16 +163,16 @@ class TestScoresDataProcessor:
         _result = await scores_processor.process(input_data)
 
         # 验证所有原始数据都被保留
-        assert result["match_id"] == 123
-        assert result["home_score"] == 2
-        assert result["away_score"] == 1
-        assert result["minute"] == 75
-        assert result["scorer"] == "Player A"
-        assert result["assist"] == "Player B"
+        assert _result["match_id"] == 123
+        assert _result["home_score"] == 2
+        assert _result["away_score"] == 1
+        assert _result["minute"] == 75
+        assert _result["scorer"] == "Player A"
+        assert _result["assist"] == "Player B"
 
         # 验证添加的处理信息
         assert "processed_at" in result
-        assert result["type"] == "scores"
+        assert _result["type"] == "scores"
 
 
 class TestFeaturesDataProcessor:
@@ -196,16 +196,16 @@ class TestFeaturesDataProcessor:
         _result = await features_processor.process(input_data)
 
         # 验证所有原始数据都被保留
-        assert result["match_id"] == 123
-        assert result["team_id"] == 1
+        assert _result["match_id"] == 123
+        assert _result["team_id"] == 1
         assert "features" in result
-        assert result["features"]["avg_goals"] == 1.8
-        assert result["features"]["win_rate"] == 0.65
-        assert result["features"]["form_points"] == 7
+        assert _result["features"]["avg_goals"] == 1.8
+        assert _result["features"]["win_rate"] == 0.65
+        assert _result["features"]["form_points"] == 7
 
         # 验证添加的处理信息
         assert "processed_at" in result
-        assert result["type"] == "features"
+        assert _result["type"] == "features"
 
 
 class TestDataQualityValidator:

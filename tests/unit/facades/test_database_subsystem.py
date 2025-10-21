@@ -27,16 +27,16 @@ class TestDatabaseSubsystem:
     async def test_execute_query(self, subsystem):
         """测试执行查询"""
         _result = await subsystem.execute_query("SELECT * FROM test", {"id": 1})
-        assert result["query"] == "SELECT * FROM test"
-        assert result["params"] == {"id": 1}
-        assert result["result"] == "success"
+        assert _result["query"] == "SELECT * FROM test"
+        assert _result["params"] == {"id": 1}
+        assert _result["result"] == "success"
         assert subsystem.query_count == 1
 
     async def test_execute_query_without_params(self, subsystem):
         """测试无参数查询"""
         _result = await subsystem.execute_query("SELECT NOW()")
-        assert result["query"] == "SELECT NOW()"
-        assert result["params"] is None
+        assert _result["query"] == "SELECT NOW()"
+        assert _result["params"] is None
         assert subsystem.query_count == 1
 
     async def test_health_check(self, subsystem):

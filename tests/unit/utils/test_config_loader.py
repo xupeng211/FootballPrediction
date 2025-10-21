@@ -48,8 +48,8 @@ class TestConfigLoader:
         _config = load_config("test_config.json")
 
         assert _config == mock_config
-        assert config["database"]["host"] == "localhost"
-        assert config["redis"]["port"] == 6379
+        assert _config["database"]["host"] == "localhost"
+        assert _config["redis"]["port"] == 6379
 
     def test_get_config_value(self):
         """测试：获取配置值"""
@@ -71,15 +71,15 @@ class TestConfigLoader:
 
         # 设置嵌套值
         set_config_value(config, "app.name", "new_name")
-        assert config["app"]["name"] == "new_name"
+        assert _config["app"]["name"] == "new_name"
 
         # 设置新值
         set_config_value(config, "app.version", "1.0.0")
-        assert config["app"]["version"] == "1.0.0"
+        assert _config["app"]["version"] == "1.0.0"
 
         # 设置顶级值
         set_config_value(config, "debug", True)
-        assert config["debug"] is True
+        assert _config["debug"] is True
 
     def test_validate_config(self):
         """测试：验证配置"""
@@ -108,7 +108,7 @@ class TestConfigLoader:
         }
 
         _result = validate_config(valid_config, schema)
-        assert result is True
+        assert _result is True
 
     def test_validate_config_invalid(self):
         """测试：验证无效配置"""
@@ -131,7 +131,7 @@ class TestConfigLoader:
         }
 
         _result = validate_config(invalid_config, schema)
-        assert result is False
+        assert _result is False
 
     @patch("src.utils.config_loader.os.path.exists")
     def test_load_config_file_not_found(self, mock_exists):
@@ -171,7 +171,7 @@ class TestConfigLoader:
             if hasattr(load_config, "__code__"):
                 # 函数存在，测试环境变量功能
                 _result = get_config_value(config, "database.host", override_env=True)
-                assert result in ["localhost", "prod_host"]
+                assert _result in ["localhost", "prod_host"]
 
 
 @pytest.mark.skipif(
@@ -258,12 +258,12 @@ class TestConfigLoaderAdvanced:
         }
 
         # 测试类型验证
-        assert isinstance(config["string_value"], str)
-        assert isinstance(config["int_value"], int)
-        assert isinstance(config["float_value"], float)
-        assert isinstance(config["bool_value"], bool)
-        assert isinstance(config["list_value"], list)
-        assert isinstance(config["dict_value"], dict)
+        assert isinstance(_config["string_value"], str)
+        assert isinstance(_config["int_value"], int)
+        assert isinstance(_config["float_value"], float)
+        assert isinstance(_config["bool_value"], bool)
+        assert isinstance(_config["list_value"], list)
+        assert isinstance(_config["dict_value"], dict)
 
     def test_config_sensitive_data(self):
         """测试：敏感配置数据"""
@@ -308,13 +308,13 @@ class TestConfigLoaderAdvanced:
 
         # 模拟配置更新
         def update_config():
-            config["value"] = 2
-            config["updated_at"] = time.time()
+            _config["value"] = 2
+            _config["updated_at"] = time.time()
 
-        initial_value = config["value"]
+        initial_value = _config["value"]
         update_config()
 
-        assert config["value"] != initial_value
+        assert _config["value"] != initial_value
         assert "updated_at" in config
 
     def test_config_profile_selection(self):
@@ -330,8 +330,8 @@ class TestConfigLoaderAdvanced:
             profile = os.getenv("APP_PROFILE", "development")
             _config = profiles.get(profile, profiles["development"])
 
-            assert config["debug"] is False
-            assert config["database"]["host"] == "prod-server"
+            assert _config["debug"] is False
+            assert _config["database"]["host"] == "prod-server"
 
     def test_config_schema_validation_advanced(self):
         """测试：高级配置模式验证"""
@@ -366,7 +366,7 @@ class TestConfigLoaderAdvanced:
         def validate_schema(config, schema):
             if "database" not in config:
                 return False
-            if "host" not in config["database"]:
+            if "host" not in _config["database"]:
                 return False
             return True
 

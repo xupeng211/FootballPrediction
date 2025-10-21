@@ -72,12 +72,14 @@ def test_feature_store_config():
     """测试特征仓库配置"""
     from src.data.features.feature_store.config import FeatureStoreConfig
 
-    _config = FeatureStoreConfig(project_name="test_project", repo_path="/tmp/test_repo")
+    _config = FeatureStoreConfig(
+        project_name="test_project", repo_path="/tmp/test_repo"
+    )
 
-    assert config.project_name == "test_project"
-    assert config.repo_path == "/tmp/test_repo"
-    assert config.postgres_config is not None
-    assert config.redis_config is not None
+    assert _config.project_name == "test_project"
+    assert _config.repo_path == "/tmp/test_repo"
+    assert _config.postgres_config is not None
+    assert _config.redis_config is not None
 
 
 def test_feature_store_config_manager():
@@ -115,7 +117,7 @@ def test_football_feature_store_without_feast():
 
     # 应该能够创建实例
     assert store is not None
-    assert store.config_manager.config.project_name == "test"
+    assert store.config_manager._config.project_name == "test"
 
     # 初始化应该成功但store为None
     store.initialize()
@@ -165,7 +167,7 @@ def test_initialize_feature_store():
         )
 
         assert store is not None
-        assert store.config_manager.config.project_name == "test_init"
+        assert store.config_manager._config.project_name == "test_init"
 
 
 # 测试数据写入

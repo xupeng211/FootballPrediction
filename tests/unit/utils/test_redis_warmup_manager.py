@@ -46,7 +46,7 @@ class TestCacheWarmupManager:
 
             _result = await self.warmup_manager.warmup_match_cache(123)
 
-            assert result is True
+            assert _result is True
             # 验证缓存设置被调用了两次（比赛信息和特征）
             assert self.mock_redis_manager.aset.call_count == 2
 
@@ -68,7 +68,7 @@ class TestCacheWarmupManager:
 
             _result = await self.warmup_manager.warmup_match_cache(999)
 
-            assert result is False
+            assert _result is False
             # 验证没有调用缓存设置
             self.mock_redis_manager.aset.assert_not_called()
 
@@ -98,7 +98,7 @@ class TestCacheWarmupManager:
 
             _result = await self.warmup_manager.warmup_team_cache(456)
 
-            assert result is True
+            assert _result is True
             # 验证缓存设置被调用了两次（球队信息和特征）
             assert self.mock_redis_manager.aset.call_count == 2
 
@@ -147,7 +147,7 @@ class TestCacheWarmupManager:
         """测试预热历史统计"""
         _result = await self.warmup_manager.warmup_historical_stats(7)
 
-        assert result is True
+        assert _result is True
         # 验证缓存设置被调用
         self.mock_redis_manager.aset.assert_called_once()
 

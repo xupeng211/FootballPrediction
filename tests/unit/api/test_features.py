@@ -408,9 +408,9 @@ class TestAPIEndpoints:
             from src.api.features import health_check
 
             _result = await health_check()
-            assert result["service"] == "特征获取服务"
-            assert result["status"] == "healthy"
-            assert result["feature_store"] == "available"
+            assert _result["service"] == "特征获取服务"
+            assert _result["status"] == "healthy"
+            assert _result["feature_store"] == "available"
 
     @pytest.mark.asyncio
     async def test_health_check_endpoint_unhealthy_simple(self):
@@ -422,9 +422,9 @@ class TestAPIEndpoints:
             from src.api.features import health_check
 
             _result = await health_check()
-            assert result["service"] == "特征获取服务"
-            assert result["status"] == "unhealthy"
-            assert result["feature_store"] == "unavailable"
+            assert _result["service"] == "特征获取服务"
+            assert _result["status"] == "unhealthy"
+            assert _result["feature_store"] == "unavailable"
 
     # HTTP端点测试需要数据库依赖，已简化为单元测试
 

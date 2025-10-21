@@ -143,7 +143,7 @@ def test_get_prediction_cqrs_service():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = get_prediction_cqrs_service()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -153,7 +153,7 @@ def test_get_match_cqrs_service():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = get_match_cqrs_service()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -163,7 +163,7 @@ def test_get_user_cqrs_service():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = get_user_cqrs_service()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -173,7 +173,7 @@ def test_get_analytics_cqrs_service():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = get_analytics_cqrs_service()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -273,7 +273,7 @@ class TestParameterizedInput:
             else:
                 _result = str(invalid_data)
             # 确保没有崩溃
-            assert result is not None
+            assert _result is not None
         except Exception:
             # 期望的错误处理
             pass

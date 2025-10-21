@@ -196,8 +196,8 @@ class TestUserProfileService:
             mock_save.return_value = {"id": 1, **mock_user_data}
 
             _result = service.create_profile(mock_user_data)
-            assert result["id"] == 1
-            assert result["username"] == "testuser"
+            assert _result["id"] == 1
+            assert _result["username"] == "testuser"
             mock_save.assert_called_once()
 
     def test_get_user_profile(self):
@@ -216,7 +216,7 @@ class TestUserProfileService:
             }
 
             _result = service.get_profile(user_id)
-            assert result["id"] == user_id
+            assert _result["id"] == user_id
             mock_get.assert_called_once_with(user_id)
 
     def test_update_user_preferences(self):
@@ -232,7 +232,7 @@ class TestUserProfileService:
             mock_update.return_value = {"updated": True}
 
             _result = service.update_preferences(user_id, preferences)
-            assert result["updated"] is True
+            assert _result["updated"] is True
 
     def test_get_user_statistics(self):
         """测试获取用户统计"""
@@ -285,8 +285,8 @@ class TestStrategyPredictionService:
             }
 
             _result = service.predict_match(mock_match_data)
-            assert result["prediction"] == "home_win"
-            assert result["confidence"] > 0.5
+            assert _result["prediction"] == "home_win"
+            assert _result["confidence"] > 0.5
 
     def test_multiple_strategies_prediction(self, mock_match_data):
         """测试多策略预测"""
@@ -336,7 +336,7 @@ class TestStrategyPredictionService:
             mock_save.return_value = {"saved": True}
 
             _result = service.update_strategy_weights(new_weights)
-            assert result["saved"] is True
+            assert _result["saved"] is True
 
 
 class TestEventPredictionService:
@@ -370,8 +370,8 @@ class TestEventPredictionService:
             }
 
             _result = service.predict_next_event(mock_event_data)
-            assert result["next_event"] == "goal"
-            assert result["probability"] > 0
+            assert _result["next_event"] == "goal"
+            assert _result["probability"] > 0
 
     def test_event_probability_timeline(self):
         """测试事件概率时间线"""
@@ -436,7 +436,7 @@ class TestDataService:
             }
 
             _result = service.get_match_data(match_id)
-            assert result["id"] == match_id
+            assert _result["id"] == match_id
 
     def test_batch_data_fetch(self):
         """测试批量数据获取"""
@@ -480,7 +480,7 @@ class TestDataService:
                 # 第二次查询 - 缓存命中
                 mock_cache_get.return_value = {"id": 1, "data": "cached_data"}
                 _result = service.get_match_data_cached(match_id)
-                assert result["data"] == "cached_data"
+                assert _result["data"] == "cached_data"
 
     def test_data_validation(self):
         """测试数据验证"""
@@ -515,7 +515,7 @@ class TestAuditService:
             mock_write.return_value = {"log_id": 123}
 
             _result = service.log_action(action_data)
-            assert result["log_id"] == 123
+            assert _result["log_id"] == 123
 
     def test_get_audit_trail(self):
         """测试获取审计轨迹"""
@@ -556,7 +556,7 @@ class TestAuditService:
 
             _result = service.generate_compliance_report(date_range)
             assert "total_actions" in result
-            assert result["compliance_score"] > 0.9
+            assert _result["compliance_score"] > 0.9
 
     def test_data_access_audit(self):
         """测试数据访问审计"""
@@ -576,7 +576,7 @@ class TestAuditService:
             mock_record.return_value = {"recorded": True}
 
             _result = service.record_data_access(access_data)
-            assert result["recorded"] is True
+            assert _result["recorded"] is True
 
 
 class TestServiceManager:
@@ -864,7 +864,7 @@ class TestServiceLifecycle:
         }
 
         # 验证配置结构
-        for service_name, service_config in config.items():
+        for service_name, service_config in _config.items():
             assert isinstance(service_config, dict)
             assert len(service_config) > 0
             assert "port" in service_config or "pool_size" in service_config

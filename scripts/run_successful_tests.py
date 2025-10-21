@@ -7,6 +7,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+
 def run_tests_with_coverage():
     """运行可成功的测试并检查覆盖率"""
 
@@ -57,12 +58,14 @@ def run_tests_with_coverage():
 
     # 构建pytest命令
     cmd = [
-        "python", "-m", "pytest",
+        "python",
+        "-m",
+        "pytest",
         "--cov=src",
         "--cov-report=term-missing",
         "--cov-report=html:htmlcov_successful",
         "-q",
-        "--tb=short"
+        "--tb=short",
     ] + existing_files
 
     print("\n执行命令:")
@@ -72,12 +75,12 @@ def run_tests_with_coverage():
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("测试输出:")
-        print("="*60)
+        print("=" * 60)
 
         # 输出最后20行（包含覆盖率信息）
-        lines = result.stdout.split('\n')
+        lines = result.stdout.split("\n")
         for line in lines[-30:]:
             print(line)
 

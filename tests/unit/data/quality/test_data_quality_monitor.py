@@ -77,8 +77,8 @@ class TestDataQualityMonitor:
                 assert "fixtures" in result
                 assert "odds" in result
                 assert "overall_status" in result
-                assert result["fixtures"]["status"] == "good"
-                assert result["odds"]["status"] == "warning"
+                assert _result["fixtures"]["status"] == "good"
+                assert _result["odds"]["status"] == "warning"
 
     @pytest.mark.asyncio
     async def test_detect_anomalies(self):
@@ -132,9 +132,9 @@ class TestDataQualityMonitor:
 
         _result = await monitor._check_fixtures_age(mock_session)
 
-        assert result["status"] == "good"
-        assert result["oldest_fixture_hours"] < 24
-        assert result["stale_fixtures_count"] == 0
+        assert _result["status"] == "good"
+        assert _result["oldest_fixture_hours"] < 24
+        assert _result["stale_fixtures_count"] == 0
 
     @pytest.mark.asyncio
     async def test_check_fixtures_age_stale(self):
@@ -151,9 +151,9 @@ class TestDataQualityMonitor:
 
         _result = await monitor._check_fixtures_age(mock_session)
 
-        assert result["status"] == "critical"
-        assert result["oldest_fixture_hours"] > 24
-        assert result["stale_fixtures_count"] > 0
+        assert _result["status"] == "critical"
+        assert _result["oldest_fixture_hours"] > 24
+        assert _result["stale_fixtures_count"] > 0
 
     @pytest.mark.asyncio
     async def test_check_odds_age_warning(self):
@@ -170,8 +170,8 @@ class TestDataQualityMonitor:
 
         _result = await monitor._check_odds_age(mock_session)
 
-        assert result["status"] == "warning"
-        assert result["oldest_odds_hours"] > 24
+        assert _result["status"] == "warning"
+        assert _result["oldest_odds_hours"] > 24
 
     @pytest.mark.asyncio
     async def test_find_missing_matches(self):
@@ -190,7 +190,7 @@ class TestDataQualityMonitor:
         _result = await monitor._find_missing_matches(mock_session)
 
         assert "missing_matches" in result
-        assert result["missing_matches"] >= 0
+        assert _result["missing_matches"] >= 0
         assert "details" in result
 
     @pytest.mark.asyncio
@@ -224,8 +224,8 @@ class TestDataQualityMonitor:
 
         assert isinstance(result, list)
         if result:
-            assert "match_id" in result[0]
-            assert "suspicious_reason" in result[0]
+            assert "match_id" in _result[0]
+            assert "suspicious_reason" in _result[0]
 
     @pytest.mark.asyncio
     async def test_find_unusual_scores(self):
@@ -256,8 +256,8 @@ class TestDataQualityMonitor:
 
         assert isinstance(result, list)
         if result:
-            assert "match_id" in result[0]
-            assert "unusual_reason" in result[0]
+            assert "match_id" in _result[0]
+            assert "unusual_reason" in _result[0]
 
     @pytest.mark.asyncio
     async def test_check_data_consistency(self):
@@ -286,8 +286,8 @@ class TestDataQualityMonitor:
 
         assert isinstance(result, list)
         if result:
-            assert "match_id" in result[0]
-            assert "issue" in result[0]
+            assert "match_id" in _result[0]
+            assert "issue" in _result[0]
 
     @pytest.mark.asyncio
     async def test_generate_quality_report(self):
@@ -451,13 +451,13 @@ class TestDataQualityMonitor:
         _result = await monitor._check_fixtures_age(mock_session)
 
         # 使用12小时阈值，10小时应该是好的
-        assert result["status"] == "good"
+        assert _result["status"] == "good"
 
         # 使用48小时前的时间应该是严重的
         old_time = datetime.now() - timedelta(hours=48)
         mock_result.scalar.return_value = old_time
         _result = await monitor._check_fixtures_age(mock_session)
-        assert result["status"] == "critical"
+        assert _result["status"] == "critical"
 
     @pytest.mark.asyncio
     async def test_full_quality_check_workflow(self):
@@ -508,7 +508,7 @@ class TestDataQualityMonitor:
         _result = await monitor._check_fixtures_age(mock_session)
 
         assert "status" in result
-        assert result["status"] == "error"
+        assert _result["status"] == "error"
         assert "error" in result
 
     def test_logging_configuration(self):

@@ -236,7 +236,7 @@ class TestVerifyPredictionPermission:
 
         _result = await verify_prediction_permission(match_id, user)
 
-        assert result is True
+        assert _result is True
 
     @pytest.mark.asyncio
     async def test_verify_prediction_permission_admin(self):
@@ -246,7 +246,7 @@ class TestVerifyPredictionPermission:
 
         _result = await verify_prediction_permission(match_id, admin)
 
-        assert result is True
+        assert _result is True
 
     @pytest.mark.asyncio
     async def test_verify_prediction_permission_different_matches(self):
@@ -256,7 +256,7 @@ class TestVerifyPredictionPermission:
 
         for match_id in matches:
             _result = await verify_prediction_permission(match_id, user)
-            assert result is True
+            assert _result is True
 
 
 class TestRateLimitCheck:
@@ -269,7 +269,7 @@ class TestRateLimitCheck:
 
         _result = await rate_limit_check(user)
 
-        assert result is True
+        assert _result is True
 
     @pytest.mark.asyncio
     async def test_rate_limit_check_admin(self):
@@ -278,7 +278,7 @@ class TestRateLimitCheck:
 
         _result = await rate_limit_check(admin)
 
-        assert result is True
+        assert _result is True
 
     @pytest.mark.asyncio
     async def test_rate_limit_check_multiple_requests(self):
@@ -288,7 +288,7 @@ class TestRateLimitCheck:
         # 模拟多次请求
         for _ in range(10):
             _result = await rate_limit_check(user)
-            assert result is True
+            assert _result is True
 
 
 class TestConstants:

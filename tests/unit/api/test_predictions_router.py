@@ -19,5 +19,5 @@ def test_predictions_health():
 
     assert response.status_code == 200
     _data = response.json()
-    assert data["status"] == "healthy"
-    assert data["service"] == "predictions"
+    assert _data["status"] == "healthy"
+    assert _data["service"] == "predictions"

@@ -15,7 +15,7 @@ class TestTimeUtils:
         _result = TimeUtils.now_utc()
 
         assert isinstance(result, datetime)
-        assert result.tzinfo == timezone.utc
+        assert _result.tzinfo == timezone.utc
         # 确保时间在合理范围内（前后5秒）
         now = datetime.now(timezone.utc)
         assert abs((result - now).total_seconds()) < 5
@@ -27,13 +27,13 @@ class TestTimeUtils:
         _result = TimeUtils.timestamp_to_datetime(timestamp)
 
         assert isinstance(result, datetime)
-        assert result.tzinfo == timezone.utc
-        assert result.year == 2022
-        assert result.month == 1
-        assert result.day == 1
-        assert result.hour == 0
-        assert result.minute == 0
-        assert result.second == 0
+        assert _result.tzinfo == timezone.utc
+        assert _result.year == 2022
+        assert _result.month == 1
+        assert _result.day == 1
+        assert _result.hour == 0
+        assert _result.minute == 0
+        assert _result.second == 0
 
     def test_datetime_to_timestamp(self):
         """测试datetime转时间戳"""
@@ -77,12 +77,12 @@ class TestTimeUtils:
         _result = TimeUtils.parse_datetime(date_str)
 
         assert isinstance(result, datetime)
-        assert result.year == 2022
-        assert result.month == 1
-        assert result.day == 15
-        assert result.hour == 14
-        assert result.minute == 30
-        assert result.second == 45
+        assert _result.year == 2022
+        assert _result.month == 1
+        assert _result.day == 15
+        assert _result.hour == 14
+        assert _result.minute == 30
+        assert _result.second == 45
 
     def test_parse_datetime_custom(self):
         """测试解析日期时间字符串（自定义格式）"""
@@ -118,12 +118,12 @@ class TestTimeUtils:
         _result = parse_datetime(date_str)
 
         assert isinstance(result, datetime)
-        assert result.year == 2022
-        assert result.month == 1
-        assert result.day == 15
-        assert result.hour == 14
-        assert result.minute == 30
-        assert result.second == 45
+        assert _result.year == 2022
+        assert _result.month == 1
+        assert _result.day == 15
+        assert _result.hour == 14
+        assert _result.minute == 30
+        assert _result.second == 45
 
     def test_parse_datetime_function_iso_format(self):
         """测试向后兼容的parse_datetime函数 - ISO格式"""
@@ -132,13 +132,13 @@ class TestTimeUtils:
         _result = parse_datetime(date_str)
 
         assert isinstance(result, datetime)
-        assert result.year == 2022
-        assert result.month == 1
-        assert result.day == 15
-        assert result.hour == 14
-        assert result.minute == 30
-        assert result.second == 45
-        assert result.microsecond == 123000
+        assert _result.year == 2022
+        assert _result.month == 1
+        assert _result.day == 15
+        assert _result.hour == 14
+        assert _result.minute == 30
+        assert _result.second == 45
+        assert _result.microsecond == 123000
 
     def test_parse_datetime_function_iso_no_fraction(self):
         """测试向后兼容的parse_datetime函数 - ISO无小数部分"""
@@ -146,12 +146,12 @@ class TestTimeUtils:
         _result = parse_datetime(date_str)
 
         assert isinstance(result, datetime)
-        assert result.year == 2022
-        assert result.month == 1
-        assert result.day == 15
-        assert result.hour == 14
-        assert result.minute == 30
-        assert result.second == 45
+        assert _result.year == 2022
+        assert _result.month == 1
+        assert _result.day == 15
+        assert _result.hour == 14
+        assert _result.minute == 30
+        assert _result.second == 45
 
     def test_parse_datetime_function_iso_no_timezone(self):
         """测试向后兼容的parse_datetime函数 - ISO无时区"""
@@ -159,12 +159,12 @@ class TestTimeUtils:
         _result = parse_datetime(date_str)
 
         assert isinstance(result, datetime)
-        assert result.year == 2022
-        assert result.month == 1
-        assert result.day == 15
-        assert result.hour == 14
-        assert result.minute == 30
-        assert result.second == 45
+        assert _result.year == 2022
+        assert _result.month == 1
+        assert _result.day == 15
+        assert _result.hour == 14
+        assert _result.minute == 30
+        assert _result.second == 45
 
     def test_parse_datetime_function_date_only(self):
         """测试向后兼容的parse_datetime函数 - 仅日期"""
@@ -172,30 +172,30 @@ class TestTimeUtils:
         _result = parse_datetime(date_str)
 
         assert isinstance(result, datetime)
-        assert result.year == 2022
-        assert result.month == 1
-        assert result.day == 15
-        assert result.hour == 0
-        assert result.minute == 0
-        assert result.second == 0
+        assert _result.year == 2022
+        assert _result.month == 1
+        assert _result.day == 15
+        assert _result.hour == 0
+        assert _result.minute == 0
+        assert _result.second == 0
 
     def test_parse_datetime_function_none(self):
         """测试向后兼容的parse_datetime函数 - None输入"""
         _result = parse_datetime(None)
-        assert result is None
+        assert _result is None
 
     def test_parse_datetime_function_invalid(self):
         """测试向后兼容的parse_datetime函数 - 无效输入"""
         # 完全无效的字符串
         _result = parse_datetime("not-a-date")
-        assert result is None
+        assert _result is None
 
         # 部分有效但格式不对
         _result = parse_datetime("2022-13-45")  # 无效的月份和日期
-        assert result is None
+        assert _result is None
 
         _result = parse_datetime("")  # 空字符串
-        assert result is None
+        assert _result is None
 
     def test_parse_datetime_function_custom_format(self):
         """测试向后兼容的parse_datetime函数 - 自定义格式"""
@@ -203,15 +203,15 @@ class TestTimeUtils:
         _result = parse_datetime(date_str, "%d/%m/%Y")
 
         assert isinstance(result, datetime)
-        assert result.year == 2022
-        assert result.month == 1
-        assert result.day == 15
+        assert _result.year == 2022
+        assert _result.month == 1
+        assert _result.day == 15
 
     def test_parse_datetime_function_wrong_custom_format(self):
         """测试向后兼容的parse_datetime函数 - 错误的自定义格式"""
         # 使用错误的格式，但应该能尝试其他格式
         _result = parse_datetime("2022-01-15", "%d/%m/%Y")
-        assert result is not None
+        assert _result is not None
         assert _result == datetime(2022, 1, 15)
 
     def test_time_edge_cases(self):
@@ -257,6 +257,6 @@ class TestTimeUtils:
         for date_str in formats:
             _result = parse_datetime(date_str)
             assert isinstance(result, datetime)
-            assert result.year == 2022
-            assert result.month == 1
-            assert result.day == 15
+            assert _result.year == 2022
+            assert _result.month == 1
+            assert _result.day == 15

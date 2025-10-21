@@ -137,31 +137,31 @@ class TestTimeUtilsOperations:
         """测试：添加天数"""
         dt = datetime(2023, 1, 1)
         _result = TimeUtils.add_days(dt, 7)
-        assert result.year == 2023
-        assert result.month == 1
-        assert result.day == 8
+        assert _result.year == 2023
+        assert _result.month == 1
+        assert _result.day == 8
 
     def test_add_hours(self):
         """测试：添加小时"""
         dt = datetime(2023, 1, 1, 12, 0, 0)
         _result = TimeUtils.add_hours(dt, 5)
-        assert result.hour == 17
-        assert result.day == 1
+        assert _result.hour == 17
+        assert _result.day == 1
 
     def test_add_minutes(self):
         """测试：添加分钟"""
         dt = datetime(2023, 1, 1, 12, 30, 0)
         _result = TimeUtils.add_minutes(dt, 45)
-        assert result.minute == 15
-        assert result.hour == 13
+        assert _result.minute == 15
+        assert _result.hour == 13
 
     def test_subtract_days(self):
         """测试：减去天数"""
         dt = datetime(2023, 1, 8)
         _result = TimeUtils.subtract_days(dt, 7)
-        assert result.day == 1
-        assert result.month == 1
-        assert result.year == 2023
+        assert _result.day == 1
+        assert _result.month == 1
+        assert _result.year == 2023
 
     def test_get_weekday(self):
         """测试：获取星期几"""
@@ -431,8 +431,8 @@ class TestTimeUtilsEdgeCases:
 
         # 减去7天
         _result = TimeUtils.subtract_days(base_dt, 7)
-        assert result.day == 1
-        assert result.month == 1
+        assert _result.day == 1
+        assert _result.month == 1
 
     def test_timezone_edge_cases(self):
         """测试：时区边界情况"""

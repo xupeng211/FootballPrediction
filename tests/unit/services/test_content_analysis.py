@@ -31,7 +31,7 @@ class TestContentAnalysisService:
         return Content(
             content_id="test_001",
             content_type="text",
-            _data ={"text": "曼联今天在英超比赛中取得了胜利，这是一场非常精彩的比赛。"},
+            _data={"text": "曼联今天在英超比赛中取得了胜利，这是一场非常精彩的比赛。"},
         )
 
     @pytest.fixture
@@ -40,7 +40,7 @@ class TestContentAnalysisService:
         return Content(
             content_id="test_002",
             content_type="image",
-            _data ={"url": "http://example.com/image.jpg", "size": "1024x768"},
+            _data={"url": "http://example.com/image.jpg", "size": "1024x768"},
         )
 
     @pytest.fixture
@@ -65,7 +65,7 @@ class TestContentAnalysisService:
         _result = await service.initialize()
 
         # Then
-        assert result is True
+        assert _result is True
         assert service._initialized is True
         assert service._models_loaded is True
 
@@ -78,7 +78,7 @@ class TestContentAnalysisService:
             _result = await service.initialize()
 
             # Then
-            assert result is False
+            assert _result is False
             assert service._initialized is False
 
     @pytest.mark.asyncio
@@ -124,10 +124,10 @@ class TestContentAnalysisService:
 
         # Then
         assert isinstance(result, AnalysisResult)
-        assert result.id == "analysis_test_001"
-        assert result.analysis_type == "content_analysis"
-        assert result.content_id == "test_001"
-        assert result.confidence == 0.85
+        assert _result.id == "analysis_test_001"
+        assert _result.analysis_type == "content_analysis"
+        assert _result.content_id == "test_001"
+        assert _result.confidence == 0.85
         assert isinstance(result.timestamp, datetime)
         assert "sentiment" in result.result
         assert "keywords" in result.result
@@ -147,10 +147,10 @@ class TestContentAnalysisService:
 
         # Then
         assert isinstance(result, AnalysisResult)
-        assert result.result["sentiment"] == "neutral"
-        assert result.result["category"] == "general"
-        assert result.result["quality_score"] == 0.5
-        assert result.result["language"] == "unknown"
+        assert _result._result["sentiment"] == "neutral"
+        assert _result._result["category"] == "general"
+        assert _result._result["quality_score"] == 0.5
+        assert _result._result["language"] == "unknown"
 
     @pytest.mark.asyncio
     async def test_analyze_content_without_initialization(
@@ -225,7 +225,7 @@ class TestContentAnalysisService:
         content = Content(
             content_id="test",
             content_type="text",
-            _data ={"text": "这是一场关于足球比赛的详细分析，包含了多个关键因素。"},
+            _data={"text": "这是一场关于足球比赛的详细分析，包含了多个关键因素。"},
         )
 
         # When
@@ -250,7 +250,7 @@ class TestContentAnalysisService:
 
         # Then
         assert "error" in result
-        assert result["error"] == "Empty text"
+        assert _result["error"] == "Empty text"
 
     def test_analyze_text_normal(self, service):
         """测试：分析普通文本"""
@@ -268,8 +268,8 @@ class TestContentAnalysisService:
         assert "language" in result
         assert "entities" in result
         assert "summary" in result
-        assert result["word_count"] == len(text.split())
-        assert result["character_count"] == len(text)
+        assert _result["word_count"] == len(text.split())
+        assert _result["character_count"] == len(text)
 
     def test_extract_entities_teams(self, service):
         """测试：提取球队实体"""
@@ -306,8 +306,8 @@ class TestContentAnalysisService:
         _result = service.classify_content(content)
 
         # Then
-        assert result["category"] == "match_report"
-        assert result["confidence"] > 0
+        assert _result["category"] == "match_report"
+        assert _result["confidence"] > 0
         assert "all_scores" in result
 
     def test_classify_content_transfer_news(self, service):
@@ -319,8 +319,8 @@ class TestContentAnalysisService:
         _result = service.classify_content(content)
 
         # Then
-        assert result["category"] == "transfer_news"
-        assert result["confidence"] > 0
+        assert _result["category"] == "transfer_news"
+        assert _result["confidence"] > 0
 
     def test_classify_content_empty(self, service):
         """测试：分类空内容"""
@@ -328,8 +328,8 @@ class TestContentAnalysisService:
         _result = service.classify_content("")
 
         # Then
-        assert result["category"] == "unknown"
-        assert result["confidence"] == 0.0
+        assert _result["category"] == "unknown"
+        assert _result["confidence"] == 0.0
 
     def test_analyze_sentiment_positive(self, service):
         """测试：正面情感分析"""
@@ -344,7 +344,7 @@ class TestContentAnalysisService:
         assert "score" in result
         assert "positive_count" in result
         assert "negative_count" in result
-        assert result["positive_count"] > 0
+        assert _result["positive_count"] > 0
 
     def test_analyze_sentiment_negative(self, service):
         """测试：负面情感分析"""
@@ -355,8 +355,8 @@ class TestContentAnalysisService:
         _result = service.analyze_sentiment(text)
 
         # Then
-        assert result["negative_count"] > 0
-        assert result["score"] < 0
+        assert _result["negative_count"] > 0
+        assert _result["score"] < 0
 
     def test_analyze_sentiment_neutral(self, service):
         """测试：中性情感分析"""
@@ -367,8 +367,8 @@ class TestContentAnalysisService:
         _result = service.analyze_sentiment(text)
 
         # Then
-        assert result["sentiment"] == "neutral"
-        assert result["score"] == 0.0
+        assert _result["sentiment"] == "neutral"
+        assert _result["score"] == 0.0
 
     def test_analyze_sentiment_empty(self, service):
         """测试：空文本情感分析"""
@@ -376,8 +376,8 @@ class TestContentAnalysisService:
         _result = service.analyze_sentiment("")
 
         # Then
-        assert result["sentiment"] == "neutral"
-        assert result["score"] == 0.0
+        assert _result["sentiment"] == "neutral"
+        assert _result["score"] == 0.0
 
     def test_generate_summary_short_text(self, service):
         """测试：生成短文本摘要"""
@@ -432,13 +432,13 @@ class TestContentModel:
         """测试：创建内容对象"""
         # Given & When
         content = Content(
-            content_id="test_001", content_type="text", _data ={"text": "测试内容"}
+            content_id="test_001", content_type="text", _data={"text": "测试内容"}
         )
 
         # Then
         assert content.id == "test_001"
         assert content.content_type == "text"
-        assert content.data["text"] == "测试内容"
+        assert content._data["text"] == "测试内容"
 
     def test_user_profile_creation_default_preferences(self):
         """测试：创建用户配置文件（默认偏好）"""
@@ -467,12 +467,12 @@ class TestContentModel:
         _result = AnalysisResult()
 
         # Then
-        assert result.id == ""
-        assert result.analysis_type == ""
-        assert result._result == {}
-        assert result.confidence == 0.0
+        assert _result.id == ""
+        assert _result.analysis_type == ""
+        assert _result._result == {}
+        assert _result.confidence == 0.0
         assert isinstance(result.timestamp, datetime)
-        assert result.content_id == ""
+        assert _result.content_id == ""
 
     def test_analysis_result_creation_with_values(self):
         """测试：创建分析结果（带值）"""
@@ -483,19 +483,19 @@ class TestContentModel:
         _result = AnalysisResult(
             id="analysis_001",
             analysis_type="sentiment",
-            _result ={"sentiment": "positive"},
+            _result={"sentiment": "positive"},
             confidence=0.95,
             timestamp=timestamp,
             content_id="content_001",
         )
 
         # Then
-        assert result.id == "analysis_001"
-        assert result.analysis_type == "sentiment"
-        assert result.result["sentiment"] == "positive"
-        assert result.confidence == 0.95
-        assert result.timestamp == timestamp
-        assert result.content_id == "content_001"
+        assert _result.id == "analysis_001"
+        assert _result.analysis_type == "sentiment"
+        assert _result._result["sentiment"] == "positive"
+        assert _result.confidence == 0.95
+        assert _result.timestamp == timestamp
+        assert _result.content_id == "content_001"
 
 
 class TestContentTypeEnum:

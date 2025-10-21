@@ -8,7 +8,7 @@
 - 基础工具类
 """
 
-from .config import Config, Settings, config, get_settings
+from .config import Config, Settings, get_config, get_settings
 from .exceptions import (
     ConfigError,
     DataError,

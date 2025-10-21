@@ -142,9 +142,9 @@ class TestMatchRepository:
                 match_repo.db_manager, "execute", return_value=mock_execute
             ):
                 _result = await match_repo.get_match_statistics()
-                assert result["total_matches"] == 100
-                assert result["completed_matches"] == 50
-                assert result["upcoming_matches"] == 20
+                assert _result["total_matches"] == 100
+                assert _result["completed_matches"] == 50
+                assert _result["upcoming_matches"] == 20
 
 
 class TestUserRepository:

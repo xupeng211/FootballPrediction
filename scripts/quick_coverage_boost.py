@@ -9,10 +9,11 @@ import ast
 from pathlib import Path
 import re
 
+
 def analyze_module(file_path):
     """分析Python文件，提取类和函数"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         tree = ast.parse(content)
@@ -24,17 +25,18 @@ def analyze_module(file_path):
             if isinstance(node, ast.ClassDef):
                 classes.append(node.name)
             elif isinstance(node, ast.FunctionDef):
-                if not node.name.startswith('_'):
+                if not node.name.startswith("_"):
                     functions.append(node.name)
 
         return {
-            'classes': classes,
-            'functions': functions,
-            'has_async': any('async def' in content for _ in content.split('\n')),
-            'has_exceptions': 'Exception' in content or 'raise' in content
+            "classes": classes,
+            "functions": functions,
+            "has_async": any("async def" in content for _ in content.split("\n")),
+            "has_exceptions": "Exception" in content or "raise" in content,
         }
-    except:
+    except Exception:
         return None
+
 
 def generate_smart_test(module_path, analysis):
     """根据分析结果生成智能测试"""
@@ -59,7 +61,7 @@ except ImportError as e:
 '''
 
     # 生成类测试
-    for cls in analysis['classes']:
+    for cls in analysis["classes"]:
         test_content += f'''
 
 class Test{cls}:
@@ -87,7 +89,7 @@ class Test{cls}:
 '''
 
     # 生成函数测试
-    for func in analysis['functions']:
+    for func in analysis["functions"]:
         test_content += f'''
 
 def test_{func}():
@@ -101,7 +103,7 @@ def test_{func}():
 '''
 
     # 添加异步测试（如果有）
-    if analysis['has_async']:
+    if analysis["has_async"]:
         test_content += '''
 
 @pytest.mark.asyncio
@@ -114,7 +116,7 @@ async def test_async_functionality():
 '''
 
     # 添加异常测试（如果有）
-    if analysis['has_exceptions']:
+    if analysis["has_exceptions"]:
         test_content += '''
 
 def test_exception_handling():
@@ -127,13 +129,14 @@ def test_exception_handling():
         pass
 '''
 
-    test_content += '''
+    test_content += """
 
 # TODO: Add more comprehensive tests
 # This is just a basic template to improve coverage
-'''
+"""
 
     return test_content
+
 
 def main():
     """主函数"""
@@ -165,7 +168,9 @@ def main():
 
         # 查找Python文件
         py_files = list(Path(src_dir).rglob("*.py"))
-        py_files = [f for f in py_files if f.name != "__init__.py" and "test" not in f.name]
+        py_files = [
+            f for f in py_files if f.name != "__init__.py" and "test" not in f.name
+        ]
 
         # 排除已有测试的文件
         for py_file in py_files[:max_files]:
@@ -188,10 +193,12 @@ def main():
             # 生成测试
             test_content = generate_smart_test(str(py_file), analysis)
 
-            with open(test_path, 'w', encoding='utf-8') as f:
+            with open(test_path, "w", encoding="utf-8") as f:
                 f.write(test_content)
 
-            print(f"  📝 创建测试: test_{rel_path} ({len(analysis['classes'])}类, {len(analysis['functions'])}函数)")
+            print(
+                f"  📝 创建测试: test_{rel_path} ({len(analysis['classes'])}类, {len(analysis['functions'])}函数)"
+            )
             created_tests.append(test_path)
 
     print(f"\n✅ 成功创建 {len(created_tests)} 个测试文件")
@@ -200,8 +207,9 @@ def main():
 
     # 创建快速运行脚本
     run_script = Path("scripts/run_created_tests.sh")
-    with open(run_script, 'w') as f:
-        f.write('''#!/bin/bash
+    with open(run_script, "w") as f:
+        f.write(
+            """#!/bin/bash
 # 运行新创建的测试
 
 echo "🧪 运行新创建的测试..."
@@ -214,7 +222,8 @@ for dir in tests/unit/api tests/unit/services tests/unit/database tests/unit/cac
         pytest $dir -v --tb=short --maxfail=5 -x
     fi
 done
-''')
+"""
+        )
 
     os.chmod(run_script, 0o755)
     print(f"\n📄 创建运行脚本: {run_script}")
@@ -224,6 +233,7 @@ done
     print("2. 检查测试结果并修复失败的测试")
     print("3. 运行 make coverage-local 查看新的覆盖率")
     print("4. 逐步完善测试内容")
+
 
 if __name__ == "__main__":
     main()

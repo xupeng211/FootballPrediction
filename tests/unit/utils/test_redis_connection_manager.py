@@ -66,7 +66,7 @@ class TestRedisConnectionManager:
         manager = RedisConnectionManager()
         _result = manager.ping()
 
-        assert result is True
+        assert _result is True
 
     @patch("src.cache.redis.core.connection_manager.redis")
     def test_ping_failure(self, mock_redis):
@@ -94,7 +94,7 @@ class TestRedisConnectionManager:
         manager = RedisConnectionManager()
         _result = manager.health_check()
 
-        assert result is True
+        assert _result is True
 
     @patch("src.cache.redis.core.connection_manager.redis")
     def test_get_info(self, mock_redis):

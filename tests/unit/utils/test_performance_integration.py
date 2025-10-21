@@ -199,12 +199,12 @@ class TestPerformanceMonitoringIntegration:
             integration = PerformanceMonitoringIntegration()
             _config = integration.get_performance_config()
 
-            assert config["enabled"] is True
-            assert config["sample_rate"] == 0.8
-            assert config["profiling_enabled"] is True
+            assert _config["enabled"] is True
+            assert _config["sample_rate"] == 0.8
+            assert _config["profiling_enabled"] is True
             assert "thresholds" in config
-            assert config["thresholds"]["response_time"]["slow"] == 2.0
-            assert config["thresholds"]["database"]["slow_query"] == 0.2
+            assert _config["thresholds"]["response_time"]["slow"] == 2.0
+            assert _config["thresholds"]["database"]["slow_query"] == 0.2
 
     def test_update_config(self):
         """测试更新配置"""

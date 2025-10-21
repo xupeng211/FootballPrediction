@@ -23,7 +23,7 @@ class TestTimeUtils:
     def test_now_utc_is_utc(self):
         """测试：返回UTC时间"""
         _result = TimeUtils.now_utc()
-        assert result.tzinfo == timezone.utc
+        assert _result.tzinfo == timezone.utc
 
     def test_now_utc_is_recent(self):
         """测试：时间是最近的"""
@@ -39,34 +39,34 @@ class TestTimeUtils:
         timestamp = 1609459200.0  # 2021-01-01 00:00:00 UTC
         _result = TimeUtils.timestamp_to_datetime(timestamp)
         assert isinstance(result, datetime)
-        assert result.tzinfo == timezone.utc
-        assert result.year == 2021
-        assert result.month == 1
-        assert result.day == 1
+        assert _result.tzinfo == timezone.utc
+        assert _result.year == 2021
+        assert _result.month == 1
+        assert _result.day == 1
 
     def test_timestamp_to_datetime_zero(self):
         """测试：时间戳为0"""
         _result = TimeUtils.timestamp_to_datetime(0.0)
         assert isinstance(result, datetime)
-        assert result.tzinfo == timezone.utc
-        assert result.year == 1970
-        assert result.month == 1
+        assert _result.tzinfo == timezone.utc
+        assert _result.year == 1970
+        assert _result.month == 1
 
     def test_timestamp_to_datetime_negative(self):
         """测试：负时间戳"""
         timestamp = -86400.0  # 1969-12-31 00:00:00 UTC
         _result = TimeUtils.timestamp_to_datetime(timestamp)
         assert isinstance(result, datetime)
-        assert result.tzinfo == timezone.utc
-        assert result.year == 1969
-        assert result.month == 12
-        assert result.day == 31
+        assert _result.tzinfo == timezone.utc
+        assert _result.year == 1969
+        assert _result.month == 12
+        assert _result.day == 31
 
     def test_timestamp_to_datetime_with_microseconds(self):
         """测试：包含微秒的时间戳"""
         timestamp = 1609459200.123456
         _result = TimeUtils.timestamp_to_datetime(timestamp)
-        assert result.microsecond == 123456
+        assert _result.microsecond == 123456
 
     # ==================== datetime_to_timestamp测试 ====================
 
@@ -130,30 +130,30 @@ class TestTimeUtils:
         date_str = "2021-01-01 12:30:45"
         _result = TimeUtils.parse_datetime(date_str)
         assert isinstance(result, datetime)
-        assert result.year == 2021
-        assert result.month == 1
-        assert result.day == 1
-        assert result.hour == 12
-        assert result.minute == 30
-        assert result.second == 45
+        assert _result.year == 2021
+        assert _result.month == 1
+        assert _result.day == 1
+        assert _result.hour == 12
+        assert _result.minute == 30
+        assert _result.second == 45
 
     def test_parse_datetime_custom(self):
         """测试：自定义格式解析"""
         date_str = "2021/01/01 12-30-45"
         _result = TimeUtils.parse_datetime(date_str, "%Y/%m/%d %H-%M-%S")
         assert isinstance(result, datetime)
-        assert result.year == 2021
-        assert result.month == 1
-        assert result.day == 1
+        assert _result.year == 2021
+        assert _result.month == 1
+        assert _result.day == 1
 
     def test_parse_datetime_date_only(self):
         """测试：只有日期"""
         date_str = "2021-01-01"
         _result = TimeUtils.parse_datetime(date_str, "%Y-%m-%d")
         assert isinstance(result, datetime)
-        assert result.hour == 0
-        assert result.minute == 0
-        assert result.second == 0
+        assert _result.hour == 0
+        assert _result.minute == 0
+        assert _result.second == 0
 
     # ==================== 向后兼容函数测试 ====================
 
@@ -161,7 +161,7 @@ class TestTimeUtils:
         """测试：utc_now函数"""
         _result = utc_now()
         assert isinstance(result, datetime)
-        assert result.tzinfo == timezone.utc
+        assert _result.tzinfo == timezone.utc
 
     def test_utc_now_same_as_class_method(self):
         """测试：utc_now与类方法返回相同类型"""
@@ -175,47 +175,47 @@ class TestTimeUtils:
         date_str = "2021-01-01 12:30:45"
         _result = parse_datetime(date_str)
         assert isinstance(result, datetime)
-        assert result.year == 2021
+        assert _result.year == 2021
 
     def test_parse_datetime_function_none(self):
         """测试：parse_datetime函数处理None"""
         _result = parse_datetime(None)
-        assert result is None
+        assert _result is None
 
     def test_parse_datetime_function_iso_with_z(self):
         """测试：parse_datetime函数处理ISO格式带Z"""
         date_str = "2021-01-01T12:30:45Z"
         _result = parse_datetime(date_str)
         assert isinstance(result, datetime)
-        assert result.year == 2021
-        assert result.hour == 12
+        assert _result.year == 2021
+        assert _result.hour == 12
 
     def test_parse_datetime_function_iso_with_microseconds(self):
         """测试：parse_datetime函数处理ISO格式带微秒"""
         date_str = "2021-01-01T12:30:45.123456Z"
         _result = parse_datetime(date_str)
         assert isinstance(result, datetime)
-        assert result.microsecond == 123456
+        assert _result.microsecond == 123456
 
     def test_parse_datetime_function_iso_without_z(self):
         """测试：parse_datetime函数处理ISO格式不带Z"""
         date_str = "2021-01-01T12:30:45"
         _result = parse_datetime(date_str)
         assert isinstance(result, datetime)
-        assert result.year == 2021
+        assert _result.year == 2021
 
     def test_parse_datetime_function_date_only(self):
         """测试：parse_datetime函数处理只有日期"""
         date_str = "2021-01-01"
         _result = parse_datetime(date_str)
         assert isinstance(result, datetime)
-        assert result.hour == 0
+        assert _result.hour == 0
 
     def test_parse_datetime_function_invalid(self):
         """测试：parse_datetime函数处理无效格式"""
         date_str = "not a date"
         _result = parse_datetime(date_str)
-        assert result is None
+        assert _result is None
 
     def test_parse_datetime_function_invalid_type(self):
         """测试：parse_datetime函数处理无效类型"""

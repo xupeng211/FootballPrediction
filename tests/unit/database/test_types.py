@@ -35,7 +35,7 @@ class TestSQLiteCompatibleJSONB:
         # 测试PostgreSQL
         _result = json_type.load_dialect_impl(pg_dialect)
         pg_dialect.type_descriptor.assert_called_once()
-        assert result is not None
+        assert _result is not None
 
         # Mock SQLite dialect
         sqlite_dialect = Mock()
@@ -46,7 +46,7 @@ class TestSQLiteCompatibleJSONB:
         # 测试SQLite
         _result = json_type.load_dialect_impl(sqlite_dialect)
         sqlite_dialect.type_descriptor.assert_called_once()
-        assert result is not None
+        assert _result is not None
 
     def test_process_bind_param_none(self):
         """测试：处理绑定参数（None值）"""
@@ -55,7 +55,7 @@ class TestSQLiteCompatibleJSONB:
         dialect.name = "sqlite"
 
         _result = json_type.process_bind_param(None, dialect)
-        assert result is None
+        assert _result is None
 
     def test_process_bind_param_postgresql(self):
         """测试：处理绑定参数（PostgreSQL）"""
@@ -99,7 +99,7 @@ class TestSQLiteCompatibleJSONB:
         dialect = Mock()
 
         _result = json_type.process_result_value(None, dialect)
-        assert result is None
+        assert _result is None
 
     def test_process_result_value_postgresql(self):
         """测试：处理结果值（PostgreSQL）"""
@@ -181,7 +181,7 @@ class TestCompatibleJSON:
 
         _result = json_type.load_dialect_impl(pg_dialect)
         pg_dialect.type_descriptor.assert_called_once()
-        assert result is not None
+        assert _result is not None
 
     def test_process_bind_param_with_mock(self):
         """测试：处理绑定参数"""
@@ -190,12 +190,12 @@ class TestCompatibleJSON:
 
         # 测试None
         _result = json_type.process_bind_param(None, dialect)
-        assert result is None
+        assert _result is None
 
         # 测试非None值
         _data = {"test": "data"}
         _result = json_type.process_bind_param(data, dialect)
-        assert result is not None
+        assert _result is not None
 
     def test_process_result_value_with_mock(self):
         """测试：处理结果值"""
@@ -204,12 +204,12 @@ class TestCompatibleJSON:
 
         # 测试None
         _result = json_type.process_result_value(None, dialect)
-        assert result is None
+        assert _result is None
 
         # 测试非None值
         _data = {"test": "data"}
         _result = json_type.process_result_value(data, dialect)
-        assert result is not None
+        assert _result is not None
 
 
 class TestUtilityFunctions:

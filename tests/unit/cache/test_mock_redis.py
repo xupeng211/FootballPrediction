@@ -43,7 +43,7 @@ class TestMockRedisManager:
 
         # 设置值
         _result = redis.set("test_key", "test_value")
-        assert result is True
+        assert _result is True
 
         # 获取值
         value = redis.get("test_key")
@@ -62,7 +62,7 @@ class TestMockRedisManager:
 
         # 设置带TTL的值（1秒）
         _result = redis.setex("ttl_key", 1, "ttl_value")
-        assert result is True
+        assert _result is True
 
         # 立即获取应该成功
         value = redis.get("ttl_key")
@@ -126,7 +126,7 @@ class TestMockRedisManager:
 
         # 设置过期时间（2秒）
         _result = redis.expire("expire_key", 2)
-        assert result is True
+        assert _result is True
 
         # 获取TTL
         ttl = redis.ttl("expire_key")
@@ -242,7 +242,7 @@ class TestMockRedisManager:
 
         # 清空所有
         _result = redis.flushall()
-        assert result is True
+        assert _result is True
 
         # 验证所有数据已清除
         assert redis.get("key1") is None
@@ -454,7 +454,7 @@ class TestMockRedisManagerAdvanced:
 
         # 执行事务
         _result = transaction()
-        assert result is not None
+        assert _result is not None
         assert len(result) == 3
         assert redis.get("t1") == "value1"
 

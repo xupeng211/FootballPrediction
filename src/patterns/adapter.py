@@ -228,9 +228,9 @@ class FootballApiAdapter(APIAdapter):
 
             return ExternalData(
                 source="football_api",
-                _data =transformed_data,
+                _data=transformed_data,
                 timestamp=datetime.now(),
-                _metadata ={"match_id": match_id, "original_format": "json"},
+                _metadata={"match_id": match_id, "original_format": "json"},
             )
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
@@ -247,9 +247,9 @@ class FootballApiAdapter(APIAdapter):
 
             return ExternalData(
                 source="football_api",
-                _data =transformed_data,
+                _data=transformed_data,
                 timestamp=datetime.now(),
-                _metadata ={"team_id": team_id, "original_format": "json"},
+                _metadata={"team_id": team_id, "original_format": "json"},
             )
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
@@ -288,9 +288,9 @@ class WeatherApiAdapter(APIAdapter):
 
             return ExternalData(
                 source="weather_api",
-                _data =transformed_data,
+                _data=transformed_data,
                 timestamp=datetime.now(),
-                _metadata ={"location": location, "date": date.isoformat()},
+                _metadata={"location": location, "date": date.isoformat()},
             )
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
@@ -345,9 +345,9 @@ class OddsApiAdapter(APIAdapter):
 
             return ExternalData(
                 source="odds_api",
-                _data =transformed_data,
+                _data=transformed_data,
                 timestamp=datetime.now(),
-                _metadata ={"match_id": match_id, "original_format": "json"},
+                _metadata={"match_id": match_id, "original_format": "json"},
             )
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:

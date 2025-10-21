@@ -26,7 +26,7 @@ class TestCQRSEndpoints:
         response = client.get("/api/v1/health")
         assert response.status_code == 200
         _data = response.json()
-        assert "checks" in data or "status" in data
+        assert "checks" in _data or "status" in _data
 
     @patch("src.api.cqrs.CommandBus.execute")
     @patch("src.api.cqrs.CreateCommand")
@@ -56,7 +56,7 @@ class TestCQRSEndpoints:
 
         assert response.status_code in [200, 201]
         _data = response.json()
-        assert "prediction_id" in data or "success" in data
+        assert "prediction_id" in _data or "success" in _data
 
     def test_get_prediction_detail(self, client):
         """测试获取预测详情"""
@@ -72,7 +72,7 @@ class TestCQRSEndpoints:
 
         if response.status_code == 200:
             _data = response.json()
-            assert "prediction_id" in data or "id" in data
+            assert "prediction_id" in _data or "id" in _data
 
     def test_get_user_predictions(self, client):
         """测试获取用户预测列表"""
@@ -88,7 +88,7 @@ class TestCQRSEndpoints:
 
         if response.status_code == 200:
             _data = response.json()
-            assert isinstance(data, list) or "predictions" in data
+            assert isinstance(data, list) or "predictions" in _data
 
     def test_get_user_stats(self, client):
         """测试获取用户统计"""
@@ -104,7 +104,7 @@ class TestCQRSEndpoints:
 
         if response.status_code == 200:
             _data = response.json()
-            assert "stats" in data or "total_predictions" in data
+            assert "stats" in _data or "total_predictions" in _data
 
     @patch("src.api.cqrs.CommandBus.execute")
     @patch("src.api.cqrs.CreateCommand")
@@ -131,7 +131,7 @@ class TestCQRSEndpoints:
 
         assert response.status_code in [200, 201]
         _data = response.json()
-        assert "match_id" in data or "success" in data
+        assert "match_id" in _data or "success" in _data
 
     def test_get_match_detail(self, client):
         """测试获取比赛详情"""
@@ -146,7 +146,7 @@ class TestCQRSEndpoints:
 
         if response.status_code == 200:
             _data = response.json()
-            assert "match_id" in data or "id" in data
+            assert "match_id" in _data or "id" in _data
 
     def test_get_upcoming_matches(self, client):
         """测试获取即将到来的比赛"""
@@ -159,7 +159,7 @@ class TestCQRSEndpoints:
 
         if response.status_code == 200:
             _data = response.json()
-            assert isinstance(data, list) or "matches" in data
+            assert isinstance(data, list) or "matches" in _data
 
     @patch("src.api.cqrs.CommandBus.execute")
     @patch("src.api.cqrs.CreateCommand")
@@ -185,7 +185,7 @@ class TestCQRSEndpoints:
 
         assert response.status_code in [200, 201]
         _data = response.json()
-        assert "user_id" in data or "success" in data
+        assert "user_id" in _data or "success" in _data
 
     def test_system_status(self, client):
         """测试系统状态"""
@@ -198,7 +198,7 @@ class TestCQRSEndpoints:
 
         if response.status_code == 200:
             _data = response.json()
-            assert "status" in data or "system" in data
+            assert "status" in _data or "system" in _data
 
 
 @pytest.mark.unit

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Integrated Bugfix Cycle Automation with TODO Board Updates."""
+
 import subprocess
 import pathlib
 import datetime

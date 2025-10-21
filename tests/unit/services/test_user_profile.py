@@ -55,7 +55,7 @@ class TestUserProfileService:
         _result = await service.initialize()
 
         # Then
-        assert result is True
+        assert _result is True
         assert service._initialized is True
 
     @pytest.mark.asyncio
@@ -67,7 +67,7 @@ class TestUserProfileService:
             _result = await service.initialize()
 
             # Then
-            assert result is False
+            assert _result is False
             assert service._initialized is False
 
     @pytest.mark.asyncio
@@ -190,7 +190,7 @@ class TestUserProfileService:
         _result = await service.update_profile("nonexistent", {"test": "value"})
 
         # Then
-        assert result is None
+        assert _result is None
 
     def test_analyze_user_interests_default(self, service, sample_user):
         """测试：分析用户兴趣（默认）"""
@@ -262,10 +262,10 @@ class TestUserProfileService:
         _result = service.create_profile(user_data)
 
         # Then
-        assert result["status"] == "created"
+        assert _result["status"] == "created"
         assert "profile" in result
-        assert result["profile"]["user_id"] == "new_user"
-        assert result["profile"]["display_name"] == "New User"
+        assert _result["profile"]["user_id"] == "new_user"
+        assert _result["profile"]["display_name"] == "New User"
 
     def test_create_profile_empty_data(self, service):
         """测试：创建画像（空数据）"""
@@ -273,8 +273,8 @@ class TestUserProfileService:
         _result = service.create_profile({})
 
         # Then
-        assert result["status"] == "error"
-        assert "Empty or invalid user data" in result["message"]
+        assert _result["status"] == "error"
+        assert "Empty or invalid user data" in _result["message"]
 
     def test_create_profile_missing_user_id(self, service):
         """测试：创建画像（缺少user_id）"""
@@ -285,7 +285,7 @@ class TestUserProfileService:
         _result = service.create_profile(user_data)
 
         # Then
-        assert result["status"] == "error"
+        assert _result["status"] == "error"
 
     def test_delete_profile_exists(self, service):
         """测试：删除存在的画像"""
@@ -297,7 +297,7 @@ class TestUserProfileService:
         _result = service.delete_profile("delete_me")
 
         # Then
-        assert result["status"] == "deleted"
+        assert _result["status"] == "deleted"
         assert "delete_me" not in service._user_profiles
 
     def test_delete_profile_not_exists(self, service):
@@ -306,7 +306,7 @@ class TestUserProfileService:
         _result = service.delete_profile("nonexistent")
 
         # Then
-        assert result["status"] == "not_found"
+        assert _result["status"] == "not_found"
 
     def test_profiles_property(self, service):
         """测试：_profiles属性"""

@@ -150,7 +150,7 @@ class TestStrategyPredictionService:
 
         # Then
         service._match_repository.get_by_id.assert_called_once_with(123)
-        assert result is not None
+        assert _result is not None
         service._prediction_repository.create.assert_called_once()
 
     @pytest.mark.asyncio
@@ -258,9 +258,9 @@ class TestStrategyPredictionService:
 
         # Then
         assert isinstance(result, PredictionInput)
-        assert result.match == context.match
-        assert result.home_team == context.home_team
-        assert result.away_team == context.away_team
+        assert _result.match == context.match
+        assert _result.home_team == context.home_team
+        assert _result.away_team == context.away_team
 
     def test_get_team_info(self, service):
         """测试：获取球队信息"""

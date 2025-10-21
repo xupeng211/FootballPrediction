@@ -32,12 +32,12 @@ class TestPredictionModels:
             confidence_score=0.75,
         )
 
-        assert result.match_id == 12345
-        assert result.model_version == "v1.0.0"
-        assert result.model_name == "football_model"
-        assert result.home_win_probability == 0.5
-        assert result.predicted_result == "home"
-        assert result.confidence_score == 0.75
+        assert _result.match_id == 12345
+        assert _result.model_version == "v1.0.0"
+        assert _result.model_name == "football_model"
+        assert _result.home_win_probability == 0.5
+        assert _result.predicted_result == "home"
+        assert _result.confidence_score == 0.75
 
     def test_prediction_result_to_dict(self):
         """测试预测结果转字典"""
@@ -78,9 +78,9 @@ class TestPredictionModels:
         }
 
         _result = PredictionResult.from_dict(data)
-        assert result.match_id == 12345
-        assert result.model_version == "v1.0.0"
-        assert result.predicted_result == "home"
+        assert _result.match_id == 12345
+        assert _result.model_version == "v1.0.0"
+        assert _result.predicted_result == "home"
 
     def test_prediction_result_validation(self):
         """测试预测结果验证"""
@@ -96,7 +96,7 @@ class TestPredictionModels:
             confidence_score=0.75,
         )
 
-        assert result.is_probabilities_valid()
+        assert _result.is_probabilities_valid()
 
         # 测试无效概率
         result.home_win_probability = 0.6
@@ -134,9 +134,9 @@ class TestPredictionModels:
         )
 
         result.update_actual_result(2, 1)
-        assert result.actual_result == "home"
-        assert result.is_correct is True
-        assert result.verified_at is not None
+        assert _result.actual_result == "home"
+        assert _result.is_correct is True
+        assert _result.verified_at is not None
 
 
 class TestPredictionMetrics:
@@ -458,8 +458,8 @@ class TestPredictionService:
 
                         _result = await service.predict_match(12345)
                         assert isinstance(result, PredictionResult)
-                        assert result.match_id == 12345
-                        assert result.predicted_result == "home"
+                        assert _result.match_id == 12345
+                        assert _result.predicted_result == "home"
 
     @pytest.mark.asyncio
     async def test_batch_predict_matches(self):
@@ -491,7 +491,7 @@ class TestPredictionService:
             )
 
             _result = await service.verify_prediction(12345)
-            assert result is True
+            assert _result is True
 
     @pytest.mark.asyncio
     async def test_get_prediction_statistics(self):
@@ -594,6 +594,6 @@ async def test_integration_example():
         confidence_score=0.75,
     )
 
-    assert result.match_id == 12345
-    assert result.predicted_result == "home"
-    assert result.is_probabilities_valid()
+    assert _result.match_id == 12345
+    assert _result.predicted_result == "home"
+    assert _result.is_probabilities_valid()

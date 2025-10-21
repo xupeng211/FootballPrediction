@@ -48,9 +48,9 @@ class TestUserEndpoints:
         _result = mocks["repository"].get(user_id)
 
         # 断言
-        assert result is not None
-        assert result.username == user_data["username"]
-        assert result.email == user_data["email"]
+        assert _result is not None
+        assert _result.username == user_data["username"]
+        assert _result.email == user_data["email"]
         mocks["repository"].get.assert_called_once_with(user_id)
 
     @with_mocks(["repository", "logger"])
@@ -65,7 +65,7 @@ class TestUserEndpoints:
         _result = mocks["repository"].get(user_id)
 
         # 断言
-        assert result is None
+        assert _result is None
         mocks["repository"].get.assert_called_once_with(user_id)
 
     @with_mocks(["repository", "logger", "cache"])
@@ -85,9 +85,9 @@ class TestUserEndpoints:
         _result = mocks["repository"].create(user_data)
 
         # 断言
-        assert result is not None
-        assert result.username == user_data["username"]
-        assert result.email == user_data["email"]
+        assert _result is not None
+        assert _result.username == user_data["username"]
+        assert _result.email == user_data["email"]
         mocks["repository"].create.assert_called_once_with(user_data)
         mocks["cache"].delete.assert_called()  # 清除缓存
 
@@ -109,8 +109,8 @@ class TestUserEndpoints:
         _result = mocks["repository"].update(user_id, update_data)
 
         # 断言
-        assert result is not None
-        assert result.full_name == "Updated Name"
+        assert _result is not None
+        assert _result.full_name == "Updated Name"
         mocks["repository"].update.assert_called_once_with(user_id, update_data)
 
     @with_mocks(["repository", "logger"])
@@ -126,7 +126,7 @@ class TestUserEndpoints:
         _result = mocks["repository"].delete(user_id)
 
         # 断言
-        assert result is True
+        assert _result is True
         mocks["repository"].delete.assert_called_once_with(user_id)
 
     @with_mocks(["repository", "cache"])
@@ -183,8 +183,8 @@ class TestMatchEndpoints:
         _result = mocks["repository"].get(match_id)
 
         # 断言
-        assert result is not None
-        assert result.id == match_id
+        assert _result is not None
+        assert _result.id == match_id
         mocks["repository"].get.assert_called_once_with(match_id)
 
     @with_mocks(["repository", "event_bus"])
@@ -204,9 +204,9 @@ class TestMatchEndpoints:
         _result = mocks["repository"].create(match_data)
 
         # 断言
-        assert result is not None
-        assert result.home_team == match_data["home_team"]
-        assert result.away_team == match_data["away_team"]
+        assert _result is not None
+        assert _result.home_team == match_data["home_team"]
+        assert _result.away_team == match_data["away_team"]
         mocks["repository"].create.assert_called_once_with(match_data)
         mocks["event_bus"].publish.assert_called()
 
@@ -251,8 +251,8 @@ class TestPredictionEndpoints:
         _result = mocks["repository"].create(prediction_data)
 
         # 断言
-        assert result is not None
-        assert result._prediction == prediction_data["prediction"]
+        assert _result is not None
+        assert _result._prediction == prediction_data["prediction"]
         mocks["repository"].create.assert_called_once_with(prediction_data)
         mocks["event_bus"].publish.assert_called()
         mocks["logger"].info.assert_called()
@@ -284,8 +284,8 @@ class TestAnalyticsEndpoints:
             mocks["cache"].set("analytics", result)
 
         # 断言
-        assert result["total_predictions"] == 1000
-        assert result["accuracy"] == 0.65
+        assert _result["total_predictions"] == 1000
+        assert _result["accuracy"] == 0.65
         mocks["repository"].aggregate.assert_called()
         mocks["cache"].set.assert_called_with("analytics", analytics_data)
 
@@ -308,8 +308,8 @@ class TestAnalyticsEndpoints:
         _result = mocks["repository"].filter()
 
         # 断言
-        assert result["user_id"] == user_id
-        assert result["total_predictions"] == 50
+        assert _result["user_id"] == user_id
+        assert _result["total_predictions"] == 50
         mocks["repository"].filter.assert_called()
 
 

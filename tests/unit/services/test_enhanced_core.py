@@ -26,12 +26,12 @@ class TestServiceConfig:
         _config = ServiceConfig(name="TestService")
 
         # Then
-        assert config.name == "TestService"
-        assert config.version == "1.0.0"
-        assert config.description == ""
-        assert config.dependencies == []
-        assert config._config == {}
-        assert isinstance(config.created_at, datetime)
+        assert _config.name == "TestService"
+        assert _config.version == "1.0.0"
+        assert _config.description == ""
+        assert _config.dependencies == []
+        assert _config._config == {}
+        assert isinstance(_config.created_at, datetime)
 
     def test_service_config_creation_full(self):
         """测试：完整参数创建配置"""
@@ -45,24 +45,24 @@ class TestServiceConfig:
             version="2.0.0",
             description="A test service with full config",
             dependencies=dependencies,
-            _config =config_dict,
+            _config=config_dict,
         )
 
         # Then
-        assert config.name == "FullService"
-        assert config.version == "2.0.0"
-        assert config.description == "A test service with full config"
-        assert config.dependencies == dependencies
-        assert config._config == config_dict
+        assert _config.name == "FullService"
+        assert _config.version == "2.0.0"
+        assert _config.description == "A test service with full config"
+        assert _config.dependencies == dependencies
+        assert _config._config == config_dict
 
     def test_service_config_empty_lists(self):
         """测试：空列表参数"""
         # When
-        _config = ServiceConfig(name="TestService", dependencies=[], _config ={})
+        _config = ServiceConfig(name="TestService", dependencies=[], _config={})
 
         # Then
-        assert config.dependencies == []
-        assert config._config == {}
+        assert _config.dependencies == []
+        assert _config._config == {}
 
 
 class TestServiceMetrics:
@@ -137,15 +137,15 @@ class TestServiceMetrics:
         _result = metrics.get_metrics()
 
         # Then
-        assert result is not metrics.metrics  # 应该是副本
-        assert result["calls"] == 1
-        assert result["total_time"] == 1.0
+        assert _result is not metrics.metrics  # 应该是副本
+        assert _result["calls"] == 1
+        assert _result["total_time"] == 1.0
 
 
 class MockEnhancedService(EnhancedBaseService):
     """用于测试的模拟增强服务"""
 
-    def __init__(self, _config =None):
+    def __init__(self, _config=None):
         super().__init__(config)
         self.initialize_called = False
         self.shutdown_called = False
@@ -205,7 +205,7 @@ class TestEnhancedBaseService:
         _result = await service.start()
 
         # Then
-        assert result is True
+        assert _result is True
         assert service._running is True
         assert service._initialized is True
         assert service._startup_time is not None
@@ -222,7 +222,7 @@ class TestEnhancedBaseService:
         _result = await service.start()
 
         # Then
-        assert result is True
+        assert _result is True
         # startup_time不应该更新
         original_time = service._startup_time
         await service.start()
@@ -239,7 +239,7 @@ class TestEnhancedBaseService:
         _result = await service.start()
 
         # Then
-        assert result is False
+        assert _result is False
         assert service._running is False
         assert service._health_status["status"] == "unhealthy"
         assert "Initialization failed" in service._health_status["message"]
@@ -254,7 +254,7 @@ class TestEnhancedBaseService:
         _result = await service.stop()
 
         # Then
-        assert result is True
+        assert _result is True
         assert service._running is False
         assert service._initialized is False
         assert service._health_status["status"] == "stopped"
@@ -267,7 +267,7 @@ class TestEnhancedBaseService:
         _result = await service.stop()
 
         # Then
-        assert result is True
+        assert _result is True
         assert service._running is False
 
     @pytest.mark.asyncio
@@ -281,7 +281,7 @@ class TestEnhancedBaseService:
         _result = await service.stop()
 
         # Then
-        assert result is False
+        assert _result is False
         # 服务应该仍然在运行
         assert service._running is True
 
@@ -326,7 +326,7 @@ class TestEnhancedBaseService:
         _result = service.is_healthy()
 
         # Then
-        assert result is True
+        assert _result is True
 
     def test_is_unhealthy(self, service):
         """测试：不健康检查"""
@@ -337,7 +337,7 @@ class TestEnhancedBaseService:
         _result = service.is_healthy()
 
         # Then
-        assert result is False
+        assert _result is False
 
     def test_get_health_info(self, service):
         """测试：获取健康信息"""
@@ -382,7 +382,7 @@ class TestEnhancedBaseService:
         # Then
         # health_check返回get_health_info的结果，其中status来自get_status()
         # 但_message_字段包含健康状态信息
-        assert "unhealthy" in result["message"]
+        assert "unhealthy" in _result["message"]
 
     @pytest.mark.asyncio
     async def test_health_check_all_healthy(self, service):
@@ -399,7 +399,7 @@ class TestEnhancedBaseService:
 
         # Then
         # status来自get_status()，不是health_status
-        assert result["status"] == "running"
+        assert _result["status"] == "running"
 
     @pytest.mark.asyncio
     async def test_execute_with_metrics_success(self, service):
@@ -464,12 +464,12 @@ class TestEnhancedBaseService:
         _result = service.get_dependency("nonexistent")
 
         # Then
-        assert result is None
+        assert _result is None
 
     def test_get_config(self, service):
         """测试：获取配置"""
         # Given
-        service.config.config["test_key"] = "test_value"
+        service._config._config["test_key"] = "test_value"
 
         # When
         _result = service.get_config("test_key")

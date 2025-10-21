@@ -41,4 +41,4 @@ class TestTimeUtils:
         start = datetime(2024, 1, 1)  # 周一
         _result = TimeUtils.add_working_days(start, 5)
         # 5个工作日后应该是下周一
-        assert result.weekday() == 0  # 周一
+        assert _result.weekday() == 0  # 周一

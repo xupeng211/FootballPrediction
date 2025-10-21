@@ -324,7 +324,7 @@ class TestFileUtils:
         file_path = tmp_path / "test.json"
 
         _result = FileUtils.write_json_file(data, file_path)
-        assert result is True
+        assert _result is True
         assert file_path.exists()
 
     def test_cleanup_old_files(self, tmp_path):

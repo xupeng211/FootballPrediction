@@ -165,7 +165,7 @@ class TestDictUtils:
 
         # 覆盖现有值
         DictUtils.set_nested(data, "a.b.c", 456)
-        assert data["a"]["b"]["c"] == 456
+        assert _data["a"]["b"]["c"] == 456
 
     def test_flatten_dict(self):
         """测试扁平化字典"""

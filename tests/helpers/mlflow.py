@@ -1,11 +1,9 @@
-"""MLflow 测试桩实现"""
+"""MLflow 测试桩实现 - 重构版本（不使用 monkeypatch）"""
 
 import sys
 from dataclasses import dataclass
-from types import ModuleType, SimpleNamespace
+from types import SimpleNamespace
 from typing import Any, Dict, List, Optional
-
-from pytest import MonkeyPatch
 
 
 @dataclass
@@ -121,40 +119,58 @@ class MockMlflowClient:
         return exp_id
 
 
-def apply_mlflow_mocks(monkeypatch: MonkeyPatch) -> None:
+# 创建全局 mock 实例（仅在测试中使用）
+_global_mlflow_mock = None
+_global_client_mock = None
+
+
+def get_mock_mlflow() -> MockMlflow:
+    """获取 MLflow mock 实例（单例）"""
+    global _global_mlflow_mock
+    if _global_mlflow_mock is None:
+        _global_mlflow_mock = MockMlflow()
+    return _global_mlflow_mock
+
+
+def get_mock_mlflow_client(tracking_uri: Optional[str] = None) -> MockMlflowClient:
+    """获取 MLflow Client mock 实例"""
+    return MockMlflowClient(tracking_uri)
+
+
+def reset_mlflow_mocks() -> None:
+    """重置 MLflow mock 实例（用于测试隔离）"""
+    global _global_mlflow_mock, _global_client_mock
+    if _global_mlflow_mock:
+        _global_mlflow_mock.experiments.clear()
+        _global_mlflow_mock.runs.clear()
+        _global_mlflow_mock.logged_metrics.clear()
+        _global_mlflow_mock.logged_params.clear()
+        _global_mlflow_mock.logged_artifacts.clear()
+
+
+# 向后兼容的函数（现在只是返回 mock 实例，不使用 monkeypatch）
+def apply_mlflow_mocks(*args, **kwargs) -> Dict[str, Any]:
     """
-    应用 MLflow mock
-
-    Args:
-        monkeypatch: pytest monkeypatch fixture
+    向后兼容：返回 MLflow mocks
+    不再使用 monkeypatch，而是返回 mock 实例供测试使用
     """
-    # 创建 mock 模块
-    mock_mlflow_module = ModuleType("mlflow")
-    mock_mlflow_module.set_experiment = MockMlflow().set_experiment
-    mock_mlflow_module.get_experiment_by_name = MockMlflow().get_experiment_by_name
-    mock_mlflow_module.start_run = MockMlflow().start_run
-    mock_mlflow_module.log_metric = MockMlflow().log_metric
-    mock_mlflow_module.log_param = MockMlflow().log_param
-    mock_mlflow_module.log_artifact = MockMlflow().log_artifact
-    mock_mlflow_module.active_run = MockMlflow().active_run
-    mock_mlflow_module.tracking = SimpleNamespace()
-    mock_mlflow_module.tracking.MlflowClient = MockMlflowClient
-
-    # 创建 client 模块
-    mock_client_module = ModuleType("mlflow.client")
-    mock_client_module.MlflowClient = MockMlflowClient
-    mock_client_module.tracking = SimpleNamespace()
-    mock_client_module.tracking.MlflowClient = MockMlflowClient
-
-    # 应用 mock
-    monkeypatch.setitem(sys.modules, "mlflow", mock_mlflow_module)
-    monkeypatch.setitem(sys.modules, "mlflow.client", mock_client_module)
-    monkeypatch.setitem(sys.modules, "mlflow.tracking", mock_mlflow_module.tracking)
+    return {
+        "mlflow": get_mock_mlflow(),
+        "mlflow.client": {
+            "MlflowClient": MockMlflowClient,
+        },
+        "mlflow.tracking": {
+            "MlflowClient": MockMlflowClient,
+        },
+    }
 
 
 __all__ = [
     "MockMlflowRun",
     "MockMlflow",
     "MockMlflowClient",
+    "get_mock_mlflow",
+    "get_mock_mlflow_client",
+    "reset_mlflow_mocks",
     "apply_mlflow_mocks",
 ]

@@ -18,8 +18,8 @@ class TestDictUtils:
         """测试扁平化字典"""
         nested = {"a": {"b": {"c": 1}}, "d": 2}
         _result = DictUtils.flatten_dict(nested)
-        assert result["a.b.c"] == 1
-        assert result["d"] == 2
+        assert _result["a.b.c"] == 1
+        assert _result["d"] == 2
 
     def test_filter_none_values(self):
         """测试过滤None值"""
@@ -38,5 +38,5 @@ class TestDictUtils:
         """测试自定义分隔符的扁平化字典"""
         nested = {"a": {"b": {"c": 1}}, "d": 2}
         _result = DictUtils.flatten_dict(nested, sep="_")
-        assert result["a_b_c"] == 1
-        assert result["d"] == 2
+        assert _result["a_b_c"] == 1
+        assert _result["d"] == 2

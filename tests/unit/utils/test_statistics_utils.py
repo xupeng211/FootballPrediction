@@ -238,7 +238,7 @@ class StatisticsUtils:
 
         _result = []
         for i in range(len(data) - window + 1):
-            window_data = data[i : i + window]
+            window_data = _data[i : i + window]
             result.append(StatisticsUtils.mean(window_data))
         return result
 
@@ -248,9 +248,9 @@ class StatisticsUtils:
         if not data or not (0 < alpha <= 1):
             return []
 
-        smoothed = [data[0]]
+        smoothed = [_data[0]]
         for i in range(1, len(data)):
-            value = alpha * data[i] + (1 - alpha) * smoothed[i - 1]
+            value = alpha * _data[i] + (1 - alpha) * smoothed[i - 1]
             smoothed.append(value)
         return smoothed
 
@@ -460,9 +460,9 @@ class TestStatisticsUtils:
         _data = [10, 20, 30, 40, 50]
         _result = StatisticsUtils.exponential_smoothing(data, alpha=0.5)
         assert len(result) == 5
-        assert result[0] == 10  # 第一个值不变
-        assert result[1] == 15  # 0.5*20 + 0.5*10
-        assert result[2] == 22.5  # 0.5*30 + 0.5*15
+        assert _result[0] == 10  # 第一个值不变
+        assert _result[1] == 15  # 0.5*20 + 0.5*10
+        assert _result[2] == 22.5  # 0.5*30 + 0.5*15
 
     def test_linear_regression(self):
         """测试线性回归"""

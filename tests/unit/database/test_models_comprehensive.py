@@ -151,7 +151,7 @@ class TestUserModel:
             mock_check.return_value = True
 
             _result = user.check_password("plain_password")
-            assert result is True
+            assert _result is True
             mock_check.assert_called_once_with("hashed_password", "plain_password")
 
 
@@ -603,7 +603,7 @@ class TestFeaturesModel:
             mock_dict.return_value = {"id": 1, "feature_data": {"key": "value"}}
 
             _result = features.to_dict()
-            assert result["feature_data"]["key"] == "value"
+            assert _result["feature_data"]["key"] == "value"
 
     def test_features_calculation(self):
         """测试特征计算"""
@@ -616,7 +616,7 @@ class TestFeaturesModel:
             mock_calc.return_value = {"calculated_feature": 0.75}
 
             _result = features.calculate()
-            assert result["calculated_feature"] == 0.75
+            assert _result["calculated_feature"] == 0.75
 
 
 class TestAuditLogModel:
@@ -739,7 +739,7 @@ class TestDataQualityLogModel:
             mock_improve.return_value = {"new_score": 0.98}
 
             _result = log.improve_quality()
-            assert result["new_score"] == 0.98
+            assert _result["new_score"] == 0.98
 
 
 class TestDataCollectionLogModel:
@@ -840,7 +840,7 @@ class TestRawDataModel:
             mock_mark.return_value = True
 
             _result = data.mark_processed()
-            assert result is True
+            assert _result is True
 
     def test_raw_data_content_validation(self):
         """测试原始数据内容验证"""
@@ -863,7 +863,7 @@ class TestRawDataModel:
             mock_archive.return_value = {"archived": True, "date": datetime.now()}
 
             _result = data.archive()
-            assert result["archived"] is True
+            assert _result["archived"] is True
 
 
 class TestModelRelationships:

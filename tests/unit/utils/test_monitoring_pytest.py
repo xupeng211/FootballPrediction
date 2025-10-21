@@ -195,12 +195,12 @@ async def _get_business_metrics_test(db):
         um_v = _val(um)
         ar_v = _val(ar)
 
-        result["24h_predictions"] = int(rp_v) if rp_v is not None else None
-        result["upcoming_matches_7d"] = int(um_v) if um_v is not None else None
-        result["model_accuracy_30d"] = float(ar_v) if ar_v is not None else None
+        _result["24h_predictions"] = int(rp_v) if rp_v is not None else None
+        _result["upcoming_matches_7d"] = int(um_v) if um_v is not None else None
+        _result["model_accuracy_30d"] = float(ar_v) if ar_v is not None else None
     except Exception:
         # 异常时保持None，并更新时间戳
-        result["last_updated"] = datetime.utcnow().isoformat()
+        _result["last_updated"] = datetime.utcnow().isoformat()
 
     return result
 
@@ -209,19 +209,19 @@ async def _get_system_metrics_test():
     """测试版本的系统指标获取函数"""
     _result = {}
     try:
-        result["cpu"] = {
+        _result["cpu"] = {
             "usage_percent": pytest_psutil.cpu_percent(),
         }
 
         memory = pytest_psutil.virtual_memory()
-        result["memory"] = {
+        _result["memory"] = {
             "total": memory.total,
             "available": memory.available,
             "used_percent": memory.percent,
         }
 
         disk = pytest_psutil.disk_usage("/")
-        result["disk"] = {
+        _result["disk"] = {
             "total": disk.total,
             "used": disk.used,
             "used_percent": disk.percent,
@@ -229,13 +229,13 @@ async def _get_system_metrics_test():
 
         process = pytest_psutil.Process()
         process_memory = process.memory_info()
-        result["process"] = {
+        _result["process"] = {
             "memory_rss": process_memory.rss,
             "memory_percent": process.memory_percent(),
         }
 
     except Exception as e:
-        result["error"] = str(e)
+        _result["error"] = str(e)
 
     return result
 
@@ -257,8 +257,8 @@ async def _get_redis_metrics_test():
             }
         )
     except Exception as e:
-        result["healthy"] = False
-        result["error"] = str(e)
+        _result["healthy"] = False
+        _result["error"] = str(e)
 
     return result
 
@@ -293,13 +293,13 @@ class TestMonitoringPytest:
         _result = await _get_database_metrics_test(mock_session)
 
         # 验证结果
-        assert result["healthy"] is True
-        assert result["statistics"]["teams_count"] == 10
-        assert result["statistics"]["matches_count"] == 20
-        assert result["statistics"]["predictions_count"] == 30
-        assert result["statistics"]["active_connections"] == 5
+        assert _result["healthy"] is True
+        assert _result["statistics"]["teams_count"] == 10
+        assert _result["statistics"]["matches_count"] == 20
+        assert _result["statistics"]["predictions_count"] == 30
+        assert _result["statistics"]["active_connections"] == 5
         assert "response_time_ms" in result
-        assert result["response_time_ms"] >= 0
+        assert _result["response_time_ms"] >= 0
 
     @pytest.mark.asyncio
     async def test_database_metrics_failure(self):
@@ -312,9 +312,9 @@ class TestMonitoringPytest:
         _result = await _get_database_metrics_test(mock_session)
 
         # 验证错误处理
-        assert result["healthy"] is False
+        assert _result["healthy"] is False
         assert "error" in result
-        assert "Database connection failed" in result["error"]
+        assert "Database connection failed" in _result["error"]
         assert "response_time_ms" in result
 
     @pytest.mark.asyncio
@@ -332,9 +332,9 @@ class TestMonitoringPytest:
         _result = await _get_business_metrics_test(mock_session)
 
         # 验证结果
-        assert result["24h_predictions"] == 100
-        assert result["upcoming_matches_7d"] == 25
-        assert result["model_accuracy_30d"] == 0.75
+        assert _result["24h_predictions"] == 100
+        assert _result["upcoming_matches_7d"] == 25
+        assert _result["model_accuracy_30d"] == 0.75
         assert "last_updated" in result
 
     @pytest.mark.asyncio
@@ -352,9 +352,9 @@ class TestMonitoringPytest:
         _result = await _get_business_metrics_test(mock_session)
 
         # 验证NULL处理
-        assert result["24h_predictions"] is None
-        assert result["upcoming_matches_7d"] is None
-        assert result["model_accuracy_30d"] is None
+        assert _result["24h_predictions"] is None
+        assert _result["upcoming_matches_7d"] is None
+        assert _result["model_accuracy_30d"] is None
         assert "last_updated" in result
 
     @pytest.mark.asyncio
@@ -371,20 +371,20 @@ class TestMonitoringPytest:
         assert "process" in result
 
         # 验证具体指标
-        assert "usage_percent" in result["cpu"]
-        assert result["cpu"]["usage_percent"] == 25.5
+        assert "usage_percent" in _result["cpu"]
+        assert _result["cpu"]["usage_percent"] == 25.5
 
-        assert "total" in result["memory"]
-        assert "used_percent" in result["memory"]
-        assert result["memory"]["total"] == 8000000000
+        assert "total" in _result["memory"]
+        assert "used_percent" in _result["memory"]
+        assert _result["memory"]["total"] == 8000000000
 
-        assert "total" in result["disk"]
-        assert "used_percent" in result["disk"]
-        assert result["disk"]["total"] == 1000000000000
+        assert "total" in _result["disk"]
+        assert "used_percent" in _result["disk"]
+        assert _result["disk"]["total"] == 1000000000000
 
-        assert "memory_rss" in result["process"]
-        assert "memory_percent" in result["process"]
-        assert result["process"]["memory_rss"] == 200000000
+        assert "memory_rss" in _result["process"]
+        assert "memory_percent" in _result["process"]
+        assert _result["process"]["memory_rss"] == 200000000
 
     @pytest.mark.asyncio
     async def test_redis_metrics(self):
@@ -400,10 +400,10 @@ class TestMonitoringPytest:
         assert "used_memory_human" in result
 
         # 验证值
-        assert result["healthy"] is True
-        assert result["connected_clients"] == 5
-        assert result["used_memory"] == 1000000
-        assert result["used_memory_human"] == "1M"
+        assert _result["healthy"] is True
+        assert _result["connected_clients"] == 5
+        assert _result["used_memory"] == 1000000
+        assert _result["used_memory_human"] == "1M"
 
     @pytest.mark.asyncio
     async def test_redis_metrics_failure(self):
@@ -417,9 +417,9 @@ class TestMonitoringPytest:
             _result = await _get_redis_metrics_test()
 
             # 验证错误处理
-            assert result["healthy"] is False
+            assert _result["healthy"] is False
             assert "error" in result
-            assert "Redis connection failed" in result["error"]
+            assert "Redis connection failed" in _result["error"]
         finally:
             # 恢复mock
             pytest_redis.Redis = original_redis
@@ -452,8 +452,8 @@ class TestMonitoringPytest:
 
         # 验证响应时间
         assert "response_time_ms" in result
-        assert result["response_time_ms"] >= 0
-        assert result["response_time_ms"] <= (time.time() - start_time) * 1000 + 10
+        assert _result["response_time_ms"] >= 0
+        assert _result["response_time_ms"] <= (time.time() - start_time) * 1000 + 10
 
     @pytest.mark.asyncio
     async def test_monitoring_module_coverage(self):

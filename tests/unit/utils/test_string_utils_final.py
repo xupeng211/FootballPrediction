@@ -296,7 +296,7 @@ class TestStringUtilsCleanText:
         text = "Hello\u00a0World"  # \u00A0是non-breaking space
         # 实现可能不处理Unicode空格
         _result = StringUtils.clean_text(text)
-        assert result in ["Hello World", "Hello\u00a0World"]
+        assert _result in ["Hello World", "Hello\u00a0World"]
 
     def test_clean_text_multiple_lines(self):
         """测试：多行文本"""

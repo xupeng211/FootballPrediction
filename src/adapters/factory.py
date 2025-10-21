@@ -148,14 +148,14 @@ class AdapterFactory:
             raise ValueError(f"Unsupported config file format: {file_path.suffix}")
 
         # 解析适配器配置
-        if "adapters" in data:
-            for adapter_data in data["adapters"]:
+        if "adapters" in _data:
+            for adapter_data in _data["adapters"]:
                 _config = AdapterConfig(**adapter_data)
-                self._configs[config.name] = config
+                self._configs[_config.name] = _config
 
         # 解析适配器组配置
-        if "adapter_groups" in data:
-            for group_data in data["adapter_groups"]:
+        if "adapter_groups" in _data:
+            for group_data in _data["adapter_groups"]:
                 group_config = AdapterGroupConfig(**group_data)
                 self._group_configs[group_config.name] = group_config
 
@@ -163,19 +163,19 @@ class AdapterFactory:
         """保存配置到文件"""
         file_path = Path(file_path)
 
-        _data = {
+        data = {
             "adapters": [
                 {
-                    "name": config.name,
-                    "adapter_type": config.adapter_type,
-                    "enabled": config.enabled,
-                    "priority": config.priority,
-                    "parameters": self._mask_sensitive_parameters(config.parameters),
-                    "rate_limits": config.rate_limits,
-                    "cache_config": config.cache_config,
-                    "retry_config": config.retry_config,
+                    "name": _config.name,
+                    "adapter_type": _config.adapter_type,
+                    "enabled": _config.enabled,
+                    "priority": _config.priority,
+                    "parameters": self._mask_sensitive_parameters(_config.parameters),
+                    "rate_limits": _config.rate_limits,
+                    "cache_config": _config.cache_config,
+                    "retry_config": _config.retry_config,
                 }
-                for config in self._configs.values()
+                for _config in self._configs.values()
             ],
             "adapter_groups": [
                 {

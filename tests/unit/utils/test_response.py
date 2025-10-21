@@ -16,7 +16,10 @@ class TestAPIResponseModel:
     def test_model_creation_success(self):
         """测试：创建成功响应模型"""
         model = APIResponseModel(
-            success=True, message="操作成功", _data ={"id": 1, "name": "test"}, code="200"
+            success=True,
+            message="操作成功",
+            _data={"id": 1, "name": "test"},
+            code="200",
         )
 
         assert model.success is True
@@ -44,7 +47,7 @@ class TestAPIResponseModel:
 
     def test_model_serialization(self):
         """测试：模型序列化"""
-        model = APIResponseModel(success=True, message="测试", _data ={"key": "value"})
+        model = APIResponseModel(success=True, message="测试", _data={"key": "value"})
 
         json_data = model.model_dump()
         assert json_data["success"] is True
@@ -68,7 +71,7 @@ class TestAPIResponseSuccess:
     def test_success_with_data(self):
         """测试：成功响应（带数据）"""
         test_data = {"id": 1, "name": "test"}
-        response = APIResponse.success(_data =test_data)
+        response = APIResponse.success(_data=test_data)
 
         assert response["success"] is True
         assert response["message"] == "操作成功"
@@ -85,14 +88,14 @@ class TestAPIResponseSuccess:
 
     def test_success_with_none_data(self):
         """测试：成功响应（数据为None）"""
-        response = APIResponse.success(_data =None)
+        response = APIResponse.success(_data=None)
 
         assert response["success"] is True
         assert "data" not in response
 
     def test_success_with_empty_data(self):
         """测试：成功响应（空数据）"""
-        response = APIResponse.success(_data ={})
+        response = APIResponse.success(_data={})
 
         assert response["success"] is True
         assert response["data"] == {}
@@ -100,7 +103,7 @@ class TestAPIResponseSuccess:
     def test_success_with_list_data(self):
         """测试：成功响应（列表数据）"""
         test_data = [1, 2, 3, {"test": "value"}]
-        response = APIResponse.success(_data =test_data)
+        response = APIResponse.success(_data=test_data)
 
         assert response["success"] is True
         assert response["data"] == test_data
@@ -117,8 +120,8 @@ class TestAPIResponseSuccess:
     def test_success_response_alias(self):
         """测试：成功响应别名方法"""
         test_data = {"result": "ok"}
-        response1 = APIResponse.success(_data =test_data)
-        response2 = APIResponse.success_response(_data =test_data)
+        response1 = APIResponse.success(_data=test_data)
+        response2 = APIResponse.success_response(_data=test_data)
 
         # 比较除了时间戳之外的所有字段
         assert response1["success"] == response2["success"]
@@ -159,7 +162,7 @@ class TestAPIResponseError:
     def test_error_with_data(self):
         """测试：错误响应（带数据）"""
         error_data = {"field": "email", "error": "格式无效"}
-        response = APIResponse.error(message="验证错误", code=400, _data =error_data)
+        response = APIResponse.error(message="验证错误", code=400, _data=error_data)
 
         assert response["success"] is False
         assert response["message"] == "验证错误"
@@ -168,7 +171,7 @@ class TestAPIResponseError:
 
     def test_error_with_none_data(self):
         """测试：错误响应（数据为None）"""
-        response = APIResponse.error(_data =None)
+        response = APIResponse.error(_data=None)
 
         assert response["success"] is False
         assert "data" not in response
@@ -208,7 +211,7 @@ class TestResponseUtils:
 
     def test_response_utils_success(self):
         """测试：ResponseUtils成功方法"""
-        response = ResponseUtils.success(_data ={"test": True})
+        response = ResponseUtils.success(_data={"test": True})
 
         assert response["success"] is True
         assert response["data"] == {"test": True}
@@ -227,7 +230,7 @@ class TestAPIResponseEdgeCases:
     def test_large_data_response(self):
         """测试：大数据响应"""
         large_data = {"items": list(range(1000))}
-        response = APIResponse.success(_data =large_data)
+        response = APIResponse.success(_data=large_data)
 
         assert response["success"] is True
         assert len(response["data"]["items"]) == 1000
@@ -237,7 +240,7 @@ class TestAPIResponseEdgeCases:
         nested_data = {
             "user": {"profile": {"settings": {"theme": "dark", "notifications": True}}}
         }
-        response = APIResponse.success(_data =nested_data)
+        response = APIResponse.success(_data=nested_data)
 
         assert response["success"] is True
         assert response["data"]["user"]["profile"]["settings"]["theme"] == "dark"
@@ -258,24 +261,24 @@ class TestAPIResponseEdgeCases:
 
     def test_boolean_data_response(self):
         """测试：布尔数据响应"""
-        response = APIResponse.success(_data =True)
+        response = APIResponse.success(_data=True)
         assert response["data"] is True
 
-        response = APIResponse.success(_data =False)
+        response = APIResponse.success(_data=False)
         assert response["data"] is False
 
     def test_numeric_data_response(self):
         """测试：数值数据响应"""
         # 整数
-        response = APIResponse.success(_data =42)
+        response = APIResponse.success(_data=42)
         assert response["data"] == 42
 
         # 浮点数
-        response = APIResponse.success(_data =3.14)
+        response = APIResponse.success(_data=3.14)
         assert response["data"] == 3.14
 
         # 零
-        response = APIResponse.success(_data =0)
+        response = APIResponse.success(_data=0)
         assert response["data"] == 0
 
     def test_response_consistency(self):
@@ -307,7 +310,7 @@ class TestAPIResponsePerformance:
         start_time = time.time()
 
         for _ in range(1000):
-            APIResponse.success(_data ={"test": "data"})
+            APIResponse.success(_data={"test": "data"})
             APIResponse.error(message="test error")
 
         end_time = time.time()
@@ -325,7 +328,7 @@ class TestAPIResponsePerformance:
             ]
         }
 
-        response = APIResponse.success(_data =large_data)
+        response = APIResponse.success(_data=large_data)
 
         # 应该能够序列化为JSON
         json_str = json.dumps(response)
@@ -437,7 +440,7 @@ class TestParameterizedInput:
             else:
                 _result = str(invalid_data)
             # 确保没有崩溃
-            assert result is not None
+            assert _result is not None
         except Exception:
             # 期望的错误处理
             pass

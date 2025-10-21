@@ -344,7 +344,7 @@ def test_decorators():
     assert _result == "value"
 
     _result = cache_get("not_exists")
-    assert result is None
+    assert _result is None
 
     # 测试通用性能装饰器
     @track_performance("test_operation")
@@ -374,5 +374,5 @@ async def test_async_decorators():
         return Result()
 
     _result = await predict_match(123)
-    assert result.predicted_result == "home"
-    assert result.confidence_score == 0.85
+    assert _result.predicted_result == "home"
+    assert _result.confidence_score == 0.85

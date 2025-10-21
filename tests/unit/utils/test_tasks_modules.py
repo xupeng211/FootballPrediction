@@ -63,8 +63,8 @@ class TestBackupTasks:
             task.execute = Mock(return_value={"status": "success", "bytes": 1024})
 
             _result = task.execute()
-            assert result["status"] == "success"
-            assert result["bytes"] == 1024
+            assert _result["status"] == "success"
+            assert _result["bytes"] == 1024
         except ImportError:
             pytest.skip("BackupTask module not available")
 
@@ -98,8 +98,8 @@ class TestBackupTasks:
             collector.collect_metrics = Mock(return_value=metrics)
 
             _result = collector.collect_metrics()
-            assert result["total_backups"] == 10
-            assert result["successful_backups"] == 9
+            assert _result["total_backups"] == 10
+            assert _result["successful_backups"] == 9
         except ImportError:
             pytest.skip("BackupMetricsCollector module not available")
 
@@ -205,9 +205,9 @@ class TestBackupCore:
                 backup_path="/backup/data", compression=True, encryption=True
             )
 
-            assert config.backup_path == "/backup/data"
-            assert config.compression is True
-            assert config.encryption is True
+            assert _config.backup_path == "/backup/data"
+            assert _config.compression is True
+            assert _config.encryption is True
         except ImportError:
             pytest.skip("BackupConfig module not available")
 
@@ -372,8 +372,8 @@ class TestTaskUtils:
             collector.get_metrics = Mock(return_value=metrics)
 
             _result = collector.get_metrics()
-            assert result["total_tasks"] == 100
-            assert result["success_rate"] == 0.85
+            assert _result["total_tasks"] == 100
+            assert _result["success_rate"] == 0.85
         except ImportError:
             pytest.skip("TaskMetricsCollector module not available")
 
@@ -404,8 +404,8 @@ class TestAsyncTasks:
             )
 
             _result = await task.execute_async()
-            assert result["status"] == "success"
-            assert result["bytes_copied"] == 1024000
+            assert _result["status"] == "success"
+            assert _result["bytes_copied"] == 1024000
         except ImportError:
             pytest.skip("AsyncBackupTask module not available")
 
@@ -423,7 +423,7 @@ class TestAsyncTasks:
             )
 
             _result = await processor.process_batch([f"task_{i}" for i in range(10)])
-            assert result["processed"] == 10
+            assert _result["processed"] == 10
         except ImportError:
             pytest.skip("TaskBatchProcessor module not available")
 

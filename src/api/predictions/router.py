@@ -291,7 +291,7 @@ async def get_recent_predictions(
                 match_id=1000 + i,
                 home_team=f"Team A{i}",
                 away_team=f"Team B{i}",
-                _prediction =PredictionResult(
+                _prediction=PredictionResult(
                     match_id=1000 + i,
                     home_win_prob=0.45,
                     draw_prob=0.30,
@@ -350,7 +350,7 @@ async def verify_prediction(
 
         verification = PredictionVerification(
             match_id=match_id,
-            _prediction =prediction,
+            _prediction=prediction,
             actual_result=actual_result,
             is_correct=is_correct,
             accuracy_score=accuracy_score,

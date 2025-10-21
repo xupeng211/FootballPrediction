@@ -44,7 +44,7 @@ class TestBaseService:
     async def test_initialize_service(self):
         """测试初始化服务"""
         _result = await self.service.initialize()
-        assert result is True
+        assert _result is True
         assert self.service._initialized is True
 
     @pytest.mark.asyncio
@@ -55,7 +55,7 @@ class TestBaseService:
 
         # 启动服务
         _result = self.service.start()
-        assert result is True
+        assert _result is True
         assert self.service._running is True
 
     @pytest.mark.asyncio
@@ -88,13 +88,13 @@ class TestBaseService:
 
         # 第二次初始化应该返回True
         _result = await self.service.initialize()
-        assert result is True
+        assert _result is True
 
     @pytest.mark.asyncio
     async def test_start_without_init(self):
         """测试未初始化时启动"""
         _result = self.service.start()
-        assert result is False
+        assert _result is False
 
     @pytest.mark.asyncio
     async def test_get_service_info(self):
@@ -186,7 +186,7 @@ class TestBaseService:
         """测试生命周期方法"""
         # 测试默认实现
         _result = await self.service._on_initialize()
-        assert result is True
+        assert _result is True
 
         await self.service._on_start()
         await self.service._on_stop()
@@ -269,7 +269,7 @@ class TestParameterizedInput:
             else:
                 _result = str(invalid_data)
             # 确保没有崩溃
-            assert result is not None
+            assert _result is not None
         except Exception:
             # 期望的错误处理
             pass

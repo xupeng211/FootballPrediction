@@ -138,7 +138,9 @@ async def test_poisson_prediction(statistical_strategy, prediction_input):
 @pytest.mark.asyncio
 async def test_historical_average_prediction(statistical_strategy, prediction_input):
     """测试历史平均预测"""
-    _result = await statistical_strategy._historical_average_prediction(prediction_input)
+    _result = await statistical_strategy._historical_average_prediction(
+        prediction_input
+    )
 
     assert isinstance(result, tuple)
     assert len(result) == 2
@@ -155,7 +157,7 @@ async def test_team_form_prediction(statistical_strategy, prediction_input):
     assert all(isinstance(x, (int, float)) for x in result)
 
     # 主队状态更好，应该预测主队进球更多
-    assert result[0] >= result[1]
+    assert _result[0] >= _result[1]
 
 
 @pytest.mark.asyncio
@@ -167,7 +169,7 @@ async def test_head_to_head_prediction(statistical_strategy, prediction_input):
     assert len(result) == 2
 
     # 基于对战历史，主队占优
-    assert result[0] >= result[1]
+    assert _result[0] >= _result[1]
 
 
 @pytest.mark.asyncio
@@ -189,8 +191,8 @@ async def test_ensemble_predictions(statistical_strategy, prediction_input):
     expected_home = 2.1 * 0.4 + 1.9 * 0.3 + 2.0 * 0.2 + 1.8 * 0.1
     expected_away = 1.3 * 0.4 + 1.1 * 0.3 + 1.0 * 0.2 + 1.1 * 0.1
 
-    assert abs(result[0] - expected_home) < 0.01
-    assert abs(result[1] - expected_away) < 0.01
+    assert abs(_result[0] - expected_home) < 0.01
+    assert abs(_result[1] - expected_away) < 0.01
 
 
 @pytest.mark.asyncio

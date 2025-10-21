@@ -20,9 +20,11 @@ from src.core.di import (
 class IService(Protocol):
     """服务接口协议"""
 
-    def get_name(self) -> str: ...
+    def get_name(self) -> str:
+        ...
 
-    def do_work(self) -> int: ...
+    def do_work(self) -> int:
+        ...
 
 
 class ServiceA:
@@ -625,7 +627,7 @@ class TestParameterizedInput:
             else:
                 _result = str(invalid_data)
             # 确保没有崩溃
-            assert result is not None
+            assert _result is not None
         except Exception:
             # 期望的错误处理
             pass

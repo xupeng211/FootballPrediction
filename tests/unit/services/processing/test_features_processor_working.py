@@ -111,7 +111,7 @@ class TestFeaturesProcessorComponents:
             # 测试数据处理
             _data = {"values": [1, 2, 3]}
             _result = processor.process(data)
-            assert result is not None
+            assert _result is not None
 
         # 检查处理器方法
         if hasattr(processor, "methods"):
@@ -123,7 +123,7 @@ class TestFeaturesProcessorComponents:
             # 测试有效数据
             valid_data = {"field": "value"}
             _result = validator.validate(valid_data)
-            assert result is True or isinstance(result, dict)
+            assert _result is True or isinstance(result, dict)
 
             # 测试无效数据
             invalid_data = {}
@@ -153,7 +153,7 @@ class TestFeaturesProcessorComponents:
 
             if hasattr(component, "configure"):
                 component.configure({"param": "value"})
-                assert component.config.get("param") == "value"
+                assert component._config.get("param") == "value"
 
 
 @pytest.mark.skipif(
@@ -185,7 +185,7 @@ class TestFeaturesProcessorIntegration:
             if is_valid:
                 # 再处理
                 _result = processor.process(data)
-                assert result is not None
+                assert _result is not None
 
     def test_pipeline_workflow(self):
         """测试：管道工作流"""
@@ -197,7 +197,9 @@ class TestFeaturesProcessorIntegration:
             if validator.validate(data):
                 # 步骤2：计算
                 if hasattr(calculator, "calculate"):
-                    _stats = calculator.calculate(data["raw_values"], operation="stats")
+                    _stats = calculator.calculate(
+                        _data["raw_values"], operation="stats"
+                    )
                     assert stats is not None
 
                 # 步骤3：处理
@@ -207,7 +209,7 @@ class TestFeaturesProcessorIntegration:
 
                 # 步骤4：聚合
                 if hasattr(aggregator, "aggregate"):
-                    aggregated = aggregator.aggregate(data["raw_values"], method="sum")
+                    aggregated = aggregator.aggregate(_data["raw_values"], method="sum")
                     assert aggregated == 15
 
     def test_error_handling(self):
@@ -221,7 +223,7 @@ class TestFeaturesProcessorIntegration:
                 try:
                     _result = component.validate(None)
                     # 如果不抛出异常，应该返回False或错误信息
-                    assert result is False or isinstance(result, dict)
+                    assert _result is False or isinstance(result, dict)
                 except (ValueError, TypeError):
                     # 抛出异常也是可接受的错误处理方式
                     pass

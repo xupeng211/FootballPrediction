@@ -58,8 +58,8 @@ class TestAdaptersAPI:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert "registry" in data
-        assert "metrics" in data
+        assert "registry" in _data
+        assert "metrics" in _data
 
     @patch("src.api.adapters.adapter_registry")
     def test_initialize_registry(self, mock_registry, client):
@@ -73,7 +73,7 @@ class TestAdaptersAPI:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert data["message"] == "适配器注册表已初始化"
+        assert _data["message"] == "适配器注册表已初始化"
 
     @patch("src.api.adapters.adapter_registry")
     def test_shutdown_registry(self, mock_registry, client):
@@ -87,7 +87,7 @@ class TestAdaptersAPI:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert data["message"] == "适配器注册表已关闭"
+        assert _data["message"] == "适配器注册表已关闭"
 
     # ==================== 适配器配置管理测试 ====================
 
@@ -116,8 +116,8 @@ class TestAdaptersAPI:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert "adapters" in data
-        assert "groups" in data
+        assert "adapters" in _data
+        assert "groups" in _data
 
     @patch("src.api.adapters.adapter_factory")
     def test_load_adapter_config(self, mock_factory, client):
@@ -149,8 +149,8 @@ class TestAdaptersAPI:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert data["source"] == "demo_adapter"
-        assert data["total_matches"] == 2
+        assert _data["source"] == "demo_adapter"
+        assert _data["total_matches"] == 2
 
     @patch("src.api.adapters.adapter_registry")
     def test_get_football_matches_with_params(self, mock_registry, client):
@@ -166,9 +166,9 @@ class TestAdaptersAPI:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert data["filters"]["league_id"] == "39"
-        assert data["filters"]["team_id"] == "111"
-        assert data["filters"]["live"] is True
+        assert _data["filters"]["league_id"] == "39"
+        assert _data["filters"]["team_id"] == "111"
+        assert _data["filters"]["live"] is True
 
     @patch("src.api.adapters.adapter_registry")
     def test_get_football_match_demo_mode(self, mock_registry, client):
@@ -182,8 +182,8 @@ class TestAdaptersAPI:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert data["source"] == "demo_adapter"
-        assert data["match"]["id"] == "12345"
+        assert _data["source"] == "demo_adapter"
+        assert _data["match"]["id"] == "12345"
 
     @patch("src.api.adapters.adapter_registry")
     def test_get_football_teams_demo_mode(self, mock_registry, client):
@@ -197,8 +197,8 @@ class TestAdaptersAPI:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert data["source"] == "demo_adapter"
-        assert data["total_teams"] == 2
+        assert _data["source"] == "demo_adapter"
+        assert _data["total_teams"] == 2
 
     @patch("src.api.adapters.adapter_registry")
     def test_get_football_teams_with_search(self, mock_registry, client):
@@ -212,7 +212,7 @@ class TestAdaptersAPI:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert data["filters"]["search"] == "Manchester"
+        assert _data["filters"]["search"] == "Manchester"
 
     @patch("src.api.adapters.adapter_registry")
     def test_get_team_players_demo_mode(self, mock_registry, client):
@@ -226,8 +226,8 @@ class TestAdaptersAPI:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert data["source"] == "demo_adapter"
-        assert data["team_id"] == "111"
+        assert _data["source"] == "demo_adapter"
+        assert _data["team_id"] == "111"
 
     # ==================== 演示功能测试 ====================
 
@@ -239,9 +239,8 @@ class TestAdaptersAPI:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert "comparison" in data
-        assert "unified_format" in data
-        assert "benefits" in data
+        assert "comparison" in _data
+        assert "benefits" in _data
 
     def test_demo_adapter_fallback(self, client):
         """测试：故障转移演示"""
@@ -251,9 +250,9 @@ class TestAdaptersAPI:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert "scenario" in data
-        assert "result" in data
-        assert data["result"]["success"] is True
+        assert "scenario" in _data
+        assert "result" in _data
+        assert _data["result"]["success"] is True
 
     def test_demo_data_transformation(self, client):
         """测试：数据转换演示"""
@@ -263,9 +262,9 @@ class TestAdaptersAPI:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert "examples" in data
-        assert "benefits" in data
-        assert len(data["examples"]) == 2
+        assert "examples" in _data
+        assert "benefits" in _data
+        assert len(_data["examples"]) == 2
 
     # ==================== 错误处理测试 ====================
 

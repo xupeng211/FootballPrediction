@@ -32,12 +32,7 @@ def main():
         cmd = ["pytest", test_dir, "-q", "--disable-warnings", "--tb=no", "--maxfail=5"]
 
         try:
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=60
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
 
             # 统计结果
             output = result.stdout + result.stderr
@@ -69,21 +64,23 @@ def main():
     if total_run > 100:
         # 估算整个项目（假设有6919个测试）
         total_tests = 6919
-        estimated_skipped = int((total_skipped / (total_skipped + total_run)) * total_tests)
+        estimated_skipped = int(
+            (total_skipped / (total_skipped + total_run)) * total_tests
+        )
 
-        print(f"\n估算整个项目:")
+        print("\n估算整个项目:")
         print(f"  估算跳过: {estimated_skipped}")
         print(f"  估算运行: {total_tests - estimated_skipped}")
 
         final_skipped = estimated_skipped
     else:
         final_skipped = total_skipped
-        print(f"\n实际运行结果:")
+        print("\n实际运行结果:")
         print(f"  实际跳过: {final_skipped}")
 
     print("\n" + "=" * 60)
     print("Phase 2 目标验证:")
-    print(f"  目标: skipped < 100")
+    print("  目标: skipped < 100")
     print(f"  结果: {final_skipped}")
 
     if final_skipped < 100:
@@ -96,7 +93,7 @@ def main():
         print("  - 为后续 Phase 3 奠定了基础")
         return True
     else:
-        print(f"\n❌ Phase 2 目标未达成")
+        print("\n❌ Phase 2 目标未达成")
         print(f"   跳过测试数量 ({final_skipped}) >= 100")
         return False
 

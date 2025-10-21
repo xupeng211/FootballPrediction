@@ -77,12 +77,12 @@ class CollectionUtils:
         for key, value in dict2.items():
             if (
                 key in result
-                and isinstance(result[key], dict)
+                and isinstance(_result[key], dict)
                 and isinstance(value, dict)
             ):
-                result[key] = CollectionUtils.deep_merge(result[key], value)
+                _result[key] = CollectionUtils.deep_merge(_result[key], value)
             else:
-                result[key] = value
+                _result[key] = value
         return result
 
     @staticmethod
@@ -101,7 +101,7 @@ class CollectionUtils:
         _result = {}
         for old_key, value in dictionary.items():
             new_key = key_map.get(old_key, old_key)
-            result[new_key] = value
+            _result[new_key] = value
         return result
 
     @staticmethod
@@ -172,7 +172,7 @@ class CollectionUtils:
             values = []
             for d in dicts:
                 values.append(d.get(key))
-            result[key] = values
+            _result[key] = values
         return result
 
     @staticmethod
@@ -188,7 +188,7 @@ class CollectionUtils:
                     new_key = f"{parent_key}{separator}{key}" if parent_key else key
                     _flatten(value, new_key)
             else:
-                result[parent_key] = obj
+                _result[parent_key] = obj
 
         _flatten(dictionary)
         return result
@@ -449,9 +449,9 @@ class TestCollectionUtils:
         dict3 = {"b": 200, "c": 300}
 
         _result = CollectionUtils.zip_dicts(dict1, dict2, dict3)
-        assert result["a"] == [1, 10, None]
-        assert result["b"] == [2, 20, 200]
-        assert result["c"] == [None, 30, 300]
+        assert _result["a"] == [1, 10, None]
+        assert _result["b"] == [2, 20, 200]
+        assert _result["c"] == [None, 30, 300]
 
     def test_flatten_dict(self):
         """测试展平字典"""

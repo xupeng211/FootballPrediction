@@ -25,8 +25,7 @@ from nightly_test_monitor import NightlyTestMonitor
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -45,7 +44,7 @@ class NightlyTestScheduler:
     def _load_config(self) -> Dict[str, Any]:
         """加载配置"""
         if Path(self.config_path).exists():
-            with open(self.config_path, 'r') as f:
+            with open(self.config_path, "r") as f:
                 return json.load(f)
         return {}
 
@@ -70,9 +69,9 @@ class NightlyTestScheduler:
 
     async def run_nightly_tests(self):
         """执行 Nightly 测试"""
-        logger.info("="*60)
+        logger.info("=" * 60)
         logger.info("🧪 开始执行 Nightly 测试套件")
-        logger.info("="*60)
+        logger.info("=" * 60)
 
         start_time = datetime.now(timezone.utc)
         self.last_run = start_time
@@ -87,7 +86,7 @@ class NightlyTestScheduler:
             await self._prepare_environment()
 
             # 3. 执行测试
-            results = await self._execute_test_suite()
+            await self._execute_test_suite()
 
             # 4. 生成报告并发送通知
             success = await self.monitor.run()
@@ -95,9 +94,9 @@ class NightlyTestScheduler:
             # 5. 记录执行历史
             self._record_execution(start_time, success)
 
-            logger.info("="*60)
+            logger.info("=" * 60)
             logger.info(f"✅ Nightly 测试执行完成 - {'成功' if success else '失败'}")
-            logger.info("="*60)
+            logger.info("=" * 60)
 
             return success
 
@@ -118,7 +117,7 @@ class NightlyTestScheduler:
             ("Python", lambda: sys.version_info >= (3, 11)),
             ("Docker", lambda: self._check_docker()),
             ("Git", lambda: self._check_command("git --version")),
-            ("Space", lambda: self._check_disk_space(1024))  # 1GB
+            ("Space", lambda: self._check_disk_space(1024)),  # 1GB
         ]
 
         all_passed = True
@@ -143,25 +142,17 @@ class NightlyTestScheduler:
     def _check_docker(self) -> bool:
         """检查 Docker 是否运行"""
         try:
-            result = subprocess.run(
-                ["docker", "info"],
-                capture_output=True,
-                timeout=10
-            )
+            subprocess.run(["docker", "info"], capture_output=True, timeout=10)
             return result.returncode == 0
-        except:
+        except Exception:
             return False
 
     def _check_command(self, command: str) -> bool:
         """检查命令是否可用"""
         try:
-            subprocess.run(
-                command.split(),
-                capture_output=True,
-                timeout=5
-            )
+            subprocess.run(command.split(), capture_output=True, timeout=5)
             return True
-        except:
+        except Exception:
             return False
 
     def _check_disk_space(self, required_mb: int) -> bool:
@@ -170,7 +161,7 @@ class NightlyTestScheduler:
             stat = os.statvfs(".")
             free_mb = (stat.f_bavail * stat.f_frsize) // (1024 * 1024)
             return free_mb >= required_mb
-        except:
+        except Exception:
             return False
 
     async def _prepare_environment(self):
@@ -200,7 +191,10 @@ class NightlyTestScheduler:
             for file_path in Path(".").glob(pattern):
                 if file_path.is_file():
                     # 保留最近的文件
-                    if (datetime.now() - datetime.fromtimestamp(file_path.stat().st_mtime)).days > 7:
+                    if (
+                        datetime.now()
+                        - datetime.fromtimestamp(file_path.stat().st_mtime)
+                    ).days > 7:
                         file_path.unlink()
 
     async def _pull_latest_code(self):
@@ -210,9 +204,7 @@ class NightlyTestScheduler:
         try:
             # 检查是否有未提交的更改
             result = subprocess.run(
-                ["git", "status", "--porcelain"],
-                capture_output=True,
-                text=True
+                ["git", "status", "--porcelain"], capture_output=True, text=True
             )
 
             if result.stdout.strip():
@@ -220,25 +212,19 @@ class NightlyTestScheduler:
                 return
 
             # 拉取最新代码
-            subprocess.run(
-                ["git", "fetch", "origin"],
-                check=True
-            )
+            subprocess.run(["git", "fetch", "origin"], check=True)
 
             # 检查是否需要更新
             result = subprocess.run(
                 ["git", "rev-parse", "HEAD", "origin/main"],
                 capture_output=True,
-                text=True
+                text=True,
             )
 
-            commits = result.stdout.strip().split('\n')
+            commits = result.stdout.strip().split("\n")
             if commits[0] != commits[1]:
                 logger.info("发现新的提交，正在更新...")
-                subprocess.run(
-                    ["git", "pull", "origin", "main"],
-                    check=True
-                )
+                subprocess.run(["git", "pull", "origin", "main"], check=True)
 
         except Exception as e:
             logger.error(f"拉取代码失败: {e}")
@@ -254,8 +240,7 @@ class NightlyTestScheduler:
         # 安装项目依赖
         try:
             subprocess.run(
-                [sys.executable, "-m", "pip", "install", "-e", ".[dev]"],
-                check=True
+                [sys.executable, "-m", "pip", "install", "-e", ".[dev]"], check=True
             )
             logger.info("依赖安装完成")
         except subprocess.CalledProcessError as e:
@@ -272,7 +257,9 @@ class NightlyTestScheduler:
         test_order = ["unit", "integration", "e2e", "performance"]
 
         for test_type in test_order:
-            if test_type not in test_types or not test_types[test_type].get("enabled", True):
+            if test_type not in test_types or not test_types[test_type].get(
+                "enabled", True
+            ):
                 logger.info(f"跳过 {test_type} 测试")
                 continue
 
@@ -292,54 +279,61 @@ class NightlyTestScheduler:
                     "total": 0,
                     "passed": 0,
                     "failed": 1,
-                    "error": str(e)
+                    "error": str(e),
                 }
 
         return results
 
-    async def _run_test_type(self, test_type: str, config: Dict[str, Any]) -> Dict[str, Any]:
+    async def _run_test_type(
+        self, test_type: str, config: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """运行特定类型的测试"""
         timeout = config.get("timeout", 600)
         marker = config.get("marker", test_type)
 
         # 构建 pytest 命令
         cmd = [
-            sys.executable, "-m", "pytest",
+            sys.executable,
+            "-m",
+            "pytest",
             f"tests/{test_type}/",
             "-v",
-            f"-m", marker,
+            "-m",
+            marker,
             "--tb=short",
-            "--junit-xml", f"reports/{test_type}-junit.xml",
-            "--html", f"reports/{test_type}-report.html",
+            "--junit-xml",
+            f"reports/{test_type}-junit.xml",
+            "--html",
+            f"reports/{test_type}-report.html",
             "--self-contained-html",
             "--json-report",
             f"--json-report-file=reports/{test_type}-results.json",
-            "--maxfail", "5"
+            "--maxfail",
+            "5",
         ]
 
         # 添加覆盖率（仅单元测试）
         if test_type == "unit":
-            cmd.extend([
-                "--cov=src",
-                "--cov-report=xml:reports/coverage-unit.xml",
-                "--cov-report=html:reports/html-unit"
-            ])
+            cmd.extend(
+                [
+                    "--cov=src",
+                    "--cov-report=xml:reports/coverage-unit.xml",
+                    "--cov-report=html:reports/html-unit",
+                ]
+            )
 
         # 执行测试
         logger.info(f"执行命令: {' '.join(cmd)}")
 
         try:
             process = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
+                *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
             )
 
             # 设置超时
             try:
                 stdout, stderr = await asyncio.wait_for(
-                    process.communicate(),
-                    timeout=timeout
+                    process.communicate(), timeout=timeout
                 )
             except asyncio.TimeoutError:
                 process.kill()
@@ -355,7 +349,7 @@ class NightlyTestScheduler:
             # 读取 JSON 报告
             report_path = Path(f"reports/{test_type}-results.json")
             if report_path.exists():
-                with open(report_path, 'r') as f:
+                with open(report_path, "r") as f:
                     return json.load(f)
 
             # 返回默认结果
@@ -363,17 +357,12 @@ class NightlyTestScheduler:
                 "total": 0,
                 "passed": 0,
                 "failed": 1 if process.returncode != 0 else 0,
-                "error": stderr.decode() if stderr else "Unknown error"
+                "error": stderr.decode() if stderr else "Unknown error",
             }
 
         except Exception as e:
             logger.error(f"运行 {test_type} 测试异常: {e}")
-            return {
-                "total": 0,
-                "passed": 0,
-                "failed": 1,
-                "error": str(e)
-            }
+            return {"total": 0, "passed": 0, "failed": 1, "error": str(e)}
 
     def _record_execution(self, start_time: datetime, success: bool, error: str = None):
         """记录执行历史"""
@@ -382,7 +371,7 @@ class NightlyTestScheduler:
         # 读取历史
         history = []
         if history_path.exists():
-            with open(history_path, 'r') as f:
+            with open(history_path, "r") as f:
                 history = json.load(f)
 
         # 添加新记录
@@ -390,7 +379,7 @@ class NightlyTestScheduler:
             "timestamp": start_time.isoformat(),
             "success": success,
             "duration": (datetime.now(timezone.utc) - start_time).total_seconds(),
-            "error": error
+            "error": error,
         }
 
         history.append(record)
@@ -400,7 +389,7 @@ class NightlyTestScheduler:
 
         # 保存历史
         history_path.parent.mkdir(exist_ok=True)
-        with open(history_path, 'w') as f:
+        with open(history_path, "w") as f:
             json.dump(history, f, indent=2)
 
     def _update_next_run(self):
@@ -458,9 +447,9 @@ class NightlyTestScheduler:
 
     def show_status(self):
         """显示调度器状态"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("📅 Nightly 测试调度器状态")
-        print("="*60)
+        print("=" * 60)
 
         print(f"运行状态: {'🟢 运行中' if self.running else '🔴 已停止'}")
         print(f"上次运行: {self.last_run or '从未运行'}")
@@ -476,7 +465,7 @@ class NightlyTestScheduler:
             status = "✅" if config.get("enabled", True) else "❌"
             print(f"  - {test_type}: {status}")
 
-        print("="*60)
+        print("=" * 60)
 
     async def run_once(self):
         """立即运行一次测试"""
@@ -490,19 +479,12 @@ async def main():
     parser.add_argument(
         "command",
         choices=["start", "stop", "status", "run", "cleanup"],
-        help="执行命令"
+        help="执行命令",
     )
     parser.add_argument(
-        "--config",
-        type=str,
-        default="config/nightly_tests.json",
-        help="配置文件路径"
+        "--config", type=str, default="config/nightly_tests.json", help="配置文件路径"
     )
-    parser.add_argument(
-        "--daemon",
-        action="store_true",
-        help="以守护进程模式运行"
-    )
+    parser.add_argument("--daemon", action="store_true", help="以守护进程模式运行")
 
     args = parser.parse_args()
 

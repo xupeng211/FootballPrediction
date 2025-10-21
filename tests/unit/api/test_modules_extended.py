@@ -67,11 +67,11 @@ class TestEventsModule:
 
         event = Event(
             event_type="test_event",
-            _data ={"message": "test"},
+            _data={"message": "test"},
             timestamp=datetime.utcnow(),
         )
         assert event.event_type == "test_event"
-        assert event.data["message"] == "test"
+        assert event._data["message"] == "test"
 
     def test_event_manager_initialization(self):
         """测试事件管理器初始化"""
@@ -107,7 +107,7 @@ class TestEventsModule:
 
         manager.register("test_event", handler)
 
-        event = Event(event_type="test_event", _data ={"test": True})
+        event = Event(event_type="test_event", _data={"test": True})
         manager.publish(event)
 
         assert len(handled_events) == 1
@@ -151,16 +151,16 @@ class TestCQRSModuleExtended:
         from src.api.cqrs import CommandResponse
 
         response = CommandResponse(
-            success=True, message="Command executed", _data ={"id": 123}
+            success=True, message="Command executed", _data={"id": 123}
         )
         assert response.success is True
-        assert response.data["id"] == 123
+        assert response._data["id"] == 123
 
     def test_query_response_creation(self):
         """测试查询响应创建"""
         from src.api.cqrs import QueryResponse
 
-        response = QueryResponse(_data =[{"id": 1, "name": "test"}], total=1, page=1)
+        response = QueryResponse(_data=[{"id": 1, "name": "test"}], total=1, page=1)
         assert len(response.data) == 1
         assert response.total == 1
 
@@ -230,7 +230,7 @@ class TestDecoratorsModule:
             return {"message": "ok"}
 
         _result = test_endpoint()
-        assert result["message"] == "ok"
+        assert _result["message"] == "ok"
 
 
 @pytest.mark.unit
@@ -461,7 +461,7 @@ class TestFacadesModule:
 
         facade = PredictionFacade(prediction_service=MockService())
         _result = facade.make_prediction({"match_id": 123})
-        assert result is not None
+        assert _result is not None
 
 
 @pytest.mark.unit
@@ -647,7 +647,7 @@ class TestIntegrationScenarios:
         subject.attach(observer)
 
         # 发布事件并通知观察者
-        event = Event(event_type="prediction_created", _data ={"id": 123})
+        event = Event(event_type="prediction_created", _data={"id": 123})
         event_manager.register("prediction_created", lambda e: subject.notify(e))
         event_manager.publish(event)
 

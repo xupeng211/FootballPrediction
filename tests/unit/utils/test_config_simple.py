@@ -2,8 +2,8 @@
 def test_config_import():
     _config = [
         "src.core.config",
-        "src.config.openapi_config",
-        "src.config.fastapi_config",
+        "src._config.openapi_config",
+        "src._config.fastapi_config",
     ]
 
     for module in config:

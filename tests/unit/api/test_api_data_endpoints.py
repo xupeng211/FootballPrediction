@@ -20,8 +20,9 @@ class TestAPIData:
         response = client.get("/")
         assert response.status_code == 200
         _data = response.json()
-        assert "message" in data
-        assert "version" in data
+        assert "message" in _data
+
+        assert "version" in _data
 
     def test_cors_headers(self, client):
         """测试CORS头"""

@@ -38,7 +38,7 @@ class TestMonitoringEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert "status" in data or "system" in data
+        assert "status" in _data or "system" in _data
 
     def test_collector_health(self, client):
         """测试收集器健康检查"""
@@ -49,7 +49,7 @@ class TestMonitoringEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert "health" in data or "status" in data
+        assert "health" in _data or "status" in _data
 
     @patch(
         "src.monitoring.metrics_collector_enhanced.EnhancedMetricsCollector.collect_metrics"
@@ -72,7 +72,7 @@ class TestMonitoringEndpoints:
 
         assert response.status_code in [200, 202]
         _data = response.json()
-        assert "metrics" in data or "success" in data
+        assert "metrics" in _data or "success" in _data
 
     def test_collector_status(self, client):
         """测试收集器状态"""
@@ -83,7 +83,7 @@ class TestMonitoringEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert "status" in data or "collector" in data
+        assert "status" in _data or "collector" in _data
 
     @patch(
         "src.monitoring.metrics_collector_enhanced.EnhancedMetricsCollector.start_collection"
@@ -99,7 +99,7 @@ class TestMonitoringEndpoints:
 
         assert response.status_code in [200, 202]
         _data = response.json()
-        assert "success" in data or "status" in data
+        assert "success" in _data or "status" in _data
 
     @patch(
         "src.monitoring.metrics_collector_enhanced.EnhancedMetricsCollector.stop_collection"
@@ -115,7 +115,7 @@ class TestMonitoringEndpoints:
 
         assert response.status_code in [200, 202]
         _data = response.json()
-        assert "success" in data or "status" in data
+        assert "success" in _data or "status" in _data
 
     @patch("src.monitoring.system_monitor.SystemHealthChecker.get_health_status")
     def test_system_health(self, mock_health, client):
@@ -137,7 +137,7 @@ class TestMonitoringEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert "status" in data or "health" in data
+        assert "status" in _data or "health" in _data
 
     @patch("src.monitoring.alert_manager.AlertManager.get_active_alerts")
     def test_get_alerts(self, mock_alerts, client):
@@ -159,7 +159,7 @@ class TestMonitoringEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert isinstance(data, list) or "alerts" in data
+        assert isinstance(data, list) or "alerts" in _data
 
     @patch("src.monitoring.alert_manager.AlertManager.create_alert")
     def test_create_alert(self, mock_create, client):
@@ -180,7 +180,7 @@ class TestMonitoringEndpoints:
 
         assert response.status_code in [200, 201]
         _data = response.json()
-        assert "alert_id" in data or "success" in data
+        assert "alert_id" in _data or "success" in _data
 
     def test_get_logs(self, client):
         """测试获取日志"""
@@ -191,7 +191,7 @@ class TestMonitoringEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert isinstance(data, list) or "logs" in data
+        assert isinstance(data, list) or "logs" in _data
 
     def test_get_performance_metrics(self, client):
         """测试获取性能指标"""
@@ -202,7 +202,7 @@ class TestMonitoringEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert "performance" in data or "metrics" in data
+        assert "performance" in _data or "metrics" in _data
 
 
 @pytest.mark.unit

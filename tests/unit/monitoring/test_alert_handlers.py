@@ -70,7 +70,7 @@ class TestAlertHandler:
         }
 
         _result = await handler.handle_alert(alert)
-        assert result is True or result is None  # 可能返回True或None
+        assert _result is True or result is None  # 可能返回True或None
 
 
 @pytest.mark.skipif(
@@ -116,7 +116,7 @@ class TestEmailAlertHandler:
 
         with patch.object(handler, "_send_email", return_value=True):
             _result = await handler.handle_alert(alert)
-            assert result is True
+            assert _result is True
 
     def test_email_formatting(self):
         """测试：邮件格式化"""
@@ -177,7 +177,7 @@ class TestSlackAlertHandler:
             mock_post.return_value.__aenter__.return_value = mock_response
 
             _result = await handler.handle_alert(alert)
-            assert result is True
+            assert _result is True
 
     def test_slack_payload_format(self):
         """测试：Slack载荷格式"""
@@ -245,7 +245,7 @@ class TestWebhookAlertHandler:
             mock_request.return_value.__aenter__.return_value = mock_response
 
             _result = await handler.handle_alert(alert)
-            assert result is True
+            assert _result is True
 
     def test_webhook_retry_logic(self):
         """测试：Webhook重试逻辑"""

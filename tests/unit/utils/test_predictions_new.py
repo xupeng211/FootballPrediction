@@ -51,8 +51,8 @@ class TestAPIPredictions:
             )
             assert response.status_code == 201
             _data = response.json()
-            assert data["id"] == 999
-            assert data["match_id"] == 123
+            assert _data["id"] == 999
+            assert _data["match_id"] == 123
 
     def test_get_prediction_by_id(self, client, auth_headers):
         """测试根据ID获取预测"""
@@ -67,7 +67,7 @@ class TestAPIPredictions:
             response = client.get("/api/predictions/1", headers=auth_headers)
             assert response.status_code == 200
             _data = response.json()
-            assert data["id"] == 1
+            assert _data["id"] == 1
 
     def test_prediction_not_found(self, client, auth_headers):
         """测试预测不存在"""

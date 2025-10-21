@@ -28,15 +28,11 @@ class ProductionAutomationPipeline:
             "security": {"status": "unknown", "score": 0},
             "tests": {"status": "unknown", "score": 0},
             "configuration": {"status": "unknown", "score": 0},
-            "ci_cd": {"status": "unknown", "score": 0}
+            "ci_cd": {"status": "unknown", "score": 0},
         }
 
         # 阈值
-        self.thresholds = {
-            "pass": 80,
-            "warning": 60,
-            "fail": 40
-        }
+        self.thresholds = {"pass": 80, "warning": 60, "fail": 40}
 
     def run_full_pipeline(self) -> bool:
         """运行完整的自动化流水线"""
@@ -72,7 +68,9 @@ class ProductionAutomationPipeline:
         # 总结
         print("\n" + "=" * 80)
         if success:
-            total_score = sum(r["score"] for r in self.check_results.values()) / len(self.check_results)
+            total_score = sum(r["score"] for r in self.check_results.values()) / len(
+                self.check_results
+            )
             print(f"✅ 流水线完成! 总分: {total_score:.1f}/100")
             if total_score >= self.thresholds["pass"]:
                 print("🎉 项目已达到生产就绪标准!")
@@ -88,9 +86,12 @@ class ProductionAutomationPipeline:
         try:
             # 运行依赖冲突解决脚本
             result = subprocess.run(
-                [sys.executable, str(self.scripts_dir / "dependency/resolve_conflicts.py")],
+                [
+                    sys.executable,
+                    str(self.scripts_dir / "dependency/resolve_conflicts.py"),
+                ],
                 capture_output=True,
-                text=True
+                text=True,
             )
 
             if result.returncode == 0:
@@ -115,12 +116,18 @@ class ProductionAutomationPipeline:
         try:
             # 运行安全配置脚本
             env_file = f".env.{self.environment}"
-            result = subprocess.run([
-                sys.executable,
-                str(self.scripts_dir / "security/setup_security.py"),
-                "--env", self.environment,
-                "--output", env_file
-            ], capture_output=True, text=True)
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(self.scripts_dir / "security/setup_security.py"),
+                    "--env",
+                    self.environment,
+                    "--output",
+                    env_file,
+                ],
+                capture_output=True,
+                text=True,
+            )
 
             if result.returncode == 0:
                 self.check_results["security"]["status"] = "passed"
@@ -143,18 +150,29 @@ class ProductionAutomationPipeline:
         """运行测试框架构建"""
         try:
             # 构建测试框架
-            result = subprocess.run([
-                sys.executable,
-                str(self.scripts_dir / "testing/build_test_framework.py")
-            ], capture_output=True, text=True)
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(self.scripts_dir / "testing/build_test_framework.py"),
+                ],
+                capture_output=True,
+                text=True,
+            )
 
             if result.returncode == 0:
                 # 运行基础测试验证
-                test_result = subprocess.run([
-                    sys.executable, "-m", "pytest",
-                    "tests/unit/api/test_health.py::TestHealthAPI::test_health_check_success",
-                    "-v", "--tb=short"
-                ], capture_output=True, text=True)
+                test_result = subprocess.run(
+                    [
+                        sys.executable,
+                        "-m",
+                        "pytest",
+                        "tests/unit/api/test_health.py::TestHealthAPI::test_health_check_success",
+                        "-v",
+                        "--tb=short",
+                    ],
+                    capture_output=True,
+                    text=True,
+                )
 
                 if test_result.returncode == 0:
                     self.check_results["tests"]["status"] = "passed"
@@ -219,7 +237,9 @@ class ProductionAutomationPipeline:
             if issues:
                 print(f"⚠️  配置问题: {', '.join(issues)}")
 
-            self.check_results["configuration"]["status"] = "passed" if score >= 80 else "warning"
+            self.check_results["configuration"]["status"] = (
+                "passed" if score >= 80 else "warning"
+            )
             self.check_results["configuration"]["score"] = score
             print(f"✅ 配置验证完成 (得分: {score})")
             return True
@@ -264,7 +284,9 @@ class ProductionAutomationPipeline:
             if issues:
                 print(f"⚠️  CI/CD问题: {', '.join(issues)}")
 
-            self.check_results["ci_cd"]["status"] = "passed" if score >= 80 else "warning"
+            self.check_results["ci_cd"]["status"] = (
+                "passed" if score >= 80 else "warning"
+            )
             self.check_results["ci_cd"]["score"] = score
             print(f"✅ CI/CD检查完成 (得分: {score})")
             return True
@@ -280,7 +302,9 @@ class ProductionAutomationPipeline:
         print("\n📊 生成最终评估报告...")
 
         # 计算总分
-        total_score = sum(r["score"] for r in self.check_results.values()) / len(self.check_results)
+        total_score = sum(r["score"] for r in self.check_results.values()) / len(
+            self.check_results
+        )
 
         # 生成报告
         report = {
@@ -291,7 +315,7 @@ class ProductionAutomationPipeline:
             "thresholds": self.thresholds,
             "details": self.check_results,
             "recommendations": self._generate_recommendations(),
-            "next_steps": self._generate_next_steps()
+            "next_steps": self._generate_next_steps(),
         }
 
         # 保存报告
@@ -321,48 +345,58 @@ class ProductionAutomationPipeline:
 
         # 依赖建议
         if self.check_results["dependencies"]["score"] < self.thresholds["pass"]:
-            recommendations.append({
-                "category": "dependencies",
-                "priority": "high",
-                "action": "解决依赖冲突",
-                "details": "运行 python scripts/dependency/resolve_conflicts.py"
-            })
+            recommendations.append(
+                {
+                    "category": "dependencies",
+                    "priority": "high",
+                    "action": "解决依赖冲突",
+                    "details": "运行 python scripts/dependency/resolve_conflicts.py",
+                }
+            )
 
         # 安全建议
         if self.check_results["security"]["score"] < self.thresholds["pass"]:
-            recommendations.append({
-                "category": "security",
-                "priority": "high",
-                "action": "配置安全密钥",
-                "details": "运行 python scripts/security/setup_security.py"
-            })
+            recommendations.append(
+                {
+                    "category": "security",
+                    "priority": "high",
+                    "action": "配置安全密钥",
+                    "details": "运行 python scripts/security/setup_security.py",
+                }
+            )
 
         # 测试建议
         if self.check_results["tests"]["score"] < self.thresholds["warning"]:
-            recommendations.append({
-                "category": "tests",
-                "priority": "high",
-                "action": "构建测试框架",
-                "details": "运行 python scripts/testing/build_test_framework.py"
-            })
+            recommendations.append(
+                {
+                    "category": "tests",
+                    "priority": "high",
+                    "action": "构建测试框架",
+                    "details": "运行 python scripts/testing/build_test_framework.py",
+                }
+            )
 
         # 配置建议
         if self.check_results["configuration"]["score"] < self.thresholds["pass"]:
-            recommendations.append({
-                "category": "configuration",
-                "priority": "medium",
-                "action": "完善环境配置",
-                "details": "检查和修复 .env.production 文件"
-            })
+            recommendations.append(
+                {
+                    "category": "configuration",
+                    "priority": "medium",
+                    "action": "完善环境配置",
+                    "details": "检查和修复 .env.production 文件",
+                }
+            )
 
         # CI/CD建议
         if self.check_results["ci_cd"]["score"] < self.thresholds["pass"]:
-            recommendations.append({
-                "category": "ci_cd",
-                "priority": "medium",
-                "action": "完善CI/CD配置",
-                "details": "添加GitHub Actions工作流和Makefile命令"
-            })
+            recommendations.append(
+                {
+                    "category": "ci_cd",
+                    "priority": "medium",
+                    "action": "完善CI/CD配置",
+                    "details": "添加GitHub Actions工作流和Makefile命令",
+                }
+            )
 
         return recommendations
 
@@ -408,7 +442,13 @@ class ProductionAutomationPipeline:
 |--------|------|------|------|"""
 
         for check_name, result in report["details"].items():
-            status_icon = "✅" if result["status"] == "passed" else "⚠️" if result["status"] == "warning" else "❌"
+            status_icon = (
+                "✅"
+                if result["status"] == "passed"
+                else "⚠️"
+                if result["status"] == "warning"
+                else "❌"
+            )
             check_name_display = check_name.replace("_", " ").title()
             markdown_content += f"\n| {check_name_display} | {status_icon} | {result['score']} | >={self.thresholds['pass']} |"
 
@@ -417,8 +457,16 @@ class ProductionAutomationPipeline:
         if report["recommendations"]:
             markdown_content += "\n### ⚠️ 需要解决的问题\n"
             for rec in report["recommendations"]:
-                priority_icon = "🔴" if rec["priority"] == "high" else "🟡" if rec["priority"] == "medium" else "🟢"
-                markdown_content += f"\n{priority_icon} **{rec['action']}** ({rec['category']})\n"
+                priority_icon = (
+                    "🔴"
+                    if rec["priority"] == "high"
+                    else "🟡"
+                    if rec["priority"] == "medium"
+                    else "🟢"
+                )
+                markdown_content += (
+                    f"\n{priority_icon} **{rec['action']}** ({rec['category']})\n"
+                )
                 markdown_content += f"   - {rec['details']}\n"
 
         markdown_content += "\n## 📋 下一步行动\n"
@@ -454,7 +502,7 @@ class ProductionAutomationPipeline:
         status_map = {
             "production_ready": "🎉 生产就绪",
             "needs_attention": "⚠️ 需要关注",
-            "not_ready": "❌ 未就绪"
+            "not_ready": "❌ 未就绪",
         }
         return status_map.get(status, status)
 
@@ -466,13 +514,9 @@ def main():
         "--env",
         choices=["development", "testing", "staging", "production"],
         default="production",
-        help="目标环境"
+        help="目标环境",
     )
-    parser.add_argument(
-        "--check-only",
-        action="store_true",
-        help="仅检查，不执行修复"
-    )
+    parser.add_argument("--check-only", action="store_true", help="仅检查，不执行修复")
 
     args = parser.parse_args()
 

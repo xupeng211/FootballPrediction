@@ -199,9 +199,9 @@ class TestDictUtilsExtended:
         # 再扁平化
         flattened = DictUtils.flatten_dict(merged)
         expected = {
-            "config.app.debug": False,
-            "config.app.version": "1.0",
-            "config.db.host": "localhost",
+            "_config.app.debug": False,
+            "_config.app.version": "1.0",
+            "_config.db.host": "localhost",
         }
         assert flattened == expected
 
@@ -250,7 +250,7 @@ class TestDictUtilsExtended:
         # 创建一个大字典
         _data = {}
         for i in range(100):
-            data[f"section{i}"] = {
+            _data[f"section{i}"] = {
                 f"subsection{j}": {"value": i * j for j in range(10)} for j in range(10)
             }
 

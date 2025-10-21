@@ -10,7 +10,9 @@
 """
 
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 import psutil
+import time
 from typing import Dict, Any
 from fastapi import APIRouter, Depends, Response
 from fastapi.responses import PlainTextResponse
@@ -18,7 +20,7 @@ from fastapi.responses import PlainTextResponse
 from ..monitoring.metrics_collector import get_metrics_collector
 from ..monitoring.metrics_exporter import get_metrics_exporter
 from src.core.logger import get_logger
-from src.database.connection import get_db_session
+from src.database.dependencies import get_db
 
 
 # 监控收集器与导出器（保留原功能，迁移到 /collector/* 与 /metrics/prometheus）
@@ -171,7 +173,7 @@ async def _get_business_metrics(db: Session) -> Dict[str, Any]:  # type: ignore
 
 
 @router.get("/metrics")
-async def get_metrics(db: Session = Depends(get_db_session)) -> Dict[str, Any]:  # type: ignore
+async def get_metrics(db: Session = Depends(get_db)) -> Dict[str, Any]:  # type: ignore
     """应用综合指标（JSON）。异常时返回 status=error 但HTTP 200。"""
     start = time.time()  # type: ignore
     response: Dict[str, Any] = {  # type: ignore
@@ -239,7 +241,7 @@ async def get_metrics(db: Session = Depends(get_db_session)) -> Dict[str, Any]: 
 
 
 @router.get("/status")
-async def get_service_status(db: Session = Depends(get_db_session)) -> Dict[str, Any]:  # type: ignore
+async def get_service_status(db: Session = Depends(get_db)) -> Dict[str, Any]:  # type: ignore
     """服务健康状态（JSON）。"""
     api_health = True
 

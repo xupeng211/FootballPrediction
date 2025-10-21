@@ -233,11 +233,11 @@ class TestOddsCollector:
         # 验证返回了比赛数据
         assert "matches" in result
         assert "total" in result
-        assert result["total"] == 2
-        assert len(result["matches"]) == 2
+        assert _result["total"] == 2
+        assert len(_result["matches"]) == 2
 
         # 验证每场比赛都有赔率数据
-        for match in result["matches"]:
+        for match in _result["matches"]:
             assert "match_id" in match
             assert "home_team" in match
             assert "away_team" in match

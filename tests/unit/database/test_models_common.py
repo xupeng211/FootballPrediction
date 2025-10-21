@@ -3,7 +3,7 @@ try:
 except ImportError:
     # 如果导入失败，创建简单的mock类用于测试
     class BaseResponse:
-        def __init__(self, _data =None, success=True, message="OK"):
+        def __init__(self, _data=None, success=True, message="OK"):
             self._data = data or {}
             self.success = success
             self.message = message
@@ -13,7 +13,7 @@ except ImportError:
 
 
 def test_base_response():
-    response = BaseResponse(_data ={"test": "data"})
+    response = BaseResponse(_data={"test": "data"})
     assert response._data == {"test": "data"}
 
 

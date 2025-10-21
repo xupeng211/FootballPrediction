@@ -119,7 +119,7 @@ class StatisticalStrategy(PredictionStrategy):
                 "team_form": self._model_params["model_weights"]["form"],
                 "head_to_head": self._model_params["model_weights"]["head_to_head"],
             },
-            _metadata ={
+            _metadata={
                 "method": "statistical_ensemble",
                 "predictions_used": {
                     "poisson": poisson_pred,
