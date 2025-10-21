@@ -101,7 +101,7 @@ class FootballApiAdaptee(Adaptee):
 
         async with self.session.get(url, headers=headers, params=params) as response:
             response.raise_for_status()
-            return await response.json()  # type: ignore
+            return await response.json()
 
     async def send_data(self, data: Any) -> Any:
         """发送数据（足球API通常只读）"""
@@ -278,11 +278,11 @@ class FootballApiAdapter(Adapter):
 
     async def _initialize(self) -> None:
         """初始化适配器"""
-        await self.adaptee.initialize()  # type: ignore
+        await self.adaptee.initialize()
 
     async def _cleanup(self) -> None:
         """清理适配器"""
-        await self.adaptee.cleanup()  # type: ignore
+        await self.adaptee.cleanup()
 
     async def get_matches(
         self,
@@ -303,7 +303,7 @@ class FootballApiAdapter(Adapter):
             params["live"] = "all"
 
         endpoint = "fixtures"
-        _data = await self.adaptee.get_data(endpoint, params)
+        data = await self.adaptee.get_data(endpoint, params)
 
         # 转换数据
         _matches = []
@@ -316,11 +316,11 @@ class FootballApiAdapter(Adapter):
     async def get_match(self, match_id: str) -> Optional[FootballMatch]:
         """获取单个比赛"""
         endpoint = f"fixtures?id={match_id}"
-        _data = await self.adaptee.get_data(endpoint)
+        data = await self.adaptee.get_data(endpoint)
 
         if data.get("response"):
             match_data = data["response"][0]
-            return await self.transformer.transform(match_data, target_type="match")  # type: ignore
+            return await self.transformer.transform(match_data, target_type="match")
         return None
 
     async def get_teams(self, league_id: Optional[str] = None) -> List[FootballTeam]:
@@ -330,7 +330,7 @@ class FootballApiAdapter(Adapter):
             params["league"] = league_id
 
         endpoint = "teams"
-        _data = await self.adaptee.get_data(endpoint, params)
+        data = await self.adaptee.get_data(endpoint, params)
 
         _teams = []
         for team_data in data.get("response", []):
@@ -342,11 +342,11 @@ class FootballApiAdapter(Adapter):
     async def get_team(self, team_id: str) -> Optional[FootballTeam]:
         """获取单个球队"""
         endpoint = f"teams?id={team_id}"
-        _data = await self.adaptee.get_data(endpoint)
+        data = await self.adaptee.get_data(endpoint)
 
         if data.get("response"):
             team_data = data["response"][0]
-            return await self.transformer.transform(team_data, target_type="team")  # type: ignore
+            return await self.transformer.transform(team_data, target_type="team")
         return None
 
     async def get_players(
@@ -358,7 +358,7 @@ class FootballApiAdapter(Adapter):
             params["season"] = season
 
         endpoint = f"players/squads?team={team_id}"
-        _data = await self.adaptee.get_data(endpoint, params)
+        data = await self.adaptee.get_data(endpoint, params)
 
         players = []
         for player_data in data.get("response", []):
@@ -372,19 +372,19 @@ class FootballApiAdapter(Adapter):
     async def get_player(self, player_id: str) -> Optional[FootballPlayer]:
         """获取单个球员"""
         endpoint = f"players?id={player_id}&season=2023"
-        _data = await self.adaptee.get_data(endpoint)
+        data = await self.adaptee.get_data(endpoint)
 
         if data.get("response"):
             player_data = data["response"][0]
-            return await self.transformer.transform(player_data, target_type="player")  # type: ignore
+            return await self.transformer.transform(player_data, target_type="player")
         return None
 
     async def get_standings(self, league_id: str, season: str) -> List[Dict[str, Any]]:
         """获取积分榜"""
         params = {"league": league_id, "season": season}
         endpoint = "standings"
-        _data = await self.adaptee.get_data(endpoint, params)
-        return data.get("response", [])  # type: ignore
+        data = await self.adaptee.get_data(endpoint, params)
+        return data.get("response", [])
 
     async def _request(self, *args, **kwargs) -> Any:
         """处理请求"""
@@ -487,7 +487,7 @@ class CompositeFootballAdapter(Adapter):
                 _matches = await task
                 results[name] = matches
             except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
-                results[name] = f"Error: {str(e)}"  # type: ignore
+                results[name] = f"Error: {str(e)}"
 
         return results
 
@@ -496,7 +496,7 @@ class FootballDataAdapter:
     """足球数据适配器（简化版用于测试）"""
 
     def __init__(self, config: Dict[str, Any]):
-        self._config = config
+        self.config = config
         self.initialized = False
         self.client = None
 
@@ -509,7 +509,7 @@ class FootballDataAdapter:
         if not self.initialized:
             raise AdapterError("Adapter not initialized")
         if self.client:
-            return await self.client.get(f"/matches/{match_id}")  # type: ignore
+            return await self.client.get(f"/matches/{match_id}")
         return {"matches": [{"id": match_id}]}
 
     async def get_team_data(self, team_id: int, **kwargs) -> Dict[str, Any]:
@@ -517,7 +517,7 @@ class FootballDataAdapter:
         if not self.initialized:
             raise AdapterError("Adapter not initialized")
         if self.client:
-            return await self.client.get(f"/teams/{team_id}")  # type: ignore
+            return await self.client.get(f"/teams/{team_id}")
         return {"id": team_id, "name": f"Team {team_id}"}
 
     async def get_league_data(self, league_id: int, **kwargs) -> Dict[str, Any]:
@@ -525,7 +525,7 @@ class FootballDataAdapter:
         if not self.initialized:
             raise AdapterError("Adapter not initialized")
         if self.client:
-            return await self.client.get(f"/competitions/{league_id}")  # type: ignore
+            return await self.client.get(f"/competitions/{league_id}")
         return {"id": league_id, "name": f"League {league_id}"}
 
     async def get_player_data(self, player_id: int, **kwargs) -> Dict[str, Any]:
@@ -533,7 +533,7 @@ class FootballDataAdapter:
         if not self.initialized:
             raise AdapterError("Adapter not initialized")
         if self.client:
-            return await self.client.get(f"/players/{player_id}")  # type: ignore
+            return await self.client.get(f"/players/{player_id}")
         return {"id": player_id, "name": f"Player {player_id}"}
 
     async def search_teams(self, name: str, **kwargs) -> Dict[str, Any]:
@@ -541,7 +541,7 @@ class FootballDataAdapter:
         if not self.initialized:
             raise AdapterError("Adapter not initialized")
         if self.client:
-            return await self.client.get(f"/teams?name={name}")  # type: ignore
+            return await self.client.get(f"/teams?name={name}")
         return {"teams": [{"name": f"{name} Team"}]}
 
     async def get_upcoming_matches(self, team_id: int, **kwargs) -> Dict[str, Any]:
@@ -549,7 +549,7 @@ class FootballDataAdapter:
         if not self.initialized:
             raise AdapterError("Adapter not initialized")
         if self.client:
-            return await self.client.get(f"/teams/{team_id}/matches?status=SCHEDULED")  # type: ignore
+            return await self.client.get(f"/teams/{team_id}/matches?status=SCHEDULED")
         return {"matches": [{"status": "SCHEDULED"}]}
 
     async def get_historical_matches(
@@ -559,7 +559,7 @@ class FootballDataAdapter:
         if not self.initialized:
             raise AdapterError("Adapter not initialized")
         if self.client:
-            return await self.client.get(  # type: ignore
+            return await self.client.get(
                 f"/teams/{team_id}/matches?status=FINISHED&limit={limit}"
             )
         return {"matches": [{"status": "FINISHED"}]}
@@ -571,7 +571,7 @@ class FootballDataAdapter:
         if not self.initialized:
             raise AdapterError("Adapter not initialized")
         if self.client:
-            return await self.client.get(  # type: ignore
+            return await self.client.get(
                 f"/competitions/{league_id}/standings?season={season}"
             )
         return {"standings": [{"table": []}]}
@@ -583,7 +583,7 @@ class FootballDataAdapter:
         if not self.initialized:
             raise AdapterError("Adapter not initialized")
         if self.client:
-            return await self.client.get(  # type: ignore
+            return await self.client.get(
                 f"/competitions/{league_id}/scorers?season={season}&limit={limit}"
             )
         return {"scorers": []}
@@ -592,7 +592,7 @@ class FootballDataAdapter:
         """批量获取比赛"""
         results = []
         for match_id in match_ids:
-            _result = await self.get_match_data(match_id)
+            result = await self.get_match_data(match_id)
             results.append(result)
         return results
 

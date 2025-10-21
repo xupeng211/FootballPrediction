@@ -13,7 +13,7 @@ import pandas as pd
 
 import pandas as pd
 
-# from src.data.processing.missing_data_handler import MissingDataHandler  # type: ignore
+# from src.data.processing.missing_data_handler import MissingDataHandler
 
 
 class DataValidator:
@@ -22,7 +22,7 @@ class DataValidator:
     def __init__(self):
         """初始化验证器"""
         self.logger = logging.getLogger(f"processing.{self.__class__.__name__}")
-        # self.missing_handler = MissingDataHandler()  # type: ignore
+        # self.missing_handler = MissingDataHandler()
 
         # 验证规则配置
         self.validation_rules = {
@@ -108,13 +108,13 @@ class DataValidator:
 
             # 2. 内容验证
             content_result = await self._validate_content(df, data_type)
-            validation_results["errors"].extend(content_result["errors"])  # type: ignore
-            validation_results["warnings"].extend(content_result["warnings"])  # type: ignore
+            validation_results["errors"].extend(content_result["errors"])
+            validation_results["warnings"].extend(content_result["warnings"])
 
             # 3. 业务规则验证
             business_result = await self._validate_business_rules(df, data_type)
-            validation_results["errors"].extend(business_result["errors"])  # type: ignore
-            validation_results["warnings"].extend(business_result["warnings"])  # type: ignore
+            validation_results["errors"].extend(business_result["errors"])
+            validation_results["warnings"].extend(business_result["warnings"])
 
             # 4. 统计信息
             validation_results["statistics"] = await self._generate_statistics(df)
@@ -214,7 +214,7 @@ class DataValidator:
             result["warnings"].append(f"发现 {duplicates.sum()} 条重复记录")
 
         # 检查缺失值
-        # missing_report = self.missing_handler.analyze_missing_data(df)  # type: ignore
+        # missing_report = self.missing_handler.analyze_missing_data(df)
         missing_report = {"missing_percentage": 0}
         if missing_report["missing_percentage"] > 50:
             result["errors"].append(
@@ -262,11 +262,11 @@ class DataValidator:
         result: Dict[str, List[str]] = {"errors": [], "warnings": []}
 
         if data_type == "match_data":
-            _result = await self._validate_match_business_rules(df)
+            result = await self._validate_match_business_rules(df)
         elif data_type == "odds_data":
-            _result = await self._validate_odds_business_rules(df)
+            result = await self._validate_odds_business_rules(df)
         elif data_type == "features_data":
-            _result = await self._validate_features_business_rules(df)
+            result = await self._validate_features_business_rules(df)
 
         return result
 
@@ -379,7 +379,7 @@ class DataValidator:
         Returns:
             统计信息
         """
-        _stats = {
+        stats = {
             "total_records": len(df),
             "total_columns": len(df.columns),
             "missing_values": df.isnull().sum().to_dict(),
@@ -423,7 +423,7 @@ class DataValidator:
             )
 
         # 记录统计信息
-        _stats = results.get("statistics", {})
+        stats = results.get("statistics", {})
         if "total_records" in stats:
             self.logger.info(f"验证记录数: {stats['total_records']}")
 

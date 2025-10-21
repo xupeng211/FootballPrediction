@@ -47,7 +47,7 @@ async def get_prediction_engine():
         # 创建预测引擎实例
         from .prediction.config import PredictionConfig
 
-        _config = PredictionConfig()
+        config = PredictionConfig()
         _prediction_engine_instance = PredictionEngine(config)
 
     return _prediction_engine_instance

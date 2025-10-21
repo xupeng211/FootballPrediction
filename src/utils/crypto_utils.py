@@ -33,7 +33,7 @@ class CryptoUtils:
 
         # 对于大长度，需要生成多个UUID
         if length > 32:
-            _result = ""
+            result = ""
             while len(result) < length:
                 result += str(uuid.uuid4()).replace("-", "")
             return result[:length]

@@ -25,7 +25,7 @@ class KafkaMessageConsumer:
         self.topics = config["topics"]
         self.consumer = None
         self.is_closed = False
-        self._stats = {
+        self.stats = {
             "messages_consumed": 0,
             "partitions_assigned": 0,
             "last_commit_offset": 0,
@@ -62,7 +62,7 @@ class KafkaMessageConsumer:
             raise StreamingError("Consumer not started")
 
         # 模拟消息
-        messages = [  # type: ignore
+        messages = [
             {
                 "topic": self.topics[0],
                 "partition": 0,
@@ -105,7 +105,7 @@ class KafkaMessageConsumer:
         if self.consumer is None:
             raise StreamingError("Consumer not started")
 
-        if offsets:  # type: ignore
+        if offsets:
             self.stats["last_commit_offset"] = max(offsets.values())
         else:
             self.stats["last_commit_offset"] = self.stats["messages_consumed"]

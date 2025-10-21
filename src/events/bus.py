@@ -264,7 +264,7 @@ class EventBus:
                     await handler.handle(event)
                 else:
                     loop = asyncio.get_event_loop()
-                    await loop.run_in_executor(self._executor, handler.handle, event)  # type: ignore
+                    await loop.run_in_executor(self._executor, handler.handle, event)
             else:
                 await handler.handle(event)
 
@@ -388,14 +388,14 @@ def event_handler(event_types: List[str]):
             for event_type in event_types:
                 asyncio.create_task(bus.subscribe(event_type, self))
 
-        cls.__init__ = __init__  # type: ignore
-        cls._handled_events = event_types  # type: ignore
+        cls.__init__ = __init__
+        cls._handled_events = event_types
 
         # 重写get_handled_events方法
         def get_handled_events(self) -> list[str]:
             return event_types
 
-        cls.get_handled_events = get_handled_events  # type: ignore
+        cls.get_handled_events = get_handled_events
 
         return cls
 

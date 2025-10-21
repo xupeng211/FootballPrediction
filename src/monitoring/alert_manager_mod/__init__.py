@@ -71,7 +71,7 @@ class Alert:
 
     def __post_init__(self):
         if self.metadata is None:
-            self._metadata = {}
+            self.metadata = {}
 
 
 class LogHandler:
@@ -142,7 +142,7 @@ class AlertAggregator:
                     level=max(a.level for a in alert_list),
                     message=f"{len(alert_list)} alerts of type '{name}'",
                     timestamp=datetime.utcnow(),
-                    _metadata={
+                    metadata ={
                         "count": len(alert_list),
                         "original_alerts": [a.id for a in alert_list],
                     },
@@ -176,7 +176,7 @@ class AlertManager:
             level=level,
             message=message,
             timestamp=datetime.utcnow(),
-            _metadata=metadata,
+            metadata =metadata,
         )
         self.alerts[alert_id] = alert
         return alert
@@ -219,7 +219,7 @@ class AlertRuleEngine:
                         level=rule["level"],
                         message=f"Alert rule '{rule['name']}' triggered",
                         timestamp=datetime.utcnow(),
-                        _metadata={"rule": rule["name"], "metrics": metrics},
+                        metadata ={"rule": rule["name"], "metrics": metrics},
                     )
                     alerts.append(alert)
                     self.rule_results[rule["name"]] = {
@@ -245,7 +245,7 @@ class AlertRuleEngine:
 
     def get_rule_results(self) -> Dict[str, Any]:
         """获取规则执行结果"""
-        return self.rule_results  # type: ignore
+        return self.rule_results
 
 
 class AlertChannelManager:

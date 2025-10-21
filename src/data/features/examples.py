@@ -316,7 +316,7 @@ def example_feature_statistics(feature_store: FootballFeatureStore) -> None:
 
     for fv_name in feature_views:
         try:
-            _stats = feature_store.get_feature_statistics(fv_name)
+            stats = feature_store.get_feature_statistics(fv_name)
             logger.info(f"\n🔍 特征视图: {fv_name}")
             logger.info(f"  📈 特征数量: {stats.get(str('num_features'), 'N/A')}")
             logger.info(f"  🏷️  实体: {', '.join(stats.get(str('entities'), []))}")

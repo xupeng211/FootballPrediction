@@ -153,7 +153,7 @@ def is_match_day() -> bool:
         #         SELECT COUNT(*) as match_count FROM matches
         #         WHERE DATE(match_date) = :today
         #     """)
-        #     _result = await session.execute(query, {"today": today})
+        #     result = await session.execute(query, {"today": today})
         #     match_count = result.scalar()
         #     return match_count > 0
 
@@ -181,7 +181,7 @@ def get_upcoming_matches(hours: int = 24) -> list:
         #         WHERE match_date BETWEEN :now AND :end_time
         #         ORDER BY match_date
         #     """)
-        #     _result = await session.execute(query, {"now": now, "end_time": end_time})
+        #     result = await session.execute(query, {"now": now, "end_time": end_time})
         #     _matches = [{
         #         "match_id": row.match_id,
         #         "home_team": row.home_team,

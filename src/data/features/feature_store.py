@@ -123,7 +123,7 @@ class FootballFeatureStore:
             self.repo_path.mkdir(parents=True, exist_ok=True)
 
             # 创建Feast配置
-            _config = RepoConfig(
+            config = RepoConfig(
                 registry=str(self.repo_path / "registry.db"),
                 project=self.project_name,
                 provider="local",
@@ -373,7 +373,7 @@ class FootballFeatureStore:
             feature_view = self._store.get_feature_view(feature_view_name)
 
             # 这里可以添加更详细的统计逻辑
-            _stats = {
+            stats = {
                 "feature_view_name": feature_view_name,
                 "num_features": len(feature_view.features),
                 "feature_names": [f.name for f in feature_view.features],

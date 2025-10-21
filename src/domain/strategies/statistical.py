@@ -54,7 +54,7 @@ class StatisticalStrategy(PredictionStrategy):
                 - home_advantage_factor: 主场优势因子
                 - model_weights: 不同统计模型的权重
         """
-        self._config = config
+        self.config = config
         self._min_sample_size = config.get("min_sample_size", 5)
         self._model_params = {
             "weight_recent_games": config.get("weight_recent_games", 0.7),
@@ -119,7 +119,7 @@ class StatisticalStrategy(PredictionStrategy):
                 "team_form": self._model_params["model_weights"]["form"],
                 "head_to_head": self._model_params["model_weights"]["head_to_head"],
             },
-            _metadata={
+            metadata ={
                 "method": "statistical_ensemble",
                 "predictions_used": {
                     "poisson": poisson_pred,

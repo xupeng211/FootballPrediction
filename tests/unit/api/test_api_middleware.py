@@ -12,6 +12,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 import time
 import json
+import asyncio
 from datetime import datetime, timedelta
 
 # 使用try-except导入，如果模块不存在则跳过测试

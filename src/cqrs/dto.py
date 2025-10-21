@@ -176,7 +176,7 @@ class CommandResult:
         cls, data: Any = None, message: str = "操作成功"
     ) -> "CommandResult":
         """创建成功结果"""
-        return cls(success=True, message=message, _data=data)
+        return cls(success=True, message=message, data =data)
 
     @classmethod
     def failure_result(

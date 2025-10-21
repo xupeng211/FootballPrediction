@@ -11,10 +11,17 @@ For backward compatibility, this file re-exports all classes from the modules.
 
 import warnings
 
-from ......src.collectors.odds.basic import collector  # type: ignore
-from ......src.collectors.odds.basic import parser  # type: ignore
-from ......src.collectors.odds.basic import storage  # type: ignore
-from ......src.collectors.odds.basic import validator  # type: ignore
+try:
+    from .odds.basic import collector
+    from .odds.basic import parser
+    from .odds.basic import storage
+    from .odds.basic import validator
+except ImportError:
+    # 如果odds子模块不存在，提供空实现
+    collector = None
+    parser = None
+    storage = None
+    validator = None
 
 warnings.warn(
     "直接从 odds_collector 导入已弃用。请从 src/collectors/odds/basic 导入相关类。",
@@ -24,5 +31,20 @@ warnings.warn(
 
 # 从新模块导入所有内容
 
+# 创建兼容类
+class OddsCollector:
+    """兼容性占位符类"""
+    def __init__(self, *args, **kwargs):
+        if collector is None:
+            raise NotImplementedError("OddsCollector implementation not available")
+
+class OddsCollectorFactory:
+    """兼容性占位符工厂类"""
+    @staticmethod
+    def create(*args, **kwargs):
+        if collector is None:
+            raise NotImplementedError("OddsCollector implementation not available")
+        return OddsCollector(*args, **kwargs)
+
 # 导出所有类
-__all__ = ["collector", "parser", "validator", "storage"]
+__all__ = ["OddsCollector", "OddsCollectorFactory"]

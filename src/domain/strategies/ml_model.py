@@ -49,7 +49,7 @@ class MLModelStrategy(PredictionStrategy):
                 - model_stage: 模型阶段（Production, Staging等）
                 - feature_config: 特征配置
         """
-        self._config = config
+        self.config = config
 
         # 初始化MLflow客户端
         try:
@@ -352,7 +352,7 @@ class MLModelStrategy(PredictionStrategy):
             predicted_away_score=pred_away,
             confidence=confidence,
             probability_distribution=probability_distribution,
-            _metadata={
+            metadata ={
                 "model_version": self._model_version,
                 "model_loaded_at": self._model_loaded_at.isoformat()
                 if self._model_loaded_at

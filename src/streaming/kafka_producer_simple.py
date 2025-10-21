@@ -21,7 +21,7 @@ class KafkaMessageProducer:
         self.bootstrap_servers = config["bootstrap_servers"]
         self.topic = config["topic"]
         self.producer = None
-        self._stats = {"messages_sent": 0, "errors": 0}
+        self.stats = {"messages_sent": 0, "errors": 0}
 
     async def start(self):
         """启动生产者"""
@@ -38,7 +38,7 @@ class KafkaMessageProducer:
         if self.producer is None:
             raise StreamingError("Producer not started")
 
-        try:  # type: ignore
+        try:
             self._serialize_message(message)
             # 模拟发送
             await asyncio.sleep(0.001)
@@ -56,7 +56,7 @@ class KafkaMessageProducer:
         """批量发送消息"""
         results = []
         for msg in messages:
-            _result = await self.send_message(msg)
+            result = await self.send_message(msg)
             results.append(result)
         return results
 

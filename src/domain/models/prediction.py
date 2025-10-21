@@ -92,7 +92,7 @@ class PredictionScore:
             return False
 
         predicted_diff = self.predicted_home - self.predicted_away
-        actual_diff = self.actual_home - self.actual_away  # type: ignore
+        actual_diff = self.actual_home - self.actual_away
 
         if predicted_diff > 0 and actual_diff > 0:
             return True  # 主队获胜
@@ -109,7 +109,7 @@ class PredictionScore:
         if not self.is_evaluated:
             return 0
         predicted_diff = self.predicted_home - self.predicted_away
-        actual_diff = self.actual_home - self.actual_away  # type: ignore
+        actual_diff = self.actual_home - self.actual_away
         return abs(predicted_diff - actual_diff)
 
     def __str__(self) -> str:
@@ -288,10 +288,10 @@ class Prediction:
         points = PredictionPoints()
 
         # 精确比分奖励
-        if self.score.is_correct_score:  # type: ignore
+        if self.score.is_correct_score:
             points.score_bonus = rules["exact_score"]
         # 结果正确奖励
-        elif self.score.is_correct_result:  # type: ignore
+        elif self.score.is_correct_result:
             points.result_bonus = rules["correct_result"]
 
         # 置信度奖励

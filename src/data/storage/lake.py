@@ -113,12 +113,12 @@ class MetadataManager:
     def save_metadata(self, key: str, metadata: Dict[str, Any]) -> bool:
         """保存元数据"""
         metadata_key = f"{key}.metadata"
-        return self.storage.save(metadata_key, metadata, format="json")  # type: ignore
+        return self.storage.save(metadata_key, metadata, format="json")
 
     def load_metadata(self, key: str) -> Optional[Dict[str, Any]]:
         """加载元数据"""
         metadata_key = f"{key}.metadata"
-        return self.storage.load(metadata_key, format="json")  # type: ignore
+        return self.storage.load(metadata_key, format="json")
 
     def list_datasets(self) -> List[str]:
         """列出所有数据集"""
@@ -157,7 +157,7 @@ class PartitionManager:
     ) -> bool:
         """按分区保存数据"""
         partition_key = self.get_partition_path(key, partition_values)
-        return self.storage.save(partition_key, data, format)  # type: ignore
+        return self.storage.save(partition_key, data, format)
 
     def list_partitions(self, base_key: str) -> List[str]:
         """列出所有分区"""

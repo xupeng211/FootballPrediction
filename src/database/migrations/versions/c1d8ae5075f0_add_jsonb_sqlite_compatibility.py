@@ -22,9 +22,9 @@ Create Date: 2025-09-12 12:41:21.259691
 
 # revision identifiers, used by Alembic.
 revision: str = "c1d8ae5075f0"
-down_revision: Union[str, None] = "006_missing_indexes"  # type: ignore
-branch_labels: Union[str, Sequence[str], None] = None  # type: ignore
-depends_on: Union[str, Sequence[str], None] = None  # type: ignore
+down_revision: Union[str, None] = "006_missing_indexes"
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
 
 
 def is_sqlite():
@@ -51,13 +51,13 @@ def upgrade() -> None:
     这个迁移主要是为了验证和确保现有结构的兼容性。
     """
     # 检查是否在离线模式
-    if context.is_offline_mode():  # type: ignore
+    if context.is_offline_mode():
         logger.info("⚠️  离线模式：跳过JSONB兼容性检查")
         # 在离线模式下执行注释，确保 SQL 生成正常
-        op.execute("-- offline mode: skipped JSONB compatibility validation")  # type: ignore
+        op.execute("-- offline mode: skipped JSONB compatibility validation")
         return
 
-    bind = op.get_bind()  # type: ignore
+    bind = op.get_bind()
 
     logger.info(f"当前数据库类型: {bind.dialect.name}")
 
@@ -156,11 +156,11 @@ def downgrade() -> None:
     实际的数据库结构没有发生改变。
     """
     # 检查是否在离线模式
-    if context.is_offline_mode():  # type: ignore
+    if context.is_offline_mode():
         logger.info("⚠️  离线模式：跳过JSONB兼容性降级")
 
         # 在离线模式下执行注释，确保 SQL 生成正常
-        op.execute("-- offline mode: skipped JSONB compatibility downgrade")  # type: ignore
+        op.execute("-- offline mode: skipped JSONB compatibility downgrade")
         return
 
     logger.info("JSONB兼容性迁移降级 - 无需特殊操作")

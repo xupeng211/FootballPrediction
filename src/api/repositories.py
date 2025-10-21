@@ -52,11 +52,11 @@ async def get_predictions(
         "predictions": [
             {
                 "id": p.id,
-                "user_id": p.user_id,  # type: ignore
+                "user_id": p.user_id,
                 "match_id": p.match_id,
-                "predicted_home": p.predicted_home,  # type: ignore
-                "predicted_away": p.predicted_away,  # type: ignore
-                "confidence": float(p.confidence),  # type: ignore
+                "predicted_home": p.predicted_home,
+                "predicted_away": p.predicted_away,
+                "confidence": float(p.confidence),
                 "created_at": p.created_at,
             }
             for p in predictions
@@ -75,13 +75,13 @@ async def get_prediction(
 
     return {
         "id": prediction.id,
-        "user_id": prediction.user_id,  # type: ignore
+        "user_id": prediction.user_id,
         "match_id": prediction.match_id,
-        "predicted_home": prediction.predicted_home,  # type: ignore
-        "predicted_away": prediction.predicted_away,  # type: ignore
-        "confidence": float(prediction.confidence),  # type: ignore
-        "strategy_used": prediction.strategy_used,  # type: ignore
-        "notes": prediction.notes,  # type: ignore
+        "predicted_home": prediction.predicted_home,
+        "predicted_away": prediction.predicted_away,
+        "confidence": float(prediction.confidence),
+        "strategy_used": prediction.strategy_used,
+        "notes": prediction.notes,
         "created_at": prediction.created_at,
         "updated_at": prediction.updated_at,
     }
@@ -94,7 +94,7 @@ async def get_user_prediction_statistics(
     days: Optional[int] = Query(None, ge=1, le=365, description="统计天数"),
 ) -> Dict[str, Any]:
     """获取用户预测统计信息"""
-    _stats = await repo.get_user_statistics(user_id, period_days=days)
+    stats = await repo.get_user_statistics(user_id, period_days=days)
     return stats
 
 
@@ -103,7 +103,7 @@ async def get_match_prediction_statistics(
     match_id: int, repo: ReadOnlyPredictionRepoDep
 ) -> Dict[str, Any]:
     """获取比赛预测统计信息"""
-    _stats = await repo.get_match_statistics(match_id)
+    stats = await repo.get_match_statistics(match_id)
     return stats
 
 
@@ -119,10 +119,10 @@ async def create_prediction(
             "message": "预测创建成功",
             "prediction": {
                 "id": prediction.id,
-                "user_id": prediction.user_id,  # type: ignore
+                "user_id": prediction.user_id,
                 "match_id": prediction.match_id,
-                "predicted_home": prediction.predicted_home,  # type: ignore
-                "predicted_away": prediction.predicted_away,  # type: ignore
+                "predicted_home": prediction.predicted_home,
+                "predicted_away": prediction.predicted_away,
                 "confidence": float(prediction.confidence),
                 "created_at": prediction.created_at,
             },
@@ -173,8 +173,8 @@ async def get_users(
                 "id": u.id,
                 "username": u.username,
                 "email": u.email,
-                "display_name": u.display_name,  # type: ignore
-                "role": u.role,  # type: ignore
+                "display_name": u.display_name,
+                "role": u.role,
                 "is_active": u.is_active,
                 "created_at": u.created_at,
             }
@@ -194,10 +194,10 @@ async def get_user(user_id: int, repo: ReadOnlyUserRepoDep) -> Dict[str, Any]:
         "id": user.id,
         "username": user.username,
         "email": user.email,
-        "display_name": user.display_name,  # type: ignore
-        "role": user.role,  # type: ignore
+        "display_name": user.display_name,
+        "role": user.role,
         "is_active": user.is_active,
-        "last_login_at": user.last_login_at,  # type: ignore
+        "last_login_at": user.last_login_at,
         "created_at": user.created_at,
     }
 
@@ -205,7 +205,7 @@ async def get_user(user_id: int, repo: ReadOnlyUserRepoDep) -> Dict[str, Any]:
 @router.get("/users/{user_id}/statistics", summary="获取用户完整统计")
 async def get_user_statistics(user_id: int, repo: UserRepoDep) -> Dict[str, Any]:
     """获取用户完整统计信息（使用读写仓储的统计方法）"""
-    _stats = await repo.get_user_statistics(user_id)
+    stats = await repo.get_user_statistics(user_id)
     return stats
 
 
@@ -224,7 +224,7 @@ async def search_users(
             {
                 "id": u.id,
                 "username": u.username,
-                "display_name": u.display_name,  # type: ignore
+                "display_name": u.display_name,
                 "email": u.email,
             }
             for u in users[:limit]
@@ -245,8 +245,8 @@ async def get_active_users(
             {
                 "id": u.id,
                 "username": u.username,
-                "display_name": u.display_name,  # type: ignore
-                "last_login_at": u.last_login_at,  # type: ignore
+                "display_name": u.display_name,
+                "last_login_at": u.last_login_at,
             }
             for u in users
         ],
@@ -296,11 +296,11 @@ async def get_matches(
         "matches": [
             {
                 "id": m.id,
-                "home_team_name": m.home_team_name,  # type: ignore
-                "away_team_name": m.away_team_name,  # type: ignore
-                "competition_name": m.competition_name,  # type: ignore
-                "match_date": m.match_date,  # type: ignore
-                "status": m.status,  # type: ignore
+                "home_team_name": m.home_team_name,
+                "away_team_name": m.away_team_name,
+                "competition_name": m.competition_name,
+                "match_date": m.match_date,
+                "status": m.status,
                 "score": {"home": m.home_score, "away": m.away_score}
                 if m.home_score is not None
                 else None,
@@ -324,10 +324,10 @@ async def get_upcoming_matches(
         "matches": [
             {
                 "id": m.id,
-                "home_team": m.home_team_name,  # type: ignore
-                "away_team": m.away_team_name,  # type: ignore
-                "competition": m.competition_name,  # type: ignore
-                "match_date": m.match_date,  # type: ignore
+                "home_team": m.home_team_name,
+                "away_team": m.away_team_name,
+                "competition": m.competition_name,
+                "match_date": m.match_date,
             }
             for m in matches
         ],
@@ -343,12 +343,12 @@ async def get_live_matches(repo: ReadOnlyMatchRepoDep) -> Dict[str, Any]:
         "live_matches": [
             {
                 "id": m.id,
-                "home_team": m.home_team_name,  # type: ignore
-                "away_team": m.away_team_name,  # type: ignore
+                "home_team": m.home_team_name,
+                "away_team": m.away_team_name,
                 "score": {"home": m.home_score, "away": m.away_score}
                 if m.home_score is not None
                 else None,
-                "started_at": m.started_at,  # type: ignore
+                "started_at": m.started_at,
             }
             for m in matches
         ],
@@ -364,12 +364,12 @@ async def get_match(match_id: int, repo: ReadOnlyMatchRepoDep) -> Dict[str, Any]
 
     return {
         "id": match.id,
-        "home_team_name": match.home_team_name,  # type: ignore
-        "away_team_name": match.away_team_name,  # type: ignore
-        "competition_name": match.competition_name,  # type: ignore
+        "home_team_name": match.home_team_name,
+        "away_team_name": match.away_team_name,
+        "competition_name": match.competition_name,
         "season": match.season,
-        "match_date": match.match_date,  # type: ignore
-        "status": match.status,  # type: ignore
+        "match_date": match.match_date,
+        "status": match.status,
         "score": {"home": match.home_score, "away": match.away_score}
         if match.home_score is not None
         else None,
@@ -380,7 +380,7 @@ async def get_match(match_id: int, repo: ReadOnlyMatchRepoDep) -> Dict[str, Any]
 @router.get("/matches/{match_id}/statistics", summary="获取比赛统计")
 async def get_match_statistics(match_id: int, repo: MatchRepoDep) -> Dict[str, Any]:
     """获取比赛统计信息"""
-    _stats = await repo.get_match_statistics(match_id)
+    stats = await repo.get_match_statistics(match_id)
     return stats
 
 
@@ -398,11 +398,11 @@ async def search_matches(
         "matches": [
             {
                 "id": m.id,
-                "home_team": m.home_team_name,  # type: ignore
-                "away_team": m.away_team_name,  # type: ignore
-                "competition": m.competition_name,  # type: ignore
-                "match_date": m.match_date,  # type: ignore
-                "status": m.status,  # type: ignore
+                "home_team": m.home_team_name,
+                "away_team": m.away_team_name,
+                "competition": m.competition_name,
+                "match_date": m.match_date,
+                "status": m.status,
             }
             for m in matches[:limit]
         ],
@@ -418,7 +418,7 @@ async def get_matches_by_date_range(
     limit: int = Query(100, ge=1, le=1000, description="返回数量限制"),
 ) -> Dict[str, Any]:
     """获取指定日期范围内的比赛"""
-    _matches = await repo.get_matches_by_date_range(start_date, end_date, status, limit)  # type: ignore
+    _matches = await repo.get_matches_by_date_range(start_date, end_date, status, limit)
     return {
         "start_date": start_date,
         "end_date": end_date,
@@ -427,11 +427,11 @@ async def get_matches_by_date_range(
         "matches": [
             {
                 "id": m.id,
-                "home_team": m.home_team_name,  # type: ignore
-                "away_team": m.away_team_name,  # type: ignore
-                "competition": m.competition_name,  # type: ignore
-                "match_date": m.match_date,  # type: ignore
-                "status": m.status,  # type: ignore
+                "home_team": m.home_team_name,
+                "away_team": m.away_team_name,
+                "competition": m.competition_name,
+                "match_date": m.match_date,
+                "status": m.status,
             }
             for m in matches
         ],
@@ -448,8 +448,8 @@ async def start_match(match_id: int, repo: MatchRepoDep) -> Dict[str, Any]:
     return {
         "message": "比赛已开始",
         "match_id": match.id,
-        "status": match.status,  # type: ignore
-        "started_at": match.started_at,  # type: ignore
+        "status": match.status,
+        "started_at": match.started_at,
     }
 
 
@@ -469,7 +469,7 @@ async def finish_match(
         "message": "比赛已结束",
         "match_id": match.id,
         "final_score": {"home": match.home_score, "away": match.away_score},
-        "finished_at": match.finished_at,  # type: ignore
+        "finished_at": match.finished_at,
     }
 
 
@@ -531,7 +531,7 @@ async def demo_read_only_vs_write(
     can_write = False
     error_message = None
     try:
-        await read_only_repo.save(prediction)  # type: ignore
+        await read_only_repo.save(prediction)
     except NotImplementedError as e:
         error_message = str(e)
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException):

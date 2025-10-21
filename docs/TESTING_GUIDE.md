@@ -2,7 +2,7 @@
 
 ## 概述
 
-本项目采用pytest作为测试框架，集成了覆盖率检查、性能测试和持续集成。
+本项目采用pytest作为测试框架，集成了覆盖率检查、性能测试和持续集成。当前处于Phase 3阶段，测试覆盖率为22.32%，目标提升至80%。
 
 ## 快速开始
 
@@ -32,13 +32,16 @@ make test-quick
 
 ```bash
 # 生成HTML覆盖率报告
-make cov.html
+make coverage
 
-# 强制80%覆盖率
-make cov.enforce
+# 查看当前覆盖率 (22.32%)
+make coverage-quick
 
 # 查看详细覆盖率
 pytest --cov=src --cov-report=term-missing
+
+# 覆盖率趋势分析
+make coverage-trends
 ```
 
 ## 测试结构
@@ -49,10 +52,20 @@ tests/
 │   ├── api/        # API端点测试
 │   ├── services/   # 服务层测试
 │   ├── database/   # 数据库测试
-│   └── utils/      # 工具函数测试
+│   ├── utils/      # 工具函数测试
+│   └── helpers/    # 测试辅助工具 (Mock fixtures)
 ├── integration/    # 集成测试 - 测试多个组件协作
-└── e2e/           # 端到端测试 - 测试完整流程
+├── e2e/           # 端到端测试 - 测试完整流程
+├── fixtures/      # 测试数据fixtures
+└── factories/     # 测试数据工厂
 ```
+
+### 新增测试基础设施 (Phase 3)
+
+- **测试辅助工具**: `tests/helpers/test_adapters.py` - 统一的Mock适配器
+- **中间件测试**: `src/api/middleware.py` - API中间件测试覆盖
+- **质量门禁**: `scripts/quality_gate.py` - 自动化质量检查
+- **环境配置**: 多种覆盖率配置文件适应不同环境
 
 ## 测试标记（Markers）
 
@@ -188,10 +201,22 @@ def mock_redis():
 
 ## 覆盖率目标
 
-- **总体覆盖率**: ≥80%
+### 当前状态 (Phase 3)
+- **总体覆盖率**: 22.32% (正在改进中)
+- **核心API模块**: 逐步提升
+- **工具类**: 重点优化区域
+- **CI强制**: 22% (当前最低阈值)
+
+### 目标状态
+- **总体覆盖率**: ≥80% (Phase 4目标)
 - **核心API模块**: ≥90%
 - **工具类**: 100%
 - **CI强制**: ≥80%
+
+### 分阶段策略
+1. **Phase 3** (当前): 稳定在22%基础上，修复关键测试
+2. **Phase 4**: 提升至40%以上
+3. **Phase 5**: 达到80%生产标准
 
 ### 查看未覆盖的代码
 
@@ -277,6 +302,15 @@ make ci
 
 # 或使用ci-verify脚本
 ./ci-verify.sh
+
+# 质量门禁快速检查
+python scripts/quality_gate.py --quick-mode
+
+# 完整质量门禁检查
+python scripts/quality_gate.py
+
+# 环境状态检查
+make env-check
 ```
 
 ## 最佳实践
@@ -363,6 +397,37 @@ pytest --cov=src --cov-report=term-missing:skip-covered
 pytest --cov=src/api --cov-report=term
 ```
 
+## 质量门禁系统 (Phase 3新增)
+
+项目引入了自动化质量门禁系统，确保代码质量和测试覆盖率：
+
+### 质量检查脚本
+
+```bash
+# 快速质量检查 (开发时使用)
+python scripts/quality_gate.py --quick-mode
+
+# 完整质量检查 (提交前使用)
+python scripts/quality_gate.py
+
+# 检查特定模块
+python scripts/quality_gate.py --module api
+```
+
+### 质量标准
+
+- **测试覆盖率**: 必须达到当前阈值 (22%)
+- **测试通过率**: ≥85%
+- **代码质量**: Ruff + MyPy 检查通过
+- **安全性**: 通过 Bandit 扫描
+- **总体评分**: ≥7.0/10
+
+### 质量报告
+
+质量检查后会生成详细报告：
+- `quality-report.json` - 机器可读的详细数据
+- 终端输出 - 人类可读的摘要信息
+
 ## 资源
 
 - [Pytest官方文档](https://docs.pytest.org/)
@@ -373,5 +438,6 @@ pytest --cov=src/api --cov-report=term
 ## 获取帮助
 
 - 查看示例测试: `tests/unit/api/test_health.py`
-- 查看测试辅助工具: `tests/helpers.py`
+- 查看测试辅助工具: `tests/helpers/test_adapters.py`
 - 运行 `make help` 查看所有make命令
+- 质量门禁问题: 检查 `scripts/quality_gate.py --help`

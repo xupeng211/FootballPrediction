@@ -149,7 +149,7 @@ class DataQualityMonitor:
                 WHERE collection_type = 'fixtures' AND status = 'success'
                 """
             )
-            _result = latest_log.fetchone()
+            result = latest_log.fetchone()
 
             if result and result.last_update:
                 hours_since = (
@@ -186,7 +186,7 @@ class DataQualityMonitor:
                 WHERE collected_at > NOW() - INTERVAL '24 hours'
                 """
             )
-            _result = latest_odds.fetchone()
+            result = latest_odds.fetchone()
 
             if result and result.last_update:
                 hours_since = (
@@ -227,7 +227,7 @@ class DataQualityMonitor:
         try:
             # 查找异常的赔率值
             abnormal_odds = await session.execute(
-                text(  # type: ignore
+                text(
                     """
                 SELECT id, match_id, bookmaker, home_odds, draw_odds, away_odds, collected_at
                 FROM odds
@@ -278,7 +278,7 @@ class DataQualityMonitor:
         try:
             # 查找异常高的比分
             high_scores = await session.execute(
-                text(  # type: ignore
+                text(
                     """
                 SELECT id, home_team_id, away_team_id, home_score, away_score, match_time
                 FROM matches

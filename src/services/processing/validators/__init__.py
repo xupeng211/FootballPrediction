@@ -5,6 +5,6 @@
 """
 
 from .data_validator import DataValidator
-from .quality_checker import QualityChecker  # type: ignore
+from .quality_checker import QualityChecker
 
 __all__ = ["DataValidator", "QualityChecker"]

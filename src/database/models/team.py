@@ -91,7 +91,7 @@ class Team(BaseModel):
     @property
     def name(self) -> str:
         """球队名称的别名属性，为了兼容性"""
-        return self.team_name  # type: ignore
+        return self.team_name
 
     @property
     def display_name(self) -> str:
@@ -228,7 +228,7 @@ class Team(BaseModel):
             .all()
         )
 
-        _stats = {
+        stats = {
             "matches_played": len(matches),
             "wins": 0,
             "draws": 0,
@@ -318,4 +318,4 @@ class Team(BaseModel):
         Returns:
             List[Team]: 所有活跃状态的球队列表。
         """
-        return session.query(cls).filter(cls.is_active is True).all()  # type: ignore
+        return session.query(cls).filter(cls.is_active is True).all()

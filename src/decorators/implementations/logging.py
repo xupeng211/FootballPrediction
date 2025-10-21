@@ -52,8 +52,8 @@ class LoggingDecorator(Decorator):
             # 安全地记录参数（避免记录敏感信息）
             safe_args = self._sanitize_args(args)
             safe_kwargs = self._sanitize_kwargs(kwargs)
-            log_data["args"] = safe_args  # type: ignore
-            log_data["kwargs"] = safe_kwargs  # type: ignore
+            log_data["args"] = safe_args
+            log_data["kwargs"] = safe_kwargs
 
         if self.include_context and "context" in kwargs:
             context = kwargs["context"]
@@ -64,7 +64,7 @@ class LoggingDecorator(Decorator):
 
         try:
             # 执行被装饰的函数
-            _result = await self.component.execute(*args, **kwargs)
+            result = await self.component.execute(*args, **kwargs)
 
             # 记录函数执行成功
             if self.log_result:
@@ -101,7 +101,7 @@ class LoggingDecorator(Decorator):
                 if self.include_context and "context" in kwargs:
                     context = kwargs["context"]
                     if isinstance(context, DecoratorContext):
-                        error_log["execution_time"] = context.get_execution_time()  # type: ignore
+                        error_log["execution_time"] = context.get_execution_time()
 
                 logger_instance.error(json.dumps(error_log))
 

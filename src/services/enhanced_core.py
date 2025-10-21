@@ -27,7 +27,7 @@ class ServiceConfig:
         self.version = version
         self.description = description
         self.dependencies = dependencies or []
-        self._config = config or {}
+        self.config = config or {}
         self.created_at = datetime.now()
 
 
@@ -54,7 +54,7 @@ class ServiceMetrics:
 
     def get_metrics(self) -> Dict[str, Any]:
         """获取指标"""
-        return self.metrics.copy()  # type: ignore
+        return self.metrics.copy()
 
 
 class EnhancedBaseService(ABC):
@@ -70,7 +70,7 @@ class EnhancedBaseService(ABC):
         Args:
             config: 服务配置
         """
-        self._config = config or ServiceConfig(self.__class__.__name__)
+        self.config = config or ServiceConfig(self.__class__.__name__)
         self.name = self.config.name
         self.version = self.config.version
         self.description = self.config.description
@@ -148,7 +148,7 @@ class EnhancedBaseService(ABC):
 
     def is_healthy(self) -> bool:
         """检查服务是否健康"""
-        return self._health_status["status"] == "healthy"  # type: ignore
+        return self._health_status["status"] == "healthy"
 
     def get_health_info(self) -> Dict[str, Any]:
         """获取健康信息"""
@@ -163,7 +163,7 @@ class EnhancedBaseService(ABC):
                 "dependencies": list(self._dependencies.keys()),
             }
         )
-        return health_info  # type: ignore
+        return health_info
 
     async def health_check(self) -> Dict[str, Any]:
         """执行健康检查 - 子类可以重写"""
@@ -191,7 +191,7 @@ class EnhancedBaseService(ABC):
 
         try:
             self.logger.debug(f"Executing operation: {operation_name}")
-            _result = await func(*args, **kwargs)
+            result = await func(*args, **kwargs)
             return result
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             success = False
@@ -247,7 +247,7 @@ class BaseService(EnhancedBaseService):
     """向后兼容的基础服务类"""
 
     def __init__(self, name: str = "BaseService"):
-        _config = ServiceConfig(name=name)
+        config = ServiceConfig(name=name)
         super().__init__(config)
 
     async def initialize(self) -> None:
@@ -264,7 +264,7 @@ class AbstractBaseService(EnhancedBaseService):
     """抽象基础服务类 - 强制子类实现所有方法"""
 
     def __init__(self, name: str):
-        _config = ServiceConfig(name=name)
+        config = ServiceConfig(name=name)
         super().__init__(config)
 
 

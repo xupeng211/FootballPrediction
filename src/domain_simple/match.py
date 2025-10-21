@@ -75,11 +75,11 @@ class Match:
 
         # 确定比赛结果
         if home_score > away_score:
-            self.prediction_result = MatchResult.HOME_WIN  # type: ignore
+            self.prediction_result = MatchResult.HOME_WIN
         elif away_score > home_score:
-            self.prediction_result = MatchResult.AWAY_WIN  # type: ignore
+            self.prediction_result = MatchResult.AWAY_WIN
         else:
-            self.prediction_result = MatchResult.DRAW  # type: ignore
+            self.prediction_result = MatchResult.DRAW
 
         return True
 
@@ -137,7 +137,7 @@ class Match:
             "home_score": self.home_score,
             "away_score": self.away_score,
             "prediction_made": self.prediction_made,
-            "prediction_result": self.prediction_result.value  # type: ignore
+            "prediction_result": self.prediction_result.value
             if self.prediction_result
             else None,
             "confidence_score": self.confidence_score,
@@ -164,7 +164,7 @@ class Match:
         if "prediction_made" in data:
             match.prediction_made = data["prediction_made"]
         if "prediction_result" in data and data["prediction_result"]:
-            match.prediction_result = MatchResult(data["prediction_result"])  # type: ignore
+            match.prediction_result = MatchResult(data["prediction_result"])
         if "confidence_score" in data:
             match.confidence_score = data["confidence_score"]
 

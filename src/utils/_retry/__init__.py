@@ -87,7 +87,7 @@ async def async_retry_with_exponential_backoff(
 
             for attempt in range(max_attempts):
                 try:
-                    return await func(*args, **kwargs)  # type: ignore
+                    return await func(*args, **kwargs)
                 except exceptions as e:
                     last_exception = e
                     if attempt < max_attempts - 1:
@@ -100,7 +100,7 @@ async def async_retry_with_exponential_backoff(
                 f"Max attempts ({max_attempts}) exceeded"
             ) from last_exception
 
-        return wrapper  # type: ignore
+        return wrapper
 
     return decorator
 
@@ -108,7 +108,7 @@ async def async_retry_with_exponential_backoff(
 def retry(config: Optional[RetryConfig] = None):
     """通用的重试装饰器"""
     if config is None:
-        _config = RetryConfig()
+        config = RetryConfig()
 
     return retry_with_exponential_backoff(
         max_attempts=config.max_attempts,
@@ -120,7 +120,7 @@ def retry(config: Optional[RetryConfig] = None):
 def async_retry(config: Optional[RetryConfig] = None):
     """通用的异步重试装饰器"""
     if config is None:
-        _config = RetryConfig()
+        config = RetryConfig()
 
     return async_retry_with_exponential_backoff(
         max_attempts=config.max_attempts,

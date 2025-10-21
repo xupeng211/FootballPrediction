@@ -239,16 +239,16 @@ class ObservableService(Subject):
     async def on_service_start(self) -> None:
         """服务启动事件"""
         await self.notify("service.start", {"service": self.service_name})
-        self._metrics["last_activity"] = datetime.now()  # type: ignore
+        self._metrics["last_activity"] = datetime.now()
 
     async def on_service_stop(self) -> None:
         """服务停止事件"""
         await self.notify("service.stop", {"service": self.service_name})
-        self._metrics["last_activity"] = datetime.now()  # type: ignore
+        self._metrics["last_activity"] = datetime.now()
 
     async def on_service_error(self, error: Exception) -> None:
         """服务错误事件"""
-        self._metrics["errors"] += 1  # type: ignore
+        self._metrics["errors"] += 1
         await self.notify(
             "service.error",
             {
@@ -260,7 +260,7 @@ class ObservableService(Subject):
 
     async def on_operation_start(self, operation: str, params: Dict[str, Any]) -> None:
         """操作开始事件"""
-        self._metrics["calls"] += 1  # type: ignore
+        self._metrics["calls"] += 1
         await self.notify(
             "operation.start",
             {"service": self.service_name, "operation": operation, "params": params},

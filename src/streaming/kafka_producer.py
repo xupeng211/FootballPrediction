@@ -27,13 +27,13 @@ try:
 except ImportError:
     # 如果简化版本不存在，尝试导入原始版本
     try:
-        from .kafka_producer_legacy import FootballKafkaProducer  # type: ignore
+        from .kafka_producer_legacy import FootballKafkaProducer
 
-        KafkaProducer = FootballKafkaProducer  # type: ignore
+        KafkaProducer = FootballKafkaProducer
         __all__ = ["KafkaProducer", "FootballKafkaProducer"]
     except ImportError:
         # 如果都不存在，提供一个空类作为占位符
-        class KafkaProducer:  # type: ignore
+        class KafkaProducer:
             """占位符类，当真实的 KafkaProducer 不可用时使用"""
 
             def __init__(self, *args, **kwargs):

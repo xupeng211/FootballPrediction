@@ -32,7 +32,7 @@ async def event_health_check() -> Dict[str, Any]:
 async def get_event_statistics() -> Dict[str, Any]:
     """获取事件系统统计信息"""
     bus = get_event_bus()
-    _stats = bus.get_stats()
+    stats = bus.get_stats()
 
     # 获取各处理器的指标
     detailed_stats = stats.copy()
@@ -149,7 +149,7 @@ async def get_recent_prediction_stats(
             if date >= cutoff_date:
                 recent_stats[date_str] = count
         except (ValueError, KeyError, AttributeError, HTTPError) as e:
-            logger.error(f"解析日期时出错: {e}")  # type: ignore
+            logger.error(f"解析日期时出错: {e}")
             continue
 
     # 计算总计

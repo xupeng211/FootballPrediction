@@ -78,7 +78,7 @@ class UserProfileService(SimpleService):
         interests = self._analyze_user_interests(user)
         behavior_patterns = self._analyze_behavior_patterns(user)
         content_preferences = self._analyze_content_preferences(user)
-        profile = UserProfile(  # type: ignore
+        profile = UserProfile(
             user_id=user.id,
             display_name=getattr(user, "display_name", user.username),
             email=(
@@ -170,7 +170,7 @@ class UserProfileService(SimpleService):
             "content_type": user_data.get(str("content_type"), "text"),
             "behavior_patterns": {"active_hours": [9, 10, 11, 14, 15, 16]},
         }
-        profile = UserProfile(  # type: ignore
+        profile = UserProfile(
             user_id=user_id,
             display_name=user_data.get(str("name"), "Anonymous"),
             email=user_data.get(str("email"), ""),
@@ -180,7 +180,7 @@ class UserProfileService(SimpleService):
             },
         )
         self._user_profiles[user_id] = profile
-        return {"status": "created", "profile": profile.to_dict()}  # type: ignore
+        return {"status": "created", "profile": profile.to_dict()}
 
     def delete_profile(self, user_id: str) -> Dict[str, Any]:
         """删除用户画像"""

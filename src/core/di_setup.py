@@ -43,7 +43,7 @@ class DISetup:
         if config_file and Path(config_file).exists():
             binder = ConfigurationBinder(DIContainer())
             binder.load_from_file(config_file)
-            binder.set_active_profile(self.profile)  # type: ignore
+            binder.set_active_profile(self.profile)
             binder.apply_configuration()
             self.container = binder.container
         else:
@@ -67,7 +67,7 @@ class DISetup:
     def _register_core_services(self) -> None:
         """注册核心服务"""
         # 注册生命周期管理器
-        self.container.register_singleton(  # type: ignore
+        self.container.register_singleton(
             ServiceLifecycleManager, instance=self.lifecycle_manager
         )
 
@@ -82,15 +82,15 @@ class DISetup:
         # 这里可以扫描并自动注册所有仓储类
         # 简化示例，手动注册主要仓储
         try:
-            from ..database.repositories.match_repository import MatchRepository  # type: ignore
-            from ..database.repositories.prediction_repository import (  # type: ignore
+            from ..database.repositories.match_repository import MatchRepository
+            from ..database.repositories.prediction_repository import (
                 PredictionRepository,
             )
-            from ..database.repositories.user_repository import UserRepository  # type: ignore
+            from ..database.repositories.user_repository import UserRepository
 
-            self.container.register_scoped(BaseRepository, MatchRepository)  # type: ignore
-            self.container.register_scoped(BaseRepository, PredictionRepository)  # type: ignore
-            self.container.register_scoped(BaseRepository, UserRepository)  # type: ignore
+            self.container.register_scoped(BaseRepository, MatchRepository)
+            self.container.register_scoped(BaseRepository, PredictionRepository)
+            self.container.register_scoped(BaseRepository, UserRepository)
 
             logger.debug("注册仓储服务完成")
         except ImportError as e:
@@ -100,13 +100,13 @@ class DISetup:
         """自动注册服务"""
         # 这里可以扫描并自动注册所有服务类
         try:
-            from ..services.database import DatabaseService  # type: ignore
-            from ..services.prediction import PredictionService  # type: ignore
-            from ..services.cache import CacheService  # type: ignore
+            from ..services.database import DatabaseService
+            from ..services.prediction import PredictionService
+            from ..services.cache import CacheService
 
-            self.container.register_singleton(DatabaseService)  # type: ignore
-            self.container.register_scoped(PredictionService)  # type: ignore
-            self.container.register_singleton(CacheService)  # type: ignore
+            self.container.register_singleton(DatabaseService)
+            self.container.register_scoped(PredictionService)
+            self.container.register_singleton(CacheService)
 
             logger.debug("注册业务服务完成")
         except ImportError as e:

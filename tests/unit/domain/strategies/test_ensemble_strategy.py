@@ -31,9 +31,10 @@ def mock_sub_strategies():
     historical.type = StrategyType.HISTORICAL
     historical.predict = AsyncMock(
         return_value=PredictionOutput(
-            _prediction=(1, 0),
+            predicted_home_score=1,
+            predicted_away_score=0,
             confidence=0.75,
-            reasoning="Historical analysis shows home advantage",
+            metadata={"reasoning": "Historical analysis shows home advantage"},
         )
     )
     strategies["historical"] = historical
@@ -44,9 +45,10 @@ def mock_sub_strategies():
     statistical.type = StrategyType.STATISTICAL
     statistical.predict = AsyncMock(
         return_value=PredictionOutput(
-            _prediction=(2, 1),
+            predicted_home_score=2,
+            predicted_away_score=1,
             confidence=0.68,
-            reasoning="Statistical models predict moderate win",
+            metadata={"reasoning": "Statistical models predict moderate win"},
         )
     )
     strategies["statistical"] = statistical
@@ -57,9 +59,10 @@ def mock_sub_strategies():
     ml_model.type = StrategyType.ML_MODEL
     ml_model.predict = AsyncMock(
         return_value=PredictionOutput(
-            _prediction=(3, 1),
+            predicted_home_score=3,
+            predicted_away_score=1,
             confidence=0.82,
-            reasoning="ML model predicts strong win",
+            metadata={"reasoning": "ML model predicts strong win"},
         )
     )
     strategies["ml_model"] = ml_model
@@ -101,7 +104,7 @@ async def test_ensemble_strategy_initialization():
 
     # Mock子策略初始化
     with patch.object(strategy, "_initialize_sub_strategies"):
-        await strategy.initialize(config)
+        await strategy.initialize(_config)
 
     assert strategy._ensemble_method == EnsembleMethod.WEIGHTED_AVERAGE
     assert strategy._consensus_threshold == 0.8
@@ -130,11 +133,12 @@ async def test_weighted_average_prediction(ensemble_strategy):
     _result = await ensemble_strategy.predict(input_data)
 
     # 验证结果
-    assert isinstance(result, PredictionOutput)
-    assert _result.prediction is not None
-    assert len(result.prediction) == 2  # (home_goals, away_goals)
-    assert 0 <= result.confidence <= 1
-    assert _result.reasoning is not None
+    assert isinstance(_result, PredictionOutput)
+    assert hasattr(_result, 'predicted_home_score')
+    assert hasattr(_result, 'predicted_away_score')
+    assert 0 <= _result.confidence <= 1
+    assert _result.metadata is not None
+    assert _result.metadata.get("reasoning") is not None
 
     # 验证所有子策略都被调用
     for strategy in ensemble_strategy._sub_strategies.values():
@@ -150,17 +154,18 @@ async def test_majority_voting_prediction(ensemble_strategy):
     # 修改子策略返回值以产生明确的多数
     ensemble_strategy._sub_strategies[
         "historical"
-    ].predict.return_value = PredictionOutput(_prediction=(2, 1), confidence=0.75)
+    ].predict.return_value = PredictionOutput(predicted_home_score=2, predicted_away_score=1, confidence=0.75, metadata={"reasoning": "Test"})
     ensemble_strategy._sub_strategies[
         "statistical"
-    ].predict.return_value = PredictionOutput(_prediction=(2, 1), confidence=0.68)
+    ].predict.return_value = PredictionOutput(predicted_home_score=2, predicted_away_score=1, confidence=0.68, metadata={"reasoning": "Test"})
 
     input_data = PredictionInput(match_id=123, home_team_id=1, away_team_id=2)
 
     _result = await ensemble_strategy.predict(input_data)
 
     # 多数投票应该选择(2, 1)
-    assert _result._prediction == (2, 1)
+    assert _result.predicted_home_score == 2
+    assert _result.predicted_away_score == 1
     assert _result.confidence > 0.5  # 多数投票的置信度应该大于0.5
 
 
@@ -182,7 +187,7 @@ async def test_dynamic_weighting(ensemble_strategy):
     _result = await ensemble_strategy.predict(input_data)
 
     # 验证动态权重已调整
-    assert isinstance(result, PredictionOutput)
+    assert isinstance(_result, PredictionOutput)
 
     # ML模型性能最好，应该有更高的权重
     ml_weight = ensemble_strategy._strategy_weights["ml_model"].performance_weight
@@ -199,22 +204,23 @@ async def test_consensus_score_calculation(ensemble_strategy):
     # 所有策略给出相似预测
     ensemble_strategy._sub_strategies[
         "historical"
-    ].predict.return_value = PredictionOutput(_prediction=(2, 1), confidence=0.75)
+    ].predict.return_value = PredictionOutput(predicted_home_score=2, predicted_away_score=1, confidence=0.75, metadata={"reasoning": "Consensus test"})
     ensemble_strategy._sub_strategies[
         "statistical"
-    ].predict.return_value = PredictionOutput(_prediction=(2, 1), confidence=0.72)
+    ].predict.return_value = PredictionOutput(predicted_home_score=2, predicted_away_score=1, confidence=0.72, metadata={"reasoning": "Consensus test"})
     ensemble_strategy._sub_strategies[
         "ml_model"
-    ].predict.return_value = PredictionOutput(_prediction=(2, 1), confidence=0.78)
+    ].predict.return_value = PredictionOutput(predicted_home_score=2, predicted_away_score=1, confidence=0.78, metadata={"reasoning": "Consensus test"})
 
     input_data = PredictionInput(match_id=123, home_team_id=1, away_team_id=2)
 
     _result = await ensemble_strategy.predict(input_data)
 
     # 高共识应该反映在结果中
+    reasoning = _result.metadata.get("reasoning", "").lower()
     assert (
-        "consensus" in result.reasoning.lower()
-        or "agreement" in result.reasoning.lower()
+        "consensus" in reasoning
+        or "agreement" in reasoning
     )
 
 
@@ -224,13 +230,13 @@ async def test_disagreement_handling(ensemble_strategy):
     # 设置高度分歧的预测
     ensemble_strategy._sub_strategies[
         "historical"
-    ].predict.return_value = PredictionOutput(_prediction=(1, 0), confidence=0.8)
+    ].predict.return_value = PredictionOutput(predicted_home_score=1, predicted_away_score=0, confidence=0.8, metadata={"reasoning": "Disagreement test"})
     ensemble_strategy._sub_strategies[
         "statistical"
-    ].predict.return_value = PredictionOutput(_prediction=(0, 0), confidence=0.7)
+    ].predict.return_value = PredictionOutput(predicted_home_score=0, predicted_away_score=0, confidence=0.7, metadata={"reasoning": "Disagreement test"})
     ensemble_strategy._sub_strategies[
         "ml_model"
-    ].predict.return_value = PredictionOutput(_prediction=(4, 0), confidence=0.85)
+    ].predict.return_value = PredictionOutput(predicted_home_score=4, predicted_away_score=0, confidence=0.85, metadata={"reasoning": "Disagreement test"})
 
     input_data = PredictionInput(match_id=123, home_team_id=1, away_team_id=2)
 
@@ -238,9 +244,10 @@ async def test_disagreement_handling(ensemble_strategy):
 
     # 高分歧应该降低置信度
     assert _result.confidence < 0.7  # 分歧时置信度应该降低
+    reasoning = _result.metadata.get("reasoning", "").lower()
     assert (
-        "disagreement" in result.reasoning.lower()
-        or "uncertain" in result.reasoning.lower()
+        "disagreement" in reasoning
+        or "uncertain" in reasoning
     )
 
 
@@ -257,9 +264,11 @@ async def test_strategy_failure_handling(ensemble_strategy):
     # 应该仍然能够预测，使用剩余的策略
     _result = await ensemble_strategy.predict(input_data)
 
-    assert isinstance(result, PredictionOutput)
-    assert _result.prediction is not None
-    assert "historical" not in result.reasoning or "failed" in result.reasoning.lower()
+    assert isinstance(_result, PredictionOutput)
+    assert hasattr(_result, 'predicted_home_score')
+    assert hasattr(_result, 'predicted_away_score')
+    reasoning = _result.metadata.get("reasoning", "")
+    assert "historical" not in reasoning or "failed" in reasoning.lower()
 
 
 @pytest.mark.asyncio
@@ -282,7 +291,7 @@ async def test_single_sub_strategy():
     mock_strategy = MagicMock()
     mock_strategy.predict = AsyncMock(
         return_value=PredictionOutput(
-            _prediction=(2, 1), confidence=0.8, reasoning="Single strategy prediction"
+            predicted_home_score=2, predicted_away_score=1, confidence=0.8, metadata={"reasoning": "Single strategy prediction"}
         )
     )
 
@@ -296,9 +305,10 @@ async def test_single_sub_strategy():
     _result = await strategy.predict(input_data)
 
     # 应该直接返回子策略的结果
-    assert _result._prediction == (2, 1)
+    assert _result.predicted_home_score == 2
+    assert _result.predicted_away_score == 1
     assert _result.confidence == 0.8
-    assert "single" in result.reasoning.lower()
+    assert "single" in _result.metadata.get("reasoning", "").lower()
 
 
 def test_strategy_weight_creation():
@@ -334,7 +344,7 @@ def test_ensemble_result_creation():
 
     assert _result.final_prediction == (2, 1)
     assert _result.confidence == 0.8
-    assert len(result.strategy_contributions) == 3
+    assert len(_result.strategy_contributions) == 3
     assert _result.consensus_score == 0.75
     assert _result.disagreement_level == 0.5
 

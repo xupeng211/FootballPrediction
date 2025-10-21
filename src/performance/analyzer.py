@@ -102,7 +102,7 @@ class PerformanceAnalyzer:
             # 平均响应时间分析
             if avg_time > self.thresholds["response_time"]["poor"]:
                 insights.append(
-                    PerformanceInsight(  # type: ignore
+                    PerformanceInsight(
                         category="api",
                         severity="critical",
                         title="API响应时间过慢",
@@ -117,7 +117,7 @@ class PerformanceAnalyzer:
                 )
             elif avg_time > self.thresholds["response_time"]["acceptable"]:
                 insights.append(
-                    PerformanceInsight(  # type: ignore
+                    PerformanceInsight(
                         category="api",
                         severity="medium",
                         title="API响应时间需要优化",
@@ -131,7 +131,7 @@ class PerformanceAnalyzer:
             # P95响应时间分析
             if p95_time > avg_time * 3:
                 insights.append(
-                    PerformanceInsight(  # type: ignore
+                    PerformanceInsight(
                         category="api",
                         severity="high",
                         title="API响应时间不稳定",
@@ -146,7 +146,7 @@ class PerformanceAnalyzer:
         max_concurrent = api_stats.get("max_concurrent_requests", 0)
         if max_concurrent > 100:
             insights.append(
-                PerformanceInsight(  # type: ignore
+                PerformanceInsight(
                     category="api",
                     severity="high",
                     title="高并发请求",
@@ -162,7 +162,7 @@ class PerformanceAnalyzer:
         if slow_endpoints:
             for endpoint in slow_endpoints[:3]:  # 最慢的3个端点
                 insights.append(
-                    PerformanceInsight(  # type: ignore
+                    PerformanceInsight(
                         category="api",
                         severity="high",
                         title=f"慢端点: {endpoint['endpoint']}",
@@ -188,7 +188,7 @@ class PerformanceAnalyzer:
                 # 查询时间分析
                 if avg_time > 0.5:  # 超过500ms
                     insights.append(
-                        PerformanceInsight(  # type: ignore
+                        PerformanceInsight(
                             category="database",
                             severity="high" if avg_time > 1.0 else "medium",
                             title=f"{query_type}查询过慢",
@@ -202,7 +202,7 @@ class PerformanceAnalyzer:
                 # 错误率分析
                 if error_rate > 0.05:  # 错误率超过5%
                     insights.append(
-                        PerformanceInsight(  # type: ignore
+                        PerformanceInsight(
                             category="database",
                             severity="critical" if error_rate > 0.1 else "high",
                             title=f"{query_type}查询错误率过高",
@@ -220,7 +220,7 @@ class PerformanceAnalyzer:
         slow_queries = db_stats.get("slow_queries", [])
         if len(slow_queries) > 10:
             insights.append(
-                PerformanceInsight(  # type: ignore
+                PerformanceInsight(
                     category="database",
                     severity="medium",
                     title="慢查询数量过多",
@@ -243,7 +243,7 @@ class PerformanceAnalyzer:
         # 命中率分析
         if hit_rate < 0.5 and total_requests > 100:  # 命中率低于50%
             insights.append(
-                PerformanceInsight(  # type: ignore
+                PerformanceInsight(
                     category="cache",
                     severity="medium",
                     title="缓存命中率过低",
@@ -255,7 +255,7 @@ class PerformanceAnalyzer:
             )
         elif hit_rate < 0.8 and total_requests > 100:
             insights.append(
-                PerformanceInsight(  # type: ignore
+                PerformanceInsight(
                     category="cache",
                     severity="low",
                     title="缓存命中率可提升",
@@ -272,7 +272,7 @@ class PerformanceAnalyzer:
 
         if avg_hit_time > 0.01:  # 超过10ms
             insights.append(
-                PerformanceInsight(  # type: ignore
+                PerformanceInsight(
                     category="cache",
                     severity="medium",
                     title="缓存读取时间过长",
@@ -285,7 +285,7 @@ class PerformanceAnalyzer:
 
         if avg_set_time > 0.05:  # 超过50ms
             insights.append(
-                PerformanceInsight(  # type: ignore
+                PerformanceInsight(
                     category="cache",
                     severity="medium",
                     title="缓存写入时间过长",
@@ -300,7 +300,7 @@ class PerformanceAnalyzer:
 
     def analyze_memory_usage(self, memory_data: List[Dict]) -> List[PerformanceInsight]:
         """分析内存使用情况"""
-        insights = []  # type: ignore
+        insights = []
 
         if not memory_data:
             return insights
@@ -314,7 +314,7 @@ class PerformanceAnalyzer:
         # 内存使用水平分析
         if max_memory > self.thresholds["memory_usage"]["poor"]:
             insights.append(
-                PerformanceInsight(  # type: ignore
+                PerformanceInsight(
                     category="memory",
                     severity="critical",
                     title="内存使用过高",
@@ -329,7 +329,7 @@ class PerformanceAnalyzer:
             )
         elif avg_memory > self.thresholds["memory_usage"]["acceptable"]:
             insights.append(
-                PerformanceInsight(  # type: ignore
+                PerformanceInsight(
                     category="memory",
                     severity="medium",
                     title="内存使用较高",
@@ -349,7 +349,7 @@ class PerformanceAnalyzer:
 
             if growth_rate > 20:  # 增长超过20%
                 insights.append(
-                    PerformanceInsight(  # type: ignore
+                    PerformanceInsight(
                         category="memory",
                         severity="high",
                         title="内存使用持续增长",
@@ -374,7 +374,7 @@ class PerformanceAnalyzer:
         active_tasks = task_stats.get("active_tasks", 0)
         if active_tasks > 50:
             insights.append(
-                PerformanceInsight(  # type: ignore
+                PerformanceInsight(
                     category="tasks",
                     severity="medium",
                     title="活跃后台任务过多",
@@ -394,7 +394,7 @@ class PerformanceAnalyzer:
             # 成功率分析
             if success_rate < 0.9 and stats["total_count"] > 10:
                 insights.append(
-                    PerformanceInsight(  # type: ignore
+                    PerformanceInsight(
                         category="tasks",
                         severity="high" if success_rate < 0.8 else "medium",
                         title=f"任务{task_name}成功率低",
@@ -408,7 +408,7 @@ class PerformanceAnalyzer:
             # 执行时间分析
             if avg_time > 300:  # 超过5分钟
                 insights.append(
-                    PerformanceInsight(  # type: ignore
+                    PerformanceInsight(
                         category="tasks",
                         severity="medium",
                         title=f"任务{task_name}执行时间过长",
@@ -423,7 +423,7 @@ class PerformanceAnalyzer:
         recent_failures = task_stats.get("recent_failures", [])
         if len(recent_failures) > 5:
             insights.append(
-                PerformanceInsight(  # type: ignore
+                PerformanceInsight(
                     category="tasks",
                     severity="high",
                     title="任务失败频繁",
@@ -619,24 +619,24 @@ class PerformanceAnalyzer:
             all_insights.extend(self.analyze_task_performance(task_stats))
 
         # 统计洞察
-        report["insights"] = all_insights  # type: ignore
-        report["summary"]["total_insights"] = len(all_insights)  # type: ignore
-        report["summary"]["critical_issues"] = len(  # type: ignore
+        report["insights"] = all_insights
+        report["summary"]["total_insights"] = len(all_insights)
+        report["summary"]["critical_issues"] = len(
             [i for i in all_insights if i.severity == "critical"]
         )
-        report["summary"]["high_issues"] = len(  # type: ignore
+        report["summary"]["high_issues"] = len(
             [i for i in all_insights if i.severity == "high"]
         )
-        report["summary"]["medium_issues"] = len(  # type: ignore
+        report["summary"]["medium_issues"] = len(
             [i for i in all_insights if i.severity == "medium"]
         )
-        report["summary"]["low_issues"] = len(  # type: ignore
+        report["summary"]["low_issues"] = len(
             [i for i in all_insights if i.severity == "low"]
         )
 
         # 生成建议
         if all_insights:
-            report["recommendations"] = self.generate_optimization_recommendations(  # type: ignore
+            report["recommendations"] = self.generate_optimization_recommendations(
                 all_insights
             )
 

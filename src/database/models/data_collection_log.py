@@ -18,7 +18,7 @@ from typing import Any, Dict, Optional
 from sqlalchemy.orm import validates
 from src.database.base import BaseModel
 from sqlalchemy import DateTime
-from sqlalchemy import Enum  # type: ignore
+from sqlalchemy import Enum
 from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy import Text
@@ -122,7 +122,7 @@ class DataCollectionLog(BaseModel):
     @property
     def is_successful(self) -> bool:
         """是否成功完成"""
-        return self.status == CollectionStatus.SUCCESS.value  # type: ignore
+        return self.status == CollectionStatus.SUCCESS.value
 
     def mark_started(self) -> None:
         """标记采集开始"""

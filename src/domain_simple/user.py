@@ -95,13 +95,13 @@ class UserStatistics:
         """获取准确率"""
         if self.total_predictions == 0:
             return 0.0
-        return (self.correct_predictions / self.total_predictions) * 100  # type: ignore
+        return (self.correct_predictions / self.total_predictions) * 100
 
     def get_roi(self) -> float:
         """获取投资回报率（假设每注1单位）"""
         if self.total_predictions == 0:
             return 0.0
-        return (self.total_profit_loss / self.total_predictions) * 100  # type: ignore
+        return (self.total_profit_loss / self.total_predictions) * 100
 
 
 class User:

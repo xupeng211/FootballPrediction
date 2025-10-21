@@ -8,7 +8,7 @@ Used to create and configure decorator instances.
 
 from typing import Any, Dict, List, Optional, Union
 from dataclasses import dataclass, field
-import yaml  # type: ignore
+import yaml
 import json
 from pathlib import Path
 
@@ -92,17 +92,17 @@ class DecoratorFactory:
         # 根据文件扩展名选择解析器
         if file_path.suffix.lower() == ".yaml" or file_path.suffix.lower() == ".yml":
             with open(file_path, "r", encoding="utf-8") as f:
-                _data = yaml.safe_load(f)
+                data = yaml.safe_load(f)
         elif file_path.suffix.lower() == ".json":
             with open(file_path, "r", encoding="utf-8") as f:
-                _data = json.load(f)
+                data = json.load(f)
         else:
             raise ValueError(f"Unsupported config file format: {file_path.suffix}")
 
         # 解析装饰器配置
         if "decorators" in data:
             for decorator_data in data["decorators"]:
-                _config = DecoratorConfig(**decorator_data)
+                config = DecoratorConfig(**decorator_data)
                 self._config_cache[config.name] = config
 
         # 解析装饰器链配置
@@ -131,7 +131,7 @@ class DecoratorFactory:
         """保存配置到文件"""
         file_path = Path(file_path)
 
-        _data = {
+        data = {
             "decorators": [
                 {
                     "name": config.name,

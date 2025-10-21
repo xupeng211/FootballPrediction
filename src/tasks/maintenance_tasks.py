@@ -58,7 +58,7 @@ def quality_check_task() -> Dict[str, Any]:
                 """
                 )
 
-                _result = await session.execute(match_integrity_query)
+                result = await session.execute(match_integrity_query)
                 incomplete_matches = (await result.scalar()) or 0
                 check_results["incomplete_matches"] = incomplete_matches
                 if incomplete_matches > 0:
@@ -77,7 +77,7 @@ def quality_check_task() -> Dict[str, Any]:
                 """
                 )
 
-                _result = await session.execute(duplicate_matches_query)
+                result = await session.execute(duplicate_matches_query)
                 duplicate_matches = (await result.scalar()) or 0
                 check_results["duplicate_matches"] = duplicate_matches
                 if duplicate_matches > 0:
@@ -97,7 +97,7 @@ def quality_check_task() -> Dict[str, Any]:
                 """
                 )
 
-                _result = await session.execute(abnormal_odds_query)
+                result = await session.execute(abnormal_odds_query)
                 abnormal_odds = (await result.scalar()) or 0
                 check_results["abnormal_odds"] = abnormal_odds
                 if abnormal_odds > 0:
@@ -114,7 +114,7 @@ def quality_check_task() -> Dict[str, Any]:
                 """
                 )
 
-                _result = await session.execute(orphan_matches_query)
+                result = await session.execute(orphan_matches_query)
                 orphan_matches = (await result.scalar()) or 0
                 check_results["orphan_matches"] = orphan_matches
                 if orphan_matches > 0:
@@ -130,7 +130,7 @@ def quality_check_task() -> Dict[str, Any]:
                 """
                 )
 
-                _result = await session.execute(stale_data_query)
+                result = await session.execute(stale_data_query)
                 stale_logs = (await result.scalar()) or 0
                 check_results["stale_collection_logs"] = stale_logs
                 if stale_logs > 0:
@@ -361,7 +361,7 @@ def database_maintenance_task() -> Dict[str, Any]:
                 """
                 )
 
-                _result = await session.execute(cleanup_query)
+                result = await session.execute(cleanup_query)
                 cleaned_sessions = result.rowcount
                 maintenance_results["cleaned_stale_sessions"] = cleaned_sessions
 
@@ -379,7 +379,7 @@ def database_maintenance_task() -> Dict[str, Any]:
                 """
                 )
 
-                _result = await session.execute(table_size_query)
+                result = await session.execute(table_size_query)
                 rows = await result.fetchall()
                 table_sizes = [
                     {"table": row.table_name, "size": row.size} for row in rows

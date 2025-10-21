@@ -35,7 +35,7 @@ Integrates Prometheus monitoring metrics, supporting backup success rate and tim
     from src.tasks.backup_tasks import daily_full_backup_task
 
     # 手动触发每日全量备份
-    _result = daily_full_backup_task.delay()
+    result = daily_full_backup_task.delay()
 
     # 获取任务执行结果
     backup_result = result.get()
@@ -64,7 +64,7 @@ Integrates Prometheus monitoring metrics, supporting backup success rate and tim
 """
 
 # 为了向后兼容性，从新的模块化结构中导入所有内容
-from .backup import (  # type: ignore
+from .backup import (
     # 基础类和指标
     DatabaseBackupTask,
     get_backup_metrics,
