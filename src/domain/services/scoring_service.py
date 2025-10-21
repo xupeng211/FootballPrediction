@@ -16,7 +16,7 @@ class ScoringService:
     """计分服务"""
 
     def __init__(self, scoring_config: Optional[Dict[str, Any]] = None):
-        self._config = scoring_config or self._default_scoring_config()
+        self.config = scoring_config or self._default_scoring_config()
 
     def _default_scoring_config(self) -> Dict[str, Any]:
         """默认计分配置"""
@@ -147,7 +147,7 @@ class ScoringService:
         max_bonus = self.config["streak_bonus"]["max_bonus"]
 
         if streak > 0:
-            return min(streak * bonus_per_streak, max_bonus)  # type: ignore
+            return min(streak * bonus_per_streak, max_bonus)
         return 0
 
     def _calculate_difficulty_bonus(

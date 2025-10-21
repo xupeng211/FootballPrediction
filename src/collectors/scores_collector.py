@@ -88,7 +88,7 @@ class ScoresCollector:
 
     async def _get_live_matches_from_db(self) -> List[Match]:
         """从数据库获取正在进行的比赛"""
-        _result = await self.db_session.execute(
+        result = await self.db_session.execute(
             select(Match).where(
                 or_(Match.match_status == "live", Match.match_status == "half_time")
             )

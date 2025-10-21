@@ -40,9 +40,9 @@ class RedisManager:
     def get_sync_client(self) -> redis.Redis:
         """获取同步Redis客户端"""
         if not self._sync_client:
-            self._sync_client = redis.from_url(self.redis_url, decode_responses=True)  # type: ignore
-            self.sync_ops = RedisSyncOperations(self._sync_client)  # type: ignore
-        return self._sync_client  # type: ignore
+            self._sync_client = redis.from_url(self.redis_url, decode_responses=True)
+            self.sync_ops = RedisSyncOperations(self._sync_client)
+        return self._sync_client
 
     async def health_check(self) -> bool:
         """健康检查"""
@@ -134,28 +134,28 @@ def get_cache(key: str) -> Optional[Any]:
     """同步获取缓存"""
     manager = get_redis_manager()
     manager.get_sync_client()
-    return manager.sync_ops.get(key)  # type: ignore
+    return manager.sync_ops.get(key)
 
 
 def set_cache(key: str, value: Any, ttl: Optional[int] = None) -> bool:
     """同步设置缓存"""
     manager = get_redis_manager()
     manager.get_sync_client()
-    return manager.sync_ops.set(key, value, ttl)  # type: ignore
+    return manager.sync_ops.set(key, value, ttl)
 
 
 def delete_cache(key: str) -> bool:
     """同步删除缓存"""
     manager = get_redis_manager()
     manager.get_sync_client()
-    return manager.sync_ops.delete(key)  # type: ignore
+    return manager.sync_ops.delete(key)
 
 
 def exists_cache(key: str) -> bool:
     """同步检查缓存是否存在"""
     manager = get_redis_manager()
     manager.get_sync_client()
-    return manager.sync_ops.exists(key)  # type: ignore
+    return manager.sync_ops.exists(key)
 
 
 def ttl_cache(key: str) -> Optional[int]:

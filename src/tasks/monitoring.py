@@ -172,9 +172,9 @@ class TaskMonitor:
         if self._db_type is None:
             try:
                 db_manager = DatabaseManager()
-                engine = db_manager._async_engine or db_manager._sync_engine  # type: ignore
+                engine = db_manager._async_engine or db_manager._sync_engine
                 if engine:
-                    self._db_type = get_db_type_from_engine(engine)  # type: ignore
+                    self._db_type = get_db_type_from_engine(engine)
                 else:
                     self._db_type = "postgresql"  # 默认值
             except (ValueError, KeyError, RuntimeError):
@@ -227,7 +227,7 @@ class TaskMonitor:
                     """
                     )
 
-                _result = await session.execute(error_rate_query)
+                result = await session.execute(error_rate_query)
 
                 for row in result:
                     task_name = row.task_name
@@ -278,7 +278,7 @@ class TaskMonitor:
                         ORDER BY total_executions DESC
                     """
                     )
-                    _result = await session.execute(
+                    result = await session.execute(
                         stats_query, {"hours_param": f"-{hours}"}
                     )
                 else:
@@ -297,7 +297,7 @@ class TaskMonitor:
                         ORDER BY total_executions DESC
                     """
                     )
-                    _result = await session.execute(stats_query, {"hours": hours})
+                    result = await session.execute(stats_query, {"hours": hours})
 
                 statistics = []
                 for row in result:
@@ -444,8 +444,8 @@ class TaskMonitor:
 
             async with db_manager.get_async_session() as session:
                 # 查询运行时间过长的任务
-                delay_query = text(query_builder.build_task_delay_query())  # type: ignore
-                _result = await session.execute(delay_query)
+                delay_query = text(query_builder.build_task_delay_query())
+                result = await session.execute(delay_query)
 
                 for row in result:
                     task_delays[row.task_name] = float(row.avg_delay_seconds)

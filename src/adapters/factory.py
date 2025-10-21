@@ -9,7 +9,7 @@ Used to create and configure adapter instances.
 import os
 from typing import Any, Dict, List, Optional, Type, Union
 from dataclasses import dataclass, field
-import yaml  # type: ignore
+import yaml
 import json
 from pathlib import Path
 
@@ -86,7 +86,7 @@ class AdapterFactory:
         adapter = adapter_class(**parameters)
 
         # 配置附加属性
-        adapter.priority = config.priority  # type: ignore
+        adapter.priority = config.priority
 
         return adapter
 
@@ -124,7 +124,7 @@ class AdapterFactory:
                 if adapter_config:
                     adapter = self.create_adapter(adapter_config)
                     is_primary = adapter_name == group_config.primary_adapter
-                    composite.add_adapter(adapter, is_primary=is_primary)  # type: ignore
+                    composite.add_adapter(adapter, is_primary=is_primary)
 
             return composite
         else:
@@ -140,22 +140,22 @@ class AdapterFactory:
         # 根据文件扩展名选择解析器
         if file_path.suffix.lower() in [".yaml", ".yml"]:
             with open(file_path, "r", encoding="utf-8") as f:
-                _data = yaml.safe_load(f)
+                data = yaml.safe_load(f)
         elif file_path.suffix.lower() == ".json":
             with open(file_path, "r", encoding="utf-8") as f:
-                _data = json.load(f)
+                data = json.load(f)
         else:
             raise ValueError(f"Unsupported config file format: {file_path.suffix}")
 
         # 解析适配器配置
-        if "adapters" in _data:
-            for adapter_data in _data["adapters"]:
-                _config = AdapterConfig(**adapter_data)
-                self._configs[_config.name] = _config
+        if "adapters" in data:
+            for adapter_data in data["adapters"]:
+                config = AdapterConfig(**adapter_data)
+                self._configs[config.name] = config
 
         # 解析适配器组配置
-        if "adapter_groups" in _data:
-            for group_data in _data["adapter_groups"]:
+        if "adapter_groups" in data:
+            for group_data in data["adapter_groups"]:
                 group_config = AdapterGroupConfig(**group_data)
                 self._group_configs[group_config.name] = group_config
 
@@ -166,16 +166,16 @@ class AdapterFactory:
         data = {
             "adapters": [
                 {
-                    "name": _config.name,
-                    "adapter_type": _config.adapter_type,
-                    "enabled": _config.enabled,
-                    "priority": _config.priority,
-                    "parameters": self._mask_sensitive_parameters(_config.parameters),
-                    "rate_limits": _config.rate_limits,
-                    "cache_config": _config.cache_config,
-                    "retry_config": _config.retry_config,
+                    "name": config.name,
+                    "adapter_type": config.adapter_type,
+                    "enabled": config.enabled,
+                    "priority": config.priority,
+                    "parameters": self._mask_sensitive_parameters(config.parameters),
+                    "rate_limits": config.rate_limits,
+                    "cache_config": config.cache_config,
+                    "retry_config": config.retry_config,
                 }
-                for _config in self._configs.values()
+                for config in self._configs.values()
             ],
             "adapter_groups": [
                 {

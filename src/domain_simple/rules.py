@@ -75,7 +75,7 @@ class BusinessRule(Rule):
 
     def validate(self, obj: Any) -> ValidationResult:
         """验证业务规则"""
-        _result = ValidationResult()
+        result = ValidationResult()
 
         if not self.enabled:
             result.add_warning(f"Rule {self.name} is disabled")
@@ -127,7 +127,7 @@ class ValidationEngine:
 
     def validate(self, obj: Any, entity_type: Optional[str] = None) -> ValidationResult:
         """验证对象"""
-        _result = ValidationResult()
+        result = ValidationResult()
 
         # 获取相关规则
         rules = self.get_rules(entity_type)
@@ -161,7 +161,7 @@ class ValidationEngine:
         results = []
 
         for obj in objects:
-            _result = self.validate(obj, entity_type)
+            result = self.validate(obj, entity_type)
             results.append(result)
 
         return results
@@ -239,7 +239,7 @@ class BusinessRules:
             )
         )
 
-        return rules  # type: ignore
+        return rules
 
     @staticmethod
     def create_prediction_rules() -> List[Rule]:
@@ -276,7 +276,7 @@ class BusinessRules:
             )
         )
 
-        return rules  # type: ignore
+        return rules
 
     @staticmethod
     def create_team_rules() -> List[Rule]:
@@ -316,7 +316,7 @@ class BusinessRules:
             )
         )
 
-        return rules  # type: ignore
+        return rules
 
 
 # 全局验证引擎实例

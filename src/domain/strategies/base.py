@@ -72,7 +72,7 @@ class PredictionStrategy(ABC):
         self.strategy_type = strategy_type
         self._metrics: Optional[StrategyMetrics] = None
         self._is_initialized = False
-        self._config: Dict[str, Any] = {}
+        self.config: Dict[str, Any] = {}
 
     @abstractmethod
     async def initialize(self, config: Dict[str, Any]) -> None:
@@ -130,11 +130,11 @@ class PredictionStrategy(ABC):
 
     def get_config(self) -> Dict[str, Any]:
         """获取策略配置"""
-        return self._config.copy()
+        return self.config.copy()
 
     def update_config(self, new_config: Dict[str, Any]) -> None:
         """更新策略配置"""
-        self._config.update(new_config)
+        self.config.update(new_config)
 
     async def validate_input(self, input_data: PredictionInput) -> bool:
         """验证输入数据有效性
@@ -150,7 +150,7 @@ class PredictionStrategy(ABC):
             return False
 
         # 检查比赛时间
-        if input_data.match.match_date <= datetime.utcnow():  # type: ignore
+        if input_data.match.match_date <= datetime.utcnow():
             return False
 
         # 子类可以覆盖此方法进行特定验证

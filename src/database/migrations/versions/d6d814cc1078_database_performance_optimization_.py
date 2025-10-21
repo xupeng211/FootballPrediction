@@ -19,26 +19,26 @@ Create Date: 2025-09-10 21:51:46.967609
 
 # revision identifiers, used by Alembic.
 revision: str = "d6d814cc1078"
-down_revision: Union[str, None] = "004_configure_permissions"  # type: ignore
-branch_labels: Union[str, Sequence[str], None] = None  # type: ignore
-depends_on: Union[str, Sequence[str], None] = None  # type: ignore
+down_revision: Union[str, None] = "004_configure_permissions"
+branch_labels: Union[str, Sequence[str], None] = None
+depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
     """数据库性能优化升级"""
 
     # 检查是否在离线模式
-    if context.is_offline_mode():  # type: ignore
+    if context.is_offline_mode():
         logger.info("⚠️  离线模式：跳过性能优化迁移")
         # 在离线模式下执行注释，确保 SQL 生成正常
-        op.execute("-- offline mode: skipped database performance optimization")  # type: ignore
-        op.execute("-- offline mode: skipped materialized views creation")  # type: ignore
-        op.execute("-- offline mode: skipped foreign key constraints creation")  # type: ignore
-        op.execute("-- offline mode: skipped trigger functions creation")  # type: ignore
+        op.execute("-- offline mode: skipped database performance optimization")
+        op.execute("-- offline mode: skipped materialized views creation")
+        op.execute("-- offline mode: skipped foreign key constraints creation")
+        op.execute("-- offline mode: skipped trigger functions creation")
         return
 
     # 获取数据库连接以执行原生SQL
-    conn = op.get_bind()  # type: ignore
+    conn = op.get_bind()
 
     # ========================================
     # 1. 为 matches 表添加按月分区策略
@@ -48,7 +48,7 @@ def upgrade() -> None:
 
     # 备份现有数据
     conn.execute(
-        text(  # type: ignore
+        text(
             """
         CREATE TABLE matches_backup AS SELECT * FROM matches;
     """
@@ -56,11 +56,11 @@ def upgrade() -> None:
     )
 
     # 删除现有的 matches 表及其关联
-    conn.execute(text("DROP TABLE IF EXISTS matches CASCADE;"))  # type: ignore
+    conn.execute(text("DROP TABLE IF EXISTS matches CASCADE;"))
 
     # 创建分区主表
     conn.execute(
-        text(  # type: ignore
+        text(
             """
         CREATE TABLE matches (
             id SERIAL,
@@ -129,7 +129,7 @@ def upgrade() -> None:
 
     for partition_name, start_date, end_date in partitions:
         conn.execute(
-            text(  # type: ignore
+            text(
                 f"""
             CREATE TABLE matches_{partition_name} PARTITION OF matches
             FOR VALUES FROM ('{start_date}') TO ('{end_date}');
@@ -139,7 +139,7 @@ def upgrade() -> None:
 
     # 恢复数据到分区表
     conn.execute(
-        text(  # type: ignore
+        text(
             """
         INSERT INTO matches
         SELECT * FROM matches_backup;
@@ -149,7 +149,7 @@ def upgrade() -> None:
 
     # 为外键约束添加唯一约束（PostgreSQL 分区表需要包含所有分区键）
     conn.execute(
-        text(  # type: ignore
+        text(
             """
         CREATE UNIQUE INDEX idx_matches_id_unique ON matches (id, match_time);
     """
@@ -157,7 +157,7 @@ def upgrade() -> None:
     )
 
     # 删除备份表
-    conn.execute(text("DROP TABLE matches_backup;"))  # type: ignore
+    conn.execute(text("DROP TABLE matches_backup;"))
 
     logger.info("   ✅ matches 表分区策略创建完成")
 
@@ -168,14 +168,14 @@ def upgrade() -> None:
     logger.info("2. 开始为 odds 表添加分区策略...")
 
     # 备份现有数据
-    conn.execute(text("CREATE TABLE odds_backup AS SELECT * FROM odds;"))  # type: ignore
+    conn.execute(text("CREATE TABLE odds_backup AS SELECT * FROM odds;"))
 
     # 删除现有的 odds 表及其关联
-    conn.execute(text("DROP TABLE IF EXISTS odds CASCADE;"))  # type: ignore
+    conn.execute(text("DROP TABLE IF EXISTS odds CASCADE;"))
 
     # 创建分区主表
     conn.execute(
-        text(  # type: ignore
+        text(
             """
         CREATE TABLE odds (
             id SERIAL,
@@ -201,7 +201,7 @@ def upgrade() -> None:
     # 创建 odds 分区表
     for partition_name, start_date, end_date in partitions:
         conn.execute(
-            text(  # type: ignore
+            text(
                 f"""
             CREATE TABLE odds_{partition_name} PARTITION OF odds
             FOR VALUES FROM ('{start_date}') TO ('{end_date}');
@@ -211,7 +211,7 @@ def upgrade() -> None:
 
     # 恢复数据到分区表
     conn.execute(
-        text(  # type: ignore
+        text(
             """
         INSERT INTO odds
         SELECT * FROM odds_backup;
@@ -221,7 +221,7 @@ def upgrade() -> None:
 
     # 为外键约束添加唯一约束（PostgreSQL 分区表需要包含所有分区键）
     conn.execute(
-        text(  # type: ignore
+        text(
             """
         CREATE UNIQUE INDEX idx_odds_id_unique ON odds (id, collected_at);
     """
@@ -229,7 +229,7 @@ def upgrade() -> None:
     )
 
     # 删除备份表
-    conn.execute(text("DROP TABLE odds_backup;"))  # type: ignore
+    conn.execute(text("DROP TABLE odds_backup;"))
 
     logger.info("   ✅ odds 表分区策略创建完成")
 
@@ -241,7 +241,7 @@ def upgrade() -> None:
 
     # matches 表索引
     conn.execute(
-        text(  # type: ignore
+        text(
             """
         CREATE INDEX idx_matches_time_status ON matches (match_time, match_status);
     """
@@ -249,7 +249,7 @@ def upgrade() -> None:
     )
 
     conn.execute(
-        text(  # type: ignore
+        text(
             """
         CREATE INDEX idx_matches_home_team_time ON matches (home_team_id, match_time);
     """
@@ -257,7 +257,7 @@ def upgrade() -> None:
     )
 
     conn.execute(
-        text(  # type: ignore
+        text(
             """
         CREATE INDEX idx_matches_away_team_time ON matches (away_team_id, match_time);
     """
@@ -265,7 +265,7 @@ def upgrade() -> None:
     )
 
     conn.execute(
-        text(  # type: ignore
+        text(
             """
         CREATE INDEX idx_matches_league_season ON matches (league_id, season);
     """
@@ -274,7 +274,7 @@ def upgrade() -> None:
 
     # odds 表索引
     conn.execute(
-        text(  # type: ignore
+        text(
             """
         CREATE INDEX idx_odds_match_bookmaker_collected ON odds (match_id, bookmaker, collected_at);
     """
@@ -282,7 +282,7 @@ def upgrade() -> None:
     )
 
     conn.execute(
-        text(  # type: ignore
+        text(
             """
         CREATE INDEX idx_odds_collected_at_desc ON odds (collected_at DESC);
     """
@@ -290,7 +290,7 @@ def upgrade() -> None:
     )
 
     conn.execute(
-        text(  # type: ignore
+        text(
             """
         CREATE INDEX idx_odds_match_market_type ON odds (match_id, market_type);
     """
@@ -299,7 +299,7 @@ def upgrade() -> None:
 
     # features 表索引（只在索引不存在时创建）
     conn.execute(
-        text(  # type: ignore
+        text(
             """
         DO $$
         BEGIN
@@ -316,7 +316,7 @@ def upgrade() -> None:
     )
 
     conn.execute(
-        text(  # type: ignore
+        text(
             """
         DO $$
         BEGIN
@@ -342,7 +342,7 @@ def upgrade() -> None:
 
     # 物化视图1: 球队近期战绩统计
     conn.execute(
-        text(  # type: ignore
+        text(
             """
         CREATE MATERIALIZED VIEW mv_team_recent_performance AS
         SELECT
@@ -393,7 +393,7 @@ def upgrade() -> None:
 
     # 为物化视图创建索引
     conn.execute(
-        text(  # type: ignore
+        text(
             """
         CREATE INDEX idx_mv_team_recent_performance_team_id ON mv_team_recent_performance (team_id);
     """
@@ -402,7 +402,7 @@ def upgrade() -> None:
 
     # 物化视图2: 赔率趋势分析
     conn.execute(
-        text(  # type: ignore
+        text(
             """
         CREATE MATERIALIZED VIEW mv_odds_trends AS
         WITH latest_odds AS (
@@ -464,7 +464,7 @@ def upgrade() -> None:
 
     # 为赔率趋势物化视图创建索引
     conn.execute(
-        text(  # type: ignore
+        text(
             """
         CREATE INDEX idx_mv_odds_trends_match_id ON mv_odds_trends (match_id);
     """
@@ -472,7 +472,7 @@ def upgrade() -> None:
     )
 
     conn.execute(
-        text(  # type: ignore
+        text(
             """
         CREATE INDEX idx_mv_odds_trends_market_type ON mv_odds_trends (market_type);
     """
@@ -480,7 +480,7 @@ def upgrade() -> None:
     )
 
     conn.execute(
-        text(  # type: ignore
+        text(
             """
         CREATE INDEX idx_mv_odds_trends_match_time ON mv_odds_trends (match_time);
     """
@@ -496,8 +496,8 @@ def upgrade() -> None:
     logger.info("5. 验证基础表存在并重新创建外键约束...")
 
     # 首先验证基础表是否存在
-    _result = conn.execute(
-        text(  # type: ignore
+    result = conn.execute(
+        text(
             """
         SELECT table_name
         FROM information_schema.tables
@@ -515,7 +515,7 @@ def upgrade() -> None:
     if "leagues" not in existing_tables:
         logger.info("   ⚠️  leagues 表不存在，重新创建...")
         conn.execute(
-            text(  # type: ignore
+            text(
                 """
             CREATE TABLE leagues (
                 id SERIAL PRIMARY KEY,
@@ -540,7 +540,7 @@ def upgrade() -> None:
     if "teams" not in existing_tables:
         logger.info("   ⚠️  teams 表不存在，重新创建...")
         conn.execute(
-            text(  # type: ignore
+            text(
                 """
             CREATE TABLE teams (
                 id SERIAL PRIMARY KEY,
@@ -566,7 +566,7 @@ def upgrade() -> None:
     try:
         # matches 表外键
         conn.execute(
-            text(  # type: ignore
+            text(
                 """
             ALTER TABLE matches ADD CONSTRAINT fk_matches_home_team
             FOREIGN KEY (home_team_id) REFERENCES teams(id) ON DELETE CASCADE;
@@ -579,7 +579,7 @@ def upgrade() -> None:
 
     try:
         conn.execute(
-            text(  # type: ignore
+            text(
                 """
             ALTER TABLE matches ADD CONSTRAINT fk_matches_away_team
             FOREIGN KEY (away_team_id) REFERENCES teams(id) ON DELETE CASCADE;
@@ -592,7 +592,7 @@ def upgrade() -> None:
 
     try:
         conn.execute(
-            text(  # type: ignore
+            text(
                 """
             ALTER TABLE matches ADD CONSTRAINT fk_matches_league
             FOREIGN KEY (league_id) REFERENCES leagues(id) ON DELETE CASCADE;
@@ -607,7 +607,7 @@ def upgrade() -> None:
     # 我们将使用应用程序级别的约束来保证数据完整性
     # 添加注释说明这个设计决策
     conn.execute(
-        text(  # type: ignore
+        text(
             """
         COMMENT ON TABLE odds IS '注意：match_id 字段应在应用程序级别保证引用完整性，由于PostgreSQL分区表限制，无法使用数据库外键约束';
     """
@@ -627,14 +627,14 @@ def downgrade() -> None:
     """回滚数据库性能优化"""
 
     # 检查是否在离线模式
-    if context.is_offline_mode():  # type: ignore
+    if context.is_offline_mode():
         logger.info("⚠️  离线模式：跳过性能优化回滚")
 
         # 在离线模式下执行注释，确保 SQL 生成正常
-        op.execute(  # type: ignore
+        op.execute(
             "-- offline mode: skipped database performance optimization rollback"
         )
-        op.execute("-- offline mode: skipped materialized views removal")  # type: ignore
+        op.execute("-- offline mode: skipped materialized views removal")
         op.execute("-- offline mode: skipped foreign key constraints removal")
         op.execute("-- offline mode: skipped trigger functions removal")
         return
@@ -645,9 +645,9 @@ def downgrade() -> None:
 
     # 删除物化视图
     conn.execute(
-        text("DROP MATERIALIZED VIEW IF EXISTS mv_team_recent_performance CASCADE;")  # type: ignore
+        text("DROP MATERIALIZED VIEW IF EXISTS mv_team_recent_performance CASCADE;")
     )
-    conn.execute(text("DROP MATERIALIZED VIEW IF EXISTS mv_odds_trends CASCADE;"))  # type: ignore
+    conn.execute(text("DROP MATERIALIZED VIEW IF EXISTS mv_odds_trends CASCADE;"))
 
     # 删除索引（PostgreSQL会在删除表时自动删除）
 

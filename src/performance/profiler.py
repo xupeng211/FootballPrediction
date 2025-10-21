@@ -98,7 +98,7 @@ class PerformanceProfiler:
 
         self.active_profiling = False
 
-        _result = {
+        result = {
             "stats": stats_stream.getvalue(),
             "memory_current": current,
             "memory_peak": peak,
@@ -113,7 +113,7 @@ class PerformanceProfiler:
     def _parse_function_stats(self, ps: pstats.Stats) -> List[FunctionProfile]:
         """解析函数统计信息"""
         profiles = []
-        stats_dict = ps.stats  # type: ignore
+        stats_dict = ps.stats
 
         for func_info, (cc, nc, tt, ct, callers) in stats_dict.items():
             filename, line, func_name = func_info
@@ -215,7 +215,7 @@ class PerformanceProfiler:
             name="database_query_duration",
             value=execution_time,
             unit="seconds",
-            _metadata={"query": query[:100], "rows": rows_affected},
+            metadata ={"query": query[:100], "rows": rows_affected},
         )
         self.metrics.append(metric)
 
@@ -235,7 +235,7 @@ class PerformanceProfiler:
             return {}
 
         # 按名称分组指标
-        grouped_metrics = {}  # type: ignore
+        grouped_metrics = {}
         for metric in self.metrics:
             if metric.name not in grouped_metrics:
                 grouped_metrics[metric.name] = []
@@ -256,7 +256,7 @@ class PerformanceProfiler:
 
     def export_metrics(self, format: str = "json") -> str:
         """导出性能指标"""
-        _data = {
+        data = {
             "timestamp": datetime.now().isoformat(),
             "metrics_summary": self.get_metrics_summary(),
             "slow_functions": [
@@ -358,7 +358,7 @@ class DatabaseQueryProfiler:
         start_time = time.perf_counter()
 
         try:
-            _result = execute_func(query)
+            result = execute_func(query)
 
             # 尝试获取影响行数
             rows_affected = 0
@@ -418,7 +418,7 @@ class APIEndpointProfiler:
                 "max_duration": 0,
             }
 
-        _stats = self.endpoint_stats[key]
+        stats = self.endpoint_stats[key]
         stats["request_count"] += 1
         stats["total_duration"] += duration
         stats["min_duration"] = min(stats["min_duration"], duration)
@@ -442,7 +442,7 @@ class APIEndpointProfiler:
             name=f"api_endpoint_duration_{key}",
             value=duration,
             unit="seconds",
-            _metadata={
+            metadata ={
                 "endpoint": endpoint,
                 "method": method,
                 "status_code": status_code,
@@ -525,7 +525,7 @@ class MemoryProfiler:
         first_rss = self.snapshots[0]["rss"] / 1024 / 1024
         last_rss = self.snapshots[-1]["rss"] / 1024 / 1024
 
-        return (last_rss - first_rss) > threshold  # type: ignore
+        return (last_rss - first_rss) > threshold
 
 
 # 创建性能分析器的便捷函数

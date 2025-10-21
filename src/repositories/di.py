@@ -31,7 +31,7 @@ async def get_prediction_repository(
 ) -> PredictionRepository:
     """获取预测仓储依赖"""
     provider = get_repository_provider()
-    return provider.get_prediction_repository(session, read_only=False)  # type: ignore
+    return provider.get_prediction_repository(session, read_only=False)
 
 
 async def get_read_only_prediction_repository(
@@ -39,7 +39,7 @@ async def get_read_only_prediction_repository(
 ) -> ReadOnlyPredictionRepository:
     """获取只读预测仓储依赖"""
     provider = get_repository_provider()
-    return provider.get_prediction_repository(session, read_only=True)  # type: ignore
+    return provider.get_prediction_repository(session, read_only=True)
 
 
 # 用户仓储依赖
@@ -48,7 +48,7 @@ async def get_user_repository(
 ) -> UserRepository:
     """获取用户仓储依赖"""
     provider = get_repository_provider()
-    return provider.get_user_repository(session, read_only=False)  # type: ignore
+    return provider.get_user_repository(session, read_only=False)
 
 
 async def get_read_only_user_repository(
@@ -56,7 +56,7 @@ async def get_read_only_user_repository(
 ) -> ReadOnlyUserRepository:
     """获取只读用户仓储依赖"""
     provider = get_repository_provider()
-    return provider.get_user_repository(session, read_only=True)  # type: ignore
+    return provider.get_user_repository(session, read_only=True)
 
 
 # 比赛仓储依赖
@@ -65,7 +65,7 @@ async def get_match_repository(
 ) -> MatchRepository:
     """获取比赛仓储依赖"""
     provider = get_repository_provider()
-    return provider.get_match_repository(session, read_only=False)  # type: ignore
+    return provider.get_match_repository(session, read_only=False)
 
 
 async def get_read_only_match_repository(
@@ -73,7 +73,7 @@ async def get_read_only_match_repository(
 ) -> ReadOnlyMatchRepository:
     """获取只读比赛仓储依赖"""
     provider = get_repository_provider()
-    return provider.get_match_repository(session, read_only=True)  # type: ignore
+    return provider.get_match_repository(session, read_only=True)
 
 
 # 类型化依赖别名（更好的IDE支持和类型检查）

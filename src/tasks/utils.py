@@ -42,7 +42,7 @@ async def should_collect_live_scores() -> bool:
             """
             )
 
-            _result = await session.execute(
+            result = await session.execute(
                 query, {"start_time": start_time, "end_time": end_time}
             )
 
@@ -87,7 +87,7 @@ async def get_upcoming_matches(hours: int = 24) -> List[dict]:
             """
             )
 
-            _result = await session.execute(query, {"now": now, "end_time": end_time})
+            result = await session.execute(query, {"now": now, "end_time": end_time})
 
             _matches = []
             for row in result:
@@ -148,7 +148,7 @@ async def get_active_leagues() -> List[str]:
             """
             )
 
-            _result = await session.execute(query)
+            result = await session.execute(query)
             leagues = [row.name for row in result]
 
             return leagues
@@ -219,12 +219,12 @@ async def cleanup_stale_tasks() -> int:
             """
             )
 
-            _result = await session.execute(cleanup_query)
+            result = await session.execute(cleanup_query)
             await session.commit()
 
             # For DELETE queries, we need to check if the result has rowcount
             if hasattr(result, "rowcount") and result.rowcount is not None:
-                return result.rowcount  # type: ignore
+                return result.rowcount
             return 0
 
     except (ValueError, KeyError, RuntimeError):

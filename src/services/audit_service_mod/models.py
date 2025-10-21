@@ -46,4 +46,4 @@ class AuditEvent:
 
     def __post_init__(self):
         if self.metadata is None:
-            self._metadata = {}
+            self.metadata = {}

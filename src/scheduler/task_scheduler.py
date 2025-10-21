@@ -7,4 +7,4 @@ warnings.warn(
 )
 
 # Compatibility module
-__all__ = []  # type: ignore
+__all__ = []

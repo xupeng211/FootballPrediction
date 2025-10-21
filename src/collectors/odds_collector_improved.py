@@ -7,7 +7,7 @@ Improved Odds Collector (Backward Compatible)
 Provides backward compatible exports for the modular odds collector.
 """
 
-from .odds import (  # type: ignore
+from .odds import (
     # 重新导出主要类和函数
     OddsCollector,
     OddsCollectorManager,

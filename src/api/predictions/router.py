@@ -120,7 +120,7 @@ async def get_prediction(
     try:
         # TODO: 从数据库或缓存中获取预测结果
         # 这里返回模拟数据作为占位符
-        _result = PredictionResult(
+        result = PredictionResult(
             match_id=match_id,
             home_win_prob=0.45,
             draw_prob=0.30,
@@ -153,11 +153,11 @@ async def create_prediction(match_id: int, request: Optional[PredictionRequest] 
         # TODO: 调用预测引擎生成预测
         # from src.api.dependencies import get_prediction_engine
         # engine = await get_prediction_engine()
-        # _result = await engine.predict(match_id)
+        # result = await engine.predict(match_id)
 
         # 模拟预测结果
         model_version = request.model_version if request else "default"
-        _result = PredictionResult(
+        result = PredictionResult(
             match_id=match_id,
             home_win_prob=0.50,
             draw_prob=0.28,

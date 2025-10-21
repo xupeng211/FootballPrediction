@@ -50,9 +50,9 @@ class OddsCollector(DataCollector):
         self.time_window_minutes = time_window_minutes
 
         # 赔率去重：记录最近采集的赔率键值
-        self._recent_odds_keys: Set[str] = set()  # type: ignore
+        self._recent_odds_keys: Set[str] = set()
         # 赔率变化：记录上次赔率值
-        self._last_odds_values: Dict[str, Dict[str, Decimal]] = {}  # type: ignore
+        self._last_odds_values: Dict[str, Dict[str, Decimal]] = {}
 
     async def collect_fixtures(self, **kwargs) -> CollectionResult:
         """赔率采集器不处理赛程数据"""
@@ -181,7 +181,7 @@ class OddsCollector(DataCollector):
             else:
                 status = "failed"
 
-            _result = CollectionResult(
+            result = CollectionResult(
                 data_source=self.data_source,
                 collection_type="odds",
                 records_collected=total_collected,
@@ -295,7 +295,7 @@ class OddsCollector(DataCollector):
 
                 # 处理响应数据
                 for event in response:
-                    for bookmaker in event.get(str("bookmakers"), []):  # type: ignore
+                    for bookmaker in event.get(str("bookmakers"), []):
                         for market_data in bookmaker.get(str("markets"), []):
                             odds_data = {
                                 "match_id": match_id,
@@ -339,7 +339,7 @@ class OddsCollector(DataCollector):
         ]
 
         key_string = "|".join(key_components)
-        return hashlib.md5(key_string.encode(), usedforsecurity=False).hexdigest()  # type: ignore
+        return hashlib.md5(key_string.encode(), usedforsecurity=False).hexdigest()
 
     async def _has_odds_changed(self, odds_data: Dict[str, Any]) -> bool:
         """
@@ -357,7 +357,7 @@ class OddsCollector(DataCollector):
             # 提取当前赔率值
             current_odds = {}
             for outcome in odds_data.get(str("outcomes"), []):
-                current_odds[outcome.get(str("name"), "")] = Decimal(  # type: ignore
+                current_odds[outcome.get(str("name"), "")] = Decimal(
                     str(outcome.get(str("price"), 0))
                 )
 
@@ -366,7 +366,7 @@ class OddsCollector(DataCollector):
                 last_odds = self._last_odds_values[odds_id]
                 # 检查是否有任何赔率发生变化
                 for name, value in current_odds.items():
-                    if name not in last_odds or abs(last_odds[name] - value) > Decimal(  # type: ignore
+                    if name not in last_odds or abs(last_odds[name] - value) > Decimal(
                         "0.01"
                     ):
                         self._last_odds_values[odds_id] = current_odds

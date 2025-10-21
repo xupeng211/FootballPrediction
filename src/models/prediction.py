@@ -22,7 +22,7 @@ class PredictionResult:
     confidence: float
     prediction_time: datetime
     model_version: str
-    features: Dict[str, Any] = None  # type: ignore
+    features: Dict[str, Any] = None
 
     def __post_init__(self):
         if self.features is None:
@@ -37,7 +37,7 @@ class PredictionCache:
 
     def get(self, key: str) -> Optional[PredictionResult]:
         """获取缓存的预测结果"""
-        return self._cache.get(key)  # type: ignore
+        return self._cache.get(key)
 
     def set(self, key: str, result: PredictionResult, ttl: int = 3600) -> None:
         """设置预测结果缓存"""
@@ -73,7 +73,7 @@ class PredictionService(SimpleService):
         """批量预测比赛"""
         results = []
         for match_id in match_ids:
-            _result = await self.predict_match(match_id)
+            result = await self.predict_match(match_id)
             results.append(result)
         return results
 
@@ -104,7 +104,7 @@ class Histogram:
     def __init__(self, name: str, description: str):
         self.name = name
         self.description = description
-        self.values = []  # type: ignore
+        self.values = []
 
     def observe(self, value: float):
         self.values.append(value)

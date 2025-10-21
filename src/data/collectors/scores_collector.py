@@ -79,9 +79,9 @@ class ScoresCollector(DataCollector):
         self.polling_interval = polling_interval
 
         # 实时数据：记录当前进行中的比赛
-        self._active_matches: Set[str] = set()  # type: ignore
+        self._active_matches: Set[str] = set()
         # 事件跟踪：记录已处理的事件ID，避免重复
-        self._processed_events: Set[str] = set()  # type: ignore
+        self._processed_events: Set[str] = set()
         # WebSocket连接状态
         self._websocket_connected = False
 
@@ -199,7 +199,7 @@ class ScoresCollector(DataCollector):
             else:
                 status = "failed"
 
-            _result = CollectionResult(
+            result = CollectionResult(
                 data_source=self.data_source,
                 collection_type="live_scores",
                 records_collected=total_collected,
@@ -280,7 +280,7 @@ class ScoresCollector(DataCollector):
 
             self.logger.info(f"Connecting to WebSocket: {self.websocket_url}")
 
-            async with websockets.connect(self.websocket_url) as websocket:  # type: ignore
+            async with websockets.connect(self.websocket_url) as websocket:
                 self._websocket_connected = True
 
                 # 订阅指定比赛的实时数据
@@ -289,7 +289,7 @@ class ScoresCollector(DataCollector):
                     "matches": match_ids,
                     "api_key": self.api_key,
                 }
-                await websocket.send(json.dumps(subscribe_message))  # type: ignore
+                await websocket.send(json.dumps(subscribe_message))
 
                 # 设置接收超时
                 end_time = asyncio.get_event_loop().time() + duration
@@ -300,7 +300,7 @@ class ScoresCollector(DataCollector):
                         message = await asyncio.wait_for(websocket.recv(), timeout=30)
 
                         # 解析实时数据
-                        _data = json.loads(message)  # type: ignore
+                        data = json.loads(message)
                         if data.get("type") == "match_update":
                             cleaned_data = await self._clean_live_data(data)
                             if cleaned_data:
@@ -475,7 +475,7 @@ class ScoresCollector(DataCollector):
                     current_matches = match_ids
 
                 if current_matches:
-                    _result = await self.collect_live_scores(
+                    result = await self.collect_live_scores(
                         match_ids=current_matches, use_websocket=use_websocket
                     )
 

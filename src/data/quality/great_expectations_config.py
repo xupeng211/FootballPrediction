@@ -241,7 +241,7 @@ class GreatExpectationsConfig:
             # 保存配置文件
             config_file_path = f"{self.ge_root_dir}/great_expectations.yml"
             with open(config_file_path, "w", encoding="utf-8") as f:
-                self.yaml_handler.dump(context_config, f)  # type: ignore
+                self.yaml_handler.dump(context_config, f)
 
             # 创建数据上下文
             self.context = gx.get_context(context_root_dir=self.ge_root_dir)
@@ -282,7 +282,7 @@ class GreatExpectationsConfig:
 
                 try:
                     # 创建期望套件
-                    suite = self.context.add_or_update_expectation_suite(  # type: ignore
+                    suite = self.context.add_or_update_expectation_suite(
                         expectation_suite_name=suite_name
                     )
 
@@ -293,7 +293,7 @@ class GreatExpectationsConfig:
                         )
 
                     # 保存套件
-                    self.context.save_expectation_suite(suite)  # type: ignore
+                    self.context.save_expectation_suite(suite)
 
                     results["created_suites"].append(
                         {
@@ -374,7 +374,7 @@ class GreatExpectationsConfig:
         }
 
         query, params = safe_queries[table_name]
-        return {"query": query, "params": params}  # type: ignore
+        return {"query": query, "params": params}
 
     async def run_validation(
         self, table_name: str, limit_rows: int = 1000
@@ -406,7 +406,7 @@ class GreatExpectationsConfig:
             )
 
             # 创建验证器
-            validator = self.context.get_validator(  # type: ignore
+            validator = self.context.get_validator(
                 batch_request=batch_request, expectation_suite_name=suite_name
             )
 
@@ -486,16 +486,16 @@ class GreatExpectationsConfig:
         }
 
         for table_name in self.data_assertions.keys():
-            _result = await self.run_validation(table_name)
+            result = await self.run_validation(table_name)
             all_results.append(result)
 
             # 统计结果
             if result["status"] == "PASSED":
-                overall_stats["passed_tables"] += 1  # type: ignore
+                overall_stats["passed_tables"] += 1
             elif result["status"] == "FAILED":
-                overall_stats["failed_tables"] += 1  # type: ignore
+                overall_stats["failed_tables"] += 1
             else:  # ERROR
-                overall_stats["error_tables"] += 1  # type: ignore
+                overall_stats["error_tables"] += 1
 
         # 计算总体成功率
         if all_results:

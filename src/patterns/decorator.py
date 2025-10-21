@@ -54,7 +54,7 @@ class LoggingDecorator(BaseDecorator):
         )
 
         try:
-            _result = await self._component.execute(*args, **kwargs)
+            result = await self._component.execute(*args, **kwargs)
             duration = time.time() - start_time
 
             self.logger.log(
@@ -89,7 +89,7 @@ class RetryDecorator(BaseDecorator):
         self.max_retries = max_retries
         self.delay = delay
         self.backoff_factor = backoff_factor
-        self.exceptions = exceptions or [Exception]  # type: ignore
+        self.exceptions = exceptions or [Exception]
 
     async def execute(self, *args, **kwargs) -> Any:
         """添加重试机制"""
@@ -111,7 +111,7 @@ class RetryDecorator(BaseDecorator):
             except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 last_exception = e
 
-                if not any(isinstance(e, exc) for exc in self.exceptions):  # type: ignore
+                if not any(isinstance(e, exc) for exc in self.exceptions):
                     raise
 
                 if attempt < self.max_retries:
@@ -125,7 +125,7 @@ class RetryDecorator(BaseDecorator):
                         f"{self._component.__class__.__name__}"
                     )
 
-        raise last_exception  # type: ignore
+        raise last_exception
 
 
 class MetricsDecorator(BaseDecorator):
@@ -150,7 +150,7 @@ class MetricsDecorator(BaseDecorator):
 
         try:
             self.metrics["calls"] += 1
-            _result = await self._component.execute(*args, **kwargs)
+            result = await self._component.execute(*args, **kwargs)
             return result
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
@@ -211,7 +211,7 @@ class ValidationDecorator(BaseDecorator):
                 raise ValueError(f"Invalid input: {str(e)}")
 
         # 执行组件
-        _result = await self._component.execute(*args, **kwargs)
+        result = await self._component.execute(*args, **kwargs)
 
         # 验证输出
         if self.validate_result:
@@ -238,7 +238,7 @@ class CacheDecorator(BaseDecorator):
         super().__init__(component)
         self.cache = cache_store or {}
         self.ttl = ttl
-        self.timestamps = {}  # type: ignore
+        self.timestamps = {}
 
     def _get_cache_key(self, *args, **kwargs) -> str:
         """生成缓存键"""
@@ -256,7 +256,7 @@ class CacheDecorator(BaseDecorator):
             return True
 
         age = time.time() - self.timestamps[key]
-        return age < self.ttl  # type: ignore
+        return age < self.ttl
 
     async def execute(self, *args, **kwargs) -> Any:
         """添加缓存功能"""
@@ -269,7 +269,7 @@ class CacheDecorator(BaseDecorator):
 
         # 缓存未命中，执行组件
         self.logger.debug(f"Cache miss for {cache_key}")
-        _result = await self._component.execute(*args, **kwargs)
+        result = await self._component.execute(*args, **kwargs)
 
         # 存储到缓存
         self.cache[cache_key] = result
@@ -321,7 +321,7 @@ def async_retry(
 
             raise last_exception
 
-        return wrapper  # type: ignore
+        return wrapper
 
     return decorator
 
@@ -338,7 +338,7 @@ def async_log(log_level: int = logging.INFO):
             logger.log(log_level, f"Starting {func.__name__}")
 
             try:
-                _result = await func(*args, **kwargs)
+                result = await func(*args, **kwargs)
                 duration = time.time() - start_time
                 logger.log(log_level, f"Completed {func.__name__} in {duration:.3f}s")
                 return result
@@ -348,7 +348,7 @@ def async_log(log_level: int = logging.INFO):
                 logger.error(f"Failed {func.__name__} in {duration:.3f}s: {str(e)}")
                 raise
 
-        return wrapper  # type: ignore
+        return wrapper
 
     return decorator
 
@@ -377,7 +377,7 @@ def async_metrics(metrics_store: Optional[Dict[str, Dict]] = None):
 
             try:
                 metrics["calls"] += 1
-                _result = await func(*args, **kwargs)
+                result = await func(*args, **kwargs)
                 return result
 
             except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
@@ -389,7 +389,7 @@ def async_metrics(metrics_store: Optional[Dict[str, Dict]] = None):
                 metrics["total_time"] += duration
                 metrics["avg_time"] = metrics["total_time"] / metrics["calls"]
 
-        return wrapper  # type: ignore
+        return wrapper
 
     return decorator
 
@@ -422,9 +422,9 @@ def create_decorated_service(service_name: str) -> Component:
 
     # 添加装饰器链
     service = LoggingDecorator(base_service)
-    service = MetricsDecorator(service)  # type: ignore
-    service = RetryDecorator(service, max_retries=2)  # type: ignore
-    service = ValidationDecorator(  # type: ignore
+    service = MetricsDecorator(service)
+    service = RetryDecorator(service, max_retries=2)
+    service = ValidationDecorator(
         service,
         validators=[lambda q: isinstance(q, str) and len(q) > 0],
         validate_result=lambda r: isinstance(r, dict) and "result" in r,

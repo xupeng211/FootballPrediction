@@ -14,7 +14,7 @@ class BaselineModelTrainer:
         self.mlflow_tracking_uri = kwargs.get(
             "mlflow_tracking_uri", "http://localhost:5000"
         )
-        self._config = {}
+        self.config = {}
 
     def train(self, *args, **kwargs):
         """训练模型（占位符实现）"""
@@ -29,7 +29,7 @@ class BaselineModelTrainer:
 
 # 处理可选依赖（保持向后兼容）
 try:
-    import xgboost as xgb  # type: ignore
+    import xgboost as xgb
 
     HAS_XGB = True
 except ImportError:
@@ -70,8 +70,8 @@ except ImportError:
             def log_model(*args, **kwargs):
                 pass
 
-    mlflow = MockMLflow()  # type: ignore
-    mlflow.sklearn = MockMLflow.sklearn()  # type: ignore
+    mlflow = MockMLflow()
+    mlflow.sklearn = MockMLflow.sklearn()
 
     class MockMlflowClient:
         def __init__(self, *args, **kwargs):
@@ -80,7 +80,7 @@ except ImportError:
         def get_latest_versions(self, *args, **kwargs):
             return []
 
-    MlflowClient = MockMlflowClient  # type: ignore
+    MlflowClient = MockMlflowClient
 
 # 重新导出以保持向后兼容性
 __all__ = [

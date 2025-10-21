@@ -8,7 +8,7 @@ Responsible for creating and managing prediction strategy instances.
 
 import os
 import json
-import yaml  # type: ignore
+import yaml
 from typing import Dict, Any, List, Optional, Type, Union
 from pathlib import Path
 from datetime import datetime
@@ -116,7 +116,7 @@ class PredictionStrategyFactory:
 
         # 获取策略配置
         if config is None:
-            _config = self._get_strategy_config(strategy_name)
+            config = self._get_strategy_config(strategy_name)
 
         # 获取策略类型
         if strategy_type is None:
@@ -135,7 +135,7 @@ class PredictionStrategyFactory:
             if strategy_type == "ensemble":
                 strategy = await self._create_ensemble_strategy(strategy_name, config)
             else:
-                strategy = strategy_class(strategy_name)  # type: ignore
+                strategy = strategy_class(strategy_name)
                 await strategy.initialize(config)
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
@@ -239,7 +239,7 @@ class PredictionStrategyFactory:
 
             try:
                 strategy = await self.create_strategy(
-                    strategy_name=strategy_name, _config=config
+                    strategy_name=strategy_name, config =config
                 )
                 created_strategies[strategy_name] = strategy
             except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
@@ -256,7 +256,7 @@ class PredictionStrategyFactory:
             if strategy_name and strategy_name not in self._strategies:
                 try:
                     await self.create_strategy(
-                        strategy_name=strategy_name, _config=config
+                        strategy_name=strategy_name, config =config
                     )
                 except (
                     ValueError,
@@ -294,9 +294,9 @@ class PredictionStrategyFactory:
         try:
             with open(config_path, "r", encoding="utf-8") as f:
                 if config_path.suffix.lower() in [".yaml", ".yml"]:
-                    _config = yaml.safe_load(f)
+                    config = yaml.safe_load(f)
                 elif config_path.suffix.lower() == ".json":
-                    _config = json.load(f)
+                    config = json.load(f)
                 else:
                     raise ValueError(f"不支持的配置文件格式: {config_path.suffix}")
 
@@ -440,14 +440,14 @@ class PredictionStrategyFactory:
         """
         # 从策略配置中获取
         if strategy_name in self._strategy_configs:
-            _config = self._strategy_configs[strategy_name].copy()
+            config = self._strategy_configs[strategy_name].copy()
         else:
             # 从默认策略中查找
             default_strategies = self._default_config.get("default_strategies", [])
-            _config = None
+            config = None
             for strategy in default_strategies:
                 if strategy.get("name") == strategy_name:
-                    _config = strategy.copy()
+                    config = strategy.copy()
                     break
 
             if not config:
@@ -460,14 +460,14 @@ class PredictionStrategyFactory:
                 keys = key.split(".")
                 current = config
                 for k in keys[:-1]:
-                    if k not in current:  # type: ignore
-                        current[k] = {}  # type: ignore
-                    current = current[k]  # type: ignore
-                current[keys[-1]] = value  # type: ignore
+                    if k not in current:
+                        current[k] = {}
+                    current = current[k]
+                current[keys[-1]] = value
             else:
-                config[key] = value  # type: ignore
+                config[key] = value
 
-        return config  # type: ignore
+        return config
 
     def list_available_strategies(self) -> List[str]:
         """列出可用的策略类型"""

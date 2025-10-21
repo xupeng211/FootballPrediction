@@ -73,7 +73,7 @@ class Decorator(Component):
 
         try:
             # 调用具体装饰器的实现
-            _result = await self._execute(*args, **kwargs)
+            result = await self._execute(*args, **kwargs)
             return result
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
             self.error_count += 1
@@ -144,10 +144,10 @@ class DecoratorComponent(Decorator):
 
     def get_all_stats(self) -> Dict[str, Any]:
         """获取所有装饰器的统计信息"""
-        _stats = {"function": self.func.__name__, "decorators": []}
+        stats = {"function": self.func.__name__, "decorators": []}
 
         for decorator in self.decorators:
-            stats["decorators"].append(decorator.get_stats())  # type: ignore
+            stats["decorators"].append(decorator.get_stats())
 
         return stats
 
@@ -217,7 +217,7 @@ class DecoratorContext:
 
     def get_execution_time(self) -> float:
         """获取执行时间"""
-        return time.time() - self.start_time  # type: ignore
+        return time.time() - self.start_time
 
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""

@@ -61,7 +61,7 @@ class TeamEntity:
     team_id: int
     team_name: str
     league_id: int
-    home_venue: Optional[str] = None  # type: ignore
+    home_venue: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典格式"""

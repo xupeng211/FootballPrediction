@@ -341,7 +341,7 @@ class FootballFeatureStore:
 
         try:
             # 获取在线特征
-            _result = self.store.get_online_features(
+            result = self.store.get_online_features(
                 features=feature_refs, entity_rows=entity_rows
             )
 
@@ -655,7 +655,7 @@ class FootballFeatureStore:
         Returns:
             Dict[str, int]: 处理统计
         """
-        _stats = {
+        stats = {
             "matches_processed": 0,
             "teams_processed": 0,
             "features_stored": 0,
@@ -672,7 +672,7 @@ class FootballFeatureStore:
                 matches_query = select(Match).where(
                     Match.match_time.between(start_date, end_date)
                 )
-                _result = await session.execute(matches_query)
+                result = await session.execute(matches_query)
                 _matches = result.scalars().all()
 
                 for match in matches:

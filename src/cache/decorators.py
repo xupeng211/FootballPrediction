@@ -22,7 +22,7 @@ try:
     from .redis_manager import RedisManager
 except ImportError:
     # 如果redis_manager不可用，使用模拟版本
-    from .mock_redis import MockRedisManager as RedisManager  # type: ignore
+    from .mock_redis import MockRedisManager as RedisManager
 
 logger = logging.getLogger(__name__)
 
@@ -148,9 +148,9 @@ def cache_result(
                     # 反序列化结果
                     if isinstance(cached_result, str):
                         try:
-                            _result = json.loads(cached_result)
+                            result = json.loads(cached_result)
                         except json.JSONDecodeError:
-                            _result = cached_result
+                            result = cached_result
                     logger.debug(f"缓存命中: {cache_key}")
                     return result
             except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
@@ -159,7 +159,7 @@ def cache_result(
                     raise
 
             # 执行原函数
-            _result = await func(*args, **kwargs)
+            result = await func(*args, **kwargs)
 
             # 存储到缓存
             try:
@@ -208,9 +208,9 @@ def cache_result(
                     # 反序列化结果
                     if isinstance(cached_result, str):
                         try:
-                            _result = json.loads(cached_result)
+                            result = json.loads(cached_result)
                         except json.JSONDecodeError:
-                            _result = cached_result
+                            result = cached_result
                     logger.debug(f"缓存命中: {cache_key}")
                     return result
             except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
@@ -219,7 +219,7 @@ def cache_result(
                     raise
 
             # 执行原函数
-            _result = func(*args, **kwargs)
+            result = func(*args, **kwargs)
 
             # 存储到缓存
             try:
@@ -247,9 +247,9 @@ def cache_result(
             return result
 
         # 返回对应的包装器
-        return async_wrapper if is_async else sync_wrapper  # type: ignore
+        return async_wrapper if is_async else sync_wrapper
 
-    return decorator  # type: ignore
+    return decorator
 
 
 def cache_with_ttl(
@@ -333,7 +333,7 @@ def cache_by_user(
                     cache_key, func, args, kwargs, ttl, is_async
                 )
 
-            return async_wrapper  # type: ignore
+            return async_wrapper
         else:
 
             @functools.wraps(func)
@@ -367,9 +367,9 @@ def cache_by_user(
                 # 使用基础缓存逻辑
                 return _cache_with_key(cache_key, func, args, kwargs, ttl, is_async)
 
-            return sync_wrapper  # type: ignore
+            return sync_wrapper
 
-    return decorator  # type: ignore
+    return decorator
 
 
 async def _cache_with_key(
@@ -381,7 +381,7 @@ async def _cache_with_key(
     is_async: bool,
 ) -> Any:
     """使用指定键进行缓存操作的内部函数"""
-    redis = RedisManager.get_instance()  # type: ignore
+    redis = RedisManager.get_instance()
 
     # 尝试从缓存获取
     try:
@@ -389,9 +389,9 @@ async def _cache_with_key(
         if cached_result is not None:
             if isinstance(cached_result, str):
                 try:
-                    _result = json.loads(cached_result)
+                    result = json.loads(cached_result)
                 except json.JSONDecodeError:
-                    _result = cached_result
+                    result = cached_result
             logger.debug(f"用户缓存命中: {cache_key}")
             return result
     except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
@@ -399,9 +399,9 @@ async def _cache_with_key(
 
     # 执行原函数
     if is_async:
-        _result = await func(*args, **kwargs)
+        result = await func(*args, **kwargs)
     else:
-        _result = func(*args, **kwargs)
+        result = func(*args, **kwargs)
 
     # 存储到缓存
     try:
@@ -455,7 +455,7 @@ def cache_invalidate(
         @functools.wraps(func)
         async def async_wrapper(*args, **kwargs):
             # 执行原函数
-            _result = await func(*args, **kwargs)
+            result = await func(*args, **kwargs)
 
             # 生成要失效的键
             invalidate_keys = []
@@ -503,7 +503,7 @@ def cache_invalidate(
         @functools.wraps(func)
         def sync_wrapper(*args, **kwargs):
             # 执行原函数
-            _result = func(*args, **kwargs)
+            result = func(*args, **kwargs)
 
             # 生成要失效的键
             invalidate_keys = []
@@ -548,9 +548,9 @@ def cache_invalidate(
 
             return result
 
-        return async_wrapper if is_async else sync_wrapper  # type: ignore
+        return async_wrapper if is_async else sync_wrapper
 
-    return decorator  # type: ignore
+    return decorator
 
 
 # 便捷函数

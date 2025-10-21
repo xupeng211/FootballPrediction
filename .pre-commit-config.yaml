@@ -45,15 +45,24 @@ repos:
   #       additional_dependencies: [types-all]
   #       exclude: ^(tests/|docs/)
 
-  # Pytest - 运行快速测试 (暂时禁用)
-  # - repo: local
-  #   hooks:
-  #     - id: pytest-quick
-  #       name: 运行快速单元测试
-  #       entry: bash -c 'source .venv/bin/activate && pytest tests/unit -m "not slow" --maxfail=3 -q'
-  #       language: system
-  #       pass_filenames: false
-  #       always_run: true
+  # 质量检查 - 运行关键测试
+  - repo: local
+    hooks:
+      - id: quality-gate
+        name: 运行质量门禁检查
+        entry: python scripts/quality_gate.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        args: [--quick-mode]
+
+      - id: critical-tests
+        name: 运行关键测试
+        entry: pytest
+        language: system
+        args: [tests/unit/api/test_adapters.py, tests/unit/utils/test_dict_utils_enhanced.py, --tb=short, -q]
+        pass_filenames: false
+        always_run: true
 
 # 全局配置
 default_language_version:

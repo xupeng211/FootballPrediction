@@ -292,7 +292,7 @@ class Subject(ABC):
         Returns:
             Dict[str, Any]: 统计信息
         """
-        event_counts = {}  # type: ignore
+        event_counts = {}
         for event in self._event_history:
             event_counts[event.event_type.value] = (
                 event_counts.get(event.event_type.value, 0) + 1

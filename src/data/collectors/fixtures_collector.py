@@ -47,7 +47,7 @@ class FixturesCollector(DataCollector):
         self.base_url = base_url
 
         # 防重复：记录已处理的比赛ID
-        self._processed_matches: Set[str] = set()  # type: ignore
+        self._processed_matches: Set[str] = set()
         # 防丢失：记录应该存在但缺失的比赛
         self._missing_matches: List[Dict[str, Any]] = []
 
@@ -89,7 +89,7 @@ class FixturesCollector(DataCollector):
             if not date_from:
                 date_from = datetime.now()
             if not date_to:
-                date_to = date_from + timedelta(days=30)  # type: ignore
+                date_to = date_from + timedelta(days=30)
 
             # 获取需要采集的联赛列表
             if not leagues:
@@ -97,11 +97,11 @@ class FixturesCollector(DataCollector):
 
             self.logger.info(
                 f"Starting fixtures collection for {len(leagues)} leagues, "
-                f"date range: {date_from.date()} to {date_to.date()}"  # type: ignore
+                f"date range: {date_from.date()} to {date_to.date()}"
             )
 
             # 加载已存在的比赛ID（防重复）
-            await self._load_existing_matches(date_from, date_to)  # type: ignore
+            await self._load_existing_matches(date_from, date_to)
 
             # 按联赛采集赛程数据
             for league_code in leagues:
@@ -109,7 +109,7 @@ class FixturesCollector(DataCollector):
                     league_fixtures = await self._collect_league_fixtures(
                         league_code,
                         date_from,
-                        date_to,  # type: ignore
+                        date_to,
                     )
 
                     # 处理每场比赛
@@ -164,7 +164,7 @@ class FixturesCollector(DataCollector):
                     )
 
             # 检测并处理缺失的比赛（防丢失）
-            await self._detect_missing_matches(collected_data, date_from, date_to)  # type: ignore
+            await self._detect_missing_matches(collected_data, date_from, date_to)
 
             # 保存到Bronze层原始数据表
             if collected_data:
@@ -179,7 +179,7 @@ class FixturesCollector(DataCollector):
             else:
                 status = "failed"
 
-            _result = CollectionResult(
+            result = CollectionResult(
                 data_source=self.data_source,
                 collection_type="fixtures",
                 records_collected=total_collected,
@@ -282,7 +282,7 @@ class FixturesCollector(DataCollector):
             #         SELECT match_id FROM matches
             #         WHERE match_date BETWEEN :date_from AND :date_to
             #     """)
-            #     _result = await session.execute(query, {"date_from": date_from, "date_to": date_to})
+            #     result = await session.execute(query, {"date_from": date_from, "date_to": date_to})
             #     self._processed_matches = {row.match_id for row in result}
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
@@ -315,7 +315,7 @@ class FixturesCollector(DataCollector):
 
             response = await self._make_request(url=url, headers=headers, params=params)
 
-            return response.get(str("matches"), [])  # type: ignore
+            return response.get(str("matches"), [])
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(
@@ -342,7 +342,7 @@ class FixturesCollector(DataCollector):
         ]
 
         key_string = "|".join(key_components)
-        return hashlib.md5(key_string.encode(), usedforsecurity=False).hexdigest()  # type: ignore
+        return hashlib.md5(key_string.encode(), usedforsecurity=False).hexdigest()
 
     async def _clean_fixture_data(
         self, raw_fixture: Dict[str, Any]

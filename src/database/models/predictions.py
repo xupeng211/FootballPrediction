@@ -174,7 +174,7 @@ class Predictions(BaseModel):
     # 兼容性别名 - 使用方法而不是属性来避免与基类冲突
     def get_created_at(self) -> datetime:
         """兼容性方法：获取预测创建时间"""
-        return self.predicted_at  # type: ignore
+        return self.predicted_at
 
     @property
     def confidence(self) -> Optional[float]:
@@ -193,7 +193,7 @@ class Predictions(BaseModel):
     def __repr__(self) -> str:
         return (
             f"<Predictions(id={self.id}, match_id={self.match_id}, "
-            f"model='{self.model_name}', _result ='{self.predicted_result.value}')>"
+            f"model='{self.model_name}', result ='{self.predicted_result.value}')>"
         )
 
     @property
@@ -252,11 +252,11 @@ class Predictions(BaseModel):
         """获取特征重要性字典"""
         if self.feature_importance:
             if isinstance(self.feature_importance, str):
-                return json.loads(self.feature_importance)  # type: ignore
+                return json.loads(self.feature_importance)
             # 如果是JSON类型，直接返回
             return (
                 self.feature_importance
-                if isinstance(self.feature_importance, dict)  # type: ignore
+                if isinstance(self.feature_importance, dict)
                 else None
             )
         return None
@@ -306,7 +306,7 @@ class Predictions(BaseModel):
         actual_predicted_prob = self.get_probabilities_dict()[actual_result]
 
         # 计算对数损失
-        log_loss = -1 * math.log(actual_predicted_prob + 1e-15)  # type: ignore
+        log_loss = -1 * math.log(actual_predicted_prob + 1e-15)
 
         # 计算布里尔评分 (Brier Score)
         brier_score = 0.0
@@ -372,7 +372,7 @@ class Predictions(BaseModel):
                 recommendations.append(recommendation)
 
         # 按期望价值排序
-        recommendations.sort(key=lambda x: float(x["expected_value"]), reverse=True)  # type: ignore
+        recommendations.sort(key=lambda x: float(x["expected_value"]), reverse=True)
 
         return recommendations
 
@@ -424,7 +424,7 @@ class Predictions(BaseModel):
         query = session.query(cls).filter(cls.match_id == match_id)
         if model_name:
             query = query.filter(cls.model_name == model_name)
-        return query.order_by(cls.predicted_at.desc()).first()  # type: ignore
+        return query.order_by(cls.predicted_at.desc()).first()
 
     @classmethod
     def get_model_predictions(cls, session, model_name: str, limit: int = 100):
@@ -456,12 +456,12 @@ class Predictions(BaseModel):
 
         predictions = (
             session.query(cls)
-            .join(Match)  # type: ignore
+            .join(Match)
             .filter(
-                and_(  # type: ignore
+                and_(
                     cls.model_name == model_name,
                     cls.predicted_at >= cutoff_date,
-                    Match.match_status == "finished",  # type: ignore
+                    Match.match_status == "finished",
                 )
             )
             .all()

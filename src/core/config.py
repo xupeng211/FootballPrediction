@@ -38,7 +38,7 @@ class Config:
         # 配置文件存储在用户主目录下，避免权限问题
         self.config_dir = Path.home() / ".footballprediction"
         self.config_file = self.config_dir / "config.json"
-        self._config: Dict[str, Any] = {}
+        self.config: Dict[str, Any] = {}
         self._load_config()
 
     def _load_config(self) -> None:
@@ -46,18 +46,18 @@ class Config:
         if self.config_file.exists():
             try:
                 with open(self.config_file, "r", encoding="utf-8") as f:
-                    self._config = json.load(f)
+                    self.config = json.load(f)
             except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
                 # 配置文件损坏时记录警告，但不中断程序执行
                 logging.warning(f"配置文件加载失败: {e}")
 
     def get(self, key: str, default: Any = None) -> Any:
         """获取配置项 - 支持默认值，确保程序健壮性"""
-        return self._config.get(str(key), default)
+        return self.config.get(str(key), default)
 
     def set(self, key: str, value: Any) -> None:
         """设置配置项 - 仅更新内存中的配置，需调用save()持久化"""
-        self._config[key] = value
+        self.config[key] = value
 
     def save(self) -> None:
         """保存配置到文件 - 自动创建目录，确保配置持久化"""
@@ -65,7 +65,7 @@ class Config:
         self.config_dir.mkdir(parents=True, exist_ok=True)
         with open(self.config_file, "w", encoding="utf-8") as f:
             # ensure_ascii=False保证中文字符正确显示
-            json.dump(self._config, f, ensure_ascii=False, indent=2)
+            json.dump(self.config, f, ensure_ascii=False, indent=2)
 
 
 SettingsClass = BaseSettings if HAS_PYDANTIC else object
@@ -315,7 +315,7 @@ class Settings(SettingsClass):
 
 
 # 全局配置实例
-_config = Config()
+config = Config()
 
 
 def get_config() -> Config:

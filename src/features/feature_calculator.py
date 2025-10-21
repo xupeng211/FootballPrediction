@@ -45,7 +45,7 @@ class FeatureCalculator:
 
     def __init__(self, config: Optional[Dict] = None):
         self.db_manager = DatabaseManager()
-        self._config = config or {}
+        self.config = config or {}
         self.features: list = []  # 存储特征定义
 
     async def calculate_recent_performance_features(
@@ -94,7 +94,7 @@ class FeatureCalculator:
             .limit(5)
         )
 
-        _result = await session.execute(recent_matches_query)
+        result = await session.execute(recent_matches_query)
         recent_matches = result.scalars().all()
 
         # 初始化特征
@@ -167,10 +167,10 @@ class FeatureCalculator:
 
         points = 0
         for match in matches:
-            _result = (match or {}).get("result")
-            if _result == "win":
+            result = (match or {}).get("result")
+            if result == "win":
                 points += 3
-            elif _result == "draw":
+            elif result == "draw":
                 points += 1
 
         max_points = len(matches) * 3
@@ -236,7 +236,7 @@ class FeatureCalculator:
             .order_by(desc(Match.match_time))
         )
 
-        _result = await session.execute(h2h_query)
+        result = await session.execute(h2h_query)
         h2h_matches = result.scalars().all()
 
         # 初始化特征
@@ -335,7 +335,7 @@ class FeatureCalculator:
             )
         )
 
-        _result = await session.execute(odds_query)
+        result = await session.execute(odds_query)
         odds_list = result.scalars().all()
 
         # 初始化特征

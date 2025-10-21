@@ -52,7 +52,7 @@ class TTLCache:
         self._lock = RLock()
 
         # 统计信息
-        self._stats = {
+        self.stats = {
             "hits": 0,
             "misses": 0,
             "sets": 0,
@@ -80,18 +80,18 @@ class TTLCache:
             entry = self._cache.get(key)
 
             if entry is None:
-                self._stats["misses"] += 1
+                self.stats["misses"] += 1
                 return default
 
             if entry.is_expired():
                 self._remove_entry(key)
-                self._stats["expirations"] += 1
-                self._stats["misses"] += 1
+                self.stats["expirations"] += 1
+                self.stats["misses"] += 1
                 return default
 
             # 移到末尾（LRU）
             self._cache.move_to_end(key)
-            self._stats["hits"] += 1
+            self.stats["hits"] += 1
             return entry.access()
 
     def set(
@@ -119,7 +119,7 @@ class TTLCache:
                     entry.expires_at = time.time() + self.default_ttl
                 entry.access()
                 self._cache.move_to_end(key)
-                self._stats["sets"] += 1
+                self.stats["sets"] += 1
                 return
 
             # 检查容量限制
@@ -135,7 +135,7 @@ class TTLCache:
             if entry.expires_at is not None:
                 heapq.heappush(self._expiration_heap, entry)
 
-            self._stats["sets"] += 1
+            self.stats["sets"] += 1
 
     def delete(self, key: str) -> bool:
         """
@@ -150,7 +150,7 @@ class TTLCache:
         with self._lock:
             if key in self._cache:
                 self._remove_entry(key)
-                self._stats["deletes"] += 1
+                self.stats["deletes"] += 1
                 return True
             return False
 
@@ -179,10 +179,10 @@ class TTLCache:
                 return default
 
             if entry.is_expired():
-                self._stats["expirations"] += 1
+                self.stats["expirations"] += 1
                 return default
 
-            self._stats["deletes"] += 1
+            self.stats["deletes"] += 1
             return entry.value
 
     def keys(self) -> List[str]:
@@ -351,14 +351,14 @@ class TTLCache:
         for key in expired_keys:
             self._cache.pop(key, None)
 
-        self._stats["expirations"] += len(expired_keys)
+        self.stats["expirations"] += len(expired_keys)
         return len(expired_keys)
 
     def _evict_lru(self) -> None:
         """淘汰最近最少使用的项"""
         if self._cache:
             key, entry = self._cache.popitem(last=False)
-            self._stats["evictions"] += 1
+            self.stats["evictions"] += 1
             logger.debug(f"淘汰LRU缓存项: {key}")
 
     def _remove_entry(self, key: str) -> None:
@@ -366,16 +366,16 @@ class TTLCache:
         entry = self._cache.pop(key, None)
         if entry:
             # 从过期堆中移除（标记为已删除）
-            entry.key = None  # type: ignore
+            entry.key = None
 
     def get_stats(self) -> Dict[str, Any]:
         """获取统计信息"""
         with self._lock:
-            total_requests = self._stats["hits"] + self._stats["misses"]
-            hit_rate = self._stats["hits"] / total_requests if total_requests > 0 else 0
+            total_requests = self.stats["hits"] + self.stats["misses"]
+            hit_rate = self.stats["hits"] / total_requests if total_requests > 0 else 0
 
             return {
-                **self._stats,
+                **self.stats,
                 "size": len(self._cache),
                 "max_size": self.max_size,
                 "hit_rate": hit_rate,
@@ -385,8 +385,8 @@ class TTLCache:
     def reset_stats(self) -> None:
         """重置统计信息"""
         with self._lock:
-            for key in self._stats:
-                self._stats[key] = 0
+            for key in self.stats:
+                self.stats[key] = 0
 
     def start_auto_cleanup(self):
         """启动自动清理任务"""

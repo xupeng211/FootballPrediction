@@ -222,7 +222,7 @@ class League:
             season=season,
             start_date=start_date,
             end_date=end_date,
-            total_rounds=total_rounds or self.settings.match_duration,  # type: ignore
+            total_rounds=total_rounds or self.settings.match_duration,
             status=LeagueStatus.UPCOMING,
         )
 
@@ -259,13 +259,13 @@ class League:
     ) -> None:
         """更新联赛设置"""
         if points_for_win is not None:
-            self.settings.points_for_win = points_for_win  # type: ignore
+            self.settings.points_for_win = points_for_win
         if points_for_draw is not None:
-            self.settings.points_for_draw = points_for_draw  # type: ignore
+            self.settings.points_for_draw = points_for_draw
         if points_for_loss is not None:
-            self.settings.points_for_loss = points_for_loss  # type: ignore
+            self.settings.points_for_loss = points_for_loss
         if max_foreign_players is not None:
-            self.settings.max_foreign_players = max_foreign_players  # type: ignore
+            self.settings.max_foreign_players = max_foreign_players
 
         self.updated_at = datetime.utcnow()
 
@@ -300,7 +300,7 @@ class League:
         # 简化的分成计算
         base_share = Decimal("1000000")  # 基础分成100万
         position_bonus = max(0, (total_teams - position) * Decimal("100000"))
-        return base_share + position_bonus  # type: ignore
+        return base_share + position_bonus
 
     # ========================================
     # 查询方法

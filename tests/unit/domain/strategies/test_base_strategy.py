@@ -50,16 +50,17 @@ class MockStrategy(PredictionStrategy):
         confidence = 0.75
 
         return PredictionOutput(
-            _prediction=(home_goals, away_goals),
+            predicted_home_score=home_goals,
+            predicted_away_score=away_goals,
             confidence=confidence,
-            reasoning=f"Mock prediction based on form: {processed_input.home_team_form} vs {processed_input.away_team_form}",
+            metadata={"reasoning": f"Mock prediction based on form: {processed_input.home_team_form} vs {processed_input.away_team_form}"},
         )
 
     async def post_process(self, output: PredictionOutput) -> PredictionOutput:
         """后处理"""
         self._post_process_called = True
         # 添加后处理标记
-        output.reasoning += " [Post-processed]"
+        output.metadata["reasoning"] += " [Post-processed]"
         return output
 
 
@@ -106,10 +107,10 @@ class TestPredictionStrategy:
         """测试策略配置"""
         _config = {"param1": "value1", "param2": 42, "model_path": "/path/to/model"}
 
-        await mock_strategy.initialize(config)
+        await mock_strategy.initialize(_config)
 
         assert mock_strategy._is_initialized is True
-        assert mock_strategy._config == config
+        assert mock_strategy._config == _config
 
     @pytest.mark.asyncio
     async def test_successful_prediction_flow(
@@ -123,12 +124,15 @@ class TestPredictionStrategy:
         _result = await mock_strategy.predict(valid_prediction_input)
 
         # 验证结果
-        assert isinstance(result, PredictionOutput)
-        assert _result.prediction is not None
-        assert len(result.prediction) == 2
-        assert isinstance(result.confidence, float)
-        assert 0 <= result.confidence <= 1
-        assert _result.reasoning is not None
+        assert isinstance(_result, PredictionOutput)
+        assert hasattr(_result, 'predicted_home_score')
+        assert hasattr(_result, 'predicted_away_score')
+        assert isinstance(_result.predicted_home_score, int)
+        assert isinstance(_result.predicted_away_score, int)
+        assert isinstance(_result.confidence, float)
+        assert 0 <= _result.confidence <= 1
+        assert _result.metadata is not None
+        assert _result.metadata.get("reasoning") is not None
 
         # 验证所有步骤都被调用
         assert mock_strategy._validate_input_called is True
@@ -137,7 +141,7 @@ class TestPredictionStrategy:
 
         # 验证统计数据
         assert mock_strategy._prediction_count == 1
-        assert mock_strategy._total_confidence == result.confidence
+        assert mock_strategy._total_confidence == _result.confidence
 
     @pytest.mark.asyncio
     async def test_prediction_without_initialization(
@@ -188,7 +192,7 @@ class TestPredictionStrategy:
         predictions = []
         for i in range(3):
             _result = await mock_strategy.predict(valid_prediction_input)
-            predictions.append(result)
+            predictions.append(_result)
 
         metrics = await mock_strategy.get_metrics()
         expected_avg = sum(p.confidence for p in predictions) / len(predictions)
@@ -235,7 +239,7 @@ class TestPredictionStrategy:
         _result = await mock_strategy.predict(valid_prediction_input)
 
         # 验证后处理标记被添加
-        assert "[Post-processed]" in result.reasoning
+        assert "[Post-processed]" in _result.metadata.get("reasoning", "")
 
     @pytest.mark.asyncio
     async def test_prediction_with_timing(self, mock_strategy, valid_prediction_input):
@@ -286,9 +290,10 @@ class TestPredictionStrategy:
         results = await mock_strategy.batch_predict(inputs)
 
         assert len(results) == 5
-        for result in results:
-            assert isinstance(result, PredictionOutput)
-            assert _result.prediction is not None
+        for _result in results:
+            assert isinstance(_result, PredictionOutput)
+            assert hasattr(_result, 'predicted_home_score')
+            assert hasattr(_result, 'predicted_away_score')
 
     @pytest.mark.asyncio
     async def test_error_handling_in_prediction(self):

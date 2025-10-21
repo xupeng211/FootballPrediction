@@ -137,11 +137,11 @@ class RawOddsData(BaseModel):
     @property
     def is_processed(self) -> bool:
         """是否已处理"""
-        return self.processed  # type: ignore
+        return self.processed
 
     def mark_processed(self) -> None:
         """标记为已处理"""
-        self.processed = True  # type: ignore
+        self.processed = True
 
     def get_odds_values(self) -> Optional[Dict[str, float]]:
         """
@@ -228,11 +228,11 @@ class RawScoresData(BaseModel):
     @property
     def is_processed(self) -> bool:
         """是否已处理"""
-        return self.processed  # type: ignore
+        return self.processed
 
     def mark_processed(self) -> None:
         """标记为已处理"""
-        self.processed = True  # type: ignore
+        self.processed = True
 
     @property
     def is_live(self) -> bool:

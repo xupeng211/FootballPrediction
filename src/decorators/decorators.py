@@ -25,22 +25,22 @@ from ..core.exceptions import (
 
 # 尝试导入可选依赖
 try:
-    from ..core.metrics import MetricsCollector  # type: ignore
+    from ..core.metrics import MetricsCollector
 except ImportError:
     MetricsCollector = None
 
 try:
-    from ..core.cache import CacheManager  # type: ignore
+    from ..core.cache import CacheManager
 except ImportError:
     CacheManager = None
 
 try:
-    from ..core.auth import AuthService  # type: ignore
+    from ..core.auth import AuthService
 except ImportError:
     AuthService = None
 
 try:
-    from ..core.validators import Validator  # type: ignore
+    from ..core.validators import Validator
 except ImportError:
     Validator = None
 from .base import Decorator, DecoratorContext, decorator_registry
@@ -85,8 +85,8 @@ class LoggingDecorator(Decorator):
             # 安全地记录参数（避免记录敏感信息）
             safe_args = self._sanitize_args(args)
             safe_kwargs = self._sanitize_kwargs(kwargs)
-            log_data["args"] = safe_args  # type: ignore
-            log_data["kwargs"] = safe_kwargs  # type: ignore
+            log_data["args"] = safe_args
+            log_data["kwargs"] = safe_kwargs
 
         if self.include_context and "context" in kwargs:
             context = kwargs["context"]
@@ -97,7 +97,7 @@ class LoggingDecorator(Decorator):
 
         try:
             # 执行被装饰的函数
-            _result = await self.component.execute(*args, **kwargs)
+            result = await self.component.execute(*args, **kwargs)
 
             # 记录函数执行成功
             if self.log_result:
@@ -134,7 +134,7 @@ class LoggingDecorator(Decorator):
                 if self.include_context and "context" in kwargs:
                     context = kwargs["context"]
                     if isinstance(context, DecoratorContext):
-                        error_log["execution_time"] = context.get_execution_time()  # type: ignore
+                        error_log["execution_time"] = context.get_execution_time()
 
                 logger_instance.error(json.dumps(error_log))
 
@@ -148,9 +148,9 @@ class LoggingDecorator(Decorator):
             if isinstance(arg, dict):
                 sanitized.append(self._sanitize_dict(arg))
             elif isinstance(arg, (list, tuple)):
-                sanitized.append(self._sanitize_sequence(arg))  # type: ignore
+                sanitized.append(self._sanitize_sequence(arg))
             else:
-                sanitized.append(str(arg)[:100])  # 限制长度  # type: ignore
+                sanitized.append(str(arg)[:100])  # 限制长度
 
         return sanitized
 
@@ -167,9 +167,9 @@ class LoggingDecorator(Decorator):
             if any(sensitive in key.lower() for sensitive in sensitive_keys):
                 sanitized[key] = "***"
             elif isinstance(value, dict):
-                sanitized[key] = self._sanitize_dict(value)  # type: ignore
+                sanitized[key] = self._sanitize_dict(value)
             elif isinstance(value, (list, tuple)):
-                sanitized[key] = self._sanitize_sequence(value)  # type: ignore
+                sanitized[key] = self._sanitize_sequence(value)
             else:
                 sanitized[key] = str(value)[:100]
 
@@ -183,9 +183,9 @@ class LoggingDecorator(Decorator):
             if isinstance(item, dict):
                 sanitized.append(self._sanitize_dict(item))
             elif isinstance(item, (list, tuple)):
-                sanitized.append(self._sanitize_sequence(item))  # type: ignore
+                sanitized.append(self._sanitize_sequence(item))
             else:
-                sanitized.append(str(item)[:100])  # type: ignore
+                sanitized.append(str(item)[:100])
 
         return sanitized
 
@@ -260,7 +260,7 @@ class RetryDecorator(Decorator):
                 current_delay = min(current_delay * self.backoff_factor, self.max_delay)
 
         # 这行代码实际上不会执行，但为了类型检查器
-        raise last_exception  # type: ignore
+        raise last_exception
 
 
 class MetricsDecorator(Decorator):
@@ -291,7 +291,7 @@ class MetricsDecorator(Decorator):
 
         try:
             # 执行被装饰的函数
-            _result = await self.component.execute(*args, **kwargs)
+            result = await self.component.execute(*args, **kwargs)
             success = True
             return result
 
@@ -393,7 +393,7 @@ class ValidationDecorator(Decorator):
                         )
 
         # 执行被装饰的函数
-        _result = await self.component.execute(*args, **kwargs)
+        result = await self.component.execute(*args, **kwargs)
 
         # 验证输出结果
         if self.validate_result and self.output_validators and Validator:
@@ -440,7 +440,7 @@ class CacheDecorator(Decorator):
             return cached_result
 
         # 缓存未命中，执行函数
-        _result = await self.component.execute(*args, **kwargs)
+        result = await self.component.execute(*args, **kwargs)
 
         # 缓存结果
         if result is not None or self.cache_empty:
