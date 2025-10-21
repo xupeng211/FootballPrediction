@@ -32,16 +32,16 @@ class TestStreamConfig:
         """测试流配置验证"""
         # Mock validation test
         _config = StreamConfig()
-        config.validate = Mock(return_value=True)
+        _config.validate = Mock(return_value=True)
 
-        _result = config.validate()
-        assert result is True
+        _result = _config.validate()
+        assert _result is True
 
     def test_stream_config_serialization(self):
         """测试流配置序列化"""
         _config = StreamConfig()
-        config.to_dict = Mock(return_value={"key": "value"})
+        _config.to_dict = Mock(return_value={"key": "value"})
 
-        _result = config.to_dict()
+        _result = _config.to_dict()
         assert isinstance(result, dict)
         assert "key" in result

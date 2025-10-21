@@ -30,7 +30,7 @@ class TestRepositoryEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert isinstance(data, list) or "predictions" in data
+        assert isinstance(data, list) or "predictions" in _data
 
     def test_get_prediction_by_id(self, client):
         """测试获取单个预测"""
@@ -45,7 +45,7 @@ class TestRepositoryEndpoints:
 
         if response.status_code == 200:
             _data = response.json()
-            assert "prediction_id" in data or "id" in data
+            assert "prediction_id" in _data or "id" in _data
 
     def test_get_user_prediction_statistics(self, client):
         """测试获取用户预测统计"""
@@ -60,7 +60,7 @@ class TestRepositoryEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert "statistics" in data or "stats" in data
+        assert "statistics" in _data or "stats" in _data
 
     def test_get_match_prediction_statistics(self, client):
         """测试获取比赛预测统计"""
@@ -75,7 +75,7 @@ class TestRepositoryEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert "statistics" in data or "stats" in data
+        assert "statistics" in _data or "stats" in _data
 
     @patch(
         "src.database.repositories.prediction_repository.PredictionRepository.create"
@@ -105,7 +105,7 @@ class TestRepositoryEndpoints:
 
         assert response.status_code in [200, 201]
         _data = response.json()
-        assert "id" in data or "prediction_id" in data
+        assert "id" in _data or "prediction_id" in _data
 
     @patch(
         "src.database.repositories.prediction_repository.PredictionRepository.update"
@@ -134,7 +134,7 @@ class TestRepositoryEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert "id" in data or "status" in data
+        assert "id" in _data or "status" in _data
 
     def test_get_users(self, client):
         """测试获取用户列表"""
@@ -145,7 +145,7 @@ class TestRepositoryEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert isinstance(data, list) or "users" in data
+        assert isinstance(data, list) or "users" in _data
 
     def test_get_user_by_id(self, client):
         """测试获取用户详情"""
@@ -160,7 +160,7 @@ class TestRepositoryEndpoints:
 
         if response.status_code == 200:
             _data = response.json()
-            assert "user_id" in data or "id" in data
+            assert "user_id" in _data or "id" in _data
 
     def test_get_user_statistics(self, client):
         """测试获取用户完整统计"""
@@ -173,7 +173,7 @@ class TestRepositoryEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert "statistics" in data or "stats" in data
+        assert "statistics" in _data or "stats" in _data
 
     def test_search_users(self, client):
         """测试搜索用户"""
@@ -186,7 +186,7 @@ class TestRepositoryEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert isinstance(data, list) or "users" in data
+        assert isinstance(data, list) or "users" in _data
 
     def test_get_active_users(self, client):
         """测试获取活跃用户"""
@@ -197,7 +197,7 @@ class TestRepositoryEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert isinstance(data, list) or "users" in data
+        assert isinstance(data, list) or "users" in _data
 
     @patch("src.database.repositories.user_repository.UserRepository.create")
     def test_create_user(self, mock_create, client):
@@ -221,7 +221,7 @@ class TestRepositoryEndpoints:
 
         assert response.status_code in [200, 201]
         _data = response.json()
-        assert "id" in data or "user_id" in data
+        assert "id" in _data or "user_id" in _data
 
     def test_get_matches(self, client):
         """测试获取比赛列表"""
@@ -232,7 +232,7 @@ class TestRepositoryEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert isinstance(data, list) or "matches" in data
+        assert isinstance(data, list) or "matches" in _data
 
     def test_get_upcoming_matches(self, client):
         """测试获取即将到来的比赛"""
@@ -243,7 +243,7 @@ class TestRepositoryEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert isinstance(data, list) or "matches" in data
+        assert isinstance(data, list) or "matches" in _data
 
     def test_get_live_matches(self, client):
         """测试获取正在进行的比赛"""
@@ -254,7 +254,7 @@ class TestRepositoryEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert isinstance(data, list) or "matches" in data
+        assert isinstance(data, list) or "matches" in _data
 
     def test_get_match_by_id(self, client):
         """测试获取比赛详情"""
@@ -269,7 +269,7 @@ class TestRepositoryEndpoints:
 
         if response.status_code == 200:
             _data = response.json()
-            assert "match_id" in data or "id" in data
+            assert "match_id" in _data or "id" in _data
 
     def test_get_match_statistics(self, client):
         """测试获取比赛统计"""
@@ -282,7 +282,7 @@ class TestRepositoryEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert "statistics" in data or "stats" in data
+        assert "statistics" in _data or "stats" in _data
 
     def test_search_matches(self, client):
         """测试搜索比赛"""
@@ -295,7 +295,7 @@ class TestRepositoryEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert isinstance(data, list) or "matches" in data
+        assert isinstance(data, list) or "matches" in _data
 
     def test_get_matches_by_date_range(self, client):
         """测试获取日期范围内的比赛"""
@@ -308,7 +308,7 @@ class TestRepositoryEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert isinstance(data, list) or "matches" in data
+        assert isinstance(data, list) or "matches" in _data
 
     @patch("src.database.repositories.match_repository.MatchRepository.start_match")
     def test_start_match(self, mock_start, client):
@@ -323,7 +323,7 @@ class TestRepositoryEndpoints:
 
         assert response.status_code in [200, 202]
         _data = response.json()
-        assert "success" in data or "status" in data
+        assert "success" in _data or "status" in _data
 
     @patch("src.database.repositories.match_repository.MatchRepository.finish_match")
     def test_finish_match(self, mock_finish, client):
@@ -346,7 +346,7 @@ class TestRepositoryEndpoints:
 
         assert response.status_code in [200, 202]
         _data = response.json()
-        assert "success" in data or "status" in data
+        assert "success" in _data or "status" in _data
 
 
 @pytest.mark.unit

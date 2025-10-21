@@ -94,7 +94,7 @@ class TestScoresCollector:
         _result = await collector.collect_live_scores(force_refresh=True)
 
         assert "live_matches_count" in result
-        assert result["live_matches_count"] == 1
+        assert _result["live_matches_count"] == 1
         assert "scores" in result
         collector.redis_client.set_cache_value.assert_called_once()
 
@@ -110,8 +110,8 @@ class TestScoresCollector:
 
         _result = await collector.collect_live_scores()
 
-        assert result["live_matches_count"] == 0
-        assert result["scores"] == {}
+        assert _result["live_matches_count"] == 0
+        assert _result["scores"] == {}
         collector.redis_client.set_cache_value.assert_called_once()
 
     @pytest.mark.asyncio
@@ -122,7 +122,7 @@ class TestScoresCollector:
         _result = await collector.collect_live_scores()
 
         assert "error" in result
-        assert "Database error" in result["error"]
+        assert "Database error" in _result["error"]
 
     @pytest.mark.asyncio
     async def test_get_live_matches_from_db(self, collector):
@@ -259,8 +259,8 @@ class TestScoresCollectorAdvanced:
             collector = ScoresCollector(mock_db, mock_redis)
             _result = await collector.collect_live_scores()
 
-            assert result["live_matches_count"] == 5
-            assert len(result["scores"]) == 5
+            assert _result["live_matches_count"] == 5
+            assert len(_result["scores"]) == 5
 
     @pytest.mark.asyncio
     async def test_cache_timeout_configuration(self):
@@ -401,8 +401,8 @@ class TestScoresCollectorAdvanced:
             _result = await collector.collect_live_scores()
 
             # 应该处理所有比赛，即使有些数据不完整
-            assert result["live_matches_count"] == 2
-            assert len(result["scores"]) == 2
+            assert _result["live_matches_count"] == 2
+            assert len(_result["scores"]) == 2
 
     def test_environment_variable_handling(self):
         """测试：环境变量处理"""

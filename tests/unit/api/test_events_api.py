@@ -30,7 +30,7 @@ class TestEventEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert "status" in data or "health" in data
+        assert "status" in _data or "health" in _data
 
     def test_get_event_stats(self, client):
         """测试获取事件统计"""
@@ -41,7 +41,7 @@ class TestEventEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert "stats" in data or "events" in data or "count" in data
+        assert "stats" in _data or "events" in _data or "count" in data
 
     def test_get_event_types(self, client):
         """测试获取事件类型"""
@@ -52,7 +52,7 @@ class TestEventEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert isinstance(data, list) or "types" in data
+        assert isinstance(data, list) or "types" in _data
 
     def test_get_subscribers(self, client):
         """测试获取订阅者信息"""
@@ -63,7 +63,7 @@ class TestEventEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert isinstance(data, list) or "subscribers" in data
+        assert isinstance(data, list) or "subscribers" in _data
 
     @patch("src.api.events.EventManager.restart")
     def test_restart_event_system(self, mock_restart, client):
@@ -77,7 +77,7 @@ class TestEventEndpoints:
 
         assert response.status_code in [200, 202]
         _data = response.json()
-        assert "success" in data or "status" in data
+        assert "success" in _data or "status" in _data
 
     def test_get_event_metrics(self, client):
         """测试获取事件指标"""
@@ -88,7 +88,7 @@ class TestEventEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert "metrics" in data or "events_processed" in data
+        assert "metrics" in _data or "events_processed" in _data
 
     def test_get_recent_predictions(self, client):
         """测试获取最近的预测统计"""
@@ -99,7 +99,7 @@ class TestEventEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert "predictions" in data or "stats" in data
+        assert "predictions" in _data or "stats" in _data
 
     def test_get_user_activity(self, client):
         """测试获取用户活动统计"""
@@ -110,7 +110,7 @@ class TestEventEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert "activity" in data or "users" in data
+        assert "activity" in _data or "users" in _data
 
     @patch("src.api.events.EventManager.publish")
     def test_publish_event(self, mock_publish, client):
@@ -133,7 +133,7 @@ class TestEventEndpoints:
 
         assert response.status_code in [200, 201]
         _data = response.json()
-        assert "event_id" in data or "success" in data
+        assert "event_id" in _data or "success" in _data
 
     @patch("src.api.events.EventManager.subscribe")
     def test_subscribe_to_event(self, mock_subscribe, client):
@@ -153,7 +153,7 @@ class TestEventEndpoints:
 
         assert response.status_code in [200, 201]
         _data = response.json()
-        assert "subscription_id" in data or "success" in data
+        assert "subscription_id" in _data or "success" in _data
 
     def test_get_event_history(self, client):
         """测试获取事件历史"""
@@ -164,7 +164,7 @@ class TestEventEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert isinstance(data, list) or "events" in data or "history" in data
+        assert isinstance(data, list) or "events" in _data or "history" in _data
 
 
 @pytest.mark.unit

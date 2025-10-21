@@ -79,17 +79,17 @@ class TestMatchDataProcessor:
         _result = await match_processor.process(input_data)
 
         # 验证所有原始数据都被保留
-        assert result["id"] == 123
-        assert result["home_team"] == "Team A"
-        assert result["away_team"] == "Team B"
-        assert result["home_score"] == 2
-        assert result["away_score"] == 1
-        assert result["status"] == "FINISHED"
+        assert _result["id"] == 123
+        assert _result["home_team"] == "Team A"
+        assert _result["away_team"] == "Team B"
+        assert _result["home_score"] == 2
+        assert _result["away_score"] == 1
+        assert _result["status"] == "FINISHED"
 
         # 验证添加的处理信息
         assert "processed_at" in result
-        assert result["type"] == "match"
-        assert isinstance(result["processed_at"], datetime)
+        assert _result["type"] == "match"
+        assert isinstance(_result["processed_at"], datetime)
 
     @pytest.mark.asyncio
     async def test_process_empty_match_data(self, match_processor):
@@ -99,9 +99,9 @@ class TestMatchDataProcessor:
         _result = await match_processor.process(input_data)
 
         # 空数据仍然会添加processed_at和type字段
-        assert result["type"] == "match"
+        assert _result["type"] == "match"
         assert "processed_at" in result
-        assert isinstance(result["processed_at"], datetime)
+        assert isinstance(_result["processed_at"], datetime)
 
     @pytest.mark.asyncio
     async def test_process_in_progress_match(self, match_processor):
@@ -116,9 +116,9 @@ class TestMatchDataProcessor:
 
         _result = await match_processor.process(input_data)
 
-        assert result["status"] == "IN_PLAY"
-        assert result["minute"] == 65
-        assert result["type"] == "match"
+        assert _result["status"] == "IN_PLAY"
+        assert _result["minute"] == 65
+        assert _result["type"] == "match"
 
     @pytest.mark.asyncio
     async def test_process_with_logging(self, match_processor):
@@ -129,7 +129,7 @@ class TestMatchDataProcessor:
             _result = await match_processor.process(input_data)
 
             mock_logger.debug.assert_called_once_with("Processing match data: 789")
-            assert result["id"] == 789
+            assert _result["id"] == 789
 
 
 @pytest.mark.skipif(
@@ -158,15 +158,15 @@ class TestOddsDataProcessor:
         _result = await odds_processor.process(input_data)
 
         # 验证所有原始数据都被保留
-        assert result["match_id"] == 123
-        assert result["bookmaker"] == "Bet365"
-        assert result["home_win"] == 2.10
-        assert result["draw"] == 3.20
-        assert result["away_win"] == 3.50
+        assert _result["match_id"] == 123
+        assert _result["bookmaker"] == "Bet365"
+        assert _result["home_win"] == 2.10
+        assert _result["draw"] == 3.20
+        assert _result["away_win"] == 3.50
 
         # 验证添加的处理信息
         assert "processed_at" in result
-        assert result["type"] == "odds"
+        assert _result["type"] == "odds"
 
     @pytest.mark.asyncio
     async def test_process_multiple_odds(self, odds_processor):
@@ -186,9 +186,9 @@ class TestOddsDataProcessor:
 
         _result = await odds_processor.process(input_data)
 
-        assert result["match_id"] == 789
-        assert len(result["bookmakers"]) == 2
-        assert result["type"] == "odds"
+        assert _result["match_id"] == 789
+        assert len(_result["bookmakers"]) == 2
+        assert _result["type"] == "odds"
 
     @pytest.mark.asyncio
     async def test_process_with_logging(self, odds_processor):
@@ -199,7 +199,7 @@ class TestOddsDataProcessor:
             _result = await odds_processor.process(input_data)
 
             mock_logger.debug.assert_called_once_with("Processing odds data: 999")
-            assert result["match_id"] == 999
+            assert _result["match_id"] == 999
 
 
 @pytest.mark.skipif(
@@ -228,16 +228,16 @@ class TestScoresDataProcessor:
         _result = await scores_processor.process(input_data)
 
         # 验证所有原始数据都被保留
-        assert result["match_id"] == 123
-        assert result["home_score"] == 2
-        assert result["away_score"] == 1
-        assert result["minute"] == 75
-        assert result["scorer"] == "Player A"
-        assert result["assist"] == "Player B"
+        assert _result["match_id"] == 123
+        assert _result["home_score"] == 2
+        assert _result["away_score"] == 1
+        assert _result["minute"] == 75
+        assert _result["scorer"] == "Player A"
+        assert _result["assist"] == "Player B"
 
         # 验证添加的处理信息
         assert "processed_at" in result
-        assert result["type"] == "scores"
+        assert _result["type"] == "scores"
 
     @pytest.mark.asyncio
     async def test_process_live_scores(self, scores_processor):
@@ -255,9 +255,9 @@ class TestScoresDataProcessor:
 
         _result = await scores_processor.process(input_data)
 
-        assert result["status"] == "LIVE"
-        assert len(result["events"]) == 2
-        assert result["type"] == "scores"
+        assert _result["status"] == "LIVE"
+        assert len(_result["events"]) == 2
+        assert _result["type"] == "scores"
 
     @pytest.mark.asyncio
     async def test_process_empty_scores(self, scores_processor):
@@ -266,7 +266,7 @@ class TestScoresDataProcessor:
 
         _result = await scores_processor.process(input_data)
 
-        assert result["type"] == "scores"
+        assert _result["type"] == "scores"
         assert "processed_at" in result
 
 
@@ -294,16 +294,16 @@ class TestFeaturesDataProcessor:
         _result = await features_processor.process(input_data)
 
         # 验证所有原始数据都被保留
-        assert result["match_id"] == 123
-        assert result["team_id"] == 1
+        assert _result["match_id"] == 123
+        assert _result["team_id"] == 1
         assert "features" in result
-        assert result["features"]["avg_goals"] == 1.8
-        assert result["features"]["win_rate"] == 0.65
-        assert result["features"]["form_points"] == 7
+        assert _result["features"]["avg_goals"] == 1.8
+        assert _result["features"]["win_rate"] == 0.65
+        assert _result["features"]["form_points"] == 7
 
         # 验证添加的处理信息
         assert "processed_at" in result
-        assert result["type"] == "features"
+        assert _result["type"] == "features"
 
     @pytest.mark.asyncio
     async def test_process_high_dimensional_features(self, features_processor):
@@ -326,10 +326,10 @@ class TestFeaturesDataProcessor:
 
         _result = await features_processor.process(input_data)
 
-        assert len(result["features"]) == 7
-        assert "goals_avg_5" in result["features"]
-        assert "goals_conceded_avg_5" in result["features"]
-        assert result["type"] == "features"
+        assert len(_result["features"]) == 7
+        assert "goals_avg_5" in _result["features"]
+        assert "goals_conceded_avg_5" in _result["features"]
+        assert _result["type"] == "features"
 
     @pytest.mark.asyncio
     async def test_process_empty_features(self, features_processor):
@@ -338,7 +338,7 @@ class TestFeaturesDataProcessor:
 
         _result = await features_processor.process(input_data)
 
-        assert result["type"] == "features"
+        assert _result["type"] == "features"
         assert "processed_at" in result
 
 
@@ -405,7 +405,7 @@ class TestDataProcessingIntegration:
             results.append(result)
 
         assert len(results) == 3
-        assert all(result["id"] in [1, 2, 3] for result in results)
+        assert all(_result["id"] in [1, 2, 3] for result in results)
         assert all("processed_at" in result for result in results)
 
     @pytest.mark.asyncio
@@ -443,7 +443,7 @@ class TestDataProcessingIntegration:
         assert "processed_at" in result
 
         # 验证时间格式
-        assert isinstance(result["processed_at"], datetime)
+        assert isinstance(_result["processed_at"], datetime)
 
     @pytest.mark.asyncio
     async def test_concurrent_processing(self):
@@ -524,8 +524,8 @@ class TestDataProcessingIntegration:
 
         _result = await processor.process(large_data)
 
-        assert len(result["features"]) == 1000
-        assert result["type"] == "features"
+        assert len(_result["features"]) == 1000
+        assert _result["type"] == "features"
         assert "processed_at" in result
 
     @pytest.mark.asyncio
@@ -553,14 +553,14 @@ class TestDataProcessingIntegration:
         _result = await processor.process(complex_data)
 
         # 验证所有数据都被保留且类型正确
-        assert result["id"] == 123
-        assert result["name"] == "Match Name"
-        assert isinstance(result["teams"], list)
-        assert isinstance(result["stats"], dict)
-        assert isinstance(result["events"], list)
-        assert result["is_finished"] is True
-        assert isinstance(result["attendance"], int)
-        assert result["type"] == "match"
+        assert _result["id"] == 123
+        assert _result["name"] == "Match Name"
+        assert isinstance(_result["teams"], list)
+        assert isinstance(_result["stats"], dict)
+        assert isinstance(_result["events"], list)
+        assert _result["is_finished"] is True
+        assert isinstance(_result["attendance"], int)
+        assert _result["type"] == "match"
         assert "processed_at" in result
 
 

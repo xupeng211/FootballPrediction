@@ -519,14 +519,14 @@ class TestMatch:
         )
 
         _data = match.to_dict()
-        assert data["id"] == 100
-        assert data["home_team_id"] == 1
-        assert data["away_team_id"] == 2
-        assert data["league_id"] == 10
-        assert data["season"] == "2023-2024"
-        assert data["status"] == "scheduled"
-        assert data["score"] is None
-        assert data["venue"] == "Camp Nou"
+        assert _data["id"] == 100
+        assert _data["home_team_id"] == 1
+        assert _data["away_team_id"] == 2
+        assert _data["league_id"] == 10
+        assert _data["season"] == "2023-2024"
+        assert _data["status"] == "scheduled"
+        assert _data["score"] is None
+        assert _data["venue"] == "Camp Nou"
 
     def test_to_dict_with_score(self):
         """测试：转换为字典（有比分）"""
@@ -541,10 +541,10 @@ class TestMatch:
         )
 
         _data = match.to_dict()
-        assert data["status"] == "finished"
-        assert data["score"]["home_score"] == 2
-        assert data["score"]["away_score"] == 1
-        assert data["score"]["result"] == "home_win"
+        assert _data["status"] == "finished"
+        assert _data["score"]["home_score"] == 2
+        assert _data["score"]["away_score"] == 1
+        assert _data["score"]["result"] == "home_win"
 
     def test_from_dict_without_score(self):
         """测试：从字典创建实例（无比分）"""

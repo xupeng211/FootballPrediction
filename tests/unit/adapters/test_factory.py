@@ -49,25 +49,25 @@ class TestAdapterConfig:
             retry_config={"max_retries": 3},
         )
 
-        assert config.name == "test_adapter"
-        assert config.adapter_type == "test"
-        assert config.enabled is True
-        assert config.priority == 100
-        assert config.parameters == {"api_key": "test_key"}
-        assert config.rate_limits == {"requests_per_minute": 10}
-        assert config.cache_config == {"ttl": 300}
-        assert config.retry_config == {"max_retries": 3}
+        assert _config.name == "test_adapter"
+        assert _config.adapter_type == "test"
+        assert _config.enabled is True
+        assert _config.priority == 100
+        assert _config.parameters == {"api_key": "test_key"}
+        assert _config.rate_limits == {"requests_per_minute": 10}
+        assert _config.cache_config == {"ttl": 300}
+        assert _config.retry_config == {"max_retries": 3}
 
     def test_adapter_config_defaults(self):
         """测试：适配器配置默认值"""
         _config = AdapterConfig(name="test", adapter_type="test")
 
-        assert config.enabled is True  # 默认启用
-        assert config.priority == 0  # 默认优先级
-        assert config.parameters == {}
-        assert config.rate_limits is None
-        assert config.cache_config is None
-        assert config.retry_config is None
+        assert _config.enabled is True  # 默认启用
+        assert _config.priority == 0  # 默认优先级
+        assert _config.parameters == {}
+        assert _config.rate_limits is None
+        assert _config.cache_config is None
+        assert _config.retry_config is None
 
 
 @pytest.mark.skipif(not FACTORY_AVAILABLE, reason="Factory module not available")
@@ -158,7 +158,7 @@ class TestAdapterFactory:
         )
 
         # 创建适配器
-        adapter = factory.create_adapter(config)
+        adapter = factory.create_adapter(_config)
 
         # 验证适配器被创建
         assert adapter is not None
@@ -174,7 +174,7 @@ class TestAdapterFactory:
 
         # 应该抛出异常
         with pytest.raises(ValueError, match="disabled"):
-            factory.create_adapter(config)
+            factory.create_adapter(_config)
 
     def test_create_adapter_unknown_type(self):
         """测试：创建未知类型的适配器"""
@@ -185,7 +185,7 @@ class TestAdapterFactory:
 
         # 应该抛出异常
         with pytest.raises(ValueError, match="Unknown adapter type"):
-            factory.create_adapter(config)
+            factory.create_adapter(_config)
 
     @patch.dict("os.environ", {"TEST_API_KEY": "secret_value"})
     def test_resolve_parameters_with_env_var(self):
@@ -299,8 +299,8 @@ class TestAdapterFactory:
             assert "test_group" in factory._group_configs
 
             _config = factory.get_config("test_adapter")
-            assert config.name == "test_adapter"
-            assert config.adapter_type == "test"
+            assert _config.name == "test_adapter"
+            assert _config.adapter_type == "test"
 
             group = factory.get_group_config("test_group")
             assert group.name == "test_group"
@@ -336,7 +336,7 @@ class TestAdapterFactory:
             # 验证配置加载
             assert "yaml_adapter" in factory._configs
             _config = factory.get_config("yaml_adapter")
-            assert config.name == "yaml_adapter"
+            assert _config.name == "yaml_adapter"
 
         finally:
             Path(temp_path).unlink()
@@ -375,7 +375,7 @@ class TestAdapterFactory:
             enabled=True,
             parameters={"api_key": "secret", "normal": "value"},
         )
-        factory._configs["save_test"] = config
+        factory._configs["save_test"] = _config
 
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             temp_path = f.name
@@ -405,11 +405,11 @@ class TestAdapterFactory:
 
         # 添加配置
         _config = AdapterConfig(name="test", adapter_type="test")
-        factory._configs["test"] = config
+        factory._configs["test"] = _config
 
         # 获取配置
         retrieved = factory.get_config("test")
-        assert retrieved is config
+        assert retrieved is _config
 
         # 获取不存在的配置
         not_found = factory.get_config("nonexistent")
@@ -460,7 +460,7 @@ class TestAdapterFactory:
         factory = AdapterFactory()
 
         _config = AdapterConfig(name="test", adapter_type="unknown_type")
-        errors = factory.validate_config(config)
+        errors = factory.validate_config(_config)
 
         assert len(errors) == 1
         assert "Unknown adapter type" in errors[0]

@@ -127,7 +127,7 @@ async def trigger_alert(
         severity=request.severity,
         message=request.message,
         source=request.source,
-        _data =request.data,
+        _data=request.data,
     )
 
     return {"message": "告警已触发", "alert_type": request.alert_type}

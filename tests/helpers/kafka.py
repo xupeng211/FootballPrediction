@@ -1,10 +1,6 @@
-"""Kafka 相关测试桩"""
+"""Kafka 相关测试桩 - 重构版本（不使用 monkeypatch）"""
 
-import sys
-from types import ModuleType
 from typing import Any, Dict, List, Optional, Tuple
-
-from pytest import MonkeyPatch
 
 
 class MockKafkaMessage:
@@ -49,6 +45,14 @@ class MockKafkaProducer:
     ) -> None:
         self.messages.append((topic, key, value))
 
+    def flush(self) -> None:
+        """模拟 flush 操作"""
+        pass
+
+    def close(self) -> None:
+        """关闭生产者"""
+        pass
+
 
 class MockKafkaConsumer:
     """返回预定义消息的内存 Kafka Consumer"""
@@ -74,29 +78,58 @@ class MockKafkaConsumer:
 
     def close(self) -> None:
         """关闭消费者"""
+        pass
 
 
-def apply_kafka_mocks(monkeypatch: MonkeyPatch) -> None:
+# 创建全局 mock 实例（仅在测试中使用）
+_global_producer_mock = None
+_global_consumer_mock = None
+
+
+def get_mock_kafka_producer() -> MockKafkaProducer:
+    """获取 Kafka Producer mock 实例（单例）"""
+    global _global_producer_mock
+    if _global_producer_mock is None:
+        _global_producer_mock = MockKafkaProducer()
+    return _global_producer_mock
+
+
+def get_mock_kafka_consumer(
+    topics: List[str] = None,
+    config: Optional[Dict[str, Any]] = None,
+    messages: Optional[List[MockKafkaMessage]] = None,
+) -> MockKafkaConsumer:
+    """获取 Kafka Consumer mock 实例"""
+    return MockKafkaConsumer(topics or [], config, messages)
+
+
+def reset_kafka_mocks() -> None:
+    """重置 Kafka mock 实例（用于测试隔离）"""
+    global _global_producer_mock
+    if _global_producer_mock:
+        _global_producer_mock.messages.clear()
+
+
+# 向后兼容的函数（现在只是返回 mock 实例，不使用 monkeypatch）
+def apply_kafka_mocks(*args, **kwargs) -> Dict[str, Any]:
     """
-    应用 Kafka mock
-
-    Args:
-        monkeypatch: pytest monkeypatch fixture
+    向后兼容：返回 Kafka mocks
+    不再使用 monkeypatch，而是返回 mock 实例供测试使用
     """
-    # 创建 mock 模块
-    mock_kafka = ModuleType("kafka")
-    mock_kafka.Producer = MockKafkaProducer
-    mock_kafka.Consumer = MockKafkaConsumer
-
-    # 应用 mock
-    monkeypatch.setitem(sys.modules, "kafka", mock_kafka)
-    monkeypatch.setitem(sys.modules, "kafka.producer", mock_kafka)
-    monkeypatch.setitem(sys.modules, "kafka.consumer", mock_kafka)
+    return {
+        "kafka": {
+            "Producer": MockKafkaProducer,
+            "Consumer": MockKafkaConsumer,
+        }
+    }
 
 
 __all__ = [
     "MockKafkaMessage",
     "MockKafkaProducer",
     "MockKafkaConsumer",
+    "get_mock_kafka_producer",
+    "get_mock_kafka_consumer",
+    "reset_kafka_mocks",
     "apply_kafka_mocks",
 ]

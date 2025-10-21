@@ -7,6 +7,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+
 def run_quick_tests():
     """运行快速测试提升覆盖率"""
     print("🚀 快速测试运行")
@@ -74,34 +75,43 @@ def test_import_module(module_path):
             ["python", "-m", "pytest", test_dir, "-v", "--tb=no", "-q", "--maxfail=10"],
             capture_output=True,
             text=True,
-            timeout=60
+            timeout=60,
         )
 
         # 统计结果
         if "passed" in result.stdout:
             try:
-                passed = int(result.stdout.split("passed")[0].split()[-1])
-                total_passed += passed
-            except:
+                total_passed += int(result.stdout.split("passed")[0].split()[-1])
+            except Exception:
                 pass
 
         if "failed" in result.stdout:
             try:
                 failed = int(result.stdout.split("failed")[0].split()[-2])
                 total_failed += failed
-            except:
+            except Exception:
                 pass
 
-    print(f"\n✅ 测试完成！")
+    print("\n✅ 测试完成！")
     print(f"   通过: {total_passed}")
     print(f"   失败: {total_failed}")
 
     # 3. 检查覆盖率
     print("\n3. 检查覆盖率...")
     subprocess.run(
-        ["python", "-m", "pytest", "tests/unit/", "--cov=src", "--cov-report=term-missing", "--tb=no", "-q"],
-        timeout=180
+        [
+            "python",
+            "-m",
+            "pytest",
+            "tests/unit/",
+            "--cov=src",
+            "--cov-report=term-missing",
+            "--tb=no",
+            "-q",
+        ],
+        timeout=180,
     )
+
 
 if __name__ == "__main__":
     run_quick_tests()

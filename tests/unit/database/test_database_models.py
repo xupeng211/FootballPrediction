@@ -279,7 +279,7 @@ class TestFeatures:
             team_id=2,
             feature_type="HEAD_TO_HEAD",
             feature_data={"wins": 5, "draws": 2, "losses": 3},
-            _metadata ={"last_updated": datetime.now()},
+            _metadata={"last_updated": datetime.now()},
         )
 
         assert features.feature_data["wins"] == 5

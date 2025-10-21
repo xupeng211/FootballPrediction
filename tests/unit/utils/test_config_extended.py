@@ -1,8 +1,8 @@
-"""扩展的core/config.py测试 - 提升覆盖率"""
+"""扩展的core/_config.py测试 - 提升覆盖率"""
 
 import os
 from unittest.mock import patch
-from src.core.config import Settings, get_settings, config
+from src.core.config import Settings, get_settings, get_config
 
 
 class TestConfigExtended:
@@ -65,7 +65,7 @@ class TestConfigExtended:
     def test_config_object(self):
         """测试配置对象"""
         # config 应该是 Settings 的实例
-        assert isinstance(config, Settings)
+        assert isinstance(get_config(), Settings)
 
     def test_database_url_property(self):
         """测试数据库URL属性"""

@@ -20,9 +20,10 @@ class TestHealthAPI:
         response = client.get("/api/health")
         assert response.status_code == 200
         _data = response.json()
-        assert data["status"] == "healthy"
-        assert "timestamp" in data
-        assert data["service"] == "football-prediction-api"
+        assert _data["status"] == "healthy"
+        assert "timestamp" in _data
+
+        assert _data["service"] == "football-prediction-api"
 
     def test_health_check_with_database(self, client):
         """测试包含数据库状态的健康检查"""
@@ -30,14 +31,15 @@ class TestHealthAPI:
         response = client.get("/api/health")
         assert response.status_code == 200
         _data = response.json()
-        assert data["status"] == "healthy"
+        assert _data["status"] == "healthy"
 
     def test_readiness_check(self, client):
         """就绪检查 - 测试v1路径"""
         response = client.get("/api/v1/health/readiness")
         if response.status_code == 200:
             _data = response.json()
-            assert "ready" in data
+            assert "ready" in _data
+
         else:
             # 如果端点不存在，至少测试健康检查
             response = client.get("/api/health")
@@ -59,6 +61,8 @@ class TestHealthAPI:
         response = client.get("/")
         assert response.status_code == 200
         _data = response.json()
-        assert "message" in data
-        assert "health" in data
-        assert data["health"] == "/api/health"
+        assert "message" in _data
+
+        assert "health" in _data
+
+        assert _data["health"] == "/api/health"

@@ -26,8 +26,8 @@ class TestPredictionsAPIV2:
         response = client.get("/predictions/health")
         assert response.status_code == 200
         _data = response.json()
-        assert data["status"] == "healthy"
-        assert data["service"] == "predictions"
+        assert _data["status"] == "healthy"
+        assert _data["service"] == "predictions"
 
     def test_get_prediction(self, client):
         """测试获取预测结果"""
@@ -39,22 +39,29 @@ class TestPredictionsAPIV2:
         _data = response.json()
 
         # 验证响应结构
-        assert "match_id" in data
-        assert "home_win_prob" in data
-        assert "draw_prob" in data
-        assert "away_win_prob" in data
-        assert "predicted_outcome" in data
-        assert "confidence" in data
-        assert "model_version" in data
-        assert "predicted_at" in data
+        assert "match_id" in _data
+
+        assert "home_win_prob" in _data
+
+        assert "draw_prob" in _data
+
+        assert "away_win_prob" in _data
+
+        assert "predicted_outcome" in _data
+
+        assert "confidence" in _data
+
+        assert "model_version" in _data
+
+        assert "predicted_at" in _data
 
         # 验证数据类型
-        assert isinstance(data["home_win_prob"], float)
-        assert isinstance(data["draw_prob"], float)
-        assert isinstance(data["away_win_prob"], float)
-        assert data["predicted_outcome"] in ["home", "draw", "away"]
-        assert 0 <= data["confidence"] <= 1
-        assert data["match_id"] == match_id
+        assert isinstance(_data["home_win_prob"], float)
+        assert isinstance(_data["draw_prob"], float)
+        assert isinstance(_data["away_win_prob"], float)
+        assert _data["predicted_outcome"] in ["home", "draw", "away"]
+        assert 0 <= _data["confidence"] <= 1
+        assert _data["match_id"] == match_id
 
     def test_get_prediction_with_params(self, client):
         """测试带参数的预测获取"""
@@ -65,7 +72,7 @@ class TestPredictionsAPIV2:
 
         assert response.status_code == 200
         _data = response.json()
-        assert data["model_version"] == "v2.0"
+        assert _data["model_version"] == "v2.0"
 
     def test_create_prediction(self, client):
         """测试创建预测"""
@@ -77,9 +84,11 @@ class TestPredictionsAPIV2:
         _data = response.json()
 
         # 验证响应结构
-        assert "match_id" in data
-        assert "predicted_outcome" in data
-        assert data["match_id"] == match_id
+        assert "match_id" in _data
+
+        assert "predicted_outcome" in _data
+
+        assert _data["match_id"] == match_id
 
     def test_create_prediction_with_request(self, client):
         """测试带请求体的预测创建"""
@@ -90,7 +99,7 @@ class TestPredictionsAPIV2:
         assert response.status_code == 201
         response.json()
         # 模拟数据可能不使用请求体的参数
-        # assert data["model_version"] == "v2.0"
+        # assert _data["model_version"] == "v2.0"
 
     def test_batch_predict(self, client):
         """测试批量预测"""
@@ -101,16 +110,20 @@ class TestPredictionsAPIV2:
         _data = response.json()
 
         # 验证批量响应结构
-        assert "predictions" in data
-        assert "total" in data
-        assert "success_count" in data
-        assert "failed_count" in data
-        assert "failed_match_ids" in data
+        assert "predictions" in _data
 
-        assert data["total"] == 3
-        assert len(data["predictions"]) == 3
-        assert data["success_count"] == 3
-        assert data["failed_count"] == 0
+        assert "total" in _data
+
+        assert "success_count" in _data
+
+        assert "failed_count" in _data
+
+        assert "failed_match_ids" in _data
+
+        assert _data["total"] == 3
+        assert len(_data["predictions"]) == 3
+        assert _data["success_count"] == 3
+        assert _data["failed_count"] == 0
 
     def test_batch_predict_too_many_matches(self, client):
         """测试批量预测超过限制"""
@@ -130,13 +143,15 @@ class TestPredictionsAPIV2:
         _data = response.json()
 
         # 验证历史响应结构
-        assert "match_id" in data
-        assert "predictions" in data
-        assert "total_predictions" in data
+        assert "match_id" in _data
 
-        assert data["match_id"] == match_id
-        assert isinstance(data["predictions"], list)
-        assert data["total_predictions"] == len(data["predictions"])
+        assert "predictions" in _data
+
+        assert "total_predictions" in _data
+
+        assert _data["match_id"] == match_id
+        assert isinstance(_data["predictions"], list)
+        assert _data["total_predictions"] == len(_data["predictions"])
 
     def test_get_prediction_history_with_limit(self, client):
         """测试带限制的预测历史"""
@@ -145,7 +160,7 @@ class TestPredictionsAPIV2:
         response = client.get(f"/predictions/history/{match_id}?limit=3")
         assert response.status_code == 200
         _data = response.json()
-        assert len(data["predictions"]) <= 3
+        assert len(_data["predictions"]) <= 3
 
     def test_get_recent_predictions(self, client):
         """测试获取最近预测"""
@@ -167,16 +182,20 @@ class TestPredictionsAPIV2:
         _data = response.json()
 
         # 验证验证响应结构
-        assert "match_id" in data
-        assert "prediction" in data
-        assert "actual_result" in data
-        assert "is_correct" in data
-        assert "accuracy_score" in data
+        assert "match_id" in _data
 
-        assert data["match_id"] == match_id
-        assert data["actual_result"] == "home"
-        assert isinstance(data["is_correct"], bool)
-        assert isinstance(data["accuracy_score"], float)
+        assert "prediction" in _data
+
+        assert "actual_result" in _data
+
+        assert "is_correct" in _data
+
+        assert "accuracy_score" in _data
+
+        assert _data["match_id"] == match_id
+        assert _data["actual_result"] == "home"
+        assert isinstance(_data["is_correct"], bool)
+        assert isinstance(_data["accuracy_score"], float)
 
     def test_verify_prediction_incorrect(self, client):
         """测试验证预测（错误）"""
@@ -185,7 +204,7 @@ class TestPredictionsAPIV2:
         response = client.post(f"/predictions/{match_id}/verify?actual_result=away")
         assert response.status_code == 200
         _data = response.json()
-        assert data["is_correct"] is False
+        assert _data["is_correct"] is False
 
     def test_verify_prediction_invalid_result(self, client):
         """测试验证预测（无效结果）"""
@@ -202,7 +221,7 @@ class TestPredictionsAPIV2:
         _data = response.json()
 
         # 概率之和应该接近1.0（允许小的浮点误差）
-        prob_sum = data["home_win_prob"] + data["draw_prob"] + data["away_win_prob"]
+        prob_sum = _data["home_win_prob"] + _data["draw_prob"] + _data["away_win_prob"]
         assert abs(prob_sum - 1.0) < 0.001
 
     def test_prediction_model_validation(self, client):

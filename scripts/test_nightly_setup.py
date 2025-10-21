@@ -18,8 +18,7 @@ sys.path.insert(0, "src")
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -28,11 +27,7 @@ class NightlySetupTester:
     """Nightly 设置测试器"""
 
     def __init__(self):
-        self.results = {
-            "passed": [],
-            "failed": [],
-            "warnings": []
-        }
+        self.results = {"passed": [], "failed": [], "warnings": []}
 
     def log(self, status: str, message: str):
         """记录测试结果"""
@@ -52,7 +47,7 @@ class NightlySetupTester:
             "scripts/run_e2e_tests.py",
             "scripts/load_staging_data.py",
             "docker-compose.test.yml",
-            "docker-compose.staging.yml"
+            "docker-compose.staging.yml",
         ]
 
         for file_path in required_files:
@@ -71,7 +66,7 @@ class NightlySetupTester:
             "tests/e2e",
             "tests/performance",
             "reports",
-            "logs"
+            "logs",
         ]
 
         for dir_path in required_dirs:
@@ -92,7 +87,7 @@ class NightlySetupTester:
             return
 
         try:
-            with open(config_path, 'r') as f:
+            with open(config_path, "r") as f:
                 config = json.load(f)
 
             # 检查必需的配置项
@@ -100,7 +95,7 @@ class NightlySetupTester:
                 "quality_gate",
                 "notifications",
                 "test_schedule",
-                "test_types"
+                "test_types",
             ]
 
             for key in required_keys:
@@ -133,7 +128,7 @@ class NightlySetupTester:
             "pytest-html",
             "pytest-json-report",
             "aiohttp",
-            "schedule"
+            "schedule",
         ]
 
         for package in required_packages:
@@ -152,10 +147,7 @@ class NightlySetupTester:
         try:
             # 检查Docker命令
             result = subprocess.run(
-                ["docker", "--version"],
-                capture_output=True,
-                text=True,
-                timeout=5
+                ["docker", "--version"], capture_output=True, text=True, timeout=5
             )
             if result.returncode == 0:
                 self.log("passed", f"Docker已安装: {result.stdout.strip()}")
@@ -170,7 +162,7 @@ class NightlySetupTester:
                 ["docker-compose", "--version"],
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
             )
             if result.returncode == 0:
                 self.log("passed", f"Docker Compose已安装: {result.stdout.strip()}")
@@ -188,7 +180,7 @@ class NightlySetupTester:
             "GITHUB_TOKEN": "GitHub通知",
             "SLACK_WEBHOOK_URL": "Slack通知",
             "SMTP_HOST": "邮件通知",
-            "DATABASE_URL": "数据库连接"
+            "DATABASE_URL": "数据库连接",
         }
 
         for var, desc in optional_vars.items():
@@ -205,7 +197,7 @@ class NightlySetupTester:
             "scripts/nightly_test_monitor.py",
             "scripts/schedule_nightly_tests.py",
             "scripts/run_e2e_tests.py",
-            "scripts/load_staging_data.py"
+            "scripts/load_staging_data.py",
         ]
 
         for script in scripts:
@@ -226,19 +218,12 @@ class NightlySetupTester:
 
         import subprocess
 
-        commands = [
-            "nightly-test",
-            "nightly-status",
-            "nightly-report"
-        ]
+        commands = ["nightly-test", "nightly-status", "nightly-report"]
 
         for cmd in commands:
             try:
                 result = subprocess.run(
-                    ["make", "-n", cmd],
-                    capture_output=True,
-                    text=True,
-                    timeout=5
+                    ["make", "-n", cmd], capture_output=True, text=True, timeout=5
                 )
                 if result.returncode == 0:
                     self.log("passed", f"Makefile命令存在: make {cmd}")
@@ -256,10 +241,19 @@ class NightlySetupTester:
         # 运行单元测试的快速版本
         try:
             result = subprocess.run(
-                [sys.executable, "-m", "pytest", "tests/unit/", "-v", "--tb=short", "--maxfail=1", "-x"],
+                [
+                    sys.executable,
+                    "-m",
+                    "pytest",
+                    "tests/unit/",
+                    "-v",
+                    "--tb=short",
+                    "--maxfail=1",
+                    "-x",
+                ],
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
             if result.returncode == 0:
@@ -268,7 +262,9 @@ class NightlySetupTester:
                 # 检查是否有测试文件
                 test_files = list(Path("tests/unit").glob("**/*.py"))
                 if test_files:
-                    self.log("failed", f"快速测试失败 (找到{len(test_files)}个测试文件)")
+                    self.log(
+                        "failed", f"快速测试失败 (找到{len(test_files)}个测试文件)"
+                    )
                 else:
                     self.log("warnings", "没有找到单元测试文件")
         except subprocess.TimeoutExpired:
@@ -278,11 +274,15 @@ class NightlySetupTester:
 
     def generate_report(self):
         """生成测试报告"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("📋 Nightly 测试设置验证报告")
-        print("="*60)
+        print("=" * 60)
 
-        total = len(self.results["passed"]) + len(self.results["failed"]) + len(self.results["warnings"])
+        total = (
+            len(self.results["passed"])
+            + len(self.results["failed"])
+            + len(self.results["warnings"])
+        )
         passed = len(self.results["passed"])
         failed = len(self.results["failed"])
         warnings = len(self.results["warnings"])
@@ -318,7 +318,7 @@ class NightlySetupTester:
         print("3. 配置环境变量以启用通知功能")
         print("4. 查看 docs/nightly_tests_guide.md 获取详细指南")
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
 
         # 保存报告
         report_data = {
@@ -328,12 +328,12 @@ class NightlySetupTester:
             "failed": failed,
             "warnings": warnings,
             "success_rate": success_rate,
-            "details": self.results
+            "details": self.results,
         }
 
         report_path = Path("reports/nightly-setup-report.json")
         report_path.parent.mkdir(exist_ok=True)
-        with open(report_path, 'w') as f:
+        with open(report_path, "w") as f:
             json.dump(report_data, f, indent=2)
 
         print(f"\n📄 详细报告已保存到: {report_path}")

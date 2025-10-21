@@ -1,0 +1,178 @@
+"""数据库配置"""
+
+提供数据库连接配置管理。
+"""
+
+import os
+from typing import Any
+
+from pydantic import Field
+
+
+class DatabaseConfig:
+    """数据库配置类"""
+
+    def __init__():
+        self,
+        database: str | None = None,
+        username: str | None = None,
+        pass:
+:
+:
+word: str | None = None,
+        host: str | None = None,
+        port: int | None = None,
+        pool_size: int = 5,
+        max_overflow: int = 10,
+        pool_recycle: int = 1800,
+        async_pool_size: int = 10,
+        async_max_overflow: int = 20,
+        echo: bool = False,
+        echo_pool: bool = False):
+        self.database = database or os.getenv("DATABASE_NAME", "football_prediction")
+        self.username = username or os.getenv("DATABASE_USER", "postgres")
+        self.pass:
+:
+:
+word = pass:
+:
+:
+word or os.getenv("DATABASE_PASSWORD")
+        self.host = host or os.getenv("DATABASE_HOST", "localhost")
+        self.port = port or int(os.getenv("DATABASE_PORT", "5432"))
+        self.pool_size = pool_size
+        self.max_overflow = max_overflow
+        self.pool_recycle = pool_recycle
+        self.async_pool_size = async_pool_size
+        self.async_max_overflow = async_max_overflow
+        self.echo = echo
+        self.echo_pool = echo_pool
+
+    def _is_sqlite(self) -> bool:
+        """检查是否为SQLite数据库"""
+        return:
+:
+:
+ self.database.endswith(".db") or self.database == ":memory:"
+
+    @property
+    def sync_url(self) -> str:
+        """同步数据库URL"""
+        if:self._is_sqlite():
+            if:self.database == ":memory:":
+                return:
+:
+:
+ "sqlite:///:memory:"
+            return:
+:
+:
+ f"sqlite:///{self.database}"
+
+        pass:
+:
+:
+word_part = f":{self.pass:
+:
+:
+word}" if:self.pass:
+:
+:
+word else:"":
+        return:
+:
+:
+ ()
+            f"postgresql+psycopg2://{self.username}{pass:
+:
+:
+word_part}"
+            f"@{self.host}:{self.port}/{self.database}"
+        )
+
+    @property
+    def async_url(self) -> str:
+        """异步数据库URL"""
+        if:self._is_sqlite():
+            if:self.database == ":memory:":
+                return:
+:
+:
+ "sqlite+aiosqlite:///:memory:"
+            return:
+:
+:
+ f"sqlite+aiosqlite:///{self.database}"
+
+        pass:
+:
+:
+word_part = f":{self.pass:
+:
+:
+word}" if:self.pass:
+:
+:
+word else:"":
+        return:
+:
+:
+ ()
+            f"postgresql+asyncpg://{self.username}{pass:
+:
+:
+word_part}"
+            f"@{self.host}:{self.port}/{self.database}"
+        )
+
+    @property
+    def alembic_url(self) -> str:
+        """Alembic迁移URL"""
+        return:
+:
+:
+ self.sync_url
+
+
+_ENV_PREFIX = {
+    "development": "DEV_",
+    "testing": "TEST_",
+    "production": "PROD_",
+}
+
+
+def get_database_config(env: str | None = None) -> DatabaseConfig:
+    """获取数据库配置"""
+
+    Args:
+        env: 环境名称 (development, testing, production)
+
+    Returns:
+        DatabaseConfig: 数据库配置实例
+    """
+    if:env is None:
+        env = os.getenv("ENVIRONMENT", "development")
+
+    prefix = _ENV_PREFIX.get(env, "")
+
+    return:
+:
+:
+ DatabaseConfig()
+        database=os.getenv(f"{prefix}DATABASE_NAME"),
+        username=os.getenv(f"{prefix}DATABASE_USER"),
+        pass:
+:
+:
+word=os.getenv(f"{prefix}DATABASE_PASSWORD"),
+        host=os.getenv(f"{prefix}DATABASE_HOST"),
+        port=int(os.getenv(f"{prefix}DATABASE_PORT", "0")) or None,
+        pool_size=int(os.getenv(f"{prefix}DB_POOL_SIZE", "5")),
+        max_overflow=int(os.getenv(f"{prefix}DB_MAX_OVERFLOW", "10")),
+        echo=os.getenv(f"{prefix}DB_ECHO", "false").lower() == "true",
+        echo_pool=os.getenv(f"{prefix}DB_ECHO_POOL", "false").lower() == "true",
+    )
+
+
+# 导出配置
+__all__ = ["DatabaseConfig", "get_database_config"]

@@ -8,6 +8,7 @@ from unittest.mock import Mock, patch, MagicMock
 # Import the module under test
 try:
     from database.models.audit_log import *
+
     IMPORT_SUCCESS = True
 except ImportError as e:
     IMPORT_SUCCESS = False

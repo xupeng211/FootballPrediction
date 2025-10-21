@@ -28,10 +28,10 @@ class TestBaseModule:
             severity="high",
         )
 
-        assert result.table_name == "test_table"
-        assert result.detection_method == "3sigma"
-        assert result.anomaly_type == "statistical_outlier"
-        assert result.severity == "high"
+        assert _result.table_name == "test_table"
+        assert _result.detection_method == "3sigma"
+        assert _result.anomaly_type == "statistical_outlier"
+        assert _result.severity == "high"
         assert len(result.anomalous_records) == 0
         assert isinstance(result.statistics, dict)
         assert isinstance(result.metadata, dict)
@@ -49,12 +49,12 @@ class TestBaseModule:
         # 测试添加异常记录
         result.add_anomalous_record({"index": 1, "value": 100.0, "z_score": 3.5})
         assert len(result.anomalous_records) == 1
-        assert result.anomalous_records[0]["index"] == 1
+        assert _result.anomalous_records[0]["index"] == 1
 
         # 测试设置统计信息
         _stats = {"mean": 50.0, "std": 10.0, "outliers_count": 1}
         result.set_statistics(stats)
-        assert result.statistics == stats
+        assert _result.statistics == stats
 
         # 测试转换为字典
         result_dict = result.to_dict()
@@ -91,11 +91,13 @@ class TestStatisticalDetector:
         outliers = [150, -50]  # 明显的异常值
         test_data = pd.Series(normal_data + outliers)
 
-        _result = detector.detect_outliers_3sigma(test_data, "test_table", "test_column")
+        _result = detector.detect_outliers_3sigma(
+            test_data, "test_table", "test_column"
+        )
 
-        assert result.table_name == "test_table"
-        assert result.detection_method == "3sigma"
-        assert result.anomaly_type == "statistical_outlier"
+        assert _result.table_name == "test_table"
+        assert _result.detection_method == "3sigma"
+        assert _result.anomaly_type == "statistical_outlier"
         assert len(result.anomalous_records) >= 2  # 至少检测到2个异常值
         assert "statistics" in result.to_dict()
 
@@ -110,8 +112,8 @@ class TestStatisticalDetector:
 
         _result = detector.detect_outliers_iqr(test_data, "test_table", "test_column")
 
-        assert result.detection_method == "iqr"
-        assert result.anomaly_type == "statistical_outlier"
+        assert _result.detection_method == "iqr"
+        assert _result.anomaly_type == "statistical_outlier"
         assert len(result.anomalous_records) >= 1  # 至少检测到1个异常值（100）
 
     def test_detect_distribution_shift(self):
@@ -129,8 +131,8 @@ class TestStatisticalDetector:
             baseline_data, current_data, "test_table", "test_column"
         )
 
-        assert result.detection_method == "ks_test"
-        assert result.anomaly_type == "distribution_shift"
+        assert _result.detection_method == "ks_test"
+        assert _result.anomaly_type == "distribution_shift"
         assert "ks_statistic" in result.statistics
         assert "p_value" in result.statistics
 
@@ -177,9 +179,9 @@ class TestMachineLearningDetector:
 
         _result = detector.detect_anomalies_isolation_forest(test_data, "test_table")
 
-        assert result.table_name == "test_table"
-        assert result.detection_method == "isolation_forest"
-        assert result.anomaly_type == "ml_anomaly"
+        assert _result.table_name == "test_table"
+        assert _result.detection_method == "isolation_forest"
+        assert _result.anomaly_type == "ml_anomaly"
         assert len(result.anomalous_records) >= 2  # 至少检测到2个异常
 
     def test_detect_anomalies_clustering(self):
@@ -199,8 +201,8 @@ class TestMachineLearningDetector:
 
         _result = detector.detect_anomalies_clustering(test_data, "test_table", eps=0.5)
 
-        assert result.detection_method == "dbscan_clustering"
-        assert result.anomaly_type == "clustering_outlier"
+        assert _result.detection_method == "dbscan_clustering"
+        assert _result.anomaly_type == "clustering_outlier"
         assert "num_clusters" in result.statistics
 
 

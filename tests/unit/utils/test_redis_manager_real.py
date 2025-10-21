@@ -118,7 +118,7 @@ class TestRedisManager:
 
         _result = redis_manager.set("test_key", "test_value")
 
-        assert result is True
+        assert _result is True
         call_args = redis_manager._sync_client.setex.call_args[0]
         assert call_args[0] == "test_key"
         assert call_args[1] == 3600  # 默认TTL
@@ -130,7 +130,7 @@ class TestRedisManager:
 
         _result = redis_manager.set("test_key", "test_value", ttl=60)
 
-        assert result is True
+        assert _result is True
         call_args = redis_manager._sync_client.setex.call_args[0]
         assert call_args[1] == 60
 
@@ -140,7 +140,7 @@ class TestRedisManager:
 
         _result = redis_manager.set("test_key", "test_value", cache_type="match_info")
 
-        assert result is True
+        assert _result is True
         call_args = redis_manager._sync_client.setex.call_args[0]
         assert call_args[1] == 3600  # match_info的TTL
 
@@ -151,7 +151,7 @@ class TestRedisManager:
 
         _result = redis_manager.set("test_key", test_data)
 
-        assert result is True
+        assert _result is True
         call_args = redis_manager._sync_client.setex.call_args[0]
         assert '"key": "value"' in call_args[2]
         assert '"number": 123' in call_args[2]
@@ -162,7 +162,7 @@ class TestRedisManager:
 
         _result = redis_manager.set("test_key", "test_value")
 
-        assert result is False
+        assert _result is False
 
     def test_delete_sync(self, redis_manager):
         """测试同步删除"""
@@ -290,7 +290,7 @@ class TestRedisManager:
 
         _result = await redis_manager.aset("test_key", "test_value")
 
-        assert result is True
+        assert _result is True
         call_args = redis_manager._async_client.setex.call_args[0]
         assert call_args[0] == "test_key"
         assert call_args[1] == 3600  # 默认TTL
@@ -303,7 +303,7 @@ class TestRedisManager:
 
         _result = await redis_manager.aset("test_key", "test_value", ttl=60)
 
-        assert result is True
+        assert _result is True
         call_args = redis_manager._async_client.setex.call_args[0]
         assert call_args[1] == 60
 
@@ -315,7 +315,7 @@ class TestRedisManager:
 
         _result = await redis_manager.aset("test_key", test_data)
 
-        assert result is True
+        assert _result is True
         call_args = redis_manager._async_client.setex.call_args[0]
         assert '"key": "value"' in call_args[2]
         assert '"number": 123' in call_args[2]
@@ -327,7 +327,7 @@ class TestRedisManager:
 
         _result = await redis_manager.aset("test_key", "test_value")
 
-        assert result is False
+        assert _result is False
 
     @pytest.mark.asyncio
     async def test_delete_async(self, redis_manager):
@@ -432,7 +432,7 @@ class TestRedisManager:
 
         _result = redis_manager.set("test_key", "test_value")
 
-        assert result is False
+        assert _result is False
         redis_manager.logger.error.assert_called()
 
     @pytest.mark.asyncio
@@ -459,7 +459,7 @@ class TestRedisManager:
 
         _result = await redis_manager.aset("test_key", "test_value")
 
-        assert result is False
+        assert _result is False
         redis_manager.logger.error.assert_called()
 
     # === 初始化池测试 ===

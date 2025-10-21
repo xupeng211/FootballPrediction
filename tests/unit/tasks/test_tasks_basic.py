@@ -127,7 +127,7 @@ class TestMaintenanceTasks:
             with patch("src.tasks.maintenance_tasks.cleanup_old_data") as mock_cleanup:
                 mock_cleanup.return_value = {"deleted": 100}
                 _result = mock_cleanup(days=30)
-                assert result["deleted"] == 100
+                assert _result["deleted"] == 100
         except ImportError:
             pytest.skip("maintenance_tasks not available")
 
@@ -178,7 +178,7 @@ class TestMonitoringTasks:
                     },
                 }
                 _result = mock_check()
-                assert result["status"] == "healthy"
+                assert _result["status"] == "healthy"
         except ImportError:
             pytest.skip("monitoring not available")
 
@@ -257,7 +257,7 @@ class TestStreamingTasks:
             ) as mock_process:
                 mock_process.return_value = {"status": "processed"}
                 _result = mock_process({"topic": "test", "message": "data"})
-                assert result["status"] == "processed"
+                assert _result["status"] == "processed"
         except ImportError:
             pytest.skip("streaming_tasks not available")
 
@@ -293,7 +293,7 @@ class TestBackupTasks:
                     "size": 1024000,
                 }
                 _result = mock_backup(type="full")
-                assert result["status"] == "completed"
+                assert _result["status"] == "completed"
                 assert "backup_id" in result
         except ImportError:
             pytest.skip("backup_tasks not available")
@@ -332,7 +332,7 @@ class TestTaskUtils:
                     "result": "completed",
                 }
                 _result = mock_status("task_123")
-                assert result["status"] == "SUCCESS"
+                assert _result["status"] == "SUCCESS"
         except ImportError:
             pytest.skip("task utils not available")
 
@@ -348,7 +348,7 @@ class TestTaskUtils:
                     "timestamp": datetime.now().isoformat(),
                 }
                 _result = mock_format({"processed": 100})
-                assert result["success"] is True
+                assert _result["success"] is True
         except ImportError:
             pytest.skip("task utils not available")
 

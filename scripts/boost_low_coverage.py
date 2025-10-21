@@ -6,6 +6,7 @@
 import os
 from pathlib import Path
 
+
 def boost_low_coverage_modules():
     """为低覆盖率模块生成测试"""
 
@@ -13,7 +14,11 @@ def boost_low_coverage_modules():
     low_coverage_modules = [
         ("lineage", "lineage_reporter", "src/lineage/lineage_reporter.py"),
         ("monitoring", "alert_handlers", "src/monitoring/alert_handlers.py"),
-        ("data/collectors", "fixtures_collector", "src/data/collectors/fixtures_collector.py"),
+        (
+            "data/collectors",
+            "fixtures_collector",
+            "src/data/collectors/fixtures_collector.py",
+        ),
         ("monitoring", "health_checker", "src/monitoring/health_checker.py"),
         ("data/collectors", "odds_collector", "src/data/collectors/odds_collector.py"),
     ]
@@ -48,6 +53,7 @@ def boost_low_coverage_modules():
 
     print(f"\n✅ 成功创建 {len(created_tests)} 个测试文件")
     return created_tests
+
 
 def generate_basic_test(module_name, module_path, category):
     """生成基础测试内容"""
@@ -95,6 +101,7 @@ class Test{module_name.title().replace("_", "")}:
 
     # TODO: Add more specific tests
 '''
+
 
 if __name__ == "__main__":
     # 创建必要的目录

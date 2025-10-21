@@ -205,7 +205,7 @@ class TestFeatureStore:
         _result = mock_store.push(test_data)
 
         # Then
-        assert result is None
+        assert _result is None
 
     def test_mock_feast_result(self):
         """测试：Mock Feast结果"""
@@ -275,7 +275,7 @@ class TestFeatureStore:
         }
 
         # When
-        store = FeatureStore(_config =config)
+        store = FeatureStore(_config=config)
 
         # Then
         assert store is not None

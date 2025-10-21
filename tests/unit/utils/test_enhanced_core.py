@@ -15,11 +15,11 @@ class TestServiceConfig:
         """测试服务配置创建"""
         _config = ServiceConfig("test_service")
 
-        assert config.service_name == "test_service"
-        assert config.enabled is True
-        assert config.retry_attempts == 3
-        assert config.timeout == 30.0
-        assert config.health_check_interval == 60.0
+        assert _config.service_name == "test_service"
+        assert _config.enabled is True
+        assert _config.retry_attempts == 3
+        assert _config.timeout == 30.0
+        assert _config.health_check_interval == 60.0
 
     def test_service_config_custom(self):
         """测试自定义服务配置"""
@@ -31,11 +31,11 @@ class TestServiceConfig:
             health_check_interval=120.0,
         )
 
-        assert config.service_name == "custom_service"
-        assert config.enabled is False
-        assert config.retry_attempts == 5
-        assert config.timeout == 60.0
-        assert config.health_check_interval == 120.0
+        assert _config.service_name == "custom_service"
+        assert _config.enabled is False
+        assert _config.retry_attempts == 5
+        assert _config.timeout == 60.0
+        assert _config.health_check_interval == 120.0
 
 
 class TestEnhancedBaseService:

@@ -43,9 +43,9 @@ class TestMatchEvents:
         event = MatchStartedEvent(match_id=1, home_team_id=2, away_team_id=3)
         _data = event.to_dict()["data"]
 
-        assert data["match_id"] == 1
-        assert data["home_team_id"] == 2
-        assert data["away_team_id"] == 3
+        assert _data["match_id"] == 1
+        assert _data["home_team_id"] == 2
+        assert _data["away_team_id"] == 3
 
     def test_match_finished_event_data(self):
         score = MatchScore(home_score=2, away_score=1)
@@ -54,7 +54,7 @@ class TestMatchEvents:
             home_team_id=1,
             away_team_id=2,
             final_score=score,
-            _result =MatchResult.HOME_WIN,
+            _result=MatchResult.HOME_WIN,
         )
 
         payload = event.to_dict()["data"]
@@ -88,8 +88,8 @@ class TestPredictionEvents:
         )
 
         _data = event.to_dict()["data"]
-        assert data["predicted_home"] == 2
-        assert data["confidence"] == 0.75
+        assert _data["predicted_home"] == 2
+        assert _data["confidence"] == 0.75
 
     def test_prediction_updated_and_cancelled_events(self):
         update_event = PredictionUpdatedEvent(
@@ -143,5 +143,5 @@ class TestPredictionEvents:
         )
 
         _data = event.to_dict()["data"]
-        assert data["points_difference"] == 5
-        assert data["adjustment_reason"] == "manual correction"
+        assert _data["points_difference"] == 5
+        assert _data["adjustment_reason"] == "manual correction"

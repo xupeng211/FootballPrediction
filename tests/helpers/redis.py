@@ -1,10 +1,6 @@
-"""Redis 测试桩"""
+"""Redis 测试桩 - 重构版本（不使用 monkeypatch）"""
 
-import sys
-from types import ModuleType
 from typing import Any, Dict, Optional
-
-from pytest import MonkeyPatch
 
 
 class MockRedis:
@@ -94,33 +90,54 @@ class MockRedisConnectionPool:
         self.kwargs = kwargs
 
 
-def apply_redis_mocks(monkeypatch: MonkeyPatch) -> None:
+# 创建全局 mock 实例（仅在测试中使用）
+_global_redis_mock = None
+_global_async_redis_mock = None
+
+
+def get_mock_redis() -> MockRedis:
+    """获取 Redis mock 实例（单例）"""
+    global _global_redis_mock
+    if _global_redis_mock is None:
+        _global_redis_mock = MockRedis()
+    return _global_redis_mock
+
+
+def get_mock_async_redis() -> MockAsyncRedis:
+    """获取异步 Redis mock 实例（单例）"""
+    global _global_async_redis_mock
+    if _global_async_redis_mock is None:
+        _global_async_redis_mock = MockAsyncRedis()
+    return _global_async_redis_mock
+
+
+def reset_redis_mocks() -> None:
+    """重置 Redis mock 实例（用于测试隔离）"""
+    global _global_redis_mock, _global_async_redis_mock
+    if _global_redis_mock:
+        _global_redis_mock._store.clear()
+    if _global_async_redis_mock:
+        _global_async_redis_mock._store.clear()
+
+
+# 向后兼容的函数（现在只是返回 mock 实例，不使用 monkeypatch）
+def apply_redis_mocks(*args, **kwargs) -> Dict[str, Any]:
     """
-    应用 Redis mock
-
-    Args:
-        monkeypatch: pytest monkeypatch fixture
+    向后兼容：返回 Redis mocks
+    不再使用 monkeypatch，而是返回 mock 实例供测试使用
     """
-    # 创建 mock 模块
-    mock_redis = ModuleType("redis")
-    mock_redis.Redis = MockRedis
-    mock_redis.ConnectionPool = MockRedisConnectionPool
-
-    # 创建 mock redis.asyncio 模块
-    mock_redis_async = ModuleType("redis.asyncio")
-    mock_redis_async.Redis = MockAsyncRedis
-    mock_redis_async.ConnectionPool = MockRedisConnectionPool
-
-    # 应用 mock
-    monkeypatch.setitem(sys.modules, "redis", mock_redis)
-    monkeypatch.setitem(sys.modules, "redis.asyncio", mock_redis_async)
-    monkeypatch.setitem(sys.modules, "redis.client", mock_redis)
-    monkeypatch.setitem(sys.modules, "redis.asyncio.client", mock_redis_async)
+    return {
+        "redis": get_mock_redis(),
+        "redis.asyncio": get_mock_async_redis(),
+    }
 
 
 __all__ = [
     "MockRedis",
     "MockAsyncRedis",
     "MockRedisConnectionPool",
+    "get_mock_redis",
+    "get_mock_async_redis",
+    "reset_redis_mocks",
     "apply_redis_mocks",
 ]

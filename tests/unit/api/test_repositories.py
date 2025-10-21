@@ -120,19 +120,19 @@ class MockRepository:
         entity.id = self.next_id
         self.next_id += 1
         entity.created_at = datetime.utcnow()
-        self.data[str(entity.id)] = entity
+        self._data[str(entity.id)] = entity
         return entity
 
     async def update(self, entity):
         """更新实体"""
         entity.updated_at = datetime.utcnow()
-        self.data[str(entity.id)] = entity
+        self._data[str(entity.id)] = entity
         return entity
 
     async def delete(self, id):
         """删除实体"""
         if str(id) in self.data:
-            del self.data[str(id)]
+            del self._data[str(id)]
             return True
         return False
 
@@ -173,10 +173,12 @@ class TestPredictionRepository:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert "total" in data
-        assert "predictions" in data
-        assert data["total"] == 3
-        assert len(data["predictions"]) == 3
+        assert "total" in _data
+
+        assert "predictions" in _data
+
+        assert _data["total"] == 3
+        assert len(_data["predictions"]) == 3
 
     @patch("src.api.repositories.ReadOnlyPredictionRepoDep")
     def test_get_predictions_with_filters(self, mock_repo_dep, client):
@@ -196,7 +198,7 @@ class TestPredictionRepository:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert data["total"] == 2  # 只有user_id=1的预测
+        assert _data["total"] == 2  # 只有user_id=1的预测
 
     @patch("src.api.repositories.ReadOnlyPredictionRepoDep")
     def test_get_predictions_with_match_filter(self, mock_repo_dep, client):
@@ -216,8 +218,8 @@ class TestPredictionRepository:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert data["total"] == 1  # 只有match_id=124的预测
-        assert data["predictions"][0]["match_id"] == 124
+        assert _data["total"] == 1  # 只有match_id=124的预测
+        assert _data["predictions"][0]["match_id"] == 124
 
     @patch("src.api.repositories.ReadOnlyPredictionRepoDep")
     def test_get_predictions_pagination(self, mock_repo_dep, client):
@@ -226,7 +228,7 @@ class TestPredictionRepository:
         mock_repo = MockRepository()
         # 添加5个预测
         for i in range(1, 6):
-            mock_repo.data[str(i)] = MockPrediction(id=i, user_id=i, match_id=100 + i)
+            mock_repo._data[str(i)] = MockPrediction(id=i, user_id=i, match_id=100 + i)
         mock_repo_dep.return_value = mock_repo
 
         # When
@@ -235,8 +237,8 @@ class TestPredictionRepository:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert data["total"] == 2  # 只返回2条
-        assert len(data["predictions"]) == 2
+        assert _data["total"] == 2  # 只返回2条
+        assert len(_data["predictions"]) == 2
 
     @patch("src.api.repositories.ReadOnlyPredictionRepoDep")
     def test_get_prediction_success(self, mock_repo_dep, client):
@@ -244,7 +246,7 @@ class TestPredictionRepository:
         # Given
         mock_repo = MockRepository()
         _prediction = MockPrediction(id=1, user_id=1, match_id=123)
-        mock_repo.data["1"] = prediction
+        mock_repo._data["1"] = prediction
         mock_repo_dep.return_value = mock_repo
 
         # When
@@ -253,11 +255,12 @@ class TestPredictionRepository:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert data["id"] == 1
-        assert data["user_id"] == 1
-        assert data["match_id"] == 123
-        assert "confidence" in data
-        assert "strategy_used" in data
+        assert _data["id"] == 1
+        assert _data["user_id"] == 1
+        assert _data["match_id"] == 123
+        assert "confidence" in _data
+
+        assert "strategy_used" in _data
 
     @patch("src.api.repositories.ReadOnlyPredictionRepoDep")
     def test_get_prediction_not_found(self, mock_repo_dep, client):
@@ -283,7 +286,7 @@ class TestPredictionRepository:
             pred = MockPrediction(
                 id=i + 1, user_id=1, match_id=100 + i, confidence=0.8 + i * 0.05
             )
-            mock_repo.data[str(i + 1)] = pred
+            mock_repo._data[str(i + 1)] = pred
         mock_repo_dep.return_value = mock_repo
 
         # When
@@ -292,9 +295,9 @@ class TestPredictionRepository:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert data["user_id"] == 1
-        assert data["total_predictions"] == 3
-        assert "average_confidence" in data
+        assert _data["user_id"] == 1
+        assert _data["total_predictions"] == 3
+        assert "average_confidence" in _data
 
     @patch("src.api.repositories.ReadOnlyPredictionRepoDep")
     def test_get_user_prediction_statistics_with_period(self, mock_repo_dep, client):
@@ -309,7 +312,7 @@ class TestPredictionRepository:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert data["period_days"] == 7
+        assert _data["period_days"] == 7
 
     def test_get_predictions_invalid_limit(self, client):
         """测试：无效的限制参数"""
@@ -353,8 +356,8 @@ class TestRepositoryEdgeCases:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert data["total"] == 0
-        assert data["predictions"] == []
+        assert _data["total"] == 0
+        assert _data["predictions"] == []
 
     @patch("src.api.repositories.ReadOnlyPredictionRepoDep")
     def test_predictions_with_no_filters(self, mock_repo_dep, client):
@@ -369,8 +372,9 @@ class TestRepositoryEdgeCases:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert "total" in data
-        assert "predictions" in data
+        assert "total" in _data
+
+        assert "predictions" in _data
 
     @patch("src.api.repositories.ReadOnlyPredictionRepoDep")
     def test_predictions_beyond_limit(self, mock_repo_dep, client):
@@ -379,7 +383,7 @@ class TestRepositoryEdgeCases:
         mock_repo = MockRepository()
         # 只添加2个预测
         for i in range(2):
-            mock_repo.data[str(i + 1)] = MockPrediction(id=i + 1)
+            mock_repo._data[str(i + 1)] = MockPrediction(id=i + 1)
         mock_repo_dep.return_value = mock_repo
 
         # When - 请求10个
@@ -388,7 +392,7 @@ class TestRepositoryEdgeCases:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert data["total"] == 2  # 只返回实际存在的数量
+        assert _data["total"] == 2  # 只返回实际存在的数量
 
     @patch("src.api.repositories.ReadOnlyPredictionRepoDep")
     def test_predictions_offset_beyond_data(self, mock_repo_dep, client):
@@ -397,7 +401,7 @@ class TestRepositoryEdgeCases:
         mock_repo = MockRepository()
         # 只添加2个预测
         for i in range(2):
-            mock_repo.data[str(i + 1)] = MockPrediction(id=i + 1)
+            mock_repo._data[str(i + 1)] = MockPrediction(id=i + 1)
         mock_repo_dep.return_value = mock_repo
 
         # When - 偏移10个
@@ -406,7 +410,7 @@ class TestRepositoryEdgeCases:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert data["total"] == 0  # 空列表
+        assert _data["total"] == 0  # 空列表
 
     @patch("src.api.repositories.ReadOnlyPredictionRepoDep")
     def test_repository_exception_handling(self, mock_repo_dep, client):
@@ -435,5 +439,5 @@ class TestRepositoryEdgeCases:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert data["total_predictions"] == 0
-        assert data["average_confidence"] == 0
+        assert _data["total_predictions"] == 0
+        assert _data["average_confidence"] == 0

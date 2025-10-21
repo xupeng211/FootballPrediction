@@ -116,7 +116,7 @@ class TestServiceManager:
         _result = manager.get_service("nonexistent")
 
         # Then
-        assert result is None
+        assert _result is None
 
     def test_list_services(self, manager):
         """测试：获取所有服务列表"""
@@ -135,7 +135,7 @@ class TestServiceManager:
         assert "service1" in result
         assert "service2" in result
         # 应该是副本，不是原字典
-        assert result is not manager._services
+        assert _result is not manager._services
 
     def test_services_property(self, manager):
         """测试：services属性"""
@@ -168,7 +168,7 @@ class TestServiceManager:
         _result = await manager.initialize_all()
 
         # Then
-        assert result is True
+        assert _result is True
         service1.initialize.assert_called_once()
         service2.initialize.assert_called_once()
 
@@ -190,7 +190,7 @@ class TestServiceManager:
         _result = await manager.initialize_all()
 
         # Then
-        assert result is False
+        assert _result is False
         # 两个服务都应该尝试初始化
         service1.initialize.assert_called_once()
         service2.initialize.assert_called_once()
@@ -209,7 +209,7 @@ class TestServiceManager:
         _result = await manager.initialize_all()
 
         # Then
-        assert result is False
+        assert _result is False
         service.initialize.assert_called_once()
 
     @pytest.mark.asyncio
@@ -219,7 +219,7 @@ class TestServiceManager:
         _result = await manager.initialize_all()
 
         # Then
-        assert result is True
+        assert _result is True
 
     @pytest.mark.asyncio
     async def test_shutdown_all_success(self, manager):

@@ -86,7 +86,7 @@ class TestModelsInstantiation:
                 id=1,
                 match_id=100,
                 model_version="v1.0",
-                _prediction ="HOME_WIN",
+                _prediction="HOME_WIN",
                 confidence=0.85,
                 created_at=datetime.datetime.now(),
             )

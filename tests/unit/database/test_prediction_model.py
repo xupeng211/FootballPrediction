@@ -198,7 +198,7 @@ class TestPredictionModel:
 
         if hasattr(sample_prediction, "async_save"):
             _result = await sample_prediction.async_save(mock_session)
-            assert result is not None
+            assert _result is not None
 
     def test_prediction_model_comparison(self, sample_prediction):
         """测试不同模型预测比较"""

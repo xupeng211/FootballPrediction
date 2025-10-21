@@ -130,7 +130,7 @@ class TestCacheConvenienceFunctions:
         mock_get_manager.return_value = mock_manager
 
         _result = set_cache("test_key", "test_value")
-        assert result is True
+        assert _result is True
         mock_manager.get_sync_client.assert_called_once()
 
     @patch("src.cache.redis_manager.get_redis_manager")
@@ -142,7 +142,7 @@ class TestCacheConvenienceFunctions:
         mock_get_manager.return_value = mock_manager
 
         _result = set_cache("test_key", "test_value", ttl=3600)
-        assert result is True
+        assert _result is True
 
     @patch("src.cache.redis_manager.get_redis_manager")
     def test_delete_cache_function(self, mock_get_manager):
@@ -153,7 +153,7 @@ class TestCacheConvenienceFunctions:
         mock_get_manager.return_value = mock_manager
 
         _result = delete_cache("test_key")
-        assert result is True
+        assert _result is True
         mock_manager.get_sync_client.assert_called_once()
 
     @patch("src.cache.redis_manager.get_redis_manager")
@@ -165,7 +165,7 @@ class TestCacheConvenienceFunctions:
         mock_get_manager.return_value = mock_manager
 
         _result = exists_cache("test_key")
-        assert result is True
+        assert _result is True
         mock_manager.get_sync_client.assert_called_once()
 
     @patch("src.cache.redis_manager.get_redis_manager")
@@ -203,7 +203,7 @@ class TestCacheConvenienceFunctions:
         mock_get_manager.return_value = mock_manager
 
         _result = ttl_cache("test_key")
-        assert result is None
+        assert _result is None
 
 
 class TestAsyncCacheFunctions:

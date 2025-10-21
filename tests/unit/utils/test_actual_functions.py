@@ -838,7 +838,7 @@ class TestTimeFunctions:
             assert callable(parse_datetime)
 
             _result = parse_datetime("2024-01-01")
-            assert result is not None or result is None  # 取决于实现
+            assert _result is not None or result is None  # 取决于实现
         except ImportError:
             pytest.skip("parse_datetime not available")
 

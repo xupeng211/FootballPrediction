@@ -45,13 +45,13 @@ class MockRedis:
         return self.get(key)
 
     def set(self, key, value):
-        self.data[key] = value
+        self._data[key] = value
 
     async def aset(self, key, value):
         self.set(key, value)
 
     def setex(self, key, seconds, value):
-        self.data[key] = value
+        self._data[key] = value
         self.expirations[key] = time.time() + seconds
 
     async def asetex(self, key, seconds, value):
@@ -367,7 +367,7 @@ class TestCacheInvalidate:
 
         # 执行更新
         _result = update_user_profile(100, name="New Name")
-        assert result["updated"] is True
+        assert _result["updated"] is True
         assert call_count == 1
 
         # 检查缓存

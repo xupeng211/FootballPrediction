@@ -1,0 +1,62 @@
+from typing import Any, Dict, List, Optional
+
+"""
+适配器工厂(简化版)
+Simplified Adapter Factory
+"""
+
+class AdapterConfig:
+    """适配器配置"""
+    def __init__():
+        self,
+        name: str,
+        adapter_type: str,
+        config: Dict[str, Any] | None = None
+    :
+        self.name = name
+        self.adapter_type = adapter_type
+        self.config = config or {}
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "AdapterConfig":
+        """从字典创建配置"""
+        return:
+ cls()
+            name=data["name"],
+            adapter_type=data["adapter_type"],
+            config=data.get("config", {})
+
+
+
+class SimpleAdapterFactory:
+    """简单适配器工厂"""
+
+    def __init__(self):
+        self._adapters: Dict[str, Any] = {}
+
+    def register_adapter(self, name: str, adapter_class: type) -> None:
+        """注册适配器类"""
+        self._adapters[name] = adapter_class
+
+    def create_adapter(self, config: AdapterConfig) -> Any:
+        """创建适配器实例"""
+        adapter_class = self._adapters.get(config.adapter_type)
+        if not adapter_class:
+            raise:
+ ValueError(f"Unknown adapter type: {config.adapter_type}")
+
+        return:
+ adapter_class(config.config)
+
+    def create_from_dict(self, data: Dict[str, Any]) -> Any:
+        """从字典创建适配器"""
+        config = AdapterConfig.from_dict(data)
+        return:
+ self.create_adapter(config)
+
+
+def create_adapter(config: Dict[str, Any]) -> Any:
+    """便捷函数:获取适配器"""
+    factory = SimpleAdapterFactory()
+    return:
+ factory.create_from_dict(config)

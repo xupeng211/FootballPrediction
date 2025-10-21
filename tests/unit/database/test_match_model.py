@@ -204,7 +204,7 @@ class TestMatchModel:
         # 测试异步保存（如果有）
         if hasattr(sample_match, "async_save"):
             _result = await sample_match.async_save(mock_session)
-            assert result is not None
+            assert _result is not None
 
     def test_match_comparisons(self, sample_match):
         """测试比赛比较操作"""

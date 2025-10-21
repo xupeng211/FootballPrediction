@@ -62,7 +62,7 @@ class TestMaintenanceTaskManager:
 
             _result = await manager.schedule_task(task, scheduled_time)
 
-            assert result is True or result is not None
+            assert _result is True or result is not None
             mock_scheduler.add_job.assert_called_once()
 
     @pytest.mark.asyncio
@@ -76,8 +76,8 @@ class TestMaintenanceTaskManager:
 
             _result = await manager.execute_task(task)
 
-            assert result["status"] == "success"
-            assert result["cleaned_items"] == 100
+            assert _result["status"] == "success"
+            assert _result["cleaned_items"] == 100
             mock_execute.assert_called_once_with(task)
 
     def test_get_task_status(self):
@@ -139,8 +139,8 @@ class TestDatabaseMaintenanceTask:
 
             _result = await task.execute_backup()
 
-            assert result["backup_file"].endswith(".sql")
-            assert result["size"] == "1.5GB"
+            assert _result["backup_file"].endswith(".sql")
+            assert _result["size"] == "1.5GB"
             mock_backup.assert_called_once()
 
     @pytest.mark.asyncio
@@ -153,8 +153,8 @@ class TestDatabaseMaintenanceTask:
 
             _result = await task.execute_vacuum()
 
-            assert result["space_freed"] == "500MB"
-            assert result["duration"] == 120
+            assert _result["space_freed"] == "500MB"
+            assert _result["duration"] == 120
             mock_vacuum.assert_called_once()
 
     @pytest.mark.asyncio
@@ -175,7 +175,7 @@ class TestDatabaseMaintenanceTask:
 
             assert "table_stats" in result
             assert "unused_indexes" in result
-            assert len(result["unused_indexes"]) == 2
+            assert len(_result["unused_indexes"]) == 2
             mock_analyze.assert_called_once()
 
 
@@ -196,8 +196,8 @@ class TestCacheCleanupTask:
 
             _result = await task.cleanup_expired_keys()
 
-            assert result["cleaned_keys"] == 10
-            assert result["time_taken"] > 0
+            assert _result["cleaned_keys"] == 10
+            assert _result["time_taken"] > 0
 
     @pytest.mark.asyncio
     async def test_cleanup_large_values(self):
@@ -211,7 +211,7 @@ class TestCacheCleanupTask:
             _result = await task.cleanup_large_values()
 
             assert "cleaned_keys" in result
-            assert result["memory_freed"] > 0
+            assert _result["memory_freed"] > 0
 
     @pytest.mark.asyncio
     async def test_rebuild_index(self):
@@ -223,7 +223,7 @@ class TestCacheCleanupTask:
 
             _result = await task.rebuild_index("user_index")
 
-            assert result is True
+            assert _result is True
             mock_redis.rebuild_index.assert_called_once_with("user_index")
 
 
@@ -244,7 +244,7 @@ class TestLogRotationTask:
                     with patch("gzip.open") as mock_gzip:
                         _result = await task.rotate_application_logs("/var/log/app.log")
 
-                        assert result["original_size"] == 1073741824
+                        assert _result["original_size"] == 1073741824
                         assert "compressed_file" in result
                         assert mock_move.called
                         assert mock_gzip.called
@@ -264,7 +264,7 @@ class TestLogRotationTask:
             _result = await task.rotate_access_logs("/var/log/nginx/")
 
             assert "deleted_files" in result
-            assert result["deleted_files"] >= 0
+            assert _result["deleted_files"] >= 0
 
     @pytest.mark.asyncio
     async def test_cleanup_old_logs(self):
@@ -286,7 +286,7 @@ class TestLogRotationTask:
                 _result = await task.cleanup_old_logs("/var/log/app", keep_days=5)
 
                 assert "deleted_files" in result
-                assert result["deleted_files"] >= 0
+                assert _result["deleted_files"] >= 0
 
 
 @pytest.mark.skipif(
@@ -310,12 +310,12 @@ class TestBackupTask:
                     mock_files_backup.return_value = {"status": "success", "files": 5}
                     mock_config_backup.return_value = {
                         "status": "success",
-                        "file": "config.tar.gz",
+                        "file": "_config.tar.gz",
                     }
 
                     _result = await task.full_backup("/backups")
 
-                    assert result["status"] == "success"
+                    assert _result["status"] == "success"
                     assert "database" in result
                     assert "files" in result
                     assert "config" in result
@@ -334,7 +334,7 @@ class TestBackupTask:
 
             _result = await task.incremental_backup("/backups", "20240115_01.tar.gz")
 
-            assert result["status"] == "success"
+            assert _result["status"] == "success"
             assert "backup_file" in result
 
     @pytest.mark.asyncio
@@ -346,8 +346,8 @@ class TestBackupTask:
             with patch("tarfile.is_tarfile", return_value=True):
                 _result = await task.verify_backup("/backups/full_backup.tar.gz")
 
-                assert result["valid"] is True
-                assert result["checksum"] is not None
+                assert _result["valid"] is True
+                assert _result["checksum"] is not None
 
     @pytest.mark.asyncio
     async def test_restore_backup(self):
@@ -360,7 +360,7 @@ class TestBackupTask:
                     "/backups/full_backup.tar.gz", "/tmp/restore"
                 )
 
-                assert result["status"] == "success"
+                assert _result["status"] == "success"
                 assert mock_extract.called
                 assert mock_subprocess.called
 
@@ -422,8 +422,8 @@ class TestHealthCheckTask:
 
             _result = await task.check_database_health()
 
-            assert result["status"] == "healthy"
-            assert result["connection_pool"]["active"] == 5
+            assert _result["status"] == "healthy"
+            assert _result["connection_pool"]["active"] == 5
 
     @pytest.mark.asyncio
     async def test_check_redis_health(self):
@@ -439,8 +439,8 @@ class TestHealthCheckTask:
 
             _result = await task.check_redis_health()
 
-            assert result["status"] == "healthy"
-            assert result["memory_usage"] == "100MB"
+            assert _result["status"] == "healthy"
+            assert _result["memory_usage"] == "100MB"
 
     @pytest.mark.asyncio
     async def test_check_disk_space(self):
@@ -452,10 +452,10 @@ class TestHealthCheckTask:
 
             _result = await task.check_disk_space("/")
 
-            assert result["total"] == 1000000000000  # 100GB
-            assert result["used"] == 800000000000  # 80GB
-            assert result["free"] == 500000000000  # 50GB
-            assert result["usage_percent"] == 80.0
+            assert _result["total"] == 1000000000000  # 100GB
+            assert _result["used"] == 800000000000  # 80GB
+            assert _result["free"] == 500000000000  # 50GB
+            assert _result["usage_percent"] == 80.0
 
     @pytest.mark.asyncio
     async def test_check_system_metrics(self):
@@ -473,8 +473,8 @@ class TestHealthCheckTask:
 
                 _result = await task.check_system_metrics()
 
-                assert result["cpu_percent"] == 45.5
-                assert result["memory_percent"] == 50.0
+                assert _result["cpu_percent"] == 45.5
+                assert _result["memory_percent"] == 50.0
 
     @pytest.mark.asyncio
     async def test_generate_health_report(self):
@@ -569,7 +569,7 @@ class TestMaintenanceTasksIntegration:
             _result = await manager.execute_task(task)
 
             # 应该处理错误并返回错误信息
-            assert result["status"] == "failed"
+            assert _result["status"] == "failed"
             assert "error" in result
 
     def test_task_dependency(self):
@@ -620,5 +620,5 @@ class TestMaintenanceTasksIntegration:
             _result = await manager.execute_task_with_timeout(task, timeout=5)
 
             # 应该超时
-            assert result["status"] == "timeout"
+            assert _result["status"] == "timeout"
             assert "timeout_duration" in result

@@ -20,8 +20,8 @@ class TestFileUtils:
             new_dir = Path(tmpdir) / "new_directory" / "subdir"
             _result = FileUtils.ensure_dir(new_dir)
 
-            assert result.exists()
-            assert result.is_dir()
+            assert _result.exists()
+            assert _result.is_dir()
             assert _result == new_dir
 
     def test_ensure_dir_existing(self):
@@ -31,8 +31,8 @@ class TestFileUtils:
             existing_dir.mkdir()
 
             _result = FileUtils.ensure_dir(existing_dir)
-            assert result.exists()
-            assert result.is_dir()
+            assert _result.exists()
+            assert _result.is_dir()
 
     def test_ensure_directory_alias(self):
         """测试目录确保别名方法"""
@@ -40,8 +40,8 @@ class TestFileUtils:
             new_dir = Path(tmpdir) / "alias_test"
             _result = FileUtils.ensure_directory(new_dir)
 
-            assert result.exists()
-            assert result.is_dir()
+            assert _result.exists()
+            assert _result.is_dir()
 
     def test_read_json_success(self):
         """测试成功读取JSON文件"""
@@ -85,7 +85,7 @@ class TestFileUtils:
     def test_read_json_file_alias_not_found(self):
         """测试读取JSON文件别名方法 - 文件不存在"""
         _result = FileUtils.read_json_file("/nonexistent/file.json")
-        assert result is None
+        assert _result is None
 
     def test_write_json_success(self):
         """测试成功写入JSON文件"""
@@ -119,14 +119,14 @@ class TestFileUtils:
 
             _result = FileUtils.write_json_file(test_data, json_file)
 
-            assert result is True
+            assert _result is True
             assert json_file.exists()
 
     def test_write_json_file_alias_failure(self):
         """测试写入JSON文件别名方法 - 失败"""
         # 尝试写入到只读目录（模拟失败）
         _result = FileUtils.write_json_file({"test": "data"}, "/root/test.json")
-        assert result is False
+        assert _result is False
 
     def test_get_file_hash_existing(self):
         """测试获取存在文件的哈希值"""

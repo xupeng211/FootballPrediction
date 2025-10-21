@@ -15,10 +15,10 @@ from src.models.common_models import (
 def test_data_validation_result():
     """测试数据验证结果"""
     _result = DataValidationResult(is_valid=True)
-    assert result.is_valid is True
+    assert _result.is_valid is True
 
     result.add_error("Test error")
-    assert result.is_valid is False
+    assert _result.is_valid is False
     assert "Test error" in result.errors
 
 

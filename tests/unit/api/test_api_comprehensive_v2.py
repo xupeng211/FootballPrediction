@@ -71,15 +71,16 @@ class TestAPIComprehensiveV2:
         response = client.get("/health")
         assert response.status_code == 200
         _data = response.json()
-        assert data["status"] == "healthy"
-        assert "version" in data
+        assert _data["status"] == "healthy"
+        assert "version" in _data
 
         # 测试详细健康检查
         response = client.get("/health/detailed")
         assert response.status_code == 200
         _data = response.json()
-        assert "services" in data
-        assert "checks" in data
+        assert "services" in _data
+
+        assert "checks" in _data
 
     def test_predictions_api(self):
         """测试预测API"""
@@ -101,7 +102,7 @@ class TestAPIComprehensiveV2:
         async def create_prediction(request: PredictionRequest):
             return PredictionResponse(
                 match_id=request.match_id,
-                _prediction ={"home_win": 0.5, "draw": 0.3, "away_win": 0.2},
+                _prediction={"home_win": 0.5, "draw": 0.3, "away_win": 0.2},
                 confidence=0.85,
                 model_version=request.model_version,
                 created_at=datetime.now().isoformat(),
@@ -113,7 +114,7 @@ class TestAPIComprehensiveV2:
                 raise HTTPException(status_code=404, detail="Prediction not found")
             return PredictionResponse(
                 match_id=prediction_id,
-                _prediction ={"home_win": 0.5, "draw": 0.3, "away_win": 0.2},
+                _prediction={"home_win": 0.5, "draw": 0.3, "away_win": 0.2},
                 confidence=0.85,
                 model_version="latest",
                 created_at=datetime.now().isoformat(),
@@ -130,8 +131,8 @@ class TestAPIComprehensiveV2:
         response = client.post("/predictions", json=request_data)
         assert response.status_code == 200
         _data = response.json()
-        assert data["match_id"] == 123
-        assert "prediction" in data
+        assert _data["match_id"] == 123
+        assert "prediction" in _data
 
         # 测试获取预测
         response = client.get("/predictions/123")
@@ -176,14 +177,15 @@ class TestAPIComprehensiveV2:
         response = client.get("/data/matches?limit=5&offset=0")
         assert response.status_code == 200
         _data = response.json()
-        assert "matches" in data
-        assert data["limit"] == 5
+        assert "matches" in _data
+
+        assert _data["limit"] == 5
 
         # 测试获取单个
         response = client.get("/data/matches/1")
         assert response.status_code == 200
         _data = response.json()
-        assert data["id"] == 1
+        assert _data["id"] == 1
 
     def test_features_api(self):
         """测试特征API"""
@@ -217,14 +219,14 @@ class TestAPIComprehensiveV2:
         response = client.get("/features/matches/123")
         assert response.status_code == 200
         _data = response.json()
-        assert data["match_id"] == 123
-        assert "features" in data
+        assert _data["match_id"] == 123
+        assert "features" in _data
 
         # 测试计算特征
         response = client.post("/features/compute", json={"match_ids": [1, 2, 3]})
         assert response.status_code == 200
         _data = response.json()
-        assert "job_id" in data
+        assert "job_id" in _data
 
     def test_models_api(self):
         """测试模型API"""
@@ -270,14 +272,15 @@ class TestAPIComprehensiveV2:
         response = client.get("/models")
         assert response.status_code == 200
         _data = response.json()
-        assert "models" in data
-        assert len(data["models"]) == 2
+        assert "models" in _data
+
+        assert len(_data["models"]) == 2
 
         # 测试获取模型
         response = client.get("/models/model_v1")
         assert response.status_code == 200
         _data = response.json()
-        assert data["id"] == "model_v1"
+        assert _data["id"] == "model_v1"
 
     def test_monitoring_api(self):
         """测试监控API"""
@@ -323,14 +326,15 @@ class TestAPIComprehensiveV2:
         response = client.get("/monitoring/metrics")
         assert response.status_code == 200
         _data = response.json()
-        assert "system" in data
-        assert "application" in data
+        assert "system" in _data
+
+        assert "application" in _data
 
         # 测试告警
         response = client.get("/monitoring/alerts?severity=error")
         assert response.status_code == 200
         _data = response.json()
-        assert all(a["severity"] == "error" for a in data["alerts"])
+        assert all(a["severity"] == "error" for a in _data["alerts"])
 
     def test_api_error_handling(self):
         """测试API错误处理"""
@@ -446,14 +450,14 @@ class TestAPIComprehensiveV2:
         response = client.get("/paginated?page=1&size=5")
         assert response.status_code == 200
         _data = response.json()
-        assert len(data["items"]) == 5
-        assert data["pagination"]["page"] == 1
+        assert len(_data["items"]) == 5
+        assert _data["pagination"]["page"] == 1
 
         # 最后一页
         response = client.get("/paginated?page=20&size=5")
         assert response.status_code == 200
         _data = response.json()
-        assert len(data["items"]) == 0
+        assert len(_data["items"]) == 0
 
     def test_api_cors(self):
         """测试API CORS"""

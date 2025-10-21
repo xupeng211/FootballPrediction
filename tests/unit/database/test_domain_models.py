@@ -95,9 +95,9 @@ class TestMatch:
         )
 
         _data = match.to_dict()
-        assert data["home_team_id"] == 1
-        assert data["away_team_id"] == 2
-        assert data["status"] == "scheduled"
+        assert _data["home_team_id"] == 1
+        assert _data["away_team_id"] == 2
+        assert _data["status"] == "scheduled"
 
     def test_from_dict(self):
         """测试从字典创建"""
@@ -168,9 +168,9 @@ class TestTeam:
         team = Team(name="Test Team", league_id=10)
         _data = team.to_dict()
 
-        assert data["name"] == "Test Team"
-        assert data["league_id"] == 10
-        assert "stats" in data
+        assert _data["name"] == "Test Team"
+        assert _data["league_id"] == 10
+        assert "stats" in _data
 
 
 class TestPrediction:
@@ -295,9 +295,9 @@ class TestLeague:
         league = League(name="Test League", country="Test Country")
         _data = league.to_dict()
 
-        assert data["name"] == "Test League"
-        assert data["country"] == "Test Country"
-        assert len(data["seasons"]) == 0
+        assert _data["name"] == "Test League"
+        assert _data["country"] == "Test Country"
+        assert len(_data["seasons"]) == 0
 
 
 class TestUser:
@@ -360,10 +360,10 @@ class TestUser:
         _user = User(username="testuser", email="test@example.com")
         _data = user.to_dict()
 
-        assert data["username"] == "testuser"
-        assert data["email"] == "test@example.com"
-        assert data["is_premium"] is False
-        assert data["level"] == 1
+        assert _data["username"] == "testuser"
+        assert _data["email"] == "test@example.com"
+        assert _data["is_premium"] is False
+        assert _data["level"] == 1
 
 
 class TestOdds:

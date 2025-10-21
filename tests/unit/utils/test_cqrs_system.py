@@ -91,7 +91,7 @@ class TestCreatePredictionCommand:
             mock_session.return_value.__aenter__.return_value.execute.return_value.scalar.return_value = None
 
             _result = await command.validate()
-            assert result.is_valid
+            assert _result.is_valid
 
     @pytest.mark.asyncio
     async def test_invalid_confidence(self):
@@ -117,7 +117,7 @@ class TestGetPredictionByIdQuery:
         """测试有效查询"""
         query = GetPredictionByIdQuery(prediction_id=1)
         _result = await query.validate()
-        assert result.is_valid
+        assert _result.is_valid
 
     @pytest.mark.asyncio
     async def test_invalid_id(self):
@@ -144,7 +144,7 @@ class TestCommandBus:
         command = TestCommand()
         _result = await bus.dispatch(command)
 
-        assert result.success
+        assert _result.success
         handler.handle.assert_called_once_with(command)
 
     async def test_no_handler_error(self):
@@ -210,9 +210,9 @@ class TestCreatePredictionHandler:
 
             _result = await handler.handle(command)
 
-            assert result.success
-            assert result.message == "预测创建成功"
-            assert result.data is not None
+            assert _result.success
+            assert _result.message == "预测创建成功"
+            assert _result.data is not None
 
     async def test_handle_duplicate(self):
         """测试重复预测"""
@@ -242,7 +242,7 @@ class TestPredictionCQRSService:
         # 模拟命令总线
         with patch.object(service.command_bus, "dispatch") as mock_dispatch:
             mock_dispatch.return_value = CommandResult.success_result(
-                _data =PredictionDTO(
+                _data=PredictionDTO(
                     id=1,
                     match_id=1,
                     user_id=1,
@@ -260,7 +260,7 @@ class TestPredictionCQRSService:
                 confidence=0.85,
             )
 
-            assert result.success
+            assert _result.success
             mock_dispatch.assert_called_once()
 
     async def test_get_prediction_by_id(self):
@@ -290,19 +290,19 @@ class TestCommandResult:
 
     def test_success_result(self):
         """测试成功结果"""
-        _result = CommandResult.success_result(_data ={"id": 1})
-        assert result.success
-        assert result.message == "操作成功"
-        assert result._data == {"id": 1}
-        assert result.errors is None
+        _result = CommandResult.success_result(_data={"id": 1})
+        assert _result.success
+        assert _result.message == "操作成功"
+        assert _result._data == {"id": 1}
+        assert _result.errors is None
 
     def test_failure_result(self):
         """测试失败结果"""
         errors = ["错误1", "错误2"]
         _result = CommandResult.failure_result(errors)
         assert not result.success
-        assert result.message == "操作失败"
-        assert result.errors == errors
+        assert _result.message == "操作失败"
+        assert _result.errors == errors
 
 
 @pytest.mark.asyncio

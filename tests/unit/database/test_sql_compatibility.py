@@ -56,7 +56,7 @@ class TestJSONBType:
 
             # 测试基本调用
             _result = get_jsonb_type()
-            assert result is not None
+            assert _result is not None
         except ImportError:
             pytest.skip("get_jsonb_type函数不可用")
         except Exception:
@@ -78,7 +78,7 @@ class TestJSONBFunctions:
             # 测试基本调用（可能需要SQLAlchemy列对象）
             mock_column = Mock()
             _result = jsonb_as_text(mock_column)
-            assert result is not None
+            assert _result is not None
         except ImportError:
             pytest.skip("jsonb_as_text函数不可用")
 
@@ -92,7 +92,7 @@ class TestJSONBFunctions:
             mock_column = Mock()
             mock_value = Mock()
             _result = jsonb_contains(mock_column, mock_value)
-            assert result is not None
+            assert _result is not None
         except ImportError:
             pytest.skip("jsonb_contains函数不可用")
 
@@ -106,7 +106,7 @@ class TestJSONBFunctions:
             mock_column = Mock()
             mock_key = Mock()
             _result = jsonb_exists(mock_column, mock_key)
-            assert result is not None
+            assert _result is not None
         except ImportError:
             pytest.skip("jsonb_exists函数不可用")
 
@@ -120,7 +120,7 @@ class TestJSONBFunctions:
             mock_column = Mock()
             mock_path = Mock()
             _result = jsonb_extract_path(mock_column, mock_path)
-            assert result is not None
+            assert _result is not None
         except ImportError:
             pytest.skip("jsonb_extract_path函数不可用")
 
@@ -134,7 +134,7 @@ class TestJSONBFunctions:
             mock_column = Mock()
             mock_path = Mock()
             _result = jsonb_extract_path_text(mock_column, mock_path)
-            assert result is not None
+            assert _result is not None
         except ImportError:
             pytest.skip("jsonb_extract_path_text函数不可用")
 
@@ -147,7 +147,7 @@ class TestJSONBFunctions:
 
             mock_column = Mock()
             _result = jsonb_array_elements(mock_column)
-            assert result is not None
+            assert _result is not None
         except ImportError:
             pytest.skip("jsonb_array_elements函数不可用")
 
@@ -160,7 +160,7 @@ class TestJSONBFunctions:
 
             mock_column = Mock()
             _result = jsonb_each(mock_column)
-            assert result is not None
+            assert _result is not None
         except ImportError:
             pytest.skip("jsonb_each函数不可用")
 
@@ -173,7 +173,7 @@ class TestJSONBFunctions:
 
             mock_column = Mock()
             _result = jsonb_object_keys(mock_column)
-            assert result is not None
+            assert _result is not None
         except ImportError:
             pytest.skip("jsonb_object_keys函数不可用")
 
@@ -186,7 +186,7 @@ class TestJSONBFunctions:
 
             mock_column = Mock()
             _result = jsonb_typeof(mock_column)
-            assert result is not None
+            assert _result is not None
         except ImportError:
             pytest.skip("jsonb_typeof函数不可用")
 
@@ -219,7 +219,7 @@ class TestJSONBAggregateFunctions:
 
             mock_column = Mock()
             _result = jsonb_agg(mock_column)
-            assert result is not None
+            assert _result is not None
         except ImportError:
             pytest.skip("jsonb_agg函数不可用")
 
@@ -232,7 +232,7 @@ class TestJSONBAggregateFunctions:
 
             mock_value = Mock()
             _result = to_jsonb(mock_value)
-            assert result is not None
+            assert _result is not None
         except ImportError:
             pytest.skip("to_jsonb函数不可用")
 
@@ -245,7 +245,7 @@ class TestJSONBAggregateFunctions:
 
             mock_value = Mock()
             _result = cast_to_jsonb(mock_value)
-            assert result is not None
+            assert _result is not None
         except ImportError:
             pytest.skip("cast_to_jsonb函数不可用")
 
@@ -371,7 +371,7 @@ class TestSQLiteCompatibility:
             try:
                 _result = get_jsonb_type(mock_dialect)
                 # 如果成功，结果应该不是None
-                assert result is not None
+                assert _result is not None
             except Exception:
                 # 可能需要更多上下文，这是可以接受的
                 pass

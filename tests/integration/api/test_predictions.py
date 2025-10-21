@@ -86,7 +86,7 @@ class TestPredictionAPIIntegration:
             pred = Prediction(
                 user_id=user.id,
                 match_id=sample_prediction_data["prediction"].match_id,
-                _prediction ="DRAW" if i % 2 == 0 else "AWAY_WIN",
+                _prediction="DRAW" if i % 2 == 0 else "AWAY_WIN",
                 confidence=0.5 + (i * 0.1),
                 created_at=datetime.now(timezone.utc),
             )
@@ -294,7 +294,7 @@ class TestPredictionAPIIntegration:
             pred = Prediction(
                 user_id=user.id,
                 match_id=match.id,
-                _prediction ="HOME_WIN" if i % 2 == 0 else "DRAW",
+                _prediction="HOME_WIN" if i % 2 == 0 else "DRAW",
                 confidence=0.5 + (i * 0.05),
                 status="COMPLETED",
                 is_correct=(i % 3 == 0),  # 每3个预测中1个正确

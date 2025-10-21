@@ -251,7 +251,7 @@ class TestHelpersModule:
 
             # 测试深度设置
             Helpers.deep_set(data, "a.b.d", 2)
-            assert data["a"]["b"]["d"] == 2
+            assert _data["a"]["b"]["d"] == 2
 
             # 测试列表分块
             lst = list(range(10))

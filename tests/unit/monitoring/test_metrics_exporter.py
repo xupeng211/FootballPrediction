@@ -47,7 +47,7 @@ def test_get_metrics_exporter():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = get_metrics_exporter()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -57,7 +57,7 @@ def test_reset_metrics_exporter():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = reset_metrics_exporter()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -67,7 +67,7 @@ def test_set_tables_to_monitor():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = set_tables_to_monitor()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -77,7 +77,7 @@ def test_record_data_collection():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = record_data_collection()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -87,7 +87,7 @@ def test_record_data_cleaning():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = record_data_cleaning()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -97,7 +97,7 @@ def test_record_data_collection_success():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = record_data_collection_success()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -107,7 +107,7 @@ def test_record_data_collection_failure():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = record_data_collection_failure()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -117,7 +117,7 @@ def test_record_data_cleaning_success():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = record_data_cleaning_success()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -127,7 +127,7 @@ def test_record_scheduler_task():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = record_scheduler_task()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -137,7 +137,7 @@ def test_record_scheduler_task_simple():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = record_scheduler_task_simple()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -147,7 +147,7 @@ def test_update_table_row_counts():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = update_table_row_counts()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -157,7 +157,7 @@ def test_get_metrics():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = get_metrics()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 

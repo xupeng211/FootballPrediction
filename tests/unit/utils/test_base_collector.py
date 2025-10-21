@@ -29,11 +29,11 @@ class TestDataCollector:
         """测试创建收集结果实例"""
         try:
             _result = CollectionResult(
-                success=True, _data ={"test": "data"}, message="Test collection"
+                success=True, _data={"test": "data"}, message="Test collection"
             )
-            assert result.success is True
-            assert result._data == {"test": "data"}
-            assert result.message == "Test collection"
+            assert _result.success is True
+            assert _result._data == {"test": "data"}
+            assert _result.message == "Test collection"
         except Exception:
             pytest.skip("Cannot create CollectionResult")
 

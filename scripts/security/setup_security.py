@@ -44,30 +44,23 @@ class SecurityManager:
             "SECRET_KEY": secrets.token_urlsafe(64),
             "JWT_SECRET_KEY": secrets.token_urlsafe(64),
             "JWT_REFRESH_SECRET_KEY": secrets.token_urlsafe(64),
-
             # API密钥
             "API_KEY": secrets.token_urlsafe(48),
             "API_SECRET_KEY": secrets.token_urlsafe(64),
-
             # 数据库加密
             "DB_ENCRYPTION_KEY": secrets.token_bytes(32).hex(),
             "DB_SALT": secrets.token_hex(16),
-
             # Redis
             "REDIS_PASSWORD": secrets.token_urlsafe(32),
-
             # MLflow
             "MLFLOW_TRACKING_PASSWORD": secrets.token_urlsafe(32),
             "MLFLOW_ARTIFACT_KEY": secrets.token_bytes(32).hex(),
-
             # 外部服务
             "EXTERNAL_API_KEY": secrets.token_urlsafe(48),
             "WEBHOOK_SECRET": secrets.token_urlsafe(64),
-
             # 加密相关
             "ENCRYPTION_KEY": Fernet.generate_key().decode(),
             "HASH_SALT": secrets.token_hex(32),
-
             # 会话安全
             "SESSION_SECRET": secrets.token_urlsafe(64),
             "CSRF_SECRET": secrets.token_urlsafe(64),
@@ -89,7 +82,7 @@ class SecurityManager:
 
             # 熵值检查（跳过十六进制字符串）
             entropy = "N/A"
-            if not all(c in '0123456789abcdefABCDEF' for c in key_value):
+            if not all(c in "0123456789abcdefABCDEF" for c in key_value):
                 entropy = self._calculate_entropy(key_value)
                 if entropy < 3.5:  # 最小熵值要求
                     raise ValueError(f"密钥 {key_name} 熵值过低: {entropy:.2f}")
@@ -105,11 +98,13 @@ class SecurityManager:
         prob = [float(s.count(c)) / len(s) for c in dict.fromkeys(s)]
 
         # 计算熵值
-        entropy = - sum(p * (p and math.log(p) / math.log(2.0)) for p in prob)
+        entropy = -sum(p * (p and math.log(p) / math.log(2.0)) for p in prob)
 
         return entropy
 
-    def generate_env_file(self, keys: Dict[str, str], output_path: Optional[str] = None):
+    def generate_env_file(
+        self, keys: Dict[str, str], output_path: Optional[str] = None
+    ):
         """生成环境配置文件"""
         print(f"\n📝 生成 .env.{self.environment} 文件...")
 
@@ -202,11 +197,11 @@ SECURITY_HEADERS={{
                     "type": "urlsafe" if "-" in value else "hex",
                     "purpose": self._get_key_purpose(name),
                     "rotation_period_days": self._get_rotation_period(name),
-                    "checksum": hashlib.sha256(value.encode()).hexdigest()[:16]
+                    "checksum": hashlib.sha256(value.encode()).hexdigest()[:16],
                 }
                 for name, value in keys.items()
             },
-            "security_policies": self._get_security_policies()
+            "security_policies": self._get_security_policies(),
         }
 
         manifest_path = self.keys_dir / f"manifest_{self.environment}.json"
@@ -226,7 +221,7 @@ SECURITY_HEADERS={{
             "API_KEY": "API访问密钥",
             "DB_ENCRYPTION_KEY": "数据库加密",
             "REDIS_PASSWORD": "Redis认证",
-            "ENCRYPTION_KEY": "通用加密"
+            "ENCRYPTION_KEY": "通用加密",
         }
         return purposes.get(key_name, "其他用途")
 
@@ -238,7 +233,7 @@ SECURITY_HEADERS={{
             "API_KEY": 180,
             "DB_ENCRYPTION_KEY": 365,
             "REDIS_PASSWORD": 90,
-            "ENCRYPTION_KEY": 365
+            "ENCRYPTION_KEY": 365,
         }
         return rotation_periods.get(key_name, 180)
 
@@ -250,18 +245,18 @@ SECURITY_HEADERS={{
                 "require_uppercase": True,
                 "require_lowercase": True,
                 "require_numbers": True,
-                "require_symbols": True
+                "require_symbols": True,
             },
             "key_rotation": {
                 "automatic": True,
                 "notification_days_before": 30,
-                "grace_period_days": 7
+                "grace_period_days": 7,
             },
             "access_control": {
                 "principle": "least_privilege",
                 "audit_log": True,
-                "mfa_required": True
-            }
+                "mfa_required": True,
+            },
         }
 
     def generate_encryption_keypair(self):
@@ -272,16 +267,13 @@ SECURITY_HEADERS={{
         from cryptography.hazmat.primitives import serialization
 
         # 生成私钥
-        private_key = rsa.generate_private_key(
-            public_exponent=65537,
-            key_size=4096
-        )
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=4096)
 
         # 序列化私钥
         private_pem = private_key.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.NoEncryption()
+            encryption_algorithm=serialization.NoEncryption(),
         )
 
         # 获取公钥
@@ -290,7 +282,7 @@ SECURITY_HEADERS={{
         # 序列化公钥
         public_pem = public_key.public_bytes(
             encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
         )
 
         # 保存密钥
@@ -373,7 +365,9 @@ SECURITY_HEADERS={{
         print("2. 不要将密钥文件提交到版本控制系统")
         print("3. 定期轮换密钥")
         print("4. 监控密钥使用情况")
-        print(f"\n📊 密钥清单已生成在: {self.keys_dir}/manifest_{self.environment}.json")
+        print(
+            f"\n📊 密钥清单已生成在: {self.keys_dir}/manifest_{self.environment}.json"
+        )
 
         return keys, manifest
 
@@ -422,17 +416,10 @@ def main():
         "--env",
         choices=["development", "testing", "staging", "production"],
         default="production",
-        help="目标环境"
+        help="目标环境",
     )
-    parser.add_argument(
-        "--output",
-        help="环境文件输出路径"
-    )
-    parser.add_argument(
-        "--validate-only",
-        action="store_true",
-        help="仅验证现有配置"
-    )
+    parser.add_argument("--output", help="环境文件输出路径")
+    parser.add_argument("--validate-only", action="store_true", help="仅验证现有配置")
 
     args = parser.parse_args()
 

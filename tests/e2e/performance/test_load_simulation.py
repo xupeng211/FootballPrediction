@@ -45,7 +45,7 @@ class TestLoadSimulation:
         admin_token = (
             await api_client.post(
                 "/api/v1/auth/login",
-                _data ={"username": "e2e_admin", "password": "E2EAdminPass123!"},
+                _data={"username": "e2e_admin", "password": "E2EAdminPass123!"},
             )
         ).json()["access_token"]
         admin_headers = {"Authorization": f"Bearer {admin_token}"}
@@ -83,7 +83,7 @@ class TestLoadSimulation:
                 "username": user_data["username"],
                 "password": user_data["password"],
             }
-            response = await api_client.post("/api/v1/auth/login", _data =login_data)
+            response = await api_client.post("/api/v1/auth/login", _data=login_data)
             if response.status_code == 200:
                 token = response.json()["access_token"]
                 sessions.append(
@@ -213,7 +213,7 @@ class TestLoadSimulation:
         user_token = (
             await api_client.post(
                 "/api/v1/auth/login",
-                _data ={"username": "e2e_user", "password": "E2ETestPass123!"},
+                _data={"username": "e2e_user", "password": "E2ETestPass123!"},
             )
         ).json()["access_token"]
         headers = {"Authorization": f"Bearer {user_token}"}
@@ -297,12 +297,12 @@ class TestLoadSimulation:
 
         # 性能断言
         for result in results:
-            assert result["avg"] < 500, (
-                f"{result['endpoint']} 平均响应时间过长: {result['avg']:.1f}ms"
-            )
-            assert result["max"] < 2000, (
-                f"{result['endpoint']} 最大响应时间过长: {result['max']:.1f}ms"
-            )
+            assert (
+                result["avg"] < 500
+            ), f"{result['endpoint']} 平均响应时间过长: {result['avg']:.1f}ms"
+            assert (
+                result["max"] < 2000
+            ), f"{result['endpoint']} 最大响应时间过长: {result['max']:.1f}ms"
 
     @pytest.mark.asyncio
     async def test_database_query_performance(
@@ -328,7 +328,7 @@ class TestLoadSimulation:
         user_tokens = []
         for user in users:
             login_data = {"username": user["username"], "password": user["password"]}
-            response = await api_client.post("/api/v1/auth/login", _data =login_data)
+            response = await api_client.post("/api/v1/auth/login", _data=login_data)
             if response.status_code == 200:
                 user_tokens.append(response.json()["access_token"])
 
@@ -423,7 +423,7 @@ class TestLoadSimulation:
         token = (
             await api_client.post(
                 "/api/v1/auth/login",
-                _data ={"username": "e2e_user", "password": "E2ETestPass123!"},
+                _data={"username": "e2e_user", "password": "E2ETestPass123!"},
             )
         ).json()["access_token"]
         headers = {"Authorization": f"Bearer {token}"}
@@ -491,7 +491,7 @@ class TestLoadSimulation:
                 "username": user_data["username"],
                 "password": user_data["password"],
             }
-            response = await api_client.post("/api/v1/auth/login", _data =login_data)
+            response = await api_client.post("/api/v1/auth/login", _data=login_data)
             if response.status_code == 200:
                 user_pool.append(
                     {

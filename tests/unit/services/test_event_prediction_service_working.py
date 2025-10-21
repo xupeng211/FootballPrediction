@@ -144,10 +144,10 @@ class TestEventDrivenPredictionService:
 
         # Then
         # 验证预测被更新
-        assert result.predicted_home_score == 3
-        assert result.predicted_away_score == 1
-        assert result.confidence_score == 0.9
-        assert result.updated_at is not None
+        assert _result.predicted_home_score == 3
+        assert _result.predicted_away_score == 1
+        assert _result.confidence_score == 0.9
+        assert _result.updated_at is not None
 
         # 验证仓库方法被调用
         mock_repo.get_by_id.assert_called_once_with(123)
@@ -183,10 +183,10 @@ class TestEventDrivenPredictionService:
         )
 
         # Then
-        assert result.predicted_home_score == 3
+        assert _result.predicted_home_score == 3
         # 其他值保持不变
-        assert result.predicted_away_score == 1
-        assert result.confidence_score == 0.85
+        assert _result.predicted_away_score == 1
+        assert _result.confidence_score == 0.85
 
     @pytest.mark.asyncio
     async def test_batch_predict_and_publish_events(self, service):
@@ -400,9 +400,9 @@ class TestEventDrivenUserService:
         )
 
         # Then
-        assert result["username"] == username
-        assert result["email"] == email
-        assert result["password_hash"] == password_hash
+        assert _result["username"] == username
+        assert _result["email"] == email
+        assert _result["password_hash"] == password_hash
         assert "registration_date" in result
         mock_event_bus.publish.assert_called_once()
 

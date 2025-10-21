@@ -17,7 +17,7 @@ class TestDatabaseWithContainers:
         """测试数据库连接"""
         with test_database_engine.connect() as conn:
             _result = conn.execute(text("SELECT 1"))
-            assert result.scalar() == 1
+            assert _result.scalar() == 1
 
     def test_database_tables_created(self, test_database_engine):
         """测试数据库表是否正确创建"""

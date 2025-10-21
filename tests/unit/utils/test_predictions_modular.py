@@ -114,11 +114,11 @@ async def test_get_match_prediction_handler():
             )
 
             # 验证结果
-            assert result is not None
-            assert result["success"] is True
+            assert _result is not None
+            assert _result["success"] is True
             assert "data" in result
-            assert result["data"]["match_id"] == 123
-            assert result["data"]["source"] == "cached"
+            assert _result["data"]["match_id"] == 123
+            assert _result["data"]["source"] == "cached"
 
 
 @pytest.mark.asyncio
@@ -185,11 +185,11 @@ async def test_batch_predict_matches_handler():
             )
 
             # 验证结果
-            assert result is not None
-            assert result["success"] is True
-            assert result["data"]["total_requested"] == 3
-            assert result["data"]["valid_matches"] == 3
-            assert result["data"]["successful_predictions"] == 3
+            assert _result is not None
+            assert _result["success"] is True
+            assert _result["data"]["total_requested"] == 3
+            assert _result["data"]["valid_matches"] == 3
+            assert _result["data"]["successful_predictions"] == 3
 
 
 @pytest.mark.asyncio
@@ -262,11 +262,11 @@ async def test_get_match_prediction_history_handler():
         )
 
         # 验证结果
-        assert result is not None
-        assert result["success"] is True
-        assert result["data"]["match_id"] == 123
-        assert result["data"]["total_predictions"] == 1
-        assert len(result["data"]["predictions"]) == 1
+        assert _result is not None
+        assert _result["success"] is True
+        assert _result["data"]["match_id"] == 123
+        assert _result["data"]["total_predictions"] == 1
+        assert len(_result["data"]["predictions"]) == 1
 
 
 @pytest.mark.asyncio
@@ -304,11 +304,11 @@ async def test_get_recent_predictions_handler():
         )
 
         # 验证结果
-        assert result is not None
-        assert result["success"] is True
-        assert result["data"]["time_range_hours"] == 24
-        assert result["data"]["total_predictions"] == 1
-        assert len(result["data"]["predictions"]) == 1
+        assert _result is not None
+        assert _result["success"] is True
+        assert _result["data"]["time_range_hours"] == 24
+        assert _result["data"]["total_predictions"] == 1
+        assert len(_result["data"]["predictions"]) == 1
 
 
 def test_backward_compatibility():

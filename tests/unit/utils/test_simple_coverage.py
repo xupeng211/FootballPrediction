@@ -308,14 +308,17 @@ class TestBasicCoverage:
 
     def test_lambda_functions(self):
         """测试lambda函数"""
+
         # 简单lambda
         def add(x, y):
             return x + y
+
         assert add(2, 3) == 5
 
         # 带条件lambda
         def get_sign(x):
             return "positive" if x > 0 else "negative" if x < 0 else "zero"
+
         assert get_sign(5) == "positive"
         assert get_sign(-5) == "negative"
         assert get_sign(0) == "zero"

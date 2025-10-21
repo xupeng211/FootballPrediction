@@ -60,8 +60,8 @@ class TestAPIDataExtended:
             response = client.get("/api/data/matches/1")
             assert response.status_code == 200
             _data = response.json()
-            assert data["id"] == 1
-            assert "score" in data
+            assert _data["id"] == 1
+            assert "score" in _data
 
     def test_get_teams(self, client):
         """测试获取球队列表"""
@@ -93,7 +93,7 @@ class TestAPIDataExtended:
             response = client.get("/api/data/export/json")
             assert response.status_code == 200
             _data = response.json()
-            assert "matches" in data
+            assert "matches" in _data
 
     def test_data_validation_error(self, client):
         """测试数据验证错误"""

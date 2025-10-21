@@ -20,12 +20,12 @@ class TestBadExample:
     def test_badly_formatted_function_zero(self):
         """测试：格式不良的函数（零输入）"""
         _result = badly_formatted_function(0, 5, 5)
-        assert result is None
+        assert _result is None
 
     def test_badly_formatted_function_negative(self):
         """测试：格式不良的函数（负数输入）"""
         _result = badly_formatted_function(-1, 5, 5)
-        assert result is None
+        assert _result is None
 
     def test_badly_formatted_function_edge_cases(self):
         """测试：格式不良的函数（边界情况）"""
@@ -75,7 +75,7 @@ class TestBadExample:
 
         # 非正数返回None
         _result = badly_formatted_function(0, 5, 5)
-        assert result is None
+        assert _result is None
 
     def test_function_parameter_order(self):
         """测试：函数参数顺序"""

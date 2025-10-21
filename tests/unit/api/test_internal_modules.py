@@ -18,11 +18,11 @@ class TestCQRSModule:
         from src.api.cqrs import CommandResponse
 
         response = CommandResponse(
-            success=True, message="Command executed successfully", _data ={"id": 123}
+            success=True, message="Command executed successfully", _data={"id": 123}
         )
         assert response.success is True
         assert response.message == "Command executed successfully"
-        assert response.data["id"] == 123
+        assert response._data["id"] == 123
 
     def test_command_response_failure(self):
         """测试命令响应失败"""
@@ -39,7 +39,7 @@ class TestCQRSModule:
         from src.api.cqrs import QueryResponse
 
         response = QueryResponse(
-            _data =[{"id": 1, "name": "test"}], total=1, page=1, per_page=10
+            _data=[{"id": 1, "name": "test"}], total=1, page=1, per_page=10
         )
         assert len(response.data) == 1
         assert response.total == 1
@@ -50,18 +50,18 @@ class TestCQRSModule:
         from src.api.cqrs import CreateCommand
 
         command = CreateCommand(
-            aggregate_id="test_123", _data ={"name": "test", "value": 100}
+            aggregate_id="test_123", _data={"name": "test", "value": 100}
         )
         assert command.aggregate_id == "test_123"
-        assert command.data["name"] == "test"
+        assert command._data["name"] == "test"
 
     def test_update_command(self):
         """测试更新命令"""
         from src.api.cqrs import UpdateCommand
 
-        command = UpdateCommand(aggregate_id="test_123", _data ={"name": "updated"})
+        command = UpdateCommand(aggregate_id="test_123", _data={"name": "updated"})
         assert command.aggregate_id == "test_123"
-        assert command.data["name"] == "updated"
+        assert command._data["name"] == "updated"
 
     def test_delete_command(self):
         """测试删除命令"""
@@ -114,11 +114,11 @@ class TestEventsModule:
 
         event = Event(
             event_type="test_event",
-            _data ={"message": "test"},
+            _data={"message": "test"},
             timestamp=datetime.utcnow(),
         )
         assert event.event_type == "test_event"
-        assert event.data["message"] == "test"
+        assert event._data["message"] == "test"
         assert event.timestamp is not None
 
     def test_event_handler_interface(self):
@@ -331,7 +331,7 @@ class TestAdaptersModule:
         assert hasattr(adapter, "get_data")
 
         _result = adapter.get_data({})
-        assert result["test"] == "data"
+        assert _result["test"] == "data"
 
     def test_football_data_adapter(self):
         """测试足球数据适配器"""

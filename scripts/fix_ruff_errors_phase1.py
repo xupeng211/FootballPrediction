@@ -11,12 +11,13 @@ import sys
 from pathlib import Path
 from typing import List, Tuple
 
+
 def run_command(cmd: List[str], description: str) -> Tuple[bool, str]:
     """运行命令并返回结果"""
     print(f"\n{'='*60}")
     print(f"🔧 {description}")
     print(f"📝 命令: {' '.join(cmd)}")
-    print('='*60)
+    print("=" * 60)
 
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
@@ -25,6 +26,7 @@ def run_command(cmd: List[str], description: str) -> Tuple[bool, str]:
     except subprocess.CalledProcessError as e:
         print(f"❌ 失败: {e.stderr[:500]}")
         return False, e.stderr
+
 
 def fix_f541_errors():
     """修复 F541: f-string without any placeholders"""
@@ -50,6 +52,7 @@ def fix_f541_errors():
         # 手动修复模式
         fix_f541_manually()
 
+
 def fix_f541_manually():
     """手动修复 F541 错误"""
     patterns = [
@@ -64,16 +67,16 @@ def fix_f541_manually():
     files_to_fix = []
     for root, dirs, files in os.walk("."):
         # 跳过 .venv, __pycache__ 等
-        dirs[:] = [d for d in dirs if not d.startswith('.') and d != '__pycache__']
+        dirs[:] = [d for d in dirs if not d.startswith(".") and d != "__pycache__"]
 
         for file in files:
-            if file.endswith('.py'):
+            if file.endswith(".py"):
                 files_to_fix.append(os.path.join(root, file))
 
     fixed_count = 0
     for file_path in files_to_fix:
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             original_content = content
@@ -84,7 +87,7 @@ def fix_f541_manually():
 
             # 如果内容有变化，写回文件
             if content != original_content:
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write(content)
                 fixed_count += 1
 
@@ -92,6 +95,7 @@ def fix_f541_manually():
             print(f"⚠️ 修复文件 {file_path} 时出错: {e}")
 
     print(f"✅ 手动修复了 {fixed_count} 个文件的 F541 错误")
+
 
 def fix_e722_errors():
     """修复 E722: Do not use bare `except`"""
@@ -103,6 +107,7 @@ def fix_e722_errors():
 
     if not success:
         print("⚠️ 自动修复失败，跳过 E722 错误（需要手动处理）")
+
 
 def fix_unused_variables():
     """修复未使用变量（添加前缀下划线）"""
@@ -123,6 +128,7 @@ def fix_unused_variables():
 
     print("✅ 生成了修复脚本: fix_unused_vars.py")
     print("💡 运行 'python fix_unused_vars.py' 来修复未使用变量")
+
 
 def generate_unused_var_fix_script():
     """生成修复未使用变量的脚本"""
@@ -205,32 +211,33 @@ if __name__ == "__main__":
     main()
 '''
 
+
 def fix_e712_errors():
     """修复 E712: Avoid equality comparisons to `False`"""
     print("\n🎯 修复 E712: Avoid equality comparisons to False")
 
     patterns = [
-        (r'== False', 'is False'),
-        (r'!= False', 'is not False'),
-        (r'== True', 'is True'),
-        (r'!= True', 'is not True'),
+        (r"== False", "is False"),
+        (r"!= False", "is not False"),
+        (r"== True", "is True"),
+        (r"!= True", "is not True"),
     ]
 
     files_to_fix = []
     for root, dirs, files in os.walk("src"):
         for file in files:
-            if file.endswith('.py'):
+            if file.endswith(".py"):
                 files_to_fix.append(os.path.join(root, file))
 
     for root, dirs, files in os.walk("tests"):
         for file in files:
-            if file.endswith('.py'):
+            if file.endswith(".py"):
                 files_to_fix.append(os.path.join(root, file))
 
     fixed_count = 0
     for file_path in files_to_fix:
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             original_content = content
@@ -241,7 +248,7 @@ def fix_e712_errors():
 
             # 如果内容有变化，写回文件
             if content != original_content:
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write(content)
                 fixed_count += 1
 
@@ -250,10 +257,11 @@ def fix_e712_errors():
 
     print(f"✅ 修复了 {fixed_count} 个文件的 E712 错误")
 
+
 def main():
     """主函数"""
     print("🚀 开始 Phase 1: 修复简单 Ruff 错误")
-    print("="*60)
+    print("=" * 60)
 
     # 1. 修复 F541 (f-string 无占位符)
     fix_f541_errors()
@@ -267,13 +275,14 @@ def main():
     # 4. 生成未使用变量修复脚本
     fix_unused_variables()
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("✅ Phase 1 修复完成！")
     print("\n📋 后续步骤：")
     print("1. 运行 'python fix_unused_vars.py' 修复未使用变量")
     print("2. 运行 'ruff check --fix src/ tests/' 进行进一步自动修复")
     print("3. 手动修复剩余的错误")
     print("4. 运行 'make lint' 验证修复结果")
+
 
 if __name__ == "__main__":
     main()

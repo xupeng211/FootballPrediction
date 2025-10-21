@@ -197,12 +197,12 @@ class TestBackwardCompatibility:
     def test_parse_datetime_function_with_none(self):
         """测试：parse_datetime函数处理None"""
         _result = parse_datetime(None)
-        assert result is None
+        assert _result is None
 
     def test_parse_datetime_function_empty_string(self):
         """测试：parse_datetime函数处理空字符串"""
         _result = parse_datetime("")
-        assert result is None
+        assert _result is None
 
     def test_parse_datetime_function_various_formats(self):
         """测试：parse_datetime函数支持多种格式"""
@@ -215,13 +215,13 @@ class TestBackwardCompatibility:
 
         for date_str, expected in test_cases:
             _result = parse_datetime(date_str)
-            assert result is not None
-            assert result.year == expected.year
-            assert result.month == expected.month
-            assert result.day == expected.day
-            assert result.hour == expected.hour
-            assert result.minute == expected.minute
-            assert result.second == expected.second
+            assert _result is not None
+            assert _result.year == expected.year
+            assert _result.month == expected.month
+            assert _result.day == expected.day
+            assert _result.hour == expected.hour
+            assert _result.minute == expected.minute
+            assert _result.second == expected.second
 
     def test_parse_datetime_function_invalid(self):
         """测试：parse_datetime函数处理无效格式"""
@@ -234,7 +234,7 @@ class TestBackwardCompatibility:
 
         for invalid in invalid_cases:
             _result = parse_datetime(invalid)
-            assert result is None
+            assert _result is None
 
 
 @pytest.mark.skipif(not TIME_UTILS_AVAILABLE, reason="Time utils module not available")

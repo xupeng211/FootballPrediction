@@ -105,18 +105,18 @@ class TestHelpers:
         }
 
         # 获取存在的键
-        assert safe_get(data, "name") == "John"
-        assert safe_get(data, "age") == 30
-        assert safe_get(data, "active") is True
-        assert safe_get(data, "score") is None
+        assert safe_get(_data, "name") == "John"
+        assert safe_get(_data, "age") == 30
+        assert safe_get(_data, "active") is True
+        assert safe_get(_data, "score") is None
 
         # 获取不存在的键
-        assert safe_get(data, "nonexistent") is None
-        assert safe_get(data, "email") is None  # 不在顶层
+        assert safe_get(_data, "nonexistent") is None
+        assert safe_get(_data, "email") is None  # 不在顶层
 
         # 使用默认值
-        assert safe_get(data, "nonexistent", "default") == "default"
-        assert safe_get(data, "score", "no_score") is None  # 即使值为None
+        assert safe_get(_data, "nonexistent", "default") == "default"
+        assert safe_get(_data, "score", "no_score") is None  # 即使值为None
 
         # 测试空字典
         empty_data = {}
@@ -127,7 +127,7 @@ class TestHelpers:
         assert safe_get(None, "key", "default") == "default"
 
         # 测试嵌套字典（但此函数不支持嵌套）
-        assert safe_get(data, "profile.email") is None  # 返回None，因为没有这个键
+        assert safe_get(_data, "profile.email") is None  # 返回None，因为没有这个键
 
     def test_format_timestamp(self):
         """测试格式化时间戳"""

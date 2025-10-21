@@ -229,7 +229,7 @@ class TestValidationUtils:
         def validate_required(data, required_fields):
             missing = []
             for field in required_fields:
-                if field not in data or data[field] is None or data[field] == "":
+                if field not in data or _data[field] is None or _data[field] == "":
                     missing.append(field)
             return missing
 
@@ -354,7 +354,7 @@ class TestValidationUtils:
             if condition_field not in data:
                 return True, None  # 条件字段不存在，跳过验证
 
-            if data[condition_field] == condition_value:
+            if _data[condition_field] == condition_value:
                 return validator(data.get(field_to_validate))
             else:
                 return True, None  # 条件不满足，跳过验证
@@ -388,7 +388,7 @@ class TestValidationUtils:
         assert is_valid is True
 
         # 测试无效情况
-        data["card_number"] = "1234"
+        _data["card_number"] = "1234"
         is_valid, msg = validate_conditional(
             data, "payment_method", "credit_card", "card_number", has_valid_card_number
         )
@@ -405,7 +405,7 @@ class TestValidationUtils:
 
             for field, validator in validators.items():
                 if field in data:
-                    is_valid, error = validator(data[field])
+                    is_valid, error = validator(_data[field])
                     results[field] = {"valid": is_valid, "error": error}
                     if not is_valid:
                         all_valid = False
@@ -462,11 +462,11 @@ class TestValidationUtils:
 
             # 并行验证多个字段
             if "email" in data:
-                tasks.append(async_validate_email(data["email"]))
+                tasks.append(async_validate_email(_data["email"]))
 
             # 可以添加更多异步验证任务
-            # tasks.append(async_validate_phone(data["phone"]))
-            # tasks.append(async_check_username(data["username"]))
+            # tasks.append(async_validate_phone(_data["phone"]))
+            # tasks.append(async_check_username(_data["username"]))
 
             results = await asyncio.gather(*tasks, return_exceptions=True)
 

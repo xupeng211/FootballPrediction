@@ -382,7 +382,7 @@ class TestPythonBuiltins:
 
         _data = [5, 1, 3, 2, 4]
         heapq.heapify(data)
-        assert data[0] == 1
+        assert _data[0] == 1
 
         smallest = heapq.heappop(data)
         assert smallest == 1

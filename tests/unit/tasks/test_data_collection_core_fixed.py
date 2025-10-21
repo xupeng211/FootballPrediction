@@ -236,7 +236,7 @@ async def test_mock_scenarios():
     try:
         _result = {"collected": 10, "status": "success"}
         # 在真实环境中，这里会调用on_success
-        assert result["status"] == "success"
+        assert _result["status"] == "success"
     except Exception:
         # 在真实环境中，这里会调用on_failure
         pass

@@ -44,7 +44,7 @@ class TestBaseModule:
             _result = get_backup_metrics()
 
             assert isinstance(result, dict)
-            assert result["status"] in ["success", "error"]
+            assert _result["status"] in ["success", "error"]
             assert "timestamp" in result
 
 

@@ -95,7 +95,7 @@ def test_get_database_manager():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = get_database_manager()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -105,7 +105,7 @@ def test_get_multi_user_database_manager():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = get_multi_user_database_manager()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -115,7 +115,7 @@ def test_initialize_database():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = initialize_database()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -125,7 +125,7 @@ def test_initialize_multi_user_database():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = initialize_multi_user_database()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -135,7 +135,7 @@ def test_initialize_test_database():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = initialize_test_database()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -145,7 +145,7 @@ def test_get_db_session():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = get_db_session()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -155,7 +155,7 @@ def test_get_async_session():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = get_async_session()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -165,7 +165,7 @@ def test_get_reader_session():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = get_reader_session()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -175,7 +175,7 @@ def test_get_writer_session():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = get_writer_session()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -185,7 +185,7 @@ def test_get_admin_session():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = get_admin_session()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -195,7 +195,7 @@ def test_get_async_reader_session():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = get_async_reader_session()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -205,7 +205,7 @@ def test_get_async_writer_session():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = get_async_writer_session()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -215,7 +215,7 @@ def test_get_async_admin_session():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = get_async_admin_session()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -225,7 +225,7 @@ def test_initialize():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = initialize()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -235,7 +235,7 @@ def test_get_session():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = get_session()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -245,7 +245,7 @@ def test_get_async_session():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = get_async_session()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 

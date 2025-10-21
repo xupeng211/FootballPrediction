@@ -12,16 +12,16 @@ def count_skipif_by_file():
 
     # 找出一些关键的永久跳过
     always_skip_patterns = [
-        r'@pytest\.mark\.skipif\(True',
-        r'@pytest\.mark\.skipif\([^)]*True[^)]*\)',
-        r'Module not available',
+        r"@pytest\.mark\.skipif\(True",
+        r"@pytest\.mark\.skipif\([^)]*True[^)]*\)",
+        r"Module not available",
     ]
 
     # 找出可能不会跳过的条件
     conditional_patterns = [
-        r'@pytest\.mark\.skipif\(not.*_AVAILABLE',
-        r'@pytest\.mark\.skipif\(.*os\.getenv',
-        r'@pytest\.mark\.skipif\(.*sys\.platform',
+        r"@pytest\.mark\.skipif\(not.*_AVAILABLE",
+        r"@pytest\.mark\.skipif\(.*os\.getenv",
+        r"@pytest\.mark\.skipif\(.*sys\.platform",
     ]
 
     total_files = 0
@@ -38,7 +38,7 @@ def count_skipif_by_file():
                 total_files += 1
 
                 try:
-                    with open(filepath, 'r', encoding='utf-8') as f:
+                    with open(filepath, "r", encoding="utf-8") as f:
                         content = f.read()
 
                     # 统计永久跳过
@@ -51,14 +51,14 @@ def count_skipif_by_file():
                         matches = re.findall(pattern, content)
                         conditional_skip_count += len(matches)
 
-                except:
+                except Exception:
                     pass
 
-    print(f"分析结果:")
+    print("分析结果:")
     print(f"  测试文件总数: {total_files}")
     print(f"  永久跳过 (skipif=True): {always_skip_count}")
     print(f"  条件跳过 (依赖模块/环境): {conditional_skip_count}")
-    print(f"  其他 skipif: 0")  # 这里简化了
+    print("  其他 skipif: 0")  # 这里简化了
 
     # 检查一些关键模块的实际可用性
     print("\n检查关键模块可用性...")
@@ -76,7 +76,7 @@ def count_skipif_by_file():
             __import__(module)
             print(f"  ✓ {module} - 可用")
             available_modules += 1
-        except:
+        except Exception:
             print(f"  ✗ {module} - 不可用")
 
     # 估算实际会跳过的数量
@@ -98,7 +98,7 @@ def count_skipif_by_file():
 
     print("\n" + "=" * 60)
     print("Phase 2 目标验证:")
-    print(f"  目标: skipped 测试 < 100")
+    print("  目标: skipped 测试 < 100")
     print(f"  估算: {estimated_total_skips}")
 
     if estimated_total_skips < 100:
@@ -106,7 +106,7 @@ def count_skipif_by_file():
         print("   估算跳过数量 < 100")
         return True
     else:
-        print(f"\n❌ Phase 2 目标可能未达成")
+        print("\n❌ Phase 2 目标可能未达成")
         print(f"   估算跳过数量 ({estimated_total_skips}) >= 100")
         return False
 

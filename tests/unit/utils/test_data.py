@@ -51,13 +51,13 @@ class TestGetMatchFeatures:
         # 验证响应
         assert response.status_code == 200
         _data = response.json()
-        assert data["match_id"] == 12345
-        assert data["match_info"]["home_team_id"] == 10
-        assert data["match_info"]["away_team_id"] == 20
-        assert data["features"]["home_team"] is None
-        assert data["features"]["away_team"] is None
-        assert data["prediction"] is None
-        assert data["odds"] == []
+        assert _data["match_id"] == 12345
+        assert _data["match_info"]["home_team_id"] == 10
+        assert _data["match_info"]["away_team_id"] == 20
+        assert _data["features"]["home_team"] is None
+        assert _data["features"]["away_team"] is None
+        assert _data["prediction"] is None
+        assert _data["odds"] == []
 
     @pytest.mark.asyncio
     async def test_get_match_features_with_data(self, api_client_full, sample_match):
@@ -140,16 +140,16 @@ class TestGetMatchFeatures:
         # 验证响应
         assert response.status_code == 200
         _data = response.json()
-        assert data["match_id"] == 12345
-        assert data["features"]["home_team"]["team_id"] == 10
-        assert data["features"]["home_team"]["recent_form"]["wins"] == 3
-        assert data["features"]["home_team"]["team_strength"] == 85.5
-        assert data["prediction"]["model_name"] == "test_model"
-        assert data["prediction"]["probabilities"]["home_win"] == 0.6
-        assert data["prediction"]["predicted_score"] == "2-1"
-        assert len(data["odds"]) == 1
-        assert data["odds"][0]["bookmaker"] == "TestBookmaker"
-        assert data["odds"][0]["home_odds"] == 2.5
+        assert _data["match_id"] == 12345
+        assert _data["features"]["home_team"]["team_id"] == 10
+        assert _data["features"]["home_team"]["recent_form"]["wins"] == 3
+        assert _data["features"]["home_team"]["team_strength"] == 85.5
+        assert _data["prediction"]["model_name"] == "test_model"
+        assert _data["prediction"]["probabilities"]["home_win"] == 0.6
+        assert _data["prediction"]["predicted_score"] == "2-1"
+        assert len(_data["odds"]) == 1
+        assert _data["odds"][0]["bookmaker"] == "TestBookmaker"
+        assert _data["odds"][0]["home_odds"] == 2.5
 
     @pytest.mark.asyncio
     async def test_get_match_features_not_found(self, api_client_full):
@@ -167,8 +167,8 @@ class TestGetMatchFeatures:
         # 验证响应
         assert response.status_code == 404
         _data = response.json()
-        assert data["error"] is True
-        assert "比赛不存在" in data["message"]
+        assert _data["error"] is True
+        assert "比赛不存在" in _data["message"]
 
     @pytest.mark.asyncio
     async def test_get_match_features_server_error(self, api_client_full, sample_match):
@@ -187,8 +187,8 @@ class TestGetMatchFeatures:
         # 验证响应
         assert response.status_code == 500
         _data = response.json()
-        assert data["error"] is True
-        assert "获取比赛特征失败" in data["message"]
+        assert _data["error"] is True
+        assert "获取比赛特征失败" in _data["message"]
 
 
 class TestGetTeamStats:
@@ -266,17 +266,17 @@ class TestGetTeamStats:
         # 验证响应
         assert response.status_code == 200
         _data = response.json()
-        assert data["team_id"] == 10
-        assert data["team_name"] == "Test Team FC"
-        assert data["total_matches"] == 5
-        assert data["wins"] == 3  # 3场胜利
-        assert data["draws"] == 1  # 1场平局
-        assert data["losses"] == 1  # 1场失败
-        assert data["goals_for"] == 8  # 2+2+3+0+1 = 8
-        assert data["goals_against"] == 6  # 1+1+1+2+1 = 6
-        assert data["win_rate"] == 0.6  # 3/5 = 0.6
-        assert data["goal_difference"] == 2  # 8-6 = 2
-        assert data["points"] == 10  # 3*3 + 1*1 + 1*0 = 10
+        assert _data["team_id"] == 10
+        assert _data["team_name"] == "Test Team FC"
+        assert _data["total_matches"] == 5
+        assert _data["wins"] == 3  # 3场胜利
+        assert _data["draws"] == 1  # 1场平局
+        assert _data["losses"] == 1  # 1场失败
+        assert _data["goals_for"] == 8  # 2+2+3+0+1 = 8
+        assert _data["goals_against"] == 6  # 1+1+1+2+1 = 6
+        assert _data["win_rate"] == 0.6  # 3/5 = 0.6
+        assert _data["goal_difference"] == 2  # 8-6 = 2
+        assert _data["points"] == 10  # 3*3 + 1*1 + 1*0 = 10
 
     @pytest.mark.asyncio
     async def test_get_team_stats_no_matches(self, api_client_full):
@@ -303,12 +303,12 @@ class TestGetTeamStats:
         # 验证响应
         assert response.status_code == 200
         _data = response.json()
-        assert data["team_id"] == 10
-        assert data["total_matches"] == 0
-        assert data["wins"] == 0
-        assert data["win_rate"] == 0.0
-        assert data["goal_difference"] == 0
-        assert data["points"] == 0
+        assert _data["team_id"] == 10
+        assert _data["total_matches"] == 0
+        assert _data["wins"] == 0
+        assert _data["win_rate"] == 0.0
+        assert _data["goal_difference"] == 0
+        assert _data["points"] == 0
 
     @pytest.mark.asyncio
     async def test_get_team_stats_not_found(self, api_client_full):
@@ -326,8 +326,8 @@ class TestGetTeamStats:
         # 验证响应
         assert response.status_code == 404
         _data = response.json()
-        assert data["error"] is True
-        assert "球队不存在" in data["message"]
+        assert _data["error"] is True
+        assert "球队不存在" in _data["message"]
 
 
 class TestGetTeamRecentStats:
@@ -369,18 +369,18 @@ class TestGetTeamRecentStats:
         # 验证响应
         assert response.status_code == 200
         _data = response.json()
-        assert data["team_id"] == 10
-        assert data["team_name"] == "Test Team FC"
-        assert data["period_days"] == 30
-        assert data["total_matches"] == 1
-        assert data["home_matches"] == 1
-        assert data["wins"] == 1
-        assert data["win_rate"] == 1.0
-        assert data["clean_sheets"] == 0
-        assert len(data["matches"]) == 1
-        assert data["matches"][0]["match_id"] == 123
-        assert data["matches"][0]["result"] == "win"
-        assert data["matches"][0]["score"] == "2-1"
+        assert _data["team_id"] == 10
+        assert _data["team_name"] == "Test Team FC"
+        assert _data["period_days"] == 30
+        assert _data["total_matches"] == 1
+        assert _data["home_matches"] == 1
+        assert _data["wins"] == 1
+        assert _data["win_rate"] == 1.0
+        assert _data["clean_sheets"] == 0
+        assert len(_data["matches"]) == 1
+        assert _data["matches"][0]["match_id"] == 123
+        assert _data["matches"][0]["result"] == "win"
+        assert _data["matches"][0]["score"] == "2-1"
 
     @pytest.mark.asyncio
     async def test_get_team_recent_stats_custom_days(self, api_client_full):
@@ -407,8 +407,8 @@ class TestGetTeamRecentStats:
         # 验证响应
         assert response.status_code == 200
         _data = response.json()
-        assert data["period_days"] == 7
-        assert data["total_matches"] == 0
+        assert _data["period_days"] == 7
+        assert _data["total_matches"] == 0
 
     @pytest.mark.asyncio
     async def test_get_team_recent_stats_invalid_days(self, api_client_full):
@@ -435,8 +435,8 @@ class TestGetTeamRecentStats:
         # 验证响应
         assert response.status_code == 404
         _data = response.json()
-        assert data["error"] is True
-        assert "球队不存在" in data["message"]
+        assert _data["error"] is True
+        assert "球队不存在" in _data["message"]
 
 
 class TestGetDashboardData:
@@ -492,14 +492,15 @@ class TestGetDashboardData:
         # 验证响应
         assert response.status_code == 200
         _data = response.json()
-        assert "generated_at" in data
-        assert data["today_matches"]["count"] == 1
-        assert len(data["today_matches"]["matches"]) == 1
-        assert data["predictions"]["count"] == 1
-        assert len(data["predictions"]["latest"]) == 1
-        assert data["data_quality"]["overall_status"] == "healthy"
-        assert data["data_quality"]["quality_score"] == 95
-        assert "system_health" in data
+        assert "generated_at" in _data
+
+        assert _data["today_matches"]["count"] == 1
+        assert len(_data["today_matches"]["matches"]) == 1
+        assert _data["predictions"]["count"] == 1
+        assert len(_data["predictions"]["latest"]) == 1
+        assert _data["data_quality"]["overall_status"] == "healthy"
+        assert _data["data_quality"]["quality_score"] == 95
+        assert "system_health" in _data
 
     @pytest.mark.asyncio
     async def test_get_dashboard_data_no_data(self, api_client_full):
@@ -532,9 +533,9 @@ class TestGetDashboardData:
         # 验证响应
         assert response.status_code == 200
         _data = response.json()
-        assert data["today_matches"]["count"] == 0
-        assert data["predictions"]["count"] == 0
-        assert data["data_quality"]["overall_status"] == "healthy"
+        assert _data["today_matches"]["count"] == 0
+        assert _data["predictions"]["count"] == 0
+        assert _data["data_quality"]["overall_status"] == "healthy"
 
     @pytest.mark.asyncio
     async def test_get_dashboard_data_error(self, api_client_full):
@@ -550,8 +551,8 @@ class TestGetDashboardData:
         # 验证响应
         assert response.status_code == 500
         _data = response.json()
-        assert data["error"] is True
-        assert "获取仪表板数据失败" in data["message"]
+        assert _data["error"] is True
+        assert "获取仪表板数据失败" in _data["message"]
 
 
 class TestSystemHealth:

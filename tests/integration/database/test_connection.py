@@ -101,7 +101,9 @@ class TestDatabaseConnection:
             assert result.scalar_one_or_none() is not None
 
         # 验证内层数据被回滚
-        _result = await db_session.execute(select(Team).where(Team.name == "Inner Team"))
+        _result = await db_session.execute(
+            select(Team).where(Team.name == "Inner Team")
+        )
         assert result.scalar_one_or_none() is None
 
     @pytest.mark.asyncio
@@ -212,7 +214,8 @@ class TestDatabaseConnection:
 
         # 复杂查询
         _result = await db_session.execute(
-            text("""
+            text(
+                """
             SELECT t.name, COUNT(m.id) as match_count
             FROM teams t
             LEFT JOIN matches m ON (t.id = m.home_team_id OR t.id = m.away_team_id)
@@ -221,7 +224,8 @@ class TestDatabaseConnection:
             HAVING COUNT(m.id) > 5
             ORDER BY match_count DESC
             LIMIT 10
-        """)
+        """
+            )
         )
 
         rows = result.fetchall()
@@ -257,7 +261,7 @@ class TestDatabaseConnection:
                 pred = Prediction(
                     user_id=user.id,
                     match_id=1,
-                    _prediction ="HOME_WIN" if i % 2 == 0 else "AWAY_WIN",
+                    _prediction="HOME_WIN" if i % 2 == 0 else "AWAY_WIN",
                     confidence=0.5 + (i * 0.01),
                     created_at=datetime.now(timezone.utc),
                 )

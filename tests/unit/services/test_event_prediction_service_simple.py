@@ -204,8 +204,8 @@ class TestEventDrivenPredictionServiceSimple:
         )
 
         # Then
-        assert result.predicted_home == 3
-        assert result.predicted_away == 1  # 原值保留
+        assert _result.predicted_home == 3
+        assert _result.predicted_away == 1  # 原值保留
 
     @pytest.mark.asyncio
     async def test_update_prediction_with_all_fields(self, mock_service):
@@ -232,7 +232,7 @@ class TestEventDrivenPredictionServiceSimple:
         )
 
         # Then
-        assert result.id == 123
+        assert _result.id == 123
         mock_service.update_prediction.assert_called_once()
 
     def test_service_is_mockable(self):
@@ -280,7 +280,7 @@ class TestEventDrivenMatchServiceSimple:
         )
 
         # Then
-        assert result.id == 456
+        assert _result.id == 456
         mock_match_service.create_match.assert_called_once()
 
 
@@ -318,5 +318,5 @@ class TestEventDrivenUserServiceSimple:
         )
 
         # Then
-        assert result["username"] == "testuser"
+        assert _result["username"] == "testuser"
         mock_user_service.register_user.assert_called_once()
