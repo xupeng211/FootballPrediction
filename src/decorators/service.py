@@ -60,7 +60,7 @@ class DecoratorService:
 
         # 如果已经装饰过，直接返回
         if func_name in self._decorated_functions:
-            return self._decorated_functions[func_name]  # type: ignore
+            return self._decorated_functions[func_name]
 
         # 创建具体组件
         component = ConcreteComponent(func_name, func)
@@ -78,7 +78,7 @@ class DecoratorService:
         # 3. 添加指定的装饰器
         if decorator_names:
             for name in decorator_names:
-                _config = self.factory.get_config(name)
+                config = self.factory.get_config(name)
                 if config:
                     configs_to_apply.append(config)
 
@@ -147,7 +147,7 @@ class DecoratorService:
         wrapper.__annotations__ = decorator_component.func.__annotations__
 
         # 添加装饰器统计方法
-        wrapper.get_decorator_stats = decorator_component.get_all_stats  # type: ignore
+        wrapper.get_decorator_stats = decorator_component.get_all_stats
 
         return wrapper
 
@@ -159,10 +159,10 @@ class DecoratorService:
 
     def get_all_stats(self) -> Dict[str, Any]:
         """获取所有装饰器的统计信息"""
-        _stats = {"total_functions": len(self._decorated_functions), "functions": {}}
+        stats = {"total_functions": len(self._decorated_functions), "functions": {}}
 
         for func_name, component in self._decorated_functions.items():
-            stats["functions"][func_name] = component.get_all_stats()  # type: ignore
+            stats["functions"][func_name] = component.get_all_stats()
 
         return stats
 

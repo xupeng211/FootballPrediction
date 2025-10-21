@@ -85,7 +85,7 @@ class AdapterRegistry:
     def get_dependencies(self, name: str) -> List[str]:
         """获取依赖"""
         if name in self._registry:
-            return self._registry[name].get("dependencies", [])  # type: ignore
+            return self._registry[name].get("dependencies", [])
         return []
 
     def resolve_dependencies(self, name: str) -> List[str]:

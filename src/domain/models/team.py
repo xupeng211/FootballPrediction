@@ -81,11 +81,11 @@ class TeamStats:
         self.goals_for += goals_for
         self.goals_against += goals_against
 
-        if _result == "win":
+        if result == "win":
             self.wins += 1
-        elif _result == "draw":
+        elif result == "draw":
             self.draws += 1
-        elif _result == "loss":
+        elif result == "loss":
             self.losses += 1
 
     def __str__(self) -> str:
@@ -138,10 +138,10 @@ class TeamForm:
         streak = 1
 
         for result in self.last_matches[1:]:
-            if _result == "D":
+            if result == "D":
                 break
-            if (streak_type == "win" and _result == "W") or (
-                streak_type == "loss" and _result == "L"
+            if (streak_type == "win" and result == "W") or (
+                streak_type == "loss" and result == "L"
             ):
                 streak += 1
             else:
@@ -227,7 +227,7 @@ class Team:
 
         # 初始化值对象
         if not self.stats:
-            self._stats = TeamStats()
+            self.stats = TeamStats()
         if not self.form:
             self.form = TeamForm()
 
@@ -271,11 +271,11 @@ class Team:
             raise DomainError("进球数不能为负数")
 
         # 更新统计
-        self.stats.update(result, goals_for, goals_against)  # type: ignore
+        self.stats.update(result, goals_for, goals_against)
 
         # 更新状态
-        self.form.add_result(  # type: ignore
-            "W" if _result == "win" else "D" if _result == "draw" else "L"
+        self.form.add_result(
+            "W" if result == "win" else "D" if result == "draw" else "L"
         )
 
         self.updated_at = datetime.utcnow()
@@ -314,7 +314,7 @@ class Team:
         strength += min(max(avg_goal_diff * 2, -10), 10)  # 净胜球权重最高±10
 
         # 最近状态加成
-        if self.form.is_in_good_form:  # type: ignore
+        if self.form.is_in_good_form:
             strength += 10
 
         return min(max(strength, 0), 100)  # 限制在0-100
@@ -433,11 +433,11 @@ class Team:
     def from_dict(cls, data: Dict[str, Any]) -> "Team":
         """从字典创建实例"""
         stats_data = data.pop("stats", None)
-        _stats = None
+        stats = None
         if stats_data:
             for transient_key in ["points", "goal_difference", "win_rate"]:
                 stats_data.pop(transient_key, None)
-            _stats = TeamStats(**stats_data)
+            stats = TeamStats(**stats_data)
 
         form_data = data.pop("form", None)
         form = None
@@ -458,7 +458,7 @@ class Team:
         if data.get("updated_at"):
             data["updated_at"] = datetime.fromisoformat(data["updated_at"])
 
-        return cls(_stats=stats, form=form, **data)
+        return cls(stats=stats, form=form, **data)
 
     def __str__(self) -> str:
         return f"{self.name} ({self.code or self.short_name}) - {self.rank}"

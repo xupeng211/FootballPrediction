@@ -20,7 +20,7 @@ class PredictionCacheManager:
 
     def get(self, key: str) -> Optional[Dict[str, Any]]:
         """Get cached prediction"""
-        return self._cache.get(key)  # type: ignore
+        return self._cache.get(key)
 
     def set(self, key: str, value: Dict[str, Any], ttl: Optional[int] = None) -> None:
         """Cache prediction"""

@@ -30,7 +30,7 @@ try:
     )
 except ImportError:
     # 如果redis模块不可用，使用mock_redis
-    from .mock_redis import (  # type: ignore
+    from .mock_redis import (
         MockRedisManager as RedisManager,
         CacheKeyManager,
         get_redis_manager,

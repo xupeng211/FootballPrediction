@@ -231,7 +231,7 @@ async def get_performance_report(
     """生成性能报告"""
     try:
         # 收集性能数据
-        api_stats: dict = {}  # 从中间件获取  # type: ignore
+        api_stats: dict = {}  # 从中间件获取
         db_stats = db_monitor.get_query_stats()
         cache_stats = cache_monitor.get_cache_stats()
         task_stats = task_monitor.get_task_stats()
@@ -283,7 +283,7 @@ async def get_performance_insights(
     """获取性能洞察"""
     try:
         # 获取所有性能数据
-        api_stats: dict = {}  # type: ignore
+        api_stats: dict = {}
         db_stats = db_monitor.get_query_stats()
         cache_stats = cache_monitor.get_cache_stats()
         task_stats = task_monitor.get_task_stats()
@@ -411,11 +411,11 @@ async def get_performance_trends(
         slope, _ = np.polyfit(x, values, 1)
 
         if abs(slope) < 0.1:
-            trend = "stable"  # type: ignore
+            trend = "stable"
         elif slope > 0:
-            trend = "increasing"  # type: ignore
+            trend = "increasing"
         else:
-            trend = "decreasing"  # type: ignore
+            trend = "decreasing"
 
         return {
             "metric": metric,

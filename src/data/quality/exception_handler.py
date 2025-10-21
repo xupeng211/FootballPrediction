@@ -135,7 +135,7 @@ class StatisticsProvider:
     """统计信息提供器"""
 
     def __init__(self):
-        self._stats = {
+        self.stats = {
             "total_processed": 0,
             "issues_found": 0,
             "issues_fixed": 0,

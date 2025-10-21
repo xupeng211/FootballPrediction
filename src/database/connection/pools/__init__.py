@@ -18,7 +18,7 @@ class ConnectionPool:
         self.min_connections = min_connections
         self.max_connections = max_connections
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
-        self._pool = []  # type: ignore
+        self._pool = []
 
     async def get_connection(self):
         """Get connection from pool"""

@@ -268,7 +268,7 @@ class Match(BaseModel):
 
     def get_match_stats(self) -> Dict[str, Any]:
         """获取比赛统计信息"""
-        _stats = {
+        stats = {
             "match_id": self.id,
             "home_team": self.home_team.team_name if self.home_team else None,
             "away_team": self.away_team.team_name if self.away_team else None,
@@ -328,7 +328,7 @@ class Match(BaseModel):
         """获取未来几天的比赛"""
 
         start_date = datetime.utcnow()
-        end_date = start_date + timedelta(days=days)  # type: ignore
+        end_date = start_date + timedelta(days=days)
 
         return (
             session.query(cls)
@@ -359,7 +359,7 @@ class Match(BaseModel):
         """获取某个球队的所有比赛"""
 
         query = session.query(cls).filter(
-            or_(cls.home_team_id == team_id, cls.away_team_id == team_id)  # type: ignore
+            or_(cls.home_team_id == team_id, cls.away_team_id == team_id)
         )
 
         if season:

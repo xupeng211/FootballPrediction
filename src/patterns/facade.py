@@ -68,9 +68,9 @@ class PredictionFacade:
 
     def __init__(
         self,
-        match_repo: MatchRepository,  # type: ignore
-        prediction_repo: PredictionRepository,  # type: ignore
-        team_repo: TeamRepository,  # type: ignore
+        match_repo: MatchRepository,
+        prediction_repo: PredictionRepository,
+        team_repo: TeamRepository,
         data_collector: UnifiedDataCollector,
     ):
         self.match_repo = match_repo
@@ -165,7 +165,7 @@ class PredictionFacade:
 
     async def _collect_external_data(self, match_id: int) -> Dict[str, Any]:
         """收集外部数据"""
-        _data = {}
+        data = {}
         try:
             # 收集比赛相关数据
             match_data = await self.data_collector.collect_match_data(match_id)
@@ -248,7 +248,7 @@ class PredictionFacade:
 
     async def _save_prediction(self, prediction: Dict[str, Any], user_id: int):
         """保存预测结果"""
-        prediction_entity = Prediction(  # type: ignore
+        prediction_entity = Prediction(
             match_id=prediction["match_id"],
             user_id=user_id,
             prediction_type=prediction["algorithm"],
@@ -272,9 +272,9 @@ class DataCollectionFacade:
 
     def __init__(
         self,
-        match_repo: MatchRepository,  # type: ignore
-        team_repo: TeamRepository,  # type: ignore
-        league_repo: LeagueRepository,  # type: ignore
+        match_repo: MatchRepository,
+        team_repo: TeamRepository,
+        league_repo: LeagueRepository,
         data_collector: UnifiedDataCollector,
     ):
         self.match_repo = match_repo
@@ -315,7 +315,7 @@ class DataCollectionFacade:
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Data sync failed: {str(e)}")
-            results["error"] = str(e)  # type: ignore
+            results["error"] = str(e)
 
         return results
 
@@ -345,13 +345,13 @@ class DataCollectionFacade:
             )
 
             # 计算整体健康度
-            stale_ratio = health["stale_matches"] / max(health["total_matches"], 1)  # type: ignore
+            stale_ratio = health["stale_matches"] / max(health["total_matches"], 1)
             if stale_ratio > 0.3:
                 health["overall_health"] = "poor"
             elif stale_ratio > 0.1:
                 health["overall_health"] = "warning"
 
-            health["last_sync"] = datetime.now()  # type: ignore
+            health["last_sync"] = datetime.now()
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to get data health: {str(e)}")
@@ -394,9 +394,9 @@ class AnalyticsFacade:
 
     def __init__(
         self,
-        match_repo: MatchRepository,  # type: ignore
-        prediction_repo: PredictionRepository,  # type: ignore
-        user_repo: UserRepository,  # type: ignore
+        match_repo: MatchRepository,
+        prediction_repo: PredictionRepository,
+        user_repo: UserRepository,
     ):
         self.match_repo = match_repo
         self.prediction_repo = prediction_repo
@@ -438,7 +438,7 @@ class AnalyticsFacade:
         """获取概览统计"""
         filters = {"created_at": {"$gte": since}}
         if user_id:
-            filters["user_id"] = user_id  # type: ignore
+            filters["user_id"] = user_id
 
         total_predictions = await self.prediction_repo.count(filters)
         correct_predictions = await self.prediction_repo.count(
@@ -561,9 +561,9 @@ class FacadeFactory:
 
     @staticmethod
     def create_prediction_facade(
-        match_repo: MatchRepository,  # type: ignore
-        prediction_repo: PredictionRepository,  # type: ignore
-        team_repo: TeamRepository,  # type: ignore
+        match_repo: MatchRepository,
+        prediction_repo: PredictionRepository,
+        team_repo: TeamRepository,
         data_collector: UnifiedDataCollector,
     ) -> PredictionFacade:
         """创建预测门面"""
@@ -576,9 +576,9 @@ class FacadeFactory:
 
     @staticmethod
     def create_data_collection_facade(
-        match_repo: MatchRepository,  # type: ignore
-        team_repo: TeamRepository,  # type: ignore
-        league_repo: LeagueRepository,  # type: ignore
+        match_repo: MatchRepository,
+        team_repo: TeamRepository,
+        league_repo: LeagueRepository,
         data_collector: UnifiedDataCollector,
     ) -> DataCollectionFacade:
         """创建数据收集门面"""
@@ -591,9 +591,9 @@ class FacadeFactory:
 
     @staticmethod
     def create_analytics_facade(
-        match_repo: MatchRepository,  # type: ignore
-        prediction_repo: PredictionRepository,  # type: ignore
-        user_repo: UserRepository,  # type: ignore
+        match_repo: MatchRepository,
+        prediction_repo: PredictionRepository,
+        user_repo: UserRepository,
     ) -> AnalyticsFacade:
         """创建分析门面"""
         return AnalyticsFacade(

@@ -19,10 +19,10 @@ from typing import Dict, Optional
 from src.core import logger
 from src.core.config import get_settings
 
-from .base import BaseService  # type: ignore
-from .content_analysis import ContentAnalysisService  # type: ignore
-from .data_processing import DataProcessingService  # type: ignore
-from .user_profile import UserProfileService  # type: ignore
+from .base import BaseService
+from .content_analysis import ContentAnalysisService
+from .data_processing import DataProcessingService
+from .user_profile import UserProfileService
 
 """
 足球预测系统服务管理器模块
@@ -76,7 +76,7 @@ class ServiceManager:
         for service in self._services.values():
             try:
                 # 每个服务独立初始化，失败不影响其他服务的尝试
-                _result = await service.initialize()
+                result = await service.initialize()
                 if not result:
                     success = False
                     self.logger.error(f"服务初始化失败: {service.name}")

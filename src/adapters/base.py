@@ -101,13 +101,13 @@ class Adapter(Target):
 
         try:
             # 调用具体适配器的实现
-            _result = await self._request(*args, **kwargs)
+            result = await self._request(*args, **kwargs)
 
             # 更新成功指标
             self.metrics["successful_requests"] += 1
             self.last_error = None
 
-            return _result
+            return result
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             # 更新失败指标
@@ -332,7 +332,7 @@ class BaseAdapter(ABC):
     """基础适配器抽象类"""
 
     def __init__(self, config: Optional[Dict[str, Any]] = None):
-        self._config = config or {}
+        self.config = config or {}
         self.is_initialized = False
 
     async def initialize(self) -> None:

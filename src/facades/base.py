@@ -241,7 +241,7 @@ class SystemFacade(ABC):
         self.metrics["requests_count"] += 1
 
         try:
-            _result = await operation()
+            result = await operation()
 
             # 记录成功指标
             execution_time = (datetime.utcnow() - start_time).total_seconds()

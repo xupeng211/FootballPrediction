@@ -252,7 +252,7 @@ class DataCollectionFacade:
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Data sync failed: {str(e)}")
-            results["error"] = str(e)  # type: ignore
+            results["error"] = str(e)
 
         return results
 
@@ -451,7 +451,7 @@ class SystemFacade:
             raise RuntimeError("System not initialized")
 
         request = PredictionRequest(match_id=match_id, user_id=user_id)
-        _result = await self._prediction_facade.make_prediction(request)
+        result = await self._prediction_facade.make_prediction(request)
 
         # 只返回最关键的信息
         return {
@@ -487,6 +487,6 @@ class SystemFacade:
 
         if self._data_facade:
             data_health = await self._data_facade.get_data_health()
-            health["services"]["data"] = data_health["overall_health"]  # type: ignore
+            health["services"]["data"] = data_health["overall_health"]
 
         return health

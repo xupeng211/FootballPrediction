@@ -81,33 +81,29 @@ class MockAdapter:
 
     async def get_teams(self, league_id=None):
         """获取球队数据"""
-        return [
-            Mock(
-                id="111",
-                name="Manchester United",
-                short_name="MUFC",
-                country="England",
-                founded=1878,
-                stadium="Old Trafford",
-                logo_url="https://example.com/logo.png",
-            )
-        ]
+        team = type('Team', (), {})()
+        team.id = "111"
+        team.name = "Manchester United"
+        team.short_name = "MUFC"
+        team.country = "England"
+        team.founded = 1878
+        team.stadium = "Old Trafford"
+        team.logo_url = "https://example.com/logo.png"
+        return [team]
 
     async def get_players(self, team_id, season=None):
         """获取球员数据"""
-        return [
-            Mock(
-                id="1001",
-                name="Bruno Fernandes",
-                team_id=team_id,
-                position="Midfielder",
-                age=28,
-                nationality="Portugal",
-                height="1.79m",
-                weight="69kg",
-                photo_url="https://example.com/photo.jpg",
-            )
-        ]
+        player = type('Player', (), {})()
+        player.id = "1001"
+        player.name = "Bruno Fernandes"
+        player.team_id = team_id
+        player.position = "Midfielder"
+        player.age = 28
+        player.nationality = "Portugal"
+        player.height = "1.79m"
+        player.weight = "69kg"
+        player.photo_url = "https://example.com/photo.jpg"
+        return [player]
 
 
 class TestAdaptersAPI:
@@ -594,8 +590,13 @@ class TestAdaptersAPI:
         assert "examples" in _data
         assert "benefits" in _data
         assert len(_data["examples"]) == 2
-        assert "API-Football" in _data
-        assert "input" in _data
+        # API-Football 应该在第一个example的source字段中
+        assert _data["examples"][0]["source"] == "API-Football"
+        # 每个example都应该有input和output
+        assert "input" in _data["examples"][0]
+        assert "output" in _data["examples"][0]
+        assert "input" in _data["examples"][1]
+        assert "output" in _data["examples"][1]
 
     # ==================== 错误处理测试 ====================
 

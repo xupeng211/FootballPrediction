@@ -39,7 +39,7 @@ class RedisAsyncOperations:
         if not self.client:
             await self.connect()
         try:
-            value = await self.client.get(key)  # type: ignore
+            value = await self.client.get(key)
             if value:
                 return json.loads(value)
             return None
@@ -54,9 +54,9 @@ class RedisAsyncOperations:
         try:
             serialized = json.dumps(value, default=str)
             if ttl:
-                return await self.client.setex(key, ttl, serialized)  # type: ignore
+                return await self.client.setex(key, ttl, serialized)
             else:
-                return await self.client.set(key, serialized)  # type: ignore
+                return await self.client.set(key, serialized)
         except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
             self.logger.error(f"Error setting key {key}: {str(e)}")
             return False
@@ -66,7 +66,7 @@ class RedisAsyncOperations:
         if not self.client:
             await self.connect()
         try:
-            return bool(await self.client.delete(key))  # type: ignore
+            return bool(await self.client.delete(key))
         except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
             self.logger.error(f"Error deleting key {key}: {str(e)}")
             return False
@@ -76,7 +76,7 @@ class RedisAsyncOperations:
         if not self.client:
             await self.connect()
         try:
-            return bool(await self.client.exists(key))  # type: ignore
+            return bool(await self.client.exists(key))
         except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
             self.logger.error(f"Error checking key {key}: {str(e)}")
             return False
@@ -86,7 +86,7 @@ class RedisAsyncOperations:
         if not self.client:
             await self.connect()
         try:
-            return bool(await self.client.expire(key, ttl))  # type: ignore
+            return bool(await self.client.expire(key, ttl))
         except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
             self.logger.error(f"Error setting TTL for key {key}: {str(e)}")
             return False

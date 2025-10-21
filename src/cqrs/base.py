@@ -28,7 +28,7 @@ class BaseMessage:
     def __init__(self, metadata: Optional[Dict[str, Any]] = None):
         self.message_id = str(uuid.uuid4())
         self.timestamp = datetime.utcnow()
-        self._metadata = metadata or {}
+        self.metadata = metadata or {}
 
 
 class Command(BaseMessage, ABC):

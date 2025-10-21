@@ -55,9 +55,9 @@ class PredictionModel:
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.is_trained = False
         self.model = None
-        self.feature_columns = []  # type: ignore
+        self.feature_columns = []
         self.target_column = "result"
-        self._metadata = {
+        self.metadata = {
             "created_at": datetime.now().isoformat(),
             "version": "1.0.0",
             "description": "Stub implementation of prediction model",
@@ -94,7 +94,7 @@ class PredictionModel:
         }
 
         self.metadata["last_trained"] = datetime.now().isoformat()
-        self.metadata["metrics"] = metrics  # type: ignore
+        self.metadata["metrics"] = metrics
 
         self.logger.info(
             f"Model trained successfully. Accuracy: {metrics['accuracy']:.3f}"
@@ -121,7 +121,7 @@ class PredictionModel:
             n_classes = 3  # 默认3分类
             predictions = np.random.randint(0, n_classes, size=len(X))
         else:
-            predictions = np.random.uniform(0, 1, size=len(X))  # type: ignore
+            predictions = np.random.uniform(0, 1, size=len(X))
 
         return predictions
 
@@ -219,7 +219,7 @@ class PredictionModel:
             self.model_type = model_data["model_type"]
             self.is_trained = model_data["is_trained"]
             self.feature_columns = model_data["feature_columns"]
-            self._metadata = model_data["metadata"]
+            self.metadata = model_data["metadata"]
 
             self.logger.info(f"Model loaded from: {file_path}")
             return True
@@ -310,7 +310,7 @@ class FootballPredictionModel(PredictionModel):
         probabilities = np.random.dirichlet(np.ones(3))
         prediction_idx = np.argmax(probabilities)
 
-        _result = {
+        result = {
             "home_team": home_team,
             "away_team": away_team,
             "prediction": self.target_classes[prediction_idx],

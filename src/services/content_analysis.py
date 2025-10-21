@@ -35,7 +35,7 @@ class Content:
     def __init__(self, content_id: str, content_type: str, data: Dict[str, Any]):
         self.id = content_id
         self.content_type = content_type
-        self._data = data
+        self.data = data
 
 
 class UserProfile:
@@ -60,7 +60,7 @@ class AnalysisResult:
     ):
         self.id = id
         self.analysis_type = analysis_type
-        self._result = result or {}
+        self.result = result or {}
         self.confidence = confidence
         self.timestamp = timestamp or datetime.now()
         self.content_id = content_id
@@ -130,7 +130,7 @@ class ContentAnalysisService(SimpleService):
         return AnalysisResult(
             id=f"analysis_{content.id}",
             analysis_type="content_analysis",
-            _result=analysis_data,
+            result =analysis_data,
             confidence=0.85,
             timestamp=datetime.now(),
             content_id=content.id,
@@ -140,7 +140,7 @@ class ContentAnalysisService(SimpleService):
         """批量分析内容"""
         results: List[AnalysisResult] = []
         for content in contents:
-            _result = await self.analyze_content(content)
+            result = await self.analyze_content(content)
             if result:
                 results.append(result)
         return results
@@ -246,7 +246,7 @@ class ContentAnalysisService(SimpleService):
                 scores[category] = score
 
         if scores:
-            best_category = max(scores, key=scores.get)  # type: ignore
+            best_category = max(scores, key=scores.get)
             confidence = min(scores[best_category] / 5, 1.0)  # 归一化到0-1
             return {
                 "category": best_category,

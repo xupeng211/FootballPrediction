@@ -62,7 +62,7 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
         import random
 
         if random.random() > self.sample_rate:
-            return await call_next(request)  # type: ignore
+            return await call_next(request)
 
         # 生成请求ID
         request_id = f"{request.method}_{hash(str(request.url))}_{time.time()}"
@@ -151,7 +151,7 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
                     f"returned {response.status_code} in {duration:.4f}s"
                 )
 
-            return response  # type: ignore
+            return response
 
         except (ValueError, RuntimeError, TimeoutError) as e:
             # 记录异常
@@ -170,7 +170,7 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
 
     def get_performance_stats(self) -> Dict:
         """获取性能统计信息"""
-        _stats = {
+        stats = {
             "total_requests": self.total_requests,
             "current_concurrent_requests": len(self.active_requests),
             "max_concurrent_requests": self.max_concurrent_requests,
@@ -239,7 +239,7 @@ class DatabasePerformanceMiddleware:
                 "error_count": 0,
             }
 
-        _stats = self.query_stats[query_type]
+        stats = self.query_stats[query_type]
         stats["count"] += 1
         stats["total_time"] += duration
         stats["rows_total"] += rows_affected
@@ -264,7 +264,7 @@ class DatabasePerformanceMiddleware:
 
     def get_query_stats(self) -> Dict:
         """获取查询统计信息"""
-        _stats = {"total_queries": self.total_queries, "query_types": {}}
+        stats = {"total_queries": self.total_queries, "query_types": {}}
 
         for query_type, data in self.query_stats.items():
             stats["query_types"][query_type] = {
@@ -326,7 +326,7 @@ class CachePerformanceMiddleware:
             self.cache_stats["hits"] / total_requests if total_requests > 0 else 0
         )
 
-        _stats = {
+        stats = {
             "hit_rate": hit_rate,
             "total_requests": total_requests,
             "hits": self.cache_stats["hits"],
@@ -358,7 +358,7 @@ class BackgroundTaskPerformanceMonitor:
 
     def start_task(self, task_id: str, task_name: str):
         """开始任务跟踪"""
-        self.active_tasks[task_id] = {"name": task_name, "start_time": time.time()}  # type: ignore
+        self.active_tasks[task_id] = {"name": task_name, "start_time": time.time()}
 
     def end_task(self, task_id: str, success: bool = True, error: Optional[str] = None):
         """结束任务跟踪"""
@@ -366,8 +366,8 @@ class BackgroundTaskPerformanceMonitor:
             return
 
         task = self.active_tasks[task_id]
-        duration = time.time() - task["start_time"]  # type: ignore
-        task_name = task["name"]  # type: ignore
+        duration = time.time() - task["start_time"]
+        task_name = task["name"]
 
         # 更新任务统计
         if task_name not in self.task_stats:
@@ -380,7 +380,7 @@ class BackgroundTaskPerformanceMonitor:
                 "max_time": 0,
             }
 
-        _stats = self.task_stats[task_name]
+        stats = self.task_stats[task_name]
         stats["total_count"] += 1
         stats["total_time"] += duration
         stats["min_time"] = min(stats["min_time"], duration)
@@ -407,10 +407,10 @@ class BackgroundTaskPerformanceMonitor:
 
     def get_task_stats(self) -> Dict:
         """获取任务统计信息"""
-        _stats = {"active_tasks": len(self.active_tasks), "task_types": {}}
+        stats = {"active_tasks": len(self.active_tasks), "task_types": {}}
 
         for task_name, data in self.task_stats.items():
-            stats["task_types"][task_name] = {  # type: ignore
+            stats["task_types"][task_name] = {
                 "total_count": data["total_count"],
                 "success_count": data["success_count"],
                 "failure_count": data["failure_count"],

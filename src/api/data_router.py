@@ -225,7 +225,7 @@ async def get_team_statistics(
     logger.info(f"获取球队 {team_id} 统计")
 
     try:
-        _stats = TeamStatistics(
+        stats = TeamStatistics(
             team_id=team_id,
             matches_played=30,
             wins=18,
@@ -316,7 +316,7 @@ async def get_match_statistics(match_id: int):
     logger.info(f"获取比赛 {match_id} 统计")
 
     try:
-        _stats = MatchStatistics(
+        stats = MatchStatistics(
             match_id=match_id,
             possession_home=55.5,
             possession_away=44.5,

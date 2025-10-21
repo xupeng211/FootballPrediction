@@ -59,7 +59,7 @@ class CommandBus:
                 raise ValueError(f"命令验证失败: {', '.join(validation_result.errors)}")
 
         # 处理命令
-        _result = await handler.handle(command)
+        result = await handler.handle(command)
 
         logger.info(f"命令处理完成: {command_type.__name__}")
 
@@ -117,7 +117,7 @@ class QueryBus:
                 raise ValueError(f"查询验证失败: {', '.join(validation_result.errors)}")
 
         # 处理查询
-        _result = await handler.handle(query)
+        result = await handler.handle(query)
 
         logger.info(f"查询处理完成: {query_type.__name__}")
 
@@ -202,4 +202,4 @@ class MetricsMiddleware:
 
     def get_metrics(self) -> Dict[str, Any]:
         """获取指标"""
-        return self._metrics.copy()  # type: ignore
+        return self._metrics.copy()

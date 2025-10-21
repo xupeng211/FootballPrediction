@@ -9,7 +9,7 @@ Provides backward compatible exports for the modular logging system.
 
 import os
 
-from .logging import (  # type: ignore
+from .logging import (
     # 重新导出主要类和函数
     LogLevel,
     LogCategory,
@@ -24,7 +24,7 @@ from .logging import (  # type: ignore
 # 初始化默认配置
 
 LoggerManager.configure(
-    level=LogLevel.INFO,  # type: ignore
+    level=LogLevel["INFO"],
     enable_json=os.getenv("LOG_JSON", "true").lower() == "true",
     log_dir=os.getenv("LOG_DIR", "logs"),
 )

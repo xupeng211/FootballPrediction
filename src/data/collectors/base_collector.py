@@ -173,7 +173,7 @@ class DataCollector(ABC):
                 method=method, url=url, headers=headers, params=params, json=json_data
             ) as response:
                 if response.status == 200:
-                    return await response.json()  # type: ignore
+                    return await response.json()
                 else:
                     raise aiohttp.ClientResponseError(
                         request_info=response.request_info,
@@ -182,7 +182,7 @@ class DataCollector(ABC):
                         message=f"HTTP {response.status} for {url}",
                     )
 
-    async def _make_request(  # type: ignore
+    async def _make_request(
         self,
         url: str,
         method: str = "GET",
@@ -227,7 +227,7 @@ class DataCollector(ABC):
         for attempt in range(self.max_retries):
             try:
                 # 使用新的带重试机制的方法
-                return await self._make_request_with_retry(  # type: ignore
+                return await self._make_request_with_retry(
                     url=url,
                     method=method,
                     headers=headers,
@@ -297,17 +297,17 @@ class DataCollector(ABC):
 
                         # 根据表类型设置特定字段
                         if table_name == "raw_match_data":
-                            bronze_record.external_match_id = data.get(  # type: ignore
+                            bronze_record.external_match_id = data.get(
                                 "external_match_id"
                             )
-                            bronze_record.external_league_id = data.get(  # type: ignore
+                            bronze_record.external_league_id = data.get(
                                 "external_league_id"
                             )
                             if "match_time" in data:
                                 try:
                                     match_time_str = data["match_time"]
                                     if isinstance(match_time_str, str):
-                                        bronze_record.match_time = (  # type: ignore
+                                        bronze_record.match_time = (
                                             datetime.fromisoformat(
                                                 match_time_str.replace("Z", "+00:00")
                                             )
@@ -318,20 +318,20 @@ class DataCollector(ABC):
                                     )
 
                         elif table_name == "raw_odds_data":
-                            bronze_record.external_match_id = data.get(  # type: ignore
+                            bronze_record.external_match_id = data.get(
                                 "external_match_id"
                             )
-                            bronze_record.bookmaker = data.get("bookmaker")  # type: ignore
-                            bronze_record.market_type = data.get("market_type")  # type: ignore
+                            bronze_record.bookmaker = data.get("bookmaker")
+                            bronze_record.market_type = data.get("market_type")
 
                         elif table_name == "raw_scores_data":
-                            bronze_record.external_match_id = data.get(  # type: ignore
+                            bronze_record.external_match_id = data.get(
                                 "external_match_id"
                             )
-                            bronze_record.match_status = data.get("match_status")  # type: ignore
-                            bronze_record.home_score = data.get("home_score")  # type: ignore
-                            bronze_record.away_score = data.get("away_score")  # type: ignore
-                            bronze_record.match_minute = data.get("match_minute")  # type: ignore
+                            bronze_record.match_status = data.get("match_status")
+                            bronze_record.home_score = data.get("home_score")
+                            bronze_record.away_score = data.get("away_score")
+                            bronze_record.match_minute = data.get("match_minute")
 
                         session.add(bronze_record)
                         saved_count += 1
@@ -405,7 +405,7 @@ class DataCollector(ABC):
                 session.add(log_entry)
                 await session.commit()
                 await session.refresh(log_entry)
-                return log_entry.id  # type: ignore
+                return log_entry.id
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             self.logger.error(f"Failed to create collection log: {str(e)}")
@@ -432,10 +432,10 @@ class DataCollector(ABC):
                 return
 
             async with self.db_manager.get_async_session() as session:
-                log_entry = await session.get(str(DataCollectionLog), log_id)  # type: ignore
+                log_entry = await session.get(str(DataCollectionLog), log_id)
                 if log_entry:
                     # 根据结果状态确定最终状态
-                    if result.status == "success":  # type: ignore
+                    if result.status == "success":
                         status = CollectionStatus.SUCCESS
                     elif result.status == "failed":
                         status = CollectionStatus.FAILED
@@ -481,7 +481,7 @@ class DataCollector(ABC):
                 log_id = await self._create_collection_log(data_type)
 
                 # 执行采集
-                _result = await collect_method()
+                result = await collect_method()
                 results[data_type] = result
 
                 # 更新采集日志

@@ -6,6 +6,6 @@
 """
 
 from .lineage_reporter import LineageReporter
-from .metadata_manager import MetadataManager  # type: ignore
+from .metadata_manager import MetadataManager
 
 __all__ = ["LineageReporter", "MetadataManager"]

@@ -83,7 +83,7 @@ class EventDrivenApplication:
 
             def __init__(self):
                 super().__init__("SimpleStats")
-                self._stats = {}
+                self.stats = {}
 
             async def handle(self, event: Event) -> None:
                 """处理事件并更新统计"""
@@ -108,11 +108,11 @@ class EventDrivenApplication:
 
     def get_event_stats(self) -> dict:
         """获取事件统计信息"""
-        return self._event_bus.get_stats()  # type: ignore
+        return self._event_bus.get_stats()
 
     async def health_check(self) -> dict:
         """事件系统健康检查"""
-        _stats = self.get_event_stats()
+        stats = self.get_event_stats()
 
         return {
             "status": "healthy"

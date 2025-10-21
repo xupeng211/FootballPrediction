@@ -98,7 +98,7 @@ async def get_prediction_engine() -> Optional["PredictionEngine"]:
     """
     from src.core.prediction_engine import get_prediction_engine
 
-    return await get_prediction_engine()  # type: ignore
+    return await get_prediction_engine()
 
 
 async def get_redis_manager():

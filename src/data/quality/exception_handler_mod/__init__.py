@@ -149,7 +149,7 @@ class StatisticsProvider:
     """统计信息提供者"""
 
     def __init__(self):
-        self._stats = {}
+        self.stats = {}
 
     def calculate_basic_stats(self, data: List[float]) -> Dict[str, float]:
         """计算基础统计信息"""
@@ -253,7 +253,7 @@ class InvalidDataHandler:
 
     def get_invalid_records(self) -> List[Dict[str, Any]]:
         """获取无效记录"""
-        return self.invalid_records  # type: ignore
+        return self.invalid_records
 
 
 class SuspiciousOddsHandler:
@@ -305,7 +305,7 @@ class DataQualityRule:
     def validate(self, data: Any) -> bool:
         """验证数据"""
         try:
-            _result = self.validator(data)
+            result = self.validator(data)
             return bool(result)
         except Exception:
             return False

@@ -22,9 +22,9 @@ from .anomaly_detector import (
 
 # 如果 AdvancedAnomalyDetector 不存在，创建一个简单的实现
 try:
-    from .advanced_anomaly_detector import AdvancedAnomalyDetector  # type: ignore
+    from .advanced_anomaly_detector import AdvancedAnomalyDetector
 except ImportError:
-    from .anomaly_detector import AnomalyDetector as AdvancedAnomalyDetector  # type: ignore
+    from .anomaly_detector import AnomalyDetector as AdvancedAnomalyDetector
 from .data_quality_monitor import DataQualityMonitor
 from .exception_handler import DataQualityExceptionHandler
 from .ge_prometheus_exporter import GEPrometheusExporter

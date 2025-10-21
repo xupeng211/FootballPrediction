@@ -26,7 +26,7 @@ class PrometheusCollector:
 
     def get_metrics(self) -> Dict[str, Any]:
         """获取所有指标"""
-        return self.metrics  # type: ignore
+        return self.metrics
 
 
 class PrometheusExporter:
@@ -49,7 +49,7 @@ class PrometheusExporter:
 # 创建默认实例
 collector = PrometheusCollector()
 exporter = PrometheusExporter(collector)
-metrics = {}  # type: ignore
-utils = {}  # type: ignore
+metrics = {}
+utils = {}
 
 __all__ = ["collector", "exporter", "metrics", "utils"]

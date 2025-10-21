@@ -8,7 +8,7 @@ from pydantic import BaseModel
 import types
 
 
-class BaseModel(BaseModel):  # type: ignore
+class BaseModel(BaseModel):
     """Base model class"""
 
     id: Optional[int] = None

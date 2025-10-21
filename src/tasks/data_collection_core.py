@@ -14,7 +14,7 @@ from celery import Celery
 from src.core.logging import get_logger
 from src.database.connection import DatabaseManager
 
-from .data_collectors import DataCollectionOrchestrator  # type: ignore
+from .data_collectors import DataCollectionOrchestrator
 
 logger = get_logger(__name__)
 
@@ -55,7 +55,7 @@ def collect_fixtures_task(self) -> Dict[str, Any]:
 
     try:
         # 获取数据库连接
-        from src.database.connection import get_db_manager  # type: ignore
+        from src.database.connection import get_db_manager
 
         db_manager = get_db_manager()
         task.set_database_manager(db_manager)
@@ -64,8 +64,8 @@ def collect_fixtures_task(self) -> Dict[str, Any]:
         collector = task.orchestrator.get_collector("fixtures")
         if collector:
             # 使用asyncio.run在同步上下文中运行异步代码
-            _result = asyncio.run(collector.collect_async(days_ahead=30))  # type: ignore
-            return result  # type: ignore
+            result = asyncio.run(collector.collect_async(days_ahead=30))
+            return result
         else:
             return {"error": "Fixtures collector not found"}
 
@@ -81,7 +81,7 @@ def collect_odds_task(self) -> Dict[str, Any]:
 
     try:
         # 获取数据库连接
-        from src.database.connection import get_db_manager  # type: ignore
+        from src.database.connection import get_db_manager
 
         db_manager = get_db_manager()
         task.set_database_manager(db_manager)
@@ -90,8 +90,8 @@ def collect_odds_task(self) -> Dict[str, Any]:
         collector = task.orchestrator.get_collector("odds")
         if collector:
             # 使用asyncio.run在同步上下文中运行异步代码
-            _result = asyncio.run(collector.collect_async())  # type: ignore
-            return result  # type: ignore
+            result = asyncio.run(collector.collect_async())
+            return result
         else:
             return {"error": "Odds collector not found"}
 
@@ -107,7 +107,7 @@ def collect_scores_task(self) -> Dict[str, Any]:
 
     try:
         # 获取数据库连接
-        from src.database.connection import get_db_manager  # type: ignore
+        from src.database.connection import get_db_manager
 
         db_manager = get_db_manager()
         task.set_database_manager(db_manager)
@@ -116,8 +116,8 @@ def collect_scores_task(self) -> Dict[str, Any]:
         collector = task.orchestrator.get_collector("scores")
         if collector:
             # 使用asyncio.run在同步上下文中运行异步代码
-            _result = asyncio.run(collector.collect_async())  # type: ignore
-            return result  # type: ignore
+            result = asyncio.run(collector.collect_async())
+            return result
         else:
             return {"error": "Scores collector not found"}
 
@@ -126,7 +126,7 @@ def collect_scores_task(self) -> Dict[str, Any]:
         raise
 
 
-@celery_app.task  # type: ignore
+@celery_app.task
 def manual_collect_all_data() -> Dict[str, Any]:
     """手动收集所有数据任务
 
@@ -138,21 +138,21 @@ def manual_collect_all_data() -> Dict[str, Any]:
 
     try:
         # 获取数据库连接
-        from src.database.connection import get_db_manager  # type: ignore
+        from src.database.connection import get_db_manager
 
         db_manager = get_db_manager()
         task.set_database_manager(db_manager)
 
         # 使用asyncio.run在同步上下文中运行异步代码
-        results = asyncio.run(task.orchestrator.collect_all_data())  # type: ignore
-        return results  # type: ignore
+        results = asyncio.run(task.orchestrator.collect_all_data())
+        return results
 
     except (RuntimeError, ValueError, ConnectionError) as e:
         logger.error(f"Failed to collect all data: {str(e)}")
         return {"error": str(e), "collected_at": datetime.utcnow().isoformat()}
 
 
-@celery_app.task  # type: ignore
+@celery_app.task
 def emergency_data_collection_task(
     data_types: Optional[List[str]] = None, priority: int = 1
 ) -> Dict[str, Any]:
@@ -165,7 +165,7 @@ def emergency_data_collection_task(
 
     try:
         # 获取数据库连接
-        from src.database.connection import get_db_manager  # type: ignore
+        from src.database.connection import get_db_manager
 
         db_manager = get_db_manager()
         task.set_database_manager(db_manager)
@@ -178,13 +178,13 @@ def emergency_data_collection_task(
         # 使用asyncio.run在同步上下文中运行异步代码
         results = asyncio.run(
             task.orchestrator.collect_all_data(data_types=critical_types)
-        )  # type: ignore
+        )
 
         # 标记为紧急收集
         results["emergency"] = True
         results["priority"] = priority
 
-        return results  # type: ignore
+        return results
 
     except (RuntimeError, ValueError, ConnectionError) as e:
         logger.error(f"Emergency data collection failed: {str(e)}")
@@ -196,7 +196,7 @@ def emergency_data_collection_task(
 
 
 # 定时任务定义
-@celery_app.task  # type: ignore
+@celery_app.task
 def collect_historical_data_task():
     """定期收集历史数据任务"""
     task = DataCollectionTask()
@@ -213,7 +213,7 @@ def collect_historical_data_task():
         if historical_collector:
             # 使用asyncio.run在同步上下文中运行异步代码
             results = asyncio.run(
-                historical_collector.collect_historical_data(  # type: ignore
+                historical_collector.collect_historical_data(
                     data_type="matches",
                     start_date=datetime.utcnow() - timedelta(days=30),
                     end_date=datetime.utcnow(),
@@ -221,7 +221,7 @@ def collect_historical_data_task():
             )
 
             # 保存到数据库
-            asyncio.run(_save_historical_data(results, "matches"))  # type: ignore
+            asyncio.run(_save_historical_data(results, "matches"))
             return results
 
         return {"error": "Historical collector not found"}
@@ -253,7 +253,7 @@ def validate_collected_data(data: Dict[str, Any], data_type: str) -> Dict[str, A
         # 基本验证
         if not data:
             validation_result["is_valid"] = False
-            validation_result["validation_errors"].append("Data is empty")  # type: ignore
+            validation_result["validation_errors"].append("Data is empty")
             return validation_result
 
         # 检查必要字段
@@ -268,7 +268,7 @@ def validate_collected_data(data: Dict[str, Any], data_type: str) -> Dict[str, A
 
     except (RuntimeError, ValueError, ConnectionError) as e:
         validation_result["is_valid"] = False
-        validation_result["validation_errors"].append(f"Validation error: {str(e)}")  # type: ignore
+        validation_result["validation_errors"].append(f"Validation error: {str(e)}")
 
     return validation_result
 
@@ -276,7 +276,7 @@ def validate_collected_data(data: Dict[str, Any], data_type: str) -> Dict[str, A
 def _validate_fixtures_data(data: Dict[str, Any]) -> Dict[str, Any]:
     """验证赛程数据"""
     errors = []
-    recommendations = []  # type: ignore
+    recommendations = []
 
     fixtures = data.get("fixtures", [])
     for i, fixture in enumerate(fixtures):
@@ -302,8 +302,8 @@ def _validate_fixtures_data(data: Dict[str, Any]) -> Dict[str, Any]:
 
 def _validate_odds_data(data: Dict[str, Any]) -> Dict[str, Any]:
     """验证赔率数据"""
-    errors = []  # type: ignore
-    recommendations = []  # type: ignore
+    errors = []
+    recommendations = []
 
     # 实现赔率数据验证逻辑
     return {"validation_errors": errors, "recommendations": recommendations}
@@ -311,8 +311,8 @@ def _validate_odds_data(data: Dict[str, Any]) -> Dict[str, Any]:
 
 def _validate_scores_data(data: Dict[str, Any]) -> Dict[str, Any]:
     """验证比分数据"""
-    errors = []  # type: ignore
-    recommendations = []  # type: ignore
+    errors = []
+    recommendations = []
 
     # 实现比分数据验证逻辑
     return {"validation_errors": errors, "recommendations": recommendations}
@@ -320,8 +320,8 @@ def _validate_scores_data(data: Dict[str, Any]) -> Dict[str, Any]:
 
 def _validate_matches_data(data: Dict[str, Any]) -> Dict[str, Any]:
     """验证比赛数据"""
-    errors = []  # type: ignore
-    recommendations = []  # type: ignore
+    errors = []
+    recommendations = []
 
     # 实现比赛数据验证逻辑
     return {"validation_errors": errors, "recommendations": recommendations}

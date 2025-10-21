@@ -6,9 +6,9 @@ Kafka消费者模块 - 兼容性包装器
 """
 
 # from .consumer import FootballKafkaConsumer  # 不存在
-from .data_processor import DataProcessor  # type: ignore
-from .message_processor import MessageProcessor  # type: ignore
-from .utils import get_session  # type: ignore
+from .data_processor import DataProcessor
+from .message_processor import MessageProcessor
+from .utils import get_session
 
 # 从新模块化结构导入所有组件
 

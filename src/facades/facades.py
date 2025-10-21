@@ -305,7 +305,7 @@ class PredictionSubsystem(Subsystem):
         """批量预测"""
         results: List[Any] = []
         for pred in predictions:
-            _result = await self.predict(pred["model"], pred["input"])
+            result = await self.predict(pred["model"], pred["input"])
             results.append(result)
         return results
 
@@ -345,7 +345,7 @@ class MainSystemFacade(SystemFacade):
         elif operation == "store_and_predict":
             return await self.store_and_predict(
                 kwargs.get("data", {}),
-                kwargs.get("cache_key"),  # type: ignore
+                kwargs.get("cache_key"),
                 kwargs.get("model", "neural_network"),
             )
 
@@ -376,26 +376,26 @@ class MainSystemFacade(SystemFacade):
     ) -> Dict:
         """快速预测接口"""
         prediction_subsystem = self.subsystem_manager.get_subsystem("prediction")
-        return await prediction_subsystem.predict(model, input_data)  # type: ignore
+        return await prediction_subsystem.predict(model, input_data)
 
     async def store_and_predict(self, data: Dict, cache_key: str, model: str) -> Dict:
         """存储数据并预测"""
         # 尝试从缓存获取
         cache_subsystem = self.subsystem_manager.get_subsystem("cache")
-        cached_result = await cache_subsystem.get(cache_key)  # type: ignore
+        cached_result = await cache_subsystem.get(cache_key)
 
         if cached_result:
-            return cached_result  # type: ignore
+            return cached_result
 
         # 执行预测
         _prediction = await self.quick_predict(data, model)
 
         # 存储到缓存
-        await cache_subsystem.set(cache_key, prediction, ttl=300)  # type: ignore
+        await cache_subsystem.set(cache_key, prediction, ttl=300)
 
         # 跟踪分析事件
         analytics_subsystem = self.subsystem_manager.get_subsystem("analytics")
-        await analytics_subsystem.track_event(  # type: ignore
+        await analytics_subsystem.track_event(
             "prediction_made",
             {
                 "model": model,
@@ -414,18 +414,18 @@ class MainSystemFacade(SystemFacade):
         for item in items:
             cache_key = item.get("cache_key")
             if cache_key:
-                cached = await cache_subsystem.get(cache_key)  # type: ignore
+                cached = await cache_subsystem.get(cache_key)
                 if cached:
                     results.append(cached)
                     continue
 
-            _prediction = await prediction_subsystem.predict(  # type: ignore
+            _prediction = await prediction_subsystem.predict(
                 item.get("model", "neural_network"), item.get("input_data", {})
             )
             results.append(prediction)
 
             if cache_key:
-                await cache_subsystem.set(cache_key, prediction, ttl=300)  # type: ignore
+                await cache_subsystem.set(cache_key, prediction, ttl=300)
 
         return results
 
@@ -454,21 +454,21 @@ class PredictionFacade(SystemFacade):
 
         if operation == "predict":
             return await self._predict_with_cache(
-                pred_subsystem,  # type: ignore
-                cache_subsystem,  # type: ignore
+                pred_subsystem,
+                cache_subsystem,
                 kwargs.get("model", "neural_network"),
                 kwargs.get("input_data", {}),
                 kwargs.get("cache_key"),
             )
 
         elif operation == "batch_predict":
-            return await pred_subsystem.batch_predict(kwargs.get("predictions", []))  # type: ignore
+            return await pred_subsystem.batch_predict(kwargs.get("predictions", []))
 
         elif operation == "get_model_info":
             return {
-                "available_models": pred_subsystem.models,  # type: ignore
-                "total_predictions": pred_subsystem.metrics["predictions_count"],  # type: ignore
-                "accuracy": pred_subsystem.metrics["accuracy"],  # type: ignore
+                "available_models": pred_subsystem.models,
+                "total_predictions": pred_subsystem.metrics["predictions_count"],
+                "accuracy": pred_subsystem.metrics["accuracy"],
             }
 
         else:
@@ -486,7 +486,7 @@ class PredictionFacade(SystemFacade):
         if cache_key:
             cached = await cache_subsystem.get(cache_key)
             if cached:
-                return cached  # type: ignore
+                return cached
 
         _prediction = await pred_subsystem.predict(model, input_data)
 
@@ -520,17 +520,17 @@ class DataCollectionFacade(SystemFacade):
         analytics_subsystem = self.subsystem_manager.get_subsystem("analytics")
 
         if operation == "store_data":
-            _data = kwargs.get("data", {})
+            data = kwargs.get("data", {})
             table = kwargs.get("table", "default")
 
             # 模拟存储数据
-            await db_subsystem.execute_query(f"INSERT INTO {table}", data)  # type: ignore
+            await db_subsystem.execute_query(f"INSERT INTO {table}", data)
 
             # 清除相关缓存
-            await cache_subsystem.clear()  # type: ignore
+            await cache_subsystem.clear()
 
             # 跟踪事件
-            await analytics_subsystem.track_event(  # type: ignore
+            await analytics_subsystem.track_event(
                 "data_stored",
                 {
                     "table": table,
@@ -546,14 +546,14 @@ class DataCollectionFacade(SystemFacade):
 
             cache_key = f"query:{hash(query)}"
             if use_cache:
-                cached = await cache_subsystem.get(cache_key)  # type: ignore
+                cached = await cache_subsystem.get(cache_key)
                 if cached:
                     return cached
 
-            _result = await db_subsystem.execute_query(query)  # type: ignore
+            result = await db_subsystem.execute_query(query)
 
             if use_cache:
-                await cache_subsystem.set(cache_key, result, ttl=60)  # type: ignore
+                await cache_subsystem.set(cache_key, result, ttl=60)
 
             return result
 
@@ -583,21 +583,21 @@ class AnalyticsFacade(SystemFacade):
         analytics_subsystem = self.subsystem_manager.get_subsystem("analytics")
 
         if operation == "track_event":
-            await analytics_subsystem.track_event(  # type: ignore
+            await analytics_subsystem.track_event(
                 kwargs.get("event_name", "unknown"), kwargs.get("properties", {})
             )
             return {"status": "tracked"}
 
         elif operation == "generate_report":
-            return await analytics_subsystem.generate_report(  # type: ignore
+            return await analytics_subsystem.generate_report(
                 kwargs.get("report_type", "summary"), kwargs.get("filters")
             )
 
         elif operation == "get_analytics_summary":
             return {
-                "total_events": analytics_subsystem.metrics["events_count"],  # type: ignore
-                "reports_count": analytics_subsystem.metrics["reports_count"],  # type: ignore
-                "last_analysis": analytics_subsystem.metrics["last_analysis"],  # type: ignore
+                "total_events": analytics_subsystem.metrics["events_count"],
+                "reports_count": analytics_subsystem.metrics["reports_count"],
+                "last_analysis": analytics_subsystem.metrics["last_analysis"],
             }
 
         else:
@@ -626,14 +626,14 @@ class NotificationFacade(SystemFacade):
         db_subsystem = self.subsystem_manager.get_subsystem("database")
 
         if operation == "send_notification":
-            success = await notif_subsystem.send_notification(  # type: ignore
+            success = await notif_subsystem.send_notification(
                 kwargs.get("recipient"),
                 kwargs.get("message"),
                 kwargs.get("channel", "email"),
             )
 
             # 记录通知历史
-            await db_subsystem.execute_query(  # type: ignore
+            await db_subsystem.execute_query(
                 "INSERT INTO notification_history",
                 {
                     "recipient": kwargs.get("recipient"),
@@ -645,15 +645,15 @@ class NotificationFacade(SystemFacade):
             return {"status": "sent" if success else "failed"}
 
         elif operation == "queue_notification":
-            await notif_subsystem.queue_notification(kwargs)  # type: ignore
+            await notif_subsystem.queue_notification(kwargs)
             return {"status": "queued"}
 
         elif operation == "get_notification_stats":
             return {
-                "sent": notif_subsystem.metrics["sent_messages"],  # type: ignore
-                "queued": notif_subsystem.metrics["queued_messages"],  # type: ignore
-                "failed": notif_subsystem.metrics["failed_messages"],  # type: ignore
-                "channels": notif_subsystem.channels,  # type: ignore
+                "sent": notif_subsystem.metrics["sent_messages"],
+                "queued": notif_subsystem.metrics["queued_messages"],
+                "failed": notif_subsystem.metrics["failed_messages"],
+                "channels": notif_subsystem.channels,
             }
 
         else:

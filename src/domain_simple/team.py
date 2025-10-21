@@ -39,19 +39,19 @@ class TeamStatistics:
         """获取胜率"""
         if self.matches_played == 0:
             return 0.0
-        return self.wins / self.matches_played  # type: ignore
+        return self.wins / self.matches_played
 
     def get_avg_goals(self) -> float:
         """获取场均进球"""
         if self.matches_played == 0:
             return 0.0
-        return self.goals_for / self.matches_played  # type: ignore
+        return self.goals_for / self.matches_played
 
     def get_avg_conceded(self) -> float:
         """获取场均失球"""
         if self.matches_played == 0:
             return 0.0
-        return self.goals_against / self.matches_played  # type: ignore
+        return self.goals_against / self.matches_played
 
 
 class Team:
@@ -134,9 +134,9 @@ class Team:
         # 从最新结果往前数
         for result in reversed(self.recent_form):
             if (
-                (streak_type == "win" and _result == "W")
-                or (streak_type == "lose" and _result == "L")
-                or (streak_type == "draw" and _result == "D")
+                (streak_type == "win" and result == "W")
+                or (streak_type == "lose" and result == "L")
+                or (streak_type == "draw" and result == "D")
             ):
                 streak_count += 1
             else:
@@ -149,9 +149,9 @@ class Team:
         # 基于近期表现调整实力评分
         recent_points = 0
         for result in self.recent_form[-5:]:
-            if _result == "W":
+            if result == "W":
                 recent_points += 3
-            elif _result == "D":
+            elif result == "D":
                 recent_points += 1
 
         # 简单的实力评分计算
@@ -174,9 +174,9 @@ class Team:
         count = min(last_n, len(self.recent_form))
 
         for result in self.recent_form[-count:]:
-            if _result == "W":
+            if result == "W":
                 points += 3
-            elif _result == "D":
+            elif result == "D":
                 points += 1
 
         return points

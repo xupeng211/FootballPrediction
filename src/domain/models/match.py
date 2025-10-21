@@ -160,11 +160,11 @@ class Match:
 
         self._add_domain_event(
             MatchFinishedEvent(
-                match_id=self.id,  # type: ignore
+                match_id=self.id,
                 home_team_id=self.home_team_id,
                 away_team_id=self.away_team_id,
                 final_score=self.score,
-                _result=self.score.result,
+                result =self.score.result,
             )
         )
 

@@ -11,13 +11,13 @@ class MockRedisManager:
     """模拟Redis管理器"""
 
     _instance: Optional["MockRedisManager"] = None
-    _data: Dict[str, Any]
+    data: Dict[str, Any]
     _expirations: Dict[str, float]
 
     def __new__(cls) -> "MockRedisManager":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
-            cls._instance._data = {}
+            cls._instance.data = {}
             cls._instance._expirations = {}
         return cls._instance
 
@@ -29,16 +29,16 @@ class MockRedisManager:
     def get(self, key: str) -> Optional[str]:
         """获取缓存值"""
         self._check_expiration(key)
-        return self._data.get(key)
+        return self.data.get(key)
 
     def set(self, key: str, value: str) -> bool:
         """设置缓存值"""
-        self._data[key] = value
+        self.data[key] = value
         return True
 
     def setex(self, key: str, seconds: int, value: str) -> bool:
         """设置带TTL的缓存值"""
-        self._data[key] = value
+        self.data[key] = value
         self._expirations[key] = time.time() + seconds
         return True
 
@@ -46,7 +46,7 @@ class MockRedisManager:
         """删除缓存键"""
         count = 0
         for key in keys:
-            if self._data.pop(key, None) is not None:
+            if self.data.pop(key, None) is not None:
                 count += 1
             self._expirations.pop(key, None)
         return count
@@ -54,7 +54,7 @@ class MockRedisManager:
     def exists(self, key: str) -> bool:
         """检查键是否存在"""
         self._check_expiration(key)
-        return key in self._data
+        return key in self.data
 
     def keys(self, pattern: str) -> List[str]:
         """获取匹配模式的所有键"""
@@ -62,13 +62,13 @@ class MockRedisManager:
         if "*" in pattern:
             import fnmatch
 
-            return [k for k in self._data.keys() if fnmatch.fnmatch(k, pattern)]
+            return [k for k in self.data.keys() if fnmatch.fnmatch(k, pattern)]
         else:
-            return [k for k in self._data.keys() if k == pattern]
+            return [k for k in self.data.keys() if k == pattern]
 
     def ttl(self, key: str) -> int:
         """获取键的TTL"""
-        if key not in self._data:
+        if key not in self.data:
             return -2
         if key not in self._expirations:
             return -1
@@ -108,7 +108,7 @@ class MockRedisManager:
     def _check_expiration(self, key: str) -> None:
         """检查键是否过期"""
         if key in self._expirations and time.time() > self._expirations[key]:
-            self._data.pop(key, None)
+            self.data.pop(key, None)
             self._expirations.pop(key, None)
 
     def _cleanup_expired(self) -> None:
@@ -116,18 +116,18 @@ class MockRedisManager:
         now = time.time()
         expired_keys = [k for k, exp in self._expirations.items() if now > exp]
         for key in expired_keys:
-            self._data.pop(key, None)
+            self.data.pop(key, None)
             self._expirations.pop(key, None)
 
     def clear(self) -> None:
         """清空所有缓存"""
-        self._data.clear()
+        self.data.clear()
         self._expirations.clear()
 
     def size(self) -> int:
         """获取缓存大小"""
         self._cleanup_expired()
-        return len(self._data)
+        return len(self.data)
 
 
 class CacheKeyManager:

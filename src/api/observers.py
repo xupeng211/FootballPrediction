@@ -56,7 +56,7 @@ async def get_observers() -> Dict[str, Any]:
     observers = {}
 
     for name, observer in manager._observers.items():
-        _stats = observer.get_stats()
+        stats = observer.get_stats()
         stats["observed_event_types"] = [
             et.value for et in observer.get_observed_event_types()
         ]
@@ -75,7 +75,7 @@ async def get_subjects() -> Dict[str, Any]:
     subjects = {}
 
     for name, subject in manager._subjects.items():
-        _stats = subject.get_stats()
+        stats = subject.get_stats()
         subjects[name] = stats
 
     return {
@@ -127,7 +127,7 @@ async def trigger_alert(
         severity=request.severity,
         message=request.message,
         source=request.source,
-        _data=request.data,
+        data =request.data,
     )
 
     return {"message": "告警已触发", "alert_type": request.alert_type}
@@ -165,7 +165,7 @@ async def update_metric(
     return {
         "message": "指标已更新",
         "metric_name": request.metric_name,
-        "metric_value": request.metric_value,  # type: ignore
+        "metric_value": request.metric_value,
     }
 
 
@@ -212,7 +212,7 @@ async def record_prediction(
     return {
         "message": "预测事件已记录",
         "strategy_name": strategy_name,
-        "response_time_ms": response_time_ms,  # type: ignore
+        "response_time_ms": response_time_ms,
     }
 
 
@@ -283,7 +283,7 @@ async def get_performance_metrics() -> Dict[str, Any]:
     if not performance_observer:
         raise HTTPException(status_code=404, detail="性能观察者未找到")
 
-    return performance_observer.get_performance_metrics()  # type: ignore
+    return performance_observer.get_performance_metrics()
 
 
 @router.post("/system/collect", summary="触发系统指标收集")

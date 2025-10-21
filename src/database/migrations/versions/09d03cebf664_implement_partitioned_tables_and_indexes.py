@@ -149,7 +149,7 @@ def _implement_postgresql_partitioning_and_indexes():
     # 注意：在生产环境中，这需要谨慎操作
     try:
         # 检查表是否已分区
-        _result = (
+        result = (
             op.get_bind()
             .execute(
                 text(
@@ -162,7 +162,7 @@ def _implement_postgresql_partitioning_and_indexes():
             .scalar()
         )
 
-        if _result == 0:
+        if result == 0:
             logger.info("  提醒：matches表尚未分区，建议在维护窗口期间手动执行分区操作")
             # 在实际部署中，需要先创建分区表，再迁移数据
 

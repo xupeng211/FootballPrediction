@@ -77,7 +77,7 @@ class League(BaseModel):
 
     def get_active_teams_count(self) -> int:
         """获取当前活跃球队数量"""
-        return self.teams.filter_by(is_active=True).count()  # type: ignore
+        return self.teams.filter_by(is_active=True).count()
 
     @classmethod
     def get_by_code(cls, session, league_code: str):

@@ -34,7 +34,7 @@ class MockMessage:
             return self._value.encode("utf-8")
         if isinstance(self._value, bytes):
             return self._value
-        return cast(Optional[bytes], self._value)  # type: ignore
+        return cast(Optional[bytes], self._value)
 
     def key(self) -> Optional[bytes]:
         """获取消息键"""
@@ -44,7 +44,7 @@ class MockMessage:
             return self._key.encode("utf-8")
         if isinstance(self._key, bytes):
             return self._key
-        return cast(Optional[bytes], self._key)  # type: ignore
+        return cast(Optional[bytes], self._key)
 
     def topic(self) -> str:
         """获取主题"""
@@ -71,10 +71,10 @@ class MockConsumer:
     """模拟Kafka消费者"""
 
     def __init__(self, config: Dict[str, Any]):
-        self._config = config
+        self.config = config
         self._topics: set[str] = set()
-        self._messages: Dict[str, List[MockMessage]] = defaultdict(list)  # type: ignore
-        self._current_offset: Dict[str, int] = defaultdict(int)  # type: ignore
+        self._messages: Dict[str, List[MockMessage]] = defaultdict(list)
+        self._current_offset: Dict[str, int] = defaultdict(int)
         self._subscribed = False
         self._running = False
         self._assignment: List[Any] = []
@@ -143,8 +143,8 @@ class MockProducer:
     """模拟Kafka生产者"""
 
     def __init__(self, config: Dict[str, Any]):
-        self._config = config
-        self._messages: Dict[str, List[MockMessage]] = defaultdict(list)  # type: ignore
+        self.config = config
+        self._messages: Dict[str, List[MockMessage]] = defaultdict(list)
         self._callbacks: Dict[str, Callable] = {}
         self._flushed = True
         self._running = True
@@ -167,10 +167,10 @@ class MockProducer:
             try:
                 # 简单的延迟模拟
                 if (
-                    hasattr(asyncio, "get_event_loop")  # type: ignore
-                    and asyncio.get_event_loop().is_running()  # type: ignore
+                    hasattr(asyncio, "get_event_loop")
+                    and asyncio.get_event_loop().is_running()
                 ):
-                    asyncio.get_event_loop().call_soon(on_delivery, None, message)  # type: ignore
+                    asyncio.get_event_loop().call_soon(on_delivery, None, message)
                 else:
                     on_delivery(None, message)
             except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
@@ -213,15 +213,15 @@ class MockAdminClient:
     """模拟Kafka管理客户端"""
 
     def __init__(self, config: Dict[str, Any]):
-        self._config = config
-        self._metadata = {"topics": {}, "brokers": {"1": "localhost:9093"}}
+        self.config = config
+        self.metadata = {"topics": {}, "brokers": {"1": "localhost:9093"}}
 
     def create_topics(self, new_topics: List[Any]) -> Dict[str, Any]:
         """创建主题"""
         results: Dict[str, Any] = {}
         for topic in new_topics:
             topic_name = getattr(topic, "topic", str(topic))
-            self._metadata["topics"][topic_name] = {  # type: ignore
+            self.metadata["topics"][topic_name] = {
                 "partitions": 1,
                 "replication_factor": 1,
             }
@@ -232,14 +232,14 @@ class MockAdminClient:
         """删除主题"""
         results = {}
         for topic in topics:
-            if topic in self._metadata["topics"]:
-                del self._metadata["topics"][topic]
+            if topic in self.metadata["topics"]:
+                del self.metadata["topics"][topic]
                 results[topic] = {"topic_id": topic}
         return results
 
     def list_topics(self, timeout: float = 1.0) -> Dict[str, Any]:
         """列出所有主题"""
-        return self._metadata
+        return self.metadata
 
     def close(self) -> None:
         """关闭管理客户端"""

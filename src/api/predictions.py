@@ -29,7 +29,7 @@ Provides API endpoints for match prediction:
 
     # 实时预测
     response = requests.post("http://localhost:8000/api/v1/predictions/12345/predict")
-    _result = response.json()
+    result = response.json()
     ```
 
 错误处理 / Error Handling:

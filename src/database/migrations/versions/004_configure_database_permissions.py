@@ -24,20 +24,20 @@ def upgrade() -> None:
     """配置数据库权限"""
 
     # 检查是否在离线模式
-    if context.is_offline_mode():  # type: ignore
+    if context.is_offline_mode():
         logger.info("⚠️  离线模式：跳过数据库权限配置")
         # 在离线模式下执行注释，确保 SQL 生成正常
-        op.execute("-- offline mode: skipped database user creation")  # type: ignore
-        op.execute("-- offline mode: skipped database permission configuration")  # type: ignore
+        op.execute("-- offline mode: skipped database user creation")
+        op.execute("-- offline mode: skipped database permission configuration")
         return
 
     # 获取数据库连接
-    connection = op.get_bind()  # type: ignore
+    connection = op.get_bind()
 
     # 获取当前数据库名称（支持测试环境）
-    db_name = os.getenv("TEST_DB_NAME", "football_prediction")  # type: ignore
-    if os.getenv("ENVIRONMENT") == "test":  # type: ignore
-        db_name = os.getenv("TEST_DB_NAME", "football_prediction_test")  # type: ignore
+    db_name = os.getenv("TEST_DB_NAME", "football_prediction")
+    if os.getenv("ENVIRONMENT") == "test":
+        db_name = os.getenv("TEST_DB_NAME", "football_prediction_test")
 
     # =============================================================================
     # 创建数据库用户
@@ -45,7 +45,7 @@ def upgrade() -> None:
 
     # 创建只读用户（分析、前端）
     connection.execute(
-        text(  # type: ignore
+        text(
             """
         DO $$
         BEGIN
@@ -60,7 +60,7 @@ def upgrade() -> None:
 
     # 创建写入用户（数据采集）
     connection.execute(
-        text(  # type: ignore
+        text(
             """
         DO $$
         BEGIN
@@ -75,7 +75,7 @@ def upgrade() -> None:
 
     # 创建管理员用户（运维、迁移）
     connection.execute(
-        text(  # type: ignore
+        text(
             """
         DO $$
         BEGIN
@@ -93,14 +93,14 @@ def upgrade() -> None:
     # =============================================================================
 
     # 授予连接数据库的权限
-    connection.execute(text(f"GRANT CONNECT ON DATABASE {db_name} TO football_reader;"))  # type: ignore
+    connection.execute(text(f"GRANT CONNECT ON DATABASE {db_name} TO football_reader;"))
 
     # 授予使用public schema的权限
-    connection.execute(text("GRANT USAGE ON SCHEMA public TO football_reader;"))  # type: ignore
+    connection.execute(text("GRANT USAGE ON SCHEMA public TO football_reader;"))
 
     # 授予所有表的SELECT权限
     connection.execute(
-        text("GRANT SELECT ON ALL TABLES IN SCHEMA public TO football_reader;")  # type: ignore
+        text("GRANT SELECT ON ALL TABLES IN SCHEMA public TO football_reader;")
     )
 
     # 授予所有序列的SELECT权限
@@ -127,35 +127,35 @@ def upgrade() -> None:
     # =============================================================================
 
     # 授予连接数据库的权限
-    connection.execute(text(f"GRANT CONNECT ON DATABASE {db_name} TO football_writer;"))  # type: ignore
+    connection.execute(text(f"GRANT CONNECT ON DATABASE {db_name} TO football_writer;"))
 
     # 授予使用public schema的权限
-    connection.execute(text("GRANT USAGE ON SCHEMA public TO football_writer;"))  # type: ignore
+    connection.execute(text("GRANT USAGE ON SCHEMA public TO football_writer;"))
 
     # 授予所有表的SELECT, INSERT, UPDATE权限
     connection.execute(
-        text(  # type: ignore
+        text(
             "GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA public TO football_writer;"
         )
     )
 
     # 授予所有序列的SELECT, USAGE权限
     connection.execute(
-        text(  # type: ignore
+        text(
             "GRANT SELECT, USAGE ON ALL SEQUENCES IN SCHEMA public TO football_writer;"
         )
     )
 
     # 为未来创建的表自动授予权限
     connection.execute(
-        text(  # type: ignore
+        text(
             "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE ON TABLES TO football_writer;"
         )
     )
 
     # 为未来创建的序列自动授予权限
     connection.execute(
-        text(  # type: ignore
+        text(
             "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, USAGE ON SEQUENCES TO football_writer;"
         )
     )
@@ -168,56 +168,56 @@ def upgrade() -> None:
     ]
 
     for table in tables_with_delete_permission:
-        connection.execute(text(f"GRANT DELETE ON {table} TO football_writer;"))  # type: ignore
+        connection.execute(text(f"GRANT DELETE ON {table} TO football_writer;"))
 
     # =============================================================================
     # 配置管理员用户权限
     # =============================================================================
 
     # 授予连接数据库的权限
-    connection.execute(text(f"GRANT CONNECT ON DATABASE {db_name} TO football_admin;"))  # type: ignore
+    connection.execute(text(f"GRANT CONNECT ON DATABASE {db_name} TO football_admin;"))
 
     # 授予所有权限
     connection.execute(
-        text(f"GRANT ALL PRIVILEGES ON DATABASE {db_name} TO football_admin;")  # type: ignore
+        text(f"GRANT ALL PRIVILEGES ON DATABASE {db_name} TO football_admin;")
     )
 
     # 授予所有表的所有权限
     connection.execute(
-        text("GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO football_admin;")  # type: ignore
+        text("GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO football_admin;")
     )
 
     # 授予所有序列的所有权限
     connection.execute(
-        text(  # type: ignore
+        text(
             "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO football_admin;"
         )
     )
 
     # 授予所有函数的执行权限
     connection.execute(
-        text("GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO football_admin;")  # type: ignore
+        text("GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO football_admin;")
     )
 
     # 为未来创建的对象自动授予权限
     connection.execute(
-        text(  # type: ignore
+        text(
             "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO football_admin;"
         )
     )
     connection.execute(
-        text(  # type: ignore
+        text(
             "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO football_admin;"
         )
     )
     connection.execute(
-        text(  # type: ignore
+        text(
             "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO football_admin;"
         )
     )
 
     # 授予创建schema的权限
-    connection.execute(text(f"GRANT CREATE ON DATABASE {db_name} TO football_admin;"))  # type: ignore
+    connection.execute(text(f"GRANT CREATE ON DATABASE {db_name} TO football_admin;"))
 
     # =============================================================================
     # 创建角色和权限视图
@@ -225,7 +225,7 @@ def upgrade() -> None:
 
     # 创建权限查询视图，方便监控用户权限
     connection.execute(
-        text(  # type: ignore
+        text(
             """
         CREATE OR REPLACE VIEW user_permissions AS
         SELECT
@@ -272,7 +272,7 @@ def upgrade() -> None:
 
     # 创建检查用户权限的函数
     connection.execute(
-        text(  # type: ignore
+        text(
             """
         CREATE OR REPLACE FUNCTION check_user_permissions(username TEXT)
         RETURNS TABLE(
@@ -306,7 +306,7 @@ def upgrade() -> None:
 
     # 创建权限审计日志表
     connection.execute(
-        text(  # type: ignore
+        text(
             """
         CREATE TABLE IF NOT EXISTS permission_audit_log (
             id SERIAL PRIMARY KEY,
@@ -324,15 +324,15 @@ def upgrade() -> None:
     )
 
     # 为权限审计日志表授予权限
-    connection.execute(text("GRANT SELECT ON permission_audit_log TO football_reader;"))  # type: ignore
+    connection.execute(text("GRANT SELECT ON permission_audit_log TO football_reader;"))
     connection.execute(
-        text("GRANT SELECT, INSERT ON permission_audit_log TO football_writer;")  # type: ignore
+        text("GRANT SELECT, INSERT ON permission_audit_log TO football_writer;")
     )
     connection.execute(
-        text("GRANT ALL PRIVILEGES ON permission_audit_log TO football_admin;")  # type: ignore
+        text("GRANT ALL PRIVILEGES ON permission_audit_log TO football_admin;")
     )
     connection.execute(
-        text(  # type: ignore
+        text(
             "GRANT USAGE ON SEQUENCE permission_audit_log_id_seq TO football_writer, football_admin;"
         )
     )
@@ -342,7 +342,7 @@ def upgrade() -> None:
     # =============================================================================
 
     connection.execute(
-        text(  # type: ignore
+        text(
             """
         INSERT INTO permission_audit_log (username, action, privilege_type, granted, granted_by, notes)
         VALUES
@@ -358,7 +358,7 @@ def downgrade() -> None:
     """回滚数据库权限配置"""
 
     # 检查是否在离线模式
-    if context.is_offline_mode():  # type: ignore
+    if context.is_offline_mode():
         logger.info("⚠️  离线模式：跳过数据库权限回滚")
         # 在离线模式下执行注释，确保 SQL 生成正常
 
@@ -382,48 +382,48 @@ def downgrade() -> None:
 
     # 撤销用户权限
     connection.execute(
-        text(f"REVOKE ALL PRIVILEGES ON DATABASE {db_name} FROM football_reader;")  # type: ignore
+        text(f"REVOKE ALL PRIVILEGES ON DATABASE {db_name} FROM football_reader;")
     )
     connection.execute(
-        text(  # type: ignore
+        text(
             "REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA public FROM football_reader;"
         )
     )
     connection.execute(
-        text(  # type: ignore
+        text(
             "REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public FROM football_reader;"
         )
     )
 
     connection.execute(
-        text(f"REVOKE ALL PRIVILEGES ON DATABASE {db_name} FROM football_writer;")  # type: ignore
+        text(f"REVOKE ALL PRIVILEGES ON DATABASE {db_name} FROM football_writer;")
     )
     connection.execute(
-        text(  # type: ignore
+        text(
             "REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA public FROM football_writer;"
         )
     )
     connection.execute(
-        text(  # type: ignore
+        text(
             "REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public FROM football_writer;"
         )
     )
 
     connection.execute(
-        text(f"REVOKE ALL PRIVILEGES ON DATABASE {db_name} FROM football_admin;")  # type: ignore
+        text(f"REVOKE ALL PRIVILEGES ON DATABASE {db_name} FROM football_admin;")
     )
     connection.execute(
-        text(  # type: ignore
+        text(
             "REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA public FROM football_admin;"
         )
     )
     connection.execute(
-        text(  # type: ignore
+        text(
             "REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public FROM football_admin;"
         )
     )
 
     # 删除用户（注意：在生产环境中可能不希望删除用户）
-    connection.execute(text("DROP USER IF EXISTS football_reader;"))  # type: ignore
-    connection.execute(text("DROP USER IF EXISTS football_writer;"))  # type: ignore
-    connection.execute(text("DROP USER IF EXISTS football_admin;"))  # type: ignore
+    connection.execute(text("DROP USER IF EXISTS football_reader;"))
+    connection.execute(text("DROP USER IF EXISTS football_writer;"))
+    connection.execute(text("DROP USER IF EXISTS football_admin;"))

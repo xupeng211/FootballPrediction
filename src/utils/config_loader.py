@@ -15,9 +15,9 @@ def load_config_from_file(file_path: str) -> Dict[str, Any]:
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             if file_path.endswith(".json"):
-                return json.load(f)  # type: ignore
+                return json.load(f)
             elif file_path.endswith(".yaml") or file_path.endswith(".yml"):
-                import yaml  # type: ignore
+                import yaml
 
                 return yaml.safe_load(f) or {}
             else:

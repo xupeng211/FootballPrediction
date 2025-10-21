@@ -20,6 +20,6 @@ warnings.warn(
 )
 
 # 导出所有类
-__all__ = [  # type: ignore
+__all__ = [
     "router",
 ]

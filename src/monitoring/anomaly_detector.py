@@ -207,7 +207,7 @@ class AnomalyDetector:
             List[AnomalyResult]: 异常检测结果
         """
         anomalies: List[AnomalyResult] = []
-        _config = self.detection_config.get(str(table_name), {})
+        config = self.detection_config.get(str(table_name), {})
 
         if not config:
             logger.warning(f"表 {table_name} 没有检测配置")
@@ -267,7 +267,7 @@ class AnomalyDetector:
             # Safe: table_name is validated against whitelist above
             # Note: Using f-string here is safe as table_name is validated against
             # whitelist
-            _result = await session.execute(
+            result = await session.execute(
                 text(
                     f"""
                     SELECT * FROM {table_name}
@@ -279,7 +279,7 @@ class AnomalyDetector:
 
             # 转换为DataFrame
             rows = result.fetchall()
-            _data = pd.DataFrame([dict(row._mapping) for row in rows])
+            data = pd.DataFrame([dict(row._mapping) for row in rows])
             return data
 
         except (ValueError, RuntimeError, TimeoutError) as e:
@@ -527,7 +527,7 @@ class AnomalyDetector:
         """
         try:
             # 获取配置的阈值
-            _config = self.detection_config.get(str(table_name), {})
+            config = self.detection_config.get(str(table_name), {})
             thresholds = config.get(str("thresholds"), {}).get(str(column_name), {})
 
             if not thresholds:

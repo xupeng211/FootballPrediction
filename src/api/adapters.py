@@ -60,14 +60,14 @@ async def get_adapter_configs() -> Dict[str, Any]:
     """获取所有适配器配置"""
     configs = {}
     for name in adapter_factory.list_configs():
-        _config = adapter_factory.get_config(name)
-        if _config:
+        config = adapter_factory.get_config(name)
+        if config:
             configs[name] = {
-                "type": _config.adapter_type,
-                "enabled": _config.enabled,
-                "priority": _config.priority,
-                "rate_limits": _config.rate_limits,
-                "cache_config": _config.cache_config,
+                "type": config.adapter_type,
+                "enabled": config.enabled,
+                "priority": config.priority,
+                "rate_limits": config.rate_limits,
+                "cache_config": config.cache_config,
             }
 
     groups = {}
@@ -94,17 +94,39 @@ async def load_adapter_config(config_data: Dict[str, Any]) -> Dict[str, str]:
     from ..adapters.factory import AdapterConfig
 
     if "adapter_name" in config_data:
-        _config = AdapterConfig(
+        config = AdapterConfig(
             name=config_data["adapter_name"],
             adapter_type=config_data.get("adapter_type", "api-football"),
             enabled=config_data.get("enabled", True),
             parameters=config_data.get("parameters", {}),
         )
-        adapter_factory._configs[_config.name] = _config
-        return {"message": f"适配器配置 {_config.name} 已加载"}
+        adapter_factory._configs[config.name] = config
+        return {"message": f"适配器配置 {config.name} 已加载"}
 
     return {"error": "缺少adapter_name"}
 
+
+# ==================== 辅助函数 ====================
+
+async def get_football_adapter():
+    """安全获取足球适配器，如果失败则返回None"""
+    try:
+        if hasattr(adapter_registry, 'status') and hasattr(adapter_registry.status, 'value'):
+            if adapter_registry.status.value == "inactive":
+                await adapter_registry.initialize()
+        else:
+            if hasattr(adapter_registry, 'initialize'):
+                await adapter_registry.initialize()
+    except Exception:
+        pass
+
+    adapter = None
+    try:
+        adapter = adapter_registry.get_adapter("api_football_main")
+    except (AttributeError, TypeError):
+        adapter = None
+
+    return adapter
 
 # ==================== 足球数据适配器演示 ====================
 
@@ -122,12 +144,7 @@ async def get_football_matches(
 
     演示适配器模式如何统一不同API的数据格式。
     """
-    # 确保注册表已初始化
-    if adapter_registry.status.value == "inactive":
-        await adapter_registry.initialize()
-
-    # 尝试获取可用的足球适配器
-    adapter = adapter_registry.get_adapter("api_football_main")
+    adapter = await get_football_adapter()
     if not adapter:
         # 尝试创建一个模拟适配器
         from ..adapters.football import ApiFootballAdapter
@@ -187,7 +204,7 @@ async def get_football_matches(
 
         # 转换为字典格式
         match_dicts = []
-        for match in matches:
+        for match in _matches:
             match_dict = {
                 "id": match.id,
                 "home_team": match.home_team,
@@ -342,11 +359,11 @@ async def get_football_teams(
 
         # 如果有搜索关键词，过滤结果
         if search:
-            _teams = [t for t in teams if search.lower() in t.name.lower()]
+            _teams = [t for t in _teams if search.lower() in t.name.lower()]
 
         # 转换为字典格式
         team_dicts = []
-        for team in teams:
+        for team in _teams:
             team_dict = {
                 "id": team.id,
                 "name": team.name,

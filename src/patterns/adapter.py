@@ -228,9 +228,9 @@ class FootballApiAdapter(APIAdapter):
 
             return ExternalData(
                 source="football_api",
-                _data=transformed_data,
+                data =transformed_data,
                 timestamp=datetime.now(),
-                _metadata={"match_id": match_id, "original_format": "json"},
+                metadata ={"match_id": match_id, "original_format": "json"},
             )
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
@@ -247,9 +247,9 @@ class FootballApiAdapter(APIAdapter):
 
             return ExternalData(
                 source="football_api",
-                _data=transformed_data,
+                data =transformed_data,
                 timestamp=datetime.now(),
-                _metadata={"team_id": team_id, "original_format": "json"},
+                metadata ={"team_id": team_id, "original_format": "json"},
             )
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
@@ -288,9 +288,9 @@ class WeatherApiAdapter(APIAdapter):
 
             return ExternalData(
                 source="weather_api",
-                _data=transformed_data,
+                data =transformed_data,
                 timestamp=datetime.now(),
-                _metadata={"location": location, "date": date.isoformat()},
+                metadata ={"location": location, "date": date.isoformat()},
             )
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
@@ -345,9 +345,9 @@ class OddsApiAdapter(APIAdapter):
 
             return ExternalData(
                 source="odds_api",
-                _data=transformed_data,
+                data =transformed_data,
                 timestamp=datetime.now(),
-                _metadata={"match_id": match_id, "original_format": "json"},
+                metadata ={"match_id": match_id, "original_format": "json"},
             )
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
@@ -366,7 +366,7 @@ class OddsApiAdapter(APIAdapter):
         """转换赔率数据格式"""
         if isinstance(raw_data, dict):
             bookmakers = raw_data.get("bookmakers", [])
-            odds_data = {}  # type: ignore
+            odds_data = {}
 
             for bookmaker in bookmakers:
                 bookmaker_name = bookmaker.get("title")
@@ -409,7 +409,7 @@ class AdapterFactory:
         if adapter_type not in cls._adapters:
             raise ValueError(f"Unknown adapter type: {adapter_type}")
 
-        return cls._adapters[adapter_type](external_api)  # type: ignore
+        return cls._adapters[adapter_type](external_api)
 
     @classmethod
     def register_adapter(cls, adapter_type: str, adapter_class: type):
@@ -453,7 +453,7 @@ class UnifiedDataCollector:
                 else:
                     results[name] = response
 
-        return results  # type: ignore
+        return results
 
     async def collect_team_stats(self, team_id: int) -> Dict[str, ExternalData]:
         """收集球队统计"""
@@ -462,7 +462,7 @@ class UnifiedDataCollector:
         for name, adapter in self.adapters.items():
             if isinstance(adapter, FootballApiAdapter):
                 try:
-                    _data = await adapter.get_team_stats(team_id)
+                    data = await adapter.get_team_stats(team_id)
                     results[name] = data
                 except (
                     ValueError,

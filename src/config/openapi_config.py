@@ -137,7 +137,7 @@ curl http://localhost:8000/predictions/{match_id}
             {
                 "name": "健康检查",
                 "description": "系统健康状态检查相关接口",
-                "externalDocs": {  # type: ignore
+                "externalDocs": {
                     "description": "健康检查详细说明",
                     "url": "https://football-prediction.com/docs/health-check",
                 },
@@ -145,7 +145,7 @@ curl http://localhost:8000/predictions/{match_id}
             {
                 "name": "预测",
                 "description": "比赛预测相关接口",
-                "externalDocs": {  # type: ignore
+                "externalDocs": {
                     "description": "预测模型说明",
                     "url": "https://football-prediction.com/docs/prediction-models",
                 },
@@ -153,7 +153,7 @@ curl http://localhost:8000/predictions/{match_id}
             {
                 "name": "数据",
                 "description": "数据管理和查询接口",
-                "externalDocs": {  # type: ignore
+                "externalDocs": {
                     "description": "数据源说明",
                     "url": "https://football-prediction.com/docs/data-sources",
                 },
@@ -161,7 +161,7 @@ curl http://localhost:8000/predictions/{match_id}
             {
                 "name": "特征",
                 "description": "特征工程相关接口",
-                "externalDocs": {  # type: ignore
+                "externalDocs": {
                     "description": "特征工程文档",
                     "url": "https://football-prediction.com/docs/feature-engineering",
                 },
@@ -169,7 +169,7 @@ curl http://localhost:8000/predictions/{match_id}
             {
                 "name": "模型",
                 "description": "ML模型管理接口",
-                "externalDocs": {  # type: ignore
+                "externalDocs": {
                     "description": "MLOps 流程说明",
                     "url": "https://football-prediction.com/docs/mlops",
                 },
@@ -177,7 +177,7 @@ curl http://localhost:8000/predictions/{match_id}
             {
                 "name": "监控",
                 "description": "系统监控和指标接口",
-                "externalDocs": {  # type: ignore
+                "externalDocs": {
                     "description": "监控配置指南",
                     "url": "https://football-prediction.com/docs/monitoring",
                 },
@@ -540,7 +540,7 @@ curl http://localhost:8000/predictions/{match_id}
             app.openapi_schema = openapi_schema
             return openapi_schema
 
-        app.openapi = custom_openapi  # type: ignore
+        app.openapi = custom_openapi
 
 
 # 导出配置函数

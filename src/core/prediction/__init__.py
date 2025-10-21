@@ -33,7 +33,7 @@ class PredictionEngine:
 
     def __init__(self, config: PredictionConfig = None):
         """初始化预测引擎"""
-        self._config = config or PredictionConfig()
+        self.config = config or PredictionConfig()
         self.statistics = PredictionStatistics()
         self._initialized = False
 
@@ -73,7 +73,7 @@ class PredictionEngine:
         """
         results = []
         for match_id in match_ids:
-            _result = await self.predict(match_id)
+            result = await self.predict(match_id)
             results.append(result)
         return results
 

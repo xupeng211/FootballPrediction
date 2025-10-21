@@ -7,7 +7,7 @@ Manages dependency injection through configuration files.
 """
 
 import json
-import yaml  # type: ignore
+import yaml
 from typing import Dict, Any, List, Type, Optional, Union
 from pathlib import Path
 import logging
@@ -52,7 +52,7 @@ class ConfigurationBinder:
     def __init__(self, container: DIContainer):
         self.container = container
         self.auto_binder = AutoBinder(container)
-        self._config: Optional[DIConfiguration] = None
+        self.config: Optional[DIConfiguration] = None
         self._active_profile: Optional[str] = None
 
     def load_from_file(self, config_path: Union[str, Path]) -> None:
@@ -65,15 +65,15 @@ class ConfigurationBinder:
         try:
             with open(config_path, "r", encoding="utf-8") as f:
                 if config_path.suffix.lower() in [".yml", ".yaml"]:
-                    _data = yaml.safe_load(f)
+                    data = yaml.safe_load(f)
                 elif config_path.suffix.lower() == ".json":
-                    _data = json.load(f)
+                    data = json.load(f)
                 else:
                     raise DependencyInjectionError(
                         f"不支持的配置文件格式: {config_path.suffix}"
                     )
 
-            self._config = self._parse_config(data)
+            self.config = self._parse_config(data)
             logger.info(f"加载配置文件: {config_path}")
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
@@ -81,7 +81,7 @@ class ConfigurationBinder:
 
     def load_from_dict(self, config_data: Dict[str, Any]) -> None:
         """从字典加载配置"""
-        self._config = self._parse_config(config_data)
+        self.config = self._parse_config(config_data)
         logger.info("从字典加载配置")
 
     def set_active_profile(self, profile: str) -> None:
@@ -91,25 +91,25 @@ class ConfigurationBinder:
 
     def apply_configuration(self) -> None:
         """应用配置"""
-        if not self._config:
+        if not self.config:
             raise DependencyInjectionError("未加载配置")
 
         logger.info("应用依赖注入配置")
 
         # 处理导入
-        for import_path in self._config.imports:
+        for import_path in self.config.imports:
             self._import_configuration(import_path)
 
         # 自动扫描
-        for module_path in self._config.auto_scan:
+        for module_path in self.config.auto_scan:
             self.auto_binder.bind_from_assembly(module_path)
 
         # 应用约定
-        for convention in self._config.conventions:
+        for convention in self.config.conventions:
             self.auto_binder.bind_by_convention(convention)
 
         # 注册服务
-        for service_name, service_config in self._config.services.items():
+        for service_name, service_config in self.config.services.items():
             if not service_config.enabled:
                 logger.debug(f"跳过禁用的服务: {service_name}")
                 continue
@@ -126,7 +126,7 @@ class ConfigurationBinder:
 
     def _parse_config(self, data: Dict[str, Any]) -> DIConfiguration:
         """解析配置"""
-        _config = DIConfiguration()
+        config = DIConfiguration()
 
         # 解析服务配置
         if "services" in data:
@@ -165,9 +165,9 @@ class ConfigurationBinder:
     def _import_configuration(self, import_path: str) -> None:
         """导入配置"""
         try:
-            import_path = Path(import_path)  # type: ignore
+            import_path = Path(import_path)
 
-            if import_path.is_file():  # type: ignore
+            if import_path.is_file():
                 binder = ConfigurationBinder(self.container)
                 binder.load_from_file(import_path)
                 binder.apply_configuration()
@@ -228,13 +228,13 @@ class ConfigurationBinder:
         # 尝试导入类型
         module_path, class_name = type_name.rsplit(".", 1)
         module = __import__(module_path, fromlist=[class_name])
-        return getattr(module, class_name)  # type: ignore
+        return getattr(module, class_name)
 
-    def _get_factory(self, factory_path: str) -> callable:  # type: ignore
+    def _get_factory(self, factory_path: str) -> callable:
         """获取工厂函数"""
         module_path, func_name = factory_path.rsplit(".", 1)
         module = __import__(module_path, fromlist=[func_name])
-        return getattr(module, func_name)  # type: ignore
+        return getattr(module, func_name)
 
     def _parse_lifetime(self, lifetime_str: str) -> ServiceLifetime:
         """解析生命周期"""
@@ -273,7 +273,7 @@ class ConfigurationBuilder:
     """配置构建器"""
 
     def __init__(self):
-        self._config = DIConfiguration()
+        self.config = DIConfiguration()
 
     def add_service(
         self,
@@ -286,41 +286,41 @@ class ConfigurationBuilder:
         service_config = ServiceConfig(
             name=name, implementation=implementation, lifetime=lifetime, **kwargs
         )
-        self._config.services[name] = service_config
+        self.config.services[name] = service_config
         return self
 
     def add_auto_scan(self, module_path: str) -> "ConfigurationBuilder":
         """添加自动扫描"""
-        self._config.auto_scan.append(module_path)
+        self.config.auto_scan.append(module_path)
         return self
 
     def add_convention(self, convention: str) -> "ConfigurationBuilder":
         """添加约定"""
-        self._config.conventions.append(convention)
+        self.config.conventions.append(convention)
         return self
 
     def add_import(self, import_path: str) -> "ConfigurationBuilder":
         """添加导入"""
-        self._config.imports.append(import_path)
+        self.config.imports.append(import_path)
         return self
 
     def build(self) -> DIConfiguration:
         """构建配置"""
-        return self._config  # type: ignore
+        return self.config
 
 
 def create_config_from_file(config_path: Union[str, Path]) -> DIConfiguration:
     """从文件创建配置"""
     binder = ConfigurationBinder(DIContainer())
     binder.load_from_file(config_path)
-    return binder._config  # type: ignore
+    return binder.config
 
 
 def create_config_from_dict(config_data: Dict[str, Any]) -> DIConfiguration:
     """从字典创建配置"""
     binder = ConfigurationBinder(DIContainer())
     binder.load_from_dict(config_data)
-    return binder._config  # type: ignore
+    return binder.config
 
 
 # 示例配置生成器

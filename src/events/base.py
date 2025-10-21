@@ -37,7 +37,7 @@ class EventData:
         self.timestamp = timestamp or datetime.utcnow()
         self.source = source
         self.version = version
-        self._metadata = metadata or {}
+        self.metadata = metadata or {}
 
 
 class Event(ABC):
@@ -53,37 +53,37 @@ class Event(ABC):
         Args:
             data: 事件数据
         """
-        self._data = data
+        self.data = data
 
     @property
     def data(self) -> EventData:
         """获取事件数据"""
-        return self._data
+        return self.data
 
     @property
     def event_id(self) -> str:
         """获取事件ID"""
-        return self._data.event_id
+        return self.data.event_id
 
     @property
     def timestamp(self) -> datetime:
         """获取事件时间戳"""
-        return self._data.timestamp
+        return self.data.timestamp
 
     @property
     def source(self) -> Optional[str]:
         """获取事件源"""
-        return self._data.source
+        return self.data.source
 
     @property
     def version(self) -> str:
         """获取事件版本"""
-        return self._data.version
+        return self.data.version
 
     @property
     def metadata(self) -> Dict[str, Any]:
         """获取事件元数据"""
-        return self._data.metadata
+        return self.data.metadata
 
     @classmethod
     @abstractmethod

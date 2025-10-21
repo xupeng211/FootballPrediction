@@ -1,7 +1,7 @@
 """OpenAPI配置测试"""
 
 import pytest
-from src._config.openapi_config import OpenAPIConfig, setup_openapi
+from src.config.openapi_config import OpenAPIConfig, setup_openapi
 
 
 class TestOpenAPIConfig:

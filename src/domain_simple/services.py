@@ -31,14 +31,14 @@ class ServiceConfig:
 
     def __post_init__(self):
         if self.config is None:
-            self._config = {}
+            self.config = {}
 
 
 class DomainService(ABC, Generic[T]):
     """域服务基类"""
 
     def __init__(self, config: Optional[ServiceConfig] = None):
-        self._config = config or ServiceConfig(self.__class__.__name__)
+        self.config = config or ServiceConfig(self.__class__.__name__)
         self.name = self.config.name
         self.version = self.config.version
         self.enabled = self.config.enabled
@@ -159,7 +159,7 @@ class MatchDomainService(DomainService[Match]):
 
         # 验证
         if self._validation_engine:
-            _result = self._validation_engine.validate(match, "match")
+            result = self._validation_engine.validate(match, "match")
             if not result.is_valid:
                 raise ValueError(f"比赛验证失败: {result.errors}")
 
@@ -212,7 +212,7 @@ class TeamDomainService(DomainService[Team]):
 
         # 验证
         if self._validation_engine:
-            _result = self._validation_engine.validate(team, "team")
+            result = self._validation_engine.validate(team, "team")
             if not result.is_valid:
                 raise ValueError(f"球队验证失败: {result.errors}")
 
@@ -265,7 +265,7 @@ class PredictionDomainService(DomainService[Prediction]):
 
         # 验证
         if self._validation_engine:
-            _result = self._validation_engine.validate(prediction, "prediction")
+            result = self._validation_engine.validate(prediction, "prediction")
             if not result.is_valid:
                 raise ValueError(f"预测验证失败: {result.errors}")
 

@@ -54,7 +54,7 @@ class DefaultRepositoryFactory:
     ) -> Repository[Prediction, int]:
         """创建预测仓储"""
         if read_only:
-            return ReadOnlyPredictionRepository(session, Prediction)  # type: ignore
+            return ReadOnlyPredictionRepository(session, Prediction)
         return PredictionRepository(session, Prediction)
 
     @staticmethod
@@ -63,7 +63,7 @@ class DefaultRepositoryFactory:
     ) -> Repository[User, int]:
         """创建用户仓储"""
         if read_only:
-            return ReadOnlyUserRepository(session, User)  # type: ignore
+            return ReadOnlyUserRepository(session, User)
         return UserRepository(session, User)
 
     @staticmethod
@@ -72,7 +72,7 @@ class DefaultRepositoryFactory:
     ) -> Repository[Match, int]:
         """创建比赛仓储"""
         if read_only:
-            return ReadOnlyMatchRepository(session, Match)  # type: ignore
+            return ReadOnlyMatchRepository(session, Match)
         return MatchRepository(session, Match)
 
 
@@ -85,7 +85,7 @@ class RepositoryProvider:
 
     def __init__(self, factory: RepositoryFactory = None):
         self._factory = factory or DefaultRepositoryFactory()
-        self._repositories = {}  # type: ignore
+        self._repositories = {}
 
     def get_prediction_repository(
         self, session: AsyncSession, read_only: bool = False
@@ -96,7 +96,7 @@ class RepositoryProvider:
             self._repositories[key] = self._factory.create_prediction_repository(
                 session, read_only
             )
-        return self._repositories[key]  # type: ignore
+        return self._repositories[key]
 
     def get_user_repository(
         self, session: AsyncSession, read_only: bool = False
@@ -107,7 +107,7 @@ class RepositoryProvider:
             self._repositories[key] = self._factory.create_user_repository(
                 session, read_only
             )
-        return self._repositories[key]  # type: ignore
+        return self._repositories[key]
 
     def get_match_repository(
         self, session: AsyncSession, read_only: bool = False
@@ -118,7 +118,7 @@ class RepositoryProvider:
             self._repositories[key] = self._factory.create_match_repository(
                 session, read_only
             )
-        return self._repositories[key]  # type: ignore
+        return self._repositories[key]
 
     def clear_cache(self):
         """清除仓储缓存"""
@@ -131,14 +131,14 @@ class RepositoryProvider:
 
 
 # 全局仓储提供者实例
-_provider: RepositoryProvider = None  # type: ignore
+_provider: RepositoryProvider = None
 
 
 def get_repository_provider() -> RepositoryProvider:
     """获取全局仓储提供者"""
     global _provider
     if _provider is None:
-        _provider = RepositoryProvider()  # type: ignore
+        _provider = RepositoryProvider()
     return _provider
 
 

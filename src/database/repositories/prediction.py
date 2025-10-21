@@ -167,17 +167,17 @@ class PredictionRepository(BaseRepository[Predictions]):
                 select(Prediction)
                 .where(
                     and_(
-                        Prediction.predicted_at >= start_date,  # type: ignore
+                        Prediction.predicted_at >= start_date,
                         Prediction.status == PredictionStatus.COMPLETED,
                     )
                 )
-                .order_by(desc(Prediction.predicted_at))  # type: ignore
+                .order_by(desc(Prediction.predicted_at))
             )
 
             if limit:
                 stmt = stmt.limit(limit)
 
-            _result = await sess.execute(stmt)
+            result = await sess.execute(stmt)
             return result.scalars().all()
 
     async def get_user_prediction_for_match(
@@ -236,7 +236,7 @@ class PredictionRepository(BaseRepository[Predictions]):
         }
 
         if confidence is not None:
-            prediction_data["confidence"] = float(confidence)  # type: ignore
+            prediction_data["confidence"] = float(confidence)
         if model_version:
             prediction_data["model_version"] = model_version
 
@@ -342,11 +342,11 @@ class PredictionRepository(BaseRepository[Predictions]):
                 query = query.where(Prediction.created_at >= start_date)
 
             # 执行查询
-            _result = await sess.execute(query)
+            result = await sess.execute(query)
             predictions = result.scalars().all()
 
             # 计算统计数据
-            _stats = {
+            stats = {
                 "total": len(predictions),
                 "pending": 0,
                 "completed": 0,
@@ -383,7 +383,7 @@ class PredictionRepository(BaseRepository[Predictions]):
 
                 # 置信度统计
                 if pred.confidence is not None:
-                    total_confidence += float(pred.confidence)  # type: ignore
+                    total_confidence += float(pred.confidence)
                     confidence_count += 1
 
             # 计算准确率
@@ -460,7 +460,7 @@ class PredictionRepository(BaseRepository[Predictions]):
 
                 # 置信度统计
                 if pred.confidence is not None:
-                    total_confidence += float(pred.confidence)  # type: ignore
+                    total_confidence += float(pred.confidence)
                     confidence_count += 1
 
             # 计算平均值
@@ -510,7 +510,7 @@ class PredictionRepository(BaseRepository[Predictions]):
                 )
                 .where(
                     and_(
-                        Prediction.predicted_at >= start_date,  # type: ignore
+                        Prediction.predicted_at >= start_date,
                         Prediction.status == PredictionStatus.COMPLETED,
                     )
                 )
@@ -519,7 +519,7 @@ class PredictionRepository(BaseRepository[Predictions]):
                 .limit(limit)
             )
 
-            _result = await sess.execute(stmt)
+            result = await sess.execute(stmt)
             rows = result.all()
 
             # 转换为字典列表
@@ -583,7 +583,7 @@ class PredictionRepository(BaseRepository[Predictions]):
             else:
                 return None
 
-            _result = await sess.execute(stmt)
+            result = await sess.execute(stmt)
             _prediction = result.scalar_one_or_none()
 
             if prediction:

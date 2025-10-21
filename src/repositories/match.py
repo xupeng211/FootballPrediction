@@ -45,7 +45,7 @@ class ReadOnlyMatchRepository(ReadOnlyRepository[Match, int]):
             if query_spec.include:
                 query = self._apply_includes(query, query_spec.include)
 
-        _result = await self.session.execute(query)
+        result = await self.session.execute(query)
         return result.scalars().first()
 
     async def find_many(self, query_spec: QuerySpec) -> List[Match]:
@@ -64,13 +64,13 @@ class ReadOnlyMatchRepository(ReadOnlyRepository[Match, int]):
             if query_spec.include:
                 query = self._apply_includes(query, query_spec.include)
 
-        _result = await self.session.execute(query)
-        return result.scalars().all()  # type: ignore
+        result = await self.session.execute(query)
+        return result.scalars().all()
 
     async def get_by_id(self, id: int) -> Optional[Match]:
         """根据ID获取比赛"""
         query = select(Match).where(Match.id == id)
-        _result = await self.session.execute(query)
+        result = await self.session.execute(query)
         return result.scalars().first()
 
     async def get_all(self, query_spec: Optional[QuerySpec] = None) -> List[Match]:
@@ -88,8 +88,8 @@ class ReadOnlyMatchRepository(ReadOnlyRepository[Match, int]):
     async def exists(self, id: int) -> bool:
         """检查比赛是否存在"""
         query = select(func.count(Match.id)).where(Match.id == id)
-        _result = await self.session.execute(query)
-        return result.scalar() > 0  # type: ignore
+        result = await self.session.execute(query)
+        return result.scalar() > 0
 
     async def get_matches_by_date_range(
         self,
@@ -101,7 +101,7 @@ class ReadOnlyMatchRepository(ReadOnlyRepository[Match, int]):
         """获取指定日期范围内的比赛"""
         filters = {"match_date": {"$gte": start_date, "$lte": end_date}}
         if status:
-            filters["status"] = status.value  # type: ignore
+            filters["status"] = status.value
 
         query_spec = QuerySpec(filters=filters, order_by=["match_date"], limit=limit)
         return await self.find_many(query_spec)
@@ -152,7 +152,7 @@ class ReadOnlyMatchRepository(ReadOnlyRepository[Match, int]):
         """获取指定联赛的比赛"""
         filters = {"competition_id": competition_id}
         if season:
-            filters["season"] = season  # type: ignore
+            filters["season"] = season
 
         query_spec = QuerySpec(filters=filters, order_by=["-match_date"], limit=limit)
         return await self.find_many(query_spec)
@@ -201,7 +201,7 @@ class MatchRepository(MatchRepositoryInterface):
     async def get_by_id(self, id: int) -> Optional[Match]:
         """根据ID获取比赛"""
         query = select(Match).where(Match.id == id)
-        _result = await self.session.execute(query)
+        result = await self.session.execute(query)
         return result.scalars().first()
 
     async def get_all(self, query_spec: Optional[QuerySpec] = None) -> List[Match]:
@@ -220,8 +220,8 @@ class MatchRepository(MatchRepositoryInterface):
             if query_spec.include:
                 query = self._apply_includes(query, query_spec.include)
 
-        _result = await self.session.execute(query)
-        return result.scalars().all()  # type: ignore
+        result = await self.session.execute(query)
+        return result.scalars().all()
 
     async def find_one(self, query_spec: QuerySpec) -> Optional[Match]:
         """查找单个比赛"""
@@ -233,7 +233,7 @@ class MatchRepository(MatchRepositoryInterface):
             if query_spec.include:
                 query = self._apply_includes(query, query_spec.include)
 
-        _result = await self.session.execute(query)
+        result = await self.session.execute(query)
         return result.scalars().first()
 
     async def find_many(self, query_spec: QuerySpec) -> List[Match]:
@@ -243,9 +243,9 @@ class MatchRepository(MatchRepositoryInterface):
     async def save(self, entity: Match) -> Match:
         """保存比赛"""
         if entity.id is None:
-            self.session.add(entity)  # type: ignore
+            self.session.add(entity)
         else:
-            entity.updated_at = datetime.utcnow()  # type: ignore
+            entity.updated_at = datetime.utcnow()
 
         await self.session.commit()
         await self.session.refresh(entity)
@@ -264,8 +264,8 @@ class MatchRepository(MatchRepositoryInterface):
     async def exists(self, id: int) -> bool:
         """检查比赛是否存在"""
         query = select(func.count(Match.id)).where(Match.id == id)
-        _result = await self.session.execute(query)
-        return result.scalar() > 0  # type: ignore
+        result = await self.session.execute(query)
+        return result.scalar() > 0
 
     async def create(self, entity_data: Dict[str, Any]) -> Match:
         """创建新比赛"""
@@ -313,7 +313,7 @@ class MatchRepository(MatchRepositoryInterface):
         for key, value in update_data.items():
             query = query.values({getattr(Match, key): value})
 
-        _result = await self.session.execute(query)
+        result = await self.session.execute(query)
         await self.session.commit()
 
         if result.rowcount > 0:
@@ -327,7 +327,7 @@ class MatchRepository(MatchRepositoryInterface):
             .where(Match.id == id)
             .values(status=MatchStatus.CANCELLED.value, updated_at=datetime.utcnow())
         )
-        _result = await self.session.execute(query)
+        result = await self.session.execute(query)
         await self.session.commit()
         return result.rowcount > 0
 
@@ -437,7 +437,7 @@ class MatchRepository(MatchRepositoryInterface):
         # 获取预测统计
         prediction_query = select(
             func.count(Prediction.id).label("total_predictions"),
-            func.avg(Prediction.confidence).label("avg_confidence"),  # type: ignore
+            func.avg(Prediction.confidence).label("avg_confidence"),
             func.sum(
                 func.case(
                     (
@@ -475,10 +475,10 @@ class MatchRepository(MatchRepositoryInterface):
 
         # 获取实际结果分布
         actual_result = None
-        if match.status == MatchStatus.FINISHED.value and match.home_score is not None:  # type: ignore
-            if match.home_score > match.away_score:  # type: ignore
+        if match.status == MatchStatus.FINISHED.value and match.home_score is not None:
+            if match.home_score > match.away_score:
                 actual_result = "home_win"
-            elif match.home_score < match.away_score:  # type: ignore
+            elif match.home_score < match.away_score:
                 actual_result = "away_win"
             else:
                 actual_result = "draw"
@@ -486,11 +486,11 @@ class MatchRepository(MatchRepositoryInterface):
         return {
             "match_id": match_id,
             "match_info": {
-                "home_team": match.home_team_name,  # type: ignore
-                "away_team": match.away_team_name,  # type: ignore
-                "competition": match.competition_name,  # type: ignore
-                "match_date": match.match_date,  # type: ignore
-                "status": match.status,  # type: ignore
+                "home_team": match.home_team_name,
+                "away_team": match.away_team_name,
+                "competition": match.competition_name,
+                "match_date": match.match_date,
+                "status": match.status,
                 "score": {"home": match.home_score, "away": match.away_score}
                 if match.home_score is not None
                 else None,

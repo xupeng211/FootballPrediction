@@ -80,7 +80,7 @@ class HistoricalStrategy(PredictionStrategy):
                 - max_historical_years: 考虑的历史年数
                 - weight_factors: 各种历史因素的权重
         """
-        self._config = config
+        self.config = config
         self._min_historical_matches = config.get("min_historical_matches", 3)
         self._similarity_threshold = config.get("similarity_threshold", 0.7)
         self._max_historical_years = config.get("max_historical_years", 5)
@@ -213,7 +213,7 @@ class HistoricalStrategy(PredictionStrategy):
             confidence=confidence,
             probability_distribution=probability_distribution,
             feature_importance=feature_importance,
-            _metadata={
+            metadata ={
                 "method": "historical_analysis",
                 "h2h_matches": len(
                     await self._get_head_to_head_matches(

@@ -82,7 +82,7 @@ class UserRepository(BaseRepository[User]):
         """
         filters = {"username": username}
         if exclude_id:
-            filters["id"] = {"ne": exclude_id}  # type: ignore
+            filters["id"] = {"ne": exclude_id}
 
         return await self.exists(filters=filters, session=session)
 
@@ -105,7 +105,7 @@ class UserRepository(BaseRepository[User]):
         """
         filters = {"email": email}
         if exclude_id:
-            filters["id"] = {"ne": exclude_id}  # type: ignore
+            filters["id"] = {"ne": exclude_id}
 
         return await self.exists(filters=filters, session=session)
 
@@ -132,16 +132,16 @@ class UserRepository(BaseRepository[User]):
             stmt = (
                 select(User)
                 .where(
-                    and_(User.is_active is True, User.last_login_at >= thirty_days_ago)  # type: ignore
+                    and_(User.is_active is True, User.last_login_at >= thirty_days_ago)
                 )
-                .order_by(desc(User.last_login_at))  # type: ignore
+                .order_by(desc(User.last_login_at))
             )
 
             if limit:
                 stmt = stmt.limit(limit)
 
-            _result = await sess.execute(stmt)
-            return result.scalars().all()  # type: ignore
+            result = await sess.execute(stmt)
+            return result.scalars().all()
 
     async def get_inactive_users(
         self,
@@ -169,16 +169,16 @@ class UserRepository(BaseRepository[User]):
             stmt = (
                 select(User)
                 .where(
-                    or_(User.last_login_at < cutoff_date, User.last_login_at.is_(None))  # type: ignore
+                    or_(User.last_login_at < cutoff_date, User.last_login_at.is_(None))
                 )
-                .order_by(asc(User.last_login_at))  # type: ignore
+                .order_by(asc(User.last_login_at))
             )
 
             if limit:
                 stmt = stmt.limit(limit)
 
-            _result = await sess.execute(stmt)
-            return result.scalars().all()  # type: ignore
+            result = await sess.execute(stmt)
+            return result.scalars().all()
 
     async def search_users(
         self,
@@ -217,8 +217,8 @@ class UserRepository(BaseRepository[User]):
             if limit:
                 stmt = stmt.limit(limit)
 
-            _result = await sess.execute(stmt)
-            return result.scalars().all()  # type: ignore
+            result = await sess.execute(stmt)
+            return result.scalars().all()
 
     async def update_last_login(
         self, user_id: Union[int, str], session: Optional[AsyncSession] = None
@@ -348,7 +348,7 @@ class UserRepository(BaseRepository[User]):
             # 活跃用户数（最近30天登录）
             thirty_days_ago = datetime.utcnow() - timedelta(days=30)
             active_stmt = select(func.count(User.id)).where(
-                and_(User.is_active is True, User.last_login_at >= thirty_days_ago)  # type: ignore
+                and_(User.is_active is True, User.last_login_at >= thirty_days_ago)
             )
             if days:
                 active_stmt = active_stmt.where(User.created_at >= start_date)
@@ -365,15 +365,15 @@ class UserRepository(BaseRepository[User]):
 
             # 计算比率
             activity_rate = 0.0
-            if total_users > 0:  # type: ignore
-                activity_rate = active_users / total_users  # type: ignore
+            if total_users > 0:
+                activity_rate = active_users / total_users
 
             return {
                 "total_users": total_users,
                 "active_users": active_users,
                 "new_users_today": new_users_today,
                 "activity_rate": activity_rate,
-                "inactive_users": total_users - active_users,  # type: ignore
+                "inactive_users": total_users - active_users,
             }
 
     async def get_user_growth_stats(
@@ -413,7 +413,7 @@ class UserRepository(BaseRepository[User]):
                 .order_by(func.date(User.created_at))
             )
 
-            _result = await sess.execute(stmt)
+            result = await sess.execute(stmt)
             rows = result.all()
 
             # 转换为字典列表
@@ -454,25 +454,25 @@ class UserRepository(BaseRepository[User]):
             if relation_name == "predictions":
                 stmt = (
                     select(User)
-                    .options(selectinload(User.predictions))  # type: ignore
+                    .options(selectinload(User.predictions))
                     .where(User.id == obj_id)
                 )
             elif relation_name == "profile":
                 stmt = (
                     select(User)
-                    .options(selectinload(User.profile))  # type: ignore
+                    .options(selectinload(User.profile))
                     .where(User.id == obj_id)
                 )
             elif relation_name == "roles":
                 stmt = (
                     select(User)
-                    .options(selectinload(User.roles))  # type: ignore
+                    .options(selectinload(User.roles))
                     .where(User.id == obj_id)
                 )
             else:
                 return None
 
-            _result = await sess.execute(stmt)
+            result = await sess.execute(stmt)
             _user = result.scalar_one_or_none()
 
             if user:
