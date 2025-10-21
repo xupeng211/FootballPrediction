@@ -33,13 +33,13 @@ class TestDatabaseConfig:
             password=None,
         )
 
-        assert config.host == "localhost"
-        assert config.port == 5432
-        assert config.database == "testdb"
-        assert config.username == "user"
-        assert config.password is None
-        assert config.pool_size == 10  # 默认值
-        assert config.echo is False  # 默认值
+        assert _config.host == "localhost"
+        assert _config.port == 5432
+        assert _config.database == "testdb"
+        assert _config.username == "user"
+        assert _config.password is None
+        assert _config.pool_size == 10  # 默认值
+        assert _config.echo is False  # 默认值
 
     def test_config_creation_full(self):
         """测试：完整配置创建"""
@@ -56,16 +56,16 @@ class TestDatabaseConfig:
             echo=True,
         )
 
-        assert config.host == "custom-host"
-        assert config.port == 5433
-        assert config.database == "custom_db"
-        assert config.username == "custom_user"
-        assert config.password == "custom_pass"
-        assert config.pool_size == 20
-        assert config.max_overflow == 30
-        assert config.pool_timeout == 60
-        assert config.pool_recycle == 3600
-        assert config.echo is True
+        assert _config.host == "custom-host"
+        assert _config.port == 5433
+        assert _config.database == "custom_db"
+        assert _config.username == "custom_user"
+        assert _config.password == "custom_pass"
+        assert _config.pool_size == 20
+        assert _config.max_overflow == 30
+        assert _config.pool_timeout == 60
+        assert _config.pool_recycle == 3600
+        assert _config.echo is True
 
     def test_is_sqlite_memory(self):
         """测试：SQLite内存数据库检测"""
@@ -76,7 +76,7 @@ class TestDatabaseConfig:
             username="user",
             password=None,
         )
-        assert config._is_sqlite() is True
+        assert _config._is_sqlite() is True
 
     def test_is_sqlite_file(self):
         """测试：SQLite文件数据库检测"""
@@ -87,7 +87,7 @@ class TestDatabaseConfig:
             username="user",
             password=None,
         )
-        assert config._is_sqlite() is True
+        assert _config._is_sqlite() is True
 
     def test_is_not_sqlite(self):
         """测试：非SQLite数据库检测"""
@@ -98,7 +98,7 @@ class TestDatabaseConfig:
             username="user",
             password=None,
         )
-        assert config._is_sqlite() is False
+        assert _config._is_sqlite() is False
 
     def test_sync_url_postgresql(self):
         """测试：PostgreSQL同步URL生成"""
@@ -110,7 +110,7 @@ class TestDatabaseConfig:
             password="pass",
         )
         expected = "postgresql+psycopg2://user:pass@localhost:5432/testdb"
-        assert config.sync_url == expected
+        assert _config.sync_url == expected
 
     def test_sync_url_postgresql_no_password(self):
         """测试：PostgreSQL同步URL生成（无密码）"""
@@ -122,7 +122,7 @@ class TestDatabaseConfig:
             password=None,
         )
         expected = "postgresql+psycopg2://user@localhost:5432/testdb"
-        assert config.sync_url == expected
+        assert _config.sync_url == expected
 
     def test_sync_url_sqlite_memory(self):
         """测试：SQLite内存数据库同步URL"""
@@ -133,7 +133,7 @@ class TestDatabaseConfig:
             username="user",
             password=None,
         )
-        assert config.sync_url == "sqlite:///:memory:"
+        assert _config.sync_url == "sqlite:///:memory:"
 
     def test_sync_url_sqlite_file(self):
         """测试：SQLite文件数据库同步URL"""
@@ -144,7 +144,7 @@ class TestDatabaseConfig:
             username="user",
             password=None,
         )
-        assert config.sync_url == "sqlite:///test.db"
+        assert _config.sync_url == "sqlite:///test.db"
 
     def test_async_url_postgresql(self):
         """测试：PostgreSQL异步URL生成"""
@@ -156,7 +156,7 @@ class TestDatabaseConfig:
             password="pass",
         )
         expected = "postgresql+asyncpg://user:pass@localhost:5432/testdb"
-        assert config.async_url == expected
+        assert _config.async_url == expected
 
     def test_async_url_postgresql_no_password(self):
         """测试：PostgreSQL异步URL生成（无密码）"""
@@ -168,7 +168,7 @@ class TestDatabaseConfig:
             password=None,
         )
         expected = "postgresql+asyncpg://user@localhost:5432/testdb"
-        assert config.async_url == expected
+        assert _config.async_url == expected
 
     def test_async_url_sqlite_memory(self):
         """测试：SQLite内存数据库异步URL"""
@@ -179,7 +179,7 @@ class TestDatabaseConfig:
             username="user",
             password=None,
         )
-        assert config.async_url == "sqlite+aiosqlite:///:memory:"
+        assert _config.async_url == "sqlite+aiosqlite:///:memory:"
 
     def test_async_url_sqlite_file(self):
         """测试：SQLite文件数据库异步URL"""
@@ -190,7 +190,7 @@ class TestDatabaseConfig:
             username="user",
             password=None,
         )
-        assert config.async_url == "sqlite+aiosqlite:///test.db"
+        assert _config.async_url == "sqlite+aiosqlite:///test.db"
 
     def test_alembic_url(self):
         """测试：Alembic URL生成"""
@@ -201,7 +201,7 @@ class TestDatabaseConfig:
             username="user",
             password="pass",
         )
-        assert config.alembic_url == config.sync_url
+        assert _config.alembic_url == _config.sync_url
 
 
 class TestEnvironmentHelpers:
@@ -257,22 +257,22 @@ class TestDatabaseConfigFactory:
         with patch.dict("os.environ", {"DB_PASSWORD": "dev-pass"}, clear=True):
             _config = get_database_config("development")
 
-            assert config.host == "localhost"
-            assert config.port == 5432
-            assert config.database == "football_prediction_dev"
-            assert config.username == "football_user"
-            assert config.password == "dev-pass"
+            assert _config.host == "localhost"
+            assert _config.port == 5432
+            assert _config.database == "football_prediction_dev"
+            assert _config.username == "football_user"
+            assert _config.password == "dev-pass"
 
     def test_get_database_config_test(self):
         """测试：获取测试环境配置"""
         with patch.dict("os.environ", {}, clear=True):
             _config = get_database_config("test")
 
-            assert config.host == "localhost"
-            assert config.port == 5432
-            assert config.database == ":memory:"
-            assert config.username == "football_user"
-            assert config.password is None  # 测试环境不需要密码
+            assert _config.host == "localhost"
+            assert _config.port == 5432
+            assert _config.database == ":memory:"
+            assert _config.username == "football_user"
+            assert _config.password is None  # 测试环境不需要密码
 
     def test_get_database_config_production_with_password(self):
         """测试：获取生产环境配置（有密码）"""
@@ -288,12 +288,12 @@ class TestDatabaseConfigFactory:
         with patch.dict("os.environ", env_vars, clear=True):
             _config = get_database_config("production")
 
-            assert config.host == "prod-host"
-            assert config.port == 5433
-            assert config.database == "prod_db"
-            assert config.username == "prod_user"
-            assert config.password == "secret_pass"
-            assert config.pool_size == 20
+            assert _config.host == "prod-host"
+            assert _config.port == 5433
+            assert _config.database == "prod_db"
+            assert _config.username == "prod_user"
+            assert _config.password == "secret_pass"
+            assert _config.pool_size == 20
 
     def test_get_database_config_production_missing_password(self):
         """测试：获取生产环境配置（缺少密码）"""
@@ -320,13 +320,13 @@ class TestDatabaseConfigFactory:
         with patch.dict("os.environ", env_vars, clear=True):
             _config = get_database_config()
 
-            assert config.host == "env-host"
-            assert config.port == 55432
-            assert config.database == "env-db"
-            assert config.username == "env-user"
-            assert config.password == "env-pass"
-            assert config.pool_size == 15
-            assert config.echo is True
+            assert _config.host == "env-host"
+            assert _config.port == 55432
+            assert _config.database == "env-db"
+            assert _config.username == "env-user"
+            assert _config.password == "env-pass"
+            assert _config.pool_size == 15
+            assert _config.echo is True
 
     def test_get_database_config_dev_environment_alias(self):
         """测试：开发环境别名"""
@@ -334,7 +334,7 @@ class TestDatabaseConfigFactory:
             "os.environ", {"DB_HOST": "dev-host", "DB_PASSWORD": "dev-pass"}, clear=True
         ):
             _config = get_database_config("dev")
-            assert config.host == "dev-host"
+            assert _config.host == "dev-host"
 
     def test_get_database_config_prod_environment_alias(self):
         """测试：生产环境别名"""
@@ -342,23 +342,23 @@ class TestDatabaseConfigFactory:
 
         with patch.dict("os.environ", env_vars, clear=True):
             _config = get_database_config("prod")
-            assert config.host == "prod-host-alias"
+            assert _config.host == "prod-host-alias"
 
     def test_get_database_config_unknown_environment(self):
         """测试：未知环境"""
         with patch.dict("os.environ", {"DB_PASSWORD": "unknown-pass"}, clear=True):
             _config = get_database_config("unknown")
             # 应该使用开发环境的默认值
-            assert config.host == "localhost"
-            assert config.database == "football_prediction_dev"
+            assert _config.host == "localhost"
+            assert _config.database == "football_prediction_dev"
 
     def test_get_test_database_config(self):
         """测试：获取测试数据库配置快捷函数"""
         with patch.dict("os.environ", {}, clear=True):
             _config = get_test_database_config()
 
-            assert config.database == ":memory:"
-            assert config.username == "football_user"
+            assert _config.database == ":memory:"
+            assert _config.username == "football_user"
 
     def test_get_production_database_config_with_password(self):
         """测试：获取生产数据库配置快捷函数（有密码）"""
@@ -367,8 +367,8 @@ class TestDatabaseConfigFactory:
         with patch.dict("os.environ", env_vars, clear=True):
             _config = get_production_database_config()
 
-            assert config.host == "prod-host"
-            assert config.password == "secret"
+            assert _config.host == "prod-host"
+            assert _config.password == "secret"
 
     def test_get_production_database_config_missing_password(self):
         """测试：获取生产数据库配置快捷函数（缺少密码）"""
@@ -395,14 +395,14 @@ class TestDatabaseConfigFactory:
         with patch.dict("os.environ", env_vars, clear=True):
             _config = get_database_config()
 
-            assert config.pool_size == 15
-            assert config.max_overflow == 25
-            assert config.pool_timeout == 45
-            assert config.pool_recycle == 2700
-            assert config.async_pool_size == 20
-            assert config.async_max_overflow == 30
-            assert config.echo is True
-            assert config.echo_pool is True
+            assert _config.pool_size == 15
+            assert _config.max_overflow == 25
+            assert _config.pool_timeout == 45
+            assert _config.pool_recycle == 2700
+            assert _config.async_pool_size == 20
+            assert _config.async_max_overflow == 30
+            assert _config.echo is True
+            assert _config.echo_pool is True
 
     def test_config_async_pool_defaults(self):
         """测试：异步连接池默认值"""
@@ -418,5 +418,5 @@ class TestDatabaseConfigFactory:
             _config = get_database_config()
 
             # 异步池默认使用同步池的值
-            assert config.async_pool_size == 12
-            assert config.async_max_overflow == 18
+            assert _config.async_pool_size == 12
+            assert _config.async_max_overflow == 18

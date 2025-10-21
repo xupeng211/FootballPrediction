@@ -13,59 +13,82 @@ from typing import List, Tuple, Pattern
 # 需要检查的模式
 SECRET_PATTERNS: List[Tuple[str, Pattern[str]]] = [
     # API Keys / Tokens
-    ("API Key", re.compile(r'["\']([A-Za-z0-9]{20,})["\'].*api[_-]?key', re.IGNORECASE)),
+    (
+        "API Key",
+        re.compile(r'["\']([A-Za-z0-9]{20,})["\'].*api[_-]?key', re.IGNORECASE),
+    ),
     ("API Token", re.compile(r'["\']([A-Za-z0-9]{20,})["\'].*token', re.IGNORECASE)),
-    ("Authorization Bearer", re.compile(r'authorization:\s*Bearer\s+([A-Za-z0-9\-._~+/]+=*)', re.IGNORECASE)),
-
+    (
+        "Authorization Bearer",
+        re.compile(r"authorization:\s*Bearer\s+([A-Za-z0-9\-._~+/]+=*)", re.IGNORECASE),
+    ),
     # Passwords
     ("Password", re.compile(r'password\s*=\s*["\']([^"\']{8,})["\']', re.IGNORECASE)),
-    ("DB Password", re.compile(r'db_password\s*=\s*["\']([^"\']{8,})["\']', re.IGNORECASE)),
-    ("Database URL", re.compile(r'(?:mysql|postgresql)://(?!{.*})([^:@\s]+):([^@]+)@', re.IGNORECASE)),
-
+    (
+        "DB Password",
+        re.compile(r'db_password\s*=\s*["\']([^"\']{8,})["\']', re.IGNORECASE),
+    ),
+    (
+        "Database URL",
+        re.compile(
+            r"(?:mysql|postgresql)://(?!{.*})([^:@\s]+):([^@]+)@", re.IGNORECASE
+        ),
+    ),
     # Secrets
-    ("Secret Key", re.compile(r'[_-]?secret[_-]?\s*=\s*["\']([^"\']{16,})["\']', re.IGNORECASE)),
-    ("JWT Secret", re.compile(r'jwt[_-]?secret\s*=\s*["\']([^"\']{16,})["\']', re.IGNORECASE)),
-
+    (
+        "Secret Key",
+        re.compile(r'[_-]?secret[_-]?\s*=\s*["\']([^"\']{16,})["\']', re.IGNORECASE),
+    ),
+    (
+        "JWT Secret",
+        re.compile(r'jwt[_-]?secret\s*=\s*["\']([^"\']{16,})["\']', re.IGNORECASE),
+    ),
     # AWS Keys
-    ("AWS Access Key", re.compile(r'AKIA[0-9A-Z]{16}')),
-    ("AWS Secret Key", re.compile(r'["\']([A-Za-z0-9/+=]{40})["\'].*aws.*secret', re.IGNORECASE)),
-
+    ("AWS Access Key", re.compile(r"AKIA[0-9A-Z]{16}")),
+    (
+        "AWS Secret Key",
+        re.compile(r'["\']([A-Za-z0-9/+=]{40})["\'].*aws.*secret', re.IGNORECASE),
+    ),
     # SSH Keys
-    ("SSH Private Key", re.compile(r'-----BEGIN\s+(?:RSA\s+)?PRIVATE\s+KEY-----')),
-
+    ("SSH Private Key", re.compile(r"-----BEGIN\s+(?:RSA\s+)?PRIVATE\s+KEY-----")),
     # Generic patterns
-    ("Base64 Secret", re.compile(r'["\']([A-Za-z0-9+/]{40,}={0,2})["\'].*secret', re.IGNORECASE)),
-
+    (
+        "Base64 Secret",
+        re.compile(r'["\']([A-Za-z0-9+/]{40,}={0,2})["\'].*secret', re.IGNORECASE),
+    ),
     # Hardcoded URLs with credentials
-    ("URL with credentials", re.compile(r'https?://[^:]+:([^@]+)@[^/]+', re.IGNORECASE)),
+    (
+        "URL with credentials",
+        re.compile(r"https?://[^:]+:([^@]+)@[^/]+", re.IGNORECASE),
+    ),
 ]
 
 # 忽略的文件和目录
 IGNORE_PATTERNS = [
-    r'\.git/',
-    r'__pycache__/',
-    r'\.venv/',
-    r'\.env$',
-    r'\.env\.example$',
-    r'\.log$',
-    r'/tests/',
-    r'/test_',
-    r'/stubs/',
-    r'/migrations/',
-    r'\.pyc$',
-    r'\.pyo$',
-    r'\.pyd$',
-    r'\.DS_Store$',
-    r'\.mypy_cache/',
-    r'\.pytest_cache/',
-    r'htmlcov/',
-    r'\.coverage',
-    r'\.tox/',
-    r'\.cleanup_backup/',
-    r'\.cleanup_archive/',
-    r'/archive/',
-    r'/node_modules/',
-    r'\.cache/',
+    r"\.git/",
+    r"__pycache__/",
+    r"\.venv/",
+    r"\.env$",
+    r"\.env\.example$",
+    r"\.log$",
+    r"/tests/",
+    r"/test_",
+    r"/stubs/",
+    r"/migrations/",
+    r"\.pyc$",
+    r"\.pyo$",
+    r"\.pyd$",
+    r"\.DS_Store$",
+    r"\.mypy_cache/",
+    r"\.pytest_cache/",
+    r"htmlcov/",
+    r"\.coverage",
+    r"\.tox/",
+    r"\.cleanup_backup/",
+    r"\.cleanup_archive/",
+    r"/archive/",
+    r"/node_modules/",
+    r"\.cache/",
 ]
 
 # 白名单 - 这些是示例值，不是真实的密钥
@@ -91,6 +114,7 @@ FALSE_POSITIVES = [
     "token-here",
 ]
 
+
 def should_ignore_file(file_path: Path) -> bool:
     """检查文件是否应该被忽略"""
     path_str = str(file_path)
@@ -99,6 +123,7 @@ def should_ignore_file(file_path: Path) -> bool:
             return True
     return False
 
+
 def is_false_positive(secret: str) -> bool:
     """检查是否是误报"""
     secret_lower = secret.lower()
@@ -106,6 +131,7 @@ def is_false_positive(secret: str) -> bool:
         if fp in secret_lower:
             return True
     return False
+
 
 def scan_file(file_path: Path) -> List[Tuple[int, str, str]]:
     """
@@ -117,7 +143,7 @@ def scan_file(file_path: Path) -> List[Tuple[int, str, str]]:
     findings = []
 
     try:
-        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
             lines = f.readlines()
     except Exception as e:
         print(f"⚠️  无法读取文件 {file_path}: {e}")
@@ -134,19 +160,20 @@ def scan_file(file_path: Path) -> List[Tuple[int, str, str]]:
                     continue
 
                 # 跳过注释
-                if line.strip().startswith('#'):
+                if line.strip().startswith("#"):
                     continue
 
                 findings.append((line_num, secret_type, secret_value))
 
     return findings
 
+
 def main():
     """主函数"""
     if len(sys.argv) > 1:
         scan_dir = Path(sys.argv[1])
     else:
-        scan_dir = Path('.')
+        scan_dir = Path(".")
 
     print("🔍 扫描硬编码敏感信息...")
     print(f"📁 扫描目录: {scan_dir.absolute()}")
@@ -156,9 +183,21 @@ def main():
     files_with_issues = 0
 
     # 获取所有需要扫描的文件
-    scan_extensions = {'.py', '.yml', '.yaml', '.json', '.js', '.ts', '.jsx', '.tsx', '.env', '.conf', '.cfg'}
+    scan_extensions = {
+        ".py",
+        ".yml",
+        ".yaml",
+        ".json",
+        ".js",
+        ".ts",
+        ".jsx",
+        ".tsx",
+        ".env",
+        ".conf",
+        ".cfg",
+    }
 
-    for file_path in scan_dir.rglob('*'):
+    for file_path in scan_dir.rglob("*"):
         if not file_path.is_file():
             continue
 
@@ -183,7 +222,9 @@ def main():
 
     print("\n" + "=" * 50)
     print("📊 扫描结果:")
-    print(f"  📁 扫描文件数: {len([f for f in scan_dir.rglob('*') if f.is_file() and f.suffix in scan_extensions and not should_ignore_file(f)])}")
+    print(
+        f"  📁 扫描文件数: {len([f for f in scan_dir.rglob('*') if f.is_file() and f.suffix in scan_extensions and not should_ignore_file(f)])}"
+    )
     print(f"  🚨 发现问题文件: {files_with_issues}")
     print(f"  ⚠️  发现敏感信息: {total_findings}")
 
@@ -198,6 +239,7 @@ def main():
     else:
         print("\n✅ 未发现硬编码的敏感信息！")
         sys.exit(0)
+
 
 if __name__ == "__main__":
     main()

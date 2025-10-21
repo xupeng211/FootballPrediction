@@ -34,7 +34,7 @@ class TestDataAPIV2:
 
         if data:
             # 验证联赛结构
-            league = data[0]
+            league = _data[0]
             assert "id" in league
             assert "name" in league
             assert "country" in league
@@ -66,10 +66,12 @@ class TestDataAPIV2:
         _data = response.json()
 
         # 验证联赛结构
-        assert data["id"] == league_id
-        assert "name" in data
-        assert "country" in data
-        assert "season" in data
+        assert _data["id"] == league_id
+        assert "name" in _data
+
+        assert "country" in _data
+
+        assert "season" in _data
 
     def test_get_league_not_found(self, client):
         """测试获取不存在的联赛"""
@@ -78,7 +80,7 @@ class TestDataAPIV2:
         # 模拟数据总是返回200，而不是404
         assert response.status_code == 200
         _data = response.json()
-        assert data["id"] == league_id
+        assert _data["id"] == league_id
 
     # ==================== Teams Tests ====================
 
@@ -93,7 +95,7 @@ class TestDataAPIV2:
 
         if data:
             # 验证球队结构
-            team = data[0]
+            team = _data[0]
             assert "id" in team
             assert "name" in team
             assert "short_name" in team
@@ -116,10 +118,12 @@ class TestDataAPIV2:
         _data = response.json()
 
         # 验证球队结构
-        assert data["id"] == team_id
-        assert "name" in data
-        assert "short_name" in data
-        assert "country" in data
+        assert _data["id"] == team_id
+        assert "name" in _data
+
+        assert "short_name" in _data
+
+        assert "country" in _data
 
     def test_get_team_statistics(self, client):
         """测试获取球队统计"""
@@ -129,20 +133,26 @@ class TestDataAPIV2:
         _data = response.json()
 
         # 验证统计结构
-        assert data["team_id"] == team_id
-        assert "matches_played" in data
-        assert "wins" in data
-        assert "draws" in data
-        assert "losses" in data
-        assert "goals_for" in data
-        assert "goals_against" in data
-        assert "points" in data
+        assert _data["team_id"] == team_id
+        assert "matches_played" in _data
+
+        assert "wins" in _data
+
+        assert "draws" in _data
+
+        assert "losses" in _data
+
+        assert "goals_for" in _data
+
+        assert "goals_against" in _data
+
+        assert "points" in _data
 
         # 验证数据类型
-        assert isinstance(data["matches_played"], int)
-        assert isinstance(data["points"], int)
-        assert data["matches_played"] >= 0
-        assert data["points"] >= 0
+        assert isinstance(_data["matches_played"], int)
+        assert isinstance(_data["points"], int)
+        assert _data["matches_played"] >= 0
+        assert _data["points"] >= 0
 
     def test_get_team_not_found(self, client):
         """测试获取不存在的球队"""
@@ -151,7 +161,7 @@ class TestDataAPIV2:
         # 模拟数据总是返回200
         assert response.status_code == 200
         _data = response.json()
-        assert data["id"] == team_id
+        assert _data["id"] == team_id
 
     # ==================== Matches Tests ====================
 
@@ -166,7 +176,7 @@ class TestDataAPIV2:
 
         if data:
             # 验证比赛结构
-            match = data[0]
+            match = _data[0]
             assert "id" in match
             assert "home_team_id" in match
             assert "away_team_id" in match
@@ -197,12 +207,16 @@ class TestDataAPIV2:
         _data = response.json()
 
         # 验证比赛结构
-        assert data["id"] == match_id
-        assert "home_team_name" in data
-        assert "away_team_name" in data
-        assert "league_name" in data
-        assert "match_date" in data
-        assert "status" in data
+        assert _data["id"] == match_id
+        assert "home_team_name" in _data
+
+        assert "away_team_name" in _data
+
+        assert "league_name" in _data
+
+        assert "match_date" in _data
+
+        assert "status" in _data
 
     def test_get_match_statistics(self, client):
         """测试获取比赛统计"""
@@ -212,19 +226,31 @@ class TestDataAPIV2:
         _data = response.json()
 
         # 验证统计结构
-        assert data["match_id"] == match_id
-        assert "possession_home" in data
-        assert "possession_away" in data
-        assert "shots_home" in data
-        assert "shots_away" in data
-        assert "shots_on_target_home" in data
-        assert "shots_on_target_away" in data
-        assert "corners_home" in data
-        assert "corners_away" in data
+        assert _data["match_id"] == match_id
+        assert "possession_home" in _data
+
+        assert "possession_away" in _data
+
+        assert "shots_home" in _data
+
+        assert "shots_away" in _data
+
+        assert "shots_on_target_home" in _data
+
+        assert "shots_on_target_away" in _data
+
+        assert "corners_home" in _data
+
+        assert "corners_away" in _data
 
         # 验证数据合理性
-        if data["possession_home"] is not None and data["possession_away"] is not None:
-            assert abs((data["possession_home"] + data["possession_away"]) - 100) < 0.1
+        if (
+            _data["possession_home"] is not None
+            and _data["possession_away"] is not None
+        ):
+            assert (
+                abs((_data["possession_home"] + _data["possession_away"]) - 100) < 0.1
+            )
 
     def test_get_match_not_found(self, client):
         """测试获取不存在的比赛"""
@@ -233,7 +259,7 @@ class TestDataAPIV2:
         # 模拟数据总是返回200
         assert response.status_code == 200
         _data = response.json()
-        assert data["id"] == match_id
+        assert _data["id"] == match_id
 
     # ==================== Odds Tests ====================
 
@@ -248,7 +274,7 @@ class TestDataAPIV2:
 
         if data:
             # 验证赔率结构
-            odds = data[0]
+            odds = _data[0]
             assert "id" in odds
             assert "match_id" in odds
             assert "bookmaker" in odds
@@ -292,7 +318,7 @@ class TestDataAPIV2:
         _data = response.json()
 
         if data:
-            odds = data[0]
+            odds = _data[0]
             # 计算隐含概率
             home_prob = 1 / odds["home_win"]
             draw_prob = 1 / odds["draw"]

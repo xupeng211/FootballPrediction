@@ -7,7 +7,7 @@ from unittest.mock import patch
 def test_fastapi_config_import():
     """测试 FastAPI 配置模块导入"""
     try:
-        from src.config.fastapi_config import get_fastapi_config
+        from src._config.fastapi_config import get_fastapi_config
 
         assert True
     except ImportError:
@@ -17,7 +17,7 @@ def test_fastapi_config_import():
 def test_openapi_config_import():
     """测试 OpenAPI 配置模块导入"""
     try:
-        from src.config.openapi_config import setup_openapi
+        from src._config.openapi_config import setup_openapi
 
         assert callable(setup_openapi)
     except ImportError:

@@ -107,7 +107,7 @@ class Adapter(Target):
             self.metrics["successful_requests"] += 1
             self.last_error = None
 
-            return result
+            return _result
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             # 更新失败指标

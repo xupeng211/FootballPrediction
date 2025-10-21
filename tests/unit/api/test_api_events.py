@@ -65,9 +65,9 @@ class TestEventAPIRoutes:
             app = mock_event_app
             _result = await app.health_check()
 
-            assert result["status"] == "healthy"
-            assert result["uptime"] == 3600
-            assert result["handlers_count"] == 5
+            assert _result["status"] == "healthy"
+            assert _result["uptime"] == 3600
+            assert _result["handlers_count"] == 5
 
     def test_get_event_statistics(self, mock_event_bus, mock_handlers):
         """测试获取事件统计"""

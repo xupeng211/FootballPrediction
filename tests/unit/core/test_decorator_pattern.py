@@ -468,8 +468,8 @@ chains:
         # 验证配置加载
         _config = factory.get_config("test_logging")
         assert config is not None
-        assert config.decorator_type == "logging"
-        assert config.parameters["level"] == "DEBUG"
+        assert _config.decorator_type == "logging"
+        assert _config.parameters["level"] == "DEBUG"
 
         chain_config = factory.get_chain_config("test_chain")
         assert chain_config is not None

@@ -112,8 +112,8 @@ class TestObserverPattern:
         # 模拟服务操作
         _result = await service.predict_match(123)
 
-        assert result["match_id"] == 123
-        assert result["prediction"] == "home_win"
+        assert _result["match_id"] == 123
+        assert _result["prediction"] == "home_win"
 
         # 验证指标收集
         metrics = metrics_observer.get_metrics()
@@ -144,8 +144,8 @@ class TestDecoratorPattern:
 
         _result = await decorated_service.execute("SELECT * FROM test")
 
-        assert result["query"] == "SELECT * FROM test"
-        assert result["result"] == "success"
+        assert _result["query"] == "SELECT * FROM test"
+        assert _result["result"] == "success"
 
     @pytest.mark.asyncio
     async def test_retry_decorator_success(self):
@@ -155,7 +155,7 @@ class TestDecoratorPattern:
 
         _result = await decorated_service.execute("SELECT * FROM test")
 
-        assert result["result"] == "success"
+        assert _result["result"] == "success"
 
     @pytest.mark.asyncio
     async def test_retry_decorator_failure(self):
@@ -194,7 +194,7 @@ class TestDecoratorPattern:
 
         _result = await decorated_service.execute("SELECT * FROM test")
 
-        assert result["result"] == "success"
+        assert _result["result"] == "success"
 
     @pytest.mark.asyncio
     async def test_validation_decorator_invalid_input(self):
@@ -228,7 +228,7 @@ class TestDecoratorPattern:
 
         _result = await service.execute("SELECT * FROM test")
 
-        assert result["result"] == "success"
+        assert _result["result"] == "success"
 
         # 验证指标装饰器收集了数据
         if hasattr(service, "get_metrics"):

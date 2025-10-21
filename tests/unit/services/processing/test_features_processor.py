@@ -59,7 +59,7 @@ class TestFeaturesProcessor:
         if hasattr(processor, "process"):
             try:
                 _result = await processor.process(input_data)
-                assert result is not None
+                assert _result is not None
                 # 验证输出结构
                 if isinstance(result, dict):
                     assert "processed_features" in result or "features" in result
@@ -82,7 +82,7 @@ class TestFeaturesProcessor:
         if hasattr(processor, "process_dataframe"):
             try:
                 _result = await processor.process_dataframe(df)
-                assert result is not None
+                assert _result is not None
                 if isinstance(result, pd.DataFrame):
                     assert len(result) == len(df)
             except Exception as e:
@@ -103,7 +103,7 @@ class TestFeaturesProcessor:
 
         if hasattr(processor, "validate"):
             _result = processor.validate(valid_features)
-            assert result is True or isinstance(result, dict)
+            assert _result is True or isinstance(result, dict)
 
         # 测试无效特征
         invalid_features = {}  # 空数据
@@ -139,7 +139,7 @@ class TestFeaturesProcessor:
 
         if hasattr(processor, "transform_features"):
             _result = processor.transform_features(raw_features)
-            assert result is not None
+            assert _result is not None
             # 验证转换后的特征
             if isinstance(result, dict):
                 assert "avg_home_goals" in result or "sum_home_goals" in result
@@ -173,7 +173,7 @@ class TestFeaturesProcessor:
 
         if hasattr(processor, "process_time_series"):
             _result = await processor.process_time_series(time_series_data)
-            assert result is not None
+            assert _result is not None
             if isinstance(result, dict):
                 assert "trend" in result or "moving_average" in result
 
@@ -217,7 +217,7 @@ class TestFeaturesProcessor:
             processor.update_config(new_config)
             # 验证配置已更新
             if hasattr(processor, "config"):
-                assert processor.config["batch_size"] == 100
+                assert processor._config["batch_size"] == 100
 
     def test_feature_normalization(self, processor):
         """测试：特征归一化"""
@@ -308,7 +308,7 @@ class TestFeaturesProcessorIntegration:
                 _result = await processor.process(engineered)
             else:
                 _result = await processor.process(raw_data)
-            assert result is not None
+            assert _result is not None
 
     def test_processor_factory_pattern(self):
         """测试：处理器工厂模式"""

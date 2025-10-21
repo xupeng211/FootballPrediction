@@ -9,6 +9,7 @@ import json
 from pathlib import Path
 from datetime import datetime
 
+
 def final_coverage_report():
     """生成最终的覆盖率报告"""
     print("📊 最终测试覆盖率验证")
@@ -16,11 +17,19 @@ def final_coverage_report():
 
     # 运行覆盖率测试
     print("1. 运行完整的单元测试覆盖率...")
-    result = subprocess.run(
-        ["python", "-m", "pytest", "tests/unit/", "--cov=src", "--cov-report=json", "-q"],
+    subprocess.run(
+        [
+            "python",
+            "-m",
+            "pytest",
+            "tests/unit/",
+            "--cov=src",
+            "--cov-report=json",
+            "-q",
+        ],
         capture_output=True,
         text=True,
-        timeout=300  # 5分钟超时
+        timeout=300,  # 5分钟超时
     )
 
     # 读取结果
@@ -33,7 +42,7 @@ def final_coverage_report():
         covered_lines = data["totals"]["covered_lines"]
         missing_lines = data["totals"]["missing_lines"]
 
-        print(f"\n📈 覆盖率统计:")
+        print("\n📈 覆盖率统计:")
         print(f"   总覆盖率: {total_coverage:.2f}%")
         print(f"   总代码行: {total_lines}")
         print(f"   已覆盖行: {covered_lines}")
@@ -46,7 +55,7 @@ def final_coverage_report():
             "11-30%": 0,
             "31-60%": 0,
             "61-90%": 0,
-            "91-100%": 0
+            "91-100%": 0,
         }
 
         perfect_coverage = []
@@ -75,30 +84,30 @@ def final_coverage_report():
                 coverage_ranges["91-100%"] += 1
                 perfect_coverage.append((module_name, coverage_pct))
 
-        print(f"\n📋 覆盖率分布:")
+        print("\n📋 覆盖率分布:")
         for range_name, count in coverage_ranges.items():
             print(f"   {range_name:>7}: {count:3d} 个模块")
 
-        print(f"\n✨ 完美覆盖的模块 (91-100%):")
+        print("\n✨ 完美覆盖的模块 (91-100%):")
         for module, coverage in perfect_coverage[:10]:
             print(f"   - {module}: {coverage:.1f}%")
         if len(perfect_coverage) > 10:
             print(f"   ... 还有 {len(perfect_coverage) - 10} 个模块")
 
-        print(f"\n👍 覆盖良好的模块 (31-90%):")
+        print("\n👍 覆盖良好的模块 (31-90%):")
         for module, coverage in good_coverage[:10]:
             print(f"   - {module}: {coverage:.1f}%")
         if len(good_coverage) > 10:
             print(f"   ... 还有 {len(good_coverage) - 10} 个模块")
 
         if needs_improvement:
-            print(f"\n🔧 需要改进的模块 (<30%):")
+            print("\n🔧 需要改进的模块 (<30%):")
             for module, coverage in needs_improvement[:10]:
                 print(f"   - {module}: {coverage:.1f}%")
 
         # 检查是否达到目标
         targets = [20.0, 25.0, 30.0, 35.0]
-        print(f"\n🎯 目标达成情况:")
+        print("\n🎯 目标达成情况:")
         for target in targets:
             if total_coverage >= target:
                 print(f"   ✅ {target}%: 已达成！")
@@ -106,7 +115,7 @@ def final_coverage_report():
                 print(f"   ❌ {target}%: 还差 {target - total_coverage:.1f}%")
 
         # 生成改进建议
-        print(f"\n💡 改进建议:")
+        print("\n💡 改进建议:")
         if total_coverage < 25:
             print("   1. 优先为零覆盖率模块添加基础测试")
             print("   2. 为导入错误检查模块修复依赖问题")
@@ -127,27 +136,28 @@ def final_coverage_report():
                 "total_percent": total_coverage,
                 "total_lines": total_lines,
                 "covered_lines": covered_lines,
-                "missing_lines": missing_lines
+                "missing_lines": missing_lines,
             },
             "distribution": coverage_ranges,
             "modules": {
                 "perfect": perfect_coverage,
                 "good": good_coverage,
-                "needs_improvement": needs_improvement
+                "needs_improvement": needs_improvement,
             },
-            "targets_met": [t for t in targets if total_coverage >= t]
+            "targets_met": [t for t in targets if total_coverage >= t],
         }
 
         with open("reports/final_coverage_report.json", "w") as f:
             json.dump(report, f, indent=2)
 
-        print(f"\n📄 详细报告已保存到: reports/final_coverage_report.json")
+        print("\n📄 详细报告已保存到: reports/final_coverage_report.json")
 
         return total_coverage
 
     else:
         print("❌ 无法生成覆盖率报告")
         return 0
+
 
 def summary_achievements():
     """总结成就"""
@@ -173,6 +183,7 @@ def summary_achievements():
     print("• 查看覆盖率: make coverage-local")
     print("• 生成测试: python scripts/boost_coverage.py")
     print("• 分析报告: python scripts/final_coverage_check.py")
+
 
 if __name__ == "__main__":
     # 创建reports目录

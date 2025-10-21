@@ -90,11 +90,11 @@ class TestBaseModel:
         _result = instance.to_dict()
 
         # 验证结果
-        assert result["id"] == 1
-        assert result["name"] == "Test Item"
-        assert result["description"] == "Test Description"
-        assert result["created_at"] == "2023-01-01T12:00:00"
-        assert result["updated_at"] == "2023-01-01T12:00:00"
+        assert _result["id"] == 1
+        assert _result["name"] == "Test Item"
+        assert _result["description"] == "Test Description"
+        assert _result["created_at"] == "2023-01-01T12:00:00"
+        assert _result["updated_at"] == "2023-01-01T12:00:00"
 
     def test_base_model_to_dict_exclude_fields(self):
         """测试：基础模型转字典（排除字段）"""
@@ -244,8 +244,8 @@ class TestBaseModel:
         _result = instance.to_dict()
 
         # None值应该被保留
-        assert result["name"] == "Test"
-        assert result["optional_field"] is None
+        assert _result["name"] == "Test"
+        assert _result["optional_field"] is None
 
     def test_base_model_table_info(self):
         """测试：基础模型表信息"""

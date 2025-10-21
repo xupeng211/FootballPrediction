@@ -22,24 +22,24 @@ class TestRetrySimpleEnhanced:
             retryable_exceptions=(ValueError, KeyError),
         )
 
-        assert config.max_attempts == 5
-        assert config.base_delay == 0.1
-        assert config.max_delay == 10.0
-        assert config.exponential_base == 2.0
-        assert config.jitter is True
-        assert ValueError in config.retryable_exceptions
-        assert KeyError in config.retryable_exceptions
+        assert _config.max_attempts == 5
+        assert _config.base_delay == 0.1
+        assert _config.max_delay == 10.0
+        assert _config.exponential_base == 2.0
+        assert _config.jitter is True
+        assert ValueError in _config.retryable_exceptions
+        assert KeyError in _config.retryable_exceptions
 
     def test_retry_config_default_values(self):
         """测试RetryConfig默认值"""
         _config = RetryConfig()
 
-        assert config.max_attempts == 3
-        assert config.base_delay == 1.0
-        assert config.max_delay == 60.0
-        assert config.exponential_base == 2.0
-        assert config.jitter is False
-        assert Exception in config.retryable_exceptions
+        assert _config.max_attempts == 3
+        assert _config.base_delay == 1.0
+        assert _config.max_delay == 60.0
+        assert _config.exponential_base == 2.0
+        assert _config.jitter is False
+        assert Exception in _config.retryable_exceptions
 
     def test_retry_decorator_success_on_first_try(self):
         """测试重试装饰器（第一次成功）"""

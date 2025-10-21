@@ -164,7 +164,7 @@ class TestSubsystem:
         )
         assert "model" in result
         assert "output" in result
-        assert result["model"] == "neural_network"
+        assert _result["model"] == "neural_network"
 
         # 测试批量预测
         predictions = await subsystem.batch_predict(
@@ -392,7 +392,7 @@ class TestConcreteFacades:
         # 测试存储并预测
         _result = await facade.execute(
             "store_and_predict",
-            _data ={"test": "data"},
+            _data={"test": "data"},
             cache_key="test_key",
             model="neural_network",
         )
@@ -448,10 +448,10 @@ class TestConcreteFacades:
 
         # 测试存储数据
         _result = await facade.execute(
-            "store_data", _data ={"key": "value"}, table="test_table"
+            "store_data", _data={"key": "value"}, table="test_table"
         )
-        assert result["status"] == "success"
-        assert result["table"] == "test_table"
+        assert _result["status"] == "success"
+        assert _result["table"] == "test_table"
 
         # 测试查询数据
         _result = await facade.execute(
@@ -469,7 +469,7 @@ class TestConcreteFacades:
         _result = await facade.execute(
             "track_event", event_name="test_event", properties={"key": "value"}
         )
-        assert result["status"] == "tracked"
+        assert _result["status"] == "tracked"
 
         # 测试生成报告
         report = await facade.execute("generate_report", report_type="summary")
@@ -494,7 +494,7 @@ class TestConcreteFacades:
             message="Test message",
             channel="email",
         )
-        assert result["status"] == "sent"
+        assert _result["status"] == "sent"
 
         # 测试排队通知
         _result = await facade.execute(
@@ -504,7 +504,7 @@ class TestConcreteFacades:
                 "message": "Queued message",
             },
         )
-        assert result["status"] == "queued"
+        assert _result["status"] == "queued"
 
         # 测试获取通知统计
         _stats = await facade.execute("get_notification_stats")
@@ -545,7 +545,7 @@ class TestFacadeFactory:
         assert isinstance(facade, MainSystemFacade)
 
         # 测试禁用的门面
-        config.enabled = False
+        _config.enabled = False
         with pytest.raises(ValueError):
             factory.create_from_config(config)
 
@@ -579,8 +579,8 @@ class TestFacadeFactory:
         factory.load_config_from_dict(data)
         _config = factory.get_config("test_facade")
         assert config is not None
-        assert config.facade_type == "main"
-        assert config.parameters["test"] == "value"
+        assert _config.facade_type == "main"
+        assert _config.parameters["test"] == "value"
 
     @patch.dict(os.environ, {"TEST_VAR": "environment_value"})
     def test_resolve_environment_variables(self):
@@ -654,8 +654,9 @@ class TestFacadeFactory:
 
         with open(json_file) as f:
             _data = json.load(f)
-        assert "facades" in data
-        assert len(data["facades"]) > 0
+        assert "facades" in _data
+
+        assert len(_data["facades"]) > 0
 
     def test_default_configs(self):
         """测试默认配置"""

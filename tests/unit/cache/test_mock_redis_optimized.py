@@ -225,8 +225,8 @@ class TestRedisManagerIntegration:
 
         # 解析数据
         _data = json.loads(cached)
-        assert data["id"] == 123
-        assert data["name"] == "Test User"
+        assert _data["id"] == 123
+        assert _data["name"] == "Test User"
 
         # 删除缓存
         mock_redis_manager.delete(cache_key)

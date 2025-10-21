@@ -63,7 +63,7 @@ class TestUserAPIIntegration:
             "password": user_data["password"],
         }
 
-        response = await api_client.post("/api/v1/auth/login", _data =login_data)
+        response = await api_client.post("/api/v1/auth/login", _data=login_data)
 
         # 验证响应
         assert response.status_code == 200
@@ -130,7 +130,7 @@ class TestUserAPIIntegration:
         # 使用新密码登录
         login_response = await api_client.post(
             "/api/v1/auth/login",
-            _data ={
+            _data={
                 "username": "test_integration_user",
                 "password": password_data["new_password"],
             },
@@ -178,7 +178,7 @@ class TestUserAPIIntegration:
             Prediction(
                 user_id=user.id,
                 match_id=sample_prediction_data["prediction"].match_id,
-                _prediction ="DRAW",
+                _prediction="DRAW",
                 confidence=0.6,
                 status="COMPLETED",
                 is_correct=True,
@@ -187,7 +187,7 @@ class TestUserAPIIntegration:
             Prediction(
                 user_id=user.id,
                 match_id=sample_prediction_data["prediction"].match_id,
-                _prediction ="AWAY_WIN",
+                _prediction="AWAY_WIN",
                 confidence=0.7,
                 status="COMPLETED",
                 is_correct=False,
@@ -357,7 +357,7 @@ class TestUserAPIIntegration:
         # 用户不存在
         response = await api_client.post(
             "/api/v1/auth/login",
-            _data ={"username": "nonexistent_user", "password": "password123"},
+            _data={"username": "nonexistent_user", "password": "password123"},
         )
         assert response.status_code == 401
 
@@ -375,7 +375,7 @@ class TestUserAPIIntegration:
         # 使用错误密码登录
         response = await api_client.post(
             "/api/v1/auth/login",
-            _data ={"username": "test_user_invalid", "password": "wrong_password"},
+            _data={"username": "test_user_invalid", "password": "wrong_password"},
         )
         assert response.status_code == 401
 

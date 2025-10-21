@@ -64,9 +64,9 @@ class TestCQRSAPI:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert data["success"] is True
-        assert "prediction_id" in data["data"]
-        assert data["message"] == "预测创建成功"
+        assert _data["success"] is True
+        assert "prediction_id" in _data["data"]
+        assert _data["message"] == "预测创建成功"
 
     def test_create_prediction_invalid_data(self, client):
         """测试：创建预测无效数据"""
@@ -111,7 +111,7 @@ class TestCQRSAPI:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert data["success"] is True
+        assert _data["success"] is True
 
     @patch("src.api.cqrs.get_prediction_cqrs_service")
     def test_delete_prediction_success(self, mock_get_service, client):
@@ -132,7 +132,7 @@ class TestCQRSAPI:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert data["success"] is True
+        assert _data["success"] is True
 
     @patch("src.api.cqrs.get_prediction_cqrs_service")
     def test_delete_prediction_not_found(self, mock_get_service, client):
@@ -177,7 +177,7 @@ class TestCQRSAPI:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert data["id"] == "pred_123"
+        assert _data["id"] == "pred_123"
 
     @patch("src.api.cqrs.get_prediction_cqrs_service")
     def test_get_prediction_not_found(self, mock_get_service, client):
@@ -263,8 +263,8 @@ class TestCQRSAPI:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert data["success"] is True
-        assert "user_id" in data["data"]
+        assert _data["success"] is True
+        assert "user_id" in _data["data"]
 
     def test_create_user_invalid_email(self, client):
         """测试：创建用户无效邮箱"""
@@ -327,8 +327,8 @@ class TestCQRSAPI:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert data["success"] is True
-        assert "match_id" in data["data"]
+        assert _data["success"] is True
+        assert "match_id" in _data["data"]
 
     def test_create_match_invalid_date(self, client):
         """测试：创建比赛无效日期"""
@@ -368,9 +368,11 @@ class TestCQRSAPI:
         # Then
         assert response.status_code == 200
         _data = response.json()
-        assert "total_predictions" in data
-        assert "success_rate" in data
-        assert "average_confidence" in data
+        assert "total_predictions" in _data
+
+        assert "success_rate" in _data
+
+        assert "average_confidence" in _data
 
     @patch("src.api.cqrs.get_analytics_cqrs_service")
     def test_get_user_analytics(self, mock_get_service, client):

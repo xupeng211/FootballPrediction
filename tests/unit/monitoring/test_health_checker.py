@@ -397,5 +397,5 @@ class TestHealthChecker:
 
         # 所有检查都应该成功
         for result in results:
-            assert result["status"] == HealthStatus.HEALTHY
+            assert _result["status"] == HealthStatus.HEALTHY
             assert "timestamp" in result

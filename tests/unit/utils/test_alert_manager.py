@@ -80,7 +80,7 @@ class TestAlertManager:
 
         _result = await alert_manager.send_alert(sample_alert)
 
-        assert result is True
+        assert _result is True
         mock_notifier.send.assert_called_once_with(sample_alert)
 
     @pytest.mark.asyncio
@@ -98,7 +98,7 @@ class TestAlertManager:
 
         _result = await alert_manager.send_alert(sample_alert)
 
-        assert result is True
+        assert _result is True
         mock_email_notifier.send.assert_called_once()
         mock_slack_notifier.send.assert_called_once()
         mock_pagerduty_notifier.send.assert_called_once()
@@ -113,7 +113,7 @@ class TestAlertManager:
 
         _result = await alert_manager.send_alert(sample_alert)
 
-        assert result is False
+        assert _result is False
         alert_manager.logger.error.assert_called()
 
     def test_add_alert_to_active(self, alert_manager, sample_alert):
@@ -347,7 +347,7 @@ class TestAlertManager:
                 severity=AlertSeverity.HIGH,
                 message="Database connection failed",
                 source="database",
-                _metadata ={"error_code": "DB_CONN_ERROR"},
+                _metadata={"error_code": "DB_CONN_ERROR"},
             )
             similar_alerts.append(alert)
 
@@ -400,7 +400,7 @@ class TestAlertManager:
         digest = alert_manager.create_digest(alerts)
         _result = await alert_manager.send_digest(digest)
 
-        assert result is True
+        assert _result is True
         mock_notifier.send.assert_called_once()
 
         # 验证摘要内容

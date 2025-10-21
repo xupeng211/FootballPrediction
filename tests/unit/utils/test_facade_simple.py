@@ -46,9 +46,9 @@ class TestPredictionFacade:
 
         # 验证结果
         assert isinstance(result, PredictionResult)
-        assert result.prediction["match_id"] == 123
-        assert result.prediction["algorithm"] == "ensemble"
-        assert result.confidence > 0
+        assert _result.prediction["match_id"] == 123
+        assert _result.prediction["algorithm"] == "ensemble"
+        assert _result.confidence > 0
         assert len(result.recommendations) > 0
 
     @pytest.mark.asyncio
@@ -58,7 +58,7 @@ class TestPredictionFacade:
         _result = await prediction_facade.make_prediction(request)
 
         # 验证价值评估
-        assert result.value_assessment is not None
+        assert _result.value_assessment is not None
         assert "is_value" in result.value_assessment
         assert "value" in result.value_assessment
 
@@ -133,10 +133,10 @@ class TestDataCollectionFacade:
         assert "teams" in result
         assert "leagues" in result
         assert "external" in result
-        assert result["matches"]["updated"] == 50
-        assert result["teams"]["updated"] == 20
-        assert result["leagues"]["updated"] == 5
-        assert result["external"]["updated"] == 100
+        assert _result["matches"]["updated"] == 50
+        assert _result["teams"]["updated"] == 20
+        assert _result["leagues"]["updated"] == 5
+        assert _result["external"]["updated"] == 100
 
     @pytest.mark.asyncio
     async def test_get_data_health(self, data_facade):
@@ -297,7 +297,7 @@ class TestSystemFacade:
         assert "prediction" in result
         assert "confidence" in result
         assert "top_recommendation" in result
-        assert result["confidence"] > 0
+        assert _result["confidence"] > 0
 
     @pytest.mark.asyncio
     async def test_quick_predict_not_initialized(self, system_facade):
@@ -351,15 +351,15 @@ class TestPredictionRequestAndResult:
         """测试预测结果创建"""
         _prediction = {"match_id": 123, "prediction": "home_win"}
         _result = PredictionResult(
-            _prediction =prediction,
+            _prediction=prediction,
             confidence=0.75,
             value_assessment={"is_value": True},
             recommendations=["建议投注"],
         )
 
-        assert result._prediction == prediction
-        assert result.confidence == 0.75
-        assert result.value_assessment["is_value"] is True
+        assert _result._prediction == prediction
+        assert _result.confidence == 0.75
+        assert _result.value_assessment["is_value"] is True
         assert len(result.recommendations) == 1
 
 
@@ -374,9 +374,9 @@ class TestDataCollectionConfig:
             batch_size=50,
         )
 
-        assert config.sources == ["football", "odds"]
-        assert config.refresh_interval == timedelta(hours=1)
-        assert config.batch_size == 50
+        assert _config.sources == ["football", "odds"]
+        assert _config.refresh_interval == timedelta(hours=1)
+        assert _config.batch_size == 50
 
     def test_config_defaults(self):
         """测试配置默认值"""
@@ -384,4 +384,4 @@ class TestDataCollectionConfig:
             sources=["test"], refresh_interval=timedelta(days=1)
         )
 
-        assert config.batch_size == 100
+        assert _config.batch_size == 100

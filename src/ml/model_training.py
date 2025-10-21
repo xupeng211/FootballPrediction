@@ -542,7 +542,7 @@ async def train_football_model(
     registry.register_model(
         trainer.model,
         model_name,
-        _metadata ={
+        _metadata={
             "training_result": training_result,
             "evaluation_metrics": evaluation_metrics,
             "model_path": model_path,

@@ -29,8 +29,8 @@ class TestAPIHealthExtended:
             response = client.get("/api/health")
             assert response.status_code == 200
             _data = response.json()
-            assert data["status"] == "healthy"
-            assert "checks" in data
+            assert _data["status"] == "healthy"
+            assert "checks" in _data
 
     def test_health_check_database_failure(self, client):
         """测试数据库健康检查失败"""
@@ -54,5 +54,6 @@ class TestAPIHealthExtended:
         response = client.get("/api/health/metrics")
         assert response.status_code == 200
         _data = response.json()
-        assert "uptime" in data
-        assert "version" in data
+        assert "uptime" in _data
+
+        assert "version" in _data

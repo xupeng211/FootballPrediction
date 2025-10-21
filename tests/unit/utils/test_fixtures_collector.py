@@ -50,10 +50,10 @@ class TestFixturesCollector:
         with patch.object(collector, "_get_http_client", return_value=mock_http_client):
             _result = await collector.collect_fixtures(league_id=1)
 
-            assert result is not None
+            assert _result is not None
             assert len(result) == 1
-            assert result[0]["id"] == 12345
-            assert result[0]["homeTeam"]["name"] == "Home Team"
+            assert _result[0]["id"] == 12345
+            assert _result[0]["homeTeam"]["name"] == "Home Team"
 
     @pytest.mark.asyncio
     async def test_collect_fixtures_with_date_range(self, collector, mock_http_client):
@@ -66,7 +66,7 @@ class TestFixturesCollector:
                 league_id=1, start_date=start_date, end_date=end_date
             )
 
-            assert result is not None
+            assert _result is not None
             mock_http_client.get.assert_called_once()
 
     @pytest.mark.asyncio
@@ -135,7 +135,7 @@ class TestFixturesCollector:
         with patch.object(collector, "get_cache_manager", return_value=mock_cache):
             _result = await collector._cache_fixture_data(fixture_data)
 
-            assert result is True
+            assert _result is True
             mock_cache.set.assert_called_once()
 
     @pytest.mark.asyncio
@@ -191,7 +191,7 @@ class TestFixturesCollector:
                 league_id=1, season="2024-25"
             )
 
-            assert result is not None
+            assert _result is not None
             # 验证调用参数
             call_args = mock_http_client.get.call_args[0][0]
             assert "competitions/1/matches" in call_args
@@ -203,7 +203,7 @@ class TestFixturesCollector:
         with patch.object(collector, "_get_http_client", return_value=mock_http_client):
             _result = await collector.collect_team_fixtures(team_id=10)
 
-            assert result is not None
+            assert _result is not None
             call_args = mock_http_client.get.call_args[0][0]
             assert "teams/10/matches" in call_args
 
@@ -213,9 +213,9 @@ class TestFixturesCollector:
         _result = collector._extract_match_time(date_string)
 
         assert isinstance(result, datetime)
-        assert result.year == 2025
-        assert result.month == 10
-        assert result.day == 5
+        assert _result.year == 2025
+        assert _result.month == 10
+        assert _result.day == 5
 
     def test_format_match_status(self, collector):
         """测试格式化比赛状态"""

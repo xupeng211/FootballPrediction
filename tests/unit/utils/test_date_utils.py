@@ -326,7 +326,7 @@ class TestDateUtils:
 
         # 添加5个工作日（应该是下周一）
         _result = DateUtils.add_business_days(start, 5)
-        assert result.weekday() == 0  # 星期一
+        assert _result.weekday() == 0  # 星期一
         assert _result == date(2021, 10, 18)
 
         # 添加1个工作日

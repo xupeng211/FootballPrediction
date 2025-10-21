@@ -27,7 +27,7 @@ class TestConfigUtils:
     def test_fastapi_config_creation(self):
         """测试FastAPI配置创建"""
         try:
-            from src.config.fastapi_config import FastAPIConfig
+            from src._config.fastapi_config import FastAPIConfig
 
             _config = FastAPIConfig()
             assert config is not None
@@ -48,15 +48,15 @@ class TestConfigUtils:
     def test_config_validation(self):
         """测试配置验证"""
         try:
-            from src.config.fastapi_config import FastAPIConfig
+            from src._config.fastapi_config import FastAPIConfig
 
             _config = FastAPIConfig()
 
             # Mock验证方法
-            config.validate = Mock(return_value=True)
+            _config.validate = Mock(return_value=True)
 
-            _result = config.validate()
-            assert result is True
+            _result = _config.validate()
+            assert _result is True
         except ImportError:
             pytest.skip("FastAPIConfig module not available")
 
@@ -68,9 +68,9 @@ class TestConfigUtils:
             _config = Config()
 
             # Mock序列化方法
-            config.to_dict = Mock(return_value={"key": "value"})
+            _config.to_dict = Mock(return_value={"key": "value"})
 
-            _result = config.to_dict()
+            _result = _config.to_dict()
             assert _result == {"key": "value"}
         except ImportError:
             pytest.skip("Config module not available")
@@ -89,7 +89,7 @@ class TestConfigUtils:
     def test_config_defaults(self):
         """测试配置默认值"""
         try:
-            from src.config.fastapi_config import FastAPIConfig
+            from src._config.fastapi_config import FastAPIConfig
 
             _config = FastAPIConfig()
 
@@ -103,7 +103,7 @@ class TestConfigUtils:
     def test_yaml_config_parsing(self):
         """测试YAML配置解析"""
         with tempfile.TemporaryDirectory() as tmpdir:
-            config_file = Path(tmpdir) / "config.yaml"
+            config_file = Path(tmpdir) / "_config.yaml"
             config_data = {
                 "database": {"host": "localhost", "port": 5432, "name": "test_db"},
                 "api": {"host": "0.0.0.0", "port": 8000, "debug": True},
@@ -123,7 +123,7 @@ class TestConfigUtils:
     def test_json_config_parsing(self):
         """测试JSON配置解析"""
         with tempfile.TemporaryDirectory() as tmpdir:
-            config_file = Path(tmpdir) / "config.json"
+            config_file = Path(tmpdir) / "_config.json"
             config_data = {
                 "app": {"name": "football_prediction", "version": "1.0.0"},
                 "features": {"ml_enabled": True, "cache_enabled": False},
@@ -232,12 +232,12 @@ class TestConfigUtils:
             for key, value in dict2.items():
                 if (
                     key in result
-                    and isinstance(result[key], dict)
+                    and isinstance(_result[key], dict)
                     and isinstance(value, dict)
                 ):
-                    result[key] = merge_dicts(result[key], value)
+                    _result[key] = merge_dicts(_result[key], value)
                 else:
-                    result[key] = value
+                    _result[key] = value
             return result
 
         base_config = {
@@ -287,8 +287,8 @@ class TestConfigUtils:
         }
 
         _config = AppConfig(**valid_config)
-        assert config.app_name == "my_app"
-        assert config.database.host == "localhost"
+        assert _config.app_name == "my_app"
+        assert _config.database.host == "localhost"
 
         # 无效配置
         invalid_config = {
@@ -388,7 +388,7 @@ class TestConfigUtils:
     def test_config_file_not_found(self):
         """测试配置文件不存在"""
         with pytest.raises(FileNotFoundError):
-            with open("/nonexistent/config.yaml", "r"):
+            with open("/nonexistent/_config.yaml", "r"):
                 pass
 
     def test_invalid_yaml_format(self):
@@ -420,7 +420,7 @@ class TestConfigUtils:
 
             def update_config(self, new_config):
                 """更新配置并触发回调"""
-                old_config = self.config.copy()
+                old_config = self._config.copy()
                 self._config = new_config
                 for callback in self.callbacks:
                     callback(old_config, self.config)
@@ -468,11 +468,11 @@ class TestConfigUtils:
                             value = value.lower() == "true"
                         elif value.isdigit():
                             value = int(value)
-                        config[config_key] = value
+                        _config[config_key] = value
                 return config
 
             _config = load_from_env()
-            assert config["app_name"] == "football_prediction"
-            assert config["debug"] is True
-            assert config["db_host"] == "localhost"
-            assert config["db_port"] == 5432
+            assert _config["app_name"] == "football_prediction"
+            assert _config["debug"] is True
+            assert _config["db_host"] == "localhost"
+            assert _config["db_port"] == 5432

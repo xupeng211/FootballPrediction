@@ -133,9 +133,9 @@ class TestDictUtils:
         assert "numbers" in result
         assert "nested.boolean" in result
         assert "nested.null" in result
-        assert result["numbers"] == [1, 2, 3]
-        assert result["nested.boolean"] is True
-        assert result["nested.null"] is None
+        assert _result["numbers"] == [1, 2, 3]
+        assert _result["nested.boolean"] is True
+        assert _result["nested.null"] is None
 
     def test_filter_none_values(self):
         """测试过滤None值"""
@@ -182,7 +182,7 @@ class TestDictUtils:
         _result = DictUtils.filter_none_values(data)
         assert "user" not in result
         assert "config" in result
-        assert result["config"]["setting"] is None
+        assert _result["config"]["setting"] is None
 
     def test_combination_operations(self):
         """测试组合操作"""
@@ -193,12 +193,12 @@ class TestDictUtils:
         merged = DictUtils.deep_merge(dict1, dict2)
         flattened = DictUtils.flatten_dict(merged)
 
-        assert "config.db.host" in flattened
-        assert "config.db.port" in flattened
-        assert "config.api.version" in flattened
-        assert flattened["config.db.host"] == "localhost"
-        assert flattened["config.db.port"] == 5432
-        assert flattened["config.api.version"] == "v1"
+        assert "_config.db.host" in flattened
+        assert "_config.db.port" in flattened
+        assert "_config.api.version" in flattened
+        assert flattened["_config.db.host"] == "localhost"
+        assert flattened["_config.db.port"] == 5432
+        assert flattened["_config.api.version"] == "v1"
 
         # 先扁平化，再过滤None
         _data = {
@@ -257,10 +257,10 @@ class TestDictUtils:
 
         assert len(result) == 1000
         assert duration < 1.0  # 应该在1秒内完成
-        assert result["key_0"]["nested"] == 0
-        assert result["key_0"]["value"] == 0
-        assert result["key_999"]["nested"] == 999
-        assert result["key_999"]["value"] == 1998
+        assert _result["key_0"]["nested"] == 0
+        assert _result["key_0"]["value"] == 0
+        assert _result["key_999"]["nested"] == 999
+        assert _result["key_999"]["value"] == 1998
 
         # 深层嵌套扁平化
         deep_data = {}

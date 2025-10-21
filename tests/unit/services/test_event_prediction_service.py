@@ -145,10 +145,10 @@ class TestEventDrivenPredictionService:
 
         # Then
         # 验证预测被更新
-        assert result.predicted_home == 3
-        assert result.predicted_away == 1
-        assert result.confidence == 0.9
-        assert result.updated_at is not None
+        assert _result.predicted_home == 3
+        assert _result.predicted_away == 1
+        assert _result.confidence == 0.9
+        assert _result.updated_at is not None
 
         # 验证仓库方法被调用
         mock_repo.get_by_id.assert_called_once_with(123)
@@ -184,10 +184,10 @@ class TestEventDrivenPredictionService:
         )
 
         # Then
-        assert result.predicted_home == 3
+        assert _result.predicted_home == 3
         # 其他值保持不变
-        assert result.predicted_away == 1
-        assert result.confidence == 0.85
+        assert _result.predicted_away == 1
+        assert _result.confidence == 0.85
 
     @pytest.mark.asyncio
     async def test_batch_predict_and_publish_events(self, service):

@@ -440,9 +440,9 @@ def test_api_endpoint_availability(endpoint, method, expected_status):
                 response = client.request(method, endpoint)
 
             # 验证状态码在预期范围内
-            assert response.status_code in expected_status, (
-                f"Unexpected status {response.status_code} for {endpoint}"
-            )
+            assert (
+                response.status_code in expected_status
+            ), f"Unexpected status {response.status_code} for {endpoint}"
         else:
             # 如果无法导入应用，只验证端点格式
             assert endpoint.startswith("/api/")

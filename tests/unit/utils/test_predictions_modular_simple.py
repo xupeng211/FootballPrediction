@@ -171,7 +171,7 @@ def test_prediction_response_schema():
     response = PredictionResponse(
         match_id=123,
         match_info=match_info,
-        _prediction =prediction_data,
+        _prediction=prediction_data,
         source="cached",
     )
 

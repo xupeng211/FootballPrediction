@@ -246,7 +246,7 @@ def test_decorators():
     assert _result == "value"
 
     _result = cache_get("not_exists", cache_type="redis")
-    assert result is None
+    assert _result is None
 
     # 测试通用性能装饰器
     @track_performance(metric_name="test_operation")

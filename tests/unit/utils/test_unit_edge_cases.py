@@ -247,7 +247,7 @@ class TestEdgeCasesAndErrorHandling:
         # Python的json模块能处理循环引用
         try:
             _result = json.dumps(circular_dict)
-            assert result is not None
+            assert _result is not None
         except (ValueError, TypeError):
             # 某些版本可能抛出异常
             pass

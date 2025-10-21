@@ -98,9 +98,9 @@ class TestBatchProcessingFlow:
                 if status.get("status") == "COMPLETED":
                     break
                 elif status.get("status") == "FAILED":
-                    assert False, (
-                        f"批量处理失败: {status.get('error', 'Unknown error')}"
-                    )
+                    assert (
+                        False
+                    ), f"批量处理失败: {status.get('error', 'Unknown error')}"
 
         processing_duration = performance_metrics.end_timer("batch_processing")
         print(f"✅ 批量处理完成 ({processing_duration:.2f}s)")
@@ -161,7 +161,7 @@ class TestBatchProcessingFlow:
         user_token = (
             await api_client.post(
                 "/api/v1/auth/login",
-                _data ={"username": "e2e_user", "password": "E2ETestPass123!"},
+                _data={"username": "e2e_user", "password": "E2ETestPass123!"},
             )
         ).json()["access_token"]
         user_headers = {"Authorization": f"Bearer {user_token}"}

@@ -80,8 +80,8 @@ class TestFixturesCollector:
 
         # 应该返回缓存的数据
         assert len(result) == 1
-        assert result[0]["id"] == 1
-        assert result[0]["homeTeam"] == "Team A"
+        assert _result[0]["id"] == 1
+        assert _result[0]["homeTeam"] == "Team A"
 
     @pytest.mark.asyncio
     async def test_collect_team_fixtures_force_refresh(
@@ -101,7 +101,7 @@ class TestFixturesCollector:
             )
 
             mock_redis_client.delete.assert_called_once()
-            assert result[0]["id"] == 2
+            assert _result[0]["id"] == 2
 
     @pytest.mark.asyncio
     async def test_collect_team_fixtures_api_success(
@@ -127,8 +127,8 @@ class TestFixturesCollector:
             _result = await collector.collect_team_fixtures(team_id=123)
 
             assert len(result) == 1
-            assert result[0]["id"] == 456
-            assert result[0]["homeTeam"]["name"] == "Team X"
+            assert _result[0]["id"] == 456
+            assert _result[0]["homeTeam"]["name"] == "Team X"
 
             # 验证缓存被设置
             mock_redis_client.set.assert_called_once()
@@ -171,9 +171,9 @@ class TestFixturesCollector:
             _result = await collector.collect_all_fixtures()
 
             assert len(result) == 3
-            assert result[0]["id"] == 1
-            assert result[1]["id"] == 2
-            assert result[2]["id"] == 3
+            assert _result[0]["id"] == 1
+            assert _result[1]["id"] == 2
+            assert _result[2]["id"] == 3
 
     @pytest.mark.asyncio
     async def test_store_fixtures_in_db(self, collector):

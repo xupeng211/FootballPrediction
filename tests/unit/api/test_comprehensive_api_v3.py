@@ -113,7 +113,7 @@ class TestComprehensiveAPI:
         response = client.get("/nonexistent-endpoint")
         assert response.status_code == 404
         _data = response.json()
-        assert "error" in data
+        assert "error" in _data
 
         # 测试方法不允许
         response = client.post("/api/health")
@@ -136,9 +136,11 @@ class TestComprehensiveAPI:
         response = client.post("/predictions/batch", json=batch_data)
         assert response.status_code == 200
         _data = response.json()
-        assert "predictions" in data
-        assert "total" in data
-        assert "success_count" in data
+        assert "predictions" in _data
+
+        assert "total" in _data
+
+        assert "success_count" in _data
 
     def test_pagination(self, client):
         """测试分页功能"""
@@ -193,15 +195,17 @@ class TestComprehensiveAPI:
             "points",
         ]
         for field in required_fields:
-            assert field in data
+            assert field in _data
 
         # 比赛统计
         response = client.get("/data/matches/1/statistics")
         assert response.status_code == 200
         _data = response.json()
-        assert "match_id" in data
-        assert "possession_home" in data
-        assert "shots_home" in data
+        assert "match_id" in _data
+
+        assert "possession_home" in _data
+
+        assert "shots_home" in _data
 
     def test_prediction_workflow(self, client):
         """测试预测工作流"""
@@ -329,7 +333,7 @@ class TestComprehensiveAPI:
         response = client.post("/predictions/batch", json=large_batch)
         assert response.status_code == 200
         _data = response.json()
-        assert data["total"] == 50
+        assert _data["total"] == 50
 
     def test_concurrent_requests_simulation(self, client):
         """模拟并发请求"""

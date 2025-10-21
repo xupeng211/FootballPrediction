@@ -136,9 +136,9 @@ class TestDictUtilsBasic:
         _result = DictUtils.flatten_dict(d)
         assert "app.name" in result
         assert "app.version" in result
-        assert "app.config.database.host" in result
-        assert "app.config.database.port" in result
-        assert "app.config.redis.host" in result
-        assert "app.config.redis.port" in result
-        assert result["app.name"] == "test-app"
-        assert result["app.config.database.host"] == "localhost"
+        assert "app._config.database.host" in result
+        assert "app._config.database.port" in result
+        assert "app._config.redis.host" in result
+        assert "app._config.redis.port" in result
+        assert _result["app.name"] == "test-app"
+        assert _result["app._config.database.host"] == "localhost"

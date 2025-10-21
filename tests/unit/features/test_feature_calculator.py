@@ -46,7 +46,7 @@ class TestFeatureCalculator:
         _config = {"cache_size": 1000, "timeout": 30}
 
         # When
-        calc = FeatureCalculator(_config =config)
+        calc = FeatureCalculator(_config=config)
 
         # Then
         assert calc._config == config
@@ -170,7 +170,7 @@ class TestFeatureCalculator:
         calc = FeatureCalculator(config)
 
         # When/Then
-        assert calc.config["test"] == "value"
+        assert calc._config["test"] == "value"
 
     @pytest.mark.asyncio
     async def test_database_manager_usage(self, calculator):

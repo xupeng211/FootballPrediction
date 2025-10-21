@@ -30,7 +30,7 @@ class TestObserverEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert "status" in data or "system" in data
+        assert "status" in _data or "system" in _data
 
     def test_get_all_metrics(self, client):
         """测试获取所有指标"""
@@ -41,7 +41,7 @@ class TestObserverEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert isinstance(data, dict) or "metrics" in data
+        assert isinstance(data, dict) or "metrics" in _data
 
     def test_get_observers(self, client):
         """测试获取所有观察者"""
@@ -52,7 +52,7 @@ class TestObserverEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert isinstance(data, list) or "observers" in data
+        assert isinstance(data, list) or "observers" in _data
 
     def test_get_subjects(self, client):
         """测试获取所有被观察者"""
@@ -63,7 +63,7 @@ class TestObserverEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert isinstance(data, list) or "subjects" in data
+        assert isinstance(data, list) or "subjects" in _data
 
     def test_get_alerts(self, client):
         """测试获取告警历史"""
@@ -74,7 +74,7 @@ class TestObserverEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert isinstance(data, list) or "alerts" in data
+        assert isinstance(data, list) or "alerts" in _data
 
     @patch("src.api.observers.AlertManager.create_alert")
     def test_create_alert(self, mock_create, client):
@@ -100,7 +100,7 @@ class TestObserverEndpoints:
 
         assert response.status_code in [200, 201]
         _data = response.json()
-        assert "alert_id" in data or "success" in data
+        assert "alert_id" in _data or "success" in _data
 
     def test_get_alert_rules(self, client):
         """测试获取告警规则"""
@@ -111,7 +111,7 @@ class TestObserverEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert isinstance(data, list) or "rules" in data
+        assert isinstance(data, list) or "rules" in _data
 
     @patch("src.api.observers.MetricsObserver.update_metric")
     def test_update_metric(self, mock_update, client):
@@ -132,7 +132,7 @@ class TestObserverEndpoints:
 
         assert response.status_code in [200, 202]
         _data = response.json()
-        assert "success" in data or "status" in data
+        assert "success" in _data or "status" in _data
 
     def test_get_prediction_stats(self, client):
         """测试获取预测统计"""
@@ -143,7 +143,7 @@ class TestObserverEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert "statistics" in data or "predictions" in data
+        assert "statistics" in _data or "predictions" in _data
 
     @patch("src.api.observers.PredictionObserver.record_prediction")
     def test_record_prediction_event(self, mock_record, client):
@@ -168,7 +168,7 @@ class TestObserverEndpoints:
 
         assert response.status_code in [200, 201]
         _data = response.json()
-        assert "event_id" in data or "success" in data
+        assert "event_id" in _data or "success" in _data
 
     def test_get_cache_stats(self, client):
         """测试获取缓存统计"""
@@ -179,7 +179,7 @@ class TestObserverEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert "statistics" in data or "cache" in data
+        assert "statistics" in _data or "cache" in _data
 
     @patch("src.api.observers.CacheObserver.record_hit")
     def test_record_cache_hit(self, mock_hit, client):
@@ -199,7 +199,7 @@ class TestObserverEndpoints:
 
         assert response.status_code in [200, 202]
         _data = response.json()
-        assert "success" in data or "status" in data
+        assert "success" in _data or "status" in _data
 
     @patch("src.api.observers.CacheObserver.record_miss")
     def test_record_cache_miss(self, mock_miss, client):
@@ -219,7 +219,7 @@ class TestObserverEndpoints:
 
         assert response.status_code in [200, 202]
         _data = response.json()
-        assert "success" in data or "status" in data
+        assert "success" in _data or "status" in _data
 
     def test_get_performance_metrics(self, client):
         """测试获取性能指标"""
@@ -230,7 +230,7 @@ class TestObserverEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert "performance" in data or "metrics" in data
+        assert "performance" in _data or "metrics" in _data
 
     @patch("src.api.observers.SystemObserver.collect_metrics")
     def test_collect_system_metrics(self, mock_collect, client):
@@ -249,7 +249,7 @@ class TestObserverEndpoints:
 
         assert response.status_code in [200, 202]
         _data = response.json()
-        assert "metrics" in data or "success" in data
+        assert "metrics" in _data or "success" in _data
 
     @patch("src.api.observers.PerformanceObserver.check_performance")
     def test_check_performance(self, mock_check, client):
@@ -267,7 +267,7 @@ class TestObserverEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert "performance_score" in data or "status" in data
+        assert "performance_score" in _data or "status" in _data
 
     def test_get_event_types(self, client):
         """测试获取所有事件类型"""
@@ -278,7 +278,7 @@ class TestObserverEndpoints:
 
         assert response.status_code == 200
         _data = response.json()
-        assert isinstance(data, list) or "types" in data
+        assert isinstance(data, list) or "types" in _data
 
     @patch("src.api.observers.ObserverManager.enable_observer")
     def test_enable_observer(self, mock_enable, client):
@@ -293,7 +293,7 @@ class TestObserverEndpoints:
 
         assert response.status_code in [200, 202]
         _data = response.json()
-        assert "success" in data or "status" in data
+        assert "success" in _data or "status" in _data
 
     @patch("src.api.observers.ObserverManager.disable_observer")
     def test_disable_observer(self, mock_disable, client):
@@ -308,7 +308,7 @@ class TestObserverEndpoints:
 
         assert response.status_code in [200, 202]
         _data = response.json()
-        assert "success" in data or "status" in data
+        assert "success" in _data or "status" in _data
 
     @patch("src.api.observers.SubjectManager.clear_history")
     def test_clear_subject_history(self, mock_clear, client):
@@ -325,7 +325,7 @@ class TestObserverEndpoints:
 
         assert response.status_code in [200, 202]
         _data = response.json()
-        assert "success" in data or "status" in data
+        assert "success" in _data or "status" in _data
 
 
 @pytest.mark.unit

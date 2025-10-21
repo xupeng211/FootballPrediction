@@ -30,8 +30,9 @@ class TestAPIMonitoring:
             response = client.get("/api/monitoring/metrics")
             assert response.status_code == 200
             _data = response.json()
-            assert "cpu_usage" in data
-            assert isinstance(data["cpu_usage"], (int, float))
+            assert "cpu_usage" in _data
+
+            assert isinstance(_data["cpu_usage"], (int, float))
 
     def test_get_performance_stats(self, client):
         """测试获取性能统计"""
@@ -47,7 +48,7 @@ class TestAPIMonitoring:
             response = client.get("/api/monitoring/performance")
             assert response.status_code == 200
             _data = response.json()
-            assert "avg_response_time" in data
+            assert "avg_response_time" in _data
 
     def test_get_alerts(self, client):
         """测试获取告警信息"""
@@ -66,7 +67,7 @@ class TestAPIMonitoring:
             assert response.status_code == 200
             _data = response.json()
             assert len(data) == 1
-            assert data[0]["type"] == "high_cpu"
+            assert _data[0]["type"] == "high_cpu"
 
     def test_trigger_alert(self, client):
         """测试触发告警"""
@@ -78,7 +79,7 @@ class TestAPIMonitoring:
             response = client.post("/api/monitoring/alerts", json=alert_data)
             assert response.status_code == 201
             _data = response.json()
-            assert data["status"] == "triggered"
+            assert _data["status"] == "triggered"
 
     def test_acknowledge_alert(self, client):
         """测试确认告警"""
@@ -88,7 +89,7 @@ class TestAPIMonitoring:
             response = client.post("/api/monitoring/alerts/1/acknowledge")
             assert response.status_code == 200
             _data = response.json()
-            assert data["status"] == "acknowledged"
+            assert _data["status"] == "acknowledged"
 
     def test_health_check_with_metrics(self, client):
         """测试带指标的健康检查"""
@@ -106,5 +107,5 @@ class TestAPIMonitoring:
             response = client.get("/api/monitoring/health")
             assert response.status_code == 200
             _data = response.json()
-            assert data["status"] in ["healthy", "degraded", "unhealthy"]
-            assert "checks" in data
+            assert _data["status"] in ["healthy", "degraded", "unhealthy"]
+            assert "checks" in _data

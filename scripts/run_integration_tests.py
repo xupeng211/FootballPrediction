@@ -31,7 +31,9 @@ def check_prerequisites():
         print("✅ Docker Compose 已安装")
     except (subprocess.CalledProcessError, FileNotFoundError):
         try:
-            subprocess.run(["docker", "compose", "version"], check=True, capture_output=True)
+            subprocess.run(
+                ["docker", "compose", "version"], check=True, capture_output=True
+            )
             print("✅ Docker Compose 已安装")
         except (subprocess.CalledProcessError, FileNotFoundError):
             print("❌ Docker Compose 未安装")
@@ -46,9 +48,7 @@ def start_test_environment():
 
     # 使用管理脚本启动环境
     result = subprocess.run(
-        ["./scripts/manage_test_env.sh", "start"],
-        capture_output=True,
-        text=True
+        ["./scripts/manage_test_env.sh", "start"], capture_output=True, text=True
     )
 
     if result.returncode != 0:
@@ -70,9 +70,7 @@ def check_service_health():
 
     # 使用管理脚本检查健康
     result = subprocess.run(
-        ["./scripts/manage_test_env.sh", "check"],
-        capture_output=True,
-        text=True
+        ["./scripts/manage_test_env.sh", "check"], capture_output=True, text=True
     )
 
     if result.returncode != 0:
@@ -106,10 +104,10 @@ def run_integration_tests():
         f"--junit-xml={xml_file}",
         f"--html={html_file}",
         "--self-contained-html",
-        f"--json-report",
+        "--json-report",
         f"--json-report-file={json_file}",
         "--maxfail=10",
-        "-x"  # 第一个失败时停止
+        "-x",  # 第一个失败时停止
     ]
 
     start_time = time.time()
@@ -137,15 +135,17 @@ def run_integration_tests():
 
     # 尝试解析 JSON 报告获取详细信息
     try:
-        with open(json_file, 'r') as f:
+        with open(json_file, "r") as f:
             json_data = json.load(f)
-            summary.update({
-                "total": json_data.get("summary", {}).get("total", 0),
-                "passed": json_data.get("summary", {}).get("passed", 0),
-                "failed": json_data.get("summary", {}).get("failed", 0),
-                "skipped": json_data.get("summary", {}).get("skipped", 0),
-                "error": json_data.get("summary", {}).get("error", 0),
-            })
+            summary.update(
+                {
+                    "total": json_data.get("summary", {}).get("total", 0),
+                    "passed": json_data.get("summary", {}).get("passed", 0),
+                    "failed": json_data.get("summary", {}).get("failed", 0),
+                    "skipped": json_data.get("summary", {}).get("skipped", 0),
+                    "error": json_data.get("summary", {}).get("error", 0),
+                }
+            )
     except Exception as e:
         print(f"⚠️ 无法解析测试报告: {e}")
 
@@ -205,7 +205,7 @@ def generate_report(summary):
 *报告生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*
 """
 
-    with open(report_path, 'w') as f:
+    with open(report_path, "w") as f:
         f.write(report_content)
 
     print(f"✅ 报告已生成: {report_path}")
@@ -216,15 +216,15 @@ def generate_report(summary):
 
 def generate_failure_analysis(summary):
     """生成失败分析"""
-    if summary.get('failed', 0) == 0 and summary.get('error', 0) == 0:
+    if summary.get("failed", 0) == 0 and summary.get("error", 0) == 0:
         return "✅ 所有测试通过，无失败案例"
 
     analysis = []
 
-    if summary.get('failed', 0) > 0:
+    if summary.get("failed", 0) > 0:
         analysis.append(f"- **失败测试**: {summary['failed']} 个")
 
-    if summary.get('error', 0) > 0:
+    if summary.get("error", 0) > 0:
         analysis.append(f"- **错误测试**: {summary['error']} 个")
 
     analysis.append("\n请查看详细的 HTML 报告获取具体失败原因。")
@@ -236,13 +236,13 @@ def generate_recommendations(summary):
     """生成改进建议"""
     recommendations = []
 
-    if not summary['success']:
+    if not summary["success"]:
         recommendations.append("- 🚨 优先修复失败的测试用例")
 
-    if summary.get('total', 0) < 50:
+    if summary.get("total", 0) < 50:
         recommendations.append("- 📈 增加集成测试覆盖率")
 
-    if summary.get('elapsed_time', 0) > 300:
+    if summary.get("elapsed_time", 0) > 300:
         recommendations.append("- ⚡ 优化测试执行速度")
 
     if not recommendations:
@@ -259,13 +259,13 @@ def update_history(summary):
 
     # 读取或创建历史文件
     if Path(history_path).exists():
-        with open(history_path, 'r') as f:
+        with open(history_path, "r") as f:
             content = f.read()
         # 在表格后添加新行
-        if '\n---\n\n' in content:
-            content = content.replace('\n---\n\n', f'\n{history_entry}---\n\n')
+        if "\n---\n\n" in content:
+            content = content.replace("\n---\n\n", f"\n{history_entry}---\n\n")
         else:
-            content += f'\n{history_entry}'
+            content += f"\n{history_entry}"
     else:
         content = f"""# 集成测试历史记录
 
@@ -274,7 +274,7 @@ def update_history(summary):
 {history_entry}
 """
 
-    with open(history_path, 'w') as f:
+    with open(history_path, "w") as f:
         f.write(content)
 
 
@@ -285,11 +285,9 @@ def cleanup_environment():
     # 询问是否停止环境
     response = input("\n是否停止测试环境？(y/N): ").strip().lower()
 
-    if response == 'y' or response == 'yes':
+    if response == "y" or response == "yes":
         result = subprocess.run(
-            ["./scripts/manage_test_env.sh", "stop"],
-            capture_output=True,
-            text=True
+            ["./scripts/manage_test_env.sh", "stop"], capture_output=True, text=True
         )
         if result.returncode == 0:
             print("✅ 测试环境已停止")

@@ -31,18 +31,20 @@ IMPORT_PATTERNS = [
     (r"import\s+(\w+_mod)", r"import \1"),
 ]
 
+
 def find_python_files(directory: Path) -> List[Path]:
     """查找所有 Python 文件"""
     python_files = []
     for root, dirs, files in os.walk(directory):
         # 跳过特定目录
-        dirs[:] = [d for d in dirs if not d.startswith('.') and d != '__pycache__']
+        dirs[:] = [d for d in dirs if not d.startswith(".") and d != "__pycache__"]
 
         for file in files:
-            if file.endswith('.py'):
+            if file.endswith(".py"):
                 python_files.append(Path(root) / file)
 
     return python_files
+
 
 def fix_imports_in_file(file_path: Path) -> Tuple[int, List[str]]:
     """修复单个文件中的导入"""
@@ -50,7 +52,7 @@ def fix_imports_in_file(file_path: Path) -> Tuple[int, List[str]]:
     changes_log = []
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         original_content = content
@@ -59,28 +61,22 @@ def fix_imports_in_file(file_path: Path) -> Tuple[int, List[str]]:
         for old_mod, new_mod in MODULE_MAPPING.items():
             # 处理相对导入
             content = re.sub(
-                f"from\\s+\\.?{old_mod}\\s+import",
-                f"from .{new_mod} import",
-                content
+                f"from\\s+\\.?{old_mod}\\s+import", f"from .{new_mod} import", content
             )
 
             # 处理绝对导入
             content = re.sub(
                 f"from\\s+src\\.[\\w\\.]+\\.{old_mod}\\s+import",
                 f"from src.{new_mod.replace('_', '.')} import",
-                content
+                content,
             )
 
             # 处理直接导入
-            content = re.sub(
-                f"import\\s+{old_mod}",
-                f"import {new_mod}",
-                content
-            )
+            content = re.sub(f"import\\s+{old_mod}", f"import {new_mod}", content)
 
         # 检查是否有变化
         if content != original_content:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(content)
             changes_made = 1
             changes_log.append(f"Updated imports in {file_path.relative_to(ROOT_DIR)}")
@@ -89,6 +85,7 @@ def fix_imports_in_file(file_path: Path) -> Tuple[int, List[str]]:
         changes_log.append(f"Error processing {file_path}: {str(e)}")
 
     return changes_made, changes_log
+
 
 def main():
     """主函数"""
@@ -126,6 +123,7 @@ def main():
         print("\n以下 _mod 文件可以删除：")
         for mod_file in mod_files:
             print(f"  - {mod_file.relative_to(ROOT_DIR)}")
+
 
 if __name__ == "__main__":
     main()

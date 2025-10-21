@@ -109,7 +109,7 @@ async def create_prediction(
     return CommandResponse(
         success=result.success,
         message=result.message,
-        _data =result.data.to_dict() if result.data else None,
+        _data=result.data.to_dict() if result.data else None,
         errors=result.errors,
     )
 
@@ -135,7 +135,7 @@ async def update_prediction(
     return CommandResponse(
         success=result.success,
         message=result.message,
-        _data =result.data.to_dict() if result.data else None,
+        _data=result.data.to_dict() if result.data else None,
         errors=result.errors,
     )
 
@@ -152,7 +152,7 @@ async def delete_prediction(
     return CommandResponse(
         success=result.success,
         message=result.message,
-        _data =result.data,
+        _data=result.data,
         errors=result.errors,
     )
 
@@ -227,7 +227,7 @@ async def create_match(
     return CommandResponse(
         success=result.success,
         message=result.message,
-        _data =result.data.to_dict() if result.data else None,
+        _data=result.data.to_dict() if result.data else None,
         errors=result.errors,
     )
 
@@ -282,7 +282,7 @@ async def create_user(
     return CommandResponse(
         success=result.success,
         message=result.message,
-        _data =result.data.to_dict() if result.data else None,
+        _data=result.data.to_dict() if result.data else None,
         errors=result.errors,
     )
 

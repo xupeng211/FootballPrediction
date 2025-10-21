@@ -226,7 +226,7 @@ class TestRateLimitMiddleware:
         assert response.status_code == 429
 
         _data = response.json()
-        assert "rate limit" in data["detail"].lower()
+        assert "rate limit" in _data["detail"].lower()
 
         # 检查重试头部
         assert response.headers.get("Retry-After") == "60"
@@ -304,7 +304,7 @@ class TestAuthenticationMiddleware:
         assert response.status_code == 401
 
         _data = response.json()
-        assert "authentication" in data["detail"].lower()
+        assert "authentication" in _data["detail"].lower()
 
     @patch("src.api.middleware.verify_token")
     def test_protected_endpoint_with_invalid_token(self, mock_verify, client):
@@ -621,8 +621,9 @@ class TestErrorHandlingMiddleware:
         assert response.status_code == 500
 
         _data = response.json()
-        assert "error" in data
-        assert "Internal Server Error" in data["error"]["message"]
+        assert "error" in _data
+
+        assert "Internal Server Error" in _data["error"]["message"]
 
     def test_http_exception(self, client):
         """测试HTTP异常"""
@@ -630,7 +631,7 @@ class TestErrorHandlingMiddleware:
         assert response.status_code == 404
 
         _data = response.json()
-        assert data["detail"] == "Not found"
+        assert _data["detail"] == "Not found"
 
     def test_error_logging(self, client):
         """测试错误日志记录"""
@@ -651,9 +652,10 @@ class TestErrorHandlingMiddleware:
             assert response.status_code == 500
 
             _data = response.json()
-            assert "error" in data
+            assert "error" in _data
+
             # 在生产环境中，错误信息可能更加通用
-            assert "Test error" not in data["error"]["message"]
+            assert "Test error" not in _data["error"]["message"]
 
 
 @pytest.mark.skipif(not MIDDLEWARE_AVAILABLE, reason=TEST_SKIP_REASON)

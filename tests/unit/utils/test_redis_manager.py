@@ -93,11 +93,11 @@ class TestRedisManager:
 
         # 设置字符串
         _result = redis_manager.set("test_key", "test_value")
-        assert result is True
+        assert _result is True
 
         # 设置字典（JSON序列化）
         _result = redis_manager.set("test_dict", {"key": "value"})
-        assert result is True
+        assert _result is True
 
     def test_get_sync(self, redis_manager, mock_sync_client):
         """测试同步获取值"""
@@ -119,7 +119,7 @@ class TestRedisManager:
         redis_manager._async_client = mock_async_client
 
         _result = await redis_manager.aset("test_key", "test_value")
-        assert result is True
+        assert _result is True
         mock_async_client.setex.assert_called_once()
 
     @pytest.mark.asyncio
@@ -136,7 +136,7 @@ class TestRedisManager:
         redis_manager._sync_client = mock_sync_client
 
         _result = redis_manager.set("test_key", "test_value", ttl=60)
-        assert result is True
+        assert _result is True
         mock_sync_client.setex.assert_called_once_with("test_key", 60, "test_value")
 
     def test_delete_sync(self, redis_manager, mock_sync_client):
@@ -175,7 +175,7 @@ class TestRedisManager:
         redis_manager._sync_client = mock_sync_client
 
         _result = redis_manager.expire("test_key", 60)
-        assert result is True
+        assert _result is True
 
     @pytest.mark.asyncio
     async def test_expire_async(self, redis_manager, mock_async_client):
@@ -183,7 +183,7 @@ class TestRedisManager:
         redis_manager._async_client = mock_async_client
 
         _result = await redis_manager.aexpire("test_key", 60)
-        assert result is True
+        assert _result is True
 
     def test_keys_sync(self, redis_manager, mock_sync_client):
         """测试同步获取键列表"""
@@ -232,7 +232,7 @@ class TestRedisManager:
 
         # ping应该返回False而不是抛出异常
         _result = redis_manager.ping()
-        assert result is False
+        assert _result is False
 
     def test_close_sync(self, redis_manager, mock_sync_client):
         """测试同步关闭"""
@@ -274,7 +274,7 @@ class TestRedisManager:
         }
 
         _result = redis_manager.set("test_json", test_data)
-        assert result is True
+        assert _result is True
 
         # 验证JSON被正确序列化
         call_args = mock_sync_client.setex.call_args[0]
@@ -288,8 +288,8 @@ class TestRedisManager:
 
         _result = redis_manager.get("test_json")
         assert isinstance(result, dict)
-        assert result["match_id"] == 12345
-        assert result["teams"] == ["Team A", "Team B"]
+        assert _result["match_id"] == 12345
+        assert _result["teams"] == ["Team A", "Team B"]
 
     def test_error_handling_get(self, redis_manager, mock_sync_client):
         """测试获取时的错误处理"""
@@ -299,7 +299,7 @@ class TestRedisManager:
         redis_manager.logger = MagicMock()
 
         _result = redis_manager.get("test_key")
-        assert result is None
+        assert _result is None
         # redis_manager.get内部可能不调用logger.error，所以只检查结果
 
     @pytest.mark.asyncio
@@ -311,7 +311,7 @@ class TestRedisManager:
         redis_manager.logger = MagicMock()
 
         _result = await redis_manager.aget("test_key")
-        assert result is None
+        assert _result is None
         # redis_manager.aget内部可能不调用logger.error，所以只检查结果
 
     def test_mget_multiple_keys(self, redis_manager, mock_sync_client):
@@ -321,9 +321,9 @@ class TestRedisManager:
 
         _result = redis_manager.mget(["key1", "key2", "key3"])
         assert len(result) == 3
-        assert result[0]["id"] == 1
-        assert result[1]["id"] == 2
-        assert result[2] is None
+        assert _result[0]["id"] == 1
+        assert _result[1]["id"] == 2
+        assert _result[2] is None
 
     def test_mset_multiple_values(self, redis_manager, mock_sync_client):
         """测试批量设置"""
@@ -333,7 +333,7 @@ class TestRedisManager:
         _data = {"key1": {"id": 1}, "key2": {"id": 2}, "key3": "string_value"}
 
         _result = redis_manager.mset(data)
-        assert result is True
+        assert _result is True
         mock_sync_client.mset.assert_called_once()
 
     def test_increment(self, redis_manager, mock_sync_client):

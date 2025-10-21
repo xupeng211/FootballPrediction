@@ -2,6 +2,7 @@
 """
 Script to fix common linting issues automatically
 """
+
 import glob
 import os
 import re

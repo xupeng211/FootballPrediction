@@ -6,7 +6,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, "src")
 
 """
-测试 src/core/config.py 模块 - 修复版
+测试 src/core/_config.py 模块 - 修复版
 """
 
 import pytest
@@ -48,10 +48,10 @@ class TestConfigModule:
         _config = get_config()
 
         # 测试默认值
-        assert config.get("nonexistent", "default") == "default"
+        assert _config.get("nonexistent", "default") == "default"
 
         # 测试获取配置
-        config.get("debug")
+        _config.get("debug")
         # value可能是None，但方法应该存在
         assert True  # 测试通过表示方法可调用
 
@@ -79,7 +79,7 @@ class TestConfigModule:
         _config = get_config()
 
         # 测试默认值返回
-        default_value = config.get("nonexistent_key", "default_value")
+        default_value = _config.get("nonexistent_key", "default_value")
         assert default_value == "default_value"
 
         # 测试配置对象存在
@@ -90,7 +90,7 @@ class TestConfigModule:
         _config = get_config()
 
         # 测试嵌套访问
-        database_config = config.get("database", {})
+        database_config = _config.get("database", {})
         assert isinstance(database_config, dict)
 
     def test_load_env_config_function(self):

@@ -20,26 +20,26 @@ class TestFileUtils:
             # 创建新目录
             new_dir = Path(tmpdir) / "new" / "sub" / "dir"
             _result = FileUtils.ensure_dir(new_dir)
-            assert result.exists()
-            assert result.is_dir()
+            assert _result.exists()
+            assert _result.is_dir()
 
             # 目录已存在
             _result = FileUtils.ensure_dir(new_dir)
-            assert result.exists()
+            assert _result.exists()
 
             # 使用字符串路径
             str_dir = os.path.join(tmpdir, "string", "dir")
             _result = FileUtils.ensure_dir(str_dir)
             assert isinstance(result, Path)
-            assert result.exists()
+            assert _result.exists()
 
     def test_ensure_directory_alias(self):
         """测试ensure_directory别名方法"""
         with tempfile.TemporaryDirectory() as tmpdir:
             new_dir = Path(tmpdir) / "alias" / "dir"
             _result = FileUtils.ensure_directory(new_dir)
-            assert result.exists()
-            assert result.is_dir()
+            assert _result.exists()
+            assert _result.is_dir()
 
     def test_write_and_read_json(self):
         """测试JSON文件读写"""
@@ -159,7 +159,7 @@ class TestFileUtils:
 
             # 文件不存在
             _result = FileUtils.read_json_file(file_path)
-            assert result is None
+            assert _result is None
 
             # 文件存在
             FileUtils.write_json(data, file_path)
@@ -174,7 +174,7 @@ class TestFileUtils:
 
             # 成功写入
             _result = FileUtils.write_json_file(data, file_path)
-            assert result is True
+            assert _result is True
             assert file_path.exists()
 
             # 验证内容
@@ -185,7 +185,7 @@ class TestFileUtils:
         """测试write_json_file失败情况"""
         # 尝试写入到无效路径
         _result = FileUtils.write_json_file({"test": "data"}, "/invalid/path/file.json")
-        assert result is False
+        assert _result is False
 
     def test_cleanup_old_files(self):
         """测试清理旧文件"""

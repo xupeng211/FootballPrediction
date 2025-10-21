@@ -118,7 +118,7 @@ class TestDataCollectionTasksCoverage:
                 with patch.object(collect_fixtures, "delay") as mock_delay:
                     mock_delay.return_value = Mock(id="task-123")
                     _result = collect_fixtures.delay(league_id=1)
-                    assert result.id == "task-123"
+                    assert _result.id == "task-123"
                     mock_delay.assert_called_once_with(league_id=1)
 
         except ImportError:
@@ -138,7 +138,7 @@ class TestDataCollectionTasksCoverage:
                 with patch.object(collect_odds, "delay") as mock_delay:
                     mock_delay.return_value = Mock(id="odds-task-456")
                     _result = collect_odds.delay(match_id=123)
-                    assert result.id == "odds-task-456"
+                    assert _result.id == "odds-task-456"
 
         except ImportError:
             pytest.skip("collect_odds not available")
@@ -156,7 +156,7 @@ class TestDataCollectionTasksCoverage:
                 with patch.object(collect_scores, "delay") as mock_delay:
                     mock_delay.return_value = Mock(status="SUCCESS")
                     _result = collect_scores.delay(date="2025-01-13")
-                    assert result.status == "SUCCESS"
+                    assert _result.status == "SUCCESS"
 
         except ImportError:
             pytest.skip("collect_scores not available")
@@ -176,7 +176,7 @@ class TestDataCollectionTasksCoverage:
                     _result = collect_stats.apply_async(
                         kwargs={"team_id": 42}, countdown=60
                     )
-                    assert result.id == "stats-789"
+                    assert _result.id == "stats-789"
 
         except ImportError:
             pytest.skip("collect_stats not available")
@@ -225,10 +225,10 @@ class TestMaintenanceTasksCoverage:
             # 模拟清理任务
             with patch.object(cleanup_old_data, "delay") as mock_delay:
                 mock_delay.return_value = Mock(
-                    id="cleanup-123", _result ={"deleted_records": 1000}
+                    id="cleanup-123", _result={"deleted_records": 1000}
                 )
                 _result = cleanup_old_data.delay(days=30)
-                assert result.result["deleted_records"] == 1000
+                assert _result._result["deleted_records"] == 1000
 
         except ImportError:
             pytest.skip("maintenance_tasks not available")
@@ -247,10 +247,10 @@ class TestMaintenanceTasksCoverage:
                 with patch.object(backup_database, "delay") as mock_delay:
                     mock_delay.return_value = Mock(
                         id=f"backup-{backup_type}-456",
-                        _result ={"backup_file": f"backup_{backup_type}.sql"},
+                        _result={"backup_file": f"backup_{backup_type}.sql"},
                     )
                     _result = backup_database.delay(type=backup_type)
-                    assert result.result["backup_file"] == f"backup_{backup_type}.sql"
+                    assert _result._result["backup_file"] == f"backup_{backup_type}.sql"
 
         except ImportError:
             pytest.skip("maintenance_tasks not available")
@@ -265,12 +265,12 @@ class TestMaintenanceTasksCoverage:
             # 模拟统计更新
             with patch.object(update_statistics, "apply_async") as mock_apply:
                 mock_apply.return_value = Mock(
-                    id="stats-789", _result ={"updated_stats": 50}
+                    id="stats-789", _result={"updated_stats": 50}
                 )
                 _result = update_statistics.apply_async(
                     kwargs={"force": True}, countdown=300
                 )
-                assert result.result["updated_stats"] == 50
+                assert _result._result["updated_stats"] == 50
 
         except ImportError:
             pytest.skip("maintenance_tasks not available")
@@ -316,10 +316,10 @@ class TestMonitoringTasksCoverage:
             }
 
             with patch.object(check_system_health, "delay") as mock_delay:
-                mock_delay.return_value = Mock(id="health-123", _result =health_status)
+                mock_delay.return_value = Mock(id="health-123", _result=health_status)
                 _result = check_system_health.delay()
-                assert result.result["database"] == "healthy"
-                assert result.result["queue"] == "warning"
+                assert _result._result["database"] == "healthy"
+                assert _result._result["queue"] == "warning"
 
         except ImportError:
             pytest.skip("monitoring not available")
@@ -335,14 +335,14 @@ class TestMonitoringTasksCoverage:
             for level in alert_levels:
                 with patch.object(send_alert, "delay") as mock_delay:
                     mock_delay.return_value = Mock(
-                        id=f"alert-{level}-456", _result ={"sent": True, "recipients": 3}
+                        id=f"alert-{level}-456", _result={"sent": True, "recipients": 3}
                     )
                     _result = send_alert.delay(
                         level=level,
                         message=f"Test {level} alert",
                         service="test-service",
                     )
-                    assert result.result["sent"] is True
+                    assert _result._result["sent"] is True
 
         except ImportError:
             pytest.skip("monitoring not available")
@@ -362,10 +362,10 @@ class TestMonitoringTasksCoverage:
             }
 
             with patch.object(collect_metrics, "delay") as mock_delay:
-                mock_delay.return_value = Mock(id="metrics-789", _result =metrics)
+                mock_delay.return_value = Mock(id="metrics-789", _result=metrics)
                 _result = collect_metrics.delay()
-                assert result.result["cpu_usage"] == 45.5
-                assert result.result["active_users"] == 150
+                assert _result._result["cpu_usage"] == 45.5
+                assert _result._result["active_users"] == 150
 
         except ImportError:
             pytest.skip("monitoring not available")
@@ -483,7 +483,7 @@ class TestTaskUtilsCoverage:
                     "result": {"processed": 100},
                 }
                 _result = get_task_status("test-123")
-                assert result["status"] == "SUCCESS"
+                assert _result["status"] == "SUCCESS"
 
         except ImportError:
             pytest.skip("task utils not available")
@@ -624,7 +624,7 @@ class TestTaskErrorHandlingCoverage:
                     task_id="task-123",
                     exception=ValueError("Test exception"),
                 )
-                assert result["logged"] is True
+                assert _result["logged"] is True
 
             # 测试关键错误日志
             with patch.object(log_critical, "__call__") as mock_critical:
@@ -637,7 +637,7 @@ class TestTaskErrorHandlingCoverage:
                     message="Critical system error",
                     context={"service": "data_collector"},
                 )
-                assert result["notification_sent"] is True
+                assert _result["notification_sent"] is True
 
         except ImportError:
             pytest.skip("error_logger not available")
@@ -686,19 +686,19 @@ class TestTaskQueueManagementCoverage:
             with patch.object(clear_queue, "__call__") as mock_clear:
                 mock_clear.return_value = {"cleared": 42}
                 _result = clear_queue("default")
-                assert result["cleared"] == 42
+                assert _result["cleared"] == 42
 
             # 测试暂停队列
             with patch.object(pause_queue, "__call__") as mock_pause:
                 mock_pause.return_value = {"paused": True}
                 _result = pause_queue("high_priority")
-                assert result["paused"] is True
+                assert _result["paused"] is True
 
             # 测试恢复队列
             with patch.object(resume_queue, "__call__") as mock_resume:
                 mock_resume.return_value = {"resumed": True}
                 _result = resume_queue("high_priority")
-                assert result["resumed"] is True
+                assert _result["resumed"] is True
 
         except ImportError:
             pytest.skip("queue_manager not available")
@@ -769,20 +769,20 @@ class TestTasksIntegrationCoverage:
             # 测试成功回调
             with patch.object(on_task_success, "__call__") as mock_success:
                 mock_success.return_value = {"callback": "executed"}
-                _result = on_task_success(task_id="123", _result ="success")
-                assert result["callback"] == "executed"
+                _result = on_task_success(task_id="123", _result="success")
+                assert _result["callback"] == "executed"
 
             # 测试失败回调
             with patch.object(on_task_failure, "__call__") as mock_failure:
                 mock_failure.return_value = {"callback": "executed", "alert_sent": True}
                 _result = on_task_failure(task_id="456", error="error message")
-                assert result["alert_sent"] is True
+                assert _result["alert_sent"] is True
 
             # 测试重试回调
             with patch.object(on_task_retry, "__call__") as mock_retry:
                 mock_retry.return_value = {"callback": "executed", "retry_count": 1}
                 _result = on_task_retry(task_id="789", reason="timeout")
-                assert result["retry_count"] == 1
+                assert _result["retry_count"] == 1
 
         except ImportError:
             pytest.skip("task callbacks not available")
@@ -805,8 +805,8 @@ class TestTasksIntegrationCoverage:
             with patch.object(check_task_queue_health, "__call__") as mock_health:
                 mock_health.return_value = health_data
                 _result = check_task_queue_health()
-                assert result["queue_length"] == 150
-                assert result["workers_active"] == 5
+                assert _result["queue_length"] == 150
+                assert _result["workers_active"] == 5
 
         except ImportError:
             pytest.skip("task monitoring not available")
@@ -826,7 +826,7 @@ class TestTasksIntegrationCoverage:
                 _result = record_task_execution_time(
                     task_name="collect_data", duration=45.2
                 )
-                assert result["recorded"] is True
+                assert _result["recorded"] is True
 
             # 获取性能统计
             with patch.object(get_task_performance_stats, "__call__") as mock_stats:

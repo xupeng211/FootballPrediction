@@ -55,7 +55,7 @@ class TestShouldCollectLiveScores:
 
             _result = await should_collect_live_scores()
 
-            assert result is True
+            assert _result is True
             mock_session.execute.assert_called_once()
 
     @pytest.mark.asyncio
@@ -71,7 +71,7 @@ class TestShouldCollectLiveScores:
 
             _result = await should_collect_live_scores()
 
-            assert result is False
+            assert _result is False
 
     @pytest.mark.asyncio
     async def test_should_collect_with_upcoming_matches(self):
@@ -86,7 +86,7 @@ class TestShouldCollectLiveScores:
 
             _result = await should_collect_live_scores()
 
-            assert result is True
+            assert _result is True
 
     @pytest.mark.asyncio
     async def test_should_collect_database_error(self):
@@ -98,7 +98,7 @@ class TestShouldCollectLiveScores:
 
             _result = await should_collect_live_scores()
 
-            assert result is False
+            assert _result is False
 
 
 @pytest.mark.skipif(
@@ -200,7 +200,7 @@ class TestIsMatchDay:
         # 2024-01-13是周六
         saturday = datetime(2024, 1, 13)
         _result = is_match_day(saturday)
-        assert result is True
+        assert _result is True
 
     def test_is_match_day_weekday(self):
         """测试：工作日可能不是比赛日"""
@@ -220,7 +220,7 @@ class TestIsMatchDay:
         # 2024-01-12是周五
         friday = datetime(2024, 1, 12)
         _result = is_match_day(friday)
-        assert result is True
+        assert _result is True
 
     def test_is_match_day_monday(self):
         """测试：周一通常不是比赛日"""
@@ -467,9 +467,9 @@ class TestGetTaskPriority:
 
         for task_name, expected_priority in known_tasks:
             priority = get_task_priority(task_name)
-            assert priority == expected_priority, (
-                f"Task {task_name} should have priority {expected_priority}"
-            )
+            assert (
+                priority == expected_priority
+            ), f"Task {task_name} should have priority {expected_priority}"
 
 
 @pytest.mark.skipif(
@@ -580,7 +580,7 @@ class TestTasksUtilsIntegration:
 
             # 应该优雅处理错误
             _result = await should_collect_live_scores()
-            assert result is False
+            assert _result is False
 
             # 重置模拟
             mock_db_manager.reset_mock()
@@ -593,7 +593,7 @@ class TestTasksUtilsIntegration:
             mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
 
             _result = await should_collect_live_scores()
-            assert result is True
+            assert _result is True
 
 
 @pytest.mark.skipif(

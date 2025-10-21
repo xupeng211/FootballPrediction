@@ -77,7 +77,7 @@ class TestDirectExecution:
             # 调用函数
             _result = get_current_time()
             assert isinstance(result, datetime)
-            assert result <= datetime.now()
+            assert _result <= datetime.now()
 
         except ImportError:
             pytest.skip("Time utils not available")

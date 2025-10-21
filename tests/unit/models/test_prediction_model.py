@@ -115,7 +115,7 @@ class TestPredictionModel:
         _result = model.train(X, y)
 
         # 验证训练结果
-        assert result is True or result is None  # 可能返回True或None
+        assert _result is True or result is None  # 可能返回True或None
         if hasattr(model, "is_trained"):
             assert model.is_trained is True
 

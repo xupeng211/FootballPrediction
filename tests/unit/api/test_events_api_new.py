@@ -46,9 +46,9 @@ class TestEventHealthCheck:
 
             _result = await event_health_check()
 
-            assert result["status"] == "healthy"
-            assert result["event_handlers"] == 5
-            assert result["uptime"] == "2h 30m"
+            assert _result["status"] == "healthy"
+            assert _result["event_handlers"] == 5
+            assert _result["uptime"] == "2h 30m"
             mock_app.health_check.assert_called_once()
 
     @pytest.mark.asyncio
@@ -65,7 +65,7 @@ class TestEventHealthCheck:
 
             _result = await event_health_check()
 
-            assert result["status"] == "unhealthy"
+            assert _result["status"] == "unhealthy"
             assert "error" in result
 
     @pytest.mark.asyncio
@@ -104,9 +104,9 @@ class TestGetEventStatistics:
 
             _result = await get_event_statistics()
 
-            assert result["total_events"] == 1000
-            assert result["events_per_second"] == 10.5
-            assert result["handlers"] == 5
+            assert _result["total_events"] == 1000
+            assert _result["events_per_second"] == 10.5
+            assert _result["handlers"] == 5
 
     @pytest.mark.asyncio
     async def test_get_event_statistics_with_metrics(self):
@@ -142,9 +142,9 @@ class TestGetEventStatistics:
 
             _result = await get_event_statistics()
 
-            assert result["total_events"] == 500
-            assert result["metrics"]["cpu_usage"] == 45.5
-            assert result["analytics"]["top_events"] == [
+            assert _result["total_events"] == 500
+            assert _result["metrics"]["cpu_usage"] == 45.5
+            assert _result["analytics"]["top_events"] == [
                 "prediction.created",
                 "user.login",
             ]
@@ -164,7 +164,7 @@ class TestGetEventStatistics:
 
             _result = await get_event_statistics()
 
-            assert result["total_events"] == 100
+            assert _result["total_events"] == 100
             assert "metrics" not in result
             assert "analytics" not in result
 
@@ -273,7 +273,7 @@ class TestEventsAPIIntegration:
             # 验证所有调用都成功
             assert len(results) == 10
             for result in results:
-                assert result["status"] == "healthy"
+                assert _result["status"] == "healthy"
 
     @pytest.mark.asyncio
     async def test_error_propagation(self):
@@ -311,7 +311,7 @@ class TestEventsAPIIntegration:
             # 多次调用统计
             for i in range(3):
                 _result = await get_event_statistics()
-                assert result["metrics"]["requests"] == 100 * (i + 1)
+                assert _result["metrics"]["requests"] == 100 * (i + 1)
 
     def test_router_tags_and_metadata(self):
         """测试：路由标签和元数据"""
@@ -382,19 +382,21 @@ class TestEventsAPIIntegration:
             _result = await get_event_statistics()
 
             # 验证基础统计
-            assert result["total_events"] == 10000
-            assert result["events_per_second"] == 25.5
+            assert _result["total_events"] == 10000
+            assert _result["events_per_second"] == 25.5
 
             # 验证处理器指标
-            assert "handler_metrics" in result["metrics"]
+            assert "handler_metrics" in _result["metrics"]
             assert (
-                result["metrics"]["handler_metrics"]["MetricsEventHandler"]["processed"]
+                _result["metrics"]["handler_metrics"]["MetricsEventHandler"][
+                    "processed"
+                ]
                 == 5000
             )
 
             # 验证分析数据
-            assert result["analytics"]["event_types"]["prediction.created"] == 4000
-            assert result["analytics"]["time_distribution"]["last_hour"] == 1000
+            assert _result["analytics"]["event_types"]["prediction.created"] == 4000
+            assert _result["analytics"]["time_distribution"]["last_hour"] == 1000
 
 
 # 如果模块不可用，添加一个占位测试

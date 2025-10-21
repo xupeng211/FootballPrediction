@@ -187,7 +187,7 @@ class TestResponseUtils:
         """测试带数据的错误响应"""
         error_msg = "Validation failed"
         details = {"field": "email", "error": "invalid format"}
-        response_obj = response.APIResponse.error(error_msg, _data =details)
+        response_obj = response.APIResponse.error(error_msg, _data=details)
 
         assert response_obj["success"] is False
         assert response_obj["message"] == error_msg
@@ -205,7 +205,7 @@ class TestResponseUtils:
         """测试API响应模型"""
         # 测试成功响应模型
         model = response.APIResponseModel(
-            success=True, message="Success", _data ={"id": 1}
+            success=True, message="Success", _data={"id": 1}
         )
         assert model.success is True
         assert model.message == "Success"

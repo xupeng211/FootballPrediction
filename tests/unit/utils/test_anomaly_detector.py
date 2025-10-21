@@ -282,7 +282,7 @@ class TestAnomalyDetector:
         anomalies = [{"index": 5, "value": 50, "column": "home_goals"}]
 
         detector.visualize_anomalies(
-            _data =sample_data,
+            _data=sample_data,
             anomalies=anomalies,
             column="home_goals",
             save_path="/tmp/anomaly_plot.png",
@@ -298,7 +298,7 @@ class TestAnomalyDetector:
         ]
 
         report = detector.generate_anomaly_report(
-            _data =sample_data, anomalies=anomalies, include_summary=True
+            _data=sample_data, anomalies=anomalies, include_summary=True
         )
 
         assert isinstance(report, dict)
@@ -320,7 +320,7 @@ class TestAnomalyDetector:
         }
 
         _result = await detector.notify_anomaly(anomaly)
-        assert result is True
+        assert _result is True
         mock_notifier.send.assert_called_once()
 
     def test_anomaly_types(self):

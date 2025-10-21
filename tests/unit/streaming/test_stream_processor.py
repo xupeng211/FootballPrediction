@@ -119,7 +119,7 @@ def test_start_timing():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = start_timing()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -129,7 +129,7 @@ def test_stop_timing():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = stop_timing()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -139,7 +139,7 @@ def test_record_processed():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = record_processed()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -149,7 +149,7 @@ def test_record_error():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = record_error()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 
@@ -159,7 +159,7 @@ def test_get_stats():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = get_stats()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 

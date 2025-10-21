@@ -59,7 +59,7 @@ class TestAPIResponse:
     def test_api_response_model(self):
         """测试API响应模型"""
         model = APIResponseModel(
-            success=True, message="测试消息", _data ={"key": "value"}, code="TEST_001"
+            success=True, message="测试消息", _data={"key": "value"}, code="TEST_001"
         )
         assert model.success is True
         assert model.message == "测试消息"

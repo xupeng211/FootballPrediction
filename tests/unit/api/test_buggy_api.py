@@ -37,18 +37,20 @@ class TestBuggyAPI:
         response = client.get("/test/fixed_query")
         assert response.status_code == 200
         _data = response.json()
-        assert "limit" in data
-        assert "type" in data
-        assert data["limit"] == 10  # 默认值
-        assert data["type"] == "int"
+        assert "limit" in _data
+
+        assert "type" in _data
+
+        assert _data["limit"] == 10  # 默认值
+        assert _data["type"] == "int"
 
     def test_fixed_query_with_limit(self, client):
         """测试：带限制参数的查询端点"""
         response = client.get("/test/fixed_query?limit=50")
         assert response.status_code == 200
         _data = response.json()
-        assert data["limit"] == 50
-        assert data["type"] == "int"
+        assert _data["limit"] == 50
+        assert _data["type"] == "int"
 
     def test_fixed_query_validation(self, client):
         """测试：查询参数验证"""
@@ -81,18 +83,20 @@ class TestBuggyAPI:
         response = client.get("/test/buggy_query")
         assert response.status_code == 200
         _data = response.json()
-        assert "limit" in data
-        assert "type" in data
-        assert isinstance(data["limit"], int)
-        assert data["type"] == "int"
+        assert "limit" in _data
+
+        assert "type" in _data
+
+        assert isinstance(_data["limit"], int)
+        assert _data["type"] == "int"
 
     def test_buggy_query_with_parameter(self, client):
         """测试：带参数的buggy查询端点"""
         response = client.get("/test/buggy_query?limit=25")
         assert response.status_code == 200
         _data = response.json()
-        assert data["limit"] == 25
-        assert isinstance(data["limit"], int)  # 确保类型转换正确
+        assert _data["limit"] == 25
+        assert isinstance(_data["limit"], int)  # 确保类型转换正确
 
     @patch("src.api.buggy_api.service")
     def test_buggy_async_endpoint(self, mock_service, client):
@@ -102,7 +106,7 @@ class TestBuggyAPI:
         response = client.get("/test/buggy_async")
         assert response.status_code == 200
         _data = response.json()
-        assert data["status"] == "test_status"
+        assert _data["status"] == "test_status"
         mock_service.get_status.assert_called_once()
 
 

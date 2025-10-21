@@ -18,8 +18,7 @@ sys.path.insert(0, "src")
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -47,7 +46,7 @@ class StagingDataLoader:
                 "teams_count": 20,
                 "season": "2024/2025",
                 "start_date": "2024-08-01",
-                "end_date": "2025-05-31"
+                "end_date": "2025-05-31",
             },
             {
                 "name": "Staging Championship",
@@ -56,7 +55,7 @@ class StagingDataLoader:
                 "teams_count": 24,
                 "season": "2024/2025",
                 "start_date": "2024-08-01",
-                "end_date": "2025-05-31"
+                "end_date": "2025-05-31",
             },
             {
                 "name": "Staging Cup",
@@ -65,28 +64,63 @@ class StagingDataLoader:
                 "teams_count": 16,
                 "season": "2024/2025",
                 "start_date": "2024-09-01",
-                "end_date": "2025-05-15"
-            }
+                "end_date": "2025-05-15",
+            },
         ]
 
         # 队伍数据
         teams = []
         team_names = [
-            "Staging City FC", "Staging United", "Staging Athletic", "Staging Rangers",
-            "Staging Wanderers", "Staging Royals", "Staging Lions", "Staging Eagles",
-            "Staging Tigers", "Staging Bears", "Staging Wolves", "Staging Foxes",
-            "Staging Sharks", "Staging Dolphins", "Staging Whales", "Staging Hawks",
-            "Staging Falcons", "Staging Eagles", "Staging Owls", "Staging Swans",
-            "Staging Dragons", "Staging Phoenix", "Staging Griffins", "Staging Unicorns",
-            "Staging Lions II", "Staging Tigers II", "Staging Bears II"
+            "Staging City FC",
+            "Staging United",
+            "Staging Athletic",
+            "Staging Rangers",
+            "Staging Wanderers",
+            "Staging Royals",
+            "Staging Lions",
+            "Staging Eagles",
+            "Staging Tigers",
+            "Staging Bears",
+            "Staging Wolves",
+            "Staging Foxes",
+            "Staging Sharks",
+            "Staging Dolphins",
+            "Staging Whales",
+            "Staging Hawks",
+            "Staging Falcons",
+            "Staging Eagles",
+            "Staging Owls",
+            "Staging Swans",
+            "Staging Dragons",
+            "Staging Phoenix",
+            "Staging Griffins",
+            "Staging Unicorns",
+            "Staging Lions II",
+            "Staging Tigers II",
+            "Staging Bears II",
         ]
 
         cities = [
-            "Staging City", "North Staging", "South Staging", "East Staging",
-            "West Staging", "Central Staging", "Port Staging", "Staging Harbor",
-            "Staging Valley", "Staging Heights", "Staging Park", "Staging Gardens",
-            "Staging Hills", "Staging Woods", "Staging Lake", "Staging River",
-            "Staging Mountain", "Staging Plains", "Staging Fields", "Staging Forest"
+            "Staging City",
+            "North Staging",
+            "South Staging",
+            "East Staging",
+            "West Staging",
+            "Central Staging",
+            "Port Staging",
+            "Staging Harbor",
+            "Staging Valley",
+            "Staging Heights",
+            "Staging Park",
+            "Staging Gardens",
+            "Staging Hills",
+            "Staging Woods",
+            "Staging Lake",
+            "Staging River",
+            "Staging Mountain",
+            "Staging Plains",
+            "Staging Fields",
+            "Staging Forest",
         ]
 
         for i, name in enumerate(team_names):
@@ -97,8 +131,8 @@ class StagingDataLoader:
                 "stadium": f"{name} Stadium",
                 "capacity": 20000 + (i * 1000),
                 "manager": f"Manager {i}",
-                "colors": ["#FF0000", "#0000FF"][:1 + (i % 2)],
-                "founded_year": 1990 + (i % 30)
+                "colors": ["#FF0000", "#0000FF"][: 1 + (i % 2)],
+                "founded_year": 1990 + (i % 30),
             }
             teams.append(team)
 
@@ -133,7 +167,9 @@ class StagingDataLoader:
                 # 比赛时间（分布在一天的不同时间）
                 match_hour = 14 + (match_idx * 2) % 8  # 14:00 - 22:00
 
-                match_date = date.replace(hour=match_hour, minute=0, second=0, microsecond=0)
+                match_date = date.replace(
+                    hour=match_hour, minute=0, second=0, microsecond=0
+                )
 
                 match = {
                     "home_team_id": teams[home_idx]["id"],
@@ -144,8 +180,12 @@ class StagingDataLoader:
                     "status": "UPCOMING",
                     "venue": teams[home_idx]["stadium"],
                     "round": day // 7 + 1,  # 轮次
-                    "weather": "Clear" if day % 3 == 0 else "Rainy" if day % 3 == 1 else "Cloudy",
-                    "attendance_estimate": 15000 + (match_idx * 2000)
+                    "weather": "Clear"
+                    if day % 3 == 0
+                    else "Rainy"
+                    if day % 3 == 1
+                    else "Cloudy",
+                    "attendance_estimate": 15000 + (match_idx * 2000),
                 }
 
                 # 对于过去的比赛，随机设置一些已完成的状态
@@ -172,19 +212,63 @@ class StagingDataLoader:
         players = []
 
         first_names = [
-            "John", "Mike", "David", "James", "Robert", "William", "Richard",
-            "Joseph", "Thomas", "Charles", "Christopher", "Daniel", "Matthew",
-            "Anthony", "Mark", "Steven", "Paul", "Kevin", "Brian", "George"
+            "John",
+            "Mike",
+            "David",
+            "James",
+            "Robert",
+            "William",
+            "Richard",
+            "Joseph",
+            "Thomas",
+            "Charles",
+            "Christopher",
+            "Daniel",
+            "Matthew",
+            "Anthony",
+            "Mark",
+            "Steven",
+            "Paul",
+            "Kevin",
+            "Brian",
+            "George",
         ]
 
         last_names = [
-            "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller",
-            "Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez",
-            "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin"
+            "Smith",
+            "Johnson",
+            "Williams",
+            "Brown",
+            "Jones",
+            "Garcia",
+            "Miller",
+            "Davis",
+            "Rodriguez",
+            "Martinez",
+            "Hernandez",
+            "Lopez",
+            "Gonzalez",
+            "Wilson",
+            "Anderson",
+            "Thomas",
+            "Taylor",
+            "Moore",
+            "Jackson",
+            "Martin",
         ]
 
-        positions = ["Goalkeeper", "Defender", "Defender", "Defender", "Midfielder",
-                     "Midfielder", "Midfielder", "Forward", "Forward", "Substitute"]
+        positions = [
+            "Goalkeeper",
+            "Defender",
+            "Defender",
+            "Defender",
+            "Midfielder",
+            "Midfielder",
+            "Midfielder",
+            "Forward",
+            "Forward",
+            "Substitute",
+        ]
 
         for team in teams:
             team_players = []
@@ -200,7 +284,7 @@ class StagingDataLoader:
                     "weight": 70 + (i % 20),  # 70-90kg
                     "nationality": "Stageland",
                     "contract_until": f"{2025 + (i % 5)}-06-30",
-                    "market_value": 1000000 + (i * 50000)  # 100万-225万
+                    "market_value": 1000000 + (i * 50000),  # 100万-225万
                 }
                 team_players.append(player)
 
@@ -218,11 +302,7 @@ class StagingDataLoader:
 
         # 创建不同类型的用户
         users = []
-        user_types = [
-            ("user", 100),
-            ("analyst", 20),
-            ("admin", 5)
-        ]
+        user_types = [("user", 100), ("analyst", 20), ("admin", 5)]
 
         user_id = 1
         for role, count in user_types:
@@ -234,7 +314,7 @@ class StagingDataLoader:
                     "role": role,
                     "is_active": True,
                     "created_at": datetime.now(timezone.utc).isoformat(),
-                    "updated_at": datetime.now(timezone.utc).isoformat()
+                    "updated_at": datetime.now(timezone.utc).isoformat(),
                 }
                 users.append(user)
                 user_id += 1
@@ -263,9 +343,11 @@ class StagingDataLoader:
                     "user_id": user["id"],
                     "match_id": match["id"],
                     "prediction": pred_types[user_predictions % 3],
-                    "confidence": min(0.99, confidence_base + (user_predictions * 0.01)),
+                    "confidence": min(
+                        0.99, confidence_base + (user_predictions * 0.01)
+                    ),
                     "created_at": datetime.now(timezone.utc).isoformat(),
-                    "status": "PENDING"
+                    "status": "PENDING",
                 }
                 predictions.append(prediction)
                 user_predictions += 1
@@ -288,15 +370,38 @@ class StagingDataLoader:
         for match in completed_matches[:10]:
             stats = {
                 "match_id": match["id"],
-                "possession": {"home": 45 + (hash(match["id"]) % 20), "away": 55 - (hash(match["id"]) % 20)},
-                "shots": {"home": 10 + (hash(match["id"]) % 10), "away": 8 + (hash(match["id"]) % 10)},
-                "shots_on_target": {"home": 4 + (hash(match["id"]) % 5), "away": 3 + (hash(match["id"]) % 5)},
-                "corners": {"home": 5 + (hash(match["id"]) % 3), "away": 4 + (hash(match["id"]) % 3)},
-                "fouls": {"home": 12 + (hash(match["id"]) % 8), "away": 10 + (hash(match["id"]) % 8)},
-                "yellow_cards": {"home": 2 + (hash(match["id"]) % 3), "away": 1 + (hash(match["id"]) % 3)},
-                "red_cards": {"home": 1 if hash(match["id"]) % 10 == 0 else 0,
-                                 "away": 1 if hash(match["id"]) % 10 == 5 else 0},
-                "offsides": {"home": 3 + (hash(match["id"]) % 4), "away": 2 + (hash(match["id"]) % 4)}
+                "possession": {
+                    "home": 45 + (hash(match["id"]) % 20),
+                    "away": 55 - (hash(match["id"]) % 20),
+                },
+                "shots": {
+                    "home": 10 + (hash(match["id"]) % 10),
+                    "away": 8 + (hash(match["id"]) % 10),
+                },
+                "shots_on_target": {
+                    "home": 4 + (hash(match["id"]) % 5),
+                    "away": 3 + (hash(match["id"]) % 5),
+                },
+                "corners": {
+                    "home": 5 + (hash(match["id"]) % 3),
+                    "away": 4 + (hash(match["id"]) % 3),
+                },
+                "fouls": {
+                    "home": 12 + (hash(match["id"]) % 8),
+                    "away": 10 + (hash(match["id"]) % 8),
+                },
+                "yellow_cards": {
+                    "home": 2 + (hash(match["id"]) % 3),
+                    "away": 1 + (hash(match["id"]) % 3),
+                },
+                "red_cards": {
+                    "home": 1 if hash(match["id"]) % 10 == 0 else 0,
+                    "away": 1 if hash(match["id"]) % 10 == 5 else 0,
+                },
+                "offsides": {
+                    "home": 3 + (hash(match["id"]) % 4),
+                    "away": 2 + (hash(match["id"]) % 4),
+                },
             }
             match_stats.append(stats)
 
@@ -322,7 +427,7 @@ class StagingDataLoader:
         output_dir = "tests/fixtures/staging"
         os.makedirs(output_dir, exist_ok=True)
 
-        with open(os.path.join(output_dir, "staging_data.json"), 'w') as f:
+        with open(os.path.join(output_dir, "staging_data.json"), "w") as f:
             json.dump(self.created_data, f, indent=2, default=str)
 
         logger.info(f"数据已保存到: {output_dir}/staging_data.json")

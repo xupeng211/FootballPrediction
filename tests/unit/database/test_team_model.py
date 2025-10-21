@@ -245,7 +245,7 @@ class TestTeamModel:
         # 测试异步保存（如果有）
         if hasattr(sample_team, "async_save"):
             _result = await sample_team.async_save(mock_session)
-            assert result is not None
+            assert _result is not None
 
     def test_team_batch_creation(self):
         """测试批量创建球队"""

@@ -239,7 +239,7 @@ class TestOddsCollectorIntegration:
                                 # 尝试传入None
                                 _result = method(None)
                                 # 应该优雅地处理None或抛出适当的异常
-                                assert result is not None or True
+                                assert _result is not None or True
                             except (TypeError, ValueError, AttributeError):
                                 # 这些是预期的错误类型
                                 pass

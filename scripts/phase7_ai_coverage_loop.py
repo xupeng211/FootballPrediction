@@ -198,7 +198,7 @@ class AICoverageOrchestrator:
                 return "medium"
             else:
                 return "complex"
-        except:
+        except Exception:
             return "simple"
 
     def _calculate_priority(
@@ -247,7 +247,7 @@ class AICoverageOrchestrator:
                         dependencies.append(node.module)
 
             return [dep for dep in dependencies if dep and not dep.startswith(".")]
-        except:
+        except Exception:
             return []
 
     def generate_unit_tests(self, target: CoverageTarget) -> AITestResult:

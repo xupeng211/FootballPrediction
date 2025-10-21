@@ -26,20 +26,24 @@ class TestExistingAPIEndpoints:
         response = client.get("/")
         assert response.status_code == 200
         _data = response.json()
-        assert "message" in data
-        assert "Football Prediction API" in data["message"]
-        assert "version" in data
-        assert "docs" in data
-        assert "health" in data
+        assert "message" in _data
+
+        assert "Football Prediction API" in _data["message"]
+        assert "version" in _data
+
+        assert "docs" in _data
+
+        assert "health" in _data
 
     def test_health_endpoint(self, client):
         """测试健康检查端点"""
         response = client.get("/api/health")
         assert response.status_code == 200
         _data = response.json()
-        assert data["status"] == "healthy"
-        assert "timestamp" in data
-        assert "service" in data
+        assert _data["status"] == "healthy"
+        assert "timestamp" in _data
+
+        assert "service" in _data
 
     def test_metrics_endpoint(self, client):
         """测试指标端点"""
@@ -55,8 +59,8 @@ class TestExistingAPIEndpoints:
         response = client.get("/api/test")
         assert response.status_code == 200
         _data = response.json()
-        assert "API is working!" in data["message"]
-        assert "timestamp" in data
+        assert "API is working!" in _data["message"]
+        assert "timestamp" in _data
 
     def test_docs_endpoint(self, client):
         """测试文档端点"""
@@ -75,17 +79,20 @@ class TestExistingAPIEndpoints:
         response = client.get("/openapi.json")
         assert response.status_code == 200
         _data = response.json()
-        assert "openapi" in data
-        assert "info" in data
-        assert data["info"]["title"] == "Football Prediction API"
+        assert "openapi" in _data
+
+        assert "info" in _data
+
+        assert _data["info"]["title"] == "Football Prediction API"
 
     def test_404_endpoint(self, client):
         """测试404错误"""
         response = client.get("/nonexistent")
         assert response.status_code == 404
         _data = response.json()
-        assert "error" in data
-        assert data["error"]["type"] == "http_error"
+        assert "error" in _data
+
+        assert _data["error"]["type"] == "http_error"
 
     def test_method_not_allowed(self, client):
         """测试方法不允许"""
@@ -135,7 +142,7 @@ class TestHealthAPIRoutes:
             pytest.skip("健康路由器端点未实现")
         assert response.status_code == 200
         _data = response.json()
-        assert "checks" in data or "status" in data
+        assert "checks" in _data or "status" in _data
 
 
 @pytest.mark.unit

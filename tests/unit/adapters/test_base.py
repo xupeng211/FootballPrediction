@@ -400,8 +400,8 @@ class TestAdapter:
         adapter.status = AdapterStatus.ACTIVE
 
         _result = await adapter.request(1, 2, param="value")
-        assert result["args"] == (1, 2)
-        assert result["kwargs"] == {"param": "value"}
+        assert _result["args"] == (1, 2)
+        assert _result["kwargs"] == {"param": "value"}
 
 
 class TestAdapterConcreteImplementation:
@@ -417,7 +417,7 @@ class TestAdapterConcreteImplementation:
                 self.initialized = False
 
             async def get_data(self, *args, **kwargs):
-                return self.data
+                return self._data
 
             async def send_data(self, data):
                 self._data = data
@@ -432,11 +432,11 @@ class TestAdapterConcreteImplementation:
                 await self.adaptee.send_data("cleaned")
                 self.cleaned = True
 
-            async def _request(self, operation="get", _data =None):
+            async def _request(self, operation="get", _data=None):
                 if operation == "get":
                     return await self.adaptee.get_data()
                 elif operation == "set":
-                    return await self.adaptee.send_data(data)
+                    return await self.adaptee.send_data(_data)
                 else:
                     raise ValueError(f"Unknown operation: {operation}")
 
@@ -532,7 +532,7 @@ class TestAdapterConcreteImplementation:
             async def _request(self, *args, **kwargs):
                 _data = await self.adaptee.get_data()
                 # 转换数据
-                return {"converted": True, "source": data}
+                return {"converted": True, "source": _data}
 
         class TargetAdapter(Adapter):
             async def _initialize(self):
@@ -561,6 +561,6 @@ class TestAdapterConcreteImplementation:
 
         # 请求
         _result = await target_adapter.request()
-        assert result["final"] is True
-        assert result["data"]["converted"] is True
-        assert "source" in result["data"]
+        assert _result["final"] is True
+        assert _result["data"]["converted"] is True
+        assert "source" in _result["data"]

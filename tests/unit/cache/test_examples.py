@@ -117,7 +117,7 @@ class TestCacheExamples:
 
             # 清除缓存
             _result = clear_user_cache(user_id)
-            assert result is True or result is None  # 可能返回True或None
+            assert _result is True or result is None  # 可能返回True或None
 
     @pytest.mark.asyncio
     async def test_batch_fetch_data(self):
@@ -262,7 +262,7 @@ class TestCacheExamplesAdvanced:
         # 如果有接受复杂对象的函数
         try:
             _result = expensive_computation(complex_param, 10)
-            assert result is not None
+            assert _result is not None
         except (TypeError, ValueError):
             # 可能不支持复杂对象作为参数
             pass
@@ -299,7 +299,7 @@ class TestCacheExamplesAdvanced:
         try:
             _result = expensive_computation(0, 0)
             # 某些实现可能缓存None值
-            assert result is not None or result is None
+            assert _result is not None or result is None
         except Exception:
             pass
 

@@ -8,6 +8,7 @@ import os
 import sys
 from pathlib import Path
 
+
 def boost_core_module_coverage():
     """为核心模块快速生成基础测试"""
 
@@ -16,29 +17,29 @@ def boost_core_module_coverage():
         "core": {
             "logger": "src/core/logger.py",
             "exceptions": "src/core/exceptions.py",
-            "di": "src/core/di.py"
+            "di": "src/core/di.py",
         },
         "services": {
             "base_unified": "src/services/base_unified.py",
             "auth_service": "src/services/auth_service.py",
             "prediction_service": "src/services/prediction_service.py",
             "match_service": "src/services/match_service.py",
-            "user_service": "src/services/user_service.py"
+            "user_service": "src/services/user_service.py",
         },
         "database": {
             "connection": "src/database/connection.py",
             "models/base": "src/database/models/base.py",
             "models/audit_log": "src/database/models/audit_log.py",
-            "repositories/base": "src/database/repositories/base.py"
+            "repositories/base": "src/database/repositories/base.py",
         },
         "cache": {
             "redis_manager": "src/cache/redis_manager.py",
-            "decorators": "src/cache/decorators.py"
+            "decorators": "src/cache/decorators.py",
         },
         "streaming": {
             "kafka_producer": "src/streaming/kafka_producer.py",
-            "kafka_consumer": "src/streaming/kafka_consumer.py"
-        }
+            "kafka_consumer": "src/streaming/kafka_consumer.py",
+        },
     }
 
     print("🚀 快速提升测试覆盖率")
@@ -74,6 +75,7 @@ def boost_core_module_coverage():
 
     print(f"\n✅ 成功创建 {len(created_tests)} 个测试文件")
     return created_tests
+
 
 def generate_test_content(module_name, module_path, category):
     """生成测试内容"""
@@ -115,6 +117,7 @@ class Test{module_name.title().replace("_", "")}:
     # TODO: Add more specific tests based on module functionality
     # This is just a basic template to improve coverage
 '''
+
 
 if __name__ == "__main__":
     # 创建必要的目录

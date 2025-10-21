@@ -32,11 +32,11 @@ class TestCQRSModule:
             from src.api.cqrs import CommandResponse
 
             response = CommandResponse(
-                success=True, message="Command executed", _data ={"id": 123}
+                success=True, message="Command executed", _data={"id": 123}
             )
             assert response.success is True
             assert response.message == "Command executed"
-            assert response.data["id"] == 123
+            assert response._data["id"] == 123
         except ImportError:
             pytest.skip("CommandResponse模型未实现")
 
@@ -45,8 +45,8 @@ class TestCQRSModule:
         try:
             from src.api.cqrs import QueryResponse
 
-            response = QueryResponse(_data =[{"name": "test"}], total=1)
-            assert response.data[0]["name"] == "test"
+            response = QueryResponse(_data=[{"name": "test"}], total=1)
+            assert response._data[0]["name"] == "test"
             assert response.total == 1
         except ImportError:
             pytest.skip("QueryResponse模型未实现")
@@ -74,11 +74,11 @@ class TestEventsModule:
 
             event = Event(
                 event_type="test_event",
-                _data ={"message": "test"},
+                _data={"message": "test"},
                 timestamp=datetime.now(),
             )
             assert event.event_type == "test_event"
-            assert event.data["message"] == "test"
+            assert event._data["message"] == "test"
         except ImportError:
             pytest.skip("Event类未实现")
 
@@ -187,8 +187,8 @@ class TestRepositoriesModule:
 
                 def create(self, data):
                     id = len(self.data) + 1
-                    self.data[id] = {**data, "id": id}
-                    return self.data[id]
+                    self._data[id] = {**data, "id": id}
+                    return self._data[id]
 
                 def get_by_id(self, id):
                     return self.data.get(id)
@@ -337,7 +337,7 @@ class TestAdaptersModule:
                 def transform(self, data):
                     # 转换数据格式
                     if "team" in data:
-                        data["team_name"] = data.pop("team")
+                        _data["team_name"] = data.pop("team")
                     return data
 
                 def get_data(self, params):
@@ -348,7 +348,7 @@ class TestAdaptersModule:
             _result = adapter.get_data({})
 
             assert "team_name" in result
-            assert result["team_name"] == "Real Madrid"
+            assert _result["team_name"] == "Real Madrid"
             assert "team" not in result
         except ImportError:
             pytest.skip("DataAdapter未实现")

@@ -285,7 +285,7 @@ class TestPredictionRepository:
 
             _result = await self.repo.delete_by_id(1)
 
-            assert result is True
+            assert _result is True
             assert self.session.committed
 
 
@@ -350,7 +350,7 @@ class TestUserRepository:
 
                 _result = await self.repo.update_last_login(1)
 
-                assert result is True
+                assert _result is True
                 assert self.session.committed
 
     async def test_deactivate_user(self):
@@ -363,7 +363,7 @@ class TestUserRepository:
 
             _result = await self.repo.deactivate_user(1)
 
-            assert result is True
+            assert _result is True
             assert self.session.committed
 
 

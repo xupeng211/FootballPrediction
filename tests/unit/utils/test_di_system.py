@@ -242,7 +242,7 @@ class TestConfigDI:
         # 创建需要配置的服务
         class DatabaseService:
             def __init__(self, config: dict):
-                self.db_url = config.get("url")
+                self.db_url = _config.get("url")
 
         # 手动注入配置
         db_config = config_di.get_config("database")
@@ -555,9 +555,9 @@ class TestDIIntegration:
         # 创建配置驱动的服务
         class DatabaseService:
             def __init__(self, config: dict):
-                self.host = config["host"]
-                self.port = config["port"]
-                self.pool_size = config["pool_size"]
+                self.host = _config["host"]
+                self.port = _config["port"]
+                self.pool_size = _config["pool_size"]
 
         # 获取配置并创建服务
         db_config = config_di.get_config("app")["database"]

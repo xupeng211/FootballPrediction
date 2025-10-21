@@ -146,7 +146,7 @@ class TestScoresCollector:
 
                 _result = await collector.collect_match_score(match_id)
 
-                assert result is True
+                assert _result is True
                 mock_fetch.assert_called_once_with(match_id)
                 mock_process.assert_called_once_with(score_data)
 
@@ -165,7 +165,7 @@ class TestScoresCollector:
 
             _result = await collector.collect_match_score(match_id)
 
-            assert result is False
+            assert _result is False
 
     @pytest.mark.asyncio
     async def test_collect_live_matches(self):
@@ -196,8 +196,8 @@ class TestScoresCollector:
             _result = await collector.collect_live_matches()
 
             assert len(result) == 2
-            assert result[0]["match_id"] == 1
-            assert result[1]["status"] == "LIVE"
+            assert _result[0]["match_id"] == 1
+            assert _result[1]["status"] == "LIVE"
 
     @pytest.mark.asyncio
     async def test_websocket_listener(self):
@@ -387,7 +387,7 @@ class TestScoresCollector:
 
             _result = await collector._fetch_from_football_api(match_id)
 
-            assert result is not None
+            assert _result is not None
             assert "match" in result
 
     @pytest.mark.asyncio
@@ -417,7 +417,7 @@ class TestScoresCollector:
 
             _result = await collector._fetch_from_api_sports(match_id)
 
-            assert result is not None
+            assert _result is not None
             assert "response" in result
 
     @pytest.mark.asyncio
@@ -444,7 +444,7 @@ class TestScoresCollector:
 
             _result = await collector._fetch_from_scorebat(match_id)
 
-            assert result is not None
+            assert _result is not None
             assert len(result) == 1
 
     def test_transform_football_api_data(self):
@@ -469,10 +469,10 @@ class TestScoresCollector:
 
         _result = collector._transform_football_api_data(api_data)
 
-        assert result["match_id"] == 123
-        assert result["home_score"] == 2
-        assert result["away_score"] == 1
-        assert result["status"] == "LIVE"
+        assert _result["match_id"] == 123
+        assert _result["home_score"] == 2
+        assert _result["away_score"] == 1
+        assert _result["status"] == "LIVE"
         assert "timestamp" in result
 
     def test_transform_api_sports_data(self):
@@ -493,11 +493,11 @@ class TestScoresCollector:
 
         _result = collector._transform_api_sports_data(api_data)
 
-        assert result["match_id"] == 123
-        assert result["home_score"] == 2
-        assert result["away_score"] == 1
-        assert result["status"] == "LIVE"
-        assert result["minute"] == 75
+        assert _result["match_id"] == 123
+        assert _result["home_score"] == 2
+        assert _result["away_score"] == 1
+        assert _result["status"] == "LIVE"
+        assert _result["minute"] == 75
 
     @pytest.mark.asyncio
     async def test_process_score_data(self):
@@ -532,7 +532,7 @@ class TestScoresCollector:
 
                     _result = await collector._process_score_data(score_data)
 
-                    assert result is True
+                    assert _result is True
                     mock_change.assert_called_once()
                     mock_save.assert_called_once_with(score_data)
                     mock_publish.assert_called_once_with(score_data)
@@ -692,9 +692,9 @@ class TestScoresCollector:
         _result = await collector._get_live_matches()
 
         assert len(result) == 2
-        assert result[0]["match_id"] == 1
-        assert result[0]["home_team"] == "Team A"
-        assert result[1]["status"] == "LIVE"
+        assert _result[0]["match_id"] == 1
+        assert _result[0]["home_team"] == "Team A"
+        assert _result[1]["status"] == "LIVE"
 
     @pytest.mark.asyncio
     async def test_cleanup_cache(self):
@@ -883,12 +883,12 @@ class TestScoresCollectorIntegration:
 
                 # 第一次调用，应该失败
                 _result = await collector._fetch_match_score_from_api(123)
-                assert result is None
+                assert _result is None
 
                 # 第二次调用，应该成功
                 _result = await collector._fetch_match_score_from_api(123)
-                assert result is not None
-                assert result["match_id"] == 123
+                assert _result is not None
+                assert _result["match_id"] == 123
 
     @pytest.mark.asyncio
     async def test_concurrent_updates(self):

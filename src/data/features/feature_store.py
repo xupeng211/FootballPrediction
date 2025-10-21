@@ -132,7 +132,7 @@ class FootballFeatureStore:
                     host=self.postgres_config["host"],
                     port=self.postgres_config["port"],
                     database=self.postgres_config["database"],
-                    _user =self.postgres_config["user"],
+                    _user=self.postgres_config["user"],
                     password=self.postgres_config["password"],
                 ),
                 online_store=RedisOnlineStoreConfig(

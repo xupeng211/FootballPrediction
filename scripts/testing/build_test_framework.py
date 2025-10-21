@@ -26,19 +26,23 @@ class TestFrameworkBuilder:
                 "models": ["test_match.py", "test_prediction.py", "test_user.py"],
                 "utils": ["test_crypto_utils.py", "test_i18n.py", "test_validators.py"],
                 "database": ["test_config.py", "test_connections.py"],
-                "middleware": ["test_i18n.py", "test_security.py", "test_performance.py"]
+                "middleware": [
+                    "test_i18n.py",
+                    "test_security.py",
+                    "test_performance.py",
+                ],
             },
             "integration": {
                 "api": ["test_api_db_integration.py", "test_api_cache_integration.py"],
                 "database": ["test_migrations.py", "test_relationships.py"],
                 "cache": ["test_redis_integration.py", "test_cache_strategies.py"],
-                "external": ["test_mlflow_integration.py", "test_external_apis.py"]
+                "external": ["test_mlflow_integration.py", "test_external_apis.py"],
             },
             "e2e": {
                 "scenarios": ["test_user_journey.py", "test_prediction_flow.py"],
                 "performance": ["test_load.py", "test_stress.py"],
-                "security": ["test_authentication_flow.py", "test_authorization.py"]
-            }
+                "security": ["test_authentication_flow.py", "test_authorization.py"],
+            },
         }
 
     def create_directory_structure(self):
@@ -545,7 +549,9 @@ class TestPredictionService:
         service.db.execute.assert_called_once()
         service.db.commit.assert_called_once()
 '''
-        service_test_path = self.tests_dir / "unit" / "services" / "test_prediction_service.py"
+        service_test_path = (
+            self.tests_dir / "unit" / "services" / "test_prediction_service.py"
+        )
         with open(service_test_path, "w", encoding="utf-8") as f:
             f.write(service_test_template)
 
@@ -683,7 +689,9 @@ class TestCacheIntegration:
         response = await async_client.get("/api/predictions/1")
         assert response.status_code == 200
 '''
-        integration_test_path = self.tests_dir / "integration" / "api" / "test_api_db_integration.py"
+        integration_test_path = (
+            self.tests_dir / "integration" / "api" / "test_api_db_integration.py"
+        )
         with open(integration_test_path, "w", encoding="utf-8") as f:
             f.write(integration_test_template)
 
@@ -803,7 +811,9 @@ class PredictionFactory(BaseFactory):
         if self.status == "completed" and not self.result:
             self.result = f"{self.predicted_home_score}-{self.predicted_away_score}"
 '''
-        with open(self.factories_dir / "prediction_factory.py", "w", encoding="utf-8") as f:
+        with open(
+            self.factories_dir / "prediction_factory.py", "w", encoding="utf-8"
+        ) as f:
             f.write(prediction_factory)
 
         print("✅ 测试数据工厂创建完成")
@@ -981,7 +991,7 @@ API_RESPONSES = {
             "timestamp": "2025-10-04T10:00:00Z",
             "version": "1.0.0",
             "database": "connected",
-            "cache": "connected"
+            "cache": "connected",
         }
         with open(json_dir / "health_response.json", "w", encoding="utf-8") as f:
             json.dump(health_response, f, indent=2)
@@ -1102,16 +1112,8 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="测试框架构建工具")
-    parser.add_argument(
-        "--only-config",
-        action="store_true",
-        help="仅创建配置文件"
-    )
-    parser.add_argument(
-        "--only-templates",
-        action="store_true",
-        help="仅创建测试模板"
-    )
+    parser.add_argument("--only-config", action="store_true", help="仅创建配置文件")
+    parser.add_argument("--only-templates", action="store_true", help="仅创建测试模板")
 
     args = parser.parse_args()
 

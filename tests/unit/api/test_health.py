@@ -140,29 +140,30 @@ class TestHealthEndpoints:
         response = client.get("/health")
         if response.status_code == 200:
             _data = response.json()
-            assert "status" in data
-            assert data["status"] in ["healthy", "unhealthy", "degraded"]
+            assert "status" in _data
+
+            assert _data["status"] in ["healthy", "unhealthy", "degraded"]
 
     def test_liveness_probe(self, client):
         """测试：存活探针"""
         response = client.get("/health/live")
         if response.status_code == 200:
             _data = response.json()
-            assert "status" in data
+            assert "status" in _data
 
     def test_readiness_probe(self, client):
         """测试：就绪探针"""
         response = client.get("/health/ready")
         if response.status_code == 200:
             _data = response.json()
-            assert "status" in data
+            assert "status" in _data
 
     def test_startup_probe(self, client):
         """测试：启动探针"""
         response = client.get("/health/startup")
         if response.status_code == 200:
             _data = response.json()
-            assert "status" in data
+            assert "status" in _data
 
 
 class TestHealthCheckerAdvanced:

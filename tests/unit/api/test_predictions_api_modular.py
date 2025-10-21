@@ -21,8 +21,8 @@ class TestPredictionsAPI:
         response = self.client.get("/api/v1/predictions/health")
         assert response.status_code == 200
         _data = response.json()
-        assert data["status"] == "healthy"
-        assert data["service"] == "predictions"
+        assert _data["status"] == "healthy"
+        assert _data["service"] == "predictions"
 
     @patch("src.services.prediction_service.PredictionService")
     def test_get_prediction(self, mock_service):
@@ -70,7 +70,7 @@ class TestPredictionsAPI:
 
         response = PredictionResponse(
             match_id=1,
-            _prediction ="home_win",
+            _prediction="home_win",
             confidence=0.85,
             probabilities={"home_win": 0.85, "draw": 0.10, "away_win": 0.05},
         )

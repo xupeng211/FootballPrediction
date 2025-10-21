@@ -65,11 +65,11 @@ class TestEventsModuleWorking:
 
         event = Event(
             event_type="test_event",
-            _data ={"message": "test"},
+            _data={"message": "test"},
             timestamp=datetime.utcnow(),
         )
         assert event.event_type == "test_event"
-        assert event.data["message"] == "test"
+        assert event._data["message"] == "test"
 
     def test_event_manager_exists(self):
         """测试事件管理器存在"""
@@ -106,28 +106,28 @@ class TestCQRSModuleWorking:
         """测试命令响应"""
         from src.api.cqrs import CommandResponse
 
-        response = CommandResponse(success=True, message="Success", _data ={"id": 123})
+        response = CommandResponse(success=True, message="Success", _data={"id": 123})
         assert response.success is True
 
     def test_query_response(self):
         """测试查询响应"""
         from src.api.cqrs import QueryResponse
 
-        response = QueryResponse(_data =[{"id": 1}], total=1, page=1)
+        response = QueryResponse(_data=[{"id": 1}], total=1, page=1)
         assert response.total == 1
 
     def test_create_command(self):
         """测试创建命令"""
         from src.api.cqrs import CreateCommand
 
-        command = CreateCommand(aggregate_id="test123", _data ={"name": "test"})
+        command = CreateCommand(aggregate_id="test123", _data={"name": "test"})
         assert command.aggregate_id == "test123"
 
     def test_update_command(self):
         """测试更新命令"""
         from src.api.cqrs import UpdateCommand
 
-        command = UpdateCommand(aggregate_id="test123", _data ={"name": "updated"})
+        command = UpdateCommand(aggregate_id="test123", _data={"name": "updated"})
         assert command.aggregate_id == "test123"
 
     def test_delete_command(self):
@@ -353,7 +353,7 @@ class TestAppModuleWorking:
         response = client.get("/nonexistent-endpoint")
         assert response.status_code == 404
         _data = response.json()
-        assert "error" in data
+        assert "error" in _data
 
     def test_exception_handling(self, client):
         """测试异常处理"""
@@ -484,7 +484,7 @@ class TestPydanticModelsWorking:
             match_id=123,
             home_team="Team A",
             away_team="Team B",
-            _prediction =result,
+            _prediction=result,
             match_date=datetime.utcnow(),
         )
         assert recent.id == 1
@@ -492,7 +492,7 @@ class TestPydanticModelsWorking:
         # 创建PredictionVerification
         verification = PredictionVerification(
             match_id=123,
-            _prediction =result,
+            _prediction=result,
             actual_result="home",
             is_correct=True,
             accuracy_score=0.75,
@@ -540,7 +540,7 @@ class TestAdditionalCoverage:
         response = client.post("/predictions/123/verify?actual_result=home")
         assert response.status_code == 200
         _data = response.json()
-        assert "is_correct" in data
+        assert "is_correct" in _data
 
     def test_batch_operations(self, client):
         """测试批量操作"""

@@ -23,11 +23,11 @@ class TestServiceConfig:
         """测试服务配置创建"""
         _config = ServiceConfig("test_service")
 
-        assert config.service_name == "test_service"
-        assert config.enabled is True
-        assert config.retry_attempts == 3
-        assert config.timeout == 30.0
-        assert config.health_check_interval == 60.0
+        assert _config.service_name == "test_service"
+        assert _config.enabled is True
+        assert _config.retry_attempts == 3
+        assert _config.timeout == 30.0
+        assert _config.health_check_interval == 60.0
 
     def test_service_config_custom(self):
         """测试自定义服务配置"""
@@ -39,11 +39,11 @@ class TestServiceConfig:
             health_check_interval=120.0,
         )
 
-        assert config.service_name == "custom_service"
-        assert config.enabled is False
-        assert config.retry_attempts == 5
-        assert config.timeout == 60.0
-        assert config.health_check_interval == 120.0
+        assert _config.service_name == "custom_service"
+        assert _config.enabled is False
+        assert _config.retry_attempts == 5
+        assert _config.timeout == 60.0
+        assert _config.health_check_interval == 120.0
 
 
 class TestEnhancedBaseService:
@@ -166,7 +166,7 @@ class TestMatchService:
         match_service.match_repo.create = AsyncMock(return_value=mock_match)
 
         _result = await match_service.create_match(match_data)
-        assert result.id == 123
+        assert _result.id == 123
         match_service.match_repo.create.assert_called_once()
 
     @pytest.mark.asyncio
@@ -177,7 +177,7 @@ class TestMatchService:
         match_service.match_repo.update = AsyncMock(return_value=mock_match)
 
         _result = await match_service.update_match_score(123, 2, 1)
-        assert result.id == 123
+        assert _result.id == 123
         match_service.match_repo.get_by_id.assert_called_once_with(123)
         match_service.match_repo.update.assert_called_once()
 
@@ -211,7 +211,7 @@ class TestPredictionService:
         )
 
         _result = await prediction_service.make_prediction(prediction_data)
-        assert result.id == 789
+        assert _result.id == 789
         prediction_service.prediction_repo.create.assert_called_once()
 
     @pytest.mark.asyncio
@@ -240,8 +240,8 @@ class TestPredictionService:
         )
 
         _result = await prediction_service.settle_prediction(789, "home_win", True)
-        assert result.is_correct is True
-        assert result.settled_at is not None
+        assert _result.is_correct is True
+        assert _result.settled_at is not None
 
     @pytest.mark.asyncio
     async def test_get_prediction_statistics(self, prediction_service):
@@ -254,8 +254,8 @@ class TestPredictionService:
         _result = await prediction_service.get_prediction_statistics(
             user_id=456, days=30
         )
-        assert result["total_predictions"] == 100
-        assert result["accuracy"] == 65.0
+        assert _result["total_predictions"] == 100
+        assert _result["accuracy"] == 65.0
 
 
 # 用于测试的增强服务实现

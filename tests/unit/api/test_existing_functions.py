@@ -22,17 +22,17 @@ class TestCQRSExistingFunctions:
         from src.api.cqrs import CommandResponse
 
         response = CommandResponse(
-            success=True, message="Command executed", _data ={"id": 123}
+            success=True, message="Command executed", _data={"id": 123}
         )
         assert response.success is True
         assert response.message == "Command executed"
-        assert response.data["id"] == 123
+        assert response._data["id"] == 123
 
     def test_query_response_class(self):
         """测试QueryResponse类"""
         from src.api.cqrs import QueryResponse
 
-        response = QueryResponse(_data =[{"id": 1, "name": "test"}], total=1, page=1)
+        response = QueryResponse(_data=[{"id": 1, "name": "test"}], total=1, page=1)
         assert len(response.data) == 1
         assert response.total == 1
         assert response.page == 1
@@ -42,18 +42,18 @@ class TestCQRSExistingFunctions:
         from src.api.cqrs import CreateCommand
 
         command = CreateCommand(
-            aggregate_id="test_123", _data ={"name": "test", "value": 100}
+            aggregate_id="test_123", _data={"name": "test", "value": 100}
         )
         assert command.aggregate_id == "test_123"
-        assert command.data["name"] == "test"
+        assert command._data["name"] == "test"
 
     def test_update_command_class(self):
         """测试UpdateCommand类"""
         from src.api.cqrs import UpdateCommand
 
-        command = UpdateCommand(aggregate_id="test_123", _data ={"name": "updated"})
+        command = UpdateCommand(aggregate_id="test_123", _data={"name": "updated"})
         assert command.aggregate_id == "test_123"
-        assert command.data["name"] == "updated"
+        assert command._data["name"] == "updated"
 
     def test_delete_command_class(self):
         """测试DeleteCommand类"""
@@ -91,11 +91,11 @@ class TestEventsExistingFunctions:
 
         event = Event(
             event_type="test_event",
-            _data ={"message": "test"},
+            _data={"message": "test"},
             timestamp=datetime.utcnow(),
         )
         assert event.event_type == "test_event"
-        assert event.data["message"] == "test"
+        assert event._data["message"] == "test"
         assert event.timestamp is not None
 
     def test_event_handler_class(self):
@@ -425,7 +425,7 @@ class TestAppIntegration:
         response = client.get("/nonexistent")
         assert response.status_code == 404
         _data = response.json()
-        assert "error" in data
+        assert "error" in _data
 
 
 @pytest.mark.unit
@@ -463,7 +463,7 @@ class TestDataModels:
         """测试基础响应模型"""
         from src.api.schemas import BaseResponse
 
-        response = BaseResponse(success=True, message="Success", _data ={"test": True})
+        response = BaseResponse(success=True, message="Success", _data={"test": True})
         assert response.success is True
         assert response.message == "Success"
 
@@ -472,7 +472,7 @@ class TestDataModels:
         from src.api.schemas import PaginatedResponse
 
         response = PaginatedResponse(
-            success=True, _data =[{"id": 1}, {"id": 2}], total=100, page=1, per_page=10
+            success=True, _data=[{"id": 1}, {"id": 2}], total=100, page=1, per_page=10
         )
         assert len(response.data) == 2
         assert response.total == 100

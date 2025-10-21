@@ -23,8 +23,7 @@ sys.path.insert(0, "src")
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -32,6 +31,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class TestResult:
     """测试结果数据类"""
+
     name: str
     total: int
     passed: int
@@ -46,6 +46,7 @@ class TestResult:
 @dataclass
 class QualityGate:
     """质量门禁配置"""
+
     min_success_rate: float = 95.0
     max_failed_tests: int = 0
     max_test_duration: int = 3600  # 1小时
@@ -57,7 +58,7 @@ class NightlyTestMonitor:
 
     def __init__(self, config_path: Optional[str] = None):
         self.config = self._load_config(config_path)
-        self.quality_gate = QualityGate(**self.config.get('quality_gate', {}))
+        self.quality_gate = QualityGate(**self.config.get("quality_gate", {}))
         self.results: Dict[str, TestResult] = {}
         self.start_time = datetime.now(timezone.utc)
 
@@ -68,12 +69,12 @@ class NightlyTestMonitor:
                 "min_success_rate": 95.0,
                 "max_failed_tests": 0,
                 "max_test_duration": 3600,
-                "required_coverage": 30.0
+                "required_coverage": 30.0,
             },
             "notifications": {
                 "slack": {
                     "enabled": False,
-                    "webhook_url": os.getenv("SLACK_WEBHOOK_URL")
+                    "webhook_url": os.getenv("SLACK_WEBHOOK_URL"),
                 },
                 "email": {
                     "enabled": False,
@@ -81,25 +82,25 @@ class NightlyTestMonitor:
                     "smtp_port": int(os.getenv("SMTP_PORT", "587")),
                     "smtp_user": os.getenv("SMTP_USER"),
                     "smtp_pass": os.getenv("SMTP_PASS"),
-                    "to_emails": os.getenv("EMAIL_TO", "").split(",")
+                    "to_emails": os.getenv("EMAIL_TO", "").split(","),
                 },
                 "github": {
                     "enabled": True,
                     "token": os.getenv("GITHUB_TOKEN"),
-                    "repo": os.getenv("GITHUB_REPOSITORY")
-                }
+                    "repo": os.getenv("GITHUB_REPOSITORY"),
+                },
             },
             "test_types": ["unit", "integration", "e2e", "performance"],
             "report_paths": {
                 "unit": "reports/unit-results.json",
                 "integration": "reports/integration-results.json",
                 "e2e": "reports/e2e-results.json",
-                "performance": "reports/benchmark-summary.json"
-            }
+                "performance": "reports/benchmark-summary.json",
+            },
         }
 
         if config_path and Path(config_path).exists():
-            with open(config_path, 'r') as f:
+            with open(config_path, "r") as f:
                 user_config = json.load(f)
                 default_config.update(user_config)
 
@@ -120,15 +121,19 @@ class NightlyTestMonitor:
                 result = await self._parse_test_report(test_type, report_path)
                 if result:
                     self.results[test_type] = result
-                    logger.info(f"收集到 {test_type} 测试结果: {result.passed}/{result.total} 通过")
+                    logger.info(
+                        f"收集到 {test_type} 测试结果: {result.passed}/{result.total} 通过"
+                    )
             except Exception as e:
                 logger.error(f"解析 {test_type} 测试报告失败: {e}")
 
         return self.results
 
-    async def _parse_test_report(self, test_type: str, report_path: str) -> Optional[TestResult]:
+    async def _parse_test_report(
+        self, test_type: str, report_path: str
+    ) -> Optional[TestResult]:
         """解析测试报告"""
-        with open(report_path, 'r') as f:
+        with open(report_path, "r") as f:
             data = json.load(f)
 
         if test_type == "performance":
@@ -160,19 +165,14 @@ class NightlyTestMonitor:
             skipped=skipped,
             duration=duration,
             success_rate=success_rate,
-            timestamp=datetime.now(timezone.utc)
+            timestamp=datetime.now(timezone.utc),
         )
 
     def check_quality_gates(self) -> Dict[str, Any]:
         """检查质量门禁"""
         logger.info("检查质量门禁...")
 
-        gate_results = {
-            "passed": True,
-            "issues": [],
-            "warnings": [],
-            "metrics": {}
-        }
+        gate_results = {"passed": True, "issues": [], "warnings": [], "metrics": {}}
 
         # 检查总成功率
         total_tests = sum(r.total for r in self.results.values())
@@ -201,9 +201,7 @@ class NightlyTestMonitor:
                 )
 
             if test_type == "e2e" and result.total == 0:
-                gate_results["warnings"].append(
-                    "没有执行 E2E 测试"
-                )
+                gate_results["warnings"].append("没有执行 E2E 测试")
 
         # 检查测试执行时长
         total_duration = sum(r.duration for r in self.results.values())
@@ -215,7 +213,7 @@ class NightlyTestMonitor:
         # 检查覆盖率（如果有）
         coverage_report = Path("reports/coverage.json")
         if coverage_report.exists():
-            with open(coverage_report, 'r') as f:
+            with open(coverage_report, "r") as f:
                 coverage_data = json.load(f)
                 coverage_percent = coverage_data.get("percent", 0)
                 gate_results["metrics"]["coverage"] = coverage_percent
@@ -237,7 +235,7 @@ class NightlyTestMonitor:
                 "run_id": os.getenv("GITHUB_RUN_ID"),
                 "commit_sha": os.getenv("GITHUB_SHA"),
                 "branch": os.getenv("GITHUB_REF_NAME"),
-                "monitor_version": "1.0.0"
+                "monitor_version": "1.0.0",
             },
             "summary": {
                 "total_tests": sum(r.total for r in self.results.values()),
@@ -247,7 +245,7 @@ class NightlyTestMonitor:
                 "total_skipped": sum(r.skipped for r in self.results.values()),
                 "total_duration": sum(r.duration for r in self.results.values()),
                 "success_rate": gate_results["metrics"].get("overall_success_rate", 0),
-                "coverage": gate_results["metrics"].get("coverage", 0)
+                "coverage": gate_results["metrics"].get("coverage", 0),
             },
             "test_results": {
                 name: {
@@ -257,19 +255,19 @@ class NightlyTestMonitor:
                     "errors": r.errors,
                     "skipped": r.skipped,
                     "duration": r.duration,
-                    "success_rate": r.success_rate
+                    "success_rate": r.success_rate,
                 }
                 for name, r in self.results.items()
             },
             "quality_gate": gate_results,
             "recommendations": self._generate_recommendations(gate_results),
-            "trends": self._analyze_trends()
+            "trends": self._analyze_trends(),
         }
 
         # 保存报告
         report_path = Path("reports/nightly-test-report.json")
         report_path.parent.mkdir(exist_ok=True)
-        with open(report_path, 'w') as f:
+        with open(report_path, "w") as f:
             json.dump(report, f, indent=2)
 
         logger.info(f"报告已生成: {report_path}")
@@ -307,7 +305,7 @@ class NightlyTestMonitor:
             "success_rate_trend": "stable",
             "coverage_trend": "stable",
             "performance_trend": "stable",
-            "recent_runs": []
+            "recent_runs": [],
         }
 
         # 查找最近的报告文件
@@ -319,7 +317,7 @@ class NightlyTestMonitor:
         recent_reports = []
         for report_file in report_dir.glob("nightly-test-report-*.json"):
             try:
-                with open(report_file, 'r') as f:
+                with open(report_file, "r") as f:
                     data = json.load(f)
                     recent_reports.append(data)
             except Exception as e:
@@ -341,7 +339,7 @@ class NightlyTestMonitor:
                 {
                     "date": r["metadata"]["generated_at"][:10],
                     "success_rate": r["summary"]["success_rate"],
-                    "passed": r["quality_gate"]["passed"]
+                    "passed": r["quality_gate"]["passed"],
                 }
                 for r in recent_reports[-5:]
             ]
@@ -361,7 +359,10 @@ class NightlyTestMonitor:
             await self._send_email_notification(report)
 
         # GitHub Issue（如果失败）
-        if not report["quality_gate"]["passed"] and self.config["notifications"]["github"]["enabled"]:
+        if (
+            not report["quality_gate"]["passed"]
+            and self.config["notifications"]["github"]["enabled"]
+        ):
             await self._create_github_issue(report)
 
     async def _send_slack_notification(self, report: Dict[str, Any]) -> None:
@@ -375,43 +376,49 @@ class NightlyTestMonitor:
         icon = "✅" if success else "❌"
 
         payload = {
-            "attachments": [{
-                "color": color,
-                "title": f"{icon} Nightly Test Report - #{report['metadata']['run_id']}",
-                "title_link": f"https://github.com/{os.getenv('GITHUB_REPOSITORY')}/actions/runs/{os.getenv('GITHUB_RUN_ID')}",
-                "fields": [
-                    {
-                        "title": "成功率",
-                        "value": f"{report['summary']['success_rate']:.1f}%",
-                        "short": True
-                    },
-                    {
-                        "title": "总测试数",
-                        "value": str(report['summary']['total_tests']),
-                        "short": True
-                    },
-                    {
-                        "title": "覆盖率",
-                        "value": f"{report['summary']['coverage']:.1f}%",
-                        "short": True
-                    },
-                    {
-                        "title": "执行时长",
-                        "value": f"{report['summary']['total_duration']/60:.1f} 分钟",
-                        "short": True
-                    }
-                ],
-                "footer": "Football Prediction System",
-                "ts": int(datetime.now().timestamp())
-            }]
+            "attachments": [
+                {
+                    "color": color,
+                    "title": f"{icon} Nightly Test Report - #{report['metadata']['run_id']}",
+                    "title_link": f"https://github.com/{os.getenv('GITHUB_REPOSITORY')}/actions/runs/{os.getenv('GITHUB_RUN_ID')}",
+                    "fields": [
+                        {
+                            "title": "成功率",
+                            "value": f"{report['summary']['success_rate']:.1f}%",
+                            "short": True,
+                        },
+                        {
+                            "title": "总测试数",
+                            "value": str(report["summary"]["total_tests"]),
+                            "short": True,
+                        },
+                        {
+                            "title": "覆盖率",
+                            "value": f"{report['summary']['coverage']:.1f}%",
+                            "short": True,
+                        },
+                        {
+                            "title": "执行时长",
+                            "value": f"{report['summary']['total_duration']/60:.1f} 分钟",
+                            "short": True,
+                        },
+                    ],
+                    "footer": "Football Prediction System",
+                    "ts": int(datetime.now().timestamp()),
+                }
+            ]
         }
 
         if not success:
-            payload["attachments"][0]["fields"].append({
-                "title": "质量门禁问题",
-                "value": "\n".join(f"• {issue}" for issue in report["quality_gate"]["issues"]),
-                "short": False
-            })
+            payload["attachments"][0]["fields"].append(
+                {
+                    "title": "质量门禁问题",
+                    "value": "\n".join(
+                        f"• {issue}" for issue in report["quality_gate"]["issues"]
+                    ),
+                    "short": False,
+                }
+            )
 
         try:
             async with aiohttp.ClientSession() as session:
@@ -427,7 +434,13 @@ class NightlyTestMonitor:
         """发送邮件通知"""
         email_config = self.config["notifications"]["email"]
 
-        if not all([email_config["smtp_host"], email_config["smtp_user"], email_config["to_emails"]]):
+        if not all(
+            [
+                email_config["smtp_host"],
+                email_config["smtp_user"],
+                email_config["to_emails"],
+            ]
+        ):
             logger.warning("邮件配置不完整")
             return
 
@@ -436,9 +449,11 @@ class NightlyTestMonitor:
 
         # 创建邮件
         msg = MIMEMultipart()
-        msg['From'] = email_config["smtp_user"]
-        msg['To'] = ", ".join(email_config["to_emails"])
-        msg['Subject'] = f"Nightly Test Report - #{report['metadata']['run_id']} - {datetime.now().strftime('%Y-%m-%d')}"
+        msg["From"] = email_config["smtp_user"]
+        msg["To"] = ", ".join(email_config["to_emails"])
+        msg[
+            "Subject"
+        ] = f"Nightly Test Report - #{report['metadata']['run_id']} - {datetime.now().strftime('%Y-%m-%d')}"
 
         # 添加 HTML 内容
         html_content = f"""
@@ -448,10 +463,12 @@ class NightlyTestMonitor:
         </body>
         </html>
         """
-        msg.attach(MIMEText(html_content, 'html'))
+        msg.attach(MIMEText(html_content, "html"))
 
         try:
-            with smtplib.SMTP(email_config["smtp_host"], email_config["smtp_port"]) as server:
+            with smtplib.SMTP(
+                email_config["smtp_host"], email_config["smtp_port"]
+            ) as server:
                 if email_config["smtp_pass"]:
                     server.starttls()
                     server.login(email_config["smtp_user"], email_config["smtp_pass"])
@@ -494,19 +511,19 @@ class NightlyTestMonitor:
 **状态**: {'✅ 通过' if report['quality_gate']['passed'] else '❌ 失败'}
 """
 
-        if report['quality_gate']['issues']:
+        if report["quality_gate"]["issues"]:
             md += "\n### ⚠️ 问题\n\n"
-            for issue in report['quality_gate']['issues']:
+            for issue in report["quality_gate"]["issues"]:
                 md += f"- {issue}\n"
 
-        if report['quality_gate']['warnings']:
+        if report["quality_gate"]["warnings"]:
             md += "\n### ⚡ 警告\n\n"
-            for warning in report['quality_gate']['warnings']:
+            for warning in report["quality_gate"]["warnings"]:
                 md += f"- {warning}\n"
 
-        if report['recommendations']:
+        if report["recommendations"]:
             md += "\n### 💡 建议\n\n"
-            for rec in report['recommendations']:
+            for rec in report["recommendations"]:
                 md += f"- {rec}\n"
 
         md += f"""
@@ -525,19 +542,21 @@ class NightlyTestMonitor:
 
         headers = {
             "Authorization": f"token {github_config['token']}",
-            "Accept": "application/vnd.github.v3+json"
+            "Accept": "application/vnd.github.v3+json",
         }
 
         issue_data = {
             "title": f"Nightly tests failed - Run #{report['metadata']['run_id']}",
             "body": self._generate_issue_body(report),
-            "labels": ["bug", "ci/cd", "nightly-tests"]
+            "labels": ["bug", "ci/cd", "nightly-tests"],
         }
 
         try:
             async with aiohttp.ClientSession() as session:
                 url = f"https://api.github.com/repos/{github_config['repo']}/issues"
-                async with session.post(url, json=issue_data, headers=headers) as response:
+                async with session.post(
+                    url, json=issue_data, headers=headers
+                ) as response:
                     if response.status == 201:
                         logger.info("GitHub Issue 创建成功")
                     else:
@@ -600,7 +619,9 @@ class NightlyTestMonitor:
             await self.send_notifications(report)
 
             # 5. 返回质量门禁结果
-            logger.info(f"监控完成，质量门禁: {'通过' if gate_results['passed'] else '失败'}")
+            logger.info(
+                f"监控完成，质量门禁: {'通过' if gate_results['passed'] else '失败'}"
+            )
             return gate_results["passed"]
 
         except Exception as e:
@@ -622,7 +643,9 @@ class NightlyTestMonitor:
             try:
                 # 从文件名提取日期
                 date_str = report_file.stem.split("-")[-1]
-                file_date = datetime.strptime(date_str, "%Y%m%d").replace(tzinfo=timezone.utc)
+                file_date = datetime.strptime(date_str, "%Y%m%d").replace(
+                    tzinfo=timezone.utc
+                )
 
                 if file_date < cutoff_date:
                     report_file.unlink()
@@ -636,27 +659,12 @@ class NightlyTestMonitor:
 async def main():
     """主函数"""
     parser = argparse.ArgumentParser(description="Nightly 测试监控器")
+    parser.add_argument("--config", type=str, help="配置文件路径")
+    parser.add_argument("--cleanup", action="store_true", help="清理旧报告")
     parser.add_argument(
-        "--config",
-        type=str,
-        help="配置文件路径"
+        "--cleanup-days", type=int, default=30, help="清理多少天前的报告"
     )
-    parser.add_argument(
-        "--cleanup",
-        action="store_true",
-        help="清理旧报告"
-    )
-    parser.add_argument(
-        "--cleanup-days",
-        type=int,
-        default=30,
-        help="清理多少天前的报告"
-    )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="只生成报告，不发送通知"
-    )
+    parser.add_argument("--dry-run", action="store_true", help="只生成报告，不发送通知")
 
     args = parser.parse_args()
 
@@ -670,7 +678,7 @@ async def main():
         # 只收集结果和生成报告
         await monitor.collect_test_results()
         gate_results = monitor.check_quality_gates()
-        report = monitor.generate_report(gate_results)
+        monitor.generate_report(gate_results)
         print(f"报告已生成，质量门禁: {'通过' if gate_results['passed'] else '失败'}")
         return
 

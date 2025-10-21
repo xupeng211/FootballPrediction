@@ -83,10 +83,10 @@ class TestScoresCollector:
         with patch.object(collector, "_get_http_client", return_value=mock_http_client):
             _result = await collector.collect_live_matches()
 
-            assert result is not None
+            assert _result is not None
             assert len(result) == 1
-            assert result[0]["match_id"] == 12345
-            assert result[0]["status"] == "LIVE"
+            assert _result[0]["match_id"] == 12345
+            assert _result[0]["status"] == "LIVE"
 
     @pytest.mark.asyncio
     async def test_collect_match_score(self, collector, mock_live_score_data):
@@ -99,10 +99,10 @@ class TestScoresCollector:
         with patch.object(collector, "_get_http_client", return_value=mock_http_client):
             _result = await collector.collect_match_score(match_id=12345)
 
-            assert result is not None
-            assert result["match_id"] == 12345
-            assert result["score"]["home_team"] == 2
-            assert result["score"]["away_team"] == 1
+            assert _result is not None
+            assert _result["match_id"] == 12345
+            assert _result["score"]["home_team"] == 2
+            assert _result["score"]["away_team"] == 1
 
     @pytest.mark.asyncio
     async def test_collect_finished_scores(self, collector, mock_finished_score_data):
@@ -117,9 +117,9 @@ class TestScoresCollector:
         with patch.object(collector, "_get_http_client", return_value=mock_http_client):
             _result = await collector.collect_finished_matches(date="2025-10-05")
 
-            assert result is not None
+            assert _result is not None
             assert len(result) == 1
-            assert result[0]["status"] == "FINISHED"
+            assert _result[0]["status"] == "FINISHED"
 
     @pytest.mark.asyncio
     async def test_parse_score_events(self, collector, mock_live_score_data):
@@ -177,9 +177,9 @@ class TestScoresCollector:
         with patch.object(collector, "_get_http_client", return_value=mock_http_client):
             _result = await collector.collect_fixtures(date="2025-10-05")
 
-            assert result is not None
+            assert _result is not None
             assert len(result) == 1
-            assert result[0]["status"] == "SCHEDULED"
+            assert _result[0]["status"] == "SCHEDULED"
 
     @pytest.mark.asyncio
     async def test_collect_historical_scores(self, collector):
@@ -205,9 +205,9 @@ class TestScoresCollector:
                 team_id=10, start_date="2025-09-01", end_date="2025-09-30"
             )
 
-            assert result is not None
+            assert _result is not None
             assert len(result) == 1
-            assert result[0]["full_time_score"]["home"] == 2
+            assert _result[0]["full_time_score"]["home"] == 2
 
     @pytest.mark.asyncio
     async def test_subscribe_live_updates(self, collector):
@@ -298,9 +298,9 @@ class TestScoresCollector:
         with patch.object(collector, "_get_http_client", return_value=mock_http_client):
             _result = await collector.collect_lineup(match_id=12345)
 
-            assert result is not None
-            assert result["home_team"]["formation"] == "4-3-3"
-            assert len(result["home_team"]["starting_xi"]) == 2
+            assert _result is not None
+            assert _result["home_team"]["formation"] == "4-3-3"
+            assert len(_result["home_team"]["starting_xi"]) == 2
 
     @pytest.mark.asyncio
     async def test_collect_head_to_head(self, collector):
@@ -331,9 +331,9 @@ class TestScoresCollector:
                 home_team_id=10, away_team_id=20
             )
 
-            assert result is not None
-            assert result["home_team_wins"] == 5
-            assert result["total_matches"] == 10
+            assert _result is not None
+            assert _result["home_team_wins"] == 5
+            assert _result["total_matches"] == 10
 
     @pytest.mark.asyncio
     async def test_cache_score_data(self, collector, mock_live_score_data):
@@ -344,7 +344,7 @@ class TestScoresCollector:
         with patch.object(collector, "get_cache_manager", return_value=mock_cache):
             _result = await collector._cache_score_data(mock_live_score_data)
 
-            assert result is True
+            assert _result is True
             mock_cache.set.assert_called_once()
 
     @pytest.mark.asyncio
@@ -373,7 +373,7 @@ class TestScoresCollector:
         with patch.object(collector, "_get_http_client", return_value=mock_http_client):
             _result = await collector.collect_match_score(match_id=12345)
 
-            assert result is None
+            assert _result is None
             collector.logger.error.assert_called()
 
     def test_validate_score_data(self, collector, mock_live_score_data):
@@ -409,9 +409,9 @@ class TestScoresCollector:
         with patch.object(collector, "_get_http_client", return_value=mock_http_client):
             _result = await collector.collect_player_stats(match_id=12345)
 
-            assert result is not None
-            assert len(result["player_stats"]) == 1
-            assert result["player_stats"][0]["goals"] == 1
+            assert _result is not None
+            assert len(_result["player_stats"]) == 1
+            assert _result["player_stats"][0]["goals"] == 1
 
     @pytest.mark.asyncio
     async def test_track_match_momentum(self, collector):

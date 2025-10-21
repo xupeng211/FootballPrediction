@@ -130,7 +130,7 @@ class ContentAnalysisService(SimpleService):
         return AnalysisResult(
             id=f"analysis_{content.id}",
             analysis_type="content_analysis",
-            _result =analysis_data,
+            _result=analysis_data,
             confidence=0.85,
             timestamp=datetime.now(),
             content_id=content.id,
@@ -200,7 +200,15 @@ class ContentAnalysisService(SimpleService):
         # 简单的实体提取逻辑
         entities = []
         # 提取球队名称
-        _teams = ["曼联", "切尔西", "阿森纳", "利物浦", "曼城", "巴塞罗那", "皇家马德里"]
+        _teams = [
+            "曼联",
+            "切尔西",
+            "阿森纳",
+            "利物浦",
+            "曼城",
+            "巴塞罗那",
+            "皇家马德里",
+        ]
         for team in teams:
             if team in text:
                 entities.append({"text": team, "type": "TEAM", "confidence": 0.9})

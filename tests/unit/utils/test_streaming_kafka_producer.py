@@ -75,7 +75,7 @@ class TestKafkaMessageProducer:
         mock_kafka_producer.send.assert_called_once_with(
             topic="test_topic", key=b"test_key", value=b'{"data": "test"}'
         )
-        assert result is not None
+        assert _result is not None
 
     @pytest.mark.asyncio
     async def test_send_message_without_key(self, producer, mock_kafka_producer):
@@ -287,7 +287,7 @@ class TestKafkaMessageProducer:
         message = {"value": {"data": "test"}}
         _result = await producer.send_message(message, retries=3)
 
-        assert result is not None
+        assert _result is not None
         assert mock_kafka_producer.send.call_count == 3
 
     @pytest.mark.asyncio

@@ -87,7 +87,7 @@ class TestConfigLoaderFromFile:
         from src.utils.config_loader import load_config_from_file
 
         # 测试不存在的文件
-        loaded = load_config_from_file("/path/that/does/not/exist/config.json")
+        loaded = load_config_from_file("/path/that/does/not/exist/_config.json")
         assert loaded == {}
 
     def test_load_config_unsupported_format(self):
@@ -155,7 +155,7 @@ class TestConfigLoaderFromFile:
 
         # 使用mock模拟权限错误
         with patch("builtins.open", side_effect=PermissionError("Permission denied")):
-            loaded = load_config_from_file("config.json")
+            loaded = load_config_from_file("_config.json")
             assert loaded == {}
 
     def test_load_config_runtime_error(self):
@@ -164,7 +164,7 @@ class TestConfigLoaderFromFile:
 
         # 使用mock模拟运行时错误
         with patch("builtins.open", side_effect=RuntimeError("Runtime error")):
-            loaded = load_config_from_file("config.json")
+            loaded = load_config_from_file("_config.json")
             assert loaded == {}
 
     def test_load_config_key_error(self):
@@ -173,7 +173,7 @@ class TestConfigLoaderFromFile:
 
         # 使用mock模拟键错误
         with patch("builtins.open", side_effect=KeyError("Key error")):
-            loaded = load_config_from_file("config.json")
+            loaded = load_config_from_file("_config.json")
             assert loaded == {}
 
     def test_load_config_value_error(self):
@@ -182,7 +182,7 @@ class TestConfigLoaderFromFile:
 
         # 使用mock模拟值错误
         with patch("builtins.open", side_effect=ValueError("Value error")):
-            loaded = load_config_from_file("config.json")
+            loaded = load_config_from_file("_config.json")
             assert loaded == {}
 
     def test_load_config_with_pathlib_path(self):
@@ -307,7 +307,7 @@ class TestConfigLoaderFromFile:
         with patch(
             "builtins.__import__", side_effect=ImportError("No module named 'yaml'")
         ):
-            loaded = load_config_from_file("config.yaml")
+            loaded = load_config_from_file("_config.yaml")
             assert loaded == {}
 
 

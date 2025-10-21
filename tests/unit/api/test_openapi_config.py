@@ -1,7 +1,7 @@
 """OpenAPI配置测试"""
 
 import pytest
-from src.config.openapi_config import OpenAPIConfig, setup_openapi
+from src._config.openapi_config import OpenAPIConfig, setup_openapi
 
 
 class TestOpenAPIConfig:
@@ -10,7 +10,7 @@ class TestOpenAPIConfig:
     def test_openapi_config_import(self):
         """测试OpenAPI配置模块导入"""
         try:
-            from src.config.openapi_config import OpenAPIConfig
+            from src._config.openapi_config import OpenAPIConfig
 
             assert OpenAPIConfig is not None
         except ImportError:
@@ -49,7 +49,7 @@ class TestOpenAPIConfig:
     def test_setup_openapi_import(self):
         """测试setup_openapi函数导入"""
         try:
-            from src.config.openapi_config import setup_openapi
+            from src._config.openapi_config import setup_openapi
 
             assert setup_openapi is not None
         except ImportError:

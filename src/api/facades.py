@@ -168,7 +168,7 @@ async def demo_main_system_prediction(
 
     _result = await facade.execute(
         "store_and_predict",
-        _data =input_data,
+        _data=input_data,
         cache_key=cache_key,
         model=model,
     )
@@ -196,9 +196,9 @@ async def demo_batch_processing(
     # 为每个项目生成缓存键
     for i, item in enumerate(items):
         if "cache_key" not in item:
-            item["cache_key"] = (
-                f"batch_item_{i}_{hash(str(item.get('input_data', {})))}"
-            )
+            item[
+                "cache_key"
+            ] = f"batch_item_{i}_{hash(str(item.get('input_data', {})))}"
 
     start_time = datetime.utcnow()
     results = await facade.execute("batch_process", items=items)
@@ -299,7 +299,7 @@ async def demo_data_storage(
 
     _result = await facade.execute(
         "store_data",
-        _data =data,
+        _data=data,
         table=table,
     )
 
@@ -534,7 +534,7 @@ async def demo_complete_workflow(
 
         data_facade = global_facades["data_collection"]
         store_result = await data_facade.execute(
-            "store_data", _data =input_data, table="workflow_inputs"
+            "store_data", _data=input_data, table="workflow_inputs"
         )
         workflow_results["data_storage"] = store_result
 

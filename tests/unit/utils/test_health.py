@@ -15,9 +15,10 @@ class TestHealthAPI:
 
         assert response.status_code == status.HTTP_200_OK
         _data = response.json()
-        assert data["status"] == "healthy"
-        assert "timestamp" in data
-        assert "version" in data
+        assert _data["status"] == "healthy"
+        assert "timestamp" in _data
+
+        assert "version" in _data
 
     def test_health_check_with_database(self, api_client):
         """测试带数据库检查的健康检查"""
@@ -35,7 +36,7 @@ class TestHealthAPI:
 
             assert response.status_code == status.HTTP_200_OK
             _data = response.json()
-            assert data["checks"]["database"]["status"] == "healthy"
+            assert _data["checks"]["database"]["status"] == "healthy"
 
     @pytest.mark.parametrize("endpoint", ["/api/health", "/api/health/"])
     def test_health_check_endpoints(self, api_client, endpoint):
@@ -83,6 +84,6 @@ class TestPredictionAPI:
 
         _data = response.json()
         assert response.status_code == status.HTTP_200_OK, data
-        assert data["success"] is True
-        assert data["data"]["match_id"] == 12345
-        assert data["data"]["prediction"]["id"] == 42
+        assert _data["success"] is True
+        assert _data["data"]["match_id"] == 12345
+        assert _data["data"]["prediction"]["id"] == 42

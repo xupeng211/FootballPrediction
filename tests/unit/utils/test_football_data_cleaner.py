@@ -86,20 +86,20 @@ class TestFootballDataCleaner:
 
         _result = await cleaner.clean_match_data(sample_match_data)
 
-        assert result is not None
-        assert result["external_match_id"] == "123456"
-        assert result["home_team_id"] == 1
-        assert result["away_team_id"] == 2
-        assert result["league_id"] == 1
-        assert result["match_status"] == "finished"
-        assert result["home_score"] == 2
-        assert result["away_score"] == 1
-        assert result["home_ht_score"] == 1
-        assert result["away_ht_score"] == 0
-        assert result["season"] == "2023"
-        assert result["matchday"] == 21
-        assert result["venue"] == "Old Trafford"
-        assert result["data_source"] == "cleaned"
+        assert _result is not None
+        assert _result["external_match_id"] == "123456"
+        assert _result["home_team_id"] == 1
+        assert _result["away_team_id"] == 2
+        assert _result["league_id"] == 1
+        assert _result["match_status"] == "finished"
+        assert _result["home_score"] == 2
+        assert _result["away_score"] == 1
+        assert _result["home_ht_score"] == 1
+        assert _result["away_ht_score"] == 0
+        assert _result["season"] == "2023"
+        assert _result["matchday"] == 21
+        assert _result["venue"] == "Old Trafford"
+        assert _result["data_source"] == "cleaned"
 
     @pytest.mark.asyncio
     async def test_clean_match_data_invalid(self, cleaner):
@@ -108,7 +108,7 @@ class TestFootballDataCleaner:
 
         _result = await cleaner.clean_match_data(invalid_data)
 
-        assert result is None
+        assert _result is None
 
     @pytest.mark.asyncio
     async def test_clean_match_data_exception(self, cleaner, sample_match_data):
@@ -118,7 +118,7 @@ class TestFootballDataCleaner:
 
         _result = await cleaner.clean_match_data(sample_match_data)
 
-        assert result is None
+        assert _result is None
         cleaner.logger.error.assert_called()
 
     # === 赔率数据清洗测试 ===
@@ -131,7 +131,7 @@ class TestFootballDataCleaner:
         assert len(result) == 2
 
         # 检查第一条赔率数据
-        odds1 = result[0]
+        odds1 = _result[0]
         assert odds1["external_match_id"] == "123456"
         assert odds1["bookmaker"] == "bet365"
         assert odds1["market_type"] == "match_winner"
@@ -142,7 +142,7 @@ class TestFootballDataCleaner:
         assert odds1["data_source"] == "cleaned"
 
         # 检查第二条赔率数据
-        odds2 = result[1]
+        odds2 = _result[1]
         assert odds2["external_match_id"] == "123457"
         assert odds2["bookmaker"] == "william_hill"
         assert odds2["market_type"] == "over_under_2.5"
@@ -179,7 +179,7 @@ class TestFootballDataCleaner:
 
         # 只应该返回有效的数据
         assert len(result) == 1
-        assert result[0]["external_match_id"] == "456"
+        assert _result[0]["external_match_id"] == "456"
 
     # === 数据验证测试 ===
 
@@ -233,12 +233,12 @@ class TestFootballDataCleaner:
         """测试转换无效时间"""
         invalid_time = "invalid-date"
         _result = cleaner._to_utc_time(invalid_time)
-        assert result is None
+        assert _result is None
 
     def test_to_utc_time_none(self, cleaner):
         """测试转换None时间"""
         _result = cleaner._to_utc_time(None)
-        assert result is None
+        assert _result is None
 
     def test_standardize_match_status(self, cleaner):
         """测试标准化比赛状态"""
@@ -403,7 +403,7 @@ class TestFootballDataCleaner:
         _result = await cleaner._map_team_id({"name": "Man United"}, league_id=1)
 
         # 验证结果
-        assert result is not None
+        assert _result is not None
 
     @pytest.mark.asyncio
     async def test_league_id_cache(self, cleaner):
@@ -420,7 +420,7 @@ class TestFootballDataCleaner:
         _result = await cleaner._map_league_id({"name": "Premier League"})
 
         # 验证结果
-        assert result is not None
+        assert _result is not None
 
     # === 错误处理测试 ===
 

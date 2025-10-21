@@ -239,7 +239,7 @@ class PredictionStrategyFactory:
 
             try:
                 strategy = await self.create_strategy(
-                    strategy_name=strategy_name, _config =config
+                    strategy_name=strategy_name, _config=config
                 )
                 created_strategies[strategy_name] = strategy
             except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
@@ -256,7 +256,7 @@ class PredictionStrategyFactory:
             if strategy_name and strategy_name not in self._strategies:
                 try:
                     await self.create_strategy(
-                        strategy_name=strategy_name, _config =config
+                        strategy_name=strategy_name, _config=config
                     )
                 except (
                     ValueError,

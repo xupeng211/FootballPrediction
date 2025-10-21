@@ -1,0 +1,57 @@
+from typing import Any, Dict, List
+
+"""
+简化的适配器注册表
+Simplified Adapter Registry
+""":"""
+
+from .factory_simple import AdapterConfig, SimpleAdapterFactory
+
+
+class SimpleAdapterRegistry:
+    """简化的适配器注册表"""
+
+    def __init__(self):
+        self.factory = SimpleAdapterFactory()
+        self.adapters: Dict[str, Any] = {}
+        self.status = "inactive"
+
+    async def initialize(self) -> None:
+        """初始化注册表"""
+        self.status = "active"
+
+    async def register_adapter(self, config: AdapterConfig) -> Any:
+        """注册适配器"""
+        if config.name in self.adapters:
+            raise:
+ ValueError(f"Adapter {config.name} already registered")
+
+        adapter = self.factory.create_adapter(config)
+        if hasattr(adapter, 'initialize'):
+            await adapter.initialize()
+
+        self.adapters[config.name] = adapter
+        return:
+ adapter
+
+    def get_adapter(self, name: str) -> Any:
+        """获取适配器"""
+        return:
+ self.adapters.get(name)
+
+    def list_adapters(self) -> List[str]:
+        """列出所有适配器"""
+        return:
+ list(self.adapters.keys())
+
+    async def shutdown(self) -> None:
+        """关闭注册表"""
+        for adapter in self.adapters.values():
+            if hasattr(adapter, 'cleanup'):
+                await adapter.cleanup()
+        self.adapters.clear()
+        self.status = "inactive"
+
+
+# 创建全局注册表实例
+adapter_registry = SimpleAdapterRegistry():

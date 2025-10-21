@@ -17,7 +17,7 @@ from src.adapters.base import Adapter
 class MockFootballDataAdapter(Adapter):
     """Mock足球数据适配器"""
 
-    def __init__(self, _config =None):
+    def __init__(self, _config=None):
         self.mock_adaptee = Mock()
         self.mock_adaptee.request = AsyncMock(return_value={"status": "ok"})
         super().__init__(self.mock_adaptee, "MockFootballAdapter")
@@ -47,21 +47,21 @@ class TestFootballDataAdapter:
         """测试配置验证"""
         _config = {"api_key": "test", "base_url": "https://api.football.com"}
         adapter = MockFootballDataAdapter(config)
-        assert adapter.config["api_key"] == "test"
+        assert adapter._config["api_key"] == "test"
 
     @pytest.mark.asyncio
     async def test_get_match_data(self):
         """测试获取比赛数据"""
         adapter = MockFootballDataAdapter()
         _result = await adapter._request("/matches")
-        assert result is not None
+        assert _result is not None
 
     @pytest.mark.asyncio
     async def test_get_team_data(self):
         """测试获取队伍数据"""
         adapter = MockFootballDataAdapter()
         _result = await adapter._request("/teams")
-        assert result is not None
+        assert _result is not None
 
     def test_build_url_with_params(self):
         """测试构建带参数的URL"""

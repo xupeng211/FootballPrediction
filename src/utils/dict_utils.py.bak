@@ -1,0 +1,158 @@
+from typing import Any
+
+
+class DictUtils:
+    """字典处理工具类"""
+
+    @staticmethod
+    def get_nested(data: dict[str, Any], path: str, default: Any = None) -> Any:
+        """获取嵌套字典的值
+
+        Args:
+            data: 源字典
+            path: 嵌套路径, 使用点分隔, 如 'a.b.c'
+            default: 默认值, 当路径不存在时返回
+
+        Returns:
+            找到的值或默认值"""
+        keys = path.split(".")
+        current = data
+
+        try:
+            for key in keys:
+                current = current[key]
+            return current
+        except (KeyError, TypeError):
+            return default
+
+    @staticmethod
+    def set_nested(data: dict[str, Any], path: str, value: Any) -> dict[str, Any]:
+        """设置嵌套字典的值
+
+        Args:
+            data: 源字典
+            path: 嵌套路径, 使用点分隔, 如 'a.b.c'
+            value: 要设置的值
+
+        Returns:
+            修改后的字典"""
+        keys = path.split(".")
+        current = data
+
+        for key in keys[:-1]:
+            if key not in current:
+                current[key] = {}
+            current = current[key]
+
+        current[keys[-1]] = value
+        return data
+
+    @staticmethod
+    def flatten_dict(data: dict[str, Any], separator: str = ".", sep: str = None) -> dict[str, Any]:
+        """展平嵌套字典
+
+        Args:
+            data: 源字典
+            separator: 分隔符(为了兼容性保留)
+            sep: 分隔符(新参数名)
+
+        Returns:
+            展平后的字典"""
+        # 兼容性处理
+        if sep is not None:
+            separator = sep
+
+        result = {}
+
+        def _flatten(obj: Any, parent_key: str = ""):
+            if isinstance(obj, dict):
+                for key, value in obj.items():
+                    new_key = f"{parent_key}{separator}{key}" if parent_key else key
+                    _flatten(value, new_key)
+            else:
+                result[parent_key] = obj
+
+        _flatten(data)
+        return result
+
+    @staticmethod
+    def filter_dict(data: dict[str, Any], keys: list[str]) -> dict[str, Any]:
+        """过滤字典, 只保留指定的键
+
+        Args:
+            data: 源字典
+            keys: 要保留的键列表
+
+        Returns:
+            过滤后的字典"""
+        return {key: value for key, value in data.items() if key in keys}
+
+    @staticmethod
+    def remove_none_values(data: dict[str, Any]) -> dict[str, Any]:
+        """移除字典中的None值
+
+        Args:
+            data: 源字典
+
+        Returns:
+            移除None值后的字典"""
+        return {key: value for key, value in data.items() if value is not None}
+
+    @staticmethod
+    def filter_none_values(data: dict[str, Any]) -> dict[str, Any]:
+        """移除字典中的None值(别名方法)
+
+        Args:
+            data: 源字典
+
+        Returns:
+            移除None值后的字典"""
+        return DictUtils.remove_none_values(data)
+
+    @staticmethod
+    def deep_merge(*dicts: dict[str, Any]) -> dict[str, Any]:
+        """深度合并多个字典
+
+        Args:
+            *dicts: 要合并的字典
+
+        Returns:
+            深度合并后的字典"""
+        result = {}
+        for d in dicts:
+            for key, value in d.items():
+                if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+                    result[key] = DictUtils.deep_merge(result[key], value)
+                else:
+                    result[key] = value
+        return result
+
+    @staticmethod
+    def merge_dicts(*dicts: dict[str, Any]) -> dict[str, Any]:
+        """合并多个字典
+
+        Args:
+            *dicts: 要合并的字典
+
+        Returns:
+            合并后的字典"""
+        result = {}
+        for d in dicts:
+            result.update(d)
+        return result
+
+    @staticmethod
+    def rename_keys(data: dict[str, Any], mapping: dict[str, str]) -> dict[str, Any]:
+        """重命名字典的键
+
+        Args:
+            data: 源字典
+            mapping: 键映射字典 {old_key: new_key}
+
+        Returns:
+            重命名后的字典"""
+        result = {}
+        for key, value in data.items():
+            new_key = mapping.get(key, key)
+            result[new_key] = value
+        return result

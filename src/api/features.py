@@ -15,7 +15,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.data.features.feature_store import FootballFeatureStore
-from src.database.connection import get_async_session
+from src.database.dependencies import get_async_db
 from src.database.models import Match
 
 logger = logging.getLogger(__name__)
@@ -168,7 +168,7 @@ def build_response_data(
 async def get_match_features_improved(
     match_id: int,
     include_raw: bool = Query(default=False, description="是否包含原始特征数据"),
-    session: AsyncSession = Depends(get_async_session),
+    session: AsyncSession = Depends(get_async_db),
 ) -> Dict[str, Any]:
     """
     改进版本：获取比赛特征

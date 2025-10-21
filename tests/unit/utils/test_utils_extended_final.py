@@ -73,7 +73,7 @@ def test_file_utils_extended():
 
     test_dir = Path("/tmp/test_football")
     _result = FileUtils.ensure_dir(test_dir)
-    assert result.exists()
+    assert _result.exists()
 
     # 测试JSON读写
     test_data = {"key": "value"}

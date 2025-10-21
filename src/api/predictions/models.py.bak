@@ -1,0 +1,159 @@
+""" 预测API模型定义"""
+"" from pydantic import BaseModel, Field
+
+
+class MatchInfo(BaseModel):
+:
+    """比赛信息模式"" match_id: inthome_team_id: int"""
+
+    away_team_id: intleague_id: int
+
+    match_time: strmatch_status: str
+
+    season: str | None = None
+
+
+class PredictionData(BaseModel):
+:
+    """预测数据模式"" id: int | None = Nonemodel_version: str"""
+
+    model_name: strhome_win_probability: float = Field(ge=0.0, le=1.0)
+
+    draw_probability: float = Field(ge=0.0, le=1.0)
+    away_win_probability: float = Field(ge=0.0, le=1.0)
+    predicted_result: strconfidence_score: float = Field(ge=0.0, le=1.0)
+
+    created_at: str | None = Noneis_correct: bool | None = None
+
+    actual_result: str | None = None
+
+
+class PredictionRequest(BaseModel):
+:
+    """预测请求模式"" match_id: intmodel_version: str | None = None"""
+
+    model_name: str | None = Noneinclude_confidence: bool = True
+
+
+
+class PredictionResponse(BaseModel):
+:
+    """预测响应模式"" match_id: intmatch_info: MatchInfo"""
+
+    prediction: PredictionDatasource: str = Field(default="cached", pattern="^(cached|real_time))
+$"
+
+
+
+class BatchPredictionRequest(BaseModel):
+:
+    """批量预测请求模式"" match_ids: list[int] = Field(max_length=50)"""
+    model_version: str | None = Nonemodel_name: str | None = None
+
+    include_confidence: bool = True
+
+
+class BatchPredictionResponse(BaseModel):
+:
+    """批量预测响应模式"" total_requested: intvalid_matches: int"""
+
+    successful_predictions: intinvalid_match_ids: list[int]
+
+    predictions: list[PredictionData]
+
+
+class UpcomingMatchesRequest(BaseModel):
+:
+    """即将到来的比赛请求模式"" league_id: int | None = Noneteam_id: int | None = None"""
+
+    days_ahead: int = Field(default=7, ge=1, le=30)
+    include_predictions: bool = False
+
+
+class UpcomingMatchesResponse(BaseModel):
+:
+    """即将到来的比赛响应模式"" total_matches: intmatches: list[MatchInfo]"""
+
+    predictions: list[PredictionData] | None = None
+
+
+class ModelStats(BaseModel):
+:
+    """模型统计模式"" model_name: strmodel_version: str"""
+
+    total_predictions: intcorrect_predictions: int
+
+    accuracy: float = Field(ge=0.0, le=1.0)
+    last_updated: str
+
+
+class ModelStatsResponse(BaseModel):
+:
+    """模型统计响应模式"" models: list[ModelStats]"""
+    total_models: int
+
+
+class HistoryPrediction(BaseModel):
+:
+    """历史预测模式"" id: intmodel_version: str"""
+
+    model_name: strhome_win_probability: float
+
+    draw_probability: floataway_win_probability: float
+
+    predicted_result: strconfidence_score: float
+
+    created_at: stris_correct: bool | None = None
+
+    actual_result: str | None = Noneverified_at
+
+    str | None = None
+
+
+class PredictionHistoryResponse(BaseModel):
+:
+    """预测历史响应模式"" match_id: inttotal_predictions: int"""
+
+    predictions: list[HistoryPrediction]
+
+
+class RecentPrediction(BaseModel):
+:
+    """最近预测模式"" id: intmatch_id: int"""
+
+    model_version: strmodel_name: str
+
+    predicted_result: strconfidence_score: float
+
+    created_at: stris_correct: bool | None = None
+
+    match_info: MatchInfo
+
+
+class RecentPredictionsResponse(BaseModel):
+:
+    """最近预测响应模式"" time_range_hours: inttotal_predictions: int"""
+
+    predictions: list[RecentPrediction]
+
+
+class PredictionOverview(BaseModel):
+:
+    """预测概览模式"" total_predictions: intcorrect_predictions: int"""
+
+    accuracy: floatlast_prediction: str | None = None
+
+    model_count: int
+
+
+class PredictionOverviewResponse(BaseModel):
+:
+    """预测概览响应模式"" overview: PredictionOverviewrecent_predictions: list[RecentPrediction]"""
+
+
+
+class VerificationResponse(BaseModel):
+    """验证响应模式"""
+    match_id: intverified
+
+    bool

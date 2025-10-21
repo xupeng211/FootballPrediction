@@ -22,9 +22,9 @@ class TestScoringService:
         assert "exact_score" in service.config
         assert "outcome_only" in service.config
         assert "goal_difference" in service.config
-        assert service.config["exact_score"]["points"] == 10
-        assert service.config["outcome_only"]["points"] == 3
-        assert service.config["goal_difference"]["points"] == 5
+        assert service._config["exact_score"]["points"] == 10
+        assert service._config["outcome_only"]["points"] == 3
+        assert service._config["goal_difference"]["points"] == 5
 
     def test_service_creation_custom_config(self):
         """测试：使用自定义配置创建服务"""
@@ -34,9 +34,9 @@ class TestScoringService:
             "confidence_bonus": {"max_bonus": 5, "threshold": 0.9},
         }
         service = ScoringService(custom_config)
-        assert service.config["exact_score"]["points"] == 15
-        assert service.config["exact_score"]["multiplier"] == 1.5
-        assert service.config["confidence_bonus"]["max_bonus"] == 5
+        assert service._config["exact_score"]["points"] == 15
+        assert service._config["exact_score"]["multiplier"] == 1.5
+        assert service._config["confidence_bonus"]["max_bonus"] == 5
 
     def test_calculate_exact_score_points_correct(self):
         """测试：计算精确比分得分（正确）"""
@@ -311,8 +311,8 @@ class TestScoringService:
             "goal_difference": {"points": 8, "multiplier": 1.0},
         }
         service.update_scoring_config(new_config)
-        assert service.config["exact_score"]["points"] == 20
-        assert service.config["outcome_only"]["points"] == 6
+        assert service._config["exact_score"]["points"] == 20
+        assert service._config["outcome_only"]["points"] == 6
 
     def test_update_scoring_config_missing_key(self):
         """测试：更新计分配置（缺少键）"""

@@ -210,7 +210,7 @@ class TestStrategyPredictionServiceReal:
         )
 
         # Then
-        assert result is not None
+        assert _result is not None
         assert service._prediction_repository.create_calls
         created_prediction = service._prediction_repository.create_calls[0]
         assert created_prediction.user_id == 456
@@ -226,7 +226,7 @@ class TestStrategyPredictionServiceReal:
         _result = await service.predict_match(match_id=123, user_id=456)
 
         # Then
-        assert result is not None
+        assert _result is not None
         # 应该使用默认策略
         assert service._current_strategies["mock_strategy"].name == "mock_strategy"
 
@@ -286,7 +286,7 @@ class TestStrategyPredictionServiceReal:
         _result = await service._get_or_create_strategy("mock_strategy")
 
         # Then
-        assert result is strategy
+        assert _result is strategy
         # 不应该从工厂获取
         service._strategy_factory.get_strategy.assert_not_called()
 
@@ -302,7 +302,7 @@ class TestStrategyPredictionServiceReal:
         _result = await service._get_or_create_strategy("new_test_strategy")
 
         # Then
-        assert result is new_strategy
+        assert _result is new_strategy
         service._strategy_factory.get_strategy.assert_called_once_with(
             "new_test_strategy"
         )
@@ -319,10 +319,10 @@ class TestStrategyPredictionServiceReal:
         _result = await service._prepare_prediction_input(match)
 
         # Then
-        assert result.match == match
-        assert result.home_team == match.home_team
-        assert result.away_team == match.away_team
-        assert result.user_id is not None  # 应该在上下文中设置
+        assert _result.match == match
+        assert _result.home_team == match.home_team
+        assert _result.away_team == match.away_team
+        assert _result.user_id is not None  # 应该在上下文中设置
 
     def test_service_attributes(self, service):
         """测试：服务属性"""

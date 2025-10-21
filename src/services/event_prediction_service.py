@@ -176,7 +176,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
                 else None,
                 strategy_used=strategy_name,
                 source=self._event_source,
-                _metadata ={
+                _metadata={
                     "prediction_time": prediction.created_at.isoformat(),
                     "notes": prediction.notes,
                 },
@@ -225,7 +225,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
                 previous_prediction=previous_prediction,
                 update_reason=update_reason,
                 source=self._event_source,
-                _metadata ={
+                _metadata={
                     "update_time": prediction.updated_at.isoformat(),
                     "notes": prediction.notes,
                 },
@@ -328,7 +328,7 @@ class EventDrivenMatchService:
                 created_by=created_by,
                 initial_odds=initial_odds,
                 source=self._event_source,
-                _metadata ={
+                _metadata={
                     "creation_time": datetime.utcnow().isoformat(),
                 },
             )
@@ -425,7 +425,7 @@ class EventDrivenUserService:
                 ip_address=ip_address,
                 user_agent=user_agent,
                 source=self._event_source,
-                _metadata ={
+                _metadata={
                     "registration_method": "web",
                 },
             )

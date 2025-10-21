@@ -16,7 +16,7 @@ def test_import_retry_config():
     assert RetryConfig is not None
 
     _config = RetryConfig(max_attempts=5)
-    assert config.max_attempts == 5
+    assert _config.max_attempts == 5
 
 
 def test_import_strategies():
@@ -119,13 +119,13 @@ def test_retry_config_creation():
         retryable_exceptions=(ValueError, TypeError),
     )
 
-    assert config.max_attempts == 5
-    assert config.base_delay == 2.0
-    assert config.max_delay == 30.0
-    assert config.exponential_base == 3.0
-    assert config.jitter is False
-    assert config.retryable_exceptions == (ValueError, TypeError)
-    assert config.backoff_strategy is not None
+    assert _config.max_attempts == 5
+    assert _config.base_delay == 2.0
+    assert _config.max_delay == 30.0
+    assert _config.exponential_base == 3.0
+    assert _config.jitter is False
+    assert _config.retryable_exceptions == (ValueError, TypeError)
+    assert _config.backoff_strategy is not None
 
 
 # 测试重试装饰器

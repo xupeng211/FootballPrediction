@@ -47,9 +47,9 @@ class TestGetCurrentUser:
 
             _result = await get_current_user(mock_credentials)
 
-            assert result["id"] == 123
-            assert result["role"] == "user"
-            assert result["token"] == "valid_token"
+            assert _result["id"] == 123
+            assert _result["role"] == "user"
+            assert _result["token"] == "valid_token"
 
     @pytest.mark.asyncio
     async def test_get_current_user_with_admin_role(self):
@@ -62,8 +62,8 @@ class TestGetCurrentUser:
 
             _result = await get_current_user(mock_credentials)
 
-            assert result["id"] == 456
-            assert result["role"] == "admin"
+            assert _result["id"] == 456
+            assert _result["role"] == "admin"
 
     @pytest.mark.asyncio
     async def test_get_current_user_invalid_token(self):
@@ -105,8 +105,8 @@ class TestGetCurrentUser:
 
             _result = await get_current_user(mock_credentials)
 
-            assert result["id"] == 789
-            assert result["role"] == "user"  # 默认角色
+            assert _result["id"] == 789
+            assert _result["role"] == "user"  # 默认角色
 
 
 @pytest.mark.skipif(
@@ -122,8 +122,8 @@ class TestGetAdminUser:
 
         _result = await get_admin_user(admin_user)
 
-        assert result is admin_user
-        assert result["role"] == "admin"
+        assert _result is admin_user
+        assert _result["role"] == "admin"
 
     @pytest.mark.asyncio
     async def test_get_admin_user_non_admin(self):
@@ -215,7 +215,7 @@ class TestVerifyPredictionPermission:
 
         _result = await verify_prediction_permission(match_id, user)
 
-        assert result is True  # 当前实现总是返回True
+        assert _result is True  # 当前实现总是返回True
 
     @pytest.mark.asyncio
     async def test_verify_prediction_permission_admin(self):
@@ -225,7 +225,7 @@ class TestVerifyPredictionPermission:
 
         _result = await verify_prediction_permission(match_id, admin_user)
 
-        assert result is True
+        assert _result is True
 
 
 @pytest.mark.skipif(
@@ -241,7 +241,7 @@ class TestRateLimitCheck:
 
         _result = await rate_limit_check(user)
 
-        assert result is True  # 当前实现总是返回True
+        assert _result is True  # 当前实现总是返回True
 
     @pytest.mark.asyncio
     async def test_rate_limit_check_admin(self):
@@ -250,7 +250,7 @@ class TestRateLimitCheck:
 
         _result = await rate_limit_check(admin_user)
 
-        assert result is True
+        assert _result is True
 
 
 @pytest.mark.skipif(
@@ -366,8 +366,8 @@ class TestDependenciesIntegration:
             # 验证所有请求都成功
             assert len(results) == 5
             for result in results:
-                assert result["id"] == 123
-                assert result["role"] == "user"
+                assert _result["id"] == 123
+                assert _result["role"] == "user"
 
     @pytest.mark.asyncio
     async def test_error_handling_chain(self):

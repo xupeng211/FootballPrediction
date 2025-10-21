@@ -194,10 +194,10 @@ class TestKafkaMessageConsumer:
 
         _result = consumer._deserialize_message(mock_message)
 
-        assert result["key"] == "test_key"
-        assert result["value"] == {"data": "test"}
-        assert result["headers"]["source"] == "api"
-        assert result["headers"]["version"] == "1.0"
+        assert _result["key"] == "test_key"
+        assert _result["value"] == {"data": "test"}
+        assert _result["headers"]["source"] == "api"
+        assert _result["headers"]["version"] == "1.0"
 
     def test_deserialize_message_without_headers(self, consumer):
         """测试反序列化没有头部的消息"""
@@ -208,9 +208,9 @@ class TestKafkaMessageConsumer:
 
         _result = consumer._deserialize_message(mock_message)
 
-        assert result["key"] == "test_key"
-        assert result["value"] == {"data": "test"}
-        assert result["headers"] == {}
+        assert _result["key"] == "test_key"
+        assert _result["value"] == {"data": "test"}
+        assert _result["headers"] == {}
 
     def test_deserialize_invalid_json(self, consumer):
         """测试反序列化无效JSON"""

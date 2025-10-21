@@ -282,14 +282,14 @@ class TestDictUtilsWorking:
         _result = DictUtils.deep_merge(dict1, dict2)
 
         # 验证深度合并结果
-        assert result["app"]["name"] == "my-app"  # 保留原值
-        assert result["app"]["version"] == "1.0.0"  # 保留原值
-        assert result["app"]["features"]["auth"]["enabled"] is True  # 保留原值
-        assert result["app"]["features"]["auth"]["provider"] == "oauth2"  # 覆盖
-        assert result["app"]["features"]["cache"]["enabled"] is False  # 保留原值
-        assert result["app"]["features"]["analytics"]["enabled"] is True  # 新增
-        assert result["app"]["deploy"]["env"] == "production"  # 新增
-        assert result["database"]["primary"]["host"] == "localhost"  # 保留原值
-        assert result["database"]["primary"]["port"] == 5432  # 保留原值
-        assert result["database"]["primary"]["pool_size"] == 10  # 新增
-        assert result["database"]["replica"]["host"] == "replica-host"  # 覆盖None
+        assert _result["app"]["name"] == "my-app"  # 保留原值
+        assert _result["app"]["version"] == "1.0.0"  # 保留原值
+        assert _result["app"]["features"]["auth"]["enabled"] is True  # 保留原值
+        assert _result["app"]["features"]["auth"]["provider"] == "oauth2"  # 覆盖
+        assert _result["app"]["features"]["cache"]["enabled"] is False  # 保留原值
+        assert _result["app"]["features"]["analytics"]["enabled"] is True  # 新增
+        assert _result["app"]["deploy"]["env"] == "production"  # 新增
+        assert _result["database"]["primary"]["host"] == "localhost"  # 保留原值
+        assert _result["database"]["primary"]["port"] == 5432  # 保留原值
+        assert _result["database"]["primary"]["pool_size"] == 10  # 新增
+        assert _result["database"]["replica"]["host"] == "replica-host"  # 覆盖None

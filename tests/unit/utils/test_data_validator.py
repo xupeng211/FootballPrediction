@@ -66,7 +66,7 @@ class TestDataValidator:
         for url in valid_urls:
             _result = self.validator.is_valid_url(url)
             # 简单的URL验证，实际实现可能更复杂
-            assert result is not None
+            assert _result is not None
 
     def test_is_valid_url_invalid_urls(self):
         """测试：无效的URL"""

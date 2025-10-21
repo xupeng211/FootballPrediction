@@ -37,12 +37,12 @@ class TestGetMatchPrediction:
         # 验证响应
         assert response.status_code == status.HTTP_200_OK
         _data = response.json()
-        assert data["success"] is True
-        assert data["data"]["match_id"] == 12345
-        assert data["data"]["source"] == "cached"
-        assert "prediction" in data["data"]
-        assert data["data"]["prediction"]["id"] == 1
-        assert data["data"]["prediction"]["model_version"] == "1.0"
+        assert _data["success"] is True
+        assert _data["data"]["match_id"] == 12345
+        assert _data["data"]["source"] == "cached"
+        assert "prediction" in _data["data"]
+        assert _data["data"]["prediction"]["id"] == 1
+        assert _data["data"]["prediction"]["model_version"] == "1.0"
 
     @pytest.mark.asyncio
     async def test_get_match_prediction_real_time_success(
@@ -86,9 +86,9 @@ class TestGetMatchPrediction:
             # 验证响应
             assert response.status_code == status.HTTP_200_OK
             _data = response.json()
-            assert data["success"] is True
-            assert data["data"]["source"] == "real_time"
-            assert data["data"]["prediction"]["model_version"] == "2.0"
+            assert _data["success"] is True
+            assert _data["data"]["source"] == "real_time"
+            assert _data["data"]["prediction"]["model_version"] == "2.0"
 
     @pytest.mark.asyncio
     async def test_get_match_prediction_match_not_found(self, api_client_full):
@@ -188,7 +188,7 @@ class TestGetMatchPrediction:
             # 验证响应
             assert response.status_code == status.HTTP_200_OK
             _data = response.json()
-            assert data["data"]["match_id"] == match_id
+            assert _data["data"]["match_id"] == match_id
 
 
 class TestPredictMatch:
@@ -221,9 +221,9 @@ class TestPredictMatch:
             # 验证响应
             assert response.status_code == status.HTTP_200_OK
             _data = response.json()
-            assert data["success"] is True
-            assert "比赛 12345 预测完成" in data["message"]
-            assert data["data"]["model_version"] == "1.0"
+            assert _data["success"] is True
+            assert "比赛 12345 预测完成" in _data["message"]
+            assert _data["data"]["model_version"] == "1.0"
 
     @pytest.mark.asyncio
     async def test_predict_match_not_found(self, api_client_full):
@@ -300,11 +300,11 @@ class TestBatchPredictMatches:
             # 验证响应
             assert response.status_code == status.HTTP_200_OK
             _data = response.json()
-            assert data["success"] is True
-            assert data["data"]["total_requested"] == 3
-            assert data["data"]["valid_matches"] == 3
-            assert data["data"]["successful_predictions"] == 3
-            assert len(data["data"]["predictions"]) == 3
+            assert _data["success"] is True
+            assert _data["data"]["total_requested"] == 3
+            assert _data["data"]["valid_matches"] == 3
+            assert _data["data"]["successful_predictions"] == 3
+            assert len(_data["data"]["predictions"]) == 3
 
     @pytest.mark.asyncio
     async def test_batch_predict_too_many_matches(self, api_client_full):
@@ -359,9 +359,9 @@ class TestBatchPredictMatches:
             # 验证响应
             assert response.status_code == status.HTTP_200_OK
             _data = response.json()
-            assert data["data"]["total_requested"] == 4
-            assert data["data"]["valid_matches"] == 3
-            assert 999 in data["data"]["invalid_match_ids"]
+            assert _data["data"]["total_requested"] == 4
+            assert _data["data"]["valid_matches"] == 3
+            assert 999 in _data["data"]["invalid_match_ids"]
 
 
 class TestGetMatchPredictionHistory:
@@ -405,11 +405,11 @@ class TestGetMatchPredictionHistory:
         # 验证响应
         assert response.status_code == status.HTTP_200_OK
         _data = response.json()
-        assert data["success"] is True
-        assert data["data"]["match_id"] == 12345
-        assert data["data"]["total_predictions"] == 3
-        assert len(data["data"]["predictions"]) == 3
-        assert data["data"]["predictions"][0]["model_version"] == "1.0"
+        assert _data["success"] is True
+        assert _data["data"]["match_id"] == 12345
+        assert _data["data"]["total_predictions"] == 3
+        assert len(_data["data"]["predictions"]) == 3
+        assert _data["data"]["predictions"][0]["model_version"] == "1.0"
 
     @pytest.mark.asyncio
     async def test_get_prediction_history_match_not_found(self, api_client_full):
@@ -488,11 +488,11 @@ class TestGetRecentPredictions:
         # 验证响应
         assert response.status_code == status.HTTP_200_OK
         _data = response.json()
-        assert data["success"] is True
-        assert data["data"]["time_range_hours"] == 24
-        assert data["data"]["total_predictions"] == 5
-        assert len(data["data"]["predictions"]) == 5
-        assert "match_info" in data["data"]["predictions"][0]
+        assert _data["success"] is True
+        assert _data["data"]["time_range_hours"] == 24
+        assert _data["data"]["total_predictions"] == 5
+        assert len(_data["data"]["predictions"]) == 5
+        assert "match_info" in _data["data"]["predictions"][0]
 
     @pytest.mark.parametrize("hours,limit", [(1, 10), (24, 50), (168, 100)])
     @pytest.mark.asyncio
@@ -513,8 +513,8 @@ class TestGetRecentPredictions:
         # 验证响应
         assert response.status_code == status.HTTP_200_OK
         _data = response.json()
-        assert data["success"] is True
-        assert data["data"]["time_range_hours"] == hours
+        assert _data["success"] is True
+        assert _data["data"]["time_range_hours"] == hours
 
 
 class TestVerifyPrediction:
@@ -535,10 +535,10 @@ class TestVerifyPrediction:
             # 验证响应
             assert response.status_code == status.HTTP_200_OK
             _data = response.json()
-            assert data["success"] is True
-            assert data["data"]["match_id"] == 12345
-            assert data["data"]["verified"] is True
-            assert "预测结果验证完成" in data["message"]
+            assert _data["success"] is True
+            assert _data["data"]["match_id"] == 12345
+            assert _data["data"]["verified"] is True
+            assert "预测结果验证完成" in _data["message"]
 
     @pytest.mark.asyncio
     async def test_verify_prediction_failure(self, api_client_full):
@@ -555,9 +555,9 @@ class TestVerifyPrediction:
             # 验证响应
             assert response.status_code == status.HTTP_200_OK
             _data = response.json()
-            assert data["success"] is False
-            assert data["data"]["verified"] is False
-            assert "验证失败" in data["message"]
+            assert _data["success"] is False
+            assert _data["data"]["verified"] is False
+            assert "验证失败" in _data["message"]
 
     @pytest.mark.asyncio
     async def test_verify_prediction_service_error(self, api_client_full):

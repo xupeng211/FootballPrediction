@@ -143,10 +143,10 @@ class TestPredictionService:
         _result = await mock_service._get_match_info(12345)
 
         # 验证结果
-        assert result is not None
-        assert result["id"] == 12345
-        assert result["home_team_id"] == 10
-        assert result["away_team_id"] == 20
+        assert _result is not None
+        assert _result["id"] == 12345
+        assert _result["home_team_id"] == 10
+        assert _result["away_team_id"] == 20
 
     @pytest.mark.asyncio
     async def test_get_match_info_not_found(self, mock_service):
@@ -162,7 +162,7 @@ class TestPredictionService:
 
         _result = await mock_service._get_match_info(99999)
 
-        assert result is None
+        assert _result is None
 
     @pytest.mark.asyncio
     async def test_calculate_actual_result(self, mock_service):
@@ -256,11 +256,11 @@ class TestPredictionService:
 
             # 验证结果
             assert isinstance(result, PredictionResult)
-            assert result.match_id == 12345
-            assert result.model_version == "1.0"
-            assert result.predicted_result == "home"
-            assert result.home_win_probability == 0.45
-            assert result.confidence_score == 0.45
+            assert _result.match_id == 12345
+            assert _result.model_version == "1.0"
+            assert _result.predicted_result == "home"
+            assert _result.home_win_probability == 0.45
+            assert _result.confidence_score == 0.45
 
     @pytest.mark.asyncio
     async def test_predict_match_with_cached_result(self, mock_service):
@@ -279,7 +279,7 @@ class TestPredictionService:
         _result = await mock_service.predict_match(12345)
 
         # 应该返回缓存的结果
-        assert result is cached_result
+        assert _result is cached_result
 
     @pytest.mark.asyncio
     async def test_predict_match_using_default_features(self, mock_service, mock_model):
@@ -305,7 +305,7 @@ class TestPredictionService:
 
             # 应该使用默认特征继续预测
             assert isinstance(result, PredictionResult)
-            assert result.match_id == 12345
+            assert _result.match_id == 12345
 
     @pytest.mark.asyncio
     async def test_predict_match_match_not_found(self, mock_service, mock_model):
@@ -541,7 +541,7 @@ class TestPredictionService:
             _result = await mock_service.predict_match(12345)
 
             # 验证元数据
-            assert result.prediction_metadata is not None
+            assert _result.prediction_metadata is not None
             assert "model_uri" in result.prediction_metadata
             assert "prediction_time" in result.prediction_metadata
             assert "feature_count" in result.prediction_metadata

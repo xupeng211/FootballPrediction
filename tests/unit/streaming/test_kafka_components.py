@@ -95,7 +95,7 @@ def test_ensure_topics_exist():
         pytest.skip("Module import failed")
     # TODO: Implement actual function test
     # _result = ensure_topics_exist()
-    # assert result is not None
+    # assert _result is not None
     assert True
 
 

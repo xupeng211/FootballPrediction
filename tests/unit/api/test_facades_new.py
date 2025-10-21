@@ -47,15 +47,15 @@ class TestListFacades:
 
             _result = await list_facades()
 
-            assert result["available_types"] == [
+            assert _result["available_types"] == [
                 "prediction",
                 "analytics",
                 "monitoring",
             ]
-            assert result["configured_facades"] == ["default", "production", "test"]
-            assert result["cached_instances"] == ["test_facade"]
-            assert result["factory_info"]["total_configs"] == 3
-            assert result["factory_info"]["cached_instances"] == 1
+            assert _result["configured_facades"] == ["default", "production", "test"]
+            assert _result["cached_instances"] == ["test_facade"]
+            assert _result["factory_info"]["total_configs"] == 3
+            assert _result["factory_info"]["cached_instances"] == 1
 
     @pytest.mark.asyncio
     async def test_list_facades_empty(self):
@@ -69,11 +69,11 @@ class TestListFacades:
 
             _result = await list_facades()
 
-            assert result["available_types"] == []
-            assert result["configured_facades"] == []
-            assert result["cached_instances"] == []
-            assert result["factory_info"]["total_configs"] == 0
-            assert result["factory_info"]["cached_instances"] == 0
+            assert _result["available_types"] == []
+            assert _result["configured_facades"] == []
+            assert _result["cached_instances"] == []
+            assert _result["factory_info"]["total_configs"] == 0
+            assert _result["factory_info"]["cached_instances"] == 0
 
     @pytest.mark.asyncio
     async def test_list_facades_factory_error(self):
@@ -109,9 +109,9 @@ class TestInitializeFacade:
                 auto_initialize=True,
             )
 
-            assert result["status"] == "success"
-            assert result["facade_name"] == "test_facade"
-            assert result["facade_type"] == "prediction"
+            assert _result["status"] == "success"
+            assert _result["facade_name"] == "test_facade"
+            assert _result["facade_type"] == "prediction"
             assert "test_facade" in global_facades
             mock_facade.initialize.assert_called_once()
 
@@ -128,8 +128,8 @@ class TestInitializeFacade:
             auto_initialize=True,
         )
 
-        assert result["status"] == "already_exists"
-        assert result["facade_name"] == "existing_facade"
+        assert _result["status"] == "already_exists"
+        assert _result["facade_name"] == "existing_facade"
 
     @pytest.mark.asyncio
     async def test_initialize_facade_no_auto_init(self):
@@ -147,8 +147,8 @@ class TestInitializeFacade:
                 auto_initialize=False,
             )
 
-            assert result["status"] == "created"
-            assert result["auto_initialized"] is False
+            assert _result["status"] == "created"
+            assert _result["auto_initialized"] is False
             assert "lazy_facade" in global_facades
             mock_facade.initialize.assert_not_called()
 
@@ -252,7 +252,7 @@ class TestFacadesIntegration:
                     facade_type=f"type{i + 1}", facade_name=f"facade_{i}"
                 )
                 facades.append(result)
-                assert result["status"] == "success"
+                assert _result["status"] == "success"
 
             # 验证所有门面都被创建
             list_result = await list_facades()
@@ -289,7 +289,7 @@ class TestFacadesIntegration:
             # 验证所有门面都被创建
             assert len(results) == 10
             for result in results:
-                assert result["status"] == "success"
+                assert _result["status"] == "success"
 
             assert len(global_facades) == 10
 
@@ -318,7 +318,7 @@ class TestFacadesIntegration:
             _result = await initialize_facade(
                 facade_type="test_type", facade_name="recover_test_2"
             )
-            assert result["status"] == "success"
+            assert _result["status"] == "success"
 
     def test_global_facades_dict(self):
         """测试：全局门面字典"""
@@ -386,7 +386,7 @@ class TestFacadesIntegration:
                 _result = await initialize_facade(
                     facade_type="test_type", facade_name=name
                 )
-                assert result["facade_name"] == name
+                assert _result["facade_name"] == name
                 assert name in global_facades
 
     def test_router_endpoints(self):

@@ -40,9 +40,10 @@ class TestDeepNestingCoverage:
         }
 
         _result = deep_merge(dict1, dict2)
-        assert result["level1"]["level2"]["level3"]["level4"]["data"] == [4, 5, 6]
+        assert _result["level1"]["level2"]["level3"]["level4"]["data"] == [4, 5, 6]
         assert (
-            result["level1"]["level2"]["level3"]["level4"]["nested"]["deep"] == "value1"
+            _result["level1"]["level2"]["level3"]["level4"]["nested"]["deep"]
+            == "value1"
         )
 
         # 测试深度扁平化

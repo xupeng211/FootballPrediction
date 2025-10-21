@@ -39,14 +39,14 @@ class MockAdapterRegistry:
         self._adapters = {}
         self._instances = {}
 
-    def register_adapter(self, name, adapter_class, _metadata =None):
+    def register_adapter(self, name, adapter_class, _metadata=None):
         self._adapters[name] = {"class": adapter_class, "metadata": metadata or {}}
 
     def unregister_adapter(self, name):
         self._adapters.pop(name, None)
         self._instances.pop(name, None)
 
-    def create_adapter(self, name, _config =None):
+    def create_adapter(self, name, _config=None):
         if name not in self._adapters:
             raise ValueError(f"Unknown adapter: {name}")
         if name not in self._instances:

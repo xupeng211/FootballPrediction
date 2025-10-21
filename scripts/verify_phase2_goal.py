@@ -16,20 +16,19 @@ def count_skipped_tests_fast():
 
     # 使用 pytest 的 --collect-only 来获取所有测试
     print("Step 1: 收集所有测试...")
-    start_time = time.time()
 
     # 先运行收集模式获取总数
     collect_result = subprocess.run(
         ["pytest", "--collect-only", "-p", "no:warnings", "-q"],
         capture_output=True,
         text=True,
-        timeout=60
+        timeout=60,
     )
 
     total_tests = 0
-    for line in collect_result.stdout.split('\n'):
+    for line in collect_result.stdout.split("\n"):
         if "tests collected" in line:
-            match = re.search(r'(\d+) tests collected', line)
+            match = re.search(r"(\d+) tests collected", line)
             if match:
                 total_tests = int(match.group(1))
                 break
@@ -47,14 +46,14 @@ def count_skipped_tests_fast():
         "--disable-warnings",
         "--maxfail=10",  # 遇到10个失败就停止
         "-rs",  # 显示跳过原因
-        "tests/"
+        "tests/",
     ]
 
     result = subprocess.run(
         cmd,
         capture_output=True,
         text=True,
-        timeout=180  # 3分钟超时
+        timeout=180,  # 3分钟超时
     )
 
     # 统计结果
@@ -67,7 +66,7 @@ def count_skipped_tests_fast():
 
     run_count = passed_count + failed_count + error_count
 
-    print(f"\n统计结果:")
+    print("\n统计结果:")
     print(f"  跳过 (SKIPPED): {skipped_count}")
     print(f"  通过 (PASSED): {passed_count}")
     print(f"  失败 (FAILED): {failed_count}")
@@ -76,14 +75,18 @@ def count_skipped_tests_fast():
 
     # 如果没有运行完所有测试，估算总数
     if run_count + skipped_count < total_tests:
-        estimated_skipped = int((skipped_count / (run_count + skipped_count)) * total_tests) if run_count + skipped_count > 0 else 0
-        print(f"\n估算结果（基于样本）:")
+        estimated_skipped = (
+            int((skipped_count / (run_count + skipped_count)) * total_tests)
+            if run_count + skipped_count > 0
+            else 0
+        )
+        print("\n估算结果（基于样本）:")
         print(f"  估算跳过数: {estimated_skipped}")
         print(f"  估算运行数: {total_tests - estimated_skipped}")
         final_skipped = estimated_skipped
     else:
         final_skipped = skipped_count
-        print(f"\n实际结果:")
+        print("\n实际结果:")
         print(f"  实际跳过数: {final_skipped}")
         print(f"  实际运行数: {run_count}")
 
@@ -102,7 +105,7 @@ def count_skipped_tests_fast():
     # 验证目标
     print("\n" + "=" * 60)
     print("Phase 2 目标验证:")
-    print(f"  目标: skipped 测试 < 100")
+    print("  目标: skipped 测试 < 100")
     print(f"  实际: {final_skipped}")
 
     if final_skipped < 100:
@@ -110,20 +113,22 @@ def count_skipped_tests_fast():
         print(f"   跳过测试数量 ({final_skipped}) < 100")
         return True
     else:
-        print(f"\n❌ Phase 2 目标未达成")
+        print("\n❌ Phase 2 目标未达成")
         print(f"   跳过测试数量 ({final_skipped}) >= 100")
 
         # 分析哪些模块跳过最多
         print("\n建议重点优化的模块:")
         module_skips = {}
-        lines = output.split('\n')
+        lines = output.split("\n")
         for i, line in enumerate(lines):
             if "SKIPPED" in line:
                 # 提取测试文件路径
                 if i > 0:
-                    prev_line = lines[i-1]
+                    prev_line = lines[i - 1]
                     if "tests/" in prev_line:
-                        module = prev_line.split("tests/")[1].split("::")[0].split(".py")[0]
+                        module = (
+                            prev_line.split("tests/")[1].split("::")[0].split(".py")[0]
+                        )
                         module_skips[module] = module_skips.get(module, 0) + 1
 
         sorted_modules = sorted(module_skips.items(), key=lambda x: x[1], reverse=True)

@@ -81,7 +81,10 @@ class TestKafkaProducer:
 
     def test_producer_creation(self):
         """测试：生产者创建"""
-        _config = {"bootstrap_servers": ["localhost:9092"], "client_id": "test_producer"}
+        _config = {
+            "bootstrap_servers": ["localhost:9092"],
+            "client_id": "test_producer",
+        }
         producer = KafkaProducer(config)
         assert producer is not None
         assert producer._config == config
@@ -89,7 +92,10 @@ class TestKafkaProducer:
     @pytest.mark.asyncio
     async def test_produce_message(self):
         """测试：生产消息"""
-        _config = {"bootstrap_servers": ["localhost:9092"], "client_id": "test_producer"}
+        _config = {
+            "bootstrap_servers": ["localhost:9092"],
+            "client_id": "test_producer",
+        }
         producer = KafkaProducer(config)
 
         message = StreamMessage("test_topic", b"test_key", b'{"event": "test"}')
@@ -103,14 +109,17 @@ class TestKafkaProducer:
 
             _result = await producer.produce(message)
 
-            assert result["topic"] == "test_topic"
-            assert result["partition"] == 0
-            assert result["offset"] == 100
+            assert _result["topic"] == "test_topic"
+            assert _result["partition"] == 0
+            assert _result["offset"] == 100
 
     @pytest.mark.asyncio
     async def test_produce_batch(self):
         """测试：批量生产消息"""
-        _config = {"bootstrap_servers": ["localhost:9092"], "client_id": "test_producer"}
+        _config = {
+            "bootstrap_servers": ["localhost:9092"],
+            "client_id": "test_producer",
+        }
         producer = KafkaProducer(config)
 
         with patch.object(producer, "kafka_client") as mock_client:
@@ -134,7 +143,10 @@ class TestKafkaProducer:
     @pytest.mark.asyncio
     async def test_producer_error_handling(self):
         """测试：生产者错误处理"""
-        _config = {"bootstrap_servers": ["localhost:9092"], "client_id": "test_producer"}
+        _config = {
+            "bootstrap_servers": ["localhost:9092"],
+            "client_id": "test_producer",
+        }
         producer = KafkaProducer(config)
 
         with patch.object(producer, "kafka_client") as mock_client:
@@ -144,12 +156,15 @@ class TestKafkaProducer:
 
             _result = await producer.produce(message)
 
-            assert result["status"] == "failed"
+            assert _result["status"] == "failed"
             assert "error" in result
 
     def test_producer_connection_health(self):
         """测试：生产者连接健康检查"""
-        _config = {"bootstrap_servers": ["localhost:9092"], "client_id": "test_producer"}
+        _config = {
+            "bootstrap_servers": ["localhost:9092"],
+            "client_id": "test_producer",
+        }
         producer = KafkaProducer(config)
 
         with patch.object(producer, "kafka_client") as mock_client:
@@ -238,7 +253,7 @@ class TestKafkaConsumer:
 
             _result = await consumer.commit_offsets(offsets)
 
-            assert result is True
+            assert _result is True
             mock_client.commit.assert_called_once_with(offsets)
 
     @pytest.mark.asyncio
@@ -283,7 +298,7 @@ class TestStreamProcessor:
         """测试：处理消息"""
 
         def process_func(data):
-            data["processed"] = True
+            _data["processed"] = True
             return data
 
         _config = {
@@ -303,7 +318,7 @@ class TestStreamProcessor:
 
             _result = await processor.process_message(message)
 
-            assert result is True
+            assert _result is True
             # 验证输出消息
             mock_producer.produce.assert_called_once()
             args = mock_producer.produce.call_args[0]
@@ -321,7 +336,7 @@ class TestStreamProcessor:
         """测试：批量处理"""
 
         def process_func(data):
-            data["batch_processed"] = True
+            _data["batch_processed"] = True
             return data
 
         _config = {
@@ -366,7 +381,7 @@ class TestStreamProcessor:
         # 应该捕获错误并记录
         _result = await processor.process_message(message)
         # 根据实现，可能返回False或者将消息发送到死信队列
-        assert result in [False, True]  # 取决于错误处理策略
+        assert _result in [False, True]  # 取决于错误处理策略
 
 
 @pytest.mark.skipif(
@@ -546,7 +561,7 @@ class TestStreamingTasksIntegration:
 
             _result = await pipeline.process_message(message)
 
-            assert result is True
+            assert _result is True
             # 验证消息经过所有处理阶段
             mock_producer.produce.assert_called_once()
             output_msg = mock_producer.produce.call_args[0][0]

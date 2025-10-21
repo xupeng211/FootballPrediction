@@ -6,6 +6,7 @@
 import subprocess
 import os
 
+
 def main():
     """运行覆盖率检查"""
 
@@ -15,7 +16,9 @@ def main():
 
     # 运行单元测试覆盖率检查，排除有问题的测试
     cmd = [
-        "python", "-m", "pytest",
+        "python",
+        "-m",
+        "pytest",
         "tests/unit",
         "--cov=src",
         "--cov-report=term-missing",
@@ -26,7 +29,7 @@ def main():
         "--ignore=tests/unit/test_database_connection_functional.py",  # 已知错误
         "--ignore=tests/unit/services/test_manager_extended.py",  # 已知错误
         "-q",
-        "--tb=no"  # 不显示错误详情
+        "--tb=no",  # 不显示错误详情
     ]
 
     print("🚀 运行快速覆盖率检查...")
@@ -40,11 +43,12 @@ def main():
     result = subprocess.run(cmd, env=env, capture_output=False)
 
     # 获取最后的覆盖率行
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("覆盖率报告:")
-    print("="*60)
+    print("=" * 60)
 
     return result.returncode == 0
+
 
 if __name__ == "__main__":
     success = main()

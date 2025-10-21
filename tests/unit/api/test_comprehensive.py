@@ -371,9 +371,9 @@ class TestAPIResponses:
             from src.api.facades import SuccessResponse
 
             response = SuccessResponse(
-                _data ={"id": 1, "name": "test"}, message="Success"
+                _data={"id": 1, "name": "test"}, message="Success"
             )
-            assert response.data["id"] == 1
+            assert response._data["id"] == 1
             assert response.message == "Success"
         except ImportError:
             pytest.skip("SuccessResponse not available")
@@ -525,7 +525,7 @@ class TestAPISecurity:
             from src.api.security import create_access_token, verify_token
 
             token = create_access_token(
-                _data ={"sub": "testuser"}, expires_delta=timedelta(minutes=30)
+                _data={"sub": "testuser"}, expires_delta=timedelta(minutes=30)
             )
             assert isinstance(token, str)
             assert len(token) > 0

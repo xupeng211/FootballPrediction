@@ -3,20 +3,24 @@
 
 import os
 
+
 def create_module_file(path, content):
     """创建模块文件"""
     dirname = os.path.dirname(path)
     if dirname and not os.path.exists(dirname):
         os.makedirs(dirname, exist_ok=True)
 
-    with open(path, 'w') as f:
+    with open(path, "w") as f:
         f.write(content)
     print(f"Created: {path}")
+
 
 # 需要创建的模块列表
 modules_to_create = [
     # Monitoring modules
-    ("src/monitoring/metrics_collector_enhanced_mod.py", '''
+    (
+        "src/monitoring/metrics_collector_enhanced_mod.py",
+        '''
 """Enhanced Metrics Collector - 简化版本"""
 
 from typing import Dict, Any
@@ -38,9 +42,11 @@ class EnhancedMetricsCollector:
     def add_metric(self, name: str, value: Any):
         """添加指标"""
         self.metrics[name] = value
-'''),
-
-    ("src/monitoring/alert_manager_mod.py", '''
+''',
+    ),
+    (
+        "src/monitoring/alert_manager_mod.py",
+        '''
 """Alert Manager - 简化版本"""
 
 from enum import Enum
@@ -86,10 +92,12 @@ class AlertManager:
     def get_active_alerts(self) -> List[Alert]:
         """获取活跃警报"""
         return self.alerts[-10:]  # 返回最近10个
-'''),
-
+''',
+    ),
     # Services modules
-    ("src/services/audit_service_mod.py", '''
+    (
+        "src/services/audit_service_mod.py",
+        '''
 """Audit Service - 简化版本"""
 
 from typing import Dict, Any, Optional
@@ -163,7 +171,8 @@ class AuditService:
     def get_events(self, limit: int = 100) -> List[AuditEvent]:
         """获取审计事件"""
         return self.events[-limit:]
-'''),
+''',
+    ),
 ]
 
 if __name__ == "__main__":

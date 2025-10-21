@@ -49,7 +49,7 @@ class TestDictUtilsComprehensive:
         """测试：覆盖现有嵌套值"""
         _data = {"a": {"b": {"c": 1}}}
         DictUtils.set_nested(data, "a.b.c", 999)
-        assert data["a"]["b"]["c"] == 999
+        assert _data["a"]["b"]["c"] == 999
 
     def test_set_nested_intermediate(self):
         """测试：设置中间路径的值"""
@@ -179,7 +179,7 @@ class TestDictUtilsComprehensive:
         _data = {"a": {"b": {"c": 1}}}
         path = ["a", "b", "c"]
         DictUtils.set_path(data, path, 999)
-        assert data["a"]["b"]["c"] == 999
+        assert _data["a"]["b"]["c"] == 999
 
     def test_set_path_root(self):
         """测试：设置根路径"""
@@ -273,15 +273,15 @@ class TestDictUtilsComprehensive:
         ]
         _result = DictUtils.group_by_key(data, "type")
         assert set(result.keys()) == {"fruit", "vegetable"}
-        assert len(result["fruit"]) == 3
-        assert len(result["vegetable"]) == 1
+        assert len(_result["fruit"]) == 3
+        assert len(_result["vegetable"]) == 1
 
     def test_deep_copy_dict(self):
         """测试：深拷贝字典"""
         _data = {"a": {"b": {"c": [1, 2, 3]}}}
         copy = DictUtils.deep_copy(data)
         # 修改原数据不应影响拷贝
-        data["a"]["b"]["c"].append(4)
+        _data["a"]["b"]["c"].append(4)
         assert copy["a"]["b"]["c"] == [1, 2, 3]
 
     # ==================== 边界条件测试 ====================
@@ -330,5 +330,5 @@ class TestDictUtilsComprehensive:
         dict2 = {f"key{i}": i * 2 for i in range(500, 1500)}
         _result = DictUtils.merge(dict1, dict2)
         assert len(result) == 1500
-        assert result["key100"] == 100  # 来自dict1
-        assert result["key1200"] == 2400  # 来自dict2
+        assert _result["key100"] == 100  # 来自dict1
+        assert _result["key1200"] == 2400  # 来自dict2

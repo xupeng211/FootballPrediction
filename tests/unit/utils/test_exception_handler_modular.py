@@ -78,12 +78,12 @@ def test_missing_value_handler():
 
     assert handler.db_manager is not None
     assert handler.config is not None
-    assert handler.config["strategy"] == "historical_average"
+    assert handler._config["strategy"] == "historical_average"
 
     # 测试配置更新
     new_config = {"lookback_days": 60}
     handler.update_config(new_config)
-    assert handler.config["lookback_days"] == 60
+    assert handler._config["lookback_days"] == 60
 
 
 def test_suspicious_odds_handler():
@@ -131,7 +131,7 @@ def test_invalid_data_handler():
 
     assert handler.db_manager is not None
     assert handler.config is not None
-    assert handler.config["batch_size"] == 100
+    assert handler._config["batch_size"] == 100
 
 
 @pytest.mark.asyncio
@@ -247,13 +247,13 @@ async def test_exception_handler_methods():
         assert _result == [{"id": 1}]
 
         _result = await handler.handle_suspicious_odds([{}])
-        assert result["total_processed"] == 1
+        assert _result["total_processed"] == 1
 
         _result = await handler.handle_invalid_data("matches", [{}], "invalid")
-        assert result["logged_count"] == 1
+        assert _result["logged_count"] == 1
 
         _result = await handler.get_handling_statistics()
-        assert result["total_issues"] == 0
+        assert _result["total_issues"] == 0
 
 
 def test_urgency_score_calculation():

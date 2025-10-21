@@ -26,7 +26,7 @@ class TestUtilsFunctionality:
             _result = get_current_time()
             assert isinstance(result, datetime)
             # 检查时间是否合理（不能是未来时间）
-            assert result <= datetime.now()
+            assert _result <= datetime.now()
         except ImportError:
             pytest.skip("Time utils not available")
         except Exception:

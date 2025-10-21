@@ -93,7 +93,7 @@ async def test_observer_subscription(test_observer, system_subject):
     event = ObservableEvent(
         event_type=ObservableEventType.METRIC_UPDATE,
         source="test",
-        _data ={"metric_name": "cpu", "metric_value": 80},
+        _data={"metric_name": "cpu", "metric_value": 80},
     )
 
     # 通知观察者
@@ -130,7 +130,7 @@ async def test_metrics_observer():
     event = ObservableEvent(
         event_type=ObservableEventType.METRIC_UPDATE,
         source="test",
-        _data ={
+        _data={
             "metric_name": "cpu_usage",
             "metric_value": 75.5,
             "metric_type": "gauge",
@@ -164,7 +164,7 @@ async def test_alerting_observer(alerting_observer):
     event = ObservableEvent(
         event_type=ObservableEventType.ERROR_OCCURRED,
         source="test",
-        _data ={"error_count": 10},
+        _data={"error_count": 10},
     )
 
     # 处理事件
@@ -378,7 +378,7 @@ async def test_performance_observer():
         event = ObservableEvent(
             event_type=ObservableEventType.PREDICTION_COMPLETED,
             source="test",
-            _data ={"response_time_ms": 100 + i * 10},
+            _data={"response_time_ms": 100 + i * 10},
         )
         await observer.update(event)
 

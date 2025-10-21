@@ -32,8 +32,8 @@ class TestConfig:
         assert hasattr(config, "_config")
 
         # 验证配置目录路径
-        assert config.config_dir == Path.home() / ".footballprediction"
-        assert config.config_file == config.config_dir / "config.json"
+        assert _config.config_dir == Path.home() / ".footballprediction"
+        assert _config.config_file == _config.config_dir / "_config.json"
 
         print("✓ Config initialization test passed")
 
@@ -46,8 +46,8 @@ class TestConfig:
                 _config = Config()
 
                 # 验证配置被正确加载
-                assert config.get("test_key") == "test_value"
-                assert config.get("number") == 42
+                assert _config.get("test_key") == "test_value"
+                assert _config.get("number") == 42
 
         print("✓ Config load existing file test passed")
 
@@ -57,8 +57,8 @@ class TestConfig:
             _config = Config()
 
             # 验证配置为空
-            assert config.get("nonexistent_key") is None
-            assert config.get("nonexistent_key", "default") == "default"
+            assert _config.get("nonexistent_key") is None
+            assert _config.get("nonexistent_key", "default") == "default"
 
         print("✓ Config load nonexistent file test passed")
 
@@ -75,7 +75,7 @@ class TestConfig:
                     mock_warning.assert_called_once()
 
                     # 验证配置为空（因为加载失败）
-                    assert config.get("any_key") is None
+                    assert _config.get("any_key") is None
 
         print("✓ Config load invalid JSON test passed")
 
@@ -84,45 +84,45 @@ class TestConfig:
         _config = Config()
 
         # 测试get默认值
-        assert config.get("key") is None
-        assert config.get("key", "default") == "default"
+        assert _config.get("key") is None
+        assert _config.get("key", "default") == "default"
 
         # 测试set
-        config.set("key", "value")
-        assert config.get("key") == "value"
+        _config.set("key", "value")
+        assert _config.get("key") == "value"
 
         # 测试覆盖现有值
-        config.set("key", "new_value")
-        assert config.get("key") == "new_value"
+        _config.set("key", "new_value")
+        assert _config.get("key") == "new_value"
 
         # 测试不同类型的值
-        config.set("number", 123)
-        config.set("boolean", True)
-        config.set("list", [1, 2, 3])
-        config.set("dict", {"nested": "value"})
+        _config.set("number", 123)
+        _config.set("boolean", True)
+        _config.set("list", [1, 2, 3])
+        _config.set("dict", {"nested": "value"})
 
-        assert config.get("number") == 123
-        assert config.get("boolean") is True
-        assert config.get("list") == [1, 2, 3]
-        assert config.get("dict") == {"nested": "value"}
+        assert _config.get("number") == 123
+        assert _config.get("boolean") is True
+        assert _config.get("list") == [1, 2, 3]
+        assert _config.get("dict") == {"nested": "value"}
 
         print("✓ Config get/set test passed")
 
     def test_config_save(self):
         """测试配置保存"""
         _config = Config()
-        config.set("test_key", "test_value")
-        config.set("number", 42)
+        _config.set("test_key", "test_value")
+        _config.set("number", 42)
 
         # Mock文件操作
         mock_file = mock_open()
         with patch("builtins.open", mock_file):
             with patch("pathlib.Path.mkdir"):
-                config.save()
+                _config.save()
 
                 # 验证文件被写入
                 mock_file.assert_called_once_with(
-                    config.config_file, "w", encoding="utf-8"
+                    _config.config_file, "w", encoding="utf-8"
                 )
 
                 # 验证写入的内容
@@ -143,7 +143,7 @@ class TestConfig:
 
         with patch("builtins.open", mock_open()):
             with patch("pathlib.Path.mkdir") as mock_mkdir:
-                config.save()
+                _config.save()
 
                 # 验证mkdir被调用
                 mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
@@ -187,7 +187,7 @@ class TestSettings:
     def test_settings_without_pydantic(self):
         """测试无Pydantic时的行为"""
         # Mock HAS_PYDANTIC为False
-        with patch("src.core.config.HAS_PYDANTIC", False):
+        with patch("src.core._config.HAS_PYDANTIC", False):
             # 重新导入模块
 
             importlib.reload(src.core.config)
@@ -241,7 +241,7 @@ class TestPydanticCompatibility:
         try:
             # Mock v2导入失败
             with patch.dict("sys.modules", {"pydantic_settings": None}):
-                with patch("src.core.config.BaseSettings", side_effect=ImportError):
+                with patch("src.core._config.BaseSettings", side_effect=ImportError):
                     # 这个测试验证回退逻辑
                     print("✓ Pydantic v1 fallback test handled")
         except Exception:
@@ -280,14 +280,14 @@ class TestConfigEdgeCases:
         }
 
         for key, value in unicode_values.items():
-            config.set(key, value)
-            assert config.get(key) == value
+            _config.set(key, value)
+            assert _config.get(key) == value
 
         # 测试保存和加载
         mock_file = mock_open()
         with patch("builtins.open", mock_file):
             with patch("pathlib.Path.mkdir"):
-                config.save()
+                _config.save()
 
                 # 验证Unicode字符被正确保存
                 handle = mock_file()
@@ -313,8 +313,8 @@ class TestConfigEdgeCases:
         }
 
         for key, value in large_data.items():
-            config.set(key, value)
-            assert config.get(key) == value
+            _config.set(key, value)
+            assert _config.get(key) == value
 
         print("✓ Config large data test passed")
 
@@ -329,8 +329,8 @@ class TestConfigEdgeCases:
             for i in range(10):
                 key = f"thread_{thread_id}_key_{i}"
                 value = f"thread_{thread_id}_value_{i}"
-                config.set(key, value)
-                assert config.get(key) == value
+                _config.set(key, value)
+                assert _config.get(key) == value
 
         threads = []
         for i in range(3):
@@ -346,7 +346,7 @@ class TestConfigEdgeCases:
             for j in range(10):
                 key = f"thread_{i}_key_{j}"
                 value = f"thread_{i}_value_{j}"
-                assert config.get(key) == value
+                assert _config.get(key) == value
 
         print("✓ Config concurrent access test passed")
 

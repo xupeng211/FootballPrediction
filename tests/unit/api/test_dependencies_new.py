@@ -47,9 +47,9 @@ class TestGetCurrentUser:
 
             _result = await get_current_user(mock_credentials)
 
-            assert result["sub"] == "user123"
-            assert result["username"] == "testuser"
-            assert result["email"] == "test@example.com"
+            assert _result["sub"] == "user123"
+            assert _result["username"] == "testuser"
+            assert _result["email"] == "test@example.com"
 
     @pytest.mark.asyncio
     async def test_get_current_user_invalid_token(self):
@@ -138,7 +138,7 @@ class TestVerifyAdminPermission:
         # 如果函数存在，测试它
         if "verify_admin_permission" in globals():
             _result = await verify_admin_permission(admin_user)
-            assert result is admin_user
+            assert _result is admin_user
 
     @pytest.mark.asyncio
     async def test_verify_admin_non_admin(self):
@@ -294,7 +294,7 @@ class TestDependenciesIntegration:
             # 验证所有调用都成功
             assert len(results) == 5
             for result in results:
-                assert result["username"] == "testuser"
+                assert _result["username"] == "testuser"
 
 
 # 如果模块不可用，添加一个占位测试

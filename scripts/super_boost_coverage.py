@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import List, Dict, Tuple
 import subprocess
 
+
 class CoverageBooster:
     """覆盖率提升器"""
 
@@ -74,106 +75,125 @@ class CoverageBooster:
     def analyze_module_structure(self, file_path: str) -> Dict:
         """深度分析模块结构"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             tree = ast.parse(content)
 
             analysis = {
-                'classes': [],
-                'functions': [],
-                'async_functions': [],
-                'properties': [],
-                'methods': {},
-                'constants': [],
-                'imports': [],
-                'decorators': [],
-                'exceptions': [],
-                'context_managers': []
+                "classes": [],
+                "functions": [],
+                "async_functions": [],
+                "properties": [],
+                "methods": {},
+                "constants": [],
+                "imports": [],
+                "decorators": [],
+                "exceptions": [],
+                "context_managers": [],
             }
 
             # 分析AST
             for node in ast.walk(tree):
                 if isinstance(node, ast.ClassDef):
                     class_info = {
-                        'name': node.name,
-                        'bases': [base.id if hasattr(base, 'id') else str(base) for base in node.bases],
-                        'methods': [],
-                        'properties': []
+                        "name": node.name,
+                        "bases": [
+                            base.id if hasattr(base, "id") else str(base)
+                            for base in node.bases
+                        ],
+                        "methods": [],
+                        "properties": [],
                     }
 
                     for item in node.body:
                         if isinstance(item, ast.FunctionDef):
                             method_info = {
-                                'name': item.name,
-                                'args': [arg.arg for arg in item.args.args],
-                                'is_async': isinstance(item, ast.AsyncFunctionDef),
-                                'decorators': [d.id if hasattr(d, 'id') else str(d) for d in item.decorator_list]
+                                "name": item.name,
+                                "args": [arg.arg for arg in item.args.args],
+                                "is_async": isinstance(item, ast.AsyncFunctionDef),
+                                "decorators": [
+                                    d.id if hasattr(d, "id") else str(d)
+                                    for d in item.decorator_list
+                                ],
                             }
-                            class_info['methods'].append(method_info)
-                        elif isinstance(item, ast.AnnAssign) and isinstance(item.target, ast.Name):
-                            class_info['properties'].append(item.target.id)
+                            class_info["methods"].append(method_info)
+                        elif isinstance(item, ast.AnnAssign) and isinstance(
+                            item.target, ast.Name
+                        ):
+                            class_info["properties"].append(item.target.id)
 
-                    analysis['classes'].append(class_info)
-                    analysis['methods'][node.name] = class_info['methods']
+                    analysis["classes"].append(class_info)
+                    analysis["methods"][node.name] = class_info["methods"]
 
-                elif isinstance(node, ast.FunctionDef) and not any(isinstance(parent, ast.ClassDef) for parent in ast.walk(tree) if hasattr(parent, 'body') and node in parent.body):
+                elif isinstance(node, ast.FunctionDef) and not any(
+                    isinstance(parent, ast.ClassDef)
+                    for parent in ast.walk(tree)
+                    if hasattr(parent, "body") and node in parent.body
+                ):
                     func_info = {
-                        'name': node.name,
-                        'args': [arg.arg for arg in node.args.args],
-                        'is_async': isinstance(node, ast.AsyncFunctionDef),
-                        'decorators': [d.id if hasattr(d, 'id') else str(d) for d in node.decorator_list]
+                        "name": node.name,
+                        "args": [arg.arg for arg in node.args.args],
+                        "is_async": isinstance(node, ast.AsyncFunctionDef),
+                        "decorators": [
+                            d.id if hasattr(d, "id") else str(d)
+                            for d in node.decorator_list
+                        ],
                     }
-                    if func_info['is_async']:
-                        analysis['async_functions'].append(func_info)
+                    if func_info["is_async"]:
+                        analysis["async_functions"].append(func_info)
                     else:
-                        analysis['functions'].append(func_info)
+                        analysis["functions"].append(func_info)
 
                 elif isinstance(node, ast.Assign):
                     for target in node.targets:
                         if isinstance(target, ast.Name) and target.id.isupper():
-                            analysis['constants'].append(target.id)
+                            analysis["constants"].append(target.id)
 
                 elif isinstance(node, ast.Import):
                     for alias in node.names:
-                        analysis['imports'].append(alias.name)
+                        analysis["imports"].append(alias.name)
 
                 elif isinstance(node, ast.ImportFrom):
                     module = node.module or ""
                     for alias in node.names:
-                        analysis['imports'].append(f"{module}.{alias.name}")
+                        analysis["imports"].append(f"{module}.{alias.name}")
 
                 elif isinstance(node, ast.Raise):
-                    analysis['exceptions'].append("raise")
+                    analysis["exceptions"].append("raise")
 
                 elif isinstance(node, ast.With):
-                    analysis['context_managers'].append("with")
+                    analysis["context_managers"].append("with")
 
             # 检查特殊模式
-            analysis['has_dataclass'] = '@dataclass' in content
-            analysis['has_type_hints'] = 'typing.' in content or ':' in content
-            analysis['has_logging'] = 'logging' in content or 'logger' in content
-            analysis['has_validation'] = 'validate' in content or 'Check' in content
-            analysis['has_error_handling'] = analysis['exceptions'] or 'try:' in content
-            analysis['has_async'] = analysis['async_functions'] or 'async def' in content
-            analysis['has_decorators'] = '@' in content
+            analysis["has_dataclass"] = "@dataclass" in content
+            analysis["has_type_hints"] = "typing." in content or ":" in content
+            analysis["has_logging"] = "logging" in content or "logger" in content
+            analysis["has_validation"] = "validate" in content or "Check" in content
+            analysis["has_error_handling"] = analysis["exceptions"] or "try:" in content
+            analysis["has_async"] = (
+                analysis["async_functions"] or "async def" in content
+            )
+            analysis["has_decorators"] = "@" in content
 
             return analysis
 
         except Exception as e:
             print(f"  ⚠️  分析失败 {file_path}: {e}")
             return {
-                'classes': [],
-                'functions': [],
-                'async_functions': [],
-                'constants': [],
-                'imports': [],
-                'has_error_handling': False,
-                'has_async': False,
-                'has_decorators': False
+                "classes": [],
+                "functions": [],
+                "async_functions": [],
+                "constants": [],
+                "imports": [],
+                "has_error_handling": False,
+                "has_async": False,
+                "has_decorators": False,
             }
 
-    def generate_comprehensive_test(self, module_name: str, file_path: str, analysis: Dict) -> str:
+    def generate_comprehensive_test(
+        self, module_name: str, file_path: str, analysis: Dict
+    ) -> str:
         """生成全面的测试"""
         module_import = module_name.replace("/", ".")
 
@@ -208,15 +228,15 @@ except ImportError as e:
 '''
 
         # 为每个类生成测试
-        for cls in analysis['classes']:
+        for cls in analysis["classes"]:
             test_content += self.generate_class_tests(cls, module_import, analysis)
 
         # 为每个函数生成测试
-        for func in analysis['functions']:
+        for func in analysis["functions"]:
             test_content += self.generate_function_tests(func, module_import)
 
         # 为每个异步函数生成测试
-        for func in analysis['async_functions']:
+        for func in analysis["async_functions"]:
             test_content += self.generate_async_function_tests(func, module_import)
 
         # 生成通用测试
@@ -239,17 +259,17 @@ class TestModuleIntegration:
 '''
 
         # 添加常量测试
-        for const in analysis.get('constants', [])[:5]:  # 只测试前5个
-            test_content += f'''
+        for const in analysis.get("constants", [])[:5]:  # 只测试前5个
+            test_content += f"""
         try:
             assert hasattr(IMPORT_MODULE, '{const}')
         except AttributeError:
             # Constant might not be exported
             pass
-'''
+"""
 
         # 添加特殊测试
-        if analysis.get('has_logging'):
+        if analysis.get("has_logging"):
             test_content += '''
     def test_logging_configuration(self):
         """Test logging is properly configured"""
@@ -263,7 +283,7 @@ class TestModuleIntegration:
             mock_info.assert_called_once()
 '''
 
-        if analysis.get('has_error_handling'):
+        if analysis.get("has_error_handling"):
             test_content += '''
     def test_error_handling(self):
         """Test error handling scenarios"""
@@ -274,7 +294,7 @@ class TestModuleIntegration:
             raise ValueError("Test exception")
 '''
 
-        if analysis.get('has_async'):
+        if analysis.get("has_async"):
             test_content += '''
     @pytest.mark.asyncio
     async def test_async_functionality(self):
@@ -324,9 +344,11 @@ class TestModuleIntegration:
 
         return test_content
 
-    def generate_class_tests(self, cls: Dict, module_import: str, analysis: Dict) -> str:
+    def generate_class_tests(
+        self, cls: Dict, module_import: str, analysis: Dict
+    ) -> str:
         """为类生成测试"""
-        class_name = cls['name']
+        class_name = cls["name"]
 
         test_content = f'''
 
@@ -385,9 +407,9 @@ class Test{class_name}:
 '''
 
         # 为每个方法生成测试
-        for method in cls.get('methods', []):
-            method_name = method['name']
-            if method_name.startswith('_'):
+        for method in cls.get("methods", []):
+            method_name = method["name"]
+            if method_name.startswith("_"):
                 continue  # Skip private methods
 
             test_content += f'''
@@ -403,7 +425,7 @@ class Test{class_name}:
 '''
 
             # 如果是异步方法
-            if method.get('is_async'):
+            if method.get("is_async"):
                 test_content += f'''
     @pytest.mark.asyncio
     async def test_{method_name}_async(self):
@@ -420,7 +442,7 @@ class Test{class_name}:
 '''
 
         # 测试属性
-        for prop in cls.get('properties', []):
+        for prop in cls.get("properties", []):
             test_content += f'''
     def test_property_{prop}(self):
         """Test property {prop}"""
@@ -438,7 +460,7 @@ class Test{class_name}:
 
     def generate_function_tests(self, func: Dict, module_import: str) -> str:
         """为函数生成测试"""
-        func_name = func['name']
+        func_name = func["name"]
 
         return f'''
 
@@ -477,7 +499,7 @@ def test_{func_name}_with_args(self):
 
     def generate_async_function_tests(self, func: Dict, module_import: str) -> str:
         """为异步函数生成测试"""
-        func_name = func['name']
+        func_name = func["name"]
 
         return f'''
 
@@ -501,12 +523,20 @@ async def test_{func_name}_async(self):
         """运行覆盖率测试"""
         try:
             subprocess.run(
-                ["python", "-m", "pytest", "tests/unit/", "--cov=src", "--cov-report=json", "-q"],
+                [
+                    "python",
+                    "-m",
+                    "pytest",
+                    "tests/unit/",
+                    "--cov=src",
+                    "--cov-report=json",
+                    "-q",
+                ],
                 capture_output=True,
                 text=True,
-                timeout=180
+                timeout=180,
             )
-        except:
+        except Exception:
             pass
 
     def boost_coverage(self):
@@ -543,10 +573,12 @@ async def test_{func_name}_async(self):
             test_path.parent.mkdir(parents=True, exist_ok=True)
 
             # 生成测试
-            test_content = self.generate_comprehensive_test(module_name, file_path, analysis)
+            test_content = self.generate_comprehensive_test(
+                module_name, file_path, analysis
+            )
 
             # 写入文件
-            with open(test_path, 'w', encoding='utf-8') as f:
+            with open(test_path, "w", encoding="utf-8") as f:
                 f.write(test_content)
 
             print(f"  📝 创建测试: tests/unit/{module_name}_test.py")
@@ -561,7 +593,7 @@ async def test_{func_name}_async(self):
 
     def create_run_script(self):
         """创建快速运行脚本"""
-        script_content = '''#!/bin/bash
+        script_content = """#!/bin/bash
 # 快速运行新创建的测试
 
 echo "🧪 运行新创建的测试..."
@@ -578,10 +610,10 @@ echo "  make coverage-local"
 echo ""
 echo "提升更多覆盖率:"
 echo "  python scripts/super_boost_coverage.py"
-'''
+"""
 
         script_path = Path("scripts/run_new_tests_batch.sh")
-        with open(script_path, 'w') as f:
+        with open(script_path, "w") as f:
             f.write(script_content)
 
         os.chmod(script_path, 0o755)
@@ -598,7 +630,7 @@ echo "  python scripts/super_boost_coverage.py"
                 ["python", "-m", "pytest", str(test_file), "-v", "--tb=no", "-q"],
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
             if result.returncode == 0 or "passed" in result.stdout:

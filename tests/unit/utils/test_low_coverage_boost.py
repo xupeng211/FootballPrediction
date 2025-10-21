@@ -76,7 +76,7 @@ class TestConfigLoaderModule:
             # 测试设置值
             _result = ConfigLoader.set_config_value("test_key", "test_value")
             # 可能返回None或其他值
-            assert result is None or isinstance(result, (bool, dict, str))
+            assert _result is None or isinstance(result, (bool, dict, str))
         except ImportError:
             pytest.skip("ConfigLoader not available")
 
@@ -87,7 +87,7 @@ class TestConfigLoaderModule:
 
             _result = ConfigLoader.reload_config()
             # 可能返回None或配置字典
-            assert result is None or isinstance(result, dict)
+            assert _result is None or isinstance(result, dict)
         except ImportError:
             pytest.skip("ConfigLoader not available")
 
@@ -421,7 +421,7 @@ class TestFileUtilsModule:
 
             try:
                 _result = FileUtils.write_json_file(test_data, tmpfile_path)
-                assert result is True
+                assert _result is True
             finally:
                 os.unlink(tmpfile_path)
         except ImportError:
@@ -659,7 +659,7 @@ class TestWarningFiltersModule:
             # 调用过滤函数
             _result = WarningFilters.filter_deprecation_warnings()
             # 可能返回None或布尔值
-            assert result is None or isinstance(result, bool)
+            assert _result is None or isinstance(result, bool)
         except ImportError:
             pytest.skip("WarningFilters not available")
 
@@ -669,7 +669,7 @@ class TestWarningFiltersModule:
             from src.utils.warning_filters import WarningFilters
 
             _result = WarningFilters.filter_import_warnings()
-            assert result is None or isinstance(result, bool)
+            assert _result is None or isinstance(result, bool)
         except ImportError:
             pytest.skip("WarningFilters not available")
 
@@ -679,7 +679,7 @@ class TestWarningFiltersModule:
             from src.utils.warning_filters import WarningFilters
 
             _result = WarningFilters.filter_user_warnings()
-            assert result is None or isinstance(result, bool)
+            assert _result is None or isinstance(result, bool)
         except ImportError:
             pytest.skip("WarningFilters not available")
 
@@ -689,7 +689,7 @@ class TestWarningFiltersModule:
             from src.utils.warning_filters import WarningFilters
 
             _result = WarningFilters.setup_warnings()
-            assert result is None or isinstance(result, bool)
+            assert _result is None or isinstance(result, bool)
         except ImportError:
             pytest.skip("WarningFilters not available")
 
@@ -702,6 +702,6 @@ class TestWarningFiltersModule:
             # 如果有自定义过滤方法
             if hasattr(WarningFilters, "filter_custom_warnings"):
                 _result = WarningFilters.filter_custom_warnings()
-                assert result is None or isinstance(result, bool)
+                assert _result is None or isinstance(result, bool)
         except ImportError:
             pytest.skip("WarningFilters not available")

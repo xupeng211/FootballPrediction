@@ -33,6 +33,6 @@ class TestPredictionEngine:
                 _result = engine.predict_match(
                     home_team="Team A", away_team="Team B", league="Test League"
                 )
-                assert result is not None
+                assert _result is not None
         except Exception:
             pytest.skip("predict_match method not available")

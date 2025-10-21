@@ -49,20 +49,20 @@ class MutationConfig:
 
     # Mutation thresholds
     THRESHOLDS = {
-        "overall": 75.0,      # Overall mutation score threshold
-        "critical": 85.0,     # Critical files mutation score threshold
-        "high": 70.0,         # High importance files threshold
-        "medium": 60.0,       # Medium importance files threshold
-        "low": 50.0,          # Low importance files threshold
+        "overall": 75.0,  # Overall mutation score threshold
+        "critical": 85.0,  # Critical files mutation score threshold
+        "high": 70.0,  # High importance files threshold
+        "medium": 60.0,  # Medium importance files threshold
+        "low": 50.0,  # Low importance files threshold
     }
 
     # Mutation testing options
     OPTIONS = {
-        "max_workers": 4,     # Number of parallel workers
-        "timeout": 30,        # Timeout per test in seconds
-        "reraise": False,     # Whether to reraise exceptions
+        "max_workers": 4,  # Number of parallel workers
+        "timeout": 30,  # Timeout per test in seconds
+        "reraise": False,  # Whether to reraise exceptions
         "incremental": True,  # Whether to use incremental testing
-        "cache_mutants": True, # Whether to cache mutant results
+        "cache_mutants": True,  # Whether to cache mutant results
     }
 
     # Test patterns to run for different file types

@@ -10,26 +10,29 @@ from pathlib import Path
 import subprocess
 import json
 
+
 def find_uncovered_modules():
     """找出未覆盖的模块"""
     print("🔍 分析测试覆盖率...\n")
 
     # 运行快速覆盖率测试（只收集数据，不生成详细报告）
     print("1. 运行覆盖率测试（仅单元测试）...")
-    result = subprocess.run(
+    subprocess.run(
         [
-            "python", "-m", "pytest",
+            "python",
+            "-m",
+            "pytest",
             "tests/unit/",
             "--cov=src",
             "--cov-report=json",
             "--cov-report=term-missing",
             "-q",  # 安静模式
             "--maxfail=10",  # 最多10个失败就停止
-            "-x"  # 遇到第一个失败就停止
+            "-x",  # 遇到第一个失败就停止
         ],
         capture_output=True,
         text=True,
-        timeout=120  # 2分钟超时
+        timeout=120,  # 2分钟超时
     )
 
     # 读取覆盖率报告
@@ -55,7 +58,7 @@ def find_uncovered_modules():
             "coverage": coverage_pct,
             "lines": metrics["summary"]["num_statements"],
             "missing": metrics["summary"]["missing_lines"],
-            "covered": metrics["summary"]["covered_lines"]
+            "covered": metrics["summary"]["covered_lines"],
         }
 
     # 按覆盖率排序
@@ -76,15 +79,17 @@ def find_uncovered_modules():
         else:
             color = "🟢"
 
-        print(f"{color} {module:<40} {info['coverage']:>7.1f}% {info['lines']:>7} {info['missing']:>7}")
+        print(
+            f"{color} {module:<40} {info['coverage']:>7.1f}% {info['lines']:>7} {info['missing']:>7}"
+        )
 
     # 重点分析0覆盖率的模块
     zero_coverage = [(m, i) for m, i in sorted_modules if i["coverage"] == 0]
     low_coverage = [(m, i) for m, i in sorted_modules if 0 < i["coverage"] < 50]
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print(f"🔴 零覆盖率模块 ({len(zero_coverage)}个):")
-    print("="*80)
+    print("=" * 80)
 
     for module, info in zero_coverage[:10]:  # 只显示前10个
         print(f"  • {module}")
@@ -95,17 +100,17 @@ def find_uncovered_modules():
     if len(zero_coverage) > 10:
         print(f"  ... 还有 {len(zero_coverage) - 10} 个模块")
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print(f"🟡 低覆盖率模块 (<50%) ({len(low_coverage)}个):")
-    print("="*80)
+    print("=" * 80)
 
     for module, info in low_coverage[:10]:  # 只显示前10个
         print(f"  • {module}: {info['coverage']:.1f}% ({info['missing']} 行未覆盖)")
 
     # 生成建议
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     print("💡 优化建议:")
-    print("="*80)
+    print("=" * 80)
 
     if zero_coverage:
         print("1. 优先为零覆盖率模块添加基础测试:")
@@ -129,15 +134,16 @@ def find_uncovered_modules():
         "total_coverage": total_coverage,
         "zero_coverage_modules": [m for m, _ in zero_coverage],
         "low_coverage_modules": [(m, i["coverage"]) for m, i in low_coverage],
-        "modules": modules
+        "modules": modules,
     }
 
     with open("reports/coverage_analysis.json", "w") as f:
         json.dump(analysis, f, indent=2)
 
-    print(f"\n📄 详细分析已保存到: reports/coverage_analysis.json")
+    print("\n📄 详细分析已保存到: reports/coverage_analysis.json")
 
     return analysis
+
 
 def generate_test_templates():
     """为未覆盖的模块生成测试模板"""
@@ -204,6 +210,7 @@ class Test{module.title().replace('.', '')}:
         print("所有模块都已有测试文件")
     else:
         print(f"\n生成了 {count} 个测试模板")
+
 
 if __name__ == "__main__":
     # 创建reports目录

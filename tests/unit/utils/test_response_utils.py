@@ -30,7 +30,7 @@ class TestResponseUtils:
         """测试API响应模型"""
         if hasattr(APIResponseModel, "__init__"):
             response = APIResponseModel(
-                success=True, message="OK", _data ={"test": "data"}
+                success=True, message="OK", _data={"test": "data"}
             )
             assert response.success is True
             assert response._data == {"test": "data"}

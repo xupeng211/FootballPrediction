@@ -20,7 +20,7 @@ def check_prerequisites():
 
     # 检查 Docker
     try:
-        result = subprocess.run(["docker", "--version"], check=True, capture_output=True)
+        subprocess.run(["docker", "--version"], check=True, capture_output=True)
         print("✅ Docker 已安装")
     except (subprocess.CalledProcessError, FileNotFoundError):
         print("❌ Docker 未安装或不在 PATH 中")
@@ -28,11 +28,13 @@ def check_prerequisites():
 
     # 检查 Docker Compose
     try:
-        result = subprocess.run(["docker-compose", "--version"], check=True, capture_output=True)
+        subprocess.run(["docker-compose", "--version"], check=True, capture_output=True)
         print("✅ Docker Compose 已安装")
     except (subprocess.CalledProcessError, FileNotFoundError):
         try:
-            result = subprocess.run(["docker", "compose", "version"], check=True, capture_output=True)
+            subprocess.run(
+                ["docker", "compose", "version"], check=True, capture_output=True
+            )
             print("✅ Docker Compose 已安装")
         except (subprocess.CalledProcessError, FileNotFoundError):
             print("❌ Docker Compose 未安装")
@@ -47,9 +49,7 @@ def setup_staging_environment():
 
     # 检查 Staging 环境是否已运行
     result = subprocess.run(
-        ["./scripts/manage_staging_env.sh", "status"],
-        capture_output=True,
-        text=True
+        ["./scripts/manage_staging_env.sh", "status"], capture_output=True, text=True
     )
 
     if "app" in result.stdout and "Up" in result.stdout:
@@ -57,9 +57,7 @@ def setup_staging_environment():
     else:
         print("📥 启动 Staging 环境...")
         result = subprocess.run(
-            ["./scripts/manage_staging_env.sh", "start"],
-            capture_output=True,
-            text=True
+            ["./scripts/manage_staging_env.sh", "start"], capture_output=True, text=True
         )
 
         if result.returncode != 0:
@@ -73,9 +71,7 @@ def setup_staging_environment():
     # 验证环境健康
     print("🏥 检查环境健康状态...")
     result = subprocess.run(
-        ["./scripts/manage_staging_env.sh", "health"],
-        capture_output=True,
-        text=True
+        ["./scripts/manage_staging_env.sh", "health"], capture_output=True, text=True
     )
 
     if result.returncode == 0:
@@ -106,7 +102,8 @@ def run_e2e_tests(test_type="all", tags=None, verbose=False):
         f"--junit-xml=reports/e2e_{timestamp}.xml",
         "--json-report",
         f"--json-report-file=reports/e2e_{timestamp}.json",
-        "-m", "e2e"
+        "-m",
+        "e2e",
     ]
 
     # 添加测试类型
@@ -161,16 +158,20 @@ def run_e2e_tests(test_type="all", tags=None, verbose=False):
 
     # 尝试解析 JSON 报告获取详细信息
     try:
-        with open(summary["json_report"], 'r') as f:
+        with open(summary["json_report"], "r") as f:
             json_data = json.load(f)
-            summary.update({
-                "total": json_data.get("summary", {}).get("total", 0),
-                "passed": json_data.get("summary", {}).get("passed", 0),
-                "failed": json_data.get("summary", {}).get("failed", 0),
-                "skipped": json_data.get("summary", {}).get("skipped", 0),
-                "error": json_data.get("summary", {}).get("error", 0),
-                "duration": json_data.get("summary", {}).get("duration", elapsed_time),
-            })
+            summary.update(
+                {
+                    "total": json_data.get("summary", {}).get("total", 0),
+                    "passed": json_data.get("summary", {}).get("passed", 0),
+                    "failed": json_data.get("summary", {}).get("failed", 0),
+                    "skipped": json_data.get("summary", {}).get("skipped", 0),
+                    "error": json_data.get("summary", {}).get("error", 0),
+                    "duration": json_data.get("summary", {}).get(
+                        "duration", elapsed_time
+                    ),
+                }
+            )
     except Exception as e:
         print(f"⚠️ 无法解析测试报告: {e}")
 
@@ -259,7 +260,7 @@ def generate_report(summary):
 *报告生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*
 """
 
-    with open(report_path, 'w') as f:
+    with open(report_path, "w") as f:
         f.write(report_content)
 
     print(f"✅ 报告已生成: {report_path}")
@@ -270,25 +271,26 @@ def generate_report(summary):
     # 打开浏览器查看报告（可选）
     try:
         import webbrowser
+
         webbrowser.open(f"file://{os.path.abspath(summary['html_report'])}")
-    except:
+    except Exception:
         pass
 
 
 def generate_failure_analysis(summary):
     """生成失败分析"""
-    if summary.get('failed', 0) == 0 and summary.get('error', 0) == 0:
+    if summary.get("failed", 0) == 0 and summary.get("error", 0) == 0:
         return "✅ 所有测试通过，无失败案例"
 
     analysis = []
 
-    if summary.get('failed', 0) > 0:
+    if summary.get("failed", 0) > 0:
         analysis.append(f"- **失败测试**: {summary['failed']} 个")
 
-    if summary.get('error', 0) > 0:
+    if summary.get("error", 0) > 0:
         analysis.append(f"- **错误测试**: {summary['error']} 个")
 
-    if summary.get('duration', 0) > 1800:  # 30分钟
+    if summary.get("duration", 0) > 1800:  # 30分钟
         analysis.append(f"- **执行时间过长**: {summary['duration']/60:.1f} 分钟")
 
     analysis.append("\n请查看详细的 HTML 报告获取具体失败原因。")
@@ -300,17 +302,17 @@ def generate_recommendations(summary):
     """生成改进建议"""
     recommendations = []
 
-    if not summary['success']:
+    if not summary["success"]:
         recommendations.append("- 🚨 优先修复失败的测试用例")
         recommendations.append("- 🔍 检查 Staging 环境配置和服务状态")
 
-    if summary.get('failed', 0) / max(summary.get('total', 1), 1) > 0.1:
+    if summary.get("failed", 0) / max(summary.get("total", 1), 1) > 0.1:
         recommendations.append("- 📈 修复失败测试以提高成功率")
 
-    if summary.get('duration', 0) > 600:  # 10分钟
+    if summary.get("duration", 0) > 600:  # 10分钟
         recommendations.append("- ⚡ 优化测试执行速度")
 
-    if summary.get('total', 0) < 20:
+    if summary.get("total", 0) < 20:
         recommendations.append("- 📝 增加更多 E2E 测试用例以覆盖更多场景")
 
     if not recommendations:
@@ -327,13 +329,13 @@ def update_history(summary):
 
     # 读取或创建历史文件
     if Path(history_path).exists():
-        with open(history_path, 'r') as f:
+        with open(history_path, "r") as f:
             content = f.read()
         # 在表格后添加新行
-        if '\n---\n\n' in content:
-            content = content.replace('\n---\n\n', f'\n{history_entry}---\n\n')
+        if "\n---\n\n" in content:
+            content = content.replace("\n---\n\n", f"\n{history_entry}---\n\n")
         else:
-            content += f'\n{history_entry}'
+            content += f"\n{history_entry}"
     else:
         content = f"""# E2E 测试历史记录
 
@@ -342,7 +344,7 @@ def update_history(summary):
 {history_entry}
 """
 
-    with open(history_path, 'w') as f:
+    with open(history_path, "w") as f:
         f.write(content)
 
 
@@ -352,11 +354,9 @@ def cleanup_environment():
 
     response = input("\n是否停止 Staging 环境？(y/N): ").strip().lower()
 
-    if response == 'y' or response == 'yes':
+    if response == "y" or response == "yes":
         result = subprocess.run(
-            ["./scripts/manage_staging_env.sh", "stop"],
-            capture_output=True,
-            text=True
+            ["./scripts/manage_staging_env.sh", "stop"], capture_output=True, text=True
         )
         if result.returncode == 0:
             print("✅ Staging 环境已停止")
@@ -374,28 +374,12 @@ def main():
         "--type",
         choices=["all", "smoke", "critical", "performance", "regression"],
         default="all",
-        help="测试类型 (default: all)"
+        help="测试类型 (default: all)",
     )
-    parser.add_argument(
-        "--tags",
-        nargs="*",
-        help="额外的 pytest 标签"
-    )
-    parser.add_argument(
-        "-v", "--verbose",
-        action="store_true",
-        help="详细输出"
-    )
-    parser.add_argument(
-        "--no-cleanup",
-        action="store_true",
-        help="测试后不清理环境"
-    )
-    parser.add_argument(
-        "--skip-setup",
-        action="store_true",
-        help="跳过环境设置"
-    )
+    parser.add_argument("--tags", nargs="*", help="额外的 pytest 标签")
+    parser.add_argument("-v", "--verbose", action="store_true", help="详细输出")
+    parser.add_argument("--no-cleanup", action="store_true", help="测试后不清理环境")
+    parser.add_argument("--skip-setup", action="store_true", help="跳过环境设置")
 
     args = parser.parse_args()
 
@@ -417,9 +401,7 @@ def main():
 
         # 运行测试
         success, summary = run_e2e_tests(
-            test_type=args.type,
-            tags=args.tags,
-            verbose=args.verbose
+            test_type=args.type, tags=args.tags, verbose=args.verbose
         )
 
         # 生成报告

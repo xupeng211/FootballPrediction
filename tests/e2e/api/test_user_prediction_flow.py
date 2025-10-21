@@ -47,7 +47,7 @@ class TestUserPredictionFlow:
             "password": user_data["password"],
         }
 
-        response = await api_client.post("/api/v1/auth/login", _data =login_data)
+        response = await api_client.post("/api/v1/auth/login", _data=login_data)
         assert response.status_code == 200, f"登录失败: {response.text}"
         login_info = response.json()
         assert "access_token" in login_info
@@ -182,9 +182,9 @@ class TestUserPredictionFlow:
 
         # 关键路径性能要求
         assert total_time < 10.0, f"完整流程耗时过长: {total_time:.2f}s"
-        assert performance_metrics.get_duration("create_prediction") < 2.0, (
-            "创建预测耗时过长"
-        )
+        assert (
+            performance_metrics.get_duration("create_prediction") < 2.0
+        ), "创建预测耗时过长"
 
     @pytest.mark.asyncio
     async def test_multiple_predictions_flow(
@@ -213,7 +213,7 @@ class TestUserPredictionFlow:
         admin_token = (
             await api_client.post(
                 "/api/v1/auth/login",
-                _data ={"username": "e2e_admin", "password": "E2EAdminPass123!"},
+                _data={"username": "e2e_admin", "password": "E2EAdminPass123!"},
             )
         ).json()["access_token"]
         admin_headers = {"Authorization": f"Bearer {admin_token}"}
@@ -435,7 +435,7 @@ class TestUserPredictionFlow:
         user_tokens = []
         for user in users:
             login_data = {"username": user["username"], "password": user["password"]}
-            response = await api_client.post("/api/v1/auth/login", _data =login_data)
+            response = await api_client.post("/api/v1/auth/login", _data=login_data)
             if response.status_code == 200:
                 user_tokens.append(response.json()["access_token"])
 
@@ -460,7 +460,7 @@ class TestUserPredictionFlow:
         admin_token = (
             await api_client.post(
                 "/api/v1/auth/login",
-                _data ={"username": "e2e_admin", "password": "E2EAdminPass123!"},
+                _data={"username": "e2e_admin", "password": "E2EAdminPass123!"},
             )
         ).json()["access_token"]
         admin_headers = {"Authorization": f"Bearer {admin_token}"}

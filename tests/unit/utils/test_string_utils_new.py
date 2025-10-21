@@ -260,7 +260,7 @@ class TestStringUtils:
         text = "A" * 10000
         _result = StringUtils.truncate(text, 100)
         assert len(result) == 100
-        assert result.endswith("...")
+        assert _result.endswith("...")
 
     def test_text_with_line_breaks_in_slugify(self):
         """测试：slugify处理换行"""

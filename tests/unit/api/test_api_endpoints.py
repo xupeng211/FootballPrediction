@@ -69,9 +69,11 @@ class TestHealthEndpoint:
         assert response.status_code == 200
 
         _data = response.json()
-        assert "status" in data
-        assert "timestamp" in data
-        assert "version" in data
+        assert "status" in _data
+
+        assert "timestamp" in _data
+
+        assert "version" in _data
 
     def test_health_check_with_details(self, client):
         """测试带详情的健康检查"""
@@ -79,10 +81,12 @@ class TestHealthEndpoint:
         assert response.status_code == 200
 
         _data = response.json()
-        assert "status" in data
-        assert "checks" in data
-        assert "database" in data["checks"]
-        assert "redis" in data["checks"]
+        assert "status" in _data
+
+        assert "checks" in _data
+
+        assert "database" in _data["checks"]
+        assert "redis" in _data["checks"]
 
     def test_liveness_probe(self, client):
         """测试存活探针"""
@@ -105,7 +109,7 @@ class TestHealthEndpoint:
         assert response.status_code == 503
 
         _data = response.json()
-        assert data["status"] == "unhealthy"
+        assert _data["status"] == "unhealthy"
 
 
 @pytest.mark.skipif(not API_AVAILABLE, reason=TEST_SKIP_REASON)
@@ -142,9 +146,10 @@ class TestPredictionEndpoints:
         assert response.status_code == 201
 
         _data = response.json()
-        assert data["match_id"] == 123
-        assert "prediction" in data
-        assert "confidence" in data
+        assert _data["match_id"] == 123
+        assert "prediction" in _data
+
+        assert "confidence" in _data
 
     def test_create_prediction_invalid_data(self, client):
         """测试创建预测 - 无效数据"""
@@ -175,8 +180,8 @@ class TestPredictionEndpoints:
         assert response.status_code == 200
 
         _data = response.json()
-        assert data["id"] == 1
-        assert data["match_id"] == 123
+        assert _data["id"] == 1
+        assert _data["match_id"] == 123
 
     def test_get_prediction_not_found(self, client):
         """测试获取不存在的预测"""
@@ -202,7 +207,7 @@ class TestPredictionEndpoints:
 
         _data = response.json()
         assert len(data) == 2
-        assert data[0]["match_id"] == 123
+        assert _data[0]["match_id"] == 123
 
     @patch("src.api.predictions.get_prediction_service")
     def test_update_prediction(self, mock_get_service, client):
@@ -251,7 +256,7 @@ class TestPredictionEndpoints:
         assert response.status_code == 200
 
         _data = response.json()
-        assert len(data["predictions"]) == 2
+        assert len(_data["predictions"]) == 2
 
 
 @pytest.mark.skipif(not API_AVAILABLE, reason=TEST_SKIP_REASON)
@@ -279,9 +284,11 @@ class TestDataEndpoints:
         assert response.status_code == 200
 
         _data = response.json()
-        assert "matches" in data
-        assert "total" in data
-        assert len(data["matches"]) == 2
+        assert "matches" in _data
+
+        assert "total" in _data
+
+        assert len(_data["matches"]) == 2
 
     @patch("src.api.data.get_match_service")
     def test_get_match(self, mock_get_service, client):
@@ -302,8 +309,8 @@ class TestDataEndpoints:
         assert response.status_code == 200
 
         _data = response.json()
-        assert data["id"] == 123
-        assert data["home_team"]["name"] == "Team A"
+        assert _data["id"] == 123
+        assert _data["home_team"]["name"] == "Team A"
 
     @patch("src.api.data.get_team_service")
     def test_get_teams(self, mock_get_service, client):
@@ -345,8 +352,8 @@ class TestDataEndpoints:
         assert response.status_code == 200
 
         _data = response.json()
-        assert data["team_id"] == 1
-        assert data["wins"] == 20
+        assert _data["team_id"] == 1
+        assert _data["wins"] == 20
 
     @patch("src.api.data.get_league_service")
     def test_get_league_standings(self, mock_get_service, client):
@@ -365,7 +372,7 @@ class TestDataEndpoints:
 
         _data = response.json()
         assert len(data) == 2
-        assert data[0]["position"] == 1
+        assert _data[0]["position"] == 1
 
     @patch("src.api.data.get_data_sync_service")
     def test_sync_data(self, mock_get_service, client):
@@ -385,8 +392,8 @@ class TestDataEndpoints:
         assert response.status_code == 200
 
         _data = response.json()
-        assert data["status"] == "success"
-        assert data["synced_matches"] == 100
+        assert _data["status"] == "success"
+        assert _data["synced_matches"] == 100
 
 
 @pytest.mark.skipif(not API_AVAILABLE, reason=TEST_SKIP_REASON)
@@ -413,8 +420,9 @@ class TestAuthentication:
             assert response.status_code == 200
 
             _data = response.json()
-            assert "token" in data
-            assert data["username"] == "testuser"
+            assert "token" in _data
+
+            assert _data["username"] == "testuser"
 
     def test_login_invalid_credentials(self, client):
         """测试无效凭据登录"""
@@ -477,8 +485,9 @@ class TestRateLimiting:
         assert response.status_code == 429
 
         _data = response.json()
-        assert "error" in data
-        assert "rate limit" in data["error"].lower()
+        assert "error" in _data
+
+        assert "rate limit" in _data["error"].lower()
 
     def test_rate_limit_headers(self, client):
         """测试速率限制头部"""
@@ -568,8 +577,9 @@ class TestErrorHandling:
         assert response.status_code == 404
 
         _data = response.json()
-        assert "error" in data
-        assert "Not Found" in data["error"]["message"]
+        assert "error" in _data
+
+        assert "Not Found" in _data["error"]["message"]
 
     def test_500_error(self, client):
         """测试500错误"""
@@ -584,7 +594,7 @@ class TestErrorHandling:
             assert response.status_code == 500
 
             _data = response.json()
-            assert "error" in data
+            assert "error" in _data
 
     def test_validation_error_format(self, client):
         """测试验证错误格式"""
@@ -594,8 +604,9 @@ class TestErrorHandling:
         assert response.status_code == 422
 
         _data = response.json()
-        assert "detail" in data
-        assert isinstance(data["detail"], list)
+        assert "detail" in _data
+
+        assert isinstance(_data["detail"], list)
 
     def test_cors_headers(self, client):
         """测试CORS头部"""
@@ -633,8 +644,8 @@ class TestPagination:
         assert response.status_code == 200
 
         _data = response.json()
-        assert len(data["matches"]) == 10
-        assert data["total"] == 100
+        assert len(_data["matches"]) == 10
+        assert _data["total"] == 100
 
     @patch("src.api.data.get_match_service")
     def test_pagination_last_page(self, mock_get_service, client):
@@ -654,8 +665,8 @@ class TestPagination:
         assert response.status_code == 200
 
         _data = response.json()
-        assert len(data["matches"]) == 10
-        assert data["matches"][0]["id"] == 91
+        assert len(_data["matches"]) == 10
+        assert _data["matches"][0]["id"] == 91
 
     @patch("src.api.data.get_match_service")
     def test_pagination_exceeded(self, mock_get_service, client):
@@ -670,7 +681,7 @@ class TestPagination:
         assert response.status_code == 200
 
         _data = response.json()
-        assert len(data["matches"]) == 0
+        assert len(_data["matches"]) == 0
 
     def test_pagination_links(self, client):
         """测试分页链接"""

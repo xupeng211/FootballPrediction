@@ -50,7 +50,7 @@ class MockStrategy(PredictionStrategy):
         confidence = 0.75
 
         return PredictionOutput(
-            _prediction =(home_goals, away_goals),
+            _prediction=(home_goals, away_goals),
             confidence=confidence,
             reasoning=f"Mock prediction based on form: {processed_input.home_team_form} vs {processed_input.away_team_form}",
         )
@@ -124,11 +124,11 @@ class TestPredictionStrategy:
 
         # 验证结果
         assert isinstance(result, PredictionOutput)
-        assert result.prediction is not None
+        assert _result.prediction is not None
         assert len(result.prediction) == 2
         assert isinstance(result.confidence, float)
         assert 0 <= result.confidence <= 1
-        assert result.reasoning is not None
+        assert _result.reasoning is not None
 
         # 验证所有步骤都被调用
         assert mock_strategy._validate_input_called is True
@@ -246,9 +246,9 @@ class TestPredictionStrategy:
             _result = await mock_strategy.predict_with_timing(valid_prediction_input)
 
         # 验证结果包含计时信息
-        assert result[0] is not None  # PredictionOutput
-        assert result[1] > 0  # 预测时间
-        assert result[1] < 1  # 合理的时间范围
+        assert _result[0] is not None  # PredictionOutput
+        assert _result[1] > 0  # 预测时间
+        assert _result[1] < 1  # 合理的时间范围
 
     def test_strategy_type_validation(self):
         """测试策略类型验证"""
@@ -288,7 +288,7 @@ class TestPredictionStrategy:
         assert len(results) == 5
         for result in results:
             assert isinstance(result, PredictionOutput)
-            assert result.prediction is not None
+            assert _result.prediction is not None
 
     @pytest.mark.asyncio
     async def test_error_handling_in_prediction(self):

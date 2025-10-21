@@ -154,7 +154,7 @@ class TestStringUtilsSlugify:
         text = "你好 世界"
         # 实际实现可能不处理Unicode
         _result = StringUtils.slugify(text)
-        assert result in ["-"]  # 可能的结果
+        assert _result in ["-"]  # 可能的结果
 
 
 @pytest.mark.skipif(
@@ -177,7 +177,7 @@ class TestStringUtilsCamelToSnake:
         """测试：全大写"""
         _result = StringUtils.camel_to_snake("API")
         # 实际实现可能返回原样
-        assert result in ["a_p_i", "api"]
+        assert _result in ["a_p_i", "api"]
 
     def test_camel_to_snake_pascal_case(self):
         """测试：帕斯卡命名"""
@@ -192,7 +192,7 @@ class TestStringUtilsCamelToSnake:
     def test_camel_to_snake_with_numbers(self):
         """测试：带数字"""
         _result = StringUtils.camel_to_snake("test123ABC")
-        assert result in ["test123_a_b_c", "test123abc"]
+        assert _result in ["test123_a_b_c", "test123abc"]
 
     def test_camel_to_snake_single_letter(self):
         """测试：单个字母"""
@@ -293,7 +293,7 @@ class TestStringUtilsCleanText:
         text = "Hello\u00a0World"  # \u00A0是non-breaking space
         # 实现可能不处理Unicode空格
         _result = StringUtils.clean_text(text)
-        assert result in ["Hello World", "Hello\u00a0World"]
+        assert _result in ["Hello World", "Hello\u00a0World"]
 
     def test_clean_text_multiple_lines(self):
         """测试：多行文本"""
@@ -343,7 +343,7 @@ class TestStringUtilsExtractNumbers:
         text = "Range: 10-20"
         _result = StringUtils.extract_numbers(text)
         # 实际的正则可能匹配10和20，或只匹配10
-        assert result in [[10.0, 20.0], [10.0]]
+        assert _result in [[10.0, 20.0], [10.0]]
 
     def test_extract_numbers_decimal_points(self):
         """测试：多个小数点"""
@@ -362,7 +362,7 @@ class TestStringUtilsExtractNumbers:
         text = "Value: 1.23e4"
         _result = StringUtils.extract_numbers(text)
         # 实现可能不支持科学计数法
-        assert result in [[1.23], [12300.0], []]
+        assert _result in [[1.23], [12300.0], []]
 
 
 @pytest.mark.skipif(

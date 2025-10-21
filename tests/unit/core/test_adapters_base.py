@@ -122,7 +122,7 @@ class TestAdapter:
                 return {"config": self.config}
 
         class ConfigurableAdapter(Adapter):
-            def __init__(self, adaptee, _config =None):
+            def __init__(self, adaptee, _config=None):
                 self._config = config or {}
                 super().__init__(adaptee)
 
@@ -148,7 +148,7 @@ class TestAdapter:
                 return {"metadata": {"version": "1.0", "type": "test"}}
 
         class MetaAdapter(Adapter):
-            def __init__(self, adaptee, _metadata =None):
+            def __init__(self, adaptee, _metadata=None):
                 self._metadata = metadata or {"version": "1.0", "type": "test"}
                 super().__init__(adaptee)
 

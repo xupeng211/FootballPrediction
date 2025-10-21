@@ -79,7 +79,7 @@ class PredictionFacade:
             await self._save_prediction(prediction, request.user_id)
 
             return PredictionResult(
-                _prediction =prediction,
+                _prediction=prediction,
                 confidence=prediction.get("confidence", 0.0),
                 value_assessment=value_assessment,
                 recommendations=recommendations,

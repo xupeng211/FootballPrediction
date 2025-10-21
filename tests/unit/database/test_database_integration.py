@@ -61,7 +61,7 @@ class TestDatabaseIntegration:
         """测试数据库连接"""
         with db_engine.connect() as conn:
             _result = conn.execute(text("SELECT 1 as test"))
-            assert result.scalar() == 1
+            assert _result.scalar() == 1
 
     def test_check_tables_exist(self, db_engine):
         """检查核心表是否存在"""

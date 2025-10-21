@@ -61,13 +61,13 @@ async def get_adapter_configs() -> Dict[str, Any]:
     configs = {}
     for name in adapter_factory.list_configs():
         _config = adapter_factory.get_config(name)
-        if config:
+        if _config:
             configs[name] = {
-                "type": config.adapter_type,
-                "enabled": config.enabled,
-                "priority": config.priority,
-                "rate_limits": config.rate_limits,
-                "cache_config": config.cache_config,
+                "type": _config.adapter_type,
+                "enabled": _config.enabled,
+                "priority": _config.priority,
+                "rate_limits": _config.rate_limits,
+                "cache_config": _config.cache_config,
             }
 
     groups = {}
@@ -100,8 +100,8 @@ async def load_adapter_config(config_data: Dict[str, Any]) -> Dict[str, str]:
             enabled=config_data.get("enabled", True),
             parameters=config_data.get("parameters", {}),
         )
-        adapter_factory._configs[config.name] = config
-        return {"message": f"适配器配置 {config.name} 已加载"}
+        adapter_factory._configs[_config.name] = _config
+        return {"message": f"适配器配置 {_config.name} 已加载"}
 
     return {"error": "缺少adapter_name"}
 

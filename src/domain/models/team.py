@@ -458,7 +458,7 @@ class Team:
         if data.get("updated_at"):
             data["updated_at"] = datetime.fromisoformat(data["updated_at"])
 
-        return cls(_stats =stats, form=form, **data)
+        return cls(_stats=stats, form=form, **data)
 
     def __str__(self) -> str:
         return f"{self.name} ({self.code or self.short_name}) - {self.rank}"

@@ -355,7 +355,7 @@ class TestLogUtils:
         }
 
         # 应用配置
-        logging.config.dictConfig(config)
+        logging._config.dictConfig(config)
 
         # 验证配置
         logger = logging.getLogger()

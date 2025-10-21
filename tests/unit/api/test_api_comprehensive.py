@@ -33,15 +33,15 @@ class TestAPIComprehensive:
         response = client.get("/api/health")
         assert response.status_code == 200
         _data = response.json()
-        assert data["status"] == "healthy"
-        assert "timestamp" in data
-        assert "service" in data
+        assert _data["status"] == "healthy"
+        assert "timestamp" in _data
+        assert "service" in _data
 
         # 测试健康路由端点
         response = client.get("/api/v1/health")
         assert response.status_code == 200
         _data = response.json()
-        assert "checks" in data or "status" in data
+        assert "checks" in _data or "status" in _data
 
     def test_api_documentation(self, client):
         """测试 API 文档端点"""
@@ -78,8 +78,8 @@ class TestAPIComprehensive:
         response = client.get("/api/test")
         assert response.status_code == 200
         _data = response.json()
-        assert "API is working!" in data["message"]
-        assert "timestamp" in data
+        assert "API is working!" in _data["message"]
+        assert "timestamp" in _data
 
     def test_error_handling(self, client):
         """测试错误处理"""
@@ -87,8 +87,9 @@ class TestAPIComprehensive:
         response = client.get("/nonexistent")
         assert response.status_code == 404
         _data = response.json()
-        assert "error" in data
-        assert data["error"]["type"] == "http_error"
+        assert "error" in _data
+
+        assert _data["error"]["type"] == "http_error"
 
         # 测试方法不允许
         response = client.post("/api/health")

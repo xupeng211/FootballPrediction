@@ -504,7 +504,7 @@ class TestFeatureExamplesAdvanced:
                     _result = await example_feature_validation(
                         valid_features, schema=valid_schema
                     )
-                    assert result["valid"] is True
+                    assert _result["valid"] is True
 
             # 运行异步测试
             import asyncio

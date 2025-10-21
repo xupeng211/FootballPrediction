@@ -35,7 +35,7 @@ def analyze_failed_tests():
         result = subprocess.run(
             cmd, capture_output=True, text=True, timeout=120, env=env
         )
-    except:
+    except Exception:
         # 如果没有安装，使用普通方式
         cmd = ["pytest", "-v", "--disable-warnings", "--tb=short"]
         result = subprocess.run(

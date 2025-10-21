@@ -2,23 +2,22 @@
 """
 Final coverage test script
 """
+
 import subprocess
 import sys
 import os
+
 
 def run_command(cmd, timeout=180):
     """运行命令并返回结果"""
     try:
         result = subprocess.run(
-            cmd,
-            shell=True,
-            capture_output=True,
-            text=True,
-            timeout=timeout
+            cmd, shell=True, capture_output=True, text=True, timeout=timeout
         )
         return result.returncode, result.stdout, result.stderr
     except subprocess.TimeoutExpired:
         return -1, "", "Command timed out"
+
 
 def main():
     """主函数"""
@@ -31,7 +30,7 @@ def main():
         "tests/unit/api/test_comprehensive.py",
         "tests/unit/tasks/test_tasks_basic.py",
         "tests/unit/core/test_di.py",
-        "tests/unit/utils/test_dict_utils.py"
+        "tests/unit/utils/test_dict_utils.py",
     ]
 
     cmd = f"pytest {' '.join(test_files)} --cov=src --cov-report=term-missing -q"
@@ -44,7 +43,7 @@ def main():
         print(out)
 
         # 提取覆盖率数字
-        lines = out.split('\n')
+        lines = out.split("\n")
         for line in lines:
             if "TOTAL" in line and "%" in line:
                 print(f"\n📊 Final coverage: {line}")
@@ -55,11 +54,12 @@ def main():
 
         # 尝试提取部分信息
         if "TOTAL" in out:
-            lines = out.split('\n')
+            lines = out.split("\n")
             for line in lines:
                 if "TOTAL" in line and "%" in line:
                     print(f"\n📊 Partial coverage: {line}")
                     break
+
 
 if __name__ == "__main__":
     main()
