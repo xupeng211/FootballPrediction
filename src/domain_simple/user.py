@@ -234,42 +234,42 @@ class User:
         )
 
         # 设置个人资料
-        user.first_name = data.get("first_name", "")
-        user.last_name = data.get("last_name", "")
-        user.avatar_url = data.get("avatar_url", "")
-        user.bio = data.get("bio", "")
+        _user.first_name = data.get("first_name", "")
+        _user.last_name = data.get("last_name", "")
+        _user.avatar_url = data.get("avatar_url", "")
+        _user.bio = data.get("bio", "")
 
         # 设置状态
-        user.is_active = data.get("is_active", True)
-        user.is_verified = data.get("is_verified", False)
+        _user.is_active = data.get("is_active", True)
+        _user.is_verified = data.get("is_verified", False)
 
         # 设置等级和成就
-        user.level = data.get("level", 1)
-        user.experience_points = data.get("experience_points", 0)
-        user.achievements = data.get("achievements", [])
+        _user.level = data.get("level", 1)
+        _user.experience_points = data.get("experience_points", 0)
+        _user.achievements = data.get("achievements", [])
 
         # 设置偏好
         if "preferences" in data:
             pref = data["preferences"]
-            user.preferences.favorite_teams = pref.get("favorite_teams", [])
-            user.preferences.favorite_leagues = pref.get("favorite_leagues", [])
-            user.preferences.notification_enabled = pref.get(
+            _user.preferences.favorite_teams = pref.get("favorite_teams", [])
+            _user.preferences.favorite_leagues = pref.get("favorite_leagues", [])
+            _user.preferences.notification_enabled = pref.get(
                 "notification_enabled", True
             )
-            user.preferences.email_notifications = pref.get("email_notifications", True)
-            user.preferences.language = pref.get("language", "zh-CN")
-            user.preferences.timezone = pref.get("timezone", "UTC+8")
-            user.preferences.odds_format = pref.get("odds_format", "decimal")
+            _user.preferences.email_notifications = pref.get("email_notifications", True)
+            _user.preferences.language = pref.get("language", "zh-CN")
+            _user.preferences.timezone = pref.get("timezone", "UTC+8")
+            _user.preferences.odds_format = pref.get("odds_format", "decimal")
 
         # 设置时间戳
         if data.get("created_at"):
-            user.created_at = datetime.fromisoformat(data["created_at"])
+            _user.created_at = datetime.fromisoformat(data["created_at"])
         if data.get("updated_at"):
-            user.updated_at = datetime.fromisoformat(data["updated_at"])
+            _user.updated_at = datetime.fromisoformat(data["updated_at"])
         if data.get("last_login"):
-            user.last_login = datetime.fromisoformat(data["last_login"])
+            _user.last_login = datetime.fromisoformat(data["last_login"])
 
-        return user
+        return _user
 
     def __str__(self) -> str:
         return f"User({self.username})"
@@ -315,7 +315,7 @@ class UserProfile:
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典"""
         return {
-            "user": self.user.to_dict(),
+            "user": self._user.to_dict(),
             "following_count": len(self.following),
             "followers_count": len(self.followers),
             "reputation_score": self.reputation_score,
