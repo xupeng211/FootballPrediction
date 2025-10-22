@@ -11,12 +11,14 @@ from typing import Dict, List, Optional
 
 # 测试导入
 import sys
-sys.path.insert(0, 'src')
+
+sys.path.insert(0, "src")
 
 try:
     from src.collectors.odds_collector import OddsCollector
     from src.database.models import OddsData, Bookmaker
     from src.utils.time_utils import utc_now
+
     ODDSCOLLECTOR_AVAILABLE = True
 except ImportError as e:
     print(f"Warning: Could not import OddsCollector: {e}")
@@ -30,11 +32,9 @@ class TestOddsCollector:
     @pytest.fixture
     def collector(self):
         """创建收集器实例"""
-        with patch('src.collectors.odds_collector.RedisManager'):
+        with patch("src.collectors.odds_collector.RedisManager"):
             collector = OddsCollector(
-                api_key="test_key",
-                base_url="https://api.test.odds.com",
-                timeout=30
+                api_key="test_key", base_url="https://api.test.odds.com", timeout=30
             )
             return collector
 
@@ -58,7 +58,7 @@ class TestOddsCollector:
             "away_win": 3.20,
             "over_under_2_5_over": 1.85,
             "over_under_2_5_under": 1.95,
-            "last_updated": "2024-01-01T15:30:00Z"
+            "last_updated": "2024-01-01T15:30:00Z",
         }
 
     @pytest.mark.asyncio
@@ -73,7 +73,7 @@ class TestOddsCollector:
         """测试收集比赛赔率"""
         match_id = 12345
 
-        with patch.object(collector, '_fetch_odds') as mock_fetch:
+        with patch.object(collector, "_fetch_odds") as mock_fetch:
             mock_fetch.return_value = sample_odds_data
 
             result = await collector.collect_match_odds(match_id)
@@ -86,7 +86,7 @@ class TestOddsCollector:
         """测试收集多个比赛赔率"""
         match_ids = [12345, 12346, 12347]
 
-        with patch.object(collector, '_fetch_odds') as mock_fetch:
+        with patch.object(collector, "_fetch_odds") as mock_fetch:
             mock_fetch.return_value = sample_odds_data
 
             results = await collector.collect_odds_batch(match_ids)
@@ -103,23 +103,22 @@ class TestOddsCollector:
             "bookmaker": "Bet365",
             "home_win": 2.15,
             "draw": 3.40,
-            "away_win": 3.20
+            "away_win": 3.20,
         }
 
         assert collector._validate_odds_data(valid_data) is True
 
         # 无效数据 - 缺少必需字段
-        invalid_data = {
-            "bookmaker": "Bet365",
-            "home_win": 2.15
-        }
+        invalid_data = {"bookmaker": "Bet365", "home_win": 2.15}
 
         assert collector._validate_odds_data(invalid_data) is False
 
     @pytest.mark.asyncio
-    async def test_save_odds_to_database(self, collector, mock_session, sample_odds_data):
+    async def test_save_odds_to_database(
+        self, collector, mock_session, sample_odds_data
+    ):
         """测试保存赔率到数据库"""
-        with patch('src.collectors.odds_collector.OddsData') as mock_odds_model:
+        with patch("src.collectors.odds_collector.OddsData") as mock_odds_model:
             mock_odds_instance = Mock()
             mock_odds_model.return_value = mock_odds_instance
 
@@ -145,12 +144,12 @@ class TestOddsCollector:
         """测试错误处理和重试"""
         match_id = 12345
 
-        with patch.object(collector, '_fetch_odds') as mock_fetch:
+        with patch.object(collector, "_fetch_odds") as mock_fetch:
             # 前两次失败，第三次成功
             mock_fetch.side_effect = [
                 Exception("Network error"),
                 Exception("API error"),
-                {"match_id": 12345, "home_win": 2.15}
+                {"match_id": 12345, "home_win": 2.15},
             ]
 
             result = await collector.collect_match_odds(match_id)
@@ -180,7 +179,7 @@ class TestOddsCollector:
         mock_session.execute.return_value.fetchall.return_value = [
             {"home_win": 2.10, "timestamp": "2024-01-01T10:00:00Z"},
             {"home_win": 2.15, "timestamp": "2024-01-01T11:00:00Z"},
-            {"home_win": 2.12, "timestamp": "2024-01-01T12:00:00Z"}
+            {"home_win": 2.12, "timestamp": "2024-01-01T12:00:00Z"},
         ]
 
         trends = await collector.get_odds_trends(match_id, mock_session)
@@ -194,8 +193,18 @@ class TestOddsCollector:
         """测试博彩公司排名"""
         odds_data = [
             {"bookmaker": "Bet365", "home_win": 2.15, "draw": 3.40, "away_win": 3.20},
-            {"bookmaker": "William Hill", "home_win": 2.20, "draw": 3.35, "away_win": 3.15},
-            {"bookmaker": "Paddy Power", "home_win": 2.12, "draw": 3.45, "away_win": 3.25}
+            {
+                "bookmaker": "William Hill",
+                "home_win": 2.20,
+                "draw": 3.35,
+                "away_win": 3.15,
+            },
+            {
+                "bookmaker": "Paddy Power",
+                "home_win": 2.12,
+                "draw": 3.45,
+                "away_win": 3.25,
+            },
         ]
 
         ranking = collector._calculate_bookmaker_ranking(odds_data)
@@ -221,12 +230,12 @@ class TestOddsCollector:
         """测试实时赔率更新"""
         match_id = 12345
 
-        with patch.object(collector, '_subscribe_live_odds') as mock_subscribe:
+        with patch.object(collector, "_subscribe_live_odds") as mock_subscribe:
             # 模拟实时赔率更新
             updates = [
                 {"home_win": 2.15, "timestamp": "2024-01-01T15:30:00Z"},
                 {"home_win": 2.12, "timestamp": "2024-01-01T15:31:00Z"},
-                {"home_win": 2.18, "timestamp": "2024-01-01T15:32:00Z"}
+                {"home_win": 2.18, "timestamp": "2024-01-01T15:32:00Z"},
             ]
 
             async def mock_updates():
@@ -278,7 +287,7 @@ class TestOddsCollector:
         """测试速率限制"""
         match_ids = list(range(10))
 
-        with patch.object(collector, '_fetch_odds') as mock_fetch:
+        with patch.object(collector, "_fetch_odds") as mock_fetch:
             mock_fetch.return_value = {"match_id": 0, "home_win": 2.15}
 
             start_time = asyncio.get_event_loop().time()

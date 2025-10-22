@@ -12,7 +12,7 @@ import sys
 import os
 
 # 添加src到路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../src"))
 
 from utils.dict_utils import DictUtils
 
@@ -110,20 +110,14 @@ class TestDictUtilsEnhanced:
         """测试复杂嵌套结构"""
         dict1 = {
             "level1": {
-                "level2": {
-                    "data": [1, 2, 3],
-                    "config": {"option1": True}
-                },
-                "other": "value1"
+                "level2": {"data": [1, 2, 3], "config": {"option1": True}},
+                "other": "value1",
             }
         }
         dict2 = {
             "level1": {
-                "level2": {
-                    "config": {"option2": False},
-                    "new_field": "added"
-                },
-                "new_other": "value2"
+                "level2": {"config": {"option2": False}, "new_field": "added"},
+                "new_other": "value2",
             }
         }
         result = DictUtils.deep_merge(dict1, dict2)
@@ -133,10 +127,10 @@ class TestDictUtilsEnhanced:
                 "level2": {
                     "data": [1, 2, 3],  # 保持原有
                     "config": {"option1": True, "option2": False},  # 合并
-                    "new_field": "added"  # 新增
+                    "new_field": "added",  # 新增
                 },
                 "other": "value1",  # 保持原有
-                "new_other": "value2"  # 新增
+                "new_other": "value2",  # 新增
             }
         }
         assert result == expected
@@ -170,11 +164,7 @@ class TestDictUtilsEnhanced:
 
     def test_flatten_dict_mixed_types(self):
         """测试混合类型扁平化"""
-        d = {
-            "a": 1,
-            "b": {"c": 2, "d": {"e": 3}},
-            "f": {"g": 4}
-        }
+        d = {"a": 1, "b": {"c": 2, "d": {"e": 3}}, "f": {"g": 4}}
         result = DictUtils.flatten_dict(d)
 
         expected = {"a": 1, "b.c": 2, "b.d.e": 3, "f.g": 4}
@@ -306,7 +296,11 @@ class TestDictUtilsEnhanced:
     def test_deep_merge_with_special_keys(self):
         """测试特殊键名"""
         dict1 = {"": "empty_key", "special-chars": "value1", "123numeric": "num1"}
-        dict2 = {"": "override_empty", "special-chars": "value2", "new.special": "value3"}
+        dict2 = {
+            "": "override_empty",
+            "special-chars": "value2",
+            "new.special": "value3",
+        }
 
         result = DictUtils.deep_merge(dict1, dict2)
 
@@ -314,7 +308,7 @@ class TestDictUtilsEnhanced:
             "": "override_empty",
             "special-chars": "value2",
             "123numeric": "num1",
-            "new.special": "value3"
+            "new.special": "value3",
         }
         assert result == expected
 
@@ -325,8 +319,14 @@ class TestDictUtilsEnhanced:
         import time
 
         # 创建中等大小字典
-        dict1 = {f"key_{i}": {"nested": f"value_{i}", "list": list(range(10))} for i in range(50)}
-        dict2 = {f"key_{i}": {"additional": f"extra_{i}", "set": {i, i+1, i+2}} for i in range(50)}
+        dict1 = {
+            f"key_{i}": {"nested": f"value_{i}", "list": list(range(10))}
+            for i in range(50)
+        }
+        dict2 = {
+            f"key_{i}": {"additional": f"extra_{i}", "set": {i, i + 1, i + 2}}
+            for i in range(50)
+        }
 
         start_time = time.time()
         result = DictUtils.deep_merge(dict1, dict2)
@@ -361,10 +361,10 @@ class TestDictUtilsEnhanced:
         data = {
             "config": {
                 "app": {"name": None, "version": "1.0"},
-                "database": {"host": "localhost", "port": None}
+                "database": {"host": "localhost", "port": None},
             },
             "features": {"feature1": True, "feature2": None},
-            "null_field": None  # 顶层None值
+            "null_field": None,  # 顶层None值
         }
 
         # 1. 过滤None值（只过滤顶层）
@@ -376,12 +376,7 @@ class TestDictUtilsEnhanced:
         assert "features" in filtered
 
         # 2. 与新配置合并
-        new_config = {
-            "config": {
-                "app": {"debug": True},
-                "cache": {"enabled": True}
-            }
-        }
+        new_config = {"config": {"app": {"debug": True}, "cache": {"enabled": True}}}
         merged = DictUtils.deep_merge(filtered, new_config)
 
         # 3. 扁平化
@@ -396,7 +391,7 @@ class TestDictUtilsEnhanced:
             "config.app.debug",
             "config.cache.enabled",
             "features.feature1",
-            "features.feature2"  # 嵌套的None保留
+            "features.feature2",  # 嵌套的None保留
         ]
 
         for key in expected_keys:

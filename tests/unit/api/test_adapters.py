@@ -81,7 +81,7 @@ class MockAdapter:
 
     async def get_teams(self, league_id=None):
         """获取球队数据"""
-        team = type('Team', (), {})()
+        team = type("Team", (), {})()
         team.id = "111"
         team.name = "Manchester United"
         team.short_name = "MUFC"
@@ -93,7 +93,7 @@ class MockAdapter:
 
     async def get_players(self, team_id, season=None):
         """获取球员数据"""
-        player = type('Player', (), {})()
+        player = type("Player", (), {})()
         player.id = "1001"
         player.name = "Bruno Fernandes"
         player.team_id = team_id

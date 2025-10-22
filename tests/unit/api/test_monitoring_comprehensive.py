@@ -12,7 +12,8 @@ import json
 
 # 测试导入
 import sys
-sys.path.insert(0, 'src')
+
+sys.path.insert(0, "src")
 
 try:
     from src.api.monitoring import (
@@ -21,9 +22,10 @@ try:
         _get_database_metrics,
         _get_application_metrics,
         _get_cache_metrics,
-        _health_check_detailed
+        _health_check_detailed,
     )
     from src.database.dependencies import get_db_session
+
     MONITORING_AVAILABLE = True
 except ImportError as e:
     print(f"Warning: Could not import monitoring modules: {e}")
@@ -42,7 +44,7 @@ class TestMonitoringAPI:
             {"teams_count": 10},
             {"matches_count": 20},
             {"predictions_count": 5},
-            {"users_count": 15}
+            {"users_count": 15},
         ]
         return session
 
@@ -55,7 +57,7 @@ class TestMonitoringAPI:
             "connected_clients": 5,
             "used_memory": 1024000,
             "keyspace_hits": 1000,
-            "keyspace_misses": 100
+            "keyspace_misses": 100,
         }
         return redis_client
 
@@ -66,18 +68,23 @@ class TestMonitoringAPI:
             "startup_time": datetime.now() - timedelta(hours=1),
             "total_requests": 1000,
             "error_count": 10,
-            "average_response_time": 150.5
+            "average_response_time": 150.5,
         }
 
     def test_system_metrics_collection(self):
         """测试系统指标收集"""
-        with patch('psutil.cpu_percent') as mock_cpu, \
-             patch('psutil.virtual_memory') as mock_memory, \
-             patch('psutil.disk_usage') as mock_disk:
-
+        with (
+            patch("psutil.cpu_percent") as mock_cpu,
+            patch("psutil.virtual_memory") as mock_memory,
+            patch("psutil.disk_usage") as mock_disk,
+        ):
             mock_cpu.return_value = 25.5
-            mock_memory.return_value = Mock(percent=60.0, used=8589934592, total=17179869184)
-            mock_disk.return_value = Mock(percent=40.0, used=107374182400, total=1073741824000)
+            mock_memory.return_value = Mock(
+                percent=60.0, used=8589934592, total=17179869184
+            )
+            mock_disk.return_value = Mock(
+                percent=40.0, used=107374182400, total=1073741824000
+            )
 
         metrics = _get_system_metrics()
 
@@ -91,7 +98,7 @@ class TestMonitoringAPI:
 
     def test_database_metrics_collection(self, mock_db_session):
         """测试数据库指标收集"""
-        with patch('src.api.monitoring.get_db_session') as mock_get_session:
+        with patch("src.api.monitoring.get_db_session") as mock_get_session:
             mock_get_session.return_value.__enter__.return_value = mock_db_session
 
         metrics = _get_database_metrics()
@@ -106,7 +113,7 @@ class TestMonitoringAPI:
 
     def test_database_metrics_error_handling(self):
         """测试数据库指标错误处理"""
-        with patch('src.api.monitoring.get_db_session') as mock_get_session:
+        with patch("src.api.monitoring.get_db_session") as mock_get_session:
             mock_get_session.side_effect = Exception("Database connection failed")
 
         metrics = _get_database_metrics()
@@ -117,7 +124,7 @@ class TestMonitoringAPI:
 
     def test_application_metrics_collection(self, mock_app_state):
         """测试应用指标收集"""
-        with patch('src.api.monitoring.app_state', mock_app_state):
+        with patch("src.api.monitoring.app_state", mock_app_state):
             metrics = _get_application_metrics()
 
         assert "startup_time" in metrics
@@ -130,7 +137,7 @@ class TestMonitoringAPI:
 
     def test_cache_metrics_collection(self, mock_redis_client):
         """测试缓存指标收集"""
-        with patch('src.api.monitoring.redis_client', mock_redis_client):
+        with patch("src.api.monitoring.redis_client", mock_redis_client):
             metrics = _get_cache_metrics()
 
         assert "connected_clients" in metrics
@@ -143,7 +150,7 @@ class TestMonitoringAPI:
 
     def test_cache_metrics_connection_error(self):
         """测试缓存连接错误"""
-        with patch('src.api.monitoring.redis_client') as mock_redis:
+        with patch("src.api.monitoring.redis_client") as mock_redis:
             mock_redis.ping.side_effect = Exception("Redis connection failed")
 
         metrics = _get_cache_metrics()
@@ -155,9 +162,10 @@ class TestMonitoringAPI:
     @pytest.mark.asyncio
     async def test_health_check_detailed(self, mock_db_session, mock_redis_client):
         """测试详细健康检查"""
-        with patch('src.api.monitoring.get_db_session') as mock_get_session, \
-             patch('src.api.monitoring.redis_client', mock_redis_client):
-
+        with (
+            patch("src.api.monitoring.get_db_session") as mock_get_session,
+            patch("src.api.monitoring.redis_client", mock_redis_client),
+        ):
             mock_get_session.return_value.__enter__.return_value = mock_db_session
 
         health_status = await _health_check_detailed()
@@ -178,17 +186,19 @@ class TestMonitoringAPI:
     def test_metrics_endpoint_structure(self):
         """测试指标端点结构"""
         # 模拟所有组件都正常
-        with patch('src.api.monitoring._get_system_metrics') as mock_system, \
-             patch('src.api.monitoring._get_database_metrics') as mock_db, \
-             patch('src.api.monitoring._get_application_metrics') as mock_app, \
-             patch('src.api.monitoring._get_cache_metrics') as mock_cache:
-
+        with (
+            patch("src.api.monitoring._get_system_metrics") as mock_system,
+            patch("src.api.monitoring._get_database_metrics") as mock_db,
+            patch("src.api.monitoring._get_application_metrics") as mock_app,
+            patch("src.api.monitoring._get_cache_metrics") as mock_cache,
+        ):
             mock_system.return_value = {"cpu_percent": 25.0}
             mock_db.return_value = {"statistics": {"teams_count": 10}}
             mock_app.return_value = {"total_requests": 1000}
             mock_cache.return_value = {"status": "connected"}
 
         from fastapi.testclient import TestClient
+
         client = TestClient(router)
 
         response = client.get("/monitoring/metrics")
@@ -202,16 +212,17 @@ class TestMonitoringAPI:
 
     def test_health_endpoint_structure(self):
         """测试健康检查端点结构"""
-        with patch('src.api.monitoring._health_check_detailed') as mock_health:
+        with patch("src.api.monitoring._health_check_detailed") as mock_health:
             mock_health.return_value = {
                 "overall_status": "healthy",
                 "checks": {
                     "database": {"status": "healthy"},
-                    "cache": {"status": "healthy"}
-                }
+                    "cache": {"status": "healthy"},
+                },
             }
 
         from fastapi.testclient import TestClient
+
         client = TestClient(router)
 
         response = client.get("/monitoring/health")
@@ -223,13 +234,14 @@ class TestMonitoringAPI:
 
     def test_alerts_endpoint(self):
         """测试告警端点"""
-        with patch('src.api.monitoring._get_system_metrics') as mock_system:
+        with patch("src.api.monitoring._get_system_metrics") as mock_system:
             mock_system.return_value = {
                 "cpu_percent": 95.0,  # 高CPU使用率
-                "memory_percent": 90.0  # 高内存使用率
+                "memory_percent": 90.0,  # 高内存使用率
             }
 
         from fastapi.testclient import TestClient
+
         client = TestClient(router)
 
         response = client.get("/monitoring/alerts")
@@ -246,14 +258,15 @@ class TestMonitoringAPI:
 
     def test_performance_metrics(self):
         """测试性能指标"""
-        with patch('src.api.monitoring._get_application_metrics') as mock_app:
+        with patch("src.api.monitoring._get_application_metrics") as mock_app:
             mock_app.return_value = {
                 "total_requests": 1000,
                 "error_count": 50,
-                "average_response_time": 250.5
+                "average_response_time": 250.5,
             }
 
         from fastapi.testclient import TestClient
+
         client = TestClient(router)
 
         response = client.get("/monitoring/performance")
@@ -267,16 +280,17 @@ class TestMonitoringAPI:
 
     def test_log_level_metrics(self):
         """测试日志级别指标"""
-        with patch('src.api.monitoring._get_log_metrics') as mock_logs:
+        with patch("src.api.monitoring._get_log_metrics") as mock_logs:
             mock_logs.return_value = {
                 "DEBUG": 100,
                 "INFO": 500,
                 "WARNING": 20,
                 "ERROR": 5,
-                "CRITICAL": 1
+                "CRITICAL": 1,
             }
 
         from fastapi.testclient import TestClient
+
         client = TestClient(router)
 
         response = client.get("/monitoring/logs")
@@ -290,10 +304,11 @@ class TestMonitoringAPI:
     @pytest.mark.asyncio
     async def test_concurrent_monitoring_requests(self):
         """测试并发监控请求"""
-        with patch('src.api.monitoring._get_system_metrics') as mock_system:
+        with patch("src.api.monitoring._get_system_metrics") as mock_system:
             mock_system.return_value = {"cpu_percent": 25.0}
 
         from fastapi.testclient import TestClient
+
         client = TestClient(router)
 
         # 并发发送多个请求
@@ -317,10 +332,7 @@ class TestMonitoringAPI:
             "memory_percent": 60.0,
             "timestamp": datetime.now(),
             "status": "healthy",
-            "details": {
-                "processes": 10,
-                "threads": 20
-            }
+            "details": {"processes": 10, "threads": 20},
         }
 
         # 测试JSON序列化
@@ -335,6 +347,7 @@ class TestMonitoringAPI:
     def test_monitoring_endpoint_security(self):
         """测试监控端点安全性"""
         from fastapi.testclient import TestClient
+
         client = TestClient(router)
 
         # 测试所有监控端点都返回适当的响应
@@ -342,7 +355,7 @@ class TestMonitoringAPI:
             "/monitoring/health",
             "/monitoring/metrics",
             "/monitoring/alerts",
-            "/monitoring/performance"
+            "/monitoring/performance",
         ]
 
         for endpoint in endpoints:
@@ -352,14 +365,15 @@ class TestMonitoringAPI:
 
     def test_monitoring_error_recovery(self):
         """测试监控错误恢复"""
-        with patch('src.api.monitoring._get_system_metrics') as mock_system:
+        with patch("src.api.monitoring._get_system_metrics") as mock_system:
             # 第一次失败，第二次成功
             mock_system.side_effect = [
                 Exception("Temporary error"),
-                {"cpu_percent": 25.0}
+                {"cpu_percent": 25.0},
             ]
 
         from fastapi.testclient import TestClient
+
         client = TestClient(router)
 
         # 第一次请求可能失败，但应用不应该崩溃
@@ -373,10 +387,11 @@ class TestMonitoringAPI:
 
     def test_monitoring_caching(self):
         """测试监控数据缓存"""
-        with patch('src.api.monitoring._get_system_metrics') as mock_system:
+        with patch("src.api.monitoring._get_system_metrics") as mock_system:
             mock_system.return_value = {"cpu_percent": 25.0}
 
         from fastapi.testclient import TestClient
+
         client = TestClient(router)
 
         # 第一次请求
@@ -404,7 +419,7 @@ class TestMonitoringAlerts:
         return {
             "system": {"cpu_percent": 95.0, "memory_percent": 90.0},
             "database": {"connection_pool_size": 20, "active_connections": 18},
-            "application": {"error_rate": 0.15, "response_time": 2000.0}
+            "application": {"error_rate": 0.15, "response_time": 2000.0},
         }
 
     def test_high_cpu_alert(self, sample_metrics):
@@ -412,12 +427,14 @@ class TestMonitoringAlerts:
         alerts = []
 
         if sample_metrics["system"]["cpu_percent"] > 90:
-            alerts.append({
-                "type": "high_cpu",
-                "severity": "critical",
-                "message": f"CPU usage is {sample_metrics['system']['cpu_percent']}%",
-                "timestamp": datetime.now().isoformat()
-            })
+            alerts.append(
+                {
+                    "type": "high_cpu",
+                    "severity": "critical",
+                    "message": f"CPU usage is {sample_metrics['system']['cpu_percent']}%",
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
 
         assert len(alerts) == 1
         assert alerts[0]["type"] == "high_cpu"
@@ -428,12 +445,14 @@ class TestMonitoringAlerts:
         alerts = []
 
         if sample_metrics["system"]["memory_percent"] > 85:
-            alerts.append({
-                "type": "high_memory",
-                "severity": "warning",
-                "message": f"Memory usage is {sample_metrics['system']['memory_percent']}%",
-                "timestamp": datetime.now().isoformat()
-            })
+            alerts.append(
+                {
+                    "type": "high_memory",
+                    "severity": "warning",
+                    "message": f"Memory usage is {sample_metrics['system']['memory_percent']}%",
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
 
         assert len(alerts) == 1
         assert alerts[0]["type"] == "high_memory"
@@ -443,14 +462,19 @@ class TestMonitoringAlerts:
         """测试数据库连接告警"""
         alerts = []
 
-        connection_usage = sample_metrics["database"]["active_connections"] / sample_metrics["database"]["connection_pool_size"]
+        connection_usage = (
+            sample_metrics["database"]["active_connections"]
+            / sample_metrics["database"]["connection_pool_size"]
+        )
         if connection_usage > 0.8:
-            alerts.append({
-                "type": "database_connections",
-                "severity": "warning",
-                "message": f"Database connection pool usage is {connection_usage*100:.1f}%",
-                "timestamp": datetime.now().isoformat()
-            })
+            alerts.append(
+                {
+                    "type": "database_connections",
+                    "severity": "warning",
+                    "message": f"Database connection pool usage is {connection_usage*100:.1f}%",
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
 
         assert len(alerts) == 1
         assert alerts[0]["type"] == "database_connections"
@@ -460,13 +484,19 @@ class TestMonitoringAlerts:
         alerts = []
 
         if sample_metrics["application"]["error_rate"] > 0.1:
-            severity = "critical" if sample_metrics["application"]["error_rate"] > 0.2 else "warning"
-            alerts.append({
-                "type": "high_error_rate",
-                "severity": severity,
-                "message": f"Error rate is {sample_metrics['application']['error_rate']*100:.1f}%",
-                "timestamp": datetime.now().isoformat()
-            })
+            severity = (
+                "critical"
+                if sample_metrics["application"]["error_rate"] > 0.2
+                else "warning"
+            )
+            alerts.append(
+                {
+                    "type": "high_error_rate",
+                    "severity": severity,
+                    "message": f"Error rate is {sample_metrics['application']['error_rate']*100:.1f}%",
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
 
         assert len(alerts) == 1
         assert alerts[0]["type"] == "high_error_rate"

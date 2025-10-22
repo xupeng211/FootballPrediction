@@ -79,7 +79,7 @@ class CreatePredictionHandler(CommandHandler):
                 logger.info(f"创建预测成功: ID={prediction.id}")
 
                 return CommandResult.success_result(
-                    data =PredictionDTO(
+                    data=PredictionDTO(
                         id=prediction.id,
                         match_id=prediction.match_id,
                         user_id=prediction.user_id,
@@ -133,7 +133,7 @@ class UpdatePredictionHandler(CommandHandler):
                 logger.info(f"更新预测成功: ID={prediction.id}")
 
                 return CommandResult.success_result(
-                    data =PredictionDTO(
+                    data=PredictionDTO(
                         id=prediction.id,
                         match_id=prediction.match_id,
                         user_id=prediction.user_id,
@@ -174,7 +174,7 @@ class DeletePredictionHandler(CommandHandler):
                 logger.info(f"删除预测成功: ID={command.prediction_id}")
 
                 return CommandResult.success_result(
-                    data ={"deleted_id": command.prediction_id}, message="预测删除成功"
+                    data={"deleted_id": command.prediction_id}, message="预测删除成功"
                 )
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
@@ -209,7 +209,7 @@ class CreateUserHandler(CommandHandler):
                 logger.info(f"创建用户成功: ID={user.id}")
 
                 return CommandResult.success_result(
-                    data =UserDTO(
+                    data=UserDTO(
                         id=user.id,
                         username=user.username,
                         email=user.email,

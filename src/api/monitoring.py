@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 import psutil
 import time
-from typing import Dict, Any
+from typing import Dict, Any, Optional, Optional
 from fastapi import APIRouter, Depends, Response
 from fastapi.responses import PlainTextResponse
 
@@ -291,7 +291,8 @@ async def collector_health() -> Dict[str, Any]:
         collector = get_metrics_collector()
         collector_status = collector.get_status()
 
-        return {
+        
+        {
             "status": "healthy",
             "timestamp": collector_status,
             "metrics_collector": collector_status,
@@ -299,9 +300,8 @@ async def collector_health() -> Dict[str, Any]:
         }
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"健康检查失败: {e}", exc_info=True)
-        return {"status": "unhealthy", "error": str(e), "message": "监控系统异常"}
-
-
+        
+        {"status": "unhealthy", "error": str(e), "message": "监控系统异常"}
 @router.post("/collector/collect")
 async def manual_collect() -> Dict[str, Any]:
     try:
@@ -328,7 +328,8 @@ async def start_collector() -> Dict[str, str]:
     try:
         collector = get_metrics_collector()
         await collector.start()
-        return {"message": "指标收集器启动成功"}
+        
+        {"message": "指标收集器启动成功"}
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"启动指标收集器失败: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"启动失败: {str(e)}")
@@ -339,7 +340,8 @@ async def stop_collector() -> Dict[str, str]:
     try:
         collector = get_metrics_collector()
         await collector.stop()
-        return {"message": "指标收集器停止成功"}
+        
+        {"message": "指标收集器停止成功"}
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"停止指标收集器失败: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"停止失败: {str(e)}")

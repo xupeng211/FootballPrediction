@@ -73,6 +73,10 @@ class ConfigurationBinder:
                         f"不支持的配置文件格式: {config_path.suffix}"
                     )
 
+            # 处理空文件情况
+            if data is None:
+                data = {}
+
             self.config = self._parse_config(data)
             logger.info(f"加载配置文件: {config_path}")
 

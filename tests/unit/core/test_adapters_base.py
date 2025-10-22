@@ -123,7 +123,7 @@ class TestAdapter:
 
         class ConfigurableAdapter(Adapter):
             def __init__(self, adaptee, _config=None):
-                self._config = config or {}
+                self._config = _config or {}
                 super().__init__(adaptee)
 
             async def _initialize(self):
@@ -136,9 +136,9 @@ class TestAdapter:
                 self.initialized = False
 
         _config = {"timeout": 30, "retries": 3}
-        adaptee = TestAdaptee(config)
-        adapter = ConfigurableAdapter(adaptee, config)
-        assert adapter._config == config
+        adaptee = TestAdaptee(_config)
+        adapter = ConfigurableAdapter(adaptee, _config)
+        assert adapter._config == _config
 
     def test_adapter_metadata(self):
         """测试适配器元数据"""
@@ -149,7 +149,7 @@ class TestAdapter:
 
         class MetaAdapter(Adapter):
             def __init__(self, adaptee, _metadata=None):
-                self._metadata = metadata or {"version": "1.0", "type": "test"}
+                self._metadata = _metadata or {"version": "1.0", "type": "test"}
                 super().__init__(adaptee)
 
             async def _initialize(self):
@@ -163,4 +163,4 @@ class TestAdapter:
 
         adaptee = TestAdaptee()
         adapter = MetaAdapter(adaptee)
-        assert adapter.metadata["version"] == "1.0"
+        assert adapter._metadata["version"] == "1.0"

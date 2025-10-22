@@ -45,7 +45,9 @@ def utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def parse_datetime(date_str: str, format_str: str = "%Y-%m-%d %H:%M:%S") -> Optional[datetime]:
+def parse_datetime(
+    date_str: str, format_str: str = "%Y-%m-%d %H:%M:%S"
+) -> Optional[datetime]:
     """解析日期时间字符串（向后兼容性函数）"""
     if date_str is None:
         return None

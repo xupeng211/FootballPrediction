@@ -228,9 +228,9 @@ class FootballApiAdapter(APIAdapter):
 
             return ExternalData(
                 source="football_api",
-                data =transformed_data,
+                data=transformed_data,
                 timestamp=datetime.now(),
-                metadata ={"match_id": match_id, "original_format": "json"},
+                metadata={"match_id": match_id, "original_format": "json"},
             )
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
@@ -247,9 +247,9 @@ class FootballApiAdapter(APIAdapter):
 
             return ExternalData(
                 source="football_api",
-                data =transformed_data,
+                data=transformed_data,
                 timestamp=datetime.now(),
-                metadata ={"team_id": team_id, "original_format": "json"},
+                metadata={"team_id": team_id, "original_format": "json"},
             )
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
@@ -288,9 +288,9 @@ class WeatherApiAdapter(APIAdapter):
 
             return ExternalData(
                 source="weather_api",
-                data =transformed_data,
+                data=transformed_data,
                 timestamp=datetime.now(),
-                metadata ={"location": location, "date": date.isoformat()},
+                metadata={"location": location, "date": date.isoformat()},
             )
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
@@ -345,9 +345,9 @@ class OddsApiAdapter(APIAdapter):
 
             return ExternalData(
                 source="odds_api",
-                data =transformed_data,
+                data=transformed_data,
                 timestamp=datetime.now(),
-                metadata ={"match_id": match_id, "original_format": "json"},
+                metadata={"match_id": match_id, "original_format": "json"},
             )
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:

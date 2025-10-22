@@ -213,7 +213,7 @@ class HistoricalStrategy(PredictionStrategy):
             confidence=confidence,
             probability_distribution=probability_distribution,
             feature_importance=feature_importance,
-            metadata ={
+            metadata={
                 "method": "historical_analysis",
                 "h2h_matches": len(
                     await self._get_head_to_head_matches(

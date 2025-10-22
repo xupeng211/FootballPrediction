@@ -89,7 +89,7 @@ class SystemMetricsSubject(Subject):
                     event_type=ObservableEventType.SYSTEM_ALERT,
                     source=f"SystemMetrics:{metric_name}",
                     severity="critical",
-                    data ={
+                    data={
                         "metric_name": metric_name,
                         "metric_value": new_value,
                         "threshold": threshold["critical"],
@@ -112,7 +112,7 @@ class SystemMetricsSubject(Subject):
                     event_type=ObservableEventType.THRESHOLD_EXCEEDED,
                     source=f"SystemMetrics:{metric_name}",
                     severity="warning",
-                    data ={
+                    data={
                         "metric_name": metric_name,
                         "metric_value": new_value,
                         "threshold": threshold["warning"],
@@ -210,7 +210,7 @@ class PredictionMetricsSubject(Subject):
         event = ObservableEvent(
             event_type=ObservableEventType.PREDICTION_COMPLETED,
             source=f"PredictionMetrics:{strategy_name}",
-            data ={
+            data={
                 "strategy_name": strategy_name,
                 "response_time_ms": response_time_ms,
                 "success": success,
@@ -263,7 +263,7 @@ class PredictionMetricsSubject(Subject):
                     event_type=ObservableEventType.PERFORMANCE_DEGRADATION,
                     source="PredictionMetrics",
                     severity="warning",
-                    data ={
+                    data={
                         "type": "response_time",
                         "value": avg_time,
                         "threshold": 1000,
@@ -279,7 +279,7 @@ class PredictionMetricsSubject(Subject):
                     event_type=ObservableEventType.PERFORMANCE_DEGRADATION,
                     source=f"PredictionMetrics:{strategy_name}",
                     severity="warning",
-                    data ={
+                    data={
                         "type": "success_rate",
                         "value": success_rate,
                         "threshold": 0.9,
@@ -360,7 +360,7 @@ class AlertSubject(Subject):
             event_type=ObservableEventType.SYSTEM_ALERT,
             source=source or f"AlertManager:{alert_type}",
             severity=severity,
-            data ={
+            data={
                 "alert_type": alert_type,
                 "message": message,
                 **(data or {}),
@@ -451,7 +451,7 @@ class CacheSubject(Subject):
         event = ObservableEvent(
             event_type=ObservableEventType.CACHE_HIT,
             source=f"Cache:{cache_name}",
-            data ={
+            data={
                 "cache_name": cache_name,
                 "key": key,
             },
@@ -466,7 +466,7 @@ class CacheSubject(Subject):
         event = ObservableEvent(
             event_type=ObservableEventType.CACHE_MISS,
             source=f"Cache:{cache_name}",
-            data ={
+            data={
                 "cache_name": cache_name,
                 "key": key,
             },
