@@ -71,7 +71,7 @@ def quick_syntax_check():
             print(f"   ✅ 语法检查通过 ({checked_count} 个文件)")
             return True
         else:
-            print(f"   ❌ 语法检查失败")
+            print("   ❌ 语法检查失败")
             return False
     else:
         print("   ℹ️ 没有找到关键文件，跳过语法检查")

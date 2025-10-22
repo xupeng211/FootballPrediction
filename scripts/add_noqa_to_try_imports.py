@@ -50,7 +50,7 @@ def add_noqa_to_try_imports(file_path: Path) -> bool:
                 if (
                     stripped.startswith("except ")
                     or stripped.startswith("finally ")
-                    or stripped == "except:"
+                    or stripped == "except Exception:"
                 ):
                     in_try = False
 

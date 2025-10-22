@@ -57,7 +57,6 @@ class TargetedFixer:
     def fix_common_import_issues(self, content: str) -> Tuple[str, List[str]]:
         """修复常见的导入问题"""
         changes = []
-        original_content = content
 
         # 常见需要导入的类型
         needed_imports = {
@@ -165,7 +164,7 @@ class TargetedFixer:
         for wrong, correct in common_fixes.items():
             if wrong in content and correct not in content:
                 content = content.replace(wrong, correct)
-                changes.append(f"修复常见属性访问")
+                changes.append("修复常见属性访问")
 
         return content, changes
 
@@ -248,7 +247,7 @@ class TargetedFixer:
             short_path = file_path.replace('/home/user/projects/FootballPrediction/', '')
             print(f"  {i}. {short_path:<40} {error_count:3d} 个错误")
 
-        print(f"\n🔄 开始针对性修复...")
+        print("\n🔄 开始针对性修复...")
 
         results = {
             'timestamp': datetime.now().isoformat(),
@@ -280,7 +279,7 @@ class TargetedFixer:
             elif changes:
                 print(f"   ⚠️ 尝试修复但未改善: {'; '.join(changes[:2])}")
             else:
-                print(f"   ℹ️ 无需修复")
+                print("   ℹ️ 无需修复")
 
             results['files_processed'].append({
                 'file_path': file_path,
@@ -295,7 +294,7 @@ class TargetedFixer:
         with open(report_file, 'w', encoding='utf-8') as f:
             json.dump(results, f, indent=2, ensure_ascii=False)
 
-        print(f"\n📊 针对性修复结果:")
+        print("\n📊 针对性修复结果:")
         print(f"✅ 成功修复: {results['success_count']}/{results['total_files']} 个文件")
         print(f"🔧 总修复数: {results['total_fixes']} 项")
         print(f"💾 详细报告: {report_file}")
@@ -311,7 +310,7 @@ class TargetedFixer:
             )
             error_lines = [line for line in result.stdout.split('\n') if ': error:' in line]
             return len(error_lines)
-        except:
+        except Exception:
             return -1
 
 def main():
@@ -320,10 +319,10 @@ def main():
     results = fixer.run_targeted_fix()
 
     if results['success_count'] > 0:
-        print(f"\n🎉 修复成功！建议运行质量检查验证效果")
+        print("\n🎉 修复成功！建议运行质量检查验证效果")
         return 0
     else:
-        print(f"\n💡 没有发现可自动修复的问题")
+        print("\n💡 没有发现可自动修复的问题")
         return 1
 
 if __name__ == '__main__':

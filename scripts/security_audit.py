@@ -193,7 +193,7 @@ class SecurityAuditor:
                     self.results["findings"].append({
                         "category": "configuration",
                         "severity": "high",
-                        "description": f"配置文件可能包含硬编码的敏感信息",
+                        "description": "配置文件可能包含硬编码的敏感信息",
                         "file": str(config_file)
                     })
                     self.results["score"] -= 10
@@ -346,7 +346,7 @@ class SecurityAuditor:
                         self.results["score"] -= 2
                         break
 
-            except Exception as e:
+            except Exception:
                 continue
 
     def audit_api_security(self):
@@ -423,7 +423,7 @@ class SecurityAuditor:
             self.results["findings"].append({
                 "category": "database_security",
                 "severity": "medium",
-                "description": f"数据库安全问题",
+                "description": "数据库安全问题",
                 "details": db_issues[:3]
             })
             self.results["score"] -= len(db_issues) * 4
@@ -494,7 +494,7 @@ class SecurityAuditor:
             for i, rec in enumerate(self.results['recommendations'], 1):
                 print(f"  {i}. {rec}")
 
-        print(f"\n📄 详细报告已保存到: security_audit_report.json")
+        print("\n📄 详细报告已保存到: security_audit_report.json")
         print("="*60)
 
 

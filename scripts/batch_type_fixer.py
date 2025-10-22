@@ -138,7 +138,7 @@ def main():
     for i, file_path in enumerate(target_files, 1):
         print(f"  {i}. {os.path.relpath(file_path, '/home/user/projects/FootballPrediction')}")
 
-    print(f"\n🔄 开始处理...")
+    print("\n🔄 开始处理...")
 
     fixed_count = 0
     failed_count = 0
@@ -183,13 +183,13 @@ def main():
                 print(f"   ❌ 保存失败: {e}")
                 failed_count += 1
         else:
-            print(f"   ⚠️ 无需修复")
+            print("   ⚠️ 无需修复")
 
-    print(f"\n📊 批量修复结果:")
+    print("\n📊 批量修复结果:")
     print(f"✅ 成功修复: {fixed_count} 个文件")
     print(f"❌ 修复失败: {failed_count} 个文件")
 
-    print(f"\n🎯 下一步建议:")
+    print("\n🎯 下一步建议:")
     if fixed_count > 0:
         print("1. 运行质量检查验证修复效果")
         print("2. 测试核心功能确保正常运行")

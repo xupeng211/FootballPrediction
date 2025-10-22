@@ -148,7 +148,7 @@ def test_health_module_basic():
         try:
             checker = HealthChecker()
             assert checker is not None
-        except:
+        except Exception:
             # 如果需要参数，跳过
             pytest.skip("HealthChecker 需要参数初始化")
 

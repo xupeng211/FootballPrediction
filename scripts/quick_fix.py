@@ -50,7 +50,7 @@ def fix_file(file_path: str):
         content = re.sub(
             r"except\s*\([^)]+\)\s*([^\n:])", r"except (\1):\n    \2", content
         )
-        content = re.sub(r"except\s*([^\n:])", r"except:\n    \1", content)
+        content = re.sub(r"except\s*([^\n:])", r"except Exception:\n    \1", content)
 
         # 5. 修复文档字符串
         content = content.replace(

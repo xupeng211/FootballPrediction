@@ -64,7 +64,7 @@ class CoverageQualityGate:
 
             # 检查是否有错误输出，但不阻止继续执行
             if result.returncode != 0:
-                print(f"⚠️  测试执行有失败项，但继续分析覆盖率")
+                print("⚠️  测试执行有失败项，但继续分析覆盖率")
                 print(f"stderr: {result.stderr[:200]}...")  # 只显示前200个字符
 
             # 读取覆盖率报告
@@ -171,7 +171,7 @@ class CoverageQualityGate:
 
         # 推荐改进措施
         if violations:
-            report += f"\n💡 改进建议:\n"
+            report += "\n💡 改进建议:\n"
 
             zero_coverage = len([m for m in modules if m['coverage'] == 0])
             if zero_coverage > 0:

@@ -159,7 +159,7 @@ def fix_unused_in_file(file_path):
     try:
         import json
         errors = json.loads(result.stdout)
-    except:
+    except Exception:
         return False
 
     # 按行号排序，从后往前修复
