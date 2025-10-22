@@ -109,12 +109,12 @@ def main():
     print(f"\n📁 处理目录: {src_dir}")
     fixed, failed = fix_files_in_directory(src_dir, ['*.py'])
 
-    print(f"\n📊 修复结果:")
+    print("\n📊 修复结果:")
     print(f"✅ 成功修复: {len(fixed)} 个文件")
     print(f"❌ 修复失败: {len(failed)} 个文件")
 
     if failed:
-        print(f"\n❌ 失败的文件:")
+        print("\n❌ 失败的文件:")
         for file_path, error in failed[:5]:  # 只显示前5个
             print(f"  {file_path}: {error}")
         if len(failed) > 5:
@@ -122,7 +122,7 @@ def main():
 
     # 显示一些修复的例子
     if fixed:
-        print(f"\n✅ 修复示例:")
+        print("\n✅ 修复示例:")
         for file_path, message in fixed[:3]:
             print(f"  {file_path}: {message}")
         if len(fixed) > 3:

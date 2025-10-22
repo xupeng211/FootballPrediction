@@ -122,7 +122,6 @@ class SmartBatchFixer:
         except Exception as e:
             return content, [f"读取文件失败: {e}"], 0
 
-        original_content = content
         changes_made = []
         fixes_applied = 0
 
@@ -181,7 +180,7 @@ class SmartBatchFixer:
         # 添加新导入
         if import_match:
             # 扩展现有导入
-            current_imports = import_match.group(1)
+            import_match.group(1)
             all_imports = existing_imports.union(new_imports)
             new_import_line = f"from typing import {', '.join(sorted(all_imports))}"
             content = content.replace(import_match.group(0), new_import_line)
@@ -350,7 +349,7 @@ class SmartBatchFixer:
             short_path = file_path.replace('/home/user/projects/FootballPrediction/', '')
             print(f"  {i}. {short_path}")
 
-        print(f"\n🔄 开始智能修复...")
+        print("\n🔄 开始智能修复...")
 
         results = {
             'timestamp': datetime.now().isoformat(),
@@ -383,7 +382,7 @@ class SmartBatchFixer:
             # 智能修复
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
-                    original_content = f.read()
+                    f.read()
 
                 fixed_content, changes, fixes_count = self.smart_fix_file(file_path, error_analysis)
 
@@ -407,7 +406,7 @@ class SmartBatchFixer:
                         print(f"      ... 还有 {len(changes) - 3} 项修复")
 
                 else:
-                    print(f"   ⚠️ 无需修复或无法自动修复")
+                    print("   ⚠️ 无需修复或无法自动修复")
                     results['failed_count'] += 1
 
                 # 记录处理结果
@@ -424,7 +423,7 @@ class SmartBatchFixer:
                 results['failed_count'] += 1
 
         # 输出总结
-        print(f"\n📊 智能批量修复结果:")
+        print("\n📊 智能批量修复结果:")
         print(f"✅ 成功处理: {results['success_count']} 个文件")
         print(f"❌ 处理失败: {results['failed_count']} 个文件")
         print(f"🔧 总修复数: {results['total_fixes']} 项")
@@ -441,12 +440,12 @@ class SmartBatchFixer:
 
         # 给出下一步建议
         if results['success_count'] > 0:
-            print(f"\n🎯 下一步建议:")
+            print("\n🎯 下一步建议:")
             print("1. 运行质量检查验证修复效果")
             print("2. 测试核心功能确保正常运行")
             print("3. 提交修复成果")
         else:
-            print(f"\n💡 建议:")
+            print("\n💡 建议:")
             print("1. 检查剩余错误类型，考虑手动修复")
             print("2. 调整修复策略，处理更复杂的类型问题")
 

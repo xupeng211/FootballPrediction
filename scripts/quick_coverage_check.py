@@ -25,7 +25,7 @@ def run_quick_coverage():
     ]
 
     print("📊 运行测试套件...")
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    subprocess.run(cmd, capture_output=True, text=True)
 
     # 读取覆盖率报告
     coverage_file = Path('coverage.json')
@@ -39,7 +39,7 @@ def run_quick_coverage():
             lines_covered = totals.get('covered_lines', 0)
             total_lines = totals.get('num_statements', 0)
 
-            print(f"\n📈 测试覆盖率报告")
+            print("\n📈 测试覆盖率报告")
             print("=" * 50)
             print(f"总体覆盖率: {coverage_percent:.2f}%")
             print(f"覆盖行数: {lines_covered}/{total_lines}")
@@ -47,7 +47,7 @@ def run_quick_coverage():
             # 按模块显示覆盖率
             files = coverage_data.get('files', {})
             if files:
-                print(f"\n📁 模块覆盖率 (Top 10):")
+                print("\n📁 模块覆盖率 (Top 10):")
                 # 按覆盖率排序
                 sorted_files = sorted(
                     [(f['name'], f['summary']['percent_covered']) for f in files.values()],
@@ -76,12 +76,12 @@ def run_quick_coverage():
 
             # 改进建议
             if coverage_percent < 70:
-                print(f"\n💡 改进建议:")
+                print("\n💡 改进建议:")
                 print("  1. 重点测试核心业务逻辑")
                 print("  2. 增加边界条件测试")
                 print("  3. 提高异常处理测试覆盖")
             elif coverage_percent < 80:
-                print(f"\n💡 优化建议:")
+                print("\n💡 优化建议:")
                 print("  1. 补充缺失的测试用例")
                 print("  2. 增加集成测试")
                 print("  3. 完善错误处理测试")
@@ -127,7 +127,7 @@ def main():
     # 运行覆盖率检查
     coverage_percent, module_count = run_quick_coverage()
 
-    print(f"\n📊 最终总结:")
+    print("\n📊 最终总结:")
     print(f"  • 测试覆盖率: {coverage_percent:.2f}%")
     print(f"  • 测试模块数: {module_count}")
 

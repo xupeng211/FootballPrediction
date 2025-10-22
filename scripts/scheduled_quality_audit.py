@@ -283,7 +283,7 @@ class ScheduledQualityAuditor:
                 return f"距离上次审计已过{time_diff.days}天，可以考虑运行快速检查"
             else:
                 return "近期已审计，无需重复运行"
-        except:
+        except Exception:
             return "审计时间记录异常，建议重新运行"
 
     def run_scheduled_audit(self, audit_type: str = "weekly") -> Dict[str, Any]:
@@ -373,7 +373,7 @@ def main():
         # 显示摘要
         if 'summary' in results:
             summary = results['summary']
-            print(f"\n📈 周报摘要:")
+            print("\n📈 周报摘要:")
             print(f"   • 周数: {summary.get('week_number', 'N/A')}")
             print(f"   • 质量评分: {summary['key_metrics'].get('quality_score', 'N/A')}/100")
             print(f"   • 质量等级: {summary['key_metrics'].get('quality_grade', 'N/A')}")
@@ -381,7 +381,7 @@ def main():
 
             recommendations = summary.get('recommendations', [])
             if recommendations:
-                print(f"   • 建议:")
+                print("   • 建议:")
                 for rec in recommendations:
                     print(f"     - {rec}")
 

@@ -100,7 +100,7 @@ async def single_request(session: aiohttp.ClientSession, url: str, method: str =
 async def stress_test(url: str, concurrent_users: int, total_requests: int,
                      method: str = "GET", data: Dict = None) -> StressTestResults:
     """执行压力测试"""
-    print(f"🚀 开始压力测试...")
+    print("🚀 开始压力测试...")
     print(f"📊 URL: {url}")
     print(f"👥 并发用户: {concurrent_users}")
     print(f"🔢 总请求数: {total_requests}")
@@ -158,19 +158,19 @@ def print_results(results: StressTestResults, test_name: str):
     print(f"📊 总请求数: {stats['total_requests']}")
     print(f"✅ 成功请求: {stats['successful_requests']} ({stats['success_rate']:.1f}%)")
     print(f"❌ 失败请求: {stats['failed_requests']} ({stats['error_rate']:.1f}%)")
-    print(f"")
-    print(f"⚡ 响应时间统计:")
+    print("")
+    print("⚡ 响应时间统计:")
     print(f"   平均: {stats['avg_response_time']:.3f}s")
     print(f"   最小: {stats['min_response_time']:.3f}s")
     print(f"   最大: {stats['max_response_time']:.3f}s")
     print(f"   P95:  {stats['p95_response_time']:.3f}s")
     print(f"   P99:  {stats['p99_response_time']:.3f}s")
-    print(f"")
+    print("")
     print(f"🚀 吞吐量: {stats['requests_per_second']:.1f} RPS")
 
     if stats['errors']:
-        print(f"")
-        print(f"🚨 错误详情 (前10个):")
+        print("")
+        print("🚨 错误详情 (前10个):")
         for i, error in enumerate(stats['errors'], 1):
             print(f"   {i}. {error}")
 
@@ -215,11 +215,11 @@ async def main():
 
             # 测试间隔
             if config != test_configs[-1]:
-                print(f"⏳ 等待 5 秒后开始下一个测试...")
+                print("⏳ 等待 5 秒后开始下一个测试...")
                 await asyncio.sleep(5)
 
         except KeyboardInterrupt:
-            print(f"\n⚠️ 用户中断测试")
+            print("\n⚠️ 用户中断测试")
             break
         except Exception as e:
             print(f"❌ 测试失败: {e}")
@@ -228,7 +228,7 @@ async def main():
     # 生成总结报告
     if all_results:
         print(f"\n{'='*80}")
-        print(f"📋 压力测试总结报告")
+        print("📋 压力测试总结报告")
         print(f"{'='*80}")
 
         for test_name, results in all_results:
@@ -242,22 +242,22 @@ async def main():
         total_successful = sum(r.successful_requests for _, r in all_results)
         overall_success_rate = (total_successful / total_requests) * 100 if total_requests > 0 else 0
 
-        print(f"\n🏆 整体表现:")
+        print("\n🏆 整体表现:")
         print(f"   总请求数: {total_requests}")
         print(f"   整体成功率: {overall_success_rate:.1f}%")
 
         if overall_success_rate >= 95:
-            print(f"   ✅ 系统性能优秀")
+            print("   ✅ 系统性能优秀")
         elif overall_success_rate >= 90:
-            print(f"   ⚠️ 系统性能良好")
+            print("   ⚠️ 系统性能良好")
         else:
-            print(f"   ❌ 系统性能需要改进")
+            print("   ❌ 系统性能需要改进")
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        print(f"\n👋 用户取消测试")
+        print("\n👋 用户取消测试")
         sys.exit(0)
     except Exception as e:
         print(f"\n❌ 测试执行失败: {e}")
