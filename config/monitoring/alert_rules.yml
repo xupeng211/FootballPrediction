@@ -1,0 +1,248 @@
+# Prometheus告警规则配置
+# Prometheus Alert Rules Configuration
+
+groups:
+  - name: football_prediction_alerts
+    rules:
+      # 系统级告警
+      - alert: HighCPUUsage
+        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "高CPU使用率告警"
+          description: "实例 {{ $labels.instance }} CPU使用率超过80%，当前值: {{ $value }}%"
+
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "高内存使用率告警"
+          description: "实例 {{ $labels.instance }} 内存使用率超过85%，当前值: {{ $value }}%"
+
+      - alert: DiskSpaceLow
+        expr: (1 - (node_filesystem_avail_bytes / node_filesystem_size_bytes)) * 100 > 90
+        for: 5m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "磁盘空间不足告警"
+          description: "实例 {{ $labels.instance }} 磁盘使用率超过90%，当前值: {{ $value }}%"
+
+      # 应用级告警
+      - alert: HighErrorRate
+        expr: rate(football_prediction_http_responses_total{status_code=~"5.."}[5m]) / rate(football_prediction_http_responses_total[5m]) * 100 > 5
+        for: 2m
+        labels:
+          severity: critical
+          service: application
+        annotations:
+          summary: "应用错误率过高"
+          description: "应用错误率超过5%，当前值: {{ $value }}%"
+
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(football_prediction_http_request_duration_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: application
+        annotations:
+          summary: "响应时间过长"
+          description: "95%的请求响应时间超过2秒，当前值: {{ $value }}秒"
+
+      - alert: LowRequestRate
+        expr: rate(football_prediction_http_requests_total[5m]) < 0.1
+        for: 10m
+        labels:
+          severity: warning
+          service: application
+        annotations:
+          summary: "请求率过低"
+          description: "应用请求率过低，可能存在服务异常，当前值: {{ $value }}请求/秒"
+
+      # 数据库告警
+      - alert: DatabaseConnectionHigh
+        expr: pg_stat_activity_count > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "数据库连接数过高"
+          description: "数据库活跃连接数: {{ $value }}，超过80个连接"
+
+      - alert: DatabaseSlowQueries
+        expr: rate(pg_stat_statements_mean_time_seconds[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "数据库慢查询告警"
+          description: "数据库平均查询时间超过1秒，当前值: {{ $value }}秒"
+
+      - alert: DatabaseConnectionsFailing
+        expr: up{job="postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: database
+        annotations:
+          summary: "数据库连接失败"
+          description: "无法连接到数据库实例 {{ $labels.instance }}"
+
+      # Redis告警
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: cache
+        annotations:
+          summary: "Redis服务宕机"
+          description: "Redis实例 {{ $labels.instance }} 无法访问"
+
+      - alert: RedisMemoryHigh
+        expr: (redis_memory_used_bytes / redis_memory_max_bytes) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          service: cache
+        annotations:
+          summary: "Redis内存使用率过高"
+          description: "Redis内存使用率: {{ $value }}%"
+
+      - alert: RedisConnectionsHigh
+        expr: redis_connected_clients > 100
+        for: 5m
+        labels:
+          severity: warning
+          service: cache
+        annotations:
+          summary: "Redis连接数过高"
+          description: "Redis客户端连接数: {{ $value }}"
+
+      # 业务告警
+      - alert: PredictionFailureRateHigh
+        expr: rate(football_prediction_prediction_errors_total[5m]) / rate(football_prediction_prediction_requests_total[5m]) * 100 > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "预测失败率过高"
+          description: "预测API失败率: {{ $value }}%，超过10%阈值"
+
+      - alert: LowPredictionAccuracy
+        expr: football_prediction_accuracy_rate < 0.5
+        for: 30m
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "预测准确率过低"
+          description: "预测准确率: {{ $value }}%，低于50%阈值"
+
+      - alert: ModelPerformanceDegraded
+        expr: football_prediction_model_accuracy < 0.6
+        for: 15m
+        labels:
+          severity: warning
+          service: ml
+        annotations:
+          summary: "模型性能下降"
+          description: "模型准确率: {{ $value }}，可能需要重新训练"
+
+      # 容器健康告警
+      - alert: ContainerDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: container
+        annotations:
+          summary: "容器宕机"
+          description: "容器 {{ $labels.instance }} ({'{{'}} $labels.job {{'}}'}) 无法访问"
+
+      - alert: ContainerRestarts
+        expr: increase(container_start_time_seconds[1h]) > 3
+        for: 0m
+        labels:
+          severity: warning
+          service: container
+        annotations:
+          summary: "容器频繁重启"
+          description: "容器 {{ $labels.instance }} 在过去1小时内重启了 {{ $value }} 次"
+
+      # 网络告警
+      - alert: HighNetworkTraffic
+        expr: rate(container_network_transmit_bytes_total[5m]) + rate(container_network_receive_bytes_total[5m]) > 100000000  # 100MB/s
+        for: 5m
+        labels:
+          severity: warning
+          service: network
+        annotations:
+          summary: "网络流量过高"
+          description: "容器 {{ $labels.instance }} 网络流量: {{ $value }} bytes/s"
+
+  - name: football_prediction_predictions
+    rules:
+      # 预测相关的特定告警
+      - alert: NoPredictionsInLastHour
+        expr: increase(football_prediction_prediction_requests_total[1h]) == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "一小时无预测请求"
+          description: "在过去一小时内没有收到任何预测请求"
+
+      - alert: PredictionLatencyHigh
+        expr: histogram_quantile(0.95, rate(football_prediction_prediction_duration_bucket[5m])) > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "预测延迟过高"
+          description: "95%的预测请求耗时超过5秒，当前值: {{ $value }}秒"
+
+      - alert: ModelUpdateFailed
+        expr: increase(football_prediction_model_update_failures_total[1h]) > 0
+        for: 0m
+        labels:
+          severity: warning
+          service: ml
+        annotations:
+          summary: "模型更新失败"
+          description: "在过去1小时内发生了 {{ $value }} 次模型更新失败"
+
+  - name: football_prediction_data_quality
+    rules:
+      # 数据质量告警
+      - alert: DataIngestionStalled
+        expr: time() - football_prediction_last_data_ingestion_timestamp > 3600
+        for: 10m
+        labels:
+          severity: warning
+          service: data
+        annotations:
+          summary: "数据摄入停滞"
+          description: "数据摄入已停滞超过1小时"
+
+      - alert: DataQualityScoreLow
+        expr: football_prediction_data_quality_score < 0.8
+        for: 15m
+        labels:
+          severity: warning
+          service: data
+        annotations:
+          summary: "数据质量分数过低"
+          description: "数据质量分数: {{ $value }}，低于80%阈值"
