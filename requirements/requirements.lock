@@ -13,7 +13,7 @@ redis==5.2.1
 pydantic==2.10.4
 pydantic-settings==2.7.0
 python-multipart==0.0.18
-python-jose[cryptography]==3.3.0
+authlib==1.6.5
 passlib[bcrypt]==1.7.4
 python-dotenv==1.0.1
 httpx==0.28.1
@@ -45,7 +45,7 @@ pandas==2.2.3
 numpy==1.26.4
 scikit-learn==1.5.2
 joblib==1.4.2
-mlflow==3.5.0
+mlflow==3.5.1
 aiokafka==0.12.0
 aio-pika==9.4.3
 grafana-api==1.0.3

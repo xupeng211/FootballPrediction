@@ -2,7 +2,7 @@
 简化的适配器工厂
 """
 
-from typing import Any, Dict, Optional, Type
+from typing import Any, Dict, Optional, Type, cast
 from src.core.exceptions import AdapterError
 
 
@@ -17,11 +17,14 @@ class AdapterFactory:
         """注册适配器"""
         if name in self._adapters:
             raise AdapterError(f"Adapter '{name}' already registered")
-        self._adapters[name] = {
-            "class": adapter_class,
-            "singleton": kwargs.get("singleton", False),
-            **kwargs,
-        }
+        self._adapters[name] = cast(
+            Type[object],
+            {
+                "class": adapter_class,
+                "singleton": kwargs.get("singleton", False),
+                **kwargs,
+            }
+        )
 
     def create_adapter(
         self, name: str, config: Optional[Dict] = None, singleton: bool = False

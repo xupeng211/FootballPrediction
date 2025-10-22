@@ -518,17 +518,7 @@ logs: ## Container: Show docker-compose logs
 # 🧪 Test Environment Management
 # ============================================================================
 
-test-env-start: ## Test: Start integration/E2E test environment
-	@echo "$(YELLOW)Starting test environment...$(RESET)" && \
-	./scripts/manage_test_env.sh start
-
-test-env-stop: ## Test: Stop test environment
-	@echo "$(YELLOW)Stopping test environment...$(RESET)" && \
-	./scripts/manage_test_env.sh stop
-
-test-env-restart: ## Test: Restart test environment
-	@echo "$(YELLOW)Restarting test environment...$(RESET)" && \
-	./scripts/manage_test_env.sh restart
+# Legacy test environment commands - moved to Docker section
 
 test-env-status: ## Test: Check test environment status
 	@./scripts/manage_test_env.sh status
@@ -659,6 +649,11 @@ e2e-full: ## E2E: Run full test suite
 e2e-report: ## E2E: Generate test report only
 	@echo "$(YELLOW)Generating E2E test report...$(RESET)" && \
 	./scripts/run_e2e_tests.py --type critical --skip-setup --no-cleanup
+
+build: ## Container: Build Docker image (development)
+	@echo "$(YELLOW)Building Docker image $(IMAGE_NAME):latest...$(RESET)" && \
+	docker-compose -f docker-compose.yml build app && \
+	echo "$(GREEN)✅ Build completed$(RESET)"
 
 deploy: ## CI/Container: Build & start containers with immutable git-sha tag
 	@echo "$(YELLOW)Deploying image $(IMAGE_NAME):$(GIT_SHA)...$(RESET)" && \
