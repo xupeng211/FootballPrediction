@@ -114,7 +114,7 @@ def analyze_progress():
         print(f"\n🎉 发现 {improvement_count} 个文件已完全修复!")
 
     # 识别需要优先修复的文件
-    print(f"\n🔥 优先修复建议 (高错误文件):")
+    print("\n🔥 优先修复建议 (高错误文件):")
     high_error_files = [(f, c) for f, c in sorted_files[:5]
                         if any(keyword in f for keyword in ['src/api/', 'src/core/', 'src/utils/'])]
 
@@ -162,19 +162,19 @@ def main():
     stats = analyze_progress()
 
     if stats and stats['total_errors'] >= 0:
-        report_file = generate_progress_report(stats)
+        generate_progress_report(stats)
 
-        print(f"\n📋 总结:")
+        print("\n📋 总结:")
         print(f"   • 总错误数: {stats['total_errors']}")
         print(f"   • 涉及文件: {len(stats['errors_by_file'])}")
         print(f"   • 错误类型: {len(stats['error_types'])}")
 
         if stats['total_errors'] < 1200:
-            print(f"   🎯 建议: 继续当前策略，错误数在控制范围内")
+            print("   🎯 建议: 继续当前策略，错误数在控制范围内")
         elif stats['total_errors'] < 1500:
-            print(f"   📈 建议: 保持小批量修复，每周减少200-300个错误")
+            print("   📈 建议: 保持小批量修复，每周减少200-300个错误")
         else:
-            print(f"   ⚠️  建议: 需要更大规模的修复努力")
+            print("   ⚠️  建议: 需要更大规模的修复努力")
 
 if __name__ == '__main__':
     main()

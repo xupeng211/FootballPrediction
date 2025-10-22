@@ -109,7 +109,7 @@ class EnhancedPreCommitChecker:
             if result.returncode == 0:
                 files = [f.strip() for f in result.stdout.strip().split('\n') if f.strip()]
                 return [f for f in files if f.startswith('src/')]
-        except:
+        except Exception:
             pass
 
         # 如果不是git环境或获取失败，返回核心文件
@@ -153,7 +153,7 @@ class EnhancedPreCommitChecker:
                     )
                     if result.returncode != 0:
                         syntax_errors.append(f"{file_path}: {result.stderr}")
-                except:
+                except Exception:
                     syntax_errors.append(f"{file_path}: 检查异常")
 
         if syntax_errors:
@@ -203,7 +203,7 @@ class EnhancedPreCommitChecker:
                     )
                     if result.returncode != 0:
                         import_errors.append(import_stmt)
-                except:
+                except Exception:
                     import_errors.append(import_stmt)
 
             if import_errors:
@@ -288,7 +288,7 @@ class EnhancedPreCommitChecker:
         # 显示失败的检查
         failed_checks = [c for c in self.results['checks'] if c.get('status') == 'failed']
         if failed_checks:
-            print(f"\n❌ 失败的检查:")
+            print("\n❌ 失败的检查:")
             for check in failed_checks:
                 print(f"  • {check['description']}")
                 if 'errors' in check:
@@ -298,7 +298,7 @@ class EnhancedPreCommitChecker:
                     print(f"    - {check['error']}")
 
         # 给出建议
-        print(f"\n💡 建议:")
+        print("\n💡 建议:")
         if self.results['failed'] > 0:
             print("  1. 修复失败的检查项")
             print("  2. 运行 'python scripts/enhanced_pre_commit_check.py --fix' 自动修复")
@@ -344,7 +344,7 @@ class EnhancedPreCommitChecker:
 
             if result.get('status') == 'failed' and result.get('critical', True):
                 # 关键检查失败，停止后续检查
-                print(f"\n⛔ 关键检查失败，停止后续检查")
+                print("\n⛔ 关键检查失败，停止后续检查")
                 break
 
         # 生成摘要和保存报告
@@ -353,10 +353,10 @@ class EnhancedPreCommitChecker:
 
         # 返回退出码
         if self.results['failed'] > 0:
-            print(f"\n❌ 预提交检查失败！")
+            print("\n❌ 预提交检查失败！")
             return 1
         else:
-            print(f"\n🎉 预提交检查全部通过！")
+            print("\n🎉 预提交检查全部通过！")
             return 0
 
 def main():
@@ -376,7 +376,7 @@ def main():
         exit_code = checker.run_all_checks(fix_mode=args.fix)
         sys.exit(exit_code)
     except KeyboardInterrupt:
-        print(f"\n⚠️ 检查被用户中断")
+        print("\n⚠️ 检查被用户中断")
         sys.exit(130)
     except Exception as e:
         print(f"\n💥 检查执行异常: {e}")

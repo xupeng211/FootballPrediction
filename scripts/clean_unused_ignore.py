@@ -89,13 +89,13 @@ def main():
     print(f"\n📁 处理目录: {src_dir}")
     fixed, failed = clean_files_in_directory(src_dir, ['*.py'])
 
-    print(f"\n📊 清理结果:")
+    print("\n📊 清理结果:")
     print(f"✅ 成功清理: {len(fixed)} 个文件")
     print(f"❌ 清理失败: {len(failed)} 个文件")
 
     # 显示一些清理的例子
     if fixed:
-        print(f"\n✅ 清理示例:")
+        print("\n✅ 清理示例:")
         for file_path, message in fixed[:3]:
             print(f"  {file_path}: {message}")
         if len(fixed) > 3:
