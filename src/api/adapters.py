@@ -7,7 +7,7 @@ Demonstrates the usage and effects of the adapter pattern.
 """
 
 from fastapi import APIRouter, HTTPException, Query, Path
-from typing import Any, Dict, Optional, Type, Optional
+from typing import Any, Dict, Optional, Type, Optional, Optional
 from datetime import datetime, date, timedelta
 from requests.exceptions import HTTPError, RequestException
 
