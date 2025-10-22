@@ -214,25 +214,25 @@ class Prediction:
         )
 
         # 设置状态
-        prediction.is_settled = data.get("is_settled", False)
-        prediction.is_correct = data.get("is_correct", False)
-        prediction.actual_value = data.get("actual_value")
-        prediction.profit_loss = data.get("profit_loss", 0.0)
-        prediction.return_amount = data.get("return_amount", 0.0)
+        _prediction.is_settled = data.get("is_settled", False)
+        _prediction.is_correct = data.get("is_correct", False)
+        _prediction.actual_value = data.get("actual_value")
+        _prediction.profit_loss = data.get("profit_loss", 0.0)
+        _prediction.return_amount = data.get("return_amount", 0.0)
 
         # 设置附加信息
-        prediction.reasoning = data.get("reasoning", "")
-        prediction.analysis_data = data.get("analysis_data", {})
+        _prediction.reasoning = data.get("reasoning", "")
+        _prediction.analysis_data = data.get("analysis_data", {})
 
         # 设置时间戳
         if data.get("created_at"):
-            prediction.created_at = datetime.fromisoformat(data["created_at"])
+            _prediction.created_at = datetime.fromisoformat(data["created_at"])
         if data.get("updated_at"):
-            prediction.updated_at = datetime.fromisoformat(data["updated_at"])
+            _prediction.updated_at = datetime.fromisoformat(data["updated_at"])
         if data.get("settled_at"):
-            prediction.settled_at = datetime.fromisoformat(data["settled_at"])
+            _prediction.settled_at = datetime.fromisoformat(data["settled_at"])
 
-        return prediction
+        return _prediction
 
     def __str__(self) -> str:
         return f"Prediction({self.prediction_type.value}: {self.predicted_value} @ {self.odds})"
