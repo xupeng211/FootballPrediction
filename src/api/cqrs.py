@@ -7,7 +7,7 @@ Provides HTTP interface for CQRS pattern.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Optional, Optional
 from datetime import date, datetime
 from pydantic import BaseModel, Field
 
@@ -109,7 +109,7 @@ async def create_prediction(
     return CommandResponse(
         success=result.success,
         message=result.message,
-        data =result.data.to_dict() if result.data else None,
+        data=result.data.to_dict() if result.data else None,
         errors=result.errors,
     )
 
@@ -135,7 +135,7 @@ async def update_prediction(
     return CommandResponse(
         success=result.success,
         message=result.message,
-        data =result.data.to_dict() if result.data else None,
+        data=result.data.to_dict() if result.data else None,
         errors=result.errors,
     )
 
@@ -152,7 +152,7 @@ async def delete_prediction(
     return CommandResponse(
         success=result.success,
         message=result.message,
-        data =result.data,
+        data=result.data,
         errors=result.errors,
     )
 
@@ -194,8 +194,6 @@ async def get_user_predictions(
         "limit": limit,
         "offset": offset,
     }
-
-
 @router.get("/users/{user_id}/stats", summary="获取用户统计")
 async def get_user_statistics(
     user_id: int,
@@ -227,7 +225,7 @@ async def create_match(
     return CommandResponse(
         success=result.success,
         message=result.message,
-        data =result.data.to_dict() if result.data else None,
+        data=result.data.to_dict() if result.data else None,
         errors=result.errors,
     )
 
@@ -282,7 +280,7 @@ async def create_user(
     return CommandResponse(
         success=result.success,
         message=result.message,
-        data =result.data.to_dict() if result.data else None,
+        data=result.data.to_dict() if result.data else None,
         errors=result.errors,
     )
 
