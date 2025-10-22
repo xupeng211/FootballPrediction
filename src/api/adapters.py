@@ -7,7 +7,7 @@ Demonstrates the usage and effects of the adapter pattern.
 """
 
 from fastapi import APIRouter, HTTPException, Query, Path
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional, Type, Optional
 from datetime import datetime, date, timedelta
 from requests.exceptions import HTTPError, RequestException
 
@@ -36,22 +36,16 @@ async def get_registry_status() -> Dict[str, Any]:
         "registry": health_status,
         "metrics": metrics_summary,
     }
-
-
 @router.post("/registry/initialize", summary="初始化适配器注册表")
 async def initialize_registry() -> Dict[str, str]:
     """初始化适配器注册表"""
     await adapter_registry.initialize()
     return {"message": "适配器注册表已初始化"}
-
-
 @router.post("/registry/shutdown", summary="关闭适配器注册表")
 async def shutdown_registry() -> Dict[str, str]:
     """关闭适配器注册表"""
     await adapter_registry.shutdown()
     return {"message": "适配器注册表已关闭"}
-
-
 # ==================== 适配器配置管理 ====================
 
 
@@ -80,12 +74,11 @@ async def get_adapter_configs() -> Dict[str, Any]:
                 "fallback_strategy": group.fallback_strategy,
             }
 
-    return {
+    
+        {
         "adapters": configs,
         "groups": groups,
     }
-
-
 @router.post("/configs/load", summary="加载适配器配置")
 async def load_adapter_config(config_data: Dict[str, Any]) -> Dict[str, str]:
     """加载适配器配置"""
@@ -103,19 +96,21 @@ async def load_adapter_config(config_data: Dict[str, Any]) -> Dict[str, str]:
         adapter_factory._configs[config.name] = config
         return {"message": f"适配器配置 {config.name} 已加载"}
 
-    return {"error": "缺少adapter_name"}
-
-
+    
+        {"error": "缺少adapter_name"}
 # ==================== 辅助函数 ====================
+
 
 async def get_football_adapter():
     """安全获取足球适配器，如果失败则返回None"""
     try:
-        if hasattr(adapter_registry, 'status') and hasattr(adapter_registry.status, 'value'):
+        if hasattr(adapter_registry, "status") and hasattr(
+            adapter_registry.status, "value"
+        ):
             if adapter_registry.status.value == "inactive":
                 await adapter_registry.initialize()
         else:
-            if hasattr(adapter_registry, 'initialize'):
+            if hasattr(adapter_registry, "initialize"):
                 await adapter_registry.initialize()
     except Exception:
         pass
@@ -127,6 +122,7 @@ async def get_football_adapter():
         adapter = None
 
     return adapter
+
 
 # ==================== 足球数据适配器演示 ====================
 
@@ -422,7 +418,8 @@ async def get_team_players(
             },
         ]
 
-        return {
+        
+        {
             "source": "demo_adapter",
             "team_id": team_id,
             "season": season,
@@ -430,7 +427,6 @@ async def get_team_players(
             "players": mock_players,
             "message": "使用演示适配器返回模拟数据",
         }
-
     try:
         players = await adapter.get_players(team_id, season=season)
 
@@ -450,14 +446,14 @@ async def get_team_players(
             }
             player_dicts.append(player_dict)
 
-        return {
+        
+        {
             "source": adapter.name,
             "team_id": team_id,
             "season": season,
             "total_players": len(player_dicts),
             "players": player_dicts,
         }
-
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         raise HTTPException(status_code=500, detail=f"获取球员数据失败: {str(e)}")
 

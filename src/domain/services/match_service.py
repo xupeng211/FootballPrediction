@@ -105,7 +105,7 @@ class MatchDomainService:
                 home_team_id=match.home_team_id,
                 away_team_id=match.away_team_id,
                 final_score=match.score or MatchScore(0, 0),
-                result =match.score.result if match.score else MatchResult.DRAW,
+                result=match.score.result if match.score else MatchResult.DRAW,
             )
             self._events.append(event)
 

@@ -39,7 +39,7 @@ class AuditService:
             resource_id=resource_id,
             message=message,
             timestamp=datetime.utcnow(),
-            metadata =metadata,
+            metadata=metadata,
         )
         self.events.append(event)
         logger.info(f"Audit event: {event}")

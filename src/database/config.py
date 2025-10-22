@@ -145,3 +145,10 @@ def get_production_database_config() -> DatabaseConfig:
     """返回生产环境数据库配置。"""
 
     return get_database_config("production")
+
+
+def get_database_url(environment: Optional[str] = None) -> str:
+    """根据环境返回数据库连接URL。"""
+
+    config = get_database_config(environment)
+    return config.async_url

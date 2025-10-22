@@ -178,7 +178,7 @@ class MockRedis:
         return {
             "used_memory": len(str(self._data)),
             "connected_clients": 1,
-            "redis_version": "6.0.0"
+            "redis_version": "6.0.0",
         }
 
 
@@ -262,7 +262,7 @@ class MockMlflowClient:
             "name": run_name,
             "id": run_id,
             "metrics": {},
-            "params": {}
+            "params": {},
         }
         return run_id
 
@@ -288,7 +288,7 @@ class TestDataFactory:
             "founded_year": 1900,
             "logo_url": "https://example.com/logo.png",
             "country": "Test Country",
-            "league": "Test League"
+            "league": "Test League",
         }
         default_data.update(overrides)
         return default_data
@@ -305,7 +305,7 @@ class TestDataFactory:
             "match_date": "2024-01-01T15:00:00",
             "venue": "Test Stadium",
             "status": "upcoming",
-            "league": "Test League"
+            "league": "Test League",
         }
         default_data.update(overrides)
         return default_data
@@ -322,7 +322,7 @@ class TestDataFactory:
             "draw_probability": 0.25,
             "away_win_probability": 0.15,
             "model_version": "v1.0.0",
-            "created_at": "2024-01-01T10:00:00"
+            "created_at": "2024-01-01T10:00:00",
         }
         default_data.update(overrides)
         return default_data
@@ -345,7 +345,9 @@ class TestUtilities:
             assert item in actual, f"Item '{item}' not found in list"
 
     @staticmethod
-    async def wait_for_condition(condition_func, timeout: float = 5.0, interval: float = 0.1):
+    async def wait_for_condition(
+        condition_func, timeout: float = 5.0, interval: float = 0.1
+    ):
         """等待条件满足"""
         start_time = asyncio.get_event_loop().time()
         while not condition_func():
@@ -368,5 +370,5 @@ def setup_test_environment():
         "config": test_config,
         "mocks": mock_registry,
         "data_factory": data_factory,
-        "utils": test_utils
+        "utils": test_utils,
     }

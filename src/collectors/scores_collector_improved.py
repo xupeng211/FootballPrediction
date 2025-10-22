@@ -530,7 +530,7 @@ class ScoresCollector:
             raw_data = RawScoresData(
                 match_id=score_data["match_id"],
                 source="real_time_collector",
-                data =score_data,
+                data=score_data,
                 collected_at=score_data["last_updated"],
             )
             self.db_session.add(raw_data)

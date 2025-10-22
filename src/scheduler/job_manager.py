@@ -244,7 +244,7 @@ class JobManager:
                 success=True,
                 start_time=start_time,
                 end_time=end_time,
-                result =result,
+                result=result,
                 execution_time=execution_time,
                 memory_usage=avg_memory,
                 cpu_usage=avg_cpu,

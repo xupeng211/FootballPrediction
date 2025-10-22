@@ -1,0 +1,86 @@
+{
+  "timestamp": "2025-10-22T19:14:47.674522",
+  "project_root": "/home/user/projects/FootballPrediction",
+  "findings": [
+    {
+      "category": "dependencies",
+      "severity": "warning",
+      "description": "无法运行依赖安全检查"
+    },
+    {
+      "category": "configuration",
+      "severity": "high",
+      "description": "配置文件可能包含硬编码的敏感信息",
+      "file": "/home/user/projects/FootballPrediction/.venv/lib/python3.11/site-packages/mkdocs/config/defaults.py"
+    },
+    {
+      "category": "configuration",
+      "severity": "high",
+      "description": "配置文件可能包含硬编码的敏感信息",
+      "file": "/home/user/projects/FootballPrediction/.venv/lib/python3.11/site-packages/pandas/tests/config/test_config.py"
+    },
+    {
+      "category": "code_security",
+      "severity": "high",
+      "description": "发现 4 个weak_crypto问题",
+      "details": [
+        "/home/user/projects/FootballPrediction/src/decorators/decorators.py: 使用了不安全的MD5算法",
+        "/home/user/projects/FootballPrediction/src/cache/decorators.py: 使用了不安全的MD5算法",
+        "/home/user/projects/FootballPrediction/src/cache/redis/core/key_manager.py: 使用了不安全的MD5算法"
+      ]
+    },
+    {
+      "category": "api_security",
+      "severity": "medium",
+      "description": "API安全检查: no_auth",
+      "details": [
+        "/home/user/projects/FootballPrediction/src/api/facades.py",
+        "/home/user/projects/FootballPrediction/src/api/decorators.py",
+        "/home/user/projects/FootballPrediction/src/api/observers.py"
+      ]
+    },
+    {
+      "category": "api_security",
+      "severity": "medium",
+      "description": "API安全检查: no_rate_limit",
+      "details": [
+        "/home/user/projects/FootballPrediction/src/api/health.py",
+        "/home/user/projects/FootballPrediction/src/api/schemas.py",
+        "/home/user/projects/FootballPrediction/src/api/cqrs.py"
+      ]
+    },
+    {
+      "category": "api_security",
+      "severity": "medium",
+      "description": "API安全检查: no_cors",
+      "details": [
+        "/home/user/projects/FootballPrediction/src/api/health.py",
+        "/home/user/projects/FootballPrediction/src/api/schemas.py",
+        "/home/user/projects/FootballPrediction/src/api/cqrs.py"
+      ]
+    },
+    {
+      "category": "database_security",
+      "severity": "medium",
+      "description": "数据库安全问题",
+      "details": [
+        "/home/user/projects/FootballPrediction/src/database/migrations/env.py: 可能包含未加密的密码",
+        "/home/user/projects/FootballPrediction/src/database/migrations/versions/004_configure_database_permissions.py: 可能包含未加密的密码"
+      ]
+    }
+  ],
+  "score": 0,
+  "max_score": 100,
+  "recommendations": [
+    "定期更新依赖包以修复安全漏洞",
+    "移除代码中的硬编码敏感信息",
+    "使用环境变量管理配置",
+    "确保敏感文件的权限设置正确",
+    "使用参数化查询避免SQL注入",
+    "避免硬编码密钥和密码",
+    "使用强加密算法",
+    "为API端点添加认证",
+    "实施速率限制",
+    "配置CORS策略"
+  ]
+}

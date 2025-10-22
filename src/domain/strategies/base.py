@@ -7,7 +7,7 @@ Defines abstract base classes and data structures for prediction strategies.
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional, Tuple, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
