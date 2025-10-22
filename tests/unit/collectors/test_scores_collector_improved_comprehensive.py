@@ -11,12 +11,14 @@ from typing import Dict, List, Optional
 
 # 测试导入
 import sys
-sys.path.insert(0, 'src')
+
+sys.path.insert(0, "src")
 
 try:
     from src.collectors.scores_collector_improved import ScoresCollector
     from src.database.models import MatchStatus, RawScoresData
     from src.utils.time_utils import utc_now
+
     COLLECTOR_AVAILABLE = True
 except ImportError as e:
     print(f"Warning: Could not import ScoresCollector: {e}")
@@ -30,11 +32,9 @@ class TestScoresCollectorImproved:
     @pytest.fixture
     def collector(self):
         """创建收集器实例"""
-        with patch('src.collectors.scores_collector_improved.RedisManager'):
+        with patch("src.collectors.scores_collector_improved.RedisManager"):
             collector = ScoresCollector(
-                api_key="test_key",
-                cache_ttl=300,
-                retry_attempts=3
+                api_key="test_key", cache_ttl=300, retry_attempts=3
             )
             return collector
 
@@ -58,7 +58,7 @@ class TestScoresCollectorImproved:
             "away_score": 1,
             "status": "LIVE",
             "minute": 75,
-            "last_updated": "2024-01-01T15:30:00Z"
+            "last_updated": "2024-01-01T15:30:00Z",
         }
 
     @pytest.mark.asyncio
@@ -83,7 +83,7 @@ class TestScoresCollectorImproved:
     @pytest.mark.asyncio
     async def test_collect_single_match_data(self, collector, sample_match_data):
         """测试收集单个比赛数据"""
-        with patch.object(collector, '_fetch_match_data') as mock_fetch:
+        with patch.object(collector, "_fetch_match_data") as mock_fetch:
             mock_fetch.return_value = sample_match_data
 
             result = await collector.collect_match(12345)
@@ -96,7 +96,7 @@ class TestScoresCollectorImproved:
         """测试收集多个比赛数据"""
         match_ids = [12345, 12346, 12347]
 
-        with patch.object(collector, '_fetch_match_data') as mock_fetch:
+        with patch.object(collector, "_fetch_match_data") as mock_fetch:
             mock_fetch.return_value = sample_match_data
 
             results = await collector.collect_matches(match_ids)
@@ -115,16 +115,13 @@ class TestScoresCollectorImproved:
             "away_team": "Team B",
             "home_score": 2,
             "away_score": 1,
-            "status": "LIVE"
+            "status": "LIVE",
         }
 
         assert collector._validate_data(valid_data) is True
 
         # 无效数据 - 缺少必需字段
-        invalid_data = {
-            "home_team": "Team A",
-            "away_team": "Team B"
-        }
+        invalid_data = {"home_team": "Team A", "away_team": "Team B"}
 
         assert collector._validate_data(invalid_data) is False
 
@@ -145,12 +142,12 @@ class TestScoresCollectorImproved:
         """测试错误处理和重试机制"""
         match_id = 12345
 
-        with patch.object(collector, '_fetch_match_data') as mock_fetch:
+        with patch.object(collector, "_fetch_match_data") as mock_fetch:
             # 前两次失败，第三次成功
             mock_fetch.side_effect = [
                 Exception("Network error"),
                 Exception("Timeout"),
-                {"id": 12345, "status": "COMPLETED"}
+                {"id": 12345, "status": "COMPLETED"},
             ]
 
             result = await collector.collect_match(match_id)
@@ -164,7 +161,7 @@ class TestScoresCollectorImproved:
         """测试速率限制"""
         match_ids = [i for i in range(10)]
 
-        with patch.object(collector, '_fetch_match_data') as mock_fetch:
+        with patch.object(collector, "_fetch_match_data") as mock_fetch:
             mock_fetch.return_value = {"id": 0, "status": "LIVE"}
 
             start_time = asyncio.get_event_loop().time()
@@ -178,7 +175,7 @@ class TestScoresCollectorImproved:
     @pytest.mark.asyncio
     async def test_websocket_connection(self, collector):
         """测试WebSocket连接"""
-        with patch('websockets.connect') as mock_connect:
+        with patch("websockets.connect") as mock_connect:
             mock_websocket = AsyncMock()
             mock_connect.return_value.__aenter__.return_value = mock_websocket
             mock_websocket.recv.return_value = '{"id": 12345, "status": "LIVE"}'
@@ -193,11 +190,13 @@ class TestScoresCollectorImproved:
             mock_connect.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_database_integration(self, collector, mock_session, sample_match_data):
+    async def test_database_integration(
+        self, collector, mock_session, sample_match_data
+    ):
         """测试数据库集成"""
         match_id = 12345
 
-        with patch.object(collector, '_fetch_match_data') as mock_fetch:
+        with patch.object(collector, "_fetch_match_data") as mock_fetch:
             mock_fetch.return_value = sample_match_data
 
             await collector.collect_and_save_match(match_id, mock_session)
@@ -210,10 +209,7 @@ class TestScoresCollectorImproved:
     async def test_data_transformation(self, collector, sample_match_data):
         """测试数据转换功能"""
         # 测试时间格式转换
-        raw_data = {
-            "id": 12345,
-            "last_updated": "2024-01-01T15:30:00Z"
-        }
+        raw_data = {"id": 12345, "last_updated": "2024-01-01T15:30:00Z"}
 
         transformed = collector._transform_data(raw_data)
 
@@ -226,7 +222,7 @@ class TestScoresCollectorImproved:
         """测试并发收集"""
         match_ids = list(range(20))
 
-        with patch.object(collector, '_fetch_match_data') as mock_fetch:
+        with patch.object(collector, "_fetch_match_data") as mock_fetch:
             mock_fetch.return_value = {"id": 0, "status": "LIVE"}
 
             tasks = [collector.collect_match(match_id) for match_id in match_ids]
@@ -238,19 +234,12 @@ class TestScoresCollectorImproved:
     def test_configuration_validation(self):
         """测试配置验证"""
         # 有效配置
-        valid_config = {
-            "api_key": "test_key",
-            "cache_ttl": 300,
-            "retry_attempts": 3
-        }
+        valid_config = {"api_key": "test_key", "cache_ttl": 300, "retry_attempts": 3}
 
         assert ScoresCollector._validate_config(valid_config) is True
 
         # 无效配置 - 缺少API密钥
-        invalid_config = {
-            "cache_ttl": 300,
-            "retry_attempts": 3
-        }
+        invalid_config = {"cache_ttl": 300, "retry_attempts": 3}
 
         assert ScoresCollector._validate_config(invalid_config) is False
 
@@ -258,7 +247,7 @@ class TestScoresCollectorImproved:
     async def test_monitoring_and_metrics(self, collector):
         """测试监控和指标收集"""
         # 收集一些数据
-        with patch.object(collector, '_fetch_match_data') as mock_fetch:
+        with patch.object(collector, "_fetch_match_data") as mock_fetch:
             mock_fetch.return_value = {"id": 12345, "status": "LIVE"}
 
             await collector.collect_match(12345)
@@ -293,13 +282,13 @@ class TestScoresCollectorErrorScenarios:
     @pytest.fixture
     def collector(self):
         """创建收集器实例"""
-        with patch('src.collectors.scores_collector_improved.RedisManager'):
+        with patch("src.collectors.scores_collector_improved.RedisManager"):
             return ScoresCollector(api_key="test_key")
 
     @pytest.mark.asyncio
     async def test_network_timeout_handling(self, collector):
         """测试网络超时处理"""
-        with patch.object(collector, '_fetch_match_data') as mock_fetch:
+        with patch.object(collector, "_fetch_match_data") as mock_fetch:
             mock_fetch.side_effect = asyncio.TimeoutError("Request timeout")
 
             with pytest.raises(Exception):
@@ -308,7 +297,7 @@ class TestScoresCollectorErrorScenarios:
     @pytest.mark.asyncio
     async def test_invalid_response_handling(self, collector):
         """测试无效响应处理"""
-        with patch.object(collector, '_fetch_match_data') as mock_fetch:
+        with patch.object(collector, "_fetch_match_data") as mock_fetch:
             mock_fetch.return_value = "invalid json"
 
             result = await collector.collect_match(12345)
@@ -317,7 +306,7 @@ class TestScoresCollectorErrorScenarios:
     @pytest.mark.asyncio
     async def test_api_rate_limit_handling(self, collector):
         """测试API速率限制处理"""
-        with patch.object(collector, '_fetch_match_data') as mock_fetch:
+        with patch.object(collector, "_fetch_match_data") as mock_fetch:
             mock_fetch.side_effect = Exception("Rate limit exceeded")
 
             # 应该触发重试机制

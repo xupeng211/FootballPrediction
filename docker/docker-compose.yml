@@ -1,4 +1,4 @@
-version: '3.8'
+# Docker Compose v3.8+ (version field deprecated)
 
 # 基础Docker Compose配置
 # 支持通过环境变量ENV切换不同环境

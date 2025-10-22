@@ -15,7 +15,7 @@ Provides FastAPI dependency injection functions, including:
 - Request validation
 """
 
-from typing import Dict, Optional
+from typing import Dict, Optional, Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -64,7 +64,6 @@ async def get_current_user(
             raise credentials_exception
 
         return {"id": int(user_id), "role": role, "token": credentials.credentials}
-
     except JWTError:
         raise credentials_exception
 

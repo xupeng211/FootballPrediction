@@ -7,7 +7,7 @@ Defines base interfaces and implementations for repository pattern.
 """
 
 from abc import ABC, abstractmethod
-from typing import TypeVar, Generic, List, Optional, Dict, Any
+from typing import TypeVar, Generic, List, Optional, Dict, Any, Optional
 from dataclasses import dataclass
 
 from sqlalchemy.ext.asyncio import AsyncSession

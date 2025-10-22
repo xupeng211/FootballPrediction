@@ -53,7 +53,9 @@ class MockStrategy(PredictionStrategy):
             predicted_home_score=home_goals,
             predicted_away_score=away_goals,
             confidence=confidence,
-            metadata={"reasoning": f"Mock prediction based on form: {processed_input.home_team_form} vs {processed_input.away_team_form}"},
+            metadata={
+                "reasoning": f"Mock prediction based on form: {processed_input.home_team_form} vs {processed_input.away_team_form}"
+            },
         )
 
     async def post_process(self, output: PredictionOutput) -> PredictionOutput:
@@ -125,8 +127,8 @@ class TestPredictionStrategy:
 
         # 验证结果
         assert isinstance(_result, PredictionOutput)
-        assert hasattr(_result, 'predicted_home_score')
-        assert hasattr(_result, 'predicted_away_score')
+        assert hasattr(_result, "predicted_home_score")
+        assert hasattr(_result, "predicted_away_score")
         assert isinstance(_result.predicted_home_score, int)
         assert isinstance(_result.predicted_away_score, int)
         assert isinstance(_result.confidence, float)
@@ -292,8 +294,8 @@ class TestPredictionStrategy:
         assert len(results) == 5
         for _result in results:
             assert isinstance(_result, PredictionOutput)
-            assert hasattr(_result, 'predicted_home_score')
-            assert hasattr(_result, 'predicted_away_score')
+            assert hasattr(_result, "predicted_home_score")
+            assert hasattr(_result, "predicted_away_score")
 
     @pytest.mark.asyncio
     async def test_error_handling_in_prediction(self):

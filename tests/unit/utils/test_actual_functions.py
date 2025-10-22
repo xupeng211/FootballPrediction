@@ -403,8 +403,8 @@ class TestFormatterFunctions:
             assert callable(format_currency)
 
             _result = format_currency(123.45, "USD")
-            assert isinstance(result, str)
-            assert "123" in result or "$" in result
+            assert isinstance(_result, str)
+            assert "123" in _result or "$" in _result
         except ImportError:
             pytest.skip("format_currency not available")
 
@@ -429,8 +429,8 @@ class TestFormatterFunctions:
             assert callable(format_percentage)
 
             _result = format_percentage(0.75)
-            assert isinstance(result, str)
-            assert "75" in result or "%" in result
+            assert isinstance(_result, str)
+            assert "75" in _result or "%" in _result
         except ImportError:
             pytest.skip("format_percentage not available")
 
@@ -961,12 +961,13 @@ class TestStandardLibraryCoverage:
         import fractions
         import pickle
         import io
+        import statistics
 
         # JSON操作
         _data = {"test": True}
-        json_str = json.dumps(data)
+        json_str = json.dumps(_data)
         parsed = json.loads(json_str)
-        assert parsed == data
+        assert parsed == _data
 
         # 哈希操作
         text = "test"
@@ -1041,7 +1042,7 @@ class TestStandardLibraryCoverage:
 
         # 统计
         _data = [1, 2, 3, 4, 5]
-        assert statistics.mean(data) == 3
+        assert statistics.mean(_data) == 3
 
         # 文件操作
         with tempfile.NamedTemporaryFile() as tmp:

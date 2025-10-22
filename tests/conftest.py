@@ -29,7 +29,7 @@ from tests.test_config import (
     setup_test_environment,
     mock_registry,
     data_factory,
-    test_utils
+    test_utils,
 )
 
 from src.main import app
@@ -40,6 +40,7 @@ from src.database.dependencies import (
     get_test_db,
     get_test_async_db,
 )
+
 
 # 全局事件循环处理
 @pytest.fixture(scope="session")
@@ -341,45 +342,51 @@ def pytest_runtest_makereport(item, call):
         if hasattr(item, "module"):
             report.sections.append(("Test Module", item.module.__name__))
 
+
 # 改进的测试配置
+
 
 # 改进的异步会话fixture
 @pytest.fixture(scope="function")
 async def async_client():
     """创建异步测试客户端"""
     from httpx import AsyncClient
+
     async with AsyncClient(app=app, base_url="http://testserver") as client:
         yield client
+
 
 # Mock服务fixture
 @pytest.fixture
 def mock_redis():
     """Redis Mock fixture"""
     from tests.redis_mock import MockRedis
+
     return MockRedis()
+
 
 @pytest.fixture
 def mock_kafka_producer():
     """Kafka Producer Mock fixture"""
     from tests.external_services_mock import MockKafkaProducer
+
     return MockKafkaProducer()
+
 
 @pytest.fixture
 def mock_kafka_consumer():
     """Kafka Consumer Mock fixture"""
     from tests.external_services_mock import MockKafkaConsumer
+
     return MockKafkaConsumer()
+
 
 # 测试数据fixtures
 @pytest.fixture
 def sample_team_data():
     """示例团队数据"""
-    return {
-        "id": 1,
-        "name": "Test Team",
-        "founded_year": 1900,
-        "logo_url": "logo.png"
-    }
+    return {"id": 1, "name": "Test Team", "founded_year": 1900, "logo_url": "logo.png"}
+
 
 @pytest.fixture
 def sample_match_data():
@@ -389,19 +396,23 @@ def sample_match_data():
         "home_team_id": 1,
         "away_team_id": 2,
         "match_date": "2024-01-01",
-        "venue": "Test Stadium"
+        "venue": "Test Stadium",
     }
+
 
 # 错误处理fixture
 @pytest.fixture
 def mock_database_error():
     """模拟数据库错误"""
+
     def side_effect(*args, **kwargs):
         raise Exception("Database connection failed")
+
     return side_effect
 
 
 # === Phase 2 增强Fixtures ===
+
 
 @pytest.fixture(scope="session", autouse=True)
 def test_environment_setup():
@@ -410,50 +421,60 @@ def test_environment_setup():
     yield
     # 清理工作（如果需要）
 
+
 @pytest.fixture
 def test_config():
     """测试配置fixture"""
     return TestConfig()
+
 
 @pytest.fixture
 def mock_services():
     """Mock服务注册表fixture"""
     return mock_registry
 
+
 @pytest.fixture
 def test_data():
     """测试数据工厂fixture"""
     return data_factory
+
 
 @pytest.fixture
 def test_helpers():
     """测试工具类fixture"""
     return test_utils
 
+
 @pytest.fixture
 def mock_redis():
     """Mock Redis fixture"""
     return mock_registry.get_service("redis")
+
 
 @pytest.fixture
 def mock_http_client():
     """Mock HTTP客户端fixture"""
     return mock_registry.get_service("http")
 
+
 @pytest.fixture
 def mock_kafka_producer():
     """Mock Kafka生产者fixture"""
     return mock_registry.get_service("kafka_producer")
+
 
 @pytest.fixture
 def mock_kafka_consumer():
     """Mock Kafka消费者fixture"""
     return mock_registry.get_service("kafka_consumer")
 
+
 @pytest.fixture
 def mock_mlflow():
     """Mock MLflow客户端fixture"""
     return mock_registry.get_service("mlflow")
+
 
 # 增强的测试数据fixtures
 @pytest.fixture
@@ -461,15 +482,18 @@ def sample_team_data(test_data):
     """增强的团队数据fixture"""
     return test_data.create_team_data()
 
+
 @pytest.fixture
 def sample_match_data(test_data):
     """增强的比赛数据fixture"""
     return test_data.create_match_data()
 
+
 @pytest.fixture
 def sample_prediction_data(test_data):
     """增强的预测数据fixture"""
     return test_data.create_prediction_data()
+
 
 @pytest.fixture
 def multiple_team_data(test_data):
@@ -480,26 +504,18 @@ def multiple_team_data(test_data):
         test_data.create_team_data(id=3, name="Team C", short_name="TC"),
     ]
 
+
 @pytest.fixture
 def multiple_match_data(test_data, multiple_team_data):
     """多个比赛数据fixture"""
     return [
         test_data.create_match_data(
-            id=1,
-            home_team_id=1,
-            away_team_id=2,
-            match_date="2024-01-01T15:00:00"
+            id=1, home_team_id=1, away_team_id=2, match_date="2024-01-01T15:00:00"
         ),
         test_data.create_match_data(
-            id=2,
-            home_team_id=2,
-            away_team_id=3,
-            match_date="2024-01-02T16:00:00"
+            id=2, home_team_id=2, away_team_id=3, match_date="2024-01-02T16:00:00"
         ),
         test_data.create_match_data(
-            id=3,
-            home_team_id=1,
-            away_team_id=3,
-            match_date="2024-01-03T17:00:00"
+            id=3, home_team_id=1, away_team_id=3, match_date="2024-01-03T17:00:00"
         ),
     ]

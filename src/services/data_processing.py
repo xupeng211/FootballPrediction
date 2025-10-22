@@ -7,7 +7,7 @@ Provides data processing and transformation functionality.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Optional, Optional
 from datetime import datetime
 from abc import ABC, abstractmethod
 
@@ -29,36 +29,32 @@ class MatchDataProcessor(DataProcessor):
     async def process(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """处理比赛数据"""
         logger.debug(f"Processing match data: {data.get('id')}")
-        return {**data, "processed_at": datetime.utcnow(), "type": "match"}
-
-
+        
+        {**data, "processed_at": datetime.utcnow(), "type": "match"}
 class OddsDataProcessor(DataProcessor):
     """赔率数据处理器"""
 
     async def process(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """处理赔率数据"""
         logger.debug(f"Processing odds data: {data.get('match_id')}")
-        return {**data, "processed_at": datetime.utcnow(), "type": "odds"}
-
-
+        
+        {**data, "processed_at": datetime.utcnow(), "type": "odds"}
 class ScoresDataProcessor(DataProcessor):
     """比分数据处理器"""
 
     async def process(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """处理比分数据"""
         logger.debug(f"Processing scores data: {data.get('match_id')}")
-        return {**data, "processed_at": datetime.utcnow(), "type": "scores"}
-
-
+        
+        {**data, "processed_at": datetime.utcnow(), "type": "scores"}
 class FeaturesDataProcessor(DataProcessor):
     """特征数据处理器"""
 
     async def process(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """处理特征数据"""
         logger.debug(f"Processing features data: {data.get('match_id')}")
-        return {**data, "processed_at": datetime.utcnow(), "type": "features"}
-
-
+        
+        {**data, "processed_at": datetime.utcnow(), "type": "features"}
 class DataQualityValidator:
     """数据质量验证器"""
 
@@ -160,9 +156,8 @@ class BronzeToSilverProcessor:
         for handler in self.handlers:
             data = handler.handle(data)
 
-        return {**data, "processed_at": datetime.utcnow(), "layer": "silver"}
-
-
+        
+        {**data, "processed_at": datetime.utcnow(), "layer": "silver"}
 class DataProcessingService:
     """数据处理服务 - 简化版本"""
 
