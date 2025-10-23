@@ -14,8 +14,13 @@ import time
 import logging
 from typing import Callable, List, Optional, Dict, Any
 from fastapi import Request, Response, HTTPException, status
-from fastapi.middleware.base import BaseHTTPMiddleware
-from fastapi.middleware.cors import CORSMiddleware
+try:
+    from fastapi.middleware.base import BaseHTTPMiddleware
+    from fastapi.middleware.cors import CORSMiddleware
+except ImportError:
+    # 使用starlette的中间件作为替代
+    from starlette.middleware.base import BaseHTTPMiddleware
+    from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.base import RequestResponseEndpoint
 from starlette.types import ASGIApp
 from collections import defaultdict
@@ -50,6 +55,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
                 "STRICT_TRANSPORT_SECURITY",
                 "max-age=31536000; includeSubDomains"
             )
+
+        return self.headers
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """处理请求并添加安全头"""
