@@ -34,12 +34,11 @@ jobs:
   deploy:
     name: 部署到 ${{ inputs.environment }}
     runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
     timeout-minutes: 30
 
     strategy:
       matrix:
-        environment: [${{ inputs.environment }}]
+        environment: [staging, production]
 
     steps:
       - name: Checkout
