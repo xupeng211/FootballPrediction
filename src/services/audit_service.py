@@ -7,7 +7,7 @@ Provides audit logging functionality for system operations.
 """
 
 import logging
-from typing import Dict, Any, Optional, List, Optional, Optional
+from typing import Dict, Any, Optional, List
 from datetime import datetime
 from enum import Enum
 

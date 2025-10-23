@@ -39,5 +39,18 @@ def init_i18n():
         pass
 
 
+class I18nUtils:
+    """国际化工具类"""
+    @staticmethod
+    def translate(key: str, language: str = "zh") -> str:
+        """翻译文本"""
+        return key  # 简化实现
+
+    @staticmethod
+    def get_supported_languages() -> dict:
+        """获取支持的语言"""
+        return supported_languages
+
+
 # 初始化
 init_i18n()

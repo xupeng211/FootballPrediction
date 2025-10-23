@@ -18,6 +18,11 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
+class ConsistencyManager:
+    """缓存一致性管理器别名"""
+    pass
+
+
 class CacheConsistencyManager:
     """缓存一致性管理类"""
 

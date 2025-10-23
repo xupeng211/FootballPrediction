@@ -7,7 +7,7 @@ Demonstrates the usage and effects of the adapter pattern.
 """
 
 from fastapi import APIRouter, HTTPException, Query, Path
-from typing import Any, Dict, Optional, Type, Optional, Optional
+from typing import Any, Dict, Optional, Type
 from datetime import datetime, date, timedelta
 from requests.exceptions import HTTPError, RequestException
 
@@ -74,8 +74,8 @@ async def get_adapter_configs() -> Dict[str, Any]:
                 "fallback_strategy": group.fallback_strategy,
             }
 
-    
-        {
+  
+        return {
         "adapters": configs,
         "groups": groups,
     }
@@ -96,8 +96,7 @@ async def load_adapter_config(config_data: Dict[str, Any]) -> Dict[str, str]:
         adapter_factory._configs[config.name] = config
         return {"message": f"适配器配置 {config.name} 已加载"}
 
-    
-        {"error": "缺少adapter_name"}
+    return {"error": "缺少adapter_name"}
 # ==================== 辅助函数 ====================
 
 
@@ -417,9 +416,7 @@ async def get_team_players(
                 "number": 10,
             },
         ]
-
-        
-        {
+        return {
             "source": "demo_adapter",
             "team_id": team_id,
             "season": season,
@@ -446,14 +443,13 @@ async def get_team_players(
             }
             player_dicts.append(player_dict)
 
-        
-        {
-            "source": adapter.name,
-            "team_id": team_id,
-            "season": season,
-            "total_players": len(player_dicts),
-            "players": player_dicts,
-        }
+            return {
+                "source": adapter.name,
+                "team_id": team_id,
+                "season": season,
+                "total_players": len(player_dicts),
+                "players": player_dicts,
+            }
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         raise HTTPException(status_code=500, detail=f"获取球员数据失败: {str(e)}")
 
