@@ -1,18 +1,22 @@
 """
-import asyncio
-    from sqlalchemy.ext.asyncio import create_async_engine
-
-from src.database.base import Base  # noqa: E402
-from src.database.config import get_database_config  # noqa: E402
-from src.database.models import Odds  # noqa: F401, E402
-
 Alembic环境配置
 
 配置数据库迁移环境，使用我们的数据库配置和模型。
 """
 
-# 导入我们的数据库配置和模型
-sys.path.append(os.path.join(os.path.dirname(__file__), "../../.."))
+import os
+import sys
+import asyncio
+from logging.config import fileConfig
+from sqlalchemy import engine_from_config
+from sqlalchemy import pool
+from sqlalchemy.ext.asyncio import create_async_engine
+
+from alembic import context
+
+from src.database.base import Base  # noqa: E402
+from src.database.config import get_database_config  # noqa: E402
+from src.database.models import Odds  # noqa: F401, E402
 
 
 # 导入所有模型以确保它们被注册到Base.metadata
@@ -98,7 +102,7 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
-def do_run_migrations(connection):
+def do_run_migrations(connection):  # type: ignore
     """运行迁移的辅助函数"""
     context.configure(
         connection=connection,

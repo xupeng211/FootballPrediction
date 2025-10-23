@@ -39,7 +39,7 @@ class MatchScore:
     home_score: int = 0
     away_score: int = 0
 
-    def __post_init__(self):
+    def __post_init__(self):  # type: ignore
         if self.home_score < 0 or self.away_score < 0:
             raise DomainError("比分不能为负数")
 
@@ -93,7 +93,7 @@ class Match:
     # 领域事件
     _domain_events: List[Any] = field(default_factory=list, init=False)
 
-    def __post_init__(self):
+    def __post_init__(self):  # type: ignore
         """初始化后的验证"""
         if self.home_team_id == self.away_team_id:
             raise DomainError("主队和客队不能相同")

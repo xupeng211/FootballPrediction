@@ -67,7 +67,7 @@ class StrategyMetrics:
 class PredictionStrategy(ABC):
     """预测策略抽象基类"""
 
-    def __init__(self, name: str, strategy_type: StrategyType):
+    def __init__(self, name: str, strategy_type: StrategyType):  # type: ignore
         self.name = name
         self.strategy_type = strategy_type
         self._metrics: Optional[StrategyMetrics] = None

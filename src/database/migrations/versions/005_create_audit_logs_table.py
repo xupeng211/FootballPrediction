@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger(__name__)
+from alembic import op
 """
 from datetime import datetime, timezone
 增强权限审计功能 - 创建audit_logs表
@@ -24,8 +27,12 @@ branch_labels = None
 depends_on = None
 
 
-def upgrade():
+def upgrade():  # type: ignore
     """升级数据库架构 - 创建audit_logs表"""
+
+    # 检查是否在SQLite环境中（测试环境）
+    conn = op.get_bind()
+    db_dialect = conn.dialect.name.lower()
 
     # 创建审计日志表
     op.create_table(
@@ -108,7 +115,7 @@ def upgrade():
         # 扩展信息
         sa.Column(
             "metadata",
-            postgresql.JSONB(astext_type=sa.Text()),
+            sa.JSON() if db_dialect == 'sqlite' else postgresql.JSONB(astext_type=sa.Text()),
             nullable=True,
             comment="扩展元数据",
         ),
@@ -185,30 +192,37 @@ def upgrade():
     if not context.is_offline_mode():
         connection = op.get_bind()
 
-        # 为只读用户授予查询权限
-        connection.execute(text("GRANT SELECT ON audit_logs TO football_reader;"))
+        # 检查是否在SQLite环境中（测试环境）
+        if db_dialect == 'sqlite':
+            logger.info("⚠️  SQLite环境：跳过PostgreSQL权限设置和函数创建")
+            op.execute("-- SQLite environment: skipped PostgreSQL permission grants")
+            op.execute("-- SQLite environment: SQLite does not support GRANT statements")
+            op.execute("-- SQLite environment: skipped PostgreSQL function creation")
+        else:
+            # 为只读用户授予查询权限
+            connection.execute(text("GRANT SELECT ON audit_logs TO football_reader;"))
 
-        # 为写入用户授予查询和插入权限（审计日志通常只允许插入，不允许修改）
-        connection.execute(
-            text("GRANT SELECT, INSERT ON audit_logs TO football_writer;")
-        )
-
-        # 为管理员用户授予所有权限（包括删除权限，用于数据清理）
-        connection.execute(
-            text("GRANT ALL PRIVILEGES ON audit_logs TO football_admin;")
-        )
-
-        # 为序列授予使用权限
-        connection.execute(
-            text(
-                "GRANT USAGE ON SEQUENCE audit_logs_id_seq TO football_writer, football_admin;"
+            # 为写入用户授予查询和插入权限（审计日志通常只允许插入，不允许修改）
+            connection.execute(
+                text("GRANT SELECT, INSERT ON audit_logs TO football_writer;")
             )
-        )
 
-        # 创建审计日志清理函数（用于定期清理过期日志）
-        connection.execute(
-            text(
-                """
+            # 为管理员用户授予所有权限（包括删除权限，用于数据清理）
+            connection.execute(
+                text("GRANT ALL PRIVILEGES ON audit_logs TO football_admin;")
+            )
+
+            # 为序列授予使用权限
+            connection.execute(
+                text(
+                    "GRANT USAGE ON SEQUENCE audit_logs_id_seq TO football_writer, football_admin;"
+                )
+            )
+
+            # 创建审计日志清理函数（用于定期清理过期日志）
+            connection.execute(
+                text(
+                    """
             CREATE OR REPLACE FUNCTION cleanup_expired_audit_logs()
             RETURNS INTEGER AS $$
             DECLARE
@@ -226,30 +240,30 @@ def upgrade():
         END;
         $$ LANGUAGE plpgsql;
     """
+                )
             )
-        )
 
-        # 为清理函数授予执行权限
-        connection.execute(
-            text(
-                "GRANT EXECUTE ON FUNCTION cleanup_expired_audit_logs() TO football_admin;"
-            )
-        )
-
-        # 记录迁移日志到原有的权限审计表（如果存在）
-        try:
+            # 为清理函数授予执行权限
             connection.execute(
                 text(
-                    """
+                    "GRANT EXECUTE ON FUNCTION cleanup_expired_audit_logs() TO football_admin;"
+                )
+            )
+
+            # 记录迁移日志到原有的权限审计表（如果存在）
+            try:
+                connection.execute(
+                    text(
+                        """
             INSERT INTO permission_audit_log (username, action, table_name, privilege_type, granted, granted_by, notes)
             VALUES ('system', 'CREATE_TABLE', 'audit_logs', 'DDL', true, 'migration_005',
                    '创建增强的权限审计日志表，支持详细的操作记录和合规要求');
         """
+                    )
                 )
-            )
-        except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
-            # 如果permission_audit_log表不存在，忽略错误但记录日志
-            logger.info(f"Warning: Could not drop permission_audit_log table: {e}")
+            except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
+                # 如果permission_audit_log表不存在，忽略错误但记录日志
+                logger.info(f"Warning: Could not drop permission_audit_log table: {e}")
     else:
         # 离线模式下执行注释，确保 SQL 生成正常
         op.execute("-- offline mode: skipped audit_logs permission grants")
@@ -257,7 +271,7 @@ def upgrade():
         op.execute("-- offline mode: skipped audit_logs function execution grants")
 
 
-def downgrade():
+def downgrade():  # type: ignore
     """降级数据库架构 - 删除audit_logs表"""
 
     # 检查是否在离线模式

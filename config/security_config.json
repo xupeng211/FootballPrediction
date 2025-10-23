@@ -1,0 +1,37 @@
+{
+  "timestamp": "2025-10-23T07:30:49.607264",
+  "jwt_secret_key": "6_SqfCoWu1F6YrKAcGQYPbFRmN-xJWKMzYoghXx276uXd7ZDCrv3Q3tPt-EiY6Z3dMr_NsgNEAV0pExtxiYXoQ",
+  "jwt_refresh_secret_key": "2EyxgWa3-FFRDTijB5rhQxfc0dGUIhm28bkwTdY7uUMitIDHw_KUgLqVZlJcYzal64h63_JOHUqf0s9P5GNoDA",
+  "algorithm": "HS256",
+  "access_token_expire_minutes": 30,
+  "refresh_token_expire_days": 7,
+  "api_key": "oS05CcfjdfKDZED2nMPdLoI6akNM0yp3FWmYZhtxjCE",
+  "api_secret_key": "5_hRYMD67JOz7XBM4uLisiY5lHAxYlDRCG4HUs8GnjpK81E5N458eQODLPd3UOxP",
+  "database_password": "209xUOuU*9hcEpuMWRUT9CCS(thhL#q8",
+  "redis_password": "kTBn6PaiuLx42OgXUfRtPkRYf5A1hVPThfhDoF4KWBY",
+  "cors_origins": [
+    "http://localhost:3000",
+    "http://localhost:8080",
+    "https://your-domain.com",
+    "https://api.your-domain.com"
+  ],
+  "rate_limit_per_minute": 60,
+  "rate_limit_burst": 10,
+  "secure_headers_enabled": true,
+  "password_min_length": 12,
+  "session_timeout_minutes": 30,
+  "audit_log_enabled": true,
+  "notes": {
+    "jwt_security": "JWT密钥已生成，长度64位，使用HMAC-SHA256算法",
+    "password_strength": "所有密码都包含大小写字母、数字和特殊字符",
+    "cors_configuration": "请根据实际域名修改CORS允许的源",
+    "deployment_checklist": [
+      "1. 将所有密钥存储在安全的密钥管理系统中",
+      "2. 更新CORS配置以匹配实际域名",
+      "3. 配置HTTPS证书",
+      "4. 设置防火墙规则",
+      "5. 启用审计日志",
+      "6. 配置备份策略"
+    ]
+  }
+}

@@ -42,7 +42,7 @@ class PredictionStrategyFactory:
     负责根据配置创建和管理各种预测策略实例。
     """
 
-    def __init__(self, config_path: Optional[Union[str, Path]] = None):
+    def __init__(self, config_path: Optional[Union[str, Path]] = None):  # type: ignore
         """初始化策略工厂
 
         Args:

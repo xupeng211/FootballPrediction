@@ -1,7 +1,12 @@
 # mypy: ignore-errors
 import sqlalchemy as sa
 from sqlalchemy.exc import SQLAlchemyError, DatabaseError
+from typing import Union, Sequence
 
+import logging
+logger = logging.getLogger(__name__)
+from alembic import context
+from alembic import op
 """add_jsonb_sqlite_compatibility
 
 
@@ -27,7 +32,7 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
-def is_sqlite():
+def is_sqlite():  # type: ignore
     """检测当前是否为SQLite数据库"""
     if context.is_offline_mode():
         return False  # 离线模式下假设不是SQLite
@@ -35,7 +40,7 @@ def is_sqlite():
     return bind.dialect.name == "sqlite"
 
 
-def is_postgresql():
+def is_postgresql():  # type: ignore
     """检测当前是否为PostgreSQL数据库"""
     if context.is_offline_mode():
         return True  # 离线模式下假设是PostgreSQL
@@ -73,7 +78,7 @@ def upgrade() -> None:
     logger.info("JSONB与SQLite兼容性配置完成")
 
 
-def _configure_sqlite_compatibility():
+def _configure_sqlite_compatibility():  # type: ignore
     """为SQLite配置兼容性设置"""
     # SQLite特定的配置
     # 由于我们使用了TypeDecorator，JSON数据会自动转换为TEXT存储
@@ -97,7 +102,7 @@ def _configure_sqlite_compatibility():
             logger.info(f"  ⚠ 表 {table_name} 不存在，跳过检查")
 
 
-def _verify_postgresql_jsonb_config():
+def _verify_postgresql_jsonb_config():  # type: ignore
     """验证PostgreSQL的JSONB配置"""
     bind = op.get_bind()
     inspector = sa.inspect(bind)

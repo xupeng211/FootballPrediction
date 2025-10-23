@@ -508,3 +508,43 @@ grep "anomaly" logs/monitoring.log
 4. 添加测试用例
 
 这个监控系统为足球预测系统提供了全面的数据质量保障，确保系统数据的准确性、及时性和可靠性。
+
+## 🔗 相关文档链接
+
+### 📚 运维核心文档
+- **[生产部署指南](PRODUCTION_READINESS_PLAN.md)** - 生产环境部署和运维指南
+- **[运维手册](runbooks/README.md)** - 运维操作指南和故障排除
+- **[备份恢复策略](BACKUP_RECOVERY.md)** - 数据备份和灾难恢复
+- **[安全配置](../security/SECURITY_POLICY.md)** - 系统安全配置和最佳实践
+
+### 🏗️ 系统架构
+- **[系统架构文档](../architecture/ARCHITECTURE.md)** - 完整的系统架构设计
+- **[数据库架构](../reference/DATABASE_SCHEMA.md)** - 数据库设计和表结构详情
+- **[监控系统架构](../architecture/performance-monitoring-architecture.md)** - 监控和可观测性架构设计
+- **[缓存实现设计](../architecture/CACHING_IMPLEMENTATION_DESIGN.md)** - 缓存架构和策略设计
+
+### 📊 监控和告警
+- **[告警管理器文档](alert_manager.md)** - 告警系统详细配置
+- **[性能分析指南](performance_analysis.md)** - 系统性能分析和优化
+- **[日志管理策略](logging_strategy.md)** - 日志收集和管理规范
+- **[健康检查配置](health_checks.md)** - 服务健康检查配置
+
+### 🛠️ 开发和测试
+- **[开发指南](../reference/DEVELOPMENT_GUIDE.md)** - 开发环境搭建和编码规范
+- **[CLAUDE.md](../../CLAUDE.md)** - AI辅助开发指导和工作流程
+- **[测试策略文档](../testing/TEST_IMPROVEMENT_GUIDE.md)** - 完整的测试策略和质量保证体系
+
+### 🚀 部署和CI/CD
+- **[Staging环境配置](../how-to/STAGING_ENVIRONMENT.md)** - 测试环境配置和管理
+- **[容器化部署](DOCKER_DEPLOYMENT.md)** - Docker容器化部署指南
+- **[CI/CD流水线](../project/CI_CD_PIPELINE.md)** - 持续集成和部署流程
+
+### 📖 项目资源
+- **[项目索引](../INDEX.md)** - 完整的文档导航和入口
+- **[快速开始指南](../how-to/QUICK_START.md)** - 5分钟快速上手指南
+- **[术语表](../reference/glossary.md)** - 项目专业术语和概念定义
+- **[API文档](../reference/API_REFERENCE.md)** - REST API接口规范
+
+---
+
+**文档维护**: 本监控文档与系统运维同步更新，如有疑问请参考相关文档或联系运维团队。

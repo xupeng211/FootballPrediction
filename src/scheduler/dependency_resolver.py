@@ -1,4 +1,5 @@
 import warnings
+from typing import Any, List, Dict, Optional, Union, Callable
 
 warnings.warn(
     "此模块已弃用，请使用新的模块结构。",
@@ -7,4 +8,4 @@ warnings.warn(
 )
 
 # Compatibility module
-__all__ = []
+__all__: list = []

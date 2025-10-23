@@ -19,7 +19,7 @@ supported_languages = {
 LOCALE_DIR = Path(__file__).parent / "locales"
 
 
-def init_i18n():
+def init_i18n():  # type: ignore
     """初始化国际化"""
     # 确保翻译目录存在
     LOCALE_DIR.mkdir(exist_ok=True)

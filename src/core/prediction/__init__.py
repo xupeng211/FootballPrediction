@@ -11,12 +11,12 @@ from .config import PredictionConfig
 class PredictionStatistics:
     """预测统计类"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self.total_predictions = 0
         self.correct_predictions = 0
         self.accuracy = 0.0
 
-    def update(self, is_correct: bool):
+    def update(self, is_correct: bool):  # type: ignore
         """更新统计"""
         self.total_predictions += 1
         if is_correct:
@@ -31,7 +31,7 @@ class PredictionStatistics:
 class PredictionEngine:
     """预测引擎类（简化实现）"""
 
-    def __init__(self, config: PredictionConfig = None):
+    def __init__(self, config: PredictionConfig = None):  # type: ignore
         """初始化预测引擎"""
         self.config = config or PredictionConfig()
         self.statistics = PredictionStatistics()

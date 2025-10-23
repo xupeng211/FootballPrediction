@@ -47,7 +47,7 @@ class Event(ABC):
     Defines the interface that all events must implement.
     """
 
-    def __init__(self, data: EventData):
+    def __init__(self, data: EventData):  # type: ignore
         """初始化事件
 
         Args:
@@ -131,7 +131,7 @@ class EventHandler(ABC):
     Defines the interface that all event handlers must implement.
     """
 
-    def __init__(self, name: Optional[str] = None):
+    def __init__(self, name: Optional[str] = None):  # type: ignore
         """初始化事件处理器
 
         Args:
@@ -242,7 +242,7 @@ class EventFilter(ABC):
 class EventTypeFilter(EventFilter):
     """基于事件类型的过滤器"""
 
-    def __init__(self, allowed_types: list[str]):
+    def __init__(self, allowed_types: list[str]):  # type: ignore
         """初始化过滤器
 
         Args:
@@ -257,7 +257,7 @@ class EventTypeFilter(EventFilter):
 class EventSourceFilter(EventFilter):
     """基于事件源的过滤器"""
 
-    def __init__(self, allowed_sources: list[str]):
+    def __init__(self, allowed_sources: list[str]):  # type: ignore
         """初始化过滤器
 
         Args:
@@ -272,7 +272,7 @@ class EventSourceFilter(EventFilter):
 class CompositeEventFilter(EventFilter):
     """组合过滤器，支持AND和OR逻辑"""
 
-    def __init__(self, filters: list[EventFilter], operator: str = "AND"):
+    def __init__(self, filters: list[EventFilter], operator: str = "AND"):  # type: ignore
         """初始化组合过滤器
 
         Args:

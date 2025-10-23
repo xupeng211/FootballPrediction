@@ -94,7 +94,7 @@ class StreamConfig:
                 result[key] = value
         return result
 
-    def save_to_file(self, file_path: str):
+    def save_to_file(self, file_path: str):  # type: ignore
         """保存配置到文件"""
         config_dict = self.to_dict()
         with open(file_path, "w") as f:

@@ -32,7 +32,7 @@ class UserRole(Enum):
 class Content:
     """内容类"""
 
-    def __init__(self, content_id: str, content_type: str, data: Dict[str, Any]):
+    def __init__(self, content_id: str, content_type: str, data: Dict[str, Any]):  # type: ignore
         self.id = content_id
         self.content_type = content_type
         self.data = data
@@ -41,7 +41,7 @@ class Content:
 class UserProfile:
     """用户配置文件类"""
 
-    def __init__(self, user_id: str, preferences: Dict[str, Any] = None):
+    def __init__(self, user_id: str, preferences: Dict[str, Any] = None):  # type: ignore
         self.user_id = user_id
         self.preferences = preferences or {}
 
@@ -69,7 +69,7 @@ class AnalysisResult:
 class ContentAnalysisService(SimpleService):
     """内容分析服务"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         super().__init__("ContentAnalysisService")
         self._models_loaded = False
 

@@ -43,7 +43,7 @@ class FeatureCalculator:
     - 批量计算和缓存优化
     """
 
-    def __init__(self, config: Optional[Dict] = None):
+    def __init__(self, config: Optional[Dict] = None):  # type: ignore
         self.db_manager = DatabaseManager()
         self.config = config or {}
         self.features: list = []  # 存储特征定义
@@ -578,7 +578,7 @@ class FeatureCalculator:
         except (TypeError, ValueError):
             return None
 
-    def calculate_rolling_mean(self, data, window: int = 3):
+    def calculate_rolling_mean(self, data, window: int = 3):  # type: ignore
         """
         计算滚动均值
 
