@@ -189,7 +189,7 @@ def cache_result(
             return result
 
         @functools.wraps(func)
-        def sync_wrapper(*args, **kwargs):
+        def sync_wrapper(*args, **kwargs):  # type: ignore
             # 检查unless条件
             if unless and unless(*args, **kwargs):
                 return func(*args, **kwargs)
@@ -337,7 +337,7 @@ def cache_by_user(
         else:
 
             @functools.wraps(func)
-            def sync_wrapper(*args, **kwargs):
+            def sync_wrapper(*args, **kwargs):  # type: ignore
                 # 提取用户ID
                 user_id = kwargs.get(user_param)
                 if user_id is None:
@@ -501,7 +501,7 @@ def cache_invalidate(
             return result
 
         @functools.wraps(func)
-        def sync_wrapper(*args, **kwargs):
+        def sync_wrapper(*args, **kwargs):  # type: ignore
             # 执行原函数
             result = func(*args, **kwargs)
 

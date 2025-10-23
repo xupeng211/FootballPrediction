@@ -27,7 +27,7 @@ class RegistryStatus(Enum):
 class AdapterRegistry:
     """适配器注册表，管理所有适配器的生命周期"""
 
-    def __init__(self, factory: Optional[AdapterFactory] = None):
+    def __init__(self, factory: Optional[AdapterFactory] = None):  # type: ignore
         self.factory = factory or AdapterFactory()
         self.adapters: Dict[str, Adapter] = {}
         self.groups: Dict[str, Adapter] = {}

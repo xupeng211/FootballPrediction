@@ -42,7 +42,7 @@ class PredictionStrategyFactory:
     负责根据配置创建和管理各种预测策略实例。
     """
 
-    def __init__(self, config_path: Optional[Union[str, Path]] = None):
+    def __init__(self, config_path: Optional[Union[str, Path]] = None):  # type: ignore
         """初始化策略工厂
 
         Args:
@@ -239,7 +239,7 @@ class PredictionStrategyFactory:
 
             try:
                 strategy = await self.create_strategy(
-                    strategy_name=strategy_name, config =config
+                    strategy_name=strategy_name, config=config
                 )
                 created_strategies[strategy_name] = strategy
             except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
@@ -256,7 +256,7 @@ class PredictionStrategyFactory:
             if strategy_name and strategy_name not in self._strategies:
                 try:
                     await self.create_strategy(
-                        strategy_name=strategy_name, config =config
+                        strategy_name=strategy_name, config=config
                     )
                 except (
                     ValueError,

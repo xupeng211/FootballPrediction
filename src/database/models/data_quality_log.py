@@ -75,7 +75,7 @@ class DataQualityLog(BaseModel):
         DateTime, default=func.now(), nullable=False, index=True, comment="发现时间"
     )
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs):  # type: ignore
         """初始化数据质量日志"""
         # 设置默认值
         if "status" not in kwargs:

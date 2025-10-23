@@ -19,7 +19,7 @@ except ImportError:
     class FootballKafkaConsumer:
         """占位符类 - Kafka消费者"""
 
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs):  # type: ignore
             pass
 
     FootballKafkaConsumer = FootballKafkaConsumer
@@ -36,7 +36,7 @@ if StreamConfig is None:
     class StreamConfig:
         """占位符类 - 流配置"""
 
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs):  # type: ignore
             pass
 
     StreamConfig: Type = StreamConfig
@@ -53,7 +53,7 @@ if StreamProcessor is None:
     class StreamProcessor:
         """占位符类 - 流处理器"""
 
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs):  # type: ignore
             pass
 
     StreamProcessor: Type = StreamProcessor

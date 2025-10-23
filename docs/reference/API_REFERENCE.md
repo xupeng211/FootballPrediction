@@ -336,3 +336,40 @@ make lint          # 代码检查
 make coverage      # 测试覆盖率
 make ci            # 完整CI检查
 ```
+
+## 🔗 相关文档链接
+
+### 📚 核心文档
+- **[系统架构文档](../architecture/ARCHITECTURE.md)** - 完整的系统架构设计和技术栈说明
+- **[数据库架构](DATABASE_SCHEMA.md)** - 数据库设计和表结构详情
+- **[开发指南](DEVELOPMENT_GUIDE.md)** - 开发环境搭建和编码规范
+- **[CLAUDE.md](../../CLAUDE.md)** - AI辅助开发指导和工作流程
+
+### 🛠️ API使用指南
+- **[API使用示例](API_USAGE_EXAMPLES.md)** - 详细的API调用示例和最佳实践
+- **[API端点详情](API_ENDPOINTS.md)** - 所有API端点的详细说明
+- **[API文档风格指南](COMPREHENSIVE_API_DOCUMENTATION_STYLE_GUIDE.md)** - API文档编写规范
+
+### 🧪 测试相关
+- **[测试策略文档](../testing/TEST_IMPROVEMENT_GUIDE.md)** - 完整的测试策略和质量保证体系
+- **[API测试指南](../testing/API_TESTING.md)** - API接口测试方法和工具
+- **[集成测试文档](../testing/INTEGRATION_TESTING.md)** - 集成测试策略和实施
+
+### 📊 业务和数据
+- **[数据采集配置](DATA_COLLECTION_SETUP.md)** - 数据采集和处理管道配置
+- **[机器学习模型指南](../ml/ML_MODEL_GUIDE.md)** - ML模型开发和部署指南
+- **[术语表](glossary.md)** - 项目专业术语和概念定义
+
+### 🔧 运维和部署
+- **[生产部署指南](../ops/PRODUCTION_READINESS_PLAN.md)** - 生产环境部署和运维指南
+- **[监控系统](../ops/MONITORING.md)** - 监控系统配置和告警设置
+- **[运维手册](../ops/runbooks/README.md)** - 运维操作指南和故障排除
+
+### 📖 快速开始
+- **[项目索引](../INDEX.md)** - 完整的文档导航和入口
+- **[快速开始指南](../how-to/QUICK_START.md)** - 5分钟快速上手指南
+- **[Makefile工具指南](../project/TOOLS.md)** - 120+开发命令详解
+
+---
+
+**文档维护**: 本API文档与代码同步更新，如有疑问请参考相关文档或联系开发团队。

@@ -1,0 +1,225 @@
+name: 项目健康监控
+
+on:
+  schedule:
+    # 每天UTC时间02:00运行
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  health-check:
+    name: 项目健康检查
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.1.6
+
+      - name: Setup Python
+        uses: actions/setup-python@v4.7.1
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements/requirements.lock
+          pip install ruff mypy safety pytest
+
+      - name: Code quality metrics
+        id: quality
+        run: |
+          echo "📊 收集代码质量指标..."
+
+          # Ruff检查
+          ruff_errors=$(ruff check src/ --output-format=json | jq length || echo "0")
+          ruff_format_errors=$(ruff format src/ --check 2>&1 | grep -c "file would be reformatted" || echo "0")
+
+          # MyPy检查
+          mypy_errors=$(mypy src/ --show-error-codes 2>&1 | grep -c "error:" || echo "0")
+
+          # 安全检查
+          safety_issues=$(safety check --json 2>&1 | jq -r '.vulnerabilities | length' 2>/dev/null || echo "0")
+
+          # 保存指标
+          cat > health-metrics.json << EOF
+          {
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "code_quality": {
+              "ruff_errors": $ruff_errors,
+              "ruff_format_issues": $ruff_format_errors,
+              "mypy_errors": $mypy_errors,
+              "safety_issues": $safety_issues
+            }
+          }
+          EOF
+
+          # 输出摘要
+          echo "ruff_errors=$ruff_errors" >> $GITHUB_OUTPUT
+          echo "mypy_errors=$mypy_errors" >> $GITHUB_OUTPUT
+          echo "safety_issues=$safety_issues" >> $GITHUB_OUTPUT
+
+      - name: Test coverage check
+        id: coverage
+        run: |
+          echo "🧪 检查测试覆盖率..."
+
+          # 运行测试并生成覆盖率
+          python -m pytest tests/ --cov=src/ --cov-report=json --cov-fail-under=15.0 || true
+
+          if [ -f coverage.json ]; then
+            coverage=$(python -c "
+import json
+with open('coverage.json') as f:
+    data = json.load(f)
+coverage = data.get('totals', {}).get('percent_covered', 0)
+print(coverage)
+")
+            echo "coverage=$coverage" >> $GITHUB_OUTPUT
+          else
+            echo "coverage=0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Documentation check
+        run: |
+          echo "📚 检查文档..."
+
+          # 检查文档文件存在
+          doc_files=("README.md" "docs/INDEX.md" "CLAUDE.md")
+          missing_docs=0
+
+          for doc in "${doc_files[@]}"; do
+            if [ -f "$doc" ]; then
+              echo "✅ $doc 存在"
+            else
+              echo "❌ $doc 缺失"
+              ((missing_docs++))
+            fi
+          done
+
+          echo "missing_docs=$missing_docs" >> $GITHUB_OUTPUT
+
+      - name: Dependencies check
+        run: |
+          echo "📦 检查依赖..."
+
+          # 检查过期依赖
+          pip list --outdated --format=json > outdated-deps.json || true
+          outdated_count=$(jq -r '.[] | select(.latest_version != .current_version) | length' outdated-deps.json 2>/dev/null || echo "0")
+
+          # 检查安全漏洞
+          security_issues=$(safety check --json 2>&1 | jq -r '.vulnerabilities | length' 2>/dev/null || echo "0")
+
+          echo "outdated_deps=$outdated_count" >> $GITHUB_OUTPUT
+          echo "security_issues=$security_issues" >> $GITHUB_OUTPUT
+
+      - name: Generate health report
+        run: |
+          echo "## 🏥 项目健康报告" > health-report.md
+          echo "" >> health-report.md
+          echo "**生成时间**: $(date)" >> health-report.md
+          echo "" >> health-report.md
+
+          echo "### 📊 质量指标" >> health-report.md
+          echo "" >> health-report.md
+          echo "- **Ruff错误**: ${{ steps.quality.outputs.ruff_errors }}" >> health-report.md
+          echo "- **格式问题**: ${{ steps.quality.outputs.ruff_format_issues }}" >> health-report.md
+          echo "- **类型错误**: ${{ steps.quality.outputs.mypy_errors }}" >> health-report.md
+          echo "- **安全问题**: ${{ steps.quality.outputs.safety_issues }}" >> health-report.md
+          echo "" >> health-report.md
+
+          echo "### 🧪 测试覆盖率" >> health-report.md
+          echo "" >> health-report.md
+          echo "- **覆盖率**: ${{ steps.coverage.outputs.coverage }}%" >> health-report.md
+          echo "- **状态**: $([ "${{ steps.coverage.outputs.coverage }}" -ge 80 ] && echo "✅ 优秀" || ([ "${{ steps.coverage.outputs.coverage }}" -ge 60 ] && echo "⚠️ 一般" || echo "❌ 需要改进"))" >> health-report.md
+          echo "" >> health-report.md
+
+          echo "### 📚 文档状态" >> health-report.md
+          echo "" >> health-report.md
+          echo "- **缺失文档**: ${{ steps.documentation.outputs.missing_docs }}" >> health-report.md
+          echo "- **状态**: $([ "${{ steps.documentation.outputs.missing_docs }}" -eq 0 ] && echo "✅ 完整" || echo "❌ 不完整")" >> health-report.md
+          echo "" >> health-report.md
+
+          echo "### 📦 依赖状态" >> health-report.md
+          echo "" >> health-report.md
+          echo "- **过期依赖**: ${{ steps.dependencies.outputs.outdated_deps }}" >> health-report.md
+          echo "- **安全漏洞**: ${{ steps.dependencies.outputs.security_issues }}" >> health-report.md
+          echo "- **状态**: $([ "${{ steps.dependencies.outputs.security_issues }}" -eq 0 ] && echo "✅ 安全" || echo "⚠️ 有风险")" >> health-report.md
+          echo "" >> health-report.md
+
+          echo "### 📈 健康评分" >> health-report.md
+          echo "" >> health-report.md
+
+          # 计算健康评分 (0-100)
+          ruff_score=$((100 - ${{ steps.quality.outputs.ruff_errors }} * 5))
+          mypy_score=$((100 - ${{ steps.quality.outputs.mypy_errors }} * 3))
+          coverage_score=${{ steps.coverage.outputs.coverage }}
+
+          # 确保分数在0-100范围内
+          ruff_score=$(( ruff_score < 0 ? 0 : ruff_score ))
+          mypy_score=$(( mypy_score < 0 ? 0 : mypy_score ))
+          health_score=$(( (ruff_score + mypy_score + coverage_score) / 3 ))
+
+          if [ $health_score -ge 90 ]; then
+            status="🟢 优秀"
+          elif [ $health_score -ge 70 ]; then
+            status="🟡 良好"
+          else
+            status="🔴 需要改进"
+          fi
+
+          echo "- **健康评分**: $health_score/100 $status" >> health-report.md
+
+      - name: Update GitHub summary
+        run: |
+          cat health-report.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: health-monitor-reports
+          path: |
+            health-report.md
+            health-metrics.json
+            outdated-deps.json
+
+      - name: Create issue if health score low
+        if: always()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const healthScore = ${{ steps.coverage.outputs.coverage }};
+
+            if (healthScore < 60) {
+              console.log('Creating issue for low health score...');
+
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `项目健康警告 - 健康评分: ${healthScore}/100`,
+                body: `
+            ## 🚨 项目健康警告
+
+            当前项目健康评分为 **${healthScore}/100**，低于推荐标准。
+
+            ### 📊 当前状态
+            - 测试覆盖率: ${healthScore}%
+            - 代码质量检查: 需要改进
+            - 建议: 请增加测试覆盖率并修复代码质量问题
+
+            ### 🎯 改进建议
+            1. 增加单元测试覆盖率至80%以上
+            2. 修复Ruff和MyPy检查发现的问题
+            3. 更新文档和依赖
+
+            自动生成于: ${new Date().toISOString()}
+            `,
+                labels: ['maintenance', 'quality']
+              });
+
+              console.log('✅ Issue created successfully');
+            } else {
+              console.log('✅ Health score is good:', healthScore);
+            }

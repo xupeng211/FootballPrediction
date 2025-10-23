@@ -58,7 +58,7 @@ class HistoricalStrategy(PredictionStrategy):
     - 相似时间段的表现
     """
 
-    def __init__(self, name: str = "historical_analyzer"):
+    def __init__(self, name: str = "historical_analyzer"):  # type: ignore
         super().__init__(name, StrategyType.HISTORICAL)
         self._historical_matches: Dict[int, List[HistoricalMatch]] = {}
         self._team_vs_team: Dict[Tuple[int, int], List[HistoricalMatch]] = {}
@@ -213,7 +213,7 @@ class HistoricalStrategy(PredictionStrategy):
             confidence=confidence,
             probability_distribution=probability_distribution,
             feature_importance=feature_importance,
-            metadata ={
+            metadata={
                 "method": "historical_analysis",
                 "h2h_matches": len(
                     await self._get_head_to_head_matches(

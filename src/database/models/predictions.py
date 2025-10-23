@@ -407,7 +407,7 @@ class Predictions(BaseModel):
         return explanation
 
     @classmethod
-    def get_match_predictions(cls, session, match_id: int):
+    def get_match_predictions(cls, session, match_id: int):  # type: ignore
         """获取比赛的所有预测"""
         return (
             session.query(cls)
@@ -427,7 +427,7 @@ class Predictions(BaseModel):
         return query.order_by(cls.predicted_at.desc()).first()
 
     @classmethod
-    def get_model_predictions(cls, session, model_name: str, limit: int = 100):
+    def get_model_predictions(cls, session, model_name: str, limit: int = 100):  # type: ignore
         """获取指定模型的预测历史"""
         return (
             session.query(cls)
@@ -438,7 +438,7 @@ class Predictions(BaseModel):
         )
 
     @classmethod
-    def calculate_model_accuracy(cls, session, model_name: str, days: int = 30):
+    def calculate_model_accuracy(cls, session, model_name: str, days: int = 30):  # type: ignore
         """
         计算模型在指定天数内的准确率
 

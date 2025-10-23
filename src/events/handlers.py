@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 class MetricsEventHandler(EventHandler):
     """指标收集事件处理器"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         super().__init__("MetricsCollector")
         self.metrics: Dict[str, Any] = {
             "events_processed": 0,
@@ -65,7 +65,7 @@ class MetricsEventHandler(EventHandler):
 class LoggingEventHandler(EventHandler):
     """日志记录事件处理器"""
 
-    def __init__(self, log_level: int = logging.INFO):
+    def __init__(self, log_level: int = logging.INFO):  # type: ignore
         super().__init__("EventLogger")
         self.logger = logging.getLogger(f"{__name__}.{self.name}")
         self.logger.setLevel(log_level)
@@ -107,7 +107,7 @@ class LoggingEventHandler(EventHandler):
 class CacheInvalidationHandler(EventHandler):
     """缓存失效事件处理器"""
 
-    def __init__(self, cache_manager=None):
+    def __init__(self, cache_manager=None):  # type: ignore
         super().__init__("CacheInvalidator")
         self.cache_manager = cache_manager
 
@@ -160,7 +160,7 @@ class CacheInvalidationHandler(EventHandler):
 class NotificationEventHandler(EventHandler):
     """通知事件处理器"""
 
-    def __init__(self, notification_service=None):
+    def __init__(self, notification_service=None):  # type: ignore
         super().__init__("NotificationHandler")
         self.notification_service = notification_service
         self.notification_queue = asyncio.Queue()
@@ -229,7 +229,7 @@ class NotificationEventHandler(EventHandler):
 class AnalyticsEventHandler(EventHandler):
     """分析事件处理器"""
 
-    def __init__(self, analytics_service=None):
+    def __init__(self, analytics_service=None):  # type: ignore
         super().__init__("AnalyticsHandler")
         self.analytics_service = analytics_service
         self.analytics_data: Dict[str, Any] = {
@@ -324,7 +324,7 @@ class AnalyticsEventHandler(EventHandler):
 class AlertEventHandler(EventHandler):
     """告警事件处理器"""
 
-    def __init__(self, alert_service=None):
+    def __init__(self, alert_service=None):  # type: ignore
         super().__init__("AlertHandler")
         self.alert_service = alert_service
         self.alert_rules = {

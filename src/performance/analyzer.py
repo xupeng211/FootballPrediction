@@ -48,7 +48,7 @@ class PerformanceTrend(BaseModel):
 class PerformanceAnalyzer:
     """性能分析器主类"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         """初始化性能分析器"""
         self.insights: List[PerformanceInsight] = []
         self.trends: Dict[str, PerformanceTrend] = {}

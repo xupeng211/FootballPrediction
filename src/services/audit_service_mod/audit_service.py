@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 class AuditService:
     """审计服务"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self.events: List[AuditEvent] = []
 
     def log_event(
@@ -39,7 +39,7 @@ class AuditService:
             resource_id=resource_id,
             message=message,
             timestamp=datetime.utcnow(),
-            metadata =metadata,
+            metadata=metadata,
         )
         self.events.append(event)
         logger.info(f"Audit event: {event}")

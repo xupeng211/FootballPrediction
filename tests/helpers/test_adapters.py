@@ -62,7 +62,7 @@ class SimplePredictionInput:
             home_team=mock_home_team,
             away_team=mock_away_team,
             historical_data=historical_data,
-            additional_features={}
+            additional_features={},
         )
 
 

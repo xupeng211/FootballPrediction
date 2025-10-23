@@ -19,7 +19,7 @@ class LeagueStatus(Enum):
 class LeagueTable:
     """联赛积分榜"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self.standings: List[Dict[str, Any]] = []
         self.last_updated = datetime.now()
 

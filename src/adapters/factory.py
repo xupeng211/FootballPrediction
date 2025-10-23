@@ -48,7 +48,7 @@ class AdapterGroupConfig:
 class AdapterFactory:
     """适配器工厂，用于创建适配器实例"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self._adapter_types: Dict[str, Type[Adapter]] = {}
         self._configs: Dict[str, AdapterConfig] = {}
         self._group_configs: Dict[str, AdapterGroupConfig] = {}

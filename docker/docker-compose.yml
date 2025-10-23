@@ -1,4 +1,4 @@
-version: '3.8'
+# Docker Compose v3.8+ (version field deprecated)
 
 # 基础Docker Compose配置
 # 支持通过环境变量ENV切换不同环境
@@ -13,7 +13,7 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
     env_file:
-      - ./docker/environments/.env.${ENV:-development}
+      - ./environments/.env.${ENV:-development}
     ports:
       - "${API_PORT:-8000}:8000"
     depends_on:
@@ -157,7 +157,7 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
     env_file:
-      - ./docker/environments/.env.${ENV:-development}
+      - ./environments/.env.${ENV:-development}
     command: celery -A src.tasks.celery_app worker --loglevel=${LOG_LEVEL:-INFO}
     volumes:
       - ../src:/app/src:${MOUNT_MODE:-rw}
@@ -180,7 +180,7 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
     env_file:
-      - ./docker/environments/.env.${ENV:-development}
+      - ./environments/.env.${ENV:-development}
     command: celery -A src.tasks.celery_app beat --loglevel=${LOG_LEVEL:-INFO}
     volumes:
       - ../src:/app/src:${MOUNT_MODE:-rw}

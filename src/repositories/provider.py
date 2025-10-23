@@ -83,7 +83,7 @@ class RepositoryProvider:
     Manages creation and lifecycle of repository instances.
     """
 
-    def __init__(self, factory: RepositoryFactory = None):
+    def __init__(self, factory: RepositoryFactory = None):  # type: ignore
         self._factory = factory or DefaultRepositoryFactory()
         self._repositories = {}
 
@@ -120,11 +120,11 @@ class RepositoryProvider:
             )
         return self._repositories[key]
 
-    def clear_cache(self):
+    def clear_cache(self):  # type: ignore
         """清除仓储缓存"""
         self._repositories.clear()
 
-    def set_factory(self, factory: RepositoryFactory):
+    def set_factory(self, factory: RepositoryFactory):  # type: ignore
         """设置仓储工厂"""
         self._factory = factory
         self.clear_cache()
@@ -142,7 +142,7 @@ def get_repository_provider() -> RepositoryProvider:
     return _provider
 
 
-def set_repository_provider(provider: RepositoryProvider):
+def set_repository_provider(provider: RepositoryProvider):  # type: ignore
     """设置全局仓储提供者"""
     global _provider
     _provider = provider

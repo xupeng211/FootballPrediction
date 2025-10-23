@@ -358,7 +358,7 @@ class QualityGate:
                 error_count = len(errors)
                 # 简单的评分公式
                 quality_score = max(5.0, 10.0 - (error_count * 0.1))
-            except:
+            except Exception:
                 quality_score = 7.0
 
         self.metrics['code_quality'] = quality_score

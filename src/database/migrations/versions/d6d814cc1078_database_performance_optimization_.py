@@ -1,6 +1,13 @@
+import logging
+from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError, DatabaseError
+from typing import Union, Sequence
+from alembic import context, op
 
 # mypy: ignore-errors
+
+logger = logging.getLogger(__name__)
+from alembic import op
 """database_performance_optimization_partitioning_indexes_materialized_views
 
 
@@ -35,6 +42,16 @@ def upgrade() -> None:
         op.execute("-- offline mode: skipped materialized views creation")
         op.execute("-- offline mode: skipped foreign key constraints creation")
         op.execute("-- offline mode: skipped trigger functions creation")
+        return
+
+    # 检查是否在SQLite环境中（测试环境）
+    conn = op.get_bind()
+    db_dialect = conn.dialect.name.lower()
+
+    if db_dialect == 'sqlite':
+        logger.info("⚠️  SQLite环境：跳过PostgreSQL性能优化迁移")
+        op.execute("-- SQLite environment: skipped PostgreSQL performance optimization")
+        op.execute("-- SQLite environment: skipped partitioning, materialized views, and advanced indexes")
         return
 
     # 获取数据库连接以执行原生SQL
@@ -637,6 +654,16 @@ def downgrade() -> None:
         op.execute("-- offline mode: skipped materialized views removal")
         op.execute("-- offline mode: skipped foreign key constraints removal")
         op.execute("-- offline mode: skipped trigger functions removal")
+        return
+
+    # 检查是否在SQLite环境中（测试环境）
+    conn = op.get_bind()
+    db_dialect = conn.dialect.name.lower()
+
+    if db_dialect == 'sqlite':
+        logger.info("⚠️  SQLite环境：跳过PostgreSQL性能优化回滚")
+        op.execute("-- SQLite environment: skipped PostgreSQL performance optimization rollback")
+        op.execute("-- SQLite environment: skipped partitioning, materialized views, and advanced indexes rollback")
         return
 
     conn = op.get_bind()

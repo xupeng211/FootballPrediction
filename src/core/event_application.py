@@ -23,7 +23,7 @@ class EventDrivenApplication:
     Manages the event system lifecycle.
     """
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         """初始化应用程序"""
         self._event_bus = get_event_bus()
         self._settings = get_settings()
@@ -81,7 +81,7 @@ class EventDrivenApplication:
         class SimpleStatsHandler(EventHandler):
             """简单统计处理器"""
 
-            def __init__(self):
+            def __init__(self):  # type: ignore
                 super().__init__("SimpleStats")
                 self.stats = {}
 

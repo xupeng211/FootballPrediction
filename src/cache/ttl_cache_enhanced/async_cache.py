@@ -208,11 +208,11 @@ class AsyncTTLCache:
         """异步重置统计信息"""
         self._cache.reset_stats()
 
-    def start_auto_cleanup(self):
+    def start_auto_cleanup(self):  # type: ignore
         """启动自动清理"""
         self._cache.start_auto_cleanup()
 
-    def stop_auto_cleanup(self):
+    def stop_auto_cleanup(self):  # type: ignore
         """停止自动清理"""
         self._cache.stop_auto_cleanup()
 

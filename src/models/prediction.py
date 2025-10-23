@@ -25,6 +25,7 @@ class PredictionResult:
     features: Dict[str, Any] = None
 
     def __post_init__(self):
+        """初始化后处理"""
         if self.features is None:
             self.features = {}
 
@@ -32,8 +33,7 @@ class PredictionResult:
 class PredictionCache:
     """预测缓存管理器"""
 
-    def __init__(self):
-        self._cache = {}
+    def __init__(self):        self._cache = {}
 
     def get(self, key: str) -> Optional[PredictionResult]:
         """获取缓存的预测结果"""
@@ -106,11 +106,9 @@ class Histogram:
         self.description = description
         self.values = []
 
-    def observe(self, value: float):
-        self.values.append(value)
+    def observe(self, value: float):        self.values.append(value)
 
-    def __call__(self):
-        return sum(self.values) / len(self.values) if self.values else 0.0
+    def __call__(self):        return sum(self.values) / len(self.values) if self.values else 0.0
 
 
 class Gauge:
@@ -119,11 +117,9 @@ class Gauge:
         self.description = description
         self.value = 0.0
 
-    def set(self, value: float):
-        self.value = value
+    def set(self, value: float):        self.value = value
 
-    def __call__(self):
-        return self.value
+    def __call__(self):        return self.value
 
 
 # 监控指标实例

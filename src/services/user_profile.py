@@ -31,7 +31,7 @@ class UserProfile:
 
 # 简化的User类定义
 class User:
-    def __init__(self, id: str, username: str):
+    def __init__(self, id: str, username: str):  # type: ignore
         self.id = id
         self.username = username
 

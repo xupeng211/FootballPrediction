@@ -3,6 +3,7 @@ import asyncio
 from unittest.mock import Mock, AsyncMock
 from typing import Dict, Any
 
+
 class MockHTTPClient:
     """模拟HTTP客户端"""
 
@@ -24,12 +25,15 @@ class MockHTTPClient:
         response.json.return_value = self.responses.get(url, {"status": "ok"})
         return response
 
+
 # Mock外部服务
 mock_http_client = MockHTTPClient()
+
 
 def get_http_client():
     """获取HTTP客户端（测试用Mock）"""
     return mock_http_client
+
 
 # Kafka Mock
 class MockKafkaProducer:
@@ -42,6 +46,7 @@ class MockKafkaProducer:
         self.messages.append({"topic": topic, "value": value, **kwargs})
         return Mock()
 
+
 class MockKafkaConsumer:
     """模拟Kafka消费者"""
 
@@ -51,9 +56,11 @@ class MockKafkaConsumer:
     def __iter__(self):
         return iter(self.messages)
 
+
 def get_kafka_producer():
     """获取Kafka生产者（测试用Mock）"""
     return MockKafkaProducer()
+
 
 def get_kafka_consumer():
     """获取Kafka消费者（测试用Mock）"""

@@ -116,7 +116,7 @@ class TeamDomainService:
         if stats:
             event = TeamStatsEvent(
                 team_id=team.id or 0,
-                result =result,
+                result=result,
                 goals_for=goals_for,
                 goals_against=goals_against,
                 matches_played=stats.matches_played,

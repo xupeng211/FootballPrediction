@@ -20,11 +20,9 @@ from src.core.di import (
 class IService(Protocol):
     """服务接口协议"""
 
-    def get_name(self) -> str:
-        ...
+    def get_name(self) -> str: ...
 
-    def do_work(self) -> int:
-        ...
+    def do_work(self) -> int: ...
 
 
 class ServiceA:

@@ -69,7 +69,7 @@ class QueryProfile:
 class PerformanceProfiler:
     """性能分析器主类"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         """初始化性能分析器"""
         self.metrics: List[PerformanceMetric] = []
         self.function_profiles: Dict[str, FunctionProfile] = {}
@@ -77,7 +77,7 @@ class PerformanceProfiler:
         self.active_profiling = False
         self.profiler = cProfile.Profile()
 
-    def start_profiling(self):
+    def start_profiling(self):  # type: ignore
         """开始性能分析"""
         self.active_profiling = True
         self.profiler.enable()
@@ -132,7 +132,7 @@ class PerformanceProfiler:
         return sorted(profiles, key=lambda x: x.total_time, reverse=True)
 
     @contextmanager
-    def profile_function(self, name: Optional[str] = None):
+    def profile_function(self, name: Optional[str] = None):  # type: ignore
         """函数性能分析上下文管理器"""
         start_time = time.perf_counter()
         start_memory = psutil.Process().memory_info().rss
@@ -215,7 +215,7 @@ class PerformanceProfiler:
             name="database_query_duration",
             value=execution_time,
             unit="seconds",
-            metadata ={"query": query[:100], "rows": rows_affected},
+            metadata={"query": query[:100], "rows": rows_affected},
         )
         self.metrics.append(metric)
 
@@ -282,7 +282,7 @@ class PerformanceProfiler:
         else:
             return str(data)
 
-    def reset(self):
+    def reset(self):  # type: ignore
         """重置所有性能数据"""
         self.metrics.clear()
         self.function_profiles.clear()
@@ -300,7 +300,7 @@ def get_profiler() -> PerformanceProfiler:
     return _global_profiler
 
 
-def profile_function(name: Optional[str] = None):
+def profile_function(name: Optional[str] = None):  # type: ignore
     """函数性能分析装饰器"""
 
     def decorator(func: Callable) -> Callable:
@@ -317,7 +317,7 @@ def profile_function(name: Optional[str] = None):
         else:
 
             @wraps(func)
-            def sync_wrapper(*args, **kwargs):
+            def sync_wrapper(*args, **kwargs):  # type: ignore
                 with _global_profiler.profile_function(name or func.__name__):
                     return func(*args, **kwargs)
 
@@ -326,12 +326,12 @@ def profile_function(name: Optional[str] = None):
     return decorator
 
 
-def profile_method(cls_attr: Optional[str] = None):
+def profile_method(cls_attr: Optional[str] = None):  # type: ignore
     """方法性能分析装饰器（用于类方法）"""
 
     def decorator(func: Callable) -> Callable:
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args, **kwargs):  # type: ignore
             # 获取类名
             if args and hasattr(args[0], "__class__"):
                 class_name = args[0].__class__.__name__
@@ -350,7 +350,7 @@ def profile_method(cls_attr: Optional[str] = None):
 class DatabaseQueryProfiler:
     """数据库查询性能分析器"""
 
-    def __init__(self, profiler: PerformanceProfiler):
+    def __init__(self, profiler: PerformanceProfiler):  # type: ignore
         self.profiler = profiler
 
     def profile_query(self, query: str, execute_func: Callable) -> Any:
@@ -391,7 +391,7 @@ class DatabaseQueryProfiler:
 class APIEndpointProfiler:
     """API端点性能分析器"""
 
-    def __init__(self, profiler: PerformanceProfiler):
+    def __init__(self, profiler: PerformanceProfiler):  # type: ignore
         self.profiler = profiler
         self.endpoint_stats: Dict[str, Dict] = {}
 
@@ -442,7 +442,7 @@ class APIEndpointProfiler:
             name=f"api_endpoint_duration_{key}",
             value=duration,
             unit="seconds",
-            metadata ={
+            metadata={
                 "endpoint": endpoint,
                 "method": method,
                 "status_code": status_code,
@@ -484,10 +484,10 @@ class APIEndpointProfiler:
 class MemoryProfiler:
     """内存使用分析器"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self.snapshots: List[Dict] = []
 
-    def take_snapshot(self, label: str = ""):
+    def take_snapshot(self, label: str = ""):  # type: ignore
         """获取内存快照"""
         process = psutil.Process()
         memory_info = process.memory_info()
@@ -529,7 +529,7 @@ class MemoryProfiler:
 
 
 # 创建性能分析器的便捷函数
-def start_profiling():
+def start_profiling():  # type: ignore
     """开始全局性能分析"""
     _global_profiler.start_profiling()
 

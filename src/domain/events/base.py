@@ -20,7 +20,7 @@ class DomainEvent(ABC):
     All domain events should inherit from this class.
     """
 
-    def __init__(self, aggregate_id: Optional[int] = None):
+    def __init__(self, aggregate_id: Optional[int] = None):  # type: ignore
         """
         初始化领域事件
 

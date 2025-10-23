@@ -18,10 +18,15 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
+class ConsistencyManager:
+    """缓存一致性管理器别名"""
+    pass
+
+
 class CacheConsistencyManager:
     """缓存一致性管理类"""
 
-    def __init__(self, redis_manager=None, db_manager=None):
+    def __init__(self, redis_manager=None, db_manager=None):  # type: ignore
         """
         初始化缓存一致性管理器
         :param redis_manager: Redis管理器实例

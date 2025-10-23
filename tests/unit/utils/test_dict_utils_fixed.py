@@ -17,27 +17,13 @@ class TestDictUtilsFixed:
 
         result = DictUtils.deep_merge(dict1, dict2)
 
-        expected = {
-            "a": 1,
-            "b": {"x": 10, "y": 20},
-            "c": 3
-        }
+        expected = {"a": 1, "b": {"x": 10, "y": 20}, "c": 3}
         assert result == expected
 
     def test_deep_merge_nested(self):
         """测试嵌套字典合并"""
-        dict1 = {
-            "level1": {
-                "level2": {"a": 1, "b": 2},
-                "other": "value1"
-            }
-        }
-        dict2 = {
-            "level1": {
-                "level2": {"b": 3, "c": 4},
-                "new": "value2"
-            }
-        }
+        dict1 = {"level1": {"level2": {"a": 1, "b": 2}, "other": "value1"}}
+        dict2 = {"level1": {"level2": {"b": 3, "c": 4}, "new": "value2"}}
 
         result = DictUtils.deep_merge(dict1, dict2)
 
@@ -45,7 +31,7 @@ class TestDictUtilsFixed:
             "level1": {
                 "level2": {"a": 1, "b": 3, "c": 4},
                 "other": "value1",
-                "new": "value2"
+                "new": "value2",
             }
         }
         assert result == expected

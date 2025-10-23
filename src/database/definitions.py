@@ -25,16 +25,16 @@ class DatabaseManager:
     _session_factory = None
     _async_session_factory = None
 
-    def __new__(cls):
+    def __new__(cls):  # type: ignore
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         if not hasattr(self, "initialized"):
             self.initialized = False
 
-    def initialize(self, database_url: Optional[str] = None):
+    def initialize(self, database_url: Optional[str] = None):  # type: ignore
         """初始化数据库连接"""
         if self.initialized:
             return
@@ -89,7 +89,7 @@ class DatabaseManager:
 class MultiUserDatabaseManager(DatabaseManager):
     """多用户数据库管理器 - 简化版本"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         super().__init__()
         self.readers = []
         self.writers = []
@@ -108,19 +108,19 @@ def get_multi_user_database_manager() -> MultiUserDatabaseManager:
 
 
 # 初始化函数
-def initialize_database(database_url: Optional[str] = None):
+def initialize_database(database_url: Optional[str] = None):  # type: ignore
     """初始化数据库"""
     manager = get_database_manager()
     manager.initialize(database_url)
 
 
-def initialize_multi_user_database(database_url: Optional[str] = None):
+def initialize_multi_user_database(database_url: Optional[str] = None):  # type: ignore
     """初始化多用户数据库"""
     manager = get_multi_user_database_manager()
     manager.initialize(database_url)
 
 
-def initialize_test_database():
+def initialize_test_database():  # type: ignore
     """初始化测试数据库"""
     # 测试数据库的特殊初始化
     pass

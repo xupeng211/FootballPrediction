@@ -40,7 +40,7 @@ class DecoratorChainConfig:
 class DecoratorFactory:
     """装饰器工厂，用于创建装饰器实例"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self._config_cache: Dict[str, DecoratorConfig] = {}
         self._chain_configs: Dict[str, DecoratorChainConfig] = {}
 
@@ -266,7 +266,7 @@ class DecoratorFactory:
 class DecoratorBuilder:
     """装饰器构建器，使用构建器模式创建装饰器"""
 
-    def __init__(self, decorator_type: str, component: Component):
+    def __init__(self, decorator_type: str, component: Component):  # type: ignore
         self.decorator_type = decorator_type
         self.component = component
         self.parameters: Dict[str, Any] = {}

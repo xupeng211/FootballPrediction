@@ -6,6 +6,7 @@ Tests for Health Check API
 """
 
 import pytest
+import asyncio
 from unittest.mock import Mock, patch, AsyncMock
 import json
 from datetime import datetime
