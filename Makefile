@@ -48,6 +48,8 @@ help: ## 📋 Show available commands
 	@echo "$(BLUE)🚀 Football Prediction Project Commands$(RESET)"
 	@echo "$(YELLOW)Environment:$(RESET)"
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## .*Environment/ {printf "  $(GREEN)%-12s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@echo "$(YELLOW)Documentation:$(RESET)"
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## .*Documentation/ {printf "  $(GREEN)%-12s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 	@echo "$(YELLOW)Code Quality:$(RESET)"
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## .*Quality/ {printf "  $(GREEN)%-12s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 	@echo "$(YELLOW)Testing:$(RESET)"
@@ -969,11 +971,6 @@ docs-architecture: ## Docs: Generate architecture diagrams and documentation
 	@find src -type d -maxdepth 2 | sort >> docs/architecture/overview.md
 	@echo "$(GREEN)✅ Architecture documentation generated$(RESET)"
 
-docs-stats: ## Docs: Generate project statistics
-	@echo "$(YELLOW)Generating project statistics...$(RESET)"
-	@mkdir -p docs/stats
-	@$(ACTIVATE) && python -c "import os, subprocess; print('📊 Project Statistics'); print('Python files:', len([f for f in subprocess.run(['find', 'src', '-name', '*.py'], capture_output=True, text=True).stdout.strip().split('\n') if f])); print('Test files:', len([f for f in subprocess.run(['find', 'tests', '-name', '*.py'], capture_output=True, text=True).stdout.strip().split('\n') if f])); print('Dependencies:', len(open('requirements.txt').readlines()) + len(open('requirements-dev.txt').readlines())); print('Basic stats completed')"
-	@echo "$(GREEN)✅ Project statistics saved to docs/stats/project_stats.md$(RESET)"
 
 docs-all: docs-api docs-code docs-architecture docs-stats ## Docs: Generate all documentation
 	@echo "$(GREEN)✅ All documentation generated$(RESET)"
@@ -1501,6 +1498,91 @@ docs-version: ## Docs: Show version information
 	@echo "$(BLUE)Python: $(shell python --version 2>/dev/null || echo 'Not available')$(RESET)"
 	@echo "$(BLUE)Makefile: $(shell make --version 2>/dev/null | head -1 || echo 'Available')$(RESET)"
 	@echo "================================"
+
+# GitHub Actions workflow aliases
+docs-ci: docs-ci-local
+docs-preview: docs-serve
+
+# ============================================================================
+# 📊 Documentation Analytics Commands
+# ============================================================================
+
+docs-analyze: ## Documentation: Analyze documentation quality and structure
+	@echo "$(YELLOW)Analyzing documentation...$(RESET)"
+	@$(ACTIVATE) && python scripts/docs_analytics.py --full-analysis --summary
+
+docs-analyze-basic: ## Documentation: Basic documentation analysis
+	@echo "$(YELLOW)Running basic documentation analysis...$(RESET)"
+	@$(ACTIVATE) && python scripts/docs_analytics.py --summary
+
+docs-analyze-report: ## Documentation: Generate detailed analysis report
+	@echo "$(YELLOW)Generating detailed analysis report...$(RESET)"
+	@$(ACTIVATE) && python scripts/docs_analytics.py --full-analysis --output docs-detailed-analysis.json
+	@echo "$(GREEN)✅ Detailed report saved to docs-detailed-analysis.json$(RESET)"
+
+docs-stats: ## Documentation: Show documentation statistics
+	@echo "$(YELLOW)Documentation Statistics:$(RESET)"
+	@echo "================================"
+	@if [ -d "docs" ]; then \
+		echo "$(BLUE)Total MD files: $(shell find docs -name "*.md" | wc -l)$(RESET)"; \
+		echo "$(BLUE)Total lines: $(shell find docs -name "*.md" -exec wc -l {} + | tail -1 | awk '{print $$1}' || echo '0')$(RESET)"; \
+		echo "$(BLUE)Total size: $(shell du -sh docs 2>/dev/null | cut -f1 || echo 'Unknown')$(RESET)"; \
+		echo "$(BLUE)Last updated: $(shell find docs -name "*.md" -exec stat -c %y {} + | sort -r | head -1 | xargs -I {} date -d {} +%Y-%m-%d || echo 'Unknown')$(RESET)"; \
+	else \
+		echo "$(RED)No docs directory found$(RESET)"; \
+	fi
+	@echo "================================"
+
+docs-quality-check: ## Documentation: Run comprehensive quality checks
+	@echo "$(YELLOW)Running documentation quality checks...$(RESET)"
+	@$(ACTIVATE) && python scripts/docs_ci_pipeline.py --quality-check --report-output docs-quality-check.json
+	@echo "$(GREEN)✅ Quality check completed$(RESET)"
+
+docs-metrics: ## Documentation: Display key metrics
+	@echo "$(YELLOW)Documentation Metrics Dashboard:$(RESET)"
+	@echo "================================"
+	@if [ -f "docs-stats.json" ]; then \
+		echo "$(BLUE)Last Analysis: $(shell python -c "import json; data=json.load(open('docs-stats.json')); print(data.get('timestamp', 'Unknown'))")$(RESET)"; \
+		echo "$(BLUE)Files Analyzed: $(shell python -c "import json; data=json.load(open('docs-stats.json')); print(data.get('total_files', 0))")$(RESET)"; \
+		echo "$(BLUE)Total Lines: $(shell python -c "import json; data=json.load(open('docs-stats.json')); print(data.get('total_lines', 0))")$(RESET)"; \
+	else \
+		echo "$(YELLOW)No metrics data found. Run 'make docs-analyze' first.$(RESET)"; \
+	fi
+	@echo "================================"
+
+docs-improvement-report: ## Documentation: Generate improvement recommendations
+	@echo "$(YELLOW)Generating improvement recommendations...$(RESET)"
+	@$(ACTIVATE) && python scripts/docs_analytics.py --full-analysis --output docs-improvement-report.json
+	@echo "$(GREEN)✅ Improvement recommendations generated$(RESET)"
+	@echo "$(BLUE)Key recommendations:$(RESET)"
+	@echo "$(BLUE)Top recommendations:$(RESET)"
+	@$(ACTIVATE) && python -c "import json; data=json.load(open('docs-improvement-report.json')); [print(f'  {i}. {\"🔴\" if rec.get(\"priority\") == \"high\" else \"🟡\" if rec.get(\"priority\") == \"medium\" else \"🟢\"} {rec.get(\"title\", \"Unknown\")}') for i, rec in enumerate(data.get('recommendations', [])[:3], 1)]"
+
+docs-health-score: ## Documentation: Calculate overall documentation health score
+	@echo "$(YELLOW)Calculating documentation health score...$(RESET)"
+	@$(ACTIVATE) && python scripts/docs_analytics.py --full-analysis --output docs-health-score.json
+	@echo "$(BLUE)Health Score: $(shell python -c "import json; data=json.load(open('docs-health-score.json')); quality=data.get('quality_metrics', {}); overall=quality.get('overall_quality_score', 0); print(f'{overall:.1f}/100')")$(RESET)"
+	@echo "$(BLUE)Component Scores:$(RESET)"
+	@$(ACTIVATE) && python -c "import json; data=json.load(open('docs-health-score.json')); quality=data.get('quality_metrics', {}); [print(f'  {\"✅\" if score >= 80 else \"⚠️\" if score >= 60 else \"❌\"} {name}: {score:.1f}/100') for name, score in [('Completeness', quality.get('completeness_score', 0)), ('Consistency', quality.get('consistency_score', 0)), ('Maintainability', quality.get('maintenance_score', 0)), ('Accessibility', quality.get('accessibility_score', 0))]]"
+
+docs-tracking: ## Documentation: Start continuous documentation tracking
+	@echo "$(YELLOW)Starting documentation tracking...$(RESET)"
+	@mkdir -p .build/docs-tracking
+	@echo "Tracking documentation changes and quality over time"
+	@$(ACTIVATE) && python scripts/docs_analytics.py --full-analysis --output .build/docs-tracking/track-$(shell date +%Y%m%d-%H%M%S).json
+	@echo "$(GREEN)✅ Tracking data saved$(RESET)"
+
+docs-compare: ## Documentation: Compare with previous analysis
+	@echo "$(YELLOW)Comparing with previous analysis...$(RESET)"
+	@if [ -f ".build/docs-tracking/track-$(shell date -d '1 week ago' +%Y%m%d)*.json" ]; then \
+		latest=$(ls -t .build/docs-tracking/track-*.json | head -1); \
+		previous=$(ls -t .build/docs-tracking/track-*.json | head -2 | tail -1); \
+		echo "$(BLUE)Latest: $(basename $$latest)$(RESET)"; \
+		echo "$(BLUE)Previous: $(basename $$previous)$(RESET)"; \
+		echo "$(GREEN)✅ Comparison ready - check detailed reports$(RESET)"; \
+	else \
+		echo "$(YELLOW)No previous analysis found. Run 'make docs-analyze' first.$(RESET)"; \
+	fi
 
 # GitHub Actions workflow aliases
 docs-ci: docs-ci-local
