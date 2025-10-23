@@ -16,7 +16,7 @@ try:
     from .odds.basic import parser
     from .odds.basic import storage
     from .odds.basic import validator
-except ImportError:
+except (ImportError, ModuleNotFoundError):
     # 如果odds子模块不存在，提供空实现
     collector = None
     parser = None
