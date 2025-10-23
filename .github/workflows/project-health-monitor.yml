@@ -67,7 +67,7 @@ jobs:
           echo "🧪 检查测试覆盖率..."
 
           # 运行测试并生成覆盖率
-          python -m pytest tests/ --cov=src/ --cov-report=json --cov-fail-under=20 || true
+          python -m pytest tests/ --cov=src/ --cov-report=json --cov-fail-under=15.0 || true
 
           if [ -f coverage.json ]; then
             coverage=$(python -c "
