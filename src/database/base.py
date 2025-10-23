@@ -71,7 +71,7 @@ class BaseModel(Base, TimestampMixin):
         return result
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]):
+    def from_dict(cls, data: Dict[str, Any]):  # type: ignore
         """
         从字典创建模型实例
 

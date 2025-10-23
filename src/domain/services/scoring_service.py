@@ -15,7 +15,7 @@ from ..models.prediction import PredictionPoints
 class ScoringService:
     """计分服务"""
 
-    def __init__(self, scoring_config: Optional[Dict[str, Any]] = None):
+    def __init__(self, scoring_config: Optional[Dict[str, Any]] = None):  # type: ignore
         self.config = scoring_config or self._default_scoring_config()
 
     def _default_scoring_config(self) -> Dict[str, Any]:

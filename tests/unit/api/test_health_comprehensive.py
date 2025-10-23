@@ -12,17 +12,14 @@ import json
 
 # 测试导入
 import sys
-sys.path.insert(0, 'src')
+
+sys.path.insert(0, "src")
 
 try:
-    from src.api.health import (
-        HealthChecker,
-        HealthStatus,
-        HealthCheckResult,
-        router
-    )
+    from src.api.health import HealthChecker, HealthStatus, HealthCheckResult, router
     from src.database.dependencies import get_db_session
     from src.cache.redis_manager import RedisManager
+
     HEALTH_AVAILABLE = True
 except ImportError as e:
     print(f"Warning: Could not import health modules: {e}")
@@ -36,8 +33,7 @@ class TestHealthChecker:
     @pytest.fixture
     def health_checker(self):
         """创建健康检查器"""
-        with patch('src.api.health.RedisManager'), \
-             patch('src.api.health.database'):
+        with patch("src.api.health.RedisManager"), patch("src.api.health.database"):
             checker = HealthChecker()
             return checker
 
@@ -58,14 +54,14 @@ class TestHealthChecker:
 
     def test_health_checker_initialization(self, health_checker):
         """测试健康检查器初始化"""
-        assert hasattr(health_checker, 'checks')
-        assert hasattr(health_checker, 'logger')
+        assert hasattr(health_checker, "checks")
+        assert hasattr(health_checker, "logger")
         assert len(health_checker.checks) > 0
 
     @pytest.mark.asyncio
     async def test_database_health_check(self, health_checker, mock_db_session):
         """测试数据库健康检查"""
-        with patch('src.api.health.get_db_session') as mock_get_session:
+        with patch("src.api.health.get_db_session") as mock_get_session:
             mock_get_session.return_value.__enter__.return_value = mock_db_session
 
         result = await health_checker.check_database()
@@ -78,7 +74,7 @@ class TestHealthChecker:
     @pytest.mark.asyncio
     async def test_database_health_check_failure(self, health_checker):
         """测试数据库健康检查失败"""
-        with patch('src.api.health.get_db_session') as mock_get_session:
+        with patch("src.api.health.get_db_session") as mock_get_session:
             mock_get_session.side_effect = Exception("Database connection failed")
 
         result = await health_checker.check_database()
@@ -89,7 +85,7 @@ class TestHealthChecker:
     @pytest.mark.asyncio
     async def test_redis_health_check(self, health_checker, mock_redis_client):
         """测试Redis健康检查"""
-        with patch('src.api.health.RedisManager.get_client') as mock_get_client:
+        with patch("src.api.health.RedisManager.get_client") as mock_get_client:
             mock_get_client.return_value = mock_redis_client
 
         result = await health_checker.check_redis()
@@ -101,7 +97,7 @@ class TestHealthChecker:
     @pytest.mark.asyncio
     async def test_redis_health_check_failure(self, health_checker):
         """测试Redis健康检查失败"""
-        with patch('src.api.health.RedisManager.get_client') as mock_get_client:
+        with patch("src.api.health.RedisManager.get_client") as mock_get_client:
             mock_get_client.side_effect = Exception("Redis connection failed")
 
         result = await health_checker.check_redis()
@@ -122,7 +118,7 @@ class TestHealthChecker:
     @pytest.mark.asyncio
     async def test_external_service_health_check(self, health_checker):
         """测试外部服务健康检查"""
-        with patch('src.api.health.httpx.AsyncClient') as mock_client:
+        with patch("src.api.health.httpx.AsyncClient") as mock_client:
             mock_response = Mock()
             mock_response.status_code = 200
             mock_response.json.return_value = {"status": "healthy"}
@@ -131,7 +127,9 @@ class TestHealthChecker:
             mock_http_client.get.return_value = mock_response
             mock_client.return_value.__aenter__.return_value = mock_http_client
 
-        result = await health_checker.check_external_service("https://api.example.com/health")
+        result = await health_checker.check_external_service(
+            "https://api.example.com/health"
+        )
 
         assert isinstance(result, HealthCheckResult)
         assert result.component == "external_service"
@@ -140,10 +138,12 @@ class TestHealthChecker:
     @pytest.mark.asyncio
     async def test_external_service_timeout(self, health_checker):
         """测试外部服务超时"""
-        with patch('src.api.health.httpx.AsyncClient') as mock_client:
+        with patch("src.api.health.httpx.AsyncClient") as mock_client:
             mock_client.side_effect = asyncio.TimeoutError("Request timeout")
 
-        result = await health_checker.check_external_service("https://api.example.com/health")
+        result = await health_checker.check_external_service(
+            "https://api.example.com/health"
+        )
 
         assert result.status == HealthStatus.UNHEALTHY
         assert "timeout" in result.details["error"].lower()
@@ -151,24 +151,25 @@ class TestHealthChecker:
     @pytest.mark.asyncio
     async def test_concurrent_health_checks(self, health_checker):
         """测试并发健康检查"""
-        with patch.object(health_checker, 'check_database') as mock_db, \
-             patch.object(health_checker, 'check_redis') as mock_redis, \
-             patch.object(health_checker, 'check_application') as mock_app:
-
+        with (
+            patch.object(health_checker, "check_database") as mock_db,
+            patch.object(health_checker, "check_redis") as mock_redis,
+            patch.object(health_checker, "check_application") as mock_app,
+        ):
             mock_db.return_value = HealthCheckResult(
                 component="database",
                 status=HealthStatus.HEALTHY,
-                message="Database is healthy"
+                message="Database is healthy",
             )
             mock_redis.return_value = HealthCheckResult(
                 component="redis",
                 status=HealthStatus.HEALTHY,
-                message="Redis is healthy"
+                message="Redis is healthy",
             )
             mock_app.return_value = HealthCheckResult(
                 component="application",
                 status=HealthStatus.HEALTHY,
-                message="Application is healthy"
+                message="Application is healthy",
             )
 
         results = await health_checker.check_all_components()
@@ -179,19 +180,21 @@ class TestHealthChecker:
     @pytest.mark.asyncio
     async def test_health_check_with_timeout(self, health_checker):
         """测试带超时的健康检查"""
-        with patch.object(health_checker, 'check_database') as mock_check:
+        with patch.object(health_checker, "check_database") as mock_check:
             # 模拟长时间运行的健康检查
             async def long_running_check():
                 await asyncio.sleep(2)
                 return HealthCheckResult(
                     component="database",
                     status=HealthStatus.HEALTHY,
-                    message="Database is healthy"
+                    message="Database is healthy",
                 )
 
             mock_check.side_effect = long_running_check
 
-        result = await health_checker.check_component_with_timeout("database", timeout=1.0)
+        result = await health_checker.check_component_with_timeout(
+            "database", timeout=1.0
+        )
 
         assert result.status == HealthStatus.UNHEALTHY
         assert "timeout" in result.details["error"].lower()
@@ -199,11 +202,11 @@ class TestHealthChecker:
     @pytest.mark.asyncio
     async def test_health_check_caching(self, health_checker):
         """测试健康检查缓存"""
-        with patch.object(health_checker, 'check_database') as mock_check:
+        with patch.object(health_checker, "check_database") as mock_check:
             mock_check.return_value = HealthCheckResult(
                 component="database",
                 status=HealthStatus.HEALTHY,
-                message="Database is healthy"
+                message="Database is healthy",
             )
 
         # 第一次检查
@@ -223,7 +226,7 @@ class TestHealthChecker:
             component="database",
             status=HealthStatus.HEALTHY,
             message="Database is healthy",
-            details={"response_time_ms": 15.5, "connections": 5}
+            details={"response_time_ms": 15.5, "connections": 5},
         )
 
         # 测试字典转换
@@ -244,15 +247,16 @@ class TestHealthChecker:
         """测试健康检查依赖链"""
         # 模拟依赖关系：应用依赖于数据库，数据库依赖于网络
 
-        with patch.object(health_checker, 'check_network') as mock_network, \
-             patch.object(health_checker, 'check_database') as mock_db, \
-             patch.object(health_checker, 'check_application') as mock_app:
-
+        with (
+            patch.object(health_checker, "check_network") as mock_network,
+            patch.object(health_checker, "check_database") as mock_db,
+            patch.object(health_checker, "check_application") as mock_app,
+        ):
             # 网络健康
             mock_network.return_value = HealthCheckResult(
                 component="network",
                 status=HealthStatus.HEALTHY,
-                message="Network is healthy"
+                message="Network is healthy",
             )
 
             # 数据库健康（依赖于网络）
@@ -260,7 +264,7 @@ class TestHealthChecker:
                 component="database",
                 status=HealthStatus.HEALTHY,
                 message="Database is healthy",
-                dependencies=["network"]
+                dependencies=["network"],
             )
 
             # 应用健康（依赖于数据库）
@@ -268,7 +272,7 @@ class TestHealthChecker:
                 component="application",
                 status=HealthStatus.HEALTHY,
                 message="Application is healthy",
-                dependencies=["database"]
+                dependencies=["database"],
             )
 
         all_results = await health_checker.check_with_dependencies()
@@ -279,12 +283,12 @@ class TestHealthChecker:
     @pytest.mark.asyncio
     async def test_health_check_performance_metrics(self, health_checker):
         """测试健康检查性能指标"""
-        with patch.object(health_checker, 'check_database') as mock_check:
+        with patch.object(health_checker, "check_database") as mock_check:
             mock_check.return_value = HealthCheckResult(
                 component="database",
                 status=HealthStatus.HEALTHY,
                 message="Database is healthy",
-                details={"response_time_ms": 25.5}
+                details={"response_time_ms": 25.5},
             )
 
         # 执行多次检查收集性能数据
@@ -304,7 +308,7 @@ class TestHealthChecker:
             "timeout_seconds": 30,
             "cache_ttl_seconds": 60,
             "retry_attempts": 3,
-            "enable_metrics": True
+            "enable_metrics": True,
         }
 
         checker = HealthChecker(config)
@@ -317,17 +321,21 @@ class TestHealthChecker:
     @pytest.mark.asyncio
     async def test_health_check_circuit_breaker(self, health_checker):
         """测试健康检查熔断器"""
-        with patch.object(health_checker, 'check_external_service') as mock_check:
+        with patch.object(health_checker, "check_external_service") as mock_check:
             # 连续失败触发熔断器
             mock_check.side_effect = Exception("Service unavailable")
 
         # 连续失败
         for _ in range(5):
-            result = await health_checker.check_external_service("https://api.example.com")
+            result = await health_checker.check_external_service(
+                "https://api.example.com"
+            )
             assert result.status == HealthStatus.UNHEALTHY
 
         # 验证熔断器状态
-        circuit_status = health_checker.get_circuit_breaker_status("https://api.example.com")
+        circuit_status = health_checker.get_circuit_breaker_status(
+            "https://api.example.com"
+        )
         assert circuit_status["is_open"] is True
 
     @pytest.mark.asyncio
@@ -336,10 +344,10 @@ class TestHealthChecker:
         critical_result = HealthCheckResult(
             component="database",
             status=HealthStatus.CRITICAL,
-            message="Database connection failed"
+            message="Database connection failed",
         )
 
-        with patch.object(health_checker, 'send_alert') as mock_alert:
+        with patch.object(health_checker, "send_alert") as mock_alert:
             await health_checker.handle_critical_health_check(critical_result)
             mock_alert.assert_called_once()
 
@@ -349,15 +357,21 @@ class TestHealthChecker:
         component = "database"
 
         # 从健康到降级
-        checker.record_status_transition(component, HealthStatus.HEALTHY, HealthStatus.DEGRADED)
+        checker.record_status_transition(
+            component, HealthStatus.HEALTHY, HealthStatus.DEGRADED
+        )
         assert checker.get_current_status(component) == HealthStatus.DEGRADED
 
         # 从降级到不健康
-        checker.record_status_transition(component, HealthStatus.DEGRADED, HealthStatus.UNHEALTHY)
+        checker.record_status_transition(
+            component, HealthStatus.DEGRADED, HealthStatus.UNHEALTHY
+        )
         assert checker.get_current_status(component) == HealthStatus.UNHEALTHY
 
         # 从不健康恢复到健康
-        checker.record_status_transition(component, HealthStatus.UNHEALTHY, HealthStatus.HEALTHY)
+        checker.record_status_transition(
+            component, HealthStatus.UNHEALTHY, HealthStatus.HEALTHY
+        )
         assert checker.get_current_status(component) == HealthStatus.HEALTHY
 
 
@@ -369,6 +383,7 @@ class TestHealthAPI:
     def client(self):
         """创建测试客户端"""
         from fastapi.testclient import TestClient
+
         return TestClient(router)
 
     def test_basic_health_endpoint(self, client):
@@ -383,7 +398,7 @@ class TestHealthAPI:
 
     def test_detailed_health_endpoint(self, client):
         """测试详细健康检查端点"""
-        with patch('src.api.health.HealthChecker') as mock_checker_class:
+        with patch("src.api.health.HealthChecker") as mock_checker_class:
             mock_checker = Mock()
             mock_checker_class.return_value = mock_checker
 
@@ -392,13 +407,13 @@ class TestHealthAPI:
                 HealthCheckResult(
                     component="database",
                     status=HealthStatus.HEALTHY,
-                    message="Database is healthy"
+                    message="Database is healthy",
                 ),
                 HealthCheckResult(
                     component="redis",
                     status=HealthStatus.HEALTHY,
-                    message="Redis is healthy"
-                )
+                    message="Redis is healthy",
+                ),
             ]
 
         response = client.get("/health/detailed")
@@ -412,7 +427,7 @@ class TestHealthAPI:
 
     def test_readiness_probe(self, client):
         """测试就绪探针"""
-        with patch('src.api.health.HealthChecker') as mock_checker_class:
+        with patch("src.api.health.HealthChecker") as mock_checker_class:
             mock_checker = Mock()
             mock_checker_class.return_value = mock_checker
 
@@ -427,7 +442,7 @@ class TestHealthAPI:
 
     def test_liveness_probe(self, client):
         """测试存活探针"""
-        with patch('src.api.health.HealthChecker') as mock_checker_class:
+        with patch("src.api.health.HealthChecker") as mock_checker_class:
             mock_checker = Mock()
             mock_checker_class.return_value = mock_checker
 
@@ -442,7 +457,7 @@ class TestHealthAPI:
 
     def test_startup_probe(self, client):
         """测试启动探针"""
-        with patch('src.api.health.HealthChecker') as mock_checker_class:
+        with patch("src.api.health.HealthChecker") as mock_checker_class:
             mock_checker = Mock()
             mock_checker_class.return_value = mock_checker
 
@@ -457,8 +472,10 @@ class TestHealthAPI:
 
     def test_health_endpoint_error_handling(self, client):
         """测试健康检查端点错误处理"""
-        with patch('src.api.health.HealthChecker') as mock_checker_class:
-            mock_checker_class.side_effect = Exception("Health checker initialization failed")
+        with patch("src.api.health.HealthChecker") as mock_checker_class:
+            mock_checker_class.side_effect = Exception(
+                "Health checker initialization failed"
+            )
 
         response = client.get("/health")
 

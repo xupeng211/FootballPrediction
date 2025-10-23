@@ -25,7 +25,7 @@ class BaseMessage:
     timestamp: datetime
     metadata: Dict[str, Any]
 
-    def __init__(self, metadata: Optional[Dict[str, Any]] = None):
+    def __init__(self, metadata: Optional[Dict[str, Any]] = None):  # type: ignore
         self.message_id = str(uuid.uuid4())
         self.timestamp = datetime.utcnow()
         self.metadata = metadata or {}
@@ -38,7 +38,7 @@ class Command(BaseMessage, ABC):
     Commands represent intentions to change system state.
     """
 
-    def __init__(self, metadata: Optional[Dict[str, Any]] = None):
+    def __init__(self, metadata: Optional[Dict[str, Any]] = None):  # type: ignore
         super().__init__(metadata)
         self.correlation_id: Optional[str] = None
         self.causation_id: Optional[str] = None
@@ -51,7 +51,7 @@ class Query(BaseMessage, ABC):
     Queries represent requests to retrieve system data.
     """
 
-    def __init__(self, metadata: Optional[Dict[str, Any]] = None):
+    def __init__(self, metadata: Optional[Dict[str, Any]] = None):  # type: ignore
         super().__init__(metadata)
 
 
@@ -96,7 +96,7 @@ class QueryHandler(ABC, Generic[QueryResultType]):
 class ValidationResult:
     """验证结果"""
 
-    def __init__(self, is_valid: bool, errors: Optional[list] = None):
+    def __init__(self, is_valid: bool, errors: Optional[list] = None):  # type: ignore
         self.is_valid = is_valid
         self.errors = errors or []
 

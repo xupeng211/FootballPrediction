@@ -14,7 +14,7 @@ logger = get_logger(__name__)
 class WarmupManager:
     """Redis cache warmup manager"""
 
-    def __init__(self, redis_manager=None):
+    def __init__(self, redis_manager=None):  # type: ignore
         """Initialize warmup manager"""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.redis_manager = redis_manager

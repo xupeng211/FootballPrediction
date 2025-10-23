@@ -74,13 +74,13 @@ def fix_bare_except(file_path):
     original = content
 
     # 替换 bare except
-    content = re.sub(r"except:\s*$", "except Exception:", content)
-    content = re.sub(r"except:\s*#", "except Exception:  #", content)
+    content = re.sub(r"except Exception:\s*$", "except Exception:", content)
+    content = re.sub(r"except Exception:\s*#", "except Exception:  #", content)
 
     if content != original:
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(content)
-        print(f"修复了裸露的 except: {file_path}")
+        print(f"修复了裸露的 except Exception: {file_path}")
         return True
 
     return False

@@ -202,16 +202,16 @@ def fix_e722_bare_except():
             original_content = content
 
             # 修复裸露 except
-            # 简单情况：独立一行的 except:
+            # 简单情况：独立一行的 except Exception:
             content = re.sub(
-                r"^(\s*)except:\s*$",
+                r"^(\s*)except Exception:\s*$",
                 r"\1except Exception:",
                 content,
                 flags=re.MULTILINE,
             )
 
             # 复杂情况：try...except 在同一行
-            content = re.sub(r"except:\s*#", "except Exception:  #", content)
+            content = re.sub(r"except Exception:\s*#", "except Exception:  #", content)
 
             # 避免已经有的 except Exception 重复
             content = re.sub(

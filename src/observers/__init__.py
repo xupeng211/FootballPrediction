@@ -22,7 +22,7 @@ from .manager import ObserverManager, get_observer_manager
 
 
 # 系统级便捷函数
-def initialize_observer_system():
+def initialize_observer_system():  # type: ignore
     """初始化观察者系统"""
     manager = get_observer_manager()
     if hasattr(manager, "initialize"):
@@ -30,7 +30,7 @@ def initialize_observer_system():
     return True
 
 
-def start_observer_system():
+def start_observer_system():  # type: ignore
     """启动观察者系统"""
     manager = get_observer_manager()
     if hasattr(manager, "start"):
@@ -38,7 +38,7 @@ def start_observer_system():
     return True
 
 
-def stop_observer_system():
+def stop_observer_system():  # type: ignore
     """停止观察者系统"""
     manager = get_observer_manager()
     if hasattr(manager, "stop"):

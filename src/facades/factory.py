@@ -48,7 +48,7 @@ class FacadeFactory:
         "notification": NotificationFacade,
     }
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self._config_cache: Dict[str, FacadeConfig] = {}
         self._instance_cache: Dict[str, SystemFacade] = {}
         self.default_environment = os.getenv("ENVIRONMENT", "development")

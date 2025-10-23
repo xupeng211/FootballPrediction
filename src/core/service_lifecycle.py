@@ -49,7 +49,7 @@ class ServiceInfo:
     dependencies: List[str] = field(default_factory=list)
     dependents: List[str] = field(default_factory=list)
 
-    def __post_init__(self):
+    def __post_init__(self):  # type: ignore
         if isinstance(self.dependencies, str):
             self.dependencies = [self.dependencies]
 
@@ -86,7 +86,7 @@ class IServiceLifecycle(ABC):
 class ServiceLifecycleManager:
     """服务生命周期管理器"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self._services: Dict[str, ServiceInfo] = {}
         self._start_order: List[str] = []
         self._stop_order: List[str] = []
@@ -533,14 +533,14 @@ def lifecycle_service(
 ):
     """服务生命周期装饰器"""
 
-    def decorator(cls):
+    def decorator(cls):  # type: ignore
         # 获取服务名称
         service_name = name or cls.__name__
 
         # 保存原始的 __init__ 方法
         original_init = cls.__init__
 
-        def new_init(self, *args, **kwargs):
+        def new_init(self, *args, **kwargs):  # type: ignore
             # 调用原始初始化
             original_init(self, *args, **kwargs)
 

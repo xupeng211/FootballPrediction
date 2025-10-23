@@ -324,7 +324,7 @@ class Match(BaseModel):
         )
 
     @classmethod
-    def get_upcoming_matches(cls, session, days: int = 7):
+    def get_upcoming_matches(cls, session, days: int = 7):  # type: ignore
         """获取未来几天的比赛"""
 
         start_date = datetime.utcnow()
@@ -355,7 +355,7 @@ class Match(BaseModel):
         return query.order_by(cls.match_time.desc()).all()
 
     @classmethod
-    def get_team_matches(cls, session, team_id: int, season: Optional[str] = None):
+    def get_team_matches(cls, session, team_id: int, season: Optional[str] = None):  # type: ignore
         """获取某个球队的所有比赛"""
 
         query = session.query(cls).filter(

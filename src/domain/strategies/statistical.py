@@ -10,7 +10,7 @@ Strategy implementation using statistical methods and mathematical models for pr
 
 import time
 import math
-from typing import Dict, Any, List, Tuple
+from typing import Any, Dict, List, Tuple, Type
 import numpy as np
 from datetime import datetime
 
@@ -35,7 +35,7 @@ class StatisticalStrategy(PredictionStrategy):
     - 泊松分布模型
     """
 
-    def __init__(self, name: str = "statistical_analyzer"):
+    def __init__(self, name: str = "statistical_analyzer"):  # type: ignore
         super().__init__(name, StrategyType.STATISTICAL)
         self._team_stats = {}
         self._head_to_head_stats = {}
@@ -119,7 +119,7 @@ class StatisticalStrategy(PredictionStrategy):
                 "team_form": self._model_params["model_weights"]["form"],
                 "head_to_head": self._model_params["model_weights"]["head_to_head"],
             },
-            metadata ={
+            metadata={
                 "method": "statistical_ensemble",
                 "predictions_used": {
                     "poisson": poisson_pred,
@@ -367,7 +367,6 @@ class StatisticalStrategy(PredictionStrategy):
         # 基于泊松分布计算概率
         if input_data.home_team.id is None or input_data.away_team.id is None:
             return {"home_win": 0.33, "draw": 0.34, "away_win": 0.33}
-
         home_avg = await self._get_team_average_goals(input_data.home_team.id, True)
         away_avg = await self._get_team_average_goals(input_data.away_team.id, False)
 

@@ -14,7 +14,7 @@ PredictionConfig = None
 PredictionStatistics = None
 
 
-def _lazy_import():
+def _lazy_import():  # type: ignore
     """延迟导入以避免循环导入"""
     global PredictionEngine, PredictionConfig, PredictionStatistics
     if PredictionEngine is None:

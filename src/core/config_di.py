@@ -49,7 +49,7 @@ class DIConfiguration:
 class ConfigurationBinder:
     """配置绑定器"""
 
-    def __init__(self, container: DIContainer):
+    def __init__(self, container: DIContainer):  # type: ignore
         self.container = container
         self.auto_binder = AutoBinder(container)
         self.config: Optional[DIConfiguration] = None
@@ -72,6 +72,10 @@ class ConfigurationBinder:
                     raise DependencyInjectionError(
                         f"不支持的配置文件格式: {config_path.suffix}"
                     )
+
+            # 处理空文件情况
+            if data is None:
+                data = {}
 
             self.config = self._parse_config(data)
             logger.info(f"加载配置文件: {config_path}")
@@ -272,7 +276,7 @@ class ConfigurationBinder:
 class ConfigurationBuilder:
     """配置构建器"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self.config = DIConfiguration()
 
     def add_service(

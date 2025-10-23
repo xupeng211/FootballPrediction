@@ -13,7 +13,8 @@ import pandas as pd
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 from enum import Enum
-import pickle
+import joblib
+import json
 
 
 class PredictionStatus(Enum):
@@ -193,7 +194,7 @@ class PredictionModel:
             }
 
             with open(file_path, "wb") as f:
-                pickle.dump(model_data, f)
+                joblib.dump(model_data, f)
 
             self.logger.info(f"Model saved to: {file_path}")
             return True
@@ -213,7 +214,7 @@ class PredictionModel:
         """
         try:
             with open(file_path, "rb") as f:
-                model_data = pickle.load(f)
+                model_data = joblib.load(f)
 
             self.model_name = model_data["model_name"]
             self.model_type = model_data["model_type"]

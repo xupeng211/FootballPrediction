@@ -33,10 +33,10 @@ mkdir -p data/test
 
 # 启动基础服务（PostgreSQL和Redis）
 echo -e "${YELLOW}🐘 启动PostgreSQL测试数据库...${NC}"
-docker-compose -f docker-compose.test.yml up -d postgres-test
+docker-compose -f docker-compose.test.yml up -d db
 
 echo -e "${YELLOW}🔴 启动Redis测试缓存...${NC}"
-docker-compose -f docker-compose.test.yml up -d redis-test
+docker-compose -f docker-compose.test.yml up -d redis
 
 # 等待服务就绪
 echo -e "${YELLOW}⏳ 等待服务启动...${NC}"
@@ -48,7 +48,7 @@ max_attempts=30
 attempt=0
 
 while [ $attempt -lt $max_attempts ]; do
-    if docker-compose -f docker-compose.test.yml exec -T postgres-test pg_isready -U test_user -d football_prediction_test > /dev/null 2>&1; then
+    if docker-compose -f docker-compose.test.yml exec -T db pg_isready -U test_user -d football_test > /dev/null 2>&1; then
         echo -e "${GREEN}✅ PostgreSQL已就绪${NC}"
         break
     fi
@@ -56,7 +56,7 @@ while [ $attempt -lt $max_attempts ]; do
     attempt=$((attempt + 1))
     if [ $attempt -eq $max_attempts ]; then
         echo -e "${RED}❌ PostgreSQL启动失败${NC}"
-        docker-compose -f docker-compose.test.yml logs postgres-test
+        docker-compose -f docker-compose.test.yml logs db
         exit 1
     fi
 
@@ -65,11 +65,11 @@ done
 
 # 检查Redis
 echo -e "${YELLOW}🔍 检查Redis连接...${NC}"
-if docker-compose -f docker-compose.test.yml exec -T redis-test redis-cli ping > /dev/null 2>&1; then
+if docker-compose -f docker-compose.test.yml exec -T redis redis-cli -a test_pass ping > /dev/null 2>&1; then
     echo -e "${GREEN}✅ Redis已就绪${NC}"
 else
     echo -e "${RED}❌ Redis启动失败${NC}"
-    docker-compose -f docker-compose.test.yml logs redis-test
+    docker-compose -f docker-compose.test.yml logs redis
     exit 1
 fi
 
@@ -94,12 +94,19 @@ DEBUG=true
 LOG_LEVEL=DEBUG
 
 # 数据库配置（测试环境）
-DATABASE_URL=postgresql://test_user:test_password@localhost:5433/football_prediction_test
+DATABASE_URL=postgresql+asyncpg://test_user:test_password@localhost:5433/football_test
 DATABASE_HOST=localhost
 DATABASE_PORT=5433
 DATABASE_NAME=football_prediction_test
 DATABASE_USER=test_user
 DATABASE_PASSWORD=test_password
+
+# 测试环境专用数据库配置（用于get_database_config函数）
+TEST_DB_HOST=localhost
+TEST_DB_PORT=5433
+TEST_DB_NAME=football_test
+TEST_DB_USER=test_user
+TEST_DB_PASSWORD=test_pass
 
 # Redis配置（测试环境）
 REDIS_URL=redis://localhost:6380/0
@@ -121,14 +128,14 @@ KAFKA_BOOTSTRAP_SERVERS=localhost:9093
 KAFKA_TOPIC_PREFIX=test
 
 # 测试配置
-TEST_DATABASE_URL=postgresql://test_user:test_password@localhost:5433/football_prediction_test
+TEST_DATABASE_URL=postgresql+asyncpg://test_user:test_password@localhost:5433/football_test
 TEST_REDIS_URL=redis://localhost:6380/0
 
 # 其他配置
 SECRET_KEY=test-secret-key-for-testing-only
 JWT_SECRET_KEY=test-jwt-secret-key-for-testing-only
 API_PREFIX=/api/v1
-CORS_ORIGINS=["http://localhost:3000", "http://localhost:8080"]
+CORS_ORIGINS=http://localhost:3000,http://localhost:8080
 
 # 性能配置（测试环境优化）
 DATABASE_POOL_SIZE=5

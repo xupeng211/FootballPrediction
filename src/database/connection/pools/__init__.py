@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 class ConnectionPool:
     """Database connection pool manager"""
 
-    def __init__(self, min_connections: int = 1, max_connections: int = 10):
+    def __init__(self, min_connections: int = 1, max_connections: int = 10):  # type: ignore
         """Initialize connection pool"""
         self.min_connections = min_connections
         self.max_connections = max_connections

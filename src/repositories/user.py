@@ -6,7 +6,7 @@ User Repository
 Implements data access logic for users.
 """
 
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional, Type
 from datetime import datetime, date
 
 from sqlalchemy import select, func, update

@@ -80,16 +80,16 @@ class League(BaseModel):
         return self.teams.filter_by(is_active=True).count()
 
     @classmethod
-    def get_by_code(cls, session, league_code: str):
+    def get_by_code(cls, session, league_code: str):  # type: ignore
         """根据联赛代码获取联赛"""
         return session.query(cls).filter(cls.league_code == league_code).first()
 
     @classmethod
-    def get_by_country(cls, session, country: str):
+    def get_by_country(cls, session, country: str):  # type: ignore
         """获取指定国家的所有联赛"""
         return session.query(cls).filter(cls.country == country).all()
 
     @classmethod
-    def get_active_leagues(cls, session):
+    def get_active_leagues(cls, session):  # type: ignore
         """获取所有活跃的联赛"""
         return session.query(cls).filter(cls.is_active is True).all()

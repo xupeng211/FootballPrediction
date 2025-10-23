@@ -68,7 +68,7 @@ class EnsembleStrategy(PredictionStrategy):
     Combines predictions from multiple sub-strategies through intelligent weighting.
     """
 
-    def __init__(self, name: str = "ensemble_predictor"):
+    def __init__(self, name: str = "ensemble_predictor"):  # type: ignore
         super().__init__(name, StrategyType.ENSEMBLE)
         self._sub_strategies: Dict[str, PredictionStrategy] = {}
         self._strategy_weights: Dict[str, StrategyWeight] = {}
@@ -222,7 +222,7 @@ class EnsembleStrategy(PredictionStrategy):
             confidence=final_confidence,
             probability_distribution=probability_distribution,
             feature_importance=feature_importance,
-            metadata ={
+            metadata={
                 "method": f"ensemble_{self._ensemble_method.value}",
                 "strategies_used": list(strategy_predictions.keys()),
                 "consensus_score": ensemble_result.consensus_score,

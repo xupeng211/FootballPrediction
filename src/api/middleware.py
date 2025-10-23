@@ -9,7 +9,7 @@ Provides various API middleware implementations.
 import time
 import uuid
 import json
-from typing import Dict, Any, Optional, Callable
+from typing import Dict, Any, Optional, Callable, Optional, Optional
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
@@ -66,7 +66,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # 清理过期记录
         if client_ip in self.clients:
             self.clients[client_ip] = [
-                timestamp for timestamp in self.clients[client_ip]
+                timestamp
+                for timestamp in self.clients[client_ip]
                 if current_time - timestamp < self.period
             ]
         else:
@@ -119,8 +120,12 @@ class CORSMiddleware(BaseHTTPMiddleware):
         origin = request.headers.get("origin")
         if origin and (origin in self.allow_origins or "*" in self.allow_origins):
             response.headers["Access-Control-Allow-Origin"] = origin
-            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-            response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+            response.headers["Access-Control-Allow-Methods"] = (
+                "GET, POST, PUT, DELETE, OPTIONS"
+            )
+            response.headers["Access-Control-Allow-Headers"] = (
+                "Content-Type, Authorization"
+            )
             response.headers["Access-Control-Allow-Credentials"] = "true"
 
         return response
@@ -136,7 +141,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
-        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["Strict-Transport-Security"] = (
+            "max-age=31536000; includeSubDomains"
+        )
 
         return response
 
@@ -164,7 +171,7 @@ class CacheMiddleware(BaseHTTPMiddleware):
                 return Response(
                     content=cache_entry["content"],
                     headers=cache_entry["headers"],
-                    status_code=cache_entry["status_code"]
+                    status_code=cache_entry["status_code"],
                 )
 
         response = await call_next(request)
@@ -174,7 +181,7 @@ class CacheMiddleware(BaseHTTPMiddleware):
             "content": response.body,
             "headers": dict(response.headers),
             "status_code": response.status_code,
-            "timestamp": current_time
+            "timestamp": current_time,
         }
 
         return response
@@ -193,5 +200,5 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
             return Response(
                 content=json.dumps({"detail": "Internal server error"}),
                 status_code=500,
-                media_type="application/json"
+                media_type="application/json",
             )

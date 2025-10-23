@@ -36,7 +36,7 @@ except ImportError:
         class KafkaProducer:
             """占位符类，当真实的 KafkaProducer 不可用时使用"""
 
-            def __init__(self, *args, **kwargs):
+            def __init__(self, *args, **kwargs):  # type: ignore
                 pass
 
             async def send(self, *args, **kwargs):

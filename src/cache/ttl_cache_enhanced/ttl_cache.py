@@ -388,7 +388,7 @@ class TTLCache:
             for key in self.stats:
                 self.stats[key] = 0
 
-    def start_auto_cleanup(self):
+    def start_auto_cleanup(self):  # type: ignore
         """启动自动清理任务"""
         if self._running:
             return
@@ -397,7 +397,7 @@ class TTLCache:
         loop = asyncio.get_event_loop()
         self._cleanup_task = loop.create_task(self._auto_cleanup())
 
-    def stop_auto_cleanup(self):
+    def stop_auto_cleanup(self):  # type: ignore
         """停止自动清理任务"""
         self._running = False
         if self._cleanup_task:

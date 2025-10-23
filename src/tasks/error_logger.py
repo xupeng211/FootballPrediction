@@ -1,13 +1,13 @@
 """
 任务错误日志记录器
 
-负责记录任务执行过程中的错误信息，包括：
+负责记录任务执行过程中的错误信息,包括:
 - API 调用失败日志
 - 任务重试记录
 - 系统异常日志
 - 错误统计和分析
 
-支持写入到 error_logs 表和数据采集日志表。
+支持写入到 error_logs 表和数据采集日志表.
 """
 
 import logging
@@ -86,7 +86,7 @@ class TaskErrorLogger:
             )
 
         except (RuntimeError, ValueError, ConnectionError) as log_error:
-            # 如果记录日志失败，只能记录到应用日志
+            # 如果记录日志失败,只能记录到应用日志
             logger.error(f"记录错误日志失败: {str(log_error)}")
 
     async def log_api_failure(
@@ -194,7 +194,7 @@ class TaskErrorLogger:
         """
         保存错误详情到数据库
 
-        由于没有专门的 error_logs 表，这里使用原始SQL创建表并插入数据
+        由于没有专门的 error_logs 表,这里使用原始SQL创建表并插入数据
         """
         try:
             async with self.db_manager.get_async_session() as session:
@@ -273,7 +273,7 @@ class TaskErrorLogger:
         获取错误统计信息
 
         Args:
-            hours: 统计时间范围（小时）
+            hours: 统计时间范围(小时)
 
         Returns:
             错误统计数据
@@ -353,7 +353,7 @@ class TaskErrorLogger:
 
     async def cleanup_old_logs(self, days_to_keep: int = 7) -> int:
         """
-        清理旧的错误日志（别名方法，兼容测试）
+        清理旧的错误日志(别名方法,兼容测试)
 
         Args:
             days_to_keep: 保留天数

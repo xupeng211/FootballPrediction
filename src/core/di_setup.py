@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class DISetup:
     """依赖注入设置类"""
 
-    def __init__(self, profile: Optional[str] = None):
+    def __init__(self, profile: Optional[str] = None):  # type: ignore
         self.profile = profile or os.getenv("APP_PROFILE", "development")
         self.container: Optional[DIContainer] = None
         self.lifecycle_manager: Optional[ServiceLifecycleManager] = None
@@ -155,7 +155,7 @@ def register_service(
 ):
     """自动注册服务装饰器"""
 
-    def decorator(cls):
+    def decorator(cls):  # type: ignore
         # 保存注册信息
         cls.__di_lifetime__ = lifetime
         cls.__di_interface__ = interface

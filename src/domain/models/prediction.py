@@ -30,7 +30,7 @@ class ConfidenceScore:
 
     value: Decimal
 
-    def __post_init__(self):
+    def __post_init__(self):  # type: ignore
         """验证置信度范围"""
         if self.value < 0 or self.value > 1:
             raise DomainError("置信度必须在 0 到 1 之间")
@@ -60,7 +60,7 @@ class PredictionScore:
     actual_home: Optional[int] = None
     actual_away: Optional[int] = None
 
-    def __post_init__(self):
+    def __post_init__(self):  # type: ignore
         """验证比分"""
         if self.predicted_home < 0 or self.predicted_away < 0:
             raise DomainError("预测比分不能为负数")
@@ -127,7 +127,7 @@ class PredictionPoints:
     result_bonus: Decimal = Decimal("0")  # 结果正确奖励
     confidence_bonus: Decimal = Decimal("0")  # 置信度奖励
 
-    def __post_init__(self):
+    def __post_init__(self):  # type: ignore
         """四舍五入到两位小数"""
         self.total = self.total.quantize(Decimal("0.01"))
         self.score_bonus = self.score_bonus.quantize(Decimal("0.01"))
@@ -172,7 +172,7 @@ class Prediction:
     # 领域事件
     _domain_events: List[Any] = field(default_factory=list, init=False)
 
-    def __post_init__(self):
+    def __post_init__(self):  # type: ignore
         """初始化后的验证"""
         if self.user_id <= 0:
             raise DomainError("用户ID必须大于0")

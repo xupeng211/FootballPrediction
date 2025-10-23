@@ -8,7 +8,7 @@ Prediction service integrated with event system, publishing prediction-related e
 """
 
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Optional, Optional
 from datetime import datetime
 
 from .strategy_prediction_service import StrategyPredictionService
@@ -33,7 +33,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
     Inherits from strategy prediction service, adding event publishing capabilities.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):  # type: ignore
         """初始化事件驱动预测服务"""
         super().__init__(*args, **kwargs)
         self._event_bus = get_event_bus()
@@ -176,7 +176,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
                 else None,
                 strategy_used=strategy_name,
                 source=self._event_source,
-                metadata ={
+                metadata={
                     "prediction_time": prediction.created_at.isoformat(),
                     "notes": prediction.notes,
                 },
@@ -225,7 +225,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
                 previous_prediction=previous_prediction,
                 update_reason=update_reason,
                 source=self._event_source,
-                metadata ={
+                metadata={
                     "update_time": prediction.updated_at.isoformat(),
                     "notes": prediction.notes,
                 },
@@ -251,7 +251,7 @@ class EventDrivenMatchService:
     Handles match-related event publishing.
     """
 
-    def __init__(self, match_repository):
+    def __init__(self, match_repository):  # type: ignore
         """初始化比赛服务
 
         Args:
@@ -328,7 +328,7 @@ class EventDrivenMatchService:
                 created_by=created_by,
                 initial_odds=initial_odds,
                 source=self._event_source,
-                metadata ={
+                metadata={
                     "creation_time": datetime.utcnow().isoformat(),
                 },
             )
@@ -355,7 +355,7 @@ class EventDrivenUserService:
     Handles user-related event publishing.
     """
 
-    def __init__(self, user_repository):
+    def __init__(self, user_repository):  # type: ignore
         """初始化用户服务
 
         Args:
@@ -425,7 +425,7 @@ class EventDrivenUserService:
                 ip_address=ip_address,
                 user_agent=user_agent,
                 source=self._event_source,
-                metadata ={
+                metadata={
                     "registration_method": "web",
                 },
             )
