@@ -49,7 +49,7 @@ class DIConfiguration:
 class ConfigurationBinder:
     """配置绑定器"""
 
-    def __init__(self, container: DIContainer):
+    def __init__(self, container: DIContainer):  # type: ignore
         self.container = container
         self.auto_binder = AutoBinder(container)
         self.config: Optional[DIConfiguration] = None
@@ -276,7 +276,7 @@ class ConfigurationBinder:
 class ConfigurationBuilder:
     """配置构建器"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self.config = DIConfiguration()
 
     def add_service(

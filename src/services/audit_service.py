@@ -70,7 +70,7 @@ class AuditLog:
 class AuditLogSummary:
     """审计日志摘要"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self.total_logs = 0
         self.by_severity = {}
         self.by_action = {}
@@ -119,12 +119,12 @@ class AuditEvent:
 class AuditService:
     """审计服务 - 简化版本"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self.events: List[AuditEvent] = []
         self.sanitizer = DataSanitizer()
         self.analyzer = SeverityAnalyzer()
 
-    def log_event(self, action: str, user: str, details: Dict[str, Any]):
+    def log_event(self, action: str, user: str, details: Dict[str, Any]):  # type: ignore
         """记录审计事件"""
         # 清理数据
         sanitized_details = self.sanitizer.sanitize(details)

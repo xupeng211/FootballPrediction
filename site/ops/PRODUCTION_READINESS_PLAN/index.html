@@ -1,0 +1,2160 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="基于现代Python技术栈的足球预测系统完整文档">
+      
+      
+        <meta name="author" content="Football Prediction Team">
+      
+      
+        <link rel="canonical" href="https://football-prediction-docs.example.com/ops/PRODUCTION_READINESS_PLAN/">
+      
+      
+        <link rel="prev" href="../../testing/CI_GUARDIAN_GUIDE/">
+      
+      
+        <link rel="next" href="../MONITORING/">
+      
+      
+      <link rel="icon" href="../../assets/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.49">
+    
+    
+      
+        <title>生产就绪 - 足球预测系统文档</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.6f8fc17f.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="足球预测系统文档">
+  <meta property="og:description" content="基于现代Python技术栈的足球预测系统完整文档">
+  <meta property="og:url" content="https://football-prediction-docs.example.com/ops/PRODUCTION_READINESS_PLAN/">
+  <meta property="og:image" content="../../assets/logo.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@football_pred">
+  <meta name="twitter:creator" content="@football_pred">
+
+  <!-- 自定义CSS和JS -->
+  <link rel="stylesheet" href="../../assets/extra.css">
+  <script src="../../assets/extra.js"></script>
+
+  <!-- 添加中文字体支持 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  
+
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#_1" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+  
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href="../.." title="足球预测系统文档" class="md-header__button md-logo" aria-label="足球预测系统文档" data-md-component="logo">
+      
+  <img src="../../assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            足球预测系统文档
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              生产就绪
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="blue"  aria-label="切换至深色模式"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="切换至深色模式" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="blue"  aria-label="切换至深色模式"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="切换至深色模式" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="blue"  aria-label="切换至浅色模式"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="切换至浅色模式" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="分享" aria-label="分享" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/your-org/football-prediction" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    football-prediction/docs
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="标签" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../index.md" class="md-tabs__link">
+        
+  
+    
+  
+  首页
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../how-to/QUICKSTART_TOOLS/" class="md-tabs__link">
+          
+  
+    
+  
+  快速开始
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../architecture/ARCHITECTURE/" class="md-tabs__link">
+          
+  
+    
+  
+  架构设计
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/API_REFERENCE/" class="md-tabs__link">
+          
+  
+    
+  
+  API参考
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../testing/TEST_IMPROVEMENT_GUIDE/" class="md-tabs__link">
+          
+  
+    
+  
+  测试指南
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+    
+  
+  运维部署
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../ml/ML_MODEL_GUIDE/" class="md-tabs__link">
+          
+  
+    
+  
+  机器学习
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../security/SECURITY_POLICY.md" class="md-tabs__link">
+          
+  
+    
+  
+  安全配置
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../project/CONTRIBUTING.md" class="md-tabs__link">
+          
+  
+    
+  
+  项目管理
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../AI_DEVELOPMENT_DOCUMENTATION_RULES.md" class="md-tabs__link">
+          
+  
+    
+  
+  参考资料
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+
+  <!-- 公告栏配置 (暂时注释掉) -->
+  <!--
+  
+  -->
+
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="足球预测系统文档" class="md-nav__button md-logo" aria-label="足球预测系统文档" data-md-component="logo">
+      
+  <img src="../../assets/logo.png" alt="logo">
+
+    </a>
+    足球预测系统文档
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/your-org/football-prediction" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    football-prediction/docs
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../index.md" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    首页
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../how-to/QUICKSTART_TOOLS/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    快速开始
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../architecture/ARCHITECTURE/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    架构设计
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../reference/API_REFERENCE/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    API参考
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../testing/TEST_IMPROVEMENT_GUIDE/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    测试指南
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          
+          <div class="md-nav__link md-nav__container">
+            <a href="../runbooks/" class="md-nav__link ">
+              
+  
+  <span class="md-ellipsis">
+    运维部署
+  </span>
+  
+
+            </a>
+            
+              
+              <label class="md-nav__link " for="__nav_6" id="__nav_6_label" tabindex="">
+                <span class="md-nav__icon md-icon"></span>
+              </label>
+            
+          </div>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            运维部署
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    生产就绪
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    生产就绪
+  </span>
+  
+
+      </a>
+      
+        
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      📋 问题清单与解决方案
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="📋 问题清单与解决方案">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-30100-95100" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. 🔴 依赖版本冲突 (当前30/100 → 目标95/100)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. 🔴 依赖版本冲突 (当前30/100 → 目标95/100)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      问题分析
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      解决方案
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-5100-85100" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. 🔴 测试框架缺失 (当前5/100 → 目标85/100)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. 🔴 测试框架缺失 (当前5/100 → 目标85/100)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    <span class="md-ellipsis">
+      问题分析
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    <span class="md-ellipsis">
+      解决方案
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-20100-95100" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. 🔴 安全配置未完成 (当前20/100 → 目标95/100)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. 🔴 安全配置未完成 (当前20/100 → 目标95/100)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    <span class="md-ellipsis">
+      问题分析
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      解决方案
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-50100-90100" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. 🔴 环境配置混乱 (当前50/100 → 目标90/100)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. 🔴 环境配置混乱 (当前50/100 → 目标90/100)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_9" class="md-nav__link">
+    <span class="md-ellipsis">
+      解决方案
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-cicd-0100-90100" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. 🔴 CI/CD验证缺失 (当前0/100 → 目标90/100)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. 🔴 CI/CD验证缺失 (当前0/100 → 目标90/100)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_10" class="md-nav__link">
+    <span class="md-ellipsis">
+      解决方案
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_11" class="md-nav__link">
+    <span class="md-ellipsis">
+      📅 实施时间线
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="📅 实施时间线">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-1-week-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 1: 基础设施 (Week 1)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-2-week-2-3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 2: 核心测试 (Week 2-3)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-3-week-3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 3: 安全加固 (Week 3)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-4-week-4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Phase 4: 生产验证 (Week 4)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_12" class="md-nav__link">
+    <span class="md-ellipsis">
+      🎯 成功指标
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_13" class="md-nav__link">
+    <span class="md-ellipsis">
+      🚨 风险管控
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🚨 风险管控">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_14" class="md-nav__link">
+    <span class="md-ellipsis">
+      高风险项
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_15" class="md-nav__link">
+    <span class="md-ellipsis">
+      应急预案
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_16" class="md-nav__link">
+    <span class="md-ellipsis">
+      📞 责任分配
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_17" class="md-nav__link">
+    <span class="md-ellipsis">
+      🛠️ 实施工具
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🛠️ 实施工具">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. 🔐 安全配置自动化
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. 🔧 依赖冲突解决器
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. 🧪 测试框架构建器
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. 🚀 自动化流水线
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_18" class="md-nav__link">
+    <span class="md-ellipsis">
+      💡 长期规划
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_19" class="md-nav__link">
+    <span class="md-ellipsis">
+      🚀 立即行动
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../MONITORING/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    监控系统
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../runbooks/BACKUP_RECOVERY_RUNBOOK.md" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    备份恢复
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../runbooks/DISASTER_RECOVERY_RUNBOOK/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    灾难恢复
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../ml/ML_MODEL_GUIDE/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    机器学习
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../security/SECURITY_POLICY.md" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    安全配置
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../project/CONTRIBUTING.md" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    项目管理
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../AI_DEVELOPMENT_DOCUMENTATION_RULES.md" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    参考资料
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+  
+                  
+
+  
+    <a href="https://github.com/your-org/football-prediction/edit/main/docs/ops/PRODUCTION_READINESS_PLAN.md" title="编辑此页" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+    
+      
+    
+    <a href="https://github.com/your-org/football-prediction/raw/main/docs/ops/PRODUCTION_READINESS_PLAN.md" title="查看本页的源代码" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
+    </a>
+  
+
+
+<h1 id="_1">生产环境问题解决方案设计<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
+<p><strong>制定日期</strong>: 2025-10-04
+<strong>目标</strong>: 将项目从D级(41/100)提升到生产就绪状态A级(90/100)</p>
+<h2 id="_2">📋 问题清单与解决方案<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<h3 id="1-30100-95100">1. 🔴 依赖版本冲突 (当前30/100 → 目标95/100)<a class="headerlink" href="#1-30100-95100" title="Permanent link">&para;</a></h3>
+<h4 id="_3">问题分析<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code>great-expectations 1.5.11 requires pandas&lt;2.2,&gt;=1.3.0
+feast 0.53.0 requires numpy&lt;3,&gt;=2.0.0; pydantic==2.10.6
+openlineage-python 1.37.0 requires requests&gt;=2.32.4
+semgrep 1.139.0 requires rich~=13.5.2; urllib3~=2.0
+safety 3.6.2 requires typer&gt;=0.16.0
+</code></pre></div>
+<h4 id="_4">解决方案<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h4>
+<p><strong>方案A: 版本锁定 (推荐)</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># requirements/production.txt</span>
+<span class="n">pandas</span><span class="o">==</span><span class="mf">2.1.4</span>  <span class="c1"># 兼容great-expectations</span>
+<span class="n">numpy</span><span class="o">==</span><span class="mf">2.0.0</span>   <span class="c1"># 兼容feast</span>
+<span class="n">pydantic</span><span class="o">==</span><span class="mf">2.10.6</span>  <span class="c1"># 兼容feast</span>
+<span class="n">requests</span><span class="o">==</span><span class="mf">2.32.4</span>  <span class="c1"># 兼容openlineage</span>
+<span class="n">rich</span><span class="o">==</span><span class="mf">13.5.2</span>    <span class="c1"># 兼容semgrep</span>
+<span class="n">urllib3</span><span class="o">==</span><span class="mf">2.0.7</span>   <span class="c1"># 兼容semgrep</span>
+<span class="n">typer</span><span class="o">==</span><span class="mf">0.16.0</span>   <span class="c1"># 兼容safety</span>
+</code></pre></div>
+<p><strong>方案B: 包替换策略</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># great-expectations → great-tables (更轻量)</span>
+<span class="c1"># feast → feast-feature-server (按需安装)</span>
+<span class="c1"># semgrep → bandit (Python专用)</span>
+</code></pre></div>
+<p><strong>实施步骤</strong></p>
+<ol>
+<li>创建依赖矩阵表</li>
+<li>使用 pip-tools 锁定版本</li>
+<li>建立依赖更新测试流程</li>
+</ol>
+<h3 id="2-5100-85100">2. 🔴 测试框架缺失 (当前5/100 → 目标85/100)<a class="headerlink" href="#2-5100-85100" title="Permanent link">&para;</a></h3>
+<h4 id="_5">问题分析<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h4>
+<ul>
+<li>仅有3个测试文件</li>
+<li>测试导入失败</li>
+<li>无测试覆盖率</li>
+</ul>
+<h4 id="_6">解决方案<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h4>
+<p><strong>测试架构设计</strong></p>
+<div class="highlight"><pre><span></span><code>tests/
+├── unit/              # 单元测试 (70%)
+│   ├── api/          # API层测试
+│   ├── services/     # 业务逻辑测试
+│   ├── models/       # 数据模型测试
+│   └── utils/        # 工具函数测试
+├── integration/       # 集成测试 (20%)
+│   ├── api_db/       # API-数据库集成
+│   ├── cache/        # 缓存集成
+│   └── external/     # 外部服务集成
+└── e2e/              # 端到端测试 (10%)
+    ├── smoke/        # 冒烟测试
+    └── scenarios/    # 业务场景测试
+</code></pre></div>
+<p><strong>测试实施计划</strong></p>
+<ol>
+<li><strong>Week 1</strong>: 设置测试基础设施</li>
+<li>配置pytest.ini</li>
+<li>创建测试工厂类</li>
+<li>
+<p>设置Mock服务</p>
+</li>
+<li>
+<p><strong>Week 2</strong>: 核心功能测试</p>
+</li>
+<li>健康检查API</li>
+<li>用户认证</li>
+<li>
+<p>基础CRUD操作</p>
+</li>
+<li>
+<p><strong>Week 3</strong>: 业务逻辑测试</p>
+</li>
+<li>预测流程</li>
+<li>数据处理管道</li>
+<li>
+<p>异常处理</p>
+</li>
+<li>
+<p><strong>Week 4</strong>: 集成和E2E测试</p>
+</li>
+<li>完整用户流程</li>
+<li>性能测试</li>
+<li>安全测试</li>
+</ol>
+<p><strong>测试工具链</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># requirements-test.txt</span>
+<span class="n">pytest</span><span class="o">==</span><span class="mf">8.3.4</span>
+<span class="n">pytest</span><span class="o">-</span><span class="n">asyncio</span><span class="o">==</span><span class="mf">0.25.0</span>
+<span class="n">pytest</span><span class="o">-</span><span class="n">cov</span><span class="o">==</span><span class="mf">6.0.0</span>
+<span class="n">pytest</span><span class="o">-</span><span class="n">mock</span><span class="o">==</span><span class="mf">3.14.0</span>
+<span class="n">factory</span><span class="o">-</span><span class="n">boy</span><span class="o">==</span><span class="mf">3.3.1</span>  <span class="c1"># 测试数据工厂</span>
+<span class="n">faker</span><span class="o">==</span><span class="mf">30.8.1</span>       <span class="c1"># 伪数据生成</span>
+<span class="n">httpx</span><span class="o">==</span><span class="mf">0.28.1</span>       <span class="c1"># 异步HTTP测试</span>
+</code></pre></div>
+<h3 id="3-20100-95100">3. 🔴 安全配置未完成 (当前20/100 → 目标95/100)<a class="headerlink" href="#3-20100-95100" title="Permanent link">&para;</a></h3>
+<h4 id="_7">问题分析<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h4>
+<ul>
+<li>使用CHANGE_ME占位符</li>
+<li>缺少密钥管理</li>
+<li>无安全策略</li>
+</ul>
+<h4 id="_8">解决方案<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h4>
+<p><strong>密钥管理架构</strong></p>
+<div class="highlight"><pre><span></span><code>security/
+├── key_management/     # 密钥管理
+│   ├── generate_keys.py
+│   ├── rotate_keys.py
+│   └── audit_keys.py
+├── policies/          # 安全策略
+│   ├── password_policy.json
+│   ├── access_policy.json
+│   └── encryption_policy.json
+└── scripts/          # 自动化脚本
+    ├── setup_security.py
+    └── validate_security.py
+</code></pre></div>
+<p><strong>安全实施方案</strong></p>
+<p><strong>步骤1: 密钥生成自动化</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># scripts/security/setup_security.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">secrets</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_secure_keys</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;生成所有必需的安全密钥&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;SECRET_KEY&quot;</span><span class="p">:</span> <span class="n">secrets</span><span class="o">.</span><span class="n">token_urlsafe</span><span class="p">(</span><span class="mi">64</span><span class="p">),</span>
+        <span class="s2">&quot;JWT_SECRET_KEY&quot;</span><span class="p">:</span> <span class="n">secrets</span><span class="o">.</span><span class="n">token_urlsafe</span><span class="p">(</span><span class="mi">64</span><span class="p">),</span>
+        <span class="s2">&quot;DB_ENCRYPTION_KEY&quot;</span><span class="p">:</span> <span class="n">secrets</span><span class="o">.</span><span class="n">token_bytes</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span><span class="o">.</span><span class="n">hex</span><span class="p">(),</span>
+        <span class="s2">&quot;REDIS_PASSWORD&quot;</span><span class="p">:</span> <span class="n">secrets</span><span class="o">.</span><span class="n">token_urlsafe</span><span class="p">(</span><span class="mi">32</span><span class="p">),</span>
+        <span class="s2">&quot;MLFLOW_TRACKING_PASSWORD&quot;</span><span class="p">:</span> <span class="n">secrets</span><span class="o">.</span><span class="n">token_urlsafe</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span>
+    <span class="p">}</span>
+</code></pre></div>
+<p><strong>步骤2: 环境配置模板</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># .env.production.template</span>
+<span class="c1"># === 应用安全配置 ===</span>
+<span class="nv">SECRET_KEY</span><span class="o">=</span><span class="si">${</span><span class="nv">SECRET_KEY</span><span class="si">}</span><span class="w">  </span><span class="c1"># 必须设置</span>
+<span class="nv">JWT_SECRET_KEY</span><span class="o">=</span><span class="si">${</span><span class="nv">JWT_SECRET_KEY</span><span class="si">}</span><span class="w">  </span><span class="c1"># 必须设置</span>
+<span class="nv">ALGORITHM</span><span class="o">=</span>HS256
+<span class="nv">ACCESS_TOKEN_EXPIRE_MINUTES</span><span class="o">=</span><span class="m">30</span>
+
+<span class="c1"># === 数据库安全 ===</span>
+<span class="nv">DATABASE_URL</span><span class="o">=</span>postgresql+asyncpg://<span class="si">${</span><span class="nv">DB_USER</span><span class="si">}</span>:<span class="si">${</span><span class="nv">DB_PASSWORD</span><span class="si">}</span>@<span class="si">${</span><span class="nv">DB_HOST</span><span class="si">}</span>:<span class="si">${</span><span class="nv">DB_PORT</span><span class="si">}</span>/<span class="si">${</span><span class="nv">DB_NAME</span><span class="si">}</span>
+<span class="nv">DB_ENCRYPTION_KEY</span><span class="o">=</span><span class="si">${</span><span class="nv">DB_ENCRYPTION_KEY</span><span class="si">}</span>
+
+<span class="c1"># === Redis安全 ===</span>
+<span class="nv">REDIS_URL</span><span class="o">=</span>redis://:<span class="si">${</span><span class="nv">REDIS_PASSWORD</span><span class="si">}</span>@<span class="si">${</span><span class="nv">REDIS_HOST</span><span class="si">}</span>:<span class="si">${</span><span class="nv">REDIS_PORT</span><span class="si">}</span>/0
+</code></pre></div>
+<p><strong>步骤3: 安全检查清单</strong></p>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> 密钥长度 ≥ 32字符</li>
+<li class="task-list-item"><input type="checkbox" disabled/> 使用HTTPS传输</li>
+<li class="task-list-item"><input type="checkbox" disabled/> 密钥轮换策略</li>
+<li class="task-list-item"><input type="checkbox" disabled/> 密钥审计日志</li>
+<li class="task-list-item"><input type="checkbox" disabled/> 访问控制最小权限</li>
+</ul>
+<h3 id="4-50100-90100">4. 🔴 环境配置混乱 (当前50/100 → 目标90/100)<a class="headerlink" href="#4-50100-90100" title="Permanent link">&para;</a></h3>
+<h4 id="_9">解决方案<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h4>
+<p><strong>Docker化方案</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c"># Dockerfile.production</span>
+<span class="k">FROM</span><span class="w"> </span><span class="s">python:3.11-slim</span>
+
+<span class="c"># 安全配置</span>
+<span class="k">RUN</span><span class="w"> </span>groupadd<span class="w"> </span>-r<span class="w"> </span>appuser<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>useradd<span class="w"> </span>-r<span class="w"> </span>-g<span class="w"> </span>appuser<span class="w"> </span>appuser
+<span class="k">RUN</span><span class="w"> </span>mkdir<span class="w"> </span>-p<span class="w"> </span>/app<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>chown<span class="w"> </span>appuser:appuser<span class="w"> </span>/app
+
+<span class="k">WORKDIR</span><span class="w"> </span><span class="s">/app</span>
+<span class="k">COPY</span><span class="w"> </span>requirements/production.txt<span class="w"> </span>.
+<span class="k">RUN</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--no-cache-dir<span class="w"> </span>-r<span class="w"> </span>production.txt
+
+<span class="k">COPY</span><span class="w"> </span>src/<span class="w"> </span>./src/
+<span class="k">COPY</span><span class="w"> </span>config/<span class="w"> </span>./config/
+
+<span class="k">USER</span><span class="w"> </span><span class="s">appuser</span>
+<span class="k">EXPOSE</span><span class="w"> </span><span class="s">8000</span>
+
+<span class="k">CMD</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;uvicorn&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;src.main:app&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;--host&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;0.0.0.0&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;--port&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;8000&quot;</span><span class="p">]</span>
+</code></pre></div>
+<p><strong>环境配置管理</strong></p>
+<div class="highlight"><pre><span></span><code>config/
+├── environments/
+│   ├── development.yaml
+│   ├── testing.yaml
+│   ├── staging.yaml
+│   └── production.yaml
+├── services/
+│   ├── database.yaml
+│   ├── redis.yaml
+│   └── mlflow.yaml
+└── scripts/
+    ├── validate_config.py
+    └── sync_config.py
+</code></pre></div>
+<h3 id="5-cicd-0100-90100">5. 🔴 CI/CD验证缺失 (当前0/100 → 目标90/100)<a class="headerlink" href="#5-cicd-0100-90100" title="Permanent link">&para;</a></h3>
+<h4 id="_10">解决方案<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h4>
+<p><strong>CI/CD流水线设计</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># .github/workflows/production-ready.yml</span>
+<span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Production Readiness Check</span>
+
+<span class="nt">on</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">push</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">branches</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">main</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">pull_request</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">branches</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">main</span><span class="p p-Indicator">]</span>
+
+<span class="nt">jobs</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">security-scan</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">runs-on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu-latest</span>
+<span class="w">    </span><span class="nt">steps</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/checkout@v4</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Run security scan</span>
+<span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">          </span><span class="no">pip-audit --requirement requirements.txt</span>
+<span class="w">          </span><span class="no">bandit -r src/ -f json -o security-report.json</span>
+<span class="w">          </span><span class="no">semgrep --config=auto src/</span>
+
+<span class="w">  </span><span class="nt">dependency-check</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">runs-on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu-latest</span>
+<span class="w">    </span><span class="nt">steps</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/checkout@v4</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Check dependencies</span>
+<span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">          </span><span class="no">pip check</span>
+<span class="w">          </span><span class="no">pip install pip-tools</span>
+<span class="w">          </span><span class="no">pip-compile requirements/production.txt</span>
+<span class="w">          </span><span class="no"># 检查是否有冲突</span>
+
+<span class="w">  </span><span class="nt">test-coverage</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">runs-on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu-latest</span>
+<span class="w">    </span><span class="nt">steps</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/checkout@v4</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Run tests with coverage</span>
+<span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">          </span><span class="no">pytest tests/ --cov=src --cov-report=xml --cov-fail-under=80</span>
+<span class="w">          </span><span class="no">coverage xml</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Upload coverage</span>
+<span class="w">        </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">codecov/codecov-action@v3</span>
+
+<span class="w">  </span><span class="nt">security-config-validation</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">runs-on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu-latest</span>
+<span class="w">    </span><span class="nt">steps</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/checkout@v4</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Validate security config</span>
+<span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">          </span><span class="no">python scripts/security/validate_security.py --env=production</span>
+<span class="w">          </span><span class="no"># 检查密钥强度、配置完整性等</span>
+
+<span class="w">  </span><span class="nt">integration-tests</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">runs-on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu-latest</span>
+<span class="w">    </span><span class="nt">services</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">postgres</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">postgres:16</span>
+<span class="w">        </span><span class="nt">env</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">POSTGRES_PASSWORD</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">test</span>
+<span class="w">        </span><span class="nt">options</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
+<span class="w">          </span><span class="no">--health-cmd pg_isready</span>
+<span class="w">          </span><span class="no">--health-interval 10s</span>
+<span class="w">          </span><span class="no">--health-timeout 5s</span>
+<span class="w">          </span><span class="no">--health-retries 5</span>
+<span class="w">      </span><span class="nt">redis</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">redis:7</span>
+<span class="w">        </span><span class="nt">options</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
+<span class="w">          </span><span class="no">--health-cmd &quot;redis-cli ping&quot;</span>
+<span class="w">          </span><span class="no">--health-interval 10s</span>
+<span class="w">          </span><span class="no">--health-timeout 5s</span>
+<span class="w">          </span><span class="no">--health-retries 5</span>
+<span class="w">    </span><span class="nt">steps</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/checkout@v4</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Run integration tests</span>
+<span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">          </span><span class="no">pytest tests/integration/ -v --tb=short</span>
+</code></pre></div>
+<h2 id="_11">📅 实施时间线<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h2>
+<h3 id="phase-1-week-1">Phase 1: 基础设施 (Week 1)<a class="headerlink" href="#phase-1-week-1" title="Permanent link">&para;</a></h3>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled checked/> 创建依赖锁定文件</li>
+<li class="task-list-item"><input type="checkbox" disabled/> 设置测试框架</li>
+<li class="task-list-item"><input type="checkbox" disabled/> 配置Docker环境</li>
+<li class="task-list-item"><input type="checkbox" disabled/> 建立CI/CD基础</li>
+</ul>
+<h3 id="phase-2-week-2-3">Phase 2: 核心测试 (Week 2-3)<a class="headerlink" href="#phase-2-week-2-3" title="Permanent link">&para;</a></h3>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> 编写单元测试(目标60%覆盖率)</li>
+<li class="task-list-item"><input type="checkbox" disabled/> 实现集成测试</li>
+<li class="task-list-item"><input type="checkbox" disabled/> 添加安全测试</li>
+<li class="task-list-item"><input type="checkbox" disabled/> 性能基准测试</li>
+</ul>
+<h3 id="phase-3-week-3">Phase 3: 安全加固 (Week 3)<a class="headerlink" href="#phase-3-week-3" title="Permanent link">&para;</a></h3>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> 密钥管理系统</li>
+<li class="task-list-item"><input type="checkbox" disabled/> 安全策略实施</li>
+<li class="task-list-item"><input type="checkbox" disabled/> 漏洞扫描集成</li>
+<li class="task-list-item"><input type="checkbox" disabled/> 安全审计自动化</li>
+</ul>
+<h3 id="phase-4-week-4">Phase 4: 生产验证 (Week 4)<a class="headerlink" href="#phase-4-week-4" title="Permanent link">&para;</a></h3>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> 端到端测试</li>
+<li class="task-list-item"><input type="checkbox" disabled/> 负载测试</li>
+<li class="task-list-item"><input type="checkbox" disabled/> 灾难恢复测试</li>
+<li class="task-list-item"><input type="checkbox" disabled/> 生产环境演练</li>
+</ul>
+<h2 id="_12">🎯 成功指标<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>当前值</th>
+<th>目标值</th>
+<th>检查方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>测试覆盖率</td>
+<td>5%</td>
+<td>85%</td>
+<td>pytest-cov</td>
+</tr>
+<tr>
+<td>依赖冲突</td>
+<td>6个</td>
+<td>0个</td>
+<td>pip check</td>
+</tr>
+<tr>
+<td>安全漏洞</td>
+<td>未知</td>
+<td>0个</td>
+<td>pip-audit</td>
+</tr>
+<tr>
+<td>CI/CD通过率</td>
+<td>0%</td>
+<td>100%</td>
+<td>GitHub Actions</td>
+</tr>
+<tr>
+<td>构建时间</td>
+<td>未知</td>
+<td>&lt;5分钟</td>
+<td>time docker build</td>
+</tr>
+<tr>
+<td>部署时间</td>
+<td>未知</td>
+<td>&lt;10分钟</td>
+<td>部署脚本</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_13">🚨 风险管控<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h2>
+<h3 id="_14">高风险项<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>依赖升级可能导致功能不兼容</strong></li>
+<li>缓解: 全面测试 + 版本锁定</li>
+<li><strong>测试框架重写工作量巨大</strong></li>
+<li>缓解: 分阶段实施 + 并行开发</li>
+<li><strong>安全配置失误可能导致生产事故</strong></li>
+<li>缓解: 多重验证 + 自动化检查</li>
+</ol>
+<h3 id="_15">应急预案<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>依赖回滚机制</strong> - 保留旧版本配置</li>
+<li><strong>测试分批部署</strong> - 灰度发布策略</li>
+<li><strong>安全热修复</strong> - 快速响应流程</li>
+</ol>
+<h2 id="_16">📞 责任分配<a class="headerlink" href="#_16" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>角色</th>
+<th>职责</th>
+<th>时间投入</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DevOps工程师</td>
+<td>CI/CD、Docker、环境配置</td>
+<td>40%</td>
+</tr>
+<tr>
+<td>测试工程师</td>
+<td>测试框架、用例编写</td>
+<td>35%</td>
+</tr>
+<tr>
+<td>安全工程师</td>
+<td>密钥管理、安全扫描</td>
+<td>15%</td>
+</tr>
+<tr>
+<td>全栈开发</td>
+<td>代码审查、集成支持</td>
+<td>10%</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_17">🛠️ 实施工具<a class="headerlink" href="#_17" title="Permanent link">&para;</a></h2>
+<p>我已经创建了以下自动化工具来加速实施：</p>
+<h3 id="1">1. 🔐 安全配置自动化<a class="headerlink" href="#1" title="Permanent link">&para;</a></h3>
+<p><strong>脚本</strong>: <code>scripts/security/setup_security.py</code></p>
+<ul>
+<li>自动生成所有安全密钥</li>
+<li>创建环境配置文件</li>
+<li>密钥强度验证</li>
+<li>备份加密</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># 生成生产环境安全配置</span>
+python<span class="w"> </span>scripts/security/setup_security.py<span class="w"> </span>--env<span class="w"> </span>production
+</code></pre></div>
+<h3 id="2">2. 🔧 依赖冲突解决器<a class="headerlink" href="#2" title="Permanent link">&para;</a></h3>
+<p><strong>脚本</strong>: <code>scripts/dependency/resolve_conflicts.py</code></p>
+<ul>
+<li>自动检测依赖冲突</li>
+<li>智能版本选择</li>
+<li>生成锁定文件</li>
+<li>创建依赖矩阵</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># 解决所有依赖冲突</span>
+python<span class="w"> </span>scripts/dependency/resolve_conflicts.py
+</code></pre></div>
+<h3 id="3">3. 🧪 测试框架构建器<a class="headerlink" href="#3" title="Permanent link">&para;</a></h3>
+<p><strong>脚本</strong>: <code>scripts/testing/build_test_framework.py</code></p>
+<ul>
+<li>创建目录结构</li>
+<li>生成测试模板</li>
+<li>配置pytest</li>
+<li>创建测试工厂</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># 构建完整测试框架</span>
+python<span class="w"> </span>scripts/testing/build_test_framework.py
+</code></pre></div>
+<h3 id="4">4. 🚀 自动化流水线<a class="headerlink" href="#4" title="Permanent link">&para;</a></h3>
+<p><strong>脚本</strong>: <code>scripts/production/automation_pipeline.py</code></p>
+<ul>
+<li>一键执行所有检查</li>
+<li>生成综合报告</li>
+<li>提供改进建议</li>
+<li>跟踪进度</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="c1"># 运行完整流水线</span>
+python<span class="w"> </span>scripts/production/automation_pipeline.py<span class="w"> </span>--env<span class="w"> </span>production
+</code></pre></div>
+<h2 id="_18">💡 长期规划<a class="headerlink" href="#_18" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>自动化依赖更新</strong> - 使用Dependabot</li>
+<li><strong>测试驱动开发</strong> - TDD工作流</li>
+<li><strong>安全即代码</strong> - Security as Code</li>
+<li><strong>可观测性</strong> - 监控、日志、追踪</li>
+</ol>
+<hr />
+<h2 id="_19">🚀 立即行动<a class="headerlink" href="#_19" title="Permanent link">&para;</a></h2>
+<p><strong>选项1: 快速修复（1天）</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># 运行自动化流水线</span>
+python<span class="w"> </span>scripts/production/automation_pipeline.py<span class="w"> </span>--env<span class="w"> </span>production
+</code></pre></div>
+<p><strong>选项2: 分步实施（1周）</strong></p>
+<ol>
+<li>Day 1: 依赖冲突解决</li>
+<li>Day 2: 安全配置设置</li>
+<li>Day 3: 测试框架构建</li>
+<li>Day 4: 配置验证</li>
+<li>Day 5: CI/CD完善</li>
+</ol>
+<p><strong>选项3: 完整方案（4周）</strong>
+按照Phase 1-4的时间线逐步实施</p>
+<hr />
+<p><strong>预期完成</strong>: 根据选择的方案，1天到4周内达到生产就绪状态</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+
+  <!-- 添加页面导航助手 -->
+  
+
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  回到页面顶部
+</button>
+        
+      </main>
+      
+  
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="页脚" >
+        
+          
+          <a href="../../testing/CI_GUARDIAN_GUIDE/" class="md-footer__link md-footer__link--prev" aria-label="上一页: CI Guardian">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                上一页
+              </span>
+              <div class="md-ellipsis">
+                CI Guardian
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../MONITORING/" class="md-footer__link md-footer__link--next" aria-label="下一页: 监控系统">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                下一页
+              </span>
+              <div class="md-ellipsis">
+                监控系统
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2025 Football Prediction Team
+    </div>
+  
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+
+  <!-- 自定义页脚内容 -->
+  <footer class="md-footer-meta">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        <div class="md-footer-copyright__highlight">
+          © 2025 Football Prediction Team -
+          基于 <a href="https://www.mkdocs.org/">MkDocs</a> 和
+          <a href="https://squidfunk.github.io/mkdocs-material/">Material for MkDocs</a> 构建
+        </div>
+        <div class="md-footer-copyright__small">
+          文档最后更新: 2025-10-23 |
+          版本: v1.0.0
+        </div>
+      </div>
+
+      <!-- 社交链接 (暂时注释掉) -->
+      <!--
+      <div class="md-footer-social">
+        
+      </div>
+      -->
+    </div>
+  </footer>
+
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["announce.dismiss", "content.action.edit", "content.action.view", "content.code.annotate", "content.code.copy", "content.code.select", "content.tabs.link", "content.tooltips", "header.autohide", "navigation.expand", "navigation.footer", "navigation.indexes", "navigation.instant", "navigation.instant.prefetch", "navigation.instant.progress", "navigation.prune", "navigation.sections", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.tracking", "search.highlight", "search.share", "search.suggest", "toc.follow", "toc.integrate"], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}}</script>
+    
+    
+  
+      <script src="../../assets/javascripts/bundle.88dd0f4e.min.js"></script>
+      
+    
+
+  <!-- Google Analytics (配置为静态值) -->
+  <!--
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-XXXXX-X"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'UA-XXXXX-X');
+  </script>
+  -->
+
+  </body>
+</html>

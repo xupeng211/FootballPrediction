@@ -23,7 +23,7 @@ from .base import SystemFacade, Subsystem, SubsystemStatus
 class DatabaseSubsystem(Subsystem):
     """数据库子系统"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         super().__init__("database", "2.0.0")
         self.connection_pool = None
         self.query_count = 0
@@ -74,7 +74,7 @@ class DatabaseSubsystem(Subsystem):
 class CacheSubsystem(Subsystem):
     """缓存子系统"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         super().__init__("cache", "1.5.0")
         self.cache_data: Dict[str, Any] = {}
         self.hit_count = 0
@@ -149,7 +149,7 @@ class CacheSubsystem(Subsystem):
 class NotificationSubsystem(Subsystem):
     """通知子系统"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         super().__init__("notification", "1.2.0")
         self.channels = ["email", "sms", "push"]
         self.message_queue: List[Dict] = []
@@ -194,7 +194,7 @@ class NotificationSubsystem(Subsystem):
 class AnalyticsSubsystem(Subsystem):
     """分析子系统"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         super().__init__("analytics", "2.1.0")
         self.events: List[Dict] = []
         self.reports: Dict[str, Any] = {}
@@ -257,7 +257,7 @@ class AnalyticsSubsystem(Subsystem):
 class PredictionSubsystem(Subsystem):
     """预测子系统"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         super().__init__("prediction", "3.0.0")
         self.models = {"neural_network": "v1.0", "random_forest": "v2.1"}
         self.predictions: List[Dict] = []
@@ -316,7 +316,7 @@ class PredictionSubsystem(Subsystem):
 class MainSystemFacade(SystemFacade):
     """主系统门面 - 提供系统级别的简化接口"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         super().__init__("main_system", "主系统门面，提供对整个系统的简化访问")
 
         # 注册所有子系统
@@ -433,7 +433,7 @@ class MainSystemFacade(SystemFacade):
 class PredictionFacade(SystemFacade):
     """预测门面 - 专注于预测相关功能"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         super().__init__("prediction", "预测系统门面，提供简化的预测接口")
 
         self.register_subsystem(PredictionSubsystem())
@@ -499,7 +499,7 @@ class PredictionFacade(SystemFacade):
 class DataCollectionFacade(SystemFacade):
     """数据收集门面 - 专注于数据收集功能"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         super().__init__("data_collection", "数据收集门面，统一管理数据收集接口")
 
         self.register_subsystem(DatabaseSubsystem())
@@ -564,7 +564,7 @@ class DataCollectionFacade(SystemFacade):
 class AnalyticsFacade(SystemFacade):
     """分析门面 - 专注于分析功能"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         super().__init__("analytics", "分析系统门面，提供简化的分析接口")
 
         self.register_subsystem(AnalyticsSubsystem())
@@ -607,7 +607,7 @@ class AnalyticsFacade(SystemFacade):
 class NotificationFacade(SystemFacade):
     """通知门面 - 专注于通知功能"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         super().__init__("notification", "通知系统门面，提供统一的通知接口")
 
         self.register_subsystem(NotificationSubsystem())

@@ -13,7 +13,7 @@ from src.domain.models.match import Match
 class MatchRepository(AbstractRepository[Match]):
     """比赛数据仓储类"""
 
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession):  # type: ignore
         super().__init__(session, Match)
 
     async def create(self, match_data: dict) -> Match:

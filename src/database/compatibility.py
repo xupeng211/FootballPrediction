@@ -21,7 +21,7 @@ class Compatibility(Enum):
 class CompatibleQueryBuilder:
     """兼容性查询构建器"""
 
-    def __init__(self, dialect: str = "postgresql"):
+    def __init__(self, dialect: str = "postgresql"):  # type: ignore
         """初始化查询构建器
 
         Args:
@@ -93,7 +93,7 @@ class CompatibleQueryBuilder:
 class SQLCompatibilityHelper:
     """SQL兼容性助手"""
 
-    def __init__(self, source_dialect: str, target_dialect: str):
+    def __init__(self, source_dialect: str, target_dialect: str):  # type: ignore
         """初始化兼容性助手
 
         Args:

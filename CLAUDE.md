@@ -4,596 +4,422 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **重要提醒：请始终使用简体中文回复用户，用户看不懂英文。**
 
+---
+
+## 📚 文档导航
+
+### 相关文档
+- **[📖 项目主文档](docs/INDEX.md)** - 完整的项目文档导航中心
+- **[🏗️ 系统架构](docs/architecture/ARCHITECTURE.md)** - 详细的系统架构说明
+- **[🚀 快速开始](docs/how-to/QUICKSTART_TOOLS.md)** - 5分钟快速开发指南
+- **[📋 API参考](docs/reference/API_REFERENCE.md)** - 完整的API文档
+- **[🧪 测试指南](docs/testing/TEST_IMPROVEMENT_GUIDE.md)** - 测试策略和最佳实践
+
+### 文档版本信息
+- **当前版本**: v2.0 (企业级架构)
+- **最后更新**: 2025-10-23
+- **维护者**: Claude AI Assistant
+- **适用范围**: Claude Code AI助手开发指导
+
+### 国际化说明
+本文档提供中文版本（推荐），英文版本作为参考：
+- 🇨🇳 **中文版本** (主要) - 当前文档，适合中文用户
+- 🇺🇸 **English Version** (参考) - 可根据需要切换语言
+
+---
+
+## ⚡ 快速导航
+
+**🚀 新手？** → [快速开始](#快速开始-5分钟) | **🔧 开发？** → [核心命令](#核心命令) | **🧪 测试？** → [测试策略](#-测试策略) | **🏗️ 架构？** → [架构设计](#-架构设计)
+
+---
+
+## 📑 目录
+
+- [📚 文档导航](#-文档导航)
+  - [相关文档](#相关文档)
+  - [文档版本信息](#文档版本信息)
+  - [国际化说明](#国际化说明)
+- [📊 项目概述](#-项目概述)
+- [🛠️ 开发环境设置](#️-开发环境设置)
+  - [快速开始](#快速开始-5分钟)
+  - [核心命令](#核心命令)
+  - [常用开发命令](#常用开发命令)
+- [🧪 测试策略](#-测试策略)
+- [🏗️ 架构设计](#-架构设计)
+- [📏 代码质量标准](#-代码质量标准)
+- [🐳 容器管理](#-容器管理)
+- [🚀 CI/CD流水线](#-cicd流水线)
+- [🗄️ 数据库操作](#️-数据库操作)
+- [🔒 安全与合规](#-安全与合规)
+- [⚙️ 开发工作流](#️-开发工作流)
+- [🎯 高级架构特性](#-高级架构特性)
+- [✨ 最佳实践](#-最佳实践)
+- [🔧 故障排除](#-故障排除)
+- [📈 项目状态](#-项目状态)
+- [🔗 深入学习资源](#-深入学习资源)
+- [📞 获取帮助](#-获取帮助)
+
+---
+
 ## Project Overview
 
-This is a football prediction system built with FastAPI, PostgreSQL, Redis, and modern Python technologies. The project follows enterprise-grade architecture patterns with Domain-Driven Design (DDD), CQRS, and microservices principles.
+基于现代Python技术栈的足球预测系统，采用FastAPI + PostgreSQL + Redis架构。项目遵循企业级开发模式，使用DDD、CQRS等设计模式。
 
-**Key Metrics:**
-- Test Coverage: 16.5% (target: >=80%, currently improving)
-- Code Quality: A+ (Ruff + MyPy compliant)
-- Python 3.11+ required
-- 385 test cases
+**关键指标：**
+- 测试覆盖率：22% (目标：>=80%，持续改进中)
+- 代码质量：A+ (通过Ruff + MyPy检查)
+- Python版本：3.11.9 (目标：3.11+)
+- 源代码文件：452个Python文件
+- 测试文件：3,095个测试文件
+- 开发命令：199个Makefile命令
 
-## Development Environment Setup
+## 开发环境设置
 
-### Quick Start (5 minutes)
+### 快速开始（5分钟）
 ```bash
-make install      # Install dependencies and create venv
-make context      # Load project context (⭐ most important)
-make test         # Run all tests (385 tests)
-make coverage     # View coverage report (22%)
+make install      # 安装依赖并创建虚拟环境
+make context      # 加载项目上下文 (⭐ 最重要)
+make test         # 运行所有测试 (385个测试)
+make coverage     # 查看覆盖率报告 (22%)
 ```
 
-### Essential Commands
+### 核心命令
 ```bash
-make help         # Show all available commands (120+ commands)
-make env-check    # Check development environment health
-make lint         # Run ruff and mypy checks
-make fmt          # Format code with ruff
-make ci           # Simulate complete CI pipeline
-make prepush      # Complete pre-push validation
+make help         # 显示所有可用命令 (199个命令)
+make env-check    # 检查开发环境健康状态
+make lint         # 运行ruff和mypy检查
+make fmt          # 使用ruff格式化代码
+make ci           # 模拟完整CI流水线
+make prepush      # 完整的预推送验证
 ```
 
-### Complete Makefile Toolchain
-
-#### 环境管理
+### 常用开发命令
 ```bash
-make env-check          # 检查开发环境健康
-make venv               # 创建和激活虚拟环境
-make install            # 从锁文件安装依赖
+# 环境管理
+make venv               # 创建虚拟环境
 make install-locked     # 从锁文件安装可重现依赖
-make lock-deps          # 锁定当前依赖用于可重现构建
-make verify-deps        # 验证依赖与锁文件匹配
-make smart-deps         # AI指导的智能依赖检查
-make clean-env          # 清理虚拟环境和旧依赖文件
-```
+make clean-env          # 清理虚拟环境
 
-#### 测试工具
-```bash
-make test               # 运行pytest单元测试
-make test-api           # 运行所有API测试
-make test-full          # 运行完整单元测试套件
-make coverage           # 运行覆盖率测试（阈值：80%）
+# 测试相关
+make test-api           # 运行API测试
 make test-integration   # 运行集成测试
-make test-all           # 在测试环境中运行所有测试
-make test-env-start     # 启动集成/E2E测试环境
-make test-env-stop      # 停止测试环境
-make test-env-status    # 检查测试环境状态
-make test-debt-analysis # 运行全面的测试债务分析
+make coverage-targeted MODULE=<module>  # 运行特定模块覆盖率
+
+# 容器和部署
+make up                 # 启动Docker服务
+make down               # 停止服务
+make deploy             # 构建生产镜像
+
+# 文档生成
+make docs-api           # 生成API文档
+make docs-code          # 生成代码文档
+make docs-architecture  # 生成架构图和文档
+make docs-all           # 生成所有文档
+make serve-docs         # 本地启动文档服务器
+
+# 监控和日志
+make staging-monitor    # 打开监控面板
+make model-monitor      # 运行模型监控
+make coverage-live      # 启动实时覆盖率监控
 ```
 
-#### 高级测试功能
+## 测试策略
+
+### 测试执行规则
+- **优先使用Makefile命令** - 避免直接运行单个pytest文件
+- 测试环境使用Docker容器隔离
+- 强制执行覆盖率阈值（最低80%，当前22%，持续改进）
+
+### 测试分类
 ```bash
-make coverage-parallel     # 并行执行覆盖率测试
-make coverage-targeted     # 运行特定模块的覆盖率测试
-make coverage-critical      # 关键路径模块100%覆盖率测试
-make mutation-test          # 运行mutmut变异测试
-make mutation-html          # 生成HTML变异测试报告
+make test-phase1      # 核心API测试（数据、特征、预测）
+make test.unit        # 仅单元测试
+make test.int         # 集成测试
+make test.e2e         # 端到端测试
+make coverage-fast    # 快速覆盖率检查（仅单元测试）
 ```
 
-#### 夜间测试
+### 测试标记（pytest.ini）
+项目使用19种测试标记：
+
+- `unit`: 单元测试
+- `integration`: 集成测试
+- `api`: API测试
+- `database`: 数据库测试
+- `slow`: 慢速测试
+- `smoke`: 冒烟测试
+- `auth`: 认证测试
+- `cache`: 缓存测试
+- `monitoring`: 监控测试
+- `e2e`: 端到端测试
+- `performance`: 性能测试
+- `critical`: 关键测试
+
+**使用示例：**
 ```bash
-make nightly-test           # 本地运行夜间测试套件
-make nightly-schedule       # 启动夜间测试调度器
-make nightly-monitor        # 监控和报告夜间测试结果
-make nightly-report         # 生成夜间测试报告
+pytest -m "unit"           # 仅单元测试
+pytest -m "not slow"       # 跳过慢速测试
+pytest -m "critical"       # 仅关键测试
 ```
 
-#### 性能分析
+### ⚠️ 关键测试规则
+**永远不要**对单个测试文件使用 `--cov-fail-under` - 这会破坏CI集成。项目有复杂的覆盖率跟踪系统，仅在集中管理时覆盖率阈值才正常工作。
+
+## 架构设计
+
+### 核心层次
+1. **API层** (`src/api/`): FastAPI路由、依赖注入、CQRS实现
+2. **领域层** (`src/domain/`): 业务模型、服务、值对象
+3. **基础设施层** (`src/database/`, `src/cache/`): PostgreSQL、Redis、仓储
+4. **服务层** (`src/services/`): 业务逻辑实现
+
+### 关键模式
+- **仓储模式**: 数据访问抽象 (`src/database/repositories/`)
+- **CQRS**: 命令查询分离 (`src/api/cqrs.py`)
+- **依赖注入**: 基于容器的DI (`src/core/di.py`)
+- **观察者模式**: 事件系统 (`src/observers/`)
+
+### 数据库架构
+- **PostgreSQL**: 主数据库，使用SQLAlchemy 2.0异步ORM
+- **Redis**: 缓存和会话存储
+- **连接池**: 高效连接管理
+- **迁移**: Alembic模式管理
+
+### 高级架构特性
+- **任务队列**: Celery分布式任务处理 (`src/tasks/`)
+- **流处理**: Kafka实时数据流处理 (`src/streaming/`)
+- **机器学习**: ML模型训练和推理系统 (`src/ml/`)
+- **实时通信**: WebSocket双向通信 (`src/realtime/`)
+- **监控体系**: Prometheus + Grafana + Loki
+- **文档系统**: MkDocs自动生成多语言文档
+
+## 代码质量标准
+
+### 代码风格
+- **Ruff**: 主要代码检查和格式化工具（行长度：88）
+- **MyPy**: 类型检查（零容忍类型错误）
+- **双引号**: 标准字符串引用
+- **类型注解**: 所有公共函数必须包含
+
+### Ruff配置要点
+- **Python目标版本**: 3.11+
+- **行长度**: 88字符
+- **测试文件例外**: 测试文件采用更宽松的规则
+- **质量门禁**: 必须通过所有质量检查
+
+### 质量检查
 ```bash
-make benchmark-full         # 运行全面的性能基准测试
-make benchmark-regression   # 运行性能回归检测
-make flamegraph             # 生成性能可视化火焰图
-make profile-app            # 分析主应用程序性能
-make profile-tests          # 分析测试执行性能
+make lint           # 代码检查，必须无错误
+make type-check     # MyPy类型检查，必须清洁
+make coverage       # >=80%阈值强制执行
+make prepush        # 组合所有质量检查
 ```
 
-#### Staging环境
+## 容器管理
+
+### 开发环境
 ```bash
-make staging-start          # 启动staging环境用于E2E测试
-make staging-stop           # 停止staging环境
-make staging-migrate        # 运行数据库迁移
-make staging-test           # 运行E2E测试
-make staging-health         # 检查staging环境健康
+make up             # 启动docker-compose服务
+make down           # 停止服务
+make logs           # 查看日志
+make deploy         # 构建不可变git-sha标签镜像
 ```
 
-#### 技术债务管理
+### 服务架构
+- **app**: 主FastAPI应用
+- **db**: PostgreSQL数据库（含健康检查）
+- **redis**: Redis缓存服务
+- **nginx**: 反向代理和负载均衡
+
+### 环境配置
 ```bash
-make debt-plan              # 显示每日技术债务清理计划
-make debt-today             # 快速开始今日债务清理工作
-make debt-status            # 显示当前任务和状态
-make debt-progress          # 查看整体清理进度
-```
+# 开发环境
+docker-compose up
 
-#### 最佳实践优化
-```bash
-make best-practices-today   # 快速开始今日最佳实践工作
-make best-practices-check   # 运行代码质量和最佳实践检查
-make best-practices-progress # 查看整体最佳实践优化进度
-```
-
-## Testing Strategy
-
-### Test Execution Rules
-- **ALWAYS use Makefile commands** - never run pytest directly on single files
-- Test environment is isolated with Docker containers
-- Coverage threshold is enforced (80% minimum, currently 22%, improving)
-
-### Test Categories
-```bash
-make test-phase1      # Core API tests (data, features, predictions)
-make test.unit        # Unit tests only
-make test.int         # Integration tests
-make test.e2e         # End-to-end tests
-make coverage-fast    # Quick coverage (unit tests only)
-```
-
-### Test Markers (from pytest.ini)
-项目使用19种测试标记来分类测试：
-
-- `unit`: 单元测试 - 测试单个函数或类
-- `integration`: 集成测试 - 测试多个组件的交互
-- `api`: API测试 - 测试HTTP端点
-- `database`: 数据库测试 - 需要数据库连接
-- `slow`: 慢速测试 - 运行时间较长的测试
-- `smoke`: 冒烟测试 - 基本功能验证
-- `auth`: 认证相关测试
-- `cache`: 缓存相关测试
-- `monitoring`: 监控相关测试
-- `e2e`: 端到端测试 - 完整的用户流程测试
-- `performance`: 性能测试 - 基准测试和性能分析
-- `asyncio`: 异步测试 - 基于asyncio的协程用例
-- `regression`: 回归测试 - 验证修复的问题不会重现
-- `critical`: 关键测试 - 必须通过的核心功能测试
-
-**Usage Examples:**
-```bash
-pytest -m "unit"                    # Only unit tests
-pytest -m "not slow"                # Skip slow tests
-pytest -m "critical"                # Only critical tests
-```
-
-### Test Environment Management
-```bash
-make test-env-start   # Start test environment with Docker
-make test-env-stop    # Stop test environment
-make test-all         # Run all tests in isolated environment
-```
-
-### Running Single Test Files (Advanced)
-While Makefile commands are preferred for regular development, you sometimes need to run single files:
-
-```bash
-# ✅ ALLOWED: Single file debugging
-pytest tests/unit/api/test_health.py -v
-
-# ✅ ALLOWED: With coverage for debugging
-pytest tests/unit/api/test_health.py --cov=src --cov-report=term-missing
-
-# ❌ NEVER: Add --cov-fail-under (breaks CI integration)
-pytest tests/unit/api/test_health.py --cov=src --cov-fail-under=80
-
-# ✅ RECOMMENDED: Use marker for focused testing
-pytest tests/unit/api/test_health.py -v -m "not slow"
-```
-
-**⚠️ 关键测试规则**
-**永远不要**对单个测试文件添加 `--cov-fail-under` - 这会破坏CI流水线集成。项目有复杂的覆盖率跟踪系统，仅在集中管理时覆盖率阈值才正常工作。
-
-## Architecture
-
-### Core Layers
-1. **API Layer** (`src/api/`): FastAPI routes, dependencies, CQRS implementation
-2. **Domain Layer** (`src/domain/`): Business models, services, value objects
-3. **Infrastructure Layer** (`src/database/`, `src/cache/`): PostgreSQL, Redis, repositories
-4. **Service Layer** (`src/services/`): Business logic implementation
-
-### Key Patterns
-- **Repository Pattern**: Data access abstraction in `src/database/repositories/`
-- **CQRS**: Command/Query separation in `src/api/cqrs.py`
-- **Dependency Injection**: Container-based DI in `src/core/di.py`
-- **Observer Pattern**: Event system in `src/observers/`
-
-### Database Architecture
-- **PostgreSQL**: Primary database with SQLAlchemy 2.0 async ORM
-- **Redis**: Caching and session storage
-- **Connection Pooling**: Efficient connection management
-- **Migrations**: Alembic for schema management
-
-## Code Quality Standards
-
-### Style Guide
-- **Ruff**: Primary linter and formatter (line length: 88)
-- **MyPy**: Type checking (zero tolerance for type errors)
-- **Double quotes**: Standard string quoting
-- **Type annotations**: Required for all public functions
-
-### Ruff Configuration Details
-From `pyproject.toml`:
-- **Python Target**: 3.11+
-- **Line Length**: 88 characters
-- **Test File Exceptions**: More relaxed rules for test files:
-  - `F401`: Unused imports (common in test files)
-  - `F811`: Redefinition (common in test files)
-  - `F821`: Undefined names (common with mocks)
-  - `E402`: Module level imports not at top (test file specific)
-
-### Quality Gates
-```bash
-make lint           # Must pass without errors
-make type-check     # MyPy must be clean
-make coverage       # >=80% threshold enforced
-make prepush        # All quality checks combined
-```
-
-## Container Management
-
-### Development Environment
-```bash
-make up             # Start docker-compose services
-make down           # Stop services
-make logs           # View logs
-make deploy         # Build with immutable git-sha tag
-make rollback TAG=<sha>  # Rollback to previous tag
-```
-
-### Services Architecture
-- **app**: Main FastAPI application
-- **db**: PostgreSQL database with health checks
-- **redis**: Redis cache service
-- **nginx**: Reverse proxy and load balancer
-
-### Docker Multi-Environment Configuration
-项目支持通过环境变量切换不同环境：
-
-#### 开发环境
-```bash
-docker-compose up  # 自动加载override配置
-```
-
-#### 生产环境
-```bash
+# 生产环境
 ENV=production docker-compose --profile production up -d
-```
 
-#### 测试环境
-```bash
+# 测试环境
 ENV=test docker-compose --profile test run --rm app pytest
 ```
 
-#### 可选服务配置
-- **nginx**: 反向代理（production、staging）
-- **prometheus**: 监控（monitoring、production）
-- **grafana**: 监控面板（monitoring、production）
-- **loki**: 日志收集（logging、production）
-- **celery-worker**: Celery工作进程（celery、production）
-- **celery-beat**: Celery定时任务（celery、production）
+## CI/CD流水线
 
-#### 开发工具（tools profile）
-- **adminer**: 数据库管理工具 (http://localhost:8080)
-- **redis-commander**: Redis管理工具 (http://localhost:8081)
-- **mailhog**: 邮件模拟器 (http://localhost:8025)
-- **pyroscope**: 性能分析 (http://localhost:4040)
-
-## CI/CD Pipeline
-
-### Local Validation
+### 本地验证
 ```bash
-./ci-verify.sh      # Complete local CI validation
-make ci             # Simulate GitHub Actions CI
+./ci-verify.sh      # 完整本地CI验证
+make ci             # 模拟GitHub Actions CI
 ```
 
-### Quality Checks
-1. **Security**: bandit vulnerability scan
-2. **Dependencies**: pip-audit for vulnerable packages
-3. **Code**: Ruff + MyPy strict checking
-4. **Tests**: 385 test cases with coverage enforcement (currently 22%, target 80%)
-5. **Build**: Docker image building and testing
+### 质量检查流程
+1. **安全扫描**: bandit漏洞扫描
+2. **依赖检查**: pip-audit漏洞包检查
+3. **代码质量**: Ruff + MyPy严格检查
+4. **测试**: 3,095个测试文件，覆盖率强制执行（当前22%，目标80%）
+5. **构建**: Docker镜像构建和测试
 
-## MLOps and Model Management
+### CI/CD流水线
+- **GitHub Actions**: 11个自动化工作流
+- **多环境部署**: 开发、预发布、生产环境
+- **质量门禁**: 安全扫描、代码质量、测试覆盖率
+- **自动化测试**: 单元测试、集成测试、性能测试
 
-### Prediction Feedback Loop
+## 数据库操作
+
+### 管理命令
 ```bash
-make feedback-update    # Update predictions with actual outcomes
-make feedback-report    # Generate accuracy trends
-make retrain-check      # Check models for retraining
-make model-monitor      # Run enhanced model monitoring
+make db-init         # 初始化数据库和迁移
+make db-migrate      # 运行数据库迁移
+make db-seed         # 播种初始数据
+make db-backup       # 创建数据库备份
+make db-reset        # 重置数据库（警告：删除所有数据）
 ```
 
-### Complete Pipeline
+### 连接管理
+- 使用异步SQLAlchemy 2.0和连接池
+- 仓储模式的数据访问抽象
+- 自动事务管理
+
+## 安全与合规
+
+### 安全扫描
 ```bash
-make mlops-pipeline     # Run full MLOps feedback loop
-make mlops-status       # Show pipeline status
+make security-check      # 运行漏洞扫描
+make audit               # 完整安全审计
+make secret-scan         # 扫描硬编码密钥
+make dependency-check    # 检查过期依赖
 ```
 
-## Documentation Standards
+### 安全特性
+- JWT令牌认证
+- RBAC权限控制
+- SQL注入防护
+- XSS和CSRF防护
+- HTTPS强制执行
+- 审计日志记录
 
-### 质量要求
-- **质量要求**: 所有文档必须通过 `make docs.check`（Docs Guard验证）
-- **目录限制**: 允许的目录包括 `architecture/`, `how-to/`, `reference/`, `testing/`, `data/`, `ml/`, `ops/`, `release/`, `staging/`, `legacy/`, `_reports/`, `_meta/`
-- **无孤立文档**: 一切都必须从INDEX.md链接
-- **持续验证**: 自动化文档健康检查
+## 开发工作流
 
-### Documentation Commands
-```bash
-make docs.check      # Validate documentation quality
-make docs.fix        # Auto-fix documentation issues
-make docs-all        # Generate all documentation
-```
-
-## Database Operations
-
-### Management Commands
-```bash
-make db-init         # Initialize database with migrations
-make db-migrate      # Run database migrations
-make db-seed         # Seed initial data
-make db-backup       # Create database backup
-make db-reset        # Reset database (WARNING: deletes all data)
-```
-
-### Connection Management
-- Uses async SQLAlchemy 2.0 with connection pooling
-- Repository pattern for data access abstraction
-- Automatic transaction management
-
-## Security and Compliance
-
-### Security Scanning
-```bash
-make security-check      # Run vulnerability scan
-make audit               # Complete security audit
-make secret-scan         # Scan for hardcoded secrets
-make license-check       # Check open source licenses
-make dependency-check    # Check for outdated dependencies
-make audit-vulnerabilities # Run dependency vulnerability audit
-```
-
-### Security and Compliance Features
-- **JWT Token Authentication**: 基于令牌的认证机制
-- **RBAC Permission Control**: 角色基础访问控制
-- **SQL Injection Protection**: ORM层保护机制
-- **XSS and CSRF Protection**: 跨站脚本和请求伪造防护
-- **HTTPS Enforcement**: 生产环境强制HTTPS
-- **Environment Variable Encryption**: 敏感配置加密存储
-- **Audit Logging**: 操作记录和追踪
-- **Database Security**: 连接池和权限管理
-
-### Security Features
-- JWT token authentication
-- RBAC permission control
-- SQL injection protection
-- XSS and CSRF protection
-- HTTPS enforcement
-
-## Performance Monitoring
-
-### Performance Commands
-```bash
-make profile-app     # Profile application performance
-make benchmark       # Run performance benchmarks
-make flamegraph      # Generate performance flamegraph
-```
-
-### Monitoring and Observability
-项目具备完整的监控和可观测性体系：
-
-#### 监控生态系统
-- **Prometheus**: 指标收集和存储
-- **Grafana**: 可视化监控面板
-- **Loki**: 日志聚合和查询
-- **Health Checks**: 服务状态监控
-- **APM Integration**: 应用性能监控
-- **Performance Profiling**: 性能分析和优化
-
-#### 监控工具
-```bash
-make coverage-dashboard     # 生成实时覆盖率监控面板
-make coverage-trends        # 显示覆盖率趋势和历史
-make coverage-live          # 启动实时覆盖率监控（自动刷新）
-```
-
-#### 日志管理
-- **Structured Logging**: 结构化JSON日志格式
-- **Log Level Management**: 环境驱动的日志级别
-- **Log Aggregation**: 分布式日志收集
-- **Audit Logs**: 操作审计日志
-
-#### 性能分析
-- **Performance Metrics**: 应用性能指标收集
-- **Flame Graphs**: 性能可视化火焰图
-- **Memory Profiling**: 内存使用分析
-- **Benchmark Testing**: 性能基准测试
-- **Regression Detection**: 性能回归检测
-
-#### Health Check Endpoints
-- **Application Health**: `/health` - 应用程序健康状态
-- **Database Health**: 数据库连接和性能检查
-- **Redis Health**: 缓存服务状态检查
-- **Service Dependencies**: 外部依赖服务检查
-
-## Development Workflow
-
-### AI-Assisted Development
-遵循工具优先原则的开发流程：
-
-1. **环境检查** - `make env-check` 检查开发环境健康
-2. **加载上下文** - `make context` 为AI加载项目上下文
+### AI辅助开发流程
+1. **环境检查** - `make env-check`
+2. **加载上下文** - `make context`
 3. **开发和测试** - 使用适当的测试策略
-4. **质量验证** - `make ci` 运行完整质量检查
-5. **预提交验证** - `make prepush` 完整的预推送验证
+4. **质量验证** - `make ci`
+5. **预提交验证** - `make prepush`
 
 ### 本地CI验证
-在提交代码前运行完整的本地CI验证：
+提交代码前运行完整本地CI验证：
 
 ```bash
 ./ci-verify.sh
 ```
 
-该脚本会执行完整的CI验证流程：
-1. **虚拟环境重建** - 清理并重新创建虚拟环境，确保依赖一致性
-2. **Docker环境启动** - 启动完整的服务栈（应用、数据库、Redis、Nginx）
-3. **测试执行** - 运行所有测试并验证代码覆盖率 >= 78%
+脚本输出"🎉 CI 绿灯验证成功！"表示可以安全推送。
 
-如果脚本输出 "🎉 CI 绿灯验证成功！" 则可以安全推送到远程。
+## 高级架构特性
 
-### 文档验证
-所有文档必须通过 `make docs.check`（Docs Guard验证）
+### 核心设计模式
+- **依赖注入容器**: `src/core/di.py` 完整DI系统
+- **CQRS模式**: 命令查询分离，读写模型隔离
+- **事件驱动架构**: 事件总线和观察者模式
+- **仓储模式**: 数据访问抽象层
 
-#### 文档质量要求
-- **允许的目录**: `architecture/`, `how-to/`, `reference/`, `testing/`, `data/`, `ml/`, `ops/`, `release/`, `staging/`, `legacy/`, `_reports/`, `_meta/`
-- **无孤立文档** - 一切都必须从INDEX.md链接
-- **质量门禁** - 所有文档必须通过验证系统
+### 关键配置文件
+- **[`pyproject.toml`](pyproject.toml)**: Ruff配置和工具设置
+- **[`pytest.ini`](pytest.ini)**: 测试配置和标记定义
+- **[`requirements/requirements.lock`](requirements/requirements.lock)**: 锁定的依赖版本
+- **[`Makefile`](Makefile)**: 完整开发工具链（199个命令）
+- **[`.env.example`](.env.example)**: 环境变量模板
+- **[`docker-compose.yml`](docker-compose.yml)**: 容器编排配置
+- **[`docs/guard.py`](scripts/docs_guard.py)**: 文档质量守护工具
 
-### GitHub Issues 双向同步
-项目包含完整的GitHub Issues同步工具：
+### 相关配置文档
+- **[开发环境配置](docs/reference/DEVELOPMENT_GUIDE.md)** - 详细的配置说明
+- **[数据库配置](docs/reference/DATABASE_SCHEMA.md)** - 数据库连接配置
+- **[部署配置](docs/ops/PRODUCTION_READINESS_PLAN.md)** - 生产环境配置
 
-```bash
-# 设置环境变量
-source github_sync_config.sh
+## 最佳实践
 
-# 双向同步 Issues
-make sync-issues
-# 或
-python scripts/sync_issues.py sync
-```
+### 开发原则
+- 使用依赖注入容器
+- 遵循仓储模式进行数据访问
+- 实现适当的错误处理和自定义异常
+- 对I/O操作使用async/await
+- 编写全面的单元和集成测试
+- **关键**: 永远不要对单个文件使用 `--cov-fail-under`
 
-功能特性：
-- 📥 从 GitHub 拉取 Issues 到本地 `issues.yaml`
-- 📤 推送本地 Issues 到 GitHub
-- 🔄 双向同步，保持数据一致性
-- 📝 支持批量管理和团队协作
+### 何时打破规则
+虽然首选Makefile命令，但以下情况允许直接使用pytest：
+- 调试特定测试失败
+- 处理隔离的功能
+- 开发期间的快速反馈
 
-### Best Practices
-- Use dependency injection container
-- Follow repository pattern for data access
-- Implement proper error handling with custom exceptions
-- Use async/await for I/O operations
-- Write comprehensive unit and integration tests
-- Use type annotations throughout
-- **CRITICAL**: Never use `--cov-fail-under` with single files - it breaks CI integration
-- Use markers wisely: `-m "unit"` for unit tests only, `-m "not slow"` to skip slow tests
+## 故障排除
 
-### 高级开发模式
-
-#### 事件驱动架构
-系统实现了完整的事件驱动架构：
-- **事件总线**: 统一事件分发机制
-- **事件处理器**: 各种业务事件处理
-- **观察者模式**: 监听器系统
-- **领域事件**: 匹配事件、预测事件等业务事件
-
-#### CQRS模式
-实现了Command Query Responsibility Segregation：
-- **命令处理**: 写操作处理
-- **查询处理**: 读操作优化
-- **DTO模式**: 数据传输对象
-- **领域模型隔离**: 读写模型分离
-
-#### 依赖注入容器
-`src/core/di.py` 实现了完整的依赖注入系统：
-- **自动绑定**: 自动组件注册
-- **生命周期管理**: 服务生命周期控制
-- **环境感知**: 环境特定配置
-
-#### 优雅关闭机制
-系统实现了完整的优雅关闭流程：
-- **资源清理**: 连接和资源释放
-- **任务完成**: 等待中任务完成
-- **状态保存**: 应用状态持久化
-
-### 故障排除指南
-
-#### 常见问题
+### 常见问题
 - **端口冲突**: 确保端口5432、6379、80可用
 - **Docker问题**: 检查Docker守护进程和docker-compose版本
 - **测试失败**: 验证测试环境是否正确设置
 - **覆盖率下降**: 运行 `make coverage-targeted MODULE=<module>`
 
-#### 调试命令
+### 调试命令
 ```bash
 make test-env-status    # 检查测试环境健康
 make env-check          # 验证开发环境
 make logs               # 查看服务日志
 ```
 
-### 环境特定配置
+## 项目状态
 
-#### 开发环境特性
-- **热重载**: 开发环境自动重启
-- **调试模式**: 调试信息和详细日志
-- **测试隔离**: 测试环境独立
-- **代码分析**: 实时代码质量检查
+- **成熟度**: 生产就绪 ⭐⭐⭐⭐⭐
+- **架构**: 现代微服务 + DDD
+- **测试**: 22%覆盖率，3,095个测试文件（目标80%）
+- **CI/CD**: 全自动化质量门禁
+- **文档**: AI辅助完善文档
 
-#### 团队协作功能
-- **Git Hooks**: 提交前检查
-- **代码审查**: 质量门禁
-- **分支策略**: Git Flow模式
-- **发布管理**: 版本控制和发布流程
+这个系统展示了现代工具、实践和全面自动化支持的企业级Python开发。
 
-## Key Configuration Files
+---
 
-- `pyproject.toml`: Ruff configuration, tool settings
-- `pytest.ini`: Test configuration and markers
-- `requirements/requirements.lock`: Locked dependencies
-- `Makefile`: Complete development toolchain (613 lines)
-- `.env.example`: Environment variable template
+## 🔗 深入学习资源
 
-## Important Development Notes
+### 📚 必读文档
+- **[完整项目文档](docs/INDEX.md)** - 所有文档的入口点
+- **[系统架构设计](docs/architecture/ARCHITECTURE.md)** - 深入理解系统设计
+- **[API开发指南](docs/reference/API_REFERENCE.md)** - API设计和使用规范
+- **[测试最佳实践](docs/testing/TEST_IMPROVEMENT_GUIDE.md)** - 测试策略和技巧
+- **[部署运维手册](docs/ops/MONITORING.md)** - 生产环境运维指南
 
-### ⚠️ 关键测试规则
-**永远不要**对单个测试文件添加 `--cov-fail-under` - 这会破坏CI流水线集成。项目有复杂的覆盖率跟踪系统，仅在集中管理时覆盖率阈值才正常工作。
+### 🛠️ 开发工具链
+- **[Makefile完整指南](docs/project/TOOLS.md)** - 120+命令详解
+- **[Docker容器化指南](docs/how-to/STAGING_ENVIRONMENT.md)** - 容器开发环境
+- **[代码质量标准](docs/reference/DEVELOPMENT_GUIDE.md)** - 质量门禁和检查
+- **[CI/CD流水线](docs/project/CI_VERIFICATION.md)** - 持续集成配置
 
-### 🎯 何时打破规则
-虽然首选Makefile命令，但以下情况允许直接使用pytest：
-- **调试特定测试失败**
-- **处理隔离的功能**
-- **开发期间的快速反馈**
+### 🚀 高级主题
+- **[机器学习模块](docs/ml/ML_MODEL_GUIDE.md)** - ML模型和预测系统
+- **[数据处理管道](docs/data/DATA_COLLECTION_SETUP.md)** - 数据采集和处理
+- **[安全最佳实践](docs/maintenance/SECURITY_AUDIT_GUIDE.md)** - 安全配置和审计
+- **[性能优化指南](docs/ops/MONITORING.md)** - 性能监控和优化
 
-始终使用适当的标记，避免在单文件命令中使用覆盖率阈值。
+### 📋 故障排除
+- **[常见问题解答](docs/project/ISSUES.md)** - 常见问题和解决方案
+- **[调试指南](docs/testing/QA_TEST_KANBAN.md)** - 调试技巧和工具
+- **[日志分析](docs/ops/MONITORING.md)** - 日志收集和分析
 
-### 📂 文档标准
-- **质量要求**: 所有文档必须通过 `make docs.check`（Docs Guard验证）
-- **目录限制**: 允许的目录包括 `architecture/`, `how-to/`, `reference/`, `testing/`, `data/`, `ml/`, `ops/`, `release/`, `staging/`, `legacy/`, `_reports/`, `_meta/`
-- **无孤立文档**: 一切都必须从INDEX.md链接
-- **持续验证**: 自动化文档健康检查
+---
 
-### 🔒 安全要求
-- **JWT认证**: 基于令牌的身份验证
-- **RBAC权限**: 角色基础访问控制
-- **注入防护**: SQL注入、XSS、CSRF保护
-- **HTTPS强制**: 生产环境安全连接
-- **敏感信息**: 环境变量加密存储
-- **审计日志**: 操作记录和追踪
+## 📞 获取帮助
 
-### 🐳 容器化最佳实践
-- **多阶段构建**: 开发、测试、生产环境分离
-- **健康检查**: 所有服务的健康状态监控
-- **优雅关闭**: 正确处理信号和资源清理
-- **环境隔离**: 通过环境变量管理不同配置
-- **服务发现**: 基于Docker Compose的服务协调
+### 🤝 社区支持
+- **[贡献指南](CONTRIBUTING.md)** - 如何参与项目贡献
+- **[问题反馈](docs/project/ISSUES.md)** - 报告问题和建议
+- **[开发讨论](docs/reference/COMPREHENSIVE_API_DOCUMENTATION_STYLE_GUIDE.md)** - 技术讨论和规范
 
-## Troubleshooting
+### 📖 文档维护
+本文档遵循项目的文档管理最佳实践，定期更新和维护。如发现问题或改进建议，请参考 [文档管理分析报告](DOCUMENTATION_MANAGEMENT_ANALYSIS.md) 中的任务看板。
 
-### Common Issues
-- **Port conflicts**: Ensure ports 5432, 6379, 80 are available
-- **Docker issues**: Check Docker daemon and docker-compose version
-- **Test failures**: Verify test environment is properly set up
-- **Coverage drops**: Run `make coverage-targeted MODULE=<module>`
+---
 
-### Debug Commands
-```bash
-make test-env-status    # Check test environment health
-make env-check          # Verify development environment
-make logs               # View service logs
-```
-
-## Project Status
-
-- **Maturity**: Production-ready ⭐⭐⭐⭐⭐
-- **Architecture**: Modern microservices with DDD
-- **Testing**: 22% coverage with comprehensive test suite (target: 80%)
-- **CI/CD**: Full automation with quality gates
-- **Documentation**: Complete with AI assistance
-
-This system demonstrates enterprise-grade Python development with modern tools, practices, and comprehensive automation.
+*最后更新: 2025-10-23 | 文档版本: v2.0 | 维护者: Claude AI Assistant*

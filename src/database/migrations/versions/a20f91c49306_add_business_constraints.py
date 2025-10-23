@@ -1,6 +1,12 @@
+import logging
 import sqlalchemy as sa
+from typing import Union, Sequence
+from alembic import op
 
 # mypy: ignore-errors
+from sqlalchemy import text
+
+logger = logging.getLogger(__name__)
 """add_business_constraints
 
 
@@ -24,6 +30,16 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     """添加业务逻辑约束和触发器"""
+
+    # 检查是否在SQLite环境中（测试环境）
+    conn = op.get_bind()
+    db_dialect = conn.dialect.name.lower()
+
+    if db_dialect == 'sqlite':
+        logger.info("⚠️  SQLite环境：跳过业务约束和触发器创建")
+        op.execute("-- SQLite environment: skipped business constraints and triggers")
+        op.execute("-- SQLite environment: SQLite does not support ALTER ADD CONSTRAINT")
+        return
 
     # 1. 添加比分字段CHECK约束（0-99）
     op.create_check_constraint(
@@ -186,6 +202,16 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """移除业务逻辑约束和触发器"""
+
+    # 检查是否在SQLite环境中（测试环境）
+    conn = op.get_bind()
+    db_dialect = conn.dialect.name.lower()
+
+    if db_dialect == 'sqlite':
+        logger.info("⚠️  SQLite环境：跳过业务约束和触发器移除")
+        op.execute("-- SQLite environment: skipped business constraints and triggers removal")
+        op.execute("-- SQLite environment: SQLite does not support DROP CONSTRAINT")
+        return
 
     # 移除触发器
     op.execute("DROP TRIGGER IF EXISTS tr_check_odds_consistency ON odds;")

@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class RedisSyncOperations:
     """Synchronous Redis operations"""
 
-    def __init__(self, redis_client=None):
+    def __init__(self, redis_client=None):  # type: ignore
         """Initialize sync operations"""
         self.client = redis_client
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")

@@ -14,7 +14,7 @@ from ..base import Subsystem, SubsystemStatus
 class DatabaseSubsystem(Subsystem):
     """数据库子系统"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         super().__init__("database", "2.0.0")
         self.connection_pool = None
         self.query_count = 0

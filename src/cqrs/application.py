@@ -51,7 +51,7 @@ class PredictionCQRSService:
     Provides command and query operations for predictions.
     """
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self.command_bus = get_command_bus()
         self.query_bus = get_query_bus()
 
@@ -144,7 +144,7 @@ class MatchCQRSService:
     Provides command and query operations for matches.
     """
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self.command_bus = get_command_bus()
         self.query_bus = get_query_bus()
 
@@ -218,7 +218,7 @@ class UserCQRSService:
     Provides command and query operations for users.
     """
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self.command_bus = get_command_bus()
         self.query_bus = get_query_bus()
 
@@ -256,7 +256,7 @@ class AnalyticsCQRSService:
     Provides analytics-related query operations.
     """
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self.query_bus = get_query_bus()
 
     async def get_prediction_analytics(

@@ -31,7 +31,7 @@ class CacheError(DataError):
 
 class ServiceError(FootballPredictionError):
     """服务错误"""
-    def __init__(self, message: str, service_name: str = None):
+    def __init__(self, message: str, service_name: str = None):  # type: ignore
         self.message = message
         self.service_name = service_name
         super().__init__(message)

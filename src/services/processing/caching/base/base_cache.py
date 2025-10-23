@@ -11,7 +11,7 @@ import logging
 class BaseCache(ABC):
     """缓存基础类"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         """初始化缓存"""
         self.logger = logging.getLogger(f"cache.{self.__class__.__name__}")
         self.cache_enabled = True
@@ -40,7 +40,7 @@ class BaseCache(ABC):
 class CacheKeyManager:
     """缓存键管理器"""
 
-    def __init__(self, prefix: str = "fp"):
+    def __init__(self, prefix: str = "fp"):  # type: ignore
         """初始化键管理器
 
         Args:

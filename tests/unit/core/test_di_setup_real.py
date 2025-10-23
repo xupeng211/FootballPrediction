@@ -389,7 +389,7 @@ test:
         """测试仓储导入错误处理"""
         with patch(
             "src.core.di_setup.DISetup._register_core_services"
-        ) as mock_register:
+        ):
             setup = DISetup()
 
             # 模拟ImportError
@@ -410,7 +410,7 @@ test:
         """测试服务导入错误处理"""
         with patch(
             "src.core.di_setup.DISetup._register_core_services"
-        ) as mock_register:
+        ):
             setup = DISetup()
 
             # 模拟ImportError

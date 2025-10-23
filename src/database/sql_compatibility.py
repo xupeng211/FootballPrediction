@@ -28,7 +28,7 @@ class Compatibility:
 class CompatibleQueryBuilder:
     """兼容的SQL查询构建器"""
 
-    def __init__(self, dialect: str = "sqlite"):
+    def __init__(self, dialect: str = "sqlite"):  # type: ignore
         self.dialect = dialect
 
     def build_insert_query(self, table: str, data: Dict[str, Any]) -> str:
@@ -48,7 +48,7 @@ class CompatibleQueryBuilder:
 class SQLCompatibilityHelper:
     """SQL兼容性助手"""
 
-    def __init__(self, engine: Engine):
+    def __init__(self, engine: Engine):  # type: ignore
         self.engine = engine
         self.db_type = get_db_type_from_engine(engine)
 

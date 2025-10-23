@@ -1,7 +1,7 @@
 """
 任务监控模块
 
-提供任务调度系统的监控功能，包括：
+提供任务调度系统的监控功能,包括:
 - 任务执行状态监控
 - 性能指标收集
 - Prometheus 指标导出
@@ -28,8 +28,8 @@ class TaskMonitor:
     """
     任务监控器
 
-    支持使用自定义的 CollectorRegistry，避免测试环境中的全局状态污染。
-    在生产环境中使用默认的全局注册表，在测试环境中可以传入独立的注册表。
+    支持使用自定义的 CollectorRegistry,避免测试环境中的全局状态污染.
+    在生产环境中使用默认的全局注册表,在测试环境中可以传入独立的注册表.
     """
 
     def __init__(self, registry: Optional[CollectorRegistry] = None):
@@ -37,7 +37,7 @@ class TaskMonitor:
         初始化任务监控器
 
         Args:
-            registry: 可选的 Prometheus 注册表实例，主要用于测试隔离
+            registry: 可选的 Prometheus 注册表实例,主要用于测试隔离
         """
         self._db_type: Optional[str] = None
         self._query_builder: Optional[CompatibleQueryBuilder] = None
@@ -45,7 +45,7 @@ class TaskMonitor:
         # 使用传入的注册表或默认全局注册表
         self.registry = registry or REGISTRY
 
-        # 在函数内部初始化 Prometheus 指标，使用指定的注册表
+        # 在函数内部初始化 Prometheus 指标,使用指定的注册表
         # 避免模块全局初始化导致的测试冲突
         self.task_counter = self._create_counter(
             "football_tasks_total",
@@ -81,14 +81,14 @@ class TaskMonitor:
 
     def _create_counter(self, name: str, description: str, labels: list) -> Counter:
         """
-        创建 Counter 指标，避免重复注册
+        创建 Counter 指标,避免重复注册
 
-        在测试环境中使用独立的注册表可以避免指标重复注册问题。
+        在测试环境中使用独立的注册表可以避免指标重复注册问题.
         """
         try:
             return Counter(name, description, labels, registry=self.registry)
         except ValueError:
-            # 如果指标已存在，尝试从注册表获取
+            # 如果指标已存在,尝试从注册表获取
             for collector in self.registry._collector_to_names:
                 if hasattr(collector, "_name") and collector._name == name:
                     return cast(Counter, collector)
@@ -102,7 +102,7 @@ class TaskMonitor:
 
     def _create_histogram(self, name: str, description: str, labels: list) -> Histogram:
         """
-        创建 Histogram 指标，避免重复注册
+        创建 Histogram 指标,避免重复注册
         """
         try:
             return Histogram(name, description, labels, registry=self.registry)
@@ -116,7 +116,7 @@ class TaskMonitor:
 
     def _create_gauge(self, name: str, description: str, labels: list) -> Gauge:
         """
-        创建 Gauge 指标，避免重复注册
+        创建 Gauge 指标,避免重复注册
         """
         try:
             return Gauge(name, description, labels, registry=self.registry)
@@ -144,7 +144,7 @@ class TaskMonitor:
         Args:
             task_name: 任务名称
             task_id: 任务ID
-            duration: 执行时长（秒）
+            duration: 执行时长(秒)
             status: 任务状态 (success / failed)
         """
         # 更新指标
@@ -251,7 +251,7 @@ class TaskMonitor:
         获取任务统计信息
 
         Args:
-            hours: 统计时间范围（小时）
+            hours: 统计时间范围(小时)
 
         Returns:
             任务统计数据

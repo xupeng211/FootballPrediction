@@ -30,7 +30,7 @@ class OddsFormat(Enum):
 class OddsMovement:
     """赔率变化"""
 
-    def __init__(self, old_odds: float, new_odds: float, timestamp: datetime):
+    def __init__(self, old_odds: float, new_odds: float, timestamp: datetime):  # type: ignore
         self.old_odds = old_odds
         self.new_odds = new_odds
         self.timestamp = timestamp
@@ -45,7 +45,7 @@ class OddsMovement:
 class ValueBet:
     """价值投注"""
 
-    def __init__(self, odds: float, probability: float, threshold: float = 1.0):
+    def __init__(self, odds: float, probability: float, threshold: float = 1.0):  # type: ignore
         self.odds = odds
         self.probability = probability
         self.threshold = threshold

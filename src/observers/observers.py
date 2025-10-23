@@ -24,7 +24,7 @@ class MetricsObserver(Observer):
     Collects and aggregates system metrics.
     """
 
-    def __init__(self, aggregation_window: int = 60):
+    def __init__(self, aggregation_window: int = 60):  # type: ignore
         """初始化指标观察者
 
         Args:
@@ -171,7 +171,7 @@ class LoggingObserver(Observer):
     Logs events to the logging system.
     """
 
-    def __init__(self, log_level: int = logging.INFO):
+    def __init__(self, log_level: int = logging.INFO):  # type: ignore
         """初始化日志观察者
 
         Args:
@@ -258,7 +258,7 @@ class AlertingObserver(Observer):
     Monitors events and triggers alerts.
     """
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         """初始化告警观察者"""
         super().__init__("AlertingObserver")
         self._alert_rules: Dict[str, Dict[str, Any]] = {}
@@ -423,7 +423,7 @@ class PerformanceObserver(Observer):
     Monitors system performance metrics.
     """
 
-    def __init__(self, window_size: int = 100):
+    def __init__(self, window_size: int = 100):  # type: ignore
         """初始化性能观察者
 
         Args:

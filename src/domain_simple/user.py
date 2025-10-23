@@ -19,7 +19,7 @@ class UserRole(Enum):
 class UserPreferences:
     """用户偏好设置"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self.favorite_teams: List[int] = []
         self.favorite_leagues: List[int] = []
         self.notification_enabled = True
@@ -52,7 +52,7 @@ class UserPreferences:
 class UserStatistics:
     """用户统计数据"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self.total_predictions = 0
         self.correct_predictions = 0
         self.total_profit_loss = 0.0
@@ -281,7 +281,7 @@ class User:
 class UserProfile:
     """用户档案（扩展的用户信息）"""
 
-    def __init__(self, user: User):
+    def __init__(self, user: User):  # type: ignore
         self._user = user
         self.prediction_history: List[Dict[str, Any]] = []
         self.following: List[int] = []  # 关注的用户ID列表

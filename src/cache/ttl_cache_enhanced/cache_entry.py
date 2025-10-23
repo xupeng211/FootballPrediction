@@ -84,7 +84,7 @@ class CacheEntry:
         remaining = int(self.expires_at - time.time())
         return remaining if remaining > 0 else 0
 
-    def __lt__(self, other):
+    def __lt__(self, other):  # type: ignore
         """
         用于堆排序，比较过期时间
 

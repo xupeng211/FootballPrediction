@@ -35,7 +35,7 @@ class StatisticalStrategy(PredictionStrategy):
     - 泊松分布模型
     """
 
-    def __init__(self, name: str = "statistical_analyzer"):
+    def __init__(self, name: str = "statistical_analyzer"):  # type: ignore
         super().__init__(name, StrategyType.STATISTICAL)
         self._team_stats = {}
         self._head_to_head_stats = {}

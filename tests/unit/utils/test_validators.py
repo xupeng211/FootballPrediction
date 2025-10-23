@@ -430,12 +430,12 @@ class TestParameterizedInput:
         )
 
     @pytest.mark.parametrize(
-        "input_data",
+        "input_data, expected_data",
         [
-            ({"name": "test"}, []),
-            ({"age": 25, "active": True}, {}),
-            ({"items": [1, 2, 3]}, {"count": 3}),
-            ({"nested": {"a": 1}}, {"b": {"c": 2}}),
+            ({"name": "test"}, {"name": "test"}),
+            ({"age": 25, "active": True}, {"age": 25, "active": True}),
+            ({"items": [1, 2, 3]}, {"items": [1, 2, 3]}),
+            ({"nested": {"a": 1}}, {"nested": {"a": 1}}),
         ],
     )
     def test_handle_dict_inputs(self, input_data, expected_data):

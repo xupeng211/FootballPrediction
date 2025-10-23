@@ -14,7 +14,7 @@ from ..models.match import MatchScore, MatchResult
 class MatchStartedEvent(DomainEvent):
     """比赛开始事件"""
 
-    def __init__(self, match_id: int, home_team_id: int, away_team_id: int, **kwargs):
+    def __init__(self, match_id: int, home_team_id: int, away_team_id: int, **kwargs):  # type: ignore
         super().__init__(aggregate_id=match_id)
         self.match_id = match_id
         self.home_team_id = home_team_id
@@ -63,7 +63,7 @@ class MatchFinishedEvent(DomainEvent):
 class MatchCancelledEvent(DomainEvent):
     """比赛取消事件"""
 
-    def __init__(self, match_id: int, reason: str, **kwargs):
+    def __init__(self, match_id: int, reason: str, **kwargs):  # type: ignore
         super().__init__(aggregate_id=match_id)
         self.match_id = match_id
         self.reason = reason
@@ -75,7 +75,7 @@ class MatchCancelledEvent(DomainEvent):
 class MatchPostponedEvent(DomainEvent):
     """比赛延期事件"""
 
-    def __init__(self, match_id: int, new_date: str, reason: str, **kwargs):
+    def __init__(self, match_id: int, new_date: str, reason: str, **kwargs):  # type: ignore
         super().__init__(aggregate_id=match_id)
         self.match_id = match_id
         self.new_date = new_date

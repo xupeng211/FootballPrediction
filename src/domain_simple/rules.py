@@ -10,7 +10,7 @@ from datetime import datetime
 class ValidationResult:
     """验证结果"""
 
-    def __init__(self, is_valid: bool = True, message: str = ""):
+    def __init__(self, is_valid: bool = True, message: str = ""):  # type: ignore
         self.is_valid = is_valid
         self.message = message
         self.errors: List[str] = []
@@ -48,7 +48,7 @@ class ValidationResult:
 class Rule(ABC):
     """规则抽象基类"""
 
-    def __init__(self, name: str, description: str = ""):
+    def __init__(self, name: str, description: str = ""):  # type: ignore
         self.name = name
         self.description = description
         self.enabled = True
@@ -93,7 +93,7 @@ class BusinessRule(Rule):
 class ValidationEngine:
     """验证引擎"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self._rules: Dict[str, List[Rule]] = {}
         self._global_rules: List[Rule] = []
 

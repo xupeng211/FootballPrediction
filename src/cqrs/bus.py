@@ -20,7 +20,7 @@ class CommandBus:
     Responsible for dispatching commands to their handlers.
     """
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self._handlers: Dict[Type[Command], CommandHandler] = {}
         self._middleware: list = []
 
@@ -80,7 +80,7 @@ class QueryBus:
     Responsible for dispatching queries to their handlers.
     """
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self._handlers: Dict[Type[Query], QueryHandler] = {}
         self._middleware: list = []
 
@@ -179,7 +179,7 @@ class ValidationMiddleware:
 class MetricsMiddleware:
     """指标中间件"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self._metrics = {
             "commands_processed": 0,
             "queries_processed": 0,

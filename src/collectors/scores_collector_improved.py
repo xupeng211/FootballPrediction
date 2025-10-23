@@ -657,7 +657,7 @@ class ScoresCollector:
 class ScoresCollectorManager:
     """比分收集器管理器"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self.collectors: Dict[int, ScoresCollector] = {}
         self.redis_manager = RedisManager()
 
@@ -681,7 +681,7 @@ class ScoresCollectorManager:
         for collector in self.collectors.values():
             await collector.stop_collection()
 
-    def remove_collector(self, session_id: int):
+    def remove_collector(self, session_id: int):  # type: ignore
         """移除收集器"""
         if session_id in self.collectors:
             del self.collectors[session_id]

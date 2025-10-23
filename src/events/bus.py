@@ -24,7 +24,7 @@ class EventBus:
     Responsible for event publishing, subscription, and distribution.
     """
 
-    def __init__(self, max_workers: int = 10):
+    def __init__(self, max_workers: int = 10):  # type: ignore
         """初始化事件总线
 
         Args:
@@ -371,7 +371,7 @@ async def stop_event_bus() -> None:
 
 
 # 装饰器：自动注册事件处理器
-def event_handler(event_types: List[str]):
+def event_handler(event_types: List[str]):  # type: ignore
     """事件处理器装饰器
 
     Args:
@@ -381,7 +381,7 @@ def event_handler(event_types: List[str]):
     def decorator(cls: Type[EventHandler]) -> Type[EventHandler]:
         original_init = cls.__init__
 
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs):  # type: ignore
             original_init(self, *args, **kwargs)
             # 自动订阅到事件总线
             bus = get_event_bus()

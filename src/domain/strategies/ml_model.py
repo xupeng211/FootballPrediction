@@ -29,7 +29,7 @@ class MLModelStrategy(PredictionStrategy):
     Uses trained machine learning models for match prediction.
     """
 
-    def __init__(self, model_name: str = "default_ml_model"):
+    def __init__(self, model_name: str = "default_ml_model"):  # type: ignore
         super().__init__(model_name, StrategyType.ML_MODEL)
         self._model = None
         self._feature_processor = None

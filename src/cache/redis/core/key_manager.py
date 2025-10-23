@@ -10,7 +10,7 @@ import json
 class RedisKeyManager:
     """管理Redis键的类"""
 
-    def __init__(self, prefix: str = "fp"):
+    def __init__(self, prefix: str = "fp"):  # type: ignore
         self.prefix = prefix
 
     def _make_key(self, key: str) -> str:

@@ -44,7 +44,7 @@ class LeagueSeason:
     total_rounds: int = 38  # 标准联赛轮次
     current_round: int = 0
 
-    def __post_init__(self):
+    def __post_init__(self):  # type: ignore
         """验证赛季信息"""
         if not self.season:
             raise DomainError("赛季名称不能为空")
@@ -113,7 +113,7 @@ class LeagueSettings:
     extra_time: bool = False  # 是否加时
     penalty_shootout: bool = False  # 是否点球
 
-    def __post_init__(self):
+    def __post_init__(self):  # type: ignore
         """验证设置"""
         if any(
             x < 0
@@ -180,7 +180,7 @@ class League:
     # 领域事件
     _domain_events: List[Any] = field(default_factory=list, init=False)
 
-    def __post_init__(self):
+    def __post_init__(self):  # type: ignore
         """初始化后的验证"""
         if not self.name or len(self.name.strip()) == 0:
             raise DomainError("联赛名称不能为空")

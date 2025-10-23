@@ -213,6 +213,7 @@ curl http://localhost:8000/predictions/{match_id}
 
         # 自定义 OpenAPI
         def custom_openapi():
+            """自定义OpenAPI配置"""
             if app.openapi_schema:
                 return app.openapi_schema
 

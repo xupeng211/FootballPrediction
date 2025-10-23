@@ -54,11 +54,11 @@
 
 ## Data
 
-- [📊 足球数据采集配置指南](data/DATA_COLLECTION_SETUP.md)
+- [📊 足球数据采集配置指南](reference/DATA_COLLECTION_SETUP.md)
 
 ## ML
 
-*(No documents currently in ML category)*
+- [🤖 机器学习模型指南](ml/ML_MODEL_GUIDE.md)
 
 ## Ops
 
@@ -92,3 +92,39 @@
 - [📚 Docs Guard 修复计划 - Phase 2 (孤儿文档处理 Batch 4 Final)](_reports/PR_DESCRIPTION_PHASE2_BATCH4.md)
 - [📚 Final Documentation Health Report](_reports/FINAL_DOCUMENTATION_HEALTH_REPORT.md)
 - [🎉 Project Retrospective Report](_reports/PROJECT_RETROSPECTIVE.md)
+
+## 🔗 快速导航
+
+### 🚀 新用户入门
+1. **[AI开发文档维护规则](AI_DEVELOPMENT_DOCUMENTATION_RULES.md)** - AI开发必读
+2. **[🚀 快速开始工具指南](how-to/QUICKSTART_TOOLS.md)** - 5分钟上手
+3. **[🎯 FootballPrediction 完整系统演示](how-to/COMPLETE_DEMO.md)** - 功能演示
+4. **[💻 开发指南](reference/DEVELOPMENT_GUIDE.md)** - 开发环境搭建
+
+### 🛠️ 开发者核心文档
+- **[CLAUDE.md](../CLAUDE.md)** - AI辅助开发指导（⭐ 核心文档）
+- **[系统架构文档](architecture/ARCHITECTURE.md)** - 系统设计总览
+- **[📚 API 参考文档](reference/API_REFERENCE.md)** - 接口文档
+- **[🗄️ 数据库架构](reference/DATABASE_SCHEMA.md)** - 数据层设计
+- **[🧪 测试策略文档](testing/TEST_IMPROVEMENT_GUIDE.md)** - 测试指南
+
+### 🚀 部署和运维
+- **[📋 生产就绪计划](ops/PRODUCTION_READINESS_PLAN.md)** - 部署指南
+- **[📊 监控系统](ops/MONITORING.md)** - 监控配置
+- **[📚 运维手册索引](ops/runbooks/README.md)** - 运维操作
+- **[🏗️ Staging环境配置](how-to/STAGING_ENVIRONMENT.md)** - 测试环境
+
+### 📚 学习和参考
+- **[📚 术语表](reference/glossary.md)** - 概念定义
+- **[📖 Makefile 使用指南](how-to/MAKEFILE_GUIDE.md)** - 工具命令
+- **[🤖 机器学习模型指南](ml/ML_MODEL_GUIDE.md)** - ML相关
+- **[📊 足球数据采集配置指南](reference/DATA_COLLECTION_SETUP.md)** - 数据处理
+
+### 📋 项目管理
+- **[📋 发布流程](release/RELEASE_PROCESS.md)** - 版本发布
+- **[🔒 安全修复摘要](security/SECURITY_FIXES_SUMMARY.md)** - 安全相关
+- **[📋 足球预测项目测试质量看板](testing/QA_TEST_KANBAN.md)** - 质量监控
+
+---
+
+**💡 提示**: 建议新用户按"新用户入门"顺序阅读，开发者可重点关注"开发者核心文档"。

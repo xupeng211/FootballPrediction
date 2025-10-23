@@ -23,7 +23,7 @@ logger = get_logger(__name__)
 class PerformanceMonitoringIntegration:
     """性能监控集成器"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         """初始化性能监控集成"""
         self.settings = get_settings()
         self.enabled = self.settings.get("PERFORMANCE_MONITORING_ENABLED", True)

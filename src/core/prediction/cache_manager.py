@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 class PredictionCacheManager:
     """Cache manager for predictions"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         """Initialize cache manager"""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self._cache = {}

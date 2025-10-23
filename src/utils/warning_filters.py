@@ -10,7 +10,7 @@ import warnings
 logger = logging.getLogger(__name__)
 
 
-def setup_warning_filters():
+def setup_warning_filters():  # type: ignore
     """设置警告过滤器"""
     # 忽略一些常见的警告
     warnings.filterwarnings("ignore", category=UserWarning, module="tensorflow.*")

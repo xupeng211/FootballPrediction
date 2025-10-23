@@ -1,0 +1,37 @@
+{
+  "ignorePatterns": [
+    {
+      "pattern": "^http://localhost",
+      "message": "忽略本地链接"
+    },
+    {
+      "pattern": "^#",
+      "message": "忽略锚点链接"
+    },
+    {
+      "pattern": "^mailto:",
+      "message": "忽略邮件链接"
+    }
+  ],
+  "replacementPatterns": [
+    {
+      "pattern": "^http://",
+      "replacement": "https://"
+    }
+  ],
+  "httpHeaders": [
+    {
+      "urls": ["https://docs.github.com"],
+      "headers": {
+        "Accept": "text/html",
+        "User-Agent": "markdown-link-check/0.1.0"
+      }
+    }
+  ],
+  "timeout": "20s",
+  "retryOn429": true,
+  "retryCount": 3,
+  "fallbackRetryDelay": "30s",
+  "aliveStatusCodes": [200, 206, 300, 301, 302, 303, 307, 308],
+  "format": "json"
+}

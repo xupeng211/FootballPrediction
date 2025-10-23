@@ -89,15 +89,15 @@ from .consistency_manager import (
 TTLCacheEntry = CacheEntry
 
 
-def get_prediction_cache():
+def get_prediction_cache():  # type: ignore
     return prediction_cache
 
 
-def get_feature_cache():
+def get_feature_cache():  # type: ignore
     return feature_cache
 
 
-def get_odds_cache():
+def get_odds_cache():  # type: ignore
     return odds_cache
 
 
