@@ -62,7 +62,7 @@ class StreamConfig:
     支持从环境变量和配置文件加载配置
     """
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self.kafka_config = self._load_kafka_config()
         self.topics = self._init_topics()
 

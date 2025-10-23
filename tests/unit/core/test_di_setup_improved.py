@@ -149,7 +149,7 @@ profiles:
             mock_auto_binder_class.return_value = mock_auto_binder
             mock_lifecycle.return_value = Mock()
 
-            container = setup.initialize(auto_scan_modules=modules)
+            setup.initialize(auto_scan_modules=modules)
 
             # 验证自动绑定器被调用
             mock_auto_binder_class.assert_called_once_with(mock_container)
@@ -169,7 +169,7 @@ profiles:
             mock_binder_class.return_value = mock_binder
             mock_lifecycle.return_value = Mock()
 
-            container = setup.initialize(config_file=temp_config_file)
+            setup.initialize(config_file=temp_config_file)
 
             # 验证配置绑定器被调用
             mock_binder_class.assert_called_once()
@@ -542,8 +542,8 @@ profiles:
         setup = DISetup()
 
         with (
-            patch("src.core.di_setup.ServiceCollection") as mock_collection,
-            patch("src.core.di_setup.get_lifecycle_manager") as mock_lifecycle,
+            patch("src.core.di_setup.ServiceCollection"),
+            patch("src.core.di_setup.get_lifecycle_manager"),
             patch("pathlib.Path.exists", return_value=True),
             patch("src.core.di_setup.ConfigurationBinder") as mock_binder_class,
         ):

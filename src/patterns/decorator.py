@@ -29,7 +29,7 @@ class Component(ABC):
 class BaseDecorator(Component):
     """装饰器基类"""
 
-    def __init__(self, component: Component):
+    def __init__(self, component: Component):  # type: ignore
         self._component = component
         self.logger = get_logger(f"decorator.{self.__class__.__name__}")
 
@@ -41,7 +41,7 @@ class BaseDecorator(Component):
 class LoggingDecorator(BaseDecorator):
     """日志装饰器"""
 
-    def __init__(self, component: Component, log_level: int = logging.INFO):
+    def __init__(self, component: Component, log_level: int = logging.INFO):  # type: ignore
         super().__init__(component)
         self.log_level = log_level
 
@@ -131,7 +131,7 @@ class RetryDecorator(BaseDecorator):
 class MetricsDecorator(BaseDecorator):
     """指标收集装饰器"""
 
-    def __init__(self, component: Component, metrics_name: Optional[str] = None):
+    def __init__(self, component: Component, metrics_name: Optional[str] = None):  # type: ignore
         super().__init__(component)
         self.metrics_name = metrics_name or component.__class__.__name__
         self.metrics = {
@@ -326,7 +326,7 @@ def async_retry(
     return decorator
 
 
-def async_log(log_level: int = logging.INFO):
+def async_log(log_level: int = logging.INFO):  # type: ignore
     """异步日志装饰器"""
 
     def decorator(func: F) -> F:
@@ -353,7 +353,7 @@ def async_log(log_level: int = logging.INFO):
     return decorator
 
 
-def async_metrics(metrics_store: Optional[Dict[str, Dict]] = None):
+def async_metrics(metrics_store: Optional[Dict[str, Dict]] = None):  # type: ignore
     """异步指标装饰器"""
     if metrics_store is None:
         metrics_store = {}
@@ -398,7 +398,7 @@ def async_metrics(metrics_store: Optional[Dict[str, Dict]] = None):
 class DatabaseService(Component):
     """数据库服务示例"""
 
-    def __init__(self, name: str):
+    def __init__(self, name: str):  # type: ignore
         self.name = name
         self.logger = get_logger(f"service.{name}")
 

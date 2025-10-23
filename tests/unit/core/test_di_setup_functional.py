@@ -166,7 +166,7 @@ profiles:
             mock_auto_binder_class.return_value = mock_auto_binder
             mock_lifecycle.return_value = Mock()
 
-            container = setup.initialize(auto_scan_modules=modules)
+            setup.initialize(auto_scan_modules=modules)
 
             mock_auto_binder_class.assert_called_once_with(mock_container)
             assert mock_auto_binder.bind_from_assembly.call_count == 2
@@ -185,7 +185,7 @@ profiles:
             mock_binder_class.return_value = mock_binder
             mock_lifecycle.return_value = Mock()
 
-            container = setup.initialize(config_file=temp_config_file)
+            setup.initialize(config_file=temp_config_file)
 
             mock_binder_class.assert_called_once()
             mock_binder.load_from_file.assert_called_once_with(temp_config_file)
@@ -255,7 +255,7 @@ profiles:
                     "No module named 'missing.service'"
                 )
 
-                with patch("src.core.di_setup.logger") as mock_logger:
+                with patch("src.core.di_setup.logger"):
                     try:
                         setup._auto_register_services()
                     except ImportError:
@@ -497,8 +497,8 @@ profiles:
         setup = DISetup()
 
         with (
-            patch("src.core.di_setup.ServiceCollection") as mock_collection,
-            patch("src.core.di_setup.get_lifecycle_manager") as mock_lifecycle,
+            patch("src.core.di_setup.ServiceCollection"),
+            patch("src.core.di_setup.get_lifecycle_manager"),
             patch("pathlib.Path.exists", return_value=True),
             patch("src.core.di_setup.ConfigurationBinder") as mock_binder_class,
         ):

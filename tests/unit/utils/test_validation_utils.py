@@ -229,20 +229,20 @@ class TestValidationUtils:
         def validate_required(data, required_fields):
             missing = []
             for field in required_fields:
-                if field not in data or _data[field] is None or _data[field] == "":
+                if field not in data or data[field] is None or data[field] == "":
                     missing.append(field)
             return missing
 
         _data = {"name": "John", "email": "john@example.com", "age": 30, "phone": ""}
 
         # 验证必填字段
-        missing = validate_required(data, ["name", "email"])
+        missing = validate_required(_data, ["name", "email"])
         assert missing == []
 
-        missing = validate_required(data, ["name", "email", "password"])
+        missing = validate_required(_data, ["name", "email", "password"])
         assert missing == ["password"]
 
-        missing = validate_required(data, ["name", "phone"])
+        missing = validate_required(_data, ["name", "phone"])
         assert missing == ["phone"]  # 空字符串视为缺失
 
     def test_type_validation(self):
@@ -313,11 +313,7 @@ class TestValidationUtils:
                 for validator_func, error_msg in self.validators:
                     try:
                         _result = validator_func(value)
-                        if isinstance(result, tuple):
-                            is_valid, msg = result
-                            if not is_valid:
-                                errors.append(msg or error_msg or "验证失败")
-                        elif not result:
+                        if not _result:
                             errors.append(error_msg or "验证失败")
                     except Exception:
                         errors.append(error_msg or "验证出错")
@@ -354,7 +350,7 @@ class TestValidationUtils:
             if condition_field not in data:
                 return True, None  # 条件字段不存在，跳过验证
 
-            if _data[condition_field] == condition_value:
+            if data[condition_field] == condition_value:
                 return validator(data.get(field_to_validate))
             else:
                 return True, None  # 条件不满足，跳过验证
@@ -370,7 +366,7 @@ class TestValidationUtils:
             return value is not None and value != "", "高级用户必须设置支付方式"
 
         is_valid, msg = validate_conditional(
-            data, "user_type", "premium", "payment_method", has_payment_method
+            _data, "user_type", "premium", "payment_method", has_payment_method
         )
         assert is_valid is True
 
@@ -383,14 +379,14 @@ class TestValidationUtils:
             return True, None
 
         is_valid, msg = validate_conditional(
-            data, "payment_method", "credit_card", "card_number", has_valid_card_number
+            _data, "payment_method", "credit_card", "card_number", has_valid_card_number
         )
         assert is_valid is True
 
         # 测试无效情况
         _data["card_number"] = "1234"
         is_valid, msg = validate_conditional(
-            data, "payment_method", "credit_card", "card_number", has_valid_card_number
+            _data, "payment_method", "credit_card", "card_number", has_valid_card_number
         )
         assert is_valid is False
         assert "卡号必须是16位数字" in msg
@@ -405,7 +401,7 @@ class TestValidationUtils:
 
             for field, validator in validators.items():
                 if field in data:
-                    is_valid, error = validator(_data[field])
+                    is_valid, error = validator(data[field])
                     results[field] = {"valid": is_valid, "error": error}
                     if not is_valid:
                         all_valid = False
@@ -428,7 +424,7 @@ class TestValidationUtils:
         # 测试数据
         _data = {"name": "John", "age": 30, "email": "john@example.com"}
 
-        is_valid, results = validate_bulk(data, validators)
+        is_valid, results = validate_bulk(_data, validators)
         assert is_valid is True
         assert all(r["valid"] for r in results.values())
 
@@ -462,7 +458,7 @@ class TestValidationUtils:
 
             # 并行验证多个字段
             if "email" in data:
-                tasks.append(async_validate_email(_data["email"]))
+                tasks.append(async_validate_email(data["email"]))
 
             # 可以添加更多异步验证任务
             # tasks.append(async_validate_phone(_data["phone"]))
@@ -489,7 +485,7 @@ class TestValidationUtils:
         async def test_async():
             # 有效数据
             _data = {"email": "test@example.com"}
-            is_valid, errors = await validate_user_data(data)
+            is_valid, errors = await validate_user_data(_data)
             assert is_valid is True
             assert len(errors) == 0
 

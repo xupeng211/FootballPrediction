@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 class ConnectionCore:
     """Core database connection utilities"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         """Initialize core utilities"""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 

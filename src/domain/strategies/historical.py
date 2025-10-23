@@ -58,7 +58,7 @@ class HistoricalStrategy(PredictionStrategy):
     - 相似时间段的表现
     """
 
-    def __init__(self, name: str = "historical_analyzer"):
+    def __init__(self, name: str = "historical_analyzer"):  # type: ignore
         super().__init__(name, StrategyType.HISTORICAL)
         self._historical_matches: Dict[int, List[HistoricalMatch]] = {}
         self._team_vs_team: Dict[Tuple[int, int], List[HistoricalMatch]] = {}

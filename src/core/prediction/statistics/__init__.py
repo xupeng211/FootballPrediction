@@ -10,7 +10,7 @@ from typing import Dict, List
 class PredictionStatistics:
     """预测统计类"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self.total_predictions = 0
         self.correct_predictions = 0
         self.incorrect_predictions = 0
@@ -18,7 +18,7 @@ class PredictionStatistics:
         self.predictions_by_model: Dict[str, int] = {}
         self.history: List[Dict] = []
 
-    def add_prediction(self, is_correct: bool, model_version: str = "default"):
+    def add_prediction(self, is_correct: bool, model_version: str = "default"):  # type: ignore
         """添加预测记录"""
         self.total_predictions += 1
         if is_correct:

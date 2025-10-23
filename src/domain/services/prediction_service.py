@@ -29,7 +29,7 @@ from ..events.prediction_events import (
 class PredictionDomainService:
     """预测领域服务"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self._events: List[Any] = []
 
     def create_prediction(

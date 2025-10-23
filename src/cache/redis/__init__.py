@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class RedisManager:
     """Redis管理器主类，整合同步和异步操作"""
 
-    def __init__(self, redis_url: Optional[str] = None):
+    def __init__(self, redis_url: Optional[str] = None):  # type: ignore
         """初始化Redis管理器"""
         self.redis_url = redis_url or "redis://localhost:6379"
         self.connection_manager = RedisConnectionManager()

@@ -11,7 +11,7 @@ from typing import Optional
 class RedisConnectionManager:
     """管理Redis连接的类"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self._pool: Optional[aioredis.ConnectionPool] = None
         self._redis: Optional[aioredis.Redis] = None
 

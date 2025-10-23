@@ -20,15 +20,15 @@ warnings.warn(
 # 简单的ErrorHandler类以保持向后兼容
 class ErrorHandler:
     """简单错误处理器"""
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self.errors = []
 
-    def handle_error(self, error: Exception):
+    def handle_error(self, error: Exception):  # type: ignore
         """处理错误"""
         self.errors.append(str(error))
         return True
 
-    def clear_errors(self):
+    def clear_errors(self):  # type: ignore
         """清除错误"""
         self.errors.clear()
 

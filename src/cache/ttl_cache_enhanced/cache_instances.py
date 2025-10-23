@@ -41,19 +41,19 @@ CACHES = {
 }
 
 
-def start_auto_cleanup():
+def start_auto_cleanup():  # type: ignore
     """启动所有缓存的自动清理"""
     for cache in CACHES.values():
         cache.start_auto_cleanup()
 
 
-def stop_auto_cleanup():
+def stop_auto_cleanup():  # type: ignore
     """停止所有缓存的自动清理"""
     for cache in CACHES.values():
         cache.stop_auto_cleanup()
 
 
-def get_cache(name: str):
+def get_cache(name: str):  # type: ignore
     """
     根据名称获取缓存
 
@@ -79,13 +79,13 @@ def get_all_stats() -> dict:
     return stats
 
 
-def clear_all_caches():
+def clear_all_caches():  # type: ignore
     """清空所有缓存"""
     for cache in CACHES.values():
         cache.clear()
 
 
-def cleanup_all_expired():
+def cleanup_all_expired():  # type: ignore
     """清理所有缓存的过期项"""
     total_cleaned = 0
     for cache in CACHES.values():

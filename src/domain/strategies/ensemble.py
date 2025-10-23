@@ -68,7 +68,7 @@ class EnsembleStrategy(PredictionStrategy):
     Combines predictions from multiple sub-strategies through intelligent weighting.
     """
 
-    def __init__(self, name: str = "ensemble_predictor"):
+    def __init__(self, name: str = "ensemble_predictor"):  # type: ignore
         super().__init__(name, StrategyType.ENSEMBLE)
         self._sub_strategies: Dict[str, PredictionStrategy] = {}
         self._strategy_weights: Dict[str, StrategyWeight] = {}

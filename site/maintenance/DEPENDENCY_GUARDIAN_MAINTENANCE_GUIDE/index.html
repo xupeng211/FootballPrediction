@@ -1,0 +1,1932 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="基于现代Python技术栈的足球预测系统完整文档">
+      
+      
+        <meta name="author" content="Football Prediction Team">
+      
+      
+        <link rel="canonical" href="https://football-prediction-docs.example.com/maintenance/DEPENDENCY_GUARDIAN_MAINTENANCE_GUIDE/">
+      
+      
+      
+      
+      <link rel="icon" href="../../assets/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.49">
+    
+    
+      
+        <title>📚 依赖守护者维护指南 - 足球预测系统文档</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.6f8fc17f.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="足球预测系统文档">
+  <meta property="og:description" content="基于现代Python技术栈的足球预测系统完整文档">
+  <meta property="og:url" content="https://football-prediction-docs.example.com/maintenance/DEPENDENCY_GUARDIAN_MAINTENANCE_GUIDE/">
+  <meta property="og:image" content="../../assets/logo.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@football_pred">
+  <meta name="twitter:creator" content="@football_pred">
+
+  <!-- 自定义CSS和JS -->
+  <link rel="stylesheet" href="../../assets/extra.css">
+  <script src="../../assets/extra.js"></script>
+
+  <!-- 添加中文字体支持 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  
+
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#_1" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+  
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href="../.." title="足球预测系统文档" class="md-header__button md-logo" aria-label="足球预测系统文档" data-md-component="logo">
+      
+  <img src="../../assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            足球预测系统文档
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              📚 依赖守护者维护指南
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="blue"  aria-label="切换至深色模式"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="切换至深色模式" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="blue"  aria-label="切换至深色模式"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="切换至深色模式" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="blue"  aria-label="切换至浅色模式"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="切换至浅色模式" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="分享" aria-label="分享" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/your-org/football-prediction" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    football-prediction/docs
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="标签" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../index.md" class="md-tabs__link">
+        
+  
+    
+  
+  首页
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../how-to/QUICKSTART_TOOLS/" class="md-tabs__link">
+          
+  
+    
+  
+  快速开始
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../architecture/ARCHITECTURE/" class="md-tabs__link">
+          
+  
+    
+  
+  架构设计
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/API_REFERENCE/" class="md-tabs__link">
+          
+  
+    
+  
+  API参考
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../testing/TEST_IMPROVEMENT_GUIDE/" class="md-tabs__link">
+          
+  
+    
+  
+  测试指南
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../ops/PRODUCTION_READINESS_PLAN/" class="md-tabs__link">
+          
+  
+    
+  
+  运维部署
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../ml/ML_MODEL_GUIDE/" class="md-tabs__link">
+          
+  
+    
+  
+  机器学习
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../security/SECURITY_POLICY.md" class="md-tabs__link">
+          
+  
+    
+  
+  安全配置
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../project/CONTRIBUTING.md" class="md-tabs__link">
+          
+  
+    
+  
+  项目管理
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../AI_DEVELOPMENT_DOCUMENTATION_RULES.md" class="md-tabs__link">
+          
+  
+    
+  
+  参考资料
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+
+  <!-- 公告栏配置 (暂时注释掉) -->
+  <!--
+  
+  -->
+
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="足球预测系统文档" class="md-nav__button md-logo" aria-label="足球预测系统文档" data-md-component="logo">
+      
+  <img src="../../assets/logo.png" alt="logo">
+
+    </a>
+    足球预测系统文档
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/your-org/football-prediction" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    football-prediction/docs
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../index.md" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    首页
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../how-to/QUICKSTART_TOOLS/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    快速开始
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../architecture/ARCHITECTURE/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    架构设计
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../reference/API_REFERENCE/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    API参考
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../testing/TEST_IMPROVEMENT_GUIDE/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    测试指南
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../ops/PRODUCTION_READINESS_PLAN/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    运维部署
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../ml/ML_MODEL_GUIDE/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    机器学习
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../security/SECURITY_POLICY.md" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    安全配置
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../project/CONTRIBUTING.md" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    项目管理
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../AI_DEVELOPMENT_DOCUMENTATION_RULES.md" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    参考资料
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+  
+                  
+
+  
+    <a href="https://github.com/your-org/football-prediction/edit/main/docs/maintenance/DEPENDENCY_GUARDIAN_MAINTENANCE_GUIDE.md" title="编辑此页" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+    
+      
+    
+    <a href="https://github.com/your-org/football-prediction/raw/main/docs/maintenance/DEPENDENCY_GUARDIAN_MAINTENANCE_GUIDE.md" title="查看本页的源代码" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
+    </a>
+  
+
+
+<h1 id="_1">📚 依赖守护者维护指南<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>FootballPrediction 项目依赖冲突防御工作流长期运维手册</strong></p>
+</blockquote>
+<p><strong>版本</strong>: v1.0
+<strong>编写日期</strong>: 2025-01-04
+<strong>维护团队</strong>: FootballPrediction 开发团队
+<strong>文档状态</strong>: 正式发布</p>
+<hr />
+<h2 id="1">🧱 1. 前言<a class="headerlink" href="#1" title="Permanent link">&para;</a></h2>
+<h3 id="11">1.1 设计目的<a class="headerlink" href="#11" title="Permanent link">&para;</a></h3>
+<p>本指南旨在建立和维护一个<strong>零依赖冲突</strong>的开发环境，通过自动化防御机制确保：
+- 本地、CI、生产环境的依赖版本完全一致
+- 依赖更新过程可控、可追溯
+- 安全漏洞及时发现和修复</p>
+<h3 id="12">1.2 系统架构概览<a class="headerlink" href="#12" title="Permanent link">&para;</a></h3>
+<p>我们采用了 <code>pip-tools + Makefile + CI Guardian</code> 三层防御体系：</p>
+<div class="highlight"><pre><span></span><code>┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   开发者操作      │    │   Makefile      │    │  pip-tools     │
+│                 │───▶│                 │───▶│                 │
+│ 编辑 .in 文件    │    │ lock-deps       │    │ pip-compile     │
+│ 提交代码         │    │ verify-deps     │    │ pip-sync        │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                                       │
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│  生产/CI环境     │    │  GitHub CI      │    │   .lock 文件     │
+│                 │◀───│                 │◀───│                 │
+│ pip install     │    │ deps_guardian   │    │ 版本锁定         │
+│ venv 激活       │    │ 自动验证         │    │ 依赖解析         │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+</code></pre></div>
+<h3 id="13">1.3 核心原则<a class="headerlink" href="#13" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>锁定优先</strong>: 所有环境必须使用 <code>.lock</code> 文件安装依赖</li>
+<li><strong>最小变更</strong>: 只在必要时更新依赖，避免不必要的风险</li>
+<li><strong>自动防御</strong>: CI 自动阻止不一致的依赖提交</li>
+<li><strong>定期审计</strong>: 定期检查安全漏洞和依赖更新</li>
+</ol>
+<hr />
+<h2 id="2">🔄 2. 依赖体系总览<a class="headerlink" href="#2" title="Permanent link">&para;</a></h2>
+<h3 id="21">2.1 目录结构<a class="headerlink" href="#21" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>requirements/
+├── base.in          # 基础生产依赖定义
+├── base.lock        # 基础生产依赖锁定文件
+├── dev.in           # 开发依赖定义
+├── dev.lock         # 开发依赖锁定文件
+├── full.in          # 完整依赖定义
+├── requirements.lock # 完整依赖锁定文件
+└── README.md        # 依赖管理说明
+
+scripts/
+└── verify_deps.sh   # 依赖一致性验证脚本
+
+.github/workflows/
+└── deps_guardian.yml # CI 自动防御工作流
+
+Makefile             # 依赖管理命令集合
+</code></pre></div>
+<h3 id="22">2.2 文件职责说明<a class="headerlink" href="#22" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>文件</th>
+<th>用途</th>
+<th>使用环境</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>base.in</code></td>
+<td>核心生产依赖定义</td>
+<td>开发</td>
+<td>定义 FastAPI、SQLAlchemy 等核心包</td>
+</tr>
+<tr>
+<td><code>base.lock</code></td>
+<td>核心生产依赖锁定</td>
+<td>生产/CI</td>
+<td>包含精确版本号，用于生产部署</td>
+</tr>
+<tr>
+<td><code>dev.in</code></td>
+<td>开发工具依赖定义</td>
+<td>开发</td>
+<td>包含 pytest、black、mypy 等工具</td>
+</tr>
+<tr>
+<td><code>dev.lock</code></td>
+<td>开发工具依赖锁定</td>
+<td>开发/CI</td>
+<td>开发环境完整依赖列表</td>
+</tr>
+<tr>
+<td><code>requirements.lock</code></td>
+<td>完整依赖锁定</td>
+<td>备用</td>
+<td>包含所有依赖的超级锁定文件</td>
+</tr>
+</tbody>
+</table>
+<h3 id="23">2.3 环境映射关系<a class="headerlink" href="#23" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="nt">生产环境</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">requirements/base.lock</span>
+<span class="nt">开发环境</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">requirements/dev.lock</span>
+<span class="nt">CI 环境</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">requirements/requirements.lock (默认)</span>
+<span class="nt">本地测试</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">make test-quick (使用 dev.lock)</span>
+</code></pre></div>
+<hr />
+<h2 id="3">🧰 3. 日常维护流程<a class="headerlink" href="#3" title="Permanent link">&para;</a></h2>
+<h3 id="31">3.1 开发阶段依赖更新<a class="headerlink" href="#31" title="Permanent link">&para;</a></h3>
+<h4 id="_2">添加新依赖<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># 1. 编辑对应的 .in 文件</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;new-package==1.2.3&quot;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>requirements/base.in
+
+<span class="c1"># 2. 重新生成锁定文件</span>
+make<span class="w"> </span>lock-deps
+
+<span class="c1"># 3. 验证一致性</span>
+make<span class="w"> </span>verify-deps
+
+<span class="c1"># 4. 提交更改</span>
+git<span class="w"> </span>add<span class="w"> </span>requirements/
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;chore(deps): add new-package v1.2.3&quot;</span>
+</code></pre></div>
+<h4 id="_3">更新现有依赖<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># 1. 修改版本号</span>
+vim<span class="w"> </span>requirements/base.in<span class="w">  </span><span class="c1"># 修改 package==1.2.3 -&gt; package==2.0.0</span>
+
+<span class="c1"># 2. 重新生成锁定文件（会自动处理依赖传递）</span>
+make<span class="w"> </span>lock-deps
+
+<span class="c1"># 3. 检查是否有破坏性变更</span>
+make<span class="w"> </span>verify-deps
+
+<span class="c1"># 4. 运行测试确保兼容性</span>
+make<span class="w"> </span>test-quick
+
+<span class="c1"># 5. 提交</span>
+git<span class="w"> </span>add<span class="w"> </span>requirements/
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;chore(deps): update package from 1.2.3 to 2.0.0&quot;</span>
+</code></pre></div>
+<h3 id="32">3.2 依赖管理最佳实践<a class="headerlink" href="#32" title="Permanent link">&para;</a></h3>
+<h4 id="_4">✅ 推荐做法<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># 使用精确版本号</span>
+<span class="nv">package</span><span class="o">==</span><span class="m">1</span>.2.3
+
+<span class="c1"># 使用范围约束（必要时）</span>
+package&gt;<span class="o">=</span><span class="m">1</span>.2.3,&lt;<span class="m">2</span>.0.0
+
+<span class="c1"># 通过 Makefile 管理</span>
+make<span class="w"> </span>lock-deps
+make<span class="w"> </span>verify-deps
+make<span class="w"> </span>install
+</code></pre></div>
+<h4 id="_5">❌ 禁止行为<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># 不要直接安装到环境</span>
+pip<span class="w"> </span>install<span class="w"> </span>package<span class="w">  </span><span class="c1"># 禁止！</span>
+
+<span class="c1"># 不要使用无版本约束</span>
+package<span class="w">  </span><span class="c1"># 禁止！</span>
+
+<span class="c1"># 不要手动编辑 .lock 文件</span>
+vim<span class="w"> </span>requirements/base.lock<span class="w">  </span><span class="c1"># 禁止！</span>
+</code></pre></div>
+<h3 id="33">3.3 本地环境重建<a class="headerlink" href="#33" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># 完全清理并重建</span>
+make<span class="w"> </span>clean-env
+make<span class="w"> </span>install
+
+<span class="c1"># 或分步执行</span>
+rm<span class="w"> </span>-rf<span class="w"> </span>.venv
+python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv
+<span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+make<span class="w"> </span>install
+</code></pre></div>
+<hr />
+<h2 id="4">🔒 4. 自动防御机制<a class="headerlink" href="#4" title="Permanent link">&para;</a></h2>
+<h3 id="41-verify_depssh">4.1 verify_deps.sh 详解<a class="headerlink" href="#41-verify_depssh" title="Permanent link">&para;</a></h3>
+<p>位置: <code>scripts/verify_deps.sh</code></p>
+<div class="highlight"><pre><span></span><code><span class="ch">#!/usr/bin/env bash</span>
+<span class="nb">set</span><span class="w"> </span>-e
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;🔍 Verifying dependency consistency...&quot;</span>
+
+<span class="c1"># 1. 检查依赖冲突</span>
+pip<span class="w"> </span>check<span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="o">(</span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;❌ pip check failed&quot;</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span><span class="o">)</span>
+
+<span class="c1"># 2. 验证 .lock 文件与 .in 文件一致</span>
+<span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-f<span class="w"> </span>requirements/base.in<span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">  </span>pip-compile<span class="w"> </span>requirements/base.in<span class="w"> </span>--quiet<span class="w"> </span>--output-file<span class="o">=</span>/tmp/base.lock
+<span class="w">  </span><span class="c1"># 忽略头部注释差异，只比较依赖内容</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span>!<span class="w"> </span>tail<span class="w"> </span>-n<span class="w"> </span>+7<span class="w"> </span>requirements/base.lock<span class="w"> </span><span class="p">|</span><span class="w"> </span>diff<span class="w"> </span>-q<span class="w"> </span>-<span class="w"> </span>&lt;<span class="o">(</span>tail<span class="w"> </span>-n<span class="w"> </span>+7<span class="w"> </span>/tmp/base.lock<span class="o">)</span><span class="w"> </span>&gt;/dev/null<span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">    </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;⚠️  base.lock 与 base.in 不一致，请执行 make lock-deps&quot;</span>
+<span class="w">    </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+<span class="w">  </span><span class="k">fi</span>
+<span class="k">fi</span>
+
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✅ Dependencies are consistent&quot;</span>
+</code></pre></div>
+<p><strong>功能说明</strong>:
+- 自动运行 <code>pip check</code> 检测循环依赖和版本冲突
+- 验证 <code>.lock</code> 文件是否是最新生成的
+- 忽略头部注释差异，避免误报</p>
+<h3 id="42-github-workflow">4.2 GitHub Workflow 详解<a class="headerlink" href="#42-github-workflow" title="Permanent link">&para;</a></h3>
+<p>位置: <code>.github/workflows/deps_guardian.yml</code></p>
+<div class="highlight"><pre><span></span><code><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Dependency Guardian</span>
+
+<span class="nt">on</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">push</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">paths</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;requirements/**&quot;</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;scripts/**&quot;</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;.github/workflows/deps_guardian.yml&quot;</span>
+<span class="w">  </span><span class="nt">pull_request</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">paths</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;requirements/**&quot;</span>
+
+<span class="nt">jobs</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">verify</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">runs-on</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ubuntu-latest</span>
+<span class="w">    </span><span class="nt">steps</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/checkout@v4</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Setup Python</span>
+<span class="w">        </span><span class="nt">uses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">actions/setup-python@v5</span>
+<span class="w">        </span><span class="nt">with</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">python-version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;3.11&quot;</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Install pip-tools</span>
+<span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pip install pip-tools</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Verify dependencies</span>
+<span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bash scripts/verify_deps.sh</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Check lock files</span>
+<span class="w">        </span><span class="nt">run</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">|</span>
+<span class="w">          </span><span class="no">pip check</span>
+<span class="w">          </span><span class="no">echo &quot;✅ All dependencies verified&quot;</span>
+</code></pre></div>
+<p><strong>触发条件</strong>:
+- 修改 <code>requirements/</code> 目录下任何文件
+- 修改 <code>scripts/verify_deps.sh</code>
+- 修改工作流文件本身</p>
+<p><strong>执行逻辑</strong>:
+1. 设置 Python 3.11 环境
+2. 安装 pip-tools
+3. 运行验证脚本
+4. 失败时 PR 自动标记为错误状态</p>
+<h3 id="43-makefile">4.3 Makefile 命令参考<a class="headerlink" href="#43-makefile" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>命令</th>
+<th>功能</th>
+<th>使用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>make install</code></td>
+<td>安装锁定依赖</td>
+<td>新环境初始化</td>
+</tr>
+<tr>
+<td><code>make install-locked</code></td>
+<td>可重现构建</td>
+<td>CI/CD 部署</td>
+</tr>
+<tr>
+<td><code>make lock-deps</code></td>
+<td>重新生成锁定文件</td>
+<td>依赖更新后</td>
+</tr>
+<tr>
+<td><code>make verify-deps</code></td>
+<td>本地检查一致性</td>
+<td>提交前验证</td>
+</tr>
+<tr>
+<td><code>make clean-env</code></td>
+<td>清理环境</td>
+<td>故障排查</td>
+</tr>
+<tr>
+<td><code>make env-check</code></td>
+<td>检查环境配置</td>
+<td>问题诊断</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="5">🧪 5. 安全与审计机制<a class="headerlink" href="#5" title="Permanent link">&para;</a></h2>
+<h3 id="51">5.1 安全审计流程<a class="headerlink" href="#51" title="Permanent link">&para;</a></h3>
+<h4 id="_6">安装审计工具<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>pip-audit
+</code></pre></div>
+<h4 id="_7">执行安全检查<a class="headerlink" href="#_7" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># 检查所有依赖的已知漏洞</span>
+pip-audit
+
+<span class="c1"># 检查特定环境</span>
+pip-audit<span class="w"> </span>-r<span class="w"> </span>requirements/base.lock
+
+<span class="c1"># 生成报告</span>
+pip-audit<span class="w"> </span>--format<span class="o">=</span>json<span class="w"> </span>--output<span class="o">=</span>audit-report.json
+</code></pre></div>
+<h4 id="_8">处理安全漏洞<a class="headerlink" href="#_8" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># 示例：修复 requests 包的漏洞</span>
+<span class="c1"># 1. 查找受影响的版本</span>
+pip-audit<span class="w"> </span>-v
+
+<span class="c1"># 2. 更新到安全版本</span>
+vim<span class="w"> </span>requirements/base.in<span class="w">  </span><span class="c1"># 修改 requests==2.28.1 -&gt; requests==2.31.0</span>
+
+<span class="c1"># 3. 重新生成锁定文件</span>
+make<span class="w"> </span>lock-deps
+
+<span class="c1"># 4. 验证修复</span>
+pip-audit
+</code></pre></div>
+<h3 id="52-dependabot">5.2 Dependabot 配置<a class="headerlink" href="#52-dependabot" title="Permanent link">&para;</a></h3>
+<p>创建 <code>.github/dependabot.yml</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="nt">updates</span><span class="p">:</span>
+<span class="w">  </span><span class="c1"># Python 依赖更新</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">package-ecosystem</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;pip&quot;</span>
+<span class="w">    </span><span class="nt">directory</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/requirements&quot;</span>
+<span class="w">    </span><span class="nt">schedule</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">interval</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;weekly&quot;</span>
+<span class="w">      </span><span class="nt">day</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;monday&quot;</span>
+<span class="w">      </span><span class="nt">time</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;09:00&quot;</span>
+<span class="w">    </span><span class="nt">open-pull-requests-limit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<span class="w">    </span><span class="nt">reviewers</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;tech-lead&quot;</span>
+<span class="w">    </span><span class="nt">assignees</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;maintainer&quot;</span>
+<span class="w">    </span><span class="nt">commit-message</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">prefix</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;chore&quot;</span>
+<span class="w">      </span><span class="nt">include</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;scope&quot;</span>
+<span class="w">    </span><span class="c1"># 允许自动合并补丁版本</span>
+<span class="w">    </span><span class="nt">auto-merge</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">    </span><span class="c1"># 忽略某些包的更新</span>
+<span class="w">    </span><span class="nt">ignore</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">dependency-name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;redis&quot;</span>
+<span class="w">        </span><span class="nt">versions</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&quot;5.x&quot;</span><span class="p p-Indicator">]</span>
+
+<span class="w">  </span><span class="c1"># GitHub Actions 更新</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">package-ecosystem</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;github-actions&quot;</span>
+<span class="w">    </span><span class="nt">directory</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/&quot;</span>
+<span class="w">    </span><span class="nt">schedule</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">interval</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;monthly&quot;</span>
+</code></pre></div>
+<h3 id="53">5.3 风险防护策略<a class="headerlink" href="#53" title="Permanent link">&para;</a></h3>
+<h4 id="_9">版本锁定策略<a class="headerlink" href="#_9" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="nt">生产环境</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">使用精确版本 (==)</span>
+<span class="nt">开发环境</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">使用精确版本 (==)</span>
+<span class="nt">测试环境</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">使用精确版本 (==)</span>
+</code></pre></div>
+<h4 id="_10">包审查清单<a class="headerlink" href="#_10" title="Permanent link">&para;</a></h4>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> 是否真的需要这个包？</li>
+<li class="task-list-item"><input type="checkbox" disabled/> 是否有更轻量的替代方案？</li>
+<li class="task-list-item"><input type="checkbox" disabled/> 包的维护状态是否活跃？</li>
+<li class="task-list-item"><input type="checkbox" disabled/> 是否有已知的安全漏洞？</li>
+<li class="task-list-item"><input type="checkbox" disabled/> 许可证是否兼容？</li>
+</ul>
+<h4 id="_11">禁用策略<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># .gitignore 中添加</span>
+requirements.txt
+!requirements/*.in
+!requirements/*.lock
+
+<span class="c1"># pre-commit hook 中检查</span>
+-<span class="w"> </span>repo:<span class="w"> </span><span class="nb">local</span>
+<span class="w">  </span>hooks:
+<span class="w">    </span>-<span class="w"> </span>id:<span class="w"> </span>no-requirements-txt
+<span class="w">      </span>name:<span class="w"> </span>禁止<span class="w"> </span>requirements.txt
+<span class="w">      </span>entry:<span class="w"> </span><span class="p">|</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-f<span class="w"> </span>requirements.txt<span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">          </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;❌ 请使用 requirements/ 目录结构&quot;</span>
+<span class="w">          </span><span class="nb">exit</span><span class="w"> </span><span class="m">1</span>
+<span class="w">        </span><span class="k">fi</span>
+<span class="w">      </span>language:<span class="w"> </span>system
+</code></pre></div>
+<hr />
+<h2 id="6">📆 6. 定期维护计划<a class="headerlink" href="#6" title="Permanent link">&para;</a></h2>
+<h3 id="61">6.1 维护矩阵<a class="headerlink" href="#61" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>周期</th>
+<th>任务</th>
+<th>负责人</th>
+<th>工具</th>
+<th>检查项</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>每日</strong></td>
+<td><code>make verify-deps</code></td>
+<td>所有开发者</td>
+<td>本地</td>
+<td>依赖一致性</td>
+</tr>
+<tr>
+<td><strong>每周</strong></td>
+<td>Dependabot PR 审查</td>
+<td>Tech Lead</td>
+<td>GitHub</td>
+<td>依赖更新</td>
+</tr>
+<tr>
+<td><strong>每月</strong></td>
+<td><code>pip-audit</code> + <code>make lock-deps</code></td>
+<td>维护者</td>
+<td>CI</td>
+<td>安全漏洞</td>
+</tr>
+<tr>
+<td><strong>每季度</strong></td>
+<td>依赖树审查</td>
+<td>架构组</td>
+<td>手动</td>
+<td>废包清理</td>
+</tr>
+<tr>
+<td><strong>每半年</strong></td>
+<td>Python 版本兼容性</td>
+<td>架构组</td>
+<td>CI</td>
+<td>重大升级</td>
+</tr>
+</tbody>
+</table>
+<h3 id="62">6.2 月度维护脚本<a class="headerlink" href="#62" title="Permanent link">&para;</a></h3>
+<p>创建 <code>scripts/monthly_deps_check.sh</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="ch">#!/usr/bin/env bash</span>
+<span class="nb">set</span><span class="w"> </span>-e
+
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;🗓️  Monthly Dependency Maintenance&quot;</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;==================================&quot;</span>
+
+<span class="c1"># 1. 检查安全漏洞</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;1. Checking security vulnerabilities...&quot;</span>
+pip-audit<span class="w"> </span>-r<span class="w"> </span>requirements/requirements.lock<span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">true</span>
+
+<span class="c1"># 2. 更新依赖（可选）</span>
+<span class="nb">read</span><span class="w"> </span>-p<span class="w"> </span><span class="s2">&quot;2. Update dependencies? (y/N): &quot;</span><span class="w"> </span>-n<span class="w"> </span><span class="m">1</span><span class="w"> </span>-r
+<span class="nb">echo</span>
+<span class="k">if</span><span class="w"> </span><span class="o">[[</span><span class="w"> </span><span class="nv">$REPLY</span><span class="w"> </span><span class="o">=</span>~<span class="w"> </span>^<span class="o">[</span>Yy<span class="o">]</span>$<span class="w"> </span><span class="o">]]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<span class="w">  </span>make<span class="w"> </span>lock-deps
+<span class="k">fi</span>
+
+<span class="c1"># 3. 运行完整测试</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;3. Running full test suite...&quot;</span>
+make<span class="w"> </span><span class="nb">test</span>
+
+<span class="c1"># 4. 生成报告</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;4. Generating dependency report...&quot;</span>
+pip<span class="w"> </span>list<span class="w"> </span>--format<span class="o">=</span>freeze<span class="w"> </span>&gt;<span class="w"> </span>deps-report-<span class="k">$(</span>date<span class="w"> </span>+%Y%m<span class="k">)</span>.txt
+
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✅ Monthly maintenance completed!&quot;</span>
+</code></pre></div>
+<h3 id="63">6.3 季度审查清单<a class="headerlink" href="#63" title="Permanent link">&para;</a></h3>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> 依赖数量趋势（是否过多）</li>
+<li class="task-list-item"><input type="checkbox" disabled/> 包大小统计（是否过大）</li>
+<li class="task-list-item"><input type="checkbox" disabled/> 启动时间影响</li>
+<li class="task-list-item"><input type="checkbox" disabled/> 许可证合规检查</li>
+<li class="task-list-item"><input type="checkbox" disabled/> 替代方案调研</li>
+<li class="task-list-item"><input type="checkbox" disabled/> 技术债务评估</li>
+</ul>
+<hr />
+<h2 id="7">🧭 7. 故障排查指南<a class="headerlink" href="#7" title="Permanent link">&para;</a></h2>
+<h3 id="71">7.1 常见问题诊断<a class="headerlink" href="#71" title="Permanent link">&para;</a></h3>
+<h4 id="1-pip-check">问题 1: pip check 报错<a class="headerlink" href="#1-pip-check" title="Permanent link">&para;</a></h4>
+<p><strong>症状</strong>:
+<div class="highlight"><pre><span></span><code>ERROR: pip&#39;s dependency resolver does not currently take into account all the packages that are installed...
+</code></pre></div></p>
+<p><strong>处理步骤</strong>:
+<div class="highlight"><pre><span></span><code><span class="c1"># 1. 检查具体冲突</span>
+pip<span class="w"> </span>check
+
+<span class="c1"># 2. 重新生成锁定文件</span>
+make<span class="w"> </span>lock-deps
+
+<span class="c1"># 3. 同步环境</span>
+pip-sync<span class="w"> </span>requirements/requirements.lock
+
+<span class="c1"># 4. 验证修复</span>
+pip<span class="w"> </span>check
+</code></pre></div></p>
+<h4 id="2-ci-deps_guardianyml">问题 2: CI 失败 - deps_guardian.yml<a class="headerlink" href="#2-ci-deps_guardianyml" title="Permanent link">&para;</a></h4>
+<p><strong>症状</strong>:
+<div class="highlight"><pre><span></span><code>⚠️  base.lock 与 base.in 不一致，请执行 make lock-deps
+</code></pre></div></p>
+<p><strong>处理步骤</strong>:
+<div class="highlight"><pre><span></span><code><span class="c1"># 1. 检查差异</span>
+git<span class="w"> </span>diff<span class="w"> </span>requirements/base.in<span class="w"> </span>requirements/base.lock
+
+<span class="c1"># 2. 本地重新生成</span>
+make<span class="w"> </span>lock-deps
+
+<span class="c1"># 3. 提交更新</span>
+git<span class="w"> </span>add<span class="w"> </span>requirements/
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;fix(deps): sync lock files with in files&quot;</span>
+</code></pre></div></p>
+<h4 id="3_1">问题 3: 虚拟环境激活失败<a class="headerlink" href="#3_1" title="Permanent link">&para;</a></h4>
+<p><strong>症状</strong>:
+<div class="highlight"><pre><span></span><code>ModuleNotFoundError: No module named &#39;redis&#39;
+</code></pre></div></p>
+<p><strong>处理步骤</strong>:
+<div class="highlight"><pre><span></span><code><span class="c1"># 1. 检查环境</span>
+which<span class="w"> </span>python
+python<span class="w"> </span>--version
+
+<span class="c1"># 2. 重新激活</span>
+<span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+
+<span class="c1"># 3. 重新安装</span>
+make<span class="w"> </span>install
+
+<span class="c1"># 4. 验证</span>
+python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import redis; print(redis.__version__)&quot;</span>
+</code></pre></div></p>
+<h4 id="4_1">问题 4: 依赖版本冲突<a class="headerlink" href="#4_1" title="Permanent link">&para;</a></h4>
+<p><strong>症状</strong>:
+<div class="highlight"><pre><span></span><code>ERROR: Package &#39;package-a&#39; requires &#39;package-b&gt;=2.0&#39;, but you have &#39;package-b 1.9&#39;...
+</code></pre></div></p>
+<p><strong>处理步骤</strong>:
+<div class="highlight"><pre><span></span><code><span class="c1"># 1. 查看依赖树</span>
+pip<span class="w"> </span>show<span class="w"> </span>package-b
+
+<span class="c1"># 2. 找出冲突方</span>
+pip<span class="w"> </span>depends<span class="w"> </span>package-a
+
+<span class="c1"># 3. 更新 .in 文件</span>
+vim<span class="w"> </span>requirements/base.in
+
+<span class="c1"># 4. 重新解析</span>
+make<span class="w"> </span>lock-deps
+</code></pre></div></p>
+<h3 id="72">7.2 应急处理流程<a class="headerlink" href="#72" title="Permanent link">&para;</a></h3>
+<h4 id="_12">生产环境依赖问题<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># 1. 快速回滚</span>
+git<span class="w"> </span>checkout<span class="w"> </span>previous-stable-tag
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements/base.lock
+
+<span class="c1"># 2. 问题定位</span>
+pip<span class="w"> </span>freeze<span class="w"> </span>&gt;<span class="w"> </span>current-deps.txt
+diff<span class="w"> </span>current-deps.txt<span class="w"> </span>requirements/base.lock
+
+<span class="c1"># 3. 修复后验证</span>
+make<span class="w"> </span>verify-deps
+</code></pre></div>
+<h4 id="_13">大规模依赖更新<a class="headerlink" href="#_13" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># 1. 创建分支</span>
+git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>deps/major-update-<span class="k">$(</span>date<span class="w"> </span>+%Y%m<span class="k">)</span>
+
+<span class="c1"># 2. 更新核心依赖</span>
+vim<span class="w"> </span>requirements/base.in
+
+<span class="c1"># 3. 逐步更新锁定文件</span>
+make<span class="w"> </span>lock-deps
+
+<span class="c1"># 4. 全面测试</span>
+make<span class="w"> </span><span class="nb">test</span>
+make<span class="w"> </span>integration-test
+
+<span class="c1"># 5. 创建 PR</span>
+git<span class="w"> </span>push<span class="w"> </span>origin<span class="w"> </span>deps/major-update-<span class="k">$(</span>date<span class="w"> </span>+%Y%m<span class="k">)</span>
+</code></pre></div>
+<hr />
+<h2 id="8">📚 8. 附录<a class="headerlink" href="#8" title="Permanent link">&para;</a></h2>
+<h3 id="81">8.1 依赖生命周期图<a class="headerlink" href="#81" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>编辑阶段:
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│ 编辑 .in 文件│───▶│ make        │───▶│ 生成 .lock  │
+│ 指定版本     │    │ lock-deps   │    │ 文件        │
+└─────────────┘    └─────────────┘    └─────────────┘
+                                             │
+验证阶段:                                    ▼
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│ 提交到仓库   │───▶│ CI 自动验证  │◀───│ make        │
+│ 触发 GitHub │    │ 阻止错误提交 │    │ verify-deps │
+│ Actions     │    │             │    │             │
+└─────────────┘    └─────────────┘    └─────────────┘
+                                             │
+使用阶段:                                    ▼
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│ 各环境安装   │◀───│ pip install │◀───│ .lock 文件   │
+│ 确保一致性   │    │ -r lockfile │    │ 版本精确     │
+└─────────────┘    └─────────────┘    └─────────────┘
+</code></pre></div>
+<h3 id="82-makefile">8.2 Makefile 完整目标列表<a class="headerlink" href="#82-makefile" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c"># 环境管理</span>
+<span class="err">make</span><span class="w"> </span><span class="err">venv</span><span class="w">           </span><span class="c"># 创建虚拟环境</span>
+<span class="err">make</span><span class="w"> </span><span class="err">install</span><span class="w">        </span><span class="c"># 安装依赖</span>
+<span class="err">make</span><span class="w"> </span><span class="err">install-locked</span><span class="w"> </span><span class="c"># 可重现安装</span>
+<span class="err">make</span><span class="w"> </span><span class="err">clean-env</span><span class="w">      </span><span class="c"># 清理环境</span>
+
+<span class="c"># 依赖管理</span>
+<span class="err">make</span><span class="w"> </span><span class="err">lock-deps</span><span class="w">      </span><span class="c"># 锁定依赖</span>
+<span class="err">make</span><span class="w"> </span><span class="err">verify-deps</span><span class="w">    </span><span class="c"># 验证一致性</span>
+<span class="err">make</span><span class="w"> </span><span class="err">check-deps</span><span class="w">     </span><span class="c"># 检查必需依赖</span>
+
+<span class="c"># 测试相关</span>
+<span class="err">make</span><span class="w"> </span><span class="err">test-quick</span><span class="w">     </span><span class="c"># 快速测试</span>
+<span class="err">make</span><span class="w"> </span><span class="err">test</span><span class="w">           </span><span class="c"># 完整测试</span>
+<span class="err">make</span><span class="w"> </span><span class="err">coverage</span><span class="w">       </span><span class="c"># 覆盖率测试</span>
+
+<span class="c"># 代码质量</span>
+<span class="err">make</span><span class="w"> </span><span class="err">fmt</span><span class="w">            </span><span class="c"># 格式化代码</span>
+<span class="err">make</span><span class="w"> </span><span class="err">lint</span><span class="w">           </span><span class="c"># 代码检查</span>
+<span class="err">make</span><span class="w"> </span><span class="err">type-check</span><span class="w">     </span><span class="c"># 类型检查</span>
+<span class="err">make</span><span class="w"> </span><span class="err">prepush</span><span class="w">        </span><span class="c"># 提交前检查</span>
+</code></pre></div>
+<h3 id="83">8.3 命令速查表<a class="headerlink" href="#83" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>命令</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>新环境</strong></td>
+<td><code>make install</code></td>
+<td>安装所有依赖</td>
+</tr>
+<tr>
+<td><strong>添加包</strong></td>
+<td><code>echo "pkg==1.0" &gt;&gt; requirements/base.in &amp;&amp; make lock-deps</code></td>
+<td>添加新依赖</td>
+</tr>
+<tr>
+<td><strong>更新包</strong></td>
+<td><code>vim requirements/base.in &amp;&amp; make lock-deps</code></td>
+<td>更新版本</td>
+</tr>
+<tr>
+<td><strong>检查</strong></td>
+<td><code>make verify-deps</code></td>
+<td>验证一致性</td>
+</tr>
+<tr>
+<td><strong>审计</strong></td>
+<td><code>pip-audit</code></td>
+<td>安全检查</td>
+</tr>
+<tr>
+<td><strong>清理</strong></td>
+<td><code>make clean-env</code></td>
+<td>重置环境</td>
+</tr>
+<tr>
+<td><strong>测试</strong></td>
+<td><code>make test-quick</code></td>
+<td>运行测试</td>
+</tr>
+</tbody>
+</table>
+<h3 id="84">8.4 优秀实践示例<a class="headerlink" href="#84" title="Permanent link">&para;</a></h3>
+<h4 id="_14">语义化提交信息<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code>chore<span class="o">(</span>deps<span class="o">)</span>:<span class="w"> </span>add<span class="w"> </span>pytest-cov<span class="w"> </span><span class="k">for</span><span class="w"> </span>coverage<span class="w"> </span>reporting
+chore<span class="o">(</span>deps<span class="o">)</span>:<span class="w"> </span>update<span class="w"> </span>fastapi<span class="w"> </span>from<span class="w"> </span><span class="m">0</span>.104.0<span class="w"> </span>to<span class="w"> </span><span class="m">0</span>.104.1
+fix<span class="o">(</span>deps<span class="o">)</span>:<span class="w"> </span>resolve<span class="w"> </span>redis<span class="w"> </span>compatibility<span class="w"> </span>issue
+chore<span class="o">(</span>deps<span class="o">)</span>!:<span class="w"> </span>upgrade<span class="w"> </span>python<span class="w"> </span>from<span class="w"> </span><span class="m">3</span>.10<span class="w"> </span>to<span class="w"> </span><span class="m">3</span>.11<span class="w">  </span><span class="c1"># 破坏性更新</span>
+</code></pre></div>
+<h4 id="_15">依赖分组管理<a class="headerlink" href="#_15" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># requirements/base.in</span>
+<span class="c1"># Core framework</span>
+<span class="na">fastapi</span><span class="o">=</span><span class="s">=0.115.6</span>
+<span class="na">uvicorn[standard]</span><span class="o">=</span><span class="s">=0.34.0</span>
+
+<span class="c1"># Database</span>
+<span class="na">sqlalchemy</span><span class="o">=</span><span class="s">=2.0.36</span>
+<span class="na">alembic</span><span class="o">=</span><span class="s">=1.16.5</span>
+
+<span class="c1"># Cache</span>
+<span class="na">redis</span><span class="o">=</span><span class="s">=5.0.1</span>
+<span class="na">aioredis</span><span class="o">=</span><span class="s">=2.0.1</span>
+
+<span class="c1"># Authentication</span>
+<span class="na">python-jose[cryptography]</span><span class="o">=</span><span class="s">=3.3.0</span>
+<span class="na">passlib[bcrypt]</span><span class="o">=</span><span class="s">=1.7.4</span>
+</code></pre></div>
+<h3 id="85">8.5 故障恢复脚本<a class="headerlink" href="#85" title="Permanent link">&para;</a></h3>
+<p>创建 <code>scripts/emergency_deps_recovery.sh</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="ch">#!/usr/bin/env bash</span>
+<span class="nb">set</span><span class="w"> </span>-e
+
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;🚨 Emergency Dependency Recovery&quot;</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;================================&quot;</span>
+
+<span class="c1"># 1. 备份当前状态</span>
+pip<span class="w"> </span>freeze<span class="w"> </span>&gt;<span class="w"> </span>emergency-backup-<span class="k">$(</span>date<span class="w"> </span>+%Y%m%d-%H%M%S<span class="k">)</span>.txt
+
+<span class="c1"># 2. 清理环境</span>
+deactivate<span class="w"> </span><span class="m">2</span>&gt;/dev/null<span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nb">true</span>
+rm<span class="w"> </span>-rf<span class="w"> </span>.venv
+
+<span class="c1"># 3. 重建环境</span>
+python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv
+<span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+
+<span class="c1"># 4. 安装基础工具</span>
+pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>pip<span class="w"> </span>pip-tools
+
+<span class="c1"># 5. 重新生成所有锁定文件</span>
+make<span class="w"> </span>lock-deps
+
+<span class="c1"># 6. 安装依赖</span>
+make<span class="w"> </span>install
+
+<span class="c1"># 7. 验证</span>
+make<span class="w"> </span>verify-deps
+
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;✅ Emergency recovery completed!&quot;</span>
+</code></pre></div>
+<hr />
+<h2 id="9">🏁 9. 总结<a class="headerlink" href="#9" title="Permanent link">&para;</a></h2>
+<h3 id="91">9.1 成果回顾<a class="headerlink" href="#91" title="Permanent link">&para;</a></h3>
+<p>通过实施本指南，我们已经实现了：</p>
+<ul>
+<li>✅ <strong>零依赖冲突</strong>: 自动化防御机制确保依赖一致性</li>
+<li>✅ <strong>环境一致性</strong>: 开发、测试、生产环境完全同步</li>
+<li>✅ <strong>安全防护</strong>: 定期审计和 CVE 检测</li>
+<li>✅ <strong>流程标准化</strong>: 清晰的更新和维护流程</li>
+<li>✅ <strong>自动化</strong>: CI/CD 集成的自动验证</li>
+</ul>
+<h3 id="92">9.2 团队责任<a class="headerlink" href="#92" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>开发者</strong>:</li>
+<li>遵循依赖添加流程</li>
+<li>提交前运行 <code>make verify-deps</code></li>
+<li>
+<p>及时处理 Dependabot PR</p>
+</li>
+<li>
+<p><strong>维护者</strong>:</p>
+</li>
+<li>执行月度安全审计</li>
+<li>审核依赖更新请求</li>
+<li>
+<p>维护文档更新</p>
+</li>
+<li>
+<p><strong>架构师</strong>:</p>
+</li>
+<li>制定依赖策略</li>
+<li>评估新技术栈</li>
+<li>规划重大升级</li>
+</ol>
+<h3 id="93">9.3 持续改进<a class="headerlink" href="#93" title="Permanent link">&para;</a></h3>
+<p>本指南是活文档，需要根据实际情况持续更新：
+- 新工具的引入
+- 流程的优化
+- 经验的积累
+- 反馈的收集</p>
+<h3 id="94">9.4 联系方式<a class="headerlink" href="#94" title="Permanent link">&para;</a></h3>
+<p>如有问题或建议，请：
+1. 创建 Issue 进行讨论
+2. 在团队会议上提出
+3. 直接联系维护团队</p>
+<hr />
+<p><strong>记住：依赖管理不是一次性任务，而是持续的过程。让我们一起维护一个稳定、安全、高效的开发环境！</strong> 🚀</p>
+<hr />
+<p><em>本文档最后更新：2025-01-04</em>
+<em>下次审查日期：2025-04-04</em></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+
+  <!-- 添加页面导航助手 -->
+  
+
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  回到页面顶部
+</button>
+        
+      </main>
+      
+  
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2025 Football Prediction Team
+    </div>
+  
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+
+  <!-- 自定义页脚内容 -->
+  <footer class="md-footer-meta">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        <div class="md-footer-copyright__highlight">
+          © 2025 Football Prediction Team -
+          基于 <a href="https://www.mkdocs.org/">MkDocs</a> 和
+          <a href="https://squidfunk.github.io/mkdocs-material/">Material for MkDocs</a> 构建
+        </div>
+        <div class="md-footer-copyright__small">
+          文档最后更新: 2025-10-23 |
+          版本: v1.0.0
+        </div>
+      </div>
+
+      <!-- 社交链接 (暂时注释掉) -->
+      <!--
+      <div class="md-footer-social">
+        
+      </div>
+      -->
+    </div>
+  </footer>
+
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": ["announce.dismiss", "content.action.edit", "content.action.view", "content.code.annotate", "content.code.copy", "content.code.select", "content.tabs.link", "content.tooltips", "header.autohide", "navigation.expand", "navigation.footer", "navigation.indexes", "navigation.instant", "navigation.instant.prefetch", "navigation.instant.progress", "navigation.prune", "navigation.sections", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.tracking", "search.highlight", "search.share", "search.suggest", "toc.follow", "toc.integrate"], "search": "../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}}</script>
+    
+    
+  
+      <script src="../../assets/javascripts/bundle.88dd0f4e.min.js"></script>
+      
+    
+
+  <!-- Google Analytics (配置为静态值) -->
+  <!--
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-XXXXX-X"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'UA-XXXXX-X');
+  </script>
+  -->
+
+  </body>
+</html>

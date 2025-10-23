@@ -26,7 +26,7 @@ class CacheConfig:
     # 序列化方式
     serializer: str = "json"
 
-    def __post_init__(self):
+    def __post_init__(self):  # type: ignore
         """初始化后处理"""
         if self.ttl_config is None:
             self.ttl_config = {

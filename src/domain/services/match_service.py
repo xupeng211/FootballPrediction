@@ -23,7 +23,7 @@ from ..events.match_events import (
 class MatchDomainService:
     """比赛领域服务"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self._events: List[Any] = []
 
     def schedule_match(

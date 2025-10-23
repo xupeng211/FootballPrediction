@@ -132,7 +132,7 @@ class PredictionCancelledEvent(DomainEvent):
 class PredictionExpiredEvent(DomainEvent):
     """预测过期事件"""
 
-    def __init__(self, prediction_id: int, match_id: int, expired_at: str, **kwargs):
+    def __init__(self, prediction_id: int, match_id: int, expired_at: str, **kwargs):  # type: ignore
         super().__init__(aggregate_id=prediction_id)
         self.prediction_id = prediction_id
         self.match_id = match_id

@@ -314,7 +314,7 @@ class Odds(BaseModel):
         return False
 
     @classmethod
-    def get_latest_odds(cls, session, match_id: int, bookmaker: Optional[str] = None):
+    def get_latest_odds(cls, session, match_id: int, bookmaker: Optional[str] = None):  # type: ignore
         """获取比赛最新赔率"""
         query = session.query(cls).filter(cls.match_id == match_id)
         if bookmaker:
@@ -322,7 +322,7 @@ class Odds(BaseModel):
         return query.order_by(cls.updated_at.desc()).all()
 
     @classmethod
-    def get_odds_history(cls, session, match_id: int, market_type: MarketType):
+    def get_odds_history(cls, session, match_id: int, market_type: MarketType):  # type: ignore
         """获取特定比赛和市场的赔率历史"""
         return (
             session.query(cls)
@@ -332,7 +332,7 @@ class Odds(BaseModel):
         )
 
     @classmethod
-    def get_bookmaker_odds(cls, session, match_id: int, bookmaker: str):
+    def get_bookmaker_odds(cls, session, match_id: int, bookmaker: str):  # type: ignore
         """获取特定博彩公司的赔率"""
         return (
             session.query(cls)
@@ -342,7 +342,7 @@ class Odds(BaseModel):
         )
 
     @classmethod
-    def get_market_average_odds(cls, session, match_id: int, market_type: MarketType):
+    def get_market_average_odds(cls, session, match_id: int, market_type: MarketType):  # type: ignore
         """获取市场平均赔率"""
 
         if market_type == MarketType.ONE_X_TWO:

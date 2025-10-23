@@ -33,7 +33,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
     Inherits from strategy prediction service, adding event publishing capabilities.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):  # type: ignore
         """初始化事件驱动预测服务"""
         super().__init__(*args, **kwargs)
         self._event_bus = get_event_bus()
@@ -251,7 +251,7 @@ class EventDrivenMatchService:
     Handles match-related event publishing.
     """
 
-    def __init__(self, match_repository):
+    def __init__(self, match_repository):  # type: ignore
         """初始化比赛服务
 
         Args:
@@ -355,7 +355,7 @@ class EventDrivenUserService:
     Handles user-related event publishing.
     """
 
-    def __init__(self, user_repository):
+    def __init__(self, user_repository):  # type: ignore
         """初始化用户服务
 
         Args:

@@ -380,6 +380,40 @@ git push
 - 添加新的最佳实践
 
 
+## 🔗 相关文档链接
+
+### 📚 测试核心文档
+- **[API测试指南](API_TESTING.md)** - API接口测试方法和工具
+- **[集成测试文档](INTEGRATION_TESTING.md)** - 集成测试策略和实施
+- **[性能测试方案](performance_tests.md)** - 性能测试和基准测试
+- **[测试用例示例](examples.md)** - 测试用例编写指南和示例
+
+### 🛠️ 开发和质量
+- **[开发指南](../reference/DEVELOPMENT_GUIDE.md)** - 开发环境搭建和编码规范
+- **[系统架构文档](../architecture/ARCHITECTURE.md)** - 完整的系统架构设计
+- **[CLAUDE.md](../../CLAUDE.md)** - AI辅助开发指导和工作流程
+- **[API文档](../reference/API_REFERENCE.md)** - REST API接口规范
+
+### 📊 覆盖率和监控
+- **[覆盖率优化报告](../_reports/active/COVERAGE_DASHBOARD.md)** - 实时覆盖率监控面板
+- **[测试优化审计](../_reports/summaries/TEST_IMPROVEMENT_AUDIT.md)** - 测试优化总结报告
+- **[监控系统](../ops/MONITORING.md)** - 监控系统配置和告警设置
+
+### 🚀 部署和CI/CD
+- **[生产部署指南](../ops/PRODUCTION_READINESS_PLAN.md)** - 生产环境部署和运维
+- **[CI Guardian系统](CI_GUARDIAN_GUIDE.md)** - CI/CD质量门禁系统
+- **[运维手册](../ops/runbooks/README.md)** - 运维操作指南和故障排除
+
+### 📖 项目资源
+- **[项目索引](../INDEX.md)** - 完整的文档导航和入口
+- **[快速开始指南](../how-to/QUICK_START.md)** - 5分钟快速上手指南
+- **[术语表](../reference/glossary.md)** - 项目专业术语和概念定义
+
+### 📋 管理和报告
+- **[测试优化看板](../_reports/active/TEST_OPTIMIZATION_KANBAN.md)** - 测试优化任务看板
+- **[测试总结报告](../_reports/summaries/TEST_SUMMARY.md)** - 测试执行情况总结
+- **[项目贡献指南](../project/CONTRIBUTING.md)** - 贡献流程和规范
+
 ---
 
 **最后更新**: 2025-01-01

@@ -1,4 +1,12 @@
 # mypy: ignore-errors
+import os
+import logging
+from sqlalchemy import text
+from alembic import context, op
+
+logger = logging.getLogger(__name__)
+
+from alembic import op
 """配置数据库权限
 
 配置三类数据库用户的权限：
@@ -29,6 +37,15 @@ def upgrade() -> None:
         # 在离线模式下执行注释，确保 SQL 生成正常
         op.execute("-- offline mode: skipped database user creation")
         op.execute("-- offline mode: skipped database permission configuration")
+        return
+
+    # 检查是否在SQLite环境中（测试环境）
+    connection = op.get_bind()
+    db_dialect = connection.dialect.name.lower()
+
+    if db_dialect == 'sqlite':
+        logger.info("⚠️  SQLite环境：跳过PostgreSQL权限配置")
+        op.execute("-- SQLite environment: skipped PostgreSQL permission configuration")
         return
 
     # 获取数据库连接
@@ -364,6 +381,15 @@ def downgrade() -> None:
 
         op.execute("-- offline mode: skipped database permission rollback")
         op.execute("-- offline mode: skipped database user deletion")
+        return
+
+    # 检查是否在SQLite环境中（测试环境）
+    connection = op.get_bind()
+    db_dialect = connection.dialect.name.lower()
+
+    if db_dialect == 'sqlite':
+        logger.info("⚠️  SQLite环境：跳过PostgreSQL权限回滚")
+        op.execute("-- SQLite environment: skipped PostgreSQL permission rollback")
         return
 
     # 获取数据库连接
