@@ -140,7 +140,7 @@ def api_client():
 
 
 @pytest.fixture
-def api_client_full(test_db, test_redis_client):
+def api_client_full(test_db, test_redis_):
     """完整API客户端fixture（包含数据库和Redis）"""
     from fastapi.testclient import TestClient
 
