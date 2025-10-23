@@ -21,7 +21,15 @@ from dotenv import load_dotenv
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import JWTError, jwt
+try:
+    from jose import JWTError, jwt
+except ImportError:
+    # 如果没有安装python-jose，提供一个简单的占位符
+    class JWTError(Exception):
+        pass
+
+    def jwt(*args, **kwargs):
+        raise ImportError("Please install python-jose: pip install python-jose")
 from src.core.prediction_engine import PredictionEngine
 from src.core.logger import get_logger
 
