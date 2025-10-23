@@ -119,7 +119,7 @@ class TestAPIDependenciesEnhanced:
 
     # === Redis客户端依赖测试 ===
 
-    def test_get_redis_client_success(self, mock_redis_client):
+    def test_get_redis_client_success(self, mock_redis_):
         """测试获取Redis客户端成功"""
         with patch("src.api.dependencies.redis_client", mock_redis_client):
             client = get_redis_client()

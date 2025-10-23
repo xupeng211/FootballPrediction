@@ -37,7 +37,7 @@ class TestKafkaAdminClient:
         return admin
 
     @pytest.fixture
-    def admin_client(self, mock_admin_client):
+    def admin_client(self, mock_admin_):
         """创建管理客户端实例"""
         with patch("aiokafka.AIOKafkaAdminClient", return_value=mock_admin_client):
             client = KafkaAdminClient(bootstrap_servers=["localhost:9092"])
