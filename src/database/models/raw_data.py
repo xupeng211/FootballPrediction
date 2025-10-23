@@ -6,6 +6,16 @@ from ..base import BaseModel
 from ..types import JsonbType
 
 
+class RawData(BaseModel):
+    """原始数据基类"""
+    __abstract__ = True
+
+    id = Column(Integer, primary_key=True)
+    source = Column(String(100))
+    raw_data = Column(JsonbType)
+    created_at = Column(DateTime, default=func.now())
+
+
 """
 Bronze层原始数据模型
 
