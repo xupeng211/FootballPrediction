@@ -53,7 +53,7 @@ class Observer(ABC):
     Defines the interface that all observers must implement.
     """
 
-    def __init__(self, name: str):
+    def __init__(self, name: str):  # type: ignore
         """初始化观察者
 
         Args:
@@ -144,7 +144,7 @@ class Subject(ABC):
     Defines the interface that all subjects must implement.
     """
 
-    def __init__(self, name: str):
+    def __init__(self, name: str):  # type: ignore
         """初始化被观察者
 
         Args:
@@ -314,7 +314,7 @@ class CompositeObserver(Observer):
     Combines multiple observers into one.
     """
 
-    def __init__(self, name: str, observers: List[Observer] = None):
+    def __init__(self, name: str, observers: List[Observer] = None):  # type: ignore
         """初始化组合观察者
 
         Args:

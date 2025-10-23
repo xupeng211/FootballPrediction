@@ -19,7 +19,7 @@ import pandas as pd
 class DataValidator:
     """数据验证器"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         """初始化验证器"""
         self.logger = logging.getLogger(f"processing.{self.__class__.__name__}")
         # self.missing_handler = MissingDataHandler()

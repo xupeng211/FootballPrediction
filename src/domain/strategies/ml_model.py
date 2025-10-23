@@ -7,7 +7,7 @@ Strategy implementation using machine learning models for prediction.
 """
 
 import time
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Type
 import numpy as np
 from datetime import datetime
 import logging
@@ -29,7 +29,7 @@ class MLModelStrategy(PredictionStrategy):
     Uses trained machine learning models for match prediction.
     """
 
-    def __init__(self, model_name: str = "default_ml_model"):
+    def __init__(self, model_name: str = "default_ml_model"):  # type: ignore
         super().__init__(model_name, StrategyType.ML_MODEL)
         self._model = None
         self._feature_processor = None
@@ -352,7 +352,7 @@ class MLModelStrategy(PredictionStrategy):
             predicted_away_score=pred_away,
             confidence=confidence,
             probability_distribution=probability_distribution,
-            metadata ={
+            metadata={
                 "model_version": self._model_version,
                 "model_loaded_at": self._model_loaded_at.isoformat()
                 if self._model_loaded_at

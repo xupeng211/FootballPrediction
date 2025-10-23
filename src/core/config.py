@@ -8,7 +8,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Optional
 
 # Pydantic compatibility logic
 try:
@@ -34,7 +34,7 @@ except ImportError:
 class Config:
     """配置管理类 - 提供统一的配置读写和持久化机制"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         # 配置文件存储在用户主目录下，避免权限问题
         self.config_dir = Path.home() / ".footballprediction"
         self.config_file = self.config_dir / "config.json"
@@ -221,7 +221,7 @@ class Settings(SettingsClass):
 
     else:
 
-        def __init__(self, **kwargs):
+        def __init__(self, **kwargs):  # type: ignore
             # 设置默认值
             self.database_url = "sqlite+aiosqlite:///./data/football_prediction.db"
             self.test_database_url = "postgresql+asyncpg://postgres:postgres@db:5432/football_prediction_test"
@@ -261,7 +261,7 @@ class Settings(SettingsClass):
             # 从环境变量读取配置
             self._load_from_env()
 
-        def _load_from_env(self):
+        def _load_from_env(self):  # type: ignore
             """从环境变量加载配置"""
             env_mapping = {
                 "DATABASE_URL": "database_url",

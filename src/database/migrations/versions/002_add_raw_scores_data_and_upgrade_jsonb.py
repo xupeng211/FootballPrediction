@@ -1,7 +1,12 @@
 import sqlalchemy as sa
 from sqlalchemy.exc import SQLAlchemyError, DatabaseError
+from typing import Union, Sequence
+from sqlalchemy.dialects import postgresql
 
 # mypy: ignore-errors
+import logging
+logger = logging.getLogger(__name__)
+from alembic import op
 """add_raw_scores_data_and_upgrade_jsonb
 
 
@@ -29,6 +34,10 @@ def upgrade() -> None:
     4. 创建相关索引优化查询性能
     """
 
+    # 检查是否在SQLite环境中（测试环境）
+    conn = op.get_bind()
+    db_dialect = conn.dialect.name.lower()
+
     # 1. 创建Bronze层原始比分数据表
     op.create_table(
         "raw_scores_data",
@@ -41,9 +50,9 @@ def upgrade() -> None:
         ),
         sa.Column(
             "raw_data",
-            postgresql.JSONB(astext_type=sa.Text()),
+            sa.JSON() if db_dialect == 'sqlite' else postgresql.JSONB(astext_type=sa.Text()),
             nullable=False,
-            comment="原始JSONB数据",
+            comment="原始JSON数据",
         ),
         sa.Column("collected_at", sa.DateTime(), nullable=False, comment="采集时间"),
         sa.Column(
@@ -90,107 +99,119 @@ def upgrade() -> None:
         "idx_raw_scores_data_score", "raw_scores_data", ["home_score", "away_score"]
     )
 
-    # 为JSONB字段创建GIN索引，支持高效的JSON查询
-    op.create_index(
-        "idx_raw_scores_data_jsonb_gin",
-        "raw_scores_data",
-        ["raw_data"],
-        postgresql_using="gin",
-    )
+    # 为JSONB字段创建GIN索引，支持高效的JSON查询（仅PostgreSQL）
+    if db_dialect != 'sqlite':
+        op.create_index(
+            "idx_raw_scores_data_jsonb_gin",
+            "raw_scores_data",
+            ["raw_data"],
+            postgresql_using="gin",
+        )
+    else:
+        logger.info("⚠️  SQLite环境：跳过JSONB GIN索引创建")
 
-    # 2. 升级现有表的JSON字段为JSONB
+    # 2. 升级现有表的JSON字段为JSONB（仅PostgreSQL环境）
     # 注意：这需要在实际应用时谨慎操作，可能需要数据迁移
-    try:
-        # 升级raw_match_data表
-        op.execute(
-            "ALTER TABLE raw_match_data ALTER COLUMN raw_data TYPE JSONB USING raw_data::jsonb"
-        )
-        # 为JSONB创建GIN索引
-        op.create_index(
-            "idx_raw_match_data_jsonb_gin",
-            "raw_match_data",
-            ["raw_data"],
-            postgresql_using="gin",
-        )
+    if db_dialect != 'sqlite':
+        try:
+            # 升级raw_match_data表
+            op.execute(
+                "ALTER TABLE raw_match_data ALTER COLUMN raw_data TYPE JSONB USING raw_data::jsonb"
+            )
+            # 为JSONB创建GIN索引
+            op.create_index(
+                "idx_raw_match_data_jsonb_gin",
+                "raw_match_data",
+                ["raw_data"],
+                postgresql_using="gin",
+            )
 
-        # 升级raw_odds_data表
-        op.execute(
-            "ALTER TABLE raw_odds_data ALTER COLUMN raw_data TYPE JSONB USING raw_data::jsonb"
-        )
-        # 为JSONB创建GIN索引
-        op.create_index(
-            "idx_raw_odds_data_jsonb_gin",
-            "raw_odds_data",
-            ["raw_data"],
-            postgresql_using="gin",
-        )
+            # 升级raw_odds_data表
+            op.execute(
+                "ALTER TABLE raw_odds_data ALTER COLUMN raw_data TYPE JSONB USING raw_data::jsonb"
+            )
+            # 为JSONB创建GIN索引
+            op.create_index(
+                "idx_raw_odds_data_jsonb_gin",
+                "raw_odds_data",
+                ["raw_data"],
+                postgresql_using="gin",
+            )
 
-    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
-        # 如果升级失败，记录警告但不中断迁移
-        logger.info(f"Warning: Failed to upgrade JSON to JSONB: {e}")
+        except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
+            # 如果升级失败，记录警告但不中断迁移
+            logger.info(f"Warning: Failed to upgrade JSON to JSONB: {e}")
+    else:
+        logger.info("⚠️  SQLite环境：跳过JSON到JSONB的升级")
 
     # 3. 为Bronze层表添加分区准备（按月分区）
     # 注意：实际的分区实现需要在数据库层面进行，这里只是准备工作
 
-    # 创建分区管理函数（可选，用于自动创建分区）
-    op.execute(
-        """
-    CREATE OR REPLACE FUNCTION create_monthly_partition(table_name TEXT, year_month TEXT)
-    RETURNS void AS $$
-    DECLARE
-        partition_name TEXT;
-        start_date DATE;
-        end_date DATE;
-    BEGIN
-        partition_name := table_name || '_' || year_month;
-        start_date := (year_month || '-01')::DATE;
-        end_date := start_date + INTERVAL '1 month';
+    # PostgreSQL环境：创建分区管理函数（可选，用于自动创建分区）
+    if db_dialect != 'sqlite':
+        op.execute(
+            """
+        CREATE OR REPLACE FUNCTION create_monthly_partition(table_name TEXT, year_month TEXT)
+        RETURNS void AS $$
+        DECLARE
+            partition_name TEXT;
+            start_date DATE;
+            end_date DATE;
+        BEGIN
+            partition_name := table_name || '_' || year_month;
+            start_date := (year_month || '-01')::DATE;
+            end_date := start_date + INTERVAL '1 month';
 
-        -- 创建分区表（仅作为示例，实际实现需要根据具体需求调整）
-        EXECUTE format('CREATE TABLE IF NOT EXISTS %I PARTITION OF %I
-                        FOR VALUES FROM (%L) TO (%L)',
-                       partition_name, table_name, start_date, end_date);
-    END;
-    $$ LANGUAGE plpgsql;
-    """
-    )
+            -- 创建分区表（仅作为示例，实际实现需要根据具体需求调整）
+            EXECUTE format('CREATE TABLE IF NOT EXISTS %I PARTITION OF %I
+                            FOR VALUES FROM (%L) TO (%L)',
+                           partition_name, table_name, start_date, end_date);
+        END;
+        $$ LANGUAGE plpgsql;
+        """
+        )
 
     # 4. 添加数据质量约束
-    # 为raw_scores_data添加检查约束
-    op.create_check_constraint(
-        "ck_raw_scores_data_scores_range",
-        "raw_scores_data",
-        "home_score >= 0 AND home_score <= 99 AND away_score >= 0 AND away_score <= 99",
-    )
+    if db_dialect != 'sqlite':
+        # 为raw_scores_data添加检查约束（PostgreSQL环境）
+        op.create_check_constraint(
+            "ck_raw_scores_data_scores_range",
+            "raw_scores_data",
+            "home_score >= 0 AND home_score <= 99 AND away_score >= 0 AND away_score <= 99",
+        )
 
-    op.create_check_constraint(
-        "ck_raw_scores_data_minute_range",
-        "raw_scores_data",
-        "match_minute IS NULL OR (match_minute >= 0 AND match_minute <= 150)",
-    )
+        op.create_check_constraint(
+            "ck_raw_scores_data_minute_range",
+            "raw_scores_data",
+            "match_minute IS NULL OR (match_minute >= 0 AND match_minute <= 150)",
+        )
+    else:
+        # SQLite环境：跳过约束添加
+        logger.info("⚠️  SQLite环境：跳过检查约束添加")
 
     # 5. 添加触发器自动更新updated_at字段
-    op.execute(
+    if db_dialect != 'sqlite':
+        op.execute(
+            """
+        CREATE OR REPLACE FUNCTION update_updated_at_column()
+        RETURNS TRIGGER AS $$
+        BEGIN
+            NEW.updated_at = CURRENT_TIMESTAMP;
+            RETURN NEW;
+        END;
+        $$ LANGUAGE plpgsql;
         """
-    CREATE OR REPLACE FUNCTION update_updated_at_column()
-    RETURNS TRIGGER AS $$
-    BEGIN
-        NEW.updated_at = CURRENT_TIMESTAMP;
-        RETURN NEW;
-    END;
-    $$ LANGUAGE plpgsql;
-    """
-    )
+        )
 
-    # 为raw_scores_data表创建更新时间触发器
-    op.execute(
+        # 为raw_scores_data表创建更新时间触发器
+        op.execute(
+            """
+        CREATE TRIGGER trigger_raw_scores_data_updated_at
+            BEFORE UPDATE ON raw_scores_data
+            FOR EACH ROW
+            EXECUTE FUNCTION update_updated_at_column();
         """
-    CREATE TRIGGER trigger_raw_scores_data_updated_at
-        BEFORE UPDATE ON raw_scores_data
-        FOR EACH ROW
-        EXECUTE FUNCTION update_updated_at_column();
-    """
-    )
+        )
 
 
 def downgrade() -> None:
@@ -198,16 +219,27 @@ def downgrade() -> None:
     回滚raw_scores_data表和JSONB升级的更改
     """
 
-    # 删除触发器和函数
-    op.execute(
-        "DROP TRIGGER IF EXISTS trigger_raw_scores_data_updated_at ON raw_scores_data"
-    )
+    # 检查数据库方言
+    conn = op.get_bind()
+    db_dialect = conn.dialect.name.lower()
 
-    op.execute("DROP FUNCTION IF EXISTS update_updated_at_column()")
-    op.execute("DROP FUNCTION IF EXISTS create_monthly_partition(TEXT, TEXT)")
+    # 删除触发器和函数（仅PostgreSQL环境）
+    if db_dialect != 'sqlite':
+        op.execute(
+            "DROP TRIGGER IF EXISTS trigger_raw_scores_data_updated_at ON raw_scores_data"
+        )
+
+        op.execute("DROP FUNCTION IF EXISTS update_updated_at_column()")
+        op.execute("DROP FUNCTION IF EXISTS create_monthly_partition(TEXT, TEXT)")
+    else:
+        logger.info("⚠️  SQLite环境：跳过触发器和函数删除")
 
     # 删除raw_scores_data表的索引
-    op.drop_index("idx_raw_scores_data_jsonb_gin", table_name="raw_scores_data")
+    try:
+        op.drop_index("idx_raw_scores_data_jsonb_gin", table_name="raw_scores_data")
+    except (SQLAlchemyError, DatabaseError):
+        logger.info("⚠️  索引idx_raw_scores_data_jsonb_gin不存在，跳过删除")
+
     op.drop_index("idx_raw_scores_data_score", table_name="raw_scores_data")
     op.drop_index("idx_raw_scores_data_status", table_name="raw_scores_data")
     op.drop_index("idx_raw_scores_data_external_match", table_name="raw_scores_data")
@@ -215,20 +247,27 @@ def downgrade() -> None:
     op.drop_index("idx_raw_scores_data_collected_at", table_name="raw_scores_data")
     op.drop_index("idx_raw_scores_data_source", table_name="raw_scores_data")
 
-    # 删除约束
-    op.drop_constraint("ck_raw_scores_data_minute_range", "raw_scores_data")
-    op.drop_constraint("ck_raw_scores_data_scores_range", "raw_scores_data")
+    # 删除约束（仅PostgreSQL环境）
+    if db_dialect != 'sqlite':
+        try:
+            op.drop_constraint("ck_raw_scores_data_minute_range", "raw_scores_data")
+            op.drop_constraint("ck_raw_scores_data_scores_range", "raw_scores_data")
+        except (SQLAlchemyError, DatabaseError):
+            logger.info("⚠️  约束不存在，跳过删除")
 
     # 删除raw_scores_data表
     op.drop_table("raw_scores_data")
 
     # 删除其他表的JSONB索引（如果存在）
-    try:
-        op.drop_index("idx_raw_match_data_jsonb_gin", table_name="raw_match_data")
-        op.drop_index("idx_raw_odds_data_jsonb_gin", table_name="raw_odds_data")
-    except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
-        # 忽略索引不存在的错误，但记录日志
-        logger.info(f"Warning: Could not drop indexes during downgrade: {e}")
+    if db_dialect != 'sqlite':
+        try:
+            op.drop_index("idx_raw_match_data_jsonb_gin", table_name="raw_match_data")
+            op.drop_index("idx_raw_odds_data_jsonb_gin", table_name="raw_odds_data")
+        except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
+            # 忽略索引不存在的错误，但记录日志
+            logger.info(f"Warning: Could not drop indexes during downgrade: {e}")
+    else:
+        logger.info("⚠️  SQLite环境：跳过JSONB索引删除")
 
     # 注意：将JSONB降级回JSON需要谨慎处理，这里不自动执行
     # 如果需要，可以手动执行：

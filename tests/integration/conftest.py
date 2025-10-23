@@ -12,6 +12,16 @@ from typing import AsyncGenerator, Generator, Any
 import tempfile
 import logging
 
+# 加载测试环境配置
+test_env_path = Path(__file__).parent.parent.parent / ".env.test"
+if test_env_path.exists():
+    with open(test_env_path) as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                key, value = line.split("=", 1)
+                os.environ[key.strip()] = value.strip()
+
 # SQLAlchemy imports
 try:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -51,6 +61,9 @@ async def test_db():
         "DATABASE_URL",
         "postgresql+asyncpg://test_user:test_pass@localhost:5433/football_test",
     )
+
+    # 调试输出
+    logger.info(f"Database URL: {database_url}")
 
     # 创建引擎
     engine = create_async_engine(

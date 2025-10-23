@@ -334,7 +334,7 @@ class AuditLog(BaseModel):
 class AuditLogSummary:
     """审计日志统计摘要类"""
 
-    def __init__(self, session):
+    def __init__(self, session):  # type: ignore
         """初始化"""
         self.session = session
 

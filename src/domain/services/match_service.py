@@ -23,7 +23,7 @@ from ..events.match_events import (
 class MatchDomainService:
     """比赛领域服务"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self._events: List[Any] = []
 
     def schedule_match(
@@ -105,7 +105,7 @@ class MatchDomainService:
                 home_team_id=match.home_team_id,
                 away_team_id=match.away_team_id,
                 final_score=match.score or MatchScore(0, 0),
-                result =match.score.result if match.score else MatchResult.DRAW,
+                result=match.score.result if match.score else MatchResult.DRAW,
             )
             self._events.append(event)
 

@@ -7,7 +7,7 @@
 from .base_unified import SimpleService
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Optional
 
 
 class ContentType(Enum):
@@ -32,7 +32,7 @@ class UserRole(Enum):
 class Content:
     """内容类"""
 
-    def __init__(self, content_id: str, content_type: str, data: Dict[str, Any]):
+    def __init__(self, content_id: str, content_type: str, data: Dict[str, Any]):  # type: ignore
         self.id = content_id
         self.content_type = content_type
         self.data = data
@@ -41,7 +41,7 @@ class Content:
 class UserProfile:
     """用户配置文件类"""
 
-    def __init__(self, user_id: str, preferences: Dict[str, Any] = None):
+    def __init__(self, user_id: str, preferences: Dict[str, Any] = None):  # type: ignore
         self.user_id = user_id
         self.preferences = preferences or {}
 
@@ -69,7 +69,7 @@ class AnalysisResult:
 class ContentAnalysisService(SimpleService):
     """内容分析服务"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         super().__init__("ContentAnalysisService")
         self._models_loaded = False
 
@@ -130,7 +130,7 @@ class ContentAnalysisService(SimpleService):
         return AnalysisResult(
             id=f"analysis_{content.id}",
             analysis_type="content_analysis",
-            result =analysis_data,
+            result=analysis_data,
             confidence=0.85,
             timestamp=datetime.now(),
             content_id=content.id,
@@ -225,7 +225,6 @@ class ContentAnalysisService(SimpleService):
         """内容分类"""
         if not content:
             return {"category": "unknown", "confidence": 0.0}
-
         content_lower = content.lower()
 
         # 定义分类规则
@@ -253,14 +252,12 @@ class ContentAnalysisService(SimpleService):
                 "confidence": confidence,
                 "all_scores": scores,
             }
-
         return {"category": "general", "confidence": 0.5}
 
     def analyze_sentiment(self, text: str) -> dict:
         """情感分析"""
         if not text:
             return {"sentiment": "neutral", "score": 0.0}
-
         # 简单的情感词典
         positive_words = ["胜利", "精彩", "出色", "优秀", "完美", "激动", "兴奋"]
         negative_words = ["失败", "糟糕", "失望", "糟糕", "痛苦", "遗憾", "失误"]
@@ -272,7 +269,6 @@ class ContentAnalysisService(SimpleService):
         total = pos_count + neg_count
         if total == 0:
             return {"sentiment": "neutral", "score": 0.0}
-
         score = (pos_count - neg_count) / total
 
         if score > 0.2:

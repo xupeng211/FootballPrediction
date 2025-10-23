@@ -35,15 +35,17 @@ repos:
         name: 检测私钥
 
 
-  # MyPy类型检查 (可选 - 如需启用请手动运行 make type-check)
-  # - repo: https://github.com/pre-commit/mirrors-mypy
-  #   rev: v1.8.0
-  #   hooks:
-  #     - id: mypy
-  #       name: MyPy类型检查
-  #       args: [--ignore-missing-imports, --no-error-summary]
-  #       additional_dependencies: [types-all]
-  #       exclude: ^(tests/|docs/)
+  # MyPy类型检查 - 轻量级检查，只检查关键文件
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.8.0
+    hooks:
+      - id: mypy
+        name: MyPy类型检查(关键文件)
+        args: [--ignore-missing-imports, --no-error-summary, --follow-imports=skip]
+        additional_dependencies: [types-all]
+        exclude: ^(tests/|docs/|migrations/)
+        # 只检查修改的文件中的关键模块
+        files: ^src/(api|domain|services|utils|core)/.*\.py$
 
   # 质量检查 - 运行关键测试
   - repo: local
@@ -63,6 +65,24 @@ repos:
         args: [tests/unit/api/test_adapters.py, tests/unit/utils/test_dict_utils_enhanced.py, --tb=short, -q]
         pass_filenames: false
         always_run: true
+
+      - id: quick-quality-check
+        name: 快速质量检查
+        entry: python scripts/quick_quality_check.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        # 只在修改Python文件时运行
+        files: ^src/.*\.py$
+
+      - id: enhanced-pre-commit
+        name: 增强预提交检查
+        entry: python scripts/enhanced_pre_commit_check.py
+        language: system
+        pass_filenames: false
+        always_run: false
+        # 只在修改Python文件时运行
+        files: ^src/.*\.py$
 
 # 全局配置
 default_language_version:

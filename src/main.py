@@ -102,20 +102,21 @@ async def lifespan(app: FastAPI):
 
         # 启动监控指标收集
         logger.info("📈 启动监控指标收集...")
-        await start_metrics_collection()
+        start_metrics_collection()
 
         # 初始化事件系统
         logger.info("🔌 初始化事件系统...")
         await initialize_event_system()
 
-        # 初始化观察者系统
-        logger.info("👁️ 初始化观察者系统...")
-        await initialize_observer_system()
-        await start_observer_system()
+        # 初始化观察者系统（仅在非最小模式）
+        if not MINIMAL_API_MODE:
+            logger.info("👁️ 初始化观察者系统...")
+            initialize_observer_system()
+            start_observer_system()
 
-        # 初始化CQRS系统
-        logger.info("⚡ 初始化CQRS系统...")
-        await initialize_cqrs()
+            # 初始化CQRS系统
+            logger.info("⚡ 初始化CQRS系统...")
+            await initialize_cqrs()
 
         # 初始化性能监控系统
         logger.info("📊 初始化性能监控系统...")

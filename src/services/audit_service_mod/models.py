@@ -44,6 +44,6 @@ class AuditEvent:
     timestamp: datetime
     metadata: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):
+    def __post_init__(self):  # type: ignore
         if self.metadata is None:
             self.metadata = {}

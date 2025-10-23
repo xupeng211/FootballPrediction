@@ -7,7 +7,7 @@ Predictions API Router
 
 import logging
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import List, Optional, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -26,7 +26,6 @@ logger = logging.getLogger(__name__)
 class PredictionRequest(BaseModel):
     """预测请求模型"""
 
-    match_id: int = Field(..., description="比赛ID")
     model_version: Optional[str] = Field("default", description="模型版本")
     include_details: bool = Field(False, description="是否包含详细信息")
 
@@ -203,7 +202,7 @@ async def batch_predict(request: BatchPredictionRequest):
                     model_version=request.model_version,
                     predicted_at=datetime.utcnow(),
                 )
-                predictions.append(prediction)
+                predictions.append(_prediction)
             except Exception as e:
                 logger.warning(f"比赛 {match_id} 预测失败: {e}")
                 failed_ids.append(match_id)
@@ -291,7 +290,7 @@ async def get_recent_predictions(
                 match_id=1000 + i,
                 home_team=f"Team A{i}",
                 away_team=f"Team B{i}",
-                _prediction=PredictionResult(
+                prediction=PredictionResult(
                     match_id=1000 + i,
                     home_win_prob=0.45,
                     draw_prob=0.30,
@@ -332,7 +331,7 @@ async def verify_prediction(
     try:
         # TODO: 获取原始预测并进行验证
         # 模拟验证
-        _prediction = PredictionResult(
+        prediction = PredictionResult(
             match_id=match_id,
             home_win_prob=0.45,
             draw_prob=0.30,
@@ -350,7 +349,7 @@ async def verify_prediction(
 
         verification = PredictionVerification(
             match_id=match_id,
-            _prediction=prediction,
+            prediction=prediction,
             actual_result=actual_result,
             is_correct=is_correct,
             accuracy_score=accuracy_score,

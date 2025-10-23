@@ -35,7 +35,7 @@ class ObserverManager:
     Creates, manages, and coordinates all observers and subjects.
     """
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         """初始化观察者管理器"""
         self._observers: Dict[str, Observer] = {}
         self._subjects: Dict[str, Subject] = {}

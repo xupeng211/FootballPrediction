@@ -203,7 +203,7 @@ class MockFeatureStore:
 class MockFeatureService:
     """模拟特征服务"""
 
-    def __init__(self, name: str, feature_store: MockFeatureStore):
+    def __init__(self, name: str, feature_store: MockFeatureStore):  # type: ignore
         self.name = name
         self.feature_store = feature_store
         self._service_config: Optional[Dict[str, Any]] = None
@@ -253,7 +253,7 @@ class MockFeastClient:
 class MockOnlineResponse:
     """模拟在线特征响应"""
 
-    def __init__(self, features: List[Dict[str, Any]], field_names: List[str]):
+    def __init__(self, features: List[Dict[str, Any]], field_names: List[str]):  # type: ignore
         self._features = features
         self._field_names = field_names
         self._to_dict_called = False
@@ -278,7 +278,7 @@ class MockOnlineResponse:
         """返回响应长度"""
         return len(self._features)
 
-    def __iter__(self):
+    def __iter__(self):  # type: ignore
         """迭代器"""
         return iter(self._features)
 

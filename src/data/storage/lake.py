@@ -6,7 +6,7 @@ Data Lake Storage Module
 
 import json
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 from datetime import datetime
 from pathlib import Path
 
@@ -113,12 +113,13 @@ class MetadataManager:
     def save_metadata(self, key: str, metadata: Dict[str, Any]) -> bool:
         """保存元数据"""
         metadata_key = f"{key}.metadata"
-        return self.storage.save(metadata_key, metadata, format="json")
+        return bool(self.storage.save(metadata_key, metadata, format="json"))
 
     def load_metadata(self, key: str) -> Optional[Dict[str, Any]]:
         """加载元数据"""
         metadata_key = f"{key}.metadata"
-        return self.storage.load(metadata_key, format="json")
+        result = self.storage.load(metadata_key, format="json")
+        return cast(Optional[Dict[str, Any]], result)
 
     def list_datasets(self) -> List[str]:
         """列出所有数据集"""
@@ -236,7 +237,7 @@ class LakeStorageUtils:
         return True
 
 
-__all__ = [
+__all__: list[str] = [
     "LocalDataLakeStorage",
     "S3DataLakeStorage",
     "MetadataManager",

@@ -1,0 +1,39 @@
+{
+  "summary": {
+    "total_files_with_errors": 2,
+    "total_errors": 2,
+    "indentation_files": 2,
+    "syntax_files": 0,
+    "other_files": 0
+  },
+  "categories": {
+    "indentation_errors": [
+      "src/tasks/data_collection_core.py",
+      "src/scheduler/job_manager.py"
+    ],
+    "syntax_errors": [],
+    "other_errors": []
+  },
+  "prioritized_files": [
+    [
+      "src/tasks/data_collection_core.py",
+      1
+    ],
+    [
+      "src/scheduler/job_manager.py",
+      1
+    ]
+  ],
+  "fix_order": [
+    [
+      "infrastructure",
+      "src/tasks/data_collection_core.py",
+      1
+    ],
+    [
+      "other",
+      "src/scheduler/job_manager.py",
+      1
+    ]
+  ]
+}

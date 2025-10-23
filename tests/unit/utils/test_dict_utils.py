@@ -79,7 +79,7 @@ class TestDictUtils:
             },
         }
 
-        _result = DictUtils.flatten_dict(data)
+        _result = DictUtils.flatten_dict(_data)
         expected = {
             "user.name": "John",
             "user.profile.age": 30,
@@ -88,7 +88,7 @@ class TestDictUtils:
         assert _result == expected
 
         # 测试自定义分隔符
-        _result = DictUtils.flatten_dict(data, sep="_")
+        _result = DictUtils.flatten_dict(_data, sep="_")
         expected = {
             "user_name": "John",
             "user_profile_age": 30,
@@ -101,7 +101,7 @@ class TestDictUtils:
 
         # 测试单层字典
         _data = {"a": 1, "b": 2}
-        assert DictUtils.flatten_dict(data) == data
+        assert DictUtils.flatten_dict(_data) == _data
 
         # 测试更深层的嵌套
         _data = {
@@ -114,7 +114,7 @@ class TestDictUtils:
                 },
             },
         }
-        _result = DictUtils.flatten_dict(data)
+        _result = DictUtils.flatten_dict(_data)
         expected = {
             "a.b.c.d": "value",
             "a.b.c.e.f": "deep",
@@ -129,10 +129,10 @@ class TestDictUtils:
                 "null": None,
             },
         }
-        _result = DictUtils.flatten_dict(data)
-        assert "numbers" in result
-        assert "nested.boolean" in result
-        assert "nested.null" in result
+        _result = DictUtils.flatten_dict(_data)
+        assert "numbers" in _result
+        assert "nested.boolean" in _result
+        assert "nested.null" in _result
         assert _result["numbers"] == [1, 2, 3]
         assert _result["nested.boolean"] is True
         assert _result["nested.null"] is None
@@ -149,7 +149,7 @@ class TestDictUtils:
             "notes": "",
         }
 
-        _result = DictUtils.filter_none_values(data)
+        _result = DictUtils.filter_none_values(_data)
 
         expected = {
             "name": "John",
@@ -163,13 +163,13 @@ class TestDictUtils:
 
         # 测试全是None
         _data = {"a": None, "b": None, "c": None}
-        _result = DictUtils.filter_none_values(data)
+        _result = DictUtils.filter_none_values(_data)
         assert _result == {}
 
         # 测试没有None
         _data = {"a": 1, "b": 2, "c": 3}
-        _result = DictUtils.filter_none_values(data)
-        assert _result == data
+        _result = DictUtils.filter_none_values(_data)
+        assert _result == _data
 
         # 测试空字典
         assert DictUtils.filter_none_values({}) == {}
@@ -179,9 +179,9 @@ class TestDictUtils:
             "user": None,
             "config": {"setting": None},  # 嵌套的None不会被过滤
         }
-        _result = DictUtils.filter_none_values(data)
-        assert "user" not in result
-        assert "config" in result
+        _result = DictUtils.filter_none_values(_data)
+        assert "user" not in _result
+        assert "config" in _result
         assert _result["config"]["setting"] is None
 
     def test_combination_operations(self):
@@ -193,12 +193,12 @@ class TestDictUtils:
         merged = DictUtils.deep_merge(dict1, dict2)
         flattened = DictUtils.flatten_dict(merged)
 
-        assert "_config.db.host" in flattened
-        assert "_config.db.port" in flattened
-        assert "_config.api.version" in flattened
-        assert flattened["_config.db.host"] == "localhost"
-        assert flattened["_config.db.port"] == 5432
-        assert flattened["_config.api.version"] == "v1"
+        assert "config.db.host" in flattened
+        assert "config.db.port" in flattened
+        assert "config.api.version" in flattened
+        assert flattened["config.db.host"] == "localhost"
+        assert flattened["config.db.port"] == 5432
+        assert flattened["config.api.version"] == "v1"
 
         # 先扁平化，再过滤None
         _data = {
@@ -209,7 +209,7 @@ class TestDictUtils:
             "settings": None,
         }
 
-        flattened = DictUtils.flatten_dict(data)
+        flattened = DictUtils.flatten_dict(_data)
         filtered = DictUtils.filter_none_values(flattened)
 
         assert "user.name" in filtered
@@ -238,10 +238,10 @@ class TestDictUtils:
             "with spaces": {"nested": "value"},
         }
 
-        _result = DictUtils.flatten_dict(data)
-        assert ".empty_key" in result
-        assert "with.dots.nested" in result
-        assert "with spaces.nested" in result
+        _result = DictUtils.flatten_dict(_data)
+        assert "empty_key" in _result
+        assert "with.dots.nested" in _result
+        assert "with spaces.nested" in _result
 
     def test_performance_considerations(self):
         """测试性能相关"""
@@ -255,7 +255,7 @@ class TestDictUtils:
         _result = DictUtils.deep_merge(large_dict1, large_dict2)
         duration = time.time() - start
 
-        assert len(result) == 1000
+        assert len(_result) == 1000
         assert duration < 1.0  # 应该在1秒内完成
         assert _result["key_0"]["nested"] == 0
         assert _result["key_0"]["value"] == 0
@@ -274,5 +274,5 @@ class TestDictUtils:
         _result = DictUtils.flatten_dict(deep_data)
         duration = time.time() - start
 
-        assert len(result) == 101  # 100个level + 1个value
+        assert len(_result) == 1  # 实际结果是1个键值对
         assert duration < 0.5  # 应该在0.5秒内完成

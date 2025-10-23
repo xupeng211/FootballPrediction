@@ -6,7 +6,7 @@ Prediction Repository
 Implements data access logic for predictions.
 """
 
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional, Type
 from datetime import datetime, date
 from decimal import Decimal
 

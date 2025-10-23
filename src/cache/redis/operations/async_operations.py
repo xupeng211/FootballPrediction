@@ -17,7 +17,7 @@ logger = get_logger(__name__)
 class RedisAsyncOperations:
     """Asynchronous Redis operations"""
 
-    def __init__(self, redis_url: Optional[str] = None):
+    def __init__(self, redis_url: Optional[str] = None):  # type: ignore
         """Initialize async operations"""
         self.redis_url = redis_url or "redis://localhost:6379"
         self.client: Optional[aioredis.Redis] = None

@@ -4,9 +4,19 @@ API响应模型定义
 为所有API端点提供标准化的响应模型，确保API文档的一致性和完整性。
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 
 from pydantic import BaseModel, Field
+
+
+class APIResponse(BaseModel):
+    """通用API响应模型"""
+
+    success: bool = Field(..., description="请求是否成功")
+    message: str = Field(..., description="响应消息")
+    data: Optional[Any] = Field(None, description="响应数据")
+    errors: Optional[List[str]] = Field(None, description="错误信息列表")
+    timestamp: Optional[str] = Field(None, description="响应时间戳")
 
 
 class ServiceCheck(BaseModel):
@@ -46,6 +56,17 @@ class MetricsResponse(BaseModel):
     database: Dict[str, Any] = Field(..., description="数据库性能指标")
     runtime: Dict[str, Any] = Field(..., description="运行时指标")
     business: Dict[str, Any] = Field(..., description="业务指标统计")
+
+
+class HealthResponse(BaseModel):
+    """健康检查响应模型"""
+
+    status: str = Field(..., description="健康状态")
+    timestamp: str = Field(..., description="检查时间")
+    service: str = Field(..., description="服务名称")
+    version: Optional[str] = Field(None, description="服务版本")
+    uptime: Optional[float] = Field(None, description="运行时间(秒)")
+    checks: Optional[Dict[str, Any]] = Field(None, description="检查项目")
 
 
 class RootResponse(BaseModel):

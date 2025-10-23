@@ -34,7 +34,7 @@ class BindingRule:
 class AutoBinder:
     """自动绑定器"""
 
-    def __init__(self, container: DIContainer):
+    def __init__(self, container: DIContainer):  # type: ignore
         self.container = container
         self._binding_rules: List[BindingRule] = []
         self._scanned_modules: List[str] = []
@@ -341,7 +341,7 @@ class ConventionBinder:
 
 
 # 装饰器用于标记自动绑定
-def auto_bind(lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT):
+def auto_bind(lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT):  # type: ignore
     """自动绑定装饰器"""
 
     def decorator(cls: Type[T]) -> Type[T]:
@@ -353,7 +353,7 @@ def auto_bind(lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT):
     return decorator
 
 
-def bind_to(interface: Type[T]):
+def bind_to(interface: Type[T]):  # type: ignore
     """绑定到接口装饰器"""
 
     def decorator(cls: Type[T]) -> Type[T]:
@@ -364,7 +364,7 @@ def bind_to(interface: Type[T]):
     return decorator
 
 
-def primary_implementation():
+def primary_implementation():  # type: ignore
     """主要实现装饰器"""
 
     def decorator(cls) -> Type:

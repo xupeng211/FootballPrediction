@@ -71,7 +71,7 @@ def search_documents(query: str, limit: int = 10) -> List[Dict[str, Any]]:
 
 
 # 示例5: 缓存失效装饰器
-def generate_invalidation_keys(func, args, kwargs, result):
+def generate_invalidation_keys(func, args, kwargs, result):  # type: ignore
     """生成缓存失效键的函数"""
     # 如果是更新操作，失效相关缓存
     if "update" in func.__name__:
@@ -138,7 +138,7 @@ def calculate_team_statistics(team_id: int, season: str) -> Dict:
 
 
 # 示例7: 自定义键生成器
-def custom_key_generator(func, args, kwargs, user_id=None):
+def custom_key_generator(func, args, kwargs, user_id=None):  # type: ignore
     """自定义缓存键生成器"""
     func_name = func.__qualname__
     # 使用特定的参数组合生成键

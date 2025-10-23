@@ -7,7 +7,7 @@ Defines base interfaces and implementations for repository pattern.
 """
 
 from abc import ABC, abstractmethod
-from typing import TypeVar, Generic, List, Optional, Dict, Any
+from typing import TypeVar, Generic, List, Optional, Dict, Any, Optional
 from dataclasses import dataclass
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -37,7 +37,7 @@ class BaseRepository(Generic[T, ID], ABC):
     Provides basic data access functionality.
     """
 
-    def __init__(self, session: AsyncSession, model_class: type[T]):
+    def __init__(self, session: AsyncSession, model_class: type[T]):  # type: ignore
         self.session = session
         self.model_class = model_class
 
@@ -76,7 +76,7 @@ class BaseRepository(Generic[T, ID], ABC):
         result = await self.session.execute(query)
         return len(result.fetchall())
 
-    def _apply_filters(self, query, filters: Dict[str, Any]):
+    def _apply_filters(self, query, filters: Dict[str, Any]):  # type: ignore
         """应用过滤器"""
         for key, value in filters.items():
             if isinstance(value, dict):
@@ -100,7 +100,7 @@ class BaseRepository(Generic[T, ID], ABC):
                 query = query.where(getattr(self.model_class, key) == value)
         return query
 
-    def _apply_order_by(self, query, order_by: List[str]):
+    def _apply_order_by(self, query, order_by: List[str]):  # type: ignore
         """应用排序"""
         for order in order_by:
             if order.startswith("-"):
@@ -110,7 +110,7 @@ class BaseRepository(Generic[T, ID], ABC):
                 query = query.order_by(getattr(self.model_class, order))
         return query
 
-    def _apply_pagination(self, query, limit: int, offset: int):
+    def _apply_pagination(self, query, limit: int, offset: int):  # type: ignore
         """应用分页"""
         if offset:
             query = query.offset(offset)
@@ -118,7 +118,7 @@ class BaseRepository(Generic[T, ID], ABC):
             query = query.limit(limit)
         return query
 
-    def _apply_includes(self, query, includes: List[str]):
+    def _apply_includes(self, query, includes: List[str]):  # type: ignore
         """应用预加载"""
         for include in includes:
             if hasattr(self.model_class, include):

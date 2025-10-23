@@ -137,9 +137,9 @@ def generate_report(errors, categories):
 
     if simple_fixes:
         print(f"  1. 简单修复 ({len(simple_fixes)} 个):")
-        print(f"     - 变量命名问题 (_result → result)")
-        print(f"     - 参数名称问题 (_data → data)")
-        print(f"     - 清理未使用的 type: ignore 注释")
+        print("     - 变量命名问题 (_result → result)")
+        print("     - 参数名称问题 (_data → data)")
+        print("     - 清理未使用的 type: ignore 注释")
 
     # 中等难度
     medium_fixes = []
@@ -149,8 +149,8 @@ def generate_report(errors, categories):
 
     if medium_fixes:
         print(f"  2. 中等难度 ({len(medium_fixes)} 个):")
-        print(f"     - 添加类型注解")
-        print(f"     - 修复类型不匹配")
+        print("     - 添加类型注解")
+        print("     - 修复类型不匹配")
 
     # 复杂问题
     complex_fixes = []
@@ -160,9 +160,9 @@ def generate_report(errors, categories):
 
     if complex_fixes:
         print(f"  3. 复杂问题 ({len(complex_fixes)} 个):")
-        print(f"     - 重构代码避免 Any 类型")
-        print(f"     - 修复属性访问错误")
-        print(f"     - 解决导入问题")
+        print("     - 重构代码避免 Any 类型")
+        print("     - 修复属性访问错误")
+        print("     - 解决导入问题")
 
 def main():
     """主函数"""
@@ -196,7 +196,7 @@ def main():
             'errors': errors
         }, f, indent=2)
 
-    print(f"\n💾 详细数据已保存到 mypy_error_analysis.json")
+    print("\n💾 详细数据已保存到 mypy_error_analysis.json")
 
 if __name__ == '__main__':
     main()

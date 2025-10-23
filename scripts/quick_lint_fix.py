@@ -72,7 +72,7 @@ def fix_bare_except(file_path):
             content = f.read()
 
         # 简单替换裸露的except
-        content = content.replace("except:", "except Exception:")
+        content = content.replace("except Exception:", "except Exception:")
 
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(content)

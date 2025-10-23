@@ -130,7 +130,7 @@ def main():
         print(f"   - E402 导入错误: {e402_errors}")
         print(f"   - F401 未使用导入: {f401_errors}")
         print(f"   - F811 重复定义: {f811_errors}")
-        print(f"   - E722 裸except: {e722_errors}")
+        print(f"   - E722 裸except Exception: {e722_errors}")
 
         # 显示前20个错误
         print("\n前20个错误:")

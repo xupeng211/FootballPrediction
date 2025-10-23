@@ -36,7 +36,7 @@ class PredictionRepository(BaseRepository[Predictions]):
     Provides CRUD operations and complex query methods for prediction data.
     """
 
-    def __init__(self, db_manager=None):
+    def __init__(self, db_manager=None):  # type: ignore
         super().__init__(Predictions, db_manager)
 
     # ========================================

@@ -2,10 +2,21 @@
 Health check module
 """
 
-from fastapi import APIRouter
+import warnings
+from fastapi import APIRouter, HTTPException
 import time
 
+# 发出弃用警告
+warnings.warn(
+    "直接从 health 导入已弃用，请使用 from src.api.health.router import router",
+    DeprecationWarning,
+    stacklevel=2
+)
+
 router = APIRouter(tags=["health"])
+
+# 定义导出列表
+__all__ = ["router"]
 
 
 def _check_database():
@@ -18,30 +29,62 @@ def _check_database():
 @router.get("/")
 async def health_check():
     """Basic health check"""
-    # 执行数据库健康检查
-    db_status = _check_database()
+    try:
+        # 执行数据库健康检查
+        db_status = _check_database()
 
-    overall_status = "healthy"
-    if db_status.get("status") != "healthy":
-        overall_status = "unhealthy"
+        overall_status = "healthy"
+        if db_status.get("status") != "healthy":
+            overall_status = "unhealthy"
 
-    return {
-        "status": overall_status,
-        "timestamp": time.time(),
-        "checks": {
-            "database": db_status,
-        },
-    }
+        return {
+            "status": overall_status,
+            "timestamp": time.time(),
+            "checks": {
+                "database": db_status,
+            },
+        }
+    except Exception as e:
+        # 数据库检查失败时返回错误状态
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "status": "error",
+                "timestamp": time.time(),
+                "error": str(e),
+                "checks": {
+                    "database": {"status": "error", "error": str(e)},
+                },
+            }
+        )
 
 
 @router.get("/liveness")
 async def liveness_check():
     """存活检查 - 确认服务正在运行"""
-    return {
-        "status": "alive",
-        "timestamp": time.time(),
-        "service": "football-prediction-api",
-    }
+    try:
+        # 安全地获取时间戳
+        try:
+            timestamp = time.time()
+        except Exception:
+            # 如果时间函数失败，使用默认值
+            timestamp = 0.0
+
+        return {
+            "status": "alive",
+            "timestamp": timestamp,
+            "service": "football-prediction-api",
+        }
+    except Exception as e:
+        # 其他错误处理
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "status": "error",
+                "error": str(e),
+                "service": "football-prediction-api",
+            }
+        )
 
 
 @router.get("/readiness")

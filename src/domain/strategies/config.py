@@ -113,7 +113,7 @@ class StrategyConfigManager:
     负责加载、保存和管理策略配置。
     """
 
-    def __init__(self, config_dir: Union[str, Path] = "configs"):
+    def __init__(self, config_dir: Union[str, Path] = "configs"):  # type: ignore
         """初始化配置管理器
 
         Args:

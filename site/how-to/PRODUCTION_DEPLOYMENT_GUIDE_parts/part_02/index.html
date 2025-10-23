@@ -1,0 +1,2442 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="基于现代Python技术栈的足球预测系统完整文档">
+      
+      
+        <meta name="author" content="Football Prediction Team">
+      
+      
+        <link rel="canonical" href="https://football-prediction-docs.example.com/how-to/PRODUCTION_DEPLOYMENT_GUIDE_parts/part_02/">
+      
+      
+      
+      
+      <link rel="icon" href="../../../assets/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.49">
+    
+    
+      
+        <title>============================================================================= - 足球预测系统文档</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.6f8fc17f.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="足球预测系统文档">
+  <meta property="og:description" content="基于现代Python技术栈的足球预测系统完整文档">
+  <meta property="og:url" content="https://football-prediction-docs.example.com/how-to/PRODUCTION_DEPLOYMENT_GUIDE_parts/part_02/">
+  <meta property="og:image" content="../../../assets/logo.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@football_pred">
+  <meta name="twitter:creator" content="@football_pred">
+
+  <!-- 自定义CSS和JS -->
+  <link rel="stylesheet" href="../../../assets/extra.css">
+  <script src="../../../assets/extra.js"></script>
+
+  <!-- 添加中文字体支持 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  
+
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#_1" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+  
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href="../../.." title="足球预测系统文档" class="md-header__button md-logo" aria-label="足球预测系统文档" data-md-component="logo">
+      
+  <img src="../../../assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            足球预测系统文档
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              =============================================================================
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="blue"  aria-label="切换至深色模式"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="切换至深色模式" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="blue" data-md-color-accent="blue"  aria-label="切换至深色模式"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="切换至深色模式" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="blue"  aria-label="切换至浅色模式"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="切换至浅色模式" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="分享" aria-label="分享" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/your-org/football-prediction" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    football-prediction/docs
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="标签" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../index.md" class="md-tabs__link">
+        
+  
+    
+  
+  首页
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../QUICKSTART_TOOLS/" class="md-tabs__link">
+          
+  
+    
+  
+  快速开始
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../architecture/ARCHITECTURE/" class="md-tabs__link">
+          
+  
+    
+  
+  架构设计
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../reference/API_REFERENCE/" class="md-tabs__link">
+          
+  
+    
+  
+  API参考
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../testing/TEST_IMPROVEMENT_GUIDE/" class="md-tabs__link">
+          
+  
+    
+  
+  测试指南
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../ops/PRODUCTION_READINESS_PLAN/" class="md-tabs__link">
+          
+  
+    
+  
+  运维部署
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../ml/ML_MODEL_GUIDE/" class="md-tabs__link">
+          
+  
+    
+  
+  机器学习
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../security/SECURITY_POLICY.md" class="md-tabs__link">
+          
+  
+    
+  
+  安全配置
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../project/CONTRIBUTING.md" class="md-tabs__link">
+          
+  
+    
+  
+  项目管理
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../AI_DEVELOPMENT_DOCUMENTATION_RULES.md" class="md-tabs__link">
+          
+  
+    
+  
+  参考资料
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+
+  <!-- 公告栏配置 (暂时注释掉) -->
+  <!--
+  
+  -->
+
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="足球预测系统文档" class="md-nav__button md-logo" aria-label="足球预测系统文档" data-md-component="logo">
+      
+  <img src="../../../assets/logo.png" alt="logo">
+
+    </a>
+    足球预测系统文档
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/your-org/football-prediction" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    football-prediction/docs
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../index.md" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    首页
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../QUICKSTART_TOOLS/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    快速开始
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../../architecture/ARCHITECTURE/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    架构设计
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../../reference/API_REFERENCE/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    API参考
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../../testing/TEST_IMPROVEMENT_GUIDE/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    测试指南
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+          
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../../ops/PRODUCTION_READINESS_PLAN/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    运维部署
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../../ml/ML_MODEL_GUIDE/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    机器学习
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../../security/SECURITY_POLICY.md" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    安全配置
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../../project/CONTRIBUTING.md" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    项目管理
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../../AI_DEVELOPMENT_DOCUMENTATION_RULES.md" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    参考资料
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+  
+                  
+
+  
+    <a href="https://github.com/your-org/football-prediction/edit/main/docs/how-to/PRODUCTION_DEPLOYMENT_GUIDE_parts/part_02.md" title="编辑此页" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+    
+      
+    
+    <a href="https://github.com/your-org/football-prediction/raw/main/docs/how-to/PRODUCTION_DEPLOYMENT_GUIDE_parts/part_02.md" title="查看本页的源代码" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c.56 0 1 .44 1 1s-.44 1-1 1-1-.44-1-1 .44-1 1-1m0-3c-2.73 0-5.06 1.66-6 4 .94 2.34 3.27 4 6 4s5.06-1.66 6-4c-.94-2.34-3.27-4-6-4m0 6.5a2.5 2.5 0 0 1-2.5-2.5 2.5 2.5 0 0 1 2.5-2.5 2.5 2.5 0 0 1 2.5 2.5 2.5 2.5 0 0 1-2.5 2.5M9.27 20H6V4h7v5h5v4.07c.7.08 1.36.25 2 .49V8l-6-6H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h4.5a8.2 8.2 0 0 1-1.23-2"/></svg>
+    </a>
+  
+
+
+<h1 id="_1">=============================================================================<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h1>
+<p>=============================================================================</p>
+<h1 id="_2"><a class="headerlink" href="#_2" title="Permanent link">&para;</a></h1>
+<h1 id="minio">部署MinIO<a class="headerlink" href="#minio" title="Permanent link">&para;</a></h1>
+<p>kubectl apply -f k8s/storage/minio-deployment.yaml
+kubectl apply -f k8s/storage/minio-service.yaml</p>
+<p>部署MinIO
+kubectl apply -f k8s/storage/minio-deployment.yaml
+kubectl apply -f k8s/storage/minio-service.yaml</p>
+<h1 id="_3"><a class="headerlink" href="#_3" title="Permanent link">&para;</a></h1>
+<h1 id="mlflow">部署MLflow<a class="headerlink" href="#mlflow" title="Permanent link">&para;</a></h1>
+<p>kubectl apply -f k8s/ml/mlflow-deployment.yaml
+kubectl apply -f k8s/ml/mlflow-service.yaml</p>
+<p>部署MLflow
+kubectl apply -f k8s/ml/mlflow-deployment.yaml
+kubectl apply -f k8s/ml/mlflow-service.yaml</p>
+<h1 id="_4"><a class="headerlink" href="#_4" title="Permanent link">&para;</a></h1>
+<h1 id="_5">=============================================================================<a class="headerlink" href="#_5" title="Permanent link">&para;</a></h1>
+<p>=============================================================================#</p>
+<h1 id="7">7. 监控系统部署<a class="headerlink" href="#7" title="Permanent link">&para;</a></h1>
+<ol>
+<li>监控系统部署#</li>
+</ol>
+<h1 id="_6">=============================================================================<a class="headerlink" href="#_6" title="Permanent link">&para;</a></h1>
+<p>=============================================================================</p>
+<h1 id="_7"><a class="headerlink" href="#_7" title="Permanent link">&para;</a></h1>
+<h1 id="prometheus">部署Prometheus<a class="headerlink" href="#prometheus" title="Permanent link">&para;</a></h1>
+<p>kubectl apply -f k8s/monitoring/prometheus-deployment.yaml
+kubectl apply -f k8s/monitoring/prometheus-service.yaml</p>
+<p>部署Prometheus
+kubectl apply -f k8s/monitoring/prometheus-deployment.yaml
+kubectl apply -f k8s/monitoring/prometheus-service.yaml</p>
+<h1 id="_8"><a class="headerlink" href="#_8" title="Permanent link">&para;</a></h1>
+<h1 id="grafana">部署Grafana<a class="headerlink" href="#grafana" title="Permanent link">&para;</a></h1>
+<p>kubectl apply -f k8s/monitoring/grafana-deployment.yaml
+kubectl apply -f k8s/monitoring/grafana-service.yaml</p>
+<p>部署Grafana
+kubectl apply -f k8s/monitoring/grafana-deployment.yaml
+kubectl apply -f k8s/monitoring/grafana-service.yaml</p>
+<h1 id="_9"><a class="headerlink" href="#_9" title="Permanent link">&para;</a></h1>
+<h1 id="alertmanager">部署AlertManager<a class="headerlink" href="#alertmanager" title="Permanent link">&para;</a></h1>
+<p>kubectl apply -f k8s/monitoring/alertmanager-deployment.yaml
+kubectl apply -f k8s/monitoring/alertmanager-service.yaml</p>
+<p>部署AlertManager
+kubectl apply -f k8s/monitoring/alertmanager-deployment.yaml
+kubectl apply -f k8s/monitoring/alertmanager-service.yaml</p>
+<h1 id="_10"><a class="headerlink" href="#_10" title="Permanent link">&para;</a></h1>
+<h1 id="_11">=============================================================================<a class="headerlink" href="#_11" title="Permanent link">&para;</a></h1>
+<p>=============================================================================#</p>
+<h1 id="8">8. 应用服务部署<a class="headerlink" href="#8" title="Permanent link">&para;</a></h1>
+<ol>
+<li>应用服务部署#</li>
+</ol>
+<h1 id="_12">=============================================================================<a class="headerlink" href="#_12" title="Permanent link">&para;</a></h1>
+<p>=============================================================================</p>
+<h1 id="_13"><a class="headerlink" href="#_13" title="Permanent link">&para;</a></h1>
+<h1 id="_14">部署应用<a class="headerlink" href="#_14" title="Permanent link">&para;</a></h1>
+<p>kubectl apply -f k8s/app/football-prediction-deployment.yaml
+kubectl apply -f k8s/app/football-prediction-service.yaml</p>
+<p>部署应用
+kubectl apply -f k8s/app/football-prediction-deployment.yaml
+kubectl apply -f k8s/app/football-prediction-service.yaml</p>
+<h1 id="_15"><a class="headerlink" href="#_15" title="Permanent link">&para;</a></h1>
+<h1 id="_16">部署任务队列<a class="headerlink" href="#_16" title="Permanent link">&para;</a></h1>
+<p>kubectl apply -f k8s/tasks/celery-worker-deployment.yaml
+kubectl apply -f k8s/tasks/celery-beat-deployment.yaml</p>
+<p>部署任务队列
+kubectl apply -f k8s/tasks/celery-worker-deployment.yaml
+kubectl apply -f k8s/tasks/celery-beat-deployment.yaml</p>
+<h1 id="_17"><a class="headerlink" href="#_17" title="Permanent link">&para;</a></h1>
+<h1 id="ingress">部署Ingress<a class="headerlink" href="#ingress" title="Permanent link">&para;</a></h1>
+<p>kubectl apply -f k8s/ingress/football-prediction-ingress.yaml</p>
+<p>部署Ingress
+kubectl apply -f k8s/ingress/football-prediction-ingress.yaml</p>
+<h1 id="_18"><a class="headerlink" href="#_18" title="Permanent link">&para;</a></h1>
+<h1 id="_19">=============================================================================<a class="headerlink" href="#_19" title="Permanent link">&para;</a></h1>
+<p>=============================================================================#</p>
+<h1 id="9">9. 验证部署<a class="headerlink" href="#9" title="Permanent link">&para;</a></h1>
+<ol>
+<li>验证部署#</li>
+</ol>
+<h1 id="_20">=============================================================================<a class="headerlink" href="#_20" title="Permanent link">&para;</a></h1>
+<p>=============================================================================</p>
+<h1 id="_21"><a class="headerlink" href="#_21" title="Permanent link">&para;</a></h1>
+<h1 id="pod">检查所有Pod状态<a class="headerlink" href="#pod" title="Permanent link">&para;</a></h1>
+<p>kubectl get pods -o wide</p>
+<p>检查所有Pod状态
+kubectl get pods -o wide</p>
+<h1 id="_22"><a class="headerlink" href="#_22" title="Permanent link">&para;</a></h1>
+<h1 id="_23">检查服务状态<a class="headerlink" href="#_23" title="Permanent link">&para;</a></h1>
+<p>kubectl get services</p>
+<p>检查服务状态
+kubectl get services</p>
+<h1 id="_24"><a class="headerlink" href="#_24" title="Permanent link">&para;</a></h1>
+<h1 id="ingress_1">检查Ingress状态<a class="headerlink" href="#ingress_1" title="Permanent link">&para;</a></h1>
+<p>kubectl get ingress
+<div class="highlight"><pre><span></span><code>检查Ingress状态
+kubectl get ingress
+</code></pre></div></p>
+<h3 id="_25"><a class="headerlink" href="#_25" title="Permanent link">&para;</a></h3>
+<h3 id="3">3. 服务启动顺序说明<a class="headerlink" href="#3" title="Permanent link">&para;</a></h3>
+<h4 id="_26">📋 启动顺序依赖图<a class="headerlink" href="#_26" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code>1. 基础设施层
+   ├── PostgreSQL (db)
+   ├── Redis (redis)
+   └── MinIO (minio)
+
+2. 消息队列层
+   ├── Zookeeper (zookeeper)
+   └── Kafka (kafka)
+
+3. 数据服务层
+   ├── MLflow DB (mlflow-db)
+   ├── Marquez DB (marquez-db)
+   └── Feature Store (feast)
+
+4. 应用服务层
+   ├── MLflow (mlflow)
+   ├── Marquez (marquez)
+   └── Prometheus (prometheus)
+
+5. 监控展示层
+   ├── Grafana (grafana)
+   ├── AlertManager (alertmanager)
+   └── Exporters (node-exporter, postgres-exporter, redis-exporter)
+
+6. 任务队列层
+   ├── Celery Worker (celery-worker)
+   ├── Celery Beat (celery-beat)
+   └── Celery Flower (celery-flower)
+
+7. 应用层
+   ├── FastAPI App (app)
+   └── Nginx (nginx)
+</code></pre></div>
+<ol>
+<li>服务启动顺序说明</li>
+</ol>
+<h4 id="_27">📋 启动顺序依赖图<a class="headerlink" href="#_27" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code>1. 基础设施层
+   ├── PostgreSQL (db)
+   ├── Redis (redis)
+   └── MinIO (minio)
+
+2. 消息队列层
+   ├── Zookeeper (zookeeper)
+   └── Kafka (kafka)
+
+3. 数据服务层
+   ├── MLflow DB (mlflow-db)
+   ├── Marquez DB (marquez-db)
+   └── Feature Store (feast)
+
+4. 应用服务层
+   ├── MLflow (mlflow)
+   ├── Marquez (marquez)
+   └── Prometheus (prometheus)
+
+5. 监控展示层
+   ├── Grafana (grafana)
+   ├── AlertManager (alertmanager)
+   └── Exporters (node-exporter, postgres-exporter, redis-exporter)
+
+6. 任务队列层
+   ├── Celery Worker (celery-worker)
+   ├── Celery Beat (celery-beat)
+   └── Celery Flower (celery-flower)
+
+7. 应用层
+   ├── FastAPI App (app)
+   └── Nginx (nginx)
+</code></pre></div>
+<h3 id="_28"><a class="headerlink" href="#_28" title="Permanent link">&para;</a></h3>
+<h3 id="4">4. 健康检查验证<a class="headerlink" href="#4" title="Permanent link">&para;</a></h3>
+<h4 id="_29">🏥 健康检查端点验证<a class="headerlink" href="#_29" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><span class="m">4</span>.<span class="w"> </span>健康检查验证
+
+<span class="c1">#### 🏥 健康检查端点验证</span>
+
+<span class="sb">```</span>bash#
+<span class="c1">#=============================================================================</span>
+<span class="o">=============================================================================</span><span class="c1">#</span>
+<span class="c1">#1. 应用服务健康检查</span>
+<span class="m">1</span>.<span class="w"> </span>应用服务健康检查#
+<span class="c1">#=============================================================================</span>
+
+<span class="o">=============================================================================</span>
+<span class="c1">#</span>
+<span class="c1">#主应用健康检查</span>
+curl<span class="w"> </span>-f<span class="w"> </span>http://localhost:8000/health
+curl<span class="w"> </span>-f<span class="w"> </span>http://localhost:8000/health/liveness
+curl<span class="w"> </span>-f<span class="w"> </span>http://localhost:8000/health/readiness
+
+主应用健康检查
+curl<span class="w"> </span>-f<span class="w"> </span>http://localhost:8000/health
+curl<span class="w"> </span>-f<span class="w"> </span>http://localhost:8000/health/liveness
+curl<span class="w"> </span>-f<span class="w"> </span>http://localhost:8000/health/readiness
+<span class="c1">#</span>
+<span class="c1">#API文档检查</span>
+curl<span class="w"> </span>-f<span class="w"> </span>http://localhost:8000/docs
+curl<span class="w"> </span>-f<span class="w"> </span>http://localhost:8000/openapi.json
+
+API文档检查
+curl<span class="w"> </span>-f<span class="w"> </span>http://localhost:8000/docs
+curl<span class="w"> </span>-f<span class="w"> </span>http://localhost:8000/openapi.json
+<span class="c1">#</span>
+<span class="c1">#=============================================================================</span>
+<span class="o">=============================================================================</span><span class="c1">#</span>
+<span class="c1">#2. 数据库健康检查</span>
+<span class="m">2</span>.<span class="w"> </span>数据库健康检查#
+<span class="c1">#=============================================================================</span>
+
+<span class="o">=============================================================================</span>
+<span class="c1">#</span>
+<span class="c1">#PostgreSQL健康检查</span>
+docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>football_prediction_db<span class="w"> </span>pg_isready<span class="w"> </span>-U<span class="w"> </span>football_user<span class="w"> </span>-d<span class="w"> </span>football_prediction_dev
+
+PostgreSQL健康检查
+docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>football_prediction_db<span class="w"> </span>pg_isready<span class="w"> </span>-U<span class="w"> </span>football_user<span class="w"> </span>-d<span class="w"> </span>football_prediction_dev
+<span class="c1">#</span>
+<span class="c1">#Redis健康检查</span>
+docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>football_prediction_redis<span class="w"> </span>redis-cli<span class="w"> </span>ping
+
+Redis健康检查
+docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>football_prediction_redis<span class="w"> </span>redis-cli<span class="w"> </span>ping
+<span class="c1">#</span>
+<span class="c1">#MLflow数据库检查</span>
+docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>football_prediction_mlflow-db<span class="w"> </span>pg_isready<span class="w"> </span>-U<span class="w"> </span>mlflow_user<span class="w"> </span>-d<span class="w"> </span>mlflow
+
+MLflow数据库检查
+docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>football_prediction_mlflow-db<span class="w"> </span>pg_isready<span class="w"> </span>-U<span class="w"> </span>mlflow_user<span class="w"> </span>-d<span class="w"> </span>mlflow
+<span class="c1">#</span>
+<span class="c1">#=============================================================================</span>
+<span class="o">=============================================================================</span><span class="c1">#</span>
+<span class="c1">#3. 消息队列健康检查</span>
+<span class="m">3</span>.<span class="w"> </span>消息队列健康检查#
+<span class="c1">#=============================================================================</span>
+
+<span class="o">=============================================================================</span>
+<span class="c1">#</span>
+<span class="c1">#Kafka健康检查</span>
+docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>football_prediction_kafka<span class="w"> </span>kafka-topics<span class="w"> </span>--bootstrap-server<span class="w"> </span>localhost:9092<span class="w"> </span>--list
+
+Kafka健康检查
+docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>football_prediction_kafka<span class="w"> </span>kafka-topics<span class="w"> </span>--bootstrap-server<span class="w"> </span>localhost:9092<span class="w"> </span>--list
+<span class="c1">#</span>
+<span class="c1">#Zookeeper健康检查</span>
+docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>football_prediction_zookeeper<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;ruok&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>nc<span class="w"> </span>localhost<span class="w"> </span><span class="m">2181</span>
+
+Zookeeper健康检查
+docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>football_prediction_zookeeper<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;ruok&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>nc<span class="w"> </span>localhost<span class="w"> </span><span class="m">2181</span>
+<span class="c1">#</span>
+<span class="c1">#=============================================================================</span>
+<span class="o">=============================================================================</span><span class="c1">#</span>
+<span class="c1">#4. 存储服务健康检查</span>
+<span class="m">4</span>.<span class="w"> </span>存储服务健康检查#
+<span class="c1">#=============================================================================</span>
+
+<span class="o">=============================================================================</span>
+<span class="c1">#</span>
+<span class="c1">#MinIO健康检查</span>
+curl<span class="w"> </span>-f<span class="w"> </span>http://localhost:9000/minio/health/live
+curl<span class="w"> </span>-f<span class="w"> </span>http://localhost:9001/minio/health/live
+
+MinIO健康检查
+curl<span class="w"> </span>-f<span class="w"> </span>http://localhost:9000/minio/health/live
+curl<span class="w"> </span>-f<span class="w"> </span>http://localhost:9001/minio/health/live
+<span class="c1">#</span>
+<span class="c1">#MLflow健康检查</span>
+curl<span class="w"> </span>-f<span class="w"> </span>http://localhost:5002/health
+
+MLflow健康检查
+curl<span class="w"> </span>-f<span class="w"> </span>http://localhost:5002/health
+<span class="c1">#</span>
+<span class="c1">#Marquez健康检查</span>
+curl<span class="w"> </span>-f<span class="w"> </span>http://localhost:5000/api/v1/namespaces
+
+Marquez健康检查
+curl<span class="w"> </span>-f<span class="w"> </span>http://localhost:5000/api/v1/namespaces
+<span class="c1">#</span>
+<span class="c1">#=============================================================================</span>
+<span class="o">=============================================================================</span><span class="c1">#</span>
+<span class="c1">#5. 监控服务健康检查</span>
+<span class="m">5</span>.<span class="w"> </span>监控服务健康检查#
+<span class="c1">#=============================================================================</span>
+
+<span class="o">=============================================================================</span>
+<span class="c1">#</span>
+<span class="c1">#Prometheus健康检查</span>
+curl<span class="w"> </span>-f<span class="w"> </span>http://localhost:9090/-/ready
+
+Prometheus健康检查
+curl<span class="w"> </span>-f<span class="w"> </span>http://localhost:9090/-/ready
+<span class="c1">#</span>
+<span class="c1">#Grafana健康检查</span>
+curl<span class="w"> </span>-f<span class="w"> </span>http://localhost:3000/api/health
+
+Grafana健康检查
+curl<span class="w"> </span>-f<span class="w"> </span>http://localhost:3000/api/health
+<span class="c1">#</span>
+<span class="c1">#AlertManager健康检查</span>
+curl<span class="w"> </span>-f<span class="w"> </span>http://localhost:9093/-/ready
+
+AlertManager健康检查
+curl<span class="w"> </span>-f<span class="w"> </span>http://localhost:9093/-/ready
+<span class="c1">#</span>
+<span class="c1">#=============================================================================</span>
+<span class="o">=============================================================================</span><span class="c1">#</span>
+<span class="c1">#6. 任务队列健康检查</span>
+<span class="m">6</span>.<span class="w"> </span>任务队列健康检查#
+<span class="c1">#=============================================================================</span>
+
+<span class="o">=============================================================================</span>
+<span class="c1">#</span>
+<span class="c1">#Celery Flower健康检查</span>
+curl<span class="w"> </span>-f<span class="w"> </span>http://localhost:5555/
+
+Celery<span class="w"> </span>Flower健康检查
+curl<span class="w"> </span>-f<span class="w"> </span>http://localhost:5555/
+<span class="c1">#</span>
+<span class="c1">#检查Celery工作状态</span>
+docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>football_prediction_celery-worker<span class="w"> </span>celery<span class="w"> </span>-A<span class="w"> </span>football_prediction.celery<span class="w"> </span>inspect<span class="w"> </span>active
+docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>football_prediction_celery-worker<span class="w"> </span>celery<span class="w"> </span>-A<span class="w"> </span>football_prediction.celery<span class="w"> </span>inspect<span class="w"> </span>scheduled
+</code></pre></div>
+<p>检查Celery工作状态
+docker exec football_prediction_celery-worker celery -A football_prediction.celery inspect active
+docker exec football_prediction_celery-worker celery -A football_prediction.celery inspect scheduled
+<div class="highlight"><pre><span></span><code>###
+###5. 日志检查要点
+
+#### 📋 日志检查清单和关键错误模式
+
+```bash
+5. 日志检查要点
+
+#### 📋 日志检查清单和关键错误模式
+
+```bash#
+#=============================================================================
+=============================================================================#
+#1. 应用服务日志检查
+1. 应用服务日志检查#
+#=============================================================================
+
+=============================================================================
+#
+#查看应用启动日志
+docker-compose logs --tail=100 app
+
+查看应用启动日志
+docker-compose logs --tail=100 app
+#
+#关键启动信息查找
+docker-compose logs app | grep -E &quot;(Starting|Started|Ready|Listening|Database connected|Cache connected)&quot;
+
+关键启动信息查找
+docker-compose logs app | grep -E &quot;(Starting|Started|Ready|Listening|Database connected|Cache connected)&quot;
+#
+#错误日志检查
+docker-compose logs app | grep -E &quot;(ERROR|CRITICAL|Exception|Failed|Connection refused|Timeout)&quot;
+
+错误日志检查
+docker-compose logs app | grep -E &quot;(ERROR|CRITICAL|Exception|Failed|Connection refused|Timeout)&quot;
+#
+#=============================================================================
+=============================================================================#
+#2. 数据库日志检查
+2. 数据库日志检查#
+#=============================================================================
+
+=============================================================================
+#
+#PostgreSQL日志
+docker-compose logs --tail=50 db
+
+PostgreSQL日志
+docker-compose logs --tail=50 db
+#
+#关键数据库信息
+docker-compose logs db | grep -E &quot;(ready|accepting connections|authentication|database system is ready)&quot;
+
+关键数据库信息
+docker-compose logs db | grep -E &quot;(ready|accepting connections|authentication|database system is ready)&quot;
+#
+#数据库错误检查
+docker-compose logs db | grep -E &quot;(FATAL|ERROR|connection|authentication|permission)&quot;
+
+数据库错误检查
+docker-compose logs db | grep -E &quot;(FATAL|ERROR|connection|authentication|permission)&quot;
+#
+#=============================================================================
+=============================================================================#
+#3. 缓存和队列日志检查
+3. 缓存和队列日志检查#
+#=============================================================================
+
+=============================================================================
+#
+#Redis日志
+docker-compose logs --tail=50 redis
+
+Redis日志
+docker-compose logs --tail=50 redis
+#
+#Kafka日志
+docker-compose logs --tail=50 kafka
+
+Kafka日志
+docker-compose logs --tail=50 kafka
+#
+#Celery日志
+docker-compose logs --tail=50 celery-worker
+
+Celery日志
+docker-compose logs --tail=50 celery-worker
+#
+#=============================================================================
+=============================================================================#
+#4. 监控系统日志检查
+4. 监控系统日志检查#
+#=============================================================================
+
+=============================================================================
+#
+#Prometheus日志
+docker-compose logs --tail=30 prometheus
+
+Prometheus日志
+docker-compose logs --tail=30 prometheus
+#
+#Grafana日志
+docker-compose logs --tail=30 grafana
+
+Grafana日志
+docker-compose logs --tail=30 grafana
+#
+#=============================================================================
+=============================================================================#
+#5. 性能指标日志检查
+5. 性能指标日志检查#
+#=============================================================================
+
+=============================================================================
+#
+#查看性能相关日志
+docker-compose logs app | grep -E &quot;(latency|response time|memory|cpu|slow query)&quot;
+
+查看性能相关日志
+docker-compose logs app | grep -E &quot;(latency|response time|memory|cpu|slow query)&quot;
+#
+#检查数据库查询性能
+docker-compose logs app | grep -E &quot;(slow query|query.*ms|execution time)&quot;
+</code></pre></div></p>
+<h4 id="_30">🚨 关键错误模式和解决方案<a class="headerlink" href="#_30" title="Permanent link">&para;</a></h4>
+<table>
+<thead>
+<tr>
+<th>错误模式</th>
+<th>可能原因</th>
+<th>解决方案</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Connection refused</code></td>
+<td>服务未启动或端口被占用</td>
+<td>检查服务状态和端口配置</td>
+</tr>
+<tr>
+<td><code>Database connection failed</code></td>
+<td>数据库连接字符串错误或数据库未启动</td>
+<td>验证数据库配置和状态</td>
+</tr>
+<tr>
+<td><code>Authentication failed</code></td>
+<td>用户名密码错误</td>
+<td>检查环境变量和密钥配置</td>
+</tr>
+<tr>
+<td><code>Module not found</code></td>
+<td>依赖包缺失</td>
+<td>检查Docker镜像构建过程</td>
+</tr>
+<tr>
+<td><code>Port already in use</code></td>
+<td>端口冲突</td>
+<td>检查端口配置和占用情况</td>
+</tr>
+<tr>
+<td><code>Out of memory</code></td>
+<td>内存不足</td>
+<td>增加内存限制或优化应用</td>
+</tr>
+<tr>
+<td><code>Permission denied</code></td>
+<td>文件权限问题</td>
+<td>检查文件系统权限</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p>检查数据库查询性能
+docker-compose logs app | grep -E "(slow query|query.*ms|execution time)"
+<div class="highlight"><pre><span></span><code>#### 🚨 关键错误模式和解决方案
+
+| 错误模式 | 可能原因 | 解决方案 |
+|---------|---------|---------|
+| `Connection refused` | 服务未启动或端口被占用 | 检查服务状态和端口配置 |
+| `Database connection failed` | 数据库连接字符串错误或数据库未启动 | 验证数据库配置和状态 |
+| `Authentication failed` | 用户名密码错误 | 检查环境变量和密钥配置 |
+| `Module not found` | 依赖包缺失 | 检查Docker镜像构建过程 |
+| `Port already in use` | 端口冲突 | 检查端口配置和占用情况 |
+| `Out of memory` | 内存不足 | 增加内存限制或优化应用 |
+| `Permission denied` | 文件权限问题 | 检查文件系统权限 |
+
+---
+##
+##✅ 部署后验证
+
+✅ 部署后验证
+###
+###1. 功能验证
+
+#### ✅ 检查清单：功能验证
+
+- [ ] **API服务响应**: 所有核心API接口正常响应
+- [ ] **数据库读写**: 数据库连接正常，读写操作成功
+- [ ] **缓存功能**: Redis缓存读写正常
+- [ ] **模型预测**: 模型加载和预测功能正常
+- [ ] **任务队列**: Celery任务正常执行
+- [ ] **文件存储**: MinIO文件上传下载正常
+
+#### 🧪 API 核心接口调用测试
+
+```bash
+1. 功能验证
+
+#### ✅ 检查清单：功能验证
+
+- [ ] **API服务响应**: 所有核心API接口正常响应
+- [ ] **数据库读写**: 数据库连接正常，读写操作成功
+- [ ] **缓存功能**: Redis缓存读写正常
+- [ ] **模型预测**: 模型加载和预测功能正常
+- [ ] **任务队列**: Celery任务正常执行
+- [ ] **文件存储**: MinIO文件上传下载正常
+
+#### 🧪 API 核心接口调用测试
+
+```bash#
+#=============================================================================
+=============================================================================#
+#1. 基础API测试
+1. 基础API测试#
+#=============================================================================
+
+=============================================================================
+#
+#服务信息测试
+curl -X GET http://localhost:8000/ \
+  -H &quot;Content-Type: application/json&quot; \
+  | jq .
+
+服务信息测试
+curl -X GET http://localhost:8000/ \
+  -H &quot;Content-Type: application/json&quot; \
+  | jq .
+#
+#健康检查测试
+curl -X GET http://localhost:8000/health \
+  -H &quot;Content-Type: application/json&quot; \
+  | jq .
+
+健康检查测试
+curl -X GET http://localhost:8000/health \
+  -H &quot;Content-Type: application/json&quot; \
+  | jq .
+#
+#API文档访问测试
+curl -X GET http://localhost:8000/docs \
+  -I
+
+API文档访问测试
+curl -X GET http://localhost:8000/docs \
+  -I
+#
+#=============================================================================
+=============================================================================#
+#2. 预测功能测试
+2. 预测功能测试#
+#=============================================================================
+
+=============================================================================
+#
+#获取预测接口文档
+curl -X GET http://localhost:8000/api/v1/predictions/ \
+  -H &quot;Content-Type: application/json&quot; \
+  | jq .
+
+获取预测接口文档
+curl -X GET http://localhost:8000/api/v1/predictions/ \
+  -H &quot;Content-Type: application/json&quot; \
+  | jq .
+#
+#创建预测请求
+curl -X POST http://localhost:8000/api/v1/predictions/ \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#39;{
+    &quot;match_id&quot;: &quot;test_match_001&quot;,
+    &quot;home_team_id&quot;: 1,
+    &quot;away_team_id&quot;: 2,
+    &quot;league_id&quot;: 1,
+    &quot;match_date&quot;: &quot;2025-09-25T15:00:00Z&quot;
+  }&#39; \
+  | jq .
+
+创建预测请求
+curl -X POST http://localhost:8000/api/v1/predictions/ \
+  -H &quot;Content-Type: application/json&quot; \
+  -d &#39;{
+    &quot;match_id&quot;: &quot;test_match_001&quot;,
+    &quot;home_team_id&quot;: 1,
+    &quot;away_team_id&quot;: 2,
+    &quot;league_id&quot;: 1,
+    &quot;match_date&quot;: &quot;2025-09-25T15:00:00Z&quot;
+  }&#39; \
+  | jq .
+#
+#获取预测结果
+curl -X GET http://localhost:8000/api/v1/predictions/test_prediction_001 \
+  -H &quot;Content-Type: application/json&quot; \
+  | jq .
+
+获取预测结果
+curl -X GET http://localhost:8000/api/v1/predictions/test_prediction_001 \
+  -H &quot;Content-Type: application/json&quot; \
+  | jq .
+#
+#=============================================================================
+=============================================================================#
+#3. 数据接口测试
+3. 数据接口测试#
+#=============================================================================
+
+=============================================================================
+#
+#获取比赛数据
+curl -X GET http://localhost:8000/api/v1/data/matches?limit=5 \
+  -H &quot;Content-Type: application/json&quot; \
+  | jq .
+
+获取比赛数据
+curl -X GET http://localhost:8000/api/v1/data/matches?limit=5 \
+  -H &quot;Content-Type: application/json&quot; \
+  | jq .
+#
+#获取队伍数据
+curl -X GET http://localhost:8000/api/v1/data/teams?limit=5 \
+  -H &quot;Content-Type: application/json&quot; \
+  | jq .
+
+获取队伍数据
+curl -X GET http://localhost:8000/api/v1/data/teams?limit=5 \
+  -H &quot;Content-Type: application/json&quot; \
+  | jq .
+#
+#获取特征数据
+curl -X GET http://localhost:8000/api/v1/features/ \
+  -H &quot;Content-Type: application/json&quot; \
+  | jq .
+
+获取特征数据
+curl -X GET http://localhost:8000/api/v1/features/ \
+  -H &quot;Content-Type: application/json&quot; \
+  | jq .
+#
+#获取队伍特征
+curl -X GET http://localhost:8000/api/v1/features/teams/1 \
+  -H &quot;Content-Type: application/json&quot; \
+  | jq .
+
+获取队伍特征
+curl -X GET http://localhost:8000/api/v1/features/teams/1 \
+  -H &quot;Content-Type: application/json&quot; \
+  | jq .
+#
+#=============================================================================
+=============================================================================#
+#4. 监控接口测试
+4. 监控接口测试#
+#=============================================================================
+
+=============================================================================
+#
+#获取系统指标
+curl -X GET http://localhost:8000/api/v1/monitoring/metrics \
+  -H &quot;Content-Type: application/json&quot; \
+  | jq .
+
+获取系统指标
+curl -X GET http://localhost:8000/api/v1/monitoring/metrics \
+  -H &quot;Content-Type: application/json&quot; \
+  | jq .
+#
+#获取Prometheus指标
+curl -X GET http://localhost:8000/metrics \
+  | head -20
+</code></pre></div></p>
+<h4 id="_31">🗄️ 数据库读写验证<a class="headerlink" href="#_31" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code>获取Prometheus指标
+curl<span class="w"> </span>-X<span class="w"> </span>GET<span class="w"> </span>http://localhost:8000/metrics<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-20
+</code></pre></div>
+<h4 id="_32">🗄️ 数据库读写验证<a class="headerlink" href="#_32" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code>#=============================================================================
+=============================================================================#
+#1. 数据库连接验证
+1. 数据库连接验证#
+#=============================================================================
+
+=============================================================================
+#
+#创建数据库连接测试脚本
+cat &gt; db_test.py &lt;&lt; &#39;EOF&#39;
+import asyncio
+import sys
+import os
+sys.path.append(&#39;/home/user/projects/FootballPrediction&#39;)
+
+from src.database.connection import get_async_session
+from src.database.models import League, Team, Match
+
+async def test_database_operations():
+    &quot;&quot;&quot;测试数据库读写操作&quot;&quot;&quot;
+    try:
+        async with get_async_session() as session:
+            # 测试读取
+            result = await session.execute(&quot;SELECT COUNT(*) FROM leagues&quot;)
+            league_count = result.scalar()
+            print(f&quot;✅ Leagues count: {league_count}&quot;)
+
+            result = await session.execute(&quot;SELECT COUNT(*) FROM teams&quot;)
+            team_count = result.scalar()
+            print(f&quot;✅ Teams count: {team_count}&quot;)
+
+            result = await session.execute(&quot;SELECT COUNT(*) FROM matches&quot;)
+            match_count = result.scalar()
+            print(f&quot;✅ Matches count: {match_count}&quot;)
+
+            # 测试写入
+            await session.execute(&quot;INSERT INTO audit_logs (action, table_name, record_id, success, duration_ms) VALUES (&#39;TEST&#39;, &#39;test_table&#39;, &#39;test_id&#39;, true, 100)&quot;)
+            await session.commit()
+            print(&quot;✅ Test write successful&quot;)
+
+            return True
+
+    except Exception as e:
+        print(f&quot;❌ Database test failed: {e}&quot;)
+        return False
+
+if __name__ == &quot;__main__&quot;:
+    success = asyncio.run(test_database_operations())
+    sys.exit(0 if success else 1)
+EOF
+
+创建数据库连接测试脚本
+cat &gt; db_test.py &lt;&lt; &#39;EOF&#39;
+import asyncio
+import sys
+import os
+sys.path.append(&#39;/home/user/projects/FootballPrediction&#39;)
+
+from src.database.connection import get_async_session
+from src.database.models import League, Team, Match
+
+async def test_database_operations():
+    &quot;&quot;&quot;测试数据库读写操作&quot;&quot;&quot;
+    try:
+        async with get_async_session() as session:
+            # 测试读取
+            result = await session.execute(&quot;SELECT COUNT(*) FROM leagues&quot;)
+            league_count = result.scalar()
+            print(f&quot;✅ Leagues count: {league_count}&quot;)
+
+            result = await session.execute(&quot;SELECT COUNT(*) FROM teams&quot;)
+            team_count = result.scalar()
+            print(f&quot;✅ Teams count: {team_count}&quot;)
+
+            result = await session.execute(&quot;SELECT COUNT(*) FROM matches&quot;)
+            match_count = result.scalar()
+            print(f&quot;✅ Matches count: {match_count}&quot;)
+
+            # 测试写入
+            await session.execute(&quot;INSERT INTO audit_logs (action, table_name, record_id, success, duration_ms) VALUES (&#39;TEST&#39;, &#39;test_table&#39;, &#39;test_id&#39;, true, 100)&quot;)
+            await session.commit()
+            print(&quot;✅ Test write successful&quot;)
+
+            return True
+
+    except Exception as e:
+        print(f&quot;❌ Database test failed: {e}&quot;)
+        return False
+
+if __name__ == &quot;__main__&quot;:
+    success = asyncio.run(test_database_operations())
+    sys.exit(0 if success else 1)
+EOF
+#
+#运行数据库测试
+python db_test.py
+
+运行数据库测试
+python db_test.py
+#
+#=============================================================================
+=============================================================================#
+#2. 数据一致性验证
+2. 数据一致性验证#
+#=============================================================================
+
+=============================================================================
+#
+#检查数据库表完整性
+docker exec football_prediction_db psql -U football_user -d football_prediction_dev -c &quot;
+SELECT table_name
+FROM information_schema.tables
+WHERE table_schema = &#39;public&#39;
+ORDER BY table_name;
+&quot;
+
+检查数据库表完整性
+docker exec football_prediction_db psql -U football_user -d football_prediction_dev -c &quot;
+SELECT table_name
+FROM information_schema.tables
+WHERE table_schema = &#39;public&#39;
+ORDER BY table_name;
+&quot;
+#
+#检查索引完整性
+docker exec football_prediction_db psql -U football_user -d football_prediction_dev -c &quot;
+SELECT indexname, tablename
+FROM pg_indexes
+WHERE schemaname = &#39;public&#39;
+ORDER BY tablename, indexname;
+&quot;
+
+检查索引完整性
+docker exec football_prediction_db psql -U football_user -d football_prediction_dev -c &quot;
+SELECT indexname, tablename
+FROM pg_indexes
+WHERE schemaname = &#39;public&#39;
+ORDER BY tablename, indexname;
+&quot;
+#
+#=============================================================================
+=============================================================================#
+#3. 缓存读写验证
+3. 缓存读写验证#
+#=============================================================================
+
+=============================================================================
+#
+#创建缓存测试脚本
+cat &gt; cache_test.py &lt;&lt; &#39;EOF&#39;
+import asyncio
+import sys
+import os
+sys.path.append(&#39;/home/user/projects/FootballPrediction&#39;)
+
+from src.cache.redis_manager import RedisManager
+
+async def test_cache_operations():
+    &quot;&quot;&quot;测试缓存读写操作&quot;&quot;&quot;
+    try:
+        redis = RedisManager()
+
+        # 测试写入
+        await redis.set(&quot;test_key&quot;, &quot;test_value&quot;, ttl=300)
+        print(&quot;✅ Cache write successful&quot;)
+
+        # 测试读取
+        value = await redis.get(&quot;test_key&quot;)
+        print(f&quot;✅ Cache read successful: {value}&quot;)
+
+        # 测试删除
+        await redis.delete(&quot;test_key&quot;)
+        print(&quot;✅ Cache delete successful&quot;)
+
+        # 测试缓存命中率
+        await redis.set(&quot;hit_test&quot;, &quot;hit_value&quot;, ttl=300)
+        await redis.get(&quot;hit_test&quot;)  # Hit
+        await redis.get(&quot;miss_test&quot;)  # Miss
+        print(&quot;✅ Cache hit/miss test completed&quot;)
+
+        return True
+
+    except Exception as e:
+        print(f&quot;❌ Cache test failed: {e}&quot;)
+        return False
+
+if __name__ == &quot;__main__&quot;:
+    success = asyncio.run(test_cache_operations())
+    sys.exit(0 if success else 1)
+EOF
+
+创建缓存测试脚本
+cat &gt; cache_test.py &lt;&lt; &#39;EOF&#39;
+import asyncio
+import sys
+import os
+sys.path.append(&#39;/home/user/projects/FootballPrediction&#39;)
+
+from src.cache.redis_manager import RedisManager
+
+async def test_cache_operations():
+    &quot;&quot;&quot;测试缓存读写操作&quot;&quot;&quot;
+    try:
+        redis = RedisManager()
+
+        # 测试写入
+        await redis.set(&quot;test_key&quot;, &quot;test_value&quot;, ttl=300)
+        print(&quot;✅ Cache write successful&quot;)
+
+        # 测试读取
+        value = await redis.get(&quot;test_key&quot;)
+        print(f&quot;✅ Cache read successful: {value}&quot;)
+
+        # 测试删除
+        await redis.delete(&quot;test_key&quot;)
+        print(&quot;✅ Cache delete successful&quot;)
+
+        # 测试缓存命中率
+        await redis.set(&quot;hit_test&quot;, &quot;hit_value&quot;, ttl=300)
+        await redis.get(&quot;hit_test&quot;)  # Hit
+        await redis.get(&quot;miss_test&quot;)  # Miss
+        print(&quot;✅ Cache hit/miss test completed&quot;)
+
+        return True
+
+    except Exception as e:
+        print(f&quot;❌ Cache test failed: {e}&quot;)
+        return False
+
+if __name__ == &quot;__main__&quot;:
+    success = asyncio.run(test_cache_operations())
+    sys.exit(0 if success else 1)
+EOF
+#
+#运行缓存测试
+python cache_test.py
+</code></pre></div>
+<h4 id="_33">🤖 模型预测结果正确性检查<a class="headerlink" href="#_33" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code>运行缓存测试
+python<span class="w"> </span>cache_test.py
+</code></pre></div>
+<h4 id="_34">🤖 模型预测结果正确性检查<a class="headerlink" href="#_34" title="Permanent link">&para;</a></h4>
+<p>```bash#</p>
+<h1 id="_35">=============================================================================<a class="headerlink" href="#_35" title="Permanent link">&para;</a></h1>
+<p>=============================================================================#</p>
+<h1 id="1">1. 模型加载验证<a class="headerlink" href="#1" title="Permanent link">&para;</a></h1>
+<ol>
+<li>模型加载验证#</li>
+</ol>
+<h1 id="_36">=============================================================================<a class="headerlink" href="#_36" title="Permanent link">&para;</a></h1>
+<p>=============================================================================</p>
+<h1 id="_37"><a class="headerlink" href="#_37" title="Permanent link">&para;</a></h1>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+
+  <!-- 添加页面导航助手 -->
+  
+    <div class="md-content__inner md-typeset">
+      <nav class="md-nav--secondary">
+        <div class="md-nav__title">
+          <i class="md-nav__icon md-icon"></i>
+          页面导航
+        </div>
+        <ul class="md-nav__list">
+          
+            <li class="md-nav__item">
+              <a href="#_1" class="md-nav__link">
+                =============================================================================
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#_2" class="md-nav__link">
+                
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#minio" class="md-nav__link">
+                部署MinIO
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#_3" class="md-nav__link">
+                
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#mlflow" class="md-nav__link">
+                部署MLflow
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#_4" class="md-nav__link">
+                
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#_5" class="md-nav__link">
+                =============================================================================
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#7" class="md-nav__link">
+                7. 监控系统部署
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#_6" class="md-nav__link">
+                =============================================================================
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#_7" class="md-nav__link">
+                
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#prometheus" class="md-nav__link">
+                部署Prometheus
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#_8" class="md-nav__link">
+                
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#grafana" class="md-nav__link">
+                部署Grafana
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#_9" class="md-nav__link">
+                
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#alertmanager" class="md-nav__link">
+                部署AlertManager
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#_10" class="md-nav__link">
+                
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#_11" class="md-nav__link">
+                =============================================================================
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#8" class="md-nav__link">
+                8. 应用服务部署
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#_12" class="md-nav__link">
+                =============================================================================
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#_13" class="md-nav__link">
+                
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#_14" class="md-nav__link">
+                部署应用
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#_15" class="md-nav__link">
+                
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#_16" class="md-nav__link">
+                部署任务队列
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#_17" class="md-nav__link">
+                
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#ingress" class="md-nav__link">
+                部署Ingress
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#_18" class="md-nav__link">
+                
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#_19" class="md-nav__link">
+                =============================================================================
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#9" class="md-nav__link">
+                9. 验证部署
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#_20" class="md-nav__link">
+                =============================================================================
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#_21" class="md-nav__link">
+                
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#pod" class="md-nav__link">
+                检查所有Pod状态
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#_22" class="md-nav__link">
+                
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#_23" class="md-nav__link">
+                检查服务状态
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#_24" class="md-nav__link">
+                
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#ingress_1" class="md-nav__link">
+                检查Ingress状态
+              </a>
+              
+                <ul class="md-nav__list">
+                  
+                    <li class="md-nav__item">
+                      <a href="#_25" class="md-nav__link">
+                        
+                      </a>
+                    </li>
+                  
+                    <li class="md-nav__item">
+                      <a href="#3" class="md-nav__link">
+                        3. 服务启动顺序说明
+                      </a>
+                    </li>
+                  
+                    <li class="md-nav__item">
+                      <a href="#_28" class="md-nav__link">
+                        
+                      </a>
+                    </li>
+                  
+                    <li class="md-nav__item">
+                      <a href="#4" class="md-nav__link">
+                        4. 健康检查验证
+                      </a>
+                    </li>
+                  
+                </ul>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#_35" class="md-nav__link">
+                =============================================================================
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#1" class="md-nav__link">
+                1. 模型加载验证
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#_36" class="md-nav__link">
+                =============================================================================
+              </a>
+              
+            </li>
+          
+            <li class="md-nav__item">
+              <a href="#_37" class="md-nav__link">
+                
+              </a>
+              
+            </li>
+          
+        </ul>
+      </nav>
+    </div>
+  
+
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  回到页面顶部
+</button>
+        
+      </main>
+      
+  
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2025 Football Prediction Team
+    </div>
+  
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+
+  <!-- 自定义页脚内容 -->
+  <footer class="md-footer-meta">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        <div class="md-footer-copyright__highlight">
+          © 2025 Football Prediction Team -
+          基于 <a href="https://www.mkdocs.org/">MkDocs</a> 和
+          <a href="https://squidfunk.github.io/mkdocs-material/">Material for MkDocs</a> 构建
+        </div>
+        <div class="md-footer-copyright__small">
+          文档最后更新: 2025-10-23 |
+          版本: v1.0.0
+        </div>
+      </div>
+
+      <!-- 社交链接 (暂时注释掉) -->
+      <!--
+      <div class="md-footer-social">
+        
+      </div>
+      -->
+    </div>
+  </footer>
+
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../../..", "features": ["announce.dismiss", "content.action.edit", "content.action.view", "content.code.annotate", "content.code.copy", "content.code.select", "content.tabs.link", "content.tooltips", "header.autohide", "navigation.expand", "navigation.footer", "navigation.indexes", "navigation.instant", "navigation.instant.prefetch", "navigation.instant.progress", "navigation.prune", "navigation.sections", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.tracking", "search.highlight", "search.share", "search.suggest", "toc.follow", "toc.integrate"], "search": "../../../assets/javascripts/workers/search.6ce7567c.min.js", "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}}</script>
+    
+    
+  
+      <script src="../../../assets/javascripts/bundle.88dd0f4e.min.js"></script>
+      
+    
+
+  <!-- Google Analytics (配置为静态值) -->
+  <!--
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-XXXXX-X"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'UA-XXXXX-X');
+  </script>
+  -->
+
+  </body>
+</html>

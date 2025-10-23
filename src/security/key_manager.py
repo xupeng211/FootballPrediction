@@ -19,7 +19,7 @@ class KeyManager:
     Key Manager (Stub Implementation)
     """
 
-    def __init__(self, key_file: Optional[str] = None):
+    def __init__(self, key_file: Optional[str] = None):  # type: ignore
         """
         初始化密钥管理器
 

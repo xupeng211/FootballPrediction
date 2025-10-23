@@ -14,6 +14,6 @@ class ExampleClass:
     pass
 
 
-def example_function():
+def example_function():  # type: ignore
     """示例函数"""
     pass

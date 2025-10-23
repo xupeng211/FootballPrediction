@@ -31,7 +31,7 @@ class Component(ABC):
 class ConcreteComponent(Component):
     """具体组件，实现了组件接口的基本功能"""
 
-    def __init__(self, name: str, func: Callable):
+    def __init__(self, name: str, func: Callable):  # type: ignore
         self.name = name
         self.func = func
         self._wrapped = self._wrap_function(func)
@@ -58,7 +58,7 @@ class ConcreteComponent(Component):
 class Decorator(Component):
     """装饰器基类，实现了组件接口并持有一个组件引用"""
 
-    def __init__(self, component: Component, name: Optional[str] = None):
+    def __init__(self, component: Component, name: Optional[str] = None):  # type: ignore
         self.component = component
         self.name = name or f"{self.__class__.__name__}_{uuid.uuid4().hex[:8]}"
         self.execution_count = 0
@@ -155,7 +155,7 @@ class DecoratorComponent(Decorator):
 class DecoratorChain:
     """装饰器链，用于管理多个装饰器的执行顺序"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self.decorators: list[Decorator] = []
 
     def add_decorator(self, decorator: Decorator) -> "DecoratorChain":
@@ -193,7 +193,7 @@ class DecoratorChain:
 class DecoratorContext:
     """装饰器执行上下文，用于在装饰器之间传递数据"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self.data: Dict[str, Any] = {}
         self.start_time = time.time()
         self.trace_id = str(uuid.uuid4())
@@ -233,7 +233,7 @@ class DecoratorContext:
 class DecoratorRegistry:
     """装饰器注册表，用于管理全局装饰器"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self._decorators: Dict[str, type[Decorator]] = {}
         self._instances: Dict[str, Decorator] = {}
 

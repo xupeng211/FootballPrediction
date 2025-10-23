@@ -368,7 +368,7 @@ class Test{class_name}:
             # Try with required arguments
             try:
                 return {class_name}(test_param="test_value")
-            except:
+            except Exception:
                 # Skip if instantiation fails
                 pytest.skip(f"Cannot instantiate {class_name}")
         except Exception:
@@ -489,7 +489,7 @@ def test_{func_name}_with_args(self):
             try:
                 result = func("test_arg")
                 assert result is not None
-            except:
+            except Exception:
                 # Function might require specific arguments
                 pass
         except Exception:

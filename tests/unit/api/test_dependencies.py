@@ -56,13 +56,13 @@ class TestParameterizedInput:
             "types": [str, int, float, bool, list, dict, tuple, set],
         }
 
-    @pytest.mark.parametrize(
-        "input_value", ["", "test", 0, 1, -1, True, False, [], {}]
-    )
+    @pytest.mark.parametrize("input_value", ["", "test", 0, 1, -1, True, False, [], {}])
     def test_handle_basic_inputs(self, input_value):
         """测试处理基本输入类型"""
         # 基础断言，确保测试能处理各种输入（None值在单独的测试中处理）
-        assert isinstance(input_value, (str, int, bool, list, dict)), f"Unexpected type for input_value: {input_value}"
+        assert isinstance(
+            input_value, (str, int, bool, list, dict)
+        ), f"Unexpected type for input_value: {input_value}"
 
     @pytest.mark.parametrize(
         "input_data, expected_data",

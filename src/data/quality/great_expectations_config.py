@@ -30,8 +30,7 @@ except ImportError:
 
     # Create placeholder objects to prevent undefined errors
     class MockGX:
-        def get_context(self, **kwargs):
-            raise ImportError("great_expectations not available")
+        def get_context(self, **kwargs):            raise ImportError("great_expectations not available")
 
     class MockDataContextError(Exception):
         pass

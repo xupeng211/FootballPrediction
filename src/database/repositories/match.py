@@ -26,7 +26,7 @@ class MatchRepository(BaseRepository[Match]):
     Provides CRUD operations and complex query methods for match data.
     """
 
-    def __init__(self, db_manager=None):
+    def __init__(self, db_manager=None):  # type: ignore
         super().__init__(Match, db_manager)
 
     # ========================================
@@ -39,7 +39,7 @@ class MatchRepository(BaseRepository[Match]):
         end_date: datetime,
         limit: Optional[int] = None,
         session: Optional[AsyncSession] = None,
-    ) -> List[Match]:
+    ) -> Optional[List[Match]]:
         """
         获取指定日期范围内的比赛
 
@@ -75,7 +75,7 @@ class MatchRepository(BaseRepository[Match]):
         status: MatchStatus,
         limit: Optional[int] = None,
         session: Optional[AsyncSession] = None,
-    ) -> List[Match]:
+    ) -> Optional[List[Match]]:
         """
         根据状态获取比赛
 
@@ -96,7 +96,7 @@ class MatchRepository(BaseRepository[Match]):
         days: int = 7,
         limit: Optional[int] = None,
         session: Optional[AsyncSession] = None,
-    ) -> List[Match]:
+    ) -> Optional[List[Match]]:
         """
         获取即将到来的比赛
 
@@ -135,7 +135,7 @@ class MatchRepository(BaseRepository[Match]):
 
     async def get_live_matches(
         self, session: Optional[AsyncSession] = None
-    ) -> List[Match]:
+    ) -> Optional[List[Match]]:
         """
         获取正在进行的比赛
 
@@ -152,7 +152,7 @@ class MatchRepository(BaseRepository[Match]):
         days: int = 7,
         limit: Optional[int] = None,
         session: Optional[AsyncSession] = None,
-    ) -> List[Match]:
+    ) -> Optional[List[Match]]:
         """
         获取已结束的比赛
 
@@ -193,7 +193,7 @@ class MatchRepository(BaseRepository[Match]):
         home_or_away: Optional[str] = None,
         limit: Optional[int] = None,
         session: Optional[AsyncSession] = None,
-    ) -> List[Match]:
+    ) -> Optional[List[Match]]:
         """
         根据球队获取比赛
 
@@ -233,7 +233,7 @@ class MatchRepository(BaseRepository[Match]):
         team2_id: Union[int, str],
         limit: Optional[int] = None,
         session: Optional[AsyncSession] = None,
-    ) -> List[Match]:
+    ) -> Optional[List[Match]]:
         """
         获取两支球队的历史对战记录
 
@@ -279,7 +279,7 @@ class MatchRepository(BaseRepository[Match]):
         season: Optional[str] = None,
         limit: Optional[int] = None,
         session: Optional[AsyncSession] = None,
-    ) -> List[Match]:
+    ) -> Optional[List[Match]]:
         """
         根据联赛获取比赛
 

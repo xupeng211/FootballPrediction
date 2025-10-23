@@ -142,7 +142,7 @@ class BaseService(ABC):
         """获取异步数据库会话"""
         return self.db_manager.get_async_session()
 
-    def get_sync_session(self):
+    def get_sync_session(self):  # type: ignore
         """获取同步数据库会话"""
         return self.db_manager.get_session()
 

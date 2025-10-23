@@ -1,6 +1,12 @@
 # mypy: ignore-errors
 from sqlalchemy.exc import SQLAlchemyError, DatabaseError
+from typing import Union, Sequence
 
+import logging
+logger = logging.getLogger(__name__)
+from sqlalchemy import text
+from alembic import context
+from alembic import op
 """add_performance_critical_indexes
 
 添加性能关键索引，优化高频查询性能。

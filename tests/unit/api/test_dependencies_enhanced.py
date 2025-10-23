@@ -14,22 +14,25 @@ from typing import Any, Dict
 from unittest.mock import Mock, AsyncMock, patch
 
 # 添加src到路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../src"))
 
 try:
     from src.database.dependencies import (
         get_db,
         get_async_db,
         get_test_db,
-        get_test_async_db
+        get_test_async_db,
     )
+
     DEPENDENCIES_AVAILABLE = True
 except ImportError as e:
     print(f"Warning: Could not import dependencies module: {e}")
     DEPENDENCIES_AVAILABLE = False
 
 
-@pytest.mark.skipif(not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available")
+@pytest.mark.skipif(
+    not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available"
+)
 class TestAPIDependenciesEnhanced:
     """API依赖模块增强测试类"""
 
@@ -64,7 +67,7 @@ class TestAPIDependenciesEnhanced:
 
     def test_get_db_dependency(self):
         """测试数据库依赖注入"""
-        with patch('src.database.dependencies.get_db_session') as mock_get_session:
+        with patch("src.database.dependencies.get_db_session") as mock_get_session:
             mock_session = Mock()
             mock_get_session.return_value = mock_session
 
@@ -72,12 +75,12 @@ class TestAPIDependenciesEnhanced:
             dependency = get_db()
 
             # 验证依赖生成器
-            assert hasattr(dependency, '__iter__') or hasattr(dependency, '__await__')
+            assert hasattr(dependency, "__iter__") or hasattr(dependency, "__await__")
 
     @pytest.mark.asyncio
     async def test_get_async_db_dependency(self):
         """测试异步数据库依赖注入"""
-        with patch('src.database.dependencies.get_async_session') as mock_get_session:
+        with patch("src.database.dependencies.get_async_session") as mock_get_session:
             mock_session = AsyncMock()
             mock_get_session.return_value = mock_session
 
@@ -85,11 +88,11 @@ class TestAPIDependenciesEnhanced:
             dependency = get_async_db()
 
             # 验证异步依赖生成器
-            assert hasattr(dependency, '__aiter__') or hasattr(dependency, '__await__')
+            assert hasattr(dependency, "__aiter__") or hasattr(dependency, "__await__")
 
     def test_test_db_dependency(self):
         """测试数据库依赖注入"""
-        with patch('src.database.dependencies.get_reader_session') as mock_get_session:
+        with patch("src.database.dependencies.get_reader_session") as mock_get_session:
             mock_session = Mock()
             mock_get_session.return_value = mock_session
 
@@ -97,12 +100,14 @@ class TestAPIDependenciesEnhanced:
             dependency = get_test_db()
 
             # 验证依赖生成器
-            assert hasattr(dependency, '__iter__')
+            assert hasattr(dependency, "__iter__")
 
     @pytest.mark.asyncio
     async def test_test_async_db_dependency(self):
         """测试异步数据库依赖注入"""
-        with patch('src.database.dependencies.get_async_reader_session') as mock_get_session:
+        with patch(
+            "src.database.dependencies.get_async_reader_session"
+        ) as mock_get_session:
             mock_session = AsyncMock()
             mock_get_session.return_value = mock_session
 
@@ -110,13 +115,13 @@ class TestAPIDependenciesEnhanced:
             dependency = get_test_async_db()
 
             # 验证异步依赖生成器
-            assert hasattr(dependency, '__aiter__')
+            assert hasattr(dependency, "__aiter__")
 
     # === Redis客户端依赖测试 ===
 
     def test_get_redis_client_success(self, mock_redis_client):
         """测试获取Redis客户端成功"""
-        with patch('src.api.dependencies.redis_client', mock_redis_client):
+        with patch("src.api.dependencies.redis_client", mock_redis_client):
             client = get_redis_client()
 
             assert client == mock_redis_client
@@ -127,7 +132,7 @@ class TestAPIDependenciesEnhanced:
         mock_redis = Mock()
         mock_redis.ping.side_effect = Exception("Redis connection failed")
 
-        with patch('src.api.dependencies.redis_client', mock_redis):
+        with patch("src.api.dependencies.redis_client", mock_redis):
             with pytest.raises(Exception, match="Redis connection failed"):
                 get_redis_client()
 
@@ -137,17 +142,17 @@ class TestAPIDependenciesEnhanced:
         """测试有效令牌获取当前用户"""
         mock_user = {"id": 1, "username": "testuser", "email": "test@example.com"}
 
-        with patch('src.api.dependencies.decode_token') as mock_decode:
+        with patch("src.api.dependencies.decode_token") as mock_decode:
             mock_decode.return_value = {"user_id": 1}
 
-            with patch('src.api.dependencies.get_user_by_id') as mock_get_user:
+            with patch("src.api.dependencies.get_user_by_id") as mock_get_user:
                 mock_get_user.return_value = mock_user
 
                 # 模拟请求头中的Authorization
                 mock_request = Mock()
                 mock_request.headers = {"authorization": "Bearer valid_token_123"}
 
-                with patch('src.api.dependencies.HTTPBearer', return_value=Mock()):
+                with patch("src.api.dependencies.HTTPBearer", return_value=Mock()):
                     user = get_current_user(mock_request)
 
                 assert user == mock_user
@@ -164,7 +169,7 @@ class TestAPIDependenciesEnhanced:
 
     def test_get_current_user_invalid_token(self):
         """测试无效令牌"""
-        with patch('src.api.dependencies.decode_token') as mock_decode:
+        with patch("src.api.dependencies.decode_token") as mock_decode:
             mock_decode.side_effect = Exception("Invalid token")
 
             mock_request = Mock()
@@ -175,10 +180,10 @@ class TestAPIDependenciesEnhanced:
 
     def test_get_current_user_user_not_found(self):
         """测试用户不存在"""
-        with patch('src.api.dependencies.decode_token') as mock_decode:
+        with patch("src.api.dependencies.decode_token") as mock_decode:
             mock_decode.return_value = {"user_id": 999}
 
-            with patch('src.api.dependencies.get_user_by_id') as mock_get_user:
+            with patch("src.api.dependencies.get_user_by_id") as mock_get_user:
                 mock_get_user.return_value = None
 
                 mock_request = Mock()
@@ -193,24 +198,24 @@ class TestAPIDependenciesEnhanced:
         """测试有效API密钥验证"""
         valid_key = "valid_api_key_12345"
 
-        with patch('src.api.dependencies.API_KEYS', [valid_key]):
+        with patch("src.api.dependencies.API_KEYS", [valid_key]):
             assert verify_api_key(valid_key) is True
 
     def test_verify_api_key_invalid(self):
         """测试无效API密钥验证"""
         invalid_key = "invalid_api_key"
 
-        with patch('src.api.dependencies.API_KEYS', ["valid_key_123"]):
+        with patch("src.api.dependencies.API_KEYS", ["valid_key_123"]):
             assert verify_api_key(invalid_key) is False
 
     def test_verify_api_key_empty_keys_list(self):
         """测试空API密钥列表"""
-        with patch('src.api.dependencies.API_KEYS', []):
+        with patch("src.api.dependencies.API_KEYS", []):
             assert verify_api_key("any_key") is False
 
     def test_verify_api_key_none_key(self):
         """测试None API密钥"""
-        with patch('src.api.dependencies.API_KEYS', ["valid_key"]):
+        with patch("src.api.dependencies.API_KEYS", ["valid_key"]):
             assert verify_api_key(None) is False
 
     # === 速率限制测试 ===
@@ -221,7 +226,7 @@ class TestAPIDependenciesEnhanced:
         mock_redis.get.return_value = None  # 没有之前的请求
         mock_redis.set.return_value = True
 
-        with patch('src.api.dependencies.redis_client', mock_redis):
+        with patch("src.api.dependencies.redis_client", mock_redis):
             # 模拟请求
             mock_request = Mock()
             mock_request.client.host = "127.0.0.1"
@@ -237,7 +242,7 @@ class TestAPIDependenciesEnhanced:
         mock_redis.get.return_value = "10"  # 已达到限制
         mock_redis.incr.return_value = 11
 
-        with patch('src.api.dependencies.redis_client', mock_redis):
+        with patch("src.api.dependencies.redis_client", mock_redis):
             mock_request = Mock()
             mock_request.client.host = "127.0.0.1"
             mock_request.url.path = "/api/test"
@@ -251,7 +256,7 @@ class TestAPIDependenciesEnhanced:
         mock_redis = Mock()
         mock_redis.get.side_effect = Exception("Redis error")
 
-        with patch('src.api.dependencies.redis_client', mock_redis):
+        with patch("src.api.dependencies.redis_client", mock_redis):
             mock_request = Mock()
             mock_request.client.host = "127.0.0.1"
 
@@ -267,10 +272,11 @@ class TestAPIDependenciesEnhanced:
         mock_db_session = Mock()
         mock_redis_client = Mock()
 
-        with patch('src.api.dependencies.get_current_user') as mock_get_user, \
-             patch('src.api.dependencies.get_db_session') as mock_get_db, \
-             patch('src.api.dependencies.get_redis_client') as mock_get_redis:
-
+        with (
+            patch("src.api.dependencies.get_current_user") as mock_get_user,
+            patch("src.api.dependencies.get_db_session") as mock_get_db,
+            patch("src.api.dependencies.get_redis_client") as mock_get_redis,
+        ):
             mock_get_user.return_value = mock_user
             mock_get_db.return_value = mock_db_session
             mock_get_redis.return_value = mock_redis_client
@@ -289,10 +295,10 @@ class TestAPIDependenciesEnhanced:
 
     def test_dependency_caching(self):
         """测试依赖缓存"""
-        with patch('src.api.dependencies._db_session_cache', None):
+        with patch("src.api.dependencies._db_session_cache", None):
             mock_db_session = Mock()
 
-            with patch('src.api.dependencies.SessionLocal') as mock_session_local:
+            with patch("src.api.dependencies.SessionLocal") as mock_session_local:
                 mock_session_local.return_value.__enter__.return_value = mock_db_session
 
                 # 第一次调用
@@ -310,12 +316,12 @@ class TestAPIDependenciesEnhanced:
         """测试数据库重试机制"""
         Mock()
 
-        with patch('src.api.dependencies.SessionLocal') as mock_session_local:
+        with patch("src.api.dependencies.SessionLocal") as mock_session_local:
             # 前两次失败，第三次成功
             mock_session_local.side_effect = [
                 Exception("Connection failed"),
                 Exception("Connection failed"),
-                mock_session_local.return_value.__enter__.return_value
+                mock_session_local.return_value.__enter__.return_value,
             ]
 
             # 这取决于实际的实现，这里只是模拟概念
@@ -330,14 +336,14 @@ class TestAPIDependenciesEnhanced:
     def test_fallback_authentication(self):
         """测试后备认证机制"""
         # 当主要认证失败时，应该有后备方案
-        with patch('src.api.dependencies.decode_token') as mock_decode:
+        with patch("src.api.dependencies.decode_token") as mock_decode:
             mock_decode.side_effect = Exception("Token decode failed")
 
             mock_request = Mock()
             mock_request.headers = {"authorization": "Bearer invalid_token"}
 
             # 可能的API密钥后备认证
-            with patch('src.api.dependencies.verify_api_key') as mock_verify:
+            with patch("src.api.dependencies.verify_api_key") as mock_verify:
                 mock_verify.return_value = True
 
                 try:
@@ -354,7 +360,7 @@ class TestAPIDependenciesEnhanced:
         """测试依赖性能"""
         import time
 
-        with patch('src.api.dependencies.SessionLocal') as mock_session_local:
+        with patch("src.api.dependencies.SessionLocal") as mock_session_local:
             mock_session = Mock()
             mock_session_local.return_value.__enter__.return_value = mock_session
 
@@ -368,14 +374,16 @@ class TestAPIDependenciesEnhanced:
             execution_time = end_time - start_time
 
             # 性能应该在合理范围内（小于1秒）
-            assert execution_time < 1.0, f"Dependency resolution took too long: {execution_time}s"
+            assert (
+                execution_time < 1.0
+            ), f"Dependency resolution took too long: {execution_time}s"
 
     # === 配置测试 ===
 
     def test_database_configuration(self):
         """测试数据库配置"""
-        with patch('src.api.dependencies.DATABASE_URL', 'sqlite:///test.db'):
-            with patch('src.api.dependencies.SessionLocal') as mock_session_local:
+        with patch("src.api.dependencies.DATABASE_URL", "sqlite:///test.db"):
+            with patch("src.api.dependencies.SessionLocal") as mock_session_local:
                 mock_session = Mock()
                 mock_session_local.return_value.__enter__.return_value = mock_session
 
@@ -384,10 +392,10 @@ class TestAPIDependenciesEnhanced:
 
     def test_redis_configuration(self):
         """测试Redis配置"""
-        with patch('src.api.dependencies.REDIS_URL', 'redis://localhost:6379/1'):
+        with patch("src.api.dependencies.REDIS_URL", "redis://localhost:6379/1"):
             mock_redis = Mock()
             mock_redis.ping.return_value = True
 
-            with patch('src.api.dependencies.redis_client', mock_redis):
+            with patch("src.api.dependencies.redis_client", mock_redis):
                 client = get_redis_client()
                 assert client == mock_redis

@@ -12,6 +12,16 @@ from typing import Dict, Any, Optional
 
 
 @dataclass
+class FeatureEntity:
+    """基础特征实体类"""
+    id: str
+    feature_type: str
+    data: Dict[str, Any]
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+@dataclass
 class MatchEntity:
     """
     比赛实体

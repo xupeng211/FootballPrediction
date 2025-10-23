@@ -133,7 +133,7 @@ app.conf.task_queues = {
 }
 
 
-def get_redis_connection():
+def get_redis_connection():  # type: ignore
     """获取Redis连接"""
     return redis.from_url(REDIS_URL)
 

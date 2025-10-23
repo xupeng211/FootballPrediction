@@ -258,7 +258,7 @@ class TeamStatsEventData(EventData):
 class MatchCreatedEvent(Event):
     """比赛创建事件"""
 
-    def __init__(self, data: MatchCreatedEventData):
+    def __init__(self, data: MatchCreatedEventData):  # type: ignore
         super().__init__(data)
 
     @classmethod
@@ -292,7 +292,7 @@ class MatchCreatedEvent(Event):
             timestamp=datetime.fromisoformat(data["timestamp"]),
             source=data.get("source"),
             version=data.get("version", "1.0"),
-            metadata =data.get("metadata", {}),
+            metadata=data.get("metadata", {}),
             match_id=data["match_id"],
             home_team_id=data["home_team_id"],
             away_team_id=data["away_team_id"],
@@ -310,7 +310,7 @@ class MatchCreatedEvent(Event):
 class MatchUpdatedEvent(Event):
     """比赛更新事件"""
 
-    def __init__(self, data: MatchUpdatedEventData):
+    def __init__(self, data: MatchUpdatedEventData):  # type: ignore
         super().__init__(data)
 
     @classmethod
@@ -344,7 +344,7 @@ class MatchUpdatedEvent(Event):
             timestamp=datetime.fromisoformat(data["timestamp"]),
             source=data.get("source"),
             version=data.get("version", "1.0"),
-            metadata =data.get("metadata", {}),
+            metadata=data.get("metadata", {}),
             match_id=data["match_id"],
             home_team_id=data["home_team_id"],
             away_team_id=data["away_team_id"],
@@ -362,7 +362,7 @@ class MatchUpdatedEvent(Event):
 class PredictionMadeEvent(Event):
     """预测创建事件"""
 
-    def __init__(self, data: PredictionMadeEventData):
+    def __init__(self, data: PredictionMadeEventData):  # type: ignore
         super().__init__(data)
 
     @classmethod
@@ -395,7 +395,7 @@ class PredictionMadeEvent(Event):
             timestamp=datetime.fromisoformat(data["timestamp"]),
             source=data.get("source"),
             version=data.get("version", "1.0"),
-            metadata =data.get("metadata", {}),
+            metadata=data.get("metadata", {}),
             prediction_id=data["prediction_id"],
             match_id=data["match_id"],
             user_id=data["user_id"],
@@ -412,7 +412,7 @@ class PredictionMadeEvent(Event):
 class PredictionUpdatedEvent(Event):
     """预测更新事件"""
 
-    def __init__(self, data: PredictionUpdatedEventData):
+    def __init__(self, data: PredictionUpdatedEventData):  # type: ignore
         super().__init__(data)
 
     @classmethod
@@ -445,7 +445,7 @@ class PredictionUpdatedEvent(Event):
             timestamp=datetime.fromisoformat(data["timestamp"]),
             source=data.get("source"),
             version=data.get("version", "1.0"),
-            metadata =data.get("metadata", {}),
+            metadata=data.get("metadata", {}),
             prediction_id=data["prediction_id"],
             match_id=data["match_id"],
             user_id=data["user_id"],
@@ -462,7 +462,7 @@ class PredictionUpdatedEvent(Event):
 class UserRegisteredEvent(Event):
     """用户注册事件"""
 
-    def __init__(self, data: UserRegisteredEventData):
+    def __init__(self, data: UserRegisteredEventData):  # type: ignore
         super().__init__(data)
 
     @classmethod
@@ -493,7 +493,7 @@ class UserRegisteredEvent(Event):
             timestamp=datetime.fromisoformat(data["timestamp"]),
             source=data.get("source"),
             version=data.get("version", "1.0"),
-            metadata =data.get("metadata", {}),
+            metadata=data.get("metadata", {}),
             user_id=data["user_id"],
             username=data["username"],
             email=data["email"],
@@ -508,7 +508,7 @@ class UserRegisteredEvent(Event):
 class TeamStatsUpdatedEvent(Event):
     """球队统计更新事件"""
 
-    def __init__(self, data: TeamStatsEventData):
+    def __init__(self, data: TeamStatsEventData):  # type: ignore
         super().__init__(data)
 
     @classmethod
@@ -542,7 +542,7 @@ class TeamStatsUpdatedEvent(Event):
             timestamp=datetime.fromisoformat(data["timestamp"]),
             source=data.get("source"),
             version=data.get("version", "1.0"),
-            metadata =data.get("metadata", {}),
+            metadata=data.get("metadata", {}),
             team_id=data["team_id"],
             season=data["season"],
             matches_played=data["matches_played"],

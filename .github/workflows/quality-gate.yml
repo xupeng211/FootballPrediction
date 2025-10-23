@@ -41,6 +41,16 @@ jobs:
         make lint
         make mypy-check
 
+    - name: Quick Quality Assessment
+      run: |
+        echo "🔍 执行快速质量评估..."
+        python scripts/quick_quality_check.py
+
+    - name: Type Safety Analysis
+      run: |
+        echo "🔍 执行类型安全深度分析..."
+        python scripts/analyze_mypy_progress.py
+
     - name: Run Tests
       run: |
         make coverage-local

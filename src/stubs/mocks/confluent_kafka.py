@@ -70,7 +70,7 @@ class MockMessage:
 class MockConsumer:
     """模拟Kafka消费者"""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any]):  # type: ignore
         self.config = config
         self._topics: set[str] = set()
         self._messages: Dict[str, List[MockMessage]] = defaultdict(list)
@@ -142,7 +142,7 @@ class MockConsumer:
 class MockProducer:
     """模拟Kafka生产者"""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any]):  # type: ignore
         self.config = config
         self._messages: Dict[str, List[MockMessage]] = defaultdict(list)
         self._callbacks: Dict[str, Callable] = {}
@@ -212,7 +212,7 @@ class MockProducer:
 class MockAdminClient:
     """模拟Kafka管理客户端"""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any]):  # type: ignore
         self.config = config
         self.metadata = {"topics": {}, "brokers": {"1": "localhost:9093"}}
 
@@ -249,7 +249,7 @@ class MockAdminClient:
 class MockDeserializingConsumer(MockConsumer):
     """带反序列化的消费者"""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any]):  # type: ignore
         super().__init__(config)
         self._key_deserializer = config.get("key.deserializer")
         self._value_deserializer = config.get("value.deserializer")
@@ -277,7 +277,7 @@ class MockDeserializingConsumer(MockConsumer):
 class MockSerializingProducer(MockProducer):
     """带序列化的生产者"""
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any]):  # type: ignore
         super().__init__(config)
         self._key_serializer = config.get("key.serializer")
         self._value_serializer = config.get("value.serializer")
@@ -347,7 +347,7 @@ class KafkaException(Exception):
 class KafkaError(Exception):
     """Kafka错误"""
 
-    def __init__(self, code: int, name: str):
+    def __init__(self, code: int, name: str):  # type: ignore
         self.code = code
         self.name = name
         super().__init__(f"KafkaError: {name} (code: {code})")
@@ -356,19 +356,19 @@ class KafkaError(Exception):
 class TopicPartition:
     """主题分区"""
 
-    def __init__(self, topic: str, partition: int = 0):
+    def __init__(self, topic: str, partition: int = 0):  # type: ignore
         self.topic = topic
         self.partition = partition
 
-    def __repr__(self):
+    def __repr__(self):  # type: ignore
         return f"TopicPartition(topic='{self.topic}', partition={self.partition})"
 
-    def __eq__(self, other):
+    def __eq__(self, other):  # type: ignore
         if not isinstance(other, TopicPartition):
             return False
         return self.topic == other.topic and self.partition == other.partition
 
-    def __hash__(self):
+    def __hash__(self):  # type: ignore
         return hash((self.topic, self.partition))
 
 

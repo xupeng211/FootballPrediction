@@ -32,7 +32,7 @@ class TeamStats:
     goals_for: int = 0
     goals_against: int = 0
 
-    def __post_init__(self):
+    def __post_init__(self):  # type: ignore
         """验证统计数据"""
         if any(
             x < 0
@@ -100,7 +100,7 @@ class TeamForm:
     current_streak: int = 0  # 当前连续纪录（胜/负为正数，平为0）
     streak_type: str = ""  # 连续类型：win/draw/loss/none
 
-    def __post_init__(self):
+    def __post_init__(self):  # type: ignore
         """验证状态数据"""
         if len(self.last_matches) > 10:
             raise DomainError("最近比赛记录最多保留10场")
@@ -206,7 +206,7 @@ class Team:
     # 领域事件
     _domain_events: List[Any] = field(default_factory=list, init=False)
 
-    def __post_init__(self):
+    def __post_init__(self):  # type: ignore
         """初始化后的验证"""
         if not self.name or len(self.name.strip()) == 0:
             raise DomainError("球队名称不能为空")

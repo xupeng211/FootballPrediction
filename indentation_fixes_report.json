@@ -1,0 +1,109 @@
+{
+  "total_files": 20,
+  "success_count": 0,
+  "failed_count": 20,
+  "failed_files": [
+    "src/tasks/streaming_tasks.py",
+    "src/monitoring/alert_manager_mod/__init__.py",
+    "src/middleware/performance_monitoring.py",
+    "src/scheduler/job_manager.py",
+    "src/data/storage/lake.py",
+    "src/data/quality/prometheus.py",
+    "src/models/prediction_model.py",
+    "src/realtime/websocket.py",
+    "src/monitoring/apm_integration.py",
+    "src/models/model_training.py",
+    "src/features/feature_store.py",
+    "src/monitoring/system_monitor.py",
+    "src/dependencies/optional.py",
+    "src/tasks/celery_app.py",
+    "src/models/prediction.py",
+    "src/ml/model_training.py",
+    "src/monitoring/metrics_collector_enhanced.py",
+    "src/monitoring/alert_manager.py",
+    "src/tasks/data_collection_core.py",
+    "src/monitoring/metrics_collector.py"
+  ],
+  "results": {
+    "src/tasks/streaming_tasks.py": {
+      "success": false,
+      "message": "修复失败: unexpected indent (<unknown>, line 38)"
+    },
+    "src/monitoring/alert_manager_mod/__init__.py": {
+      "success": false,
+      "message": "修复失败: expected an indented block after class definition on line 25 (<unknown>, line 26)"
+    },
+    "src/middleware/performance_monitoring.py": {
+      "success": false,
+      "message": "修复失败: expected an indented block after class definition on line 54 (<unknown>, line 55)"
+    },
+    "src/scheduler/job_manager.py": {
+      "success": false,
+      "message": "修复失败: expected an indented block after class definition on line 77 (<unknown>, line 78)"
+    },
+    "src/data/storage/lake.py": {
+      "success": false,
+      "message": "修复失败: expected an indented block after class definition on line 85 (<unknown>, line 86)"
+    },
+    "src/data/quality/prometheus.py": {
+      "success": false,
+      "message": "修复失败: unexpected indent (<unknown>, line 19)"
+    },
+    "src/models/prediction_model.py": {
+      "success": false,
+      "message": "修复失败: expected an indented block after class definition on line 30 (<unknown>, line 31)"
+    },
+    "src/realtime/websocket.py": {
+      "success": false,
+      "message": "修复失败: expected an indented block after class definition on line 26 (<unknown>, line 27)"
+    },
+    "src/monitoring/apm_integration.py": {
+      "success": false,
+      "message": "修复失败: unexpected indent (<unknown>, line 32)"
+    },
+    "src/models/model_training.py": {
+      "success": false,
+      "message": "修复失败: unexpected indent (<unknown>, line 21)"
+    },
+    "src/features/feature_store.py": {
+      "success": false,
+      "message": "修复失败: unexpected indent (<unknown>, line 32)"
+    },
+    "src/monitoring/system_monitor.py": {
+      "success": false,
+      "message": "修复失败: unexpected indent (<unknown>, line 23)"
+    },
+    "src/dependencies/optional.py": {
+      "success": false,
+      "message": "修复失败: unexpected indent (<unknown>, line 24)"
+    },
+    "src/tasks/celery_app.py": {
+      "success": false,
+      "message": "修复失败: unexpected indent (<unknown>, line 31)"
+    },
+    "src/models/prediction.py": {
+      "success": false,
+      "message": "修复失败: expected an indented block after class definition on line 33 (<unknown>, line 34)"
+    },
+    "src/ml/model_training.py": {
+      "success": false,
+      "message": "修复失败: expected an indented block after class definition on line 37 (<unknown>, line 38)"
+    },
+    "src/monitoring/metrics_collector_enhanced.py": {
+      "success": false,
+      "message": "修复失败: unexpected indent (<unknown>, line 35)"
+    },
+    "src/monitoring/alert_manager.py": {
+      "success": false,
+      "message": "修复失败: expected an indented block after class definition on line 25 (<unknown>, line 26)"
+    },
+    "src/tasks/data_collection_core.py": {
+      "success": false,
+      "message": "修复失败: unexpected indent (<unknown>, line 201)"
+    },
+    "src/monitoring/metrics_collector.py": {
+      "success": false,
+      "message": "修复失败: unexpected indent (<unknown>, line 39)"
+    }
+  }
+}

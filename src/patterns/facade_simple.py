@@ -47,7 +47,7 @@ class PredictionFacade:
     简化预测相关的复杂操作，提供统一的预测服务接口
     """
 
-    def __init__(self, services: Dict[str, Any]):
+    def __init__(self, services: Dict[str, Any]):  # type: ignore
         self.services = services
         self.logger = get_logger("facade.prediction")
 
@@ -216,7 +216,7 @@ class DataCollectionFacade:
     简化数据收集、更新和维护的复杂操作
     """
 
-    def __init__(self, services: Dict[str, Any]):
+    def __init__(self, services: Dict[str, Any]):  # type: ignore
         self.services = services
         self.logger = get_logger("facade.data_collection")
 
@@ -295,7 +295,7 @@ class AnalyticsFacade:
     简化数据分析、报表生成和洞察提取的复杂操作
     """
 
-    def __init__(self, services: Dict[str, Any]):
+    def __init__(self, services: Dict[str, Any]):  # type: ignore
         self.services = services
         self.logger = get_logger("facade.analytics")
 
@@ -430,14 +430,14 @@ class SystemFacade:
     提供整个系统的统一入口
     """
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self.services = {}
         self._prediction_facade: Optional[PredictionFacade] = None
         self._data_facade: Optional[DataCollectionFacade] = None
         self._analytics_facade: Optional[AnalyticsFacade] = None
         self.logger = get_logger("facade.system")
 
-    def initialize(self, services: Dict[str, Any]):
+    def initialize(self, services: Dict[str, Any]):  # type: ignore
         """初始化系统门面"""
         self.services = services
         self._prediction_facade = FacadeFactory.create_prediction_facade(services)

@@ -22,7 +22,7 @@ class SQLiteCompatibleJSONB(TypeDecorator):
     impl = Text
     cache_ok = True
 
-    def load_dialect_impl(self, dialect):
+    def load_dialect_impl(self, dialect):  # type: ignore
         """根据数据库方言加载对应的实现"""
         if dialect.name == "postgresql":
             return dialect.type_descriptor(JSONB())
@@ -81,7 +81,7 @@ class CompatibleJSON(TypeDecorator):
     impl = Text
     cache_ok = True
 
-    def load_dialect_impl(self, dialect):
+    def load_dialect_impl(self, dialect):  # type: ignore
         """根据数据库方言加载对应的实现"""
         if dialect.name == "postgresql":
             return dialect.type_descriptor(JSON())

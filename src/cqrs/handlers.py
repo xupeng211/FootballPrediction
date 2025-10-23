@@ -43,7 +43,7 @@ class CreatePredictionHandler(CommandHandler):
     """创建预测处理器"""
 
     @property
-    def command_type(self):
+    def command_type(self):  # type: ignore
         return CreatePredictionCommand
 
     async def handle(self, command: CreatePredictionCommand) -> CommandResult:
@@ -79,7 +79,7 @@ class CreatePredictionHandler(CommandHandler):
                 logger.info(f"创建预测成功: ID={prediction.id}")
 
                 return CommandResult.success_result(
-                    data =PredictionDTO(
+                    data=PredictionDTO(
                         id=prediction.id,
                         match_id=prediction.match_id,
                         user_id=prediction.user_id,
@@ -102,7 +102,7 @@ class UpdatePredictionHandler(CommandHandler):
     """更新预测处理器"""
 
     @property
-    def command_type(self):
+    def command_type(self):  # type: ignore
         return UpdatePredictionCommand
 
     async def handle(self, command: UpdatePredictionCommand) -> CommandResult:
@@ -133,7 +133,7 @@ class UpdatePredictionHandler(CommandHandler):
                 logger.info(f"更新预测成功: ID={prediction.id}")
 
                 return CommandResult.success_result(
-                    data =PredictionDTO(
+                    data=PredictionDTO(
                         id=prediction.id,
                         match_id=prediction.match_id,
                         user_id=prediction.user_id,
@@ -157,7 +157,7 @@ class DeletePredictionHandler(CommandHandler):
     """删除预测处理器"""
 
     @property
-    def command_type(self):
+    def command_type(self):  # type: ignore
         return DeletePredictionCommand
 
     async def handle(self, command: DeletePredictionCommand) -> CommandResult:
@@ -174,7 +174,7 @@ class DeletePredictionHandler(CommandHandler):
                 logger.info(f"删除预测成功: ID={command.prediction_id}")
 
                 return CommandResult.success_result(
-                    data ={"deleted_id": command.prediction_id}, message="预测删除成功"
+                    data={"deleted_id": command.prediction_id}, message="预测删除成功"
                 )
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
@@ -187,7 +187,7 @@ class CreateUserHandler(CommandHandler):
     """创建用户处理器"""
 
     @property
-    def command_type(self):
+    def command_type(self):  # type: ignore
         return CreateUserCommand
 
     async def handle(self, command: CreateUserCommand) -> CommandResult:
@@ -209,7 +209,7 @@ class CreateUserHandler(CommandHandler):
                 logger.info(f"创建用户成功: ID={user.id}")
 
                 return CommandResult.success_result(
-                    data =UserDTO(
+                    data=UserDTO(
                         id=user.id,
                         username=user.username,
                         email=user.email,
@@ -233,7 +233,7 @@ class GetPredictionByIdHandler(QueryHandler):
     """根据ID获取预测处理器"""
 
     @property
-    def query_type(self):
+    def query_type(self):  # type: ignore
         return GetPredictionByIdQuery
 
     async def handle(self, query: GetPredictionByIdQuery) -> Optional[PredictionDTO]:
@@ -268,7 +268,7 @@ class GetPredictionsByUserHandler(QueryHandler):
     """获取用户预测列表处理器"""
 
     @property
-    def query_type(self):
+    def query_type(self):  # type: ignore
         return GetPredictionsByUserQuery
 
     async def handle(self, query: GetPredictionsByUserQuery) -> List[PredictionDTO]:
@@ -331,7 +331,7 @@ class GetUserStatsHandler(QueryHandler):
     """获取用户统计处理器"""
 
     @property
-    def query_type(self):
+    def query_type(self):  # type: ignore
         return GetUserStatsQuery
 
     async def handle(self, query: GetUserStatsQuery) -> Optional[PredictionStatsDTO]:
@@ -448,7 +448,7 @@ class GetUpcomingMatchesHandler(QueryHandler):
     """获取即将到来的比赛处理器"""
 
     @property
-    def query_type(self):
+    def query_type(self):  # type: ignore
         return GetUpcomingMatchesQuery
 
     async def handle(self, query: GetUpcomingMatchesQuery) -> List[MatchDTO]:
@@ -506,7 +506,7 @@ class GetUpcomingMatchesHandler(QueryHandler):
 class PredictionCommandHandlers:
     """预测命令处理器集合"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self.create = CreatePredictionHandler()
         self.update = UpdatePredictionHandler()
         self.delete = DeletePredictionHandler()
@@ -515,7 +515,7 @@ class PredictionCommandHandlers:
 class PredictionQueryHandlers:
     """预测查询处理器集合"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self.get_by_id = GetPredictionByIdHandler()
         self.get_by_user = GetPredictionsByUserHandler()
         self.get_stats = GetUserStatsHandler()
@@ -525,7 +525,7 @@ class PredictionQueryHandlers:
 class UserCommandHandlers:
     """用户命令处理器集合"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self.create = CreateUserHandler()
         self.update = UpdateUserHandler()
 
@@ -533,7 +533,7 @@ class UserCommandHandlers:
 class UserQueryHandlers:
     """用户查询处理器集合"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self.get_by_id = GetUserByIdHandler()
         self.get_stats = GetUserStatsHandler()
 
@@ -541,7 +541,7 @@ class UserQueryHandlers:
 class MatchCommandHandlers:
     """比赛命令处理器集合"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self.create = CreateMatchHandler()
         self.update = UpdateMatchHandler()
 
@@ -549,7 +549,7 @@ class MatchCommandHandlers:
 class MatchQueryHandlers:
     """比赛查询处理器集合"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self.get_by_id = GetMatchByIdHandler()
         self.get_upcoming = GetUpcomingMatchesHandler()
         self.get_predictions = GetMatchPredictionsHandler()

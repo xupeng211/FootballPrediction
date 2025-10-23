@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.4
+# # syntax=docker/dockerfile:1.4
 # 统一Dockerfile - 支持多阶段构建
 # 使用方式：
 # - 开发：docker build -f docker/Dockerfile --target development ..

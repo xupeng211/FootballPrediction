@@ -1,0 +1,57 @@
+{
+  "timestamp": "2025-10-23T06:16:51.163637",
+  "current_project_status": {
+    "coverage": 22.58958038661009,
+    "test_count": 0,
+    "code_quality_score": 10.0
+  },
+  "optimized_standards": {
+    "coverage": {
+      "minimum": 20.58958038661009,
+      "target": 27.58958038661009,
+      "excellent": 37.589580386610095,
+      "critical_files": {
+        "src/api/schemas.py": 95.0,
+        "src/core/exceptions.py": 90.0,
+        "src/models/": 60.0
+      }
+    },
+    "tests": {
+      "min_pass_rate": 85.0,
+      "max_failures": 5,
+      "min_total": 100
+    },
+    "code_quality": {
+      "max_ruff_errors": 10,
+      "max_mypy_errors": 10,
+      "format_required": true
+    },
+    "security": {
+      "max_vulnerabilities": 2,
+      "max_secrets": 3
+    }
+  },
+  "gaps_analysis": {
+    "coverage_gap": 5.0,
+    "test_quality_gap": 0.0,
+    "code_quality_gap": 0,
+    "security_issues": 0,
+    "overall_score": 6.0625738739123625
+  },
+  "improvement_plan": {
+    "priority_1": [],
+    "priority_2": [
+      "增加边界条件测试",
+      "优化现有测试用例",
+      "添加集成测试",
+      "增加测试用例数量",
+      "提高测试覆盖率",
+      "优化测试结构"
+    ],
+    "priority_3": [],
+    "estimated_timeline": {
+      "coverage": "1-2周"
+    },
+    "resource_requirements": {}
+  }
+}

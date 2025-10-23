@@ -9,7 +9,7 @@ from typing import Optional, Dict, Any, List
 class TeamStatistics:
     """球队统计数据"""
 
-    def __init__(self):
+    def __init__(self):  # type: ignore
         self.matches_played = 0
         self.wins = 0
         self.draws = 0

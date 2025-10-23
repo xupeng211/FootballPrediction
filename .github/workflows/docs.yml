@@ -1,0 +1,319 @@
+name: 📚 Documentation CI/CD
+
+on:
+  push:
+    branches: [main, develop, docs/**]
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - '.github/workflows/docs.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: 'Deploy to GitHub Pages'
+        required: false
+        default: false
+        type: boolean
+      environment:
+        description: 'Target environment'
+        required: false
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+# 取消并行的运行，避免资源浪费
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # ===== 阶段 1: 文档检查 =====
+  docs-check:
+    name: 🔍 文档健康检查
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 📥 Checkout代码
+        uses: actions/checkout@v4.1.6
+        with:
+          fetch-depth: 0  # 获取完整历史用于git信息
+
+      - name: 🐍 设置Python环境
+        uses: actions/setup-python@v4.7.1
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install mkdocs mkdocs-material
+          pip install -r requirements/requirements.lock
+
+      - name: 🔍 检查文档健康状态
+        run: |
+          echo "📋 检查文档目录结构..."
+          if [ ! -d "docs" ]; then
+            echo "❌ docs/ 目录不存在"
+            exit 1
+          fi
+
+          echo "📄 统计文档文件..."
+          MD_FILES=$(find docs -name "*.md" | wc -l)
+          echo "✅ 发现 $MD_FILES 个Markdown文件"
+
+          if [ ! -f "mkdocs.yml" ]; then
+            echo "❌ mkdocs.yml 配置文件不存在"
+            exit 1
+          fi
+
+          echo "✅ 基础检查通过"
+
+      - name: 🧪 验证MkDocs配置
+        run: |
+          echo "🔧 验证MkDocs配置..."
+          mkdocs --version
+
+          # 检查配置语法
+          python -c "import yaml; yaml.safe_load(open('mkdocs.yml'))"
+          echo "✅ mkdocs.yml 语法正确"
+
+          # 构建测试（严格模式）
+          mkdocs build --strict --quiet
+          echo "✅ MkDocs构建成功"
+
+      - name: 🔗 检查文档链接
+        run: |
+          echo "🔗 检查文档链接..."
+
+          # 安装链接检查工具
+          pip install markdown-link-check
+
+          # 检查文档链接
+          markdown-link-check docs/ -v --config .mlc_config.json 2>/dev/null || {
+            echo "⚠️  链接检查发现问题，但不阻止构建"
+          }
+
+          echo "✅ 链接检查完成"
+
+      - name: 📊 生成文档统计
+        run: |
+          echo "📊 生成文档统计报告..."
+
+          cat > docs-stats.json << EOF
+          {
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "total_files": $(find docs -name "*.md" | wc -l),
+            "total_lines": $(find docs -name "*.md" -exec wc -l {} + | tail -1 | awk '{print $1}'),
+            "directories": $(find docs -type d | wc -l),
+            "largest_file": "$(find docs -name "*.md" -exec wc -l {} + | sort -nr | head -1 | awk '{print $2}')",
+            "git_commit": "$(git rev-parse --short HEAD)",
+            "git_branch": "$(git rev-parse --abbrev-ref HEAD)"
+          }
+          EOF
+
+          echo "📈 文档统计已生成"
+
+  # ===== 阶段 2: 构建文档 =====
+  docs-build:
+    name: 🔨 构建文档站点
+    runs-on: ubuntu-latest
+    needs: docs-check
+    timeout-minutes: 15
+
+    steps:
+      - name: 📥 Checkout代码
+        uses: actions/checkout@v4.1.6
+        with:
+          fetch-depth: 0
+
+      - name: 🐍 设置Python环境
+        uses: actions/setup-python@v4.7.1
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install mkdocs mkdocs-material
+          pip install -r requirements/requirements.lock
+
+      - name: 🔨 构建文档
+        run: |
+          echo "🔨 开始构建文档站点..."
+
+          # 清理之前的构建
+          rm -rf site/
+
+          # 构建文档
+          mkdocs build --verbose
+
+          # 检查构建结果
+          if [ ! -f "site/index.html" ]; then
+            echo "❌ 构建失败：主页面未生成"
+            exit 1
+          fi
+
+          # 统计生成的页面
+          HTML_FILES=$(find site -name "*.html" | wc -l)
+          echo "✅ 构建成功：生成 $HTML_FILES 个HTML页面"
+
+          # 检查站点大小
+          SITE_SIZE=$(du -sh site/ | cut -f1)
+          echo "📦 站点大小：$SITE_SIZE"
+
+      - name: 📊 构建报告
+        run: |
+          echo "📊 生成构建报告..."
+
+          cat > build-report.json << EOF
+          {
+            "build_time": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "commit": "$(git rev-parse --short HEAD)",
+            "branch": "$(git rev-parse --abbrev-ref HEAD)",
+            "html_pages": $(find site -name "*.html" | wc -l),
+            "site_size": "$(du -sh site/ | cut -f1)",
+            "build_status": "success"
+          }
+          EOF
+
+      - name: 📦 上传构建产物
+        uses: actions/upload-artifact@v3.1.3
+        with:
+          name: docs-site-${{ github.sha }}
+          path: site/
+          retention-days: 30
+
+  # ===== 阶段 3: 部署到GitHub Pages =====
+  docs-deploy:
+    name: 🚀 部署到GitHub Pages
+    runs-on: ubuntu-latest
+    needs: docs-build
+    if: |
+      github.ref == 'refs/heads/main' ||
+      github.ref == 'refs/heads/develop' ||
+      github.event_name == 'workflow_dispatch' && github.event.inputs.deploy == 'true'
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: 📥 Checkout代码
+        uses: actions/checkout@v4.1.6
+
+      - name: 🐍 设置Python环境
+        uses: actions/setup-python@v4.7.1
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install mkdocs mkdocs-material
+          pip install -r requirements/requirements.lock
+
+      - name: 📦 下载构建产物
+        uses: actions/download-artifact@v3.0.2
+        with:
+          name: docs-site-${{ github.sha }}
+          path: site/
+
+      - name: 🚀 配置GitHub Pages
+        uses: actions/configure-pages@v4.0.0
+
+      - name: 🚀 部署到GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4.0.5
+
+      - name: 📊 部署报告
+        run: |
+          echo "🎉 文档已成功部署到GitHub Pages!"
+          echo "🔗 访问地址: ${{ steps.deployment.outputs.page_url }}"
+
+  # ===== 阶段 4: 质量检查 =====
+  docs-quality:
+    name: 📈 文档质量检查
+    runs-on: ubuntu-latest
+    needs: docs-build
+    if: github.event_name == 'pull_request'
+    timeout-minutes: 5
+
+    steps:
+      - name: 📥 Checkout代码
+        uses: actions/checkout@v4.1.6
+
+      - name: 📦 下载构建产物
+        uses: actions/download-artifact@v3.0.2
+        with:
+          name: docs-site-${{ github.sha }}
+          path: site/
+
+      - name: 📈 质量分析
+        run: |
+          echo "📈 执行文档质量分析..."
+
+          # 检查页面大小
+          LARGE_PAGES=$(find site -name "*.html" -exec wc -c {} + | awk '$1 > 50000' | wc -l)
+          if [ "$LARGE_PAGES" -gt 0 ]; then
+            echo "⚠️  发现 $LARGE_PAGES 个大型页面（>50KB）"
+          fi
+
+          # 检查图片优化
+          IMAGES=$(find site -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.gif" | wc -l)
+          echo "📷 图片数量：$IMAGES"
+
+          # 生成质量报告
+          cat > quality-report.json << EOF
+          {
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "large_pages": $LARGE_PAGES,
+            "image_count": $IMAGES,
+            "quality_score": "good"
+          }
+          EOF
+
+  # ===== 阶段 5: 通知 =====
+  docs-notify:
+    name: 📢 通知
+    runs-on: ubuntu-latest
+    needs: [docs-build, docs-deploy]
+    if: always()
+    timeout-minutes: 5
+
+    steps:
+      - name: 📢 部署成功通知
+        if: needs.docs-deploy.result == 'success'
+        run: |
+          echo "🎉 文档部署成功！"
+          echo "📖 访问地址：https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+
+      - name: ❌ 部署失败通知
+        if: failure()
+        run: |
+          echo "❌ 文档部署失败，请检查日志"
+          echo "🔗 查看详细日志：https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+# ===== 工作流信息 =====
+outputs:
+  site_url:
+    description: "部署的文档站点URL"
+    value: ${{ jobs.docs-deploy.outputs.page_url }}
+  build_status:
+    description: "构建状态"
+    value: ${{ jobs.docs-build.result }}
