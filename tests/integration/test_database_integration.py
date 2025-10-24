@@ -360,7 +360,7 @@ class TestModuleNotAvailable:
 
 
 # 测试模块级别的功能
-def test_module_imports(client, client, client, client):
+def test_module_imports(client):
     """测试：模块导入"""
     if DATABASE_AVAILABLE:
         from src.database.connection import DatabaseManager
@@ -372,7 +372,7 @@ def test_module_imports(client, client, client, client):
         assert Base is not None
 
 
-def test_database_manager_class(client, client, client, client):
+def test_database_manager_class(client):
     """测试：数据库管理器类"""
     if DATABASE_AVAILABLE:
         assert DatabaseManager is not None

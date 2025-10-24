@@ -704,7 +704,7 @@ def test_event_routing_configuration(
         (10485760, "reject"),  # 10MB
     ],
 )
-def test_message_size_handling(message_size, expected_behavior, client, client, client, client):
+def test_message_size_handling(message_size, expected_behavior, client):
     """测试消息大小处理"""
     # 验证消息大小限制
     assert isinstance(message_size, int)

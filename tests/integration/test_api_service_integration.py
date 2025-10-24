@@ -488,7 +488,7 @@ def test_service_method_integration(
 
 
 @pytest.mark.integration
-def test_error_propagation_flow(client, client, client, client):
+def test_error_propagation_flow(client):
     """测试错误传播流程"""
     # 模拟错误在层间传播
     layers = ["api", "service", "repository", "database"]
