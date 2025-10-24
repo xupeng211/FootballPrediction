@@ -12,7 +12,7 @@ from src.main import app
 
 
 @pytest.fixture(scope="session")
-def test_client(, client):
+def test_client(, client, client):
     """创建测试客户端"""
     return TestClient(app)
 

@@ -112,7 +112,7 @@ async def async_db_session() -> AsyncGenerator[AsyncSession, None]:
 @pytest.mark.external_api
 @pytest.mark.slow
 
-def test_client(db_session: Session, client) -> Generator[TestClient, None, None]:
+def test_client(db_session: Session, client, client) -> Generator[TestClient, None, None]:
     """提供测试客户端，使用 dependency_overrides 替换数据库依赖"""
 
     # 重写依赖注入，使用测试数据库会话
@@ -177,7 +177,7 @@ async def async_test_client(
 
 # === 环境配置 ===
 @pytest.fixture(autouse=True)
-def test_env(, client):
+def test_env(, client, client):
     """设置测试环境变量（不再使用 monkeypatch）"""
     os.environ["ENVIRONMENT"] = "testing"
     os.environ["DATABASE_URL"] = "sqlite:///:memory:"
