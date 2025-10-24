@@ -153,12 +153,12 @@ class TestPostgreSQLIntegration:
             # 创建记录
             created = await repo.create(name="test", value=100)
             assert created.name == "test"
-            assert created.value == 100
+            assert created.value   == 100
 
             # 获取记录
             retrieved = await repo.get_by_id(created.id)
             assert retrieved is not None
-            assert retrieved.name == "test"
+            assert retrieved.name   == "test"
 
         await engine.dispose()
 
@@ -214,7 +214,7 @@ class TestRedisIntegration:
         await redis_manager.set("cache_key", {"data": "test_value"}, ttl=60)
         cached_data = await redis_manager.get("cache_key")
         assert cached_data is not None
-        assert cached_data["data"] == "test_value"
+        assert cached_data["data"]   == "test_value"
 
         # 测试缓存过期
         await redis_manager.set("expire_key", "expire_value", ttl=1)
@@ -259,7 +259,7 @@ class TestWithMockContainers:
             redis_client = Redis(host="localhost", port=6379)
             await redis_client.ping()
             value = await redis_client.get("test_key")
-            assert value == b"test_value"
+            assert value   == b"test_value"
 
     async def test_full_workflow_mock(self):
         """测试：完整工作流（模拟）"""
@@ -284,11 +284,11 @@ class TestWithMockContainers:
                 # 测试工作流
                 data_service = mock_service()
                 _matches = await data_service.collect_match_data()
-                assert matches["matches"] == 10
+                assert matches["matches"]   == 10
 
                 pred_service_instance = mock_pred()
                 _prediction = await pred_service_instance.predict(match_id=1)
-                assert prediction["home_win"] == 0.5
+                assert prediction["home_win"]   == 0.5
 
     async def test_error_handling_mock(self):
         """测试：错误处理（模拟）"""
@@ -378,7 +378,7 @@ class TestContainerOrchestration:
             await start_service(service)
 
         # 验证启动顺序
-        assert started_services == startup_order
+        assert started_services   == startup_order
 
     def test_environment_variables(self):
         """测试：环境变量配置"""

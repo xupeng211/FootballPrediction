@@ -80,7 +80,7 @@ class TestRepositoryDatabaseIntegration:
         mock_session.get.return_value = prediction
         _result = await prediction_repo.get_by_id(1)
         mock_session.get.assert_called_once_with(Prediction, 1)
-        assert _result == prediction
+        assert _result   == prediction
 
         # 测试更新
         prediction.predicted_home_score = 3
@@ -142,11 +142,11 @@ class TestRepositoryDatabaseIntegration:
         # 测试按用户名查询
         mock_session.execute.return_value = Mock(scalar_one_or_none=user)
         _result = await user_repo.get_by_username("testuser")
-        assert _result == user if result else True  # 允许None返回
+        assert _result   == user if result else True  # 允许None返回
 
         # 测试按邮箱查询
         _result = await user_repo.get_by_email("test@example.com")
-        assert _result == user if result else True
+        assert _result   == user if result else True
 
         # 测试密码验证（如果存在）
         if hasattr(user_repo, "verify_password"):
@@ -382,7 +382,7 @@ class TestConnectionPoolIntegration:
         }
 
         # 验证健康检查结果
-        assert health_status["database"] == "healthy"
+        assert health_status["database"]   == "healthy"
         assert health_status["response_time_ms"] < 1000  # 响应时间小于1秒
 
 
@@ -397,7 +397,7 @@ class TestConnectionPoolIntegration:
         ("seasons", 5),
     ],
 )
-def test_table_data_integration(table_name, record_count):
+def test_table_data_integration(table_name, record_count, client, client):
     """测试表数据集成"""
     # 验证表名和记录数的基本格式
     assert isinstance(table_name, str)
@@ -424,7 +424,9 @@ def test_table_data_integration(table_name, record_count):
         ("invalid_operation", "invalid_entity", False),
     ],
 )
-def test_crud_operation_integration(operation, entity, should_succeed):
+def test_crud_operation_integration(
+    operation, entity, should_succeed, client
+):
     """测试CRUD操作集成"""
     # 验证操作参数
     assert operation in [
@@ -448,14 +450,14 @@ def test_crud_operation_integration(operation, entity, should_succeed):
     if should_succeed:
         # 对于有效操作，验证基本逻辑
         assert operation != "invalid_operation"
-        assert entity != "invalid_entity"
+        assert entity   != "invalid_entity"
     else:
         # 对于无效操作，确保被正确识别
-        assert operation == "invalid_operation" or entity == "invalid_entity"
+        assert operation == "invalid_operation" or entity   == "invalid_entity"
 
 
 @pytest.mark.integration
-def test_migration_integration():
+def test_migration_integration(client, client):
     """测试数据库迁移集成"""
     # 模拟迁移状态
     migrations = [
@@ -482,7 +484,7 @@ def test_migration_integration():
 
 
 @pytest.mark.integration
-def test_index_integration():
+def test_index_integration(client, client):
     """测试数据库索引集成"""
     # 模拟索引信息
     indexes = [
@@ -516,7 +518,7 @@ def test_index_integration():
 
 
 @pytest.mark.integration
-def test_query_performance_integration():
+def test_query_performance_integration(client, client):
     """测试查询性能集成"""
     # 模拟查询性能指标
     query_performance = {

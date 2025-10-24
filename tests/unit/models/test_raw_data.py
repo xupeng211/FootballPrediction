@@ -28,12 +28,15 @@ try:
         # 基础类
         Base,
     )
+
     RAW_DATA_AVAILABLE = True
 except ImportError:
     RAW_DATA_AVAILABLE = False
 
 
-@pytest.mark.skipif(not RAW_DATA_AVAILABLE, reason="Raw data models module not available")
+@pytest.mark.skipif(
+    not RAW_DATA_AVAILABLE, reason="Raw data models module not available"
+)
 class TestRawMatchData:
     """RawMatchData测试"""
 
@@ -49,8 +52,8 @@ class TestRawMatchData:
     def test_raw_match_data_inherits_from_base(self):
         """测试RawMatchData继承自Base"""
         # 简化继承检查
-        assert hasattr(RawMatchData, '__tablename__')
-        assert hasattr(RawMatchData, '__table__')
+        assert hasattr(RawMatchData, "__tablename__")
+        assert hasattr(RawMatchData, "__table__")
         assert RawMatchData.__tablename__ == "raw_match_data"
 
     def test_raw_match_data_columns(self):
@@ -58,9 +61,19 @@ class TestRawMatchData:
         # 验证所有预期的列都存在
         columns = [column.name for column in RawMatchData.__table__.columns]
         expected_columns = [
-            'id', 'match_id', 'home_team', 'away_team', 'league', 'season',
-            'match_date', 'home_score', 'away_score', 'status', 'raw_data',
-            'created_at', 'updated_at'
+            "id",
+            "match_id",
+            "home_team",
+            "away_team",
+            "league",
+            "season",
+            "match_date",
+            "home_score",
+            "away_score",
+            "status",
+            "raw_data",
+            "created_at",
+            "updated_at",
         ]
         assert set(columns) == set(expected_columns)
 
@@ -69,25 +82,25 @@ class TestRawMatchData:
         columns = RawMatchData.__table__.columns
 
         # 验证主键
-        assert columns['id'].primary_key is True
+        assert columns["id"].primary_key is True
         # SQLAlchemy主键默认nullable=False，这是正确的
-        assert columns['id'].nullable is False
+        assert columns["id"].nullable is False
 
         # 验证唯一约束
-        assert columns['match_id'].unique is True
-        assert columns['match_id'].nullable is False
+        assert columns["match_id"].unique is True
+        assert columns["match_id"].nullable is False
 
         # 验证外键和索引
-        assert columns['match_id'].index is True
-        assert columns['home_team'].nullable is False
-        assert columns['away_team'].nullable is False
-        assert columns['league'].nullable is False
-        assert columns['season'].nullable is False
+        assert columns["match_id"].index is True
+        assert columns["home_team"].nullable is False
+        assert columns["away_team"].nullable is False
+        assert columns["league"].nullable is False
+        assert columns["season"].nullable is False
 
         # 验证默认值
-        assert columns['status'].default.arg == "scheduled"
-        assert columns['home_score'].nullable is True
-        assert columns['away_score'].nullable is True
+        assert columns["status"].default.arg == "scheduled"
+        assert columns["home_score"].nullable is True
+        assert columns["away_score"].nullable is True
 
     def test_raw_match_data_instantiation(self):
         """测试RawMatchData实例化"""
@@ -103,7 +116,7 @@ class TestRawMatchData:
             match_date=current_time,
             home_score=2,
             away_score=1,
-            status="completed"
+            status="completed",
         )
 
         # 验证属性设置
@@ -128,7 +141,7 @@ class TestRawMatchData:
             league="La Liga",
             season="2023-2024",
             match_date=datetime.datetime.utcnow(),
-            raw_data=raw_json
+            raw_data=raw_json,
         )
 
         assert match_data.raw_data == raw_json
@@ -141,12 +154,12 @@ class TestRawMatchData:
             away_team="Team F",
             league="Serie A",
             season="2023-2024",
-            match_date=datetime.datetime.utcnow()
+            match_date=datetime.datetime.utcnow(),
         )
 
         # SQLAlchemy的默认值在数据库层面处理，实例化时可能是None
         # 我们验证列定义的默认值而不是实例值
-        column = RawMatchData.__table__.columns['status']
+        column = RawMatchData.__table__.columns["status"]
         assert column.default.arg == "scheduled"
 
         # 实例值在未设置时确实是None
@@ -155,7 +168,9 @@ class TestRawMatchData:
         assert match_data.raw_data is None
 
 
-@pytest.mark.skipif(not RAW_DATA_AVAILABLE, reason="Raw data models module not available")
+@pytest.mark.skipif(
+    not RAW_DATA_AVAILABLE, reason="Raw data models module not available"
+)
 class TestRawOddsData:
     """RawOddsData测试"""
 
@@ -172,8 +187,15 @@ class TestRawOddsData:
         """测试RawOddsData列定义"""
         columns = [column.name for column in RawOddsData.__table__.columns]
         expected_columns = [
-            'id', 'match_id', 'bookmaker', 'market', 'outcome', 'odds',
-            'timestamp', 'raw_data', 'created_at'
+            "id",
+            "match_id",
+            "bookmaker",
+            "market",
+            "outcome",
+            "odds",
+            "timestamp",
+            "raw_data",
+            "created_at",
         ]
         assert set(columns) == set(expected_columns)
 
@@ -182,13 +204,13 @@ class TestRawOddsData:
         columns = RawOddsData.__table__.columns
 
         # 验证数据类型和约束
-        assert columns['match_id'].nullable is False
-        assert columns['match_id'].index is True
-        assert columns['bookmaker'].nullable is False
-        assert columns['market'].nullable is False
-        assert columns['outcome'].nullable is False
-        assert columns['odds'].nullable is False
-        assert columns['timestamp'].nullable is False
+        assert columns["match_id"].nullable is False
+        assert columns["match_id"].index is True
+        assert columns["bookmaker"].nullable is False
+        assert columns["market"].nullable is False
+        assert columns["outcome"].nullable is False
+        assert columns["odds"].nullable is False
+        assert columns["timestamp"].nullable is False
 
     def test_raw_odds_data_instantiation(self):
         """测试RawOddsData实例化"""
@@ -200,7 +222,7 @@ class TestRawOddsData:
             market="1X2",
             outcome="1",
             odds=2.5,
-            timestamp=current_time
+            timestamp=current_time,
         )
 
         assert odds_data.match_id == "match_123"
@@ -221,13 +243,15 @@ class TestRawOddsData:
             outcome="Over 2.5",
             odds=1.85,
             timestamp=datetime.datetime.utcnow(),
-            raw_data=raw_info
+            raw_data=raw_info,
         )
 
         assert odds_data.raw_data == raw_info
 
 
-@pytest.mark.skipif(not RAW_DATA_AVAILABLE, reason="Raw data models module not available")
+@pytest.mark.skipif(
+    not RAW_DATA_AVAILABLE, reason="Raw data models module not available"
+)
 class TestRawStatisticsData:
     """RawStatisticsData测试"""
 
@@ -244,8 +268,16 @@ class TestRawStatisticsData:
         """测试RawStatisticsData列定义"""
         columns = [column.name for column in RawStatisticsData.__table__.columns]
         expected_columns = [
-            'id', 'match_id', 'team', 'stat_type', 'stat_value', 'stat_text',
-            'source', 'timestamp', 'raw_data', 'created_at'
+            "id",
+            "match_id",
+            "team",
+            "stat_type",
+            "stat_value",
+            "stat_text",
+            "source",
+            "timestamp",
+            "raw_data",
+            "created_at",
         ]
         assert set(columns) == set(expected_columns)
 
@@ -254,14 +286,14 @@ class TestRawStatisticsData:
         columns = RawStatisticsData.__table__.columns
 
         # 验证数据类型和约束
-        assert columns['match_id'].nullable is False
-        assert columns['match_id'].index is True
-        assert columns['team'].nullable is False
-        assert columns['stat_type'].nullable is False
-        assert columns['stat_value'].nullable is True
-        assert columns['stat_text'].nullable is True
-        assert columns['source'].nullable is False
-        assert columns['timestamp'].nullable is False
+        assert columns["match_id"].nullable is False
+        assert columns["match_id"].index is True
+        assert columns["team"].nullable is False
+        assert columns["stat_type"].nullable is False
+        assert columns["stat_value"].nullable is True
+        assert columns["stat_text"].nullable is True
+        assert columns["source"].nullable is False
+        assert columns["timestamp"].nullable is False
 
     def test_raw_statistics_data_instantiation(self):
         """测试RawStatisticsData实例化"""
@@ -273,7 +305,7 @@ class TestRawStatisticsData:
             stat_type="possession",
             stat_value=65.5,
             source="Opta",
-            timestamp=current_time
+            timestamp=current_time,
         )
 
         assert stats_data.match_id == "stats_match_123"
@@ -293,7 +325,7 @@ class TestRawStatisticsData:
             stat_type="formation",
             stat_text="4-3-3",
             source="StatsBomb",
-            timestamp=datetime.datetime.utcnow()
+            timestamp=datetime.datetime.utcnow(),
         )
 
         assert stats_data.stat_type == "formation"
@@ -311,13 +343,15 @@ class TestRawStatisticsData:
             stat_value=2.35,
             source="Understat",
             timestamp=datetime.datetime.utcnow(),
-            raw_data=raw_stats
+            raw_data=raw_stats,
         )
 
         assert stats_data.raw_data == raw_stats
 
 
-@pytest.mark.skipif(not RAW_DATA_AVAILABLE, reason="Raw data models module not available")
+@pytest.mark.skipif(
+    not RAW_DATA_AVAILABLE, reason="Raw data models module not available"
+)
 class TestRawMatchDataCreate:
     """RawMatchDataCreate测试"""
 
@@ -341,7 +375,7 @@ class TestRawMatchDataCreate:
             home_score=3,
             away_score=0,
             status="completed",
-            raw_data=raw_json
+            raw_data=raw_json,
         )
 
         assert create_data.match_id == "create_match_123"
@@ -365,7 +399,7 @@ class TestRawMatchDataCreate:
             away_team="Arsenal",
             league="Premier League",
             season="2023-2024",
-            match_date=match_time
+            match_date=match_time,
         )
 
         # 验证默认值
@@ -380,12 +414,14 @@ class TestRawMatchDataCreate:
         with pytest.raises(Exception):  # Pydantic ValidationError
             RawMatchDataCreate(
                 home_team="Team A",
-                away_team="Team B"
+                away_team="Team B",
                 # 缺少必需字段
             )
 
 
-@pytest.mark.skipif(not RAW_DATA_AVAILABLE, reason="Raw data models module not available")
+@pytest.mark.skipif(
+    not RAW_DATA_AVAILABLE, reason="Raw data models module not available"
+)
 class TestRawMatchDataResponse:
     """RawMatchDataResponse测试"""
 
@@ -419,7 +455,7 @@ class TestRawMatchDataResponse:
             status="completed",
             raw_data=raw_json,
             created_at=created_time,
-            updated_at=updated_time
+            updated_at=updated_time,
         )
 
         assert response_data.id == 1
@@ -453,7 +489,7 @@ class TestRawMatchDataResponse:
             status="scheduled",
             raw_data=None,  # 添加必需字段
             created_at=match_time,
-            updated_at=match_time
+            updated_at=match_time,
         )
 
         # 测试序列化
@@ -479,7 +515,7 @@ class TestRawMatchDataResponse:
             status="scheduled",
             raw_data=None,  # 添加必需字段
             created_at=current_time,
-            updated_at=current_time
+            updated_at=current_time,
         )
 
         json_str = response_data.model_dump_json()
@@ -488,7 +524,9 @@ class TestRawMatchDataResponse:
         assert "Team Y" in json_str
 
 
-@pytest.mark.skipif(not RAW_DATA_AVAILABLE, reason="Raw data models module not available")
+@pytest.mark.skipif(
+    not RAW_DATA_AVAILABLE, reason="Raw data models module not available"
+)
 class TestRawOddsDataCreate:
     """RawOddsDataCreate测试"""
 
@@ -509,7 +547,7 @@ class TestRawOddsDataCreate:
             outcome="Team A",
             odds=1.95,
             timestamp=timestamp,
-            raw_data=raw_data
+            raw_data=raw_data,
         )
 
         assert create_data.match_id == "odds_create_123"
@@ -526,7 +564,7 @@ class TestRawOddsDataCreate:
         with pytest.raises(Exception):  # Pydantic ValidationError
             RawOddsDataCreate(
                 match_id="test",
-                bookmaker="test"
+                bookmaker="test",
                 # 缺少其他必需字段
             )
 
@@ -541,7 +579,7 @@ class TestRawOddsDataCreate:
             market="Test Market",
             outcome="Test Outcome",
             odds=2.5,  # 有效浮点数
-            timestamp=timestamp
+            timestamp=timestamp,
         )
         assert create_data.odds == 2.5
 
@@ -552,12 +590,14 @@ class TestRawOddsDataCreate:
             market="Test Market",
             outcome="Test Outcome",
             odds=3,  # 整数
-            timestamp=timestamp
+            timestamp=timestamp,
         )
         assert create_data_int.odds == 3
 
 
-@pytest.mark.skipif(not RAW_DATA_AVAILABLE, reason="Raw data models module not available")
+@pytest.mark.skipif(
+    not RAW_DATA_AVAILABLE, reason="Raw data models module not available"
+)
 class TestRawOddsDataResponse:
     """RawOddsDataResponse测试"""
 
@@ -586,7 +626,7 @@ class TestRawOddsDataResponse:
             odds=2.1,
             timestamp=timestamp,
             raw_data=raw_data,
-            created_at=created_at
+            created_at=created_at,
         )
 
         assert response_data.id == 1
@@ -600,7 +640,9 @@ class TestRawOddsDataResponse:
         assert response_data.created_at == created_at
 
 
-@pytest.mark.skipif(not RAW_DATA_AVAILABLE, reason="Raw data models module not available")
+@pytest.mark.skipif(
+    not RAW_DATA_AVAILABLE, reason="Raw data models module not available"
+)
 class TestRawStatisticsDataCreate:
     """RawStatisticsDataCreate测试"""
 
@@ -622,7 +664,7 @@ class TestRawStatisticsDataCreate:
             stat_text="8 shots on target",
             source="WhoScored",
             timestamp=timestamp,
-            raw_data=raw_data
+            raw_data=raw_data,
         )
 
         assert create_data.match_id == "stats_create_123"
@@ -644,7 +686,7 @@ class TestRawStatisticsDataCreate:
             team="Team A",
             stat_type="cards",
             source="Referee",
-            timestamp=timestamp
+            timestamp=timestamp,
         )
 
         assert create_data.stat_value is None
@@ -660,7 +702,9 @@ class TestRawStatisticsDataCreate:
             )
 
 
-@pytest.mark.skipif(not RAW_DATA_AVAILABLE, reason="Raw data models module not available")
+@pytest.mark.skipif(
+    not RAW_DATA_AVAILABLE, reason="Raw data models module not available"
+)
 class TestRawStatisticsDataResponse:
     """RawStatisticsDataResponse测试"""
 
@@ -690,7 +734,7 @@ class TestRawStatisticsDataResponse:
             source="Opta",
             timestamp=timestamp,
             raw_data=raw_data,
-            created_at=created_at
+            created_at=created_at,
         )
 
         assert response_data.id == 1
@@ -705,7 +749,9 @@ class TestRawStatisticsDataResponse:
         assert response_data.created_at == created_at
 
 
-@pytest.mark.skipif(not RAW_DATA_AVAILABLE, reason="Raw data models module not available")
+@pytest.mark.skipif(
+    not RAW_DATA_AVAILABLE, reason="Raw data models module not available"
+)
 class TestRawDataIntegration:
     """原始数据模型集成测试"""
 
@@ -713,15 +759,15 @@ class TestRawDataIntegration:
         """测试所有SQLAlchemy模型都继承自Base"""
         # 简化继承检查 - 验证它们都有SQLAlchemy模型的属性
         for model_class in [RawMatchData, RawOddsData, RawStatisticsData]:
-            assert hasattr(model_class, '__tablename__')
-            assert hasattr(model_class, '__table__')
-            assert hasattr(model_class, 'id')  # 主键列
+            assert hasattr(model_class, "__tablename__")
+            assert hasattr(model_class, "__table__")
+            assert hasattr(model_class, "id")  # 主键列
 
     def test_all_pydantic_models_have_config(self):
         """测试所有响应Pydantic模型都有配置"""
-        assert hasattr(RawMatchDataResponse, 'Config')
-        assert hasattr(RawOddsDataResponse, 'Config')
-        assert hasattr(RawStatisticsDataResponse, 'Config')
+        assert hasattr(RawMatchDataResponse, "Config")
+        assert hasattr(RawOddsDataResponse, "Config")
+        assert hasattr(RawStatisticsDataResponse, "Config")
 
         assert RawMatchDataResponse.Config.from_attributes is True
         assert RawOddsDataResponse.Config.from_attributes is True
@@ -739,7 +785,7 @@ class TestRawDataIntegration:
             away_team="Team B",
             league="Test League",
             season="2023-2024",
-            match_date=match_time
+            match_date=match_time,
         )
 
         odds_data = RawOddsData(
@@ -748,7 +794,7 @@ class TestRawDataIntegration:
             market="1X2",
             outcome="1",
             odds=2.0,
-            timestamp=match_time
+            timestamp=match_time,
         )
 
         stats_data = RawStatisticsData(
@@ -757,11 +803,13 @@ class TestRawDataIntegration:
             stat_type="possession",
             stat_value=55.0,
             source="Test Source",
-            timestamp=match_time
+            timestamp=match_time,
         )
 
         # 验证通过match_id关联
-        assert match_data.match_id == odds_data.match_id == stats_data.match_id == match_id
+        assert (
+            match_data.match_id == odds_data.match_id == stats_data.match_id == match_id
+        )
 
     def test_pydantic_models_validation_workflow(self):
         """测试Pydantic模型验证工作流"""
@@ -777,7 +825,7 @@ class TestRawDataIntegration:
             match_date=match_time,
             home_score=2,
             away_score=1,
-            status="completed"
+            status="completed",
         )
 
         # 2. 模拟数据库操作后创建响应
@@ -794,7 +842,7 @@ class TestRawDataIntegration:
             status=create_data.status,
             raw_data=create_data.raw_data,
             created_at=match_time,
-            updated_at=match_time
+            updated_at=match_time,
         )
 
         # 3. 验证数据一致性
@@ -809,12 +857,12 @@ class TestRawDataIntegration:
 
         # 检查RawMatchDataCreate的字段描述
         fields = RawMatchDataCreate.model_fields
-        assert 'match_id' in fields
-        assert 'home_team' in fields
-        assert 'away_team' in fields
-        assert 'league' in fields
-        assert 'season' in fields
-        assert 'match_date' in fields
+        assert "match_id" in fields
+        assert "home_team" in fields
+        assert "away_team" in fields
+        assert "league" in fields
+        assert "season" in fields
+        assert "match_date" in fields
 
     def test_comprehensive_data_types(self):
         """测试全面的数据类型"""
@@ -823,7 +871,7 @@ class TestRawDataIntegration:
             "nested": {"key": "value"},
             "array": [1, 2, 3],
             "boolean": True,
-            "null": None
+            "null": None,
         }
 
         match_data = RawMatchDataCreate(
@@ -833,7 +881,7 @@ class TestRawDataIntegration:
             league="Type Test League",
             season="2023-2024",
             match_date=datetime.datetime(2023, 12, 1, 19, 0, 0),
-            raw_data=complex_json
+            raw_data=complex_json,
         )
 
         assert match_data.raw_data == complex_json

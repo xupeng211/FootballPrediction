@@ -19,6 +19,7 @@ try:
     from src.core.prediction_engine import PredictionEngine, PredictionConfig
     from src.core.service_lifecycle import ServiceLifecycleManager
     from src.core.event_application import EventApplication
+
     CORE_AVAILABLE = True
 except ImportError as e:
     print(f"Core import error: {e}")
@@ -28,6 +29,7 @@ try:
     from src.api.data_router import data_router
     from src.api.predictions.router import predictions_router
     from src.api.observers import observer_manager
+
     API_AVAILABLE = True
 except ImportError as e:
     print(f"API import error: {e}")
@@ -37,6 +39,7 @@ try:
     from src.cqrs.application import CQRSApplication
     from src.cqrs.bus import CommandBus, QueryBus
     from src.cqrs.dto import DataTransferObject
+
     CQRS_AVAILABLE = True
 except ImportError as e:
     print(f"CQRS import error: {e}")
@@ -46,6 +49,7 @@ try:
     from src.events.bus import EventBus
     from src.events.handlers import EventHandler
     from src.events.types import DomainEvent
+
     EVENTS_AVAILABLE = True
 except ImportError as e:
     print(f"Events import error: {e}")
@@ -54,6 +58,7 @@ except ImportError as e:
 try:
     from src.facades.facades import PredictionFacade, DataFacade
     from src.facades.factory import FacadeFactory
+
     FACADES_AVAILABLE = True
 except ImportError as e:
     print(f"Facades import error: {e}")
@@ -75,14 +80,15 @@ class TestPredictionEngineAdvanced:
         config.cache_ttl = 300
 
         # 验证配置属性
-        assert hasattr(config, 'model_type')
-        assert hasattr(config, 'confidence_threshold')
-        assert hasattr(config, 'max_predictions_per_request')
-        assert hasattr(config, 'enable_caching')
-        assert hasattr(config, 'cache_ttl')
+        assert hasattr(config, "model_type")
+        assert hasattr(config, "confidence_threshold")
+        assert hasattr(config, "max_predictions_per_request")
+        assert hasattr(config, "enable_caching")
+        assert hasattr(config, "cache_ttl")
 
     def test_prediction_engine_lifecycle(self):
         """测试：预测引擎生命周期 - 覆盖率补充"""
+
         # 模拟生命周期管理器
         class MockServiceLifecycleManager:
             def __init__(self):
@@ -152,6 +158,7 @@ class TestPredictionEngineAdvanced:
 
     async def test_prediction_engine_performance(self):
         """测试：预测引擎性能 - 覆盖率补充"""
+
         # 模拟性能监控
         class PerformanceMonitor:
             def __init__(self):
@@ -161,7 +168,7 @@ class TestPredictionEngineAdvanced:
                 self.metrics[operation_id] = {
                     "start_time": datetime.utcnow(),
                     "end_time": None,
-                    "duration_ms": None
+                    "duration_ms": None,
                 }
 
             def end_timing(self, operation_id: str):
@@ -170,22 +177,27 @@ class TestPredictionEngineAdvanced:
                     start_time = self.metrics[operation_id]["start_time"]
                     duration = (end_time - start_time).total_seconds() * 1000
 
-                    self.metrics[operation_id].update({
-                        "end_time": end_time,
-                        "duration_ms": duration
-                    })
+                    self.metrics[operation_id].update(
+                        {"end_time": end_time, "duration_ms": duration}
+                    )
 
             def get_performance_stats(self):
                 if not self.metrics:
                     return {}
 
-                durations = [m["duration_ms"] for m in self.metrics.values() if m["duration_ms"] is not None]
+                durations = [
+                    m["duration_ms"]
+                    for m in self.metrics.values()
+                    if m["duration_ms"] is not None
+                ]
 
                 return {
                     "total_operations": len(self.metrics),
-                    "average_duration_ms": sum(durations) / len(durations) if durations else 0,
+                    "average_duration_ms": sum(durations) / len(durations)
+                    if durations
+                    else 0,
                     "min_duration_ms": min(durations) if durations else 0,
-                    "max_duration_ms": max(durations) if durations else 0
+                    "max_duration_ms": max(durations) if durations else 0,
                 }
 
         # 测试性能监控
@@ -208,6 +220,7 @@ class TestPredictionEngineAdvanced:
 
     def test_prediction_engine_data_flow(self):
         """测试：预测引擎数据流 - 覆盖率补充"""
+
         # 模拟数据流处理
         class DataFlowProcessor:
             def __init__(self):
@@ -244,9 +257,11 @@ class TestPredictionEngineAdvanced:
 
         def calculate_features(data):
             features = {
-                "team_length_diff": len(data["teams"]["home"]) - len(data["teams"]["away"]),
+                "team_length_diff": len(data["teams"]["home"])
+                - len(data["teams"]["away"]),
                 "has_odds": "odds" in data,
-                "data_completeness": len([k for k, v in data.items() if v is not None]) / 10  # 假设10个字段
+                "data_completeness": len([k for k, v in data.items() if v is not None])
+                / 10,  # 假设10个字段
             }
             data["features"] = features
             return data
@@ -262,12 +277,12 @@ class TestPredictionEngineAdvanced:
             predictions = {
                 "home_win": max(0.1, min(0.9, base_prob)),
                 "draw": 0.3,
-                "away_win": max(0.1, min(0.9, 1 - base_prob))
+                "away_win": max(0.1, min(0.9, 1 - base_prob)),
             }
 
             # 归一化
             total = sum(predictions.values())
-            normalized_predictions = {k: v/total for k, v in predictions.items()}
+            normalized_predictions = {k: v / total for k, v in predictions.items()}
 
             data["predictions"] = normalized_predictions
             data["confidence"] = max(normalized_predictions.values())
@@ -281,8 +296,16 @@ class TestPredictionEngineAdvanced:
         # 测试数据流
         test_data = [
             {"match_id": 1, "teams": {"home": "Team A", "away": "Team B"}},
-            {"match_id": 2, "teams": {"home": "Team C", "away": "Team D"}, "odds": {"home": 2.0, "draw": 3.2, "away": 4.0}},
-            {"match_id": 3, "teams": {"home": "Long Team Name", "away": "Short"}, "stadium": "Test Stadium"}
+            {
+                "match_id": 2,
+                "teams": {"home": "Team C", "away": "Team D"},
+                "odds": {"home": 2.0, "draw": 3.2, "away": 4.0},
+            },
+            {
+                "match_id": 3,
+                "teams": {"home": "Long Team Name", "away": "Short"},
+                "stadium": "Test Stadium",
+            },
         ]
 
         results = []
@@ -308,6 +331,7 @@ class TestAPIRouterAdvanced:
 
     def test_api_router_registration(self):
         """测试：API路由注册 - 覆盖率补充"""
+
         # 模拟路由注册系统
         class MockRouter:
             def __init__(self):
@@ -322,7 +346,7 @@ class TestAPIRouterAdvanced:
                     "path": path,
                     "handler": handler,
                     "methods": methods,
-                    "registered_at": datetime.utcnow()
+                    "registered_at": datetime.utcnow(),
                 }
 
                 self.routes[path] = route_info
@@ -352,7 +376,9 @@ class TestAPIRouterAdvanced:
         # 注册路由
         router.add_route("/predictions", get_predictions_handler, ["GET"])
         router.add_route("/predictions", create_prediction_handler, ["POST"])
-        router.add_route("/predictions/{prediction_id}", update_prediction_handler, ["PUT", "PATCH"])
+        router.add_route(
+            "/predictions/{prediction_id}", update_prediction_handler, ["PUT", "PATCH"]
+        )
 
         # 验证路由注册
         predictions_route = router.get_route_info("/predictions")
@@ -367,6 +393,7 @@ class TestAPIRouterAdvanced:
 
     def test_api_middleware_chain(self):
         """测试：API中间件链 - 覆盖盖率补充"""
+
         # 模拟中间件系统
         class MiddlewareManager:
             def __init__(self):
@@ -377,6 +404,7 @@ class TestAPIRouterAdvanced:
 
             async def process_request(self, request, handler):
                 """处理请求通过中间件链"""
+
                 # 构建中间件链
                 async def call_next():
                     return await handler(request)
@@ -384,6 +412,7 @@ class TestAPIRouterAdvanced:
                 # 倒序应用中间件（最后一个先执行）
                 for middleware in reversed(self.middleware_stack):
                     original_next = call_next
+
                     def call_next(req):
                         return middleware(req, original_next)
 
@@ -416,10 +445,7 @@ class TestAPIRouterAdvanced:
                 return {"status": "success", "data": request}
 
             # 创建请求
-            request = {
-                "required_field": "test_value",
-                "user_input": "test_data"
-            }
+            request = {"required_field": "test_value", "user_input": "test_data"}
 
             # 处理请求
             response = await manager.process_request(request, request_handler)
@@ -435,33 +461,40 @@ class TestAPIRouterAdvanced:
 
     def test_api_response_formatting(self):
         """测试：API响应格式化 - 覆盖率补充"""
+
         # 模拟响应格式化器
         class ResponseFormatter:
             def __init__(self):
                 self.default_headers = {
                     "Content-Type": "application/json",
-                    "Server": "Football-Prediction-API/1.0"
+                    "Server": "Football-Prediction-API/1.0",
                 }
 
-            def format_success_response(self, data: Any, message: str = "Success") -> Dict[str, Any]:
+            def format_success_response(
+                self, data: Any, message: str = "Success"
+            ) -> Dict[str, Any]:
                 return {
                     "success": True,
                     "data": data,
                     "message": message,
                     "timestamp": datetime.utcnow().isoformat(),
-                    "headers": self.default_headers.copy()
+                    "headers": self.default_headers.copy(),
                 }
 
-            def format_error_response(self, error: str, details: Dict[str, Any] = None) -> Dict[str, Any]:
+            def format_error_response(
+                self, error: str, details: Dict[str, Any] = None
+            ) -> Dict[str, Any]:
                 return {
                     "success": False,
                     "error": error,
                     "details": details or {},
                     "timestamp": datetime.utcnow().isoformat(),
-                    "headers": self.default_headers.copy()
+                    "headers": self.default_headers.copy(),
                 }
 
-            def format_paginated_response(self, items: List[Any], page: int, per_page: int, total: int) -> Dict[str, Any]:
+            def format_paginated_response(
+                self, items: List[Any], page: int, per_page: int, total: int
+            ) -> Dict[str, Any]:
                 total_pages = (total + per_page - 1) // per_page
 
                 return {
@@ -473,10 +506,10 @@ class TestAPIRouterAdvanced:
                         "total": total,
                         "total_pages": total_pages,
                         "has_next": page < total_pages,
-                        "has_prev": page > 1
+                        "has_prev": page > 1,
                     },
                     "timestamp": datetime.utcnow().isoformat(),
-                    "headers": self.default_headers.copy()
+                    "headers": self.default_headers.copy(),
                 }
 
         # 测试响应格式化
@@ -485,7 +518,7 @@ class TestAPIRouterAdvanced:
         # 测试成功响应
         success_response = formatter.format_success_response(
             data={"id": 1, "name": "Test Prediction"},
-            message="Prediction retrieved successfully"
+            message="Prediction retrieved successfully",
         )
 
         assert success_response["success"] is True
@@ -495,7 +528,7 @@ class TestAPIRouterAdvanced:
         # 测试错误响应
         error_response = formatter.format_error_response(
             error="Validation failed",
-            details={"field": "email", "message": "Invalid format"}
+            details={"field": "email", "message": "Invalid format"},
         )
 
         assert error_response["success"] is False
@@ -504,10 +537,7 @@ class TestAPIRouterAdvanced:
 
         # 测试分页响应
         paginated_response = formatter.format_paginated_response(
-            items=[{"id": 1}, {"id": 2}],
-            page=1,
-            per_page=10,
-            total=25
+            items=[{"id": 1}, {"id": 2}], page=1, per_page=10, total=25
         )
 
         assert paginated_response["success"] is True
@@ -522,6 +552,7 @@ class TestCQRSApplicationAdvanced:
 
     def test_command_bus_dispatching(self):
         """测试：命令总线分发 - 覆盖盖率补充"""
+
         # 模拟命令总线
         class MockCommandBus:
             def __init__(self):
@@ -533,11 +564,13 @@ class TestCQRSApplicationAdvanced:
 
             async def dispatch(self, command):
                 command_type = type(command).__name__
-                self.command_history.append({
-                    "type": command_type,
-                    "command": command,
-                    "timestamp": datetime.utcnow()
-                })
+                self.command_history.append(
+                    {
+                        "type": command_type,
+                        "command": command,
+                        "timestamp": datetime.utcnow(),
+                    }
+                )
 
                 if command_type not in self.handlers:
                     raise ValueError(f"No handler registered for {command_type}")
@@ -558,7 +591,7 @@ class TestCQRSApplicationAdvanced:
                 return {
                     "success": True,
                     "prediction_id": f"pred_{command.match_id}",
-                    "data": command.prediction_data
+                    "data": command.prediction_data,
                 }
 
         # 测试命令总线
@@ -570,7 +603,7 @@ class TestCQRSApplicationAdvanced:
             # 创建并发送命令
             command = CreatePredictionCommand(
                 match_id=123,
-                prediction_data={"home_win": 0.6, "draw": 0.3, "away_win": 0.1}
+                prediction_data={"home_win": 0.6, "draw": 0.3, "away_win": 0.1},
             )
 
             result = await bus.dispatch(command)
@@ -586,6 +619,7 @@ class TestCQRSApplicationAdvanced:
 
     def test_query_bus_execution(self):
         """测试：查询总线执行 - 覆盖率补充"""
+
         # 模拟查询总线
         class MockQueryBus:
             def __init__(self):
@@ -625,7 +659,7 @@ class TestCQRSApplicationAdvanced:
             def __init__(self):
                 self.database = {
                     "pred_123": {"id": "pred_123", "confidence": 0.85},
-                    "pred_456": {"id": "pred_456", "confidence": 0.92}
+                    "pred_456": {"id": "pred_456", "confidence": 0.92},
                 }
 
             async def handle(self, query):
@@ -666,6 +700,7 @@ class TestCQRSApplicationAdvanced:
 
     def test_cqrs_data_integrity(self):
         """测试：CQRS数据完整性 - 覆盖率补充"""
+
         # 模拟数据完整性检查器
         class DataIntegrityChecker:
             def __init__(self):
@@ -677,7 +712,7 @@ class TestCQRSApplicationAdvanced:
                 self.read_model[entity_id] = {
                     "data": data,
                     "last_updated": datetime.utcnow(),
-                    "version": self.read_model.get(entity_id, {}).get("version", 0) + 1
+                    "version": self.read_model.get(entity_id, {}).get("version", 0) + 1,
                 }
 
             def update_write_model(self, entity_id: str, data: Dict[str, Any]):
@@ -685,7 +720,8 @@ class TestCQRSApplicationAdvanced:
                 self.write_model[entity_id] = {
                     "data": data,
                     "last_updated": datetime.utcnow(),
-                    "version": self.write_model.get(entity_id, {}).get("version", 0) + 1
+                    "version": self.write_model.get(entity_id, {}).get("version", 0)
+                    + 1,
                 }
 
             def check_consistency(self, entity_id: str) -> Dict[str, Any]:
@@ -713,7 +749,7 @@ class TestCQRSApplicationAdvanced:
                     "consistent": len(consistency_issues) == 0,
                     "issues": consistency_issues,
                     "read_version": read_data["version"],
-                    "write_version": write_model["version"]
+                    "write_version": write_model["version"],
                 }
 
         # 测试数据完整性
@@ -741,6 +777,7 @@ class TestEventSystemAdvanced:
 
     def test_event_bus_publishing(self):
         """测试：事件总线发布 - 覆盖盖率补充"""
+
         # 模拟事件总线
         class MockEventBus:
             def __init__(self):
@@ -754,11 +791,9 @@ class TestEventSystemAdvanced:
 
             async def publish(self, event):
                 event_type = type(event).__name__
-                self.published_events.append({
-                    "type": event_type,
-                    "event": event,
-                    "timestamp": datetime.utcnow()
-                })
+                self.published_events.append(
+                    {"type": event_type, "event": event, "timestamp": datetime.utcnow()}
+                )
 
                 if event_type in self.subscribers:
                     tasks = []
@@ -802,7 +837,7 @@ class TestEventSystemAdvanced:
             # 发布事件
             event = PredictionCompletedEvent(
                 prediction_id="pred_123",
-                result={"confidence": 0.85, "outcome": "home_win"}
+                result={"confidence": 0.85, "outcome": "home_win"},
             )
 
             await bus.publish(event)
@@ -816,6 +851,7 @@ class TestEventSystemAdvanced:
 
     def test_event_handler_error_handling(self):
         """测试：事件处理器错误处理 - 覆盖盖率补充"""
+
         # 模拟错误处理机制
         class ErrorHandlingEventBus:
             def __init__(self):
@@ -836,12 +872,14 @@ class TestEventSystemAdvanced:
                     try:
                         await handler.handle(event)
                     except Exception as e:
-                        self.error_log.append({
-                            "handler": handler.__class__.__name__,
-                            "error": str(e),
-                            "event": event,
-                            "timestamp": datetime.utcnow()
-                        })
+                        self.error_log.append(
+                            {
+                                "handler": handler.__class__.__name__,
+                                "error": str(e),
+                                "event": event,
+                                "timestamp": datetime.utcnow(),
+                            }
+                        )
 
         # 模拟有问题的处理器
         class FailingHandler:
@@ -886,6 +924,7 @@ class TestFacadePatternAdvanced:
 
     def test_facade_service_coordination(self):
         """测试：门面服务协调 - 覆盖率补充"""
+
         # 模拟服务协调门面
         class PredictionFacade:
             def __init__(self):
@@ -903,26 +942,28 @@ class TestFacadePatternAdvanced:
                 prediction = await self.prediction_service.generate(match_data)
 
                 # 3. 应用用户偏好
-                adjusted_prediction = await self._apply_user_preferences(prediction, user_preferences)
+                adjusted_prediction = await self._apply_user_preferences(
+                    prediction, user_preferences
+                )
 
                 # 4. 记录审计日志
                 audit_log = await self.audit_service.log_prediction_creation(
                     match_data["match_id"],
                     adjusted_prediction,
-                    user_preferences.get("user_id")
+                    user_preferences.get("user_id"),
                 )
 
                 # 5. 发送通知
                 if user_preferences.get("notifications", False):
                     await self.notification_service.send_prediction_notification(
                         adjusted_prediction,
-                        user_preferences.get("notification_channels", [])
+                        user_preferences.get("notification_channels", []),
                     )
 
                 return {
                     "success": True,
                     "prediction": adjusted_prediction,
-                    "audit_log": audit_log
+                    "audit_log": audit_log,
                 }
 
             async def _validate_match_data(self, data):
@@ -949,28 +990,33 @@ class TestFacadePatternAdvanced:
             facade = PredictionFacade()
 
             # 模拟服务响应
-            facade.prediction_service.generate = AsyncMock(return_value={
-                "confidence": 0.75,
-                "outcome": "home_win"
-            })
+            facade.prediction_service.generate = AsyncMock(
+                return_value={"confidence": 0.75, "outcome": "home_win"}
+            )
 
-            facade.audit_service.log_prediction_creation = AsyncMock(return_value="audit_123")
-            facade.notification_service.send_prediction_notification = AsyncMock(return_value="notification_sent")
+            facade.audit_service.log_prediction_creation = AsyncMock(
+                return_value="audit_123"
+            )
+            facade.notification_service.send_prediction_notification = AsyncMock(
+                return_value="notification_sent"
+            )
 
             # 测试复杂预测创建
             match_data = {
                 "match_id": "match_456",
-                "teams": {"home": "Team A", "away": "Team B"}
+                "teams": {"home": "Team A", "away": "Team B"},
             }
 
             user_preferences = {
                 "user_id": "user_789",
                 "high_confidence_only": True,
                 "notifications": True,
-                "notification_channels": ["email", "sms"]
+                "notification_channels": ["email", "sms"],
             }
 
-            result = await facade.create_complex_prediction(match_data, user_preferences)
+            result = await facade.create_complex_prediction(
+                match_data, user_preferences
+            )
 
             # 验证协调结果
             assert result["success"] is True
@@ -987,6 +1033,7 @@ class TestFacadePatternAdvanced:
 
     def test_facade_error_recovery(self):
         """测试：门面错误恢复 - 覆盖率补充"""
+
         # 模拟错误恢复门面
         class ResilientFacade:
             def __init__(self):

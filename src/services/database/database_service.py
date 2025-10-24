@@ -33,16 +33,9 @@ class DatabaseService:
         try:
             # 简单的连接测试
             await self.session.execute("SELECT 1")
-            return {
-                "status": "healthy",
-                "database": "connected"
-            }
+            return {"status": "healthy", "database": "connected"}
         except Exception as e:
-            return {
-                "status": "unhealthy",
-                "database": "disconnected",
-                "error": str(e)
-            }
+            return {"status": "unhealthy", "database": "disconnected", "error": str(e)}
 
     async def cleanup_old_data(self, days: int = 30):
         """清理旧数据"""
@@ -56,5 +49,5 @@ class DatabaseService:
         # 暂时返回成功状态
         return {
             "status": "success",
-            "backup_file": f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.sql"
+            "backup_file": f"backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.sql",
         }

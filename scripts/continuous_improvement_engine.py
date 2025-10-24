@@ -125,7 +125,7 @@ class ContinuousImprovementEngine:
         # 7. 生成改进报告
         self._generate_improvement_report(cycle_data)
 
-        print(f"\n✅ 持续改进周期完成！")
+        print("\n✅ 持续改进周期完成！")
         print(f"⏱️ 用时: {cycle_data['duration_seconds']:.1f}秒")
         print(f"📊 改进成功: {'是' if cycle_data['success'] else '否'}")
 
@@ -262,7 +262,7 @@ class ContinuousImprovementEngine:
                         "result": result
                     })
                     results["actions_executed"] += 1
-                    print(f"    ✅ 成功")
+                    print("    ✅ 成功")
                 else:
                     results["failures"].append({
                         "action": action["description"],
@@ -350,7 +350,7 @@ class Test{source_file.stem.title().replace('_', '')}:
         """分析并改进覆盖率"""
         try:
             # 运行覆盖率分析
-            result = subprocess.run([
+            subprocess.run([
                 sys.executable, "-m", "pytest", "tests/unit/api/test_health.py",
                 "--cov=src/", "--cov-report=json", "--cov-report=html", "--tb=short", "-q"
             ], capture_output=True, text=True, timeout=60)
@@ -497,7 +497,7 @@ class Test{source_file.stem.title().replace('_', '')}:
                 change_symbol = "📈" if data["improvement"] > 0 else "📉" if data["improvement"] < 0 else "➡️"
                 report_content += f"| {metric_names[metric]} | {data['old']:.1f} | {data['new']:.1f} | {change_symbol} {data['improvement']:+.1f} | {data['percentage_change']:+.1f}% |\n"
 
-        report_content += f"""
+        report_content += """
 
 ## 🎯 执行的改进措施
 
@@ -559,7 +559,7 @@ class Test{source_file.stem.title().replace('_', '')}:
                 print('='*60)
 
                 # 运行改进周期
-                cycle_result = self.run_continuous_improvement_cycle()
+                self.run_continuous_improvement_cycle()
 
                 # 计算下次运行时间
                 cycle_duration = (datetime.now() - cycle_start).total_seconds()
@@ -570,7 +570,7 @@ class Test{source_file.stem.title().replace('_', '')}:
                     print(f"⏱️ 等待时间: {wait_time:.0f} 秒")
                     time.sleep(wait_time)
                 else:
-                    print(f"\n⚠️ 周期耗时过长，立即开始下个周期")
+                    print("\n⚠️ 周期耗时过长，立即开始下个周期")
 
         except KeyboardInterrupt:
             print("\n🛑 自动化改进引擎已停止")

@@ -53,7 +53,8 @@ class DataQualityExceptionHandler:
 class MissingValueHandler:
     """缺失值处理器"""
 
-    def __init__(self):        self.default_values = {
+    def __init__(self):
+        self.default_values = {
             "home_score": 0,
             "away_score": 0,
             "match_time": datetime.utcnow(),
@@ -70,7 +71,8 @@ class MissingValueHandler:
 class SuspiciousOddsHandler:
     """可疑赔率处理器"""
 
-    def __init__(self):        self.odds_limits = {
+    def __init__(self):
+        self.odds_limits = {
             "home_win": (1.01, 50.0),
             "draw": (1.01, 50.0),
             "away_win": (1.01, 50.0),
@@ -132,7 +134,8 @@ class QualityLogger:
 class StatisticsProvider:
     """统计信息提供器"""
 
-    def __init__(self):        self.stats = {
+    def __init__(self):
+        self.stats = {
             "total_processed": 0,
             "issues_found": 0,
             "issues_fixed": 0,

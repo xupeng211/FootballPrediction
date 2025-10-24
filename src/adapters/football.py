@@ -309,9 +309,9 @@ class FootballApiAdapter(Adapter):
         _matches = []
         for match_data in data.get("response", []):
             match = await self.transformer.transform(match_data, target_type="match")
-            matches.append(match)
+            _matches.append(match)
 
-        return matches
+        return _matches
 
     async def get_match(self, match_id: str) -> Optional[FootballMatch]:
         """获取单个比赛"""
@@ -335,9 +335,9 @@ class FootballApiAdapter(Adapter):
         _teams = []
         for team_data in data.get("response", []):
             team = await self.transformer.transform(team_data, target_type="team")
-            teams.append(team)
+            _teams.append(team)
 
-        return teams
+        return _teams
 
     async def get_team(self, team_id: str) -> Optional[FootballTeam]:
         """获取单个球队"""

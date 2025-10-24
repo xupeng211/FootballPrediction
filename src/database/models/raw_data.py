@@ -8,6 +8,7 @@ from ..types import JsonbType
 
 class RawData(BaseModel):
     """原始数据基类"""
+
     __abstract__ = True
 
     id = Column(Integer, primary_key=True)

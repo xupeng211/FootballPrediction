@@ -15,6 +15,7 @@ try:
     from src.services.data_processing import DataProcessingService
     from src.services.audit_service import AuditService
     from src.core.prediction_engine import PredictionEngine
+
     SERVICES_AVAILABLE = True
 except ImportError as e:
     print(f"Services import error: {e}")
@@ -30,10 +31,10 @@ class TestCoreServicesCoverage:
         service = DataProcessingService()
 
         # 测试初始化
-        assert hasattr(service, 'initialize')
-        assert hasattr(service, 'process_data')
-        assert hasattr(service, 'batch_process')
-        assert hasattr(service, 'cleanup')
+        assert hasattr(service, "initialize")
+        assert hasattr(service, "process_data")
+        assert hasattr(service, "batch_process")
+        assert hasattr(service, "cleanup")
 
     def test_audit_service_functionality(self):
         """测试：审计服务功能 - 覆盖率补充"""
@@ -41,9 +42,7 @@ class TestCoreServicesCoverage:
 
         # 测试事件记录
         event = service.log_event(
-            action="test_action",
-            user="test_user",
-            details={"key": "value"}
+            action="test_action", user="test_user", details={"key": "value"}
         )
 
         assert event.action == "test_action"
@@ -56,7 +55,7 @@ class TestCoreServicesCoverage:
 
         # 测试摘要
         summary = service.get_summary()
-        assert hasattr(summary, 'total_logs')
+        assert hasattr(summary, "total_logs")
 
     @pytest.mark.asyncio
     async def test_data_processing_basic_flow(self):
@@ -69,7 +68,7 @@ class TestCoreServicesCoverage:
             "id": "test123",
             "type": "match",
             "home_team": "Team A",
-            "away_team": "Team B"
+            "away_team": "Team B",
         }
 
         result = await service.process_data(test_data)
@@ -121,7 +120,7 @@ class TestPredictionEngineCoverage:
             engine.predict.return_value = {
                 "home_score": 2,
                 "away_score": 1,
-                "confidence": 0.85
+                "confidence": 0.85,
             }
 
             # 测试预测功能
@@ -165,7 +164,7 @@ class TestUtilityFunctionsCoverage:
             "match_id": 123,
             "home_team": "Team A",
             "away_team": "Team B",
-            "score": {"home": 2, "away": 1}
+            "score": {"home": 2, "away": 1},
         }
 
         assert "match_id" in test_dict
@@ -179,7 +178,7 @@ class TestUtilityFunctionsCoverage:
         predictions = [
             {"id": 1, "confidence": 0.8},
             {"id": 2, "confidence": 0.7},
-            {"id": 3, "confidence": 0.9}
+            {"id": 3, "confidence": 0.9},
         ]
 
         assert len(predictions) == 3
@@ -193,7 +192,7 @@ class TestUtilityFunctionsCoverage:
             "int_val": 42,
             "str_val": "test",
             "list_val": [1, 2, 3],
-            "dict_val": {"key": "value"}
+            "dict_val": {"key": "value"},
         }
 
         assert isinstance(test_data["int_val"], int)
@@ -220,6 +219,7 @@ class TestErrorHandlingCoverage:
 
     def test_defensive_programming(self):
         """测试：防御性编程 - 覆盖率补充"""
+
         # 测试空值检查
         def safe_divide(a, b):
             if b is None or b == 0:
@@ -232,6 +232,7 @@ class TestErrorHandlingCoverage:
 
     def test_data_validation(self):
         """测试：数据验证 - 覆盖率补充"""
+
         # 测试数据验证逻辑
         def validate_match_data(data):
             if not isinstance(data, dict):
@@ -242,7 +243,7 @@ class TestErrorHandlingCoverage:
         valid_data = {
             "home_team": "Team A",
             "away_team": "Team B",
-            "match_date": "2023-12-01"
+            "match_date": "2023-12-01",
         }
         invalid_data = {"home_team": "Team A"}
 
@@ -267,6 +268,7 @@ class TestIntegrationScenarios:
     @pytest.mark.asyncio
     async def test_async_workflow_mock(self):
         """测试：异步工作流模拟 - 覆盖率补充"""
+
         # 模拟异步工作流
         async def process_workflow(data):
             # 模拟异步处理步骤

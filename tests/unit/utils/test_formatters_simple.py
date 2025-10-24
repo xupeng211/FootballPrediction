@@ -18,6 +18,7 @@ try:
         format_currency,
         format_percentage,
     )
+
     FORMATTERS_AVAILABLE = True
 except ImportError:
     FORMATTERS_AVAILABLE = False

@@ -1,6 +1,8 @@
 import logging
+
 logger = logging.getLogger(__name__)
 from alembic import op
+
 """implement_partitioned_tables_and_indexes
 
 

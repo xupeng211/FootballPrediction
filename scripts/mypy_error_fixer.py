@@ -103,7 +103,7 @@ def fix_no_any_return(error_info: Dict) -> str:
             # 检查是否是函数返回语句
             if line.startswith('return '):
                 # 如果函数有明确的返回类型注解，可能需要添加类型注解
-                indent = len(lines[line_num - 1]) - len(lines[line_num - 1].lstrip())
+                len(lines[line_num - 1]) - len(lines[line_num - 1].lstrip())
                 if '-> Any' in lines[max(0, line_num - 10):line_num - 1]:
                     return f"✅ {file_path}:{line_num} - 已经有Any类型注解"
                 else:

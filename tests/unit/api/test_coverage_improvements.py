@@ -25,7 +25,7 @@ except ImportError:
         jwt = None
 
 # 添加项目根目录到sys.path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../.."))
 
 # 检查JWT是否可用
 JWT_AVAILABLE = jwt is not None
@@ -41,8 +41,9 @@ try:
         rate_limit_check,
         SECRET_KEY,
         ALGORITHM,
-        security
+        security,
     )
+
     DEPENDENCIES_AVAILABLE = True
 except ImportError as e:
     print(f"导入错误: {e}")
@@ -59,7 +60,10 @@ class TestDependenciesModule:
         assert ALGORITHM == "HS256"
         assert security is not None
 
-    @pytest.mark.skipif(not DEPENDENCIES_AVAILABLE or not JWT_AVAILABLE, reason="dependencies或JWT模块不可用")
+    @pytest.mark.skipif(
+        not DEPENDENCIES_AVAILABLE or not JWT_AVAILABLE,
+        reason="dependencies或JWT模块不可用",
+    )
     def test_get_current_user_valid_token(self):
         """测试有效token的用户获取"""
         # 创建有效的JWT token
@@ -67,10 +71,7 @@ class TestDependenciesModule:
         token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
         # 创建模拟凭据
-        credentials = HTTPAuthorizationCredentials(
-            scheme="Bearer",
-            credentials=token
-        )
+        credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
 
         # 测试异步函数
         result = asyncio.run(get_current_user(credentials))
@@ -84,10 +85,7 @@ class TestDependenciesModule:
         payload = {"sub": "456", "role": "admin", "exp": 9999999999}
         token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
-        credentials = HTTPAuthorizationCredentials(
-            scheme="Bearer",
-            credentials=token
-        )
+        credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
 
         result = asyncio.run(get_current_user(credentials))
 
@@ -98,8 +96,7 @@ class TestDependenciesModule:
     def test_get_current_user_invalid_token(self):
         """测试无效token的处理"""
         credentials = HTTPAuthorizationCredentials(
-            scheme="Bearer",
-            credentials="invalid_token"
+            scheme="Bearer", credentials="invalid_token"
         )
 
         with pytest.raises(HTTPException) as exc_info:
@@ -114,10 +111,7 @@ class TestDependenciesModule:
         payload = {"sub": "789", "role": "user", "exp": 1000000000}  # 过期时间戳
         token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
-        credentials = HTTPAuthorizationCredentials(
-            scheme="Bearer",
-            credentials=token
-        )
+        credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
 
         with pytest.raises(HTTPException) as exc_info:
             asyncio.run(get_current_user(credentials))
@@ -129,10 +123,7 @@ class TestDependenciesModule:
         payload = {"role": "user", "exp": 9999999999}  # 缺少sub字段
         token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
-        credentials = HTTPAuthorizationCredentials(
-            scheme="Bearer",
-            credentials=token
-        )
+        credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
 
         with pytest.raises(HTTPException) as exc_info:
             asyncio.run(get_current_user(credentials))
@@ -144,10 +135,7 @@ class TestDependenciesModule:
         payload = {"sub": "101112", "exp": 9999999999}  # 缺少role字段
         token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
-        credentials = HTTPAuthorizationCredentials(
-            scheme="Bearer",
-            credentials=token
-        )
+        credentials = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
 
         result = asyncio.run(get_current_user(credentials))
 
@@ -190,7 +178,7 @@ class TestDependenciesModule:
 
         assert exc_info.value.status_code == status.HTTP_403_FORBIDDEN
 
-    @patch('src.api.dependencies.get_prediction_engine')
+    @patch("src.api.dependencies.get_prediction_engine")
     def test_get_prediction_engine(self, mock_get_engine):
         """测试获取预测引擎"""
         mock_engine = Mock()
@@ -200,7 +188,7 @@ class TestDependenciesModule:
 
         assert result == mock_engine
 
-    @patch('src.api.dependencies.get_prediction_engine')
+    @patch("src.api.dependencies.get_prediction_engine")
     def test_get_prediction_engine_with_exception(self, mock_get_engine):
         """测试预测引擎异常处理"""
         mock_get_engine.side_effect = Exception("Engine error")
@@ -208,7 +196,7 @@ class TestDependenciesModule:
         with pytest.raises(Exception, match="Engine error"):
             asyncio.run(get_prediction_engine())
 
-    @patch('src.api.dependencies.get_redis_manager')
+    @patch("src.api.dependencies.get_redis_manager")
     def test_get_redis_manager(self, mock_get_redis):
         """测试获取Redis管理器"""
         mock_redis = Mock()
@@ -286,7 +274,7 @@ class TestConstants:
     def test_security_bearer(self):
         """测试Bearer安全方案"""
         assert security is not None
-        assert hasattr(security, 'scheme_name')
+        assert hasattr(security, "scheme_name")
 
 
 class TestJWTIntegration:
@@ -300,7 +288,7 @@ class TestJWTIntegration:
             "role": "user",
             "name": "Test User",
             "iat": 1234567890,
-            "exp": 9999999999
+            "exp": 9999999999,
         }
         token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -318,7 +306,7 @@ class TestJWTIntegration:
             "role": "admin",
             "permissions": ["read", "write", "delete"],
             "department": "IT",
-            "exp": 9999999999
+            "exp": 9999999999,
         }
         token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -356,8 +344,9 @@ class TestModuleImports:
                 get_prediction_engine,
                 get_redis_manager,
                 SECRET_KEY,
-                ALGORITHM
+                ALGORITHM,
             )
+
             assert True
         except ImportError as e:
             pytest.skip(f"模块导入失败: {e}")
@@ -366,8 +355,7 @@ class TestModuleImports:
         """测试数据类字段"""
         # 测试HTTPAuthorizationCredentials的字段
         credentials = HTTPAuthorizationCredentials(
-            scheme="Bearer",
-            credentials="test_token"
+            scheme="Bearer", credentials="test_token"
         )
 
         assert credentials.scheme == "Bearer"
@@ -378,8 +366,8 @@ class TestModuleImports:
 class TestDependenciesIntegration:
     """依赖注入集成测试"""
 
-    @patch('src.api.dependencies.get_prediction_engine')
-    @patch('src.api.dependencies.get_redis_manager')
+    @patch("src.api.dependencies.get_prediction_engine")
+    @patch("src.api.dependencies.get_redis_manager")
     def test_full_dependency_chain(self, mock_redis, mock_engine):
         """测试完整的依赖链"""
         # 设置模拟

@@ -13,18 +13,21 @@ from typing import Dict, Any, List, Optional
 import json
 import asyncio
 
+
 # 直接导入可用模块进行测试
 def test_imports_coverage():
     """测试：模块导入覆盖率"""
     # 测试核心模块导入
     try:
         from src.core.config import Config
+
         assert Config is not None
     except ImportError:
         pytest.skip("Config module not available")
 
     try:
         from src.core.exceptions import FootballPredictionError, ServiceError
+
         assert FootballPredictionError is not None
         assert ServiceError is not None
     except ImportError:
@@ -32,6 +35,7 @@ def test_imports_coverage():
 
     try:
         from src.api.schemas import APIResponse
+
         assert APIResponse is not None
     except ImportError:
         pytest.skip("API schemas module not available")
@@ -46,16 +50,16 @@ def test_config_class_coverage():
         config = Config()
 
         # 测试配置属性
-        assert hasattr(config, 'debug')
-        assert hasattr(config, 'database_url')
-        assert hasattr(config, 'secret_key')
+        assert hasattr(config, "debug")
+        assert hasattr(config, "database_url")
+        assert hasattr(config, "secret_key")
 
         # 测试配置方法（如果存在）
-        if hasattr(config, 'get_database_url'):
+        if hasattr(config, "get_database_url"):
             db_url = config.get_database_url()
             assert isinstance(db_url, str)
 
-        if hasattr(config, 'is_debug_mode'):
+        if hasattr(config, "is_debug_mode"):
             is_debug = config.is_debug_mode()
             assert isinstance(is_debug, bool)
 
@@ -106,7 +110,7 @@ def test_api_schemas_coverage():
             success=True,
             message="操作成功",
             data={"id": 1, "name": "test"},
-            timestamp="2023-12-01T10:00:00Z"
+            timestamp="2023-12-01T10:00:00Z",
         )
 
         assert success_response.success is True
@@ -116,10 +120,7 @@ def test_api_schemas_coverage():
 
         # 测试错误响应
         error_response = APIResponse(
-            success=False,
-            message="操作失败",
-            errors=["错误1", "错误2"],
-            data=None
+            success=False, message="操作失败", errors=["错误1", "错误2"], data=None
         )
 
         assert error_response.success is False
@@ -207,7 +208,7 @@ def test_validation_utilities_coverage():
         valid_emails = [
             "user@example.com",
             "test.email+tag@domain.co.uk",
-            "user123@test-domain.org"
+            "user123@test-domain.org",
         ]
 
         for email in valid_emails:
@@ -219,7 +220,7 @@ def test_validation_utilities_coverage():
             "@missing-domain.com",
             "user@.invalid",
             "user@domain.",
-            "user space@domain.com"
+            "user space@domain.com",
         ]
 
         for email in invalid_emails:
@@ -232,12 +233,7 @@ def test_validation_utilities_coverage():
     try:
         from src.utils.validators import validate_phone
 
-        valid_phones = [
-            "+1234567890",
-            "123-456-7890",
-            "(123) 456-7890",
-            "1234567890"
-        ]
+        valid_phones = ["+1234567890", "123-456-7890", "(123) 456-7890", "1234567890"]
 
         for phone in valid_phones:
             result = validate_phone(phone)
@@ -277,8 +273,8 @@ def test_business_logic_coverage():
 
     # 测试赔率转概率
     def odds_to_probability(odds: Dict[str, float]) -> Dict[str, float]:
-        total_inverse = sum(1/price for price in odds.values())
-        return {outcome: (1/price)/total_inverse for outcome, price in odds.items()}
+        total_inverse = sum(1 / price for price in odds.values())
+        return {outcome: (1 / price) / total_inverse for outcome, price in odds.items()}
 
     decimal_odds = {"home": 2.0, "draw": 3.2, "away": 4.5}
     probabilities = odds_to_probability(decimal_odds)
@@ -302,7 +298,7 @@ def test_business_logic_coverage():
             "Manchester United": "Man United",
             "Manchester City": "Man City",
             "Tottenham Hotspur": "Tottenham",
-            "West Ham United": "West Ham"
+            "West Ham United": "West Ham",
         }
 
         return mappings.get(cleaned, cleaned)
@@ -333,21 +329,18 @@ def test_data_validation_patterns_coverage():
         # 日期格式检查
         if "match_date" in data:
             try:
-                datetime.fromisoformat(data["match_date"].replace('Z', '+00:00'))
+                datetime.fromisoformat(data["match_date"].replace("Z", "+00:00"))
             except (ValueError, AttributeError):
                 errors.append("Invalid date format")
 
-        return {
-            "is_valid": len(errors) == 0,
-            "errors": errors
-        }
+        return {"is_valid": len(errors) == 0, "errors": errors}
 
     # 测试有效数据
     valid_data = {
         "match_id": 123,
         "home_team": "Team A",
         "away_team": "Team B",
-        "match_date": "2023-12-01T20:00:00Z"
+        "match_date": "2023-12-01T20:00:00Z",
     }
 
     result = validate_match_data(valid_data)
@@ -359,7 +352,7 @@ def test_data_validation_patterns_coverage():
         "match_id": "not_a_number",
         "home_team": "",
         "away_team": "Team B",
-        "match_date": "invalid_date"
+        "match_date": "invalid_date",
     }
 
     result = validate_match_data(invalid_data)
@@ -394,12 +387,16 @@ def test_error_handling_patterns_coverage():
                         if attempt < max_attempts - 1:
                             continue
                 raise last_exception
+
             return wrapper
+
         return decorator
 
     @retry_operation(max_attempts=3)
     def failing_operation():
-        failing_operation.attempt_count = getattr(failing_operation, 'attempt_count', 0) + 1
+        failing_operation.attempt_count = (
+            getattr(failing_operation, "attempt_count", 0) + 1
+        )
         if failing_operation.attempt_count < 3:
             raise ConnectionError("Temporary failure")
         return "success"
@@ -421,7 +418,7 @@ def test_date_time_utilities_coverage():
         if isinstance(date_input, str):
             # 尝试ISO格式
             try:
-                return datetime.fromisoformat(date_input.replace('Z', '+00:00'))
+                return datetime.fromisoformat(date_input.replace("Z", "+00:00"))
             except ValueError:
                 pass
 
@@ -444,7 +441,7 @@ def test_date_time_utilities_coverage():
         "2023-12-01T20:00:00Z",
         "2023-12-01 20:00:00",
         "2023-12-01",
-        datetime.utcnow()
+        datetime.utcnow(),
     ]
 
     for date_format in date_formats[:3]:  # 排除datetime对象
@@ -483,8 +480,12 @@ def test_performance_monitoring_coverage():
 
         def get_stats(self):
             return {
-                "timings": {k: v.get("duration", 0) for k, v in self.timings.items() if "duration" in v},
-                "counters": self.counters
+                "timings": {
+                    k: v.get("duration", 0)
+                    for k, v in self.timings.items()
+                    if "duration" in v
+                },
+                "counters": self.counters,
             }
 
     import time
@@ -521,22 +522,21 @@ def test_data_serialization_coverage():
         "price": 99.99,
         "is_active": True,
         "tags": ["tag1", "tag2", "tag3"],
-        "metadata": {
-            "source": "api",
-            "version": "1.0"
-        }
+        "metadata": {"source": "api", "version": "1.0"},
     }
 
     # 序列化为JSON
-    json_str = json.dumps({
-        "id": test_data["id"],
-        "name": test_data["name"],
-        "created_at": test_data["created_at"].isoformat(),
-        "price": test_data["price"],
-        "is_active": test_data["is_active"],
-        "tags": test_data["tags"],
-        "metadata": test_data["metadata"]
-    })
+    json_str = json.dumps(
+        {
+            "id": test_data["id"],
+            "name": test_data["name"],
+            "created_at": test_data["created_at"].isoformat(),
+            "price": test_data["price"],
+            "is_active": test_data["is_active"],
+            "tags": test_data["tags"],
+            "metadata": test_data["metadata"],
+        }
+    )
 
     # 验证序列化结果
     parsed = json.loads(json_str)

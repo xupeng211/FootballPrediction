@@ -10,7 +10,7 @@ import time
 warnings.warn(
     "直接从 health 导入已弃用，请使用 from src.api.health.router import router",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 router = APIRouter(tags=["health"])
@@ -55,7 +55,7 @@ async def health_check():
                 "checks": {
                     "database": {"status": "error", "error": str(e)},
                 },
-            }
+            },
         )
 
 
@@ -83,7 +83,7 @@ async def liveness_check():
                 "status": "error",
                 "error": str(e),
                 "service": "football-prediction-api",
-            }
+            },
         )
 
 

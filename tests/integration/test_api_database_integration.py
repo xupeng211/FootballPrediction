@@ -395,7 +395,9 @@ class TestAPIDatabaseIntegration:
         ("/api/v1/health", "GET", [200, 404]),
     ],
 )
-def test_api_endpoint_availability(endpoint, method, expected_codes):
+def test_database_connection_health(
+    endpoint, method, expected_codes, client
+):
     """测试API端点可用性"""
     try:
         client = TestClient(app) if IMPORT_SUCCESS else None
@@ -431,7 +433,9 @@ def test_api_endpoint_availability(endpoint, method, expected_codes):
         ("status", "invalid", False),
     ],
 )
-def test_query_parameter_validation(query_param, value, should_validate):
+def test_database_connection_health(
+    query_param, value, should_validate, client
+):
     """测试查询参数验证"""
     # 验证参数
     assert isinstance(query_param, str)
@@ -443,22 +447,22 @@ def test_query_parameter_validation(query_param, value, should_validate):
     assert query_param in valid_params
 
     # 验证值
-    if query_param == "page":
+    if query_param   == "page":
         assert isinstance(value, int)
         if should_validate:
             assert value >= 1
-    elif query_param == "limit":
+    elif query_param   == "limit":
         assert isinstance(value, int)
         if should_validate:
             assert 1 <= value <= 100
-    elif query_param == "status":
+    elif query_param   == "status":
         assert isinstance(value, str)
         if should_validate:
             assert value in ["upcoming", "live", "finished", "cancelled"]
 
 
 @pytest.mark.integration
-def test_database_connection_health():
+def test_database_connection_health(client, client):
     """测试数据库连接健康状态"""
     # 模拟连接健康检查
     health_status = {
@@ -471,13 +475,13 @@ def test_database_connection_health():
     }
 
     # 验证健康状态
-    assert health_status["database"]["status"] == "healthy"
+    assert health_status["database"]["status"]   == "healthy"
     assert health_status["database"]["response_time_ms"] < 100
     assert health_status["database"]["connection_pool"]["total"] > 0
 
 
 @pytest.mark.integration
-def test_api_response_format():
+def test_database_connection_health(client, client):
     """测试API响应格式"""
     # 标准API响应格式
     response_formats = [

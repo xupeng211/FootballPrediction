@@ -17,6 +17,7 @@ import json
 try:
     from src.database.connection import DatabaseConnection
     from src.database.dependencies import get_db_session
+
     DATABASE_AVAILABLE = True
 except ImportError as e:
     print(f"Database import error: {e}")
@@ -25,6 +26,7 @@ except ImportError as e:
 try:
     from src.cache.redis_manager import RedisManager
     from src.cache.ttl_cache import TTLCache
+
     CACHE_AVAILABLE = True
 except ImportError as e:
     print(f"Cache import error: {e}")
@@ -32,6 +34,7 @@ except ImportError as e:
 
 try:
     from src.api.dependencies import get_current_user, get_prediction_engine
+
     API_DEPS_AVAILABLE = True
 except ImportError as e:
     print(f"API dependencies import error: {e}")
@@ -40,6 +43,7 @@ except ImportError as e:
 try:
     from src.services.data_processing import DataProcessingService
     from src.services.audit_service import AuditService
+
     SERVICES_AVAILABLE = True
 except ImportError as e:
     print(f"Services import error: {e}")
@@ -69,15 +73,15 @@ class TestServiceIntegration:
             details={
                 "operation_id": operation_id,
                 "service": "DataProcessingService",
-                "timestamp": datetime.utcnow().isoformat()
-            }
+                "timestamp": datetime.utcnow().isoformat(),
+            },
         )
 
         # 2. 处理数据
         test_data = [
             {"match_id": 1001, "home_team": "Team A", "away_team": "Team B"},
             {"match_id": 1002, "home_team": "Team C", "away_team": "Team D"},
-            {"match_id": 1003, "home_team": "Team E", "away_team": "Team F"}
+            {"match_id": 1003, "home_team": "Team E", "away_team": "Team F"},
         ]
 
         processed_results = []
@@ -89,8 +93,8 @@ class TestServiceIntegration:
                 details={
                     "operation_id": operation_id,
                     "item_id": data["match_id"],
-                    "status": "processing"
-                }
+                    "status": "processing",
+                },
             )
 
             # 处理数据
@@ -105,8 +109,8 @@ class TestServiceIntegration:
                     "operation_id": operation_id,
                     "item_id": data["match_id"],
                     "result_id": result.get("id"),
-                    "success": True
-                }
+                    "success": True,
+                },
             )
 
         # 3. 完成批量操作
@@ -117,8 +121,8 @@ class TestServiceIntegration:
                 "operation_id": operation_id,
                 "total_processed": len(processed_results),
                 "success_count": len(processed_results),
-                "processing_time_ms": 150
-            }
+                "processing_time_ms": 150,
+            },
         )
 
         # 验证集成结果
@@ -127,8 +131,11 @@ class TestServiceIntegration:
 
         # 验证审计跟踪
         all_events = audit_service.get_events(limit=20)
-        operation_events = [e for e in all_events if hasattr(e, 'details') and
-                          e.details.get("operation_id") == operation_id]
+        operation_events = [
+            e
+            for e in all_events
+            if hasattr(e, "details") and e.details.get("operation_id") == operation_id
+        ]
 
         assert len(operation_events) >= 7  # start + 3*2 (processing+complete) + end
 
@@ -137,6 +144,7 @@ class TestServiceIntegration:
     @pytest.mark.asyncio
     async def test_service_error_propagation(self):
         """测试：服务间错误传播 - 覆盖率补充"""
+
         # 创建模拟的下游服务
         class DownstreamService:
             def __init__(self, failure_rate=0.3):
@@ -167,7 +175,7 @@ class TestServiceIntegration:
                         return {
                             "success": True,
                             "result": result,
-                            "attempts": attempt + 1
+                            "attempts": attempt + 1,
                         }
                     except ConnectionError as e:
                         last_exception = e
@@ -178,7 +186,7 @@ class TestServiceIntegration:
                 return {
                     "success": False,
                     "error": str(last_exception),
-                    "attempts": self.max_retries
+                    "attempts": self.max_retries,
                 }
 
         # 测试错误传播和恢复
@@ -213,6 +221,7 @@ class TestDatabaseIntegration:
 
     def test_database_connection_management(self):
         """测试：数据库连接管理 - 覆盖率补充"""
+
         # 模拟数据库连接管理器
         class MockDatabaseConnection:
             def __init__(self, connection_string: str):
@@ -292,6 +301,7 @@ class TestDatabaseIntegration:
 
     def test_transaction_management(self):
         """测试：事务管理 - 覆盖率补充"""
+
         # 模拟事务管理器
         class MockTransactionManager:
             def __init__(self, db_connection):
@@ -312,7 +322,7 @@ class TestDatabaseIntegration:
                     "id": transaction_id,
                     "operations": [],
                     "status": "active",
-                    "started_at": datetime.utcnow()
+                    "started_at": datetime.utcnow(),
                 }
 
                 return transaction_id
@@ -341,7 +351,9 @@ class TestDatabaseIntegration:
 
                 transaction = self.active_transactions[transaction_id]
                 if transaction["status"] not in ["active"]:
-                    raise ValueError(f"Cannot rollback transaction {transaction_id} with status {transaction['status']}")
+                    raise ValueError(
+                        f"Cannot rollback transaction {transaction_id} with status {transaction['status']}"
+                    )
 
                 # 模拟回滚操作
                 await asyncio.sleep(0.003)
@@ -351,7 +363,9 @@ class TestDatabaseIntegration:
 
                 return True
 
-            async def execute_in_transaction(self, transaction_id, operation_func, *args, **kwargs):
+            async def execute_in_transaction(
+                self, transaction_id, operation_func, *args, **kwargs
+            ):
                 """在事务中执行操作"""
                 await self.begin_transaction(transaction_id)
 
@@ -376,7 +390,9 @@ class TestDatabaseIntegration:
                 await db.execute_query("UPDATE accounts SET balance = 100")
                 return {"records_affected": 2}
 
-            result = await tx_manager.execute_in_transaction("tx_success", successful_operation)
+            result = await tx_manager.execute_in_transaction(
+                "tx_success", successful_operation
+            )
             assert result["success"] is True
 
             # 测试失败的事务
@@ -384,7 +400,9 @@ class TestDatabaseIntegration:
                 await db.execute_query("INSERT INTO users VALUES (2, 'test2')")
                 raise ValueError("Simulated operation failure")
 
-            result = await tx_manager.execute_in_transaction("tx_fail", failing_operation)
+            result = await tx_manager.execute_in_transaction(
+                "tx_fail", failing_operation
+            )
             assert result["success"] is False
             assert "Simulated operation failure" in result["error"]
 
@@ -399,6 +417,7 @@ class TestDatabaseIntegration:
 
     def test_database_pool_management(self):
         """测试：数据库连接池管理 - 覆盖率补充"""
+
         # 模拟连接池
         class MockConnectionPool:
             def __init__(self, min_connections=2, max_connections=10):
@@ -414,16 +433,21 @@ class TestDatabaseIntegration:
 
             def _create_connection(self):
                 """创建新连接"""
-                if len(self.available_connections) + len(self.used_connections) >= self.max_connections:
+                if (
+                    len(self.available_connections) + len(self.used_connections)
+                    >= self.max_connections
+                ):
                     raise RuntimeError("Maximum connections reached")
 
                 connection_id = f"conn_{self.total_created + 1}"
-                self.available_connections.append({
-                    "id": connection_id,
-                    "created_at": datetime.utcnow(),
-                    "last_used": datetime.utcnow(),
-                    "is_active": True
-                })
+                self.available_connections.append(
+                    {
+                        "id": connection_id,
+                        "created_at": datetime.utcnow(),
+                        "last_used": datetime.utcnow(),
+                        "is_active": True,
+                    }
+                )
                 self.total_created += 1
 
             async def get_connection(self, timeout=5.0):
@@ -461,20 +485,23 @@ class TestDatabaseIntegration:
                         return
 
                 # 连接不在可用列表中，需要重新添加
-                self.available_connections.append({
-                    "id": connection_id,
-                    "created_at": datetime.utcnow(),
-                    "last_used": datetime.utcnow(),
-                    "is_active": True
-                })
+                self.available_connections.append(
+                    {
+                        "id": connection_id,
+                        "created_at": datetime.utcnow(),
+                        "last_used": datetime.utcnow(),
+                        "is_active": True,
+                    }
+                )
 
             def get_pool_stats(self):
                 """获取连接池统计"""
                 return {
-                    "total_connections": len(self.available_connections) + len(self.used_connections),
+                    "total_connections": len(self.available_connections)
+                    + len(self.used_connections),
                     "available_connections": len(self.available_connections),
                     "used_connections": len(self.used_connections),
-                    "total_created": self.total_created
+                    "total_created": self.total_created,
                 }
 
         # 测试连接池
@@ -555,7 +582,7 @@ class TestCacheIntegration:
         batch_data = {
             "product_1": {"name": "Product 1", "price": 10.99},
             "product_2": {"name": "Product 2", "price": 20.99},
-            "product_3": {"name": "Product 3", "price": 30.99}
+            "product_3": {"name": "Product 3", "price": 30.99},
         }
 
         for key, value in batch_data.items():
@@ -571,6 +598,7 @@ class TestCacheIntegration:
 
     def test_cache_with_service_integration(self):
         """测试：缓存与服务集成 - 覆盖率补充"""
+
         # 创建带缓存的服务
         class CachedDataService:
             def __init__(self):
@@ -599,13 +627,14 @@ class TestCacheIntegration:
                 """模拟数据库查询"""
                 # 模拟数据库查询延迟
                 import time
+
                 time.sleep(0.001)
 
                 return {
                     "id": user_id,
                     "name": f"User {user_id}",
                     "email": f"user{user_id}@example.com",
-                    "last_login": datetime.utcnow().isoformat()
+                    "last_login": datetime.utcnow().isoformat(),
                 }
 
             def invalidate_user_cache(self, user_id: int):
@@ -618,7 +647,7 @@ class TestCacheIntegration:
                 return {
                     "cache_size": len(self.cache._cache_store),
                     "ttl_store_size": len(self.cache._ttl_store),
-                    "db_calls": self.call_count
+                    "db_calls": self.call_count,
                 }
 
         # 测试缓存服务
@@ -662,6 +691,7 @@ class TestAPIIntegration:
 
     def test_dependency_injection_integration(self):
         """测试：依赖注入集成 - 覆盖率补充"""
+
         # 模拟FastAPI依赖注入系统
         class MockRequest:
             def __init__(self, headers=None, user=None):
@@ -695,7 +725,7 @@ class TestAPIIntegration:
             def __init__(self):
                 self.users = {
                     1: {"id": 1, "name": "Admin", "role": "admin"},
-                    2: {"id": 2, "name": "User", "role": "user"}
+                    2: {"id": 2, "name": "User", "role": "user"},
                 }
 
             def get_user(self, user_id: int):
@@ -762,6 +792,7 @@ class TestAPIIntegration:
 
     def test_middleware_integration(self):
         """测试：中间件集成 - 覆盖率补充"""
+
         # 模拟中间件系统
         class MockMiddleware:
             def __init__(self, name):
@@ -812,7 +843,9 @@ class TestAPIIntegration:
                         return response
 
                     middleware = self.middlewares[middleware_index]
-                    return await middleware.process_request(req, lambda r: call_next(r, middleware_index + 1))
+                    return await middleware.process_request(
+                        req, lambda r: call_next(r, middleware_index + 1)
+                    )
 
                 return await call_next(request)
 
@@ -851,6 +884,7 @@ class TestAPIIntegration:
 
     def test_error_handling_integration(self):
         """测试：错误处理集成 - 覆盖率补充"""
+
         # 模拟错误处理系统
         class ErrorHandler:
             def __init__(self):
@@ -864,12 +898,14 @@ class TestAPIIntegration:
             def handle_error(self, error, context=None):
                 """处理错误"""
                 error_type = type(error)
-                self.error_log.append({
-                    "error": str(error),
-                    "type": error_type.__name__,
-                    "context": context,
-                    "timestamp": datetime.utcnow()
-                })
+                self.error_log.append(
+                    {
+                        "error": str(error),
+                        "type": error_type.__name__,
+                        "context": context,
+                        "timestamp": datetime.utcnow(),
+                    }
+                )
 
                 # 查找并执行对应的处理器
                 for exc_type, handler in self.error_handlers.items():
@@ -880,7 +916,7 @@ class TestAPIIntegration:
                 return {
                     "error": "Internal Server Error",
                     "type": error_type.__name__,
-                    "message": str(error)
+                    "message": str(error),
                 }
 
         # 创建错误处理器
@@ -891,14 +927,14 @@ class TestAPIIntegration:
             return {
                 "error": "Validation Error",
                 "details": str(error),
-                "field": context.get("field") if context else None
+                "field": context.get("field") if context else None,
             }
 
         def handle_authentication_error(error, context):
             return {
                 "error": "Authentication Failed",
                 "message": "Please check your credentials",
-                "user_id": context.get("user_id") if context else None
+                "user_id": context.get("user_id") if context else None,
             }
 
         error_handler.register_handler(ValueError, handle_validation_error)
@@ -992,7 +1028,7 @@ class TestSystemIntegration:
                 return {
                     "user_id": user_id,
                     "name": f"User {user_id}",
-                    "role": "user" if user_id > 100 else "admin"
+                    "role": "user" if user_id > 100 else "admin",
                 }
 
             async def check_permissions(self, user, data):
@@ -1011,19 +1047,19 @@ class TestSystemIntegration:
                         "action": "created",
                         "id": 12345,
                         "created_by": user["user_id"],
-                        "data": payload
+                        "data": payload,
                     }
                 elif action == "update":
                     return {
                         "action": "updated",
                         "updated_by": user["user_id"],
-                        "data": payload
+                        "data": payload,
                     }
                 else:
                     return {
                         "action": action,
                         "processed_by": user["user_id"],
-                        "data": payload
+                        "data": payload,
                     }
 
             async def format_response(self, result):
@@ -1032,7 +1068,7 @@ class TestSystemIntegration:
                     "success": True,
                     "data": result,
                     "timestamp": datetime.utcnow().isoformat(),
-                    "request_id": f"req_{datetime.utcnow().timestamp()}"
+                    "request_id": f"req_{datetime.utcnow().timestamp()}",
                 }
 
             async def log_request(self, request, user, response):
@@ -1042,7 +1078,7 @@ class TestSystemIntegration:
                     "user_id": user["user_id"],
                     "action": request["action"],
                     "success": response["success"],
-                    "timestamp": datetime.utcnow()
+                    "timestamp": datetime.utcnow(),
                 }
                 return log_entry
 
@@ -1054,13 +1090,20 @@ class TestSystemIntegration:
             valid_request = {
                 "user_id": 101,
                 "action": "create",
-                "data": {"name": "Test Item", "value": 42}
+                "data": {"name": "Test Item", "value": 42},
             }
 
             response = await processor.process_request(valid_request)
 
             # 验证处理步骤
-            expected_steps = ["validated", "authenticated", "authorized", "processed", "formatted", "logged"]
+            expected_steps = [
+                "validated",
+                "authenticated",
+                "authorized",
+                "processed",
+                "formatted",
+                "logged",
+            ]
             assert processor.steps == expected_steps
 
             # 验证响应
@@ -1072,7 +1115,7 @@ class TestSystemIntegration:
             insufficient_permission_request = {
                 "user_id": 150,  # 普通用户
                 "action": "admin_action",
-                "data": {}
+                "data": {},
             }
 
             with pytest.raises(PermissionError):
@@ -1106,14 +1149,14 @@ class TestSystemIntegration:
                         self.task_results[task_id] = {
                             "status": "completed",
                             "result": result,
-                            "completed_at": datetime.utcnow()
+                            "completed_at": datetime.utcnow(),
                         }
                         return result
                     except Exception as e:
                         self.task_results[task_id] = {
                             "status": "failed",
                             "error": str(e),
-                            "failed_at": datetime.utcnow()
+                            "failed_at": datetime.utcnow(),
                         }
                         raise
 
@@ -1129,7 +1172,9 @@ class TestSystemIntegration:
                     raise ValueError(f"Task {task_id} not found")
 
                 try:
-                    result = await asyncio.wait_for(self.tasks[task_id], timeout=timeout)
+                    result = await asyncio.wait_for(
+                        self.tasks[task_id], timeout=timeout
+                    )
                     return result
                 except asyncio.TimeoutError:
                     return {"status": "timeout", "task_id": task_id}
@@ -1147,7 +1192,7 @@ class TestSystemIntegration:
                 except asyncio.CancelledError:
                     self.task_results[task_id] = {
                         "status": "cancelled",
-                        "cancelled_at": datetime.utcnow()
+                        "cancelled_at": datetime.utcnow(),
                     }
 
             def get_task_status(self, task_id):
@@ -1183,8 +1228,12 @@ class TestSystemIntegration:
                 raise ValueError("Task failed intentionally")
 
             # 提交任务
-            task1_id = await manager.submit_task(long_running_task, 0.5, "Task 1 Complete")
-            task2_id = await manager.submit_task(long_running_task, 0.3, "Task 2 Complete")
+            task1_id = await manager.submit_task(
+                long_running_task, 0.5, "Task 1 Complete"
+            )
+            task2_id = await manager.submit_task(
+                long_running_task, 0.3, "Task 2 Complete"
+            )
             task3_id = await manager.submit_task(failing_task)
 
             # 等待任务完成
@@ -1206,7 +1255,9 @@ class TestSystemIntegration:
             assert manager.get_task_status(task3_id) == "failed"
 
             # 测试任务取消
-            task4_id = await manager.submit_task(long_running_task, 2.0, "Will be cancelled")
+            task4_id = await manager.submit_task(
+                long_running_task, 2.0, "Will be cancelled"
+            )
             await asyncio.sleep(0.1)  # 让任务开始
             await manager.cancel_task(task4_id)
 

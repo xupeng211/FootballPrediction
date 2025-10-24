@@ -105,7 +105,7 @@ class SmartQualityFixer:
             ruff_fixes + test_fixes
         )
 
-        print(f"\n✅ 修复完成！")
+        print("\n✅ 修复完成！")
         print(f"📊 总修复数: {total_fixes}")
         print(f"📁 处理文件数: {self.fix_results['files_processed']}")
 
@@ -161,7 +161,6 @@ class SmartQualityFixer:
 
         for i, line in enumerate(lines):
             # 修复常见的语法错误模式
-            original_line = line
 
             # 1. 修复未闭合的括号问题
             if 'def ' in line and line.strip().endswith(':'):

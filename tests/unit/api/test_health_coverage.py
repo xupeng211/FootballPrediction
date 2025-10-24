@@ -12,6 +12,7 @@ def test_health_module_import():
     """测试health模块导入功能"""
     # 测试导入不会抛出异常
     from src.api.health import router
+
     assert router is not None
 
 
@@ -20,6 +21,7 @@ def test_health_module_deprecation_warning():
     # 由于模块结构变化，弃用警告可能不会触发
     # 我们只验证导入功能正常
     from src.api.health import router
+
     assert router is not None
 
 
@@ -28,7 +30,7 @@ def test_health_module_all_exports():
     from src.api import health
 
     # 验证模块有导出功能
-    assert hasattr(health, '__all__')
+    assert hasattr(health, "__all__")
     # 至少应该有一些导出项目
     assert len(health.__all__) >= 1
 
@@ -38,7 +40,7 @@ def test_health_router_object():
     from src.api.health import router
 
     # 验证路由器对象属性
-    assert hasattr(router, 'routes')
+    assert hasattr(router, "routes")
     # 验证路由器不是None
     assert router is not None
 
@@ -48,6 +50,7 @@ def test_health_module_backward_compatibility():
     # 模拟旧版本的导入方式
     try:
         from src.api.health import router as old_router
+
         # 验证新版本导入方式
         from src.api.health.health import router as new_router
 
@@ -56,6 +59,7 @@ def test_health_module_backward_compatibility():
     except ImportError:
         # 如果新模块不存在，至少确保旧模块能导入
         from src.api.health import router
+
         assert router is not None
 
 
@@ -78,11 +82,15 @@ def test_health_module_warning_stacklevel():
         from src.api.health import router
 
         # 查找弃用警告
-        deprecation_warnings = [warning for warning in w
-                              if issubclass(warning.category, DeprecationWarning)]
+        deprecation_warnings = [
+            warning for warning in w if issubclass(warning.category, DeprecationWarning)
+        ]
 
         if deprecation_warnings:
             # 验证警告有正确的堆栈级别
             warning = deprecation_warnings[0]
             # 堆栈级别应该指向导入此模块的代码
-            assert warning.filename.endswith('health.py') or 'test_health_coverage.py' in warning.filename
+            assert (
+                warning.filename.endswith("health.py")
+                or "test_health_coverage.py" in warning.filename
+            )

@@ -17,9 +17,11 @@ warnings.warn(
     stacklevel=2,
 )
 
+
 # 简单的ErrorHandler类以保持向后兼容
 class ErrorHandler:
     """简单错误处理器"""
+
     def __init__(self):  # type: ignore
         self.errors = []
 
@@ -31,6 +33,7 @@ class ErrorHandler:
     def clear_errors(self):  # type: ignore
         """清除错误"""
         self.errors.clear()
+
 
 # 导出所有内容
 __all__ = ["ErrorHandler"]

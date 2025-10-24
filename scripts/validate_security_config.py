@@ -110,7 +110,7 @@ class SecurityValidator:
         # 检查CORS设置
         cors_allow_credentials = os.getenv("CORS_ALLOW_CREDENTIALS", "false").lower() == "true"
         cors_allow_methods = os.getenv("CORS_ALLOW_METHODS", "")
-        cors_allow_headers = os.getenv("CORS_ALLOW_HEADERS", "")
+        os.getenv("CORS_ALLOW_HEADERS", "")
 
         if cors_allow_credentials:
             self.log_success("CORS_ALLOW_CREDENTIALS 已启用")
@@ -417,7 +417,7 @@ def load_env_file(env_file: str):
                     # 移除引号
                     value = value.strip('"\'')
                     os.environ[key] = value
-        print(f"✅ 环境文件加载完成")
+        print("✅ 环境文件加载完成")
     else:
         print(f"❌ 环境文件不存在: {env_file}")
 

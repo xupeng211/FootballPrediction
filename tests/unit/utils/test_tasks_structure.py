@@ -97,9 +97,9 @@ def test_features_module_structure():
         content = f.read()
 
     # 验证任务函数存在
-    assert (
-        "def calculate_features_batch(" in content
-    ), "calculate_features_batch 函数不在 features.py 中"
+    assert "def calculate_features_batch(" in content, (
+        "calculate_features_batch 函数不在 features.py 中"
+    )
 
 
 def test_maintenance_module_structure():
@@ -125,9 +125,9 @@ def test_quality_module_structure():
         content = f.read()
 
     # 验证任务函数存在
-    assert (
-        "def run_quality_checks(" in content
-    ), "run_quality_checks 函数不在 quality.py 中"
+    assert "def run_quality_checks(" in content, (
+        "run_quality_checks 函数不在 quality.py 中"
+    )
 
 
 def test_predictions_module_structure():
@@ -137,9 +137,9 @@ def test_predictions_module_structure():
         content = f.read()
 
     # 验证任务函数存在
-    assert (
-        "def generate_predictions(" in content
-    ), "generate_predictions 函数不在 predictions.py 中"
+    assert "def generate_predictions(" in content, (
+        "generate_predictions 函数不在 predictions.py 中"
+    )
 
 
 def test_processing_module_structure():
@@ -149,9 +149,9 @@ def test_processing_module_structure():
         content = f.read()
 
     # 验证任务函数存在
-    assert (
-        "def process_bronze_to_silver(" in content
-    ), "process_bronze_to_silver 函数不在 processing.py 中"
+    assert "def process_bronze_to_silver(" in content, (
+        "process_bronze_to_silver 函数不在 processing.py 中"
+    )
 
 
 def test_original_file_updated():

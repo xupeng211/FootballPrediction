@@ -20,6 +20,7 @@ try:
     from src.core.prediction.config import PredictionConfig
     from src.core.prediction.statistics import PredictionStatistics
     from src.core.error_handler import ErrorHandler, GlobalErrorHandler
+
     CORE_AVAILABLE = True
 except ImportError as e:
     print(f"Core prediction engine import error: {e}")
@@ -29,6 +30,7 @@ try:
     from src.api.cqrs import CommandBus, QueryBus, CQRSApplication
     from src.api.commands import PredictionCommand, MatchDataCommand
     from src.api.queries import PredictionQuery, StatisticsQuery
+
     CQRS_AVAILABLE = True
 except ImportError as e:
     print(f"CQRS modules import error: {e}")
@@ -38,6 +40,7 @@ try:
     from src.domain.events import Event, EventBus, DomainEvent
     from src.observers.base import Observer
     from src.domain.models.events import MatchEvent, PredictionEvent
+
     EVENTS_AVAILABLE = True
 except ImportError as e:
     print(f"Event system import error: {e}")
@@ -46,6 +49,7 @@ except ImportError as e:
 try:
     from src.facades.facades import PredictionFacade, DataProcessingFacade
     from src.domain.services import PredictionDomainService
+
     FACADE_AVAILABLE = True
 except ImportError as e:
     print(f"Facade pattern import error: {e}")
@@ -54,6 +58,7 @@ except ImportError as e:
 try:
     from src.api.data_router import router
     from src.api.dependencies import get_prediction_service, get_database
+
     API_AVAILABLE = True
 except ImportError as e:
     print(f"API router import error: {e}")
@@ -79,11 +84,7 @@ class TestPredictionEngineAdvanced:
             "match_id": 123,
             "home_team": "Team A",
             "away_team": "Team B",
-            "features": {
-                "home_form": 0.8,
-                "away_form": 0.6,
-                "h2h_history": 0.7
-            }
+            "features": {"home_form": 0.8, "away_form": 0.6, "h2h_history": 0.7},
         }
 
         result = await engine.process_prediction(request_data)
@@ -110,11 +111,13 @@ class TestPredictionEngineAdvanced:
         monitor = Mock()
         monitor.start_timing = Mock()
         monitor.end_timing = Mock()
-        monitor.get_performance_stats = Mock(return_value={
-            "total_operations": 10,
-            "average_time": 0.05,
-            "success_rate": 0.95
-        })
+        monitor.get_performance_stats = Mock(
+            return_value={
+                "total_operations": 10,
+                "average_time": 0.05,
+                "success_rate": 0.95,
+            }
+        )
 
         # 模拟多次预测
         for i in range(10):
@@ -145,7 +148,7 @@ class TestPredictionEngineAdvanced:
             {},  # 空数据
             {"match_id": None},  # 无效ID
             {"match_id": 123, "home_team": ""},  # 缺少必需字段
-            {"match_id": 123, "features": "invalid"}  # 错误类型
+            {"match_id": 123, "features": "invalid"},  # 错误类型
         ]
 
         for request in invalid_requests:
@@ -171,8 +174,8 @@ class TestPredictionEngineAdvanced:
                 "features": {
                     "home_form": 0.5 + (i * 0.1),
                     "away_form": 0.5 - (i * 0.05),
-                    "h2h_history": 0.6 + (i * 0.02)
-                }
+                    "h2h_history": 0.6 + (i * 0.02),
+                },
             }
             for i in range(1, 6)
         ]
@@ -202,7 +205,7 @@ class TestAPIRouterAdvanced:
         """测试：路由器注册和发现"""
         # 验证路由器存在
         assert router is not None
-        assert hasattr(router, 'routes')
+        assert hasattr(router, "routes")
 
         # 检查路由数量
         routes = list(router.routes)
@@ -210,9 +213,9 @@ class TestAPIRouterAdvanced:
 
         # 验证路由属性
         for route in routes:
-            assert hasattr(route, 'path')
-            assert hasattr(route, 'methods')
-            assert route.path.startswith('/')  # 所有路径应该以/开头
+            assert hasattr(route, "path")
+            assert hasattr(route, "methods")
+            assert route.path.startswith("/")  # 所有路径应该以/开头
 
     def test_middleware_chain_integration(self):
         """测试：中间件链集成"""
@@ -241,13 +244,18 @@ class TestAPIRouterAdvanced:
             def chained_request(request):
                 current_handler = handler
                 for middleware in reversed(middlewares):
+
                     def new_handler(req, h=current_handler, m=middleware):
                         return m(req, h)
+
                     current_handler = new_handler
                 return current_handler(request)
+
             return chained_request
 
-        chain = create_chain([cors_middleware, auth_middleware, logging_middleware], mock_handler)
+        chain = create_chain(
+            [cors_middleware, auth_middleware, logging_middleware], mock_handler
+        )
         chain({"path": "/test"})
 
         # 验证中间件执行顺序
@@ -255,6 +263,7 @@ class TestAPIRouterAdvanced:
 
     def test_response_formatting_consistency(self):
         """测试：响应格式一致性"""
+
         # 模拟API响应格式化器
         class ResponseFormatter:
             def format_success(self, data, message="操作成功"):
@@ -262,7 +271,7 @@ class TestAPIRouterAdvanced:
                     "success": True,
                     "message": message,
                     "data": data,
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.utcnow().isoformat(),
                 }
 
             def format_error(self, error_message, details=None):
@@ -270,15 +279,14 @@ class TestAPIRouterAdvanced:
                     "success": False,
                     "message": error_message,
                     "errors": details or [],
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.utcnow().isoformat(),
                 }
 
         formatter = ResponseFormatter()
 
         # 测试成功响应
         success_response = formatter.format_success(
-            {"prediction_id": 123, "result": "home_win"},
-            "预测完成"
+            {"prediction_id": 123, "result": "home_win"}, "预测完成"
         )
 
         assert success_response["success"] is True
@@ -288,8 +296,7 @@ class TestAPIRouterAdvanced:
 
         # 测试错误响应
         error_response = formatter.format_error(
-            "验证失败",
-            ["match_id是必需的", "team_name不能为空"]
+            "验证失败", ["match_id是必需的", "team_name不能为空"]
         )
 
         assert error_response["success"] is False
@@ -312,7 +319,7 @@ class TestCQRSApplicationAdvanced:
                 return {
                     "command_id": command.id,
                     "status": "processed",
-                    "result": "prediction_created"
+                    "result": "prediction_created",
                 }
 
         command_bus.register("PredictionCommand", PredictionCommandHandler())
@@ -321,7 +328,7 @@ class TestCQRSApplicationAdvanced:
         command = PredictionCommand(
             id="cmd_123",
             match_id=456,
-            prediction_data={"home_win": 0.6, "draw": 0.25, "away_win": 0.15}
+            prediction_data={"home_win": 0.6, "draw": 0.25, "away_win": 0.15},
         )
 
         # 分发命令
@@ -352,7 +359,7 @@ class TestCQRSApplicationAdvanced:
                     "team_id": query.team_id,
                     "played_matches": 10,
                     "win_rate": 0.7,
-                    "goals_scored": 25
+                    "goals_scored": 25,
                 }
 
                 self.cache[cache_key] = data
@@ -361,10 +368,7 @@ class TestCQRSApplicationAdvanced:
         query_bus.register("StatisticsQuery", StatisticsQueryHandler())
 
         # 创建查询
-        query = StatisticsQuery(
-            team_id=789,
-            date_range="2023-01-01:2023-12-31"
-        )
+        query = StatisticsQuery(team_id=789, date_range="2023-01-01:2023-12-31")
 
         # 第一次查询（无缓存）
         result1 = await query_bus.dispatch(query)
@@ -383,16 +387,11 @@ class TestCQRSApplicationAdvanced:
         # 模拟命令和查询的协调
         async def process_prediction_workflow(match_data):
             # 1. 处理命令（写操作）
-            command = MatchDataCommand(
-                operation="create",
-                data=match_data
-            )
+            command = MatchDataCommand(operation="create", data=match_data)
             command_result = await cqrs_app.command_bus.dispatch(command)
 
             # 2. 执行查询（读操作）
-            query = PredictionQuery(
-                match_id=match_data["match_id"]
-            )
+            query = PredictionQuery(match_id=match_data["match_id"])
             query_result = await cqrs_app.query_bus.dispatch(query)
 
             # 3. 验证数据一致性
@@ -402,7 +401,7 @@ class TestCQRSApplicationAdvanced:
             return {
                 "command_result": command_result,
                 "query_result": query_result,
-                "data_integrity": True
+                "data_integrity": True,
             }
 
         # 测试数据
@@ -410,7 +409,7 @@ class TestCQRSApplicationAdvanced:
             "match_id": 999,
             "home_team": "Test Home",
             "away_team": "Test Away",
-            "kickoff_time": datetime.utcnow().isoformat()
+            "kickoff_time": datetime.utcnow().isoformat(),
         }
 
         result = await process_prediction_workflow(test_match_data)
@@ -431,11 +430,13 @@ class TestEventSystemAdvanced:
 
         class MatchEventHandler:
             async def handle(self, event):
-                events_handled.append({
-                    "event_type": event.__class__.__name__,
-                    "data": event.data,
-                    "handled_at": datetime.utcnow()
-                })
+                events_handled.append(
+                    {
+                        "event_type": event.__class__.__name__,
+                        "data": event.data,
+                        "handled_at": datetime.utcnow(),
+                    }
+                )
 
         # 注册事件处理器
         event_bus.subscribe(MatchEvent, MatchEventHandler())
@@ -447,8 +448,8 @@ class TestEventSystemAdvanced:
                 "match_id": 456,
                 "home_score": 2,
                 "away_score": 1,
-                "status": "completed"
-            }
+                "status": "completed",
+            },
         )
 
         await event_bus.publish(match_event)
@@ -503,8 +504,7 @@ class TestEventSystemAdvanced:
 
         # 发布事件
         match_event = MatchEvent(
-            event_id="event_456",
-            data={"match_id": 789, "status": "started"}
+            event_id="event_456", data={"match_id": 789, "status": "started"}
         )
 
         # 应该成功（经过重试）
@@ -535,6 +535,7 @@ class TestFacadePatternAdvanced:
         class MockCacheService:
             async def get(self, key):
                 return None
+
             async def set(self, key, value, ttl=3600):
                 return True
 
@@ -545,9 +546,7 @@ class TestFacadePatternAdvanced:
 
         # 执行复合操作
         result = await prediction_facade.get_prediction_with_context(
-            match_id=123,
-            home_team_id=1,
-            away_team_id=2
+            match_id=123, home_team_id=1, away_team_id=2
         )
 
         # 验证协调结果

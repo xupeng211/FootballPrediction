@@ -18,6 +18,7 @@ try:
     from src.api.schemas import APIResponse
     from src.core.exceptions import ServiceError, FootballPredictionError
     from src.security.middleware import SecurityHeadersMiddleware, RateLimitMiddleware
+
     API_AVAILABLE = True
 except ImportError as e:
     print(f"API modules import error: {e}")
@@ -25,6 +26,7 @@ except ImportError as e:
 
 try:
     from src.database.models.raw_data import RawMatchData, RawOddsData, RawScoresData
+
     DATABASE_AVAILABLE = True
 except ImportError as e:
     print(f"Database models import error: {e}")
@@ -32,6 +34,7 @@ except ImportError as e:
 
 try:
     from src.utils.i18n import I18nUtils, supported_languages
+
     UTILS_AVAILABLE = True
 except ImportError as e:
     print(f"Utils modules import error: {e}")
@@ -48,7 +51,7 @@ class TestAPISchemasCoverage:
             success=True,
             message="操作成功",
             data={"id": 1, "name": "test"},
-            timestamp="2023-12-01T10:00:00Z"
+            timestamp="2023-12-01T10:00:00Z",
         )
 
         assert response.success is True
@@ -59,10 +62,7 @@ class TestAPISchemasCoverage:
     def test_api_response_error_format(self):
         """测试：API响应错误格式 - 覆盖率补充"""
         response = APIResponse(
-            success=False,
-            message="操作失败",
-            errors=["错误1", "错误2"],
-            data=None
+            success=False, message="操作失败", errors=["错误1", "错误2"], data=None
         )
 
         assert response.success is False
@@ -72,11 +72,7 @@ class TestAPISchemasCoverage:
 
     def test_api_response_serialization(self):
         """测试：API响应序列化 - 覆盖率补充"""
-        response = APIResponse(
-            success=True,
-            message="测试",
-            data={"key": "value"}
-        )
+        response = APIResponse(success=True, message="测试", data={"key": "value"})
 
         # 测试转换为字典
         response_dict = response.model_dump()
@@ -87,9 +83,7 @@ class TestAPISchemasCoverage:
     def test_api_response_json_compatibility(self):
         """测试：API响应JSON兼容性 - 覆盖率补充"""
         response = APIResponse(
-            success=True,
-            message="JSON测试",
-            data={"number": 42, "text": "hello"}
+            success=True, message="JSON测试", data={"number": 42, "text": "hello"}
         )
 
         # 测试JSON序列化
@@ -104,10 +98,7 @@ class TestCoreExceptionsCoverage:
 
     def test_service_error_creation(self):
         """测试：服务错误创建 - 覆盖率补充"""
-        error = ServiceError(
-            message="服务不可用",
-            service_name="prediction_service"
-        )
+        error = ServiceError(message="服务不可用", service_name="prediction_service")
 
         assert str(error) == "服务不可用"
         assert error.message == "服务不可用"
@@ -165,7 +156,7 @@ class TestSecurityMiddlewareCoverage:
         await middleware.dispatch(mock_request, mock_call_next)
 
         # 验证安全头被添加
-        assert hasattr(mock_response, 'headers')
+        assert hasattr(mock_response, "headers")
         assert middleware.enabled is True
 
     def test_security_headers_configuration(self):
@@ -181,11 +172,7 @@ class TestSecurityMiddlewareCoverage:
 
     def test_rate_limit_middleware_configuration(self):
         """测试：速率限制中间件配置 - 覆盖率补充"""
-        middleware = RateLimitMiddleware(
-            Mock(),
-            requests_per_minute=30,
-            burst_size=5
-        )
+        middleware = RateLimitMiddleware(Mock(), requests_per_minute=30, burst_size=5)
 
         assert middleware.requests_per_minute == 30
         assert middleware.burst_size == 5
@@ -227,9 +214,9 @@ class TestDatabaseModelsCoverage:
     def test_database_model_class_structure(self):
         """测试：数据库模型类结构 - 覆盖率补充"""
         # 测试类属性存在性
-        assert hasattr(RawMatchData, '__tablename__')
-        assert hasattr(RawOddsData, '__tablename__')
-        assert hasattr(RawScoresData, '__tablename__')
+        assert hasattr(RawMatchData, "__tablename__")
+        assert hasattr(RawOddsData, "__tablename__")
+        assert hasattr(RawScoresData, "__tablename__")
 
     def test_database_mock_operations(self):
         """测试：数据库模拟操作 - 覆盖率补充"""
@@ -250,6 +237,7 @@ class TestDatabaseModelsCoverage:
 
     def test_data_validation_patterns(self):
         """测试：数据验证模式 - 覆盖率补充"""
+
         # 测试数据验证逻辑，不依赖具体模型类
         def validate_raw_data(data: Dict[str, Any]) -> bool:
             required_fields = ["data_source", "raw_data"]
@@ -259,7 +247,7 @@ class TestDatabaseModelsCoverage:
         valid_data = {
             "data_source": "api",
             "raw_data": {"id": 1},
-            "collected_at": datetime.utcnow()
+            "collected_at": datetime.utcnow(),
         }
         assert validate_raw_data(valid_data) is True
 
@@ -306,11 +294,8 @@ class TestAPIIntegrationPatterns:
         error_response = APIResponse(
             success=False,
             message="请求处理失败",
-            errors=[
-                "参数验证失败: match_id不能为空",
-                "数据库连接超时"
-            ],
-            data=None
+            errors=["参数验证失败: match_id不能为空", "数据库连接超时"],
+            data=None,
         )
 
         assert error_response.success is False
@@ -320,14 +305,15 @@ class TestAPIIntegrationPatterns:
     @pytest.mark.asyncio
     async def test_async_workflow_simulation(self):
         """测试：异步工作流模拟 - 覆盖率补充"""
+
         # 模拟异步API工作流
-        async def process_prediction_request(request_data: Dict[str, Any]) -> APIResponse:
+        async def process_prediction_request(
+            request_data: Dict[str, Any],
+        ) -> APIResponse:
             # 模拟数据验证
             if not request_data.get("match_id"):
                 return APIResponse(
-                    success=False,
-                    message="验证失败",
-                    errors=["match_id是必需的"]
+                    success=False, message="验证失败", errors=["match_id是必需的"]
                 )
 
             # 模拟异步处理
@@ -339,12 +325,8 @@ class TestAPIIntegrationPatterns:
                 message="预测处理成功",
                 data={
                     "prediction_id": "pred_123",
-                    "result": {
-                        "home_win": 0.6,
-                        "draw": 0.25,
-                        "away_win": 0.15
-                    }
-                }
+                    "result": {"home_win": 0.6, "draw": 0.25, "away_win": 0.15},
+                },
             )
 
         # 测试成功场景
@@ -367,7 +349,7 @@ class TestAPIIntegrationPatterns:
             "homeTeam": {"name": "Team A", "id": 1},
             "awayTeam": {"name": "Team B", "id": 2},
             "competition": {"name": "Premier League"},
-            "date": "2023-12-01T20:00:00Z"
+            "date": "2023-12-01T20:00:00Z",
         }
 
         # 转换为API响应格式
@@ -377,13 +359,11 @@ class TestAPIIntegrationPatterns:
             "away_team": raw_match_data["awayTeam"]["name"],
             "competition": raw_match_data["competition"]["name"],
             "match_date": raw_match_data["date"],
-            "processed_at": datetime.utcnow().isoformat()
+            "processed_at": datetime.utcnow().isoformat(),
         }
 
         response = APIResponse(
-            success=True,
-            message="数据转换成功",
-            data=transformed_data
+            success=True, message="数据转换成功", data=transformed_data
         )
 
         assert response.data["match_id"] == 123
@@ -397,18 +377,11 @@ class TestCommonPatternsCoverage:
     def test_dictionary_operations(self):
         """测试：字典操作模式 - 覆盖率补充"""
         # 测试嵌套字典安全访问
-        data = {
-            "level1": {
-                "level2": {
-                    "value": "found"
-                }
-            },
-            "list_data": [1, 2, 3, 4, 5]
-        }
+        data = {"level1": {"level2": {"value": "found"}}, "list_data": [1, 2, 3, 4, 5]}
 
         # 安全访问嵌套值
         def safe_get(dictionary: Dict, key_path: str, default=None):
-            keys = key_path.split('.')
+            keys = key_path.split(".")
             current = dictionary
             for key in keys:
                 if isinstance(current, dict) and key in current:
@@ -427,7 +400,7 @@ class TestCommonPatternsCoverage:
             {"id": 1, "confidence": 0.8, "outcome": "home_win"},
             {"id": 2, "confidence": 0.6, "outcome": "draw"},
             {"id": 3, "confidence": 0.9, "outcome": "away_win"},
-            {"id": 4, "confidence": 0.7, "outcome": "home_win"}
+            {"id": 4, "confidence": 0.7, "outcome": "home_win"},
         ]
 
         # 高置信度预测
@@ -468,6 +441,7 @@ class TestCommonPatternsCoverage:
 
     def test_type_validation_patterns(self):
         """测试：类型验证模式 - 覆盖率补充"""
+
         # 测试数据类型验证
         def validate_prediction_data(data: Dict[str, Any]) -> Dict[str, str]:
             errors = []

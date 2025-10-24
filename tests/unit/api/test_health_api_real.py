@@ -46,20 +46,26 @@ class TestHealthAPIReal:
         import importlib
 
         # 清除已导入的模块
-        if 'src.api.health' in sys.modules:
-            del sys.modules['src.api.health']
+        if "src.api.health" in sys.modules:
+            del sys.modules["src.api.health"]
 
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always", DeprecationWarning)
 
             # 重新导入模块以触发警告
-            importlib.import_module('src.api.health')
+            importlib.import_module("src.api.health")
             from src.api.health import router
 
             # 验证弃用警告
             assert len(w) >= 1, f"Expected at least 1 deprecation warning, got {len(w)}"
-            deprecation_warnings = [warning for warning in w if issubclass(warning.category, DeprecationWarning)]
-            assert len(deprecation_warnings) >= 1, f"Expected deprecation warning, got {len(deprecation_warnings)}"
+            deprecation_warnings = [
+                warning
+                for warning in w
+                if issubclass(warning.category, DeprecationWarning)
+            ]
+            assert len(deprecation_warnings) >= 1, (
+                f"Expected deprecation warning, got {len(deprecation_warnings)}"
+            )
             assert "直接从 health 导入已弃用" in str(deprecation_warnings[0].message)
 
             # 验证router被正确导入
