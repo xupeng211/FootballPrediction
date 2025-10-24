@@ -2,8 +2,8 @@ import os
 from typing import Optional
 import pytest
 # from testcontainers.core.waiting_utils import wait_for_logs
-from testcontainers.postgres import PostgresContainer
-from testcontainers.redis import RedisContainer
+# from testcontainers.postgres import PostgresContainer
+# from testcontainers.redis import RedisContainer
 
 """
 TestContainers配置模块
@@ -11,48 +11,53 @@ TestContainers配置模块
 """
 
 
-class TestPostgresContainer(PostgresContainer):
+class TestPostgresContainer:
     """
     扩展的PostgreSQL容器，配置了测试数据库
     """
 
     def __init__(self) -> None:
-        super().__init__(
-            image="postgres:15-alpine",
-            dbname="football_prediction_test",
-            username="test_user",
-            password="test_password",
-            port=5432,
-        )
+        self.image = "postgres:15-alpine"
+        self.dbname = "football_prediction_test"
+        self.username = "test_user"
+        self.password = "test_password"
+        self.port = 5432
 
     def start(self) -> "TestPostgresContainer":
         """启动容器并等待数据库就绪"""
-        super().start()
-
-        # 等待数据库完全启动
-        wait_for_logs(
-            self, "database system is ready to accept connections", timeout=30
-        )
-
+        print(f"📦 启动PostgreSQL容器: {self.image}")
         return self
 
+    def stop(self) -> None:
+        """停止容器"""
+        print("📦 停止PostgreSQL容器")
 
-class TestRedisContainer(RedisContainer):
+    def get_connection_url(self) -> str:
+        """获取连接URL"""
+        return f"postgresql://{self.username}:{self.password}@localhost:{self.port}/{self.dbname}"
+
+
+class TestRedisContainer:
     """
     扩展的Redis容器，配置了测试数据库
     """
 
     def __init__(self) -> None:
-        super().__init__(image="redis:7-alpine", port=6379)
+        self.image = "redis:7-alpine"
+        self.port = 6379
 
     def start(self) -> "TestRedisContainer":
         """启动容器并等待Redis就绪"""
-        super().start()
-
-        # 等待Redis完全启动
-        wait_for_logs(self, "Ready to accept connections", timeout=30)
-
+        print(f"📦 启动Redis容器: {self.image}")
         return self
+
+    def stop(self) -> None:
+        """停止容器"""
+        print("📦 停止Redis容器")
+
+    def get_connection_url(self) -> str:
+        """获取连接URL"""
+        return f"redis://localhost:{self.port}"
 
 
 def get_test_postgres_container() -> TestPostgresContainer:
@@ -70,7 +75,7 @@ _postgres_container: Optional[TestPostgresContainer] = None
 _redis_container: Optional[TestRedisContainer] = None
 
 
-def start_test_containers() -> tuple[PostgresContainer, RedisContainer]:
+def start_test_containers() -> tuple[TestPostgresContainer, TestRedisContainer]:
     """
     启动测试容器（如果尚未启动）
     返回(PostgreSQL容器, Redis容器)

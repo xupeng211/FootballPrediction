@@ -74,7 +74,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 源代码文件：453个Python文件
 - 测试文件：775个测试文件
 - 测试用例：385个
-- 开发命令：190个Makefile命令
+- 开发命令：233个Makefile命令
 - 项目成熟度：企业级生产就绪 ⭐⭐⭐⭐⭐
 
 ## 开发环境设置
@@ -89,7 +89,7 @@ make coverage     # 查看覆盖率报告 (16.5%)
 
 ### 核心命令
 ```bash
-make help         # 显示所有可用命令 (190个命令)
+make help         # 显示所有可用命令 (233个命令)
 make env-check    # 检查开发环境健康状态
 make lint         # 运行ruff和mypy检查
 make fmt          # 使用ruff格式化代码
@@ -432,7 +432,7 @@ python3 scripts/improvement_monitor.py
 - **[`pyproject.toml`](pyproject.toml)**: Ruff配置和工具设置
 - **[`pytest.ini`](pytest.ini)**: 测试配置和标记定义
 - **[`requirements/requirements.lock`](requirements/requirements.lock)**: 锁定的依赖版本
-- **[`Makefile`](Makefile)**: 完整开发工具链（199个命令）
+- **[`Makefile`](Makefile)**: 完整开发工具链（233个命令）
 - **[`.env.example`](.env.example)**: 环境变量模板
 - **[`docker-compose.yml`](docker-compose.yml)**: 容器编排配置
 - **[`docs/guard.py`](scripts/docs_guard.py)**: 文档质量守护工具
