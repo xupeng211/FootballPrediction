@@ -20,10 +20,12 @@ pytestmark = [pytest.mark.integration, pytest.mark.slow]
 # 尝试导入testcontainers
 TESTCONTAINERS_AVAILABLE = False
 try:
-    # # from testcontainers.compose import DockerCompose
+    # # # from testcontainers.compose import DockerCompose
   # TODO: 安装testcontainers依赖
   # TODO: 安装testcontainers依赖
-    # # from testcontainers.core.waiting_utils import wait_for_logs
+  # TODO: 安装testcontainers依赖
+    # # # from testcontainers.core.waiting_utils import wait_for_logs
+  # TODO: 安装testcontainers依赖
   # TODO: 安装testcontainers依赖
   # TODO: 安装testcontainers依赖
 
