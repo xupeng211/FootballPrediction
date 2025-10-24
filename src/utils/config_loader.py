@@ -22,5 +22,8 @@ def load_config_from_file(file_path: str) -> Dict[str, Any]:
                 return yaml.safe_load(f) or {}
             else:
                 return {}
-    except (ValueError, KeyError, RuntimeError):
+    except (ValueError, KeyError, RuntimeError, ImportError):
+        return {}
+    except Exception as e:
+        # 捕获YAML解析错误和其他可能的异常
         return {}
