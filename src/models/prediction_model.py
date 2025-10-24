@@ -339,7 +339,7 @@ class FootballPredictionModel(PredictionModel):
         """
         results = []
         for match in matches:
-            _prediction = self.predict_match(
+            prediction = self.predict_match(
                 match.get("home_team", ""),
                 match.get("away_team", ""),
                 match.get("features", {}),

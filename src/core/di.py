@@ -21,7 +21,7 @@ from dataclasses import dataclass
 from datetime import datetime
 import logging
 
-from ..core.exceptions import DependencyInjectionError
+from .exceptions import DependencyInjectionError
 
 T = TypeVar("T")
 logger = logging.getLogger(__name__)
