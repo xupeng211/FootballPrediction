@@ -466,7 +466,7 @@ def test_database_connection_health(
 
 
 @pytest.mark.integration
-def test_database_connection_health(client, client, client, client):
+def test_database_connection_health(client):
     """测试数据库连接健康状态"""
     # 模拟连接健康检查
     health_status = {
@@ -485,7 +485,7 @@ def test_database_connection_health(client, client, client, client):
 
 
 @pytest.mark.integration
-def test_database_connection_health(client, client, client, client):
+def test_database_connection_health(client):
     """测试API响应格式"""
     # 标准API响应格式
     response_formats = [

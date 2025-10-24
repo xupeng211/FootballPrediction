@@ -1,0 +1,210 @@
+[
+  {
+    "timestamp": "2025-10-24T21:46:39.027441",
+    "project_path": ".",
+    "cleanliness_score": 75,
+    "grade": "B (一般)",
+    "metrics": {
+      "root_files": 73,
+      "markdown_files": 28,
+      "archive_size_mb": 13.26,
+      "file_distribution": {
+        "无扩展名": 8,
+        ".example": 1,
+        ".md": 28,
+        ".py": 4,
+        ".yaml": 1,
+        ".txt": 3,
+        ".json": 8,
+        ".yml": 5,
+        ".ini": 5,
+        ".db": 1,
+        ".backup": 3,
+        ".sh": 1,
+        ".0": 1,
+        ".production": 2,
+        ".toml": 1,
+        ".test": 1
+      },
+      "missing_directories": [],
+      "forbidden_files": 3804
+    },
+    "issues": [
+      "根目录文件过多 (73 > 50)",
+      "Markdown文件过多 (28 > 20)",
+      "发现不应存在的文件: 3804个"
+    ],
+    "recommendations": [
+      "考虑将临时报告移动到 archive/ 目录",
+      "将不必要的文件移动到合适的子目录"
+    ]
+  },
+  {
+    "timestamp": "2025-10-24T21:46:50.890894",
+    "project_path": ".",
+    "cleanliness_score": 81,
+    "grade": "A (良好)",
+    "metrics": {
+      "root_files": 73,
+      "markdown_files": 28,
+      "archive_size_mb": 13.26,
+      "file_distribution": {
+        "无扩展名": 8,
+        ".example": 1,
+        ".md": 28,
+        ".py": 4,
+        ".yaml": 1,
+        ".txt": 3,
+        ".json": 8,
+        ".yml": 5,
+        ".ini": 5,
+        ".db": 1,
+        ".backup": 3,
+        ".sh": 1,
+        ".0": 1,
+        ".production": 2,
+        ".toml": 1,
+        ".test": 1
+      },
+      "missing_directories": [],
+      "forbidden_files": 2
+    },
+    "issues": [
+      "根目录文件过多 (73 > 50)",
+      "Markdown文件过多 (28 > 20)",
+      "发现不应存在的文件: 2个"
+    ],
+    "recommendations": [
+      "考虑将临时报告移动到 archive/ 目录",
+      "将不必要的文件移动到合适的子目录"
+    ]
+  },
+  {
+    "timestamp": "2025-10-24T21:52:11.659893",
+    "project_path": ".",
+    "cleanliness_score": 96,
+    "grade": "A+ (优秀)",
+    "metrics": {
+      "root_files": 48,
+      "markdown_files": 3,
+      "archive_size_mb": 13.42,
+      "file_distribution": {
+        "无扩展名": 8,
+        ".example": 1,
+        ".py": 4,
+        ".yaml": 1,
+        ".txt": 3,
+        ".json": 8,
+        ".yml": 5,
+        ".md": 3,
+        ".ini": 5,
+        ".db": 1,
+        ".backup": 3,
+        ".sh": 1,
+        ".0": 1,
+        ".production": 2,
+        ".toml": 1,
+        ".test": 1
+      },
+      "missing_directories": [],
+      "forbidden_files": 2
+    },
+    "issues": [
+      "发现不应存在的文件: 2个"
+    ],
+    "recommendations": []
+  },
+  {
+    "timestamp": "2025-10-24T21:52:29.849663",
+    "project_path": ".",
+    "cleanliness_score": 96,
+    "grade": "A+ (优秀)",
+    "metrics": {
+      "root_files": 45,
+      "markdown_files": 3,
+      "archive_size_mb": 13.43,
+      "file_distribution": {
+        "无扩展名": 8,
+        ".example": 1,
+        ".py": 4,
+        ".yaml": 1,
+        ".txt": 3,
+        ".json": 8,
+        ".yml": 5,
+        ".md": 3,
+        ".ini": 5,
+        ".sh": 1,
+        ".0": 1,
+        ".production": 2,
+        ".toml": 1,
+        ".test": 1,
+        ".backup": 1
+      },
+      "missing_directories": [],
+      "forbidden_files": 2
+    },
+    "issues": [
+      "发现不应存在的文件: 2个"
+    ],
+    "recommendations": []
+  },
+  {
+    "timestamp": "2025-10-24T21:53:01.495956",
+    "project_path": ".",
+    "cleanliness_score": 96,
+    "grade": "A+ (优秀)",
+    "metrics": {
+      "root_files": 27,
+      "markdown_files": 3,
+      "archive_size_mb": 13.43,
+      "file_distribution": {
+        "无扩展名": 8,
+        ".example": 1,
+        ".yaml": 1,
+        ".yml": 5,
+        ".md": 3,
+        ".ini": 3,
+        ".json": 1,
+        ".production": 2,
+        ".py": 1,
+        ".toml": 1,
+        ".test": 1
+      },
+      "missing_directories": [],
+      "forbidden_files": 2
+    },
+    "issues": [
+      "发现不应存在的文件: 2个"
+    ],
+    "recommendations": []
+  },
+  {
+    "timestamp": "2025-10-24T21:53:29.123688",
+    "project_path": ".",
+    "cleanliness_score": 96,
+    "grade": "A+ (优秀)",
+    "metrics": {
+      "root_files": 26,
+      "markdown_files": 3,
+      "archive_size_mb": 13.43,
+      "file_distribution": {
+        "无扩展名": 8,
+        ".example": 1,
+        ".yaml": 1,
+        ".yml": 5,
+        ".md": 3,
+        ".ini": 3,
+        ".json": 1,
+        ".production": 2,
+        ".toml": 1,
+        ".test": 1
+      },
+      "missing_directories": [],
+      "forbidden_files": 2
+    },
+    "issues": [
+      "发现不应存在的文件: 2个"
+    ],
+    "recommendations": []
+  }
+]
