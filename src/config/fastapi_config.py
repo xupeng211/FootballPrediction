@@ -48,6 +48,7 @@ def create_chinese_app() -> FastAPI:
         app.openapi_schema = openapi_schema
         return app.openapi_schema
 
-    app.openapi = custom_openapi
+    # 使用setattr来设置openapi方法
+    setattr(app, 'openapi', custom_openapi)
 
     return app
