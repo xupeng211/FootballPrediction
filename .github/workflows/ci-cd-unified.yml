@@ -124,7 +124,33 @@ jobs:
     strategy:
       matrix:
         test-type: [unit, integration, coverage]
-    timeout-minutes: 15
+    timeout-minutes: 20
+    services:
+      # 为集成测试提供PostgreSQL服务隔离
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      # 为集成测试提供Redis服务隔离
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
     steps:
       - name: 📥 Checkout代码
         uses: actions/checkout@v4
@@ -157,8 +183,15 @@ jobs:
 
       - name: 🔄 集成测试
         if: matrix.test-type == 'integration'
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379
+          TEST_DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+          TEST_REDIS_URL: redis://localhost:6379
         run: |
           echo "🔄 运行集成测试..."
+          echo "📊 测试数据库连接: $DATABASE_URL"
+          echo "📊 测试Redis连接: $REDIS_URL"
           make test.int
 
       - name: 📊 覆盖率分析
@@ -173,7 +206,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [quality-checks, test-execution]
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - name: 📥 Checkout代码
         uses: actions/checkout@v4
