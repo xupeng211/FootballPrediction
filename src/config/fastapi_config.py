@@ -4,33 +4,36 @@ FastAPI 中文配置
 
 from fastapi import FastAPI
 
-from src.utils.i18n import _, init_i18n
+from src.utils.i18n import init_i18n, I18nUtils
 
 
 def create_chinese_app() -> FastAPI:
     """创建中文界面的 FastAPI 应用"""
 
     # 初始化中文
-    init_i18n("zh_CN")
+    init_i18n()
 
     app = FastAPI(
-        title=_("Football Prediction API"),
-        description=_("Machine Learning Based Football Match Prediction System"),
+        title=I18nUtils.translate("Football Prediction API"),
+        description=I18nUtils.translate("Machine Learning Based Football Match Prediction System"),
         version="1.0.0",
         docs_url="/docs",
         redoc_url="/redoc",
     )
+
+    # 保存原始的openapi方法
+    original_openapi = app.openapi
 
     # 自定义文档
     def custom_openapi():
         if app.openapi_schema:
             return app.openapi_schema
 
-        openapi_schema = app.openapi()
+        openapi_schema = original_openapi()
 
         # 修改信息为中文
-        openapi_schema["info"]["title"] = _("Football Prediction API")
-        openapi_schema["info"]["description"] = _(
+        openapi_schema["info"]["title"] = I18nUtils.translate("Football Prediction API")
+        openapi_schema["info"]["description"] = I18nUtils.translate(
             "Machine Learning Based Football Match Prediction System"
         )
 
@@ -45,6 +48,7 @@ def create_chinese_app() -> FastAPI:
         app.openapi_schema = openapi_schema
         return app.openapi_schema
 
-    app.openapi = custom_openapi
+    # 使用setattr来设置openapi方法
+    setattr(app, 'openapi', custom_openapi)
 
     return app
