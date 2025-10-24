@@ -1,13 +1,14 @@
 {
-  "version": "2.0",
-  "last_updated": "2025-10-24T00:41:33.795070",
+  "version": "2.1",
+  "last_updated": "2025-10-24T02:12:30.000000",
   "standards": {
     "coverage": {
-      "minimum": 15.0,
-      "target": 18.452409209589366,
-      "excellent": 28.452409209589366,
+      "minimum": 20.0,
+      "target": 25.0,
+      "excellent": 40.0,
       "critical_files": {
-        "src/api/schemas.py": 95.0,
+        "src/api/schemas.py": 100.0,
+        "src/api/cqrs.py": 80.0,
         "src/core/exceptions.py": 90.0,
         "src/models/": 60.0
       }
