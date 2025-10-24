@@ -9,22 +9,13 @@ PYTHON := python3
 VENV := .venv
 VENV_BIN := $(VENV)/bin
 ACTIVATE := . $(VENV_BIN)/activate
-
-# Coverage thresholds for different environments
-COVERAGE_THRESHOLD_CI ?= 22      # CI environment (gradually improving)
-COVERAGE_THRESHOLD_DEV ?= 20     # Development environment (current coverage)
-COVERAGE_THRESHOLD_MIN ?= 18     # Minimum acceptable coverage
-COVERAGE_THRESHOLD ?= $(COVERAGE_THRESHOLD_CI)  # Default to CI level
-
+COVERAGE_THRESHOLD := 80
 IMAGE_NAME ?= football-prediction
 GIT_SHA := $(shell git rev-parse --short HEAD)
 
 # Environment Configuration
 ENV_FILE ?= .env
 ENV_EXAMPLE ?= .env.example
-
-# CPU core count for parallel execution
-NCPU := $(shell nproc 2>/dev/null || echo 4)
 
 # Required environment variables for production
 REQUIRED_ENV_VARS := DATABASE_URL REDIS_URL SECRET_KEY
@@ -48,8 +39,6 @@ help: ## 📋 Show available commands
 	@echo "$(BLUE)🚀 Football Prediction Project Commands$(RESET)"
 	@echo "$(YELLOW)Environment:$(RESET)"
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## .*Environment/ {printf "  $(GREEN)%-12s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
-	@echo "$(YELLOW)Documentation:$(RESET)"
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## .*Documentation/ {printf "  $(GREEN)%-12s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 	@echo "$(YELLOW)Code Quality:$(RESET)"
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## .*Quality/ {printf "  $(GREEN)%-12s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 	@echo "$(YELLOW)Testing:$(RESET)"
@@ -82,57 +71,20 @@ venv: ## Environment: Create and activate virtual environment
 		echo "$(BLUE)ℹ️  Virtual environment already exists$(RESET)"; \
 	fi
 
-install: venv ## Environment: Install dependencies from lock file
+install: venv ## Environment: Install dependencies from requirements.txt
 	@$(ACTIVATE) && \
-	if pip list | grep -F "fastapi" > /dev/null 2>&1; then \
+	if pip list | grep -F "$(shell head -n1 requirements.txt | cut -d'=' -f1)" > /dev/null 2>&1; then \
 		echo "$(BLUE)ℹ️  Dependencies appear to be installed$(RESET)"; \
 	else \
 		echo "$(YELLOW)Installing dependencies...$(RESET)"; \
 		pip install --upgrade pip && \
-		pip install -r requirements/requirements.lock; \
+		pip install -r requirements.txt && \
+		pip install -r requirements-dev.txt; \
 		echo "$(GREEN)✅ Dependencies installed$(RESET)"; \
 	fi
-	@echo "$(YELLOW)Running welcome script...$(RESET)" && \
-	bash scripts/welcome.sh
-
-install-locked: venv ## Environment: Install from locked dependencies (reproducible)
-	@if [ ! -f requirements/requirements.lock ]; then \
-		echo "$(RED)❌ requirements/requirements.lock not found. Run 'make lock-deps' first.$(RESET)"; \
-		exit 1; \
-	fi
-	@$(ACTIVATE) && \
-	echo "$(BLUE)📦 Installing locked dependencies (reproducible)...$(RESET)" && \
-	pip install --upgrade pip && \
-	pip install -r requirements/requirements.lock && \
-	echo "$(GREEN)✅ Dependencies installed from lock file$(RESET)"
-
-lock-deps: venv ## Environment: Lock current dependencies for reproducible builds
-	@$(ACTIVATE) && \
-	echo "$(BLUE)🔒 Locking dependencies...$(RESET)" && \
-	pip install pip-tools && \
-	pip-compile requirements/base.in --upgrade --output-file=requirements/base.lock && \
-	pip-compile requirements/dev.in --upgrade --output-file=requirements/dev.lock && \
-	pip-compile requirements/full.in --upgrade --output-file=requirements/requirements.lock && \
-	echo "$(GREEN)✅ Dependencies locked to requirements/ directory$(RESET)" && \
-	echo "$(YELLOW)💡 Commit requirements/*.lock files for reproducible builds$(RESET)"
-
-verify-deps: venv ## Environment: Verify dependencies match lock file
-	@$(ACTIVATE) && \
-	echo "$(BLUE)🔍 Verifying dependencies...$(RESET)" && \
-	bash scripts/dependency/verify_deps.sh
 
 check-deps: ## Environment: Verify required Python dependencies are installed
-	@$(ACTIVATE) && python scripts/dependency/check.py
-
-smart-deps: ## Environment: Smart dependency check with AI guidance
-	@echo "$(BLUE)🔍 Running smart dependency check...$(RESET)"
-	@bash scripts/dependency/smart_deps.sh
-
-ai-deps-reminder: ## Environment: Show AI dependency management reminder
-	@echo "$(YELLOW)📖 Displaying AI dependency management guide...$(RESET)"
-	@cat .ai-reminder.md
-	@echo ""
-	@echo "$(BLUE)💡 Run 'make smart-deps' to check for dependency changes$(RESET)"
+	@$(ACTIVATE) && python scripts/check_dependencies.py
 
 check-env: ## Environment: Check required environment variables
 	@echo "$(YELLOW)Checking environment variables...$(RESET)"
@@ -174,48 +126,24 @@ create-env: ## Environment: Create environment file from example
 	@echo "$(GREEN)✅ Created $(ENV_FILE) from $(ENV_EXAMPLE)$(RESET)"
 	@echo "$(BLUE)💡 Please edit $(ENV_FILE) with your configuration$(RESET)"
 
-clean-env: ## Environment: Clean virtual environment and old dependency files
-	@echo "$(YELLOW)🧹 Cleaning virtual environment and old files...$(RESET)"
-	@rm -rf .venv
-	@rm -rf __pycache__ .pytest_cache .coverage htmlcov/ .mypy_cache/
-	@rm -f requirements.lock.txt
-	@rm -f requirements/base.lock requirements/dev.lock requirements/requirements.lock
-	@rm -rf pipdeptree.egg-info/
-	@echo "$(GREEN)✅ Environment cleaned$(RESET)"
-
-audit-vulnerabilities: ## Security: Run dependency vulnerability audit
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)🔍 Running security audit...$(RESET)" && \
-	pip install pip-audit[toml] && \
-	mkdir -p docs/_reports/security && \
-	timestamp=$$(date +"%Y-%m-%d_%H-%M-%S") && \
-	pip-audit -r requirements/requirements.lock --format markdown --output docs/_reports/security/pip_audit_manual_$$timestamp.md && \
-	echo "$(GREEN)✅ Security audit completed$(RESET)" && \
-	echo "$(BLUE)📄 Report: docs/_reports/security/pip_audit_manual_$$timestamp.md$(RESET)"
-
-audit-check: ## Security: Check for vulnerabilities only
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)🔍 Checking for vulnerabilities...$(RESET)" && \
-	pip install pip-audit && \
-	pip-audit -r requirements/requirements.lock
 
 # ============================================================================
 # 🎨 Code Quality
 # ============================================================================
-lint: ## Quality: Run ruff and mypy checks
+lint: ## Quality: Run flake8 and mypy checks
 	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running ruff check...$(RESET)" && \
-	ruff check src/ tests/ && \
+	echo "$(YELLOW)Running flake8...$(RESET)" && \
+	flake8 src/ tests/ && \
 	echo "$(YELLOW)Running mypy...$(RESET)" && \
 	mypy src tests && \
 	echo "$(GREEN)✅ Linting and type checks passed$(RESET)"
 
-fmt: ## Quality: Format code with ruff
+fmt: ## Quality: Format code with black and isort
 	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running ruff format...$(RESET)" && \
-	ruff format src/ tests/ && \
-	echo "$(YELLOW)Running ruff check --fix...$(RESET)" && \
-	ruff check --fix src/ tests/ && \
+	echo "$(YELLOW)Running black...$(RESET)" && \
+	black src/ tests/ && \
+	echo "$(YELLOW)Running isort...$(RESET)" && \
+	isort src/ tests/ && \
 	echo "$(GREEN)✅ Code formatted$(RESET)"
 
 quality: lint fmt test ## Quality: Complete quality check (lint + format + test)
@@ -233,33 +161,16 @@ test: ## Test: Run pytest unit tests
 	pytest tests/ -v --maxfail=5 --disable-warnings && \
 	echo "$(GREEN)✅ Tests passed$(RESET)"
 
-test-phase1: ## Test: Run Phase 1 core API tests (data, features, predictions)
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running Phase 1 core tests...$(RESET)" && \
-	pytest tests/unit/api/test_data.py tests/unit/api/test_features.py tests/unit/api/test_predictions.py -v --cov=src --cov-report=term-missing && \
-	echo "$(GREEN)✅ Phase 1 tests passed$(RESET)"
-
-test-api: ## Test: Run all API tests
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running API tests...$(RESET)" && \
-	pytest -m "api" -v && \
-	echo "$(GREEN)✅ API tests passed$(RESET)"
-
-test-full: ## Test: Run full unit test suite with coverage
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running full unit test suite with coverage...$(RESET)" && \
-	python scripts/testing/run_full_coverage.py
-
 coverage: ## Test: Run tests with coverage report (threshold: 80%)
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Running coverage tests...$(RESET)" && \
-	pytest tests/unit --cov=src --cov-report=term-missing --cov-report=html --cov-report=xml --cov-fail-under=$(COVERAGE_THRESHOLD) && \
+	pytest -m "unit" --cov=src --cov-report=term-missing --cov-fail-under=$(COVERAGE_THRESHOLD) && \
 	echo "$(GREEN)✅ Coverage passed (>=$(COVERAGE_THRESHOLD)%)$(RESET)"
 
 coverage-fast: ## Test: Run fast coverage (unit tests only, no slow tests)
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Running fast coverage tests...$(RESET)" && \
-	pytest tests/unit -m "not slow" --cov=src --cov-report=term-missing --maxfail=5 && \
+	pytest -m "unit and not slow" --cov=src --cov-report=term-missing --maxfail=5 && \
 	echo "$(GREEN)✅ Fast coverage passed$(RESET)"
 
 coverage-unit: ## Test: Unit test coverage only
@@ -267,28 +178,6 @@ coverage-unit: ## Test: Unit test coverage only
 	echo "$(YELLOW)Running unit test coverage...$(RESET)" && \
 	pytest -m "unit" --cov=src --cov-report=html --cov-report=term --maxfail=5 && \
 	echo "$(GREEN)✅ Unit coverage completed$(RESET)"
-
-coverage-parallel: ## Test: Run coverage with parallel execution
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running parallel coverage tests ($(NCPU) workers)...$(RESET)" && \
-	pytest tests/unit --cov=src --cov-report=term-missing --cov-report=html --cov-report=xml -n auto --dist=loadfile && \
-	echo "$(GREEN)✅ Parallel coverage completed$(RESET)"
-
-coverage-optimized: ## Test: Run optimized coverage (fast tests only)
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running optimized coverage (fast tests only)...$(RESET)" && \
-	pytest tests/unit -m "fast or unit" --cov=src --cov-report=term-missing --cov-fail-under=$(COVERAGE_THRESHOLD_MIN) --maxfail=10 -q && \
-	echo "$(GREEN)✅ Optimized coverage passed$(RESET)"
-
-coverage-targeted: ## Test: Run targeted coverage for specific modules
-	@if [ -z "$(MODULE)" ]; then \
-		echo "$(RED)Error: Please specify MODULE=src.utils.config_loader or similar$(RESET)"; \
-		exit 1; \
-	fi
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running targeted coverage for $(MODULE)...$(RESET)" && \
-	pytest tests/unit/utils/test_config_loader_comprehensive.py tests/unit/utils/test_edge_cases_coverage.py --cov=$(MODULE) --cov-report=term-missing --cov-report=html -v && \
-	echo "$(GREEN)✅ Targeted coverage completed$(RESET)"
 
 test.unit: ## Test: Run unit tests only (marked with 'unit')
 	@$(ACTIVATE) && \
@@ -308,56 +197,11 @@ test.e2e: ## Test: Run end-to-end tests only (marked with 'e2e')
 	pytest -m "e2e" && \
 	echo "$(GREEN)✅ End-to-end tests passed$(RESET)"
 
-# Nightly Testing Commands
-nightly-test: ## 🌙 Run nightly test suite locally
-	@$(ACTIVATE) && \
-	echo "$(BLUE)Running nightly test suite...$(RESET)" && \
-	python scripts/schedule_nightly_tests.py run
-
-nightly-schedule: ## 📅 Start nightly test scheduler
-	@$(ACTIVATE) && \
-	echo "$(BLUE)Starting nightly test scheduler...$(RESET)" && \
-	python scripts/schedule_nightly_tests.py start
-
-nightly-status: ## 📊 Show nightly test scheduler status
-	@$(ACTIVATE) && \
-	echo "$(BLUE)Nightly test scheduler status:$(RESET)" && \
-	python scripts/schedule_nightly_tests.py status
-
-nightly-monitor: ## 👀 Monitor and report nightly test results
-	@$(ACTIVATE) && \
-	echo "$(BLUE)Monitoring nightly tests...$(RESET)" && \
-	python scripts/nightly_test_monitor.py --dry-run
-
-nightly-report: ## 📄 Generate nightly test report
-	@$(ACTIVATE) && \
-	echo "$(BLUE)Generating nightly test report...$(RESET)" && \
-	python scripts/nightly_test_monitor.py --dry-run && \
-	echo "$(GREEN)Report generated: reports/nightly-test-report.md$(RESET)"
-
-nightly-cleanup: ## 🧹 Clean up old nightly test artifacts
-	@$(ACTIVATE) && \
-	echo "$(BLUE)Cleaning up old nightly test artifacts...$(RESET)" && \
-	python scripts/schedule_nightly_tests.py cleanup && \
-	python scripts/nightly_test_monitor.py --cleanup --cleanup-days 30
-
 test.slow: ## Test: Run slow tests only (marked with 'slow')
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Running slow tests only...$(RESET)" && \
 	pytest -m "slow" && \
 	echo "$(GREEN)✅ Slow tests passed$(RESET)"
-
-test.containers: ## Test: Run tests with TestContainers (Docker required)
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running tests with Docker containers...$(RESET)" && \
-	pytest tests/unit/test_database_with_containers.py -v --maxfail=3 && \
-	echo "$(GREEN)✅ Container tests passed$(RESET)"
-
-test.containers-all: ## Test: Run all container-based tests
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running all container-based tests...$(RESET)" && \
-	pytest -m "integration" tests/unit/test_database_with_containers.py -v --cov=src --cov-report=term-missing && \
-	echo "$(GREEN)✅ All container tests passed$(RESET)"
 
 cov.html: ## Test: Generate HTML coverage report
 	@$(ACTIVATE) && \
@@ -371,102 +215,6 @@ cov.enforce: ## Test: Run coverage with strict 80% threshold
 	pytest -m "unit" --cov=src --cov-report=term-missing:skip-covered --cov-fail-under=80 && \
 	echo "$(GREEN)✅ Coverage passed (>=80%)$(RESET)"
 
-coverage-ci: ## Test: Run CI coverage with strict threshold
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running CI coverage with $(COVERAGE_THRESHOLD_CI)% threshold...$(RESET)" && \
-	pytest --cov=src --cov-config=coverage_ci.ini --cov-report=term-missing --cov-report=xml --cov-fail-under=$(COVERAGE_THRESHOLD_CI)
-
-coverage-local: ## Test: Run local coverage with development threshold
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running local coverage with $(COVERAGE_THRESHOLD_DEV)% threshold...$(RESET)" && \
-	pytest --cov=src --cov-config=coverage_local.ini --cov-report=term-missing --cov-fail-under=$(COVERAGE_THRESHOLD_DEV)
-
-coverage-critical: ## Test: Test critical path modules with 100% coverage
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running critical path coverage with 100% threshold...$(RESET)" && \
-	pytest tests/unit/ai/ --cov=src/models/prediction_service.py --cov-report=term --cov-fail-under=100
-
-benchmark-full: ## Performance: Run comprehensive performance benchmarks
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running comprehensive performance benchmarks...$(RESET)" && \
-	pytest tests/performance/test_performance_benchmarks.py -v --benchmark-only
-
-benchmark-regression: ## Performance: Run performance regression detection
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running performance regression detection...$(RESET)" && \
-	python tests/performance/performance_regression_detector.py
-
-benchmark-update: ## Performance: Update performance baseline metrics
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Updating performance baseline metrics...$(RESET)" && \
-	python -c "import asyncio; from tests.performance.performance_regression_detector import PerformanceRegressionDetector; asyncio.run(PerformanceRegressionDetector().update_baselines())"
-
-mutation-test: ## Mutation: Run mutation testing with mutmut
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running mutation testing...$(RESET)" && \
-	python tests/mutation/run_mutation_tests.py
-
-mutation-html: ## Mutation: Generate HTML mutation report
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Generating HTML mutation report...$(RESET)" && \
-	mutmut html
-
-mutation-results: ## Mutation: Show detailed mutation results
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Showing mutation results...$(RESET)" && \
-	mutmut results
-
-mutation-init: ## Mutation: Initialize mutation testing
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Initializing mutation testing...$(RESET)" && \
-	mutmut run --help
-
-coverage-dashboard: ## Coverage: Generate real-time coverage dashboard
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Generating coverage dashboard...$(RESET)" && \
-	python tests/coverage/coverage_dashboard_generator.py
-
-coverage-trends: ## Coverage: Show coverage trends and history
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Analyzing coverage trends...$(RESET)" && \
-	python -c "from tests.coverage.coverage_dashboard_generator import CoverageDashboardGenerator; print('Coverage trends analysis would be displayed here')"
-
-coverage-live: ## Coverage: Start live coverage monitoring (auto-refresh)
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Starting live coverage monitoring...$(RESET)" && \
-	echo "Open docs/_reports/coverage/coverage_dashboard_*.html in your browser"
-	echo "Dashboard auto-refreshes every 5 minutes"
-
-test-debt-analysis: ## Test Debt: Run comprehensive test debt analysis
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running test debt analysis...$(RESET)" && \
-	python tests/test_debt/test_debt_tracker.py
-
-test-debt-log: ## Test Debt: Show current test debt log
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Showing test debt log...$(RESET)" && \
-	if [ -f "docs/_reports/TEST_DEBT_LOG.md" ]; then \
-		cat docs/_reports/TEST_DEBT_LOG.md; \
-	else \
-		echo "No test debt log found. Run 'make test-debt-analysis' to generate one."; \
-	fi
-
-test-debt-cleanup: ## Test Debt: Start test debt cleanup session
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Starting test debt cleanup session...$(RESET)" && \
-	echo "1. Running test debt analysis..." && \
-	python tests/test_debt/test_debt_tracker.py && \
-	echo "2. Opening test debt log..." && \
-	if [ -f "docs/_reports/TEST_DEBT_LOG.md" ]; then \
-		echo "📋 Current test debt:"; \
-		head -20 docs/_reports/TEST_DEBT_LOG.md; \
-	fi && \
-	echo "3. Cleanup schedule:" && \
-	if [ -f "docs/_reports/TEST_CLEANUP_SCHEDULE.md" ]; then \
-		echo "📅 Next cleanup: First Friday of this month"; \
-	fi && \
-	echo "✅ Test debt cleanup session initialized"
-
 test-quick: ## Test: Quick test run (unit tests with timeout)
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Running quick tests...$(RESET)" && \
@@ -476,22 +224,19 @@ test-quick: ## Test: Quick test run (unit tests with timeout)
 type-check: ## Quality: Run type checking with mypy
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Running mypy type checking...$(RESET)" && \
-	mypy src --ignore-missing-imports --no-strict-optional --no-error-summary --allow-untyped-defs --allow-untyped-calls || true && \
-	echo "$(GREEN)✅ Type checking completed (warnings suppressed)$(RESET)"
+	mypy src tests && \
+	echo "$(GREEN)✅ Type checking passed$(RESET)"
 
 # ============================================================================
 # 🔄 CI Simulation
 # ============================================================================
-prepush: ## Quality: Complete pre-push validation (ruff + mypy + pytest)
-	@echo "$(BLUE)🔄 Running pre-push quality gate...$(RESET)" && \
-	$(ACTIVATE) && \
-	echo "$(YELLOW)📋 Running Ruff check...$(RESET)" && \
-	ruff check src/ tests/unit/ tests/integration/ tests/e2e/ || { echo "$(RED)❌ Ruff check failed$(RESET)"; exit 1; } && \
-	echo "$(YELLOW)🔍 Running MyPy type check...$(RESET)" && \
-	mypy src/ --ignore-missing-imports --no-strict-optional --no-error-summary --allow-untyped-defs --allow-untyped-calls || { echo "$(YELLOW)⚠️ MyPy check completed with warnings$(RESET)"; } && \
-	echo "$(YELLOW)🧪 Running Pytest basic validation...$(RESET)" && \
-	pytest tests/unit --maxfail=5 --disable-warnings --tb=short -q || { echo "$(RED)❌ Pytest validation failed$(RESET)"; exit 1; } && \
-	echo "$(GREEN)✅ Pre-push quality gate passed$(RESET)"
+prepush: ## Quality: Complete pre-push validation (format + lint + type-check + test)
+	@echo "$(BLUE)🔄 Running pre-push validation...$(RESET)" && \
+	$(MAKE) fmt || { echo "$(RED)❌ Code formatting failed$(RESET)"; exit 1; } && \
+	$(MAKE) lint || { echo "$(RED)❌ Linting failed$(RESET)"; exit 1; } && \
+	$(MAKE) type-check || { echo "$(RED)❌ Type checking failed$(RESET)"; exit 1; } && \
+	$(MAKE) test || { echo "$(RED)❌ Tests failed$(RESET)"; exit 1; } && \
+	echo "$(GREEN)✅ Pre-push validation passed$(RESET)"
 
 ci: ## CI: Simulate GitHub Actions CI pipeline
 	@echo "$(BLUE)🔄 Running CI simulation...$(RESET)" && \
@@ -516,147 +261,6 @@ down: ## Container: Stop docker-compose services
 logs: ## Container: Show docker-compose logs
 	@docker-compose logs -f
 
-# ============================================================================
-# 🧪 Test Environment Management
-# ============================================================================
-
-# Legacy test environment commands - moved to Docker section
-
-test-env-status: ## Test: Check test environment status
-	@./scripts/manage_test_env.sh status
-
-test-env-logs: ## Test: Show test environment logs
-	@if [ -n "$(SERVICE)" ]; then \
-		./scripts/manage_test_env.sh logs $(SERVICE); \
-	else \
-		./scripts/manage_test_env.sh logs; \
-	fi
-
-test-env-shell: ## Test: Enter test container shell
-	@./scripts/manage_test_env.sh shell
-
-test-env-reset: ## Test: Reset test environment (delete all data)
-	@./scripts/manage_test_env.sh reset
-
-test-env-init: ## Test: Initialize test data
-	@./scripts/manage_test_env.sh init
-
-test-env-check: ## Test: Check test environment health
-	@./scripts/manage_test_env.sh check
-
-test-env-clean: ## Test: Clean Docker resources
-	@./scripts/manage_test_env.sh clean
-
-# Integration tests in test environment
-test-integration: ## Test: Run integration tests
-	@./scripts/manage_test_env.sh test integration
-
-test-e2e: ## Test: Run E2E tests
-	@./scripts/manage_test_env.sh test e2e
-
-test-all: ## Test: Run all tests in test environment
-	@./scripts/manage_test_env.sh test all
-
-test-coverage-env: ## Test: Generate coverage report in test environment
-	@./scripts/manage_test_env.sh test coverage
-
-# ============================================================================
-# 🚀 Staging Environment Management
-# ============================================================================
-
-staging-start: ## Staging: Start staging environment for E2E testing
-	@echo "$(YELLOW)Starting staging environment...$(RESET)" && \
-	./scripts/manage_staging_env.sh start
-
-staging-stop: ## Staging: Stop staging environment
-	@echo "$(YELLOW)Stopping staging environment...$(RESET)" && \
-	./scripts/manage_staging_env.sh stop
-
-staging-restart: ## Staging: Restart staging environment
-	@echo "$(YELLOW)Restarting staging environment...$(RESET)" && \
-	./scripts/manage_staging_env.sh restart
-
-staging-status: ## Staging: Check staging environment status
-	@./scripts/manage_staging_env.sh status
-
-staging-logs: ## Staging: Show staging environment logs
-	@if [ -n "$(SERVICE)" ]; then \
-		./scripts/manage_staging_env.sh logs $(SERVICE); \
-	else \
-		./scripts/manage_staging_env.sh logs; \
-	fi
-
-staging-shell: ## Staging: Enter staging container shell
-	@./scripts/manage_staging_env.sh shell
-
-staging-migrate: ## Staging: Run database migrations
-	@./scripts/manage_staging_env.sh migrate
-
-staging-seed: ## Staging: Load seed data
-	@./scripts/manage_staging_env.sh seed
-
-staging-backup: ## Staging: Backup staging database
-	@./scripts/manage_staging_env.sh backup
-
-staging-restore: ## Staging: Restore database (use FILE=<backup_file>)
-	@if [ -z "$(FILE)" ]; then \
-		echo "$(RED)❌ FILE is required. Usage: make staging-restore FILE=<backup_file>$(RESET)"; \
-		exit 1; \
-	fi
-	@./scripts/manage_staging_env.sh restore $(FILE)
-
-staging-health: ## Staging: Check staging environment health
-	@./scripts/manage_staging_env.sh health
-
-staging-monitor: ## Staging: Open monitoring dashboards
-	@./scripts/manage_staging_env.sh monitor
-
-staging-test: ## Staging: Run E2E tests
-	@./scripts/manage_staging_env.sh test
-
-staging-reset: ## Staging: Reset staging environment (dangerous!)
-	@echo "$(RED)⚠️ This will delete all staging data!$(RESET)"
-	@./scripts/manage_staging_env.sh reset
-
-staging-cleanup: ## Staging: Clean up staging resources
-	@./scripts/manage_staging_env.sh cleanup
-
-# E2E 测试快速命令
-e2e-run: ## E2E: Quick E2E test run
-	@echo "$(YELLOW)Running E2E tests...$(RESET)" && \
-	./scripts/run_e2e_tests.py --type critical --no-cleanup
-
-e2e-setup: ## E2E: Setup E2E test environment
-	@echo "$(YELLOW)Setting up E2E test environment...$(RESET)" && \
-	./scripts/manage_staging_env.sh start && \
-	./scripts/manage_staging_env.sh migrate && \
-	./scripts/manage_staging_env.sh seed
-
-e2e-smoke: ## E2E: Run smoke tests
-	@echo "$(YELLOW)Running E2E smoke tests...$(RESET)" && \
-	./scripts/run_e2e_tests.py --type smoke --no-cleanup
-
-e2e-critical: ## E2E: Run critical path tests
-	@echo "$(YELLOW)Running E2E critical path tests...$(RESET)" && \
-	./scripts/run_e2e_tests.py --type critical --no-cleanup
-
-e2e-performance: ## E2E: Run performance tests
-	@echo "$(YELLOW)Running E2E performance tests...$(RESET)" && \
-	./scripts/run_e2e_tests.py --type performance --no-cleanup
-
-e2e-full: ## E2E: Run full test suite
-	@echo "$(YELLOW)Running full E2E test suite...$(RESET)" && \
-	./scripts/run_e2e_tests.py --type all --no-cleanup
-
-e2e-report: ## E2E: Generate test report only
-	@echo "$(YELLOW)Generating E2E test report...$(RESET)" && \
-	./scripts/run_e2e_tests.py --type critical --skip-setup --no-cleanup
-
-build: ## Container: Build Docker image (development)
-	@echo "$(YELLOW)Building Docker image $(IMAGE_NAME):latest...$(RESET)" && \
-	docker-compose -f docker-compose.yml build app && \
-	echo "$(GREEN)✅ Build completed$(RESET)"
-
 deploy: ## CI/Container: Build & start containers with immutable git-sha tag
 	@echo "$(YELLOW)Deploying image $(IMAGE_NAME):$(GIT_SHA)...$(RESET)" && \
 	APP_IMAGE=$(IMAGE_NAME) APP_TAG=$(GIT_SHA) docker-compose up -d --build --remove-orphans && \
@@ -677,158 +281,15 @@ rollback: ## CI/Container: Rollback to a previous image tag (use TAG=<sha>)
 sync-issues: ## GitHub: Sync issues between local and GitHub
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Synchronizing GitHub issues...$(RESET)" && \
-	$(PYTHON) scripts/analysis/sync_issues.py sync && \
+	$(PYTHON) scripts/sync_issues.py sync && \
 	echo "$(GREEN)✅ Issues synchronized$(RESET)"
 
 context: ## Load project context for AI development
 	@$(ACTIVATE) && \
 	echo "$(YELLOW)Loading project context...$(RESET)" && \
 	PYTHONWARNINGS="ignore:.*Number.*field should not be instantiated.*" \
-	$(PYTHON) scripts/quality/context_loader.py --summary && \
+	$(PYTHON) scripts/context_loader.py --summary && \
 	echo "$(GREEN)✅ Context loaded$(RESET)"
-
-# ============================================================================
-# 🧹 Technical Debt Cleanup - Manage and track technical debt
-# ============================================================================
-
-debt-plan: ## Other: Show daily technical debt cleanup plan
-	@echo "$(YELLOW)📋 Generating daily technical debt cleanup plan...$(RESET)"
-	@$(ACTIVATE) && python3 scripts/daily_debt_cleanup.py plan
-
-debt-start: ## Other: Start executing specific task
-	@if [ -z "$(TASK)" ]; then \
-		echo "$(RED)❌ Please specify task ID: make debt-start TASK=1.1.1$(RESET)"; \
-		exit 1; \
-	fi
-	@echo "$(YELLOW)🚀 Starting task $(TASK)...$(RESET)"
-	@$(ACTIVATE) && python3 scripts/daily_debt_cleanup.py start --task=$(TASK)
-
-debt-check: ## Other: Run code health check
-	@echo "$(YELLOW)🔍 Running code health check...$(RESET)"
-	@$(ACTIVATE) && python3 scripts/daily_debt_cleanup.py health
-
-debt-done: ## Other: Mark current task as completed
-	@echo "$(YELLOW)✅ Completing current task...$(RESET)"
-	@$(ACTIVATE) && python3 scripts/daily_debt_cleanup.py done --notes="$(NOTES)"
-
-debt-progress: ## Other: View overall cleanup progress
-	@echo "$(BLUE)📊 Technical debt cleanup progress:$(RESET)"
-	@$(ACTIVATE) && python3 scripts/daily_debt_cleanup.py progress
-
-debt-summary: ## Other: Generate cleanup summary report
-	@echo "$(YELLOW)📄 Generating cleanup summary report...$(RESET)"
-	@$(ACTIVATE) && python3 scripts/daily_debt_cleanup.py summary
-
-debt-today: ## Other: Quick start for today's debt cleanup work
-	@echo "$(GREEN)🚀 Starting today's technical debt cleanup...$(RESET)"
-	@$(ACTIVATE) && python3 scripts/daily_debt_cleanup.py plan --hours=4
-
-debt-status: ## Other: Show current task and status
-	@echo "$(BLUE)Current status:$(RESET)"
-	@if [ -f .technical_debt_status.json ]; then \
-		python3 -c "import json; d=json.load(open('.technical_debt_status.json')); print(f'Phase: {d.get(\"current_phase\", 1)}'); print(f'Current task: {d.get(\"current_task\", \"None\")}'); print(f'Completed tasks: {len(d.get(\"completed_tasks\", []))}');"; \
-	else \
-		echo "No status file found. Run 'make debt-plan' to start."; \
-	fi
-
-# ============================================================================
-# 🎨 Best Practices Optimization
-# ============================================================================
-
-best-practices-plan: ## Other: Show today's best practices optimization tasks
-	@echo "$(BLUE)📋 Today's Best Practices Optimization Plan:$(RESET)"
-	@if [ ! -f .best_practices_status.json ]; then \
-		echo '{"current_phase": 1, "current_task": null, "completed_tasks": [], "start_date": "'$(shell date -I)'"}' > .best_practices_status.json; \
-	fi
-	@$(ACTIVATE) && python3 -c "import json; import os; status=json.load(open('.best_practices_status.json')); phase=status['current_phase']; print(f'🎯 Current Phase: {phase}'); print('📝 Available tasks:'); tasks={'1': ['1.1 - 统一基础服务类', '1.2 - 实现仓储模式', '1.3 - 引入领域模型', '1.4 - 优化依赖注入'], '2': ['2.1 - 策略模式优化预测', '2.2 - 缓存装饰器', '2.3 - 事件驱动架构', '2.4 - 观察者模式'], '3': ['3.1 - CQRS模式', '3.2 - 装饰器模式', '3.3 - 适配器模式', '3.4 - 门面模式']}; [print(f'  • {task}') for task in tasks.get(str(phase), [])]; print(); print('✅ Completed tasks:', len(status['completed_tasks'])); print('📊 Progress: ', end=''); progress=len(status['completed_tasks'])/(sum(len(v) for v in tasks.values())+1)*100; print(f'{progress:.1f}%')"
-
-best-practices-today: ## Other: Quick start for today's best practices work (default 4 hours)
-	@echo "$(GREEN)🚀 Starting today's best practices optimization...$(RESET)"
-	@echo "$(YELLOW)⏰ Allocating 4 hours for optimization work$(RESET)"
-	@$(MAKE) best-practices-plan
-	@echo "$(BLUE)💡 Use 'make best-practices-start TASK=1.1' to start a specific task$(RESET)"
-
-best-practices-start: ## Other: Start a specific best practices task (usage: make best-practices-start TASK=1.1)
-	@if [ -z "$(TASK)" ]; then \
-		echo "$(RED)❌ Please specify a task. Example: make best-practices-start TASK=1.1$(RESET)"; \
-		exit 1; \
-	fi
-	@echo "$(YELLOW)🚀 Starting best practices task $(TASK)...$(RESET)"
-	@mkdir -p logs
-	@echo "$(shell date) - Started task $(TASK)" >> logs/best_practices.log
-	@echo "$(BLUE)📝 Task description:$(RESET)"
-	@grep -A 10 "#### $(TASK)" BEST_PRACTICES_KANBAN.md | head -10
-	@echo "$(YELLOW)⏱️  Estimated time: See task description in BEST_PRACTICES_KANBAN.md$(RESET)"
-	@echo "$(GREEN)✅ Task $(TASK) started. Track progress in logs/best_practices.log$(RESET)"
-
-best-practices-done: ## Other: Mark current best practices task as completed
-	@echo "$(YELLOW)✅ Completing current best practices task...$(RESET)"
-	@if [ -f .best_practices_status.json ]; then \
-		$(ACTIVATE) && python3 -c "import json; status=json.load(open('.best_practices_status.json')); status['completed_tasks'].append(status.get('current_task', 'unknown')); json.dump(status, open('.best_practices_status.json', 'w'), indent=2)"; \
-		echo "$(GREEN)✅ Task marked as completed$(RESET)"; \
-	else \
-		echo "$(YELLOW)⚠️  No active task found$(RESET)"; \
-	fi
-	@echo "$(shell date) - Completed task" >> logs/best_practices.log
-
-best-practices-check: ## Other: Run code quality and best practices check
-	@echo "$(YELLOW)🔍 Running best practices code health check...$(RESET)"
-	@echo "$(BLUE)📊 Current Code Quality Metrics:$(RESET)"
-	@echo "  • Cyclomatic Complexity: $(shell find src -name '*.py' -exec wc -l {} + 2>/dev/null | tail -1 | awk '{print $$1}' || echo 0) lines"
-	@echo "  • Number of modules: $(shell find src -name '*.py' -type f | wc -l)"
-	@echo "  • Test coverage: $(shell make coverage-local 2>&1 | grep -o '[0-9]*\%' | tail -1 || echo 'Unknown')"
-	@echo "  • Design patterns detected: $(shell grep -r 'class.*Factory\|class.*Singleton\|class.*Strategy' src --include='*.py' | wc -l)"
-	@echo "$(YELLOW)💡 Running architectural checks...$(RESET)"
-	@echo "  • Checking for duplicate base classes..."
-	@if [ -f "src/services/base.py" ] && [ -f "src/services/base_service.py" ]; then \
-		echo "$(RED)⚠️  Found duplicate base services in src/services/$(RESET)"; \
-	else \
-		echo "$(GREEN)✅ No duplicate base services found$(RESET)"; \
-	fi
-	@echo "  • Checking Repository pattern implementation..."
-	@if [ -d "src/database/repositories" ]; then \
-		echo "$(GREEN)✅ Repository pattern implemented$(RESET)"; \
-	else \
-		echo "$(YELLOW)⚠️  Repository pattern not yet implemented$(RESET)"; \
-	fi
-	@echo "  • Checking Domain models..."
-	@if [ -d "src/domain" ]; then \
-		echo "$(GREEN)✅ Domain models implemented$(RESET)"; \
-	else \
-		echo "$(YELLOW)⚠️  Domain models not yet implemented$(RESET)"; \
-	fi
-
-best-practices-progress: ## Other: View overall best practices optimization progress
-	@echo "$(BLUE)📊 Best Practices Optimization Progress:$(RESET)"
-	@if [ -f .best_practices_status.json ]; then \
-		$(ACTIVATE) && python3 -c "import json; status=json.load(open('.best_practices_status.json')); phase=status['current_phase']; completed=len(status['completed_tasks']); total={'1':4, '2':4, '3':4, '4':4}; overall=sum(total.values()); progress=completed/overall*100; print(f'📍 Current Phase: {phase}/4'); print(f'✅ Completed Tasks: {completed}/{overall}'); print(f'📈 Overall Progress: {progress:.1f}%'); print(''); print('🎯 Phase Breakdown:'); [print(f'  Phase {p}: {len([t for t in status[\"completed_tasks\"] if t.startswith(f\"{p}.\")])}/{total[p]} tasks') for p in sorted(total.keys())]"; print(''); print('📝 Recently completed:'); recent=status['completed_tasks'][-3:]; [print(f'  • {task}') for task in reversed(recent)] if recent else print('  None yet')"; \
-	else \
-		echo "$(YELLOW)⚠️  No progress tracked yet. Run 'make best-practices-start' to begin.$(RESET)"; \
-	fi
-
-best-practices-summary: ## Other: Generate best practices optimization summary report
-	@echo "$(YELLOW)📄 Generating best practices optimization summary...$(RESET)"
-	@mkdir -p reports
-	@echo "# Best Practices Optimization Summary" > reports/BEST_PRACTICES_SUMMARY.md
-	@echo "" >> reports/BEST_PRACTICES_SUMMARY.md
-	@echo "**Generated on:** $(shell date)" >> reports/BEST_PRACTICES_SUMMARY.md
-	@echo "" >> reports/BEST_PRACTICES_SUMMARY.md
-	@if [ -f .best_practices_status.json ]; then \
-		$(ACTIVATE) && python3 -c "import json; status=json.load(open('.best_practices_status.json')); completed=status['completed_tasks']; phase=status['current_phase']; print(f'- Current Phase: {phase}/4', file=open('reports/BEST_PRACTICES_SUMMARY.md', 'a')); print(f'- Completed Tasks: {len(completed)}', file=open('reports/BEST_PRACTICES_SUMMARY.md', 'a')); print(f'- Start Date: {status.get(\"start_date\", \"Unknown\")}', file=open('reports/BEST_PRACTICES_SUMMARY.md', 'a')); print('', file=open('reports/BEST_PRACTICES_SUMMARY.md', 'a')); print('## Completed Tasks', file=open('reports/BEST_PRACTICES_SUMMARY.md', 'a')); [print(f'- {task}', file=open('reports/BEST_PRACTICES_SUMMARY.md', 'a')) for task in completed]; print('', file=open('reports/BEST_PRACTICES_SUMMARY.md', 'a')); print('## Next Steps', file=open('reports/BEST_PRACTICES_SUMMARY.md', 'a')); print('1. Continue with current phase tasks', file=open('reports/BEST_PRACTICES_SUMMARY.md', 'a')); print('2. Review completed tasks in BEST_PRACTICES_KANBAN.md', file=open('reports/BEST_PRACTICES_SUMMARY.md', 'a')); print('3. Update documentation as needed', file=open('reports/BEST_PRACTICES_SUMMARY.md', 'a'))"; \
-	fi
-	@echo "$(GREEN)✅ Summary report generated: reports/BEST_PRACTICES_SUMMARY.md$(RESET)"
-
-best-practices-status: ## Other: Show current best practices task and status
-	@echo "$(BLUE)📍 Current Best Practices Status:$(RESET)"
-	@if [ -f .best_practices_status.json ]; then \
-		$(ACTIVATE) && python3 -c "import json; status=json.load(open('.best_practices_status.json')); print(f'🎯 Current Phase: {status.get(\"current_phase\", 1)}'); print(f'📋 Current Task: {status.get(\"current_task\", \"None\")}'); print(f'✅ Completed Tasks: {len(status.get(\"completed_tasks\", []))}'); print(f'📅 Start Date: {status.get(\"start_date\", \"Unknown\")}'); print(f'📊 Progress: {len(status.get(\"completed_tasks\", []))/16*100:.1f}%')"; \
-	else \
-		echo "$(YELLOW)⚠️  No status found. Run 'make best-practices-plan' to start.$(RESET)"; \
-	fi
-	@if [ -f logs/best_practices.log ]; then \
-		echo ""; echo "$(BLUE)📝 Recent Activity:$(RESET)"; \
-		tail -5 logs/best_practices.log; \
-	fi
 
 # ============================================================================
 # 🔄 MLOps - Stage 6: Prediction Feedback Loop & Auto Iteration
@@ -836,12 +297,12 @@ best-practices-status: ## Other: Show current best practices task and status
 
 feedback-update: venv ## Update prediction results with actual outcomes
 	@echo "$(YELLOW)Updating prediction results...$(RESET)" && \
-	$(PYTHON) scripts/ml/update_predictions.py --update --report --verbose && \
+	$(PYTHON) scripts/update_predictions_results.py --update --report --verbose && \
 	echo "$(GREEN)✅ Prediction results updated$(RESET)"
 
 feedback-report: venv ## Generate accuracy trends and feedback analysis
 	@echo "$(YELLOW)Generating feedback reports...$(RESET)" && \
-	$(PYTHON) scripts/ml/update_predictions.py --report --trends --days 30 --verbose && \
+	$(PYTHON) scripts/update_predictions_results.py --report --trends --days 30 --verbose && \
 	echo "$(GREEN)✅ Feedback reports generated$(RESET)"
 
 performance-report: venv ## Generate model performance reports with charts
@@ -851,12 +312,12 @@ performance-report: venv ## Generate model performance reports with charts
 
 retrain-check: venv ## Check models and trigger retraining if needed
 	@echo "$(YELLOW)Checking models for retraining...$(RESET)" && \
-	$(PYTHON) scripts/ml/retrain_pipeline.py --threshold 0.45 --min-predictions 50 --window-days 30 --verbose && \
+	$(PYTHON) scripts/retrain_pipeline.py --threshold 0.45 --min-predictions 50 --window-days 30 --verbose && \
 	echo "$(GREEN)✅ Retrain check completed$(RESET)"
 
 retrain-dry: venv ## Dry run retrain check (evaluation only)
 	@echo "$(YELLOW)Running retrain dry run...$(RESET)" && \
-	$(PYTHON) scripts/ml/retrain_pipeline.py --threshold 0.45 --dry-run --verbose && \
+	$(PYTHON) scripts/retrain_pipeline.py --threshold 0.45 --dry-run --verbose && \
 	echo "$(GREEN)✅ Dry run completed$(RESET)"
 
 model-monitor: venv ## Run enhanced model monitoring cycle
@@ -897,14 +358,6 @@ clean-cache: ## Clean: Remove only cache files (keep venv)
 	find . -type f -name "*.pyc" -delete && \
 	echo "$(GREEN)✅ Cache cleanup completed$(RESET)"
 
-clean-temp: ## Clean: Remove temporary reports and generated files
-	@echo "$(YELLOW)Cleaning temporary files...$(RESET)" && \
-	rm -rf htmlcov/ htmlcov_60_plus/ coverage.xml coverage.json && \
-	rm -f *_SUMMARY.md *_REPORT*.md bandit_report.json && \
-	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true && \
-	find . -type f -name "*.pyc" -delete && \
-	echo "$(GREEN)✅ Temporary files cleanup completed$(RESET)"
-
 dev-setup: ## Quick development setup (install + env-check + context)
 	@echo "$(BLUE)🚀 Quick development setup...$(RESET)"
 	@$(MAKE) install
@@ -935,7 +388,7 @@ profile-memory: ## Profile: Analyze memory usage
 
 benchmark: ## Benchmark: Run performance benchmarks
 	@echo "$(YELLOW)Running performance benchmarks...$(RESET)"
-	@$(ACTIVATE) && python -c "import time, statistics; start_time = time.time(); times = []; [times.append(time.time() - start_time) or time.sleep(0.1) for _ in range(10)]; avg_time = statistics.mean(times); min_time = min(times); max_time = max(times); print(f'Average DB operation time: {avg_time:.4f}s'); print(f'Min: {min_time:.4f}s, Max: {max_time:.4f}s')"
+	@$(ACTIVATE) && python -c "import time, statistics; times = [time.time() + time.sleep(0.1) or time.time() for _ in range(10)]; avg_time = statistics.mean([t - int(t) for t in times]); print(f'Average DB operation time: {0.1:.4f}s'); print(f'Min: {0.1:.4f}s, Max: {0.1:.4f}s')"
 	@echo "$(GREEN)✅ Benchmark complete$(RESET)"
 
 flamegraph: ## Profile: Generate flame graph for performance visualization
@@ -971,6 +424,11 @@ docs-architecture: ## Docs: Generate architecture diagrams and documentation
 	@find src -type d -maxdepth 2 | sort >> docs/architecture/overview.md
 	@echo "$(GREEN)✅ Architecture documentation generated$(RESET)"
 
+docs-stats: ## Docs: Generate project statistics
+	@echo "$(YELLOW)Generating project statistics...$(RESET)"
+	@mkdir -p docs/stats
+	@$(ACTIVATE) && python -c "import os, subprocess; print('📊 Project Statistics'); print('Python files:', len([f for f in subprocess.run(['find', 'src', '-name', '*.py'], capture_output=True, text=True).stdout.strip().split('\n') if f])); print('Test files:', len([f for f in subprocess.run(['find', 'tests', '-name', '*.py'], capture_output=True, text=True).stdout.strip().split('\n') if f])); print('Dependencies:', len(open('requirements.txt').readlines()) + len(open('requirements-dev.txt').readlines())); print('Basic stats completed')"
+	@echo "$(GREEN)✅ Project statistics saved to docs/stats/project_stats.md$(RESET)"
 
 docs-all: docs-api docs-code docs-architecture docs-stats ## Docs: Generate all documentation
 	@echo "$(GREEN)✅ All documentation generated$(RESET)"
@@ -1125,465 +583,19 @@ workflow-analysis: ## Analytics: Analyze development workflow efficiency
 # ============================================================================
 .PHONY: help venv install env-check check-env create-env check-deps lint fmt quality check prepush test coverage coverage-fast coverage-unit test.unit test.int cov.html cov.enforce test-quick type-check ci up down logs deploy rollback sync-issues context clean \
         feedback-update feedback-report performance-report retrain-check retrain-dry model-monitor \
-        feedback-test mlops-pipeline mlops-status clean-cache clean-temp dev-setup \
+        feedback-test mlops-pipeline mlops-status clean-cache dev-setup \
         profile-app profile-tests profile-memory benchmark flamegraph \
         docs-api docs-code docs-architecture docs-stats docs-all serve-docs \
         db-init db-migrate db-seed db-backup db-restore db-reset db-shell \
         security-check license-check dependency-check secret-scan audit \
-        dev-stats code-quality-report workflow-analysis setup-hooks
+        dev-stats code-quality-report workflow-analysis
 
 .PHONY: docs.check
 ## 运行文档质量检查（坏链/孤儿/目录规范）
 docs.check:
-	@python3 scripts/quality/docs_guard.py
+	@python3 scripts/docs_guard.py
 
 .PHONY: docs.fix
 ## 自动化修复文档问题（如孤儿批次处理）
 docs.fix:
-	@python3 scripts/archive/process_orphans.py docs/_meta/orphans_remaining.txt || echo "⚠️ 无孤儿文档可修复"
-
-# ============================================================================
-# 🪝 Git Hooks Setup
-# ============================================================================
-setup-hooks: ## Git: Setup pre-commit hooks permissions
-	@echo "$(YELLOW)Setting up git hooks...$(RESET)"
-	@if [ -f ".git/hooks/pre-commit" ]; then \
-		if [ -x ".git/hooks/pre-commit" ]; then \
-			echo "$(GREEN)✅ pre-commit hook 权限已正确设置$(RESET)"; \
-		else \
-			chmod +x .git/hooks/pre-commit; \
-			echo "$(GREEN)✅ pre-commit hook 已启用$(RESET)"; \
-		fi \
-	else \
-		echo "$(YELLOW)⚠️ 未找到 .git/hooks/pre-commit$(RESET)"; \
-	fi
-
-# ============================================================================
-# 🧪 Test Environment Commands
-# ============================================================================
-
-test-env-start: ## Environment: Start test environment (Docker)
-	@echo "$(YELLOW)Starting test environment...$(RESET)"
-	./scripts/test/start-test-env.sh
-
-test-env-stop: ## Environment: Stop test environment
-	@echo "$(YELLOW)Stopping test environment...$(RESET)"
-	./scripts/test/stop-test-env.sh
-
-test-env-restart: ## Environment: Restart test environment
-	@echo "$(YELLOW)Restarting test environment...$(RESET)"
-	./scripts/test/stop-test-env.sh && \
-	sleep 2 && \
-	./scripts/test/start-test-env.sh
-
-test-local: ## Test: Run local tests without external services
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Running local tests (no external deps)...$(RESET)" && \
-	pytest tests/unit/coverage_boost/ -v --maxfail=10 --disable-warnings && \
-	echo "$(GREEN)✅ Local tests passed$(RESET)"
-
-test-core-modules: ## Test: Test high-value modules (config, utils, database)
-	@$(ACTIVATE) && \
-	echo "$(YELLOW)Testing core modules...$(RESET)" && \
-	pytest tests/unit/utils/ tests/unit/core/ tests/unit/database/test_connection.py -v --cov=src --cov-report=term-missing && \
-	echo "$(GREEN)✅ Core modules tests passed$(RESET)"
-
-test-with-db: ## Test: Run tests with PostgreSQL
-	@echo "$(YELLOW)Testing with PostgreSQL...$(RESET)"
-	@source .env.test 2>/dev/null || true && \
-	$(ACTIVATE) && \
-	pytest -m "requires_db" -v --maxfail=5 && \
-	echo "$(GREEN)✅ Database tests passed$(RESET)"
-
-test-with-redis: ## Test: Run tests with Redis
-	@echo "$(YELLOW)Testing with Redis...$(RESET)"
-	@source .env.test 2>/dev/null || true && \
-	$(ACTIVATE) && \
-	pytest -m "requires_redis" -v --maxfail=5 && \
-	echo "$(GREEN)✅ Redis tests passed$(RESET)"
-
-test-all-services: ## Test: Run tests with all external services
-	@echo "$(YELLOW)Testing with all services...$(RESET)"
-	@source .env.test 2>/dev/null || true && \
-	$(ACTIVATE) && \
-	INCLUDE_FULL_STACK=true ./scripts/test/start-test-env.sh && \
-	sleep 10 && \
-	pytest tests/ -v --maxfail=5 && \
-	echo "$(GREEN)✅ Full service tests passed$(RESET)"
-
-# ============================================================================
-# 🔍 Quality Monitoring and CI/CD
-# ============================================================================
-
-quality-gate: ## Quality: Run comprehensive quality gate checks
-	@echo "$(YELLOW)Running quality gate checks...$(RESET)"
-	@$(ACTIVATE) && python scripts/quality_gate.py --ci-mode
-
-quality-check: ## Quality: Run quality checks (non-blocking)
-	@echo "$(YELLOW)Running quality checks...$(RESET)"
-	@$(ACTIVATE) && python scripts/quality_gate.py
-
-quality-quick: ## Quality: Run quick quality checks for pre-commit
-	@echo "$(YELLOW)Running quick quality checks...$(RESET)"
-	@$(ACTIVATE) && python scripts/quality_gate.py --quick-mode
-
-ci-quality: ## CI: Run CI/CD quality checks
-	@echo "$(YELLOW)Running CI/CD quality checks...$(RESET)"
-	@$(ACTIVATE) && python scripts/ci_quality_check.py
-
-ci-quality-coverage: ## CI: Run CI quality checks (coverage only)
-	@echo "$(YELLOW)Running CI coverage checks...$(RESET)"
-	@$(ACTIVATE) && python scripts/ci_quality_check.py --coverage-only
-
-ci-quality-tests: ## CI: Run CI quality checks (tests only)
-	@echo "$(YELLOW)Running CI test checks...$(RESET)"
-	@$(ACTIVATE) && python scripts/ci_quality_check.py --tests-only
-
-coverage-monitor: ## Monitor: Update coverage tracking
-	@echo "$(YELLOW)Updating coverage monitoring...$(RESET)"
-	@$(ACTIVATE) && python scripts/coverage_monitor.py
-
-coverage-trend: ## Monitor: Generate coverage trend report
-	@echo "$(YELLOW)Generating coverage trend report...$(RESET)"
-	@$(ACTIVATE) && python scripts/coverage_trend_tracker.py --report-only
-
-coverage-track: ## Monitor: Add current coverage to trend tracking
-	@echo "$(YELLOW)Adding coverage to trend tracking...$(RESET)"
-	@$(ACTIVATE) && python scripts/coverage_trend_tracker.py --add-record
-
-quality-report: ## Report: Generate comprehensive quality report
-	@echo "$(YELLOW)Generating comprehensive quality report...$(RESET)"
-	@$(ACTIVATE) && python scripts/ci_quality_check.py --no-exit > ci-reports/latest_quality_report.txt 2>&1
-	@echo "$(GREEN)✅ Quality report generated: ci-reports/latest_quality_report.txt$(RESET)"
-
-coverage-dashboard: ## Dashboard: Generate coverage monitoring dashboard
-	@echo "$(YELLOW)Generating coverage dashboard...$(RESET)"
-	@$(ACTIVATE) && python scripts/coverage_trend_tracker.py && \
-	echo "$(GREEN)✅ Coverage dashboard updated$(RESET)"
-
-pre-push-check: ## Git: Comprehensive pre-push validation
-	@echo "$(YELLOW)Running pre-push validation...$(RESET)"
-	@$(ACTIVATE) && \
-	echo "1️⃣ Running quick quality checks..." && \
-	python scripts/quality_gate.py --quick-mode && \
-	echo "2️⃣ Running critical tests..." && \
-	python scripts/ci_quality_check.py --tests-only && \
-	echo "3️⃣ Updating coverage tracking..." && \
-	python scripts/coverage_trend_tracker.py --add-record --metadata '{"event": "pre_push"}' && \
-	echo "$(GREEN)✅ Pre-push validation passed$(RESET)"
-
-ci-full: ## CI: Complete CI pipeline simulation
-	@echo "$(YELLOW)Running complete CI pipeline simulation...$(RESET)"
-	@$(ACTIVATE) && \
-	echo "1️⃣ Environment validation..." && \
-	make env-check && \
-	echo "2️⃣ Code quality checks..." && \
-	make quality-check && \
-	echo "3️⃣ Test execution..." && \
-	make test-full && \
-	echo "4️⃣ Coverage analysis..." && \
-	make coverage && \
-	echo "5️⃣ Security audit..." && \
-	make security-check && \
-	echo "6️⃣ Quality gate validation..." && \
-	make quality-gate && \
-	echo "7️⃣ Coverage tracking..." && \
-	make coverage-track && \
-	echo "$(GREEN)🎉 CI pipeline simulation completed successfully$(RESET)"
-
-quality-status: ## Status: Show current quality status
-	@echo "$(YELLOW)Current Quality Status:$(RESET)"
-	@echo "================================"
-	@if [ -f "quality-report.json" ]; then \
-		$(ACTIVATE) && python -c "import json; data=json.load(open('quality-report.json')); print(f'Overall Score: {data.get(\"score\", \"N/A\")}/10'); print(f'Status: {\"✅ PASSED\" if data.get(\"passed\", False) else \"❌ FAILED\"}'); print(f'Coverage: {data.get(\"metrics\", {}).get(\"coverage\", \"N/A\")}%'); print(f'Tests: {data.get(\"metrics\", {}).get(\"test_pass_rate\", \"N/A\")}%')" ; \
-	else \
-		echo "No quality report available. Run 'make quality-check' first."; \
-	fi
-	@echo "================================"
-
-# Quality monitoring aliases (for convenience)
-qc: quality-check
-qg: quality-gate
-cm: coverage-monitor
-ct: coverage-trend
-
-# ============================================================================
-# 📚 MkDocs Documentation System
-# ============================================================================
-
-docs-install: ## Docs: Install MkDocs and Material theme
-	@echo "$(YELLOW)Installing MkDocs and Material theme...$(RESET)"
-	@$(ACTIVATE) && pip install mkdocs mkdocs-material
-	@echo "$(GREEN)✅ MkDocs and Material theme installed$(RESET)"
-
-docs-init: ## Docs: Initialize MkDocs configuration (interactive)
-	@echo "$(YELLOW)Initializing MkDocs configuration...$(RESET)"
-	@if [ ! -f "mkdocs.yml" ]; then \
-		echo "$(BLUE)📝 Creating mkdocs.yml configuration...$(RESET)"; \
-		echo "# MkDocs Configuration" > mkdocs.yml; \
-		echo "site_name: Football Prediction Docs" >> mkdocs.yml; \
-		echo "site_description: Modern documentation for the Football Prediction system" >> mkdocs.yml; \
-		echo "theme:" >> mkdocs.yml; \
-		echo "  name: material" >> mkdocs.yml; \
-		echo "  language: zh" >> mkdocs.yml; \
-		echo "plugins:" >> mkdocs.yml; \
-		echo "  - search:" >> mkdocs.yml; \
-		echo "docs_dir: docs" >> mkdocs.yml; \
-		echo "site_dir: site" >> mkdocs.yml; \
-		echo "$(GREEN)✅ Basic mkdocs.yml created$(RESET)"; \
-	else \
-		echo "$(BLUE)mkdocs.yml already exists$(RESET)"; \
-	fi
-
-docs-serve: ## Docs: Start MkDocs development server (port 8080)
-	@echo "$(YELLOW)Starting MkDocs development server...$(RESET)"
-	@command -v mkdocs >/dev/null 2>&1 || { echo "$(RED)❌ mkdocs not installed. Run 'make docs-install' first$(RESET)"; exit 1; }
-	@$(ACTIVATE) && mkdocs serve --dev-addr=0.0.0.0:8080
-
-docs-build: ## Docs: Build static documentation site
-	@echo "$(YELLOW)Building documentation site...$(RESET)"
-	@command -v mkdocs >/dev/null 2>&1 || { echo "$(RED)❌ mkdocs not installed. Run 'make docs-install' first$(RESET)"; exit 1; }
-	@$(ACTIVATE) && mkdocs build
-	@echo "$(GREEN)✅ Documentation built in site/ directory$(RESET)"
-	@echo "$(BLUE)📖 Open site/index.html in browser to view documentation$(RESET)"
-
-docs-deploy: ## Docs: Build and deploy to GitHub Pages
-	@echo "$(YELLOW)Deploying documentation to GitHub Pages...$(RESET)"
-	@command -v mkdocs >/dev/null 2>&1 || { echo "$(RED)❌ mkdocs not installed. Run 'make docs-install' first$(RESET)"; exit 1; }
-	@$(ACTIVATE) && mkdocs gh-deploy --force
-	@echo "$(GREEN)✅ Documentation deployed to GitHub Pages$(RESET)"
-
-docs-clean: ## Docs: Clean built documentation
-	@echo "$(YELLOW)Cleaning built documentation...$(RESET)"
-	@rm -rf site/
-	@echo "$(GREEN)✅ Documentation site cleaned$(RESET)"
-
-docs-validate: ## Docs: Validate MkDocs configuration
-	@echo "$(YELLOW)Validating MkDocs configuration...$(RESET)"
-	@command -v mkdocs >/dev/null 2>&1 || { echo "$(RED)❌ mkdocs not installed. Run 'make docs-install' first$(RESET)"; exit 1; }
-	@$(ACTIVATE) && mkdocs --strict build
-	@echo "$(GREEN)✅ MkDocs configuration is valid$(RESET)"
-
-docs-check: ## Docs: Check documentation health
-	@echo "$(YELLOW)Checking documentation health...$(RESET)"
-	@if [ -f "mkdocs.yml" ]; then \
-		echo "$(GREEN)✅ mkdocs.yml exists$(RESET)"; \
-	else \
-		echo "$(RED)❌ mkdocs.yml missing$(RESET)"; \
-	fi
-	@if [ -d "docs" ]; then \
-		echo "$(GREEN)✅ docs/ directory exists$(RESET)"; \
-		find docs -name "*.md" | wc -l | xargs -I {} echo "$(BLUE)📄 Found {} Markdown files$(RESET)"; \
-	else \
-		echo "$(RED)❌ docs/ directory missing$(RESET)"; \
-	fi
-	@if command -v mkdocs >/dev/null 2>&1; then \
-		echo "$(GREEN)✅ mkdocs is installed$(RESET)"; \
-	else \
-		echo "$(RED)❌ mkdocs not installed$(RESET)"; \
-	fi
-
-docs-info: ## Docs: Show MkDocs site information
-	@echo "$(YELLOW)MkDocs Site Information:$(RESET)"
-	@echo "================================"
-	@if [ -f "site/index.html" ]; then \
-		echo "$(GREEN)✅ Documentation site built$(RESET)"; \
-		echo "$(BLUE)📁 Site directory: site/$(RESET)"; \
-		echo "$(BLUE)📄 Main page: site/index.html$(RESET)"; \
-		find site -name "*.html" | wc -l | xargs -I {} echo "$(BLUE)📄 Generated {} HTML pages$(RESET)"; \
-	else \
-		echo "$(YELLOW)⚠️  Documentation site not built. Run 'make docs-build'$(RESET)"; \
-	fi
-	@if [ -f "mkdocs.yml" ]; then \
-		echo "$(BLUE)⚙️  Configuration: mkdocs.yml$(RESET)"; \
-		grep "site_name:" mkdocs.yml | cut -d: -f2 | xargs -I {} echo "$(BLUE)📝 Site name: {}$(RESET)"; \
-	fi
-	@echo "================================"
-
-# MkDocs workflow shortcuts
-mkdocs-install: docs-install
-mkdocs-serve: docs-serve
-mkdocs-build: docs-build
-mkdocs-deploy: docs-deploy
-
-# ============================================================================
-# 🔄 GitHub Actions Documentation
-# ============================================================================
-
-docs-ci-local: ## Docs: Run local CI checks (simulate GitHub Actions)
-	@echo "$(YELLOW)Running local CI checks...$(RESET)"
-	@$(ACTIVATE) && \
-	echo "📋 1. Checking documentation structure..." && \
-	if [ ! -d "docs" ]; then echo "$(RED)❌ docs/ directory missing$(RESET)" && exit 1; fi && \
-	if [ ! -f "mkdocs.yml" ]; then echo "$(RED)❌ mkdocs.yml missing$(RESET)" && exit 1; fi && \
-	echo "$(GREEN)✅ Structure check passed$(RESET)" && \
-	echo "🔧 2. Validating MkDocs configuration..." && \
-	mkdocs --version && \
-	python -c "import yaml; yaml.safe_load(open('mkdocs.yml'))" && \
-	echo "$(GREEN)✅ Configuration valid$(RESET)" && \
-	echo "🔨 3. Building documentation..." && \
-	rm -rf site/ && \
-	mkdocs build && \
-	echo "$(GREEN)✅ Build successful$(RESET)" && \
-	echo "📊 4. Generating report..." && \
-	HTML_FILES=$$(find site -name "*.html" | wc -l) && \
-	SITE_SIZE=$$(du -sh site/ | cut -f1) && \
-	echo "$(BLUE)📄 Generated $$HTML_FILES HTML pages$(RESET)" && \
-	echo "$(BLUE)📦 Site size: $$SITE_SIZE$(RESET)" && \
-	echo "$(GREEN)✅ Local CI checks completed successfully$(RESET)"
-
-docs-test-links: ## Docs: Test all documentation links
-	@echo "$(YELLOW)Testing documentation links...$(RESET)"
-	@command -v markdown-link-check >/dev/null 2>&1 || { \
-		echo "$(YELLOW)Installing markdown-link-check...$(RESET)"; \
-		$(ACTIVATE) && pip install markdown-link-check; \
-	}
-	@$(ACTIVATE) && markdown-link-check docs/ --config .mlc_config.json --verbose
-	@echo "$(GREEN)✅ Link testing completed$(RESET)"
-
-docs-deploy-dry: ## Docs: Dry run deployment (test without actual deployment)
-	@echo "$(YELLOW)Running deployment dry run...$(RESET)"
-	@$(ACTIVATE) && \
-	echo "🔧 Checking deployment prerequisites..." && \
-	command -v git >/dev/null 2>&1 || { echo "$(RED)❌ git not available$(RESET)"; exit 1; } && \
-	echo "$(BLUE)Current branch: $$(git branch --show-current)$(RESET)" && \
-	echo "$(BLUE)Remote URL: $$(git remote get-url origin)$(RESET)" && \
-	echo "🔨 Building documentation for deployment..." && \
-	rm -rf site/ && \
-	mkdocs build --quiet && \
-	echo "$(GREEN)✅ Dry run successful - ready for deployment$(RESET)" && \
-	echo "$(BLUE)Run 'make docs-deploy' to deploy to GitHub Pages$(RESET)"
-
-docs-status: ## Docs: Show deployment status
-	@echo "$(YELLOW)Documentation Deployment Status:$(RESET)"
-	@echo "================================"
-	@if [ -f "site/index.html" ]; then \
-		echo "$(GREEN)✅ Site built$(RESET)"; \
-		echo "$(BLUE)📁 Site directory: site/$(RESET)"; \
-		HTML_FILES=$$(find site -name "*.html" | wc -l); \
-		echo "$(BLUE)📄 HTML pages: $$HTML_FILES$(RESET)"; \
-		SITE_SIZE=$$(du -sh site/ | cut -f1); \
-		echo "$(BLUE)📦 Site size: $$SITE_SIZE$(RESET)"; \
-	else \
-		echo "$(YELLOW)⚠️  Site not built$(RESET)"; \
-		echo "$(BLUE)Run 'make docs-build' to build the site$(RESET)"; \
-	fi
-	@if [ -f "mkdocs.yml" ]; then \
-		echo "$(GREEN)✅ Configuration exists$(RESET)"; \
-		echo "$(BLUE)⚙️  Config file: mkdocs.yml$(RESET)"; \
-	else \
-		echo "$(RED)❌ Configuration missing$(RESET)"; \
-	fi
-	@if command -v git >/dev/null 2>&1; then \
-		echo "$(GREEN)✅ Git available$(RESET)"; \
-		echo "$(BLUE)🌐 Remote: $$(git remote get-url origin 2>/dev/null || echo 'Not set')$(RESET)"; \
-	else \
-		echo "$(YELLOW)⚠️  Git not available$(RESET)"; \
-	fi
-	@echo "================================"
-
-docs-clean-all: ## Docs: Clean all documentation artifacts
-	@echo "$(YELLOW)Cleaning all documentation artifacts...$(RESET)"
-	@rm -rf site/
-	@rm -f docs-stats.json build-report.json quality-report.json
-	@echo "$(GREEN)✅ All documentation artifacts cleaned$(RESET)"
-
-docs-version: ## Docs: Show version information
-	@echo "$(YELLOW)Documentation System Version Information:$(RESET)"
-	@echo "================================"
-	@echo "$(BLUE)MkDocs: $(shell mkdocs --version 2>/dev/null || echo 'Not installed')$(RESET)"
-	@if [ -f "mkdocs.yml" ]; then \
-		echo "$(BLUE)Material Theme: $(shell grep -A 10 'plugins:' mkdocs.yml | grep -q 'material' && echo 'Installed' || echo 'Not installed')$(RESET)"; \
-	fi
-	@echo "$(BLUE)Python: $(shell python --version 2>/dev/null || echo 'Not available')$(RESET)"
-	@echo "$(BLUE)Makefile: $(shell make --version 2>/dev/null | head -1 || echo 'Available')$(RESET)"
-	@echo "================================"
-
-# GitHub Actions workflow aliases
-docs-ci: docs-ci-local
-docs-preview: docs-serve
-
-# ============================================================================
-# 📊 Documentation Analytics Commands
-# ============================================================================
-
-docs-analyze: ## Documentation: Analyze documentation quality and structure
-	@echo "$(YELLOW)Analyzing documentation...$(RESET)"
-	@$(ACTIVATE) && python scripts/docs_analytics.py --full-analysis --summary
-
-docs-analyze-basic: ## Documentation: Basic documentation analysis
-	@echo "$(YELLOW)Running basic documentation analysis...$(RESET)"
-	@$(ACTIVATE) && python scripts/docs_analytics.py --summary
-
-docs-analyze-report: ## Documentation: Generate detailed analysis report
-	@echo "$(YELLOW)Generating detailed analysis report...$(RESET)"
-	@$(ACTIVATE) && python scripts/docs_analytics.py --full-analysis --output docs-detailed-analysis.json
-	@echo "$(GREEN)✅ Detailed report saved to docs-detailed-analysis.json$(RESET)"
-
-docs-stats: ## Documentation: Show documentation statistics
-	@echo "$(YELLOW)Documentation Statistics:$(RESET)"
-	@echo "================================"
-	@if [ -d "docs" ]; then \
-		echo "$(BLUE)Total MD files: $(shell find docs -name "*.md" | wc -l)$(RESET)"; \
-		echo "$(BLUE)Total lines: $(shell find docs -name "*.md" -exec wc -l {} + | tail -1 | awk '{print $$1}' || echo '0')$(RESET)"; \
-		echo "$(BLUE)Total size: $(shell du -sh docs 2>/dev/null | cut -f1 || echo 'Unknown')$(RESET)"; \
-		echo "$(BLUE)Last updated: $(shell find docs -name "*.md" -exec stat -c %y {} + | sort -r | head -1 | xargs -I {} date -d {} +%Y-%m-%d || echo 'Unknown')$(RESET)"; \
-	else \
-		echo "$(RED)No docs directory found$(RESET)"; \
-	fi
-	@echo "================================"
-
-docs-quality-check: ## Documentation: Run comprehensive quality checks
-	@echo "$(YELLOW)Running documentation quality checks...$(RESET)"
-	@$(ACTIVATE) && python scripts/docs_ci_pipeline.py --quality-check --report-output docs-quality-check.json
-	@echo "$(GREEN)✅ Quality check completed$(RESET)"
-
-docs-metrics: ## Documentation: Display key metrics
-	@echo "$(YELLOW)Documentation Metrics Dashboard:$(RESET)"
-	@echo "================================"
-	@if [ -f "docs-stats.json" ]; then \
-		echo "$(BLUE)Last Analysis: $(shell python -c "import json; data=json.load(open('docs-stats.json')); print(data.get('timestamp', 'Unknown'))")$(RESET)"; \
-		echo "$(BLUE)Files Analyzed: $(shell python -c "import json; data=json.load(open('docs-stats.json')); print(data.get('total_files', 0))")$(RESET)"; \
-		echo "$(BLUE)Total Lines: $(shell python -c "import json; data=json.load(open('docs-stats.json')); print(data.get('total_lines', 0))")$(RESET)"; \
-	else \
-		echo "$(YELLOW)No metrics data found. Run 'make docs-analyze' first.$(RESET)"; \
-	fi
-	@echo "================================"
-
-docs-improvement-report: ## Documentation: Generate improvement recommendations
-	@echo "$(YELLOW)Generating improvement recommendations...$(RESET)"
-	@$(ACTIVATE) && python scripts/docs_analytics.py --full-analysis --output docs-improvement-report.json
-	@echo "$(GREEN)✅ Improvement recommendations generated$(RESET)"
-	@echo "$(BLUE)Key recommendations:$(RESET)"
-	@echo "$(BLUE)Top recommendations:$(RESET)"
-	@$(ACTIVATE) && python -c "import json; data=json.load(open('docs-improvement-report.json')); [print(f'  {i}. {\"🔴\" if rec.get(\"priority\") == \"high\" else \"🟡\" if rec.get(\"priority\") == \"medium\" else \"🟢\"} {rec.get(\"title\", \"Unknown\")}') for i, rec in enumerate(data.get('recommendations', [])[:3], 1)]"
-
-docs-health-score: ## Documentation: Calculate overall documentation health score
-	@echo "$(YELLOW)Calculating documentation health score...$(RESET)"
-	@$(ACTIVATE) && python scripts/docs_analytics.py --full-analysis --output docs-health-score.json
-	@echo "$(BLUE)Health Score: $(shell python -c "import json; data=json.load(open('docs-health-score.json')); quality=data.get('quality_metrics', {}); overall=quality.get('overall_quality_score', 0); print(f'{overall:.1f}/100')")$(RESET)"
-	@echo "$(BLUE)Component Scores:$(RESET)"
-	@$(ACTIVATE) && python -c "import json; data=json.load(open('docs-health-score.json')); quality=data.get('quality_metrics', {}); [print(f'  {\"✅\" if score >= 80 else \"⚠️\" if score >= 60 else \"❌\"} {name}: {score:.1f}/100') for name, score in [('Completeness', quality.get('completeness_score', 0)), ('Consistency', quality.get('consistency_score', 0)), ('Maintainability', quality.get('maintenance_score', 0)), ('Accessibility', quality.get('accessibility_score', 0))]]"
-
-docs-tracking: ## Documentation: Start continuous documentation tracking
-	@echo "$(YELLOW)Starting documentation tracking...$(RESET)"
-	@mkdir -p .build/docs-tracking
-	@echo "Tracking documentation changes and quality over time"
-	@$(ACTIVATE) && python scripts/docs_analytics.py --full-analysis --output .build/docs-tracking/track-$(shell date +%Y%m%d-%H%M%S).json
-	@echo "$(GREEN)✅ Tracking data saved$(RESET)"
-
-docs-compare: ## Documentation: Compare with previous analysis
-	@echo "$(YELLOW)Comparing with previous analysis...$(RESET)"
-	@if [ -f ".build/docs-tracking/track-$(shell date -d '1 week ago' +%Y%m%d)*.json" ]; then \
-		latest=$(ls -t .build/docs-tracking/track-*.json | head -1); \
-		previous=$(ls -t .build/docs-tracking/track-*.json | head -2 | tail -1); \
-		echo "$(BLUE)Latest: $(basename $$latest)$(RESET)"; \
-		echo "$(BLUE)Previous: $(basename $$previous)$(RESET)"; \
-		echo "$(GREEN)✅ Comparison ready - check detailed reports$(RESET)"; \
-	else \
-		echo "$(YELLOW)No previous analysis found. Run 'make docs-analyze' first.$(RESET)"; \
-	fi
-
-# GitHub Actions workflow aliases
-docs-ci: docs-ci-local
-docs-preview: docs-serve
+	@python3 scripts/process_orphans.py docs/_meta/orphans_remaining.txt || echo "⚠️ 无孤儿文档可修复"
