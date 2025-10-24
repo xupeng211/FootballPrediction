@@ -1,4 +1,6 @@
 # 配置简单测试
+@pytest.mark.unit
+
 def test_config_import():
     config_modules = [
         "src.core.config",
@@ -17,6 +19,7 @@ def test_config_import():
 def test_config_creation():
     try:
         from src.core.config import get_config
+import pytest
 
         config = get_config()
         assert config is not None

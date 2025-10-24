@@ -1,3 +1,4 @@
+from unittest.mock import patch, AsyncMock, MagicMock
 """
 预测模块测试
 Prediction Module Tests
@@ -8,7 +9,6 @@ Tests prediction functionality defined in src/models/prediction.py, focused on a
 
 import pytest
 import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
 from typing import Any, Dict
 
 # 导入要测试的模块
@@ -35,6 +35,8 @@ except ImportError:
 
 
 @pytest.mark.skipif(not PREDICTION_AVAILABLE, reason="Prediction module not available")
+@pytest.mark.unit
+
 class TestPredictionResult:
     """PredictionResult测试"""
 

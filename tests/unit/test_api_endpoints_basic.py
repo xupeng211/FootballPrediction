@@ -1,4 +1,7 @@
 # API端点基础测试
+@pytest.mark.unit
+@pytest.mark.api
+
 def test_api_imports():
     # 测试所有API模块的导入
     apis = [

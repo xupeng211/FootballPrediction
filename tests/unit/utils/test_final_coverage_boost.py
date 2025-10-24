@@ -3,6 +3,8 @@
 import pytest
 
 
+@pytest.mark.unit
+
 class TestFinalCoverageBoost:
     """用于达到20%覆盖率的最终测试"""
 

@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 33 repeated Mock creations
+
+# TODO: Consider creating a fixture for 33 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock
 """
 数据收集器真实模块测试
 Tests for real data collector modules
@@ -7,7 +12,6 @@ Tests for real data collector modules
 
 import pytest
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch
 from pathlib import Path
 import sys
 
@@ -24,6 +28,8 @@ from src.collectors import (
     ScoresCollectorFactory,
 )
 
+
+@pytest.mark.unit
 
 class TestFixturesCollector:
     """赛程收集器测试"""

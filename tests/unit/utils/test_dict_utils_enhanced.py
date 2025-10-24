@@ -17,6 +17,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../src"))
 from utils.dict_utils import DictUtils
 
 
+@pytest.mark.unit
+
 class TestDictUtilsEnhanced:
     """DictUtils增强测试类"""
 

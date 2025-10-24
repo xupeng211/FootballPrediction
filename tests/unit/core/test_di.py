@@ -1,3 +1,4 @@
+from unittest.mock import Mock, MagicMock
 """
 依赖注入容器测试
 Tests for Dependency Injection Container
@@ -7,7 +8,6 @@ Tests for Dependency Injection Container
 
 import pytest
 from typing import Protocol
-from unittest.mock import Mock, MagicMock
 from src.core.di import (
     DIContainer,
     ServiceLifetime,
@@ -80,6 +80,8 @@ class ServiceWithArgs:
     def get_text(self) -> str:
         return self.text
 
+
+@pytest.mark.unit
 
 class TestServiceDescriptor:
     """服务描述符测试"""

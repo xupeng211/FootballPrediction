@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
+from unittest.mock import Mock, patch
 """
 Auto-generated basic tests for health_simple.py
 TODO: Expand these tests with actual functionality
 """
 
 import pytest
-from unittest.mock import Mock, patch
 
 # TODO: Import the module to test
 # from health_simple import *
 
+
+@pytest.mark.unit
 
 class TestHealthSimple:
     """Basic test class for health_simple.py"""

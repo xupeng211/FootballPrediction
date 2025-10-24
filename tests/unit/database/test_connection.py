@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 31 repeated Mock creations
+
+# TODO: Consider creating a fixture for 31 repeated Mock creations
+
+from unittest.mock import Mock, patch, MagicMock
 """
 数据库连接测试
 Tests for Database Connection
@@ -6,7 +11,6 @@ Tests for Database Connection
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 import asyncio
 
 from src.database.connection import (
@@ -29,6 +33,8 @@ from src.database.connection import (
     get_async_admin_session,
 )
 
+
+@pytest.mark.unit
 
 class TestDatabaseRole:
     """数据库角色测试"""
@@ -107,6 +113,8 @@ class TestDatabaseManager:
 
     def test_initialization_no_url(self):
         """测试：没有URL时的初始化"""
+        with patch.dict("os.environ", {}, clear=True):
+        with patch.dict("os.environ", {}, clear=True):
         with patch.dict("os.environ", {}, clear=True):
             manager = DatabaseManager()
             with pytest.raises(ValueError) as exc_info:

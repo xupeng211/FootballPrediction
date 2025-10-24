@@ -6,6 +6,8 @@ Collectors Module Basic Tests
 import pytest
 
 
+@pytest.mark.unit
+
 def test_collectors_directory_exists():
     """测试收集器目录存在"""
     import os

@@ -19,6 +19,8 @@ import re
     not os.getenv("DOCKER_COMPOSE_ACTIVE"),
     reason="Docker Compose services not active. Run 'docker-compose up -d postgres redis' first.",
 )
+@pytest.mark.unit
+
 class TestDatabaseIntegration:
     """使用Docker Compose服务的数据库集成测试"""
 

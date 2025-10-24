@@ -3,6 +3,8 @@
 import pytest
 
 
+@pytest.mark.unit
+
 class TestSQLCompatibility:
     """测试SQL兼容性模块"""
 

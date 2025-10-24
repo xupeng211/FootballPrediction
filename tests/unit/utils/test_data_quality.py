@@ -3,6 +3,8 @@
 import pytest
 
 
+@pytest.mark.unit
+
 class TestDataQuality:
     """测试数据质量模块"""
 

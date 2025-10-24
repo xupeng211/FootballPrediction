@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, AsyncMock
 """
 缓存示例测试
 Tests for Cache Examples
@@ -6,7 +7,6 @@ Tests for Cache Examples
 """
 
 import pytest
-from unittest.mock import Mock, patch, AsyncMock
 import asyncio
 
 # 测试导入
@@ -40,6 +40,8 @@ except ImportError as e:
 @pytest.mark.skipif(
     not CACHE_EXAMPLES_AVAILABLE, reason="Cache examples module not available"
 )
+@pytest.mark.unit
+
 class TestCacheExamples:
     """缓存示例测试"""
 

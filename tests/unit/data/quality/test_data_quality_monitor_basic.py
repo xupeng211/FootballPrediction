@@ -42,6 +42,8 @@ def test_class_attributes():
     DATA_QUALITY_MONITOR_AVAILABLE,
     reason="Data quality monitor module should be available",
 )
+@pytest.mark.unit
+
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 

@@ -1,3 +1,4 @@
+from unittest.mock import patch, MagicMock
 """
 测试模块化TTL缓存
 Test Modular TTL Cache
@@ -5,8 +6,11 @@ Test Modular TTL Cache
 
 import pytest
 import time
-from unittest.mock import patch, MagicMock
 
+
+@pytest.mark.unit
+@pytest.mark.cache
+@pytest.mark.slow
 
 def test_cache_entry():
     """测试缓存条目"""

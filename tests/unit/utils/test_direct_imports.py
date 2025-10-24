@@ -13,6 +13,9 @@ src_path = Path(__file__).parent.parent.parent.parent / "src"
 sys.path.insert(0, str(src_path))
 
 
+@pytest.mark.unit
+@pytest.mark.external_api
+
 def test_crypto_utils():
     """测试crypto_utils模块"""
     try:

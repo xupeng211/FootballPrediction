@@ -1,3 +1,4 @@
+from unittest.mock import AsyncMock, MagicMock
 """
 数据处理服务测试（修复版）
 Tests for Data Processing Service (Fixed)
@@ -5,7 +6,6 @@ Tests for Data Processing Service (Fixed)
 
 import pytest
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock
 
 from src.services.data_processing import (
     DataProcessor,
@@ -30,6 +30,8 @@ class MockDataProcessor(DataProcessor):
         """处理数据"""
         return {**data, "mock_processed": True, "processed_at": datetime.utcnow()}
 
+
+@pytest.mark.unit
 
 class TestDataProcessor:
     """测试数据处理器基类"""

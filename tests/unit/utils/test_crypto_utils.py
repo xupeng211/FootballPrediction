@@ -6,6 +6,8 @@ import pytest
 """
 
 
+@pytest.mark.unit
+
 class TestCryptoUtils:
     """测试CryptoUtils类"""
 

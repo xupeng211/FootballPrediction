@@ -1,12 +1,18 @@
+# TODO: Consider creating a fixture for 40 repeated Mock creations
+
+# TODO: Consider creating a fixture for 40 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 事件驱动预测服务简单测试
 Simple Tests for Event-Driven Prediction Service
 """
 
 import pytest
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from datetime import datetime
 
+
+@pytest.mark.unit
 
 class TestEventDrivenPredictionServiceSimple:
     """事件驱动预测服务简单测试"""

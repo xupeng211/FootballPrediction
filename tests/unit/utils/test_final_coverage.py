@@ -1,9 +1,9 @@
+from unittest.mock import Mock, patch, MagicMock
 """最终覆盖率测试 - 直接测试模块函数"""
 
 from __future__ import annotations
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime, timedelta
 import json
 import uuid
@@ -14,6 +14,9 @@ import base64
 import asyncio
 from typing import Any, Dict, List
 
+
+@pytest.mark.unit
+@pytest.mark.external_api
 
 class TestCryptoUtilsModule:
     """测试加密工具模块"""

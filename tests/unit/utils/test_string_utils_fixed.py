@@ -22,6 +22,8 @@ except ImportError as e:
 @pytest.mark.skipif(
     not STRING_UTILS_AVAILABLE, reason="String utils module not available"
 )
+@pytest.mark.unit
+
 class TestStringUtilsTruncate:
     """字符串截断测试"""
 

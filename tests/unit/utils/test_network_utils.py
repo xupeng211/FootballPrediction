@@ -200,6 +200,9 @@ class NetworkUtils:
         }
 
 
+@pytest.mark.unit
+@pytest.mark.external_api
+
 class TestNetworkUtils:
     """测试网络工具类"""
 

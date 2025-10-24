@@ -1,5 +1,6 @@
 try:
     from src.data.collectors.base_collector import BaseCollector
+import pytest
 except ImportError:
     # 如果导入失败，创建简单的mock类用于测试
     class BaseCollector:
@@ -15,6 +16,8 @@ except ImportError:
         def collect(self):
             pass
 
+
+@pytest.mark.unit
 
 def test_base_collector():
     collector = BaseCollector()

@@ -3,6 +3,8 @@
 # from src.utils.dict_utils import DictUtils
 
 
+@pytest.mark.unit
+
 class TestDictUtilsBasic:
     """字典工具基础测试"""
 

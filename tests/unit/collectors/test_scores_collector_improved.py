@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 84 repeated Mock creations
+
+# TODO: Consider creating a fixture for 84 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 改进的比分收集器测试
 Tests for Improved Scores Collector
@@ -6,7 +11,6 @@ Tests for Improved Scores Collector
 """
 
 import pytest
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
 from datetime import datetime, timedelta
 import asyncio
 import json
@@ -33,6 +37,8 @@ except ImportError as e:
 @pytest.mark.skipif(
     not SCORES_COLLECTOR_AVAILABLE, reason="Scores collector module not available"
 )
+@pytest.mark.unit
+
 class TestScoresCollector:
     """比分收集器测试"""
 

@@ -26,6 +26,8 @@ except ImportError as e:
 @pytest.mark.skipif(
     not FEATURES_PROCESSOR_AVAILABLE, reason="Features processor module not available"
 )
+@pytest.mark.unit
+
 class TestFeaturesProcessorImports:
     """特征处理器导入测试"""
 

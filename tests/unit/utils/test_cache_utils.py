@@ -1,10 +1,13 @@
+from unittest.mock import Mock, patch
 """缓存工具测试"""
 
 import pytest
-from unittest.mock import Mock, patch
 from src.cache.redis_manager import RedisManager
 from src.cache.ttl_cache import TTLCache
 
+
+@pytest.mark.unit
+@pytest.mark.cache
 
 class TestCacheUtils:
     """测试缓存工具"""
@@ -20,6 +23,8 @@ class TestCacheUtils:
         assert cache is not None
         assert cache.max_size == 100
 
+    @patch("redis.Redis")
+    @patch("redis.Redis")
     @patch("redis.Redis")
     def test_redis_connection_mock(self, mock_redis):
         """测试Redis连接mock"""

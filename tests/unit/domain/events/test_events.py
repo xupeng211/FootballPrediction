@@ -1,4 +1,5 @@
 from datetime import datetime
+import pytest
 
 from src.domain.events.base import DomainEvent
 from src.domain.events.match_events import (
@@ -26,6 +27,8 @@ class DummyEvent(DomainEvent):
     def _get_event_data(self):
         return {"payload": self.payload}
 
+
+@pytest.mark.unit
 
 class TestBaseEvent:
     def test_should_convert_event_to_dict(self):

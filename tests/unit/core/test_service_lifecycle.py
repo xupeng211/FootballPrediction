@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 62 repeated Mock creations
+
+# TODO: Consider creating a fixture for 62 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock
 """
 服务生命周期管理测试
 Service Lifecycle Management Tests
@@ -11,7 +16,6 @@ import asyncio
 import threading
 from datetime import datetime, timedelta
 from typing import Any, Optional
-from unittest.mock import Mock, AsyncMock, patch
 
 # 导入要测试的模块
 try:
@@ -33,6 +37,8 @@ except ImportError:
 @pytest.mark.skipif(
     not SERVICE_LIFECYCLE_AVAILABLE, reason="Service lifecycle module not available"
 )
+@pytest.mark.unit
+
 class TestServiceState:
     """服务状态枚举测试"""
 

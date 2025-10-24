@@ -1,5 +1,6 @@
 try:
     from src.core.error_handler import ErrorHandler
+import pytest
 except ImportError:
     # 如果导入失败，创建简单的mock类用于测试
     class ErrorHandler:
@@ -17,6 +18,8 @@ except ImportError:
             self.service_name = service_name
             self.error_code = error_code
 
+
+@pytest.mark.unit
 
 def test_error_handler_creation():
     handler = ErrorHandler()

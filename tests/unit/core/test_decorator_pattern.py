@@ -1,9 +1,14 @@
+# TODO: Consider creating a fixture for 30 repeated Mock creations
+
+# TODO: Consider creating a fixture for 30 repeated Mock creations
+
 import sys
 from pathlib import Path
 
 # 添加项目路径
 from src.decorators.base import *
 
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, "src")
 
@@ -19,7 +24,6 @@ import pytest
 import asyncio
 import time
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, Mock, patch, MagicMock
 
 from src.decorators.base import (
     Component,
@@ -57,6 +61,8 @@ from src.decorators.service import (
     with_all,
 )
 
+
+@pytest.mark.unit
 
 class TestDecoratorBase:
     """测试装饰器基类"""
@@ -357,6 +363,8 @@ class TestConcreteDecorators:
 
         # 模拟慢速执行的函数
         async def slow_execute():
+            await asyncio.sleep(2)
+            await asyncio.sleep(2)
             await asyncio.sleep(2)
             return "slow_result"
 

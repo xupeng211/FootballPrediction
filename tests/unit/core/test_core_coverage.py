@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 8 repeated Mock creations
+
+# TODO: Consider creating a fixture for 8 repeated Mock creations
+
+from unittest.mock import Mock, patch, MagicMock
 """
 核心模块测试覆盖率提升
 Core Module Coverage Improvement
@@ -9,13 +14,15 @@ Created specifically to improve coverage for low-coverage modules in src/core/.
 import pytest
 import asyncio
 import logging
-from unittest.mock import Mock, patch, MagicMock
 import sys
 import os
 
 # 添加项目根目录到sys.path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../.."))
 
+
+@pytest.mark.unit
+@pytest.mark.critical
 
 class TestLoggerSimple:
     """测试简化日志模块"""

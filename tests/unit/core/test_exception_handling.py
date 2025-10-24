@@ -76,6 +76,9 @@ class RateLimitError(FootballPredictionError):
         self.retry_after = retry_after
 
 
+@pytest.mark.unit
+@pytest.mark.slow
+
 class TestCustomExceptions:
     """自定义异常测试"""
 
@@ -313,6 +316,8 @@ class TestExceptionHandling:
         import asyncio
 
         async def slow_operation(delay):
+            await asyncio.sleep(delay)
+            await asyncio.sleep(delay)
             await asyncio.sleep(delay)
             return "done"
 

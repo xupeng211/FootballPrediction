@@ -5,6 +5,8 @@
 # from src.utils.file_utils import FileUtils
 
 
+@pytest.mark.unit
+
 def test_crypto_utils_extended():
     # 测试加密功能
     password = "test123"
@@ -61,6 +63,7 @@ def test_string_utils_extended():
 def test_time_utils_extended():
     # 测试时间格式化
     from datetime import datetime
+import pytest
 
     now = datetime.now()
     formatted = TimeUtils.format_datetime(now)

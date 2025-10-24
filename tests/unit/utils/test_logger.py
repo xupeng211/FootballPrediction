@@ -3,6 +3,8 @@
 import pytest
 
 
+@pytest.mark.unit
+
 class TestCoreLogger:
     """测试核心日志器"""
 

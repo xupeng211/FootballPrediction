@@ -14,6 +14,8 @@ import tempfile
 from pathlib import Path
 
 
+@pytest.mark.unit
+
 class TestBasicCoverage:
     """基础覆盖率测试 - 测试简单函数和常量"""
 

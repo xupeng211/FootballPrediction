@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 5 repeated Mock creations
+
+# TODO: Consider creating a fixture for 5 repeated Mock creations
+
+from unittest.mock import Mock, patch
 """
 SQL兼容性真实测试
 Tests for SQL Compatibility (Real Implementation)
@@ -6,7 +11,6 @@ Tests for SQL Compatibility (Real Implementation)
 """
 
 import pytest
-from unittest.mock import Mock, patch
 
 from src.database.sql_compatibility import (
     Compatibility,
@@ -14,6 +18,9 @@ from src.database.sql_compatibility import (
     SQLCompatibilityHelper,
 )
 
+
+@pytest.mark.unit
+@pytest.mark.database
 
 class TestCompatibility:
     """兼容性类测试"""

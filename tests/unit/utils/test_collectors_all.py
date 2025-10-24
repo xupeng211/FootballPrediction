@@ -1,5 +1,6 @@
 try:
     from src.collectors.fixtures_collector import FixturesCollector
+import pytest
     from src.collectors.odds_collector import OddsCollector
     from src.collectors.scores_collector import ScoresCollector
 
@@ -40,6 +41,8 @@ except ImportError:
         def collect(self):
             pass
 
+
+@pytest.mark.unit
 
 def test_all_collectors():
     fixtures = FixturesCollector()

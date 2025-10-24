@@ -1,14 +1,20 @@
+# TODO: Consider creating a fixture for 7 repeated Mock creations
+
+# TODO: Consider creating a fixture for 7 repeated Mock creations
+
+from unittest.mock import patch, MagicMock
 """
 测试拆分后的特征仓库
 Test Split Feature Store
 """
 
 import pytest
-from unittest.mock import MagicMock, patch
 from datetime import datetime
 
 
 # 测试导入
+@pytest.mark.unit
+
 def test_import_feature_store():
     """测试能否正常导入特征仓库模块"""
     from src.data.features.feature_store import FootballFeatureStore

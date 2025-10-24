@@ -255,6 +255,8 @@ class CollectionUtils:
         return groups
 
 
+@pytest.mark.unit
+
 class TestCollectionUtils:
     """测试集合工具类"""
 

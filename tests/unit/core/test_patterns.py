@@ -1,7 +1,12 @@
+# TODO: Consider creating a fixture for 6 repeated Mock creations
+
+# TODO: Consider creating a fixture for 6 repeated Mock creations
+
 import sys
 from pathlib import Path
 
 # 添加项目路径
+from unittest.mock import AsyncMock, MagicMock
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, "src")
 
@@ -14,7 +19,6 @@ sys.path.insert(0, "src")
 import pytest
 import asyncio
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock
 
 # 尝试导入模式模块
 try:
@@ -49,6 +53,8 @@ except ImportError:
 
 
 @pytest.mark.skipif(not PATTERNS_AVAILABLE, reason="Patterns module not available")
+@pytest.mark.unit
+
 class TestObserverPattern:
     """观察者模式测试"""
 

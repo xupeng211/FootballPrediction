@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 16 repeated Mock creations
+
+# TODO: Consider creating a fixture for 16 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock
 """
 特征示例测试
 Tests for Feature Examples
@@ -6,7 +11,6 @@ Tests for Feature Examples
 """
 
 import pytest
-from unittest.mock import Mock, patch, AsyncMock
 import pandas as pd
 from datetime import datetime, timedelta
 
@@ -39,6 +43,8 @@ except ImportError as e:
 @pytest.mark.skipif(
     not FEATURE_EXAMPLES_AVAILABLE, reason="Feature examples module not available"
 )
+@pytest.mark.unit
+
 class TestFeatureExamples:
     """特征示例测试"""
 

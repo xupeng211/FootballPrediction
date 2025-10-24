@@ -1,3 +1,4 @@
+from unittest.mock import patch, AsyncMock, MagicMock
 """
 观察者模式单元测试
 Unit Tests for Observer Pattern
@@ -9,7 +10,6 @@ Tests core functionality of the observer pattern.
 import pytest
 import asyncio
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
 from typing import Dict, Any, List
 
 from src.observers.base import Observer, Subject, ObservableEvent, ObservableEventType
@@ -52,6 +52,8 @@ def sample_error_event():
 
 # ==================== 基础类测试 ====================
 
+
+@pytest.mark.unit
 
 class TestObserver:
     """测试观察者基类"""
@@ -179,6 +181,8 @@ class TestSubject:
         await subject.notify(sample_event)
 
         # 验证观察者收到事件
+        await asyncio.sleep(0.01)  # 等待异步通知完成
+        await asyncio.sleep(0.01)  # 等待异步通知完成
         await asyncio.sleep(0.01)  # 等待异步通知完成
         assert len(observer.events) == 1
         assert observer.events[0] == sample_event
@@ -495,6 +499,8 @@ class TestSystemMetricsSubject:
         """测试设置指标"""
         subject.set_metric("cpu_usage", 75.5)
         # 等待异步任务完成
+        await asyncio.sleep(0.01)
+        await asyncio.sleep(0.01)
         await asyncio.sleep(0.01)
         metrics = subject.get_metrics()
         assert metrics["cpu_usage"] == 75.5

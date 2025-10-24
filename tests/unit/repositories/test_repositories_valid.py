@@ -1,10 +1,14 @@
+# TODO: Consider creating a fixture for 23 repeated Mock creations
+
+# TODO: Consider creating a fixture for 23 repeated Mock creations
+
+from unittest.mock import patch, AsyncMock, MagicMock
 """
 仓储模式单元测试
 """
 
 import pytest
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.repositories.base import BaseRepository
@@ -13,6 +17,8 @@ from src.database.repositories.prediction import PredictionRepository
 from src.database.repositories.user import UserRepository
 from src.database.models.match import Match
 
+
+@pytest.mark.unit
 
 class TestBaseRepository:
     """基础仓储测试"""

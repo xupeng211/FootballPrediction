@@ -28,6 +28,9 @@ except Exception as e:
     BUGGY_API_EXISTS = False
 
 
+@pytest.mark.unit
+@pytest.mark.api
+
 class TestBuggyAPIBasic:
     """Buggy API基础测试"""
 

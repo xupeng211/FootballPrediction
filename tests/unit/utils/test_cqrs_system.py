@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 5 repeated Mock creations
+
+# TODO: Consider creating a fixture for 5 repeated Mock creations
+
+from unittest.mock import patch, AsyncMock, MagicMock
 """
 CQRS系统单元测试
 CQRS System Unit Tests
@@ -9,7 +14,6 @@ Tests core functionality of CQRS pattern.
 import pytest
 import asyncio
 from datetime import datetime, date, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
 
 from src.cqrs.base import Command, Query, ValidationResult
 from src.cqrs.commands import (
@@ -38,6 +42,8 @@ from src.cqrs.application import (
     initialize_cqrs,
 )
 
+
+@pytest.mark.unit
 
 class TestCommand(Command):
     """测试命令"""

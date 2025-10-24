@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch
 """
 全面API测试 v3 - 覆盖所有已实现的端点
 Comprehensive API Tests v3 - Cover All Implemented Endpoints
@@ -5,7 +6,6 @@ Comprehensive API Tests v3 - Cover All Implemented Endpoints
 
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import Mock, patch
 import json
 from datetime import datetime
 

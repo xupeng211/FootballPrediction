@@ -9,6 +9,9 @@ from pydantic import ValidationError
 from src.utils.response import APIResponse, APIResponseModel, ResponseUtils
 
 
+@pytest.mark.unit
+@pytest.mark.slow
+
 class TestAPIResponse:
     """API响应工具类测试"""
 
@@ -288,6 +291,8 @@ class TestAPIResponse:
         # 等待一小段时间确保时间戳不同
         import time
 
+        time.sleep(0.001)
+        time.sleep(0.001)
         time.sleep(0.001)
 
         # 第二次调用

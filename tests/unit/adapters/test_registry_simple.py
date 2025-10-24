@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 54 repeated Mock creations
+
+# TODO: Consider creating a fixture for 54 repeated Mock creations
+
+from unittest.mock import Mock, patch, MagicMock
 """
 简化适配器注册表模块测试
 Simple Adapter Registry Module Tests
@@ -8,7 +13,6 @@ Tests simple adapter registry functionality defined in src/adapters/registry_sim
 
 import pytest
 from typing import Any, Dict, Optional
-from unittest.mock import Mock, patch, MagicMock
 
 # 导入要测试的模块
 try:
@@ -28,6 +32,8 @@ except ImportError:
 @pytest.mark.skipif(
     not REGISTRY_SIMPLE_AVAILABLE, reason="Simple registry module not available"
 )
+@pytest.mark.unit
+
 class TestAdapterRegistry:
     """AdapterRegistry类测试"""
 

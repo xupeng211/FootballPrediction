@@ -1,10 +1,12 @@
+from unittest.mock import patch, MagicMock
 """API预测端点测试"""
 
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import patch, MagicMock
 import json
 
+
+@pytest.mark.unit
 
 class TestAPIPredictions:
     """API预测端点测试"""

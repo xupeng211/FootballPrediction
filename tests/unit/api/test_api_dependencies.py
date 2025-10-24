@@ -1,3 +1,4 @@
+from unittest.mock import patch, AsyncMock, MagicMock
 """
 API依赖注入模块测试
 """
@@ -5,7 +6,6 @@ API依赖注入模块测试
 pytest_plugins = "asyncio"
 
 import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
 from datetime import datetime, timedelta
 from fastapi import HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials
@@ -23,6 +23,8 @@ from src.api.dependencies import (
     ALGORITHM,
 )
 
+
+@pytest.mark.unit
 
 class TestGetCurrentUser:
     """获取当前用户测试"""

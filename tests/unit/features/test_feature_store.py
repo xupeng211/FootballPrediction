@@ -19,6 +19,8 @@ from src.features.feature_store import (
 )
 
 
+@pytest.mark.unit
+
 class TestFeatureStore:
     """特征存储测试"""
 

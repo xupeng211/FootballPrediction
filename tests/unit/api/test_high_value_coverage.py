@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, AsyncMock
 """
 高价值模块覆盖率提升测试
 High Value Module Coverage Boost Tests
@@ -6,7 +7,6 @@ High Value Module Coverage Boost Tests
 """
 
 import pytest
-from unittest.mock import Mock, patch, AsyncMock
 from datetime import datetime
 import asyncio
 
@@ -23,6 +23,8 @@ except ImportError as e:
 
 
 @pytest.mark.skipif(not SERVICES_AVAILABLE, reason="服务模块不可用")
+@pytest.mark.unit
+
 class TestCoreServicesCoverage:
     """核心服务覆盖率补充测试"""
 
@@ -272,6 +274,8 @@ class TestIntegrationScenarios:
         # 模拟异步工作流
         async def process_workflow(data):
             # 模拟异步处理步骤
+            await asyncio.sleep(0.01)  # 模拟异步操作
+            await asyncio.sleep(0.01)  # 模拟异步操作
             await asyncio.sleep(0.01)  # 模拟异步操作
 
             # 数据处理

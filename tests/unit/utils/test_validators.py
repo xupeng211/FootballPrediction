@@ -15,6 +15,8 @@ from src.utils.validators import (
 )
 
 
+@pytest.mark.unit
+
 class TestEmailValidator:
     """邮箱验证器测试"""
 
@@ -280,6 +282,8 @@ class TestDataTypesValidator:
         import datetime
         from typing import Any
 
+        _data = {"date": datetime.datetime.now(), "items": [1, 2, 3], "value": Any}
+        _data = {"date": datetime.datetime.now(), "items": [1, 2, 3], "value": Any}
         _data = {"date": datetime.datetime.now(), "items": [1, 2, 3], "value": Any}
         schema = {
             "date": datetime.datetime,

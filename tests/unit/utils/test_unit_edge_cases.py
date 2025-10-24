@@ -1,6 +1,5 @@
 # noqa: F401,F811,F821,E402
 import pytest
-from unittest.mock import MagicMock, patch
 import sys
 import os
 from datetime import timedelta
@@ -13,6 +12,7 @@ import gc
 import math
 import tempfile
 
+from unittest.mock import patch, MagicMock
 """
 边界情况和错误处理测试
 专注于测试各种异常场景和边界条件
@@ -334,6 +334,8 @@ class TestEdgeCasesAndErrorHandling:
         """测试异步错误处理"""
 
         async def failing_async_function():
+            await asyncio.sleep(0.01)
+            await asyncio.sleep(0.01)
             await asyncio.sleep(0.01)
             raise ValueError("Async error")
 

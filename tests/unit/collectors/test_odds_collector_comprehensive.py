@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 5 repeated Mock creations
+
+# TODO: Consider creating a fixture for 5 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock
 """
 OddsCollector 综合测试
 提升 collectors 模块覆盖率的关键测试
@@ -5,7 +10,6 @@ OddsCollector 综合测试
 
 import pytest
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
@@ -26,6 +30,8 @@ except ImportError as e:
 
 
 @pytest.mark.skipif(not ODDSCOLLECTOR_AVAILABLE, reason="OddsCollector not available")
+@pytest.mark.unit
+
 class TestOddsCollector:
     """OddsCollector测试"""
 

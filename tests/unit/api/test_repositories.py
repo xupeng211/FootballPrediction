@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 仓储模式API端点测试
 Tests for Repository Pattern API Endpoints
@@ -12,7 +13,6 @@ Tests for Repository Pattern API Endpoints
 
 import pytest
 from datetime import datetime, date, timedelta
-from unittest.mock import AsyncMock, Mock, patch, MagicMock
 from fastapi.testclient import TestClient
 from fastapi import FastAPI
 
@@ -150,6 +150,9 @@ def client(app):
     """创建测试客户端"""
     return TestClient(app)
 
+
+@pytest.mark.unit
+@pytest.mark.api
 
 class TestPredictionRepository:
     """预测仓储测试"""

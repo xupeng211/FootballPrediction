@@ -1,4 +1,6 @@
 # 工具模块完整测试
+@pytest.mark.unit
+
 def test_all_utils():
     utils = [
         "src.utils.crypto_utils",
@@ -24,6 +26,7 @@ def test_all_utils():
 def test_util_functions():
     # 测试工具函数的存在性
     from src.utils.string_utils import StringUtils
+import pytest
     from src.utils.time_utils import TimeUtils
     from src.utils.dict_utils import DictUtils
 

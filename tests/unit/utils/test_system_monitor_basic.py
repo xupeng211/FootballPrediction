@@ -1,9 +1,13 @@
+# TODO: Consider creating a fixture for 5 repeated Mock creations
+
+# TODO: Consider creating a fixture for 5 repeated Mock creations
+
+from unittest.mock import Mock, patch
 """
 系统监控模块基础测试
 """
 
 import pytest
-from unittest.mock import Mock, patch
 
 
 def test_module_import():

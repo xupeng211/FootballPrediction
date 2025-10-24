@@ -1,5 +1,8 @@
 from src.data.quality.data_quality_monitor import DataQualityMonitor
+import pytest
 
+
+@pytest.mark.unit
 
 def test_data_quality_monitor():
     monitor = DataQualityMonitor()

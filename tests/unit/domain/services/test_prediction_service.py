@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 28 repeated Mock creations
+
+# TODO: Consider creating a fixture for 28 repeated Mock creations
+
+from unittest.mock import Mock, patch
 """
 预测领域服务测试
 Tests for Prediction Domain Service
@@ -5,7 +10,6 @@ Tests for Prediction Domain Service
 
 import pytest
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch
 
 from src.domain.services.prediction_service import PredictionDomainService
 from src.domain.models.prediction import Prediction, PredictionStatus
@@ -19,6 +23,8 @@ from src.domain.events.prediction_events import (
     PredictionPointsAdjustedEvent,
 )
 
+
+@pytest.mark.unit
 
 class TestPredictionDomainService:
     """预测领域服务测试"""

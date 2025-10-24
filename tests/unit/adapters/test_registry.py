@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 56 repeated Mock creations
+
+# TODO: Consider creating a fixture for 56 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 适配器注册表测试
 Tests for Adapter Registry
@@ -6,7 +11,6 @@ Tests for Adapter Registry
 """
 
 import pytest
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
 import asyncio
 
 # 测试导入
@@ -31,6 +35,8 @@ except ImportError as e:
 
 @pytest.mark.skipif(not REGISTRY_AVAILABLE, reason="Registry module not available")
 @pytest.mark.asyncio
+@pytest.mark.unit
+
 class TestAdapterRegistry:
     """适配器注册表测试"""
 

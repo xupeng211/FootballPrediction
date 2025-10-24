@@ -1,3 +1,4 @@
+from unittest.mock import patch, MagicMock
 """
 加密工具测试（新版本）
 Tests for Crypto Utils (New Version)
@@ -8,7 +9,6 @@ Tests for Crypto Utils (New Version)
 import pytest
 import hashlib
 import secrets
-from unittest.mock import patch, MagicMock
 
 # 测试导入
 try:
@@ -19,6 +19,8 @@ except ImportError as e:
     print(f"Import error: {e}")
     CRYPTO_UTILS_AVAILABLE = False
 
+
+@pytest.mark.unit
 
 class TestCryptoUtilsStaticMethods:
     """CryptoUtils静态方法测试"""

@@ -1,10 +1,14 @@
+# TODO: Consider creating a fixture for 8 repeated Mock creations
+
+# TODO: Consider creating a fixture for 8 repeated Mock creations
+
+from unittest.mock import Mock, patch
 """
 特征计算器模块化测试
 """
 
 import pytest
 from datetime import datetime
-from unittest.mock import Mock, patch
 
 
 def test_module_import():

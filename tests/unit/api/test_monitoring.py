@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 15 repeated Mock creations
+
+# TODO: Consider creating a fixture for 15 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 API监控测试
 Tests for API Monitoring
@@ -6,7 +11,6 @@ Tests for API Monitoring
 """
 
 import pytest
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from fastapi import FastAPI
 from sqlalchemy.orm import Session
 
@@ -22,6 +26,8 @@ except ImportError as e:
 
 
 @pytest.mark.skipif(not MONITORING_AVAILABLE, reason="Monitoring module not available")
+@pytest.mark.unit
+
 class TestMonitoringRouter:
     """监控路由器测试"""
 

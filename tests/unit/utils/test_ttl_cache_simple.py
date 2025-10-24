@@ -1,9 +1,13 @@
+from unittest.mock import patch
 """TTL 缓存简单测试"""
 
 import pytest
 import time
-from unittest.mock import patch
 
+
+@pytest.mark.unit
+@pytest.mark.cache
+@pytest.mark.slow
 
 class TestTTLCache:
     """测试 TTL 缓存"""

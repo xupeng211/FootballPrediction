@@ -1,6 +1,9 @@
 # 加密工具高级测试
 from src.utils.crypto_utils import CryptoUtils
+import pytest
 
+
+@pytest.mark.unit
 
 def test_hash_password():
     password = "test123"

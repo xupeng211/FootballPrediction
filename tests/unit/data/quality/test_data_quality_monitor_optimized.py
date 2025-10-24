@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 数据质量监控器优化测试
 Tests for Data Quality Monitor (Optimized Version)
@@ -6,7 +7,6 @@ Tests for Data Quality Monitor (Optimized Version)
 """
 
 import pytest
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
 from datetime import datetime, timedelta
 import logging
 import asyncio
@@ -53,6 +53,8 @@ def data_quality_monitor(mock_db_session):
     not DATA_QUALITY_MONITOR_AVAILABLE,
     reason="Data quality monitor module not available",
 )
+@pytest.mark.unit
+
 class TestDataQualityMonitorOptimized:
     """数据质量监控器优化测试"""
 

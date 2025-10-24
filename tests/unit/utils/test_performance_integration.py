@@ -1,10 +1,14 @@
+# TODO: Consider creating a fixture for 23 repeated Mock creations
+
+# TODO: Consider creating a fixture for 23 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock
 """
 性能监控集成模块测试
 Performance Integration Module Tests
 """
 
 import pytest
-from unittest.mock import Mock, patch, AsyncMock
 from typing import Dict, Any
 
 from fastapi import FastAPI
@@ -19,6 +23,10 @@ from src.performance.integration import (
     generate_performance_report,
 )
 
+
+@pytest.mark.unit
+@pytest.mark.slow
+@pytest.mark.critical
 
 class TestPerformanceMonitoringIntegration:
     """性能监控集成器测试类"""

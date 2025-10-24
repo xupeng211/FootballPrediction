@@ -1,14 +1,16 @@
+from unittest.mock import Mock, patch
 """
 Services模块简化测试
 Services Module Simple Tests
 """
 
 import pytest
-from unittest.mock import Mock, patch
 from datetime import datetime
 
 
 # 测试服务导入
+@pytest.mark.unit
+
 def test_services_import():
     """测试所有服务模块可以正常导入"""
     # 测试基础服务可以导入

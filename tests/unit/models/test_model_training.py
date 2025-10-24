@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, MagicMock
 """
 模型训练模块测试
 Model Training Module Tests
@@ -7,7 +8,6 @@ Tests model training functionality defined in src/models/model_training.py, focu
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 import sys
 
 # 导入要测试的模块
@@ -29,6 +29,8 @@ except ImportError:
 @pytest.mark.skipif(
     not MODEL_TRAINING_AVAILABLE, reason="Model training module not available"
 )
+@pytest.mark.unit
+
 class TestBaselineModelTrainer:
     """BaselineModelTrainer测试"""
 

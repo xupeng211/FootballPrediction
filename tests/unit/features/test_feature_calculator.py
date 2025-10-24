@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 14 repeated Mock creations
+
+# TODO: Consider creating a fixture for 14 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 特征计算器测试
 Tests for Feature Calculator
@@ -6,11 +11,12 @@ Tests for Feature Calculator
 import pytest
 from datetime import datetime, timedelta
 from decimal import Decimal
-from unittest.mock import AsyncMock, Mock, patch, MagicMock
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.features.feature_calculator import FeatureCalculator
 
+
+@pytest.mark.unit
 
 class TestFeatureCalculator:
     """特征计算器测试"""

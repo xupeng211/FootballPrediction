@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 
 # 添加项目路径
+from unittest.mock import Mock, AsyncMock
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, "src")
 
@@ -10,7 +11,6 @@ sys.path.insert(0, "src")
 """
 
 import pytest
-from unittest.mock import Mock, AsyncMock
 from src.adapters.base import Adapter
 
 
@@ -61,6 +61,8 @@ class MockAdapterRegistry:
             return self._adapters[name]["metadata"]
         return None
 
+
+@pytest.mark.unit
 
 class TestAdapterRegistry:
     """适配器注册表测试"""

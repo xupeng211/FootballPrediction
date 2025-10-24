@@ -1,15 +1,22 @@
+# TODO: Consider creating a fixture for 8 repeated Mock creations
+
+# TODO: Consider creating a fixture for 8 repeated Mock creations
+
+from unittest.mock import Mock, MagicMock
 """
 测试依赖注入机制
 Test dependency injection mechanism
 """
 
 import pytest
-from unittest.mock import Mock, MagicMock
 from fastapi.testclient import TestClient
 
 from src.main import app
 from src.database.dependencies import get_db, get_async_db, db_session, async_db_session
 
+
+@pytest.mark.unit
+@pytest.mark.api
 
 class TestDependencyInjectionFixtures:
     """测试依赖注入 fixtures 是否正常工作"""

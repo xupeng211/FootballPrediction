@@ -9,6 +9,8 @@ import pytest
 from src.bad_example import badly_formatted_function, very_long_line
 
 
+@pytest.mark.unit
+
 class TestBadExample:
     """不良示例代码测试"""
 

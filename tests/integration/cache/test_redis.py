@@ -10,6 +10,8 @@ from datetime import datetime, timezone, timedelta
 from typing import Any, Optional
 
 
+@pytest.mark.integration
+
 class TestRedisIntegration:
     """Redis 集成测试"""
 
@@ -231,6 +233,8 @@ class TestRedisIntegration:
         async def get_user_from_db(user_id: int) -> dict:
             # 模拟数据库查询
             await asyncio.sleep(0.1)  # 模拟延迟
+            await asyncio.sleep(0.1)  # 模拟延迟
+            await asyncio.sleep(0.1)  # 模拟延迟
             return {
                 "id": user_id,
                 "username": f"user_{user_id}",
@@ -282,6 +286,8 @@ class TestRedisIntegration:
         # 写-失效模式
         async def update_user_in_db(user_id: int, data: dict):
             # 模拟数据库更新
+            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.1)
             await asyncio.sleep(0.1)
             return True
 
@@ -408,6 +414,8 @@ class TestRedisIntegration:
         await sub.subscribe("test_channel")
 
         # 等待订阅生效
+        await asyncio.sleep(0.1)
+        await asyncio.sleep(0.1)
         await asyncio.sleep(0.1)
 
         # 发布消息

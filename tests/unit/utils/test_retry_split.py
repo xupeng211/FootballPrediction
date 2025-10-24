@@ -1,3 +1,4 @@
+from unittest.mock import patch, MagicMock
 """
 测试拆分后的重试机制
 Test Split Retry Mechanism
@@ -5,7 +6,6 @@ Test Split Retry Mechanism
 
 import asyncio
 import pytest
-from unittest.mock import MagicMock, patch
 
 
 # 测试导入

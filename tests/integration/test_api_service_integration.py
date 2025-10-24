@@ -1,10 +1,14 @@
+# TODO: Consider creating a fixture for 10 repeated Mock creations
+
+# TODO: Consider creating a fixture for 10 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock
 """
 API与服务层集成测试
 测试API端点与服务层的正确交互
 """
 
 import pytest
-from unittest.mock import Mock, patch, AsyncMock
 import asyncio
 from fastapi.testclient import TestClient
 from datetime import datetime, timezone
@@ -73,7 +77,7 @@ class TestAPIWithServiceIntegration:
             _data = response.json()
             assert "id" in data
             assert data["match_id"] == 1
-            assert data["predicted_home_score"]   == 2
+            assert data["predicted_home_score"]     == 2
         else:
             # 如果端点不存在，验证mock被调用
             mock_service.create_prediction.assert_called_once()
@@ -192,7 +196,7 @@ class TestServiceWithRepositoryIntegration:
             # 断言
             if result:
                 assert result.match_id == 1
-                assert result.predicted_home_score   == 2
+                assert result.predicted_home_score     == 2
             # 验证仓储方法被调用
             self.mock_prediction_repo.create.assert_called_once()
 
@@ -265,7 +269,7 @@ class TestEventDrivenIntegration:
 
         # 断言
         assert len(self.events) == 1
-        assert self.events[0]["event_type"]   == "prediction_created"
+        assert self.events[0]["event_type"]     == "prediction_created"
         assert "data" in self.events[0]
 
     def test_match_status_update_event(self):
@@ -291,7 +295,7 @@ class TestEventDrivenIntegration:
         assert len(self.events) == 3
         assert all(e["event_type"] == "match_status_updated" for e in self.events)
         assert self.events[0]["old_status"] == "upcoming"
-        assert self.events[-1]["new_status"]   == "cancelled"
+        assert self.events[-1]["new_status"]     == "cancelled"
 
 
 @pytest.mark.integration
@@ -480,11 +484,11 @@ def test_service_method_integration(
         assert all(isinstance(k, str) for k in input_data.keys())
     else:
         # 对于无效方法，确保被正确处理
-        assert service_method   == "invalid_method"
+        assert service_method     == "invalid_method"
 
 
 @pytest.mark.integration
-def test_error_propagation_flow(client, client):
+def test_error_propagation_flow(client, client, client, client):
     """测试错误传播流程"""
     # 模拟错误在层间传播
     layers = ["api", "service", "repository", "database"]

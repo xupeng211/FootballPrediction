@@ -1,9 +1,13 @@
+# TODO: Consider creating a fixture for 15 repeated Mock creations
+
+# TODO: Consider creating a fixture for 15 repeated Mock creations
+
+from unittest.mock import Mock, patch, MagicMock
 """
 任务模块测试
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime, timedelta
 import asyncio
 
@@ -35,6 +39,8 @@ TEST_SKIP_REASON = "Tasks module not available"
 
 
 @pytest.mark.skipif(not TASKS_AVAILABLE, reason=TEST_SKIP_REASON)
+@pytest.mark.unit
+
 class TestBackupTasks:
     """备份任务测试"""
 

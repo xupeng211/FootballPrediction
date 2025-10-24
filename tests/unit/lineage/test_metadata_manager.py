@@ -22,6 +22,8 @@ except ImportError as e:
 @pytest.mark.skipif(
     not METADATA_MANAGER_AVAILABLE, reason="Metadata manager module not available"
 )
+@pytest.mark.unit
+
 class TestMetadataManager:
     """元数据管理器测试"""
 

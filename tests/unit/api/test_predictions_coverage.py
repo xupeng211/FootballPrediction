@@ -6,6 +6,9 @@ Test coverage supplement for predictions module
 import pytest
 
 
+@pytest.mark.unit
+@pytest.mark.api
+
 def test_predictions_module_import():
     """测试predictions模块导入功能"""
     # 测试导入不会抛出异常

@@ -10,6 +10,8 @@ from datetime import datetime
 from src.utils.response import APIResponse, APIResponseModel, ResponseUtils
 
 
+@pytest.mark.unit
+
 class TestAPIResponseModel:
     """API响应模型测试"""
 

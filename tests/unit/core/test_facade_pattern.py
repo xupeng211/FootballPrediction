@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 14 repeated Mock creations
+
+# TODO: Consider creating a fixture for 14 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 门面模式单元测试
 Unit Tests for Facade Pattern
@@ -11,7 +16,6 @@ import asyncio
 import os
 from typing import Any
 from datetime import datetime
-from unittest.mock import AsyncMock, Mock, patch, MagicMock
 
 from src.facades.base import (
     Subsystem,
@@ -37,6 +41,8 @@ from src.facades.factory import (
     facade_factory,
 )
 
+
+@pytest.mark.unit
 
 class TestSubsystem:
     """测试子系统"""

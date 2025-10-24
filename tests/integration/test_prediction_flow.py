@@ -1,9 +1,13 @@
+# TODO: Consider creating a fixture for 19 repeated Mock creations
+
+# TODO: Consider creating a fixture for 19 repeated Mock creations
+
 import pytest
 import asyncio
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, patch
 from src.models.prediction_service import PredictionResult
 
+from unittest.mock import patch, AsyncMock
 """
 预测流程集成测试
 Integration Tests for Prediction Flow
@@ -89,7 +93,7 @@ class TestPredictionFlow:
         assert result["match_id"] == match_id
         assert result["prediction"] == "home"
         assert result["probabilities"]["home_win"] == 0.5
-        assert result["confidence"]   == 0.65
+        assert result["confidence"]     == 0.65
         assert "features" in result
         assert "odds" in result
         assert "match_info" in result
@@ -98,7 +102,7 @@ class TestPredictionFlow:
         cache_key = prediction_engine.cache_key_manager.prediction_key(match_id)
         cached_result = await prediction_engine.redis_manager.aget(cache_key)
         assert cached_result is not None
-        assert cached_result["prediction"]   == "home"
+        assert cached_result["prediction"]     == "home"
 
     @pytest.mark.asyncio
     async def test_batch_prediction_flow(self, prediction_engine):
@@ -239,7 +243,7 @@ class TestPredictionFlow:
 
         # 验证结果一致
         assert result1["prediction"] == result2["prediction"]
-        assert result1["confidence"]   == result2["confidence"]
+        assert result1["confidence"]     == result2["confidence"]
 
         # 验证只调用了一次预测服务
         prediction_engine.prediction_service.predict_match.assert_called_once()
@@ -270,7 +274,7 @@ class TestPredictionFlow:
 
         # 第二次调用应该成功
         _result = await prediction_engine.predict_match(match_id)
-        assert result["prediction"]   == "home"
+        assert result["prediction"]     == "home"
 
     @pytest.mark.asyncio
     async def test_prediction_verification_flow(self, prediction_engine):
@@ -291,7 +295,7 @@ class TestPredictionFlow:
 
         # 验证结果
         assert stats["total_matches"] == 1
-        assert stats["verified"]   == 1
+        assert stats["verified"]     == 1
         prediction_engine.prediction_service.verify_prediction.assert_called_once_with(
             match_id
         )
@@ -303,6 +307,8 @@ class TestPredictionFlow:
 
         # 模拟快速预测
         async def mock_predict(mid):
+            await asyncio.sleep(0.01)  # 模拟10ms处理时间
+            await asyncio.sleep(0.01)  # 模拟10ms处理时间
             await asyncio.sleep(0.01)  # 模拟10ms处理时间
             return {"match_id": mid, "prediction": "home"}
 
@@ -340,7 +346,7 @@ class TestPredictionFlow:
         health = await prediction_engine.health_check()
 
         # 验证健康状态
-        assert health["status"]   == "healthy"
+        assert health["status"]     == "healthy"
         assert "components" in health
         assert all(status == "healthy" for status in health["components"].values())
 

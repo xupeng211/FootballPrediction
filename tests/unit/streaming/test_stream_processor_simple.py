@@ -11,6 +11,8 @@ import sys
 MODULE_PATH = Path("src") / "stream/processor.py"
 
 
+@pytest.mark.unit
+
 class TestTestStreamProcessor:
     """简化测试类"""
 

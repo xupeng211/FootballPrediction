@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
+from unittest.mock import Mock, patch
 """
 Auto-generated basic tests for monitoring.py
 TODO: Expand these tests with actual functionality
 """
 
 import pytest
-from unittest.mock import Mock, patch
 
 # TODO: Import the module to test
 # from monitoring import *
 
+
+@pytest.mark.unit
+@pytest.mark.monitoring
 
 class TestMonitoring:
     """Basic test class for monitoring.py"""

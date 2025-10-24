@@ -1,10 +1,14 @@
+from unittest.mock import patch, MagicMock
 """TTL缓存测试"""
 
 import pytest
 import time
-from unittest.mock import MagicMock, patch
 from src.cache.ttl_cache import TTLCache
 
+
+@pytest.mark.unit
+@pytest.mark.cache
+@pytest.mark.slow
 
 class TestTTLCache:
     """TTL缓存测试"""
@@ -24,6 +28,10 @@ class TestTTLCache:
         cache = TTLCache(ttl=0.1, max_size=100)  # 0.1秒过期
         cache.set("key1", "value1")
         assert cache.get("key1") == "value1"
+        time.sleep(0.2)
+        time.sleep(0.2)
+        time.sleep(0.2)
+        time.sleep(0.2)
         time.sleep(0.2)
         assert cache.get("key1") is None
 

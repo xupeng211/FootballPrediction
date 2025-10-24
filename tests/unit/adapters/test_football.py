@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 30 repeated Mock creations
+
+# TODO: Consider creating a fixture for 30 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 足球适配器模块测试
 Football Adapters Module Tests
@@ -9,7 +14,6 @@ Tests football adapters functionality defined in src/adapters/football.py, focus
 import pytest
 import asyncio
 from datetime import datetime
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from typing import Any, Dict, List, Optional
 
 # 导入要测试的模块
@@ -41,6 +45,8 @@ except ImportError as e:
 @pytest.mark.skipif(
     not FOOTBALL_AVAILABLE, reason="Football adapters module not available"
 )
+@pytest.mark.unit
+
 class TestMatchStatus:
     """MatchStatus枚举测试"""
 

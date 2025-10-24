@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, AsyncMock
 """
 健康检查API测试
 Tests for Health Check API
@@ -7,7 +8,6 @@ Tests for Health Check API
 
 import pytest
 import asyncio
-from unittest.mock import Mock, patch, AsyncMock
 import json
 from datetime import datetime
 
@@ -23,6 +23,8 @@ except ImportError as e:
     HealthChecker = None
     router = None
 
+
+@pytest.mark.unit
 
 class TestHealthChecker:
     """健康检查器测试"""
@@ -334,6 +336,8 @@ class TestHealthCheckerErrorHandling:
         HealthChecker()
 
         async def slow_check():
+            await asyncio.sleep(5)  # 模拟慢速检查
+            await asyncio.sleep(5)  # 模拟慢速检查
             await asyncio.sleep(5)  # 模拟慢速检查
             return {"status": "healthy"}
 

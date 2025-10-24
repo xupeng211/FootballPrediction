@@ -1,3 +1,4 @@
+from unittest.mock import Mock, MagicMock
 """
 内部模块测试 - 测试CQRS、事件、观察者等内部模块
 Internal Modules Tests - Test CQRS, Events, Observers and other internal modules
@@ -5,7 +6,6 @@ Internal Modules Tests - Test CQRS, Events, Observers and other internal modules
 
 import pytest
 from datetime import datetime, timedelta
-from unittest.mock import Mock, MagicMock
 
 
 # 测试CQRS模块

@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch
 """
 可工作的端点测试 - 专注于实际存在的功能
 Working Endpoints Tests - Focus on Actually Existing Functions
@@ -5,7 +6,6 @@ Working Endpoints Tests - Focus on Actually Existing Functions
 
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import Mock, patch
 import json
 from datetime import datetime, timedelta
 

@@ -12,6 +12,9 @@ from src.models.common_models import (
 )
 
 
+@pytest.mark.unit
+@pytest.mark.database
+
 def test_data_validation_result():
     """测试数据验证结果"""
     _result = DataValidationResult(is_valid=True)

@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch
 """
 更多覆盖率测试 - 针对低覆盖率模块
 More Coverage Tests - Target Low Coverage Modules
@@ -5,7 +6,6 @@ More Coverage Tests - Target Low Coverage Modules
 
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import Mock, patch
 import json
 from datetime import datetime, timedelta
 

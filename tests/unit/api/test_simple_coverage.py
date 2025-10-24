@@ -14,6 +14,9 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../.."))
 
 
+@pytest.mark.unit
+@pytest.mark.api
+
 class TestAPIBasics:
     """测试API基础功能"""
 
@@ -285,6 +288,8 @@ class TestConfigHandling:
         import os
 
         # 设置测试环境变量
+        os.environ["TEST_API_VAR"] = "test_value"
+        os.environ["TEST_API_VAR"] = "test_value"
         os.environ["TEST_API_VAR"] = "test_value"
 
         assert os.environ.get("TEST_API_VAR") == "test_value"

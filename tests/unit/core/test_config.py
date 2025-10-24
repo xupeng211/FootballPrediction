@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, mock_open
 """
 配置管理模块测试
 Configuration Management Module Tests
@@ -11,7 +12,6 @@ import json
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch, mock_open
 
 # 导入要测试的模块
 try:
@@ -30,6 +30,8 @@ except ImportError:
 
 
 @pytest.mark.skipif(not CONFIG_AVAILABLE, reason="Config module not available")
+@pytest.mark.unit
+
 class TestConfig:
     """Config类测试"""
 
@@ -311,12 +313,16 @@ class TestSettings:
     def test_settings_invalid_env_port(self):
         """测试无效的环境变量端口值"""
         with patch.dict(os.environ, {"API_PORT": "invalid_port"}):
+        with patch.dict(os.environ, {"API_PORT": "invalid_port"}):
+        with patch.dict(os.environ, {"API_PORT": "invalid_port"}):
             settings = Settings()
             # 应该保持默认值
             assert settings.api_port == 8000
 
     def test_settings_invalid_env_metrics_enabled(self):
         """测试无效的metrics_enabled环境变量"""
+        with patch.dict(os.environ, {"METRICS_ENABLED": "invalid_value"}):
+        with patch.dict(os.environ, {"METRICS_ENABLED": "invalid_value"}):
         with patch.dict(os.environ, {"METRICS_ENABLED": "invalid_value"}):
             settings = Settings()
             # 应该保持默认值

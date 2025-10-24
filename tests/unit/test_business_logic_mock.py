@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 19 repeated Mock creations
+
+# TODO: Consider creating a fixture for 19 repeated Mock creations
+
+from unittest.mock import Mock, patch, MagicMock, call
 """
 业务逻辑Mock测试
 覆盖核心业务逻辑的Mock测试
@@ -6,7 +11,6 @@
 import pytest
 import sys
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock, call
 from datetime import datetime, timedelta
 from decimal import Decimal
 

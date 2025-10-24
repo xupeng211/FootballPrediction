@@ -1,6 +1,9 @@
+# TODO: Consider creating a fixture for 8 repeated Mock creations
+
+# TODO: Consider creating a fixture for 8 repeated Mock creations
+
 # noqa: F401,F811,F821,E402
 import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
 import sys
 import os
 import time
@@ -8,6 +11,7 @@ from src.cache.redis_manager import RedisManager
 from src.cache.ttl_cache import TTLCache
 import json
 
+from unittest.mock import patch, AsyncMock, MagicMock
 """
 缓存综合测试
 专注于提升缓存模块的覆盖率

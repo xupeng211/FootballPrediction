@@ -1,10 +1,14 @@
+# TODO: Consider creating a fixture for 8 repeated Mock creations
+
+# TODO: Consider creating a fixture for 8 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 Tests for api.middleware
 Auto-generated test file
 """
 
 import pytest
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
 import asyncio
 
 # Test imports
@@ -16,6 +20,8 @@ except ImportError as e:
     IMPORT_SUCCESS = False
     IMPORT_ERROR = str(e)
 
+
+@pytest.mark.unit
 
 class TestTimingMiddleware:
     """Test cases for TimingMiddleware"""

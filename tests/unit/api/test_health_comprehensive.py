@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 8 repeated Mock creations
+
+# TODO: Consider creating a fixture for 8 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock
 """
 Health API 综合测试
 提升 api.health 模块覆盖率的关键测试
@@ -5,7 +10,6 @@ Health API 综合测试
 
 import pytest
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 import json
@@ -27,6 +31,8 @@ except ImportError as e:
 
 
 @pytest.mark.skipif(not HEALTH_AVAILABLE, reason="Health modules not available")
+@pytest.mark.unit
+
 class TestHealthChecker:
     """HealthChecker测试"""
 

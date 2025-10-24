@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, AsyncMock
 """
 健康检查API测试
 Tests for Health Check API
@@ -6,7 +7,6 @@ Tests for Health Check API
 """
 
 import pytest
-from unittest.mock import Mock, patch, AsyncMock
 import time
 from fastapi.testclient import TestClient
 from fastapi import FastAPI
@@ -25,6 +25,8 @@ except ImportError as e:
 
 
 @pytest.mark.skipif(not HEALTH_AVAILABLE, reason="Health module not available")
+@pytest.mark.unit
+
 class TestHealthCheck:
     """健康检查测试"""
 

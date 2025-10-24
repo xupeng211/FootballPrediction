@@ -11,6 +11,8 @@ import sys
 MODULE_PATH = Path("src") / "service/lifecycle.py"
 
 
+@pytest.mark.unit
+
 class TestTestServiceLifecycle:
     """简化测试类"""
 

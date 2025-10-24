@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 14 repeated Mock creations
+
+# TODO: Consider creating a fixture for 14 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 数据收集核心测试（修复版）
 Tests for Data Collection Core (Fixed Version)
@@ -6,7 +11,6 @@ Tests for Data Collection Core (Fixed Version)
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock, AsyncMock
 from datetime import datetime
 
 # 测试导入
@@ -32,6 +36,8 @@ if not DATA_COLLECTION_CORE_AVAILABLE:
     not DATA_COLLECTION_CORE_AVAILABLE,
     reason="Data collection core module not available",
 )
+@pytest.mark.unit
+
 class TestDataCollectionTask:
     """数据收集任务测试"""
 

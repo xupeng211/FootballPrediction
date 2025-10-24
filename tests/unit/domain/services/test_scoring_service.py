@@ -12,6 +12,8 @@ from src.domain.services.scoring_service import ScoringService
 from src.domain.models.prediction import PredictionPoints
 
 
+@pytest.mark.unit
+
 class TestScoringService:
     """计分服务测试"""
 

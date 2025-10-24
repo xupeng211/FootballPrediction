@@ -1,3 +1,4 @@
+from unittest.mock import patch, MagicMock
 """
 日志工具测试
 """
@@ -8,9 +9,11 @@ import logging.config
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 import pytest
 
+
+@pytest.mark.unit
+@pytest.mark.critical
 
 class TestLogUtils:
     """日志工具测试"""

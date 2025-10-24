@@ -4,6 +4,9 @@ import pytest
 # from src.utils.data_validator import DataValidator
 
 
+@pytest.mark.unit
+@pytest.mark.external_api
+
 class TestDataValidator:
     """数据验证器测试"""
 

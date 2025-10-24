@@ -9,6 +9,8 @@ import pytest
 from src.utils.string_utils import StringUtils
 
 
+@pytest.mark.unit
+
 class TestStringUtilsTruncate:
     """字符串截断测试"""
 

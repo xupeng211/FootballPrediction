@@ -6,6 +6,8 @@ from datetime import datetime
 from src.utils.response import APIResponse, ResponseUtils
 
 
+@pytest.mark.unit
+
 class TestResponseSimple:
     """API响应工具简单测试"""
 

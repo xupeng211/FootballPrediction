@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 6 repeated Mock creations
+
+# TODO: Consider creating a fixture for 6 repeated Mock creations
+
+from unittest.mock import Mock, patch, MagicMock
 """
 适配器工厂测试
 Tests for Adapter Factory
@@ -6,7 +11,6 @@ Tests for Adapter Factory
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 from pathlib import Path
 import tempfile
 import json
@@ -33,6 +37,8 @@ except ImportError as e:
 
 
 @pytest.mark.skipif(not FACTORY_AVAILABLE, reason="Factory module not available")
+@pytest.mark.unit
+
 class TestAdapterConfig:
     """适配器配置测试"""
 

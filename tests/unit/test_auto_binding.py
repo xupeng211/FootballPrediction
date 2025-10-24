@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
+from unittest.mock import Mock, patch
 """
 Auto-generated basic tests for auto_binding.py
 TODO: Expand these tests with actual functionality
 """
 
 import pytest
-from unittest.mock import Mock, patch
 
 # TODO: Import the module to test
 # from auto_binding import *
 
+
+@pytest.mark.unit
 
 class TestAutoBinding:
     """Basic test class for auto_binding.py"""

@@ -7,6 +7,8 @@ import pytest
 from src.core.logger import Logger, get_logger
 
 
+@pytest.mark.unit
+
 def test_get_logger():
     """测试获取日志器"""
     logger = get_logger("test_logger")

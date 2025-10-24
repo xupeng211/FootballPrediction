@@ -26,6 +26,9 @@ from src.domain_simple import (
 )
 
 
+@pytest.mark.unit
+@pytest.mark.database
+
 class TestMatch:
     """比赛领域模型测试"""
 

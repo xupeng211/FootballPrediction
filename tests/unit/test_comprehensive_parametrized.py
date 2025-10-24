@@ -10,6 +10,8 @@ import json
 import uuid
 
 
+@pytest.mark.unit
+
 class TestDataTypeConversion:
     """数据类型转换测试"""
 

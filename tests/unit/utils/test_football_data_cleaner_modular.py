@@ -1,10 +1,14 @@
+# TODO: Consider creating a fixture for 18 repeated Mock creations
+
+# TODO: Consider creating a fixture for 18 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock
 """
 足球数据清洗器模块化测试
 """
 
 import pytest
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock, Mock, patch
 
 
 def test_module_imports():

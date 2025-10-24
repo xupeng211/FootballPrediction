@@ -46,6 +46,8 @@ from src.core.exceptions import (
 )
 
 
+@pytest.mark.unit
+
 class TestFootballPredictionError:
     """基础异常类测试"""
 

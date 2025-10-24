@@ -1,10 +1,10 @@
+from unittest.mock import patch, MagicMock
 """
 核心工具类单元测试
 """
 
 import pytest
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock, patch
 import time
 
 # from src.utils.string_utils import StringUtils
@@ -14,6 +14,9 @@ import time
 # from src.utils.crypto_utils import CryptoUtils
 # from src.utils.data_validator import DataValidator
 
+
+@pytest.mark.unit
+@pytest.mark.external_api
 
 class TestStringUtils:
     """字符串工具测试"""

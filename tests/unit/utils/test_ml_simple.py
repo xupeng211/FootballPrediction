@@ -1,4 +1,6 @@
 # 机器学习简单测试
+@pytest.mark.unit
+
 def test_ml_import():
     ml = [
         "src.ml.model_training",
@@ -18,6 +20,7 @@ def test_ml_import():
 def test_ml_training():
     try:
         from src.ml.model_training import ModelTrainer
+import pytest
 
         trainer = ModelTrainer()
         assert trainer is not None

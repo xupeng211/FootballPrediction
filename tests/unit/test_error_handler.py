@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
+from unittest.mock import Mock, patch
 """
 Auto-generated basic tests for error_handler.py
 TODO: Expand these tests with actual functionality
 """
 
 import pytest
-from unittest.mock import Mock, patch
 
 # TODO: Import the module to test
 # from error_handler import *
 
+
+@pytest.mark.unit
 
 class TestErrorHandler:
     """Basic test class for error_handler.py"""

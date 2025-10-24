@@ -1,14 +1,15 @@
 # noqa: F401,F811,F821,E402
 import json
+import pytest
 import os
 import sys
 from pathlib import Path
-from unittest.mock import patch, mock_open
 from src.core.config import Config, Settings, HAS_PYDANTIC
 import importlib
 import src.core.config
 from src.core.config import Settings as SettingsNoPydantic
 
+from unittest.mock import patch, mock_open
 """
 Config模块综合测试
 提高config.py的覆盖率到90%
@@ -18,6 +19,8 @@ Config模块综合测试
 # 添加src到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
 
+
+@pytest.mark.unit
 
 class TestConfig:
     """Config类测试"""
@@ -207,6 +210,8 @@ class TestSettings:
             "REDIS_URL": "redis://localhost:6380/1",
         }
 
+        with patch.dict(os.environ, test_env_vars):
+        with patch.dict(os.environ, test_env_vars):
         with patch.dict(os.environ, test_env_vars):
             # Pydantic会自动从环境变量加载
             settings = Settings()

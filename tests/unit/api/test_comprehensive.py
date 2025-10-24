@@ -1,16 +1,19 @@
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """API层综合测试 - 提升API覆盖率"""
 
 from __future__ import annotations
 
 import pytest
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
 from fastapi import status
 from fastapi.testclient import TestClient
 from pydantic import BaseModel
 
 from tests.factories import DataFactory, MockFactory
 
+
+@pytest.mark.unit
+@pytest.mark.api
 
 class TestAPIModels:
     """测试API模型"""

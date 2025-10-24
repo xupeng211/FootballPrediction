@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, AsyncMock, MagicMock, mock_open
 """最终覆盖率提升测试 - 冲刺30%目标"""
 
 from __future__ import annotations
@@ -9,11 +10,13 @@ import os
 import tempfile
 import time
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, AsyncMock, MagicMock, mock_open
 from pathlib import Path
 
 
 # 额外测试覆盖更多utils函数
+@pytest.mark.unit
+@pytest.mark.slow
+
 class TestUtilsExtra:
     """测试utils模块的额外函数"""
 
@@ -448,6 +451,8 @@ class TestStandardLibraryCoverage:
         """测试操作系统操作"""
         # 测试环境变量
         os.environ["TEST_VAR"] = "test_value"
+        os.environ["TEST_VAR"] = "test_value"
+        os.environ["TEST_VAR"] = "test_value"
         assert os.environ.get("TEST_VAR") == "test_value"
         del os.environ["TEST_VAR"]
 
@@ -464,6 +469,8 @@ class TestStandardLibraryCoverage:
         """测试时间操作"""
         # 测试time模块
         start = time.time()
+        time.sleep(0.01)  # 10ms
+        time.sleep(0.01)  # 10ms
         time.sleep(0.01)  # 10ms
         end = time.time()
         assert end > start
@@ -496,6 +503,8 @@ class TestStandardLibraryCoverage:
         """测试异步操作"""
 
         async def async_func():
+            await asyncio.sleep(0.01)
+            await asyncio.sleep(0.01)
             await asyncio.sleep(0.01)
             return "async result"
 

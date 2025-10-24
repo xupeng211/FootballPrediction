@@ -1,7 +1,11 @@
-from unittest.mock import AsyncMock, MagicMock, patch
+# TODO: Consider creating a fixture for 13 repeated Mock creations
+
+# TODO: Consider creating a fixture for 13 repeated Mock creations
+
 import pytest
 from src.cache.redis_manager import CacheKeyManager, RedisManager
 
+from unittest.mock import patch, AsyncMock, MagicMock
 """
 Redis管理器基础测试
 测试RedisManager的核心功能

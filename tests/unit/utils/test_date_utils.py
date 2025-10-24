@@ -283,6 +283,8 @@ class DateUtils:
         return date(year, month, 1)
 
 
+@pytest.mark.unit
+
 class TestDateUtils:
     """测试日期工具类"""
 

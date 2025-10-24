@@ -1,11 +1,13 @@
 # noqa: F401,F811,F821,E402
+from unittest.mock import MagicMock
 """
 core_simple 模块测试
 """
 
 import pytest
-from unittest.mock import MagicMock
 
+
+@pytest.mark.unit
 
 class TestCoreSimple:
     """core_simple 模块测试"""

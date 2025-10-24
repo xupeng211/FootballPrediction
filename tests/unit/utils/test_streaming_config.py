@@ -1,9 +1,9 @@
+from unittest.mock import patch, MagicMock, mock_open
 """
 流处理配置测试
 """
 
 import pytest
-from unittest.mock import MagicMock, patch, mock_open
 import json
 import yaml
 from typing import Any, Dict, List, Optional
@@ -16,6 +16,9 @@ from src.streaming.stream_config_simple import (
     ProducerConfig,
 )
 
+
+@pytest.mark.unit
+@pytest.mark.streaming
 
 class TestStreamConfig:
     """流配置基础测试"""
@@ -358,6 +361,8 @@ class TestConfigLoading:
         """测试环境变量替换"""
         import os
 
+        os.environ["KAFKA_SERVER"] = "kafka.example.com:9092"
+        os.environ["KAFKA_SERVER"] = "kafka.example.com:9092"
         os.environ["KAFKA_SERVER"] = "kafka.example.com:9092"
         os.environ["KAFKA_GROUP"] = "prod_group"
 

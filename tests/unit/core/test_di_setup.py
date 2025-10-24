@@ -1,7 +1,12 @@
+# TODO: Consider creating a fixture for 4 repeated Mock creations
+
+# TODO: Consider creating a fixture for 4 repeated Mock creations
+
 import sys
 from pathlib import Path
 
 # 添加项目路径
+from unittest.mock import Mock, AsyncMock
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, "src")
 
@@ -10,7 +15,6 @@ DI设置测试 - 简化版
 """
 
 import pytest
-from unittest.mock import Mock, AsyncMock
 
 
 # Mock DI模块
@@ -58,6 +62,8 @@ class MockDISetup:
     async def dispose(self):
         self.initialized = False
 
+
+@pytest.mark.unit
 
 class TestDISetup:
     """依赖注入设置测试"""

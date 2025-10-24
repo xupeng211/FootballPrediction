@@ -1,10 +1,10 @@
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 Tests for monitoring.metrics_exporter
 Auto-generated test file
 """
 
 import pytest
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
 import asyncio
 
 # Test imports
@@ -16,6 +16,8 @@ except ImportError as e:
     IMPORT_SUCCESS = False
     IMPORT_ERROR = str(e)
 
+
+@pytest.mark.unit
 
 class TestMetricsExporter:
     """Test cases for MetricsExporter"""

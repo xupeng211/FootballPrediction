@@ -1,12 +1,16 @@
+# TODO: Consider creating a fixture for 10 repeated Mock creations
+
+# TODO: Consider creating a fixture for 10 repeated Mock creations
+
 import asyncio
 import os
 import time
 import pytest
 import psutil
-from unittest.mock import AsyncMock
 from src.core.prediction_engine import PredictionEngine
 from src.models.prediction_service import PredictionResult
 
+from unittest.mock import AsyncMock
 """
 预测性能基准测试
 Performance Benchmarks for Prediction
@@ -107,6 +111,8 @@ class TestPredictionBenchmarks:
         for concurrency in concurrency_levels:
             # 模拟预测（带少量延迟）
             async def mock_predict(mid):
+                await asyncio.sleep(0.01)  # 10ms模拟处理时间
+                await asyncio.sleep(0.01)  # 10ms模拟处理时间
                 await asyncio.sleep(0.01)  # 10ms模拟处理时间
                 return {"match_id": mid, "prediction": "home"}
 

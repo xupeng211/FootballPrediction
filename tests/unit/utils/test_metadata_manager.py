@@ -1,5 +1,6 @@
 try:
     from src.lineage.metadata_manager import MetadataManager
+import pytest
 except ImportError:
     # 如果导入失败，创建简单的mock类用于测试
     class MetadataManager:
@@ -12,6 +13,8 @@ except ImportError:
         def update_metadata(self, id, metadata):
             pass
 
+
+@pytest.mark.unit
 
 def test_metadata_manager():
     manager = MetadataManager()

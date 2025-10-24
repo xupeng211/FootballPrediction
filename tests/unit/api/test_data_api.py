@@ -3,6 +3,9 @@
 import pytest
 
 
+@pytest.mark.unit
+@pytest.mark.api
+
 class TestDataAPI:
     """测试数据API"""
 

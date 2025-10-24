@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 缓存与服务层集成测试
 测试缓存系统与服务层的正确交互
@@ -7,7 +8,6 @@ import pytest
 import asyncio
 import json
 from datetime import datetime, timezone, timedelta
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
 from typing import Any, Dict, List, Optional
 
 # 导入需要测试的模块
@@ -86,7 +86,7 @@ class TestCacheServiceIntegration:
         assert cached_value is not None
         cached_data = json.loads(cached_value)
         assert cached_data["id"] == prediction_data["id"]
-        assert cached_data["match_id"]   == prediction_data["match_id"]
+        assert cached_data["match_id"]     == prediction_data["match_id"]
 
     @pytest.mark.asyncio
     async def test_match_service_caching(self):
@@ -129,7 +129,7 @@ class TestCacheServiceIntegration:
 
         cached_data = json.loads(cached_value)
         assert len(cached_data["matches"]) == 2
-        assert cached_data["total"]   == 2
+        assert cached_data["total"]     == 2
 
     @pytest.mark.asyncio
     async def test_user_service_caching(self):
@@ -410,7 +410,7 @@ class TestCachePerformanceIntegration:
 
         # 计算命中率
         hit_rate = cache_stats["cache_hits"] / cache_stats["total_requests"]
-        assert hit_rate   == cache_stats["hit_rate"]
+        assert hit_rate     == cache_stats["hit_rate"]
         assert hit_rate > 0.8  # 期望命中率超过80%
 
         # 验证统计完整性

@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 7 repeated Mock creations
+
+# TODO: Consider creating a fixture for 7 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock
 """
 测试 predictions.health 模块的覆盖率补充
 Test coverage supplement for predictions.health module
@@ -5,11 +10,14 @@ Test coverage supplement for predictions.health module
 
 import pytest
 import asyncio
-from unittest.mock import Mock, patch, AsyncMock
 from fastapi import HTTPException
 
 from src.api.predictions.health import health_router, health_check
 
+
+@pytest.mark.unit
+@pytest.mark.api
+@pytest.mark.external_api
 
 class TestPredictionsHealthRouter:
     """PredictionsHealthRouter 测试类"""

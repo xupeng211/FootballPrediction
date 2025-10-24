@@ -1,5 +1,6 @@
 try:
     from src.core.config import get_config
+import pytest
 except ImportError:
     # 如果导入失败，创建简单的mock函数用于测试
     def get_config():
@@ -23,6 +24,8 @@ except ImportError:
             def handle_error(self, error):
                 pass
 
+
+@pytest.mark.unit
 
 def test_get_config():
     try:

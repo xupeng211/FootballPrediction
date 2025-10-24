@@ -1,14 +1,21 @@
+# TODO: Consider creating a fixture for 31 repeated Mock creations
+
+# TODO: Consider creating a fixture for 31 repeated Mock creations
+
+from unittest.mock import Mock, patch, MagicMock
 """数据库模型测试"""
 
 from __future__ import annotations
 
 import pytest
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, MagicMock
 
 from tests.factories import DataFactory, MockFactory
 from tests.factories.test_helpers import with_mocks
 
+
+@pytest.mark.unit
+@pytest.mark.database
 
 class TestUserModel:
     """用户模型测试"""

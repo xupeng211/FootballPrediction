@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 31 repeated Mock creations
+
+# TODO: Consider creating a fixture for 31 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 DI设置真实模块测试
 Tests for real DI setup module
@@ -9,7 +14,6 @@ import pytest
 import tempfile
 import os
 from pathlib import Path
-from unittest.mock import Mock, patch, AsyncMock
 import sys
 
 # 添加项目路径
@@ -21,6 +25,8 @@ from src.core.di import DIContainer, ServiceLifetime
 from src.core.service_lifecycle import ServiceLifecycleManager
 from src.core.config_di import ConfigurationBinder
 
+
+@pytest.mark.unit
 
 class TestDISetupReal:
     """真实DI设置模块测试"""
@@ -70,6 +76,10 @@ profiles:
 
     def test_di_setup_creation_with_none_profile(self):
         """测试使用None配置文件"""
+        with patch.dict(os.environ, {"APP_PROFILE": "staging"}):
+        with patch.dict(os.environ, {"APP_PROFILE": "staging"}):
+        with patch.dict(os.environ, {"APP_PROFILE": "staging"}):
+        with patch.dict(os.environ, {"APP_PROFILE": "staging"}):
         with patch.dict(os.environ, {"APP_PROFILE": "staging"}):
             setup = DISetup(profile=None)
             assert setup.profile == "staging"
@@ -392,7 +402,6 @@ test:
 
             # 模拟ImportError
             def side_effect():
-                from unittest.mock import MagicMock
 
                 raise ImportError("No module named 'missing.module'")
 

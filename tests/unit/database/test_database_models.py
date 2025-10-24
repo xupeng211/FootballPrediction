@@ -22,6 +22,9 @@ from src.database.models.audit_log import AuditLog
 from src.database.models.data_quality_log import DataQualityLog
 
 
+@pytest.mark.unit
+@pytest.mark.database
+
 class TestUser:
     """用户模型测试"""
 

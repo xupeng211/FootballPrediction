@@ -1,4 +1,7 @@
 # API模块导入测试
+@pytest.mark.unit
+@pytest.mark.api
+
 def test_api_imports():
     modules = [
         "src.api.app",

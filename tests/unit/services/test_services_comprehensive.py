@@ -1,10 +1,14 @@
+# TODO: Consider creating a fixture for 21 repeated Mock creations
+
+# TODO: Consider creating a fixture for 21 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 服务层综合测试
 Service Layer Comprehensive Tests
 """
 
 import pytest
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
 from datetime import datetime, timedelta
 import asyncio
 from typing import Optional, Dict, Any, List
@@ -51,6 +55,8 @@ try:
 except ImportError:
     ServiceManager = Mock
 
+
+@pytest.mark.unit
 
 class TestBaseService:
     """基础服务测试类"""

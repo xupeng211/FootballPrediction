@@ -11,6 +11,8 @@ from pathlib import Path
 # from src.utils.file_utils import FileUtils
 
 
+@pytest.mark.unit
+
 class TestFileUtils:
     """文件工具类测试"""
 

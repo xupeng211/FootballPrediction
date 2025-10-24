@@ -1,9 +1,16 @@
+# TODO: Consider creating a fixture for 4 repeated Mock creations
+
+# TODO: Consider creating a fixture for 4 repeated Mock creations
+
+from unittest.mock import patch, AsyncMock, MagicMock
 """数据库连接测试"""
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 # from src.database.connection_mod import DatabaseManager
 
+
+@pytest.mark.unit
+@pytest.mark.database
 
 class TestDatabaseManager:
     """数据库管理器测试"""

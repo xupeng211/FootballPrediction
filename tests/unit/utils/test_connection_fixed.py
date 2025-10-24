@@ -1,11 +1,13 @@
 # noqa: F401,F811,F821,E402
+from unittest.mock import MagicMock
 """
 connection_fixed 模块测试
 """
 
 import pytest
-from unittest.mock import MagicMock
 
+
+@pytest.mark.unit
 
 class TestConnectionFixed:
     """connection_fixed 模块测试"""

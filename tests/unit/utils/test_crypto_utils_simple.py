@@ -6,6 +6,8 @@ import pytest
 from src.utils.crypto_utils import CryptoUtils
 
 
+@pytest.mark.unit
+
 class TestCryptoUtilsSimple:
     """测试CryptoUtils的基本功能"""
 

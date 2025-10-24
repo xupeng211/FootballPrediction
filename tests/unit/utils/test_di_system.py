@@ -1,9 +1,13 @@
+# TODO: Consider creating a fixture for 7 repeated Mock creations
+
+# TODO: Consider creating a fixture for 7 repeated Mock creations
+
+from unittest.mock import Mock, patch, MagicMock
 """
 依赖注入系统测试
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 from typing import Any, Dict, Optional, Type, TypeVar
 from dataclasses import dataclass
 
@@ -23,6 +27,8 @@ TEST_SKIP_REASON = "DI module not available"
 
 
 @pytest.mark.skipif(not DI_AVAILABLE, reason=TEST_SKIP_REASON)
+@pytest.mark.unit
+
 class TestDIContainer:
     """依赖注入容器测试"""
 

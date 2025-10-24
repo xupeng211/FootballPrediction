@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 45 repeated Mock creations
+
+# TODO: Consider creating a fixture for 45 repeated Mock creations
+
+from unittest.mock import Mock, patch, MagicMock
 """
 简化适配器工厂模块测试
 Simple Adapter Factory Module Tests
@@ -8,7 +13,6 @@ Tests simple adapter factory functionality defined in src/adapters/factory_simpl
 
 import pytest
 from typing import Any, Dict, Optional
-from unittest.mock import Mock, patch, MagicMock
 
 # 导入要测试的模块
 try:
@@ -28,6 +32,8 @@ except ImportError:
 @pytest.mark.skipif(
     not FACTORY_SIMPLE_AVAILABLE, reason="Simple factory module not available"
 )
+@pytest.mark.unit
+
 class TestAdapterFactory:
     """AdapterFactory类测试"""
 

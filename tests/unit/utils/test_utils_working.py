@@ -16,6 +16,9 @@ from src.utils.response import APIResponse
 from src.utils import warning_filters
 
 
+@pytest.mark.unit
+@pytest.mark.external_api
+
 class TestCryptoUtils:
     """加密工具测试"""
 

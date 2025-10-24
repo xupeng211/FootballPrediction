@@ -1,13 +1,17 @@
+from unittest.mock import AsyncMock, MagicMock
 """
 测试拆分后的数据API
 Test Split Data API
 """
 
 import pytest
-from unittest.mock import MagicMock, AsyncMock
 
 
 # 测试导入是否正常
+@pytest.mark.unit
+@pytest.mark.api
+@pytest.mark.external_api
+
 def test_import_data_api():
     """测试能否正常导入data_api模块"""
     from src.api import data_api

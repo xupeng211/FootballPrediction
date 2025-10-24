@@ -1,3 +1,4 @@
+from unittest.mock import patch, MagicMock
 """
 测试模块化的指标导出器
 Test Modular Metrics Exporter
@@ -6,9 +7,10 @@ Test Modular Metrics Exporter
 import pytest
 import time
 from datetime import datetime
-from unittest.mock import patch, MagicMock
 from prometheus_client import CollectorRegistry
 
+
+@pytest.mark.unit
 
 def test_metric_definitions():
     """测试指标定义"""

@@ -1,10 +1,10 @@
+from unittest.mock import Mock, patch, AsyncMock, MagicMock, call, PropertyMock
 """
 Comprehensive tests for adapters.registry
 Auto-generated to maximize coverage
 """
 
 import pytest
-from unittest.mock import Mock, patch, AsyncMock, MagicMock, call, PropertyMock
 import asyncio
 import json
 from datetime import datetime, timezone, timedelta
@@ -28,6 +28,8 @@ except ImportError as e:
     except ImportError:
         IMPORT_MODULE = None
 
+
+@pytest.mark.unit
 
 class TestRegistryStatus:
     """Test cases for RegistryStatus class"""
@@ -297,6 +299,8 @@ class TestModuleIntegration:
             pytest.skip("Module import failed")
 
         async def async_test():
+            await asyncio.sleep(0.001)
+            await asyncio.sleep(0.001)
             await asyncio.sleep(0.001)
             return True
 

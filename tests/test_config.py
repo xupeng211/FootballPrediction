@@ -1,4 +1,9 @@
+# TODO: Consider creating a fixture for 4 repeated Mock creations
+
+# TODO: Consider creating a fixture for 4 repeated Mock creations
+
 #!/usr/bin/env python3
+from unittest.mock import Mock, AsyncMock
 """
 测试配置中心 - 增强版
 Enhanced Test Configuration Center
@@ -11,17 +16,20 @@ Enhanced Test Configuration Center
 """
 
 import os
+import pytest
 import sys
 import tempfile
 import asyncio
 from pathlib import Path
 from typing import Any, Dict, Optional, AsyncGenerator, Generator
-from unittest.mock import Mock, AsyncMock
 
 # 添加项目根目录到路径
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root / "src"))
 
+
+@pytest.mark.external_api
+@pytest.mark.slow
 
 class TestConfig:
     """测试配置管理类"""
@@ -336,7 +344,7 @@ class TestUtilities:
         """断言字典包含指定键值对"""
         for key, value in expected.items():
             assert key in actual, f"Key '{key}' not found in dictionary"
-            assert actual[key]   == value, f"Expected {key}={value}, got {actual[key]}"
+            assert actual[key]      == value, f"Expected {key}={value}, got {actual[key]}"
 
     @staticmethod
     def assert_list_contains(actual: list, expected_items: list):

@@ -3,6 +3,8 @@
 import pytest
 
 
+@pytest.mark.unit
+
 def test_database_base_model():
     """测试Database BaseModel"""
     from src.database.base import BaseModel, Base

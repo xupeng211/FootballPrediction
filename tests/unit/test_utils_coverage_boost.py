@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, MagicMock
 """
 工具类覆盖率提升测试
 专门针对utils模块的简单函数进行测试，快速提升覆盖率
@@ -6,7 +7,6 @@
 import pytest
 import sys
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime, timedelta
 import json
 import os
@@ -16,6 +16,9 @@ import base64
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
+
+@pytest.mark.unit
+@pytest.mark.external_api
 
 class TestStringUtils:
     """字符串工具测试"""
@@ -229,6 +232,8 @@ class TestConfigLoader:
     def test_env_config(self):
         """测试环境变量配置"""
         # 设置测试环境变量
+        os.environ["TEST_CONFIG"] = "test_value"
+        os.environ["TEST_CONFIG"] = "test_value"
         os.environ["TEST_CONFIG"] = "test_value"
 
         try:

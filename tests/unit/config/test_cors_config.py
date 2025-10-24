@@ -1,3 +1,4 @@
+from unittest.mock import patch, mock_open
 """
 CORS配置模块测试
 CORS Config Module Tests
@@ -8,7 +9,6 @@ Tests CORS configuration functionality defined in src/config/cors_config.py, foc
 
 import pytest
 import os
-from unittest.mock import patch, mock_open
 from typing import List
 
 # 导入要测试的模块
@@ -26,6 +26,8 @@ except ImportError:
 @pytest.mark.skipif(
     not CORS_CONFIG_AVAILABLE, reason="CORS config module not available"
 )
+@pytest.mark.unit
+
 class TestGetCorsOrigins:
     """get_cors_origins函数测试"""
 
@@ -37,6 +39,10 @@ class TestGetCorsOrigins:
     def test_get_cors_origins_development_env(self):
         """测试开发环境的CORS源"""
         with patch.dict(os.environ, {"ENVIRONMENT": "development"}):
+        with patch.dict(os.environ, {"ENVIRONMENT": "development"}):
+        with patch.dict(os.environ, {"ENVIRONMENT": "development"}):
+        with patch.dict(os.environ, {"ENVIRONMENT": "development"}):
+        with patch.dict(os.environ, {"ENVIRONMENT": "development"}):
             origins = get_cors_origins()
 
             assert isinstance(origins, list)
@@ -47,6 +53,8 @@ class TestGetCorsOrigins:
 
     def test_get_cors_origins_development_env_unset(self):
         """测试环境变量未设置时的默认开发环境"""
+        with patch.dict(os.environ, {}, clear=True):
+        with patch.dict(os.environ, {}, clear=True):
         with patch.dict(os.environ, {}, clear=True):
             origins = get_cors_origins()
 
@@ -76,6 +84,8 @@ class TestGetCorsOrigins:
     def test_get_cors_origins_production_env_default(self):
         """测试生产环境未设置CORS_ORIGINS时的默认值"""
         with patch.dict(os.environ, {"ENVIRONMENT": "production"}):
+        with patch.dict(os.environ, {"ENVIRONMENT": "production"}):
+        with patch.dict(os.environ, {"ENVIRONMENT": "production"}):
             # 确保CORS_ORIGINS不存在
             if "CORS_ORIGINS" in os.environ:
                 del os.environ["CORS_ORIGINS"]
@@ -88,6 +98,8 @@ class TestGetCorsOrigins:
 
     def test_get_cors_origins_production_env_empty_origins(self):
         """测试生产环境CORS_ORIGINS为空字符串"""
+        with patch.dict(os.environ, {"ENVIRONMENT": "production", "CORS_ORIGINS": ""}):
+        with patch.dict(os.environ, {"ENVIRONMENT": "production", "CORS_ORIGINS": ""}):
         with patch.dict(os.environ, {"ENVIRONMENT": "production", "CORS_ORIGINS": ""}):
             origins = get_cors_origins()
 
@@ -110,6 +122,8 @@ class TestGetCorsOrigins:
     def test_get_cors_origins_staging_env(self):
         """测试预发布环境的CORS源"""
         with patch.dict(os.environ, {"ENVIRONMENT": "staging"}):
+        with patch.dict(os.environ, {"ENVIRONMENT": "staging"}):
+        with patch.dict(os.environ, {"ENVIRONMENT": "staging"}):
             origins = get_cors_origins()
 
             assert isinstance(origins, list)
@@ -119,6 +133,8 @@ class TestGetCorsOrigins:
 
     def test_get_cors_origins_staging_env_case_insensitive(self):
         """测试环境变量大小写不敏感"""
+        with patch.dict(os.environ, {"ENVIRONMENT": "STAGING"}):
+        with patch.dict(os.environ, {"ENVIRONMENT": "STAGING"}):
         with patch.dict(os.environ, {"ENVIRONMENT": "STAGING"}):
             origins = get_cors_origins()
 
@@ -130,6 +146,8 @@ class TestGetCorsOrigins:
     def test_get_cors_origins_test_env(self):
         """测试测试环境（应该使用默认配置）"""
         with patch.dict(os.environ, {"ENVIRONMENT": "test"}):
+        with patch.dict(os.environ, {"ENVIRONMENT": "test"}):
+        with patch.dict(os.environ, {"ENVIRONMENT": "test"}):
             origins = get_cors_origins()
 
             # 应该使用默认的development环境配置
@@ -139,6 +157,8 @@ class TestGetCorsOrigins:
 
     def test_get_cors_origins_unknown_env(self):
         """测试未知环境（应该使用默认配置）"""
+        with patch.dict(os.environ, {"ENVIRONMENT": "unknown"}):
+        with patch.dict(os.environ, {"ENVIRONMENT": "unknown"}):
         with patch.dict(os.environ, {"ENVIRONMENT": "unknown"}):
             origins = get_cors_origins()
 
@@ -197,6 +217,8 @@ class TestGetCorsConfig:
     def test_get_cors_config_development_env(self):
         """测试开发环境的CORS配置"""
         with patch.dict(os.environ, {"ENVIRONMENT": "development"}):
+        with patch.dict(os.environ, {"ENVIRONMENT": "development"}):
+        with patch.dict(os.environ, {"ENVIRONMENT": "development"}):
             config = get_cors_config()
 
             assert config["allow_origins"] == [
@@ -238,6 +260,8 @@ class TestGetCorsConfig:
     def test_get_cors_config_staging_env(self):
         """测试预发布环境的CORS配置"""
         with patch.dict(os.environ, {"ENVIRONMENT": "staging"}):
+        with patch.dict(os.environ, {"ENVIRONMENT": "staging"}):
+        with patch.dict(os.environ, {"ENVIRONMENT": "staging"}):
             config = get_cors_config()
 
             assert config["allow_origins"] == [
@@ -257,6 +281,8 @@ class TestGetCorsConfig:
 
     def test_get_cors_config_consistency(self):
         """测试配置一致性"""
+        with patch.dict(os.environ, {"ENVIRONMENT": "production"}):
+        with patch.dict(os.environ, {"ENVIRONMENT": "production"}):
         with patch.dict(os.environ, {"ENVIRONMENT": "production"}):
             config = get_cors_config()
             origins = get_cors_origins()
@@ -318,6 +344,8 @@ class TestIntegration:
     def test_full_workflow_development(self):
         """测试完整的开发环境工作流"""
         with patch.dict(os.environ, {"ENVIRONMENT": "development"}):
+        with patch.dict(os.environ, {"ENVIRONMENT": "development"}):
+        with patch.dict(os.environ, {"ENVIRONMENT": "development"}):
             # 获取CORS源
             origins = get_cors_origins()
             assert len(origins) == 3
@@ -355,6 +383,8 @@ class TestIntegration:
         """测试环境变更时的行为"""
         # 先测试开发环境
         with patch.dict(os.environ, {"ENVIRONMENT": "development"}):
+        with patch.dict(os.environ, {"ENVIRONMENT": "development"}):
+        with patch.dict(os.environ, {"ENVIRONMENT": "development"}):
             dev_config = get_cors_config()
             assert len(dev_config["allow_origins"]) == 3
 
@@ -370,6 +400,8 @@ class TestIntegration:
     def test_edge_case_empty_env_var(self):
         """测试环境变量为空字符串的边界情况"""
         with patch.dict(os.environ, {"ENVIRONMENT": ""}):
+        with patch.dict(os.environ, {"ENVIRONMENT": ""}):
+        with patch.dict(os.environ, {"ENVIRONMENT": ""}):
             # 空字符串应该被视为未知环境，使用默认配置
             config = get_cors_config()
             assert len(config["allow_origins"]) == 3  # 开发环境的默认配置
@@ -378,12 +410,16 @@ class TestIntegration:
     def test_edge_case_whitespace_env_var(self):
         """测试环境变量包含空格的边界情况"""
         with patch.dict(os.environ, {"ENVIRONMENT": " development "}):
+        with patch.dict(os.environ, {"ENVIRONMENT": " development "}):
+        with patch.dict(os.environ, {"ENVIRONMENT": " development "}):
             # 包含空格应该被视为未知环境，使用默认配置
             config = get_cors_config()
             assert len(config["allow_origins"]) == 3  # 开发环境的默认配置
 
     def test_real_world_scenario_localhost(self):
         """测试真实场景：本地开发"""
+        with patch.dict(os.environ, {}, clear=True):
+        with patch.dict(os.environ, {}, clear=True):
         with patch.dict(os.environ, {}, clear=True):
             # 没有设置环境变量，应该默认为开发环境
             config = get_cors_config()

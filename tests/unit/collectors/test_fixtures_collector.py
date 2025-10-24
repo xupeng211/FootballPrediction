@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 24 repeated Mock creations
+
+# TODO: Consider creating a fixture for 24 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 比赛赛程收集器测试
 Tests for Fixtures Collector
@@ -6,7 +11,6 @@ Tests for Fixtures Collector
 """
 
 import pytest
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from datetime import datetime, timedelta
 import os
 
@@ -23,6 +27,8 @@ except ImportError as e:
 @pytest.mark.skipif(
     not COLLECTORS_AVAILABLE, reason="Fixtures collector module not available"
 )
+@pytest.mark.unit
+
 class TestFixturesCollector:
     """比赛赛程收集器测试"""
 
@@ -61,6 +67,8 @@ class TestFixturesCollector:
         self, mock_db_session, mock_redis_client
     ):
         """测试：收集器初始化（无API令牌）"""
+        with patch.dict(os.environ, {}, clear=True):
+        with patch.dict(os.environ, {}, clear=True):
         with patch.dict(os.environ, {}, clear=True):
             with patch("src.collectors.fixtures_collector.logger") as mock_logger:
                 collector = FixturesCollector(mock_db_session, mock_redis_client)
@@ -295,6 +303,8 @@ class TestFixturesCollectorIntegration:
         mock_redis.set = AsyncMock()
 
         with patch.dict(os.environ, {"FOOTBALL_API_TOKEN": "test_token"}):
+        with patch.dict(os.environ, {"FOOTBALL_API_TOKEN": "test_token"}):
+        with patch.dict(os.environ, {"FOOTBALL_API_TOKEN": "test_token"}):
             collector = FixturesCollector(mock_db, mock_redis)
 
         # 模拟API数据
@@ -355,6 +365,8 @@ class TestFixturesCollectorIntegration:
         mock_redis = Mock()
 
         # 创建没有API令牌的收集器
+        with patch.dict(os.environ, {}, clear=True):
+        with patch.dict(os.environ, {}, clear=True):
         with patch.dict(os.environ, {}, clear=True):
             with patch("src.collectors.fixtures_collector.logger") as mock_logger:
                 collector = FixturesCollector(mock_db, mock_redis)

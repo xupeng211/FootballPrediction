@@ -1,13 +1,19 @@
+# TODO: Consider creating a fixture for 30 repeated Mock creations
+
+# TODO: Consider creating a fixture for 30 repeated Mock creations
+
+from unittest.mock import patch, AsyncMock, MagicMock
 """预测API单元测试"""
 
 from datetime import datetime
 from decimal import Decimal
-from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from fastapi import status
 from src.database.models import PredictedResult
 from src.models.prediction_service import PredictionService
 
+
+@pytest.mark.unit
 
 class TestGetMatchPrediction:
     """获取比赛预测API测试"""

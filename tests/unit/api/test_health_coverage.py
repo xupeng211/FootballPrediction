@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch
 """
 测试 health 模块的覆盖率补充
 Test coverage supplement for health module
@@ -5,8 +6,10 @@ Test coverage supplement for health module
 
 import pytest
 import warnings
-from unittest.mock import Mock, patch
 
+
+@pytest.mark.unit
+@pytest.mark.api
 
 def test_health_module_import():
     """测试health模块导入功能"""

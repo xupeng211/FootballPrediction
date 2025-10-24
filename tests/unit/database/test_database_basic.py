@@ -1,9 +1,9 @@
+from unittest.mock import AsyncMock, MagicMock
 """
 数据库基础测试
 """
 
 import pytest
-from unittest.mock import MagicMock, AsyncMock
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -16,6 +16,9 @@ from src.database.compatibility import (
 
 Base = declarative_base()
 
+
+@pytest.mark.unit
+@pytest.mark.database
 
 class TestUser(Base):
     """测试用户模型"""

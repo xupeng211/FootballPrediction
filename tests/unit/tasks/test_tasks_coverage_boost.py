@@ -1,13 +1,21 @@
+# TODO: Consider creating a fixture for 16 repeated Mock creations
+
+# TODO: Consider creating a fixture for 16 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """Tasks模块覆盖率提升测试 - 目标：从0%到5%"""
 
 from __future__ import annotations
 
 import pytest
 import asyncio
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
 from datetime import datetime, timedelta
 from celery import Celery
 
+
+@pytest.mark.unit
+@pytest.mark.slow
+@pytest.mark.critical
 
 class TestCeleryAppCoverage:
     """测试Celery应用基础功能"""

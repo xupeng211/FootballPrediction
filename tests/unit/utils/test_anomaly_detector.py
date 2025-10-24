@@ -1,5 +1,4 @@
 from datetime import datetime
-from unittest.mock import MagicMock
 import numpy as np
 import pandas as pd
 import pytest
@@ -37,6 +36,7 @@ from src.data.quality.anomaly_detector import StatisticalAnomalyDetector
 # 使用学习到的模式进行预测
 
 
+from unittest.mock import MagicMock
 """
 数据质量测试 - 异常检测器
 """

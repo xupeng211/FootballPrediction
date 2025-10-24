@@ -20,6 +20,8 @@ except ImportError as e:
 
 
 # @pytest.mark.skipif(not HEALTH_AVAILABLE, reason="Health module not available")
+@pytest.mark.unit
+
 class TestHealthCompatibility:
     """健康API兼容性测试"""
 

@@ -33,6 +33,8 @@ except ImportError:
 @pytest.mark.skipif(
     not PREDICTION_SERVICE_AVAILABLE, reason="Prediction service module not available"
 )
+@pytest.mark.unit
+
 class TestModuleImports:
     """模块导入测试"""
 

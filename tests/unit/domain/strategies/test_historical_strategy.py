@@ -9,6 +9,8 @@ from src.domain.strategies.base import PredictionInput
 from src.domain.strategies.historical import HistoricalMatch, HistoricalStrategy
 
 
+@pytest.mark.unit
+
 def test_historical_strategy_provides_stable_predictions():
     strategy = HistoricalStrategy()
     asyncio.run(

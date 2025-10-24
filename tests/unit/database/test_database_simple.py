@@ -1,4 +1,7 @@
 # 数据库简单测试
+@pytest.mark.unit
+@pytest.mark.database
+
 def test_database_import():
     db_modules = [
         "src.database.base",

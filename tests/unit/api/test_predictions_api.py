@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, AsyncMock
 """
 预测 API 测试
 Prediction API Tests
@@ -5,12 +6,14 @@ Prediction API Tests
 
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import Mock, patch, AsyncMock
 import json
 from datetime import datetime, date
 
 from src.api.app import app
 
+
+@pytest.mark.unit
+@pytest.mark.api
 
 class TestPredictionsAPI:
     """预测 API 测试类"""

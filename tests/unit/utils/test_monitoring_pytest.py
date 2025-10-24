@@ -1,12 +1,16 @@
+# TODO: Consider creating a fixture for 57 repeated Mock creations
+
+# TODO: Consider creating a fixture for 57 repeated Mock creations
+
 # noqa: F401,F811,F821,E402
 import os
 import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, AsyncMock
 import pytest
 
+from unittest.mock import Mock, AsyncMock, MagicMock
 """
 Monitoring模块pytest异步测试
 使用pytest-asyncio提升覆盖率
@@ -264,6 +268,8 @@ async def _get_redis_metrics_test():
 
 
 # 测试类
+@pytest.mark.unit
+
 class TestMonitoringPytest:
     """监控模块pytest测试"""
 
@@ -409,6 +415,8 @@ class TestMonitoringPytest:
     async def test_redis_metrics_failure(self):
         """测试Redis指标失败"""
         # 临时修改redis mock让它失败
+        original_redis = pytest_redis.Redis
+        original_redis = pytest_redis.Redis
         original_redis = pytest_redis.Redis
         pytest_redis.Redis = Mock(side_effect=Exception("Redis connection failed"))
 

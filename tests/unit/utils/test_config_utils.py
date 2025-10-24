@@ -1,15 +1,17 @@
+from unittest.mock import Mock, patch, MagicMock
 """
 配置工具测试
 """
 
 import os
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 from pathlib import Path
 import tempfile
 import json
 import yaml
 
+
+@pytest.mark.unit
 
 class TestConfigUtils:
     """测试配置工具"""
@@ -34,6 +36,8 @@ class TestConfigUtils:
         except ImportError:
             pytest.skip("FastAPIConfig module not available")
 
+    @patch.dict(os.environ, {"DATABASE_URL": "sqlite:///test.db"})
+    @patch.dict(os.environ, {"DATABASE_URL": "sqlite:///test.db"})
     @patch.dict(os.environ, {"DATABASE_URL": "sqlite:///test.db"})
     def test_environment_variables(self):
         """测试环境变量"""
@@ -455,6 +459,8 @@ class TestConfigUtils:
             "FP_REDIS_URL": "redis://localhost:6379",
         }
 
+        with patch.dict(os.environ, env_config):
+        with patch.dict(os.environ, env_config):
         with patch.dict(os.environ, env_config):
 
             def load_from_env(prefix="FP_"):

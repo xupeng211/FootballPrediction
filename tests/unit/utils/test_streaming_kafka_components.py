@@ -1,9 +1,13 @@
+# TODO: Consider creating a fixture for 18 repeated Mock creations
+
+# TODO: Consider creating a fixture for 18 repeated Mock creations
+
+from unittest.mock import patch, AsyncMock, MagicMock, mock_open
 """
 Kafka组件集成测试
 """
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch, mock_open
 import asyncio
 import json
 from typing import Any, Dict, List, Optional
@@ -20,6 +24,8 @@ from src.streaming.kafka_components_simple import (
 )
 from src.core.exceptions import StreamingError
 
+
+@pytest.mark.unit
 
 class TestKafkaAdminClient:
     """Kafka管理客户端测试"""

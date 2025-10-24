@@ -1,12 +1,18 @@
+# TODO: Consider creating a fixture for 4 repeated Mock creations
+
+# TODO: Consider creating a fixture for 4 repeated Mock creations
+
+from unittest.mock import patch, AsyncMock, MagicMock
 """
 增强基础服务测试
 """
 
 import pytest
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
 from src.services.enhanced_core import EnhancedBaseService, ServiceConfig
 
+
+@pytest.mark.unit
 
 class TestServiceConfig:
     """服务配置测试"""
@@ -139,6 +145,8 @@ class TestEnhancedBaseService:
 
         # 测试超时
         async def slow_func():
+            await asyncio.sleep(2)
+            await asyncio.sleep(2)
             await asyncio.sleep(2)
             return "too slow"
 

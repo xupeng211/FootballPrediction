@@ -1,7 +1,11 @@
 # API模型导入测试
+@pytest.mark.unit
+@pytest.mark.api
+
 def test_api_models_import():
     try:
         from src.api.predictions.models import PredictionRequest, PredictionResponse
+import pytest
         from src.api.schemas import HealthResponse
 
         assert True  # Basic assertion - consider enhancing

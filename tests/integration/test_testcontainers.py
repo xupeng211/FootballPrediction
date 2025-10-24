@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 6 repeated Mock creations
+
+# TODO: Consider creating a fixture for 6 repeated Mock creations
+
+from unittest.mock import Mock, patch
 """
 TestContainers集成测试
 TestContainers Integration Tests
@@ -7,7 +12,6 @@ TestContainers Integration Tests
 
 import pytest
 import asyncio
-from unittest.mock import Mock, patch
 import time
 
 # 测试标记
@@ -153,12 +157,12 @@ class TestPostgreSQLIntegration:
             # 创建记录
             created = await repo.create(name="test", value=100)
             assert created.name == "test"
-            assert created.value   == 100
+            assert created.value     == 100
 
             # 获取记录
             retrieved = await repo.get_by_id(created.id)
             assert retrieved is not None
-            assert retrieved.name   == "test"
+            assert retrieved.name     == "test"
 
         await engine.dispose()
 
@@ -185,6 +189,8 @@ class TestRedisIntegration:
         import redis.asyncio as redis
 
         # 创建Redis客户端
+        client = redis.Redis(
+        client = redis.Redis(
         client = redis.Redis(
             host=redis_container["host"],
             port=redis_container["port"],
@@ -214,7 +220,7 @@ class TestRedisIntegration:
         await redis_manager.set("cache_key", {"data": "test_value"}, ttl=60)
         cached_data = await redis_manager.get("cache_key")
         assert cached_data is not None
-        assert cached_data["data"]   == "test_value"
+        assert cached_data["data"]     == "test_value"
 
         # 测试缓存过期
         await redis_manager.set("expire_key", "expire_value", ttl=1)
@@ -259,7 +265,7 @@ class TestWithMockContainers:
             redis_client = Redis(host="localhost", port=6379)
             await redis_client.ping()
             value = await redis_client.get("test_key")
-            assert value   == b"test_value"
+            assert value     == b"test_value"
 
     async def test_full_workflow_mock(self):
         """测试：完整工作流（模拟）"""
@@ -284,11 +290,11 @@ class TestWithMockContainers:
                 # 测试工作流
                 data_service = mock_service()
                 _matches = await data_service.collect_match_data()
-                assert matches["matches"]   == 10
+                assert matches["matches"]     == 10
 
                 pred_service_instance = mock_pred()
                 _prediction = await pred_service_instance.predict(match_id=1)
-                assert prediction["home_win"]   == 0.5
+                assert prediction["home_win"]     == 0.5
 
     async def test_error_handling_mock(self):
         """测试：错误处理（模拟）"""
@@ -344,6 +350,8 @@ class TestContainerOrchestration:
         # 模拟服务就绪
         async def check_service(service_name):
             await asyncio.sleep(0.1)  # 模拟检查延迟
+            await asyncio.sleep(0.1)  # 模拟检查延迟
+            await asyncio.sleep(0.1)  # 模拟检查延迟
             health_checks[service_name] = True
 
         # 并发检查所有服务
@@ -366,6 +374,8 @@ class TestContainerOrchestration:
             # 模拟启动延迟
             if service_name == "database":
                 await asyncio.sleep(0.3)
+                await asyncio.sleep(0.3)
+                await asyncio.sleep(0.3)
             elif service_name == "redis":
                 await asyncio.sleep(0.2)
             else:
@@ -378,7 +388,7 @@ class TestContainerOrchestration:
             await start_service(service)
 
         # 验证启动顺序
-        assert started_services   == startup_order
+        assert started_services     == startup_order
 
     def test_environment_variables(self):
         """测试：环境变量配置"""
@@ -390,6 +400,8 @@ class TestContainerOrchestration:
         import os
 
         for var in required_vars:
+            value = os.environ.get(var)
+            value = os.environ.get(var)
             value = os.environ.get(var)
             # 在测试中可以接受None或使用默认值
             assert value is None or isinstance(value, str)

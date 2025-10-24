@@ -1,3 +1,4 @@
+from unittest.mock import Mock, AsyncMock
 """
 预测API模块化简化测试
 """
@@ -118,7 +119,6 @@ async def test_batch_predict_too_many_matches():
     """测试批量预测超过限制"""
     from src.api.predictions_mod.batch_handlers import batch_predict_matches_handler
     from fastapi import HTTPException
-    from unittest.mock import AsyncMock, Mock
 
     mock_request = Mock()
     mock_session = AsyncMock()

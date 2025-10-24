@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 22 repeated Mock creations
+
+# TODO: Consider creating a fixture for 22 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock
 """
 事件系统API测试
 Tests for Event System API
@@ -6,7 +11,6 @@ Tests for Event System API
 """
 
 import pytest
-from unittest.mock import Mock, patch, AsyncMock
 from datetime import datetime
 
 # 测试导入
@@ -28,6 +32,8 @@ except ImportError as e:
 
 
 @pytest.mark.skipif(not EVENTS_AVAILABLE, reason="Events API module not available")
+@pytest.mark.unit
+
 class TestEventHealthCheck:
     """事件健康检查测试"""
 

@@ -1,10 +1,10 @@
+from unittest.mock import Mock, patch, AsyncMock, MagicMock, call, PropertyMock
 """
 Comprehensive tests for api.monitoring
 Auto-generated to maximize coverage
 """
 
 import pytest
-from unittest.mock import Mock, patch, AsyncMock, MagicMock, call, PropertyMock
 import asyncio
 import json
 from datetime import datetime, timezone, timedelta
@@ -28,6 +28,8 @@ except ImportError as e:
     except ImportError:
         IMPORT_MODULE = None
 
+
+@pytest.mark.unit
 
 class TestModuleIntegration:
     """Module integration and edge case tests"""

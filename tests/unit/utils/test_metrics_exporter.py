@@ -1,5 +1,6 @@
 try:
     from src.models.metrics_exporter import MetricsExporter
+import pytest
 except ImportError:
     # 如果导入失败，创建简单的mock类用于测试
     class MetricsExporter:
@@ -9,6 +10,8 @@ except ImportError:
         def export_to_json(self):
             pass
 
+
+@pytest.mark.unit
 
 def test_metrics_exporter():
     exporter = MetricsExporter()

@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 30 repeated Mock creations
+
+# TODO: Consider creating a fixture for 30 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock
 """
 任务工具函数测试
 Tests for Tasks Utils
@@ -6,7 +11,6 @@ Tests for Tasks Utils
 """
 
 import pytest
-from unittest.mock import Mock, patch, AsyncMock
 from datetime import datetime, timedelta, timezone
 from typing import List
 
@@ -39,6 +43,8 @@ except ImportError as e:
 @pytest.mark.skipif(
     not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available"
 )
+@pytest.mark.unit
+
 class TestShouldCollectLiveScores:
     """测试：是否应该采集实时比分"""
 

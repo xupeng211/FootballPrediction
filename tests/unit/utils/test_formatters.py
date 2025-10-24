@@ -24,6 +24,8 @@ except ImportError as e:
 
 
 @pytest.mark.skipif(not FORMATTERS_AVAILABLE, reason="Formatters module not available")
+@pytest.mark.unit
+
 class TestFormatDatetime:
     """日期时间格式化测试"""
 
