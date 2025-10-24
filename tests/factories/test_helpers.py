@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from unittest.mock import Mock, MagicMock
 import pytest
 from typing import Any, Dict, List, Optional, Generator
-from unittest.mock import Mock, MagicMock
 
 from tests.factories.data_factory import DataFactory
 from tests.factories.mock_factory import MockFactory

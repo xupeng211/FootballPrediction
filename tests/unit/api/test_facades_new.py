@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 25 repeated Mock creations
+
+# TODO: Consider creating a fixture for 25 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock
 """
 门面模式API测试
 Tests for Facade Pattern API
@@ -6,7 +11,6 @@ Tests for Facade Pattern API
 """
 
 import pytest
-from unittest.mock import Mock, patch, AsyncMock
 from datetime import datetime
 
 # 测试导入
@@ -26,6 +30,8 @@ except ImportError as e:
 
 
 @pytest.mark.skipif(not FACADES_AVAILABLE, reason="Facades API module not available")
+@pytest.mark.unit
+
 class TestListFacades:
     """获取门面列表测试"""
 

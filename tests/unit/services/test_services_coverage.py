@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 12 repeated Mock creations
+
+# TODO: Consider creating a fixture for 12 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 服务模块测试覆盖率提升
 Services Module Coverage Improvement
@@ -8,7 +13,6 @@ Created specifically to improve coverage for low-coverage modules in src/service
 
 import pytest
 import asyncio
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
 from datetime import datetime
 import sys
 import os
@@ -16,6 +20,9 @@ import os
 # 添加项目根目录到sys.path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../.."))
 
+
+@pytest.mark.unit
+@pytest.mark.critical
 
 class TestDatabaseService:
     """测试数据库服务模块"""

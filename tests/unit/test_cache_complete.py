@@ -1,7 +1,11 @@
 # 缓存模块完整测试
+@pytest.mark.unit
+@pytest.mark.cache
+
 def test_cache_components():
     try:
         from src.cache.redis_manager import RedisManager
+import pytest
         from src.cache.ttl_cache import TTLCache
         from src.cache.consistency_manager import ConsistencyManager
 

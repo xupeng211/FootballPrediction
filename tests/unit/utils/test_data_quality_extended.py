@@ -1,5 +1,6 @@
 try:
     from src.data.quality.data_quality_monitor import DataQualityMonitor
+import pytest
 except ImportError:
     # 如果导入失败，创建简单的mock类用于测试
     class DataQualityMonitor:
@@ -33,6 +34,8 @@ except ImportError:
         def handle_exception(self):
             pass
 
+
+@pytest.mark.unit
 
 def test_data_quality_monitor():
     monitor = DataQualityMonitor()

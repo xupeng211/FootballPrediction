@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
+from unittest.mock import Mock, patch
 """
 Auto-generated basic tests for event_application.py
 TODO: Expand these tests with actual functionality
 """
 
 import pytest
-from unittest.mock import Mock, patch
 
 # TODO: Import the module to test
 # from event_application import *
 
+
+@pytest.mark.unit
 
 class TestEventApplication:
     """Basic test class for event_application.py"""

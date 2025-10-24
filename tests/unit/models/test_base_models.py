@@ -30,6 +30,8 @@ except ImportError:
 @pytest.mark.skipif(
     not BASE_MODELS_AVAILABLE, reason="Base models module not available"
 )
+@pytest.mark.unit
+
 class TestBaseModel:
     """BaseModel测试"""
 

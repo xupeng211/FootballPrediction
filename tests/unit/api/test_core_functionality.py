@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch
 """
 核心功能测试 - 专注于测试已实现的核心功能
 Core Functionality Tests - Focus on testing implemented core functionality
@@ -5,7 +6,6 @@ Core Functionality Tests - Focus on testing implemented core functionality
 
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import Mock, patch
 import json
 from datetime import datetime, timedelta
 

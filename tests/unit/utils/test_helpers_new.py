@@ -26,6 +26,8 @@ except ImportError as e:
 
 
 @pytest.mark.skipif(not HELPERS_AVAILABLE, reason="Helpers module not available")
+@pytest.mark.unit
+
 class TestGenerateUUID:
     """UUID生成测试"""
 
@@ -159,6 +161,8 @@ class TestFormatTimestamp:
         formatted1 = format_timestamp()
         import time
 
+        time.sleep(0.01)
+        time.sleep(0.01)
         time.sleep(0.01)
         formatted2 = format_timestamp()
 

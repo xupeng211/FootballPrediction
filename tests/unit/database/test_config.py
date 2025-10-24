@@ -1,3 +1,4 @@
+from unittest.mock import patch, MagicMock
 """
 数据库配置测试
 Tests for Database Config
@@ -6,7 +7,6 @@ Tests for Database Config
 """
 
 import pytest
-from unittest.mock import patch, MagicMock
 import tempfile
 import os
 
@@ -19,6 +19,9 @@ from src.database.config import (
     _parse_int,
 )
 
+
+@pytest.mark.unit
+@pytest.mark.database
 
 class TestDatabaseConfig:
     """数据库配置测试"""
@@ -210,6 +213,8 @@ class TestEnvironmentHelpers:
     def test_get_env_bool_true(self):
         """测试：环境变量布尔值解析（真）"""
         with patch.dict("os.environ", {"TEST_BOOL": "true"}):
+        with patch.dict("os.environ", {"TEST_BOOL": "true"}):
+        with patch.dict("os.environ", {"TEST_BOOL": "true"}):
             assert _get_env_bool("TEST_BOOL") is True
 
         with patch.dict("os.environ", {"TEST_BOOL": "1"}):
@@ -237,6 +242,10 @@ class TestEnvironmentHelpers:
     def test_parse_int_valid(self):
         """测试：环境变量整数解析（有效）"""
         with patch.dict("os.environ", {"TEST_INT": "123"}):
+        with patch.dict("os.environ", {"TEST_INT": "123"}):
+        with patch.dict("os.environ", {"TEST_INT": "123"}):
+        with patch.dict("os.environ", {"TEST_INT": "123"}):
+        with patch.dict("os.environ", {"TEST_INT": "123"}):
             assert _parse_int("TEST_INT", 0) == 123
 
     def test_parse_int_invalid(self):
@@ -255,6 +264,10 @@ class TestDatabaseConfigFactory:
     def test_get_database_config_development(self):
         """测试：获取开发环境配置"""
         with patch.dict("os.environ", {"DB_PASSWORD": "dev-pass"}, clear=True):
+        with patch.dict("os.environ", {"DB_PASSWORD": "dev-pass"}, clear=True):
+        with patch.dict("os.environ", {"DB_PASSWORD": "dev-pass"}, clear=True):
+        with patch.dict("os.environ", {"DB_PASSWORD": "dev-pass"}, clear=True):
+        with patch.dict("os.environ", {"DB_PASSWORD": "dev-pass"}, clear=True):
             _config = get_database_config("development")
 
             assert _config.host == "localhost"
@@ -265,6 +278,8 @@ class TestDatabaseConfigFactory:
 
     def test_get_database_config_test(self):
         """测试：获取测试环境配置"""
+        with patch.dict("os.environ", {}, clear=True):
+        with patch.dict("os.environ", {}, clear=True):
         with patch.dict("os.environ", {}, clear=True):
             _config = get_database_config("test")
 
@@ -297,6 +312,8 @@ class TestDatabaseConfigFactory:
 
     def test_get_database_config_production_missing_password(self):
         """测试：获取生产环境配置（缺少密码）"""
+        with patch.dict("os.environ", {}, clear=True):
+        with patch.dict("os.environ", {}, clear=True):
         with patch.dict("os.environ", {}, clear=True):
             with pytest.raises(ValueError) as exc_info:
                 get_database_config("production")
@@ -341,11 +358,15 @@ class TestDatabaseConfigFactory:
         env_vars = {"PROD_DB_HOST": "prod-host-alias", "PROD_DB_PASSWORD": "secret"}
 
         with patch.dict("os.environ", env_vars, clear=True):
+        with patch.dict("os.environ", env_vars, clear=True):
+        with patch.dict("os.environ", env_vars, clear=True):
             _config = get_database_config("prod")
             assert _config.host == "prod-host-alias"
 
     def test_get_database_config_unknown_environment(self):
         """测试：未知环境"""
+        with patch.dict("os.environ", {"DB_PASSWORD": "unknown-pass"}, clear=True):
+        with patch.dict("os.environ", {"DB_PASSWORD": "unknown-pass"}, clear=True):
         with patch.dict("os.environ", {"DB_PASSWORD": "unknown-pass"}, clear=True):
             _config = get_database_config("unknown")
             # 应该使用开发环境的默认值
@@ -354,6 +375,8 @@ class TestDatabaseConfigFactory:
 
     def test_get_test_database_config(self):
         """测试：获取测试数据库配置快捷函数"""
+        with patch.dict("os.environ", {}, clear=True):
+        with patch.dict("os.environ", {}, clear=True):
         with patch.dict("os.environ", {}, clear=True):
             _config = get_test_database_config()
 
@@ -365,6 +388,8 @@ class TestDatabaseConfigFactory:
         env_vars = {"PROD_DB_HOST": "prod-host", "PROD_DB_PASSWORD": "secret"}
 
         with patch.dict("os.environ", env_vars, clear=True):
+        with patch.dict("os.environ", env_vars, clear=True):
+        with patch.dict("os.environ", env_vars, clear=True):
             _config = get_production_database_config()
 
             assert _config.host == "prod-host"
@@ -372,6 +397,8 @@ class TestDatabaseConfigFactory:
 
     def test_get_production_database_config_missing_password(self):
         """测试：获取生产数据库配置快捷函数（缺少密码）"""
+        with patch.dict("os.environ", {}, clear=True):
+        with patch.dict("os.environ", {}, clear=True):
         with patch.dict("os.environ", {}, clear=True):
             with pytest.raises(ValueError):
                 get_production_database_config()
@@ -414,6 +441,8 @@ class TestDatabaseConfigFactory:
             "DB_MAX_OVERFLOW": "18",
         }
 
+        with patch.dict("os.environ", env_vars, clear=True):
+        with patch.dict("os.environ", env_vars, clear=True):
         with patch.dict("os.environ", env_vars, clear=True):
             _config = get_database_config()
 

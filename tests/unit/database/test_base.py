@@ -12,6 +12,9 @@ from sqlalchemy import Column, String, Integer
 from src.database.base import Base, TimestampMixin, BaseModel
 
 
+@pytest.mark.unit
+@pytest.mark.database
+
 class TestTimestampMixin:
     """时间戳混入测试"""
 

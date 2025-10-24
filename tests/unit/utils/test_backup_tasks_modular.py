@@ -1,12 +1,18 @@
+# TODO: Consider creating a fixture for 4 repeated Mock creations
+
+# TODO: Consider creating a fixture for 4 repeated Mock creations
+
+from unittest.mock import patch, MagicMock
 """
 测试备份任务模块化拆分
 Test modular split of backup tasks
 """
 
 import pytest
-from unittest.mock import MagicMock, patch
 from datetime import datetime
 
+
+@pytest.mark.unit
 
 class TestBaseModule:
     """测试基础模块"""

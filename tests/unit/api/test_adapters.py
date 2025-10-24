@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 32 repeated Mock creations
+
+# TODO: Consider creating a fixture for 32 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 适配器API端点测试
 Tests for Adapter API Endpoints
@@ -11,7 +16,6 @@ Tests for Adapter API Endpoints
 
 import pytest
 from datetime import datetime, date, timedelta
-from unittest.mock import AsyncMock, Mock, patch, MagicMock
 from fastapi.testclient import TestClient
 from fastapi import FastAPI
 
@@ -105,6 +109,10 @@ class MockAdapter:
         player.photo_url = "https://example.com/photo.jpg"
         return [player]
 
+
+@pytest.mark.unit
+@pytest.mark.api
+@pytest.mark.external_api
 
 class TestAdaptersAPI:
     """适配器API测试"""

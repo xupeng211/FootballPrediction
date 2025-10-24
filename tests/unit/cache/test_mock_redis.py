@@ -1,3 +1,4 @@
+from unittest.mock import patch
 """
 模拟Redis管理器测试
 Tests for Mock Redis Manager
@@ -8,7 +9,6 @@ Tests for Mock Redis Manager
 import pytest
 import time
 import json
-from unittest.mock import patch
 
 # 测试导入
 try:
@@ -22,6 +22,8 @@ except ImportError as e:
 
 
 @pytest.mark.skipif(not MOCK_REDIS_AVAILABLE, reason="Mock Redis module not available")
+@pytest.mark.unit
+
 class TestMockRedisManager:
     """模拟Redis管理器测试"""
 

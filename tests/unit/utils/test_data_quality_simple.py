@@ -1,4 +1,6 @@
 # 数据质量简单测试
+@pytest.mark.unit
+
 def test_data_quality_import():
     quality = [
         "src.data.quality.anomaly_detector",
@@ -19,6 +21,7 @@ def test_data_quality_import():
 def test_quality_creation():
     try:
         from src.data.quality.data_quality_monitor import DataQualityMonitor
+import pytest
 
         monitor = DataQualityMonitor()
         assert monitor is not None

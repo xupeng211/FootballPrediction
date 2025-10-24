@@ -1,13 +1,16 @@
+from unittest.mock import patch, AsyncMock
 """
 测试预测API的模块化拆分
 """
 
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import AsyncMock, patch
 
 from src.main import app
 
+
+@pytest.mark.unit
+@pytest.mark.api
 
 class TestPredictionsAPI:
     """测试预测API"""

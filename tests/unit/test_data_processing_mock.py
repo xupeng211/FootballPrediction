@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 16 repeated Mock creations
+
+# TODO: Consider creating a fixture for 16 repeated Mock creations
+
+from unittest.mock import Mock, patch, MagicMock
 """
 数据处理功能测试
 覆盖数据处理相关的业务逻辑
@@ -6,12 +11,13 @@
 import pytest
 import sys
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime, timedelta
 import json
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
+
+@pytest.mark.unit
 
 class TestDataProcessingPipeline:
     """数据处理管道测试"""

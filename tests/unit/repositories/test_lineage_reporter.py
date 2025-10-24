@@ -1,5 +1,6 @@
 try:
     from src.lineage.lineage_reporter import LineageReporter
+import pytest
 except ImportError:
     # 如果导入失败，创建简单的mock类用于测试
     class LineageReporter:
@@ -9,6 +10,8 @@ except ImportError:
         def generate_report(self):
             pass
 
+
+@pytest.mark.unit
 
 def test_lineage_reporter():
     reporter = LineageReporter()

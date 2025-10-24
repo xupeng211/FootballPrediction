@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch
 """
 现有API端点测试
 Existing API Endpoints Tests
@@ -5,7 +6,6 @@ Existing API Endpoints Tests
 
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import Mock, patch
 import json
 from datetime import datetime
 

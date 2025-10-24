@@ -13,6 +13,10 @@ src_path = Path(__file__).parent.parent.parent.parent / "src"
 sys.path.insert(0, str(src_path))
 
 
+@pytest.mark.unit
+@pytest.mark.external_api
+@pytest.mark.slow
+
 class TestCryptoUtilsWorking:
     """测试crypto_utils模块 - 使用类方法"""
 

@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 30 repeated Mock creations
+
+# TODO: Consider creating a fixture for 30 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 CQRS API端点简化测试
 Simplified Tests for CQRS API Endpoints
@@ -7,7 +12,6 @@ Simplified Tests for CQRS API Endpoints
 
 import pytest
 from datetime import datetime
-from unittest.mock import AsyncMock, Mock, patch, MagicMock
 from fastapi.testclient import TestClient
 from fastapi import FastAPI
 
@@ -27,6 +31,9 @@ def client(app):
     """创建测试客户端"""
     return TestClient(app)
 
+
+@pytest.mark.unit
+@pytest.mark.api
 
 class TestCQRSAPI:
     """CQRS API测试"""

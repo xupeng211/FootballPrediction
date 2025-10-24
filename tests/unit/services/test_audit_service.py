@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, MagicMock
 """
 import sys
 from pathlib import Path
@@ -14,7 +15,6 @@ Tests for Audit Service
 
 import pytest
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, MagicMock
 from typing import Dict, Any
 
 # 测试导入
@@ -38,6 +38,8 @@ except ImportError as e:
 
 
 @pytest.mark.skipif(not AUDIT_AVAILABLE, reason="Audit service module not available")
+@pytest.mark.unit
+
 class TestAuditSeverity:
     """审计严重程度测试"""
 

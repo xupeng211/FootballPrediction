@@ -3,6 +3,8 @@
 import pytest
 
 
+@pytest.mark.unit
+
 class TestMain:
     """测试主模块"""
 

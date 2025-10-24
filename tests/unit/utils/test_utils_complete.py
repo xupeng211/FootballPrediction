@@ -1,4 +1,6 @@
 # 工具模块完整测试
+@pytest.mark.unit
+
 def test_utils_import():
     utils = [
         "src.utils.crypto_utils",
@@ -42,6 +44,7 @@ def test_utils_functionality():
     try:
         # from src.utils.time_utils import TimeUtils
         from datetime import datetime
+import pytest
 
         formatted = TimeUtils.format_datetime(datetime.now())
         assert formatted is not None

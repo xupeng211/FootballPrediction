@@ -1,3 +1,4 @@
+from unittest.mock import patch, MagicMock
 """
 Celery应用配置测试
 Tests for Celery App Configuration
@@ -6,7 +7,6 @@ Tests for Celery App Configuration
 """
 
 import pytest
-from unittest.mock import patch, MagicMock
 import os
 
 # 尝试导入celery_app模块
@@ -24,6 +24,8 @@ except ImportError as e:
 
 
 @pytest.mark.skipif(not CELERY_APP_AVAILABLE, reason="Celery app module not available")
+@pytest.mark.unit
+
 class TestCeleryApp:
     """Celery应用测试"""
 

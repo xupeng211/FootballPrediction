@@ -285,6 +285,8 @@ class StatisticsUtils:
         return 1 - (ss_res / ss_tot) if ss_tot != 0 else 0.0
 
 
+@pytest.mark.unit
+
 class TestStatisticsUtils:
     """测试统计工具类"""
 

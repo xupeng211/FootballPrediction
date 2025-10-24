@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 15 repeated Mock creations
+
+# TODO: Consider creating a fixture for 15 repeated Mock creations
+
+from unittest.mock import patch, AsyncMock, MagicMock, ANY
 """
 仓储模式单元测试
 Repository Pattern Unit Tests
@@ -10,7 +15,6 @@ import pytest
 import asyncio
 from datetime import datetime, date, timedelta
 from decimal import Decimal
-from unittest.mock import AsyncMock, MagicMock, patch, ANY
 
 from src.repositories.base import (
     BaseRepository,
@@ -90,6 +94,8 @@ class MockAsyncSession:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         pass
 
+
+@pytest.mark.unit
 
 class TestQuerySpec:
     """测试QuerySpec"""

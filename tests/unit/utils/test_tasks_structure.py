@@ -4,8 +4,11 @@ Test scheduler tasks module structure
 """
 
 import os
+import pytest
 import ast
 
+
+@pytest.mark.unit
 
 def test_module_files_exist():
     """测试所有模块文件都存在"""

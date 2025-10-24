@@ -309,6 +309,8 @@ class MatchAnalyzer:
         return clean_sheet_matches
 
 
+@pytest.mark.unit
+
 class TestMatchAnalysis:
     """测试比赛分析业务逻辑"""
 

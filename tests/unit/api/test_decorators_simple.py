@@ -11,6 +11,8 @@ import sys
 MODULE_PATH = Path("src") / "decorators.py"
 
 
+@pytest.mark.unit
+
 class TestTestDecorators:
     """简化测试类"""
 

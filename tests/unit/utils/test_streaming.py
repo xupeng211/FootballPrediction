@@ -3,6 +3,9 @@
 import pytest
 
 
+@pytest.mark.unit
+@pytest.mark.streaming
+
 class TestStreaming:
     """测试流处理模块"""
 

@@ -1,10 +1,14 @@
+# TODO: Consider creating a fixture for 7 repeated Mock creations
+
+# TODO: Consider creating a fixture for 7 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock
 """
 增强指标收集器模块化测试
 """
 
 import pytest
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, AsyncMock
 
 
 def test_module_imports():
@@ -116,7 +120,6 @@ def test_metrics_aggregator():
 def test_business_metrics_collector():
     """测试业务指标收集器"""
     from src.metrics.collector.enhanced import BusinessMetricsCollector
-    from unittest.mock import Mock
 
     prometheus_manager = Mock()
     aggregator = Mock()
@@ -153,7 +156,6 @@ def test_business_metrics_collector():
 def test_system_metrics_collector():
     """测试系统指标收集器"""
     from src.metrics.collector.enhanced import SystemMetricsCollector
-    from unittest.mock import Mock
 
     prometheus_manager = Mock()
     aggregator = Mock()
@@ -365,6 +367,8 @@ async def test_async_decorators():
     @track_prediction_performance()
     async def predict_match(match_id: int, model_version: str = "v1.0"):
         # 模拟预测
+        await asyncio.sleep(0.01)
+        await asyncio.sleep(0.01)
         await asyncio.sleep(0.01)
 
         class Result:

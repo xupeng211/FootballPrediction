@@ -1,13 +1,16 @@
+from unittest.mock import Mock, patch
 """
 测试 PredictionCacheManager 的覆盖率补充
 Test coverage supplement for PredictionCacheManager
 """
 
 import pytest
-from unittest.mock import Mock, patch
 
 from src.core.prediction.cache_manager import PredictionCacheManager
 
+
+@pytest.mark.unit
+@pytest.mark.cache
 
 class TestPredictionCacheManager:
     """PredictionCacheManager 测试类"""

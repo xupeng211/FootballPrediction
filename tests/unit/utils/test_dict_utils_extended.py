@@ -9,6 +9,8 @@ import pytest
 from src.utils.dict_utils import DictUtils
 
 
+@pytest.mark.unit
+
 class TestDictUtilsExtended:
     """字典工具扩展测试"""
 

@@ -25,6 +25,8 @@ except ImportError:
 
 
 @pytest.mark.skipif(not VALIDATORS_AVAILABLE, reason="Validators module not available")
+@pytest.mark.unit
+
 class TestValidatorsSimple:
     """验证器简单测试"""
 

@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 21 repeated Mock creations
+
+# TODO: Consider creating a fixture for 21 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 Redis管理器测试
 Tests for Redis Manager
@@ -6,7 +11,6 @@ Tests for Redis Manager
 """
 
 import pytest
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
 
 # 测试导入
 from src.cache.redis_manager import (
@@ -20,6 +24,8 @@ from src.cache.redis_manager import (
     ttl_cache,
 )
 
+
+@pytest.mark.unit
 
 class TestRedisManager:
     """Redis管理器测试"""
@@ -377,6 +383,8 @@ class TestConfiguration:
 
     def test_environment_redis_url(self):
         """测试：环境变量Redis URL"""
+        with patch.dict("os.environ", {"REDIS_URL": "redis://env-host:6379"}):
+        with patch.dict("os.environ", {"REDIS_URL": "redis://env-host:6379"}):
         with patch.dict("os.environ", {"REDIS_URL": "redis://env-host:6379"}):
             manager = RedisManager()
             # 如果实现使用环境变量，这里应该使用环境变量的值

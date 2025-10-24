@@ -1,3 +1,4 @@
+from unittest.mock import patch, AsyncMock, MagicMock
 """
 缓存装饰器测试
 Tests for cache decorators
@@ -9,7 +10,6 @@ import asyncio
 import json
 import time
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 
 from src.cache.decorators import (
     cache_result,
@@ -96,6 +96,8 @@ def patch_redis_manager(mock_redis):
         yield
 
 
+@pytest.mark.unit
+
 class TestCacheKeyGeneration:
     """测试缓存键生成"""
 
@@ -176,6 +178,8 @@ class TestCacheResult:
         async def async_compute(x, y):
             nonlocal call_count
             call_count += 1
+            await asyncio.sleep(0.01)
+            await asyncio.sleep(0.01)
             await asyncio.sleep(0.01)
             return x * y
 
@@ -291,6 +295,8 @@ class TestCacheByUser:
         async def get_user_prefs(uid):
             nonlocal call_count
             call_count += 1
+            await asyncio.sleep(0.01)
+            await asyncio.sleep(0.01)
             await asyncio.sleep(0.01)
             return {"user": uid, "theme": "dark"}
 

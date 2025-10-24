@@ -1,13 +1,16 @@
+from unittest.mock import patch, MagicMock
 """
 测试拆分后的日志系统
 Test Split Logging System
 """
 
 import pytest
-from unittest.mock import MagicMock, patch
 
 
 # 测试导入
+@pytest.mark.unit
+@pytest.mark.critical
+
 def test_import_logging_types():
     """测试能否正常导入日志类型"""
     from src.core.logging import LogLevel, LogCategory

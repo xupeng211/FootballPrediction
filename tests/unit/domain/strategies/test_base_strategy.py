@@ -1,9 +1,9 @@
+from unittest.mock import patch, MagicMock
 """测试基础策略类"""
 
 import pytest
 import asyncio
 from datetime import datetime
-from unittest.mock import MagicMock, patch
 from typing import Any, Dict
 
 from src.domain.strategies.base import (
@@ -92,6 +92,8 @@ def invalid_prediction_input():
     """创建无效的预测输入"""
     return PredictionInput(match_id=None, home_team_id=1, away_team_id=None)
 
+
+@pytest.mark.unit
 
 class TestPredictionStrategy:
     """测试预测策略基类"""

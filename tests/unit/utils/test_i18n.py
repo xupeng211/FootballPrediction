@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 6 repeated Mock creations
+
+# TODO: Consider creating a fixture for 6 repeated Mock creations
+
+from unittest.mock import patch, MagicMock
 """
 国际化测试
 Internationalization Tests
@@ -8,7 +13,6 @@ Internationalization Tests
 import pytest
 import os
 from pathlib import Path
-from unittest.mock import patch, MagicMock
 
 from src.utils.i18n import (
     init_i18n,
@@ -16,6 +20,8 @@ from src.utils.i18n import (
     LOCALE_DIR,
 )
 
+
+@pytest.mark.unit
 
 class TestI18n:
     """测试国际化功能"""
@@ -53,6 +59,8 @@ class TestI18n:
             mock_gettext.install = MagicMock()
 
             # Mock环境变量
+            with patch.dict(os.environ, {"LANGUAGE": "en_US"}):
+            with patch.dict(os.environ, {"LANGUAGE": "en_US"}):
             with patch.dict(os.environ, {"LANGUAGE": "en_US"}):
                 init_i18n()
 
@@ -165,6 +173,8 @@ class TestI18n:
     def test_edge_cases(self):
         """测试边界情况"""
         # 测试空的环境变量
+        with patch.dict(os.environ, {}, clear=True):
+        with patch.dict(os.environ, {}, clear=True):
         with patch.dict(os.environ, {}, clear=True):
             init_i18n()
             # 应该使用默认值

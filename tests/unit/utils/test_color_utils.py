@@ -259,6 +259,8 @@ class ColorUtils:
         }
 
 
+@pytest.mark.unit
+
 class TestColorUtils:
     """测试颜色工具类"""
 

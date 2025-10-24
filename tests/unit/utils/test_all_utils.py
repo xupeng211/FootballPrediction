@@ -16,6 +16,8 @@ from pathlib import Path
 
 
 # 测试字符串工具
+@pytest.mark.unit
+
 class TestStringUtils:
     """字符串工具测试"""
 

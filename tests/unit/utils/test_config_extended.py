@@ -1,9 +1,13 @@
+from unittest.mock import patch
 """扩展的core/_config.py测试 - 提升覆盖率"""
 
 import os
-from unittest.mock import patch
+import pytest
 from src.core.config import Settings, get_settings, get_config
 
+
+@pytest.mark.unit
+@pytest.mark.external_api
 
 class TestConfigExtended:
     """扩展的配置测试，覆盖未测试的代码路径"""
@@ -11,11 +15,15 @@ class TestConfigExtended:
     def test_settings_with_minimal_mode_true(self):
         """测试最小模式设置为true"""
         with patch.dict(os.environ, {"MINIMAL_API_MODE": "true"}):
+        with patch.dict(os.environ, {"MINIMAL_API_MODE": "true"}):
+        with patch.dict(os.environ, {"MINIMAL_API_MODE": "true"}):
             settings = Settings()
             assert settings.minimal_api_mode is True
 
     def test_settings_with_debug_mode(self):
         """测试调试模式"""
+        with patch.dict(os.environ, {"DEBUG": "true"}):
+        with patch.dict(os.environ, {"DEBUG": "true"}):
         with patch.dict(os.environ, {"DEBUG": "true"}):
             settings = Settings()
             assert settings.debug is True
@@ -57,6 +65,8 @@ class TestConfigExtended:
     def test_environment_property(self):
         """测试环境属性"""
         with patch.dict(os.environ, {"ENVIRONMENT": "production"}):
+        with patch.dict(os.environ, {"ENVIRONMENT": "production"}):
+        with patch.dict(os.environ, {"ENVIRONMENT": "production"}):
             settings = Settings()
             # 测试环境属性（如果存在）
             if hasattr(settings, "environment"):
@@ -92,11 +102,17 @@ class TestConfigExtended:
     def test_settings_with_log_level(self):
         """测试日志级别设置"""
         with patch.dict(os.environ, {"LOG_LEVEL": "DEBUG"}):
+        with patch.dict(os.environ, {"LOG_LEVEL": "DEBUG"}):
+        with patch.dict(os.environ, {"LOG_LEVEL": "DEBUG"}):
+        with patch.dict(os.environ, {"LOG_LEVEL": "DEBUG"}):
+        with patch.dict(os.environ, {"LOG_LEVEL": "DEBUG"}):
             settings = Settings()
             assert settings.log_level == "DEBUG"
 
     def test_settings_with_numeric_values(self):
         """测试数值配置"""
+        with patch.dict(os.environ, {"API_PORT": "9000", "WORKERS": "4"}):
+        with patch.dict(os.environ, {"API_PORT": "9000", "WORKERS": "4"}):
         with patch.dict(os.environ, {"API_PORT": "9000", "WORKERS": "4"}):
             settings = Settings()
             # 验证数值被正确解析（如果存在这些属性）
@@ -126,6 +142,8 @@ class TestConfigExtended:
         environments = ["development", "testing", "staging", "production"]
 
         for env in environments:
+            with patch.dict(os.environ, {"ENVIRONMENT": env}):
+            with patch.dict(os.environ, {"ENVIRONMENT": env}):
             with patch.dict(os.environ, {"ENVIRONMENT": env}):
                 settings = Settings()
                 # 测试环境检测（如果有相关属性）

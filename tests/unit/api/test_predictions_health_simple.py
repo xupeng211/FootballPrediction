@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from unittest.mock import patch, AsyncMock
 """
 预测服务健康检查模块单元测试
 Unit Tests for Predictions Health Check Module
@@ -10,7 +11,6 @@ This is the first test file in the quality improvement plan to establish test co
 import pytest
 from datetime import datetime
 from fastapi.testclient import TestClient
-from unittest.mock import patch, AsyncMock
 import sys
 import os
 
@@ -28,6 +28,8 @@ except ImportError as e:
 
 
 @pytest.mark.skipif(not CLIENT_AVAILABLE, reason="Required modules not available")
+@pytest.mark.unit
+
 class TestPredictionsHealthSimple:
     """预测服务健康检查测试类"""
 

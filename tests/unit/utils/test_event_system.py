@@ -1,3 +1,4 @@
+from unittest.mock import AsyncMock, MagicMock
 """
 事件系统单元测试
 Event System Unit Tests
@@ -9,7 +10,6 @@ Tests core functionality of the event system.
 import pytest
 import asyncio
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock
 import pytest_asyncio
 
 from src.events import (
@@ -33,6 +33,8 @@ from src.events.handlers import (
     AnalyticsEventHandler,
 )
 
+
+@pytest.mark.unit
 
 class TestEventHandler(EventHandler):
     """测试用的事件处理器"""

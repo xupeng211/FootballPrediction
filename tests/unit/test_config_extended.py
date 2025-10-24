@@ -1,7 +1,10 @@
 # 配置扩展测试
 from src.core.config import get_config
+import pytest
 from src.config.openapi_config import OpenAPIConfig
 
+
+@pytest.mark.unit
 
 def test_get_config():
     config = get_config()

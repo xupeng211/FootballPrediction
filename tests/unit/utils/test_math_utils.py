@@ -209,6 +209,8 @@ class MathUtils:
         return len(numbers) / sum(1 / x for x in numbers)
 
 
+@pytest.mark.unit
+
 class TestMathUtils:
     """测试数学工具类"""
 

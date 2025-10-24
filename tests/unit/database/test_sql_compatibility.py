@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 17 repeated Mock creations
+
+# TODO: Consider creating a fixture for 17 repeated Mock creations
+
+from unittest.mock import Mock, patch
 """
 SQL兼容性测试
 Tests for SQL Compatibility
@@ -6,10 +11,12 @@ Tests for SQL Compatibility
 """
 
 import pytest
-from unittest.mock import Mock, patch
 
 
 # 检查模块是否可以导入
+@pytest.mark.unit
+@pytest.mark.database
+
 def test_sql_compatibility_module_import():
     """测试：SQL兼容性模块导入"""
     try:

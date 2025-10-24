@@ -1,9 +1,13 @@
+# TODO: Consider creating a fixture for 6 repeated Mock creations
+
+# TODO: Consider creating a fixture for 6 repeated Mock creations
+
+from unittest.mock import patch, AsyncMock, MagicMock, mock_open
 """
 Kafka生产者测试
 """
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch, mock_open
 import asyncio
 import json
 from typing import Any, Dict, Optional
@@ -19,6 +23,8 @@ class KafkaError(Exception):
 class KafkaTimeoutError(Exception):
     pass
 
+
+@pytest.mark.unit
 
 class TestKafkaMessageProducer:
     """Kafka消息生产者测试"""

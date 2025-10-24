@@ -1,13 +1,21 @@
+# TODO: Consider creating a fixture for 9 repeated Mock creations
+
+# TODO: Consider creating a fixture for 9 repeated Mock creations
+
+from unittest.mock import patch, AsyncMock, MagicMock
 """
 缓存装饰器模块测试
 """
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 import asyncio
 import time
 from typing import Any, Dict, Optional
 
+
+@pytest.mark.unit
+@pytest.mark.cache
+@pytest.mark.slow
 
 class TestCacheDecorators:
     """缓存装饰器测试"""

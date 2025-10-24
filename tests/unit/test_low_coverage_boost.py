@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 79 repeated Mock creations
+
+# TODO: Consider creating a fixture for 79 repeated Mock creations
+
+from unittest.mock import Mock, patch, MagicMock
 """
 低覆盖率模块测试增强
 专门为覆盖率低于20%的模块创建测试
@@ -6,7 +11,6 @@
 import pytest
 import sys
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime, timedelta
 import json
 

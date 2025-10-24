@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 32 repeated Mock creations
+
+# TODO: Consider creating a fixture for 32 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock
 """
 赔率收集器改进版测试
 Tests for improved odds collector
@@ -7,7 +12,6 @@ Tests for improved odds collector
 
 import pytest
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch
 from pathlib import Path
 import sys
 
@@ -25,6 +29,8 @@ from src.collectors.odds_collector_improved import (
     get_odds_manager,
 )
 
+
+@pytest.mark.unit
 
 class TestOddsCollectorImproved:
     """赔率收集器改进版测试"""

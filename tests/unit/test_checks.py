@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
+from unittest.mock import Mock, patch
 """
 Auto-generated basic tests for checks.py
 TODO: Expand these tests with actual functionality
 """
 
 import pytest
-from unittest.mock import Mock, patch
 
 # TODO: Import the module to test
 # from checks import *
 
+
+@pytest.mark.unit
 
 class TestChecks:
     """Basic test class for checks.py"""

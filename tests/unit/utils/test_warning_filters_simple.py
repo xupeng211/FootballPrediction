@@ -1,3 +1,4 @@
+from unittest.mock import patch, MagicMock
 """
 警告过滤器简单测试
 Simple Warning Filters Tests
@@ -10,7 +11,6 @@ import pytest
 import warnings
 import logging
 import sys
-from unittest.mock import patch, MagicMock
 
 # 导入要测试的模块
 try:
@@ -24,6 +24,8 @@ except ImportError:
 @pytest.mark.skipif(
     not WARNING_FILTERS_AVAILABLE, reason="Warning filters module not available"
 )
+@pytest.mark.unit
+
 class TestWarningFiltersSimple:
     """警告过滤器简单测试"""
 

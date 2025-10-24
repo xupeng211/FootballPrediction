@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, AsyncMock
 """
 流处理任务测试
 Tests for Streaming Tasks
@@ -6,7 +7,6 @@ Tests for Streaming Tasks
 """
 
 import pytest
-from unittest.mock import Mock, patch, AsyncMock
 from datetime import datetime
 import asyncio
 import json
@@ -38,6 +38,8 @@ except ImportError as e:
 @pytest.mark.skipif(
     not STREAMING_TASKS_AVAILABLE, reason="Streaming tasks module not available"
 )
+@pytest.mark.unit
+
 class TestStreamMessage:
     """流消息测试"""
 

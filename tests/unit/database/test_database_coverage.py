@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 72 repeated Mock creations
+
+# TODO: Consider creating a fixture for 72 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 数据库模块测试覆盖率提升
 Database Module Coverage Improvement
@@ -8,7 +13,6 @@ Created specifically to improve coverage for low-coverage modules in src/databas
 
 import pytest
 import asyncio
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 import sys
@@ -17,6 +21,10 @@ import os
 # 添加项目根目录到sys.path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../.."))
 
+
+@pytest.mark.unit
+@pytest.mark.database
+@pytest.mark.critical
 
 class TestMatchRepository:
     """测试比赛仓库模块"""

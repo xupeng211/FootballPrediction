@@ -3,6 +3,8 @@
 import pytest
 
 
+@pytest.mark.unit
+
 class TestDatabaseTypes:
     """测试数据库类型"""
 

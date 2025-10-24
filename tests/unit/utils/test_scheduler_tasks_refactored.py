@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, MagicMock
 """
 测试重构后的调度任务模块
 
@@ -5,8 +6,9 @@
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 
+
+@pytest.mark.unit
 
 class TestBaseDataTask:
     """测试基础任务类"""

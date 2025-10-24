@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 6 repeated Mock creations
+
+# TODO: Consider creating a fixture for 6 repeated Mock creations
+
+from unittest.mock import Mock, patch
 """
 增强指标收集器模块化简化测试
 """
@@ -5,6 +10,10 @@
 import pytest
 from datetime import datetime
 
+
+@pytest.mark.unit
+@pytest.mark.external_api
+@pytest.mark.critical
 
 def test_metric_types():
     """测试指标数据类型"""
@@ -124,7 +133,6 @@ def test_system_metrics_collector():
     from src.monitoring.metrics_collector_enhanced.system_metrics import (
         SystemMetricsCollector,
     )
-    from unittest.mock import Mock
 
     prometheus_manager = Mock()
     aggregator = Mock()
@@ -163,7 +171,6 @@ def test_business_metrics_collector():
     from src.monitoring.metrics_collector_enhanced.business_metrics import (
         BusinessMetricsCollector,
     )
-    from unittest.mock import Mock
 
     prometheus_manager = Mock()
     aggregator = Mock()
@@ -264,7 +271,6 @@ def test_alert_handlers():
         AlertInfo,
     )
     from datetime import datetime
-    from unittest.mock import patch
 
     # 创建测试告警
     alert = AlertInfo(

@@ -18,6 +18,8 @@ from src.utils.helpers import (
 )
 
 
+@pytest.mark.unit
+
 class TestHelpers:
     """测试辅助函数"""
 

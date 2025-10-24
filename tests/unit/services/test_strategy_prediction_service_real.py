@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 12 repeated Mock creations
+
+# TODO: Consider creating a fixture for 12 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 策略预测服务测试（真实实现）
 Tests for Strategy Prediction Service (Real Implementation)
@@ -8,7 +13,6 @@ Tests for Strategy Prediction Service (Real Implementation)
 
 import pytest
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, patch, MagicMock, Mock
 
 from src.services.strategy_prediction_service import StrategyPredictionService
 from src.domain.strategies import PredictionStrategy, PredictionStrategyFactory
@@ -117,6 +121,8 @@ class MockPredictionDomainService:
         prediction.created_at = datetime.utcnow()
         return prediction
 
+
+@pytest.mark.unit
 
 class TestStrategyPredictionServiceReal:
     """策略预测服务真实测试"""

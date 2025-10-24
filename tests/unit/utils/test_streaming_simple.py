@@ -1,4 +1,7 @@
 # 流处理简单测试
+@pytest.mark.unit
+@pytest.mark.streaming
+
 def test_streaming_import():
     streaming = [
         "src.streaming.kafka_components",
@@ -19,6 +22,7 @@ def test_streaming_import():
 def test_stream_config():
     try:
         from src.streaming.stream_config import StreamConfig
+import pytest
 
         _config = StreamConfig()
         assert config is not None

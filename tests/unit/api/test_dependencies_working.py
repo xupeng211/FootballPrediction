@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 14 repeated Mock creations
+
+# TODO: Consider creating a fixture for 14 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock
 """
 API依赖注入测试（工作版本）
 Tests for API Dependencies (Working Version)
@@ -6,7 +11,6 @@ Tests for API Dependencies (Working Version)
 """
 
 import pytest
-from unittest.mock import Mock, patch, AsyncMock
 from fastapi import HTTPException, status
 from jose import JWTError
 
@@ -33,6 +37,8 @@ except ImportError as e:
 @pytest.mark.skipif(
     not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available"
 )
+@pytest.mark.unit
+
 class TestGetCurrentUser:
     """获取当前用户测试"""
 

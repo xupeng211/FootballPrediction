@@ -13,6 +13,8 @@ import pytest
 from src.utils.dict_utils import DictUtils
 
 
+@pytest.mark.unit
+
 class TestDictUtilsComprehensive:
     """字典工具综合测试"""
 

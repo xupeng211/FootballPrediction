@@ -1,8 +1,11 @@
 # 任务模块基础测试
+@pytest.mark.unit
+
 def test_import_tasks():
     # 只测试导入，即使失败也没关系
     try:
         from src.tasks.backup_tasks import BackupTasks
+import pytest
         from src.tasks.data_collection_tasks import DataCollectionTasks
         from src.tasks.monitoring import MonitoringTasks
 

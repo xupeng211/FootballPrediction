@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, AsyncMock
 """
 事件API端点测试
 Events API Endpoints Tests
@@ -5,7 +6,6 @@ Events API Endpoints Tests
 
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import Mock, patch, AsyncMock
 import json
 from datetime import datetime
 

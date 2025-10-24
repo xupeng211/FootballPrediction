@@ -7,6 +7,9 @@ from fastapi.testclient import TestClient
 from src.api.predictions.router import router
 
 
+@pytest.mark.unit
+@pytest.mark.api
+
 def test_predictions_health():
     """测试预测健康检查端点"""
     from fastapi import FastAPI

@@ -1,8 +1,10 @@
 # noqa: F401,F811,F821,E402
+from unittest.mock import MagicMock
 """快速胜利测试 - 快速提升覆盖率"""
 
-from unittest.mock import MagicMock
 
+
+@pytest.mark.unit
 
 class TestQuickWins:
     """quick_wins 模块测试"""

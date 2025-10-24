@@ -1,7 +1,11 @@
 # 数据库连接基础测试
+@pytest.mark.unit
+@pytest.mark.database
+
 def test_database_imports():
     try:
         from src.database.connection import DatabaseManager
+import pytest
         from src.database.config import DatabaseConfig
 
         assert True

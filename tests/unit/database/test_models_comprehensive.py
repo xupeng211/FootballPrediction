@@ -1,10 +1,10 @@
+from unittest.mock import Mock, patch, MagicMock
 """
 数据库模型综合测试
 Database Models Comprehensive Tests
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime, date, timedelta
 from decimal import Decimal
 from sqlalchemy import (
@@ -77,6 +77,10 @@ try:
 except ImportError:
     RawData = Mock
 
+
+@pytest.mark.unit
+@pytest.mark.database
+@pytest.mark.external_api
 
 class TestUserModel:
     """用户模型测试"""

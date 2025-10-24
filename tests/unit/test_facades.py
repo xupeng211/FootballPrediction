@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
+from unittest.mock import Mock, patch
 """
 Auto-generated basic tests for facades.py
 TODO: Expand these tests with actual functionality
 """
 
 import pytest
-from unittest.mock import Mock, patch
 
 # TODO: Import the module to test
 # from facades import *
 
+
+@pytest.mark.unit
 
 class TestFacades:
     """Basic test class for facades.py"""

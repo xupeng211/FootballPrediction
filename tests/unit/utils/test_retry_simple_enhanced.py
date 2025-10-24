@@ -1,12 +1,14 @@
+from unittest.mock import MagicMock
 """增强的重试功能测试（简化版）"""
 
 import time
-from unittest.mock import MagicMock
 
 import pytest
 
 # from src.utils.retry import RetryConfig, retry, CircuitBreaker, CircuitState
 
+
+@pytest.mark.unit
 
 class TestRetrySimpleEnhanced:
     """增强的重试功能测试（简化版）"""
@@ -150,6 +152,8 @@ class TestRetrySimpleEnhanced:
 
         @retry(RetryConfig(max_attempts=5, base_delay=0.1, max_delay=0.2, timeout=0.3))
         def slow_failing_function():
+            time.sleep(0.15)
+            time.sleep(0.15)
             time.sleep(0.15)
             raise ValueError("Timeout test")
 

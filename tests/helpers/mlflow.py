@@ -1,176 +1,299 @@
-"""MLflow 测试桩实现 - 重构版本（不使用 monkeypatch）"""
+"""
+MLflow测试辅助工具
+提供MLflow客户端和运行时Mock实现
+"""
 
-import sys
-from dataclasses import dataclass
-from types import SimpleNamespace
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
+from unittest.mock import Mock, AsyncMock
+import json
+from datetime import datetime, timezone
 
 
-@dataclass
 class MockMlflowRun:
-    """简化的 MLflow run 上下文对象"""
+    """模拟MLflow运行"""
 
-    run_id: str = "mock-run"
-
-    def __enter__(self) -> "MockMlflowRun":
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
-        return False
-
-    @property
-    def info(self) -> SimpleNamespace:
-        return SimpleNamespace(run_id=self.run_id)
-
-
-class MockMlflow:
-    """捕获日志调用的 MLflow 模拟实现"""
-
-    def __init__(self) -> None:
-        self.experiments: Dict[str, SimpleNamespace] = {}
-        self.runs: Dict[str, SimpleNamespace] = {}
-        self.logged_metrics: Dict[str, List[Dict[str, Any]]] = {}
-        self.logged_params: Dict[str, List[Dict[str, Any]]] = {}
-        self.logged_artifacts: Dict[str, List[str]] = {}
-
-    def set_experiment(self, experiment_name: str) -> None:
-        """设置实验"""
-        if experiment_name not in self.experiments:
-            self.experiments[experiment_name] = SimpleNamespace(
-                experiment_id=f"exp-{len(self.experiments)}",
-                name=experiment_name,
-            )
-
-    def get_experiment_by_name(self, experiment_name: str) -> Optional[SimpleNamespace]:
-        """获取实验"""
-        return self.experiments.get(experiment_name)
-
-    def start_run(
+    def __init__(
         self,
-        run_name: Optional[str] = None,
-        experiment_id: Optional[str] = None,
-        tags: Optional[Dict[str, str]] = None,
-    ) -> MockMlflowRun:
-        """开始运行"""
-        run_id = f"run-{len(self.runs)}"
-        run = SimpleNamespace(
-            run_id=run_id,
-            name=run_name or "mock-run",
-            experiment_id=experiment_id or "default",
-            tags=tags or {},
-        )
-        self.runs[run_id] = run
-        self.logged_metrics[run_id] = []
-        self.logged_params[run_id] = []
-        self.logged_artifacts[run_id] = []
-
-        return MockMlflowRun(run_id=run_id)
+        run_id: str = "test_run_id",
+        experiment_id: str = "test_experiment_id",
+        status: str = "RUNNING",
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None
+    ):
+        self.run_id = run_id
+        self.experiment_id = experiment_id
+        self.status = status
+        self.start_time = start_time or datetime.now(timezone.utc)
+        self.end_time = end_time
+        self.metrics: Dict[str, float] = {}
+        self.params: Dict[str, str] = {}
+        self.tags: Dict[str, str] = {}
+        self.artifacts: List[str] = []
 
     def log_metric(self, key: str, value: float, step: Optional[int] = None) -> None:
         """记录指标"""
-        active_run = self.active_run()
-        if active_run:
-            self.logged_metrics[active_run.run_id].append(
-                {"key": key, "value": value, "step": step}
-            )
+        if step is not None:
+            key = f"{key}_step_{step}"
+        self.metrics[key] = value
 
-    def log_param(self, key: str, value: Any) -> None:
+    def log_param(self, key: str, value: str) -> None:
         """记录参数"""
-        active_run = self.active_run()
-        if active_run:
-            self.logged_params[active_run.run_id].append({"key": key, "value": value})
+        self.params[key] = value
 
-    def log_artifact(
-        self, local_path: str, artifact_path: Optional[str] = None
-    ) -> None:
+    def set_tag(self, key: str, value: str) -> None:
+        """设置标签"""
+        self.tags[key] = value
+
+    def log_artifact(self, local_path: str, artifact_path: Optional[str] = None) -> None:
         """记录文件"""
-        active_run = self.active_run()
-        if active_run:
-            self.logged_artifacts[active_run.run_id].append(local_path)
+        self.artifacts.append(local_path)
 
-    def active_run(self) -> Optional[SimpleNamespace]:
-        """获取当前运行"""
-        # 简单实现：返回最后一个运行
-        if self.runs:
-            run_id = list(self.runs.keys())[-1]
-            return self.runs[run_id]
-        return None
+    def get_metrics(self) -> Dict[str, float]:
+        """获取所有指标"""
+        return self.metrics.copy()
+
+    def get_params(self) -> Dict[str, str]:
+        """获取所有参数"""
+        return self.params.copy()
+
+    def get_tags(self) -> Dict[str, str]:
+        """获取所有标签"""
+        return self.tags.copy()
 
 
 class MockMlflowClient:
-    """模拟 MLflow 客户端"""
+    """模拟MLflow客户端"""
 
-    def __init__(self, tracking_uri: Optional[str] = None) -> None:
-        self.tracking_uri = tracking_uri or "http://localhost:5000"
-        self._mlflow = MockMlflow()
+    def __init__(self):
+        self.experiments: Dict[str, Dict[str, Any]] = {}
+        self.runs: Dict[str, MockMlflowRun] = {}
+        self.models: Dict[str, Dict[str, Any]] = {}
 
-    def list_experiments(self) -> List[SimpleNamespace]:
-        """列出所有实验"""
-        return list(self._mlflow.experiments.values())
-
-    def create_experiment(
-        self, name: str, tags: Optional[Dict[str, str]] = None
-    ) -> str:
+    def create_experiment(self, name: str, tags: Optional[Dict[str, str]] = None) -> str:
         """创建实验"""
-        exp_id = f"exp-{len(self._mlflow.experiments)}"
-        self._mlflow.experiments[name] = SimpleNamespace(
-            experiment_id=exp_id, name=name, tags=tags or {}
+        experiment_id = f"exp_{len(self.experiments) + 1}"
+        self.experiments[experiment_id] = {
+            "id": experiment_id,
+            "name": name,
+            "tags": tags or {},
+            "creation_time": datetime.now(timezone.utc)
+        }
+        return experiment_id
+
+    def get_experiment_by_name(self, name: str) -> Optional[Dict[str, Any]]:
+        """根据名称获取实验"""
+        for exp in self.experiments.values():
+            if exp["name"] == name:
+                return exp
+        return None
+
+    def create_run(
+        self,
+        experiment_id: str,
+        tags: Optional[Dict[str, str]] = None,
+        run_name: Optional[str] = None
+    ) -> MockMlflowRun:
+        """创建运行"""
+        run_id = f"run_{len(self.runs) + 1}"
+        run = MockMlflowRun(
+            run_id=run_id,
+            experiment_id=experiment_id,
+            tags=tags or {}
         )
-        return exp_id
+        if run_name:
+            run.set_tag("mlflow.runName", run_name)
+
+        self.runs[run_id] = run
+        return run
+
+    def get_run(self, run_id: str) -> Optional[MockMlflowRun]:
+        """获取运行"""
+        return self.runs.get(run_id)
+
+    def list_run_infos(
+        self,
+        experiment_id: str,
+        max_results: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
+        """列出运行信息"""
+        run_infos = []
+        for run in self.runs.values():
+            if run.experiment_id == experiment_id:
+                run_infos.append({
+                    "run_id": run.run_id,
+                    "experiment_id": run.experiment_id,
+                    "status": run.status,
+                    "start_time": run.start_time,
+                    "end_time": run.end_time
+                })
+
+        if max_results:
+            run_infos = run_infos[:max_results]
+
+        return run_infos
+
+    def log_model(
+        self,
+        run_id: str,
+        model_path: str,
+        model: Any,
+        registered_model_name: Optional[str] = None
+    ) -> None:
+        """记录模型"""
+        if run_id not in self.runs:
+            return
+
+        model_info = {
+            "run_id": run_id,
+            "model_path": model_path,
+            "model_type": type(model).__name__,
+            "registered_name": registered_model_name,
+            "creation_time": datetime.now(timezone.utc)
+        }
+
+        if registered_model_name:
+            self.models[registered_model_name] = model_info
+
+    def get_model_version(self, name: str, version: str) -> Optional[Dict[str, Any]]:
+        """获取模型版本"""
+        return self.models.get(name)
+
+    def transition_model_version_stage(
+        self,
+        name: str,
+        version: str,
+        stage: str
+    ) -> None:
+        """转换模型版本阶段"""
+        if name in self.models:
+            self.models[name]["stage"] = stage
+
+    def delete_run(self, run_id: str) -> None:
+        """删除运行"""
+        self.runs.pop(run_id, None)
+
+    def search_runs(
+        self,
+        experiment_ids: Optional[List[str]] = None,
+        filter_string: str = "",
+        max_results: Optional[int] = None
+    ) -> List[MockMlflowRun]:
+        """搜索运行"""
+        runs = list(self.runs.values())
+
+        if experiment_ids:
+            runs = [run for run in runs if run.experiment_id in experiment_ids]
+
+        # 简单的过滤实现
+        if filter_string:
+            # 可以根据需要实现更复杂的过滤逻辑
+            pass
+
+        if max_results:
+            runs = runs[:max_results]
+
+        return runs
 
 
-# 创建全局 mock 实例（仅在测试中使用）
-_global_mlflow_mock = None
-_global_client_mock = None
+class MockMlflow:
+    """模拟MLflow模块"""
+
+    def __init__(self):
+        self.client = MockMlflowClient()
+        self.active_run: Optional[MockMlflowRun] = None
+
+    def start_run(
+        self,
+        run_id: Optional[str] = None,
+        experiment_id: Optional[str] = None,
+        tags: Optional[Dict[str, str]] = None,
+        run_name: Optional[str] = None
+    ) -> MockMlflowRun:
+        """开始运行"""
+        if run_id and run_id in self.client.runs:
+            self.active_run = self.client.runs[run_id]
+        else:
+            self.active_run = self.client.create_run(
+                experiment_id or "default",
+                tags=tags,
+                run_name=run_name
+            )
+        return self.active_run
+
+    def end_run(self) -> None:
+        """结束运行"""
+        if self.active_run:
+            self.active_run.status = "FINISHED"
+            self.active_run.end_time = datetime.now(timezone.utc)
+        self.active_run = None
+
+    def log_metric(self, key: str, value: float, step: Optional[int] = None) -> None:
+        """记录指标"""
+        if self.active_run:
+            self.active_run.log_metric(key, value, step)
+
+    def log_param(self, key: str, value: str) -> None:
+        """记录参数"""
+        if self.active_run:
+            self.active_run.log_param(key, value)
+
+    def set_tag(self, key: str, value: str) -> None:
+        """设置标签"""
+        if self.active_run:
+            self.active_run.set_tag(key, value)
+
+    def log_artifact(self, local_path: str, artifact_path: Optional[str] = None) -> None:
+        """记录文件"""
+        if self.active_run:
+            self.active_run.log_artifact(local_path, artifact_path)
+
+    def get_active_run(self) -> Optional[MockMlflowRun]:
+        """获取当前活动运行"""
+        return self.active_run
+
+    def log_model(
+        self,
+        model_path: str,
+        model: Any,
+        registered_model_name: Optional[str] = None
+    ) -> None:
+        """记录模型"""
+        if self.active_run:
+            self.client.log_model(
+                self.active_run.run_id,
+                model_path,
+                model,
+                registered_model_name
+            )
+
+    def create_experiment(self, name: str, tags: Optional[Dict[str, str]] = None) -> str:
+        """创建实验"""
+        return self.client.create_experiment(name, tags)
+
+    def get_experiment_by_name(self, name: str) -> Optional[Dict[str, Any]]:
+        """根据名称获取实验"""
+        return self.client.get_experiment_by_name(name)
+
+    def set_experiment(self, experiment_id: str) -> None:
+        """设置活动实验"""
+        # 在mock中简化实现
+        pass
+
+    def tracking_uri(self) -> str:
+        """获取跟踪URI"""
+        return "http://mock-mlflow:5000"
 
 
-def get_mock_mlflow() -> MockMlflow:
-    """获取 MLflow mock 实例（单例）"""
-    global _global_mlflow_mock
-    if _global_mlflow_mock is None:
-        _global_mlflow_mock = MockMlflow()
-    return _global_mlflow_mock
+def apply_mlflow_mocks():
+    """应用MLflow mock装饰器"""
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            mock_mlflow = MockMlflow()
+            return func(mock_mlflow, *args, **kwargs)
+        return wrapper
+    return decorator
 
 
-def get_mock_mlflow_client(tracking_uri: Optional[str] = None) -> MockMlflowClient:
-    """获取 MLflow Client mock 实例"""
-    return MockMlflowClient(tracking_uri)
-
-
-def reset_mlflow_mocks() -> None:
-    """重置 MLflow mock 实例（用于测试隔离）"""
-    global _global_mlflow_mock, _global_client_mock
-    if _global_mlflow_mock:
-        _global_mlflow_mock.experiments.clear()
-        _global_mlflow_mock.runs.clear()
-        _global_mlflow_mock.logged_metrics.clear()
-        _global_mlflow_mock.logged_params.clear()
-        _global_mlflow_mock.logged_artifacts.clear()
-
-
-# 向后兼容的函数（现在只是返回 mock 实例，不使用 monkeypatch）
-def apply_mlflow_mocks(*args, **kwargs) -> Dict[str, Any]:
-    """
-    向后兼容：返回 MLflow mocks
-    不再使用 monkeypatch，而是返回 mock 实例供测试使用
-    """
-    return {
-        "mlflow": get_mock_mlflow(),
-        "mlflow.client": {
-            "MlflowClient": MockMlflowClient,
-        },
-        "mlflow.tracking": {
-            "MlflowClient": MockMlflowClient,
-        },
-    }
-
-
-__all__ = [
-    "MockMlflowRun",
-    "MockMlflow",
-    "MockMlflowClient",
-    "get_mock_mlflow",
-    "get_mock_mlflow_client",
-    "reset_mlflow_mocks",
-    "apply_mlflow_mocks",
-]
+# 全局mock实例
+mock_mlflow = MockMlflow()
+mock_mlflow_client = MockMlflowClient()

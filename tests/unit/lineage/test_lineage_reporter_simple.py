@@ -11,6 +11,8 @@ import sys
 MODULE_PATH = Path("src") / "lineage/reporter.py"
 
 
+@pytest.mark.unit
+
 class TestTestLineageReporter:
     """简化测试类"""
 

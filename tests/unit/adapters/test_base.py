@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 12 repeated Mock creations
+
+# TODO: Consider creating a fixture for 12 repeated Mock creations
+
+from unittest.mock import Mock, AsyncMock
 """
 适配器基类测试
 Tests for Adapter Base Classes
@@ -8,10 +13,11 @@ Tests for Adapter Base Classes
 import pytest
 import asyncio
 from datetime import datetime
-from unittest.mock import Mock, AsyncMock
 
 from src.adapters.base import AdapterStatus, Adaptee, Target, Adapter
 
+
+@pytest.mark.unit
 
 class TestAdapterStatus:
     """适配器状态测试"""

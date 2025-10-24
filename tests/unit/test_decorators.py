@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
+from unittest.mock import Mock, patch
 """
 Auto-generated basic tests for decorators.py
 TODO: Expand these tests with actual functionality
 """
 
 import pytest
-from unittest.mock import Mock, patch
 
 # TODO: Import the module to test
 # from decorators import *
 
+
+@pytest.mark.unit
 
 class TestDecorators:
     """Basic test class for decorators.py"""

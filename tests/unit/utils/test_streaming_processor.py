@@ -1,9 +1,13 @@
+# TODO: Consider creating a fixture for 8 repeated Mock creations
+
+# TODO: Consider creating a fixture for 8 repeated Mock creations
+
+from unittest.mock import patch, AsyncMock, MagicMock
 """
 流处理器测试
 """
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 import asyncio
 import json
 from typing import Any, Dict, List, Optional, Callable, AsyncGenerator
@@ -37,6 +41,8 @@ class AsyncIterator:
         self.index += 1
         return item
 
+
+@pytest.mark.unit
 
 class TestStreamProcessor:
     """流处理器基础测试"""

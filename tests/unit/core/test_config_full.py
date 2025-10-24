@@ -2,6 +2,7 @@ import sys
 from pathlib import Path
 
 # 添加项目路径
+from unittest.mock import patch, MagicMock
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, "src")
 
@@ -11,7 +12,6 @@ sys.path.insert(0, "src")
 
 import pytest
 import os
-from unittest.mock import patch, MagicMock
 
 # 直接导入可用组件
 from src.core.config import get_config, Config
@@ -25,6 +25,8 @@ class MockLoadEnvConfig:
 
 load_env_config = MockLoadEnvConfig().load_env_config
 
+
+@pytest.mark.unit
 
 class TestConfigModule:
     """测试 config 模块"""
@@ -58,12 +60,16 @@ class TestConfigModule:
     def test_config_environment_override(self):
         """测试环境变量覆盖"""
         with patch.dict(os.environ, {"APP_DEBUG": "true"}):
+        with patch.dict(os.environ, {"APP_DEBUG": "true"}):
+        with patch.dict(os.environ, {"APP_DEBUG": "true"}):
             _config = get_config()
             # 模拟测试
             assert config is not None
 
     def test_testing_config(self):
         """测试测试配置"""
+        with patch.dict(os.environ, {"TESTING": "true"}):
+        with patch.dict(os.environ, {"TESTING": "true"}):
         with patch.dict(os.environ, {"TESTING": "true"}):
             _config = get_config()
             assert config is not None

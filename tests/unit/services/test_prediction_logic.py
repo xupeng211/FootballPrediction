@@ -10,6 +10,8 @@ import math
 
 
 # 测试预测计算逻辑
+@pytest.mark.unit
+
 class TestPredictionCalculations:
     """预测计算测试"""
 

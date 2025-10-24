@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 20 repeated Mock creations
+
+# TODO: Consider creating a fixture for 20 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 API中间件测试
 """
@@ -5,7 +10,6 @@ API中间件测试
 pytest_plugins = "asyncio"
 
 import pytest
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from fastapi import FastAPI, Request, Response
 from fastapi.testclient import TestClient
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -36,6 +40,8 @@ TEST_SKIP_REASON = "API middleware module not available"
 
 
 @pytest.mark.skipif(not MIDDLEWARE_AVAILABLE, reason=TEST_SKIP_REASON)
+@pytest.mark.unit
+
 class TestTimingMiddleware:
     """计时中间件测试"""
 
@@ -47,6 +53,8 @@ class TestTimingMiddleware:
 
         @app.get("/test")
         async def test_endpoint():
+            await asyncio.sleep(0.01)  # 模拟处理时间
+            await asyncio.sleep(0.01)  # 模拟处理时间
             await asyncio.sleep(0.01)  # 模拟处理时间
             return {"message": "test"}
 

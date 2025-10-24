@@ -18,6 +18,9 @@ def league() -> League:
     return League(name="Premier League", country="England", level=1)
 
 
+@pytest.mark.unit
+@pytest.mark.external_api
+
 class TestLeagueSeason:
     def test_should_validate_basic_constraints(self):
         start = datetime(2024, 8, 1)

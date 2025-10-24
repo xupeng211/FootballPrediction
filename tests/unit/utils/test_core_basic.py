@@ -17,6 +17,8 @@ from src.core.exceptions import (
 )
 
 
+@pytest.mark.unit
+
 class TestExceptions:
     """异常类测试"""
 

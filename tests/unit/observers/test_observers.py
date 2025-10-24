@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 观察者模块测试
 Observers Module Tests
@@ -9,7 +10,6 @@ Tests observers implementations defined in src/observers/observers.py, focused o
 import pytest
 import asyncio
 import time
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from datetime import datetime, timedelta
 from typing import Any, Dict, List
 
@@ -30,6 +30,8 @@ except ImportError as e:
 
 
 @pytest.mark.skipif(not OBSERVERS_AVAILABLE, reason="Observers module not available")
+@pytest.mark.unit
+
 class TestMetricsObserver:
     """MetricsObserver测试"""
 

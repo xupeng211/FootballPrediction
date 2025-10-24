@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 20 repeated Mock creations
+
+# TODO: Consider creating a fixture for 20 repeated Mock creations
+
+from unittest.mock import patch, AsyncMock, MagicMock
 """
 服务层单元测试
 """
@@ -10,11 +15,12 @@ except ImportError:
 
 import pytest
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
 from src.services.enhanced_core import EnhancedBaseService, ServiceConfig
 # from src.services.match_service import MatchService
 # from src.services.prediction_service import PredictionService
 
+
+@pytest.mark.unit
 
 class TestServiceConfig:
     """服务配置测试"""

@@ -8,6 +8,8 @@ from httpx import AsyncClient
 from datetime import datetime, timezone
 
 
+@pytest.mark.integration
+
 class TestPredictionAPIIntegration:
     """预测 API 集成测试"""
 
@@ -29,11 +31,11 @@ class TestPredictionAPIIntegration:
         )
 
         # 验证响应
-        assert response.status_code   == 201
+        assert response.status_code     == 201
         _data = response.json()
         assert data["match_id"] == request_data["match_id"]
         assert data["prediction"] == request_data["prediction"]
-        assert data["confidence"]   == request_data["confidence"]
+        assert data["confidence"]     == request_data["confidence"]
         assert "id" in data
         assert "created_at" in data
 
@@ -43,7 +45,7 @@ class TestPredictionAPIIntegration:
         _result = await db_session.get(Prediction, data["id"])
         assert result is not None
         assert result._prediction == request_data["prediction"]
-        assert result.confidence   == request_data["confidence"]
+        assert result.confidence     == request_data["confidence"]
 
     @pytest.mark.asyncio
     async def test_get_prediction(
@@ -62,11 +64,11 @@ class TestPredictionAPIIntegration:
         )
 
         # 验证响应
-        assert response.status_code   == 200
+        assert response.status_code     == 200
         _data = response.json()
         assert data["id"] == prediction.id
         assert data["prediction"] == prediction.prediction
-        assert data["confidence"]   == prediction.confidence
+        assert data["confidence"]     == prediction.confidence
 
     @pytest.mark.asyncio
     async def test_list_user_predictions(
@@ -99,11 +101,11 @@ class TestPredictionAPIIntegration:
         )
 
         # 验证响应
-        assert response.status_code   == 200
+        assert response.status_code     == 200
         _data = response.json()
         assert "data" in data
         assert len(data["data"]) == 6  # 1个初始 + 5个新创建
-        assert data["total"]   == 6
+        assert data["total"]     == 6
         assert "pagination" in data
 
     @pytest.mark.asyncio
@@ -134,14 +136,14 @@ class TestPredictionAPIIntegration:
         )
 
         # 验证响应
-        assert response.status_code   == 200
+        assert response.status_code     == 200
         _data = response.json()
-        assert data["status"]   == "COMPLETED"
+        assert data["status"]     == "COMPLETED"
         assert data["is_correct"] is True
 
         # 验证数据库
         await db_session.refresh(prediction)
-        assert prediction.status   == "COMPLETED"
+        assert prediction.status     == "COMPLETED"
         assert prediction.is_correct is True
 
     @pytest.mark.asyncio
@@ -159,7 +161,7 @@ class TestPredictionAPIIntegration:
             },
             headers=auth_headers,
         )
-        assert response.status_code   == 422
+        assert response.status_code     == 422
 
         # 无效的置信度
         response = await api_client.post(
@@ -171,7 +173,7 @@ class TestPredictionAPIIntegration:
             },
             headers=auth_headers,
         )
-        assert response.status_code   == 422
+        assert response.status_code     == 422
 
         # 缺少必需字段
         response = await api_client.post(
@@ -182,7 +184,7 @@ class TestPredictionAPIIntegration:
             },
             headers=auth_headers,
         )
-        assert response.status_code   == 422
+        assert response.status_code     == 422
 
     @pytest.mark.asyncio
     async def test_duplicate_prediction_error(
@@ -199,13 +201,13 @@ class TestPredictionAPIIntegration:
         response1 = await api_client.post(
             "/api/v1/predictions", json=request_data, headers=auth_headers
         )
-        assert response1.status_code   == 201
+        assert response1.status_code     == 201
 
         # 尝试创建重复预测
         response2 = await api_client.post(
             "/api/v1/predictions", json=request_data, headers=auth_headers
         )
-        assert response2.status_code   == 400
+        assert response2.status_code     == 400
         assert "already exists" in response2.json()["detail"].lower()
 
     @pytest.mark.asyncio
@@ -222,7 +224,7 @@ class TestPredictionAPIIntegration:
                 "confidence": 0.85,
             },
         )
-        assert response.status_code   == 401
+        assert response.status_code     == 401
 
         # 无效的 token
         response = await api_client.post(
@@ -234,7 +236,7 @@ class TestPredictionAPIIntegration:
             },
             headers={"Authorization": "Bearer invalid_token"},
         )
-        assert response.status_code   == 401
+        assert response.status_code     == 401
 
     @pytest.mark.asyncio
     async def test_delete_prediction(
@@ -251,7 +253,7 @@ class TestPredictionAPIIntegration:
         response = await api_client.delete(
             f"/api/v1/predictions/{prediction.id}", headers=auth_headers
         )
-        assert response.status_code   == 204
+        assert response.status_code     == 204
 
         # 验证已删除
         from src.database.models import Prediction
@@ -313,11 +315,11 @@ class TestPredictionAPIIntegration:
         )
 
         # 验证响应
-        assert response.status_code   == 200
+        assert response.status_code     == 200
         _stats = response.json()
         assert "total_predictions" in stats
         assert "correct_predictions" in stats
         assert "accuracy" in stats
-        assert "total_predictions"   == 11  # 1个初始 + 10个新创建
+        assert "total_predictions"     == 11  # 1个初始 + 10个新创建
         assert "accuracy" in stats
         assert 0 <= stats["accuracy"] <= 1

@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
+from unittest.mock import Mock, patch
 """
 Auto-generated basic tests for di.py
 TODO: Expand these tests with actual functionality
 """
 
 import pytest
-from unittest.mock import Mock, patch
 
 # TODO: Import the module to test
 # from di import *
 
+
+@pytest.mark.unit
 
 class TestDi:
     """Basic test class for di.py"""

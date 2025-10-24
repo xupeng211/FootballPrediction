@@ -1,10 +1,14 @@
+# TODO: Consider creating a fixture for 7 repeated Mock creations
+
+# TODO: Consider creating a fixture for 7 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock
 """
 用户画像服务测试
 Tests for User Profile Service
 """
 
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime
 
 from src.services.user_profile import (
@@ -13,6 +17,8 @@ from src.services.user_profile import (
     User,
 )
 
+
+@pytest.mark.unit
 
 class TestUserProfileService:
     """用户画像服务测试"""

@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, AsyncMock
 """
 业务逻辑深度覆盖率测试 - 第三阶段
 Business Logic Deep Coverage Tests - Phase 3
@@ -8,7 +9,6 @@ Business Logic Deep Coverage Tests - Phase 3
 
 import pytest
 import asyncio
-from unittest.mock import Mock, patch, AsyncMock
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional, Tuple
 import json
@@ -44,6 +44,8 @@ except ImportError as e:
 
 
 @pytest.mark.skipif(not SERVICES_AVAILABLE, reason="服务模块不可用")
+@pytest.mark.unit
+
 class TestDataProcessingServiceAdvanced:
     """数据处理服务高级测试"""
 
@@ -1174,6 +1176,8 @@ class TestBusinessLogicIntegration:
         async def process_single_prediction(match_data):
             """处理单个预测"""
             # 模拟预测处理时间
+            await asyncio.sleep(0.01)
+            await asyncio.sleep(0.01)
             await asyncio.sleep(0.01)
 
             return {

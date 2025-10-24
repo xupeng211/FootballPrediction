@@ -1,5 +1,8 @@
 from src.streaming.stream_processor import StreamProcessor
+import pytest
 
+
+@pytest.mark.unit
 
 def test_stream_processor():
     processor = StreamProcessor()

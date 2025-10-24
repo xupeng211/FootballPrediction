@@ -17,6 +17,11 @@ src_path = Path(__file__).parent.parent.parent / "src"
 sys.path.insert(0, str(src_path))
 
 
+@pytest.mark.unit
+@pytest.mark.external_api
+@pytest.mark.slow
+@pytest.mark.critical
+
 class TestAllUtilsComprehensive:
     """全面测试所有utils模块中的所有函数"""
 

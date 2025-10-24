@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 # from src.utils.time_utils import TimeUtils
 
 
+@pytest.mark.unit
+
 class TestTimeUtils:
     """时间工具测试"""
 

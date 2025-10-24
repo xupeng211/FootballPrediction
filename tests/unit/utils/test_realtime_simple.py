@@ -1,4 +1,6 @@
 # 实时数据处理简单测试
+@pytest.mark.unit
+
 def test_realtime_import():
     realtime = [
         "src.realtime.websocket",
@@ -17,6 +19,7 @@ def test_realtime_import():
 def test_websocket():
     try:
         from src.realtime.websocket import WebSocketHandler
+import pytest
 
         handler = WebSocketHandler()
         assert handler is not None

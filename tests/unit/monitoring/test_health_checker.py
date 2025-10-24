@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 19 repeated Mock creations
+
+# TODO: Consider creating a fixture for 19 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock
 """
 健康检查器测试
 Tests for Health Checker
@@ -7,10 +12,11 @@ Tests for Health Checker
 
 import pytest
 from datetime import datetime, timedelta
-from unittest.mock import Mock, AsyncMock, patch
 
 from src.monitoring.health_checker import HealthStatus, HealthChecker
 
+
+@pytest.mark.unit
 
 class TestHealthStatus:
     """健康状态测试"""
@@ -96,6 +102,8 @@ class TestHealthChecker:
         # 模拟慢查询（1-5秒）
         async def slow_query(query):
             await asyncio.sleep(0.1)  # 模拟延迟
+            await asyncio.sleep(0.1)  # 模拟延迟
+            await asyncio.sleep(0.1)  # 模拟延迟
             return {"test": 1}
 
         mock_db.fetch_one = slow_query
@@ -125,6 +133,8 @@ class TestHealthChecker:
 
         # 模拟非常慢的查询（>5秒）
         async def very_slow_query(query):
+            await asyncio.sleep(0.2)  # 模拟延迟
+            await asyncio.sleep(0.2)  # 模拟延迟
             await asyncio.sleep(0.2)  # 模拟延迟
             return {"test": 1}
 

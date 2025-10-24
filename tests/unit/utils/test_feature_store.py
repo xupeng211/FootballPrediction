@@ -1,5 +1,8 @@
 from src.data.features.feature_store import FeatureStore
+import pytest
 
+
+@pytest.mark.unit
 
 def test_feature_store():
     store = FeatureStore()

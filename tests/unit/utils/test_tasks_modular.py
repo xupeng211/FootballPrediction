@@ -1,3 +1,4 @@
+from unittest.mock import patch, AsyncMock, MagicMock
 """
 测试调度任务模块化拆分
 Test modular split of scheduler tasks
@@ -5,8 +6,9 @@ Test modular split of scheduler tasks
 
 import json
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 
+
+@pytest.mark.unit
 
 class TestBaseModule:
     """测试基础任务模块"""

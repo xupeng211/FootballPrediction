@@ -6,6 +6,9 @@ import pytest
 from src.facades.subsystems.database import DatabaseSubsystem
 
 
+@pytest.mark.unit
+@pytest.mark.database
+
 class TestDatabaseSubsystem:
     """测试数据库子系统"""
 

@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, MagicMock, mock_open
 """提升低覆盖率模块的测试"""
 
 from __future__ import annotations
@@ -10,11 +11,13 @@ import hashlib
 import secrets
 import uuid
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, MagicMock, mock_open
 from pathlib import Path
 
 from tests.factories import DataFactory
 
+
+@pytest.mark.unit
+@pytest.mark.external_api
 
 class TestConfigLoaderModule:
     """测试配置加载器模块 - 目标：50%覆盖率"""
@@ -97,6 +100,8 @@ class TestConfigLoaderModule:
             from src.utils.config_loader import ConfigLoader
 
             # 设置环境变量
+            os.environ["TEST_CONFIG_VAR"] = "test_value"
+            os.environ["TEST_CONFIG_VAR"] = "test_value"
             os.environ["TEST_CONFIG_VAR"] = "test_value"
 
             _config = ConfigLoader.get_env_config()

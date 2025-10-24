@@ -21,6 +21,8 @@ except ImportError:
             pass
 
 
+@pytest.mark.unit
+
 class TestErrorHandler:
     """测试错误处理器"""
 

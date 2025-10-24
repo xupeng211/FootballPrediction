@@ -1,3 +1,4 @@
+from unittest.mock import patch, AsyncMock
 """
 Buggy API测试
 Tests for Buggy API
@@ -7,7 +8,6 @@ Tests for Buggy API
 
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import AsyncMock, patch
 
 # 测试导入
 try:
@@ -20,6 +20,8 @@ except ImportError as e:
 
 
 @pytest.mark.skipif(not BUGGY_API_AVAILABLE, reason="Buggy API module not available")
+@pytest.mark.unit
+
 class TestBuggyAPI:
     """Buggy API测试"""
 

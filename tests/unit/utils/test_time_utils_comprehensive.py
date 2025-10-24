@@ -7,6 +7,8 @@ from datetime import datetime, timezone, timedelta
 # from src.utils.time_utils import TimeUtils, utc_now, parse_datetime
 
 
+@pytest.mark.unit
+
 class TestTimeUtils:
     """时间工具类测试"""
 

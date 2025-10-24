@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 19 repeated Mock creations
+
+# TODO: Consider creating a fixture for 19 repeated Mock creations
+
+from unittest.mock import Mock, MagicMock
 """
 数据库类型测试
 Tests for Database Types
@@ -7,10 +12,12 @@ Tests for Database Types
 
 import json
 import pytest
-from unittest.mock import Mock, MagicMock
 
 from src.database.types import SQLiteCompatibleJSONB, CompatibleJSON, get_json_type
 
+
+@pytest.mark.unit
+@pytest.mark.database
 
 class TestSQLiteCompatibleJSONB:
     """SQLite兼容的JSONB类型测试"""

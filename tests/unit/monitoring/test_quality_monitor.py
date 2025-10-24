@@ -1,10 +1,10 @@
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 Tests for monitoring.quality_monitor
 Auto-generated test file
 """
 
 import pytest
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
 import asyncio
 
 # Test imports

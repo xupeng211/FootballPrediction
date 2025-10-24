@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, MagicMock
 """
 预测模型测试
 Tests for Prediction Model
@@ -6,7 +7,6 @@ Tests for Prediction Model
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 import numpy as np
 import pandas as pd
 from datetime import datetime
@@ -31,6 +31,8 @@ except ImportError as e:
 @pytest.mark.skipif(
     not PREDICTION_MODEL_AVAILABLE, reason="Prediction model module not available"
 )
+@pytest.mark.unit
+
 class TestPredictionStatus:
     """预测状态测试"""
 

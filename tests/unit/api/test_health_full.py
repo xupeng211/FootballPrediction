@@ -1,10 +1,10 @@
+from unittest.mock import Mock, patch, MagicMock
 """
 测试 src/api/health.py 模块
 """
 
 import pytest
 import sys
-from unittest.mock import Mock, patch, MagicMock
 
 # 确保模块可以导入
 sys.path.insert(0, "src")
@@ -19,6 +19,8 @@ except ImportError:
 
 
 @pytest.mark.skipif(not HEALTH_AVAILABLE, reason="health模块不可用")
+@pytest.mark.unit
+
 class TestHealthModule:
     """测试 health 模块"""
 

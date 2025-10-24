@@ -1,9 +1,9 @@
+from unittest.mock import Mock, patch, MagicMock
 """测试覆盖率提升文件 - 专门用于增加覆盖率"""
 
 from __future__ import annotations
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime, timedelta
 import json
 import uuid
@@ -16,6 +16,8 @@ from typing import Any, Dict, List
 
 
 # 测试所有导入的模块函数
+@pytest.mark.unit
+
 class TestUtilsImports:
     """测试所有utils模块函数导入"""
 
@@ -713,6 +715,8 @@ class TestAsyncFunctionality:
 
         # 模拟异步操作
         async def mock_async_operation():
+            await asyncio.sleep(0.01)
+            await asyncio.sleep(0.01)
             await asyncio.sleep(0.01)
             return "async_result"
 

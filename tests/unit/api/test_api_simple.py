@@ -1,3 +1,4 @@
+from unittest.mock import patch, AsyncMock, MagicMock
 """
 API模块简单测试
 """
@@ -6,12 +7,13 @@ pytest_plugins = "asyncio"
 
 import pytest
 import asyncio
-from unittest.mock import MagicMock, AsyncMock, patch
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 import json
 from typing import Dict, Any
 
+
+@pytest.mark.unit
 
 class TestAPIBasics:
     """API基础功能测试"""
@@ -57,6 +59,8 @@ class TestAPIBasics:
 
         @app.get("/async-test")
         async def async_test_endpoint():
+            await asyncio.sleep(0.01)
+            await asyncio.sleep(0.01)
             await asyncio.sleep(0.01)
             return {"message": "async test"}
 

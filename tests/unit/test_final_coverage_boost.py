@@ -17,6 +17,10 @@ src_path = Path(__file__).parent.parent.parent / "src"
 sys.path.insert(0, str(src_path))
 
 
+@pytest.mark.unit
+@pytest.mark.external_api
+@pytest.mark.slow
+
 class TestAllAvailableModules:
     """测试所有可用的模块"""
 
