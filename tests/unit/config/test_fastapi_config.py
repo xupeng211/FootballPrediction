@@ -14,12 +14,15 @@ from typing import Dict, Any
 # 导入要测试的模块
 try:
     from src.config.fastapi_config import create_chinese_app
+
     FASTAPI_CONFIG_AVAILABLE = True
 except ImportError:
     FASTAPI_CONFIG_AVAILABLE = False
 
 
-@pytest.mark.skipif(not FASTAPI_CONFIG_AVAILABLE, reason="FastAPI config module not available")
+@pytest.mark.skipif(
+    not FASTAPI_CONFIG_AVAILABLE, reason="FastAPI config module not available"
+)
 class TestCreateChineseApp:
     """create_chinese_app函数测试"""
 
@@ -44,7 +47,7 @@ class TestCreateChineseApp:
         assert app.redoc_url == "/redoc"
 
         # 验证openapi函数被设置
-        assert hasattr(app, 'openapi')
+        assert hasattr(app, "openapi")
         assert callable(app.openapi)
 
     def test_create_chinese_app_custom_openapi_function(self):
@@ -79,7 +82,7 @@ class TestCreateChineseApp:
         schema1 = app.openapi()
 
         # 验证schema被缓存
-        assert hasattr(app, 'openapi_schema')
+        assert hasattr(app, "openapi_schema")
         assert app.openapi_schema is not None
 
         # 第二次调用应该返回缓存的schema
@@ -123,7 +126,7 @@ class TestCreateChineseApp:
             {"name": "基础", "description": "基础接口"},
             {"name": "预测", "description": "预测相关接口"},
             {"name": "数据", "description": "数据管理接口"},
-            {"name": "监控", "description": "系统监控接口"}
+            {"name": "监控", "description": "系统监控接口"},
         ]
 
         for expected_tag in expected_tags:
@@ -169,12 +172,12 @@ class TestCreateChineseApp:
         app = create_chinese_app()
 
         # 验证FastAPI基本属性
-        assert hasattr(app, 'title')
-        assert hasattr(app, 'description')
-        assert hasattr(app, 'version')
-        assert hasattr(app, 'docs_url')
-        assert hasattr(app, 'redoc_url')
-        assert hasattr(app, 'openapi')
+        assert hasattr(app, "title")
+        assert hasattr(app, "description")
+        assert hasattr(app, "version")
+        assert hasattr(app, "docs_url")
+        assert hasattr(app, "redoc_url")
+        assert hasattr(app, "openapi")
 
         # 验证属性类型
         assert isinstance(app.title, str)
@@ -210,7 +213,7 @@ class TestCreateChineseApp:
         # 应该能够正常创建应用而不抛出任何异常
         try:
             app = create_chinese_app()
-            schema = app.openapi()
+            app.openapi()
             assert True  # 如果到这里说明没有异常
         except Exception as e:
             pytest.fail(f"create_chinese_app() raised an unexpected exception: {e}")

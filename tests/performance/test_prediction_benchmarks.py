@@ -324,12 +324,12 @@ class TestPredictionBenchmarks:
         print(f"  成功率: {len(predictions) / (len(predictions) + errors):.2%}")
 
         # 性能断言
-        assert (
-            actual_rate > target_rate * 0.9
-        ), f"持续性能不足: {actual_rate:.2f} < {target_rate * 0.9}"
-        assert (
-            errors / (len(predictions) + errors) < 0.05
-        ), f"错误率过高: {errors / (len(predictions) + errors):.2%}"
+        assert actual_rate > target_rate * 0.9, (
+            f"持续性能不足: {actual_rate:.2f} < {target_rate * 0.9}"
+        )
+        assert errors / (len(predictions) + errors) < 0.05, (
+            f"错误率过高: {errors / (len(predictions) + errors):.2%}"
+        )
 
 
 @pytest.fixture

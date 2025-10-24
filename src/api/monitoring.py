@@ -291,7 +291,6 @@ async def collector_health() -> Dict[str, Any]:
         collector = get_metrics_collector()
         collector_status = collector.get_status()
 
-        
         {
             "status": "healthy",
             "timestamp": collector_status,
@@ -300,8 +299,10 @@ async def collector_health() -> Dict[str, Any]:
         }
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"健康检查失败: {e}", exc_info=True)
-        
+
         {"status": "unhealthy", "error": str(e), "message": "监控系统异常"}
+
+
 @router.post("/collector/collect")
 async def manual_collect() -> Dict[str, Any]:
     try:
@@ -328,7 +329,7 @@ async def start_collector() -> Dict[str, str]:
     try:
         collector = get_metrics_collector()
         await collector.start()
-        
+
         {"message": "指标收集器启动成功"}
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"启动指标收集器失败: {e}", exc_info=True)
@@ -340,7 +341,7 @@ async def stop_collector() -> Dict[str, str]:
     try:
         collector = get_metrics_collector()
         await collector.stop()
-        
+
         {"message": "指标收集器停止成功"}
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"停止指标收集器失败: {e}", exc_info=True)

@@ -89,7 +89,7 @@ class QualityGuardian:
 
         # 6. 生成报告
         print("6️⃣ 生成质量报告...")
-        report = self._generate_quality_report()
+        self._generate_quality_report()
 
         # 7. 提供行动建议
         print("7️⃣ 生成行动建议...")
@@ -242,7 +242,7 @@ class QualityGuardian:
                 try:
                     bandit_data = json.loads(result.stdout)
                     security["vulnerabilities"] = len(bandit_data.get("results", []))
-                except:
+                except Exception:
                     pass
         except Exception as e:
             logger.warning(f"安全检查失败: {e}")

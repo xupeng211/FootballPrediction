@@ -23,7 +23,7 @@ class AdapterFactory:
                 "class": adapter_class,
                 "singleton": kwargs.get("singleton", False),
                 **kwargs,
-            }
+            },
         )
 
     def create_adapter(

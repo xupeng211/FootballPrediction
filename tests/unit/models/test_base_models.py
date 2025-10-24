@@ -21,12 +21,15 @@ try:
         MetadataModel,
         base_models,
     )
+
     BASE_MODELS_AVAILABLE = True
 except ImportError:
     BASE_MODELS_AVAILABLE = False
 
 
-@pytest.mark.skipif(not BASE_MODELS_AVAILABLE, reason="Base models module not available")
+@pytest.mark.skipif(
+    not BASE_MODELS_AVAILABLE, reason="Base models module not available"
+)
 class TestBaseModel:
     """BaseModel测试"""
 
@@ -118,7 +121,9 @@ class TestBaseModel:
         assert set(fields.keys()) == expected_fields
 
 
-@pytest.mark.skipif(not BASE_MODELS_AVAILABLE, reason="Base models module not available")
+@pytest.mark.skipif(
+    not BASE_MODELS_AVAILABLE, reason="Base models module not available"
+)
 class TestTimestampedModel:
     """TimestampedModel测试"""
 
@@ -148,10 +153,7 @@ class TestTimestampedModel:
     def test_timestamped_model_custom_timestamps(self):
         """测试TimestampedModel自定义时间戳"""
         custom_time = datetime.datetime(2023, 1, 1, 12, 0, 0)
-        model = TimestampedModel(
-            created_at=custom_time,
-            updated_at=custom_time
-        )
+        model = TimestampedModel(created_at=custom_time, updated_at=custom_time)
 
         assert model.created_at == custom_time
         assert model.updated_at == custom_time
@@ -169,11 +171,7 @@ class TestTimestampedModel:
     def test_timestamped_model_serialization(self):
         """测试TimestampedModel序列化"""
         custom_time = datetime.datetime(2023, 1, 1, 12, 0, 0)
-        model = TimestampedModel(
-            id=1,
-            created_at=custom_time,
-            updated_at=custom_time
-        )
+        model = TimestampedModel(id=1, created_at=custom_time, updated_at=custom_time)
 
         data = model.model_dump()
         assert data["id"] == 1
@@ -189,7 +187,9 @@ class TestTimestampedModel:
         assert "updated_at" in json_str
 
 
-@pytest.mark.skipif(not BASE_MODELS_AVAILABLE, reason="Base models module not available")
+@pytest.mark.skipif(
+    not BASE_MODELS_AVAILABLE, reason="Base models module not available"
+)
 class TestIdentifiableModel:
     """IdentifiableModel测试"""
 
@@ -209,9 +209,7 @@ class TestIdentifiableModel:
     def test_identifiable_model_with_description(self):
         """测试IdentifiableModel带描述"""
         model = IdentifiableModel(
-            id=42,
-            name="Test Model",
-            description="This is a test model"
+            id=42, name="Test Model", description="This is a test model"
         )
 
         assert model.id == 42
@@ -242,11 +240,7 @@ class TestIdentifiableModel:
 
         # 测试继承的属性
         custom_time = datetime.datetime(2023, 1, 1, 12, 0, 0)
-        model = IdentifiableModel(
-            id=1,
-            name="Test",
-            created_at=custom_time
-        )
+        model = IdentifiableModel(id=1, name="Test", created_at=custom_time)
 
         assert model.id == 1
         assert model.created_at == custom_time
@@ -254,9 +248,7 @@ class TestIdentifiableModel:
     def test_identifiable_model_serialization(self):
         """测试IdentifiableModel序列化"""
         model = IdentifiableModel(
-            id=123,
-            name="Test Model",
-            description="Test Description"
+            id=123, name="Test Model", description="Test Description"
         )
 
         data = model.model_dump()
@@ -273,7 +265,9 @@ class TestIdentifiableModel:
         assert "name" in json_str
 
 
-@pytest.mark.skipif(not BASE_MODELS_AVAILABLE, reason="Base models module not available")
+@pytest.mark.skipif(
+    not BASE_MODELS_AVAILABLE, reason="Base models module not available"
+)
 class TestStatusModel:
     """StatusModel测试"""
 
@@ -323,11 +317,7 @@ class TestStatusModel:
 
         # 测试继承的属性
         custom_time = datetime.datetime(2023, 1, 1, 12, 0, 0)
-        model = StatusModel(
-            id=1,
-            status="active",
-            created_at=custom_time
-        )
+        model = StatusModel(id=1, status="active", created_at=custom_time)
 
         assert model.id == 1
         assert model.status == "active"
@@ -335,11 +325,7 @@ class TestStatusModel:
 
     def test_status_model_serialization(self):
         """测试StatusModel序列化"""
-        model = StatusModel(
-            id=1,
-            status="archived",
-            is_enabled=False
-        )
+        model = StatusModel(id=1, status="archived", is_enabled=False)
 
         data = model.model_dump()
         assert data["id"] == 1
@@ -355,7 +341,9 @@ class TestStatusModel:
         assert "is_enabled" in json_str
 
 
-@pytest.mark.skipif(not BASE_MODELS_AVAILABLE, reason="Base models module not available")
+@pytest.mark.skipif(
+    not BASE_MODELS_AVAILABLE, reason="Base models module not available"
+)
 class TestMetadataModel:
     """MetadataModel测试"""
 
@@ -407,15 +395,8 @@ class TestMetadataModel:
     def test_metadata_model_complex_data(self):
         """测试MetadataModel复杂数据"""
         complex_metadata = {
-            "config": {
-                "debug": True,
-                "timeout": 30,
-                "servers": ["server1", "server2"]
-            },
-            "metrics": {
-                "enabled": True,
-                "interval": 60
-            }
+            "config": {"debug": True, "timeout": 30, "servers": ["server1", "server2"]},
+            "metrics": {"enabled": True, "interval": 60},
         }
         tags = ["web", "api", "monitoring"]
 
@@ -431,10 +412,7 @@ class TestMetadataModel:
         # 测试继承的属性
         custom_time = datetime.datetime(2023, 1, 1, 12, 0, 0)
         model = MetadataModel(
-            id=1,
-            metadata={"test": "value"},
-            tags=["test"],
-            created_at=custom_time
+            id=1, metadata={"test": "value"}, tags=["test"], created_at=custom_time
         )
 
         assert model.id == 1
@@ -444,11 +422,7 @@ class TestMetadataModel:
 
     def test_metadata_model_serialization(self):
         """测试MetadataModel序列化"""
-        model = MetadataModel(
-            id=1,
-            metadata={"key": "value"},
-            tags=["tag1", "tag2"]
-        )
+        model = MetadataModel(id=1, metadata={"key": "value"}, tags=["tag1", "tag2"])
 
         data = model.model_dump()
         assert data["id"] == 1
@@ -464,7 +438,9 @@ class TestMetadataModel:
         assert "tags" in json_str
 
 
-@pytest.mark.skipif(not BASE_MODELS_AVAILABLE, reason="Base models module not available")
+@pytest.mark.skipif(
+    not BASE_MODELS_AVAILABLE, reason="Base models module not available"
+)
 class TestBaseModelsNamespace:
     """base_models命名空间测试"""
 
@@ -503,32 +479,31 @@ class TestBaseModelsNamespace:
 
     def test_all_models_inherit_base_model(self):
         """测试所有模型都继承自BaseModel"""
-        models = [
-            TimestampedModel,
-            IdentifiableModel,
-            StatusModel,
-            MetadataModel
-        ]
+        models = [TimestampedModel, IdentifiableModel, StatusModel, MetadataModel]
 
         for model_class in models:
-            assert issubclass(model_class, BaseModel), f"{model_class.__name__} should inherit from BaseModel"
+            assert issubclass(model_class, BaseModel), (
+                f"{model_class.__name__} should inherit from BaseModel"
+            )
 
 
-@pytest.mark.skipif(not BASE_MODELS_AVAILABLE, reason="Base models module not available")
+@pytest.mark.skipif(
+    not BASE_MODELS_AVAILABLE, reason="Base models module not available"
+)
 class TestBaseModelsIntegration:
     """基础模型集成测试"""
 
     def test_combined_model_inheritance(self):
         """测试组合模型继承"""
+
         # 创建一个组合多个基础模型的类
-        class CombinedModel(TimestampedModel, IdentifiableModel, StatusModel, MetadataModel):
+        class CombinedModel(
+            TimestampedModel, IdentifiableModel, StatusModel, MetadataModel
+        ):
             pass
 
         model = CombinedModel(
-            id=1,
-            name="Combined Model",
-            metadata={"type": "test"},
-            tags=["test"]
+            id=1, name="Combined Model", metadata={"type": "test"}, tags=["test"]
         )
 
         # 验证所有属性都存在
@@ -542,9 +517,13 @@ class TestBaseModelsIntegration:
 
     def test_model_workflow(self):
         """测试完整的工作流"""
+
         # 1. 创建一个组合所有基础模型的类用于工作流测试
-        class WorkflowModel(TimestampedModel, IdentifiableModel, StatusModel, MetadataModel):
+        class WorkflowModel(
+            TimestampedModel, IdentifiableModel, StatusModel, MetadataModel
+        ):
             """工作流测试用的组合模型"""
+
             pass
 
         model_data = {
@@ -556,9 +535,9 @@ class TestBaseModelsIntegration:
             "metadata": {
                 "source": "test",
                 "version": "1.0",
-                "environment": "development"
+                "environment": "development",
             },
-            "tags": ["test", "validation", "demo"]
+            "tags": ["test", "validation", "demo"],
         }
 
         model = WorkflowModel(**model_data)
@@ -608,15 +587,13 @@ class TestBaseModelsIntegration:
     def test_model_consistency(self):
         """测试模型一致性"""
         # 创建多个相同类型的模型
-        models = [
-            BaseModel() for _ in range(5)
-        ]
+        models = [BaseModel() for _ in range(5)]
 
         # 验证它们都有相同的结构
         for model in models:
-            assert hasattr(model, 'id')
-            assert hasattr(model, 'created_at')
-            assert hasattr(model, 'updated_at')
+            assert hasattr(model, "id")
+            assert hasattr(model, "created_at")
+            assert hasattr(model, "updated_at")
 
         # 验证每个实例都是独立的
         models[0].id = 1

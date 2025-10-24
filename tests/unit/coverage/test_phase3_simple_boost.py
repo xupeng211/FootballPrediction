@@ -15,6 +15,7 @@ import json
 try:
     from src.core.config import Config
     from src.core.logging import get_logger
+
     CORE_AVAILABLE = True
 except ImportError as e:
     print(f"Core import error: {e}")
@@ -23,6 +24,7 @@ except ImportError as e:
 try:
     from src.utils.crypto_utils import hash_password, verify_password
     from src.utils.validators import validate_email, validate_phone
+
     UTILS_AVAILABLE = True
 except ImportError as e:
     print(f"Utils import error: {e}")
@@ -30,6 +32,7 @@ except ImportError as e:
 
 try:
     from src.models.common_models import create_response, create_error_response
+
     MODELS_AVAILABLE = True
 except ImportError as e:
     print(f"Models import error: {e}")
@@ -43,17 +46,20 @@ class TestCoreConfigCoverage:
     def test_config_loading(self):
         """测试：配置加载 - 覆盖率补充"""
         # 模拟配置加载
-        with patch.dict('os.environ', {
-            'DATABASE_URL': 'postgresql://test:test@localhost/test',
-            'SECRET_KEY': 'test-secret-key',
-            'DEBUG': 'true'
-        }):
+        with patch.dict(
+            "os.environ",
+            {
+                "DATABASE_URL": "postgresql://test:test@localhost/test",
+                "SECRET_KEY": "test-secret-key",
+                "DEBUG": "true",
+            },
+        ):
             config = Config()
 
             # 验证配置属性存在
-            assert hasattr(config, 'database_url')
-            assert hasattr(config, 'secret_key')
-            assert hasattr(config, 'debug')
+            assert hasattr(config, "database_url")
+            assert hasattr(config, "secret_key")
+            assert hasattr(config, "debug")
 
     @pytest.mark.skipif(not CORE_AVAILABLE, reason="核心模块不可用")
     def test_logging_configuration(self):
@@ -62,40 +68,43 @@ class TestCoreConfigCoverage:
 
         # 验证日志器创建
         assert logger is not None
-        assert hasattr(logger, 'info')
-        assert hasattr(logger, 'error')
-        assert hasattr(logger, 'warning')
+        assert hasattr(logger, "info")
+        assert hasattr(logger, "error")
+        assert hasattr(logger, "warning")
 
     @pytest.mark.skipif(not CORE_AVAILABLE, reason="核心模块不可用")
     def test_environment_variable_handling(self):
         """测试：环境变量处理 - 覆盖率补充"""
         # 测试环境变量解析
-        with patch.dict('os.environ', {
-            'MAX_CONNECTIONS': '10',
-            'TIMEOUT_SECONDS': '30',
-            'ENABLE_FEATURES': 'true'
-        }):
+        with patch.dict(
+            "os.environ",
+            {
+                "MAX_CONNECTIONS": "10",
+                "TIMEOUT_SECONDS": "30",
+                "ENABLE_FEATURES": "true",
+            },
+        ):
             # 模拟环境变量解析逻辑
             def get_env_int(key: str, default: int = 0) -> int:
                 value = os.getenv(key)
                 return int(value) if value and value.isdigit() else default
 
             def get_env_bool(key: str, default: bool = False) -> bool:
-                value = os.getenv(key, '').lower()
-                return value in ('true', '1', 'yes', 'on')
+                value = os.getenv(key, "").lower()
+                return value in ("true", "1", "yes", "on")
 
             # 测试整数解析
-            max_connections = get_env_int('MAX_CONNECTIONS', 5)
+            max_connections = get_env_int("MAX_CONNECTIONS", 5)
             assert max_connections == 10
 
-            timeout = get_env_int('TIMEOUT_SECONDS', 60)
+            timeout = get_env_int("TIMEOUT_SECONDS", 60)
             assert timeout == 30
 
             # 测试布尔解析
-            enable_features = get_env_bool('ENABLE_FEATURES', False)
+            enable_features = get_env_bool("ENABLE_FEATURES", False)
             assert enable_features is True
 
-            disable_features = get_env_bool('DISABLE_FEATURES', False)
+            disable_features = get_env_bool("DISABLE_FEATURES", False)
             assert disable_features is False
 
 
@@ -128,7 +137,7 @@ class TestUtilsSimpleCoverage:
         valid_emails = [
             "user@example.com",
             "test.email+tag@domain.co.uk",
-            "user123@test-domain.org"
+            "user123@test-domain.org",
         ]
 
         for email in valid_emails:
@@ -140,7 +149,7 @@ class TestUtilsSimpleCoverage:
             "@missing-domain.com",
             "user@.invalid",
             "user@domain.",
-            "user space@domain.com"
+            "user space@domain.com",
         ]
 
         for email in invalid_emails:
@@ -150,12 +159,7 @@ class TestUtilsSimpleCoverage:
     def test_phone_validation(self):
         """测试：电话号码验证 - 覆盖率补充"""
         # 有效电话号码
-        valid_phones = [
-            "+1234567890",
-            "123-456-7890",
-            "(123) 456-7890",
-            "1234567890"
-        ]
+        valid_phones = ["+1234567890", "123-456-7890", "(123) 456-7890", "1234567890"]
 
         for phone in valid_phones:
             result = validate_phone(phone)
@@ -165,6 +169,7 @@ class TestUtilsSimpleCoverage:
     @pytest.mark.skipif(not UTILS_AVAILABLE, reason="工具模块不可用")
     def test_string_processing_utilities(self):
         """测试：字符串处理工具 - 覆盖率补充"""
+
         # 测试字符串清理
         def clean_string(s: str) -> str:
             if not s:
@@ -191,8 +196,7 @@ class TestModelsSimpleCoverage:
         """测试：响应创建 - 覆盖率补充"""
         # 测试成功响应
         success_response = create_response(
-            data={"id": 1, "name": "Test"},
-            message="Operation successful"
+            data={"id": 1, "name": "Test"}, message="Operation successful"
         )
 
         assert success_response["success"] is True
@@ -202,7 +206,7 @@ class TestModelsSimpleCoverage:
         # 测试错误响应
         error_response = create_error_response(
             error="Validation failed",
-            details={"field": "email", "message": "Invalid format"}
+            details={"field": "email", "message": "Invalid format"},
         )
 
         assert error_response["success"] is False
@@ -219,18 +223,20 @@ class TestModelsSimpleCoverage:
             "created_at": datetime.utcnow(),
             "price": 99.99,
             "is_active": True,
-            "tags": ["tag1", "tag2", "tag3"]
+            "tags": ["tag1", "tag2", "tag3"],
         }
 
         # 序列化为JSON
-        json_str = json.dumps({
-            "id": test_data["id"],
-            "name": test_data["name"],
-            "created_at": test_data["created_at"].isoformat(),
-            "price": test_data["price"],
-            "is_active": test_data["is_active"],
-            "tags": test_data["tags"]
-        })
+        json_str = json.dumps(
+            {
+                "id": test_data["id"],
+                "name": test_data["name"],
+                "created_at": test_data["created_at"].isoformat(),
+                "price": test_data["price"],
+                "is_active": test_data["is_active"],
+                "tags": test_data["tags"],
+            }
+        )
 
         # 验证序列化结果
         parsed = json.loads(json_str)
@@ -246,10 +252,13 @@ class TestBusinessLogicSimple:
 
     def test_prediction_probability_calculation(self):
         """测试：预测概率计算 - 覆盖率补充"""
+
         # 模拟赔率转概率
         def odds_to_probability(odds: Dict[str, float]) -> Dict[str, float]:
-            total_inverse = sum(1/price for price in odds.values())
-            return {outcome: (1/price)/total_inverse for outcome, price in odds.items()}
+            total_inverse = sum(1 / price for price in odds.values())
+            return {
+                outcome: (1 / price) / total_inverse for outcome, price in odds.items()
+            }
 
         # 测试赔率转换
         decimal_odds = {"home": 2.0, "draw": 3.2, "away": 4.5}
@@ -265,6 +274,7 @@ class TestBusinessLogicSimple:
 
     def test_team_name_standardization(self):
         """测试：队名标准化 - 覆盖率补充"""
+
         def standardize_team_name(name: str) -> str:
             if not name:
                 return ""
@@ -277,7 +287,7 @@ class TestBusinessLogicSimple:
                 "Manchester United": "Man United",
                 "Manchester City": "Man City",
                 "Tottenham Hotspur": "Tottenham",
-                "West Ham United": "West Ham"
+                "West Ham United": "West Ham",
             }
 
             return mappings.get(cleaned, cleaned)
@@ -291,6 +301,7 @@ class TestBusinessLogicSimple:
 
     def test_match_data_validation(self):
         """测试：比赛数据验证 - 覆盖率补充"""
+
         def validate_match_data(data: Dict[str, Any]) -> Dict[str, Any]:
             errors = []
 
@@ -307,21 +318,18 @@ class TestBusinessLogicSimple:
             # 日期格式检查
             if "match_date" in data:
                 try:
-                    datetime.fromisoformat(data["match_date"].replace('Z', '+00:00'))
+                    datetime.fromisoformat(data["match_date"].replace("Z", "+00:00"))
                 except (ValueError, AttributeError):
                     errors.append("Invalid date format")
 
-            return {
-                "is_valid": len(errors) == 0,
-                "errors": errors
-            }
+            return {"is_valid": len(errors) == 0, "errors": errors}
 
         # 测试有效数据
         valid_data = {
             "match_id": 123,
             "home_team": "Team A",
             "away_team": "Team B",
-            "match_date": "2023-12-01T20:00:00Z"
+            "match_date": "2023-12-01T20:00:00Z",
         }
 
         result = validate_match_data(valid_data)
@@ -333,7 +341,7 @@ class TestBusinessLogicSimple:
             "match_id": "not_a_number",
             "home_team": "",
             "away_team": "Team B",
-            "match_date": "invalid_date"
+            "match_date": "invalid_date",
         }
 
         result = validate_match_data(invalid_data)
@@ -348,7 +356,7 @@ class TestBusinessLogicSimple:
             {"match_id": 2, "confidence": 0.72, "actual": "draw"},
             {"match_id": 3, "confidence": 0.91, "actual": "home_win"},
             {"match_id": 4, "confidence": 0.68, "actual": "away_win"},
-            {"match_id": 5, "confidence": 0.79, "actual": "draw"}
+            {"match_id": 5, "confidence": 0.79, "actual": "draw"},
         ]
 
         # 计算准确率
@@ -382,6 +390,7 @@ class TestErrorHandlingPatterns:
 
     def test_exception_handling_strategies(self):
         """测试：异常处理策略 - 覆盖率补充"""
+
         # 策略1：返回默认值
         def safe_divide(a, b, default=0):
             try:
@@ -406,12 +415,16 @@ class TestErrorHandlingPatterns:
                             if attempt < max_attempts - 1:
                                 continue
                     raise last_exception
+
                 return wrapper
+
             return decorator
 
         @retry_operation(max_attempts=3)
         def failing_operation():
-            failing_operation.attempt_count = getattr(failing_operation, 'attempt_count', 0) + 1
+            failing_operation.attempt_count = (
+                getattr(failing_operation, "attempt_count", 0) + 1
+            )
             if failing_operation.attempt_count < 3:
                 raise ConnectionError("Temporary failure")
             return "success"
@@ -423,6 +436,7 @@ class TestErrorHandlingPatterns:
 
     def test_data_validation_patterns(self):
         """测试：数据验证模式 - 覆盖率补充"""
+
         # 验证器模式
         class Validator:
             def __init__(self):
@@ -442,24 +456,16 @@ class TestErrorHandlingPatterns:
         validator = Validator()
 
         # 添加验证规则
+        validator.add_rule(lambda x: isinstance(x, dict), "Data must be a dictionary")
+
+        validator.add_rule(lambda x: "name" in x, "Missing required field: name")
+
         validator.add_rule(
-            lambda x: isinstance(x, dict),
-            "Data must be a dictionary"
+            lambda x: isinstance(x.get("name"), str), "Name must be a string"
         )
 
         validator.add_rule(
-            lambda x: "name" in x,
-            "Missing required field: name"
-        )
-
-        validator.add_rule(
-            lambda x: isinstance(x.get("name"), str),
-            "Name must be a string"
-        )
-
-        validator.add_rule(
-            lambda x: len(x.get("name", "")) >= 2,
-            "Name must be at least 2 characters"
+            lambda x: len(x.get("name", "")) >= 2, "Name must be at least 2 characters"
         )
 
         # 测试验证
@@ -474,6 +480,7 @@ class TestErrorHandlingPatterns:
 
     def test_resource_management_patterns(self):
         """测试：资源管理模式 - 覆盖率补充"""
+
         # 上下文管理器模式
         class Resource:
             def __init__(self, name):
@@ -522,7 +529,7 @@ class TestDateTimeUtilities:
             "2023-12-01T20:00:00Z",
             "2023-12-01 20:00:00",
             "2023-12-01",
-            datetime.utcnow()
+            datetime.utcnow(),
         ]
 
         def parse_flexible_date(date_input):
@@ -533,7 +540,7 @@ class TestDateTimeUtilities:
             if isinstance(date_input, str):
                 # 尝试ISO格式
                 try:
-                    return datetime.fromisoformat(date_input.replace('Z', '+00:00'))
+                    return datetime.fromisoformat(date_input.replace("Z", "+00:00"))
                 except ValueError:
                     pass
 
@@ -573,7 +580,7 @@ class TestDateTimeUtilities:
             return {
                 "days": diff.days,
                 "seconds": diff.total_seconds(),
-                "is_past": diff.total_seconds() < 0
+                "is_past": diff.total_seconds() < 0,
             }
 
         # 测试过去时间
@@ -590,10 +597,13 @@ class TestDateTimeUtilities:
 
     def test_business_date_logic(self):
         """测试：业务日期逻辑 - 覆盖率补充"""
+
         def is_match_date_valid(match_date_str):
             """检查比赛日期是否有效"""
             try:
-                match_date = datetime.fromisoformat(match_date_str.replace('Z', '+00:00'))
+                match_date = datetime.fromisoformat(
+                    match_date_str.replace("Z", "+00:00")
+                )
                 now = datetime.utcnow()
 
                 # 比赛时间不能太过去或太未来

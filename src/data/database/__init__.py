@@ -1,4 +1,5 @@
 from typing import Any, List, Dict, Optional, Union, Callable
+
 """
 Data database module
 """

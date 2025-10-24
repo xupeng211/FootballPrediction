@@ -55,9 +55,7 @@ class MatchRepository(AbstractRepository[Match]):
 
     async def get_all(self, limit: int = 100, offset: int = 0) -> List[Match]:
         """获取所有比赛列表"""
-        result = await self.session.execute(
-            select(Match).offset(offset).limit(limit)
-        )
+        result = await self.session.execute(select(Match).offset(offset).limit(limit))
         return result.scalars().all()
 
     async def get_by_competition(self, competition_id: str) -> List[Match]:

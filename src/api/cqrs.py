@@ -194,6 +194,8 @@ async def get_user_predictions(
         "limit": limit,
         "offset": offset,
     }
+
+
 @router.get("/users/{user_id}/stats", summary="获取用户统计")
 async def get_user_statistics(
     user_id: int,

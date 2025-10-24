@@ -47,7 +47,7 @@ def check_migration_imports():
 
         try:
             # 尝试导入模块
-            module = importlib.import_module(f'database.migrations.versions.{module_name}')
+            importlib.import_module(f'database.migrations.versions.{module_name}')
             print(f"   ✅ {module_name}")
         except Exception as e:
             print(f"   ❌ {module_name}: {e}")

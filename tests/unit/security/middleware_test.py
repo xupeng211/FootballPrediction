@@ -14,6 +14,7 @@ import warnings
 # Import the module under test
 try:
     from security.middleware import *
+
     IMPORT_SUCCESS = True
     IMPORT_ERROR = None
 except ImportError as e:
@@ -22,6 +23,7 @@ except ImportError as e:
     # Try importing without wildcard
     try:
         import security.middleware
+
         IMPORT_MODULE = security.middleware
     except ImportError:
         IMPORT_MODULE = None
@@ -42,16 +44,18 @@ class TestModuleIntegration:
         if not IMPORT_SUCCESS:
             pytest.skip("Module import failed")
 
-
-    @pytest.mark.parametrize("input_data,expected", [
-        (None, None),
-        ("", ""),
-        (0, 0),
-        ([], []),
-        ({}, {}),
-        (True, True),
-        (False, False)
-    ])
+    @pytest.mark.parametrize(
+        "input_data,expected",
+        [
+            (None, None),
+            ("", ""),
+            (0, 0),
+            ([], []),
+            ({}, {}),
+            (True, True),
+            (False, False),
+        ],
+    )
     def test_with_various_inputs(self, input_data, expected):
         """Test with various input types"""
         if not IMPORT_SUCCESS:

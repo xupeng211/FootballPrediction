@@ -217,12 +217,12 @@ def main():
     success_count = sum(1 for success, _ in results.values() if success)
     failed_files = [path for path, (success, _) in results.items() if not success]
 
-    print(f"\n📊 修复结果:")
+    print("\n📊 修复结果:")
     print(f"   成功: {success_count}/{len(files_to_fix)}")
     print(f"   失败: {len(failed_files)}")
 
     if failed_files:
-        print(f"\n❌ 修复失败的文件:")
+        print("\n❌ 修复失败的文件:")
         for file_path in failed_files:
             print(f"   - {file_path}: {results[file_path][1]}")
 
@@ -239,7 +239,7 @@ def main():
     with open('indentation_fixes_report.json', 'w', encoding='utf-8') as f:
         json.dump(fix_report, f, indent=2, ensure_ascii=False)
 
-    print(f"\n📄 修复报告已保存到: indentation_fixes_report.json")
+    print("\n📄 修复报告已保存到: indentation_fixes_report.json")
 
     return fix_report
 

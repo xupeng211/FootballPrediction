@@ -18,6 +18,7 @@ import math
 try:
     from src.services.data_processing import DataProcessingService
     from src.services.audit_service import AuditService
+
     SERVICES_AVAILABLE = True
 except ImportError as e:
     print(f"Services import error: {e}")
@@ -26,6 +27,7 @@ except ImportError as e:
 try:
     from src.models.prediction import PredictionModel, PredictionResult
     from src.models.common_models import ApiResponse, PaginatedResponse
+
     MODELS_AVAILABLE = True
 except ImportError as e:
     print(f"Models import error: {e}")
@@ -34,6 +36,7 @@ except ImportError as e:
 try:
     from src.utils.data_validator import DataValidator
     from src.utils.time_utils import parse_datetime, format_datetime
+
     UTILS_AVAILABLE = True
 except ImportError as e:
     print(f"Utils import error: {e}")
@@ -52,9 +55,24 @@ class TestDataProcessingServiceAdvanced:
 
         # 批量预测数据
         batch_data = [
-            {"match_id": 101, "home_team": "Team A", "away_team": "Team B", "date": "2023-12-01"},
-            {"match_id": 102, "home_team": "Team C", "away_team": "Team D", "date": "2023-12-02"},
-            {"match_id": 103, "home_team": "Team E", "away_team": "Team F", "date": "2023-12-03"}
+            {
+                "match_id": 101,
+                "home_team": "Team A",
+                "away_team": "Team B",
+                "date": "2023-12-01",
+            },
+            {
+                "match_id": 102,
+                "home_team": "Team C",
+                "away_team": "Team D",
+                "date": "2023-12-02",
+            },
+            {
+                "match_id": 103,
+                "home_team": "Team E",
+                "away_team": "Team F",
+                "date": "2023-12-03",
+            },
         ]
 
         # 模拟批量处理
@@ -85,7 +103,7 @@ class TestDataProcessingServiceAdvanced:
             "season": "2023-2024",
             "venue": "Stadium",
             "weather": {"temperature": 15, "humidity": 65},
-            "odds": {"home": 2.1, "draw": 3.4, "away": 3.8}
+            "odds": {"home": 2.1, "draw": 3.4, "away": 3.8},
         }
 
         # 步骤1：数据清洗
@@ -94,15 +112,16 @@ class TestDataProcessingServiceAdvanced:
             "home_team": raw_data["home_team"].strip().title(),
             "away_team": raw_data["away_team"].strip().title(),
             "league": raw_data["league"],
-            "processed_at": datetime.utcnow().isoformat()
+            "processed_at": datetime.utcnow().isoformat(),
         }
 
         # 步骤2：特征提取
         features = {
             "match_id": cleaned_data["match_id"],
-            "team_length_diff": len(cleaned_data["home_team"]) - len(cleaned_data["away_team"]),
+            "team_length_diff": len(cleaned_data["home_team"])
+            - len(cleaned_data["away_team"]),
             "has_weather": "weather" in raw_data,
-            "odds_available": "odds" in raw_data
+            "odds_available": "odds" in raw_data,
         }
 
         # 步骤3：预测生成
@@ -123,6 +142,7 @@ class TestDataProcessingServiceAdvanced:
 
         # 模拟不稳定的数据源
         attempt_count = 0
+
         async def unreliable_process(data):
             nonlocal attempt_count
             attempt_count += 1
@@ -156,6 +176,7 @@ class TestDataProcessingServiceAdvanced:
 
     def test_data_quality_validation(self):
         """测试：数据质量验证 - 覆盖率补充"""
+
         # 创建数据质量验证器
         def validate_match_data_quality(data: Dict[str, Any]) -> Dict[str, Any]:
             issues = []
@@ -185,7 +206,7 @@ class TestDataProcessingServiceAdvanced:
             # 检查日期格式
             if "date" in data:
                 try:
-                    datetime.fromisoformat(data["date"].replace('Z', '+00:00'))
+                    datetime.fromisoformat(data["date"].replace("Z", "+00:00"))
                 except (ValueError, AttributeError):
                     issues.append("Invalid date format")
                     score -= 15
@@ -193,7 +214,7 @@ class TestDataProcessingServiceAdvanced:
             return {
                 "is_valid": len(issues) == 0,
                 "quality_score": max(0, score),
-                "issues": issues
+                "issues": issues,
             }
 
         # 测试高质量数据
@@ -202,7 +223,7 @@ class TestDataProcessingServiceAdvanced:
             "home_team": "Manchester United",
             "away_team": "Liverpool",
             "date": "2023-12-01T20:00:00Z",
-            "league": "Premier League"
+            "league": "Premier League",
         }
 
         result = validate_match_data_quality(good_data)
@@ -215,7 +236,7 @@ class TestDataProcessingServiceAdvanced:
             "match_id": "not_a_number",
             "home_team": "A",
             "away_team": "",
-            "date": "invalid_date"
+            "date": "invalid_date",
         }
 
         result = validate_match_data_quality(bad_data)
@@ -244,8 +265,8 @@ class TestAuditServiceAdvanced:
                 "operation_id": operation_id,
                 "batch_size": 100,
                 "model_version": "v2.1.0",
-                "timestamp": datetime.utcnow().isoformat()
-            }
+                "timestamp": datetime.utcnow().isoformat(),
+            },
         )
 
         # 处理过程中的关键事件
@@ -259,8 +280,8 @@ class TestAuditServiceAdvanced:
                     "match_id": 1000 + i,
                     "prediction": {"home_win": 0.6, "draw": 0.25, "away_win": 0.15},
                     "confidence": 0.85,
-                    "processing_time_ms": 150 + i * 10
-                }
+                    "processing_time_ms": 150 + i * 10,
+                },
             )
             processing_events.append(event)
 
@@ -273,8 +294,8 @@ class TestAuditServiceAdvanced:
                 "match_id": 1005,
                 "error_type": "InsufficientData",
                 "error_message": "Missing historical data for team",
-                "retry_count": 2
-            }
+                "retry_count": 2,
+            },
         )
 
         # 完成操作
@@ -287,14 +308,17 @@ class TestAuditServiceAdvanced:
                 "successful": 4,
                 "failed": 1,
                 "total_time_seconds": 2.3,
-                "average_confidence": 0.82
-            }
+                "average_confidence": 0.82,
+            },
         )
 
         # 验证审计跟踪完整性
         all_events = audit_service.get_events(limit=20)
-        operation_events = [e for e in all_events if hasattr(e, 'details') and
-                          e.details.get("operation_id") == operation_id]
+        operation_events = [
+            e
+            for e in all_events
+            if hasattr(e, "details") and e.details.get("operation_id") == operation_id
+        ]
 
         assert len(operation_events) >= 7  # start + 5 processing + error + end
 
@@ -307,7 +331,7 @@ class TestAuditServiceAdvanced:
 
         # 验证统计摘要
         summary = audit_service.get_summary()
-        assert hasattr(summary, 'total_logs')
+        assert hasattr(summary, "total_logs")
         assert summary.total_logs >= 7
 
     def test_audit_data_privacy_compliance(self):
@@ -319,7 +343,7 @@ class TestAuditServiceAdvanced:
             "user_id": "user_123",
             "email": "user@example.com",
             "ip_address": "192.168.1.100",
-            "credit_card": "4111-1111-1111-1111"
+            "credit_card": "4111-1111-1111-1111",
         }
 
         # 测试数据脱敏功能
@@ -354,7 +378,7 @@ class TestAuditServiceAdvanced:
         audit_event = audit_service.log_event(
             action="user_authentication",
             user=sensitive_user_data["user_id"],
-            details=masked_data
+            details=masked_data,
         )
 
         # 验证脱敏效果
@@ -363,7 +387,7 @@ class TestAuditServiceAdvanced:
         assert masked_data["credit_card"] == "****-****-****-1111"
 
         # 确保原始敏感数据不在审计日志中
-        audit_details = audit_event.details if hasattr(audit_event, 'details') else {}
+        audit_details = audit_event.details if hasattr(audit_event, "details") else {}
         assert "user@example.com" not in str(audit_details)
         assert "192.168.1.100" not in str(audit_details)
         assert "4111-1111-1111-1111" not in str(audit_details)
@@ -383,8 +407,8 @@ class TestAuditServiceAdvanced:
                 details={
                     "event_id": i,
                     "batch_id": i // 10,
-                    "payload_size": 100 + (i % 200)
-                }
+                    "payload_size": 100 + (i % 200),
+                },
             )
 
         end_time = datetime.utcnow()
@@ -409,6 +433,7 @@ class TestPredictionModelsAdvanced:
 
     def test_prediction_confidence_calculation(self):
         """测试：预测置信度计算 - 覆盖率补充"""
+
         # 创建预测结果模型
         class PredictionResult:
             def __init__(self, probabilities: Dict[str, float], confidence: float):
@@ -419,6 +444,7 @@ class TestPredictionModelsAdvanced:
             def calculate_entropy(self) -> float:
                 """计算预测熵值"""
                 import math
+
                 entropy = 0.0
                 for prob in self.probabilities.values():
                     if prob > 0:
@@ -440,12 +466,12 @@ class TestPredictionModelsAdvanced:
         # 测试不同置信度的预测
         high_confidence_pred = PredictionResult(
             probabilities={"home_win": 0.8, "draw": 0.15, "away_win": 0.05},
-            confidence=0.85
+            confidence=0.85,
         )
 
         low_confidence_pred = PredictionResult(
             probabilities={"home_win": 0.4, "draw": 0.3, "away_win": 0.3},
-            confidence=0.45
+            confidence=0.45,
         )
 
         # 验证高置信度预测
@@ -463,6 +489,7 @@ class TestPredictionModelsAdvanced:
 
     def test_prediction_model_validation(self):
         """测试：预测模型验证 - 覆盖率补充"""
+
         # 创建预测模型验证器
         class PredictionModelValidator:
             def __init__(self):
@@ -471,19 +498,25 @@ class TestPredictionModelsAdvanced:
             def add_rule(self, rule_func, error_message: str):
                 self.validation_rules.append((rule_func, error_message))
 
-            def validate_probabilities(self, probabilities: Dict[str, float]) -> List[str]:
+            def validate_probabilities(
+                self, probabilities: Dict[str, float]
+            ) -> List[str]:
                 """验证概率分布"""
                 errors = []
 
                 # 检查概率和
                 total_prob = sum(probabilities.values())
                 if abs(total_prob - 1.0) > 0.01:
-                    errors.append(f"Probabilities sum to {total_prob:.3f}, should be 1.0")
+                    errors.append(
+                        f"Probabilities sum to {total_prob:.3f}, should be 1.0"
+                    )
 
                 # 检查概率范围
                 for outcome, prob in probabilities.items():
                     if not (0.0 <= prob <= 1.0):
-                        errors.append(f"Probability for {outcome} ({prob}) is out of range [0,1]")
+                        errors.append(
+                            f"Probability for {outcome} ({prob}) is out of range [0,1]"
+                        )
 
                 # 检查极端值
                 if any(prob < 0.01 for prob in probabilities.values()):
@@ -491,7 +524,9 @@ class TestPredictionModelsAdvanced:
 
                 return errors
 
-            def validate_prediction_result(self, prediction: Dict[str, Any]) -> List[str]:
+            def validate_prediction_result(
+                self, prediction: Dict[str, Any]
+            ) -> List[str]:
                 """验证预测结果"""
                 all_errors = []
 
@@ -502,14 +537,18 @@ class TestPredictionModelsAdvanced:
 
                 # 验证概率
                 if "probabilities" in prediction:
-                    prob_errors = self.validate_probabilities(prediction["probabilities"])
+                    prob_errors = self.validate_probabilities(
+                        prediction["probabilities"]
+                    )
                     all_errors.extend(prob_errors)
 
                 # 验证时间戳
                 if "timestamp" in prediction:
                     try:
                         if isinstance(prediction["timestamp"], str):
-                            datetime.fromisoformat(prediction["timestamp"].replace('Z', '+00:00'))
+                            datetime.fromisoformat(
+                                prediction["timestamp"].replace("Z", "+00:00")
+                            )
                         elif isinstance(prediction["timestamp"], datetime):
                             pass  # 有效的时间戳
                         else:
@@ -534,15 +573,19 @@ class TestPredictionModelsAdvanced:
             return len(prediction.get("probabilities", {})) >= 2
 
         validator.add_rule(has_required_fields, "Missing required fields")
-        validator.add_rule(confidence_is_reasonable, "Confidence must be between 0 and 1")
-        validator.add_rule(has_min_predictions, "Must have at least 2 outcome predictions")
+        validator.add_rule(
+            confidence_is_reasonable, "Confidence must be between 0 and 1"
+        )
+        validator.add_rule(
+            has_min_predictions, "Must have at least 2 outcome predictions"
+        )
 
         # 测试有效预测
         valid_prediction = {
             "match_id": 123,
             "probabilities": {"home_win": 0.6, "draw": 0.25, "away_win": 0.15},
             "confidence": 0.8,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
         }
 
         errors = validator.validate_prediction_result(valid_prediction)
@@ -553,7 +596,7 @@ class TestPredictionModelsAdvanced:
             "match_id": 456,
             "probabilities": {"home_win": 0.8, "draw": 0.3},  # 总和 > 1
             "confidence": 1.2,  # 超出范围
-            "timestamp": "invalid_date"
+            "timestamp": "invalid_date",
         }
 
         errors = validator.validate_prediction_result(invalid_prediction)
@@ -563,6 +606,7 @@ class TestPredictionModelsAdvanced:
 
     def test_model_performance_metrics(self):
         """测试：模型性能指标 - 覆盖率补充"""
+
         # 创建性能指标计算器
         class ModelPerformanceMetrics:
             def __init__(self):
@@ -581,7 +625,9 @@ class TestPredictionModelsAdvanced:
 
                 correct = 0
                 for pred, actual in zip(self.predictions, self.actual_results):
-                    predicted_outcome = max(pred["probabilities"].items(), key=lambda x: x[1])[0]
+                    predicted_outcome = max(
+                        pred["probabilities"].items(), key=lambda x: x[1]
+                    )[0]
                     if predicted_outcome == actual:
                         correct += 1
 
@@ -603,8 +649,9 @@ class TestPredictionModelsAdvanced:
             def calculate_log_loss(self) -> float:
                 """计算对数损失（越小越好）"""
                 import math
+
                 if not self.predictions:
-                    return float('inf')
+                    return float("inf")
 
                 log_losses = []
                 epsilon = 1e-15  # 避免log(0)
@@ -622,11 +669,26 @@ class TestPredictionModelsAdvanced:
 
         # 添加测试数据
         test_predictions = [
-            {"probabilities": {"home_win": 0.7, "draw": 0.2, "away_win": 0.1}, "confidence": 0.8},
-            {"probabilities": {"home_win": 0.3, "draw": 0.4, "away_win": 0.3}, "confidence": 0.5},
-            {"probabilities": {"home_win": 0.9, "draw": 0.05, "away_win": 0.05}, "confidence": 0.9},
-            {"probabilities": {"home_win": 0.2, "draw": 0.3, "away_win": 0.5}, "confidence": 0.6},
-            {"probabilities": {"home_win": 0.6, "draw": 0.3, "away_win": 0.1}, "confidence": 0.7}
+            {
+                "probabilities": {"home_win": 0.7, "draw": 0.2, "away_win": 0.1},
+                "confidence": 0.8,
+            },
+            {
+                "probabilities": {"home_win": 0.3, "draw": 0.4, "away_win": 0.3},
+                "confidence": 0.5,
+            },
+            {
+                "probabilities": {"home_win": 0.9, "draw": 0.05, "away_win": 0.05},
+                "confidence": 0.9,
+            },
+            {
+                "probabilities": {"home_win": 0.2, "draw": 0.3, "away_win": 0.5},
+                "confidence": 0.6,
+            },
+            {
+                "probabilities": {"home_win": 0.6, "draw": 0.3, "away_win": 0.1},
+                "confidence": 0.7,
+            },
         ]
 
         actual_outcomes = ["home_win", "draw", "home_win", "away_win", "home_win"]
@@ -660,11 +722,11 @@ class TestUtilsAdvanced:
 
         # 转换为不同时区
         est_time = utc_time.astimezone(timezone(timedelta(hours=-5)))  # EST
-        cst_time = utc_time.astimezone(timezone(timedelta(hours=8)))   # CST (China)
+        cst_time = utc_time.astimezone(timezone(timedelta(hours=8)))  # CST (China)
 
         # 验证时区转换
         assert est_time.hour == 15  # UTC 20:00 -> EST 15:00
-        assert cst_time.hour == 4   # UTC 20:00 -> CST 04:00 (next day)
+        assert cst_time.hour == 4  # UTC 20:00 -> CST 04:00 (next day)
 
         # 测试时间格式化
         def format_time_with_timezone(dt: datetime, tz_name: str) -> str:
@@ -682,6 +744,7 @@ class TestUtilsAdvanced:
 
     def test_data_transformation_utilities(self):
         """测试：数据转换工具 - 覆盖率补充"""
+
         # 创建数据转换工具集
         class DataTransformer:
             @staticmethod
@@ -698,34 +761,50 @@ class TestUtilsAdvanced:
                     "Manchester United": "Man United",
                     "Manchester City": "Man City",
                     "Tottenham Hotspur": "Tottenham",
-                    "West Ham United": "West Ham"
+                    "West Ham United": "West Ham",
                 }
 
                 return name_mappings.get(normalized, normalized)
 
             @staticmethod
-            def convert_odds_format(odds: Dict[str, float], from_format: str, to_format: str) -> Dict[str, float]:
+            def convert_odds_format(
+                odds: Dict[str, float], from_format: str, to_format: str
+            ) -> Dict[str, float]:
                 """转换赔率格式"""
                 if from_format == "decimal" and to_format == "probability":
                     # 十进制赔率转概率
-                    return {outcome: 1/odds if odds > 0 else 0 for outcome, odds in odds.items()}
+                    return {
+                        outcome: 1 / odds if odds > 0 else 0
+                        for outcome, odds in odds.items()
+                    }
 
                 elif from_format == "probability" and to_format == "decimal":
                     # 概率转十进制赔率
-                    return {outcome: 1/prob if prob > 0 else float('inf') for outcome, prob in odds.items()}
+                    return {
+                        outcome: 1 / prob if prob > 0 else float("inf")
+                        for outcome, prob in odds.items()
+                    }
 
                 else:
                     return odds.copy()
 
             @staticmethod
-            def calculate_team_strength_metrics(team_data: Dict[str, Any]) -> Dict[str, float]:
+            def calculate_team_strength_metrics(
+                team_data: Dict[str, Any],
+            ) -> Dict[str, float]:
                 """计算球队实力指标"""
                 metrics = {}
 
                 # 基础指标
-                metrics["form_score"] = team_data.get("recent_points", 0) / max(team_data.get("recent_games", 1), 1)
-                metrics["goal_difference"] = team_data.get("goals_for", 0) - team_data.get("goals_against", 0)
-                metrics["home_advantage"] = 1.15 if team_data.get("is_home", False) else 1.0
+                metrics["form_score"] = team_data.get("recent_points", 0) / max(
+                    team_data.get("recent_games", 1), 1
+                )
+                metrics["goal_difference"] = team_data.get(
+                    "goals_for", 0
+                ) - team_data.get("goals_against", 0)
+                metrics["home_advantage"] = (
+                    1.15 if team_data.get("is_home", False) else 1.0
+                )
 
                 # 计算综合实力分数
                 base_strength = metrics["form_score"] * 100
@@ -739,14 +818,18 @@ class TestUtilsAdvanced:
         # 测试队名标准化
         transformer = DataTransformer()
 
-        assert transformer.normalize_team_name("  manchester   united  ") == "Man United"
+        assert (
+            transformer.normalize_team_name("  manchester   united  ") == "Man United"
+        )
         assert transformer.normalize_team_name("TOTTENHAM HOTSPUR") == "Tottenham"
         assert transformer.normalize_team_name("west ham united") == "West Ham"
         assert transformer.normalize_team_name("Unknown Team") == "Unknown Team"
 
         # 测试赔率格式转换
         decimal_odds = {"home": 2.0, "draw": 3.2, "away": 4.5}
-        probability_odds = transformer.convert_odds_format(decimal_odds, "decimal", "probability")
+        probability_odds = transformer.convert_odds_format(
+            decimal_odds, "decimal", "probability"
+        )
 
         assert abs(probability_odds["home"] - 0.5) < 0.01
         assert abs(probability_odds["draw"] - 0.3125) < 0.01
@@ -758,7 +841,7 @@ class TestUtilsAdvanced:
             "recent_games": 5,
             "goals_for": 15,
             "goals_against": 8,
-            "is_home": True
+            "is_home": True,
         }
 
         metrics = transformer.calculate_team_strength_metrics(team_data)
@@ -770,6 +853,7 @@ class TestUtilsAdvanced:
 
     def test_advanced_data_validation(self):
         """测试：高级数据验证 - 覆盖率补充"""
+
         # 创建高级数据验证器
         class AdvancedDataValidator:
             def __init__(self):
@@ -784,11 +868,7 @@ class TestUtilsAdvanced:
 
             def validate_match_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
                 """验证比赛数据"""
-                result = {
-                    "is_valid": True,
-                    "errors": {},
-                    "warnings": []
-                }
+                result = {"is_valid": True, "errors": {}, "warnings": []}
 
                 for field, rules in self.validation_rules.items():
                     field_errors = []
@@ -813,25 +893,33 @@ class TestUtilsAdvanced:
                 """生成警告信息"""
                 # 检查数据完整性
                 if "odds" in data and "probabilities" not in data:
-                    result["warnings"].append("Odds data available but no calculated probabilities")
+                    result["warnings"].append(
+                        "Odds data available but no calculated probabilities"
+                    )
 
                 # 检查时间合理性
                 if "match_date" in data:
                     try:
-                        match_date = datetime.fromisoformat(data["match_date"].replace('Z', '+00:00'))
+                        match_date = datetime.fromisoformat(
+                            data["match_date"].replace("Z", "+00:00")
+                        )
                         now = datetime.utcnow()
 
                         if match_date < now - timedelta(days=1):
                             result["warnings"].append("Match date is in the past")
                         elif match_date > now + timedelta(days=365):
-                            result["warnings"].append("Match date is more than a year in the future")
+                            result["warnings"].append(
+                                "Match date is more than a year in the future"
+                            )
                     except (ValueError, AttributeError):
                         pass
 
                 # 检查数据一致性
                 if "home_team" in data and "away_team" in data:
                     if data["home_team"] == data["away_team"]:
-                        result["warnings"].append("Home team and away team are the same")
+                        result["warnings"].append(
+                            "Home team and away team are the same"
+                        )
 
         # 创建验证器并添加规则
         validator = AdvancedDataValidator()
@@ -840,8 +928,12 @@ class TestUtilsAdvanced:
         def validate_team_name(name, data):
             return isinstance(name, str) and len(name.strip()) >= 2
 
-        validator.add_validation_rule("home_team", validate_team_name, "Home team name is invalid")
-        validator.add_validation_rule("away_team", validate_team_name, "Away team name is invalid")
+        validator.add_validation_rule(
+            "home_team", validate_team_name, "Home team name is invalid"
+        )
+        validator.add_validation_rule(
+            "away_team", validate_team_name, "Away team name is invalid"
+        )
 
         # 添加比分验证规则
         def validate_score(score, data):
@@ -850,10 +942,18 @@ class TestUtilsAdvanced:
         def validate_score_values(score, data):
             if not isinstance(score, dict):
                 return False
-            return all(isinstance(score[k], int) and score[k] >= 0 for k in ["home", "away"])
+            return all(
+                isinstance(score[k], int) and score[k] >= 0 for k in ["home", "away"]
+            )
 
-        validator.add_validation_rule("final_score", validate_score, "Final score format is invalid")
-        validator.add_validation_rule("final_score", validate_score_values, "Score values must be non-negative integers")
+        validator.add_validation_rule(
+            "final_score", validate_score, "Final score format is invalid"
+        )
+        validator.add_validation_rule(
+            "final_score",
+            validate_score_values,
+            "Score values must be non-negative integers",
+        )
 
         # 测试有效数据
         valid_data = {
@@ -861,7 +961,7 @@ class TestUtilsAdvanced:
             "away_team": "Team B",
             "match_date": "2023-12-15T20:00:00Z",
             "final_score": {"home": 2, "away": 1},
-            "probabilities": {"home_win": 0.6, "draw": 0.25, "away_win": 0.15}
+            "probabilities": {"home_win": 0.6, "draw": 0.25, "away_win": 0.15},
         }
 
         result = validator.validate_match_data(valid_data)
@@ -873,7 +973,7 @@ class TestUtilsAdvanced:
             "home_team": "A",  # 太短
             "away_team": "Team B",
             "match_date": "2020-01-01T00:00:00Z",  # 过去时间
-            "final_score": {"home": -1, "away": 2}  # 负数
+            "final_score": {"home": -1, "away": 2},  # 负数
         }
 
         result = validator.validate_match_data(invalid_data)
@@ -899,7 +999,7 @@ class TestBusinessLogicIntegration:
                 "date": "2023-12-01T20:00:00Z",
                 "venue": "Stadium A",
                 "weather": {"temperature": 15, "condition": "clear"},
-                "odds": {"home": 2.1, "draw": 3.4, "away": 3.8}
+                "odds": {"home": 2.1, "draw": 3.4, "away": 3.8},
             }
 
         # 2. 数据预处理
@@ -910,7 +1010,7 @@ class TestBusinessLogicIntegration:
                 "team_strength_diff": self._calculate_team_strength_diff(raw_data),
                 "home_advantage": 1.15,  # 主场优势
                 "weather_impact": self._calculate_weather_impact(raw_data["weather"]),
-                "odds_implied_prob": self._odds_to_probabilities(raw_data["odds"])
+                "odds_implied_prob": self._odds_to_probabilities(raw_data["odds"]),
             }
 
             return features
@@ -924,27 +1024,31 @@ class TestBusinessLogicIntegration:
             adjustments = {
                 "team_strength": features["team_strength_diff"] * 0.1,
                 "home_advantage": (features["home_advantage"] - 1.0) * 0.05,
-                "weather": features["weather_impact"] * 0.02
+                "weather": features["weather_impact"] * 0.02,
             }
 
             adjusted_prob = {}
             for outcome, prob in base_prob.items():
-                adjustment = sum(adjustments.values()) * (0.8 if outcome == "home" else 0.1)
+                adjustment = sum(adjustments.values()) * (
+                    0.8 if outcome == "home" else 0.1
+                )
                 adjusted_prob[outcome] = max(0.01, min(0.99, prob + adjustment))
 
             # 归一化
             total = sum(adjusted_prob.values())
-            normalized_prob = {k: v/total for k, v in adjusted_prob.items()}
+            normalized_prob = {k: v / total for k, v in adjusted_prob.items()}
 
             # 计算置信度
-            confidence = max(normalized_prob.values()) * (1 + self._calculate_prediction_certainty(features))
+            confidence = max(normalized_prob.values()) * (
+                1 + self._calculate_prediction_certainty(features)
+            )
 
             return {
                 "match_id": features["match_id"],
                 "probabilities": normalized_prob,
                 "confidence": min(confidence, 0.95),
                 "factors": adjustments,
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.utcnow().isoformat(),
             }
 
         # 4. 结果验证
@@ -955,8 +1059,10 @@ class TestBusinessLogicIntegration:
 
             confidence_valid = 0.0 <= prediction["confidence"] <= 1.0
 
-            has_required_fields = all(field in prediction for field in
-                                     ["match_id", "probabilities", "confidence"])
+            has_required_fields = all(
+                field in prediction
+                for field in ["match_id", "probabilities", "confidence"]
+            )
 
             return prob_valid and confidence_valid and has_required_fields
 
@@ -984,8 +1090,8 @@ class TestBusinessLogicIntegration:
 
     def _odds_to_probabilities(self, odds: Dict[str, Any]) -> Dict[str, float]:
         """赔率转概率"""
-        total_inverse = sum(1/price for price in odds.values())
-        return {outcome: (1/price)/total_inverse for outcome, price in odds.items()}
+        total_inverse = sum(1 / price for price in odds.values())
+        return {outcome: (1 / price) / total_inverse for outcome, price in odds.items()}
 
     def _calculate_prediction_certainty(self, features: Dict[str, Any]) -> float:
         """计算预测确定性"""
@@ -1027,7 +1133,9 @@ class TestBusinessLogicIntegration:
                             break
 
                     raise last_error
+
                 return wrapper
+
             return decorator
 
         # 测试错误处理
@@ -1070,13 +1178,9 @@ class TestBusinessLogicIntegration:
 
             return {
                 "match_id": match_data["id"],
-                "prediction": {
-                    "home_win": 0.6,
-                    "draw": 0.25,
-                    "away_win": 0.15
-                },
+                "prediction": {"home_win": 0.6, "draw": 0.25, "away_win": 0.15},
                 "confidence": 0.8,
-                "processed_at": datetime.utcnow().isoformat()
+                "processed_at": datetime.utcnow().isoformat(),
             }
 
         async def batch_predict(match_list, max_concurrent=5):
@@ -1101,7 +1205,7 @@ class TestBusinessLogicIntegration:
                 "successful": successful,
                 "failed": failed,
                 "total_processed": len(match_list),
-                "success_rate": len(successful) / len(match_list) if match_list else 0
+                "success_rate": len(successful) / len(match_list) if match_list else 0,
             }
 
         # 测试并发处理

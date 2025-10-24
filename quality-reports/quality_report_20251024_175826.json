@@ -1,0 +1,35 @@
+{
+  "timestamp": "2025-10-24T17:58:26.888442",
+  "quality_status": {
+    "timestamp": "2025-10-24T17:58:15.319971",
+    "overall_score": 5.94,
+    "coverage": 13.53891771682728,
+    "code_quality": 10.0,
+    "test_health": 2,
+    "security": 10,
+    "recommendations": [],
+    "action_items": [],
+    "ruff_errors": 0,
+    "mypy_errors": 0,
+    "test_count": 0,
+    "test_pass_rate": 0,
+    "files_count": 452
+  },
+  "trends": {
+    "coverage_trend": "stable",
+    "quality_trend": "stable",
+    "recommendation": "持续监控"
+  },
+  "benchmarks": {
+    "vs_industry": {
+      "coverage": -61.46108228317272,
+      "code_quality": 3.0,
+      "security": 2
+    },
+    "vs_targets": {
+      "coverage": -26.461082283172722,
+      "code_quality": 2.0,
+      "security": 1
+    }
+  }
+}

@@ -471,7 +471,7 @@ class TestMonitoringAlerts:
                 {
                     "type": "database_connections",
                     "severity": "warning",
-                    "message": f"Database connection pool usage is {connection_usage*100:.1f}%",
+                    "message": f"Database connection pool usage is {connection_usage * 100:.1f}%",
                     "timestamp": datetime.now().isoformat(),
                 }
             )
@@ -493,7 +493,7 @@ class TestMonitoringAlerts:
                 {
                     "type": "high_error_rate",
                     "severity": severity,
-                    "message": f"Error rate is {sample_metrics['application']['error_rate']*100:.1f}%",
+                    "message": f"Error rate is {sample_metrics['application']['error_rate'] * 100:.1f}%",
                     "timestamp": datetime.now().isoformat(),
                 }
             )

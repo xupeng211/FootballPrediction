@@ -2,12 +2,12 @@
 def test_api_imports():
     # 测试所有API模块的导入
     apis = [
-        'src.api.app',
-        'src.api.health',
-        'src.api.predictions',
-        'src.api.data',
-        'src.api.features',
-        'src.api.monitoring'
+        "src.api.app",
+        "src.api.health",
+        "src.api.predictions",
+        "src.api.data",
+        "src.api.features",
+        "src.api.monitoring",
     ]
 
     for api in apis:

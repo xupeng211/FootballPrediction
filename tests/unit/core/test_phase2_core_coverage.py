@@ -18,6 +18,7 @@ try:
     from src.cqrs.base import Command, Query, CommandHandler, QueryHandler
     from src.cqrs.bus import CommandBus, QueryBus
     from src.cqrs.dto import DTO, DataTransferObject
+
     CQRS_AVAILABLE = True
 except ImportError as e:
     print(f"CQRS modules import error: {e}")
@@ -27,6 +28,7 @@ try:
     from src.events.base import Event, EventHandler
     from src.events.bus import EventBus
     from src.events.types import DomainEvent, IntegrationEvent
+
     EVENTS_AVAILABLE = True
 except ImportError as e:
     print(f"Events modules import error: {e}")
@@ -35,6 +37,7 @@ except ImportError as e:
 try:
     from src.facades.base import Facade, ServiceLocator
     from src.facades.facades import PredictionFacade, DataFacade
+
     FACAES_AVAILABLE = True
 except ImportError as e:
     print(f"Facades modules import error: {e}")
@@ -43,6 +46,7 @@ except ImportError as e:
 try:
     from src.decorators.base import BaseDecorator, DecoratorRegistry
     from src.decorators.decorators import retry, cache, log_execution
+
     DECORATORS_AVAILABLE = True
 except ImportError as e:
     print(f"Decorators modules import error: {e}")
@@ -55,6 +59,7 @@ class TestCQRSCoverage:
 
     def test_command_creation(self):
         """测试：命令创建 - 覆盖率补充"""
+
         # 创建具体命令类
         class CreatePredictionCommand(Command):
             def __init__(self, match_id: int, prediction_data: Dict[str, Any]):
@@ -63,7 +68,7 @@ class TestCQRSCoverage:
 
         command = CreatePredictionCommand(
             match_id=123,
-            prediction_data={"home_win": 0.6, "draw": 0.3, "away_win": 0.1}
+            prediction_data={"home_win": 0.6, "draw": 0.3, "away_win": 0.1},
         )
 
         assert command.match_id == 123
@@ -71,6 +76,7 @@ class TestCQRSCoverage:
 
     def test_query_creation(self):
         """测试：查询创建 - 覆盖率补充"""
+
         # 创建具体查询类
         class GetMatchQuery(Query):
             def __init__(self, match_id: int):
@@ -82,6 +88,7 @@ class TestCQRSCoverage:
 
     def test_command_handler_implementation(self):
         """测试：命令处理器实现 - 覆盖率补充"""
+
         # 模拟命令处理器
         class MockCommandHandler:
             def handle(self, command):
@@ -96,12 +103,13 @@ class TestCQRSCoverage:
 
     def test_query_handler_implementation(self):
         """测试：查询处理器实现 - 覆盖率补充"""
+
         # 模拟查询处理器
         class MockQueryHandler:
             def handle(self, query):
                 return {
                     "data": {"match_id": query.match_id, "home_team": "Team A"},
-                    "query_id": id(query)
+                    "query_id": id(query),
                 }
 
         handler = MockQueryHandler()
@@ -114,6 +122,7 @@ class TestCQRSCoverage:
 
     def test_dto_patterns(self):
         """测试：DTO模式 - 覆盖率补充"""
+
         # 创建数据传输对象
         class MatchDTO(DataTransferObject):
             def __init__(self, match_id: int, home_team: str, away_team: str):
@@ -127,7 +136,7 @@ class TestCQRSCoverage:
         dto_dict = {
             "match_id": dto.match_id,
             "home_team": dto.home_team,
-            "away_team": dto.away_team
+            "away_team": dto.away_team,
         }
 
         assert dto_dict["match_id"] == 123
@@ -135,6 +144,7 @@ class TestCQRSCoverage:
 
     def test_command_bus_simulation(self):
         """测试：命令总线模拟 - 覆盖率补充"""
+
         # 简化的命令总线模拟
         class SimpleCommandBus:
             def __init__(self):
@@ -169,6 +179,7 @@ class TestCQRSCoverage:
 
     def test_query_bus_simulation(self):
         """测试：查询总线模拟 - 覆盖率补充"""
+
         # 简化的查询总线模拟
         class SimpleQueryBus:
             def __init__(self):
@@ -190,7 +201,7 @@ class TestCQRSCoverage:
             return {
                 "match_id": query.match_id,
                 "home_team": f"Team_{query.match_id}",
-                "away_team": "Opponent"
+                "away_team": "Opponent",
             }
 
         bus.register_handler("GetMatchQuery", handle_get_match)
@@ -213,9 +224,16 @@ class TestEventSystemCoverage:
 
     def test_domain_event_creation(self):
         """测试：领域事件创建 - 覆盖率补充"""
+
         # 创建领域事件
         class MatchScheduledEvent(DomainEvent):
-            def __init__(self, match_id: int, home_team: str, away_team: str, scheduled_time: datetime):
+            def __init__(
+                self,
+                match_id: int,
+                home_team: str,
+                away_team: str,
+                scheduled_time: datetime,
+            ):
                 super().__init__()
                 self.match_id = match_id
                 self.home_team = home_team
@@ -226,7 +244,7 @@ class TestEventSystemCoverage:
             match_id=123,
             home_team="Team A",
             away_team="Team B",
-            scheduled_time=datetime.utcnow()
+            scheduled_time=datetime.utcnow(),
         )
 
         assert event.match_id == 123
@@ -235,6 +253,7 @@ class TestEventSystemCoverage:
 
     def test_integration_event_creation(self):
         """测试：集成事件创建 - 覆盖率补充"""
+
         # 创建集成事件
         class PredictionCompletedEvent(IntegrationEvent):
             def __init__(self, prediction_id: str, result: Dict[str, float]):
@@ -244,7 +263,7 @@ class TestEventSystemCoverage:
 
         event = PredictionCompletedEvent(
             prediction_id="pred_123",
-            result={"home_win": 0.7, "draw": 0.2, "away_win": 0.1}
+            result={"home_win": 0.7, "draw": 0.2, "away_win": 0.1},
         )
 
         assert event.prediction_id == "pred_123"
@@ -252,20 +271,21 @@ class TestEventSystemCoverage:
 
     def test_event_handler_implementation(self):
         """测试：事件处理器实现 - 覆盖率补充"""
+
         # 模拟事件处理器
         class MatchEventHandler:
             def handle_match_scheduled(self, event):
                 return {
                     "action": "notification_sent",
                     "match_id": event.match_id,
-                    "message": f"Match {event.home_team} vs {event.away_team} scheduled"
+                    "message": f"Match {event.home_team} vs {event.away_team} scheduled",
                 }
 
             def handle_prediction_completed(self, event):
                 return {
                     "action": "result_processed",
                     "prediction_id": event.prediction_id,
-                    "confidence": max(event.result.values())
+                    "confidence": max(event.result.values()),
                 }
 
         handler = MatchEventHandler()
@@ -291,6 +311,7 @@ class TestEventSystemCoverage:
 
     def test_event_bus_simulation(self):
         """测试：事件总线模拟 - 覆盖率补充"""
+
         # 简化的事件总线模拟
         class SimpleEventBus:
             def __init__(self):
@@ -309,7 +330,7 @@ class TestEventSystemCoverage:
                 if event_type in self.handlers:
                     results = []
                     for handler in self.handlers[event_type]:
-                        if hasattr(handler, 'handle'):
+                        if hasattr(handler, "handle"):
                             results.append(handler.handle(event))
                         elif callable(handler):
                             results.append(handler(event))
@@ -352,6 +373,7 @@ class TestFacadeCoverage:
 
     def test_facade_pattern_implementation(self):
         """测试：门面模式实现 - 覆盖率补充"""
+
         # 简化的门面实现
         class PredictionFacade:
             def __init__(self):
@@ -359,7 +381,9 @@ class TestFacadeCoverage:
                 self.data_service = Mock()
                 self.notification_service = Mock()
 
-            def create_prediction(self, match_id: int, model_type: str) -> Dict[str, Any]:
+            def create_prediction(
+                self, match_id: int, model_type: str
+            ) -> Dict[str, Any]:
                 # 获取比赛数据
                 match_data = self.data_service.get_match(match_id)
 
@@ -369,11 +393,7 @@ class TestFacadeCoverage:
                 # 发送通知
                 self.notification_service.send_prediction_notification(prediction)
 
-                return {
-                    "success": True,
-                    "prediction": prediction,
-                    "match_id": match_id
-                }
+                return {"success": True, "prediction": prediction, "match_id": match_id}
 
             def get_prediction_history(self, user_id: int) -> List[Dict[str, Any]]:
                 # 获取历史预测
@@ -382,11 +402,14 @@ class TestFacadeCoverage:
         # 模拟依赖服务
         facade = PredictionFacade()
         facade.data_service.get_match.return_value = {"id": 123, "teams": ["A", "B"]}
-        facade.prediction_service.predict.return_value = {"id": "pred_123", "result": "home_win"}
+        facade.prediction_service.predict.return_value = {
+            "id": "pred_123",
+            "result": "home_win",
+        }
         facade.notification_service.send_prediction_notification.return_value = True
         facade.prediction_service.get_user_predictions.return_value = [
             {"id": "pred_1", "result": "home_win"},
-            {"id": "pred_2", "result": "draw"}
+            {"id": "pred_2", "result": "draw"},
         ]
 
         # 测试创建预测
@@ -402,6 +425,7 @@ class TestFacadeCoverage:
 
     def test_service_locator_pattern(self):
         """测试：服务定位器模式 - 覆盖率补充"""
+
         # 简化的服务定位器
         class SimpleServiceLocator:
             def __init__(self):
@@ -456,6 +480,7 @@ class TestDecoratorCoverage:
 
     def test_retry_decorator_simulation(self):
         """测试：重试装饰器模拟 - 覆盖率补充"""
+
         # 简化的重试装饰器实现
         def simple_retry(max_attempts=3, delay=0.01):
             def decorator(func):
@@ -468,9 +493,12 @@ class TestDecoratorCoverage:
                             last_exception = e
                             if attempt < max_attempts - 1:
                                 import time
+
                                 time.sleep(delay)
                     raise last_exception
+
                 return wrapper
+
             return decorator
 
         # 测试成功的函数
@@ -483,6 +511,7 @@ class TestDecoratorCoverage:
 
         # 测试重试机制
         call_count = 0
+
         @simple_retry(max_attempts=3, delay=0.001)
         def failing_function():
             nonlocal call_count
@@ -497,6 +526,7 @@ class TestDecoratorCoverage:
 
     def test_cache_decorator_simulation(self):
         """测试：缓存装饰器模拟 - 覆盖率补充"""
+
         # 简化的缓存装饰器实现
         def simple_cache(ttl=60):
             def decorator(func):
@@ -514,11 +544,14 @@ class TestDecoratorCoverage:
                     result = func(*args, **kwargs)
                     cache_store[cache_key] = result
                     return result
+
                 return wrapper
+
             return decorator
 
         # 测试缓存功能
         call_count = 0
+
         @simple_cache(ttl=60)
         def expensive_calculation(x):
             nonlocal call_count
@@ -542,6 +575,7 @@ class TestDecoratorCoverage:
 
     def test_logging_decorator_simulation(self):
         """测试：日志装饰器模拟 - 覆盖率补充"""
+
         # 简化的日志装饰器实现
         def log_execution(func):
             def wrapper(*args, **kwargs):
@@ -587,6 +621,7 @@ class TestDecoratorCoverage:
 
     def test_decorator_chaining(self):
         """测试：装饰器链 - 覆盖率补充"""
+
         # 组合多个装饰器
         def timing_decorator(func):
             def wrapper(*args, **kwargs):
@@ -595,6 +630,7 @@ class TestDecoratorCoverage:
                 end = datetime.utcnow()
                 wrapper.execution_time = (end - start).total_seconds()
                 return result
+
             return wrapper
 
         def validation_decorator(func):
@@ -602,6 +638,7 @@ class TestDecoratorCoverage:
                 if len(args) > 0 and args[0] < 0:
                     raise ValueError("Negative values not allowed")
                 return func(*args, **kwargs)
+
             return wrapper
 
         # 应用装饰器链
@@ -613,7 +650,7 @@ class TestDecoratorCoverage:
         # 测试正常执行
         result = process_data(5)
         assert result == 10
-        assert hasattr(process_data, 'execution_time')
+        assert hasattr(process_data, "execution_time")
 
         # 测试验证失败
         with pytest.raises(ValueError):
@@ -625,6 +662,7 @@ class TestAdvancedPatternsCoverage:
 
     def test_strategy_pattern_simulation(self):
         """测试：策略模式模拟 - 覆盖率补充"""
+
         # 预测策略接口
         class PredictionStrategy:
             def predict(self, match_data):
@@ -652,7 +690,7 @@ class TestAdvancedPatternsCoverage:
                 return {
                     "home_win": home_win / total_prob,
                     "draw": draw / total_prob,
-                    "away_win": away_win / total_prob
+                    "away_win": away_win / total_prob,
                 }
 
         # 上下文类
@@ -673,15 +711,14 @@ class TestAdvancedPatternsCoverage:
 
         # 切换到高级策略
         context.set_strategy(AdvancedStrategy())
-        advanced_result = context.make_prediction({
-            "id": 123,
-            "home_strength": 0.8,
-            "away_strength": 0.4
-        })
+        advanced_result = context.make_prediction(
+            {"id": 123, "home_strength": 0.8, "away_strength": 0.4}
+        )
         assert advanced_result["home_win"] > advanced_result["away_win"]
 
     def test_observer_pattern_simulation(self):
         """测试：观察者模式模拟 - 覆盖率补充"""
+
         # 观察者模式实现
         class Subject:
             def __init__(self):
@@ -704,7 +741,7 @@ class TestAdvancedPatternsCoverage:
 
         class NotificationObserver:
             def update(self, event_data):
-                self.notifications_sent = getattr(self, 'notifications_sent', 0) + 1
+                self.notifications_sent = getattr(self, "notifications_sent", 0) + 1
 
         # 测试观察者模式
         subject = Subject()
@@ -732,6 +769,7 @@ class TestAdvancedPatternsCoverage:
 
     def test_factory_pattern_simulation(self):
         """测试：工厂模式模拟 - 覆盖率补充"""
+
         # 抽象工厂
         class DataProcessorFactory:
             @staticmethod
@@ -756,7 +794,11 @@ class TestAdvancedPatternsCoverage:
 
         class OddsProcessor:
             def process(self, data):
-                return {"type": "odds", "processed": True, "odds": {"home": 1.8, "draw": 3.2, "away": 4.5}}
+                return {
+                    "type": "odds",
+                    "processed": True,
+                    "odds": {"home": 1.8, "draw": 3.2, "away": 4.5},
+                }
 
         # 测试工厂模式
         match_processor = DataProcessorFactory.create_processor("match")
@@ -782,6 +824,7 @@ class TestAdvancedPatternsCoverage:
 
     def test_template_method_pattern(self):
         """测试：模板方法模式 - 覆盖率补充"""
+
         # 模板方法基类
         class DataAnalysisTemplate:
             def analyze(self, data):
@@ -812,28 +855,25 @@ class TestAdvancedPatternsCoverage:
             def process_data(self, data):
                 return {
                     "match_id": data.get("id"),
-                    "teams": f"{data.get('home_team')} vs {data.get('away_team')}"
+                    "teams": f"{data.get('home_team')} vs {data.get('away_team')}",
                 }
 
             def generate_results(self, data):
                 return {
                     "prediction": "home_win",
                     "confidence": 0.7,
-                    "match_info": data["teams"]
+                    "match_info": data["teams"],
                 }
 
         class PredictionAnalysis(DataAnalysisTemplate):
             def process_data(self, data):
-                return {
-                    "model": data.get("model"),
-                    "inputs": data.get("features", [])
-                }
+                return {"model": data.get("model"), "inputs": data.get("features", [])}
 
             def generate_results(self, data):
                 return {
                     "model_performance": data["model"],
                     "feature_count": len(data["inputs"]),
-                    "accuracy": 0.85
+                    "accuracy": 0.85,
                 }
 
         # 测试模板方法
@@ -843,7 +883,7 @@ class TestAdvancedPatternsCoverage:
             "home_team": "Team A",
             "away_team": "Team B",
             "stadium": None,  # 应该被清理掉
-            "date": "2023-12-01"
+            "date": "2023-12-01",
         }
 
         match_result = match_analyzer.analyze(match_data)
@@ -855,7 +895,7 @@ class TestAdvancedPatternsCoverage:
         prediction_data = {
             "model": "neural_network",
             "features": ["home_form", "away_form", "h2h"],
-            "timestamp": None  # 应该被清理掉
+            "timestamp": None,  # 应该被清理掉
         }
 
         prediction_result = prediction_analyzer.analyze(prediction_data)

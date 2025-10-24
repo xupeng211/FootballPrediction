@@ -5,6 +5,7 @@ from alembic import op
 
 # mypy: ignore-errors
 import logging
+
 logger = logging.getLogger(__name__)
 """add_data_collection_logs_and_bronze_layer_tables
 

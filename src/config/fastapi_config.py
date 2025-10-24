@@ -15,7 +15,9 @@ def create_chinese_app() -> FastAPI:
 
     app = FastAPI(
         title=I18nUtils.translate("Football Prediction API"),
-        description=I18nUtils.translate("Machine Learning Based Football Match Prediction System"),
+        description=I18nUtils.translate(
+            "Machine Learning Based Football Match Prediction System"
+        ),
         version="1.0.0",
         docs_url="/docs",
         redoc_url="/redoc",
@@ -49,6 +51,6 @@ def create_chinese_app() -> FastAPI:
         return app.openapi_schema
 
     # 使用setattr来设置openapi方法
-    setattr(app, 'openapi', custom_openapi)
+    setattr(app, "openapi", custom_openapi)
 
     return app

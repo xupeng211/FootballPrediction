@@ -98,9 +98,9 @@ class TestBatchProcessingFlow:
                 if status.get("status") == "COMPLETED":
                     break
                 elif status.get("status") == "FAILED":
-                    assert (
-                        False
-                    ), f"批量处理失败: {status.get('error', 'Unknown error')}"
+                    assert False, (
+                        f"批量处理失败: {status.get('error', 'Unknown error')}"
+                    )
 
         processing_duration = performance_metrics.end_timer("batch_processing")
         print(f"✅ 批量处理完成 ({processing_duration:.2f}s)")

@@ -21,6 +21,7 @@ from dotenv import load_dotenv
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
 try:
     from jose import JWTError, jwt
 except ImportError:
@@ -30,6 +31,8 @@ except ImportError:
 
     def jwt(*args, **kwargs):
         raise ImportError("Please install python-jose: pip install python-jose")
+
+
 from src.core.prediction_engine import PredictionEngine
 from src.core.logger import get_logger
 
@@ -39,9 +42,12 @@ load_dotenv()
 logger = get_logger(__name__)
 
 # JWT配置 - 从环境变量获取
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", os.getenv("SECRET_KEY", "your-secret-key-here"))
+SECRET_KEY = os.getenv(
+    "JWT_SECRET_KEY", os.getenv("SECRET_KEY", "your-secret-key-here")
+)
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 security = HTTPBearer()
+
 
 # 验证密钥强度
 def validate_secret_key():
@@ -50,6 +56,7 @@ def validate_secret_key():
         logger.warning("⚠️ 使用默认JWT密钥，请立即更改！")
     if len(SECRET_KEY) < 32:
         logger.warning("⚠️ JWT密钥长度不足32位，建议使用更强的密钥")
+
 
 # 启动时验证
 validate_secret_key()

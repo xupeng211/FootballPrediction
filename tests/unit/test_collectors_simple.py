@@ -3,6 +3,7 @@ from src.collectors.fixtures_collector import FixturesCollector
 from src.collectors.odds_collector import OddsCollector
 from src.collectors.scores_collector import ScoresCollector
 
+
 def test_collector_instances():
     fixtures = FixturesCollector()
     odds = OddsCollector()
@@ -12,7 +13,8 @@ def test_collector_instances():
     assert odds is not None
     assert scores is not None
 
+
 def test_collector_configs():
     fixtures = FixturesCollector()
-    assert hasattr(fixtures, 'config')
-    assert hasattr(fixtures, 'logger')
+    assert hasattr(fixtures, "config")
+    assert hasattr(fixtures, "logger")

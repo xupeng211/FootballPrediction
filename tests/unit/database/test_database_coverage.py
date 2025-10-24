@@ -15,7 +15,7 @@ import sys
 import os
 
 # 添加项目根目录到sys.path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../.."))
 
 
 class TestMatchRepository:
@@ -35,10 +35,12 @@ class TestMatchRepository:
         """创建比赛仓库实例"""
         try:
             from src.database.repositories.match_repository.match import MatchRepository
+
             return MatchRepository(mock_session)
         except ImportError:
             try:
                 from src.database.repositories.match_repository import MatchRepository
+
                 return MatchRepository(mock_session)
             except ImportError:
                 pytest.skip("MatchRepository模块不可用")
@@ -47,11 +49,13 @@ class TestMatchRepository:
         """测试比赛仓库创建"""
         try:
             from src.database.repositories.match_repository.match import MatchRepository
+
             repo = MatchRepository(mock_session)
             assert repo.session == mock_session
         except ImportError:
             try:
                 from src.database.repositories.match_repository import MatchRepository
+
                 repo = MatchRepository(mock_session)
                 assert repo.session == mock_session
             except ImportError:
@@ -128,6 +132,7 @@ class TestMatchRepository:
     async def test_get_matches_by_date(self, match_repository):
         """测试按日期获取比赛"""
         from datetime import date, datetime
+
         mock_matches = [Mock()]
         match_repository.session.execute.return_value = Mock(
             scalars=Mock(return_value=Mock(all=Mock(return_value=mock_matches)))
@@ -167,6 +172,7 @@ class TestPredictionRepository:
         """创建预测仓库实例"""
         try:
             from src.database.repositories.prediction import PredictionRepository
+
             return PredictionRepository(mock_session)
         except ImportError:
             pytest.skip("PredictionRepository模块不可用")
@@ -175,6 +181,7 @@ class TestPredictionRepository:
         """测试预测仓库创建"""
         try:
             from src.database.repositories.prediction import PredictionRepository
+
             repo = PredictionRepository(mock_session)
             assert repo.session == mock_session
         except ImportError:
@@ -244,6 +251,7 @@ class TestUserRepository:
         """创建用户仓库实例"""
         try:
             from src.database.repositories.user import UserRepository
+
             return UserRepository(mock_session)
         except ImportError:
             pytest.skip("UserRepository模块不可用")
@@ -252,6 +260,7 @@ class TestUserRepository:
         """测试用户仓库创建"""
         try:
             from src.database.repositories.user import UserRepository
+
             repo = UserRepository(mock_session)
             assert repo.session == mock_session
         except ImportError:
@@ -321,6 +330,7 @@ class TestBaseRepository:
         """创建基础仓库实例"""
         try:
             from src.database.repositories.base import BaseRepository
+
             return BaseRepository(mock_session)
         except ImportError:
             pytest.skip("BaseRepository模块不可用")
@@ -329,6 +339,7 @@ class TestBaseRepository:
         """测试基础仓库创建"""
         try:
             from src.database.repositories.base import BaseRepository
+
             repo = BaseRepository(mock_session)
             assert repo.session == mock_session
         except ImportError:
@@ -352,6 +363,7 @@ class TestDatabaseTypes:
         """测试数据库类型导入"""
         try:
             from src.database.types import DatabaseTypes
+
             assert DatabaseTypes is not None
         except ImportError:
             pytest.skip("database types模块不可用")
@@ -360,7 +372,8 @@ class TestDatabaseTypes:
         """测试自定义类型创建"""
         try:
             from src.database.types import CustomType
-            if hasattr(CustomType, '__init__'):
+
+            if hasattr(CustomType, "__init__"):
                 custom_type = CustomType()
                 assert custom_type is not None
         except ImportError:
@@ -374,6 +387,7 @@ class TestDatabaseCompatibility:
         """测试兼容性导入"""
         try:
             from src.database.compatibility import CompatibilityChecker
+
             assert CompatibilityChecker is not None
         except ImportError:
             pytest.skip("compatibility模块不可用")
@@ -382,6 +396,7 @@ class TestDatabaseCompatibility:
         """测试兼容性检查器创建"""
         try:
             from src.database.compatibility import CompatibilityChecker
+
             checker = CompatibilityChecker()
             assert checker is not None
         except ImportError:
@@ -395,6 +410,7 @@ class TestDatabaseBase:
         """测试数据库基础导入"""
         try:
             from src.database.base import DatabaseBase
+
             assert DatabaseBase is not None
         except ImportError:
             pytest.skip("database base模块不可用")
@@ -403,6 +419,7 @@ class TestDatabaseBase:
         """测试数据库基础创建"""
         try:
             from src.database.base import DatabaseBase
+
             base = DatabaseBase()
             assert base is not None
         except ImportError:
@@ -416,6 +433,7 @@ class TestDatabaseConfig:
         """测试数据库配置导入"""
         try:
             from src.database.config import DatabaseConfig
+
             assert DatabaseConfig is not None
         except ImportError:
             pytest.skip("database config模块不可用")
@@ -424,6 +442,7 @@ class TestDatabaseConfig:
         """测试数据库配置创建"""
         try:
             from src.database.config import DatabaseConfig
+
             config = DatabaseConfig()
             assert config is not None
         except ImportError:
@@ -437,6 +456,7 @@ class TestOddsModels:
         """测试赔率模型导入"""
         try:
             from src.database.models.odds import OddsModel
+
             assert OddsModel is not None
         except ImportError:
             pytest.skip("odds models模块不可用")
@@ -445,6 +465,7 @@ class TestOddsModels:
         """测试赔率模型创建"""
         try:
             from src.database.models.odds import OddsModel
+
             model = OddsModel()
             assert model is not None
         except ImportError:
@@ -459,23 +480,29 @@ class TestDatabaseIntegration:
         mock_session = AsyncMock()
 
         repositories = [
-            ('match', 'MatchRepository'),
-            ('prediction', 'PredictionRepository'),
-            ('user', 'UserRepository'),
+            ("match", "MatchRepository"),
+            ("prediction", "PredictionRepository"),
+            ("user", "UserRepository"),
         ]
 
         initialized_repos = []
         for repo_name, repo_class in repositories:
             try:
-                if repo_name == 'match':
+                if repo_name == "match":
                     try:
-                        from src.database.repositories.match_repository.match import MatchRepository
+                        from src.database.repositories.match_repository.match import (
+                            MatchRepository,
+                        )
+
                         repo = MatchRepository(mock_session)
                     except ImportError:
-                        from src.database.repositories.match_repository import MatchRepository
+                        from src.database.repositories.match_repository import (
+                            MatchRepository,
+                        )
+
                         repo = MatchRepository(mock_session)
                 else:
-                    module_path = f'src.database.repositories.{repo_name}'
+                    module_path = f"src.database.repositories.{repo_name}"
                     module = __import__(module_path, fromlist=[repo_class])
                     repo_class = getattr(module, repo_class)
                     repo = repo_class(mock_session)
@@ -497,7 +524,7 @@ class TestDatabaseIntegration:
         mock_session.rollback = AsyncMock()
 
         # 测试会话是否具有必需的方法
-        required_methods = ['execute', 'commit', 'rollback']
+        required_methods = ["execute", "commit", "rollback"]
         for method in required_methods:
             assert hasattr(mock_session, method)
             assert callable(getattr(mock_session, method))
@@ -509,6 +536,7 @@ class TestDatabaseIntegration:
 
         try:
             from src.database.repositories.match_repository.match import MatchRepository
+
             repo = MatchRepository(mock_session)
 
             with pytest.raises(Exception, match="Database error"):
@@ -523,10 +551,10 @@ class TestModuleAvailability:
     def test_critical_database_modules_available(self):
         """测试关键数据库模块可用性"""
         critical_modules = {
-            'base': 'src.database.repositories.base',
-            'match': 'src.database.repositories.match',
-            'prediction': 'src.database.repositories.prediction',
-            'user': 'src.database.repositories.user',
+            "base": "src.database.repositories.base",
+            "match": "src.database.repositories.match",
+            "prediction": "src.database.repositories.prediction",
+            "user": "src.database.repositories.user",
         }
 
         available_count = 0

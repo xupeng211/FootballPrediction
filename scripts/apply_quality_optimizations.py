@@ -27,7 +27,7 @@ def apply_ci_optimizations():
     optimized_standards = optimization_report["optimized_standards"]
 
     print("🔧 应用质量标准优化配置...")
-    print(f"📊 优化标准:")
+    print("📊 优化标准:")
     print(f"  - 覆盖率最低要求: {optimized_standards['coverage']['minimum']}%")
     print(f"  - 覆盖率目标: {optimized_standards['coverage']['target']:.1f}%")
     print(f"  - 最大Ruff错误: {optimized_standards['code_quality']['max_ruff_errors']}")

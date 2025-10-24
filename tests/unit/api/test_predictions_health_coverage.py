@@ -17,7 +17,7 @@ class TestPredictionsHealthRouter:
     def test_health_router_creation(self):
         """测试健康检查路由器创建"""
         assert health_router is not None
-        assert hasattr(health_router, 'routes')
+        assert hasattr(health_router, "routes")
         assert health_router.prefix == "/predictions"
         assert "predictions" in health_router.tags
 
@@ -42,7 +42,7 @@ class TestPredictionsHealthRouter:
         # 验证版本号
         assert result["version"] == "1.0.0"
 
-    @patch('src.api.predictions.health.datetime')
+    @patch("src.api.predictions.health.datetime")
     def test_health_check_with_mock_datetime(self, mock_datetime):
         """测试健康检查（模拟datetime）"""
         # 设置模拟时间
@@ -56,6 +56,7 @@ class TestPredictionsHealthRouter:
         # 为Mock对象添加减法支持
         def mock_subtract(self, other):
             return time_diff
+
         now.__sub__ = mock_subtract
 
         mock_datetime.utcnow.side_effect = [now, now]
@@ -69,7 +70,7 @@ class TestPredictionsHealthRouter:
 
     def test_health_check_exception_handling(self):
         """测试健康检查异常处理"""
-        with patch('src.api.predictions.health.datetime') as mock_datetime:
+        with patch("src.api.predictions.health.datetime") as mock_datetime:
             # 模拟datetime抛出异常
             mock_datetime.utcnow.side_effect = Exception("Mock error")
 
@@ -83,7 +84,7 @@ class TestPredictionsHealthRouter:
 
     def test_health_check_response_time_calculation(self):
         """测试健康检查响应时间计算"""
-        with patch('src.api.predictions.health.datetime') as mock_datetime:
+        with patch("src.api.predictions.health.datetime") as mock_datetime:
             # 模拟时间差
             start = Mock()
             end = Mock()
@@ -93,6 +94,7 @@ class TestPredictionsHealthRouter:
             # 为Mock对象添加减法支持
             def mock_subtract(self, other):
                 return time_diff
+
             end.__sub__ = mock_subtract
 
             mock_datetime.utcnow.side_effect = [start, end]
@@ -108,8 +110,12 @@ class TestPredictionsHealthRouter:
 
         # 验证所有必需字段都存在
         required_fields = [
-            "status", "service", "timestamp", "checks",
-            "response_time_ms", "version"
+            "status",
+            "service",
+            "timestamp",
+            "checks",
+            "response_time_ms",
+            "version",
         ]
         for field in required_fields:
             assert field in result
@@ -133,7 +139,7 @@ class TestPredictionsHealthRouter:
 
     def test_health_check_timestamp_format(self):
         """测试健康检查时间戳格式"""
-        with patch('src.api.predictions.health.datetime') as mock_datetime:
+        with patch("src.api.predictions.health.datetime") as mock_datetime:
             now = Mock()
             now.isoformat.return_value = "2023-10-23T10:00:00.123456"
 
@@ -144,6 +150,7 @@ class TestPredictionsHealthRouter:
             # 为Mock对象添加减法支持
             def mock_subtract(self, other):
                 return time_diff
+
             now.__sub__ = mock_subtract
 
             mock_datetime.utcnow.side_effect = [now, now]

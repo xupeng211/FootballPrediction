@@ -35,10 +35,12 @@ def upgrade() -> None:
     conn = op.get_bind()
     db_dialect = conn.dialect.name.lower()
 
-    if db_dialect == 'sqlite':
+    if db_dialect == "sqlite":
         logger.info("⚠️  SQLite环境：跳过业务约束和触发器创建")
         op.execute("-- SQLite environment: skipped business constraints and triggers")
-        op.execute("-- SQLite environment: SQLite does not support ALTER ADD CONSTRAINT")
+        op.execute(
+            "-- SQLite environment: SQLite does not support ALTER ADD CONSTRAINT"
+        )
         return
 
     # 1. 添加比分字段CHECK约束（0-99）
@@ -207,9 +209,11 @@ def downgrade() -> None:
     conn = op.get_bind()
     db_dialect = conn.dialect.name.lower()
 
-    if db_dialect == 'sqlite':
+    if db_dialect == "sqlite":
         logger.info("⚠️  SQLite环境：跳过业务约束和触发器移除")
-        op.execute("-- SQLite environment: skipped business constraints and triggers removal")
+        op.execute(
+            "-- SQLite environment: skipped business constraints and triggers removal"
+        )
         op.execute("-- SQLite environment: SQLite does not support DROP CONSTRAINT")
         return
 
