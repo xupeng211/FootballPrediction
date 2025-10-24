@@ -160,7 +160,7 @@ def api_client_full(test_db, test_redis_):
 @pytest.fixture(scope="function")
 @pytest.mark.external_api
 
-def test_db(, client):
+def test_db(, client, client):
     """测试数据库fixture"""
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
@@ -184,7 +184,7 @@ def test_db(, client):
 
 # === 环境配置 ===
 @pytest.fixture(autouse=True)
-def test_env(monkeypatch, client):
+def test_env(monkeypatch, client, client):
     """设置测试环境变量"""
     monkeypatch.setenv("ENVIRONMENT", "testing")
     monkeypatch.setenv("DATABASE_URL", "sqlite:///:memory:")
@@ -490,7 +490,7 @@ def with_external_apis_mock(func):
 
 # === Test Data Factory ===
 @pytest.fixture
-def test_match_data(, client):
+def test_match_data(, client, client):
     """测试用比赛数据"""
     return {
         "id": 12345,
@@ -506,7 +506,7 @@ def test_match_data(, client):
 
 
 @pytest.fixture
-def test_team_data(, client):
+def test_team_data(, client, client):
     """测试用球队数据"""
     return {
         "id": 1,
@@ -519,7 +519,7 @@ def test_team_data(, client):
 
 
 @pytest.fixture
-def test_odds_data(, client):
+def test_odds_data(, client, client):
     """测试用赔率数据"""
     return {
         "id": 54321,
@@ -533,7 +533,7 @@ def test_odds_data(, client):
 
 
 @pytest.fixture
-def test_prediction_data(, client):
+def test_prediction_data(, client, client):
     """测试用预测数据"""
     return {
         "id": 999,

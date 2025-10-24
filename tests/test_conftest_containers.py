@@ -62,7 +62,7 @@ def redis_container():
 @pytest.fixture(scope="session")
 @pytest.mark.docker
 
-def test_database_engine(postgres_container, client):
+def test_database_engine(postgres_container, client, client):
     """
     测试数据库引擎
     基于TestContainers的PostgreSQL实例
@@ -87,7 +87,7 @@ def test_database_engine(postgres_container, client):
 
 
 @pytest.fixture(scope="function")
-def test_db_session(test_database_engine, client):
+def test_db_session(test_database_engine, client, client):
     """
     测试数据库会话
     每个测试函数都有一个独立的会话
@@ -119,7 +119,7 @@ def test_db_session(test_database_engine, client):
 
 
 @pytest.fixture(scope="function")
-def test_redis_client(redis_container, client):
+def test_redis_client(redis_container, client, client):
     """
     测试Redis客户端
     基于TestContainers的Redis实例
