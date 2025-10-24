@@ -70,13 +70,7 @@ jobs:
           python -m pytest tests/ --cov=src/ --cov-report=json --cov-fail-under=15.0 || true
 
           if [ -f coverage.json ]; then
-            coverage=$(python -c "
-import json
-with open('coverage.json') as f:
-    data = json.load(f)
-coverage = data.get('totals', {}).get('percent_covered', 0)
-print(coverage)
-")
+            coverage=$(python -c "import json; data=json.load(open('coverage.json')); print(data.get('totals', {}).get('percent_covered', 0))")
             echo "coverage=$coverage" >> $GITHUB_OUTPUT
           else
             echo "coverage=0" >> $GITHUB_OUTPUT
