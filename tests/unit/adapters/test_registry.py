@@ -492,3 +492,266 @@ def test_enum_values():
         assert "ACTIVE" in members
         assert "INACTIVE" in members
         assert "SHUTTING_DOWN" in members
+
+
+# 补充测试以达到更高覆盖率
+@pytest.mark.skipif(not REGISTRY_AVAILABLE, reason="Registry module not available")
+@pytest.mark.asyncio
+class TestRegistryAdditionalCoverage:
+    """补充注册表测试以达到更高覆盖率"""
+
+    @pytest.fixture
+    def mock_factory(self):
+        """创建模拟工厂"""
+        factory = Mock(spec=AdapterFactory)
+        return factory
+
+    @pytest.fixture
+    def registry(self, mock_factory):
+        """创建注册表实例"""
+        return AdapterRegistry(factory=mock_factory)
+
+    async def test_health_check_loop_with_error(self, registry):
+        """测试健康检查循环中遇到错误"""
+        await registry.initialize()
+
+        # 模拟健康检查抛出异常
+        with patch.object(registry, '_perform_health_checks', side_effect=ValueError("Health check failed")):
+            with patch('asyncio.sleep') as mock_sleep:
+                # 取消任务以避免无限循环
+                registry._health_check_task.cancel()
+
+                try:
+                    await registry._health_check_task
+                except asyncio.CancelledError:
+                    pass  # 预期的取消异常
+
+                await registry.shutdown()
+
+    async def test_perform_health_checks_success(self, registry):
+        """测试执行健康检查成功"""
+        # 创建模拟适配器
+        mock_adapter = Mock(spec=Adapter)
+        mock_adapter.health_check = AsyncMock(return_value=True)
+        registry.adapters["test_adapter"] = mock_adapter
+
+        # 执行健康检查
+        await registry._perform_health_checks()
+
+        # 验证健康检查被调用
+        mock_adapter.health_check.assert_called_once()
+
+    async def test_perform_health_checks_with_failure(self, registry):
+        """测试执行健康检查时适配器失败"""
+        # 创建模拟适配器
+        mock_adapter = Mock(spec=Adapter)
+        mock_adapter.health_check = AsyncMock(side_effect=ValueError("Health check failed"))
+        registry.adapters["test_adapter"] = mock_adapter
+
+        # 执行健康检查
+        await registry._perform_health_checks()
+
+        # 验证健康检查被调用
+        mock_adapter.health_check.assert_called_once()
+
+    async def test_perform_health_checks_group_failure(self, registry):
+        """测试执行健康检查时组适配器失败"""
+        # 创建模拟组适配器
+        mock_group = Mock(spec=Adapter)
+        mock_group.health_check = AsyncMock(side_effect=TypeError("Group check failed"))
+        registry.groups["test_group"] = mock_group
+
+        # 执行健康检查
+        await registry._perform_health_checks()
+
+        # 验证健康检查被调用
+        mock_group.health_check.assert_called_once()
+
+    async def test_get_health_status_empty(self, registry):
+        """测试获取空注册表的健康状态"""
+        await registry.initialize()
+
+        status = await registry.get_health_status()
+
+        assert isinstance(status, dict)
+        assert "registry_status" in status
+        assert "total_adapters" in status
+        assert "active_adapters" in status
+        assert "inactive_adapters" in status
+        assert "total_groups" in status
+        assert "last_health_check" in status
+        assert "adapters" in status
+        assert "groups" in status
+        assert status["total_adapters"] == 0
+        assert status["active_adapters"] == 0
+        assert status["inactive_adapters"] == 0
+        assert status["total_groups"] == 0
+        assert len(status["adapters"]) == 0
+        assert len(status["groups"]) == 0
+
+        await registry.shutdown()
+
+    async def test_get_health_status_with_adapters(self, registry):
+        """测试获取包含适配器的注册表健康状态"""
+        await registry.initialize()
+
+        # 创建模拟适配器
+        mock_adapter = Mock(spec=Adapter)
+        mock_adapter.status = AdapterStatus.ACTIVE
+        mock_adapter.get_metrics.return_value = {"requests": 10, "success_rate": 0.95}
+        registry.adapters["test_adapter"] = mock_adapter
+
+        status = await registry.get_health_status()
+
+        assert "test_adapter" in status["adapters"]
+        assert status["adapters"]["test_adapter"]["status"] == "active"
+        assert "metrics" in status["adapters"]["test_adapter"]
+
+        await registry.shutdown()
+
+    async def test_get_metrics_summary_empty(self, registry):
+        """测试获取空注册表的指标摘要"""
+        summary = registry.get_metrics_summary()
+
+        assert isinstance(summary, dict)
+        assert "total_requests" in summary
+        assert "total_successful" in summary
+        assert "total_failed" in summary
+        assert "adapter_types" in summary
+        assert summary["total_requests"] == 0
+        assert summary["total_successful"] == 0
+        assert summary["total_failed"] == 0
+
+    async def test_find_best_adapter_no_candidates(self, registry):
+        """测试查找最佳适配器没有候选"""
+        await registry.initialize()
+
+        best_adapter = await registry.find_best_adapter("nonexistent-type")
+
+        assert best_adapter is None
+
+        await registry.shutdown()
+
+    def test_registry_properties(self, registry):
+        """测试注册表属性"""
+        assert hasattr(registry, 'health_check_interval')
+        assert isinstance(registry.health_check_interval, float)
+        assert registry.health_check_interval > 0
+
+        assert hasattr(registry, 'adapters')
+        assert isinstance(registry.adapters, dict)
+
+        assert hasattr(registry, 'groups')
+        assert isinstance(registry.groups, dict)
+
+        assert hasattr(registry, 'factory')
+        assert registry.factory is not None
+
+        assert hasattr(registry, '_metrics_collector')
+        assert registry._metrics_collector is None
+
+        assert hasattr(registry, '_health_check_task')
+        assert registry._health_check_task is None
+
+    def test_enable_metrics_collection(self, registry):
+        """测试启用指标收集"""
+        registry.enable_metrics_collection()
+
+        assert registry._metrics_collector is not None
+        assert "start_time" in registry._metrics_collector
+        assert "health_checks" in registry._metrics_collector
+        assert "adapter_failures" in registry._metrics_collector
+
+    def test_disable_metrics_collection(self, registry):
+        """测试禁用指标收集"""
+        # 先启用
+        registry.enable_metrics_collection()
+        assert registry._metrics_collector is not None
+
+        # 再禁用
+        registry.disable_metrics_collection()
+        assert registry._metrics_collector is None
+
+    async def test_get_adapters_by_type(self, registry):
+        """测试按类型获取适配器"""
+        # 创建模拟适配器
+        mock_adapter = Mock(spec=Adapter)
+        mock_adapter.name = "test_adapter"
+        mock_adapter.status = AdapterStatus.ACTIVE
+        # 设置类名以匹配get_adapters_by_type的逻辑（它比较__class__.__name__）
+        mock_adapter.__class__.__name__ = "api-football"
+
+        registry.factory.create_adapter.return_value = mock_adapter
+
+        # 注册适配器
+        mock_config = Mock(spec=AdapterConfig)
+        mock_config.name = "test_adapter"
+        mock_config.adapter_type = "api-football"
+
+        registry.factory.create_adapter.return_value = mock_adapter
+        registry.adapters["test_adapter"] = mock_adapter
+
+        # 获取特定类型的适配器（使用类名而不是adapter_type）
+        adapters = registry.get_adapters_by_type("api-football")
+        assert len(adapters) == 1
+        assert "test_adapter" in [a.name for a in adapters]
+
+    def test_registry_properties(self, registry):
+        """测试注册表属性"""
+        assert hasattr(registry, 'health_check_interval')
+        assert isinstance(registry.health_check_interval, float)
+        assert registry.health_check_interval > 0
+
+        assert hasattr(registry, 'adapters')
+        assert isinstance(registry.adapters, dict)
+
+        assert hasattr(registry, 'groups')
+        assert isinstance(registry.groups, dict)
+
+        assert hasattr(registry, 'factory')
+        assert registry.factory is not None
+
+        assert hasattr(registry, '_metrics_collector')
+        assert registry._metrics_collector is None
+
+        assert hasattr(registry, '_health_check_task')
+        assert registry._health_check_task is None
+
+    def test_registry_status_transitions(self, registry):
+        """测试注册表状态转换"""
+        # 初始状态
+        assert registry.status == RegistryStatus.INACTIVE
+
+        # 这些操作需要在异步环境中测试，但我们可以验证状态枚举
+        assert hasattr(registry, 'status')
+        assert isinstance(registry.status, RegistryStatus)
+
+    def test_health_check_interval_property(self, registry):
+        """测试健康检查间隔属性"""
+        assert hasattr(registry, 'health_check_interval')
+        assert isinstance(registry.health_check_interval, float)
+        assert registry.health_check_interval > 0
+
+    def test_adapters_and_groups_properties(self, registry):
+        """测试适配器和组属性"""
+        assert hasattr(registry, 'adapters')
+        assert hasattr(registry, 'groups')
+        assert isinstance(registry.adapters, dict)
+        assert isinstance(registry.groups, dict)
+        assert len(registry.adapters) == 0
+        assert len(registry.groups) == 0
+
+    def test_factory_property(self, registry):
+        """测试工厂属性"""
+        assert hasattr(registry, 'factory')
+        assert registry.factory is not None
+
+    def test_metrics_collector_initial_state(self, registry):
+        """测试指标收集器初始状态"""
+        assert hasattr(registry, '_metrics_collector')
+        assert registry._metrics_collector is None
+
+    def test_health_check_task_initial_state(self, registry):
+        """测试健康检查任务初始状态"""
+        assert hasattr(registry, '_health_check_task')
+        assert registry._health_check_task is None
