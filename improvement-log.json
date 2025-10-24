@@ -1,0 +1,193 @@
+[
+  {
+    "timestamp": "2025-10-24T17:58:15.319967",
+    "duration_seconds": 36.785231,
+    "quality_status_before": {
+      "timestamp": "2025-10-24T17:58:40.678509",
+      "overall_score": 5.94,
+      "coverage": 13.53891771682728,
+      "code_quality": 10.0,
+      "test_health": 2,
+      "security": 10,
+      "recommendations": [
+        "提升测试覆盖率",
+        "建立质量门禁",
+        "定期质量监控"
+      ],
+      "action_items": [
+        {
+          "priority": "HIGH",
+          "category": "coverage",
+          "action": "提升测试覆盖率",
+          "details": "当前覆盖率13.5%，建议优先为核心模块添加测试"
+        },
+        {
+          "priority": "LOW",
+          "category": "prevention",
+          "action": "建立质量门禁",
+          "details": "在CI/CD中集成质量检查"
+        },
+        {
+          "priority": "LOW",
+          "category": "monitoring",
+          "action": "定期质量监控",
+          "details": "建立定期质量检查和报告机制"
+        }
+      ],
+      "ruff_errors": 0,
+      "mypy_errors": 0,
+      "test_count": 0,
+      "test_pass_rate": 0,
+      "files_count": 452
+    },
+    "gap_analysis": {
+      "overall_score": {
+        "current": 5.94,
+        "target": 8.0,
+        "gap": 2.0599999999999996,
+        "priority": "HIGH"
+      },
+      "coverage": {
+        "current": 13.53891771682728,
+        "target": 25.0,
+        "gap": 11.46108228317272,
+        "priority": "HIGH"
+      },
+      "code_quality": {
+        "current": 10.0,
+        "target": 8.0,
+        "gap": 0,
+        "priority": "MEDIUM"
+      },
+      "security": {
+        "current": 10,
+        "target": 9.0,
+        "gap": 0,
+        "priority": "LOW"
+      }
+    },
+    "improvement_plan": [
+      {
+        "type": "comprehensive_fix",
+        "priority": "HIGH",
+        "description": "运行综合质量修复",
+        "expected_improvement": 1.0
+      },
+      {
+        "type": "test_generation",
+        "priority": "HIGH",
+        "description": "为核心模块生成基础测试",
+        "target_modules": [
+          "src/api",
+          "src/core"
+        ],
+        "expected_improvement": 3.0
+      },
+      {
+        "type": "coverage_analysis",
+        "priority": "MEDIUM",
+        "description": "分析未覆盖代码并针对性添加测试",
+        "expected_improvement": 2.0
+      }
+    ],
+    "improvement_results": {
+      "actions_executed": 3,
+      "improvements_made": [
+        {
+          "action": "运行综合质量修复",
+          "result": {
+            "success": true,
+            "fixes_applied": 19,
+            "message": "应用了 19 个自动修复"
+          }
+        },
+        {
+          "action": "为核心模块生成基础测试",
+          "result": {
+            "success": true,
+            "generated_tests": 0,
+            "message": "生成了 0 个基础测试文件"
+          }
+        },
+        {
+          "action": "分析未覆盖代码并针对性添加测试",
+          "result": {
+            "success": true,
+            "message": "覆盖率分析完成，生成了HTML报告",
+            "coverage_report_generated": true
+          }
+        }
+      ],
+      "failures": []
+    },
+    "verification_results": {
+      "overall_improvement": true,
+      "new_quality_status": {
+        "timestamp": "2025-10-24T17:58:40.678509",
+        "overall_score": 5.94,
+        "coverage": 13.53891771682728,
+        "code_quality": 10.0,
+        "test_health": 2,
+        "security": 10,
+        "recommendations": [
+          "提升测试覆盖率",
+          "建立质量门禁",
+          "定期质量监控"
+        ],
+        "action_items": [
+          {
+            "priority": "HIGH",
+            "category": "coverage",
+            "action": "提升测试覆盖率",
+            "details": "当前覆盖率13.5%，建议优先为核心模块添加测试"
+          },
+          {
+            "priority": "LOW",
+            "category": "prevention",
+            "action": "建立质量门禁",
+            "details": "在CI/CD中集成质量检查"
+          },
+          {
+            "priority": "LOW",
+            "category": "monitoring",
+            "action": "定期质量监控",
+            "details": "建立定期质量检查和报告机制"
+          }
+        ],
+        "ruff_errors": 0,
+        "mypy_errors": 0,
+        "test_count": 0,
+        "test_pass_rate": 0,
+        "files_count": 452
+      },
+      "improvements": {
+        "overall_score": {
+          "old": 0,
+          "new": 5.94,
+          "improvement": 5.94,
+          "percentage_change": 0
+        },
+        "coverage": {
+          "old": 0,
+          "new": 13.53891771682728,
+          "improvement": 13.53891771682728,
+          "percentage_change": 0
+        },
+        "code_quality": {
+          "old": 0,
+          "new": 10.0,
+          "improvement": 10.0,
+          "percentage_change": 0
+        },
+        "security": {
+          "old": 0,
+          "new": 10,
+          "improvement": 10,
+          "percentage_change": 0
+        }
+      },
+      "summary": "改进成果: 综合分数提升 5.9 分, 覆盖率提升 13.5%, code_quality 提升 10.0, security 提升 10.0"
+    },
+    "success": true
+  }
+]

@@ -41,6 +41,7 @@ try:
         AdapterError,
         StreamingError,
     )
+
     EXCEPTIONS_AVAILABLE = True
 except ImportError:
     EXCEPTIONS_AVAILABLE = False
@@ -88,7 +89,9 @@ class TestCoreExceptions:
             (StreamingError, "Streaming error"),
         ],
     )
-    def test_specific_exception_creation(self, exception_class: Type[Exception], expected_message: str):
+    def test_specific_exception_creation(
+        self, exception_class: Type[Exception], expected_message: str
+    ):
         """测试具体异常类的创建"""
         error = exception_class(expected_message)
         assert str(error) == expected_message
@@ -180,7 +183,9 @@ class TestCoreExceptions:
 
     def test_exception_with_long_message(self):
         """测试长消息的异常"""
-        long_message = "This is a very long error message that might occur in production " * 10
+        long_message = (
+            "This is a very long error message that might occur in production " * 10
+        )
         error = PredictionError(long_message)
         assert str(error) == long_message
 
@@ -254,7 +259,7 @@ class TestCoreExceptions:
 
         start_time = time.time()
         for _ in range(1000):
-            error = PredictionError("Performance test")
+            PredictionError("Performance test")
         end_time = time.time()
 
         # 创建1000个异常应该在合理时间内完成（小于1秒）
@@ -272,8 +277,8 @@ class TestCoreExceptions:
         assert error2 != error3
 
         # 但是类型应该相同
-        assert type(error1) == type(error2)
-        assert type(error1) == type(error3)
+        assert type(error1) is type(error2)
+        assert type(error1) is type(error3)
 
     def test_exception_hashability(self):
         """测试异常的可哈希性"""
@@ -314,15 +319,38 @@ class TestCoreExceptions:
         assert isinstance(domain_error, FootballPredictionError)
         assert isinstance(business_error, DomainError)
 
-    @pytest.mark.parametrize("exception_class", [
-        ConfigError, DataError, ModelError, PredictionError, CacheError,
-        ServiceError, DatabaseError, ConsistencyError, ValidationError,
-        DataQualityError, PipelineError, DomainError, BusinessRuleError,
-        ServiceLifecycleError, DependencyInjectionError, LineageError,
-        TrackingError, BacktestError, DataProcessingError, TaskExecutionError,
-        TaskRetryError, AuthenticationError, AuthorizationError,
-        RateLimitError, TimeoutError, AdapterError, StreamingError,
-    ])
+    @pytest.mark.parametrize(
+        "exception_class",
+        [
+            ConfigError,
+            DataError,
+            ModelError,
+            PredictionError,
+            CacheError,
+            ServiceError,
+            DatabaseError,
+            ConsistencyError,
+            ValidationError,
+            DataQualityError,
+            PipelineError,
+            DomainError,
+            BusinessRuleError,
+            ServiceLifecycleError,
+            DependencyInjectionError,
+            LineageError,
+            TrackingError,
+            BacktestError,
+            DataProcessingError,
+            TaskExecutionError,
+            TaskRetryError,
+            AuthenticationError,
+            AuthorizationError,
+            RateLimitError,
+            TimeoutError,
+            AdapterError,
+            StreamingError,
+        ],
+    )
     def test_exception_catchability(self, exception_class: Type[Exception]):
         """测试所有异常的可捕获性"""
         error = exception_class("Test message")

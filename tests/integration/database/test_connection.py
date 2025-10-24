@@ -73,7 +73,7 @@ class TestDatabaseConnection:
         )
         saved_team = result.scalar_one_or_none()
         assert saved_team is not None
-        assert saved_team.city == "Commit City"
+        assert saved_team.city   == "Commit City"
 
     @pytest.mark.asyncio
     async def test_nested_transactions(self, db_session):
@@ -127,7 +127,7 @@ class TestDatabaseConnection:
                     await asyncio.sleep(0.1)  # 短暂等待后重试
 
         _result = await query_with_retry()
-        assert _result == 1
+        assert _result   == 1
 
     @pytest.mark.asyncio
     async def test_batch_operations(self, db_session):
@@ -150,7 +150,7 @@ class TestDatabaseConnection:
             select(func.count(Team.id)).where(Team.name.like("Batch Team%"))
         )
         count = result.scalar()
-        assert count == 100
+        assert count   == 100
 
         # 批量更新
         await db_session.execute(
@@ -163,7 +163,7 @@ class TestDatabaseConnection:
             select(func.count(Team.id)).where(Team.city == "Updated City")
         )
         count = result.scalar()
-        assert count == 100
+        assert count   == 100
 
         # 批量删除
         await db_session.execute(
@@ -176,7 +176,7 @@ class TestDatabaseConnection:
             select(func.count(Team.id)).where(Team.name.like("Batch Team%"))
         )
         count = result.scalar()
-        assert count == 0
+        assert count   == 0
 
     @pytest.mark.asyncio
     async def test_query_performance(self, db_session):
@@ -333,7 +333,7 @@ class TestDatabaseConnection:
                 select(func.count(Team.id)).where(Team.name.like("Concurrent Team%"))
             )
             count = result.scalar()
-            assert count == 20
+            assert count   == 20
 
     @pytest.mark.asyncio
     async def test_error_handling(self, db_session):

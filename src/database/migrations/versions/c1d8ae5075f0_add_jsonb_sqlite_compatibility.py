@@ -4,9 +4,11 @@ from sqlalchemy.exc import SQLAlchemyError, DatabaseError
 from typing import Union, Sequence
 
 import logging
+
 logger = logging.getLogger(__name__)
 from alembic import context
 from alembic import op
+
 """add_jsonb_sqlite_compatibility
 
 

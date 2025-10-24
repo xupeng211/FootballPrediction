@@ -8,6 +8,7 @@ from alembic import context, op
 
 logger = logging.getLogger(__name__)
 from alembic import op
+
 """database_performance_optimization_partitioning_indexes_materialized_views
 
 
@@ -48,10 +49,12 @@ def upgrade() -> None:
     conn = op.get_bind()
     db_dialect = conn.dialect.name.lower()
 
-    if db_dialect == 'sqlite':
+    if db_dialect == "sqlite":
         logger.info("⚠️  SQLite环境：跳过PostgreSQL性能优化迁移")
         op.execute("-- SQLite environment: skipped PostgreSQL performance optimization")
-        op.execute("-- SQLite environment: skipped partitioning, materialized views, and advanced indexes")
+        op.execute(
+            "-- SQLite environment: skipped partitioning, materialized views, and advanced indexes"
+        )
         return
 
     # 获取数据库连接以执行原生SQL
@@ -660,10 +663,14 @@ def downgrade() -> None:
     conn = op.get_bind()
     db_dialect = conn.dialect.name.lower()
 
-    if db_dialect == 'sqlite':
+    if db_dialect == "sqlite":
         logger.info("⚠️  SQLite环境：跳过PostgreSQL性能优化回滚")
-        op.execute("-- SQLite environment: skipped PostgreSQL performance optimization rollback")
-        op.execute("-- SQLite environment: skipped partitioning, materialized views, and advanced indexes rollback")
+        op.execute(
+            "-- SQLite environment: skipped PostgreSQL performance optimization rollback"
+        )
+        op.execute(
+            "-- SQLite environment: skipped partitioning, materialized views, and advanced indexes rollback"
+        )
         return
 
     conn = op.get_bind()

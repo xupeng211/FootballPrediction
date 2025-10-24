@@ -41,6 +41,7 @@ def init_i18n():  # type: ignore
 
 class I18nUtils:
     """国际化工具类"""
+
     @staticmethod
     def translate(key: str, language: str = "zh") -> str:
         """翻译文本"""

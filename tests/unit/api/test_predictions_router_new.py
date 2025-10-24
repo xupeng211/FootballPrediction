@@ -445,9 +445,7 @@ class TestPredictionsRouter:
         assert request.include_details is False
 
         # 测试完整请求
-        request = PredictionRequest(
-            model_version="v2.0", include_details=True
-        )
+        request = PredictionRequest(model_version="v2.0", include_details=True)
         assert request.model_version == "v2.0"
         assert request.include_details is True
 

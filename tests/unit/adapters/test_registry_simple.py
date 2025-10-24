@@ -19,12 +19,15 @@ try:
         _global_registry,
     )
     from src.core.exceptions import AdapterError
+
     REGISTRY_SIMPLE_AVAILABLE = True
 except ImportError:
     REGISTRY_SIMPLE_AVAILABLE = False
 
 
-@pytest.mark.skipif(not REGISTRY_SIMPLE_AVAILABLE, reason="Simple registry module not available")
+@pytest.mark.skipif(
+    not REGISTRY_SIMPLE_AVAILABLE, reason="Simple registry module not available"
+)
 class TestAdapterRegistry:
     """AdapterRegistry类测试"""
 
@@ -32,8 +35,8 @@ class TestAdapterRegistry:
         """测试适配器注册表初始化"""
         registry = AdapterRegistry()
 
-        assert hasattr(registry, '_registry')
-        assert hasattr(registry, '_instances')
+        assert hasattr(registry, "_registry")
+        assert hasattr(registry, "_instances")
         assert isinstance(registry._registry, dict)
         assert isinstance(registry._instances, dict)
         assert len(registry._registry) == 0
@@ -329,9 +332,15 @@ class TestAdapterRegistry:
         mock_class2 = Mock()
         mock_class3 = Mock()
 
-        registry.register("adapter1", mock_class1, version="1.0", singleton=True, priority=1)
-        registry.register("adapter2", mock_class2, version="1.0", singleton=False, priority=2)
-        registry.register("adapter3", mock_class3, version="2.0", singleton=True, priority=1)
+        registry.register(
+            "adapter1", mock_class1, version="1.0", singleton=True, priority=1
+        )
+        registry.register(
+            "adapter2", mock_class2, version="1.0", singleton=False, priority=2
+        )
+        registry.register(
+            "adapter3", mock_class3, version="2.0", singleton=True, priority=1
+        )
 
         # 使用多个过滤条件
         result = registry.list(version="1.0", priority=1)
@@ -584,7 +593,7 @@ class TestAdapterRegistry:
 
         import_data = {
             "import1": {"class": mock_class1, "version": "1.0"},
-            "import2": {"class": mock_class2, "version": "2.0"}
+            "import2": {"class": mock_class2, "version": "2.0"},
         }
 
         registry.import_data(import_data)
@@ -608,7 +617,7 @@ class TestAdapterRegistry:
         # 导入更多数据
         import_data = {
             "import1": {"class": mock_class2, "version": "2.0"},
-            "import2": {"class": mock_class3, "version": "3.0"}
+            "import2": {"class": mock_class3, "version": "3.0"},
         }
 
         registry.import_data(import_data)
@@ -629,9 +638,7 @@ class TestAdapterRegistry:
         registry.register("override", mock_class1, version="1.0")
 
         # 导入同名数据
-        import_data = {
-            "override": {"class": mock_class2, "version": "2.0"}
-        }
+        import_data = {"override": {"class": mock_class2, "version": "2.0"}}
 
         registry.import_data(import_data)
 
@@ -757,7 +764,9 @@ class TestAdapterRegistry:
         assert "workflow" in new_registry._registry
 
 
-@pytest.mark.skipif(not REGISTRY_SIMPLE_AVAILABLE, reason="Simple registry module not available")
+@pytest.mark.skipif(
+    not REGISTRY_SIMPLE_AVAILABLE, reason="Simple registry module not available"
+)
 class TestGlobalRegistryFunctions:
     """全局注册表函数测试"""
 
@@ -774,11 +783,12 @@ class TestGlobalRegistryFunctions:
 
         assert registry1 is registry2  # 应该是同一个实例
 
-    @patch('src.adapters.registry_simple._global_registry', None)
+    @patch("src.adapters.registry_simple._global_registry", None)
     def test_get_global_registry_creates_new_instance(self):
         """测试全局注册表创建新实例"""
         # 重置全局变量
         import src.adapters.registry_simple
+
         original_registry = src.adapters.registry_simple._global_registry
         src.adapters.registry_simple._global_registry = None
 
@@ -796,6 +806,7 @@ class TestGlobalRegistryFunctions:
         """测试注册适配器装饰器"""
         # 清除全局注册表
         import src.adapters.registry_simple
+
         src.adapters.registry_simple._global_registry = None
 
         @register_adapter("decorated_global", version="1.0")
@@ -813,6 +824,7 @@ class TestGlobalRegistryFunctions:
         """测试注册适配器装饰器（使用类名）"""
         # 清除全局注册表
         import src.adapters.registry_simple
+
         src.adapters.registry_simple._global_registry = None
 
         @register_adapter(version="2.0")
@@ -830,6 +842,7 @@ class TestGlobalRegistryFunctions:
         """测试全局注册表隔离"""
         # 重置全局注册表
         import src.adapters.registry_simple
+
         src.adapters.registry_simple._global_registry = None
 
         # 注册适配器到全局注册表
@@ -847,7 +860,9 @@ class TestGlobalRegistryFunctions:
         mock_class.assert_called_once_with()
 
 
-@pytest.mark.skipif(not REGISTRY_SIMPLE_AVAILABLE, reason="Simple registry module not available")
+@pytest.mark.skipif(
+    not REGISTRY_SIMPLE_AVAILABLE, reason="Simple registry module not available"
+)
 class TestModuleIntegration:
     """模块集成测试"""
 
@@ -856,35 +871,35 @@ class TestModuleIntegration:
         from src.adapters import registry_simple
 
         # 验证所有预期的导出都存在
-        assert hasattr(registry_simple, 'AdapterRegistry')
-        assert hasattr(registry_simple, 'get_global_registry')
-        assert hasattr(registry_simple, 'register_adapter')
-        assert hasattr(registry_simple, '_global_registry')
+        assert hasattr(registry_simple, "AdapterRegistry")
+        assert hasattr(registry_simple, "get_global_registry")
+        assert hasattr(registry_simple, "register_adapter")
+        assert hasattr(registry_simple, "_global_registry")
 
     def test_adapter_registry_class_attributes(self):
         """测试AdapterRegistry类属性"""
         # 验证类有预期的属性
-        assert hasattr(AdapterRegistry, 'register')
-        assert hasattr(AdapterRegistry, 'unregister')
-        assert hasattr(AdapterRegistry, 'create')
-        assert hasattr(AdapterRegistry, 'get_info')
-        assert hasattr(AdapterRegistry, 'list')
-        assert hasattr(AdapterRegistry, 'get_singleton')
-        assert hasattr(AdapterRegistry, 'clear')
-        assert hasattr(AdapterRegistry, 'validate_config')
-        assert hasattr(AdapterRegistry, 'get_dependencies')
-        assert hasattr(AdapterRegistry, 'resolve_dependencies')
-        assert hasattr(AdapterRegistry, 'get_statistics')
-        assert hasattr(AdapterRegistry, 'export')
-        assert hasattr(AdapterRegistry, 'import_data')
-        assert hasattr(AdapterRegistry, 'adapter')
+        assert hasattr(AdapterRegistry, "register")
+        assert hasattr(AdapterRegistry, "unregister")
+        assert hasattr(AdapterRegistry, "create")
+        assert hasattr(AdapterRegistry, "get_info")
+        assert hasattr(AdapterRegistry, "list")
+        assert hasattr(AdapterRegistry, "get_singleton")
+        assert hasattr(AdapterRegistry, "clear")
+        assert hasattr(AdapterRegistry, "validate_config")
+        assert hasattr(AdapterRegistry, "get_dependencies")
+        assert hasattr(AdapterRegistry, "resolve_dependencies")
+        assert hasattr(AdapterRegistry, "get_statistics")
+        assert hasattr(AdapterRegistry, "export")
+        assert hasattr(AdapterRegistry, "import_data")
+        assert hasattr(AdapterRegistry, "adapter")
 
     def test_global_registry_variable(self):
         """测试全局注册表变量"""
         import src.adapters.registry_simple
 
         # 验证全局变量存在
-        assert hasattr(src.adapters.registry_simple, '_global_registry')
+        assert hasattr(src.adapters.registry_simple, "_global_registry")
 
         # 初始状态应该是None
         original_value = src.adapters.registry_simple._global_registry
@@ -908,7 +923,7 @@ class TestModuleIntegration:
 
         # 测试register_adapter签名
         sig = inspect.signature(register_adapter)
-        expected_params = ['name']
+        expected_params = ["name"]
         actual_params = list(sig.parameters.keys())
         for param in expected_params:
             assert param in actual_params
@@ -920,6 +935,7 @@ class TestModuleIntegration:
 
         # 重置全局注册表
         import src.adapters.registry_simple
+
         src.adapters.registry_simple._global_registry = None
 
         results = []
@@ -992,5 +1008,5 @@ class TestModuleIntegration:
 
         # 验证可以正常使用
         registry = AdapterRegistry()
-        assert hasattr(registry, 'register')
-        assert hasattr(registry, 'create')
+        assert hasattr(registry, "register")
+        assert hasattr(registry, "create")

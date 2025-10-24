@@ -16,7 +16,7 @@ import sys
 import os
 
 # 添加项目根目录到sys.path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../.."))
 
 # 尝试导入适配器API
 try:
@@ -34,6 +34,7 @@ class TestAdaptersAPI:
     def client(self):
         """创建测试客户端"""
         from fastapi import FastAPI
+
         app = FastAPI()
         app.include_router(router)
         return TestClient(app)
@@ -41,7 +42,7 @@ class TestAdaptersAPI:
     @pytest.fixture
     def mock_registry(self):
         """模拟适配器注册表"""
-        with patch('src.api.adapters.adapter_registry') as mock:
+        with patch("src.api.adapters.adapter_registry") as mock:
             mock.status.value = "inactive"
             mock.get_health_status = AsyncMock(return_value={"status": "healthy"})
             mock.get_metrics_summary = Mock(return_value={"total_adapters": 5})
@@ -59,7 +60,7 @@ class TestAdaptersAPI:
     @pytest.fixture
     def mock_factory(self):
         """模拟适配器工厂"""
-        with patch('src.api.adapters.adapter_factory') as mock:
+        with patch("src.api.adapters.adapter_factory") as mock:
             mock.get_config = Mock(return_value={})
             mock.get_group_config = Mock(return_value={})
             mock.list_configs = Mock(return_value=[])
@@ -154,7 +155,7 @@ class TestAdaptersAPI:
         mock_adapter.request.return_value = {
             "matches": [
                 {"id": 1, "home": "Team A", "away": "Team B"},
-                {"id": 2, "home": "Team C", "away": "Team D"}
+                {"id": 2, "home": "Team C", "away": "Team D"},
             ]
         }
         mock_registry.get_adapter.return_value = mock_adapter
@@ -197,7 +198,7 @@ class TestAdaptersAPI:
             "id": 123,
             "home": "Team A",
             "away": "Team B",
-            "date": "2024-01-15"
+            "date": "2024-01-15",
         }
         mock_registry.get_adapter.return_value = mock_adapter
 
@@ -211,7 +212,9 @@ class TestAdaptersAPI:
     def test_get_football_match_not_found(self, client, mock_registry):
         """测试获取不存在的足球比赛"""
         mock_adapter = Mock()
-        mock_adapter.request.side_effect = HTTPException(status_code=404, detail="Match not found")
+        mock_adapter.request.side_effect = HTTPException(
+            status_code=404, detail="Match not found"
+        )
         mock_registry.get_adapter.return_value = mock_adapter
 
         response = client.get("/adapters/football/matches/999")
@@ -231,10 +234,7 @@ class TestAdaptersAPI:
         """测试成功获取足球队列表"""
         mock_adapter = Mock()
         mock_adapter.request.return_value = {
-            "teams": [
-                {"id": 1, "name": "Team A"},
-                {"id": 2, "name": "Team B"}
-            ]
+            "teams": [{"id": 1, "name": "Team A"}, {"id": 2, "name": "Team B"}]
         }
         mock_registry.get_adapter.return_value = mock_adapter
 
@@ -272,7 +272,7 @@ class TestAdaptersAPI:
         mock_adapter.request.return_value = {
             "players": [
                 {"id": 1, "name": "Player A", "position": "Forward"},
-                {"id": 2, "name": "Player B", "position": "Goalkeeper"}
+                {"id": 2, "name": "Player B", "position": "Goalkeeper"},
             ]
         }
         mock_registry.get_adapter.return_value = mock_adapter
@@ -323,7 +323,9 @@ class TestAdaptersAPI:
 
     def test_get_football_matches_error(self, client, mock_registry):
         """测试获取足球比赛时出错"""
-        mock_registry.get_adapter.side_effect = HTTPException(status_code=503, detail="Service unavailable")
+        mock_registry.get_adapter.side_effect = HTTPException(
+            status_code=503, detail="Service unavailable"
+        )
 
         response = client.get("/adapters/football/matches")
 
@@ -388,7 +390,7 @@ class TestAdaptersModuleStructure:
     def test_router_exists(self):
         """测试路由器存在"""
         assert router is not None
-        assert hasattr(router, 'routes')
+        assert hasattr(router, "routes")
 
     def test_adapter_factory_exists(self):
         """测试适配器工厂存在"""
@@ -416,6 +418,7 @@ class TestModuleImports:
         """测试适配器导入"""
         try:
             from src.api.adapters import router
+
             assert router is not None
         except ImportError as e:
             pytest.skip(f"适配器模块导入失败: {e}")
@@ -424,6 +427,7 @@ class TestModuleImports:
         """测试适配器类导入"""
         try:
             from src.adapters import AdapterFactory, AdapterRegistry
+
             assert AdapterFactory is not None
             assert AdapterRegistry is not None
         except ImportError as e:

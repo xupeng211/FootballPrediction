@@ -4,6 +4,7 @@ def test_schema_imports():
     try:
         from src.api.schemas import PredictionRequest
         from src.api.schemas import PredictionResponse
+
         assert True
     except ImportError:
         assert False

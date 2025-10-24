@@ -374,9 +374,9 @@ class TestAPIDependenciesEnhanced:
             execution_time = end_time - start_time
 
             # 性能应该在合理范围内（小于1秒）
-            assert (
-                execution_time < 1.0
-            ), f"Dependency resolution took too long: {execution_time}s"
+            assert execution_time < 1.0, (
+                f"Dependency resolution took too long: {execution_time}s"
+            )
 
     # === 配置测试 ===
 

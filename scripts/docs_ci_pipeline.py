@@ -905,7 +905,7 @@ async def main():
         )
 
     # 保存报告
-    report_path = pipeline.save_pipeline_report(args.report_output)
+    pipeline.save_pipeline_report(args.report_output)
 
     # 打印摘要
     pipeline.print_pipeline_summary()

@@ -14,6 +14,7 @@ Base = declarative_base()
 
 class RawMatchData(Base):
     """原始比赛数据表"""
+
     __tablename__ = "raw_match_data"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -33,6 +34,7 @@ class RawMatchData(Base):
 
 class RawOddsData(Base):
     """原始赔率数据表"""
+
     __tablename__ = "raw_odds_data"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -48,6 +50,7 @@ class RawOddsData(Base):
 
 class RawStatisticsData(Base):
     """原始统计数据表"""
+
     __tablename__ = "raw_statistics_data"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -65,6 +68,7 @@ class RawStatisticsData(Base):
 # Pydantic模型用于API
 class RawMatchDataCreate(BaseModel):
     """创建原始比赛数据"""
+
     match_id: str = Field(..., description="比赛ID")
     home_team: str = Field(..., description="主队")
     away_team: str = Field(..., description="客队")
@@ -79,6 +83,7 @@ class RawMatchDataCreate(BaseModel):
 
 class RawMatchDataResponse(BaseModel):
     """原始比赛数据响应"""
+
     id: int
     match_id: str
     home_team: str
@@ -99,6 +104,7 @@ class RawMatchDataResponse(BaseModel):
 
 class RawOddsDataCreate(BaseModel):
     """创建原始赔率数据"""
+
     match_id: str = Field(..., description="比赛ID")
     bookmaker: str = Field(..., description="博彩公司")
     market: str = Field(..., description="市场类型")
@@ -110,6 +116,7 @@ class RawOddsDataCreate(BaseModel):
 
 class RawOddsDataResponse(BaseModel):
     """原始赔率数据响应"""
+
     id: int
     match_id: str
     bookmaker: str
@@ -126,6 +133,7 @@ class RawOddsDataResponse(BaseModel):
 
 class RawStatisticsDataCreate(BaseModel):
     """创建原始统计数据"""
+
     match_id: str = Field(..., description="比赛ID")
     team: str = Field(..., description="队伍")
     stat_type: str = Field(..., description="统计类型")
@@ -138,6 +146,7 @@ class RawStatisticsDataCreate(BaseModel):
 
 class RawStatisticsDataResponse(BaseModel):
     """原始统计数据响应"""
+
     id: int
     match_id: str
     team: str

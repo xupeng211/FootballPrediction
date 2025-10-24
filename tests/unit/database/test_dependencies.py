@@ -10,6 +10,7 @@ import asyncio
 # Test imports
 try:
     from database.dependencies import *
+
     IMPORT_SUCCESS = True
 except ImportError as e:
     IMPORT_SUCCESS = False

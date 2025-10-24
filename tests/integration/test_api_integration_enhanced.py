@@ -78,9 +78,9 @@ class TestAPIIntegrationEnhanced:
                 headers={"Authorization": "Bearer test_token"},
             )
 
-            assert response.status_code == 201
+            assert response.status_code   == 201
             _prediction = response.json()
-            assert prediction["prediction"] == "home_win"
+            assert prediction["prediction"]   == "home_win"
 
         # 2. 获取预测历史
         with patch("src.api.predictions.PredictionService") as mock_service:
@@ -91,10 +91,10 @@ class TestAPIIntegrationEnhanced:
                 headers={"Authorization": "Bearer test_token"},
             )
 
-            assert response.status_code == 200
+            assert response.status_code   == 200
             history = response.json()
             assert len(history) == 1
-            assert history[0]["prediction"] == "home_win"
+            assert history[0]["prediction"]   == "home_win"
 
     async def test_live_match_updates_workflow(self, api_client, sample_workflow_data):
         """测试实时比赛更新工作流"""
@@ -124,10 +124,10 @@ class TestAPIIntegrationEnhanced:
                 f"/api/v1/matches/{sample_workflow_data['match']['id']}/live"
             )
 
-            assert response.status_code == 200
+            assert response.status_code   == 200
             live = response.json()
             assert len(live["events"]) == 2
-            assert live["statistics"]["possession"]["home"] == 55
+            assert live["statistics"]["possession"]["home"]   == 55
 
     async def test_odds_updates_and_prediction_correlation(self, api_client):
         """测试赔率更新与预测的关联"""
@@ -168,13 +168,13 @@ class TestAPIIntegrationEnhanced:
                     json={"match_id": 999, "current_odds": odds},
                 )
 
-                assert response.status_code == 200
+                assert response.status_code   == 200
                 pred = response.json()
                 predictions.append(pred)
 
         # 验证预测与赔率变化的关联
         assert predictions[0]["prediction"] == "draw"
-        assert predictions[2]["prediction"] == "home_win"
+        assert predictions[2]["prediction"]   == "home_win"
         assert predictions[2]["confidence"] > predictions[0]["confidence"]
 
     async def test_batch_predictions_workflow(self, api_client):
@@ -202,7 +202,7 @@ class TestAPIIntegrationEnhanced:
                 headers={"Authorization": "Bearer test_token"},
             )
 
-            assert response.status_code == 200
+            assert response.status_code   == 200
             results = response.json()
             assert len(results) == 3
             assert all("prediction" in r for r in results)
@@ -218,7 +218,7 @@ class TestAPIIntegrationEnhanced:
             with patch("src.cache.redis_manager.set_cache_value") as mock_set:
                 response = api_client.get(f"/api/v1/matches/{match_id}")
 
-                assert response.status_code == 200
+                assert response.status_code   == 200
                 mock_set.assert_called_once()
 
         # 2. 更新数据，触发缓存失效
@@ -238,7 +238,7 @@ class TestAPIIntegrationEnhanced:
             mock_get.return_value = None  # 缓存已失效
 
             response = api_client.get(f"/api/v1/matches/{match_id}")
-            assert response.status_code == 200
+            assert response.status_code   == 200
 
     async def test_error_propagation_workflow(self, api_client):
         """测试错误传播工作流"""
@@ -248,7 +248,7 @@ class TestAPIIntegrationEnhanced:
 
             response = api_client.post("/api/v1/predictions", json={"match_id": 777})
 
-            assert response.status_code == 503
+            assert response.status_code   == 503
             error = response.json()
             assert "error" in error
             assert "Model service unavailable" in error["detail"]
@@ -264,16 +264,16 @@ class TestAPIIntegrationEnhanced:
             mock_db.return_value.__aenter__.return_value.execute.return_value = match_id
 
             response = api_client.post("/api/v1/matches", json=create_data)
-            assert response.status_code == 201
+            assert response.status_code   == 201
 
         # 获取比赛验证数据一致性
         response = api_client.get(f"/api/v1/matches/{match_id}")
-        assert response.status_code == 200
+        assert response.status_code   == 200
 
         match = response.json()
         assert match["id"] == match_id
         assert match["home_team_id"] == create_data["home_team_id"]
-        assert match["away_team_id"] == create_data["away_team_id"]
+        assert match["away_team_id"]   == create_data["away_team_id"]
 
     async def test_concurrent_requests_workflow(self, api_client):
         """测试并发请求工作流"""
@@ -316,13 +316,13 @@ class TestAPIIntegrationEnhanced:
         """测试认证流程"""
         # 1. 未认证请求
         response = api_client.get("/api/v1/predictions/1")
-        assert response.status_code == 401
+        assert response.status_code   == 401
 
         # 2. 使用无效token
         response = api_client.get(
             "/api/v1/predictions/1", headers={"Authorization": "Bearer invalid_token"}
         )
-        assert response.status_code == 401
+        assert response.status_code   == 401
 
         # 3. 使用有效token
         with patch("src.api.auth.verify_token") as mock_verify:
@@ -338,7 +338,7 @@ class TestAPIIntegrationEnhanced:
         """测试API版本控制"""
         # 测试v1 API
         response = api_client.get("/api/v1/health")
-        assert response.status_code == 200
+        assert response.status_code   == 200
 
         # 测试版本响应头
         assert "api-version" in response.headers or "X-API-Version" in response.headers
@@ -351,7 +351,7 @@ class TestAPIIntegrationEnhanced:
             _data="invalid json",
             headers={"Content-Type": "application/json"},
         )
-        assert response.status_code == 422
+        assert response.status_code   == 422
 
         # 测试必填字段缺失
         response = api_client.post(
@@ -367,7 +367,7 @@ class TestAPIIntegrationEnhanced:
         response = api_client.get("/api/v1/health")
 
         # 验证响应是JSON
-        assert response.headers["content-type"] == "application/json"
+        assert response.headers["content-type"]   == "application/json"
 
         # 验证响应结构
         _data = response.json()

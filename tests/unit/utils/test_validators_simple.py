@@ -18,6 +18,7 @@ try:
         validate_required_fields,
         validate_data_types,
     )
+
     VALIDATORS_AVAILABLE = True
 except ImportError:
     VALIDATORS_AVAILABLE = False
@@ -153,11 +154,7 @@ class TestValidatorsSimple:
 
     def test_validate_required_fields_all_present(self):
         """测试所有必需字段都存在"""
-        data = {
-            "name": "John Doe",
-            "email": "john@example.com",
-            "age": 30
-        }
+        data = {"name": "John Doe", "email": "john@example.com", "age": 30}
         required_fields = ["name", "email", "age"]
 
         result = validate_required_fields(data, required_fields)
@@ -165,10 +162,7 @@ class TestValidatorsSimple:
 
     def test_validate_required_fields_missing_fields(self):
         """测试缺少必需字段"""
-        data = {
-            "name": "John Doe",
-            "email": "john@example.com"
-        }
+        data = {"name": "John Doe", "email": "john@example.com"}
         required_fields = ["name", "email", "age", "phone"]
 
         result = validate_required_fields(data, required_fields)
@@ -176,12 +170,7 @@ class TestValidatorsSimple:
 
     def test_validate_required_fields_none_values(self):
         """测试None值被视为缺失"""
-        data = {
-            "name": "John Doe",
-            "email": None,
-            "age": 30,
-            "phone": None
-        }
+        data = {"name": "John Doe", "email": None, "age": 30, "phone": None}
         required_fields = ["name", "email", "age", "phone"]
 
         result = validate_required_fields(data, required_fields)
@@ -189,12 +178,7 @@ class TestValidatorsSimple:
 
     def test_validate_required_fields_empty_string_values(self):
         """测试空字符串被视为缺失"""
-        data = {
-            "name": "John Doe",
-            "email": "",
-            "age": 30,
-            "phone": "   "
-        }
+        data = {"name": "John Doe", "email": "", "age": 30, "phone": "   "}
         required_fields = ["name", "email", "age", "phone"]
 
         result = validate_required_fields(data, required_fields)
@@ -224,18 +208,8 @@ class TestValidatorsSimple:
 
     def test_validate_data_types_correct_types(self):
         """测试正确的数据类型"""
-        data = {
-            "name": "John",
-            "age": 30,
-            "active": True,
-            "scores": [95, 87, 92]
-        }
-        schema = {
-            "name": str,
-            "age": int,
-            "active": bool,
-            "scores": list
-        }
+        data = {"name": "John", "age": 30, "active": True, "scores": [95, 87, 92]}
+        schema = {"name": str, "age": int, "active": bool, "scores": list}
 
         result = validate_data_types(data, schema)
         assert result == []
@@ -247,15 +221,9 @@ class TestValidatorsSimple:
             "age": "30",  # 应该是int
             "active": "true",  # 应该是bool
             "scores": [95, 87, 92],
-            "email": None  # 应该是str
+            "email": None,  # 应该是str
         }
-        schema = {
-            "name": str,
-            "age": int,
-            "active": bool,
-            "scores": list,
-            "email": str
-        }
+        schema = {"name": str, "age": int, "active": bool, "scores": list, "email": str}
 
         result = validate_data_types(data, schema)
         assert len(result) == 3
@@ -272,24 +240,19 @@ class TestValidatorsSimple:
             "name": "John",
             "age": 30,
             "active": True,
-            "extra_field": "not in schema"
+            "extra_field": "not in schema",
         }
-        schema = {
-            "name": str,
-            "age": int
-        }
+        schema = {"name": str, "age": int}
 
         result = validate_data_types(data, schema)
         assert result == []
 
     def test_validate_data_types_missing_fields_in_data(self):
         """测试数据中缺少schema中的字段"""
-        data = {
-            "name": "John"
-        }
+        data = {"name": "John"}
         schema = {
             "name": str,
-            "age": int  # 字段不存在于数据中
+            "age": int,  # 字段不存在于数据中
         }
 
         result = validate_data_types(data, schema)
@@ -299,12 +262,9 @@ class TestValidatorsSimple:
         """测试类型继承（bool是int的子类）"""
         data = {
             "count": True,  # bool是int的子类
-            "flag": False
+            "flag": False,
         }
-        schema = {
-            "count": int,
-            "flag": bool
-        }
+        schema = {"count": int, "flag": bool}
 
         result = validate_data_types(data, schema)
         # count字段可能有类型检查问题，但flag应该正确
@@ -312,15 +272,11 @@ class TestValidatorsSimple:
 
     def test_validate_data_types_special_types(self):
         """测试特殊类型"""
-        data = {
-            "items": [1, 2, 3],
-            "config": {"key": "value"},
-            "callback": lambda x: x
-        }
+        data = {"items": [1, 2, 3], "config": {"key": "value"}, "callback": lambda x: x}
         schema = {
             "items": list,
             "config": dict,
-            "callback": object  # 任何对象都匹配object
+            "callback": object,  # 任何对象都匹配object
         }
 
         result = validate_data_types(data, schema)
@@ -328,14 +284,8 @@ class TestValidatorsSimple:
 
     def test_validate_data_types_none_values(self):
         """测试None值"""
-        data = {
-            "name": None,
-            "age": None
-        }
-        schema = {
-            "name": str,
-            "age": int
-        }
+        data = {"name": None, "age": None}
+        schema = {"name": str, "age": int}
 
         result = validate_data_types(data, schema)
         assert len(result) == 2
@@ -351,7 +301,7 @@ class TestValidatorsSimple:
             "phone": "1234567890",  # 使用简单电话号码避免正则表达式错误
             "website": "https://johndoe.com",
             "age": 30,
-            "premium": True
+            "premium": True,
         }
 
         # 1. 验证必需字段
@@ -360,12 +310,7 @@ class TestValidatorsSimple:
         assert missing == []
 
         # 2. 验证数据类型
-        type_schema = {
-            "name": str,
-            "email": str,
-            "age": int,
-            "premium": bool
-        }
+        type_schema = {"name": str, "email": str, "age": int, "premium": bool}
         type_errors = validate_data_types(user_data, type_schema)
         assert type_errors == []
 

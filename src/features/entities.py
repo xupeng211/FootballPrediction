@@ -14,6 +14,7 @@ from typing import Dict, Any, Optional
 @dataclass
 class FeatureEntity:
     """基础特征实体类"""
+
     id: str
     feature_type: str
     data: Dict[str, Any]

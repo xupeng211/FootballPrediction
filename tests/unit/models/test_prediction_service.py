@@ -24,12 +24,15 @@ try:
         model_load_duration_seconds,
         cache_hit_ratio,
     )
+
     PREDICTION_SERVICE_AVAILABLE = True
 except ImportError:
     PREDICTION_SERVICE_AVAILABLE = False
 
 
-@pytest.mark.skipif(not PREDICTION_SERVICE_AVAILABLE, reason="Prediction service module not available")
+@pytest.mark.skipif(
+    not PREDICTION_SERVICE_AVAILABLE, reason="Prediction service module not available"
+)
 class TestModuleImports:
     """模块导入测试"""
 
@@ -65,7 +68,9 @@ class TestModuleImports:
         assert callable(cache_hit_ratio)
 
 
-@pytest.mark.skipif(not PREDICTION_SERVICE_AVAILABLE, reason="Prediction service module not available")
+@pytest.mark.skipif(
+    not PREDICTION_SERVICE_AVAILABLE, reason="Prediction service module not available"
+)
 class TestModuleStructure:
     """模块结构测试"""
 
@@ -73,7 +78,7 @@ class TestModuleStructure:
         """测试__all__存在"""
         from src.models import prediction_service
 
-        assert hasattr(prediction_service, '__all__')
+        assert hasattr(prediction_service, "__all__")
         assert isinstance(prediction_service.__all__, list)
 
     def test_module_all_contents(self):
@@ -94,7 +99,9 @@ class TestModuleStructure:
         actual_all = set(prediction_service.__all__)
         expected_all_set = set(expected_all)
 
-        assert actual_all == expected_all_set, f"Expected {expected_all_set}, got {actual_all}"
+        assert actual_all == expected_all_set, (
+            f"Expected {expected_all_set}, got {actual_all}"
+        )
 
     def test_module_all_exports_exist(self):
         """测试__all__中的导出都存在"""
@@ -116,7 +123,9 @@ class TestModuleStructure:
         assert PredictionCache is OriginalPredictionCache
 
 
-@pytest.mark.skipif(not PREDICTION_SERVICE_AVAILABLE, reason="Prediction service module not available")
+@pytest.mark.skipif(
+    not PREDICTION_SERVICE_AVAILABLE, reason="Prediction service module not available"
+)
 class TestImportedFunctionality:
     """导入功能测试"""
 
@@ -130,7 +139,7 @@ class TestImportedFunctionality:
             predicted_result="home_win",
             confidence=0.85,
             prediction_time=datetime.datetime.utcnow(),
-            model_version="v1.0.0"
+            model_version="v1.0.0",
         )
 
         assert result.match_id == 12345
@@ -151,10 +160,10 @@ class TestImportedFunctionality:
         assert isinstance(service.cache, PredictionCache)
 
         # 测试异步方法存在
-        assert hasattr(service, 'predict_match')
-        assert hasattr(service, 'batch_predict_matches')
-        assert hasattr(service, 'verify_prediction')
-        assert hasattr(service, 'get_prediction_statistics')
+        assert hasattr(service, "predict_match")
+        assert hasattr(service, "batch_predict_matches")
+        assert hasattr(service, "verify_prediction")
+        assert hasattr(service, "get_prediction_statistics")
 
     def test_prediction_cache_functionality(self):
         """测试PredictionCache功能"""
@@ -169,7 +178,7 @@ class TestImportedFunctionality:
             predicted_result="draw",
             confidence=0.50,
             prediction_time=datetime.datetime.utcnow(),
-            model_version="v1.0.0"
+            model_version="v1.0.0",
         )
 
         cache.set("test_key", result)
@@ -198,7 +207,9 @@ class TestImportedFunctionality:
         assert duration == 1.5
 
 
-@pytest.mark.skipif(not PREDICTION_SERVICE_AVAILABLE, reason="Prediction service module not available")
+@pytest.mark.skipif(
+    not PREDICTION_SERVICE_AVAILABLE, reason="Prediction service module not available"
+)
 class TestModuleDocumentation:
     """模块文档测试"""
 
@@ -237,7 +248,9 @@ class TestModuleDocumentation:
         assert OriginalCache.__doc__ is not None
 
 
-@pytest.mark.skipif(not PREDICTION_SERVICE_AVAILABLE, reason="Prediction service module not available")
+@pytest.mark.skipif(
+    not PREDICTION_SERVICE_AVAILABLE, reason="Prediction service module not available"
+)
 class TestIntegrationWithOriginalModule:
     """与原始模块集成测试"""
 
@@ -268,7 +281,7 @@ class TestIntegrationWithOriginalModule:
             predicted_result="away_win",
             confidence=0.75,
             prediction_time=datetime.datetime.utcnow(),
-            model_version="v2.0.0"
+            model_version="v2.0.0",
         )
 
         # 验证基本功能
@@ -284,6 +297,7 @@ class TestIntegrationWithOriginalModule:
 
         # 通过原始模块应该看到相同的修改
         from src.models.prediction import predictions_total as original_total
+
         assert original_total() == initial_count + 1
 
         # 通过prediction_service设置仪表
@@ -291,10 +305,13 @@ class TestIntegrationWithOriginalModule:
 
         # 通过原始模块应该看到相同的值
         from src.models.prediction import prediction_accuracy as original_accuracy
+
         assert original_accuracy() == 0.88
 
 
-@pytest.mark.skipif(not PREDICTION_SERVICE_AVAILABLE, reason="Prediction service module not available")
+@pytest.mark.skipif(
+    not PREDICTION_SERVICE_AVAILABLE, reason="Prediction service module not available"
+)
 class TestErrorHandling:
     """错误处理测试"""
 
@@ -313,6 +330,7 @@ class TestErrorHandling:
             from src.models.prediction_service import PredictionService
             from src.models.prediction_service import PredictionCache
             from src.models.prediction_service import predictions_total
+
             assert True
         except ImportError as e:
             pytest.fail(f"Expected import should not fail: {e}")
@@ -328,11 +346,14 @@ class TestErrorHandling:
 
         # 验证导入仍然有效
         from src.models.prediction_service import PredictionResult, PredictionService
+
         assert PredictionResult is not None
         assert PredictionService is not None
 
 
-@pytest.mark.skipif(not PREDICTION_SERVICE_AVAILABLE, reason="Prediction service module not available")
+@pytest.mark.skipif(
+    not PREDICTION_SERVICE_AVAILABLE, reason="Prediction service module not available"
+)
 class TestBackwardCompatibility:
     """向后兼容性测试"""
 
@@ -343,12 +364,12 @@ class TestBackwardCompatibility:
         cache = PredictionCache()
 
         # 验证这些对象有预期的属性和方法
-        assert hasattr(service, 'mlflow_tracking_uri')
-        assert hasattr(service, 'cache')
-        assert hasattr(cache, '_cache')
-        assert hasattr(cache, 'get')
-        assert hasattr(cache, 'set')
-        assert hasattr(cache, 'clear')
+        assert hasattr(service, "mlflow_tracking_uri")
+        assert hasattr(service, "cache")
+        assert hasattr(cache, "_cache")
+        assert hasattr(cache, "get")
+        assert hasattr(cache, "set")
+        assert hasattr(cache, "clear")
 
     def test_original_behavior_preserved(self):
         """测试原始行为保持不变"""
@@ -360,7 +381,7 @@ class TestBackwardCompatibility:
             predicted_result="home_win",
             confidence=0.80,
             prediction_time=datetime.datetime.utcnow(),
-            model_version="v1.0.0"
+            model_version="v1.0.0",
         )
 
         # 验证__post_init__正常工作
@@ -390,7 +411,9 @@ class TestBackwardCompatibility:
             pytest.fail(f"Backward compatibility import failed: {e}")
 
 
-@pytest.mark.skipif(not PREDICTION_SERVICE_AVAILABLE, reason="Prediction service module not available")
+@pytest.mark.skipif(
+    not PREDICTION_SERVICE_AVAILABLE, reason="Prediction service module not available"
+)
 class TestModuleAttributes:
     """模块属性测试"""
 
@@ -399,28 +422,30 @@ class TestModuleAttributes:
         import src.models.prediction_service
 
         # 验证模块有正确的文件路径
-        assert hasattr(src.models.prediction_service, '__file__')
+        assert hasattr(src.models.prediction_service, "__file__")
         file_path = src.models.prediction_service.__file__
-        assert 'prediction_service.py' in file_path
+        assert "prediction_service.py" in file_path
 
     def test_module_package(self):
         """测试模块包信息"""
         import src.models.prediction_service
 
         # 验证模块包信息正确
-        assert hasattr(src.models.prediction_service, '__package__')
-        assert src.models.prediction_service.__package__ == 'src.models'
+        assert hasattr(src.models.prediction_service, "__package__")
+        assert src.models.prediction_service.__package__ == "src.models"
 
     def test_module_name(self):
         """测试模块名称"""
         import src.models.prediction_service
 
         # 验证模块名称正确
-        assert hasattr(src.models.prediction_service, '__name__')
-        assert src.models.prediction_service.__name__ == 'src.models.prediction_service'
+        assert hasattr(src.models.prediction_service, "__name__")
+        assert src.models.prediction_service.__name__ == "src.models.prediction_service"
 
 
-@pytest.mark.skipif(not PREDICTION_SERVICE_AVAILABLE, reason="Prediction service module not available")
+@pytest.mark.skipif(
+    not PREDICTION_SERVICE_AVAILABLE, reason="Prediction service module not available"
+)
 class TestFutureProofing:
     """面向未来测试"""
 
@@ -430,7 +455,7 @@ class TestFutureProofing:
         from src.models import prediction_service
 
         # 模块应该有明确的__all__定义
-        assert hasattr(prediction_service, '__all__')
+        assert hasattr(prediction_service, "__all__")
         assert len(prediction_service.__all__) > 0
 
         # 所有导出都应该可访问
@@ -452,5 +477,11 @@ class TestFutureProofing:
             from src.models.prediction_service import PredictionResult
 
             # 验证没有弃用警告
-            deprecation_warnings = [warning for warning in w if issubclass(warning.category, DeprecationWarning)]
-            assert len(deprecation_warnings) == 0, f"Unexpected deprecation warnings: {[str(w) for w in deprecation_warnings]}"
+            deprecation_warnings = [
+                warning
+                for warning in w
+                if issubclass(warning.category, DeprecationWarning)
+            ]
+            assert len(deprecation_warnings) == 0, (
+                f"Unexpected deprecation warnings: {[str(w) for w in deprecation_warnings]}"
+            )

@@ -3,10 +3,12 @@ from sqlalchemy.exc import SQLAlchemyError, DatabaseError
 from typing import Union, Sequence
 
 import logging
+
 logger = logging.getLogger(__name__)
 from sqlalchemy import text
 from alembic import context
 from alembic import op
+
 """add_missing_database_indexes
 
 

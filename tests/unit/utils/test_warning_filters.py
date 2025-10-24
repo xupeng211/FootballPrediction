@@ -16,12 +16,15 @@ from unittest.mock import patch, MagicMock
 try:
     from src.utils import warning_filters
     from src.utils.warning_filters import setup_warning_filters
+
     WARNING_FILTERS_AVAILABLE = True
 except ImportError:
     WARNING_FILTERS_AVAILABLE = False
 
 
-@pytest.mark.skipif(not WARNING_FILTERS_AVAILABLE, reason="Warning filters module not available")
+@pytest.mark.skipif(
+    not WARNING_FILTERS_AVAILABLE, reason="Warning filters module not available"
+)
 class TestSetupWarningFilters:
     """setup_warning_filters函数测试"""
 
@@ -67,7 +70,7 @@ class TestSetupWarningFilters:
             # 恢复原始的警告过滤器状态
             warnings.filters[:] = original_filters
 
-    @patch('warnings.filterwarnings')
+    @patch("warnings.filterwarnings")
     def test_setup_warning_filters_calls_filterwarnings(self, mock_filterwarnings):
         """测试setup_warning_filters调用filterwarnings"""
         # 调用函数
@@ -93,7 +96,9 @@ class TestSetupWarningFilters:
                 warnings.warn("Test user warning", UserWarning)
                 warnings.warn("Test deprecation warning", DeprecationWarning)
                 warnings.warn("Test future warning", FutureWarning)
-                warnings.warn("Test pending deprecation warning", PendingDeprecationWarning)
+                warnings.warn(
+                    "Test pending deprecation warning", PendingDeprecationWarning
+                )
 
                 # 验证没有崩溃
                 assert isinstance(w, list)
@@ -103,7 +108,9 @@ class TestSetupWarningFilters:
             warnings.filters[:] = original_filters
 
 
-@pytest.mark.skipif(not WARNING_FILTERS_AVAILABLE, reason="Warning filters module not available")
+@pytest.mark.skipif(
+    not WARNING_FILTERS_AVAILABLE, reason="Warning filters module not available"
+)
 class TestModuleAutoExecution:
     """模块自动执行测试"""
 
@@ -123,7 +130,7 @@ class TestModuleAutoExecution:
             # 在pytest环境下不应该自动执行
             assert True
 
-    @patch('logging.getLogger')
+    @patch("logging.getLogger")
     def test_auto_execution_error_handling(self, mock_get_logger):
         """测试自动执行时的异常处理"""
         # 设置模拟logger
@@ -132,15 +139,17 @@ class TestModuleAutoExecution:
 
         # 模拟异常处理场景
         test_exception = ValueError("Test error")
-        logger = logging.getLogger('src.utils.warning_filters')
+        logger = logging.getLogger("src.utils.warning_filters")
         logger.info(f"⚠️  警告过滤器自动设置失败: {test_exception}")
 
         # 验证logger获取被调用
-        mock_get_logger.assert_called_with('src.utils.warning_filters')
+        mock_get_logger.assert_called_with("src.utils.warning_filters")
         # 验证日志记录被调用
-        mock_logger.info.assert_called_once_with("⚠️  警告过滤器自动设置失败: Test error")
+        mock_logger.info.assert_called_once_with(
+            "⚠️  警告过滤器自动设置失败: Test error"
+        )
 
-    @patch('logging.getLogger')
+    @patch("logging.getLogger")
     def test_keyerror_handling(self, mock_get_logger):
         """测试KeyError异常处理"""
         # 设置模拟logger
@@ -149,13 +158,15 @@ class TestModuleAutoExecution:
 
         # 模拟KeyError异常场景
         test_exception = KeyError("Test KeyError")
-        logger = logging.getLogger('src.utils.warning_filters')
+        logger = logging.getLogger("src.utils.warning_filters")
         logger.info(f"⚠️  警告过滤器自动设置失败: {test_exception}")
 
-        mock_get_logger.assert_called_with('src.utils.warning_filters')
-        mock_logger.info.assert_called_once_with("⚠️  警告过滤器自动设置失败: 'Test KeyError'")
+        mock_get_logger.assert_called_with("src.utils.warning_filters")
+        mock_logger.info.assert_called_once_with(
+            "⚠️  警告过滤器自动设置失败: 'Test KeyError'"
+        )
 
-    @patch('logging.getLogger')
+    @patch("logging.getLogger")
     def test_typeerror_handling(self, mock_get_logger):
         """测试TypeError异常处理"""
         # 设置模拟logger
@@ -164,36 +175,41 @@ class TestModuleAutoExecution:
 
         # 模拟TypeError异常场景
         test_exception = TypeError("Test TypeError")
-        logger = logging.getLogger('src.utils.warning_filters')
+        logger = logging.getLogger("src.utils.warning_filters")
         logger.info(f"⚠️  警告过滤器自动设置失败: {test_exception}")
 
-        mock_get_logger.assert_called_with('src.utils.warning_filters')
-        mock_logger.info.assert_called_once_with("⚠️  警告过滤器自动设置失败: Test TypeError")
+        mock_get_logger.assert_called_with("src.utils.warning_filters")
+        mock_logger.info.assert_called_once_with(
+            "⚠️  警告过滤器自动设置失败: Test TypeError"
+        )
 
 
-@pytest.mark.skipif(not WARNING_FILTERS_AVAILABLE, reason="Warning filters module not available")
+@pytest.mark.skipif(
+    not WARNING_FILTERS_AVAILABLE, reason="Warning filters module not available"
+)
 class TestModuleIntegration:
     """模块集成测试"""
 
     def test_module_logger_exists(self):
         """测试模块logger存在"""
-        assert hasattr(warning_filters, 'logger')
+        assert hasattr(warning_filters, "logger")
         assert isinstance(warning_filters.logger, logging.Logger)
 
     def test_module_logger_name(self):
         """测试模块logger名称"""
-        assert warning_filters.logger.name == 'src.utils.warning_filters'
+        assert warning_filters.logger.name == "src.utils.warning_filters"
 
     def test_module_imports(self):
         """测试模块导入正确"""
         # 验证必要的模块被导入
-        assert hasattr(warning_filters, 'logging')
-        assert hasattr(warning_filters, 'sys')
-        assert hasattr(warning_filters, 'warnings')
+        assert hasattr(warning_filters, "logging")
+        assert hasattr(warning_filters, "sys")
+        assert hasattr(warning_filters, "warnings")
 
     def test_function_signature(self):
         """测试函数签名"""
         import inspect
+
         sig = inspect.signature(setup_warning_filters)
 
         # 函数应该没有参数
@@ -233,7 +249,7 @@ class TestModuleIntegration:
         # 验证所有结果都是None
         assert all(result is None for result in results)
 
-    @patch('logging.getLogger')
+    @patch("logging.getLogger")
     def test_exception_coverage(self, mock_get_logger):
         """测试异常处理覆盖所有预期异常类型"""
         expected_exceptions = [ValueError, KeyError, TypeError]
@@ -245,7 +261,7 @@ class TestModuleIntegration:
 
             # 直接模拟异常处理逻辑
             test_exception = exc_type("Test")
-            logger = logging.getLogger('src.utils.warning_filters')
+            logger = logging.getLogger("src.utils.warning_filters")
             logger.info(f"⚠️  警告过滤器自动设置失败: {test_exception}")
 
             # 验证预期的异常被正确处理
@@ -275,5 +291,3 @@ class TestModuleIntegration:
         finally:
             # 恢复原始状态
             warnings.filters[:] = original_filters
-
-    

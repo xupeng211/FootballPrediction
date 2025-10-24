@@ -14,7 +14,7 @@ import sys
 import os
 
 # 添加项目根目录到sys.path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../.."))
 
 
 class TestDatabaseService:
@@ -40,14 +40,21 @@ class TestDatabaseService:
         """创建数据库服务实例"""
         match_repo, prediction_repo, user_repo = mock_repositories
 
-        with patch('src.services.database.database_service.MatchRepository') as mock_match_class:
-            with patch('src.services.database.database_service.PredictionRepository') as mock_pred_class:
-                with patch('src.services.database.database_service.UserRepository') as mock_user_class:
+        with patch(
+            "src.services.database.database_service.MatchRepository"
+        ) as mock_match_class:
+            with patch(
+                "src.services.database.database_service.PredictionRepository"
+            ) as mock_pred_class:
+                with patch(
+                    "src.services.database.database_service.UserRepository"
+                ) as mock_user_class:
                     mock_match_class.return_value = match_repo
                     mock_pred_class.return_value = prediction_repo
                     mock_user_class.return_value = user_repo
 
                     from src.services.database.database_service import DatabaseService
+
                     service = DatabaseService(mock_session)
                     return service
 
@@ -55,14 +62,21 @@ class TestDatabaseService:
         """测试数据库服务初始化"""
         match_repo, prediction_repo, user_repo = mock_repositories
 
-        with patch('src.services.database.database_service.MatchRepository') as mock_match_class:
-            with patch('src.services.database.database_service.PredictionRepository') as mock_pred_class:
-                with patch('src.services.database.database_service.UserRepository') as mock_user_class:
+        with patch(
+            "src.services.database.database_service.MatchRepository"
+        ) as mock_match_class:
+            with patch(
+                "src.services.database.database_service.PredictionRepository"
+            ) as mock_pred_class:
+                with patch(
+                    "src.services.database.database_service.UserRepository"
+                ) as mock_user_class:
                     mock_match_class.return_value = match_repo
                     mock_pred_class.return_value = prediction_repo
                     mock_user_class.return_value = user_repo
 
                     from src.services.database.database_service import DatabaseService
+
                     service = DatabaseService(mock_session)
 
                     assert service.session == mock_session
@@ -70,7 +84,9 @@ class TestDatabaseService:
                     assert service.prediction_repo == prediction_repo
                     assert service.user_repo == user_repo
 
-    async def test_get_match_with_predictions_exists(self, database_service, mock_repositories):
+    async def test_get_match_with_predictions_exists(
+        self, database_service, mock_repositories
+    ):
         """测试获取存在比赛的预测数据"""
         match_repo, prediction_repo, user_repo = mock_repositories
 
@@ -89,7 +105,9 @@ class TestDatabaseService:
         match_repo.get_by_id.assert_called_once_with(123)
         prediction_repo.get_by_match.assert_called_once_with(123)
 
-    async def test_get_match_with_predictions_not_exists(self, database_service, mock_repositories):
+    async def test_get_match_with_predictions_not_exists(
+        self, database_service, mock_repositories
+    ):
         """测试获取不存在比赛的预测数据"""
         match_repo, prediction_repo, user_repo = mock_repositories
 
@@ -150,6 +168,7 @@ class TestAuditService:
         """测试审计服务导入"""
         try:
             from src.services.audit_service_mod.audit_service import AuditService
+
             assert AuditService is not None
         except ImportError:
             pytest.skip("audit_service模块不可用")
@@ -158,6 +177,7 @@ class TestAuditService:
         """测试审计服务创建"""
         try:
             from src.services.audit_service_mod.audit_service import AuditService
+
             service = AuditService()
             assert service is not None
         except ImportError:
@@ -167,6 +187,7 @@ class TestAuditService:
         """测试审计模型导入"""
         try:
             from src.services.audit_service_mod.models import AuditLog
+
             assert AuditLog is not None
         except ImportError:
             pytest.skip("audit models模块不可用")
@@ -179,6 +200,7 @@ class TestProcessingCache:
         """测试处理缓存导入"""
         try:
             from src.services.processing.caching.processing_cache import ProcessingCache
+
             assert ProcessingCache is not None
         except ImportError:
             pytest.skip("processing_cache模块不可用")
@@ -187,6 +209,7 @@ class TestProcessingCache:
         """测试处理缓存创建"""
         try:
             from src.services.processing.caching.processing_cache import ProcessingCache
+
             cache = ProcessingCache()
             assert cache is not None
         except ImportError:
@@ -200,6 +223,7 @@ class TestDataValidator:
         """测试数据验证器导入"""
         try:
             from src.services.processing.validators.data_validator import DataValidator
+
             assert DataValidator is not None
         except ImportError:
             pytest.skip("data_validator模块不可用")
@@ -208,6 +232,7 @@ class TestDataValidator:
         """测试数据验证器创建"""
         try:
             from src.services.processing.validators.data_validator import DataValidator
+
             validator = DataValidator()
             assert validator is not None
         except ImportError:
@@ -220,7 +245,10 @@ class TestMatchProcessor:
     def test_match_processor_imports(self):
         """测试比赛处理器导入"""
         try:
-            from src.services.processing.processors.match_processor import MatchProcessor
+            from src.services.processing.processors.match_processor import (
+                MatchProcessor,
+            )
+
             assert MatchProcessor is not None
         except ImportError:
             pytest.skip("match_processor模块不可用")
@@ -228,11 +256,14 @@ class TestMatchProcessor:
     async def test_match_processor_processing(self):
         """测试比赛处理器处理功能"""
         try:
-            from src.services.processing.processors.match_processor import MatchProcessor
+            from src.services.processing.processors.match_processor import (
+                MatchProcessor,
+            )
+
             processor = MatchProcessor()
 
             # 测试基本处理方法（如果存在）
-            if hasattr(processor, 'process_match'):
+            if hasattr(processor, "process_match"):
                 result = await processor.process_match({"id": 123})
                 assert result is not None
         except ImportError:
@@ -245,7 +276,10 @@ class TestStrategyPredictionService:
     def test_strategy_prediction_service_imports(self):
         """测试策略预测服务导入"""
         try:
-            from src.services.strategy_prediction_service import StrategyPredictionService
+            from src.services.strategy_prediction_service import (
+                StrategyPredictionService,
+            )
+
             assert StrategyPredictionService is not None
         except ImportError:
             pytest.skip("strategy_prediction_service模块不可用")
@@ -253,7 +287,10 @@ class TestStrategyPredictionService:
     def test_strategy_prediction_service_creation(self):
         """测试策略预测服务创建"""
         try:
-            from src.services.strategy_prediction_service import StrategyPredictionService
+            from src.services.strategy_prediction_service import (
+                StrategyPredictionService,
+            )
+
             service = StrategyPredictionService()
             assert service is not None
         except ImportError:
@@ -267,6 +304,7 @@ class TestContentAnalysis:
         """测试内容分析导入"""
         try:
             from src.services.content_analysis import ContentAnalysisService
+
             assert ContentAnalysisService is not None
         except ImportError:
             pytest.skip("content_analysis模块不可用")
@@ -275,6 +313,7 @@ class TestContentAnalysis:
         """测试内容分析创建"""
         try:
             from src.services.content_analysis import ContentAnalysisService
+
             service = ContentAnalysisService()
             assert service is not None
         except ImportError:
@@ -288,6 +327,7 @@ class TestEventPredictionService:
         """测试事件预测服务导入"""
         try:
             from src.services.event_prediction_service import EventPredictionService
+
             assert EventPredictionService is not None
         except ImportError:
             pytest.skip("event_prediction_service模块不可用")
@@ -296,6 +336,7 @@ class TestEventPredictionService:
         """测试事件预测服务创建"""
         try:
             from src.services.event_prediction_service import EventPredictionService
+
             service = EventPredictionService()
             assert service is not None
         except ImportError:
@@ -309,6 +350,7 @@ class TestEnhancedCore:
         """测试增强核心导入"""
         try:
             from src.services.enhanced_core import EnhancedCoreService
+
             assert EnhancedCoreService is not None
         except ImportError:
             pytest.skip("enhanced_core模块不可用")
@@ -317,6 +359,7 @@ class TestEnhancedCore:
         """测试增强核心创建"""
         try:
             from src.services.enhanced_core import EnhancedCoreService
+
             service = EnhancedCoreService()
             assert service is not None
         except ImportError:
@@ -329,7 +372,7 @@ class TestServicesIntegration:
     def test_services_compatibility(self):
         """测试服务模块兼容性"""
         service_modules = [
-            'src.services.database.database_service',
+            "src.services.database.database_service",
         ]
 
         available_modules = []
@@ -347,6 +390,7 @@ class TestServicesIntegration:
         # 测试数据库服务初始化模式
         try:
             from src.services.database.database_service import DatabaseService
+
             mock_session = Mock()
             service = DatabaseService(mock_session)
             assert service.session == mock_session
@@ -357,14 +401,15 @@ class TestServicesIntegration:
         """测试服务方法签名"""
         try:
             from src.services.database.database_service import DatabaseService
+
             mock_session = Mock()
             service = DatabaseService(mock_session)
 
             # 检查关键方法是否存在
-            assert hasattr(service, 'get_match_with_predictions')
-            assert hasattr(service, 'health_check')
-            assert hasattr(service, 'cleanup_old_data')
-            assert hasattr(service, 'backup_data')
+            assert hasattr(service, "get_match_with_predictions")
+            assert hasattr(service, "health_check")
+            assert hasattr(service, "cleanup_old_data")
+            assert hasattr(service, "backup_data")
 
             # 检查方法是否可调用
             assert callable(service.get_match_with_predictions)
@@ -382,15 +427,20 @@ class TestErrorHandling:
         """测试数据库服务错误处理"""
         try:
             from src.services.database.database_service import DatabaseService
+
             mock_session = Mock()
 
-            with patch('src.services.database.database_service.MatchRepository'):
-                with patch('src.services.database.database_service.PredictionRepository'):
-                    with patch('src.services.database.database_service.UserRepository'):
+            with patch("src.services.database.database_service.MatchRepository"):
+                with patch(
+                    "src.services.database.database_service.PredictionRepository"
+                ):
+                    with patch("src.services.database.database_service.UserRepository"):
                         service = DatabaseService(mock_session)
 
                         # 测试健康检查异常处理
-                        mock_session.execute = AsyncMock(side_effect=Exception("Database error"))
+                        mock_session.execute = AsyncMock(
+                            side_effect=Exception("Database error")
+                        )
                         result = await service.health_check()
 
                         assert result["status"] == "unhealthy"
@@ -406,7 +456,7 @@ class TestModuleAvailability:
     def test_critical_modules_available(self):
         """测试关键模块可用性"""
         critical_modules = {
-            'database_service': 'src.services.database.database_service',
+            "database_service": "src.services.database.database_service",
         }
 
         available_count = 0

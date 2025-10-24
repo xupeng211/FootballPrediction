@@ -10,19 +10,25 @@ from fastapi.testclient import TestClient
 # 导入主应用
 from src.main import app
 
+
 @pytest.fixture(scope="session")
 def test_client():
     """创建测试客户端"""
     return TestClient(app)
 
+
 @pytest.fixture(scope="session")
 def async_client():
     """创建异步测试客户端"""
     from fastapi.testclient import AsyncTestClient
+
     return AsyncTestClient(app)
+
 
 # 直接使用标准logging，避免循环导入问题
 import logging
+
+
 def get_logger(name: str, level: str = "INFO") -> logging.Logger:
     """获取标准日志器"""
     logger = logging.getLogger(name)
@@ -36,6 +42,7 @@ def get_logger(name: str, level: str = "INFO") -> logging.Logger:
         logger.addHandler(handler)
     return logger
 
+
 # 简化的测试数据工厂
 @pytest.fixture
 def sample_prediction_data():
@@ -47,8 +54,9 @@ def sample_prediction_data():
         "away_win_prob": 0.2,
         "predicted_outcome": "home",
         "confidence": 0.85,
-        "model_version": "1.0.0"
+        "model_version": "1.0.0",
     }
+
 
 # 设置测试环境
 @pytest.fixture(autouse=True)

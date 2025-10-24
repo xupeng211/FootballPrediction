@@ -4,6 +4,7 @@ from sqlalchemy.exc import SQLAlchemyError, DatabaseError
 
 from sqlalchemy import text
 from alembic import op
+
 """Phase 3 改进迁移
 Phase 3 improvements migration
 
@@ -59,7 +60,7 @@ def upgrade():  # type: ignore
     )
 
     # PostgreSQL环境：执行所有PostgreSQL特有的操作
-    if db_dialect != 'sqlite':
+    if db_dialect != "sqlite":
         # 创建原始数据分区表（如果不存在）
         op.execute(
             """
@@ -230,9 +231,11 @@ def downgrade():  # type: ignore
     op.drop_index("idx_predictions_verified", table_name="predictions")
     op.drop_index("idx_matches_time_status", table_name="matches")
     op.drop_index("idx_odds_match_bookmaker_market", table_name="odds")
-    op.drop_index("idx_data_collection_type_status_time", table_name="data_collection_logs")
+    op.drop_index(
+        "idx_data_collection_type_status_time", table_name="data_collection_logs"
+    )
 
-    if db_dialect != 'sqlite':
+    if db_dialect != "sqlite":
         # PostgreSQL环境：删除视图
         op.execute("DROP VIEW IF EXISTS live_matches_view;")
         op.execute("DROP VIEW IF EXISTS model_accuracy_view;")

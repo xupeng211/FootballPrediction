@@ -17,12 +17,15 @@ try:
         get_cors_origins,
         get_cors_config,
     )
+
     CORS_CONFIG_AVAILABLE = True
 except ImportError:
     CORS_CONFIG_AVAILABLE = False
 
 
-@pytest.mark.skipif(not CORS_CONFIG_AVAILABLE, reason="CORS config module not available")
+@pytest.mark.skipif(
+    not CORS_CONFIG_AVAILABLE, reason="CORS config module not available"
+)
 class TestGetCorsOrigins:
     """get_cors_origins函数测试"""
 
@@ -55,10 +58,13 @@ class TestGetCorsOrigins:
 
     def test_get_cors_origins_production_env(self):
         """测试生产环境的CORS源"""
-        with patch.dict(os.environ, {
-            "ENVIRONMENT": "production",
-            "CORS_ORIGINS": "https://app1.com,https://app2.com,https://api.example.com"
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "ENVIRONMENT": "production",
+                "CORS_ORIGINS": "https://app1.com,https://app2.com,https://api.example.com",
+            },
+        ):
             origins = get_cors_origins()
 
             assert isinstance(origins, list)
@@ -82,10 +88,7 @@ class TestGetCorsOrigins:
 
     def test_get_cors_origins_production_env_empty_origins(self):
         """测试生产环境CORS_ORIGINS为空字符串"""
-        with patch.dict(os.environ, {
-            "ENVIRONMENT": "production",
-            "CORS_ORIGINS": ""
-        }):
+        with patch.dict(os.environ, {"ENVIRONMENT": "production", "CORS_ORIGINS": ""}):
             origins = get_cors_origins()
 
             assert isinstance(origins, list)
@@ -94,10 +97,10 @@ class TestGetCorsOrigins:
 
     def test_get_cors_origins_production_env_single_origin(self):
         """测试生产环境单个CORS源"""
-        with patch.dict(os.environ, {
-            "ENVIRONMENT": "production",
-            "CORS_ORIGINS": "https://single-origin.com"
-        }):
+        with patch.dict(
+            os.environ,
+            {"ENVIRONMENT": "production", "CORS_ORIGINS": "https://single-origin.com"},
+        ):
             origins = get_cors_origins()
 
             assert isinstance(origins, list)
@@ -146,10 +149,13 @@ class TestGetCorsOrigins:
 
     def test_get_cors_origins_production_with_spaces(self):
         """测试生产环境CORS_ORIGINS包含空格"""
-        with patch.dict(os.environ, {
-            "ENVIRONMENT": "production",
-            "CORS_ORIGINS": "https://app1.com , https://app2.com ,https://app3.com"
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "ENVIRONMENT": "production",
+                "CORS_ORIGINS": "https://app1.com , https://app2.com ,https://app3.com",
+            },
+        ):
             origins = get_cors_origins()
 
             assert isinstance(origins, list)
@@ -159,7 +165,9 @@ class TestGetCorsOrigins:
             assert "https://app3.com" in origins
 
 
-@pytest.mark.skipif(not CORS_CONFIG_AVAILABLE, reason="CORS config module not available")
+@pytest.mark.skipif(
+    not CORS_CONFIG_AVAILABLE, reason="CORS config module not available"
+)
 class TestGetCorsConfig:
     """get_cors_config函数测试"""
 
@@ -180,7 +188,7 @@ class TestGetCorsConfig:
             "allow_credentials",
             "allow_methods",
             "allow_headers",
-            "max_age"
+            "max_age",
         ]
 
         for key in required_keys:
@@ -194,24 +202,36 @@ class TestGetCorsConfig:
             assert config["allow_origins"] == [
                 "http://localhost:3000",
                 "http://localhost:8080",
-                "http://localhost:8000"
+                "http://localhost:8000",
             ]
             assert config["allow_credentials"] is True
-            assert config["allow_methods"] == ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+            assert config["allow_methods"] == [
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE",
+                "OPTIONS",
+            ]
             assert config["allow_headers"] == ["*"]
             assert config["max_age"] == 600
 
     def test_get_cors_config_production_env(self):
         """测试生产环境的CORS配置"""
-        with patch.dict(os.environ, {
-            "ENVIRONMENT": "production",
-            "CORS_ORIGINS": "https://production.com"
-        }):
+        with patch.dict(
+            os.environ,
+            {"ENVIRONMENT": "production", "CORS_ORIGINS": "https://production.com"},
+        ):
             config = get_cors_config()
 
             assert config["allow_origins"] == ["https://production.com"]
             assert config["allow_credentials"] is True
-            assert config["allow_methods"] == ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+            assert config["allow_methods"] == [
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE",
+                "OPTIONS",
+            ]
             assert config["allow_headers"] == ["*"]
             assert config["max_age"] == 600
 
@@ -222,10 +242,16 @@ class TestGetCorsConfig:
 
             assert config["allow_origins"] == [
                 "https://staging.yourdomain.com",
-                "http://localhost:3000"
+                "http://localhost:3000",
             ]
             assert config["allow_credentials"] is True
-            assert config["allow_methods"] == ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+            assert config["allow_methods"] == [
+                "GET",
+                "POST",
+                "PUT",
+                "DELETE",
+                "OPTIONS",
+            ]
             assert config["allow_headers"] == ["*"]
             assert config["max_age"] == 600
 
@@ -283,7 +309,9 @@ class TestGetCorsConfig:
         assert config["max_age"] == 600
 
 
-@pytest.mark.skipif(not CORS_CONFIG_AVAILABLE, reason="CORS config module not available")
+@pytest.mark.skipif(
+    not CORS_CONFIG_AVAILABLE, reason="CORS config module not available"
+)
 class TestIntegration:
     """集成测试"""
 
@@ -306,10 +334,13 @@ class TestIntegration:
 
     def test_full_workflow_production(self):
         """测试完整的生产环境工作流"""
-        with patch.dict(os.environ, {
-            "ENVIRONMENT": "production",
-            "CORS_ORIGINS": "https://api.example.com,https://app.example.com"
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "ENVIRONMENT": "production",
+                "CORS_ORIGINS": "https://api.example.com,https://app.example.com",
+            },
+        ):
             # 获取CORS源
             origins = get_cors_origins()
             assert len(origins) == 2
@@ -328,10 +359,10 @@ class TestIntegration:
             assert len(dev_config["allow_origins"]) == 3
 
         # 再测试生产环境
-        with patch.dict(os.environ, {
-            "ENVIRONMENT": "production",
-            "CORS_ORIGINS": "https://prod.com"
-        }):
+        with patch.dict(
+            os.environ,
+            {"ENVIRONMENT": "production", "CORS_ORIGINS": "https://prod.com"},
+        ):
             prod_config = get_cors_config()
             assert len(prod_config["allow_origins"]) == 1
             assert prod_config["allow_origins"] != dev_config["allow_origins"]
@@ -368,13 +399,13 @@ class TestIntegration:
         production_domains = [
             "https://www.example.com",
             "https://api.example.com",
-            "https://admin.example.com"
+            "https://admin.example.com",
         ]
 
-        with patch.dict(os.environ, {
-            "ENVIRONMENT": "production",
-            "CORS_ORIGINS": ",".join(production_domains)
-        }):
+        with patch.dict(
+            os.environ,
+            {"ENVIRONMENT": "production", "CORS_ORIGINS": ",".join(production_domains)},
+        ):
             config = get_cors_config()
 
             # 验证所有生产域名都被包含

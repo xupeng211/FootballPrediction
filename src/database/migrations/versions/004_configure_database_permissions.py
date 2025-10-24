@@ -7,6 +7,7 @@ from alembic import context, op
 logger = logging.getLogger(__name__)
 
 from alembic import op
+
 """配置数据库权限
 
 配置三类数据库用户的权限：
@@ -43,7 +44,7 @@ def upgrade() -> None:
     connection = op.get_bind()
     db_dialect = connection.dialect.name.lower()
 
-    if db_dialect == 'sqlite':
+    if db_dialect == "sqlite":
         logger.info("⚠️  SQLite环境：跳过PostgreSQL权限配置")
         op.execute("-- SQLite environment: skipped PostgreSQL permission configuration")
         return
@@ -387,7 +388,7 @@ def downgrade() -> None:
     connection = op.get_bind()
     db_dialect = connection.dialect.name.lower()
 
-    if db_dialect == 'sqlite':
+    if db_dialect == "sqlite":
         logger.info("⚠️  SQLite环境：跳过PostgreSQL权限回滚")
         op.execute("-- SQLite environment: skipped PostgreSQL permission rollback")
         return

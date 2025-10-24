@@ -13,6 +13,7 @@ logger = getLogger(__name__)
 # 创建子路由器
 health_router = APIRouter(prefix="/predictions", tags=["predictions"])
 
+
 @health_router.get("/health", summary="预测服务健康检查")
 async def health_check() -> Dict[str, Any]:
     """
@@ -39,15 +40,12 @@ async def health_check() -> Dict[str, Any]:
             "checks": {
                 "database": db_status,
                 "prediction_engine": prediction_engine_status,
-                "cache": cache_status
+                "cache": cache_status,
             },
             "response_time_ms": response_time_ms,
-            "version": "1.0.0"
+            "version": "1.0.0",
         }
 
     except Exception as e:
         logger.error(f"Health check failed: {str(e)}")
-        raise HTTPException(
-            status_code=503,
-            detail=f"Service unavailable: {str(e)}"
-        )
+        raise HTTPException(status_code=503, detail=f"Service unavailable: {str(e)}")

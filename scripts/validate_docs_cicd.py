@@ -52,7 +52,7 @@ def check_mkdocs_config():
     if success:
         print(f"   ✅ {stdout.strip()}")
     else:
-        print(f"   ❌ MkDocs未安装或不可用")
+        print("   ❌ MkDocs未安装或不可用")
         return False
 
     return True
@@ -84,7 +84,7 @@ def validate_github_actions():
 
     all_valid = True
     for workflow in workflows:
-        exists = check_file_exists(workflow, f"检查工作流文件")
+        exists = check_file_exists(workflow, "检查工作流文件")
         if exists:
             valid = validate_yaml_syntax(workflow)
             all_valid = all_valid and valid
@@ -109,7 +109,7 @@ def test_mkdocs_build():
             site_size = sum(f.stat().st_size for f in site_dir.rglob('*') if f.is_file())
             site_size_mb = site_size / (1024 * 1024)
 
-            print(f"   ✅ 构建成功")
+            print("   ✅ 构建成功")
             print(f"   📄 生成HTML文件: {html_files}")
             print(f"   📦 站点大小: {site_size_mb:.1f}MB")
             return True

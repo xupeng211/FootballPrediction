@@ -109,7 +109,7 @@ class SmartMyPyFixer:
                         if import_line >= 0:
                             # 在import语句后添加修复
                             if 'logger' in var_name:
-                                fix_code = f'logger = logging.getLogger(__name__)'
+                                fix_code = 'logger = logging.getLogger(__name__)'
                             else:
                                 fix_code = fix_mapping[var_name]
 
@@ -309,7 +309,7 @@ def main():
         return
 
     # 运行修复
-    print(f"\n🔧 开始智能修复 (最多3轮)...")
+    print("\n🔧 开始智能修复 (最多3轮)...")
     results = fixer.run_multiple_cycles(3)
 
     # 最终检查
@@ -329,7 +329,7 @@ def main():
     print(f"   实际改善: {improvement}")
 
     if results:
-        print(f"\n📈 按类型统计:")
+        print("\n📈 按类型统计:")
         for error_type, count in results.items():
             print(f"   {error_type}: {count} 个")
 

@@ -516,8 +516,12 @@ class TestRegistryAdditionalCoverage:
         await registry.initialize()
 
         # 模拟健康检查抛出异常
-        with patch.object(registry, '_perform_health_checks', side_effect=ValueError("Health check failed")):
-            with patch('asyncio.sleep') as mock_sleep:
+        with patch.object(
+            registry,
+            "_perform_health_checks",
+            side_effect=ValueError("Health check failed"),
+        ):
+            with patch("asyncio.sleep"):
                 # 取消任务以避免无限循环
                 registry._health_check_task.cancel()
 
@@ -545,7 +549,9 @@ class TestRegistryAdditionalCoverage:
         """测试执行健康检查时适配器失败"""
         # 创建模拟适配器
         mock_adapter = Mock(spec=Adapter)
-        mock_adapter.health_check = AsyncMock(side_effect=ValueError("Health check failed"))
+        mock_adapter.health_check = AsyncMock(
+            side_effect=ValueError("Health check failed")
+        )
         registry.adapters["test_adapter"] = mock_adapter
 
         # 执行健康检查
@@ -634,23 +640,23 @@ class TestRegistryAdditionalCoverage:
 
     def test_registry_properties(self, registry):
         """测试注册表属性"""
-        assert hasattr(registry, 'health_check_interval')
+        assert hasattr(registry, "health_check_interval")
         assert isinstance(registry.health_check_interval, float)
         assert registry.health_check_interval > 0
 
-        assert hasattr(registry, 'adapters')
+        assert hasattr(registry, "adapters")
         assert isinstance(registry.adapters, dict)
 
-        assert hasattr(registry, 'groups')
+        assert hasattr(registry, "groups")
         assert isinstance(registry.groups, dict)
 
-        assert hasattr(registry, 'factory')
+        assert hasattr(registry, "factory")
         assert registry.factory is not None
 
-        assert hasattr(registry, '_metrics_collector')
+        assert hasattr(registry, "_metrics_collector")
         assert registry._metrics_collector is None
 
-        assert hasattr(registry, '_health_check_task')
+        assert hasattr(registry, "_health_check_task")
         assert registry._health_check_task is None
 
     def test_enable_metrics_collection(self, registry):
@@ -698,23 +704,23 @@ class TestRegistryAdditionalCoverage:
 
     def test_registry_properties(self, registry):
         """测试注册表属性"""
-        assert hasattr(registry, 'health_check_interval')
+        assert hasattr(registry, "health_check_interval")
         assert isinstance(registry.health_check_interval, float)
         assert registry.health_check_interval > 0
 
-        assert hasattr(registry, 'adapters')
+        assert hasattr(registry, "adapters")
         assert isinstance(registry.adapters, dict)
 
-        assert hasattr(registry, 'groups')
+        assert hasattr(registry, "groups")
         assert isinstance(registry.groups, dict)
 
-        assert hasattr(registry, 'factory')
+        assert hasattr(registry, "factory")
         assert registry.factory is not None
 
-        assert hasattr(registry, '_metrics_collector')
+        assert hasattr(registry, "_metrics_collector")
         assert registry._metrics_collector is None
 
-        assert hasattr(registry, '_health_check_task')
+        assert hasattr(registry, "_health_check_task")
         assert registry._health_check_task is None
 
     def test_registry_status_transitions(self, registry):
@@ -723,19 +729,19 @@ class TestRegistryAdditionalCoverage:
         assert registry.status == RegistryStatus.INACTIVE
 
         # 这些操作需要在异步环境中测试，但我们可以验证状态枚举
-        assert hasattr(registry, 'status')
+        assert hasattr(registry, "status")
         assert isinstance(registry.status, RegistryStatus)
 
     def test_health_check_interval_property(self, registry):
         """测试健康检查间隔属性"""
-        assert hasattr(registry, 'health_check_interval')
+        assert hasattr(registry, "health_check_interval")
         assert isinstance(registry.health_check_interval, float)
         assert registry.health_check_interval > 0
 
     def test_adapters_and_groups_properties(self, registry):
         """测试适配器和组属性"""
-        assert hasattr(registry, 'adapters')
-        assert hasattr(registry, 'groups')
+        assert hasattr(registry, "adapters")
+        assert hasattr(registry, "groups")
         assert isinstance(registry.adapters, dict)
         assert isinstance(registry.groups, dict)
         assert len(registry.adapters) == 0
@@ -743,15 +749,15 @@ class TestRegistryAdditionalCoverage:
 
     def test_factory_property(self, registry):
         """测试工厂属性"""
-        assert hasattr(registry, 'factory')
+        assert hasattr(registry, "factory")
         assert registry.factory is not None
 
     def test_metrics_collector_initial_state(self, registry):
         """测试指标收集器初始状态"""
-        assert hasattr(registry, '_metrics_collector')
+        assert hasattr(registry, "_metrics_collector")
         assert registry._metrics_collector is None
 
     def test_health_check_task_initial_state(self, registry):
         """测试健康检查任务初始状态"""
-        assert hasattr(registry, '_health_check_task')
+        assert hasattr(registry, "_health_check_task")
         assert registry._health_check_task is None

@@ -19,12 +19,15 @@ try:
         _global_factory,
     )
     from src.core.exceptions import AdapterError
+
     FACTORY_SIMPLE_AVAILABLE = True
 except ImportError:
     FACTORY_SIMPLE_AVAILABLE = False
 
 
-@pytest.mark.skipif(not FACTORY_SIMPLE_AVAILABLE, reason="Simple factory module not available")
+@pytest.mark.skipif(
+    not FACTORY_SIMPLE_AVAILABLE, reason="Simple factory module not available"
+)
 class TestAdapterFactory:
     """AdapterFactory类测试"""
 
@@ -32,8 +35,8 @@ class TestAdapterFactory:
         """测试适配器工厂初始化"""
         factory = AdapterFactory()
 
-        assert hasattr(factory, '_adapters')
-        assert hasattr(factory, '_instances')
+        assert hasattr(factory, "_adapters")
+        assert hasattr(factory, "_instances")
         assert isinstance(factory._adapters, dict)
         assert isinstance(factory._instances, dict)
         assert len(factory._adapters) == 0
@@ -97,7 +100,7 @@ class TestAdapterFactory:
             singleton=True,
             version="1.0",
             description="Test adapter",
-            priority=5
+            priority=5,
         )
 
         adapter_info = factory._adapters["complex_adapter"]
@@ -323,7 +326,9 @@ class TestAdapterFactory:
         mock_class2 = Mock()
 
         factory.register_adapter("adapter1", mock_class1, version="1.0", singleton=True)
-        factory.register_adapter("adapter2", mock_class2, version="2.0", singleton=False)
+        factory.register_adapter(
+            "adapter2", mock_class2, version="2.0", singleton=False
+        )
 
         # 过滤singleton=True的适配器
         result = factory.list(singleton=True)
@@ -355,9 +360,15 @@ class TestAdapterFactory:
         mock_class2 = Mock()
         mock_class3 = Mock()
 
-        factory.register_adapter("adapter1", mock_class1, version="1.0", singleton=True, priority=1)
-        factory.register_adapter("adapter2", mock_class2, version="1.0", singleton=False, priority=2)
-        factory.register_adapter("adapter3", mock_class3, version="2.0", singleton=True, priority=1)
+        factory.register_adapter(
+            "adapter1", mock_class1, version="1.0", singleton=True, priority=1
+        )
+        factory.register_adapter(
+            "adapter2", mock_class2, version="1.0", singleton=False, priority=2
+        )
+        factory.register_adapter(
+            "adapter3", mock_class3, version="2.0", singleton=True, priority=1
+        )
 
         # 使用多个过滤条件
         result = factory.list(version="1.0", priority=1)
@@ -444,7 +455,9 @@ class TestAdapterFactory:
         mock_class2 = Mock(side_effect=[instance2a, instance2b])
 
         factory.register_adapter("service1", mock_class1, singleton=True)
-        factory.register_adapter("service2", mock_class2, singleton=False, version="2.0")
+        factory.register_adapter(
+            "service2", mock_class2, singleton=False, version="2.0"
+        )
 
         # 2. 列出适配器
         adapters = factory.list_adapters()
@@ -524,7 +537,9 @@ class TestAdapterFactory:
         assert mock_class.call_count == 2  # 应该调用两次
 
 
-@pytest.mark.skipif(not FACTORY_SIMPLE_AVAILABLE, reason="Simple factory module not available")
+@pytest.mark.skipif(
+    not FACTORY_SIMPLE_AVAILABLE, reason="Simple factory module not available"
+)
 class TestGlobalFactoryFunctions:
     """全局工厂函数测试"""
 
@@ -541,11 +556,12 @@ class TestGlobalFactoryFunctions:
 
         assert factory1 is factory2  # 应该是同一个实例
 
-    @patch('src.adapters.factory_simple._global_factory', None)
+    @patch("src.adapters.factory_simple._global_factory", None)
     def test_get_global_factory_creates_new_instance(self):
         """测试全局工厂创建新实例"""
         # 重置全局变量
         import src.adapters.factory_simple
+
         original_factory = src.adapters.factory_simple._global_factory
         src.adapters.factory_simple._global_factory = None
 
@@ -563,6 +579,7 @@ class TestGlobalFactoryFunctions:
         """测试便捷函数获取适配器"""
         # 清除全局工厂
         import src.adapters.factory_simple
+
         src.adapters.factory_simple._global_factory = None
 
         mock_adapter_class = Mock(return_value="convenient_instance")
@@ -581,6 +598,7 @@ class TestGlobalFactoryFunctions:
         """测试便捷函数获取适配器（带配置）"""
         # 清除全局工厂
         import src.adapters.factory_simple
+
         src.adapters.factory_simple._global_factory = None
 
         mock_adapter_class = Mock(return_value="configured_convenient_instance")
@@ -598,6 +616,7 @@ class TestGlobalFactoryFunctions:
         """测试便捷函数获取单例适配器"""
         # 清除全局工厂
         import src.adapters.factory_simple
+
         src.adapters.factory_simple._global_factory = None
 
         mock_adapter_class = Mock(return_value="convenient_singleton")
@@ -617,6 +636,7 @@ class TestGlobalFactoryFunctions:
         """测试便捷函数获取未注册的适配器"""
         # 清除全局工厂
         import src.adapters.factory_simple
+
         src.adapters.factory_simple._global_factory = None
 
         with pytest.raises(AdapterError) as exc_info:
@@ -629,6 +649,7 @@ class TestGlobalFactoryFunctions:
         """测试全局工厂隔离"""
         # 重置全局工厂
         import src.adapters.factory_simple
+
         src.adapters.factory_simple._global_factory = None
 
         # 注册适配器到全局工厂
@@ -646,7 +667,9 @@ class TestGlobalFactoryFunctions:
         mock_class.assert_called_once_with(None)
 
 
-@pytest.mark.skipif(not FACTORY_SIMPLE_AVAILABLE, reason="Simple factory module not available")
+@pytest.mark.skipif(
+    not FACTORY_SIMPLE_AVAILABLE, reason="Simple factory module not available"
+)
 class TestModuleIntegration:
     """模块集成测试"""
 
@@ -655,28 +678,28 @@ class TestModuleIntegration:
         from src.adapters import factory_simple
 
         # 验证所有预期的导出都存在
-        assert hasattr(factory_simple, 'AdapterFactory')
-        assert hasattr(factory_simple, 'get_global_factory')
-        assert hasattr(factory_simple, 'get_adapter')
-        assert hasattr(factory_simple, '_global_factory')
+        assert hasattr(factory_simple, "AdapterFactory")
+        assert hasattr(factory_simple, "get_global_factory")
+        assert hasattr(factory_simple, "get_adapter")
+        assert hasattr(factory_simple, "_global_factory")
 
     def test_adapter_factory_class_attributes(self):
         """测试AdapterFactory类属性"""
         # 验证类有预期的属性
-        assert hasattr(AdapterFactory, 'register_adapter')
-        assert hasattr(AdapterFactory, 'create_adapter')
-        assert hasattr(AdapterFactory, 'get_instance')
-        assert hasattr(AdapterFactory, 'list_adapters')
-        assert hasattr(AdapterFactory, 'list')
-        assert hasattr(AdapterFactory, 'unregister_adapter')
-        assert hasattr(AdapterFactory, 'get_adapter_type')
+        assert hasattr(AdapterFactory, "register_adapter")
+        assert hasattr(AdapterFactory, "create_adapter")
+        assert hasattr(AdapterFactory, "get_instance")
+        assert hasattr(AdapterFactory, "list_adapters")
+        assert hasattr(AdapterFactory, "list")
+        assert hasattr(AdapterFactory, "unregister_adapter")
+        assert hasattr(AdapterFactory, "get_adapter_type")
 
     def test_global_factory_variable(self):
         """测试全局工厂变量"""
         import src.adapters.factory_simple
 
         # 验证全局变量存在
-        assert hasattr(src.adapters.factory_simple, '_global_factory')
+        assert hasattr(src.adapters.factory_simple, "_global_factory")
 
         # 初始状态应该是None
         original_value = src.adapters.factory_simple._global_factory
@@ -700,7 +723,7 @@ class TestModuleIntegration:
 
         # 测试get_adapter签名
         sig = inspect.signature(get_adapter)
-        expected_params = ['adapter_type', 'config', 'singleton']
+        expected_params = ["adapter_type", "config", "singleton"]
         actual_params = list(sig.parameters.keys())
         for param in expected_params:
             assert param in actual_params
@@ -712,6 +735,7 @@ class TestModuleIntegration:
 
         # 重置全局工厂
         import src.adapters.factory_simple
+
         src.adapters.factory_simple._global_factory = None
 
         results = []
@@ -784,5 +808,5 @@ class TestModuleIntegration:
 
         # 验证可以正常使用
         factory = AdapterFactory()
-        assert hasattr(factory, 'register_adapter')
-        assert hasattr(factory, 'create_adapter')
+        assert hasattr(factory, "register_adapter")
+        assert hasattr(factory, "create_adapter")

@@ -24,12 +24,15 @@ try:
         lifecycle_service,
         ServiceLifecycleError,
     )
+
     SERVICE_LIFECYCLE_AVAILABLE = True
 except ImportError:
     SERVICE_LIFECYCLE_AVAILABLE = False
 
 
-@pytest.mark.skipif(not SERVICE_LIFECYCLE_AVAILABLE, reason="Service lifecycle module not available")
+@pytest.mark.skipif(
+    not SERVICE_LIFECYCLE_AVAILABLE, reason="Service lifecycle module not available"
+)
 class TestServiceState:
     """服务状态枚举测试"""
 
@@ -57,7 +60,9 @@ class TestServiceState:
         assert hash(state1) != hash(state3)
 
 
-@pytest.mark.skipif(not SERVICE_LIFECYCLE_AVAILABLE, reason="Service lifecycle module not available")
+@pytest.mark.skipif(
+    not SERVICE_LIFECYCLE_AVAILABLE, reason="Service lifecycle module not available"
+)
 class TestServiceInfo:
     """服务信息测试"""
 
@@ -65,9 +70,7 @@ class TestServiceInfo:
         """测试服务信息创建"""
         instance = Mock()
         service_info = ServiceInfo(
-            name="test_service",
-            instance=instance,
-            dependencies=["dep1", "dep2"]
+            name="test_service", instance=instance, dependencies=["dep1", "dep2"]
         )
 
         assert service_info.name == "test_service"
@@ -85,7 +88,7 @@ class TestServiceInfo:
         service_info = ServiceInfo(
             name="test_service",
             instance=instance,
-            dependencies="single_dep"  # 字符串而不是列表
+            dependencies="single_dep",  # 字符串而不是列表
         )
 
         assert service_info.dependencies == ["single_dep"]
@@ -95,10 +98,7 @@ class TestServiceInfo:
         instance = Mock()
         before_creation = datetime.utcnow()
 
-        service_info = ServiceInfo(
-            name="test_service",
-            instance=instance
-        )
+        service_info = ServiceInfo(name="test_service", instance=instance)
 
         after_creation = datetime.utcnow()
 
@@ -110,9 +110,7 @@ class TestServiceInfo:
         """测试服务信息字符串表示"""
         instance = Mock()
         service_info = ServiceInfo(
-            name="test_service",
-            instance=instance,
-            state=ServiceState.RUNNING
+            name="test_service", instance=instance, state=ServiceState.RUNNING
         )
 
         str_repr = str(service_info)
@@ -120,12 +118,15 @@ class TestServiceInfo:
         assert "RUNNING" in str_repr
 
 
-@pytest.mark.skipif(not SERVICE_LIFECYCLE_AVAILABLE, reason="Service lifecycle module not available")
+@pytest.mark.skipif(
+    not SERVICE_LIFECYCLE_AVAILABLE, reason="Service lifecycle module not available"
+)
 class TestIServiceLifecycle:
     """服务生命周期接口测试"""
 
     def test_interface_methods(self):
         """测试接口方法定义"""
+
         # 创建一个实现接口的测试类
         class TestService(IServiceLifecycle):
             def __init__(self):
@@ -160,7 +161,9 @@ class TestIServiceLifecycle:
         assert service.healthy
 
 
-@pytest.mark.skipif(not SERVICE_LIFECYCLE_AVAILABLE, reason="Service lifecycle module not available")
+@pytest.mark.skipif(
+    not SERVICE_LIFECYCLE_AVAILABLE, reason="Service lifecycle module not available"
+)
 class TestServiceLifecycleManager:
     """服务生命周期管理器测试"""
 
@@ -171,9 +174,9 @@ class TestServiceLifecycleManager:
     def teardown_method(self):
         """每个测试方法后的清理"""
         # 清理管理器资源
-        if hasattr(self.manager, '_shutdown_event'):
+        if hasattr(self.manager, "_shutdown_event"):
             self.manager._shutdown_event.set()
-        if hasattr(self.manager, '_monitor_task') and self.manager._monitor_task:
+        if hasattr(self.manager, "_monitor_task") and self.manager._monitor_task:
             self.manager._monitor_task.cancel()
 
     def test_manager_initialization(self):
@@ -181,7 +184,7 @@ class TestServiceLifecycleManager:
         assert self.manager._services == {}
         assert self.manager._start_order == []
         assert self.manager._stop_order == []
-        assert hasattr(self.manager, '_lock')
+        assert hasattr(self.manager, "_lock")
         assert not self.manager._shutdown_event.is_set()
         assert self.manager._monitor_task is None
 
@@ -209,7 +212,7 @@ class TestServiceLifecycleManager:
     def test_register_service_with_circular_dependency(self):
         """测试注册循环依赖服务"""
         # 先注册服务A，并让它依赖服务B（B还未注册）
-        instance_a = Mock()
+        Mock()
         # 手动设置A依赖B
         self.manager._services["service_a"] = Mock(dependencies=["service_b"])
 
@@ -319,6 +322,7 @@ class TestServiceLifecycleManager:
     @pytest.mark.asyncio
     async def test_initialize_service_with_lifecycle_interface(self):
         """测试实现生命周期接口的服务初始化"""
+
         class TestService(IServiceLifecycle):
             def __init__(self):
                 self.initialized = False
@@ -563,7 +567,7 @@ class TestServiceLifecycleManager:
 
     def test_start_monitoring(self):
         """测试启动监控"""
-        with patch('asyncio.create_task') as mock_create_task:
+        with patch("asyncio.create_task") as mock_create_task:
             mock_task = Mock()
             mock_create_task.return_value = mock_task
 
@@ -668,7 +672,9 @@ class TestServiceLifecycleManager:
         assert self.manager._stop_order == ["service3", "service2", "service1"]
 
 
-@pytest.mark.skipif(not SERVICE_LIFECYCLE_AVAILABLE, reason="Service lifecycle module not available")
+@pytest.mark.skipif(
+    not SERVICE_LIFECYCLE_AVAILABLE, reason="Service lifecycle module not available"
+)
 class TestGlobalLifecycleManager:
     """全局生命周期管理器测试"""
 
@@ -680,11 +686,12 @@ class TestGlobalLifecycleManager:
         assert manager1 is manager2
         assert isinstance(manager1, ServiceLifecycleManager)
 
-    @patch('src.core.service_lifecycle._default_lifecycle_manager', None)
+    @patch("src.core.service_lifecycle._default_lifecycle_manager", None)
     def test_get_lifecycle_manager_creates_new(self):
         """测试获取生命周期管理器时创建新实例"""
         # 模拟全局变量为None的情况
         import src.core.service_lifecycle
+
         original_manager = src.core.service_lifecycle._default_lifecycle_manager
         src.core.service_lifecycle._default_lifecycle_manager = None
 
@@ -697,12 +704,15 @@ class TestGlobalLifecycleManager:
             src.core.service_lifecycle._default_lifecycle_manager = original_manager
 
 
-@pytest.mark.skipif(not SERVICE_LIFECYCLE_AVAILABLE, reason="Service lifecycle module not available")
+@pytest.mark.skipif(
+    not SERVICE_LIFECYCLE_AVAILABLE, reason="Service lifecycle module not available"
+)
 class TestLifecycleDecorator:
     """生命周期装饰器测试"""
 
     def test_lifecycle_decorator_with_name(self):
         """测试带名称的生命周期装饰器"""
+
         @lifecycle_service(name="decorated_service", dependencies=["dep1"])
         class TestService:
             def __init__(self):
@@ -721,6 +731,7 @@ class TestLifecycleDecorator:
 
     def test_lifecycle_decorator_without_name(self):
         """测试不带名称的生命周期装饰器"""
+
         @lifecycle_service()
         class TestService:
             def __init__(self):
@@ -736,19 +747,21 @@ class TestLifecycleDecorator:
 
     def test_lifecycle_decorator_without_dependencies(self):
         """测试不带依赖的生命周期装饰器"""
+
         @lifecycle_service(name="simple_service")
         class TestService:
             def __init__(self):
                 self.value = 42
 
         manager = get_lifecycle_manager()
-        service = TestService()
+        TestService()
 
         service_info = manager.get_service_info("simple_service")
         assert service_info.dependencies == []
 
     def test_lifecycle_decorator_preserves_init(self):
         """测试装饰器保持原始初始化方法"""
+
         @lifecycle_service(name="preserved_service")
         class TestService:
             def __init__(self, custom_arg):

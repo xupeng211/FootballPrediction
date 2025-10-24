@@ -157,7 +157,7 @@ async def test_get_match_prediction_returns_cached(
     match_id = cached_prediction["match_id"]
 
     response = await integration_client.get(f"/api/v1/predictions/{match_id}")
-    assert response.status_code == 200
+    assert response.status_code   == 200
 
     payload = response.json()
     assert payload["success"] is True
@@ -166,7 +166,7 @@ async def test_get_match_prediction_returns_cached(
     assert data["match_id"] == match_id
     assert data["source"] == "cached"
     assert data["prediction"]["model_version"] == "1.0"
-    assert data["prediction"]["model_name"] == "baseline_model"
+    assert data["prediction"]["model_name"]   == "baseline_model"
 
 
 @pytest.mark.asyncio
@@ -180,7 +180,7 @@ async def test_prediction_history_returns_records(
     response = await integration_client.get(
         f"/api/v1/predictions/history/{match_id}?limit=5"
     )
-    assert response.status_code == 200
+    assert response.status_code   == 200
 
     payload = response.json()
     assert payload["success"] is True
@@ -188,10 +188,10 @@ async def test_prediction_history_returns_records(
     _data = payload["data"]
     assert data["match_id"] == match_id
     assert data["total_predictions"] == 1
-    assert data["predictions"][0]["model_version"] == "1.0"
+    assert data["predictions"][0]["model_version"]   == "1.0"
 
     # 不存在的比赛返回404
     missing_response = await integration_client.get(
         "/api/v1/predictions/history/999999"
     )
-    assert missing_response.status_code == 404
+    assert missing_response.status_code   == 404

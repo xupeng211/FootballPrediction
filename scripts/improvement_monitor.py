@@ -35,7 +35,7 @@ def monitor_improvements():
     print("=" * 50)
 
     # 总体统计
-    print(f"\n📊 总体统计:")
+    print("\n📊 总体统计:")
     print(f"总改进周期: {len(history)}")
 
     successful_cycles = [c for c in history if c.get('success', False)]
@@ -43,7 +43,7 @@ def monitor_improvements():
     print(f"成功率: {len(successful_cycles)/len(history)*100:.1f}%")
 
     # 最近7天的改进情况
-    print(f"\n📅 最近7天改进情况:")
+    print("\n📅 最近7天改进情况:")
     recent_cutoff = datetime.now() - timedelta(days=7)
     recent_cycles = [
         cycle for cycle in history
@@ -61,7 +61,7 @@ def monitor_improvements():
 
     # 计算改进趋势
     if len(successful_cycles) >= 2:
-        print(f"\n📈 改进趋势分析:")
+        print("\n📈 改进趋势分析:")
 
         # 取最近5个成功周期
         recent_successful = successful_cycles[-5:]
@@ -89,7 +89,7 @@ def monitor_improvements():
     # 显示最新状态
     if history:
         latest_cycle = history[-1]
-        print(f"\n📊 最新质量状态:")
+        print("\n📊 最新质量状态:")
 
         verification = latest_cycle.get('verification_results', {})
         new_status = verification.get('new_quality_status', {})
@@ -102,7 +102,7 @@ def monitor_improvements():
         # 显示最新改进措施
         improvements_made = latest_cycle.get('improvement_results', {}).get('improvements_made', [])
         if improvements_made:
-            print(f"\n✅ 最近执行的改进:")
+            print("\n✅ 最近执行的改进:")
             for improvement in improvements_made:
                 print(f"  - {improvement['action']}")
 
@@ -113,7 +113,7 @@ def monitor_improvements():
             with open(goals_file) as f:
                 goals = json.load(f)
 
-            print(f"\n🎯 质量目标达成情况:")
+            print("\n🎯 质量目标达成情况:")
 
             for metric, target in goals.items():
                 if metric in new_status:
@@ -126,7 +126,7 @@ def monitor_improvements():
             print(f"⚠️ 无法读取质量目标: {e}")
 
     # 建议和下一步
-    print(f"\n💡 改进建议:")
+    print("\n💡 改进建议:")
     if new_status.get('coverage', 0) < 20:
         print("  - 🎯 优先提升测试覆盖率到20%以上")
     if new_status.get('overall_score', 0) < 7:
@@ -134,7 +134,7 @@ def monitor_improvements():
     if new_status.get('code_quality', 0) >= 10:
         print("  - ✅ 代码质量已达优秀，保持即可")
 
-    print(f"\n📋 报告文件:")
+    print("\n📋 报告文件:")
     improvement_reports = list(project_root.glob("improvement-report-*.md"))
     if improvement_reports:
         latest_report = sorted(improvement_reports)[-1]
@@ -145,10 +145,10 @@ def monitor_improvements():
         latest_quality = sorted(quality_reports)[-1]
         print(f"  - 最新质量报告: {latest_quality.name}")
 
-    print(f"\n🚀 下一步操作:")
-    print(f"  - 运行改进: ./start-improvement.sh")
-    print(f"  - 查看历史: python3 scripts/continuous_improvement_engine.py --history")
-    print(f"  - 自动改进: python3 scripts/continuous_improvement_engine.py --automated")
+    print("\n🚀 下一步操作:")
+    print("  - 运行改进: ./start-improvement.sh")
+    print("  - 查看历史: python3 scripts/continuous_improvement_engine.py --history")
+    print("  - 自动改进: python3 scripts/continuous_improvement_engine.py --automated")
 
 
 if __name__ == "__main__":

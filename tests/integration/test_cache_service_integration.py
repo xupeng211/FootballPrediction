@@ -86,7 +86,7 @@ class TestCacheServiceIntegration:
         assert cached_value is not None
         cached_data = json.loads(cached_value)
         assert cached_data["id"] == prediction_data["id"]
-        assert cached_data["match_id"] == prediction_data["match_id"]
+        assert cached_data["match_id"]   == prediction_data["match_id"]
 
     @pytest.mark.asyncio
     async def test_match_service_caching(self):
@@ -129,7 +129,7 @@ class TestCacheServiceIntegration:
 
         cached_data = json.loads(cached_value)
         assert len(cached_data["matches"]) == 2
-        assert cached_data["total"] == 2
+        assert cached_data["total"]   == 2
 
     @pytest.mark.asyncio
     async def test_user_service_caching(self):
@@ -410,7 +410,7 @@ class TestCachePerformanceIntegration:
 
         # 计算命中率
         hit_rate = cache_stats["cache_hits"] / cache_stats["total_requests"]
-        assert hit_rate == cache_stats["hit_rate"]
+        assert hit_rate   == cache_stats["hit_rate"]
         assert hit_rate > 0.8  # 期望命中率超过80%
 
         # 验证统计完整性
@@ -494,7 +494,9 @@ class TestCachePerformanceIntegration:
         ("static:*", "static_data", 86400),
     ],
 )
-def test_cache_pattern_configuration(cache_pattern, data_type, expected_ttl):
+def test_cache_pattern_configuration(
+    cache_pattern, data_type, expected_ttl, client
+):
     """测试缓存模式配置"""
     # 验证配置格式
     assert "*" in cache_pattern or cache_pattern.isalnum()
@@ -521,7 +523,9 @@ def test_cache_pattern_configuration(cache_pattern, data_type, expected_ttl):
         ("search", "users:search:test", True),
     ],
 )
-def test_cache_operation_rules(operation, cache_key, should_cache):
+def test_cache_operation_rules(
+    operation, cache_key, should_cache, client
+):
     """测试缓存操作规则"""
     # 验证规则
     assert operation in ["get", "create", "update", "delete", "list", "search"]

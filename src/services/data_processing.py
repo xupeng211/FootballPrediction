@@ -31,6 +31,8 @@ class MatchDataProcessor(DataProcessor):
         logger.debug(f"Processing match data: {data.get('id')}")
 
         return {**data, "processed_at": datetime.utcnow(), "type": "match"}
+
+
 class OddsDataProcessor(DataProcessor):
     """赔率数据处理器"""
 
@@ -39,6 +41,8 @@ class OddsDataProcessor(DataProcessor):
         logger.debug(f"Processing odds data: {data.get('match_id')}")
 
         return {**data, "processed_at": datetime.utcnow(), "type": "odds"}
+
+
 class ScoresDataProcessor(DataProcessor):
     """比分数据处理器"""
 
@@ -47,6 +51,8 @@ class ScoresDataProcessor(DataProcessor):
         logger.debug(f"Processing scores data: {data.get('match_id')}")
 
         return {**data, "processed_at": datetime.utcnow(), "type": "scores"}
+
+
 class FeaturesDataProcessor(DataProcessor):
     """特征数据处理器"""
 
@@ -55,6 +61,8 @@ class FeaturesDataProcessor(DataProcessor):
         logger.debug(f"Processing features data: {data.get('match_id')}")
 
         return {**data, "processed_at": datetime.utcnow(), "type": "features"}
+
+
 class DataQualityValidator:
     """数据质量验证器"""
 
@@ -157,6 +165,8 @@ class BronzeToSilverProcessor:
             data = handler.handle(data)
 
         return {**data, "processed_at": datetime.utcnow(), "layer": "silver"}
+
+
 class DataProcessingService:
     """数据处理服务 - 简化版本"""
 

@@ -11,7 +11,7 @@ import sys
 import os
 
 # 添加项目根目录到sys.path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../.."))
 
 
 class TestAPIBasics:
@@ -21,8 +21,8 @@ class TestAPIBasics:
         """测试API模块导入"""
         # 测试基础模块导入
         basic_modules = [
-            'src.api.models',
-            'src.api.schemas',
+            "src.api.models",
+            "src.api.schemas",
         ]
 
         for module_name in basic_modules:
@@ -36,11 +36,13 @@ class TestAPIBasics:
         """测试健康模块导入"""
         try:
             from src.api.health import router
+
             assert router is not None
         except ImportError:
             # 测试健康路由是否通过其他方式可用
             try:
                 from src.api.health.health import router
+
                 assert router is not None
             except ImportError:
                 pytest.skip("健康模块不可用")
@@ -49,11 +51,13 @@ class TestAPIBasics:
         """测试预测模块导入"""
         try:
             from src.api.predictions import router
+
             assert router is not None
         except ImportError:
             # 测试预测路由是否通过其他方式可用
             try:
                 from src.api.predictions.router import router
+
                 assert router is not None
             except ImportError:
                 pytest.skip("预测模块不可用")
@@ -62,9 +66,10 @@ class TestAPIBasics:
         """测试路由器属性"""
         try:
             from src.api.health import router
+
             # 检查路由器基本属性
-            assert hasattr(router, 'routes')
-            assert hasattr(router, 'prefix')
+            assert hasattr(router, "routes")
+            assert hasattr(router, "prefix")
         except ImportError:
             pytest.skip("路由器模块不可用")
 
@@ -72,11 +77,13 @@ class TestAPIBasics:
         """测试API模型存在"""
         try:
             from src.api.models import BaseResponse
+
             assert BaseResponse is not None
         except ImportError:
             try:
                 # 尝试从schemas导入
                 from src.api.schemas import BaseResponse
+
                 assert BaseResponse is not None
             except ImportError:
                 pytest.skip("API模型不可用")
@@ -85,8 +92,9 @@ class TestAPIBasics:
         """测试模式验证"""
         try:
             from src.api.schemas import PredictionRequest
+
             # 创建基本请求
-            if hasattr(PredictionRequest, '__init__'):
+            if hasattr(PredictionRequest, "__init__"):
                 request = PredictionRequest()
                 assert request is not None
         except ImportError:
@@ -100,8 +108,8 @@ class TestConstants:
         """测试API常量"""
         # 测试常见的API常量
         api_constants = {
-            'API_V1_PREFIX': '/api/v1',
-            'TAGS': ['api', 'football', 'predictions'],
+            "API_V1_PREFIX": "/api/v1",
+            "TAGS": ["api", "football", "predictions"],
         }
 
         # 这些常量可能不存在，但我们测试导入不会失败
@@ -118,6 +126,7 @@ class TestErrorHandling:
         # 尝试导入不存在的模块
         try:
             from src.api.nonexistent_module import something
+
             assert False, "应该抛出ImportError"
         except ImportError:
             assert True  # 期望的错误
@@ -126,9 +135,10 @@ class TestErrorHandling:
         """测试属性错误处理"""
         try:
             from src.api.models import BaseResponse
+
             # 尝试访问不存在的属性
-            if hasattr(BaseResponse, '__dict__'):
-                result = getattr(BaseResponse, 'nonexistent_attribute', None)
+            if hasattr(BaseResponse, "__dict__"):
+                result = getattr(BaseResponse, "nonexistent_attribute", None)
                 assert result is None
         except ImportError:
             pytest.skip("模型模块不可用")
@@ -141,6 +151,7 @@ class TestFastAPIIntegration:
         """测试FastAPI导入"""
         try:
             from fastapi import FastAPI
+
             app = FastAPI()
             assert app is not None
         except ImportError:
@@ -150,6 +161,7 @@ class TestFastAPIIntegration:
         """测试路由器创建"""
         try:
             from fastapi import APIRouter
+
             router = APIRouter()
             assert router is not None
         except ImportError:
@@ -159,6 +171,7 @@ class TestFastAPIIntegration:
         """测试依赖导入"""
         try:
             from fastapi import Depends
+
             assert Depends is not None
         except ImportError:
             pytest.skip("Depends不可用")
@@ -169,15 +182,15 @@ class TestFileStructure:
 
     def test_api_directory_exists(self):
         """测试API目录存在"""
-        api_path = os.path.join(os.path.dirname(__file__), '../../../src/api')
+        api_path = os.path.join(os.path.dirname(__file__), "../../../src/api")
         assert os.path.exists(api_path), "API目录应该存在"
 
     def test_key_files_exist(self):
         """测试关键文件存在"""
         key_files = [
-            '../../../src/api/__init__.py',
-            '../../../src/api/models.py',
-            '../../../src/api/schemas.py',
+            "../../../src/api/__init__.py",
+            "../../../src/api/models.py",
+            "../../../src/api/schemas.py",
         ]
 
         for file_path in key_files:
@@ -194,23 +207,25 @@ class TestModuleStructure:
     def test_api_module_structure(self):
         """测试API模块结构"""
         import src.api
-        assert hasattr(src.api, '__file__')
+
+        assert hasattr(src.api, "__file__")
         assert os.path.exists(src.api.__file__)
 
     def test_module_attributes(self):
         """测试模块属性"""
         try:
             import src.api.models
+
             # 检查模块基本属性
-            assert hasattr(src.api.models, '__name__')
-            assert src.api.models.__name__ == 'src.api.models'
+            assert hasattr(src.api.models, "__name__")
+            assert src.api.models.__name__ == "src.api.models"
         except ImportError:
             pytest.skip("models模块不可用")
 
     def test_package_structure(self):
         """测试包结构"""
-        api_path = os.path.join(os.path.dirname(__file__), '../../../src/api')
-        init_file = os.path.join(api_path, '__init__.py')
+        api_path = os.path.join(os.path.dirname(__file__), "../../../src/api")
+        init_file = os.path.join(api_path, "__init__.py")
 
         if os.path.exists(api_path):
             # 检查是否是Python包
@@ -240,12 +255,7 @@ class TestBasicFunctionality:
     def test_list_operations(self):
         """测试列表操作"""
         # 测试基本列表操作
-        api_endpoints = [
-            "/predictions",
-            "/matches",
-            "/teams",
-            "/health"
-        ]
+        api_endpoints = ["/predictions", "/matches", "/teams", "/health"]
 
         assert len(api_endpoints) == 4
         assert "/predictions" in api_endpoints
@@ -257,7 +267,7 @@ class TestBasicFunctionality:
         api_response = {
             "status": "success",
             "data": {"predictions": []},
-            "message": "API response"
+            "message": "API response",
         }
 
         assert "status" in api_response
@@ -275,13 +285,13 @@ class TestConfigHandling:
         import os
 
         # 设置测试环境变量
-        os.environ['TEST_API_VAR'] = 'test_value'
+        os.environ["TEST_API_VAR"] = "test_value"
 
-        assert os.environ.get('TEST_API_VAR') == 'test_value'
+        assert os.environ.get("TEST_API_VAR") == "test_value"
 
         # 清理
-        if 'TEST_API_VAR' in os.environ:
-            del os.environ['TEST_API_VAR']
+        if "TEST_API_VAR" in os.environ:
+            del os.environ["TEST_API_VAR"]
 
     def test_config_loading(self):
         """测试配置加载"""
@@ -289,7 +299,7 @@ class TestConfigHandling:
         mock_config = {
             "api_title": "Football Prediction API",
             "version": "1.0.0",
-            "debug": True
+            "debug": True,
         }
 
         assert mock_config["api_title"] == "Football Prediction API"

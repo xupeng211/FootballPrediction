@@ -90,7 +90,7 @@ def main():
                 print(f"   ✅ 移除第 {line_num} 行的type: ignore")
                 fixed_count += 1
 
-    print(f"\n📈 修复结果:")
+    print("\n📈 修复结果:")
     print(f"   处理错误数: {len(errors)}")
     print(f"   成功修复数: {fixed_count}")
 

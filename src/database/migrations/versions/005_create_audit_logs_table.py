@@ -1,6 +1,8 @@
 import logging
+
 logger = logging.getLogger(__name__)
 from alembic import op
+
 """
 from datetime import datetime, timezone
 增强权限审计功能 - 创建audit_logs表
@@ -115,7 +117,9 @@ def upgrade():  # type: ignore
         # 扩展信息
         sa.Column(
             "metadata",
-            sa.JSON() if db_dialect == 'sqlite' else postgresql.JSONB(astext_type=sa.Text()),
+            sa.JSON()
+            if db_dialect == "sqlite"
+            else postgresql.JSONB(astext_type=sa.Text()),
             nullable=True,
             comment="扩展元数据",
         ),
@@ -193,10 +197,12 @@ def upgrade():  # type: ignore
         connection = op.get_bind()
 
         # 检查是否在SQLite环境中（测试环境）
-        if db_dialect == 'sqlite':
+        if db_dialect == "sqlite":
             logger.info("⚠️  SQLite环境：跳过PostgreSQL权限设置和函数创建")
             op.execute("-- SQLite environment: skipped PostgreSQL permission grants")
-            op.execute("-- SQLite environment: SQLite does not support GRANT statements")
+            op.execute(
+                "-- SQLite environment: SQLite does not support GRANT statements"
+            )
             op.execute("-- SQLite environment: skipped PostgreSQL function creation")
         else:
             # 为只读用户授予查询权限

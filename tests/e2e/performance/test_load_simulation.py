@@ -297,12 +297,12 @@ class TestLoadSimulation:
 
         # 性能断言
         for result in results:
-            assert (
-                result["avg"] < 500
-            ), f"{result['endpoint']} 平均响应时间过长: {result['avg']:.1f}ms"
-            assert (
-                result["max"] < 2000
-            ), f"{result['endpoint']} 最大响应时间过长: {result['max']:.1f}ms"
+            assert result["avg"] < 500, (
+                f"{result['endpoint']} 平均响应时间过长: {result['avg']:.1f}ms"
+            )
+            assert result["max"] < 2000, (
+                f"{result['endpoint']} 最大响应时间过长: {result['max']:.1f}ms"
+            )
 
     @pytest.mark.asyncio
     async def test_database_query_performance(

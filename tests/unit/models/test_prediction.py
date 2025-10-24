@@ -28,6 +28,7 @@ try:
         model_load_duration_seconds,
         cache_hit_ratio,
     )
+
     PREDICTION_AVAILABLE = True
 except ImportError:
     PREDICTION_AVAILABLE = False
@@ -41,6 +42,7 @@ class TestPredictionResult:
         """测试PredictionResult dataclass"""
         # 验证它是一个dataclass
         import dataclasses
+
         assert dataclasses.is_dataclass(PredictionResult)
 
     def test_prediction_result_class_exists(self):
@@ -59,7 +61,7 @@ class TestPredictionResult:
             confidence=0.85,
             prediction_time=prediction_time,
             model_version="v2.1.0",
-            features=features
+            features=features,
         )
 
         assert result.match_id == 12345
@@ -78,7 +80,7 @@ class TestPredictionResult:
             predicted_result="draw",
             confidence=0.60,
             prediction_time=prediction_time,
-            model_version="v1.0.0"
+            model_version="v1.0.0",
         )
 
         assert result.match_id == 67890
@@ -97,7 +99,7 @@ class TestPredictionResult:
             predicted_result="away_win",
             confidence=0.70,
             prediction_time=datetime.datetime.utcnow(),
-            model_version="v1.0.0"
+            model_version="v1.0.0",
         )
         assert result1.features == {}
 
@@ -108,7 +110,7 @@ class TestPredictionResult:
             confidence=0.80,
             prediction_time=datetime.datetime.utcnow(),
             model_version="v1.0.0",
-            features=None
+            features=None,
         )
         assert result2.features == {}
 
@@ -120,7 +122,7 @@ class TestPredictionResult:
             confidence=0.50,
             prediction_time=datetime.datetime.utcnow(),
             model_version="v1.0.0",
-            features=custom_features
+            features=custom_features,
         )
         assert result3.features == custom_features
 
@@ -131,7 +133,7 @@ class TestPredictionResult:
             predicted_result="home_win",
             confidence=0.75,
             prediction_time=datetime.datetime.utcnow(),
-            model_version="v1.0.0"
+            model_version="v1.0.0",
         )
 
         assert isinstance(result.match_id, int)
@@ -157,7 +159,7 @@ class TestPredictionResult:
                 predicted_result=predicted_result,
                 confidence=confidence,
                 prediction_time=base_time,
-                model_version="v1.0.0"
+                model_version="v1.0.0",
             )
             assert result.predicted_result == predicted_result
             assert result.confidence == confidence
@@ -165,21 +167,13 @@ class TestPredictionResult:
     def test_prediction_result_complex_features(self):
         """测试复杂的features结构"""
         complex_features = {
-            "home_team": {
-                "rating": 85.5,
-                "form": [1, 0, 1, 1, 0],
-                "injuries": 2
-            },
-            "away_team": {
-                "rating": 78.2,
-                "form": [0, 1, 0, 0, 1],
-                "injuries": 1
-            },
+            "home_team": {"rating": 85.5, "form": [1, 0, 1, 1, 0], "injuries": 2},
+            "away_team": {"rating": 78.2, "form": [0, 1, 0, 0, 1], "injuries": 1},
             "match_conditions": {
                 "venue": "home",
                 "weather": "sunny",
-                "temperature": 22.5
-            }
+                "temperature": 22.5,
+            },
         }
 
         result = PredictionResult(
@@ -188,7 +182,7 @@ class TestPredictionResult:
             confidence=0.75,
             prediction_time=datetime.datetime.utcnow(),
             model_version="v3.0.0",
-            features=complex_features
+            features=complex_features,
         )
 
         assert result.features == complex_features
@@ -220,7 +214,7 @@ class TestPredictionCache:
             predicted_result="home_win",
             confidence=0.80,
             prediction_time=prediction_time,
-            model_version="v1.0.0"
+            model_version="v1.0.0",
         )
 
         # 设置缓存
@@ -249,7 +243,7 @@ class TestPredictionCache:
             predicted_result="draw",
             confidence=0.60,
             prediction_time=prediction_time,
-            model_version="v1.0.0"
+            model_version="v1.0.0",
         )
 
         # 设置带TTL的缓存
@@ -272,9 +266,9 @@ class TestPredictionCache:
                 predicted_result="home_win",
                 confidence=0.75,
                 prediction_time=prediction_time,
-                model_version="v1.0.0"
+                model_version="v1.0.0",
             )
-            cache.set(f"match_{100+i}", result)
+            cache.set(f"match_{100 + i}", result)
 
         # 验证缓存不为空
         assert len(cache._cache) == 3
@@ -297,7 +291,7 @@ class TestPredictionCache:
             predicted_result="home_win",
             confidence=0.80,
             prediction_time=prediction_time,
-            model_version="v1.0.0"
+            model_version="v1.0.0",
         )
         cache.set("match_789", result1)
 
@@ -311,7 +305,7 @@ class TestPredictionCache:
             predicted_result="away_win",
             confidence=0.20,  # 不同的置信度
             prediction_time=prediction_time,
-            model_version="v2.0.0"
+            model_version="v2.0.0",
         )
         cache.set("match_789", result2)
 
@@ -331,7 +325,7 @@ class TestPredictionCache:
             "match_123_home",
             "match_456_away",
             "match_789_draw_v1.0.0",
-            "user_123_match_456_model_v2.1.0"
+            "user_123_match_456_model_v2.1.0",
         ]
 
         result = PredictionResult(
@@ -339,7 +333,7 @@ class TestPredictionCache:
             predicted_result="home_win",
             confidence=0.75,
             prediction_time=prediction_time,
-            model_version="v1.0.0"
+            model_version="v1.0.0",
         )
 
         for key in complex_keys:
@@ -375,6 +369,7 @@ class TestPredictionService:
         """测试PredictionService继承关系"""
         # 检查是否继承自SimpleService
         from src.services.base_unified import SimpleService
+
         assert issubclass(PredictionService, SimpleService)
 
     def test_prediction_service_predict_match(self):
@@ -409,6 +404,7 @@ class TestPredictionService:
                 assert result.confidence == 0.75
 
         import asyncio
+
         asyncio.run(test_different_ids())
 
     def test_prediction_service_batch_predict_matches(self):
@@ -428,6 +424,7 @@ class TestPredictionService:
                 assert result.predicted_result == "home_win"
 
         import asyncio
+
         asyncio.run(test_batch_predict())
 
     def test_prediction_service_batch_predict_empty_list(self):
@@ -439,6 +436,7 @@ class TestPredictionService:
             assert results == []
 
         import asyncio
+
         asyncio.run(test_empty_batch())
 
     def test_prediction_service_batch_predict_single_item(self):
@@ -455,6 +453,7 @@ class TestPredictionService:
             assert isinstance(result, PredictionResult)
 
         import asyncio
+
         asyncio.run(test_single_batch())
 
     def test_prediction_service_verify_prediction(self):
@@ -472,6 +471,7 @@ class TestPredictionService:
             assert result3 is True
 
         import asyncio
+
         asyncio.run(test_verify())
 
     def test_prediction_service_get_prediction_statistics(self):
@@ -492,12 +492,13 @@ class TestPredictionService:
             assert stats["model_version"] == "v1.0.0"
 
         import asyncio
+
         asyncio.run(test_statistics())
 
     def test_prediction_service_cache_integration(self):
         """测试PredictionService与缓存的集成"""
         service = PredictionService()
-        prediction_time = datetime.datetime.utcnow()
+        datetime.datetime.utcnow()
 
         async def test_cache_integration():
             # 创建一个预测
@@ -512,6 +513,7 @@ class TestPredictionService:
             assert cached_result.match_id == 123
 
         import asyncio
+
         asyncio.run(test_cache_integration())
 
 
@@ -792,7 +794,9 @@ class TestMonitoringMetrics:
     def test_prediction_duration_seconds_histogram(self):
         """测试prediction_duration_seconds直方图"""
         assert prediction_duration_seconds.name == "prediction_duration_seconds"
-        assert prediction_duration_seconds.description == "Prediction duration in seconds"
+        assert (
+            prediction_duration_seconds.description == "Prediction duration in seconds"
+        )
         assert prediction_duration_seconds() == 0.0
 
         # 测试观察
@@ -812,7 +816,9 @@ class TestMonitoringMetrics:
     def test_model_load_duration_seconds_histogram(self):
         """测试model_load_duration_seconds直方图"""
         assert model_load_duration_seconds.name == "model_load_duration_seconds"
-        assert model_load_duration_seconds.description == "Model load duration in seconds"
+        assert (
+            model_load_duration_seconds.description == "Model load duration in seconds"
+        )
         assert model_load_duration_seconds() == 0.0
 
         # 测试观察
@@ -832,7 +838,7 @@ class TestMonitoringMetrics:
     def test_all_metrics_independent(self):
         """测试所有指标实例独立工作"""
         # 保存当前状态并重置指标
-        initial_total = predictions_total()
+        predictions_total()
 
         # 重置计数器
         predictions_total.value = 0
@@ -969,4 +975,5 @@ class TestPredictionIntegration:
             assert len(results) == 1000
 
         import asyncio
+
         asyncio.run(test_error_handling())

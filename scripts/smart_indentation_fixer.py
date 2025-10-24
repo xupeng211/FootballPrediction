@@ -156,13 +156,13 @@ def main():
                      if success and msg == "缩进错误修复成功")
     failed_files = [path for path, (success, _) in results.items() if not success]
 
-    print(f"\n📊 修复结果:")
+    print("\n📊 修复结果:")
     print(f"   成功处理: {success_count}/{len(results)}")
     print(f"   实际修复: {fixed_count}")
     print(f"   处理失败: {len(failed_files)}")
 
     if failed_files:
-        print(f"\n❌ 处理失败的文件:")
+        print("\n❌ 处理失败的文件:")
         for file_path in failed_files:
             print(f"   - {file_path}: {results[file_path][1]}")
 

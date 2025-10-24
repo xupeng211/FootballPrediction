@@ -90,30 +90,30 @@ class APMIntegration:
     def get_sentry_dsn(self) -> Optional[str]:
         """获取Sentry DSN"""
         import os
+
         return os.getenv("SENTRY_DSN")
 
     def get_environment(self) -> str:
         """获取当前环境"""
         import os
+
         return os.getenv("ENVIRONMENT", "development")
 
     def create_span(self, name: str, **kwargs):
         """创建追踪span"""
-        if not self.enabled or not hasattr(self, 'tracer'):
+        if not self.enabled or not hasattr(self, "tracer"):
             return _DummySpan()
 
         return self.tracer.start_span(name, **kwargs)
 
     def record_metric(self, name: str, value: float, unit: str = "", **kwargs):
         """记录指标"""
-        if not self.enabled or not hasattr(self, 'meter'):
+        if not self.enabled or not hasattr(self, "meter"):
             return
 
         try:
             counter = self.meter.create_counter(
-                name=f"football_prediction_{name}",
-                unit=unit,
-                **kwargs
+                name=f"football_prediction_{name}", unit=unit, **kwargs
             )
             counter.add(value)
         except Exception as e:
@@ -126,6 +126,7 @@ class APMIntegration:
 
         try:
             import sentry_sdk
+
             sentry_sdk.capture_exception(error, extra=context)
         except Exception:
             # Sentry不可用时的fallback
@@ -141,7 +142,7 @@ class APMIntegration:
             self.record_error(e, {"operation": operation_name})
             raise
         finally:
-            if hasattr(span, 'end'):
+            if hasattr(span, "end"):
                 span.end()
 
     @asynccontextmanager
@@ -154,7 +155,7 @@ class APMIntegration:
             self.record_error(e, {"operation": operation_name})
             raise
         finally:
-            if hasattr(span, 'end'):
+            if hasattr(span, "end"):
                 span.end()
 
 
@@ -173,13 +174,20 @@ class APMMiddleware(BaseHTTPMiddleware):
         start_time = time.time()
 
         # 创建请求span
-        with self.apm.trace_operation(f"HTTP {request.method} {request.url.path}") as span:
+        with self.apm.trace_operation(
+            f"HTTP {request.method} {request.url.path}"
+        ) as span:
             try:
                 # 记录请求开始
-                self.apm.record_metric("http_requests_total", 1, "count", {
-                    "method": request.method,
-                    "path": request.url.path,
-                })
+                self.apm.record_metric(
+                    "http_requests_total",
+                    1,
+                    "count",
+                    {
+                        "method": request.method,
+                        "path": request.url.path,
+                    },
+                )
 
                 # 处理请求
                 response = await call_next(request)
@@ -188,39 +196,57 @@ class APMMiddleware(BaseHTTPMiddleware):
                 process_time = time.time() - start_time
 
                 # 记录响应时间指标
-                self.apm.record_metric("http_request_duration", process_time, "seconds", {
-                    "method": request.method,
-                    "path": request.url.path,
-                    "status_code": str(response.status_code),
-                })
+                self.apm.record_metric(
+                    "http_request_duration",
+                    process_time,
+                    "seconds",
+                    {
+                        "method": request.method,
+                        "path": request.url.path,
+                        "status_code": str(response.status_code),
+                    },
+                )
 
                 # 记录状态码指标
-                self.apm.record_metric("http_responses_total", 1, "count", {
-                    "method": request.method,
-                    "path": request.url.path,
-                    "status_code": str(response.status_code),
-                })
+                self.apm.record_metric(
+                    "http_responses_total",
+                    1,
+                    "count",
+                    {
+                        "method": request.method,
+                        "path": request.url.path,
+                        "status_code": str(response.status_code),
+                    },
+                )
 
                 # 添加追踪信息到响应头
-                response.headers["X-Trace-ID"] = getattr(span, 'span_id', 'unknown')
+                response.headers["X-Trace-ID"] = getattr(span, "span_id", "unknown")
                 response.headers["X-Process-Time"] = str(process_time)
 
                 return response
 
             except Exception as e:
                 # 记录错误
-                self.apm.record_error(e, {
-                    "method": request.method,
-                    "path": request.url.path,
-                    "query_params": dict(request.query_params),
-                })
+                self.apm.record_error(
+                    e,
+                    {
+                        "method": request.method,
+                        "path": request.url.path,
+                        "query_params": dict(request.query_params),
+                    },
+                )
 
                 # 记录错误指标
-                self.apm.record_metric("http_errors_total", 1, "count", {
-                    "method": request.method,
-                    "path": request.url.path,
-                    "error_type": type(e).__name__,
-                })
+                self.apm.record_metric(
+                    "http_errors_total",
+                    1,
+                    "count",
+                    {
+                        "method": request.method,
+                        "path": request.url.path,
+                        "error_type": type(e).__name__,
+                    },
+                )
 
                 raise
 
@@ -244,6 +270,7 @@ class _DummySpan:
 # 全局APM实例
 _global_apm = None
 
+
 def get_apm() -> APMIntegration:
     """获取全局APM实例"""
     global _global_apm
@@ -251,36 +278,47 @@ def get_apm() -> APMIntegration:
         _global_apm = APMIntegration()
     return _global_apm
 
+
 def init_apm(enabled: bool = True) -> APMIntegration:
     """初始化APM"""
     global _global_apm
     _global_apm = APMIntegration(enabled)
     return _global_apm
 
+
 # 便捷函数
 def trace_operation(operation_name: str):
     """追踪操作装饰器"""
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             apm = get_apm()
             with apm.trace_operation(operation_name):
                 return func(*args, **kwargs)
+
         return wrapper
+
     return decorator
+
 
 def trace_async_operation(operation_name: str):
     """追踪异步操作装饰器"""
+
     def decorator(func):
         async def wrapper(*args, **kwargs):
             apm = get_apm()
             async with apm.trace_async_operation(operation_name):
                 return await func(*args, **kwargs)
+
         return wrapper
+
     return decorator
+
 
 def record_metric(name: str, value: float, unit: str = "", **kwargs):
     """记录指标的便捷函数"""
     get_apm().record_metric(name, value, unit, **kwargs)
+
 
 def record_error(error: Exception, context: Optional[Dict] = None):
     """记录错误的便捷函数"""

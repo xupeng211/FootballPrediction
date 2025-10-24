@@ -52,7 +52,7 @@ class TestRealAPIIntegration:
     def test_health_endpoint_integration(self, client):
         """测试健康检查端点的真实集成"""
         response = client.get("/health")
-        assert response.status_code == 200
+        assert response.status_code   == 200
 
         _data = response.json()
         assert "status" in data
@@ -62,7 +62,7 @@ class TestRealAPIIntegration:
     def test_api_root_integration(self, client):
         """测试API根端点的真实集成"""
         response = client.get("/")
-        assert response.status_code == 200
+        assert response.status_code   == 200
 
         _data = response.json()
         assert "message" in data
@@ -84,7 +84,7 @@ class TestRealAPIIntegration:
         mock_db_session.execute.return_value = mock_result
 
         response = client.get("/api/data/matches")
-        assert response.status_code == 200
+        assert response.status_code   == 200
 
         _data = response.json()
         assert isinstance(data, list)
@@ -115,7 +115,7 @@ class TestRealAPIIntegration:
         """测试预测端点的参数验证"""
         # 测试缺少必要参数
         response = client.post("/api/predictions", json={})
-        assert response.status_code == 422  # Validation error
+        assert response.status_code   == 422  # Validation error
 
         # 测试无效参数
         response = client.post(
@@ -125,7 +125,7 @@ class TestRealAPIIntegration:
                 "prediction_type": "invalid_type",
             },
         )
-        assert response.status_code == 422
+        assert response.status_code   == 422
 
     @patch("src.database.connection.get_async_session")
     @patch("src.services.prediction_service.PredictionService")
@@ -153,7 +153,7 @@ class TestRealAPIIntegration:
             },
         )
 
-        assert response.status_code == 200
+        assert response.status_code   == 200
 
         _data = response.json()
         assert "prediction" in data
@@ -176,7 +176,7 @@ class TestRealAPIIntegration:
         mock_db_session.execute.return_value = mock_result
 
         response = client.get("/api/models")
-        assert response.status_code == 200
+        assert response.status_code   == 200
 
         _data = response.json()
         assert isinstance(data, list)
@@ -209,17 +209,17 @@ class TestRealAPIIntegration:
         """测试错误处理的集成"""
         # 测试404错误
         response = client.get("/api/nonexistent-endpoint")
-        assert response.status_code == 404
+        assert response.status_code   == 404
 
         # 测试方法不允许
         response = client.patch("/api/data/matches")
-        assert response.status_code == 405
+        assert response.status_code   == 405
 
     def test_cors_integration(self, client):
         """测试CORS配置的集成"""
         # 发送带有Origin头的请求
         response = client.get("/health", headers={"Origin": "http://localhost:3000"})
-        assert response.status_code == 200
+        assert response.status_code   == 200
 
         # 检查CORS头
         assert "access-control-allow-origin" in response.headers.lower()
@@ -241,7 +241,7 @@ class TestRealAPIIntegration:
 
         # 测试分页参数
         response = client.get("/api/data/matches?page=1&size=5")
-        assert response.status_code == 200
+        assert response.status_code   == 200
 
         _data = response.json()
         assert isinstance(data, list)
@@ -261,13 +261,13 @@ class TestRealAPIIntegration:
 
         # 测试状态过滤
         response = client.get("/api/data/matches?status=completed")
-        assert response.status_code == 200
+        assert response.status_code   == 200
 
         _data = response.json()
         # 如果有数据，应该都是completed状态
         for match in data:
             if "status" in match:
-                assert match["status"] == "completed"
+                assert match["status"]   == "completed"
 
     @patch("src.database.connection.get_async_session")
     def test_authentication_integration(

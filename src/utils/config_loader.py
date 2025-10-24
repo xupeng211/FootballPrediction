@@ -24,6 +24,6 @@ def load_config_from_file(file_path: str) -> Dict[str, Any]:
                 return {}
     except (ValueError, KeyError, RuntimeError, ImportError):
         return {}
-    except Exception as e:
+    except Exception:
         # 捕获YAML解析错误和其他可能的异常
         return {}

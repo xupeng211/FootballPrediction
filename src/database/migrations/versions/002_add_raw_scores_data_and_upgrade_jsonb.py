@@ -5,8 +5,10 @@ from sqlalchemy.dialects import postgresql
 
 # mypy: ignore-errors
 import logging
+
 logger = logging.getLogger(__name__)
 from alembic import op
+
 """add_raw_scores_data_and_upgrade_jsonb
 
 
@@ -50,7 +52,9 @@ def upgrade() -> None:
         ),
         sa.Column(
             "raw_data",
-            sa.JSON() if db_dialect == 'sqlite' else postgresql.JSONB(astext_type=sa.Text()),
+            sa.JSON()
+            if db_dialect == "sqlite"
+            else postgresql.JSONB(astext_type=sa.Text()),
             nullable=False,
             comment="原始JSON数据",
         ),
@@ -100,7 +104,7 @@ def upgrade() -> None:
     )
 
     # 为JSONB字段创建GIN索引，支持高效的JSON查询（仅PostgreSQL）
-    if db_dialect != 'sqlite':
+    if db_dialect != "sqlite":
         op.create_index(
             "idx_raw_scores_data_jsonb_gin",
             "raw_scores_data",
@@ -112,7 +116,7 @@ def upgrade() -> None:
 
     # 2. 升级现有表的JSON字段为JSONB（仅PostgreSQL环境）
     # 注意：这需要在实际应用时谨慎操作，可能需要数据迁移
-    if db_dialect != 'sqlite':
+    if db_dialect != "sqlite":
         try:
             # 升级raw_match_data表
             op.execute(
@@ -148,7 +152,7 @@ def upgrade() -> None:
     # 注意：实际的分区实现需要在数据库层面进行，这里只是准备工作
 
     # PostgreSQL环境：创建分区管理函数（可选，用于自动创建分区）
-    if db_dialect != 'sqlite':
+    if db_dialect != "sqlite":
         op.execute(
             """
         CREATE OR REPLACE FUNCTION create_monthly_partition(table_name TEXT, year_month TEXT)
@@ -172,7 +176,7 @@ def upgrade() -> None:
         )
 
     # 4. 添加数据质量约束
-    if db_dialect != 'sqlite':
+    if db_dialect != "sqlite":
         # 为raw_scores_data添加检查约束（PostgreSQL环境）
         op.create_check_constraint(
             "ck_raw_scores_data_scores_range",
@@ -190,7 +194,7 @@ def upgrade() -> None:
         logger.info("⚠️  SQLite环境：跳过检查约束添加")
 
     # 5. 添加触发器自动更新updated_at字段
-    if db_dialect != 'sqlite':
+    if db_dialect != "sqlite":
         op.execute(
             """
         CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -224,7 +228,7 @@ def downgrade() -> None:
     db_dialect = conn.dialect.name.lower()
 
     # 删除触发器和函数（仅PostgreSQL环境）
-    if db_dialect != 'sqlite':
+    if db_dialect != "sqlite":
         op.execute(
             "DROP TRIGGER IF EXISTS trigger_raw_scores_data_updated_at ON raw_scores_data"
         )
@@ -248,7 +252,7 @@ def downgrade() -> None:
     op.drop_index("idx_raw_scores_data_source", table_name="raw_scores_data")
 
     # 删除约束（仅PostgreSQL环境）
-    if db_dialect != 'sqlite':
+    if db_dialect != "sqlite":
         try:
             op.drop_constraint("ck_raw_scores_data_minute_range", "raw_scores_data")
             op.drop_constraint("ck_raw_scores_data_scores_range", "raw_scores_data")
@@ -259,7 +263,7 @@ def downgrade() -> None:
     op.drop_table("raw_scores_data")
 
     # 删除其他表的JSONB索引（如果存在）
-    if db_dialect != 'sqlite':
+    if db_dialect != "sqlite":
         try:
             op.drop_index("idx_raw_match_data_jsonb_gin", table_name="raw_match_data")
             op.drop_index("idx_raw_odds_data_jsonb_gin", table_name="raw_odds_data")

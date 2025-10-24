@@ -14,7 +14,7 @@ import sys
 import os
 
 # 添加项目根目录到sys.path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../.."))
 
 
 class TestLoggerSimple:
@@ -88,7 +88,7 @@ class TestLoggerSimple:
         logger = get_simple_logger("functionality_logger")
 
         # 测试不同级别的日志输出
-        with patch('logging.StreamHandler.emit') as mock_emit:
+        with patch("logging.StreamHandler.emit") as mock_emit:
             logger.info("Test info message")
             logger.warning("Test warning message")
             logger.error("Test error message")
@@ -99,9 +99,11 @@ class TestLoggerSimple:
 class TestPredictionEngine:
     """测试预测引擎模块"""
 
-    @patch('src.core.prediction_engine._lazy_import')
-    @patch('src.core.prediction_engine.PredictionConfig')
-    def test_get_prediction_engine_first_call(self, mock_config_class, mock_lazy_import):
+    @patch("src.core.prediction_engine._lazy_import")
+    @patch("src.core.prediction_engine.PredictionConfig")
+    def test_get_prediction_engine_first_call(
+        self, mock_config_class, mock_lazy_import
+    ):
         """测试首次获取预测引擎"""
         # 设置模拟
         mock_config = Mock()
@@ -110,9 +112,10 @@ class TestPredictionEngine:
         mock_engine = Mock()
         mock_engine_class.return_value = mock_engine
 
-        with patch('src.core.prediction_engine.PredictionEngine', mock_engine_class):
+        with patch("src.core.prediction_engine.PredictionEngine", mock_engine_class):
             # 重置全局实例
             import src.core.prediction_engine
+
             src.core.prediction_engine._prediction_engine_instance = None
 
             result = asyncio.run(get_prediction_engine())
@@ -122,17 +125,18 @@ class TestPredictionEngine:
             mock_config_class.assert_called_once()
             mock_engine_class.assert_called_once_with(config=mock_config)
 
-    @patch('src.core.prediction_engine._lazy_import')
+    @patch("src.core.prediction_engine._lazy_import")
     def test_get_prediction_engine_singleton(self, mock_lazy_import):
         """测试预测引擎单例模式"""
         mock_engine_class = Mock()
         mock_engine = Mock()
         mock_engine_class.return_value = mock_engine
 
-        with patch('src.core.prediction_engine.PredictionEngine', mock_engine_class):
-            with patch('src.core.prediction_engine.PredictionConfig'):
+        with patch("src.core.prediction_engine.PredictionEngine", mock_engine_class):
+            with patch("src.core.prediction_engine.PredictionConfig"):
                 # 重置全局实例
                 import src.core.prediction_engine
+
                 src.core.prediction_engine._prediction_engine_instance = None
 
                 # 第一次调用
@@ -147,13 +151,16 @@ class TestPredictionEngine:
         """测试延迟导入函数"""
         # 重置全局变量
         import src.core.prediction_engine
+
         src.core.prediction_engine.PredictionEngine = None
         src.core.prediction_engine.PredictionConfig = None
         src.core.prediction_engine.PredictionStatistics = None
 
-        with patch('src.core.prediction_engine.PredictionEngine') as mock_pe:
-            with patch('src.core.prediction_engine.PredictionConfig') as mock_pc:
-                with patch('src.core.prediction_engine.PredictionStatistics') as mock_ps:
+        with patch("src.core.prediction_engine.PredictionEngine") as mock_pe:
+            with patch("src.core.prediction_engine.PredictionConfig") as mock_pc:
+                with patch(
+                    "src.core.prediction_engine.PredictionStatistics"
+                ) as mock_ps:
                     # 模拟导入
                     src.core.prediction_engine._lazy_import()
 
@@ -174,16 +181,18 @@ class TestPredictionEngine:
         src.core.prediction_engine.PredictionConfig = mock_pc
         src.core.prediction_engine.PredictionStatistics = mock_ps
 
-        with patch('src.core.prediction_engine.PredictionEngine'), \
-             patch('src.core.prediction_engine.PredictionConfig'), \
-             patch('src.core.prediction_engine.PredictionStatistics'):
-                    # 再次调用应该不改变值
-                    src.core.prediction_engine._lazy_import()
+        with (
+            patch("src.core.prediction_engine.PredictionEngine"),
+            patch("src.core.prediction_engine.PredictionConfig"),
+            patch("src.core.prediction_engine.PredictionStatistics"),
+        ):
+            # 再次调用应该不改变值
+            src.core.prediction_engine._lazy_import()
 
-                    # 值应该保持不变
-                    assert src.core.prediction_engine.PredictionEngine == mock_pe
-                    assert src.core.prediction_engine.PredictionConfig == mock_pc
-                    assert src.core.prediction_engine.PredictionStatistics == mock_ps
+            # 值应该保持不变
+            assert src.core.prediction_engine.PredictionEngine == mock_pe
+            assert src.core.prediction_engine.PredictionConfig == mock_pc
+            assert src.core.prediction_engine.PredictionStatistics == mock_ps
 
 
 class TestAutoBinding:
@@ -193,6 +202,7 @@ class TestAutoBinding:
         """测试自动绑定导入"""
         try:
             from src.core.auto_binding import auto_bind
+
             assert auto_bind is not None
         except ImportError:
             pytest.skip("auto_binding模块不可用")
@@ -201,6 +211,7 @@ class TestAutoBinding:
         """测试自动绑定函数存在"""
         try:
             from src.core.auto_binding import auto_bind
+
             assert callable(auto_bind)
         except ImportError:
             pytest.skip("auto_binding模块不可用")
@@ -213,6 +224,7 @@ class TestServiceLifecycle:
         """测试服务生命周期导入"""
         try:
             from src.core.service_lifecycle import ServiceLifecycle
+
             assert ServiceLifecycle is not None
         except ImportError:
             pytest.skip("service_lifecycle模块不可用")
@@ -221,6 +233,7 @@ class TestServiceLifecycle:
         """测试服务生命周期类存在"""
         try:
             from src.core.service_lifecycle import ServiceLifecycle
+
             # 检查是否是类
             assert isinstance(ServiceLifecycle, type)
         except ImportError:
@@ -234,6 +247,7 @@ class TestDIContainer:
         """测试DI容器导入"""
         try:
             from src.core.di import DIContainer
+
             assert DIContainer is not None
         except ImportError:
             pytest.skip("di模块不可用")
@@ -242,6 +256,7 @@ class TestDIContainer:
         """测试DI容器创建"""
         try:
             from src.core.di import DIContainer
+
             container = DIContainer()
             assert container is not None
         except ImportError:
@@ -255,6 +270,7 @@ class TestConfigDI:
         """测试配置DI导入"""
         try:
             from src.core.config_di import load_config
+
             assert load_config is not None
         except ImportError:
             pytest.skip("config_di模块不可用")
@@ -267,6 +283,7 @@ class TestEventApplication:
         """测试事件应用导入"""
         try:
             from src.core.event_application import EventApplication
+
             assert EventApplication is not None
         except ImportError:
             pytest.skip("event_application模块不可用")
@@ -279,6 +296,7 @@ class TestPredictionModules:
         """测试缓存管理器导入"""
         try:
             from src.core.prediction.cache_manager import CacheManager
+
             assert CacheManager is not None
         except ImportError:
             pytest.skip("cache_manager模块不可用")
@@ -287,6 +305,7 @@ class TestPredictionModules:
         """测试数据加载器导入"""
         try:
             from src.core.prediction.data_loader import DataLoader
+
             assert DataLoader is not None
         except ImportError:
             pytest.skip("data_loader模块不可用")
@@ -299,6 +318,7 @@ class TestLoggerModule:
         """测试日志模块导入"""
         try:
             from src.core.logger import get_logger
+
             assert get_logger is not None
         except ImportError:
             pytest.skip("logger模块不可用")
@@ -307,6 +327,7 @@ class TestLoggerModule:
         """测试获取日志器函数"""
         try:
             from src.core.logger import get_logger
+
             logger = get_logger("test_module")
             assert logger is not None
         except ImportError:
@@ -320,6 +341,7 @@ class TestExceptionsModule:
         """测试异常模块导入"""
         try:
             from src.core.exceptions import PredictionException
+
             assert PredictionException is not None
         except ImportError:
             pytest.skip("exceptions模块不可用")
@@ -328,6 +350,7 @@ class TestExceptionsModule:
         """测试预测异常创建"""
         try:
             from src.core.exceptions import PredictionException
+
             exception = PredictionException("Test error")
             assert str(exception) == "Test error"
         except ImportError:
@@ -341,6 +364,7 @@ class TestErrorHandler:
         """测试错误处理器导入"""
         try:
             from src.core.error_handler import ErrorHandler
+
             assert ErrorHandler is not None
         except ImportError:
             pytest.skip("error_handler模块不可用")
@@ -352,8 +376,8 @@ class TestModuleIntegration:
     def test_core_modules_compatibility(self):
         """测试核心模块兼容性"""
         modules_to_test = [
-            'src.core.logger_simple',
-            'src.core.prediction_engine',
+            "src.core.logger_simple",
+            "src.core.prediction_engine",
         ]
 
         for module_name in modules_to_test:
@@ -366,12 +390,12 @@ class TestModuleIntegration:
         """测试无循环导入"""
         # 测试一些关键模块是否能正常导入
         modules_to_test = [
-            'src.core.logger_simple',
+            "src.core.logger_simple",
         ]
 
         for module_name in modules_to_test:
             try:
-                module = __import__(module_name, fromlist=[''])
+                module = __import__(module_name, fromlist=[""])
                 assert module is not None
             except ImportError as e:
                 pytest.skip(f"模块 {module_name} 导入失败: {e}")

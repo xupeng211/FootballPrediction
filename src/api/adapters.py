@@ -36,16 +36,22 @@ async def get_registry_status() -> Dict[str, Any]:
         "registry": health_status,
         "metrics": metrics_summary,
     }
+
+
 @router.post("/registry/initialize", summary="初始化适配器注册表")
 async def initialize_registry() -> Dict[str, str]:
     """初始化适配器注册表"""
     await adapter_registry.initialize()
     return {"message": "适配器注册表已初始化"}
+
+
 @router.post("/registry/shutdown", summary="关闭适配器注册表")
 async def shutdown_registry() -> Dict[str, str]:
     """关闭适配器注册表"""
     await adapter_registry.shutdown()
     return {"message": "适配器注册表已关闭"}
+
+
 # ==================== 适配器配置管理 ====================
 
 
@@ -74,11 +80,12 @@ async def get_adapter_configs() -> Dict[str, Any]:
                 "fallback_strategy": group.fallback_strategy,
             }
 
-  
         return {
-        "adapters": configs,
-        "groups": groups,
-    }
+            "adapters": configs,
+            "groups": groups,
+        }
+
+
 @router.post("/configs/load", summary="加载适配器配置")
 async def load_adapter_config(config_data: Dict[str, Any]) -> Dict[str, str]:
     """加载适配器配置"""
@@ -97,6 +104,8 @@ async def load_adapter_config(config_data: Dict[str, Any]) -> Dict[str, str]:
         return {"message": f"适配器配置 {config.name} 已加载"}
 
     return {"error": "缺少adapter_name"}
+
+
 # ==================== 辅助函数 ====================
 
 

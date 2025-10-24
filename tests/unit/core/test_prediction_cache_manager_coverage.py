@@ -16,12 +16,12 @@ class TestPredictionCacheManager:
         """测试缓存管理器初始化"""
         manager = PredictionCacheManager()
 
-        assert hasattr(manager, '_cache')
-        assert hasattr(manager, 'logger')
+        assert hasattr(manager, "_cache")
+        assert hasattr(manager, "logger")
         assert manager._cache == {}
         assert manager.logger is not None
 
-    @patch('src.core.prediction.cache_manager.logging.getLogger')
+    @patch("src.core.prediction.cache_manager.logging.getLogger")
     def test_init_logger_creation(self, mock_get_logger):
         """测试初始化时logger的创建"""
         mock_logger = Mock()

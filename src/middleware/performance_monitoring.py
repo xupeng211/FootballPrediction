@@ -41,8 +41,8 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
                 "status_code": response.status_code,
                 "process_time": process_time,
                 "user_agent": request.headers.get("user-agent"),
-                "remote_addr": request.client.host if request.client else None
-            }
+                "remote_addr": request.client.host if request.client else None,
+            },
         )
 
         # 添加响应头
@@ -70,8 +70,8 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                 "method": request.method,
                 "url": str(request.url),
                 "headers": dict(request.headers),
-                "client": request.client.host if request.client else None
-            }
+                "client": request.client.host if request.client else None,
+            },
         )
 
         try:
@@ -84,8 +84,8 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                     "method": request.method,
                     "url": str(request.url),
                     "status_code": response.status_code,
-                    "client": request.client.host if request.client else None
-                }
+                    "client": request.client.host if request.client else None,
+                },
             )
 
             return response
@@ -98,8 +98,8 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
                     "method": request.method,
                     "url": str(request.url),
                     "error": str(e),
-                    "client": request.client.host if request.client else None
+                    "client": request.client.host if request.client else None,
                 },
-                exc_info=True
+                exc_info=True,
             )
             raise

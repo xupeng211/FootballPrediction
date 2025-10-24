@@ -138,7 +138,6 @@ def generate_fix_plan(errors_by_file: Dict) -> Dict:
     core_modules = ['src/core/', 'src/api/', 'src/domain/', 'src/database/']
     data_modules = ['src/data/', 'src/features/', 'src/ml/']
     infra_modules = ['src/cache/', 'src/monitoring/', 'src/tasks/']
-    other_modules = []
 
     for file_path, error_count in prioritized_files:
         if any(file_path.startswith(module) for module in core_modules):
@@ -168,7 +167,7 @@ def main():
 
     # 打印摘要
     summary = fix_plan['summary']
-    print(f"\n📊 语法错误摘要:")
+    print("\n📊 语法错误摘要:")
     print(f"   总文件数: {summary['total_files_with_errors']}")
     print(f"   总错误数: {summary['total_errors']}")
     print(f"   缩进错误文件: {summary['indentation_files']}")
@@ -176,7 +175,7 @@ def main():
     print(f"   其他错误文件: {summary['other_files']}")
 
     # 打印修复计划
-    print(f"\n📋 修复计划 (按优先级排序):")
+    print("\n📋 修复计划 (按优先级排序):")
     for i, (category, file_path, error_count) in enumerate(fix_plan['fix_order'][:10], 1):
         print(f"   {i:2d}. [{category:12s}] {file_path} ({error_count} 个错误)")
 
