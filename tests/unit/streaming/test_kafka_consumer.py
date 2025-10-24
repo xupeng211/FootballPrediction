@@ -22,6 +22,8 @@ except ImportError as e:
 
 
 @pytest.mark.skipif(not KAFKA_AVAILABLE, reason="Kafka consumer module not available")
+@pytest.mark.unit
+
 class TestKafkaConsumerImports:
     """Kafka消费者导入测试"""
 

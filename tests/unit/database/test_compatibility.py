@@ -10,6 +10,9 @@ from src.database.compatibility import (
 )
 
 
+@pytest.mark.unit
+@pytest.mark.database
+
 def test_compatibility_enum():
     """测试兼容性枚举"""
     assert Compatibility.FULL.value == "full"

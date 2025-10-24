@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, MagicMock
 """
 任务监控模块测试
 Tests for Task Monitoring
@@ -6,7 +7,6 @@ Tests for Task Monitoring
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime
 from prometheus_client import CollectorRegistry
 
@@ -23,6 +23,8 @@ except ImportError as e:
 
 
 @pytest.mark.skipif(not MONITORING_AVAILABLE, reason="Monitoring module not available")
+@pytest.mark.unit
+
 class TestTaskMonitor:
     """任务监控器测试"""
 

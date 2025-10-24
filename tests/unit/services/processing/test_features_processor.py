@@ -1,3 +1,4 @@
+from unittest.mock import Mock, AsyncMock
 """
 特征处理器测试
 Tests for Features Processor
@@ -6,7 +7,6 @@ Tests for Features Processor
 """
 
 import pytest
-from unittest.mock import Mock, AsyncMock
 import pandas as pd
 from typing import Dict, Any
 
@@ -23,6 +23,8 @@ except ImportError as e:
 @pytest.mark.skipif(
     not FEATURES_PROCESSOR_AVAILABLE, reason="Features processor module not available"
 )
+@pytest.mark.unit
+
 class TestFeaturesProcessor:
     """特征处理器测试"""
 

@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, MagicMock
 """
 扩展模块测试 - 覆盖更多API模块
 Extended Module Tests - Cover More API Modules
@@ -5,7 +6,6 @@ Extended Module Tests - Cover More API Modules
 
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import Mock, patch, MagicMock
 import json
 from datetime import datetime, timedelta
 from typing import Dict, Any, List

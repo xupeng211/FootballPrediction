@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch
 """
 简单工作测试 - 测试确实工作的功能
 Simple Working Tests - Test Actually Working Functions
@@ -5,7 +6,6 @@ Simple Working Tests - Test Actually Working Functions
 
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import Mock, patch
 import json
 from datetime import datetime
 

@@ -8,6 +8,8 @@ from httpx import AsyncClient
 from datetime import datetime, timezone
 
 
+@pytest.mark.integration
+
 class TestUserAPIIntegration:
     """用户 API 集成测试"""
 
@@ -25,11 +27,11 @@ class TestUserAPIIntegration:
         response = await api_client.post("/api/v1/auth/register", json=user_data)
 
         # 验证响应
-        assert response.status_code   == 201
+        assert response.status_code     == 201
         _data = response.json()
         assert data["username"] == user_data["username"]
         assert data["email"] == user_data["email"]
-        assert data["role"]   == user_data["role"]
+        assert data["role"]     == user_data["role"]
         assert "password" not in data  # 密码不应返回
         assert "id" in data
         assert "created_at" in data
@@ -43,7 +45,7 @@ class TestUserAPIIntegration:
         _user = user.scalar_one_or_none()
         assert user is not None
         assert user.email == user_data["email"]
-        assert user.role   == user_data["role"]
+        assert user.role     == user_data["role"]
 
     @pytest.mark.asyncio
     async def test_login_user(self, api_client: AsyncClient, db_session):
@@ -66,11 +68,11 @@ class TestUserAPIIntegration:
         response = await api_client.post("/api/v1/auth/login", _data=login_data)
 
         # 验证响应
-        assert response.status_code   == 200
+        assert response.status_code     == 200
         _data = response.json()
         assert "access_token" in data
         assert "token_type" in data
-        assert data["token_type"]   == "bearer"
+        assert data["token_type"]     == "bearer"
         assert "expires_in" in data
 
     @pytest.mark.asyncio
@@ -81,7 +83,7 @@ class TestUserAPIIntegration:
         response = await api_client.get("/api/v1/users/me", headers=auth_headers)
 
         # 验证响应
-        assert response.status_code   == 200
+        assert response.status_code     == 200
         _data = response.json()
         assert "username" in data
         assert "email" in data
@@ -104,11 +106,11 @@ class TestUserAPIIntegration:
         )
 
         # 验证响应
-        assert response.status_code   == 200
+        assert response.status_code     == 200
         _data = response.json()
         assert data["email"] == update_data["email"]
         assert data["first_name"] == update_data["first_name"]
-        assert data["last_name"]   == update_data["last_name"]
+        assert data["last_name"]     == update_data["last_name"]
 
     @pytest.mark.asyncio
     async def test_change_password(self, api_client: AsyncClient, auth_headers: dict):
@@ -123,7 +125,7 @@ class TestUserAPIIntegration:
         )
 
         # 验证响应
-        assert response.status_code   == 200
+        assert response.status_code     == 200
         _data = response.json()
         assert "message" in data
 
@@ -135,7 +137,7 @@ class TestUserAPIIntegration:
                 "password": password_data["new_password"],
             },
         )
-        assert login_response.status_code   == 200
+        assert login_response.status_code     == 200
 
     @pytest.mark.asyncio
     async def test_get_user_predictions(
@@ -154,7 +156,7 @@ class TestUserAPIIntegration:
         )
 
         # 验证响应
-        assert response.status_code   == 200
+        assert response.status_code     == 200
         _data = response.json()
         assert "data" in data
         assert "pagination" in data
@@ -205,7 +207,7 @@ class TestUserAPIIntegration:
         )
 
         # 验证响应
-        assert response.status_code   == 200
+        assert response.status_code     == 200
         _stats = response.json()
         assert "total_predictions" in stats
         assert "correct_predictions" in stats
@@ -240,7 +242,7 @@ class TestUserAPIIntegration:
         response = await api_client.get("/api/v1/users", headers=auth_headers)
 
         # 验证响应
-        assert response.status_code   == 200
+        assert response.status_code     == 200
         _data = response.json()
         assert "data" in data
         assert "pagination" in data
@@ -250,7 +252,7 @@ class TestUserAPIIntegration:
         response = await api_client.get(
             "/api/v1/users", params={"role": "user"}, headers=auth_headers
         )
-        assert response.status_code   == 200
+        assert response.status_code     == 200
         filtered_data = response.json()
         assert all(u["role"] == "user" for u in filtered_data["data"])
 
@@ -278,7 +280,7 @@ class TestUserAPIIntegration:
         )
 
         # 验证响应
-        assert response.status_code   == 200
+        assert response.status_code     == 200
 
         # 验证数据库
         await db_session.refresh(user)
@@ -296,7 +298,7 @@ class TestUserAPIIntegration:
                 "password": "password123",
             },
         )
-        assert response.status_code   == 422
+        assert response.status_code     == 422
 
         # 密码太短
         response = await api_client.post(
@@ -307,7 +309,7 @@ class TestUserAPIIntegration:
                 "password": "123",
             },
         )
-        assert response.status_code   == 422
+        assert response.status_code     == 422
 
         # 用户名太短
         response = await api_client.post(
@@ -318,7 +320,7 @@ class TestUserAPIIntegration:
                 "password": "password123",
             },
         )
-        assert response.status_code   == 422
+        assert response.status_code     == 422
 
     @pytest.mark.asyncio
     async def test_duplicate_registration(self, api_client: AsyncClient):
@@ -331,7 +333,7 @@ class TestUserAPIIntegration:
 
         # 第一次注册
         response1 = await api_client.post("/api/v1/auth/register", json=user_data)
-        assert response1.status_code   == 201
+        assert response1.status_code     == 201
 
         # 第二次注册相同用户名
         user_data2 = {
@@ -340,7 +342,7 @@ class TestUserAPIIntegration:
             "password": "password123",
         }
         response2 = await api_client.post("/api/v1/auth/register", json=user_data2)
-        assert response2.status_code   == 400
+        assert response2.status_code     == 400
 
         # 第二次注册相同邮箱
         user_data3 = {
@@ -349,7 +351,7 @@ class TestUserAPIIntegration:
             "password": "password123",
         }
         response3 = await api_client.post("/api/v1/auth/register", json=user_data3)
-        assert response3.status_code   == 400
+        assert response3.status_code     == 400
 
     @pytest.mark.asyncio
     async def test_invalid_login(self, api_client: AsyncClient):
@@ -359,7 +361,7 @@ class TestUserAPIIntegration:
             "/api/v1/auth/login",
             _data={"username": "nonexistent_user", "password": "password123"},
         )
-        assert response.status_code   == 401
+        assert response.status_code     == 401
 
         # 密码错误
         # 先注册用户
@@ -377,7 +379,7 @@ class TestUserAPIIntegration:
             "/api/v1/auth/login",
             _data={"username": "test_user_invalid", "password": "wrong_password"},
         )
-        assert response.status_code   == 401
+        assert response.status_code     == 401
 
     @pytest.mark.asyncio
     async def test_token_refresh(self, api_client: AsyncClient, test_user_token):
@@ -388,7 +390,7 @@ class TestUserAPIIntegration:
         )
 
         # 验证响应
-        assert response.status_code   == 200
+        assert response.status_code     == 200
         _data = response.json()
         assert "access_token" in data
         assert "token_type" in data

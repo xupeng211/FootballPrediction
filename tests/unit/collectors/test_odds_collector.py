@@ -28,6 +28,8 @@ except ImportError as e:
     __all__ = []
 
 
+@pytest.mark.unit
+
 class TestOddsCollectorCompatibility:
     """赔率收集器兼容性测试"""
 

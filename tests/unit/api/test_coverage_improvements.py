@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 4 repeated Mock creations
+
+# TODO: Consider creating a fixture for 4 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock
 """
 测试覆盖率提升 - API模块测试
 Coverage Improvement - API Module Tests
@@ -8,7 +13,6 @@ Created specifically to improve coverage for low-coverage core API modules.
 
 import pytest
 import asyncio
-from unittest.mock import Mock, patch, AsyncMock
 from fastapi import HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials
 import sys
@@ -49,6 +53,8 @@ except ImportError as e:
     print(f"导入错误: {e}")
     DEPENDENCIES_AVAILABLE = False
 
+
+@pytest.mark.unit
 
 class TestDependenciesModule:
     """测试依赖注入模块"""

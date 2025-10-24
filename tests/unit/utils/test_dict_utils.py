@@ -11,6 +11,8 @@ from typing import Any, Dict, List
 from src.utils.dict_utils import DictUtils
 
 
+@pytest.mark.unit
+
 class TestDictUtils:
     """测试字典工具类"""
 

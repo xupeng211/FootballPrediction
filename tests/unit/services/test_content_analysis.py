@@ -1,10 +1,10 @@
+from unittest.mock import Mock, patch, AsyncMock
 """
 内容分析服务测试
 Tests for Content Analysis Service
 """
 
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime
 
 from src.services.content_analysis import (
@@ -16,6 +16,8 @@ from src.services.content_analysis import (
     UserRole,
 )
 
+
+@pytest.mark.unit
 
 class TestContentAnalysisService:
     """内容分析服务测试"""

@@ -17,6 +17,8 @@ def prediction() -> Prediction:
     return Prediction(user_id=1, match_id=2)
 
 
+@pytest.mark.unit
+
 class TestPredictionInitialization:
     def test_should_validate_basic_constraints(self):
         with pytest.raises(DomainError):

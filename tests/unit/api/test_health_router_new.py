@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch
 """
 健康检查API路由器测试
 Tests for health check API router
@@ -7,12 +8,16 @@ Tests for health check API router
 
 import pytest
 import time
-from unittest.mock import Mock, patch
 from fastapi.testclient import TestClient
 from fastapi import FastAPI
 
 from src.api.health import router as health_router
 
+
+@pytest.mark.unit
+@pytest.mark.api
+@pytest.mark.external_api
+@pytest.mark.slow
 
 class TestHealthRouter:
     """健康检查API路由器测试"""
@@ -352,6 +357,8 @@ class TestHealthRouter:
     def test_timestamp_precision(self, client):
         """测试时间戳精度"""
         response1 = client.get("/api/v1/health/")
+        time.sleep(0.001)  # 等待1毫秒
+        time.sleep(0.001)  # 等待1毫秒
         time.sleep(0.001)  # 等待1毫秒
         response2 = client.get("/api/v1/health/")
 

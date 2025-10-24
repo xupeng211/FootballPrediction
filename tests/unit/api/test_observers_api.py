@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, AsyncMock
 """
 观察者API端点测试
 Observers API Endpoints Tests
@@ -5,7 +6,6 @@ Observers API Endpoints Tests
 
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import Mock, patch, AsyncMock
 import json
 from datetime import datetime
 

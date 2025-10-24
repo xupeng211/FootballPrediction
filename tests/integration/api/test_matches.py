@@ -9,6 +9,8 @@ from datetime import datetime, timezone
 from sqlalchemy import select
 
 
+@pytest.mark.integration
+
 class TestMatchAPIIntegration:
     """比赛 API 集成测试"""
 
@@ -46,11 +48,11 @@ class TestMatchAPIIntegration:
         )
 
         # 验证响应
-        assert response.status_code   == 201
+        assert response.status_code     == 201
         _data = response.json()
         assert data["home_team_id"] == request_data["home_team_id"]
         assert data["away_team_id"] == request_data["away_team_id"]
-        assert data["competition"]   == request_data["competition"]
+        assert data["competition"]     == request_data["competition"]
         assert "id" in data
 
         # 验证数据库中的数据
@@ -59,7 +61,7 @@ class TestMatchAPIIntegration:
         match = await db_session.get(Match, data["id"])
         assert match is not None
         assert match.home_team_id == request_data["home_team_id"]
-        assert match.competition   == request_data["competition"]
+        assert match.competition     == request_data["competition"]
 
     @pytest.mark.asyncio
     async def test_get_matches(
@@ -98,7 +100,7 @@ class TestMatchAPIIntegration:
         response = await api_client.get("/api/v1/matches", headers=auth_headers)
 
         # 验证响应
-        assert response.status_code   == 200
+        assert response.status_code     == 200
         _data = response.json()
         assert "data" in data
         assert len(data["data"]) >= 5
@@ -108,7 +110,7 @@ class TestMatchAPIIntegration:
         response = await api_client.get(
             "/api/v1/matches", params={"status": "UPCOMING"}, headers=auth_headers
         )
-        assert response.status_code   == 200
+        assert response.status_code     == 200
         upcoming_data = response.json()
         assert all(m["status"] == "UPCOMING" for m in upcoming_data["data"])
 
@@ -125,12 +127,12 @@ class TestMatchAPIIntegration:
         )
 
         # 验证响应
-        assert response.status_code   == 200
+        assert response.status_code     == 200
         _data = response.json()
         assert data["id"] == match.id
         assert data["home_team_id"] == match.home_team_id
         assert data["away_team_id"] == match.away_team_id
-        assert data["competition"]   == match.competition
+        assert data["competition"]     == match.competition
 
     @pytest.mark.asyncio
     async def test_update_match_result(
@@ -152,11 +154,11 @@ class TestMatchAPIIntegration:
         )
 
         # 验证响应
-        assert response.status_code   == 200
+        assert response.status_code     == 200
         _data = response.json()
         assert data["status"] == "COMPLETED"
         assert data["home_score"] == 3
-        assert data["away_score"]   == 1
+        assert data["away_score"]     == 1
 
         # 验证数据库
         from src.database.models import Match
@@ -164,7 +166,7 @@ class TestMatchAPIIntegration:
         updated_match = await db_session.get(Match, match.id)
         assert updated_match.status == "COMPLETED"
         assert updated_match.home_score == 3
-        assert updated_match.away_score   == 1
+        assert updated_match.away_score     == 1
 
     @pytest.mark.asyncio
     async def test_get_upcoming_matches(
@@ -199,7 +201,7 @@ class TestMatchAPIIntegration:
         )
 
         # 验证响应
-        assert response.status_code   == 200
+        assert response.status_code     == 200
         _data = response.json()
         assert "data" in data
         assert len(data["data"]) >= 1
@@ -237,7 +239,7 @@ class TestMatchAPIIntegration:
         response = await api_client.get("/api/v1/matches/live", headers=auth_headers)
 
         # 验证响应
-        assert response.status_code   == 200
+        assert response.status_code     == 200
         _data = response.json()
         assert "data" in data
         assert len(data["data"]) >= 1
@@ -282,7 +284,7 @@ class TestMatchAPIIntegration:
         )
 
         # 验证响应
-        assert response.status_code   == 200
+        assert response.status_code     == 200
         _data = response.json()
         assert "data" in data
         assert len(data["data"]) == 2  # match1 和 match2 都包含 team1
@@ -327,7 +329,7 @@ class TestMatchAPIIntegration:
         )
 
         # 验证响应
-        assert response.status_code   == 200
+        assert response.status_code     == 200
         _stats = response.json()
         assert "total_matches" in stats
         assert "status_counts" in stats
@@ -356,7 +358,7 @@ class TestMatchAPIIntegration:
         )
 
         # 应该返回错误
-        assert response.status_code == 400 or response.status_code   == 422
+        assert response.status_code == 400 or response.status_code     == 422
 
     @pytest.mark.asyncio
     async def test_duplicate_match(

@@ -1,3 +1,4 @@
+from unittest.mock import patch
 """
 时间工具测试（修复版）
 Tests for Time Utils (Fixed Version)
@@ -7,7 +8,6 @@ Tests for Time Utils (Fixed Version)
 
 import pytest
 from datetime import datetime, timedelta, timezone
-from unittest.mock import patch
 
 # 测试导入
 try:
@@ -21,6 +21,8 @@ except ImportError as e:
 
 
 @pytest.mark.skipif(not TIME_UTILS_AVAILABLE, reason="Time utils module not available")
+@pytest.mark.unit
+
 class TestTimeUtilsBasic:
     """时间工具基础功能测试"""
 
@@ -326,6 +328,8 @@ async def test_async_context_usage():
         # 模拟异步操作
         import asyncio
 
+        await asyncio.sleep(0.01)
+        await asyncio.sleep(0.01)
         await asyncio.sleep(0.01)
 
         end_time = TimeUtils.now_utc()

@@ -1,0 +1,58 @@
+{
+  "timestamp": "2025-10-24T19:58:50.267001",
+  "quality_status": {
+    "timestamp": "2025-10-24T19:58:39.331127",
+    "overall_score": 5.94,
+    "coverage": 13.516473757437613,
+    "code_quality": 10.0,
+    "test_health": 2,
+    "security": 10,
+    "recommendations": [
+      "提升测试覆盖率",
+      "建立质量门禁",
+      "定期质量监控"
+    ],
+    "action_items": [
+      {
+        "priority": "HIGH",
+        "category": "coverage",
+        "action": "提升测试覆盖率",
+        "details": "当前覆盖率13.5%，建议优先为核心模块添加测试"
+      },
+      {
+        "priority": "LOW",
+        "category": "prevention",
+        "action": "建立质量门禁",
+        "details": "在CI/CD中集成质量检查"
+      },
+      {
+        "priority": "LOW",
+        "category": "monitoring",
+        "action": "定期质量监控",
+        "details": "建立定期质量检查和报告机制"
+      }
+    ],
+    "ruff_errors": 0,
+    "mypy_errors": 0,
+    "test_count": 0,
+    "test_pass_rate": 0,
+    "files_count": 453
+  },
+  "trends": {
+    "coverage_trend": "stable",
+    "quality_trend": "stable",
+    "recommendation": "持续监控"
+  },
+  "benchmarks": {
+    "vs_industry": {
+      "coverage": -61.48352624256239,
+      "code_quality": 3.0,
+      "security": 2
+    },
+    "vs_targets": {
+      "coverage": -26.483526242562387,
+      "code_quality": 2.0,
+      "security": 1
+    }
+  }
+}

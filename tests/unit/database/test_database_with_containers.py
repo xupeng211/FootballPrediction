@@ -10,6 +10,8 @@ from src.database.models.match import Match
 
 
 @pytest.mark.integration
+@pytest.mark.unit
+
 class TestDatabaseWithContainers:
     """使用真实PostgreSQL容器的数据库测试"""
 

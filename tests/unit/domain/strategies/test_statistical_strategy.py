@@ -1,8 +1,8 @@
+from unittest.mock import patch, AsyncMock, MagicMock
 """测试统计策略"""
 
 import pytest
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime, timedelta
 import numpy as np
 

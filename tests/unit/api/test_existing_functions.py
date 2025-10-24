@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, MagicMock
 """
 现有功能测试 - 测试实际存在的功能
 Existing Functions Tests - Test Actually Existing Functions
@@ -5,7 +6,6 @@ Existing Functions Tests - Test Actually Existing Functions
 
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import Mock, patch, MagicMock
 import json
 from datetime import datetime, timedelta
 from typing import Dict, Any, List

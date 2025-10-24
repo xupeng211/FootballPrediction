@@ -1,3 +1,4 @@
+from unittest.mock import patch, MagicMock
 """
 测试异常检测器模块化拆分
 Test modular split of anomaly detectors
@@ -5,8 +6,9 @@ Test modular split of anomaly detectors
 
 import pandas as pd
 import pytest
-from unittest.mock import MagicMock, patch
 
+
+@pytest.mark.unit
 
 class TestBaseModule:
     """测试基础模块"""

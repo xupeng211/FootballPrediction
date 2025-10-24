@@ -4,6 +4,8 @@ import pytest
 from src.data.collectors.base_collector import DataCollector, CollectionResult
 
 
+@pytest.mark.unit
+
 class TestDataCollector:
     """测试数据收集器"""
 

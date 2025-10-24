@@ -1,10 +1,10 @@
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 Tests for api.dependencies
 Auto-generated test file
 """
 
 import pytest
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
 import asyncio
 
 # Test imports
@@ -41,6 +41,8 @@ def test_exception_handling():
 
 
 # 参数化测试 - 边界条件和各种输入
+@pytest.mark.unit
+
 class TestParameterizedInput:
     """参数化输入测试"""
 

@@ -1,3 +1,4 @@
+from unittest.mock import patch
 """
 时间工具测试
 Tests for Time Utils
@@ -7,7 +8,6 @@ Tests for Time Utils
 
 import pytest
 from datetime import datetime, timedelta, timezone
-from unittest.mock import patch
 
 # 测试导入
 try:
@@ -21,6 +21,8 @@ except ImportError as e:
 
 
 @pytest.mark.skipif(not TIME_UTILS_AVAILABLE, reason="Time utils module not available")
+@pytest.mark.unit
+
 class TestTimeUtilsFormatting:
     """时间工具格式化测试"""
 

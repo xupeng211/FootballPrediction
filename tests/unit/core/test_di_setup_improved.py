@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 47 repeated Mock creations
+
+# TODO: Consider creating a fixture for 47 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 DI设置改进版测试
 Tests for improved DI setup module
@@ -10,7 +15,6 @@ import tempfile
 import os
 import asyncio
 from pathlib import Path
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
 import sys
 
 # 添加项目路径
@@ -25,6 +29,8 @@ from src.core.di_setup import (
     create_di_config,
 )
 
+
+@pytest.mark.unit
 
 class TestDISetupImproved:
     """DI设置改进版测试"""
@@ -74,6 +80,10 @@ profiles:
 
     def test_di_setup_creation_with_none_profile(self):
         """测试使用None配置文件"""
+        with patch.dict(os.environ, {"APP_PROFILE": "staging"}):
+        with patch.dict(os.environ, {"APP_PROFILE": "staging"}):
+        with patch.dict(os.environ, {"APP_PROFILE": "staging"}):
+        with patch.dict(os.environ, {"APP_PROFILE": "staging"}):
         with patch.dict(os.environ, {"APP_PROFILE": "staging"}):
             setup = DISetup(profile=None)
             assert setup.profile == "staging"

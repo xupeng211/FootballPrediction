@@ -1,10 +1,14 @@
+# TODO: Consider creating a fixture for 5 repeated Mock creations
+
+# TODO: Consider creating a fixture for 5 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock
 """
 增强服务核心模块测试
 Tests for Enhanced Core Module
 """
 
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime, timedelta
 import time
 
@@ -16,6 +20,8 @@ from src.services.enhanced_core import (
     AbstractBaseService,
 )
 
+
+@pytest.mark.unit
 
 class TestServiceConfig:
     """测试服务配置类"""

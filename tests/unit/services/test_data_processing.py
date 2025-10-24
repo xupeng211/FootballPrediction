@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, AsyncMock
 """
 数据处理服务测试
 Tests for Data Processing Service
@@ -7,7 +8,6 @@ Tests for Data Processing Service
 
 import pytest
 from datetime import datetime
-from unittest.mock import Mock, AsyncMock, patch
 from typing import Dict, Any
 
 # 测试导入
@@ -29,6 +29,8 @@ except ImportError as e:
 @pytest.mark.skipif(
     not PROCESSING_AVAILABLE, reason="Data processing module not available"
 )
+@pytest.mark.unit
+
 class TestDataProcessor:
     """数据处理器基类测试"""
 

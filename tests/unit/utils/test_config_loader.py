@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch
 """
 配置加载器测试
 Tests for Config Loader
@@ -6,7 +7,6 @@ Tests for Config Loader
 """
 
 import pytest
-from unittest.mock import Mock, patch
 import os
 
 # 测试导入
@@ -32,6 +32,8 @@ except ImportError as e:
 @pytest.mark.skipif(
     not CONFIG_LOADER_AVAILABLE, reason="Config loader module not available"
 )
+@pytest.mark.unit
+
 class TestConfigLoader:
     """配置加载器测试"""
 
@@ -166,6 +168,8 @@ class TestConfigLoader:
         """测试：环境变量覆盖"""
         _config = {"database": {"host": "localhost"}}
 
+        with patch.dict(os.environ, {"CONFIG_DATABASE_HOST": "prod_host"}):
+        with patch.dict(os.environ, {"CONFIG_DATABASE_HOST": "prod_host"}):
         with patch.dict(os.environ, {"CONFIG_DATABASE_HOST": "prod_host"}):
             # 如果实现了环境变量覆盖
             if hasattr(load_config, "__code__"):
@@ -326,6 +330,8 @@ class TestConfigLoaderAdvanced:
         }
 
         # 根据环境变量选择配置
+        with patch.dict(os.environ, {"APP_PROFILE": "production"}):
+        with patch.dict(os.environ, {"APP_PROFILE": "production"}):
         with patch.dict(os.environ, {"APP_PROFILE": "production"}):
             profile = os.getenv("APP_PROFILE", "development")
             _config = profiles.get(profile, profiles["development"])

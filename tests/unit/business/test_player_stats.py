@@ -321,6 +321,8 @@ class PlayerAnalyzer:
         return max(self.players.values(), key=lambda p: p.stats.minutes_played)
 
 
+@pytest.mark.unit
+
 class TestPlayerStats:
     """测试球员统计业务逻辑"""
 

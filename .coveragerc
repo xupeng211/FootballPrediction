@@ -1,18 +1,88 @@
 [run]
+# 足球预测系统 - Coverage配置优化
+# 重构时间: 2025-10-24
+
 branch = True
 source = src
+
+# 排除目录和文件
 omit =
+    # 标准排除
     */__pycache__/*
-    */tests/integration/*
-    */tests/e2e/*
-    */tests/slow/*
-    */tests/examples/*
-    */tests/demo/*
+    */venv/*
+    */.venv/*
+    */virtualenv/*
+    */site-packages/*
+
+    # 测试文件排除
+    */tests/*
+    */test_*
+    */*_test.py
+
+    # 第三方代码和生成文件
+    */migrations/*
     */__init__.py
+    */conftest.py
+    */wsgi.py
+    */asgi.py
+
+    # 示例和文档代码
+    */examples/*
+    */docs/*
+    */playground/*
+
+    # 特定模块排除
+    */stubs/*
+    */backup/*
+    */legacy/*
+    */archived/*
+
+# 并行执行
+parallel = True
 
 [report]
+# 报告配置
 show_missing = True
 skip_covered = False
+precision = 2
+exclude_lines =
+    # 标准排除模式
+    pragma: no cover
+    def __repr__
+    if self.debug:
+    if settings.DEBUG
+    raise AssertionError
+    raise NotImplementedError
+    if 0:
+    if __name__ == .__main__.:
+    class .*\bProtocol\):
+    @(abc\.)?abstractmethod
+
+    # 项目特定排除
+    logger\.
+    pass
+    \.\.\.
+    NotImplementedError
+    raise NotImplementedError
 
 [html]
+# HTML报告配置
 directory = htmlcov
+show_contexts = True
+skip_covered = False
+precision = 2
+
+[xml]
+# XML报告配置 (CI/CD集成)
+output = coverage.xml
+
+[json]
+# JSON报告配置
+output = coverage.json
+pretty_print = True
+
+[paths]
+# 路径映射 (支持多环境)
+source =
+    src/
+    .venv/lib/python*/site-packages/src

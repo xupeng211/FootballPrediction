@@ -1,12 +1,18 @@
+# TODO: Consider creating a fixture for 8 repeated Mock creations
+
+# TODO: Consider creating a fixture for 8 repeated Mock creations
+
+from unittest.mock import patch, MagicMock
 """
 测试预测服务模块化拆分
 Test modular split of prediction service
 """
 
 import pytest
-from unittest.mock import MagicMock, patch
 from datetime import datetime
 
+
+@pytest.mark.unit
 
 class TestPredictionModels:
     """测试预测模型"""

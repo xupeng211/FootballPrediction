@@ -22,6 +22,8 @@ def away_team() -> Team:
     return Team(id=2, name="Away FC", country="England")
 
 
+@pytest.mark.unit
+
 class TestMatchScheduling:
     def test_should_schedule_match(self, service, home_team, away_team):
         match_time = datetime.utcnow() + timedelta(days=1)

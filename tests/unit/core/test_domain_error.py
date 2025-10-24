@@ -14,6 +14,8 @@ from src.core.exceptions import (
 )
 
 
+@pytest.mark.unit
+
 class TestDomainErrors:
     """测试领域异常类"""
 

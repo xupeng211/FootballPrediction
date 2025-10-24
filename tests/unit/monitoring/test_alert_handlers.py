@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 13 repeated Mock creations
+
+# TODO: Consider creating a fixture for 13 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock
 """
 警报处理器测试
 Tests for Alert Handlers
@@ -6,7 +11,6 @@ Tests for Alert Handlers
 """
 
 import pytest
-from unittest.mock import Mock, patch, AsyncMock
 from datetime import datetime
 import json
 
@@ -39,6 +43,8 @@ except ImportError as e:
 @pytest.mark.skipif(
     not ALERT_HANDLERS_AVAILABLE, reason="Alert handlers module not available"
 )
+@pytest.mark.unit
+
 class TestAlertHandler:
     """警报处理器基础测试"""
 

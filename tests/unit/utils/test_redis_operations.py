@@ -1,15 +1,21 @@
+# TODO: Consider creating a fixture for 23 repeated Mock creations
+
+# TODO: Consider creating a fixture for 23 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock
 """
 测试Redis操作类
 """
 
 import json
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
 
 from src.cache.redis.core.connection_manager import RedisConnectionManager
 from src.cache.redis.operations.sync_operations import RedisSyncOperations
 from src.cache.redis.operations.async_operations import RedisAsyncOperations
 
+
+@pytest.mark.unit
 
 class TestRedisSyncOperations:
     """测试Redis同步操作"""

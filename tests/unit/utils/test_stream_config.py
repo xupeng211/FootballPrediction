@@ -1,13 +1,15 @@
+from unittest.mock import Mock
 """流配置测试"""
 
 import pytest
-from unittest.mock import Mock
 
 # Mock classes for testing
 StreamConfig = Mock
 KafkaConfig = Mock
 TopicConfig = Mock
 
+
+@pytest.mark.unit
 
 class TestStreamConfig:
     """测试流配置"""

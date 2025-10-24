@@ -60,6 +60,8 @@ except ImportError:
     pass
 
 
+@pytest.mark.unit
+
 class TestExistingModules:
     """测试实际存在的模块"""
 
@@ -435,6 +437,8 @@ class TestPythonBuiltins:
         import time
 
         start = time.time()
+        time.sleep(0.001)  # 1ms
+        time.sleep(0.001)  # 1ms
         time.sleep(0.001)  # 1ms
         end = time.time()
         assert end > start

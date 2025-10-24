@@ -1,4 +1,6 @@
 # 服务层基本测试
+@pytest.mark.unit
+
 def test_services_import():
     services = [
         "src.services.audit_service",
@@ -20,6 +22,7 @@ def test_services_import():
 def test_base_service_methods():
     try:
         from src.services.base import BaseService
+import pytest
 
         service = BaseService()
         assert service is not None

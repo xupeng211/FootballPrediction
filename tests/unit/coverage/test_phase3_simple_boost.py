@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, AsyncMock
 """
 第三阶段简单覆盖率提升测试
 Phase 3 Simple Coverage Boost Tests
@@ -6,7 +7,6 @@ Phase 3 Simple Coverage Boost Tests
 """
 
 import pytest
-from unittest.mock import Mock, patch, AsyncMock
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 import json
@@ -38,6 +38,8 @@ except ImportError as e:
     print(f"Models import error: {e}")
     MODELS_AVAILABLE = False
 
+
+@pytest.mark.unit
 
 class TestCoreConfigCoverage:
     """核心配置覆盖率测试"""

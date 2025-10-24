@@ -1,3 +1,4 @@
+from unittest.mock import Mock
 """
 验证器参数化测试
 Tests for Validators (Parametrized)
@@ -6,7 +7,6 @@ Tests for Validators (Parametrized)
 """
 
 import pytest
-from unittest.mock import Mock
 import re
 
 # 测试导入
@@ -42,6 +42,8 @@ except ImportError as e:
 
 
 @pytest.mark.skipif(not VALIDATORS_AVAILABLE, reason="Validators module not available")
+@pytest.mark.unit
+
 class TestValidatorsParametrized:
     """验证器参数化测试"""
 

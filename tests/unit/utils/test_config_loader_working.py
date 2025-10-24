@@ -23,6 +23,8 @@ except ImportError:
 @pytest.mark.skipif(
     not CONFIG_LOADER_AVAILABLE, reason="Config loader module not available"
 )
+@pytest.mark.unit
+
 class TestConfigLoaderWorking:
     """配置加载器工作测试"""
 

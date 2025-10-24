@@ -9,6 +9,8 @@ import sys
 sys.path.insert(0, "src")
 
 
+@pytest.mark.unit
+
 def test_health_module_import():
     """测试健康模块可以导入"""
     try:

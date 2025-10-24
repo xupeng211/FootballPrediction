@@ -11,6 +11,8 @@ import sys
 MODULE_PATH = Path("src") / "quality/monitor.py"
 
 
+@pytest.mark.unit
+
 class TestTestQualityMonitor:
     """简化测试类"""
 

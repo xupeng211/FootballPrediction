@@ -1,9 +1,13 @@
+# TODO: Consider creating a fixture for 42 repeated Mock creations
+
+# TODO: Consider creating a fixture for 42 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 API端点测试
 """
 
 import pytest
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from fastapi.testclient import TestClient
 from fastapi import FastAPI, HTTPException, Depends
 from datetime import datetime, timedelta
@@ -55,6 +59,8 @@ TEST_SKIP_REASON = "API module not available"
 
 
 @pytest.mark.skipif(not API_AVAILABLE, reason=TEST_SKIP_REASON)
+@pytest.mark.unit
+
 class TestHealthEndpoint:
     """健康检查端点测试"""
 

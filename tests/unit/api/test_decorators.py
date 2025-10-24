@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 14 repeated Mock creations
+
+# TODO: Consider creating a fixture for 14 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 API装饰器测试
 Tests for API Decorators
@@ -6,7 +11,6 @@ Tests for API Decorators
 """
 
 import pytest
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from fastapi.testclient import TestClient
 from fastapi import FastAPI
 import asyncio
@@ -36,6 +40,8 @@ except ImportError as e:
 
 
 @pytest.mark.skipif(not DECORATORS_AVAILABLE, reason="Decorators module not available")
+@pytest.mark.unit
+
 class TestAPIDecorators:
     """API装饰器测试"""
 

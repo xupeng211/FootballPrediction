@@ -1,6 +1,9 @@
 # 字典工具高级测试
 from src.utils.dict_utils import DictUtils
+import pytest
 
+
+@pytest.mark.unit
 
 def test_flatten_dict():
     nested = {"a": {"b": {"c": 1}}}

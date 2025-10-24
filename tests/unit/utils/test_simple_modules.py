@@ -1,13 +1,15 @@
+from unittest.mock import patch, MagicMock
 """
 简单模块测试
 """
 
 import pytest
-from unittest.mock import MagicMock, patch
 from src.utils import crypto_utils
 from src.utils import response
 from src.utils import i18n
 
+
+@pytest.mark.unit
 
 class TestCryptoUtils:
     """加密工具测试"""

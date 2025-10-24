@@ -1,5 +1,6 @@
 try:
     from src.models.common_models import BaseResponse
+import pytest
 except ImportError:
     # 如果导入失败，创建简单的mock类用于测试
     class BaseResponse:
@@ -11,6 +12,9 @@ except ImportError:
         def dict(self):
             return {"data": self.data, "success": self.success, "message": self.message}
 
+
+@pytest.mark.unit
+@pytest.mark.database
 
 def test_base_response():
     response = BaseResponse(_data={"test": "data"})

@@ -1,10 +1,14 @@
+# TODO: Consider creating a fixture for 22 repeated Mock creations
+
+# TODO: Consider creating a fixture for 22 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock
 """
 预测API模块化测试
 """
 
 import pytest
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock, Mock, patch
 
 from fastapi import HTTPException
 

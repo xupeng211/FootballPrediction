@@ -1,5 +1,9 @@
 from src.database.models.odds import Odds
+import pytest
 
+
+@pytest.mark.unit
+@pytest.mark.database
 
 def test_odds_model():
     odds = Odds(match_id=1, home_win=2.0, draw=3.0, away_win=3.5)

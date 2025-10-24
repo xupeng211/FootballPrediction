@@ -14,6 +14,10 @@ sys.path.insert(0, str(src_path))
 
 
 # 首先检查哪些模块可以成功导入
+@pytest.mark.unit
+@pytest.mark.external_api
+@pytest.mark.slow
+
 def test_import_modules():
     """测试导入所有utils模块"""
     modules = [

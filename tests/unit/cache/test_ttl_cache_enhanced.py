@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, MagicMock
 """
 TTL缓存增强版测试
 Tests for Enhanced TTL Cache
@@ -8,7 +9,6 @@ Tests for Enhanced TTL Cache
 import pytest
 import time
 import threading
-from unittest.mock import Mock, patch, MagicMock
 
 # 测试导入
 try:
@@ -29,6 +29,8 @@ except ImportError:
 
 
 @pytest.mark.skipif(not TTL_AVAILABLE, reason="TTL cache enhanced module not available")
+@pytest.mark.unit
+
 class TestCacheEntry:
     """缓存条目测试"""
 
@@ -57,6 +59,8 @@ class TestCacheEntry:
         initial_time = entry.last_accessed
 
         # 短暂等待确保时间不同
+        time.sleep(0.01)
+        time.sleep(0.01)
         time.sleep(0.01)
         entry.touch()
 
@@ -132,6 +136,8 @@ class TestTTLCache:
 
         # 等待过期
         time.sleep(1.1)
+        time.sleep(1.1)
+        time.sleep(1.1)
         assert cache.get("key1") is None
 
     def test_cache_delete(self):
@@ -177,6 +183,8 @@ class TestTTLCache:
             cache.set(f"key{i}", f"value{i}")
 
         # 等待过期
+        time.sleep(1.1)
+        time.sleep(1.1)
         time.sleep(1.1)
 
         # 清理过期项
@@ -308,6 +316,8 @@ class TestAsyncTTLCache:
 
         # 等待过期
         await asyncio.sleep(1.1)
+        await asyncio.sleep(1.1)
+        await asyncio.sleep(1.1)
         assert await cache.get("key1") is None
 
     @pytest.mark.asyncio
@@ -319,6 +329,8 @@ class TestAsyncTTLCache:
         await cache.set("key2", "value2")
 
         # 等待过期
+        await asyncio.sleep(1.1)
+        await asyncio.sleep(1.1)
         await asyncio.sleep(1.1)
 
         # 清理过期项

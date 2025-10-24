@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
+from unittest.mock import Mock, patch
 """
 Auto-generated basic tests for logger_simple.py
 TODO: Expand these tests with actual functionality
 """
 
 import pytest
-from unittest.mock import Mock, patch
 
 # TODO: Import the module to test
 # from logger_simple import *
 
+
+@pytest.mark.unit
 
 class TestLoggerSimple:
     """Basic test class for logger_simple.py"""

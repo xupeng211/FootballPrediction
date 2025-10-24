@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, AsyncMock
 """
 预测API路由器测试
 Tests for predictions API router
@@ -7,7 +8,6 @@ Tests for predictions API router
 
 import pytest
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, AsyncMock
 from fastapi.testclient import TestClient
 from fastapi import FastAPI
 
@@ -22,6 +22,9 @@ from src.api.predictions.router import (
     PredictionVerification,
 )
 
+
+@pytest.mark.unit
+@pytest.mark.api
 
 class TestPredictionsRouter:
     """预测API路由器测试"""

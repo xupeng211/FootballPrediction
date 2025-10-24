@@ -1,12 +1,18 @@
+# TODO: Consider creating a fixture for 14 repeated Mock creations
+
+# TODO: Consider creating a fixture for 14 repeated Mock creations
+
+from unittest.mock import Mock, patch
 """
 测试Redis连接管理器
 """
 
 import pytest
-from unittest.mock import Mock, patch
 
 from src.cache.redis.core.connection_manager import RedisConnectionManager
 
+
+@pytest.mark.unit
 
 class TestRedisConnectionManager:
     """测试Redis连接管理器"""

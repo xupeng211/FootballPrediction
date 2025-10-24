@@ -1,5 +1,6 @@
 try:
     from src.database.base import BaseRepository
+import pytest
 except ImportError:
     # 如果导入失败，创建简单的mock类用于测试
     class BaseRepository:
@@ -15,6 +16,9 @@ except ImportError:
         def delete(self, id):
             pass
 
+
+@pytest.mark.unit
+@pytest.mark.database
 
 def test_base_repository():
     repo = BaseRepository()

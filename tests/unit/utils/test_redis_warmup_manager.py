@@ -1,13 +1,19 @@
+# TODO: Consider creating a fixture for 17 repeated Mock creations
+
+# TODO: Consider creating a fixture for 17 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock
 """
 测试Redis缓存预热管理器
 """
 
 import pytest
 from datetime import datetime, timedelta
-from unittest.mock import Mock, AsyncMock, patch
 
 from src.cache.redis.warmup.warmup_manager import CacheWarmupManager
 
+
+@pytest.mark.unit
 
 class TestCacheWarmupManager:
     """测试缓存预热管理器"""

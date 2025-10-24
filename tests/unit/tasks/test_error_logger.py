@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 16 repeated Mock creations
+
+# TODO: Consider creating a fixture for 16 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 任务错误日志记录器测试
 Tests for Task Error Logger
@@ -6,7 +11,6 @@ Tests for Task Error Logger
 """
 
 import pytest
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
 from datetime import datetime
 import traceback
 import asyncio
@@ -27,6 +31,8 @@ except ImportError as e:
 @pytest.mark.skipif(
     not ERROR_LOGGER_AVAILABLE, reason="Error logger module not available"
 )
+@pytest.mark.unit
+
 class TestTaskErrorLogger:
     """任务错误日志记录器测试"""
 

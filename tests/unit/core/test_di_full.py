@@ -1,7 +1,12 @@
+# TODO: Consider creating a fixture for 8 repeated Mock creations
+
+# TODO: Consider creating a fixture for 8 repeated Mock creations
+
 import sys
 from pathlib import Path
 
 # 添加项目路径
+from unittest.mock import Mock, MagicMock
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, "src")
 
@@ -10,7 +15,6 @@ sys.path.insert(0, "src")
 """
 
 import pytest
-from unittest.mock import Mock, MagicMock
 
 
 # Mock DI容器
@@ -77,6 +81,8 @@ def register_service(name):
 
     return decorator
 
+
+@pytest.mark.unit
 
 class TestDIModule:
     """测试 DI 模块"""

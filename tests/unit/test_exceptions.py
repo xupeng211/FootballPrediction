@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
+from unittest.mock import Mock, patch
 """
 Auto-generated basic tests for exceptions.py
 TODO: Expand these tests with actual functionality
 """
 
 import pytest
-from unittest.mock import Mock, patch
 
 # TODO: Import the module to test
 # from exceptions import *
 
+
+@pytest.mark.unit
 
 class TestExceptions:
     """Basic test class for exceptions.py"""

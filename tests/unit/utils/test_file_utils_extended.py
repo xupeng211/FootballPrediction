@@ -1,3 +1,4 @@
+from unittest.mock import patch, MagicMock
 """文件工具测试"""
 
 import os
@@ -5,9 +6,10 @@ import pytest
 import tempfile
 import json
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 # from src.utils.file_utils import FileUtils
 
+
+@pytest.mark.unit
 
 class TestFileUtils:
     """文件工具测试"""

@@ -1,4 +1,7 @@
 # 监控模块完整测试
+@pytest.mark.unit
+@pytest.mark.monitoring
+
 def test_monitoring_components():
     components = [
         "src.monitoring.alert_manager",
@@ -20,6 +23,7 @@ def test_monitoring_components():
 def test_monitoring_initialization():
     # 测试监控组件的初始化
     from src.monitoring.metrics_collector import MetricsCollector
+import pytest
     from src.monitoring.system_monitor import SystemMonitor
 
     collector = MetricsCollector()

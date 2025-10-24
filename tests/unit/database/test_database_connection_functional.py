@@ -1,11 +1,15 @@
+# TODO: Consider creating a fixture for 16 repeated Mock creations
+
+# TODO: Consider creating a fixture for 16 repeated Mock creations
+
 #!/usr/bin/env python3
+from unittest.mock import Mock, patch, MagicMock
 """
 数据库连接功能测试
 Database Connection Functional Tests
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
@@ -15,6 +19,9 @@ from src.database.connection import (
     DatabaseRole,
 )
 
+
+@pytest.mark.unit
+@pytest.mark.database
 
 class TestDatabaseConnectionFunctional:
     """数据库连接功能测试"""
@@ -99,6 +106,8 @@ class TestDatabaseConnectionFunctional:
     def test_database_manager_raise_error_without_url(self, db_manager):
         """测试：没有提供数据库URL时应该抛出错误"""
         # Given
+        with patch.dict("os.environ", {}, clear=True):
+        with patch.dict("os.environ", {}, clear=True):
         with patch.dict("os.environ", {}, clear=True):
             # When / Then
             # 由于SQLAlchemy会先抛出错误，我们捕获任意异常

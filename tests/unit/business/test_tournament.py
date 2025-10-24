@@ -351,6 +351,8 @@ class Tournament:
         }
 
 
+@pytest.mark.unit
+
 class TestTournament:
     """测试锦标赛业务逻辑"""
 

@@ -7,6 +7,8 @@ import pytest
 from src.cache.redis.core.key_manager import CacheKeyManager
 
 
+@pytest.mark.unit
+
 class TestCacheKeyManager:
     """测试缓存键管理器"""
 

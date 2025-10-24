@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from unittest.mock import patch, MagicMock
 """
 健康检查模块独立测试
 Standalone Health Check Module Test
@@ -9,7 +10,6 @@ Does not depend on full application, directly tests health check functionality.
 
 import pytest
 from datetime import datetime
-from unittest.mock import patch, MagicMock
 import sys
 import os
 import asyncio
@@ -29,6 +29,8 @@ except ImportError as e:
 @pytest.mark.skipif(
     not HEALTH_FUNCTION_AVAILABLE, reason="Health function not available"
 )
+@pytest.mark.unit
+
 class TestHealthCheckSimple:
     """健康检查功能独立测试类"""
 

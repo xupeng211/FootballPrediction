@@ -10,6 +10,8 @@ from pathlib import Path
 
 
 # 测试项目结构
+@pytest.mark.unit
+
 def test_project_structure():
     """测试项目结构存在性"""
     project_root = Path(__file__).parent.parent.parent.parent
@@ -231,6 +233,8 @@ class TestBasicFunctionality:
 
         # 基础时间
         now = datetime.datetime.now()
+        now = datetime.datetime.now()
+        now = datetime.datetime.now()
         assert now is not None
 
         # 时间戳
@@ -266,6 +270,8 @@ class TestBasicFunctionality:
         import os
 
         # 获取环境变量
+        home = os.environ.get("HOME")
+        home = os.environ.get("HOME")
         home = os.environ.get("HOME")
         path = os.environ.get("PATH")
 

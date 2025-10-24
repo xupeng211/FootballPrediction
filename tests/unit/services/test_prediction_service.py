@@ -1,10 +1,14 @@
+# TODO: Consider creating a fixture for 22 repeated Mock creations
+
+# TODO: Consider creating a fixture for 22 repeated Mock creations
+
 # noqa: F401,F811,F821,E402
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
 import numpy as np
 import pytest
 from src.models.prediction_service import PredictionResult, PredictionService
 
+from unittest.mock import patch, AsyncMock, MagicMock
 """
 PredictionService单元测试 / Unit Tests for PredictionService
 
@@ -23,6 +27,8 @@ Tests core functionality of prediction service, including:
 - Statistics retrieval
 """
 
+
+@pytest.mark.unit
 
 class TestPredictionService:
     """PredictionService测试类"""

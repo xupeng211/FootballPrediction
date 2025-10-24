@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 9 repeated Mock creations
+
+# TODO: Consider creating a fixture for 9 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock
 """
 Maintenance Tasks 综合测试
 提升 tasks 模块覆盖率的关键测试
@@ -5,7 +10,6 @@ Maintenance Tasks 综合测试
 
 import pytest
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 import tempfile
@@ -33,6 +37,8 @@ except ImportError as e:
 
 
 @pytest.mark.skipif(not TASKS_AVAILABLE, reason="Maintenance tasks not available")
+@pytest.mark.unit
+
 class TestMaintenanceTasks:
     """维护任务测试"""
 

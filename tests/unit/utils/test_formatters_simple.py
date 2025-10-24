@@ -25,6 +25,8 @@ except ImportError:
 
 
 @pytest.mark.skipif(not FORMATTERS_AVAILABLE, reason="Formatters module not available")
+@pytest.mark.unit
+
 class TestFormattersSimple:
     """格式化工具简单测试"""
 

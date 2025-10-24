@@ -48,6 +48,8 @@ except ImportError:
 
 
 @pytest.mark.skipif(not EXCEPTIONS_AVAILABLE, reason="Exceptions module not available")
+@pytest.mark.unit
+
 class TestCoreExceptions:
     """核心异常类测试"""
 

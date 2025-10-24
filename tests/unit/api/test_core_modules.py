@@ -1,10 +1,10 @@
+from unittest.mock import Mock, patch
 """
 核心API模块测试
 Core API Modules Tests
 """
 
 import pytest
-from unittest.mock import Mock, patch
 import json
 from datetime import datetime
 

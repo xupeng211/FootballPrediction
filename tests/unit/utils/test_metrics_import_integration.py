@@ -6,6 +6,8 @@
 import pytest
 
 
+@pytest.mark.unit
+
 def test_import_metric_types():
     """测试导入指标类型"""
     try:

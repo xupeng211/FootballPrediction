@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 集成测试 - 第三阶段
 Integration Tests - Phase 3
@@ -8,7 +9,6 @@ Integration Tests - Phase 3
 
 import pytest
 import asyncio
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 import json
@@ -51,6 +51,8 @@ except ImportError as e:
 
 
 @pytest.mark.skipif(not SERVICES_AVAILABLE, reason="服务模块不可用")
+@pytest.mark.unit
+
 class TestServiceIntegration:
     """服务集成测试"""
 
@@ -1220,6 +1222,8 @@ class TestSystemIntegration:
 
             # 定义测试任务
             async def long_running_task(duration, result_value):
+                await asyncio.sleep(duration)
+                await asyncio.sleep(duration)
                 await asyncio.sleep(duration)
                 return {"result": result_value, "duration": duration}
 

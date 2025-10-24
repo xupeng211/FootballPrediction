@@ -1,11 +1,13 @@
 # noqa: F401,F811,F821,E402
+from unittest.mock import MagicMock
 """
 scheduler_simple 模块测试
 """
 
 import pytest
-from unittest.mock import MagicMock
 
+
+@pytest.mark.unit
 
 class TestSchedulerSimple:
     """scheduler_simple 模块测试"""

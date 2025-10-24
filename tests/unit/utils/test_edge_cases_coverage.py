@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, MagicMock, mock_open
 """边界条件和深度嵌套代码路径测试 - 提升覆盖率"""
 
 from __future__ import annotations
@@ -6,12 +7,15 @@ import pytest
 import json
 import os
 import tempfile
-from unittest.mock import Mock, patch, MagicMock, mock_open
 from pathlib import Path
 import itertools
 from collections import defaultdict, Counter
 import re
 
+
+@pytest.mark.unit
+@pytest.mark.external_api
+@pytest.mark.slow
 
 class TestDeepNestingCoverage:
     """测试深度嵌套的代码路径"""
@@ -660,6 +664,8 @@ class TestDeepNestingCoverage:
                 self.value = value
 
             async def __aenter__(self):
+                await asyncio.sleep(0.001)  # 模拟异步操作
+                await asyncio.sleep(0.001)  # 模拟异步操作
                 await asyncio.sleep(0.001)  # 模拟异步操作
                 return self.value
 

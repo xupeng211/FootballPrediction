@@ -1,7 +1,11 @@
 # 数据库模型基本测试
+@pytest.mark.unit
+@pytest.mark.database
+
 def test_db_models():
     try:
         from src.database.models.league import League
+import pytest
         from src.database.models.team import Team
         from src.database.models.match import Match
         from src.database.models.odds import Odds

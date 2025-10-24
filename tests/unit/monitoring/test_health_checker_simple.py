@@ -11,6 +11,8 @@ import sys
 MODULE_PATH = Path("src") / "health/checker.py"
 
 
+@pytest.mark.unit
+
 class TestTestHealthChecker:
     """简化测试类"""
 

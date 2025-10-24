@@ -4,6 +4,8 @@
 # from src.utils.dict_utils import DictUtils
 
 
+@pytest.mark.unit
+
 class TestDictUtilsWorking:
     """字典工具测试（工作版本）"""
 

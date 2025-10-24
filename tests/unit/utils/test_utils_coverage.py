@@ -1,11 +1,14 @@
+from unittest.mock import Mock, patch, MagicMock
 """
 工具类覆盖率测试
 快速提升覆盖率到30%
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 
+
+@pytest.mark.unit
+@pytest.mark.external_api
 
 class TestUtilsCoverage:
     """工具类覆盖率测试"""

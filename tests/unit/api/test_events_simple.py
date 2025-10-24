@@ -11,6 +11,8 @@ import sys
 MODULE_PATH = Path("src") / "events.py"
 
 
+@pytest.mark.unit
+
 class TestTestEvents:
     """简化测试类"""
 

@@ -9,6 +9,9 @@ from datetime import datetime
 from src.database.models import User, Team, League, Match, Predictions
 
 
+@pytest.mark.unit
+@pytest.mark.database
+
 class TestUserSimple:
     """用户模型简化测试"""
 

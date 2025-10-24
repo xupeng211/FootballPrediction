@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 47 repeated Mock creations
+
+# TODO: Consider creating a fixture for 47 repeated Mock creations
+
+from unittest.mock import patch, AsyncMock, MagicMock
 """
 特征服务API测试
 
@@ -12,10 +17,11 @@
 """
 
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
 import pandas as pd
 import pytest
 
+
+@pytest.mark.unit
 
 class TestGetMatchFeatures:
     """获取比赛特征API测试"""

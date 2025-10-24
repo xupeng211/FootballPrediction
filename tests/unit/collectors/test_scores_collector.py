@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 38 repeated Mock creations
+
+# TODO: Consider creating a fixture for 38 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 比分收集器测试
 Tests for Scores Collector
@@ -6,7 +11,6 @@ Tests for Scores Collector
 """
 
 import pytest
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
 from datetime import datetime
 import asyncio
 
@@ -25,6 +29,8 @@ except ImportError as e:
 @pytest.mark.skipif(
     not SCORES_COLLECTOR_AVAILABLE, reason="Scores collector module not available"
 )
+@pytest.mark.unit
+
 class TestScoresCollector:
     """比分收集器测试"""
 
@@ -58,6 +64,10 @@ class TestScoresCollector:
 
     def test_collector_creation_without_token(self, mock_db_session, mock_redis_client):
         """测试：没有API Token的收集器创建"""
+        with patch.dict("os.environ", {}, clear=True):
+        with patch.dict("os.environ", {}, clear=True):
+        with patch.dict("os.environ", {}, clear=True):
+        with patch.dict("os.environ", {}, clear=True):
         with patch.dict("os.environ", {}, clear=True):
             collector = ScoresCollector(mock_db_session, mock_redis_client)
             assert collector.headers == {}
@@ -270,6 +280,8 @@ class TestScoresCollectorAdvanced:
         mock_redis.get_cache_value.return_value = None
 
         with patch.dict("os.environ", {"FOOTBALL_API_TOKEN": "test"}):
+        with patch.dict("os.environ", {"FOOTBALL_API_TOKEN": "test"}):
+        with patch.dict("os.environ", {"FOOTBALL_API_TOKEN": "test"}):
             collector = ScoresCollector(mock_db, mock_redis)
             collector.cache_timeout = 120  # 设置2分钟缓存
 
@@ -296,6 +308,8 @@ class TestScoresCollectorAdvanced:
         mock_db.execute.return_value = mock_result
 
         with patch.dict("os.environ", {"FOOTBALL_API_TOKEN": "test"}):
+        with patch.dict("os.environ", {"FOOTBALL_API_TOKEN": "test"}):
+        with patch.dict("os.environ", {"FOOTBALL_API_TOKEN": "test"}):
             collector = ScoresCollector(mock_db, mock_redis)
 
             # 并发执行多次收集
@@ -311,6 +325,8 @@ class TestScoresCollectorAdvanced:
         mock_redis = AsyncMock()
 
         with patch.dict("os.environ", {"FOOTBALL_API_TOKEN": "test"}):
+        with patch.dict("os.environ", {"FOOTBALL_API_TOKEN": "test"}):
+        with patch.dict("os.environ", {"FOOTBALL_API_TOKEN": "test"}):
             collector = ScoresCollector(mock_db, mock_redis)
 
             assert "live_scores" in collector.api_endpoints
@@ -322,6 +338,8 @@ class TestScoresCollectorAdvanced:
         mock_db = AsyncMock()
         mock_redis = AsyncMock()
 
+        with patch.dict("os.environ", {"FOOTBALL_API_TOKEN": "test"}):
+        with patch.dict("os.environ", {"FOOTBALL_API_TOKEN": "test"}):
         with patch.dict("os.environ", {"FOOTBALL_API_TOKEN": "test"}):
             collector = ScoresCollector(mock_db, mock_redis)
 

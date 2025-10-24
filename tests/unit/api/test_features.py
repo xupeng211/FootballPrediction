@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 22 repeated Mock creations
+
+# TODO: Consider creating a fixture for 22 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 API特征管理测试
 Tests for API Features
@@ -6,7 +11,6 @@ Tests for API Features
 """
 
 import pytest
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
@@ -39,6 +43,8 @@ except ImportError as e:
 
 
 @pytest.mark.skipif(not FEATURES_AVAILABLE, reason="Features module not available")
+@pytest.mark.unit
+
 class TestFeatureStore:
     """特征存储测试"""
 

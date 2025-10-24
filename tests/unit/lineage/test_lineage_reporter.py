@@ -1,9 +1,9 @@
+from unittest.mock import Mock, patch, AsyncMock
 """
 Tests for lineage.lineage_reporter
 """
 
 import pytest
-from unittest.mock import Mock, patch, AsyncMock
 import asyncio
 
 # Import the module under test
@@ -15,6 +15,8 @@ except ImportError as e:
     IMPORT_SUCCESS = False
     IMPORT_ERROR = str(e)
 
+
+@pytest.mark.unit
 
 class TestLineageReporter:
     """Test cases for lineage_reporter"""

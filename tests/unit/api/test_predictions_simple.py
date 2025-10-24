@@ -17,6 +17,9 @@ except ImportError as e:
     PREDICTIONS_AVAILABLE = False
 
 
+@pytest.mark.unit
+@pytest.mark.api
+
 class TestPredictionsAPI:
     """预测API测试"""
 

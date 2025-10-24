@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 4 repeated Mock creations
+
+# TODO: Consider creating a fixture for 4 repeated Mock creations
+
+from unittest.mock import patch, MagicMock
 """
 警告过滤器模块测试
 Warning Filters Module Tests
@@ -10,7 +15,6 @@ import pytest
 import logging
 import sys
 import warnings
-from unittest.mock import patch, MagicMock
 
 # 导入要测试的模块
 try:
@@ -25,6 +29,8 @@ except ImportError:
 @pytest.mark.skipif(
     not WARNING_FILTERS_AVAILABLE, reason="Warning filters module not available"
 )
+@pytest.mark.unit
+
 class TestSetupWarningFilters:
     """setup_warning_filters函数测试"""
 

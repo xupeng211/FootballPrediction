@@ -222,6 +222,8 @@ class LeagueStandings:
         }
 
 
+@pytest.mark.unit
+
 class TestLeagueStandings:
     """测试联赛积分榜"""
 

@@ -1,3 +1,4 @@
+from unittest.mock import Mock
 """
 原始数据模型测试
 Raw Data Models Tests
@@ -9,7 +10,6 @@ Tests raw data model functionality defined in src/models/raw_data.py, focused on
 import pytest
 import datetime
 from typing import Any, Dict
-from unittest.mock import Mock
 
 # 导入要测试的模块
 try:
@@ -37,6 +37,8 @@ except ImportError:
 @pytest.mark.skipif(
     not RAW_DATA_AVAILABLE, reason="Raw data models module not available"
 )
+@pytest.mark.unit
+
 class TestRawMatchData:
     """RawMatchData测试"""
 

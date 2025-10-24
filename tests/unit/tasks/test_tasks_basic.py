@@ -1,14 +1,16 @@
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """Tasks模块基础测试 - 提升整体覆盖率"""
 
 from __future__ import annotations
 
 import pytest
 import asyncio
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
 from datetime import datetime, timedelta
 
 
 # 测试Celery应用
+@pytest.mark.unit
+
 class TestCeleryApp:
     """测试Celery应用配置"""
 
@@ -492,6 +494,8 @@ class TestTaskIntegration:
         """测试异步任务执行"""
 
         async def dummy_async_task():
+            await asyncio.sleep(0.01)
+            await asyncio.sleep(0.01)
             await asyncio.sleep(0.01)
             return "completed"
 

@@ -35,6 +35,8 @@ def team() -> Team:
     return team
 
 
+@pytest.mark.unit
+
 class TestTeamService:
     def test_should_update_team_profile(self, team):
         repo = InMemoryTeamRepository()

@@ -9,6 +9,8 @@ from src.domain.strategies.base import PredictionInput
 from src.domain.strategies.ml_model import MLModelStrategy
 
 
+@pytest.mark.unit
+
 def test_ml_model_strategy_mock_predictions_are_deterministic():
     strategy = MLModelStrategy("mock_model")
     asyncio.run(strategy.initialize({"random_seed": 321}))

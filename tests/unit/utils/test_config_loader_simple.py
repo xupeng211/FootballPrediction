@@ -11,6 +11,8 @@ import sys
 MODULE_PATH = Path("src") / "config/loader.py"
 
 
+@pytest.mark.unit
+
 class TestTestConfigLoader:
     """简化测试类"""
 

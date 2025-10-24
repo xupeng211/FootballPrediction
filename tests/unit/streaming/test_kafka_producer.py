@@ -1,9 +1,9 @@
+from unittest.mock import Mock, patch, MagicMock
 """
 Tests for streaming.kafka_producer
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 
 # Import the module under test
 try:
@@ -14,6 +14,9 @@ except ImportError as e:
     IMPORT_SUCCESS = False
     IMPORT_ERROR = str(e)
 
+
+@pytest.mark.unit
+@pytest.mark.streaming
 
 class TestKafkaProducer:
     """Test cases for kafka_producer"""

@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 45 repeated Mock creations
+
+# TODO: Consider creating a fixture for 45 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock
 """
 性能监控中间件测试
 Performance Monitoring Middleware Tests
@@ -6,7 +11,6 @@ Performance Monitoring Middleware Tests
 import pytest
 import asyncio
 import time
-from unittest.mock import Mock, patch, AsyncMock
 from typing import Dict, Any
 
 from fastapi import Request, Response
@@ -19,6 +23,8 @@ from src.performance.middleware import (
     BackgroundTaskPerformanceMonitor,
 )
 
+
+@pytest.mark.unit
 
 class TestPerformanceMonitoringMiddleware:
     """性能监控中间件测试类"""

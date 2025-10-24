@@ -1,4 +1,9 @@
+# TODO: Consider creating a fixture for 34 repeated Mock creations
+
+# TODO: Consider creating a fixture for 34 repeated Mock creations
+
 #!/usr/bin/env python3
+from unittest.mock import Mock, patch, AsyncMock
 """
 API 依赖模块增强测试套件
 Enhanced API Dependencies Test Suite
@@ -11,7 +16,6 @@ import pytest
 import sys
 import os
 from typing import Any, Dict
-from unittest.mock import Mock, AsyncMock, patch
 
 # 添加src到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../src"))
@@ -33,6 +37,8 @@ except ImportError as e:
 @pytest.mark.skipif(
     not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available"
 )
+@pytest.mark.unit
+
 class TestAPIDependenciesEnhanced:
     """API依赖模块增强测试类"""
 

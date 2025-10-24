@@ -1,3 +1,4 @@
+from unittest.mock import patch, MagicMock, mock_open
 """ConfigLoader模块综合测试 - 目标：从18%提升到60%"""
 
 from __future__ import annotations
@@ -8,9 +9,11 @@ import json
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import patch, mock_open, MagicMock
 import yaml
 
+
+@pytest.mark.unit
+@pytest.mark.external_api
 
 class TestConfigLoaderFromFile:
     """测试从文件加载配置的功能"""

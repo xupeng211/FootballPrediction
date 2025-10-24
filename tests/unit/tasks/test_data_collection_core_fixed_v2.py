@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 15 repeated Mock creations
+
+# TODO: Consider creating a fixture for 15 repeated Mock creations
+
+from unittest.mock import Mock, patch, MagicMock
 """
 数据收集核心测试（语法修复版）
 Tests for Data Collection Core (Syntax Fixed Version)
@@ -6,7 +11,6 @@ Tests for Data Collection Core (Syntax Fixed Version)
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 from datetime import datetime
 
 # 尝试导入数据收集核心模块
@@ -33,6 +37,8 @@ except ImportError as e:
     not DATA_COLLECTION_CORE_AVAILABLE,
     reason="Data collection core module not available",
 )
+@pytest.mark.unit
+
 class TestDataCollectionTask:
     """数据收集任务测试"""
 

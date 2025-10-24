@@ -1,12 +1,16 @@
+from unittest.mock import Mock, patch
 """
 验证工具测试
 """
 
 import pytest
 from datetime import datetime, date
-from unittest.mock import Mock, patch
 import re
 
+
+@pytest.mark.unit
+@pytest.mark.external_api
+@pytest.mark.slow
 
 class TestValidationUtils:
     """测试验证工具"""
@@ -443,6 +447,8 @@ class TestValidationUtils:
 
         async def async_validate_email(email):
             """模拟异步邮箱验证（检查域名MX记录）"""
+            await asyncio.sleep(0.01)  # 模拟网络延迟
+            await asyncio.sleep(0.01)  # 模拟网络延迟
             await asyncio.sleep(0.01)  # 模拟网络延迟
             if not email or "@" not in email:
                 return False, "邮箱格式无效"

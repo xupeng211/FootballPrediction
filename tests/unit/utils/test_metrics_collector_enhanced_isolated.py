@@ -1,3 +1,4 @@
+from unittest.mock import Mock
 """
 增强指标收集器隔离测试
 测试各个模块的独立功能，避免导入依赖问题
@@ -5,8 +6,9 @@
 
 import pytest
 from datetime import datetime
-from unittest.mock import Mock
 
+
+@pytest.mark.unit
 
 def test_metric_types_isolated():
     """独立测试指标数据类型"""
@@ -314,7 +316,6 @@ def test_alert_manager_isolated():
 def test_decorators_isolated():
     """独立测试装饰器"""
     import functools
-    from unittest.mock import Mock
 
     # 创建mock的收集器
     collector = Mock()

@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch
 """
 预测API v2测试 - 针对新实现的端点
 Predictions API v2 Tests - For Newly Implemented Endpoints
@@ -5,7 +6,6 @@ Predictions API v2 Tests - For Newly Implemented Endpoints
 
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import Mock, patch
 import json
 from datetime import datetime, timedelta
 

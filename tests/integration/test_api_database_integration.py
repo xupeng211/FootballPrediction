@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 13 repeated Mock creations
+
+# TODO: Consider creating a fixture for 13 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 API与数据库集成测试
 测试API端点与数据库的直接交互
@@ -6,7 +11,6 @@ API与数据库集成测试
 import pytest
 import asyncio
 from datetime import datetime, timezone, timedelta
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Any, Dict, List, Optional
@@ -447,22 +451,22 @@ def test_database_connection_health(
     assert query_param in valid_params
 
     # 验证值
-    if query_param   == "page":
+    if query_param     == "page":
         assert isinstance(value, int)
         if should_validate:
             assert value >= 1
-    elif query_param   == "limit":
+    elif query_param     == "limit":
         assert isinstance(value, int)
         if should_validate:
             assert 1 <= value <= 100
-    elif query_param   == "status":
+    elif query_param     == "status":
         assert isinstance(value, str)
         if should_validate:
             assert value in ["upcoming", "live", "finished", "cancelled"]
 
 
 @pytest.mark.integration
-def test_database_connection_health(client, client):
+def test_database_connection_health(client, client, client, client):
     """测试数据库连接健康状态"""
     # 模拟连接健康检查
     health_status = {
@@ -475,13 +479,13 @@ def test_database_connection_health(client, client):
     }
 
     # 验证健康状态
-    assert health_status["database"]["status"]   == "healthy"
+    assert health_status["database"]["status"]     == "healthy"
     assert health_status["database"]["response_time_ms"] < 100
     assert health_status["database"]["connection_pool"]["total"] > 0
 
 
 @pytest.mark.integration
-def test_database_connection_health(client, client):
+def test_database_connection_health(client, client, client, client):
     """测试API响应格式"""
     # 标准API响应格式
     response_formats = [

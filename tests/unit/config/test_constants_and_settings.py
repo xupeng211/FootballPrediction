@@ -106,6 +106,9 @@ class UserRole(Enum):
     SUPER_ADMIN = "super_admin"
 
 
+@pytest.mark.unit
+@pytest.mark.external_api
+
 class TestAppConstants:
     """应用常量测试"""
 

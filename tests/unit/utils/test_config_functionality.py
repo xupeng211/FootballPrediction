@@ -1,4 +1,5 @@
 # noqa: F401,F811,F821,E402
+from unittest.mock import patch
 """
 配置模块功能测试
 测试配置读取和验证
@@ -7,7 +8,6 @@
 import pytest
 import os
 import sys
-from unittest.mock import patch
 
 # 添加src目录到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
@@ -36,6 +36,8 @@ class TestConfigFunctionality:
 
             # 使用测试环境变量
             with patch.dict(os.environ, {"DATABASE_URL": "sqlite:///test.db"}):
+            with patch.dict(os.environ, {"DATABASE_URL": "sqlite:///test.db"}):
+            with patch.dict(os.environ, {"DATABASE_URL": "sqlite:///test.db"}):
                 _config = Config()
                 # 检查是否有数据库相关属性
                 assert hasattr(config, "DATABASE_URL") or hasattr(
@@ -52,6 +54,8 @@ class TestConfigFunctionality:
             from src.core.config import Config
 
             with patch.dict(os.environ, {"REDIS_URL": "redis://localhost:6379/0"}):
+            with patch.dict(os.environ, {"REDIS_URL": "redis://localhost:6379/0"}):
+            with patch.dict(os.environ, {"REDIS_URL": "redis://localhost:6379/0"}):
                 _config = Config()
                 # 检查是否有Redis相关属性
                 assert hasattr(config, "REDIS_URL") or hasattr(config, "redis_url")
@@ -65,6 +69,8 @@ class TestConfigFunctionality:
         try:
             from src.core.config import Config
 
+            with patch.dict(os.environ, {"DEBUG": "true"}):
+            with patch.dict(os.environ, {"DEBUG": "true"}):
             with patch.dict(os.environ, {"DEBUG": "true"}):
                 _config = Config()
                 # 检查调试模式
@@ -80,6 +86,8 @@ class TestConfigFunctionality:
         try:
             from src.core.config import Config
 
+            with patch.dict(os.environ, {"LOG_LEVEL": "INFO"}):
+            with patch.dict(os.environ, {"LOG_LEVEL": "INFO"}):
             with patch.dict(os.environ, {"LOG_LEVEL": "INFO"}):
                 _config = Config()
                 # 检查日志级别
@@ -114,6 +122,8 @@ class TestConfigFunctionality:
         try:
             from src.core.config import Config
 
+            with patch.dict(os.environ, {"ENVIRONMENT": "development"}):
+            with patch.dict(os.environ, {"ENVIRONMENT": "development"}):
             with patch.dict(os.environ, {"ENVIRONMENT": "development"}):
                 _config = Config()
                 env = getattr(

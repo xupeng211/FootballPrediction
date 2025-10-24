@@ -1,3 +1,4 @@
+from unittest.mock import patch, AsyncMock
 """
 健康检查工具测试
 Health Check Utils Tests
@@ -10,7 +11,6 @@ import pytest
 import asyncio
 import time
 from datetime import datetime
-from unittest.mock import AsyncMock, patch
 
 # 导入要测试的模块
 try:
@@ -24,6 +24,8 @@ except ImportError:
 @pytest.mark.skipif(
     not HEALTH_UTILS_AVAILABLE, reason="Health utils module not available"
 )
+@pytest.mark.unit
+
 class TestHealthChecker:
     """HealthChecker类测试"""
 
@@ -192,6 +194,8 @@ class TestHealthChecker:
         """测试Redis检查异常处理"""
         # 模拟Redis连接异常
         with patch("asyncio.sleep", side_effect=Exception("Redis connection failed")):
+        with patch("asyncio.sleep", side_effect=Exception("Redis connection failed")):
+        with patch("asyncio.sleep", side_effect=Exception("Redis connection failed")):
             result = await self.checker.check_redis()
 
             assert result["status"] == "unhealthy"
@@ -281,6 +285,8 @@ class TestHealthChecker:
 
         async def slow_sleep(delay):
             # 强制延迟更长时间
+            await asyncio.sleep(0.1)  # 100ms
+            await asyncio.sleep(0.1)  # 100ms
             await asyncio.sleep(0.1)  # 100ms
 
         with patch("asyncio.sleep", side_effect=slow_sleep):

@@ -1,14 +1,20 @@
+# TODO: Consider creating a fixture for 16 repeated Mock creations
+
+# TODO: Consider creating a fixture for 16 repeated Mock creations
+
+from unittest.mock import patch, AsyncMock, MagicMock
 """
 API事件模块测试
 """
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime, timedelta
 from typing import Dict, Any, List
 
 from src.api.events import router
 
+
+@pytest.mark.unit
 
 class TestEventAPIRoutes:
     """事件API路由测试"""

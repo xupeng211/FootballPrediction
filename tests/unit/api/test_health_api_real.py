@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, AsyncMock
 """
 健康检查API真实测试
 Tests for real health check API
@@ -9,7 +10,6 @@ import pytest
 import sys
 import time
 import warnings
-from unittest.mock import Mock, patch, AsyncMock
 from fastapi.testclient import TestClient
 from fastapi import FastAPI
 from pathlib import Path
@@ -21,6 +21,8 @@ sys.path.insert(0, "src")
 from src.api.health import router as health_router
 from src.api.health import _check_database
 
+
+@pytest.mark.unit
 
 class TestHealthAPIReal:
     """健康检查API真实测试"""
@@ -158,6 +160,8 @@ class TestHealthAPIReal:
     def test_basic_health_check_timestamp_precision(self, client):
         """测试健康检查时间戳精度"""
         response1 = client.get("/api/v1/health/")
+        time.sleep(0.001)  # 等待1毫秒
+        time.sleep(0.001)  # 等待1毫秒
         time.sleep(0.001)  # 等待1毫秒
         response2 = client.get("/api/v1/health/")
 

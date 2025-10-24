@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 4 repeated Mock creations
+
+# TODO: Consider creating a fixture for 4 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 第四阶段核心模块深度覆盖测试
 Phase 4 Core Modules Deep Coverage Tests
@@ -9,7 +14,6 @@ Phase 4 Core Modules Deep Coverage Tests
 import pytest
 import asyncio
 import time
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 import json
@@ -66,6 +70,8 @@ except ImportError as e:
 
 
 @pytest.mark.skipif(not CORE_AVAILABLE, reason="核心预测引擎不可用")
+@pytest.mark.unit
+
 class TestPredictionEngineAdvanced:
     """高级预测引擎测试"""
 

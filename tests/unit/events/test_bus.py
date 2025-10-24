@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 事件总线模块测试
 Event Bus Module Tests
@@ -8,7 +9,6 @@ Tests event bus functionality defined in src/events/bus.py, focused on achieving
 
 import pytest
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from typing import Any, Dict, List, Callable, Optional
 
 # 导入要测试的模块
@@ -35,6 +35,8 @@ except ImportError as e:
 
 
 @pytest.mark.skipif(not EVENTS_AVAILABLE, reason="Events module not available")
+@pytest.mark.unit
+
 class TestEventBus:
     """EventBus测试"""
 

@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 6 repeated Mock creations
+
+# TODO: Consider creating a fixture for 6 repeated Mock creations
+
+from unittest.mock import Mock, patch, MagicMock
 """
 模型指标导出器模块测试
 Model Metrics Exporter Module Tests
@@ -7,7 +12,6 @@ Tests model metrics exporter functionality defined in src/models/metrics_exporte
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 import datetime
 from typing import Dict, Any
 
@@ -42,6 +46,8 @@ class MockPredictionResult:
 @pytest.mark.skipif(
     not METRICS_EXPORTER_AVAILABLE, reason="Metrics exporter module not available"
 )
+@pytest.mark.unit
+
 class TestModelMetricsExporter:
     """ModelMetricsExporter测试"""
 

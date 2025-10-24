@@ -1,8 +1,12 @@
+# TODO: Consider creating a fixture for 8 repeated Mock creations
+
+# TODO: Consider creating a fixture for 8 repeated Mock creations
+
+from unittest.mock import patch, AsyncMock, MagicMock
 """测试集成策略"""
 
 import pytest
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime
 import numpy as np
 

@@ -36,6 +36,9 @@ except ImportError:
             self.username = username
 
 
+@pytest.mark.unit
+@pytest.mark.database
+
 def test_league_model():
     league = League(name="Test League")
     assert league.name == "Test League"

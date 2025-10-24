@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 4 repeated Mock creations
+
+# TODO: Consider creating a fixture for 4 repeated Mock creations
+
+from unittest.mock import Mock, patch, MagicMock
 """
 性能分析器测试
 Performance Profiler Tests
@@ -5,7 +10,6 @@ Performance Profiler Tests
 
 import pytest
 import time
-from unittest.mock import Mock, patch, MagicMock
 from typing import Dict, Any
 
 from src.performance.profiler import (
@@ -24,6 +28,9 @@ from src.performance.profiler import (
     get_performance_report,
 )
 
+
+@pytest.mark.unit
+@pytest.mark.slow
 
 class TestPerformanceProfiler:
     """性能分析器测试类"""
@@ -289,6 +296,10 @@ class TestProfileDecorators:
         @profile_function
         def test_function(x, y):
             time.sleep(0.01)  # 模拟耗时操作
+            time.sleep(0.01)  # 模拟耗时操作
+            time.sleep(0.01)  # 模拟耗时操作
+            time.sleep(0.01)  # 模拟耗时操作
+            time.sleep(0.01)  # 模拟耗时操作
             return x + y
 
         # 调用函数
@@ -305,6 +316,10 @@ class TestProfileDecorators:
         class TestClass:
             @profile_method
             def test_method(self, value):
+                time.sleep(0.01)
+                time.sleep(0.01)
+                time.sleep(0.01)
+                time.sleep(0.01)
                 time.sleep(0.01)
                 return value * 2
 

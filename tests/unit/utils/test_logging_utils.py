@@ -1,5 +1,6 @@
 try:
     from src.core.logger import get_logger
+import pytest
 except ImportError:
     # 如果导入失败，创建简单的mock函数用于测试
     def get_logger(name):
@@ -16,6 +17,8 @@ except ImportError:
 
         return MockLogger()
 
+
+@pytest.mark.unit
 
 def test_logger_creation():
     logger = get_logger("test")

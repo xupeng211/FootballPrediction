@@ -8,6 +8,9 @@ from datetime import datetime
 from src.utils import string_utils, time_utils, dict_utils
 
 
+@pytest.mark.unit
+@pytest.mark.external_api
+
 class TestStringUtils:
     """字符串工具测试"""
 

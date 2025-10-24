@@ -1,4 +1,6 @@
 # 所有数据收集器测试
+@pytest.mark.unit
+
 def test_all_collectors():
     collectors = [
         "src.collectors.fixtures_collector",
@@ -16,6 +18,7 @@ def test_all_collectors():
 
 def test_collector_methods():
     from src.collectors.base_collector import BaseCollector
+import pytest
 
     # 测试基类方法
     assert hasattr(BaseCollector, "collect")

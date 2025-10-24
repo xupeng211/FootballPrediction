@@ -1,3 +1,8 @@
+# TODO: Consider creating a fixture for 46 repeated Mock creations
+
+# TODO: Consider creating a fixture for 46 repeated Mock creations
+
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 DI设置功能测试
 Tests for DI setup functional module
@@ -10,7 +15,6 @@ import tempfile
 import os
 import asyncio
 from pathlib import Path
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
 import sys
 
 # 添加项目路径
@@ -26,6 +30,8 @@ from src.core.di_setup import (
 )
 from src.core.di import ServiceLifetime
 
+
+@pytest.mark.unit
 
 class TestDISetupFunctional:
     """DI设置功能测试"""
@@ -75,6 +81,10 @@ profiles:
 
     def test_di_setup_creation_environment_variable(self):
         """测试环境变量设置配置文件"""
+        with patch.dict(os.environ, {"APP_PROFILE": "staging"}):
+        with patch.dict(os.environ, {"APP_PROFILE": "staging"}):
+        with patch.dict(os.environ, {"APP_PROFILE": "staging"}):
+        with patch.dict(os.environ, {"APP_PROFILE": "staging"}):
         with patch.dict(os.environ, {"APP_PROFILE": "staging"}):
             setup = DISetup(profile=None)
             assert setup.profile == "staging"

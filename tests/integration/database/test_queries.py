@@ -10,6 +10,8 @@ from datetime import datetime, timezone, timedelta
 import time
 
 
+@pytest.mark.integration
+
 class TestDatabaseQueries:
     """数据库查询测试"""
 

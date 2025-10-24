@@ -3,6 +3,8 @@
 import pytest
 
 
+@pytest.mark.unit
+
 class TestConsistencyManager:
     """测试缓存一致性管理器"""
 

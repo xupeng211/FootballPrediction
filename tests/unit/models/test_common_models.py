@@ -14,6 +14,8 @@ from src.models.common_models import (
 )
 
 
+@pytest.mark.unit
+
 def test_data_validation_result():
     """测试数据验证结果"""
     # 测试有效的验证结果

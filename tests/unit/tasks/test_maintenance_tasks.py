@@ -1,3 +1,4 @@
+from unittest.mock import Mock, patch, AsyncMock
 """
 维护任务测试
 Tests for Maintenance Tasks
@@ -6,7 +7,6 @@ Tests for Maintenance Tasks
 """
 
 import pytest
-from unittest.mock import Mock, patch, AsyncMock
 from datetime import datetime, timedelta
 import asyncio
 
@@ -39,6 +39,8 @@ except ImportError as e:
 @pytest.mark.skipif(
     not MAINTENANCE_TASKS_AVAILABLE, reason="Maintenance tasks module not available"
 )
+@pytest.mark.unit
+
 class TestMaintenanceTaskManager:
     """维护任务管理器测试"""
 
