@@ -163,7 +163,7 @@ async def get_prediction(
     prediction_id: int, service=Depends(get_prediction_cqrs_service)
 ):
     """获取预测详情"""
-    _prediction = await service.get_prediction_by_id(prediction_id)
+    prediction = await service.get_prediction_by_id(prediction_id)
     if not prediction:
         raise HTTPException(status_code=404, detail="预测不存在")
 
