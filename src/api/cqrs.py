@@ -259,8 +259,8 @@ async def get_upcoming_matches(
     )
 
     return {
-        "matches": [m.to_dict() for m in matches],
-        "total": len(matches),
+        "matches": [m.to_dict() for m in _matches],
+        "total": len(_matches),
         "filters": {"days_ahead": days_ahead, "competition": competition},
     }
 
