@@ -206,5 +206,34 @@
       "发现不应存在的文件: 2个"
     ],
     "recommendations": []
+  },
+  {
+    "timestamp": "2025-10-24T21:55:57.908585",
+    "project_path": ".",
+    "cleanliness_score": 90,
+    "grade": "A+ (优秀)",
+    "metrics": {
+      "root_files": 26,
+      "markdown_files": 3,
+      "archive_size_mb": 13.43,
+      "file_distribution": {
+        "无扩展名": 8,
+        ".example": 1,
+        ".yaml": 1,
+        ".yml": 5,
+        ".md": 3,
+        ".ini": 3,
+        ".json": 1,
+        ".production": 2,
+        ".toml": 1,
+        ".test": 1
+      },
+      "missing_directories": [],
+      "forbidden_files": 673
+    },
+    "issues": [
+      "发现不应存在的文件: 673个"
+    ],
+    "recommendations": []
   }
 ]
