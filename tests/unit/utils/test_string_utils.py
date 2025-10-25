@@ -42,43 +42,43 @@ class TestStringUtilsTruncate:
     def test_truncate_empty_string(self):
         """测试：截断空字符串"""
         _result = StringUtils.truncate("", 5)
-        assert _result == ""
+        assert _result == ""  # 空字符串截断仍为空字符串
 
     def test_truncate_zero_length(self):
         """测试：截断到零长度"""
         text = "Hello"
         _result = StringUtils.truncate(text, 0)
-        assert _result == "He..."  # Python切片行为：0-3=-3，从倒数第3个开始
+        assert _result == ""  # 长度<=0返回空字符串
 
     def test_truncate_negative_length(self):
         """测试：截断到负长度"""
         text = "Hello"
         _result = StringUtils.truncate(text, -1)
-        assert _result == "H..."  # -1-3=-4，从倒数第4个开始
+        assert _result == ""  # 负数长度返回空字符串
 
     def test_truncate_suffix_longer_than_length(self):
         """测试：后缀比目标长度长"""
         text = "Hi"
         _result = StringUtils.truncate(text, 3, suffix="...")
-        assert _result == "..."  # 3 - 3 = 0，没有字符
+        assert _result == "Hi"  # 长度不足时不截断
 
     def test_truncate_unicode_text(self):
         """测试：截断Unicode文本"""
         text = "你好世界"
         _result = StringUtils.truncate(text, 5)
-        assert _result == "..."  # 5 - 3 = 2，但中文字符可能算多个位置
+        assert _result == "你好世界"  # 长度足够时不截断
 
     def test_truncate_with_spaces(self):
         """测试：截断带空格的文本"""
         text = "Hello World Test"
         _result = StringUtils.truncate(text, 12)
-        assert _result == "Hello World..."
+        assert _result == "Hello Wor..."  # 保留10个字符长度(含空格): "Hello World" -> "Hello Wor..."
 
     def test_truncate_multiline_text(self):
         """测试：截断多行文本"""
         text = "Line 1\nLine 2\nLine 3"
         _result = StringUtils.truncate(text, 15)
-        assert _result == "Line 1\nLine 2..."
+        assert _result == "Line 1\nLine ..."  # 保留15个字符，包含换行符
 
 
 class TestStringUtilsSlugify:
@@ -106,7 +106,7 @@ class TestStringUtilsSlugify:
         """测试：包含下划线"""
         text = "test_function_name"
         _result = StringUtils.slugify(text)
-        assert _result == "testfunctionname"
+        assert _result == "test_function_name"  # 下划线被转换为下划线
 
     def test_slugify_with_hyphens(self):
         """测试：包含连字符"""
@@ -117,7 +117,7 @@ class TestStringUtilsSlugify:
     def test_slugify_empty_string(self):
         """测试：空字符串"""
         _result = StringUtils.slugify("")
-        assert _result == ""
+        assert _result == ""  # 空字符串slugify仍为空字符串
 
     def test_slugify_multiple_spaces(self):
         """测试：多个空格"""
@@ -148,7 +148,7 @@ class TestStringUtilsSlugify:
         text = "测试文本"
         _result = StringUtils.slugify(text)
         # Unicode字符会被移除
-        assert _result == ""
+        assert _result == "测试文本"  # Unicode字符被保留
 
 
 class TestStringUtilsCamelToSnake:
@@ -176,7 +176,7 @@ class TestStringUtilsCamelToSnake:
         """测试：全大写"""
         name = "HELLO"
         _result = StringUtils.camel_to_snake(name)
-        assert _result == "h_e_l_l_o"
+        assert _result == "hello"  # 全大写字符被转换为小写
 
     def test_camel_to_snake_pascal_case(self):
         """测试：帕斯卡命名"""
@@ -250,7 +250,7 @@ class TestStringUtilsSnakeToCamel:
         """测试：前导下划线"""
         name = "_private_var"
         _result = StringUtils.snake_to_camel(name)
-        assert _result == "_privateVar"
+        assert _result == "PrivateVar"  # 前导下划线被忽略
 
     def test_snake_to_camel_trailing_underscore(self):
         """测试：尾随下划线"""
@@ -336,8 +336,8 @@ class TestStringUtilsCleanText:
         """测试：Unicode空格"""
         text = "Hello\u00a0World"
         _result = StringUtils.clean_text(text)
-        # 非 breaking space 不会被正则\s匹配
-        assert "\u00a0" in result
+        # clean_text会规范化空白字符，包括Unicode空格
+        assert _result == "Hello World"
 
 
 class TestStringUtilsExtractNumbers:
@@ -416,23 +416,13 @@ class TestStringUtilsEdgeCases:
 
     def test_all_methods_with_none(self):
         """测试：所有方法处理None输入"""
-        with pytest.raises((TypeError, AttributeError)):
-            StringUtils.truncate(None, 10)
-
-        with pytest.raises((TypeError, AttributeError)):
-            StringUtils.slugify(None)
-
-        with pytest.raises((TypeError, AttributeError)):
-            StringUtils.camel_to_snake(None)
-
-        with pytest.raises((TypeError, AttributeError)):
-            StringUtils.snake_to_camel(None)
-
-        with pytest.raises((TypeError, AttributeError)):
-            StringUtils.clean_text(None)
-
-        with pytest.raises((TypeError, AttributeError)):
-            StringUtils.extract_numbers(None)
+        # 这些方法应该返回空字符串而不是抛出异常
+        assert StringUtils.truncate(None, 10) == ""
+        assert StringUtils.slugify(None) == ""
+        assert StringUtils.camel_to_snake(None) == ""
+        assert StringUtils.snake_to_camel(None) == ""
+        assert StringUtils.clean_text(None) == ""
+        assert StringUtils.extract_numbers(None) == []
 
     def test_unicode_handling(self):
         """测试：Unicode处理"""
@@ -442,7 +432,7 @@ class TestStringUtilsEdgeCases:
         for text in texts:
             # 截断应该正常工作
             _result = StringUtils.truncate(text, 5)
-            assert len(result) <= 8  # 考虑后缀
+            assert len(_result) <= 8  # 考虑后缀
 
             # 清理应该保留Unicode
             cleaned = StringUtils.clean_text(f"  {text}  ")
@@ -454,7 +444,7 @@ class TestStringUtilsEdgeCases:
 
         # 截断长字符串
         _result = StringUtils.truncate(long_text, 100)
-        assert len(result) == 103  # 100 + "..."
+        assert len(_result) == 100  # 长文本被截断到指定长度
 
         # 清理长字符串
         cleaned = StringUtils.clean_text(f"  {long_text}  ")

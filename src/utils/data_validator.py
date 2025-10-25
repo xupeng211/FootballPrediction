@@ -6,7 +6,7 @@
 
 import re
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 
 class DataValidator:
@@ -103,3 +103,47 @@ class DataValidator:
     def validate_date_range(start_date: datetime, end_date: datetime) -> bool:
         """验证日期范围 - 开始日期应早于结束日期"""
         return start_date <= end_date
+
+    @staticmethod
+    def validate_json(json_str: str) -> tuple[bool, Optional[dict]]:
+        """验证并解析JSON"""
+        try:
+            import json
+            data = json.loads(json_str)
+            return True, data
+        except Exception:
+            return False, None
+
+    @staticmethod
+    def flatten_dict(data: dict, separator: str = ".") -> dict:
+        """扁平化字典"""
+        def _flatten(obj, parent_key=""):
+            items = []
+            if isinstance(obj, dict):
+                for key, value in obj.items():
+                    new_key = f"{parent_key}{separator}{key}" if parent_key else key
+                    items.extend(_flatten(value, new_key).items())
+            elif isinstance(obj, list):
+                for i, value in enumerate(obj):
+                    new_key = f"{parent_key}{separator}{i}" if parent_key else str(i)
+                    items.extend(_flatten(value, new_key).items())
+            else:
+                return {parent_key: obj}
+            return dict(items)
+
+        return _flatten(data)
+
+    @staticmethod
+    def sanitize_phone_number(phone: str) -> str:
+        """清理电话号码"""
+        if not isinstance(phone, str):
+            return ""
+
+        # 移除非数字字符
+        digits = re.sub(r'[^\d]', '', phone)
+
+        # 中国手机号格式验证
+        if len(digits) == 11 and digits.startswith('1'):
+            return digits
+
+        return ""

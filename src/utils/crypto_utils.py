@@ -41,14 +41,49 @@ class CryptoUtils:
         return str(uuid.uuid4()).replace("-", "")[:length]
 
     @staticmethod
-    def hash_string(text: str, algorithm: str = "md5") -> str:
+    def hash_string(text: str, algorithm: str = "sha256") -> str:
         """字符串哈希"""
+        if not isinstance(text, str):
+            return ""
+
+        text = text.encode("utf-8")
+
         if algorithm == "md5":
-            return hashlib.md5(text.encode("utf-8"), usedforsecurity=False).hexdigest()
+            return hashlib.md5(text, usedforsecurity=False).hexdigest()
+        elif algorithm == "sha1":
+            return hashlib.sha1(text).hexdigest()
         elif algorithm == "sha256":
-            return hashlib.sha256(text.encode("utf-8")).hexdigest()
+            return hashlib.sha256(text).hexdigest()
+        elif algorithm == "sha512":
+            return hashlib.sha512(text).hexdigest()
         else:
             raise ValueError(f"不支持的哈希算法: {algorithm}")
+
+    @staticmethod
+    def encode_base64(text: str) -> str:
+        """Base64编码"""
+        if not isinstance(text, str):
+            return ""
+
+        try:
+            encoded_bytes = text.encode('utf-8')
+            import base64
+            return base64.b64encode(encoded_bytes).decode('utf-8')
+        except Exception:
+            return ""
+
+    @staticmethod
+    def decode_base64(encoded_text: str) -> str:
+        """Base64解码"""
+        if not isinstance(encoded_text, str):
+            return ""
+
+        try:
+            import base64
+            decoded_bytes = base64.b64decode(encoded_text.encode('utf-8'))
+            return decoded_bytes.decode('utf-8')
+        except Exception:
+            return ""
 
     @staticmethod
     def hash_password(password: str, salt: Optional[str] = None) -> str:
