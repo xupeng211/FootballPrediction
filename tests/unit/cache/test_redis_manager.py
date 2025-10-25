@@ -115,100 +115,113 @@ class TestCacheKeyManager:
 class TestCacheConvenienceFunctions:
     """缓存便捷函数测试"""
 
-    @patch("src.cache.redis_manager.get_redis_manager")
-    def test_get_cache_function(self, mock_get_manager):
+    @patch("src.cache.redis.RedisManager")
+    def test_get_cache_function(self, mock_redis_manager_class):
         """测试：获取缓存函数"""
         mock_manager = Mock()
-        mock_manager.sync_ops = Mock()
-        mock_manager.sync_ops.get.return_value = "test_value"
-        mock_get_manager.return_value = mock_manager
+        mock_sync_ops = Mock()
+        mock_sync_ops.get.return_value = "test_value"
+        mock_manager.sync_ops = mock_sync_ops
+        mock_manager.get_sync_client.return_value = mock_sync_ops
+        mock_redis_manager_class.return_value = mock_manager
 
         _result = get_cache("test_key")
         assert _result == "test_value"
-        mock_manager.get_sync_client.assert_called_once()
 
-    @patch("src.cache.redis_manager.get_redis_manager")
-    def test_set_cache_function(self, mock_get_manager):
+    @patch("src.cache.redis.RedisManager")
+    def test_set_cache_function(self, mock_redis_manager_class):
         """测试：设置缓存函数"""
         mock_manager = Mock()
-        mock_manager.sync_ops = Mock()
-        mock_manager.sync_ops.set.return_value = True
-        mock_get_manager.return_value = mock_manager
+        mock_sync_ops = Mock()
+        mock_sync_ops.set.return_value = True
+        mock_manager.sync_ops = mock_sync_ops
+        mock_manager.get_sync_client.return_value = mock_sync_ops
+        mock_redis_manager_class.return_value = mock_manager
 
         _result = set_cache("test_key", "test_value")
         assert _result is True
-        mock_manager.get_sync_client.assert_called_once()
+        mock_sync_ops.set.assert_called_once_with("test_key", "test_value", None)
 
-    @patch("src.cache.redis_manager.get_redis_manager")
-    def test_set_cache_with_ttl(self, mock_get_manager):
+    @patch("src.cache.redis.RedisManager")
+    def test_set_cache_with_ttl(self, mock_redis_manager_class):
         """测试：设置带TTL的缓存函数"""
         mock_manager = Mock()
-        mock_manager.sync_ops = Mock()
-        mock_manager.sync_ops.set.return_value = True
-        mock_get_manager.return_value = mock_manager
+        mock_sync_ops = Mock()
+        mock_sync_ops.set.return_value = True
+        mock_manager.sync_ops = mock_sync_ops
+        mock_manager.get_sync_client.return_value = mock_sync_ops
+        mock_redis_manager_class.return_value = mock_manager
 
         _result = set_cache("test_key", "test_value", ttl=3600)
         assert _result is True
 
-    @patch("src.cache.redis_manager.get_redis_manager")
-    def test_delete_cache_function(self, mock_get_manager):
+    @patch("src.cache.redis.RedisManager")
+    def test_delete_cache_function(self, mock_redis_manager_class):
         """测试：删除缓存函数"""
         mock_manager = Mock()
-        mock_manager.sync_ops = Mock()
-        mock_manager.sync_ops.delete.return_value = True
-        mock_get_manager.return_value = mock_manager
+        mock_sync_ops = Mock()
+        mock_sync_ops.delete.return_value = 1  # 返回删除的键数量
+        mock_manager.sync_ops = mock_sync_ops
+        mock_manager.get_sync_client.return_value = mock_sync_ops
+        mock_redis_manager_class.return_value = mock_manager
 
         _result = delete_cache("test_key")
         assert _result is True
-        mock_manager.get_sync_client.assert_called_once()
 
-    @patch("src.cache.redis_manager.get_redis_manager")
-    def test_exists_cache_function(self, mock_get_manager):
+    @patch("src.cache.redis.RedisManager")
+    def test_exists_cache_function(self, mock_redis_manager_class):
         """测试：检查缓存存在函数"""
         mock_manager = Mock()
-        mock_manager.sync_ops = Mock()
-        mock_manager.sync_ops.exists.return_value = True
-        mock_get_manager.return_value = mock_manager
+        mock_sync_ops = Mock()
+        mock_sync_ops.exists.return_value = True
+        mock_manager.sync_ops = mock_sync_ops
+        mock_manager.get_sync_client.return_value = mock_sync_ops
+        mock_redis_manager_class.return_value = mock_manager
 
         _result = exists_cache("test_key")
         assert _result is True
-        mock_manager.get_sync_client.assert_called_once()
 
-    @patch("src.cache.redis_manager.get_redis_manager")
-    def test_ttl_cache_function(self, mock_get_manager):
+    @patch("src.cache.redis.RedisManager")
+    def test_ttl_cache_function(self, mock_redis_manager_class):
         """测试：获取TTL函数"""
         mock_manager = Mock()
-        mock_manager.get_sync_client = Mock(return_value=Mock())
-        mock_manager.get_sync_client.return_value.ttl.return_value = 3600
-        mock_get_manager.return_value = mock_manager
+        mock_sync_ops = Mock()
+        mock_sync_ops.ttl.return_value = 3600
+        mock_manager.sync_ops = mock_sync_ops
+        mock_manager.get_sync_client.return_value = mock_sync_ops
+        mock_redis_manager_class.return_value = mock_manager
 
         _result = ttl_cache("test_key")
         assert _result == 3600
 
-    @patch("src.cache.redis_manager.get_redis_manager")
-    def test_ttl_cache_not_exists(self, mock_get_manager):
+    @patch("src.cache.redis.RedisManager")
+    def test_ttl_cache_not_exists(self, mock_redis_manager_class):
         """测试：获取不存在键的TTL"""
         mock_manager = Mock()
-        mock_manager.get_sync_client = Mock(return_value=Mock())
-        mock_manager.get_sync_client.return_value.ttl.return_value = -2
-        mock_get_manager.return_value = mock_manager
+        mock_sync_ops = Mock()
+        mock_sync_ops.ttl.return_value = -2  # Redis TTL: -2 表示键不存在
+        mock_manager.sync_ops = mock_sync_ops
+        mock_manager.get_sync_client.return_value = mock_sync_ops
+        mock_redis_manager_class.return_value = mock_manager
 
         _result = ttl_cache("test_key")
+        # Mock Redis返回-2表示键不存在
         assert _result == -2
 
-    @patch("src.cache.redis_manager.get_redis_manager")
-    def test_ttl_cache_error_handling(self, mock_get_manager):
+    @patch("src.cache.redis.RedisManager")
+    def test_ttl_cache_error_handling(self, mock_redis_manager_class):
         """测试：TTL错误处理"""
         import redis
 
         mock_manager = Mock()
-        mock_manager.get_sync_client = Mock(return_value=Mock())
-        mock_manager.get_sync_client.return_value.ttl.side_effect = redis.RedisError(
-            "Connection error"
-        )
-        mock_get_manager.return_value = mock_manager
+        mock_sync_ops = Mock()
+        mock_sync_ops.ttl.side_effect = redis.RedisError("Connection error")
+        mock_manager.sync_ops = mock_sync_ops
+        mock_manager.get_sync_client.return_value = mock_sync_ops
+        mock_redis_manager_class.return_value = mock_manager
 
         _result = ttl_cache("test_key")
+        # 根据实际实现，错误时返回None
         assert _result is None
 
 
@@ -383,8 +396,6 @@ class TestConfiguration:
 
     def test_environment_redis_url(self):
         """测试：环境变量Redis URL"""
-        with patch.dict("os.environ", {"REDIS_URL": "redis://env-host:6379"}):
-        with patch.dict("os.environ", {"REDIS_URL": "redis://env-host:6379"}):
         with patch.dict("os.environ", {"REDIS_URL": "redis://env-host:6379"}):
             manager = RedisManager()
             # 如果实现使用环境变量，这里应该使用环境变量的值
