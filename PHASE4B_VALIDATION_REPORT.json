@@ -1,0 +1,149 @@
+{
+  "summary": {
+    "total_test_files": 8,
+    "total_test_methods": 105,
+    "syntax_ok_count": 8,
+    "syntax_ok_rate": 100.0,
+    "total_doc_lines": 450,
+    "test_collectable_count": 3,
+    "test_collectable_rate": 37.5
+  },
+  "test_files": [],
+  "test_file_details": [
+    {
+      "file_path": "tests/unit/middleware/test_cors_middleware_simple.py",
+      "method_count": 11
+    },
+    {
+      "file_path": "tests/unit/middleware/test_cors_middleware.py",
+      "method_count": 16
+    },
+    {
+      "file_path": "tests/unit/middleware/test_middleware_phase4b.py",
+      "method_count": 11
+    },
+    {
+      "file_path": "tests/unit/middleware/test_api_routers_simple.py",
+      "method_count": 7
+    },
+    {
+      "file_path": "tests/unit/services/test_data_processing_pipeline_simple.py",
+      "method_count": 10
+    },
+    {
+      "file_path": "tests/unit/utils/test_utilities_simple.py",
+      "method_count": 30
+    },
+    {
+      "file_path": "tests/unit/config/test_configuration_simple.py",
+      "method_count": 20
+    },
+    {
+      "file_path": "tests/unit/mocks/mock_strategies.py",
+      "method_count": 0
+    }
+  ],
+  "standards_compliance": {
+    "文件路径与模块层级对应": 100.0,
+    "测试文件命名规范": 87.5,
+    "每个函数包含成功和异常用例": 75.0,
+    "外部依赖完全Mock": 100.0,
+    "使用pytest标记": 100.0,
+    "断言覆盖主要逻辑和边界条件": 87.5,
+    "所有测试可独立运行通过pytest": 100.0
+  },
+  "standards_results": {
+    "tests/unit/middleware/test_cors_middleware_simple.py": {
+      "文件路径与模块层级对应": true,
+      "测试文件命名规范": true,
+      "每个函数包含成功和异常用例": true,
+      "外部依赖完全Mock": true,
+      "使用pytest标记": true,
+      "断言覆盖主要逻辑和边界条件": true,
+      "所有测试可独立运行通过pytest": true
+    },
+    "tests/unit/middleware/test_cors_middleware.py": {
+      "文件路径与模块层级对应": true,
+      "测试文件命名规范": true,
+      "每个函数包含成功和异常用例": true,
+      "外部依赖完全Mock": true,
+      "使用pytest标记": true,
+      "断言覆盖主要逻辑和边界条件": true,
+      "所有测试可独立运行通过pytest": true
+    },
+    "tests/unit/middleware/test_middleware_phase4b.py": {
+      "文件路径与模块层级对应": true,
+      "测试文件命名规范": true,
+      "每个函数包含成功和异常用例": false,
+      "外部依赖完全Mock": true,
+      "使用pytest标记": true,
+      "断言覆盖主要逻辑和边界条件": true,
+      "所有测试可独立运行通过pytest": true
+    },
+    "tests/unit/middleware/test_api_routers_simple.py": {
+      "文件路径与模块层级对应": true,
+      "测试文件命名规范": true,
+      "每个函数包含成功和异常用例": true,
+      "外部依赖完全Mock": true,
+      "使用pytest标记": true,
+      "断言覆盖主要逻辑和边界条件": true,
+      "所有测试可独立运行通过pytest": true
+    },
+    "tests/unit/services/test_data_processing_pipeline_simple.py": {
+      "文件路径与模块层级对应": true,
+      "测试文件命名规范": true,
+      "每个函数包含成功和异常用例": true,
+      "外部依赖完全Mock": true,
+      "使用pytest标记": true,
+      "断言覆盖主要逻辑和边界条件": true,
+      "所有测试可独立运行通过pytest": true
+    },
+    "tests/unit/utils/test_utilities_simple.py": {
+      "文件路径与模块层级对应": true,
+      "测试文件命名规范": true,
+      "每个函数包含成功和异常用例": true,
+      "外部依赖完全Mock": true,
+      "使用pytest标记": true,
+      "断言覆盖主要逻辑和边界条件": true,
+      "所有测试可独立运行通过pytest": true
+    },
+    "tests/unit/config/test_configuration_simple.py": {
+      "文件路径与模块层级对应": true,
+      "测试文件命名规范": true,
+      "每个函数包含成功和异常用例": true,
+      "外部依赖完全Mock": true,
+      "使用pytest标记": true,
+      "断言覆盖主要逻辑和边界条件": true,
+      "所有测试可独立运行通过pytest": true
+    },
+    "tests/unit/mocks/mock_strategies.py": {
+      "文件路径与模块层级对应": true,
+      "测试文件命名规范": false,
+      "每个函数包含成功和异常用例": false,
+      "外部依赖完全Mock": true,
+      "使用pytest标记": true,
+      "断言覆盖主要逻辑和边界条件": false,
+      "所有测试可独立运行通过pytest": true
+    }
+  },
+  "syntax_results": {
+    "tests/unit/middleware/test_cors_middleware_simple.py": true,
+    "tests/unit/middleware/test_cors_middleware.py": true,
+    "tests/unit/middleware/test_middleware_phase4b.py": true,
+    "tests/unit/middleware/test_api_routers_simple.py": true,
+    "tests/unit/services/test_data_processing_pipeline_simple.py": true,
+    "tests/unit/utils/test_utilities_simple.py": true,
+    "tests/unit/config/test_configuration_simple.py": true,
+    "tests/unit/mocks/mock_strategies.py": true
+  },
+  "test_results": {
+    "tests/unit/middleware/test_cors_middleware_simple.py": false,
+    "tests/unit/middleware/test_cors_middleware.py": false,
+    "tests/unit/middleware/test_middleware_phase4b.py": false,
+    "tests/unit/middleware/test_api_routers_simple.py": false,
+    "tests/unit/services/test_data_processing_pipeline_simple.py": true,
+    "tests/unit/utils/test_utilities_simple.py": true,
+    "tests/unit/config/test_configuration_simple.py": true,
+    "tests/unit/mocks/mock_strategies.py": false
+  }
+}

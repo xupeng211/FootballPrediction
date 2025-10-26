@@ -114,7 +114,9 @@ class TestDatabaseManager:
     def test_initialization_no_url(self):
         """测试：没有URL时的初始化"""
         with patch.dict("os.environ", {}, clear=True):
+            pass
         with patch.dict("os.environ", {}, clear=True):
+            pass
         with patch.dict("os.environ", {}, clear=True):
             manager = DatabaseManager()
             with pytest.raises(ValueError) as exc_info:

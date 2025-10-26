@@ -10,6 +10,7 @@ from .base import BaseRepository, T
 from .match import MatchRepository
 from .prediction import PredictionRepository
 from .user import UserRepository
+from .team_repository import TeamRepository
 
 __all__ = [
     "BaseRepository",
@@ -17,4 +18,5 @@ __all__ = [
     "MatchRepository",
     "PredictionRepository",
     "UserRepository",
+    "TeamRepository",
 ]

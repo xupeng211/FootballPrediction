@@ -87,7 +87,7 @@ def test_module_imports():
         assert module is not None
 
 
-def test_backward_compatibility(self):
+def test_backward_compatibility():
     """测试：向后兼容性"""
     if METADATA_MANAGER_AVAILABLE:
         # 尝试导入（即使可能失败）

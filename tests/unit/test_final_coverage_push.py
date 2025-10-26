@@ -1,7 +1,6 @@
+from __future__ import annotations
 from unittest.mock import Mock, patch, AsyncMock, MagicMock, mock_open
 """最终覆盖率提升测试 - 冲刺30%目标"""
-
-from __future__ import annotations
 
 import pytest
 import asyncio
@@ -288,7 +287,7 @@ class TestStandardLibraryCoverage:
     def test_json_operations(self):
         """测试JSON操作"""
         # 测试json模块
-        _data = {"key": "value", "number": 123}
+        data = {"key": "value", "number": 123}
         json_str = json.dumps(data)
         parsed = json.loads(json_str)
         assert parsed == data
