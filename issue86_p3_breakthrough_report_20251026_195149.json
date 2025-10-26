@@ -1,0 +1,40 @@
+{
+  "breakthrough_time": "2025-10-26T19:51:49.684611",
+  "issue_number": 86,
+  "phase": "P3",
+  "duration_seconds": 7.531406879425049,
+  "initial_coverage": 15.71,
+  "current_coverage": 15.706728812932342,
+  "target_coverage": 30.0,
+  "expected_coverage": 30.0,
+  "modules_processed": 5,
+  "tests_created": 5,
+  "priority_modules": [
+    {
+      "module_path": "core.config",
+      "current_coverage": 36.5,
+      "priority_score": 85
+    },
+    {
+      "module_path": "core.di",
+      "current_coverage": 21.8,
+      "priority_score": 82
+    },
+    {
+      "module_path": "models.prediction",
+      "current_coverage": 64.9,
+      "priority_score": 78
+    },
+    {
+      "module_path": "api.cqrs",
+      "current_coverage": 56.7,
+      "priority_score": 75
+    },
+    {
+      "module_path": "database.repositories.team_repository",
+      "current_coverage": 45.2,
+      "priority_score": 80
+    }
+  ],
+  "success_rate": 100.0
+}

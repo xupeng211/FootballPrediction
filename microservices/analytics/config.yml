@@ -1,0 +1,32 @@
+# Analytics Service 配置文件
+
+service:
+  name: "Analytics Service"
+  description: "分析服务微服务"
+  port: 8004
+  version: "1.0.0"
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+database:
+  host: "localhost"
+  port: 5432
+  name: "footballprediction_analytics"
+  user: "postgres"
+  password: "password"
+
+redis:
+  host: "localhost"
+  port: 6379
+  db: 0
+
+monitoring:
+  enabled: true
+  metrics_path: "/metrics"
+  health_path: "/health"
+
+security:
+  cors_enabled: true
+  authentication_required: false
