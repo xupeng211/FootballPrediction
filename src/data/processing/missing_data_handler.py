@@ -24,7 +24,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from src.core.config import get_settings
 from src.database.connection import DatabaseManager
-from .models.features import Features
+from .models import Features
 
 
 class MissingDataHandler:
