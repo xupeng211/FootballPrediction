@@ -39,7 +39,7 @@ def cache_result(*args, **kwargs):
         return decorator
 
 
-def cache_with_ttl(ttl_seconds):
+def cache_with_ttl(ttl_seconds, prefix=None):
     """带TTL的缓存装饰器 - 占位符实现"""
 
     def decorator(func):
