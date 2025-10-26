@@ -131,13 +131,13 @@ def pytest_collection_modifyitems(config, items):
 # 测试报告
 # =============================================================================
 
-@pytest.hookimpl(tryfirst, sessionfinish)
+@pytest.hookimpl(tryfirst=True)
 def pytest_sessionfinish(session, exitstatus):
     """会话结束时的清理"""
     print("\n" + "="*50)
     print("🧪 测试会话结束")
     print(f"📊 总测试数: {len(session.items)}")
-    print(f"⏱️  总用时: {session.duration}秒")
+    # print(f"⏱️  总用时: {session.duration}秒")
     if exitstatus == 0:
         print("✅ 所有测试通过")
     else:
