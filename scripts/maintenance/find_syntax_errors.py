@@ -15,6 +15,10 @@ def find_syntax_errors(directory="tests/"):
     test_files = list(Path(directory).rglob("*.py"))
 
     for file_path in test_files:
+        # 排除backup目录下的文件
+        if "backup" in str(file_path):
+            continue
+
         try:
             py_compile.compile(file_path, doraise=True)
             syntax_correct.append(file_path)
