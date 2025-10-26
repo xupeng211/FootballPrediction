@@ -164,6 +164,33 @@ class Phase4AMockFactory:
         return service
 
 
+  @staticmethod
+    def create_mock_redis_client():
+        """创建Redis客户端 Mock"""
+        client = Mock()
+        client.get = AsyncMock(return_value={"key": "test_key", "value": "test_value", "exists": True})
+        client.set = AsyncMock(return_value={"success": True, "key": "test_key"})
+        client.delete = AsyncMock(return_value={"success": True, "key": "test_key"})
+        client.exists = AsyncMock(return_value=True)
+        client.ping = AsyncMock(return_value={"status": "PONG"})
+        client.info = Mock(return_value={"redis_version": "6.2.0", "used_memory": "1MB"})
+        return client
+
+    @staticmethod
+    def create_mock_repository():
+        """创建仓储 Mock"""
+        repository = Mock()
+        repository.find_by_id = AsyncMock(return_value={"id": 1, "data": "test"})
+        repository.find_all = AsyncMock(return_value=[{"id": 1}, {"id": 2}])
+        repository.save = AsyncMock(return_value={"success": True, "id": 1})
+        repository.delete = AsyncMock(return_value={"success": True})
+        repository.count = AsyncMock(return_value=10)
+        repository.health_check = AsyncMock(return_value={"healthy": True, "records": 100})
+        return repository
+
+
 # 创建直接的Mock实例以供导入
 MockCacheService = Phase4AMockFactory.create_mock_cache_service()
 MockDatabaseService = Phase4AMockFactory.create_mock_database_service()
+MockRedisClient = Phase4AMockFactory.create_mock_redis_client()
+MockRepository = Phase4AMockFactory.create_mock_repository()
