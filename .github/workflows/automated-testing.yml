@@ -2,7 +2,7 @@
 # 自动化测试流水线
 # 生成时间: 2025-10-26 20:57:41
 
-name: Automated Testing Pipeline
+name: 🤖 Automated Testing Pipeline (Enhanced v2.0)
 
 on:
   schedule:
@@ -13,14 +13,93 @@ on:
     paths:
       - 'src/**'
       - 'tests/**'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tests/**'
+
+env:
+  PYTHON_VERSION: '3.11'
+  PYTEST_ADDOPTS: "--tb=short --strict-markers --strict-config"
 
 jobs:
-  # 回归测试
-  regression-tests:
+  # 并行快速检查
+  quick-checks:
+    name: ⚡ 快速检查
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        check-type: [syntax, imports, lint]
+      fail-fast: false
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: 🐍 设置Python环境
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+        cache-dependency-path: |
+          requirements/requirements.lock
+          pyproject.toml
+
+    - name: 📦 安装依赖
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements/requirements.lock
+        pip install ruff mypy
+
+    - name: 🔧 语法检查
+      if: matrix.check-type == 'syntax'
+      run: |
+        echo "🔧 Python语法检查..."
+        python -m py_compile src/**/*.py
+        echo "✅ 语法检查通过"
+
+    - name: 📦 导入检查
+      if: matrix.check-type == 'imports'
+      run: |
+        echo "📦 检查导入问题..."
+        python -c "
+        import sys
+        import importlib.util
+        import pathlib
+
+        src_path = pathlib.Path('src')
+        if src_path.exists():
+            for py_file in src_path.rglob('*.py'):
+                if py_file.name.startswith('_'):
+                    continue
+                try:
+                    module_name = py_file.relative_to('src').with_suffix('').as_posix().replace('/', '.')
+                    importlib.import_module(module_name)
+                    print(f'✅ {module_name}')
+                except Exception as e:
+                    print(f'❌ {module_name}: {e}')
+                    sys.exit(1)
+        echo "✅ 导入检查完成"
+        "
+
+    - name: 🔍 Lint检查
+      if: matrix.check-type == 'lint'
+      run: |
+        echo "🔍 Ruff代码检查..."
+        ruff check src/ --output-format=github
+        echo "✅ Lint检查完成"
+
+  # 回归测试 (优化并行)
+  regression-tests:
+    name: 🧪 回归测试
+    runs-on: ubuntu-latest
+    needs: quick-checks
+    timeout-minutes: 30
     strategy:
       matrix:
         python-version: ["3.11", "3.12"]
+        test-type: [unit, integration]
+      fail-fast: false
     steps:
     - uses: actions/checkout@v4
 
@@ -113,13 +192,40 @@ jobs:
     - name: Run security vulnerability scan
       run: |
         pip install safety bandit
-        safety check --json --output safety-report.json || true
-        bandit -r src/ -f json -o bandit-report.json || true
+        echo "🔒 Running security vulnerability scan..."
+
+        # Safety检查
+        safety check --json --output safety-report.json
+        if [ $? -ne 0 ]; then
+          echo "⚠️ Safety发现依赖安全问题"
+        fi
+
+        # Bandit安全扫描
+        bandit -r src/ -f json -o bandit-report.json
+        if [ $? -ne 0 ]; then
+          echo "⚠️ Bandit发现代码安全问题"
+          HIGH_SEVERITY=$(jq '[.results[] | select(.issue_severity == "HIGH")] | length' bandit-report.json 2>/dev/null || echo "0")
+          if [ "$HIGH_SEVERITY" -gt 0 ]; then
+            echo "❌ 发现$HIGH_SEVERITY个高危安全问题，CI失败"
+            exit 1
+          fi
+        fi
+        echo "✅ Security scan completed"
 
     - name: Run dependency check
       run: |
         pip install pip-audit
-        pip-audit --format=json --output=audit-report.json || true
+        echo "🔍 Running dependency audit..."
+        pip-audit --format=json --output=audit-report.json
+        if [ $? -ne 0 ]; then
+          echo "⚠️ pip-audit发现漏洞依赖"
+          VULNERABLE=$(jq '[.vulnerabilities[]] | length' audit-report.json 2>/dev/null || echo "0")
+          if [ "$VULNERABLE" -gt 0 ]; then
+            echo "❌ 发现$VULNERABLE个漏洞依赖，请更新依赖"
+            exit 1
+          fi
+        fi
+        echo "✅ Dependency check completed"
 
     - name: Upload security reports
       uses: actions/upload-artifact@v4

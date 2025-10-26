@@ -1,0 +1,106 @@
+# Docker Compose v3.8+ (version field deprecated)
+# 优化版本 - 减少镜像拉取时间
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      # 优化：缓存层
+      cache_from:
+        - type: "cache"
+        - source: app-cache
+        # 只缓存Dockerfile中的COPY和ADD命令
+        scopes: [app-cache]
+
+    env_file:
+      - ./environments/.env.${ENV:-development}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    # 优化：挂载卷
+    volumes:
+      - ../src:/app/src:${MOUNT_MODE:-ro}
+      # 依赖卷（只读，减少容器内写入）
+      - app-cache:/root/.cache # 缓存卷
+
+    # 优化：减少网络I/O
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --workers 4 --access-logfile -
+
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_URL=postgresql+asyncpg://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-football_prediction}
+      - REDIS_URL=redis://redis:6379/0
+
+    # 优化：资源限制
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+
+    # 优化：健康检查更频繁
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+    restart: unless-stopped
+
+    # 使用本地DNS缓存（如果可用）
+    dns:
+      - 8.8.8.8
+      - 208.67.222.222
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME:-football_prediction}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    # 优化：使用健康检查
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-U", "${DB_USER:-postgres}", "-d", "${DB_NAME:-football_prediction}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --requirepass "${REDIS_PASSWORD:-}"
+
+    volumes:
+      - redis_data:/data
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+    restart: unless-stopped
+
+  # 缓存服务（可选，用于开发环境）
+  app-cache:
+    image: busybox
+    volumes:
+      - app-cache:/root/.cache
+    command: |
+      # 创建缓存目录结构
+      mkdir -p /root/.cache/docker-build
+      # 设置权限
+      chown -R 1000:1000 /root/.cache
+      echo "Docker build cache initialized"
