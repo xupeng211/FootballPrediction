@@ -1,5 +1,7 @@
 """字典工具基础测试"""
 
+import pytest
+
 # from src.utils.dict_utils import DictUtils
 
 

@@ -6,8 +6,8 @@ Match Repository Implementation
 from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.database.base import Base
-from src.database.repositories.base import AbstractRepository
-from src.domain.models.match import Match
+from .repositories.base import AbstractRepository
+from .models.match import Match
 
 
 class MatchRepository(AbstractRepository[Match]):

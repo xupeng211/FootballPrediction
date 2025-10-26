@@ -98,7 +98,7 @@ class MockContentAnalysisManager:
         if name in self._analyzers:
             raise ValueError(f"Analyzer {name} already registered")
         if not hasattr(analyzer, 'analyze'):
-            raise TypeError(f"Invalid analyzer type")
+            raise TypeError("Invalid analyzer type")
         self._analyzers[name] = analyzer
 
     def get_analyzer(self, name):

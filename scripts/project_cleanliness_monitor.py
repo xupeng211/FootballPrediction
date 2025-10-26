@@ -206,7 +206,7 @@ class ProjectCleanlinessMonitor:
         print("📈 关键指标:")
         for key, value in report['metrics'].items():
             if key == 'file_distribution':
-                print(f"  文件类型分布:")
+                print("  文件类型分布:")
                 for ext, count in value.items():
                     print(f"    {ext}: {count} 个")
             else:

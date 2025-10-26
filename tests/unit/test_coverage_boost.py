@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 from unittest.mock import Mock, patch, MagicMock
 """测试覆盖率提升文件 - 专门用于增加覆盖率"""
 
-from __future__ import annotations
 
 import pytest
 from datetime import datetime, timedelta

@@ -1,7 +1,6 @@
+from __future__ import annotations
 from unittest.mock import patch, MagicMock, mock_open
 """ConfigLoader模块综合测试 - 目标：从18%提升到60%"""
-
-from __future__ import annotations
 
 
 import pytest

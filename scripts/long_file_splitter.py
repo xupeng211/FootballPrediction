@@ -892,7 +892,7 @@ def main():
         else:
             print(f"⚠️ 文件不存在: {file_path}")
 
-    print(f"\n📊 拆分总结:")
+    print("\n📊 拆分总结:")
     print(f"   处理文件数: {len(splitter.critical_files)}")
     print(f"   创建文件数: {total_created_files}")
     print(f"   平均每文件创建: {total_created_files // len(splitter.critical_files):.1f} 个新文件")

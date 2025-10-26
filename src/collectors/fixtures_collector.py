@@ -13,8 +13,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.cache.redis_manager import RedisManager
 from src.database.connection import DatabaseManager
-from src.database.models.match import Match
-from src.database.models.team import Team
+from .models.match import Match
+from .models.team import Team
 from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)

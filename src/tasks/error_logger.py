@@ -18,7 +18,7 @@ from typing import Any, Dict, Optional
 from sqlalchemy import text
 
 from src.database.connection import DatabaseManager
-from src.database.models.data_collection_log import CollectionStatus, DataCollectionLog
+from .models.data_collection_log import CollectionStatus, DataCollectionLog
 from src.database.sql_compatibility import (
     CompatibleQueryBuilder,
     SQLCompatibilityHelper,

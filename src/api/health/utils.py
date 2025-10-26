@@ -8,7 +8,7 @@ Health Utils - API模块
 - 数据库、Redis、预测服务的健康检查
 
 使用示例：
-    from src.api.health.utils import HealthChecker
+    from .health.utils import HealthChecker
     checker = HealthChecker()
     status = await checker.check_all_services()
 
