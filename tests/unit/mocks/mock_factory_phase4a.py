@@ -140,3 +140,30 @@ class Phase4AMockFactory:
         queue.get_queue_size = Mock(return_value=10)
         queue.health_check = AsyncMock(return_value={"healthy": True, "consumers": 3})
         return queue
+
+    @staticmethod
+    def create_mock_cache_service():
+        """创建缓存服务 Mock"""
+        service = Mock()
+        service.get = AsyncMock(return_value={"key": "test_key", "value": "test_value"})
+        service.set = AsyncMock(return_value={"success": True, "key": "test_key"})
+        service.delete = AsyncMock(return_value={"success": True, "key": "test_key"})
+        service.clear = AsyncMock(return_value={"success": True, "cleared_keys": 10})
+        service.health_check = AsyncMock(return_value={"healthy": True, "cache_size": "1MB"})
+        return service
+
+    @staticmethod
+    def create_mock_database_service():
+        """创建数据库服务 Mock"""
+        service = Mock()
+        service.query = AsyncMock(return_value={"success": True, "rows": 5, "data": []})
+        service.execute = AsyncMock(return_value={"success": True, "affected_rows": 1})
+        service.transaction = AsyncMock(return_value={"success": True, "transaction_id": "tx_123"})
+        service.get_connection_info = Mock(return_value={"host": "localhost", "port": 5432})
+        service.health_check = AsyncMock(return_value={"healthy": True, "connections": 10})
+        return service
+
+
+# 创建直接的Mock实例以供导入
+MockCacheService = Phase4AMockFactory.create_mock_cache_service()
+MockDatabaseService = Phase4AMockFactory.create_mock_database_service()
