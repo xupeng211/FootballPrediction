@@ -15,7 +15,6 @@ from .config import get_settings
 
 logger = logging.getLogger(__name__)
 
-
 class EventDrivenApplication:
     """事件驱动应用程序
 
@@ -23,7 +22,7 @@ class EventDrivenApplication:
     Manages the event system lifecycle.
     """
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         """初始化应用程序"""
         self._event_bus = get_event_bus()
         self._settings = get_settings()
@@ -81,7 +80,7 @@ class EventDrivenApplication:
         class SimpleStatsHandler(EventHandler):
             """简单统计处理器"""
 
-            def __init__(self):  # type: ignore
+            def __init__(self):
                 super().__init__("SimpleStats")
                 self.stats = {}
 
@@ -124,10 +123,8 @@ class EventDrivenApplication:
             "active_tasks": stats["active_tasks"],
         }
 
-
 # 全局应用程序实例
 _app_instance: Optional[EventDrivenApplication] = None
-
 
 def get_event_application() -> EventDrivenApplication:
     """获取全局事件应用程序实例"""
@@ -136,19 +133,16 @@ def get_event_application() -> EventDrivenApplication:
         _app_instance = EventDrivenApplication()
     return _app_instance
 
-
 # 便捷函数
 async def initialize_event_system() -> None:
     """初始化事件系统"""
     app = get_event_application()
     await app.initialize()
 
-
 async def shutdown_event_system() -> None:
     """关闭事件系统"""
     app = get_event_application()
     await app.shutdown()
-
 
 async def get_event_system_health() -> dict:
     """获取事件系统健康状态"""

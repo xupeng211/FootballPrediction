@@ -5,7 +5,6 @@ from sqlalchemy.orm import validates
 from ..base import BaseModel
 from ..types import JsonbType
 
-
 class RawData(BaseModel):
     """原始数据基类"""
 
@@ -16,7 +15,6 @@ class RawData(BaseModel):
     raw_data = Column(JsonbType)
     created_at = Column(DateTime, default=func.now())
 
-
 """
 Bronze层原始数据模型
 
@@ -25,7 +23,6 @@ Bronze层原始数据模型
 
 基于 DATA_DESIGN.md 第2.1节Bronze层设计。
 """
-
 
 class RawMatchData(BaseModel):
     """
@@ -108,7 +105,6 @@ class RawMatchData(BaseModel):
             f")>"
         )
 
-
 class RawOddsData(BaseModel):
     """
     Bronze层原始赔率数据模型
@@ -189,7 +185,6 @@ class RawOddsData(BaseModel):
             f"processed={self.processed}"
             f")>"
         )
-
 
 class RawScoresData(BaseModel):
     """

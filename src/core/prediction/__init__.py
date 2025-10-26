@@ -7,16 +7,15 @@ Prediction Module
 
 from .config import PredictionConfig
 
-
 class PredictionStatistics:
     """预测统计类"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self.total_predictions = 0
         self.correct_predictions = 0
         self.accuracy = 0.0
 
-    def update(self, is_correct: bool):  # type: ignore
+    def update(self, is_correct: bool):
         """更新统计"""
         self.total_predictions += 1
         if is_correct:
@@ -27,11 +26,10 @@ class PredictionStatistics:
             else 0.0
         )
 
-
 class PredictionEngine:
     """预测引擎类（简化实现）"""
 
-    def __init__(self, config: PredictionConfig = None):  # type: ignore
+    def __init__(self, config: PredictionConfig = None):
         """初始化预测引擎"""
         self.config = config or PredictionConfig()
         self.statistics = PredictionStatistics()
@@ -80,6 +78,5 @@ class PredictionEngine:
     def get_statistics(self) -> PredictionStatistics:
         """获取统计信息"""
         return self.statistics
-
 
 __all__ = ["PredictionEngine", "PredictionConfig", "PredictionStatistics"]

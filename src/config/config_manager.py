@@ -28,7 +28,6 @@ import hashlib
 
 logger = logging.getLogger(__name__)
 
-
 class ConfigSource(ABC):
     """抽象配置源"""
 
@@ -42,14 +41,13 @@ class ConfigSource(ABC):
         """保存配置数据"""
         pass
 
-
 class FileConfigSource(ConfigSource):
     """文件配置源"""
 
     def __init__(self, file_path: str, format: str = "json"):
         self.file_path = file_path
         self.format = format.lower()
-        self._cache = {}
+        self._cache: dict = {}
         self._last_modified = None
 
     async def load(self) -> Dict[str, Any]:
@@ -100,13 +98,12 @@ class FileConfigSource(ConfigSource):
             logger.error(f"Failed to save config to {self.file_path}: {e}")
             return False
 
-
 class EnvironmentConfigSource(ConfigSource):
     """环境变量配置源"""
 
     def __init__(self, prefix: str = "APP_"):
         self.prefix = prefix.upper()
-        self._cache = {}
+        self._cache: dict = {}
 
     async def load(self) -> Dict[str, Any]:
         """从环境变量加载配置"""
@@ -145,7 +142,6 @@ class EnvironmentConfigSource(ConfigSource):
 
         return value
 
-
 @dataclass
 class ConfigCache:
     """配置缓存"""
@@ -177,7 +173,6 @@ class ConfigCache:
         """清空缓存"""
         self._cache.clear()
         self._timestamps.clear()
-
 
 class ConfigValidator:
     """配置验证器"""
@@ -219,7 +214,6 @@ class ConfigValidator:
             return value
         except (KeyError, TypeError):
             return None
-
 
 class ConfigManager:
     """配置管理器"""
@@ -386,7 +380,6 @@ class ConfigManager:
         except (ValueError, TypeError):
             return default
 
-
 # 默认配置工厂函数
 def get_default_config_manager() -> ConfigManager:
     """获取默认配置管理器"""
@@ -397,7 +390,6 @@ def get_default_config_manager() -> ConfigManager:
     manager.add_source(env_source)
 
     return manager
-
 
 def get_development_config() -> Dict[str, Any]:
     """获取开发环境配置"""
@@ -418,7 +410,6 @@ def get_development_config() -> Dict[str, Any]:
             "format": "detailed"
         }
     }
-
 
 def get_production_config() -> Dict[str, Any]:
     """获取生产环境配置"""
@@ -444,7 +435,6 @@ def get_production_config() -> Dict[str, Any]:
         }
     }
 
-
 def get_config_by_env(env: str = "development") -> Dict[str, Any]:
     """根据环境获取配置"""
     if env == "production":
@@ -453,7 +443,6 @@ def get_config_by_env(env: str = "development") -> Dict[str, Any]:
         return get_development_config()
     else:
         return get_development_config()
-
 
 # 配置管理器实例（单例模式）
 _config_manager = None

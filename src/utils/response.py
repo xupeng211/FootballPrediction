@@ -9,7 +9,6 @@ from typing import Any, Dict, Optional
 
 from pydantic import BaseModel
 
-
 class APIResponseModel(BaseModel):
     """API响应Pydantic模型"""
 
@@ -17,7 +16,6 @@ class APIResponseModel(BaseModel):
     message: str
     data: Optional[Any] = None
     code: Optional[str] = None
-
 
 class APIResponse:
     """API响应格式化工具"""
@@ -87,7 +85,6 @@ class APIResponse:
     ) -> Dict[str, Any]:
         """错误响应（别名方法）"""
         return APIResponse.error(message, code, data)
-
 
 # 为了向后兼容，提供一个ResponseUtils别名
 ResponseUtils = APIResponse

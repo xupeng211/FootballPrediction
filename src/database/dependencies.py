@@ -20,7 +20,6 @@ from src.database.definitions import (
     get_async_writer_session,
 )
 
-
 def get_db() -> Generator[Session, None, None]:
     """
     获取数据库会话的依赖注入函数
@@ -36,7 +35,6 @@ def get_db() -> Generator[Session, None, None]:
         yield session
     finally:
         session.close()
-
 
 async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
     """
@@ -54,7 +52,6 @@ async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
     finally:
         await session.close()
 
-
 def get_reader_db() -> Generator[Session, None, None]:
     """
     获取只读数据库会话的依赖注入函数
@@ -69,7 +66,6 @@ def get_reader_db() -> Generator[Session, None, None]:
         yield session
     finally:
         session.close()
-
 
 def get_writer_db() -> Generator[Session, None, None]:
     """
@@ -86,7 +82,6 @@ def get_writer_db() -> Generator[Session, None, None]:
     finally:
         session.close()
 
-
 async def get_async_reader_db() -> AsyncGenerator[AsyncSession, None]:
     """
     获取异步只读数据库会话的依赖注入函数
@@ -101,7 +96,6 @@ async def get_async_reader_db() -> AsyncGenerator[AsyncSession, None]:
         yield session
     finally:
         await session.close()
-
 
 async def get_async_writer_db() -> AsyncGenerator[AsyncSession, None]:
     """
@@ -118,11 +112,9 @@ async def get_async_writer_db() -> AsyncGenerator[AsyncSession, None]:
     finally:
         await session.close()
 
-
 # 为了向后兼容，保留原有的函数名
 get_db_session = get_db
 get_async_db_session = get_async_db
-
 
 # 测试专用的依赖注入函数
 def get_test_db() -> Generator[Session, None, None]:
@@ -141,7 +133,6 @@ def get_test_db() -> Generator[Session, None, None]:
     finally:
         session.close()
 
-
 async def get_test_async_db() -> AsyncGenerator[AsyncSession, None]:
     """
     测试用的异步数据库会话依赖注入函数
@@ -158,7 +149,6 @@ async def get_test_async_db() -> AsyncGenerator[AsyncSession, None]:
     finally:
         await session.close()
 
-
 # 便捷的依赖注入对象，可以直接在路由中使用
 db_session = Depends(get_db)
 async_db_session = Depends(get_async_db)
@@ -170,7 +160,6 @@ async_writer_db = Depends(get_async_writer_db)
 # 测试用的便捷依赖
 test_db = Depends(get_test_db)
 test_async_db = Depends(get_test_async_db)
-
 
 __all__ = [
     # 同步依赖注入函数

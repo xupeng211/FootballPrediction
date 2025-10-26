@@ -12,7 +12,6 @@ from sqlalchemy import DateTime
 from sqlalchemy import Integer
 from sqlalchemy import String
 
-
 class User(BaseModel):
     """平台用户表，满足测试所需的基本字段。"""
 
@@ -46,7 +45,7 @@ class User(BaseModel):
 
     def touch_login(self) -> None:
         """更新最近登录时间。"""
-        self.last_login = datetime.utcnow()  # type: ignore[assignment]
+        self.last_login = datetime.utcnow()
 
     def __repr__(self) -> str:  # pragma: no cover - 调试友好
         return f"<User(id={self.id}, username='{self.username}', email='{self.email}')>"

@@ -1,3 +1,4 @@
+from src.core.logger import get_logger
 """
 事件系统API端点
 Event System API Endpoints
@@ -20,13 +21,11 @@ from ..events.handlers import (
 
 router = APIRouter(prefix="/events", tags=["事件系统"])
 
-
 @router.get("/health", summary="事件系统健康检查")
 async def event_health_check() -> Dict[str, Any]:
     """检查事件系统的健康状态"""
     app = get_event_application()
     return await app.health_check()
-
 
 @router.get("/stats", summary="获取事件统计")
 async def get_event_statistics() -> Dict[str, Any]:
@@ -49,13 +48,11 @@ async def get_event_statistics() -> Dict[str, Any]:
 
     return detailed_stats
 
-
 @router.get("/types", summary="获取所有事件类型")
 async def get_event_types() -> List[str]:
     """获取所有已注册的事件类型"""
     bus = get_event_bus()
     return bus.get_all_event_types()
-
 
 @router.get("/subscribers", summary="获取订阅者信息")
 async def get_subscribers_info(
@@ -83,7 +80,6 @@ async def get_subscribers_info(
             "subscribers": subscriber_info,
         }
 
-
 @router.post("/restart", summary="重启事件系统")
 async def restart_event_system() -> Dict[str, str]:
     """重启事件系统（谨慎使用）"""
@@ -94,7 +90,6 @@ async def restart_event_system() -> Dict[str, str]:
         return {"message": "事件系统已成功重启"}
     except (ValueError, KeyError, AttributeError, HTTPError) as e:
         raise HTTPException(status_code=500, detail=f"重启失败: {str(e)}")
-
 
 @router.get("/metrics", summary="获取详细指标")
 async def get_detailed_metrics() -> Dict[str, Any]:
@@ -125,7 +120,6 @@ async def get_detailed_metrics() -> Dict[str, Any]:
     metrics["system_stats"] = bus.get_stats()
 
     return metrics
-
 
 @router.get("/predictions/recent", summary="获取最近的预测统计")
 async def get_recent_prediction_stats(
@@ -162,7 +156,6 @@ async def get_recent_prediction_stats(
         "average_per_day": total_predictions / days if days > 0 else 0,
     }
 
-
 @router.get("/users/activity", summary="获取用户活动统计")
 async def get_user_activity_stats(
     limit: int = Query(10, ge=1, le=100, description="返回用户数量限制"),
@@ -196,7 +189,6 @@ async def get_user_activity_stats(
             for user_id, data in top_users
         ],
     }
-
 
 # 辅助函数
 def _find_handler(handler_type):

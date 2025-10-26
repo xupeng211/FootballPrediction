@@ -6,11 +6,10 @@ from typing import Optional
 import hashlib
 import json
 
-
 class RedisKeyManager:
     """管理Redis键的类"""
 
-    def __init__(self, prefix: str = "fp"):  # type: ignore
+    def __init__(self, prefix: str = "fp"):
         self.prefix = prefix
 
     def _make_key(self, key: str) -> str:
@@ -87,7 +86,6 @@ class RedisKeyManager:
     def prediction_key(match_id: int, version: str) -> str:
         """预测结果键"""
         return f"predictions:{match_id}:{version}"
-
 
 # 别名以保持向后兼容
 CacheKeyManager = RedisKeyManager

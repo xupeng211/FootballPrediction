@@ -14,7 +14,6 @@ from typing import Optional, Dict, Any, List
 
 from ...core.exceptions import DomainError
 
-
 class PredictionStatus(Enum):
     """预测状态"""
 
@@ -23,14 +22,13 @@ class PredictionStatus(Enum):
     CANCELLED = "cancelled"  # 已取消
     EXPIRED = "expired"  # 已过期
 
-
 @dataclass
 class ConfidenceScore:
     """置信度值对象"""
 
     value: Decimal
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self):
         """验证置信度范围"""
         if self.value < 0 or self.value > 1:
             raise DomainError("置信度必须在 0 到 1 之间")
@@ -50,7 +48,6 @@ class ConfidenceScore:
     def __str__(self) -> str:
         return f"{self.value:.2f} ({self.level})"
 
-
 @dataclass
 class PredictionScore:
     """预测比分值对象"""
@@ -60,7 +57,7 @@ class PredictionScore:
     actual_home: Optional[int] = None
     actual_away: Optional[int] = None
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self):
         """验证比分"""
         if self.predicted_home < 0 or self.predicted_away < 0:
             raise DomainError("预测比分不能为负数")
@@ -117,7 +114,6 @@ class PredictionScore:
             return f"{self.predicted_home}-{self.predicted_away} (实际: {self.actual_home}-{self.actual_away})"
         return f"{self.predicted_home}-{self.predicted_away}"
 
-
 @dataclass
 class PredictionPoints:
     """预测积分值对象"""
@@ -127,7 +123,7 @@ class PredictionPoints:
     result_bonus: Decimal = Decimal("0")  # 结果正确奖励
     confidence_bonus: Decimal = Decimal("0")  # 置信度奖励
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self):
         """四舍五入到两位小数"""
         self.total = self.total.quantize(Decimal("0.01"))
         self.score_bonus = self.score_bonus.quantize(Decimal("0.01"))
@@ -146,7 +142,6 @@ class PredictionPoints:
 
     def __str__(self) -> str:
         return f"{self.total} 分"
-
 
 @dataclass
 class Prediction:
@@ -172,7 +167,7 @@ class Prediction:
     # 领域事件
     _domain_events: List[Any] = field(default_factory=list, init=False)
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self):
         """初始化后的验证"""
         if self.user_id <= 0:
             raise DomainError("用户ID必须大于0")

@@ -24,7 +24,6 @@ from ..core.di import DIContainer
 
 logger = logging.getLogger(__name__)
 
-
 class StrategyPredictionService:
     """基于策略模式的预测服务
 
@@ -462,7 +461,6 @@ class StrategyPredictionService:
             "total_predictions": total_predictions,
             "average_score_difference": avg_score_diff,
         }
-
 
 # 依赖注入配置
 def configure_strategy_prediction_services(container: DIContainer) -> None:

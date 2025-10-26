@@ -11,7 +11,6 @@ from datetime import datetime
 
 from src.database.connection import DatabaseManager
 
-
 class BaseService(ABC):
     """
     统一的基础服务类
@@ -142,7 +141,7 @@ class BaseService(ABC):
         """获取异步数据库会话"""
         return self.db_manager.get_async_session()
 
-    def get_sync_session(self):  # type: ignore
+    def get_sync_session(self):
         """获取同步数据库会话"""
         return self.db_manager.get_session()
 
@@ -299,7 +298,6 @@ class BaseService(ABC):
             "description": "Service description not provided",
             "version": "1.0.0",
         }
-
 
 class SimpleService(BaseService):
     """

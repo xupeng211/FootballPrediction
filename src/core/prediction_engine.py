@@ -13,8 +13,7 @@ PredictionEngine = None
 PredictionConfig = None
 PredictionStatistics = None
 
-
-def _lazy_import():  # type: ignore
+def _lazy_import():
     """延迟导入以避免循环导入"""
     global PredictionEngine, PredictionConfig, PredictionStatistics
     if PredictionEngine is None:
@@ -26,10 +25,8 @@ def _lazy_import():  # type: ignore
         PredictionConfig = _PC
         PredictionStatistics = _PS
 
-
 # 单例实例
 _prediction_engine_instance = None
-
 
 async def get_prediction_engine():
     """
@@ -51,7 +48,6 @@ async def get_prediction_engine():
         _prediction_engine_instance = PredictionEngine(config)
 
     return _prediction_engine_instance
-
 
 # 保持原有的导入方式
 __all__ = [

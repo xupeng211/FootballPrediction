@@ -19,7 +19,6 @@ from src.utils.retry import RetryConfig, retry
 from src.utils.time_utils import utc_now, parse_datetime
 from src.database.connection import get_async_session
 
-
 # 函数定义
 def get_scores_manager():
     """获取全局比分收集器管理器"""

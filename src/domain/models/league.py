@@ -14,7 +14,6 @@ from decimal import Decimal
 
 from ...core.exceptions import DomainError
 
-
 class LeagueType(Enum):
     """联赛类型"""
 
@@ -23,7 +22,6 @@ class LeagueType(Enum):
     INTERNATIONAL = "international"  # 国际赛事
     FRIENDLY = "friendly"  # 友谊赛
 
-
 class LeagueStatus(Enum):
     """联赛状态"""
 
@@ -31,7 +29,6 @@ class LeagueStatus(Enum):
     ACTIVE = "active"  # 进行中
     COMPLETED = "completed"  # 已结束
     SUSPENDED = "suspended"  # 暂停
-
 
 @dataclass
 class LeagueSeason:
@@ -44,7 +41,7 @@ class LeagueSeason:
     total_rounds: int = 38  # 标准联赛轮次
     current_round: int = 0
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self):
         """验证赛季信息"""
         if not self.season:
             raise DomainError("赛季名称不能为空")
@@ -97,7 +94,6 @@ class LeagueSeason:
     def __str__(self) -> str:
         return f"{self.season} - 第 {self.current_round}/{self.total_rounds} 轮"
 
-
 @dataclass
 class LeagueSettings:
     """联赛设置值对象"""
@@ -113,7 +109,7 @@ class LeagueSettings:
     extra_time: bool = False  # 是否加时
     penalty_shootout: bool = False  # 是否点球
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self):
         """验证设置"""
         if any(
             x < 0
@@ -152,7 +148,6 @@ class LeagueSettings:
             f"胜{self.points_for_win} 平{self.points_for_draw} 负{self.points_for_loss}"
         )
 
-
 @dataclass
 class League:
     """
@@ -180,7 +175,7 @@ class League:
     # 领域事件
     _domain_events: List[Any] = field(default_factory=list, init=False)
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self):
         """初始化后的验证"""
         if not self.name or len(self.name.strip()) == 0:
             raise DomainError("联赛名称不能为空")

@@ -9,7 +9,6 @@ import logging
 logger = logging.getLogger(__name__)
 """add_data_collection_logs_and_bronze_layer_tables
 
-
 Revision ID: f48d412852cc
 Revises: d56c8d0d5aa0
 Create Date: 2025-09-10 20:42:25.754318
@@ -21,7 +20,6 @@ revision: str = "f48d412852cc"
 down_revision: Union[str, None] = "d56c8d0d5aa0"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
-
 
 def upgrade() -> None:
     """
@@ -227,7 +225,6 @@ def upgrade() -> None:
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         # 如果features表不存在或字段已存在，忽略错误但记录日志
         logger.info(f"Warning: Could not add columns to features table: {e}")
-
 
 def downgrade() -> None:
     """

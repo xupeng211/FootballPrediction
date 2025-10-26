@@ -20,8 +20,7 @@ down_revision = "d3bf28af22ff"
 branch_labels = None
 depends_on = None
 
-
-def upgrade():  # type: ignore
+def upgrade():
     """升级数据库架构"""
 
     # 检查是否在SQLite环境中（测试环境）
@@ -218,8 +217,7 @@ def upgrade():  # type: ignore
     """
         )
 
-
-def downgrade():  # type: ignore
+def downgrade():
     """回滚数据库架构"""
 
     # 检查是否在SQLite环境中（测试环境）

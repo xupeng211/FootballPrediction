@@ -32,7 +32,6 @@ except ImportError:
     def jwt(*args, **kwargs):
         raise ImportError("Please install python-jose: pip install python-jose")
 
-
 from src.core.prediction_engine import PredictionEngine
 from src.core.logger import get_logger
 
@@ -48,7 +47,6 @@ SECRET_KEY = os.getenv(
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 security = HTTPBearer()
 
-
 # 验证密钥强度
 def validate_secret_key():
     """验证JWT密钥强度"""
@@ -57,10 +55,8 @@ def validate_secret_key():
     if len(SECRET_KEY) < 32:
         logger.warning("⚠️ JWT密钥长度不足32位，建议使用更强的密钥")
 
-
 # 启动时验证
 validate_secret_key()
-
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -98,7 +94,6 @@ async def get_current_user(
     except JWTError:
         raise credentials_exception
 
-
 async def get_admin_user(current_user: Dict = Depends(get_current_user)) -> Dict:
     """
     获取管理员用户
@@ -118,7 +113,6 @@ async def get_admin_user(current_user: Dict = Depends(get_current_user)) -> Dict
         )
     return current_user
 
-
 async def get_prediction_engine() -> Optional["PredictionEngine"]:
     """
     获取预测引擎实例
@@ -130,13 +124,11 @@ async def get_prediction_engine() -> Optional["PredictionEngine"]:
 
     return await get_prediction_engine()
 
-
 async def get_redis_manager():
     """获取Redis管理器"""
     from src.cache.redis_manager import get_redis_manager
 
     return get_redis_manager()
-
 
 async def verify_prediction_permission(
     match_id: int, current_user: Dict = Depends(get_current_user)
@@ -154,7 +146,6 @@ async def verify_prediction_permission(
     # 这里可以实现更复杂的权限逻辑
     # 例如：检查用户是否有访问特定比赛的权限
     return True
-
 
 async def rate_limit_check(current_user: Dict = Depends(get_current_user)):
     """

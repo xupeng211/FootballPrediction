@@ -14,7 +14,6 @@ from prometheus_client import CollectorRegistry, Counter, Gauge, Histogram
 from src.database.connection import DatabaseManager
 from src.cache.redis.core.connection_manager import RedisConnectionManager
 
-
 class SystemMetricsCollector:
     """系统指标收集器"""
 

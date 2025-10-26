@@ -30,11 +30,10 @@ except ImportError:
         def Field(*args: Any, **kwargs: Any) -> Any:
             return None
 
-
 class Config:
     """配置管理类 - 提供统一的配置读写和持久化机制"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         # 配置文件存储在用户主目录下，避免权限问题
         self.config_dir = Path.home() / ".footballprediction"
         self.config_file = self.config_dir / "config.json"
@@ -67,9 +66,7 @@ class Config:
             # ensure_ascii=False保证中文字符正确显示
             json.dump(self.config, f, ensure_ascii=False, indent=2)
 
-
 SettingsClass = BaseSettings if HAS_PYDANTIC else object
-
 
 class Settings(SettingsClass):
     """应用程序设置类 - 使用Pydantic进行配置管理和验证"""
@@ -221,7 +218,7 @@ class Settings(SettingsClass):
 
     else:
 
-        def __init__(self, **kwargs):  # type: ignore
+        def __init__(self, **kwargs):
             # 设置默认值
             self.database_url = "sqlite+aiosqlite:///./data/football_prediction.db"
             self.test_database_url = "postgresql+asyncpg://postgres:postgres@db:5432/football_prediction_test"
@@ -261,7 +258,7 @@ class Settings(SettingsClass):
             # 从环境变量读取配置
             self._load_from_env()
 
-        def _load_from_env(self):  # type: ignore
+        def _load_from_env(self):
             """从环境变量加载配置"""
             env_mapping = {
                 "DATABASE_URL": "database_url",
@@ -313,15 +310,12 @@ class Settings(SettingsClass):
 
             return [item.strip() for item in value.split(",") if item.strip()]
 
-
 # 全局配置实例
 config = Config()
-
 
 def get_config() -> Config:
     """获取配置实例"""
     return config
-
 
 # 创建全局设置实例
 def get_settings() -> Settings:

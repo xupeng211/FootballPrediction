@@ -6,7 +6,6 @@ from datetime import datetime
 from typing import Optional, Dict, Any, List
 from enum import Enum
 
-
 class LeagueStatus(Enum):
     """联赛状态"""
 
@@ -15,11 +14,10 @@ class LeagueStatus(Enum):
     COMPLETED = "completed"
     SUSPENDED = "suspended"
 
-
 class LeagueTable:
     """联赛积分榜"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self.standings: List[Dict[str, Any]] = []
         self.last_updated = datetime.now()
 
@@ -41,7 +39,6 @@ class LeagueTable:
             "standings": self.standings,
             "last_updated": self.last_updated.isoformat(),
         }
-
 
 class League:
     """联赛领域模型"""

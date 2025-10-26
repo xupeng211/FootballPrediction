@@ -14,7 +14,6 @@ from collections import defaultdict
 
 from .base import Subject, ObservableEvent, ObservableEventType
 
-
 class SystemMetricsSubject(Subject):
     """系统指标被观察者
 
@@ -22,7 +21,7 @@ class SystemMetricsSubject(Subject):
     Monitors system-level metric changes.
     """
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         """初始化系统指标被观察者"""
         super().__init__("SystemMetrics")
         self._metrics: Dict[str, float] = {}
@@ -154,7 +153,6 @@ class SystemMetricsSubject(Subject):
         """获取所有指标"""
         return dict(self._metrics)
 
-
 class PredictionMetricsSubject(Subject):
     """预测指标被观察者
 
@@ -162,7 +160,7 @@ class PredictionMetricsSubject(Subject):
     Monitors prediction-related metrics.
     """
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         """初始化预测指标被观察者"""
         super().__init__("PredictionMetrics")
         self._prediction_counts: Dict[str, int] = defaultdict(int)
@@ -311,7 +309,6 @@ class PredictionMetricsSubject(Subject):
 
         return result
 
-
 class AlertSubject(Subject):
     """告警被观察者
 
@@ -319,7 +316,7 @@ class AlertSubject(Subject):
     Manages alert events.
     """
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         """初始化告警被观察者"""
         super().__init__("AlertManager")
         self._alert_counts: Dict[str, int] = defaultdict(int)
@@ -423,7 +420,6 @@ class AlertSubject(Subject):
             "suppression_rules": len(self._suppression_rules),
         }
 
-
 class CacheSubject(Subject):
     """缓存被观察者
 
@@ -431,7 +427,7 @@ class CacheSubject(Subject):
     Monitors cache-related events.
     """
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         """初始化缓存被观察者"""
         super().__init__("CacheMonitor")
         self._cache_stats = {

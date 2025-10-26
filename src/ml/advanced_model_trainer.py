@@ -27,8 +27,8 @@ class AdvancedModelTrainer:
         self.config = config or {}
         self.model = None
         self.is_trained = False
-        self.training_history = []
-        self.performance_metrics = {}
+        self.training_history: list = []
+        self.performance_metrics: dict = {}
 
     async def train_model(
         self,

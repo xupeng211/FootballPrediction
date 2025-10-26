@@ -16,7 +16,6 @@ from sqlalchemy.orm import selectinload
 from .base import BaseRepository
 from ..models.user import User
 
-
 class UserRepository(BaseRepository[User]):
     """
     用户仓储类
@@ -26,7 +25,7 @@ class UserRepository(BaseRepository[User]):
     Provides CRUD operations and complex query methods for user data.
     """
 
-    def __init__(self, db_manager=None):  # type: ignore
+    def __init__(self, db_manager=None):
         super().__init__(User, db_manager)
 
     # ========================================

@@ -7,11 +7,10 @@ import redis.asyncio as aioredis
 from redis.exceptions import RedisError
 from typing import Optional
 
-
 class RedisConnectionManager:
     """管理Redis连接的类"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self._pool: Optional[aioredis.ConnectionPool] = None
         self._redis: Optional[aioredis.Redis] = None
 

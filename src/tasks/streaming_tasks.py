@@ -19,7 +19,6 @@ from src.tasks.error_handlers import TaskErrorLogger
 
 logger = get_logger(__name__)
 
-
 class StreamingTask(Task):
     """
     流处理任务基类
@@ -43,7 +42,6 @@ class StreamingTask(Task):
             asyncio.set_event_loop(loop)
 
         return loop.run_until_complete(coro)
-
 
 @app.task(base=StreamingTask, bind=True)
 def consume_kafka_streams_task(
@@ -117,7 +115,6 @@ def consume_kafka_streams_task(
 
     return self.run_async(_consume_streams())
 
-
 @app.task(base=StreamingTask, bind=True)
 def start_continuous_consumer_task(
     self, topics: Optional[List[str]] = None, consumer_group_id: Optional[str] = None
@@ -181,7 +178,6 @@ def start_continuous_consumer_task(
                 consumer.stop_consuming()
 
     return self.run_async(_start_continuous_consumer())
-
 
 @app.task(base=StreamingTask, bind=True)
 def produce_to_kafka_stream_task(
@@ -250,7 +246,6 @@ def produce_to_kafka_stream_task(
 
     return self.run_async(_produce_to_stream())
 
-
 @app.task(base=StreamingTask, bind=True)
 def stream_health_check_task(self):
     """
@@ -295,7 +290,6 @@ def stream_health_check_task(self):
                 processor.stop_processing()
 
     return self.run_async(_stream_health_check())
-
 
 @app.task(base=StreamingTask, bind=True)
 def stream_data_processing_task(
@@ -372,7 +366,6 @@ def stream_data_processing_task(
                 processor.stop_processing()
 
     return self.run_async(_stream_data_processing())
-
 
 @app.task(base=StreamingTask, bind=True)
 def kafka_topic_management_task(self, action: str, topic_name: Optional[str] = None):

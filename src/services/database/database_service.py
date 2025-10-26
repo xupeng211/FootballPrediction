@@ -10,11 +10,10 @@ from .repositories.match_repository import MatchRepository
 from .repositories.prediction_repository import PredictionRepository
 from .repositories.user_repository import UserRepository
 
-
 class DatabaseService:
     """数据库服务类 - 提供高级数据库操作接口"""
 
-    def __init__(self, session: AsyncSession):  # type: ignore
+    def __init__(self, session: AsyncSession):
         self.session = session
         self.match_repo = MatchRepository(session)
         self.prediction_repo = PredictionRepository(session)

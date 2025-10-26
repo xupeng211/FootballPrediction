@@ -6,7 +6,6 @@ from datetime import datetime
 from typing import Optional, Dict, Any, List
 from enum import Enum
 
-
 class UserRole(Enum):
     """用户角色"""
 
@@ -15,11 +14,10 @@ class UserRole(Enum):
     ADMIN = "admin"
     ANALYST = "analyst"
 
-
 class UserPreferences:
     """用户偏好设置"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self.favorite_teams: List[int] = []
         self.favorite_leagues: List[int] = []
         self.notification_enabled = True
@@ -48,11 +46,10 @@ class UserPreferences:
         if league_id in self.favorite_leagues:
             self.favorite_leagues.remove(league_id)
 
-
 class UserStatistics:
     """用户统计数据"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self.total_predictions = 0
         self.correct_predictions = 0
         self.total_profit_loss = 0.0
@@ -102,7 +99,6 @@ class UserStatistics:
         if self.total_predictions == 0:
             return 0.0
         return (self.total_profit_loss / self.total_predictions) * 100
-
 
 class User:
     """用户领域模型"""
@@ -279,11 +275,10 @@ class User:
     def __repr__(self) -> str:
         return f"<User(id={self.id}, username={self.username}, role={self.role.value})>"
 
-
 class UserProfile:
     """用户档案（扩展的用户信息）"""
 
-    def __init__(self, user: User):  # type: ignore
+    def __init__(self, user: User):
         self._user = user
         self.prediction_history: List[Dict[str, Any]] = []
         self.following: List[int] = []  # 关注的用户ID列表

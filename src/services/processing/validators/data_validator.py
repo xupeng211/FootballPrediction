@@ -15,11 +15,10 @@ import pandas as pd
 
 # from .processing.missing_data_handler import MissingDataHandler
 
-
 class DataValidator:
     """数据验证器"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         """初始化验证器"""
         self.logger = logging.getLogger(f"processing.{self.__class__.__name__}")
         # self.missing_handler = MissingDataHandler()

@@ -14,12 +14,10 @@ from sqlalchemy import select, func, update
 from .base import Repository, ReadOnlyRepository, QuerySpec
 from ..database.models import User
 
-
 class UserRepositoryInterface(Repository[User, int]):
     """用户仓储接口"""
 
     pass
-
 
 class ReadOnlyUserRepository(ReadOnlyRepository[User, int]):
     """只读用户仓储"""
@@ -119,7 +117,6 @@ class ReadOnlyUserRepository(ReadOnlyRepository[User, int]):
         filters = {"created_at": {"$gte": start_date, "$lte": end_date}}
         query_spec = QuerySpec(filters=filters, order_by=["-created_at"], limit=limit)
         return await self.find_many(query_spec)
-
 
 class UserRepository(UserRepositoryInterface):
     """用户仓储实现"""

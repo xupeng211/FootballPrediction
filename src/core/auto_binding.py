@@ -20,7 +20,6 @@ from .exceptions import DependencyInjectionError
 T = TypeVar("T")
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class BindingRule:
     """绑定规则"""
@@ -30,11 +29,10 @@ class BindingRule:
     lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT
     condition: Optional[callable] = None
 
-
 class AutoBinder:
     """自动绑定器"""
 
-    def __init__(self, container: DIContainer):  # type: ignore
+    def __init__(self, container: DIContainer):
         self.container = container
         self._binding_rules: List[BindingRule] = []
         self._scanned_modules: List[str] = []
@@ -313,7 +311,6 @@ class AutoBinder:
                         )
                         break
 
-
 class ConventionBinder:
     """约定绑定器"""
 
@@ -339,9 +336,8 @@ class ConventionBinder:
         # 这里可以实现命名空间绑定
         pass
 
-
 # 装饰器用于标记自动绑定
-def auto_bind(lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT):  # type: ignore
+def auto_bind(lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT):
     """自动绑定装饰器"""
 
     def decorator(cls: Type[T]) -> Type[T]:
@@ -352,8 +348,7 @@ def auto_bind(lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT):  # type: i
 
     return decorator
 
-
-def bind_to(interface: Type[T]):  # type: ignore
+def bind_to(interface: Type[T]):
     """绑定到接口装饰器"""
 
     def decorator(cls: Type[T]) -> Type[T]:
@@ -363,8 +358,7 @@ def bind_to(interface: Type[T]):  # type: ignore
 
     return decorator
 
-
-def primary_implementation():  # type: ignore
+def primary_implementation():
     """主要实现装饰器"""
 
     def decorator(cls) -> Type:

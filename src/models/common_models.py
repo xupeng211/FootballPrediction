@@ -61,7 +61,6 @@ __all__ = [
     "ModelMetrics",
 ]
 
-
 class DataValidationResult(BaseModel):
     """数据验证结果"""
 
@@ -77,7 +76,6 @@ class DataValidationResult(BaseModel):
     def add_warning(self, warning: str):
         """添加警告"""
         self.warnings.append(warning)
-
 
 class FeatureVector(BaseModel):
     """特征向量"""
@@ -97,7 +95,6 @@ class FeatureVector(BaseModel):
         if name not in self.feature_names:
             self.feature_names.append(name)
 
-
 class MatchData(BaseModel):
     """比赛数据"""
 
@@ -111,7 +108,6 @@ class MatchData(BaseModel):
     away_score: Optional[int] = None
     odds: Optional[Dict[str, float]] = None
     features: Optional[FeatureVector] = None
-
 
 class ModelMetrics(BaseModel):
     """模型指标"""

@@ -29,7 +29,6 @@ from .feature_store import (
 
 logger = logging.getLogger(__name__)
 
-
 def example_initialize_feature_store() -> FootballFeatureStore:
     """
     示例：初始化特征仓库
@@ -60,7 +59,6 @@ def example_initialize_feature_store() -> FootballFeatureStore:
 
     logger.info("✅ 特征仓库初始化成功！")
     return feature_store
-
 
 def example_write_team_features(feature_store: FootballFeatureStore) -> None:
     """
@@ -134,7 +132,6 @@ def example_write_team_features(feature_store: FootballFeatureStore) -> None:
 
     logger.info(f"✅ 成功写入 {len(df)} 条球队统计特征！")
 
-
 def example_write_odds_features(feature_store: FootballFeatureStore) -> None:
     """
     示例：写入赔率特征数据
@@ -203,7 +200,6 @@ def example_write_odds_features(feature_store: FootballFeatureStore) -> None:
 
     logger.info(f"✅ 成功写入 {len(df)} 条赔率特征！")
 
-
 def example_get_online_features(feature_store: FootballFeatureStore) -> pd.DataFrame:
     """
     示例：获取在线特征（用于实时预测）
@@ -230,7 +226,6 @@ def example_get_online_features(feature_store: FootballFeatureStore) -> pd.DataF
     logger.info(features_df.head())
 
     return features_df
-
 
 def example_get_historical_features(
     feature_store: FootballFeatureStore,
@@ -271,7 +266,6 @@ def example_get_historical_features(
 
     return training_df
 
-
 def example_create_training_dataset(
     feature_store: FootballFeatureStore,
 ) -> pd.DataFrame:
@@ -301,7 +295,6 @@ def example_create_training_dataset(
 
     return training_df
 
-
 def example_feature_statistics(feature_store: FootballFeatureStore) -> None:
     """
     示例：获取特征统计信息
@@ -324,7 +317,6 @@ def example_feature_statistics(feature_store: FootballFeatureStore) -> None:
             logger.info(f"  🏷️  标签: {stats.get(str('tags'), {})}")
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.info(f"❌ 获取 {fv_name} 统计失败: {str(e)}")
-
 
 def example_list_all_features(feature_store: FootballFeatureStore) -> None:
     """
@@ -349,7 +341,6 @@ def example_list_all_features(feature_store: FootballFeatureStore) -> None:
             logger.info(f"    ... 还有 {len(features_list) - 10} 个特征")
     else:
         logger.info("❌ 未找到任何特征")
-
 
 async def run_complete_example() -> None:
     """
@@ -397,7 +388,6 @@ async def run_complete_example() -> None:
     except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
         logger.info(f"❌ 示例运行失败: {str(e)}")
         logger.error(f"Feature store example failed: {str(e)}", exc_info=True)
-
 
 def example_integration_with_ml_pipeline() -> Dict[str, Any]:
     """
@@ -454,7 +444,6 @@ def example_integration_with_ml_pipeline() -> Dict[str, Any]:
 
     logger.info("✅ ML流水线集成示例完成！")
     return results
-
 
 if __name__ == "__main__":
     # 设置日志级别

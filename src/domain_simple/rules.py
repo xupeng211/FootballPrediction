@@ -6,11 +6,10 @@ from typing import Any, Dict, List, Optional, Callable
 from abc import ABC, abstractmethod
 from datetime import datetime
 
-
 class ValidationResult:
     """验证结果"""
 
-    def __init__(self, is_valid: bool = True, message: str = ""):  # type: ignore
+    def __init__(self, is_valid: bool = True, message: str = ""):
         self.is_valid = is_valid
         self.message = message
         self.errors: List[str] = []
@@ -44,11 +43,10 @@ class ValidationResult:
             "timestamp": self.timestamp.isoformat(),
         }
 
-
 class Rule(ABC):
     """规则抽象基类"""
 
-    def __init__(self, name: str, description: str = ""):  # type: ignore
+    def __init__(self, name: str, description: str = ""):
         self.name = name
         self.description = description
         self.enabled = True
@@ -57,7 +55,6 @@ class Rule(ABC):
     def validate(self, obj: Any) -> ValidationResult:
         """验证对象"""
         pass
-
 
 class BusinessRule(Rule):
     """业务规则"""
@@ -89,11 +86,10 @@ class BusinessRule(Rule):
 
         return result
 
-
 class ValidationEngine:
     """验证引擎"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self._rules: Dict[str, List[Rule]] = {}
         self._global_rules: List[Rule] = []
 
@@ -195,7 +191,6 @@ class ValidationEngine:
         else:
             self._rules.clear()
             self._global_rules.clear()
-
 
 class BusinessRules:
     """预定义的业务规则集合"""
@@ -318,10 +313,8 @@ class BusinessRules:
 
         return rules
 
-
 # 全局验证引擎实例
 _validation_engine = None
-
 
 def get_validation_engine() -> ValidationEngine:
     """获取全局验证引擎实例"""

@@ -25,7 +25,6 @@ from ..core.di import DIContainer
 
 logger = logging.getLogger(__name__)
 
-
 class EventDrivenPredictionService(StrategyPredictionService):
     """事件驱动的预测服务
 
@@ -33,7 +32,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
     Inherits from strategy prediction service, adding event publishing capabilities.
     """
 
-    def __init__(self, *args, **kwargs):  # type: ignore
+    def __init__(self, *args, **kwargs):
         """初始化事件驱动预测服务"""
         super().__init__(*args, **kwargs)
         self._event_bus = get_event_bus()
@@ -242,7 +241,6 @@ class EventDrivenPredictionService(StrategyPredictionService):
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"发布预测更新事件失败: {e}")
 
-
 # 事件驱动的比赛服务
 class EventDrivenMatchService:
     """事件驱动的比赛服务
@@ -251,7 +249,7 @@ class EventDrivenMatchService:
     Handles match-related event publishing.
     """
 
-    def __init__(self, match_repository):  # type: ignore
+    def __init__(self, match_repository):
         """初始化比赛服务
 
         Args:
@@ -346,7 +344,6 @@ class EventDrivenMatchService:
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"发布比赛创建事件失败: {e}")
 
-
 # 事件驱动的用户服务
 class EventDrivenUserService:
     """事件驱动的用户服务
@@ -355,7 +352,7 @@ class EventDrivenUserService:
     Handles user-related event publishing.
     """
 
-    def __init__(self, user_repository):  # type: ignore
+    def __init__(self, user_repository):
         """初始化用户服务
 
         Args:
@@ -442,7 +439,6 @@ class EventDrivenUserService:
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"发布用户注册事件失败: {e}")
-
 
 # 依赖注入配置
 def configure_event_driven_services(container: DIContainer) -> None:

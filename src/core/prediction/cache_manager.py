@@ -9,11 +9,10 @@ from src.core.logging import get_logger
 
 logger = get_logger(__name__)
 
-
 class PredictionCacheManager:
     """Cache manager for predictions"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         """Initialize cache manager"""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self._cache = {}

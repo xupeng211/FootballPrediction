@@ -15,7 +15,6 @@ from typing import Optional, Dict, Any, List
 
 from .entities import MatchEntity, TeamEntity
 
-
 @dataclass
 class RecentPerformanceFeatures:
     """
@@ -73,7 +72,6 @@ class RecentPerformanceFeatures:
             "recent_5_win_rate": self.recent_5_win_rate,
             "recent_5_goals_per_game": self.recent_5_goals_per_game,
         }
-
 
 @dataclass
 class HistoricalMatchupFeatures:
@@ -147,7 +145,6 @@ class HistoricalMatchupFeatures:
             "h2h_goals_avg": self.h2h_goals_avg,
             "h2h_home_goals_avg": self.h2h_home_goals_avg,
         }
-
 
 @dataclass
 class OddsFeatures:
@@ -254,7 +251,6 @@ class OddsFeatures:
             "market_efficiency": self.market_efficiency,
         }
 
-
 @dataclass
 class AllMatchFeatures:
     """
@@ -278,7 +274,6 @@ class AllMatchFeatures:
             "historical_matchup": self.historical_matchup.to_dict(),
             "odds_features": self.odds_features.to_dict(),
         }
-
 
 @dataclass
 class AllTeamFeatures:

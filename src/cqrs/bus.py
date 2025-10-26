@@ -12,7 +12,6 @@ from .base import Command, Query, CommandHandler, QueryHandler
 
 logger = logging.getLogger(__name__)
 
-
 class CommandBus:
     """命令总线
 
@@ -20,7 +19,7 @@ class CommandBus:
     Responsible for dispatching commands to their handlers.
     """
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self._handlers: Dict[Type[Command], CommandHandler] = {}
         self._middleware: list = []
 
@@ -72,7 +71,6 @@ class CommandBus:
             for cmd_type, handler in self._handlers.items()
         }
 
-
 class QueryBus:
     """查询总线
 
@@ -80,7 +78,7 @@ class QueryBus:
     Responsible for dispatching queries to their handlers.
     """
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self._handlers: Dict[Type[Query], QueryHandler] = {}
         self._middleware: list = []
 
@@ -130,11 +128,9 @@ class QueryBus:
             for query_type, handler in self._handlers.items()
         }
 
-
 # 全局实例
 _command_bus: Optional[CommandBus] = None
 _query_bus: Optional[QueryBus] = None
-
 
 def get_command_bus() -> CommandBus:
     """获取命令总线实例"""
@@ -143,14 +139,12 @@ def get_command_bus() -> CommandBus:
         _command_bus = CommandBus()
     return _command_bus
 
-
 def get_query_bus() -> QueryBus:
     """获取查询总线实例"""
     global _query_bus
     if _query_bus is None:
         _query_bus = QueryBus()
     return _query_bus
-
 
 # 中间件示例
 class LoggingMiddleware:
@@ -161,7 +155,6 @@ class LoggingMiddleware:
         message_type = type(message).__name__
         logger.info(f"处理消息: {message_type} (ID: {message.message_id})")
         return message
-
 
 class ValidationMiddleware:
     """验证中间件"""
@@ -175,11 +168,10 @@ class ValidationMiddleware:
                 raise ValueError(f"消息验证失败: {', '.join(validation_result.errors)}")
         return message
 
-
 class MetricsMiddleware:
     """指标中间件"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self._metrics = {
             "commands_processed": 0,
             "queries_processed": 0,

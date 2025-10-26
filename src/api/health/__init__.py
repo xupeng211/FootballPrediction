@@ -18,13 +18,11 @@ router = APIRouter(tags=["health"])
 # 定义导出列表
 __all__ = ["router"]
 
-
 def _check_database():
     """检查数据库连接状态（内部函数）"""
     # 这里应该有实际的数据库连接检查逻辑
     # 现在返回模拟数据
     return {"status": "healthy", "latency_ms": 10}
-
 
 @router.get("/")
 async def health_check():
@@ -58,7 +56,6 @@ async def health_check():
             },
         )
 
-
 @router.get("/liveness")
 async def liveness_check():
     """存活检查 - 确认服务正在运行"""
@@ -86,7 +83,6 @@ async def liveness_check():
             },
         )
 
-
 @router.get("/readiness")
 async def readiness_check():
     """就绪检查 - 确认服务准备好处理请求"""
@@ -105,7 +101,6 @@ async def readiness_check():
             "timestamp": time.time(),
             "checks": {"database": db_status},
         }
-
 
 @router.get("/detailed")
 async def detailed_health():

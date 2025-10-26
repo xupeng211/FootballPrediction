@@ -21,7 +21,6 @@ from .base import (
 )
 from ..models.prediction import Prediction
 
-
 class MLModelStrategy(PredictionStrategy):
     """机器学习模型预测策略
 
@@ -29,7 +28,7 @@ class MLModelStrategy(PredictionStrategy):
     Uses trained machine learning models for match prediction.
     """
 
-    def __init__(self, model_name: str = "default_ml_model"):  # type: ignore
+    def __init__(self, model_name: str = "default_ml_model"):
         super().__init__(model_name, StrategyType.ML_MODEL)
         self._model = None
         self._feature_processor = None

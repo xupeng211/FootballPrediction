@@ -8,7 +8,6 @@ from datetime import datetime
 from typing import Optional, Dict, Any
 from dataclasses import dataclass
 
-
 class AuditAction(Enum):
     """审计动作"""
 
@@ -20,7 +19,6 @@ class AuditAction(Enum):
     LOGOUT = "logout"
     EXPORT = "export"
 
-
 class AuditSeverity(Enum):
     """审计严重级别"""
 
@@ -28,7 +26,6 @@ class AuditSeverity(Enum):
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
-
 
 @dataclass
 class AuditEvent:
@@ -44,6 +41,6 @@ class AuditEvent:
     timestamp: datetime
     metadata: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self):
         if self.metadata is None:
             self.metadata = {}
