@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional
 
 from ..services.base_unified import SimpleService
 
+
 @dataclass
 class PredictionResult:
     """预测结果"""
@@ -30,6 +31,7 @@ class PredictionResult:
         """初始化后处理"""
         if self.features is None:
             self.features = {}
+
 
 class PredictionCache:
     """预测缓存管理器"""
@@ -48,6 +50,7 @@ class PredictionCache:
     def clear(self) -> None:
         """清空缓存"""
         self._cache.clear()
+
 
 class PredictionService(SimpleService):
     """预测服务"""
@@ -86,6 +89,7 @@ class PredictionService(SimpleService):
         """获取预测统计信息"""
         return {"total_predictions": 0, "accuracy": 0.0, "model_version": "v1.0.0"}
 
+
 # Prometheus 监控指标（简单实现）
 class Counter:
     def __init__(self, name: str, description: str):
@@ -99,6 +103,7 @@ class Counter:
     def __call__(self):
         return self.value
 
+
 class Histogram:
     def __init__(self, name: str, description: str):
         self.name = name
@@ -111,6 +116,7 @@ class Histogram:
     def __call__(self):
         return sum(self.values) / len(self.values) if self.values else 0.0
 
+
 class Gauge:
     def __init__(self, name: str, description: str):
         self.name = name
@@ -122,6 +128,7 @@ class Gauge:
 
     def __call__(self):
         return self.value
+
 
 # 监控指标实例
 predictions_total = Counter("predictions_total", "Total number of predictions")

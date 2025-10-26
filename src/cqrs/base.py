@@ -16,6 +16,7 @@ import uuid
 CommandResultType = TypeVar("CommandResultType")
 QueryResultType = TypeVar("QueryResultType")
 
+
 @dataclass
 class BaseMessage:
     """消息基类"""
@@ -29,6 +30,7 @@ class BaseMessage:
         self.timestamp = datetime.utcnow()
         self.metadata = metadata or {}
 
+
 class Command(BaseMessage, ABC):
     """命令基类
 
@@ -41,6 +43,7 @@ class Command(BaseMessage, ABC):
         self.correlation_id: Optional[str] = None
         self.causation_id: Optional[str] = None
 
+
 class Query(BaseMessage, ABC):
     """查询基类
 
@@ -50,6 +53,7 @@ class Query(BaseMessage, ABC):
 
     def __init__(self, metadata: Optional[Dict[str, Any]] = None):
         super().__init__(metadata)
+
 
 class CommandHandler(ABC, Generic[CommandResultType]):
     """命令处理器基类
@@ -69,6 +73,7 @@ class CommandHandler(ABC, Generic[CommandResultType]):
         """支持的命令类型"""
         pass
 
+
 class QueryHandler(ABC, Generic[QueryResultType]):
     """查询处理器基类
 
@@ -87,6 +92,7 @@ class QueryHandler(ABC, Generic[QueryResultType]):
         """支持的查询类型"""
         pass
 
+
 class ValidationResult:
     """验证结果"""
 
@@ -104,6 +110,7 @@ class ValidationResult:
         """创建失败的验证结果"""
         return cls(False, errors)
 
+
 class ValidatableCommand(Command, ABC):
     """可验证的命令基类"""
 
@@ -111,6 +118,7 @@ class ValidatableCommand(Command, ABC):
     async def validate(self) -> ValidationResult:
         """验证命令"""
         pass
+
 
 class ValidatableQuery(Query, ABC):
     """可验证的查询基类"""

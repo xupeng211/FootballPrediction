@@ -13,10 +13,12 @@ from enum import Enum
 import logging
 
 # 常量
-YAML = 'yaml'
-JSON = 'json'
+YAML = "yaml"
+JSON = "json"
+
 
 # 类定义
 class HistoricalConfig:
     """历史数据策略配置"""
+
     pass  # TODO: 实现类逻辑

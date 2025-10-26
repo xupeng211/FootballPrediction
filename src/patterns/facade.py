@@ -17,5 +17,5 @@ __all__ = [
     "PredictionFacade",
     "DataCollectionFacade",
     "AnalyticsFacade",
-    "FacadeFactory"
+    "FacadeFactory",
 ]

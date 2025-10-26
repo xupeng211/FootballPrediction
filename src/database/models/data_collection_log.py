@@ -23,6 +23,7 @@ from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy import Text
 
+
 class CollectionStatus(Enum):
     """采集状态枚举"""
 
@@ -30,6 +31,7 @@ class CollectionStatus(Enum):
     FAILED = "failed"
     PARTIAL = "partial"
     RUNNING = "running"
+
 
 class CollectionType(Enum):
     """采集类型枚举"""
@@ -39,8 +41,9 @@ class CollectionType(Enum):
     SCORES = "scores"
     LIVE_SCORES = "live_scores"
 
+
 class DataCollectionLog(BaseModel):
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {"extend_existing": True}
     """
     数据采集日志模型
 

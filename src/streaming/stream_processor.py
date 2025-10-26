@@ -11,6 +11,7 @@ from src.core.logging import get_logger
 
 logger = get_logger(__name__)
 
+
 class StreamProcessor:
     """流数据处理器"""
 
@@ -41,6 +42,7 @@ class StreamProcessor:
             self.stats["error_count"] += 1
             self.logger.error(f"Error processing message: {str(e)}")
             return {"status": "error", "error": str(e)}
+
 
 class StreamProcessorManager:
     """流处理器管理器"""
@@ -73,6 +75,7 @@ class StreamProcessorManager:
         for processor in self.processors.values():
             await processor.stop()
         self.is_running = False
+
 
 class ProcessingStatistics:
     """处理统计"""
@@ -115,6 +118,7 @@ class ProcessingStatistics:
             * 100,
         }
 
+
 class HealthChecker:
     """健康检查器"""
 
@@ -135,6 +139,7 @@ class HealthChecker:
             self.logger.error(f"Health check failed: {str(e)}")
             self.is_healthy = False
             return False
+
 
 # 向后兼容的导出
 StreamProcessorManager = StreamProcessorManager  # 避免名称冲突

@@ -6,6 +6,7 @@ from typing import Any, Dict, List
 
 from src.core.exceptions import StreamingError
 
+
 class KafkaAdminClient:
     """Kafka管理客户端（简化版）"""
 
@@ -59,6 +60,7 @@ class KafkaAdminClient:
             raise StreamingError("Admin client not started")
         pass  # 简化实现
 
+
 class KafkaTopicManager:
     """Kafka主题管理器"""
 
@@ -106,6 +108,7 @@ class KafkaTopicManager:
             {"topic": topic_name, "count": new_partition_count}
         )
 
+
 class KafkaConsumerGroup:
     """Kafka消费者组管理"""
 
@@ -141,6 +144,7 @@ class KafkaConsumerGroup:
     async def delete_group(self):
         """删除消费者组"""
         await self.admin.delete_consumer_groups([self.group_id])
+
 
 class KafkaCluster:
     """Kafka集群"""
@@ -182,6 +186,7 @@ class KafkaCluster:
             "messages_in_per_sec": 1000,
             "messages_out_per_sec": 500,
         }
+
 
 class KafkaHealthChecker:
     """Kafka健康检查器"""
@@ -228,6 +233,7 @@ class KafkaHealthChecker:
             {"topic": "topic1", "partition": 0, "lag": 100},
             {"topic": "topic1", "partition": 1, "lag": 50},
         ]
+
 
 class KafkaMetricsCollector:
     """Kafka指标收集器"""

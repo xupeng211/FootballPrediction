@@ -51,6 +51,7 @@ except ImportError:
 #         RuntimeBatchRequest = Any
 RuntimeBatchRequest = Any  # Placeholder for testing
 
+
 class GreatExpectationsConfig:
     """
     Great Expectations 配置管理器

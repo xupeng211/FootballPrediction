@@ -20,6 +20,7 @@ down_revision = "d3bf28af22ff"
 branch_labels = None
 depends_on = None
 
+
 def upgrade():
     """升级数据库架构"""
 
@@ -216,6 +217,7 @@ def upgrade():
     $$ LANGUAGE plpgsql;
     """
         )
+
 
 def downgrade():
     """回滚数据库架构"""

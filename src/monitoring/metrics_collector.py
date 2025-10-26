@@ -25,6 +25,7 @@ except ImportError:
     # 如果模块化实现有问题，使用基础实现
     pass
 
+
 # 便捷函数 - 直接实现以保持向后兼容
 def start_metrics_collection():
     """启动指标收集"""
@@ -33,12 +34,14 @@ def start_metrics_collection():
         collector.start()
     return True
 
+
 def stop_metrics_collection():
     """停止指标收集"""
     collector = get_metrics_collector()
     if hasattr(collector, "stop"):
         collector.stop()
     return True
+
 
 __all__ = [
     "MetricsCollector",

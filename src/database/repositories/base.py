@@ -17,6 +17,7 @@ from src.database.connection import DatabaseManager
 # 类型变量
 T = TypeVar("T")
 
+
 class BaseRepository(ABC, Generic[T]):
     """
     基础仓储抽象类

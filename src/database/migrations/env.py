@@ -73,6 +73,7 @@ target_metadata = Base.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
+
 def run_migrations_offline() -> None:
     """
     Run migrations in 'offline' mode.
@@ -99,6 +100,7 @@ def run_migrations_offline() -> None:
     with context.begin_transaction():
         context.run_migrations()
 
+
 def do_run_migrations(connection):
     """运行迁移的辅助函数"""
     context.configure(
@@ -112,6 +114,7 @@ def do_run_migrations(connection):
     with context.begin_transaction():
         context.run_migrations()
 
+
 async def run_async_migrations():
     """在异步模式下运行迁移"""
 
@@ -124,6 +127,7 @@ async def run_async_migrations():
         await connection.run_sync(do_run_migrations)
 
     await connectable.dispose()
+
 
 def run_migrations_online() -> None:
     """
@@ -152,6 +156,7 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         do_run_migrations(connection)
+
 
 if context.is_offline_mode():
     run_migrations_offline()

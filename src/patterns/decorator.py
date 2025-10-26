@@ -16,6 +16,7 @@ from src.core.logging import get_logger
 T = TypeVar("T")
 F = TypeVar("F", bound=Callable[..., Any])
 
+
 class Component(ABC):
     """组件抽象基类"""
 
@@ -23,6 +24,7 @@ class Component(ABC):
     async def execute(self, *args, **kwargs) -> Any:
         """执行组件功能"""
         pass
+
 
 class BaseDecorator(Component):
     """装饰器基类"""
@@ -34,6 +36,7 @@ class BaseDecorator(Component):
     async def execute(self, *args, **kwargs) -> Any:
         """执行装饰后的功能"""
         return await self._component.execute(*args, **kwargs)
+
 
 class LoggingDecorator(BaseDecorator):
     """日志装饰器"""
@@ -69,6 +72,7 @@ class LoggingDecorator(BaseDecorator):
                 f"in {duration:.3f}s | Error: {str(e)}"
             )
             raise
+
 
 class RetryDecorator(BaseDecorator):
     """重试装饰器"""
@@ -122,6 +126,7 @@ class RetryDecorator(BaseDecorator):
                     )
 
         raise last_exception
+
 
 class MetricsDecorator(BaseDecorator):
     """指标收集装饰器"""
@@ -179,6 +184,7 @@ class MetricsDecorator(BaseDecorator):
         )
         return metrics
 
+
 class ValidationDecorator(BaseDecorator):
     """验证装饰器"""
 
@@ -218,6 +224,7 @@ class ValidationDecorator(BaseDecorator):
                 raise ValueError(f"Invalid result: {str(e)}")
 
         return result
+
 
 class CacheDecorator(BaseDecorator):
     """缓存装饰器"""
@@ -270,6 +277,7 @@ class CacheDecorator(BaseDecorator):
 
         return result
 
+
 # 函数式装饰器
 def async_retry(
     max_retries: int = 3,
@@ -317,6 +325,7 @@ def async_retry(
 
     return decorator
 
+
 def async_log(log_level: int = logging.INFO):
     """异步日志装饰器"""
 
@@ -342,6 +351,7 @@ def async_log(log_level: int = logging.INFO):
         return wrapper
 
     return decorator
+
 
 def async_metrics(metrics_store: Optional[Dict[str, Dict]] = None):
     """异步指标装饰器"""
@@ -383,6 +393,7 @@ def async_metrics(metrics_store: Optional[Dict[str, Dict]] = None):
 
     return decorator
 
+
 # 示例使用
 class DatabaseService(Component):
     """数据库服务示例"""
@@ -403,6 +414,7 @@ class DatabaseService(Component):
             raise Exception("Database error")
 
         return {"query": query, "result": "success", "rows": 10}
+
 
 def create_decorated_service(service_name: str) -> Component:
     """创建装饰后的服务"""

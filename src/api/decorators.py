@@ -26,15 +26,18 @@ global_decorator_service = DecoratorService()
 
 # ==================== 示例函数 ====================
 
+
 async def example_function_1(x: int, y: int) -> int:
     """示例函数1：简单加法"""
     await asyncio.sleep(0.01)  # 模拟异步操作
     return x + y
 
+
 async def example_function_2(text: str) -> str:
     """示例函数2：文本处理"""
     await asyncio.sleep(0.02)
     return f"Processed: {text}"
+
 
 async def failing_function(retry_count: int = 0) -> str:
     """示例函数3：会失败的函数（用于测试重试）"""
@@ -43,12 +46,15 @@ async def failing_function(retry_count: int = 0) -> str:
         raise ValueError(f"Attempt {retry_count + 1} failed")
     return "Success after retries"
 
+
 async def slow_function(delay: float = 0.1) -> str:
     """示例函数4：慢速函数（用于测试超时）"""
     await asyncio.sleep(delay)
     return "Completed slowly"
 
+
 # ==================== 装饰器统计端点 ====================
+
 
 @router.get("/stats", summary="获取装饰器统计信息")
 async def get_decorator_stats(
@@ -65,13 +71,16 @@ async def get_decorator_stats(
     else:
         return global_decorator_service.get_all_stats()
 
+
 @router.post("/stats/clear", summary="清空统计信息")
 async def clear_decorator_stats() -> Dict[str, str]:
     """清空所有装饰器的统计信息"""
     global_decorator_service.clear_stats()
     return {"message": "统计信息已清空"}
 
+
 # ==================== 装饰器演示端点 ====================
+
 
 @router.get("/demo/logging", summary="日志装饰器演示")
 async def demo_logging_decorator(
@@ -95,6 +104,7 @@ async def demo_logging_decorator(
         "message": "查看应用日志以查看装饰器效果",
     }
 
+
 @router.get("/demo/retry", summary="重试装饰器演示")
 async def demo_retry_decorator() -> Dict[str, Any]:
     """演示重试装饰器的效果"""
@@ -116,6 +126,7 @@ async def demo_retry_decorator() -> Dict[str, Any]:
         "decorator_stats": stats,
         "message": "函数失败后自动重试",
     }
+
 
 @router.get("/demo/cache", summary="缓存装饰器演示")
 async def demo_cache_decorator(
@@ -156,6 +167,7 @@ async def demo_cache_decorator(
         "cache_enabled": use_cache,
         "speedup": first_call_time / second_call_time if second_call_time > 0 else 0,
     }
+
 
 @router.get("/demo/timeout", summary="超时装饰器演示")
 async def demo_timeout_decorator(
@@ -202,6 +214,7 @@ async def demo_timeout_decorator(
         "timed_out": not success and actual_time >= timeout_seconds,
     }
 
+
 @router.get("/demo/metrics", summary="指标装饰器演示")
 async def demo_metrics_decorator(
     iterations: int = Query(10, ge=1, le=100, description="执行次数"),
@@ -228,6 +241,7 @@ async def demo_metrics_decorator(
         "decorator_stats": stats,
         "message": "指标装饰器收集了每次执行的统计数据",
     }
+
 
 @router.get("/demo/combo", summary="组合装饰器演示")
 async def demo_combo_decorators(
@@ -271,7 +285,9 @@ async def demo_combo_decorators(
         "message": "同时应用了日志、指标、超时和缓存装饰器",
     }
 
+
 # ==================== 装饰器配置管理 ====================
+
 
 @router.get("/configs", summary="获取装饰器配置")
 async def get_decorator_configs() -> Dict[str, Any]:
@@ -306,13 +322,16 @@ async def get_decorator_configs() -> Dict[str, Any]:
         "function_decorators": len(global_decorator_service._function_decorators),
     }
 
+
 @router.post("/reload", summary="重新加载装饰器配置")
 async def reload_decorator_configs() -> Dict[str, str]:
     """重新加载装饰器配置"""
     global_decorator_service.reload_configuration()
     return {"message": "装饰器配置已重新加载"}
 
+
 # ==================== 装饰器上下文演示 ====================
+
 
 @router.get("/demo/context", summary="装饰器上下文演示")
 async def demo_decorator_context(

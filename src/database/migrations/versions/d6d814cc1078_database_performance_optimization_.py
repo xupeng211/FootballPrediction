@@ -10,7 +10,4 @@ d6d814cc1078_database_performance_optimization_ 主模块
 from database.migrations.versions.d6d814cc1078_database_performance_optimization_.database.migrations.versions.d6d814cc1078_database_performance_optimization__utils import *
 
 # 导出所有公共接口
-__all__ = [
-    "upgrade",
-    "downgrade"
-]
+__all__ = ["upgrade", "downgrade"]

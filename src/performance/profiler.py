@@ -29,6 +29,7 @@ from src.core.logging import get_logger
 
 logger = get_logger(__name__)
 
+
 @dataclass
 class PerformanceMetric:
     """性能指标数据结构"""
@@ -38,6 +39,7 @@ class PerformanceMetric:
     unit: str
     timestamp: datetime = field(default_factory=datetime.now)
     metadata: Dict[str, Any] = field(default_factory=dict)
+
 
 @dataclass
 class FunctionProfile:
@@ -52,6 +54,7 @@ class FunctionProfile:
     cpu_time: float
     memory_usage: int = 0
 
+
 @dataclass
 class QueryProfile:
     """数据库查询性能分析结果"""
@@ -61,6 +64,7 @@ class QueryProfile:
     rows_affected: int
     index_used: Optional[str] = None
     explain_plan: Optional[Dict] = None
+
 
 class PerformanceProfiler:
     """性能分析器主类"""
@@ -286,12 +290,15 @@ class PerformanceProfiler:
         self.profiler = cProfile.Profile()
         logger.info("Performance profiler reset")
 
+
 # 全局性能分析器实例
 _global_profiler = PerformanceProfiler()
+
 
 def get_profiler() -> PerformanceProfiler:
     """获取全局性能分析器实例"""
     return _global_profiler
+
 
 def profile_function(name: Optional[str] = None):
     """函数性能分析装饰器"""
@@ -318,6 +325,7 @@ def profile_function(name: Optional[str] = None):
 
     return decorator
 
+
 def profile_method(cls_attr: Optional[str] = None):
     """方法性能分析装饰器（用于类方法）"""
 
@@ -337,6 +345,7 @@ def profile_method(cls_attr: Optional[str] = None):
         return wrapper
 
     return decorator
+
 
 class DatabaseQueryProfiler:
     """数据库查询性能分析器"""
@@ -377,6 +386,7 @@ class DatabaseQueryProfiler:
 
             logger.error(f"Query failed after {execution_time:.4f}s: {str(e)}")
             raise
+
 
 class APIEndpointProfiler:
     """API端点性能分析器"""
@@ -470,6 +480,7 @@ class APIEndpointProfiler:
 
         return sorted(slow_endpoints, key=lambda x: x["average_duration"], reverse=True)
 
+
 class MemoryProfiler:
     """内存使用分析器"""
 
@@ -516,14 +527,17 @@ class MemoryProfiler:
 
         return (last_rss - first_rss) > threshold
 
+
 # 创建性能分析器的便捷函数
 def start_profiling():
     """开始全局性能分析"""
     _global_profiler.start_profiling()
 
+
 def stop_profiling() -> Dict[str, Any]:
     """停止全局性能分析"""
     return _global_profiler.stop_profiling()
+
 
 def get_performance_report() -> str:
     """获取性能报告"""

@@ -19,6 +19,7 @@ from celery.schedules import crontab
 # 配置日志记录器（用于测试支持）
 logger = logging.getLogger(__name__)
 
+
 # 模拟的数据库管理器类（用于测试支持）
 class DatabaseManager:
     """数据库管理器模拟类，用于支持测试"""
@@ -33,6 +34,7 @@ class DatabaseManager:
     def close_connection(self):
         """关闭数据库连接"""
 
+
 # 模拟的Redis管理器类（用于测试支持）
 class RedisManager:
     """Redis管理器模拟类，用于支持测试"""
@@ -46,6 +48,7 @@ class RedisManager:
 
     def close_connection(self):
         """关闭Redis连接"""
+
 
 # 创建 Celery 应用实例
 app = Celery("football_prediction_tasks")
@@ -209,6 +212,7 @@ app.conf.beat_schedule = {
 # 自动发现任务模块
 app.autodiscover_tasks(["src.tasks"])
 
+
 class TaskRetryConfig:
     """任务重试配置"""
 
@@ -250,6 +254,7 @@ class TaskRetryConfig:
                 "retry_jitter": False,
             },
         )
+
 
 # 任务监控配置
 TASK_MONITORING = {

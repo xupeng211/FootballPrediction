@@ -15,12 +15,13 @@ import unicodedata
 from typing import List, Optional
 from functools import lru_cache
 
+
 class StringUtils:
     """字符串处理工具类"""
 
     # 编译正则表达式以提高性能
-    _EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
-    _PHONE_REGEX = re.compile(r'^1[3-9]\d{9}$')
+    _EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+    _PHONE_REGEX = re.compile(r"^1[3-9]\d{9}$")
 
     @staticmethod
     def clean_string(text: str, remove_special_chars: bool = False) -> str:
@@ -32,15 +33,16 @@ class StringUtils:
         cleaned = text.strip()
 
         # 移除Unicode控制字符
-        cleaned = ''.join(char for char in cleaned
-                        if unicodedata.category(char)[0] != 'C')
+        cleaned = "".join(
+            char for char in cleaned if unicodedata.category(char)[0] != "C"
+        )
 
         if remove_special_chars:
             # 移除特殊字符，保留字母数字和基本标点
-            cleaned = re.sub(r'[^\w\s\-.,!?()[\]{}"\'`~@#$%^&*+=<>|\\]', '', cleaned)
+            cleaned = re.sub(r'[^\w\s\-.,!?()[\]{}"\'`~@#$%^&*+=<>|\\]', "", cleaned)
 
         # 规范化空白字符
-        cleaned = ' '.join(cleaned.split())
+        cleaned = " ".join(cleaned.split())
         return cleaned
 
     @staticmethod
@@ -51,7 +53,7 @@ class StringUtils:
 
         if len(text) <= length:
             return text
-        return text[:length - len(suffix)] + suffix
+        return text[: length - len(suffix)] + suffix
 
     @staticmethod
     def validate_email(email: str) -> bool:
@@ -75,14 +77,13 @@ class StringUtils:
             return ""
 
         # 规范化Unicode
-        text = unicodedata.normalize('NFKD', text)
-        text = ''.join(char for char in text
-                      if unicodedata.category(char) != 'Mn')
+        text = unicodedata.normalize("NFKD", text)
+        text = "".join(char for char in text if unicodedata.category(char) != "Mn")
 
         # 转换为小写，替换空格为连字符
         text = text.lower()
-        text = re.sub(r'[^\w\s-]', '', text)
-        text = re.sub(r'[-\s]+', '-', text).strip('-')
+        text = re.sub(r"[^\w\s-]", "", text)
+        text = re.sub(r"[-\s]+", "-", text).strip("-")
         return text
 
     @staticmethod
@@ -121,7 +122,7 @@ class StringUtils:
             return False
 
         # 移除非数字字符
-        digits_only = re.sub(r'[^\d]', '', phone)
+        digits_only = re.sub(r"[^\d]", "", phone)
 
         # 验证11位手机号
         return bool(StringUtils._PHONE_REGEX.match(digits_only))
@@ -133,10 +134,10 @@ class StringUtils:
             return ""
 
         # 移除非数字字符
-        digits_only = re.sub(r'[^\d]', '', phone)
+        digits_only = re.sub(r"[^\d]", "", phone)
 
         # 中国手机号格式验证
-        if len(digits_only) == 11 and digits_only.startswith('1'):
+        if len(digits_only) == 11 and digits_only.startswith("1"):
             return digits_only
 
         return ""
@@ -152,7 +153,9 @@ class StringUtils:
         return [float(num) for num in numbers if num]
 
     @staticmethod
-    def mask_sensitive_data(text: str, mask_char: str = "*", visible_chars: int = 4) -> str:
+    def mask_sensitive_data(
+        text: str, mask_char: str = "*", visible_chars: int = 4
+    ) -> str:
         """遮蔽敏感数据"""
         if not isinstance(text, str) or len(text) <= visible_chars:
             return text
@@ -172,7 +175,7 @@ class StringUtils:
         if bytes_count == 0:
             return "0 B"
 
-        units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
+        units = ["B", "KB", "MB", "GB", "TB", "PB"]
         unit_index = 0
 
         while bytes_count >= 1024 and unit_index < len(units) - 1:
@@ -198,15 +201,16 @@ class StringUtils:
             return ""
 
         html_escape_map = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#x27;',
-            '/': '&#x2F;'
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#x27;",
+            "/": "&#x2F;",
         }
 
-        return ''.join(html_escape_map.get(char, char) for char in text)
+        return "".join(html_escape_map.get(char, char) for char in text)
+
 
 # 性能优化的字符串处理函数
 @lru_cache(maxsize=256)
@@ -214,9 +218,11 @@ def cached_slug(text: str) -> str:
     """缓存的slug生成函数"""
     return StringUtils.slugify(text)
 
+
 def batch_clean_strings(strings: List[str], **kwargs) -> List[str]:
     """批量清理字符串"""
     return [StringUtils.clean_string(s, **kwargs) for s in strings]
+
 
 def validate_batch_emails(emails: List[str]) -> dict:
     """批量验证邮箱"""

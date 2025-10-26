@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
 from typing import Any, List, Optional
 import logging
 
+
 class BaseCache(ABC):
     """缓存基础类"""
 
@@ -34,6 +35,7 @@ class BaseCache(ABC):
     async def clear(self) -> bool:
         """清空缓存"""
         pass
+
 
 class CacheKeyManager:
     """缓存键管理器"""

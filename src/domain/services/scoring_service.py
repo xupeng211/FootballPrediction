@@ -11,6 +11,7 @@ from typing import Dict, Any, List, Optional
 
 from ..models.prediction import PredictionPoints
 
+
 class ScoringService:
     """计分服务"""
 

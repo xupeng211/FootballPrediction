@@ -16,6 +16,7 @@ import logging
 
 T = TypeVar("T")
 
+
 class ObservableEventType(Enum):
     """可观察事件类型"""
 
@@ -27,6 +28,7 @@ class ObservableEventType(Enum):
     CACHE_HIT = "cache_hit"
     CACHE_MISS = "cache_miss"
     THRESHOLD_EXCEEDED = "threshold_exceeded"
+
 
 @dataclass
 class ObservableEvent:
@@ -41,6 +43,7 @@ class ObservableEvent:
 
     def __str__(self) -> str:
         return f"{self.event_type.value}[{self.severity}]: {self.source}"
+
 
 class Observer(ABC):
     """观察者抽象基类
@@ -131,6 +134,7 @@ class Observer(ABC):
             "enabled": self._enabled,
             "filters_count": len(self._subscription_filters),
         }
+
 
 class Subject(ABC):
     """被观察者抽象基类
@@ -300,6 +304,7 @@ class Subject(ABC):
             "enabled": self._enabled,
             "event_counts": event_counts,
         }
+
 
 class CompositeObserver(Observer):
     """组合观察者

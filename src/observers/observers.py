@@ -16,6 +16,7 @@ from .base import Observer, ObservableEvent, ObservableEventType
 
 logger = logging.getLogger(__name__)
 
+
 class MetricsObserver(Observer):
     """指标收集观察者
 
@@ -162,6 +163,7 @@ class MetricsObserver(Observer):
         )
         return stats
 
+
 class LoggingObserver(Observer):
     """日志记录观察者
 
@@ -247,6 +249,7 @@ class LoggingObserver(Observer):
             }
         )
         return stats
+
 
 class AlertingObserver(Observer):
     """告警通知观察者
@@ -411,6 +414,7 @@ class AlertingObserver(Observer):
             }
         )
         return stats
+
 
 class PerformanceObserver(Observer):
     """性能监控观察者

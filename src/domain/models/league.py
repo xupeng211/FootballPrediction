@@ -14,6 +14,7 @@ from decimal import Decimal
 
 from ...core.exceptions import DomainError
 
+
 class LeagueType(Enum):
     """联赛类型"""
 
@@ -22,6 +23,7 @@ class LeagueType(Enum):
     INTERNATIONAL = "international"  # 国际赛事
     FRIENDLY = "friendly"  # 友谊赛
 
+
 class LeagueStatus(Enum):
     """联赛状态"""
 
@@ -29,6 +31,7 @@ class LeagueStatus(Enum):
     ACTIVE = "active"  # 进行中
     COMPLETED = "completed"  # 已结束
     SUSPENDED = "suspended"  # 暂停
+
 
 @dataclass
 class LeagueSeason:
@@ -94,6 +97,7 @@ class LeagueSeason:
     def __str__(self) -> str:
         return f"{self.season} - 第 {self.current_round}/{self.total_rounds} 轮"
 
+
 @dataclass
 class LeagueSettings:
     """联赛设置值对象"""
@@ -147,6 +151,7 @@ class LeagueSettings:
         return (
             f"胜{self.points_for_win} 平{self.points_for_draw} 负{self.points_for_loss}"
         )
+
 
 @dataclass
 class League:

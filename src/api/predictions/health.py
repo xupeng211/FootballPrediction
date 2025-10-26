@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 # 创建子路由器
 health_router = APIRouter(prefix="/predictions", tags=["predictions"])
 
+
 @health_router.get("/health", summary="预测服务健康检查")
 async def health_check() -> Dict[str, Any]:
     """

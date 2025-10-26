@@ -14,6 +14,7 @@ from ..base import Decorator, DecoratorContext
 
 logger = get_logger(__name__)
 
+
 class LoggingDecorator(Decorator):
     """日志装饰器，记录函数执行的前后信息"""
 

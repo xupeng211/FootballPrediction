@@ -11,6 +11,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 logger = logging.getLogger(__name__)
 
+
 class PerformanceMiddleware(BaseHTTPMiddleware):
     """性能监控中间件"""
 
@@ -48,6 +49,7 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
         response.headers["X-Process-Time"] = str(process_time)
 
         return response
+
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """请求日志中间件"""

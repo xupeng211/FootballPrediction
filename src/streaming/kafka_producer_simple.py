@@ -8,6 +8,7 @@ from typing import Any, Dict, Optional, List
 
 from src.core.exceptions import StreamingError
 
+
 class KafkaMessageProducer:
     """Kafka消息生产者（简化版）"""
 

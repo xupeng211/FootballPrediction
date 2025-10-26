@@ -17,6 +17,7 @@ Features - 数据库模块
 """
 
 from typing import Optional, Dict, Any, TYPE_CHECKING
+
 if TYPE_CHECKING:
     from .match import Match
     from .team import Team
@@ -37,11 +38,13 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from ..base import BaseModel
 from datetime import datetime
 
+
 class TeamType(str, Enum):
     """球队类型枚举"""
 
     HOME = "home"  # 主队
     AWAY = "away"  # 客队
+
 
 class FeatureEntityType(str, Enum):
     """特征实体类型"""
@@ -51,8 +54,9 @@ class FeatureEntityType(str, Enum):
     PLAYER = "player"
     LEAGUE = "league"
 
+
 class FeatureEntity(BaseModel):
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {"extend_existing": True}
     __tablename__ = "feature_entities"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -60,30 +64,39 @@ class FeatureEntity(BaseModel):
     entity_id: Mapped[int] = mapped_column(Integer, nullable=False)
     feature_name: Mapped[str] = mapped_column(String(100), nullable=False)
     feature_value: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    feature_numeric: Mapped[Optional[Decimal]] = mapped_column(DECIMAL(10, 4), nullable=True)
+    feature_numeric: Mapped[Optional[Decimal]] = mapped_column(
+        DECIMAL(10, 4), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     # 索引
     __table_args__ = (
-        Index('idx_feature_entity', 'entity_type', 'entity_id'),
-        Index('idx_feature_name', 'feature_name'),
-        {'extend_existing': True}
+        Index("idx_feature_entity", "entity_type", "entity_id"),
+        Index("idx_feature_name", "feature_name"),
+        {"extend_existing": True},
     )
+
 
 class Features(BaseModel):
     """特征数据模型"""
 
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {"extend_existing": True}
     __tablename__ = "features"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     match_id: Mapped[int] = mapped_column(Integer, nullable=False)
     team_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     feature_type: Mapped[str] = mapped_column(String(50), nullable=False)
-    feature_data: Mapped[Optional[Dict[str, Any]]] = mapped_column(Text, nullable=True)  # JSON as text
+    feature_data: Mapped[Optional[Dict[str, Any]]] = mapped_column(
+        Text, nullable=True
+    )  # JSON as text
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     # 关系
     match: Mapped[Optional["Match"]] = relationship("Match", back_populates="features")
@@ -91,8 +104,8 @@ class Features(BaseModel):
 
     # 索引
     __table_args__ = (
-        Index('idx_features_match', 'match_id'),
-        Index('idx_features_team', 'team_id'),
-        Index('idx_features_type', 'feature_type'),
-        {'extend_existing': True}
+        Index("idx_features_match", "match_id"),
+        Index("idx_features_team", "team_id"),
+        Index("idx_features_type", "feature_type"),
+        {"extend_existing": True},
     )

@@ -10,8 +10,10 @@ from typing import Any, Dict, Optional
 from sqlalchemy import Column, DateTime, Integer
 from sqlalchemy.orm import DeclarativeBase
 
+
 class Base(DeclarativeBase):
     """SQLAlchemy基础模型类"""
+
 
 class TimestampMixin:
     """时间戳混入类，为模型添加创建时间和更新时间字段"""
@@ -27,6 +29,7 @@ class TimestampMixin:
         nullable=False,
         comment="更新时间",
     )
+
 
 class BaseModel(Base, TimestampMixin):
     """
@@ -107,6 +110,7 @@ class BaseModel(Base, TimestampMixin):
     def __repr__(self) -> str:
         """对象的字符串表示"""
         return f"<{self.__class__.__name__}(id={getattr(self, 'id', None)})>"
+
 
 # 导出基础类，供其他模型使用
 __all__ = ["Base", "BaseModel", "TimestampMixin"]

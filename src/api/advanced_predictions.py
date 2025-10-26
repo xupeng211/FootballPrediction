@@ -15,22 +15,26 @@ from datetime import datetime
 
 router = APIRouter()
 
+
 class AdvancedPredictionAPIRequest(BaseModel):
     """请求模型"""
+
     config: Dict[str, Any] = {}
     parameters: Dict[str, Any] = {}
 
+
 class AdvancedPredictionAPIResponse(BaseModel):
     """响应模型"""
+
     success: bool
     data: Optional[Dict[str, Any]] = None
     message: str
     timestamp: datetime
 
+
 @router.post("/advanced_prediction_api/execute")
 async def execute_advanced_prediction_api(
-    request: AdvancedPredictionAPIRequest,
-    background_tasks: BackgroundTasks
+    request: AdvancedPredictionAPIRequest, background_tasks: BackgroundTasks
 ) -> AdvancedPredictionAPIResponse:
     """执行Advanced Prediction API"""
     try:
@@ -41,10 +45,11 @@ async def execute_advanced_prediction_api(
             success=True,
             data=result,
             message="Advanced Prediction API执行成功",
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/advanced_prediction_api/status/{job_id}")
 async def get_advanced_prediction_api_status(job_id: str):
@@ -54,8 +59,9 @@ async def get_advanced_prediction_api_status(job_id: str):
         "job_id": job_id,
         "status": "completed",
         "progress": 100,
-        "result": {"data": "sample_result"}
+        "result": {"data": "sample_result"},
     }
+
 
 @router.get("/advanced_prediction_api/health")
 async def health_check():
@@ -63,5 +69,5 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "Advanced Prediction API",
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
     }

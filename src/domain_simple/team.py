@@ -5,6 +5,7 @@
 from datetime import datetime
 from typing import Optional, Dict, Any, List
 
+
 class TeamStatistics:
     """球队统计数据"""
 
@@ -51,6 +52,7 @@ class TeamStatistics:
         if self.matches_played == 0:
             return 0.0
         return self.goals_against / self.matches_played
+
 
 class Team:
     """球队领域模型"""

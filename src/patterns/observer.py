@@ -12,6 +12,7 @@ import logging
 
 from src.core.logging import get_logger
 
+
 class Observer(ABC):
     """观察者抽象基类"""
 
@@ -24,6 +25,7 @@ class Observer(ABC):
     def get_name(self) -> str:
         """获取观察者名称"""
         pass
+
 
 class Subject(ABC):
     """被观察者抽象基类"""
@@ -93,6 +95,7 @@ class Subject(ABC):
             return self._event_history[-limit:]
         return self._event_history.copy()
 
+
 class MetricsObserver(Observer):
     """指标收集观察者"""
 
@@ -130,6 +133,7 @@ class MetricsObserver(Observer):
         """获取收集的指标"""
         return self.metrics.copy()
 
+
 class LoggingObserver(Observer):
     """日志记录观察者"""
 
@@ -155,6 +159,7 @@ class LoggingObserver(Observer):
 
     def get_name(self) -> str:
         return "LoggingObserver"
+
 
 class AlertingObserver(Observer):
     """告警通知观察者"""
@@ -222,6 +227,7 @@ class AlertingObserver(Observer):
             return self.alert_history[-limit:]
         return self.alert_history.copy()
 
+
 class ObservableService(Subject):
     """可观察的服务基类"""
 
@@ -278,6 +284,7 @@ class ObservableService(Subject):
         """获取服务指标"""
         return self._metrics.copy()
 
+
 # 示例使用
 class PredictionService(ObservableService):
     """预测服务示例"""
@@ -305,6 +312,7 @@ class PredictionService(ObservableService):
             await self.on_service_error(e)
             raise
 
+
 # 工厂函数
 def create_observer_system() -> Dict[str, Observer]:
     """创建观察者系统"""
@@ -313,6 +321,7 @@ def create_observer_system() -> Dict[str, Observer]:
         "logging": LoggingObserver(),
         "alerting": AlertingObserver(),
     }
+
 
 # 便捷函数
 async def setup_service_observers(

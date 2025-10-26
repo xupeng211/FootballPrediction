@@ -8,6 +8,7 @@
 # mypy: ignore-errors
 # 该文件包含复杂的机器学习逻辑，类型检查已忽略
 
+
 # training 模块不存在，创建一个占位符类以保持兼容性
 class BaselineModelTrainer:
     """基准模型训练器（占位符实现）"""
@@ -25,6 +26,7 @@ class BaselineModelTrainer:
     def evaluate(self, *args, **kwargs):
         """评估模型（占位符实现）"""
         return None
+
 
 # 从新模块化结构导入所有组件
 

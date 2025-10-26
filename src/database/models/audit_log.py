@@ -15,6 +15,7 @@ from ..types import SQLiteCompatibleJSONB
 基于 DATA_DESIGN.md 中的权限控制设计。
 """
 
+
 class AuditAction(str, Enum):
     """审计操作类型枚举"""
 
@@ -38,6 +39,7 @@ class AuditAction(str, Enum):
     CONFIG_CHANGE = "CONFIG_CHANGE"  # 配置变更
     SCHEMA_CHANGE = "SCHEMA_CHANGE"  # 架构变更
 
+
 class AuditSeverity(str, Enum):
     """审计事件严重级别"""
 
@@ -47,8 +49,9 @@ class AuditSeverity(str, Enum):
     HIGH = "HIGH"  # 高风险：删除、权限变更
     CRITICAL = "CRITICAL"  # 极高风险：系统级操作
 
+
 class AuditLog(BaseModel):
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {"extend_existing": True}
     __tablename__ = "audit_logs"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -67,34 +70,35 @@ class AuditLog(BaseModel):
 
     # 索引定义
     __table_args__ = (
-        Index('idx_audit_user_action', 'user_id', 'action'),
-        Index('idx_audit_timestamp_severity', 'timestamp', 'severity'),
-        Index('idx_audit_resource', 'resource_type', 'resource_id'),
-        {'extend_existing': True}
+        Index("idx_audit_user_action", "user_id", "action"),
+        Index("idx_audit_timestamp_severity", "timestamp", "severity"),
+        Index("idx_audit_resource", "resource_type", "resource_id"),
+        {"extend_existing": True},
     )
 
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典格式"""
         return {
-            'id': self.id,
-            'user_id': self.user_id,
-            'username': self.username,
-            'action': self.action,
-            'resource_type': self.resource_type,
-            'resource_id': self.resource_id,
-            'severity': self.severity,
-            'ip_address': self.ip_address,
-            'user_agent': self.user_agent,
-            'details': self.details,
-            'audit_metadata': self.audit_metadata,
-            'timestamp': self.timestamp.isoformat() if self.timestamp else None,
-            'session_id': self.session_id
+            "id": self.id,
+            "user_id": self.user_id,
+            "username": self.username,
+            "action": self.action,
+            "resource_type": self.resource_type,
+            "resource_id": self.resource_id,
+            "severity": self.severity,
+            "ip_address": self.ip_address,
+            "user_agent": self.user_agent,
+            "details": self.details,
+            "audit_metadata": self.audit_metadata,
+            "timestamp": self.timestamp.isoformat() if self.timestamp else None,
+            "session_id": self.session_id,
         }
+
 
 class AuditLogSummary(BaseModel):
     """审计日志汇总模型"""
 
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {"extend_existing": True}
     __tablename__ = "audit_log_summaries"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -107,20 +111,17 @@ class AuditLogSummary(BaseModel):
     created_at = Column(DateTime, nullable=False, default=func.now())
 
     # 索引定义
-    __table_args__ = (
-        Index('idx_summary_date', 'date'),
-        {'extend_existing': True}
-    )
+    __table_args__ = (Index("idx_summary_date", "date"), {"extend_existing": True})
 
     def to_dict(self) -> Dict[str, Any]:
         """转换为字典格式"""
         return {
-            'id': self.id,
-            'date': self.date.isoformat() if self.date else None,
-            'total_actions': self.total_actions,
-            'actions_by_type': self.actions_by_type,
-            'actions_by_severity': self.actions_by_severity,
-            'top_users': self.top_users,
-            'top_resources': self.top_resources,
-            'created_at': self.created_at.isoformat() if self.created_at else None
+            "id": self.id,
+            "date": self.date.isoformat() if self.date else None,
+            "total_actions": self.total_actions,
+            "actions_by_type": self.actions_by_type,
+            "actions_by_severity": self.actions_by_severity,
+            "top_users": self.top_users,
+            "top_resources": self.top_resources,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
         }

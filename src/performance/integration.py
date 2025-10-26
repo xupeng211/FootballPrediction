@@ -19,6 +19,7 @@ from src.core.logging import get_logger
 
 logger = get_logger(__name__)
 
+
 class PerformanceMonitoringIntegration:
     """性能监控集成器"""
 
@@ -254,8 +255,10 @@ class PerformanceMonitoringIntegration:
         except (ValueError, RuntimeError, TimeoutError) as e:
             logger.error(f"Failed to cleanup performance monitoring: {str(e)}")
 
+
 # 全局集成实例
 _integration = None
+
 
 def get_performance_integration() -> PerformanceMonitoringIntegration:
     """获取全局性能监控集成实例"""
@@ -263,6 +266,7 @@ def get_performance_integration() -> PerformanceMonitoringIntegration:
     if _integration is None:
         _integration = PerformanceMonitoringIntegration()
     return _integration
+
 
 def setup_performance_monitoring(
     app: Optional[FastAPI] = None,
@@ -288,18 +292,22 @@ def setup_performance_monitoring(
 
     return integration
 
+
 # 便捷函数
 def integrate_performance_monitoring(app: FastAPI) -> None:
     """集成性能监控到FastAPI应用（便捷函数）"""
     setup_performance_monitoring(app)
 
+
 def start_performance_profiling() -> None:
     """启动性能分析（便捷函数）"""
     get_performance_integration().start_profiling()
 
+
 def stop_performance_profiling() -> None:
     """停止性能分析（便捷函数）"""
     get_performance_integration().stop_profiling()
+
 
 def generate_performance_report() -> Optional[str]:
     """生成性能报告（便捷函数）"""

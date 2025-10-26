@@ -28,6 +28,7 @@ down_revision = "f48d412852cc"
 branch_labels = None
 depends_on = None
 
+
 def upgrade() -> None:
     """配置数据库权限"""
 
@@ -369,6 +370,7 @@ def upgrade() -> None:
     """
         )
     )
+
 
 def downgrade() -> None:
     """回滚数据库权限配置"""

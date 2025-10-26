@@ -19,6 +19,7 @@ from ..core.exceptions import ServiceLifecycleError
 
 logger = logging.getLogger(__name__)
 
+
 class ServiceState(Enum):
     """服务状态"""
 
@@ -31,6 +32,7 @@ class ServiceState(Enum):
     STOPPED = "stopped"  # 已停止
     ERROR = "error"  # 错误状态
     DISPOSED = "disposed"  # 已销毁
+
 
 @dataclass
 class ServiceInfo:
@@ -50,6 +52,7 @@ class ServiceInfo:
     def __post_init__(self):
         if isinstance(self.dependencies, str):
             self.dependencies = [self.dependencies]
+
 
 class IServiceLifecycle(ABC):
     """服务生命周期接口"""
@@ -78,6 +81,7 @@ class IServiceLifecycle(ABC):
     def health_check(self) -> bool:
         """健康检查"""
         pass
+
 
 class ServiceLifecycleManager:
     """服务生命周期管理器"""
@@ -510,8 +514,10 @@ class ServiceLifecycleManager:
         self._stop_order = self._start_order.copy()
         self._stop_order.reverse()
 
+
 # 全局服务生命周期管理器
 _default_lifecycle_manager: Optional[ServiceLifecycleManager] = None
+
 
 def get_lifecycle_manager() -> ServiceLifecycleManager:
     """获取默认的生命周期管理器"""
@@ -519,6 +525,7 @@ def get_lifecycle_manager() -> ServiceLifecycleManager:
     if _default_lifecycle_manager is None:
         _default_lifecycle_manager = ServiceLifecycleManager()
     return _default_lifecycle_manager
+
 
 # 生命周期装饰器
 def lifecycle_service(
