@@ -9,8 +9,8 @@ from typing import Dict, Any, List, Optional, Tuple
 from datetime import datetime
 import numpy
 from dataclasses import dataclass
-from src.domain.strategies.base import PredictionStrategy, PredictionInput, PredictionOutput, StrategyType, StrategyMetrics
-from src.domain.models.prediction import Prediction
+from .strategies.base import PredictionStrategy, PredictionInput, PredictionOutput, StrategyType, StrategyMetrics
+from .models.prediction import Prediction
 
 
 # 类定义

@@ -13,6 +13,8 @@ Base = declarative_base()
 
 
 class RawMatchData(Base):
+    __table_args__ = {'extend_existing': True}
+    __table_args__ = {'extend_existing': True}
     """原始比赛数据表"""
 
     __tablename__ = "raw_match_data"
@@ -33,6 +35,8 @@ class RawMatchData(Base):
 
 
 class RawOddsData(Base):
+    __table_args__ = {'extend_existing': True}
+    __table_args__ = {'extend_existing': True}
     """原始赔率数据表"""
 
     __tablename__ = "raw_odds_data"
@@ -49,6 +53,8 @@ class RawOddsData(Base):
 
 
 class RawStatisticsData(Base):
+    __table_args__ = {'extend_existing': True}
+    __table_args__ = {'extend_existing': True}
     """原始统计数据表"""
 
     __tablename__ = "raw_statistics_data"

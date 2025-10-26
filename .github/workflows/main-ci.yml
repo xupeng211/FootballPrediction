@@ -29,6 +29,12 @@ jobs:
           pip install -r requirements/requirements.lock
           pip install ruff mypy bandit pip-audit
 
+      - name: 🔧 语法检查 (Issue #84)
+        run: |
+          echo "🔧 Running syntax validation for all test files..."
+          python scripts/maintenance/find_syntax_errors.py
+          echo "✅ Syntax validation passed - all test files are syntactically correct"
+
       - name: 🔍 Ruff代码检查
         run: ruff check src/ --output-format=github
 

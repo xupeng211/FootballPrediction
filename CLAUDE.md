@@ -18,7 +18,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### 文档版本信息
 - **当前版本**: v2.0 (企业级架构 + 质量守护系统)
-- **最后更新**: 2025-10-24
+- **最后更新**: 2025-10-25
 - **维护者**: Claude AI Assistant
 - **适用范围**: Claude Code AI助手开发指导
 
@@ -543,4 +543,4 @@ make logs               # 查看服务日志
 
 ---
 
-*最后更新: 2025-10-24 | 文档版本: v2.0 | 维护者: Claude AI Assistant*
+*最后更新: 2025-10-25 | 文档版本: v2.0 | 维护者: Claude AI Assistant*

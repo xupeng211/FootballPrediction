@@ -5,6 +5,9 @@
 # from src.utils.file_utils import FileUtils
 
 
+from datetime import datetime
+import pytest
+from pathlib import Path
 @pytest.mark.unit
 
 def test_crypto_utils_extended():
@@ -62,8 +65,6 @@ def test_string_utils_extended():
 
 def test_time_utils_extended():
     # 测试时间格式化
-    from datetime import datetime
-import pytest
 
     now = datetime.now()
     formatted = TimeUtils.format_datetime(now)
@@ -72,7 +73,6 @@ import pytest
 
 def test_file_utils_extended():
     # 测试确保目录存在
-    from pathlib import Path
 
     test_dir = Path("/tmp/test_football")
     _result = FileUtils.ensure_dir(test_dir)

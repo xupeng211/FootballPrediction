@@ -292,20 +292,20 @@ def main():
         with open('LONG_FILES_ANALYSIS_REPORT.md', 'w', encoding='utf-8') as f:
             f.write(report)
 
-        print(f"\n📄 报告已保存到: LONG_FILES_ANALYSIS_REPORT.md")
+        print("\n📄 报告已保存到: LONG_FILES_ANALYSIS_REPORT.md")
 
         # 显示优先级统计
         total_files = len(long_files)
         critical_files = len(split_plan['critical_files'])
         high_files = len(split_plan['high_priority_files'])
 
-        print(f"\n🎯 拆分优先级:")
+        print("\n🎯 拆分优先级:")
         print(f"   紧急拆分: {critical_files} 个文件")
         print(f"   高优先级: {high_files} 个文件")
         print(f"   总计: {total_files} 个文件需要处理")
 
         if critical_files > 0:
-            print(f"\n⚠️ 建议优先处理紧急文件:")
+            print("\n⚠️ 建议优先处理紧急文件:")
             for file_plan in split_plan['critical_files']:
                 print(f"   - {file_plan['path']} ({file_plan['line_count']} 行)")
 

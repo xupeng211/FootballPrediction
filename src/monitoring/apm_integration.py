@@ -40,8 +40,8 @@ class APMIntegration:
                 from opentelemetry.exporter.prometheus import PrometheusMetricReader
                 from opentelemetry.sdk.metrics import MeterProvider
                 from opentelemetry.sdk.trace import TracerProvider
-                from opentelemetry.sdk.trace.export import BatchSpanProcessor
-                from opentelemetry.exporter.jaeger.thrift import JaegerExporter
+                from .trace.export import BatchSpanProcessor
+                from .jaeger.thrift import JaegerExporter
 
                 # 初始化追踪
                 trace.set_tracer_provider(TracerProvider())

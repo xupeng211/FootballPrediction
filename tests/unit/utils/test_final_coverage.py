@@ -1,7 +1,6 @@
+from __future__ import annotations
 from unittest.mock import Mock, patch, MagicMock
 """最终覆盖率测试 - 直接测试模块函数"""
-
-from __future__ import annotations
 
 import pytest
 from datetime import datetime, timedelta

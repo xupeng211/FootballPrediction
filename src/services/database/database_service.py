@@ -5,10 +5,10 @@ Database Service
 
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.database.repositories.base import AbstractRepository
-from src.database.repositories.match_repository import MatchRepository
-from src.database.repositories.prediction_repository import PredictionRepository
-from src.database.repositories.user_repository import UserRepository
+from .repositories.base import AbstractRepository
+from .repositories.match_repository import MatchRepository
+from .repositories.prediction_repository import PredictionRepository
+from .repositories.user_repository import UserRepository
 
 
 class DatabaseService:

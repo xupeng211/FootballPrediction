@@ -260,7 +260,7 @@ class DataCollector(ABC):
         try:
             # 导入相应的Bronze层模型
 
-            from src.database.models.raw_data import (
+            from .models.raw_data import (
                 RawMatchData,
                 RawOddsData,
                 RawScoresData,
@@ -394,7 +394,7 @@ class DataCollector(ABC):
             int: 日志记录ID
         """
         try:
-            from src.database.models.data_collection_log import DataCollectionLog
+            from .models.data_collection_log import DataCollectionLog
 
             log_entry = DataCollectionLog(
                 data_source=self.data_source, collection_type=collection_type
@@ -422,7 +422,7 @@ class DataCollector(ABC):
             result: 采集结果
         """
         try:
-            from src.database.models.data_collection_log import (
+            from .models.data_collection_log import (
                 CollectionStatus,
                 DataCollectionLog,
             )

@@ -1,7 +1,6 @@
+from __future__ import annotations
 from unittest.mock import Mock, patch, MagicMock, mock_open
 """边界条件和深度嵌套代码路径测试 - 提升覆盖率"""
-
-from __future__ import annotations
 
 import pytest
 import json

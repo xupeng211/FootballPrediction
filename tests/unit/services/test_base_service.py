@@ -1,6 +1,8 @@
 # from src.services.base_unified import BaseService
 
 
+import pytest
+
 @pytest.mark.unit
 
 def test_base_service():

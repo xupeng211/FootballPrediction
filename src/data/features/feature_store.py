@@ -33,7 +33,7 @@ try:
     from feast.infra.offline_stores.contrib.postgres_offline_store.postgres import (
         PostgreSQLOfflineStoreConfig,
     )
-    from feast.infra.online_stores.redis import RedisOnlineStoreConfig
+    from .online_stores.redis import RedisOnlineStoreConfig
     from feast.repo_config import RepoConfig
 
     HAS_FEAST = True

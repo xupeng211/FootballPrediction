@@ -14,7 +14,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.data.features.feature_store import FootballFeatureStore
+from src.features.feature_store import FootballFeatureStore
 from src.database.dependencies import get_async_db
 from src.database.models import Match
 

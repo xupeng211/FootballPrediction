@@ -1,4 +1,5 @@
 # API端点基础测试
+import pytest
 @pytest.mark.unit
 @pytest.mark.api
 

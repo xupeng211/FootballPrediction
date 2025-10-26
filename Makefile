@@ -153,6 +153,27 @@ check: quality ## Quality: Alias for quality command
 	@echo "$(GREEN)✅ All quality checks passed$(RESET)"
 
 # ============================================================================
+# 🔧 Syntax Checking (Issue #84 Integration)
+# ============================================================================
+syntax-check: ## Quality: Check syntax errors in all test files (Issue #84)
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Checking syntax errors in all test files...$(RESET)" && \
+	$(PYTHON) scripts/maintenance/find_syntax_errors.py && \
+	echo "$(GREEN)✅ Syntax check passed$(RESET)"
+
+syntax-fix: ## Quality: Automatically fix syntax errors (Issue #84 tools)
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Automatically fixing syntax errors...$(RESET)" && \
+	$(PYTHON) scripts/maintenance/fix_issue84_final.py && \
+	echo "$(GREEN)✅ Syntax errors fixed$(RESET)"
+
+syntax-validate: ## Quality: Validate test file executability
+	@$(ACTIVATE) && \
+	echo "$(YELLOW)Validating test file executability...$(RESET)" && \
+	$(PYTHON) scripts/maintenance/test_executability_check.py && \
+	echo "$(GREEN)✅ Test executability validated$(RESET)"
+
+# ============================================================================
 # 🧪 Testing
 # ============================================================================
 test: ## Test: Run pytest unit tests
@@ -230,8 +251,9 @@ type-check: ## Quality: Run type checking with mypy
 # ============================================================================
 # 🔄 CI Simulation
 # ============================================================================
-prepush: ## Quality: Complete pre-push validation (format + lint + type-check + test)
+prepush: ## Quality: Complete pre-push validation (syntax + format + lint + type-check + test)
 	@echo "$(BLUE)🔄 Running pre-push validation...$(RESET)" && \
+	$(MAKE) syntax-check || { echo "$(RED)❌ Syntax check failed$(RESET)"; exit 1; } && \
 	$(MAKE) fmt || { echo "$(RED)❌ Code formatting failed$(RESET)"; exit 1; } && \
 	$(MAKE) lint || { echo "$(RED)❌ Linting failed$(RESET)"; exit 1; } && \
 	$(MAKE) type-check || { echo "$(RED)❌ Type checking failed$(RESET)"; exit 1; } && \
@@ -599,3 +621,13 @@ docs.check:
 ## 自动化修复文档问题（如孤儿批次处理）
 docs.fix:
 	@python3 scripts/process_orphans.py docs/_meta/orphans_remaining.txt || echo "⚠️ 无孤儿文档可修复"
+
+# Issue #88 测试命令
+test-issue88:
+	pytest test_basic_pytest.py test_core_config_enhanced.py test_models_prediction_fixed.py test_api_routers_enhanced.py test_database_models_fixed.py -v
+
+test-stability:
+	python3 scripts/core_stability_validator.py
+
+cleanup-issue88:
+	python3 scripts/intelligent_file_cleanup.py

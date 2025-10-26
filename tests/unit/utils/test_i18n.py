@@ -60,7 +60,9 @@ class TestI18n:
 
             # Mock环境变量
             with patch.dict(os.environ, {"LANGUAGE": "en_US"}):
+                pass
             with patch.dict(os.environ, {"LANGUAGE": "en_US"}):
+                pass
             with patch.dict(os.environ, {"LANGUAGE": "en_US"}):
                 init_i18n()
 
@@ -174,7 +176,9 @@ class TestI18n:
         """测试边界情况"""
         # 测试空的环境变量
         with patch.dict(os.environ, {}, clear=True):
+            pass
         with patch.dict(os.environ, {}, clear=True):
+            pass
         with patch.dict(os.environ, {}, clear=True):
             init_i18n()
             # 应该使用默认值
