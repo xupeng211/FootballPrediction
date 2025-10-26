@@ -59,7 +59,7 @@ jobs:
           python-version: "3.11"
 
       - name: 缓存依赖
-        uses: actions/cache@v3.3.2
+        uses: actions/cache@v4.3.2
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('requirements/**/*.lock', 'requirements/**/*.txt') }}
@@ -100,7 +100,7 @@ jobs:
           python-version: "3.11"
 
       - name: 缓存依赖
-        uses: actions/cache@v3.3.2
+        uses: actions/cache@v4.3.2
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('requirements/**/*.lock', 'requirements/**/*.txt') }}
@@ -118,7 +118,7 @@ jobs:
           python scripts/generate_performance_report.py --days-back ${{ inputs.days_back || '30' }}
 
       - name: 上传报告
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: performance-report
           path: reports/performance/
@@ -141,7 +141,7 @@ jobs:
           python-version: "3.11"
 
       - name: 缓存依赖
-        uses: actions/cache@v3.3.2
+        uses: actions/cache@v4.3.2
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('requirements/**/*.lock', 'requirements/**/*.txt') }}
@@ -182,7 +182,7 @@ jobs:
           python-version: "3.11"
 
       - name: 缓存依赖
-        uses: actions/cache@v3.3.2
+        uses: actions/cache@v4.3.2
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('requirements/**/*.lock', 'requirements/**/*.txt') }}
@@ -210,7 +210,7 @@ jobs:
           python scripts/generate_monitor_report.py
 
       - name: 上传监控报告
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: model-monitor-report
           path: reports/monitoring/

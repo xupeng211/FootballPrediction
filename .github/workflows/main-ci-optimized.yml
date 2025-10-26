@@ -54,7 +54,7 @@ jobs:
 
       - name: 💾 缓存MyPy结果 (统一配置)
         if: matrix.check-type == 'mypy'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ${{ env.MYPY_CACHE_DIR }}
           key: ${{ runner.os }}-mypy-${{ hashFiles('**/mypy_*.ini', '**/pyproject.toml', '**/src/**') }}
@@ -190,7 +190,7 @@ jobs:
 
       - name: 📊 上传覆盖率报告
         if: matrix.test-type == 'unit' && github.event_name == 'push'
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           file: ./coverage.xml
           fail_ci_if_error: false
@@ -249,7 +249,7 @@ jobs:
 
       - name: 📤 上传性能报告
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ci-performance-report
           path: |

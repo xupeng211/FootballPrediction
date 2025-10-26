@@ -280,7 +280,7 @@ jobs:
         path: comprehensive-test-report.html
 
     - name: Notify test results
-      uses: 8398a7/action-slack@v3
+      uses: 8398a7/action-slack@v4
       with:
         status: ${ job.status }
         channel: '#testing'
