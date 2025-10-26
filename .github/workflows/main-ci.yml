@@ -1,0 +1,131 @@
+name: Main CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  quality:
+    name: Code Quality Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        check-type: [syntax, ruff, mypy, security]
+      fail-fast: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements/requirements.lock
+            pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements/requirements.lock
+          pip install ruff mypy bandit pip-audit pytest pytest-cov pytest-xdist
+
+      - name: Syntax check
+        if: matrix.check-type == 'syntax'
+        run: |
+          find src/ -name "*.py" -exec python -m py_compile {} \;
+          echo "Syntax check passed"
+
+      - name: Ruff code check
+        if: matrix.check-type == 'ruff'
+        run: ruff check src/ --output-format=github
+
+      - name: Ruff format check
+        if: matrix.check-type == 'ruff'
+        run: ruff format src/ --check
+
+      - name: MyPy type check
+        if: matrix.check-type == 'mypy'
+        run: mypy src/ --config-file mypy_minimum.ini
+
+      - name: Security check
+        if: matrix.check-type == 'security'
+        run: bandit -r src/ -f json
+
+  tests:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: quality
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements/requirements.lock
+            pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements/requirements.lock
+          pip install pytest pytest-cov pytest-xdist
+
+      - name: Run unit tests
+        run: |
+          pytest tests/unit/ -v --tb=short --cov=src --cov-report=xml --cov-report=term-missing
+
+      - name: Run integration tests
+        run: |
+          pytest tests/integration/ -v --tb=short
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+
+  build:
+    name: Build Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: tests
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements/requirements.lock
+            pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements/requirements.lock
+
+      - name: Build package
+        run: |
+          python -m build --wheel --sdist
+
+      - name: Check package
+        run: |
+          twine check dist/*
