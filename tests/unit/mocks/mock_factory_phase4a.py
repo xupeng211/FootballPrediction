@@ -164,7 +164,7 @@ class Phase4AMockFactory:
         return service
 
 
-  @staticmethod
+    @staticmethod
     def create_mock_redis_client():
         """创建Redis客户端 Mock"""
         client = Mock()

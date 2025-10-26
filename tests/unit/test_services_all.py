@@ -1,4 +1,6 @@
 # 所有服务基础测试
+import pytest
+
 @pytest.mark.unit
 
 def test_service_imports():
