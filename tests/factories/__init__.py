@@ -1,27 +1,28 @@
-from .team_factory import TeamFactory
-from .league_factory import LeagueFactory
-from .match_factory import MatchFactory
-from .odds_factory import OddsFactory
-from .prediction_factory import PredictionFactory
+"""
+Test factories package
+"""
+
 from .user_factory import UserFactory
-from .data_factory import DataFactory
-from .mock_factory import MockFactory
 
-"""
-测试数据工厂
-使用Factory Boy创建测试数据
-"""
+# Additional factories can be added as needed
+def DataFactory(data_type: str, **kwargs):
+    """Generic data factory for testing"""
+    if data_type == "user":
+        return UserFactory.create_test_user(**kwargs)
+    else:
+        raise ValueError(f"Unknown data type: {data_type}")
 
-# 导入所有工厂类
+def MockFactory(mock_type: str, **kwargs):
+    """Generic mock factory for testing"""
+    from unittest.mock import Mock
 
-# 便捷导入
-__all__ = [
-    "TeamFactory",
-    "LeagueFactory",
-    "MatchFactory",
-    "OddsFactory",
-    "PredictionFactory",
-    "UserFactory",
-    "DataFactory",
-    "MockFactory",
-]
+    if mock_type == "user":
+        mock_user = Mock()
+        mock_user.id = kwargs.get("id", 1)
+        mock_user.username = kwargs.get("username", "testuser")
+        mock_user.email = kwargs.get("email", "test@example.com")
+        return mock_user
+    else:
+        return Mock()
+
+__all__ = ["UserFactory", "DataFactory", "MockFactory"]
