@@ -29,5 +29,11 @@ class EnsembleStrategy:
     pass
 
 
+class StrategyWeight:
+    """策略权重 - 占位符实现"""
+
+    pass
+
+
 # 导出所有公共接口
-__all__ = ["EnsembleMethod", "EnsembleResult", "EnsembleStrategy"]
+__all__ = ["EnsembleMethod", "EnsembleResult", "EnsembleStrategy", "StrategyWeight"]

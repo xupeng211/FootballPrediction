@@ -16,7 +16,7 @@ import json
 try:
     from models.prediction import *
 except ImportError as e:
-    print(f"警告: 无法导入模块 {module_path}: {e}")
+    print(f"警告: 无法导入模块 models.prediction: {e}")
 
 
 # 异步函数Mock策略

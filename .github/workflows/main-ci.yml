@@ -35,7 +35,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r requirements/requirements.lock
-          pip install ruff mypy bandit pip-audit pytest pytest-cov pytest-xdist pytest-asyncio requests aiohttp pandas numpy sqlalchemy psutil feast
+          pip install ruff mypy bandit pip-audit pytest pytest-cov pytest-xdist pytest-asyncio requests aiohttp pandas numpy sqlalchemy psutil feast psycopg-binary
 
       - name: Syntax check
         if: matrix.check-type == 'syntax'
@@ -81,7 +81,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r requirements/requirements.lock
-          pip install pytest pytest-cov pytest-xdist pytest-asyncio requests aiohttp pandas numpy sqlalchemy psutil feast
+          pip install pytest pytest-cov pytest-xdist pytest-asyncio requests aiohttp pandas numpy sqlalchemy psutil feast psycopg-binary
 
       - name: Run unit tests
         run: |
