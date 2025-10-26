@@ -8,6 +8,7 @@ from datetime import datetime
 
 from src.core.exceptions import StreamingError
 
+
 class KafkaMessageConsumer:
     """Kafka消息消费者（简化版）"""
 

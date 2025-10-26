@@ -28,6 +28,7 @@ import hashlib
 
 logger = logging.getLogger(__name__)
 
+
 class ConfigSource(ABC):
     """抽象配置源"""
 
@@ -40,6 +41,7 @@ class ConfigSource(ABC):
     async def save(self, config: Dict[str, Any]) -> bool:
         """保存配置数据"""
         pass
+
 
 class FileConfigSource(ConfigSource):
     """文件配置源"""
@@ -61,10 +63,10 @@ class FileConfigSource(ConfigSource):
             if self._last_modified == current_modified and self._cache:
                 return self._cache
 
-            with open(self.file_path, 'r', encoding='utf-8') as f:
-                if self.format == 'json':
+            with open(self.file_path, "r", encoding="utf-8") as f:
+                if self.format == "json":
                     data = json.load(f)
-                elif self.format == 'yaml':
+                elif self.format == "yaml":
                     data = yaml.safe_load(f) or {}
                 else:
                     data = {}
@@ -82,10 +84,10 @@ class FileConfigSource(ConfigSource):
         try:
             os.makedirs(os.path.dirname(self.file_path), exist_ok=True)
 
-            with open(self.file_path, 'w', encoding='utf-8') as f:
-                if self.format == 'json':
+            with open(self.file_path, "w", encoding="utf-8") as f:
+                if self.format == "json":
                     json.dump(config, f, indent=2, ensure_ascii=False)
-                elif self.format == 'yaml':
+                elif self.format == "yaml":
                     yaml.dump(config, f, default_flow_style=False, allow_unicode=True)
                 else:
                     return False
@@ -97,6 +99,7 @@ class FileConfigSource(ConfigSource):
         except Exception as e:
             logger.error(f"Failed to save config to {self.file_path}: {e}")
             return False
+
 
 class EnvironmentConfigSource(ConfigSource):
     """环境变量配置源"""
@@ -111,7 +114,7 @@ class EnvironmentConfigSource(ConfigSource):
 
         for key, value in os.environ.items():
             if key.startswith(self.prefix):
-                config_key = key[len(self.prefix):].lower()
+                config_key = key[len(self.prefix) :].lower()
 
                 # 尝试转换类型
                 converted_value = self._convert_value(value)
@@ -128,12 +131,12 @@ class EnvironmentConfigSource(ConfigSource):
     def _convert_value(self, value: str) -> Union[str, int, float, bool]:
         """尝试转换值的类型"""
         # 布尔值
-        if value.lower() in ('true', 'false'):
-            return value.lower() == 'true'
+        if value.lower() in ("true", "false"):
+            return value.lower() == "true"
 
         # 数字
         try:
-            if '.' in value:
+            if "." in value:
                 return float(value)
             else:
                 return int(value)
@@ -141,6 +144,7 @@ class EnvironmentConfigSource(ConfigSource):
             pass
 
         return value
+
 
 @dataclass
 class ConfigCache:
@@ -174,6 +178,7 @@ class ConfigCache:
         self._cache.clear()
         self._timestamps.clear()
 
+
 class ConfigValidator:
     """配置验证器"""
 
@@ -181,12 +186,11 @@ class ConfigValidator:
         self.rules: Dict[str, Dict[str, Any]] = {}
         self.errors: List[str] = []
 
-    def add_rule(self, key: str, validator: Callable[[Any], bool], message: str) -> None:
+    def add_rule(
+        self, key: str, validator: Callable[[Any], bool], message: str
+    ) -> None:
         """添加验证规则"""
-        self.rules[key] = {
-            'validator': validator,
-            'message': message
-        }
+        self.rules[key] = {"validator": validator, "message": message}
 
     def validate(self, config: Dict[str, Any]) -> bool:
         """验证配置"""
@@ -196,7 +200,7 @@ class ConfigValidator:
             value = self._get_nested_value(config, key)
 
             try:
-                if not rule['validator'](value):
+                if not rule["validator"](value):
                     self.errors.append(f"{key}: {rule['message']}")
             except Exception as e:
                 self.errors.append(f"{key}: 验证错误 - {str(e)}")
@@ -205,7 +209,7 @@ class ConfigValidator:
 
     def _get_nested_value(self, config: Dict[str, Any], key: str) -> Any:
         """获取嵌套配置值"""
-        keys = key.split('.')
+        keys = key.split(".")
         value = config
 
         try:
@@ -214,6 +218,7 @@ class ConfigValidator:
             return value
         except (KeyError, TypeError):
             return None
+
 
 class ConfigManager:
     """配置管理器"""
@@ -278,7 +283,7 @@ class ConfigManager:
             return cached_value
 
         # 从配置中获取
-        keys = key.split('.')
+        keys = key.split(".")
         value = self._config
 
         try:
@@ -294,7 +299,7 @@ class ConfigManager:
     def set(self, key: str, value: Any) -> None:
         """设置配置值"""
         old_value = self.get(key)
-        keys = key.split('.')
+        keys = key.split(".")
         config = self._config
 
         # 创建嵌套字典结构
@@ -353,7 +358,9 @@ class ConfigManager:
         except Exception:
             return ""
 
-    def add_validation_rule(self, key: str, validator: Callable[[Any], bool], message: str) -> None:
+    def add_validation_rule(
+        self, key: str, validator: Callable[[Any], bool], message: str
+    ) -> None:
         """添加配置验证规则"""
         self._validator.add_rule(key, validator, message)
 
@@ -365,6 +372,7 @@ class ConfigManager:
         """生成加密密钥"""
         # 简化实现 - 生产环境应该使用更安全的方式
         import secrets
+
         return secrets.token_hex(32)
 
     @lru_cache(maxsize=1000)
@@ -380,6 +388,7 @@ class ConfigManager:
         except (ValueError, TypeError):
             return default
 
+
 # 默认配置工厂函数
 def get_default_config_manager() -> ConfigManager:
     """获取默认配置管理器"""
@@ -391,6 +400,7 @@ def get_default_config_manager() -> ConfigManager:
 
     return manager
 
+
 def get_development_config() -> Dict[str, Any]:
     """获取开发环境配置"""
     return {
@@ -398,18 +408,12 @@ def get_development_config() -> Dict[str, Any]:
         "database": {
             "host": "localhost",
             "port": 5432,
-            "name": "football_prediction_dev"
+            "name": "football_prediction_dev",
         },
-        "api": {
-            "host": "localhost",
-            "port": 8000,
-            "cors_origins": ["*"]
-        },
-        "logging": {
-            "level": "DEBUG",
-            "format": "detailed"
-        }
+        "api": {"host": "localhost", "port": 8000, "cors_origins": ["*"]},
+        "logging": {"level": "DEBUG", "format": "detailed"},
     }
+
 
 def get_production_config() -> Dict[str, Any]:
     """获取生产环境配置"""
@@ -418,22 +422,17 @@ def get_production_config() -> Dict[str, Any]:
         "database": {
             "host": os.getenv("DB_HOST", "localhost"),
             "port": int(os.getenv("DB_PORT", "5432")),
-            "name": os.getenv("DB_NAME", "football_prediction")
+            "name": os.getenv("DB_NAME", "football_prediction"),
         },
         "api": {
             "host": os.getenv("API_HOST", "0.0.0.0"),
             "port": int(os.getenv("API_PORT", "8000")),
-            "cors_origins": os.getenv("CORS_ORIGINS", "").split(",")
+            "cors_origins": os.getenv("CORS_ORIGINS", "").split(","),
         },
-        "logging": {
-            "level": "INFO",
-            "format": "json"
-        },
-        "security": {
-            "secret_key": os.getenv("SECRET_KEY", ""),
-            "jwt_expiration": 3600
-        }
+        "logging": {"level": "INFO", "format": "json"},
+        "security": {"secret_key": os.getenv("SECRET_KEY", ""), "jwt_expiration": 3600},
     }
+
 
 def get_config_by_env(env: str = "development") -> Dict[str, Any]:
     """根据环境获取配置"""
@@ -444,8 +443,10 @@ def get_config_by_env(env: str = "development") -> Dict[str, Any]:
     else:
         return get_development_config()
 
+
 # 配置管理器实例（单例模式）
 _config_manager = None
+
 
 def get_config_manager() -> ConfigManager:
     """获取全局配置管理器实例"""

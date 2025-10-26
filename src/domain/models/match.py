@@ -13,6 +13,7 @@ from typing import Optional, Dict, Any, List
 
 from ...core.exceptions import DomainError
 
+
 class MatchStatus(Enum):
     """比赛状态"""
 
@@ -22,12 +23,14 @@ class MatchStatus(Enum):
     CANCELLED = "cancelled"  # 已取消
     POSTPONED = "postponed"  # 延期
 
+
 class MatchResult(Enum):
     """比赛结果"""
 
     HOME_WIN = "home_win"  # 主队获胜
     AWAY_WIN = "away_win"  # 客队获胜
     DRAW = "draw"  # 平局
+
 
 @dataclass
 class MatchScore:
@@ -62,6 +65,7 @@ class MatchScore:
 
     def __str__(self) -> str:
         return f"{self.home_score}-{self.away_score}"
+
 
 @dataclass
 class Match:

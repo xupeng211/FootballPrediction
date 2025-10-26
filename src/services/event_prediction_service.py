@@ -25,6 +25,7 @@ from ..core.di import DIContainer
 
 logger = logging.getLogger(__name__)
 
+
 class EventDrivenPredictionService(StrategyPredictionService):
     """事件驱动的预测服务
 
@@ -241,6 +242,7 @@ class EventDrivenPredictionService(StrategyPredictionService):
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"发布预测更新事件失败: {e}")
 
+
 # 事件驱动的比赛服务
 class EventDrivenMatchService:
     """事件驱动的比赛服务
@@ -344,6 +346,7 @@ class EventDrivenMatchService:
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"发布比赛创建事件失败: {e}")
 
+
 # 事件驱动的用户服务
 class EventDrivenUserService:
     """事件驱动的用户服务
@@ -439,6 +442,7 @@ class EventDrivenUserService:
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"发布用户注册事件失败: {e}")
+
 
 # 依赖注入配置
 def configure_event_driven_services(container: DIContainer) -> None:

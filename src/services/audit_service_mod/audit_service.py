@@ -12,6 +12,7 @@ from .models import AuditEvent, AuditAction, AuditSeverity
 
 logger = logging.getLogger(__name__)
 
+
 class AuditService:
     """审计服务"""
 
@@ -63,6 +64,7 @@ class AuditService:
 
         return filtered[-limit:]
 
+
 class DataSanitizer:
     """数据清理器"""
 
@@ -80,6 +82,7 @@ class DataSanitizer:
         if len(phone) > 4:
             return phone[:2] + "*" * (len(phone) - 4) + phone[-2:]
         return "***"
+
 
 class SeverityAnalyzer:
     """严重程度分析器"""

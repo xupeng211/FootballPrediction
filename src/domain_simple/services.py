@@ -19,6 +19,7 @@ from .rules import ValidationEngine, get_validation_engine
 
 T = TypeVar("T")
 
+
 @dataclass
 class ServiceConfig:
     """服务配置"""
@@ -31,6 +32,7 @@ class ServiceConfig:
     def __post_init__(self):
         if self.config is None:
             self.config = {}
+
 
 class DomainService(ABC, Generic[T]):
     """域服务基类"""
@@ -98,6 +100,7 @@ class DomainService(ABC, Generic[T]):
         """是否已启动"""
         return self._started
 
+
 class MatchDomainService(DomainService[Match]):
     """比赛域服务"""
 
@@ -164,6 +167,7 @@ class MatchDomainService(DomainService[Match]):
         created = await self.match_repo.create(match.to_dict())
         return Match.from_dict(created)
 
+
 class TeamDomainService(DomainService[Team]):
     """球队域服务"""
 
@@ -216,6 +220,7 @@ class TeamDomainService(DomainService[Team]):
         created = await self.team_repo.create(team.to_dict())
         return Team.from_dict(created)
 
+
 class PredictionDomainService(DomainService[Prediction]):
     """预测域服务"""
 
@@ -267,6 +272,7 @@ class PredictionDomainService(DomainService[Prediction]):
         # 保存
         created = await self.prediction_repo.create(prediction.to_dict())
         return Prediction.from_dict(created)
+
 
 class DomainServiceFactory:
     """域服务工厂
@@ -366,8 +372,10 @@ class DomainServiceFactory:
 
         return status
 
+
 # 全局工厂实例
 _domain_factory = None
+
 
 def get_domain_factory() -> DomainServiceFactory:
     """获取全局域服务工厂实例"""

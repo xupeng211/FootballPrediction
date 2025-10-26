@@ -16,6 +16,7 @@ from ..models.match import Match
 from ..models.team import Team
 from ..models.prediction import Prediction
 
+
 class StrategyType(Enum):
     """策略类型枚举"""
 
@@ -23,6 +24,7 @@ class StrategyType(Enum):
     STATISTICAL = "statistical"
     HISTORICAL = "historical"
     ENSEMBLE = "ensemble"
+
 
 @dataclass
 class PredictionInput:
@@ -34,6 +36,7 @@ class PredictionInput:
     historical_data: Optional[Dict[str, Any]] = None
     additional_features: Optional[Dict[str, Any]] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=datetime.utcnow)
+
 
 @dataclass
 class PredictionOutput:
@@ -48,6 +51,7 @@ class PredictionOutput:
     strategy_used: Optional[str] = None
     execution_time_ms: Optional[float] = None
 
+
 @dataclass
 class StrategyMetrics:
     """策略性能指标"""
@@ -58,6 +62,7 @@ class StrategyMetrics:
     f1_score: float
     total_predictions: int
     last_updated: datetime = field(default_factory=datetime.utcnow)
+
 
 class PredictionStrategy(ABC):
     """预测策略抽象基类"""
@@ -180,6 +185,7 @@ class PredictionStrategy(ABC):
 
     def __repr__(self) -> str:
         return self.__str__()
+
 
 @dataclass
 class PredictionContext:

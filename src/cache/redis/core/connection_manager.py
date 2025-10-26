@@ -7,6 +7,7 @@ import redis.asyncio as aioredis
 from redis.exceptions import RedisError
 from typing import Optional
 
+
 class RedisConnectionManager:
     """管理Redis连接的类"""
 

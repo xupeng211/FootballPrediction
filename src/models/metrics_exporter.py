@@ -12,6 +12,7 @@ from prometheus_client import CollectorRegistry, Counter, Gauge, Histogram
 
 logger = logging.getLogger(__name__)
 
+
 class ModelMetricsExporter:
     """
     模型指标导出器

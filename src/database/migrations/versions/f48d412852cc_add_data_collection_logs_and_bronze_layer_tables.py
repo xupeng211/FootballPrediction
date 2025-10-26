@@ -21,6 +21,7 @@ down_revision: Union[str, None] = "d56c8d0d5aa0"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
+
 def upgrade() -> None:
     """
     创建数据采集日志表和Bronze层原始数据表
@@ -225,6 +226,7 @@ def upgrade() -> None:
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         # 如果features表不存在或字段已存在，忽略错误但记录日志
         logger.info(f"Warning: Could not add columns to features table: {e}")
+
 
 def downgrade() -> None:
     """

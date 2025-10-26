@@ -14,6 +14,7 @@ from enum import Enum
 
 logger = logging.getLogger(__name__)
 
+
 class SubsystemStatus(Enum):
     """子系统状态"""
 
@@ -21,6 +22,7 @@ class SubsystemStatus(Enum):
     INACTIVE = "inactive"
     ERROR = "error"
     MAINTENANCE = "maintenance"
+
 
 class Subsystem(ABC):
     """子系统抽象基类"""
@@ -65,6 +67,7 @@ class Subsystem(ABC):
             "error_message": self.error_message,
             "metrics": self.metrics,
         }
+
 
 class SubsystemManager:
     """子系统管理器"""
@@ -166,6 +169,7 @@ class SubsystemManager:
         return {
             name: subsystem.get_status() for name, subsystem in self._subsystems.items()
         }
+
 
 class SystemFacade(ABC):
     """系统门面抽象基类"""

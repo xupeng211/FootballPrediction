@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Optional, Dict, Any
 from enum import Enum
 
+
 class PredictionType(Enum):
     """预测类型枚举"""
 
@@ -15,6 +16,7 @@ class PredictionType(Enum):
     CORRECT_SCORE = "correct_score"  # 正确比分
     HALF_TIME = "half_time"  # 半场结果
 
+
 class PredictionConfidence(Enum):
     """预测置信度"""
 
@@ -22,6 +24,7 @@ class PredictionConfidence(Enum):
     MEDIUM = 0.6  # 中
     HIGH = 0.8  # 高
     VERY_HIGH = 0.95  # 极高
+
 
 class Prediction:
     """预测领域模型"""

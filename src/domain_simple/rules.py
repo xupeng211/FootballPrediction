@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Callable
 from abc import ABC, abstractmethod
 from datetime import datetime
 
+
 class ValidationResult:
     """验证结果"""
 
@@ -43,6 +44,7 @@ class ValidationResult:
             "timestamp": self.timestamp.isoformat(),
         }
 
+
 class Rule(ABC):
     """规则抽象基类"""
 
@@ -55,6 +57,7 @@ class Rule(ABC):
     def validate(self, obj: Any) -> ValidationResult:
         """验证对象"""
         pass
+
 
 class BusinessRule(Rule):
     """业务规则"""
@@ -85,6 +88,7 @@ class BusinessRule(Rule):
             result.add_error(f"Error validating rule {self.name}: {str(e)}")
 
         return result
+
 
 class ValidationEngine:
     """验证引擎"""
@@ -191,6 +195,7 @@ class ValidationEngine:
         else:
             self._rules.clear()
             self._global_rules.clear()
+
 
 class BusinessRules:
     """预定义的业务规则集合"""
@@ -313,8 +318,10 @@ class BusinessRules:
 
         return rules
 
+
 # 全局验证引擎实例
 _validation_engine = None
+
 
 def get_validation_engine() -> ValidationEngine:
     """获取全局验证引擎实例"""

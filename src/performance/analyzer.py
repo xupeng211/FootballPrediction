@@ -11,8 +11,4 @@ from .performance.analyzer_core import *
 from .performance.analyzer_models import *
 
 # 导出所有公共接口
-__all__ = [
-    "PerformanceAnalyzer",
-    "PerformanceInsight",
-    "PerformanceTrend"
-]
+__all__ = ["PerformanceAnalyzer", "PerformanceInsight", "PerformanceTrend"]

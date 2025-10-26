@@ -7,6 +7,7 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
+
 class OddsQueryParams(BaseModel):
     """赔率查询参数"""
 

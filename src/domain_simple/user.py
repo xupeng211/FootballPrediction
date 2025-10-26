@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Optional, Dict, Any, List
 from enum import Enum
 
+
 class UserRole(Enum):
     """用户角色"""
 
@@ -13,6 +14,7 @@ class UserRole(Enum):
     PREMIUM = "premium"
     ADMIN = "admin"
     ANALYST = "analyst"
+
 
 class UserPreferences:
     """用户偏好设置"""
@@ -45,6 +47,7 @@ class UserPreferences:
         """移除喜欢的联赛"""
         if league_id in self.favorite_leagues:
             self.favorite_leagues.remove(league_id)
+
 
 class UserStatistics:
     """用户统计数据"""
@@ -99,6 +102,7 @@ class UserStatistics:
         if self.total_predictions == 0:
             return 0.0
         return (self.total_profit_loss / self.total_predictions) * 100
+
 
 class User:
     """用户领域模型"""
@@ -274,6 +278,7 @@ class User:
 
     def __repr__(self) -> str:
         return f"<User(id={self.id}, username={self.username}, role={self.role.value})>"
+
 
 class UserProfile:
     """用户档案（扩展的用户信息）"""

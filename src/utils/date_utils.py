@@ -15,6 +15,7 @@ from typing import Optional, Union, Dict, Any
 import calendar
 from functools import lru_cache
 
+
 class DateUtils:
     """日期时间工具类"""
 
@@ -26,7 +27,7 @@ class DateUtils:
         "iso": "%Y-%m-%dT%H:%M:%S",
         "readable": "%Y年%m月%d日 %H:%M:%S",
         "short": "%m/%d %H:%M",
-        "us": "%m/%d/%Y %I:%M %p"
+        "us": "%m/%d/%Y %I:%M %p",
     }
 
     @staticmethod
@@ -111,7 +112,15 @@ class DateUtils:
             return ""
 
         if locale == "zh":
-            weekdays = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"]
+            weekdays = [
+                "星期一",
+                "星期二",
+                "星期三",
+                "星期四",
+                "星期五",
+                "星期六",
+                "星期日",
+            ]
             return weekdays[dt.weekday()]
         else:
             return dt.strftime("%A")
@@ -150,7 +159,9 @@ class DateUtils:
         age = today.year - birth_date.year
 
         # 检查是否还没过生日
-        if today.month < birth_date.month or (today.month == birth_date.month and today.day < birth_date.day):
+        if today.month < birth_date.month or (
+            today.month == birth_date.month and today.day < birth_date.day
+        ):
             age -= 1
 
         return age
@@ -252,7 +263,9 @@ class DateUtils:
             return dt
 
         last_day = DateUtils.get_days_in_month(dt.year, dt.month)
-        return dt.replace(day=last_day, hour=23, minute=59, second=59, microsecond=999999)
+        return dt.replace(
+            day=last_day, hour=23, minute=59, second=59, microsecond=999999
+        )
 
     @staticmethod
     def get_formatted_duration(seconds: float) -> str:
@@ -290,7 +303,7 @@ class DateUtils:
             "01-01": "元旦",
             "05-01": "劳动节",
             "10-01": "国庆节",
-            "12-25": "圣诞节"
+            "12-25": "圣诞节",
         }
 
         date_str = dt.strftime("%m-%d")
@@ -299,7 +312,7 @@ class DateUtils:
         return {
             "is_holiday": bool(holiday_name),
             "holiday_name": holiday_name or "",
-            "is_weekend": DateUtils.is_weekend(dt)
+            "is_weekend": DateUtils.is_weekend(dt),
         }
 
     @staticmethod
@@ -321,16 +334,19 @@ class DateUtils:
 
         return DateUtils.get_formatted_duration(duration.total_seconds())
 
+
 # 性能优化的日期处理函数
 @lru_cache(maxsize=500)
 def cached_format_datetime(dt: datetime, format_str: str) -> str:
     """缓存的日期格式化函数"""
     return DateUtils.format_datetime(dt, format_str)
 
+
 @lru_cache(maxsize=500)
 def cached_time_ago(dt: datetime) -> str:
     """缓存的相对时间函数"""
     return DateUtils.get_time_ago(dt)
+
 
 def get_business_days_range(start_date: datetime, end_date: datetime) -> int:
     """获取日期范围内的工作日数量"""
@@ -350,6 +366,7 @@ def get_business_days_range(start_date: datetime, end_date: datetime) -> int:
 
     return business_days
 
+
 def get_date_range_summary(start_date: datetime, end_date: datetime) -> Dict[str, Any]:
     """获取日期范围的统计信息"""
     if not isinstance(start_date, datetime) or not isinstance(end_date, datetime):
@@ -367,5 +384,5 @@ def get_date_range_summary(start_date: datetime, end_date: datetime) -> Dict[str
         "business_days": business_days,
         "weekend_days": weekend_days,
         "weeks": total_days // 7,
-        "remaining_days": total_days % 7
+        "remaining_days": total_days % 7,
     }

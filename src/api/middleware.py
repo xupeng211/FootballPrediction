@@ -19,6 +19,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class TimingMiddleware(BaseHTTPMiddleware):
     """计时中间件，记录请求处理时间"""
 
@@ -29,6 +30,7 @@ class TimingMiddleware(BaseHTTPMiddleware):
 
         response.headers["X-Process-Time"] = str(process_time)
         return response
+
 
 class LoggingMiddleware(BaseHTTPMiddleware):
     """日志中间件，记录请求信息"""
@@ -46,6 +48,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         except Exception as e:
             logger.error(f"Error {request_id}: {str(e)}")
             raise
+
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """简单的速率限制中间件"""
@@ -78,6 +81,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         return await call_next(request)
 
+
 class AuthenticationMiddleware(BaseHTTPMiddleware):
     """简单的认证中间件"""
 
@@ -102,6 +106,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
 
         return await call_next(request)
 
+
 class CORSMiddleware(BaseHTTPMiddleware):
     """CORS中间件"""
 
@@ -125,6 +130,7 @@ class CORSMiddleware(BaseHTTPMiddleware):
 
         return response
 
+
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """安全头中间件"""
 
@@ -140,6 +146,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         )
 
         return response
+
 
 class CacheMiddleware(BaseHTTPMiddleware):
     """简单的缓存中间件"""
@@ -178,6 +185,7 @@ class CacheMiddleware(BaseHTTPMiddleware):
         }
 
         return response
+
 
 class ErrorHandlingMiddleware(BaseHTTPMiddleware):
     """错误处理中间件"""

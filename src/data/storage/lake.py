@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, cast
 from datetime import datetime
 from pathlib import Path
 
+
 class LocalDataLakeStorage:
     """本地数据湖存储"""
 
@@ -80,6 +81,7 @@ class LocalDataLakeStorage:
             self.logger.error(f"删除数据失败: {e}")
             return False
 
+
 class S3DataLakeStorage:
     """S3 数据湖存储（简单实现）"""
 
@@ -98,6 +100,7 @@ class S3DataLakeStorage:
         """从 S3 加载数据（占位符实现）"""
         self.logger.info(f"S3 加载占位符: {self.bucket}/{self.prefix}/{key}")
         return None
+
 
 class MetadataManager:
     """数据湖元数据管理器"""
@@ -124,6 +127,7 @@ class MetadataManager:
         # 过滤掉元数据文件
         datasets = [k for k in keys if not k.endswith(".metadata")]
         return datasets
+
 
 class PartitionManager:
     """数据湖分区管理器"""
@@ -171,6 +175,7 @@ class PartitionManager:
                         partitions.add(partition)
 
         return sorted(partitions)
+
 
 class LakeStorageUtils:
     """数据湖存储工具类"""
@@ -230,6 +235,7 @@ class LakeStorageUtils:
             return False
 
         return True
+
 
 __all__: list[str] = [
     "LocalDataLakeStorage",

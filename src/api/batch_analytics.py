@@ -15,22 +15,26 @@ from datetime import datetime
 
 router = APIRouter()
 
+
 class BatchAnalyticsAPIRequest(BaseModel):
     """请求模型"""
+
     config: Dict[str, Any] = {}
     parameters: Dict[str, Any] = {}
 
+
 class BatchAnalyticsAPIResponse(BaseModel):
     """响应模型"""
+
     success: bool
     data: Optional[Dict[str, Any]] = None
     message: str
     timestamp: datetime
 
+
 @router.post("/batch_analytics_api/execute")
 async def execute_batch_analytics_api(
-    request: BatchAnalyticsAPIRequest,
-    background_tasks: BackgroundTasks
+    request: BatchAnalyticsAPIRequest, background_tasks: BackgroundTasks
 ) -> BatchAnalyticsAPIResponse:
     """执行Batch Analytics API"""
     try:
@@ -41,10 +45,11 @@ async def execute_batch_analytics_api(
             success=True,
             data=result,
             message="Batch Analytics API执行成功",
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/batch_analytics_api/status/{job_id}")
 async def get_batch_analytics_api_status(job_id: str):
@@ -54,8 +59,9 @@ async def get_batch_analytics_api_status(job_id: str):
         "job_id": job_id,
         "status": "completed",
         "progress": 100,
-        "result": {"data": "sample_result"}
+        "result": {"data": "sample_result"},
     }
+
 
 @router.get("/batch_analytics_api/health")
 async def health_check():
@@ -63,5 +69,5 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "Batch Analytics API",
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
     }

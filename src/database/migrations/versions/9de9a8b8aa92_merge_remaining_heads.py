@@ -17,8 +17,10 @@ down_revision: Union[str, None] = ("9ac2aff86228", "007_improve_phase3_implement
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
+
 def upgrade() -> None:
     pass
+
 
 def downgrade() -> None:
     pass

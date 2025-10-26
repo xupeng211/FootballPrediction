@@ -21,6 +21,7 @@ from src.core.logging import get_logger
 
 logger = get_logger(__name__)
 
+
 class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
     """性能监控中间件"""
 
@@ -208,6 +209,7 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
         self.request_times.clear()
         self.api_profiler.endpoint_stats.clear()
 
+
 class DatabasePerformanceMiddleware:
     """数据库性能监控中间件"""
 
@@ -281,6 +283,7 @@ class DatabasePerformanceMiddleware:
 
         return stats
 
+
 class CachePerformanceMiddleware:
     """缓存性能监控中间件"""
 
@@ -343,6 +346,7 @@ class CachePerformanceMiddleware:
             )
 
         return stats
+
 
 class BackgroundTaskPerformanceMonitor:
     """后台任务性能监控器"""

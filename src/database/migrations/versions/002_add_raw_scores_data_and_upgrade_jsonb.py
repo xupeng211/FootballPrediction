@@ -23,6 +23,7 @@ down_revision: Union[str, None] = "f48d412852cc"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
+
 def upgrade() -> None:
     """
     添加raw_scores_data表并升级现有Bronze层表为JSONB
@@ -214,6 +215,7 @@ def upgrade() -> None:
             EXECUTE FUNCTION update_updated_at_column();
         """
         )
+
 
 def downgrade() -> None:
     """

@@ -12,6 +12,7 @@ import os
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
+
 @dataclass
 class KafkaConfig:
     """Kafka基础配置"""
@@ -40,6 +41,7 @@ class KafkaConfig:
     key_serializer: str = "string"
     value_serializer: str = "json"
 
+
 @dataclass
 class TopicConfig:
     """Topic配置"""
@@ -50,6 +52,7 @@ class TopicConfig:
     cleanup_policy: str = "delete"
     retention_ms: int = 604800000  # 7天
     segment_ms: int = 86400000  # 1天
+
 
 class StreamConfig:
     """

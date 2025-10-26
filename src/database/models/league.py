@@ -14,6 +14,7 @@ from sqlalchemy import Index
 from sqlalchemy import Integer
 from sqlalchemy import String
 
+
 class League(BaseModel):
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {"extend_existing": True}
     __tablename__ = "leagues"

@@ -10,6 +10,7 @@ Prometheus Exporter Module
 import logging
 from typing import Any, Dict, List
 
+
 class PrometheusCollector:
     """Prometheus 指标收集器"""
 
@@ -30,6 +31,7 @@ class PrometheusCollector:
         """获取所有指标"""
         return self.metrics
 
+
 class PrometheusExporter:
     """Prometheus 导出器"""
 
@@ -45,6 +47,7 @@ class PrometheusExporter:
             output.append(f"# TYPE {name} {metric['type']}")
             output.append(f"{name} {metric['value']}")
         return "\n".join(output)
+
 
 # 创建默认实例
 collector = PrometheusCollector()

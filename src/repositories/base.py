@@ -18,6 +18,7 @@ from sqlalchemy.orm import selectinload
 T = TypeVar("T")
 ID = TypeVar("ID")
 
+
 @dataclass
 class QuerySpec:
     """查询规范"""
@@ -27,6 +28,7 @@ class QuerySpec:
     limit: Optional[int] = None
     offset: Optional[int] = None
     include: Optional[List[str]] = None
+
 
 class BaseRepository(Generic[T, ID], ABC):
     """仓储基类
@@ -123,6 +125,7 @@ class BaseRepository(Generic[T, ID], ABC):
                 query = query.options(selectinload(getattr(self.model_class, include)))
         return query
 
+
 class ReadOnlyRepository(BaseRepository[T, ID], ABC):
     """只读仓储基类"""
 
@@ -150,6 +153,7 @@ class ReadOnlyRepository(BaseRepository[T, ID], ABC):
             result = await self.session.execute(query)
             return result.scalars().all()
         return []
+
 
 class WriteOnlyRepository(BaseRepository[T, ID], ABC):
     """只写仓储基类"""
@@ -189,6 +193,7 @@ class WriteOnlyRepository(BaseRepository[T, ID], ABC):
         query = delete(self.model_class).where(self.model_class.id.in_(ids))
         result = await self.session.execute(query)
         return result.rowcount
+
 
 class Repository(ReadOnlyRepository[T, ID], WriteOnlyRepository[T, ID], ABC):
     """完整仓储接口

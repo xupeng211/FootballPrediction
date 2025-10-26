@@ -37,6 +37,7 @@ from .dto import (
 
 logger = logging.getLogger(__name__)
 
+
 # 预测命令处理器
 class CreatePredictionHandler(CommandHandler):
     """创建预测处理器"""
@@ -96,6 +97,7 @@ class CreatePredictionHandler(CommandHandler):
             logger.error(f"创建预测失败: {e}")
             return CommandResult.failure_result([str(e)], "创建预测失败")
 
+
 class UpdatePredictionHandler(CommandHandler):
     """更新预测处理器"""
 
@@ -150,6 +152,7 @@ class UpdatePredictionHandler(CommandHandler):
             logger.error(f"更新预测失败: {e}")
             return CommandResult.failure_result([str(e)], "更新预测失败")
 
+
 class DeletePredictionHandler(CommandHandler):
     """删除预测处理器"""
 
@@ -177,6 +180,7 @@ class DeletePredictionHandler(CommandHandler):
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"删除预测失败: {e}")
             return CommandResult.failure_result([str(e)], "删除预测失败")
+
 
 # 用户命令处理器
 class CreateUserHandler(CommandHandler):
@@ -223,6 +227,7 @@ class CreateUserHandler(CommandHandler):
             logger.error(f"创建用户失败: {e}")
             return CommandResult.failure_result([str(e)], "创建用户失败")
 
+
 # 查询处理器
 class GetPredictionByIdHandler(QueryHandler):
     """根据ID获取预测处理器"""
@@ -257,6 +262,7 @@ class GetPredictionByIdHandler(QueryHandler):
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"获取预测失败: {e}")
             return None
+
 
 class GetPredictionsByUserHandler(QueryHandler):
     """获取用户预测列表处理器"""
@@ -319,6 +325,7 @@ class GetPredictionsByUserHandler(QueryHandler):
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"获取用户预测列表失败: {e}")
             return []
+
 
 class GetUserStatsHandler(QueryHandler):
     """获取用户统计处理器"""
@@ -436,6 +443,7 @@ class GetUserStatsHandler(QueryHandler):
             logger.error(f"获取用户统计失败: {e}")
             return None
 
+
 class GetUpcomingMatchesHandler(QueryHandler):
     """获取即将到来的比赛处理器"""
 
@@ -493,6 +501,7 @@ class GetUpcomingMatchesHandler(QueryHandler):
             logger.error(f"获取即将到来的比赛失败: {e}")
             return []
 
+
 # 处理器集合类
 class PredictionCommandHandlers:
     """预测命令处理器集合"""
@@ -501,6 +510,7 @@ class PredictionCommandHandlers:
         self.create = CreatePredictionHandler()
         self.update = UpdatePredictionHandler()
         self.delete = DeletePredictionHandler()
+
 
 class PredictionQueryHandlers:
     """预测查询处理器集合"""
@@ -511,12 +521,14 @@ class PredictionQueryHandlers:
         self.get_stats = GetUserStatsHandler()
         self.get_upcoming_matches = GetUpcomingMatchesHandler()
 
+
 class UserCommandHandlers:
     """用户命令处理器集合"""
 
     def __init__(self):
         self.create = CreateUserHandler()
         self.update = UpdateUserHandler()
+
 
 class UserQueryHandlers:
     """用户查询处理器集合"""
@@ -525,12 +537,14 @@ class UserQueryHandlers:
         self.get_by_id = GetUserByIdHandler()
         self.get_stats = GetUserStatsHandler()
 
+
 class MatchCommandHandlers:
     """比赛命令处理器集合"""
 
     def __init__(self):
         self.create = CreateMatchHandler()
         self.update = UpdateMatchHandler()
+
 
 class MatchQueryHandlers:
     """比赛查询处理器集合"""

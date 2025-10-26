@@ -27,6 +27,7 @@ from src.database.sql_compatibility import (
 
 logger = logging.getLogger(__name__)
 
+
 class TaskErrorLogger:
     """任务错误日志记录器"""
 

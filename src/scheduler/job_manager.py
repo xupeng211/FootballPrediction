@@ -19,6 +19,7 @@ from src.database.connection import DatabaseManager
 
 logger = logging.getLogger(__name__)
 
+
 class JobExecutionResult:
     """作业执行结果类"""
 
@@ -71,6 +72,7 @@ class JobExecutionResult:
             "error": self.error,
             "result": str(self.result) if self.result is not None else None,
         }
+
 
 class ResourceMonitor:
     """资源监控器"""
@@ -155,6 +157,7 @@ class ResourceMonitor:
         )
 
         return avg_memory, avg_cpu
+
 
 class JobManager:
     """

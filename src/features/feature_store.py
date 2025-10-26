@@ -20,5 +20,5 @@ __all__ = [
     "MockFloat64",
     "MockInt64",
     "MockPostgreSQLSource",
-    "MockValueType"
+    "MockValueType",
 ]

@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 
+
 @dataclass
 class PredictionDTO:
     """预测DTO"""
@@ -46,6 +47,7 @@ class PredictionDTO:
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
 
+
 @dataclass
 class UserDTO:
     """用户DTO"""
@@ -73,6 +75,7 @@ class UserDTO:
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "last_login": self.last_login.isoformat() if self.last_login else None,
         }
+
 
 @dataclass
 class MatchDTO:
@@ -106,6 +109,7 @@ class MatchDTO:
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
 
+
 @dataclass
 class PredictionStatsDTO:
     """预测统计DTO"""
@@ -132,6 +136,7 @@ class PredictionStatsDTO:
             "recent_performance": self.recent_performance,
         }
 
+
 @dataclass
 class MatchStatsDTO:
     """比赛统计DTO"""
@@ -155,6 +160,7 @@ class MatchStatsDTO:
             "draw_percentage": float(self.draw_percentage),
             "away_win_percentage": float(self.away_win_percentage),
         }
+
 
 @dataclass
 class CommandResult:

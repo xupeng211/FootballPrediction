@@ -19,11 +19,13 @@ from src.utils.retry import RetryConfig, retry
 from src.utils.time_utils import utc_now, parse_datetime
 from src.database.connection import get_async_session
 
+
 # 类定义
 class ScoresCollector:
     """实时比分收集器
-Real-time Scores Collector
+    Real-time Scores Collector
 
-从多个数据源收集实时比分数据，支持WebSocket和HTTP轮询。
-Collects real-time scores from multiple sources, supporting WebSocket and HTTP polling."""
+    从多个数据源收集实时比分数据，支持WebSocket和HTTP轮询。
+    Collects real-time scores from multiple sources, supporting WebSocket and HTTP polling."""
+
     pass  # TODO: 实现类逻辑

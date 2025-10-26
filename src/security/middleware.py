@@ -30,6 +30,7 @@ from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
+
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """安全头中间件"""
 
@@ -68,6 +69,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             response.headers[header] = value
 
         return response
+
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """速率限制中间件"""
@@ -137,6 +139,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         ]
 
         return len(recent_requests) >= self.requests_per_minute
+
 
 class AuditLoggingMiddleware(BaseHTTPMiddleware):
     """审计日志中间件"""
@@ -232,6 +235,7 @@ class AuditLoggingMiddleware(BaseHTTPMiddleware):
             client_ip = f"{forwarded_for.split(',')[0].strip()} (via {client_ip})"
         return client_ip
 
+
 class CSPMiddleware(BaseHTTPMiddleware):
     """内容安全策略中间件"""
 
@@ -273,6 +277,7 @@ class CSPMiddleware(BaseHTTPMiddleware):
 
         return response
 
+
 def setup_security_middleware(app: ASGIApp) -> ASGIApp:
     """设置所有安全中间件"""
 
@@ -312,6 +317,7 @@ def setup_security_middleware(app: ASGIApp) -> ASGIApp:
     app.add_middleware(CSPMiddleware, enabled=csp_enabled)
 
     return app
+
 
 class SecurityConfig:
     """安全配置类"""
@@ -393,6 +399,7 @@ class SecurityConfig:
             "httponly": self.session_http_only_cookie,
             "samesite": self.session_samesite_cookie,
         }
+
 
 # 全局安全配置实例
 security_config = SecurityConfig()

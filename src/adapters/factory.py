@@ -20,6 +20,7 @@ from .football import (
     CompositeFootballAdapter,
 )
 
+
 @dataclass
 class AdapterConfig:
     """适配器配置"""
@@ -33,6 +34,7 @@ class AdapterConfig:
     cache_config: Optional[Dict[str, Any]] = None
     retry_config: Optional[Dict[str, Any]] = None
 
+
 @dataclass
 class AdapterGroupConfig:
     """适配器组配置"""
@@ -41,6 +43,7 @@ class AdapterGroupConfig:
     adapters: List[str]
     primary_adapter: Optional[str] = None
     fallback_strategy: str = "sequential"  # sequential, parallel, random
+
 
 class AdapterFactory:
     """适配器工厂，用于创建适配器实例"""
@@ -276,6 +279,7 @@ class AdapterFactory:
             pass
 
         return errors
+
 
 # 全局适配器工厂实例
 adapter_factory = AdapterFactory()

@@ -1,4 +1,5 @@
 from typing import Dict, Any, Optional, List
+
 """
 streaming_collector.py
 streaming_collector
@@ -22,7 +23,9 @@ warnings.warn(
 # 从新模块导入所有内容
 try:
     from ..streaming.kafka_collector import KafkaCollector as kafka_collector
-    from ..streaming.websocket_collector import WebSocketCollector as websocket_collector
+    from ..streaming.websocket_collector import (
+        WebSocketCollector as websocket_collector,
+    )
     from ..streaming.processor import StreamProcessor as processor
     from ..streaming.manager import StreamManager as manager
 except ImportError:

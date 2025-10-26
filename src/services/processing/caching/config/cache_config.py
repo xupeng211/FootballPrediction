@@ -6,6 +6,7 @@ Cache Configuration
 from typing import Dict, Optional
 from dataclasses import dataclass
 
+
 @dataclass
 class CacheConfig:
     """缓存配置类"""
@@ -36,8 +37,10 @@ class CacheConfig:
                 "statistics": 1800,  # 30分钟
             }
 
+
 # 全局缓存配置实例
 CACHE_CONFIG = CacheConfig()
+
 
 def get_cache_ttl(cache_type: str) -> int:
     """获取指定类型的缓存TTL

@@ -19,6 +19,7 @@ from enum import Enum
 
 logger = logging.getLogger(__name__)
 
+
 class DataQualityLevel(Enum):
     """数据质量等级"""
 
@@ -26,6 +27,7 @@ class DataQualityLevel(Enum):
     MEDIUM = "medium"
     LOW = "low"
     INVALID = "invalid"
+
 
 class FootballDataCleaner:
     """足球数据清洗器 - 简化版本"""
@@ -75,6 +77,7 @@ class FootballDataCleaner:
     def batch_clean(self, data_list: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """批量清洗数据"""
         return [self.clean_match_data(data) for data in data_list]
+
 
 # 保持原有的导出
 __all__ = [

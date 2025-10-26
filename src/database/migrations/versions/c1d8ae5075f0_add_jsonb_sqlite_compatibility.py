@@ -32,6 +32,7 @@ down_revision: Union[str, None] = "006_missing_indexes"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
+
 def is_sqlite():
     """检测当前是否为SQLite数据库"""
     if context.is_offline_mode():
@@ -39,12 +40,14 @@ def is_sqlite():
     bind = op.get_bind()
     return bind.dialect.name == "sqlite"
 
+
 def is_postgresql():
     """检测当前是否为PostgreSQL数据库"""
     if context.is_offline_mode():
         return True  # 离线模式下假设是PostgreSQL
     bind = op.get_bind()
     return bind.dialect.name == "postgresql"
+
 
 def upgrade() -> None:
     """
@@ -75,6 +78,7 @@ def upgrade() -> None:
 
     logger.info("JSONB与SQLite兼容性配置完成")
 
+
 def _configure_sqlite_compatibility():
     """为SQLite配置兼容性设置"""
     # SQLite特定的配置
@@ -97,6 +101,7 @@ def _configure_sqlite_compatibility():
             logger.info(f"  ✓ 表 {table_name} 存在，JSON字段将自动适配为TEXT")
         else:
             logger.info(f"  ⚠ 表 {table_name} 不存在，跳过检查")
+
 
 def _verify_postgresql_jsonb_config():
     """验证PostgreSQL的JSONB配置"""
@@ -147,6 +152,7 @@ def _verify_postgresql_jsonb_config():
 
         except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             logger.info(f"  ❌ 检查表 {table_name} 时出错: {e}")
+
 
 def downgrade() -> None:
     """

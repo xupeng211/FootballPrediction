@@ -21,6 +21,7 @@ from pathlib import Path
 # 导入预测模型
 from ..models.prediction_model import PredictionModel, FootballPredictionModel
 
+
 class TrainingStatus(Enum):
     """训练状态枚举"""
 
@@ -32,6 +33,7 @@ class TrainingStatus(Enum):
     FAILED = "failed"
     CANCELLED = "cancelled"
 
+
 class ModelType(Enum):
     """模型类型枚举"""
 
@@ -42,6 +44,7 @@ class ModelType(Enum):
     NEURAL_NETWORK = "neural_network"
     SVM = "svm"
     XGBOOST = "xgboost"
+
 
 class TrainingConfig:
     """训练配置类"""
@@ -73,6 +76,7 @@ class TrainingConfig:
         self.handle_missing = True
         self.handle_outliers = True
         self.balance_classes = True
+
 
 class ModelTrainer:
     """
@@ -369,6 +373,7 @@ class ModelTrainer:
             )[:5],
         }
 
+
 class ModelRegistry:
     """模型注册表"""
 
@@ -483,8 +488,10 @@ class ModelRegistry:
 
         return False
 
+
 # 全局模型注册表
 _global_registry: Optional[ModelRegistry] = None
+
 
 def get_model_registry() -> ModelRegistry:
     """获取全局模型注册表"""
@@ -492,6 +499,7 @@ def get_model_registry() -> ModelRegistry:
     if _global_registry is None:
         _global_registry = ModelRegistry()
     return _global_registry
+
 
 # 便捷函数
 async def train_football_model(

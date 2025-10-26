@@ -25,6 +25,7 @@ router = APIRouter(prefix="/repositories", tags=["仓储模式"])
 
 # ==================== 预测仓储端点 ====================
 
+
 @router.get("/predictions", summary="获取预测列表")
 async def get_predictions(
     repo: ReadOnlyPredictionRepoDep,
@@ -61,6 +62,7 @@ async def get_predictions(
         ],
     }
 
+
 @router.get("/predictions/{prediction_id}", summary="获取单个预测")
 async def get_prediction(
     prediction_id: int, repo: ReadOnlyPredictionRepoDep
@@ -83,6 +85,7 @@ async def get_prediction(
         "updated_at": prediction.updated_at,
     }
 
+
 @router.get("/predictions/user/{user_id}/statistics", summary="获取用户预测统计")
 async def get_user_prediction_statistics(
     user_id: int,
@@ -93,6 +96,7 @@ async def get_user_prediction_statistics(
     stats = await repo.get_user_statistics(user_id, period_days=days)
     return stats
 
+
 @router.get("/predictions/match/{match_id}/statistics", summary="获取比赛预测统计")
 async def get_match_prediction_statistics(
     match_id: int, repo: ReadOnlyPredictionRepoDep
@@ -100,6 +104,7 @@ async def get_match_prediction_statistics(
     """获取比赛预测统计信息"""
     stats = await repo.get_match_statistics(match_id)
     return stats
+
 
 @router.post("/predictions", summary="创建预测")
 async def create_prediction(
@@ -124,6 +129,7 @@ async def create_prediction(
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 @router.put("/predictions/{prediction_id}", summary="更新预测")
 async def update_prediction(
     prediction_id: int, update_data: Dict[str, Any], repo: PredictionRepoDep
@@ -138,7 +144,9 @@ async def update_prediction(
         "prediction": {"id": prediction.id, "updated_at": prediction.updated_at},
     }
 
+
 # ==================== 用户仓储端点 ====================
+
 
 @router.get("/users", summary="获取用户列表")
 async def get_users(
@@ -173,6 +181,7 @@ async def get_users(
         ],
     }
 
+
 @router.get("/users/{user_id}", summary="获取用户详情")
 async def get_user(user_id: int, repo: ReadOnlyUserRepoDep) -> Dict[str, Any]:
     """获取用户详情"""
@@ -191,11 +200,13 @@ async def get_user(user_id: int, repo: ReadOnlyUserRepoDep) -> Dict[str, Any]:
         "created_at": user.created_at,
     }
 
+
 @router.get("/users/{user_id}/statistics", summary="获取用户完整统计")
 async def get_user_statistics(user_id: int, repo: UserRepoDep) -> Dict[str, Any]:
     """获取用户完整统计信息（使用读写仓储的统计方法）"""
     stats = await repo.get_user_statistics(user_id)
     return stats
+
 
 @router.get("/users/search", summary="搜索用户")
 async def search_users(
@@ -219,6 +230,7 @@ async def search_users(
         ],
     }
 
+
 @router.get("/users/active", summary="获取活跃用户")
 async def get_active_users(
     repo: ReadOnlyUserRepoDep,
@@ -239,6 +251,7 @@ async def get_active_users(
         ],
     }
 
+
 @router.post("/users", summary="创建用户")
 async def create_user(user_data: Dict[str, Any], repo: UserRepoDep) -> Dict[str, Any]:
     """创建新用户"""
@@ -256,7 +269,9 @@ async def create_user(user_data: Dict[str, Any], repo: UserRepoDep) -> Dict[str,
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+
 # ==================== 比赛仓储端点 ====================
+
 
 @router.get("/matches", summary="获取比赛列表")
 async def get_matches(
@@ -293,6 +308,7 @@ async def get_matches(
         ],
     }
 
+
 @router.get("/matches/upcoming", summary="获取即将到来的比赛")
 async def get_upcoming_matches(
     repo: ReadOnlyMatchRepoDep,
@@ -316,6 +332,7 @@ async def get_upcoming_matches(
         ],
     }
 
+
 @router.get("/matches/live", summary="获取正在进行的比赛")
 async def get_live_matches(repo: ReadOnlyMatchRepoDep) -> Dict[str, Any]:
     """获取正在进行的比赛"""
@@ -335,6 +352,7 @@ async def get_live_matches(repo: ReadOnlyMatchRepoDep) -> Dict[str, Any]:
             for m in matches
         ],
     }
+
 
 @router.get("/matches/{match_id}", summary="获取比赛详情")
 async def get_match(match_id: int, repo: ReadOnlyMatchRepoDep) -> Dict[str, Any]:
@@ -357,11 +375,13 @@ async def get_match(match_id: int, repo: ReadOnlyMatchRepoDep) -> Dict[str, Any]
         "created_at": match.created_at,
     }
 
+
 @router.get("/matches/{match_id}/statistics", summary="获取比赛统计")
 async def get_match_statistics(match_id: int, repo: MatchRepoDep) -> Dict[str, Any]:
     """获取比赛统计信息"""
     stats = await repo.get_match_statistics(match_id)
     return stats
+
 
 @router.get("/matches/search", summary="搜索比赛")
 async def search_matches(
@@ -386,6 +406,7 @@ async def search_matches(
             for m in matches[:limit]
         ],
     }
+
 
 @router.get("/matches/date-range", summary="获取日期范围内的比赛")
 async def get_matches_by_date_range(
@@ -415,6 +436,7 @@ async def get_matches_by_date_range(
         ],
     }
 
+
 @router.post("/matches/{match_id}/start", summary="开始比赛")
 async def start_match(match_id: int, repo: MatchRepoDep) -> Dict[str, Any]:
     """开始比赛（更新状态为LIVE）"""
@@ -428,6 +450,7 @@ async def start_match(match_id: int, repo: MatchRepoDep) -> Dict[str, Any]:
         "status": match.status,
         "started_at": match.started_at,
     }
+
 
 @router.post("/matches/{match_id}/finish", summary="结束比赛")
 async def finish_match(
@@ -448,7 +471,9 @@ async def finish_match(
         "finished_at": match.finished_at,
     }
 
+
 # ==================== 仓储模式演示端点 ====================
+
 
 @router.get("/demo/query-spec", summary="QuerySpec查询演示")
 async def demo_query_spec(
@@ -489,6 +514,7 @@ async def demo_query_spec(
             },
         ],
     }
+
 
 @router.get("/demo/read-only-vs-write", summary="只读与读写仓储对比")
 async def demo_read_only_vs_write(

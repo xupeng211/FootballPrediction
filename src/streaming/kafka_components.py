@@ -74,9 +74,11 @@ KafkaTopicManager = None  # 主题管理
 MessageSerializer = None  # 消息序列化器
 KafkaStream = None  # 流处理类
 
+
 def ensure_topics_exist(topics: List[str]) -> bool:
     """确保主题存在（桩实现）"""
     return True
+
 
 # 重新导出以保持向后兼容性
 __all__ = [

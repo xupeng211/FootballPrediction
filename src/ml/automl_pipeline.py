@@ -23,6 +23,7 @@ import joblib
 
 logger = logging.getLogger(__name__)
 
+
 class AutoMLPipeline:
     """AutoML Pipeline"""
 
@@ -38,7 +39,7 @@ class AutoMLPipeline:
         X: pd.DataFrame,
         y: pd.Series,
         model_type: str = "random_forest",
-        hyperparameter_tuning: bool = True
+        hyperparameter_tuning: bool = True,
     ) -> Dict[str, Any]:
         """训练模型"""
         try:
@@ -53,16 +54,16 @@ class AutoMLPipeline:
             if model_type == "random_forest":
                 model = RandomForestClassifier(random_state=42)
                 param_grid = {
-                    'n_estimators': [50, 100, 200],
-                    'max_depth': [5, 10, None],
-                    'min_samples_split': [2, 5, 10]
+                    "n_estimators": [50, 100, 200],
+                    "max_depth": [5, 10, None],
+                    "min_samples_split": [2, 5, 10],
                 }
             elif model_type == "gradient_boosting":
                 model = GradientBoostingRegressor(random_state=42)
                 param_grid = {
-                    'n_estimators': [50, 100, 200],
-                    'learning_rate': [0.01, 0.1, 0.2],
-                    'max_depth': [3, 5, 7]
+                    "n_estimators": [50, 100, 200],
+                    "learning_rate": [0.01, 0.1, 0.2],
+                    "max_depth": [3, 5, 7],
                 }
             else:
                 raise ValueError(f"不支持的模型类型: {model_type}")
@@ -70,7 +71,7 @@ class AutoMLPipeline:
             # 超参数调优
             if hyperparameter_tuning:
                 grid_search = GridSearchCV(
-                    model, param_grid, cv=3, scoring='accuracy', n_jobs=-1
+                    model, param_grid, cv=3, scoring="accuracy", n_jobs=-1
                 )
                 grid_search.fit(X_train, y_train)
                 self.model = grid_search.best_estimator_
@@ -83,7 +84,7 @@ class AutoMLPipeline:
             # 评估模型
             y_pred = self.model.predict(X_test)
 
-            if hasattr(self.model, 'predict_proba'):
+            if hasattr(self.model, "predict_proba"):
                 accuracy = accuracy_score(y_test, y_pred)
                 metric_name = "accuracy"
                 metric_value = accuracy
@@ -99,7 +100,7 @@ class AutoMLPipeline:
                 "best_params": best_params,
                 f"{metric_name}_test": metric_value,
                 "training_samples": len(X_train),
-                "test_samples": len(X_test)
+                "test_samples": len(X_test),
             }
 
             self.training_history.append(training_record)
@@ -115,15 +116,12 @@ class AutoMLPipeline:
                 "metric_value": metric_value,
                 "best_params": best_params,
                 "training_samples": len(X_train),
-                "test_samples": len(X_test)
+                "test_samples": len(X_test),
             }
 
         except Exception as e:
             logger.error(f"模型训练失败: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}
 
     async def predict(self, features: pd.DataFrame) -> Dict[str, Any]:
         """预测"""
@@ -134,24 +132,25 @@ class AutoMLPipeline:
             predictions = self.model.predict(features)
             probabilities = None
 
-            if hasattr(self.model, 'predict_proba'):
+            if hasattr(self.model, "predict_proba"):
                 probabilities = self.model.predict_proba(features)
 
             return {
                 "success": True,
                 "predictions": predictions.tolist(),
-                "probabilities": probabilities.tolist() if probabilities is not None else None,
-                "timestamp": datetime.now()
+                "probabilities": probabilities.tolist()
+                if probabilities is not None
+                else None,
+                "timestamp": datetime.now(),
             }
 
         except Exception as e:
             logger.error(f"预测失败: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}
 
-    async def monitor_performance(self, test_data: pd.DataFrame, test_labels: pd.Series) -> Dict[str, Any]:
+    async def monitor_performance(
+        self, test_data: pd.DataFrame, test_labels: pd.Series
+    ) -> Dict[str, Any]:
         """监控模型性能"""
         try:
             if not self.is_trained:
@@ -159,7 +158,7 @@ class AutoMLPipeline:
 
             predictions = self.model.predict(test_data)
 
-            if hasattr(self.model, 'predict_proba'):
+            if hasattr(self.model, "predict_proba"):
                 accuracy = accuracy_score(test_labels, predictions)
                 metric_name = "accuracy"
                 metric_value = accuracy
@@ -183,7 +182,7 @@ class AutoMLPipeline:
                 metric_name: metric_value,
                 "performance_drop": performance_drop,
                 "alert_threshold": 0.1,
-                "needs_retraining": performance_drop > 0.1
+                "needs_retraining": performance_drop > 0.1,
             }
             # 记录性能数据到历史记录
             self.performance_history.append(performance_record)
@@ -193,15 +192,14 @@ class AutoMLPipeline:
                 "baseline_performance": self.performance_metrics.get(metric_name),
                 "performance_drop": performance_drop,
                 "needs_retraining": performance_drop > 0.1,
-                "recommendation": "重新训练模型" if performance_drop > 0.1 else "继续监控"
+                "recommendation": "重新训练模型"
+                if performance_drop > 0.1
+                else "继续监控",
             }
 
         except Exception as e:
             logger.error(f"性能监控失败: {e}")
-            return {
-                "error": str(e),
-                "needs_retraining": True
-            }
+            return {"error": str(e), "needs_retraining": True}
 
     def save_model(self, filepath: str) -> bool:
         """保存模型"""
@@ -211,7 +209,7 @@ class AutoMLPipeline:
                 "is_trained": self.is_trained,
                 "training_history": self.training_history,
                 "performance_metrics": self.performance_metrics,
-                "config": self.config
+                "config": self.config,
             }
 
             joblib.dump(model_data, filepath)
@@ -240,14 +238,18 @@ class AutoMLPipeline:
             logger.error(f"模型加载失败: {e}")
             return False
 
+
 # 创建全局实例
 automlpipeline_instance = AutoMLPipeline()
+
 
 async def main():
     """主函数示例"""
     # 示例数据
     np.random.seed(42)
-    X = pd.DataFrame(np.random.randn(100, 5), columns=[f'feature_{i}' for i in range(5)])
+    X = pd.DataFrame(
+        np.random.randn(100, 5), columns=[f"feature_{i}" for i in range(5)]
+    )
     y = pd.Series(np.random.choice([0, 1], 100))
 
     trainer = AutoMLPipeline()
@@ -257,13 +259,16 @@ async def main():
     print("训练结果:", training_result)
 
     # 预测
-    test_features = pd.DataFrame(np.random.randn(5, 5), columns=[f'feature_{i}' for i in range(5)])
+    test_features = pd.DataFrame(
+        np.random.randn(5, 5), columns=[f"feature_{i}" for i in range(5)]
+    )
     prediction_result = await trainer.predict(test_features)
     print("预测结果:", prediction_result)
 
     # 性能监控
     monitoring_result = await trainer.monitor_performance(X, y)
     print("监控结果:", monitoring_result)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

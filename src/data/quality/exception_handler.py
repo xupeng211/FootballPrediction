@@ -14,6 +14,7 @@ from enum import Enum
 
 logger = logging.getLogger(__name__)
 
+
 class DataQualityIssueType(Enum):
     """数据质量问题类型"""
 
@@ -22,6 +23,7 @@ class DataQualityIssueType(Enum):
     OUT_OF_RANGE = "out_of_range"
     DUPLICATE = "duplicate"
     INCONSISTENT = "inconsistent"
+
 
 class DataQualityExceptionHandler:
     """数据质量异常处理器 - 简化版本"""
@@ -47,6 +49,7 @@ class DataQualityExceptionHandler:
         """获取处理统计"""
         return self.statistics
 
+
 class MissingValueHandler:
     """缺失值处理器"""
 
@@ -63,6 +66,7 @@ class MissingValueHandler:
             if key not in data or data[key] is None:
                 data[key] = default_value
         return data
+
 
 class SuspiciousOddsHandler:
     """可疑赔率处理器"""
@@ -91,6 +95,7 @@ class SuspiciousOddsHandler:
                     data[f"{odds_type}_invalid"] = True
         return data
 
+
 class InvalidDataHandler:
     """无效数据处理器"""
 
@@ -102,6 +107,7 @@ class InvalidDataHandler:
             return {"valid": False, "data": str(data)}
 
         return {"valid": True, "data": data}
+
 
 class QualityLogger:
     """质量日志记录器"""
@@ -124,6 +130,7 @@ class QualityLogger:
         """获取日志"""
         return self.logs[-limit:]
 
+
 class StatisticsProvider:
     """统计信息提供器"""
 
@@ -142,41 +149,49 @@ class StatisticsProvider:
         """获取统计信息"""
         return self.stats.copy()
 
+
 # 异常类定义
 class DataQualityException(Exception):
     """数据质量异常基类"""
 
     pass
 
+
 class MissingValueException(DataQualityException):
     """缺失值异常"""
 
     pass
+
 
 class SuspiciousOddsException(DataQualityException):
     """可疑赔率异常"""
 
     pass
 
+
 class InvalidDataException(DataQualityException):
     """无效数据异常"""
 
     pass
+
 
 class DataConsistencyException(DataQualityException):
     """数据一致性异常"""
 
     pass
 
+
 class QualityLogException(DataQualityException):
     """质量日志异常"""
 
     pass
 
+
 class StatisticsQueryException(DataQualityException):
     """统计查询异常"""
 
     pass
+
 
 # 保持原有的 __all__ 导出以维持兼容性
 __all__ = [

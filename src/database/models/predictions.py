@@ -2,6 +2,7 @@ import json
 import math
 from sqlalchemy import and_
 from .match import Match
+
 """
 Predictions - 数据库模块
 
@@ -45,6 +46,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 存储机器学习模型的预测结果，包括胜负概率、比分预测等。
 """
 
+
 class PredictedResult(Enum):
     """预测结果枚举"""
 
@@ -52,6 +54,7 @@ class PredictedResult(Enum):
     DRAW = "draw"  # 平局
     AWAY_WIN = "away_win"  # 客队胜
 
+
 class Predictions(BaseModel):
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {"extend_existing": True}
     __tablename__ = "predictions"

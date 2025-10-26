@@ -34,6 +34,7 @@ LogCategory = {
     "AUDIT": "audit",
 }
 
+
 class StructuredLogger:
     """结构化日志记录器"""
 
@@ -62,6 +63,7 @@ class StructuredLogger:
         extra = {"category": self.category, **kwargs}
         self.logger.debug(message, extra=extra)
 
+
 class LoggerManager:
     """日志管理器 - 统一日志配置和管理"""
 
@@ -85,20 +87,24 @@ class LoggerManager:
         """检查是否已配置"""
         return cls._configured
 
+
 def log_performance(func_name: str, duration: float, **kwargs):
     """记录性能日志"""
     logger = get_logger("performance")
     logger.info(f"Performance: {func_name} took {duration:.4f}s", **kwargs)
+
 
 def log_async_performance(func_name: str, duration: float, **kwargs):
     """记录异步性能日志"""
     logger = get_logger("async_performance")
     logger.info(f"Async Performance: {func_name} took {duration:.4f}s", **kwargs)
 
+
 def log_audit(action: str, user: str, resource: str, **kwargs):
     """记录审计日志"""
     logger = get_logger("audit")
     logger.info(f"Audit: {action} by {user} on {resource}", **kwargs)
+
 
 def get_logger(name: str, level: Optional[str] = "INFO") -> logging.Logger:
     """获取指定名称的日志器。

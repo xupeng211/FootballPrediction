@@ -10,6 +10,7 @@ from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
+
 class RedisSyncOperations:
     """Synchronous Redis operations"""
 

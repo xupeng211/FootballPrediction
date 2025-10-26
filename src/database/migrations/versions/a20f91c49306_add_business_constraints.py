@@ -26,6 +26,7 @@ down_revision: Union[str, None] = "d82ea26f05d0"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
+
 def upgrade() -> None:
     """添加业务逻辑约束和触发器"""
 
@@ -198,6 +199,7 @@ def upgrade() -> None:
         EXECUTE FUNCTION check_odds_consistency();
     """
     )
+
 
 def downgrade() -> None:
     """移除业务逻辑约束和触发器"""

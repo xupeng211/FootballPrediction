@@ -13,11 +13,13 @@ from typing import Optional, Dict, Any, List
 
 from ...core.exceptions import DomainError
 
+
 class TeamType(Enum):
     """球队类型"""
 
     CLUB = "club"  # 俱乐部
     NATIONAL = "national"  # 国家队
+
 
 @dataclass
 class TeamStats:
@@ -88,6 +90,7 @@ class TeamStats:
 
     def __str__(self) -> str:
         return f"{self.matches_played}场 {self.wins}胜 {self.draws}平 {self.losses}负"
+
 
 @dataclass
 class TeamForm:
@@ -171,6 +174,7 @@ class TeamForm:
             else "无"
         )
         return f"状态: {self.recent_form_string} ({streak_str})"
+
 
 @dataclass
 class Team:

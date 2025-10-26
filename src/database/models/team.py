@@ -12,6 +12,7 @@ from enum import Enum
 
 # Match model imported locally to avoid circular imports
 
+
 class TeamForm(Enum):
     """球队状态枚举"""
 
@@ -19,6 +20,7 @@ class TeamForm(Enum):
     AVERAGE = "average"  # 状态一般
     POOR = "poor"  # 状态不佳
 
+
 class Team(BaseModel):
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {"extend_existing": True}
     __tablename__ = "teams"

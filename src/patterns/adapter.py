@@ -13,6 +13,7 @@ import aiohttp
 
 from src.core.logging import get_logger
 
+
 @dataclass
 class ExternalData:
     """外部数据通用格式"""
@@ -21,6 +22,7 @@ class ExternalData:
     data: Any
     timestamp: datetime
     metadata: Dict[str, Any]
+
 
 class ExternalAPI(ABC):
     """外部API抽象接口"""
@@ -34,6 +36,7 @@ class ExternalAPI(ABC):
     async def send_data(self, endpoint: str, data: Any) -> Any:
         """发送数据"""
         pass
+
 
 class APIAdapter(ABC):
     """API适配器抽象基类"""
@@ -56,6 +59,7 @@ class APIAdapter(ABC):
     def transform_data(self, raw_data: Any) -> Dict[str, Any]:
         """转换数据格式"""
         pass
+
 
 class FootballAPIImpl(ExternalAPI):
     """足球API实现示例"""
@@ -112,6 +116,7 @@ class FootballAPIImpl(ExternalAPI):
         if self.session and not self.session.closed:
             await self.session.close()
 
+
 class WeatherAPIImpl(ExternalAPI):
     """天气API实现示例"""
 
@@ -154,6 +159,7 @@ class WeatherAPIImpl(ExternalAPI):
         """关闭会话"""
         if self.session and not self.session.closed:
             await self.session.close()
+
 
 class OddsAPIImpl(ExternalAPI):
     """赔率API实现示例"""
@@ -209,6 +215,7 @@ class OddsAPIImpl(ExternalAPI):
         """关闭会话"""
         if self.session and not self.session.closed:
             await self.session.close()
+
 
 class FootballApiAdapter(APIAdapter):
     """足球API适配器"""
@@ -267,6 +274,7 @@ class FootballApiAdapter(APIAdapter):
             }
         return {}
 
+
 class WeatherApiAdapter(APIAdapter):
     """天气API适配器"""
 
@@ -324,6 +332,7 @@ class WeatherApiAdapter(APIAdapter):
                 "clouds": raw_data.get("clouds", {}).get("all"),
             }
         return {}
+
 
 class OddsApiAdapter(APIAdapter):
     """赔率API适配器"""
@@ -384,6 +393,7 @@ class OddsApiAdapter(APIAdapter):
             }
         return {}
 
+
 class AdapterFactory:
     """适配器工厂"""
 
@@ -405,6 +415,7 @@ class AdapterFactory:
     def register_adapter(cls, adapter_type: str, adapter_class: type):
         """注册新的适配器类型"""
         cls._adapters[adapter_type] = adapter_class
+
 
 class UnifiedDataCollector:
     """统一数据收集器"""
@@ -492,6 +503,7 @@ class UnifiedDataCollector:
         for adapter in self.adapters.values():
             if hasattr(adapter.external_api, "close"):
                 await adapter.external_api.close()
+
 
 # 示例使用
 async def example_usage():

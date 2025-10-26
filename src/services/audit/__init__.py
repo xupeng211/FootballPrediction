@@ -13,6 +13,7 @@ from typing import Optional
 from enum import Enum
 from datetime import datetime
 
+
 class AuditAction(Enum):
     """审计动作枚举"""
 
@@ -23,6 +24,7 @@ class AuditAction(Enum):
     LOGIN = "login"
     LOGOUT = "logout"
 
+
 class AuditSeverity(Enum):
     """审计严重性枚举"""
 
@@ -30,6 +32,7 @@ class AuditSeverity(Enum):
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
+
 
 class AuditContext:
     """审计上下文"""
@@ -40,6 +43,7 @@ class AuditContext:
         self.user_id = user_id
         self.action = action
         self.timestamp = datetime.now()
+
 
 class AuditLog:
     """审计日志"""
@@ -55,11 +59,13 @@ class AuditLog:
         self.severity = severity
         self.timestamp = datetime.now()
 
+
 class AuditLogSummary:
     """审计日志摘要"""
 
     def __init__(self, total_logs: int = 0):
         self.total_logs = total_logs
+
 
 class AuditService:
     """审计服务（简化版本）"""
@@ -75,6 +81,7 @@ class AuditService:
     ):
         """记录审计日志"""
         pass
+
 
 __all__ = [
     "AuditService",

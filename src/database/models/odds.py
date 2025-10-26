@@ -48,6 +48,7 @@ from sqlalchemy import String
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
 
+
 class MarketType(Enum):
     """赔率市场类型"""
 
@@ -56,6 +57,7 @@ class MarketType(Enum):
     ASIAN_HANDICAP = "asian_handicap"  # 亚洲让球
     BOTH_TEAMS_SCORE = "both_teams_score"  # 双方进球
 
+
 class Odds(BaseModel):
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {"extend_existing": True}
     __tablename__ = "odds"

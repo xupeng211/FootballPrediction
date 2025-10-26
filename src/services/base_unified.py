@@ -11,6 +11,7 @@ from datetime import datetime
 
 from src.database.connection import DatabaseManager
 
+
 class BaseService(ABC):
     """
     统一的基础服务类
@@ -298,6 +299,7 @@ class BaseService(ABC):
             "description": "Service description not provided",
             "version": "1.0.0",
         }
+
 
 class SimpleService(BaseService):
     """

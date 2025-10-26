@@ -11,6 +11,7 @@ from datetime import datetime
 from .base import ValidatableCommand, ValidationResult
 from ..database.models import User, Match, Prediction
 
+
 class CreatePredictionCommand(ValidatableCommand):
     """创建预测命令"""
 
@@ -57,6 +58,7 @@ class CreatePredictionCommand(ValidatableCommand):
             if not errors
             else ValidationResult.failure(errors)
         )
+
 
 class UpdatePredictionCommand(ValidatableCommand):
     """更新预测命令"""
@@ -109,6 +111,7 @@ class UpdatePredictionCommand(ValidatableCommand):
             else ValidationResult.failure(errors)
         )
 
+
 class DeletePredictionCommand(ValidatableCommand):
     """删除预测命令"""
 
@@ -139,6 +142,7 @@ class DeletePredictionCommand(ValidatableCommand):
             if not errors
             else ValidationResult.failure(errors)
         )
+
 
 class CreateUserCommand(ValidatableCommand):
     """创建用户命令"""
@@ -188,6 +192,7 @@ class CreateUserCommand(ValidatableCommand):
             else ValidationResult.failure(errors)
         )
 
+
 class UpdateUserCommand(ValidatableCommand):
     """更新用户命令"""
 
@@ -222,6 +227,7 @@ class UpdateUserCommand(ValidatableCommand):
             if not errors
             else ValidationResult.failure(errors)
         )
+
 
 class CreateMatchCommand(ValidatableCommand):
     """创建比赛命令"""
@@ -263,6 +269,7 @@ class CreateMatchCommand(ValidatableCommand):
             if not errors
             else ValidationResult.failure(errors)
         )
+
 
 class UpdateMatchCommand(ValidatableCommand):
     """更新比赛命令"""

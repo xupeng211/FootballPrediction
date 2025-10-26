@@ -20,6 +20,7 @@ from datetime import datetime
 
 from src.database.connection import DatabaseManager
 
+
 class DataQualityMonitor:
     """
     数据质量监控器

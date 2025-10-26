@@ -15,6 +15,7 @@ import logging
 
 T = TypeVar("T", bound="Event")
 
+
 class EventData:
     """事件数据基类
 
@@ -36,6 +37,7 @@ class EventData:
         self.source = source
         self.version = version
         self.metadata = metadata or {}
+
 
 class Event(ABC):
     """事件抽象基类
@@ -119,6 +121,7 @@ class Event(ABC):
 
     def __repr__(self) -> str:
         return self.__str__()
+
 
 class EventHandler(ABC):
     """事件处理器抽象基类
@@ -215,6 +218,7 @@ class EventHandler(ABC):
                 logger = logging.getLogger(__name__)
                 logger.info(f"Error handling event {event_type}: {e}")
 
+
 class EventFilter(ABC):
     """事件过滤器抽象基类
 
@@ -233,6 +237,7 @@ class EventFilter(ABC):
         """
         pass
 
+
 class EventTypeFilter(EventFilter):
     """基于事件类型的过滤器"""
 
@@ -247,6 +252,7 @@ class EventTypeFilter(EventFilter):
     def should_process(self, event: Event) -> bool:
         return event.get_event_type() in self.allowed_types
 
+
 class EventSourceFilter(EventFilter):
     """基于事件源的过滤器"""
 
@@ -260,6 +266,7 @@ class EventSourceFilter(EventFilter):
 
     def should_process(self, event: Event) -> bool:
         return event.source in self.allowed_sources if event.source else False
+
 
 class CompositeEventFilter(EventFilter):
     """组合过滤器，支持AND和OR逻辑"""

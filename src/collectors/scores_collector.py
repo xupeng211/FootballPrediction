@@ -17,6 +17,7 @@ from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)
 
+
 class ScoresCollector:
     """比分收集器"""
 
@@ -109,6 +110,7 @@ class ScoresCollector:
 
         for key in keys_to_clear:
             await self.redis_client.delete_cache(key)
+
 
 class ScoresCollectorFactory:
     """比分收集器工厂类"""

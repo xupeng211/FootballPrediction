@@ -21,6 +21,7 @@ from openlineage.client.facet_v2 import (
 
 logger = logging.getLogger(__name__)
 
+
 class LineageReporter:
     """
     数据血缘报告器
@@ -424,6 +425,7 @@ class LineageReporter:
         """清理所有活跃运行记录"""
         self._active_runs.clear()
         logger.info("Cleared all active runs")
+
 
 # 全局实例
 lineage_reporter = LineageReporter()

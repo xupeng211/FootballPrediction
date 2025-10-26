@@ -9,6 +9,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Optional
 
+
 class ContentType(Enum):
     """内容类型枚举"""
 
@@ -18,6 +19,7 @@ class ContentType(Enum):
     AUDIO = "audio"
     DOCUMENT = "document"
 
+
 class UserRole(Enum):
     """用户角色枚举"""
 
@@ -25,6 +27,7 @@ class UserRole(Enum):
     USER = "user"
     GUEST = "guest"
     MODERATOR = "moderator"
+
 
 class Content:
     """内容类"""
@@ -34,12 +37,14 @@ class Content:
         self.content_type = content_type
         self.data = data
 
+
 class UserProfile:
     """用户配置文件类"""
 
     def __init__(self, user_id: str, preferences: Dict[str, Any] = None):
         self.user_id = user_id
         self.preferences = preferences or {}
+
 
 class AnalysisResult:
     """分析结果类"""
@@ -59,6 +64,7 @@ class AnalysisResult:
         self.confidence = confidence
         self.timestamp = timestamp or datetime.now()
         self.content_id = content_id
+
 
 class ContentAnalysisService(SimpleService):
     """内容分析服务"""

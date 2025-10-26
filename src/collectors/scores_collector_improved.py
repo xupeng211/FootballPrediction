@@ -12,8 +12,4 @@ from .collectors.scores_collector_improved_models import *
 from .collectors.scores_collector_improved_utils import *
 
 # 导出所有公共接口
-__all__ = [
-    "ScoresCollector",
-    "ScoresCollectorManager",
-    "get_scores_manager"
-]
+__all__ = ["ScoresCollector", "ScoresCollectorManager", "get_scores_manager"]

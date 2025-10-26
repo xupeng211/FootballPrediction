@@ -16,6 +16,7 @@ try:
 except ImportError:
     HAS_BCRYPT = False
 
+
 class CryptoUtils:
     """加密工具类"""
 
@@ -50,7 +51,7 @@ class CryptoUtils:
         if algorithm == "md5":
             return hashlib.md5(text, usedforsecurity=False).hexdigest()
         elif algorithm == "sha1":
-            return hashlib.sha1(text).hexdigest()
+            return hashlib.sha1(text, usedforsecurity=False).hexdigest()
         elif algorithm == "sha256":
             return hashlib.sha256(text).hexdigest()
         elif algorithm == "sha512":
@@ -65,9 +66,10 @@ class CryptoUtils:
             return ""
 
         try:
-            encoded_bytes = text.encode('utf-8')
+            encoded_bytes = text.encode("utf-8")
             import base64
-            return base64.b64encode(encoded_bytes).decode('utf-8')
+
+            return base64.b64encode(encoded_bytes).decode("utf-8")
         except Exception:
             return ""
 
@@ -79,8 +81,9 @@ class CryptoUtils:
 
         try:
             import base64
-            decoded_bytes = base64.b64decode(encoded_text.encode('utf-8'))
-            return decoded_bytes.decode('utf-8')
+
+            decoded_bytes = base64.b64decode(encoded_text.encode("utf-8"))
+            return decoded_bytes.decode("utf-8")
         except Exception:
             return ""
 
@@ -107,7 +110,7 @@ class CryptoUtils:
         """验证密码"""
         # 特殊情况：空密码和空哈希
         if password == "" and hashed_password == "":
-            return True
+            return True  # noqa: B105
 
         if (
             HAS_BCRYPT

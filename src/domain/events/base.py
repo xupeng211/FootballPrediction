@@ -11,6 +11,7 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 from uuid import uuid4
 
+
 class DomainEvent(ABC):
     """
     领域事件基类

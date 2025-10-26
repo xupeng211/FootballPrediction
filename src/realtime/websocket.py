@@ -13,6 +13,7 @@ from typing import Any, Callable, Dict, List, Optional, Set, Union
 from datetime import datetime
 from enum import Enum
 
+
 class ConnectionState(Enum):
     """连接状态枚举"""
 
@@ -20,6 +21,7 @@ class ConnectionState(Enum):
     CONNECTING = "connecting"
     CONNECTED = "connected"
     DISCONNECTING = "disconnecting"
+
 
 class WebSocketMessage:
     """WebSocket 消息类"""
@@ -40,6 +42,7 @@ class WebSocketMessage:
                 "id": self.id,
             }
         )
+
 
 class WebSocketManager:
     """
@@ -213,6 +216,7 @@ class WebSocketManager:
             },
         }
 
+
 class WebSocketConnection:
     """
     WebSocket 连接类（桩实现）
@@ -283,8 +287,10 @@ class WebSocketConnection:
         """检查连接是否活跃"""
         return self.state == ConnectionState.CONNECTED
 
+
 # 全局 WebSocket 管理器实例
 _global_manager: Optional[WebSocketManager] = None
+
 
 def get_websocket_manager() -> WebSocketManager:
     """
@@ -298,14 +304,17 @@ def get_websocket_manager() -> WebSocketManager:
         _global_manager = WebSocketManager()
     return _global_manager
 
+
 # 便捷函数
 async def send_to_user(user_id: str, message: Any) -> bool:
     """发送消息给特定用户"""
     return await get_websocket_manager().send_to_connection(user_id, message)
 
+
 async def broadcast_to_room(room_name: str, message: Any) -> int:
     """广播消息到房间"""
     return await get_websocket_manager().broadcast(message, room_name)
+
 
 async def broadcast_to_all(message: Any) -> int:
     """广播消息给所有连接"""

@@ -25,6 +25,7 @@ from ..events.prediction_events import (
     PredictionPointsAdjustedEvent,
 )
 
+
 class PredictionDomainService:
     """预测领域服务"""
 

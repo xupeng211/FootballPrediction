@@ -15,15 +15,19 @@ import re
 import logging
 from datetime import datetime, timedelta
 
+
 class CorsOriginValidationMode(Enum):
     """CORS origin验证模式"""
+
     STRICT = "strict"
     LOOSE = "loose"
     DISABLED = "disabled"
 
+
 @dataclass
 class CorsConfig:
     """CORS配置类"""
+
     # 允许的origins
     allow_origins: Optional[List[str]] = None
     # 允许的方法
@@ -60,7 +64,11 @@ class CorsConfig:
         if self.expose_headers is None:
             self.expose_headers = []
         if self.vary is None:
-            self.vary = ["Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"]
+            self.vary = [
+                "Origin",
+                "Access-Control-Request-Method",
+                "Access-Control-Request-Headers",
+            ]
 
     def validate(self) -> bool:
         """验证配置有效性"""
@@ -75,7 +83,17 @@ class CorsConfig:
 
             # 验证methods
             if self.allow_methods:
-                valid_methods = {"GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH", "TRACE", "CONNECT"}
+                valid_methods = {
+                    "GET",
+                    "POST",
+                    "PUT",
+                    "DELETE",
+                    "OPTIONS",
+                    "HEAD",
+                    "PATCH",
+                    "TRACE",
+                    "CONNECT",
+                }
                 for method in self.allow_methods:
                     if method.upper() not in valid_methods:
                         return False
@@ -102,24 +120,24 @@ class CorsConfig:
 
         # 验证URL格式
         url_pattern = re.compile(
-            r'^https?://'  # protocol
-            r'(?:\S+(?::\S*)?@)?'  # authentication
-            r'(?:'  # IP address exclusion
-            r'(?:(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}'  # IP
-            r'(?:\.[0-9]\d?)?'  # port
-            r')|'
-            r'(?:(?:[a-z0-9\u00a1-\uffff]-*)*[a-z0-9\u00a1-\uffff]+)'  # domain label
-            r'(?:\.(?:[a-z0-9\u00a1-\uffff]-*)*[a-z0-9\u00a1-\uffff]+)*'  # subdomain
-            r'\.[a-z\u00a1-\uffff]{2,}'  # TLD
-            r'))'
-            r'(?::\d{2,5})?'  # port
-            r'(?:/[^\s]*)?$',  # path
-            re.IGNORECASE
+            r"^https?://"  # protocol
+            r"(?:\S+(?::\S*)?@)?"  # authentication
+            r"(?:"  # IP address exclusion
+            r"(?:(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}"  # IP
+            r"(?:\.[0-9]\d?)?"  # port
+            r")|"
+            r"(?:(?:[a-z0-9\u00a1-\uffff]-*)*[a-z0-9\u00a1-\uffff]+)"  # domain label
+            r"(?:\.(?:[a-z0-9\u00a1-\uffff]-*)*[a-z0-9\u00a1-\uffff]+)*"  # subdomain
+            r"\.[a-z\u00a1-\uffff]{2,}"  # TLD
+            r"))"
+            r"(?::\d{2,5})?"  # port
+            r"(?:/[^\s]*)?$",  # path
+            re.IGNORECASE,
         )
 
         return bool(url_pattern.match(origin))
 
-    def get_enhanced_config(self) -> 'CorsConfig':
+    def get_enhanced_config(self) -> "CorsConfig":
         """获取增强的配置"""
         enhanced = CorsConfig(
             allow_origins=self.allow_origins.copy() if self.allow_origins else None,
@@ -134,7 +152,7 @@ class CorsConfig:
             wildcard_subdomains=self.wildcard_subdomains,
             enable_preflight_cache=self.enable_preflight_cache,
             preflight_cache_ttl=self.preflight_cache_ttl,
-            enable_metrics=self.enable_metrics
+            enable_metrics=self.enable_metrics,
         )
 
         # 添加常用的默认origins
@@ -162,7 +180,7 @@ class CorsConfig:
             "wildcard_subdomains": self.wildcard_subdomains,
             "enable_preflight_cache": self.enable_preflight_cache,
             "preflight_cache_ttl": self.preflight_cache_ttl,
-            "enable_metrics": self.enable_metrics
+            "enable_metrics": self.enable_metrics,
         }
 
     def get_security_headers(self) -> Dict[str, str]:
@@ -179,6 +197,7 @@ class CorsConfig:
             headers["Vary"] = ", ".join(self.vary)
 
         return headers
+
 
 class CorsOriginValidator:
     """CORS origin验证器"""
@@ -235,9 +254,11 @@ class CorsOriginValidator:
         """清空验证缓存"""
         self._cached_validations.clear()
 
+
 @dataclass
 class PreflightRequest:
     """预检请求数据"""
+
     origin: str
     method: str
     headers: List[str]
@@ -249,9 +270,11 @@ class PreflightRequest:
             self.headers = [self.headers]
         self.method = self.method.upper()
 
+
 @dataclass
 class CorsPreflightResponse:
     """CORS预检响应"""
+
     status_code: int = 200
     headers: Dict[str, str] = field(default_factory=dict)
     content: bytes = b""
@@ -261,9 +284,11 @@ class CorsPreflightResponse:
         if "Content-Length" not in self.headers:
             self.headers["Content-Length"] = str(len(self.content))
 
+
 @dataclass
 class CorsResponseHeaders:
     """CORS响应头"""
+
     allow_origin: Optional[str] = None
     allow_methods: Optional[str] = None
     allow_headers: Optional[str] = None
@@ -290,6 +315,7 @@ class CorsResponseHeaders:
 
         return headers
 
+
 # 默认配置工厂函数
 def get_cors_config() -> CorsConfig:
     """获取默认的CORS配置"""
@@ -297,18 +323,23 @@ def get_cors_config() -> CorsConfig:
         allow_origins=[
             "https://api.example.com",
             "https://admin.example.com",
-            "https://frontend.example.com"
+            "https://frontend.example.com",
         ],
         allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allow_headers=["Content-Type", "Authorization", "X-API-Key"],
         max_age=3600,
         allow_credentials=True,
         expose_headers=["X-Custom-Header"],
-        vary=["Origin", "Access-Control-Request-Method", "Access-Control-Request-Headers"],
+        vary=[
+            "Origin",
+            "Access-Control-Request-Method",
+            "Access-Control-Request-Headers",
+        ],
         origin_validation_mode=CorsOriginValidationMode.STRICT,
         enable_preflight_cache=True,
-        enable_metrics=True
+        enable_metrics=True,
     )
+
 
 def get_development_cors_config() -> CorsConfig:
     """获取开发环境的CORS配置"""
@@ -319,8 +350,9 @@ def get_development_cors_config() -> CorsConfig:
         max_age=86400,
         allow_credentials=False,
         origin_validation_mode=CorsOriginValidationMode.LOOSE,
-        enable_preflight_cache=False
+        enable_preflight_cache=False,
     )
+
 
 def get_production_cors_config() -> CorsConfig:
     """获取生产环境的CORS配置"""
@@ -328,7 +360,7 @@ def get_production_cors_config() -> CorsConfig:
         allow_origins=[
             "https://api.footballprediction.com",
             "https://admin.footballprediction.com",
-            "https://footballprediction.com"
+            "https://footballprediction.com",
         ],
         allow_methods=["GET", "POST", "PUT", "DELETE"],
         allow_headers=["Content-Type", "Authorization", "X-API-Version"],
@@ -339,15 +371,17 @@ def get_production_cors_config() -> CorsConfig:
         strict_slash=True,
         wildcard_subdomains=True,
         enable_preflight_cache=True,
-        preflight_cache_ttl=1800
+        preflight_cache_ttl=1800,
     )
+
 
 # 环境配置映射
 CORS_CONFIGS = {
     "development": get_development_cors_config,
     "production": get_production_cors_config,
-    "default": get_cors_config
+    "default": get_cors_config,
 }
+
 
 def get_cors_config_by_env(env: str = "default") -> CorsConfig:
     """根据环境获取CORS配置"""

@@ -5,6 +5,7 @@
 from typing import Any, Dict, List, Optional, Callable, AsyncIterator
 from datetime import datetime, timedelta
 
+
 class StreamProcessor:
     """流处理器基类"""
 
@@ -226,6 +227,7 @@ class StreamProcessor:
                     result = await window_func(window["messages"])
                     yield result
 
+
 class MessageProcessor:
     """消息处理器"""
 
@@ -246,6 +248,7 @@ class MessageProcessor:
     def get_handler(self, event_type: str) -> Optional[Callable]:
         """获取事件处理器"""
         return self.handlers.get(event_type)
+
 
 class BatchProcessor:
     """批量处理器"""

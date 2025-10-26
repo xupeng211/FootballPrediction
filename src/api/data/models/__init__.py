@@ -23,12 +23,12 @@ except ImportError:
         country: str
 
     class MatchInfo(BaseModel):
-#         id: int  # 重复定义已注释
+        #         id: int  # 重复定义已注释
         home_team: str
         away_team: str
 
-#     class OddsInfo(BaseModel):
-#         id: int  # 重复定义已注释
+        #     class OddsInfo(BaseModel):
+        #         id: int  # 重复定义已注释
         match_id: int
         home_win: float
 

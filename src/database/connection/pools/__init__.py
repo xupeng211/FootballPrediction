@@ -9,6 +9,7 @@ from src.core.logging import get_logger
 
 logger = get_logger(__name__)
 
+
 class ConnectionPool:
     """Database connection pool manager"""
 
@@ -33,5 +34,6 @@ class ConnectionPool:
         """Close all connections"""
         # Placeholder implementation
         pass
+
 
 __all__ = ["ConnectionPool"]

@@ -24,6 +24,7 @@ from .bus import get_event_bus
 
 logger = logging.getLogger(__name__)
 
+
 class MetricsEventHandler(EventHandler):
     """指标收集事件处理器"""
 
@@ -59,6 +60,7 @@ class MetricsEventHandler(EventHandler):
     def get_metrics(self) -> Dict[str, Any]:
         """获取收集的指标"""
         return self.metrics.copy()
+
 
 class LoggingEventHandler(EventHandler):
     """日志记录事件处理器"""
@@ -100,6 +102,7 @@ class LoggingEventHandler(EventHandler):
             UserRegisteredEvent.get_event_type(),
             TeamStatsUpdatedEvent.get_event_type(),
         ]
+
 
 class CacheInvalidationHandler(EventHandler):
     """缓存失效事件处理器"""
@@ -152,6 +155,7 @@ class CacheInvalidationHandler(EventHandler):
             PredictionUpdatedEvent.get_event_type(),
             TeamStatsUpdatedEvent.get_event_type(),
         ]
+
 
 class NotificationEventHandler(EventHandler):
     """通知事件处理器"""
@@ -220,6 +224,7 @@ class NotificationEventHandler(EventHandler):
             except asyncio.QueueEmpty:
                 break
         return notifications
+
 
 class AnalyticsEventHandler(EventHandler):
     """分析事件处理器"""
@@ -315,6 +320,7 @@ class AnalyticsEventHandler(EventHandler):
         """获取分析数据"""
         return self.analytics_data.copy()
 
+
 class AlertEventHandler(EventHandler):
     """告警事件处理器"""
 
@@ -348,6 +354,7 @@ class AlertEventHandler(EventHandler):
         return [
             PredictionMadeEvent.get_event_type(),
         ]
+
 
 # 便捷函数：注册所有默认处理器
 async def register_default_handlers() -> None:

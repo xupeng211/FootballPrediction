@@ -11,6 +11,7 @@ import time
 
 from src.core.logging import get_logger
 
+
 class ServiceConfig:
     """服务配置类"""
 
@@ -28,6 +29,7 @@ class ServiceConfig:
         self.dependencies = dependencies or []
         self.config = config or {}
         self.created_at = datetime.now()
+
 
 class ServiceMetrics:
     """服务指标收集器"""
@@ -53,6 +55,7 @@ class ServiceMetrics:
     def get_metrics(self) -> Dict[str, Any]:
         """获取指标"""
         return self.metrics.copy()
+
 
 class EnhancedBaseService(ABC):
     """增强的基础服务类
@@ -238,6 +241,7 @@ class EnhancedBaseService(ABC):
             f"<{self.__class__.__name__}(name={self.name}, status={self.get_status()})>"
         )
 
+
 # 为了向后兼容，保留原有的BaseService类
 class BaseService(EnhancedBaseService):
     """向后兼容的基础服务类"""
@@ -255,12 +259,14 @@ class BaseService(EnhancedBaseService):
         self._running = False
         self._initialized = False
 
+
 class AbstractBaseService(EnhancedBaseService):
     """抽象基础服务类 - 强制子类实现所有方法"""
 
     def __init__(self, name: str):
         config = ServiceConfig(name=name)
         super().__init__(config)
+
 
 # 导出所有类
 __all__ = [

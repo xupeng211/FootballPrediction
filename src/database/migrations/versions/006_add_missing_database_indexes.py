@@ -31,6 +31,7 @@ down_revision: Union[str, None] = "d6d814cc1078"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
+
 def upgrade() -> None:
     """添加缺失的数据库索引"""
 
@@ -220,6 +221,7 @@ def upgrade() -> None:
         logger.info(f"   ❌ 验证索引失败: {e}")
 
     logger.info("✅ 数据库索引优化迁移完成！")
+
 
 def downgrade() -> None:
     """回滚索引创建（删除添加的索引）"""

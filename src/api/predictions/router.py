@@ -24,11 +24,13 @@ logger = logging.getLogger(__name__)
 # Pydantic Models
 # ============================================================================
 
+
 class PredictionRequest(BaseModel):
     """预测请求模型"""
 
     model_version: Optional[str] = Field("default", description="模型版本")
     include_details: bool = Field(False, description="是否包含详细信息")
+
 
 class PredictionResult(BaseModel):
     """预测结果模型"""
@@ -42,6 +44,7 @@ class PredictionResult(BaseModel):
     model_version: str = Field(..., description="使用的模型版本")
     predicted_at: datetime = Field(default_factory=datetime.utcnow)
 
+
 class BatchPredictionRequest(BaseModel):
     """批量预测请求"""
 
@@ -49,6 +52,7 @@ class BatchPredictionRequest(BaseModel):
         ..., min_length=1, max_length=100, description="比赛ID列表"
     )
     model_version: Optional[str] = Field("default", description="模型版本")
+
 
 class BatchPredictionResponse(BaseModel):
     """批量预测响应"""
@@ -59,12 +63,14 @@ class BatchPredictionResponse(BaseModel):
     failed_count: int
     failed_match_ids: List[int] = Field(default_factory=list)
 
+
 class PredictionHistory(BaseModel):
     """预测历史记录"""
 
     match_id: int
     predictions: List[PredictionResult]
     total_predictions: int
+
 
 class RecentPrediction(BaseModel):
     """最近的预测"""
@@ -76,6 +82,7 @@ class RecentPrediction(BaseModel):
     prediction: PredictionResult
     match_date: datetime
 
+
 class PredictionVerification(BaseModel):
     """预测验证结果"""
 
@@ -85,14 +92,17 @@ class PredictionVerification(BaseModel):
     is_correct: bool
     accuracy_score: float
 
+
 # ============================================================================
 # API Endpoints
 # ============================================================================
+
 
 @router.get("/health")
 async def health_check():
     """健康检查"""
     return {"status": "healthy", "service": "predictions"}
+
 
 @router.get("/{match_id}", response_model=PredictionResult)
 async def get_prediction(
@@ -129,6 +139,7 @@ async def get_prediction(
         logger.error(f"获取预测失败: {e}")
         raise HTTPException(status_code=500, detail=f"获取预测失败: {str(e)}")
 
+
 @router.post("/{match_id}/predict", response_model=PredictionResult, status_code=201)
 async def create_prediction(match_id: int, request: Optional[PredictionRequest] = None):
     """
@@ -164,6 +175,7 @@ async def create_prediction(match_id: int, request: Optional[PredictionRequest] 
     except Exception as e:
         logger.error(f"生成预测失败: {e}")
         raise HTTPException(status_code=500, detail=f"生成预测失败: {str(e)}")
+
 
 @router.post("/batch", response_model=BatchPredictionResponse)
 async def batch_predict(request: BatchPredictionRequest):
@@ -214,6 +226,7 @@ async def batch_predict(request: BatchPredictionRequest):
         logger.error(f"批量预测失败: {e}")
         raise HTTPException(status_code=500, detail=f"批量预测失败: {str(e)}")
 
+
 @router.get("/history/{match_id}", response_model=PredictionHistory)
 async def get_prediction_history(
     match_id: int,
@@ -257,6 +270,7 @@ async def get_prediction_history(
         logger.error(f"获取历史记录失败: {e}")
         raise HTTPException(status_code=500, detail=f"获取历史记录失败: {str(e)}")
 
+
 @router.get("/recent", response_model=List[RecentPrediction])
 async def get_recent_predictions(
     limit: int = Query(20, ge=1, le=100, description="返回数量"),
@@ -299,6 +313,7 @@ async def get_recent_predictions(
     except Exception as e:
         logger.error(f"获取最近预测失败: {e}")
         raise HTTPException(status_code=500, detail=f"获取最近预测失败: {str(e)}")
+
 
 @router.post("/{match_id}/verify", response_model=PredictionVerification)
 async def verify_prediction(

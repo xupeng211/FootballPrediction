@@ -16,6 +16,7 @@ from sqlalchemy.orm import selectinload
 from .base import BaseRepository
 from ..models.match import Match, MatchStatus, MatchResult
 
+
 class MatchRepository(BaseRepository[Match]):
     """
     比赛仓储类

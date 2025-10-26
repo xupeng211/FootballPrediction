@@ -1,5 +1,6 @@
 from typing import cast, defaultdict
 import asyncio
+
 """
 Confluent Kafka Mock 实现
 用于测试环境，避免真实的Kafka依赖
@@ -9,6 +10,7 @@ import logging
 from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
 
 class MockMessage:
     """模拟Kafka消息"""
@@ -66,6 +68,7 @@ class MockMessage:
     def set_headers(self, headers: List[tuple[str, bytes]]) -> None:
         """设置头部"""
         self._headers = headers
+
 
 class MockConsumer:
     """模拟Kafka消费者"""
@@ -138,6 +141,7 @@ class MockConsumer:
         """批量添加测试消息"""
         self._messages[topic].extend(messages)
 
+
 class MockProducer:
     """模拟Kafka生产者"""
 
@@ -207,6 +211,7 @@ class MockProducer:
         else:
             self._messages.clear()
 
+
 class MockAdminClient:
     """模拟Kafka管理客户端"""
 
@@ -243,6 +248,7 @@ class MockAdminClient:
         """关闭管理客户端"""
         logger.info("Mock admin client closed")
 
+
 class MockDeserializingConsumer(MockConsumer):
     """带反序列化的消费者"""
 
@@ -269,6 +275,7 @@ class MockDeserializingConsumer(MockConsumer):
                 logger.error(f"Key deserialization error: {e}")
 
         return message
+
 
 class MockSerializingProducer(MockProducer):
     """带序列化的生产者"""
@@ -312,6 +319,7 @@ class MockSerializingProducer(MockProducer):
             on_delivery=on_delivery,
         )
 
+
 # 方便的工厂函数
 def Consumer(config: Dict[str, Any]) -> MockConsumer:
     """创建消费者"""
@@ -319,21 +327,25 @@ def Consumer(config: Dict[str, Any]) -> MockConsumer:
         return MockDeserializingConsumer(config)
     return MockConsumer(config)
 
+
 def Producer(config: Dict[str, Any]) -> MockProducer:
     """创建生产者"""
     if "key.serializer" in config or "value.serializer" in config:
         return MockSerializingProducer(config)
     return MockProducer(config)
 
+
 def AdminClient(config: Dict[str, Any]) -> MockAdminClient:
     """创建管理客户端"""
     return MockAdminClient(config)
+
 
 # Kafka异常类的模拟
 class KafkaException(Exception):
     """Kafka异常基类"""
 
     pass
+
 
 class KafkaError(Exception):
     """Kafka错误"""
@@ -342,6 +354,7 @@ class KafkaError(Exception):
         self.code = code
         self.name = name
         super().__init__(f"KafkaError: {name} (code: {code})")
+
 
 class TopicPartition:
     """主题分区"""
@@ -360,6 +373,7 @@ class TopicPartition:
 
     def __hash__(self):
         return hash((self.topic, self.partition))
+
 
 # 常用错误码
 KAFKA_UNKNOWN_TOPIC_OR_PART = 3

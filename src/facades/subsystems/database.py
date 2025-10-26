@@ -10,6 +10,7 @@ from typing import Any, Dict, Optional
 
 from ..base import Subsystem, SubsystemStatus
 
+
 class DatabaseSubsystem(Subsystem):
     """数据库子系统"""
 

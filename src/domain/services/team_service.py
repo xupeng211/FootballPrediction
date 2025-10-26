@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional, Protocol
 
 from ..models.team import Team, TeamForm, TeamStats
 
+
 class TeamRepositoryProtocol(Protocol):
     """球队仓储协议。"""
 
@@ -20,6 +21,7 @@ class TeamRepositoryProtocol(Protocol):
 
     def update(self, team: Team) -> Team:  # pragma: no cover - 协议定义
         ...
+
 
 @dataclass(frozen=True)
 class TeamStatsEvent:
@@ -33,6 +35,7 @@ class TeamStatsEvent:
     points: int
     occurred_at: datetime = field(default_factory=datetime.utcnow)
 
+
 @dataclass(frozen=True)
 class TeamProfileUpdatedEvent:
     """球队资料更新事件."""
@@ -41,12 +44,14 @@ class TeamProfileUpdatedEvent:
     updated_fields: Dict[str, Any]
     occurred_at: datetime = field(default_factory=datetime.utcnow)
 
+
 @dataclass(frozen=True)
 class TeamPerformanceResetEvent:
     """球队表现重置事件."""
 
     team_id: int
     occurred_at: datetime = field(default_factory=datetime.utcnow)
+
 
 class TeamDomainService:
     """球队领域服务"""

@@ -19,7 +19,9 @@ from src.utils.retry import RetryConfig, retry
 from src.utils.time_utils import utc_now, parse_datetime
 from src.database.connection import get_async_session
 
+
 # 类定义
 class ScoresCollectorManager:
     """比分收集器管理器"""
+
     pass  # TODO: 实现类逻辑

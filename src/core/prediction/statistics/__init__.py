@@ -6,6 +6,7 @@ Prediction Statistics Module
 from datetime import datetime
 from typing import Dict, List
 
+
 class PredictionStatistics:
     """预测统计类"""
 
@@ -55,5 +56,6 @@ class PredictionStatistics:
             "accuracy": self.accuracy,
             "models": self.predictions_by_model,
         }
+
 
 __all__ = ["PredictionStatistics"]

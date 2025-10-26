@@ -9,6 +9,7 @@ from src.database.base import Base
 from .repositories.base import AbstractRepository
 from .models.match import Match
 
+
 class MatchRepository(AbstractRepository[Match]):
     """比赛数据仓储类"""
 

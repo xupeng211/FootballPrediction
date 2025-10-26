@@ -16,6 +16,7 @@ from .base import Event, EventHandler, EventFilter
 
 logger = logging.getLogger(__name__)
 
+
 class EventBus:
     """事件总线
 
@@ -338,8 +339,10 @@ class EventBus:
             "event_types_list": list(self._subscribers.keys()),
         }
 
+
 # 全局事件总线实例
 _event_bus: Optional[EventBus] = None
+
 
 def get_event_bus() -> EventBus:
     """获取全局事件总线实例
@@ -352,10 +355,12 @@ def get_event_bus() -> EventBus:
         _event_bus = EventBus()
     return _event_bus
 
+
 async def start_event_bus() -> None:
     """启动全局事件总线"""
     bus = get_event_bus()
     await bus.start()
+
 
 async def stop_event_bus() -> None:
     """停止全局事件总线"""
@@ -363,6 +368,7 @@ async def stop_event_bus() -> None:
     if _event_bus:
         await _event_bus.stop()
         _event_bus = None
+
 
 # 装饰器：自动注册事件处理器
 def event_handler(event_types: List[str]):

@@ -28,6 +28,7 @@ from ..database.connection import get_async_session
 
 logger = logging.getLogger(__name__)
 
+
 class MetricsExporter:
     """
     监控指标导出器
@@ -534,8 +535,10 @@ class MetricsExporter:
             mock_gauge.labels = Mock(return_value=mock_gauge)
             return mock_gauge
 
+
 # 全局指标导出器实例 - 延迟初始化避免测试冲突
 _metrics_exporter_instance = None
+
 
 def get_metrics_exporter(
     registry: Optional[CollectorRegistry] = None,
@@ -563,6 +566,7 @@ def get_metrics_exporter(
         _metrics_exporter_instance = MetricsExporter()
 
     return _metrics_exporter_instance
+
 
 def reset_metrics_exporter():
     """

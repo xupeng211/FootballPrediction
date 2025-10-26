@@ -8,6 +8,7 @@ from fastapi import FastAPI
 # mypy: ignore-errors
 # 类型检查已忽略 - 这些文件包含复杂的动态类型逻辑
 
+
 class OpenAPIConfig:
     """OpenAPI 配置管理类"""
 
@@ -544,6 +545,7 @@ curl http://localhost:8000/predictions/{match_id}
             return openapi_schema
 
         app.openapi = custom_openapi
+
 
 # 导出配置函数
 def setup_openapi(app: FastAPI) -> None:

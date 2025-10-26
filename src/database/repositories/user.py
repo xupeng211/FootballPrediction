@@ -16,6 +16,7 @@ from sqlalchemy.orm import selectinload
 from .base import BaseRepository
 from ..models.user import User
 
+
 class UserRepository(BaseRepository[User]):
     """
     用户仓储类

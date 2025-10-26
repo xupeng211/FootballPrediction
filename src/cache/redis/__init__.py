@@ -19,6 +19,7 @@ from .warmup.warmup_manager import startup_warmup
 
 logger = logging.getLogger(__name__)
 
+
 class RedisManager:
     """Redis管理器主类，整合同步和异步操作"""
 
@@ -51,8 +52,10 @@ class RedisManager:
         """获取键管理器"""
         return self.key_manager
 
+
 # 全局实例
 _redis_manager: Optional[RedisManager] = None
+
 
 def get_redis_manager() -> RedisManager:
     """获取全局Redis管理器实例"""
@@ -61,26 +64,31 @@ def get_redis_manager() -> RedisManager:
         _redis_manager = RedisManager()
     return _redis_manager
 
+
 # 便捷函数 - 异步版本
 async def aget_cache(key: str) -> Optional[Any]:
     """异步获取缓存"""
     manager = get_redis_manager()
     return await manager.async_ops.get(key)
 
+
 async def aset_cache(key: str, value: Any, ttl: Optional[int] = None) -> bool:
     """异步设置缓存"""
     manager = get_redis_manager()
     return await manager.async_ops.set(key, value, ttl)
+
 
 async def adelete_cache(key: str) -> bool:
     """异步删除缓存"""
     manager = get_redis_manager()
     return await manager.async_ops.delete(key)
 
+
 async def aexists_cache(key: str) -> bool:
     """异步检查缓存是否存在"""
     manager = get_redis_manager()
     return await manager.async_ops.exists(key)
+
 
 async def attl_cache(key: str) -> Optional[int]:
     """异步获取TTL"""
@@ -91,6 +99,7 @@ async def attl_cache(key: str) -> Optional[int]:
         logger.error(f"Error getting TTL for key {key}: {str(e)}")
         return None
 
+
 async def amget_cache(keys: List[str]) -> List[Optional[Any]]:
     """异步批量获取缓存"""
     try:
@@ -100,6 +109,7 @@ async def amget_cache(keys: List[str]) -> List[Optional[Any]]:
     except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
         logger.error(f"Error in mget: {str(e)}")
         return [None] * len(keys)
+
 
 async def amset_cache(mapping: Dict[str, Any], ttl: Optional[int] = None) -> bool:
     """异步批量设置缓存"""
@@ -118,6 +128,7 @@ async def amset_cache(mapping: Dict[str, Any], ttl: Optional[int] = None) -> boo
         logger.error(f"Error in mset: {str(e)}")
         return False
 
+
 # 便捷函数 - 同步版本
 def get_cache(key: str) -> Optional[Any]:
     """同步获取缓存"""
@@ -125,11 +136,13 @@ def get_cache(key: str) -> Optional[Any]:
     manager.get_sync_client()
     return manager.sync_ops.get(key)
 
+
 def set_cache(key: str, value: Any, ttl: Optional[int] = None) -> bool:
     """同步设置缓存"""
     manager = get_redis_manager()
     manager.get_sync_client()
     return manager.sync_ops.set(key, value, ttl)
+
 
 def delete_cache(key: str) -> bool:
     """同步删除缓存"""
@@ -137,11 +150,13 @@ def delete_cache(key: str) -> bool:
     manager.get_sync_client()
     return manager.sync_ops.delete(key)
 
+
 def exists_cache(key: str) -> bool:
     """同步检查缓存是否存在"""
     manager = get_redis_manager()
     manager.get_sync_client()
     return manager.sync_ops.exists(key)
+
 
 def ttl_cache(key: str) -> Optional[int]:
     """同步获取TTL"""
@@ -152,6 +167,7 @@ def ttl_cache(key: str) -> Optional[int]:
         logger.error(f"Error getting TTL for key {key}: {str(e)}")
         return None
 
+
 def mget_cache(keys: List[str]) -> List[Optional[Any]]:
     """同步批量获取缓存"""
     try:
@@ -161,6 +177,7 @@ def mget_cache(keys: List[str]) -> List[Optional[Any]]:
     except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
         logger.error(f"Error in mget: {str(e)}")
         return [None] * len(keys)
+
 
 def mset_cache(mapping: Dict[str, Any], ttl: Optional[int] = None) -> bool:
     """同步批量设置缓存"""
@@ -178,6 +195,7 @@ def mset_cache(mapping: Dict[str, Any], ttl: Optional[int] = None) -> bool:
     except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
         logger.error(f"Error in mset: {str(e)}")
         return False
+
 
 # 导出所有公共接口
 __all__ = [

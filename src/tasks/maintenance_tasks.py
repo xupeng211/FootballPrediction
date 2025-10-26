@@ -20,6 +20,7 @@ from src.tasks.celery_app import app
 
 logger = logging.getLogger(__name__)
 
+
 @app.task
 def quality_check_task() -> Dict[str, Any]:
     """
@@ -162,6 +163,7 @@ def quality_check_task() -> Dict[str, Any]:
             "execution_time": datetime.now().isoformat(),
         }
 
+
 @app.task
 def cleanup_error_logs_task(days: int = 7) -> Dict[str, Any]:
     """
@@ -204,6 +206,7 @@ def cleanup_error_logs_task(days: int = 7) -> Dict[str, Any]:
             "deleted_count": 0,
             "execution_time": datetime.now().isoformat(),
         }
+
 
 @app.task
 def system_health_check_task() -> Dict[str, Any]:
@@ -308,6 +311,7 @@ def system_health_check_task() -> Dict[str, Any]:
             "overall_healthy": False,
             "execution_time": datetime.now().isoformat(),
         }
+
 
 @app.task
 def database_maintenance_task() -> Dict[str, Any]:

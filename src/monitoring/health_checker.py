@@ -11,12 +11,14 @@ from typing import Any, Dict, Optional
 from src.database.connection import DatabaseManager
 from src.cache.redis.core.connection_manager import RedisConnectionManager
 
+
 class HealthStatus:
     """健康状态"""
 
     HEALTHY = "healthy"
     UNHEALTHY = "unhealthy"
     DEGRADED = "degraded"
+
 
 class HealthChecker:
     """健康检查器"""

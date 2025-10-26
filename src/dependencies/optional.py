@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 T = TypeVar("T")
 
+
 class MissingDependency:
     """缺失依赖的占位符"""
 
@@ -30,6 +31,7 @@ class MissingDependency:
 
     def __bool__(self):
         return False
+
 
 # 尝试导入可选依赖，失败则提供占位符
 def try_import(module_name: str, package: str = None) -> Union[Any, MissingDependency]:
@@ -64,6 +66,7 @@ def try_import(module_name: str, package: str = None) -> Union[Any, MissingDepen
         else:
             warnings.warn(f"导入 {module_name} 时发生意外错误: {e}", RuntimeWarning)
         return MissingDependency(module_name)
+
 
 # 常见的可选依赖
 # 数据处理
@@ -139,6 +142,7 @@ mlflow = try_import("mlflow")
 dvc = try_import("dvc")
 great_expectations = try_import("great_expectations")
 
+
 def safe_import(module_path: str, default: Optional[T] = None) -> Optional[T]:
     """
     安全地导入模块，返回默认值
@@ -159,6 +163,7 @@ def safe_import(module_path: str, default: Optional[T] = None) -> Optional[T]:
     except (ImportError, AttributeError):
         return default
 
+
 def has_dependency(dependency_name: str) -> bool:
     """
     检查依赖是否存在
@@ -178,6 +183,7 @@ def has_dependency(dependency_name: str) -> bool:
     except (ImportError, AttributeError):
         return False
 
+
 def get_dependency_version(dependency_name: str) -> Optional[str]:
     """
     获取依赖版本
@@ -195,6 +201,7 @@ def get_dependency_version(dependency_name: str) -> Optional[str]:
         return getattr(module, "__version__", None)
     except (ImportError, AttributeError, KeyError, RuntimeError):
         return None
+
 
 def check_optional_dependencies() -> dict:
     """
@@ -230,34 +237,42 @@ def check_optional_dependencies() -> dict:
         "versions": versions,
     }
 
+
 # 导出便捷的检查函数
 def has_pandas() -> bool:
     """检查是否安装了pandas"""
     return has_dependency("pandas")
 
+
 def has_sklearn() -> bool:
     """检查是否安装了sklearn"""
     return has_dependency("sklearn")
+
 
 def has_mlflow() -> bool:
     """检查是否安装了mlflow"""
     return has_dependency("mlflow")
 
+
 def has_slowapi() -> bool:
     """检查是否安装了slowapi"""
     return has_dependency("slowapi")
+
 
 def has_kafka() -> bool:
     """检查是否安装了kafka-python"""
     return has_dependency("kafka")
 
+
 def has_redis() -> bool:
     """检查是否安装了redis"""
     return has_dependency("redis")
 
+
 def has_celery() -> bool:
     """检查是否安装了celery"""
     return has_dependency("celery")
+
 
 if __name__ == "__main__":
     # 打印依赖状态

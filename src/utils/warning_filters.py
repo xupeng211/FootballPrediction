@@ -9,6 +9,7 @@ import warnings
 
 logger = logging.getLogger(__name__)
 
+
 def setup_warning_filters():
     """设置警告过滤器"""
     # 忽略一些常见的警告
@@ -16,6 +17,7 @@ def setup_warning_filters():
     warnings.filterwarnings("ignore", category=DeprecationWarning, module="sklearn.*")
     warnings.filterwarnings("ignore", category=FutureWarning, module="pandas.*")
     warnings.filterwarnings("ignore", category=PendingDeprecationWarning)
+
 
 # 只在非测试环境下自动设置
 if "pytest" not in sys.modules:
