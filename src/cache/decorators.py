@@ -102,8 +102,10 @@ def cache_user_predictions(ttl_seconds=None, **kwargs):
 
 def cache_match_data(ttl_seconds=None, **kwargs):
     """比赛数据缓存装饰器 - 占位符实现"""
+
     def decorator(func):
         return func
+
     return decorator
 
 
