@@ -188,7 +188,7 @@ else:
     from src.api.data_router import (
         router as data_router,
     )  # runtime import for minimal mode
-    from src.api.features import router as features_router
+    # from src.api.features import router as features_router  # 暂时注释，避免导入问题
     from src.api.monitoring import router as monitoring_router
     from src.api.predictions import router as predictions_router
     from src.api.events import router as events_router
@@ -200,7 +200,7 @@ else:
     from src.api.facades import router as facades_router
 
     app.include_router(monitoring_router, prefix="/api/v1")
-    app.include_router(features_router, prefix="/api/v1")
+    # app.include_router(features_router, prefix="/api/v1")  # 暂时注释，避免导入问题
     app.include_router(data_router, prefix="/api/v1")
     app.include_router(predictions_router, prefix="/api/v1")
     app.include_router(events_router, prefix="/api/v1")

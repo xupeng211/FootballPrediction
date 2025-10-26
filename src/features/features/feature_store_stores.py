@@ -10,8 +10,8 @@ import logging
 import pandas
 from src.cache import CacheKeyManager, RedisManager
 from src.database.connection import DatabaseManager
-from entities import MatchEntity
-from feature_calculator import FeatureCalculator
+from ..entities import MatchEntity
+from ..feature_calculator import FeatureCalculator
 from feast import Entity, FeatureStore, FeatureView, Field, ValueType
 from feast.infra.offline_stores.contrib.postgres_offline_store.postgres_source import PostgreSQLSource
 from feast.types import Float64, Int64
