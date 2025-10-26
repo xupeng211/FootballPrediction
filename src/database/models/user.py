@@ -14,3 +14,4 @@ from sqlalchemy import String
 
 class User(BaseModel):
     __table_args__ = {'extend_existing': True}
+    __tablename__ = "users"

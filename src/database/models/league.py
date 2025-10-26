@@ -16,3 +16,4 @@ from sqlalchemy import String
 
 class League(BaseModel):
     __table_args__ = {'extend_existing': True}
+    __tablename__ = "leagues"
