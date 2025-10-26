@@ -1,3 +1,7 @@
+try:
+    import yaml
+except ImportError:
+    yaml = None
 """
 Configuration loader utilities
 """

@@ -167,7 +167,7 @@ class StringUtils:
         return StringUtils.slugify(text)
 
     @staticmethod
-    def format_bytes(bytes_count: int, precision: int = 2) -> str:
+    def format_bytes(bytes_count: float, precision: int = 2) -> str:
         """格式化字节数为人类可读格式"""
         if bytes_count == 0:
             return "0 B"

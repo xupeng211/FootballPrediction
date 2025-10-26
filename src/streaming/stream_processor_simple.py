@@ -233,7 +233,7 @@ class MessageProcessor:
         self.name = name
         self.input_topic = input_topic
         self.output_topic = output_topic
-        self.handlers = {}
+        self.handlers: Dict[str, Any] = {}
 
     def add_handler(self, event_type: str, handler: Callable):
         """添加事件处理器"""
@@ -254,7 +254,7 @@ class BatchProcessor:
         self.name = name
         self.batch_size = batch_size
         self.batch_timeout = batch_timeout
-        self.current_batch = []
+        self.current_batch: List[Any] = []
         self.metrics = {"batches_processed": 0, "total_messages_processed": 0}
 
     def add_to_batch(self, message: Dict[str, Any]):
@@ -267,7 +267,7 @@ class BatchProcessor:
 
     def clear_batch(self):
         """清空批次"""
-        self.current_batch = []
+        self.current_batch: List[Any] = []
 
     def get_batch(self) -> List[Dict[str, Any]]:
         """获取当前批次"""
