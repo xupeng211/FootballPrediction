@@ -135,6 +135,7 @@ check_imports()
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements/requirements.lock
+        pip install pytest pytest-cov pytest-xdist pytest-asyncio requests aiohttp
 
     - name: Run full test suite
       run: |
@@ -211,6 +212,7 @@ check_imports()
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements/requirements.lock
+        pip install pytest pytest-cov pytest-xdist pytest-asyncio requests aiohttp
         pip install locust
 
     - name: Run load tests
@@ -301,6 +303,7 @@ check_imports()
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements/requirements.lock
+        pip install pytest pytest-cov pytest-xdist pytest-asyncio requests aiohttp
 
     - name: Run compatibility tests
       run: |
