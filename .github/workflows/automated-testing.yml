@@ -55,7 +55,7 @@ jobs:
       if: matrix.check-type == 'syntax'
       run: |
         echo "🔧 Python语法检查..."
-        python -m py_compile src/**/*.py
+        find src/ -name "*.py" -exec python -m py_compile {} \;
         echo "✅ 语法检查通过"
 
     - name: 📦 导入检查

@@ -89,7 +89,9 @@ class ProcessingCache:
         # 添加参数
         if params:
             params_str = json.dumps(params, sort_keys=True)
-            params_hash = hashlib.md5(params_str.encode(), usedforsecurity=False).hexdigest()
+            params_hash = hashlib.md5(
+                params_str.encode(), usedforsecurity=False
+            ).hexdigest()
             key_parts.append(params_hash)
 
         # 生成完整键
