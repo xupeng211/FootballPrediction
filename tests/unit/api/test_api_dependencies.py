@@ -9,7 +9,11 @@ import pytest
 from datetime import datetime, timedelta
 from fastapi import HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials
-from jose import jwt
+try:
+    from jose import jwt
+except ImportError:
+    # 如果jose不可用，使用python-jose
+    from python_jose import jwt
 from typing import Dict
 
 from src.api.dependencies import (

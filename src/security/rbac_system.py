@@ -17,7 +17,7 @@ class Role_BasedAccessControl:
 
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.logger.info(f"初始化security特性: Role-Based Access Control")
+        self.logger.info("初始化security特性: Role-Based Access Control")
 
     def process(self, data: Dict) -> Dict:
         """处理数据"""
