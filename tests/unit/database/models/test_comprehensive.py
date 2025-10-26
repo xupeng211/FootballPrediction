@@ -15,7 +15,7 @@ import json
 
 # 尝试导入目标模块
 try:
-    from database.models. import *
+    from database.models import *
 except ImportError as e:
     print(f"警告: 无法导入模块: {e}")
 
