@@ -48,8 +48,11 @@ def cache_with_ttl(ttl_seconds, prefix=None):
     return decorator
 
 
-def cache_by_user(user_id_param="user_id", ttl=None, prefix=None):
+def cache_by_user(user_id_param="user_id", user_param=None, ttl=None, prefix=None):
     """按用户缓存的装饰器 - 占位符实现"""
+    # 支持两种参数名称以保持兼容性
+    if user_param is not None:
+        user_id_param = user_param
 
     def decorator(func):
         return func
