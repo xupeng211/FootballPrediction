@@ -89,7 +89,7 @@ class ProcessingCache:
         # 添加参数
         if params:
             params_str = json.dumps(params, sort_keys=True)
-            params_hash = hashlib.md5(params_str.encode()).hexdigest()
+            params_hash = hashlib.md5(params_str.encode(), usedforsecurity=False).hexdigest()
             key_parts.append(params_hash)
 
         # 生成完整键
@@ -119,7 +119,7 @@ class ProcessingCache:
             else:
                 data_str = str(data)
 
-            return hashlib.md5(data_str.encode()).hexdigest()
+            return hashlib.md5(data_str.encode(), usedforsecurity=False).hexdigest()
         except (RedisError, ConnectionError, TimeoutError, ValueError) as e:
             self.logger.error(f"计算数据哈希失败: {e}")
             return "error_hash"
