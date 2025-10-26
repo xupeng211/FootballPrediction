@@ -10,7 +10,6 @@ from typing import Optional, Dict, Any
 from datetime import date
 from .base import ValidatableQuery, ValidationResult
 
-
 class GetPredictionByIdQuery(ValidatableQuery):
     """根据ID获取预测查询"""
 
@@ -34,7 +33,6 @@ class GetPredictionByIdQuery(ValidatableQuery):
             if not errors
             else ValidationResult.failure(errors)
         )
-
 
 class GetPredictionsByUserQuery(ValidatableQuery):
     """获取用户的所有预测查询"""
@@ -77,7 +75,6 @@ class GetPredictionsByUserQuery(ValidatableQuery):
             else ValidationResult.failure(errors)
         )
 
-
 class GetMatchPredictionsQuery(ValidatableQuery):
     """获取比赛的所有预测查询"""
 
@@ -103,7 +100,6 @@ class GetMatchPredictionsQuery(ValidatableQuery):
             if not errors
             else ValidationResult.failure(errors)
         )
-
 
 class GetUserStatsQuery(ValidatableQuery):
     """获取用户统计查询"""
@@ -131,7 +127,6 @@ class GetUserStatsQuery(ValidatableQuery):
             else ValidationResult.failure(errors)
         )
 
-
 class GetMatchByIdQuery(ValidatableQuery):
     """根据ID获取比赛查询"""
 
@@ -157,7 +152,6 @@ class GetMatchByIdQuery(ValidatableQuery):
             if not errors
             else ValidationResult.failure(errors)
         )
-
 
 class GetUpcomingMatchesQuery(ValidatableQuery):
     """获取即将到来的比赛查询"""
@@ -195,7 +189,6 @@ class GetUpcomingMatchesQuery(ValidatableQuery):
             else ValidationResult.failure(errors)
         )
 
-
 class GetPredictionAnalyticsQuery(ValidatableQuery):
     """获取预测分析查询"""
 
@@ -228,7 +221,6 @@ class GetPredictionAnalyticsQuery(ValidatableQuery):
             if not errors
             else ValidationResult.failure(errors)
         )
-
 
 class GetLeaderboardQuery(ValidatableQuery):
     """获取排行榜查询"""

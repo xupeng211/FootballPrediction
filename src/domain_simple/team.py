@@ -5,11 +5,10 @@
 from datetime import datetime
 from typing import Optional, Dict, Any, List
 
-
 class TeamStatistics:
     """球队统计数据"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self.matches_played = 0
         self.wins = 0
         self.draws = 0
@@ -52,7 +51,6 @@ class TeamStatistics:
         if self.matches_played == 0:
             return 0.0
         return self.goals_against / self.matches_played
-
 
 class Team:
     """球队领域模型"""

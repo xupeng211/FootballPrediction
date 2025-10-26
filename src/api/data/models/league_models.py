@@ -8,7 +8,6 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
-
 class LeagueQueryParams(BaseModel):
     """联赛查询参数"""
 
@@ -18,7 +17,6 @@ class LeagueQueryParams(BaseModel):
     search: Optional[str] = Field(None, description="搜索关键词")
     limit: int = Field(50, ge=1, le=1000, description="返回数量限制")
     offset: int = Field(0, ge=0, description="偏移量")
-
 
 class LeagueCreateRequest(BaseModel):
     """创建联赛请求"""

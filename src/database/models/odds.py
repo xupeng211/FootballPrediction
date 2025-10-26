@@ -48,7 +48,6 @@ from sqlalchemy import String
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
 
-
 class MarketType(Enum):
     """赔率市场类型"""
 
@@ -56,7 +55,6 @@ class MarketType(Enum):
     OVER_UNDER = "over_under"  # 大小球
     ASIAN_HANDICAP = "asian_handicap"  # 亚洲让球
     BOTH_TEAMS_SCORE = "both_teams_score"  # 双方进球
-
 
 class Odds(BaseModel):
     """
@@ -314,7 +312,7 @@ class Odds(BaseModel):
         return False
 
     @classmethod
-    def get_latest_odds(cls, session, match_id: int, bookmaker: Optional[str] = None):  # type: ignore
+    def get_latest_odds(cls, session, match_id: int, bookmaker: Optional[str] = None):
         """获取比赛最新赔率"""
         query = session.query(cls).filter(cls.match_id == match_id)
         if bookmaker:
@@ -322,7 +320,7 @@ class Odds(BaseModel):
         return query.order_by(cls.updated_at.desc()).all()
 
     @classmethod
-    def get_odds_history(cls, session, match_id: int, market_type: MarketType):  # type: ignore
+    def get_odds_history(cls, session, match_id: int, market_type: MarketType):
         """获取特定比赛和市场的赔率历史"""
         return (
             session.query(cls)
@@ -332,7 +330,7 @@ class Odds(BaseModel):
         )
 
     @classmethod
-    def get_bookmaker_odds(cls, session, match_id: int, bookmaker: str):  # type: ignore
+    def get_bookmaker_odds(cls, session, match_id: int, bookmaker: str):
         """获取特定博彩公司的赔率"""
         return (
             session.query(cls)
@@ -342,7 +340,7 @@ class Odds(BaseModel):
         )
 
     @classmethod
-    def get_market_average_odds(cls, session, match_id: int, market_type: MarketType):  # type: ignore
+    def get_market_average_odds(cls, session, match_id: int, market_type: MarketType):
         """获取市场平均赔率"""
 
         if market_type == MarketType.ONE_X_TWO:

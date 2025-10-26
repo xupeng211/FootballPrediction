@@ -19,14 +19,12 @@ from .decorators import (
     cache_team_stats,
 )
 
-
 # 示例1: 基础结果缓存
 @cache_result(ttl=3600, prefix="example")
 def expensive_computation(x: int, y: int) -> int:
     """模拟耗时的计算"""
     logger.info(f"执行计算: {x} + {y}")
     return x + y
-
 
 # 示例2: 异步函数缓存
 @cache_with_ttl(ttl_seconds=1800, prefix="api_calls")
@@ -35,7 +33,6 @@ async def fetch_user_data(user_id: int) -> Dict[str, Any]:
     logger.info(f"获取用户数据: {user_id}")
     await asyncio.sleep(1)  # 模拟网络延迟
     return {"id": user_id, "name": f"User {user_id}", "age": 25}
-
 
 # 示例3: 基于用户的缓存
 @cache_by_user(ttl=7200, prefix="user_profile", user_param="user_id")
@@ -53,7 +50,6 @@ def get_user_profile(user_id: int, include_sensitive: bool = False) -> Dict[str,
         profile["address"] = f"Street {user_id}, City"
     return profile
 
-
 # 示例4: 带条件缓存的装饰器
 @cache_result(
     ttl=600,
@@ -69,9 +65,8 @@ def search_documents(query: str, limit: int = 10) -> List[Dict[str, Any]]:
         for i in range(min(limit, 5))
     ]
 
-
 # 示例5: 缓存失效装饰器
-def generate_invalidation_keys(func, args, kwargs, result):  # type: ignore
+def generate_invalidation_keys(func, args, kwargs, result):
     """生成缓存失效键的函数"""
     # 如果是更新操作，失效相关缓存
     if "update" in func.__name__:
@@ -83,7 +78,6 @@ def generate_invalidation_keys(func, args, kwargs, result):  # type: ignore
             ]
     return []
 
-
 @cache_invalidate(
     pattern="user_profile:*",  # 失效所有用户档案缓存
     key_generator=generate_invalidation_keys,
@@ -93,7 +87,6 @@ def update_user_profile(user_id: int, **updates) -> Dict[str, Any]:
     logger.info(f"更新用户档案: {user_id}, 更新: {updates}")
     # 模拟更新操作
     return {"user_id": user_id, "updated_fields": list(updates.keys())}
-
 
 # 示例6: 便捷装饰器使用
 @cache_user_predictions(ttl_seconds=3600)
@@ -106,7 +99,6 @@ def get_user_predictions(user_id: int, match_id: Optional[int] = None) -> List[D
         if match_id is None or i == match_id
     ]
 
-
 @cache_match_data(ttl_seconds=1800)
 async def get_match_details(match_id: int) -> Dict:
     """获取比赛详情（使用便捷装饰器）"""
@@ -118,7 +110,6 @@ async def get_match_details(match_id: int) -> Dict:
         "away_team": "Team B",
         "kickoff": "2024-01-01T20:00:00Z",
     }
-
 
 @cache_team_stats(ttl_seconds=7200)
 def calculate_team_statistics(team_id: int, season: str) -> Dict:
@@ -136,9 +127,8 @@ def calculate_team_statistics(team_id: int, season: str) -> Dict:
         "points": 41,
     }
 
-
 # 示例7: 自定义键生成器
-def custom_key_generator(func, args, kwargs, user_id=None):  # type: ignore
+def custom_key_generator(func, args, kwargs, user_id=None):
     """自定义缓存键生成器"""
     func_name = func.__qualname__
     # 使用特定的参数组合生成键
@@ -151,7 +141,6 @@ def custom_key_generator(func, args, kwargs, user_id=None):  # type: ignore
         key_parts.append(f"season_{kwargs['season']}")
 
     return ":".join(key_parts)
-
 
 @cache_result(
     ttl=3600,
@@ -168,7 +157,6 @@ def get_team_form(team_id: int, season: str, last_n: int = 5) -> List[Dict]:
         {"result": "L", "goals_for": 0, "goals_against": 2},
         {"result": "W", "goals_for": 2, "goals_against": 0},
     ][:last_n]
-
 
 # 示例8: 组合使用装饰器
 class PredictionService:
@@ -220,7 +208,6 @@ class PredictionService:
             "prediction_id": f"pred_{match_id}_{user_id}",
             "invalidated_cache": f"predictions:user:{user_id}:*",
         }
-
 
 # 运行示例的函数
 async def run_examples():
@@ -282,7 +269,6 @@ async def run_examples():
     logger.info(f"用户预测: {pred}")
     submit = await service.submit_prediction(500, 601, "2-1")
     logger.info(f"提交结果: {submit}\n")
-
 
 if __name__ == "__main__":
     # 运行示例

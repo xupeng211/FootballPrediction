@@ -27,15 +27,14 @@ except ImportError:
         home_team: str
         away_team: str
 
-    class OddsInfo(BaseModel):
+#     class OddsInfo(BaseModel):
         id: int
         match_id: int
         home_win: float
 
-    class TeamInfo(BaseModel):
+#     class TeamInfo(BaseModel):
         id: int
         name: str
-
 
 # 为了向后兼容，保持models包
 __all__ = ["LeagueInfo", "MatchInfo", "OddsInfo", "TeamInfo"]

@@ -17,7 +17,6 @@ from ml_model import MLModelStrategy
 from statistical import StatisticalStrategy
 from historical import HistoricalStrategy
 
-
 # 常量
 WEIGHTED_AVERAGE = 'weighted_average'
 MAJORITY_VOTING = 'majority_voting'

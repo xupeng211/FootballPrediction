@@ -1,3 +1,4 @@
+import json
 """
 实时比分采集器
 
@@ -20,7 +21,6 @@ import asyncio
 
 from .base_collector import DataCollector, CollectionResult
 
-
 class MatchStatus(Enum):
     """比赛状态枚举"""
 
@@ -32,7 +32,6 @@ class MatchStatus(Enum):
     POSTPONED = "postponed"
     CANCELLED = "cancelled"
 
-
 class EventType(Enum):
     """比赛事件类型枚举"""
 
@@ -43,7 +42,6 @@ class EventType(Enum):
     PENALTY = "penalty"
     OWN_GOAL = "own_goal"
     VAR_DECISION = "var_decision"
-
 
 class ScoresCollector(DataCollector):
     """

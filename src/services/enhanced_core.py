@@ -11,7 +11,6 @@ import time
 
 from src.core.logging import get_logger
 
-
 class ServiceConfig:
     """服务配置类"""
 
@@ -30,11 +29,10 @@ class ServiceConfig:
         self.config = config or {}
         self.created_at = datetime.now()
 
-
 class ServiceMetrics:
     """服务指标收集器"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self.metrics = {
             "calls": 0,
             "errors": 0,
@@ -43,7 +41,7 @@ class ServiceMetrics:
             "last_call": None,
         }
 
-    def record_call(self, duration: float, success: bool = True):  # type: ignore
+    def record_call(self, duration: float, success: bool = True):
         """记录调用"""
         self.metrics["calls"] += 1
         self.metrics["total_time"] += duration
@@ -56,7 +54,6 @@ class ServiceMetrics:
         """获取指标"""
         return self.metrics.copy()
 
-
 class EnhancedBaseService(ABC):
     """增强的基础服务类
 
@@ -64,7 +61,7 @@ class EnhancedBaseService(ABC):
     并添加了指标收集、配置管理、健康检查等功能。
     """
 
-    def __init__(self, config: Optional[ServiceConfig] = None):  # type: ignore
+    def __init__(self, config: Optional[ServiceConfig] = None):
         """初始化服务
 
         Args:
@@ -204,7 +201,7 @@ class EnhancedBaseService(ABC):
                 f"Operation {operation_name} completed in {duration:.3f}s"
             )
 
-    def add_dependency(self, name: str, service: "EnhancedBaseService"):  # type: ignore
+    def add_dependency(self, name: str, service: "EnhancedBaseService"):
         """添加依赖服务"""
         self._dependencies[name] = service
         self.logger.debug(f"Added dependency: {name}")
@@ -241,12 +238,11 @@ class EnhancedBaseService(ABC):
             f"<{self.__class__.__name__}(name={self.name}, status={self.get_status()})>"
         )
 
-
 # 为了向后兼容，保留原有的BaseService类
 class BaseService(EnhancedBaseService):
     """向后兼容的基础服务类"""
 
-    def __init__(self, name: str = "BaseService"):  # type: ignore
+    def __init__(self, name: str = "BaseService"):
         config = ServiceConfig(name=name)
         super().__init__(config)
 
@@ -259,14 +255,12 @@ class BaseService(EnhancedBaseService):
         self._running = False
         self._initialized = False
 
-
 class AbstractBaseService(EnhancedBaseService):
     """抽象基础服务类 - 强制子类实现所有方法"""
 
-    def __init__(self, name: str):  # type: ignore
+    def __init__(self, name: str):
         config = ServiceConfig(name=name)
         super().__init__(config)
-
 
 # 导出所有类
 __all__ = [

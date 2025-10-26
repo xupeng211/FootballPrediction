@@ -12,7 +12,6 @@ import random
 
 T = TypeVar("T")
 
-
 class RetryConfig:
     """重试配置类"""
 
@@ -32,12 +31,10 @@ class RetryConfig:
         self.jitter = jitter
         self.retryable_exceptions = retryable_exceptions
 
-
 class RetryError(Exception):
     """重试失败异常"""
 
     pass
-
 
 def retry_with_exponential_backoff(
     max_attempts: int = 3,
@@ -71,7 +68,6 @@ def retry_with_exponential_backoff(
 
     return decorator
 
-
 async def async_retry_with_exponential_backoff(
     max_attempts: int = 3,
     base_delay: float = 1.0,
@@ -104,8 +100,7 @@ async def async_retry_with_exponential_backoff(
 
     return decorator
 
-
-def retry(config: Optional[RetryConfig] = None):  # type: ignore
+def retry(config: Optional[RetryConfig] = None):
     """通用的重试装饰器"""
     if config is None:
         config = RetryConfig()
@@ -116,8 +111,7 @@ def retry(config: Optional[RetryConfig] = None):  # type: ignore
         max_delay=config.max_delay,
     )
 
-
-def async_retry(config: Optional[RetryConfig] = None):  # type: ignore
+def async_retry(config: Optional[RetryConfig] = None):
     """通用的异步重试装饰器"""
     if config is None:
         config = RetryConfig()
@@ -128,7 +122,6 @@ def async_retry(config: Optional[RetryConfig] = None):  # type: ignore
         max_delay=config.max_delay,
     )
 
-
 # 简单的别名
 BackoffStrategy = RetryConfig
 ExponentialBackoffStrategy = RetryConfig
@@ -138,14 +131,12 @@ PolynomialBackoffStrategy = RetryConfig
 retry_sync = retry
 retry_async = async_retry
 
-
 class CircuitState:
     """熔断器状态枚举"""
 
     CLOSED = "closed"
     OPEN = "open"
     HALF_OPEN = "half_open"
-
 
 class CircuitBreaker:
     """熔断器实现"""
@@ -162,7 +153,6 @@ class CircuitBreaker:
         self.failure_count = 0
         self.last_failure_time = None
         self.state = CircuitState.CLOSED
-
 
 __all__ = [
     "RetryConfig",

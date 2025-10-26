@@ -3,7 +3,6 @@
 import os
 from typing import List
 
-
 def get_cors_origins() -> List[str]:
     """获取CORS允许的源"""
     env = os.getenv("ENVIRONMENT", "development")
@@ -18,7 +17,6 @@ def get_cors_origins() -> List[str]:
             "http://localhost:8080",
             "http://localhost:8000",
         ]
-
 
 def get_cors_config() -> dict:
     """获取完整的CORS配置"""

@@ -11,7 +11,6 @@ from dataclasses import dataclass
 
 from src.core.logging import get_logger
 
-
 @dataclass
 class PredictionRequest:
     """预测请求"""
@@ -20,7 +19,6 @@ class PredictionRequest:
     user_id: int
     algorithm: str = "ensemble"
     features: Optional[Dict[str, Any]] = None
-
 
 @dataclass
 class PredictionResult:
@@ -31,7 +29,6 @@ class PredictionResult:
     value_assessment: Optional[Dict[str, Any]]
     recommendations: List[str]
 
-
 @dataclass
 class DataCollectionConfig:
     """数据收集配置"""
@@ -40,14 +37,13 @@ class DataCollectionConfig:
     refresh_interval: timedelta
     batch_size: int = 100
 
-
 class PredictionFacade:
     """预测门面
 
     简化预测相关的复杂操作，提供统一的预测服务接口
     """
 
-    def __init__(self, services: Dict[str, Any]):  # type: ignore
+    def __init__(self, services: Dict[str, Any]):
         self.services = services
         self.logger = get_logger("facade.prediction")
 
@@ -209,14 +205,13 @@ class PredictionFacade:
         # 模拟保存
         self.logger.info(f"Saved prediction for user {user_id}")
 
-
 class DataCollectionFacade:
     """数据收集门面
 
     简化数据收集、更新和维护的复杂操作
     """
 
-    def __init__(self, services: Dict[str, Any]):  # type: ignore
+    def __init__(self, services: Dict[str, Any]):
         self.services = services
         self.logger = get_logger("facade.data_collection")
 
@@ -288,14 +283,13 @@ class DataCollectionFacade:
         await asyncio.sleep(0.01)
         return 100
 
-
 class AnalyticsFacade:
     """分析门面
 
     简化数据分析、报表生成和洞察提取的复杂操作
     """
 
-    def __init__(self, services: Dict[str, Any]):  # type: ignore
+    def __init__(self, services: Dict[str, Any]):
         self.services = services
         self.logger = get_logger("facade.analytics")
 
@@ -402,7 +396,6 @@ class AnalyticsFacade:
             "data": "Profitability report data...",
         }
 
-
 # 门面工厂
 class FacadeFactory:
     """门面工厂"""
@@ -422,7 +415,6 @@ class FacadeFactory:
         """创建分析门面"""
         return AnalyticsFacade(services)
 
-
 # 系统门面 - 统一入口
 class SystemFacade:
     """系统门面
@@ -430,14 +422,14 @@ class SystemFacade:
     提供整个系统的统一入口
     """
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self.services = {}
         self._prediction_facade: Optional[PredictionFacade] = None
         self._data_facade: Optional[DataCollectionFacade] = None
         self._analytics_facade: Optional[AnalyticsFacade] = None
         self.logger = get_logger("facade.system")
 
-    def initialize(self, services: Dict[str, Any]):  # type: ignore
+    def initialize(self, services: Dict[str, Any]):
         """初始化系统门面"""
         self.services = services
         self._prediction_facade = FacadeFactory.create_prediction_facade(services)

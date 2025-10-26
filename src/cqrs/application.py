@@ -43,7 +43,6 @@ from .handlers import (
 
 logger = logging.getLogger(__name__)
 
-
 class PredictionCQRSService:
     """预测CQRS服务
 
@@ -51,7 +50,7 @@ class PredictionCQRSService:
     Provides command and query operations for predictions.
     """
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self.command_bus = get_command_bus()
         self.query_bus = get_query_bus()
 
@@ -136,7 +135,6 @@ class PredictionCQRSService:
         )
         return await self.query_bus.dispatch(query)
 
-
 class MatchCQRSService:
     """比赛CQRS服务
 
@@ -144,7 +142,7 @@ class MatchCQRSService:
     Provides command and query operations for matches.
     """
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self.command_bus = get_command_bus()
         self.query_bus = get_query_bus()
 
@@ -210,7 +208,6 @@ class MatchCQRSService:
         )
         return await self.query_bus.dispatch(query)
 
-
 class UserCQRSService:
     """用户CQRS服务
 
@@ -218,7 +215,7 @@ class UserCQRSService:
     Provides command and query operations for users.
     """
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self.command_bus = get_command_bus()
         self.query_bus = get_query_bus()
 
@@ -248,7 +245,6 @@ class UserCQRSService:
         )
         return await self.command_bus.dispatch(command)
 
-
 class AnalyticsCQRSService:
     """分析CQRS服务
 
@@ -256,7 +252,7 @@ class AnalyticsCQRSService:
     Provides analytics-related query operations.
     """
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self.query_bus = get_query_bus()
 
     async def get_prediction_analytics(
@@ -285,7 +281,6 @@ class AnalyticsCQRSService:
         query = GetLeaderboardQuery(period=period, limit=limit, offset=offset)
         return await self.query_bus.dispatch(query)
 
-
 # CQRS服务工厂
 class CQRSServiceFactory:
     """CQRS服务工厂"""
@@ -309,7 +304,6 @@ class CQRSServiceFactory:
     def create_analytics_service() -> AnalyticsCQRSService:
         """创建分析服务"""
         return AnalyticsCQRSService()
-
 
 # 便捷函数
 async def initialize_cqrs():

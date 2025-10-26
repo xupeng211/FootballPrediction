@@ -12,7 +12,6 @@ from dataclasses import dataclass
 from .strategies.base import PredictionStrategy, PredictionInput, PredictionOutput, StrategyType, StrategyMetrics
 from .models.prediction import Prediction
 
-
 # 类定义
 class HistoricalMatch:
     """历史比赛数据结构"""

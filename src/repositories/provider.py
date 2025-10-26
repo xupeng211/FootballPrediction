@@ -17,10 +17,8 @@ from .user import UserRepository, ReadOnlyUserRepository
 from .match import MatchRepository, ReadOnlyMatchRepository
 from ..database.models import Prediction, User, Match
 
-
 T = TypeVar("T")
 ID = TypeVar("ID")
-
 
 @runtime_checkable
 class RepositoryFactory(Protocol):
@@ -43,7 +41,6 @@ class RepositoryFactory(Protocol):
     ) -> Repository[Match, int]:
         """创建比赛仓储"""
         ...
-
 
 class DefaultRepositoryFactory:
     """默认仓储工厂实现"""
@@ -75,7 +72,6 @@ class DefaultRepositoryFactory:
             return ReadOnlyMatchRepository(session, Match)
         return MatchRepository(session, Match)
 
-
 class RepositoryProvider:
     """仓储提供者
 
@@ -83,7 +79,7 @@ class RepositoryProvider:
     Manages creation and lifecycle of repository instances.
     """
 
-    def __init__(self, factory: RepositoryFactory = None):  # type: ignore
+    def __init__(self, factory: RepositoryFactory = None):
         self._factory = factory or DefaultRepositoryFactory()
         self._repositories = {}
 
@@ -120,19 +116,17 @@ class RepositoryProvider:
             )
         return self._repositories[key]
 
-    def clear_cache(self):  # type: ignore
+    def clear_cache(self):
         """清除仓储缓存"""
         self._repositories.clear()
 
-    def set_factory(self, factory: RepositoryFactory):  # type: ignore
+    def set_factory(self, factory: RepositoryFactory):
         """设置仓储工厂"""
         self._factory = factory
         self.clear_cache()
 
-
 # 全局仓储提供者实例
 _provider: RepositoryProvider = None
-
 
 def get_repository_provider() -> RepositoryProvider:
     """获取全局仓储提供者"""
@@ -141,12 +135,10 @@ def get_repository_provider() -> RepositoryProvider:
         _provider = RepositoryProvider()
     return _provider
 
-
-def set_repository_provider(provider: RepositoryProvider):  # type: ignore
+def set_repository_provider(provider: RepositoryProvider):
     """设置全局仓储提供者"""
     global _provider
     _provider = provider
-
 
 @lru_cache(maxsize=32)
 def _get_repository_cached(
@@ -162,7 +154,6 @@ def _get_repository_cached(
     else:
         raise ValueError(f"Unknown repository type: {repository_type}")
 
-
 # 便捷函数
 def get_prediction_repository(
     session: AsyncSession, read_only: bool = False
@@ -170,13 +161,11 @@ def get_prediction_repository(
     """便捷函数：获取预测仓储"""
     return get_repository_provider().get_prediction_repository(session, read_only)
 
-
 def get_user_repository(
     session: AsyncSession, read_only: bool = False
 ) -> Repository[User, int]:
     """便捷函数：获取用户仓储"""
     return get_repository_provider().get_user_repository(session, read_only)
-
 
 def get_match_repository(
     session: AsyncSession, read_only: bool = False

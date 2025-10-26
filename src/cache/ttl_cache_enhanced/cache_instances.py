@@ -40,20 +40,17 @@ CACHES = {
     "temp": temp_cache,
 }
 
-
-def start_auto_cleanup():  # type: ignore
+def start_auto_cleanup():
     """启动所有缓存的自动清理"""
     for cache in CACHES.values():
         cache.start_auto_cleanup()
 
-
-def stop_auto_cleanup():  # type: ignore
+def stop_auto_cleanup():
     """停止所有缓存的自动清理"""
     for cache in CACHES.values():
         cache.stop_auto_cleanup()
 
-
-def get_cache(name: str):  # type: ignore
+def get_cache(name: str):
     """
     根据名称获取缓存
 
@@ -64,7 +61,6 @@ def get_cache(name: str):  # type: ignore
         TTLCache: 缓存实例，如果不存在返回None
     """
     return CACHES.get(name)
-
 
 def get_all_stats() -> dict:
     """
@@ -78,20 +74,17 @@ def get_all_stats() -> dict:
         stats[name] = cache.get_stats()
     return stats
 
-
-def clear_all_caches():  # type: ignore
+def clear_all_caches():
     """清空所有缓存"""
     for cache in CACHES.values():
         cache.clear()
 
-
-def cleanup_all_expired():  # type: ignore
+def cleanup_all_expired():
     """清理所有缓存的过期项"""
     total_cleaned = 0
     for cache in CACHES.values():
         total_cleaned += cache.cleanup_expired()
     return total_cleaned
-
 
 # 启动自动清理
 # Start auto cleanup

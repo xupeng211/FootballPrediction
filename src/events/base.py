@@ -13,9 +13,7 @@ from datetime import datetime
 from typing import Any, Dict, Optional, Type, TypeVar
 import logging
 
-
 T = TypeVar("T", bound="Event")
-
 
 class EventData:
     """事件数据基类
@@ -39,7 +37,6 @@ class EventData:
         self.version = version
         self.metadata = metadata or {}
 
-
 class Event(ABC):
     """事件抽象基类
 
@@ -47,7 +44,7 @@ class Event(ABC):
     Defines the interface that all events must implement.
     """
 
-    def __init__(self, data: EventData):  # type: ignore
+    def __init__(self, data: EventData):
         """初始化事件
 
         Args:
@@ -123,7 +120,6 @@ class Event(ABC):
     def __repr__(self) -> str:
         return self.__str__()
 
-
 class EventHandler(ABC):
     """事件处理器抽象基类
 
@@ -131,7 +127,7 @@ class EventHandler(ABC):
     Defines the interface that all event handlers must implement.
     """
 
-    def __init__(self, name: Optional[str] = None):  # type: ignore
+    def __init__(self, name: Optional[str] = None):
         """初始化事件处理器
 
         Args:
@@ -219,7 +215,6 @@ class EventHandler(ABC):
                 logger = logging.getLogger(__name__)
                 logger.info(f"Error handling event {event_type}: {e}")
 
-
 class EventFilter(ABC):
     """事件过滤器抽象基类
 
@@ -238,11 +233,10 @@ class EventFilter(ABC):
         """
         pass
 
-
 class EventTypeFilter(EventFilter):
     """基于事件类型的过滤器"""
 
-    def __init__(self, allowed_types: list[str]):  # type: ignore
+    def __init__(self, allowed_types: list[str]):
         """初始化过滤器
 
         Args:
@@ -253,11 +247,10 @@ class EventTypeFilter(EventFilter):
     def should_process(self, event: Event) -> bool:
         return event.get_event_type() in self.allowed_types
 
-
 class EventSourceFilter(EventFilter):
     """基于事件源的过滤器"""
 
-    def __init__(self, allowed_sources: list[str]):  # type: ignore
+    def __init__(self, allowed_sources: list[str]):
         """初始化过滤器
 
         Args:
@@ -268,11 +261,10 @@ class EventSourceFilter(EventFilter):
     def should_process(self, event: Event) -> bool:
         return event.source in self.allowed_sources if event.source else False
 
-
 class CompositeEventFilter(EventFilter):
     """组合过滤器，支持AND和OR逻辑"""
 
-    def __init__(self, filters: list[EventFilter], operator: str = "AND"):  # type: ignore
+    def __init__(self, filters: list[EventFilter], operator: str = "AND"):
         """初始化组合过滤器
 
         Args:

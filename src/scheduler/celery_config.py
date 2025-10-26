@@ -132,11 +132,9 @@ app.conf.task_queues = {
     },
 }
 
-
-def get_redis_connection():  # type: ignore
+def get_redis_connection():
     """获取Redis连接"""
     return redis.from_url(REDIS_URL)
-
 
 def is_match_day() -> bool:
     """检查今天是否有比赛"""
@@ -161,7 +159,6 @@ def is_match_day() -> bool:
         return True
     except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
         return False
-
 
 def get_upcoming_matches(hours: int = 24) -> list:
     """获取未来N小时内的比赛"""
@@ -195,7 +192,6 @@ def get_upcoming_matches(hours: int = 24) -> list:
     except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
         return []
 
-
 def should_collect_live_scores() -> bool:
     """判断是否应该采集实时比分"""
     try:
@@ -208,7 +204,6 @@ def should_collect_live_scores() -> bool:
 
     except (ValueError, TypeError, AttributeError, KeyError, RuntimeError):
         return False
-
 
 # 任务重试配置
 class TaskRetryConfig:
@@ -236,7 +231,6 @@ class TaskRetryConfig:
         },
     }
 
-
 # 监控配置
 class MonitoringConfig:
     """监控配置"""
@@ -254,7 +248,6 @@ class MonitoringConfig:
 
     # 监控时间窗口（小时）
     MONITORING_WINDOW = 24
-
 
 # 导入任务模块（避免循环导入）
 app.autodiscover_tasks(["src.scheduler.tasks"])

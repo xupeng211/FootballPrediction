@@ -19,11 +19,10 @@ from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)
 
-
 class FixturesCollector:
     """比赛赛程收集器"""
 
-    def __init__(self, db_session: AsyncSession, redis_client: RedisManager):  # type: ignore
+    def __init__(self, db_session: AsyncSession, redis_client: RedisManager):
         self.db_session = db_session
         self.redis_client = redis_client
         self.cache_timeout = 3600  # 1小时缓存
@@ -298,7 +297,6 @@ class FixturesCollector:
             stats["errors"] += 1
 
         return stats
-
 
 class FixturesCollectorFactory:
     """赛程收集器工厂类"""

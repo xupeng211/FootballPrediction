@@ -9,7 +9,6 @@ from sqlalchemy import text
 logger = logging.getLogger(__name__)
 """add_business_constraints
 
-
 Revision ID: a20f91c49306
 Revises: d82ea26f05d0
 Create Date: 2025-09-11 23:59:32.853716
@@ -26,7 +25,6 @@ revision: str = "a20f91c49306"
 down_revision: Union[str, None] = "d82ea26f05d0"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
-
 
 def upgrade() -> None:
     """添加业务逻辑约束和触发器"""
@@ -200,7 +198,6 @@ def upgrade() -> None:
         EXECUTE FUNCTION check_odds_consistency();
     """
     )
-
 
 def downgrade() -> None:
     """移除业务逻辑约束和触发器"""

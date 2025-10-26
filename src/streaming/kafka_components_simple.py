@@ -6,11 +6,10 @@ from typing import Any, Dict, List
 
 from src.core.exceptions import StreamingError
 
-
 class KafkaAdminClient:
     """Kafka管理客户端（简化版）"""
 
-    def __init__(self, bootstrap_servers: List[str]):  # type: ignore
+    def __init__(self, bootstrap_servers: List[str]):
         self.bootstrap_servers = bootstrap_servers
         self.is_running = False
 
@@ -60,11 +59,10 @@ class KafkaAdminClient:
             raise StreamingError("Admin client not started")
         pass  # 简化实现
 
-
 class KafkaTopicManager:
     """Kafka主题管理器"""
 
-    def __init__(self, admin_client: KafkaAdminClient):  # type: ignore
+    def __init__(self, admin_client: KafkaAdminClient):
         self.admin = admin_client
 
     async def create_topic(self, topic_spec: Dict[str, Any]):
@@ -108,11 +106,10 @@ class KafkaTopicManager:
             {"topic": topic_name, "count": new_partition_count}
         )
 
-
 class KafkaConsumerGroup:
     """Kafka消费者组管理"""
 
-    def __init__(self, group_id: str, admin_client: KafkaAdminClient):  # type: ignore
+    def __init__(self, group_id: str, admin_client: KafkaAdminClient):
         self.group_id = group_id
         self.admin = admin_client
 
@@ -145,11 +142,10 @@ class KafkaConsumerGroup:
         """删除消费者组"""
         await self.admin.delete_consumer_groups([self.group_id])
 
-
 class KafkaCluster:
     """Kafka集群"""
 
-    def __init__(self, name: str, brokers: List[str]):  # type: ignore
+    def __init__(self, name: str, brokers: List[str]):
         self.name = name
         self.brokers = brokers
         self.is_healthy = None
@@ -187,11 +183,10 @@ class KafkaCluster:
             "messages_out_per_sec": 500,
         }
 
-
 class KafkaHealthChecker:
     """Kafka健康检查器"""
 
-    def __init__(self, admin_client: KafkaAdminClient):  # type: ignore
+    def __init__(self, admin_client: KafkaAdminClient):
         self.admin = admin_client
 
     async def check_broker_health(self) -> Dict[int, Dict[str, Any]]:
@@ -234,11 +229,10 @@ class KafkaHealthChecker:
             {"topic": "topic1", "partition": 1, "lag": 50},
         ]
 
-
 class KafkaMetricsCollector:
     """Kafka指标收集器"""
 
-    def __init__(self, admin_client: KafkaAdminClient):  # type: ignore
+    def __init__(self, admin_client: KafkaAdminClient):
         self.admin = admin_client
 
     async def collect_broker_metrics(self) -> Dict[str, Dict[str, Any]]:

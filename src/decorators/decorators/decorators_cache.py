@@ -19,7 +19,6 @@ from core.validators import Validator
 import hashlib
 import pickle
 
-
 # 类定义
 class CacheDecorator:
     """缓存装饰器，缓存函数的执行结果"""

@@ -27,7 +27,6 @@ from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy import Text
 
-
 class AuditAction(str, Enum):
     """审计操作类型枚举"""
 
@@ -51,7 +50,6 @@ class AuditAction(str, Enum):
     CONFIG_CHANGE = "CONFIG_CHANGE"  # 配置变更
     SCHEMA_CHANGE = "SCHEMA_CHANGE"  # 架构变更
 
-
 class AuditSeverity(str, Enum):
     """审计事件严重级别"""
 
@@ -60,7 +58,6 @@ class AuditSeverity(str, Enum):
     MEDIUM = "MEDIUM"  # 中风险：普通写操作
     HIGH = "HIGH"  # 高风险：删除、权限变更
     CRITICAL = "CRITICAL"  # 极高风险：系统级操作
-
 
 class AuditLog(BaseModel):
     """
@@ -330,11 +327,10 @@ class AuditLog(BaseModel):
             **kwargs,
         )
 
-
 class AuditLogSummary:
     """审计日志统计摘要类"""
 
-    def __init__(self, session):  # type: ignore
+    def __init__(self, session):
         """初始化"""
         self.session = session
 

@@ -6,7 +6,6 @@ from datetime import datetime
 from typing import Optional, Dict, Any, List
 from enum import Enum
 
-
 class MarketType(Enum):
     """市场类型"""
 
@@ -18,7 +17,6 @@ class MarketType(Enum):
     HALF_TIME = "HT"  # 半场
     CORNER = "CORNER"  # 角球
 
-
 class OddsFormat(Enum):
     """赔率格式"""
 
@@ -26,11 +24,10 @@ class OddsFormat(Enum):
     FRACTIONAL = "fractional"  # 分数（英国）
     AMERICAN = "american"  # 美式
 
-
 class OddsMovement:
     """赔率变化"""
 
-    def __init__(self, old_odds: float, new_odds: float, timestamp: datetime):  # type: ignore
+    def __init__(self, old_odds: float, new_odds: float, timestamp: datetime):
         self.old_odds = old_odds
         self.new_odds = new_odds
         self.timestamp = timestamp
@@ -41,11 +38,10 @@ class OddsMovement:
         """是否为显著变化"""
         return abs(self.change_percent) >= threshold
 
-
 class ValueBet:
     """价值投注"""
 
-    def __init__(self, odds: float, probability: float, threshold: float = 1.0):  # type: ignore
+    def __init__(self, odds: float, probability: float, threshold: float = 1.0):
         self.odds = odds
         self.probability = probability
         self.threshold = threshold
@@ -60,7 +56,6 @@ class ValueBet:
         if not self.is_value():
             return 0.0
         return min(1.0, self.expected_value / (self.threshold * 2))
-
 
 class Odds:
     """赔率领域模型"""

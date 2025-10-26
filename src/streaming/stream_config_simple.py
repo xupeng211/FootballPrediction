@@ -7,7 +7,6 @@ import os
 from typing import Any, Dict, List, Optional
 from pathlib import Path
 
-
 class StreamConfig:
     """流配置基类"""
 
@@ -94,12 +93,11 @@ class StreamConfig:
                 result[key] = value
         return result
 
-    def save_to_file(self, file_path: str):  # type: ignore
+    def save_to_file(self, file_path: str):
         """保存配置到文件"""
         config_dict = self.to_dict()
         with open(file_path, "w") as f:
             json.dump(config_dict, f, indent=2)
-
 
 class KafkaConfig(StreamConfig):
     """Kafka配置"""
@@ -143,7 +141,6 @@ class KafkaConfig(StreamConfig):
                     raise ValueError("Invalid port format")
 
         return True
-
 
 class ConsumerConfig(StreamConfig):
     """消费者配置"""
@@ -225,7 +222,6 @@ class ConsumerConfig(StreamConfig):
                     raise ValueError(f"{field} must have at least {min_items} items")
 
         return True
-
 
 class ProducerConfig(StreamConfig):
     """生产者配置"""

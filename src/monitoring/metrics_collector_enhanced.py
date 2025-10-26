@@ -21,7 +21,6 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
-
 class EnhancedMetricsCollector:
     """简化的增强指标收集器"""
 
@@ -36,7 +35,6 @@ class EnhancedMetricsCollector:
         """添加指标"""
         self.metrics[name] = value
         logger.debug(f"Added metric: {name} = {value}")
-
 
 class MetricsAggregator:
     """指标聚合器 - 简化版本"""
@@ -60,7 +58,6 @@ class MetricsAggregator:
         """获取聚合后的指标"""
         return self.aggregated_metrics
 
-
 class MetricPoint:
     """指标点 - 简化版本"""
 
@@ -73,10 +70,8 @@ class MetricPoint:
         """转换为字典"""
         return {"name": self.name, "value": self.value, "timestamp": self.timestamp}
 
-
 # 全局实例
 _collector = None
-
 
 def get_metrics_collector() -> EnhancedMetricsCollector:
     """获取全局指标收集器实例"""
@@ -85,20 +80,17 @@ def get_metrics_collector() -> EnhancedMetricsCollector:
         _collector = EnhancedMetricsCollector()
     return _collector
 
-
 def track_prediction_performance(prediction_id: str, accuracy: float):
     """跟踪预测性能"""
     collector = get_metrics_collector()
     collector.add_metric(f"prediction_{prediction_id}_accuracy", accuracy)
     logger.info(f"Tracked prediction performance: {prediction_id} - {accuracy}")
 
-
 def track_cache_performance(cache_name: str, hit_rate: float):
     """跟踪缓存性能"""
     collector = get_metrics_collector()
     collector.add_metric(f"cache_{cache_name}_hit_rate", hit_rate)
     logger.info(f"Tracked cache performance: {cache_name} - {hit_rate}")
-
 
 # 重新导出类型
 

@@ -6,7 +6,6 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
-
 class MatchInfo(BaseModel):
     """比赛信息模式"""
 
@@ -17,7 +16,6 @@ class MatchInfo(BaseModel):
     match_time: str
     match_status: str
     season: Optional[str] = None
-
 
 class PredictionData(BaseModel):
     """预测数据模式"""
@@ -34,7 +32,6 @@ class PredictionData(BaseModel):
     is_correct: Optional[bool] = None
     actual_result: Optional[str] = None
 
-
 class PredictionRequest(BaseModel):
     """预测请求模式"""
 
@@ -42,7 +39,6 @@ class PredictionRequest(BaseModel):
     model_version: Optional[str] = None
     model_name: Optional[str] = None
     include_confidence: bool = True
-
 
 class PredictionResponse(BaseModel):
     """预测响应模式"""
@@ -52,7 +48,6 @@ class PredictionResponse(BaseModel):
     prediction: PredictionData
     source: str = Field(default="cached", pattern="^(cached|real_time)$")
 
-
 class BatchPredictionRequest(BaseModel):
     """批量预测请求模式"""
 
@@ -60,7 +55,6 @@ class BatchPredictionRequest(BaseModel):
     model_version: Optional[str] = None
     model_name: Optional[str] = None
     include_confidence: bool = True
-
 
 class BatchPredictionResponse(BaseModel):
     """批量预测响应模式"""
@@ -71,7 +65,6 @@ class BatchPredictionResponse(BaseModel):
     invalid_match_ids: List[int]
     predictions: List[PredictionData]
 
-
 class UpcomingMatchesRequest(BaseModel):
     """即将到来的比赛请求模式"""
 
@@ -80,14 +73,12 @@ class UpcomingMatchesRequest(BaseModel):
     days_ahead: int = Field(default=7, ge=1, le=30)
     include_predictions: bool = False
 
-
 class UpcomingMatchesResponse(BaseModel):
     """即将到来的比赛响应模式"""
 
     total_matches: int
     matches: List[MatchInfo]
     predictions: Optional[List[PredictionData]] = None
-
 
 class ModelStats(BaseModel):
     """模型统计模式"""
@@ -99,13 +90,11 @@ class ModelStats(BaseModel):
     accuracy: float = Field(ge=0.0, le=1.0)
     last_updated: str
 
-
 class ModelStatsResponse(BaseModel):
     """模型统计响应模式"""
 
     models: List[ModelStats]
     total_models: int
-
 
 class HistoryPrediction(BaseModel):
     """历史预测模式"""
@@ -123,14 +112,12 @@ class HistoryPrediction(BaseModel):
     actual_result: Optional[str] = None
     verified_at: Optional[str] = None
 
-
 class PredictionHistoryResponse(BaseModel):
     """预测历史响应模式"""
 
     match_id: int
     total_predictions: int
     predictions: List[HistoryPrediction]
-
 
 class RecentPrediction(BaseModel):
     """最近预测模式"""
@@ -145,14 +132,12 @@ class RecentPrediction(BaseModel):
     is_correct: Optional[bool] = None
     match_info: MatchInfo
 
-
 class RecentPredictionsResponse(BaseModel):
     """最近预测响应模式"""
 
     time_range_hours: int
     total_predictions: int
     predictions: List[RecentPrediction]
-
 
 class PredictionOverview(BaseModel):
     """预测概览模式"""
@@ -163,13 +148,11 @@ class PredictionOverview(BaseModel):
     last_prediction: Optional[str] = None
     model_count: int
 
-
 class PredictionOverviewResponse(BaseModel):
     """预测概览响应模式"""
 
     overview: PredictionOverview
     recent_predictions: List[RecentPrediction]
-
 
 class VerificationResponse(BaseModel):
     """验证响应模式"""

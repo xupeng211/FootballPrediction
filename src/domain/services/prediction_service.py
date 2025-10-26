@@ -25,11 +25,10 @@ from ..events.prediction_events import (
     PredictionPointsAdjustedEvent,
 )
 
-
 class PredictionDomainService:
     """预测领域服务"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self._events: List[Any] = []
 
     def create_prediction(

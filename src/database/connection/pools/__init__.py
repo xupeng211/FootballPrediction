@@ -9,11 +9,10 @@ from src.core.logging import get_logger
 
 logger = get_logger(__name__)
 
-
 class ConnectionPool:
     """Database connection pool manager"""
 
-    def __init__(self, min_connections: int = 1, max_connections: int = 10):  # type: ignore
+    def __init__(self, min_connections: int = 1, max_connections: int = 10):
         """Initialize connection pool"""
         self.min_connections = min_connections
         self.max_connections = max_connections
@@ -34,6 +33,5 @@ class ConnectionPool:
         """Close all connections"""
         # Placeholder implementation
         pass
-
 
 __all__ = ["ConnectionPool"]

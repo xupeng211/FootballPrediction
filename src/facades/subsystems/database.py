@@ -10,11 +10,10 @@ from typing import Any, Dict, Optional
 
 from ..base import Subsystem, SubsystemStatus
 
-
 class DatabaseSubsystem(Subsystem):
     """数据库子系统"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         super().__init__("database", "2.0.0")
         self.connection_pool = None
         self.query_count = 0

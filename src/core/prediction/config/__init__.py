@@ -7,7 +7,6 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
-
 class PredictionConfig(BaseModel):
     """预测引擎配置类"""
 
@@ -39,7 +38,6 @@ class PredictionConfig(BaseModel):
 
         frozen = False  # 允许修改配置
 
-
 class DatabaseConfig(BaseModel):
     """数据库配置类"""
 
@@ -57,6 +55,5 @@ class DatabaseConfig(BaseModel):
     def connection_string(self) -> str:
         """获取数据库连接字符串"""
         return f"postgresql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
-
 
 __all__ = ["PredictionConfig", "DatabaseConfig"]

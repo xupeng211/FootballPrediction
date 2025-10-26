@@ -33,13 +33,11 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from ..base import BaseModel
 from datetime import datetime
 
-
 class TeamType(str, Enum):
     """球队类型枚举"""
 
     HOME = "home"  # 主队
     AWAY = "away"  # 客队
-
 
 class FeatureEntityType(str, Enum):
     """特征实体类型"""
@@ -48,7 +46,6 @@ class FeatureEntityType(str, Enum):
     TEAM = "team"
     PLAYER = "player"
     LEAGUE = "league"
-
 
 class FeatureEntity(BaseModel):
     """特征实体"""
@@ -77,7 +74,6 @@ class FeatureEntity(BaseModel):
             f"<FeatureEntity(id={self.id}, name={self.name}, type={self.entity_type})>"
         )
 
-
 class FeatureMetadata(BaseModel):
     """特征元数据"""
 
@@ -101,7 +97,6 @@ class FeatureMetadata(BaseModel):
     def __repr__(self) -> str:
         return f"<FeatureMetadata(id={self.id}, name={self.feature_name})>"
 
-
 # 为了向后兼容，保留原始的名称
 feature_entity = FeatureEntity
 feature_metadata = FeatureMetadata
@@ -117,7 +112,6 @@ feature_types = {
 # 简化的模型字典
 models = {"FeatureEntity": FeatureEntity, "FeatureMetadata": FeatureMetadata}
 
-
 # 为了向后兼容，添加简化的 Features 类
 class Features(BaseModel):
     """简化的 Features 类以保持向后兼容"""
@@ -132,7 +126,6 @@ class Features(BaseModel):
 
     def __repr__(self) -> str:
         return f"<Features(id={self.id})>"
-
 
 __all__ = [
     "FeatureEntity",

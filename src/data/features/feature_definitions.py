@@ -10,7 +10,6 @@
 from datetime import timedelta
 from typing import Dict, List, Optional
 
-
 class FeatureDefinitions:
     """特征定义类，包含所有特征相关的定义"""
 
@@ -63,14 +62,12 @@ class FeatureDefinitions:
         },
     }
 
-
 # 为了兼容性，提供简化的模拟对象
 class MockEntity:
     def __init__(self, name: str, description: str, join_keys: List[str]) -> None:
         self.name = name
         self.description = description
         self.join_keys = join_keys
-
 
 class MockFeatureView:
     def __init__(
@@ -87,13 +84,11 @@ class MockFeatureView:
         self.source = source
         self.tags = tags or {}
 
-
 class MockFileSource:
     def __init__(self, name: str, path: str, timestamp_field: str) -> None:
         self.name = name
         self.path = path
         self.timestamp_field = timestamp_field
-
 
 # 实体定义
 match_entity = MockEntity(
@@ -159,7 +154,6 @@ head_to_head_features_view = MockFeatureView(
     source=odds_features_source,  # 复用数据源
     tags={"team": "data", "type": "historical_matchup"},
 )
-
 
 # 特征服务定义（简化版本）
 class FeatureServices:

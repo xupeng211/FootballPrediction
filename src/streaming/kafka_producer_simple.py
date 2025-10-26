@@ -8,11 +8,10 @@ from typing import Any, Dict, Optional, List
 
 from src.core.exceptions import StreamingError
 
-
 class KafkaMessageProducer:
     """Kafka消息生产者（简化版）"""
 
-    def __init__(self, config: Dict[str, Any]):  # type: ignore
+    def __init__(self, config: Dict[str, Any]):
         if "bootstrap_servers" not in config:
             raise StreamingError("Missing required config: bootstrap_servers")
         if "topic" not in config:

@@ -7,7 +7,6 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime
 from enum import Enum
 
-
 class MatchStatus(Enum):
     """比赛状态枚举"""
     SCHEDULED = "SCHEDULED"
@@ -16,13 +15,11 @@ class MatchStatus(Enum):
     POSTPONED = "POSTPONED"
     CANCELLED = "CANCELLED"
 
-
 class TeamStatus(Enum):
     """队伍状态枚举"""
     ACTIVE = "ACTIVE"
     INACTIVE = "INACTIVE"
     SUSPENDED = "SUSPENDED"
-
 
 @dataclass
 class Team:
@@ -32,7 +29,6 @@ class Team:
     status: TeamStatus
     league_id: Optional[int] = None
     created_at: Optional[datetime] = None
-
 
 @dataclass
 class Match:
@@ -48,7 +44,6 @@ class Match:
     home_score: Optional[int] = 0
     away_score: Optional[int] = 0
 
-
 @dataclass
 class League:
     """联赛实体"""
@@ -57,7 +52,6 @@ class League:
     country: str
     season: str
     is_active: bool = True
-
 
 @dataclass
 class Prediction:
@@ -70,12 +64,10 @@ class Prediction:
     created_at: datetime
     is_correct: Optional[bool] = None
 
-
 # 导出常用函数
 def create_test_team(id: int, name: str) -> Team:
     """创建测试用队伍"""
     return Team(id=id, name=name, status=TeamStatus.ACTIVE)
-
 
 def create_test_match(id: int, home_team: int, away_team: int) -> Match:
     """创建测试用比赛"""
@@ -87,11 +79,9 @@ def create_test_match(id: int, home_team: int, away_team: int) -> Match:
         status=MatchStatus.SCHEDULED
     )
 
-
 def validate_prediction_confidence(confidence: float) -> bool:
     """验证预测置信度"""
     return 0.0 <= confidence <= 1.0
-
 
 __all__ = [
     'Team', 'Match', 'League', 'Prediction', 'MatchStatus', 'TeamStatus',

@@ -16,7 +16,6 @@ from .base import Observer, ObservableEvent, ObservableEventType
 
 logger = logging.getLogger(__name__)
 
-
 class MetricsObserver(Observer):
     """指标收集观察者
 
@@ -24,7 +23,7 @@ class MetricsObserver(Observer):
     Collects and aggregates system metrics.
     """
 
-    def __init__(self, aggregation_window: int = 60):  # type: ignore
+    def __init__(self, aggregation_window: int = 60):
         """初始化指标观察者
 
         Args:
@@ -163,7 +162,6 @@ class MetricsObserver(Observer):
         )
         return stats
 
-
 class LoggingObserver(Observer):
     """日志记录观察者
 
@@ -171,7 +169,7 @@ class LoggingObserver(Observer):
     Logs events to the logging system.
     """
 
-    def __init__(self, log_level: int = logging.INFO):  # type: ignore
+    def __init__(self, log_level: int = logging.INFO):
         """初始化日志观察者
 
         Args:
@@ -250,7 +248,6 @@ class LoggingObserver(Observer):
         )
         return stats
 
-
 class AlertingObserver(Observer):
     """告警通知观察者
 
@@ -258,7 +255,7 @@ class AlertingObserver(Observer):
     Monitors events and triggers alerts.
     """
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         """初始化告警观察者"""
         super().__init__("AlertingObserver")
         self._alert_rules: Dict[str, Dict[str, Any]] = {}
@@ -415,7 +412,6 @@ class AlertingObserver(Observer):
         )
         return stats
 
-
 class PerformanceObserver(Observer):
     """性能监控观察者
 
@@ -423,7 +419,7 @@ class PerformanceObserver(Observer):
     Monitors system performance metrics.
     """
 
-    def __init__(self, window_size: int = 100):  # type: ignore
+    def __init__(self, window_size: int = 100):
         """初始化性能观察者
 
         Args:

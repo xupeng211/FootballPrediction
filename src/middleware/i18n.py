@@ -7,7 +7,6 @@ import os
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 
-
 class I18nMiddleware(BaseHTTPMiddleware):
     """国际化中间件 - 设置语言偏好"""
 

@@ -1,7 +1,6 @@
 """
 Statistics Data Collection Tasks
 
-
 # 此文件已从 data_collection_tasks_legacy.py 拆分
 # This file was split from data_collection_tasks_legacy.py
 

@@ -10,11 +10,10 @@ from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
-
 class RedisSyncOperations:
     """Synchronous Redis operations"""
 
-    def __init__(self, redis_client=None):  # type: ignore
+    def __init__(self, redis_client=None):
         """Initialize sync operations"""
         self.client = redis_client
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")

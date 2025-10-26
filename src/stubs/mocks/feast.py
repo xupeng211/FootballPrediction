@@ -11,7 +11,6 @@ from collections import defaultdict
 
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class FeatureView:
     """特征视图"""
@@ -24,7 +23,6 @@ class FeatureView:
     stream_source: Optional[str] = None
     tags: Optional[Dict[str, str]] = None
 
-
 @dataclass
 class Entity:
     """实体"""
@@ -34,7 +32,6 @@ class Entity:
     description: Optional[str] = None
     tags: Optional[Dict[str, str]] = None
 
-
 @dataclass
 class FeatureService:
     """特征服务"""
@@ -42,7 +39,6 @@ class FeatureService:
     name: str
     features: List[str]
     tags: Optional[Dict[str, str]] = None
-
 
 class ValueType:
     """值类型常量"""
@@ -55,7 +51,6 @@ class ValueType:
     BYTES = "BYTES"
     BOOL = "BOOL"
     UNIX_TIMESTAMP = "UNIX_TIMESTAMP"
-
 
 class MockFeatureStore:
     """模拟特征存储"""
@@ -199,11 +194,10 @@ class MockFeatureStore:
         """清除测试数据"""
         self._feature_data.clear()
 
-
 class MockFeatureService:
     """模拟特征服务"""
 
-    def __init__(self, name: str, feature_store: MockFeatureStore):  # type: ignore
+    def __init__(self, name: str, feature_store: MockFeatureStore):
         self.name = name
         self.feature_store = feature_store
         self._service_config: Optional[Dict[str, Any]] = None
@@ -215,7 +209,6 @@ class MockFeatureService:
         entity_rows = [{"entity_id": entity_id}]
         features, _ = self.feature_store.get_online_features(feature_refs, entity_rows)
         return features[0] if features else {}
-
 
 class MockFeastClient:
     """模拟Feast客户端"""
@@ -249,11 +242,10 @@ class MockFeastClient:
             self._services[name] = MockFeatureService(name, self.feature_store)
         return self._services[name]
 
-
 class MockOnlineResponse:
     """模拟在线特征响应"""
 
-    def __init__(self, features: List[Dict[str, Any]], field_names: List[str]):  # type: ignore
+    def __init__(self, features: List[Dict[str, Any]], field_names: List[str]):
         self._features = features
         self._field_names = field_names
         self._to_dict_called = False
@@ -278,21 +270,18 @@ class MockOnlineResponse:
         """返回响应长度"""
         return len(self._features)
 
-    def __iter__(self):  # type: ignore
+    def __iter__(self):
         """迭代器"""
         return iter(self._features)
-
 
 # 便捷函数
 def FeatureStore(repo_path: str = None, config_path: str = None) -> MockFeatureStore:
     """创建特征存储"""
     return MockFeatureStore(repo_path, config_path)
 
-
 def Client(repo_path: str = None, config_path: str = None) -> MockFeastClient:
     """创建Feast客户端"""
     return MockFeastClient(repo_path, config_path)
-
 
 # 测试数据生成器
 def generate_test_features(entity_id: str) -> Dict[str, Any]:
@@ -315,10 +304,8 @@ def generate_test_features(entity_id: str) -> Dict[str, Any]:
         "historical__head_to_head_draws": 2,
     }
 
-
 # 创建全局实例
 global_feast_store: Optional[MockFeatureStore] = None
-
 
 def get_feast_store() -> MockFeatureStore:
     """获取全局特征存储实例"""
@@ -327,7 +314,6 @@ def get_feast_store() -> MockFeatureStore:
         global_feast_store = MockFeatureStore()
         global_feast_store.init()
     return global_feast_store
-
 
 def reset_feast_store() -> None:
     """重置全局特征存储"""

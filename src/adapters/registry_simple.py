@@ -5,19 +5,18 @@
 from typing import Any, Dict, Optional, Type, List
 from src.core.exceptions import AdapterError
 
-
 class AdapterRegistry:
     """适配器注册表"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self._registry: Dict[str, Dict] = {}
         self._instances: Dict[str, Any] = {}
 
-    def register(self, name: str, adapter_class: Type, **kwargs):  # type: ignore
+    def register(self, name: str, adapter_class: Type, **kwargs):
         """注册适配器"""
         self._registry[name] = {"class": adapter_class, **kwargs}
 
-    def unregister(self, name: str):  # type: ignore
+    def unregister(self, name: str):
         """注销适配器"""
         if name not in self._registry:
             raise AdapterError(f"No adapter registered with name '{name}'")
@@ -25,7 +24,7 @@ class AdapterRegistry:
         if name in self._instances:
             del self._instances[name]
 
-    def create(self, name: str, config: Optional[Dict] = None):  # type: ignore
+    def create(self, name: str, config: Optional[Dict] = None):
         """创建适配器实例"""
         if name not in self._registry:
             raise AdapterError(f"No adapter registered with name '{name}'")
@@ -60,7 +59,7 @@ class AdapterRegistry:
                 adapters.append((name, info))
         return adapters
 
-    def get_singleton(self, name: str):  # type: ignore
+    def get_singleton(self, name: str):
         """获取单例实例"""
         if name not in self._registry:
             raise AdapterError(f"No adapter registered with name '{name}'")
@@ -72,7 +71,7 @@ class AdapterRegistry:
 
         return self._instances[name]
 
-    def clear(self):  # type: ignore
+    def clear(self):
         """清空注册表"""
         self._registry.clear()
         self._instances.clear()
@@ -106,24 +105,22 @@ class AdapterRegistry:
         """导出注册表"""
         return self._registry.copy()
 
-    def import_data(self, data: Dict):  # type: ignore
+    def import_data(self, data: Dict):
         """导入数据"""
         self._registry.update(data)
 
-    def adapter(self, name: str = None, **kwargs):  # type: ignore
+    def adapter(self, name: str = None, **kwargs):
         """装饰器注册适配器"""
 
-        def decorator(cls):  # type: ignore
+        def decorator(cls):
             adapter_name = name or cls.__name__
             self.register(adapter_name, cls, **kwargs)
             return cls
 
         return decorator
 
-
 # 全局注册表实例
 _global_registry = None
-
 
 def get_global_registry() -> AdapterRegistry:
     """获取全局注册表实例"""
@@ -132,8 +129,7 @@ def get_global_registry() -> AdapterRegistry:
         _global_registry = AdapterRegistry()
     return _global_registry
 
-
-def register_adapter(name: str = None, **kwargs):  # type: ignore
+def register_adapter(name: str = None, **kwargs):
     """装饰器注册适配器"""
     registry = get_global_registry()
     return registry.adapter(name, **kwargs)

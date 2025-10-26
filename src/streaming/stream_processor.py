@@ -11,11 +11,10 @@ from src.core.logging import get_logger
 
 logger = get_logger(__name__)
 
-
 class StreamProcessor:
     """流数据处理器"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         """初始化流处理器"""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.is_running = False
@@ -43,11 +42,10 @@ class StreamProcessor:
             self.logger.error(f"Error processing message: {str(e)}")
             return {"status": "error", "error": str(e)}
 
-
 class StreamProcessorManager:
     """流处理器管理器"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         """初始化管理器"""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.processors = {}
@@ -76,30 +74,29 @@ class StreamProcessorManager:
             await processor.stop()
         self.is_running = False
 
-
 class ProcessingStatistics:
     """处理统计"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         """初始化统计"""
         self.start_time = None
         self.end_time = None
         self.total_processed = 0
         self.total_errors = 0
 
-    def start_timing(self):  # type: ignore
+    def start_timing(self):
         """开始计时"""
         self.start_time = asyncio.get_event_loop().time()
 
-    def stop_timing(self):  # type: ignore
+    def stop_timing(self):
         """停止计时"""
         self.end_time = asyncio.get_event_loop().time()
 
-    def record_processed(self):  # type: ignore
+    def record_processed(self):
         """记录处理"""
         self.total_processed += 1
 
-    def record_error(self):  # type: ignore
+    def record_error(self):
         """记录错误"""
         self.total_errors += 1
 
@@ -118,11 +115,10 @@ class ProcessingStatistics:
             * 100,
         }
 
-
 class HealthChecker:
     """健康检查器"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         """初始化健康检查器"""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.last_check = None
@@ -139,7 +135,6 @@ class HealthChecker:
             self.logger.error(f"Health check failed: {str(e)}")
             self.is_healthy = False
             return False
-
 
 # 向后兼容的导出
 StreamProcessorManager = StreamProcessorManager  # 避免名称冲突

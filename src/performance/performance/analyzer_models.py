@@ -10,7 +10,6 @@ import numpy
 from pydantic import BaseModel
 from src.core.logging import get_logger
 
-
 # 类定义
 class PerformanceInsight:
     """性能洞察数据结构"""

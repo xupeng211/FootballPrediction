@@ -12,7 +12,6 @@ from datetime import datetime
 from enum import Enum
 import asyncio
 
-
 class AdapterStatus(Enum):
     """适配器状态枚举"""
 
@@ -20,7 +19,6 @@ class AdapterStatus(Enum):
     INACTIVE = "inactive"
     ERROR = "error"
     MAINTENANCE = "maintenance"
-
 
 class Adaptee(ABC):
     """被适配者接口，需要被适配的现有接口"""
@@ -35,7 +33,6 @@ class Adaptee(ABC):
         """发送数据"""
         pass
 
-
 class Target(ABC):
     """目标接口，客户端期望的接口"""
 
@@ -44,11 +41,10 @@ class Target(ABC):
         """标准请求方法"""
         pass
 
-
 class Adapter(Target):
     """适配器基类，将Adaptee接口转换为Target接口"""
 
-    def __init__(self, adaptee: Adaptee, name: Optional[str] = None):  # type: ignore
+    def __init__(self, adaptee: Adaptee, name: Optional[str] = None):
         self.adaptee = adaptee
         self.name = name or self.__class__.__name__
         self.status = AdapterStatus.INACTIVE
@@ -170,11 +166,10 @@ class Adapter(Target):
             ),
         }
 
-
 class CompositeAdapter(Adapter):
     """组合适配器，可以管理多个子适配器"""
 
-    def __init__(self, name: str, adapters: List[Adapter] = None):  # type: ignore
+    def __init__(self, name: str, adapters: List[Adapter] = None):
         """初始化组合适配器
 
         Args:
@@ -186,12 +181,12 @@ class CompositeAdapter(Adapter):
         self.adapter_registry: Dict[str, Adapter] = {}
         self._register_adapters()
 
-    def _register_adapters(self):  # type: ignore
+    def _register_adapters(self):
         """注册所有子适配器"""
         for adapter in self.adapters:
             self.adapter_registry[adapter.name] = adapter
 
-    def add_adapter(self, adapter: Adapter):  # type: ignore
+    def add_adapter(self, adapter: Adapter):
         """添加子适配器
 
         Args:
@@ -308,7 +303,6 @@ class CompositeAdapter(Adapter):
             "average_response_time": 0.0,
         }
 
-
 class DataTransformer(ABC):
     """数据转换器基类"""
 
@@ -327,11 +321,10 @@ class DataTransformer(ABC):
         """获取目标数据结构"""
         pass
 
-
 class BaseAdapter(ABC):
     """基础适配器抽象类"""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):  # type: ignore
+    def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
         self.is_initialized = False
 

@@ -37,13 +37,12 @@ from .dto import (
 
 logger = logging.getLogger(__name__)
 
-
 # 预测命令处理器
 class CreatePredictionHandler(CommandHandler):
     """创建预测处理器"""
 
     @property
-    def command_type(self):  # type: ignore
+    def command_type(self):
         return CreatePredictionCommand
 
     async def handle(self, command: CreatePredictionCommand) -> CommandResult:
@@ -97,12 +96,11 @@ class CreatePredictionHandler(CommandHandler):
             logger.error(f"创建预测失败: {e}")
             return CommandResult.failure_result([str(e)], "创建预测失败")
 
-
 class UpdatePredictionHandler(CommandHandler):
     """更新预测处理器"""
 
     @property
-    def command_type(self):  # type: ignore
+    def command_type(self):
         return UpdatePredictionCommand
 
     async def handle(self, command: UpdatePredictionCommand) -> CommandResult:
@@ -152,12 +150,11 @@ class UpdatePredictionHandler(CommandHandler):
             logger.error(f"更新预测失败: {e}")
             return CommandResult.failure_result([str(e)], "更新预测失败")
 
-
 class DeletePredictionHandler(CommandHandler):
     """删除预测处理器"""
 
     @property
-    def command_type(self):  # type: ignore
+    def command_type(self):
         return DeletePredictionCommand
 
     async def handle(self, command: DeletePredictionCommand) -> CommandResult:
@@ -181,13 +178,12 @@ class DeletePredictionHandler(CommandHandler):
             logger.error(f"删除预测失败: {e}")
             return CommandResult.failure_result([str(e)], "删除预测失败")
 
-
 # 用户命令处理器
 class CreateUserHandler(CommandHandler):
     """创建用户处理器"""
 
     @property
-    def command_type(self):  # type: ignore
+    def command_type(self):
         return CreateUserCommand
 
     async def handle(self, command: CreateUserCommand) -> CommandResult:
@@ -227,13 +223,12 @@ class CreateUserHandler(CommandHandler):
             logger.error(f"创建用户失败: {e}")
             return CommandResult.failure_result([str(e)], "创建用户失败")
 
-
 # 查询处理器
 class GetPredictionByIdHandler(QueryHandler):
     """根据ID获取预测处理器"""
 
     @property
-    def query_type(self):  # type: ignore
+    def query_type(self):
         return GetPredictionByIdQuery
 
     async def handle(self, query: GetPredictionByIdQuery) -> Optional[PredictionDTO]:
@@ -263,12 +258,11 @@ class GetPredictionByIdHandler(QueryHandler):
             logger.error(f"获取预测失败: {e}")
             return None
 
-
 class GetPredictionsByUserHandler(QueryHandler):
     """获取用户预测列表处理器"""
 
     @property
-    def query_type(self):  # type: ignore
+    def query_type(self):
         return GetPredictionsByUserQuery
 
     async def handle(self, query: GetPredictionsByUserQuery) -> List[PredictionDTO]:
@@ -326,12 +320,11 @@ class GetPredictionsByUserHandler(QueryHandler):
             logger.error(f"获取用户预测列表失败: {e}")
             return []
 
-
 class GetUserStatsHandler(QueryHandler):
     """获取用户统计处理器"""
 
     @property
-    def query_type(self):  # type: ignore
+    def query_type(self):
         return GetUserStatsQuery
 
     async def handle(self, query: GetUserStatsQuery) -> Optional[PredictionStatsDTO]:
@@ -443,12 +436,11 @@ class GetUserStatsHandler(QueryHandler):
             logger.error(f"获取用户统计失败: {e}")
             return None
 
-
 class GetUpcomingMatchesHandler(QueryHandler):
     """获取即将到来的比赛处理器"""
 
     @property
-    def query_type(self):  # type: ignore
+    def query_type(self):
         return GetUpcomingMatchesQuery
 
     async def handle(self, query: GetUpcomingMatchesQuery) -> List[MatchDTO]:
@@ -501,55 +493,49 @@ class GetUpcomingMatchesHandler(QueryHandler):
             logger.error(f"获取即将到来的比赛失败: {e}")
             return []
 
-
 # 处理器集合类
 class PredictionCommandHandlers:
     """预测命令处理器集合"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self.create = CreatePredictionHandler()
         self.update = UpdatePredictionHandler()
         self.delete = DeletePredictionHandler()
 
-
 class PredictionQueryHandlers:
     """预测查询处理器集合"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self.get_by_id = GetPredictionByIdHandler()
         self.get_by_user = GetPredictionsByUserHandler()
         self.get_stats = GetUserStatsHandler()
         self.get_upcoming_matches = GetUpcomingMatchesHandler()
 
-
 class UserCommandHandlers:
     """用户命令处理器集合"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self.create = CreateUserHandler()
         self.update = UpdateUserHandler()
-
 
 class UserQueryHandlers:
     """用户查询处理器集合"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self.get_by_id = GetUserByIdHandler()
         self.get_stats = GetUserStatsHandler()
-
 
 class MatchCommandHandlers:
     """比赛命令处理器集合"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self.create = CreateMatchHandler()
         self.update = UpdateMatchHandler()
-
 
 class MatchQueryHandlers:
     """比赛查询处理器集合"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self.get_by_id = GetMatchByIdHandler()
         self.get_upcoming = GetUpcomingMatchesHandler()
         self.get_predictions = GetMatchPredictionsHandler()

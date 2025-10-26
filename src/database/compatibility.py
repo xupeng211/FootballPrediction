@@ -9,7 +9,6 @@ from typing import Any, Dict
 from enum import Enum
 import re
 
-
 class Compatibility(Enum):
     """兼容性级别枚举"""
 
@@ -17,11 +16,10 @@ class Compatibility(Enum):
     PARTIAL = "partial"  # 部分兼容
     NONE = "none"  # 不兼容
 
-
 class CompatibleQueryBuilder:
     """兼容性查询构建器"""
 
-    def __init__(self, dialect: str = "postgresql"):  # type: ignore
+    def __init__(self, dialect: str = "postgresql"):
         """初始化查询构建器
 
         Args:
@@ -89,11 +87,10 @@ class CompatibleQueryBuilder:
         else:
             return f"{self.compatibility_rules['json_extract']}({column}, '$.{path}')"
 
-
 class SQLCompatibilityHelper:
     """SQL兼容性助手"""
 
-    def __init__(self, source_dialect: str, target_dialect: str):  # type: ignore
+    def __init__(self, source_dialect: str, target_dialect: str):
         """初始化兼容性助手
 
         Args:

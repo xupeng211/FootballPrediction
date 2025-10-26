@@ -29,7 +29,6 @@ from src.core.logging import get_logger
 
 logger = get_logger(__name__)
 
-
 @dataclass
 class PerformanceMetric:
     """性能指标数据结构"""
@@ -39,7 +38,6 @@ class PerformanceMetric:
     unit: str
     timestamp: datetime = field(default_factory=datetime.now)
     metadata: Dict[str, Any] = field(default_factory=dict)
-
 
 @dataclass
 class FunctionProfile:
@@ -54,7 +52,6 @@ class FunctionProfile:
     cpu_time: float
     memory_usage: int = 0
 
-
 @dataclass
 class QueryProfile:
     """数据库查询性能分析结果"""
@@ -65,11 +62,10 @@ class QueryProfile:
     index_used: Optional[str] = None
     explain_plan: Optional[Dict] = None
 
-
 class PerformanceProfiler:
     """性能分析器主类"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         """初始化性能分析器"""
         self.metrics: List[PerformanceMetric] = []
         self.function_profiles: Dict[str, FunctionProfile] = {}
@@ -77,7 +73,7 @@ class PerformanceProfiler:
         self.active_profiling = False
         self.profiler = cProfile.Profile()
 
-    def start_profiling(self):  # type: ignore
+    def start_profiling(self):
         """开始性能分析"""
         self.active_profiling = True
         self.profiler.enable()
@@ -132,7 +128,7 @@ class PerformanceProfiler:
         return sorted(profiles, key=lambda x: x.total_time, reverse=True)
 
     @contextmanager
-    def profile_function(self, name: Optional[str] = None):  # type: ignore
+    def profile_function(self, name: Optional[str] = None):
         """函数性能分析上下文管理器"""
         start_time = time.perf_counter()
         start_memory = psutil.Process().memory_info().rss
@@ -282,7 +278,7 @@ class PerformanceProfiler:
         else:
             return str(data)
 
-    def reset(self):  # type: ignore
+    def reset(self):
         """重置所有性能数据"""
         self.metrics.clear()
         self.function_profiles.clear()
@@ -290,17 +286,14 @@ class PerformanceProfiler:
         self.profiler = cProfile.Profile()
         logger.info("Performance profiler reset")
 
-
 # 全局性能分析器实例
 _global_profiler = PerformanceProfiler()
-
 
 def get_profiler() -> PerformanceProfiler:
     """获取全局性能分析器实例"""
     return _global_profiler
 
-
-def profile_function(name: Optional[str] = None):  # type: ignore
+def profile_function(name: Optional[str] = None):
     """函数性能分析装饰器"""
 
     def decorator(func: Callable) -> Callable:
@@ -317,7 +310,7 @@ def profile_function(name: Optional[str] = None):  # type: ignore
         else:
 
             @wraps(func)
-            def sync_wrapper(*args, **kwargs):  # type: ignore
+            def sync_wrapper(*args, **kwargs):
                 with _global_profiler.profile_function(name or func.__name__):
                     return func(*args, **kwargs)
 
@@ -325,13 +318,12 @@ def profile_function(name: Optional[str] = None):  # type: ignore
 
     return decorator
 
-
-def profile_method(cls_attr: Optional[str] = None):  # type: ignore
+def profile_method(cls_attr: Optional[str] = None):
     """方法性能分析装饰器（用于类方法）"""
 
     def decorator(func: Callable) -> Callable:
         @wraps(func)
-        def wrapper(*args, **kwargs):  # type: ignore
+        def wrapper(*args, **kwargs):
             # 获取类名
             if args and hasattr(args[0], "__class__"):
                 class_name = args[0].__class__.__name__
@@ -346,11 +338,10 @@ def profile_method(cls_attr: Optional[str] = None):  # type: ignore
 
     return decorator
 
-
 class DatabaseQueryProfiler:
     """数据库查询性能分析器"""
 
-    def __init__(self, profiler: PerformanceProfiler):  # type: ignore
+    def __init__(self, profiler: PerformanceProfiler):
         self.profiler = profiler
 
     def profile_query(self, query: str, execute_func: Callable) -> Any:
@@ -387,11 +378,10 @@ class DatabaseQueryProfiler:
             logger.error(f"Query failed after {execution_time:.4f}s: {str(e)}")
             raise
 
-
 class APIEndpointProfiler:
     """API端点性能分析器"""
 
-    def __init__(self, profiler: PerformanceProfiler):  # type: ignore
+    def __init__(self, profiler: PerformanceProfiler):
         self.profiler = profiler
         self.endpoint_stats: Dict[str, Dict] = {}
 
@@ -480,14 +470,13 @@ class APIEndpointProfiler:
 
         return sorted(slow_endpoints, key=lambda x: x["average_duration"], reverse=True)
 
-
 class MemoryProfiler:
     """内存使用分析器"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self.snapshots: List[Dict] = []
 
-    def take_snapshot(self, label: str = ""):  # type: ignore
+    def take_snapshot(self, label: str = ""):
         """获取内存快照"""
         process = psutil.Process()
         memory_info = process.memory_info()
@@ -527,17 +516,14 @@ class MemoryProfiler:
 
         return (last_rss - first_rss) > threshold
 
-
 # 创建性能分析器的便捷函数
-def start_profiling():  # type: ignore
+def start_profiling():
     """开始全局性能分析"""
     _global_profiler.start_profiling()
-
 
 def stop_profiling() -> Dict[str, Any]:
     """停止全局性能分析"""
     return _global_profiler.stop_profiling()
-
 
 def get_performance_report() -> str:
     """获取性能报告"""

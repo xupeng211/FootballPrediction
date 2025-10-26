@@ -6,7 +6,6 @@ Mock Redis Manager for Testing and Development
 import time
 from typing import Any, Dict, List, Optional, Union
 
-
 class MockRedisManager:
     """模拟Redis管理器"""
 
@@ -129,7 +128,6 @@ class MockRedisManager:
         self._cleanup_expired()
         return len(self.data)
 
-
 class CacheKeyManager:
     """缓存键管理器"""
 
@@ -167,17 +165,14 @@ class CacheKeyManager:
         """构建预测相关键"""
         return f"prediction:{user_id}:{match_id}"
 
-
 def get_redis_manager() -> MockRedisManager:
     """获取Redis管理器实例"""
     return MockRedisManager()
-
 
 # 向后兼容的便捷函数
 def get_cache(key: str) -> Optional[str]:
     """获取缓存"""
     return get_redis_manager().get(key)
-
 
 def set_cache(key: str, value: str, ttl: Optional[int] = None) -> bool:
     """设置缓存"""
@@ -186,27 +181,22 @@ def set_cache(key: str, value: str, ttl: Optional[int] = None) -> bool:
         return manager.setex(key, ttl, value)
     return manager.set(key, value)
 
-
 def delete_cache(*keys: str) -> int:
     """删除缓存"""
     return get_redis_manager().delete(*keys)
-
 
 def exists_cache(key: str) -> bool:
     """检查缓存是否存在"""
     return get_redis_manager().exists(key)
 
-
 def ttl_cache(key: str) -> int:
     """获取缓存TTL"""
     return get_redis_manager().ttl(key)
-
 
 def mget_cache(*keys: str) -> List[Optional[str]]:
     """批量获取缓存"""
     manager = get_redis_manager()
     return [manager.get(k) for k in keys]
-
 
 def mset_cache(mapping: Dict[str, str], ttl: Optional[int] = None) -> bool:
     """批量设置缓存"""
@@ -218,12 +208,10 @@ def mset_cache(mapping: Dict[str, str], ttl: Optional[int] = None) -> bool:
             manager.set(key, value)
     return True
 
-
 # 异步便捷函数
 async def aget_cache(key: str) -> Optional[str]:
     """异步获取缓存"""
     return await get_redis_manager().aget(key)
-
 
 async def aset_cache(key: str, value: str, ttl: Optional[int] = None) -> bool:
     """异步设置缓存"""
@@ -232,27 +220,22 @@ async def aset_cache(key: str, value: str, ttl: Optional[int] = None) -> bool:
         return await manager.asetex(key, ttl, value)
     return await manager.aset(key, value)
 
-
 async def adelete_cache(*keys: str) -> int:
     """异步删除缓存"""
     return await get_redis_manager().adelete(*keys)
-
 
 async def aexists_cache(key: str) -> bool:
     """异步检查缓存是否存在"""
     return await get_redis_manager().aexists(key)
 
-
 async def attl_cache(key: str) -> int:
     """异步获取缓存TTL"""
     return await get_redis_manager().attl(key)
-
 
 async def amget_cache(*keys: str) -> List[Optional[str]]:
     """异步批量获取缓存"""
     manager = get_redis_manager()
     return [await manager.aget(k) for k in keys]
-
 
 async def amset_cache(mapping: Dict[str, str], ttl: Optional[int] = None) -> bool:
     """异步批量设置缓存"""
@@ -263,7 +246,6 @@ async def amset_cache(mapping: Dict[str, str], ttl: Optional[int] = None) -> boo
         else:
             await manager.aset(key, value)
     return True
-
 
 async def startup_warmup() -> None:
     """启动时预热"""

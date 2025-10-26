@@ -13,7 +13,6 @@ import time
 import uuid
 from datetime import datetime
 
-
 class Component(ABC):
     """组件接口，定义了组件的基本操作"""
 
@@ -27,11 +26,10 @@ class Component(ABC):
         """获取组件名称"""
         pass
 
-
 class ConcreteComponent(Component):
     """具体组件，实现了组件接口的基本功能"""
 
-    def __init__(self, name: str, func: Callable):  # type: ignore
+    def __init__(self, name: str, func: Callable):
         self.name = name
         self.func = func
         self._wrapped = self._wrap_function(func)
@@ -54,11 +52,10 @@ class ConcreteComponent(Component):
     def get_name(self) -> str:
         return self.name
 
-
 class Decorator(Component):
     """装饰器基类，实现了组件接口并持有一个组件引用"""
 
-    def __init__(self, component: Component, name: Optional[str] = None):  # type: ignore
+    def __init__(self, component: Component, name: Optional[str] = None):
         self.component = component
         self.name = name or f"{self.__class__.__name__}_{uuid.uuid4().hex[:8]}"
         self.execution_count = 0
@@ -114,7 +111,6 @@ class Decorator(Component):
             "last_execution_time": self.last_execution_time,
         }
 
-
 class DecoratorComponent(Decorator):
     """装饰器组件，用于装饰函数或方法"""
 
@@ -151,11 +147,10 @@ class DecoratorComponent(Decorator):
 
         return stats
 
-
 class DecoratorChain:
     """装饰器链，用于管理多个装饰器的执行顺序"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self.decorators: list[Decorator] = []
 
     def add_decorator(self, decorator: Decorator) -> "DecoratorChain":
@@ -188,12 +183,11 @@ class DecoratorChain:
             "decorators": [d.get_stats() for d in self.decorators],
         }
 
-
 # 装饰器上下文管理器
 class DecoratorContext:
     """装饰器执行上下文，用于在装饰器之间传递数据"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self.data: Dict[str, Any] = {}
         self.start_time = time.time()
         self.trace_id = str(uuid.uuid4())
@@ -228,12 +222,11 @@ class DecoratorContext:
             "data": self.data,
         }
 
-
 # 装饰器注册表
 class DecoratorRegistry:
     """装饰器注册表，用于管理全局装饰器"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self._decorators: Dict[str, type[Decorator]] = {}
         self._instances: Dict[str, Decorator] = {}
 
@@ -272,7 +265,6 @@ class DecoratorRegistry:
         """清空注册表"""
         self._decorators.clear()
         self._instances.clear()
-
 
 # 全局装饰器注册表
 decorator_registry = DecoratorRegistry()

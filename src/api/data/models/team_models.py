@@ -7,7 +7,6 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
-
 class TeamQueryParams(BaseModel):
     """球队查询参数"""
 
@@ -17,7 +16,6 @@ class TeamQueryParams(BaseModel):
     limit: int = Field(50, ge=1, le=1000, description="返回数量限制")
     offset: int = Field(0, ge=0, description="偏移量")
 
-
 class TeamCreateRequest(BaseModel):
     """创建球队请求"""
 
@@ -26,7 +24,6 @@ class TeamCreateRequest(BaseModel):
     founded_year: Optional[int] = Field(None, ge=1800, le=2030, description="成立年份")
     stadium: Optional[str] = Field(None, max_length=100, description="球场名称")
     logo_url: Optional[str] = Field(None, max_length=255, description="队徽URL")
-
 
 class TeamUpdateRequest(BaseModel):
     """更新球队请求"""

@@ -15,12 +15,10 @@ from sqlalchemy import select, func
 from .base import Repository, ReadOnlyRepository, QuerySpec
 from ..database.models import Prediction
 
-
 class PredictionRepositoryInterface(Repository[Prediction, int]):
     """预测仓储接口"""
 
     pass
-
 
 class ReadOnlyPredictionRepository(ReadOnlyRepository[Prediction, int]):
     """只读预测仓储"""
@@ -200,7 +198,6 @@ class ReadOnlyPredictionRepository(ReadOnlyRepository[Prediction, int]):
             "average_confidence": float(stats.avg_confidence or 0),
             "prediction_distribution": distribution,
         }
-
 
 class PredictionRepository(PredictionRepositoryInterface):
     """预测仓储实现"""
