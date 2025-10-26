@@ -15,6 +15,7 @@ from sqlalchemy import select, func, update
 from .base import Repository, ReadOnlyRepository, QuerySpec
 from ..database.models import Match
 
+
 class MatchStatus(str, Enum):
     """比赛状态枚举"""
 
@@ -24,10 +25,12 @@ class MatchStatus(str, Enum):
     POSTPONED = "postponed"
     CANCELLED = "cancelled"
 
+
 class MatchRepositoryInterface(Repository[Match, int]):
     """比赛仓储接口"""
 
     pass
+
 
 class ReadOnlyMatchRepository(ReadOnlyRepository[Match, int]):
     """只读比赛仓储"""
@@ -190,6 +193,7 @@ class ReadOnlyMatchRepository(ReadOnlyRepository[Match, int]):
 
         query_spec = QuerySpec(filters=filters, order_by=["-match_date"], limit=limit)
         return await self.find_many(query_spec)
+
 
 class MatchRepository(MatchRepositoryInterface):
     """比赛仓储实现"""

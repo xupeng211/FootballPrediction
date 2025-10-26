@@ -12,6 +12,7 @@ from src.core.logging import get_logger
 
 logger = get_logger(__name__)
 
+
 class AnomalyDetector:
     """Data anomaly detection utilities"""
 
@@ -49,6 +50,7 @@ class AnomalyDetector:
             "indices": df[duplicates].index.tolist(),
         }
 
+
 # 添加缺失的类
 class AdvancedAnomalyDetector(AnomalyDetector):
     """Advanced anomaly detector with additional methods"""
@@ -63,15 +65,18 @@ class AdvancedAnomalyDetector(AnomalyDetector):
             "duplicates": self.detect_duplicates(df),
         }
 
+
 class StatisticalAnomalyDetector(AnomalyDetector):
     """Statistical anomaly detector"""
 
     pass
 
+
 class MachineLearningAnomalyDetector(AnomalyDetector):
     """Machine learning anomaly detector"""
 
     pass
+
 
 class AnomalyDetectionResult:
     """Anomaly detection result"""

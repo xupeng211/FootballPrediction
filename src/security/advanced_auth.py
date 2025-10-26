@@ -12,6 +12,7 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
+
 class AdvancedAuthenticationSystem:
     """Advanced Authentication System"""
 
@@ -22,21 +23,22 @@ class AdvancedAuthenticationSystem:
     def process(self, data: Dict) -> Dict:
         """处理数据"""
         result = {
-            'status': 'success',
-            'feature': 'Advanced Authentication System',
-            'timestamp': datetime.now().isoformat(),
-            'data': data
+            "status": "success",
+            "feature": "Advanced Authentication System",
+            "timestamp": datetime.now().isoformat(),
+            "data": data,
         }
         return result
 
     def get_status(self) -> Dict:
         """获取状态"""
         return {
-            'feature': 'Advanced Authentication System',
-            'type': 'security',
-            'status': 'active',
-            'health': 'healthy'
+            "feature": "Advanced Authentication System",
+            "type": "security",
+            "status": "active",
+            "health": "healthy",
         }
+
 
 if __name__ == "__main__":
     service = AdvancedAuthenticationSystem()

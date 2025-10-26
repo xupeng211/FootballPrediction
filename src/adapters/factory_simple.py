@@ -5,6 +5,7 @@
 from typing import Any, Dict, Optional, Type, cast
 from src.core.exceptions import AdapterError
 
+
 class AdapterFactory:
     """适配器工厂"""
 
@@ -77,8 +78,10 @@ class AdapterFactory:
             return self._adapters[name]["class"]
         return None
 
+
 # 全局工厂实例
 _global_factory = None
+
 
 def get_global_factory() -> AdapterFactory:
     """获取全局工厂实例"""
@@ -86,6 +89,7 @@ def get_global_factory() -> AdapterFactory:
     if _global_factory is None:
         _global_factory = AdapterFactory()
     return _global_factory
+
 
 def get_adapter(
     adapter_type: str, config: Optional[Dict] = None, singleton: bool = False

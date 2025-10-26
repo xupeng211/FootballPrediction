@@ -19,6 +19,7 @@ import json
 # mypy: ignore-errors
 # 类型检查已忽略 - 这些文件包含复杂的动态类型逻辑
 
+
 class PredictionStatus(Enum):
     """预测状态枚举"""
 
@@ -28,6 +29,7 @@ class PredictionStatus(Enum):
     FAILED = "failed"
     CANCELLED = "cancelled"
 
+
 class PredictionType(Enum):
     """预测类型枚举"""
 
@@ -35,6 +37,7 @@ class PredictionType(Enum):
     OVER_UNDER = "over_under"
     CORRECT_SCORE = "correct_score"
     BOTH_TEAMS_SCORE = "both_teams_score"
+
 
 class PredictionModel:
     """
@@ -278,6 +281,7 @@ class PredictionModel:
 
         return {"explanations": explanations, "method": "stub_shap"}
 
+
 class FootballPredictionModel(PredictionModel):
     """
     足球预测模型（桩实现）
@@ -347,21 +351,26 @@ class FootballPredictionModel(PredictionModel):
 
         return results
 
+
 # 模型注册表
 _model_registry: Dict[str, PredictionModel] = {}
+
 
 def register_model(model: PredictionModel) -> None:
     """注册模型"""
     _model_registry[model.model_name] = model
     logging.getLogger(__name__).info(f"Model registered: {model.model_name}")
 
+
 def get_model(model_name: str) -> Optional[PredictionModel]:
     """获取模型"""
     return _model_registry.get(model_name)
 
+
 def list_models() -> List[str]:
     """列出所有模型"""
     return list(_model_registry.keys())
+
 
 # 创建默认模型
 default_model = FootballPredictionModel()

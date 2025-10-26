@@ -8,6 +8,7 @@ SQL兼容性工具模块 - 为各种SQL操作提供兼容性支持
 from typing import Any, Dict
 from sqlalchemy.engine import Engine
 
+
 class Compatibility:
     """SQL兼容性支持"""
 
@@ -22,6 +23,7 @@ class Compatibility:
         if dialect == "postgresql":
             return "NOW()"
         return "datetime('now')"
+
 
 class CompatibleQueryBuilder:
     """兼容的SQL查询构建器"""
@@ -42,6 +44,7 @@ class CompatibleQueryBuilder:
         set_clause = ", ".join([f"{key} = :{key}" for key in data.keys()])
         return f"UPDATE {table} SET {set_clause} WHERE {where_clause}"
 
+
 class SQLCompatibilityHelper:
     """SQL兼容性助手"""
 
@@ -57,6 +60,7 @@ class SQLCompatibilityHelper:
         """规范化值"""
         return value
 
+
 def get_db_type_from_engine(engine: Engine) -> str:
     """从引擎获取数据库类型"""
     dialect_name = engine.dialect.name.lower()
@@ -68,6 +72,7 @@ def get_db_type_from_engine(engine: Engine) -> str:
         return "sqlite"
     else:
         return dialect_name
+
 
 # 创建默认实例
 compatibility = Compatibility()

@@ -18,6 +18,7 @@ down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
+
 def upgrade() -> None:
     # 创建联赛表
     op.create_table(
@@ -484,6 +485,7 @@ def upgrade() -> None:
     op.create_index(
         "idx_predictions_model_version", "predictions", ["model_name", "model_version"]
     )
+
 
 def downgrade() -> None:
     # 删除表（按相反顺序）

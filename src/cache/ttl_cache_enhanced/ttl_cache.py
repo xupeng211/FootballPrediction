@@ -18,6 +18,7 @@ from .cache_entry import CacheEntry
 
 logger = logging.getLogger(__name__)
 
+
 class TTLCache:
     """
     带TTL的LRU缓存

@@ -8,6 +8,7 @@ from datetime import datetime
 from typing import Optional, Dict, Any
 from enum import Enum
 
+
 class MatchStatus(Enum):
     """比赛状态枚举"""
 
@@ -17,6 +18,7 @@ class MatchStatus(Enum):
     CANCELLED = "cancelled"  # 已取消
     POSTPONED = "postponed"  # 延期
 
+
 class MatchResult(Enum):
     """比赛结果枚举"""
 
@@ -24,6 +26,7 @@ class MatchResult(Enum):
     AWAY_WIN = "away_win"  # 客队胜
     DRAW = "draw"  # 平局
     UNKNOWN = "unknown"  # 未知
+
 
 class Match:
     """比赛领域模型"""

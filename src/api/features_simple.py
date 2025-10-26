@@ -19,10 +19,10 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/features", tags=["特征管理"])
 
+
 @router.get("/match/{match_id}", response_model=Dict[str, Any])
 async def get_match_features(
-    match_id: int,
-    db: AsyncSession = Depends(get_async_db)
+    match_id: int, db: AsyncSession = Depends(get_async_db)
 ) -> Dict[str, Any]:
     """
     获取指定比赛的简单特征
@@ -36,9 +36,13 @@ async def get_match_features(
     try:
         # 这里使用基本的SQL查询，避免复杂特征存储
         result = await db.execute(
-            select(Match.id, Match.home_team_id, Match.away_team_id,
-                  Match.home_score, Match.away_score)
-            .where(Match.id == match_id)
+            select(
+                Match.id,
+                Match.home_team_id,
+                Match.away_team_id,
+                Match.home_score,
+                Match.away_score,
+            ).where(Match.id == match_id)
         )
         match_data = result.fetchone()
 
@@ -51,7 +55,7 @@ async def get_match_features(
             "away_team_id": match_data[2],
             "home_score": match_data[3],
             "away_score": match_data[4],
-            "status": "success"
+            "status": "success",
         }
 
     except SQLAlchemyError as e:
@@ -64,6 +68,7 @@ async def get_match_features(
         logger.error(f"未知错误: {e}")
         raise HTTPException(status_code=500, detail="服务器内部错误")
 
+
 @router.get("/health", response_model=Dict[str, str])
 async def health_check() -> Dict[str, str]:
     """
@@ -73,11 +78,12 @@ async def health_check() -> Dict[str, str]:
         return {
             "status": "healthy",
             "service": "features",
-            "message": "简化版特征服务运行正常"
+            "message": "简化版特征服务运行正常",
         }
     except Exception as e:
         logger.error(f"健康检查失败: {e}")
         raise HTTPException(status_code=500, detail="健康检查失败")
+
 
 @router.get("/", response_model=Dict[str, str])
 async def get_features_info() -> Dict[str, str]:
@@ -93,19 +99,11 @@ async def get_features_info() -> Dict[str, str]:
                 {
                     "path": "/match/{match_id}",
                     "method": "GET",
-                    "description": "获取指定比赛的特征数据"
+                    "description": "获取指定比赛的特征数据",
                 },
-                {
-                    "path": "/health",
-                    "method": "GET",
-                    "description": "健康检查端点"
-                },
-                {
-                    "path": "/",
-                    "method": "GET",
-                    "description": "服务信息"
-                }
-            ]
+                {"path": "/health", "method": "GET", "description": "健康检查端点"},
+                {"path": "/", "method": "GET", "description": "服务信息"},
+            ],
         }
     except Exception as e:
         logger.error(f"获取服务信息失败: {e}")

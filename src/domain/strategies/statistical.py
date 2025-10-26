@@ -23,6 +23,7 @@ from .base import (
 )
 from ..models.prediction import Prediction
 
+
 class StatisticalStrategy(PredictionStrategy):
     """统计分析预测策略
 

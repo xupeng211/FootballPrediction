@@ -2,6 +2,7 @@ from fastapi import APIRouter, Query
 
 router = APIRouter()
 
+
 # 1. ✅ 修复后的 FastAPI Query 参数
 @router.get("/fixed_query")
 async def fixed_query(
@@ -15,6 +16,7 @@ async def fixed_query(
     4. 添加了描述信息
     """
     return {"limit": limit, "type": type(limit).__name__}
+
 
 # ✅ 修复后的版本 - 原来的 buggy_query
 @router.get("/buggy_query")
@@ -31,11 +33,14 @@ async def buggy_query(
     # 确保返回的 limit 是 int 类型，避免 TypeError
     return {"limit": int(limit), "type": type(limit).__name__}
 
+
 class SomeAsyncService:
     async def get_status(self):
         return "real_status"
 
+
 service = SomeAsyncService()
+
 
 @router.get("/buggy_async")
 async def buggy_async():

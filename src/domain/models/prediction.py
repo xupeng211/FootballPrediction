@@ -14,6 +14,7 @@ from typing import Optional, Dict, Any, List
 
 from ...core.exceptions import DomainError
 
+
 class PredictionStatus(Enum):
     """预测状态"""
 
@@ -21,6 +22,7 @@ class PredictionStatus(Enum):
     EVALUATED = "evaluated"  # 已评估
     CANCELLED = "cancelled"  # 已取消
     EXPIRED = "expired"  # 已过期
+
 
 @dataclass
 class ConfidenceScore:
@@ -47,6 +49,7 @@ class ConfidenceScore:
 
     def __str__(self) -> str:
         return f"{self.value:.2f} ({self.level})"
+
 
 @dataclass
 class PredictionScore:
@@ -114,6 +117,7 @@ class PredictionScore:
             return f"{self.predicted_home}-{self.predicted_away} (实际: {self.actual_home}-{self.actual_away})"
         return f"{self.predicted_home}-{self.predicted_away}"
 
+
 @dataclass
 class PredictionPoints:
     """预测积分值对象"""
@@ -142,6 +146,7 @@ class PredictionPoints:
 
     def __str__(self) -> str:
         return f"{self.total} 分"
+
 
 @dataclass
 class Prediction:

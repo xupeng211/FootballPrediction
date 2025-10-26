@@ -30,6 +30,7 @@ except ImportError:
         def Field(*args: Any, **kwargs: Any) -> Any:
             return None
 
+
 class Config:
     """配置管理类 - 提供统一的配置读写和持久化机制"""
 
@@ -66,7 +67,9 @@ class Config:
             # ensure_ascii=False保证中文字符正确显示
             json.dump(self.config, f, ensure_ascii=False, indent=2)
 
+
 SettingsClass = BaseSettings if HAS_PYDANTIC else object
+
 
 class Settings(SettingsClass):
     """应用程序设置类 - 使用Pydantic进行配置管理和验证"""
@@ -310,12 +313,15 @@ class Settings(SettingsClass):
 
             return [item.strip() for item in value.split(",") if item.strip()]
 
+
 # 全局配置实例
 config = Config()
+
 
 def get_config() -> Config:
     """获取配置实例"""
     return config
+
 
 # 创建全局设置实例
 def get_settings() -> Settings:

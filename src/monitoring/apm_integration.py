@@ -16,6 +16,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 logger = logging.getLogger(__name__)
 
+
 class APMIntegration:
     """APM集成管理器"""
 
@@ -157,6 +158,7 @@ class APMIntegration:
             if hasattr(span, "end"):
                 span.end()
 
+
 class APMMiddleware(BaseHTTPMiddleware):
     """APM中间件"""
 
@@ -248,6 +250,7 @@ class APMMiddleware(BaseHTTPMiddleware):
 
                 raise
 
+
 class _DummySpan:
     """虚拟Span，用于APM不可用时的fallback"""
 
@@ -263,8 +266,10 @@ class _DummySpan:
     def add_event(self, name, attributes=None):
         pass
 
+
 # 全局APM实例
 _global_apm = None
+
 
 def get_apm() -> APMIntegration:
     """获取全局APM实例"""
@@ -273,11 +278,13 @@ def get_apm() -> APMIntegration:
         _global_apm = APMIntegration()
     return _global_apm
 
+
 def init_apm(enabled: bool = True) -> APMIntegration:
     """初始化APM"""
     global _global_apm
     _global_apm = APMIntegration(enabled)
     return _global_apm
+
 
 # 便捷函数
 def trace_operation(operation_name: str):
@@ -293,6 +300,7 @@ def trace_operation(operation_name: str):
 
     return decorator
 
+
 def trace_async_operation(operation_name: str):
     """追踪异步操作装饰器"""
 
@@ -306,9 +314,11 @@ def trace_async_operation(operation_name: str):
 
     return decorator
 
+
 def record_metric(name: str, value: float, unit: str = "", **kwargs):
     """记录指标的便捷函数"""
     get_apm().record_metric(name, value, unit, **kwargs)
+
 
 def record_error(error: Exception, context: Optional[Dict] = None):
     """记录错误的便捷函数"""

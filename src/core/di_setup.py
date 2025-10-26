@@ -19,6 +19,7 @@ from ..database.repositories.base import BaseRepository
 
 logger = logging.getLogger(__name__)
 
+
 class DISetup:
     """依赖注入设置类"""
 
@@ -123,8 +124,10 @@ class DISetup:
         if self.lifecycle_manager:
             await self.lifecycle_manager.shutdown()
 
+
 # 全局DI设置实例
 _di_setup: Optional[DISetup] = None
+
 
 def get_di_setup() -> DISetup:
     """获取DI设置实例"""
@@ -132,6 +135,7 @@ def get_di_setup() -> DISetup:
     if _di_setup is None:
         _di_setup = DISetup()
     return _di_setup
+
 
 def configure_di(
     config_file: Optional[str] = None,
@@ -141,6 +145,7 @@ def configure_di(
     """配置依赖注入（便捷函数）"""
     setup = DISetup(profile)
     return setup.initialize(config_file, auto_scan_modules)
+
 
 # 装饰器：自动注册服务
 def register_service(
@@ -177,6 +182,7 @@ def register_service(
         return cls
 
     return decorator
+
 
 # 示例：创建配置文件的便捷函数
 def create_di_config(

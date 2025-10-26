@@ -14,6 +14,7 @@ from pathlib import Path
 
 from .base import Decorator, Component, decorator_registry
 
+
 @dataclass
 class DecoratorConfig:
     """装饰器配置"""
@@ -25,6 +26,7 @@ class DecoratorConfig:
     parameters: Dict[str, Any] = field(default_factory=dict)
     conditions: Optional[Dict[str, Any]] = None
 
+
 @dataclass
 class DecoratorChainConfig:
     """装饰器链配置"""
@@ -33,6 +35,7 @@ class DecoratorChainConfig:
     target_functions: List[str]
     decorators: List[DecoratorConfig]
     is_global: bool = False
+
 
 class DecoratorFactory:
     """装饰器工厂，用于创建装饰器实例"""
@@ -259,6 +262,7 @@ class DecoratorFactory:
         )
         self._chain_configs["service_chain"] = service_chain
 
+
 class DecoratorBuilder:
     """装饰器构建器，使用构建器模式创建装饰器"""
 
@@ -289,6 +293,7 @@ class DecoratorBuilder:
         return factory.create_decorator(
             self.decorator_type, self.component, name=self.name, **self.parameters
         )
+
 
 # 全局装饰器工厂实例
 decorator_factory = DecoratorFactory()

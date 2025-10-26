@@ -19,6 +19,7 @@ from ..events.match_events import (
     MatchPostponedEvent,
 )
 
+
 class MatchDomainService:
     """比赛领域服务"""
 

@@ -9,6 +9,7 @@ Defines domain events related to predictions.
 from typing import Dict, Any, Optional
 from .base import DomainEvent
 
+
 class PredictionCreatedEvent(DomainEvent):
     """预测创建事件"""
 
@@ -39,6 +40,7 @@ class PredictionCreatedEvent(DomainEvent):
             "predicted_away": self.predicted_away,
             "confidence": self.confidence,
         }
+
 
 class PredictionUpdatedEvent(DomainEvent):
     """预测更新事件"""
@@ -72,6 +74,7 @@ class PredictionUpdatedEvent(DomainEvent):
             },
         }
 
+
 class PredictionEvaluatedEvent(DomainEvent):
     """预测评估事件"""
 
@@ -102,6 +105,7 @@ class PredictionEvaluatedEvent(DomainEvent):
             "accuracy_score": self.accuracy_score,
         }
 
+
 class PredictionCancelledEvent(DomainEvent):
     """预测取消事件"""
 
@@ -124,6 +128,7 @@ class PredictionCancelledEvent(DomainEvent):
             "cancelled_by": self.cancelled_by,
         }
 
+
 class PredictionExpiredEvent(DomainEvent):
     """预测过期事件"""
 
@@ -139,6 +144,7 @@ class PredictionExpiredEvent(DomainEvent):
             "match_id": self.match_id,
             "expired_at": self.expired_at,
         }
+
 
 class PredictionPointsAdjustedEvent(DomainEvent):
     """预测积分调整事件"""

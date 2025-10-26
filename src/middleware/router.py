@@ -5,10 +5,8 @@
 
 from fastapi import APIRouter
 
-router = APIRouter(
-    prefix="/middleware",
-    tags=["middleware"]
-)
+router = APIRouter(prefix="/middleware", tags=["middleware"])
+
 
 @router.get("/health")
 async def health_check():

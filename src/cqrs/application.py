@@ -43,6 +43,7 @@ from .handlers import (
 
 logger = logging.getLogger(__name__)
 
+
 class PredictionCQRSService:
     """预测CQRS服务
 
@@ -135,6 +136,7 @@ class PredictionCQRSService:
         )
         return await self.query_bus.dispatch(query)
 
+
 class MatchCQRSService:
     """比赛CQRS服务
 
@@ -208,6 +210,7 @@ class MatchCQRSService:
         )
         return await self.query_bus.dispatch(query)
 
+
 class UserCQRSService:
     """用户CQRS服务
 
@@ -245,6 +248,7 @@ class UserCQRSService:
         )
         return await self.command_bus.dispatch(command)
 
+
 class AnalyticsCQRSService:
     """分析CQRS服务
 
@@ -281,6 +285,7 @@ class AnalyticsCQRSService:
         query = GetLeaderboardQuery(period=period, limit=limit, offset=offset)
         return await self.query_bus.dispatch(query)
 
+
 # CQRS服务工厂
 class CQRSServiceFactory:
     """CQRS服务工厂"""
@@ -304,6 +309,7 @@ class CQRSServiceFactory:
     def create_analytics_service() -> AnalyticsCQRSService:
         """创建分析服务"""
         return AnalyticsCQRSService()
+
 
 # 便捷函数
 async def initialize_cqrs():

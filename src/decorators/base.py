@@ -13,6 +13,7 @@ import time
 import uuid
 from datetime import datetime
 
+
 class Component(ABC):
     """组件接口，定义了组件的基本操作"""
 
@@ -25,6 +26,7 @@ class Component(ABC):
     def get_name(self) -> str:
         """获取组件名称"""
         pass
+
 
 class ConcreteComponent(Component):
     """具体组件，实现了组件接口的基本功能"""
@@ -51,6 +53,7 @@ class ConcreteComponent(Component):
 
     def get_name(self) -> str:
         return self.name
+
 
 class Decorator(Component):
     """装饰器基类，实现了组件接口并持有一个组件引用"""
@@ -111,6 +114,7 @@ class Decorator(Component):
             "last_execution_time": self.last_execution_time,
         }
 
+
 class DecoratorComponent(Decorator):
     """装饰器组件，用于装饰函数或方法"""
 
@@ -147,6 +151,7 @@ class DecoratorComponent(Decorator):
 
         return stats
 
+
 class DecoratorChain:
     """装饰器链，用于管理多个装饰器的执行顺序"""
 
@@ -182,6 +187,7 @@ class DecoratorChain:
             "chain_length": len(self.decorators),
             "decorators": [d.get_stats() for d in self.decorators],
         }
+
 
 # 装饰器上下文管理器
 class DecoratorContext:
@@ -221,6 +227,7 @@ class DecoratorContext:
             "execution_path": self.execution_path,
             "data": self.data,
         }
+
 
 # 装饰器注册表
 class DecoratorRegistry:
@@ -265,6 +272,7 @@ class DecoratorRegistry:
         """清空注册表"""
         self._decorators.clear()
         self._instances.clear()
+
 
 # 全局装饰器注册表
 decorator_registry = DecoratorRegistry()

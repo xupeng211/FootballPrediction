@@ -19,6 +19,7 @@ from .exceptions import DependencyInjectionError
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class ServiceConfig:
     """服务配置"""
@@ -33,6 +34,7 @@ class ServiceConfig:
     enabled: bool = True
     condition: Optional[str] = None
 
+
 @dataclass
 class DIConfiguration:
     """依赖注入配置"""
@@ -42,6 +44,7 @@ class DIConfiguration:
     conventions: List[str] = field(default_factory=list)
     profiles: List[str] = field(default_factory=list)
     imports: List[str] = field(default_factory=list)
+
 
 class ConfigurationBinder:
     """配置绑定器"""
@@ -269,6 +272,7 @@ class ConfigurationBinder:
             logger.error(f"评估条件失败 {condition}: {e}")
             return False
 
+
 class ConfigurationBuilder:
     """配置构建器"""
 
@@ -308,17 +312,20 @@ class ConfigurationBuilder:
         """构建配置"""
         return self.config
 
+
 def create_config_from_file(config_path: Union[str, Path]) -> DIConfiguration:
     """从文件创建配置"""
     binder = ConfigurationBinder(DIContainer())
     binder.load_from_file(config_path)
     return binder.config
 
+
 def create_config_from_dict(config_data: Dict[str, Any]) -> DIConfiguration:
     """从字典创建配置"""
     binder = ConfigurationBinder(DIContainer())
     binder.load_from_dict(config_data)
     return binder.config
+
 
 # 示例配置生成器
 def generate_sample_config(format: str = "yaml") -> str:

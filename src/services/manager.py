@@ -30,6 +30,7 @@ from .user_profile import UserProfileService
 统一管理所有业务服务的生命周期和依赖关系。
 """
 
+
 class ServiceManager:
     """服务管理器 - 负责统一管理所有业务服务的生命周期和依赖关系"""
 
@@ -95,6 +96,7 @@ class ServiceManager:
                 # 关闭失败不应阻止其他服务的正常关闭
                 self.logger.error(f"服务关闭异常: {service.name}, {e}")
 
+
 # 全局服务管理器实例
 service_manager = ServiceManager()
 
@@ -103,6 +105,7 @@ _SERVICE_FACTORIES = {
     "UserProfileService": UserProfileService,
     "DataProcessingService": DataProcessingService,
 }
+
 
 def _ensure_default_services() -> None:
     settings = get_settings()
@@ -118,5 +121,6 @@ def _ensure_default_services() -> None:
 
         if service_name not in service_manager.services:
             service_manager.register_service(service_name, factory())
+
 
 _ensure_default_services()

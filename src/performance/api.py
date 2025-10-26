@@ -37,6 +37,7 @@ db_monitor = DatabasePerformanceMiddleware()
 cache_monitor = CachePerformanceMiddleware()
 task_monitor = BackgroundTaskPerformanceMonitor()
 
+
 class PerformanceConfig(BaseModel):
     """性能配置"""
 
@@ -48,6 +49,7 @@ class PerformanceConfig(BaseModel):
     memory_threshold: int = Field(default=500, gt=0, description="内存阈值(MB)")
     enable_profiling: bool = Field(default=False, description="是否启用性能分析")
 
+
 class ThresholdUpdate(BaseModel):
     """阈值更新"""
 
@@ -55,12 +57,14 @@ class ThresholdUpdate(BaseModel):
     metric: str = Field(..., description="指标")
     value: float = Field(..., description="新的阈值值")
 
+
 class PerformanceRequest(BaseModel):
     """性能分析请求"""
 
     duration_minutes: int = Field(default=5, ge=1, le=60, description="分析时长(分钟)")
     include_memory: bool = Field(default=True, description="是否包含内存分析")
     include_database: bool = Field(default=True, description="是否包含数据库分析")
+
 
 @router.get("/metrics")
 async def get_performance_metrics():
@@ -109,6 +113,7 @@ async def get_performance_metrics():
             status_code=500, detail="Failed to retrieve performance metrics"
         )
 
+
 @router.post("/profiling/start")
 async def start_profiling(config: PerformanceRequest):
     """启动性能分析"""
@@ -143,6 +148,7 @@ async def start_profiling(config: PerformanceRequest):
             status_code=500, detail="Failed to start performance profiling"
         )
 
+
 @router.post("/profiling/stop")
 async def stop_profiling():
     """停止性能分析"""
@@ -169,6 +175,7 @@ async def stop_profiling():
         raise HTTPException(
             status_code=500, detail="Failed to stop performance profiling"
         )
+
 
 @router.get("/profiling/results")
 async def get_profiling_results():
@@ -213,6 +220,7 @@ async def get_profiling_results():
         raise HTTPException(
             status_code=500, detail="Failed to retrieve profiling results"
         )
+
 
 @router.get("/report")
 async def get_performance_report(
@@ -265,6 +273,7 @@ async def get_performance_report(
         raise HTTPException(
             status_code=500, detail="Failed to generate performance report"
         )
+
 
 @router.get("/insights")
 async def get_performance_insights(
@@ -326,6 +335,7 @@ async def get_performance_insights(
             status_code=500, detail="Failed to retrieve performance insights"
         )
 
+
 @router.get("/score")
 async def get_performance_score():
     """获取性能评分"""
@@ -364,6 +374,7 @@ async def get_performance_score():
         raise HTTPException(
             status_code=500, detail="Failed to retrieve performance score"
         )
+
 
 @router.get("/trends")
 async def get_performance_trends(
@@ -431,6 +442,7 @@ async def get_performance_trends(
             status_code=500, detail="Failed to retrieve performance trends"
         )
 
+
 @router.post("/thresholds")
 async def update_threshold(threshold: ThresholdUpdate):
     """更新性能阈值"""
@@ -453,6 +465,7 @@ async def update_threshold(threshold: ThresholdUpdate):
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"Failed to update threshold: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to update threshold")
+
 
 @router.get("/thresholds")
 async def get_thresholds():
@@ -489,6 +502,7 @@ async def get_thresholds():
         logger.error(f"Failed to get thresholds: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to retrieve thresholds")
 
+
 @router.post("/reset")
 async def reset_performance_stats():
     """重置性能统计数据"""
@@ -518,6 +532,7 @@ async def reset_performance_stats():
         raise HTTPException(
             status_code=500, detail="Failed to reset performance statistics"
         )
+
 
 @router.get("/dashboard")
 async def get_performance_dashboard():

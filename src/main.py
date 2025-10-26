@@ -91,6 +91,7 @@ else:
         "⚠️  slowapi 未安装，API速率限制功能已禁用。安装方法: pip install slowapi"
     )
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """应用生命周期管理"""
@@ -154,6 +155,7 @@ async def lifespan(app: FastAPI):
     performance_integration = get_performance_integration()
     performance_integration.cleanup()
 
+
 # 创建FastAPI应用（详细信息在 openapi_config.py 中配置）
 app = FastAPI(
     docs_url="/docs",
@@ -211,6 +213,7 @@ else:
     app.include_router(adapters_router, prefix="/api/v1")
     app.include_router(facades_router, prefix="/api/v1")
 
+
 @app.get(str("/"), summary="根路径", tags=["基础"], response_model=RootResponse)
 async def root():
     """
@@ -226,6 +229,7 @@ async def root():
         "docs_url": "/docs",
         "health_check": "/api/health",
     }
+
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, exc: HTTPException):
@@ -245,6 +249,7 @@ async def http_exception_handler(request, exc: HTTPException):
         },
     )
 
+
 @app.exception_handler(Exception)
 async def general_exception_handler(request, exc: Exception):
     """
@@ -263,6 +268,7 @@ async def general_exception_handler(request, exc: Exception):
             "path": str(request.url),
         },
     )
+
 
 if __name__ == "__main__":
     import uvicorn

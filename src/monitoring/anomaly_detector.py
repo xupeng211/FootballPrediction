@@ -10,9 +10,4 @@ anomaly_detector 主模块
 from .monitoring.anomaly_detector_anomaly_detection import *
 
 # 导出所有公共接口
-__all__ = [
-    "AnomalyType",
-    "AnomalySeverity",
-    "AnomalyResult",
-    "AnomalyDetector"
-]
+__all__ = ["AnomalyType", "AnomalySeverity", "AnomalyResult", "AnomalyDetector"]

@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 # Pydantic Models
 # ============================================================================
 
+
 class LeagueInfo(BaseModel):
     """联赛信息"""
 
@@ -32,6 +33,7 @@ class LeagueInfo(BaseModel):
     country: str
     logo_url: Optional[str] = None
     season: Optional[str] = None
+
 
 class TeamInfo(BaseModel):
     """球队信息"""
@@ -42,6 +44,7 @@ class TeamInfo(BaseModel):
     logo_url: Optional[str] = None
     country: Optional[str] = None
     league_id: Optional[int] = None
+
 
 class MatchInfo(BaseModel):
     """比赛信息"""
@@ -58,6 +61,7 @@ class MatchInfo(BaseModel):
     home_score: Optional[int] = None
     away_score: Optional[int] = None
 
+
 class OddsInfo(BaseModel):
     """赔率信息"""
 
@@ -68,6 +72,7 @@ class OddsInfo(BaseModel):
     draw: float = Field(..., gt=1.0, description="平局赔率")
     away_win: float = Field(..., gt=1.0, description="客队获胜赔率")
     updated_at: datetime
+
 
 class MatchStatistics(BaseModel):
     """比赛统计"""
@@ -82,6 +87,7 @@ class MatchStatistics(BaseModel):
     corners_home: Optional[int] = None
     corners_away: Optional[int] = None
 
+
 class TeamStatistics(BaseModel):
     """球队统计"""
 
@@ -94,9 +100,11 @@ class TeamStatistics(BaseModel):
     goals_against: int
     points: int
 
+
 # ============================================================================
 # API Endpoints - Leagues
 # ============================================================================
+
 
 @router.get("/leagues", response_model=List[LeagueInfo])
 async def get_leagues(
@@ -130,6 +138,7 @@ async def get_leagues(
         logger.error(f"获取联赛失败: {e}")
         raise HTTPException(status_code=500, detail=f"获取联赛失败: {str(e)}")
 
+
 @router.get("/leagues/{league_id}", response_model=LeagueInfo)
 async def get_league(league_id: int):
     """获取单个联赛详情"""
@@ -148,9 +157,11 @@ async def get_league(league_id: int):
         logger.error(f"获取联赛失败: {e}")
         raise HTTPException(status_code=404, detail="联赛不存在")
 
+
 # ============================================================================
 # API Endpoints - Teams
 # ============================================================================
+
 
 @router.get("/teams", response_model=List[TeamInfo])
 async def get_teams(
@@ -186,6 +197,7 @@ async def get_teams(
         logger.error(f"获取球队失败: {e}")
         raise HTTPException(status_code=500, detail=f"获取球队失败: {str(e)}")
 
+
 @router.get("/teams/{team_id}", response_model=TeamInfo)
 async def get_team(team_id: int):
     """获取单个球队详情"""
@@ -202,6 +214,7 @@ async def get_team(team_id: int):
     except Exception as e:
         logger.error(f"获取球队失败: {e}")
         raise HTTPException(status_code=404, detail="球队不存在")
+
 
 @router.get("/teams/{team_id}/statistics", response_model=TeamStatistics)
 async def get_team_statistics(
@@ -226,9 +239,11 @@ async def get_team_statistics(
         logger.error(f"获取球队统计失败: {e}")
         raise HTTPException(status_code=500, detail="获取统计失败")
 
+
 # ============================================================================
 # API Endpoints - Matches
 # ============================================================================
+
 
 @router.get("/matches", response_model=List[MatchInfo])
 async def get_matches(
@@ -270,6 +285,7 @@ async def get_matches(
         logger.error(f"获取比赛失败: {e}")
         raise HTTPException(status_code=500, detail=f"获取比赛失败: {str(e)}")
 
+
 @router.get("/matches/{match_id}", response_model=MatchInfo)
 async def get_match(match_id: int):
     """获取单场比赛详情"""
@@ -291,6 +307,7 @@ async def get_match(match_id: int):
     except Exception as e:
         logger.error(f"获取比赛失败: {e}")
         raise HTTPException(status_code=404, detail="比赛不存在")
+
 
 @router.get("/matches/{match_id}/statistics", response_model=MatchStatistics)
 async def get_match_statistics(match_id: int):
@@ -314,9 +331,11 @@ async def get_match_statistics(match_id: int):
         logger.error(f"获取比赛统计失败: {e}")
         raise HTTPException(status_code=500, detail="获取统计失败")
 
+
 # ============================================================================
 # API Endpoints - Odds
 # ============================================================================
+
 
 @router.get("/odds", response_model=List[OddsInfo])
 async def get_odds(
@@ -352,6 +371,7 @@ async def get_odds(
         logger.error(f"获取赔率失败: {e}")
         raise HTTPException(status_code=500, detail=f"获取赔率失败: {str(e)}")
 
+
 @router.get("/odds/{match_id}", response_model=List[OddsInfo])
 async def get_match_odds(match_id: int):
     """获取指定比赛的所有赔率"""
@@ -374,6 +394,7 @@ async def get_match_odds(match_id: int):
     except Exception as e:
         logger.error(f"获取赔率失败: {e}")
         raise HTTPException(status_code=500, detail="获取赔率失败")
+
 
 # 导出所有必要的符号以保持兼容性
 __all__ = [

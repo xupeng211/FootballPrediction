@@ -22,15 +22,18 @@ from .ensemble import EnsembleStrategy
 
 logger = logging.getLogger(__name__)
 
+
 class StrategyCreationError(Exception):
     """策略创建错误"""
 
     pass
 
+
 class StrategyConfigurationError(Exception):
     """策略配置错误"""
 
     pass
+
 
 class PredictionStrategyFactory:
     """预测策略工厂类

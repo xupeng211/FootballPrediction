@@ -14,6 +14,7 @@ from sqlalchemy import text
 
 from src.database.connection import DatabaseManager
 
+
 async def should_collect_live_scores() -> bool:
     """
     判断是否应该采集实时比分
@@ -51,6 +52,7 @@ async def should_collect_live_scores() -> bool:
     except (ValueError, KeyError, RuntimeError):
         # 如果查询失败，返回 False（避免在测试中无谓的数据采集）
         return False
+
 
 async def get_upcoming_matches(hours: int = 24) -> List[dict]:
     """
@@ -105,6 +107,7 @@ async def get_upcoming_matches(hours: int = 24) -> List[dict]:
     except (ValueError, KeyError, RuntimeError):
         return []
 
+
 def is_match_day(date: Optional[datetime] = None) -> bool:
     """
     检查指定日期是否有比赛
@@ -121,6 +124,7 @@ def is_match_day(date: Optional[datetime] = None) -> bool:
     # 简化实现：假设周末更可能有比赛
     weekday = date.weekday()
     return weekday in [5, 6]  # 周六、周日
+
 
 async def get_active_leagues() -> List[str]:
     """
@@ -152,6 +156,7 @@ async def get_active_leagues() -> List[str]:
     except (ValueError, KeyError, RuntimeError):
         # 返回一些常见的联赛作为默认值
         return ["Premier League", "La Liga", "Serie A", "Bundesliga"]
+
 
 def calculate_next_collection_time(
     task_name: str, interval_minutes: int = None
@@ -194,6 +199,7 @@ def calculate_next_collection_time(
         # 默认1小时后
         return now + timedelta(hours=1)
 
+
 async def cleanup_stale_tasks() -> int:
     """
     清理过期的任务记录
@@ -223,6 +229,7 @@ async def cleanup_stale_tasks() -> int:
 
     except (ValueError, KeyError, RuntimeError):
         return 0
+
 
 def get_task_priority(task_name: str) -> int:
     """

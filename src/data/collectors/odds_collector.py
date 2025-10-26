@@ -1,4 +1,5 @@
 from typing import Set
+
 """
 
 # mypy: ignore-errors
@@ -21,6 +22,7 @@ from typing import Dict, List, Optional, Any
 from datetime import datetime
 
 from .base_collector import DataCollector, CollectionResult
+
 
 class OddsCollector(DataCollector):
     """

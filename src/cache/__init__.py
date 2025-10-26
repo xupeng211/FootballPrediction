@@ -88,14 +88,18 @@ from .consistency_manager import (
 # 为了保持向后兼容，提供一些常用别名
 TTLCacheEntry = CacheEntry
 
+
 def get_prediction_cache():
     return prediction_cache
+
 
 def get_feature_cache():
     return feature_cache
 
+
 def get_odds_cache():
     return odds_cache
+
 
 __all__ = [
     # Redis管理器

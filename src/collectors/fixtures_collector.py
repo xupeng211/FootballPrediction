@@ -19,6 +19,7 @@ from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)
 
+
 class FixturesCollector:
     """比赛赛程收集器"""
 
@@ -297,6 +298,7 @@ class FixturesCollector:
             stats["errors"] += 1
 
         return stats
+
 
 class FixturesCollectorFactory:
     """赛程收集器工厂类"""

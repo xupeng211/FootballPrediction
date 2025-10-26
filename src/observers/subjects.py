@@ -14,6 +14,7 @@ from collections import defaultdict
 
 from .base import Subject, ObservableEvent, ObservableEventType
 
+
 class SystemMetricsSubject(Subject):
     """系统指标被观察者
 
@@ -152,6 +153,7 @@ class SystemMetricsSubject(Subject):
     def get_metrics(self) -> Dict[str, float]:
         """获取所有指标"""
         return dict(self._metrics)
+
 
 class PredictionMetricsSubject(Subject):
     """预测指标被观察者
@@ -309,6 +311,7 @@ class PredictionMetricsSubject(Subject):
 
         return result
 
+
 class AlertSubject(Subject):
     """告警被观察者
 
@@ -419,6 +422,7 @@ class AlertSubject(Subject):
             },
             "suppression_rules": len(self._suppression_rules),
         }
+
 
 class CacheSubject(Subject):
     """缓存被观察者

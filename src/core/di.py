@@ -26,12 +26,14 @@ from .exceptions import DependencyInjectionError
 T = TypeVar("T")
 logger = logging.getLogger(__name__)
 
+
 class ServiceLifetime(Enum):
     """服务生命周期枚举"""
 
     SINGLETON = "singleton"  # 单例：整个容器生命周期内只创建一次
     SCOPED = "scoped"  # 作用域：每个作用域内创建一次
     TRANSIENT = "transient"  # 瞬时：每次请求都创建新实例
+
 
 @dataclass
 class ServiceDescriptor:
@@ -47,6 +49,7 @@ class ServiceDescriptor:
     def __post_init__(self):
         if self.dependencies is None:
             self.dependencies = []
+
 
 class DIContainer:
     """依赖注入容器"""
@@ -303,6 +306,7 @@ class DIContainer:
         self._scoped_instances.clear()
         logger.info("清除所有服务注册")
 
+
 class DIScope:
     """依赖注入作用域"""
 
@@ -321,6 +325,7 @@ class DIScope:
         self.container._current_scope = self._old_scope
         self.container.clear_scope(self.scope_name)
         logger.debug(f"退出作用域: {self.scope_name}")
+
 
 class ServiceCollection:
     """服务集合，用于批量注册服务"""
@@ -380,8 +385,10 @@ class ServiceCollection:
 
         return container
 
+
 # 全局容器实例
 _default_container: Optional[DIContainer] = None
+
 
 def get_default_container() -> DIContainer:
     """获取默认容器"""
@@ -389,6 +396,7 @@ def get_default_container() -> DIContainer:
     if _default_container is None:
         _default_container = DIContainer("default")
     return _default_container
+
 
 def configure_services(
     configurator: Callable[[ServiceCollection], None],
@@ -404,9 +412,11 @@ def configure_services(
 
     return container
 
+
 def resolve(service_type: Type[T]) -> T:
     """从默认容器解析服务"""
     return get_default_container().resolve(service_type)
+
 
 def inject(
     service_type: Type[T], container: Optional[DIContainer] = None

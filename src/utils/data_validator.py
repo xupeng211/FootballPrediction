@@ -8,6 +8,7 @@ import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+
 class DataValidator:
     """数据验证工具类"""
 
@@ -108,6 +109,7 @@ class DataValidator:
         """验证并解析JSON"""
         try:
             import json
+
             data = json.loads(json_str)
             return True, data
         except Exception:
@@ -116,6 +118,7 @@ class DataValidator:
     @staticmethod
     def flatten_dict(data: dict, separator: str = ".") -> dict:
         """扁平化字典"""
+
         def _flatten(obj, parent_key=""):
             items = []
             if isinstance(obj, dict):
@@ -139,10 +142,10 @@ class DataValidator:
             return ""
 
         # 移除非数字字符
-        digits = re.sub(r'[^\d]', '', phone)
+        digits = re.sub(r"[^\d]", "", phone)
 
         # 中国手机号格式验证
-        if len(digits) == 11 and digits.startswith('1'):
+        if len(digits) == 11 and digits.startswith("1"):
             return digits
 
         return ""

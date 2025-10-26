@@ -10,6 +10,7 @@ from typing import Dict, Any
 from .base import DomainEvent
 from ..models.match import MatchScore, MatchResult
 
+
 class MatchStartedEvent(DomainEvent):
     """比赛开始事件"""
 
@@ -25,6 +26,7 @@ class MatchStartedEvent(DomainEvent):
             "home_team_id": self.home_team_id,
             "away_team_id": self.away_team_id,
         }
+
 
 class MatchFinishedEvent(DomainEvent):
     """比赛结束事件"""
@@ -57,6 +59,7 @@ class MatchFinishedEvent(DomainEvent):
             },
         }
 
+
 class MatchCancelledEvent(DomainEvent):
     """比赛取消事件"""
 
@@ -67,6 +70,7 @@ class MatchCancelledEvent(DomainEvent):
 
     def _get_event_data(self) -> Dict[str, Any]:
         return {"match_id": self.match_id, "reason": self.reason}
+
 
 class MatchPostponedEvent(DomainEvent):
     """比赛延期事件"""

@@ -11,9 +11,4 @@ from .scheduler.recovery_handler_core import *
 from .scheduler.recovery_handler_models import *
 
 # 导出所有公共接口
-__all__ = [
-    "RecoveryHandler",
-    "FailureType",
-    "RecoveryStrategy",
-    "TaskFailure"
-]
+__all__ = ["RecoveryHandler", "FailureType", "RecoveryStrategy", "TaskFailure"]

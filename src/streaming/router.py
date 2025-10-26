@@ -5,10 +5,8 @@
 
 from fastapi import APIRouter
 
-router = APIRouter(
-    prefix="/streaming",
-    tags=["streaming"]
-)
+router = APIRouter(prefix="/streaming", tags=["streaming"])
+
 
 @router.get("/health")
 async def health_check():

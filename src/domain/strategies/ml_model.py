@@ -21,6 +21,7 @@ from .base import (
 )
 from ..models.prediction import Prediction
 
+
 class MLModelStrategy(PredictionStrategy):
     """机器学习模型预测策略
 

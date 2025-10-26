@@ -12,6 +12,7 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
+
 class Role_BasedAccessControl:
     """Role-Based Access Control"""
 
@@ -22,21 +23,22 @@ class Role_BasedAccessControl:
     def process(self, data: Dict) -> Dict:
         """处理数据"""
         result = {
-            'status': 'success',
-            'feature': 'Role-Based Access Control',
-            'timestamp': datetime.now().isoformat(),
-            'data': data
+            "status": "success",
+            "feature": "Role-Based Access Control",
+            "timestamp": datetime.now().isoformat(),
+            "data": data,
         }
         return result
 
     def get_status(self) -> Dict:
         """获取状态"""
         return {
-            'feature': 'Role-Based Access Control',
-            'type': 'security',
-            'status': 'active',
-            'health': 'healthy'
+            "feature": "Role-Based Access Control",
+            "type": "security",
+            "status": "active",
+            "health": "healthy",
         }
+
 
 if __name__ == "__main__":
     service = Role_BasedAccessControl()

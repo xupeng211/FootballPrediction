@@ -31,6 +31,7 @@ EXTERNAL_API_RETRY_CONFIG = RetryConfig(
     retryable_exceptions=(aiohttp.ClientError, asyncio.TimeoutError, ConnectionError),
 )
 
+
 @dataclass
 class CollectionResult:
     """采集结果数据结构"""
@@ -43,6 +44,7 @@ class CollectionResult:
     status: str  # success/failed/partial
     error_message: Optional[str] = None
     collected_data: Optional[List[Dict[str, Any]]] = None
+
 
 class DataCollector(ABC):
     """

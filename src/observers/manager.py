@@ -27,6 +27,7 @@ from .subjects import (
 
 logger = logging.getLogger(__name__)
 
+
 class ObserverManager:
     """观察者管理器
 
@@ -365,8 +366,10 @@ class ObserverManager:
 
         return result
 
+
 # 全局实例
 _observer_manager: Optional[ObserverManager] = None
+
 
 def get_observer_manager() -> ObserverManager:
     """获取全局观察者管理器实例"""
@@ -375,16 +378,19 @@ def get_observer_manager() -> ObserverManager:
         _observer_manager = ObserverManager()
     return _observer_manager
 
+
 # 便捷函数
 async def initialize_observer_system() -> None:
     """初始化观察者系统"""
     manager = get_observer_manager()
     await manager.initialize()
 
+
 async def start_observer_system() -> None:
     """启动观察者系统"""
     manager = get_observer_manager()
     await manager.start()
+
 
 async def stop_observer_system() -> None:
     """停止观察者系统"""

@@ -10,6 +10,4 @@ feature_calculator 主模块
 from .features.feature_calculator_calculators import *
 
 # 导出所有公共接口
-__all__ = [
-    "FeatureCalculator"
-]
+__all__ = ["FeatureCalculator"]

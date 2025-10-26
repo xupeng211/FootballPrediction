@@ -5,6 +5,7 @@
 from typing import Any, Dict, Optional, Type, List
 from src.core.exceptions import AdapterError
 
+
 class AdapterRegistry:
     """适配器注册表"""
 
@@ -119,8 +120,10 @@ class AdapterRegistry:
 
         return decorator
 
+
 # 全局注册表实例
 _global_registry = None
+
 
 def get_global_registry() -> AdapterRegistry:
     """获取全局注册表实例"""
@@ -128,6 +131,7 @@ def get_global_registry() -> AdapterRegistry:
     if _global_registry is None:
         _global_registry = AdapterRegistry()
     return _global_registry
+
 
 def register_adapter(name: str = None, **kwargs):
     """装饰器注册适配器"""

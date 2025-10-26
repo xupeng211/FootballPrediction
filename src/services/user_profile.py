@@ -8,6 +8,7 @@ from typing import Any, Dict, Optional, List
 from datetime import datetime
 from .base_unified import SimpleService
 
+
 # 简化的UserProfile类定义
 class UserProfile:
     def __init__(
@@ -27,11 +28,13 @@ class UserProfile:
             "preferences": self.preferences,
         }
 
+
 # 简化的User类定义
 class User:
     def __init__(self, id: str, username: str):
         self.id = id
         self.username = username
+
 
 class UserProfileService(SimpleService):
     """用户画像服务"""

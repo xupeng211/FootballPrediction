@@ -1,5 +1,6 @@
 from datetime import timedelta
 from sqlalchemy import or_
+
 """
 Match - 数据库模块
 
@@ -37,6 +38,7 @@ from ..base import BaseModel
 存储足球比赛的详细信息，包括比赛时间、比分、状态等。
 """
 
+
 class MatchStatus(Enum):
     """比赛状态枚举"""
 
@@ -45,6 +47,7 @@ class MatchStatus(Enum):
     FINISHED = "finished"  # 已结束
     CANCELLED = "cancelled"  # 已取消
 
+
 class MatchResult(Enum):
     """比赛结果枚举"""
 
@@ -52,6 +55,7 @@ class MatchResult(Enum):
     AWAY_WIN = "away_win"  # 客队获胜
     DRAW = "draw"  # 平局
 
+
 class Match(BaseModel):
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {"extend_existing": True}
     __tablename__ = "matches"

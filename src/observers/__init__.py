@@ -20,6 +20,7 @@ from .subjects import (
 )
 from .manager import ObserverManager, get_observer_manager
 
+
 # 系统级便捷函数
 def initialize_observer_system():
     """初始化观察者系统"""
@@ -28,6 +29,7 @@ def initialize_observer_system():
         manager.initialize()
     return True
 
+
 def start_observer_system():
     """启动观察者系统"""
     manager = get_observer_manager()
@@ -35,12 +37,14 @@ def start_observer_system():
         manager.start()
     return True
 
+
 def stop_observer_system():
     """停止观察者系统"""
     manager = get_observer_manager()
     if hasattr(manager, "stop"):
         manager.stop()
     return True
+
 
 __all__ = [
     # 基础类

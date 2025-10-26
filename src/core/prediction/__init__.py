@@ -7,6 +7,7 @@ Prediction Module
 
 from .config import PredictionConfig
 
+
 class PredictionStatistics:
     """预测统计类"""
 
@@ -25,6 +26,7 @@ class PredictionStatistics:
             if self.total_predictions > 0
             else 0.0
         )
+
 
 class PredictionEngine:
     """预测引擎类（简化实现）"""
@@ -78,5 +80,6 @@ class PredictionEngine:
     def get_statistics(self) -> PredictionStatistics:
         """获取统计信息"""
         return self.statistics
+
 
 __all__ = ["PredictionEngine", "PredictionConfig", "PredictionStatistics"]

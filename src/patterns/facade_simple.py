@@ -11,6 +11,7 @@ from dataclasses import dataclass
 
 from src.core.logging import get_logger
 
+
 @dataclass
 class PredictionRequest:
     """预测请求"""
@@ -19,6 +20,7 @@ class PredictionRequest:
     user_id: int
     algorithm: str = "ensemble"
     features: Optional[Dict[str, Any]] = None
+
 
 @dataclass
 class PredictionResult:
@@ -29,6 +31,7 @@ class PredictionResult:
     value_assessment: Optional[Dict[str, Any]]
     recommendations: List[str]
 
+
 @dataclass
 class DataCollectionConfig:
     """数据收集配置"""
@@ -36,6 +39,7 @@ class DataCollectionConfig:
     sources: List[str]
     refresh_interval: timedelta
     batch_size: int = 100
+
 
 class PredictionFacade:
     """预测门面
@@ -205,6 +209,7 @@ class PredictionFacade:
         # 模拟保存
         self.logger.info(f"Saved prediction for user {user_id}")
 
+
 class DataCollectionFacade:
     """数据收集门面
 
@@ -282,6 +287,7 @@ class DataCollectionFacade:
         """同步外部数据"""
         await asyncio.sleep(0.01)
         return 100
+
 
 class AnalyticsFacade:
     """分析门面
@@ -396,6 +402,7 @@ class AnalyticsFacade:
             "data": "Profitability report data...",
         }
 
+
 # 门面工厂
 class FacadeFactory:
     """门面工厂"""
@@ -414,6 +421,7 @@ class FacadeFactory:
     def create_analytics_facade(services: Dict[str, Any]) -> AnalyticsFacade:
         """创建分析门面"""
         return AnalyticsFacade(services)
+
 
 # 系统门面 - 统一入口
 class SystemFacade:

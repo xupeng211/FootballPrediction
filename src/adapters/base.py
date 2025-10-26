@@ -12,6 +12,7 @@ from datetime import datetime
 from enum import Enum
 import asyncio
 
+
 class AdapterStatus(Enum):
     """适配器状态枚举"""
 
@@ -19,6 +20,7 @@ class AdapterStatus(Enum):
     INACTIVE = "inactive"
     ERROR = "error"
     MAINTENANCE = "maintenance"
+
 
 class Adaptee(ABC):
     """被适配者接口，需要被适配的现有接口"""
@@ -33,6 +35,7 @@ class Adaptee(ABC):
         """发送数据"""
         pass
 
+
 class Target(ABC):
     """目标接口，客户端期望的接口"""
 
@@ -40,6 +43,7 @@ class Target(ABC):
     async def request(self, *args, **kwargs) -> Any:
         """标准请求方法"""
         pass
+
 
 class Adapter(Target):
     """适配器基类，将Adaptee接口转换为Target接口"""
@@ -165,6 +169,7 @@ class Adapter(Target):
                 else 0
             ),
         }
+
 
 class CompositeAdapter(Adapter):
     """组合适配器，可以管理多个子适配器"""
@@ -303,6 +308,7 @@ class CompositeAdapter(Adapter):
             "average_response_time": 0.0,
         }
 
+
 class DataTransformer(ABC):
     """数据转换器基类"""
 
@@ -320,6 +326,7 @@ class DataTransformer(ABC):
     def get_target_schema(self) -> Dict[str, Any]:
         """获取目标数据结构"""
         pass
+
 
 class BaseAdapter(ABC):
     """基础适配器抽象类"""
