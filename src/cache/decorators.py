@@ -52,7 +52,7 @@ def cache_by_user(user_id_param="user_id", user_param=None, ttl=None, prefix=Non
     """按用户缓存的装饰器 - 占位符实现"""
     # 支持两种参数名称以保持兼容性
     if user_param is not None:
-        user_id_param = user_param
+        user_id_param = user_param  # noqa: F841  # 占位符实现中暂时未使用
 
     def decorator(func):
         return func
