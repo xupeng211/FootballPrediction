@@ -188,7 +188,7 @@ else:
     from src.api.data_router import (
         router as data_router,
     )  # runtime import for minimal mode
-    from src.api.features import router as features_router
+    from src.api.features_simple import router as features_router
     from src.api.monitoring import router as monitoring_router
     from src.api.predictions import router as predictions_router
     from src.api.events import router as events_router
