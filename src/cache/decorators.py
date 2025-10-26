@@ -91,9 +91,11 @@ def cache_invalidate(pattern_func=None, pattern=None, key_generator=None, **kwar
     return decorator
 
 
-def cache_user_predictions(func):
+def cache_user_predictions(ttl_seconds=None, **kwargs):
     """用户预测缓存装饰器 - 占位符实现"""
-    return func
+    def decorator(func):
+        return func
+    return decorator
 
 
 def cache_match_data(func):
