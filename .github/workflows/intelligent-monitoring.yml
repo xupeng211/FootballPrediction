@@ -176,7 +176,7 @@ print('✅ 质量仪表板已生成')
 "
 
       - name: 📤 上传监控报告
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: intelligent-quality-monitoring-reports
           path: quality_monitoring_reports/
@@ -352,7 +352,7 @@ print('✅ 质量预测报告已生成')
 "
 
       - name: 📤 上传预测报告
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: quality-prediction-report
           path: quality_prediction_report.md

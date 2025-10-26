@@ -113,7 +113,7 @@ if os.path.exists(report_file):
     "
 
       - name: 📤 上传质量报告
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: quality-guardian-reports
@@ -214,7 +214,7 @@ with open('quality_comment.md', 'w') as f:
           python3 scripts/improvement_monitor.py --export-formats json,markdown || true
 
       - name: 📤 上传改进报告
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: continuous-improvement-reports
@@ -375,7 +375,7 @@ print('📚 AI编程指南已生成')
 "
 
       - name: 📤 上传AI编程指南
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ai-programming-guide
           path: AI_PROGRAMMING_GUIDE.md
