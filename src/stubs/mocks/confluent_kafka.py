@@ -1,3 +1,5 @@
+from typing import cast, defaultdict
+import asyncio
 """
 Confluent Kafka Mock 实现
 用于测试环境，避免真实的Kafka依赖
