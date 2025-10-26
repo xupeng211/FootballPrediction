@@ -81,9 +81,9 @@ def _make_cache_key(func_name, args, kwargs, prefix=None):
     return hashlib.md5(key_str.encode(), usedforsecurity=False).hexdigest()
 
 
-def cache_invalidate(pattern_func):
+def cache_invalidate(pattern_func=None, pattern=None, key_generator=None, **kwargs):
     """缓存失效装饰器 - 占位符实现"""
-
+    # 支持多种参数名称以保持兼容性
     def decorator(func):
         return func
 
