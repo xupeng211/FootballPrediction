@@ -17,7 +17,7 @@ class AdvancedAuthenticationSystem:
 
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.logger.info(f"初始化security特性: Advanced Authentication System")
+        self.logger.info("初始化security特性: Advanced Authentication System")
 
     def process(self, data: Dict) -> Dict:
         """处理数据"""
