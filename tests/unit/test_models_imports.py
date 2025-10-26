@@ -1,4 +1,6 @@
 # 模型导入批量测试
+import pytest
+
 @pytest.mark.unit
 
 def test_import_all_models():
