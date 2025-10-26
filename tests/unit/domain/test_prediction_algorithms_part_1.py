@@ -6,6 +6,7 @@
 
 import pytest
 from enum import Enum
+from dataclasses import dataclass
 from unittest.mock import Mock, patch
 
 class PredictionOutcome(Enum):
