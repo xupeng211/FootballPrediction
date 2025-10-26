@@ -174,6 +174,7 @@ class AdvancedModelTrainer:
                 else:  # mse
                     performance_drop = metric_value - baseline
 
+            # 性能记录，用于可能的日志记录或监控
             performance_record = {
                 "timestamp": datetime.now(),
                 metric_name: metric_value,
@@ -181,6 +182,8 @@ class AdvancedModelTrainer:
                 "alert_threshold": 0.1,
                 "needs_retraining": performance_drop > 0.1
             }
+            # 记录性能数据到历史记录
+            self.performance_history.append(performance_record)
 
             return {
                 "current_performance": metric_value,
