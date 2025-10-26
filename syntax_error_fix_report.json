@@ -1,0 +1,162 @@
+{
+  "fix_time": "2025-10-26",
+  "issue_number": 84,
+  "fixed_files": [
+    "tests/unit/adapters/base_test_phase3.py",
+    "tests/unit/api/data_router_test_phase3.py",
+    "tests/unit/api/decorators_test_phase3.py",
+    "tests/unit/utils/helpers_test_phase3.py",
+    "tests/unit/utils/formatters_test_phase3.py",
+    "tests/unit/utils/dict_utils_test_phase3.py",
+    "tests/unit/utils/file_utils_test_phase3.py",
+    "tests/unit/utils/time_utils_test_phase3.py",
+    "tests/unit/domain/test_prediction_algorithms_part_2.py",
+    "tests/unit/domain/test_prediction_algorithms_part_4.py",
+    "tests/unit/domain/test_prediction_algorithms_part_3.py",
+    "tests/unit/domain/test_prediction_algorithms_part_5.py",
+    "tests/unit/cqrs/application_test_phase3.py",
+    "tests/unit/cqrs/base_test_phase3.py",
+    "tests/unit/cqrs/dto_test_phase3.py",
+    "tests/unit/database/config_test_phase3.py",
+    "tests/unit/database/definitions_test_phase3.py",
+    "tests/unit/database/dependencies_test_phase3.py",
+    "tests/unit/core/logging_test_phase3.py",
+    "tests/unit/core/service_lifecycle_test_phase3.py",
+    "tests/unit/core/auto_binding_test_phase3.py",
+    "tests/unit/data/processing/football_data_cleaner_test_phase3.py",
+    "tests/unit/data/quality/data_quality_monitor_test_phase3.py",
+    "tests/unit/data/quality/exception_handler_test_phase3.py",
+    "tests/unit/events/types_test_phase3.py",
+    "tests/unit/events/base_test_phase3.py",
+    "tests/unit/adapters/base_test_phase3.py",
+    "tests/unit/api/data_router_test_phase3.py",
+    "tests/unit/api/decorators_test_phase3.py",
+    "tests/unit/utils/helpers_test_phase3.py",
+    "tests/unit/utils/formatters_test_phase3.py",
+    "tests/unit/utils/dict_utils_test_phase3.py",
+    "tests/unit/utils/file_utils_test_phase3.py",
+    "tests/unit/utils/time_utils_test_phase3.py",
+    "tests/unit/cqrs/application_test_phase3.py",
+    "tests/unit/cqrs/base_test_phase3.py",
+    "tests/unit/cqrs/dto_test_phase3.py",
+    "tests/unit/database/config_test_phase3.py",
+    "tests/unit/database/definitions_test_phase3.py",
+    "tests/unit/database/dependencies_test_phase3.py",
+    "tests/unit/core/logging_test_phase3.py",
+    "tests/unit/core/service_lifecycle_test_phase3.py",
+    "tests/unit/core/auto_binding_test_phase3.py",
+    "tests/unit/data/processing/football_data_cleaner_test_phase3.py",
+    "tests/unit/data/quality/data_quality_monitor_test_phase3.py",
+    "tests/unit/data/quality/exception_handler_test_phase3.py",
+    "tests/unit/events/types_test_phase3.py",
+    "tests/unit/events/base_test_phase3.py"
+  ],
+  "error_files": [
+    [
+      "tests/unit/adapters/base_test_phase3.py",
+      "unexpected indent (<unknown>, line 10)"
+    ],
+    [
+      "tests/unit/api/data_router_test_phase3.py",
+      "unexpected indent (<unknown>, line 10)"
+    ],
+    [
+      "tests/unit/api/decorators_test_phase3.py",
+      "unexpected indent (<unknown>, line 10)"
+    ],
+    [
+      "tests/unit/utils/helpers_test_phase3.py",
+      "unexpected indent (<unknown>, line 10)"
+    ],
+    [
+      "tests/unit/utils/formatters_test_phase3.py",
+      "unexpected indent (<unknown>, line 10)"
+    ],
+    [
+      "tests/unit/utils/dict_utils_test_phase3.py",
+      "unexpected indent (<unknown>, line 10)"
+    ],
+    [
+      "tests/unit/utils/file_utils_test_phase3.py",
+      "unexpected indent (<unknown>, line 10)"
+    ],
+    [
+      "tests/unit/utils/time_utils_test_phase3.py",
+      "unexpected indent (<unknown>, line 10)"
+    ],
+    [
+      "tests/unit/domain/test_prediction_algorithms_part_2.py",
+      "unexpected indent (<unknown>, line 7)"
+    ],
+    [
+      "tests/unit/domain/test_prediction_algorithms_part_4.py",
+      "unexpected indent (<unknown>, line 7)"
+    ],
+    [
+      "tests/unit/domain/test_prediction_algorithms_part_3.py",
+      "unexpected indent (<unknown>, line 7)"
+    ],
+    [
+      "tests/unit/domain/test_prediction_algorithms_part_5.py",
+      "unexpected indent (<unknown>, line 7)"
+    ],
+    [
+      "tests/unit/cqrs/application_test_phase3.py",
+      "unexpected indent (<unknown>, line 10)"
+    ],
+    [
+      "tests/unit/cqrs/base_test_phase3.py",
+      "unexpected indent (<unknown>, line 10)"
+    ],
+    [
+      "tests/unit/cqrs/dto_test_phase3.py",
+      "unexpected indent (<unknown>, line 10)"
+    ],
+    [
+      "tests/unit/database/config_test_phase3.py",
+      "unexpected indent (<unknown>, line 10)"
+    ],
+    [
+      "tests/unit/database/definitions_test_phase3.py",
+      "unexpected indent (<unknown>, line 10)"
+    ],
+    [
+      "tests/unit/database/dependencies_test_phase3.py",
+      "unexpected indent (<unknown>, line 10)"
+    ],
+    [
+      "tests/unit/core/logging_test_phase3.py",
+      "unexpected indent (<unknown>, line 10)"
+    ],
+    [
+      "tests/unit/core/service_lifecycle_test_phase3.py",
+      "unexpected indent (<unknown>, line 10)"
+    ],
+    [
+      "tests/unit/core/auto_binding_test_phase3.py",
+      "unexpected indent (<unknown>, line 10)"
+    ],
+    [
+      "tests/unit/data/processing/football_data_cleaner_test_phase3.py",
+      "unexpected indent (<unknown>, line 10)"
+    ],
+    [
+      "tests/unit/data/quality/data_quality_monitor_test_phase3.py",
+      "unexpected indent (<unknown>, line 10)"
+    ],
+    [
+      "tests/unit/data/quality/exception_handler_test_phase3.py",
+      "unexpected indent (<unknown>, line 10)"
+    ],
+    [
+      "tests/unit/events/types_test_phase3.py",
+      "unexpected indent (<unknown>, line 10)"
+    ],
+    [
+      "tests/unit/events/base_test_phase3.py",
+      "unexpected indent (<unknown>, line 10)"
+    ]
+  ],
+  "total_fixed": 48,
+  "total_errors": 26
+}

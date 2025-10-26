@@ -1,0 +1,127 @@
+# Blue-Green Deployment
+# 蓝绿部署配置
+# 生成时间: 2025-10-26 20:57:41
+
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: footballprediction-api
+  namespace: footballprediction
+spec:
+  replicas: 3
+  strategy:
+    blueGreen:
+      activeService: footballprediction-api-active
+      previewService: footballprediction-api-preview
+      autoPromotionEnabled: false
+      scaleDownDelaySeconds: 30
+      prePromotionAnalysis:
+        templates:
+        - templateName: success-rate
+        args:
+        - name: service-name
+          value: footballprediction-api-preview
+      postPromotionAnalysis:
+        templates:
+        - templateName: success-rate
+        args:
+        - name: service-name
+          value: footballprediction-api-active
+      previewReplicaCount: 2
+  selector:
+    matchLabels:
+      app: footballprediction-api
+  template:
+    metadata:
+      labels:
+        app: footballprediction-api
+    spec:
+      containers:
+      - name: api
+        image: footballprediction/api:{{ values.imageTag }}
+        ports:
+        - containerPort: 8000
+        env:
+        - name: ENV
+          value: "production"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: footballprediction-secrets
+              key: database-url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: footballprediction-secrets
+              key: redis-url
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: footballprediction-api-active
+  namespace: footballprediction
+spec:
+  selector:
+    app: footballprediction-api
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8000
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: footballprediction-api-preview
+  namespace: footballprediction
+spec:
+  selector:
+    app: footballprediction-api
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8000
+  type: ClusterIP
+
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: success-rate
+  namespace: footballprediction
+spec:
+  args:
+  - name: service-name
+  metrics:
+  - name: success-rate
+    interval: 30s
+    count: 10
+    successCondition: result[0] >= 0.95
+    failureLimit: 3
+    provider:
+      prometheus:
+        address: http://prometheus.istio-system.svc.cluster.local:9090
+        query: |
+          sum(rate(http_server_requests{status!~"5..",service="{args.service-name}}[2m])) /
+          sum(rate(http_server_requests{service="{args.service-name}"}[2m]))

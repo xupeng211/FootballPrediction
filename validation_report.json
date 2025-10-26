@@ -1,5 +1,5 @@
 {
-  "validation_time": "2025-10-26 19:38:05",
+  "validation_time": "2025-10-26 20:59:51",
   "validator_version": "1.0.0",
   "results": {
     "tests": {
@@ -8,32 +8,32 @@
         "total_tests": 39,
         "passed": 39,
         "failed": 0,
-        "duration": "1.37s",
+        "duration": "2.13s",
         "pass_rate": "100.0%"
       }
     },
     "code_quality": {
-      "status": "✅ 优秀",
+      "status": "⚠️ 需要改进",
       "details": {
-        "ruff_errors": 0,
-        "status": "零错误"
+        "ruff_errors": 6,
+        "status": "6个错误"
       }
     },
     "coverage": {
       "status": "✅ 稳定",
       "details": {
-        "total_coverage": "15.77%",
+        "total_coverage": "15.33%",
         "target_met": true,
         "lines_covered": 4248,
-        "lines_total": 21985
+        "lines_total": 22664
       }
     },
     "core_functionality": {
       "status": "✅ 稳定",
       "details": {
         "total_checks": 4,
-        "passed_checks": 3,
-        "success_rate": "75.0%",
+        "passed_checks": 4,
+        "success_rate": "100.0%",
         "tests": [
           [
             "模块导入",
@@ -45,7 +45,7 @@
           ],
           [
             "测试环境",
-            "❌ 失败: name 'tryfirst' is not defined"
+            "✅ 通过"
           ],
           [
             "文件完整性",
@@ -56,7 +56,7 @@
     },
     "overall_status": {
       "status": "🏆 优秀",
-      "score": "100.0%",
+      "score": "92.5%",
       "recommendation": "系统状态优秀，可以继续推进后续工作",
       "categories_evaluated": 4
     }
