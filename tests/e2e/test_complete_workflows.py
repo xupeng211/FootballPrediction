@@ -50,7 +50,7 @@ class TestEnd_to_EndWorkflowTests:
             mock_redis.set.return_value = True
             yield mock_redis
 
-    def test_complete_workflow_end-to-end_workflow_tests(self, client, db_session, redis_client):
+    def test_complete_workflow_end_to_end_tests(self, client, db_session, redis_client):
         """测试完整工作流：End-to-End Workflow Tests"""
         # TODO: 实现具体的集成测试逻辑
 
@@ -82,7 +82,7 @@ class TestEnd_to_EndWorkflowTests:
         # 基本断言
         assert True
 
-    def test_error_handling_end-to-end_workflow_tests(self, client):
+    def test_error_handling_end_to_end_tests(self, client):
         """测试错误处理：End-to-End Workflow Tests"""
         # TODO: 测试各种错误场景
 
@@ -99,7 +99,7 @@ class TestEnd_to_EndWorkflowTests:
 
         assert True
 
-    def test_performance_end-to-end_workflow_tests(self, client):
+    def test_performance_end_to_end_tests(self, client):
         """测试性能：End-to-End Workflow Tests"""
         # TODO: 测试性能指标
 
@@ -118,7 +118,7 @@ class TestEnd_to_EndWorkflowTests:
         assert duration < 5.0, f"性能测试失败: 耗时{duration:.2f}秒"
 
     @pytest.mark.asyncio
-    async def test_async_operations_end-to-end_workflow_tests(self):
+    async def test_async_operations_end_to_end_tests(self):
         """测试异步操作：End-to-End Workflow Tests"""
         # TODO: 测试异步操作
 
@@ -129,7 +129,7 @@ class TestEnd_to_EndWorkflowTests:
         result = await sample_async_operation()
         assert result["status"] == "completed"
 
-    def test_data_consistency_end-to-end_workflow_tests(self, db_session, redis_client):
+    def test_data_consistency_end_to_end_tests(self, db_session, redis_client):
         """测试数据一致性：End-to-End Workflow Tests"""
         # TODO: 测试数据一致性
 
@@ -145,7 +145,7 @@ class TestEnd_to_EndWorkflowTests:
         assert test_data["timestamp"] is not None
         assert test_data["status"] is not None
 
-    def test_security_end-to-end_workflow_tests(self, client):
+    def test_security_end_to_end_tests(self, client):
         """测试安全性：End-to-End Workflow Tests"""
         # TODO: 测试安全相关功能
 
