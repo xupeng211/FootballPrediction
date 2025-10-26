@@ -243,10 +243,7 @@ check_imports()
         echo "🔒 Running security vulnerability scan..."
 
         # Safety检查
-        safety check --json --output json > safety-report.json
-        if [ $? -ne 0 ]; then
-          echo "⚠️ Safety发现依赖安全问题"
-        fi
+        safety check --json --output json > safety-report.json || echo "Safety发现依赖安全问题"
 
         # Bandit安全扫描
         bandit -r src/ -f json -o bandit-report.json
