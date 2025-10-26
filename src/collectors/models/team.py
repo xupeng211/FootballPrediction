@@ -31,7 +31,7 @@ class Team:
             "country": self.country,
             "league": self.league,
             "founded_year": self.founded_year,
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
 
     @classmethod
@@ -44,5 +44,5 @@ class Team:
             country=data.get("country", ""),
             league=data.get("league", ""),
             founded_year=data.get("founded_year"),
-            metadata=data.get("metadata", {})
+            metadata=data.get("metadata", {}),
         )

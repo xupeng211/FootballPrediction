@@ -77,6 +77,6 @@ class TimestampMixin:
     def with_timestamps(cls, **kwargs):
         """添加时间戳字段"""
         now = datetime.now(timezone.utc)
-        kwargs.setdefault('created_at', now)
-        kwargs.setdefault('updated_at', now)
+        kwargs.setdefault("created_at", now)
+        kwargs.setdefault("updated_at", now)
         return kwargs

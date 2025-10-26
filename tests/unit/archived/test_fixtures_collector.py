@@ -32,7 +32,6 @@ except ImportError as e:
     not COLLECTORS_AVAILABLE, reason="Fixtures collector module not available"
 )
 @pytest.mark.unit
-
 class TestFixturesCollector:
     """比赛赛程收集器测试"""
 
