@@ -26,9 +26,16 @@ __all__ = [
 
 
 # 提供占位符函数以保持向后兼容
-def cache_result(func):
+def cache_result(*args, **kwargs):
     """缓存结果装饰器 - 占位符实现"""
-    return func
+    if args and callable(args[0]):
+        # 直接作为装饰器使用: @cache_result
+        return args[0]
+    else:
+        # 带参数使用: @cache_result(ttl=3600)
+        def decorator(func):
+            return func
+        return decorator
 
 
 def cache_with_ttl(ttl_seconds):
@@ -47,6 +54,27 @@ def cache_by_user(user_id_param="user_id"):
         return func
 
     return decorator
+
+
+def _make_cache_key(func_name, args, kwargs, prefix=None):
+    """生成缓存键的辅助函数"""
+    import hashlib
+    import json
+
+    key_parts = [func_name]
+    if prefix:
+        key_parts.append(prefix)
+
+    # 添加参数到键中
+    if args:
+        key_parts.extend(str(arg) for arg in args)
+    if kwargs:
+        sorted_kwargs = sorted(kwargs.items())
+        key_parts.extend(f"{k}:{v}" for k, v in sorted_kwargs)
+
+    # 生成哈希
+    key_str = ":".join(key_parts)
+    return hashlib.md5(key_str.encode(), usedforsecurity=False).hexdigest()
 
 
 def cache_invalidate(pattern_func):

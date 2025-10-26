@@ -1,20 +1,16 @@
-# TODO: Consider creating a fixture for 24 repeated Mock creations
-
-# TODO: Consider creating a fixture for 24 repeated Mock creations
-
 """
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
-import pytest
-from datetime import datetime, timedelta
-import os
-from src.collectors.fixtures_collector import FixturesCollector
-import pytest
-import asyncio
 比赛赛程收集器测试
 Tests for Fixtures Collector
 
 测试src.collectors.fixtures_collector模块的功能
 """
+
+from unittest.mock import Mock, patch, AsyncMock, MagicMock
+import pytest
+from datetime import datetime, timedelta
+import os
+from src.collectors.fixtures_collector import FixturesCollector
+import asyncio
 
 
 # 测试导入
