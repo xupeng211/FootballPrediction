@@ -27,22 +27,24 @@ class DataFactory(BaseFactory, DataFactoryMixin, TimestampMixin):
     def create(cls, **kwargs) -> Dict[str, Any]:
         """创建通用数据实例"""
         default_data = {
-            'id': cls.generate_id(),
-            'uuid': str(uuid.uuid4()),
-            'name': random.choice(cls.NAMES),
-            'email': random.choice(cls.EMAILS),
-            'phone': f"138{random.randint(10000000, 99999999)}",
-            'city': random.choice(cls.CITIES),
-            'country': random.choice(cls.COUNTRIES),
-            'company': random.choice(cls.COMPANIES),
-            'created_at': cls.generate_timestamp(),
-            'updated_at': cls.generate_timestamp(),
-            'is_active': True,
-            'score': random.randint(0, 100),
-            'rating': round(random.uniform(1.0, 5.0), 1),
-            'description': f"测试数据描述_{random.randint(1, 1000)}",
-            'tags': random.sample(['tag1', 'tag2', 'tag3', 'tag4', 'tag5'], random.randint(1, 3)),
-            'metadata': cls._generate_metadata(),
+            "id": cls.generate_id(),
+            "uuid": str(uuid.uuid4()),
+            "name": random.choice(cls.NAMES),
+            "email": random.choice(cls.EMAILS),
+            "phone": f"138{random.randint(10000000, 99999999)}",
+            "city": random.choice(cls.CITIES),
+            "country": random.choice(cls.COUNTRIES),
+            "company": random.choice(cls.COMPANIES),
+            "created_at": cls.generate_timestamp(),
+            "updated_at": cls.generate_timestamp(),
+            "is_active": True,
+            "score": random.randint(0, 100),
+            "rating": round(random.uniform(1.0, 5.0), 1),
+            "description": f"测试数据描述_{random.randint(1, 1000)}",
+            "tags": random.sample(
+                ["tag1", "tag2", "tag3", "tag4", "tag5"], random.randint(1, 3)
+            ),
+            "metadata": cls._generate_metadata(),
         }
 
         default_data.update(kwargs)
@@ -76,12 +78,20 @@ class DataFactory(BaseFactory, DataFactoryMixin, TimestampMixin):
     @classmethod
     def create_high_score(cls, **kwargs) -> Dict[str, Any]:
         """创建高分数据"""
-        return cls.create(score=random.randint(80, 100), rating=round(random.uniform(4.0, 5.0), 1), **kwargs)
+        return cls.create(
+            score=random.randint(80, 100),
+            rating=round(random.uniform(4.0, 5.0), 1),
+            **kwargs,
+        )
 
     @classmethod
     def create_low_score(cls, **kwargs) -> Dict[str, Any]:
         """创建低分数据"""
-        return cls.create(score=random.randint(0, 30), rating=round(random.uniform(1.0, 2.0), 1), **kwargs)
+        return cls.create(
+            score=random.randint(0, 30),
+            rating=round(random.uniform(1.0, 2.0), 1),
+            **kwargs,
+        )
 
     @classmethod
     def create_with_tags(cls, tags: List[str], **kwargs) -> Dict[str, Any]:
@@ -92,12 +102,12 @@ class DataFactory(BaseFactory, DataFactoryMixin, TimestampMixin):
     def _generate_metadata(cls) -> Dict[str, Any]:
         """生成元数据"""
         return {
-            'source': 'test_factory',
-            'version': '1.0',
-            'environment': 'test',
-            'created_by': 'DataFactory',
-            'random_seed': random.randint(1, 10000),
-            'checksum': f"checksum_{random.randint(1000, 9999)}"
+            "source": "test_factory",
+            "version": "1.0",
+            "environment": "test",
+            "created_by": "DataFactory",
+            "random_seed": random.randint(1, 10000),
+            "checksum": f"checksum_{random.randint(1000, 9999)}",
         }
 
     @classmethod
@@ -110,13 +120,13 @@ class DataFactory(BaseFactory, DataFactoryMixin, TimestampMixin):
     def create_numeric_data(cls, **kwargs) -> Dict[str, Union[int, float]]:
         """创建数值型测试数据"""
         return {
-            'integer_value': random.randint(1, 1000),
-            'float_value': round(random.uniform(0.1, 99.9), 2),
-            'percentage': round(random.uniform(0.0, 100.0), 2),
-            'ratio': round(random.uniform(0.1, 10.0), 3),
-            'score': random.randint(0, 100),
-            'rating': round(random.uniform(1.0, 5.0), 1),
-            **kwargs
+            "integer_value": random.randint(1, 1000),
+            "float_value": round(random.uniform(0.1, 99.9), 2),
+            "percentage": round(random.uniform(0.0, 100.0), 2),
+            "ratio": round(random.uniform(0.1, 10.0), 3),
+            "score": random.randint(0, 100),
+            "rating": round(random.uniform(1.0, 5.0), 1),
+            **kwargs,
         }
 
     @classmethod
@@ -127,16 +137,16 @@ class DataFactory(BaseFactory, DataFactoryMixin, TimestampMixin):
             "Lorem ipsum dolor sit amet",
             "测试数据生成器",
             "Sample text for testing",
-            "示例文本内容"
+            "示例文本内容",
         ]
 
         return {
-            'title': f"标题_{random.randint(1, 100)}",
-            'content': random.choice(texts),
-            'description': f"描述_{random.randint(1, 1000)}",
-            'summary': f"摘要_{random.randint(1, 500)}",
-            'notes': f"备注_{random.randint(1, 200)}",
-            **kwargs
+            "title": f"标题_{random.randint(1, 100)}",
+            "content": random.choice(texts),
+            "description": f"描述_{random.randint(1, 1000)}",
+            "summary": f"摘要_{random.randint(1, 500)}",
+            "notes": f"备注_{random.randint(1, 200)}",
+            **kwargs,
         }
 
     @classmethod
@@ -144,13 +154,13 @@ class DataFactory(BaseFactory, DataFactoryMixin, TimestampMixin):
         """创建日期时间测试数据"""
         now = datetime.now(timezone.utc)
         return {
-            'created_at': now,
-            'updated_at': now,
-            'start_date': now.replace(day=random.randint(1, 28)),
-            'end_date': now.replace(day=random.randint(1, 28)),
-            'last_modified': now.replace(hour=random.randint(0, 23)),
-            'expiry_date': now.replace(year=now.year + random.randint(1, 5)),
-            **{k: v for k, v in kwargs.items() if isinstance(v, datetime)}
+            "created_at": now,
+            "updated_at": now,
+            "start_date": now.replace(day=random.randint(1, 28)),
+            "end_date": now.replace(day=random.randint(1, 28)),
+            "last_modified": now.replace(hour=random.randint(0, 23)),
+            "expiry_date": now.replace(year=now.year + random.randint(1, 5)),
+            **{k: v for k, v in kwargs.items() if isinstance(v, datetime)},
         }
 
     @classmethod
@@ -162,30 +172,31 @@ class DataFactory(BaseFactory, DataFactoryMixin, TimestampMixin):
     def create_nested_data(cls, **kwargs) -> Dict[str, Any]:
         """创建嵌套型测试数据"""
         return {
-            'id': cls.generate_id(),
-            'name': random.choice(cls.NAMES),
-            'profile': {
-                'email': random.choice(cls.EMAILS),
-                'phone': f"138{random.randint(10000000, 99999999)}",
-                'address': {
-                    'city': random.choice(cls.CITIES),
-                    'country': random.choice(cls.COUNTRIES),
-                    'zipcode': f"{random.randint(100000, 999999)}"
-                }
+            "id": cls.generate_id(),
+            "name": random.choice(cls.NAMES),
+            "profile": {
+                "email": random.choice(cls.EMAILS),
+                "phone": f"138{random.randint(10000000, 99999999)}",
+                "address": {
+                    "city": random.choice(cls.CITIES),
+                    "country": random.choice(cls.COUNTRIES),
+                    "zipcode": f"{random.randint(100000, 999999)}",
+                },
             },
-            'settings': {
-                'theme': random.choice(['light', 'dark']),
-                'language': random.choice(['zh-CN', 'en-US']),
-                'notifications': random.choice([True, False])
+            "settings": {
+                "theme": random.choice(["light", "dark"]),
+                "language": random.choice(["zh-CN", "en-US"]),
+                "notifications": random.choice([True, False]),
             },
-            'activities': [
+            "activities": [
                 {
-                    'type': random.choice(['login', 'logout', 'update']),
-                    'timestamp': cls.generate_timestamp(),
-                    'details': f"活动详情_{random.randint(1, 100)}"
-                } for _ in range(random.randint(1, 5))
+                    "type": random.choice(["login", "logout", "update"]),
+                    "timestamp": cls.generate_timestamp(),
+                    "details": f"活动详情_{random.randint(1, 100)}",
+                }
+                for _ in range(random.randint(1, 5))
             ],
-            **kwargs
+            **kwargs,
         }
 
 
@@ -199,10 +210,10 @@ class SequenceDataFactory(DataFactory):
         """创建序列数据"""
         self._counter += 1
         default_data = {
-            'sequence_id': self._counter,
-            'order': self._counter,
-            'prefix': f"SEQ_{self._counter:04d}",
-            'name': f"序列数据_{self._counter}",
+            "sequence_id": self._counter,
+            "order": self._counter,
+            "prefix": f"SEQ_{self._counter:04d}",
+            "name": f"序列数据_{self._counter}",
         }
 
         default_data.update(kwargs)
@@ -220,7 +231,8 @@ class RandomDataFactory(DataFactory):
     def create_string(cls, length: int = 10) -> str:
         """生成随机字符串"""
         import string
-        return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+
+        return "".join(random.choices(string.ascii_letters + string.digits, k=length))
 
     @classmethod
     def create_integer(cls, min_val: int = 1, max_val: int = 1000) -> int:

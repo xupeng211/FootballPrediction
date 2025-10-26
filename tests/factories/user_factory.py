@@ -27,14 +27,16 @@ class UserFactory:
         import hashlib
         import secrets
 
-        password_hash = hashlib.sha256("test_password".encode(), usedforsecurity=False).hexdigest()
+        password_hash = hashlib.sha256(
+            "test_password".encode(), usedforsecurity=False
+        ).hexdigest()
 
         return cls(
             id=user_id,
             username=f"testuser{user_id}",
             email=f"test{user_id}@example.com",
             password_hash=password_hash,
-            is_active=True
+            is_active=True,
         )
 
     def to_dict(self) -> Dict[str, Any]:
@@ -45,5 +47,5 @@ class UserFactory:
             "email": self.email,
             "password_hash": self.password_hash,
             "is_active": self.is_active,
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }

@@ -35,6 +35,7 @@ def cache_result(*args, **kwargs):
         # 带参数使用: @cache_result(ttl=3600)
         def decorator(func):
             return func
+
         return decorator
 
 

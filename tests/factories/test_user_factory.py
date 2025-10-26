@@ -124,7 +124,6 @@ class BettorUserFactory(UserFactory):
 
 
 @pytest.mark.external_api
-
 class TestUserFactory(UserFactory):
     """常用测试用户集合。"""
 

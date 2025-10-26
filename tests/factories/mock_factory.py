@@ -42,27 +42,27 @@ class MockFactory:
             overrides = {}
 
         mock = Mock()
-        mock.id = overrides.get('id', cls.DEFAULT_USER_ID)
-        mock.username = overrides.get('username', cls.DEFAULT_USERNAME)
-        mock.email = overrides.get('email', cls.DEFAULT_EMAIL)
-        mock.hashed_password = overrides.get('hashed_password', 'hashed_password_123')
-        mock.is_active = overrides.get('is_active', True)
-        mock.is_verified = overrides.get('is_verified', True)
-        mock.is_admin = overrides.get('is_admin', False)
-        mock.is_analyst = overrides.get('is_analyst', False)
-        mock.created_at = overrides.get('created_at', datetime.now(timezone.utc))
-        mock.last_login = overrides.get('last_login', datetime.now(timezone.utc))
+        mock.id = overrides.get("id", cls.DEFAULT_USER_ID)
+        mock.username = overrides.get("username", cls.DEFAULT_USERNAME)
+        mock.email = overrides.get("email", cls.DEFAULT_EMAIL)
+        mock.hashed_password = overrides.get("hashed_password", "hashed_password_123")
+        mock.is_active = overrides.get("is_active", True)
+        mock.is_verified = overrides.get("is_verified", True)
+        mock.is_admin = overrides.get("is_admin", False)
+        mock.is_analyst = overrides.get("is_analyst", False)
+        mock.created_at = overrides.get("created_at", datetime.now(timezone.utc))
+        mock.last_login = overrides.get("last_login", datetime.now(timezone.utc))
 
         # 添加常用的方法
         mock.check_password.return_value = True
         mock.update_last_login = Mock()
         mock.to_dict.return_value = {
-            'id': mock.id,
-            'username': mock.username,
-            'email': mock.email,
-            'is_active': mock.is_active,
-            'is_admin': mock.is_admin,
-            'created_at': mock.created_at.isoformat()
+            "id": mock.id,
+            "username": mock.username,
+            "email": mock.email,
+            "is_active": mock.is_active,
+            "is_admin": mock.is_admin,
+            "created_at": mock.created_at.isoformat(),
         }
 
         return mock
@@ -79,10 +79,10 @@ class MockFactory:
             Mock: 配置好的管理员Mock对象
         """
         admin_overrides = {
-            'username': 'admin',
-            'email': 'admin@example.com',
-            'is_admin': True,
-            'is_active': True
+            "username": "admin",
+            "email": "admin@example.com",
+            "is_admin": True,
+            "is_active": True,
         }
         if overrides:
             admin_overrides.update(overrides)
@@ -104,24 +104,24 @@ class MockFactory:
             overrides = {}
 
         mock = Mock()
-        mock.id = overrides.get('id', cls.DEFAULT_MATCH_ID)
-        mock.home_team = overrides.get('home_team', 'Team A')
-        mock.away_team = overrides.get('away_team', 'Team B')
-        mock.home_score = overrides.get('home_score', None)
-        mock.away_score = overrides.get('away_score', None)
-        mock.status = overrides.get('status', 'upcoming')
-        mock.match_date = overrides.get('match_date', datetime.now(timezone.utc))
-        mock.created_at = overrides.get('created_at', datetime.now(timezone.utc))
+        mock.id = overrides.get("id", cls.DEFAULT_MATCH_ID)
+        mock.home_team = overrides.get("home_team", "Team A")
+        mock.away_team = overrides.get("away_team", "Team B")
+        mock.home_score = overrides.get("home_score", None)
+        mock.away_score = overrides.get("away_score", None)
+        mock.status = overrides.get("status", "upcoming")
+        mock.match_date = overrides.get("match_date", datetime.now(timezone.utc))
+        mock.created_at = overrides.get("created_at", datetime.now(timezone.utc))
 
         # 添加常用的方法
         mock.to_dict.return_value = {
-            'id': mock.id,
-            'home_team': mock.home_team,
-            'away_team': mock.away_team,
-            'home_score': mock.home_score,
-            'away_score': mock.away_score,
-            'status': mock.status,
-            'match_date': mock.match_date.isoformat()
+            "id": mock.id,
+            "home_team": mock.home_team,
+            "away_team": mock.away_team,
+            "home_score": mock.home_score,
+            "away_score": mock.away_score,
+            "status": mock.status,
+            "match_date": mock.match_date.isoformat(),
         }
 
         return mock
@@ -141,25 +141,25 @@ class MockFactory:
             overrides = {}
 
         mock = Mock()
-        mock.id = overrides.get('id', 'prediction_123')
-        mock.match_id = overrides.get('match_id', cls.DEFAULT_MATCH_ID)
-        mock.user_id = overrides.get('user_id', cls.DEFAULT_USER_ID)
-        mock.predicted_home_score = overrides.get('predicted_home_score', 2)
-        mock.predicted_away_score = overrides.get('predicted_away_score', 1)
-        mock.confidence = overrides.get('confidence', 0.85)
-        mock.is_correct = overrides.get('is_correct', None)
-        mock.created_at = overrides.get('created_at', datetime.now(timezone.utc))
+        mock.id = overrides.get("id", "prediction_123")
+        mock.match_id = overrides.get("match_id", cls.DEFAULT_MATCH_ID)
+        mock.user_id = overrides.get("user_id", cls.DEFAULT_USER_ID)
+        mock.predicted_home_score = overrides.get("predicted_home_score", 2)
+        mock.predicted_away_score = overrides.get("predicted_away_score", 1)
+        mock.confidence = overrides.get("confidence", 0.85)
+        mock.is_correct = overrides.get("is_correct", None)
+        mock.created_at = overrides.get("created_at", datetime.now(timezone.utc))
 
         # 添加常用的方法
         mock.to_dict.return_value = {
-            'id': mock.id,
-            'match_id': mock.match_id,
-            'user_id': mock.user_id,
-            'predicted_home_score': mock.predicted_home_score,
-            'predicted_away_score': mock.predicted_away_score,
-            'confidence': mock.confidence,
-            'is_correct': mock.is_correct,
-            'created_at': mock.created_at.isoformat()
+            "id": mock.id,
+            "match_id": mock.match_id,
+            "user_id": mock.user_id,
+            "predicted_home_score": mock.predicted_home_score,
+            "predicted_away_score": mock.predicted_away_score,
+            "confidence": mock.confidence,
+            "is_correct": mock.is_correct,
+            "created_at": mock.created_at.isoformat(),
         }
 
         return mock
@@ -179,19 +179,19 @@ class MockFactory:
             overrides = {}
 
         mock = Mock()
-        mock.id = overrides.get('id', cls.DEFAULT_TEAM_ID)
-        mock.name = overrides.get('name', 'Test Team FC')
-        mock.short_name = overrides.get('short_name', 'TTF')
-        mock.country = overrides.get('country', 'Test Country')
-        mock.league_id = overrides.get('league_id', cls.DEFAULT_LEAGUE_ID)
-        mock.created_at = overrides.get('created_at', datetime.now(timezone.utc))
+        mock.id = overrides.get("id", cls.DEFAULT_TEAM_ID)
+        mock.name = overrides.get("name", "Test Team FC")
+        mock.short_name = overrides.get("short_name", "TTF")
+        mock.country = overrides.get("country", "Test Country")
+        mock.league_id = overrides.get("league_id", cls.DEFAULT_LEAGUE_ID)
+        mock.created_at = overrides.get("created_at", datetime.now(timezone.utc))
 
         mock.to_dict.return_value = {
-            'id': mock.id,
-            'name': mock.name,
-            'short_name': mock.short_name,
-            'country': mock.country,
-            'league_id': mock.league_id
+            "id": mock.id,
+            "name": mock.name,
+            "short_name": mock.short_name,
+            "country": mock.country,
+            "league_id": mock.league_id,
         }
 
         return mock
@@ -211,23 +211,25 @@ class MockFactory:
             overrides = {}
 
         mock = Mock()
-        mock.id = overrides.get('id', cls.DEFAULT_LEAGUE_ID)
-        mock.name = overrides.get('name', 'Test League')
-        mock.country = overrides.get('country', 'Test Country')
-        mock.season = overrides.get('season', '2024-2025')
-        mock.created_at = overrides.get('created_at', datetime.now(timezone.utc))
+        mock.id = overrides.get("id", cls.DEFAULT_LEAGUE_ID)
+        mock.name = overrides.get("name", "Test League")
+        mock.country = overrides.get("country", "Test Country")
+        mock.season = overrides.get("season", "2024-2025")
+        mock.created_at = overrides.get("created_at", datetime.now(timezone.utc))
 
         mock.to_dict.return_value = {
-            'id': mock.id,
-            'name': mock.name,
-            'country': mock.country,
-            'season': mock.season
+            "id": mock.id,
+            "name": mock.name,
+            "country": mock.country,
+            "season": mock.season,
         }
 
         return mock
 
     @classmethod
-    def mock_repository(cls, repository_type: str = "base", overrides: Dict[str, Any] = None) -> Mock:
+    def mock_repository(
+        cls, repository_type: str = "base", overrides: Dict[str, Any] = None
+    ) -> Mock:
         """
         创建Mock仓储对象
 
@@ -273,16 +275,67 @@ class MockFactory:
 
         # 根据仓储类型添加特定方法
         if repository_type == "user":
-            mock.get_by_username = Mock(side_effect=lambda username: next((u for u in mock._data.values() if hasattr(u, 'username') and u.username == username), None))
-            mock.get_by_email = Mock(side_effect=lambda email: next((u for u in mock._data.values() if hasattr(u, 'email') and u.email == email), None))
-            mock.verify_password = AsyncMock(return_value=overrides.get('password_valid', True))
+            mock.get_by_username = Mock(
+                side_effect=lambda username: next(
+                    (
+                        u
+                        for u in mock._data.values()
+                        if hasattr(u, "username") and u.username == username
+                    ),
+                    None,
+                )
+            )
+            mock.get_by_email = Mock(
+                side_effect=lambda email: next(
+                    (
+                        u
+                        for u in mock._data.values()
+                        if hasattr(u, "email") and u.email == email
+                    ),
+                    None,
+                )
+            )
+            mock.verify_password = AsyncMock(
+                return_value=overrides.get("password_valid", True)
+            )
         elif repository_type == "match":
-            mock.get_by_status = Mock(side_effect=lambda status: [m for m in mock._data.values() if hasattr(m, 'status') and m.status == status])
-            mock.get_by_date_range = Mock(side_effect=lambda start, end: [m for m in mock._data.values() if hasattr(m, 'match_date') and start <= m.match_date <= end])
-            mock.get_by_team = Mock(side_effect=lambda team: [m for m in mock._data.values() if hasattr(m, 'home_team') and (m.home_team == team or m.away_team == team)])
+            mock.get_by_status = Mock(
+                side_effect=lambda status: [
+                    m
+                    for m in mock._data.values()
+                    if hasattr(m, "status") and m.status == status
+                ]
+            )
+            mock.get_by_date_range = Mock(
+                side_effect=lambda start, end: [
+                    m
+                    for m in mock._data.values()
+                    if hasattr(m, "match_date") and start <= m.match_date <= end
+                ]
+            )
+            mock.get_by_team = Mock(
+                side_effect=lambda team: [
+                    m
+                    for m in mock._data.values()
+                    if hasattr(m, "home_team")
+                    and (m.home_team == team or m.away_team == team)
+                ]
+            )
         elif repository_type == "prediction":
-            mock.get_by_user = Mock(side_effect=lambda user_id: [p for p in mock._data.values() if hasattr(p, 'user_id') and p.user_id == user_id])
-            mock.get_by_match = Mock(side_effect=lambda match_id: [p for p in mock._data.values() if hasattr(p, 'match_id') and p.match_id == match_id])
+            mock.get_by_user = Mock(
+                side_effect=lambda user_id: [
+                    p
+                    for p in mock._data.values()
+                    if hasattr(p, "user_id") and p.user_id == user_id
+                ]
+            )
+            mock.get_by_match = Mock(
+                side_effect=lambda match_id: [
+                    p
+                    for p in mock._data.values()
+                    if hasattr(p, "match_id") and p.match_id == match_id
+                ]
+            )
 
         return mock
 
@@ -337,11 +390,13 @@ class MockFactory:
             overrides = {}
 
         mock = Mock()
-        mock._data = overrides.get('data', {})
+        mock._data = overrides.get("data", {})
 
         # 异步方法
         mock.get = AsyncMock(side_effect=lambda key: mock._redis_get(key))
-        mock.set = AsyncMock(side_effect=lambda key, value, ex=None: mock._redis_set(key, value))
+        mock.set = AsyncMock(
+            side_effect=lambda key, value, ex=None: mock._redis_set(key, value)
+        )
         mock.delete = AsyncMock(side_effect=lambda key: mock._data.pop(key, None))
         mock.exists = AsyncMock(side_effect=lambda key: key in mock._data)
         mock.expire = AsyncMock(return_value=True)
@@ -352,9 +407,12 @@ class MockFactory:
             if value is None:
                 return None
             # 如果是JSON字符串，尝试解析
-            if isinstance(value, str) and (value.startswith('{') or value.startswith('[')):
+            if isinstance(value, str) and (
+                value.startswith("{") or value.startswith("[")
+            ):
                 try:
                     import json
+
                     return json.loads(value)
                 except:
                     return value
@@ -363,6 +421,7 @@ class MockFactory:
         def _redis_set(key, value):
             if isinstance(value, (dict, list)):
                 import json
+
                 mock._data[key] = json.dumps(value)
             else:
                 mock._data[key] = str(value)
@@ -394,21 +453,25 @@ class MockFactory:
 
         # 响应对象模拟
         mock_response = Mock()
-        mock_response.status_code = overrides.get('status_code', 200)
-        mock_response.json.return_value = overrides.get('response_data', DataFactory.api_response_data())
-        mock_response.text = overrides.get('response_text', '{"success": true}')
-        mock_response.headers = overrides.get('response_headers', {})
+        mock_response.status_code = overrides.get("status_code", 200)
+        mock_response.json.return_value = overrides.get(
+            "response_data", DataFactory.api_response_data()
+        )
+        mock_response.text = overrides.get("response_text", '{"success": true}')
+        mock_response.headers = overrides.get("response_headers", {})
 
         # HTTP方法模拟
         mock.get = AsyncMock(return_value=mock_response)
         mock.post = AsyncMock(return_value=mock_response)
         mock.put = AsyncMock(return_value=mock_response)
-        mock.delete = AsyncMock(return_value=Mock(status_code=204, json=Mock(return_value=None), text=""))
+        mock.delete = AsyncMock(
+            return_value=Mock(status_code=204, json=Mock(return_value=None), text="")
+        )
 
         # 配置
-        mock.base_url = overrides.get('base_url', "https://api.example.com")
-        mock.headers = overrides.get('headers', {"Authorization": "Bearer token123"})
-        mock.timeout = overrides.get('timeout', 30)
+        mock.base_url = overrides.get("base_url", "https://api.example.com")
+        mock.headers = overrides.get("headers", {"Authorization": "Bearer token123"})
+        mock.timeout = overrides.get("timeout", 30)
 
         return mock
 
@@ -427,14 +490,16 @@ class MockFactory:
             overrides = {}
 
         mock = Mock()
-        mock.cache = overrides.get('cache_data', {})
+        mock.cache = overrides.get("cache_data", {})
 
         mock.get = AsyncMock(side_effect=lambda key: mock.cache.get(key))
-        mock.set = AsyncMock(side_effect=lambda key, value, ttl=None: mock.cache.update({key: value}))
+        mock.set = AsyncMock(
+            side_effect=lambda key, value, ttl=None: mock.cache.update({key: value})
+        )
         mock.delete = AsyncMock(side_effect=lambda key: mock.cache.pop(key, None))
         mock.clear = AsyncMock(side_effect=lambda: mock.cache.clear())
         mock.exists = AsyncMock(side_effect=lambda key: key in mock.cache)
-        mock.get_ttl = AsyncMock(return_value=overrides.get('ttl', 3600))
+        mock.get_ttl = AsyncMock(return_value=overrides.get("ttl", 3600))
 
         return mock
 
@@ -484,16 +549,30 @@ class MockFactory:
             overrides = {}
 
         mock = Mock()
-        mock.handlers = overrides.get('handlers', {})
-        mock.events = overrides.get('events', [])
+        mock.handlers = overrides.get("handlers", {})
+        mock.events = overrides.get("events", [])
 
-        mock.subscribe = Mock(side_effect=lambda event, handler: mock.handlers.setdefault(event, []).append(handler))
-        mock.unsubscribe = Mock(side_effect=lambda event, handler: mock.handlers.get(event, []).remove(handler) if event in mock.handlers else None)
-        mock.publish = AsyncMock(side_effect=lambda event, data: mock._publish(event, data))
+        mock.subscribe = Mock(
+            side_effect=lambda event, handler: mock.handlers.setdefault(
+                event, []
+            ).append(handler)
+        )
+        mock.unsubscribe = Mock(
+            side_effect=lambda event, handler: mock.handlers.get(event, []).remove(
+                handler
+            )
+            if event in mock.handlers
+            else None
+        )
+        mock.publish = AsyncMock(
+            side_effect=lambda event, data: mock._publish(event, data)
+        )
         mock.clear = Mock(side_effect=lambda: mock.handlers.clear())
 
         def _publish(event, data):
-            mock.events.append({'event': event, 'data': data, 'timestamp': datetime.now(timezone.utc)})
+            mock.events.append(
+                {"event": event, "data": data, "timestamp": datetime.now(timezone.utc)}
+            )
             if event in mock.handlers:
                 for handler in mock.handlers[event]:
                     if asyncio.iscoroutinefunction(handler):
@@ -520,10 +599,14 @@ class MockFactory:
             overrides = {}
 
         mock = Mock()
-        mock.jobs = overrides.get('jobs', [])
-        mock.running = overrides.get('running', False)
+        mock.jobs = overrides.get("jobs", [])
+        mock.running = overrides.get("running", False)
 
-        mock.add_job = Mock(side_effect=lambda func, trigger, **kwargs: mock._add_job(func, trigger, kwargs))
+        mock.add_job = Mock(
+            side_effect=lambda func, trigger, **kwargs: mock._add_job(
+                func, trigger, kwargs
+            )
+        )
         mock.remove_job = Mock(side_effect=lambda job_id: mock._remove_job(job_id))
         mock.start = AsyncMock(return_value=True)
         mock.stop = AsyncMock(return_value=True)
@@ -564,32 +647,41 @@ class MockFactory:
             overrides = {}
 
         mock = Mock()
-        mock.sent_emails = overrides.get('sent_emails', [])
+        mock.sent_emails = overrides.get("sent_emails", [])
 
-        mock.send_email = AsyncMock(side_effect=lambda to, subject, body, **kwargs: mock._record_email(to, subject, body, kwargs))
-        mock.send_template = AsyncMock(side_effect=lambda template, to, context, **kwargs: mock._record_template_email(template, to, context, kwargs))
+        mock.send_email = AsyncMock(
+            side_effect=lambda to, subject, body, **kwargs: mock._record_email(
+                to, subject, body, kwargs
+            )
+        )
+        mock.send_template = AsyncMock(
+            side_effect=lambda template,
+            to,
+            context,
+            **kwargs: mock._record_template_email(template, to, context, kwargs)
+        )
         mock.send_bulk = AsyncMock(return_value=True)
         mock.get_sent_emails = Mock(return_value=mock.sent_emails)
         mock.clear_sent = Mock(side_effect=lambda: mock.sent_emails.clear())
 
         def _record_email(to, subject, body, kwargs):
             email = {
-                'to': to,
-                'subject': subject,
-                'body': body,
-                'kwargs': kwargs,
-                'timestamp': datetime.now(timezone.utc)
+                "to": to,
+                "subject": subject,
+                "body": body,
+                "kwargs": kwargs,
+                "timestamp": datetime.now(timezone.utc),
             }
             mock.sent_emails.append(email)
             return True
 
         def _record_template_email(template, to, context, kwargs):
             email = {
-                'template': template,
-                'to': to,
-                'context': context,
-                'kwargs': kwargs,
-                'timestamp': datetime.now(timezone.utc)
+                "template": template,
+                "to": to,
+                "context": context,
+                "kwargs": kwargs,
+                "timestamp": datetime.now(timezone.utc),
             }
             mock.sent_emails.append(email)
             return True
@@ -615,10 +707,10 @@ class MockFactory:
         mocks = []
         for i in range(count):
             item_overrides = overrides.copy()
-            if 'id' in overrides and isinstance(overrides['id'], str):
-                item_overrides['id'] = f"{overrides['id']}_{i+1}"
-            elif 'id' in overrides and isinstance(overrides['id'], int):
-                item_overrides['id'] = overrides['id'] + i
+            if "id" in overrides and isinstance(overrides["id"], str):
+                item_overrides["id"] = f"{overrides['id']}_{i + 1}"
+            elif "id" in overrides and isinstance(overrides["id"], int):
+                item_overrides["id"] = overrides["id"] + i
 
             mocks.append(factory_method(item_overrides))
 
@@ -640,33 +732,41 @@ class MockFactory:
         # 默认包含所有组件
         include_all = not components
 
-        if include_all or 'users' in components:
-            context['users'] = cls.create_batch(cls.mock_user, components.get('user_count', 3))
-            context['admin_user'] = cls.mock_admin_user()
+        if include_all or "users" in components:
+            context["users"] = cls.create_batch(
+                cls.mock_user, components.get("user_count", 3)
+            )
+            context["admin_user"] = cls.mock_admin_user()
 
-        if include_all or 'matches' in components:
-            context['matches'] = cls.create_batch(cls.mock_match, components.get('match_count', 5))
+        if include_all or "matches" in components:
+            context["matches"] = cls.create_batch(
+                cls.mock_match, components.get("match_count", 5)
+            )
 
-        if include_all or 'predictions' in components:
-            context['predictions'] = cls.create_batch(cls.mock_prediction, components.get('prediction_count', 10))
+        if include_all or "predictions" in components:
+            context["predictions"] = cls.create_batch(
+                cls.mock_prediction, components.get("prediction_count", 10)
+            )
 
-        if include_all or 'teams' in components:
-            context['teams'] = cls.create_batch(cls.mock_team, components.get('team_count', 8))
+        if include_all or "teams" in components:
+            context["teams"] = cls.create_batch(
+                cls.mock_team, components.get("team_count", 8)
+            )
 
-        if include_all or 'repositories' in components:
-            context['user_repo'] = cls.mock_repository('user')
-            context['match_repo'] = cls.mock_repository('match')
-            context['prediction_repo'] = cls.mock_repository('prediction')
+        if include_all or "repositories" in components:
+            context["user_repo"] = cls.mock_repository("user")
+            context["match_repo"] = cls.mock_repository("match")
+            context["prediction_repo"] = cls.mock_repository("prediction")
 
-        if include_all or 'services' in components:
-            context['db'] = cls.mock_database_connection()
-            context['redis'] = cls.mock_redis_client()
-            context['cache'] = cls.mock_cache_service()
-            context['api_client'] = cls.mock_api_client()
-            context['logger'] = cls.mock_logger()
-            context['event_bus'] = cls.mock_event_bus()
-            context['scheduler'] = cls.mock_scheduler()
-            context['email_service'] = cls.mock_email_service()
+        if include_all or "services" in components:
+            context["db"] = cls.mock_database_connection()
+            context["redis"] = cls.mock_redis_client()
+            context["cache"] = cls.mock_cache_service()
+            context["api_client"] = cls.mock_api_client()
+            context["logger"] = cls.mock_logger()
+            context["event_bus"] = cls.mock_event_bus()
+            context["scheduler"] = cls.mock_scheduler()
+            context["email_service"] = cls.mock_email_service()
 
         return context
 
