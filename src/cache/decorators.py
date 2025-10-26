@@ -93,8 +93,10 @@ def cache_invalidate(pattern_func=None, pattern=None, key_generator=None, **kwar
 
 def cache_user_predictions(ttl_seconds=None, **kwargs):
     """用户预测缓存装饰器 - 占位符实现"""
+
     def decorator(func):
         return func
+
     return decorator
 
 
