@@ -111,6 +111,8 @@ def cache_match_data(ttl_seconds=None, **kwargs):
 
 def cache_team_stats(ttl_seconds=None, **kwargs):
     """队伍统计缓存装饰器 - 占位符实现"""
+
     def decorator(func):
         return func
+
     return decorator
