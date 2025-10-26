@@ -28,4 +28,5 @@ from sqlalchemy import Text
 
 
 class DataQualityLog(BaseModel):
+    __tablename__ = "data_quality_logs"
     __table_args__ = {"extend_existing": True}

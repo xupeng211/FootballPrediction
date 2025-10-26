@@ -14,16 +14,10 @@ import asyncio
 
 
 # 测试导入
+COLLECTORS_AVAILABLE = True
 try:
-    pass
-except Exception:
-    pass
-
-    COLLECTORS_AVAILABLE = True
-try:
-    pass
+    from src.collectors.fixtures_collector import FixturesCollector
 except ImportError as e:
-    print(f"Import error: {e}")
     print(f"Import error: {e}")
     COLLECTORS_AVAILABLE = False
 
