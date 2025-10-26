@@ -45,7 +45,7 @@ jobs:
       - name: 🔧 语法检查
         if: matrix.check-type == 'syntax'
         run: |
-          python -m py_compile src/**/*.py
+          find src/ -name "*.py" -exec python -m py_compile {} \;
           echo "✅ 语法检查通过"
 
       - name: 🔍 Ruff代码检查
