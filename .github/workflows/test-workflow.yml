@@ -1,0 +1,18 @@
+name: 测试工作流
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    name: 简单测试
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: 测试命令
+        run: |
+          echo "测试工作流运行成功"
+          echo "时间: $(date)"
