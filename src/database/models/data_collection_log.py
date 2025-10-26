@@ -40,6 +40,7 @@ class CollectionType(Enum):
     LIVE_SCORES = "live_scores"
 
 class DataCollectionLog(BaseModel):
+    __table_args__ = {'extend_existing': True}
     """
     数据采集日志模型
 
