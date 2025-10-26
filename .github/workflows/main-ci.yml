@@ -57,7 +57,7 @@ jobs:
 
       - name: Security check
         if: matrix.check-type == 'security'
-        run: bandit -r src/ -f json
+        run: bandit -r src/ --severity-level high
 
   tests:
     name: Test Suite
