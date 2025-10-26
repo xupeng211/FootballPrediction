@@ -1,8 +1,10 @@
 from typing import Any, Dict, Optional
-from datetime import datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 from enum import Enum
 from sqlalchemy import Boolean, Column, DateTime, Index, Integer, String, Text, func
+from sqlalchemy.sql import func
+from ..base import BaseModel
+from ..types import SQLiteCompatibleJSONB
 
 """
 权限审计日志模型
@@ -12,20 +14,6 @@ from sqlalchemy import Boolean, Column, DateTime, Index, Integer, String, Text, 
 
 基于 DATA_DESIGN.md 中的权限控制设计。
 """
-
-from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
-from sqlalchemy import Boolean, Column, DateTime, Index, Integer, String, Text
-from sqlalchemy.sql import func
-from ..base import BaseModel
-from ..types import SQLiteCompatibleJSONB
-from sqlalchemy import Column
-from sqlalchemy import DateTime
-from sqlalchemy import Enum
-from sqlalchemy import Index
-from sqlalchemy import Integer
-from sqlalchemy import String
-from sqlalchemy import Text
 
 class AuditAction(str, Enum):
     """审计操作类型枚举"""
@@ -62,3 +50,77 @@ class AuditSeverity(str, Enum):
 class AuditLog(BaseModel):
     __table_args__ = {'extend_existing': True}
     __tablename__ = "audit_logs"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, nullable=True, index=True)
+    username = Column(String(255), nullable=True, index=True)
+    action = Column(String(50), nullable=False, index=True)
+    resource_type = Column(String(100), nullable=True, index=True)
+    resource_id = Column(String(100), nullable=True, index=True)
+    severity = Column(String(20), nullable=False, default="INFO", index=True)
+    ip_address = Column(String(45), nullable=True)
+    user_agent = Column(Text, nullable=True)
+    details = Column(Text, nullable=True)
+    audit_metadata = Column(SQLiteCompatibleJSONB, nullable=True)
+    timestamp = Column(DateTime, nullable=False, default=func.now(), index=True)
+    session_id = Column(String(255), nullable=True, index=True)
+
+    # 索引定义
+    __table_args__ = (
+        Index('idx_audit_user_action', 'user_id', 'action'),
+        Index('idx_audit_timestamp_severity', 'timestamp', 'severity'),
+        Index('idx_audit_resource', 'resource_type', 'resource_id'),
+        {'extend_existing': True}
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """转换为字典格式"""
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'username': self.username,
+            'action': self.action,
+            'resource_type': self.resource_type,
+            'resource_id': self.resource_id,
+            'severity': self.severity,
+            'ip_address': self.ip_address,
+            'user_agent': self.user_agent,
+            'details': self.details,
+            'audit_metadata': self.audit_metadata,
+            'timestamp': self.timestamp.isoformat() if self.timestamp else None,
+            'session_id': self.session_id
+        }
+
+class AuditLogSummary(BaseModel):
+    """审计日志汇总模型"""
+
+    __table_args__ = {'extend_existing': True}
+    __tablename__ = "audit_log_summaries"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    date = Column(DateTime, nullable=False, index=True)
+    total_actions = Column(Integer, nullable=False, default=0)
+    actions_by_type = Column(SQLiteCompatibleJSONB, nullable=True)
+    actions_by_severity = Column(SQLiteCompatibleJSONB, nullable=True)
+    top_users = Column(SQLiteCompatibleJSONB, nullable=True)
+    top_resources = Column(SQLiteCompatibleJSONB, nullable=True)
+    created_at = Column(DateTime, nullable=False, default=func.now())
+
+    # 索引定义
+    __table_args__ = (
+        Index('idx_summary_date', 'date'),
+        {'extend_existing': True}
+    )
+
+    def to_dict(self) -> Dict[str, Any]:
+        """转换为字典格式"""
+        return {
+            'id': self.id,
+            'date': self.date.isoformat() if self.date else None,
+            'total_actions': self.total_actions,
+            'actions_by_type': self.actions_by_type,
+            'actions_by_severity': self.actions_by_severity,
+            'top_users': self.top_users,
+            'top_resources': self.top_resources,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }

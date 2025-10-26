@@ -31,3 +31,4 @@ structlog==24.4.0
 # 任务队列
 celery==5.4.0
 kombu==5.4.2
+requests==2.31.0

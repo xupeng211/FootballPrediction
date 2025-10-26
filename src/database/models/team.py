@@ -21,3 +21,4 @@ class TeamForm(Enum):
 
 class Team(BaseModel):
     __table_args__ = {'extend_existing': True}
+    __tablename__ = "teams"
