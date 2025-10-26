@@ -1,0 +1,99 @@
+# ============================================================================
+# 🛠️ 共享工作流模板
+# ============================================================================
+# 可复用的工作流组件，减少重复配置
+# 版本: v1.0 | 最后更新: 2025-10-26
+
+name: Shared Setup Template
+
+on:
+  workflow_call:
+    inputs:
+      job-name:
+        required: false
+        type: string
+        default: 'setup'
+      python-version:
+        required: false
+        type: string
+        default: '3.11'
+      install-deps:
+        required: false
+        type: boolean
+        default: true
+      cache-type:
+        required: false
+        type: string
+        default: 'all'  # all, pip, mypy, coverage, none
+
+jobs:
+  setup:
+    name: ${{ inputs.job-name || 'Environment Setup' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 📥 Checkout代码
+        uses: actions/checkout@v4
+
+      - name: 🐍 设置Python环境
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ inputs.python-version || '3.11' }}
+          cache: ${{ inputs.cache-type == 'all' || inputs.cache-type == 'pip' && 'pip' || '' }}
+          cache-dependency-path: |
+            requirements/requirements.lock
+            pyproject.toml
+
+      - name: 💾 缓存MyPy结果
+        if: inputs.cache-type == 'all' || inputs.cache-type == 'mypy'
+        uses: actions/cache@v3
+        with:
+          path: .mypy_cache
+          key: ${{ runner.os }}-mypy-${{ hashFiles('**/mypy_*.ini', '**/pyproject.toml', '**/src/**') }}
+          restore-keys: |
+            ${{ runner.os }}-mypy-
+            ${{ runner.os }}-mypy-${{ hashFiles('**/mypy_*.ini') }}
+
+      - name: 💾 缓存覆盖率数据
+        if: inputs.cache-type == 'all' || inputs.cache-type == 'coverage'
+        uses: actions/cache@v3
+        with:
+          path: .coverage_data
+          key: ${{ runner.os }}-coverage-${{ hashFiles('**/src/**', '**/tests/**') }}
+
+      - name: 📦 安装依赖
+        if: inputs.install-deps
+        run: |
+          echo "🐍 安装Python依赖..."
+          if [ -f "requirements/requirements.lock" ]; then
+            pip install --upgrade pip
+            pip install -r requirements/requirements.lock
+          elif [ -f "requirements.txt" ]; then
+            pip install --upgrade pip
+            pip install -r requirements.txt
+          else
+            pip install --upgrade pip
+            pip install -e .
+          fi
+
+          # 安装开发工具
+          pip install ruff mypy bandit pip-audit pytest pytest-cov pytest-xdist
+
+          echo "✅ 依赖安装完成"
+
+      - name: 🔧 验证环境
+        run: |
+          echo "🐍 Python版本: $(python --version)"
+          echo "📦 pip版本: $(pip --version)"
+          echo "🛠️ 已安装的关键工具:"
+
+          for tool in ruff mypy bandit pip-audit pytest; do
+            if command -v $tool &> /dev/null; then
+              echo "  ✅ $tool: $($tool --version 2>/dev/null | head -1 || echo 'available')"
+            else
+              echo "  ❌ $tool: 未安装"
+            fi
+          done
+
+          echo "🎯 环境验证完成"

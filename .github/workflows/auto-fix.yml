@@ -1,0 +1,410 @@
+name: 🤖 AI自动修复机器人
+
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened, synchronize]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: '修复目标'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - syntax
+          - imports
+          - style
+          - types
+          - security
+          - tests
+      auto_commit:
+        description: '自动提交修复'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  auto-fix-issues:
+    name: 🔧 自动修复Issue
+    if: |
+      github.event_name == 'issues' &&
+      (contains(github.event.issue.labels.*.name, 'auto-fixable') ||
+       contains(github.event.issue.title, '[AI]'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: 📥 Checkout代码
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
+
+      - name: 🐍 设置Python环境
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements/requirements.lock
+            pyproject.toml
+
+      - name: 📦 安装依赖
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements/requirements.lock
+          pip install ruff mypy bandit pip-audit pytest
+
+      - name: 🔧 AI自动修复
+        env:
+          TARGET: 'all'
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          echo "🤖 启动AI自动修复机器人..."
+          echo "🎯 Issue: $ISSUE_NUMBER"
+
+          # 运行自动修复
+          python3 scripts/ai_auto_fixer.py --target "$TARGET" --confidence 0.6
+
+          # 检查修复结果
+          if [ -f "ai_fix_report.json" ]; then
+            echo "📊 修复报告生成成功"
+            python3 -c "
+import json
+
+with open('ai_fix_report.json', 'r') as f:
+    report = json.load(f)
+
+success_count = report['successful_fixes']
+total_count = report['total_fixes_attempted']
+files_count = len(report['files_modified'])
+
+print(f'修复统计: {success_count}/{total_count} 成功')
+print(f'修改文件: {files_count} 个')
+
+# 生成修复评论
+if success_count > 0:
+    comment = f'''## 🔧 AI自动修复完成
+
+### 📊 修复统计
+- **成功修复**: {success_count}/{total_count} 类问题
+- **修改文件**: {files_count} 个
+- **修复置信度**: 高
+
+### 📁 修改的文件
+'''
+
+    for file_path in report['files_modified']:
+        comment += f'- `{file_path}`\n'
+
+    comment += '''
+### 🔍 下一步建议
+1. 检查自动修复的效果
+2. 运行 `make test-quick` 验证功能
+3. 如有问题，请查看详细日志
+
+### 📋 修复详情
+'''
+
+    for fix_detail in report['fix_details']:
+        if fix_detail['success'] and fix_detail['issues_fixed']:
+            comment += f'''
+#### ✅ {fix_detail['type']}
+'''
+            for issue in fix_detail['issues_fixed']:
+                comment += f"- {issue}\n"
+
+    if any(detail['requires_manual_review'] for detail in report['fix_details']):
+        comment += '''
+### ⚠️ 需要手动审查
+部分修复可能需要手动审查和调整。建议检查修改后的代码。
+'''
+
+    comment += '''
+---
+*🤖 此修复由AI自动修复机器人完成*
+'''
+
+    with open('fix_comment.md', 'w') as f:
+        f.write(comment)
+
+    else:
+        print('❌ 未发现可自动修复的问题')
+"
+
+            # 发布修复评论
+            if [ -f "fix_comment.md" ]; then
+              gh issue comment "$ISSUE_NUMBER" --body "$(cat fix_comment.md)"
+            fi
+          else
+            echo "❌ 修复报告生成失败"
+          fi
+
+      - name: 📤 创建修复PR (如果需要)
+        if: github.event.inputs.auto_commit == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "📤 创建自动修复PR..."
+
+            # 配置Git用户信息
+            git config --global user.name "AI Auto Fixer"
+            git config --global user.email "ai-fixer@actions.users.noreply.github.com"
+
+            # 创建新分支
+            BRANCH_NAME="auto-fix-issue-$ISSUE_NUMBER"
+            git checkout -b "$BRANCH_NAME"
+
+            # 提交修复
+            git add .
+            git commit -m "🤖 AI自动修复 Issue #$ISSUE_NUMBER
+
+* 由AI自动修复机器人完成
+* 修复时间: $(date)
+* 相关Issue: #$ISSUE_NUMBER"
+
+            # 推送分支
+            git push origin "$BRANCH_NAME"
+
+            # 创建PR
+            gh pr create \
+              --title "🤖 AI自动修复: Issue #$ISSUE_NUMBER" \
+              --body "## 🔧 AI自动修复PR
+
+此PR由AI自动修复机器人基于Issue #$ISSUE_NUMBER生成。
+
+### 📋 修复内容
+- 自动检测并修复代码问题
+- 使用AI算法分析和修复
+- 修复时间: $(date)
+
+### ✅ 验证步骤
+1. 检查修复效果
+2. 运行测试验证
+3. 审查代码变更
+
+---
+*🤖 由AI自动修复机器人自动生成*" \
+              --base main \
+              --label "auto-fix" \
+              --label "ai-programming" || echo "PR创建可能失败"
+
+            echo "✅ 修复PR已创建"
+          else
+            echo "ℹ️ 没有文件变更，无需创建PR"
+          fi
+
+  auto-fix-pr:
+    name: 🔧 PR自动修复
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: 📥 Checkout代码
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: 🐍 设置Python环境
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements/requirements.lock
+            pyproject.toml
+
+      - name: 📦 安装依赖
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements/requirements.lock
+          pip install ruff mypy bandit pip-audit pytest
+
+      - name: 🔧 AI自动修复PR
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          echo "🤖 分析PR: $PR_NUMBER - $PR_TITLE"
+
+          # 运行智能修复
+          python3 scripts/smart_quality_fixer.py --auto-fix || echo "智能修复完成"
+
+          # 运行AI自动修复
+          python3 scripts/ai_auto_fixer.py --target all --confidence 0.6 || echo "AI修复完成"
+
+          # 检查修复结果
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "🔧 发现可修复的问题，尝试自动修复..."
+
+            # 配置Git用户信息
+            git config --global user.name "AI Auto Fixer"
+            git config --global user.email "ai-fixer@actions.users.noreply.github.com"
+
+            # 提交修复
+            git add .
+            git commit -m "🤖 AI自动修复 PR代码质量问题
+
+* 由AI自动修复机器人完成
+* 修复时间: $(date)
+* 相关PR: #$PR_NUMBER"
+
+            # 推送到同一分支
+            git push
+
+            echo "✅ 自动修复已提交到PR分支"
+          else
+            echo "✅ 未发现可自动修复的问题"
+          fi
+
+      - name: 📊 生成修复报告
+        run: |
+          if [ -f "ai_fix_report.json" ]; then
+            echo "📊 生成AI修复报告..."
+            python3 -c "
+import json
+
+with open('ai_fix_report.json', 'r') as f:
+    report = json.load(f)
+
+success_count = report['successful_fixes']
+total_count = report['total_fixes_attempted']
+
+comment = f'''## 🤖 PR自动修复报告
+
+### 📊 修复统计
+- **修复尝试**: {total_count} 类问题
+- **成功修复**: {success_count} 类问题
+- **成功率**: {(success_count/total_count*100):.1f}%
+
+### 📁 修改文件
+{len(report['files_modified'])} 个文件被修改
+
+### 🔍 修复详情
+'''
+
+for detail in report['fix_details']:
+    status = '✅' if detail['success'] else '❌'
+    comment += f'{status} **{detail[\"type\"]}**: {len(detail[\"issues_fixed\"])} 个问题\n'
+
+if success_count > 0:
+    comment += '''
+### 💡 建议
+请检查修复效果，确保功能正常。如有问题，请手动调整。
+'''
+
+comment += '''
+---
+*🤖 此报告由AI自动修复机器人生成*
+'''
+
+with open('pr_fix_comment.md', 'w') as f:
+    f.write(comment)
+"
+
+            # 发布评论到PR
+            gh pr comment "$PR_NUMBER" --body "$(cat pr_fix_comment.md)"
+          fi
+
+  manual-auto-fix:
+    name: 🔧 手动触发自动修复
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: 📥 Checkout代码
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
+
+      - name: 🐍 设置Python环境
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: |
+            requirements/requirements.lock
+            pyproject.toml
+
+      - name: 📦 安装依赖
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements/requirements.lock
+          pip install ruff mypy bandit pip-audit pytest
+
+      - name: 🔧 执行手动自动修复
+        env:
+          TARGET: ${{ github.event.inputs.target || 'all' }}
+          AUTO_COMMIT: ${{ github.event.inputs.auto_commit || 'false' }}
+        run: |
+          echo "🤖 执行手动自动修复..."
+          echo "🎯 目标: $TARGET"
+          echo "📤 自动提交: $AUTO_COMMIT"
+
+          # 运行AI自动修复
+          python3 scripts/ai_auto_fixer.py --target "$TARGET" --confidence 0.6
+
+          # 显示修复结果
+          if [ -f "ai_fix_report.json" ]; then
+            python3 -c "
+import json
+
+with open('ai_fix_report.json', 'r') as f:
+    report = json.load(f)
+
+print('📊 修复统计:')
+print(f'  成功修复: {report[\"successful_fixes\"]}/{report[\"total_fixes_attempted\"]}')
+print(f'  修改文件: {len(report[\"files_modified\"])}')
+
+if report['files_modified']:
+    print('📁 修改的文件:')
+    for file_path in report['files_modified']:
+        print(f'  - {file_path}')
+"
+
+            # 如果设置了自动提交，创建PR
+            if [ "$AUTO_COMMIT" = "true" ] && [ -n "$(git status --porcelain)" ]; then
+              echo "📤 创建自动修复PR..."
+
+              git config --global user.name "AI Auto Fixer"
+              git config --global user.email "ai-fixer@actions.users.noreply.github.com"
+
+              BRANCH_NAME="manual-auto-fix-$(date +%Y%m%d-%H%M%S)"
+              git checkout -b "$BRANCH_NAME"
+
+              git add .
+              git commit -m "🤖 手动触发AI自动修复
+
+* 由AI自动修复机器人完成
+* 修复时间: $(date)
+* 目标类型: $TARGET"
+
+              git push origin "$BRANCH_NAME"
+
+              gh pr create \
+                --title "🤖 手动触发AI自动修复" \
+                --body="## 🔧 手动触发AI自动修复PR
+
+此PR由手动触发的AI自动修复机器人生成。
+
+**修复目标**: $TARGET
+**修复时间**: $(date)
+
+---
+*🤖 由AI自动修复机器人自动生成*" \
+                --base main \
+                --label "auto-fix" \
+                --label "ai-programming"
+
+              echo "✅ 自动修复PR已创建"
+            fi
+          else
+            echo "ℹ️ 没有文件变更或报告生成失败"
+          fi

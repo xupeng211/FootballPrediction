@@ -344,7 +344,7 @@ class TestUtilities:
         """断言字典包含指定键值对"""
         for key, value in expected.items():
             assert key in actual, f"Key '{key}' not found in dictionary"
-            assert actual[key]       == value, f"Expected {key}={value}, got {actual[key]}"
+            assert actual[key]        == value, f"Expected {key}={value}, got {actual[key]}"
 
     @staticmethod
     def assert_list_contains(actual: list, expected_items: list):
