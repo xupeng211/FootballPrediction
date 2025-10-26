@@ -36,7 +36,7 @@ class Match:
             "match_date": self.match_date.isoformat() if self.match_date else None,
             "league": self.league,
             "status": self.status,
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
 
     @classmethod
@@ -45,6 +45,7 @@ class Match:
         match_date = data.get("match_date")
         if isinstance(match_date, str):
             from datetime import datetime
+
             match_date = datetime.fromisoformat(match_date.replace("Z", "+00:00"))
 
         return cls(
@@ -56,5 +57,5 @@ class Match:
             match_date=match_date,
             league=data.get("league", ""),
             status=data.get("status", "scheduled"),
-            metadata=data.get("metadata", {})
+            metadata=data.get("metadata", {}),
         )
