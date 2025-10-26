@@ -1,0 +1,177 @@
+# ============================================================================
+# 🚀 共享CI/CD配置标准
+# ============================================================================
+# 统一的项目CI/CD配置，减少重复，提高一致性
+# 版本: v1.0 | 最后更新: 2025-10-26
+
+# 环境变量配置
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'  # 文档构建需要
+  PIP_CACHE_DIR: '~/.cache/pip'
+  MYPY_CACHE_DIR: '.mypy_cache'
+  COVERAGE_CACHE_DIR: '.coverage_data'
+  POETRY_CACHE_DIR: '~/.cache/pypoetry'
+
+# 缓存配置模板
+cache_config: &cache_config
+  pip:
+    key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.lock', '**/pyproject.toml') }}
+    paths:
+      - ~/.cache/pip
+      - ~/.cache/pypoetry
+      - ~/Library/Caches/pip  # macOS
+
+  mypy:
+    key: ${{ runner.os }}-mypy-${{ hashFiles('**/mypy_*.ini', '**/pyproject.toml', '**/src/**') }}
+    paths:
+      - .mypy_cache
+      - ~/.cache/mypy
+
+  coverage:
+    key: ${{ runner.os }}-coverage-${{ hashFiles('**/src/**', '**/tests/**') }}
+    paths:
+      - .coverage_data
+
+  node:
+    key: ${{ runner.os }}-node-${{ hashFiles('**/package.json', '**/package-lock.json') }}
+    paths:
+      - ~/.npm
+      - ~/.cache/npm
+
+# 超时配置（分钟）
+timeouts: &timeouts
+  quality: 15
+  test-unit: 20
+  test-integration: 25
+  test-e2e: 40
+  build: 30
+  deploy: 45
+  docs: 35
+  security: 20
+
+# Python环境配置模板
+python_setup: &python_setup
+  uses: actions/setup-python@v4
+  with:
+    python-version: ${{ env.PYTHON_VERSION }}
+    cache: 'pip'
+    cache-dependency-path: |
+      requirements/requirements.lock
+      pyproject.toml
+
+# Node.js环境配置模板
+node_setup: &node_setup
+  uses: actions/setup-node@v4
+  with:
+    node-version: ${{ env.NODE_VERSION }}
+    cache: 'npm'
+
+# 依赖安装模板
+install_deps: &install_deps
+  name: 📦 安装依赖
+  run: |
+    echo "🐍 安装Python依赖..."
+    if [ -f "requirements/requirements.lock" ]; then
+      pip install --upgrade pip
+      pip install -r requirements/requirements.lock
+    elif [ -f "requirements.txt" ]; then
+      pip install --upgrade pip
+      pip install -r requirements.txt
+    else
+      pip install --upgrade pip
+      pip install -e .
+    fi
+
+    # 安装开发工具
+    pip install ruff mypy bandit pip-audit pytest pytest-cov pytest-xdist
+
+    echo "✅ 依赖安装完成"
+
+# 安全检查模板
+security_checks: &security_checks
+  name: 🛡️ 安全检查
+  run: |
+    echo "🔒 开始全面安全检查..."
+
+    # Bandit安全扫描
+    echo "🔍 运行Bandit代码安全扫描..."
+    bandit -r src/ -f json -o bandit-report.json
+    BANDIT_EXIT_CODE=$?
+
+    if [ $BANDIT_EXIT_CODE -ne 0 ]; then
+      echo "⚠️ Bandit发现安全问题"
+      HIGH_SEVERITY=$(jq '[.results[] | select(.issue_severity == "HIGH")] | length' bandit-report.json 2>/dev/null || echo "0")
+      MEDIUM_SEVERITY=$(jq '[.results[] | select(.issue_severity == "MEDIUM")] | length' bandit-report.json 2>/dev/null || echo "0")
+
+      echo "📊 安全问题统计:"
+      echo "  - 高危: $HIGH_SEVERITY 个"
+      echo "  - 中危: $MEDIUM_SEVERITY 个"
+
+      if [ "$HIGH_SEVERITY" -gt 0 ]; then
+        echo "❌ 发现高危安全问题，请检查bandit-report.json"
+        exit 1
+      fi
+    fi
+
+    # 依赖安全审计
+    echo "🔍 运行依赖安全审计..."
+    pip-audit --format=json --output=audit-report.json
+    AUDIT_EXIT_CODE=$?
+
+    if [ $AUDIT_EXIT_CODE -ne 0 ]; then
+      echo "⚠️ 发现依赖安全问题"
+      VULNERABLE=$(jq '[.vulnerabilities[]] | length' audit-report.json 2>/dev/null || echo "0")
+      if [ "$VULNERABLE" -gt 0 ]; then
+        echo "❌ 发现$VULNERABLE个漏洞依赖，请更新依赖"
+        jq -r '.vulnerabilities[] | "  - \(.name): \(.vulnerabilities[0].advisory) (严重性: \(.vulnerabilities[0].severity)"' audit-report.json
+        exit 1
+      fi
+    fi
+
+    echo "✅ 安全检查完成"
+
+# 质量检查模板
+quality_checks: &quality_checks
+  name: 🔍 代码质量检查
+  run: |
+    echo "🔍 开始代码质量检查..."
+
+    # 语法检查
+    echo "🔧 Python语法检查..."
+    python -m py_compile src/**/*.py
+    echo "✅ 语法检查通过"
+
+    # Ruff代码检查
+    echo "📋 Ruff代码风格检查..."
+    ruff check src/ --output-format=github
+    RUFF_EXIT_CODE=$?
+
+    if [ $RUFF_EXIT_CODE -ne 0 ]; then
+      echo "❌ Ruff检查发现问题"
+      exit 1
+    fi
+
+    # Ruff格式检查
+    echo "📐 Ruff格式检查..."
+    ruff format src/ --check
+    FORMAT_EXIT_CODE=$?
+
+    if [ $FORMAT_EXIT_CODE -ne 0 ]; then
+      echo "❌ 代码格式问题，请运行: ruff format src/"
+      exit 1
+    fi
+
+    echo "✅ 代码质量检查完成"
+
+# 测试配置模板
+test_config: &test_config
+  env:
+    PYTEST_ADDOPTS: "--tb=short --strict-markers --strict-config"
+    PYTHONPATH: ${{ github.workspace }}
+
+# 覆盖率配置
+coverage_config: &coverage_config
+  current_threshold: 13.89
+  target_threshold: 80
+  fail_behavior: "warn"  # warn, fail, ignore
