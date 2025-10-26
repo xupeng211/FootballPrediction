@@ -11,11 +11,10 @@ from typing import Dict, List, Optional, Any, Union
 
 import pandas as pd
 
-
 class MatchProcessor:
     """比赛数据处理器"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         """初始化处理器"""
         self.logger = logging.getLogger(f"processing.{self.__class__.__name__}")
         # self.data_cleaner = FootballDataCleaner()

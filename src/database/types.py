@@ -10,7 +10,6 @@ from typing import Any, Union
 from sqlalchemy import JSON, Text, TypeDecorator
 from sqlalchemy.dialects.postgresql import JSONB
 
-
 class SQLiteCompatibleJSONB(TypeDecorator):
     """
     SQLite兼容的JSONB类型
@@ -22,7 +21,7 @@ class SQLiteCompatibleJSONB(TypeDecorator):
     impl = Text
     cache_ok = True
 
-    def load_dialect_impl(self, dialect):  # type: ignore
+    def load_dialect_impl(self, dialect):
         """根据数据库方言加载对应的实现"""
         if dialect.name == "postgresql":
             return dialect.type_descriptor(JSONB())
@@ -70,7 +69,6 @@ class SQLiteCompatibleJSONB(TypeDecorator):
                     return value
             return value
 
-
 class CompatibleJSON(TypeDecorator):
     """
     跨数据库兼容的JSON类型
@@ -81,7 +79,7 @@ class CompatibleJSON(TypeDecorator):
     impl = Text
     cache_ok = True
 
-    def load_dialect_impl(self, dialect):  # type: ignore
+    def load_dialect_impl(self, dialect):
         """根据数据库方言加载对应的实现"""
         if dialect.name == "postgresql":
             return dialect.type_descriptor(JSON())
@@ -115,7 +113,6 @@ class CompatibleJSON(TypeDecorator):
                     return value
             return value
 
-
 # 便捷的类型别名
 JsonType = SQLiteCompatibleJSONB()
 JsonbType = SQLiteCompatibleJSONB()
@@ -123,7 +120,6 @@ CompatJsonType = CompatibleJSON()
 
 # 传统方式的兼容定义（向后兼容）
 JsonTypeCompat = JSONB().with_variant(JSON(), "sqlite")
-
 
 def get_json_type(use_jsonb: bool = True) -> TypeDecorator:
     """
@@ -139,7 +135,6 @@ def get_json_type(use_jsonb: bool = True) -> TypeDecorator:
         return SQLiteCompatibleJSONB()
     else:
         return CompatibleJSON()
-
 
 # 导出类型定义
 __all__ = [

@@ -20,21 +20,17 @@ from .statistical import StatisticalStrategy
 from .historical import HistoricalStrategy
 from .ensemble import EnsembleStrategy
 
-
 logger = logging.getLogger(__name__)
-
 
 class StrategyCreationError(Exception):
     """策略创建错误"""
 
     pass
 
-
 class StrategyConfigurationError(Exception):
     """策略配置错误"""
 
     pass
-
 
 class PredictionStrategyFactory:
     """预测策略工厂类
@@ -42,7 +38,7 @@ class PredictionStrategyFactory:
     负责根据配置创建和管理各种预测策略实例。
     """
 
-    def __init__(self, config_path: Optional[Union[str, Path]] = None):  # type: ignore
+    def __init__(self, config_path: Optional[Union[str, Path]] = None):
         """初始化策略工厂
 
         Args:

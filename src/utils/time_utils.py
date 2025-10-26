@@ -7,7 +7,6 @@
 from datetime import datetime, timezone
 from typing import Optional
 
-
 class TimeUtils:
     """时间处理工具类"""
 
@@ -38,12 +37,10 @@ class TimeUtils:
         """解析日期时间字符串"""
         return datetime.strptime(date_str, format_str)
 
-
 # 为了向后兼容，添加常用函数别名
 def utc_now() -> datetime:
     """获取当前UTC时间（向后兼容性函数）"""
     return datetime.now(timezone.utc)
-
 
 def parse_datetime(
     date_str: Optional[str], format_str: str = "%Y-%m-%d %H:%M:%S"

@@ -32,12 +32,17 @@ except ImportError:
 
     class OddsInfo(BaseModel):
         id: int
-        match_id: int
-        home_win: float
+        home_odds: float
+        away_odds: float
 
     class TeamInfo(BaseModel):
         id: int
         name: str
+        match_id: int
+        home_win: float
 
+#     class TeamInfo(BaseModel):
+        id: int
+        name: str
 
 __all__ = ["LeagueInfo", "MatchInfo", "OddsInfo", "TeamInfo"]

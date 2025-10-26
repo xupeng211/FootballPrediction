@@ -12,7 +12,6 @@ from prometheus_client import CollectorRegistry, Counter, Gauge, Histogram
 
 from .alert_manager_mod.models import Alert, AlertChannel
 
-
 class PrometheusMetrics:
     """Prometheus 指标管理"""
 
@@ -63,7 +62,6 @@ class PrometheusMetrics:
         """记录告警解决时间"""
         self.alert_duration.labels(severity=alert.severity.value).observe(duration)
 
-
 class AlertHandler:
     """告警处理器基类"""
 
@@ -77,7 +75,6 @@ class AlertHandler:
     def get_name(self) -> str:
         """获取处理器名称"""
         return self.__class__.__name__
-
 
 class LogHandler(AlertHandler):
     """日志告警处理器"""
@@ -113,7 +110,6 @@ class LogHandler(AlertHandler):
             self.logger.error(f"Failed to log alert: {str(e)}")
             return False
 
-
 class PrometheusHandler(AlertHandler):
     """Prometheus 告警处理器"""
 
@@ -131,7 +127,6 @@ class PrometheusHandler(AlertHandler):
         except (ValueError, RuntimeError, TimeoutError) as e:
             logging.error(f"Failed to update Prometheus metrics: {str(e)}")
             return False
-
 
 class WebhookHandler(AlertHandler):
     """Webhook 告警处理器"""
@@ -163,7 +158,6 @@ class WebhookHandler(AlertHandler):
         except (ValueError, RuntimeError, TimeoutError) as e:
             logging.error(f"Failed to send webhook alert: {str(e)}")
             return False
-
 
 class EmailHandler(AlertHandler):
     """邮件告警处理器"""

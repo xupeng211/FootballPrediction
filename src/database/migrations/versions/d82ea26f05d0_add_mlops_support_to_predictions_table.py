@@ -16,7 +16,6 @@ down_revision = "d6d814cc1078"
 branch_labels = None
 depends_on = None
 
-
 def upgrade() -> None:
     """添加MLOps支持到predictions表"""
 
@@ -64,7 +63,6 @@ def upgrade() -> None:
         "idx_predictions_verification", "predictions", ["is_correct", "verified_at"]
     )
     op.create_index("idx_predictions_actual_result", "predictions", ["actual_result"])
-
 
 def downgrade() -> None:
     """移除MLOps支持字段"""

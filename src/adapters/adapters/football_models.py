@@ -12,7 +12,6 @@ from enum import Enum
 from src.adapters.base import Adapter, Adaptee, DataTransformer, AdapterStatus
 from src.core.exceptions import AdapterError
 
-
 # 常量
 SCHEDULED = 'SCHEDULED'
 LIVE = 'LIVE'

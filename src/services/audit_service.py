@@ -13,7 +13,6 @@ from enum import Enum
 
 logger = logging.getLogger(__name__)
 
-
 class AuditSeverity(Enum):
     """审计严重程度"""
 
@@ -21,7 +20,6 @@ class AuditSeverity(Enum):
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
-
 
 class AuditAction:
     """审计动作"""
@@ -33,7 +31,6 @@ class AuditAction:
     LOGIN = "login"
     LOGOUT = "logout"
     EXPORT = "export"
-
 
 class AuditContext:
     """审计上下文"""
@@ -48,7 +45,6 @@ class AuditContext:
         self.session_id = session_id
         self.ip_address = ip_address
         self.timestamp = datetime.utcnow()
-
 
 class AuditLog:
     """审计日志"""
@@ -66,15 +62,13 @@ class AuditLog:
         self.details = details
         self.timestamp = datetime.utcnow()
 
-
 class AuditLogSummary:
     """审计日志摘要"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self.total_logs = 0
         self.by_severity = {}
         self.by_action = {}
-
 
 class DataSanitizer:
     """数据清理器 - 简化版本"""
@@ -89,7 +83,6 @@ class DataSanitizer:
             sanitized["token"] = "***"
         return sanitized
 
-
 class SeverityAnalyzer:
     """严重程度分析器"""
 
@@ -101,7 +94,6 @@ class SeverityAnalyzer:
         elif "modify" in event.action.lower():
             return AuditSeverity.MEDIUM
         return AuditSeverity.LOW
-
 
 class AuditEvent:
     """审计事件"""
@@ -115,16 +107,15 @@ class AuditEvent:
         self.details = details
         self.timestamp = datetime.utcnow()
 
-
 class AuditService:
     """审计服务 - 简化版本"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self.events: List[AuditEvent] = []
         self.sanitizer = DataSanitizer()
         self.analyzer = SeverityAnalyzer()
 
-    def log_event(self, action: str, user: str, details: Dict[str, Any]):  # type: ignore
+    def log_event(self, action: str, user: str, details: Dict[str, Any]):
         """记录审计事件"""
         # 清理数据
         sanitized_details = self.sanitizer.sanitize(details)
@@ -158,7 +149,6 @@ class AuditService:
             summary.by_action[action] = summary.by_action.get(action, 0) + 1
 
         return summary
-
 
 __all__ = [
     "AuditService",

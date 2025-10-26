@@ -32,7 +32,6 @@ down_revision: Union[str, None] = "006_missing_indexes"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
-
 def _create_predictions_indexes(conn) -> None:
     """创建预测表索引"""
     logger.info("1. 创建预测表性能索引...")
@@ -65,7 +64,6 @@ def _create_predictions_indexes(conn) -> None:
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         logger.info(f"   ✗ idx_predictions_match_created 创建失败: {e}")
 
-
 def upgrade() -> None:
     """添加性能关键索引"""
 
@@ -89,7 +87,6 @@ def upgrade() -> None:
     # 2. 比赛表复合索引优化
     # ========================================
     _create_matches_indexes(conn)
-
 
 def _create_matches_indexes(conn) -> None:
     """创建比赛表索引"""
@@ -137,7 +134,6 @@ def _create_matches_indexes(conn) -> None:
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         logger.info(f"   ✗ idx_matches_home_time 创建失败: {e}")
 
-
 def _create_features_indexes(conn) -> None:
     """创建特征表索引"""
     logger.info("3. 创建特征表性能索引...")
@@ -170,7 +166,6 @@ def _create_features_indexes(conn) -> None:
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         logger.info(f"   ✗ idx_features_type 创建失败: {e}")
 
-
 def _create_data_quality_indexes(conn) -> None:
     """创建数据质量监控索引"""
     logger.info("4. 创建数据质量监控索引...")
@@ -202,7 +197,6 @@ def _create_data_quality_indexes(conn) -> None:
         logger.info("   ✓ idx_data_quality_status 创建成功")
     except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
         logger.info(f"   ✗ idx_data_quality_status 创建失败: {e}")
-
 
 def _create_audit_logs_indexes(conn) -> None:
     """创建审计日志索引"""
@@ -348,7 +342,6 @@ def _create_audit_logs_indexes(conn) -> None:
         logger.info(f"   ✗ idx_error_logs_task_status 创建失败: {e}")
 
     logger.info("✅ 性能关键索引创建完成！")
-
 
 def downgrade() -> None:
     """删除性能关键索引"""

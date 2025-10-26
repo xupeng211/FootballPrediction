@@ -23,7 +23,6 @@ from .base import (
 )
 from ..models.prediction import Prediction
 
-
 class StatisticalStrategy(PredictionStrategy):
     """统计分析预测策略
 
@@ -35,7 +34,7 @@ class StatisticalStrategy(PredictionStrategy):
     - 泊松分布模型
     """
 
-    def __init__(self, name: str = "statistical_analyzer"):  # type: ignore
+    def __init__(self, name: str = "statistical_analyzer"):
         super().__init__(name, StrategyType.STATISTICAL)
         self._team_stats = {}
         self._head_to_head_stats = {}

@@ -6,7 +6,6 @@ Simplified Logging Management Tool
 import logging
 from typing import Optional
 
-
 def get_simple_logger(name: str, level: str = "INFO") -> logging.Logger:
     """获取简化日志器，避免循环依赖"""
     logger = logging.getLogger(name)

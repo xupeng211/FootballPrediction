@@ -10,7 +10,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, Any, Optional
 
-
 @dataclass
 class FeatureEntity:
     """基础特征实体类"""
@@ -20,7 +19,6 @@ class FeatureEntity:
     data: Dict[str, Any]
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
-
 
 @dataclass
 class MatchEntity:
@@ -60,7 +58,6 @@ class MatchEntity:
             season=data["season"],
         )
 
-
 @dataclass
 class TeamEntity:
     """
@@ -92,7 +89,6 @@ class TeamEntity:
             league_id=data["league_id"],
             home_venue=data.get("home_venue"),
         )
-
 
 @dataclass
 class FeatureKey:

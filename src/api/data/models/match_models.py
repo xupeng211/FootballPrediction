@@ -8,7 +8,6 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
-
 class MatchQueryParams(BaseModel):
     """比赛查询参数"""
 
@@ -20,7 +19,6 @@ class MatchQueryParams(BaseModel):
     limit: int = Field(50, ge=1, le=1000, description="返回数量限制")
     offset: int = Field(0, ge=0, description="偏移量")
 
-
 class MatchCreateRequest(BaseModel):
     """创建比赛请求"""
 
@@ -29,7 +27,6 @@ class MatchCreateRequest(BaseModel):
     league_id: int = Field(..., description="联赛ID")
     match_time: datetime = Field(..., description="比赛时间")
     venue: Optional[str] = Field(None, description="比赛场地")
-
 
 class MatchUpdateRequest(BaseModel):
     """更新比赛请求"""

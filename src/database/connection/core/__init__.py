@@ -9,11 +9,10 @@ from src.core.logging import get_logger
 
 logger = get_logger(__name__)
 
-
 class ConnectionCore:
     """Core database connection utilities"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         """Initialize core utilities"""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
@@ -26,6 +25,5 @@ class ConnectionCore:
         """Test database connection"""
         # Placeholder implementation
         return True
-
 
 __all__ = ["ConnectionCore"]

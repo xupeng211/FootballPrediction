@@ -10,11 +10,10 @@ from src.core.logging import get_logger
 
 logger = get_logger(__name__)
 
-
 class PredictionDataLoader:
     """Data loader for predictions"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         """Initialize data loader"""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 

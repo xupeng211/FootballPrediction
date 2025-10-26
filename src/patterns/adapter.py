@@ -13,7 +13,6 @@ import aiohttp
 
 from src.core.logging import get_logger
 
-
 @dataclass
 class ExternalData:
     """外部数据通用格式"""
@@ -22,7 +21,6 @@ class ExternalData:
     data: Any
     timestamp: datetime
     metadata: Dict[str, Any]
-
 
 class ExternalAPI(ABC):
     """外部API抽象接口"""
@@ -37,11 +35,10 @@ class ExternalAPI(ABC):
         """发送数据"""
         pass
 
-
 class APIAdapter(ABC):
     """API适配器抽象基类"""
 
-    def __init__(self, external_api: ExternalAPI):  # type: ignore
+    def __init__(self, external_api: ExternalAPI):
         self.external_api = external_api
         self.logger = get_logger(f"adapter.{self.__class__.__name__}")
 
@@ -60,11 +57,10 @@ class APIAdapter(ABC):
         """转换数据格式"""
         pass
 
-
 class FootballAPIImpl(ExternalAPI):
     """足球API实现示例"""
 
-    def __init__(self, api_key: str, base_url: str):  # type: ignore
+    def __init__(self, api_key: str, base_url: str):
         self.api_key = api_key
         self.base_url = base_url
         self.logger = get_logger("api.football")
@@ -116,11 +112,10 @@ class FootballAPIImpl(ExternalAPI):
         if self.session and not self.session.closed:
             await self.session.close()
 
-
 class WeatherAPIImpl(ExternalAPI):
     """天气API实现示例"""
 
-    def __init__(self, api_key: str, base_url: str):  # type: ignore
+    def __init__(self, api_key: str, base_url: str):
         self.api_key = api_key
         self.base_url = base_url
         self.logger = get_logger("api.weather")
@@ -160,11 +155,10 @@ class WeatherAPIImpl(ExternalAPI):
         if self.session and not self.session.closed:
             await self.session.close()
 
-
 class OddsAPIImpl(ExternalAPI):
     """赔率API实现示例"""
 
-    def __init__(self, api_key: str, base_url: str):  # type: ignore
+    def __init__(self, api_key: str, base_url: str):
         self.api_key = api_key
         self.base_url = base_url
         self.logger = get_logger("api.odds")
@@ -215,7 +209,6 @@ class OddsAPIImpl(ExternalAPI):
         """关闭会话"""
         if self.session and not self.session.closed:
             await self.session.close()
-
 
 class FootballApiAdapter(APIAdapter):
     """足球API适配器"""
@@ -274,7 +267,6 @@ class FootballApiAdapter(APIAdapter):
             }
         return {}
 
-
 class WeatherApiAdapter(APIAdapter):
     """天气API适配器"""
 
@@ -332,7 +324,6 @@ class WeatherApiAdapter(APIAdapter):
                 "clouds": raw_data.get("clouds", {}).get("all"),
             }
         return {}
-
 
 class OddsApiAdapter(APIAdapter):
     """赔率API适配器"""
@@ -393,7 +384,6 @@ class OddsApiAdapter(APIAdapter):
             }
         return {}
 
-
 class AdapterFactory:
     """适配器工厂"""
 
@@ -412,19 +402,18 @@ class AdapterFactory:
         return cls._adapters[adapter_type](external_api)
 
     @classmethod
-    def register_adapter(cls, adapter_type: str, adapter_class: type):  # type: ignore
+    def register_adapter(cls, adapter_type: str, adapter_class: type):
         """注册新的适配器类型"""
         cls._adapters[adapter_type] = adapter_class
-
 
 class UnifiedDataCollector:
     """统一数据收集器"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self.adapters: Dict[str, APIAdapter] = {}
         self.logger = get_logger("collector.unified")
 
-    def add_adapter(self, name: str, adapter: APIAdapter):  # type: ignore
+    def add_adapter(self, name: str, adapter: APIAdapter):
         """添加适配器"""
         self.adapters[name] = adapter
         self.logger.info(f"Added adapter: {name}")
@@ -503,7 +492,6 @@ class UnifiedDataCollector:
         for adapter in self.adapters.values():
             if hasattr(adapter.external_api, "close"):
                 await adapter.external_api.close()
-
 
 # 示例使用
 async def example_usage():

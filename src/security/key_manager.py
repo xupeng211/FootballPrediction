@@ -11,7 +11,6 @@ import logging
 import os
 from typing import Dict, Optional
 
-
 class KeyManager:
     """
     密钥管理器（桩实现）
@@ -19,7 +18,7 @@ class KeyManager:
     Key Manager (Stub Implementation)
     """
 
-    def __init__(self, key_file: Optional[str] = None):  # type: ignore
+    def __init__(self, key_file: Optional[str] = None):
         """
         初始化密钥管理器
 
@@ -164,10 +163,8 @@ class KeyManager:
         self.logger.info(f"Saving keys to: {file_path}")
         # 桩实现：不实际保存
 
-
 # 全局实例
 _global_key_manager: Optional[KeyManager] = None
-
 
 def get_key_manager() -> KeyManager:
     """
@@ -181,22 +178,18 @@ def get_key_manager() -> KeyManager:
         _global_key_manager = KeyManager()
     return _global_key_manager
 
-
 # 便捷函数
 def get_key(key_name: str) -> str:
     """获取密钥的便捷函数"""
     return get_key_manager().get_key(key_name)
 
-
 def set_key(key_name: str, value: str) -> None:
     """设置密钥的便捷函数"""
     get_key_manager().set_key(key_name, value)
 
-
 def encrypt_data(data: str, key_name: str) -> str:
     """加密数据的便捷函数"""
     return get_key_manager().encrypt(data, key_name)
-
 
 def decrypt_data(encrypted_data: str, key_name: str) -> str:
     """解密数据的便捷函数"""

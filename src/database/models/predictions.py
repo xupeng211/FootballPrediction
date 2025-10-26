@@ -35,13 +35,11 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-
 """
 预测结果数据模型
 
 存储机器学习模型的预测结果，包括胜负概率、比分预测等。
 """
-
 
 class PredictedResult(Enum):
     """预测结果枚举"""
@@ -49,7 +47,6 @@ class PredictedResult(Enum):
     HOME_WIN = "home_win"  # 主队胜
     DRAW = "draw"  # 平局
     AWAY_WIN = "away_win"  # 客队胜
-
 
 class Predictions(BaseModel):
     """
@@ -407,7 +404,7 @@ class Predictions(BaseModel):
         return explanation
 
     @classmethod
-    def get_match_predictions(cls, session, match_id: int):  # type: ignore
+    def get_match_predictions(cls, session, match_id: int):
         """获取比赛的所有预测"""
         return (
             session.query(cls)
@@ -427,7 +424,7 @@ class Predictions(BaseModel):
         return query.order_by(cls.predicted_at.desc()).first()
 
     @classmethod
-    def get_model_predictions(cls, session, model_name: str, limit: int = 100):  # type: ignore
+    def get_model_predictions(cls, session, model_name: str, limit: int = 100):
         """获取指定模型的预测历史"""
         return (
             session.query(cls)
@@ -438,7 +435,7 @@ class Predictions(BaseModel):
         )
 
     @classmethod
-    def calculate_model_accuracy(cls, session, model_name: str, days: int = 30):  # type: ignore
+    def calculate_model_accuracy(cls, session, model_name: str, days: int = 30):
         """
         计算模型在指定天数内的准确率
 

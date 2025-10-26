@@ -55,7 +55,6 @@ from .feature_definitions import (  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
-
 class FootballFeatureStore:
     """
     足球特征仓库管理器
@@ -462,10 +461,8 @@ class FootballFeatureStore:
             self.logger.error(f"清理过期特征失败: {str(e)}")
             raise
 
-
 # 全局特征仓库实例
 _feature_store: Optional[FootballFeatureStore] = None
-
 
 def get_feature_store() -> FootballFeatureStore:
     """获取特征仓库实例"""
@@ -474,7 +471,6 @@ def get_feature_store() -> FootballFeatureStore:
         _feature_store = FootballFeatureStore()
         _feature_store.initialize()
     return _feature_store if isinstance(_feature_store, dict) else {}
-
 
 def initialize_feature_store(
     project_name: str = "football_prediction",

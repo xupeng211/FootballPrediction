@@ -15,7 +15,6 @@ import unicodedata
 from typing import List, Optional
 from functools import lru_cache
 
-
 class StringUtils:
     """字符串处理工具类"""
 
@@ -209,18 +208,15 @@ class StringUtils:
 
         return ''.join(html_escape_map.get(char, char) for char in text)
 
-
 # 性能优化的字符串处理函数
 @lru_cache(maxsize=256)
 def cached_slug(text: str) -> str:
     """缓存的slug生成函数"""
     return StringUtils.slugify(text)
 
-
 def batch_clean_strings(strings: List[str], **kwargs) -> List[str]:
     """批量清理字符串"""
     return [StringUtils.clean_string(s, **kwargs) for s in strings]
-
 
 def validate_batch_emails(emails: List[str]) -> dict:
     """批量验证邮箱"""

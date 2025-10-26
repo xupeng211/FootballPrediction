@@ -19,13 +19,11 @@ from ..models.predictions import Predictions, PredictedResult
 # 类型别名
 Prediction = Predictions
 
-
 # 预测状态常量
 class PredictionStatus:
     PENDING = "pending"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
-
 
 class PredictionRepository(BaseRepository[Predictions]):
     """
@@ -36,7 +34,7 @@ class PredictionRepository(BaseRepository[Predictions]):
     Provides CRUD operations and complex query methods for prediction data.
     """
 
-    def __init__(self, db_manager=None):  # type: ignore
+    def __init__(self, db_manager=None):
         super().__init__(Predictions, db_manager)
 
     # ========================================

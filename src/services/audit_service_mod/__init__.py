@@ -11,7 +11,6 @@ from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 from datetime import datetime
 
-
 @dataclass
 class AuditContext:
     """审计上下文"""
@@ -22,7 +21,6 @@ class AuditContext:
     user_agent: Optional[str] = None
     request_id: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = None
-
 
 @dataclass
 class AuditLog:
@@ -38,7 +36,6 @@ class AuditLog:
     severity: AuditSeverity = AuditSeverity.LOW
     metadata: Optional[Dict[str, Any]] = None
 
-
 @dataclass
 class AuditLogSummary:
     """审计日志摘要"""
@@ -49,7 +46,6 @@ class AuditLogSummary:
     severity_counts: Dict[str, int]
     top_users: List[Dict[str, Any]]
     top_resources: List[Dict[str, Any]]
-
 
 __all__ = [
     "AuditAction",

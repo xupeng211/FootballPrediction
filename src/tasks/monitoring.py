@@ -23,7 +23,6 @@ from src.database.sql_compatibility import (
 
 logger = logging.getLogger(__name__)
 
-
 class TaskMonitor:
     """
     任务监控器

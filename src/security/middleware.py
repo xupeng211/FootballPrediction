@@ -28,14 +28,12 @@ from collections import defaultdict
 import asyncio
 from datetime import datetime, timedelta
 
-
 logger = logging.getLogger(__name__)
-
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """安全头中间件"""
 
-    def __init__(self, app: ASGIApp, enabled: bool = True):  # type: ignore
+    def __init__(self, app: ASGIApp, enabled: bool = True):
         super().__init__(app)
         self.enabled = enabled
         self.headers = self._get_security_headers()
@@ -70,7 +68,6 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             response.headers[header] = value
 
         return response
-
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """速率限制中间件"""
@@ -118,7 +115,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # 使用直接连接的IP
         return request.client.host if request.client else "unknown"
 
-    def _cleanup_old_requests(self, client_ip: str, current_time: float):  # type: ignore
+    def _cleanup_old_requests(self, client_ip: str, current_time: float):
         """清理过期的请求记录"""
         cutoff_time = current_time - 60  # 1分钟前
         self.clients[client_ip] = [
@@ -141,16 +138,15 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         return len(recent_requests) >= self.requests_per_minute
 
-
 class AuditLoggingMiddleware(BaseHTTPMiddleware):
     """审计日志中间件"""
 
-    def __init__(self, app: ASGIApp, enabled: bool = True):  # type: ignore
+    def __init__(self, app: ASGIApp, enabled: bool = True):
         super().__init__(app)
         self.enabled = enabled
         self.setup_audit_logger()
 
-    def setup_audit_logger(self):  # type: ignore
+    def setup_audit_logger(self):
         """设置审计日志记录器"""
         if not self.enabled:
             return
@@ -200,7 +196,7 @@ class AuditLoggingMiddleware(BaseHTTPMiddleware):
             self._log_request_error(request, e, duration)
             raise
 
-    def _log_request_start(self, request: Request):  # type: ignore
+    def _log_request_start(self, request: Request):
         """记录请求开始"""
         self.audit_logger.info(
             f"Request started: {request.method} {request.url} - "
@@ -210,7 +206,7 @@ class AuditLoggingMiddleware(BaseHTTPMiddleware):
 
     def _log_request_complete(
         self, request: Request, response: Response, duration: float
-    ):  # type: ignore
+    ):
         """记录请求完成"""
         self.audit_logger.info(
             f"Request completed: {request.method} {request.url} - "
@@ -219,7 +215,7 @@ class AuditLoggingMiddleware(BaseHTTPMiddleware):
             f"Client: {self._get_client_info(request)}"
         )
 
-    def _log_request_error(self, request: Request, error: Exception, duration: float):  # type: ignore
+    def _log_request_error(self, request: Request, error: Exception, duration: float):
         """记录请求错误"""
         self.audit_logger.error(
             f"Request failed: {request.method} {request.url} - "
@@ -236,11 +232,10 @@ class AuditLoggingMiddleware(BaseHTTPMiddleware):
             client_ip = f"{forwarded_for.split(',')[0].strip()} (via {client_ip})"
         return client_ip
 
-
 class CSPMiddleware(BaseHTTPMiddleware):
     """内容安全策略中间件"""
 
-    def __init__(self, app: ASGIApp, enabled: bool = True):  # type: ignore
+    def __init__(self, app: ASGIApp, enabled: bool = True):
         super().__init__(app)
         self.enabled = enabled
         self.csp_policy = self._build_csp_policy()
@@ -277,7 +272,6 @@ class CSPMiddleware(BaseHTTPMiddleware):
         response.headers["Content-Security-Policy"] = self.csp_policy
 
         return response
-
 
 def setup_security_middleware(app: ASGIApp) -> ASGIApp:
     """设置所有安全中间件"""
@@ -319,14 +313,13 @@ def setup_security_middleware(app: ASGIApp) -> ASGIApp:
 
     return app
 
-
 class SecurityConfig:
     """安全配置类"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self.load_config()
 
-    def load_config(self):  # type: ignore
+    def load_config(self):
         """加载安全配置"""
         self.rate_limit_per_minute = int(os.getenv("RATE_LIMIT_PER_MINUTE", "60"))
         self.rate_limit_burst = int(os.getenv("RATE_LIMIT_BURST", "10"))
@@ -400,7 +393,6 @@ class SecurityConfig:
             "httponly": self.session_http_only_cookie,
             "samesite": self.session_samesite_cookie,
         }
-
 
 # 全局安全配置实例
 security_config = SecurityConfig()

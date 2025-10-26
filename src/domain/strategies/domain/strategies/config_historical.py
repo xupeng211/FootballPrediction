@@ -12,7 +12,6 @@ from dataclasses import dataclass, field, asdict
 from enum import Enum
 import logging
 
-
 # 常量
 YAML = 'yaml'
 JSON = 'json'

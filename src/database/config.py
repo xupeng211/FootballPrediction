@@ -6,7 +6,6 @@ import os
 from dataclasses import dataclass
 from typing import Optional
 
-
 @dataclass
 class DatabaseConfig:
     """封装数据库连接配置及常用连接URL。"""
@@ -56,7 +55,6 @@ class DatabaseConfig:
     def alembic_url(self) -> str:
         return self.sync_url
 
-
 _ENV_PREFIX = {
     "development": "",
     "dev": "",
@@ -65,13 +63,11 @@ _ENV_PREFIX = {
     "prod": "PROD_",
 }
 
-
 def _get_env_bool(key: str, default: bool = False) -> bool:
     value = os.getenv(key)
     if value is None:
         return default
     return value.lower() in {"1", "true", "yes", "on"}
-
 
 def _parse_int(key: str, default: int) -> int:
     value = os.getenv(key)
@@ -81,7 +77,6 @@ def _parse_int(key: str, default: int) -> int:
         return int(value)
     except ValueError:
         return default
-
 
 def get_database_config(environment: Optional[str] = None) -> DatabaseConfig:
     """根据环境返回数据库配置。"""
@@ -134,18 +129,15 @@ def get_database_config(environment: Optional[str] = None) -> DatabaseConfig:
         echo_pool=echo_pool,
     )
 
-
 def get_test_database_config() -> DatabaseConfig:
     """返回测试环境数据库配置。"""
 
     return get_database_config("test")
 
-
 def get_production_database_config() -> DatabaseConfig:
     """返回生产环境数据库配置。"""
 
     return get_database_config("production")
-
 
 def get_database_url(environment: Optional[str] = None) -> str:
     """根据环境返回数据库连接URL。"""

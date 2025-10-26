@@ -16,7 +16,6 @@ try:
 except ImportError:
     HAS_BCRYPT = False
 
-
 class CryptoUtils:
     """加密工具类"""
 

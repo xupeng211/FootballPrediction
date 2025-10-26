@@ -15,13 +15,11 @@ import re
 import logging
 from datetime import datetime, timedelta
 
-
 class CorsOriginValidationMode(Enum):
     """CORS origin验证模式"""
     STRICT = "strict"
     LOOSE = "loose"
     DISABLED = "disabled"
-
 
 @dataclass
 class CorsConfig:
@@ -182,7 +180,6 @@ class CorsConfig:
 
         return headers
 
-
 class CorsOriginValidator:
     """CORS origin验证器"""
 
@@ -238,7 +235,6 @@ class CorsOriginValidator:
         """清空验证缓存"""
         self._cached_validations.clear()
 
-
 @dataclass
 class PreflightRequest:
     """预检请求数据"""
@@ -253,7 +249,6 @@ class PreflightRequest:
             self.headers = [self.headers]
         self.method = self.method.upper()
 
-
 @dataclass
 class CorsPreflightResponse:
     """CORS预检响应"""
@@ -265,7 +260,6 @@ class CorsPreflightResponse:
         """设置默认headers"""
         if "Content-Length" not in self.headers:
             self.headers["Content-Length"] = str(len(self.content))
-
 
 @dataclass
 class CorsResponseHeaders:
@@ -296,7 +290,6 @@ class CorsResponseHeaders:
 
         return headers
 
-
 # 默认配置工厂函数
 def get_cors_config() -> CorsConfig:
     """获取默认的CORS配置"""
@@ -317,7 +310,6 @@ def get_cors_config() -> CorsConfig:
         enable_metrics=True
     )
 
-
 def get_development_cors_config() -> CorsConfig:
     """获取开发环境的CORS配置"""
     return CorsConfig(
@@ -329,7 +321,6 @@ def get_development_cors_config() -> CorsConfig:
         origin_validation_mode=CorsOriginValidationMode.LOOSE,
         enable_preflight_cache=False
     )
-
 
 def get_production_cors_config() -> CorsConfig:
     """获取生产环境的CORS配置"""
@@ -351,14 +342,12 @@ def get_production_cors_config() -> CorsConfig:
         preflight_cache_ttl=1800
     )
 
-
 # 环境配置映射
 CORS_CONFIGS = {
     "development": get_development_cors_config,
     "production": get_production_cors_config,
     "default": get_cors_config
 }
-
 
 def get_cors_config_by_env(env: str = "default") -> CorsConfig:
     """根据环境获取CORS配置"""

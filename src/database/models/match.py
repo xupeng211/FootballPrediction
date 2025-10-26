@@ -29,13 +29,11 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from ..base import BaseModel
 
-
 """
 比赛模型
 
 存储足球比赛的详细信息，包括比赛时间、比分、状态等。
 """
-
 
 class MatchStatus(Enum):
     """比赛状态枚举"""
@@ -45,14 +43,12 @@ class MatchStatus(Enum):
     FINISHED = "finished"  # 已结束
     CANCELLED = "cancelled"  # 已取消
 
-
 class MatchResult(Enum):
     """比赛结果枚举"""
 
     HOME_WIN = "home_win"  # 主队获胜
     AWAY_WIN = "away_win"  # 客队获胜
     DRAW = "draw"  # 平局
-
 
 class Match(BaseModel):
     """
@@ -324,7 +320,7 @@ class Match(BaseModel):
         )
 
     @classmethod
-    def get_upcoming_matches(cls, session, days: int = 7):  # type: ignore
+    def get_upcoming_matches(cls, session, days: int = 7):
         """获取未来几天的比赛"""
 
         start_date = datetime.utcnow()
@@ -355,7 +351,7 @@ class Match(BaseModel):
         return query.order_by(cls.match_time.desc()).all()
 
     @classmethod
-    def get_team_matches(cls, session, team_id: int, season: Optional[str] = None):  # type: ignore
+    def get_team_matches(cls, session, team_id: int, season: Optional[str] = None):
         """获取某个球队的所有比赛"""
 
         query = session.query(cls).filter(

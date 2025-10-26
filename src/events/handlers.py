@@ -24,11 +24,10 @@ from .bus import get_event_bus
 
 logger = logging.getLogger(__name__)
 
-
 class MetricsEventHandler(EventHandler):
     """指标收集事件处理器"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         super().__init__("MetricsCollector")
         self.metrics: Dict[str, Any] = {
             "events_processed": 0,
@@ -61,11 +60,10 @@ class MetricsEventHandler(EventHandler):
         """获取收集的指标"""
         return self.metrics.copy()
 
-
 class LoggingEventHandler(EventHandler):
     """日志记录事件处理器"""
 
-    def __init__(self, log_level: int = logging.INFO):  # type: ignore
+    def __init__(self, log_level: int = logging.INFO):
         super().__init__("EventLogger")
         self.logger = logging.getLogger(f"{__name__}.{self.name}")
         self.logger.setLevel(log_level)
@@ -103,11 +101,10 @@ class LoggingEventHandler(EventHandler):
             TeamStatsUpdatedEvent.get_event_type(),
         ]
 
-
 class CacheInvalidationHandler(EventHandler):
     """缓存失效事件处理器"""
 
-    def __init__(self, cache_manager=None):  # type: ignore
+    def __init__(self, cache_manager=None):
         super().__init__("CacheInvalidator")
         self.cache_manager = cache_manager
 
@@ -156,11 +153,10 @@ class CacheInvalidationHandler(EventHandler):
             TeamStatsUpdatedEvent.get_event_type(),
         ]
 
-
 class NotificationEventHandler(EventHandler):
     """通知事件处理器"""
 
-    def __init__(self, notification_service=None):  # type: ignore
+    def __init__(self, notification_service=None):
         super().__init__("NotificationHandler")
         self.notification_service = notification_service
         self.notification_queue = asyncio.Queue()
@@ -225,11 +221,10 @@ class NotificationEventHandler(EventHandler):
                 break
         return notifications
 
-
 class AnalyticsEventHandler(EventHandler):
     """分析事件处理器"""
 
-    def __init__(self, analytics_service=None):  # type: ignore
+    def __init__(self, analytics_service=None):
         super().__init__("AnalyticsHandler")
         self.analytics_service = analytics_service
         self.analytics_data: Dict[str, Any] = {
@@ -320,11 +315,10 @@ class AnalyticsEventHandler(EventHandler):
         """获取分析数据"""
         return self.analytics_data.copy()
 
-
 class AlertEventHandler(EventHandler):
     """告警事件处理器"""
 
-    def __init__(self, alert_service=None):  # type: ignore
+    def __init__(self, alert_service=None):
         super().__init__("AlertHandler")
         self.alert_service = alert_service
         self.alert_rules = {
@@ -354,7 +348,6 @@ class AlertEventHandler(EventHandler):
         return [
             PredictionMadeEvent.get_event_type(),
         ]
-
 
 # 便捷函数：注册所有默认处理器
 async def register_default_handlers() -> None:

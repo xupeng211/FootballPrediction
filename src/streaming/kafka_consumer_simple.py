@@ -8,11 +8,10 @@ from datetime import datetime
 
 from src.core.exceptions import StreamingError
 
-
 class KafkaMessageConsumer:
     """Kafka消息消费者（简化版）"""
 
-    def __init__(self, config: Dict[str, Any]):  # type: ignore
+    def __init__(self, config: Dict[str, Any]):
         if "bootstrap_servers" not in config:
             raise StreamingError("Missing required config: bootstrap_servers")
         if "group_id" not in config:
@@ -116,19 +115,19 @@ class KafkaMessageConsumer:
             raise StreamingError("Consumer not started")
         pass  # 简化实现
 
-    def pause_partition(self, partition):  # type: ignore
+    def pause_partition(self, partition):
         """暂停分区"""
         pass  # 简化实现
 
-    def resume_partition(self, partition):  # type: ignore
+    def resume_partition(self, partition):
         """恢复分区"""
         pass  # 简化实现
 
-    def get_assignment(self):  # type: ignore
+    def get_assignment(self):
         """获取分区分配"""
         return list(range(len(self.topics)))
 
-    def get_position(self):  # type: ignore
+    def get_position(self):
         """获取当前位置"""
         return {i: self.stats["messages_consumed"] for i in range(len(self.topics))}
 
@@ -175,7 +174,7 @@ class KafkaMessageConsumer:
         """重置偏移量到末尾"""
         await self.seek(topic, partition, -1)
 
-    def _create_rebalance_listener(self):  # type: ignore
+    def _create_rebalance_listener(self):
         """创建重平衡监听器"""
 
         class RebalanceListener:

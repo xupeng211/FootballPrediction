@@ -21,7 +21,6 @@ logger = get_logger(__name__)
 # Celery实例
 celery_app = Celery("data_collection")
 
-
 class DataCollectionTask:
     """数据收集任务基类"""
 
@@ -46,7 +45,6 @@ class DataCollectionTask:
     def on_success(self, retval, task_id, args, kwargs) -> None:
         """任务成功回调"""
         logger.info(f"Task {task_id} completed successfully")
-
 
 @celery_app.task(bind=True)
 def collect_fixtures_task(self) -> Dict[str, Any]:
@@ -73,7 +71,6 @@ def collect_fixtures_task(self) -> Dict[str, Any]:
         logger.error(f"Failed to collect fixtures: {str(e)}")
         raise
 
-
 @celery_app.task(bind=True)
 def collect_odds_task(self) -> Dict[str, Any]:
     """收集赔率数据任务"""
@@ -98,7 +95,6 @@ def collect_odds_task(self) -> Dict[str, Any]:
     except (RuntimeError, ValueError, ConnectionError) as e:
         logger.error(f"Failed to collect odds: {str(e)}")
         raise
-
 
 @celery_app.task(bind=True)
 def collect_scores_task(self) -> Dict[str, Any]:
@@ -125,7 +121,6 @@ def collect_scores_task(self) -> Dict[str, Any]:
         logger.error(f"Failed to collect scores: {str(e)}")
         raise
 
-
 @celery_app.task
 def manual_collect_all_data() -> Dict[str, Any]:
     """手动收集所有数据任务
@@ -150,7 +145,6 @@ def manual_collect_all_data() -> Dict[str, Any]:
     except (RuntimeError, ValueError, ConnectionError) as e:
         logger.error(f"Failed to collect all data: {str(e)}")
         return {"error": str(e), "collected_at": datetime.utcnow().isoformat()}
-
 
 @celery_app.task
 def emergency_data_collection_task(
@@ -194,7 +188,6 @@ def emergency_data_collection_task(
             "collected_at": datetime.utcnow().isoformat(),
         }
 
-
 # 定时任务定义
 @celery_app.task
 def collect_historical_data_task():
@@ -230,7 +223,6 @@ def collect_historical_data_task():
         logger.error(f"Failed to collect historical data: {str(e)}")
         raise
 
-
 async def _save_historical_data(data: Dict[str, Any], data_type: str) -> None:
     """保存历史数据到数据库"""
     # 这里应该实现实际的数据库保存逻辑
@@ -238,7 +230,6 @@ async def _save_historical_data(data: Dict[str, Any], data_type: str) -> None:
 
     # 模拟保存操作
     await asyncio.sleep(0.1)
-
 
 def validate_collected_data(data: Dict[str, Any], data_type: str) -> Dict[str, Any]:
     """验证收集的数据"""
@@ -272,7 +263,6 @@ def validate_collected_data(data: Dict[str, Any], data_type: str) -> Dict[str, A
 
     return validation_result
 
-
 def _validate_fixtures_data(data: Dict[str, Any]) -> Dict[str, Any]:
     """验证赛程数据"""
     errors = []
@@ -299,7 +289,6 @@ def _validate_fixtures_data(data: Dict[str, Any]) -> Dict[str, Any]:
 
     return {"validation_errors": errors, "recommendations": recommendations}
 
-
 def _validate_odds_data(data: Dict[str, Any]) -> Dict[str, Any]:
     """验证赔率数据"""
     errors = []
@@ -308,7 +297,6 @@ def _validate_odds_data(data: Dict[str, Any]) -> Dict[str, Any]:
     # 实现赔率数据验证逻辑
     return {"validation_errors": errors, "recommendations": recommendations}
 
-
 def _validate_scores_data(data: Dict[str, Any]) -> Dict[str, Any]:
     """验证比分数据"""
     errors = []
@@ -316,7 +304,6 @@ def _validate_scores_data(data: Dict[str, Any]) -> Dict[str, Any]:
 
     # 实现比分数据验证逻辑
     return {"validation_errors": errors, "recommendations": recommendations}
-
 
 def _validate_matches_data(data: Dict[str, Any]) -> Dict[str, Any]:
     """验证比赛数据"""

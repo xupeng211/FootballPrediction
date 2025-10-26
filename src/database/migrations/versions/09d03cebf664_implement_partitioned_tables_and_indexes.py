@@ -5,7 +5,6 @@ from alembic import op
 
 """implement_partitioned_tables_and_indexes
 
-
 实现分区表和索引优化策略
 
 基于 architecture.md 第3.4节和第3.3节的设计要求，实现：
@@ -34,22 +33,19 @@ down_revision: Union[str, None] = "c1d8ae5075f0"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
-
-def is_sqlite():  # type: ignore
+def is_sqlite():
     """检测当前是否为SQLite数据库"""
     if context.is_offline_mode():
         return False  # 离线模式下假设不是SQLite
     bind = op.get_bind()
     return bind.dialect.name == "sqlite"
 
-
-def is_postgresql():  # type: ignore
+def is_postgresql():
     """检测当前是否为PostgreSQL数据库"""
     if context.is_offline_mode():
         return True  # 离线模式下假设是PostgreSQL
     bind = op.get_bind()
     return bind.dialect.name == "postgresql"
-
 
 def upgrade() -> None:
     """
@@ -82,8 +78,7 @@ def upgrade() -> None:
 
     logger.info("分区表和索引优化实施完成")
 
-
-def _implement_postgresql_partitioning_and_indexes():  # type: ignore
+def _implement_postgresql_partitioning_and_indexes():
     """PostgreSQL环境下实现分区表和高级索引"""
 
     # 1. 创建分区管理函数
@@ -195,8 +190,7 @@ def _implement_postgresql_partitioning_and_indexes():  # type: ignore
     # 6. 实现PostgreSQL高级索引
     _create_postgresql_advanced_indexes()
 
-
-def _create_postgresql_advanced_indexes():  # type: ignore
+def _create_postgresql_advanced_indexes():
     """创建PostgreSQL高级索引"""
 
     advanced_indexes = [
@@ -253,8 +247,7 @@ def _create_postgresql_advanced_indexes():  # type: ignore
         except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             logger.info(f"  创建索引 {idx['name']} 失败: {e}")
 
-
-def _implement_sqlite_optimized_indexes():  # type: ignore
+def _implement_sqlite_optimized_indexes():
     """SQLite环境下实现优化索引"""
 
     sqlite_indexes = [
@@ -304,8 +297,7 @@ def _implement_sqlite_optimized_indexes():  # type: ignore
         except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             logger.info(f"  创建SQLite索引 {idx['name']} 失败: {e}")
 
-
-def _implement_basic_indexes():  # type: ignore
+def _implement_basic_indexes():
     """实现基础索引（通用数据库）"""
 
     basic_indexes = [
@@ -327,8 +319,7 @@ def _implement_basic_indexes():  # type: ignore
         except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             logger.info(f"  创建基础索引 {idx['name']} 失败: {e}")
 
-
-def _create_index_if_not_exists(name, table, columns, method="btree", condition=None):  # type: ignore
+def _create_index_if_not_exists(name, table, columns, method="btree", condition=None):
     """创建PostgreSQL索引（如果不存在）"""
 
     # 检查索引是否存在
@@ -364,8 +355,7 @@ def _create_index_if_not_exists(name, table, columns, method="btree", condition=
     op.execute(text(index_sql))
     logger.info(f"  ✓ 已创建索引: {name}")
 
-
-def _create_simple_index(name, table, columns):  # type: ignore
+def _create_simple_index(name, table, columns):
     """创建简单索引"""
     try:
         op.create_index(name, table, columns)
@@ -375,7 +365,6 @@ def _create_simple_index(name, table, columns):  # type: ignore
             logger.info(f"  索引 {name} 已存在，跳过创建")
         else:
             raise
-
 
 def downgrade() -> None:
     """
@@ -400,8 +389,7 @@ def downgrade() -> None:
 
     logger.info("分区表和索引降级完成")
 
-
-def _downgrade_postgresql_features():  # type: ignore
+def _downgrade_postgresql_features():
     """降级PostgreSQL特性"""
 
     # 删除分区管理函数
@@ -427,8 +415,7 @@ def _downgrade_postgresql_features():  # type: ignore
         except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             logger.info(f"  删除索引 {idx_name} 失败: {e}")
 
-
-def _downgrade_sqlite_features():  # type: ignore
+def _downgrade_sqlite_features():
     """降级SQLite特性"""
 
     indexes_to_drop = [

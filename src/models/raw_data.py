@@ -11,7 +11,6 @@ from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 
-
 class RawMatchData(Base):
     __table_args__ = {'extend_existing': True}
     __table_args__ = {'extend_existing': True}
@@ -33,7 +32,6 @@ class RawMatchData(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-
 class RawOddsData(Base):
     __table_args__ = {'extend_existing': True}
     __table_args__ = {'extend_existing': True}
@@ -50,7 +48,6 @@ class RawOddsData(Base):
     timestamp = Column(DateTime, nullable=False)
     raw_data = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
-
 
 class RawStatisticsData(Base):
     __table_args__ = {'extend_existing': True}
@@ -70,7 +67,6 @@ class RawStatisticsData(Base):
     raw_data = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-
 # Pydantic模型用于API
 class RawMatchDataCreate(BaseModel):
     """创建原始比赛数据"""
@@ -85,7 +81,6 @@ class RawMatchDataCreate(BaseModel):
     away_score: Optional[int] = Field(None, description="客队得分")
     status: str = Field("scheduled", description="比赛状态")
     raw_data: Optional[Dict[str, Any]] = Field(None, description="原始数据")
-
 
 class RawMatchDataResponse(BaseModel):
     """原始比赛数据响应"""
@@ -107,7 +102,6 @@ class RawMatchDataResponse(BaseModel):
     class Config:
         from_attributes = True
 
-
 class RawOddsDataCreate(BaseModel):
     """创建原始赔率数据"""
 
@@ -118,7 +112,6 @@ class RawOddsDataCreate(BaseModel):
     odds: float = Field(..., description="赔率")
     timestamp: datetime = Field(..., description="时间戳")
     raw_data: Optional[Dict[str, Any]] = Field(None, description="原始数据")
-
 
 class RawOddsDataResponse(BaseModel):
     """原始赔率数据响应"""
@@ -136,7 +129,6 @@ class RawOddsDataResponse(BaseModel):
     class Config:
         from_attributes = True
 
-
 class RawStatisticsDataCreate(BaseModel):
     """创建原始统计数据"""
 
@@ -148,7 +140,6 @@ class RawStatisticsDataCreate(BaseModel):
     source: str = Field(..., description="数据源")
     timestamp: datetime = Field(..., description="时间戳")
     raw_data: Optional[Dict[str, Any]] = Field(None, description="原始数据")
-
 
 class RawStatisticsDataResponse(BaseModel):
     """原始统计数据响应"""

@@ -18,7 +18,6 @@ from .cache_entry import CacheEntry
 
 logger = logging.getLogger(__name__)
 
-
 class TTLCache:
     """
     带TTL的LRU缓存
@@ -388,7 +387,7 @@ class TTLCache:
             for key in self.stats:
                 self.stats[key] = 0
 
-    def start_auto_cleanup(self):  # type: ignore
+    def start_auto_cleanup(self):
         """启动自动清理任务"""
         if self._running:
             return
@@ -397,7 +396,7 @@ class TTLCache:
         loop = asyncio.get_event_loop()
         self._cleanup_task = loop.create_task(self._auto_cleanup())
 
-    def stop_auto_cleanup(self):  # type: ignore
+    def stop_auto_cleanup(self):
         """停止自动清理任务"""
         self._running = False
         if self._cleanup_task:

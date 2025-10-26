@@ -15,7 +15,6 @@ import logging
 from .base import Adapter, AdapterStatus
 from .factory import AdapterFactory, AdapterConfig, AdapterGroupConfig
 
-
 class RegistryStatus(Enum):
     """注册表状态"""
 
@@ -23,11 +22,10 @@ class RegistryStatus(Enum):
     INACTIVE = "inactive"
     SHUTTING_DOWN = "shutting_down"
 
-
 class AdapterRegistry:
     """适配器注册表，管理所有适配器的生命周期"""
 
-    def __init__(self, factory: Optional[AdapterFactory] = None):  # type: ignore
+    def __init__(self, factory: Optional[AdapterFactory] = None):
         self.factory = factory or AdapterFactory()
         self.adapters: Dict[str, Adapter] = {}
         self.groups: Dict[str, Adapter] = {}
@@ -366,7 +364,6 @@ class AdapterRegistry:
     def disable_metrics_collection(self) -> None:
         """禁用指标收集"""
         self._metrics_collector = None
-
 
 # 全局适配器注册表实例
 adapter_registry = AdapterRegistry()

@@ -19,7 +19,6 @@ import pandas
 from sqlalchemy import select
 from database.models.match import Match
 
-
 # 常量
 ENABLE_FEAST = os.getenv('ENABLE_FEAST', 'true').lower() == 'true'
 HAS_FEAST = True

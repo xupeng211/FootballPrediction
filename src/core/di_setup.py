@@ -19,11 +19,10 @@ from ..database.repositories.base import BaseRepository
 
 logger = logging.getLogger(__name__)
 
-
 class DISetup:
     """依赖注入设置类"""
 
-    def __init__(self, profile: Optional[str] = None):  # type: ignore
+    def __init__(self, profile: Optional[str] = None):
         self.profile = profile or os.getenv("APP_PROFILE", "development")
         self.container: Optional[DIContainer] = None
         self.lifecycle_manager: Optional[ServiceLifecycleManager] = None
@@ -124,10 +123,8 @@ class DISetup:
         if self.lifecycle_manager:
             await self.lifecycle_manager.shutdown()
 
-
 # 全局DI设置实例
 _di_setup: Optional[DISetup] = None
-
 
 def get_di_setup() -> DISetup:
     """获取DI设置实例"""
@@ -135,7 +132,6 @@ def get_di_setup() -> DISetup:
     if _di_setup is None:
         _di_setup = DISetup()
     return _di_setup
-
 
 def configure_di(
     config_file: Optional[str] = None,
@@ -146,7 +142,6 @@ def configure_di(
     setup = DISetup(profile)
     return setup.initialize(config_file, auto_scan_modules)
 
-
 # 装饰器：自动注册服务
 def register_service(
     lifetime: ServiceLifetime = ServiceLifetime.TRANSIENT,
@@ -155,7 +150,7 @@ def register_service(
 ):
     """自动注册服务装饰器"""
 
-    def decorator(cls):  # type: ignore
+    def decorator(cls):
         # 保存注册信息
         cls.__di_lifetime__ = lifetime
         cls.__di_interface__ = interface
@@ -182,7 +177,6 @@ def register_service(
         return cls
 
     return decorator
-
 
 # 示例：创建配置文件的便捷函数
 def create_di_config(

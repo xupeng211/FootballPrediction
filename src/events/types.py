@@ -13,7 +13,6 @@ from typing import Any, Dict, Optional
 
 from .base import Event, EventData
 
-
 # 比赛相关事件数据
 class MatchEventData(EventData):
     """比赛事件数据"""
@@ -40,7 +39,6 @@ class MatchEventData(EventData):
         self.venue = venue
         self.weather = weather
 
-
 class MatchCreatedEventData(MatchEventData):
     """比赛创建事件数据"""
 
@@ -65,7 +63,6 @@ class MatchCreatedEventData(MatchEventData):
         )
         self.created_by = created_by
         self.initial_odds = initial_odds
-
 
 class MatchUpdatedEventData(MatchEventData):
     """比赛更新事件数据"""
@@ -92,7 +89,6 @@ class MatchUpdatedEventData(MatchEventData):
         self.updated_fields = updated_fields or {}
         self.previous_status = previous_status
 
-
 # 预测相关事件数据
 class PredictionEventData(EventData):
     """预测事件数据"""
@@ -116,7 +112,6 @@ class PredictionEventData(EventData):
         self.predicted_away = predicted_away
         self.confidence = confidence
         self.strategy_used = strategy_used
-
 
 class PredictionMadeEventData(PredictionEventData):
     """预测创建事件数据"""
@@ -147,7 +142,6 @@ class PredictionMadeEventData(PredictionEventData):
         self.points_earned = points_earned
         self.accuracy_score = accuracy_score
 
-
 class PredictionUpdatedEventData(PredictionEventData):
     """预测更新事件数据"""
 
@@ -177,7 +171,6 @@ class PredictionUpdatedEventData(PredictionEventData):
         self.previous_prediction = previous_prediction
         self.update_reason = update_reason
 
-
 # 用户相关事件数据
 class UserEventData(EventData):
     """用户事件数据"""
@@ -195,7 +188,6 @@ class UserEventData(EventData):
         self.username = username
         self.email = email
         self.registration_date = registration_date
-
 
 class UserRegisteredEventData(UserEventData):
     """用户注册事件数据"""
@@ -221,7 +213,6 @@ class UserRegisteredEventData(UserEventData):
         self.referral_code = referral_code
         self.ip_address = ip_address
         self.user_agent = user_agent
-
 
 # 球队统计事件数据
 class TeamStatsEventData(EventData):
@@ -253,12 +244,11 @@ class TeamStatsEventData(EventData):
         self.points = points
         self.last_updated = last_updated
 
-
 # 事件类定义
 class MatchCreatedEvent(Event):
     """比赛创建事件"""
 
-    def __init__(self, data: MatchCreatedEventData):  # type: ignore
+    def __init__(self, data: MatchCreatedEventData):
         super().__init__(data)
 
     @classmethod
@@ -306,11 +296,10 @@ class MatchCreatedEvent(Event):
         )
         return cls(event_data)
 
-
 class MatchUpdatedEvent(Event):
     """比赛更新事件"""
 
-    def __init__(self, data: MatchUpdatedEventData):  # type: ignore
+    def __init__(self, data: MatchUpdatedEventData):
         super().__init__(data)
 
     @classmethod
@@ -358,11 +347,10 @@ class MatchUpdatedEvent(Event):
         )
         return cls(event_data)
 
-
 class PredictionMadeEvent(Event):
     """预测创建事件"""
 
-    def __init__(self, data: PredictionMadeEventData):  # type: ignore
+    def __init__(self, data: PredictionMadeEventData):
         super().__init__(data)
 
     @classmethod
@@ -408,11 +396,10 @@ class PredictionMadeEvent(Event):
         )
         return cls(event_data)
 
-
 class PredictionUpdatedEvent(Event):
     """预测更新事件"""
 
-    def __init__(self, data: PredictionUpdatedEventData):  # type: ignore
+    def __init__(self, data: PredictionUpdatedEventData):
         super().__init__(data)
 
     @classmethod
@@ -458,11 +445,10 @@ class PredictionUpdatedEvent(Event):
         )
         return cls(event_data)
 
-
 class UserRegisteredEvent(Event):
     """用户注册事件"""
 
-    def __init__(self, data: UserRegisteredEventData):  # type: ignore
+    def __init__(self, data: UserRegisteredEventData):
         super().__init__(data)
 
     @classmethod
@@ -504,11 +490,10 @@ class UserRegisteredEvent(Event):
         )
         return cls(event_data)
 
-
 class TeamStatsUpdatedEvent(Event):
     """球队统计更新事件"""
 
-    def __init__(self, data: TeamStatsEventData):  # type: ignore
+    def __init__(self, data: TeamStatsEventData):
         super().__init__(data)
 
     @classmethod

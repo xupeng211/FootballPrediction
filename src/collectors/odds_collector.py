@@ -31,7 +31,6 @@ warnings.warn(
 
 # 从新模块导入所有内容
 
-
 # 创建兼容类
 class OddsCollector:
     """兼容性占位符类"""
@@ -39,7 +38,6 @@ class OddsCollector:
     def __init__(self, *args, **kwargs):
         if collector is None:
             raise NotImplementedError("OddsCollector implementation not available")
-
 
 class OddsCollectorFactory:
     """兼容性占位符工厂类"""
@@ -49,7 +47,6 @@ class OddsCollectorFactory:
         if collector is None:
             raise NotImplementedError("OddsCollector implementation not available")
         return OddsCollector(*args, **kwargs)
-
 
 # 导出所有类
 __all__ = ["OddsCollector", "OddsCollectorFactory"]

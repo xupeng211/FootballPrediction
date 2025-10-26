@@ -17,17 +17,15 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-
 class ConsistencyManager:
     """缓存一致性管理器别名"""
 
     pass
 
-
 class CacheConsistencyManager:
     """缓存一致性管理类"""
 
-    def __init__(self, redis_manager=None, db_manager=None):  # type: ignore
+    def __init__(self, redis_manager=None, db_manager=None):
         """
         初始化缓存一致性管理器
         :param redis_manager: Redis管理器实例
@@ -125,7 +123,6 @@ class CacheConsistencyManager:
             self.logger.error(f"获取缓存统计失败: {e}")
             return {"status": "error", "error": str(e)}
 
-
 # 便捷函数
 async def invalidate_entity_cache(
     entity_type: str, entity_id: Union[int, List[int]]
@@ -139,7 +136,6 @@ async def invalidate_entity_cache(
         keys = [f"{entity_type}:{eid}" for eid in entity_id]
 
     return await manager.invalidate_cache(keys)
-
 
 async def sync_entity_cache(entity_type: str, entity_id: int) -> bool:
     """同步实体缓存的便捷函数"""

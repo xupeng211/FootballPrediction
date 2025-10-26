@@ -10,11 +10,10 @@ from src.core.logging import get_logger
 
 logger = get_logger(__name__)
 
-
 class WarmupManager:
     """Redis cache warmup manager"""
 
-    def __init__(self, redis_manager=None):  # type: ignore
+    def __init__(self, redis_manager=None):
         """Initialize warmup manager"""
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.redis_manager = redis_manager
@@ -35,10 +34,8 @@ class WarmupManager:
         finally:
             self.is_warming_up = False
 
-
 # 别名以保持向后兼容
 CacheWarmupManager = WarmupManager
-
 
 async def startup_warmup(patterns: Optional[List[str]] = None) -> Dict[str, Any]:
     """启动时预热缓存的便捷函数"""

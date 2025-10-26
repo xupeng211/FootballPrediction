@@ -22,7 +22,6 @@ from .facades import (
     NotificationFacade,
 )
 
-
 @dataclass
 class FacadeConfig:
     """门面配置"""
@@ -34,7 +33,6 @@ class FacadeConfig:
     subsystems: List[str] = field(default_factory=list)
     parameters: Dict[str, Any] = field(default_factory=dict)
     environment: Optional[str] = None
-
 
 class FacadeFactory:
     """门面工厂类"""
@@ -48,7 +46,7 @@ class FacadeFactory:
         "notification": NotificationFacade,
     }
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self._config_cache: Dict[str, FacadeConfig] = {}
         self._instance_cache: Dict[str, SystemFacade] = {}
         self.default_environment = os.getenv("ENVIRONMENT", "development")
@@ -313,7 +311,6 @@ class FacadeFactory:
     def get_cached_instance(self, name: str) -> Optional[SystemFacade]:
         """获取缓存的实例"""
         return self._instance_cache.get(name)
-
 
 # 全局门面工厂实例
 facade_factory = FacadeFactory()

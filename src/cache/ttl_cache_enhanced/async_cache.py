@@ -10,7 +10,6 @@ from typing import Any, Dict, List, Optional
 
 from .ttl_cache import TTLCache
 
-
 class AsyncTTLCache:
     """
     异步TTL缓存包装器
@@ -208,11 +207,11 @@ class AsyncTTLCache:
         """异步重置统计信息"""
         self._cache.reset_stats()
 
-    def start_auto_cleanup(self):  # type: ignore
+    def start_auto_cleanup(self):
         """启动自动清理"""
         self._cache.start_auto_cleanup()
 
-    def stop_auto_cleanup(self):  # type: ignore
+    def stop_auto_cleanup(self):
         """停止自动清理"""
         self._cache.stop_auto_cleanup()
 

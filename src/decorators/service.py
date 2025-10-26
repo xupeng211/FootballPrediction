@@ -19,11 +19,10 @@ from .factory import DecoratorFactory, DecoratorConfig
 
 logger = get_logger(__name__)
 
-
 class DecoratorService:
     """装饰器服务，管理和应用装饰器"""
 
-    def __init__(self, factory: Optional[DecoratorFactory] = None):  # type: ignore
+    def __init__(self, factory: Optional[DecoratorFactory] = None):
         self.factory = factory or DecoratorFactory()
         self._decorated_functions: Dict[str, DecoratorComponent] = {}
         self._global_decorators: List[DecoratorConfig] = []
@@ -186,7 +185,6 @@ class DecoratorService:
             if config.conditions and config.conditions.get("global", False):
                 self._global_decorators.append(config)
 
-
 # 便捷装饰器函数
 def decorate(
     decorator_names: Optional[List[str]] = None, **decorator_kwargs
@@ -204,7 +202,6 @@ def decorate(
 
     return decorator
 
-
 def with_logging(
     level: str = "INFO", log_args: bool = True, log_result: bool = True, **kwargs
 ) -> Callable:
@@ -216,7 +213,6 @@ def with_logging(
         log_result=log_result,
         **kwargs,
     )
-
 
 def with_retry(
     max_attempts: int = 3, delay: float = 1.0, backoff_factor: float = 2.0, **kwargs
@@ -230,7 +226,6 @@ def with_retry(
         **kwargs,
     )
 
-
 def with_metrics(
     metric_name: Optional[str] = None, tags: Optional[Dict[str, str]] = None, **kwargs
 ) -> Callable:
@@ -242,18 +237,15 @@ def with_metrics(
         **kwargs,
     )
 
-
 def with_cache(ttl: Optional[int] = None, **kwargs) -> Callable:
     """添加缓存装饰器"""
     return decorate(decorator_names=["default_cache"], ttl=ttl, **kwargs)
-
 
 def with_timeout(timeout_seconds: float = 30.0, **kwargs) -> Callable:
     """添加超时装饰器"""
     return decorate(
         decorator_names=["default_timeout"], timeout_seconds=timeout_seconds, **kwargs
     )
-
 
 def with_all(
     log_level: str = "INFO",
@@ -277,7 +269,6 @@ def with_all(
         timeout_seconds=timeout_seconds,
         **kwargs,
     )
-
 
 # 创建全局装饰器服务实例
 decorator_service = DecoratorService()

@@ -19,7 +19,7 @@ except ImportError:
     class FootballKafkaConsumer:
         """占位符类 - Kafka消费者"""
 
-        def __init__(self, *args, **kwargs):  # type: ignore
+        def __init__(self, *args, **kwargs):
             pass
 
     FootballKafkaConsumer = FootballKafkaConsumer
@@ -36,7 +36,7 @@ if StreamConfig is None:
     class StreamConfig:
         """占位符类 - 流配置"""
 
-        def __init__(self, *args, **kwargs):  # type: ignore
+        def __init__(self, *args, **kwargs):
             pass
 
     StreamConfig: Type = StreamConfig
@@ -53,7 +53,7 @@ if StreamProcessor is None:
     class StreamProcessor:
         """占位符类 - 流处理器"""
 
-        def __init__(self, *args, **kwargs):  # type: ignore
+        def __init__(self, *args, **kwargs):
             pass
 
     StreamProcessor: Type = StreamProcessor
@@ -74,11 +74,9 @@ KafkaTopicManager = None  # 主题管理
 MessageSerializer = None  # 消息序列化器
 KafkaStream = None  # 流处理类
 
-
 def ensure_topics_exist(topics: List[str]) -> bool:
     """确保主题存在（桩实现）"""
     return True
-
 
 # 重新导出以保持向后兼容性
 __all__ = [

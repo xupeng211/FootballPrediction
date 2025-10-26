@@ -19,7 +19,6 @@ from typing import cast
 import pandas
 import pandas
 
-
 # 类定义
 class FeatureCalculator:
     """特征计算器

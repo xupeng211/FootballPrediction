@@ -13,13 +13,11 @@ from typing import Optional, Dict, Any, List
 
 from ...core.exceptions import DomainError
 
-
 class TeamType(Enum):
     """球队类型"""
 
     CLUB = "club"  # 俱乐部
     NATIONAL = "national"  # 国家队
-
 
 @dataclass
 class TeamStats:
@@ -32,7 +30,7 @@ class TeamStats:
     goals_for: int = 0
     goals_against: int = 0
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self):
         """验证统计数据"""
         if any(
             x < 0
@@ -91,7 +89,6 @@ class TeamStats:
     def __str__(self) -> str:
         return f"{self.matches_played}场 {self.wins}胜 {self.draws}平 {self.losses}负"
 
-
 @dataclass
 class TeamForm:
     """球队状态值对象"""
@@ -100,7 +97,7 @@ class TeamForm:
     current_streak: int = 0  # 当前连续纪录（胜/负为正数，平为0）
     streak_type: str = ""  # 连续类型：win/draw/loss/none
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self):
         """验证状态数据"""
         if len(self.last_matches) > 10:
             raise DomainError("最近比赛记录最多保留10场")
@@ -175,7 +172,6 @@ class TeamForm:
         )
         return f"状态: {self.recent_form_string} ({streak_str})"
 
-
 @dataclass
 class Team:
     """
@@ -206,7 +202,7 @@ class Team:
     # 领域事件
     _domain_events: List[Any] = field(default_factory=list, init=False)
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self):
         """初始化后的验证"""
         if not self.name or len(self.name.strip()) == 0:
             raise DomainError("球队名称不能为空")

@@ -26,7 +26,6 @@ from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy import Text
 
-
 class DataQualityLog(BaseModel):
     """
     数据质量日志模型
@@ -75,7 +74,7 @@ class DataQualityLog(BaseModel):
         DateTime, default=func.now(), nullable=False, index=True, comment="发现时间"
     )
 
-    def __init__(self, **kwargs):  # type: ignore
+    def __init__(self, **kwargs):
         """初始化数据质量日志"""
         # 设置默认值
         if "status" not in kwargs:
@@ -115,22 +114,22 @@ class DataQualityLog(BaseModel):
 
     def mark_as_resolved(self, handler: str, notes: str) -> None:
         """标记为已解决"""
-        self.status = "resolved"  # type: ignore[assignment]
-        self.handled_by = handler  # type: ignore[assignment]
-        self.handled_at = datetime.now()  # type: ignore[assignment]
-        self.resolution_notes = notes  # type: ignore[assignment]
+        self.status = "resolved"
+        self.handled_by = handler
+        self.handled_at = datetime.now()
+        self.resolution_notes = notes
 
     def mark_as_ignored(self, handler: str, reason: str) -> None:
         """标记为忽略"""
-        self.status = "ignored"  # type: ignore[assignment]
-        self.handled_by = handler  # type: ignore[assignment]
-        self.handled_at = datetime.now()  # type: ignore[assignment]
-        self.resolution_notes = f"忽略原因: {reason}"  # type: ignore[assignment]
+        self.status = "ignored"
+        self.handled_by = handler
+        self.handled_at = datetime.now()
+        self.resolution_notes = f"忽略原因: {reason}"
 
     def assign_to_handler(self, handler: str) -> None:
         """分配给处理人员"""
-        self.status = "in_progress"  # type: ignore[assignment]
-        self.handled_by = handler  # type: ignore[assignment]
+        self.status = "in_progress"
+        self.handled_by = handler
 
     @classmethod
     def get_severity_level(cls, error_type: str) -> str:

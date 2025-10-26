@@ -40,7 +40,6 @@ except ImportError:
     DataContextError = MockDataContextError
     YAMLHandler = None
 
-
 # Temporarily commented out for pytest testing
 # try:
 #     from great_expectations.core.batch import RuntimeBatchRequest
@@ -51,7 +50,6 @@ except ImportError:
 #         # 如果都不存在，使用 Any 类型占位
 #         RuntimeBatchRequest = Any
 RuntimeBatchRequest = Any  # Placeholder for testing
-
 
 class GreatExpectationsConfig:
     """

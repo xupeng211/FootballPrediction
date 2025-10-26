@@ -28,8 +28,7 @@ down_revision = "004_configure_permissions"
 branch_labels = None
 depends_on = None
 
-
-def upgrade():  # type: ignore
+def upgrade():
     """升级数据库架构 - 创建audit_logs表"""
 
     # 检查是否在SQLite环境中（测试环境）
@@ -276,8 +275,7 @@ def upgrade():  # type: ignore
         op.execute("-- offline mode: skipped audit_logs cleanup function creation")
         op.execute("-- offline mode: skipped audit_logs function execution grants")
 
-
-def downgrade():  # type: ignore
+def downgrade():
     """降级数据库架构 - 删除audit_logs表"""
 
     # 检查是否在离线模式

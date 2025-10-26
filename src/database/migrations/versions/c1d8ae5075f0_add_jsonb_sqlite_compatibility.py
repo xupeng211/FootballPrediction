@@ -11,7 +11,6 @@ from alembic import op
 
 """add_jsonb_sqlite_compatibility
 
-
 添加JSONB与SQLite兼容性支持
 
 本迁移文件主要目的是确保数据库模型在不同数据库类型（PostgreSQL/SQLite）下的兼容性。
@@ -33,22 +32,19 @@ down_revision: Union[str, None] = "006_missing_indexes"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
-
-def is_sqlite():  # type: ignore
+def is_sqlite():
     """检测当前是否为SQLite数据库"""
     if context.is_offline_mode():
         return False  # 离线模式下假设不是SQLite
     bind = op.get_bind()
     return bind.dialect.name == "sqlite"
 
-
-def is_postgresql():  # type: ignore
+def is_postgresql():
     """检测当前是否为PostgreSQL数据库"""
     if context.is_offline_mode():
         return True  # 离线模式下假设是PostgreSQL
     bind = op.get_bind()
     return bind.dialect.name == "postgresql"
-
 
 def upgrade() -> None:
     """
@@ -79,8 +75,7 @@ def upgrade() -> None:
 
     logger.info("JSONB与SQLite兼容性配置完成")
 
-
-def _configure_sqlite_compatibility():  # type: ignore
+def _configure_sqlite_compatibility():
     """为SQLite配置兼容性设置"""
     # SQLite特定的配置
     # 由于我们使用了TypeDecorator，JSON数据会自动转换为TEXT存储
@@ -103,8 +98,7 @@ def _configure_sqlite_compatibility():  # type: ignore
         else:
             logger.info(f"  ⚠ 表 {table_name} 不存在，跳过检查")
 
-
-def _verify_postgresql_jsonb_config():  # type: ignore
+def _verify_postgresql_jsonb_config():
     """验证PostgreSQL的JSONB配置"""
     bind = op.get_bind()
     inspector = sa.inspect(bind)
@@ -153,7 +147,6 @@ def _verify_postgresql_jsonb_config():  # type: ignore
 
         except (SQLAlchemyError, DatabaseError, ConnectionError, TimeoutError) as e:
             logger.info(f"  ❌ 检查表 {table_name} 时出错: {e}")
-
 
 def downgrade() -> None:
     """

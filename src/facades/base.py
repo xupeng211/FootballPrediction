@@ -14,7 +14,6 @@ from enum import Enum
 
 logger = logging.getLogger(__name__)
 
-
 class SubsystemStatus(Enum):
     """子系统状态"""
 
@@ -23,11 +22,10 @@ class SubsystemStatus(Enum):
     ERROR = "error"
     MAINTENANCE = "maintenance"
 
-
 class Subsystem(ABC):
     """子系统抽象基类"""
 
-    def __init__(self, name: str, version: str = "1.0.0"):  # type: ignore
+    def __init__(self, name: str, version: str = "1.0.0"):
         self.name = name
         self.version = version
         self.status = SubsystemStatus.INACTIVE
@@ -68,11 +66,10 @@ class Subsystem(ABC):
             "metrics": self.metrics,
         }
 
-
 class SubsystemManager:
     """子系统管理器"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self._subsystems: Dict[str, Subsystem] = {}
         self._dependencies: Dict[str, Set[str]] = {}
         self._initialization_order: List[str] = []
@@ -108,7 +105,7 @@ class SubsystemManager:
         temp_visited = set()
         order = []
 
-        def visit(name: str):  # type: ignore
+        def visit(name: str):
             if name in temp_visited:
                 raise ValueError(f"Circular dependency detected involving {name}")
             if name not in visited:
@@ -170,11 +167,10 @@ class SubsystemManager:
             name: subsystem.get_status() for name, subsystem in self._subsystems.items()
         }
 
-
 class SystemFacade(ABC):
     """系统门面抽象基类"""
 
-    def __init__(self, name: str, description: str = ""):  # type: ignore
+    def __init__(self, name: str, description: str = ""):
         self.name = name
         self.description = description
         self.subsystem_manager = SubsystemManager()

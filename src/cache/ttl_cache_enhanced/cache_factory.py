@@ -11,7 +11,6 @@ from typing import Optional, Union
 from .async_cache import AsyncTTLCache
 from .ttl_cache import TTLCache
 
-
 class CacheFactory:
     """缓存工厂类
 

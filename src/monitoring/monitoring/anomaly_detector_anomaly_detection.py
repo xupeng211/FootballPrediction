@@ -13,7 +13,6 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.database.connection import DatabaseManager
 
-
 # 常量
 OUTLIER = 'outlier'
 TREND_CHANGE = 'trend_change'

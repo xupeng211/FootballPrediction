@@ -5,15 +5,14 @@
 from typing import Any, Dict, Optional, Type, cast
 from src.core.exceptions import AdapterError
 
-
 class AdapterFactory:
     """适配器工厂"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self._adapters: Dict[str, Type] = {}
         self._instances: Dict[str, Any] = {}
 
-    def register_adapter(self, name: str, adapter_class: Type, **kwargs):  # type: ignore
+    def register_adapter(self, name: str, adapter_class: Type, **kwargs):
         """注册适配器"""
         if name in self._adapters:
             raise AdapterError(f"Adapter '{name}' already registered")
@@ -46,15 +45,15 @@ class AdapterFactory:
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             raise AdapterError(f"Failed to create adapter '{name}': {str(e)}")
 
-    def get_instance(self):  # type: ignore
+    def get_instance(self):
         """获取全局工厂实例"""
         return self
 
-    def list_adapters(self):  # type: ignore
+    def list_adapters(self):
         """列出所有已注册的适配器"""
         return [(name, info["class"]) for name, info in self._adapters.items()]
 
-    def list(self, **filters):  # type: ignore
+    def list(self, **filters):
         """列出适配器，支持过滤条件"""
         adapters = []
         for name, info in self._adapters.items():
@@ -67,21 +66,19 @@ class AdapterFactory:
                 adapters.append((name, info))
         return adapters
 
-    def unregister_adapter(self, name: str):  # type: ignore
+    def unregister_adapter(self, name: str):
         """注销适配器"""
         self._adapters.pop(name, None)
         self._instances.pop(name, None)
 
-    def get_adapter_type(self, name: str):  # type: ignore
+    def get_adapter_type(self, name: str):
         """获取适配器类型"""
         if name in self._adapters:
             return self._adapters[name]["class"]
         return None
 
-
 # 全局工厂实例
 _global_factory = None
-
 
 def get_global_factory() -> AdapterFactory:
     """获取全局工厂实例"""
@@ -89,7 +86,6 @@ def get_global_factory() -> AdapterFactory:
     if _global_factory is None:
         _global_factory = AdapterFactory()
     return _global_factory
-
 
 def get_adapter(
     adapter_type: str, config: Optional[Dict] = None, singleton: bool = False

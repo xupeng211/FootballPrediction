@@ -26,14 +26,12 @@ from .exceptions import DependencyInjectionError
 T = TypeVar("T")
 logger = logging.getLogger(__name__)
 
-
 class ServiceLifetime(Enum):
     """服务生命周期枚举"""
 
     SINGLETON = "singleton"  # 单例：整个容器生命周期内只创建一次
     SCOPED = "scoped"  # 作用域：每个作用域内创建一次
     TRANSIENT = "transient"  # 瞬时：每次请求都创建新实例
-
 
 @dataclass
 class ServiceDescriptor:
@@ -46,15 +44,14 @@ class ServiceDescriptor:
     instance: Optional[Any] = None
     dependencies: Optional[List[Type]] = None
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self):
         if self.dependencies is None:
             self.dependencies = []
-
 
 class DIContainer:
     """依赖注入容器"""
 
-    def __init__(self, name: str = "default"):  # type: ignore
+    def __init__(self, name: str = "default"):
         self.name = name
         self._services: Dict[Type, ServiceDescriptor] = {}
         self._singletons: Dict[Type, Any] = {}
@@ -306,31 +303,29 @@ class DIContainer:
         self._scoped_instances.clear()
         logger.info("清除所有服务注册")
 
-
 class DIScope:
     """依赖注入作用域"""
 
-    def __init__(self, container: DIContainer, scope_name: str):  # type: ignore
+    def __init__(self, container: DIContainer, scope_name: str):
         self.container = container
         self.scope_name = scope_name
         self._old_scope = None
 
-    def __enter__(self):  # type: ignore
+    def __enter__(self):
         self._old_scope = self.container._current_scope
         self.container._current_scope = self.scope_name
         logger.debug(f"进入作用域: {self.scope_name}")
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):  # type: ignore
+    def __exit__(self, exc_type, exc_val, exc_tb):
         self.container._current_scope = self._old_scope
         self.container.clear_scope(self.scope_name)
         logger.debug(f"退出作用域: {self.scope_name}")
 
-
 class ServiceCollection:
     """服务集合，用于批量注册服务"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self._registrations: List[Callable[[DIContainer], None]] = []
 
     def add_singleton(
@@ -385,10 +380,8 @@ class ServiceCollection:
 
         return container
 
-
 # 全局容器实例
 _default_container: Optional[DIContainer] = None
-
 
 def get_default_container() -> DIContainer:
     """获取默认容器"""
@@ -396,7 +389,6 @@ def get_default_container() -> DIContainer:
     if _default_container is None:
         _default_container = DIContainer("default")
     return _default_container
-
 
 def configure_services(
     configurator: Callable[[ServiceCollection], None],
@@ -412,11 +404,9 @@ def configure_services(
 
     return container
 
-
 def resolve(service_type: Type[T]) -> T:
     """从默认容器解析服务"""
     return get_default_container().resolve(service_type)
-
 
 def inject(
     service_type: Type[T], container: Optional[DIContainer] = None
@@ -424,7 +414,7 @@ def inject(
     """依赖注入装饰器"""
 
     def decorator(func: Callable) -> Callable:
-        def wrapper(*args, **kwargs):  # type: ignore
+        def wrapper(*args, **kwargs):
             if container is None:
                 instance = resolve(service_type)
             else:

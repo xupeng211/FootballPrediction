@@ -7,8 +7,7 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
 import types
 
-
-class BaseModel(BaseModel):
+class FootballBaseModel(BaseModel):
     """Base model class"""
 
     id: Optional[int] = None
@@ -18,13 +17,11 @@ class BaseModel(BaseModel):
     class Config:
         from_attributes = True
 
-
 class TimestampedModel(BaseModel):
     """Timestamped base model"""
 
     created_at: datetime = datetime.utcnow()
     updated_at: datetime = datetime.utcnow()
-
 
 class IdentifiableModel(BaseModel):
     """Identifiable base model"""
@@ -33,13 +30,11 @@ class IdentifiableModel(BaseModel):
     name: str
     description: Optional[str] = None
 
-
 class StatusModel(BaseModel):
     """Status base model"""
 
     status: str = "active"
     is_enabled: bool = True
-
 
 class MetadataModel(BaseModel):
     """Metadata base model"""
@@ -47,10 +42,9 @@ class MetadataModel(BaseModel):
     metadata: Dict[str, Any] = {}
     tags: List[str] = []
 
-
 # 创建一个简单的模块对象以保持向后兼容
 base_models = types.SimpleNamespace(
-    BaseModel=BaseModel,
+    BaseModel=FootballBaseModel,
     TimestampedModel=TimestampedModel,
     IdentifiableModel=IdentifiableModel,
     StatusModel=StatusModel,

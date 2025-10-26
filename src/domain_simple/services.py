@@ -19,7 +19,6 @@ from .rules import ValidationEngine, get_validation_engine
 
 T = TypeVar("T")
 
-
 @dataclass
 class ServiceConfig:
     """服务配置"""
@@ -29,15 +28,14 @@ class ServiceConfig:
     enabled: bool = True
     config: Optional[Dict[str, Any]] = None
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self):
         if self.config is None:
             self.config = {}
-
 
 class DomainService(ABC, Generic[T]):
     """域服务基类"""
 
-    def __init__(self, config: Optional[ServiceConfig] = None):  # type: ignore
+    def __init__(self, config: Optional[ServiceConfig] = None):
         self.config = config or ServiceConfig(self.__class__.__name__)
         self.name = self.config.name
         self.version = self.config.version
@@ -70,11 +68,11 @@ class DomainService(ABC, Generic[T]):
         """停止服务"""
         pass
 
-    def add_dependency(self, name: str, service: "DomainService"):  # type: ignore
+    def add_dependency(self, name: str, service: "DomainService"):
         """添加依赖服务"""
         self._dependencies[name] = service
 
-    def add_repository(self, name: str, repository: BaseRepository):  # type: ignore
+    def add_repository(self, name: str, repository: BaseRepository):
         """添加仓储"""
         self._repositories[name] = repository
 
@@ -86,7 +84,7 @@ class DomainService(ABC, Generic[T]):
         """获取仓储"""
         return self._repositories.get(name)
 
-    def set_validation_engine(self, engine: ValidationEngine):  # type: ignore
+    def set_validation_engine(self, engine: ValidationEngine):
         """设置验证引擎"""
         self._validation_engine = engine
 
@@ -100,11 +98,10 @@ class DomainService(ABC, Generic[T]):
         """是否已启动"""
         return self._started
 
-
 class MatchDomainService(DomainService[Match]):
     """比赛域服务"""
 
-    def __init__(self, config: Optional[ServiceConfig] = None):  # type: ignore
+    def __init__(self, config: Optional[ServiceConfig] = None):
         super().__init__(config or ServiceConfig("MatchDomainService"))
         self.match_repo: Optional[BaseRepository] = None
         self.team_repo: Optional[BaseRepository] = None
@@ -167,11 +164,10 @@ class MatchDomainService(DomainService[Match]):
         created = await self.match_repo.create(match.to_dict())
         return Match.from_dict(created)
 
-
 class TeamDomainService(DomainService[Team]):
     """球队域服务"""
 
-    def __init__(self, config: Optional[ServiceConfig] = None):  # type: ignore
+    def __init__(self, config: Optional[ServiceConfig] = None):
         super().__init__(config or ServiceConfig("TeamDomainService"))
         self.team_repo: Optional[BaseRepository] = None
         self.logger = logging.getLogger(__name__)
@@ -220,11 +216,10 @@ class TeamDomainService(DomainService[Team]):
         created = await self.team_repo.create(team.to_dict())
         return Team.from_dict(created)
 
-
 class PredictionDomainService(DomainService[Prediction]):
     """预测域服务"""
 
-    def __init__(self, config: Optional[ServiceConfig] = None):  # type: ignore
+    def __init__(self, config: Optional[ServiceConfig] = None):
         super().__init__(config or ServiceConfig("PredictionDomainService"))
         self.prediction_repo: Optional[BaseRepository] = None
         self.logger = logging.getLogger(__name__)
@@ -273,20 +268,19 @@ class PredictionDomainService(DomainService[Prediction]):
         created = await self.prediction_repo.create(prediction.to_dict())
         return Prediction.from_dict(created)
 
-
 class DomainServiceFactory:
     """域服务工厂
 
     负责创建、配置和管理所有域服务实例。
     """
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self._services: Dict[str, DomainService] = {}
         self._repositories: Dict[str, BaseRepository] = {}
         self._validation_engine = get_validation_engine()
         self.logger = logging.getLogger(__name__)
 
-    def register_repository(self, name: str, repository: BaseRepository):  # type: ignore
+    def register_repository(self, name: str, repository: BaseRepository):
         """注册仓储"""
         self._repositories[name] = repository
 
@@ -372,10 +366,8 @@ class DomainServiceFactory:
 
         return status
 
-
 # 全局工厂实例
 _domain_factory = None
-
 
 def get_domain_factory() -> DomainServiceFactory:
     """获取全局域服务工厂实例"""

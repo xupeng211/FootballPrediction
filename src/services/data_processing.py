@@ -13,7 +13,6 @@ from abc import ABC, abstractmethod
 
 logger = logging.getLogger(__name__)
 
-
 class DataProcessor(ABC):
     """数据处理器基类"""
 
@@ -21,7 +20,6 @@ class DataProcessor(ABC):
     async def process(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """处理数据"""
         pass
-
 
 class MatchDataProcessor(DataProcessor):
     """比赛数据处理器"""
@@ -32,7 +30,6 @@ class MatchDataProcessor(DataProcessor):
 
         return {**data, "processed_at": datetime.utcnow(), "type": "match"}
 
-
 class OddsDataProcessor(DataProcessor):
     """赔率数据处理器"""
 
@@ -41,7 +38,6 @@ class OddsDataProcessor(DataProcessor):
         logger.debug(f"Processing odds data: {data.get('match_id')}")
 
         return {**data, "processed_at": datetime.utcnow(), "type": "odds"}
-
 
 class ScoresDataProcessor(DataProcessor):
     """比分数据处理器"""
@@ -52,7 +48,6 @@ class ScoresDataProcessor(DataProcessor):
 
         return {**data, "processed_at": datetime.utcnow(), "type": "scores"}
 
-
 class FeaturesDataProcessor(DataProcessor):
     """特征数据处理器"""
 
@@ -62,11 +57,10 @@ class FeaturesDataProcessor(DataProcessor):
 
         return {**data, "processed_at": datetime.utcnow(), "type": "features"}
 
-
 class DataQualityValidator:
     """数据质量验证器"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self.errors = []
 
     def validate(self, data: Dict[str, Any]) -> bool:
@@ -85,11 +79,10 @@ class DataQualityValidator:
 
         return len(self.errors) == 0
 
-
 class AnomalyDetector:
     """异常检测器"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self.threshold = 3.0  # 标准差阈值
 
     def detect(self, data: Dict[str, Any]) -> List[str]:
@@ -106,14 +99,12 @@ class AnomalyDetector:
 
         return anomalies
 
-
 class MissingDataHandler:
     """缺失数据处理基类"""
 
     def handle(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """处理缺失数据"""
         return data
-
 
 class MissingScoresHandler(MissingDataHandler):
     """缺失比分处理器"""
@@ -126,7 +117,6 @@ class MissingScoresHandler(MissingDataHandler):
             data["away_score"] = 0
         return data
 
-
 class MissingTeamHandler(MissingDataHandler):
     """缺失球队处理器"""
 
@@ -138,11 +128,10 @@ class MissingTeamHandler(MissingDataHandler):
             data["away_team"] = "Unknown"
         return data
 
-
 class BronzeToSilverProcessor:
     """青铜到银层数据处理器"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self.validators = [DataQualityValidator()]
         self.detectors = [AnomalyDetector()]
         self.handlers = [MissingScoresHandler(), MissingTeamHandler()]
@@ -166,11 +155,10 @@ class BronzeToSilverProcessor:
 
         return {**data, "processed_at": datetime.utcnow(), "layer": "silver"}
 
-
 class DataProcessingService:
     """数据处理服务 - 简化版本"""
 
-    def __init__(self, session=None):  # type: ignore
+    def __init__(self, session=None):
         """初始化服务"""
         self.session = session
         self.initialized = False
@@ -218,7 +206,6 @@ class DataProcessingService:
     async def cleanup(self):
         """清理资源"""
         logger.info("DataProcessingService cleaned up")
-
 
 # 重新导出以保持原始接口
 __all__ = [

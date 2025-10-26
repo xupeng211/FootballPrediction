@@ -22,14 +22,12 @@ from ..monitoring.metrics_exporter import get_metrics_exporter
 from src.core.logger import get_logger
 from src.database.dependencies import get_db
 
-
 # 监控收集器与导出器（保留原功能，迁移到 /collector/* 与 /metrics/prometheus）
 
 logger = get_logger(__name__)
 
 # 去除内部前缀，由主应用通过 include_router(prefix="/api/v1") 统一挂载
 router = APIRouter(tags=["monitoring"])
-
 
 async def _get_database_metrics(db: Session) -> Dict[str, Any]:
     """获取数据库健康与统计指标。
@@ -87,7 +85,6 @@ async def _get_database_metrics(db: Session) -> Dict[str, Any]:
         stats["response_time_ms"] = round((time.time() - start) * 1000.0, 3)
 
     return stats
-
 
 async def _get_business_metrics(db: Session) -> Dict[str, Any]:
     """获取业务层关键指标。异常时各项返回 None。
@@ -165,7 +162,6 @@ async def _get_business_metrics(db: Session) -> Dict[str, Any]:
 
     return result
 
-
 @router.get("/metrics")
 async def get_metrics(db: Session = Depends(get_db)) -> Dict[str, Any]:
     """应用综合指标（JSON）。异常时返回 status=error 但HTTP 200。"""
@@ -211,13 +207,13 @@ async def get_metrics(db: Session = Depends(get_db)) -> Dict[str, Any]:
         # 数据库与业务指标（允许mock为非协程）
         db_result = _get_database_metrics(db)
         if isawaitable(db_result):
-            db_result = await db_result  # type: ignore[assignment]
+            db_result = await db_result
         biz_result = _get_business_metrics(db)
         if isawaitable(biz_result):
-            biz_result = await biz_result  # type: ignore[assignment]
+            biz_result = await biz_result
 
-        response["database"] = db_result  # type: ignore[assignment]
-        response["business"] = biz_result  # type: ignore[assignment]
+        response["database"] = db_result
+        response["business"] = biz_result
 
         # 运行时信息
         response["runtime"] = {
@@ -232,7 +228,6 @@ async def get_metrics(db: Session = Depends(get_db)) -> Dict[str, Any]:
         response["response_time_ms"] = round((time.time() - start) * 1000.0, 3)
 
     return response
-
 
 @router.get("/status")
 async def get_service_status(db: Session = Depends(get_db)) -> Dict[str, Any]:
@@ -271,7 +266,6 @@ async def get_service_status(db: Session = Depends(get_db)) -> Dict[str, Any]:
         },
     }
 
-
 @router.get(str("/metrics/prometheus"), response_class=PlainTextResponse)
 async def prometheus_metrics():
     """Prometheus 指标端点（文本）。"""
@@ -282,7 +276,6 @@ async def prometheus_metrics():
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"获取Prometheus指标失败: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="获取监控指标失败")
-
 
 # 将原收集器相关端点迁移到 /collector/*，避免与 /status 冲突
 @router.get("/collector/health")
@@ -302,7 +295,6 @@ async def collector_health() -> Dict[str, Any]:
 
         {"status": "unhealthy", "error": str(e), "message": "监控系统异常"}
 
-
 @router.post("/collector/collect")
 async def manual_collect() -> Dict[str, Any]:
     try:
@@ -313,7 +305,6 @@ async def manual_collect() -> Dict[str, Any]:
         logger.error(f"手动指标收集失败: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"指标收集失败: {str(e)}")
 
-
 @router.get("/collector/status")
 async def collector_status() -> Dict[str, Any]:
     try:
@@ -322,7 +313,6 @@ async def collector_status() -> Dict[str, Any]:
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"获取收集器状态失败: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="获取状态失败")
-
 
 @router.post("/collector/start")
 async def start_collector() -> Dict[str, str]:
@@ -334,7 +324,6 @@ async def start_collector() -> Dict[str, str]:
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"启动指标收集器失败: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"启动失败: {str(e)}")
-
 
 @router.post("/collector/stop")
 async def stop_collector() -> Dict[str, str]:

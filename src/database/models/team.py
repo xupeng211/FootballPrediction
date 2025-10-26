@@ -4,7 +4,6 @@ from sqlalchemy.orm import Session, relationship
 from ..base import BaseModel
 from enum import Enum
 
-
 """
 球队模型
 
@@ -13,14 +12,12 @@ from enum import Enum
 
 # Match model imported locally to avoid circular imports
 
-
 class TeamForm(Enum):
     """球队状态枚举"""
 
     GOOD = "good"  # 状态良好
     AVERAGE = "average"  # 状态一般
     POOR = "poor"  # 状态不佳
-
 
 class Team(BaseModel):
     """

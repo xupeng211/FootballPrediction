@@ -11,7 +11,6 @@ from src.core.logging import get_logger
 from src.patterns.adapter import UnifiedDataCollector
 from src.database.repositories import MatchRepository, PredictionRepository, TeamRepository
 
-
 # 类定义
 class PredictionRequest:
     """预测请求"""

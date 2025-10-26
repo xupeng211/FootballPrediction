@@ -16,7 +16,6 @@ from sqlalchemy.orm import selectinload
 from .base import BaseRepository
 from ..models.match import Match, MatchStatus, MatchResult
 
-
 class MatchRepository(BaseRepository[Match]):
     """
     比赛仓储类
@@ -26,7 +25,7 @@ class MatchRepository(BaseRepository[Match]):
     Provides CRUD operations and complex query methods for match data.
     """
 
-    def __init__(self, db_manager=None):  # type: ignore
+    def __init__(self, db_manager=None):
         super().__init__(Match, db_manager)
 
     # ========================================

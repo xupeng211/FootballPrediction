@@ -18,7 +18,6 @@ from sqlalchemy.orm import selectinload
 T = TypeVar("T")
 ID = TypeVar("ID")
 
-
 @dataclass
 class QuerySpec:
     """查询规范"""
@@ -29,7 +28,6 @@ class QuerySpec:
     offset: Optional[int] = None
     include: Optional[List[str]] = None
 
-
 class BaseRepository(Generic[T, ID], ABC):
     """仓储基类
 
@@ -37,7 +35,7 @@ class BaseRepository(Generic[T, ID], ABC):
     Provides basic data access functionality.
     """
 
-    def __init__(self, session: AsyncSession, model_class: type[T]):  # type: ignore
+    def __init__(self, session: AsyncSession, model_class: type[T]):
         self.session = session
         self.model_class = model_class
 
@@ -76,7 +74,7 @@ class BaseRepository(Generic[T, ID], ABC):
         result = await self.session.execute(query)
         return len(result.fetchall())
 
-    def _apply_filters(self, query, filters: Dict[str, Any]):  # type: ignore
+    def _apply_filters(self, query, filters: Dict[str, Any]):
         """应用过滤器"""
         for key, value in filters.items():
             if isinstance(value, dict):
@@ -100,7 +98,7 @@ class BaseRepository(Generic[T, ID], ABC):
                 query = query.where(getattr(self.model_class, key) == value)
         return query
 
-    def _apply_order_by(self, query, order_by: List[str]):  # type: ignore
+    def _apply_order_by(self, query, order_by: List[str]):
         """应用排序"""
         for order in order_by:
             if order.startswith("-"):
@@ -110,7 +108,7 @@ class BaseRepository(Generic[T, ID], ABC):
                 query = query.order_by(getattr(self.model_class, order))
         return query
 
-    def _apply_pagination(self, query, limit: int, offset: int):  # type: ignore
+    def _apply_pagination(self, query, limit: int, offset: int):
         """应用分页"""
         if offset:
             query = query.offset(offset)
@@ -118,13 +116,12 @@ class BaseRepository(Generic[T, ID], ABC):
             query = query.limit(limit)
         return query
 
-    def _apply_includes(self, query, includes: List[str]):  # type: ignore
+    def _apply_includes(self, query, includes: List[str]):
         """应用预加载"""
         for include in includes:
             if hasattr(self.model_class, include):
                 query = query.options(selectinload(getattr(self.model_class, include)))
         return query
-
 
 class ReadOnlyRepository(BaseRepository[T, ID], ABC):
     """只读仓储基类"""
@@ -153,7 +150,6 @@ class ReadOnlyRepository(BaseRepository[T, ID], ABC):
             result = await self.session.execute(query)
             return result.scalars().all()
         return []
-
 
 class WriteOnlyRepository(BaseRepository[T, ID], ABC):
     """只写仓储基类"""
@@ -193,7 +189,6 @@ class WriteOnlyRepository(BaseRepository[T, ID], ABC):
         query = delete(self.model_class).where(self.model_class.id.in_(ids))
         result = await self.session.execute(query)
         return result.rowcount
-
 
 class Repository(ReadOnlyRepository[T, ID], WriteOnlyRepository[T, ID], ABC):
     """完整仓储接口

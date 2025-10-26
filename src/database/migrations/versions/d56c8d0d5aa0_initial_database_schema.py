@@ -1,6 +1,5 @@
 """Initial database schema
 
-
 Revision ID: d56c8d0d5aa0
 Revises:
 Create Date: 2025-09-07 20:13:08.860093
@@ -18,7 +17,6 @@ revision: str = "d56c8d0d5aa0"
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
-
 
 def upgrade() -> None:
     # 创建联赛表
@@ -486,7 +484,6 @@ def upgrade() -> None:
     op.create_index(
         "idx_predictions_model_version", "predictions", ["model_name", "model_version"]
     )
-
 
 def downgrade() -> None:
     # 删除表（按相反顺序）

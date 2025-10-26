@@ -11,7 +11,6 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 from uuid import uuid4
 
-
 class DomainEvent(ABC):
     """
     领域事件基类
@@ -20,7 +19,7 @@ class DomainEvent(ABC):
     All domain events should inherit from this class.
     """
 
-    def __init__(self, aggregate_id: Optional[int] = None):  # type: ignore
+    def __init__(self, aggregate_id: Optional[int] = None):
         """
         初始化领域事件
 

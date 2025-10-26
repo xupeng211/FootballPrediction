@@ -6,7 +6,6 @@ from fastapi import FastAPI
 
 from src.utils.i18n import init_i18n, I18nUtils
 
-
 def create_chinese_app() -> FastAPI:
     """创建中文界面的 FastAPI 应用"""
 

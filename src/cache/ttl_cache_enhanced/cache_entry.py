@@ -8,7 +8,6 @@ Cache Entry Definition
 import time
 from typing import Any, Optional
 
-
 class CacheEntry:
     """缓存条目
 
@@ -84,7 +83,7 @@ class CacheEntry:
         remaining = int(self.expires_at - time.time())
         return remaining if remaining > 0 else 0
 
-    def __lt__(self, other):  # type: ignore
+    def __lt__(self, other):
         """
         用于堆排序，比较过期时间
 

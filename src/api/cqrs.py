@@ -15,7 +15,6 @@ from ..cqrs.application import CQRSServiceFactory
 
 router = APIRouter(prefix="/cqrs", tags=["CQRS"])
 
-
 # 请求模型
 class CreatePredictionRequest(BaseModel):
     """创建预测请求"""
@@ -28,7 +27,6 @@ class CreatePredictionRequest(BaseModel):
     strategy_used: Optional[str] = Field(None, description="使用的策略")
     notes: Optional[str] = Field(None, description="备注")
 
-
 class UpdatePredictionRequest(BaseModel):
     """更新预测请求"""
 
@@ -38,14 +36,12 @@ class UpdatePredictionRequest(BaseModel):
     strategy_used: Optional[str] = Field(None, description="使用的策略")
     notes: Optional[str] = Field(None, description="备注")
 
-
 class CreateUserRequest(BaseModel):
     """创建用户请求"""
 
     username: str = Field(..., min_length=3, description="用户名")
     email: str = Field(..., pattern=r"^[^@]+@[^@]+\.[^@]+$", description="邮箱")
     password_hash: str = Field(..., description="密码哈希")
-
 
 class CreateMatchRequest(BaseModel):
     """创建比赛请求"""
@@ -56,7 +52,6 @@ class CreateMatchRequest(BaseModel):
     competition: Optional[str] = Field(None, description="赛事")
     venue: Optional[str] = Field(None, description="场地")
 
-
 # 响应模型
 class CommandResponse(BaseModel):
     """命令响应"""
@@ -66,27 +61,22 @@ class CommandResponse(BaseModel):
     data: Optional[Dict[str, Any]] = None
     errors: Optional[List[str]] = None
 
-
 # 依赖注入
 def get_prediction_cqrs_service():
     """获取预测CQRS服务"""
     return CQRSServiceFactory.create_prediction_service()
 
-
 def get_match_cqrs_service():
     """获取比赛CQRS服务"""
     return CQRSServiceFactory.create_match_service()
-
 
 def get_user_cqrs_service():
     """获取用户CQRS服务"""
     return CQRSServiceFactory.create_user_service()
 
-
 def get_analytics_cqrs_service():
     """获取分析CQRS服务"""
     return CQRSServiceFactory.create_analytics_service()
-
 
 # 预测命令端点
 @router.post("/predictions", response_model=CommandResponse, summary="创建预测")
@@ -113,7 +103,6 @@ async def create_prediction(
         errors=result.errors,
     )
 
-
 @router.put(
     "/predictions/{prediction_id}", response_model=CommandResponse, summary="更新预测"
 )
@@ -139,7 +128,6 @@ async def update_prediction(
         errors=result.errors,
     )
 
-
 @router.delete(
     "/predictions/{prediction_id}", response_model=CommandResponse, summary="删除预测"
 )
@@ -156,7 +144,6 @@ async def delete_prediction(
         errors=result.errors,
     )
 
-
 # 预测查询端点
 @router.get("/predictions/{prediction_id}", summary="获取预测详情")
 async def get_prediction(
@@ -168,7 +155,6 @@ async def get_prediction(
         raise HTTPException(status_code=404, detail="预测不存在")
 
     return prediction.to_dict()
-
 
 @router.get("/users/{user_id}/predictions", summary="获取用户预测列表")
 async def get_user_predictions(
@@ -195,7 +181,6 @@ async def get_user_predictions(
         "offset": offset,
     }
 
-
 @router.get("/users/{user_id}/stats", summary="获取用户统计")
 async def get_user_statistics(
     user_id: int,
@@ -208,7 +193,6 @@ async def get_user_statistics(
         raise HTTPException(status_code=404, detail="用户统计不存在")
 
     return stats.to_dict()
-
 
 # 比赛命令端点
 @router.post("/matches", response_model=CommandResponse, summary="创建比赛")
@@ -231,7 +215,6 @@ async def create_match(
         errors=result.errors,
     )
 
-
 # 比赛查询端点
 @router.get("/matches/{match_id}", summary="获取比赛详情")
 async def get_match(
@@ -245,7 +228,6 @@ async def get_match(
         raise HTTPException(status_code=404, detail="比赛不存在")
 
     return match.to_dict()
-
 
 @router.get("/matches/upcoming", summary="获取即将到来的比赛")
 async def get_upcoming_matches(
@@ -266,7 +248,6 @@ async def get_upcoming_matches(
         "filters": {"days_ahead": days_ahead, "competition": competition},
     }
 
-
 # 用户命令端点
 @router.post("/users", response_model=CommandResponse, summary="创建用户")
 async def create_user(
@@ -285,7 +266,6 @@ async def create_user(
         data=result.data.to_dict() if result.data else None,
         errors=result.errors,
     )
-
 
 # 系统端点
 @router.get("/system/status", summary="获取CQRS系统状态")

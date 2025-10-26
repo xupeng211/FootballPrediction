@@ -6,7 +6,6 @@ Cache Configuration
 from typing import Dict, Optional
 from dataclasses import dataclass
 
-
 @dataclass
 class CacheConfig:
     """缓存配置类"""
@@ -26,7 +25,7 @@ class CacheConfig:
     # 序列化方式
     serializer: str = "json"
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self):
         """初始化后处理"""
         if self.ttl_config is None:
             self.ttl_config = {
@@ -37,10 +36,8 @@ class CacheConfig:
                 "statistics": 1800,  # 30分钟
             }
 
-
 # 全局缓存配置实例
 CACHE_CONFIG = CacheConfig()
-
 
 def get_cache_ttl(cache_type: str) -> int:
     """获取指定类型的缓存TTL

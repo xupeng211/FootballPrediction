@@ -12,7 +12,6 @@ import os
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-
 @dataclass
 class KafkaConfig:
     """Kafka基础配置"""
@@ -41,7 +40,6 @@ class KafkaConfig:
     key_serializer: str = "string"
     value_serializer: str = "json"
 
-
 @dataclass
 class TopicConfig:
     """Topic配置"""
@@ -53,7 +51,6 @@ class TopicConfig:
     retention_ms: int = 604800000  # 7天
     segment_ms: int = 86400000  # 1天
 
-
 class StreamConfig:
     """
     流式处理配置管理器
@@ -62,7 +59,7 @@ class StreamConfig:
     支持从环境变量和配置文件加载配置
     """
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self.kafka_config = self._load_kafka_config()
         self.topics = self._init_topics()
 

@@ -8,7 +8,6 @@ from typing import Any, Dict, Optional, List
 
 from pydantic import BaseModel, Field
 
-
 class APIResponse(BaseModel):
     """通用API响应模型"""
 
@@ -18,14 +17,12 @@ class APIResponse(BaseModel):
     errors: Optional[List[str]] = Field(None, description="错误信息列表")
     timestamp: Optional[str] = Field(None, description="响应时间戳")
 
-
 class ServiceCheck(BaseModel):
     """服务检查结果模型"""
 
     status: str = Field(..., description="服务状态")
     response_time_ms: float = Field(..., description="响应时间(毫秒)")
     details: Optional[Dict[str, Any]] = Field(None, description="详细信息")
-
 
 class HealthCheckResponse(BaseModel):
     """健康检查API响应模型"""
@@ -38,14 +35,12 @@ class HealthCheckResponse(BaseModel):
     response_time_ms: float = Field(..., description="总响应时间(毫秒)")
     checks: Dict[str, ServiceCheck] = Field(..., description="各服务检查结果")
 
-
 class StatusResponse(BaseModel):
     """服务状态API响应模型"""
 
     status: str = Field(..., description="整体状态")
     timestamp: str = Field(..., description="检查时间")
     services: Dict[str, str] = Field(..., description="各服务状态")
-
 
 class MetricsResponse(BaseModel):
     """监控指标API响应模型"""
@@ -57,7 +52,6 @@ class MetricsResponse(BaseModel):
     runtime: Dict[str, Any] = Field(..., description="运行时指标")
     business: Dict[str, Any] = Field(..., description="业务指标统计")
 
-
 class HealthResponse(BaseModel):
     """健康检查响应模型"""
 
@@ -68,7 +62,6 @@ class HealthResponse(BaseModel):
     uptime: Optional[float] = Field(None, description="运行时间(秒)")
     checks: Optional[Dict[str, Any]] = Field(None, description="检查项目")
 
-
 class RootResponse(BaseModel):
     """根路径API响应模型"""
 
@@ -77,7 +70,6 @@ class RootResponse(BaseModel):
     status: str = Field(..., description="服务状态")
     docs_url: str = Field(..., description="API文档地址")
     health_check: str = Field(..., description="健康检查地址")
-
 
 class ErrorResponse(BaseModel):
     """错误响应模型"""

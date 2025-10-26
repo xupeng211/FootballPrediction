@@ -11,7 +11,6 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
-
 class FootballDataCleaner:
     """足球数据清理器"""
 
@@ -81,7 +80,6 @@ class FootballDataCleaner:
     def clean_player_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """清理球员数据"""
         return self.clean_match_data(df)
-
 
 class DataValidator:
     """数据验证器"""

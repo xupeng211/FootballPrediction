@@ -19,7 +19,6 @@ from ..core.exceptions import ServiceLifecycleError
 
 logger = logging.getLogger(__name__)
 
-
 class ServiceState(Enum):
     """服务状态"""
 
@@ -32,7 +31,6 @@ class ServiceState(Enum):
     STOPPED = "stopped"  # 已停止
     ERROR = "error"  # 错误状态
     DISPOSED = "disposed"  # 已销毁
-
 
 @dataclass
 class ServiceInfo:
@@ -49,10 +47,9 @@ class ServiceInfo:
     dependencies: List[str] = field(default_factory=list)
     dependents: List[str] = field(default_factory=list)
 
-    def __post_init__(self):  # type: ignore
+    def __post_init__(self):
         if isinstance(self.dependencies, str):
             self.dependencies = [self.dependencies]
-
 
 class IServiceLifecycle(ABC):
     """服务生命周期接口"""
@@ -82,11 +79,10 @@ class IServiceLifecycle(ABC):
         """健康检查"""
         pass
 
-
 class ServiceLifecycleManager:
     """服务生命周期管理器"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self._services: Dict[str, ServiceInfo] = {}
         self._start_order: List[str] = []
         self._stop_order: List[str] = []
@@ -514,10 +510,8 @@ class ServiceLifecycleManager:
         self._stop_order = self._start_order.copy()
         self._stop_order.reverse()
 
-
 # 全局服务生命周期管理器
 _default_lifecycle_manager: Optional[ServiceLifecycleManager] = None
-
 
 def get_lifecycle_manager() -> ServiceLifecycleManager:
     """获取默认的生命周期管理器"""
@@ -526,21 +520,20 @@ def get_lifecycle_manager() -> ServiceLifecycleManager:
         _default_lifecycle_manager = ServiceLifecycleManager()
     return _default_lifecycle_manager
 
-
 # 生命周期装饰器
 def lifecycle_service(
     name: Optional[str] = None, dependencies: Optional[List[str]] = None
 ):
     """服务生命周期装饰器"""
 
-    def decorator(cls):  # type: ignore
+    def decorator(cls):
         # 获取服务名称
         service_name = name or cls.__name__
 
         # 保存原始的 __init__ 方法
         original_init = cls.__init__
 
-        def new_init(self, *args, **kwargs):  # type: ignore
+        def new_init(self, *args, **kwargs):
             # 调用原始初始化
             original_init(self, *args, **kwargs)
 

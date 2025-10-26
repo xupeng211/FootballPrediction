@@ -10,7 +10,6 @@ from typing import Union, Sequence
 from alembic import context, op
 from alembic import op
 
-
 # 函数定义
 def upgrade():
     """数据库性能优化升级"""

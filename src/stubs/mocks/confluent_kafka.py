@@ -8,7 +8,6 @@ from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
-
 class MockMessage:
     """模拟Kafka消息"""
 
@@ -66,11 +65,10 @@ class MockMessage:
         """设置头部"""
         self._headers = headers
 
-
 class MockConsumer:
     """模拟Kafka消费者"""
 
-    def __init__(self, config: Dict[str, Any]):  # type: ignore
+    def __init__(self, config: Dict[str, Any]):
         self.config = config
         self._topics: set[str] = set()
         self._messages: Dict[str, List[MockMessage]] = defaultdict(list)
@@ -138,11 +136,10 @@ class MockConsumer:
         """批量添加测试消息"""
         self._messages[topic].extend(messages)
 
-
 class MockProducer:
     """模拟Kafka生产者"""
 
-    def __init__(self, config: Dict[str, Any]):  # type: ignore
+    def __init__(self, config: Dict[str, Any]):
         self.config = config
         self._messages: Dict[str, List[MockMessage]] = defaultdict(list)
         self._callbacks: Dict[str, Callable] = {}
@@ -208,11 +205,10 @@ class MockProducer:
         else:
             self._messages.clear()
 
-
 class MockAdminClient:
     """模拟Kafka管理客户端"""
 
-    def __init__(self, config: Dict[str, Any]):  # type: ignore
+    def __init__(self, config: Dict[str, Any]):
         self.config = config
         self.metadata = {"topics": {}, "brokers": {"1": "localhost:9093"}}
 
@@ -245,11 +241,10 @@ class MockAdminClient:
         """关闭管理客户端"""
         logger.info("Mock admin client closed")
 
-
 class MockDeserializingConsumer(MockConsumer):
     """带反序列化的消费者"""
 
-    def __init__(self, config: Dict[str, Any]):  # type: ignore
+    def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
         self._key_deserializer = config.get("key.deserializer")
         self._value_deserializer = config.get("value.deserializer")
@@ -273,11 +268,10 @@ class MockDeserializingConsumer(MockConsumer):
 
         return message
 
-
 class MockSerializingProducer(MockProducer):
     """带序列化的生产者"""
 
-    def __init__(self, config: Dict[str, Any]):  # type: ignore
+    def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
         self._key_serializer = config.get("key.serializer")
         self._value_serializer = config.get("value.serializer")
@@ -316,7 +310,6 @@ class MockSerializingProducer(MockProducer):
             on_delivery=on_delivery,
         )
 
-
 # 方便的工厂函数
 def Consumer(config: Dict[str, Any]) -> MockConsumer:
     """创建消费者"""
@@ -324,18 +317,15 @@ def Consumer(config: Dict[str, Any]) -> MockConsumer:
         return MockDeserializingConsumer(config)
     return MockConsumer(config)
 
-
 def Producer(config: Dict[str, Any]) -> MockProducer:
     """创建生产者"""
     if "key.serializer" in config or "value.serializer" in config:
         return MockSerializingProducer(config)
     return MockProducer(config)
 
-
 def AdminClient(config: Dict[str, Any]) -> MockAdminClient:
     """创建管理客户端"""
     return MockAdminClient(config)
-
 
 # Kafka异常类的模拟
 class KafkaException(Exception):
@@ -343,34 +333,31 @@ class KafkaException(Exception):
 
     pass
 
-
 class KafkaError(Exception):
     """Kafka错误"""
 
-    def __init__(self, code: int, name: str):  # type: ignore
+    def __init__(self, code: int, name: str):
         self.code = code
         self.name = name
         super().__init__(f"KafkaError: {name} (code: {code})")
 
-
 class TopicPartition:
     """主题分区"""
 
-    def __init__(self, topic: str, partition: int = 0):  # type: ignore
+    def __init__(self, topic: str, partition: int = 0):
         self.topic = topic
         self.partition = partition
 
-    def __repr__(self):  # type: ignore
+    def __repr__(self):
         return f"TopicPartition(topic='{self.topic}', partition={self.partition})"
 
-    def __eq__(self, other):  # type: ignore
+    def __eq__(self, other):
         if not isinstance(other, TopicPartition):
             return False
         return self.topic == other.topic and self.partition == other.partition
 
-    def __hash__(self):  # type: ignore
+    def __hash__(self):
         return hash((self.topic, self.partition))
-
 
 # 常用错误码
 KAFKA_UNKNOWN_TOPIC_OR_PART = 3

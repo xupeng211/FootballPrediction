@@ -10,11 +10,10 @@ from typing import Dict, List, Optional, Any
 import logging
 from redis.exceptions import RedisError
 
-
 class ProcessingCache:
     """数据处理缓存管理器"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         """初始化缓存管理器"""
         self.logger = logging.getLogger(f"processing.{self.__class__.__name__}")
         self.redis_manager = None

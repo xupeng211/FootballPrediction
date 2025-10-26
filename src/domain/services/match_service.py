@@ -19,11 +19,10 @@ from ..events.match_events import (
     MatchPostponedEvent,
 )
 
-
 class MatchDomainService:
     """比赛领域服务"""
 
-    def __init__(self):  # type: ignore
+    def __init__(self):
         self._events: List[Any] = []
 
     def schedule_match(

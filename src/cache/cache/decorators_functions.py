@@ -13,7 +13,6 @@ from redis.exceptions import RedisError
 from src.cache.redis_manager import RedisManager
 from src.cache.mock_redis import MockRedisManager
 
-
 # 常量
 F = TypeVar('F', bound=Callable[..., Any])
 T = TypeVar('T')

@@ -15,7 +15,6 @@ from typing import Optional, Union, Dict, Any
 import calendar
 from functools import lru_cache
 
-
 class DateUtils:
     """日期时间工具类"""
 
@@ -322,19 +321,16 @@ class DateUtils:
 
         return DateUtils.get_formatted_duration(duration.total_seconds())
 
-
 # 性能优化的日期处理函数
 @lru_cache(maxsize=500)
 def cached_format_datetime(dt: datetime, format_str: str) -> str:
     """缓存的日期格式化函数"""
     return DateUtils.format_datetime(dt, format_str)
 
-
 @lru_cache(maxsize=500)
 def cached_time_ago(dt: datetime) -> str:
     """缓存的相对时间函数"""
     return DateUtils.get_time_ago(dt)
-
 
 def get_business_days_range(start_date: datetime, end_date: datetime) -> int:
     """获取日期范围内的工作日数量"""
@@ -353,7 +349,6 @@ def get_business_days_range(start_date: datetime, end_date: datetime) -> int:
         current += timedelta(days=1)
 
     return business_days
-
 
 def get_date_range_summary(start_date: datetime, end_date: datetime) -> Dict[str, Any]:
     """获取日期范围的统计信息"""
