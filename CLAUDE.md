@@ -17,8 +17,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **[🧪 测试指南](docs/testing/TEST_IMPROVEMENT_GUIDE.md)** - 测试策略和最佳实践
 
 ### 文档版本信息
-- **当前版本**: v2.0 (企业级架构 + 质量守护系统)
-- **最后更新**: 2025-10-25
+- **当前版本**: v2.1 (企业级架构 + 质量守护系统)
+- **最后更新**: 2025-10-26
 - **维护者**: Claude AI Assistant
 - **适用范围**: Claude Code AI助手开发指导
 
@@ -68,7 +68,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 基于现代Python技术栈的足球预测系统，采用FastAPI + PostgreSQL + Redis架构。项目遵循企业级开发模式，使用DDD、CQRS等设计模式。
 
 **关键指标：**
-- 测试覆盖率：16.5% (目标：>=80%，持续改进中)
+- 测试覆盖率：13.89% (当前HTML报告)
 - 代码质量：A+ (通过Ruff + MyPy检查)
 - Python版本：3.11.9 (目标：3.11+)
 - 源代码文件：453个Python文件
@@ -100,7 +100,7 @@ make prepush      # 完整的预推送验证
 ### 🛡️ 质量守护系统命令 ⭐
 ```bash
 # 快速质量检查和改进
-./start-improvement.sh                    # 一键启动质量改进
+./scripts/start_improvement.sh                    # 一键启动质量改进
 python3 scripts/quality_guardian.py --check-only  # 全面质量检查
 python3 scripts/smart_quality_fixer.py           # 智能自动修复
 python3 scripts/improvement_monitor.py          # 查看改进状态
@@ -147,9 +147,10 @@ make coverage-live      # 启动实时覆盖率监控
 ## 测试策略
 
 ### 测试执行规则
-- **优先使用Makefile命令** - 避免直接运行单个pytest文件
+- **⚠️ 重要：优先使用Makefile命令** - 避免直接运行单个pytest文件，这会破坏CI集成和覆盖率跟踪
 - 测试环境使用Docker容器隔离
-- 强制执行覆盖率阈值（最低18%，当前16.5%，目标80%，持续改进）
+- 强制执行覆盖率阈值（最低18%，当前13.89%，目标80%，持续改进）
+- **关键规则：永远不要对单个测试文件使用 `--cov-fail-under`** - 这会破坏项目复杂的覆盖率跟踪系统
 
 ### 测试组织结构
 ```
@@ -196,9 +197,9 @@ pytest -m "critical"       # 仅关键测试
 ```
 
 ### 覆盖率管理
-- **当前覆盖率**: 16.5%
+- **当前覆盖率**: 13.89% (基于HTML报告)
 - **目标覆盖率**: 80%
-- **覆盖率阈值**: 18% (最低)、20% (开发)、16.5% (CI)
+- **覆盖率阈值**: 18% (最低)、20% (开发)、13.89% (CI当前)
 
 ### ⚠️ 关键测试规则
 **永远不要**对单个测试文件使用 `--cov-fail-under` - 这会破坏CI集成。项目有复杂的覆盖率跟踪系统，仅在集中管理时覆盖率阈值才正常工作。
@@ -309,7 +310,7 @@ make ci             # 模拟GitHub Actions CI
 1. **安全扫描**: bandit漏洞扫描
 2. **依赖检查**: pip-audit漏洞包检查
 3. **代码质量**: Ruff + MyPy严格检查
-4. **测试**: 385个测试用例，覆盖率强制执行（当前16.5%，目标80%）
+4. **测试**: 385个测试用例，覆盖率强制执行（当前13.89%，目标80%）
 5. **构建**: Docker镜像构建和测试
 
 ### CI/CD流水线
@@ -321,7 +322,7 @@ make ci             # 模拟GitHub Actions CI
 ### 质量监控体系
 **核心指标**:
 - **代码质量**: Ruff + MyPy 严格检查
-- **测试覆盖率**: 16.5% (目标80%)
+- **测试覆盖率**: 13.89% (目标80%)
 - **安全扫描**: bandit漏洞扫描
 - **依赖检查**: pip-audit包检查
 - **性能监控**: Prometheus + Grafana
@@ -396,7 +397,7 @@ python3 scripts/improvement_monitor.py
 #### 批量代码修改后处理
 ```bash
 # 运行完整改进周期
-./start-improvement.sh
+./scripts/start_improvement.sh
 
 # 或启动自动化改进
 python3 scripts/continuous_improvement_engine.py --automated --interval 30
@@ -477,7 +478,7 @@ make logs               # 查看服务日志
 
 - **成熟度**: 企业级生产就绪 ⭐⭐⭐⭐⭐
 - **架构**: 现代微服务 + DDD + CQRS
-- **测试**: 16.5%覆盖率，385个测试用例（目标80%）
+- **测试**: 13.89%覆盖率，385个测试用例（目标80%）
 - **CI/CD**: 全自动化质量门禁
 - **文档**: AI辅助完善文档
 - **代码质量**: A+ (通过Ruff + MyPy检查)
@@ -543,4 +544,4 @@ make logs               # 查看服务日志
 
 ---
 
-*最后更新: 2025-10-25 | 文档版本: v2.0 | 维护者: Claude AI Assistant*
+*最后更新: 2025-10-26 | 文档版本: v2.1 | 维护者: Claude AI Assistant*
