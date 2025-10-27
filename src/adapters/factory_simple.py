@@ -14,7 +14,7 @@ class AdapterFactory:
 _global_factory = None
 
 
-):
+def get_adapter(adapter_type: str, config: Optional[Dict[str, Any]] = None, singleton: bool = True) -> Any:
     """便捷函数：获取适配器"""
     factory = get_global_factory()
     return factory.create_adapter(adapter_type, config, singleton)
@@ -38,9 +38,9 @@ _global_factory = None
 
 # TODO: 方法 def create_adapter 过长(21行)，建议拆分
     def create_adapter(
-        """TODO: 添加函数文档"""
         self, name: str, config: Optional[Dict] = None, singleton: bool = False
-    ):
+    ) -> Any:
+        """创建适配器实例"""
         """创建适配器实例"""
         if name not in self._adapters:
             raise AdapterError(f"No adapter registered for '{name}'")
