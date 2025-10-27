@@ -10,14 +10,14 @@ from pathlib import Path
 import pytest
 
 
-def test_python_version_compatibility(client, client, client, client, client):
+def test_python_version_compatibility(client, client):
     """测试Python版本兼容性"""
     # 验证Python版本满足最低要求
     assert sys.version_info >= (3, 11), f"Python版本过低: {sys.version}"
     print(f"✅ Python版本兼容: {sys.version}")
 
 
-def test_project_structure(client, client, client, client, client):
+def test_project_structure(client, client):
     """测试项目结构完整性"""
     project_root = Path(__file__).parent.parent.parent
 
@@ -32,7 +32,7 @@ def test_project_structure(client, client, client, client, client):
     print("✅ 项目结构完整性检查通过")
 
 
-def test_core_modules_import(client, client, client, client, client):
+def test_core_modules_import(client, client):
     """测试核心模块导入兼容性"""
     try:
         # 测试核心模块导入
@@ -45,15 +45,15 @@ def test_core_modules_import(client, client, client, client, client):
         pytest.skip(f"核心模块导入失败，可能是环境问题: {e}")
 
 
-def test_basic_functionality(client, client, client, client, client):
+def test_basic_functionality(client, client):
     """测试基本功能"""
     # 简单的功能测试
-    assert 1 + 1      == 2, "基础计算功能异常"
+    assert 1 + 1           == 2, "基础计算功能异常"
     assert "test".upper() == "TEST", "字符串处理异常"
     print("✅ 基础功能测试通过")
 
 
-def test_dependencies_available(client, client, client, client, client):
+def test_dependencies_available(client, client):
     """测试关键依赖包可用性"""
     required_packages = ["pytest", "fastapi", "sqlalchemy", "pydantic"]
 

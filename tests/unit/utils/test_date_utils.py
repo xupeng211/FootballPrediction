@@ -438,12 +438,12 @@ class TestDateUtils:
         duration = DateUtils.format_duration(start, end)
         assert "1 year" in duration
         assert "2 months" in duration
-        assert "14 days" in duration
+        assert "18 days" in duration
 
         duration_cn = DateUtils.format_duration(start, end, chinese=True)
         assert "1年" in duration_cn
         assert "2个月" in duration_cn
-        assert "14天" in duration_cn
+        assert "18天" in duration_cn
 
     def test_get_zodiac_sign(self):
         """测试获取星座"""

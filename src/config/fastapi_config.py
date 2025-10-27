@@ -27,7 +27,9 @@ def create_chinese_app() -> FastAPI:
     original_openapi = app.openapi
 
     # 自定义文档
+# TODO: 方法 def custom_openapi 过长(29行)，建议拆分
     def custom_openapi():
+        """TODO: 添加函数文档"""
         if app.openapi_schema:
             return app.openapi_schema
 

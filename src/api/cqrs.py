@@ -69,26 +69,6 @@ class CommandResponse(BaseModel):
 
 
 # 依赖注入
-def get_prediction_cqrs_service():
-    """获取预测CQRS服务"""
-    return CQRSServiceFactory.create_prediction_service()
-
-
-def get_match_cqrs_service():
-    """获取比赛CQRS服务"""
-    return CQRSServiceFactory.create_match_service()
-
-
-def get_user_cqrs_service():
-    """获取用户CQRS服务"""
-    return CQRSServiceFactory.create_user_service()
-
-
-def get_analytics_cqrs_service():
-    """获取分析CQRS服务"""
-    return CQRSServiceFactory.create_analytics_service()
-
-
 # 预测命令端点
 @router.post("/predictions", response_model=CommandResponse, summary="创建预测")
 async def create_prediction(
@@ -166,7 +146,7 @@ async def get_prediction(
     """获取预测详情"""
     prediction = await service.get_prediction_by_id(prediction_id)
     if not prediction:
-        raise HTTPException(status_code=404, detail="预测不存在")
+        raise HTTPException(status_code=404, detail="预测不存在")  # TODO: 将魔法数字 404 提取为常量
 
     return prediction.to_dict()
 
@@ -174,7 +154,7 @@ async def get_prediction(
 @router.get("/users/{user_id}/predictions", summary="获取用户预测列表")
 async def get_user_predictions(
     user_id: int,
-    limit: Optional[int] = Query(10, ge=1, le=100),
+    limit: Optional[int] = Query(10, ge=1, le=100),  # TODO: 将魔法数字 100 提取为常量
     offset: Optional[int] = Query(0, ge=0),
     start_date: Optional[date] = Query(None),
     end_date: Optional[date] = Query(None),
@@ -206,7 +186,7 @@ async def get_user_statistics(
     """获取用户统计信息"""
     stats = await service.get_user_stats(user_id, include_predictions)
     if not stats:
-        raise HTTPException(status_code=404, detail="用户统计不存在")
+        raise HTTPException(status_code=404, detail="用户统计不存在")  # TODO: 将魔法数字 404 提取为常量
 
     return stats.to_dict()
 
@@ -243,16 +223,16 @@ async def get_match(
     """获取比赛详情"""
     match = await service.get_match_by_id(match_id, include_predictions)
     if not match:
-        raise HTTPException(status_code=404, detail="比赛不存在")
+        raise HTTPException(status_code=404, detail="比赛不存在")  # TODO: 将魔法数字 404 提取为常量
 
     return match.to_dict()
 
 
 @router.get("/matches/upcoming", summary="获取即将到来的比赛")
 async def get_upcoming_matches(
-    days_ahead: int = Query(7, ge=1, le=30),
+    days_ahead: int = Query(7, ge=1, le=30),  # TODO: 将魔法数字 30 提取为常量
     competition: Optional[str] = Query(None),
-    limit: Optional[int] = Query(10, ge=1, le=100),
+    limit: Optional[int] = Query(10, ge=1, le=100),  # TODO: 将魔法数字 100 提取为常量
     offset: Optional[int] = Query(0, ge=0),
     service=Depends(get_match_cqrs_service),
 ):
@@ -304,3 +284,25 @@ async def get_cqrs_system_status():
         "total_commands": len(command_bus.get_registered_commands()),
         "total_queries": len(query_bus.get_registered_queries()),
     }
+
+def get_prediction_cqrs_service():  # TODO: 添加返回类型注解
+    """获取预测CQRS服务"""
+    return CQRSServiceFactory.create_prediction_service()
+
+
+def get_match_cqrs_service():  # TODO: 添加返回类型注解
+    """获取比赛CQRS服务"""
+    return CQRSServiceFactory.create_match_service()
+
+
+def get_user_cqrs_service():  # TODO: 添加返回类型注解
+    """获取用户CQRS服务"""
+    return CQRSServiceFactory.create_user_service()
+
+
+def get_analytics_cqrs_service():  # TODO: 添加返回类型注解
+    """获取分析CQRS服务"""
+    return CQRSServiceFactory.create_analytics_service()
+
+
+# 预测命令端点

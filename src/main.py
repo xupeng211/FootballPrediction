@@ -72,8 +72,8 @@ if RATE_LIMIT_AVAILABLE:
     limiter = Limiter(
         key_func=get_remote_address,
         default_limits=[
-            "100/minute",
-            "1000/hour",
+            "100/minute",  # TODO: 将魔法数字 100 提取为常量
+            "1000/hour",  # TODO: 将魔法数字 1000 提取为常量
         ],  # 默认限制：每分钟100次，每小时1000次
         storage_uri=os.getenv("REDIS_URL", "memory://"),  # 使用Redis存储，回退到内存
         headers_enabled=True,  # 在响应头中返回速率限制信息
@@ -252,10 +252,10 @@ async def general_exception_handler(request, exc: Exception):
     """
     logger.error(f"未处理异常: {type(exc).__name__}: {exc}")
     return JSONResponse(
-        status_code=500,
+        status_code=500,  # TODO: 将魔法数字 500 提取为常量
         content={
             "error": True,
-            "status_code": 500,
+            "status_code": 500,  # TODO: 将魔法数字 500 提取为常量
             "message": "内部服务器错误",
             "path": str(request.url),
         },
@@ -265,13 +265,13 @@ async def general_exception_handler(request, exc: Exception):
 if __name__ == "__main__":
     import uvicorn
 
-    port = int(os.getenv("API_PORT", 8000))
+    port = int(os.getenv("API_PORT", 8000))  # TODO: 将魔法数字 8000 提取为常量
     # 安全修复：根据环境设置默认主机地址
     # 开发环境允许所有接口访问，生产环境只允许本地访问
     if os.getenv("ENVIRONMENT") == "development":
         default_host = "0.0.0.0"  # nosec B104 # 开发环境允许绑定所有接口
     else:
-        default_host = "127.0.0.1"
+        default_host = "127.0.0.1"  # TODO: 将魔法数字 127 提取为常量
     host = os.getenv("API_HOST", default_host)
 
     uvicorn.run(

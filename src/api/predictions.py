@@ -24,18 +24,18 @@ Provides API endpoints for match prediction:
     import requests
 
     # 获取比赛预测
-    response = requests.get("http://localhost:8000/api/v1/predictions/12345")
+    response = requests.get("http://localhost:8000/api/v1/predictions/12345")  # TODO: 将魔法数字 8000 提取为常量
     _prediction = response.json()
 
     # 实时预测
-    response = requests.post("http://localhost:8000/api/v1/predictions/12345/predict")
+    response = requests.post("http://localhost:8000/api/v1/predictions/12345/predict")  # TODO: 将魔法数字 8000 提取为常量
     result = response.json()
     ```
 
 错误处理 / Error Handling:
-    - 404: 比赛不存在 / Match not found
-    - 400: 请求参数错误 / Bad request parameters
-    - 500: 服务器内部错误 / Internal server error
+    - 404: 比赛不存在 / Match not found  # TODO: 将魔法数字 404 提取为常量
+    - 400: 请求参数错误 / Bad request parameters  # TODO: 将魔法数字 400 提取为常量
+    - 500: 服务器内部错误 / Internal server error  # TODO: 将魔法数字 500 提取为常量
 
 该文件已重构为模块化架构，原始功能现在通过以下模块提供：
 - rate_limiter: 速率限制配置

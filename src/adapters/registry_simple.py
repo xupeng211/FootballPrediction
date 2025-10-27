@@ -10,15 +10,19 @@ from src.core.exceptions import AdapterError
 class AdapterRegistry:
     """适配器注册表"""
 
+# 全局注册表实例
+_global_registry = None
+
+
     def __init__(self):
         self._registry: Dict[str, Dict] = {}
         self._instances: Dict[str, Any] = {}
 
-    def register(self, name: str, adapter_class: Type, **kwargs):
+    def register(self, name: str, adapter_class: Type, **kwargs):  # TODO: 添加返回类型注解
         """注册适配器"""
         self._registry[name] = {"class": adapter_class, **kwargs}
 
-    def unregister(self, name: str):
+    def unregister(self, name: str):  # TODO: 添加返回类型注解
         """注销适配器"""
         if name not in self._registry:
             raise AdapterError(f"No adapter registered with name '{name}'")
@@ -26,7 +30,7 @@ class AdapterRegistry:
         if name in self._instances:
             del self._instances[name]
 
-    def create(self, name: str, config: Optional[Dict] = None):
+    def create(self, name: str, config: Optional[Dict] = None):  # TODO: 添加返回类型注解
         """创建适配器实例"""
         if name not in self._registry:
             raise AdapterError(f"No adapter registered with name '{name}'")
@@ -61,7 +65,7 @@ class AdapterRegistry:
                 adapters.append((name, info))
         return adapters
 
-    def get_singleton(self, name: str):
+    def get_singleton(self, name: str):  # TODO: 添加返回类型注解
         """获取单例实例"""
         if name not in self._registry:
             raise AdapterError(f"No adapter registered with name '{name}'")
@@ -73,7 +77,7 @@ class AdapterRegistry:
 
         return self._instances[name]
 
-    def clear(self):
+    def clear(self):  # TODO: 添加返回类型注解
         """清空注册表"""
         self._registry.clear()
         self._instances.clear()
@@ -107,14 +111,15 @@ class AdapterRegistry:
         """导出注册表"""
         return self._registry.copy()
 
-    def import_data(self, data: Dict):
+    def import_data(self, data: Dict):  # TODO: 添加返回类型注解
         """导入数据"""
         self._registry.update(data)
 
-    def adapter(self, name: str = None, **kwargs):
+    def adapter(self, name: str = None, **kwargs):  # TODO: 添加返回类型注解
         """装饰器注册适配器"""
 
         def decorator(cls):
+            """TODO: 添加函数文档"""
             adapter_name = name or cls.__name__
             self.register(adapter_name, cls, **kwargs)
             return cls
@@ -123,9 +128,6 @@ class AdapterRegistry:
 
 
 # 全局注册表实例
-_global_registry = None
-
-
 def get_global_registry() -> AdapterRegistry:
     """获取全局注册表实例"""
     global _global_registry
@@ -134,7 +136,7 @@ def get_global_registry() -> AdapterRegistry:
     return _global_registry
 
 
-def register_adapter(name: str = None, **kwargs):
+def register_adapter(name: str = None, **kwargs):  # TODO: 添加返回类型注解
     """装饰器注册适配器"""
     registry = get_global_registry()
     return registry.adapter(name, **kwargs)

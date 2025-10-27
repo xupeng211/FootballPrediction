@@ -28,6 +28,10 @@ class RegistryStatus(Enum):
 class AdapterRegistry:
     """适配器注册表，管理所有适配器的生命周期"""
 
+# 全局适配器注册表实例
+adapter_registry = AdapterRegistry()
+
+# TODO: 方法 def __init__ 过长(101行)，建议拆分
     def __init__(self, factory: Optional[AdapterFactory] = None):
         self.factory = factory or AdapterFactory()
         self.adapters: Dict[str, Adapter] = {}
@@ -161,6 +165,7 @@ class AdapterRegistry:
             if adapter.status == AdapterStatus.ACTIVE
         ]
 
+# TODO: 方法 def get_inactive_adapters 过长(131行)，建议拆分
     def get_inactive_adapters(self) -> List[Adapter]:
         """获取所有非活跃的适配器"""
         return [
@@ -292,6 +297,7 @@ class AdapterRegistry:
 
         return health_status
 
+# TODO: 方法 def get_metrics_summary 过长(64行)，建议拆分
     def get_metrics_summary(self) -> Dict[str, Any]:
         """获取指标摘要"""
         total_requests = 0
@@ -370,4 +376,3 @@ class AdapterRegistry:
 
 
 # 全局适配器注册表实例
-adapter_registry = AdapterRegistry()

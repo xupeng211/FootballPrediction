@@ -30,6 +30,7 @@ except ImportError:
         pass
 
     def jwt(*args, **kwargs):
+        """TODO: 添加函数文档"""
         raise ImportError("Please install python-jose: pip install python-jose")
 
 
@@ -50,11 +51,11 @@ security = HTTPBearer()
 
 
 # 验证密钥强度
-def validate_secret_key():
+def validate_secret_key():  # TODO: 添加返回类型注解
     """验证JWT密钥强度"""
     if SECRET_KEY in ["your-secret-key-here", "your-jwt-secret-key-change-this"]:
         logger.warning("⚠️ 使用默认JWT密钥，请立即更改！")
-    if len(SECRET_KEY) < 32:
+    if len(SECRET_KEY) < 32:  # TODO: 将魔法数字 32 提取为常量
         logger.warning("⚠️ JWT密钥长度不足32位，建议使用更强的密钥")
 
 
