@@ -53,7 +53,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """简单的速率限制中间件"""
 
-    def __init__(self, app, calls: int = 100, period: int = 60):
+    def __init__(self, app, calls: int = 100, period: int = 60):  # TODO: 将魔法数字 100 提取为常量
         super().__init__(app)
         self.calls = calls
         self.period = period
@@ -75,7 +75,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         # 检查是否超过限制
         if len(self.clients[client_ip]) >= self.calls:
-            raise HTTPException(status_code=429, detail="Rate limit exceeded")
+            raise HTTPException(status_code=429, detail="Rate limit exceeded")  # TODO: 将魔法数字 429 提取为常量
 
         self.clients[client_ip].append(current_time)
 
@@ -97,7 +97,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         # 简单的token验证（生产环境应该更复杂）
         auth_header = request.headers.get("Authorization")
         if not auth_header or not auth_header.startswith("Bearer "):
-            raise HTTPException(status_code=401, detail="Missing or invalid token")
+            raise HTTPException(status_code=401, detail="Missing or invalid token")  # TODO: 将魔法数字 401 提取为常量
 
         # 这里可以添加token验证逻辑
         # token = auth_header.split(" ")[1]
@@ -142,7 +142,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Strict-Transport-Security"] = (
-            "max-age=31536000; includeSubDomains"
+            "max-age=31536000; includeSubDomains"  # TODO: 将魔法数字 31536000 提取为常量
         )
 
         return response
@@ -151,7 +151,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 class CacheMiddleware(BaseHTTPMiddleware):
     """简单的缓存中间件"""
 
-    def __init__(self, app, cache_timeout: int = 300):
+    def __init__(self, app, cache_timeout: int = 300):  # TODO: 将魔法数字 300 提取为常量
         super().__init__(app)
         self.cache: Dict[str, Dict[str, Any]] = {}
         self.cache_timeout = cache_timeout
@@ -199,6 +199,6 @@ class ErrorHandlingMiddleware(BaseHTTPMiddleware):
             logger.error(f"Unhandled error: {str(e)}")
             return Response(
                 content=json.dumps({"detail": "Internal server error"}),
-                status_code=500,
+                status_code=500,  # TODO: 将魔法数字 500 提取为常量
                 media_type="application/json",
             )

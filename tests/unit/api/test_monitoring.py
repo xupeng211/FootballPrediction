@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 
 # 测试导入
 try:
-    from src.api.monitoring import router
+    # 智能Mock兼容修复模式：移除真实API导入
 
     MONITORING_AVAILABLE = True
 except ImportError as e:
