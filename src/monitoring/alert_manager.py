@@ -152,7 +152,9 @@ class AlertManager:
         }
 
         # 只有在没有时间戳信息时才添加当前时间
-        if not alert_with_meta.get("created_at") and not alert_with_meta.get("timestamp"):
+        if not alert_with_meta.get("created_at") and not alert_with_meta.get(
+            "timestamp"
+        ):
             alert_with_meta["created_at"] = datetime.utcnow().isoformat()
         self.active_alerts.append(alert_with_meta)
         return alert_id
@@ -217,7 +219,9 @@ class AlertManager:
                         alert_id = alert.get("id", "")
                         self.remove_alert(alert_id)
                         archived_count += 1
-                        logger.info(f"Archived alert {alert_id} with timestamp {created_at}")
+                        logger.info(
+                            f"Archived alert {alert_id} with timestamp {created_at}"
+                        )
                 except (ValueError, TypeError):
                     # 如果时间戳格式有问题，跳过
                     continue
@@ -361,7 +365,9 @@ class AlertManager:
         """检查API响应时间（别名方法，用于测试兼容）"""
         return await self.monitor_api_response_time()
 
-    def aggregate_alerts(self, alerts: List[Dict] = None, window_minutes: int = 60) -> Dict:
+    def aggregate_alerts(
+        self, alerts: List[Dict] = None, window_minutes: int = 60
+    ) -> Dict:
         """聚合告警"""
         if alerts is None:
             alerts = self.active_alerts
@@ -416,7 +422,9 @@ class AlertManager:
                 condition = rule.get("condition")
                 if condition and callable(condition):
                     if condition(alert):
-                        logger.info(f"Alert suppressed by rule: {rule.get('reason', 'unknown')}")
+                        logger.info(
+                            f"Alert suppressed by rule: {rule.get('reason', 'unknown')}"
+                        )
                         return True
             return False
         except Exception as e:
@@ -453,7 +461,7 @@ class AlertManager:
         """序列化告警对象，转换枚举为字符串"""
         serialized = {}
         for key, value in alert.items():
-            if hasattr(value, 'value'):  # 枚举对象
+            if hasattr(value, "value"):  # 枚举对象
                 serialized[key] = value.value
             elif isinstance(value, datetime):  # datetime对象
                 serialized[key] = value.isoformat()
@@ -471,8 +479,12 @@ class AlertManager:
             import json
 
             # 序列化告警数据
-            serialized_active = [self._serialize_alert(alert) for alert in self.active_alerts]
-            serialized_history = [self._serialize_alert(alert) for alert in self.alert_history]
+            serialized_active = [
+                self._serialize_alert(alert) for alert in self.active_alerts
+            ]
+            serialized_history = [
+                self._serialize_alert(alert) for alert in self.alert_history
+            ]
 
             return json.dumps(
                 {
@@ -493,7 +505,9 @@ class AlertManager:
 
             # 确保基本字段存在
             basic_fields = ["id", "type", "severity", "message", "source", "timestamp"]
-            fields = [field for field in basic_fields if field in all_fields] + sorted([f for f in all_fields if f not in basic_fields])
+            fields = [field for field in basic_fields if field in all_fields] + sorted(
+                [f for f in all_fields if f not in basic_fields]
+            )
 
             output = io.StringIO()
             writer = csv.DictWriter(output, fieldnames=fields)
@@ -518,12 +532,20 @@ class AlertManager:
         for alert in self.active_alerts:
             # 统计按类型 - 处理枚举对象
             alert_type_raw = alert.get("type", "unknown")
-            alert_type = alert_type_raw.value if hasattr(alert_type_raw, 'value') else str(alert_type_raw)
+            alert_type = (
+                alert_type_raw.value
+                if hasattr(alert_type_raw, "value")
+                else str(alert_type_raw)
+            )
             by_type[alert_type] = by_type.get(alert_type, 0) + 1
 
             # 统计按严重级别 - 处理枚举对象
             severity_raw = alert.get("severity", "unknown")
-            severity = severity_raw.value if hasattr(severity_raw, 'value') else str(severity_raw)
+            severity = (
+                severity_raw.value
+                if hasattr(severity_raw, "value")
+                else str(severity_raw)
+            )
             by_severity[severity] = by_severity.get(severity, 0) + 1
 
         return {
@@ -570,7 +592,7 @@ class AlertManager:
                 name="test_alert",
                 severity=AlertSeverity.LOW,
                 alert_type=AlertType.SYSTEM,
-                message="Test alert message"
+                message="Test alert message",
             )
 
             # 发送测试告警
@@ -673,7 +695,7 @@ def get_system_metrics() -> Dict[str, float]:
         memory_usage = memory.percent
 
         # 磁盘使用率
-        disk = psutil.disk_usage('/')
+        disk = psutil.disk_usage("/")
         disk_usage = (disk.used / disk.total) * 100
 
         return {
@@ -708,6 +730,7 @@ def get_api_response_time() -> float:
         # 简化实现：返回模拟响应时间
         # 在实际应用中，这里应该测量真实的API响应时间
         import time
+
         time.sleep(0.1)  # 模拟请求延迟
         return 2.5  # 2.5秒响应时间
     except Exception:
