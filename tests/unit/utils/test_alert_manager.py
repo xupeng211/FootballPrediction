@@ -443,7 +443,7 @@ class TestAlertManager:
             )
         )
 
-        _stats = alert_manager.get_alert_statistics()
+        stats = alert_manager.get_alert_statistics()
 
         assert stats["total_alerts"] == 3
         assert stats["by_type"]["error"] == 2
@@ -482,8 +482,8 @@ class TestAlertManager:
         json_export = alert_manager.export_alerts(format="json")
         exported_data = json.loads(json_export)
 
-        assert len(exported_data) == 1
-        assert exported_data[0]["id"] == sample_alert["id"]
+        assert len(exported_data["active_alerts"]) == 1
+        assert exported_data["active_alerts"][0]["id"] == sample_alert["id"]
 
         # 导出为CSV
         csv_export = alert_manager.export_alerts(format="csv")
