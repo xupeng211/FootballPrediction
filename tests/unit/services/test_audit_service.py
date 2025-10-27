@@ -186,7 +186,7 @@ class TestAuditEvent:
         """测试：创建审计事件"""
         event = AuditEvent(
             action=AuditAction.CREATE,
-            _user="test_user",
+            user="test_user",
             severity=AuditSeverity.MEDIUM,
             details={"resource": "test"},
         )
@@ -208,7 +208,7 @@ class TestAuditEvent:
 
         for action in actions:
             event = AuditEvent(
-                action=action, _user="user123", severity=AuditSeverity.LOW, details={}
+                action=action, user="user123", severity=AuditSeverity.LOW, details={}
             )
             assert event.action == action
 
@@ -217,7 +217,7 @@ class TestAuditEvent:
         before = datetime.utcnow()
         event = AuditEvent(
             action=AuditAction.READ,
-            _user="user456",
+            user="user456",
             severity=AuditSeverity.LOW,
             details={},
         )
@@ -237,7 +237,7 @@ class TestDataSanitizer:
 
     def test_sanitize_password(self, sanitizer):
         """测试：清理密码"""
-        _data = {"username": "test", "password": "secret123"}
+        data = {"username": "test", "password": "secret123"}
         sanitized = sanitizer.sanitize(data)
 
         assert sanitized["username"] == "test"
@@ -245,7 +245,7 @@ class TestDataSanitizer:
 
     def test_sanitize_token(self, sanitizer):
         """测试：清理令牌"""
-        _data = {"token": "sk-1234567890", "user_id": 123}
+        data = {"token": "sk-1234567890", "user_id": 123}
         sanitized = sanitizer.sanitize(data)
 
         assert sanitized["user_id"] == 123
@@ -253,7 +253,7 @@ class TestDataSanitizer:
 
     def test_sanitize_multiple_sensitive_fields(self, sanitizer):
         """测试：清理多个敏感字段"""
-        _data = {
+        data = {
             "username": "test",
             "password": "secret",
             "token": "abc123",
@@ -271,14 +271,14 @@ class TestDataSanitizer:
 
     def test_sanitize_empty_data(self, sanitizer):
         """测试：清理空数据"""
-        _data = {}
+        data = {}
         sanitized = sanitizer.sanitize(data)
 
         assert sanitized == {}
 
     def test_sanitize_nested_data(self, sanitizer):
         """测试：清理嵌套数据"""
-        _data = {"user": {"username": "test", "password": "secret"}, "token": "abc123"}
+        data = {"user": {"username": "test", "password": "secret"}, "token": "abc123"}
         sanitized = sanitizer.sanitize(data)
 
         # 简化版清理器只处理顶层字段
@@ -298,7 +298,7 @@ class TestSeverityAnalyzer:
     def test_analyze_delete_action(self, analyzer):
         """测试：分析删除动作"""
         event = AuditEvent(
-            action="delete_user", _user="admin", severity=AuditSeverity.LOW, details={}
+            action="delete_user", user="admin", severity=AuditSeverity.LOW, details={}
         )
 
         severity = analyzer.analyze(event)
@@ -308,7 +308,7 @@ class TestSeverityAnalyzer:
         """测试：分析修改动作"""
         event = AuditEvent(
             action="modify_config",
-            _user="admin",
+            user="admin",
             severity=AuditSeverity.LOW,
             details={},
         )
@@ -319,7 +319,7 @@ class TestSeverityAnalyzer:
     def test_analyze_other_action(self, analyzer):
         """测试：分析其他动作"""
         event = AuditEvent(
-            action="read_data", _user="user123", severity=AuditSeverity.LOW, details={}
+            action="read_data", user="user123", severity=AuditSeverity.LOW, details={}
         )
 
         severity = analyzer.analyze(event)
@@ -328,7 +328,7 @@ class TestSeverityAnalyzer:
     def test_analyze_case_insensitive(self, analyzer):
         """测试：大小写不敏感分析"""
         event = AuditEvent(
-            action="DELETE_USER", _user="admin", severity=AuditSeverity.LOW, details={}
+            action="DELETE_USER", user="admin", severity=AuditSeverity.LOW, details={}
         )
 
         severity = analyzer.analyze(event)
@@ -355,7 +355,7 @@ class TestAuditService:
     def test_log_event(self, audit_service):
         """测试：记录事件"""
         event = audit_service.log_event(
-            action="create_prediction", _user="user123", details={"prediction_id": 789}
+            action="create_prediction", user="user123", details={"prediction_id": 789}
         )
 
         assert event is not None
@@ -369,7 +369,7 @@ class TestAuditService:
         """测试：记录带清理的事件"""
         event = audit_service.log_event(
             action="login",
-            _user="user456",
+            user="user456",
             details={"username": "test", "password": "secret123"},
         )
 
@@ -382,7 +382,7 @@ class TestAuditService:
 
         for i in range(5):
             event = audit_service.log_event(
-                action=f"action_{i}", _user=f"user_{i}", details={"index": i}
+                action=f"action_{i}", user=f"user_{i}", details={"index": i}
             )
             events.append(event)
 
@@ -453,7 +453,7 @@ class TestAuditService:
         """测试：事件记录时的日志"""
         with patch("src.services.audit_service.logger") as mock_logger:
             event = audit_service.log_event(
-                action="test_action", _user="test_user", details={}
+                action="test_action", user="test_user", details={}
             )
 
             mock_logger.info.assert_called_once_with(
@@ -472,7 +472,7 @@ class TestAuditService:
             for i in range(10):
                 audit_service.log_event(
                     action=f"worker_{worker_id}_action_{i}",
-                    _user=f"worker_{worker_id}",
+                    user=f"worker_{worker_id}",
                     details={"iteration": i},
                 )
                 results.append((worker_id, i))
@@ -511,7 +511,7 @@ class TestAuditService:
 
         event = service.log_event(
             action="login",
-            _user="test",
+            user="test",
             details={"password": "secret", "api_key": "abc123", "normal": "value"},
         )
 
@@ -533,7 +533,7 @@ class TestAuditService:
         service = AuditService()
         service.analyzer = CustomAnalyzer()
 
-        event = service.log_event(action="login_attempt", _user="test", details={})
+        event = service.log_event(action="login_attempt", user="test", details={})
 
         assert event.severity == AuditSeverity.HIGH
 
@@ -546,7 +546,7 @@ class TestAuditService:
         # 记录大量事件
         for i in range(1000):
             audit_service.log_event(
-                action=f"action_{i}", _user="perf_test", details={"index": i}
+                action=f"action_{i}", user="perf_test", details={"index": i}
             )
 
         end_time = time.time()
