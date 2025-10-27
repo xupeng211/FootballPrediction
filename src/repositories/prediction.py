@@ -8,7 +8,7 @@ Implements data access logic for predictions.
 
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional
 
 from sqlalchemy import func, select
 

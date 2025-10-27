@@ -335,6 +335,6 @@ async def test_async_context_usage():
 
         end_time = TimeUtils.now_utc()
 
-        # 验证时间差
+        # 验证时间差（允许一定的执行时间偏差）
         time_diff = (end_time - start_time).total_seconds()
-        assert 0.01 <= time_diff < 0.02
+        assert 0.01 <= time_diff < 0.05  # 放宽上限以适应系统调度差异

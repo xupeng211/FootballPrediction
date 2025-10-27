@@ -11,11 +11,12 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import pytest
 
 # 尝试导入目标模块
+module_name = "adapters.football"
 try:
-    from adapters.football import *
+    from src.adapters.football import *
 
     IMPORTS_AVAILABLE = True
-    print("成功导入模块: adapters.base")
+    print(f"成功导入模块: {module_name}")
 except ImportError as e:
     print(f"导入警告: {e}")
     IMPORTS_AVAILABLE = False

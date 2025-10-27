@@ -12,7 +12,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
 
 # 创建路由器

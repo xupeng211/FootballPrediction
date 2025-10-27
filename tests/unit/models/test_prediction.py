@@ -12,8 +12,8 @@ import pytest
 
 # 导入要测试的模块
 try:
-    from src.models.prediction import (Counter, Gauge,  # 监控指标类; 监控指标实例
-                                       Histogram, PredictionCache,
+    from src.models.prediction import Gauge  # 监控指标类; 监控指标实例
+    from src.models.prediction import (Counter, Histogram, PredictionCache,
                                        PredictionResult, PredictionService,
                                        cache_hit_ratio,
                                        model_load_duration_seconds,

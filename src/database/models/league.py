@@ -1,5 +1,3 @@
-from sqlalchemy import Boolean, Column, Index, Integer, String
-from sqlalchemy.orm import relationship
 
 """
 联赛模型
@@ -7,7 +5,6 @@ from sqlalchemy.orm import relationship
 存储足球联赛的基础信息，如英超、西甲等。
 """
 
-from sqlalchemy import Boolean, Column, Index, Integer, String
 
 from ..base import BaseModel
 

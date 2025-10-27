@@ -3,17 +3,8 @@
 """
 
 # 导入
-import logging
-from datetime import datetime
-from enum import Enum
-from typing import Any, Dict, List, Optional
 
-import numpy
-import pandas
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database.connection import DatabaseManager
 
 # 常量
 OUTLIER = "outlier"

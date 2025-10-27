@@ -8,7 +8,7 @@ Implements data access logic for matches.
 
 from datetime import date, datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Optional
 
 from sqlalchemy import func, select, update
 

@@ -11,7 +11,7 @@ Strategy implementation using statistical methods and mathematical models for pr
 import math
 import time
 from datetime import datetime
-from typing import Any, Dict, List, Tuple, Type
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 

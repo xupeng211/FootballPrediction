@@ -3,10 +3,9 @@ API缓存实现
 生成时间: 2025-10-26 20:57:22
 """
 
-import json
 import time
 from functools import wraps
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 
 class APICache:

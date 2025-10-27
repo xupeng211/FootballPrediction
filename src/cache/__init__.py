@@ -26,8 +26,8 @@ from .decorators import (CacheDecorator, InvalidateCacheDecorator,
                          cache_match_data, cache_result, cache_team_stats,
                          cache_user_predictions, cache_with_ttl)
 # Redis缓存管理
-from .redis_manager import (CacheKeyManager,  # 便捷函数 - 异步; 便捷函数 - 同步; 其他功能
-                            RedisManager, adelete_cache, aexists_cache,
+from .redis_manager import CacheKeyManager  # 便捷函数 - 异步; 便捷函数 - 同步; 其他功能
+from .redis_manager import (RedisManager, adelete_cache, aexists_cache,
                             aget_cache, amget_cache, amset_cache, aset_cache,
                             attl_cache, delete_cache, exists_cache, get_cache,
                             get_redis_manager, mget_cache, mset_cache,

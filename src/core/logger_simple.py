@@ -4,7 +4,6 @@ Simplified Logging Management Tool
 """
 
 import logging
-from typing import Optional
 
 
 def get_simple_logger(name: str, level: str = "INFO") -> logging.Logger:

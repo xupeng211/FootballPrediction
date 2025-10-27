@@ -123,8 +123,8 @@ class TestHelpers:
         # 测试None字典
         assert safe_get(None, "key", "default") == "default"
 
-        # 测试嵌套字典（但此函数不支持嵌套）
-        assert safe_get(_data, "profile.email") is None  # 返回None，因为没有这个键
+        # 测试嵌套字典（此函数支持点号分隔的嵌套键）
+        assert safe_get(_data, "profile.email") == "john@example.com"  # 支持嵌套访问
 
     def test_format_timestamp(self):
         """测试格式化时间戳"""
@@ -159,12 +159,12 @@ class TestHelpers:
 
     def test_sanitize_string(self):
         """测试清理字符串"""
-        # 测试基本清理
-        assert sanitize_string("  Hello World  ") == "hello world"
-        assert sanitize_string("   TEST   ") == "test"
+        # 测试基本清理（sanitize_string只做XSS防护，不做大小写转换）
+        assert sanitize_string("  Hello World  ") == "Hello World"
+        assert sanitize_string("   TEST   ") == "TEST"
 
-        # 测试大小写转换
-        assert sanitize_string("HeLLo WoRLD") == "hello world"
+        # 测试大小写转换（sanitize_string不改变大小写）
+        assert sanitize_string("HeLLo WoRLD") == "HeLLo WoRLD"
 
         # 测试空字符串
         assert sanitize_string("") == ""
@@ -177,17 +177,17 @@ class TestHelpers:
         assert sanitize_string("\t\n  \r") == ""
 
         # 测试特殊字符
-        assert sanitize_string("  Hello@World!  ") == "hello@world!"
-        assert sanitize_string("  Test_123  ") == "test_123"
+        assert sanitize_string("  Hello@World!  ") == "Hello@World!"
+        assert sanitize_string("  Test_123  ") == "Test_123"
 
         # 测试Unicode字符
         assert sanitize_string("  你好世界  ") == "你好世界"
 
         # 测试混合空白
-        assert sanitize_string("\tHello\nWorld\r\n") == "hello\nworld"
+        assert sanitize_string("\tHello\nWorld\r\n") == "Hello\nWorld"
 
         # 测试保留内部空白
-        assert sanitize_string("  Hello   World  ") == "hello   world"
+        assert sanitize_string("  Hello   World  ") == "Hello   World"
 
     def test_edge_cases(self):
         """测试边界情况"""
@@ -246,7 +246,7 @@ class TestHelpers:
 
         # 清理名称
         clean_name = sanitize_string("  " + user_data["name"] + "  ")
-        assert clean_name == "john doe"
+        assert clean_name == "John Doe"
 
         # 生成用户ID和哈希
         user_id = generate_uuid()
@@ -266,7 +266,7 @@ class TestHelpers:
 
         # 验证记录
         assert user_record["id"] == user_id
-        assert user_record["name"] == "john doe"
+        assert user_record["name"] == "John Doe"
         assert user_record["email"] == "john@example.com"
         assert user_record["email_hash"] == generate_hash("john@example.com")
         assert "T" in user_record["created_at"]

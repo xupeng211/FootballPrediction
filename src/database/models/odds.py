@@ -14,15 +14,8 @@ Odds - 数据库模块
 - [待补充 - 使用注意事项]
 """
 
-from datetime import datetime
-from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, Optional
 
-from sqlalchemy import DECIMAL, CheckConstraint, DateTime
-from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import ForeignKey, Index, String, func
-from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..base import BaseModel
 
@@ -32,12 +25,7 @@ from ..base import BaseModel
 存储不同博彩公司的赔率信息，包括胜平负、大小球、让球等市场。
 """
 
-from typing import Any, Dict, Optional
 
-from sqlalchemy import DECIMAL, CheckConstraint, DateTime
-from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import ForeignKey, Index, String, func
-from sqlalchemy.orm import mapped_column, relationship
 
 from src.database.base import BaseModel
 
