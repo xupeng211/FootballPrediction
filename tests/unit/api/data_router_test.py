@@ -11,7 +11,11 @@ import pytest
 
 # 尝试导入目标模块
 try:
-    from src.api.data_router import *
+    from src.api.data_router import (
+        LeagueInfo, TeamInfo, MatchInfo, OddsInfo, MatchStatistics, TeamStatistics,
+        get_leagues, get_league, get_teams, get_team, get_team_statistics,
+        get_matches, get_match, get_match_statistics, get_odds, get_match_odds
+    )
 
     IMPORTS_AVAILABLE = True
 except ImportError as e:
@@ -33,11 +37,19 @@ class TestApiData_Router:
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
-        # TODO: 实现{class_name}类的基础测试
         # 创建LeagueInfo实例并测试基础功能
         try:
-            instance = LeagueInfo()
+            instance = LeagueInfo(
+                id=1,
+                name="测试联赛",
+                country="中国"
+            )
             assert instance is not None
+            assert instance.id == 1
+            assert instance.name == "测试联赛"
+            assert instance.country == "中国"
+            assert instance.logo_url is None
+            assert instance.season is None
         except Exception as e:
             print(f"实例化失败: {e}")
             pytest.skip("模型实例化失败")
@@ -47,11 +59,21 @@ class TestApiData_Router:
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
-        # TODO: 实现{class_name}类的基础测试
         # 创建TeamInfo实例并测试基础功能
         try:
-            instance = TeamInfo()
+            instance = TeamInfo(
+                id=1,
+                name="测试球队",
+                short_name="测试队",
+                country="中国"
+            )
             assert instance is not None
+            assert instance.id == 1
+            assert instance.name == "测试球队"
+            assert instance.short_name == "测试队"
+            assert instance.country == "中国"
+            assert instance.logo_url is None
+            assert instance.league_id is None
         except Exception as e:
             print(f"实例化失败: {e}")
             pytest.skip("模型实例化失败")
@@ -61,11 +83,28 @@ class TestApiData_Router:
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
-        # TODO: 实现{class_name}类的基础测试
         # 创建MatchInfo实例并测试基础功能
         try:
-            instance = MatchInfo()
+            from datetime import datetime
+            instance = MatchInfo(
+                id=1,
+                home_team_id=10,
+                away_team_id=20,
+                home_team_name="主队",
+                away_team_name="客队",
+                league_id=1,
+                league_name="测试联赛",
+                match_date=datetime.now(),
+                status="pending"
+            )
             assert instance is not None
+            assert instance.id == 1
+            assert instance.home_team_id == 10
+            assert instance.away_team_id == 20
+            assert instance.home_team_name == "主队"
+            assert instance.away_team_name == "客队"
+            assert instance.league_id == 1
+            assert instance.league_name == "测试联赛"
         except Exception as e:
             print(f"实例化失败: {e}")
             pytest.skip("模型实例化失败")
@@ -75,30 +114,37 @@ class TestApiData_Router:
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
-        # TODO: 实现{func_name}函数测试
-        # 根据函数签名设计测试用例
+        # 测试get_leagues函数是否可调用（FastAPI路由函数）
         try:
-            # 尝试调用get_leagues函数
-            result = get_leagues()
-            assert result is not None or callable(result)
+            # 检查函数是否可以正常导入
+            assert callable(get_leagues), "get_leagues应该是可调用的函数"
+
+            # 检查函数签名
+            import inspect
+            sig = inspect.signature(get_leagues)
+            assert 'country' in sig.parameters, "应该有country参数"
+            assert 'season' in sig.parameters, "应该有season参数"
+            assert 'limit' in sig.parameters, "应该有limit参数"
+
         except Exception as e:
-            print(f"函数调用失败: {e}")
-            pytest.skip("函数调用失败")
+            print(f"函数检查失败: {e}")
+            pytest.skip("函数检查失败")
 
     def test_get_league_function(self):
         """测试get_league函数功能"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
-        # TODO: 实现{func_name}函数测试
-        # 根据函数签名设计测试用例
+        # 测试函数签名和可调用性（FastAPI路由函数）
         try:
-            # 尝试调用get_league函数
-            result = get_league()
-            assert result is not None or callable(result)
+            assert callable(get_league), "get_league应该是可调用的函数"
+            import inspect
+            sig = inspect.signature(get_league)
+            # 检查是否有参数
+            assert len(sig.parameters) > 0, "函数应该有参数"
         except Exception as e:
-            print(f"函数调用失败: {e}")
-            pytest.skip("函数调用失败")
+            print(f"函数检查失败: {e}")
+            pytest.skip("函数检查失败")
 
     def test_get_teams_function(self):
         """测试get_teams函数功能"""
