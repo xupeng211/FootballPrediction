@@ -181,7 +181,7 @@ class TestUtilsConfigIntegration:
             if encryption_enabled:
                 hashed = CryptoUtils.hash_string(test_data, hash_algorithm)
                 assert hashed is not None
-                assert hashed           != test_data  # 应该被哈希化
+                assert hashed            != test_data  # 应该被哈希化
 
     async def test_config_data_validator_integration_success(
         self, temp_config_file
@@ -310,7 +310,7 @@ class TestUtilsConfigIntegration:
         # 验证变更通知
         assert len(changes) >= 1
         assert changes[-1][0] == "test.key"
-        assert changes[-1][2]           == "test_value"
+        assert changes[-1][2]            == "test_value"
 
     async def test_multi_source_config_integration_success(self) -> None:
         """✅ 成功用例：多源配置集成成功"""
@@ -347,7 +347,7 @@ class TestUtilsConfigIntegration:
             assert config.get("app_name") == "football_prediction"
             assert config.get("version") == "1.0"
             assert "database" in config
-            assert config["database"]["host"]           == "localhost"
+            assert config["database"]["host"]            == "localhost"
 
         finally:
             # 清理临时文件
@@ -375,12 +375,12 @@ class TestUtilsConfigIntegration:
 
         if hasattr(manager, "encrypt_value"):
             encrypted = manager.encrypt_value(sensitive_value)
-            assert encrypted           != sensitive_value
+            assert encrypted            != sensitive_value
             assert len(encrypted) > 0
 
             if hasattr(manager, "decrypt_value"):
                 decrypted = manager.decrypt_value(encrypted)
-                assert decrypted           == sensitive_value
+                assert decrypted            == sensitive_value
 
     async def test_config_performance_monitoring_integration_success(
         self, temp_config_file
