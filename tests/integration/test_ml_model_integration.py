@@ -131,7 +131,7 @@ class TestMLModelIntegrationTests:
             return {"status": "completed"}
 
         result = await sample_async_operation()
-        assert result["status"]   == "completed"
+        assert result["status"]      == "completed"
 
     def test_data_consistency_ml_model_integration_tests(
         self, db_session, redis_client
@@ -169,5 +169,5 @@ class TestMLModelIntegrationTests:
         assert True
 
 
-if __name__   == "__main__":
+if __name__      == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])

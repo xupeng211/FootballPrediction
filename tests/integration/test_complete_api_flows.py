@@ -131,7 +131,7 @@ class TestAPIIntegrationTests:
             return {"status": "completed"}
 
         result = await sample_async_operation()
-        assert result["status"]   == "completed"
+        assert result["status"]      == "completed"
 
     def test_data_consistency_api_integration_tests(self, db_session, redis_client):
         """测试数据一致性：API Integration Tests"""
@@ -167,5 +167,5 @@ class TestAPIIntegrationTests:
         assert True
 
 
-if __name__   == "__main__":
+if __name__      == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])
