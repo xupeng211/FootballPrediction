@@ -52,6 +52,11 @@ adapter_factory = AdapterFactory()
 # 创建默认配置
 adapter_factory.create_default_configs()
 
+# TODO: 方法 def create_adapter_group 过长(25行)，建议拆分
+# TODO: 方法 def load_config_from_file 过长(29行)，建议拆分
+# TODO: 方法 def save_config_to_file 过长(39行)，建议拆分
+# TODO: 方法 def create_default_configs 过长(37行)，建议拆分
+# 全局适配器工厂实例
     def __init__(self):
         self._adapter_types: Dict[str, Type[Adapter]] = {}
         self._configs: Dict[str, AdapterConfig] = {}
@@ -110,6 +115,7 @@ adapter_factory.create_default_configs()
         return resolved
 
 # TODO: 方法 def create_adapter_group 过长(25行)，建议拆分
+# TODO: 方法 def create_adapter_group 过长(26行)，建议拆分
     def create_adapter_group(self, group_config: AdapterGroupConfig) -> Adapter:
         """创建适配器组"""
         if group_config.adapters:
@@ -136,6 +142,7 @@ adapter_factory.create_default_configs()
             raise ValueError(f"No adapters configured for group {group_config.name}")
 
 # TODO: 方法 def load_config_from_file 过长(29行)，建议拆分
+# TODO: 方法 def load_config_from_file 过长(30行)，建议拆分
     def load_config_from_file(self, file_path: Union[str, Path]) -> None:
         """从文件加载适配器配置"""
         file_path = Path(file_path)
@@ -165,6 +172,7 @@ adapter_factory.create_default_configs()
                 group_config = AdapterGroupConfig(**group_data)
                 self._group_configs[group_config.name] = group_config
 
+# TODO: 方法 def save_config_to_file 过长(39行)，建议拆分
 # TODO: 方法 def save_config_to_file 过长(39行)，建议拆分
     def save_config_to_file(self, file_path: Union[str, Path]) -> None:
         """保存配置到文件"""
@@ -218,6 +226,7 @@ adapter_factory.create_default_configs()
 
         return masked
 
+# TODO: 方法 def create_default_configs 过长(37行)，建议拆分
 # TODO: 方法 def create_default_configs 过长(37行)，建议拆分
     def create_default_configs(self) -> None:
         """创建默认配置"""

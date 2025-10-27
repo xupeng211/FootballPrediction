@@ -2,7 +2,7 @@
 简化的适配器注册表
 """
 
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, Optional, Type
 
 from src.core.exceptions import AdapterError
 
@@ -10,19 +10,15 @@ from src.core.exceptions import AdapterError
 class AdapterRegistry:
     """适配器注册表"""
 
-# 全局注册表实例
-_global_registry = None
-
-
     def __init__(self):
         self._registry: Dict[str, Dict] = {}
         self._instances: Dict[str, Any] = {}
 
-    def register(self, name: str, adapter_class: Type, **kwargs):  # TODO: 添加返回类型注解
+    def register(self, name: str, adapter_class: Type, **kwargs) -> None:
         """注册适配器"""
         self._registry[name] = {"class": adapter_class, **kwargs}
 
-    def unregister(self, name: str):  # TODO: 添加返回类型注解
+    def unregister(self, name: str) -> None:
         """注销适配器"""
         if name not in self._registry:
             raise AdapterError(f"No adapter registered with name '{name}'")
@@ -30,7 +26,7 @@ _global_registry = None
         if name in self._instances:
             del self._instances[name]
 
-    def create(self, name: str, config: Optional[Dict] = None):  # TODO: 添加返回类型注解
+    def create(self, name: str, config: Optional[Dict] = None) -> Any:
         """创建适配器实例"""
         if name not in self._registry:
             raise AdapterError(f"No adapter registered with name '{name}'")
@@ -39,95 +35,28 @@ _global_registry = None
         adapter_class = adapter_info["class"]
 
         try:
-            if config:
-                return adapter_class(config)
-            else:
-                return adapter_class()
+            return adapter_class(config)
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:
             raise AdapterError(f"Failed to create adapter '{name}': {str(e)}")
 
-    def get_info(self, name: str) -> Dict:
+    def get_registered_names(self) -> list[str]:
+        """获取所有已注册的适配器名称"""
+        return list(self._registry.keys())
+
+    def get_adapter_info(self, name: str) -> Optional[Dict]:
         """获取适配器信息"""
-        if name not in self._registry:
-            raise AdapterError(f"No adapter registered with name '{name}'")
-        return self._registry[name].copy()
+        return self._registry.get(name)
 
-    def list(self, **filters) -> List[tuple]:
-        """列出适配器，支持过滤条件"""
-        adapters = []
-        for name, info in self._registry.items():
-            match = True
-            for key, value in filters.items():
-                if key in info and info[key] != value:
-                    match = False
-                    break
-            if match:
-                adapters.append((name, info))
-        return adapters
-
-    def get_singleton(self, name: str):  # TODO: 添加返回类型注解
-        """获取单例实例"""
-        if name not in self._registry:
-            raise AdapterError(f"No adapter registered with name '{name}'")
-
-        if name not in self._instances:
-            adapter_info = self._registry[name]
-            adapter_class = adapter_info["class"]
-            self._instances[name] = adapter_class()
-
-        return self._instances[name]
-
-    def clear(self):  # TODO: 添加返回类型注解
+    def clear(self) -> None:
         """清空注册表"""
         self._registry.clear()
         self._instances.clear()
 
-    def validate_config(self, name: str, config: Dict) -> bool:
-        """验证配置"""
-        # 简化实现，总是返回True
-        return True
-
-    def get_dependencies(self, name: str) -> List[str]:
-        """获取依赖"""
-        if name in self._registry:
-            return list(self._registry[name].get("dependencies", []))
-        return []
-
-    def resolve_dependencies(self, name: str) -> List[str]:
-        """解析依赖关系"""
-        # 简化实现
-        return [name]
-
-    def get_statistics(self) -> Dict:
-        """获取统计信息"""
-        return {
-            "total": len(self._registry),
-            "singletons": sum(
-                1 for info in self._registry.values() if info.get("singleton", False)
-            ),
-        }
-
-    def export(self) -> Dict:
-        """导出注册表"""
-        return self._registry.copy()
-
-    def import_data(self, data: Dict):  # TODO: 添加返回类型注解
-        """导入数据"""
-        self._registry.update(data)
-
-    def adapter(self, name: str = None, **kwargs):  # TODO: 添加返回类型注解
-        """装饰器注册适配器"""
-
-        def decorator(cls):
-            """TODO: 添加函数文档"""
-            adapter_name = name or cls.__name__
-            self.register(adapter_name, cls, **kwargs)
-            return cls
-
-        return decorator
-
 
 # 全局注册表实例
+_global_registry = None
+
+
 def get_global_registry() -> AdapterRegistry:
     """获取全局注册表实例"""
     global _global_registry
@@ -136,7 +65,13 @@ def get_global_registry() -> AdapterRegistry:
     return _global_registry
 
 
-def register_adapter(name: str = None, **kwargs):  # TODO: 添加返回类型注解
+def register_adapter(name: str = None, **kwargs):
     """装饰器注册适配器"""
     registry = get_global_registry()
-    return registry.adapter(name, **kwargs)
+
+    def decorator(cls):
+        adapter_name = name or cls.__name__
+        registry.register(adapter_name, cls, **kwargs)
+        return cls
+
+    return decorator
