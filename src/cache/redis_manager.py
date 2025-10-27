@@ -5,8 +5,8 @@ Redis缓存管理器
 """
 
 try:
-    from .redis import (CacheKeyManager,  # 便捷函数 - 异步; 便捷函数 - 同步; 其他功能
-                        RedisManager, adelete_cache, aexists_cache, aget_cache,
+    from .redis import CacheKeyManager  # 便捷函数 - 异步; 便捷函数 - 同步; 其他功能
+    from .redis import (RedisManager, adelete_cache, aexists_cache, aget_cache,
                         amget_cache, amset_cache, aset_cache, attl_cache,
                         delete_cache, exists_cache, get_cache,
                         get_redis_manager, mget_cache, mset_cache, set_cache,

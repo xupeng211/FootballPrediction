@@ -12,7 +12,7 @@ Security Middleware
 import logging
 import os
 import time
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict
 
 from fastapi import HTTPException, Request, Response, status
 
@@ -24,11 +24,8 @@ except ImportError:
     from starlette.middleware.base import BaseHTTPMiddleware
     from starlette.middleware.cors import CORSMiddleware
 
-import asyncio
 from collections import defaultdict
-from datetime import datetime, timedelta
 
-from starlette.middleware.base import RequestResponseEndpoint
 from starlette.types import ASGIApp
 
 logger = logging.getLogger(__name__)

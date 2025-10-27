@@ -8,7 +8,7 @@ Alert Manager
 import logging
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +77,7 @@ class AlertManager:
         source: str = "",
         name: str = None,
         alert_type: AlertType = None,
-        **kwargs
+        **kwargs,
     ):
         """创建警报 - 支持多种参数格式以向后兼容"""
         # 处理不同的参数格式
@@ -102,11 +102,13 @@ class AlertManager:
                 "message": message,
                 "source": source,
                 "timestamp": datetime.utcnow(),
-                **kwargs
+                **kwargs,
             }
 
         # 旧格式支持
-        alert = Alert(name, severity or AlertSeverity.MEDIUM, type or AlertType.INFO, message)
+        alert = Alert(
+            name, severity or AlertSeverity.MEDIUM, type or AlertType.INFO, message
+        )
         self.alerts.append(alert)
         logger.info(f"Created alert: {name} - {message}")
 
@@ -118,7 +120,7 @@ class AlertManager:
             "message": message,
             "source": source,
             "timestamp": datetime.utcnow(),
-            **kwargs
+            **kwargs,
         }
 
     def get_active_alerts(self) -> List[Dict]:
@@ -145,7 +147,7 @@ class AlertManager:
             **alert_data,
             "id": alert_id,
             "status": "active",
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.utcnow().isoformat(),
         }
         self.active_alerts.append(alert_with_meta)
         return alert_id
@@ -178,15 +180,13 @@ class AlertManager:
     def get_alerts_by_severity(self, severity: AlertSeverity) -> List[Dict]:
         """根据严重程度获取告警"""
         return [
-            alert for alert in self.active_alerts
-            if alert.get("severity") == severity
+            alert for alert in self.active_alerts if alert.get("severity") == severity
         ]
 
     def get_alerts_by_type(self, alert_type: AlertType) -> List[Dict]:
         """根据类型获取告警"""
         return [
-            alert for alert in self.active_alerts
-            if alert.get("type") == alert_type
+            alert for alert in self.active_alerts if alert.get("type") == alert_type
         ]
 
     def archive_old_alerts(self, days: int = 30) -> int:
@@ -216,7 +216,8 @@ class AlertManager:
 
         # 清理过期的请求记录
         self.rate_limiter[key] = [
-            req_time for req_time in self.rate_limiter[key]
+            req_time
+            for req_time in self.rate_limiter[key]
             if now - req_time < timedelta(seconds=window)
         ]
 
@@ -233,7 +234,7 @@ class AlertManager:
         return {
             "status": "healthy",
             "active_alerts": len(self.active_alerts),
-            "check_time": datetime.utcnow().isoformat()
+            "check_time": datetime.utcnow().isoformat(),
         }
 
     async def monitor_database_connection(self) -> Dict:
@@ -241,7 +242,7 @@ class AlertManager:
         return {
             "status": "connected",
             "response_time_ms": 10,
-            "check_time": datetime.utcnow().isoformat()
+            "check_time": datetime.utcnow().isoformat(),
         }
 
     async def monitor_api_response_time(self) -> Dict:
@@ -249,7 +250,7 @@ class AlertManager:
         return {
             "average_response_time_ms": 150,
             "status": "healthy",
-            "check_time": datetime.utcnow().isoformat()
+            "check_time": datetime.utcnow().isoformat(),
         }
 
     def aggregate_alerts(self, window_minutes: int = 60) -> Dict:
@@ -258,7 +259,7 @@ class AlertManager:
             "total_alerts": len(self.active_alerts),
             "by_severity": {},
             "by_type": {},
-            "window_minutes": window_minutes
+            "window_minutes": window_minutes,
         }
 
     def check_suppression(self, alert: Dict) -> bool:
@@ -271,7 +272,7 @@ class AlertManager:
         return {
             "summary": f"Digest with {len(alerts)} alerts",
             "alerts": alerts,
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.utcnow().isoformat(),
         }
 
     async def send_digest(self, digest: Dict) -> bool:
@@ -291,11 +292,15 @@ class AlertManager:
 
         if format == "json":
             import json
-            return json.dumps({
-                "active_alerts": self.active_alerts,
-                "alert_history": self.alert_history,
-                "export_time": datetime.utcnow().isoformat()
-            }, indent=2)
+
+            return json.dumps(
+                {
+                    "active_alerts": self.active_alerts,
+                    "alert_history": self.alert_history,
+                    "export_time": datetime.utcnow().isoformat(),
+                },
+                indent=2,
+            )
         return ""
 
     def get_alert_statistics(self) -> Dict:
@@ -305,7 +310,7 @@ class AlertManager:
             "total_history": len(self.alert_history),
             "by_severity": {},
             "by_type": {},
-            "last_24h": 0
+            "last_24h": 0,
         }
 
     def auto_resolve_alerts(self, hours: int = 24) -> int:
@@ -326,10 +331,7 @@ class AlertManager:
         try:
             # 创建测试告警
             test_alert = self.create_alert(
-                "test_alert",
-                AlertSeverity.LOW,
-                AlertType.INFO,
-                "Test alert message"
+                "test_alert", AlertSeverity.LOW, AlertType.INFO, "Test alert message"
             )
 
             return {
@@ -337,14 +339,14 @@ class AlertManager:
                 "success": True,  # 添加success字段以兼容测试期望
                 "message": "Alert system is working",
                 "test_alert_id": test_alert.get("id", "test"),
-                "test_time": datetime.utcnow().isoformat()
+                "test_time": datetime.utcnow().isoformat(),
             }
         except Exception as e:
             return {
                 "status": "failed",
                 "success": False,  # 添加success字段以兼容测试期望
                 "message": f"Alert system test failed: {str(e)}",
-                "test_time": datetime.utcnow().isoformat()
+                "test_time": datetime.utcnow().isoformat(),
             }
 
     def _update_rate_limit(self, key: str, window: int) -> None:
@@ -356,8 +358,7 @@ class AlertManager:
         # 清理过期的记录
         cutoff_time = now - timedelta(seconds=window)
         self.rate_limiter[key] = [
-            req_time for req_time in self.rate_limiter[key]
-            if req_time > cutoff_time
+            req_time for req_time in self.rate_limiter[key] if req_time > cutoff_time
         ]
 
 

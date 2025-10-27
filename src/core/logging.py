@@ -5,8 +5,7 @@
 """
 
 import logging
-import os
-from typing import Any, Dict, Optional
+from typing import Optional
 
 from .logger import Logger as _BaseLogger
 

@@ -13,7 +13,7 @@
 import re
 import unicodedata
 from functools import lru_cache
-from typing import List, Optional
+from typing import List
 
 
 class StringUtils:

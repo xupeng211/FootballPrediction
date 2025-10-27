@@ -5,11 +5,9 @@ from datetime import datetime
 Database Service
 """
 
-from typing import Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .repositories.base import AbstractRepository
 from .repositories.match_repository import MatchRepository
 from .repositories.prediction_repository import PredictionRepository
 from .repositories.user_repository import UserRepository

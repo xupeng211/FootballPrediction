@@ -1,4 +1,3 @@
-from src.core.logger import get_logger
 
 """
 事件系统API端点

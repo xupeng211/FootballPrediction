@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 from src.database.definitions import (get_async_reader_session,
                                       get_async_session,
                                       get_async_writer_session,
-                                      get_database_manager, get_db_session,
+                                      get_db_session,
                                       get_reader_session, get_writer_session)
 
 

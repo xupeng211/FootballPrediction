@@ -11,11 +11,12 @@ import pytest
 
 # 尝试导入目标模块
 try:
-    from src.api.data_router import (
-        LeagueInfo, TeamInfo, MatchInfo, OddsInfo, MatchStatistics, TeamStatistics,
-        get_leagues, get_league, get_teams, get_team, get_team_statistics,
-        get_matches, get_match, get_match_statistics, get_odds, get_match_odds
-    )
+    from src.api.data_router import (LeagueInfo, MatchInfo, MatchStatistics,
+                                     OddsInfo, TeamInfo, TeamStatistics,
+                                     get_league, get_leagues, get_match,
+                                     get_match_odds, get_match_statistics,
+                                     get_matches, get_odds, get_team,
+                                     get_team_statistics, get_teams)
 
     IMPORTS_AVAILABLE = True
 except ImportError as e:
@@ -39,11 +40,7 @@ class TestApiData_Router:
 
         # 创建LeagueInfo实例并测试基础功能
         try:
-            instance = LeagueInfo(
-                id=1,
-                name="测试联赛",
-                country="中国"
-            )
+            instance = LeagueInfo(id=1, name="测试联赛", country="中国")
             assert instance is not None
             assert instance.id == 1
             assert instance.name == "测试联赛"
@@ -62,10 +59,7 @@ class TestApiData_Router:
         # 创建TeamInfo实例并测试基础功能
         try:
             instance = TeamInfo(
-                id=1,
-                name="测试球队",
-                short_name="测试队",
-                country="中国"
+                id=1, name="测试球队", short_name="测试队", country="中国"
             )
             assert instance is not None
             assert instance.id == 1
@@ -86,6 +80,7 @@ class TestApiData_Router:
         # 创建MatchInfo实例并测试基础功能
         try:
             from datetime import datetime
+
             instance = MatchInfo(
                 id=1,
                 home_team_id=10,
@@ -95,7 +90,7 @@ class TestApiData_Router:
                 league_id=1,
                 league_name="测试联赛",
                 match_date=datetime.now(),
-                status="pending"
+                status="pending",
             )
             assert instance is not None
             assert instance.id == 1
@@ -121,10 +116,11 @@ class TestApiData_Router:
 
             # 检查函数签名
             import inspect
+
             sig = inspect.signature(get_leagues)
-            assert 'country' in sig.parameters, "应该有country参数"
-            assert 'season' in sig.parameters, "应该有season参数"
-            assert 'limit' in sig.parameters, "应该有limit参数"
+            assert "country" in sig.parameters, "应该有country参数"
+            assert "season" in sig.parameters, "应该有season参数"
+            assert "limit" in sig.parameters, "应该有limit参数"
 
         except Exception as e:
             print(f"函数检查失败: {e}")
@@ -139,6 +135,7 @@ class TestApiData_Router:
         try:
             assert callable(get_league), "get_league应该是可调用的函数"
             import inspect
+
             sig = inspect.signature(get_league)
             # 检查是否有参数
             assert len(sig.parameters) > 0, "函数应该有参数"

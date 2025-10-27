@@ -6,7 +6,6 @@ Alembic环境配置
 
 import asyncio
 import os
-import sys
 from logging.config import fileConfig
 
 from alembic import context

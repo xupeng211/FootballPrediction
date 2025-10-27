@@ -20,7 +20,7 @@ Health Utils - API模块
 import asyncio
 import time
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 
 class HealthChecker:

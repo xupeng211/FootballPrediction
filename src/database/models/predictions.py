@@ -1,9 +1,5 @@
-import json
-import math
 
-from sqlalchemy import and_
 
-from .match import Match
 
 """
 Predictions - 数据库模块
@@ -21,15 +17,8 @@ Predictions - 数据库模块
 - [待补充 - 使用注意事项]
 """
 
-from datetime import datetime, timedelta
-from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, List, Optional
 
-from sqlalchemy import DECIMAL, JSON, DateTime
-from sqlalchemy import Enum as SQLEnum
-from sqlalchemy import ForeignKey, Index, Integer, String
-from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..base import BaseModel
 

@@ -1,6 +1,5 @@
 """数据库相关的定义，用于替代connection_mod"""
 
-import asyncio
 from enum import Enum
 from typing import Optional
 

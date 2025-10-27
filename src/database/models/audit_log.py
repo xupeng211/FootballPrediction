@@ -1,8 +1,7 @@
-from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
-from sqlalchemy import (Boolean, Column, DateTime, Index, Integer, String,
+from sqlalchemy import (Column, DateTime, Index, Integer, String,
                         Text, func)
 from sqlalchemy.sql import func
 

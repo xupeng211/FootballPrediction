@@ -4,7 +4,6 @@ from typing import Sequence, Union
 import sqlalchemy as sa
 from alembic import op
 # mypy: ignore-errors
-from sqlalchemy import text
 
 logger = logging.getLogger(__name__)
 """add_business_constraints

@@ -3,16 +3,8 @@
 """
 
 # 导入
-import asyncio
-from dataclasses import dataclass
-from datetime import datetime
-from enum import Enum
-from typing import Any, Dict, List, Optional
 
-import aiohttp
 
-from src.adapters.base import Adaptee, Adapter, AdapterStatus, DataTransformer
-from src.core.exceptions import AdapterError
 
 # 常量
 SCHEDULED = "SCHEDULED"

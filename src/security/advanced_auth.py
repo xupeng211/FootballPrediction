@@ -8,7 +8,7 @@ Advanced Authentication System
 
 import logging
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict
 
 logger = logging.getLogger(__name__)
 

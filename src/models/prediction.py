@@ -16,7 +16,6 @@ from ..services.base_unified import SimpleService
 # 类型检查已忽略 - 这些文件包含复杂的动态类型逻辑
 
 
-
 @dataclass
 class PredictionResult:
     """预测结果"""
