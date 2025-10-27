@@ -4,11 +4,11 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Union
-from datetime import datetime, timezone
+import json
 import random
 import uuid
-import json
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional, Union
 
 from .base import BaseFactory, DataFactoryMixin, TimestampMixin
 

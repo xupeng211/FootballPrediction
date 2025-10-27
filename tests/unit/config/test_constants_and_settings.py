@@ -3,13 +3,14 @@
 测试所有配置值、常量和设置
 """
 
-import pytest
-import os
-from datetime import datetime, timezone, timedelta
-from typing import Any, Dict, List, Optional
-from enum import Enum
 import json
+import os
+from datetime import datetime, timedelta, timezone
+from enum import Enum
 from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import pytest
 
 
 # 应用常量定义
@@ -108,7 +109,6 @@ class UserRole(Enum):
 
 @pytest.mark.unit
 @pytest.mark.external_api
-
 class TestAppConstants:
     """应用常量测试"""
 

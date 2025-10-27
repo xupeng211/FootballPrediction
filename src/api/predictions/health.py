@@ -5,7 +5,8 @@ Predictions Health Check Endpoint
 
 import logging
 from datetime import datetime
-from typing import Dict, Any
+from typing import Any, Dict
+
 from fastapi import APIRouter, HTTPException
 
 logger = logging.getLogger(__name__)

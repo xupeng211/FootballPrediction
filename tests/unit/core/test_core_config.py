@@ -1,12 +1,14 @@
 """测试核心配置模块"""
 
-import pytest
-from unittest.mock import Mock, patch, mock_open
 import os
 import tempfile
+from unittest.mock import Mock, mock_open, patch
+
+import pytest
 
 try:
     from src.core.config import CoreConfig
+
     IMPORT_SUCCESS = True
 except ImportError as e:
     IMPORT_SUCCESS = False
@@ -22,10 +24,10 @@ class TestCoreConfig:
         """测试默认配置创建"""
         config = CoreConfig()
         assert config is not None
-        assert hasattr(config, 'database_url')
-        assert hasattr(config, 'redis_url')
-        assert hasattr(config, 'debug')
-        assert hasattr(config, 'environment')
+        assert hasattr(config, "database_url")
+        assert hasattr(config, "redis_url")
+        assert hasattr(config, "debug")
+        assert hasattr(config, "environment")
 
     def test_config_creation_with_dict(self):
         """测试使用字典创建配置"""
@@ -33,7 +35,7 @@ class TestCoreConfig:
             "database_url": "postgresql://test",
             "redis_url": "redis://test",
             "debug": True,
-            "environment": "test"
+            "environment": "test",
         }
 
         try:
@@ -49,12 +51,12 @@ class TestCoreConfig:
         config = CoreConfig()
 
         try:
-            if hasattr(config, 'validate'):
+            if hasattr(config, "validate"):
                 result = config.validate()
                 if result is not None:
                     assert isinstance(result, bool)
 
-            if hasattr(config, 'is_valid'):
+            if hasattr(config, "is_valid"):
                 result = config.is_valid()
                 if result is not None:
                     assert isinstance(result, bool)
@@ -67,16 +69,23 @@ class TestCoreConfig:
 
         try:
             # 测试数据库相关配置
-            if hasattr(config, 'get_database_config'):
+            if hasattr(config, "get_database_config"):
                 db_config = config.get_database_config()
                 if db_config is not None:
                     assert isinstance(db_config, dict)
-                    possible_keys = ["url", "host", "port", "database", "username", "password"]
+                    possible_keys = [
+                        "url",
+                        "host",
+                        "port",
+                        "database",
+                        "username",
+                        "password",
+                    ]
                     for key in possible_keys:
                         if key in db_config:
                             assert db_config[key] is not None
 
-            if hasattr(config, 'database_url'):
+            if hasattr(config, "database_url"):
                 assert config.database_url is not None
         except Exception:
             pass
@@ -86,12 +95,12 @@ class TestCoreConfig:
         config = CoreConfig()
 
         try:
-            if hasattr(config, 'get_redis_config'):
+            if hasattr(config, "get_redis_config"):
                 redis_config = config.get_redis_config()
                 if redis_config is not None:
                     assert isinstance(redis_config, dict)
 
-            if hasattr(config, 'redis_url'):
+            if hasattr(config, "redis_url"):
                 assert config.redis_url is not None
         except Exception:
             pass
@@ -101,19 +110,19 @@ class TestCoreConfig:
         config = CoreConfig()
 
         try:
-            if hasattr(config, 'environment'):
+            if hasattr(config, "environment"):
                 env = config.environment
                 assert env is not None
                 assert isinstance(env, str)
                 possible_envs = ["development", "testing", "production", "staging"]
                 assert env in possible_envs
 
-            if hasattr(config, 'is_development'):
+            if hasattr(config, "is_development"):
                 result = config.is_development()
                 if result is not None:
                     assert isinstance(result, bool)
 
-            if hasattr(config, 'is_production'):
+            if hasattr(config, "is_production"):
                 result = config.is_production()
                 if result is not None:
                     assert isinstance(result, bool)
@@ -125,11 +134,11 @@ class TestCoreConfig:
         config = CoreConfig()
 
         try:
-            if hasattr(config, 'debug'):
+            if hasattr(config, "debug"):
                 debug = config.debug
                 assert isinstance(debug, bool)
 
-            if hasattr(config, 'is_debug'):
+            if hasattr(config, "is_debug"):
                 result = config.is_debug()
                 if result is not None:
                     assert isinstance(result, bool)
@@ -141,12 +150,12 @@ class TestCoreConfig:
         config = CoreConfig()
 
         try:
-            if hasattr(config, 'get_logging_config'):
+            if hasattr(config, "get_logging_config"):
                 log_config = config.get_logging_config()
                 if log_config is not None:
                     assert isinstance(log_config, dict)
 
-            if hasattr(config, 'log_level'):
+            if hasattr(config, "log_level"):
                 log_level = config.log_level
                 if log_level is not None:
                     assert isinstance(log_level, str)
@@ -160,12 +169,12 @@ class TestCoreConfig:
         config = CoreConfig()
 
         try:
-            if hasattr(config, 'get_security_config'):
+            if hasattr(config, "get_security_config"):
                 security_config = config.get_security_config()
                 if security_config is not None:
                     assert isinstance(security_config, dict)
 
-            if hasattr(config, 'secret_key'):
+            if hasattr(config, "secret_key"):
                 secret_key = config.secret_key
                 if secret_key is not None:
                     assert isinstance(secret_key, str)
@@ -178,17 +187,17 @@ class TestCoreConfig:
         config = CoreConfig()
 
         try:
-            if hasattr(config, 'get_api_config'):
+            if hasattr(config, "get_api_config"):
                 api_config = config.get_api_config()
                 if api_config is not None:
                     assert isinstance(api_config, dict)
 
-            if hasattr(config, 'api_title'):
+            if hasattr(config, "api_title"):
                 title = config.api_title
                 if title is not None:
                     assert isinstance(title, str)
 
-            if hasattr(config, 'api_version'):
+            if hasattr(config, "api_version"):
                 version = config.api_version
                 if version is not None:
                     assert isinstance(version, str)
@@ -199,15 +208,17 @@ class TestCoreConfig:
         """测试从文件加载配置"""
         try:
             # 创建临时配置文件
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".json", delete=False
+            ) as f:
                 f.write('{"debug": true, "environment": "test"}')
                 temp_file = f.name
 
             try:
                 config = CoreConfig.from_file(temp_file)
                 if config is not None:
-                    assert hasattr(config, 'debug')
-                    assert hasattr(config, 'environment')
+                    assert hasattr(config, "debug")
+                    assert hasattr(config, "environment")
             except Exception:
                 # from_file方法可能不存在或格式不同
                 pass
@@ -222,8 +233,8 @@ class TestCoreConfig:
         config = CoreConfig()
 
         try:
-            if hasattr(config, 'load_from_env'):
-                with patch.dict(os.environ, {'DEBUG': 'true', 'ENVIRONMENT': 'test'}):
+            if hasattr(config, "load_from_env"):
+                with patch.dict(os.environ, {"DEBUG": "true", "ENVIRONMENT": "test"}):
                     result = config.load_from_env()
                     if result is not None:
                         assert isinstance(result, bool)
@@ -235,13 +246,13 @@ class TestCoreConfig:
         config = CoreConfig()
 
         try:
-            if hasattr(config, 'merge'):
+            if hasattr(config, "merge"):
                 override_config = {"debug": True}
                 result = config.merge(override_config)
                 if result is not None:
                     assert isinstance(result, bool)
 
-            if hasattr(config, 'update'):
+            if hasattr(config, "update"):
                 override_config = {"environment": "test"}
                 config.update(override_config)
         except Exception:
@@ -252,12 +263,12 @@ class TestCoreConfig:
         config = CoreConfig()
 
         try:
-            if hasattr(config, 'to_dict'):
+            if hasattr(config, "to_dict"):
                 config_dict = config.to_dict()
                 if config_dict is not None:
                     assert isinstance(config_dict, dict)
 
-            if hasattr(config, 'to_json'):
+            if hasattr(config, "to_json"):
                 json_str = config.to_json()
                 if json_str is not None:
                     assert isinstance(json_str, str)
@@ -270,12 +281,7 @@ class TestCoreConfig:
 
         try:
             # 检查必要的默认值
-            required_defaults = [
-                'database_url',
-                'redis_url',
-                'environment',
-                'debug'
-            ]
+            required_defaults = ["database_url", "redis_url", "environment", "debug"]
 
             for default in required_defaults:
                 if hasattr(config, default):
@@ -286,7 +292,7 @@ class TestCoreConfig:
 
     def test_config_validation_rules(self):
         """测试配置验证规则"""
-        config = CoreConfig()
+        CoreConfig()
 
         try:
             # 测试无效配置
@@ -299,7 +305,7 @@ class TestCoreConfig:
             for invalid_config in invalid_configs:
                 try:
                     new_config = CoreConfig(invalid_config)
-                    if hasattr(new_config, 'validate'):
+                    if hasattr(new_config, "validate"):
                         result = new_config.validate()
                         if result is not None:
                             assert result is False  # 应该验证失败
@@ -313,12 +319,12 @@ class TestCoreConfig:
         config = CoreConfig()
 
         try:
-            if hasattr(config, 'reload'):
+            if hasattr(config, "reload"):
                 result = config.reload()
                 if result is not None:
                     assert isinstance(result, bool)
 
-            if hasattr(config, 'refresh'):
+            if hasattr(config, "refresh"):
                 result = config.refresh()
                 if result is not None:
                     assert isinstance(result, bool)
@@ -329,19 +335,12 @@ class TestCoreConfig:
         """测试配置部分"""
         config = CoreConfig()
 
-        sections = [
-            "database",
-            "redis",
-            "api",
-            "logging",
-            "security",
-            "cache"
-        ]
+        sections = ["database", "redis", "api", "logging", "security", "cache"]
 
         for section in sections:
             try:
-                if hasattr(config, f'get_{section}_config'):
-                    method = getattr(config, f'get_{section}_config')
+                if hasattr(config, f"get_{section}_config"):
+                    method = getattr(config, f"get_{section}_config")
                     result = method()
                     if result is not None:
                         assert isinstance(result, dict)
@@ -354,13 +353,7 @@ class TestCoreConfig:
 
         try:
             # 测试无效输入处理
-            invalid_inputs = [
-                None,
-                "string_config",
-                123,
-                [],
-                object()
-            ]
+            invalid_inputs = [None, "string_config", 123, [], object()]
 
             for invalid_input in invalid_inputs:
                 try:
@@ -385,11 +378,11 @@ class TestCoreConfig:
         try:
             # 测试多次访问
             for _ in range(100):
-                if hasattr(config, 'database_url'):
+                if hasattr(config, "database_url"):
                     _ = config.database_url
 
             # 测试批量获取
-            if hasattr(config, 'to_dict'):
+            if hasattr(config, "to_dict"):
                 for _ in range(10):
                     _ = config.to_dict()
         except Exception:
@@ -404,7 +397,7 @@ class TestCoreConfig:
 
         def worker():
             try:
-                if hasattr(config, 'to_dict'):
+                if hasattr(config, "to_dict"):
                     result = config.to_dict()
                     results.append(result)
             except Exception:
@@ -430,13 +423,13 @@ class TestCoreConfig:
             base_config = {"debug": False, "environment": "development"}
             child_config = {"debug": True}  # 覆盖debug
 
-            if hasattr(CoreConfig, 'inherit'):
+            if hasattr(CoreConfig, "inherit"):
                 # 假设有继承方法
                 pass
             else:
                 # 测试手动继承
                 config = CoreConfig()
-                if hasattr(config, 'update'):
+                if hasattr(config, "update"):
                     config.update(base_config)
                     config.update(child_config)
         except Exception:
@@ -447,13 +440,13 @@ class TestCoreConfig:
         config = CoreConfig()
 
         try:
-            if hasattr(config, 'enable_hot_reload'):
+            if hasattr(config, "enable_hot_reload"):
                 config.enable_hot_reload()
 
-            if hasattr(config, 'disable_hot_reload'):
+            if hasattr(config, "disable_hot_reload"):
                 config.disable_hot_reload()
 
-            if hasattr(config, 'is_hot_reload_enabled'):
+            if hasattr(config, "is_hot_reload_enabled"):
                 result = config.is_hot_reload_enabled()
                 if result is not None:
                     assert isinstance(result, bool)
@@ -465,12 +458,12 @@ class TestCoreConfig:
         config = CoreConfig()
 
         try:
-            if hasattr(config, 'schema'):
+            if hasattr(config, "schema"):
                 schema = config.schema
                 if schema is not None:
                     assert isinstance(schema, dict)
 
-            if hasattr(config, 'validate_against_schema'):
+            if hasattr(config, "validate_against_schema"):
                 valid_config = {"debug": True, "environment": "test"}
                 result = config.validate_against_schema(valid_config)
                 if result is not None:
@@ -484,20 +477,20 @@ class TestCoreConfig:
 
         for env in environments:
             try:
-                if hasattr(config, 'get_environment_config'):
+                if hasattr(config, "get_environment_config"):
                     env_config = config.get_environment_config(env)
                     if env_config is not None:
                         assert isinstance(env_config, dict)
 
                 # 临时设置环境
-                original_env = getattr(config, 'environment', None)
-                if hasattr(config, 'set_environment'):
+                original_env = getattr(config, "environment", None)
+                if hasattr(config, "set_environment"):
                     config.set_environment(env)
-                    if hasattr(config, 'environment'):
+                    if hasattr(config, "environment"):
                         assert config.environment == env
 
                 # 恢复原始环境
-                if original_env and hasattr(config, 'set_environment'):
+                if original_env and hasattr(config, "set_environment"):
                     config.set_environment(original_env)
             except Exception:
                 pass
@@ -507,13 +500,13 @@ class TestCoreConfig:
         config = CoreConfig()
 
         try:
-            if hasattr(config, 'enable_caching'):
+            if hasattr(config, "enable_caching"):
                 config.enable_caching()
 
-            if hasattr(config, 'disable_caching'):
+            if hasattr(config, "disable_caching"):
                 config.disable_caching()
 
-            if hasattr(config, 'clear_cache'):
+            if hasattr(config, "clear_cache"):
                 config.clear_cache()
         except Exception:
             pass
@@ -523,13 +516,13 @@ class TestCoreConfig:
         config = CoreConfig()
 
         try:
-            if hasattr(config, 'backup'):
+            if hasattr(config, "backup"):
                 backup = config.backup()
                 if backup is not None:
                     assert isinstance(backup, (str, dict))
 
-            if hasattr(config, 'restore'):
-                if hasattr(config, 'backup'):
+            if hasattr(config, "restore"):
+                if hasattr(config, "backup"):
                     backup = config.backup()
                 if backup is not None:
                     result = config.restore(backup)
@@ -543,12 +536,12 @@ class TestCoreConfig:
         config = CoreConfig()
 
         try:
-            if hasattr(config, 'check_compliance'):
+            if hasattr(config, "check_compliance"):
                 result = config.check_compliance()
                 if result is not None:
                     assert isinstance(result, (bool, dict))
 
-            if hasattr(config, 'get_compliance_report'):
+            if hasattr(config, "get_compliance_report"):
                 report = config.get_compliance_report()
                 if report is not None:
                     assert isinstance(report, dict)

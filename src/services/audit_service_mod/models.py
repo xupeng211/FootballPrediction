@@ -3,10 +3,10 @@
 Audit Service Models (Compatibility Version)
 """
 
-from enum import Enum
-from datetime import datetime
-from typing import Optional, Dict, Any
 from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, Optional
 
 
 class AuditAction(Enum):

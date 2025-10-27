@@ -6,10 +6,11 @@ Working Config Loader Tests
 Tests configuration loading functionality defined in src/utils/config_loader.py, focused on achieving 100% coverage.
 """
 
-import pytest
 import json
 import os
 import tempfile
+
+import pytest
 
 # 导入要测试的模块
 try:
@@ -24,7 +25,6 @@ except ImportError:
     not CONFIG_LOADER_AVAILABLE, reason="Config loader module not available"
 )
 @pytest.mark.unit
-
 class TestConfigLoaderWorking:
     """配置加载器工作测试"""
 

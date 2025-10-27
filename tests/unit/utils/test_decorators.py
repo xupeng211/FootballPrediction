@@ -1,4 +1,5 @@
-from unittest.mock import patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
 """
 缓存装饰器测试
 Tests for cache decorators
@@ -9,21 +10,15 @@ Tests for cache decorators
 import asyncio
 import json
 import time
+
 import pytest
 
-from src.cache.decorators import (
-    cache_result,
-    cache_with_ttl,
-    cache_by_user,
-    cache_invalidate,
-    cache_user_predictions,
-    cache_match_data,
-    cache_team_stats,
-    _make_cache_key,
-    CacheDecorator,
-    UserCacheDecorator,
-    InvalidateCacheDecorator,
-)
+from src.cache.decorators import (CacheDecorator, InvalidateCacheDecorator,
+                                  UserCacheDecorator, _make_cache_key,
+                                  cache_by_user, cache_invalidate,
+                                  cache_match_data, cache_result,
+                                  cache_team_stats, cache_user_predictions,
+                                  cache_with_ttl)
 
 
 # 模拟Redis管理器
@@ -97,7 +92,6 @@ def patch_redis_manager(mock_redis):
 
 
 @pytest.mark.unit
-
 class TestCacheKeyGeneration:
     """测试缓存键生成"""
 

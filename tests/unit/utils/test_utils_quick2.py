@@ -1,9 +1,9 @@
 import pytest
+
 from tests.base import BaseTestCase
 
 
 @pytest.mark.unit
-
 class TestUtilsQuick(BaseTestCase):
     """工具模块快速测试"""
 

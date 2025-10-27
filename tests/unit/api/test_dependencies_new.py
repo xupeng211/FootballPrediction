@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 8 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 API依赖注入测试
 Tests for API Dependencies
@@ -16,13 +17,9 @@ from jose import JWTError
 
 # 测试导入
 try:
-    from src.api.dependencies import (
-        get_current_user,
-        get_prediction_engine,
-        verify_admin_permission,
-        validate_request_data,
-        security,
-    )
+    from src.api.dependencies import (get_current_user, get_prediction_engine,
+                                      security, validate_request_data,
+                                      verify_admin_permission)
 
     DEPENDENCIES_AVAILABLE = True
 except ImportError as e:
@@ -34,7 +31,6 @@ except ImportError as e:
     not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available"
 )
 @pytest.mark.unit
-
 class TestGetCurrentUser:
     """获取当前用户测试"""
 

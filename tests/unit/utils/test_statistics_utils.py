@@ -2,9 +2,10 @@
 统计工具测试
 """
 
-import pytest
 import math
-from typing import List, Tuple, Optional, Dict, Any
+from typing import Any, Dict, List, Optional, Tuple
+
+import pytest
 
 
 class StatisticsUtils:
@@ -215,9 +216,9 @@ class StatisticsUtils:
             "count": n,
             "mean": StatisticsUtils.mean(data),
             "median": StatisticsUtils.median(data),
-            "mode": StatisticsUtils.mode(data)[0]
-            if StatisticsUtils.mode(data)
-            else None,
+            "mode": (
+                StatisticsUtils.mode(data)[0] if StatisticsUtils.mode(data) else None
+            ),
             "std": StatisticsUtils.standard_deviation(data, sample=True),
             "variance": StatisticsUtils.variance(data, sample=True),
             "min": min(data),
@@ -286,7 +287,6 @@ class StatisticsUtils:
 
 
 @pytest.mark.unit
-
 class TestStatisticsUtils:
     """测试统计工具类"""
 

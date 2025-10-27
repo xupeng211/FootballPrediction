@@ -4,7 +4,6 @@ import pytest
 
 
 @pytest.mark.unit
-
 class TestLineage:
     """测试数据血缘模块"""
 

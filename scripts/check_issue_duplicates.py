@@ -123,7 +123,7 @@ class IssueValidator:
 
         # 找到最大编号并加1
         max_phase = max(phase_numbers)
-        next_phase = max_phase + 1
+        max_phase + 1
         next_week = 1
 
         return f"{max_phase}.{next_week}"

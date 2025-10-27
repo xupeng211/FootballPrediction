@@ -9,8 +9,8 @@ Provides data access layer abstraction, implementing repository pattern for furt
 from .base import BaseRepository, T
 from .match import MatchRepository
 from .prediction import PredictionRepository
-from .user import UserRepository
 from .team_repository import TeamRepository
+from .user import UserRepository
 
 __all__ = [
     "BaseRepository",

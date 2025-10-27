@@ -3,16 +3,13 @@
 """
 
 import pytest
-from src.database.compatibility import (
-    Compatibility,
-    CompatibleQueryBuilder,
-    SQLCompatibilityHelper,
-)
+
+from src.database.compatibility import (Compatibility, CompatibleQueryBuilder,
+                                        SQLCompatibilityHelper)
 
 
 @pytest.mark.unit
 @pytest.mark.database
-
 def test_compatibility_enum():
     """测试兼容性枚举"""
     assert Compatibility.FULL.value == "full"

@@ -1,23 +1,18 @@
 """测试API依赖注入模块"""
 
-import pytest
 import asyncio
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 # Test imports
 try:
-    from src.api.dependencies import (
-        validate_secret_key,
-        get_current_user,
-        get_admin_user,
-        get_prediction_engine,
-        get_redis_manager,
-        verify_prediction_permission,
-        rate_limit_check,
-        SECRET_KEY,
-        ALGORITHM,
-        security
-    )
+    from src.api.dependencies import (ALGORITHM, SECRET_KEY, get_admin_user,
+                                      get_current_user, get_prediction_engine,
+                                      get_redis_manager, rate_limit_check,
+                                      security, validate_secret_key,
+                                      verify_prediction_permission)
+
     IMPORT_SUCCESS = True
 except ImportError as e:
     IMPORT_SUCCESS = False
@@ -83,7 +78,7 @@ class TestAPIDependencies:
         try:
             result = await get_prediction_engine()
             # 结果可能是None或PredictionEngine实例
-            assert result is None or hasattr(result, 'predict')
+            assert result is None or hasattr(result, "predict")
         except Exception:
             # 可能因为依赖问题失败
             pass
@@ -95,7 +90,7 @@ class TestAPIDependencies:
         try:
             result = await get_redis_manager()
             # 结果可能是None或Redis管理器实例
-            assert result is None or hasattr(result, 'get')
+            assert result is None or hasattr(result, "get")
         except Exception:
             # 可能因为依赖问题失败
             pass
@@ -155,7 +150,6 @@ def test_exception_handling():
 
 # 参数化测试 - 边界条件和各种输入
 @pytest.mark.unit
-
 class TestParameterizedInput:
     """参数化输入测试"""
 
@@ -175,9 +169,9 @@ class TestParameterizedInput:
     def test_handle_basic_inputs(self, input_value):
         """测试处理基本输入类型"""
         # 基础断言，确保测试能处理各种输入（None值在单独的测试中处理）
-        assert isinstance(input_value, (str, int, bool, list, dict)), (
-            f"Unexpected type for input_value: {input_value}"
-        )
+        assert isinstance(
+            input_value, (str, int, bool, list, dict)
+        ), f"Unexpected type for input_value: {input_value}"
 
     @pytest.mark.parametrize(
         "input_data, expected_data",

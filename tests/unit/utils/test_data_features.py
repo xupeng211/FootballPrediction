@@ -4,7 +4,6 @@ import pytest
 
 
 @pytest.mark.unit
-
 class TestDataFeatures:
     """测试数据特征模块"""
 

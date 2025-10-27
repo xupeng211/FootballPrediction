@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 62 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 服务生命周期管理测试
 Service Lifecycle Management Tests
@@ -11,23 +12,21 @@ Service Lifecycle Management Tests
 Tests service lifecycle management functionality defined in src/core/service_lifecycle.py.
 """
 
-import pytest
 import asyncio
 import threading
 from datetime import datetime, timedelta
 from typing import Any, Optional
 
+import pytest
+
 # 导入要测试的模块
 try:
-    from src.core.service_lifecycle import (
-        ServiceState,
-        ServiceInfo,
-        IServiceLifecycle,
-        ServiceLifecycleManager,
-        get_lifecycle_manager,
-        lifecycle_service,
-        ServiceLifecycleError,
-    )
+    from src.core.service_lifecycle import (IServiceLifecycle, ServiceInfo,
+                                            ServiceLifecycleError,
+                                            ServiceLifecycleManager,
+                                            ServiceState,
+                                            get_lifecycle_manager,
+                                            lifecycle_service)
 
     SERVICE_LIFECYCLE_AVAILABLE = True
 except ImportError:
@@ -38,7 +37,6 @@ except ImportError:
     not SERVICE_LIFECYCLE_AVAILABLE, reason="Service lifecycle module not available"
 )
 @pytest.mark.unit
-
 class TestServiceState:
     """服务状态枚举测试"""
 

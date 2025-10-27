@@ -1,4 +1,5 @@
 from unittest.mock import Mock, patch
+
 """
 数据库连接简化测试
 Tests for Database Connection (Simple Version)
@@ -8,21 +9,17 @@ Tests for Database Connection (Simple Version)
 
 import pytest
 
-from src.database.connection import (
-    DatabaseRole,
-    DatabaseManager,
-    MultiUserDatabaseManager,
-    get_database_manager,
-    get_multi_user_database_manager,
-    initialize_database,
-    initialize_multi_user_database,
-    initialize_test_database,
-)
+from src.database.connection import (DatabaseManager, DatabaseRole,
+                                     MultiUserDatabaseManager,
+                                     get_database_manager,
+                                     get_multi_user_database_manager,
+                                     initialize_database,
+                                     initialize_multi_user_database,
+                                     initialize_test_database)
 
 
 @pytest.mark.unit
 @pytest.mark.database
-
 class TestDatabaseRole:
     """数据库角色测试"""
 
@@ -131,17 +128,14 @@ class TestSessionFunctions:
 
     def test_session_functions_import(self):
         """测试：会话函数可以导入"""
-        from src.database.connection import (
-            get_db_session,
-            get_async_session,
-            get_reader_session,
-            get_writer_session,
-            get_admin_session,
-            get_session,
-            get_async_reader_session,
-            get_async_writer_session,
-            get_async_admin_session,
-        )
+        from src.database.connection import (get_admin_session,
+                                             get_async_admin_session,
+                                             get_async_reader_session,
+                                             get_async_session,
+                                             get_async_writer_session,
+                                             get_db_session,
+                                             get_reader_session, get_session,
+                                             get_writer_session)
 
         # 所有函数应该是可调用的
         assert callable(get_db_session)
@@ -156,8 +150,9 @@ class TestSessionFunctions:
 
     def test_get_db_session_returns_session(self):
         """测试：获取数据库会话返回会话对象"""
-        from src.database.connection import get_db_session
         from sqlalchemy.orm import Session
+
+        from src.database.connection import get_db_session
 
         # 这可能会尝试初始化数据库，但我们只检查返回类型
         try:
@@ -169,8 +164,9 @@ class TestSessionFunctions:
 
     def test_get_async_session_returns_async_session(self):
         """测试：获取异步会话返回异步会话对象"""
-        from src.database.connection import get_async_session
         from sqlalchemy.ext.asyncio import AsyncSession
+
+        from src.database.connection import get_async_session
 
         try:
             session = get_async_session()

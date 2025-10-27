@@ -59,7 +59,7 @@ def create_enhanced_test_fixed(source_file: str, test_file: str, module_info: Di
     class_name = module_name.title().replace(".", "").replace("_", "")
 
     # 分析源模块
-    source_analysis = analyze_source_module(source_file)
+    analyze_source_module(source_file)
 
     test_template = f'''"""
 增强真实业务逻辑测试: {module_name}

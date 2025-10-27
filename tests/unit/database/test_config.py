@@ -1,4 +1,5 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 """
 数据库配置测试
 Tests for Database Config
@@ -6,23 +7,19 @@ Tests for Database Config
 测试src.database.config模块的功能
 """
 
-import pytest
-import tempfile
 import os
+import tempfile
 
-from src.database.config import (
-    DatabaseConfig,
-    get_database_config,
-    get_test_database_config,
-    get_production_database_config,
-    _get_env_bool,
-    _parse_int,
-)
+import pytest
+
+from src.database.config import (DatabaseConfig, _get_env_bool, _parse_int,
+                                 get_database_config,
+                                 get_production_database_config,
+                                 get_test_database_config)
 
 
 @pytest.mark.unit
 @pytest.mark.database
-
 class TestDatabaseConfig:
     """数据库配置测试"""
 

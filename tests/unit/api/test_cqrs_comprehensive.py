@@ -6,12 +6,13 @@
 优先级: HIGH
 """
 
-import pytest
-from unittest.mock import Mock, patch, AsyncMock, MagicMock, call
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
 import asyncio
 import json
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+from unittest.mock import AsyncMock, MagicMock, Mock, call, patch
+
+import pytest
 
 # 尝试导入目标模块
 try:
@@ -31,11 +32,7 @@ class TestApiCqrsComprehensive:
     @pytest.fixture
     def setup_mocks(self):
         """设置Mock对象"""
-        return {
-            'config': {'test_mode': True},
-            'mock_data': {'key': 'value'}
-        }
-
+        return {"config": {"test_mode": True}, "mock_data": {"key": "value"}}
 
     def test_createpredictionrequest_initialization(self, setup_mocks):
         """测试 CreatePredictionRequest 初始化"""
@@ -47,7 +44,6 @@ class TestApiCqrsComprehensive:
         # TODO: 实现 CreatePredictionRequest 核心功能测试
         assert True
 
-
     def test_updatepredictionrequest_initialization(self, setup_mocks):
         """测试 UpdatePredictionRequest 初始化"""
         # TODO: 实现 UpdatePredictionRequest 初始化测试
@@ -57,7 +53,6 @@ class TestApiCqrsComprehensive:
         """测试 UpdatePredictionRequest 核心功能"""
         # TODO: 实现 UpdatePredictionRequest 核心功能测试
         assert True
-
 
     def test_createuserrequest_initialization(self, setup_mocks):
         """测试 CreateUserRequest 初始化"""
@@ -69,7 +64,6 @@ class TestApiCqrsComprehensive:
         # TODO: 实现 CreateUserRequest 核心功能测试
         assert True
 
-
     def test_creatematchrequest_initialization(self, setup_mocks):
         """测试 CreateMatchRequest 初始化"""
         # TODO: 实现 CreateMatchRequest 初始化测试
@@ -80,7 +74,6 @@ class TestApiCqrsComprehensive:
         # TODO: 实现 CreateMatchRequest 核心功能测试
         assert True
 
-
     def test_commandresponse_initialization(self, setup_mocks):
         """测试 CommandResponse 初始化"""
         # TODO: 实现 CommandResponse 初始化测试
@@ -90,7 +83,6 @@ class TestApiCqrsComprehensive:
         """测试 CommandResponse 核心功能"""
         # TODO: 实现 CommandResponse 核心功能测试
         assert True
-
 
     def test_get_prediction_cqrs_service_basic(self, setup_mocks):
         """测试函数 get_prediction_cqrs_service"""
@@ -106,7 +98,6 @@ class TestApiCqrsComprehensive:
         with pytest.raises(Exception):
             raise Exception("Edge case test")
 
-
     def test_get_match_cqrs_service_basic(self, setup_mocks):
         """测试函数 get_match_cqrs_service"""
         # TODO: 实现 get_match_cqrs_service 基础测试
@@ -120,7 +111,6 @@ class TestApiCqrsComprehensive:
         # TODO: 实现 get_match_cqrs_service 边界测试
         with pytest.raises(Exception):
             raise Exception("Edge case test")
-
 
     def test_get_user_cqrs_service_basic(self, setup_mocks):
         """测试函数 get_user_cqrs_service"""
@@ -136,7 +126,6 @@ class TestApiCqrsComprehensive:
         with pytest.raises(Exception):
             raise Exception("Edge case test")
 
-
     def test_get_analytics_cqrs_service_basic(self, setup_mocks):
         """测试函数 get_analytics_cqrs_service"""
         # TODO: 实现 get_analytics_cqrs_service 基础测试
@@ -151,7 +140,6 @@ class TestApiCqrsComprehensive:
         with pytest.raises(Exception):
             raise Exception("Edge case test")
 
-
     @pytest.mark.asyncio
     async def test_create_prediction_async(self, setup_mocks):
         """测试异步函数 create_prediction"""
@@ -159,7 +147,6 @@ class TestApiCqrsComprehensive:
         mock_async = AsyncMock()
         result = await mock_async()
         assert result is not None
-
 
     @pytest.mark.asyncio
     async def test_update_prediction_async(self, setup_mocks):
@@ -169,7 +156,6 @@ class TestApiCqrsComprehensive:
         result = await mock_async()
         assert result is not None
 
-
     @pytest.mark.asyncio
     async def test_delete_prediction_async(self, setup_mocks):
         """测试异步函数 delete_prediction"""
@@ -177,7 +163,6 @@ class TestApiCqrsComprehensive:
         mock_async = AsyncMock()
         result = await mock_async()
         assert result is not None
-
 
     @pytest.mark.asyncio
     async def test_get_prediction_async(self, setup_mocks):
@@ -187,7 +172,6 @@ class TestApiCqrsComprehensive:
         result = await mock_async()
         assert result is not None
 
-
     @pytest.mark.asyncio
     async def test_get_user_predictions_async(self, setup_mocks):
         """测试异步函数 get_user_predictions"""
@@ -195,7 +179,6 @@ class TestApiCqrsComprehensive:
         mock_async = AsyncMock()
         result = await mock_async()
         assert result is not None
-
 
     def test_module_integration(self, setup_mocks):
         """测试模块集成"""
@@ -216,15 +199,27 @@ class TestApiCqrsComprehensive:
         end_time = datetime.now()
         assert (end_time - start_time).total_seconds() < 1.0
 
-    @pytest.mark.parametrize("input_data,expected", [
-        ({"key": "value"}, {"key": "value"}),
-        (None, None),
-        ("", ""),
-    ])
+    @pytest.mark.parametrize(
+        "input_data,expected",
+        [
+            ({"key": "value"}, {"key": "value"}),
+            (None, None),
+            ("", ""),
+        ],
+    )
     def test_parameterized_cases(self, setup_mocks, input_data, expected):
         """参数化测试"""
         # TODO: 实现参数化测试
         assert input_data == expected
 
+
 if __name__ == "__main__":
-    pytest.main([__file__, "-v", "--cov=" + "{module_path.replace('src/', '').replace('.py', '').replace('/', '.')}", "--cov-report=term"])
+    pytest.main(
+        [
+            __file__,
+            "-v",
+            "--cov="
+            + "{module_path.replace('src/', '').replace('.py', '').replace('/', '.')}",
+            "--cov-report=term",
+        ]
+    )

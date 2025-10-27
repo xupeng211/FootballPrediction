@@ -3,30 +3,25 @@
 # TODO: Consider creating a fixture for 8 repeated Mock creations
 
 from unittest.mock import Mock, patch
+
 """
 特征计算器模块化测试
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
 
 
 def test_module_import():
     """测试模块导入"""
     # 测试导入新模块
-    from src.features.feature_calculator_mod import (
-        FeatureCalculator,
-        RecentPerformanceCalculator,
-        HistoricalMatchupCalculator,
-        OddsFeaturesCalculator,
-        BatchCalculator,
-        StatisticsUtils,
-    )
-
     # 测试导入兼容模块
-    from src.features.feature_calculator import (
-        FeatureCalculator as LegacyFeatureCalculator,
-    )
+    from src.features.feature_calculator import \
+        FeatureCalculator as LegacyFeatureCalculator
+    from src.features.feature_calculator_mod import (
+        BatchCalculator, FeatureCalculator, HistoricalMatchupCalculator,
+        OddsFeaturesCalculator, RecentPerformanceCalculator, StatisticsUtils)
 
     assert FeatureCalculator is not None
     assert RecentPerformanceCalculator is not None
@@ -39,7 +34,8 @@ def test_module_import():
 
 def test_statistics_utils():
     """测试统计工具类"""
-    from src.features.feature_calculator_mod.statistics_utils import StatisticsUtils
+    from src.features.feature_calculator_mod.statistics_utils import \
+        StatisticsUtils
 
     # 测试基础统计函数
     _data = [1, 2, 3, 4, 5]
@@ -153,7 +149,8 @@ def test_batch_calculator():
 
 def test_rolling_statistics():
     """测试滚动统计"""
-    from src.features.feature_calculator_mod.statistics_utils import StatisticsUtils
+    from src.features.feature_calculator_mod.statistics_utils import \
+        StatisticsUtils
 
     _data = [1, 2, 3, 4, 5]
 
@@ -164,7 +161,8 @@ def test_rolling_statistics():
 
 def test_distribution_stats():
     """测试分布统计"""
-    from src.features.feature_calculator_mod.statistics_utils import StatisticsUtils
+    from src.features.feature_calculator_mod.statistics_utils import \
+        StatisticsUtils
 
     _data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
@@ -181,7 +179,8 @@ def test_distribution_stats():
 
 def test_outlier_detection():
     """测试异常值检测"""
-    from src.features.feature_calculator_mod.statistics_utils import StatisticsUtils
+    from src.features.feature_calculator_mod.statistics_utils import \
+        StatisticsUtils
 
     _data = [1, 2, 3, 4, 5, 100]  # 100是异常值
 
@@ -201,13 +200,9 @@ def test_outlier_detection():
 def test_backward_compatibility():
     """测试向后兼容性"""
     # 测试原始导入方式仍然有效
-    from src.features.feature_calculator import (
-        FeatureCalculator,
-        calculate_mean,
-        calculate_std,
-        calculate_min,
-        calculate_max,
-    )
+    from src.features.feature_calculator import (FeatureCalculator,
+                                                 calculate_max, calculate_mean,
+                                                 calculate_min, calculate_std)
 
     # 测试统计函数
     _data = [1, 2, 3, 4, 5]

@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 5 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 缓存一致性管理器测试
 Tests for Cache Consistency Manager
@@ -10,14 +11,14 @@ Tests for Cache Consistency Manager
 测试src.cache.consistency_manager模块的功能
 """
 
-import pytest
 import logging
+
+import pytest
 
 from src.cache.consistency_manager import CacheConsistencyManager
 
 
 @pytest.mark.unit
-
 class TestCacheConsistencyManager:
     """缓存一致性管理器测试"""
 

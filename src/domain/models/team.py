@@ -9,7 +9,7 @@ Encapsulates team-related business logic and invariants.
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
 
 from ...core.exceptions import DomainError
 
@@ -402,27 +402,31 @@ class Team:
             "website": self.website,
             "logo_url": self.logo_url,
             "is_active": self.is_active,
-            "stats": {
-                "matches_played": self.stats.matches_played,
-                "wins": self.stats.wins,
-                "draws": self.stats.draws,
-                "losses": self.stats.losses,
-                "goals_for": self.stats.goals_for,
-                "goals_against": self.stats.goals_against,
-                "points": self.stats.points,
-                "goal_difference": self.stats.goal_difference,
-                "win_rate": self.stats.win_rate,
-            }
-            if self.stats
-            else None,
-            "form": {
-                "last_matches": self.form.last_matches,
-                "current_streak": self.form.current_streak,
-                "streak_type": self.form.streak_type,
-                "recent_form_string": self.form.recent_form_string,
-            }
-            if self.form
-            else None,
+            "stats": (
+                {
+                    "matches_played": self.stats.matches_played,
+                    "wins": self.stats.wins,
+                    "draws": self.stats.draws,
+                    "losses": self.stats.losses,
+                    "goals_for": self.stats.goals_for,
+                    "goals_against": self.stats.goals_against,
+                    "points": self.stats.points,
+                    "goal_difference": self.stats.goal_difference,
+                    "win_rate": self.stats.win_rate,
+                }
+                if self.stats
+                else None
+            ),
+            "form": (
+                {
+                    "last_matches": self.form.last_matches,
+                    "current_streak": self.form.current_streak,
+                    "streak_type": self.form.streak_type,
+                    "recent_form_string": self.form.recent_form_string,
+                }
+                if self.form
+                else None
+            ),
             "strength": self.calculate_strength(),
             "rank": self.rank,
             "created_at": self.created_at.isoformat(),

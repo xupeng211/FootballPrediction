@@ -7,19 +7,20 @@ Model Training Module - Stub Implementation
 Temporary implementation to resolve import errors.
 """
 
+import asyncio
+import json
 import logging
 import os
-import json
-import numpy as np
-import pandas as pd
-from typing import Any, Dict, List, Optional, Tuple
 from datetime import datetime
 from enum import Enum
-import asyncio
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
+import pandas as pd
 
 # 导入预测模型
-from ..models.prediction_model import PredictionModel, FootballPredictionModel
+from ..models.prediction_model import FootballPredictionModel, PredictionModel
 
 
 class TrainingStatus(Enum):
@@ -95,7 +96,7 @@ class ModelTrainer:
         self.config = config or TrainingConfig()
         import logging
         from datetime import datetime
-        from typing import List, Dict, Any, Optional, Tuple
+        from typing import Any, Dict, List, Optional, Tuple
 
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
         self.model = None
@@ -360,13 +361,17 @@ class ModelTrainer:
             "model_name": self.model.model_name if self.model else None,
             "start_time": self.start_time.isoformat() if self.start_time else None,
             "end_time": self.end_time.isoformat() if self.end_time else None,
-            "duration": (self.end_time - self.start_time).total_seconds()
-            if self.start_time and self.end_time
-            else None,
+            "duration": (
+                (self.end_time - self.start_time).total_seconds()
+                if self.start_time and self.end_time
+                else None
+            ),
             "training_epochs": len(self.training_history),
-            "best_accuracy": max([h.get("accuracy", 0) for h in self.training_history])
-            if self.training_history
-            else None,
+            "best_accuracy": (
+                max([h.get("accuracy", 0) for h in self.training_history])
+                if self.training_history
+                else None
+            ),
             "feature_count": len(self.feature_importance),
             "top_features": sorted(
                 self.feature_importance.items(), key=lambda x: x[1], reverse=True

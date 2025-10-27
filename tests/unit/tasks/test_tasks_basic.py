@@ -1,16 +1,18 @@
 from __future__ import annotations
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 """Tasks模块基础测试 - 提升整体覆盖率"""
 
 
-import pytest
 import asyncio
 from datetime import datetime, timedelta
+
+import pytest
 
 
 # 测试Celery应用
 @pytest.mark.unit
-
 class TestCeleryApp:
     """测试Celery应用配置"""
 
@@ -81,7 +83,8 @@ class TestDataCollectionTasks:
             pass
         except Exception:
             pass
-            from src.tasks.data_collection.fixtures_tasks import collect_fixtures
+            from src.tasks.data_collection.fixtures_tasks import \
+                collect_fixtures
 
             assert collect_fixtures is not None
         except ImportError:
@@ -134,11 +137,9 @@ class TestMaintenanceTasks:
             pass
         except Exception:
             pass
-            from src.tasks.maintenance_tasks import (
-                cleanup_old_data,
-                backup_database,
-                update_statistics,
-            )
+            from src.tasks.maintenance_tasks import (backup_database,
+                                                     cleanup_old_data,
+                                                     update_statistics)
 
             assert cleanup_old_data is not None
             assert backup_database is not None
@@ -189,11 +190,8 @@ class TestMonitoringTasks:
             pass
         except Exception:
             pass
-            from src.tasks.monitoring import (
-                check_system_health,
-                send_alert,
-                collect_metrics,
-            )
+            from src.tasks.monitoring import (check_system_health,
+                                              collect_metrics, send_alert)
 
             assert check_system_health is not None
             assert send_alert is not None
@@ -254,7 +252,7 @@ class TestErrorHandling:
             pass
         except Exception:
             pass
-            from src.tasks.error_logger import log_error, log_critical
+            from src.tasks.error_logger import log_critical, log_error
 
             assert log_error is not None
             assert log_critical is not None
@@ -287,11 +285,9 @@ class TestStreamingTasks:
             pass
         except Exception:
             pass
-            from src.tasks.streaming_tasks import (
-                process_kafka_message,
-                publish_event,
-                handle_stream_data,
-            )
+            from src.tasks.streaming_tasks import (handle_stream_data,
+                                                   process_kafka_message,
+                                                   publish_event)
 
             assert process_kafka_message is not None
             assert publish_event is not None
@@ -328,11 +324,8 @@ class TestBackupTasks:
             pass
         except Exception:
             pass
-            from src.tasks.backup_tasks import (
-                create_backup,
-                restore_backup,
-                schedule_backup,
-            )
+            from src.tasks.backup_tasks import (create_backup, restore_backup,
+                                                schedule_backup)
 
             assert create_backup is not None
             assert restore_backup is not None
@@ -371,12 +364,8 @@ class TestTaskUtils:
             pass
         except Exception:
             pass
-            from src.tasks.utils import (
-                get_task_status,
-                cancel_task,
-                retry_task,
-                format_task_result,
-            )
+            from src.tasks.utils import (cancel_task, format_task_result,
+                                         get_task_status, retry_task)
 
             assert get_task_status is not None
             assert cancel_task is not None
@@ -434,12 +423,9 @@ class TestTaskDecorators:
             pass
         except Exception:
             pass
-            from src.tasks.decorators import (
-                task_retry,
-                task_timeout,
-                task_circuit_breaker,
-                task_rate_limit,
-            )
+            from src.tasks.decorators import (task_circuit_breaker,
+                                              task_rate_limit, task_retry,
+                                              task_timeout)
 
             assert task_retry is not None
             assert task_timeout is not None
@@ -476,12 +462,10 @@ class TestTaskScheduler:
             pass
         except Exception:
             pass
-            from src.tasks.scheduler import (
-                TaskScheduler,
-                schedule_task,
-                cancel_scheduled_task,
-                list_scheduled_tasks,
-            )
+            from src.tasks.scheduler import (TaskScheduler,
+                                             cancel_scheduled_task,
+                                             list_scheduled_tasks,
+                                             schedule_task)
 
             assert TaskScheduler is not None
             assert schedule_task is not None
@@ -519,13 +503,9 @@ class TestTaskQueue:
             pass
         except Exception:
             pass
-            from src.tasks.queue_manager import (
-                QueueManager,
-                get_queue_size,
-                clear_queue,
-                pause_queue,
-                resume_queue,
-            )
+            from src.tasks.queue_manager import (QueueManager, clear_queue,
+                                                 get_queue_size, pause_queue,
+                                                 resume_queue)
 
             assert QueueManager is not None
             assert get_queue_size is not None

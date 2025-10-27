@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 22 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 """
 API特征管理测试
 Tests for API Features
@@ -10,23 +11,19 @@ Tests for API Features
 测试src.api.features模块的特征管理功能
 """
 
+from datetime import datetime
+
 import pytest
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import datetime
 
 # 测试导入
 try:
-    from src.api.features import (
-        router,
-        get_feature_store,
-        validate_match_id,
-        check_feature_store_availability,
-        get_match_info,
-        get_features_data,
-        build_response_data,
-        feature_store,
-    )
+    from src.api.features import (build_response_data,
+                                  check_feature_store_availability,
+                                  feature_store, get_feature_store,
+                                  get_features_data, get_match_info, router,
+                                  validate_match_id)
 
     FEATURES_AVAILABLE = True
 except ImportError as e:
@@ -44,7 +41,6 @@ except ImportError as e:
 
 @pytest.mark.skipif(not FEATURES_AVAILABLE, reason="Features module not available")
 @pytest.mark.unit
-
 class TestFeatureStore:
     """特征存储测试"""
 
@@ -385,8 +381,8 @@ class TestAPIEndpoints:
     @pytest.fixture
     def client(self):
         """创建测试客户端（不依赖数据库）"""
-        from fastapi.testclient import TestClient
         from fastapi import FastAPI
+        from fastapi.testclient import TestClient
 
         # 创建独立应用以避免数据库依赖
         test_app = FastAPI()
@@ -449,7 +445,7 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if FEATURES_AVAILABLE:
-        from src.api.features import router, get_feature_store
+        from src.api.features import get_feature_store, router
 
         assert router is not None
         assert get_feature_store is not None

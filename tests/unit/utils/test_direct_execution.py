@@ -4,10 +4,11 @@
 直接调用函数执行代码，避免mock
 """
 
-import pytest
-import sys
 import os
+import sys
 from datetime import datetime
+
+import pytest
 
 # 添加src目录到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))
@@ -109,9 +110,7 @@ class TestDirectExecution:
         """测试响应工具"""
         try:
             from src.utils.response import (  # noqa: F401
-                create_success_response,
-                create_error_response,
-            )
+                create_error_response, create_success_response)
 
             # 创建成功响应
             success = create_success_response({"data": "test"})
@@ -147,7 +146,8 @@ class TestDirectExecution:
     def test_database_base_functions(self):
         """测试数据库基础函数"""
         try:
-            from src.database.base import get_database_url, create_engine  # noqa: F401
+            from src.database.base import (create_engine,  # noqa: F401
+                                           get_database_url)
 
             # 获取数据库URL
             url = get_database_url()

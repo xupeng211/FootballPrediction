@@ -3,8 +3,8 @@
 """
 
 from datetime import datetime
-from typing import Optional, Dict, Any
 from enum import Enum
+from typing import Any, Dict, Optional
 
 
 class PredictionType(Enum):

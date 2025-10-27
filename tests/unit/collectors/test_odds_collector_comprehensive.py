@@ -2,25 +2,26 @@
 
 # TODO: Consider creating a fixture for 5 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 OddsCollector 综合测试
 提升 collectors 模块覆盖率的关键测试
 """
 
-import pytest
 import asyncio
+# 测试导入
+import sys
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
-# 测试导入
-import sys
+import pytest
 
 sys.path.insert(0, "src")
 
 try:
     from src.collectors.odds_collector import OddsCollector
-    from src.database.models import OddsData, Bookmaker
+    from src.database.models import Bookmaker, OddsData
     from src.utils.time_utils import utc_now
 
     ODDSCOLLECTOR_AVAILABLE = True
@@ -31,7 +32,6 @@ except ImportError as e:
 
 @pytest.mark.skipif(not ODDSCOLLECTOR_AVAILABLE, reason="OddsCollector not available")
 @pytest.mark.unit
-
 class TestOddsCollector:
     """OddsCollector测试"""
 

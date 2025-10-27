@@ -1,4 +1,5 @@
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 健康检查API测试
 Tests for Health Check API
@@ -6,15 +7,15 @@ Tests for Health Check API
 测试src.api.health模块的健康检查功能
 """
 
-import pytest
 import time
-from fastapi.testclient import TestClient
+
+import pytest
 from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 # 测试导入
 try:
-    from src.api.health import router
-    from src.api.health import _check_database
+    from src.api.health import _check_database, router
 
     HEALTH_AVAILABLE = True
 except ImportError as e:
@@ -26,7 +27,6 @@ except ImportError as e:
 
 @pytest.mark.skipif(not HEALTH_AVAILABLE, reason="Health module not available")
 @pytest.mark.unit
-
 class TestHealthCheck:
     """健康检查测试"""
 
@@ -267,7 +267,7 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if HEALTH_AVAILABLE:
-        from src.api.health import router, _check_database
+        from src.api.health import _check_database, router
 
         assert router is not None
         assert _check_database is not None
@@ -289,12 +289,8 @@ async def test_async_endpoints():
     """测试：异步端点"""
     if HEALTH_AVAILABLE:
         # 直接调用端点函数
-        from src.api.health import (
-            health_check,
-            liveness_check,
-            readiness_check,
-            detailed_health,
-        )
+        from src.api.health import (detailed_health, health_check,
+                                    liveness_check, readiness_check)
 
         # 测试health_check
         _result = await health_check()

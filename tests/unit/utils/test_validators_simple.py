@@ -6,18 +6,15 @@ Simple Validators Tests
 Tests data validation functionality defined in src/utils/validators.py, focused on achieving 100% coverage.
 """
 
-import pytest
 import re
+
+import pytest
 
 # 导入要测试的模块
 try:
-    from src.utils.validators import (
-        is_valid_email,
-        is_valid_phone,
-        is_valid_url,
-        validate_required_fields,
-        validate_data_types,
-    )
+    from src.utils.validators import (is_valid_email, is_valid_phone,
+                                      is_valid_url, validate_data_types,
+                                      validate_required_fields)
 
     VALIDATORS_AVAILABLE = True
 except ImportError:
@@ -26,7 +23,6 @@ except ImportError:
 
 @pytest.mark.skipif(not VALIDATORS_AVAILABLE, reason="Validators module not available")
 @pytest.mark.unit
-
 class TestValidatorsSimple:
     """验证器简单测试"""
 

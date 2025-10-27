@@ -1,11 +1,11 @@
 """预测引擎测试"""
 
 import pytest
+
 from src.core.prediction_engine import PredictionEngine
 
 
 @pytest.mark.unit
-
 class TestPredictionEngine:
     """测试预测引擎"""
 

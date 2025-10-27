@@ -2,28 +2,30 @@
 
 # TODO: Consider creating a fixture for 5 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 """
 数据库与仓储层集成测试
 测试仓储模式与数据库的正确交互
 """
 
-import pytest
 import asyncio
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
+
+import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 # 导入需要测试的模块
 try:
     from src.database.connection import get_async_session
-    from src.database.repositories.prediction import PredictionRepository
-    from src.database.repositories.match import MatchRepository
-    from src.database.repositories.user import UserRepository
-    from src.database.models.prediction import Prediction
-    from src.database.models.match import Match
-    from src.database.models.user import User
     from src.database.models.base import Base
+    from src.database.models.match import Match
+    from src.database.models.prediction import Prediction
+    from src.database.models.user import User
+    from src.database.repositories.match import MatchRepository
+    from src.database.repositories.prediction import PredictionRepository
+    from src.database.repositories.user import UserRepository
 
     IMPORT_SUCCESS = True
 except ImportError as e:
@@ -84,7 +86,7 @@ class TestRepositoryDatabaseIntegration:
         mock_session.get.return_value = prediction
         _result = await prediction_repo.get_by_id(1)
         mock_session.get.assert_called_once_with(Prediction, 1)
-        assert _result        == prediction
+        assert _result == prediction
 
         # 测试更新
         prediction.predicted_home_score = 3
@@ -146,11 +148,11 @@ class TestRepositoryDatabaseIntegration:
         # 测试按用户名查询
         mock_session.execute.return_value = Mock(scalar_one_or_none=user)
         _result = await user_repo.get_by_username("testuser")
-        assert _result        == user if result else True  # 允许None返回
+        assert _result == user if result else True  # 允许None返回
 
         # 测试按邮箱查询
         _result = await user_repo.get_by_email("test@example.com")
-        assert _result        == user if result else True
+        assert _result == user if result else True
 
         # 测试密码验证（如果存在）
         if hasattr(user_repo, "verify_password"):
@@ -388,7 +390,7 @@ class TestConnectionPoolIntegration:
         }
 
         # 验证健康检查结果
-        assert health_status["database"]        == "healthy"
+        assert health_status["database"] == "healthy"
         assert health_status["response_time_ms"] < 1000  # 响应时间小于1秒
 
 
@@ -403,7 +405,7 @@ class TestConnectionPoolIntegration:
         ("seasons", 5),
     ],
 )
-def test_table_data_integration(table_name, record_count, client, client):
+def test_table_data_integration(table_name, record_count, client):
     """测试表数据集成"""
     # 验证表名和记录数的基本格式
     assert isinstance(table_name, str)
@@ -430,9 +432,7 @@ def test_table_data_integration(table_name, record_count, client, client):
         ("invalid_operation", "invalid_entity", False),
     ],
 )
-def test_crud_operation_integration(
-    operation, entity, should_succeed, client
-):
+def test_crud_operation_integration(operation, entity, should_succeed, client):
     """测试CRUD操作集成"""
     # 验证操作参数
     assert operation in [
@@ -456,14 +456,14 @@ def test_crud_operation_integration(
     if should_succeed:
         # 对于有效操作，验证基本逻辑
         assert operation != "invalid_operation"
-        assert entity        != "invalid_entity"
+        assert entity != "invalid_entity"
     else:
         # 对于无效操作，确保被正确识别
-        assert operation == "invalid_operation" or entity        == "invalid_entity"
+        assert operation == "invalid_operation" or entity == "invalid_entity"
 
 
 @pytest.mark.integration
-def test_migration_integration(client, client):
+def test_migration_integration(client):
     """测试数据库迁移集成"""
     # 模拟迁移状态
     migrations = [
@@ -490,7 +490,7 @@ def test_migration_integration(client, client):
 
 
 @pytest.mark.integration
-def test_index_integration(client, client):
+def test_index_integration(client):
     """测试数据库索引集成"""
     # 模拟索引信息
     indexes = [
@@ -524,7 +524,7 @@ def test_index_integration(client, client):
 
 
 @pytest.mark.integration
-def test_query_performance_integration(client, client):
+def test_query_performance_integration(client):
     """测试查询性能集成"""
     # 模拟查询性能指标
     query_performance = {

@@ -5,14 +5,14 @@ System Metrics Collector
 负责收集系统、数据库、缓存等各项指标。
 """
 
-import psutil
 from datetime import datetime
 from typing import Any, Dict, Optional
 
+import psutil
 from prometheus_client import CollectorRegistry, Counter, Gauge, Histogram
 
-from src.database.connection import DatabaseManager
 from src.cache.redis.core.connection_manager import RedisConnectionManager
+from src.database.connection import DatabaseManager
 
 
 class SystemMetricsCollector:

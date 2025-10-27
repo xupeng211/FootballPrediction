@@ -2,15 +2,17 @@
 
 # TODO: Consider creating a fixture for 28 repeated Mock creations
 
-from unittest.mock import Mock, MagicMock
+from unittest.mock import MagicMock, Mock
+
 """
 Mock配置文件
 处理所有导入错误和模块依赖问题
 """
 
 import sys
-import pytest
 from pathlib import Path
+
+import pytest
 
 # 添加项目路径
 project_root = Path(__file__).parent.parent.parent

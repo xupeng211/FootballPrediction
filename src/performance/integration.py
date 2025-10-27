@@ -47,8 +47,8 @@ class PerformanceMonitoringIntegration:
 
         try:
             # 导入中间件
-            from .middleware import PerformanceMonitoringMiddleware
             from .api import router as performance_router
+            from .middleware import PerformanceMonitoringMiddleware
 
             # 添加性能监控中间件
             app.add_middleware(
@@ -72,7 +72,7 @@ class PerformanceMonitoringIntegration:
             return
 
         try:
-            from .profiler import get_profiler, DatabaseQueryProfiler
+            from .profiler import DatabaseQueryProfiler, get_profiler
 
             # 创建数据库查询分析器
             DatabaseQueryProfiler(get_profiler())

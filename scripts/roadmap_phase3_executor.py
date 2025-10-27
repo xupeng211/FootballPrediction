@@ -60,7 +60,7 @@ class RoadmapPhase3Executor:
         duration = time.time() - self.phase_stats['start_time']
         success = api_success and data_success and ml_success and integration_success
 
-        print(f"\n🎉 路线图阶段3执行完成!")
+        print("\n🎉 路线图阶段3执行完成!")
         print(f"⏱️  总用时: {duration:.2f}秒")
         print(f"🔧 功能扩展: {self.phase_stats['features_extended']}")
         print(f"🌐 API增强: {self.phase_stats['apis_enhanced']}")

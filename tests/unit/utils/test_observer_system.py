@@ -1,4 +1,5 @@
 from unittest.mock import AsyncMock, MagicMock
+
 """
 观察者系统单元测试
 Observer System Unit Tests
@@ -7,29 +8,23 @@ Observer System Unit Tests
 Tests core functionality of the observer pattern.
 """
 
-import pytest
 import asyncio
 from datetime import datetime, timedelta
+
+import pytest
 import pytest_asyncio
 
-from src.observers.base import Observer, Subject, ObservableEvent, ObservableEventType
-from src.observers.observers import (
-    MetricsObserver,
-    LoggingObserver,
-    AlertingObserver,
-    PerformanceObserver,
-)
-from src.observers.subjects import (
-    SystemMetricsSubject,
-    PredictionMetricsSubject,
-    AlertSubject,
-    CacheSubject,
-)
+from src.observers.base import (ObservableEvent, ObservableEventType, Observer,
+                                Subject)
 from src.observers.manager import ObserverManager, get_observer_manager
+from src.observers.observers import (AlertingObserver, LoggingObserver,
+                                     MetricsObserver, PerformanceObserver)
+from src.observers.subjects import (AlertSubject, CacheSubject,
+                                    PredictionMetricsSubject,
+                                    SystemMetricsSubject)
 
 
 @pytest.mark.unit
-
 class TestObserver(Observer):
     """测试用的观察者"""
 

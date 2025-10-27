@@ -4,9 +4,9 @@
 
 import sys
 from pathlib import Path
-
 # 添加项目路径
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, "src")
 
@@ -15,6 +15,7 @@ sys.path.insert(0, "src")
 """
 
 import pytest
+
 from src.adapters.base import Adapter
 
 
@@ -45,7 +46,6 @@ except ImportError:
 
 
 @pytest.mark.unit
-
 class TestFootballDataAdapter:
     """足球数据适配器测试"""
 

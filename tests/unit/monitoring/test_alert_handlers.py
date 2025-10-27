@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 13 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 警报处理器测试
 Tests for Alert Handlers
@@ -10,21 +11,18 @@ Tests for Alert Handlers
 测试src.monitoring.alert_handlers模块的警报处理功能
 """
 
-import pytest
-from datetime import datetime
 import json
+from datetime import datetime
+
+import pytest
 
 # 测试导入
 try:
-    from src.monitoring.alert_handlers import (
-        AlertHandler,
-        EmailAlertHandler,
-        SlackAlertHandler,
-        WebhookAlertHandler,
-        AlertManager,
-        AlertSeverity,
-        AlertStatus,
-    )
+    from src.monitoring.alert_handlers import (AlertHandler, AlertManager,
+                                               AlertSeverity, AlertStatus,
+                                               EmailAlertHandler,
+                                               SlackAlertHandler,
+                                               WebhookAlertHandler)
 
     ALERT_HANDLERS_AVAILABLE = True
 except ImportError as e:
@@ -44,7 +42,6 @@ except ImportError as e:
     not ALERT_HANDLERS_AVAILABLE, reason="Alert handlers module not available"
 )
 @pytest.mark.unit
-
 class TestAlertHandler:
     """警报处理器基础测试"""
 
@@ -372,13 +369,10 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if ALERT_HANDLERS_AVAILABLE:
-        from src.monitoring.alert_handlers import (
-            AlertHandler,
-            EmailAlertHandler,
-            SlackAlertHandler,
-            WebhookAlertHandler,
-            AlertManager,
-        )
+        from src.monitoring.alert_handlers import (AlertHandler, AlertManager,
+                                                   EmailAlertHandler,
+                                                   SlackAlertHandler,
+                                                   WebhookAlertHandler)
 
         assert AlertHandler is not None
         assert EmailAlertHandler is not None

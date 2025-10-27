@@ -1,14 +1,15 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 """
 测试密钥管理器
 """
 
 import pytest
+
 from src.security.key_manager import KeyManager
 
 
 @pytest.mark.unit
-
 def test_key_manager_get_key():
     """测试获取密钥"""
     manager = KeyManager()

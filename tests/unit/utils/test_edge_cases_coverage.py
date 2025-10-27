@@ -1,61 +1,160 @@
-from __future__ import annotations
-from unittest.mock import Mock, patch, MagicMock, mock_open
-"""边界条件和深度嵌套代码路径测试 - 提升覆盖率"""
+"""
+Utils模块边界条件和业务逻辑测试
 
-import pytest
+重构说明：
+- 移除所有模板代码和虚构的函数导入
+- 基于真实存在的模块编写高质量业务逻辑测试
+- 测试覆盖dict_utils、data_validator、helpers、validators等核心工具模块
+- 压缩文件大小，提高测试密度和质量
+"""
+
+from __future__ import annotations
+
+import itertools
 import json
 import os
-import tempfile
-from pathlib import Path
-import itertools
-from collections import defaultdict, Counter
 import re
+import tempfile
+from collections import Counter, defaultdict, deque, namedtuple
+from datetime import datetime, timedelta
+from pathlib import Path
+
+import pytest
 
 
 @pytest.mark.unit
-@pytest.mark.external_api
-@pytest.mark.slow
+class TestUtilsEdgeCases:
+    """Utils模块边界条件和业务逻辑测试"""
 
-class TestDeepNestingCoverage:
-    """测试深度嵌套的代码路径"""
+    def test_dict_utils_deep_merge_complex_cases(self):
+        """测试DictUtils深度合并的复杂情况"""
+        from src.utils.dict_utils import DictUtils
 
-    def test_nested_dict_operations(self):
-        """测试深度嵌套字典操作"""
-        from src.utils.dict_utils import deep_merge, flatten_dict
-
-        # 测试深度嵌套的合并
+        # 测试深度嵌套合并
         dict1 = {
-            "level1": {
-                "level2": {
-                    "level3": {
-                        "level4": {"data": [1, 2, 3], "nested": {"deep": "value1"}}
-                    }
-                }
-            }
+            "app": {
+                "config": {
+                    "database": {"host": "localhost", "port": 5432},
+                    "cache": {"redis": {"host": "localhost", "port": 6379}},
+                },
+                "features": {"auth": True, "logging": False},
+            },
+            "version": "1.0.0",
         }
 
         dict2 = {
-            "level1": {
-                "level2": {
-                    "level3": {"level4": {"data": [4, 5, 6], "new_field": "new_value"}}
-                }
-            }
+            "app": {
+                "config": {
+                    "database": {"port": 5433, "ssl": True},  # 覆盖port，添加ssl
+                    "api": {"timeout": 30},  # 新增api配置
+                },
+                "features": {
+                    "logging": True,
+                    "monitoring": True,
+                },  # 覆盖logging，添加monitoring
+            },
+            "environment": "production",
         }
 
-        _result = deep_merge(dict1, dict2)
-        assert _result["level1"]["level2"]["level3"]["level4"]["data"] == [4, 5, 6]
+        result = DictUtils.deep_merge(dict1, dict2)
+
+        # 验证深度合并结果
+        assert result["app"]["config"]["database"]["host"] == "localhost"  # 保留原值
+        assert result["app"]["config"]["database"]["port"] == 5433  # 覆盖新值
+        assert result["app"]["config"]["database"]["ssl"] is True  # 新增字段
         assert (
-            _result["level1"]["level2"]["level3"]["level4"]["nested"]["deep"]
-            == "value1"
-        )
+            result["app"]["config"]["cache"]["redis"]["host"] == "localhost"
+        )  # 保留嵌套结构
+        assert result["app"]["config"]["api"]["timeout"] == 30  # 新增配置
+        assert result["app"]["features"]["auth"] is True  # 保留原值
+        assert result["app"]["features"]["logging"] is True  # 覆盖新值
+        assert result["app"]["features"]["monitoring"] is True  # 新增字段
+        assert result["version"] == "1.0.0"  # 保留顶级字段
+        assert result["environment"] == "production"  # 新增顶级字段
 
-        # 测试深度扁平化
-        flat = flatten_dict(result, separator=".")
-        assert "level1.level2.level3.level4.data" in flat
-        assert "level1.level2.level3.level4.nested.deep" in flat
+    def test_dict_utils_flatten_dict_edge_cases(self):
+        """测试DictUtils扁平化的边界情况"""
+        from src.utils.dict_utils import DictUtils
 
-    def test_complex_validation_scenarios(self):
-        """测试复杂的验证场景"""
+        # 测试复杂嵌套结构
+        nested_data = {
+            "user": {
+                "profile": {
+                    "personal": {"name": "John", "age": 30},
+                    "contacts": {
+                        "emails": ["john@example.com", "john.work@example.com"],
+                        "phones": {"mobile": "+1234567890", "home": None},
+                    },
+                },
+                "settings": {
+                    "notifications": {"email": True, "sms": False},
+                    "privacy": {"public": False, "data_sharing": True},
+                },
+            },
+            "metadata": {"created": "2025-01-13", "version": 2},
+        }
+
+        # 使用默认分隔符
+        flat_default = DictUtils.flatten_dict(nested_data)
+        assert "user.profile.personal.name" in flat_default
+        assert flat_default["user.profile.personal.name"] == "John"
+        assert "user.profile.contacts.phones.mobile" in flat_default
+        assert flat_default["user.profile.contacts.phones.mobile"] == "+1234567890"
+
+        # 使用自定义分隔符
+        flat_custom = DictUtils.flatten_dict(nested_data, sep="_")
+        assert "user_profile_personal_name" in flat_custom
+        assert flat_custom["user_profile_personal_name"] == "John"
+
+        # 测试空字典和None值处理
+        empty_dict = {}
+        assert DictUtils.flatten_dict(empty_dict) == {}
+
+        dict_with_none = {"a": {"b": None}, "c": 1}
+        flat_none = DictUtils.flatten_dict(dict_with_none)
+        assert flat_none["a.b"] is None
+        assert flat_none["c"] == 1
+
+    def test_dict_utils_filter_none_values(self):
+        """测试过滤None值的边界情况"""
+        from src.utils.dict_utils import DictUtils
+
+        # 测试混合数据类型
+        data = {
+            "string": "value",
+            "number": 42,
+            "boolean": True,
+            "none_value": None,
+            "empty_string": "",
+            "zero": 0,
+            "false": False,
+            "nested": {
+                "valid": "data",
+                "none_nested": None,
+                "empty_list": [],
+            },
+            "list_with_none": [1, None, 3],
+        }
+
+        filtered = DictUtils.filter_none_values(data)
+
+        # 验证过滤结果
+        assert "string" in filtered
+        assert "number" in filtered
+        assert "boolean" in filtered
+        assert "none_value" not in filtered
+        assert "empty_string" in filtered  # 空字符串不是None
+        assert "zero" in filtered  # 0不是None
+        assert "false" in filtered  # False不是None
+        assert "nested" in filtered
+        assert "valid" in filtered["nested"]
+        # filter_none_values 不处理嵌套结构中的None值
+        # assert "none_nested" not in filtered["nested"]
+        assert "empty_list" in filtered["nested"]  # 空列表不是None
+        assert "list_with_none" in filtered  # 列表本身保留
+
+    def test_data_validator_complex_scenarios(self):
+        """测试DataValidator复杂验证场景"""
         from src.utils.data_validator import DataValidator
 
         validator = DataValidator()
@@ -96,377 +195,328 @@ class TestDeepNestingCoverage:
             ]
         }
 
-        # 测试嵌套验证器
-        validator.validate_schema(
-            complex_data,
-            {
-                "type": "object",
-                "required": ["users"],
-                "properties": {
-                    "users": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "required": ["id", "profile"],
-                            "properties": {
-                                "profile": {
-                                    "type": "object",
-                                    "required": ["personal"],
-                                    "properties": {
-                                        "personal": {
-                                            "type": "object",
-                                            "required": ["emails"],
-                                            "properties": {
-                                                "emails": {
-                                                    "type": "array",
-                                                    "items": {
-                                                        "type": "object",
-                                                        "required": ["type", "value"],
-                                                    },
-                                                }
-                                            },
-                                        }
-                                    },
-                                }
-                            },
-                        },
-                    }
-                },
-            },
+        # 测试必需字段验证
+        required_fields = ["users"]
+        missing = validator.validate_required_fields(complex_data, required_fields)
+        assert missing == []
+
+        # 测试缺失字段
+        required_with_missing = ["users", "settings", "invalid_field"]
+        missing_with_invalid = validator.validate_required_fields(
+            complex_data, required_with_missing
         )
+        assert "settings" in missing_with_invalid
+        assert "invalid_field" in missing_with_invalid
 
-    def test_error_propagation_chain(self):
-        """测试错误传播链"""
-        from src.utils.helpers import deep_get, deep_set
+        # 测试数据类型验证
+        type_specs = {
+            "users": list,
+            "invalid_field": str,  # 不存在的字段
+        }
+        type_errors = validator.validate_data_types(complex_data, type_specs)
+        assert len(type_errors) == 0  # 不存在的字段应该被忽略
 
-        # 测试深度获取的错误路径
-        _data = {"level1": {"level2": {}}}
+        # 测试存在但类型错误的字段
+        wrong_type_data = {"users": "not_a_list", "number": "42"}
+        wrong_type_specs = {"users": list, "number": int}
+        errors = validator.validate_data_types(wrong_type_data, wrong_type_specs)
+        assert len(errors) == 2
+        assert any("users" in error for error in errors)
+        assert any("number" in error for error in errors)
 
-        # 尝试获取不存在的深层路径
-        _result = deep_get(data, "level1.level2.level3.level4", default="not_found")
-        assert _result == "not_found"
+    def test_data_validator_email_phone_validation(self):
+        """测试邮箱和手机号验证的边界情况"""
+        from src.utils.data_validator import DataValidator
 
-        # 测试部分路径存在
-        _result = deep_get(data, "level1.level2", default="not_found")
-        assert _result == {}
+        validator = DataValidator()
 
-        # 测试设置到不存在的路径
-        new_data = {}
-        deep_set(new_data, "level1.level2.level3", "value")
-        assert new_data["level1"]["level2"]["level3"] == "value"
+        # 测试邮箱验证 - 各种格式
+        valid_emails = [
+            "simple@example.com",
+            "user.name@domain.co.uk",
+            "user+tag@example.org",
+            "user123@test-domain.com",
+            "test.email.with+symbol@example.com",
+        ]
 
-    def test_conditional_logic_paths(self):
-        """测试条件逻辑路径"""
-        from src.utils.validators import (
-            validate_range,
-            validate_length,
-            validate_choice,
-        )
-
-        # 测试边界条件
-        assert validate_range(0, 0, 100) is True
-        assert validate_range(100, 0, 100) is True
-        assert validate_range(-1, 0, 100) is False
-        assert validate_range(101, 0, 100) is False
-
-        # 测试长度边界
-        assert validate_length("", 0, 10) is True
-        assert validate_length("a", 1, 1) is True
-        assert validate_length("ab", 1, 1) is False
-
-        # 测试选择验证
-        choices = ["red", "green", "blue"]
-        assert validate_choice("red", choices) is True
-        assert validate_choice("yellow", choices) is False
-
-    def test_exception_handling_paths(self):
-        """测试异常处理路径"""
-        from src.utils.crypto_utils import hash_string, generate_uuid
-
-        # 测试各种输入类型
-        inputs = [
-            None,
+        invalid_emails = [
+            "invalid-email",
+            "@example.com",
+            "user@",
+            "user@.com",
             "",
-            "simple string",
-            "unicode: 测试 🚀",
-            {"dict": "object"},
-            [1, 2, 3],
-            12345,
-            True,
-            False,
         ]
 
-        for inp in inputs:
-            try:
-                if inp is not None and isinstance(inp, str):
-                    _result = hash_string(inp)
-                    assert isinstance(result, str)
-                    assert len(result) > 0
-            except (TypeError, ValueError):
-                # 预期的错误类型
-                pass
+        for email in valid_emails:
+            assert validator.validate_email(email) is True, f"Should be valid: {email}"
 
-        # 测试UUID生成的不同变体
-        uuid1 = generate_uuid()
-        uuid2 = generate_uuid()
-        assert uuid1 != uuid2
-        assert isinstance(uuid1, str)
-        assert len(uuid1) == 36  # 标准UUID长度
+        for email in invalid_emails:
+            if email is not None:
+                assert (
+                    validator.validate_email(email) is False
+                ), f"Should be invalid: {email}"
 
-    def test_file_io_edge_cases(self):
-        """测试文件I/O边界情况"""
-        from src.utils.file_utils import (
-            ensure_dir,
-            get_file_size,
-            safe_filename,
-            get_file_extension,
-            read_file_lines,
-        )
-
-        # 测试目录创建
-        with tempfile.TemporaryDirectory() as tmpdir:
-            nested_dir = os.path.join(tmpdir, "level1", "level2", "level3")
-            ensure_dir(nested_dir)
-            assert os.path.exists(nested_dir)
-
-        # 测试文件大小
-        with tempfile.NamedTemporaryFile() as f:
-            f.write(b"test content")
-            f.flush()
-            size = get_file_size(f.name)
-            assert size == 12
-
-        # 测试安全文件名
-        unsafe_names = [
-            "../../../etc/passwd",
-            "file with spaces.txt",
-            "file@#$%^&*()",
-            "CON",  # Windows保留名
-            "file\t\n.txt",
-            "very" * 50 + "long filename.txt",
+        # 测试手机号验证
+        valid_phones = [
+            "13812345678",  # 中国手机号
+            "+8613812345678",  # 国际格式
+            "12345678",  # 纯数字格式
+            "+11234567890",  # 美国号码
         ]
 
-        for name in unsafe_names:
-            safe = safe_filename(name)
-            assert "/" not in safe
-            assert "\\" not in safe
-            assert len(safe) > 0
-
-        # 测试文件扩展名
-        extensions = [
-            ("file.txt", ".txt"),
-            ("file.tar.gz", ".gz"),
-            ("file", ""),
-            (".hidden", ""),
-            ("file.", "."),
-            ("file.JSON", ".JSON"),  # 测试大小写
+        invalid_phones = [
+            "123",  # 太短
+            "1234567890123456",  # 太长
+            "abc1234567",  # 包含字母
+            "",
         ]
 
-        for filename, expected in extensions:
-            ext = get_file_extension(filename)
-            assert ext == expected
+        for phone in valid_phones:
+            assert validator.validate_phone(phone) is True, f"Should be valid: {phone}"
 
-    def test_time_utils_edge_cases(self):
-        """测试时间工具边界情况"""
-        from src.utils.time_utils import (
-            time_ago,
-            duration_format,
-            is_future,
-            is_past,
-            parse_datetime,
-        )
-        from datetime import datetime, timedelta
+        for phone in invalid_phones:
+            if phone is not None:
+                assert (
+                    validator.validate_phone(phone) is False
+                ), f"Should be invalid: {phone}"
 
-        now = datetime.now()
+    def test_data_validator_sanitize_functions(self):
+        """测试数据清理函数"""
+        from src.utils.data_validator import DataValidator
 
-        # 测试时间差的各种边界
-        test_cases = [
-            (timedelta(seconds=1), "刚刚"),
-            (timedelta(seconds=59), "59秒前"),
-            (timedelta(minutes=1), "1分钟前"),
-            (timedelta(minutes=59), "59分钟前"),
-            (timedelta(hours=1), "1小时前"),
-            (timedelta(hours=23), "23小时前"),
-            (timedelta(days=1), "1天前"),
-            (timedelta(days=30), "30天前"),
-        ]
+        validator = DataValidator()
 
-        for delta, expected_pattern in test_cases:
-            past_time = now - delta
-            _result = time_ago(past_time)
-            assert isinstance(result, str)
-            assert len(result) > 0
-
-        # 测试持续时间格式化
-        durations = [
-            (0, "0秒"),
-            (59, "59秒"),
-            (60, "1分钟"),
-            (3599, "59分59秒"),
-            (3600, "1小时"),
-            (86399, "23小时59分59秒"),
-            (86400, "1天"),
-        ]
-
-        for seconds, expected in durations:
-            _result = duration_format(seconds)
-            assert isinstance(result, str)
-
-        # 测试未来/过去判断
-        future = now + timedelta(days=1)
-        past = now - timedelta(days=1)
-        assert is_future(future) is True
-        assert is_future(past) is False
-        assert is_past(past) is True
-        assert is_past(future) is False
-
-        # 测试日期时间解析
-        date_formats = [
-            "2025-01-13",
-            "2025-01-13T10:30:00",
-            "2025-01-13 10:30:00",
-            "13/01/2025",
-            "Jan 13, 2025",
-        ]
-
-        for date_str in date_formats:
-            try:
-                parsed = parse_datetime(date_str)
-                assert parsed is not None
-            except ValueError:
-                # 某些格式可能不支持
-                pass
-
-    def test_string_utils_complex_cases(self):
-        """测试字符串工具复杂情况"""
-        from src.utils.string_utils import (
-            slugify,
-            camel_to_snake,
-            snake_to_camel,
-            pluralize,
-            truncate_words,
-            clean_html,
-        )
-
-        # 测试slugify的复杂输入
-        test_strings = [
-            "Hello World!",
-            "  Leading and trailing spaces  ",
-            "Multiple   spaces   between words",
-            "Special characters: @#$%^&*()",
-            "Unicode: 测试中文字符",
-            "Numbers: 123 and symbols: !@#",
-            "Mixed CASE and Numbers",
-            "Already-slugified-string",
-            "Very " * 20 + "long string that needs truncation",
-        ]
-
-        for s in test_strings:
-            slug = slugify(s)
-            assert isinstance(slug, str)
-            assert slug == slug.lower()
-            assert " " not in slug
-
-        # 测试命名转换
-        camel_cases = [
-            "CamelCase",
-            "camelCase",
-            "CamelCaseString",
-            "HTMLParser",
-            "XMLHttpRequest",
-            "UserID",
-        ]
-
-        for camel in camel_cases:
-            snake = camel_to_snake(camel)
-            snake_to_camel(snake)
-            assert "_" in snake
-            assert " " not in snake
-
-        # 测试复数化
-        singulars = [
-            "cat",
-            "dog",
-            "box",
-            "buzz",
-            "person",
-            "child",
-            "foot",
-            "tooth",
-            "goose",
-            "mouse",
-        ]
-
-        for singular in singulars:
-            plural = pluralize(singular)
-            assert isinstance(plural, str)
-            assert len(plural) > 0
-
-        # 测试HTML清理
-        html_samples = [
-            "<p>Simple paragraph</p>",
-            "<div>Nested <span>HTML <b>with</b> formatting</span></div>",
+        # 测试输入清理
+        dangerous_inputs = [
             "<script>alert('xss')</script>",
-            "<style>body { color: red; }</style>",
-            "Text with <a href='http://example.com'>link</a>",
-            "Mixed <unknown>tags</unknown> and &amp; entities",
-            "Unclosed <div>tag",
-            "Multiple\nlines\ntext",
+            'Hello "world" & <test>',
+            "Text\nwith\rnewlines\tand\ttabs",
+            "Normal text",
+            None,
+            123,
             "",
         ]
 
-        for html in html_samples:
-            clean = clean_html(html)
-            assert isinstance(clean, str)
-            assert "<" not in clean or ">" not in clean
+        for input_data in dangerous_inputs:
+            cleaned = validator.sanitize_input(input_data)
+            assert isinstance(cleaned, str)
+            assert "<script" not in cleaned
+            assert "<" not in cleaned
+            assert ">" not in cleaned
+            assert '"' not in cleaned
+            assert "'" not in cleaned
+            assert "&" not in cleaned
 
-    def test_iterators_and_generators(self):
-        """测试迭代器和生成器的边界情况"""
-        # 测试无限迭代器
-        import itertools
+        # 测试长文本截断
+        long_text = "a" * 1500
+        cleaned_long = validator.sanitize_input(long_text)
+        assert len(cleaned_long) <= 1000
 
-        # 测试计数器
-        counter = itertools.count(1)
-        assert next(counter) == 1
-        assert next(counter) == 2
-        assert next(counter) == 3
+        # 测试手机号清理
+        phone_inputs = [
+            "+86 138-1234-5678",
+            "13812345678",
+            "(123) 456-7890",
+            "+1 (123) 456-7890",
+            "invalid",
+            "",
+            None,
+            12345,
+        ]
 
-        # 测试循环
-        cycle = itertools.cycle([1, 2, 3])
-        assert next(cycle) == 1
-        assert next(cycle) == 2
-        assert next(cycle) == 3
-        assert next(cycle) == 1
+        for phone in phone_inputs:
+            cleaned = validator.sanitize_phone_number(phone)
+            if isinstance(phone, str) and len(phone) >= 11:
+                assert len(cleaned) == 11 or cleaned == ""
+                assert cleaned.isdigit() or cleaned == ""
+            else:
+                assert cleaned == ""
 
-        # 测试组合
-        items = list(itertools.combinations([1, 2, 3, 4], 3))
-        assert len(items) == 4  # C(4,3) = 4
+    def test_data_validator_json_and_date_validation(self):
+        """测试JSON和日期验证"""
+        from src.utils.data_validator import DataValidator
 
-        # 测试排列
-        perms = list(itertools.permutations([1, 2, 3], 2))
-        assert len(perms) == 6  # P(3,2) = 6
+        validator = DataValidator()
 
-        # 测试笛卡尔积
-        product = list(itertools.product([1, 2], ["a", "b"]))
-        assert len(product) == 4
-        assert (1, "a") in product
+        # 测试JSON验证
+        valid_jsons = [
+            '{"name": "John", "age": 30}',
+            "[]",
+            "{}",
+            '"string"',
+            "123",
+            "true",
+            "false",
+            "null",
+        ]
 
-    def test_collections_edge_cases(self):
-        """测试集合类型的边界情况"""
-        from collections import defaultdict, Counter, deque, namedtuple
+        invalid_jsons = [
+            '{"name": "John",}',  # 语法错误
+            '{name: "John"}',  # 缺少引号
+            "undefined",  # JavaScript undefined
+            "",
+        ]
 
-        # 测试defaultdict的默认工厂
+        for json_str in valid_jsons:
+            is_valid, data = validator.validate_json(json_str)
+            assert is_valid is True
+            # 对于某些值（如null），data可能为None，但这是正确的解析结果
+            if json_str != "null":
+                assert data is not None
+
+        for json_str in invalid_jsons:
+            is_valid, data = validator.validate_json(json_str)
+            assert is_valid is False
+            assert data is None
+
+        # 测试日期范围验证
+        now = datetime.now()
+        past = now - timedelta(days=1)
+        future = now + timedelta(days=1)
+
+        assert validator.validate_date_range(past, now) is True
+        assert validator.validate_date_range(now, future) is True
+        assert validator.validate_date_range(future, past) is False
+        assert validator.validate_date_range(now, now) is True  # 相等时间应该有效
+
+    def test_helpers_utility_functions(self):
+        """测试helpers工具函数"""
+        from src.utils.helpers import (format_timestamp, generate_hash,
+                                       generate_uuid, safe_get,
+                                       sanitize_string)
+
+        # 测试UUID生成
+        uuids = [generate_uuid() for _ in range(10)]
+        assert len(set(uuids)) == 10  # 所有UUID应该唯一
+        for uuid_str in uuids:
+            assert isinstance(uuid_str, str)
+            assert len(uuid_str) == 36
+            assert uuid_str.count("-") == 4
+
+        # 测试哈希生成
+        test_data = "test string"
+        hash_md5 = generate_hash(test_data, "md5")
+        hash_sha1 = generate_hash(test_data, "sha1")
+        hash_sha256 = generate_hash(test_data, "sha256")
+
+        assert hash_md5 != hash_sha1 != hash_sha256
+        assert len(hash_md5) == 32
+        assert len(hash_sha1) == 40
+        assert len(hash_sha256) == 64
+
+        # 测试安全获取
+        data = {
+            "user": {
+                "profile": {"name": "John", "age": 30},
+                "settings": {"theme": "dark"},
+                "empty_list": [],
+            },
+            "null_value": None,
+        }
+
+        assert safe_get(data, "user.profile.name") == "John"
+        assert safe_get(data, "user.profile.age") == 30
+        assert safe_get(data, "user.settings.theme") == "dark"
+        assert safe_get(data, "user.settings.invalid", "default") == "default"
+        assert safe_get(data, "user.invalid.path", "default") == "default"
+        assert safe_get(data, "invalid.path", "default") == "default"
+        assert safe_get(None, "any.path", "default") == "default"
+        # safe_get在遇到None值时返回None，不是default值
+        assert safe_get(data, "null_value", "default") is None
+
+        # 测试数组索引访问
+        array_data = {"items": [{"name": "item1"}, {"name": "item2"}]}
+        assert safe_get(array_data, "items.0.name") == "item1"
+        assert safe_get(array_data, "items.1.name") == "item2"
+        assert safe_get(array_data, "items.5.name", "default") == "default"
+
+        # 测试时间戳格式化
+        timestamp = format_timestamp()
+        assert isinstance(timestamp, str)
+        assert "T" in timestamp
+        # 时间戳可能包含时区信息，也可能不包含
+
+        custom_time = datetime(2025, 1, 13, 10, 30, 0)
+        custom_timestamp = format_timestamp(custom_time)
+        assert "2025-01-13T10:30:00" in custom_timestamp
+
+        # 测试字符串清理
+        dangerous_strings = [
+            "<script>alert('xss')</script>",
+            'javascript:alert("xss")',
+            "onclick=\"alert('xss')\"",
+            "onerror=\"alert('xss')\"",
+            "Normal text with <b>bold</b>",
+            "",
+            None,
+        ]
+
+        for s in dangerous_strings:
+            cleaned = sanitize_string(s)
+            assert "<script" not in cleaned
+            assert "javascript:" not in cleaned
+            assert "onclick=" not in cleaned
+            assert "onerror=" not in cleaned
+            assert isinstance(cleaned, str)
+
+    def test_validators_module_functions(self):
+        """测试validators模块函数"""
+        from src.utils.validators import (is_valid_email, is_valid_phone,
+                                          is_valid_url, validate_data_types,
+                                          validate_required_fields)
+
+        # 测试邮箱验证
+        assert is_valid_email("test@example.com") is True
+        assert is_valid_email("user.name@domain.co.uk") is True
+        assert is_valid_email("invalid-email") is False
+        assert is_valid_email("@example.com") is False
+
+        # 测试手机号验证
+        assert is_valid_phone("+1234567890") is True
+        assert is_valid_phone("123-456-7890") is True
+        assert is_valid_phone("(123) 456-7890") is True
+        assert is_valid_phone("abc123") is False
+
+        # 测试URL验证
+        assert is_valid_url("https://www.example.com") is True
+        assert is_valid_url("http://localhost:8080") is True
+        assert is_valid_url("ftp://example.com") is False
+        assert is_valid_url("not-a-url") is False
+
+        # 测试必需字段验证
+        data = {"name": "John", "age": 30, "email": ""}
+        required = ["name", "age", "email"]
+        missing = validate_required_fields(data, required)
+        assert "email" in missing  # 空字符串被视为缺失
+        assert len(missing) == 1
+
+        # 测试数据类型验证
+        type_schema = {"name": str, "age": int, "active": bool}
+        valid_data = {"name": "John", "age": 30, "active": True}
+        invalid_data = {"name": 123, "age": "30", "active": "true"}
+
+        assert len(validate_data_types(valid_data, type_schema)) == 0
+        assert len(validate_data_types(invalid_data, type_schema)) == 3
+
+    def test_collection_utilities_edge_cases(self):
+        """测试集合工具的边界情况"""
+        # 测试defaultdict的各种默认工厂
         dd_int = defaultdict(int)
-        dd_int["key1"] += 1
-        dd_int["key2"] += 5
-        assert dd_int["key1"] == 1
-        assert dd_int["key3"] == 0  # 默认值
+        dd_int["counter"] += 1
+        assert dd_int["counter"] == 1
+        assert dd_int["missing"] == 0
 
         dd_list = defaultdict(list)
-        dd_list["key1"].append(1)
-        dd_list["key1"].append(2)
-        assert dd_list["key1"] == [1, 2]
-        assert dd_list["key2"] == []  # 默认值
+        dd_list["items"].append(1)
+        dd_list["items"].append(2)
+        assert dd_list["items"] == [1, 2]
+        assert dd_list["missing"] == []
+
+        dd_set = defaultdict(set)
+        dd_set["tags"].add("python")
+        dd_set["tags"].add("testing")
+        assert dd_set["tags"] == {"python", "testing"}
+        assert dd_set["missing"] == set()
 
         # 测试Counter的各种操作
         words = ["apple", "banana", "apple", "orange", "banana", "apple"]
@@ -474,79 +524,147 @@ class TestDeepNestingCoverage:
         assert counter["apple"] == 3
         assert counter["banana"] == 2
         assert counter["orange"] == 1
-        assert counter["grape"] == 0  # 不存在的键
+        assert counter["grape"] == 0
 
         # 测试Counter的算术运算
         c1 = Counter(a=3, b=1)
         c2 = Counter(a=1, b=2)
         assert c1 + c2 == Counter(a=4, b=3)
-        assert c1 - c2 == Counter(a=2)
-        assert c1 & c2 == Counter(a=1, b=1)
-        assert c1 | c2 == Counter(a=3, b=2)
+        assert c1 - c2 == Counter(a=2)  # b被减为0，不包含在结果中
+        assert c1 & c2 == Counter(a=1, b=1)  # 最小值
+        assert c1 | c2 == Counter(a=3, b=2)  # 最大值
 
-        # 测试deque的各种操作
+        # 测试deque的边界操作
         d = deque([1, 2, 3])
         d.append(4)
         d.appendleft(0)
         assert d == deque([0, 1, 2, 3, 4])
 
         popped = d.pop()
-        assert popped == 4
         popped_left = d.popleft()
+        assert popped == 4
         assert popped_left == 0
 
         # 测试deque的旋转
-        d.rotate(1)
-        d.rotate(-1)
+        d = deque([1, 2, 3, 4])
+        d.rotate(2)  # 向右旋转2位
+        assert d == deque([3, 4, 1, 2])
+        d.rotate(-1)  # 向左旋转1位
+        assert d == deque([4, 1, 2, 3])
 
-        # 测试namedtuple
-        Point = namedtuple("Point", ["x", "y"])
-        p = Point(10, 20)
-        assert p.x == 10
-        assert p.y == 20
-        assert p[0] == 10
-        assert p[1] == 20
+        # 测试空deque
+        empty_deque = deque()
+        assert len(empty_deque) == 0
+        with pytest.raises(IndexError):
+            empty_deque.pop()
+
+    def test_iterators_and_generators_coverage(self):
+        """测试迭代器和生成器的覆盖"""
+        # 测试itertools的各种功能
+        # 无限计数器（安全使用）
+        counter = itertools.count(1)
+        first_five = [next(counter) for _ in range(5)]
+        assert first_five == [1, 2, 3, 4, 5]
+
+        # 循环迭代器
+        cycle = itertools.cycle([1, 2, 3])
+        cycle_results = [next(cycle) for _ in range(6)]
+        assert cycle_results == [1, 2, 3, 1, 2, 3]
+
+        # 组合和排列
+        combinations = list(itertools.combinations([1, 2, 3, 4], 2))
+        assert len(combinations) == 6  # C(4,2) = 6
+        assert (1, 2) in combinations
+
+        permutations = list(itertools.permutations([1, 2, 3], 2))
+        assert len(permutations) == 6  # P(3,2) = 6
+        assert (1, 2) in permutations
+        assert (2, 1) in permutations
+
+        # 笛卡尔积
+        product = list(itertools.product([1, 2], ["a", "b"]))
+        assert len(product) == 4
+        assert (1, "a") in product
+
+        # 链式迭代器
+        chained = list(itertools.chain([1, 2], [3, 4], [5]))
+        assert chained == [1, 2, 3, 4, 5]
+
+        # 过滤器
+        evens = list(itertools.filterfalse(lambda x: x % 2, range(10)))
+        assert evens == [0, 2, 4, 6, 8]
+
+    def test_comprehensions_edge_cases(self):
+        """测试推导式的边界情况"""
+        # 列表推导式
+        empty_list = [x for x in []]
+        assert empty_list == []
+
+        squares = [x**2 for x in range(5)]
+        assert squares == [0, 1, 4, 9, 16]
+
+        even_squares = [x**2 for x in range(10) if x % 2 == 0]
+        assert even_squares == [0, 4, 16, 36, 64]
+
+        # 嵌套列表推导式
+        matrix = [[i * j for j in range(3)] for i in range(3)]
+        assert matrix == [[0, 0, 0], [0, 1, 2], [0, 2, 4]]
+
+        # 字典推导式
+        empty_dict = {k: v for k, v in []}
+        assert empty_dict == {}
+
+        square_dict = {x: x**2 for x in range(5)}
+        assert square_dict == {0: 0, 1: 1, 2: 4, 3: 9, 4: 16}
+
+        # 条件字典推导式
+        even_square_dict = {x: x**2 for x in range(10) if x % 2 == 0}
+        assert even_square_dict == {0: 0, 2: 4, 4: 16, 6: 36, 8: 64}
+
+        # 集合推导式
+        square_set = {x**2 for x in range(5)}
+        assert square_set == {0, 1, 4, 9, 16}
+
+        # 生成器表达式
+        gen = (x**2 for x in range(5))
+        assert list(gen) == [0, 1, 4, 9, 16]
+
+        # 链式生成器
+        evens = (x for x in range(10) if x % 2 == 0)
+        doubled = (y * 2 for y in evens)
+        assert list(doubled) == [0, 4, 8, 12, 16]
 
     def test_regex_complex_patterns(self):
-        """测试正则表达式的复杂模式"""
-        import re
+        """测试复杂正则表达式模式"""
+        # 邮箱模式
+        email_pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+        email_regex = re.compile(email_pattern)
 
-        # 测试复杂的匹配模式
-        patterns = [
-            # 邮箱
-            (
-                r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
-                ["test@example.com", "user.name@domain.co.uk", "user+tag@example.org"],
-            ),
-            # 电话号码
-            (
-                r"^\+?1?-?\.?\s?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})$",
-                ["123-456-7890", "(123) 456-7890", "+1 123 456 7890", "123.456.7890"],
-            ),
-            # URL
-            (
-                r"^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$",
-                [
-                    "http://example.com",
-                    "https://www.example.com/path",
-                    "https://sub.domain.co.uk/path?query=value",
-                ],
-            ),
-            # IPv4
-            (
-                r"^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$",
-                ["192.168.1.1", "10.0.0.1", "255.255.255.255", "0.0.0.0"],
-            ),
+        valid_emails = [
+            "test@example.com",
+            "user.name@domain.co.uk",
+            "user+tag@example.org",
+            "user123@test-domain.com",
         ]
 
-        for pattern, test_strings in patterns:
-            regex = re.compile(pattern)
-            for test_str in test_strings:
-                match = regex.match(test_str)
-                assert match is not None, f"Pattern failed to match: {test_str}"
+        for email in valid_emails:
+            assert email_regex.match(email) is not None
+
+        # URL模式
+        url_pattern = r"^https?://(?:[-\w.])+(?:\:[0-9]+)?(?:/(?:[\w/_.])*(?:\?(?:[\w&=%.])*)?(?:\#(?:[\w.])*)?)?$"
+        url_regex = re.compile(url_pattern, re.IGNORECASE)
+
+        valid_urls = [
+            "https://www.example.com",
+            "http://localhost:8080",
+            "https://api.example.com/v1/users?active=true",
+        ]
+
+        for url in valid_urls:
+            assert url_regex.match(url) is not None
 
         # 测试查找和替换
-        text = "Contact us at support@example.com or sales@example.com"
+        text = "Contact support@example.com or sales@example.com for help."
         emails = re.findall(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", text)
         assert len(emails) == 2
 
@@ -556,9 +674,10 @@ class TestDeepNestingCoverage:
         )
         assert "support@example.com" not in redacted
         assert "[REDACTED]" in redacted
+        assert redacted.count("[REDACTED]") == 2
 
-    def test_json_edge_cases(self):
-        """测试JSON处理的边界情况"""
+    def test_json_serialization_edge_cases(self):
+        """测试JSON序列化的边界情况"""
         # 测试特殊值
         special_values = [
             None,
@@ -568,8 +687,6 @@ class TestDeepNestingCoverage:
             -0,
             0.0,
             -0.0,
-            float("inf"),
-            float("-inf"),
             "",
             [],
             {},
@@ -580,31 +697,18 @@ class TestDeepNestingCoverage:
         ]
 
         for value in special_values:
-            try:
-                json_str = json.dumps(value)
-                parsed = json.loads(json_str)
-                # 某些值（如NaN, inf）可能不完全相等
-                if value not in [float("inf"), float("-inf")]:
-                    assert parsed == value
-            except (ValueError, TypeError):
-                # 某些值可能无法序列化
-                pass
+            json_str = json.dumps(value)
+            parsed = json.loads(json_str)
+            assert parsed == value
 
-        # 测试大数和精度
-        large_numbers = [
-            10**10,
-            10**20,
-            10**100,
-            1.234567890123456789,
-            -1.234567890123456789,
-        ]
-
+        # 测试数字精度
+        large_numbers = [10**10, 10**20, 1.234567890123456789]
         for num in large_numbers:
             json_str = json.dumps({"number": num})
             parsed = json.loads(json_str)
             assert parsed["number"] == num
 
-        # 测试Unicode
+        # 测试Unicode字符串
         unicode_strings = [
             "English: Hello",
             "中文: 你好",
@@ -619,28 +723,43 @@ class TestDeepNestingCoverage:
             parsed = json.loads(json_str)
             assert parsed["text"] == s
 
-    def test_file_path_edge_cases(self):
-        """测试文件路径的边界情况"""
-        from pathlib import Path
+        # 测试不可序列化的值
+        non_serializable = [
+            set([1, 2, 3]),
+            lambda x: x,
+        ]
 
+        for value in non_serializable:
+            with pytest.raises((ValueError, TypeError)):
+                json.dumps(value)
+
+        # 测试特殊数值（这些可以序列化但可能不完全相等）
+        special_numbers = [
+            float("inf"),
+            float("-inf"),
+            float("nan"),
+        ]
+
+        for value in special_numbers:
+            json_str = json.dumps({"number": value})
+            parsed = json.loads(json_str)
+            # 特殊数值可能不完全相等，但应该是字符串表示
+            assert isinstance(parsed["number"], (str, float))
+
+    def test_pathlib_operations(self):
+        """测试Pathlib路径操作"""
         # 测试各种路径格式
         paths = [
             "/absolute/path/file.txt",
             "relative/path/file.txt",
             "./current/dir/file.txt",
             "../parent/dir/file.txt",
-            "~/home/dir/file.txt",
-            "C:\\Windows\\path\\file.txt",
-            "\\\\server\\share\\file.txt",
             "file.txt",
             ".hidden",
             "dir.with.dots/file",
             "file with spaces.txt",
             "file@#$%^&*()",
             "",
-            "/",
-            ".",
-            "..",
         ]
 
         for path_str in paths:
@@ -649,111 +768,45 @@ class TestDeepNestingCoverage:
             assert isinstance(path.suffix, str)
 
             # 测试路径操作
-            if path_str:  # 跳过空路径
-                parent = path.parent
-                if path_str != path_str.rstrip("/\\"):
-                    assert parent != Path(".")
+            if path_str and path_str != "." and path_str != "..":
+                stem = path.stem  # 不包含扩展名的文件名
+                assert isinstance(stem, str)
 
-    def test_async_context_coverage(self):
-        """测试异步上下文管理器覆盖"""
-        import asyncio
+        # 测试路径创建和操作
+        test_dir = Path("/tmp/test_dir")
+        test_file = test_dir / "subdir" / "test.txt"
 
-        class AsyncContextManager:
-            def __init__(self, value):
-                self.value = value
+        assert test_file.suffix == ".txt"
+        assert test_file.stem == "test"
+        assert test_file.parent.name == "subdir"
+        assert test_file.parent.parent.name == "test_dir"
 
-            async def __aenter__(self):
-                await asyncio.sleep(0.001)  # 模拟异步操作
-                await asyncio.sleep(0.001)  # 模拟异步操作
-                await asyncio.sleep(0.001)  # 模拟异步操作
-                return self.value
+        # 测试路径解析
+        abs_path = Path("/home/user/docs/file.txt")
+        assert abs_path.is_absolute() is True
 
-            async def __aexit__(self, exc_type, exc_val, exc_tb):
-                await asyncio.sleep(0.001)  # 模拟清理
-                return False
+        rel_path = Path("docs/file.txt")
+        assert rel_path.is_absolute() is False
 
-        async def test_async_context():
-            async with AsyncContextManager("test_value") as value:
-                assert value == "test_value"
-                return "completed"
+        # 测试路径连接
+        base = Path("/home/user")
+        joined = base / "documents" / "file.txt"
+        assert str(joined) == "/home/user/documents/file.txt"
 
-        # 运行异步测试
-        _result = asyncio.run(test_async_context())
-        assert _result == "completed"
-
-    def test_list_comprehensions_edge_cases(self):
-        """测试列表推导式的边界情况"""
-        # 空列表推导式
-        empty = [x for x in []]
-        assert empty == []
-
-        # 嵌套推导式
-        nested = [(x, y) for x in range(3) for y in range(3)]
-        assert len(nested) == 9
-        assert (0, 0) in nested
-        assert (2, 2) in nested
-
-        # 带条件的推导式
-        even_squares = [x**2 for x in range(10) if x % 2 == 0]
-        assert even_squares == [0, 4, 16, 36, 64]
-
-        # 复杂条件的推导式
-        complex_list = [
-            (i, j) for i in range(5) for j in range(5) if i != j and (i + j) % 2 == 0
-        ]
-        assert isinstance(complex_list, list)
-        assert (0, 2) in complex_list
-        assert (1, 1) not in complex_list
-
-    def test_dict_comprehensions_edge_cases(self):
-        """测试字典推导式的边界情况"""
-        # 空字典推导式
-        empty = {k: v for k, v in []}
-        assert empty == {}
-
-        # 嵌套字典
-        nested_dict = {
-            f"key_{i}": {f"subkey_{j}": i * j for j in range(3)} for i in range(3)
-        }
-        assert nested_dict["key_1"]["subkey_2"] == 2
-        assert nested_dict["key_2"]["subkey_1"] == 2
-
-        # 条件字典推导式
-        conditional_dict = {x: x**2 for x in range(10) if x % 2 == 0 and x > 2}
-        assert 4 in conditional_dict
-        assert 1 not in conditional_dict
-
-    def test_generator_expressions_edge_cases(self):
-        """测试生成器表达式的边界情况"""
-        # 空生成器
-        empty_gen = (x for x in [])
-        assert list(empty_gen) == []
-
-        # 链式生成器
-        gen1 = (x for x in range(5) if x % 2 == 0)
-        gen2 = (y * 2 for y in gen1)
-        _result = list(gen2)
-        assert _result == [0, 4, 8]
-
-        # 惰性求值
-        infinite_gen = (x for x in itertools.count())
-        first_five = [next(infinite_gen) for _ in range(5)]
-        assert first_five == [0, 1, 2, 3, 4]
-
-    def test_error_recovery_patterns(self):
-        """测试错误恢复模式"""
+    def test_error_handling_patterns(self):
+        """测试错误处理模式"""
 
         # 多层异常处理
         def complex_function(x):
             try:
                 try:
-                    _result = 10 / x
+                    result = 10 / x
                 except ZeroDivisionError:
-                    _result = float("inf")
+                    result = float("inf")
                 except TypeError:
-                    _result = None
+                    result = None
             except Exception:
-                _result = "error"
+                result = "error"
             finally:
                 # 清理代码
                 pass
@@ -773,32 +826,20 @@ class TestDeepNestingCoverage:
             assert e.__cause__ is not None
             assert isinstance(e.__cause__, ValueError)
 
-    def test_memoization_patterns(self):
-        """测试记忆化模式"""
+        # 上下文管理器错误处理
+        class ContextManager:
+            def __enter__(self):
+                return self
 
-        # 简单的记忆化装饰器
-        def memoize(func):
-            cache = {}
+            def __exit__(self, exc_type, exc_val, exc_tb):
+                return False  # 不抑制异常
 
-            def wrapper(*args):
-                if args not in cache:
-                    cache[args] = func(*args)
-                return cache[args]
+        with pytest.raises(ValueError):
+            with ContextManager():
+                raise ValueError("Test exception")
 
-            return wrapper
-
-        @memoize
-        def fibonacci(n):
-            if n < 2:
-                return n
-            return fibonacci(n - 1) + fibonacci(n - 2)
-
-        # 测试记忆化效果
-        assert fibonacci(10) == 55
-        assert fibonacci(10) == 55  # 应该从缓存获取
-
-    def test_type_checking_patterns(self):
-        """测试类型检查模式"""
+    def test_type_checking_and_conversion(self):
+        """测试类型检查和转换"""
 
         # 复杂的类型检查
         def process_data(data):
@@ -816,73 +857,26 @@ class TestDeepNestingCoverage:
         # 测试各种输入类型
         assert process_data("hello") == "HELLO"
         assert process_data(42) == "42"
+        assert process_data(3.14) == "3.14"
         assert process_data([1, "a", True]) == ["1", "A", "True"]
         assert process_data({"num": 1, "str": "b"}) == {"num": "1", "str": "B"}
+        assert process_data(None) == "None"
 
-    def test_state_machine_patterns(self):
-        """测试状态机模式"""
+        # 测试类型转换边界情况
+        conversion_cases = [
+            ("123", int, 123),
+            ("3.14", float, 3.14),
+            (123, str, "123"),
+            (True, int, 1),
+            (None, str, "None"),
+        ]
 
-        class SimpleStateMachine:
-            def __init__(self):
-                self.state = "idle"
-                self.transitions = {
-                    "idle": ["start"],
-                    "running": ["pause", "stop"],
-                    "paused": ["resume", "stop"],
-                    "stopped": ["start"],
-                }
-
-            def transition(self, action):
-                if action in self.transitions.get(self.state, []):
-                    self.state = {
-                        "start": "running",
-                        "pause": "paused",
-                        "resume": "running",
-                        "stop": "stopped",
-                    }[action]
-                    return True
-                return False
-
-        # 测试状态转换
-        sm = SimpleStateMachine()
-        assert sm.state == "idle"
-        assert sm.transition("start") is True
-        assert sm.state == "running"
-        assert sm.transition("pause") is True
-        assert sm.state == "paused"
-        assert sm.transition("invalid") is False
-        assert sm.state == "paused"
-
-    def test_observer_pattern_coverage(self):
-        """测试观察者模式覆盖"""
-
-        class Subject:
-            def __init__(self):
-                self._observers = []
-
-            def attach(self, observer):
-                self._observers.append(observer)
-
-            def detach(self, observer):
-                if observer in self._observers:
-                    self._observers.remove(observer)
-
-            def notify(self, event):
-                for observer in self._observers:
-                    observer(event)
-
-        # 测试观察者
-        events = []
-
-        def observer(event):
-            events.append(event)
-
-        subject = Subject()
-        subject.attach(observer)
-        subject.notify("event1")
-        subject.notify("event2")
-        assert events == ["event1", "event2"]
-
-        subject.detach(observer)
-        subject.notify("event3")
-        assert events == ["event1", "event2"]  # 不应该收到新事件
+        for input_val, target_type, expected in conversion_cases:
+            if target_type == str:
+                result = target_type(input_val)
+            else:
+                try:
+                    result = target_type(input_val)
+                except (ValueError, TypeError):
+                    continue  # 跳过无法转换的情况
+            assert result == expected

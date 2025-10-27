@@ -5,24 +5,17 @@ test_date_time_utils - 第19部分
 包含项目: 5 个 (函数/类)
 """
 
+import os
+import sys
+from unittest.mock import Mock, patch
 
 import pytest
 
-from unittest.mock import Mock, patch
-
-import sys
-
-import os
-
-
 
 class TestDateTimeUtilsPart19:
-
     """测试类"""
 
-
     def test_period_calculation(self):
-
         """测试时间段计算"""
         if IMPORT_SUCCESS:
             start_date = datetime.date(2023, 1, 1)
@@ -36,9 +29,7 @@ class TestDateTimeUtilsPart19:
             business_days = DateRangeCalculator.count_working_days(start_date, end_date)
             assert business_days > 200  # 大约260个工作日
 
-
     def test_recurring_events(self):
-
         """测试重复事件计算"""
         if IMPORT_SUCCESS:
             # 计算每月最后一个工作日
@@ -57,9 +48,7 @@ class TestDateTimeUtilsPart19:
             assert len(last_working_days) == 12
             assert all(DateUtils.is_weekday(date) for date in last_working_days)
 
-
     def test_time_zone_scenarios(self):
-
         """测试时区场景"""
         if IMPORT_SUCCESS:
             # 创建同一时刻的不同时区表示
@@ -72,9 +61,7 @@ class TestDateTimeUtilsPart19:
             # 在简化版本中，这些应该是相同的
             assert abs((back_to_utc - utc_time).total_seconds()) < 5
 
-
     def test_edge_cases(self):
-
         """测试边缘情况"""
         if IMPORT_SUCCESS:
             # 闰年2月
@@ -90,9 +77,7 @@ class TestDateTimeUtilsPart19:
             next_year = DateUtils.add_days(year_end, 1)
             assert next_year == datetime.date(2024, 1, 1)
 
-
     def test_performance_considerations(self):
-
         """测试性能考虑"""
         if IMPORT_SUCCESS:
 
@@ -100,8 +85,7 @@ class TestDateTimeUtilsPart19:
             start_time = time.time()
 
             large_range = DateRangeCalculator.get_date_range(
-                datetime.date(2023, 1, 1),
-                datetime.date(2023, 12, 31)
+                datetime.date(2023, 1, 1), datetime.date(2023, 12, 31)
             )
 
             end_time = time.time()
@@ -109,5 +93,3 @@ class TestDateTimeUtilsPart19:
 
             assert len(large_range) == 365
             assert processing_time < 1.0  # 应该在1秒内完成
-
-

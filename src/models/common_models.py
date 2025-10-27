@@ -10,13 +10,15 @@ For backward compatibility, this file re-exports all classes from the modules.
 """
 
 import warnings
-from typing import Dict, List, Optional
 from datetime import datetime
+from typing import Dict, List, Optional
+
 from pydantic import BaseModel, Field
 
+from ..common import api_models
 # from ..api.data.models import api_models  # 已重构，移除此导入
 from .base_models import base_models as base_models_mod
-from ..common import api_models
+
 # utils 模块不存在，注释掉以避免导入错误
 # from ..common import utils
 
@@ -33,17 +35,11 @@ warnings.warn(
 
 # 从新模块导入所有内容
 
-# 从 services.content_analysis 导入 Content, ContentType, AnalysisResult, UserProfile 和 UserRole 以保持兼容性
-from ..services.content_analysis import (
-    Content,
-    ContentType,
-    AnalysisResult,
-    UserProfile,
-    UserRole,
-)
-
 # 从 database.models 导入 User 以保持兼容性
 from ..database.models import User
+# 从 services.content_analysis 导入 Content, ContentType, AnalysisResult, UserProfile 和 UserRole 以保持兼容性
+from ..services.content_analysis import (AnalysisResult, Content, ContentType,
+                                         UserProfile, UserRole)
 
 # 导出所有类
 __all__ = [
@@ -137,3 +133,28 @@ class ModelMetrics(BaseModel):
         self.correct_predictions += correct
         self.accuracy = self.correct_predictions / self.total_predictions
         self.last_updated = datetime.utcnow()
+
+
+from datetime import datetime
+from typing import Any, Optional
+
+from pydantic import BaseModel
+
+
+class APIResponse(BaseModel):
+    """通用API响应模型"""
+
+    success: bool = True
+    message: str = "Success"
+    data: Optional[Any] = None
+    timestamp: datetime = datetime.utcnow()
+
+
+class ErrorResponse(BaseModel):
+    """错误响应模型"""
+
+    success: bool = False
+    message: str
+    error_code: Optional[str] = None
+    details: Optional[dict] = None
+    timestamp: datetime = datetime.utcnow()

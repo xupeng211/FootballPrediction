@@ -2,20 +2,21 @@
 
 # TODO: Consider creating a fixture for 16 repeated Mock creations
 
-from unittest.mock import patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
 """
 API事件模块测试
 """
 
-import pytest
 from datetime import datetime, timedelta
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+
+import pytest
 
 from src.api.events import router
 
 
 @pytest.mark.unit
-
 class TestEventAPIRoutes:
     """事件API路由测试"""
 
@@ -86,7 +87,8 @@ class TestEventAPIRoutes:
                 mock_find.side_effect = find_handler_side_effect
 
                 # 直接调用函数逻辑
-                from src.api.events import MetricsEventHandler, AnalyticsEventHandler
+                from src.api.events import (AnalyticsEventHandler,
+                                            MetricsEventHandler)
 
                 _stats = mock_event_bus.get_stats()
                 detailed_stats = stats.copy()
@@ -204,7 +206,8 @@ class TestEventAPIRoutes:
 
                 mock_find.side_effect = find_handler_side_effect
 
-                from src.api.events import MetricsEventHandler, AnalyticsEventHandler
+                from src.api.events import (AnalyticsEventHandler,
+                                            MetricsEventHandler)
 
                 _stats = mock_bus.get_stats()
                 detailed_stats = stats.copy()

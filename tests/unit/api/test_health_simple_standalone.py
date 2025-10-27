@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 """
 健康检查模块独立测试
 Standalone Health Check Module Test
@@ -8,11 +9,12 @@ Standalone Health Check Module Test
 Does not depend on full application, directly tests health check functionality.
 """
 
-import pytest
-from datetime import datetime
-import sys
-import os
 import asyncio
+import os
+import sys
+from datetime import datetime
+
+import pytest
 
 # 添加src到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../src"))
@@ -30,7 +32,6 @@ except ImportError as e:
     not HEALTH_FUNCTION_AVAILABLE, reason="Health function not available"
 )
 @pytest.mark.unit
-
 class TestHealthCheckSimple:
     """健康检查功能独立测试类"""
 
@@ -120,9 +121,9 @@ class TestHealthCheckSimple:
 
         # 验证实际响应时间
         actual_response_time = (end_time - start_time) * 1000
-        assert actual_response_time < 100, (
-            f"Health check took too long: {actual_response_time}ms"
-        )
+        assert (
+            actual_response_time < 100
+        ), f"Health check took too long: {actual_response_time}ms"
 
         # 验证报告的响应时间合理性
         reported_response_time = result["response_time_ms"]
@@ -372,8 +373,9 @@ def test_health_function_import():
 def test_health_function_signature():
     """测试健康函数签名"""
     try:
-        from src.api.predictions.health_simple import health_check
         import inspect
+
+        from src.api.predictions.health_simple import health_check
 
         sig = inspect.signature(health_check)
         assert len(sig.parameters) == 0, "Health function should take no parameters"

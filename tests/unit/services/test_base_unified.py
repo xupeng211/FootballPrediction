@@ -1,4 +1,5 @@
 from unittest.mock import AsyncMock, MagicMock
+
 """
 统一基础服务测试
 Base Unified Service Tests
@@ -6,14 +7,14 @@ Base Unified Service Tests
 测试BaseService的核心功能。
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
 
 from src.services.base_unified import BaseService
 
 
 @pytest.mark.unit
-
 class TestBaseService:
     """测试基础服务"""
 

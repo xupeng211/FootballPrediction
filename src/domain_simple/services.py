@@ -6,16 +6,16 @@ import logging
 提供领域服务的工厂模式实现，管理服务依赖和生命周期。
 """
 
-from datetime import datetime
-from typing import Dict, List, Optional, Any, Type, TypeVar, Generic
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from datetime import datetime
+from typing import Any, Dict, Generic, List, Optional, Type, TypeVar
 
 from ..database.repositories.base import BaseRepository
 from .match import Match
-from .team import Team
 from .prediction import Prediction
 from .rules import ValidationEngine, get_validation_engine
+from .team import Team
 
 T = TypeVar("T")
 

@@ -135,7 +135,7 @@ class MyPyIssueFixer:
                 # 处理变量注解问题
                 if issue['code'] == 'var-annotated':
                     # 尝试添加简单的类型注解
-                    if '=' in line and not ':' in line.split('=')[0]:
+                    if '=' in line and ':' not in line.split('=')[0]:
                         var_name = line.split('=')[0].strip()
                         if 'training_history' in var_name:
                             lines[line_num] = line.replace(var_name, f"{var_name}: list = []")

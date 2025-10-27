@@ -1,4 +1,5 @@
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
 """
 测试重构后的调度任务模块
 
@@ -9,7 +10,6 @@ import pytest
 
 
 @pytest.mark.unit
-
 class TestBaseDataTask:
     """测试基础任务类"""
 
@@ -29,10 +29,7 @@ class TestDataCollectionTasks:
     def test_import_data_collection_tasks(self):
         """测试导入数据采集任务"""
         from src.scheduler.tasks.data_collection import (
-            collect_fixtures,
-            collect_odds,
-            collect_live_scores_conditional,
-        )
+            collect_fixtures, collect_live_scores_conditional, collect_odds)
 
         # 任务应该可以被导入
         assert collect_fixtures is not None
@@ -42,7 +39,8 @@ class TestDataCollectionTasks:
     @patch("src.scheduler.tasks.data_collection.fixtures_task.FixturesCollector")
     def test_collect_fixtures_task(self, mock_collector_class):
         """测试赛程采集任务"""
-        from src.scheduler.tasks.data_collection.fixtures_task import collect_fixtures
+        from src.scheduler.tasks.data_collection.fixtures_task import \
+            collect_fixtures
 
         # Mock采集器
         mock_collector = Mock()
@@ -62,7 +60,8 @@ class TestFeatureCalculationTask:
 
     def test_import_feature_calculation_task(self):
         """测试导入特征计算任务"""
-        from src.scheduler.tasks.feature_calculation import calculate_features_batch
+        from src.scheduler.tasks.feature_calculation import \
+            calculate_features_batch
 
         # 任务应该可以被导入
         assert calculate_features_batch is not None
@@ -117,7 +116,8 @@ class TestTransformationTask:
 
     def test_import_transformation_task(self):
         """测试导入数据转换任务"""
-        from src.scheduler.tasks.data_transformation import process_bronze_to_silver
+        from src.scheduler.tasks.data_transformation import \
+            process_bronze_to_silver
 
         # 任务应该可以被导入
         assert process_bronze_to_silver is not None
@@ -128,18 +128,13 @@ class TestTasksModule:
 
     def test_import_all_tasks(self):
         """测试导入所有任务"""
-        from src.scheduler.tasks import (
-            BaseDataTask,
-            collect_fixtures,
-            collect_odds,
-            collect_live_scores_conditional,
-            calculate_features_batch,
-            cleanup_data,
-            run_quality_checks,
-            backup_database,
-            generate_predictions,
-            process_bronze_to_silver,
-        )
+        from src.scheduler.tasks import (BaseDataTask, backup_database,
+                                         calculate_features_batch,
+                                         cleanup_data, collect_fixtures,
+                                         collect_live_scores_conditional,
+                                         collect_odds, generate_predictions,
+                                         process_bronze_to_silver,
+                                         run_quality_checks)
 
         # 所有任务都应该可以被导入
         assert BaseDataTask is not None

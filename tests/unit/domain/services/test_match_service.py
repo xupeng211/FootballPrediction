@@ -23,7 +23,6 @@ def away_team() -> Team:
 
 
 @pytest.mark.unit
-
 class TestMatchScheduling:
     def test_should_schedule_match(self, service, home_team, away_team):
         match_time = datetime.utcnow() + timedelta(days=1)

@@ -17,7 +17,7 @@ class AuditLoggingSystem:
 
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.logger.info(f"初始化compliance特性: Audit Logging System")
+        self.logger.info("初始化compliance特性: Audit Logging System")
 
     def process(self, data: Dict) -> Dict:
         """处理数据"""

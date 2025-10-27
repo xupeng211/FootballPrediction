@@ -71,7 +71,6 @@ class TestStandardizer:
             return file_path.name  # 已经符合规范
 
         # 获取模块信息
-        parent_dir = file_path.parent.name
         base_name = file_path.stem
 
         # 如果已经是标准格式但缺少test_前缀

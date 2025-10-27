@@ -4,10 +4,13 @@ Match Repository Implementation
 """
 
 from typing import List, Optional
+
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.database.base import Base
-from .repositories.base import AbstractRepository
+
 from .models.match import Match
+from .repositories.base import AbstractRepository
 
 
 class MatchRepository(AbstractRepository[Match]):

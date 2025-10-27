@@ -3,6 +3,7 @@
 # TODO: Consider creating a fixture for 14 repeated Mock creations
 
 from unittest.mock import Mock, patch
+
 """
 测试Redis连接管理器
 """
@@ -13,7 +14,6 @@ from src.cache.redis.core.connection_manager import RedisConnectionManager
 
 
 @pytest.mark.unit
-
 class TestRedisConnectionManager:
     """测试Redis连接管理器"""
 

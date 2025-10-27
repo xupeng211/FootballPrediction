@@ -2,17 +2,19 @@
 
 # TODO: Consider creating a fixture for 79 repeated Mock creations
 
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
 """
 低覆盖率模块测试增强
 专门为覆盖率低于20%的模块创建测试
 """
 
-import pytest
-import sys
-from pathlib import Path
-from datetime import datetime, timedelta
 import json
+import sys
+from datetime import datetime, timedelta
+from pathlib import Path
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 

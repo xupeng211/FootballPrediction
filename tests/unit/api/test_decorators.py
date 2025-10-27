@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 14 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 """
 API装饰器测试
 Tests for API Decorators
@@ -10,22 +11,18 @@ Tests for API Decorators
 测试src.api.decorators模块的装饰器演示端点
 """
 
-import pytest
-from fastapi.testclient import TestClient
-from fastapi import FastAPI
 import asyncio
 from datetime import datetime
 
+import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
 # 测试导入
 try:
-    from src.api.decorators import router
-    from src.api.decorators import (
-        example_function_1,
-        example_function_2,
-        failing_function,
-        slow_function,
-        global_decorator_service,
-    )
+    from src.api.decorators import (example_function_1, example_function_2,
+                                    failing_function, global_decorator_service,
+                                    router, slow_function)
 
     DECORATORS_AVAILABLE = True
 except ImportError as e:
@@ -41,7 +38,6 @@ except ImportError as e:
 
 @pytest.mark.skipif(not DECORATORS_AVAILABLE, reason="Decorators module not available")
 @pytest.mark.unit
-
 class TestAPIDecorators:
     """API装饰器测试"""
 
@@ -491,7 +487,7 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if DECORATORS_AVAILABLE:
-        from src.api.decorators import router, global_decorator_service
+        from src.api.decorators import global_decorator_service, router
 
         assert router is not None
         assert global_decorator_service is not None

@@ -2,21 +2,24 @@
 
 # TODO: Consider creating a fixture for 7 repeated Mock creations
 
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
 """
 依赖注入系统测试
 """
 
-import pytest
-from typing import Any, Dict, Optional, Type, TypeVar
 from dataclasses import dataclass
+from typing import Any, Dict, Optional, Type, TypeVar
+
+import pytest
 
 # 使用try-except导入，如果模块不存在则跳过测试
 try:
-    from src.core.di import DIContainer, ServiceNotFoundError, CircularDependencyError
-    from src.core.di_setup import DISetup
-    from src.core.config_di import ConfigDI
     from src.core.auto_binding import AutoBinding
+    from src.core.config_di import ConfigDI
+    from src.core.di import (CircularDependencyError, DIContainer,
+                             ServiceNotFoundError)
+    from src.core.di_setup import DISetup
     from src.core.service_lifecycle import ServiceLifecycle, ServiceState
 
     DI_AVAILABLE = True
@@ -28,7 +31,6 @@ TEST_SKIP_REASON = "DI module not available"
 
 @pytest.mark.skipif(not DI_AVAILABLE, reason=TEST_SKIP_REASON)
 @pytest.mark.unit
-
 class TestDIContainer:
     """依赖注入容器测试"""
 

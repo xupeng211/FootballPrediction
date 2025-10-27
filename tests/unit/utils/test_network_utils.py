@@ -2,10 +2,11 @@
 网络工具测试
 """
 
-import pytest
 import json
 import urllib.parse
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
+
+import pytest
 
 
 class NetworkUtils:
@@ -202,7 +203,6 @@ class NetworkUtils:
 
 @pytest.mark.unit
 @pytest.mark.external_api
-
 class TestNetworkUtils:
     """测试网络工具类"""
 

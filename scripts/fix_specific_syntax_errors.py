@@ -185,7 +185,7 @@ if __name__ == "__main__":
             if self.fix_single_file(file_path):
                 success_count += 1
 
-        print(f"\n📊 修复统计:")
+        print("\n📊 修复统计:")
         print(f"  目标文件数: {len(self.target_files)}")
         print(f"  成功修复: {success_count}")
         print(f"  修复失败: {len(self.failed_files)}")
@@ -199,7 +199,7 @@ if __name__ == "__main__":
         # 生成报告
         self.generate_fix_report()
 
-        print(f"\n🎉 特定语法错误修复完成!")
+        print("\n🎉 特定语法错误修复完成!")
         print(f"修复状态: {'✅ 全部成功' if validation_success else '⚠️ 部分成功'}")
 
         return validation_success

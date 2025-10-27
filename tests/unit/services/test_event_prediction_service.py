@@ -2,23 +2,24 @@
 
 # TODO: Consider creating a fixture for 27 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 """
 事件驱动预测服务测试
 Tests for Event-Driven Prediction Service
 """
 
-import pytest
 from datetime import datetime
 
-from src.services.event_prediction_service import EventDrivenPredictionService
-from src.domain.models import Prediction, PredictionStatus
-from src.events import get_event_bus, EventBus
+import pytest
+
 from src.core.di import DIContainer
+from src.domain.models import Prediction, PredictionStatus
+from src.events import EventBus, get_event_bus
+from src.services.event_prediction_service import EventDrivenPredictionService
 
 
 @pytest.mark.unit
-
 class TestEventDrivenPredictionService:
     """事件驱动预测服务测试"""
 
@@ -241,7 +242,8 @@ class TestEventDrivenPredictionService:
 
         # Then
         # 验证继承关系
-        from src.services.strategy_prediction_service import StrategyPredictionService
+        from src.services.strategy_prediction_service import \
+            StrategyPredictionService
 
         assert isinstance(service, StrategyPredictionService)
 

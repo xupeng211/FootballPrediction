@@ -1,16 +1,15 @@
 """测试比赛领域事件模块"""
 
-import pytest
 from unittest.mock import Mock
 
+import pytest
+
 try:
-    from src.domain.events.match_events import (
-        MatchStartedEvent,
-        MatchFinishedEvent,
-        MatchCancelledEvent,
-        MatchPostponedEvent
-    )
-    from src.domain.models.match import MatchScore, MatchResult
+    from src.domain.events.match_events import (MatchCancelledEvent,
+                                                MatchFinishedEvent,
+                                                MatchPostponedEvent,
+                                                MatchStartedEvent)
+    from src.domain.models.match import MatchResult, MatchScore
 
     # 测试数据
     MATCH_ID = 123
@@ -41,9 +40,7 @@ class TestMatchEvents:
     def test_match_started_event_creation(self):
         """测试比赛开始事件创建"""
         event = MatchStartedEvent(
-            match_id=MATCH_ID,
-            home_team_id=HOME_TEAM_ID,
-            away_team_id=AWAY_TEAM_ID
+            match_id=MATCH_ID, home_team_id=HOME_TEAM_ID, away_team_id=AWAY_TEAM_ID
         )
 
         assert event.match_id == MATCH_ID
@@ -54,16 +51,14 @@ class TestMatchEvents:
     def test_match_started_event_data(self):
         """测试比赛开始事件数据"""
         event = MatchStartedEvent(
-            match_id=MATCH_ID,
-            home_team_id=HOME_TEAM_ID,
-            away_team_id=AWAY_TEAM_ID
+            match_id=MATCH_ID, home_team_id=HOME_TEAM_ID, away_team_id=AWAY_TEAM_ID
         )
 
         event_data = event._get_event_data()
         expected_data = {
             "match_id": MATCH_ID,
             "home_team_id": HOME_TEAM_ID,
-            "away_team_id": AWAY_TEAM_ID
+            "away_team_id": AWAY_TEAM_ID,
         }
 
         assert event_data == expected_data
@@ -75,7 +70,7 @@ class TestMatchEvents:
             home_team_id=HOME_TEAM_ID,
             away_team_id=AWAY_TEAM_ID,
             final_score=FINAL_SCORE,
-            result=RESULT
+            result=RESULT,
         )
 
         assert event.match_id == MATCH_ID
@@ -92,7 +87,7 @@ class TestMatchEvents:
             home_team_id=HOME_TEAM_ID,
             away_team_id=AWAY_TEAM_ID,
             final_score=FINAL_SCORE,
-            result=RESULT
+            result=RESULT,
         )
 
         event_data = event._get_event_data()
@@ -111,10 +106,7 @@ class TestMatchEvents:
 
     def test_match_cancelled_event_creation(self):
         """测试比赛取消事件创建"""
-        event = MatchCancelledEvent(
-            match_id=MATCH_ID,
-            reason=CANCELLATION_REASON
-        )
+        event = MatchCancelledEvent(match_id=MATCH_ID, reason=CANCELLATION_REASON)
 
         assert event.match_id == MATCH_ID
         assert event.reason == CANCELLATION_REASON
@@ -122,25 +114,17 @@ class TestMatchEvents:
 
     def test_match_cancelled_event_data(self):
         """测试比赛取消事件数据"""
-        event = MatchCancelledEvent(
-            match_id=MATCH_ID,
-            reason=CANCELLATION_REASON
-        )
+        event = MatchCancelledEvent(match_id=MATCH_ID, reason=CANCELLATION_REASON)
 
         event_data = event._get_event_data()
-        expected_data = {
-            "match_id": MATCH_ID,
-            "reason": CANCELLATION_REASON
-        }
+        expected_data = {"match_id": MATCH_ID, "reason": CANCELLATION_REASON}
 
         assert event_data == expected_data
 
     def test_match_postponed_event_creation(self):
         """测试比赛延期事件创建"""
         event = MatchPostponedEvent(
-            match_id=MATCH_ID,
-            new_date=NEW_DATE,
-            reason=POSTPONEMENT_REASON
+            match_id=MATCH_ID, new_date=NEW_DATE, reason=POSTPONEMENT_REASON
         )
 
         assert event.match_id == MATCH_ID
@@ -151,16 +135,14 @@ class TestMatchEvents:
     def test_match_postponed_event_data(self):
         """测试比赛延期事件数据"""
         event = MatchPostponedEvent(
-            match_id=MATCH_ID,
-            new_date=NEW_DATE,
-            reason=POSTPONEMENT_REASON
+            match_id=MATCH_ID, new_date=NEW_DATE, reason=POSTPONEMENT_REASON
         )
 
         event_data = event._get_event_data()
         expected_data = {
             "match_id": MATCH_ID,
             "new_date": NEW_DATE,
-            "reason": POSTPONEMENT_REASON
+            "reason": POSTPONEMENT_REASON,
         }
 
         assert event_data == expected_data
@@ -169,14 +151,16 @@ class TestMatchEvents:
         """测试事件继承"""
         # 所有事件都应该继承自DomainEvent
         started_event = MatchStartedEvent(MATCH_ID, HOME_TEAM_ID, AWAY_TEAM_ID)
-        finished_event = MatchFinishedEvent(MATCH_ID, HOME_TEAM_ID, AWAY_TEAM_ID, FINAL_SCORE, RESULT)
+        finished_event = MatchFinishedEvent(
+            MATCH_ID, HOME_TEAM_ID, AWAY_TEAM_ID, FINAL_SCORE, RESULT
+        )
         cancelled_event = MatchCancelledEvent(MATCH_ID, CANCELLATION_REASON)
         postponed_event = MatchPostponedEvent(MATCH_ID, NEW_DATE, POSTPONEMENT_REASON)
 
         # 测试它们都有基本的事件属性
         for event in [started_event, finished_event, cancelled_event, postponed_event]:
-            assert hasattr(event, 'aggregate_id')
-            assert hasattr(event, '_get_event_data')
+            assert hasattr(event, "aggregate_id")
+            assert hasattr(event, "_get_event_data")
             assert callable(event._get_event_data)
 
     def test_event_with_additional_kwargs(self):
@@ -209,7 +193,7 @@ class TestMatchEvents:
                 home_team_id=HOME_TEAM_ID,
                 away_team_id=AWAY_TEAM_ID,
                 final_score=score,
-                result=result
+                result=result,
             )
 
             event_data = event._get_event_data()
@@ -225,7 +209,7 @@ class TestMatchEvents:
             "Technical issues",
             "Force majeure",
             "",
-            "Multiple reasons complex situation"
+            "Multiple reasons complex situation",
         ]
 
         for reason in reasons:
@@ -241,7 +225,7 @@ class TestMatchEvents:
             "2024-01-15T19:00:00Z",
             "2024-01-15 19:00:00",
             "2024/01/15 19:00",
-            "15-01-2024 19:00"
+            "15-01-2024 19:00",
         ]
 
         for date_str in date_formats:
@@ -274,9 +258,11 @@ class TestEventIntegration:
         """测试事件序列化兼容性"""
         events = [
             MatchStartedEvent(MATCH_ID, HOME_TEAM_ID, AWAY_TEAM_ID),
-            MatchFinishedEvent(MATCH_ID, HOME_TEAM_ID, AWAY_TEAM_ID, FINAL_SCORE, RESULT),
+            MatchFinishedEvent(
+                MATCH_ID, HOME_TEAM_ID, AWAY_TEAM_ID, FINAL_SCORE, RESULT
+            ),
             MatchCancelledEvent(MATCH_ID, CANCELLATION_REASON),
-            MatchPostponedEvent(MATCH_ID, NEW_DATE, POSTPONEMENT_REASON)
+            MatchPostponedEvent(MATCH_ID, NEW_DATE, POSTPONEMENT_REASON),
         ]
 
         for event in events:

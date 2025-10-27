@@ -1,22 +1,24 @@
 from __future__ import annotations
-from unittest.mock import Mock, patch, MagicMock
+
+from unittest.mock import MagicMock, Mock, patch
+
 """最终覆盖率测试 - 直接测试模块函数"""
 
-import pytest
-from datetime import datetime, timedelta
+import asyncio
+import base64
+import hashlib
 import json
-import uuid
 import re
 import secrets
-import hashlib
-import base64
-import asyncio
+import uuid
+from datetime import datetime, timedelta
 from typing import Any, Dict, List
+
+import pytest
 
 
 @pytest.mark.unit
 @pytest.mark.external_api
-
 class TestCryptoUtilsModule:
     """测试加密工具模块"""
 
@@ -719,7 +721,8 @@ class TestUtilsInitExports:
     def test_exported_functions_exist(self):
         """测试导出的函数存在"""
         try:
-            from src.utils import generate_uuid, hash_string, deep_merge, slugify
+            from src.utils import (deep_merge, generate_uuid, hash_string,
+                                   slugify)
 
             # 函数应该存在且可调用
             assert callable(generate_uuid)
@@ -732,7 +735,8 @@ class TestUtilsInitExports:
     def test_exported_functions_work(self):
         """测试导出的函数工作"""
         try:
-            from src.utils import generate_uuid, generate_short_id, format_datetime
+            from src.utils import (format_datetime, generate_short_id,
+                                   generate_uuid)
 
             # 测试UUID生成
             uuid1 = generate_uuid()
@@ -810,8 +814,9 @@ class TestPerformanceAndEdgeCases:
     def test_time_edge_cases(self):
         """测试时间边界情况"""
         try:
-            from src.utils.time_utils import TimeUtils
             from datetime import datetime, timedelta
+
+            from src.utils.time_utils import TimeUtils
 
             # 测试零时间差
             now = datetime.now()

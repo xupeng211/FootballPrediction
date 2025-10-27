@@ -2,23 +2,23 @@
 
 # TODO: Consider creating a fixture for 8 repeated Mock creations
 
-from unittest.mock import patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
 """
 流处理器测试
 """
 
-import pytest
 import asyncio
 import json
-from typing import Any, Dict, List, Optional, Callable, AsyncGenerator
 from datetime import datetime, timedelta
+from typing import Any, AsyncGenerator, Callable, Dict, List, Optional
 
-from src.streaming.stream_processor_simple import (
-    StreamProcessor,
-    MessageProcessor,
-    BatchProcessor,
-)
+import pytest
+
 from src.core.exceptions import StreamingError
+from src.streaming.stream_processor_simple import (BatchProcessor,
+                                                   MessageProcessor,
+                                                   StreamProcessor)
 
 
 class AsyncIterator:
@@ -43,7 +43,6 @@ class AsyncIterator:
 
 
 @pytest.mark.unit
-
 class TestStreamProcessor:
     """流处理器基础测试"""
 

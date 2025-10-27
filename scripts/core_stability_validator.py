@@ -109,14 +109,14 @@ class CoreStabilityValidator:
                         'exit_code': result.returncode
                     }
                 }
-                print(f"❌ 测试验证失败")
+                print("❌ 测试验证失败")
 
         except subprocess.TimeoutExpired:
             self.results['tests'] = {
                 'status': '⏰ 超时',
                 'details': {'error': '测试执行超时 (120秒)'}
             }
-            print(f"⏰ 测试执行超时")
+            print("⏰ 测试执行超时")
 
         except Exception as e:
             self.results['tests'] = {
@@ -245,13 +245,13 @@ class CoreStabilityValidator:
 
         # 测试2: 基础实例化
         try:
-            config = Config()
+            Config()
             functionality_tests.append(('实例化', '✅ 通过'))
         except NameError:
             # 如果Config未定义，先导入
             try:
                 from src.core.config import Config
-                config = Config()
+                Config()
                 functionality_tests.append(('实例化', '✅ 通过'))
             except Exception as e:
                 functionality_tests.append(('实例化', f'❌ 失败: {e}'))
@@ -398,7 +398,7 @@ class CoreStabilityValidator:
         # 生成报告
         report = self.generate_validation_report()
 
-        print(f"\n🎉 验证完成!")
+        print("\n🎉 验证完成!")
         print(f"⏱️  总用时: {duration:.2f}秒")
         print(f"📊 总体状态: {self.results['overall_status']['status']}")
         print(f"💡 建议: {self.results['overall_status']['recommendation']}")

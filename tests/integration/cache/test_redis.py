@@ -3,15 +3,15 @@ Redis 缓存集成测试
 测试 Redis 缓存的各种功能和模式
 """
 
-import pytest
 import asyncio
 import json
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
+
+import pytest
 
 
 @pytest.mark.integration
-
 class TestRedisIntegration:
     """Redis 集成测试"""
 

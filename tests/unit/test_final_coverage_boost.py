@@ -3,14 +3,15 @@
 专注于达到30%覆盖率目标
 """
 
-import pytest
-import sys
-import os
-from pathlib import Path
-import json
-import hashlib
 import base64
-from datetime import datetime, timezone, timedelta
+import hashlib
+import json
+import os
+import sys
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+import pytest
 
 # 添加src目录
 src_path = Path(__file__).parent.parent.parent / "src"
@@ -20,20 +21,15 @@ sys.path.insert(0, str(src_path))
 @pytest.mark.unit
 @pytest.mark.external_api
 @pytest.mark.slow
-
 class TestAllAvailableModules:
     """测试所有可用的模块"""
 
     def test_crypto_utils_functions(self):
         """测试crypto_utils的所有函数"""
         try:
-            from utils.crypto_utils import (
-                hash_password,
-                verify_password,
-                generate_token,
-                encrypt_data,
-                decrypt_data,
-            )
+            from utils.crypto_utils import (decrypt_data, encrypt_data,
+                                            generate_token, hash_password,
+                                            verify_password)
 
             # 测试密码哈希
             password = "test_password_123"
@@ -63,16 +59,11 @@ class TestAllAvailableModules:
     def test_data_validator_functions(self):
         """测试data_validator的所有函数"""
         try:
-            from utils.data_validator import (
-                validate_email,
-                validate_phone,
-                validate_url,
-                validate_date,
-                validate_number,
-                validate_json,
-                validate_ip,
-                validate_credit_card,
-            )
+            from utils.data_validator import (validate_credit_card,
+                                              validate_date, validate_email,
+                                              validate_ip, validate_json,
+                                              validate_number, validate_phone,
+                                              validate_url)
 
             # 测试邮箱验证
             emails = ["test@example.com", "user.name@domain.co.uk", "invalid", "@wrong"]
@@ -113,13 +104,9 @@ class TestAllAvailableModules:
     def test_dict_utils_functions(self):
         """测试dict_utils的所有函数"""
         try:
-            from utils.dict_utils import (
-                deep_merge,
-                flatten_dict,
-                unflatten_dict,
-                filter_none,
-                pick_keys,
-            )
+            from utils.dict_utils import (deep_merge, filter_none,
+                                          flatten_dict, pick_keys,
+                                          unflatten_dict)
 
             # 测试深度合并
             dict1 = {"a": 1, "b": {"x": 1}, "c": [1, 2]}
@@ -146,16 +133,11 @@ class TestAllAvailableModules:
     def test_file_utils_functions(self):
         """测试file_utils的所有函数"""
         try:
-            from utils.file_utils import (
-                ensure_dir,
-                get_file_size,
-                safe_filename,
-                read_file,
-                write_file,
-                backup_file,
-                get_file_hash,
-            )
             import tempfile
+
+            from utils.file_utils import (backup_file, ensure_dir,
+                                          get_file_hash, get_file_size,
+                                          read_file, safe_filename, write_file)
 
             # 测试确保目录
             test_dir = "/tmp/test_football_dir"
@@ -202,15 +184,9 @@ class TestAllAvailableModules:
     def test_string_utils_functions(self):
         """测试string_utils的所有函数"""
         try:
-            from utils.string_utils import (
-                slugify,
-                camel_to_snake,
-                snake_to_camel,
-                pluralize,
-                singularize,
-                truncate_words,
-                clean_html,
-            )
+            from utils.string_utils import (camel_to_snake, clean_html,
+                                            pluralize, singularize, slugify,
+                                            snake_to_camel, truncate_words)
 
             # 测试slugify
             texts = [
@@ -242,16 +218,11 @@ class TestAllAvailableModules:
     def test_time_utils_functions(self):
         """测试time_utils的所有函数"""
         try:
-            from utils.time_utils import (
-                time_ago,
-                duration_format,
-                is_future,
-                is_past,
-                format_datetime,
-                parse_datetime,
-                get_timezone_offset,
-            )
-            from datetime import datetime, timezone, timedelta
+            from datetime import datetime, timedelta, timezone
+
+            from utils.time_utils import (duration_format, format_datetime,
+                                          get_timezone_offset, is_future,
+                                          is_past, parse_datetime, time_ago)
 
             now = datetime.now(timezone.utc)
 
@@ -286,14 +257,10 @@ class TestAllAvailableModules:
     def test_validators_functions(self):
         """测试validators的所有函数"""
         try:
-            from utils.validators import (
-                validate_required,
-                validate_range,
-                validate_length,
-                validate_pattern,
-                validate_choice,
-                validate_email_format,
-            )
+            from utils.validators import (validate_choice,
+                                          validate_email_format,
+                                          validate_length, validate_pattern,
+                                          validate_range, validate_required)
 
             # 测试必填验证
             values = [None, "", [], {}, "test", 0, False]
@@ -323,13 +290,9 @@ class TestAllAvailableModules:
     def test_config_loader_functions(self):
         """测试config_loader的所有函数"""
         try:
-            from utils.config_loader import (
-                load_config,
-                get_config_value,
-                set_config_value,
-                reload_config,
-                get_env_config,
-            )
+            from utils.config_loader import (get_config_value, get_env_config,
+                                             load_config, reload_config,
+                                             set_config_value)
 
             # 测试加载配置
             _config = load_config()
@@ -355,17 +318,9 @@ class TestAllAvailableModules:
     def test_response_module(self):
         """测试response模块"""
         try:
-            from utils.response import (
-                success,
-                error,
-                created,
-                updated,
-                deleted,
-                not_found,
-                bad_request,
-                unauthorized,
-                forbidden,
-            )
+            from utils.response import (bad_request, created, deleted, error,
+                                        forbidden, not_found, success,
+                                        unauthorized, updated)
 
             # 测试各种响应类型
             responses = [
@@ -390,12 +345,8 @@ class TestAllAvailableModules:
     def test_i18n_module(self):
         """测试i18n模块"""
         try:
-            from utils.i18n import (
-                _,
-                set_language,
-                get_current_language,
-                get_translations,
-            )
+            from utils.i18n import (_, get_current_language, get_translations,
+                                    set_language)
 
             # 测试翻译
             keys = ["hello", "goodbye", "error", "success"]
@@ -416,15 +367,9 @@ class TestAllAvailableModules:
     def test_helpers_module(self):
         """测试helpers模块"""
         try:
-            from utils.helpers import (
-                generate_uuid,
-                is_json,
-                truncate_string,
-                deep_get,
-                deep_set,
-                merge_dicts,
-                chunk_list,
-            )
+            from utils.helpers import (chunk_list, deep_get, deep_set,
+                                       generate_uuid, is_json, merge_dicts,
+                                       truncate_string)
 
             # 测试UUID生成
             for _ in range(5):
@@ -458,12 +403,10 @@ class TestAllAvailableModules:
     def test_warning_filters_module(self):
         """测试warning_filters模块"""
         try:
-            from utils.warning_filters import (
-                filter_deprecation_warnings,
-                filter_import_warnings,
-                filter_user_warnings,
-                setup_warnings,
-            )
+            from utils.warning_filters import (filter_deprecation_warnings,
+                                               filter_import_warnings,
+                                               filter_user_warnings,
+                                               setup_warnings)
 
             # 测试各种警告过滤器
             filters = [
@@ -483,15 +426,11 @@ class TestAllAvailableModules:
     def test_formatters_module(self):
         """测试formatters模块"""
         try:
-            from utils.formatters import (
-                format_datetime,
-                format_currency,
-                format_bytes,
-                format_percentage,
-                format_phone,
-                format_address,
-            )
             from datetime import datetime, timezone
+
+            from utils.formatters import (format_address, format_bytes,
+                                          format_currency, format_datetime,
+                                          format_percentage, format_phone)
 
             # 测试日期时间格式化
             dt = datetime.now(timezone.utc)
@@ -519,13 +458,8 @@ class TestAllAvailableModules:
     def test_retry_module(self):
         """测试retry模块"""
         try:
-            from utils.retry import (
-                retry,
-                RetryError,
-                exponential_backoff,
-                jitter_backoff,
-                linear_backoff,
-            )
+            from utils.retry import (RetryError, exponential_backoff,
+                                     jitter_backoff, linear_backoff, retry)
 
             # 测试基本重试
             attempts = 0
@@ -714,7 +648,7 @@ class TestStandardLibraryCoverage:
 
     def test_collection_operations(self):
         """测试集合操作"""
-        from collections import Counter, defaultdict, deque, OrderedDict
+        from collections import Counter, OrderedDict, defaultdict, deque
 
         # Counter
         text = "hello world hello python"

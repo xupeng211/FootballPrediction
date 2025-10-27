@@ -130,7 +130,7 @@ class Test{module_name.title().replace(".", "").replace("_", "")}Real:
 
         return True
 
-    except Exception as e:
+    except Exception:
         print("   ❌ 创建测试文件失败: {e}")
         return False
 

@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 12 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 """
 服务模块测试覆盖率提升
 Services Module Coverage Improvement
@@ -11,11 +12,12 @@ Services Module Coverage Improvement
 Created specifically to improve coverage for low-coverage modules in src/services/.
 """
 
-import pytest
 import asyncio
-from datetime import datetime
-import sys
 import os
+import sys
+from datetime import datetime
+
+import pytest
 
 # 添加项目根目录到sys.path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../.."))
@@ -23,7 +25,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../.."))
 
 @pytest.mark.unit
 @pytest.mark.critical
-
 class TestDatabaseService:
     """测试数据库服务模块"""
 
@@ -60,7 +61,8 @@ class TestDatabaseService:
                     mock_pred_class.return_value = prediction_repo
                     mock_user_class.return_value = user_repo
 
-                    from src.services.database.database_service import DatabaseService
+                    from src.services.database.database_service import \
+                        DatabaseService
 
                     service = DatabaseService(mock_session)
                     return service
@@ -82,7 +84,8 @@ class TestDatabaseService:
                     mock_pred_class.return_value = prediction_repo
                     mock_user_class.return_value = user_repo
 
-                    from src.services.database.database_service import DatabaseService
+                    from src.services.database.database_service import \
+                        DatabaseService
 
                     service = DatabaseService(mock_session)
 
@@ -174,7 +177,8 @@ class TestAuditService:
     def test_audit_service_imports(self):
         """测试审计服务导入"""
         try:
-            from src.services.audit_service_mod.audit_service import AuditService
+            from src.services.audit_service_mod.audit_service import \
+                AuditService
 
             assert AuditService is not None
         except ImportError:
@@ -183,7 +187,8 @@ class TestAuditService:
     def test_audit_service_creation(self):
         """测试审计服务创建"""
         try:
-            from src.services.audit_service_mod.audit_service import AuditService
+            from src.services.audit_service_mod.audit_service import \
+                AuditService
 
             service = AuditService()
             assert service is not None
@@ -206,7 +211,8 @@ class TestProcessingCache:
     def test_processing_cache_imports(self):
         """测试处理缓存导入"""
         try:
-            from src.services.processing.caching.processing_cache import ProcessingCache
+            from src.services.processing.caching.processing_cache import \
+                ProcessingCache
 
             assert ProcessingCache is not None
         except ImportError:
@@ -215,7 +221,8 @@ class TestProcessingCache:
     def test_processing_cache_creation(self):
         """测试处理缓存创建"""
         try:
-            from src.services.processing.caching.processing_cache import ProcessingCache
+            from src.services.processing.caching.processing_cache import \
+                ProcessingCache
 
             cache = ProcessingCache()
             assert cache is not None
@@ -229,7 +236,8 @@ class TestDataValidator:
     def test_data_validator_imports(self):
         """测试数据验证器导入"""
         try:
-            from src.services.processing.validators.data_validator import DataValidator
+            from src.services.processing.validators.data_validator import \
+                DataValidator
 
             assert DataValidator is not None
         except ImportError:
@@ -238,7 +246,8 @@ class TestDataValidator:
     def test_data_validator_creation(self):
         """测试数据验证器创建"""
         try:
-            from src.services.processing.validators.data_validator import DataValidator
+            from src.services.processing.validators.data_validator import \
+                DataValidator
 
             validator = DataValidator()
             assert validator is not None
@@ -252,9 +261,8 @@ class TestMatchProcessor:
     def test_match_processor_imports(self):
         """测试比赛处理器导入"""
         try:
-            from src.services.processing.processors.match_processor import (
-                MatchProcessor,
-            )
+            from src.services.processing.processors.match_processor import \
+                MatchProcessor
 
             assert MatchProcessor is not None
         except ImportError:
@@ -263,9 +271,8 @@ class TestMatchProcessor:
     async def test_match_processor_processing(self):
         """测试比赛处理器处理功能"""
         try:
-            from src.services.processing.processors.match_processor import (
-                MatchProcessor,
-            )
+            from src.services.processing.processors.match_processor import \
+                MatchProcessor
 
             processor = MatchProcessor()
 
@@ -283,9 +290,8 @@ class TestStrategyPredictionService:
     def test_strategy_prediction_service_imports(self):
         """测试策略预测服务导入"""
         try:
-            from src.services.strategy_prediction_service import (
-                StrategyPredictionService,
-            )
+            from src.services.strategy_prediction_service import \
+                StrategyPredictionService
 
             assert StrategyPredictionService is not None
         except ImportError:
@@ -294,9 +300,8 @@ class TestStrategyPredictionService:
     def test_strategy_prediction_service_creation(self):
         """测试策略预测服务创建"""
         try:
-            from src.services.strategy_prediction_service import (
-                StrategyPredictionService,
-            )
+            from src.services.strategy_prediction_service import \
+                StrategyPredictionService
 
             service = StrategyPredictionService()
             assert service is not None
@@ -333,7 +338,8 @@ class TestEventPredictionService:
     def test_event_prediction_service_imports(self):
         """测试事件预测服务导入"""
         try:
-            from src.services.event_prediction_service import EventPredictionService
+            from src.services.event_prediction_service import \
+                EventPredictionService
 
             assert EventPredictionService is not None
         except ImportError:
@@ -342,7 +348,8 @@ class TestEventPredictionService:
     def test_event_prediction_service_creation(self):
         """测试事件预测服务创建"""
         try:
-            from src.services.event_prediction_service import EventPredictionService
+            from src.services.event_prediction_service import \
+                EventPredictionService
 
             service = EventPredictionService()
             assert service is not None

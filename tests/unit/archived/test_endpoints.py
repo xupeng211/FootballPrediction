@@ -1,14 +1,17 @@
 from __future__ import annotations
-# TODO: Consider creating a fixture for 9 repeated Mock creations
+
+from unittest.mock import MagicMock, Mock, patch
 
 # TODO: Consider creating a fixture for 9 repeated Mock creations
 
-from unittest.mock import Mock, patch, MagicMock
+# TODO: Consider creating a fixture for 9 repeated Mock creations
+
+
 """API端点测试"""
 
 import pytest
-from fastapi.testclient import TestClient
 from fastapi import status
+from fastapi.testclient import TestClient
 
 from tests.factories import DataFactory, MockFactory
 from tests.factories.test_helpers import with_mocks, with_test_data
@@ -16,7 +19,6 @@ from tests.factories.test_helpers import with_mocks, with_test_data
 
 @pytest.mark.unit
 @pytest.mark.api
-
 class TestHealthEndpoint:
     """健康检查端点测试"""
 

@@ -8,11 +8,11 @@ Provides concrete implementations for various subjects.
 
 import asyncio
 import time
+from collections import defaultdict
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
-from collections import defaultdict
 
-from .base import Subject, ObservableEvent, ObservableEventType
+from .base import ObservableEvent, ObservableEventType, Subject
 
 
 class SystemMetricsSubject(Subject):

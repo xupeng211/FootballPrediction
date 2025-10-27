@@ -1,10 +1,10 @@
-from src.data.processing.football_data_cleaner_mod import FootballDataCleaner
 import pytest
+
+from src.data.processing.football_data_cleaner_mod import FootballDataCleaner
 from src.data.processing.missing_data_handler import MissingDataHandler
 
 
 @pytest.mark.unit
-
 def test_data_cleaner():
     cleaner = FootballDataCleaner()
     assert cleaner is not None

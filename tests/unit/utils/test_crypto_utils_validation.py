@@ -6,10 +6,11 @@
 
 import hashlib
 import uuid
+from typing import Any, Dict
 from unittest.mock import Mock, patch
-from typing import Dict, Any
 
 import pytest
+
 from src.utils.crypto_utils import CryptoUtils
 
 
@@ -23,13 +24,13 @@ class TestCryptoUtilsUUID:
 
         assert isinstance(uuid_result, str)
         assert len(uuid_result) == 36  # UUID标准长度
-        assert uuid_result.count('-') == 4  # UUID格式验证
+        assert uuid_result.count("-") == 4  # UUID格式验证
 
         # 验证可以解析为UUID对象
         parsed_uuid = uuid.UUID(uuid_result)
         assert str(parsed_uuid) == uuid_result
 
-    @patch('uuid.uuid4')
+    @patch("uuid.uuid4")
     def test_generate_uuid_exception(self, mock_uuid4: Mock) -> None:
         """❌ 异常用例：UUID生成失败"""
         mock_uuid4.side_effect = Exception("UUID generation failed")
@@ -83,7 +84,7 @@ class TestCryptoUtilsShortID:
         # 100个ID中至少应该有99个是唯一的（极低概率重复）
         assert len(unique_ids) >= 99
 
-    @patch('uuid.uuid4')
+    @patch("uuid.uuid4")
     def test_generate_short_id_exception(self, mock_uuid4: Mock) -> None:
         """❌ 异常用例：UUID生成失败"""
         mock_uuid4.side_effect = Exception("UUID generation failed")
@@ -147,29 +148,31 @@ class TestCryptoUtilsPasswordHashing:
     """测试密码哈希功能（需要bcrypt）"""
 
     @pytest.mark.skipif(
-        not hasattr(CryptoUtils, 'HAS_BCRYPT') or not CryptoUtils.HAS_BCRYPT,
-        reason="bcrypt not available"
+        not hasattr(CryptoUtils, "HAS_BCRYPT") or not CryptoUtils.HAS_BCRYPT,
+        reason="bcrypt not available",
     )
     def test_hash_password_success(self) -> None:
         """✅ 成功用例：密码哈希（如果有bcrypt）"""
         password = "my_secure_password"
 
         # 如果有hash_password方法
-        if hasattr(CryptoUtils, 'hash_password'):
+        if hasattr(CryptoUtils, "hash_password"):
             hashed = CryptoUtils.hash_password(password)
             assert isinstance(hashed, str)
             assert len(hashed) > 50  # bcrypt哈希通常很长
             assert hashed.startswith("$2")  # bcrypt哈希前缀
 
     @pytest.mark.skipif(
-        not hasattr(CryptoUtils, 'HAS_BCRYPT') or not CryptoUtils.HAS_BCRYPT,
-        reason="bcrypt not available"
+        not hasattr(CryptoUtils, "HAS_BCRYPT") or not CryptoUtils.HAS_BCRYPT,
+        reason="bcrypt not available",
     )
     def test_verify_password_success(self) -> None:
         """✅ 成功用例：密码验证"""
         password = "my_secure_password"
 
-        if hasattr(CryptoUtils, 'hash_password') and hasattr(CryptoUtils, 'verify_password'):
+        if hasattr(CryptoUtils, "hash_password") and hasattr(
+            CryptoUtils, "verify_password"
+        ):
             hashed = CryptoUtils.hash_password(password)
             assert CryptoUtils.verify_password(password, hashed) is True
             assert CryptoUtils.verify_password("wrong_password", hashed) is False
@@ -177,7 +180,7 @@ class TestCryptoUtilsPasswordHashing:
     def test_bcrypt_not_available_fallback(self) -> None:
         """✅ 边界用例：bcrypt不可用时的回退"""
         # 检查是否有bcrypt可用性标志
-        has_bcrypt = getattr(CryptoUtils, 'HAS_BCRYPT', False)
+        has_bcrypt = getattr(CryptoUtils, "HAS_BCRYPT", False)
 
         if not has_bcrypt:
             # 如果bcrypt不可用，应该有适当的回退机制
@@ -190,7 +193,7 @@ class TestCryptoUtilsTokenGeneration:
 
     def test_generate_token_if_exists(self) -> None:
         """✅ 成功用例：生成令牌（如果方法存在）"""
-        if hasattr(CryptoUtils, 'generate_token'):
+        if hasattr(CryptoUtils, "generate_token"):
             token = CryptoUtils.generate_token()
             assert isinstance(token, str)
             assert len(token) > 0
@@ -198,7 +201,7 @@ class TestCryptoUtilsTokenGeneration:
 
     def test_generate_token_with_length_if_exists(self) -> None:
         """✅ 成功用例：生成指定长度令牌（如果方法存在）"""
-        if hasattr(CryptoUtils, 'generate_token_with_length'):
+        if hasattr(CryptoUtils, "generate_token_with_length"):
             for length in [16, 32, 64]:
                 token = CryptoUtils.generate_token_with_length(length)
                 assert isinstance(token, str)
@@ -210,21 +213,21 @@ class TestCryptoUtilsTokenGeneration:
 class TestCryptoUtilsSaltGeneration:
     """测试盐值生成功能"""
 
-    @patch('secrets.token_hex')
+    @patch("secrets.token_hex")
     def test_generate_salt_success(self, mock_token_hex: Mock) -> None:
         """✅ 成功用例：生成盐值"""
         mock_token_hex.return_value = "abcdef1234567890" * 2  # 32字符
 
-        if hasattr(CryptoUtils, 'generate_salt'):
+        if hasattr(CryptoUtils, "generate_salt"):
             salt = CryptoUtils.generate_salt()
             assert salt == "abcdef1234567890" * 2
 
-    @patch('secrets.token_hex')
+    @patch("secrets.token_hex")
     def test_generate_salt_with_length(self, mock_token_hex: Mock) -> None:
         """✅ 成功用例：生成指定长度盐值"""
         mock_token_hex.return_value = "test_salt_16_chars"
 
-        if hasattr(CryptoUtils, 'generate_salt'):
+        if hasattr(CryptoUtils, "generate_salt"):
             salt = CryptoUtils.generate_salt(16)
             # token_hex返回的长度是原始长度的2倍（hex编码）
             # 所以16字符的输入会产生32字符的输出
@@ -232,19 +235,19 @@ class TestCryptoUtilsSaltGeneration:
 
     def test_generate_salt_randomness(self) -> None:
         """✅ 成功用例：验证盐值随机性"""
-        if hasattr(CryptoUtils, 'generate_salt'):
+        if hasattr(CryptoUtils, "generate_salt"):
             salts = [CryptoUtils.generate_salt() for _ in range(10)]
             unique_salts = set(salts)
 
             # 10个盐值应该都是唯一的
             assert len(unique_salts) == 10
 
-    @patch('secrets.token_hex')
+    @patch("secrets.token_hex")
     def test_generate_salt_exception(self, mock_token_hex: Mock) -> None:
         """❌ 异常用例：盐值生成失败"""
         mock_token_hex.side_effect = Exception("Random generation failed")
 
-        if hasattr(CryptoUtils, 'generate_salt'):
+        if hasattr(CryptoUtils, "generate_salt"):
             with pytest.raises(Exception, match="Random generation failed"):
                 CryptoUtils.generate_salt()
 
@@ -362,7 +365,7 @@ class TestCryptoUtilsEdgeCases:
         assert len(ids) == 500
 
         # 验证唯一性（考虑线程前缀）
-        base_ids = [id_.split('_', 2)[-1] for id_ in ids]
+        base_ids = [id_.split("_", 2)[-1] for id_ in ids]
         unique_base_ids = set(base_ids)
 
         # 应该至少有95%的唯一性（考虑到极低概率的冲突）

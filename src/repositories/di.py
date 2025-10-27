@@ -13,10 +13,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database.connection import get_async_session
 from .base import Repository
-from .prediction import PredictionRepository, ReadOnlyPredictionRepository
-from .user import UserRepository, ReadOnlyUserRepository
 from .match import MatchRepository, ReadOnlyMatchRepository
-from .provider import get_repository_provider, RepositoryProvider
+from .prediction import PredictionRepository, ReadOnlyPredictionRepository
+from .provider import RepositoryProvider, get_repository_provider
+from .user import ReadOnlyUserRepository, UserRepository
 
 
 # 仓储提供者依赖

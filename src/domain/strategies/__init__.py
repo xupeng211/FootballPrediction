@@ -6,20 +6,14 @@ Prediction Strategies Module
 Provides strategy pattern implementation for various prediction algorithms.
 """
 
-from .base import (
-    PredictionStrategy,
-    PredictionContext,
-    PredictionInput,
-    PredictionOutput,
-    StrategyType,
-    StrategyMetrics,
-)
-from .ml_model import MLModelStrategy
-from .statistical import StatisticalStrategy
-from .historical import HistoricalStrategy
+from .base import (PredictionContext, PredictionInput, PredictionOutput,
+                   PredictionStrategy, StrategyMetrics, StrategyType)
+from .config import StrategyConfig
 from .ensemble import EnsembleStrategy
 from .factory import PredictionStrategyFactory
-from .config import StrategyConfig
+from .historical import HistoricalStrategy
+from .ml_model import MLModelStrategy
+from .statistical import StatisticalStrategy
 
 __all__ = [
     # 基础接口

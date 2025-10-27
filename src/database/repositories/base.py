@@ -7,9 +7,12 @@ Defines the base interface for the Repository pattern, providing standard CRUD o
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union, Callable
+from typing import (Any, Callable, Dict, Generic, List, Optional, Type,
+                    TypeVar, Union)
 
-from sqlalchemy import select, update, delete, exc as SQLAlchemyExc
+from sqlalchemy import delete
+from sqlalchemy import exc as SQLAlchemyExc
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.connection import DatabaseManager

@@ -1,4 +1,5 @@
-from unittest.mock import patch, AsyncMock
+from unittest.mock import AsyncMock, patch
+
 """
 测试预测API的模块化拆分
 """
@@ -11,7 +12,6 @@ from src.main import app
 
 @pytest.mark.unit
 @pytest.mark.api
-
 class TestPredictionsAPI:
     """测试预测API"""
 
@@ -47,12 +47,10 @@ class TestPredictionsAPI:
 
     def test_prediction_models_import(self):
         """测试预测模型可以导入"""
-        from src.api.predictions.models import (
-            PredictionRequest,
-            PredictionResponse,
-            BatchPredictionRequest,
-            PredictionOverviewResponse,
-        )
+        from src.api.predictions.models import (BatchPredictionRequest,
+                                                PredictionOverviewResponse,
+                                                PredictionRequest,
+                                                PredictionResponse)
 
         # 创建一个简单的请求对象
         request = PredictionRequest(match_id=1, model_name="test_model")

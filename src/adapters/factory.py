@@ -6,19 +6,17 @@ Adapter Factory
 Used to create and configure adapter instances.
 """
 
-import os
-from typing import Any, Dict, List, Optional, Type, Union
-from dataclasses import dataclass, field
-import yaml
 import json
+import os
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Type, Union
+
+import yaml
 
 from .base import Adapter
-from .football import (
-    ApiFootballAdapter,
-    OptaDataAdapter,
-    CompositeFootballAdapter,
-)
+from .football import (ApiFootballAdapter, CompositeFootballAdapter,
+                       OptaDataAdapter)
 
 
 @dataclass

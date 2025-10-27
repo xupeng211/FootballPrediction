@@ -1,17 +1,18 @@
 from unittest.mock import Mock, patch
+
 """
 验证工具测试
 """
 
-import pytest
-from datetime import datetime, date
 import re
+from datetime import date, datetime
+
+import pytest
 
 
 @pytest.mark.unit
 @pytest.mark.external_api
 @pytest.mark.slow
-
 class TestValidationUtils:
     """测试验证工具"""
 

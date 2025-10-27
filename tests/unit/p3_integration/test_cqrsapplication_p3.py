@@ -4,44 +4,36 @@ P3阶段高级集成测试: CQRSApplication
 策略: 高级Mock + 真实依赖注入 + 端到端集成测试
 """
 
-import pytest
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch, MagicMock, call
-from typing import Dict, List, Any, Optional
-import sys
 import os
+import sys
+from typing import Any, Dict, List, Optional
+from unittest.mock import AsyncMock, MagicMock, Mock, call, patch
+
+import pytest
 
 # 确保可以导入源码模块
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../.."))
 
 # 导入目标模块
 try:
-    from src.cqrs.application import (
-        PredictionCQRSService,
-        MatchCQRSService,
-        UserCQRSService,
-        AnalyticsCQRSService,
-        CQRSServiceFactory,
-        initialize_cqrs
-    )
+    from src.cqrs.application import (AnalyticsCQRSService, CQRSServiceFactory,
+                                      MatchCQRSService, PredictionCQRSService,
+                                      UserCQRSService, initialize_cqrs)
     from src.cqrs.bus import CommandBus, QueryBus
-    from src.cqrs.commands import (
-        CreatePredictionCommand,
-        UpdatePredictionCommand,
-        CreateMatchCommand,
-        CreateUserCommand
-    )
-    from src.cqrs.queries import (
-        GetPredictionByIdQuery,
-        GetMatchByIdQuery,
-        GetUserStatsQuery
-    )
-    from src.cqrs.dto import PredictionDTO, MatchDTO, CommandResult
-    from src.cqrs.handlers import PredictionCommandHandlers, PredictionQueryHandlers
+    from src.cqrs.commands import (CreateMatchCommand, CreatePredictionCommand,
+                                   CreateUserCommand, UpdatePredictionCommand)
+    from src.cqrs.dto import CommandResult, MatchDTO, PredictionDTO
+    from src.cqrs.handlers import (PredictionCommandHandlers,
+                                   PredictionQueryHandlers)
+    from src.cqrs.queries import (GetMatchByIdQuery, GetPredictionByIdQuery,
+                                  GetUserStatsQuery)
+
     CQRS_AVAILABLE = True
 except ImportError as e:
     print(f"CQRS模块导入警告: {e}")
     CQRS_AVAILABLE = False
+
 
 class TestCQRSApplicationAdvanced:
     """CQRSApplication 高级集成测试套件"""
@@ -67,8 +59,9 @@ class TestCQRSApplicationAdvanced:
             pytest.skip("CQRS模块不可用")
 
         # 创建服务实例并注入模拟依赖
-        with patch('src.cqrs.application.get_command_bus', return_value=mock_command_bus), \
-             patch('src.cqrs.application.get_query_bus', return_value=mock_query_bus):
+        with patch(
+            "src.cqrs.application.get_command_bus", return_value=mock_command_bus
+        ), patch("src.cqrs.application.get_query_bus", return_value=mock_query_bus):
 
             prediction_service = PredictionCQRSService()
             match_service = MatchCQRSService()
@@ -76,16 +69,16 @@ class TestCQRSApplicationAdvanced:
             analytics_service = AnalyticsCQRSService()
 
             return {
-                'prediction': prediction_service,
-                'match': match_service,
-                'user': user_service,
-                'analytics': analytics_service
+                "prediction": prediction_service,
+                "match": match_service,
+                "user": user_service,
+                "analytics": analytics_service,
             }
 
     @pytest.mark.skipif(not CQRS_AVAILABLE, reason="CQRS模块不可用")
     def test_cqrs_module_import(self):
         """测试CQRS模块导入"""
-        from src.cqrs import application, bus, commands, queries, dto, handlers
+        from src.cqrs import application, bus, commands, dto, handlers, queries
 
         assert application is not None
         assert bus is not None
@@ -97,7 +90,7 @@ class TestCQRSApplicationAdvanced:
     @pytest.mark.asyncio
     async def test_prediction_cqrs_service_create_prediction(self, cqrs_services):
         """测试预测CQRS服务 - 创建预测"""
-        prediction_service = cqrs_services['prediction']
+        prediction_service = cqrs_services["prediction"]
 
         result = await prediction_service.create_prediction(
             match_id=1,
@@ -106,7 +99,7 @@ class TestCQRSApplicationAdvanced:
             predicted_away=1,
             confidence=0.85,
             strategy_used="historical_analysis",
-            notes="Test prediction"
+            notes="Test prediction",
         )
 
         assert result.success is True
@@ -127,14 +120,14 @@ class TestCQRSApplicationAdvanced:
     @pytest.mark.asyncio
     async def test_prediction_cqrs_service_update_prediction(self, cqrs_services):
         """测试预测CQRS服务 - 更新预测"""
-        prediction_service = cqrs_services['prediction']
+        prediction_service = cqrs_services["prediction"]
 
         result = await prediction_service.update_prediction(
             prediction_id=1,
             predicted_home=3,
             predicted_away=1,
             confidence=0.90,
-            strategy_used="ml_model"
+            strategy_used="ml_model",
         )
 
         assert result.success is True
@@ -152,7 +145,7 @@ class TestCQRSApplicationAdvanced:
     @pytest.mark.asyncio
     async def test_prediction_cqrs_service_get_by_id(self, cqrs_services):
         """测试预测CQRS服务 - 根据ID获取预测"""
-        prediction_service = cqrs_services['prediction']
+        prediction_service = cqrs_services["prediction"]
 
         # 设置查询总线返回值
         mock_prediction = PredictionDTO(
@@ -162,7 +155,7 @@ class TestCQRSApplicationAdvanced:
             predicted_home=2,
             predicted_away=1,
             confidence=0.85,
-            strategy_used="test"
+            strategy_used="test",
         )
         prediction_service.query_bus.dispatch.return_value = mock_prediction
 
@@ -185,14 +178,14 @@ class TestCQRSApplicationAdvanced:
         """测试比赛CQRS服务 - 创建比赛"""
         from datetime import datetime
 
-        match_service = cqrs_services['match']
+        match_service = cqrs_services["match"]
 
         result = await match_service.create_match(
             home_team="Team A",
             away_team="Team B",
             match_date=datetime(2024, 1, 1, 15, 0),
             competition="Premier League",
-            venue="Stadium A"
+            venue="Stadium A",
         )
 
         assert result.success is True
@@ -210,12 +203,12 @@ class TestCQRSApplicationAdvanced:
     @pytest.mark.asyncio
     async def test_user_cqrs_service_create_user(self, cqrs_services):
         """测试用户CQRS服务 - 创建用户"""
-        user_service = cqrs_services['user']
+        user_service = cqrs_services["user"]
 
         result = await user_service.create_user(
             username="testuser",
             email="test@example.com",
-            password_hash="hashed_password"
+            password_hash="hashed_password",
         )
 
         assert result.success is True
@@ -232,19 +225,18 @@ class TestCQRSApplicationAdvanced:
     @pytest.mark.asyncio
     async def test_analytics_cqrs_service_prediction_analytics(self, cqrs_services):
         """测试分析CQRS服务 - 预测分析"""
-        analytics_service = cqrs_services['analytics']
+        analytics_service = cqrs_services["analytics"]
 
         # 设置查询总线返回值
         mock_analytics = {
             "total_predictions": 100,
             "accuracy": 0.75,
-            "confidence_distribution": {"high": 30, "medium": 50, "low": 20}
+            "confidence_distribution": {"high": 30, "medium": 50, "low": 20},
         }
         analytics_service.query_bus.dispatch.return_value = mock_analytics
 
         result = await analytics_service.get_prediction_analytics(
-            user_id=1,
-            strategy_filter="historical_analysis"
+            user_id=1, strategy_filter="historical_analysis"
         )
 
         assert result is not None
@@ -260,8 +252,9 @@ class TestCQRSApplicationAdvanced:
         if not CQRS_AVAILABLE:
             pytest.skip("CQRS模块不可用")
 
-        with patch('src.cqrs.application.get_command_bus'), \
-             patch('src.cqrs.application.get_query_bus'):
+        with patch("src.cqrs.application.get_command_bus"), patch(
+            "src.cqrs.application.get_query_bus"
+        ):
 
             # 测试工厂方法
             prediction_service = CQRSServiceFactory.create_prediction_service()
@@ -284,8 +277,9 @@ class TestCQRSApplicationAdvanced:
         if not CQRS_AVAILABLE:
             pytest.skip("CQRS模块不可用")
 
-        with patch('src.cqrs.application.get_command_bus') as mock_cmd_bus, \
-             patch('src.cqrs.application.get_query_bus') as mock_query_bus:
+        with patch("src.cqrs.application.get_command_bus") as mock_cmd_bus, patch(
+            "src.cqrs.application.get_query_bus"
+        ) as mock_query_bus:
 
             mock_cmd_instance = AsyncMock(spec=CommandBus)
             mock_query_instance = AsyncMock(spec=QueryBus)
@@ -297,11 +291,20 @@ class TestCQRSApplicationAdvanced:
             mock_user_handlers = Mock()
             mock_query_handlers = Mock()
 
-            with patch('src.cqrs.application.PredictionCommandHandlers', return_value=mock_prediction_handlers), \
-                 patch('src.cqrs.application.UserCommandHandlers', return_value=mock_user_handlers), \
-                 patch('src.cqrs.application.PredictionQueryHandlers', return_value=mock_query_handlers), \
-                 patch('src.cqrs.application.LoggingMiddleware'), \
-                 patch('src.cqrs.application.ValidationMiddleware'):
+            with patch(
+                "src.cqrs.application.PredictionCommandHandlers",
+                return_value=mock_prediction_handlers,
+            ), patch(
+                "src.cqrs.application.UserCommandHandlers",
+                return_value=mock_user_handlers,
+            ), patch(
+                "src.cqrs.application.PredictionQueryHandlers",
+                return_value=mock_query_handlers,
+            ), patch(
+                "src.cqrs.application.LoggingMiddleware"
+            ), patch(
+                "src.cqrs.application.ValidationMiddleware"
+            ):
 
                 # 执行初始化
                 await initialize_cqrs()
@@ -313,7 +316,7 @@ class TestCQRSApplicationAdvanced:
     @pytest.mark.asyncio
     async def test_cqrs_error_handling(self, cqrs_services):
         """测试CQRS错误处理"""
-        prediction_service = cqrs_services['prediction']
+        prediction_service = cqrs_services["prediction"]
 
         # 模拟命令总线抛出异常
         prediction_service.command_bus.dispatch.side_effect = ValueError("Test error")
@@ -324,13 +327,13 @@ class TestCQRSApplicationAdvanced:
                 user_id=1,
                 predicted_home=2,
                 predicted_away=1,
-                confidence=0.85
+                confidence=0.85,
             )
 
     @pytest.mark.asyncio
     async def test_cqrs_concurrent_operations(self, cqrs_services):
         """测试CQRS并发操作"""
-        prediction_service = cqrs_services['prediction']
+        prediction_service = cqrs_services["prediction"]
 
         # 创建多个并发任务
         tasks = []
@@ -340,7 +343,7 @@ class TestCQRSApplicationAdvanced:
                 user_id=1,
                 predicted_home=2,
                 predicted_away=1,
-                confidence=0.85
+                confidence=0.85,
             )
             tasks.append(task)
 
@@ -361,8 +364,9 @@ class TestCQRSApplicationAdvanced:
             pytest.skip("CQRS模块不可用")
 
         # 模拟完整的业务流程
-        with patch('src.cqrs.application.get_command_bus') as mock_cmd_bus, \
-             patch('src.cqrs.application.get_query_bus') as mock_query_bus:
+        with patch("src.cqrs.application.get_command_bus") as mock_cmd_bus, patch(
+            "src.cqrs.application.get_query_bus"
+        ) as mock_query_bus:
 
             mock_cmd_instance = AsyncMock(spec=CommandBus)
             mock_query_instance = AsyncMock(spec=QueryBus)
@@ -373,10 +377,11 @@ class TestCQRSApplicationAdvanced:
             service = CQRSServiceFactory.create_prediction_service()
 
             # 验证服务初始化
-            assert hasattr(service, 'command_bus')
-            assert hasattr(service, 'query_bus')
-            assert hasattr(service, 'create_prediction')
-            assert hasattr(service, 'get_prediction_by_id')
+            assert hasattr(service, "command_bus")
+            assert hasattr(service, "query_bus")
+            assert hasattr(service, "create_prediction")
+            assert hasattr(service, "get_prediction_by_id")
+
 
 if __name__ == "__main__":
     print("P3阶段高级集成测试: CQRSApplication")

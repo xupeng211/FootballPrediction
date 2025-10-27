@@ -3,13 +3,14 @@
 测试系统在高并发下的性能表现
 """
 
-import pytest
 import asyncio
-import aiohttp
 import statistics
-from datetime import datetime, timezone, timedelta
-from typing import List, Dict, Any
 import time
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List
+
+import aiohttp
+import pytest
 from httpx import AsyncClient
 
 
@@ -135,9 +136,9 @@ class TestLoadSimulation:
                 "user_id": session["user_id"],
                 "response_times": response_times,
                 "success_count": success_count,
-                "avg_response_time": statistics.mean(response_times)
-                if response_times
-                else 0,
+                "avg_response_time": (
+                    statistics.mean(response_times) if response_times else 0
+                ),
             }
 
         # 执行并发任务
@@ -171,16 +172,12 @@ class TestLoadSimulation:
         p95_response_time = (
             statistics.quantiles(all_response_times, n=20)[18]
             if len(all_response_times) >= 20
-            else max(all_response_times)
-            if all_response_times
-            else 0
+            else max(all_response_times) if all_response_times else 0
         )
         p99_response_time = (
             statistics.quantiles(all_response_times, n=100)[98]
             if len(all_response_times) >= 100
-            else max(all_response_times)
-            if all_response_times
-            else 0
+            else max(all_response_times) if all_response_times else 0
         )
         throughput = total_successful / duration if duration > 0 else 0
 
@@ -297,12 +294,12 @@ class TestLoadSimulation:
 
         # 性能断言
         for result in results:
-            assert result["avg"] < 500, (
-                f"{result['endpoint']} 平均响应时间过长: {result['avg']:.1f}ms"
-            )
-            assert result["max"] < 2000, (
-                f"{result['endpoint']} 最大响应时间过长: {result['max']:.1f}ms"
-            )
+            assert (
+                result["avg"] < 500
+            ), f"{result['endpoint']} 平均响应时间过长: {result['avg']:.1f}ms"
+            assert (
+                result["max"] < 2000
+            ), f"{result['endpoint']} 最大响应时间过长: {result['max']:.1f}ms"
 
     @pytest.mark.asyncio
     async def test_database_query_performance(

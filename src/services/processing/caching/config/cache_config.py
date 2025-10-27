@@ -3,8 +3,8 @@
 Cache Configuration
 """
 
-from typing import Dict, Optional
 from dataclasses import dataclass
+from typing import Dict, Optional
 
 
 @dataclass

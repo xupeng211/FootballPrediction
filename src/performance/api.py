@@ -15,17 +15,15 @@ import asyncio
 from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from src.performance.profiler import get_profiler
-from src.performance.analyzer import PerformanceAnalyzer
-from src.performance.middleware import (
-    DatabasePerformanceMiddleware,
-    CachePerformanceMiddleware,
-    BackgroundTaskPerformanceMonitor,
-)
 from src.core.logging import get_logger
+from src.performance.analyzer import PerformanceAnalyzer
+from src.performance.middleware import (BackgroundTaskPerformanceMonitor,
+                                        CachePerformanceMiddleware,
+                                        DatabasePerformanceMiddleware)
+from src.performance.profiler import get_profiler
 
 logger = get_logger(__name__)
 
@@ -386,8 +384,9 @@ async def get_performance_trends(
         # Note: 从数据库或时序数据库获取历史数据
         # 当前返回模拟数据，生产环境应连接到时序数据库
 
-        import numpy as np
         from datetime import datetime, timedelta
+
+        import numpy as np
 
         # 生成模拟数据点
         end_time = datetime.now()

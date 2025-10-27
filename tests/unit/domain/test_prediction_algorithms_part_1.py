@@ -4,22 +4,25 @@
 创建时间: 2025-10-26 18:19:15.122578
 """
 
-import pytest
-from enum import Enum
 from dataclasses import dataclass
+from enum import Enum
 from unittest.mock import Mock, patch
+
+import pytest
+
 
 class PredictionOutcome(Enum):
     """预测结果枚举"""
+
     HOME_WIN = "home"
     DRAW = "draw"
     AWAY_WIN = "away"
 
 
 @dataclass
-
 class MockPredictionFeatures:
     """Mock预测特征数据"""
+
     home_team_form: float
     away_team_form: float
     h2h_home_wins: int
@@ -36,12 +39,10 @@ class MockPredictionFeatures:
 
 @pytest.mark.unit
 @pytest.mark.domain
-
 class TestPredictionAlgorithmsComprehensive:
     """预测算法全面测试"""
 
     @pytest.fixture
-
     def mock_prediction_service(self):
         """Mock预测服务"""
         service = Mock()
@@ -51,7 +52,6 @@ class TestPredictionAlgorithmsComprehensive:
         return service
 
     @pytest.fixture
-
     def mock_feature_extractor(self):
         """Mock特征提取器"""
         extractor = Mock()
@@ -61,7 +61,6 @@ class TestPredictionAlgorithmsComprehensive:
         return extractor
 
     @pytest.fixture
-
     def sample_match_data(self):
         """样本比赛数据"""
         return {
@@ -72,7 +71,7 @@ class TestPredictionAlgorithmsComprehensive:
                 "form": [3, 1, 1, 3, 2],  # 最近5场比赛积分
                 "goals_scored": 15,
                 "goals_conceded": 8,
-                "position": 3
+                "position": 3,
             },
             "away_team": {
                 "id": 2,
@@ -80,15 +79,14 @@ class TestPredictionAlgorithmsComprehensive:
                 "form": [1, 0, 2, 1, 3],
                 "goals_scored": 12,
                 "goals_conceded": 10,
-                "position": 7
+                "position": 7,
             },
             "league": "Premier League",
             "match_date": datetime.utcnow() + timedelta(days=1),
-            "venue": "neutral"  # 或 "home"
+            "venue": "neutral",  # 或 "home"
         }
 
     @pytest.fixture
-
     def sample_features(self):
         """样本特征数据"""
         return MockPredictionFeatures(
@@ -103,11 +101,10 @@ class TestPredictionAlgorithmsComprehensive:
             home_advantage=0.3,
             days_since_last_match=7,
             season_points_diff=12.0,
-            recent_form_weighted=1.8
+            recent_form_weighted=1.8,
         )
 
     @pytest.fixture
-
     def basic_prediction_algorithm(self):
         """基础预测算法"""
         algorithm = Mock()
@@ -118,15 +115,12 @@ class TestPredictionAlgorithmsComprehensive:
 
     # ==================== 基础预测算法测试 ====================
 
-
-    def test_basic_prediction_algorithm_success(self, basic_prediction_algorithm, sample_features) -> None:
+    def test_basic_prediction_algorithm_success(
+        self, basic_prediction_algorithm, sample_features
+    ) -> None:
         """✅ 成功用例：基础预测算法正常工作"""
         # Mock预测结果
-        expected_probabilities = {
-            "home_win": 0.45,
-            "draw": 0.30,
-            "away_win": 0.25
-        }
+        expected_probabilities = {"home_win": 0.45, "draw": 0.30, "away_win": 0.25}
 
         basic_prediction_algorithm.predict.return_value = expected_probabilities
 
@@ -144,26 +138,28 @@ class TestPredictionAlgorithmsComprehensive:
         prob_sum = sum(result.values())
         assert abs(prob_sum - 1.0) < 0.01
 
-
-    def test_basic_prediction_algorithm_confidence_calculation(self, basic_prediction_algorithm) -> None:
+    def test_basic_prediction_algorithm_confidence_calculation(
+        self, basic_prediction_algorithm
+    ) -> None:
         """✅ 成功用例：置信度计算"""
         probabilities = {"home_win": 0.55, "draw": 0.25, "away_win": 0.20}
         expected_confidence = 0.75  # 模拟计算结果
 
-        basic_prediction_algorithm.calculate_confidence.return_value = expected_confidence
+        basic_prediction_algorithm.calculate_confidence.return_value = (
+            expected_confidence
+        )
 
         result = basic_prediction_algorithm.calculate_confidence(probabilities)
 
         assert 0.0 <= result <= 1.0
         assert isinstance(result, (int, float))
 
-
-    def test_basic_prediction_algorithm_feature_validation(self, basic_prediction_algorithm, sample_features) -> None:
+    def test_basic_prediction_algorithm_feature_validation(
+        self, basic_prediction_algorithm, sample_features
+    ) -> None:
         """✅ 成功用例：特征验证"""
         basic_prediction_algorithm.validate_features.return_value = True
 
         result = basic_prediction_algorithm.validate_features(sample_features)
 
         assert isinstance(result, bool)
-
-

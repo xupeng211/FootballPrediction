@@ -16,27 +16,22 @@ Features - 数据库模块
 - 使用SQLAlchemy 2.0语法
 """
 
-from typing import Optional, Dict, Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 if TYPE_CHECKING:
     from .match import Match
     from .team import Team
+
+from datetime import datetime
 from decimal import Decimal
 from enum import Enum
-from sqlalchemy import (
-    Boolean,
-    DECIMAL,
-    Enum as SQLEnum,
-    ForeignKey,
-    Integer,
-    String,
-    DateTime,
-    Text,
-    Index,
-)
+
+from sqlalchemy import DECIMAL, Boolean, DateTime
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from ..base import BaseModel
-from datetime import datetime
 
 
 class TeamType(str, Enum):

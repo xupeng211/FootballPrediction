@@ -6,14 +6,14 @@ Match Repository
 Implements data access logic for matches.
 """
 
-from typing import Any, Dict, List, Optional, Type
-from datetime import datetime, date, timedelta
+from datetime import date, datetime, timedelta
 from enum import Enum
+from typing import Any, Dict, List, Optional, Type
 
-from sqlalchemy import select, func, update
+from sqlalchemy import func, select, update
 
-from .base import Repository, ReadOnlyRepository, QuerySpec
 from ..database.models import Match
+from .base import QuerySpec, ReadOnlyRepository, Repository
 
 
 class MatchStatus(str, Enum):
@@ -491,9 +491,11 @@ class MatchRepository(MatchRepositoryInterface):
                 "competition": match.competition_name,
                 "match_date": match.match_date,
                 "status": match.status,
-                "score": {"home": match.home_score, "away": match.away_score}
-                if match.home_score is not None
-                else None,
+                "score": (
+                    {"home": match.home_score, "away": match.away_score}
+                    if match.home_score is not None
+                    else None
+                ),
             },
             "predictions": {
                 "total": prediction_stats.total_predictions or 0,

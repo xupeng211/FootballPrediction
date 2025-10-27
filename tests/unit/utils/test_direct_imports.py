@@ -3,10 +3,11 @@
 绕过导入问题，直接测试源代码
 """
 
-import pytest
-import sys
 import os
+import sys
 from pathlib import Path
+
+import pytest
 
 # 添加src目录到Python路径
 src_path = Path(__file__).parent.parent.parent.parent / "src"
@@ -15,11 +16,11 @@ sys.path.insert(0, str(src_path))
 
 @pytest.mark.unit
 @pytest.mark.external_api
-
 def test_crypto_utils():
     """测试crypto_utils模块"""
     try:
-        from utils.crypto_utils import hash_password, verify_password, generate_token
+        from utils.crypto_utils import (generate_token, hash_password,
+                                        verify_password)
 
         # 测试密码哈希
         password = "test123"
@@ -42,7 +43,8 @@ def test_crypto_utils():
 def test_data_validator():
     """测试data_validator模块"""
     try:
-        from utils.data_validator import validate_email, validate_phone, validate_url
+        from utils.data_validator import (validate_email, validate_phone,
+                                          validate_url)
 
         # 测试邮箱验证
         assert validate_email("test@example.com") is True
@@ -62,7 +64,7 @@ def test_data_validator():
 def test_dict_utils():
     """测试dict_utils模块"""
     try:
-        from utils.dict_utils import deep_merge, flatten_dict, filter_none
+        from utils.dict_utils import deep_merge, filter_none, flatten_dict
 
         # 测试深度合并
         d1 = {"a": 1, "b": {"x": 1}}
@@ -122,8 +124,10 @@ def test_file_utils():
 def test_formatters():
     """测试formatters模块"""
     try:
-        from utils.formatters import format_datetime, format_currency, format_bytes
         from datetime import datetime, timezone
+
+        from utils.formatters import (format_bytes, format_currency,
+                                      format_datetime)
 
         # 测试日期时间格式化
         dt = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
@@ -166,7 +170,7 @@ def test_helpers():
 def test_string_utils():
     """测试string_utils模块"""
     try:
-        from utils.string_utils import slugify, camel_to_snake, snake_to_camel
+        from utils.string_utils import camel_to_snake, slugify, snake_to_camel
 
         # 测试slugify
         text = "Hello World! How are you?"
@@ -190,8 +194,9 @@ def test_string_utils():
 def test_time_utils():
     """测试time_utils模块"""
     try:
-        from utils.time_utils import time_ago, duration_format, is_future
-        from datetime import datetime, timezone, timedelta
+        from datetime import datetime, timedelta, timezone
+
+        from utils.time_utils import duration_format, is_future, time_ago
 
         now = datetime.now(timezone.utc)
 
@@ -216,7 +221,8 @@ def test_time_utils():
 def test_validators():
     """测试validators模块"""
     try:
-        from utils.validators import validate_required, validate_range, validate_length
+        from utils.validators import (validate_length, validate_range,
+                                      validate_required)
 
         # 测试必填验证
         assert validate_required("test") is True
@@ -240,10 +246,9 @@ def test_warning_filters():
     """测试warning_filters模块"""
     try:
         import warnings
-        from utils.warning_filters import (
-            filter_deprecation_warnings,
-            ignore_user_warnings,
-        )
+
+        from utils.warning_filters import (filter_deprecation_warnings,
+                                           ignore_user_warnings)
 
         # 测试过滤警告
         with warnings.catch_warnings(record=True) as w:
@@ -259,7 +264,7 @@ def test_warning_filters():
 def test_i18n():
     """测试i18n模块"""
     try:
-        from utils.i18n import _, set_language, get_current_language
+        from utils.i18n import _, get_current_language, set_language
 
         # 测试翻译
         _result = _("hello")
@@ -276,7 +281,7 @@ def test_i18n():
 def test_response():
     """测试response模块"""
     try:
-        from utils.response import success, error, created, not_found
+        from utils.response import created, error, not_found, success
 
         # 测试成功响应
         resp = success({"data": "test"})
@@ -300,7 +305,7 @@ def test_response():
 def test_retry():
     """测试retry模块"""
     try:
-        from utils.retry import retry, RetryError
+        from utils.retry import RetryError, retry
 
         attempts = 0
 
@@ -322,7 +327,7 @@ def test_retry():
 def test_config_loader():
     """测试config_loader模块"""
     try:
-        from utils.config_loader import load_config, get_config_value
+        from utils.config_loader import get_config_value, load_config
 
         # 测试加载配置
         _config = load_config()

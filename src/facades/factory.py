@@ -6,21 +6,17 @@ Facade Factory
 Used to create and configure facade instances.
 """
 
-from typing import Any, Dict, List, Optional, Type, Union
-from dataclasses import dataclass, field
-import os
-from pathlib import Path
-import yaml
 import json
+import os
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Type, Union
+
+import yaml
 
 from .base import SystemFacade
-from .facades import (
-    MainSystemFacade,
-    PredictionFacade,
-    DataCollectionFacade,
-    AnalyticsFacade,
-    NotificationFacade,
-)
+from .facades import (AnalyticsFacade, DataCollectionFacade, MainSystemFacade,
+                      NotificationFacade, PredictionFacade)
 
 
 @dataclass

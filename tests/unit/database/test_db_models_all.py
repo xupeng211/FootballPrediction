@@ -2,10 +2,10 @@ import pytest
 
 try:
     from src.database.models.league import League
-    from src.database.models.team import Team
     from src.database.models.match import Match
     from src.database.models.odds import Odds
     from src.database.models.predictions import Prediction
+    from src.database.models.team import Team
     from src.database.models.user import User
 except ImportError:
     # 如果导入失败，创建简单的mock类用于测试
@@ -38,7 +38,6 @@ except ImportError:
 
 @pytest.mark.unit
 @pytest.mark.database
-
 def test_league_model():
     league = League(name="Test League")
     assert league.name == "Test League"

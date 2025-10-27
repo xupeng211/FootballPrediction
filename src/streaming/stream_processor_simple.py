@@ -2,8 +2,8 @@
 简化的流处理器实现
 """
 
-from typing import Any, Dict, List, Optional, Callable, AsyncIterator
 from datetime import datetime, timedelta
+from typing import Any, AsyncIterator, Callable, Dict, List, Optional
 
 
 class StreamProcessor:

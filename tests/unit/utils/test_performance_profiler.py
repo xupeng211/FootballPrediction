@@ -2,36 +2,29 @@
 
 # TODO: Consider creating a fixture for 4 repeated Mock creations
 
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
 """
 性能分析器测试
 Performance Profiler Tests
 """
 
-import pytest
 import time
-from typing import Dict, Any
+from typing import Any, Dict
 
-from src.performance.profiler import (
-    PerformanceProfiler,
-    get_profiler,
-    profile_function,
-    profile_method,
-    DatabaseQueryProfiler,
-    APIEndpointProfiler,
-    MemoryProfiler,
-    PerformanceMetric,
-    FunctionProfile,
-    QueryProfile,
-    start_profiling,
-    stop_profiling,
-    get_performance_report,
-)
+import pytest
+
+from src.performance.profiler import (APIEndpointProfiler,
+                                      DatabaseQueryProfiler, FunctionProfile,
+                                      MemoryProfiler, PerformanceMetric,
+                                      PerformanceProfiler, QueryProfile,
+                                      get_performance_report, get_profiler,
+                                      profile_function, profile_method,
+                                      start_profiling, stop_profiling)
 
 
 @pytest.mark.unit
 @pytest.mark.slow
-
 class TestPerformanceProfiler:
     """性能分析器测试类"""
 

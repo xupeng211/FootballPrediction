@@ -1,9 +1,9 @@
-from src.data.processing.missing_data_handler import MissingDataHandler
 import pytest
+
+from src.data.processing.missing_data_handler import MissingDataHandler
 
 
 @pytest.mark.unit
-
 def test_missing_data_handler():
     handler = MissingDataHandler()
     assert handler is not None

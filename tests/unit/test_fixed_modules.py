@@ -4,10 +4,9 @@ import pytest
 
 
 @pytest.mark.unit
-
 def test_database_base_model():
     """测试Database BaseModel"""
-    from src.database.base import BaseModel, Base
+    from src.database.base import Base, BaseModel
 
     # 测试BaseModel可以导入和使用
     assert BaseModel is not None
@@ -61,7 +60,7 @@ def test_services_base_service():
 
 def test_domain_models():
     """测试Domain Models"""
-    from src.domain.models import Team, Match, Prediction
+    from src.domain.models import Match, Prediction, Team
 
     # 测试占位符类
     team = Team()

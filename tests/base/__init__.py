@@ -2,10 +2,11 @@
 测试基础设施
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock
-from typing import Any, Dict, Optional
 from pathlib import Path
+from typing import Any, Dict, Optional
+from unittest.mock import MagicMock, Mock
+
+import pytest
 
 # 测试配置
 TEST_CONFIG = {

@@ -8,32 +8,19 @@ Implements handlers for all commands and queries.
 """
 
 import logging
-from typing import List, Optional, Dict, Any
 from datetime import datetime
 from decimal import Decimal
+from typing import Any, Dict, List, Optional
 
 from ..database.connection import get_session
-from ..database.models import User, Prediction
+from ..database.models import Prediction, User
 from .base import CommandHandler, QueryHandler
-from .commands import (
-    CreatePredictionCommand,
-    UpdatePredictionCommand,
-    DeletePredictionCommand,
-    CreateUserCommand,
-)
-from .queries import (
-    GetPredictionByIdQuery,
-    GetPredictionsByUserQuery,
-    GetUserStatsQuery,
-    GetUpcomingMatchesQuery,
-)
-from .dto import (
-    PredictionDTO,
-    UserDTO,
-    MatchDTO,
-    PredictionStatsDTO,
-    CommandResult,
-)
+from .commands import (CreatePredictionCommand, CreateUserCommand,
+                       DeletePredictionCommand, UpdatePredictionCommand)
+from .dto import (CommandResult, MatchDTO, PredictionDTO, PredictionStatsDTO,
+                  UserDTO)
+from .queries import (GetPredictionByIdQuery, GetPredictionsByUserQuery,
+                      GetUpcomingMatchesQuery, GetUserStatsQuery)
 
 logger = logging.getLogger(__name__)
 
@@ -422,9 +409,11 @@ class GetUserStatsHandler(QueryHandler):
                             "actual_home": row.home_score,
                             "actual_away": row.away_score,
                             "points_earned": row.points_earned,
-                            "accuracy_score": float(row.accuracy_score)
-                            if row.accuracy_score
-                            else None,
+                            "accuracy_score": (
+                                float(row.accuracy_score)
+                                if row.accuracy_score
+                                else None
+                            ),
                         }
                     )
 

@@ -5,12 +5,14 @@
 import asyncio
 import os
 import time
-import pytest
+from unittest.mock import AsyncMock
+
 import psutil
+import pytest
+
 from src.core.prediction_engine import PredictionEngine
 from src.models.prediction_service import PredictionResult
 
-from unittest.mock import AsyncMock
 """
 预测性能基准测试
 Performance Benchmarks for Prediction
@@ -330,12 +332,12 @@ class TestPredictionBenchmarks:
         print(f"  成功率: {len(predictions) / (len(predictions) + errors):.2%}")
 
         # 性能断言
-        assert actual_rate > target_rate * 0.9, (
-            f"持续性能不足: {actual_rate:.2f} < {target_rate * 0.9}"
-        )
-        assert errors / (len(predictions) + errors) < 0.05, (
-            f"错误率过高: {errors / (len(predictions) + errors):.2%}"
-        )
+        assert (
+            actual_rate > target_rate * 0.9
+        ), f"持续性能不足: {actual_rate:.2f} < {target_rate * 0.9}"
+        assert (
+            errors / (len(predictions) + errors) < 0.05
+        ), f"错误率过高: {errors / (len(predictions) + errors):.2%}"
 
 
 @pytest.fixture

@@ -14,27 +14,28 @@ Database Service Comprehensive Test Suite
 测试覆盖率目标：>=95%
 """
 
-import pytest
 import asyncio
 import json
 import time
-from unittest.mock import Mock, AsyncMock, patch, MagicMock, call
-from typing import Dict, Any, List, Optional, Union, Tuple
-from datetime import datetime, timedelta
-from dataclasses import dataclass, asdict
-from enum import Enum
 import uuid
 from contextlib import asynccontextmanager
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple, Union
+from unittest.mock import AsyncMock, MagicMock, Mock, call, patch
+
+import asyncpg
+import pytest
 import sqlalchemy as sa
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-import asyncpg
 
 # 导入实际数据库模块，如果失败则使用Mock
 try:
-    from src.database.repositories.base import BaseRepository
-    from src.database.models.base import BaseModel
     from src.database.connection import DatabaseManager
+    from src.database.models.base import BaseModel
+    from src.database.repositories.base import BaseRepository
     from src.database.transaction import TransactionManager
 except ImportError:
     BaseRepository = Mock()
@@ -42,19 +43,17 @@ except ImportError:
     DatabaseManager = Mock()
     TransactionManager = Mock
 
-from tests.unit.mocks.mock_factory_phase4a import Phase4AMockFactory
-
 # 导入数据库相关的Mock类
-from tests.unit.mocks.mock_factory_phase4a import (
-    MockDatabaseService,
-    MockRepository,
-    MockTransactionManager,
-    MockConnectionPool
-)
+from tests.unit.mocks.mock_factory_phase4a import (MockConnectionPool,
+                                                   MockDatabaseService,
+                                                   MockRepository,
+                                                   MockTransactionManager,
+                                                   Phase4AMockFactory)
 
 
 class DatabaseType(Enum):
     """数据库类型枚举"""
+
     POSTGRESQL = "postgresql"
     MYSQL = "mysql"
     SQLITE = "sqlite"
@@ -63,6 +62,7 @@ class DatabaseType(Enum):
 
 class TransactionState(Enum):
     """事务状态枚举"""
+
     ACTIVE = "active"
     COMMITTED = "committed"
     ROLLED_BACK = "rolled_back"
@@ -71,6 +71,7 @@ class TransactionState(Enum):
 
 class IsolationLevel(Enum):
     """隔离级别枚举"""
+
     READ_UNCOMMITTED = "READ UNCOMMITTED"
     READ_COMMITTED = "READ COMMITTED"
     REPEATABLE_READ = "REPEATABLE READ"
@@ -80,6 +81,7 @@ class IsolationLevel(Enum):
 @dataclass
 class DatabaseConfig:
     """数据库配置"""
+
     host: str
     port: int
     database: str
@@ -95,6 +97,7 @@ class DatabaseConfig:
 @dataclass
 class QueryMetrics:
     """查询指标"""
+
     query: str
     execution_time: float
     rows_affected: int
@@ -105,6 +108,7 @@ class QueryMetrics:
 @dataclass
 class TransactionMetrics:
     """事务指标"""
+
     transaction_id: str
     start_time: datetime
     end_time: Optional[datetime] = None
@@ -164,13 +168,15 @@ class MockConnection:
                 query=query,
                 execution_time=execution_time,
                 rows_affected=rows_affected,
-                error=error
+                error=error,
             )
             self.query_history.append(metrics)
 
         return metrics
 
-    async def fetchall(self, query: str, params: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+    async def fetchall(
+        self, query: str, params: Dict[str, Any] = None
+    ) -> List[Dict[str, Any]]:
         """获取所有结果"""
         await self.execute(query, params)
 
@@ -178,17 +184,19 @@ class MockConnection:
         if "users" in query.lower():
             return [
                 {"id": 1, "username": "user1", "email": "user1@example.com"},
-                {"id": 2, "username": "user2", "email": "user2@example.com"}
+                {"id": 2, "username": "user2", "email": "user2@example.com"},
             ]
         elif "predictions" in query.lower():
             return [
                 {"id": 1, "match_id": 123, "prediction": "home_win"},
-                {"id": 2, "match_id": 124, "prediction": "draw"}
+                {"id": 2, "match_id": 124, "prediction": "draw"},
             ]
         else:
             return []
 
-    async def fetchone(self, query: str, params: Dict[str, Any] = None) -> Optional[Dict[str, Any]]:
+    async def fetchone(
+        self, query: str, params: Dict[str, Any] = None
+    ) -> Optional[Dict[str, Any]]:
         """获取单行结果"""
         results = await self.fetchall(query, params)
         return results[0] if results else None
@@ -202,7 +210,7 @@ class MockConnection:
         self.transaction = {
             "id": str(uuid.uuid4()),
             "start_time": datetime.now(),
-            "operations": []
+            "operations": [],
         }
 
     async def commit(self):
@@ -335,7 +343,7 @@ class MockDatabaseEngine:
             "active_connections": self.active_connections,
             "available_connections": len(self.connection_pool),
             "pool_size": self.config.pool_size,
-            "max_overflow": self.config.max_overflow
+            "max_overflow": self.config.max_overflow,
         }
 
 
@@ -356,7 +364,7 @@ class TestDatabaseBasicOperations:
             database="test_db",
             username="test_user",
             password="test_password",
-            pool_size=5
+            pool_size=5,
         )
 
     @pytest.fixture
@@ -434,7 +442,7 @@ class TestDatabaseBasicOperations:
         query = "SELECT * FROM users WHERE id = 999"
 
         # Mock实现对于不存在的记录返回None
-        with patch.object(mock_connection, 'fetchone', return_value=None):
+        with patch.object(mock_connection, "fetchone", return_value=None):
             result = await mock_connection.fetchone(query)
             assert result is None
 
@@ -571,7 +579,7 @@ class TestConnectionPooling:
             username="test_user",
             password="test_password",
             pool_size=3,
-            max_overflow=2
+            max_overflow=2,
         )
 
     @pytest.fixture
@@ -644,6 +652,7 @@ class TestConnectionPooling:
     @pytest.mark.asyncio
     async def test_concurrent_connection_access(self, mock_engine):
         """测试并发连接访问"""
+
         async def acquire_and_release():
             connection = await mock_engine.acquire_connection()
             await asyncio.sleep(0.01)  # 模拟使用连接
@@ -689,7 +698,7 @@ class TestConnectionPooling:
             "active_connections",
             "available_connections",
             "pool_size",
-            "max_overflow"
+            "max_overflow",
         ]
 
         for field in required_fields:
@@ -710,7 +719,7 @@ class TestRepositoryPattern:
         return [
             {"id": 1, "name": "Entity 1", "status": "active"},
             {"id": 2, "name": "Entity 2", "status": "inactive"},
-            {"id": 3, "name": "Entity 3", "status": "active"}
+            {"id": 3, "name": "Entity 3", "status": "active"},
         ]
 
     @pytest.mark.asyncio
@@ -718,7 +727,7 @@ class TestRepositoryPattern:
         """测试根据ID查找"""
         entity_id = 1
 
-        with patch.object(mock_repository, 'find_by_id') as mock_find:
+        with patch.object(mock_repository, "find_by_id") as mock_find:
             mock_find.return_value = sample_entities[0]
 
             result = await mock_repository.find_by_id(entity_id)
@@ -732,7 +741,7 @@ class TestRepositoryPattern:
         """测试查找不存在的ID"""
         non_existent_id = 999
 
-        with patch.object(mock_repository, 'find_by_id') as mock_find:
+        with patch.object(mock_repository, "find_by_id") as mock_find:
             mock_find.return_value = None
 
             result = await mock_repository.find_by_id(non_existent_id)
@@ -742,7 +751,7 @@ class TestRepositoryPattern:
     @pytest.mark.asyncio
     async def test_find_all(self, mock_repository, sample_entities):
         """测试查找所有记录"""
-        with patch.object(mock_repository, 'find_all') as mock_find_all:
+        with patch.object(mock_repository, "find_all") as mock_find_all:
             mock_find_all.return_value = sample_entities
 
             results = await mock_repository.find_all()
@@ -755,7 +764,7 @@ class TestRepositoryPattern:
         """测试带过滤条件的查找"""
         filters = {"status": "active"}
 
-        with patch.object(mock_repository, 'find_with_filters') as mock_find:
+        with patch.object(mock_repository, "find_with_filters") as mock_find:
             active_entities = [e for e in sample_entities if e["status"] == "active"]
             mock_find.return_value = active_entities
 
@@ -770,7 +779,7 @@ class TestRepositoryPattern:
         """测试创建实体"""
         new_entity = {"name": "New Entity", "status": "active"}
 
-        with patch.object(mock_repository, 'create') as mock_create:
+        with patch.object(mock_repository, "create") as mock_create:
             created_entity = {**new_entity, "id": 4}
             mock_create.return_value = created_entity
 
@@ -787,7 +796,7 @@ class TestRepositoryPattern:
         entity_id = 1
         updates = {"name": "Updated Entity", "status": "inactive"}
 
-        with patch.object(mock_repository, 'update') as mock_update:
+        with patch.object(mock_repository, "update") as mock_update:
             updated_entity = {"id": entity_id, **updates}
             mock_update.return_value = updated_entity
 
@@ -803,7 +812,7 @@ class TestRepositoryPattern:
         """测试删除实体"""
         entity_id = 1
 
-        with patch.object(mock_repository, 'delete') as mock_delete:
+        with patch.object(mock_repository, "delete") as mock_delete:
             mock_delete.return_value = True
 
             result = await mock_repository.delete(entity_id)
@@ -814,7 +823,7 @@ class TestRepositoryPattern:
     @pytest.mark.asyncio
     async def test_count_entities(self, mock_repository):
         """测试统计实体数量"""
-        with patch.object(mock_repository, 'count') as mock_count:
+        with patch.object(mock_repository, "count") as mock_count:
             mock_count.return_value = 42
 
             count = await mock_repository.count()
@@ -827,7 +836,7 @@ class TestRepositoryPattern:
         """测试检查实体是否存在"""
         entity_id = 1
 
-        with patch.object(mock_repository, 'exists') as mock_exists:
+        with patch.object(mock_repository, "exists") as mock_exists:
             mock_exists.return_value = True
 
             result = await mock_repository.exists(entity_id)
@@ -841,13 +850,13 @@ class TestRepositoryPattern:
         page = 1
         per_page = 10
 
-        with patch.object(mock_repository, 'find_paginated') as mock_paginated:
+        with patch.object(mock_repository, "find_paginated") as mock_paginated:
             mock_result = {
                 "items": [{"id": i} for i in range(1, 11)],
                 "total": 100,
                 "page": page,
                 "per_page": per_page,
-                "pages": 10
+                "pages": 10,
             }
             mock_paginated.return_value = mock_result
 
@@ -862,14 +871,12 @@ class TestRepositoryPattern:
     async def test_bulk_operations(self, mock_repository):
         """测试批量操作"""
         entities_to_create = [
-            {"name": f"Entity {i}", "status": "active"}
-            for i in range(1, 6)
+            {"name": f"Entity {i}", "status": "active"} for i in range(1, 6)
         ]
 
-        with patch.object(mock_repository, 'bulk_create') as mock_bulk:
+        with patch.object(mock_repository, "bulk_create") as mock_bulk:
             created_entities = [
-                {**entity, "id": i}
-                for i, entity in enumerate(entities_to_create, 1)
+                {**entity, "id": i} for i, entity in enumerate(entities_to_create, 1)
             ]
             mock_bulk.return_value = created_entities
 
@@ -924,7 +931,7 @@ class TestTransactionManager:
     async def test_nested_transactions(self, transaction_manager):
         """测试嵌套事务"""
 
-        async with transaction_manager.transaction() as outer_tx:
+        async with transaction_manager.transaction():
             assert transaction_manager.in_transaction is True
 
             async with transaction_manager.transaction() as inner_tx:
@@ -942,7 +949,7 @@ class TestTransactionManager:
         isolation_levels = [
             IsolationLevel.READ_COMMITTED,
             IsolationLevel.REPEATABLE_READ,
-            IsolationLevel.SERIALIZABLE
+            IsolationLevel.SERIALIZABLE,
         ]
 
         for level in isolation_levels:
@@ -972,11 +979,11 @@ class TestTransactionManager:
     async def test_transaction_timeout(self, transaction_manager):
         """测试事务超时"""
 
-        with patch.object(transaction_manager, '_check_timeout') as mock_timeout:
+        with patch.object(transaction_manager, "_check_timeout") as mock_timeout:
             mock_timeout.side_effect = TimeoutError("Transaction timeout")
 
             with pytest.raises(TimeoutError):
-                async with transaction_manager.transaction(timeout=1.0) as tx:
+                async with transaction_manager.transaction(timeout=1.0):
                     await asyncio.sleep(2.0)  # 模拟长时间操作
 
     @pytest.mark.asyncio
@@ -993,9 +1000,7 @@ class TestTransactionManager:
             return "success"
 
         result = await transaction_manager.execute_with_retry(
-            failing_operation,
-            max_attempts=3,
-            delay=0.01
+            failing_operation, max_attempts=3, delay=0.01
         )
 
         assert result == "success"
@@ -1018,12 +1023,12 @@ class TestDatabaseService:
     @pytest.mark.asyncio
     async def test_service_initialization(self, database_service):
         """测试服务初始化"""
-        with patch.object(database_service, 'initialize') as mock_init:
+        with patch.object(database_service, "initialize") as mock_init:
             mock_init.return_value = {
                 "success": True,
                 "database_type": "postgresql",
                 "pool_size": 10,
-                "connected": True
+                "connected": True,
             }
 
             result = await database_service.initialize()
@@ -1038,14 +1043,14 @@ class TestDatabaseService:
         query = "SELECT * FROM users WHERE active = true"
         params = {"limit": 100}
 
-        with patch.object(database_service, 'execute_query') as mock_execute:
+        with patch.object(database_service, "execute_query") as mock_execute:
             mock_execute.return_value = {
                 "success": True,
                 "rows": [
                     {"id": 1, "username": "user1"},
-                    {"id": 2, "username": "user2"}
+                    {"id": 2, "username": "user2"},
                 ],
-                "execution_time": 0.002
+                "execution_time": 0.002,
             }
 
             result = await database_service.execute_query(query, params)
@@ -1060,18 +1065,18 @@ class TestDatabaseService:
         queries = [
             "SELECT * FROM users",
             "SELECT * FROM predictions",
-            "SELECT * FROM matches"
+            "SELECT * FROM matches",
         ]
 
-        with patch.object(database_service, 'execute_batch') as mock_batch:
+        with patch.object(database_service, "execute_batch") as mock_batch:
             mock_batch.return_value = {
                 "success": True,
                 "results": [
                     {"rows": [{"id": 1}], "execution_time": 0.001},
                     {"rows": [{"id": 2}], "execution_time": 0.002},
-                    {"rows": [{"id": 3}], "execution_time": 0.001}
+                    {"rows": [{"id": 3}], "execution_time": 0.001},
                 ],
-                "total_execution_time": 0.004
+                "total_execution_time": 0.004,
             }
 
             result = await database_service.execute_batch(queries)
@@ -1082,12 +1087,12 @@ class TestDatabaseService:
     @pytest.mark.asyncio
     async def test_connection_health_check(self, database_service):
         """测试连接健康检查"""
-        with patch.object(database_service, 'health_check') as mock_health:
+        with patch.object(database_service, "health_check") as mock_health:
             mock_health.return_value = {
                 "healthy": True,
                 "active_connections": 5,
                 "idle_connections": 15,
-                "response_time": 0.001
+                "response_time": 0.001,
             }
 
             health = await database_service.health_check()
@@ -1099,15 +1104,15 @@ class TestDatabaseService:
     @pytest.mark.asyncio
     async def test_database_migrations(self, database_service):
         """测试数据库迁移"""
-        with patch.object(database_service, 'run_migrations') as mock_migrate:
+        with patch.object(database_service, "run_migrations") as mock_migrate:
             mock_migrate.return_value = {
                 "success": True,
                 "migrations_applied": 3,
                 "migration_details": [
                     {"version": "001", "name": "create_users_table"},
                     {"version": "002", "name": "add_predictions_table"},
-                    {"version": "003", "name": "add_indexes"}
-                ]
+                    {"version": "003", "name": "add_indexes"},
+                ],
             }
 
             result = await database_service.run_migrations()
@@ -1120,12 +1125,12 @@ class TestDatabaseService:
     async def test_backup_and_restore(self, database_service):
         """测试备份和恢复"""
         # 备份
-        with patch.object(database_service, 'create_backup') as mock_backup:
+        with patch.object(database_service, "create_backup") as mock_backup:
             mock_backup.return_value = {
                 "success": True,
                 "backup_id": "backup_20251026_001",
                 "file_size": "125MB",
-                "duration": 45.2
+                "duration": 45.2,
             }
 
             backup_result = await database_service.create_backup()
@@ -1134,12 +1139,12 @@ class TestDatabaseService:
 
         # 恢复
         backup_id = backup_result["backup_id"]
-        with patch.object(database_service, 'restore_backup') as mock_restore:
+        with patch.object(database_service, "restore_backup") as mock_restore:
             mock_restore.return_value = {
                 "success": True,
                 "restored_at": datetime.now(),
                 "tables_restored": 15,
-                "records_restored": 50000
+                "records_restored": 50000,
             }
 
             restore_result = await database_service.restore_backup(backup_id)
@@ -1151,10 +1156,13 @@ class TestDatabaseService:
         """测试查询性能监控"""
         slow_queries = [
             {"query": "SELECT * FROM large_table", "execution_time": 2.5},
-            {"query": "SELECT * FROM another_table WHERE complex_condition", "execution_time": 3.1}
+            {
+                "query": "SELECT * FROM another_table WHERE complex_condition",
+                "execution_time": 3.1,
+            },
         ]
 
-        with patch.object(database_service, 'get_slow_queries') as mock_slow:
+        with patch.object(database_service, "get_slow_queries") as mock_slow:
             mock_slow.return_value = slow_queries
 
             slow = await database_service.get_slow_queries(threshold=1.0)
@@ -1165,13 +1173,13 @@ class TestDatabaseService:
     @pytest.mark.asyncio
     async def test_connection_pool_management(self, database_service):
         """测试连接池管理"""
-        with patch.object(database_service, 'get_pool_status') as mock_pool:
+        with patch.object(database_service, "get_pool_status") as mock_pool:
             mock_pool.return_value = {
                 "pool_size": 20,
                 "active_connections": 8,
                 "idle_connections": 12,
                 "waiting_requests": 0,
-                "total_requests": 15420
+                "total_requests": 15420,
             }
 
             pool_status = await database_service.get_pool_status()
@@ -1184,7 +1192,7 @@ class TestDatabaseService:
     @pytest.mark.asyncio
     async def test_database_statistics(self, database_service):
         """测试数据库统计信息"""
-        with patch.object(database_service, 'get_statistics') as mock_stats:
+        with patch.object(database_service, "get_statistics") as mock_stats:
             mock_stats.return_value = {
                 "total_connections": 1000,
                 "active_connections": 5,
@@ -1193,7 +1201,7 @@ class TestDatabaseService:
                 "avg_response_time": 0.025,
                 "cache_hit_rate": 0.85,
                 "database_size": "2.5GB",
-                "table_count": 25
+                "table_count": 25,
             }
 
             stats = await database_service.get_statistics()
@@ -1215,7 +1223,7 @@ class TestDatabasePerformance:
             database="perf_test",
             username="perf_user",
             password="perf_pass",
-            pool_size=20
+            pool_size=20,
         )
         return MockDatabaseEngine(config)
 
@@ -1316,7 +1324,7 @@ class TestDatabasePerformance:
         for data in insert_data:
             await connection.execute(
                 "INSERT INTO bulk_table (value, timestamp) VALUES (:value, :timestamp)",
-                data
+                data,
             )
 
         total_time = time.time() - start_time
@@ -1339,8 +1347,8 @@ class TestDatabasePerformance:
 
         # 验证内存线性增长
         for i in range(1, len(memory_usage)):
-            growth_ratio = memory_usage[i] / memory_usage[i-1]
-            count_ratio = connection_counts[i] / connection_counts[i-1]
+            growth_ratio = memory_usage[i] / memory_usage[i - 1]
+            count_ratio = connection_counts[i] / connection_counts[i - 1]
 
             # 内存增长应该与连接数增长成比例
             assert abs(growth_ratio - count_ratio) < 0.1
@@ -1362,7 +1370,7 @@ class TestDatabasePerformance:
         second_execution = time.time() - start_time
 
         # 缓存应该显著提高性能
-        cache_speedup = first_execution / second_execution if second_execution > 0 else 1
+        first_execution / second_execution if second_execution > 0 else 1
 
         # 在真实环境中，缓存应该带来明显性能提升
         # 这里我们只验证第二次执行不会比第一次慢太多

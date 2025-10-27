@@ -1,8 +1,10 @@
+from enum import Enum
 from typing import Dict, List, Optional
+
 from sqlalchemy import Boolean, Column, ForeignKey, Index, Integer, String
 from sqlalchemy.orm import Session, relationship
+
 from ..base import BaseModel
-from enum import Enum
 
 """
 球队模型

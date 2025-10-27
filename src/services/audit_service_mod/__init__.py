@@ -3,13 +3,13 @@
 Audit Service Module (Compatibility Version)
 """
 
-from .models import AuditAction, AuditSeverity, AuditEvent
-from .audit_service import AuditService, DataSanitizer, SeverityAnalyzer
-
-# 添加缺失的类定义
-from typing import List, Dict, Any, Optional
 from dataclasses import dataclass
 from datetime import datetime
+# 添加缺失的类定义
+from typing import Any, Dict, List, Optional
+
+from .audit_service import AuditService, DataSanitizer, SeverityAnalyzer
+from .models import AuditAction, AuditEvent, AuditSeverity
 
 
 @dataclass

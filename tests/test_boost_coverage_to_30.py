@@ -1,12 +1,13 @@
 import pytest
+
 #!/usr/bin/env python3
 """
 批量测试脚本，目标覆盖率达到30%
 """
 
+import os
 import subprocess
 import sys
-import os
 from pathlib import Path
 
 # 测试文件列表

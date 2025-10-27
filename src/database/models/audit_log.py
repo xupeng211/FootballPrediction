@@ -1,8 +1,11 @@
-from typing import Any, Dict, Optional
 from datetime import datetime, timedelta
 from enum import Enum
-from sqlalchemy import Boolean, Column, DateTime, Index, Integer, String, Text, func
+from typing import Any, Dict, Optional
+
+from sqlalchemy import (Boolean, Column, DateTime, Index, Integer, String,
+                        Text, func)
 from sqlalchemy.sql import func
+
 from ..base import BaseModel
 from ..types import SQLiteCompatibleJSONB
 

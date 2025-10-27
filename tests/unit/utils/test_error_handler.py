@@ -3,11 +3,7 @@
 import pytest
 
 try:
-    from src.core.error_handler import (
-        handle_error,
-        log_error,
-        ErrorHandler,
-    )
+    from src.core.error_handler import ErrorHandler, handle_error, log_error
 except ImportError:
     # 如果 error_handler 模块不存在，创建基本的实现
     def handle_error(exception):
@@ -22,7 +18,6 @@ except ImportError:
 
 
 @pytest.mark.unit
-
 class TestErrorHandler:
     """测试错误处理器"""
 

@@ -4,7 +4,7 @@
 
 import asyncio
 import json
-from typing import Any, Dict, Optional, List
+from typing import Any, Dict, List, Optional
 
 from src.core.exceptions import StreamingError
 

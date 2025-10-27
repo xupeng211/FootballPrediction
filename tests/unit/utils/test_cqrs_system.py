@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 5 repeated Mock creations
 
-from unittest.mock import patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
 """
 CQRS系统单元测试
 CQRS System Unit Tests
@@ -11,40 +12,29 @@ CQRS System Unit Tests
 Tests core functionality of CQRS pattern.
 """
 
-import pytest
 import asyncio
-from datetime import datetime, date, timedelta
+from datetime import date, datetime, timedelta
 
+import pytest
+
+from src.cqrs.application import (CQRSServiceFactory, PredictionCQRSService,
+                                  initialize_cqrs)
 from src.cqrs.base import Command, Query, ValidationResult
-from src.cqrs.commands import (
-    CreatePredictionCommand,
-    UpdatePredictionCommand,
-    DeletePredictionCommand,
-)
-from src.cqrs.queries import (
-    GetPredictionByIdQuery,
-    GetPredictionsByUserQuery,
-    GetUserStatsQuery,
-)
-from src.cqrs.dto import PredictionDTO, CommandResult
 from src.cqrs.bus import CommandBus, QueryBus
-from src.cqrs.handlers import (
-    CreatePredictionHandler,
-    UpdatePredictionHandler,
-    DeletePredictionHandler,
-    GetPredictionByIdHandler,
-    GetPredictionsByUserHandler,
-    GetUserStatsHandler,
-)
-from src.cqrs.application import (
-    PredictionCQRSService,
-    CQRSServiceFactory,
-    initialize_cqrs,
-)
+from src.cqrs.commands import (CreatePredictionCommand,
+                               DeletePredictionCommand,
+                               UpdatePredictionCommand)
+from src.cqrs.dto import CommandResult, PredictionDTO
+from src.cqrs.handlers import (CreatePredictionHandler,
+                               DeletePredictionHandler,
+                               GetPredictionByIdHandler,
+                               GetPredictionsByUserHandler,
+                               GetUserStatsHandler, UpdatePredictionHandler)
+from src.cqrs.queries import (GetPredictionByIdQuery,
+                              GetPredictionsByUserQuery, GetUserStatsQuery)
 
 
 @pytest.mark.unit
-
 class TestCommand(Command):
     """测试命令"""
 
@@ -94,7 +84,9 @@ class TestCreatePredictionCommand:
             mock_session.return_value.__aenter__.return_value.get.return_value = (
                 MagicMock()
             )
-            mock_session.return_value.__aenter__.return_value.execute.return_value.scalar.return_value = None
+            mock_session.return_value.__aenter__.return_value.execute.return_value.scalar.return_value = (
+                None
+            )
 
             _result = await command.validate()
             assert _result.is_valid
@@ -207,7 +199,9 @@ class TestCreatePredictionHandler:
         mock_prediction.created_at = datetime.utcnow()
 
         with patch("src.cqrs.handlers.get_session") as mock_session:
-            mock_session.return_value.__aenter__.return_value.execute.return_value.scalar.return_value = None
+            mock_session.return_value.__aenter__.return_value.execute.return_value.scalar.return_value = (
+                None
+            )
             mock_session.return_value.__aenter__.return_value.add.return_value = None
             mock_session.return_value.__aenter__.return_value.commit.return_value = None
             mock_session.return_value.__aenter__.return_value.refresh.return_value = (
@@ -229,7 +223,9 @@ class TestCreatePredictionHandler:
 
         # 模拟已存在预测
         with patch("src.cqrs.handlers.get_session") as mock_session:
-            mock_session.return_value.__aenter__.return_value.execute.return_value.scalar.return_value = 1
+            mock_session.return_value.__aenter__.return_value.execute.return_value.scalar.return_value = (
+                1
+            )
 
             _result = await handler.handle(command)
 
@@ -378,7 +374,9 @@ class TestCQRSIntegration:
             mock_prediction.notes = None
             mock_prediction.created_at = datetime.utcnow()
 
-            mock_session.return_value.__aenter__.return_value.execute.return_value.scalar.return_value = None
+            mock_session.return_value.__aenter__.return_value.execute.return_value.scalar.return_value = (
+                None
+            )
             mock_session.return_value.__aenter__.return_value.add.return_value = None
             mock_session.return_value.__aenter__.return_value.commit.return_value = None
             mock_session.return_value.__aenter__.return_value.refresh.return_value = (

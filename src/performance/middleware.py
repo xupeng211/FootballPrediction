@@ -16,8 +16,8 @@ from typing import Callable, Dict, List, Optional
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from src.performance.profiler import get_profiler, APIEndpointProfiler
 from src.core.logging import get_logger
+from src.performance.profiler import APIEndpointProfiler, get_profiler
 
 logger = get_logger(__name__)
 
@@ -269,14 +269,14 @@ class DatabasePerformanceMiddleware:
         for query_type, data in self.query_stats.items():
             stats["query_types"][query_type] = {
                 "count": data["count"],
-                "average_time": data["total_time"] / data["count"]
-                if data["count"] > 0
-                else 0,
+                "average_time": (
+                    data["total_time"] / data["count"] if data["count"] > 0 else 0
+                ),
                 "total_time": data["total_time"],
                 "rows_total": data["rows_total"],
-                "error_rate": data["error_count"] / data["count"]
-                if data["count"] > 0
-                else 0,
+                "error_rate": (
+                    data["error_count"] / data["count"] if data["count"] > 0 else 0
+                ),
             }
 
         stats["slow_queries"] = self.slow_queries[-10:]  # 最近10个慢查询
@@ -414,12 +414,16 @@ class BackgroundTaskPerformanceMonitor:
                 "total_count": data["total_count"],
                 "success_count": data["success_count"],
                 "failure_count": data["failure_count"],
-                "success_rate": data["success_count"] / data["total_count"]
-                if data["total_count"] > 0
-                else 0,
-                "average_time": data["total_time"] / data["total_count"]
-                if data["total_count"] > 0
-                else 0,
+                "success_rate": (
+                    data["success_count"] / data["total_count"]
+                    if data["total_count"] > 0
+                    else 0
+                ),
+                "average_time": (
+                    data["total_time"] / data["total_count"]
+                    if data["total_count"] > 0
+                    else 0
+                ),
                 "min_time": data["min_time"] if data["min_time"] != float("inf") else 0,
                 "max_time": data["max_time"],
             }

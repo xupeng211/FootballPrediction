@@ -6,24 +6,27 @@
 策略: 真实业务逻辑测试，避免空洞框架代码
 """
 
-import pytest
-from unittest.mock import Mock, patch, AsyncMock, MagicMock, call
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Union
+from typing import Any, Dict, List, Optional, Union
+from unittest.mock import AsyncMock, MagicMock, Mock, call, patch
+
+import pytest
 
 # 安全导入目标模块
 try:
     from utils.string_utils import *
+
     IMPORTS_AVAILABLE = True
     print("✅ 成功导入模块: utils.string_utils")
 
     # 获取实际导入的内容
     import sys
+
     current_module = sys.modules[__name__]
     imported_items = []
     for name in dir(current_module):
         obj = getattr(current_module, name)
-        if hasattr(obj, '__module__') and obj.__module__ == module_name:
+        if hasattr(obj, "__module__") and obj.__module__ == module_name:
             imported_items.append(name)
 
     print(f"📋 导入的项目: {imported_items[:5]}")  # 显示前5个
@@ -36,6 +39,7 @@ except Exception as e:
     print(f"⚠️ 导入异常: {e}")
     IMPORTS_AVAILABLE = False
     imported_items = []
+
 
 class TestUtilsStringUtilsEnhanced:
     """增强真实业务逻辑测试 - 实际功能验证"""
@@ -65,15 +69,19 @@ class TestUtilsStringUtilsEnhanced:
 
                     # 尝试使用合理的参数调用函数
                     try:
-                        if item_name.lower().startswith('is_') or item_name.lower().startswith('has_'):
+                        if item_name.lower().startswith(
+                            "is_"
+                        ) or item_name.lower().startswith("has_"):
                             # 布尔检查函数
                             result = item(True)
-                            assert isinstance(result, bool), f"{item_name} 应该返回布尔值"
-                        elif item_name.lower().startswith('get_'):
+                            assert isinstance(
+                                result, bool
+                            ), f"{item_name} 应该返回布尔值"
+                        elif item_name.lower().startswith("get_"):
                             # 获取函数
                             result = item()
                             print(f"   结果类型: {type(result)}")
-                        elif 'validate' in item_name.lower():
+                        elif "validate" in item_name.lower():
                             # 验证函数
                             if item.__code__.co_argcount > 0:
                                 result = item("test_data")
@@ -112,8 +120,12 @@ class TestUtilsStringUtilsEnhanced:
                         print("   ✅ 类实例化成功")
 
                         # 测试类方法
-                        methods = [method for method in dir(instance)
-                                 if not method.startswith('_') and callable(getattr(instance, method))]
+                        methods = [
+                            method
+                            for method in dir(instance)
+                            if not method.startswith("_")
+                            and callable(getattr(instance, method))
+                        ]
 
                         for method_name in methods[:2]:  # 测试前2个方法
                             try:
@@ -138,13 +150,13 @@ class TestUtilsStringUtilsEnhanced:
 
         try:
             # 根据模块类型设计特定的集成测试
-            if 'validator' in module_name.lower():
+            if "validator" in module_name.lower():
                 self._test_validator_integration()
-            elif 'config' in module_name.lower():
+            elif "config" in module_name.lower():
                 self._test_config_integration()
-            elif 'util' in module_name.lower():
+            elif "util" in module_name.lower():
                 self._test_utility_integration()
-            elif 'model' in module_name.lower():
+            elif "model" in module_name.lower():
                 self._test_model_integration()
             else:
                 self._test_generic_integration()
@@ -229,11 +241,13 @@ class TestUtilsStringUtilsEnhanced:
                             if callable(item) and not inspect.isclass(item):
                                 try:
                                     if item.__code__.co_argcount > 0:
-                                        result = item(test_case)
+                                        item(test_case)
                                     else:
-                                        result = item()
+                                        item()
                                 except Exception as case_e:
-                                    print(f"   边界测试 {test_case}: {type(case_e).__name__}")
+                                    print(
+                                        f"   边界测试 {test_case}: {type(case_e).__name__}"
+                                    )
                 except Exception as e:
                     print(f"错误处理测试异常: {e}")
 

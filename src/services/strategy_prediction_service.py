@@ -8,19 +8,15 @@ Refactored prediction service using strategy pattern for flexible algorithm sele
 """
 
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
-from ..domain.strategies import (
-    PredictionStrategy,
-    PredictionStrategyFactory,
-    PredictionInput,
-    PredictionOutput,
-    PredictionContext,
-)
-from ..domain.models import Team, Prediction
-from ..domain.services import PredictionDomainService
-from ..database.repositories import MatchRepository, PredictionRepository
 from ..core.di import DIContainer
+from ..database.repositories import MatchRepository, PredictionRepository
+from ..domain.models import Prediction, Team
+from ..domain.services import PredictionDomainService
+from ..domain.strategies import (PredictionContext, PredictionInput,
+                                 PredictionOutput, PredictionStrategy,
+                                 PredictionStrategyFactory)
 
 logger = logging.getLogger(__name__)
 
@@ -329,9 +325,9 @@ class StrategyPredictionService:
                 "type": strategy.strategy_type.value,
                 "healthy": strategy.is_healthy(),
                 "is_default": name == self._default_strategy,
-                "metrics": strategy.get_metrics().__dict__
-                if strategy.get_metrics()
-                else None,
+                "metrics": (
+                    strategy.get_metrics().__dict__ if strategy.get_metrics() else None
+                ),
                 "health": health_report.get(name, {}),
             }
 

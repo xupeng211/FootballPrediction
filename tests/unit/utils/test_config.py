@@ -4,7 +4,6 @@ import pytest
 
 
 @pytest.mark.unit
-
 class TestCoreConfig:
     """测试核心配置"""
 

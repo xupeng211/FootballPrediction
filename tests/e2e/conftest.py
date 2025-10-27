@@ -3,15 +3,16 @@ E2E 测试配置文件
 提供 E2E 测试的共享 fixtures 和配置
 """
 
-import pytest
 import asyncio
+import logging
 import os
 import sys
-from pathlib import Path
-from typing import AsyncGenerator, Dict, Any
 import tempfile
-import logging
 from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, AsyncGenerator, Dict
+
+import pytest
 
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -322,8 +323,9 @@ async def test_data_loader(api_client, auth_tokens):
 async def websocket_client():
     """WebSocket 客户端 fixture"""
     try:
-        import websockets
         import json
+
+        import websockets
 
         base_url = os.getenv("E2E_BASE_URL", "localhost")
         ws_url = f"ws://{base_url}:8000/ws"

@@ -1,20 +1,21 @@
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 预测 API 测试
 Prediction API Tests
 """
 
+import json
+from datetime import date, datetime
+
 import pytest
 from fastapi.testclient import TestClient
-import json
-from datetime import datetime, date
 
 from src.api.app import app
 
 
 @pytest.mark.unit
 @pytest.mark.api
-
 class TestPredictionsAPI:
     """预测 API 测试类"""
 

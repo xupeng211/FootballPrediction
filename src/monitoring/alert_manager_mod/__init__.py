@@ -3,12 +3,12 @@
 Alert Manager Module (Compatibility Version)
 """
 
-from enum import Enum
-from typing import List, Dict, Any, Optional, Callable
+import logging
+import uuid
 from dataclasses import dataclass
 from datetime import datetime
-import uuid
-import logging
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional
 
 # mypy: ignore-errors
 # 类型检查已忽略 - 这些文件包含复杂的动态类型逻辑

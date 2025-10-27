@@ -23,29 +23,29 @@
 目标：验证完整业务流程的正确性和稳定性
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock, AsyncMock, create_autospec
-from typing import Dict, Any, List, Optional, Union
-from datetime import datetime, timedelta
 import asyncio
 import json
-import tempfile
 import os
+import tempfile
+from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
+from unittest.mock import AsyncMock, MagicMock, Mock, create_autospec, patch
+
+import pytest
 
 # 测试导入
 try:
-    from src.utils.string_utils import StringUtils
-    from src.utils.date_utils import DateUtils
+    from src.config.config_manager import (ConfigManager,
+                                           EnvironmentConfigSource,
+                                           FileConfigSource,
+                                           get_config_manager)
+    from src.middleware.cors_config import (CorsConfig, CorsMiddleware,
+                                            get_cors_config_by_env)
     from src.utils.crypto_utils import CryptoUtils
     from src.utils.data_validator import DataValidator
-    from src.config.config_manager import (
-        ConfigManager, FileConfigSource, EnvironmentConfigSource,
-        get_config_manager
-    )
-    from src.middleware.cors_config import (
-        CorsConfig, CorsMiddleware, get_cors_config_by_env
-    )
+    from src.utils.date_utils import DateUtils
+    from src.utils.string_utils import StringUtils
 except ImportError as e:
     print(f"Warning: Import error - {e}, using Mock classes")
     # 创建Mock类用于端到端测试
@@ -83,18 +83,14 @@ class TestBusinessWorkflowsE2E:
         user_service.db = mock_database
 
         # Mock用户注册
-        user_service.register_user = AsyncMock(return_value={
-            "success": True,
-            "user_id": 12345,
-            "message": "用户注册成功"
-        })
+        user_service.register_user = AsyncMock(
+            return_value={"success": True, "user_id": 12345, "message": "用户注册成功"}
+        )
 
         # Mock用户验证
-        user_service.validate_user = AsyncMock(return_value={
-            "success": True,
-            "user_id": 12345,
-            "username": "test_user"
-        })
+        user_service.validate_user = AsyncMock(
+            return_value={"success": True, "user_id": 12345, "username": "test_user"}
+        )
 
         # Mock密码验证
         user_service.verify_password = AsyncMock(return_value=True)
@@ -108,25 +104,29 @@ class TestBusinessWorkflowsE2E:
         prediction_service.db = mock_database
 
         # Mock预测创建
-        prediction_service.create_prediction = AsyncMock(return_value={
-            "success": True,
-            "prediction_id": 67890,
-            "predicted_home_score": 2,
-            "predicted_away_score": 1,
-            "confidence": 0.85
-        })
-
-        # Mock预测查询
-        prediction_service.get_user_predictions = AsyncMock(return_value=[
-            {
+        prediction_service.create_prediction = AsyncMock(
+            return_value={
+                "success": True,
                 "prediction_id": 67890,
-                "match_id": 12345,
                 "predicted_home_score": 2,
                 "predicted_away_score": 1,
-                "result": "pending",
-                "created_at": "2024-01-01T10:00:00Z"
+                "confidence": 0.85,
             }
-        ])
+        )
+
+        # Mock预测查询
+        prediction_service.get_user_predictions = AsyncMock(
+            return_value=[
+                {
+                    "prediction_id": 67890,
+                    "match_id": 12345,
+                    "predicted_home_score": 2,
+                    "predicted_away_score": 1,
+                    "result": "pending",
+                    "created_at": "2024-01-01T10:00:00Z",
+                }
+            ]
+        )
 
         return prediction_service
 
@@ -137,21 +137,23 @@ class TestBusinessWorkflowsE2E:
             "username": "testuser123",
             "email": "test@example.com",
             "password": "securepassword123",
-            "phone": "13812345678"
+            "phone": "13812345678",
         }
 
         # 步骤1：验证输入数据
-        if hasattr(DataValidator, 'validate_required_fields'):
+        if hasattr(DataValidator, "validate_required_fields"):
             required_fields = ["username", "email", "password"]
-            missing_fields = DataValidator.validate_required_fields(user_data, required_fields)
+            missing_fields = DataValidator.validate_required_fields(
+                user_data, required_fields
+            )
             assert len(missing_fields) == 0
 
         # 步骤2：验证邮箱格式
-        if hasattr(StringUtils, 'validate_email'):
+        if hasattr(StringUtils, "validate_email"):
             assert StringUtils.validate_email(user_data["email"]) is True
 
         # 步骤3：验证手机号格式
-        if hasattr(StringUtils, 'sanitize_phone_number'):
+        if hasattr(StringUtils, "sanitize_phone_number"):
             clean_phone = StringUtils.sanitize_phone_number(user_data["phone"])
             assert clean_phone == "13812345678"
 
@@ -163,18 +165,19 @@ class TestBusinessWorkflowsE2E:
         assert "user_id" in registration_result
         assert registration_result["user_id"] == 12345
 
-    async def test_user_authentication_workflow_success(self, mock_user_service) -> None:
+    async def test_user_authentication_workflow_success(
+        self, mock_user_service
+    ) -> None:
         """✅ 成功用例：用户认证完整流程成功"""
         # 模拟登录数据
-        login_data = {
-            "username": "testuser123",
-            "password": "securepassword123"
-        }
+        login_data = {"username": "testuser123", "password": "securepassword123"}
 
         # 步骤1：验证登录数据
-        if hasattr(DataValidator, 'validate_required_fields'):
+        if hasattr(DataValidator, "validate_required_fields"):
             required_fields = ["username", "password"]
-            missing_fields = DataValidator.validate_required_fields(login_data, required_fields)
+            missing_fields = DataValidator.validate_required_fields(
+                login_data, required_fields
+            )
             assert len(missing_fields) == 0
 
         # 步骤2：验证用户存在
@@ -183,17 +186,18 @@ class TestBusinessWorkflowsE2E:
 
         # 步骤3：验证密码
         password_valid = await mock_user_service.verify_password(
-            login_data["username"],
-            login_data["password"]
+            login_data["username"], login_data["password"]
         )
         assert password_valid is True
 
         # 步骤4：生成认证令牌
-        if hasattr(CryptoUtils, 'generate_token'):
+        if hasattr(CryptoUtils, "generate_token"):
             auth_token = CryptoUtils.generate_token(32)
             assert len(auth_token) == 64  # 32字节的十六进制
 
-    async def test_prediction_creation_workflow_success(self, mock_prediction_service) -> None:
+    async def test_prediction_creation_workflow_success(
+        self, mock_prediction_service
+    ) -> None:
         """✅ 成功用例：预测创建完整流程成功"""
         # 模拟预测数据
         prediction_data = {
@@ -201,13 +205,20 @@ class TestBusinessWorkflowsE2E:
             "match_id": 67890,
             "predicted_home_score": 2,
             "predicted_away_score": 1,
-            "confidence": 0.85
+            "confidence": 0.85,
         }
 
         # 步骤1：验证预测数据
-        if hasattr(DataValidator, 'validate_required_fields'):
-            required_fields = ["user_id", "match_id", "predicted_home_score", "predicted_away_score"]
-            missing_fields = DataValidator.validate_required_fields(prediction_data, required_fields)
+        if hasattr(DataValidator, "validate_required_fields"):
+            required_fields = [
+                "user_id",
+                "match_id",
+                "predicted_home_score",
+                "predicted_away_score",
+            ]
+            missing_fields = DataValidator.validate_required_fields(
+                prediction_data, required_fields
+            )
             assert len(missing_fields) == 0
 
         # 步骤2：验证比分范围
@@ -221,7 +232,9 @@ class TestBusinessWorkflowsE2E:
         assert 0.0 <= confidence <= 1.0
 
         # 步骤4：创建预测
-        prediction_result = await mock_prediction_service.create_prediction(prediction_data)
+        prediction_result = await mock_prediction_service.create_prediction(
+            prediction_data
+        )
 
         # 步骤5：验证预测结果
         assert prediction_result["success"] is True
@@ -239,17 +252,19 @@ class TestBusinessWorkflowsE2E:
             "endpoint": "https://api.football-data.org/matches",
             "api_key": "test_api_key_12345",
             "timeout": 30,
-            "retry_count": 3
+            "retry_count": 3,
         }
 
         # 步骤2：验证配置
-        if hasattr(DataValidator, 'validate_required_fields'):
+        if hasattr(DataValidator, "validate_required_fields"):
             required_fields = ["source", "endpoint", "api_key"]
-            missing_fields = DataValidator.validate_required_fields(collector_config, required_fields)
+            missing_fields = DataValidator.validate_required_fields(
+                collector_config, required_fields
+            )
             assert len(missing_fields) == 0
 
         # 步骤3：验证URL格式
-        if hasattr(StringUtils, 'validate_url'):
+        if hasattr(StringUtils, "validate_url"):
             assert StringUtils.validate_url(collector_config["endpoint"]) is True
 
         # 步骤4：模拟数据收集
@@ -260,11 +275,11 @@ class TestBusinessWorkflowsE2E:
                     "home_team": "Team A",
                     "away_team": "Team B",
                     "start_time": "2024-01-15T19:00:00Z",
-                    "league": "Premier League"
+                    "league": "Premier League",
                 }
             ],
             "total_matches": 1,
-            "collection_timestamp": "2024-01-01T12:00:00Z"
+            "collection_timestamp": "2024-01-01T12:00:00Z",
         }
 
         # 步骤5：验证收集的数据
@@ -272,9 +287,11 @@ class TestBusinessWorkflowsE2E:
         assert len(collected_data["matches"]) > 0
 
         match_data = collected_data["matches"][0]
-        if hasattr(DataValidator, 'validate_required_fields'):
+        if hasattr(DataValidator, "validate_required_fields"):
             match_required = ["match_id", "home_team", "away_team", "start_time"]
-            missing_match_fields = DataValidator.validate_required_fields(match_data, match_required)
+            missing_match_fields = DataValidator.validate_required_fields(
+                match_data, match_required
+            )
             assert len(missing_match_fields) == 0
 
     async def test_configuration_management_workflow_success(self) -> None:
@@ -292,7 +309,7 @@ class TestBusinessWorkflowsE2E:
             "FOOTBALLPREDICTION_API_PORT": "8000",
             "FOOTBALLPREDICTION_DEBUG": "true",
             "FOOTBALLPREDICTION_DB_HOST": "localhost",
-            "FOOTBALLPREDICTION_DB_PORT": "5432"
+            "FOOTBALLPREDICTION_DB_PORT": "5432",
         }
 
         with patch.dict(os.environ, test_env):
@@ -312,14 +329,14 @@ class TestBusinessWorkflowsE2E:
     async def test_cors_workflow_success(self) -> None:
         """✅ 成功用例：CORS处理完整流程成功"""
         # 步骤1：获取CORS配置
-        if not hasattr(get_cors_config_by_env, '__call__'):
+        if not hasattr(get_cors_config_by_env, "__call__"):
             pytest.skip("CORS config function not available")
 
         dev_config = get_cors_config_by_env("development")
         assert dev_config is not None
 
         # 步骤2：验证CORS配置
-        if hasattr(dev_config, 'validate'):
+        if hasattr(dev_config, "validate"):
             assert dev_config.validate() is True
 
         # 步骤3：模拟CORS请求
@@ -328,7 +345,7 @@ class TestBusinessWorkflowsE2E:
         mock_request.origin = "https://frontend.example.com"
         mock_request.headers = {
             "Access-Control-Request-Method": "POST",
-            "Access-Control-Request-Headers": "Content-Type"
+            "Access-Control-Request-Headers": "Content-Type",
         }
 
         # 步骤4：处理预检请求
@@ -337,7 +354,7 @@ class TestBusinessWorkflowsE2E:
         mock_response.headers = {
             "Access-Control-Allow-Origin": "https://frontend.example.com",
             "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE",
-            "Access-Control-Allow-Headers": "Content-Type, Authorization"
+            "Access-Control-Allow-Headers": "Content-Type, Authorization",
         }
 
         # 步骤5：验证CORS响应
@@ -351,23 +368,23 @@ class TestBusinessWorkflowsE2E:
             {
                 "type": "validation_error",
                 "data": {"username": "", "email": "invalid"},
-                "expected_error": "输入验证失败"
+                "expected_error": "输入验证失败",
             },
             {
                 "type": "database_error",
                 "data": {"query": "SELECT * FROM nonexistent_table"},
-                "expected_error": "数据库查询失败"
+                "expected_error": "数据库查询失败",
             },
             {
                 "type": "api_error",
                 "data": {"endpoint": "invalid_endpoint"},
-                "expected_error": "API端点不存在"
+                "expected_error": "API端点不存在",
             },
             {
                 "type": "network_error",
                 "data": {"url": "http://nonexistent.domain.com"},
-                "expected_error": "网络连接失败"
-            }
+                "expected_error": "网络连接失败",
+            },
         ]
 
         # 步骤2：处理每种错误场景
@@ -383,7 +400,7 @@ class TestBusinessWorkflowsE2E:
                 "error_message": scenario["expected_error"],
                 "timestamp": datetime.utcnow().isoformat(),
                 "logged": error_handler.log_error().get("logged", False),
-                "notified": error_handler.notify_admin().get("notified", False)
+                "notified": error_handler.notify_admin().get("notified", False),
             }
 
             # 验证错误处理结果
@@ -405,7 +422,7 @@ class TestBusinessWorkflowsE2E:
             "user_authentication",
             "prediction_creation",
             "data_collection",
-            "configuration_loading"
+            "configuration_loading",
         ]
 
         performance_metrics = []
@@ -422,16 +439,16 @@ class TestBusinessWorkflowsE2E:
 
             # 记录指标
             performance_monitor.log_metric(
-                operation_name=operation,
-                execution_time=execution_time,
-                success=True
+                operation_name=operation, execution_time=execution_time, success=True
             )
 
-            performance_metrics.append({
-                "operation": operation,
-                "execution_time": execution_time,
-                "success": True
-            })
+            performance_metrics.append(
+                {
+                    "operation": operation,
+                    "execution_time": execution_time,
+                    "success": True,
+                }
+            )
 
         # 步骤3：验证性能指标
         assert len(performance_metrics) == len(operations)
@@ -454,25 +471,27 @@ class TestBusinessWorkflowsE2E:
                 config = {
                     "debug": True,
                     "database": {"host": "localhost"},
-                    "api": {"cors_origins": ["*"]}
+                    "api": {"cors_origins": ["*"]},
                 }
             elif env == "staging":
                 config = {
                     "debug": True,
                     "database": {"host": "staging-db.example.com"},
-                    "api": {"cors_origins": ["https://staging.example.com"]}
+                    "api": {"cors_origins": ["https://staging.example.com"]},
                 }
             elif env == "production":
                 config = {
                     "debug": False,
                     "database": {"host": "prod-db.example.com"},
-                    "api": {"cors_origins": ["https://prod.example.com"]}
+                    "api": {"cors_origins": ["https://prod.example.com"]},
                 }
 
             # 步骤3：验证环境配置
-            if hasattr(DataValidator, 'validate_required_fields'):
+            if hasattr(DataValidator, "validate_required_fields"):
                 required_fields = ["debug", "database", "api"]
-                missing_fields = DataValidator.validate_required_fields(config, required_fields)
+                missing_fields = DataValidator.validate_required_fields(
+                    config, required_fields
+                )
                 assert len(missing_fields) == 0
 
             # 步骤4：模拟部署验证
@@ -480,7 +499,7 @@ class TestBusinessWorkflowsE2E:
                 "environment": env,
                 "config_loaded": True,
                 "health_check": True,
-                "services_running": True
+                "services_running": True,
             }
 
             deployment_results.append(deployment_result)
@@ -493,7 +512,9 @@ class TestBusinessWorkflowsE2E:
             assert result["health_check"] is True
             assert result["services_running"] is True
 
-    async def test_end_to_end_api_workflow_success(self, mock_user_service, mock_prediction_service) -> None:
+    async def test_end_to_end_api_workflow_success(
+        self, mock_user_service, mock_prediction_service
+    ) -> None:
         """✅ 成功用例：端到端API完整流程成功"""
         # 完整的API工作流：用户注册 -> 登录 -> 创建预测 -> 查询预测
 
@@ -501,7 +522,7 @@ class TestBusinessWorkflowsE2E:
         user_data = {
             "username": "endtoend_test_user",
             "email": "endtoend@example.com",
-            "password": "securepassword123"
+            "password": "securepassword123",
         }
 
         registration_result = await mock_user_service.register_user(user_data)
@@ -517,10 +538,12 @@ class TestBusinessWorkflowsE2E:
             "match_id": 99999,
             "predicted_home_score": 2,
             "predicted_away_score": 1,
-            "confidence": 0.88
+            "confidence": 0.88,
         }
 
-        prediction_result = await mock_prediction_service.create_prediction(prediction_data)
+        prediction_result = await mock_prediction_service.create_prediction(
+            prediction_data
+        )
         assert prediction_result["success"] is True
 
         # 步骤4：查询用户预测历史
@@ -535,12 +558,14 @@ class TestBusinessWorkflowsE2E:
             "user_authenticated": login_result["success"],
             "prediction_created": prediction_result["success"],
             "predictions_retrieved": len(user_predictions) > 0,
-            "workflow_success": all([
-                registration_result["success"],
-                login_result["success"],
-                prediction_result["success"],
-                len(user_predictions) > 0
-            ])
+            "workflow_success": all(
+                [
+                    registration_result["success"],
+                    login_result["success"],
+                    prediction_result["success"],
+                    len(user_predictions) > 0,
+                ]
+            ),
         }
 
         assert workflow_complete["workflow_success"] is True
@@ -555,14 +580,14 @@ def e2e_test_data():
                 "username": "test_user_1",
                 "email": "user1@example.com",
                 "password": "password123",
-                "phone": "13812345678"
+                "phone": "13812345678",
             },
             {
                 "username": "test_user_2",
                 "email": "user2@example.com",
                 "password": "password456",
-                "phone": "13987654321"
-            }
+                "phone": "13987654321",
+            },
         ],
         "matches": [
             {
@@ -570,28 +595,28 @@ def e2e_test_data():
                 "home_team": "Manchester United",
                 "away_team": "Liverpool",
                 "start_time": "2024-01-15T19:00:00Z",
-                "league": "Premier League"
+                "league": "Premier League",
             },
             {
                 "match_id": 67890,
                 "home_team": "Barcelona",
                 "away_team": "Real Madrid",
                 "start_time": "2024-01-16T21:00:00Z",
-                "league": "La Liga"
-            }
+                "league": "La Liga",
+            },
         ],
         "predictions": [
             {
                 "match_id": 12345,
                 "predicted_home_score": 2,
                 "predicted_away_score": 1,
-                "confidence": 0.85
+                "confidence": 0.85,
             },
             {
                 "match_id": 67890,
                 "predicted_home_score": 1,
                 "predicted_away_score": 1,
-                "confidence": 0.70
-            }
-        ]
+                "confidence": 0.70,
+            },
+        ],
     }

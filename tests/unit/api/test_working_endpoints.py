@@ -1,13 +1,15 @@
 from unittest.mock import Mock, patch
+
 """
 可工作的端点测试 - 专注于实际存在的功能
 Working Endpoints Tests - Focus on Actually Existing Functions
 """
 
-import pytest
-from fastapi.testclient import TestClient
 import json
 from datetime import datetime, timedelta
+
+import pytest
+from fastapi.testclient import TestClient
 
 from src.api.app import app
 
@@ -434,7 +436,8 @@ class TestDependenciesAndImports:
 
     def test_import_models(self):
         """测试导入模型"""
-        from src.api.predictions.models import PredictionRequest, PredictionResponse
+        from src.api.predictions.models import (PredictionRequest,
+                                                PredictionResponse)
 
         assert standard_response is not None
         assert error_response is not None

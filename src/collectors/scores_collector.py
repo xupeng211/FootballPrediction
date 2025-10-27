@@ -3,17 +3,18 @@
 实时收集比赛比分和事件
 """
 
+import os
 from datetime import datetime
 from typing import Any, Dict, List
-import os
 
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.cache.redis_manager import RedisManager
-from src.database.connection import DatabaseManager
-from .models.match import Match
 from src.core.logging_system import get_logger
+from src.database.connection import DatabaseManager
+
+from .models.match import Match
 
 logger = get_logger(__name__)
 

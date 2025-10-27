@@ -274,12 +274,12 @@ Issue #83-C 的所有目标已经完成，建议：
 
     def generate_update_report(self):
         """生成更新报告"""
-        print(f"\n📋 GitHub Issue 更新完成报告")
+        print("\n📋 GitHub Issue 更新完成报告")
         print("=" * 50)
         print(f"📊 更新的Issue数量: {len(self.updates_made)}")
         print(f"📝 更新的Issue: {', '.join(map(str, self.updates_made))}")
         print(f"⏰ 更新时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print(f"🎯 状态: 所有目标Issue已更新并关闭")
+        print("🎯 状态: 所有目标Issue已更新并关闭")
 
         # 保存报告
         report = {
@@ -292,9 +292,9 @@ Issue #83-C 的所有目标已经完成，建议：
         with open(f"github_issues_update_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json", 'w') as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
 
-        print(f"\n🎉 GitHub Issue 维护完成！")
-        print(f"📊 所有关联的Issue已更新并关闭")
-        print(f"🚀 项目状态: 企业级生产就绪")
+        print("\n🎉 GitHub Issue 维护完成！")
+        print("📊 所有关联的Issue已更新并关闭")
+        print("🚀 项目状态: 企业级生产就绪")
 
 def main():
     """主函数"""

@@ -3,20 +3,22 @@
 自动生成以解决导入问题
 """
 
-
-import sys
 import os
+import sys
 from unittest.mock import Mock, patch
+
 import pytest
 
 # 添加src到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
+
 
 # 安全导入装饰器
 def safe_import(module_name):
     """安全导入模块"""
     try:
         import importlib
+
         module = importlib.import_module(module_name)
         print(f"✅ 成功导入模块: {module_name}")
         return module
@@ -27,15 +29,15 @@ def safe_import(module_name):
         print(f"⚠️ 模块异常 {module_name}: {type(e).__name__}: {e}")
         return None
 
+
 # 通用Mock函数
 def create_mock_module():
     """创建通用Mock模块"""
     mock = Mock()
-    mock.predict = Mock(return_value={'home_win_prob': 0.6, 'confidence': 0.8})
-    mock.get = Mock(return_value={'item_id': 1, 'name': 'test_item'})
-    mock.process_data = Mock(return_value={'processed': True, 'result': 'test_result'})
+    mock.predict = Mock(return_value={"home_win_prob": 0.6, "confidence": 0.8})
+    mock.get = Mock(return_value={"item_id": 1, "name": "test_item"})
+    mock.process_data = Mock(return_value={"processed": True, "result": "test_result"})
     return mock
-
 
     async def test_create_user_flow(self, client, mock_db_session):
         """测试创建用户的完整流程"""
@@ -380,9 +382,7 @@ def create_mock_module():
         ("/api/v1/health", "GET", [200, 404]),
     ],
 )
-def test_database_connection_health(
-    endpoint, method, expected_codes, client
-):
+def test_database_connection_health(endpoint, method, expected_codes, client):
     """测试API端点可用性"""
     try:
         client = TestClient(app) if IMPORT_SUCCESS else None
@@ -418,9 +418,7 @@ def test_database_connection_health(
         ("status", "invalid", False),
     ],
 )
-def test_database_connection_health(
-    query_param, value, should_validate, client
-):
+def test_database_connection_health(query_param, value, should_validate, client):
     """测试查询参数验证"""
     # 验证参数
     assert isinstance(query_param, str)
@@ -432,15 +430,15 @@ def test_database_connection_health(
     assert query_param in valid_params
 
     # 验证值
-    if query_param     == "page":
+    if query_param == "page":
         assert isinstance(value, int)
         if should_validate:
             assert value >= 1
-    elif query_param     == "limit":
+    elif query_param == "limit":
         assert isinstance(value, int)
         if should_validate:
             assert 1 <= value <= 100
-    elif query_param     == "status":
+    elif query_param == "status":
         assert isinstance(value, str)
         if should_validate:
             assert value in ["upcoming", "live", "finished", "cancelled"]
@@ -460,7 +458,7 @@ def test_database_connection_health(client):
     }
 
     # 验证健康状态
-    assert health_status["database"]["status"]     == "healthy"
+    assert health_status["database"]["status"] == "healthy"
     assert health_status["database"]["response_time_ms"] < 100
     assert health_status["database"]["connection_pool"]["total"] > 0
 
@@ -485,4 +483,3 @@ def test_database_connection_health(client):
         assert any(
             key in response for key in ["data", "id", "message", "error", "status"]
         )
-

@@ -7,8 +7,8 @@ Defines DTOs used in CQRS pattern.
 """
 
 from dataclasses import dataclass
-from typing import Optional, List, Dict, Any
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -39,9 +39,9 @@ class PredictionDTO:
             "confidence": float(self.confidence) if self.confidence else None,
             "strategy_used": self.strategy_used,
             "points_earned": self.points_earned,
-            "accuracy_score": float(self.accuracy_score)
-            if self.accuracy_score
-            else None,
+            "accuracy_score": (
+                float(self.accuracy_score) if self.accuracy_score else None
+            ),
             "notes": self.notes,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,

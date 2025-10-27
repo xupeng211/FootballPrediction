@@ -1,4 +1,5 @@
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
 """
 模型训练模块测试
 Model Training Module Tests
@@ -7,19 +8,15 @@ Model Training Module Tests
 Tests model training functionality defined in src/models/model_training.py, focused on achieving 100% coverage.
 """
 
-import pytest
 import sys
+
+import pytest
 
 # 导入要测试的模块
 try:
-    from src.models.model_training import (
-        BaselineModelTrainer,
-        HAS_XGB,
-        HAS_MLFLOW,
-        xgb,
-        mlflow,
-        MlflowClient,
-    )
+    from src.models.model_training import (HAS_MLFLOW, HAS_XGB,
+                                           BaselineModelTrainer, MlflowClient,
+                                           mlflow, xgb)
 
     MODEL_TRAINING_AVAILABLE = True
 except ImportError:
@@ -30,7 +27,6 @@ except ImportError:
     not MODEL_TRAINING_AVAILABLE, reason="Model training module not available"
 )
 @pytest.mark.unit
-
 class TestBaselineModelTrainer:
     """BaselineModelTrainer测试"""
 

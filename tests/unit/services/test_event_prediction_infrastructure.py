@@ -18,24 +18,24 @@
 7. ✅ 所有测试可独立运行通过pytest
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock, AsyncMock
-from typing import Dict, Any, Optional, List
-from datetime import datetime
 import asyncio
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import pytest
 
 # 尝试导入被测试模块
 try:
-    from src.services.event_prediction_service import EventDrivenPredictionService
-    from src.domain.models import Match, Prediction
-    from src.events.types import (
-        PredictionMadeEvent,
-        PredictionUpdatedEvent,
-        get_event_bus
-    )
-    from src.services.strategy_prediction_service import StrategyPredictionService
     from src.core.di import DIContainer
-except ImportError as e:
+    from src.domain.models import Match, Prediction
+    from src.events.types import (PredictionMadeEvent, PredictionUpdatedEvent,
+                                  get_event_bus)
+    from src.services.event_prediction_service import \
+        EventDrivenPredictionService
+    from src.services.strategy_prediction_service import \
+        StrategyPredictionService
+except ImportError:
     EventDrivenPredictionService = None
     StrategyPredictionService = None
     get_event_bus = None
@@ -56,21 +56,32 @@ class TestEventPredictionServiceInfrastructure:
             # Mock策略预测服务
             mock_strategy_service = Mock()
 
-            with patch('src.services.event_prediction_service.StrategyPredictionService', return_value=mock_strategy_service):
-                with patch('src.core.di.DIContainer.get_instance', return_value=MagicMock()):
-                    with patch('src.events.types.get_event_bus', return_value=mock_event_bus):
+            with patch(
+                "src.services.event_prediction_service.StrategyPredictionService",
+                return_value=mock_strategy_service,
+            ):
+                with patch(
+                    "src.core.di.DIContainer.get_instance", return_value=MagicMock()
+                ):
+                    with patch(
+                        "src.events.types.get_event_bus", return_value=mock_event_bus
+                    ):
                         service = EventDrivenPredictionService()
 
                         # 验证服务初始化
                         assert service is not None
-                        assert hasattr(service, 'event_bus')
-                        assert hasattr(service, 'strategy_service')
+                        assert hasattr(service, "event_bus")
+                        assert hasattr(service, "strategy_service")
 
     def test_service_initialization_failure(self) -> None:
         """❌ 异常用例：服务初始化失败"""
         if EventDrivenPredictionService is not None:
-            with patch('src.services.event_prediction_service.StrategyPredictionService') as mock_strategy:
-                mock_strategy.side_effect = Exception("Strategy service initialization failed")
+            with patch(
+                "src.services.event_prediction_service.StrategyPredictionService"
+            ) as mock_strategy:
+                mock_strategy.side_effect = Exception(
+                    "Strategy service initialization failed"
+                )
 
                 with pytest.raises(Exception):
                     EventDrivenPredictionService()
@@ -89,9 +100,16 @@ class TestEventPredictionServiceInfrastructure:
             mock_prediction.match_id = 100
             mock_strategy_service.predict.return_value = mock_prediction
 
-            with patch('src.services.event_prediction_service.StrategyPredictionService', return_value=mock_strategy_service):
-                with patch('src.core.di.DIContainer.get_instance', return_value=MagicMock()):
-                    with patch('src.events.types.get_event_bus', return_value=mock_event_bus):
+            with patch(
+                "src.services.event_prediction_service.StrategyPredictionService",
+                return_value=mock_strategy_service,
+            ):
+                with patch(
+                    "src.core.di.DIContainer.get_instance", return_value=MagicMock()
+                ):
+                    with patch(
+                        "src.events.types.get_event_bus", return_value=mock_event_bus
+                    ):
                         service = EventDrivenPredictionService()
 
                         # 调用预测方法
@@ -100,7 +118,7 @@ class TestEventPredictionServiceInfrastructure:
                             user_id=1,
                             strategy_name="neural_network",
                             confidence=0.8,
-                            notes="Test prediction"
+                            notes="Test prediction",
                         )
 
                         # 验证预测结果
@@ -123,16 +141,23 @@ class TestEventPredictionServiceInfrastructure:
             mock_strategy_service = Mock()
             mock_strategy_service.predict.side_effect = ValueError("Invalid strategy")
 
-            with patch('src.services.event_prediction_service.StrategyPredictionService', return_value=mock_strategy_service):
-                with patch('src.core.di.DIContainer.get_instance', return_value=MagicMock()):
-                    with patch('src.events.types.get_event_bus', return_value=mock_event_bus):
+            with patch(
+                "src.services.event_prediction_service.StrategyPredictionService",
+                return_value=mock_strategy_service,
+            ):
+                with patch(
+                    "src.core.di.DIContainer.get_instance", return_value=MagicMock()
+                ):
+                    with patch(
+                        "src.events.types.get_event_bus", return_value=mock_event_bus
+                    ):
                         service = EventDrivenPredictionService()
 
                         with pytest.raises(ValueError):
                             await service.predict_match(
                                 match_id=100,
                                 user_id=1,
-                                strategy_name="invalid_strategy"
+                                strategy_name="invalid_strategy",
                             )
 
     @pytest.mark.asyncio
@@ -148,15 +173,20 @@ class TestEventPredictionServiceInfrastructure:
             mock_prediction.match_id = 200
             mock_strategy_service.predict.return_value = mock_prediction
 
-            with patch('src.services.event_prediction_service.StrategyPredictionService', return_value=mock_strategy_service):
-                with patch('src.core.di.DIContainer.get_instance', return_value=MagicMock()):
-                    with patch('src.events.types.get_event_bus', return_value=mock_event_bus):
+            with patch(
+                "src.services.event_prediction_service.StrategyPredictionService",
+                return_value=mock_strategy_service,
+            ):
+                with patch(
+                    "src.core.di.DIContainer.get_instance", return_value=MagicMock()
+                ):
+                    with patch(
+                        "src.events.types.get_event_bus", return_value=mock_event_bus
+                    ):
                         service = EventDrivenPredictionService()
 
                         await service.predict_match(
-                            match_id=200,
-                            user_id=2,
-                            strategy_name="neural_network"
+                            match_id=200, user_id=2, strategy_name="neural_network"
                         )
 
                         # 验证事件发布
@@ -174,18 +204,27 @@ class TestEventPredictionServiceInfrastructure:
             mock_strategy_service = Mock()
             mock_updated_prediction = Mock()
             mock_updated_prediction.id = 3
-            mock_strategy_service.update_prediction.return_value = mock_updated_prediction
+            mock_strategy_service.update_prediction.return_value = (
+                mock_updated_prediction
+            )
 
-            with patch('src.services.event_prediction_service.StrategyPredictionService', return_value=mock_strategy_service):
-                with patch('src.core.di.DIContainer.get_instance', return_value=MagicMock()):
-                    with patch('src.events.types.get_event_bus', return_value=mock_event_bus):
+            with patch(
+                "src.services.event_prediction_service.StrategyPredictionService",
+                return_value=mock_strategy_service,
+            ):
+                with patch(
+                    "src.core.di.DIContainer.get_instance", return_value=MagicMock()
+                ):
+                    with patch(
+                        "src.events.types.get_event_bus", return_value=mock_event_bus
+                    ):
                         service = EventDrivenPredictionService()
 
                         result = await service.update_prediction(
                             prediction_id=3,
                             user_id=1,
                             new_confidence=0.9,
-                            notes="Updated prediction"
+                            notes="Updated prediction",
                         )
 
                         # 验证更新结果
@@ -205,17 +244,25 @@ class TestEventPredictionServiceInfrastructure:
             mock_event_bus.publish = AsyncMock()
 
             mock_strategy_service = Mock()
-            mock_strategy_service.update_prediction.side_effect = ValueError("Prediction not found")
+            mock_strategy_service.update_prediction.side_effect = ValueError(
+                "Prediction not found"
+            )
 
-            with patch('src.services.event_prediction_service.StrategyPredictionService', return_value=mock_strategy_service):
-                with patch('src.core.di.DIContainer.get_instance', return_value=MagicMock()):
-                    with patch('src.events.types.get_event_bus', return_value=mock_event_bus):
+            with patch(
+                "src.services.event_prediction_service.StrategyPredictionService",
+                return_value=mock_strategy_service,
+            ):
+                with patch(
+                    "src.core.di.DIContainer.get_instance", return_value=MagicMock()
+                ):
+                    with patch(
+                        "src.events.types.get_event_bus", return_value=mock_event_bus
+                    ):
                         service = EventDrivenPredictionService()
 
                         with pytest.raises(ValueError):
                             await service.update_prediction(
-                                prediction_id=999,
-                                user_id=1
+                                prediction_id=999, user_id=1
                             )
 
     @pytest.mark.asyncio
@@ -226,25 +273,29 @@ class TestEventPredictionServiceInfrastructure:
             mock_event_bus.publish = AsyncMock()
 
             mock_strategy_service = Mock()
-            mock_predictions = [
-                Mock(id=i+1, match_id=300+i) for i in range(3)
-            ]
+            mock_predictions = [Mock(id=i + 1, match_id=300 + i) for i in range(3)]
             mock_strategy_service.batch_predict.return_value = mock_predictions
 
-            with patch('src.services.event_prediction_service.StrategyPredictionService', return_value=mock_strategy_service):
-                with patch('src.core.di.DIContainer.get_instance', return_value=MagicMock()):
-                    with patch('src.events.types.get_event_bus', return_value=mock_event_bus):
+            with patch(
+                "src.services.event_prediction_service.StrategyPredictionService",
+                return_value=mock_strategy_service,
+            ):
+                with patch(
+                    "src.core.di.DIContainer.get_instance", return_value=MagicMock()
+                ):
+                    with patch(
+                        "src.events.types.get_event_bus", return_value=mock_event_bus
+                    ):
                         service = EventDrivenPredictionService()
 
                         requests = [
                             {"match_id": 300, "user_id": 1},
                             {"match_id": 301, "user_id": 1},
-                            {"match_id": 302, "user_id": 1}
+                            {"match_id": 302, "user_id": 1},
                         ]
 
                         results = await service.batch_predict(
-                            requests=requests,
-                            strategy_name="neural_network"
+                            requests=requests, strategy_name="neural_network"
                         )
 
                         # 验证批量结果
@@ -253,7 +304,9 @@ class TestEventPredictionServiceInfrastructure:
                             assert result.id == i + 1
 
                         # 验证策略服务调用
-                        mock_strategy_service.batch_predict.assert_called_once_with(requests)
+                        mock_strategy_service.batch_predict.assert_called_once_with(
+                            requests
+                        )
 
                         # 验证事件发布次数
                         assert mock_event_bus.publish.call_count == 3
@@ -267,13 +320,19 @@ class TestEventPredictionServiceInfrastructure:
 
             mock_strategy_service = Mock()
             mock_strategy_service.predict.side_effect = lambda **kwargs: Mock(
-                id=kwargs.get('match_id', 0),
-                match_id=kwargs.get('match_id', 0)
+                id=kwargs.get("match_id", 0), match_id=kwargs.get("match_id", 0)
             )
 
-            with patch('src.services.event_prediction_service.StrategyPredictionService', return_value=mock_strategy_service):
-                with patch('src.core.di.DIContainer.get_instance', return_value=MagicMock()):
-                    with patch('src.events.types.get_event_bus', return_value=mock_event_bus):
+            with patch(
+                "src.services.event_prediction_service.StrategyPredictionService",
+                return_value=mock_strategy_service,
+            ):
+                with patch(
+                    "src.core.di.DIContainer.get_instance", return_value=MagicMock()
+                ):
+                    with patch(
+                        "src.events.types.get_event_bus", return_value=mock_event_bus
+                    ):
                         service = EventDrivenPredictionService()
 
                         # 模拟并发预测请求
@@ -287,7 +346,7 @@ class TestEventPredictionServiceInfrastructure:
                             task = service.predict_match(
                                 match_id=request["match_id"],
                                 user_id=request["user_id"],
-                                strategy_name="neural_network"
+                                strategy_name="neural_network",
                             )
                             tasks.append(task)
 
@@ -325,7 +384,9 @@ class TestEventPredictionServiceInfrastructure:
             incomplete_prediction.confidence = 0.8
             incomplete_prediction.status = "completed"
 
-            result = EventDrivenPredictionService._validate_prediction(incomplete_prediction)
+            result = EventDrivenPredictionService._validate_prediction(
+                incomplete_prediction
+            )
             assert result is False
 
     @pytest.mark.asyncio
@@ -339,12 +400,19 @@ class TestEventPredictionServiceInfrastructure:
             # 第一次调用失败，第二次成功
             mock_strategy_service.predict.side_effect = [
                 Exception("Temporary failure"),
-                Mock(id=4, match_id=400)
+                Mock(id=4, match_id=400),
             ]
 
-            with patch('src.services.event_prediction_service.StrategyPredictionService', return_value=mock_strategy_service):
-                with patch('src.core.di.DIContainer.get_instance', return_value=MagicMock()):
-                    with patch('src.events.types.get_event_bus', return_value=mock_event_bus):
+            with patch(
+                "src.services.event_prediction_service.StrategyPredictionService",
+                return_value=mock_strategy_service,
+            ):
+                with patch(
+                    "src.core.di.DIContainer.get_instance", return_value=MagicMock()
+                ):
+                    with patch(
+                        "src.events.types.get_event_bus", return_value=mock_event_bus
+                    ):
                         service = EventDrivenPredictionService()
 
                         # 设置重试机制
@@ -352,10 +420,7 @@ class TestEventPredictionServiceInfrastructure:
 
                         # 第一次尝试失败
                         with pytest.raises(Exception):
-                            await service.predict_match(
-                                match_id=400,
-                                user_id=1
-                            )
+                            await service.predict_match(match_id=400, user_id=1)
 
                         # 验证重试调用
                         assert mock_strategy_service.predict.call_count == 2
@@ -368,9 +433,16 @@ class TestEventPredictionServiceInfrastructure:
 
             mock_strategy_service = Mock()
 
-            with patch('src.services.event_prediction_service.StrategyPredictionService', return_value=mock_strategy_service):
-                with patch('src.core.di.DIContainer.get_instance', return_value=MagicMock()):
-                    with patch('src.events.types.get_event_bus', return_value=mock_event_bus):
+            with patch(
+                "src.services.event_prediction_service.StrategyPredictionService",
+                return_value=mock_strategy_service,
+            ):
+                with patch(
+                    "src.core.di.DIContainer.get_instance", return_value=MagicMock()
+                ):
+                    with patch(
+                        "src.events.types.get_event_bus", return_value=mock_event_bus
+                    ):
                         service = EventDrivenPredictionService()
 
                         # 验证事件总线集成
@@ -381,7 +453,7 @@ class TestEventPredictionServiceInfrastructure:
                             prediction_id=5,
                             match_id=500,
                             user_id=1,
-                            timestamp=datetime.utcnow()
+                            timestamp=datetime.utcnow(),
                         )
 
                         # 调用事件发布
@@ -398,18 +470,27 @@ class TestEventPredictionServiceInfrastructure:
 
             mock_strategy_service = Mock()
 
-            with patch('src.services.event_prediction_service.StrategyPredictionService', return_value=mock_strategy_service):
-                with patch('src.core.di.DIContainer.get_instance', return_value=MagicMock()):
-                    with patch('src.events.types.get_event_bus', return_value=mock_event_bus):
+            with patch(
+                "src.services.event_prediction_service.StrategyPredictionService",
+                return_value=mock_strategy_service,
+            ):
+                with patch(
+                    "src.core.di.DIContainer.get_instance", return_value=MagicMock()
+                ):
+                    with patch(
+                        "src.events.types.get_event_bus", return_value=mock_event_bus
+                    ):
                         service = EventDrivenPredictionService()
 
                         # 配置服务参数
-                        service.configure({
-                            'max_retries': 3,
-                            'timeout': 30,
-                            'enable_events': True,
-                            'default_confidence_threshold': 0.6
-                        })
+                        service.configure(
+                            {
+                                "max_retries": 3,
+                                "timeout": 30,
+                                "enable_events": True,
+                                "default_confidence_threshold": 0.6,
+                            }
+                        )
 
                         # 验证配置
                         assert service.max_retries == 3
@@ -428,9 +509,16 @@ class TestEventPredictionServiceInfrastructure:
 
             mock_strategy_service = Mock()
 
-            with patch('src.services.event_prediction_service.StrategyPredictionService', return_value=mock_strategy_service):
-                with patch('src.core.di.DIContainer.get_instance', return_value=MagicMock()):
-                    with patch('src.events.types.get_event_bus', return_value=mock_event_bus):
+            with patch(
+                "src.services.event_prediction_service.StrategyPredictionService",
+                return_value=mock_strategy_service,
+            ):
+                with patch(
+                    "src.core.di.DIContainer.get_instance", return_value=MagicMock()
+                ):
+                    with patch(
+                        "src.events.types.get_event_bus", return_value=mock_event_bus
+                    ):
                         service = EventDrivenPredictionService()
 
                         # 启动服务

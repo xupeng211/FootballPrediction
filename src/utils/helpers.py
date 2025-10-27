@@ -5,7 +5,7 @@ Helper functions
 import hashlib
 import uuid
 from datetime import datetime
-from typing import Any, Dict, Optional, Optional
+from typing import Any, Dict, Optional
 
 
 def generate_uuid() -> str:
@@ -13,16 +13,40 @@ def generate_uuid() -> str:
     return str(uuid.uuid4())
 
 
-def generate_hash(data: str) -> str:
-    """Generate SHA256 hash"""
-    return hashlib.sha256(data.encode()).hexdigest()
+def generate_hash(data: str, algorithm: str = "sha256") -> str:
+    """Generate hash with specified algorithm"""
+    if algorithm == "md5":
+        return hashlib.md5(data.encode()).hexdigest()
+    elif algorithm == "sha1":
+        return hashlib.sha1(data.encode()).hexdigest()
+    else:
+        return hashlib.sha256(data.encode()).hexdigest()
 
 
 def safe_get(data: Optional[Dict[str, Any]], key: str, default: Any = None) -> Any:
-    """Safely get value from dict"""
+    """Safely get value from dict using dot notation"""
     if data is None:
         return default
-    return data.get(key, default)
+
+    # 支持点号分隔的嵌套键
+    keys = key.split(".")
+    current = data
+
+    try:
+        for k in keys:
+            if isinstance(current, dict) and k in current:
+                current = current[k]
+            elif isinstance(current, list) and k.isdigit():
+                index = int(k)
+                if 0 <= index < len(current):
+                    current = current[index]
+                else:
+                    return default
+            else:
+                return default
+        return current
+    except (KeyError, TypeError, IndexError):
+        return default
 
 
 def format_timestamp(dt: Optional[datetime] = None) -> str:
@@ -33,5 +57,26 @@ def format_timestamp(dt: Optional[datetime] = None) -> str:
 
 
 def sanitize_string(s: str) -> str:
-    """Sanitize string input"""
-    return s.strip().lower() if s else ""
+    """Sanitize string input - basic XSS protection"""
+    if not s:
+        return ""
+
+    # 移除常见的XSS攻击向量
+    dangerous_patterns = [
+        "<script",
+        "</script>",
+        "javascript:",
+        "onerror=",
+        "onload=",
+        "onclick=",
+        "onmouseover=",
+        "onfocus=",
+        "onblur=",
+        "onchange=",
+    ]
+
+    sanitized = s
+    for pattern in dangerous_patterns:
+        sanitized = sanitized.replace(pattern, "")
+
+    return sanitized.strip()

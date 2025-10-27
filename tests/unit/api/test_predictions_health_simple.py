@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-from unittest.mock import patch, AsyncMock
+from unittest.mock import AsyncMock, patch
+
 """
 预测服务健康检查模块单元测试
 Unit Tests for Predictions Health Check Module
@@ -8,11 +9,12 @@ Unit Tests for Predictions Health Check Module
 This is the first test file in the quality improvement plan to establish test coverage foundation.
 """
 
-import pytest
-from datetime import datetime
-from fastapi.testclient import TestClient
-import sys
 import os
+import sys
+from datetime import datetime
+
+import pytest
+from fastapi.testclient import TestClient
 
 # 添加src到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../src"))
@@ -29,7 +31,6 @@ except ImportError as e:
 
 @pytest.mark.skipif(not CLIENT_AVAILABLE, reason="Required modules not available")
 @pytest.mark.unit
-
 class TestPredictionsHealthSimple:
     """预测服务健康检查测试类"""
 
@@ -138,9 +139,9 @@ class TestPredictionsHealthSimple:
 
         # 验证实际响应时间
         actual_response_time = (end_time - start_time) * 1000
-        assert actual_response_time < 1000, (
-            f"Health check took too long: {actual_response_time}ms"
-        )
+        assert (
+            actual_response_time < 1000
+        ), f"Health check took too long: {actual_response_time}ms"
 
         # 验证报告的响应时间合理性
         data = response.json()

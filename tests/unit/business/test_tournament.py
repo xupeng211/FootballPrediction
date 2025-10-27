@@ -2,11 +2,12 @@
 锦标赛业务逻辑测试
 """
 
-import pytest
-from datetime import datetime, timedelta
-from typing import List, Dict, Any, Optional, Tuple
-from enum import Enum
 import random
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
+
+import pytest
 
 
 class TournamentType(Enum):
@@ -339,20 +340,19 @@ class Tournament:
             "total_teams": total_teams,
             "total_matches": total_matches,
             "total_goals": total_goals,
-            "avg_goals_per_match": total_goals / total_matches
-            if total_matches > 0
-            else 0,
+            "avg_goals_per_match": (
+                total_goals / total_matches if total_matches > 0 else 0
+            ),
             "champion": self.champion.name if self.champion else None,
             "total_groups": len(self.groups),
             "group_stage_teams": sum(len(g.teams) for g in self.groups.values()),
-            "knockout_teams": len(self.get_knockout_teams())
-            if self.groups
-            else total_teams,
+            "knockout_teams": (
+                len(self.get_knockout_teams()) if self.groups else total_teams
+            ),
         }
 
 
 @pytest.mark.unit
-
 class TestTournament:
     """测试锦标赛业务逻辑"""
 

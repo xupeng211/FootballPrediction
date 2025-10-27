@@ -8,12 +8,12 @@ CORS配置模块 - Phase 4B实现
 - 安全策略配置
 """
 
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any, Set
-from enum import Enum
-import re
 import logging
+import re
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
+from enum import Enum
+from typing import Any, Dict, List, Optional, Set
 
 
 class CorsOriginValidationMode(Enum):

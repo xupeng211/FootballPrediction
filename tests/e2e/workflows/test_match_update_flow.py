@@ -3,10 +3,11 @@
 测试比赛从开始到结束的完整实时更新流程
 """
 
-import pytest
 import asyncio
 import json
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
+
+import pytest
 from httpx import AsyncClient
 
 
@@ -174,11 +175,11 @@ class TestMatchUpdateFlow:
             "minute": 90,
             "home_score": final_score["home"],
             "away_score": final_score["away"],
-            "result": "HOME_WIN"
-            if final_score["home"] > final_score["away"]
-            else "AWAY_WIN"
-            if final_score["away"] > final_score["home"]
-            else "DRAW",
+            "result": (
+                "HOME_WIN"
+                if final_score["home"] > final_score["away"]
+                else "AWAY_WIN" if final_score["away"] > final_score["home"] else "DRAW"
+            ),
         }
 
         response = await api_client.patch(

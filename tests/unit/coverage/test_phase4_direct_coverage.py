@@ -1,4 +1,5 @@
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
 """
 第四阶段直接覆盖率提升测试
 Phase 4 Direct Coverage Boost Tests
@@ -7,17 +8,17 @@ Phase 4 Direct Coverage Boost Tests
 目标：30% → 40%覆盖率提升
 """
 
-import pytest
-from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional
-import json
 import asyncio
+import json
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+
+import pytest
 
 
 # 直接导入可用模块进行测试
 @pytest.mark.unit
 @pytest.mark.slow
-
 def test_imports_coverage():
     """测试：模块导入覆盖率"""
     # 测试核心模块导入
@@ -182,7 +183,7 @@ def test_utils_modules_coverage():
 
     # 测试字典工具
     try:
-        from src.utils.dict_utils import safe_get, merge_dicts
+        from src.utils.dict_utils import merge_dicts, safe_get
 
         # 测试安全字典访问
         data = {"level1": {"level2": {"value": "found"}}}

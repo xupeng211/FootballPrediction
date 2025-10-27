@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 45 repeated Mock creations
 
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
 """
 简化适配器工厂模块测试
 Simple Adapter Factory Module Tests
@@ -11,17 +12,14 @@ Simple Adapter Factory Module Tests
 Tests simple adapter factory functionality defined in src/adapters/factory_simple.py, focused on achieving 100% coverage.
 """
 
-import pytest
 from typing import Any, Dict, Optional
+
+import pytest
 
 # 导入要测试的模块
 try:
-    from src.adapters.factory_simple import (
-        AdapterFactory,
-        get_global_factory,
-        get_adapter,
-        _global_factory,
-    )
+    from src.adapters.factory_simple import (AdapterFactory, _global_factory,
+                                             get_adapter, get_global_factory)
     from src.core.exceptions import AdapterError
 
     FACTORY_SIMPLE_AVAILABLE = True
@@ -33,7 +31,6 @@ except ImportError:
     not FACTORY_SIMPLE_AVAILABLE, reason="Simple factory module not available"
 )
 @pytest.mark.unit
-
 class TestAdapterFactory:
     """AdapterFactory类测试"""
 
@@ -801,9 +798,8 @@ class TestModuleIntegration:
     def test_module_import_integrity(self):
         """测试模块导入完整性"""
         # 测试可以正常导入所有必要的组件
-        from src.adapters.factory_simple import AdapterFactory
-        from src.adapters.factory_simple import get_global_factory
-        from src.adapters.factory_simple import get_adapter
+        from src.adapters.factory_simple import (AdapterFactory, get_adapter,
+                                                 get_global_factory)
         from src.core.exceptions import AdapterError
 
         # 验证导入的对象是可用的

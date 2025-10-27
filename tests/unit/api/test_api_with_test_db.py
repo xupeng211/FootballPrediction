@@ -1,4 +1,5 @@
 from unittest.mock import Mock, patch
+
 """
 测试 API 使用测试数据库
 Test API with test database
@@ -15,7 +16,6 @@ from src.database.dependencies import get_db
 @pytest.mark.unit
 @pytest.mark.api
 @pytest.mark.external_api
-
 class TestAPIWithTestDatabase:
     """测试 API 使用测试数据库"""
 
@@ -45,8 +45,9 @@ class TestAPIWithTestDatabase:
         try:
             # 直接调用路由函数，而不是通过 HTTP
             # 这避免了 TestClient 的启动问题
-            from src.api.monitoring import _get_database_metrics
             import asyncio
+
+            from src.api.monitoring import _get_database_metrics
 
             # 运行异步函数
             result = asyncio.run(_get_database_metrics(mock_db_session))
@@ -86,8 +87,9 @@ class TestAPIWithTestDatabase:
 
     def test_async_db_dependency_generator(self):
         """测试异步数据库依赖生成器"""
-        from src.database.dependencies import get_async_db
         import asyncio
+
+        from src.database.dependencies import get_async_db
 
         async def test_async():
             db_gen = get_async_db()
@@ -105,7 +107,7 @@ class TestAPIWithTestDatabase:
     def test_mock_external_services_fixtures(self):
         """测试外部服务 mock fixtures"""
         # 验证 mock fixtures 可以导入
-        from tests.conftest import mock_redis, mock_mlflow, mock_kafka
+        from tests.conftest import mock_kafka, mock_mlflow, mock_redis
 
         # 这些应该返回 fixture 函数，而不是 mock 对象本身
         assert callable(mock_redis)

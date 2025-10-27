@@ -63,10 +63,10 @@ WantedBy=multi-user.target
             with open(service_file, 'w') as f:
                 f.write(service_content)
             print(f"✅ 创建了systemd服务文件: {service_file}")
-            print(f"💡 手动安装命令:")
+            print("💡 手动安装命令:")
             print(f"   sudo cp {service_file} /etc/systemd/system/")
-            print(f"   sudo systemctl daemon-reload")
-            print(f"   sudo systemctl enable football-prediction-maintenance.service")
+            print("   sudo systemctl daemon-reload")
+            print("   sudo systemctl enable football-prediction-maintenance.service")
             return False
         except Exception as e:
             print(f"❌ 创建systemd服务失败: {e}")
@@ -74,7 +74,7 @@ WantedBy=multi-user.target
 
     def create_monitoring_dashboard(self):
         """创建监控面板"""
-        print(f"\n📊 创建监控面板...")
+        print("\n📊 创建监控面板...")
         print("=" * 50)
 
         dashboard_dir = Path("monitoring")
@@ -262,7 +262,7 @@ WantedBy=multi-user.target
         print(f"✅ 创建监控面板: {dashboard_file}")
 
         # 2. 创建监控数据API
-        monitoring_api = f"""#!/usr/bin/env python3
+        monitoring_api = """#!/usr/bin/env python3
 \"\"\"
 监控数据API - 为监控面板提供数据接口
 \"\"\"
@@ -304,20 +304,20 @@ def get_system_status():
     if validation_data and 'results' in validation_data:
         results = validation_data['results']
 
-        status_data = {{
-            'overall_status': results.get('overall_status', {{}}).get('status', '未知'),
-            'health_score': results.get('overall_status', {{}}).get('score', 'N/A'),
-            'tests': results.get('tests', {{}}),
-            'code_quality': results.get('code_quality', {{}}),
-            'coverage': results.get('coverage', {{}}),
+        status_data = {
+            'overall_status': results.get('overall_status', {}).get('status', '未知'),
+            'health_score': results.get('overall_status', {}).get('score', 'N/A'),
+            'tests': results.get('tests', {}),
+            'code_quality': results.get('code_quality', {}),
+            'coverage': results.get('coverage', {}),
             'last_updated': validation_data.get('validation_time', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-        }}
+        }
     else:
-        status_data = {{
+        status_data = {
             'overall_status': '❓ 未知',
             'health_score': 'N/A',
             'last_updated': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        }}
+        }
 
     # 添加维护日志信息
     if maintenance_logs:
@@ -351,7 +351,7 @@ if __name__ == '__main__':
         print(f"✅ 创建监控API: {api_file}")
 
         # 3. 创建启动脚本
-        start_script = f"""#!/bin/bash
+        start_script = """#!/bin/bash
 # 启动监控面板服务
 
 echo "🚀 启动FootballPrediction监控面板..."
@@ -396,14 +396,14 @@ python3 -m http.server $PORT
 
     def create_maintenance_scripts(self):
         """创建维护辅助脚本"""
-        print(f"\n🔧 创建维护辅助脚本...")
+        print("\n🔧 创建维护辅助脚本...")
         print("=" * 50)
 
         scripts_dir = Path("scripts/maintenance")
         scripts_dir.mkdir(exist_ok=True)
 
         # 1. 快速健康检查脚本
-        quick_health = f"""#!/usr/bin/env python3
+        quick_health = """#!/usr/bin/env python3
 \"\"\"
 快速健康检查 - 每日维护的简化版本
 \"\"\"
@@ -415,7 +415,7 @@ from datetime import datetime
 
 def quick_health_check():
     \"\"\"执行快速健康检查\"\"\"
-    print(f"🏥 快速健康检查 - {{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}}")
+    print(f"🏥 快速健康检查 - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 50)
 
     checks = []
@@ -430,7 +430,7 @@ def quick_health_check():
         )
         checks.append(('核心测试', '✅ 通过' if result.returncode == 0 else '❌ 失败'))
     except Exception as e:
-        checks.append(('核心测试', f'❌ 异常: {{e}}'))
+        checks.append(('核心测试', f'❌ 异常: {e}'))
 
     # 检查2: 代码质量
     try:
@@ -442,24 +442,24 @@ def quick_health_check():
         )
         checks.append(('代码质量', '✅ 优秀' if result.returncode == 0 else '⚠️ 需要改进'))
     except Exception as e:
-        checks.append(('代码质量', f'❌ 异常: {{e}}'))
+        checks.append(('代码质量', f'❌ 异常: {e}'))
 
     # 检查3: 文件完整性
     required_files = ['src/database/repositories/team_repository.py', 'tests/conftest.py']
     missing_files = [f for f in required_files if not Path(f).exists()]
-    checks.append(('文件完整性', '✅ 完整' if not missing_files else f'❌ 缺失: {{missing_files}}'))
+    checks.append(('文件完整性', '✅ 完整' if not missing_files else f'❌ 缺失: {missing_files}'))
 
     # 显示结果
     print(f"\\n📊 检查结果:")
     for name, status in checks:
-        print(f"  {{name}}: {{status}}")
+        print(f"  {name}: {status}")
 
     # 计算总体状态
     passed = len([c for c in checks if '✅' in c[1]])
     total = len(checks)
     health_rate = (passed / total) * 100
 
-    print(f"\\n🎯 总体健康率: {{health_rate:.1f}}% ({{passed}}/{{total}})")
+    print(f"\\n🎯 总体健康率: {health_rate:.1f}% ({passed}/{total})")
 
     if health_rate >= 90:
         print("🏆 系统状态优秀")
@@ -476,7 +476,7 @@ if __name__ == '__main__':
 """
 
         # 2. 自动更新脚本
-        auto_update = f"""#!/usr/bin/env python3
+        auto_update = """#!/usr/bin/env python3
 \"\"\"
 自动更新脚本 - 更新依赖和配置
 \"\"\"
@@ -504,7 +504,7 @@ def auto_update():
         )
         updates.append(('依赖锁文件', '✅ 已更新' if result.returncode == 0 else '⚠️ 无变化'))
     except Exception as e:
-        updates.append(('依赖锁文件', f'❌ 失败: {{e}}'))
+        updates.append(('依赖锁文件', f'❌ 失败: {e}'))
 
     # 2. 更新文档
     try:
@@ -517,7 +517,7 @@ def auto_update():
         )
         updates.append(('项目文档', '✅ 已更新' if result.returncode == 0 else '⚠️ 跳过'))
     except Exception as e:
-        updates.append(('项目文档', f'❌ 失败: {{e}}'))
+        updates.append(('项目文档', f'❌ 失败: {e}'))
 
     # 3. 清理临时文件
     try:
@@ -534,14 +534,14 @@ def auto_update():
             if result.returncode == 0:
                 cleaned += 1
 
-        updates.append(('临时文件清理', f'✅ 已清理 {{cleaned}} 类文件'))
+        updates.append(('临时文件清理', f'✅ 已清理 {cleaned} 类文件'))
     except Exception as e:
-        updates.append(('临时文件清理', f'❌ 失败: {{e}}'))
+        updates.append(('临时文件清理', f'❌ 失败: {e}'))
 
     # 显示结果
     print(f"\\n📊 更新结果:")
     for name, status in updates:
-        print(f"  {{name}}: {{status}}")
+        print(f"  {name}: {status}")
 
     return True
 
@@ -565,12 +565,12 @@ if __name__ == '__main__':
             os.chmod(script_file, 0o755)
             print(f"  ✅ 创建: {script_file}")
 
-        print(f"\\n✅ 维护脚本创建完成")
+        print("\\n✅ 维护脚本创建完成")
         return len(scripts)
 
     def test_monitoring_system(self):
         """测试监控系统"""
-        print(f"\\n🧪 测试监控系统...")
+        print("\\n🧪 测试监控系统...")
         print("=" * 50)
 
         test_results = []
@@ -585,12 +585,12 @@ if __name__ == '__main__':
             )
 
             if result.returncode == 0:
-                data = json.loads(result.stdout)
+                json.loads(result.stdout)
                 test_results.append(('监控API', '✅ 正常'))
-                print(f"  ✅ 监控API正常工作")
+                print("  ✅ 监控API正常工作")
             else:
                 test_results.append(('监控API', f'❌ 错误: {result.stderr[:100]}'))
-                print(f"  ❌ 监控API失败")
+                print("  ❌ 监控API失败")
         except Exception as e:
             test_results.append(('监控API', f'❌ 异常: {e}'))
             print(f"  ❌ 监控API异常: {e}")
@@ -599,28 +599,28 @@ if __name__ == '__main__':
         dashboard_file = Path("monitoring/dashboard.html")
         if dashboard_file.exists():
             test_results.append(('监控面板', '✅ 文件存在'))
-            print(f"  ✅ 监控面板文件存在")
+            print("  ✅ 监控面板文件存在")
         else:
             test_results.append(('监控面板', '❌ 文件缺失'))
-            print(f"  ❌ 监控面板文件缺失")
+            print("  ❌ 监控面板文件缺失")
 
         # 测试3: 验证维护脚本
         health_script = Path("scripts/maintenance/quick_health_check.py")
         if health_script.exists() and os.access(health_script, os.X_OK):
             test_results.append(('健康检查脚本', '✅ 可执行'))
-            print(f"  ✅ 健康检查脚本可执行")
+            print("  ✅ 健康检查脚本可执行")
         else:
             test_results.append(('健康检查脚本', '❌ 不可用'))
-            print(f"  ❌ 健康检查脚本不可用")
+            print("  ❌ 健康检查脚本不可用")
 
         # 测试4: 检查启动脚本
         start_script = Path("start_monitoring.sh")
         if start_script.exists() and os.access(start_script, os.X_OK):
             test_results.append(('启动脚本', '✅ 可执行'))
-            print(f"  ✅ 启动脚本可执行")
+            print("  ✅ 启动脚本可执行")
         else:
             test_results.append(('启动脚本', '❌ 不可用'))
-            print(f"  ❌ 启动脚本不可用")
+            print("  ❌ 启动脚本不可用")
 
         # 计算成功率
         passed = len([r for r in test_results if '✅' in r[1]])
@@ -635,7 +635,7 @@ if __name__ == '__main__':
 
     def generate_setup_report(self):
         """生成设置报告"""
-        print(f"\\n📋 生成设置报告...")
+        print("\\n📋 生成设置报告...")
         print("=" * 50)
 
         report = {
@@ -667,26 +667,26 @@ if __name__ == '__main__':
         print(f"✅ 设置报告已保存: {report_file}")
 
         # 显示使用说明
-        print(f"\\n🎯 定期维护系统设置完成!")
+        print("\\n🎯 定期维护系统设置完成!")
         print("=" * 50)
-        print(f"📅 定时任务:")
+        print("📅 定时任务:")
         for job_name, schedule in self.schedule_config.items():
             print(f"  {job_name}: {schedule}")
 
-        print(f"\\n📊 监控面板:")
-        print(f"  启动命令: ./start_monitoring.sh")
+        print("\\n📊 监控面板:")
+        print("  启动命令: ./start_monitoring.sh")
         print(f"  访问地址: http://localhost:{self.monitoring_config['dashboard_port']}/monitoring/dashboard.html")
-        print(f"  API接口: python3 monitoring/monitoring_api.py --json")
+        print("  API接口: python3 monitoring/monitoring_api.py --json")
 
-        print(f"\\n🔧 维护脚本:")
-        print(f"  快速健康检查: python3 scripts/maintenance/quick_health_check.py")
-        print(f"  自动更新: python3 scripts/maintenance/auto_update.py")
+        print("\\n🔧 维护脚本:")
+        print("  快速健康检查: python3 scripts/maintenance/quick_health_check.py")
+        print("  自动更新: python3 scripts/maintenance/auto_update.py")
 
-        print(f"\\n⚠️ 重要提醒:")
-        print(f"  1. 定期检查监控面板状态")
-        print(f"  2. 确保定时任务正常运行")
-        print(f"  3. 保留维护日志用于问题排查")
-        print(f"  4. 根据需要调整调度频率")
+        print("\\n⚠️ 重要提醒:")
+        print("  1. 定期检查监控面板状态")
+        print("  2. 确保定时任务正常运行")
+        print("  3. 保留维护日志用于问题排查")
+        print("  4. 根据需要调整调度频率")
 
         return report
 
@@ -714,10 +714,10 @@ if __name__ == '__main__':
 
         duration = time.time() - start_time
 
-        print(f"\\n🎉 定期维护系统设置完成!")
+        print("\\n🎉 定期维护系统设置完成!")
         print(f"⏱️  总用时: {duration:.2f}秒")
         print(f"📊 Cron任务: {'成功' if cron_success else '部分成功'}")
-        print(f"🖥️  监控面板: 已创建")
+        print("🖥️  监控面板: 已创建")
         print(f"🔧 维护脚本: {scripts_count} 个")
         print(f"🧪 系统测试: {'通过' if test_success else '需要调试'}")
 

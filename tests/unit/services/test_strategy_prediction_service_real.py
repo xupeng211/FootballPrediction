@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 12 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 """
 策略预测服务测试（真实实现）
 Tests for Strategy Prediction Service (Real Implementation)
@@ -11,12 +12,13 @@ Tests for Strategy Prediction Service (Real Implementation)
 只在需要模拟外部依赖（如数据库、网络）时使用Mock。
 """
 
-import pytest
 from datetime import datetime, timedelta
 
-from src.services.strategy_prediction_service import StrategyPredictionService
+import pytest
+
+from src.domain.models import Match, Prediction, Team
 from src.domain.strategies import PredictionStrategy, PredictionStrategyFactory
-from src.domain.models import Prediction, Match, Team
+from src.services.strategy_prediction_service import StrategyPredictionService
 
 
 class MockStrategy(PredictionStrategy):
@@ -123,7 +125,6 @@ class MockPredictionDomainService:
 
 
 @pytest.mark.unit
-
 class TestStrategyPredictionServiceReal:
     """策略预测服务真实测试"""
 

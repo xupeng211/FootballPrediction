@@ -4,9 +4,9 @@
 
 import sys
 from pathlib import Path
-
 # 添加项目路径
-from unittest.mock import Mock, AsyncMock
+from unittest.mock import AsyncMock, Mock
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, "src")
 
@@ -15,6 +15,7 @@ sys.path.insert(0, "src")
 """
 
 import pytest
+
 from src.adapters.base import Adapter
 
 
@@ -38,7 +39,6 @@ class MockAdapter(Adapter):
 
 
 @pytest.mark.unit
-
 class TestAdapterFactory:
     """适配器工厂测试"""
 

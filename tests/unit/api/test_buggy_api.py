@@ -1,4 +1,5 @@
-from unittest.mock import patch, AsyncMock
+from unittest.mock import AsyncMock, patch
+
 """
 Buggy API测试
 Tests for Buggy API
@@ -11,7 +12,7 @@ from fastapi.testclient import TestClient
 
 # 测试导入
 try:
-    from src.api.buggy_api import router, SomeAsyncService, service
+    from src.api.buggy_api import SomeAsyncService, router, service
 
     BUGGY_API_AVAILABLE = True
 except ImportError as e:
@@ -21,7 +22,6 @@ except ImportError as e:
 
 @pytest.mark.skipif(not BUGGY_API_AVAILABLE, reason="Buggy API module not available")
 @pytest.mark.unit
-
 class TestBuggyAPI:
     """Buggy API测试"""
 
@@ -187,6 +187,7 @@ class TestBuggyAPIEdgeCases:
     def test_concurrent_requests(self):
         """测试：并发请求"""
         import threading
+
         from fastapi import FastAPI
 
         app = FastAPI()

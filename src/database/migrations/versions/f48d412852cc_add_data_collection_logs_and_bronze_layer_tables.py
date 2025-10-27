@@ -1,10 +1,10 @@
-import sqlalchemy as sa
-from sqlalchemy.exc import SQLAlchemyError, DatabaseError
-from typing import Union, Sequence
-from alembic import op
-
 # mypy: ignore-errors
 import logging
+from typing import Sequence, Union
+
+import sqlalchemy as sa
+from alembic import op
+from sqlalchemy.exc import DatabaseError, SQLAlchemyError
 
 logger = logging.getLogger(__name__)
 """add_data_collection_logs_and_bronze_layer_tables

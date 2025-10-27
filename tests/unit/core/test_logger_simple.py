@@ -1,4 +1,5 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 """
 简化日志管理工具测试
 Simplified Logging Management Tool Tests
@@ -7,9 +8,10 @@ Simplified Logging Management Tool Tests
 Tests simplified logging management functionality defined in src/core/logger_simple.py.
 """
 
-import pytest
-import logging
 import io
+import logging
+
+import pytest
 
 # 导入要测试的模块
 try:
@@ -24,7 +26,6 @@ except ImportError:
     not LOGGER_SIMPLE_AVAILABLE, reason="Logger simple module not available"
 )
 @pytest.mark.unit
-
 class TestSimpleLogger:
     """SimpleLogger类测试"""
 
@@ -257,6 +258,7 @@ class TestSimpleLogger:
 
         # 重新创建logger以触发格式化器创建
         import importlib
+
         import src.core.logger_simple
 
         importlib.reload(src.core.logger_simple)

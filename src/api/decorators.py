@@ -10,10 +10,11 @@ Decorator Pattern API Endpoints
 Demonstrates the usage and effects of the decorator pattern.
 """
 
-from fastapi import APIRouter, HTTPException, Query
-from typing import Dict, Any, Optional
-from datetime import datetime
 import asyncio
+from datetime import datetime
+from typing import Any, Dict, Optional
+
+from fastapi import APIRouter, HTTPException, Query
 from requests.exceptions import HTTPError
 
 from ..decorators import DecoratorService
@@ -355,9 +356,9 @@ async def demo_decorator_context(
         return {
             "value": x * 2,
             "user_id": decorator_context.get("user_id") if decorator_context else None,
-            "request_id": decorator_context.get("request_id")
-            if decorator_context
-            else None,
+            "request_id": (
+                decorator_context.get("request_id") if decorator_context else None
+            ),
         }
 
     # 应用装饰器

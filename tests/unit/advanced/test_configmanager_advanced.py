@@ -4,13 +4,15 @@
 策略: 高级Mock + 真实业务逻辑测试
 """
 
-import pytest
-from unittest.mock import Mock, patch, AsyncMock
-import sys
 import os
+import sys
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 # 确保可以导入源码模块
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../.."))
+
 
 class TestConfigManager:
     """ConfigManager 高级测试套件"""
@@ -20,6 +22,7 @@ class TestConfigManager:
         try:
             # 尝试导入模块
             import importlib
+
             module = importlib.import_module("core.config")
             assert module is not None
         except ImportError:
@@ -29,16 +32,16 @@ class TestConfigManager:
         """测试基础初始化"""
         try:
             import importlib
+
             module = importlib.import_module("core.config")
 
             # 查找可实例化的类
-            instance = None
             for attr_name in dir(module):
-                if not attr_name.startswith('_'):
+                if not attr_name.startswith("_"):
                     attr = getattr(module, attr_name)
-                    if hasattr(attr, '__call__') and hasattr(attr, '__name__'):
+                    if hasattr(attr, "__call__") and hasattr(attr, "__name__"):
                         try:
-                            instance = attr()
+                            attr()
                             break
                         except:
                             continue
@@ -50,14 +53,11 @@ class TestConfigManager:
 
     def test_configuration_handling(self):
         """测试配置处理"""
-        with patch.dict(os.environ, {
-            'TEST_CONFIG': 'test_value',
-            'DEBUG': 'true'
-        }):
+        with patch.dict(os.environ, {"TEST_CONFIG": "test_value", "DEBUG": "true"}):
             try:
                 # 测试环境变量读取
-                config_value = os.environ.get('TEST_CONFIG')
-                assert config_value == 'test_value'
+                config_value = os.environ.get("TEST_CONFIG")
+                assert config_value == "test_value"
             except Exception:
                 pytest.skip("配置处理测试跳过")
 
@@ -83,6 +83,7 @@ class TestConfigManager:
 
     def test_async_functionality(self):
         """测试异步功能"""
+
         @pytest.mark.asyncio
         async def test_async():
             async_mock = AsyncMock()
@@ -95,6 +96,7 @@ class TestConfigManager:
         # 如果支持异步，运行测试
         try:
             import asyncio
+
             asyncio.run(test_async())
         except:
             pytest.skip("异步功能测试跳过")
@@ -137,7 +139,9 @@ class TestConfigManager:
         for test_value in test_cases:
             try:
                 mock_processor = Mock()
-                mock_processor.process.return_value = f"processed_{type(test_value).__name__}"
+                mock_processor.process.return_value = (
+                    f"processed_{type(test_value).__name__}"
+                )
 
                 result = mock_processor.process(test_value)
                 assert result is not None
@@ -198,6 +202,7 @@ class TestConfigManager:
         assert new_result == "new_result"
         mock_legacy.old_method.assert_called_once()
         mock_legacy.new_method.assert_called_once()
+
 
 if __name__ == "__main__":
     print("高级覆盖率提升测试: ConfigManager")

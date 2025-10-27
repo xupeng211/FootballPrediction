@@ -23,28 +23,30 @@
 目标：验证模块间集成的正确性和性能
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock, AsyncMock, create_autospec
-from typing import Dict, Any, List, Optional, Union
-from datetime import datetime, timedelta
 import asyncio
-import tempfile
 import os
+import tempfile
+from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
+from unittest.mock import AsyncMock, MagicMock, Mock, create_autospec, patch
+
+import pytest
 
 # 测试导入
 try:
-    from src.utils.string_utils import StringUtils
-    from src.utils.date_utils import DateUtils
+    from src.config.config_manager import (ConfigManager,
+                                           EnvironmentConfigSource,
+                                           FileConfigSource,
+                                           get_config_manager,
+                                           get_development_config,
+                                           get_production_config)
+    from src.middleware.cors_config import (CorsConfig, CorsOriginValidator,
+                                            get_cors_config_by_env)
     from src.utils.crypto_utils import CryptoUtils
     from src.utils.data_validator import DataValidator
-    from src.config.config_manager import (
-        ConfigManager, FileConfigSource, EnvironmentConfigSource,
-        get_config_manager, get_development_config, get_production_config
-    )
-    from src.middleware.cors_config import (
-        CorsConfig, CorsOriginValidator, get_cors_config_by_env
-    )
+    from src.utils.date_utils import DateUtils
+    from src.utils.string_utils import StringUtils
 except ImportError as e:
     # 如果无法导入，创建Mock类用于测试
     print(f"Warning: Import error - {e}, using Mock classes")
@@ -71,33 +73,30 @@ class TestUtilsConfigIntegration:
     @pytest.fixture
     def temp_config_file(self):
         """创建临时配置文件"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             config_data = {
                 "string_processing": {
                     "max_length": 100,
                     "remove_special_chars": True,
-                    "default_suffix": "..."
+                    "default_suffix": "...",
                 },
                 "date_formatting": {
                     "default_format": "%Y-%m-%d %H:%M:%S",
-                    "timezone": "UTC"
+                    "timezone": "UTC",
                 },
-                "security": {
-                    "encryption_enabled": True,
-                    "hash_algorithm": "sha256"
-                },
-                "validation": {
-                    "strict_mode": True,
-                    "email_validation": True
-                }
+                "security": {"encryption_enabled": True, "hash_algorithm": "sha256"},
+                "validation": {"strict_mode": True, "email_validation": True},
             }
             import json
+
             json.dump(config_data, f, indent=2)
             return f.name
 
-    async def test_config_string_utils_integration_success(self, temp_config_file) -> None:
+    async def test_config_string_utils_integration_success(
+        self, temp_config_file
+    ) -> None:
         """✅ 成功用例：配置与字符串工具集成成功"""
-        if not hasattr(ConfigManager, '__call__'):
+        if not hasattr(ConfigManager, "__call__"):
             pytest.skip("ConfigManager not properly imported")
 
         # 创建配置管理器
@@ -110,26 +109,32 @@ class TestUtilsConfigIntegration:
 
         # 验证字符串工具集成
         max_length = config.get("string_processing", {}).get("max_length", 50)
-        remove_special = config.get("string_processing", {}).get("remove_special_chars", False)
-        default_suffix = config.get("string_processing", {}).get("default_suffix", "...")
+        remove_special = config.get("string_processing", {}).get(
+            "remove_special_chars", False
+        )
+        default_suffix = config.get("string_processing", {}).get(
+            "default_suffix", "..."
+        )
 
         # 测试字符串处理功能
         test_text = "This is a very long text with special characters!@#$%"
 
-        if hasattr(StringUtils, 'truncate'):
+        if hasattr(StringUtils, "truncate"):
             truncated = StringUtils.truncate(test_text, max_length, default_suffix)
             assert len(truncated) <= max_length
             assert truncated.endswith(default_suffix)
 
-        if hasattr(StringUtils, 'clean_string'):
+        if hasattr(StringUtils, "clean_string"):
             cleaned = StringUtils.clean_string(test_text, remove_special)
             if remove_special:
                 assert "@" not in cleaned
                 assert "#" not in cleaned
 
-    async def test_config_date_utils_integration_success(self, temp_config_file) -> None:
+    async def test_config_date_utils_integration_success(
+        self, temp_config_file
+    ) -> None:
         """✅ 成功用例：配置与日期工具集成成功"""
-        if not hasattr(ConfigManager, '__call__'):
+        if not hasattr(ConfigManager, "__call__"):
             pytest.skip("ConfigManager not properly imported")
 
         manager = ConfigManager()
@@ -139,20 +144,24 @@ class TestUtilsConfigIntegration:
         config = await manager.load_all()
 
         # 验证日期工具集成
-        date_format = config.get("date_formatting", {}).get("default_format", "%Y-%m-%d")
-        timezone = config.get("date_formatting", {}).get("timezone", "UTC")
+        date_format = config.get("date_formatting", {}).get(
+            "default_format", "%Y-%m-%d"
+        )
+        config.get("date_formatting", {}).get("timezone", "UTC")
 
         # 测试日期格式化功能
         test_dt = datetime.utcnow()
 
-        if hasattr(DateUtils, 'format_datetime'):
+        if hasattr(DateUtils, "format_datetime"):
             formatted = DateUtils.format_datetime(test_dt, date_format)
             assert formatted is not None
             assert len(formatted) > 0
 
-    async def test_config_crypto_utils_integration_success(self, temp_config_file) -> None:
+    async def test_config_crypto_utils_integration_success(
+        self, temp_config_file
+    ) -> None:
         """✅ 成功用例：配置与加密工具集成成功"""
-        if not hasattr(ConfigManager, '__call__'):
+        if not hasattr(ConfigManager, "__call__"):
             pytest.skip("ConfigManager not properly imported")
 
         manager = ConfigManager()
@@ -168,15 +177,17 @@ class TestUtilsConfigIntegration:
         # 测试加密功能
         test_data = "sensitive_data"
 
-        if hasattr(CryptoUtils, 'hash_string'):
+        if hasattr(CryptoUtils, "hash_string"):
             if encryption_enabled:
                 hashed = CryptoUtils.hash_string(test_data, hash_algorithm)
                 assert hashed is not None
-                assert hashed  != test_data  # 应该被哈希化
+                assert hashed != test_data  # 应该被哈希化
 
-    async def test_config_data_validator_integration_success(self, temp_config_file) -> None:
+    async def test_config_data_validator_integration_success(
+        self, temp_config_file
+    ) -> None:
         """✅ 成功用例：配置与数据验证器集成成功"""
-        if not hasattr(ConfigManager, '__call__'):
+        if not hasattr(ConfigManager, "__call__"):
             pytest.skip("ConfigManager not properly imported")
 
         manager = ConfigManager()
@@ -186,13 +197,13 @@ class TestUtilsConfigIntegration:
         config = await manager.load_all()
 
         # 验证数据验证器集成
-        strict_mode = config.get("validation", {}).get("strict_mode", False)
-        email_validation = config.get("validation", {}).get("email_validation", True)
+        config.get("validation", {}).get("strict_mode", False)
+        config.get("validation", {}).get("email_validation", True)
 
         # 测试验证功能
         test_email = "test@example.com"
 
-        if hasattr(DataValidator, 'validate_required_fields'):
+        if hasattr(DataValidator, "validate_required_fields"):
             test_data = {"email": test_email, "name": "test_user"}
             required_fields = ["email", "name"]
             missing = DataValidator.validate_required_fields(test_data, required_fields)
@@ -204,11 +215,11 @@ class TestUtilsConfigIntegration:
         test_env_vars = {
             "FOOTBALLPREDICTION_STRING_MAX_LENGTH": "150",
             "FOOTBALLPREDICTION_DATE_FORMAT": "%Y/%m/%d",
-            "FOOTBALLPREDICTION_ENCRYPTION_ENABLED": "true"
+            "FOOTBALLPREDICTION_ENCRYPTION_ENABLED": "true",
         }
 
         with patch.dict(os.environ, test_env_vars):
-            if hasattr(EnvironmentConfigSource, '__call__'):
+            if hasattr(EnvironmentConfigSource, "__call__"):
                 env_source = EnvironmentConfigSource("FOOTBALLPREDICTION_")
                 config = await env_source.load()
 
@@ -219,7 +230,7 @@ class TestUtilsConfigIntegration:
 
     async def test_cors_config_integration_success(self) -> None:
         """✅ 成功用例：CORS配置集成成功"""
-        if not hasattr(get_cors_config_by_env, '__call__'):
+        if not hasattr(get_cors_config_by_env, "__call__"):
             pytest.skip("CORS config function not available")
 
         # 测试开发环境CORS配置
@@ -231,14 +242,18 @@ class TestUtilsConfigIntegration:
         assert prod_config is not None
 
         # 验证配置差异
-        if hasattr(dev_config, 'allow_origins') and hasattr(prod_config, 'allow_origins'):
+        if hasattr(dev_config, "allow_origins") and hasattr(
+            prod_config, "allow_origins"
+        ):
             # 开发环境通常允许更多origins
             assert isinstance(dev_config.allow_origins, list)
             assert isinstance(prod_config.allow_origins, list)
 
-    async def test_config_validation_integration_success(self, temp_config_file) -> None:
+    async def test_config_validation_integration_success(
+        self, temp_config_file
+    ) -> None:
         """✅ 成功用例：配置验证集成成功"""
-        if not hasattr(ConfigManager, '__call__'):
+        if not hasattr(ConfigManager, "__call__"):
             pytest.skip("ConfigManager not properly imported")
 
         manager = ConfigManager()
@@ -249,13 +264,13 @@ class TestUtilsConfigIntegration:
         manager.add_validation_rule(
             "string_processing.max_length",
             lambda x: isinstance(x, int) and x > 0,
-            "Max length must be positive integer"
+            "Max length must be positive integer",
         )
 
         manager.add_validation_rule(
             "security.hash_algorithm",
             lambda x: x in ["md5", "sha1", "sha256", "sha512"],
-            "Invalid hash algorithm"
+            "Invalid hash algorithm",
         )
 
         config = await manager.load_all()
@@ -267,9 +282,11 @@ class TestUtilsConfigIntegration:
             max_length_errors = [e for e in errors if "max_length" in e]
             assert len(max_length_errors) == 0
 
-    async def test_config_change_notification_integration_success(self, temp_config_file) -> None:
+    async def test_config_change_notification_integration_success(
+        self, temp_config_file
+    ) -> None:
         """✅ 成功用例：配置变更通知集成成功"""
-        if not hasattr(ConfigManager, '__call__'):
+        if not hasattr(ConfigManager, "__call__"):
             pytest.skip("ConfigManager not properly imported")
 
         manager = ConfigManager()
@@ -293,24 +310,25 @@ class TestUtilsConfigIntegration:
         # 验证变更通知
         assert len(changes) >= 1
         assert changes[-1][0] == "test.key"
-        assert changes[-1][2]  == "test_value"
+        assert changes[-1][2] == "test_value"
 
     async def test_multi_source_config_integration_success(self) -> None:
         """✅ 成功用例：多源配置集成成功"""
-        if not hasattr(ConfigManager, '__call__'):
+        if not hasattr(ConfigManager, "__call__"):
             pytest.skip("ConfigManager not properly imported")
 
         manager = ConfigManager()
 
         # 创建临时配置文件1
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f1:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f1:
             config1 = {"app_name": "football_prediction", "version": "1.0"}
             import json
+
             json.dump(config1, f1)
             file1_path = f1.name
 
         # 创建临时配置文件2
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f2:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f2:
             config2 = {"database": {"host": "localhost", "port": 5432}}
             json.dump(config2, f2)
             file2_path = f2.name
@@ -329,7 +347,7 @@ class TestUtilsConfigIntegration:
             assert config.get("app_name") == "football_prediction"
             assert config.get("version") == "1.0"
             assert "database" in config
-            assert config["database"]["host"]  == "localhost"
+            assert config["database"]["host"] == "localhost"
 
         finally:
             # 清理临时文件
@@ -339,9 +357,11 @@ class TestUtilsConfigIntegration:
             except OSError:
                 pass
 
-    async def test_config_encryption_integration_success(self, temp_config_file) -> None:
+    async def test_config_encryption_integration_success(
+        self, temp_config_file
+    ) -> None:
         """✅ 成功用例：配置加密集成成功"""
-        if not hasattr(ConfigManager, '__call__'):
+        if not hasattr(ConfigManager, "__call__"):
             pytest.skip("ConfigManager not properly imported")
 
         manager = ConfigManager()
@@ -353,18 +373,20 @@ class TestUtilsConfigIntegration:
         # 测试配置值加密
         sensitive_value = "secret_password"
 
-        if hasattr(manager, 'encrypt_value'):
+        if hasattr(manager, "encrypt_value"):
             encrypted = manager.encrypt_value(sensitive_value)
-            assert encrypted  != sensitive_value
+            assert encrypted != sensitive_value
             assert len(encrypted) > 0
 
-            if hasattr(manager, 'decrypt_value'):
+            if hasattr(manager, "decrypt_value"):
                 decrypted = manager.decrypt_value(encrypted)
-                assert decrypted  == sensitive_value
+                assert decrypted == sensitive_value
 
-    async def test_config_performance_monitoring_integration_success(self, temp_config_file) -> None:
+    async def test_config_performance_monitoring_integration_success(
+        self, temp_config_file
+    ) -> None:
         """✅ 成功用例：配置性能监控集成成功"""
-        if not hasattr(ConfigManager, '__call__'):
+        if not hasattr(ConfigManager, "__call__"):
             pytest.skip("ConfigManager not properly imported")
 
         manager = ConfigManager()
@@ -384,15 +406,17 @@ class TestUtilsConfigIntegration:
         # 验证性能要求（每次加载应该在合理时间内完成）
         assert avg_load_time < 0.1  # 100毫秒内
 
-    async def test_config_error_recovery_integration_success(self, temp_config_file) -> None:
+    async def test_config_error_recovery_integration_success(
+        self, temp_config_file
+    ) -> None:
         """✅ 成功用例：配置错误恢复集成成功"""
-        if not hasattr(ConfigManager, '__call__'):
+        if not hasattr(ConfigManager, "__call__"):
             pytest.skip("ConfigManager not properly imported")
 
         manager = ConfigManager()
 
         # 创建损坏的配置文件
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             f.write('{"invalid": json}')  # 故意损坏的JSON
             corrupted_file = f.name
 
@@ -418,9 +442,11 @@ class TestUtilsConfigIntegration:
             except OSError:
                 pass
 
-    async def test_config_hot_reload_integration_success(self, temp_config_file) -> None:
+    async def test_config_hot_reload_integration_success(
+        self, temp_config_file
+    ) -> None:
         """✅ 成功用例：配置热重载集成成功"""
-        if not hasattr(ConfigManager, '__call__'):
+        if not hasattr(ConfigManager, "__call__"):
             pytest.skip("ConfigManager not properly imported")
 
         manager = ConfigManager()
@@ -428,20 +454,21 @@ class TestUtilsConfigIntegration:
         manager.add_source(file_source)
 
         # 初始加载
-        config1 = await manager.load_all()
+        await manager.load_all()
 
         # 修改文件内容
         new_config = {
             "string_processing": {
                 "max_length": 200,  # 修改值
                 "remove_special_chars": True,
-                "default_suffix": "..."
+                "default_suffix": "...",
             },
-            "hot_reload": True
+            "hot_reload": True,
         }
 
-        with open(temp_config_file, 'w') as f:
+        with open(temp_config_file, "w") as f:
             import json
+
             json.dump(new_config, f, indent=2)
 
         # 重新加载
@@ -457,23 +484,17 @@ def mock_integration_data():
     """Mock集成测试数据"""
     return {
         "config_data": {
-            "string": {
-                "max_length": 100,
-                "trim_whitespace": True
-            },
-            "date": {
-                "format": "%Y-%m-%d",
-                "timezone": "UTC"
-            }
+            "string": {"max_length": 100, "trim_whitespace": True},
+            "date": {"format": "%Y-%m-%d", "timezone": "UTC"},
         },
         "test_strings": [
             "Hello World",
             "Test String with Special Characters!@#",
             "   Trim Spaces   ",
-            "A" * 150  # 超长字符串
+            "A" * 150,  # 超长字符串
         ],
         "test_dates": [
             datetime(2023, 12, 25, 15, 30, 0),
-            datetime(2024, 1, 1, 0, 0, 0)
-        ]
+            datetime(2024, 1, 1, 0, 0, 0),
+        ],
     }

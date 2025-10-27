@@ -1,19 +1,19 @@
 # noqa: F401,F811,F821,E402
-from src import main as main_module
 import importlib
 from contextlib import ExitStack
 from datetime import datetime
 from decimal import Decimal
-from fastapi.testclient import TestClient
-from sqlalchemy.ext.asyncio import AsyncSession
 from typing import AsyncGenerator
-import pytest
-
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.database.connection import get_async_session
-from src.database.models import Match, MatchStatus, PredictedResult, Predictions
+import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from src import main as main_module
+from src.database.connection import get_async_session
+from src.database.models import (Match, MatchStatus, PredictedResult,
+                                 Predictions)
 
 """API测试配置"""
 
@@ -227,8 +227,9 @@ def sample_prediction_data():
 健康检查测试的 fixtures
 """
 
+from unittest.mock import AsyncMock, Mock
+
 import pytest
-from unittest.mock import Mock, AsyncMock
 
 
 @pytest.fixture

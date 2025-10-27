@@ -3,6 +3,7 @@
 # TODO: Consider creating a fixture for 50 repeated Mock creations
 
 from unittest.mock import MagicMock
+
 """
 数据API单元测试
 
@@ -14,11 +15,11 @@ from unittest.mock import MagicMock
 
 from datetime import datetime, timedelta
 from decimal import Decimal
+
 import pytest
 
 
 @pytest.mark.unit
-
 class TestGetMatchFeatures:
     """获取比赛特征数据API测试"""
 

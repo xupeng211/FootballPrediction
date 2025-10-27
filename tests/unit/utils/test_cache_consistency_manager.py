@@ -1,14 +1,17 @@
-from unittest.mock import patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
 """
 缓存一致性管理器测试
 """
 
-import pytest
 from typing import List
+
+import pytest
 
 # 导入RedisManager和DatabaseManager
 try:
     from src.cache.redis_manager import RedisManager
+
     # from src.database.connection_mod import DatabaseManager
 except ImportError:
     RedisManager = None
@@ -18,7 +21,6 @@ from src.cache.consistency_manager import CacheConsistencyManager
 
 
 @pytest.mark.unit
-
 class TestCacheConsistencyManager:
     """缓存一致性管理器测试"""
 

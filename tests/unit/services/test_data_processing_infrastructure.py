@@ -18,13 +18,15 @@
 7. ✅ 所有测试可独立运行通过pytest
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock, AsyncMock, create_autospec
-from typing import Dict, Any, List, Optional, Union
-from datetime import datetime
 import asyncio
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Union
+from unittest.mock import AsyncMock, MagicMock, Mock, create_autospec, patch
+
+import pytest
+
 
 # Mock 数据类
 @dataclass
@@ -32,6 +34,7 @@ class DataValidationResult:
     is_valid: bool
     errors: Optional[List[str]] = None
     warnings: Optional[List[str]] = None
+
 
 # 创建Mock基类
 class MockDataProcessor(ABC):
@@ -45,8 +48,8 @@ class MockDataProcessor(ABC):
 
     @classmethod
     def __subclasshook__(cls, subclass):
-        return (hasattr(subclass, 'process') and
-                callable(subclass.process))
+        return hasattr(subclass, "process") and callable(subclass.process)
+
 
 # Mock实现类
 class MockMatchDataProcessor(MockDataProcessor):
@@ -56,6 +59,7 @@ class MockMatchDataProcessor(MockDataProcessor):
     def process(self, data):
         return {"type": "match", "processed": True}
 
+
 class MockOddsDataProcessor(MockDataProcessor):
     def __init__(self):
         pass
@@ -63,12 +67,14 @@ class MockOddsDataProcessor(MockDataProcessor):
     def process(self, data):
         return {"type": "odds", "processed": True}
 
+
 class MockScoresDataProcessor(MockDataProcessor):
     def __init__(self):
         pass
 
     def process(self, data):
         return {"type": "scores", "processed": True}
+
 
 # Mock Manager类
 class MockDataProcessingManager:
@@ -111,10 +117,10 @@ class MockDataProcessingManager:
     async def process_data_async(self, processor_type, data):
         result = self.process_data(processor_type, data)
         return {
-            'success': True if result else False,
-            'type': processor_type,
-            'data': result,
-            'processed_at': datetime.utcnow()
+            "success": True if result else False,
+            "type": processor_type,
+            "data": result,
+            "processed_at": datetime.utcnow(),
         }
 
     async def process_data_batch(self, processor_type, data_list):
@@ -129,6 +135,7 @@ class MockDataProcessingManager:
 
     def set_default_validator(self, validator):
         self._validator = validator
+
 
 # 为测试设置Mock别名
 DataProcessor = MockDataProcessor
@@ -150,9 +157,7 @@ class TestDataProcessorAbstract:
         assert issubclass(DataProcessor, ABC)
 
         # 验证抽象方法存在
-        abstract_methods = [
-            'process', '__init__', '__subclasshook__'
-        ]
+        abstract_methods = ["process", "__init__", "__subclasshook__"]
 
         for method in abstract_methods:
             assert hasattr(DataProcessor, method)
@@ -160,13 +165,13 @@ class TestDataProcessorAbstract:
     def test_abstract_methods_are_abstract(self) -> None:
         """✅ 成功用例：抽象方法都被标记为抽象"""
         # 验证所有抽象方法
-        abstract_methods = [
-            'process', '__init__', '__subclasshook__'
-        ]
+        abstract_methods = ["process", "__init__", "__subclasshook__"]
 
         for method in abstract_methods:
             method_obj = getattr(DataProcessor, method, None)
-            assert getattr(method_obj, '__isabstractmethod__', False), f"Method {method} should be abstract"
+            assert getattr(
+                method_obj, "__isabstractmethod__", False
+            ), f"Method {method} should be abstract"
 
 
 @pytest.mark.unit
@@ -179,9 +184,9 @@ class TestDataProcessingManager:
 
         # 模拟可用的处理器
         mock_processors = {
-            'match': Mock(spec=DataProcessor),
-            'odds': Mock(spec=DataProcessor),
-            'scores': Mock(spec=DataProcessor)
+            "match": Mock(spec=DataProcessor),
+            "odds": Mock(spec=DataProcessor),
+            "scores": Mock(spec=DataProcessor),
         }
 
         # 设置处理器
@@ -190,18 +195,18 @@ class TestDataProcessingManager:
         # 验证处理器注册
         registered = manager.get_available_processors()
         assert len(registered) == 3
-        assert 'match' in registered
-        assert 'odds' in registered
-        assert 'scores' in registered
+        assert "match" in registered
+        assert "odds" in registered
+        assert "scores" in registered
 
     def test_processor_creation_success(self) -> None:
         """✅ 成功用例：处理器创建成功"""
         manager = DataProcessingManager()
 
         # 测试创建各种处理器
-        match_processor = manager.create_processor('match')
-        odds_processor = manager.create_processor('odds')
-        scores_processor = manager.create_processor('scores')
+        match_processor = manager.create_processor("match")
+        odds_processor = manager.create_processor("odds")
+        scores_processor = manager.create_processor("scores")
 
         # 验证创建结果
         assert match_processor is not None
@@ -216,7 +221,7 @@ class TestDataProcessingManager:
         manager = DataProcessingManager()
 
         # 尝试创建未知类型处理器
-        invalid_processor = manager.create_processor('invalid_type')
+        invalid_processor = manager.create_processor("invalid_type")
 
         # 验证创建失败
         assert invalid_processor is None
@@ -227,10 +232,10 @@ class TestDataProcessingManager:
 
         # 注册处理器
         mock_processor = Mock(spec=DataProcessor)
-        manager.set_processors({'test': mock_processor})
+        manager.set_processors({"test": mock_processor})
 
         # 获取处理器
-        retrieved_processor = manager.get_processor('test')
+        retrieved_processor = manager.get_processor("test")
         assert retrieved_processor is mock_processor
 
     def test_get_processor_with_cache(self) -> None:
@@ -239,14 +244,14 @@ class TestDataProcessingManager:
 
         # 注册处理器
         mock_processor = Mock(spec=DataProcessor)
-        manager.set_processors({'test': mock_processor})
+        manager.set_processors({"test": mock_processor})
 
         # 第一次获取 - 创建缓存
-        instance1 = manager.get_processor('test')
+        instance1 = manager.get_processor("test")
         assert instance1 is mock_processor
 
         # 第二次获取 - 应该返回缓存实例
-        instance2 = manager.get_processor('test')
+        instance2 = manager.get_processor("test")
         assert instance2 is instance1
 
     def test_get_processor_unknown_type(self) -> None:
@@ -255,10 +260,10 @@ class TestDataProcessingManager:
 
         # 注册一个处理器
         mock_processor = Mock(spec=DataProcessor)
-        manager.set_processors({'test': mock_processor})
+        manager.set_processors({"test": mock_processor})
 
         # 尝试获取未注册类型
-        unknown_processor = manager.get_processor('unknown_type')
+        unknown_processor = manager.get_processor("unknown_type")
         assert unknown_processor is None
 
     def test_data_processing_success(self) -> None:
@@ -268,11 +273,11 @@ class TestDataProcessingManager:
         # 注册处理器
         mock_processor = Mock(spec=DataProcessor)
         mock_processor.process.return_value = {"result": "processed"}
-        manager.set_processors({'test': mock_processor})
+        manager.set_processors({"test": mock_processor})
 
         # 处理数据
         data = {"key": "value"}
-        result = manager.process_data('test', data)
+        result = manager.process_data("test", data)
 
         # 验证处理结果
         assert result is not None
@@ -286,16 +291,16 @@ class TestDataProcessingManager:
 
         # 注册处理器
         mock_processor = Mock(spec=DataProcessor)
-        manager.set_processors({'test': mock_processor})
+        manager.set_processors({"test": mock_processor})
 
         # 异步处理数据
         data = {"key": "value"}
-        result = await manager.process_data_async('test', data)
+        result = await manager.process_data_async("test", data)
 
         # 验证异步处理结果
-        assert result['success'] is True
-        assert result['type'] == 'test'
-        assert 'processed_at' in result
+        assert result["success"] is True
+        assert result["type"] == "test"
+        assert "processed_at" in result
 
     @pytest.mark.asyncio
     async def test_batch_data_processing_success(self) -> None:
@@ -305,17 +310,17 @@ class TestDataProcessingManager:
         # 注册处理器
         mock_processor = Mock(spec=DataProcessor)
         mock_processor.process.return_value = {"processed": True}
-        manager.set_processors({'batch': mock_processor})
+        manager.set_processors({"batch": mock_processor})
 
         # 批量处理数据
         data_list = [{"id": i, "data": f"test_{i}"} for i in range(3)]
-        results = await manager.process_data_batch('batch', data_list)
+        results = await manager.process_data_batch("batch", data_list)
 
         # 验证批量处理结果
         assert len(results) == 3
         for result in results:
-            assert result['success'] is True
-            assert 'processed_at' in result
+            assert result["success"] is True
+            assert "processed_at" in result
 
     def test_processor_validation_success(self) -> None:
         """✅ 成功用例：处理器验证成功"""
@@ -323,7 +328,7 @@ class TestDataProcessingManager:
 
         # 注册有效处理器
         valid_processor = Mock(spec=DataProcessor)
-        manager.set_processors({'valid': valid_processor})
+        manager.set_processors({"valid": valid_processor})
 
         # 验证处理器
         is_valid = manager.validate_processor(valid_processor)
@@ -337,11 +342,11 @@ class TestDataProcessingManager:
         failing_processor = Mock(spec=DataProcessor)
         failing_processor.process.side_effect = Exception("Processing failed")
 
-        manager.set_processors({'failing': failing_processor})
+        manager.set_processors({"failing": failing_processor})
 
         # 处理数据应该返回None
         data = {"test": "data"}
-        result = manager.process_data('failing', data)
+        result = manager.process_data("failing", data)
 
         # 验证错误处理
         assert result is None
@@ -353,9 +358,7 @@ def mock_data_validator():
     """Mock数据验证器用于测试"""
     validator = Mock()
     validator.validate.return_value = DataValidationResult(
-        is_valid=True,
-        errors=None,
-        warnings=None
+        is_valid=True, errors=None, warnings=None
     )
     return validator
 
@@ -368,10 +371,10 @@ def mock_data_processor():
     processor.initialize.return_value = None
     processor.teardown.return_value = None
     processor.process.return_value = {
-        'success': True,
-        'type': 'test',
-        'data': {'processed': True},
-        'processed_at': datetime.utcnow()
+        "success": True,
+        "type": "test",
+        "data": {"processed": True},
+        "processed_at": datetime.utcnow(),
     }
     return processor
 
@@ -390,13 +393,13 @@ def mock_data_processing_manager():
 def mock_match_data():
     """Mock比赛数据用于测试"""
     return {
-        'match_id': 123,
-        'home_team_score': 2,
-        'away_team_score': 1,
-        'status': 'completed',
-        'confidence': 0.75,
-        'kickoff_time': None,
-        'venue': 'Test Stadium'
+        "match_id": 123,
+        "home_team_score": 2,
+        "away_team_score": 1,
+        "status": "completed",
+        "confidence": 0.75,
+        "kickoff_time": None,
+        "venue": "Test Stadium",
     }
 
 
@@ -404,11 +407,11 @@ def mock_match_data():
 def mock_odds_data():
     """Mock赔率数据用于测试"""
     return {
-        'match_id': 123,
-        'home_win_odds': [2.1, 1.85],
-        'draw_odds': [3.2, 3.3],
-        'away_win_odds': [4.0, 2.05],
-        'confidence': 0.7
+        "match_id": 123,
+        "home_win_odds": [2.1, 1.85],
+        "draw_odds": [3.2, 3.3],
+        "away_win_odds": [4.0, 2.05],
+        "confidence": 0.7,
     }
 
 
@@ -416,12 +419,12 @@ def mock_odds_data():
 def mock_scores_data():
     """Mock比分数据用于测试"""
     return {
-        'match_id': 123,
-        'home_score': 2,
-        'away_score': 1,
-        'status': 'final',
-        'home_position': 1,
-        'away_position': 2
+        "match_id": 123,
+        "home_score": 2,
+        "away_score": 1,
+        "status": "final",
+        "home_position": 1,
+        "away_position": 2,
     }
 
 
@@ -429,8 +432,8 @@ def mock_scores_data():
 def mock_data():
     """Mock处理后的数据用于测试"""
     return {
-        'type': 'test',
-        'processed': True,
-        'data': {'additional_info': 'test'},
-        'processed_at': datetime.utcnow()
+        "type": "test",
+        "processed": True,
+        "data": {"additional_info": "test"},
+        "processed_at": datetime.utcnow(),
     }

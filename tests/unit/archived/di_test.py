@@ -4,18 +4,21 @@
 重构时间: 2025-10-25 13:28
 """
 
-import pytest
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import pytest
 
 # 尝试导入目标模块
 try:
     from core.di import *
+
     IMPORTS_AVAILABLE = True
 except ImportError as e:
     print(f"导入警告: {e}")
     IMPORTS_AVAILABLE = False
+
 
 class TestCoreDiReal:
     """真实业务逻辑测试 - 重构版本"""
@@ -32,7 +35,9 @@ class TestCoreDiReal:
         try:
             result = get_default_container()
             # 验证函数执行不抛出异常
-            assert result is not None or isinstance(result, (bool, int, float, str, list, dict))
+            assert result is not None or isinstance(
+                result, (bool, int, float, str, list, dict)
+            )
         except Exception as e:
             # 函数可能需要特定参数，记录但不失败
             print(f"函数 {'get_default_container'} 测试跳过: {e}")
@@ -43,7 +48,9 @@ class TestCoreDiReal:
         try:
             result = configure_services("test_arg_0")
             # 验证函数执行不抛出异常
-            assert result is not None or isinstance(result, (bool, int, float, str, list, dict))
+            assert result is not None or isinstance(
+                result, (bool, int, float, str, list, dict)
+            )
         except Exception as e:
             # 函数可能需要特定参数，记录但不失败
             print(f"函数 {'configure_services'} 测试跳过: {e}")
@@ -54,7 +61,9 @@ class TestCoreDiReal:
         try:
             result = resolve("test_arg_0")
             # 验证函数执行不抛出异常
-            assert result is not None or isinstance(result, (bool, int, float, str, list, dict))
+            assert result is not None or isinstance(
+                result, (bool, int, float, str, list, dict)
+            )
         except Exception as e:
             # 函数可能需要特定参数，记录但不失败
             print(f"函数 {'resolve'} 测试跳过: {e}")
@@ -65,7 +74,9 @@ class TestCoreDiReal:
         try:
             result = inject("test_arg_0", "test_arg_1")
             # 验证函数执行不抛出异常
-            assert result is not None or isinstance(result, (bool, int, float, str, list, dict))
+            assert result is not None or isinstance(
+                result, (bool, int, float, str, list, dict)
+            )
         except Exception as e:
             # 函数可能需要特定参数，记录但不失败
             print(f"函数 {'inject'} 测试跳过: {e}")
@@ -74,9 +85,13 @@ class TestCoreDiReal:
     def test_register_singleton_function(self):
         """测试register_singleton函数"""
         try:
-            result = register_singleton("test_arg_0", "test_arg_1", "test_arg_2", "test_arg_3", "test_arg_4")
+            result = register_singleton(
+                "test_arg_0", "test_arg_1", "test_arg_2", "test_arg_3", "test_arg_4"
+            )
             # 验证函数执行不抛出异常
-            assert result is not None or isinstance(result, (bool, int, float, str, list, dict))
+            assert result is not None or isinstance(
+                result, (bool, int, float, str, list, dict)
+            )
         except Exception as e:
             # 函数可能需要特定参数，记录但不失败
             print(f"函数 {'register_singleton'} 测试跳过: {e}")
@@ -119,9 +134,11 @@ class TestCoreDiReal:
         """测试DIContainer.register_singleton方法"""
         try:
             instance = DIContainer()
-            if hasattr(instance, 'register_singleton'):
+            if hasattr(instance, "register_singleton"):
                 result = instance.register_singleton()
-                assert result is not None or isinstance(result, (bool, int, float, str, list, dict))
+                assert result is not None or isinstance(
+                    result, (bool, int, float, str, list, dict)
+                )
             else:
                 pytest.skip("方法 register_singleton 不存在")
         except Exception as e:

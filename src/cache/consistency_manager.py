@@ -3,11 +3,12 @@
 负责协调Redis缓存和PostgreSQL数据库之间的数据一致性
 """
 
-from src.cache.redis import get_redis_manager
-
 import logging
 from typing import Any, Dict, List, Union
+
 from redis.exceptions import RedisError
+
+from src.cache.redis import get_redis_manager
 
 try:
     from .redis_manager import get_redis_manager

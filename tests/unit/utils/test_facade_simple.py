@@ -3,27 +3,22 @@
 # TODO: Consider creating a fixture for 13 repeated Mock creations
 
 from unittest.mock import AsyncMock, MagicMock
+
 """
 门面模式单元测试（简化版）
 """
 
-import pytest
 from datetime import datetime, timedelta
 
-from src.patterns.facade_simple import (
-    PredictionFacade,
-    DataCollectionFacade,
-    AnalyticsFacade,
-    FacadeFactory,
-    SystemFacade,
-    PredictionRequest,
-    PredictionResult,
-    DataCollectionConfig,
-)
+import pytest
+
+from src.patterns.facade_simple import (AnalyticsFacade, DataCollectionConfig,
+                                        DataCollectionFacade, FacadeFactory,
+                                        PredictionFacade, PredictionRequest,
+                                        PredictionResult, SystemFacade)
 
 
 @pytest.mark.unit
-
 class TestPredictionFacade:
     """预测门面测试"""
 

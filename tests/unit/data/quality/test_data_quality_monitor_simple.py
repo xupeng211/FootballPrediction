@@ -1,4 +1,5 @@
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 数据质量监控器简化测试
 Tests for Data Quality Monitor (Simple Version)
@@ -6,9 +7,10 @@ Tests for Data Quality Monitor (Simple Version)
 测试src.data.quality.data_quality_monitor模块的基本功能
 """
 
-import pytest
-from datetime import datetime, timedelta
 import logging
+from datetime import datetime, timedelta
+
+import pytest
 
 # 测试导入
 try:
@@ -26,7 +28,6 @@ except ImportError as e:
     reason="Data quality monitor module not available",
 )
 @pytest.mark.unit
-
 class TestDataQualityMonitorSimple:
     """数据质量监控器简化测试"""
 

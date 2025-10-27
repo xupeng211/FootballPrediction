@@ -1,4 +1,5 @@
 from unittest.mock import patch
+
 """
 时间工具测试（修复版）
 Tests for Time Utils (Fixed Version)
@@ -6,12 +7,13 @@ Tests for Time Utils (Fixed Version)
 测试src.utils.time_utils模块的实际功能
 """
 
-import pytest
 from datetime import datetime, timedelta, timezone
+
+import pytest
 
 # 测试导入
 try:
-    from src.utils.time_utils import TimeUtils, utc_now, parse_datetime
+    from src.utils.time_utils import TimeUtils, parse_datetime, utc_now
 
     TIME_UTILS_AVAILABLE = True
 except ImportError as e:
@@ -22,7 +24,6 @@ except ImportError as e:
 
 @pytest.mark.skipif(not TIME_UTILS_AVAILABLE, reason="Time utils module not available")
 @pytest.mark.unit
-
 class TestTimeUtilsBasic:
     """时间工具基础功能测试"""
 
@@ -298,7 +299,7 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if TIME_UTILS_AVAILABLE:
-        from src.utils.time_utils import TimeUtils, utc_now, parse_datetime
+        from src.utils.time_utils import TimeUtils, parse_datetime, utc_now
 
         assert TimeUtils is not None
         assert utc_now is not None

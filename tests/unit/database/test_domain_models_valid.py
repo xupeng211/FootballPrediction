@@ -3,32 +3,19 @@
 基于实际实现编写
 """
 
-import pytest
 from datetime import datetime, timedelta
 
-from src.domain_simple import (
-    Match,
-    MatchStatus,
-    MatchResult,
-    Team,
-    TeamStatistics,
-    Prediction,
-    PredictionType,
-    PredictionConfidence,
-    League,
-    LeagueTable,
-    User,
-    UserProfile,
-    UserPreferences,
-    Odds,
-    MarketType,
-    ValueBet,
-)
+import pytest
+
+from src.domain_simple import (League, LeagueTable, MarketType, Match,
+                               MatchResult, MatchStatus, Odds, Prediction,
+                               PredictionConfidence, PredictionType, Team,
+                               TeamStatistics, User, UserPreferences,
+                               UserProfile, ValueBet)
 
 
 @pytest.mark.unit
 @pytest.mark.database
-
 class TestMatch:
     """比赛领域模型测试"""
 

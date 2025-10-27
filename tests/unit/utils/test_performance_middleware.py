@@ -2,30 +2,28 @@
 
 # TODO: Consider creating a fixture for 45 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 性能监控中间件测试
 Performance Monitoring Middleware Tests
 """
 
-import pytest
 import asyncio
 import time
-from typing import Dict, Any
+from typing import Any, Dict
 
+import pytest
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from src.performance.middleware import (
-    PerformanceMonitoringMiddleware,
-    DatabasePerformanceMiddleware,
-    CachePerformanceMiddleware,
-    BackgroundTaskPerformanceMonitor,
-)
+from src.performance.middleware import (BackgroundTaskPerformanceMonitor,
+                                        CachePerformanceMiddleware,
+                                        DatabasePerformanceMiddleware,
+                                        PerformanceMonitoringMiddleware)
 
 
 @pytest.mark.unit
-
 class TestPerformanceMonitoringMiddleware:
     """性能监控中间件测试类"""
 

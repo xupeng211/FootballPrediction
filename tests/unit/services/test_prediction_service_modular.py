@@ -2,18 +2,19 @@
 
 # TODO: Consider creating a fixture for 8 repeated Mock creations
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 """
 测试预测服务模块化拆分
 Test modular split of prediction service
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
 
 
 @pytest.mark.unit
-
 class TestPredictionModels:
     """测试预测模型"""
 
@@ -150,13 +151,11 @@ class TestPredictionMetrics:
 
     def test_metrics_import(self):
         """测试指标导入"""
-        from src.models.prediction.metrics import (
-            predictions_total,
-            prediction_duration_seconds,
-            prediction_accuracy,
-            model_load_duration_seconds,
-            cache_hit_ratio,
-        )
+        from src.models.prediction.metrics import (cache_hit_ratio,
+                                                   model_load_duration_seconds,
+                                                   prediction_accuracy,
+                                                   prediction_duration_seconds,
+                                                   predictions_total)
 
         assert predictions_total is not None
         assert prediction_duration_seconds is not None
@@ -166,10 +165,8 @@ class TestPredictionMetrics:
 
     def test_metrics_are_callable(self):
         """测试指标可调用"""
-        from src.models.prediction.metrics import (
-            predictions_total,
-            prediction_accuracy,
-        )
+        from src.models.prediction.metrics import (prediction_accuracy,
+                                                   predictions_total)
 
         # 测试指标有labels方法
         assert hasattr(predictions_total, "labels")
@@ -347,8 +344,9 @@ class TestFeatureProcessor:
 
     def test_prepare_features_for_prediction(self):
         """测试准备预测特征"""
-        from src.models.prediction.feature_processor import FeatureProcessor
         import numpy as np
+
+        from src.models.prediction.feature_processor import FeatureProcessor
 
         processor = FeatureProcessor()
         features = processor.get_default_features()
@@ -438,8 +436,8 @@ class TestPredictionService:
     @pytest.mark.asyncio
     async def test_predict_match(self):
         """测试预测比赛"""
-        from src.models.prediction.service import PredictionService
         from src.models.prediction.models import PredictionResult
+        from src.models.prediction.service import PredictionService
 
         service = PredictionService()
         mock_model = MagicMock()
@@ -512,7 +510,9 @@ class TestPredictionService:
             mock_row.correct_predictions = 60
             mock_row.avg_confidence = 0.75
             mock_row.model_versions_used = 3
-            mock_session.return_value.__aenter__.return_value.execute.return_value.first.return_value = mock_row
+            mock_session.return_value.__aenter__.return_value.execute.return_value.first.return_value = (
+                mock_row
+            )
 
             _stats = await service.get_prediction_statistics(30)
             assert "total_predictions" in stats
@@ -524,12 +524,9 @@ class TestModularStructure:
 
     def test_import_from_main_module(self):
         """测试从主模块导入"""
-        from src.models.prediction import (
-            PredictionResult,
-            PredictionService,
-            PredictionCache,
-            predictions_total,
-        )
+        from src.models.prediction import (PredictionCache, PredictionResult,
+                                           PredictionService,
+                                           predictions_total)
 
         assert PredictionResult is not None
         assert PredictionService is not None
@@ -539,10 +536,10 @@ class TestModularStructure:
     def test_backward_compatibility_imports(self):
         """测试向后兼容性导入"""
         # 从原始文件导入应该仍然有效
-        from src.models.prediction_service import (
-            PredictionResult as old_result,
-            PredictionService as old_service,
-        )
+        from src.models.prediction_service import \
+            PredictionResult as old_result
+        from src.models.prediction_service import \
+            PredictionService as old_service
 
         assert old_result is not None
         assert old_service is not None
@@ -581,7 +578,7 @@ class TestModularStructure:
 @pytest.mark.asyncio
 async def test_integration_example():
     """测试集成示例"""
-    from src.models.prediction import PredictionService, PredictionResult
+    from src.models.prediction import PredictionResult, PredictionService
 
     # 验证PredictionService可以正常使用
     service = PredictionService()

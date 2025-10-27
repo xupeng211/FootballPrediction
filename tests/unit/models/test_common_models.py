@@ -3,19 +3,15 @@
 """
 
 from datetime import datetime
-from pydantic import ValidationError
-import pytest
 
-from src.models.common_models import (
-    DataValidationResult,
-    FeatureVector,
-    MatchData,
-    ModelMetrics,
-)
+import pytest
+from pydantic import ValidationError
+
+from src.models.common_models import (DataValidationResult, FeatureVector,
+                                      MatchData, ModelMetrics)
 
 
 @pytest.mark.unit
-
 def test_data_validation_result():
     """测试数据验证结果"""
     # 测试有效的验证结果

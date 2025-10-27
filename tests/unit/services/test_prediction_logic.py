@@ -3,15 +3,15 @@
 测试预测计算和验证逻辑
 """
 
-import pytest
-from datetime import datetime, timezone, timedelta
-from typing import List, Dict, Tuple
 import math
+from datetime import datetime, timedelta, timezone
+from typing import Dict, List, Tuple
+
+import pytest
 
 
 # 测试预测计算逻辑
 @pytest.mark.unit
-
 class TestPredictionCalculations:
     """预测计算测试"""
 
@@ -358,16 +358,12 @@ class TestPredictionBusinessRules:
             pred_result = (
                 "home"
                 if predicted_home > predicted_away
-                else "away"
-                if predicted_home < predicted_away
-                else "draw"
+                else "away" if predicted_home < predicted_away else "draw"
             )
             actual_result = (
                 "home"
                 if actual_home > actual_away
-                else "away"
-                if actual_home < actual_away
-                else "draw"
+                else "away" if actual_home < actual_away else "draw"
             )
 
             if pred_result == actual_result:

@@ -230,7 +230,7 @@ def create_mock_module():
                 # 检查是否是下一个测试或类定义
                 if (line.strip().startswith('def ') or line.strip().startswith('async def ') or
                     line.strip().startswith('class ') or line.strip() == ''):
-                    if line.strip().startswith('def ') and not 'test_' in line:
+                    if line.strip().startswith('def ') and 'test_' not in line:
                         in_test = False
                     else:
                         test_lines.append(line)

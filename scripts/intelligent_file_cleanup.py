@@ -47,7 +47,7 @@ class IntelligentFileCleanup:
             if not file_info:
                 continue
 
-            status = file_info[:2]
+            file_info[:2]
             file_path = file_info[3:]
 
             # 分类文件
@@ -63,7 +63,7 @@ class IntelligentFileCleanup:
                 categorized_files['other_files'].append(file_path)
 
         # 显示统计
-        print(f"📁 剩余文件统计:")
+        print("📁 剩余文件统计:")
         for category, files in categorized_files.items():
             print(f"  {category}: {len(files)} 个文件")
 
@@ -263,7 +263,7 @@ cleanup-issue88:
 
     def commit_cleanup_changes(self):
         """提交清理更改"""
-        print(f"\n🚀 提交清理更改...")
+        print("\n🚀 提交清理更改...")
         print("=" * 40)
 
         try:
@@ -343,7 +343,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"""
         duration = time.time() - start_time
 
         # 4. 显示总结
-        print(f"\n📊 清理总结:")
+        print("\n📊 清理总结:")
         print("=" * 40)
         for key, value in self.cleanup_stats.items():
             if key != 'errors':
@@ -354,7 +354,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"""
         # 5. 提交更改
         commit_success = self.commit_cleanup_changes()
 
-        print(f"\n🎉 智能清理完成!")
+        print("\n🎉 智能清理完成!")
         print(f"📊 处理了 {total_processed} 个文件")
         print(f"⏱️  用时: {duration:.2f}秒")
         print(f"🚀 提交状态: {'成功' if commit_success else '失败'}")

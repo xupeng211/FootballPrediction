@@ -4,11 +4,13 @@
 
 # noqa: F401,F811,F821,E402
 from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import numpy as np
 import pytest
+
 from src.models.prediction_service import PredictionResult, PredictionService
 
-from unittest.mock import patch, AsyncMock, MagicMock
 """
 PredictionService单元测试 / Unit Tests for PredictionService
 
@@ -29,7 +31,6 @@ Tests core functionality of prediction service, including:
 
 
 @pytest.mark.unit
-
 class TestPredictionService:
     """PredictionService测试类"""
 
@@ -142,8 +143,12 @@ class TestPredictionService:
         mock_session.execute.return_value = mock_result
 
         # 正确mock异步上下文管理器
-        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
-        mock_service.db_manager.get_async_session.return_value.__aexit__.return_value = None
+        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = (
+            mock_session
+        )
+        mock_service.db_manager.get_async_session.return_value.__aexit__.return_value = (
+            None
+        )
 
         # 调用方法
         _result = await mock_service._get_match_info(12345)
@@ -163,8 +168,12 @@ class TestPredictionService:
         mock_session.execute.return_value = mock_result
 
         # 正确mock异步上下文管理器
-        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
-        mock_service.db_manager.get_async_session.return_value.__aexit__.return_value = None
+        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = (
+            mock_session
+        )
+        mock_service.db_manager.get_async_session.return_value.__aexit__.return_value = (
+            None
+        )
 
         _result = await mock_service._get_match_info(99999)
 
@@ -405,7 +414,9 @@ class TestPredictionService:
         mock_result.first.return_value = mock_match
         mock_session.execute.return_value = mock_result
 
-        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
+        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = (
+            mock_session
+        )
 
         # 执行验证
         success = await mock_service.verify_prediction(12345)
@@ -423,7 +434,9 @@ class TestPredictionService:
         mock_result.first.return_value = None  # 比赛未结束或不存在
         mock_session.execute.return_value = mock_result
 
-        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
+        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = (
+            mock_session
+        )
 
         success = await mock_service.verify_prediction(12345)
 
@@ -441,7 +454,9 @@ class TestPredictionService:
         mock_result.first.return_value = mock_row
         mock_session.execute.return_value = mock_result
 
-        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
+        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = (
+            mock_session
+        )
 
         accuracy = await mock_service.get_model_accuracy("test_model", 7)
 
@@ -455,7 +470,9 @@ class TestPredictionService:
         mock_result.first.return_value = None
         mock_session.execute.return_value = mock_result
 
-        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
+        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = (
+            mock_session
+        )
 
         accuracy = await mock_service.get_model_accuracy("test_model", 7)
 
@@ -479,7 +496,9 @@ class TestPredictionService:
         mock_result.__iter__ = MagicMock(return_value=iter([mock_row1]))
         mock_session.execute.return_value = mock_result
 
-        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
+        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = (
+            mock_session
+        )
 
         _stats = await mock_service.get_prediction_statistics(30)
 
@@ -494,7 +513,9 @@ class TestPredictionService:
     async def test_store_prediction(self, mock_service, sample_prediction_result):
         """测试存储预测结果"""
         mock_session = AsyncMock()
-        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
+        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = (
+            mock_session
+        )
 
         await mock_service._store_prediction(sample_prediction_result)
 
@@ -509,7 +530,9 @@ class TestPredictionService:
         """测试存储预测结果失败"""
         mock_session = AsyncMock()
         mock_session.add.side_effect = Exception("Database error")
-        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = mock_session
+        mock_service.db_manager.get_async_session.return_value.__aenter__.return_value = (
+            mock_session
+        )
 
         with pytest.raises(Exception, match="Database error"):
             await mock_service._store_prediction(sample_prediction_result)

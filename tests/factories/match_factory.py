@@ -2,9 +2,9 @@
 比赛工厂 - 用于测试数据创建
 """
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timezone, timedelta
 import random
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional
 
 from .base import BaseFactory, DataFactoryMixin, TimestampMixin
 

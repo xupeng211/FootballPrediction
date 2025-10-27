@@ -4,26 +4,29 @@ P3阶段端到端API集成测试
 策略: 真实API端点测试 + 数据库集成
 """
 
-import pytest
-from unittest.mock import patch, Mock, AsyncMock
-from fastapi.testclient import TestClient
 import json
-import sys
 import os
-from typing import Dict, List, Any
+import sys
+from typing import Any, Dict, List
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
+from fastapi.testclient import TestClient
 
 # 确保可以导入源码模块
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../.."))
 
 # 导入API模块
 try:
     from src.api.app import app
     from src.api.data_router import router as data_router
     from src.api.predictions.router import router as predictions_router
+
     API_AVAILABLE = True
 except ImportError as e:
     print(f"API模块导入警告: {e}")
     API_AVAILABLE = False
+
 
 class TestEndToEndAPIIntegration:
     """端到端API集成测试套件"""
@@ -39,14 +42,14 @@ class TestEndToEndAPIIntegration:
     @pytest.fixture
     def mock_database_config(self):
         """模拟数据库配置"""
-        with patch('src.database.config.get_database_config') as mock_config:
+        with patch("src.database.config.get_database_config") as mock_config:
             mock_config.return_value = Mock(
                 sync_url="sqlite:///:memory:",
                 async_url="sqlite+aiosqlite:///:memory:",
                 database=":memory:",
                 host="localhost",
                 username="test_user",
-                password=None
+                password=None,
             )
             yield mock_config
 
@@ -66,7 +69,7 @@ class TestEndToEndAPIIntegration:
             "/api/data/leagues",
             "/api/data/teams",
             "/api/data/matches",
-            "/api/data/odds"
+            "/api/data/odds",
         ]
 
         for endpoint in endpoints:
@@ -81,7 +84,7 @@ class TestEndToEndAPIIntegration:
         endpoints = [
             "/api/predictions/",
             "/api/predictions/health",
-            "/api/predictions/models"
+            "/api/predictions/models",
         ]
 
         for endpoint in endpoints:
@@ -98,7 +101,7 @@ class TestEndToEndAPIIntegration:
             "predicted_home": 2,
             "predicted_away": 1,
             "confidence": 0.85,
-            "strategy_used": "test"
+            "strategy_used": "test",
         }
 
         response = client.post("/api/predictions/", json=prediction_data)
@@ -115,7 +118,7 @@ class TestEndToEndAPIIntegration:
             "match_id": "invalid",  # 应该是数字
             "user_id": -1,  # 无效的用户ID
             "predicted_home": "invalid",  # 应该是数字
-            "confidence": 2.0  # 超出范围
+            "confidence": 2.0,  # 超出范围
         }
 
         response = client.post("/api/predictions/", json=invalid_data)
@@ -161,7 +164,7 @@ class TestEndToEndAPIIntegration:
         cors_headers = [
             "access-control-allow-origin",
             "access-control-allow-methods",
-            "access-control-allow-headers"
+            "access-control-allow-headers",
         ]
 
         for header in cors_headers:
@@ -180,7 +183,7 @@ class TestEndToEndAPIIntegration:
             responses.append(response)
 
         # 检查是否有速率限制响应
-        rate_limited = any(r.status_code == 429 for r in responses)
+        any(r.status_code == 429 for r in responses)
         # 速率限制是可选的，所以不强制要求
 
     def test_api_authentication(self, client):
@@ -210,6 +213,7 @@ class TestEndToEndAPIIntegration:
         for invalid_data in invalid_datasets:
             response = client.post("/api/predictions/", json=invalid_data)
             assert response.status_code in [400, 422]
+
 
 if __name__ == "__main__":
     print("P3阶段端到端API集成测试")

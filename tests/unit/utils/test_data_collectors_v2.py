@@ -7,6 +7,7 @@ except Exception:
     pass
     from src.collectors.data_collector_v2 import DataCollectorV2
 except ImportError:
+
     class DataCollectorV2:
         def collect(self):
             return []

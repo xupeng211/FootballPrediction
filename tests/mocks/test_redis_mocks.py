@@ -3,9 +3,10 @@
 # TODO: Consider creating a fixture for 5 repeated Mock creations
 
 import sys
+from unittest.mock import MagicMock
+
 import redis.asyncio
 
-from unittest.mock import MagicMock
 """
 Redis Mocks for Testing
 

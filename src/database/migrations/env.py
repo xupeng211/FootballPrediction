@@ -4,15 +4,14 @@ Alembic环境配置
 配置数据库迁移环境，使用我们的数据库配置和模型。
 """
 
+import asyncio
 import os
 import sys
-import asyncio
 from logging.config import fileConfig
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-from sqlalchemy.ext.asyncio import create_async_engine
 
 from alembic import context
+from sqlalchemy import engine_from_config, pool
+from sqlalchemy.ext.asyncio import create_async_engine
 
 from src.database.base import Base  # noqa: E402
 from src.database.config import get_database_config  # noqa: E402

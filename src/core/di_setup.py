@@ -6,16 +6,16 @@ Dependency Injection Setup
 Provides initialization and configuration for dependency injection.
 """
 
+import logging
 import os
 from pathlib import Path
 from typing import Optional
-import logging
 
+from ..database.repositories.base import BaseRepository
+from .auto_binding import AutoBinder
+from .config_di import ConfigurationBinder
 from .di import DIContainer, ServiceCollection, ServiceLifetime
 from .service_lifecycle import ServiceLifecycleManager, get_lifecycle_manager
-from .config_di import ConfigurationBinder
-from .auto_binding import AutoBinder
-from ..database.repositories.base import BaseRepository
 
 logger = logging.getLogger(__name__)
 
@@ -82,10 +82,10 @@ class DISetup:
         # 这里可以扫描并自动注册所有仓储类
         # 简化示例，手动注册主要仓储
         try:
-            from ..database.repositories.match_repository import MatchRepository
-            from ..database.repositories.prediction_repository import (
-                PredictionRepository,
-            )
+            from ..database.repositories.match_repository import \
+                MatchRepository
+            from ..database.repositories.prediction_repository import \
+                PredictionRepository
             from ..database.repositories.user_repository import UserRepository
 
             self.container.register_scoped(BaseRepository, MatchRepository)
@@ -100,9 +100,9 @@ class DISetup:
         """自动注册服务"""
         # 这里可以扫描并自动注册所有服务类
         try:
+            from ..services.cache import CacheService
             from ..services.database import DatabaseService
             from ..services.prediction import PredictionService
-            from ..services.cache import CacheService
 
             self.container.register_singleton(DatabaseService)
             self.container.register_scoped(PredictionService)

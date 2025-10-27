@@ -9,18 +9,20 @@
 - /collector/*: 指标收集器控制与状态
 """
 
-from sqlalchemy.orm import Session
-from sqlalchemy import text
-import psutil
 import time
-from typing import Dict, Any, Optional, Optional
+from typing import Any, Dict, Optional
+
+import psutil
 from fastapi import APIRouter, Depends, Response
 from fastapi.responses import PlainTextResponse
+from sqlalchemy import text
+from sqlalchemy.orm import Session
+
+from src.core.logger import get_logger
+from src.database.dependencies import get_db
 
 from ..monitoring.metrics_collector import get_metrics_collector
 from ..monitoring.metrics_exporter import get_metrics_exporter
-from src.core.logger import get_logger
-from src.database.dependencies import get_db
 
 # 监控收集器与导出器（保留原功能，迁移到 /collector/* 与 /metrics/prometheus）
 

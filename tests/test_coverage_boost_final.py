@@ -1,13 +1,14 @@
 import pytest
+
 #!/usr/bin/env python3
 """
 最终覆盖率提升脚本
 快速运行所有测试以达到30%覆盖率目标
 """
 
+import os
 import subprocess
 import sys
-import os
 from pathlib import Path
 
 

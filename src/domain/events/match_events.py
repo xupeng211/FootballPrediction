@@ -6,9 +6,10 @@ Match Domain Events
 Defines domain events related to matches.
 """
 
-from typing import Dict, Any
+from typing import Any, Dict
+
+from ..models.match import MatchResult, MatchScore
 from .base import DomainEvent
-from ..models.match import MatchScore, MatchResult
 
 
 class MatchStartedEvent(DomainEvent):

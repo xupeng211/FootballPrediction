@@ -13,41 +13,71 @@ Cache Service Comprehensive Test Suite
 测试覆盖率目标：>=95%
 """
 
-import pytest
 import asyncio
-import json
-import time
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
-from typing import Dict, Any, List, Optional, Union
-from datetime import datetime, timedelta
-from dataclasses import dataclass, asdict
-from enum import Enum
-import pickle
 import hashlib
+import json
+import pickle
+import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Any, Dict, List, Optional, Union
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import pytest
 
 # 导入实际缓存模块，如果失败则使用Mock
 try:
-    from src.services.processing.caching.base.base_cache import BaseCache, CacheKeyManager
-    from src.services.processing.caching.processing_cache import ProcessingCache
+    from src.services.processing.caching.base.base_cache import (
+        BaseCache, CacheKeyManager)
+    from src.services.processing.caching.processing_cache import \
+        ProcessingCache
 except ImportError:
-    BaseCache = Mock()
-    CacheKeyManager = Mock()
-    ProcessingCache = Mock
+    # 创建一个简单的异步BaseCache Mock
+    class BaseCache:
+        def __init__(self):
+            self._storage = {}
+            self._ttl_store = {}
 
-from tests.unit.mocks.mock_factory_phase4a import Phase4AMockFactory
+        async def get(self, key: str) -> Optional[Any]:
+            return self._storage.get(key)
+
+        async def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
+            self._storage[key] = value
+            if ttl:
+                from datetime import datetime, timedelta
+
+                self._ttl_store[key] = datetime.utcnow() + timedelta(seconds=ttl)
+            return True
+
+        async def exists(self, key: str) -> bool:
+            return key in self._storage
+
+        async def delete(self, key: str) -> bool:
+            self._storage.pop(key, None)
+            self._ttl_store.pop(key, None)
+            return True
+
+        async def clear(self) -> bool:
+            self._storage.clear()
+            self._ttl_store.clear()
+            return True
+
+    CacheKeyManager = Mock()
+    ProcessingCache = Mock()
 
 # 导入缓存相关的Mock类
-from tests.unit.mocks.mock_factory_phase4a import (
-    MockCacheService,
-    MockRedisClient,
-    MockCacheConfig
-)
+from tests.unit.mocks.mock_factory_phase4a import (MockCacheConfig,
+                                                   MockCacheService,
+                                                   MockRedisClient,
+                                                   Phase4AMockFactory)
 
 
 class CacheType(Enum):
     """缓存类型枚举"""
+
     MEMORY = "memory"
     REDIS = "redis"
     DISTRIBUTED = "distributed"
@@ -56,6 +86,7 @@ class CacheType(Enum):
 
 class CacheStrategy(Enum):
     """缓存策略枚举"""
+
     LRU = "lru"
     LFU = "lfu"
     FIFO = "fifo"
@@ -68,6 +99,7 @@ class CacheStrategy(Enum):
 @dataclass
 class CacheEntry:
     """缓存条目"""
+
     key: str
     value: Any
     ttl: Optional[int] = None
@@ -88,6 +120,7 @@ class CacheEntry:
 @dataclass
 class CacheMetrics:
     """缓存指标"""
+
     hits: int = 0
     misses: int = 0
     sets: int = 0
@@ -164,12 +197,7 @@ class MockRedisCache(BaseCache):
                 raise ConnectionError("Redis not connected")
 
             # 创建缓存条目
-            entry = CacheEntry(
-                key=key,
-                value=value,
-                ttl=ttl,
-                created_at=datetime.now()
-            )
+            entry = CacheEntry(key=key, value=value, ttl=ttl, created_at=datetime.now())
 
             # 存储到内存
             self._storage[key] = entry
@@ -231,8 +259,8 @@ class MockRedisCache(BaseCache):
         total_requests = self._metrics.hits + self._metrics.misses + self._metrics.sets
         if total_requests > 0:
             self._metrics.avg_response_time = (
-                (self._metrics.avg_response_time * (total_requests - 1) + response_time) / total_requests
-            )
+                self._metrics.avg_response_time * (total_requests - 1) + response_time
+            ) / total_requests
 
     async def get_metrics(self) -> CacheMetrics:
         """获取缓存指标"""
@@ -249,6 +277,7 @@ class MockRedisCache(BaseCache):
     async def keys(self, pattern: str = "*") -> List[str]:
         """获取匹配模式的键"""
         import fnmatch
+
         return [key for key in self._storage.keys() if fnmatch.fnmatch(key, pattern)]
 
     async def ttl(self, key: str) -> int:
@@ -273,18 +302,18 @@ class TestCacheBasicOperations:
         return {
             "predictions": [
                 {"match_id": 1, "prediction": "home_win", "confidence": 0.75},
-                {"match_id": 2, "prediction": "draw", "confidence": 0.60}
+                {"match_id": 2, "prediction": "draw", "confidence": 0.60},
             ],
             "user_profile": {
                 "user_id": "user123",
-                "preferences": {"language": "zh", "timezone": "Asia/Shanghai"}
+                "preferences": {"language": "zh", "timezone": "Asia/Shanghai"},
             },
             "match_data": {
                 "match_id": 12345,
                 "home_team": "Manchester United",
                 "away_team": "Liverpool",
-                "date": "2025-10-26"
-            }
+                "date": "2025-10-26",
+            },
         }
 
     @pytest.mark.asyncio
@@ -576,9 +605,7 @@ class TestCacheStrategies:
     async def test_cache_aside_pattern(self, mock_cache):
         """测试Cache-Aside模式"""
         # 模拟数据库
-        mock_db = {
-            "user:123": {"name": "John", "email": "john@example.com"}
-        }
+        mock_db = {"user:123": {"name": "John", "email": "john@example.com"}}
 
         async def load_from_database(key):
             return mock_db.get(key)
@@ -760,7 +787,7 @@ class TestCachePerformance:
         operations_per_second_read = num_keys / bulk_read_time
 
         assert operations_per_second_write > 1000  # 每秒至少1000次写入
-        assert operations_per_second_read > 2000   # 每秒至少2000次读取
+        assert operations_per_second_read > 2000  # 每秒至少2000次读取
         assert len(results) == num_keys
         assert all(result is not None for result in results)
 
@@ -797,7 +824,7 @@ class TestCacheReliability:
             "list": [1, 2, 3, "four"],
             "dict": {"nested": {"key": "value"}},
             "unicode": "测试中文字符串",
-            "special_chars": "!@#$%^&*()_+-=[]{}|;:,.<>?"
+            "special_chars": "!@#$%^&*()_+-=[]{}|;:,.<>?",
         }
 
         # 存储复杂数据
@@ -814,10 +841,15 @@ class TestCacheReliability:
         """测试序列化和反序列化"""
         # 测试Python对象的序列化
         test_objects = [
-            {"complex_object": {"nested_list": [1, 2, 3], "nested_dict": {"key": "value"}}},
+            {
+                "complex_object": {
+                    "nested_list": [1, 2, 3],
+                    "nested_dict": {"key": "value"},
+                }
+            },
             [1, 2, 3, {"list_item": "dict_in_list"}],
             ("tuple", "data", 123),
-            None
+            None,
         ]
 
         for i, obj in enumerate(test_objects):
@@ -901,10 +933,11 @@ class TestCacheReliability:
         await reliable_cache.set("normal2", "value2")
 
         # 模拟部分操作失败
-        with patch.object(reliable_cache, 'set') as mock_set:
+        with patch.object(reliable_cache, "set") as mock_set:
             mock_set.side_effect = lambda k, v, ttl=3600: (
-                asyncio.sleep(0.001) if k.startswith("fail") else
-                asyncio.create_task(MockRedisCache.set(reliable_cache, k, v, ttl))
+                asyncio.sleep(0.001)
+                if k.startswith("fail")
+                else asyncio.create_task(MockRedisCache.set(reliable_cache, k, v, ttl))
             )
 
             # 尝试存储会失败和成功的数据
@@ -1000,11 +1033,11 @@ class TestCacheServiceIntegration:
     @pytest.mark.asyncio
     async def test_cache_service_initialization(self, mock_cache_service):
         """测试缓存服务初始化"""
-        with patch.object(mock_cache_service, 'initialize') as mock_init:
+        with patch.object(mock_cache_service, "initialize") as mock_init:
             mock_init.return_value = {
                 "success": True,
                 "cache_type": "redis",
-                "connected": True
+                "connected": True,
             }
 
             result = await mock_cache_service.initialize()
@@ -1022,23 +1055,25 @@ class TestCacheServiceIntegration:
             "home_win_probability": 0.45,
             "draw_probability": 0.25,
             "away_win_probability": 0.30,
-            "confidence": 0.75
+            "confidence": 0.75,
         }
 
         # 缓存预测数据
-        with patch.object(mock_cache_service, 'cache_prediction') as mock_cache:
+        with patch.object(mock_cache_service, "cache_prediction") as mock_cache:
             mock_cache.return_value = {
                 "success": True,
                 "key": f"prediction:{match_id}",
-                "ttl": 300
+                "ttl": 300,
             }
 
-            result = await mock_cache_service.cache_prediction(match_id, prediction_data)
+            result = await mock_cache_service.cache_prediction(
+                match_id, prediction_data
+            )
             assert result["success"] is True
             assert "prediction:" in result["key"]
 
         # 获取缓存的预测数据
-        with patch.object(mock_cache_service, 'get_cached_prediction') as mock_get:
+        with patch.object(mock_cache_service, "get_cached_prediction") as mock_get:
             mock_get.return_value = prediction_data
 
             cached_data = await mock_cache_service.get_cached_prediction(match_id)
@@ -1053,15 +1088,15 @@ class TestCacheServiceIntegration:
             "session_id": "sess_456789",
             "login_time": datetime.now(),
             "last_activity": datetime.now(),
-            "preferences": {"language": "zh"}
+            "preferences": {"language": "zh"},
         }
 
         # 缓存会话
-        with patch.object(mock_cache_service, 'cache_session') as mock_cache:
+        with patch.object(mock_cache_service, "cache_session") as mock_cache:
             mock_cache.return_value = {
                 "success": True,
                 "session_key": f"session:{user_id}",
-                "expires_in": 3600
+                "expires_in": 3600,
             }
 
             result = await mock_cache_service.cache_session(user_id, session_data)
@@ -1074,22 +1109,21 @@ class TestCacheServiceIntegration:
         user_id = "user123"
 
         # 测试按用户失效
-        with patch.object(mock_cache_service, 'invalidate_user_cache') as mock_invalidate:
-            mock_invalidate.return_value = {
-                "success": True,
-                "invalidated_keys": 5
-            }
+        with patch.object(
+            mock_cache_service, "invalidate_user_cache"
+        ) as mock_invalidate:
+            mock_invalidate.return_value = {"success": True, "invalidated_keys": 5}
 
             result = await mock_cache_service.invalidate_user_cache(user_id)
             assert result["success"] is True
             assert result["invalidated_keys"] == 5
 
         # 测试按模式失效
-        with patch.object(mock_cache_service, 'invalidate_pattern') as mock_pattern:
+        with patch.object(mock_cache_service, "invalidate_pattern") as mock_pattern:
             mock_pattern.return_value = {
                 "success": True,
                 "invalidated_keys": 12,
-                "pattern": "prediction:*"
+                "pattern": "prediction:*",
             }
 
             result = await mock_cache_service.invalidate_pattern("prediction:*")
@@ -1102,11 +1136,11 @@ class TestCacheServiceIntegration:
         # 预热热门比赛数据
         popular_matches = [12345, 12346, 12347]
 
-        with patch.object(mock_cache_service, 'warm_popular_matches') as mock_warm:
+        with patch.object(mock_cache_service, "warm_popular_matches") as mock_warm:
             mock_warm.return_value = {
                 "success": True,
                 "warmed_matches": len(popular_matches),
-                "duration_ms": 150
+                "duration_ms": 150,
             }
 
             result = await mock_cache_service.warm_popular_matches(popular_matches)
@@ -1116,14 +1150,14 @@ class TestCacheServiceIntegration:
     @pytest.mark.asyncio
     async def test_cache_statistics_monitoring(self, mock_cache_service):
         """测试缓存统计监控"""
-        with patch.object(mock_cache_service, 'get_statistics') as mock_stats:
+        with patch.object(mock_cache_service, "get_statistics") as mock_stats:
             mock_stats.return_value = {
                 "total_keys": 1000,
                 "memory_usage": "50MB",
                 "hit_rate": 0.85,
                 "avg_response_time": "2.5ms",
                 "operations_per_second": 5000,
-                "evictions": 12
+                "evictions": 12,
             }
 
             stats = await mock_cache_service.get_statistics()
@@ -1138,15 +1172,15 @@ class TestCacheServiceIntegration:
         cluster_nodes = [
             {"host": "redis-node-1", "port": 6379},
             {"host": "redis-node-2", "port": 6379},
-            {"host": "redis-node-3", "port": 6379}
+            {"host": "redis-node-3", "port": 6379},
         ]
 
-        with patch.object(mock_redis_client, 'connect_to_cluster') as mock_connect:
+        with patch.object(mock_redis_client, "connect_to_cluster") as mock_connect:
             mock_connect.return_value = {
                 "success": True,
                 "cluster_size": len(cluster_nodes),
                 "connected_nodes": len(cluster_nodes),
-                "replication_factor": 2
+                "replication_factor": 2,
             }
 
             result = await mock_redis_client.connect_to_cluster(cluster_nodes)
@@ -1154,11 +1188,11 @@ class TestCacheServiceIntegration:
             assert result["cluster_size"] == 3
 
         # 测试集群写入
-        with patch.object(mock_redis_client, 'cluster_set') as mock_cluster_set:
+        with patch.object(mock_redis_client, "cluster_set") as mock_cluster_set:
             mock_cluster_set.return_value = {
                 "success": True,
                 "node": "redis-node-2",
-                "replicated": True
+                "replicated": True,
             }
 
             result = await mock_redis_client.cluster_set("cluster_key", "cluster_value")
@@ -1169,13 +1203,13 @@ class TestCacheServiceIntegration:
     async def test_cache_backup_and_restore(self, mock_cache_service):
         """测试缓存备份和恢复"""
         # 创建备份
-        with patch.object(mock_cache_service, 'create_backup') as mock_backup:
+        with patch.object(mock_cache_service, "create_backup") as mock_backup:
             mock_backup.return_value = {
                 "success": True,
                 "backup_id": "backup_20251026_001",
                 "keys_count": 500,
                 "file_size": "25MB",
-                "duration_ms": 1200
+                "duration_ms": 1200,
             }
 
             backup_result = await mock_cache_service.create_backup()
@@ -1184,11 +1218,11 @@ class TestCacheServiceIntegration:
 
         # 恢复备份
         backup_id = backup_result["backup_id"]
-        with patch.object(mock_cache_service, 'restore_backup') as mock_restore:
+        with patch.object(mock_cache_service, "restore_backup") as mock_restore:
             mock_restore.return_value = {
                 "success": True,
                 "restored_keys": 500,
-                "duration_ms": 800
+                "duration_ms": 800,
             }
 
             restore_result = await mock_cache_service.restore_backup(backup_id)

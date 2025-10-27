@@ -6,25 +6,14 @@ Domain Events
 Defines domain event classes for recording and propagating important events in the domain.
 """
 
-from .match_events import (
-    MatchStartedEvent,
-    MatchFinishedEvent,
-    MatchCancelledEvent,
-    MatchPostponedEvent,
-)
-from .prediction_events import (
-    PredictionCreatedEvent,
-    PredictionUpdatedEvent,
-    PredictionEvaluatedEvent,
-    PredictionCancelledEvent,
-    PredictionExpiredEvent,
-    PredictionPointsAdjustedEvent,
-)
-from .prediction_events import (
-    PredictionCreatedEvent,
-    PredictionEvaluatedEvent,
-    PredictionCancelledEvent,
-)
+from .match_events import (MatchCancelledEvent, MatchFinishedEvent,
+                           MatchPostponedEvent, MatchStartedEvent)
+from .prediction_events import (PredictionCancelledEvent,
+                                PredictionCreatedEvent,
+                                PredictionEvaluatedEvent,
+                                PredictionExpiredEvent,
+                                PredictionPointsAdjustedEvent,
+                                PredictionUpdatedEvent)
 
 __all__ = [
     # 比赛事件

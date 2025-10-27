@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 16 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 """
 任务错误日志记录器测试
 Tests for Task Error Logger
@@ -10,15 +11,16 @@ Tests for Task Error Logger
 测试src.tasks.error_logger模块的错误日志记录功能
 """
 
-import pytest
-from datetime import datetime
-import traceback
 import asyncio
+import traceback
+from datetime import datetime
+
+import pytest
 
 # 测试导入
 try:
-    from src.tasks.error_logger import TaskErrorLogger
     from src.database.models.data_collection_log import CollectionStatus
+    from src.tasks.error_logger import TaskErrorLogger
 
     ERROR_LOGGER_AVAILABLE = True
 except ImportError as e:
@@ -32,7 +34,6 @@ except ImportError as e:
     not ERROR_LOGGER_AVAILABLE, reason="Error logger module not available"
 )
 @pytest.mark.unit
-
 class TestTaskErrorLogger:
     """任务错误日志记录器测试"""
 
@@ -469,8 +470,8 @@ class TestTaskErrorLoggerIntegration:
         TaskErrorLogger()
 
         # 性能测试：快速序列化大量错误
-        import time
         import json
+        import time
 
         errors = []
         for i in range(100):

@@ -3,13 +3,14 @@
 测试批量导入预测、数据导出等批量处理功能
 """
 
-import pytest
 import asyncio
-import tempfile
 import csv
-import json
 import io
-from datetime import datetime, timezone, timedelta
+import json
+import tempfile
+from datetime import datetime, timedelta, timezone
+
+import pytest
 from httpx import AsyncClient
 
 
@@ -98,9 +99,9 @@ class TestBatchProcessingFlow:
                 if status.get("status") == "COMPLETED":
                     break
                 elif status.get("status") == "FAILED":
-                    assert False, (
-                        f"批量处理失败: {status.get('error', 'Unknown error')}"
-                    )
+                    assert (
+                        False
+                    ), f"批量处理失败: {status.get('error', 'Unknown error')}"
 
         processing_duration = performance_metrics.end_timer("batch_processing")
         print(f"✅ 批量处理完成 ({processing_duration:.2f}s)")

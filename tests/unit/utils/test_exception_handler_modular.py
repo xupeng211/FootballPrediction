@@ -2,38 +2,31 @@
 
 # TODO: Consider creating a fixture for 16 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 数据质量异常处理器模块化测试
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
 
 
 def test_module_import():
     """测试模块导入"""
     # 测试导入新模块
-    from src.data.quality.exception_handler_mod import (
-        DataQualityExceptionHandler,
-        MissingValueHandler,
-        SuspiciousOddsHandler,
-        InvalidDataHandler,
-        QualityLogger,
-        StatisticsProvider,
-    )
-
-    # 测试导入异常类
-    from src.data.quality.exception_handler_mod import (
-        DataQualityException,
-        MissingValueException,
-        SuspiciousOddsException,
-    )
-
     # 测试导入兼容模块
+    # 测试导入异常类
+    from src.data.quality.exception_handler_mod import DataQualityException
+    from src.data.quality.exception_handler_mod import \
+        DataQualityExceptionHandler
+    from src.data.quality.exception_handler_mod import \
+        DataQualityExceptionHandler as LegacyDataQualityExceptionHandler
     from src.data.quality.exception_handler_mod import (
-        DataQualityExceptionHandler as LegacyDataQualityExceptionHandler,
-    )
+        InvalidDataHandler, MissingValueException, MissingValueHandler,
+        QualityLogger, StatisticsProvider, SuspiciousOddsException,
+        SuspiciousOddsHandler)
 
     assert DataQualityExceptionHandler is not None
     assert MissingValueHandler is not None
@@ -47,11 +40,8 @@ def test_module_import():
 def test_exception_classes():
     """测试异常类"""
     from src.data.quality.exception_handler_mod import (
-        DataQualityException,
-        MissingValueException,
-        SuspiciousOddsException,
-        InvalidDataException,
-    )
+        DataQualityException, InvalidDataException, MissingValueException,
+        SuspiciousOddsException)
 
     # 测试基础异常
     base_exc = DataQualityException("Base error")
@@ -142,8 +132,8 @@ def test_invalid_data_handler():
 async def test_quality_logger():
     """测试质量日志记录器"""
     from src.data.quality.exception_handler_mod import QualityLogger
-    # from src.database.connection_mod import DatabaseManager
 
+    # from src.database.connection_mod import DatabaseManager
     # Mock database manager
     db_manager = Mock(spec=DatabaseManager)
     logger = QualityLogger(db_manager)
@@ -186,7 +176,8 @@ def test_statistics_provider():
 
 def test_exception_handler_initialization():
     """测试异常处理器初始化"""
-    from src.data.quality.exception_handler_mod import DataQualityExceptionHandler
+    from src.data.quality.exception_handler_mod import \
+        DataQualityExceptionHandler
 
     with patch("src.database.connection.DatabaseManager"):
         handler = DataQualityExceptionHandler()
@@ -209,11 +200,8 @@ def test_backward_compatibility():
     """测试向后兼容性"""
     # 测试原始导入方式仍然有效
     from src.data.quality.exception_handler_mod import (
-        DataQualityExceptionHandler,
-        MissingValueHandler,
-        SuspiciousOddsHandler,
-        DataQualityException,
-    )
+        DataQualityException, DataQualityExceptionHandler, MissingValueHandler,
+        SuspiciousOddsHandler)
 
     # 验证类可以实例化
     with patch("src.database.connection.DatabaseManager"):
@@ -227,7 +215,8 @@ def test_backward_compatibility():
 @pytest.mark.asyncio
 async def test_exception_handler_methods():
     """测试异常处理器的方法"""
-    from src.data.quality.exception_handler_mod import DataQualityExceptionHandler
+    from src.data.quality.exception_handler_mod import \
+        DataQualityExceptionHandler
 
     with patch("src.database.connection.DatabaseManager"):
         handler = DataQualityExceptionHandler()
@@ -287,7 +276,8 @@ def test_urgency_score_calculation():
 @pytest.mark.asyncio
 async def test_quality_dashboard():
     """测试质量仪表板"""
-    from src.data.quality.exception_handler_mod import DataQualityExceptionHandler
+    from src.data.quality.exception_handler_mod import \
+        DataQualityExceptionHandler
 
     with patch("src.database.connection.DatabaseManager"):
         handler = DataQualityExceptionHandler()

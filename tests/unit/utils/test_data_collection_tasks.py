@@ -1,5 +1,6 @@
 # noqa: F401,F811,F821,E402
 from unittest.mock import MagicMock
+
 """
 data_collection_tasks 模块测试
 """
@@ -8,7 +9,6 @@ import pytest
 
 
 @pytest.mark.unit
-
 class TestDataCollectionTasks:
     """data_collection_tasks 模块测试"""
 

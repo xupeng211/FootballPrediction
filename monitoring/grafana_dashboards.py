@@ -17,7 +17,7 @@ class GrafanaDashboards:
 
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.logger.info(f"初始化monitoring特性: Grafana Dashboards")
+        self.logger.info("初始化monitoring特性: Grafana Dashboards")
 
     def process(self, data: Dict) -> Dict:
         """处理数据"""

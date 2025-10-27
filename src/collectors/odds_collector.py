@@ -12,10 +12,7 @@ For backward compatibility, this file re-exports all classes from the modules.
 import warnings
 
 try:
-    from .odds.basic import collector
-    from .odds.basic import parser
-    from .odds.basic import storage
-    from .odds.basic import validator
+    from .odds.basic import collector, parser, storage, validator
 except (ImportError, ModuleNotFoundError):
     # 如果odds子模块不存在，提供空实现
     collector = None
