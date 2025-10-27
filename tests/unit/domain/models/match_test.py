@@ -10,8 +10,9 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import pytest
 
 # 尝试导入目标模块
+module_name = "domain.models.match"
 try:
-    from domain.models.match import *
+    from src.domain.models.match import *
 
     IMPORTS_AVAILABLE = True
 except ImportError as e:

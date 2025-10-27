@@ -12,7 +12,7 @@ import pytest
 
 # 尝试导入目标模块
 try:
-    from models.prediction import *
+    from src.models.prediction import *
 
     IMPORTS_AVAILABLE = True
 except ImportError as e:

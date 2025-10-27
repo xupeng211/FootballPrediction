@@ -10,8 +10,9 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import pytest
 
 # 尝试导入目标模块
+module_name = "domain.models.team"
 try:
-    from domain.models.team import *
+    from src.domain.models.team import *
 
     IMPORTS_AVAILABLE = True
 except ImportError as e:
@@ -33,14 +34,14 @@ class TestDomainModelsTeam:
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
-        # TODO: 实现{class_name}类的基础测试
-        # 创建TeamType实例并测试基础功能
+        # 测试TeamType枚举的基础功能
         try:
-            instance = TeamType()
+            instance = TeamType.CLUB
             assert instance is not None
+            assert instance.value == "club"
         except Exception as e:
             print(f"实例化失败: {e}")
-            pytest.skip(f"{class_name}实例化失败")
+            pytest.skip("实例化失败")
 
     def test_points_function(self):
         """测试points函数功能"""
