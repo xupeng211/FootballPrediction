@@ -7,6 +7,7 @@
 import hashlib
 import secrets
 import uuid
+import urllib.parse
 from typing import Optional
 
 try:
@@ -155,3 +156,94 @@ class CryptoUtils:
     def generate_token(length: int = 32) -> str:
         """生成随机令牌"""
         return secrets.token_hex(length)
+
+    @staticmethod
+    def encode_url(text: str) -> str:
+        """URL编码"""
+        if not isinstance(text, str):
+            return ""
+        return urllib.parse.quote(text.encode('utf-8'))
+
+    @staticmethod
+    def decode_url(encoded_text: str) -> str:
+        """URL解码"""
+        if not isinstance(encoded_text, str):
+            return ""
+        try:
+            return urllib.parse.unquote(encoded_text, encoding='utf-8')
+        except Exception:
+            return ""
+
+    @staticmethod
+    def encode_url_component(text: str) -> str:
+        """URL组件编码"""
+        if not isinstance(text, str):
+            return ""
+        return urllib.parse.quote_plus(text.encode('utf-8'))
+
+    @staticmethod
+    def decode_url_component(encoded_text: str) -> str:
+        """URL组件解码"""
+        if not isinstance(encoded_text, str):
+            return ""
+        try:
+            return urllib.parse.unquote_plus(encoded_text, encoding='utf-8')
+        except Exception:
+            return ""
+
+    @staticmethod
+    def create_checksum(data: str, algorithm: str = "md5") -> str:
+        """创建数据校验和"""
+        if not isinstance(data, str):
+            return ""
+
+        # 简单实现：哈希 + 长度
+        data_hash = CryptoUtils.hash_string(data, algorithm)
+        return f"{data_hash[:8]}{len(data):08d}"
+
+    @staticmethod
+    def generate_api_key(length: int = 32) -> str:
+        """生成API密钥"""
+        # 使用更安全的字符集
+        chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+        if length <= 0:
+            return ""
+        return ''.join(secrets.choice(chars) for _ in range(length))
+
+    @staticmethod
+    def obfuscate(text: str) -> str:
+        """混淆文本"""
+        if not isinstance(text, str):
+            return ""
+
+        # 简单的异或混淆
+        key = "football_prediction_secret_key"
+        result = []
+        for i, char in enumerate(text):
+            key_char = key[i % len(key)]
+            result.append(chr(ord(char) ^ ord(key_char)))
+        return ''.join(result)
+
+    @staticmethod
+    def deobfuscate(obfuscated_text: str) -> str:
+        """反混淆文本"""
+        if not isinstance(obfuscated_text, str):
+            return ""
+
+        key = "football_prediction_secret_key"
+        result = []
+        for i, char in enumerate(obfuscated_text):
+            key_char = key[i % len(key)]
+            result.append(chr(ord(char) ^ ord(key_char)))
+        return ''.join(result)
+
+    @staticmethod
+    def compare_strings_secure(a: str, b: str) -> bool:
+        """安全字符串比较（防止时序攻击）"""
+        if len(a) != len(b):
+            return False
+
+        result = 0
+        for x, y in zip(a, b):
+            result |= ord(x) ^ ord(y)
+        return result == 0
