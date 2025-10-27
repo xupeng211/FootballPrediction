@@ -11,7 +11,7 @@ import pytest
 
 # 尝试导入目标模块
 try:
-    from api.data_router import *
+    from src.api.data_router import *
 
     IMPORTS_AVAILABLE = True
 except ImportError as e:
@@ -40,7 +40,7 @@ class TestApiData_Router:
             assert instance is not None
         except Exception as e:
             print(f"实例化失败: {e}")
-            pytest.skip(f"{class_name}实例化失败")
+            pytest.skip("模型实例化失败")
 
     def test_teaminfo_basic(self):
         """测试TeamInfo类基础功能"""
@@ -54,7 +54,7 @@ class TestApiData_Router:
             assert instance is not None
         except Exception as e:
             print(f"实例化失败: {e}")
-            pytest.skip(f"{class_name}实例化失败")
+            pytest.skip("模型实例化失败")
 
     def test_matchinfo_basic(self):
         """测试MatchInfo类基础功能"""
@@ -68,7 +68,7 @@ class TestApiData_Router:
             assert instance is not None
         except Exception as e:
             print(f"实例化失败: {e}")
-            pytest.skip(f"{class_name}实例化失败")
+            pytest.skip("模型实例化失败")
 
     def test_get_leagues_function(self):
         """测试get_leagues函数功能"""
@@ -83,7 +83,7 @@ class TestApiData_Router:
             assert result is not None or callable(result)
         except Exception as e:
             print(f"函数调用失败: {e}")
-            pytest.skip(f"{func_name}函数调用失败")
+            pytest.skip("函数调用失败")
 
     def test_get_league_function(self):
         """测试get_league函数功能"""
@@ -98,7 +98,7 @@ class TestApiData_Router:
             assert result is not None or callable(result)
         except Exception as e:
             print(f"函数调用失败: {e}")
-            pytest.skip(f"{func_name}函数调用失败")
+            pytest.skip("函数调用失败")
 
     def test_get_teams_function(self):
         """测试get_teams函数功能"""
@@ -113,7 +113,7 @@ class TestApiData_Router:
             assert result is not None or callable(result)
         except Exception as e:
             print(f"函数调用失败: {e}")
-            pytest.skip(f"{func_name}函数调用失败")
+            pytest.skip("函数调用失败")
 
     def test_get_team_function(self):
         """测试get_team函数功能"""
@@ -128,7 +128,7 @@ class TestApiData_Router:
             assert result is not None or callable(result)
         except Exception as e:
             print(f"函数调用失败: {e}")
-            pytest.skip(f"{func_name}函数调用失败")
+            pytest.skip("函数调用失败")
 
     def test_get_team_statistics_function(self):
         """测试get_team_statistics函数功能"""
@@ -143,7 +143,7 @@ class TestApiData_Router:
             assert result is not None or callable(result)
         except Exception as e:
             print(f"函数调用失败: {e}")
-            pytest.skip(f"{func_name}函数调用失败")
+            pytest.skip("函数调用失败")
 
         # API特定测试
         def test_api_endpoint(self):
