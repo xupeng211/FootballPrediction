@@ -125,7 +125,7 @@ class AlertManager:
 
     def get_active_alerts(self) -> List[Dict]:
         """获取活跃警报"""
-        return list(self.active_alerts.values())[-10:]  # 返回最近10个字典
+        return self.active_alerts[-10:]  # 返回最近10个字典
 
     async def send_alert(self, alert_data: Dict) -> bool:
         """发送告警"""
@@ -147,8 +147,11 @@ class AlertManager:
             **alert_data,
             "id": alert_id,
             "status": "active",
-            "created_at": datetime.utcnow().isoformat(),
         }
+
+        # 只有在没有时间戳信息时才添加当前时间
+        if not alert_with_meta.get("created_at") and not alert_with_meta.get("timestamp"):
+            alert_with_meta["created_at"] = datetime.utcnow().isoformat()
         self.active_alerts.append(alert_with_meta)
         return alert_id
 
@@ -189,20 +192,31 @@ class AlertManager:
             alert for alert in self.active_alerts if alert.get("type") == alert_type
         ]
 
-    def archive_old_alerts(self, days: int = 30) -> int:
+    def archive_old_alerts(self, days: int = 30, hours: int = None) -> int:
         """归档旧告警"""
-        cutoff_date = datetime.utcnow() - timedelta(days=days)
+        if hours is not None:
+            cutoff_date = datetime.utcnow() - timedelta(hours=hours)
+        else:
+            cutoff_date = datetime.utcnow() - timedelta(days=days)
         archived_count = 0
 
         for alert in list(self.active_alerts):
-            created_at_str = alert.get("created_at", "")
+            # 检查created_at或timestamp字段
+            created_at_str = alert.get("created_at", "") or alert.get("timestamp", "")
             if created_at_str:
                 try:
-                    created_at = datetime.fromisoformat(created_at_str)
+                    # 如果是datetime对象，转换为ISO字符串
+                    if isinstance(created_at_str, datetime):
+                        created_at = created_at_str
+                    else:
+                        created_at = datetime.fromisoformat(str(created_at_str))
+
                     if created_at < cutoff_date:
-                        self.remove_alert(alert.get("id", ""))
+                        alert_id = alert.get("id", "")
+                        self.remove_alert(alert_id)
                         archived_count += 1
-                except ValueError:
+                        logger.info(f"Archived alert {alert_id} with timestamp {created_at}")
+                except (ValueError, TypeError):
                     # 如果时间戳格式有问题，跳过
                     continue
 
