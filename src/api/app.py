@@ -23,6 +23,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from src.api.data_router import router as data_router
 from src.api.health import router as health_router
 from src.api.predictions import router as predictions_router
+from src.api.adapters.router import router as adapters_router
 from src.config.openapi_config import setup_openapi
 from src.core.logging import get_logger
 from src.core.prediction import PredictionEngine
@@ -145,6 +146,7 @@ app.add_middleware(RequestLoggingMiddleware)
 app.include_router(health_router, prefix="/api/v1/health", tags=["health"])
 app.include_router(predictions_router)
 app.include_router(data_router)
+app.include_router(adapters_router)
 
 
 # 全局异常处理

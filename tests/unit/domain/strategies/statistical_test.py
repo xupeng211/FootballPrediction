@@ -10,8 +10,9 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import pytest
 
 # 尝试导入目标模块
+module_name = "domain.strategies.statistical"
 try:
-    from domain.strategies.statistical import *
+    from src.domain.strategies.statistical import *
 
     IMPORTS_AVAILABLE = True
 except ImportError as e:

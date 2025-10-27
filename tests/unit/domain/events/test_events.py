@@ -53,7 +53,7 @@ class TestMatchEvents:
             home_team_id=1,
             away_team_id=2,
             final_score=score,
-            _result=MatchResult.HOME_WIN,
+            result=MatchResult.HOME_WIN,
         )
 
         payload = event.to_dict()["data"]
