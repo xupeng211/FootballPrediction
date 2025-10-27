@@ -2,19 +2,16 @@
 数据库模型简单测试
 """
 
-import pytest
 from datetime import datetime
-from src.models.common_models import (
-    DataValidationResult,
-    FeatureVector,
-    MatchData,
-    ModelMetrics,
-)
+
+import pytest
+
+from src.models.common_models import (DataValidationResult, FeatureVector,
+                                      MatchData, ModelMetrics)
 
 
 @pytest.mark.unit
 @pytest.mark.database
-
 def test_data_validation_result():
     """测试数据验证结果"""
     _result = DataValidationResult(is_valid=True)

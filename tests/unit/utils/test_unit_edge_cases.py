@@ -1,18 +1,19 @@
 # noqa: F401,F811,F821,E402
-import pytest
-import sys
-import os
-from datetime import timedelta
-import json
 import asyncio
+import gc
+import json
+import math
+import os
 import socket
+import sys
+import tempfile
 import urllib.error
 import urllib.request
-import gc
-import math
-import tempfile
+from datetime import timedelta
+from unittest.mock import MagicMock, patch
 
-from unittest.mock import patch, MagicMock
+import pytest
+
 """
 边界情况和错误处理测试
 专注于测试各种异常场景和边界条件
@@ -87,6 +88,7 @@ class TestEdgeCasesAndErrorHandling:
         """测试数据库约束违反"""
         try:
             from sqlalchemy.exc import IntegrityError
+
             from src.database.models.team import Team
 
             # 模拟唯一约束违反
@@ -259,8 +261,8 @@ class TestEdgeCasesAndErrorHandling:
 
     def test_api_rate_limiting(self):
         """测试API限流"""
-        from collections import defaultdict, deque
         import time
+        from collections import defaultdict, deque
 
         class RateLimiter:
             def __init__(self, max_requests, time_window):

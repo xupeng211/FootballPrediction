@@ -18,10 +18,10 @@ from typing import Set
 基于 DATA_DESIGN.md 第1.1节设计。
 """
 
-from typing import Dict, List, Optional, Any
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from .base_collector import DataCollector, CollectionResult
+from .base_collector import CollectionResult, DataCollector
 
 
 class FixturesCollector(DataCollector):

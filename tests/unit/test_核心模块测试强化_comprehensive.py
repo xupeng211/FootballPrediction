@@ -7,9 +7,11 @@
 目标覆盖率: 80%+
 """
 
-import pytest
-from unittest.mock import Mock, patch
 from datetime import datetime
+from unittest.mock import Mock, patch
+
+import pytest
+
 
 class Test核心模块测试强化:
     """核心模块测试强化 测试类"""
@@ -31,6 +33,7 @@ class Test核心模块测试强化:
         # 模拟性能测试
         end_time = datetime.now()
         assert (end_time - start_time).total_seconds() < 1.0
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

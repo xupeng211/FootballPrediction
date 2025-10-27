@@ -17,7 +17,7 @@ class ComplianceChecker:
 
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.logger.info(f"初始化compliance特性: Compliance Checker")
+        self.logger.info("初始化compliance特性: Compliance Checker")
 
     def process(self, data: Dict) -> Dict:
         """处理数据"""

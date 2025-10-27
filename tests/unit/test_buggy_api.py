@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from unittest.mock import Mock, patch
+
 """
 Auto-generated basic tests for buggy_api.py
 TODO: Expand these tests with actual functionality
@@ -13,7 +14,6 @@ import pytest
 
 @pytest.mark.unit
 @pytest.mark.api
-
 class TestBuggyApi:
     """Basic test class for buggy_api.py"""
 

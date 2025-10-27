@@ -4,19 +4,22 @@ Issue #83 覆盖率提升测试: api.decorators
 生成时间: 2025-10-25 13:03
 """
 
-import pytest
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import pytest
 
 # 尝试导入目标模块
 try:
     from api.decorators import *
+
     IMPORTS_AVAILABLE = True
     print("成功导入模块: adapters.base")
 except ImportError as e:
     print(f"导入警告: {e}")
     IMPORTS_AVAILABLE = False
+
 
 class TestApiDecoratorsBoost:
     """覆盖率提升测试类 - 针对80%目标优化"""
@@ -31,7 +34,7 @@ class TestApiDecoratorsBoost:
         """测试所有函数 - 覆盖率提升核心"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
-        
+
         # TODO: 实现所有函数的测试
         # 目标：覆盖所有可调用的函数
         functions_covered = []
@@ -41,7 +44,7 @@ class TestApiDecoratorsBoost:
         """测试所有类 - 覆盖率提升重点"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
-        
+
         # TODO: 实现所有类的测试
         # 目标：覆盖所有类的方法
         classes_covered = []
@@ -51,7 +54,7 @@ class TestApiDecoratorsBoost:
         """测试分支覆盖 - 覆盖率提升关键"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
-        
+
         # TODO: 实现所有分支的测试
         # 目标：覆盖所有if/else分支
         branches_covered = []
@@ -61,7 +64,7 @@ class TestApiDecoratorsBoost:
         """测试异常处理 - 覆盖率提升补充"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
-        
+
         # TODO: 实现异常处理的测试
         # 目标：覆盖所有异常处理分支
         exceptions_tested = []
@@ -71,7 +74,7 @@ class TestApiDecoratorsBoost:
         """测试边界条件 - 覆盖率提升完善"""
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
-        
+
         # TODO: 实现边界条件的测试
         # 目标：覆盖所有边界条件
         edge_cases_tested = []

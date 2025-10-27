@@ -2,8 +2,9 @@
 集合工具测试
 """
 
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TypeVar
+
 import pytest
-from typing import List, Dict, Any, Set, Tuple, Optional, TypeVar, Callable
 
 T = TypeVar("T")
 
@@ -256,7 +257,6 @@ class CollectionUtils:
 
 
 @pytest.mark.unit
-
 class TestCollectionUtils:
     """测试集合工具类"""
 

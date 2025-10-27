@@ -2,16 +2,17 @@
 
 # TODO: Consider creating a fixture for 5 repeated Mock creations
 
-from unittest.mock import patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
 """API测试模板"""
 
 import pytest
 from fastapi import status
+
 from src.api import predictions as predictions_module
 
 
 @pytest.mark.unit
-
 class TestHealthAPI:
     """健康检查API测试"""
 

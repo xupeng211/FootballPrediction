@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 22 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 事件系统API测试
 Tests for Event System API
@@ -10,20 +11,17 @@ Tests for Event System API
 测试src.api.events模块的功能
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
 
 # 测试导入
 try:
-    from src.api.events import (
-        router,
-        event_health_check,
-        get_event_statistics,
-        _find_handler,
-    )
+    from src.api.events import (_find_handler, event_health_check,
+                                get_event_statistics, router)
     from src.core.event_application import EventApplication
     from src.events import EventBus
-    from src.events.handlers import MetricsEventHandler, AnalyticsEventHandler
+    from src.events.handlers import AnalyticsEventHandler, MetricsEventHandler
 
     EVENTS_AVAILABLE = True
 except ImportError as e:
@@ -33,7 +31,6 @@ except ImportError as e:
 
 @pytest.mark.skipif(not EVENTS_AVAILABLE, reason="Events API module not available")
 @pytest.mark.unit
-
 class TestEventHealthCheck:
     """事件健康检查测试"""
 

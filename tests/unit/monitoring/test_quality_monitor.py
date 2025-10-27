@@ -1,12 +1,14 @@
 """测试数据质量监控模块"""
 
-import pytest
 import asyncio
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import pytest
 
 # Test imports
 try:
     from src.monitoring.quality_monitor import QualityMonitor
+
     IMPORT_SUCCESS = True
 except ImportError as e:
     IMPORT_SUCCESS = False
@@ -28,10 +30,7 @@ class TestQualityMonitor:
         monitor = QualityMonitor()
 
         # 创建模拟数据
-        data = {
-            "last_updated": 1704067200,  # 时间戳
-            "data_source": "api"
-        }
+        data = {"last_updated": 1704067200, "data_source": "api"}  # 时间戳
 
         try:
             result = monitor.check_data_freshness(data)
@@ -45,10 +44,7 @@ class TestQualityMonitor:
         monitor = QualityMonitor()
 
         # 创建模拟数据
-        data = {
-            "required_fields": ["id", "name"],
-            "record": {"id": 1, "name": "Test"}
-        }
+        data = {"required_fields": ["id", "name"], "record": {"id": 1, "name": "Test"}}
 
         try:
             result = monitor.check_data_completeness(data)
@@ -62,10 +58,7 @@ class TestQualityMonitor:
         monitor = QualityMonitor()
 
         # 创建模拟数据
-        data = {
-            "freshness_score": 0.8,
-            "completeness_score": 0.9
-        }
+        data = {"freshness_score": 0.8, "completeness_score": 0.9}
 
         try:
             result = monitor.calculate_overall_quality_score(data)
@@ -111,14 +104,11 @@ class TestQualityMonitor:
 
     def test_monitor_configuration(self):
         """测试监控器配置"""
-        config = {
-            "freshness_threshold": 3600,
-            "completeness_threshold": 0.8
-        }
+        config = {"freshness_threshold": 3600, "completeness_threshold": 0.8}
 
         try:
             monitor = QualityMonitor(config)
-            assert hasattr(monitor, 'config')
+            assert hasattr(monitor, "config")
         except Exception:
             # 配置可能不支持，这是可以接受的
             monitor = QualityMonitor()
@@ -131,7 +121,7 @@ class TestQualityMonitor:
         data_batch = [
             {"id": 1, "value": "test1"},
             {"id": 2, "value": "test2"},
-            {"id": 3, "value": "test3"}
+            {"id": 3, "value": "test3"},
         ]
 
         try:
@@ -151,7 +141,7 @@ async def test_async_functionality():
     monitor = QualityMonitor()
 
     # 测试异步方法（如果存在）
-    if hasattr(monitor, 'async_check'):
+    if hasattr(monitor, "async_check"):
         try:
             result = await monitor.async_check({})
             assert result is not None
@@ -169,12 +159,7 @@ def test_exception_handling():
     monitor = QualityMonitor()
 
     # 测试各种异常情况
-    test_cases = [
-        None,
-        {},
-        {"invalid": "data"},
-        {"nested": {"invalid": True}}
-    ]
+    test_cases = [None, {}, {"invalid": "data"}, {"nested": {"invalid": True}}]
 
     for test_data in test_cases:
         try:
@@ -208,7 +193,7 @@ class TestParameterizedInput:
         if not IMPORT_SUCCESS:
             pytest.skip("Module import failed")
 
-        monitor = QualityMonitor()
+        QualityMonitor()
         # 基础断言，确保测试能处理各种输入
         assert isinstance(input_value, (str, int, bool, list, dict))
 
@@ -239,12 +224,12 @@ class TestBoundaryConditions:
         monitor = QualityMonitor()
 
         edge_cases = [
-            "",           # 空字符串
-            [],           # 空列表
-            {},           # 空字典
-            None,         # None值
-            0,            # 零值
-            False,        # False值
+            "",  # 空字符串
+            [],  # 空列表
+            {},  # 空字典
+            None,  # None值
+            0,  # 零值
+            False,  # False值
         ]
 
         for case in edge_cases:
@@ -262,10 +247,10 @@ class TestBoundaryConditions:
         monitor = QualityMonitor()
 
         extreme_values = [
-            999999999,    # 大数
-            -999999999,   # 负大数
-            1.79e308,     # 浮点数最大值
-            -1.79e308,    # 浮点数最小值
+            999999999,  # 大数
+            -999999999,  # 负大数
+            1.79e308,  # 浮点数最大值
+            -1.79e308,  # 浮点数最小值
         ]
 
         for value in extreme_values:

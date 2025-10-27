@@ -16,7 +16,7 @@ def fix_specific_line_indentation(filepath, line_number):
             line = lines[line_number - 1]
             if line.strip():
                 # 检查当前缩进
-                current_indent = len(line) - len(line.lstrip())
+                len(line) - len(line.lstrip())
                 stripped = line.lstrip()
 
                 # 根据内容决定正确的缩进

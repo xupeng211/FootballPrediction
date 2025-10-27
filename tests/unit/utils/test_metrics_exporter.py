@@ -7,6 +7,7 @@ except Exception:
     pass
     from src.metrics.exporter import MetricsExporter
 except ImportError:
+
     class MetricsExporter:
         def export_metrics(self):
             return "exported"

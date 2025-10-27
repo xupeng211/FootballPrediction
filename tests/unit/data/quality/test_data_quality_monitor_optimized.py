@@ -1,4 +1,5 @@
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 """
 数据质量监控器优化测试
 Tests for Data Quality Monitor (Optimized Version)
@@ -6,13 +7,14 @@ Tests for Data Quality Monitor (Optimized Version)
 使用高性能mock方案测试数据质量监控功能
 """
 
-import pytest
-from datetime import datetime, timedelta
-import logging
 import asyncio
+import logging
+from datetime import datetime, timedelta
+
+import pytest
 
 # 导入优化的 mock
-from tests.mocks.fast_mocks import FastDatabaseManager, FastAsyncSession
+from tests.mocks.fast_mocks import FastAsyncSession, FastDatabaseManager
 
 # 测试导入
 try:
@@ -54,7 +56,6 @@ def data_quality_monitor(mock_db_session):
     reason="Data quality monitor module not available",
 )
 @pytest.mark.unit
-
 class TestDataQualityMonitorOptimized:
     """数据质量监控器优化测试"""
 
@@ -279,7 +280,9 @@ class TestDataQualityMonitorIntegration:
         with patch("src.data.quality.data_quality_monitor.DatabaseManager") as mock_db:
             # 配置 mock
             mock_session = FastAsyncSession()
-            mock_db.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
+            mock_db.return_value.get_async_session.return_value.__aenter__.return_value = (
+                mock_session
+            )
 
             # 创建监控器
             monitor = DataQualityMonitor()

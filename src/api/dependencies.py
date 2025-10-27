@@ -15,12 +15,12 @@ Provides FastAPI dependency injection functions, including:
 - Request validation
 """
 
-from typing import Dict, Optional, Optional
 import os
-from dotenv import load_dotenv
+from typing import Dict, Optional
 
+from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 try:
     from jose import JWTError, jwt
@@ -33,8 +33,8 @@ except ImportError:
         raise ImportError("Please install python-jose: pip install python-jose")
 
 
-from src.core.prediction_engine import PredictionEngine
 from src.core.logger import get_logger
+from src.core.prediction_engine import PredictionEngine
 
 # 加载环境变量
 load_dotenv()

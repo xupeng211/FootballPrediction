@@ -3,7 +3,8 @@
 # TODO: Consider creating a fixture for 9 repeated Mock creations
 
 # noqa: F401,F811,F821,E402
-from unittest.mock import Mock, AsyncMock
+from unittest.mock import AsyncMock, Mock
+
 """赔率收集器独立测试 - 消除零覆盖率"""
 
 import pytest
@@ -137,7 +138,6 @@ def odds_collector(mock_db_session, mock_redis_client):
 
 
 @pytest.mark.unit
-
 class TestOddsCollector:
     """赔率收集器测试"""
 

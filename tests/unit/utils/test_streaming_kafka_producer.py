@@ -2,17 +2,20 @@
 
 # TODO: Consider creating a fixture for 6 repeated Mock creations
 
-from unittest.mock import patch, AsyncMock, MagicMock, mock_open
+from unittest.mock import AsyncMock, MagicMock, mock_open, patch
+
 """
 Kafka生产者测试
 """
 
-import pytest
 import asyncio
 import json
 from typing import Any, Dict, Optional
-from src.streaming.kafka_producer_simple import KafkaMessageProducer
+
+import pytest
+
 from src.core.exceptions import StreamingError
+from src.streaming.kafka_producer_simple import KafkaMessageProducer
 
 
 # 模拟kafka错误
@@ -25,7 +28,6 @@ class KafkaTimeoutError(Exception):
 
 
 @pytest.mark.unit
-
 class TestKafkaMessageProducer:
     """Kafka消息生产者测试"""
 

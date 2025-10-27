@@ -1,10 +1,11 @@
 # API模块导入测试
-import pytest
 from unittest.mock import Mock
+
+import pytest
+
 
 @pytest.mark.unit
 @pytest.mark.api
-
 def test_api_imports():
     modules = [
         "src.api.app",

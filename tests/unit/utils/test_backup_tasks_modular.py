@@ -2,18 +2,19 @@
 
 # TODO: Consider creating a fixture for 4 repeated Mock creations
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 """
 测试备份任务模块化拆分
 Test modular split of backup tasks
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
 
 
 @pytest.mark.unit
-
 class TestBaseModule:
     """测试基础模块"""
 
@@ -25,14 +26,12 @@ class TestBaseModule:
 
     def test_backup_metrics_import(self):
         """测试备份指标导入"""
-        from src.tasks.backup.base import (
-            backup_tasks_total,
-            backup_task_duration,
-            backup_last_success,
-            backup_size_bytes,
-            backup_failures_total,
-            get_backup_metrics,
-        )
+        from src.tasks.backup.base import (backup_failures_total,
+                                           backup_last_success,
+                                           backup_size_bytes,
+                                           backup_task_duration,
+                                           backup_tasks_total,
+                                           get_backup_metrics)
 
         assert backup_tasks_total is not None
         assert backup_task_duration is not None
@@ -59,13 +58,11 @@ class TestDatabaseModule:
 
     def test_database_backup_tasks_import(self):
         """测试数据库备份任务导入"""
-        from src.tasks.backup.database import (
-            daily_full_backup_task,
-            hourly_incremental_backup_task,
-            weekly_wal_archive_task,
-            backup_database_task,
-            verify_backup_task,
-        )
+        from src.tasks.backup.database import (backup_database_task,
+                                               daily_full_backup_task,
+                                               hourly_incremental_backup_task,
+                                               verify_backup_task,
+                                               weekly_wal_archive_task)
 
         assert daily_full_backup_task is not None
         assert hourly_incremental_backup_task is not None
@@ -112,11 +109,9 @@ class TestMaintenanceModule:
 
     def test_maintenance_tasks_import(self):
         """测试维护任务导入"""
-        from src.tasks.backup.maintenance import (
-            cleanup_old_backups_task,
-            verify_backup_integrity_task,
-            check_backup_storage_task,
-        )
+        from src.tasks.backup.maintenance import (check_backup_storage_task,
+                                                  cleanup_old_backups_task,
+                                                  verify_backup_integrity_task)
 
         assert cleanup_old_backups_task is not None
         assert verify_backup_integrity_task is not None
@@ -146,11 +141,9 @@ class TestServicesModule:
 
     def test_services_backup_tasks_import(self):
         """测试服务备份任务导入"""
-        from src.tasks.backup.services import (
-            backup_redis_task,
-            backup_logs_task,
-            backup_config_task,
-        )
+        from src.tasks.backup.services import (backup_config_task,
+                                               backup_logs_task,
+                                               backup_redis_task)
 
         assert backup_redis_task is not None
         assert backup_logs_task is not None
@@ -180,12 +173,10 @@ class TestManualModule:
 
     def test_manual_tasks_import(self):
         """测试手动任务导入"""
-        from src.tasks.backup.manual import (
-            manual_backup_task,
-            get_backup_status,
-            list_backup_files,
-            restore_backup,
-        )
+        from src.tasks.backup.manual import (get_backup_status,
+                                             list_backup_files,
+                                             manual_backup_task,
+                                             restore_backup)
 
         assert manual_backup_task is not None
         assert get_backup_status is not None
@@ -216,13 +207,9 @@ class TestModularStructure:
 
     def test_import_from_main_module(self):
         """测试从主模块导入"""
-        from src.tasks.backup import (
-            DatabaseBackupTask,
-            daily_full_backup_task,
-            backup_redis_task,
-            manual_backup_task,
-            get_backup_metrics,
-        )
+        from src.tasks.backup import (DatabaseBackupTask, backup_redis_task,
+                                      daily_full_backup_task,
+                                      get_backup_metrics, manual_backup_task)
 
         assert DatabaseBackupTask is not None
         assert daily_full_backup_task is not None
@@ -233,12 +220,10 @@ class TestModularStructure:
     def test_backward_compatibility_imports(self):
         """测试向后兼容性导入"""
         # 从原始文件导入应该仍然有效
-        from src.tasks.backup_tasks import (
-            DatabaseBackupTask as old_task,
-            daily_full_backup_task as old_daily,
-            backup_redis_task as old_redis,
-            get_backup_metrics as old_metrics,
-        )
+        from src.tasks.backup_tasks import DatabaseBackupTask as old_task
+        from src.tasks.backup_tasks import backup_redis_task as old_redis
+        from src.tasks.backup_tasks import daily_full_backup_task as old_daily
+        from src.tasks.backup_tasks import get_backup_metrics as old_metrics
 
         assert old_task is not None
         assert old_daily is not None
@@ -322,8 +307,8 @@ class TestTaskDecorators:
     def test_celery_task_decorators(self):
         """测试Celery任务装饰器"""
         from src.tasks.backup.database import daily_full_backup_task
-        from src.tasks.backup.services import backup_redis_task
         from src.tasks.backup.manual import manual_backup_task
+        from src.tasks.backup.services import backup_redis_task
 
         # 验证任务都有delay方法
         assert hasattr(daily_full_backup_task, "delay")

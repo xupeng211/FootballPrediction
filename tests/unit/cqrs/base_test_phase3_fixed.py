@@ -4,30 +4,34 @@ Issue #83-B阶段3简化测试: cqrs.base
 创建时间: 2025-10-25
 """
 
-import pytest
-from unittest.mock import Mock, patch, AsyncMock
-from datetime import datetime
-import inspect
 import asyncio
+import inspect
+from datetime import datetime
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 # 安全导入目标模块
 try:
     from cqrs.base import *
+
     IMPORTS_AVAILABLE = True
     print("✅ 成功导入模块: cqrs.base")
 
     import sys
+
     current_module = sys.modules[__name__]
     imported_items = []
     for name in dir(current_module):
         obj = getattr(current_module, name)
-        if hasattr(obj, '__module__') and obj.__module__ == 'cqrs.base':
+        if hasattr(obj, "__module__") and obj.__module__ == "cqrs.base":
             imported_items.append(name)
 
 except ImportError as e:
     print(f"❌ 导入失败: {e}")
     IMPORTS_AVAILABLE = False
     imported_items = []
+
 
 class TestCqrsBasePhase3:
     """阶段3简化测试"""
@@ -77,7 +81,11 @@ class TestCqrsBasePhase3:
                         print("   实例化成功")
 
                         # 测试基础方法
-                        methods = [m for m in dir(instance) if not m.startswith('_') and callable(getattr(instance, m))]
+                        methods = [
+                            m
+                            for m in dir(instance)
+                            if not m.startswith("_") and callable(getattr(instance, m))
+                        ]
                         for method_name in methods[:2]:
                             try:
                                 method = getattr(instance, method_name)
@@ -88,7 +96,9 @@ class TestCqrsBasePhase3:
                                     result = method()
                                 print(f"   方法 {method_name}: {type(result).__name__}")
                             except Exception as method_e:
-                                print(f"   方法 {method_name} 异常: {type(method_e).__name__}")
+                                print(
+                                    f"   方法 {method_name} 异常: {type(method_e).__name__}"
+                                )
 
                     except Exception as e:
                         print(f"   实例化异常: {e}")
@@ -122,6 +132,7 @@ class TestCqrsBasePhase3:
             pytest.skip("模块导入失败")
 
         import time
+
         start_time = time.time()
 
         # 执行基础操作
@@ -131,7 +142,7 @@ class TestCqrsBasePhase3:
                 item = globals().get(item_name)
                 if callable(item):
                     try:
-                        result = item()
+                        item()
                     except:
                         pass
 
@@ -156,7 +167,7 @@ class TestCqrsBasePhase3:
                         item = globals().get(item_name)
                         if callable(item):
                             try:
-                                result = item(test_case)
+                                item(test_case)
                             except:
                                 pass  # 预期的错误
                 except Exception as e:

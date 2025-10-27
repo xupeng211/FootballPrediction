@@ -1,18 +1,20 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 """
 文件工具测试
 """
 
-import pytest
 import json
-import tempfile
 import os
+import tempfile
 from pathlib import Path
+
+import pytest
+
 # from src.utils.file_utils import FileUtils
 
 
 @pytest.mark.unit
-
 class TestFileUtils:
     """文件工具测试"""
 

@@ -17,7 +17,7 @@ class PrometheusMetrics:
 
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.logger.info(f"初始化monitoring特性: Prometheus Metrics")
+        self.logger.info("初始化monitoring特性: Prometheus Metrics")
 
     def process(self, data: Dict) -> Dict:
         """处理数据"""

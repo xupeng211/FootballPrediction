@@ -3,9 +3,9 @@ HTTP客户端测试辅助工具
 提供HTTP请求的Mock和测试辅助功能
 """
 
-from typing import Any, Dict, Optional
-from unittest.mock import Mock, AsyncMock
 import json
+from typing import Any, Dict, Optional
+from unittest.mock import AsyncMock, Mock
 
 
 class MockHTTPResponse:
@@ -16,7 +16,7 @@ class MockHTTPResponse:
         status_code: int = 200,
         json_data: Optional[Dict[str, Any]] = None,
         text: Optional[str] = None,
-        headers: Optional[Dict[str, str]] = None
+        headers: Optional[Dict[str, str]] = None,
     ) -> None:
         self.status_code = status_code
         self._json_data = json_data or {"mock": True}
@@ -35,7 +35,7 @@ class MockHTTPResponse:
     @property
     def content(self) -> bytes:
         """返回响应内容字节"""
-        return self.text.encode('utf-8')
+        return self.text.encode("utf-8")
 
 
 class MockHTTPClient:
@@ -100,23 +100,29 @@ class MockAsyncHTTPClient:
 
 def apply_http_mocks():
     """应用HTTP mock装饰器"""
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             # 创建mock客户端
             mock_client = MockHTTPClient()
 
             # 设置常见响应
-            mock_client.set_response("GET", "/api/health", MockHTTPResponse({
-                "status": "healthy"
-            }))
+            mock_client.set_response(
+                "GET", "/api/health", MockHTTPResponse({"status": "healthy"})
+            )
 
-            mock_client.set_response("POST", "/api/predictions", MockHTTPResponse(
-                status_code=201,
-                json_data={"id": 1, "prediction": "win"}
-            ))
+            mock_client.set_response(
+                "POST",
+                "/api/predictions",
+                MockHTTPResponse(
+                    status_code=201, json_data={"id": 1, "prediction": "win"}
+                ),
+            )
 
             return func(mock_client, *args, **kwargs)
+
         return wrapper
+
     return decorator
 
 

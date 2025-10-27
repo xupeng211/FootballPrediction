@@ -1,4 +1,5 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 """API数据端点扩展测试"""
 
 import pytest
@@ -6,7 +7,6 @@ from fastapi.testclient import TestClient
 
 
 @pytest.mark.unit
-
 class TestAPIDataExtended:
     """API数据端点扩展测试"""
 

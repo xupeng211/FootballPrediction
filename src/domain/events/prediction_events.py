@@ -6,7 +6,8 @@ Prediction Domain Events
 Defines domain events related to predictions.
 """
 
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
 from .base import DomainEvent
 
 

@@ -173,7 +173,6 @@ class Phase2CoreModules:
             classes = []
             has_init = '__init__' in content
             has_methods = 'def ' in content
-            has_classes = 'class ' in content
 
             # 查找函数定义
             func_pattern = r'def\s+(\w+)\s*\('

@@ -7,16 +7,19 @@ Issue #83-C 高级重构测试: database.definitions
 策略: 高级Mock策略，解决复杂模块依赖问题
 """
 
-import pytest
-from unittest.mock import Mock, patch, AsyncMock, MagicMock, call
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Union
 import inspect
+import os
 import sys
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Union
+from unittest.mock import AsyncMock, MagicMock, Mock, call, patch
+
+import pytest
 
 # 导入Mock策略库
 
-import os
+
+
 # 内联Mock策略实现
 class MockContextManager:
     """简化的Mock上下文管理器"""
@@ -27,111 +30,87 @@ class MockContextManager:
 
     def __enter__(self):
         # 设置环境变量
-        os.environ['DATABASE_URL'] = 'sqlite:///:memory:'
-        os.environ['REDIS_URL'] = 'redis://localhost:6379/0'
-        os.environ['ENVIRONMENT'] = 'testing'
+        os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+        os.environ["REDIS_URL"] = "redis://localhost:6379/0"
+        os.environ["ENVIRONMENT"] = "testing"
 
         # 创建Mock数据
         for category in self.categories:
-            if category == 'di':
+            if category == "di":
                 self.mock_data[category] = self._create_di_mocks()
-            elif category == 'config':
+            elif category == "config":
                 self.mock_data[category] = self._create_config_mocks()
-            elif category == 'database':
+            elif category == "database":
                 self.mock_data[category] = self._create_database_mocks()
-            elif category == 'api':
+            elif category == "api":
                 self.mock_data[category] = self._create_api_mocks()
-            elif category == 'cqrs':
+            elif category == "cqrs":
                 self.mock_data[category] = self._create_cqrs_mocks()
-            elif category == 'cache':
+            elif category == "cache":
                 self.mock_data[category] = self._create_cache_mocks()
-            elif category == 'tasks':
+            elif category == "tasks":
                 self.mock_data[category] = self._create_tasks_mocks()
-            elif category == 'services':
+            elif category == "services":
                 self.mock_data[category] = self._create_services_mocks()
-            elif category == 'middleware':
+            elif category == "middleware":
                 self.mock_data[category] = self._create_middleware_mocks()
             else:
-                self.mock_data[category] = {'mock': Mock()}
+                self.mock_data[category] = {"mock": Mock()}
 
         return self.mock_data
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         # 清理环境变量
-        for key in ['DATABASE_URL', 'REDIS_URL', 'ENVIRONMENT']:
+        for key in ["DATABASE_URL", "REDIS_URL", "ENVIRONMENT"]:
             if key in os.environ:
                 del os.environ[key]
 
     def _create_di_mocks(self):
         """创建DI相关Mock"""
         return {
-            'container': Mock(),
-            'service_factory': Mock(),
-            'dependency_resolver': Mock()
+            "container": Mock(),
+            "service_factory": Mock(),
+            "dependency_resolver": Mock(),
         }
 
     def _create_config_mocks(self):
         """创建配置相关Mock"""
-        return {
-            'app_config': Mock(),
-            'database_config': Mock(),
-            'api_config': Mock()
-        }
+        return {"app_config": Mock(), "database_config": Mock(), "api_config": Mock()}
 
     def _create_database_mocks(self):
         """创建数据库相关Mock"""
-        return {
-            'engine': Mock(),
-            'session': Mock(),
-            'repository': Mock()
-        }
+        return {"engine": Mock(), "session": Mock(), "repository": Mock()}
 
     def _create_api_mocks(self):
         """创建API相关Mock"""
-        return {
-            'app': Mock(),
-            'client': Mock(),
-            'router': Mock()
-        }
+        return {"app": Mock(), "client": Mock(), "router": Mock()}
 
     def _create_cqrs_mocks(self):
         """创建CQRS相关Mock"""
-        return {
-            'command_bus': Mock(),
-            'query_bus': Mock(),
-            'event_handler': Mock()
-        }
+        return {"command_bus": Mock(), "query_bus": Mock(), "event_handler": Mock()}
 
     def _create_cache_mocks(self):
         """创建缓存相关Mock"""
-        return {
-            'redis_client': Mock(),
-            'cache_manager': Mock(),
-            'cache_store': Mock()
-        }
+        return {"redis_client": Mock(), "cache_manager": Mock(), "cache_store": Mock()}
 
     def _create_tasks_mocks(self):
         """创建任务相关Mock"""
-        return {
-            'task_manager': Mock(),
-            'celery_app': Mock(),
-            'task_queue': Mock()
-        }
+        return {"task_manager": Mock(), "celery_app": Mock(), "task_queue": Mock()}
 
     def _create_services_mocks(self):
         """创建服务相关Mock"""
         return {
-            'prediction_service': Mock(),
-            'data_service': Mock(),
-            'user_service': Mock()
+            "prediction_service": Mock(),
+            "data_service": Mock(),
+            "user_service": Mock(),
         }
 
     def _create_middleware_mocks(self):
         """创建中间件相关Mock"""
         return {
-            'cors_middleware': Mock(),
-            'auth_middleware': Mock(),
-            'cache_middleware': Mock()
+            "cors_middleware": Mock(),
+            "auth_middleware": Mock(),
+            "cache_middleware": Mock(),
         }
 
 
@@ -146,7 +125,7 @@ class TestDatabaseDefinitionsIssue83CFixed:
         """自动设置所有Mock"""
         pass  # Mock策略总是可用
 
-        with MockContextManager(['database', 'config']) as mocks:
+        with MockContextManager(["database", "config"]) as mocks:
             self.mocks = mocks
             yield
 
@@ -156,13 +135,14 @@ class TestDatabaseDefinitionsIssue83CFixed:
         try:
             # 尝试导入目标模块
             import importlib
-            module = importlib.import_module('database.definitions')
+
+            module = importlib.import_module("database.definitions")
 
             assert module is not None, f"模块 {module_name} 应该能导入"
             print(f"✅ 成功导入模块: {module_name}")
 
             # 验证模块有内容
-            assert hasattr(module, '__name__'), "模块应该有名称属性"
+            assert hasattr(module, "__name__"), "模块应该有名称属性"
             print("✅ 模块验证通过")
 
         except ImportError as e:
@@ -174,11 +154,11 @@ class TestDatabaseDefinitionsIssue83CFixed:
     @pytest.mark.unit
     def test_mock_setup_validation(self):
         """验证Mock设置正确性"""
-        assert hasattr(self, 'mocks'), "Mock应该已设置"
+        assert hasattr(self, "mocks"), "Mock应该已设置"
         assert len(self.mocks) > 0, "应该有Mock数据"
 
         # 验证关键Mock组件
-        for category in ['database', 'config']:
+        for category in ["database", "config"]:
             if category in self.mocks:
                 mock_data = self.mocks[category]
                 assert isinstance(mock_data, dict), f"{category} Mock数据应该是字典"
@@ -187,19 +167,23 @@ class TestDatabaseDefinitionsIssue83CFixed:
     @pytest.mark.unit
     def test_advanced_function_execution(self):
         """高级函数执行测试"""
-        if not hasattr(self, 'mocks') or len(self.mocks) == 0:
+        if not hasattr(self, "mocks") or len(self.mocks) == 0:
             pytest.skip("Mock数据不可用")
 
         try:
             # 尝试导入模块
             import importlib
-            module = importlib.import_module('database.definitions')
+
+            module = importlib.import_module("database.definitions")
 
             # 查找可测试的函数
-            functions = [name for name in dir(module)
-                        if callable(getattr(module, name))
-                        and not name.startswith('_')
-                        and not inspect.isclass(getattr(module, name))]
+            functions = [
+                name
+                for name in dir(module)
+                if callable(getattr(module, name))
+                and not name.startswith("_")
+                and not inspect.isclass(getattr(module, name))
+            ]
 
             for func_name in functions[:3]:  # 测试前3个函数
                 try:
@@ -227,26 +211,31 @@ class TestDatabaseDefinitionsIssue83CFixed:
     @pytest.mark.unit
     def test_advanced_class_testing(self):
         """高级类测试"""
-        if not hasattr(self, 'mocks') or len(self.mocks) == 0:
+        if not hasattr(self, "mocks") or len(self.mocks) == 0:
             pytest.skip("Mock数据不可用")
 
         try:
             import importlib
-            module = importlib.import_module('database.definitions')
+
+            module = importlib.import_module("database.definitions")
 
             # 查找可测试的类
-            classes = [name for name in dir(module)
-                      if inspect.isclass(getattr(module, name))
-                      and not name.startswith('_')]
+            classes = [
+                name
+                for name in dir(module)
+                if inspect.isclass(getattr(module, name)) and not name.startswith("_")
+            ]
 
             for class_name in classes[:2]:  # 测试前2个类
                 try:
                     cls = getattr(module, class_name)
 
                     # 尝试实例化
-                    if hasattr(cls, '__init__'):
+                    if hasattr(cls, "__init__"):
                         # 根据构造函数参数决定实例化策略
-                        init_args = cls.__init__.__code__.co_argcount - 1  # 减去self参数
+                        init_args = (
+                            cls.__init__.__code__.co_argcount - 1
+                        )  # 减去self参数
 
                         if init_args == 0:
                             instance = cls()
@@ -259,9 +248,12 @@ class TestDatabaseDefinitionsIssue83CFixed:
                         print(f"   ✅ 类 {class_name} 实例化成功")
 
                         # 测试类方法
-                        methods = [method for method in dir(instance)
-                                 if not method.startswith('_')
-                                 and callable(getattr(instance, method))]
+                        methods = [
+                            method
+                            for method in dir(instance)
+                            if not method.startswith("_")
+                            and callable(getattr(instance, method))
+                        ]
 
                         for method_name in methods[:2]:
                             try:
@@ -269,7 +261,9 @@ class TestDatabaseDefinitionsIssue83CFixed:
                                 result = method()
                                 print(f"      方法 {method_name}: {type(result)}")
                             except Exception as me:
-                                print(f"      方法 {method_name} 异常: {type(me).__name__}")
+                                print(
+                                    f"      方法 {method_name} 异常: {type(me).__name__}"
+                                )
                     else:
                         print(f"   类 {class_name} 无构造函数")
 
@@ -284,17 +278,17 @@ class TestDatabaseDefinitionsIssue83CFixed:
     @pytest.mark.integration
     def test_category_specific_integration(self):
         """类别特定的集成测试"""
-        if not hasattr(self, 'mocks') or len(self.mocks) == 0:
+        if not hasattr(self, "mocks") or len(self.mocks) == 0:
             pytest.skip("Mock数据不可用")
 
         try:
-            if 'database' == 'core':
+            if "database" == "core":
                 self._test_core_integration()
-            elif 'database' == 'api':
+            elif "database" == "api":
                 self._test_api_integration()
-            elif 'database' == 'database':
+            elif "database" == "database":
                 self._test_database_integration()
-            elif 'database' == 'cqrs':
+            elif "database" == "cqrs":
                 self._test_cqrs_integration()
             else:
                 self._test_generic_integration()
@@ -310,40 +304,40 @@ class TestDatabaseDefinitionsIssue83CFixed:
         print("🔧 核心模块集成测试")
 
         # 验证配置Mock
-        if 'config' in self.mocks:
-            config_data = self.mocks['config']
-            assert 'database' in config_data, "配置应该包含数据库设置"
-            assert 'api' in config_data, "配置应该包含API设置"
+        if "config" in self.mocks:
+            config_data = self.mocks["config"]
+            assert "database" in config_data, "配置应该包含数据库设置"
+            assert "api" in config_data, "配置应该包含API设置"
 
     def _test_api_integration(self):
         """API模块集成测试"""
         print("🌐 API模块集成测试")
 
         # 验证API Mock
-        if 'api' in self.mocks:
-            api_data = self.mocks['api']
-            assert 'app' in api_data, "API应该有应用实例"
-            assert 'client' in api_data, "API应该有客户端实例"
+        if "api" in self.mocks:
+            api_data = self.mocks["api"]
+            assert "app" in api_data, "API应该有应用实例"
+            assert "client" in api_data, "API应该有客户端实例"
 
     def _test_database_integration(self):
         """数据库模块集成测试"""
         print("🗄️ 数据库模块集成测试")
 
         # 验证数据库Mock
-        if 'database' in self.mocks:
-            db_data = self.mocks['database']
-            assert 'engine' in db_data, "数据库应该有引擎实例"
-            assert 'session' in db_data, "数据库应该有会话实例"
+        if "database" in self.mocks:
+            db_data = self.mocks["database"]
+            assert "engine" in db_data, "数据库应该有引擎实例"
+            assert "session" in db_data, "数据库应该有会话实例"
 
     def _test_cqrs_integration(self):
         """CQRS模块集成测试"""
         print("📋 CQRS模块集成测试")
 
         # 验证CQRS Mock
-        if 'cqrs' in self.mocks:
-            cqrs_data = self.mocks['cqrs']
-            assert 'command_bus' in cqrs_data, "CQRS应该有命令总线"
-            assert 'query_bus' in cqrs_data, "CQRS应该有查询总线"
+        if "cqrs" in self.mocks:
+            cqrs_data = self.mocks["cqrs"]
+            assert "command_bus" in cqrs_data, "CQRS应该有命令总线"
+            assert "query_bus" in cqrs_data, "CQRS应该有查询总线"
 
     def _test_generic_integration(self):
         """通用集成测试"""
@@ -357,17 +351,18 @@ class TestDatabaseDefinitionsIssue83CFixed:
     @pytest.mark.performance
     def test_performance_with_mocks(self):
         """带Mock的性能测试"""
-        if not hasattr(self, 'mocks') or len(self.mocks) == 0:
+        if not hasattr(self, "mocks") or len(self.mocks) == 0:
             pytest.skip("Mock数据不可用")
 
         import time
+
         start_time = time.time()
 
         # 执行一些基础操作
         for i in range(10):
             # Mock操作应该很快
-            if 'config' in self.mocks:
-                config = self.mocks['config']
+            if "config" in self.mocks:
+                config = self.mocks["config"]
                 assert isinstance(config, dict)
 
         end_time = time.time()
@@ -379,7 +374,7 @@ class TestDatabaseDefinitionsIssue83CFixed:
     @pytest.mark.regression
     def test_mock_regression_safety(self):
         """Mock回归安全检查"""
-        if not hasattr(self, 'mocks') or len(self.mocks) == 0:
+        if not hasattr(self, "mocks") or len(self.mocks) == 0:
             pytest.skip("Mock数据不可用")
 
         try:
@@ -387,9 +382,10 @@ class TestDatabaseDefinitionsIssue83CFixed:
             assert isinstance(self.mocks, dict), "Mock数据应该是字典"
 
             # 确保环境变量设置正确
-            if 'config' in self.mocks:
+            if "config" in self.mocks:
                 import os
-                assert 'DATABASE_URL' in os.environ, "应该设置数据库URL"
+
+                assert "DATABASE_URL" in os.environ, "应该设置数据库URL"
 
             print("✅ Mock回归安全检查通过")
 

@@ -1,20 +1,21 @@
-from unittest.mock import patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
 """
 API模块简单测试
 """
 
 pytest_plugins = "asyncio"
 
-import pytest
 import asyncio
+import json
+from typing import Any, Dict
+
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-import json
-from typing import Dict, Any
 
 
 @pytest.mark.unit
-
 class TestAPIBasics:
     """API基础功能测试"""
 

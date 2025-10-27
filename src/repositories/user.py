@@ -6,13 +6,13 @@ User Repository
 Implements data access logic for users.
 """
 
+from datetime import date, datetime
 from typing import Any, Dict, List, Optional, Type
-from datetime import datetime, date
 
-from sqlalchemy import select, func, update
+from sqlalchemy import func, select, update
 
-from .base import Repository, ReadOnlyRepository, QuerySpec
 from ..database.models import User
+from .base import QuerySpec, ReadOnlyRepository, Repository
 
 
 class UserRepositoryInterface(Repository[User, int]):

@@ -4,19 +4,18 @@
 提供更可靠、更详细的特征获取接口，包含完善的错误处理和日志记录。
 """
 
-from requests.exceptions import HTTPError, RequestException
-
 import logging
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from requests.exceptions import HTTPError, RequestException
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.features.feature_store import FootballFeatureStore
 from src.database.dependencies import get_async_db
 from src.database.models import Match
+from src.features.feature_store import FootballFeatureStore
 
 logger = logging.getLogger(__name__)
 

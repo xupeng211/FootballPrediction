@@ -2,10 +2,11 @@
 Base models
 """
 
+import types
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel
-import types
 
 
 class FootballBaseModel(BaseModel):
@@ -56,3 +57,16 @@ base_models = types.SimpleNamespace(
     StatusModel=StatusModel,
     MetadataModel=MetadataModel,
 )
+
+from datetime import datetime
+
+from sqlalchemy import Column, DateTime
+
+
+class TimestampMixin:
+    """时间戳混入类"""
+
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )

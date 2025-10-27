@@ -192,7 +192,6 @@ def fix_indentation_problems(content):
     lines = content.split('\n')
     new_lines = []
 
-    current_indent = 0
     in_function = False
     function_indent = 0
 

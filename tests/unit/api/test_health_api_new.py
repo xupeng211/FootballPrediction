@@ -1,4 +1,5 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 """健康检查API测试"""
 
 import pytest
@@ -7,7 +8,6 @@ from fastapi.testclient import TestClient
 
 @pytest.mark.unit
 @pytest.mark.api
-
 class TestHealthAPI:
     """健康检查API测试"""
 

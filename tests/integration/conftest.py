@@ -4,13 +4,14 @@
 """
 
 import asyncio
-import pytest
+import logging
 import os
 import sys
-from pathlib import Path
-from typing import AsyncGenerator, Generator, Any
 import tempfile
-import logging
+from pathlib import Path
+from typing import Any, AsyncGenerator, Generator
+
+import pytest
 
 # 加载测试环境配置
 test_env_path = Path(__file__).parent.parent.parent / ".env.test"
@@ -52,9 +53,9 @@ def event_loop():
 @pytest.fixture(scope="session")
 async def test_db():
     """测试数据库 fixture"""
-    from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-    from sqlalchemy.orm import sessionmaker
     from sqlalchemy import text
+    from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+    from sqlalchemy.orm import sessionmaker
 
     # 数据库配置
     database_url = os.getenv(
@@ -161,9 +162,10 @@ async def test_redis():
 async def test_kafka():
     """Kafka fixture"""
     try:
-        from kafka import KafkaAdminClient, KafkaProducer, KafkaConsumer
-        from kafka.errors import KafkaError
         import threading
+
+        from kafka import KafkaAdminClient, KafkaConsumer, KafkaProducer
+        from kafka.errors import KafkaError
 
         # Kafka 配置
         bootstrap_servers = os.getenv("KAFKA_BROKER", "localhost:9093")
@@ -253,6 +255,7 @@ async def test_kafka():
 async def api_client():
     """API 测试客户端 fixture"""
     from httpx import AsyncClient
+
     from src.main import app
 
     async with AsyncClient(app=app, base_url="http://test") as client:
@@ -336,7 +339,7 @@ async def sample_match_data(db_session):
 @pytest.fixture
 async def sample_prediction_data(db_session, sample_match_data):
     """创建示例预测数据"""
-    from src.database.models import User, Prediction
+    from src.database.models import Prediction, User
 
     # 创建用户
     _user = User(

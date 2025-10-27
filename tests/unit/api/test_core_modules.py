@@ -1,12 +1,14 @@
 from unittest.mock import Mock, patch
+
 """
 核心API模块测试
 Core API Modules Tests
 """
 
-import pytest
 import json
 from datetime import datetime
+
+import pytest
 
 # 测试各个模块的导入和基本功能
 
@@ -18,7 +20,7 @@ class TestCQRSModule:
     def test_cqrs_import(self):
         """测试CQRS模块导入"""
         try:
-            from src.api.cqrs import CommandBus, QueryBus, CreateCommand
+            from src.api.cqrs import CommandBus, CreateCommand, QueryBus
 
             assert CommandBus is not None
             assert QueryBus is not None
@@ -59,7 +61,7 @@ class TestEventsModule:
     def test_events_import(self):
         """测试事件模块导入"""
         try:
-            from src.api.events import EventManager, Event, EventHandler
+            from src.api.events import Event, EventHandler, EventManager
 
             assert EventManager is not None
             assert Event is not None
@@ -105,7 +107,7 @@ class TestObserversModule:
     def test_observers_import(self):
         """测试观察者模块导入"""
         try:
-            from src.api.observers import Observer, Subject, ObserverManager
+            from src.api.observers import Observer, ObserverManager, Subject
 
             assert Observer is not None
             assert Subject is not None
@@ -143,12 +145,10 @@ class TestRepositoriesModule:
     def test_repositories_import(self):
         """测试仓储模块导入"""
         try:
-            from src.api.repositories import (
-                PredictionRepository,
-                UserRepository,
-                MatchRepository,
-                RepositoryManager,
-            )
+            from src.api.repositories import (MatchRepository,
+                                              PredictionRepository,
+                                              RepositoryManager,
+                                              UserRepository)
 
             assert PredictionRepository is not None
             assert UserRepository is not None
@@ -160,7 +160,7 @@ class TestRepositoriesModule:
     def test_query_spec_builder(self):
         """测试查询规范构建器"""
         try:
-            from src.api.repositories import QuerySpec, QueryBuilder
+            from src.api.repositories import QueryBuilder, QuerySpec
 
             query = (
                 QueryBuilder()
@@ -211,13 +211,8 @@ class TestDecoratorsModule:
     def test_decorators_import(self):
         """测试装饰器模块导入"""
         try:
-            from src.api.decorators import (
-                log_requests,
-                cache_result,
-                rate_limit,
-                timeout,
-                retry,
-            )
+            from src.api.decorators import (cache_result, log_requests,
+                                            rate_limit, retry, timeout)
 
             assert log_requests is not None
             assert cache_result is not None
@@ -295,12 +290,9 @@ class TestAdaptersModule:
     def test_adapters_import(self):
         """测试适配器模块导入"""
         try:
-            from src.api.adapters import (
-                DataAdapter,
-                FootballDataAdapter,
-                ExternalAPIAdapter,
-                AdapterRegistry,
-            )
+            from src.api.adapters import (AdapterRegistry, DataAdapter,
+                                          ExternalAPIAdapter,
+                                          FootballDataAdapter)
 
             assert DataAdapter is not None
             assert FootballDataAdapter is not None
@@ -361,12 +353,8 @@ class TestFacadesModule:
     def test_facades_import(self):
         """测试门面模块导入"""
         try:
-            from src.api.facades import (
-                PredictionFacade,
-                DataFacade,
-                NotificationFacade,
-                FacadeManager,
-            )
+            from src.api.facades import (DataFacade, FacadeManager,
+                                         NotificationFacade, PredictionFacade)
 
             assert PredictionFacade is not None
             assert DataFacade is not None
@@ -406,11 +394,8 @@ class TestFeaturesModule:
     def test_features_import(self):
         """测试特征模块导入"""
         try:
-            from src.api.features import (
-                FeatureExtractor,
-                FeatureStore,
-                FeatureCalculator,
-            )
+            from src.api.features import (FeatureCalculator, FeatureExtractor,
+                                          FeatureStore)
 
             assert FeatureExtractor is not None
             assert FeatureStore is not None

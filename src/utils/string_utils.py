@@ -12,8 +12,8 @@
 
 import re
 import unicodedata
-from typing import List, Optional
 from functools import lru_cache
+from typing import List, Optional
 
 
 class StringUtils:

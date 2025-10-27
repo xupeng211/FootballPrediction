@@ -1,3 +1,5 @@
+import pytest
+
 # noqa: F401,F811,F821,E402
 """字典工具类测试"""
 
@@ -5,7 +7,6 @@
 
 
 @pytest.mark.unit
-
 class TestDictUtils:
     """字典工具类测试"""
 

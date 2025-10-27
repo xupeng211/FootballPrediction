@@ -4,8 +4,8 @@
 
 import json
 import os
-from typing import Any, Dict, List, Optional
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 
 class StreamConfig:

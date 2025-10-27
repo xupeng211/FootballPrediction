@@ -1,11 +1,11 @@
 """基础收集器测试"""
 
 import pytest
-from src.data.collectors.base_collector import DataCollector, CollectionResult
+
+from src.data.collectors.base_collector import CollectionResult, DataCollector
 
 
 @pytest.mark.unit
-
 class TestDataCollector:
     """测试数据收集器"""
 
@@ -42,8 +42,9 @@ class TestDataCollector:
     def test_data_collector_is_abstract(self):
         """测试数据收集器是抽象类"""
         try:
-            from src.data.collectors.base_collector import DataCollector
             import pytest
+
+            from src.data.collectors.base_collector import DataCollector
 
             # DataCollector 应该是抽象类，不能直接实例化
             with pytest.raises(TypeError):

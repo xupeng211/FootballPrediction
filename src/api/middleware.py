@@ -6,16 +6,17 @@ API Middleware Module
 Provides various API middleware implementations.
 """
 
+import json
+import logging
 import time
 import uuid
-import json
-from typing import Dict, Any, Optional, Callable, Optional, Optional
+from typing import Any, Callable, Dict, Optional
+
+from fastapi import HTTPException
+from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
-from fastapi import HTTPException
-from fastapi.responses import JSONResponse
-import logging
 
 logger = logging.getLogger(__name__)
 

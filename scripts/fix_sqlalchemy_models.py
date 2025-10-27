@@ -84,7 +84,7 @@ def main():
     fixed_files = fix_sqlalchemy_models()
 
     if fixed_files:
-        print(f"\n📊 修复总结:")
+        print("\n📊 修复总结:")
         print(f"  - 修复文件数: {len(fixed_files)}")
         print(f"  - 每个文件都添加了 '__table_args__ = {'extend_existing': True}'")
         print("\n🎯 建议:")

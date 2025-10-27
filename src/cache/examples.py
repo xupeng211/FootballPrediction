@@ -6,18 +6,12 @@ Cache Decorators Usage Examples
 """
 
 import asyncio
-from typing import Any, Dict, List, Optional
 import logging
+from typing import Any, Dict, List, Optional
 
-from .decorators import (
-    cache_result,
-    cache_with_ttl,
-    cache_by_user,
-    cache_invalidate,
-    cache_user_predictions,
-    cache_match_data,
-    cache_team_stats,
-)
+from .decorators import (cache_by_user, cache_invalidate, cache_match_data,
+                         cache_result, cache_team_stats,
+                         cache_user_predictions, cache_with_ttl)
 
 
 # 示例1: 基础结果缓存

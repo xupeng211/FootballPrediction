@@ -1,22 +1,28 @@
+import os
+import sys
+from unittest.mock import Mock, patch
+
+import pytest
+
+# 导入成功标志
+IMPORT_SUCCESS = True
+IMPORT_ERROR = None
 """
 安全导入版本 - test_api_service_integration.py
 自动生成以解决导入问题
 """
 
 
-import sys
-import os
-from unittest.mock import Mock, patch
-import pytest
-
 # 添加src到Python路径
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
+
 
 # 安全导入装饰器
 def safe_import(module_name):
     """安全导入模块"""
     try:
         import importlib
+
         module = importlib.import_module(module_name)
         print(f"✅ 成功导入模块: {module_name}")
         return module
@@ -27,15 +33,15 @@ def safe_import(module_name):
         print(f"⚠️ 模块异常 {module_name}: {type(e).__name__}: {e}")
         return None
 
+
 # 通用Mock函数
 def create_mock_module():
     """创建通用Mock模块"""
     mock = Mock()
-    mock.predict = Mock(return_value={'home_win_prob': 0.6, 'confidence': 0.8})
-    mock.get = Mock(return_value={'item_id': 1, 'name': 'test_item'})
-    mock.process_data = Mock(return_value={'processed': True, 'result': 'test_result'})
+    mock.predict = Mock(return_value={"home_win_prob": 0.6, "confidence": 0.8})
+    mock.get = Mock(return_value={"item_id": 1, "name": "test_item"})
+    mock.process_data = Mock(return_value={"processed": True, "result": "test_result"})
     return mock
-
 
     def test_create_prediction_endpoint_with_service(self, mock_get_service):
         """测试创建预测端点与服务层的交互"""
@@ -69,7 +75,7 @@ def create_mock_module():
             _data = response.json()
             assert "id" in data
             assert data["match_id"] == 1
-            assert data["predicted_home_score"]      == 2
+            assert data["predicted_home_score"] == 2
         else:
             # 如果端点不存在，验证mock被调用
             mock_service.create_prediction.assert_called_once()
@@ -180,7 +186,7 @@ class TestServiceWithRepositoryIntegration:
             # 断言
             if result:
                 assert result.match_id == 1
-                assert result.predicted_home_score      == 2
+                assert result.predicted_home_score == 2
             # 验证仓储方法被调用
             self.mock_prediction_repo.create.assert_called_once()
 
@@ -248,7 +254,7 @@ class TestEventDrivenIntegration:
 
         # 断言
         assert len(self.events) == 1
-        assert self.events[0]["event_type"]      == "prediction_created"
+        assert self.events[0]["event_type"] == "prediction_created"
         assert "data" in self.events[0]
 
     def test_match_status_update_event(self):
@@ -274,7 +280,7 @@ class TestEventDrivenIntegration:
         assert len(self.events) == 3
         assert all(e["event_type"] == "match_status_updated" for e in self.events)
         assert self.events[0]["old_status"] == "upcoming"
-        assert self.events[-1]["new_status"]      == "cancelled"
+        assert self.events[-1]["new_status"] == "cancelled"
 
 
 @pytest.mark.integration
@@ -406,9 +412,7 @@ class TestDatabaseTransactionIntegration:
         ("/api/v1/stats", "GET", [200, 404]),
     ],
 )
-def test_api_endpoint_availability(
-    endpoint, method, expected_status, client
-):
+def test_api_endpoint_availability(endpoint, method, expected_status, client):
     """测试API端点可用性"""
     try:
         client = TestClient(app) if IMPORT_SUCCESS else None
@@ -420,9 +424,9 @@ def test_api_endpoint_availability(
                 response = client.request(method, endpoint)
 
             # 验证状态码在预期范围内
-            assert response.status_code in expected_status, (
-                f"Unexpected status {response.status_code} for {endpoint}"
-            )
+            assert (
+                response.status_code in expected_status
+            ), f"Unexpected status {response.status_code} for {endpoint}"
         else:
             # 如果无法导入应用，只验证端点格式
             assert endpoint.startswith("/api/")
@@ -443,9 +447,7 @@ def test_api_endpoint_availability(
         ("invalid_method", {"invalid": "data"}, False),
     ],
 )
-def test_service_method_integration(
-    service_method, input_data, should_pass, client
-):
+def test_service_method_integration(service_method, input_data, should_pass, client):
     """测试服务方法集成"""
     # 验证方法名和输入数据的基本格式
     assert isinstance(service_method, str)
@@ -458,11 +460,11 @@ def test_service_method_integration(
         assert all(isinstance(k, str) for k in input_data.keys())
     else:
         # 对于无效方法，确保被正确处理
-        assert service_method      == "invalid_method"
+        assert service_method == "invalid_method"
 
 
 @pytest.mark.integration
-def test_error_propagation_flow(client, client):
+def test_error_propagation_flow(client):
     """测试错误传播流程"""
     # 模拟错误在层间传播
     layers = ["api", "service", "repository", "database"]
@@ -496,4 +498,3 @@ class BusinessError(Exception):
 
 class HTTPException(Exception):
     """HTTP异常"""
-

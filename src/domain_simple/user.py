@@ -3,8 +3,8 @@
 """
 
 from datetime import datetime
-from typing import Optional, Dict, Any, List
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class UserRole(Enum):

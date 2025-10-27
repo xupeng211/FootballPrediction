@@ -1,4 +1,5 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 """
 日志模块综合测试
 Comprehensive Tests for Logger Module
@@ -7,15 +8,15 @@ Comprehensive Tests for Logger Module
 """
 
 import logging
-import pytest
 from io import StringIO
+
+import pytest
 
 from src.core.logger import Logger, get_logger, logger
 
 
 @pytest.mark.unit
 @pytest.mark.critical
-
 class TestLogger:
     """日志管理类测试"""
 

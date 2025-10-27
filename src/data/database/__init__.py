@@ -1,4 +1,4 @@
-from typing import Any, List, Dict, Optional, Union, Callable
+from typing import Any, Callable, Dict, List, Optional, Union
 
 """
 Data database module

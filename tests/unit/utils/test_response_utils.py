@@ -1,11 +1,11 @@
 """响应工具测试"""
 
 import pytest
+
 from src.utils.response import APIResponse, APIResponseModel, ResponseUtils
 
 
 @pytest.mark.unit
-
 class TestResponseUtils:
     """测试响应工具函数"""
 

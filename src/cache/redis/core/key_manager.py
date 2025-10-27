@@ -2,9 +2,9 @@
 Redis key manager
 """
 
-from typing import Optional
 import hashlib
 import json
+from typing import Optional
 
 
 class RedisKeyManager:

@@ -1,16 +1,15 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 """
 简单模块测试
 """
 
 import pytest
-from src.utils import crypto_utils
-from src.utils import response
-from src.utils import i18n
+
+from src.utils import crypto_utils, i18n, response
 
 
 @pytest.mark.unit
-
 class TestCryptoUtils:
     """加密工具测试"""
 
@@ -291,7 +290,6 @@ class TestI18nUtils:
         # 由于模块在导入时会自动调用init_i18n
         # 这里主要验证不会抛出异常
         import importlib
-
         # 重新导入模块
         import sys
 

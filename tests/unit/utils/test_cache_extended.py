@@ -1,11 +1,11 @@
-from src.cache.ttl_cache import TTLCache
 import pytest
+
 from src.cache.redis_manager import RedisManager
+from src.cache.ttl_cache import TTLCache
 
 
 @pytest.mark.unit
 @pytest.mark.cache
-
 def test_ttl_cache_extended():
     cache = TTLCache(maxsize=100, ttl=60)
 

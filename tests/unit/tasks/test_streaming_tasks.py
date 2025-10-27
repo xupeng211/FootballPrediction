@@ -1,4 +1,5 @@
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 流处理任务测试
 Tests for Streaming Tasks
@@ -6,21 +7,17 @@ Tests for Streaming Tasks
 测试src.tasks.streaming_tasks模块的流处理功能
 """
 
-import pytest
-from datetime import datetime
 import asyncio
 import json
+from datetime import datetime
+
+import pytest
 
 # 测试导入
 try:
-    from src.tasks.streaming_tasks import (
-        StreamMessage,
-        KafkaProducer,
-        KafkaConsumer,
-        StreamProcessor,
-        StreamMonitor,
-        StreamingTaskStatus,
-    )
+    from src.tasks.streaming_tasks import (KafkaConsumer, KafkaProducer,
+                                           StreamingTaskStatus, StreamMessage,
+                                           StreamMonitor, StreamProcessor)
 
     STREAMING_TASKS_AVAILABLE = True
 except ImportError as e:
@@ -39,7 +36,6 @@ except ImportError as e:
     not STREAMING_TASKS_AVAILABLE, reason="Streaming tasks module not available"
 )
 @pytest.mark.unit
-
 class TestStreamMessage:
     """流消息测试"""
 
@@ -456,11 +452,7 @@ class TestStreamMonitor:
             mock_alert.send_alert.return_value = True
 
             # 模拟高延迟
-            lag_metrics = {
-                "test_topic": {
-                    0: 1500  # 超过阈值
-                }
-            }
+            lag_metrics = {"test_topic": {0: 1500}}  # 超过阈值
 
             await monitor.check_and_alert(lag_metrics)
 
@@ -670,14 +662,10 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if STREAMING_TASKS_AVAILABLE:
-        from src.tasks.streaming_tasks import (
-            StreamMessage,
-            KafkaProducer,
-            KafkaConsumer,
-            StreamProcessor,
-            StreamMonitor,
-            StreamingTaskStatus,
-        )
+        from src.tasks.streaming_tasks import (KafkaConsumer, KafkaProducer,
+                                               StreamingTaskStatus,
+                                               StreamMessage, StreamMonitor,
+                                               StreamProcessor)
 
         assert StreamMessage is not None
         assert KafkaProducer is not None

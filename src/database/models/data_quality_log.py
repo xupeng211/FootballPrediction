@@ -1,7 +1,10 @@
-from typing import Any, Dict, Optional
 from datetime import datetime
+from typing import Any, Dict, Optional
+
+from sqlalchemy import (JSON, Boolean, Column, DateTime, Integer, String, Text,
+                        func)
+
 from ..base import BaseModel
-from sqlalchemy import Boolean, Column, DateTime, Integer, JSON, String, Text, func
 
 """
 数据质量日志数据库模型
@@ -16,15 +19,11 @@ from sqlalchemy import Boolean, Column, DateTime, Integer, JSON, String, Text, f
 """
 
 from typing import Any, Dict, Optional
+
 from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String, Text
 from sqlalchemy.sql import func
+
 from src.database.base import BaseModel
-from sqlalchemy import Boolean
-from sqlalchemy import Column
-from sqlalchemy import DateTime
-from sqlalchemy import Integer
-from sqlalchemy import String
-from sqlalchemy import Text
 
 
 class DataQualityLog(BaseModel):

@@ -215,7 +215,7 @@ class SyntaxErrorFixer:
 
         success_rate = ((total_files - remaining_errors) / total_files * 100) if total_files > 0 else 0
 
-        print(f"\n📊 修复验证结果:")
+        print("\n📊 修复验证结果:")
         print(f"  总文件数: {total_files}")
         print(f"  成功修复: {len(self.fixed_files)}")
         print(f"  剩余错误: {remaining_errors}")
@@ -263,7 +263,7 @@ class SyntaxErrorFixer:
 
         total_fixed = fixed_indent + fixed_prediction + fixed_phase3
 
-        print(f"\n📊 修复统计:")
+        print("\n📊 修复统计:")
         print(f"  缩进错误修复: {fixed_indent} 个")
         print(f"  预测算法测试修复: {fixed_prediction} 个")
         print(f"  Phase3测试修复: {fixed_phase3} 个")
@@ -275,7 +275,7 @@ class SyntaxErrorFixer:
         # 4. 生成报告
         self.generate_report()
 
-        print(f"\n🎉 语法错误修复完成!")
+        print("\n🎉 语法错误修复完成!")
         print(f"{'✅ 全部成功' if success else '⚠️ 部分成功'}")
         print(f"修复文件数: {total_fixed}")
         print(f"验证结果: {'通过' if success else '需要进一步处理'}")

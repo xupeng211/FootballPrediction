@@ -5,7 +5,6 @@ import pytest
 
 @pytest.mark.unit
 @pytest.mark.monitoring
-
 class TestMonitoringAPI:
     """测试监控API"""
 

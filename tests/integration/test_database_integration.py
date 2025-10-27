@@ -1,4 +1,5 @@
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 数据库集成测试
 Database Integration Tests
@@ -6,20 +7,21 @@ Database Integration Tests
 测试数据库集成和仓储模式
 """
 
-import pytest
 import asyncio
+import os
+import tempfile
+
+import pytest
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import text
-import tempfile
-import os
 
 # 测试导入
 try:
-    from src.database.connection import DatabaseManager
-    from src.database.repositories import BaseRepository
-    from src.database.models import Base
     from src.database.config import get_database_url
+    from src.database.connection import DatabaseManager
+    from src.database.models import Base
+    from src.database.repositories import BaseRepository
 
     DATABASE_AVAILABLE = True
 except ImportError as e:
@@ -243,7 +245,7 @@ class TestDatabaseConfig:
         """测试：从环境变量获取数据库URL"""
         if get_database_url:
             url = get_database_url()
-            assert url      == "sqlite+aiosqlite:///test.db"
+            assert url == "sqlite+aiosqlite:///test.db"
 
 
 @pytest.mark.skipif(not DATABASE_AVAILABLE, reason="Database modules not available")
@@ -346,7 +348,7 @@ class TestDatabasePerformance:
         # 所有查询都应该成功
         assert len(results) == 10
         for i, result in enumerate(results):
-            assert _result      == f"session_{i}"
+            assert _result == f"session_{i}"
 
 
 @pytest.mark.skipif(DATABASE_AVAILABLE, reason="Database modules should be available")
@@ -360,19 +362,19 @@ class TestModuleNotAvailable:
 
 
 # 测试模块级别的功能
-def test_module_imports(client, client):
+def test_module_imports(client):
     """测试：模块导入"""
     if DATABASE_AVAILABLE:
         from src.database.connection import DatabaseManager
-        from src.database.repositories import BaseRepository
         from src.database.models import Base
+        from src.database.repositories import BaseRepository
 
         assert DatabaseManager is not None
         assert BaseRepository is not None
         assert Base is not None
 
 
-def test_database_manager_class(client, client):
+def test_database_manager_class(client):
     """测试：数据库管理器类"""
     if DATABASE_AVAILABLE:
         assert DatabaseManager is not None

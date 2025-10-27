@@ -16,7 +16,6 @@ def parse_coverage_output(coverage_output):
 
     # 解析覆盖率输出
     lines = coverage_output.split('\n')
-    current_module = None
 
     for line in lines:
         # 匹配覆盖率行，例如：

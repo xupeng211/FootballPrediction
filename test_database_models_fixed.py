@@ -73,7 +73,7 @@ class TestDatabaseModelsFixed:
             from src.database.models.league import League
 
             # 创建模拟实例
-            league = Mock(spec=League)
+            Mock(spec=League)
 
             # 模拟display_name属性方法
             if hasattr(League, 'display_name'):

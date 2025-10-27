@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 6 repeated Mock creations
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 """
 国际化测试
 Internationalization Tests
@@ -10,19 +11,15 @@ Internationalization Tests
 测试实际的i18n功能。
 """
 
-import pytest
 import os
 from pathlib import Path
 
-from src.utils.i18n import (
-    init_i18n,
-    supported_languages,
-    LOCALE_DIR,
-)
+import pytest
+
+from src.utils.i18n import LOCALE_DIR, init_i18n, supported_languages
 
 
 @pytest.mark.unit
-
 class TestI18n:
     """测试国际化功能"""
 

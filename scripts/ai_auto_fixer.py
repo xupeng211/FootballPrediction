@@ -40,7 +40,7 @@ class AIAutoFixer:
         """分析并修复问题"""
         results = []
 
-        print(f"🤖 AI自动化修复机器人启动...")
+        print("🤖 AI自动化修复机器人启动...")
         print(f"🎯 目标: {target}")
         print(f"📂 工作目录: {self.root_dir}")
 
@@ -643,7 +643,7 @@ def main():
     if args.report:
         # 只生成报告，不执行修复
         issues = fixer._analyze_current_issues()
-        print(f"\n📊 发现的问题:")
+        print("\n📊 发现的问题:")
         for issue_type, issue_list in issues.items():
             print(f"  {issue_type}: {len(issue_list)} 个问题")
     else:

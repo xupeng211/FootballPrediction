@@ -5,8 +5,9 @@ Tests for String Utils (Fixed Version)
 测试src.utils.string_utils模块的实际功能
 """
 
-import pytest
 from typing import List
+
+import pytest
 
 # 测试导入
 try:
@@ -23,7 +24,6 @@ except ImportError as e:
     not STRING_UTILS_AVAILABLE, reason="String utils module not available"
 )
 @pytest.mark.unit
-
 class TestStringUtilsTruncate:
     """字符串截断测试"""
 

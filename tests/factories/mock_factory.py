@@ -8,7 +8,7 @@ from __future__ import annotations
 import asyncio
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Union
-from unittest.mock import Mock, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock
 
 from tests.factories.data_factory import DataFactory
 
@@ -558,11 +558,11 @@ class MockFactory:
             ).append(handler)
         )
         mock.unsubscribe = Mock(
-            side_effect=lambda event, handler: mock.handlers.get(event, []).remove(
-                handler
+            side_effect=lambda event, handler: (
+                mock.handlers.get(event, []).remove(handler)
+                if event in mock.handlers
+                else None
             )
-            if event in mock.handlers
-            else None
         )
         mock.publish = AsyncMock(
             side_effect=lambda event, data: mock._publish(event, data)
@@ -655,10 +655,9 @@ class MockFactory:
             )
         )
         mock.send_template = AsyncMock(
-            side_effect=lambda template,
-            to,
-            context,
-            **kwargs: mock._record_template_email(template, to, context, kwargs)
+            side_effect=lambda template, to, context, **kwargs: mock._record_template_email(
+                template, to, context, kwargs
+            )
         )
         mock.send_bulk = AsyncMock(return_value=True)
         mock.get_sent_emails = Mock(return_value=mock.sent_emails)

@@ -5,17 +5,14 @@ import pytest
 
 @pytest.mark.unit
 @pytest.mark.streaming
-
 class TestStreaming:
     """测试流处理模块"""
 
     def test_kafka_components_import(self):
         """测试Kafka组件导入"""
         try:
-            from src.streaming.kafka_components import (
-                KafkaProducerManager,
-                KafkaConsumerManager,
-            )
+            from src.streaming.kafka_components import (KafkaConsumerManager,
+                                                        KafkaProducerManager)
 
             assert KafkaProducerManager is not None
             assert KafkaConsumerManager is not None

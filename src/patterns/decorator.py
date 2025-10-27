@@ -5,11 +5,11 @@
 """
 
 import asyncio
-import time
 import functools
 import logging
-from typing import Any, Callable, Dict, List, Optional, TypeVar
+import time
 from abc import ABC, abstractmethod
+from typing import Any, Callable, Dict, List, Optional, TypeVar
 
 from src.core.logging import get_logger
 

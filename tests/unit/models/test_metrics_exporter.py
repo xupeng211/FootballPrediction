@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 6 repeated Mock creations
 
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
 """
 模型指标导出器模块测试
 Model Metrics Exporter Module Tests
@@ -11,9 +12,10 @@ Model Metrics Exporter Module Tests
 Tests model metrics exporter functionality defined in src/models/metrics_exporter.py, focused on achieving 100% coverage.
 """
 
-import pytest
 import datetime
-from typing import Dict, Any
+from typing import Any, Dict
+
+import pytest
 
 # 导入要测试的模块
 try:
@@ -47,7 +49,6 @@ class MockPredictionResult:
     not METRICS_EXPORTER_AVAILABLE, reason="Metrics exporter module not available"
 )
 @pytest.mark.unit
-
 class TestModelMetricsExporter:
     """ModelMetricsExporter测试"""
 
@@ -363,9 +364,9 @@ class TestModelMetricsExporter:
 
         for key in expected_keys:
             assert key in summary, f"Missing key in summary: {key}"
-            assert isinstance(summary[key], str), (
-                f"Summary value for {key} should be a string"
-            )
+            assert isinstance(
+                summary[key], str
+            ), f"Summary value for {key} should be a string"
 
     def test_get_metrics_summary_content(self):
         """测试获取指标摘要内容"""

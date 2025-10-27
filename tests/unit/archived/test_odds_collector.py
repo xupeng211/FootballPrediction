@@ -1,12 +1,14 @@
 """测试赔率收集器模块"""
 
-import pytest
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime, timedelta
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 try:
     from src.collectors.odds_collector import OddsCollector
+
     IMPORT_SUCCESS = True
 except ImportError as e:
     IMPORT_SUCCESS = False
@@ -22,16 +24,12 @@ class TestOddsCollector:
         """测试赔率收集器创建"""
         collector = OddsCollector()
         assert collector is not None
-        assert hasattr(collector, 'collect_odds')
-        assert hasattr(collector, 'validate_odds')
+        assert hasattr(collector, "collect_odds")
+        assert hasattr(collector, "validate_odds")
 
     def test_odds_collector_with_config(self):
         """测试带配置的赔率收集器创建"""
-        config = {
-            "timeout": 30,
-            "retry_count": 3,
-            "data_source": "api"
-        }
+        config = {"timeout": 30, "retry_count": 3, "data_source": "api"}
 
         try:
             collector = OddsCollector(config)
@@ -52,10 +50,10 @@ class TestOddsCollector:
             "home_win": 2.5,
             "draw": 3.2,
             "away_win": 2.8,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
-        with patch.object(collector, 'collect_odds', return_value=mock_odds):
+        with patch.object(collector, "collect_odds", return_value=mock_odds):
             result = await collector.collect_odds(123)
             assert result == mock_odds
             assert result["match_id"] == 123
@@ -76,7 +74,9 @@ class TestOddsCollector:
             }
             mock_results.append(mock_odds)
 
-        with patch.object(collector, 'collect_odds_multiple', return_value=mock_results):
+        with patch.object(
+            collector, "collect_odds_multiple", return_value=mock_results
+        ):
             results = await collector.collect_odds_multiple(match_ids)
             assert len(results) == 3
             for i, result in enumerate(results):
@@ -91,7 +91,7 @@ class TestOddsCollector:
             "home_win": 2.5,
             "draw": 3.2,
             "away_win": 2.8,
-            "over_under": {"2.5": {"over": 1.9, "under": 1.9}}
+            "over_under": {"2.5": {"over": 1.9, "under": 1.9}},
         }
 
         try:
@@ -99,7 +99,7 @@ class TestOddsCollector:
             assert result is True
         except Exception:
             # 验证方法可能有不同的接口
-            if hasattr(collector, 'validate_odds'):
+            if hasattr(collector, "validate_odds"):
                 result = collector.validate_odds(valid_odds)
                 assert result is not None
 
@@ -129,11 +129,7 @@ class TestOddsCollector:
         """测试赔率格式化"""
         collector = OddsCollector()
 
-        raw_odds = {
-            "home_win": 2.5,
-            "draw": 3.2,
-            "away_win": 2.8
-        }
+        raw_odds = {"home_win": 2.5, "draw": 3.2, "away_win": 2.8}
 
         try:
             formatted = collector.format_odds(raw_odds)
@@ -142,7 +138,7 @@ class TestOddsCollector:
             assert "away_win" in formatted
         except Exception:
             # 格式化方法可能不存在
-            if hasattr(collector, 'format_odds'):
+            if hasattr(collector, "format_odds"):
                 pass
 
     def test_odds_history_tracking(self):
@@ -152,7 +148,7 @@ class TestOddsCollector:
         odds_history = [
             {"timestamp": "2024-01-01T10:00:00Z", "home_win": 2.5},
             {"timestamp": "2024-01-01T11:00:00Z", "home_win": 2.4},
-            {"timestamp": "2024-01-01T12:00:00Z", "home_win": 2.3}
+            {"timestamp": "2024-01-01T12:00:00Z", "home_win": 2.3},
         ]
 
         try:
@@ -160,7 +156,7 @@ class TestOddsCollector:
             assert trend is not None
         except Exception:
             # 趋势分析可能不支持
-            if hasattr(collector, 'analyze_odds_trend'):
+            if hasattr(collector, "analyze_odds_trend"):
                 pass
 
     @pytest.mark.asyncio
@@ -168,7 +164,9 @@ class TestOddsCollector:
         """测试网络故障错误处理"""
         collector = OddsCollector()
 
-        with patch.object(collector, 'collect_odds', side_effect=Exception("Network error")):
+        with patch.object(
+            collector, "collect_odds", side_effect=Exception("Network error")
+        ):
             with pytest.raises(Exception, match="Network error"):
                 await collector.collect_odds(123)
 
@@ -181,10 +179,10 @@ class TestOddsCollector:
             await asyncio.sleep(2)  # 模拟长时间操作
             return {"timeout": True}
 
-        with patch.object(collector, 'collect_odds', side_effect=timeout_handler):
+        with patch.object(collector, "collect_odds", side_effect=timeout_handler):
             # 设置较短的超时时间进行测试
             try:
-                result = await asyncio.wait_for(collector.collect_odds(123), timeout=0.1)
+                await asyncio.wait_for(collector.collect_odds(123), timeout=0.1)
             except asyncio.TimeoutError:
                 # 超时是预期的
                 assert True
@@ -195,7 +193,7 @@ class TestOddsCollector:
 
         valid_ranges = [
             (1.01, 1.99),  # 低赔率
-            (2.0, 3.0),    # 中等赔率
+            (2.0, 3.0),  # 中等赔率
             (10.0, 50.0),  # 高赔率
         ]
 
@@ -203,7 +201,7 @@ class TestOddsCollector:
             odds_data = {
                 "home_win": min_val,
                 "draw": (min_val + max_val) / 2,
-                "away_win": max_val
+                "away_win": max_val,
             }
 
             try:
@@ -240,13 +238,13 @@ class TestOddsCollector:
             "over_under",
             "both_teams_to_score",
             "correct_score",
-            "handicap"
+            "handicap",
         ]
 
         for market_type in market_types:
             market_data = {
                 "market_type": market_type,
-                "outcomes": {"outcome1": 2.5, "outcome2": 3.2}
+                "outcomes": {"outcome1": 2.5, "outcome2": 3.2},
             }
 
             try:
@@ -273,10 +271,10 @@ class TestOddsCollector:
             match_id = request["match_id"]
             batch_results[match_id] = {
                 "match_id": match_id,
-                "odds": {market: 2.5 for market in request["markets"]}
+                "odds": {market: 2.5 for market in request["markets"]},
             }
 
-        with patch.object(collector, 'collect_batch_odds', return_value=batch_results):
+        with patch.object(collector, "collect_batch_odds", return_value=batch_results):
             results = await collector.collect_batch_odds(batch_requests)
             assert len(results) == 3
             for match_id, odds_data in results.items():
@@ -286,17 +284,13 @@ class TestOddsCollector:
         """测试数据源集成"""
         collector = OddsCollector()
 
-        data_sources = [
-            "api_1",
-            "api_2",
-            "web_scraping"
-        ]
+        data_sources = ["api_1", "api_2", "web_scraping"]
 
         for source in data_sources:
             try:
                 collector.set_data_source(source)
                 # 如果方法存在且不抛出异常，测试通过
-                if hasattr(collector, 'set_data_source'):
+                if hasattr(collector, "set_data_source"):
                     assert True
             except Exception:
                 pass
@@ -364,7 +358,7 @@ class TestOddsCollector:
             collector.handle_odds_update(odds_update)
 
             # 验证回调被调用
-            if hasattr(update_callback, 'called'):
+            if hasattr(update_callback, "called"):
                 assert True
         except Exception:
             pass
@@ -375,7 +369,7 @@ class TestOddsCollector:
 
         odds_data = {
             123: {"home_win": 2.5, "draw": 3.2, "away_win": 2.8},
-            124: {"home_win": 1.8, "draw": 3.5, "away_win": 4.2}
+            124: {"home_win": 1.8, "draw": 3.5, "away_win": 4.2},
         }
 
         try:
@@ -398,7 +392,11 @@ class TestOddsCollector:
             if metrics is not None:
                 assert isinstance(metrics, dict)
                 # 可能的性能指标
-                possible_metrics = ["requests_count", "avg_response_time", "success_rate"]
+                possible_metrics = [
+                    "requests_count",
+                    "avg_response_time",
+                    "success_rate",
+                ]
                 for metric in possible_metrics:
                     if metric in metrics:
                         assert isinstance(metrics[metric], (int, float))
@@ -415,7 +413,7 @@ async def test_async_functionality():
     collector = OddsCollector()
 
     # 测试异步方法（如果存在）
-    if hasattr(collector, 'async_collect'):
+    if hasattr(collector, "async_collect"):
         try:
             result = await collector.async_collect()
             assert result is not None

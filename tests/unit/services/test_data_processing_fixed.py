@@ -1,26 +1,25 @@
 from unittest.mock import AsyncMock, MagicMock
+
 """
 数据处理服务测试（修复版）
 Tests for Data Processing Service (Fixed)
 """
 
-import pytest
 from datetime import datetime
 
-from src.services.data_processing import (
-    DataProcessor,
-    MatchDataProcessor,
-    OddsDataProcessor,
-    ScoresDataProcessor,
-    FeaturesDataProcessor,
-    DataQualityValidator,
-    AnomalyDetector,
-    MissingDataHandler,
-    MissingScoresHandler,
-    MissingTeamHandler,
-    BronzeToSilverProcessor,
-    DataProcessingService,
-)
+import pytest
+
+from src.services.data_processing import (AnomalyDetector,
+                                          BronzeToSilverProcessor,
+                                          DataProcessingService, DataProcessor,
+                                          DataQualityValidator,
+                                          FeaturesDataProcessor,
+                                          MatchDataProcessor,
+                                          MissingDataHandler,
+                                          MissingScoresHandler,
+                                          MissingTeamHandler,
+                                          OddsDataProcessor,
+                                          ScoresDataProcessor)
 
 
 class MockDataProcessor(DataProcessor):
@@ -32,7 +31,6 @@ class MockDataProcessor(DataProcessor):
 
 
 @pytest.mark.unit
-
 class TestDataProcessor:
     """测试数据处理器基类"""
 

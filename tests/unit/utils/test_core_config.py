@@ -1,18 +1,19 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 """
 核心配置模块测试
 """
 
-import pytest
 import json
 import tempfile
 from pathlib import Path
 
-from src.core.config import Config, Settings, HAS_PYDANTIC
+import pytest
+
+from src.core.config import HAS_PYDANTIC, Config, Settings
 
 
 @pytest.mark.unit
-
 class TestConfig:
     """配置管理类测试"""
 

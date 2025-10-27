@@ -3,7 +3,6 @@ import pytest
 
 @pytest.mark.unit
 @pytest.mark.streaming
-
 def test_streaming_imports():
     modules = [
         "src.streaming.kafka_components",

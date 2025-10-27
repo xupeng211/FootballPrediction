@@ -1,8 +1,8 @@
 # 所有服务基础测试
 import pytest
 
-@pytest.mark.unit
 
+@pytest.mark.unit
 def test_service_imports():
     services = [
         "src.services.audit_service",

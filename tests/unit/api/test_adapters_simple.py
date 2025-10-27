@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 6 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 """
 适配器API端点简化测试
 Tests for Adapter API Endpoints (Simple Version)
@@ -10,10 +11,11 @@ Tests for Adapter API Endpoints (Simple Version)
 专注于测试API端点的核心功能，使用简化的Mock避免序列化问题。
 """
 
+from datetime import date, datetime, timedelta
+
 import pytest
-from datetime import datetime, date, timedelta
-from fastapi.testclient import TestClient
 from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 from src.api.adapters import router
 
@@ -34,7 +36,6 @@ def client(app):
 
 @pytest.mark.unit
 @pytest.mark.api
-
 class TestAdaptersAPI:
     """适配器API测试"""
 

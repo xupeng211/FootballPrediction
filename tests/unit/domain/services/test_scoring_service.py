@@ -5,15 +5,15 @@ Tests for Scoring Service
 测试src.domain.services.scoring_service模块的功能
 """
 
-import pytest
 from decimal import Decimal
 
-from src.domain.services.scoring_service import ScoringService
+import pytest
+
 from src.domain.models.prediction import PredictionPoints
+from src.domain.services.scoring_service import ScoringService
 
 
 @pytest.mark.unit
-
 class TestScoringService:
     """计分服务测试"""
 

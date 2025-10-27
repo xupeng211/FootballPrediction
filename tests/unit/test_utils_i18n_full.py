@@ -1,10 +1,10 @@
 # 国际化工具测试
-from src.utils.i18n import I18nUtils
 import pytest
+
+from src.utils.i18n import I18nUtils
 
 
 @pytest.mark.unit
-
 def test_get_translation():
     text = I18nUtils.get_translation("hello", "zh")
     assert isinstance(text, str)

@@ -1,12 +1,14 @@
 """测试性能监控中间件"""
 
-import pytest
-import time
 import asyncio
-from unittest.mock import Mock, patch, AsyncMock
+import time
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 try:
     from src.middleware.performance_monitoring import PerformanceMiddleware
+
     IMPORT_SUCCESS = True
 except ImportError as e:
     IMPORT_SUCCESS = False
@@ -24,7 +26,7 @@ class TestPerformanceMiddleware:
         middleware = PerformanceMiddleware(app, enabled=True)
 
         assert middleware.enabled is True
-        assert hasattr(middleware, 'dispatch')
+        assert hasattr(middleware, "dispatch")
 
     def test_middleware_creation_disabled(self):
         """测试禁用状态的中间件创建"""
@@ -123,6 +125,7 @@ class TestPerformanceMiddleware:
 
         # 检查继承关系
         from starlette.middleware.base import BaseHTTPMiddleware
+
         assert isinstance(middleware, BaseHTTPMiddleware)
 
     def test_middleware_attributes(self):
@@ -131,8 +134,8 @@ class TestPerformanceMiddleware:
         middleware = PerformanceMiddleware(app, enabled=True)
 
         # 检查关键属性
-        assert hasattr(middleware, 'enabled')
-        assert hasattr(middleware, 'dispatch')
+        assert hasattr(middleware, "enabled")
+        assert hasattr(middleware, "dispatch")
         assert isinstance(middleware.enabled, bool)
 
     @pytest.mark.parametrize("http_method", ["GET", "POST", "PUT", "DELETE", "PATCH"])
@@ -239,10 +242,7 @@ class TestPerformanceMiddleware:
         app = Mock()
 
         # 测试不同的配置选项
-        configs = [
-            {"enabled": True},
-            {"enabled": False}
-        ]
+        configs = [{"enabled": True}, {"enabled": False}]
 
         for config in configs:
             middleware = PerformanceMiddleware(app, **config)

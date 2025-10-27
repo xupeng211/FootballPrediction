@@ -3,9 +3,9 @@ TestContainers模拟模块
 为测试环境提供容器服务的Mock实现
 """
 
-from typing import Optional, Dict, Any
-from unittest.mock import Mock, patch
 import time
+from typing import Any, Dict, Optional
+from unittest.mock import Mock, patch
 
 
 class MockContainer:
@@ -61,7 +61,7 @@ class PostgresContainer(MockContainer):
         password: str = "test",
         dbname: str = "test_db",
         port: int = 5432,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(image, **kwargs)
         self.user = user
@@ -69,9 +69,9 @@ class PostgresContainer(MockContainer):
         self.dbname = dbname
         self._port = port
         self._env = {
-            'POSTGRES_USER': user,
-            'POSTGRES_PASSWORD': password,
-            'POSTGRES_DB': dbname
+            "POSTGRES_USER": user,
+            "POSTGRES_PASSWORD": password,
+            "POSTGRES_DB": dbname,
         }
 
     def get_connection_url(self) -> str:
@@ -84,12 +84,7 @@ class PostgresContainer(MockContainer):
 class RedisContainer(MockContainer):
     """模拟Redis容器"""
 
-    def __init__(
-        self,
-        image: str = "redis:6",
-        port: int = 6379,
-        **kwargs
-    ):
+    def __init__(self, image: str = "redis:6", port: int = 6379, **kwargs):
         super().__init__(image, **kwargs)
         self._port = port
 
@@ -109,7 +104,7 @@ class TestPostgresContainer(PostgresContainer):
         password: str = "test_pass",
         dbname: str = "test_db",
         port: Optional[int] = None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
             image="postgres:13",
@@ -117,7 +112,7 @@ class TestPostgresContainer(PostgresContainer):
             password=password,
             dbname=dbname,
             port=port or 15432,  # 避免与主PostgreSQL冲突
-            **kwargs
+            **kwargs,
         )
 
     def setup_test_database(self) -> None:
@@ -129,15 +124,9 @@ class TestPostgresContainer(PostgresContainer):
 class TestRedisContainer(RedisContainer):
     """扩展的Redis容器，配置了测试环境"""
 
-    def __init__(
-        self,
-        port: Optional[int] = None,
-        **kwargs
-    ):
+    def __init__(self, port: Optional[int] = None, **kwargs):
         super().__init__(
-            image="redis:6",
-            port=port or 16379,  # 避免与主Redis冲突
-            **kwargs
+            image="redis:6", port=port or 16379, **kwargs  # 避免与主Redis冲突
         )
 
     def setup_test_data(self) -> None:
@@ -146,23 +135,19 @@ class TestRedisContainer(RedisContainer):
         pass
 
 
-def wait_for_logs(container, predicate: str, timeout: int = 30, interval: float = 1.0) -> None:
+def wait_for_logs(
+    container, predicate: str, timeout: int = 30, interval: float = 1.0
+) -> None:
     """等待容器日志中出现指定内容"""
     # Mock实现，直接返回
     pass
 
 
 def create_test_database_container(
-    user: str = "test_user",
-    password: str = "test_pass",
-    dbname: str = "test_db"
+    user: str = "test_user", password: str = "test_pass", dbname: str = "test_db"
 ) -> TestPostgresContainer:
     """创建测试数据库容器"""
-    return TestPostgresContainer(
-        user=user,
-        password=password,
-        dbname=dbname
-    )
+    return TestPostgresContainer(user=user, password=password, dbname=dbname)
 
 
 def create_test_redis_container(port: Optional[int] = None) -> TestRedisContainer:
@@ -179,10 +164,7 @@ def start_test_containers():
     postgres.start()
     redis.start()
 
-    return {
-        'postgres': postgres,
-        'redis': redis
-    }
+    return {"postgres": postgres, "redis": redis}
 
 
 def stop_test_containers(containers: Dict[str, MockContainer]) -> None:
@@ -194,6 +176,7 @@ def stop_test_containers(containers: Dict[str, MockContainer]) -> None:
 # 模拟装饰器，用于不需要真实容器的测试
 def mock_containers(func):
     """Mock容器装饰器"""
+
     def wrapper(*args, **kwargs):
         # 创建mock容器实例
         mock_postgres = TestPostgresContainer()
@@ -215,14 +198,14 @@ def mock_containers(func):
 
 # 向外提供的接口
 __all__ = [
-    'PostgresContainer',
-    'RedisContainer',
-    'TestPostgresContainer',
-    'TestRedisContainer',
-    'wait_for_logs',
-    'create_test_database_container',
-    'create_test_redis_container',
-    'start_test_containers',
-    'stop_test_containers',
-    'mock_containers'
+    "PostgresContainer",
+    "RedisContainer",
+    "TestPostgresContainer",
+    "TestRedisContainer",
+    "wait_for_logs",
+    "create_test_database_container",
+    "create_test_redis_container",
+    "start_test_containers",
+    "stop_test_containers",
+    "mock_containers",
 ]

@@ -7,12 +7,12 @@ Defines core interfaces for observers and subjects.
 """
 
 import asyncio
-from abc import ABC, abstractmethod
-from datetime import datetime
-from typing import Any, Dict, List, Optional, TypeVar, Callable
-from enum import Enum
-from dataclasses import dataclass, field
 import logging
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, TypeVar
 
 T = TypeVar("T")
 

@@ -3,10 +3,10 @@ Redis测试辅助工具
 提供Redis客户端的Mock实现
 """
 
-from typing import Any, Dict, List, Optional, Union, AsyncGenerator
-from unittest.mock import Mock, AsyncMock
 import json
 import time
+from typing import Any, AsyncGenerator, Dict, List, Optional, Union
+from unittest.mock import AsyncMock, Mock
 
 
 class MockRedis:
@@ -166,7 +166,7 @@ class MockRedis:
 
         if end == -1:
             return data[start:]
-        return data[start:end + 1]
+        return data[start : end + 1]
 
     def lpop(self, name: str) -> Optional[str]:
         """左侧弹出"""
@@ -209,7 +209,9 @@ class MockRedis:
 
         return count
 
-    def zrange(self, name: str, start: int, end: int, withscores: bool = False) -> List[Union[str, tuple]]:
+    def zrange(
+        self, name: str, start: int, end: int, withscores: bool = False
+    ) -> List[Union[str, tuple]]:
         """获取有序集合范围"""
         if not self.exists(name):
             return []
@@ -223,7 +225,7 @@ class MockRedis:
         if end == -1:
             sorted_items = sorted_items[start:]
         else:
-            sorted_items = sorted_items[start:end + 1]
+            sorted_items = sorted_items[start : end + 1]
 
         if withscores:
             return [(member, score) for member, score in sorted_items]
@@ -242,6 +244,7 @@ class MockRedis:
     def keys(self, pattern: str = "*") -> List[str]:
         """获取键列表"""
         import fnmatch
+
         keys = list(self._data.keys())
         if pattern != "*":
             keys = [key for key in keys if fnmatch.fnmatch(key, pattern)]
@@ -333,7 +336,9 @@ class MockAsyncRedis(MockRedis):
         """异步添加到有序集合"""
         return super().zadd(name, mapping)
 
-    async def zrange(self, name: str, start: int, end: int, withscores: bool = False) -> List[Union[str, tuple]]:
+    async def zrange(
+        self, name: str, start: int, end: int, withscores: bool = False
+    ) -> List[Union[str, tuple]]:
         """异步获取有序集合范围"""
         return super().zrange(name, start, end, withscores)
 
@@ -359,7 +364,7 @@ class MockRedisConnectionPool:
 
     def __init__(self, **kwargs):
         self._connections: List[MockRedis] = []
-        self.max_connections = kwargs.get('max_connections', 10)
+        self.max_connections = kwargs.get("max_connections", 10)
 
     def get_connection(self) -> MockRedis:
         """获取连接"""
@@ -381,6 +386,7 @@ class MockRedisConnectionPool:
 
 def apply_redis_mocks():
     """应用Redis mock装饰器"""
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             # 创建mock Redis实例
@@ -392,7 +398,9 @@ def apply_redis_mocks():
             mock_redis.hset("test_hash", {"field1": "value1", "field2": "value2"})
 
             return func(mock_redis, mock_async_redis, *args, **kwargs)
+
         return wrapper
+
     return decorator
 
 

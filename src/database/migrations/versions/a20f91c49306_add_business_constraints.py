@@ -1,8 +1,8 @@
 import logging
-import sqlalchemy as sa
-from typing import Union, Sequence
-from alembic import op
+from typing import Sequence, Union
 
+import sqlalchemy as sa
+from alembic import op
 # mypy: ignore-errors
 from sqlalchemy import text
 

@@ -3,10 +3,10 @@ Kafka测试辅助工具
 提供Kafka生产者和消费者的Mock实现
 """
 
-from typing import Any, Dict, List, Optional, AsyncGenerator
-from unittest.mock import Mock, AsyncMock
 import asyncio
 import json
+from typing import Any, AsyncGenerator, Dict, List, Optional
+from unittest.mock import AsyncMock, Mock
 
 
 class MockKafkaMessage:
@@ -18,7 +18,7 @@ class MockKafkaMessage:
         key: Optional[bytes] = None,
         value: Optional[bytes] = None,
         partition: int = 0,
-        offset: int = 0
+        offset: int = 0,
     ):
         self.topic = topic
         self.key = key
@@ -29,7 +29,7 @@ class MockKafkaMessage:
     def decode(self) -> str:
         """解码消息值"""
         if self.value:
-            return self.value.decode('utf-8')
+            return self.value.decode("utf-8")
         return ""
 
     def decode_json(self) -> Dict[str, Any]:
@@ -52,26 +52,23 @@ class MockKafkaProducer:
         topic: str,
         value: Any,
         key: Optional[Any] = None,
-        partition: Optional[int] = None
+        partition: Optional[int] = None,
     ) -> MockKafkaMessage:
         """发送消息"""
         if isinstance(value, dict):
-            value_bytes = json.dumps(value).encode('utf-8')
+            value_bytes = json.dumps(value).encode("utf-8")
         elif isinstance(value, str):
-            value_bytes = value.encode('utf-8')
+            value_bytes = value.encode("utf-8")
         else:
-            value_bytes = str(value).encode('utf-8')
+            value_bytes = str(value).encode("utf-8")
 
         if isinstance(key, str):
-            key_bytes = key.encode('utf-8')
+            key_bytes = key.encode("utf-8")
         else:
             key_bytes = key
 
         message = MockKafkaMessage(
-            topic=topic,
-            key=key_bytes,
-            value=value_bytes,
-            partition=partition or 0
+            topic=topic, key=key_bytes, value=value_bytes, partition=partition or 0
         )
 
         self.messages.append(message)
@@ -130,7 +127,9 @@ class MockKafkaConsumer:
         """返回异步迭代器"""
         return self
 
-    async def getmany(self, timeout_ms: int = 0, max_records: int = None) -> Dict[str, List[MockKafkaMessage]]:
+    async def getmany(
+        self, timeout_ms: int = 0, max_records: int = None
+    ) -> Dict[str, List[MockKafkaMessage]]:
         """批量获取消息"""
         if max_records is None:
             max_records = len(self.messages) - self.current_index
@@ -171,25 +170,26 @@ class MockKafkaConsumer:
 
 def apply_kafka_mocks():
     """应用Kafka mock装饰器"""
+
     def decorator(func):
         async def wrapper(*args, **kwargs):
             # 创建mock生产者和消费者
             producer = MockKafkaProducer()
-            consumer = MockKafkaConsumer(['test_topic'])
+            consumer = MockKafkaConsumer(["test_topic"])
 
             # 添加测试消息
             test_message = MockKafkaMessage(
-                topic='test_topic',
-                key=b'test_key',
-                value=b'{"test": "data"}'
+                topic="test_topic", key=b"test_key", value=b'{"test": "data"}'
             )
             consumer.add_message(test_message)
 
             return await func(producer, consumer, *args, **kwargs)
+
         return wrapper
+
     return decorator
 
 
 # 全局mock实例
 mock_kafka_producer = MockKafkaProducer()
-mock_kafka_consumer = MockKafkaConsumer(['test_topic'])
+mock_kafka_consumer = MockKafkaConsumer(["test_topic"])

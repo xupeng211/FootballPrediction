@@ -2,11 +2,12 @@
 
 # TODO: Consider creating a fixture for 6 repeated Mock creations
 
+# 模拟 FeaturesService，因为实际类不存在
+from unittest.mock import MagicMock, patch
+
 import pytest
 
 
-# 模拟 FeaturesService，因为实际类不存在
-from unittest.mock import patch, MagicMock
 class FeaturesService:
     """模拟特征服务"""
 
@@ -77,7 +78,7 @@ class TestFeaturesIntegration:
             if response.status_code == 200:
                 _data = response.json()
                 assert "features" in data
-                assert data["match_id"]     == 12345
+                assert data["match_id"] == 12345
 
     @pytest.mark.asyncio
     async def test_get_features_database_integration(
@@ -275,7 +276,7 @@ class TestFeaturesIntegration:
                 _data = response.json()
                 assert "features" in data
                 assert "version" in data
-                assert data["version"]     == version
+                assert data["version"] == version
 
     @pytest.mark.asyncio
     async def test_features_with_real_time_data(self, api_client_full):

@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 14 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 """
 数据收集核心测试（修复版）
 Tests for Data Collection Core (Fixed Version)
@@ -10,14 +11,14 @@ Tests for Data Collection Core (Fixed Version)
 测试src.tasks.data_collection_core模块的数据收集功能
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
 
 # 测试导入
 try:
-    from src.tasks.data_collection_core import DataCollectionTask
-    from src.tasks.data_collection_core import celery_app
-    from src.tasks.data_collection_core import logger
+    from src.tasks.data_collection_core import (DataCollectionTask, celery_app,
+                                                logger)
 
     DATA_COLLECTION_CORE_AVAILABLE = True
 except ImportError:
@@ -37,7 +38,6 @@ if not DATA_COLLECTION_CORE_AVAILABLE:
     reason="Data collection core module not available",
 )
 @pytest.mark.unit
-
 class TestDataCollectionTask:
     """数据收集任务测试"""
 
@@ -159,11 +159,8 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if DATA_COLLECTION_CORE_AVAILABLE:
-        from src.tasks.data_collection_core import (
-            DataCollectionTask,
-            celery_app,
-            logger,
-        )
+        from src.tasks.data_collection_core import (DataCollectionTask,
+                                                    celery_app, logger)
 
         assert DataCollectionTask is not None
         assert celery_app is not None

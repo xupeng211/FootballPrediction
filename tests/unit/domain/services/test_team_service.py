@@ -1,12 +1,10 @@
 import pytest
 
 from src.domain.models.team import Team, TeamStats
-from src.domain.services.team_service import (
-    TeamDomainService,
-    TeamPerformanceResetEvent,
-    TeamProfileUpdatedEvent,
-    TeamStatsEvent,
-)
+from src.domain.services.team_service import (TeamDomainService,
+                                              TeamPerformanceResetEvent,
+                                              TeamProfileUpdatedEvent,
+                                              TeamStatsEvent)
 
 
 class InMemoryTeamRepository:
@@ -36,7 +34,6 @@ def team() -> Team:
 
 
 @pytest.mark.unit
-
 class TestTeamService:
     def test_should_update_team_profile(self, team):
         repo = InMemoryTeamRepository()

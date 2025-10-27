@@ -3,11 +3,12 @@
 测试所有自定义异常和错误处理逻辑
 """
 
-import pytest
-from datetime import datetime, timezone, timedelta
-from typing import Any, Dict, List, Optional
-import traceback
 import logging
+import traceback
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional
+
+import pytest
 
 
 # 自定义异常类定义
@@ -78,7 +79,6 @@ class RateLimitError(FootballPredictionError):
 
 @pytest.mark.unit
 @pytest.mark.slow
-
 class TestCustomExceptions:
     """自定义异常测试"""
 

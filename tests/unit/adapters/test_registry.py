@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 56 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 """
 适配器注册表测试
 Tests for Adapter Registry
@@ -10,14 +11,17 @@ Tests for Adapter Registry
 测试src.adapters.registry模块的适配器注册表功能
 """
 
-import pytest
 import asyncio
+
+import pytest
 
 # 测试导入
 try:
-    from src.adapters.registry import AdapterRegistry, RegistryStatus, adapter_registry
     from src.adapters.base import Adapter, AdapterStatus
-    from src.adapters.factory import AdapterFactory, AdapterConfig, AdapterGroupConfig
+    from src.adapters.factory import (AdapterConfig, AdapterFactory,
+                                      AdapterGroupConfig)
+    from src.adapters.registry import (AdapterRegistry, RegistryStatus,
+                                       adapter_registry)
 
     REGISTRY_AVAILABLE = True
 except ImportError as e:
@@ -36,7 +40,6 @@ except ImportError as e:
 @pytest.mark.skipif(not REGISTRY_AVAILABLE, reason="Registry module not available")
 @pytest.mark.asyncio
 @pytest.mark.unit
-
 class TestAdapterRegistry:
     """适配器注册表测试"""
 

@@ -1,19 +1,15 @@
 """测试基础装饰器模块"""
 
-import pytest
 import functools
 import time
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 try:
-    from src.decorators.base import (
-        retry,
-        cache_result,
-        log_execution,
-        validate_input,
-        timing,
-        rate_limit
-    )
+    from src.decorators.base import (cache_result, log_execution, rate_limit,
+                                     retry, timing, validate_input)
+
     IMPORT_SUCCESS = True
 except ImportError as e:
     IMPORT_SUCCESS = False
@@ -25,7 +21,9 @@ except ImportError as e:
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
                 return func(*args, **kwargs)
+
             return wrapper
+
         return decorator
 
     def cache_result(ttl=300):
@@ -33,13 +31,16 @@ except ImportError as e:
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
                 return func(*args, **kwargs)
+
             return wrapper
+
         return decorator
 
     def log_execution(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             return func(*args, **kwargs)
+
         return wrapper
 
     def validate_input(validator=None):
@@ -47,13 +48,16 @@ except ImportError as e:
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
                 return func(*args, **kwargs)
+
             return wrapper
+
         return decorator
 
     def timing(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             return func(*args, **kwargs)
+
         return wrapper
 
     def rate_limit(max_calls=10, window=60):
@@ -61,7 +65,9 @@ except ImportError as e:
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
                 return func(*args, **kwargs)
+
             return wrapper
+
         return decorator
 
 
@@ -72,6 +78,7 @@ class TestBaseDecorators:
 
     def test_retry_decorator_success(self):
         """测试重试装饰器成功情况"""
+
         @retry(max_attempts=3, delay=0.1)
         def successful_function():
             return "success"
@@ -97,6 +104,7 @@ class TestBaseDecorators:
 
     def test_retry_decorator_max_attempts(self):
         """测试重试装饰器最大尝试次数"""
+
         @retry(max_attempts=2, delay=0.01)
         def always_failing_function():
             raise ValueError("Always fails")
@@ -106,6 +114,7 @@ class TestBaseDecorators:
 
     def test_retry_decorator_with_exception_types(self):
         """测试重试装饰器异常类型过滤"""
+
         @retry(max_attempts=2, delay=0.01, exceptions=(ValueError,))
         def function_with_value_error():
             raise ValueError("Value error")
@@ -122,6 +131,7 @@ class TestBaseDecorators:
 
     def test_cache_decorator_basic(self):
         """测试缓存装饰器基本功能"""
+
         @cache_result(ttl=300)
         def expensive_function(x):
             return x * 2
@@ -136,6 +146,7 @@ class TestBaseDecorators:
 
     def test_cache_decorator_different_args(self):
         """测试缓存装饰器不同参数"""
+
         @cache_result(ttl=300)
         def expensive_function(x):
             return x * 2
@@ -148,6 +159,7 @@ class TestBaseDecorators:
 
     def test_cache_decorator_kwargs(self):
         """测试缓存装饰器关键字参数"""
+
         @cache_result(ttl=300)
         def expensive_function(x, multiplier=1):
             return x * multiplier
@@ -160,11 +172,12 @@ class TestBaseDecorators:
 
     def test_log_execution_decorator(self):
         """测试日志装饰器"""
+
         @log_execution
         def logged_function(x, y):
             return x + y
 
-        with patch('logging.Logger.info') as mock_log:
+        with patch("logging.Logger.info") as mock_log:
             result = logged_function(1, 2)
             assert result == 3
             # 验证日志被调用
@@ -172,11 +185,12 @@ class TestBaseDecorators:
 
     def test_log_execution_with_exception(self):
         """测试日志装饰器异常处理"""
+
         @log_execution
         def failing_function():
             raise ValueError("Test error")
 
-        with patch('logging.Logger.error') as mock_log:
+        with patch("logging.Logger.error") as mock_log:
             with pytest.raises(ValueError):
                 failing_function()
             # 验证错误日志被调用
@@ -184,6 +198,7 @@ class TestBaseDecorators:
 
     def test_validate_input_decorator(self):
         """测试输入验证装饰器"""
+
         def positive_number_validator(x):
             return x > 0
 
@@ -201,6 +216,7 @@ class TestBaseDecorators:
 
     def test_validate_input_with_lambda(self):
         """测试输入验证装饰器使用lambda"""
+
         @validate_input(lambda x: isinstance(x, int))
         def process_integer(x):
             return x + 1
@@ -213,12 +229,13 @@ class TestBaseDecorators:
 
     def test_timing_decorator(self):
         """测试计时装饰器"""
+
         @timing
         def timed_function():
             time.sleep(0.01)
             return "done"
 
-        with patch('time.time') as mock_time:
+        with patch("time.time") as mock_time:
             mock_time.side_effect = [0.0, 1.0, 2.0]
             result = timed_function()
             assert result == "done"
@@ -227,11 +244,12 @@ class TestBaseDecorators:
 
     def test_timing_decorator_with_exception(self):
         """测试计时装饰器异常处理"""
+
         @timing
         def failing_function():
             raise ValueError("Test error")
 
-        with patch('time.time') as mock_time:
+        with patch("time.time") as mock_time:
             mock_time.side_effect = [0.0, 1.0, 2.0]
             with pytest.raises(ValueError):
                 failing_function()
@@ -285,19 +303,21 @@ class TestBaseDecorators:
 
     def test_decorator_chaining(self):
         """测试装饰器链式调用"""
+
         @cache_result(ttl=300)
         @log_execution
         @retry(max_attempts=2)
         def chained_function(x):
             return x * 2
 
-        with patch('logging.Logger.info') as mock_log:
+        with patch("logging.Logger.info") as mock_log:
             result = chained_function(5)
             assert result == 10
             mock_log.assert_called()
 
     def test_decorator_preserves_metadata(self):
         """测试装饰器保留元数据"""
+
         @cache_result(ttl=300)
         @log_execution
         def decorated_function(x):
@@ -309,6 +329,7 @@ class TestBaseDecorators:
 
     def test_decorator_with_class_methods(self):
         """测试装饰器在类方法上的使用"""
+
         class TestClass:
             @cache_result(ttl=300)
             def method1(self, x):
@@ -327,6 +348,7 @@ class TestBaseDecorators:
 
     def test_decorator_with_static_methods(self):
         """测试装饰器在静态方法上的使用"""
+
         class TestClass:
             @staticmethod
             @cache_result(ttl=300)
@@ -348,13 +370,15 @@ class TestBaseDecorators:
         """测试装饰器异步功能"""
         # 某些装饰器可能支持异步
         try:
+
             @cache_result(ttl=300)
             async def async_function(x):
                 return x * 2
 
             # 如果支持异步，测试它
             import asyncio
-            if hasattr(async_function, '__await__'):
+
+            if hasattr(async_function, "__await__"):
                 result = asyncio.run(async_function(5))
                 assert result == 10
         except Exception:
@@ -362,6 +386,7 @@ class TestBaseDecorators:
 
     def test_decorator_with_optional_params(self):
         """测试装饰器可选参数"""
+
         @cache_result()  # 使用默认TTL
         def function_with_default_cache(x):
             return x * 2
@@ -371,6 +396,7 @@ class TestBaseDecorators:
 
     def test_decorator_performance_impact(self):
         """测试装饰器性能影响"""
+
         @cache_result(ttl=300)
         def cached_function(x):
             return x * 2
@@ -396,6 +422,7 @@ class TestBaseDecorators:
     def test_decorator_thread_safety(self):
         """测试装饰器线程安全"""
         import threading
+
         results = []
 
         @cache_result(ttl=300)
@@ -421,21 +448,23 @@ class TestBaseDecorators:
 
     def test_decorator_error_handling(self):
         """测试装饰器错误处理"""
+
         @log_execution
         @retry(max_attempts=2)
         def error_prone_function():
-            if not hasattr(error_prone_function, 'should_fail'):
+            if not hasattr(error_prone_function, "should_fail"):
                 error_prone_function.should_fail = True
                 raise ValueError("First failure")
             return "success"
 
-        with patch('logging.Logger.error') as mock_log:
+        with patch("logging.Logger.error") as mock_log:
             with pytest.raises(ValueError):
                 error_prone_function()
             mock_log.assert_called()
 
     def test_decorator_memory_usage(self):
         """测试装饰器内存使用"""
+
         # 测试大量缓存的内存使用
         @cache_result(ttl=300)
         def memory_intensive_function(x):
@@ -455,21 +484,26 @@ class TestBaseDecorators:
             {"max_attempts": 5, "delay": 0.01},
             {"max_attempts": 1, "delay": 0.01},
             {"ttl": 600},
-            {"window": 30, "max_calls": 5}
+            {"window": 30, "max_calls": 5},
         ]
 
         for config in configurations:
             try:
                 # 尝试不同配置
                 if "max_attempts" in config:
+
                     @retry(**config)
                     def test_function():
                         return "test"
+
                 elif "ttl" in config:
+
                     @cache_result(**config)
                     def test_function():
                         return "test"
+
                 elif "window" in config:
+
                     @rate_limit(**config)
                     def test_function():
                         return "test"
@@ -495,6 +529,7 @@ class TestBaseDecorators:
 
     def test_decorator_edge_cases(self):
         """测试装饰器边缘情况"""
+
         # 测试空函数
         @cache_result(ttl=300)
         def empty_function():

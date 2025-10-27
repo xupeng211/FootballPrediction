@@ -11,16 +11,11 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List
 
-from .base import EventHandler, Event
-from .types import (
-    MatchCreatedEvent,
-    MatchUpdatedEvent,
-    PredictionMadeEvent,
-    PredictionUpdatedEvent,
-    UserRegisteredEvent,
-    TeamStatsUpdatedEvent,
-)
+from .base import Event, EventHandler
 from .bus import get_event_bus
+from .types import (MatchCreatedEvent, MatchUpdatedEvent, PredictionMadeEvent,
+                    PredictionUpdatedEvent, TeamStatsUpdatedEvent,
+                    UserRegisteredEvent)
 
 logger = logging.getLogger(__name__)
 
@@ -270,9 +265,9 @@ class AnalyticsEventHandler(EventHandler):
                 "last_prediction": None,
             }
         self.analytics_data["user_activity"][user_id]["predictions_count"] += 1
-        self.analytics_data["user_activity"][user_id]["last_prediction"] = (
-            event.timestamp
-        )
+        self.analytics_data["user_activity"][user_id][
+            "last_prediction"
+        ] = event.timestamp
 
         # 按比赛统计预测
         match_id = event.data.match_id

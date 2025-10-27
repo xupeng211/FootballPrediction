@@ -1,4 +1,5 @@
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 维护任务测试
 Tests for Maintenance Tasks
@@ -6,21 +7,18 @@ Tests for Maintenance Tasks
 测试src.tasks.maintenance_tasks模块的维护任务功能
 """
 
-import pytest
-from datetime import datetime, timedelta
 import asyncio
+from datetime import datetime, timedelta
+
+import pytest
 
 # 测试导入
 try:
-    from src.tasks.maintenance_tasks import (
-        MaintenanceTaskManager,
-        DatabaseMaintenanceTask,
-        CacheCleanupTask,
-        LogRotationTask,
-        BackupTask,
-        HealthCheckTask,
-        MaintenanceTaskStatus,
-    )
+    from src.tasks.maintenance_tasks import (BackupTask, CacheCleanupTask,
+                                             DatabaseMaintenanceTask,
+                                             HealthCheckTask, LogRotationTask,
+                                             MaintenanceTaskManager,
+                                             MaintenanceTaskStatus)
 
     MAINTENANCE_TASKS_AVAILABLE = True
 except ImportError as e:
@@ -40,7 +38,6 @@ except ImportError as e:
     not MAINTENANCE_TASKS_AVAILABLE, reason="Maintenance tasks module not available"
 )
 @pytest.mark.unit
-
 class TestMaintenanceTaskManager:
     """维护任务管理器测试"""
 
@@ -384,15 +381,12 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if MAINTENANCE_TASKS_AVAILABLE:
-        from src.tasks.maintenance_tasks import (
-            MaintenanceTaskManager,
-            DatabaseMaintenanceTask,
-            CacheCleanupTask,
-            LogRotationTask,
-            BackupTask,
-            HealthCheckTask,
-            MaintenanceTaskStatus,
-        )
+        from src.tasks.maintenance_tasks import (BackupTask, CacheCleanupTask,
+                                                 DatabaseMaintenanceTask,
+                                                 HealthCheckTask,
+                                                 LogRotationTask,
+                                                 MaintenanceTaskManager,
+                                                 MaintenanceTaskStatus)
 
         assert MaintenanceTaskManager is not None
         assert DatabaseMaintenanceTask is not None

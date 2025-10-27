@@ -1,4 +1,5 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 """
 警告过滤器简单测试
 Simple Warning Filters Tests
@@ -7,10 +8,11 @@ Simple Warning Filters Tests
 Tests warning filtering functionality defined in src/utils/warning_filters.py, focused on achieving 100% coverage.
 """
 
-import pytest
-import warnings
 import logging
 import sys
+import warnings
+
+import pytest
 
 # 导入要测试的模块
 try:
@@ -25,7 +27,6 @@ except ImportError:
     not WARNING_FILTERS_AVAILABLE, reason="Warning filters module not available"
 )
 @pytest.mark.unit
-
 class TestWarningFiltersSimple:
     """警告过滤器简单测试"""
 

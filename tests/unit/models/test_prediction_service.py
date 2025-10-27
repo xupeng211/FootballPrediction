@@ -10,20 +10,10 @@ import pytest
 
 # 导入要测试的模块
 try:
-    from src.models.prediction_service import (
-        # 数据模型
-        PredictionResult,
-        # 核心服务
-        PredictionService,
-        # 缓存
-        PredictionCache,
-        # 监控指标
-        predictions_total,
-        prediction_duration_seconds,
-        prediction_accuracy,
-        model_load_duration_seconds,
-        cache_hit_ratio,
-    )
+    from src.models.prediction_service import (  # 数据模型; 核心服务; 缓存; 监控指标
+        PredictionCache, PredictionResult, PredictionService, cache_hit_ratio,
+        model_load_duration_seconds, prediction_accuracy,
+        prediction_duration_seconds, predictions_total)
 
     PREDICTION_SERVICE_AVAILABLE = True
 except ImportError:
@@ -34,7 +24,6 @@ except ImportError:
     not PREDICTION_SERVICE_AVAILABLE, reason="Prediction service module not available"
 )
 @pytest.mark.unit
-
 class TestModuleImports:
     """模块导入测试"""
 
@@ -101,9 +90,9 @@ class TestModuleStructure:
         actual_all = set(prediction_service.__all__)
         expected_all_set = set(expected_all)
 
-        assert actual_all == expected_all_set, (
-            f"Expected {expected_all_set}, got {actual_all}"
-        )
+        assert (
+            actual_all == expected_all_set
+        ), f"Expected {expected_all_set}, got {actual_all}"
 
     def test_module_all_exports_exist(self):
         """测试__all__中的导出都存在"""
@@ -115,9 +104,12 @@ class TestModuleStructure:
     def test_backward_compatibility_imports(self):
         """测试向后兼容性导入"""
         # 验证所有导入的类和对象都是预期的类型
-        from src.models.prediction import PredictionResult as OriginalPredictionResult
-        from src.models.prediction import PredictionService as OriginalPredictionService
-        from src.models.prediction import PredictionCache as OriginalPredictionCache
+        from src.models.prediction import \
+            PredictionCache as OriginalPredictionCache
+        from src.models.prediction import \
+            PredictionResult as OriginalPredictionResult
+        from src.models.prediction import \
+            PredictionService as OriginalPredictionService
 
         # 比较重新导入的对象与原始对象
         assert PredictionResult is OriginalPredictionResult
@@ -241,9 +233,9 @@ class TestModuleDocumentation:
         # PredictionCache的文档在原始模块中
 
         # 验证这些类都有文档（通过检查原始模块）
+        from src.models.prediction import PredictionCache as OriginalCache
         from src.models.prediction import PredictionResult as OriginalResult
         from src.models.prediction import PredictionService as OriginalService
-        from src.models.prediction import PredictionCache as OriginalCache
 
         assert OriginalResult.__doc__ is not None
         assert OriginalService.__doc__ is not None
@@ -258,12 +250,10 @@ class TestIntegrationWithOriginalModule:
 
     def test_objects_are_identical(self):
         """测试重新导入的对象与原始对象相同"""
-        from src.models.prediction import (
-            PredictionResult as OriginalResult,
-            PredictionService as OriginalService,
-            PredictionCache as OriginalCache,
-            predictions_total as OriginalTotal,
-        )
+        from src.models.prediction import PredictionCache as OriginalCache
+        from src.models.prediction import PredictionResult as OriginalResult
+        from src.models.prediction import PredictionService as OriginalService
+        from src.models.prediction import predictions_total as OriginalTotal
 
         # 验证对象引用相同
         assert PredictionResult is OriginalResult
@@ -273,8 +263,8 @@ class TestIntegrationWithOriginalModule:
 
     def test_functionality_preserved(self):
         """测试功能保持完整"""
-        import datetime
         import asyncio
+        import datetime
 
         # 创建相同的对象应该产生相同的行为
         service = PredictionService()
@@ -306,7 +296,8 @@ class TestIntegrationWithOriginalModule:
         prediction_accuracy.set(0.88)
 
         # 通过原始模块应该看到相同的值
-        from src.models.prediction import prediction_accuracy as original_accuracy
+        from src.models.prediction import \
+            prediction_accuracy as original_accuracy
 
         assert original_accuracy() == 0.88
 
@@ -328,10 +319,10 @@ class TestErrorHandling:
         # 验证所有预期的导入都存在
         try:
             # 这些导入应该成功
-            from src.models.prediction_service import PredictionResult
-            from src.models.prediction_service import PredictionService
-            from src.models.prediction_service import PredictionCache
-            from src.models.prediction_service import predictions_total
+            from src.models.prediction_service import (PredictionCache,
+                                                       PredictionResult,
+                                                       PredictionService,
+                                                       predictions_total)
 
             assert True
         except ImportError as e:
@@ -341,13 +332,15 @@ class TestErrorHandling:
         """测试模块加载健壮性"""
         # 验证模块可以多次导入而不出问题
         import importlib
+
         import src.models.prediction_service
 
         # 重新导入模块
         importlib.reload(src.models.prediction_service)
 
         # 验证导入仍然有效
-        from src.models.prediction_service import PredictionResult, PredictionService
+        from src.models.prediction_service import (PredictionResult,
+                                                   PredictionService)
 
         assert PredictionResult is not None
         assert PredictionService is not None
@@ -398,10 +391,13 @@ class TestBackwardCompatibility:
         # 验证可以使用与原始模块相同的方式导入
         try:
             # 这些导入方式都应该有效
-            from src.models.prediction_service import PredictionResult as Result1
-            from src.models.prediction_service import PredictionService as Service1
             from src.models.prediction_service import PredictionCache as Cache1
-            from src.models.prediction_service import predictions_total as Total1
+            from src.models.prediction_service import \
+                PredictionResult as Result1
+            from src.models.prediction_service import \
+                PredictionService as Service1
+            from src.models.prediction_service import \
+                predictions_total as Total1
 
             # 验证导入的对象类型正确
             assert callable(Result1)
@@ -484,6 +480,6 @@ class TestFutureProofing:
                 for warning in w
                 if issubclass(warning.category, DeprecationWarning)
             ]
-            assert len(deprecation_warnings) == 0, (
-                f"Unexpected deprecation warnings: {[str(w) for w in deprecation_warnings]}"
-            )
+            assert (
+                len(deprecation_warnings) == 0
+            ), f"Unexpected deprecation warnings: {[str(w) for w in deprecation_warnings]}"

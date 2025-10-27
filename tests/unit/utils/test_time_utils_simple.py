@@ -2,14 +2,14 @@
 测试时间工具函数
 """
 
-import pytest
 from datetime import datetime, timedelta
 
-from src.utils.time_utils import TimeUtils, utc_now, parse_datetime
+import pytest
+
+from src.utils.time_utils import TimeUtils, parse_datetime, utc_now
 
 
 @pytest.mark.unit
-
 class TestTimeUtils:
     """测试时间工具函数"""
 

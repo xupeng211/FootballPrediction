@@ -1,11 +1,13 @@
 """测试日期工具模块"""
 
-import pytest
-from datetime import datetime, timedelta, date
+from datetime import date, datetime, timedelta
 from unittest.mock import patch
+
+import pytest
 
 try:
     from src.utils.date_utils import DateUtils
+
     IMPORT_SUCCESS = True
 except ImportError as e:
     IMPORT_SUCCESS = False
@@ -28,11 +30,11 @@ class TestDateUtils:
 
         try:
             # 测试获取当前日期
-            if hasattr(utils, 'now'):
+            if hasattr(utils, "now"):
                 result = utils.now()
                 assert isinstance(result, (datetime, date))
 
-            if hasattr(utils, 'today'):
+            if hasattr(utils, "today"):
                 result = utils.today()
                 assert isinstance(result, (datetime, date))
         except Exception:
@@ -47,12 +49,12 @@ class TestDateUtils:
             "15/01/2024",
             "2024-01-15T10:30:00",
             "Jan 15, 2024",
-            "15-Jan-2024"
+            "15-Jan-2024",
         ]
 
         for date_str in date_strings:
             try:
-                if hasattr(utils, 'parse'):
+                if hasattr(utils, "parse"):
                     result = utils.parse(date_str)
                     if result is not None:
                         assert isinstance(result, (datetime, date))
@@ -66,17 +68,11 @@ class TestDateUtils:
 
         test_date = datetime(2024, 1, 15, 10, 30, 45)
 
-        formats = [
-            "%Y-%m-%d",
-            "%d/%m/%Y",
-            "%Y-%m-%d %H:%M:%S",
-            "%B %d, %Y",
-            "%d-%b-%Y"
-        ]
+        formats = ["%Y-%m-%d", "%d/%m/%Y", "%Y-%m-%d %H:%M:%S", "%B %d, %Y", "%d-%b-%Y"]
 
         for fmt in formats:
             try:
-                if hasattr(utils, 'format'):
+                if hasattr(utils, "format"):
                     result = utils.format(test_date, fmt)
                     if result is not None:
                         assert isinstance(result, str)
@@ -91,18 +87,18 @@ class TestDateUtils:
 
         try:
             # 测试加法
-            if hasattr(utils, 'add_days'):
+            if hasattr(utils, "add_days"):
                 result = utils.add_days(base_date, 7)
                 if result is not None:
                     assert isinstance(result, (datetime, date))
                     assert result > base_date
 
-            if hasattr(utils, 'add_weeks'):
+            if hasattr(utils, "add_weeks"):
                 result = utils.add_weeks(base_date, 2)
                 if result is not None:
                     assert isinstance(result, (datetime, date))
 
-            if hasattr(utils, 'add_months'):
+            if hasattr(utils, "add_months"):
                 result = utils.add_months(base_date, 1)
                 if result is not None:
                     assert isinstance(result, (datetime, date))
@@ -118,15 +114,15 @@ class TestDateUtils:
         date3 = datetime(2024, 1, 15)
 
         try:
-            if hasattr(utils, 'is_after'):
+            if hasattr(utils, "is_after"):
                 assert utils.is_after(date2, date1) is True
                 assert utils.is_after(date1, date2) is False
 
-            if hasattr(utils, 'is_before'):
+            if hasattr(utils, "is_before"):
                 assert utils.is_before(date1, date2) is True
                 assert utils.is_before(date2, date1) is False
 
-            if hasattr(utils, 'is_equal'):
+            if hasattr(utils, "is_equal"):
                 assert utils.is_equal(date1, date3) is True
                 assert utils.is_equal(date1, date2) is False
         except Exception:
@@ -140,17 +136,17 @@ class TestDateUtils:
         date2 = datetime(2024, 1, 20)
 
         try:
-            if hasattr(utils, 'days_between'):
+            if hasattr(utils, "days_between"):
                 result = utils.days_between(date1, date2)
                 if result is not None:
                     assert isinstance(result, (int, float))
 
-            if hasattr(utils, 'weeks_between'):
+            if hasattr(utils, "weeks_between"):
                 result = utils.weeks_between(date1, date2)
                 if result is not None:
                     assert isinstance(result, (int, float))
 
-            if hasattr(utils, 'months_between'):
+            if hasattr(utils, "months_between"):
                 result = utils.months_between(date1, date2)
                 if result is not None:
                     assert isinstance(result, (int, float))
@@ -162,12 +158,12 @@ class TestDateUtils:
         utils = DateUtils()
 
         try:
-            if hasattr(utils, 'to_utc'):
+            if hasattr(utils, "to_utc"):
                 result = utils.to_utc(datetime.now())
                 if result is not None:
                     assert isinstance(result, datetime)
 
-            if hasattr(utils, 'from_utc'):
+            if hasattr(utils, "from_utc"):
                 result = utils.from_utc(datetime.utcnow())
                 if result is not None:
                     assert isinstance(result, datetime)
@@ -186,18 +182,18 @@ class TestDateUtils:
 
         for test_date in test_dates:
             try:
-                if hasattr(utils, 'get_weekday'):
+                if hasattr(utils, "get_weekday"):
                     result = utils.get_weekday(test_date)
                     if result is not None:
                         assert isinstance(result, int)
                         assert 0 <= result <= 6
 
-                if hasattr(utils, 'is_weekend'):
+                if hasattr(utils, "is_weekend"):
                     result = utils.is_weekend(test_date)
                     if result is not None:
                         assert isinstance(result, bool)
 
-                if hasattr(utils, 'is_weekday'):
+                if hasattr(utils, "is_weekday"):
                     result = utils.is_weekday(test_date)
                     if result is not None:
                         assert isinstance(result, bool)
@@ -212,7 +208,7 @@ class TestDateUtils:
             datetime(2024, 1, 15),
             date(2024, 1, 15),
             "2024-01-15",
-            "15/01/2024"
+            "15/01/2024",
         ]
 
         invalid_dates = [
@@ -220,12 +216,12 @@ class TestDateUtils:
             "2024-13-45",  # Invalid month and day
             "not-a-date",
             "",
-            None
+            None,
         ]
 
         for valid_date in valid_dates:
             try:
-                if hasattr(utils, 'is_valid_date'):
+                if hasattr(utils, "is_valid_date"):
                     result = utils.is_valid_date(valid_date)
                     if result is not None:
                         assert isinstance(result, bool)
@@ -234,7 +230,7 @@ class TestDateUtils:
 
         for invalid_date in invalid_dates:
             try:
-                if hasattr(utils, 'is_valid_date'):
+                if hasattr(utils, "is_valid_date"):
                     result = utils.is_valid_date(invalid_date)
                     if result is not None:
                         assert isinstance(result, bool)
@@ -249,12 +245,12 @@ class TestDateUtils:
         end_date = datetime(2024, 1, 20)
 
         try:
-            if hasattr(utils, 'date_range'):
+            if hasattr(utils, "date_range"):
                 result = utils.date_range(start_date, end_date)
                 if result is not None:
                     assert isinstance(result, list)
 
-            if hasattr(utils, 'is_in_range'):
+            if hasattr(utils, "is_in_range"):
                 test_date = datetime(2024, 1, 17)
                 result = utils.is_in_range(test_date, start_date, end_date)
                 if result is not None:
@@ -269,17 +265,17 @@ class TestDateUtils:
         test_date = datetime(2024, 1, 15)  # Monday
 
         try:
-            if hasattr(utils, 'is_business_day'):
+            if hasattr(utils, "is_business_day"):
                 result = utils.is_business_day(test_date)
                 if result is not None:
                     assert isinstance(result, bool)
 
-            if hasattr(utils, 'next_business_day'):
+            if hasattr(utils, "next_business_day"):
                 result = utils.next_business_day(test_date)
                 if result is not None:
                     assert isinstance(result, (datetime, date))
 
-            if hasattr(utils, 'previous_business_day'):
+            if hasattr(utils, "previous_business_day"):
                 result = utils.previous_business_day(test_date)
                 if result is not None:
                     assert isinstance(result, (datetime, date))
@@ -293,17 +289,17 @@ class TestDateUtils:
         test_datetime = datetime(2024, 1, 15, 14, 30, 45)
 
         try:
-            if hasattr(utils, 'truncate_to_day'):
+            if hasattr(utils, "truncate_to_day"):
                 result = utils.truncate_to_day(test_datetime)
                 if result is not None:
                     assert isinstance(result, (datetime, date))
 
-            if hasattr(utils, 'truncate_to_month'):
+            if hasattr(utils, "truncate_to_month"):
                 result = utils.truncate_to_month(test_datetime)
                 if result is not None:
                     assert isinstance(result, (datetime, date))
 
-            if hasattr(utils, 'truncate_to_year'):
+            if hasattr(utils, "truncate_to_year"):
                 result = utils.truncate_to_year(test_datetime)
                 if result is not None:
                     assert isinstance(result, (datetime, date))
@@ -325,7 +321,7 @@ class TestDateUtils:
         for case in edge_cases:
             try:
                 # 基本操作应该能处理边缘情况
-                if hasattr(utils, 'safe_format'):
+                if hasattr(utils, "safe_format"):
                     result = utils.safe_format(case)
                     if result is not None:
                         assert isinstance(result, str)
@@ -336,20 +332,13 @@ class TestDateUtils:
         """测试错误处理"""
         utils = DateUtils()
 
-        error_cases = [
-            None,
-            "invalid",
-            123,
-            [],
-            {},
-            object()
-        ]
+        error_cases = [None, "invalid", 123, [], {}, object()]
 
         for case in error_cases:
             try:
                 # 应该优雅地处理无效输入
-                if hasattr(utils, 'safe_parse'):
-                    result = utils.safe_parse(case)
+                if hasattr(utils, "safe_parse"):
+                    utils.safe_parse(case)
                     # 如果方法存在，应该不抛出异常
             except Exception:
                 pass
@@ -362,14 +351,14 @@ class TestDateUtils:
         date_list = [datetime(2024, 1, 1) + timedelta(days=i) for i in range(1000)]
 
         try:
-            if hasattr(utils, 'batch_process'):
+            if hasattr(utils, "batch_process"):
                 result = utils.batch_process(date_list)
                 if result is not None:
                     assert isinstance(result, list)
         except Exception:
             pass
 
-    @patch('src.utils.date_utils.datetime')
+    @patch("src.utils.date_utils.datetime")
     def test_with_mocked_time(self, mock_datetime):
         """测试模拟时间"""
         mock_now = datetime(2024, 1, 15, 12, 0, 0)
@@ -378,7 +367,7 @@ class TestDateUtils:
         utils = DateUtils()
 
         try:
-            if hasattr(utils, 'now'):
+            if hasattr(utils, "now"):
                 result = utils.now()
                 assert result == mock_now
         except Exception:
@@ -386,12 +375,7 @@ class TestDateUtils:
 
     def test_configuration_options(self):
         """测试配置选项"""
-        configs = [
-            {},
-            {"timezone": "UTC"},
-            {"format": "%Y-%m-%d"},
-            {"locale": "en_US"}
-        ]
+        configs = [{}, {"timezone": "UTC"}, {"format": "%Y-%m-%d"}, {"locale": "en_US"}]
 
         for config in configs:
             try:
@@ -410,11 +394,11 @@ class TestDateUtils:
             datetime(2024, 1, 15),
             datetime(2024, 1, 20),
             datetime(2024, 2, 1),
-            datetime(2024, 2, 15)
+            datetime(2024, 2, 15),
         ]
 
         try:
-            if hasattr(utils, 'get_stats'):
+            if hasattr(utils, "get_stats"):
                 stats = utils.get_stats(date_list)
                 if stats is not None:
                     assert isinstance(stats, dict)

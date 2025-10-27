@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 23 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 数据质量监控器测试
 Tests for Data Quality Monitor
@@ -10,9 +11,10 @@ Tests for Data Quality Monitor
 测试src.data.quality.data_quality_monitor模块的数据质量监控功能
 """
 
-import pytest
-from datetime import datetime, timedelta
 import logging
+from datetime import datetime, timedelta
+
+import pytest
 
 # 测试导入
 try:
@@ -30,7 +32,6 @@ except ImportError as e:
     reason="Data quality monitor module not available",
 )
 @pytest.mark.unit
-
 class TestDataQualityMonitor:
     """数据质量监控器测试"""
 

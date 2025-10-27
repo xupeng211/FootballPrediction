@@ -4,29 +4,33 @@ Issue #83-B阶段3简化测试: utils.helpers
 创建时间: 2025-10-25
 """
 
-import pytest
-from unittest.mock import Mock, patch
-from datetime import datetime
 import inspect
+from datetime import datetime
+from unittest.mock import Mock, patch
+
+import pytest
 
 # 安全导入目标模块
 try:
     from utils.helpers import *
+
     IMPORTS_AVAILABLE = True
     print("✅ 成功导入模块: utils.helpers")
 
     import sys
+
     current_module = sys.modules[__name__]
     imported_items = []
     for name in dir(current_module):
         obj = getattr(current_module, name)
-        if hasattr(obj, '__module__') and obj.__module__ == 'utils.helpers':
+        if hasattr(obj, "__module__") and obj.__module__ == "utils.helpers":
             imported_items.append(name)
 
 except ImportError as e:
     print(f"❌ 导入失败: {e}")
     IMPORTS_AVAILABLE = False
     imported_items = []
+
 
 class TestUtilsHelpersPhase3:
     """阶段3简化测试"""
@@ -101,6 +105,7 @@ class TestUtilsHelpersPhase3:
             pytest.skip("模块导入失败")
 
         import time
+
         start_time = time.time()
 
         # 执行基础操作
@@ -136,9 +141,9 @@ class TestUtilsHelpersPhase3:
                         if callable(item):
                             try:
                                 if item.__code__.co_argcount > 0:
-                                    result = item(test_case)
+                                    item(test_case)
                                 else:
-                                    result = item()
+                                    item()
                             except:
                                 pass  # 预期的错误
                 except Exception as e:

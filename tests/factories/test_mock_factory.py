@@ -4,10 +4,10 @@
 
 from __future__ import annotations
 
-from unittest.mock import Mock, MagicMock
-from typing import Any, Dict, List, Optional
 import asyncio
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+from unittest.mock import MagicMock, Mock
 
 from tests.factories.data_factory import DataFactory
 
@@ -208,11 +208,11 @@ class MockFactory:
             ).append(handler)
         )
         mock.unsubscribe = Mock(
-            side_effect=lambda event, handler: mock.handlers.get(event, []).remove(
-                handler
+            side_effect=lambda event, handler: (
+                mock.handlers.get(event, []).remove(handler)
+                if event in mock.handlers
+                else None
             )
-            if event in mock.handlers
-            else None
         )
         mock.publish = Mock(side_effect=lambda event, data: mock._publish(event, data))
         mock.clear = Mock(side_effect=lambda: mock.handlers.clear())

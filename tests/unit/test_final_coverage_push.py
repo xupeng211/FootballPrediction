@@ -1,8 +1,9 @@
 from __future__ import annotations
-from unittest.mock import Mock, patch, AsyncMock, MagicMock, mock_open
+
+from unittest.mock import AsyncMock, MagicMock, Mock, mock_open, patch
+
 """最终覆盖率提升测试 - 冲刺30%目标"""
 
-import pytest
 import asyncio
 import json
 import os
@@ -11,11 +12,12 @@ import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
+import pytest
+
 
 # 额外测试覆盖更多utils函数
 @pytest.mark.unit
 @pytest.mark.slow
-
 class TestUtilsExtra:
     """测试utils模块的额外函数"""
 
@@ -145,7 +147,8 @@ class TestUtilsExtra:
     def test_utils_response_helpers(self):
         """测试响应助手函数"""
         try:
-            from utils import success_response, error_response, created_response
+            from utils import (created_response, error_response,
+                               success_response)
 
             # 测试成功响应
             resp = success_response({"data": "test"})
@@ -193,7 +196,7 @@ class TestUtilsExtra:
     def test_utils_i18n_functions(self):
         """测试国际化函数"""
         try:
-            from utils import _, set_language, get_current_language
+            from utils import _, get_current_language, set_language
 
             # 测试翻译函数
             _result = _("test_key")
@@ -212,7 +215,8 @@ class TestUtilsExtra:
     def test_utils_retry_functions(self):
         """测试重试函数"""
         try:
-            from utils import retry, exponential_backoff, linear_backoff, jitter_backoff
+            from utils import (exponential_backoff, jitter_backoff,
+                               linear_backoff, retry)
 
             # 测试指数退避
             delay1 = exponential_backoff(1, 1.0)
@@ -246,13 +250,9 @@ class TestUtilsExtra:
     def test_utils_validator_functions(self):
         """测试验证器函数"""
         try:
-            from utils import (
-                validate_required,
-                validate_range,
-                validate_length,
-                validate_pattern,
-                validate_choice,
-            )
+            from utils import (validate_choice, validate_length,
+                               validate_pattern, validate_range,
+                               validate_required)
 
             # 测试必填验证
             assert validate_required("value") is True

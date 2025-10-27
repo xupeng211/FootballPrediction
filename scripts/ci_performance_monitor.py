@@ -91,7 +91,7 @@ class CIPerformanceMonitor:
             syntax_time = time.time() - start_time
             results["syntax_time"] = syntax_time
             print(f"✅ 语法检查耗时: {syntax_time:.2f}s")
-        except subprocess.CalledProcessError as e:
+        except subprocess.CalledProcessError:
             syntax_time = time.time() - start_time
             results["syntax_time"] = syntax_time
             print(f"⚠️ 语法检查发现问题 (耗时: {syntax_time:.2f}s)")
@@ -108,7 +108,7 @@ class CIPerformanceMonitor:
             results["lint_time"] = lint_time
             results["lint_issues"] = lint_issues
             print(f"✅ Lint检查耗时: {lint_time:.2f}s (问题: {len(json.loads(result.stdout) if result.stdout.strip() else '[]')})")
-        except subprocess.CalledProcessError as e:
+        except subprocess.CalledProcessError:
             lint_time = time.time() - start_time
             results["lint_time"] = lint_time
             results["lint_issues"] = -1
@@ -129,7 +129,7 @@ class CIPerformanceMonitor:
                 results["test_time"] = test_time
                 results["test_summary"] = test_summary
                 print(f"✅ 测试执行耗时: {test_time:.2f}s")
-            except subprocess.CalledProcessError as e:
+            except subprocess.CalledProcessError:
                 test_time = time.time() - start_time
                 results["test_time"] = test_time
                 results["test_summary"] = "测试失败"
@@ -178,9 +178,9 @@ class CIPerformanceMonitor:
         report_path = Path(filename)
 
         with open(report_path, 'w', encoding='utf-8') as f:
-            f.write(f"# CI/CD性能监控报告\n\n")
+            f.write("# CI/CD性能监控报告\n\n")
             f.write(f"**生成时间**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-            f.write(f"**监控器版本**: v1.0\n\n")
+            f.write("**监控器版本**: v1.0\n\n")
             f.write(report)
 
         print(f"📄 性能报告已保存到: {report_path}")

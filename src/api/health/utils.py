@@ -19,8 +19,8 @@ Health Utils - API模块
 
 import asyncio
 import time
-from typing import Dict, Any, Optional
 from datetime import datetime
+from typing import Any, Dict, Optional
 
 
 class HealthChecker:
@@ -49,15 +49,21 @@ class HealthChecker:
         )
 
         checks = {
-            "database": results[0]
-            if not isinstance(results[0], Exception)
-            else {"status": "error", "error": str(results[0])},
-            "redis": results[1]
-            if not isinstance(results[1], Exception)
-            else {"status": "error", "error": str(results[1])},
-            "prediction_service": results[2]
-            if not isinstance(results[2], Exception)
-            else {"status": "error", "error": str(results[2])},
+            "database": (
+                results[0]
+                if not isinstance(results[0], Exception)
+                else {"status": "error", "error": str(results[0])}
+            ),
+            "redis": (
+                results[1]
+                if not isinstance(results[1], Exception)
+                else {"status": "error", "error": str(results[1])}
+            ),
+            "prediction_service": (
+                results[2]
+                if not isinstance(results[2], Exception)
+                else {"status": "error", "error": str(results[2])}
+            ),
         }
 
         # 判断整体状态

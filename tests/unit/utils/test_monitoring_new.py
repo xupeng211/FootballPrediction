@@ -1,14 +1,15 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 """API监控端点测试"""
+
+import time
 
 import pytest
 from fastapi.testclient import TestClient
-import time
 
 
 @pytest.mark.unit
 @pytest.mark.monitoring
-
 class TestAPIMonitoring:
     """API监控端点测试"""
 

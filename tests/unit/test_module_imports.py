@@ -2,15 +2,15 @@
 简单的模块可用性测试
 """
 
-import pytest
 import sys
+
+import pytest
 
 # 确保模块可以导入
 sys.path.insert(0, "src")
 
 
 @pytest.mark.unit
-
 def test_health_module_import():
     """测试健康模块可以导入"""
     try:

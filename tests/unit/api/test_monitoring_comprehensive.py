@@ -2,32 +2,29 @@
 
 # TODO: Consider creating a fixture for 4 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 Monitoring API 综合测试
 提升 monitoring 模块覆盖率的关键测试
 """
 
-import pytest
 import asyncio
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
 import json
-
 # 测试导入
 import sys
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional
+
+import pytest
 
 sys.path.insert(0, "src")
 
 try:
-    from src.api.monitoring import (
-        router,
-        _get_system_metrics,
-        _get_database_metrics,
-        _get_application_metrics,
-        _get_cache_metrics,
-        _health_check_detailed,
-    )
+    from src.api.monitoring import (_get_application_metrics,
+                                    _get_cache_metrics, _get_database_metrics,
+                                    _get_system_metrics,
+                                    _health_check_detailed, router)
     from src.database.dependencies import get_db_session
 
     MONITORING_AVAILABLE = True
@@ -38,7 +35,6 @@ except ImportError as e:
 
 @pytest.mark.skipif(not MONITORING_AVAILABLE, reason="Monitoring modules not available")
 @pytest.mark.unit
-
 class TestMonitoringAPI:
     """Monitoring API测试"""
 

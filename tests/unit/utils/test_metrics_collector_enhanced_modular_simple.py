@@ -3,25 +3,23 @@
 # TODO: Consider creating a fixture for 6 repeated Mock creations
 
 from unittest.mock import Mock, patch
+
 """
 增强指标收集器模块化简化测试
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
 
 
 @pytest.mark.unit
 @pytest.mark.external_api
 @pytest.mark.critical
-
 def test_metric_types():
     """测试指标数据类型"""
     from src.monitoring.metrics_collector_enhanced.metric_types import (
-        MetricPoint,
-        MetricSummary,
-        AlertInfo,
-    )
+        AlertInfo, MetricPoint, MetricSummary)
 
     # 测试MetricPoint
     point = MetricPoint(
@@ -57,10 +55,10 @@ def test_metric_types():
 
 def test_metrics_aggregator():
     """测试指标聚合器"""
-    from src.monitoring.metrics_collector_enhanced.aggregator import (
-        MetricsAggregator,
-    )
-    from src.monitoring.metrics_collector_enhanced.metric_types import MetricPoint
+    from src.monitoring.metrics_collector_enhanced.aggregator import \
+        MetricsAggregator
+    from src.monitoring.metrics_collector_enhanced.metric_types import \
+        MetricPoint
 
     aggregator = MetricsAggregator(window_size=60)
 
@@ -130,9 +128,8 @@ def test_alert_manager():
 
 def test_system_metrics_collector():
     """测试系统指标收集器"""
-    from src.monitoring.metrics_collector_enhanced.system_metrics import (
-        SystemMetricsCollector,
-    )
+    from src.monitoring.metrics_collector_enhanced.system_metrics import \
+        SystemMetricsCollector
 
     prometheus_manager = Mock()
     aggregator = Mock()
@@ -168,9 +165,8 @@ def test_system_metrics_collector():
 
 def test_business_metrics_collector():
     """测试业务指标收集器"""
-    from src.monitoring.metrics_collector_enhanced.business_metrics import (
-        BusinessMetricsCollector,
-    )
+    from src.monitoring.metrics_collector_enhanced.business_metrics import \
+        BusinessMetricsCollector
 
     prometheus_manager = Mock()
     aggregator = Mock()
@@ -218,12 +214,9 @@ def test_business_metrics_collector():
 def test_backward_compatibility():
     """测试向后兼容性"""
     # 测试原始导入方式仍然有效
-    from src.metrics.collector.enhanced import (
-        EnhancedMetricsCollector,
-        MetricsAggregator,
-        MetricPoint,
-        get_metrics_collector,
-    )
+    from src.metrics.collector.enhanced import (EnhancedMetricsCollector,
+                                                MetricPoint, MetricsAggregator,
+                                                get_metrics_collector)
 
     # 测试基本功能
     collector = get_metrics_collector()
@@ -238,9 +231,7 @@ def test_backward_compatibility():
 def test_decorators():
     """测试装饰器"""
     from src.monitoring.metrics_collector_enhanced.decorators import (
-        track_cache_performance,
-        track_performance,
-    )
+        track_cache_performance, track_performance)
 
     # 测试缓存性能装饰器
     @track_cache_performance(cache_type_param="cache_type")
@@ -266,11 +257,10 @@ def test_decorators():
 
 def test_alert_handlers():
     """测试告警处理器"""
-    from src.monitoring.metrics_collector_enhanced.alerting import (
-        DefaultAlertHandlers,
-        AlertInfo,
-    )
     from datetime import datetime
+
+    from src.monitoring.metrics_collector_enhanced.alerting import (
+        AlertInfo, DefaultAlertHandlers)
 
     # 创建测试告警
     alert = AlertInfo(
@@ -298,7 +288,8 @@ def test_alert_handlers():
 
 def test_metric_summary():
     """测试指标摘要"""
-    from src.monitoring.metrics_collector_enhanced.metric_types import MetricSummary
+    from src.monitoring.metrics_collector_enhanced.metric_types import \
+        MetricSummary
 
     summary = MetricSummary(
         count=100,
@@ -322,8 +313,10 @@ def test_metric_summary():
 
 def test_alert_info():
     """测试告警信息"""
-    from src.monitoring.metrics_collector_enhanced.metric_types import AlertInfo
     from datetime import datetime
+
+    from src.monitoring.metrics_collector_enhanced.metric_types import \
+        AlertInfo
 
     alert = AlertInfo(
         name="test_alert",

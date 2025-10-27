@@ -1,21 +1,22 @@
 from unittest.mock import Mock
+
 """
 增强指标收集器隔离测试
 测试各个模块的独立功能，避免导入依赖问题
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
 
 
 @pytest.mark.unit
-
 def test_metric_types_isolated():
     """独立测试指标数据类型"""
     # 直接定义测试，避免导入问题
     from dataclasses import dataclass, field
-    from typing import Dict, Any
     from datetime import datetime
+    from typing import Any, Dict
 
     @dataclass
     class MetricPoint:
@@ -101,7 +102,7 @@ def test_aggregator_isolated():
     import statistics
     from collections import defaultdict, deque
     from datetime import datetime, timedelta
-    from typing import Dict, Deque
+    from typing import Deque, Dict
 
     # 简化的MetricPoint定义
     class MetricPoint:
@@ -192,7 +193,7 @@ def test_aggregator_isolated():
 def test_alert_manager_isolated():
     """独立测试告警管理器"""
     from datetime import datetime, timedelta
-    from typing import Dict, Callable, Any, List, Optional
+    from typing import Any, Callable, Dict, List, Optional
 
     # 简化的AlertInfo定义
     class AlertInfo:

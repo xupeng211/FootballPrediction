@@ -1,13 +1,12 @@
 # mypy: ignore-errors
-import sqlalchemy as sa
-from sqlalchemy.exc import SQLAlchemyError, DatabaseError
-from typing import Union, Sequence
-
 import logging
+from typing import Sequence, Union
+
+import sqlalchemy as sa
+from sqlalchemy.exc import DatabaseError, SQLAlchemyError
 
 logger = logging.getLogger(__name__)
-from alembic import context
-from alembic import op
+from alembic import context, op
 
 """add_jsonb_sqlite_compatibility
 

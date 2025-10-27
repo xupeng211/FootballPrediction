@@ -1,11 +1,13 @@
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 """
 Tests for streaming.kafka_consumer_simple
 Auto-generated test file
 """
 
-import pytest
 import asyncio
+
+import pytest
 
 # Test imports
 try:
@@ -18,7 +20,6 @@ except ImportError as e:
 
 
 @pytest.mark.unit
-
 class TestKafkaMessageConsumer:
     """Test cases for KafkaMessageConsumer"""
 

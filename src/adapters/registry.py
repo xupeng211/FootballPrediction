@@ -7,13 +7,13 @@ Manages adapter registration, discovery, and lifecycle.
 """
 
 import asyncio
-from typing import Any, Dict, List, Optional
+import logging
 from datetime import datetime
 from enum import Enum
-import logging
+from typing import Any, Dict, List, Optional
 
 from .base import Adapter, AdapterStatus
-from .factory import AdapterFactory, AdapterConfig, AdapterGroupConfig
+from .factory import AdapterConfig, AdapterFactory, AdapterGroupConfig
 
 
 class RegistryStatus(Enum):

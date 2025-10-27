@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 30 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 任务工具函数测试
 Tests for Tasks Utils
@@ -10,21 +11,17 @@ Tests for Tasks Utils
 测试src.tasks.utils模块的任务工具函数
 """
 
-import pytest
 from datetime import datetime, timedelta, timezone
 from typing import List
 
+import pytest
+
 # 测试导入
 try:
-    from src.tasks.utils import (
-        should_collect_live_scores,
-        get_upcoming_matches,
-        is_match_day,
-        get_active_leagues,
-        calculate_next_collection_time,
-        cleanup_stale_tasks,
-        get_task_priority,
-    )
+    from src.tasks.utils import (calculate_next_collection_time,
+                                 cleanup_stale_tasks, get_active_leagues,
+                                 get_task_priority, get_upcoming_matches,
+                                 is_match_day, should_collect_live_scores)
 
     TASKS_UTILS_AVAILABLE = True
 except ImportError as e:
@@ -44,7 +41,6 @@ except ImportError as e:
     not TASKS_UTILS_AVAILABLE, reason="Tasks utils module not available"
 )
 @pytest.mark.unit
-
 class TestShouldCollectLiveScores:
     """测试：是否应该采集实时比分"""
 
@@ -57,7 +53,9 @@ class TestShouldCollectLiveScores:
             mock_result.scalar.return_value = 5  # 5场比赛
             mock_session.execute.return_value = mock_result
 
-            mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
+            mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = (
+                mock_session
+            )
 
             _result = await should_collect_live_scores()
 
@@ -73,7 +71,9 @@ class TestShouldCollectLiveScores:
             mock_result.scalar.return_value = 0  # 0场比赛
             mock_session.execute.return_value = mock_result
 
-            mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
+            mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = (
+                mock_session
+            )
 
             _result = await should_collect_live_scores()
 
@@ -88,7 +88,9 @@ class TestShouldCollectLiveScores:
             mock_result.scalar.return_value = 3  # 3场比赛
             mock_session.execute.return_value = mock_result
 
-            mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
+            mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = (
+                mock_session
+            )
 
             _result = await should_collect_live_scores()
 
@@ -141,7 +143,9 @@ class TestGetUpcomingMatches:
             mock_result.fetchall.return_value = mock_matches
             mock_session.execute.return_value = mock_result
 
-            mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
+            mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = (
+                mock_session
+            )
 
             _matches = await get_upcoming_matches()
 
@@ -158,7 +162,9 @@ class TestGetUpcomingMatches:
             mock_result.fetchall.return_value = []  # 没有比赛
             mock_session.execute.return_value = mock_result
 
-            mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
+            mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = (
+                mock_session
+            )
 
             _matches = await get_upcoming_matches(hours=48)
 
@@ -187,7 +193,9 @@ class TestGetUpcomingMatches:
             mock_result.fetchall.return_value = mock_matches
             mock_session.execute.return_value = mock_result
 
-            mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
+            mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = (
+                mock_session
+            )
 
             _matches = await get_upcoming_matches(hours=12)
 
@@ -255,7 +263,9 @@ class TestGetActiveLeagues:
             mock_result.scalars.return_value.all.return_value = mock_leagues
             mock_session.execute.return_value = mock_result
 
-            mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
+            mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = (
+                mock_session
+            )
 
             leagues = await get_active_leagues()
 
@@ -272,7 +282,9 @@ class TestGetActiveLeagues:
             mock_result.scalars.return_value.all.return_value = []
             mock_session.execute.return_value = mock_result
 
-            mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
+            mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = (
+                mock_session
+            )
 
             leagues = await get_active_leagues()
 
@@ -291,7 +303,9 @@ class TestGetActiveLeagues:
             mock_result.scalars.return_value.all.return_value = mock_leagues
             mock_session.execute.return_value = mock_result
 
-            mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
+            mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = (
+                mock_session
+            )
 
             leagues = await get_active_leagues()
 
@@ -383,7 +397,9 @@ class TestCleanupStaleTasks:
             mock_result.rowcount = 5  # 清理了5个任务
             mock_session.execute.return_value = mock_result
 
-            mock_db_manager.return_value.get_session.return_value.__enter__.return_value = mock_session
+            mock_db_manager.return_value.get_session.return_value.__enter__.return_value = (
+                mock_session
+            )
 
             cleaned_count = cleanup_stale_tasks()
 
@@ -399,7 +415,9 @@ class TestCleanupStaleTasks:
             mock_result.rowcount = 0  # 没有清理任务
             mock_session.execute.return_value = mock_result
 
-            mock_db_manager.return_value.get_session.return_value.__enter__.return_value = mock_session
+            mock_db_manager.return_value.get_session.return_value.__enter__.return_value = (
+                mock_session
+            )
 
             cleaned_count = cleanup_stale_tasks()
 
@@ -413,7 +431,9 @@ class TestCleanupStaleTasks:
             mock_result.rowcount = 3
             mock_session.execute.return_value = mock_result
 
-            mock_db_manager.return_value.get_session.return_value.__enter__.return_value = mock_session
+            mock_db_manager.return_value.get_session.return_value.__enter__.return_value = (
+                mock_session
+            )
 
             # 清理超过6小时的任务
             cleaned_count = cleanup_stale_tasks(hours_threshold=6)
@@ -473,9 +493,9 @@ class TestGetTaskPriority:
 
         for task_name, expected_priority in known_tasks:
             priority = get_task_priority(task_name)
-            assert priority == expected_priority, (
-                f"Task {task_name} should have priority {expected_priority}"
-            )
+            assert (
+                priority == expected_priority
+            ), f"Task {task_name} should have priority {expected_priority}"
 
 
 @pytest.mark.skipif(
@@ -495,7 +515,9 @@ class TestTasksUtilsIntegration:
             mock_result.scalar.return_value = 3
             mock_session.execute.return_value = mock_result
 
-            mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
+            mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = (
+                mock_session
+            )
 
             # 1. 检查是否应该采集
             should_collect = await should_collect_live_scores()
@@ -542,7 +564,9 @@ class TestTasksUtilsIntegration:
             ]
             mock_session.execute.return_value = mock_result
 
-            mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
+            mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = (
+                mock_session
+            )
 
             # 获取活跃联赛
             leagues = await get_active_leagues()
@@ -596,7 +620,9 @@ class TestTasksUtilsIntegration:
             mock_result = Mock()
             mock_result.scalar.return_value = 1
             mock_session.execute.return_value = mock_result
-            mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = mock_session
+            mock_db_manager.return_value.get_async_session.return_value.__aenter__.return_value = (
+                mock_session
+            )
 
             _result = await should_collect_live_scores()
             assert _result is True
@@ -618,15 +644,10 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if TASKS_UTILS_AVAILABLE:
-        from src.tasks.utils import (
-            should_collect_live_scores,
-            get_upcoming_matches,
-            is_match_day,
-            get_active_leagues,
-            calculate_next_collection_time,
-            cleanup_stale_tasks,
-            get_task_priority,
-        )
+        from src.tasks.utils import (calculate_next_collection_time,
+                                     cleanup_stale_tasks, get_active_leagues,
+                                     get_task_priority, get_upcoming_matches,
+                                     is_match_day, should_collect_live_scores)
 
         assert should_collect_live_scores is not None
         assert get_upcoming_matches is not None

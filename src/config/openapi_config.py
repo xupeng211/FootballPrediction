@@ -2,7 +2,8 @@
 OpenAPI 配置和文档增强
 """
 
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+
 from fastapi import FastAPI
 
 # mypy: ignore-errors

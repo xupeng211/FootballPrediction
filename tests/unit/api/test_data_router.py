@@ -2,14 +2,16 @@
 
 # TODO: Consider creating a fixture for 6 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 """
 Tests for api.data_router
 Auto-generated test file
 """
 
-import pytest
 import asyncio
+
+import pytest
 
 # Test imports
 try:
@@ -22,7 +24,6 @@ except ImportError as e:
 
 
 @pytest.mark.unit
-
 class TestLeagueInfo:
     """Test cases for LeagueInfo"""
 

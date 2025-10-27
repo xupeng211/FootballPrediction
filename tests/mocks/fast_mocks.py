@@ -3,9 +3,9 @@
 提供预配置的高性能 Mock 对象，用于测试环境
 """
 
-from unittest.mock import Mock, AsyncMock
 import asyncio
 from typing import Any, Dict, List, Optional
+from unittest.mock import AsyncMock, Mock
 
 
 class FastDatabaseManager:
@@ -98,8 +98,14 @@ class FastHTTPClient:
         response.headers = {}
         return response
 
-    async def post(self, url: str, data: Dict = None, json: Dict = None,
-                  headers: Dict = None, timeout: int = 30) -> Mock:
+    async def post(
+        self,
+        url: str,
+        data: Dict = None,
+        json: Dict = None,
+        headers: Dict = None,
+        timeout: int = 30,
+    ) -> Mock:
         """模拟 HTTP POST 请求"""
         response = Mock()
         response.status_code = 200
@@ -108,8 +114,14 @@ class FastHTTPClient:
         response.headers = {}
         return response
 
-    async def put(self, url: str, data: Dict = None, json: Dict = None,
-                 headers: Dict = None, timeout: int = 30) -> Mock:
+    async def put(
+        self,
+        url: str,
+        data: Dict = None,
+        json: Dict = None,
+        headers: Dict = None,
+        timeout: int = 30,
+    ) -> Mock:
         """模拟 HTTP PUT 请求"""
         response = Mock()
         response.status_code = 200

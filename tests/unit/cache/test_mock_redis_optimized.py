@@ -1,4 +1,5 @@
 from unittest.mock import Mock, patch
+
 """
 Mock Redis 优化测试
 Tests for Mock Redis (Optimized Version)
@@ -6,9 +7,10 @@ Tests for Mock Redis (Optimized Version)
 使用高性能Mock Redis测试缓存功能
 """
 
-import pytest
 import asyncio
 from datetime import datetime, timedelta
+
+import pytest
 
 # 导入优化的 mock
 from tests.mocks.fast_mocks import FastRedisManager
@@ -46,7 +48,6 @@ def mock_redis_manager():
     not REDIS_MANAGER_AVAILABLE, reason="Redis manager module not available"
 )
 @pytest.mark.unit
-
 class TestMockRedisOptimized:
     """Mock Redis 优化测试"""
 

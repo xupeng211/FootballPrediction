@@ -6,12 +6,13 @@
 优先级: HIGH
 """
 
-import pytest
-from unittest.mock import Mock, patch, AsyncMock, MagicMock, call
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
 import asyncio
 import json
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+from unittest.mock import AsyncMock, MagicMock, Mock, call, patch
+
+import pytest
 
 # 尝试导入目标模块
 try:
@@ -33,11 +34,7 @@ class TestApiModelsComprehensive:
     @pytest.fixture
     def setup_mocks(self):
         """设置Mock对象"""
-        return {
-            'config': {'test_mode': True},
-            'mock_data': {'key': 'value'}
-        }
-
+        return {"config": {"test_mode": True}, "mock_data": {"key": "value"}}
 
     def test_module_integration(self, setup_mocks):
         """测试模块集成"""
@@ -58,15 +55,27 @@ class TestApiModelsComprehensive:
         end_time = datetime.now()
         assert (end_time - start_time).total_seconds() < 1.0
 
-    @pytest.mark.parametrize("input_data,expected", [
-        ({"key": "value"}, {"key": "value"}),
-        (None, None),
-        ("", ""),
-    ])
+    @pytest.mark.parametrize(
+        "input_data,expected",
+        [
+            ({"key": "value"}, {"key": "value"}),
+            (None, None),
+            ("", ""),
+        ],
+    )
     def test_parameterized_cases(self, setup_mocks, input_data, expected):
         """参数化测试"""
         # TODO: 实现参数化测试
         assert input_data == expected
 
+
 if __name__ == "__main__":
-    pytest.main([__file__, "-v", "--cov=" + "{module_path.replace('src/', '').replace('.py', '').replace('/', '.')}", "--cov-report=term"])
+    pytest.main(
+        [
+            __file__,
+            "-v",
+            "--cov="
+            + "{module_path.replace('src/', '').replace('.py', '').replace('/', '.')}",
+            "--cov-report=term",
+        ]
+    )

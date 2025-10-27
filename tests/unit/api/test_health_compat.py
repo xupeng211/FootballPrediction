@@ -5,13 +5,14 @@ Tests for Health API Compatibility
 测试src.api.health模块的兼容性包装功能
 """
 
-import pytest
 import warnings
+
+import pytest
 
 # 测试导入
 HEALTH_AVAILABLE = True
 try:
-    from src.api.health import router, __all__
+    from src.api.health import __all__, router
 except ImportError as e:
     print(f"Import error: {e}")
     HEALTH_AVAILABLE = False
@@ -21,7 +22,6 @@ except ImportError as e:
 
 # @pytest.mark.skipif(not HEALTH_AVAILABLE, reason="Health module not available")
 @pytest.mark.unit
-
 class TestHealthCompatibility:
     """健康API兼容性测试"""
 
@@ -44,6 +44,7 @@ class TestHealthCompatibility:
             warnings.simplefilter("always")
             # 重新导入以触发警告
             from importlib import reload
+
             import src.api.health as health_module
 
             reload(health_module)

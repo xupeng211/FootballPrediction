@@ -3,8 +3,8 @@
 
 import pytest
 
-@pytest.mark.unit
 
+@pytest.mark.unit
 def test_base_service():
     service = BaseService()
     assert service is not None

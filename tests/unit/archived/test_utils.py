@@ -1,4 +1,5 @@
-from unittest.mock import patch, AsyncMock
+from unittest.mock import AsyncMock, patch
+
 """
 健康检查工具测试
 Health Check Utils Tests
@@ -7,10 +8,11 @@ Health Check Utils Tests
 Tests health check utility functionality defined in src/api/health/utils.py.
 """
 
-import pytest
 import asyncio
 import time
 from datetime import datetime
+
+import pytest
 
 # 导入要测试的模块
 try:
@@ -25,7 +27,6 @@ except ImportError:
     not HEALTH_UTILS_AVAILABLE, reason="Health utils module not available"
 )
 @pytest.mark.unit
-
 class TestHealthChecker:
     """HealthChecker类测试"""
 

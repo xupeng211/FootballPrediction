@@ -1,11 +1,11 @@
 # 数据质量简单测试
-from src.data.quality.anomaly_detector import AnomalyDetector
 import pytest
+
+from src.data.quality.anomaly_detector import AnomalyDetector
 from src.data.quality.data_quality_monitor import DataQualityMonitor
 
 
 @pytest.mark.unit
-
 def test_anomaly_detector():
     detector = AnomalyDetector()
     assert detector is not None

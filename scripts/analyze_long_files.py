@@ -128,7 +128,7 @@ class LongFileAnalyzer:
 
     def _get_end_line(self, node, content: str) -> int:
         """获取节点结束行号"""
-        lines = content.split('\n')
+        content.split('\n')
         if hasattr(node, 'end_lineno') and node.end_lineno:
             return node.end_lineno
 

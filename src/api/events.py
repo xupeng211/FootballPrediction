@@ -8,17 +8,15 @@ Event System API Endpoints
 Provides management and monitoring interfaces for the event system.
 """
 
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+
 from fastapi import APIRouter, HTTPException, Query
 from requests.exceptions import HTTPError
-from typing import Dict, Any, List, Optional
-from datetime import datetime, timedelta
 
 from ..core.event_application import get_event_application
 from ..events import get_event_bus
-from ..events.handlers import (
-    MetricsEventHandler,
-    AnalyticsEventHandler,
-)
+from ..events.handlers import AnalyticsEventHandler, MetricsEventHandler
 
 router = APIRouter(prefix="/events", tags=["事件系统"])
 

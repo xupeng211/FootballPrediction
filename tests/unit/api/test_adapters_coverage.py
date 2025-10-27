@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 31 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 适配器API测试覆盖率提升
 Adapters API Coverage Improvement
@@ -11,21 +12,22 @@ Adapters API Coverage Improvement
 Created specifically to improve coverage for src/api/adapters.py module.
 """
 
-import pytest
 import asyncio
-from fastapi.testclient import TestClient
-from fastapi import HTTPException, Query, Path
-from datetime import datetime, date, timedelta
-import sys
 import os
+import sys
+from datetime import date, datetime, timedelta
+
+import pytest
+from fastapi import HTTPException, Path, Query
+from fastapi.testclient import TestClient
 
 # 添加项目根目录到sys.path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../.."))
 
 # 尝试导入适配器API
 try:
-    from src.api.adapters import router, adapter_factory, adapter_registry
     from src.adapters import AdapterFactory, AdapterRegistry
+    from src.api.adapters import adapter_factory, adapter_registry, router
 except ImportError as e:
     print(f"导入适配器模块失败: {e}")
     pytest.skip("无法导入适配器模块", allow_module_level=True)
@@ -34,7 +36,6 @@ except ImportError as e:
 @pytest.mark.unit
 @pytest.mark.api
 @pytest.mark.external_api
-
 class TestAdaptersAPI:
     """测试适配器API端点"""
 

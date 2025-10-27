@@ -11,10 +11,10 @@ For backward compatibility, this file re-exports all classes from the modules.
 
 import warnings
 
-from ............src.services.processing.processors.odds import aggregator
-from ............src.services.processing.processors.odds import processor
-from ............src.services.processing.processors.odds import transformer
-from ............src.services.processing.processors.odds import validator
+from ............src.services.processing.processors.odds import (aggregator,
+                                                                 processor,
+                                                                 transformer,
+                                                                 validator)
 
 warnings.warn(
     "直接从 odds_processor 导入已弃用。"

@@ -1,15 +1,18 @@
 # TODO: Consider creating a fixture for 21 repeated Mock creations
 
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
+
 # TODO: Consider creating a fixture for 21 repeated Mock creations
 
-from unittest.mock import AsyncMock, MagicMock
+
 """
 预加载Mock - 在pytest收集测试之前应用
 """
 
-import sys
 import os
+import sys
 
 # 设置测试环境变量
 os.environ["TESTING"] = "true"

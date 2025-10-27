@@ -2,33 +2,33 @@
 
 # TODO: Consider creating a fixture for 15 repeated Mock creations
 
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
 """
 任务模块测试
 """
 
-import pytest
-from datetime import datetime, timedelta
 import asyncio
+from datetime import datetime, timedelta
+
+import pytest
 
 # 尝试导入任务模块，如果不存在则跳过测试
 try:
-    from src.tasks.backup.tasks import BackupTask
-    from src.tasks.backup.cleanup import CleanupTask
-    from src.tasks.backup.metrics import BackupMetricsCollector
-    from src.tasks.backup.validation import BackupValidator
-    from src.tasks.backup.executor import BackupExecutor
-    from src.tasks.backup.core import BackupConfig, BackupStrategy, BackupScheduler
-    from src.tasks.core import (
-        TaskStateManager,
-        TaskPriorityQueue,
-        TaskDependencyResolver,
-    )
-    from src.tasks.core import TaskRetryPolicy, TaskMetricsCollector
     from src.tasks.backup.async_tasks import AsyncBackupTask
-    from src.tasks.core import TaskBatchProcessor, TaskCancellationManager
-    from src.tasks.reporting import TaskReportGenerator
+    from src.tasks.backup.cleanup import CleanupTask
+    from src.tasks.backup.core import (BackupConfig, BackupScheduler,
+                                       BackupStrategy)
+    from src.tasks.backup.executor import BackupExecutor
+    from src.tasks.backup.metrics import BackupMetricsCollector
+    from src.tasks.backup.tasks import BackupTask
+    from src.tasks.backup.validation import BackupValidator
+    from src.tasks.core import (TaskBatchProcessor, TaskCancellationManager,
+                                TaskDependencyResolver, TaskMetricsCollector,
+                                TaskPriorityQueue, TaskRetryPolicy,
+                                TaskStateManager)
     from src.tasks.notifications import TaskNotificationManager
+    from src.tasks.reporting import TaskReportGenerator
 
     TASKS_AVAILABLE = True
 except ImportError:
@@ -40,7 +40,6 @@ TEST_SKIP_REASON = "Tasks module not available"
 
 @pytest.mark.skipif(not TASKS_AVAILABLE, reason=TEST_SKIP_REASON)
 @pytest.mark.unit
-
 class TestBackupTasks:
     """备份任务测试"""
 

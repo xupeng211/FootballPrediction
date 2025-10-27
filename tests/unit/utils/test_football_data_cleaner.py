@@ -2,10 +2,12 @@
 
 # TODO: Consider creating a fixture for 6 repeated Mock creations
 
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
+
 from src.data.processing.football_data_cleaner_mod import FootballDataCleaner
 
-from unittest.mock import AsyncMock, MagicMock
 """
 足球数据清洗器测试
 测试FootballDataCleaner的各种数据清洗功能

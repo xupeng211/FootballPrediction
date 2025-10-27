@@ -10,7 +10,7 @@ from pathlib import Path
 
 def auto_update():
     """执行自动更新"""
-    print(f"🔄 开始自动更新...")
+    print("🔄 开始自动更新...")
     print("=" * 50)
 
     updates = []
@@ -61,7 +61,7 @@ def auto_update():
         updates.append(('临时文件清理', f'❌ 失败: {e}'))
 
     # 显示结果
-    print(f"\n📊 更新结果:")
+    print("\n📊 更新结果:")
     for name, status in updates:
         print(f"  {name}: {status}")
 

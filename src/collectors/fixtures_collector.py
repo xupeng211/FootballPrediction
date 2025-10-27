@@ -4,18 +4,19 @@
 从各种数据源收集比赛赛程信息
 """
 
+import os
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
-import os
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.cache.redis_manager import RedisManager
+from src.core.logging_system import get_logger
 from src.database.connection import DatabaseManager
+
 from .models.match import Match
 from .models.team import Team
-from src.core.logging_system import get_logger
 
 logger = get_logger(__name__)
 

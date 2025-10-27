@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 14 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 """
 门面模式单元测试
 Unit Tests for Facade Pattern
@@ -11,39 +12,24 @@ Unit Tests for Facade Pattern
 Tests all components of the facade pattern.
 """
 
-import pytest
 import asyncio
 import os
-from typing import Any
 from datetime import datetime
+from typing import Any
 
-from src.facades.base import (
-    Subsystem,
-    SubsystemStatus,
-    SubsystemManager,
-    SystemFacade,
-)
-from src.facades.facades import (
-    DatabaseSubsystem,
-    CacheSubsystem,
-    NotificationSubsystem,
-    AnalyticsSubsystem,
-    PredictionSubsystem,
-    MainSystemFacade,
-    PredictionFacade,
-    DataCollectionFacade,
-    AnalyticsFacade,
-    NotificationFacade,
-)
-from src.facades.factory import (
-    FacadeFactory,
-    FacadeConfig,
-    facade_factory,
-)
+import pytest
+
+from src.facades.base import (Subsystem, SubsystemManager, SubsystemStatus,
+                              SystemFacade)
+from src.facades.facades import (AnalyticsFacade, AnalyticsSubsystem,
+                                 CacheSubsystem, DatabaseSubsystem,
+                                 DataCollectionFacade, MainSystemFacade,
+                                 NotificationFacade, NotificationSubsystem,
+                                 PredictionFacade, PredictionSubsystem)
+from src.facades.factory import FacadeConfig, FacadeFactory, facade_factory
 
 
 @pytest.mark.unit
-
 class TestSubsystem:
     """测试子系统"""
 

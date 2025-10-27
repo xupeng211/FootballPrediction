@@ -3,13 +3,15 @@
 目标: 从36.5%提升到60%+
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-import sys
 import os
+import sys
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 
 # 确保可以导入源码模块
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
+
 
 class TestCoreConfigCoverage:
     """core.config模块覆盖率提升测试"""
@@ -17,7 +19,9 @@ class TestCoreConfigCoverage:
     def test_config_imports(self):
         """测试配置模块导入"""
         try:
-            from src.core.config import ConfigManager, DatabaseConfig, AppConfig
+            from src.core.config import (AppConfig, ConfigManager,
+                                         DatabaseConfig)
+
             assert ConfigManager is not None
             assert DatabaseConfig is not None
             assert AppConfig is not None
@@ -39,7 +43,7 @@ class TestCoreConfigCoverage:
 
         except ImportError:
             pytest.skip("配置模块不可用")
-        except Exception as e:
+        except Exception:
             # 如果初始化失败，至少验证类存在
             assert True  # 类存在是基本的
 
@@ -53,9 +57,9 @@ class TestCoreConfigCoverage:
             assert db_config is not None
 
             # 测试配置属性
-            if hasattr(db_config, 'database_url'):
+            if hasattr(db_config, "database_url"):
                 assert db_config.database_url is not None
-            if hasattr(db_config, 'pool_size'):
+            if hasattr(db_config, "pool_size"):
                 assert isinstance(db_config.pool_size, int)
 
         except ImportError:
@@ -73,9 +77,9 @@ class TestCoreConfigCoverage:
             assert app_config is not None
 
             # 测试常见配置项
-            if hasattr(app_config, 'debug'):
+            if hasattr(app_config, "debug"):
                 assert isinstance(app_config.debug, bool)
-            if hasattr(app_config, 'secret_key'):
+            if hasattr(app_config, "secret_key"):
                 assert app_config.secret_key is not None
 
         except ImportError:
@@ -91,18 +95,20 @@ class TestCoreConfigCoverage:
             config = ConfigManager()
 
             # 测试各种加载方法
-            if hasattr(config, 'load_from_file'):
+            if hasattr(config, "load_from_file"):
                 # Mock文件操作
-                with patch('builtins.open', create=True) as mock_open:
-                    mock_open.return_value.__enter__.return_value.read.return_value = "TEST_CONFIG=test_value\n"
+                with patch("builtins.open", create=True) as mock_open:
+                    mock_open.return_value.__enter__.return_value.read.return_value = (
+                        "TEST_CONFIG=test_value\n"
+                    )
                     try:
                         config.load_from_file("test.yml")
                     except:
                         pass  # 可能失败，但方法被调用了
 
-            if hasattr(config, 'load_from_env'):
+            if hasattr(config, "load_from_env"):
                 # Mock环境变量
-                with patch.dict(os.environ, {'TEST_VAR': 'test_value'}):
+                with patch.dict(os.environ, {"TEST_VAR": "test_value"}):
                     try:
                         config.load_from_env()
                     except:
@@ -119,14 +125,14 @@ class TestCoreConfigCoverage:
             config = ConfigManager()
 
             # 测试验证方法
-            if hasattr(config, 'validate'):
+            if hasattr(config, "validate"):
                 try:
                     is_valid = config.validate()
                     assert isinstance(is_valid, bool)
                 except:
                     assert True  # 验证方法存在
 
-            if hasattr(config, 'is_valid'):
+            if hasattr(config, "is_valid"):
                 try:
                     is_valid = config.is_valid()
                     assert isinstance(is_valid, bool)
@@ -155,7 +161,7 @@ class TestCoreConfigCoverage:
         except ImportError:
             pytest.skip("配置管理器不可用")
 
-    @patch('src.core.config.os.environ')
+    @patch("src.core.config.os.environ")
     def test_config_with_mocks(self, mock_environ):
         """测试使用Mock的配置功能"""
         try:
@@ -163,18 +169,18 @@ class TestCoreConfigCoverage:
 
             # 设置Mock环境变量
             mock_environ.__getitem__.side_effect = {
-                'DATABASE_URL': 'sqlite:///test.db',
-                'DEBUG': 'true',
-                'SECRET_KEY': 'test-secret-key'
+                "DATABASE_URL": "sqlite:///test.db",
+                "DEBUG": "true",
+                "SECRET_KEY": "test-secret-key",
             }.__getitem__
 
             config = ConfigManager()
             assert config is not None
 
             # 测试配置获取
-            if hasattr(config, 'get'):
+            if hasattr(config, "get"):
                 try:
-                    value = config.get('DATABASE_URL')
+                    value = config.get("DATABASE_URL")
                     assert value is not None
                 except:
                     assert True  # get方法存在

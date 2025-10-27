@@ -1,4 +1,5 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 """
 测试拆分后的日志系统
 Test Split Logging System
@@ -10,10 +11,9 @@ import pytest
 # 测试导入
 @pytest.mark.unit
 @pytest.mark.critical
-
 def test_import_logging_types():
     """测试能否正常导入日志类型"""
-    from src.core.logging import LogLevel, LogCategory
+    from src.core.logging import LogCategory, LogLevel
 
     assert LogLevel is not None
     assert LogCategory is not None
@@ -38,7 +38,8 @@ def test_import_logger_manager():
 
 def test_import_decorators():
     """测试能否正常导入日志装饰器"""
-    from src.core.logging import log_performance, log_async_performance, log_audit
+    from src.core.logging import (log_async_performance, log_audit,
+                                  log_performance)
 
     assert log_performance is not None
     assert log_async_performance is not None
@@ -62,7 +63,7 @@ def test_import_handlers():
 # 测试结构化日志器
 def test_structured_logger_creation():
     """测试创建结构化日志器"""
-    from src.core.logging import StructuredLogger, LogLevel, LogCategory
+    from src.core.logging import LogCategory, LogLevel, StructuredLogger
 
     logger = StructuredLogger(
         name="test_logger",
@@ -93,7 +94,7 @@ def test_logger_manager_configure():
 
 def test_logger_manager_get_logger():
     """测试从日志管理器获取日志器"""
-    from src.core.logging import LoggerManager, LogCategory
+    from src.core.logging import LogCategory, LoggerManager
 
     logger = LoggerManager.get_logger("test_manager", LogCategory.DATABASE)
 
@@ -104,7 +105,7 @@ def test_logger_manager_get_logger():
 # 测试装饰器
 def test_performance_decorator():
     """测试性能监控装饰器"""
-    from src.core.logging import log_performance, LogCategory
+    from src.core.logging import LogCategory, log_performance
 
     @log_performance("test_operation")
     def test_function():
@@ -129,16 +130,10 @@ def test_audit_decorator():
 # 测试向后兼容性
 def test_backward_compatibility_import():
     """测试向后兼容的导入"""
-    from src.core.logging_system import (
-        LogLevel,
-        LogCategory,
-        StructuredLogger,
-        LoggerManager,
-        get_logger,
-        log_performance,
-        log_async_performance,
-        log_audit,
-    )
+    from src.core.logging_system import (LogCategory, LoggerManager, LogLevel,
+                                         StructuredLogger, get_logger,
+                                         log_async_performance, log_audit,
+                                         log_performance)
 
     assert LogLevel is not None
     assert LogCategory is not None
@@ -152,7 +147,7 @@ def test_backward_compatibility_import():
 
 def test_backward_compatibility_get_logger():
     """测试向后兼容的获取日志器"""
-    from src.core.logging_system import get_logger, LogCategory
+    from src.core.logging_system import LogCategory, get_logger
 
     logger = get_logger("test_compat", LogCategory.API)
 
@@ -197,7 +192,7 @@ def test_logger_methods(mock_getenv):
     """测试日志器的各种方法"""
     mock_getenv.return_value = "test"
 
-    from src.core.logging import StructuredLogger, LogLevel, LogCategory
+    from src.core.logging import LogCategory, LogLevel, StructuredLogger
 
     logger = StructuredLogger(
         name="test_methods",

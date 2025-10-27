@@ -3,12 +3,12 @@
 Audit Service (Compatibility Version)
 """
 
-from typing import List, Dict, Any, Optional
-from datetime import datetime
 import logging
 import uuid
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from .models import AuditEvent, AuditAction, AuditSeverity
+from .models import AuditAction, AuditEvent, AuditSeverity
 
 logger = logging.getLogger(__name__)
 

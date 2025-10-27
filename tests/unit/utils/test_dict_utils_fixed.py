@@ -4,11 +4,11 @@
 """
 
 import pytest
+
 from src.utils.dict_utils import DictUtils
 
 
 @pytest.mark.unit
-
 class TestDictUtilsFixed:
     """测试修复后的 DictUtils 功能"""
 

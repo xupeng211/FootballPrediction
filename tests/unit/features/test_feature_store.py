@@ -1,26 +1,26 @@
+import pytest
+
+# 跳过需要 feast 和 psycopg 的测试
+pytest.importorskip("feast", reason="feast not installed")
+pytest.importorskip("psycopg", reason="psycopg not installed")
+
 """
 特征存储测试
 Tests for Feature Store
 """
 
-import pytest
 from datetime import datetime, timedelta
-from typing import Dict, List, Any
-import pandas as pd
+from typing import Any, Dict, List
 
-from src.features.feature_store import (
-    FeatureStore,
-    Entity,
-    FeatureView,
-    Field,
-    Float64,
-    Int64,
-    _MockFeastResult,
-)
+import pandas as pd
+import pytest
+
+from src.features.feature_store import (Entity, FeatureStore, FeatureView,
+                                        Field, Float64, Int64,
+                                        _MockFeastResult)
 
 
 @pytest.mark.unit
-
 class TestFeatureStore:
     """特征存储测试"""
 

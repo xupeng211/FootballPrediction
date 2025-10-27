@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 4 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 测试覆盖率提升 - API模块测试
 Coverage Improvement - API Module Tests
@@ -11,19 +12,21 @@ Coverage Improvement - API Module Tests
 Created specifically to improve coverage for low-coverage core API modules.
 """
 
-import pytest
 import asyncio
+import os
+import sys
+
+import pytest
 from fastapi import HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials
-import sys
-import os
 
 # 尝试导入JWT相关模块
 try:
     from jose import JWTError, jwt
 except ImportError:
     try:
-        from authlib.jose import jwt, JoseError as JWTError
+        from authlib.jose import JoseError as JWTError
+        from authlib.jose import jwt
     except ImportError:
         JWTError = Exception
         jwt = None
@@ -36,17 +39,10 @@ JWT_AVAILABLE = jwt is not None
 
 # 导入要测试的模块
 try:
-    from src.api.dependencies import (
-        get_current_user,
-        get_admin_user,
-        get_prediction_engine,
-        get_redis_manager,
-        verify_prediction_permission,
-        rate_limit_check,
-        SECRET_KEY,
-        ALGORITHM,
-        security,
-    )
+    from src.api.dependencies import (ALGORITHM, SECRET_KEY, get_admin_user,
+                                      get_current_user, get_prediction_engine,
+                                      get_redis_manager, rate_limit_check,
+                                      security, verify_prediction_permission)
 
     DEPENDENCIES_AVAILABLE = True
 except ImportError as e:
@@ -55,7 +51,6 @@ except ImportError as e:
 
 
 @pytest.mark.unit
-
 class TestDependenciesModule:
     """测试依赖注入模块"""
 
@@ -344,14 +339,10 @@ class TestModuleImports:
     def test_module_imports(self):
         """测试所有必需的模块都能正确导入"""
         try:
-            from src.api.dependencies import (
-                get_current_user,
-                get_admin_user,
-                get_prediction_engine,
-                get_redis_manager,
-                SECRET_KEY,
-                ALGORITHM,
-            )
+            from src.api.dependencies import (ALGORITHM, SECRET_KEY,
+                                              get_admin_user, get_current_user,
+                                              get_prediction_engine,
+                                              get_redis_manager)
 
             assert True
         except ImportError as e:

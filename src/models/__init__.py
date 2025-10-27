@@ -8,14 +8,8 @@
 - 通用数据模型: Content, AnalysisResult, User等
 """
 
-from .common_models import (
-    AnalysisResult,
-    Content,
-    ContentType,
-    User,
-    UserProfile,
-    UserRole,
-)
+from .common_models import (AnalysisResult, Content, ContentType, User,
+                            UserProfile, UserRole)
 from .metrics_exporter import ModelMetricsExporter
 from .model_training import BaselineModelTrainer
 from .prediction_service import PredictionResult, PredictionService

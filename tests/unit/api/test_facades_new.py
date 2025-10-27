@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 25 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 门面模式API测试
 Tests for Facade Pattern API
@@ -10,18 +11,14 @@ Tests for Facade Pattern API
 测试src.api.facades模块的功能
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
 
 # 测试导入
 try:
-    from src.api.facades import (
-        router,
-        list_facades,
-        initialize_facade,
-        global_facades,
-        facade_factory,
-    )
+    from src.api.facades import (facade_factory, global_facades,
+                                 initialize_facade, list_facades, router)
 
     FACADES_AVAILABLE = True
 except ImportError as e:
@@ -31,7 +28,6 @@ except ImportError as e:
 
 @pytest.mark.skipif(not FACADES_AVAILABLE, reason="Facades API module not available")
 @pytest.mark.unit
-
 class TestListFacades:
     """获取门面列表测试"""
 

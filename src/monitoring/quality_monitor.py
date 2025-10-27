@@ -40,7 +40,7 @@ Supports real-time monitoring, historical trend analysis, and quality score calc
 """
 
 from .quality.core.monitor import QualityMonitor
-from .quality.core.results import DataFreshnessResult, DataCompletenessResult
+from .quality.core.results import DataCompletenessResult, DataFreshnessResult
 
 # 为了保持向后兼容，重新导出新模块化的类
 

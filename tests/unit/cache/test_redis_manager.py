@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 21 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 """
 Redis管理器测试
 Tests for Redis Manager
@@ -13,20 +14,12 @@ Tests for Redis Manager
 import pytest
 
 # 测试导入
-from src.cache.redis_manager import (
-    RedisManager,
-    CacheKeyManager,
-    get_redis_manager,
-    get_cache,
-    set_cache,
-    delete_cache,
-    exists_cache,
-    ttl_cache,
-)
+from src.cache.redis_manager import (CacheKeyManager, RedisManager,
+                                     delete_cache, exists_cache, get_cache,
+                                     get_redis_manager, set_cache, ttl_cache)
 
 
 @pytest.mark.unit
-
 class TestRedisManager:
     """Redis管理器测试"""
 
@@ -234,15 +227,10 @@ class TestAsyncCacheFunctions:
         """测试：异步缓存函数导入"""
         # 测试异步函数是否可以导入
         try:
-            from src.cache.redis_manager import (
-                aget_cache,
-                aset_cache,
-                adelete_cache,
-                aexists_cache,
-                attl_cache,
-                amget_cache,
-                amset_cache,
-            )
+            from src.cache.redis_manager import (adelete_cache, aexists_cache,
+                                                 aget_cache, amget_cache,
+                                                 amset_cache, aset_cache,
+                                                 attl_cache)
 
             assert callable(aget_cache)
             assert callable(aset_cache)

@@ -1,4 +1,5 @@
 from unittest.mock import MagicMock
+
 """增强的重试功能测试（简化版）"""
 
 import time
@@ -9,7 +10,6 @@ import pytest
 
 
 @pytest.mark.unit
-
 class TestRetrySimpleEnhanced:
     """增强的重试功能测试（简化版）"""
 

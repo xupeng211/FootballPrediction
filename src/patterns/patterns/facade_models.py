@@ -4,16 +4,14 @@
 
 # 导入
 import asyncio
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
-from datetime import datetime, timedelta
 from dataclasses import dataclass
+from datetime import datetime, timedelta
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
+
 from src.core.logging import get_logger
+from src.database.repositories import (MatchRepository, PredictionRepository,
+                                       TeamRepository)
 from src.patterns.adapter import UnifiedDataCollector
-from src.database.repositories import (
-    MatchRepository,
-    PredictionRepository,
-    TeamRepository,
-)
 
 
 # 类定义

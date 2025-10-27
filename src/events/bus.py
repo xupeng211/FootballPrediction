@@ -9,10 +9,10 @@ Provides event publishing, subscription, and routing functionality.
 import asyncio
 import logging
 from collections import defaultdict
-from typing import Any, Dict, List, Optional, Type
 from concurrent.futures import ThreadPoolExecutor
+from typing import Any, Dict, List, Optional, Type
 
-from .base import Event, EventHandler, EventFilter
+from .base import Event, EventFilter, EventHandler
 
 logger = logging.getLogger(__name__)
 
