@@ -12,8 +12,9 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import pytest
 
 # 安全导入目标模块
+module_name = "utils.data_validator"
 try:
-    from utils.data_validator import *
+    from src.utils.data_validator import *
 
     IMPORTS_AVAILABLE = True
     print("✅ 成功导入模块: utils.data_validator")

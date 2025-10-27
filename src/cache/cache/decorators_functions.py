@@ -3,17 +3,9 @@
 """
 
 # 导入
-import functools
-import hashlib
-import inspect
-import json
-import logging
-from typing import Any, Callable, Dict, Optional, Tuple, TypeVar, Union
+from typing import Any, Callable, TypeVar
 
-from redis.exceptions import RedisError
 
-from src.cache.mock_redis import MockRedisManager
-from src.cache.redis_manager import RedisManager
 
 # 常量
 F = TypeVar("F", bound=Callable[..., Any])

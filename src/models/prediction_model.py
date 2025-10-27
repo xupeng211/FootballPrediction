@@ -7,7 +7,6 @@ Prediction Model Module - Stub Implementation
 Temporary implementation to resolve import errors.
 """
 
-import json
 import logging
 from datetime import datetime
 from enum import Enum

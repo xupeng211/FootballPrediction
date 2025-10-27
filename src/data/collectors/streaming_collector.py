@@ -1,4 +1,3 @@
-from typing import Any, Dict, List, Optional
 
 """
 streaming_collector.py

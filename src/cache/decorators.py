@@ -63,7 +63,6 @@ def cache_by_user(user_id_param="user_id", user_param=None, ttl=None, prefix=Non
 def _make_cache_key(func_name, args, kwargs, prefix=None):
     """生成缓存键的辅助函数"""
     import hashlib
-    import json
 
     key_parts = [func_name]
     if prefix:

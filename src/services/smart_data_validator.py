@@ -7,13 +7,10 @@ Smart Data Validator
 """
 
 import asyncio
-import json
 import logging
-from datetime import datetime, timedelta
-from typing import Any, AsyncGenerator, Dict, List, Optional
+from datetime import datetime
+from typing import Any, AsyncGenerator, Dict
 
-import numpy as np
-import pandas as pd
 
 logger = logging.getLogger(__name__)
 

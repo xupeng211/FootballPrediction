@@ -9,7 +9,7 @@ Strategy implementation using machine learning models for prediction.
 import logging
 import time
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Type
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 

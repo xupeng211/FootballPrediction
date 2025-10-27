@@ -40,9 +40,7 @@ class TestApiObservers:
         try:
             # 提供必需的参数
             instance = AlertRequest(
-                alert_type="error",
-                severity="high",
-                message="Test alert"
+                alert_type="error", severity="high", message="Test alert"
             )
             assert instance is not None
         except Exception as e:
@@ -59,10 +57,7 @@ class TestApiObservers:
         class_name = "MetricUpdateRequest"
         try:
             # 提供必需的参数
-            instance = MetricUpdateRequest(
-                metric_name="cpu_usage",
-                metric_value=75.5
-            )
+            instance = MetricUpdateRequest(metric_name="cpu_usage", metric_value=75.5)
             assert instance is not None
         except Exception as e:
             print(f"实例化失败: {e}")

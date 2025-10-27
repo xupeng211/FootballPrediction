@@ -7,11 +7,10 @@ APM Integration Module
 
 import logging
 import time
-import traceback
 from contextlib import asynccontextmanager, contextmanager
-from typing import Any, Dict, List, Optional
+from typing import Dict, Optional
 
-from fastapi import Request, Response
+from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
 logger = logging.getLogger(__name__)

@@ -6,12 +6,10 @@ Advanced Prediction API
 生成时间: 2025-10-26 20:57:38
 """
 
-import asyncio
-import json
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
 
 router = APIRouter()
