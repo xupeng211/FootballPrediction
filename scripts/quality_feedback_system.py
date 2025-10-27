@@ -216,7 +216,11 @@ class QualityFeedbackSystem:
             self.feedback_data["metrics"] = {
                 name: asdict(metric) for name, metric in metrics.items()
             }
-            self.feedback_data["metrics"][k]["timestamp"] = v["timestamp"].isoformat()
+
+            # 转换timestamp为ISO格式
+            for k, v in self.feedback_data["metrics"].items():
+                if "timestamp" in v and hasattr(v["timestamp"], "isoformat"):
+                    self.feedback_data["metrics"][k]["timestamp"] = v["timestamp"].isoformat()
 
             self.feedback_data["last_update"] = datetime.now().isoformat()
 
