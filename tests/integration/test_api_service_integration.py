@@ -435,7 +435,7 @@ class TestDatabaseTransactionIntegration:
         ("/api/v1/stats", "GET", [200, 404]),
     ],
 )
-def test_api_endpoint_availability(endpoint, method, expected_status, client, client):
+def test_api_endpoint_availability(endpoint, method, expected_status, client):
     """测试API端点可用性"""
     try:
         client = TestClient(app) if IMPORT_SUCCESS else None
@@ -470,7 +470,7 @@ def test_api_endpoint_availability(endpoint, method, expected_status, client, cl
         ("invalid_method", {"invalid": "data"}, False),
     ],
 )
-def test_service_method_integration(service_method, input_data, should_pass, client, client):
+def test_service_method_integration(service_method, input_data, should_pass, client):
     """测试服务方法集成"""
     # 验证方法名和输入数据的基本格式
     assert isinstance(service_method, str)
@@ -487,7 +487,7 @@ def test_service_method_integration(service_method, input_data, should_pass, cli
 
 
 @pytest.mark.integration
-def test_error_propagation_flow(client, client):
+def test_error_propagation_flow(client):
     """测试错误传播流程"""
     # 模拟错误在层间传播
     layers = ["api", "service", "repository", "database"]
