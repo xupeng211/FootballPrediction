@@ -2,10 +2,11 @@
 比赛分析业务逻辑测试
 """
 
-import pytest
 from datetime import datetime, timedelta
-from typing import List, Dict, Any, Optional
 from enum import Enum
+from typing import Any, Dict, List, Optional
+
+import pytest
 
 
 class MatchResult(Enum):
@@ -310,7 +311,6 @@ class MatchAnalyzer:
 
 
 @pytest.mark.unit
-
 class TestMatchAnalysis:
     """测试比赛分析业务逻辑"""
 

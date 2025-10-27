@@ -1,16 +1,18 @@
 """测试API路由扩展模块"""
 
+from typing import Any, Dict, List, Optional
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
 
 try:
     from src.api.data_router import DataRouter
-    from src.api.predictions.router import PredictionRouter
     from src.api.models.common_models import PaginationParams, SortParams
     from src.api.models.response_models import APIResponse, PaginatedResponse
+    from src.api.predictions.router import PredictionRouter
+
     IMPORT_SUCCESS = True
 except ImportError as e:
     IMPORT_SUCCESS = False
@@ -23,27 +25,29 @@ except ImportError as e:
             self.dependencies = []
 
         def add_route(self, path, endpoint, methods=None, **kwargs):
-            self.routes.append({
-                'path': path,
-                'endpoint': endpoint,
-                'methods': methods or ['GET'],
-                **kwargs
-            })
+            self.routes.append(
+                {
+                    "path": path,
+                    "endpoint": endpoint,
+                    "methods": methods or ["GET"],
+                    **kwargs,
+                }
+            )
 
         def get(self, path, **kwargs):
-            return self.add_route(path, None, ['GET'], **kwargs)
+            return self.add_route(path, None, ["GET"], **kwargs)
 
         def post(self, path, **kwargs):
-            return self.add_route(path, None, ['POST'], **kwargs)
+            return self.add_route(path, None, ["POST"], **kwargs)
 
         def put(self, path, **kwargs):
-            return self.add_route(path, None, ['PUT'], **kwargs)
+            return self.add_route(path, None, ["PUT"], **kwargs)
 
         def delete(self, path, **kwargs):
-            return self.add_route(path, None, ['DELETE'], **kwargs)
+            return self.add_route(path, None, ["DELETE"], **kwargs)
 
         def patch(self, path, **kwargs):
-            return self.add_route(path, None, ['PATCH'], **kwargs)
+            return self.add_route(path, None, ["PATCH"], **kwargs)
 
     class PaginationParams(BaseModel):
         page: int = 1
@@ -97,7 +101,7 @@ class TestAPIRouterExtended:
         """测试路由创建"""
         router = mock_data_router
         assert router is not None
-        assert hasattr(router, 'routes')
+        assert hasattr(router, "routes")
         assert isinstance(router.routes, list)
 
     def test_router_route_addition(self, mock_data_router):
@@ -105,29 +109,29 @@ class TestAPIRouterExtended:
         # 添加GET路由
         mock_data_router.get("/test")
         assert len(mock_data_router.routes) == 1
-        assert mock_data_router.routes[0]['path'] == "/test"
-        assert "GET" in mock_data_routes[0]['methods']
+        assert mock_data_router.routes[0]["path"] == "/test"
+        assert "GET" in mock_data_routes[0]["methods"]
 
         # 添加POST路由
         mock_data_router.post("/test")
         assert len(mock_data_router.routes) == 2
-        assert mock_data_router.routes[1]['methods'] == ['POST']
+        assert mock_data_router.routes[1]["methods"] == ["POST"]
 
     def test_router_http_methods(self, mock_data_router):
         """测试HTTP方法"""
         methods = [
-            ('get', ['GET']),
-            ('post', ['POST']),
-            ('put', ['PUT']),
-            ('delete', ['DELETE']),
-            ('patch', ['PATCH'])
+            ("get", ["GET"]),
+            ("post", ["POST"]),
+            ("put", ["PUT"]),
+            ("delete", ["DELETE"]),
+            ("patch", ["PATCH"]),
         ]
 
         for method_name, expected_methods in methods:
             method_func = getattr(mock_data_router, method_name)
-            route = method_func(f"/{method_name}")
+            method_func(f"/{method_name}")
             assert len(mock_data_router.routes) > 0
-            assert mock_data_router.routes[-1]['methods'] == expected_methods
+            assert mock_data_router.routes[-1]["methods"] == expected_methods
 
     def test_pagination_params_creation(self):
         """测试分页参数创建"""
@@ -147,17 +151,17 @@ class TestAPIRouterExtended:
         """测试分页参数验证"""
         # 测试页数验证
         params = PaginationParams(page=0)
-        if hasattr(params, 'page'):
+        if hasattr(params, "page"):
             assert isinstance(params.page, int)
 
         # 测试大小验证
         params = PaginationParams(size=0)
-        if hasattr(params, 'size'):
+        if hasattr(params, "size"):
             assert isinstance(params.size, int)
 
         # 测试最大值限制
         params = PaginationParams(size=1000)
-        if hasattr(params, 'size') and hasattr(params, 'max_size'):
+        if hasattr(params, "size") and hasattr(params, "max_size"):
             # 可能会调整大小到最大值
             pass
 
@@ -179,7 +183,7 @@ class TestAPIRouterExtended:
         sort_orders = ["asc", "desc", "ASC", "DESC", "invalid"]
         for order in sort_orders:
             params = SortParams(sort_order=order)
-            assert hasattr(params, 'sort_order')
+            assert hasattr(params, "sort_order")
             assert isinstance(params.sort_order, str)
 
         # 测试排序字段
@@ -187,16 +191,14 @@ class TestAPIRouterExtended:
         for field in sort_fields:
             params = SortParams(sort_by=field)
             if field is not None:
-                assert hasattr(params, 'sort_by')
+                assert hasattr(params, "sort_by")
                 assert isinstance(params.sort_by, str)
 
     def test_api_response_creation(self):
         """测试API响应创建"""
         # 成功响应
         response = APIResponse(
-            success=True,
-            message="Operation successful",
-            data={"key": "value"}
+            success=True, message="Operation successful", data={"key": "value"}
         )
         assert response.success is True
         assert response.message == "Operation successful"
@@ -204,9 +206,7 @@ class TestAPIRouterExtended:
 
         # 失败响应
         response = APIResponse(
-            success=False,
-            message="Operation failed",
-            errors=["Error 1", "Error 2"]
+            success=False, message="Operation failed", errors=["Error 1", "Error 2"]
         )
         assert response.success is False
         assert response.message == "Operation failed"
@@ -218,17 +218,12 @@ class TestAPIRouterExtended:
             success=True,
             message="Data retrieved successfully",
             data=[{"id": 1}, {"id": 2}],
-            pagination={
-                "page": 1,
-                "size": 10,
-                "total": 100,
-                "pages": 10
-            }
+            pagination={"page": 1, "size": 10, "total": 100, "pages": 10},
         )
         assert response.success is True
         assert len(response.data) == 2
-        assert response.pagination['page'] == 1
-        assert response.pagination['total'] == 100
+        assert response.pagination["page"] == 1
+        assert response.pagination["total"] == 100
 
     def test_route_path_handling(self, mock_data_router):
         """测试路由路径处理"""
@@ -237,21 +232,24 @@ class TestAPIRouterExtended:
             "/api/data",
             "/api/data/{id}",
             "/api/data/{id}/details",
-            "/api/v1/leagues/{league_id}/matches/{match_id}"
+            "/api/v1/leagues/{league_id}/matches/{match_id}",
         ]
 
         for path in test_paths:
             mock_data_router.get(path)
             assert len(mock_data_router.routes) > 0
-            assert mock_data_router.routes[-1]['path'] == path
+            assert mock_data_router.routes[-1]["path"] == path
 
     def test_route_parameter_extraction(self):
         """测试路由参数提取"""
         # 模拟路径参数提取
         path_params = [
             ("/data/{id}", {"id": "123"}),
-            ("/data/{category}/items/{item_id}", {"category": "sports", "item_id": "456"}),
-            ("/search/{q}", {"q": "test query"})
+            (
+                "/data/{category}/items/{item_id}",
+                {"category": "sports", "item_id": "456"},
+            ),
+            ("/search/{q}", {"q": "test query"}),
         ]
 
         for path, expected_params in path_params:
@@ -269,7 +267,7 @@ class TestAPIRouterExtended:
             (403, "Forbidden"),
             (404, "Not Found"),
             (422, "Unprocessable Entity"),
-            (500, "Internal Server Error")
+            (500, "Internal Server Error"),
         ]
 
         for code, reason in status_codes:
@@ -284,7 +282,7 @@ class TestAPIRouterExtended:
             "Validation error",
             ["Error 1", "Error 2"],
             {"field": "value", "error": "Validation failed"},
-            None  # 无错误
+            None,  # 无错误
         ]
 
         for error_data in errors:
@@ -299,9 +297,7 @@ class TestAPIRouterExtended:
                     errors_list = []
 
                 response = APIResponse(
-                    success=False,
-                    message="Error occurred",
-                    errors=errors_list
+                    success=False, message="Error occurred", errors=errors_list
                 )
 
                 assert response.success is False
@@ -319,16 +315,12 @@ class TestAPIRouterExtended:
             123,
             True,
             None,
-            {"nested": {"data": "value"}}
+            {"nested": {"data": "value"}},
         ]
 
         for data in test_data:
             try:
-                response = APIResponse(
-                    success=True,
-                    message="Success",
-                    data=data
-                )
+                response = APIResponse(success=True, message="Success", data=data)
                 assert response.data == data
             except Exception:
                 pass  # 某些数据可能无法序列化
@@ -340,7 +332,7 @@ class TestAPIRouterExtended:
             {"name": "Test"},
             {"id": 1, "active": True},
             {"list": [1, 2, 3]},
-            {"nested": {"inner": "value"}}
+            {"nested": {"inner": "value"}},
         ]
 
         for request_data in valid_requests:
@@ -354,12 +346,12 @@ class TestAPIRouterExtended:
         responses = [
             APIResponse(success=True, message="Success"),
             APIResponse(success=False, message="Error", errors=["Test error"]),
-            APIResponse(success=True, message="Data", data={"key": "value"})
+            APIResponse(success=True, message="Data", data={"key": "value"}),
         ]
 
         for response in responses:
-            assert hasattr(response, 'success')
-            assert hasattr(response, 'message')
+            assert hasattr(response, "success")
+            assert hasattr(response, "message")
             assert isinstance(response.success, bool)
             assert isinstance(response.message, str)
 
@@ -370,27 +362,22 @@ class TestAPIRouterExtended:
             "auth_required",
             "admin_required",
             "rate_limit",
-            "cache_control"
+            "cache_control",
         ]
 
         for dep in dependencies:
             # 模拟添加依赖
-            if hasattr(mock_data_router, 'dependencies'):
+            if hasattr(mock_data_router, "dependencies"):
                 mock_data_router.dependencies.append(dep)
 
         # 验证依赖添加
-        if hasattr(mock_data_router, 'dependencies'):
+        if hasattr(mock_data_router, "dependencies"):
             assert len(mock_data_router.dependencies) >= 0
 
     def test_route_middleware_integration(self, mock_data_router):
         """测试路由中间件集成"""
         # 测试中间件配置
-        middlewares = [
-            "cors",
-            "auth",
-            "logging",
-            "error_handling"
-        ]
+        middlewares = ["cors", "auth", "logging", "error_handling"]
 
         for middleware in middlewares:
             # 模拟中间件配置
@@ -430,7 +417,8 @@ class TestAPIRouterExtended:
         max_requests = 3
 
         import time
-        start_time = time.time()
+
+        time.time()
 
         # 模拟多个请求
         for i in range(5):
@@ -439,8 +427,7 @@ class TestAPIRouterExtended:
 
             # 检查速率限制
             recent_requests = [
-                t for t in request_times
-                if current_time - t < rate_limit_window
+                t for t in request_times if current_time - t < rate_limit_window
             ]
 
             # 模拟速率限制逻辑
@@ -492,7 +479,7 @@ class TestAPIRouterExtended:
         user_permissions = {
             "admin": ["read", "write", "delete"],
             "user": ["read"],
-            "guest": []
+            "guest": [],
         }
 
         for role, permissions in user_permissions.items():
@@ -514,7 +501,7 @@ class TestAPIRouterExtended:
             "/api/v1/data",
             "/api/v2/data",
             "/api/v1/leagues",
-            "/api/v2/leagues"
+            "/api/v2/leagues",
         ]
 
         for endpoint in api_versions:
@@ -528,7 +515,7 @@ class TestAPIRouterExtended:
             "application/json",
             "application/xml",
             "text/plain",
-            "multipart/form-data"
+            "multipart/form-data",
         ]
 
         for content_type in content_types:
@@ -542,7 +529,7 @@ class TestAPIRouterExtended:
             "Cache-Control",
             "X-RateLimit-Limit",
             "X-Request-ID",
-            "Server"
+            "Server",
         ]
 
         for header in common_headers:
@@ -555,7 +542,7 @@ class TestAPIRouterExtended:
             {"page": 1, "size": 10},
             {"sort": "name", "order": "asc"},
             {"filter": "active", "search": "test"},
-            {"fields": "id,name,created_at"}
+            {"fields": "id,name,created_at"},
         ]
 
         for params in query_params:
@@ -587,7 +574,7 @@ class TestAPIRouterAdvanced:
         custom_errors = [
             {"code": "VALIDATION_ERROR", "message": "Invalid input"},
             {"code": "NOT_FOUND", "message": "Resource not found"},
-            {"code": "PERMISSION_DENIED", "message": "Access denied"}
+            {"code": "PERMISSION_DENIED", "message": "Access denied"},
         ]
 
         for error in custom_errors:
@@ -599,20 +586,13 @@ class TestAPIRouterAdvanced:
     def test_bulk_operations(self):
         """测试批量操作"""
         # 测试批量创建
-        bulk_data = [
-            {"name": "Item 1"},
-            {"name": "Item 2"},
-            {"name": "Item 3"}
-        ]
+        bulk_data = [{"name": "Item 1"}, {"name": "Item 2"}, {"name": "Item 3"}]
 
         assert len(bulk_data) == 3
         assert all(isinstance(item, dict) for item in bulk_data)
 
         # 测试批量更新
-        update_data = [
-            {"id": 1, "name": "Updated 1"},
-            {"id": 2, "name": "Updated 2"}
-        ]
+        update_data = [{"id": 1, "name": "Updated 1"}, {"id": 2, "name": "Updated 2"}]
 
         assert len(update_data) == 2
         assert all("id" in item for item in update_data)
@@ -622,7 +602,7 @@ class TestAPIRouterAdvanced:
         search_queries = [
             {"q": "test", "fields": ["name", "description"]},
             {"q": "football", "filters": {"category": "sports"}},
-            {"q": "league", "sort": "relevance", "page": 1}
+            {"q": "league", "sort": "relevance", "page": 1},
         ]
 
         for query in search_queries:
@@ -642,7 +622,7 @@ class TestAPIRouterAdvanced:
         # 模拟导出数据
         export_data = {
             "leagues": [{"id": 1, "name": "Premier League"}],
-            "teams": [{"id": 1, "name": "Manchester United"}]
+            "teams": [{"id": 1, "name": "Manchester United"}],
         }
 
         assert isinstance(export_data, dict)
@@ -654,7 +634,7 @@ class TestAPIRouterAdvanced:
         websocket_connections = ["conn_1", "conn_2", "conn_3"]
 
         # 测试广播消息
-        broadcast_message = {"type": "update", "data": {"score": 2-1}}
+        broadcast_message = {"type": "update", "data": {"score": 2 - 1}}
 
         for conn_id in websocket_connections:
             assert isinstance(conn_id, str)
@@ -668,7 +648,7 @@ class TestAPIRouterAdvanced:
         background_tasks = [
             {"id": 1, "type": "data_processing", "status": "pending"},
             {"id": 2, "type": "email_sending", "status": "running"},
-            {"id": 3, "type": "report_generation", "status": "completed"}
+            {"id": 3, "type": "report_generation", "status": "completed"},
         ]
 
         for task in background_tasks:

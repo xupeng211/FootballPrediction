@@ -83,7 +83,7 @@ def test_basic_functionality():
     try:
         # 测试一个简单的类实例化
         from src.monitoring.anomaly_detector import AnomalyDetector
-        detector = AnomalyDetector()
+        AnomalyDetector()
         print("✅ AnomalyDetector 实例化成功")
 
         # 测试一个简单的方法调用

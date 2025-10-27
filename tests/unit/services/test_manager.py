@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 39 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 """
 服务管理器测试
 Tests for Service Manager
@@ -10,17 +11,12 @@ Tests for Service Manager
 
 import pytest
 
-from src.services.manager import (
-    ServiceManager,
-    service_manager,
-    _SERVICE_FACTORIES,
-    _ensure_default_services,
-)
 from src.services.base_unified import BaseService
+from src.services.manager import (_SERVICE_FACTORIES, ServiceManager,
+                                  _ensure_default_services, service_manager)
 
 
 @pytest.mark.unit
-
 class TestServiceManager:
     """服务管理器测试"""
 

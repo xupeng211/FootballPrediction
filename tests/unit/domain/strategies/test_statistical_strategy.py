@@ -1,19 +1,19 @@
-from unittest.mock import patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
 """测试统计策略"""
 
-import pytest
 import asyncio
 from datetime import datetime, timedelta
-import numpy as np
 
-from src.domain.strategies.statistical import StatisticalStrategy
-from src.domain.strategies.base import (
-    PredictionInput as BasePredictionInput,
-    PredictionOutput,
-    StrategyType,
-)
-from tests.helpers.test_adapters import SimplePredictionInput as PredictionInput
+import numpy as np
+import pytest
+
 from src.domain.models.prediction import Prediction
+from src.domain.strategies.base import PredictionInput as BasePredictionInput
+from src.domain.strategies.base import PredictionOutput, StrategyType
+from src.domain.strategies.statistical import StatisticalStrategy
+from tests.helpers.test_adapters import \
+    SimplePredictionInput as PredictionInput
 
 
 @pytest.fixture

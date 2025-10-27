@@ -1,4 +1,5 @@
-from unittest.mock import Mock, MagicMock
+from unittest.mock import MagicMock, Mock
+
 """
 依赖注入容器测试
 Tests for Dependency Injection Container
@@ -6,14 +7,12 @@ Tests for Dependency Injection Container
 测试src.core.di模块的功能
 """
 
-import pytest
 from typing import Protocol
-from src.core.di import (
-    DIContainer,
-    ServiceLifetime,
-    ServiceDescriptor,
-    DependencyInjectionError,
-)
+
+import pytest
+
+from src.core.di import (DependencyInjectionError, DIContainer,
+                         ServiceDescriptor, ServiceLifetime)
 
 
 # 测试用的服务类
@@ -82,7 +81,6 @@ class ServiceWithArgs:
 
 
 @pytest.mark.unit
-
 class TestServiceDescriptor:
     """服务描述符测试"""
 

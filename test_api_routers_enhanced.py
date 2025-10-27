@@ -126,7 +126,7 @@ class TestApiRoutersEnhanced:
             request = PredictionRequest(match_id=1)
             assert request is not None
             assert request.match_id == 1
-            assert request.include_confidence == True  # 默认值
+            assert request.include_confidence  # 默认值
 
         except ImportError:
             pytest.skip("API models not available")

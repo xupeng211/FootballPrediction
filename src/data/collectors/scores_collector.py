@@ -15,12 +15,12 @@ import json
 基于 DATA_DESIGN.md 第1.1节设计。
 """
 
-from typing import Dict, List, Optional, Any
+import asyncio
 from datetime import datetime
 from enum import Enum
-import asyncio
+from typing import Any, Dict, List, Optional
 
-from .base_collector import DataCollector, CollectionResult
+from .base_collector import CollectionResult, DataCollector
 
 
 class MatchStatus(Enum):

@@ -2,26 +2,21 @@
 
 # TODO: Consider creating a fixture for 8 repeated Mock creations
 
-from unittest.mock import patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
 """测试集成策略"""
 
-import pytest
 import asyncio
 from datetime import datetime
-import numpy as np
 
-from src.domain.strategies.ensemble import (
-    EnsembleStrategy,
-    EnsembleMethod,
-    StrategyWeight,
-    EnsembleResult,
-)
-from src.domain.strategies.base import (
-    PredictionInput,
-    PredictionOutput,
-    StrategyType,
-)
+import numpy as np
+import pytest
+
 from src.domain.models.prediction import Prediction
+from src.domain.strategies.base import (PredictionInput, PredictionOutput,
+                                        StrategyType)
+from src.domain.strategies.ensemble import (EnsembleMethod, EnsembleResult,
+                                            EnsembleStrategy, StrategyWeight)
 
 
 @pytest.fixture
@@ -156,21 +151,21 @@ async def test_majority_voting_prediction(ensemble_strategy):
     ensemble_strategy._ensemble_method = EnsembleMethod.MAJORITY_VOTING
 
     # 修改子策略返回值以产生明确的多数
-    ensemble_strategy._sub_strategies[
-        "historical"
-    ].predict.return_value = PredictionOutput(
-        predicted_home_score=2,
-        predicted_away_score=1,
-        confidence=0.75,
-        metadata={"reasoning": "Test"},
+    ensemble_strategy._sub_strategies["historical"].predict.return_value = (
+        PredictionOutput(
+            predicted_home_score=2,
+            predicted_away_score=1,
+            confidence=0.75,
+            metadata={"reasoning": "Test"},
+        )
     )
-    ensemble_strategy._sub_strategies[
-        "statistical"
-    ].predict.return_value = PredictionOutput(
-        predicted_home_score=2,
-        predicted_away_score=1,
-        confidence=0.68,
-        metadata={"reasoning": "Test"},
+    ensemble_strategy._sub_strategies["statistical"].predict.return_value = (
+        PredictionOutput(
+            predicted_home_score=2,
+            predicted_away_score=1,
+            confidence=0.68,
+            metadata={"reasoning": "Test"},
+        )
     )
 
     input_data = PredictionInput(match_id=123, home_team_id=1, away_team_id=2)
@@ -216,29 +211,29 @@ async def test_dynamic_weighting(ensemble_strategy):
 async def test_consensus_score_calculation(ensemble_strategy):
     """测试共识分数计算"""
     # 所有策略给出相似预测
-    ensemble_strategy._sub_strategies[
-        "historical"
-    ].predict.return_value = PredictionOutput(
-        predicted_home_score=2,
-        predicted_away_score=1,
-        confidence=0.75,
-        metadata={"reasoning": "Consensus test"},
+    ensemble_strategy._sub_strategies["historical"].predict.return_value = (
+        PredictionOutput(
+            predicted_home_score=2,
+            predicted_away_score=1,
+            confidence=0.75,
+            metadata={"reasoning": "Consensus test"},
+        )
     )
-    ensemble_strategy._sub_strategies[
-        "statistical"
-    ].predict.return_value = PredictionOutput(
-        predicted_home_score=2,
-        predicted_away_score=1,
-        confidence=0.72,
-        metadata={"reasoning": "Consensus test"},
+    ensemble_strategy._sub_strategies["statistical"].predict.return_value = (
+        PredictionOutput(
+            predicted_home_score=2,
+            predicted_away_score=1,
+            confidence=0.72,
+            metadata={"reasoning": "Consensus test"},
+        )
     )
-    ensemble_strategy._sub_strategies[
-        "ml_model"
-    ].predict.return_value = PredictionOutput(
-        predicted_home_score=2,
-        predicted_away_score=1,
-        confidence=0.78,
-        metadata={"reasoning": "Consensus test"},
+    ensemble_strategy._sub_strategies["ml_model"].predict.return_value = (
+        PredictionOutput(
+            predicted_home_score=2,
+            predicted_away_score=1,
+            confidence=0.78,
+            metadata={"reasoning": "Consensus test"},
+        )
     )
 
     input_data = PredictionInput(match_id=123, home_team_id=1, away_team_id=2)
@@ -254,29 +249,29 @@ async def test_consensus_score_calculation(ensemble_strategy):
 async def test_disagreement_handling(ensemble_strategy):
     """测试分歧处理"""
     # 设置高度分歧的预测
-    ensemble_strategy._sub_strategies[
-        "historical"
-    ].predict.return_value = PredictionOutput(
-        predicted_home_score=1,
-        predicted_away_score=0,
-        confidence=0.8,
-        metadata={"reasoning": "Disagreement test"},
+    ensemble_strategy._sub_strategies["historical"].predict.return_value = (
+        PredictionOutput(
+            predicted_home_score=1,
+            predicted_away_score=0,
+            confidence=0.8,
+            metadata={"reasoning": "Disagreement test"},
+        )
     )
-    ensemble_strategy._sub_strategies[
-        "statistical"
-    ].predict.return_value = PredictionOutput(
-        predicted_home_score=0,
-        predicted_away_score=0,
-        confidence=0.7,
-        metadata={"reasoning": "Disagreement test"},
+    ensemble_strategy._sub_strategies["statistical"].predict.return_value = (
+        PredictionOutput(
+            predicted_home_score=0,
+            predicted_away_score=0,
+            confidence=0.7,
+            metadata={"reasoning": "Disagreement test"},
+        )
     )
-    ensemble_strategy._sub_strategies[
-        "ml_model"
-    ].predict.return_value = PredictionOutput(
-        predicted_home_score=4,
-        predicted_away_score=0,
-        confidence=0.85,
-        metadata={"reasoning": "Disagreement test"},
+    ensemble_strategy._sub_strategies["ml_model"].predict.return_value = (
+        PredictionOutput(
+            predicted_home_score=4,
+            predicted_away_score=0,
+            confidence=0.85,
+            metadata={"reasoning": "Disagreement test"},
+        )
     )
 
     input_data = PredictionInput(match_id=123, home_team_id=1, away_team_id=2)

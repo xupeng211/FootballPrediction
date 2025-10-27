@@ -1,13 +1,15 @@
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 观察者API端点测试
 Observers API Endpoints Tests
 """
 
-import pytest
-from fastapi.testclient import TestClient
 import json
 from datetime import datetime
+
+import pytest
+from fastapi.testclient import TestClient
 
 from src.api.app import app
 

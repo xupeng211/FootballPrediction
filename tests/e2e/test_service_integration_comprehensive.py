@@ -13,16 +13,17 @@ Comprehensive Service Integration Test Suite
 测试覆盖率目标：>=95%
 """
 
-import pytest
 import asyncio
 import json
 import time
-from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional
-from dataclasses import dataclass
-from enum import Enum
-from unittest.mock import Mock, AsyncMock, patch
 import uuid
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Any, Dict, List, Optional
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 # 导入测试工具
 try:
@@ -55,6 +56,7 @@ except ImportError:
 
 class IntegrationTestScenario(Enum):
     """集成测试场景枚举"""
+
     USER_PREDICTION_FLOW = "user_prediction_flow"
     DATA_PROCESSING_PIPELINE = "data_processing_pipeline"
     CACHE_DATABASE_SYNC = "cache_database_sync"
@@ -65,6 +67,7 @@ class IntegrationTestScenario(Enum):
 @dataclass
 class TestMetrics:
     """测试指标"""
+
     start_time: datetime
     end_time: Optional[datetime] = None
     response_times: List[float] = None
@@ -83,7 +86,11 @@ class TestMetrics:
 
     @property
     def avg_response_time(self) -> float:
-        return sum(self.response_times) / len(self.response_times) if self.response_times else 0
+        return (
+            sum(self.response_times) / len(self.response_times)
+            if self.response_times
+            else 0
+        )
 
     @property
     def success_rate(self) -> float:
@@ -98,10 +105,10 @@ class TestServiceIntegration:
     def mock_services(self):
         """Mock服务集合"""
         return {
-            'user_service': Phase4AMockFactory.create_mock_user_service(),
-            'cache_service': Phase4AMockFactory.create_mock_cache_service(),
-            'database_service': Phase4AMockFactory.create_mock_database_service(),
-            'prediction_service': Phase4AMockFactory.create_mock_prediction_service()
+            "user_service": Phase4AMockFactory.create_mock_user_service(),
+            "cache_service": Phase4AMockFactory.create_mock_cache_service(),
+            "database_service": Phase4AMockFactory.create_mock_database_service(),
+            "prediction_service": Phase4AMockFactory.create_mock_prediction_service(),
         }
 
     @pytest.fixture
@@ -130,15 +137,15 @@ class TestServiceIntegration:
             "email": f"test_{int(time.time())}@example.com",
             "password": "SecurePass123!",
             "first_name": "Test",
-            "last_name": "User"
+            "last_name": "User",
         }
 
-        with patch('httpx.AsyncClient.post') as mock_post:
+        with patch("httpx.AsyncClient.post") as mock_post:
             mock_post.return_value.status_code = 201
             mock_post.return_value.json.return_value = {
                 "id": str(uuid.uuid4()),
                 "username": user_data["username"],
-                "email": user_data["email"]
+                "email": user_data["email"],
             }
 
             response = await api_client.post("/api/v1/auth/register", json=user_data)
@@ -154,15 +161,15 @@ class TestServiceIntegration:
         start_time = time.time()
         login_data = {
             "username": user_data["username"],
-            "password": user_data["password"]
+            "password": user_data["password"],
         }
 
-        with patch('httpx.AsyncClient.post') as mock_post:
+        with patch("httpx.AsyncClient.post") as mock_post:
             mock_post.return_value.status_code = 200
             mock_post.return_value.json.return_value = {
                 "access_token": "mock_token",
                 "refresh_token": "mock_refresh",
-                "expires_in": 3600
+                "expires_in": 3600,
             }
 
             response = await api_client.post("/api/v1/auth/login", json=login_data)
@@ -180,7 +187,7 @@ class TestServiceIntegration:
         token = "mock_token"
         headers = {"Authorization": f"Bearer {token}"}
 
-        with patch('httpx.AsyncClient.get') as mock_get:
+        with patch("httpx.AsyncClient.get") as mock_get:
             mock_get.return_value.status_code = 200
             mock_get.return_value.json.return_value = {
                 "matches": [
@@ -189,11 +196,7 @@ class TestServiceIntegration:
                         "home_team": "Manchester United",
                         "away_team": "Liverpool",
                         "date": "2025-10-26T15:00:00Z",
-                        "odds": {
-                            "home_win": 2.1,
-                            "draw": 3.4,
-                            "away_win": 3.2
-                        }
+                        "odds": {"home_win": 2.1, "draw": 3.4, "away_win": 3.2},
                     }
                 ]
             }
@@ -211,23 +214,21 @@ class TestServiceIntegration:
 
         # 4. 创建预测
         start_time = time.time()
-        prediction_data = {
-            "match_id": 1,
-            "prediction": "home_win",
-            "confidence": 0.75
-        }
+        prediction_data = {"match_id": 1, "prediction": "home_win", "confidence": 0.75}
 
-        with patch('httpx.AsyncClient.post') as mock_post:
+        with patch("httpx.AsyncClient.post") as mock_post:
             mock_post.return_value.status_code = 201
             mock_post.return_value.json.return_value = {
                 "id": str(uuid.uuid4()),
                 "match_id": prediction_data["match_id"],
                 "prediction": prediction_data["prediction"],
                 "confidence": prediction_data["confidence"],
-                "created_at": datetime.now().isoformat()
+                "created_at": datetime.now().isoformat(),
             }
 
-            response = await api_client.post("/api/v1/predictions", json=prediction_data, headers=headers)
+            response = await api_client.post(
+                "/api/v1/predictions", json=prediction_data, headers=headers
+            )
             assert response.status_code == 201
 
             prediction_time = time.time() - start_time
@@ -255,7 +256,9 @@ class TestServiceIntegration:
     @pytest.mark.e2e
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_data_processing_pipeline_integration(self, mock_services, test_metrics):
+    async def test_data_processing_pipeline_integration(
+        self, mock_services, test_metrics
+    ):
         """测试数据处理管道集成"""
         scenario = IntegrationTestScenario.DATA_PROCESSING_PIPELINE
         print(f"🧪 开始测试场景: {scenario.value}")
@@ -264,16 +267,20 @@ class TestServiceIntegration:
 
         # 1. 数据收集
         start_time = time.time()
-        with patch.object(mock_services['database_service'], 'execute_query') as mock_query:
+        with patch.object(
+            mock_services["database_service"], "execute_query"
+        ) as mock_query:
             mock_query.return_value = {
                 "success": True,
                 "rows": [
                     {"id": 1, "team": "Man United", "goals": 2},
-                    {"id": 2, "team": "Liverpool", "goals": 1}
-                ]
+                    {"id": 2, "team": "Liverpool", "goals": 1},
+                ],
             }
 
-            result = await mock_services['database_service'].execute_query("SELECT * FROM matches")
+            result = await mock_services["database_service"].execute_query(
+                "SELECT * FROM matches"
+            )
             assert result["success"] is True
             assert len(result["rows"]) == 2
 
@@ -293,7 +300,7 @@ class TestServiceIntegration:
                 "team": row["team"],
                 "goals": row["goals"],
                 "performance_score": row["goals"] * 10,
-                "processed_at": datetime.now()
+                "processed_at": datetime.now(),
             }
             processed_data.append(processed_row)
 
@@ -305,10 +312,15 @@ class TestServiceIntegration:
 
         # 3. 数据存储
         start_time = time.time()
-        with patch.object(mock_services['database_service'], 'execute_query') as mock_insert:
-            mock_insert.return_value = {"success": True, "rows_affected": len(processed_data)}
+        with patch.object(
+            mock_services["database_service"], "execute_query"
+        ) as mock_insert:
+            mock_insert.return_value = {
+                "success": True,
+                "rows_affected": len(processed_data),
+            }
 
-            insert_result = await mock_services['database_service'].execute_query(
+            insert_result = await mock_services["database_service"].execute_query(
                 "INSERT INTO processed_data VALUES (...)", processed_data
             )
             assert insert_result["success"] is True
@@ -322,10 +334,10 @@ class TestServiceIntegration:
 
         # 4. 缓存更新
         start_time = time.time()
-        with patch.object(mock_services['cache_service'], 'set') as mock_cache:
+        with patch.object(mock_services["cache_service"], "set") as mock_cache:
             mock_cache.return_value = True
 
-            cache_result = await mock_services['cache_service'].set(
+            cache_result = await mock_services["cache_service"].set(
                 f"processed_match_data_{int(time.time())}", processed_data
             )
             assert cache_result is True
@@ -353,40 +365,41 @@ class TestServiceIntegration:
         test_data = {
             "id": 123,
             "value": "test_data",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         # 1. 写入数据库
-        with patch.object(mock_services['database_service'], 'execute_query') as mock_db:
+        with patch.object(
+            mock_services["database_service"], "execute_query"
+        ) as mock_db:
             mock_db.return_value = {"success": True, "rows_affected": 1}
 
-            db_result = await mock_services['database_service'].execute_query(
+            db_result = await mock_services["database_service"].execute_query(
                 "INSERT INTO test_table VALUES (:id, :value, :timestamp)", test_data
             )
             assert db_result["success"] is True
 
         # 2. 写入缓存
-        with patch.object(mock_services['cache_service'], 'set') as mock_cache:
+        with patch.object(mock_services["cache_service"], "set") as mock_cache:
             mock_cache.return_value = True
 
-            cache_result = await mock_services['cache_service'].set(test_key, test_data)
+            cache_result = await mock_services["cache_service"].set(test_key, test_data)
             assert cache_result is True
 
         # 3. 验证缓存数据
-        with patch.object(mock_services['cache_service'], 'get') as mock_get:
+        with patch.object(mock_services["cache_service"], "get") as mock_get:
             mock_get.return_value = test_data
 
-            cached_data = await mock_services['cache_service'].get(test_key)
+            cached_data = await mock_services["cache_service"].get(test_key)
             assert cached_data == test_data
 
         # 4. 验证数据库数据
-        with patch.object(mock_services['database_service'], 'execute_query') as mock_select:
-            mock_select.return_value = {
-                "success": True,
-                "rows": [test_data]
-            }
+        with patch.object(
+            mock_services["database_service"], "execute_query"
+        ) as mock_select:
+            mock_select.return_value = {"success": True, "rows": [test_data]}
 
-            db_data = await mock_services['database_service'].execute_query(
+            db_data = await mock_services["database_service"].execute_query(
                 "SELECT * FROM test_table WHERE id = :id", {"id": 123}
             )
             assert db_data["success"] is True
@@ -419,16 +432,18 @@ class TestServiceIntegration:
                     "home_team": "Chelsea",
                     "away_team": "Arsenal",
                     "date": "2025-10-26T20:00:00Z",
-                    "league": "Premier League"
+                    "league": "Premier League",
                 }
-            ]
+            ],
         }
 
-        with patch('httpx.AsyncClient.get') as mock_external_get:
+        with patch("httpx.AsyncClient.get") as mock_external_get:
             mock_external_get.return_value.status_code = 200
             mock_external_get.return_value.json.return_value = mock_response
 
-            response = await api_client.get(f"/api/v1/external/football-data?url={external_api_url}")
+            response = await api_client.get(
+                f"/api/v1/external/football-data?url={external_api_url}"
+            )
             assert response.status_code == 200
 
             api_time = time.time() - start_time
@@ -449,7 +464,7 @@ class TestServiceIntegration:
                 "match_date": item["date"],
                 "league": item["league"],
                 "source": "external_api",
-                "imported_at": datetime.now()
+                "imported_at": datetime.now(),
             }
             converted_data.append(converted_item)
 
@@ -461,14 +476,16 @@ class TestServiceIntegration:
 
         # 3. 本地存储
         start_time = time.time()
-        with patch('httpx.AsyncClient.post') as mock_post:
+        with patch("httpx.AsyncClient.post") as mock_post:
             mock_post.return_value.status_code = 201
             mock_post.return_value.json.return_value = {
                 "success": True,
-                "imported_count": len(converted_data)
+                "imported_count": len(converted_data),
             }
 
-            response = await api_client.post("/api/v1/matches/import", json=converted_data)
+            response = await api_client.post(
+                "/api/v1/matches/import", json=converted_data
+            )
             assert response.status_code == 201
             assert response.json()["imported_count"] == len(converted_data)
 
@@ -479,11 +496,11 @@ class TestServiceIntegration:
         print(f"✅ 本地存储完成 ({import_time:.3f}s)")
 
         # 验证导入的数据
-        with patch('httpx.AsyncClient.get') as mock_get:
+        with patch("httpx.AsyncClient.get") as mock_get:
             mock_get.return_value.status_code = 200
             mock_get.return_value.json.return_value = {
                 "matches": converted_data,
-                "total": len(converted_data)
+                "total": len(converted_data),
             }
 
             response = await api_client.get("/api/v1/matches?source=external_api")
@@ -497,7 +514,9 @@ class TestServiceIntegration:
     @pytest.mark.e2e
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_performance_monitoring_integration(self, mock_services, test_metrics):
+    async def test_performance_monitoring_integration(
+        self, mock_services, test_metrics
+    ):
         """测试性能监控集成"""
         scenario = IntegrationTestScenario.PERFORMANCE_MONITORING
         print(f"🧪 开始测试场景: {scenario.value}")
@@ -554,7 +573,7 @@ class TestServiceIntegration:
         print("🧪 开始测试场景: 错误处理和恢复")
 
         # 1. 网络错误处理
-        with patch('httpx.AsyncClient.get') as mock_get:
+        with patch("httpx.AsyncClient.get") as mock_get:
             mock_get.side_effect = Exception("Network error")
 
             try:
@@ -565,7 +584,7 @@ class TestServiceIntegration:
                 print("✅ 网络错误处理正确")
 
         # 2. 服务降级处理
-        with patch('httpx.AsyncClient.get') as mock_get:
+        with patch("httpx.AsyncClient.get") as mock_get:
             # 模拟主服务不可用
             mock_get.return_value.status_code = 503
 
@@ -573,11 +592,11 @@ class TestServiceIntegration:
             assert response.status_code == 503
 
             # 验证降级服务响应
-            with patch('httpx.AsyncClient.get') as mock_fallback:
+            with patch("httpx.AsyncClient.get") as mock_fallback:
                 mock_fallback.return_value.status_code = 200
                 mock_fallback.return_value.json.return_value = {
                     "matches": [],
-                    "message": "服务降级，使用缓存数据"
+                    "message": "服务降级，使用缓存数据",
                 }
 
                 response = await api_client.get("/api/v1/matches/fallback")
@@ -626,28 +645,32 @@ class TestServiceIntegration:
         service_calls = []
 
         async def mock_user_call():
-            service_calls.append('user_service')
+            service_calls.append("user_service")
             return {"user_id": "123", "username": "test_user"}
 
         async def mock_cache_call(key):
-            service_calls.append('cache_service')
+            service_calls.append("cache_service")
             return {"key": key, "value": "cached_data"}
 
         async def mock_db_call(query):
-            service_calls.append('database_service')
+            service_calls.append("database_service")
             return {"success": True, "data": [{"id": 1, "name": "test"}]}
 
         async def mock_prediction_call(user_id, prediction_data):
             # 预测服务需要调用用户服务和数据库服务
             user_info = await mock_user_call()
-            db_data = await mock_db_call(f"SELECT * FROM predictions WHERE user_id = {user_id}")
+            db_data = await mock_db_call(
+                f"SELECT * FROM predictions WHERE user_id = {user_id}"
+            )
             return {"prediction_id": "456", "user": user_info, "data": db_data}
 
         # 模拟完整的调用链
-        result = await mock_prediction_call("123", {"match_id": 1, "prediction": "home_win"})
+        result = await mock_prediction_call(
+            "123", {"match_id": 1, "prediction": "home_win"}
+        )
 
         # 验证调用顺序和完整性
-        expected_calls = ['user_service', 'database_service', 'user_service']
+        expected_calls = ["user_service", "database_service", "user_service"]
         assert len(service_calls) == len(expected_calls)
         assert all(call in service_calls for call in expected_calls)
 
@@ -672,48 +695,49 @@ class TestServiceIntegration:
             "user_id": test_user_id,
             "match_id": 1,
             "prediction": "home_win",
-            "confidence": 0.75
+            "confidence": 0.75,
         }
 
         # 1. 在数据库中创建预测
-        with patch.object(mock_services['database_service'], 'execute_query') as mock_db:
+        with patch.object(
+            mock_services["database_service"], "execute_query"
+        ) as mock_db:
             mock_db.return_value = {"success": True, "id": "pred_456"}
 
-            db_result = await mock_services['database_service'].execute_query(
+            db_result = await mock_services["database_service"].execute_query(
                 "INSERT INTO predictions VALUES (:user_id, :match_id, :prediction, :confidence)",
-                test_prediction_data
+                test_prediction_data,
             )
             assert db_result["success"] is True
 
         # 2. 在缓存中存储相同数据
-        with patch.object(mock_services['cache_service'], 'set') as mock_cache:
+        with patch.object(mock_services["cache_service"], "set") as mock_cache:
             mock_cache.return_value = True
 
-            cache_result = await mock_services['cache_service'].set(
+            cache_result = await mock_services["cache_service"].set(
                 f"prediction_{test_prediction_data['match_id']}_{test_user_id}",
-                test_prediction_data
+                test_prediction_data,
             )
             assert cache_result is True
 
         # 3. 从缓存读取数据
-        with patch.object(mock_services['cache_service'], 'get') as mock_get:
+        with patch.object(mock_services["cache_service"], "get") as mock_get:
             mock_get.return_value = test_prediction_data
 
-            cached_data = await mock_services['cache_service'].get(
+            cached_data = await mock_services["cache_service"].get(
                 f"prediction_{test_prediction_data['match_id']}_{test_user_id}"
             )
             assert cached_data == test_prediction_data
 
         # 4. 从数据库读取数据
-        with patch.object(mock_services['database_service'], 'execute_query') as mock_select:
-            mock_select.return_value = {
-                "success": True,
-                "rows": [test_prediction_data]
-            }
+        with patch.object(
+            mock_services["database_service"], "execute_query"
+        ) as mock_select:
+            mock_select.return_value = {"success": True, "rows": [test_prediction_data]}
 
-            db_result = await mock_services['database_service'].execute_query(
+            db_result = await mock_services["database_service"].execute_query(
                 "SELECT * FROM predictions WHERE user_id = :user_id AND match_id = :match_id",
-                {"user_id": test_user_id, "match_id": test_prediction_data["match_id"]}
+                {"user_id": test_user_id, "match_id": test_prediction_data["match_id"]},
             )
             assert db_result["success"] is True
             assert db_result["rows"][0] == test_prediction_data

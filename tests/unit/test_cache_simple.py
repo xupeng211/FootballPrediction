@@ -1,12 +1,12 @@
 # 缓存简单测试
-from src.cache.ttl_cache import TTLCache
 import pytest
+
 from src.cache.consistency_manager import ConsistencyManager
+from src.cache.ttl_cache import TTLCache
 
 
 @pytest.mark.unit
 @pytest.mark.cache
-
 def test_ttl_cache_basic():
     cache = TTLCache(maxsize=10, ttl=60)
     cache.set("key", "value")

@@ -1,37 +1,33 @@
 from __future__ import annotations
 
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
 """测试覆盖率提升文件 - 专门用于增加覆盖率"""
 
 
-import pytest
-from datetime import datetime, timedelta
+import asyncio
+import base64
+import hashlib
 import json
-import uuid
 import re
 import secrets
-import hashlib
-import base64
-import asyncio
+import uuid
+from datetime import datetime, timedelta
 from typing import Any, Dict, List
+
+import pytest
 
 
 # 测试所有导入的模块函数
 @pytest.mark.unit
-
 class TestUtilsImports:
     """测试所有utils模块函数导入"""
 
     def test_crypto_utils_imports(self):
         """测试加密工具导入"""
         try:
-            from utils import (
-                generate_uuid,
-                generate_short_id,
-                hash_string,
-                hash_password,
-                verify_password,
-            )
+            from utils import (generate_short_id, generate_uuid, hash_password,
+                               hash_string, verify_password)
 
             # 测试函数可调用
             assert callable(generate_uuid)
@@ -45,18 +41,9 @@ class TestUtilsImports:
     def test_data_validator_imports(self):
         """测试数据验证器导入"""
         try:
-            from utils import (
-                validate_email,
-                validate_phone,
-                validate_url,
-                validate_date,
-            )
-            from utils import (
-                validate_number,
-                validate_json,
-                validate_ip,
-                validate_credit_card,
-            )
+            from utils import (validate_credit_card, validate_date,
+                               validate_email, validate_ip, validate_json,
+                               validate_number, validate_phone, validate_url)
 
             # 测试函数可调用
             assert callable(validate_email)
@@ -73,13 +60,8 @@ class TestUtilsImports:
     def test_dict_utils_imports(self):
         """测试字典工具导入"""
         try:
-            from utils import (
-                deep_merge,
-                flatten_dict,
-                filter_none,
-                pick_keys,
-                exclude_keys,
-            )
+            from utils import (deep_merge, exclude_keys, filter_none,
+                               flatten_dict, pick_keys)
 
             # 测试函数可调用
             assert callable(deep_merge)
@@ -93,14 +75,9 @@ class TestUtilsImports:
     def test_file_utils_imports(self):
         """测试文件工具导入"""
         try:
-            from utils import (
-                ensure_dir,
-                get_file_size,
-                safe_filename,
-                read_file,
-                write_file,
-            )
-            from utils import get_file_extension, get_file_hash, backup_file
+            from utils import (backup_file, ensure_dir, get_file_extension,
+                               get_file_hash, get_file_size, read_file,
+                               safe_filename, write_file)
 
             # 测试函数可调用
             assert callable(ensure_dir)
@@ -117,13 +94,9 @@ class TestUtilsImports:
     def test_formatters_imports(self):
         """测试格式化器导入"""
         try:
-            from utils import format_datetime, format_relative_time, format_currency
-            from utils import (
-                format_bytes,
-                format_percentage,
-                format_phone,
-                format_address,
-            )
+            from utils import (format_address, format_bytes, format_currency,
+                               format_datetime, format_percentage,
+                               format_phone, format_relative_time)
 
             # 测试函数可调用
             assert callable(format_datetime)
@@ -139,8 +112,9 @@ class TestUtilsImports:
     def test_helpers_imports(self):
         """测试帮助工具导入"""
         try:
-            from utils import generate_uuid_helper, is_json, truncate_string
-            from utils import deep_get, deep_set, merge_dicts, chunk_list, flatten_list
+            from utils import (chunk_list, deep_get, deep_set, flatten_list,
+                               generate_uuid_helper, is_json, merge_dicts,
+                               truncate_string)
 
             # 测试函数可调用
             assert callable(generate_uuid_helper)
@@ -157,14 +131,9 @@ class TestUtilsImports:
     def test_string_utils_imports(self):
         """测试字符串工具导入"""
         try:
-            from utils import (
-                slugify,
-                camel_to_snake,
-                snake_to_camel,
-                pluralize,
-                singularize,
-            )
-            from utils import truncate_words, clean_html, capitalize_first
+            from utils import (camel_to_snake, capitalize_first, clean_html,
+                               pluralize, singularize, slugify, snake_to_camel,
+                               truncate_words)
 
             # 测试函数可调用
             assert callable(slugify)
@@ -181,8 +150,8 @@ class TestUtilsImports:
     def test_time_utils_imports(self):
         """测试时间工具导入"""
         try:
-            from utils import time_ago, duration_format, is_future, is_past
-            from utils import get_timezone_offset, parse_datetime
+            from utils import (duration_format, get_timezone_offset, is_future,
+                               is_past, parse_datetime, time_ago)
 
             # 测试函数可调用
             assert callable(time_ago)
@@ -197,14 +166,11 @@ class TestUtilsImports:
     def test_response_imports(self):
         """测试响应工具导入"""
         try:
-            from utils import (
-                success_response,
-                error_response,
-                created_response,
-                updated_response,
-            )
-            from utils import deleted_response, not_found_response, bad_request_response
-            from utils import unauthorized_response, forbidden_response
+            from utils import (bad_request_response, created_response,
+                               deleted_response, error_response,
+                               forbidden_response, not_found_response,
+                               success_response, unauthorized_response,
+                               updated_response)
 
             # 测试函数可调用
             assert callable(success_response)
@@ -222,13 +188,8 @@ class TestUtilsImports:
     def test_i18n_imports(self):
         """测试国际化导入"""
         try:
-            from utils import (
-                _,
-                set_language,
-                get_current_language,
-                get_translations,
-                translate_list,
-            )
+            from utils import (_, get_current_language, get_translations,
+                               set_language, translate_list)
 
             # 测试函数可调用
             assert callable(_)
@@ -242,8 +203,9 @@ class TestUtilsImports:
     def test_warning_filters_imports(self):
         """测试警告过滤器导入"""
         try:
-            from utils import filter_deprecation_warnings, filter_import_warnings
-            from utils import filter_user_warnings, setup_warnings
+            from utils import (filter_deprecation_warnings,
+                               filter_import_warnings, filter_user_warnings,
+                               setup_warnings)
 
             # 测试函数可调用
             assert callable(filter_deprecation_warnings)
@@ -256,8 +218,8 @@ class TestUtilsImports:
     def test_config_loader_imports(self):
         """测试配置加载器导入"""
         try:
-            from utils import load_config, get_config_value, set_config_value
-            from utils import reload_config, get_env_config
+            from utils import (get_config_value, get_env_config, load_config,
+                               reload_config, set_config_value)
 
             # 测试函数可调用
             assert callable(load_config)
@@ -271,7 +233,8 @@ class TestUtilsImports:
     def test_retry_imports(self):
         """测试重试工具导入"""
         try:
-            from utils import retry, exponential_backoff, linear_backoff, jitter_backoff
+            from utils import (exponential_backoff, jitter_backoff,
+                               linear_backoff, retry)
 
             # 测试函数可调用
             assert callable(retry)
@@ -284,9 +247,10 @@ class TestUtilsImports:
     def test_validators_imports(self):
         """测试验证器导入"""
         try:
-            from utils import validate_required, validate_range, validate_length
-            from utils import validate_pattern, validate_choice, validate_email_format
-            from utils import validate_url_format, validate_number_format
+            from utils import (validate_choice, validate_email_format,
+                               validate_length, validate_number_format,
+                               validate_pattern, validate_range,
+                               validate_required, validate_url_format)
 
             # 测试函数可调用
             assert callable(validate_required)
@@ -321,7 +285,7 @@ class TestCoreFunctionality:
     def test_hash_functions(self):
         """测试哈希函数"""
         try:
-            from utils import hash_string, hash_password, verify_password
+            from utils import hash_password, hash_string, verify_password
 
             text = "test_password"
             hashed = hash_string(text)
@@ -339,12 +303,8 @@ class TestCoreFunctionality:
     def test_validation_functions(self):
         """测试验证函数"""
         try:
-            from utils import (
-                validate_email,
-                validate_phone,
-                validate_url,
-                validate_json,
-            )
+            from utils import (validate_email, validate_json, validate_phone,
+                               validate_url)
 
             # 测试邮箱验证
             assert validate_email("test@example.com")
@@ -363,13 +323,8 @@ class TestCoreFunctionality:
     def test_dict_functions(self):
         """测试字典函数"""
         try:
-            from utils import (
-                deep_merge,
-                flatten_dict,
-                filter_none,
-                pick_keys,
-                exclude_keys,
-            )
+            from utils import (deep_merge, exclude_keys, filter_none,
+                               flatten_dict, pick_keys)
 
             dict1 = {"a": 1, "b": 2}
             dict2 = {"b": 3, "c": 4}
@@ -406,7 +361,8 @@ class TestCoreFunctionality:
     def test_string_functions(self):
         """测试字符串函数"""
         try:
-            from utils import slugify, camel_to_snake, snake_to_camel, truncate_string
+            from utils import (camel_to_snake, slugify, snake_to_camel,
+                               truncate_string)
 
             # 测试slugify
             assert slugify("Hello World!") == "hello-world"
@@ -428,8 +384,9 @@ class TestCoreFunctionality:
     def test_time_functions(self):
         """测试时间函数"""
         try:
-            from utils import time_ago, duration_format, is_future, is_past
             from datetime import datetime, timedelta
+
+            from utils import duration_format, is_future, is_past, time_ago
 
             # 测试时间差
             past_time = datetime.now() - timedelta(hours=2)
@@ -453,7 +410,8 @@ class TestCoreFunctionality:
     def test_response_functions(self):
         """测试响应函数"""
         try:
-            from utils import success_response, error_response, not_found_response
+            from utils import (error_response, not_found_response,
+                               success_response)
 
             # 测试成功响应
             resp = success_response({"data": "test"})
@@ -693,7 +651,7 @@ class TestErrorHandling:
     def test_edge_cases(self):
         """测试边界情况"""
         try:
-            from utils import truncate_string, deep_merge
+            from utils import deep_merge, truncate_string
 
             # 测试空字符串截断
             truncated = truncate_string("", 10)
@@ -749,7 +707,7 @@ class TestPerformance:
     def test_large_data_handling(self):
         """测试大数据处理"""
         try:
-            from utils import flatten_dict, chunk_list
+            from utils import chunk_list, flatten_dict
 
             # 创建大的嵌套字典
             large_dict = {}

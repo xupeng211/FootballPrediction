@@ -3,6 +3,7 @@
 """
 
 from typing import Any, Dict, Optional, Type, cast
+
 from src.core.exceptions import AdapterError
 
 

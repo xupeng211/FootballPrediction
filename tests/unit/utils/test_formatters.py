@@ -5,17 +5,14 @@ Tests for Formatters
 测试src.utils.formatters模块的格式化功能
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
 
 # 测试导入
 try:
-    from src.utils.formatters import (
-        format_datetime,
-        format_json,
-        format_currency,
-        format_percentage,
-    )
+    from src.utils.formatters import (format_currency, format_datetime,
+                                      format_json, format_percentage)
 
     FORMATTERS_AVAILABLE = True
 except ImportError as e:
@@ -25,7 +22,6 @@ except ImportError as e:
 
 @pytest.mark.skipif(not FORMATTERS_AVAILABLE, reason="Formatters module not available")
 @pytest.mark.unit
-
 class TestFormatDatetime:
     """日期时间格式化测试"""
 
@@ -272,12 +268,8 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if FORMATTERS_AVAILABLE:
-        from src.utils.formatters import (
-            format_datetime,
-            format_json,
-            format_currency,
-            format_percentage,
-        )
+        from src.utils.formatters import (format_currency, format_datetime,
+                                          format_json, format_percentage)
 
         assert format_datetime is not None
         assert format_json is not None

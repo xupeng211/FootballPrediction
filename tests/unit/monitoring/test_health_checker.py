@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 19 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 健康检查器测试
 Tests for Health Checker
@@ -10,14 +11,14 @@ Tests for Health Checker
 测试src.monitoring.health_checker模块的功能
 """
 
-import pytest
 from datetime import datetime, timedelta
 
-from src.monitoring.health_checker import HealthStatus, HealthChecker
+import pytest
+
+from src.monitoring.health_checker import HealthChecker, HealthStatus
 
 
 @pytest.mark.unit
-
 class TestHealthStatus:
     """健康状态测试"""
 

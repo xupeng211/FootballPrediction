@@ -5,14 +5,16 @@
 优先级: MEDIUM
 """
 
-import pytest
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import pytest
 
 # 安全导入目标模块
 try:
     from models.common_models import *
+
     IMPORTS_AVAILABLE = True
     print("✅ 成功导入模块: models.common_models")
 except ImportError as e:
@@ -21,6 +23,7 @@ except ImportError as e:
 except Exception as e:
     print(f"⚠️ 导入异常: {e}")
     IMPORTS_AVAILABLE = False
+
 
 class TestModelsCommonModelsReal:
     """重构后的实质性测试 - 真实业务逻辑验证"""
@@ -43,7 +46,11 @@ class TestModelsCommonModelsReal:
             assert True  # 模块可以正常使用
 
             # 如果有函数，测试它们
-            functions = [name for name in dir() if not name.startswith('_') and callable(globals()[name])]
+            functions = [
+                name
+                for name in dir()
+                if not name.startswith("_") and callable(globals()[name])
+            ]
             if functions:
                 print(f"发现函数: {functions[:3]}")  # 显示前3个函数
 
@@ -58,13 +65,13 @@ class TestModelsCommonModelsReal:
 
         try:
             # 根据模块类型设计集成测试
-            if 'config' in module_name:
+            if "config" in module_name:
                 print("配置模块集成测试")
                 assert True  # 基础集成测试通过
-            elif 'model' in module_name:
+            elif "model" in module_name:
                 print("模型模块集成测试")
                 assert True  # 基础集成测试通过
-            elif 'validator' in module_name:
+            elif "validator" in module_name:
                 print("验证器模块集成测试")
                 assert True  # 基础集成测试通过
             else:
@@ -81,6 +88,7 @@ class TestModelsCommonModelsReal:
             pytest.skip("模块导入失败")
 
         import time
+
         start_time = time.time()
 
         # 执行一些基本操作

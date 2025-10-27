@@ -4,7 +4,6 @@ import pytest
 
 
 @pytest.mark.unit
-
 class TestFinalCoverageBoost:
     """用于达到20%覆盖率的最终测试"""
 
@@ -104,8 +103,8 @@ class TestFinalCoverageBoost:
     def test_model_imports(self):
         """测试模型导入"""
         try:
-            from src.models.prediction_service import PredictionService
             from src.models.model_training import ModelTrainer
+            from src.models.prediction_service import PredictionService
 
             assert PredictionService is not None
             assert ModelTrainer is not None

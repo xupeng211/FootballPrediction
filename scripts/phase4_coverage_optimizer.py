@@ -759,8 +759,8 @@ if __name__ == "__main__":
         final_coverage = self.generate_coverage_report()
 
         # 4. 生成总结报告
-        print(f"\n🎉 阶段4优化完成!")
-        print(f"📊 成果总结:")
+        print("\n🎉 阶段4优化完成!")
+        print("📊 成果总结:")
         print(f"  测试文件: {passed}/{total} 通过")
         print(f"  初始覆盖率: {self.current_coverage}%")
         print(f"  最终覆盖率: {final_coverage:.2f}%" if final_coverage else "覆盖率报告生成失败")
@@ -786,7 +786,7 @@ def main():
         print(f"\n🏆 阶段4圆满成功! 覆盖率达到 {final_coverage:.2f}%")
         return True
     else:
-        print(f"\n📊 阶段4部分完成. 继续改进中...")
+        print("\n📊 阶段4部分完成. 继续改进中...")
         return False
 
 if __name__ == "__main__":

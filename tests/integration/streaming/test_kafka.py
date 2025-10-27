@@ -3,15 +3,15 @@ Kafka 消息流集成测试
 测试 Kafka 生产者和消费者的功能
 """
 
-import pytest
 import asyncio
 import json
 from datetime import datetime, timezone
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
+import pytest
 
 
 @pytest.mark.integration
-
 class TestKafkaIntegration:
     """Kafka 集成测试"""
 
@@ -30,7 +30,7 @@ class TestKafkaIntegration:
         record_metadata = future.get(timeout=10)
 
         # 验证发送成功
-        assert record_metadata.topic     == topic
+        assert record_metadata.topic == topic
         assert record_metadata.partition >= 0
         assert record_metadata.offset >= 0
 
@@ -74,7 +74,7 @@ class TestKafkaIntegration:
 
         # 验证消费的消息
         assert len(consumed_messages) == 3
-        assert consumed_messages[0]["message"]     == "Test message 1"
+        assert consumed_messages[0]["message"] == "Test message 1"
 
         consumer.close()
 
@@ -83,8 +83,9 @@ class TestKafkaIntegration:
         self, test_kafka, db_session, sample_prediction_data
     ):
         """测试预测事件流"""
-        from kafka import KafkaProducer, KafkaConsumer
         import uuid
+
+        from kafka import KafkaConsumer, KafkaProducer
 
         topic = f"{test_kafka['topics'][0]}"  # predictions topic
         bootstrap_servers = test_kafka["bootstrap_servers"]
@@ -136,7 +137,7 @@ class TestKafkaIntegration:
         assert consumed_event is not None
         assert consumed_event["event_type"] == "prediction_created"
         assert consumed_event["data"]["prediction_id"] == prediction.id
-        assert consumed_event["data"]["prediction"]     == prediction.prediction
+        assert consumed_event["data"]["prediction"] == prediction.prediction
 
         # 清理
         event_producer.close()
@@ -145,8 +146,9 @@ class TestKafkaIntegration:
     @pytest.mark.asyncio
     async def test_match_update_events(self, test_kafka, sample_match_data):
         """测试比赛更新事件流"""
-        from kafka import KafkaProducer, KafkaConsumer
         import uuid
+
+        from kafka import KafkaConsumer, KafkaProducer
 
         topic = f"{test_kafka['topics'][1]}"  # matches topic
         bootstrap_servers = test_kafka["bootstrap_servers"]
@@ -219,7 +221,7 @@ class TestKafkaIntegration:
         assert len(consumed_events) == 3
         assert consumed_events[0]["event_type"] == "match_started"
         assert consumed_events[1]["event_type"] == "goal_scored"
-        assert consumed_events[2]["event_type"]     == "match_finished"
+        assert consumed_events[2]["event_type"] == "match_finished"
 
         # 验证事件顺序
         assert consumed_events[0]["timestamp"] < consumed_events[1]["timestamp"]
@@ -232,8 +234,9 @@ class TestKafkaIntegration:
     @pytest.mark.asyncio
     async def test_audit_log_events(self, test_kafka):
         """测试审计日志事件"""
-        from kafka import KafkaProducer, KafkaConsumer
         import uuid
+
+        from kafka import KafkaConsumer, KafkaProducer
 
         topic = f"{test_kafka['topics'][2]}"  # audit_logs topic
         bootstrap_servers = test_kafka["bootstrap_servers"]
@@ -303,7 +306,7 @@ class TestKafkaIntegration:
         assert len(consumed_events) == 3
         assert consumed_events["user_login"]["success"] is True
         assert consumed_events["prediction_created"]["resource_id"] == "prediction_456"
-        assert consumed_events["data_export"]["record_count"]     == 1000
+        assert consumed_events["data_export"]["record_count"] == 1000
 
         # 清理
         producer.close()
@@ -312,7 +315,7 @@ class TestKafkaIntegration:
     @pytest.mark.asyncio
     async def test_message_serialization(self, test_kafka):
         """测试消息序列化和反序列化"""
-        from kafka import KafkaProducer, KafkaConsumer
+        from kafka import KafkaConsumer, KafkaProducer
 
         topic = test_kafka["topics"][0]
         bootstrap_servers = test_kafka["bootstrap_servers"]
@@ -357,7 +360,7 @@ class TestKafkaIntegration:
         # 验证序列化结果
         assert consumed_message is not None
         assert consumed_message["data"]["nested"]["boolean"] is True
-        assert consumed_message["data"]["nested"]["unicode"]     == "测试中文"
+        assert consumed_message["data"]["nested"]["unicode"] == "测试中文"
         assert isinstance(consumed_message["data"]["set_data"], list)
 
         # 清理
@@ -367,7 +370,7 @@ class TestKafkaIntegration:
     @pytest.mark.asyncio
     async def test_message_partitioning(self, test_kafka):
         """测试消息分区"""
-        from kafka import KafkaProducer, KafkaConsumer
+        from kafka import KafkaConsumer, KafkaProducer
 
         topic = test_kafka["topics"][0]
         bootstrap_servers = test_kafka["bootstrap_servers"]
@@ -413,14 +416,15 @@ class TestKafkaIntegration:
 
         assert len(set(a_partitions)) == 1  # 所有 A 消息在同一分区
         assert len(set(b_partitions)) == 1  # 所有 B 消息在同一分区
-        assert a_partitions[0]     != b_partitions[0]  # A 和 B 在不同分区
+        assert a_partitions[0] != b_partitions[0]  # A 和 B 在不同分区
 
     @pytest.mark.asyncio
     async def test_error_handling(self, test_kafka):
         """测试错误处理"""
+        import uuid
+
         from kafka import KafkaProducer
         from kafka.errors import KafkaError
-        import uuid
 
         topic = "non_existent_topic"
         bootstrap_servers = test_kafka["bootstrap_servers"]
@@ -488,7 +492,7 @@ class TestKafkaIntegration:
 
         # 验证所有消息都发送成功
         total_messages = sum(len(r) for r in results)
-        assert total_messages     == 30
+        assert total_messages == 30
 
         # 清理
         for producer in producers:

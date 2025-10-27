@@ -5,13 +5,14 @@ Tests for Fixtures Collector
 测试src.collectors.fixtures_collector模块的功能
 """
 
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
-import pytest
-from datetime import datetime, timedelta
-import os
-from src.collectors.fixtures_collector import FixturesCollector
 import asyncio
+import os
+from datetime import datetime, timedelta
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
+import pytest
+
+from src.collectors.fixtures_collector import FixturesCollector
 
 # 测试导入
 COLLECTORS_AVAILABLE = True
@@ -213,7 +214,9 @@ class TestFixturesCollector:
         mock_existing_match = Mock()
         with patch("src.collectors.fixtures_collector.select") as mock_select:
             mock_select.return_value.where.return_value.return_value = mock_select
-            collector.db_session.execute.return_value.scalar_one_or_none.return_value = mock_existing_match
+            collector.db_session.execute.return_value.scalar_one_or_none.return_value = (
+                mock_existing_match
+            )
 
             _result = await collector.store_fixtures_in_db(fixtures_data)
 

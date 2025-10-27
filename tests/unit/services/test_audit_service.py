@@ -1,4 +1,5 @@
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
 """
 import sys
 from pathlib import Path
@@ -13,23 +14,18 @@ Tests for Audit Service
 测试src.services.audit_service模块的功能
 """
 
-import pytest
 from datetime import datetime, timedelta
-from typing import Dict, Any
+from typing import Any, Dict
+
+import pytest
 
 # 测试导入
 try:
-    from src.services.audit_service import (
-        AuditSeverity,
-        AuditAction,
-        AuditContext,
-        AuditLog,
-        AuditLogSummary,
-        DataSanitizer,
-        SeverityAnalyzer,
-        AuditEvent,
-        AuditService,
-    )
+    from src.services.audit_service import (AuditAction, AuditContext,
+                                            AuditEvent, AuditLog,
+                                            AuditLogSummary, AuditService,
+                                            AuditSeverity, DataSanitizer,
+                                            SeverityAnalyzer)
 
     AUDIT_AVAILABLE = True
 except ImportError as e:
@@ -39,7 +35,6 @@ except ImportError as e:
 
 @pytest.mark.skipif(not AUDIT_AVAILABLE, reason="Audit service module not available")
 @pytest.mark.unit
-
 class TestAuditSeverity:
     """审计严重程度测试"""
 

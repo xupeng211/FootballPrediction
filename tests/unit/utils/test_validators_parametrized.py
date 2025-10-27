@@ -1,4 +1,5 @@
 from unittest.mock import Mock
+
 """
 验证器参数化测试
 Tests for Validators (Parametrized)
@@ -6,23 +7,19 @@ Tests for Validators (Parametrized)
 使用参数化测试减少重复代码，提高测试覆盖率
 """
 
-import pytest
 import re
+
+import pytest
 
 # 测试导入
 try:
-    from src.utils.validators import (
-        validate_email,
-        validate_phone,
-        validate_url,
-        validate_username,
-        validate_password,
-        validate_credit_card,
-        validate_ipv4_address,
-        validate_mac_address,
-        validate_date_string,
-        validate_json_string,
-    )
+    from src.utils.validators import (validate_credit_card,
+                                      validate_date_string, validate_email,
+                                      validate_ipv4_address,
+                                      validate_json_string,
+                                      validate_mac_address, validate_password,
+                                      validate_phone, validate_url,
+                                      validate_username)
 
     VALIDATORS_AVAILABLE = True
 except ImportError as e:
@@ -43,7 +40,6 @@ except ImportError as e:
 
 @pytest.mark.skipif(not VALIDATORS_AVAILABLE, reason="Validators module not available")
 @pytest.mark.unit
-
 class TestValidatorsParametrized:
     """验证器参数化测试"""
 

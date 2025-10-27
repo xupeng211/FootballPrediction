@@ -2,19 +2,20 @@
 
 # TODO: Consider creating a fixture for 7 repeated Mock creations
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 """
 测试拆分后的特征仓库
 Test Split Feature Store
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
 
 
 # 测试导入
 @pytest.mark.unit
-
 def test_import_feature_store():
     """测试能否正常导入特征仓库模块"""
     from src.data.features.feature_store import FootballFeatureStore
@@ -25,9 +26,7 @@ def test_import_feature_store():
 def test_import_config_manager():
     """测试能否正常导入配置管理器"""
     from src.data.features.feature_store.config import (
-        FeatureStoreConfig,
-        FeatureStoreConfigManager,
-    )
+        FeatureStoreConfig, FeatureStoreConfigManager)
 
     assert FeatureStoreConfig is not None
     assert FeatureStoreConfigManager is not None
@@ -49,7 +48,8 @@ def test_import_query_manager():
 
 def test_import_dataset_manager():
     """测试能否正常导入数据集管理器"""
-    from src.data.features.feature_store.computation import FeatureDatasetManager
+    from src.data.features.feature_store.computation import \
+        FeatureDatasetManager
 
     assert FeatureDatasetManager is not None
 
@@ -57,13 +57,8 @@ def test_import_dataset_manager():
 def test_import_feature_definitions():
     """测试能否正常导入特征定义"""
     from src.data.features.feature_store.utils import (
-        match_entity,
-        team_entity,
-        match_features_view,
-        team_recent_stats_view,
-        odds_features_view,
-        head_to_head_features_view,
-    )
+        head_to_head_features_view, match_entity, match_features_view,
+        odds_features_view, team_entity, team_recent_stats_view)
 
     assert match_entity is not None
     assert team_entity is not None
@@ -90,7 +85,8 @@ def test_feature_store_config():
 
 def test_feature_store_config_manager():
     """测试特征仓库配置管理器"""
-    from src.data.features.feature_store.config import FeatureStoreConfigManager
+    from src.data.features.feature_store.config import \
+        FeatureStoreConfigManager
 
     config_manager = FeatureStoreConfigManager()
 
@@ -101,7 +97,8 @@ def test_feature_store_config_manager():
 
 def test_create_temp_repo():
     """测试创建临时仓库"""
-    from src.data.features.feature_store.config import FeatureStoreConfigManager
+    from src.data.features.feature_store.config import \
+        FeatureStoreConfigManager
 
     config_manager = FeatureStoreConfigManager()
     temp_repo = config_manager.create_temp_repo()
@@ -180,6 +177,7 @@ def test_initialize_feature_store():
 def test_write_features():
     """测试写入特征数据"""
     import pandas as pd
+
     from src.data.features.feature_store.storage import FeatureStorageManager
 
     # 创建模拟的store
@@ -206,6 +204,7 @@ def test_write_features():
 def test_get_online_features():
     """测试获取在线特征"""
     import pandas as pd
+
     from src.data.features.feature_store.query import FeatureQueryManager
 
     # 创建模拟的store和storage_manager
@@ -240,7 +239,9 @@ def test_get_online_features():
 def test_create_training_dataset():
     """测试创建训练数据集"""
     from datetime import datetime
-    from src.data.features.feature_store.computation import FeatureDatasetManager
+
+    from src.data.features.feature_store.computation import \
+        FeatureDatasetManager
 
     # 创建模拟的query_manager
     mock_query_manager = MagicMock()

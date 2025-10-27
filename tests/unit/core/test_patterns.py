@@ -4,9 +4,9 @@
 
 import sys
 from pathlib import Path
-
 # 添加项目路径
 from unittest.mock import AsyncMock, MagicMock
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, "src")
 
@@ -16,36 +16,23 @@ sys.path.insert(0, "src")
 设计模式实现的单元测试
 """
 
-import pytest
 import asyncio
 from datetime import datetime, timedelta
 
+import pytest
+
 # 尝试导入模式模块
 try:
-    from src.patterns.observer import (
-        MetricsObserver,
-        LoggingObserver,
-        AlertingObserver,
-        ObservableService,
-        PredictionService,
-    )
-    from src.patterns.decorator import (
-        DatabaseService,
-        LoggingDecorator,
-        RetryDecorator,
-        MetricsDecorator,
-        ValidationDecorator,
-        async_retry,
-        async_log,
-    )
-    from src.patterns.adapter import (
-        FootballApiAdapter,
-        WeatherApiAdapter,
-        OddsApiAdapter,
-        AdapterFactory,
-        UnifiedDataCollector,
-        ExternalData,
-    )
+    from src.patterns.adapter import (AdapterFactory, ExternalData,
+                                      FootballApiAdapter, OddsApiAdapter,
+                                      UnifiedDataCollector, WeatherApiAdapter)
+    from src.patterns.decorator import (DatabaseService, LoggingDecorator,
+                                        MetricsDecorator, RetryDecorator,
+                                        ValidationDecorator, async_log,
+                                        async_retry)
+    from src.patterns.observer import (AlertingObserver, LoggingObserver,
+                                       MetricsObserver, ObservableService,
+                                       PredictionService)
 
     PATTERNS_AVAILABLE = True
 except ImportError:
@@ -54,7 +41,6 @@ except ImportError:
 
 @pytest.mark.skipif(not PATTERNS_AVAILABLE, reason="Patterns module not available")
 @pytest.mark.unit
-
 class TestObserverPattern:
     """观察者模式测试"""
 

@@ -3,13 +3,15 @@
 基于当前可执行的测试框架，提升覆盖率
 """
 
-import pytest
-from unittest.mock import Mock, patch
-import sys
 import os
+import sys
+from unittest.mock import Mock, patch
+
+import pytest
 
 # 确保路径正确
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../.."))
+
 
 class TestBasicCoverageBoost:
     """基础覆盖率提升测试套件"""
@@ -17,9 +19,10 @@ class TestBasicCoverageBoost:
     def test_utils_imports(self):
         """测试工具模块导入"""
         try:
-            from src.utils.validators import DataValidator
             from src.utils.formatters import DataFormatter
             from src.utils.response import ResponseBuilder
+            from src.utils.validators import DataValidator
+
             assert DataValidator is not None
             assert DataFormatter is not None
             assert ResponseBuilder is not None
@@ -34,11 +37,11 @@ class TestBasicCoverageBoost:
             validator = DataValidator()
 
             # 测试基本验证方法
-            if hasattr(validator, 'validate_email'):
+            if hasattr(validator, "validate_email"):
                 result = validator.validate_email("test@example.com")
                 assert isinstance(result, bool)
 
-            if hasattr(validator, 'validate_phone'):
+            if hasattr(validator, "validate_phone"):
                 result = validator.validate_phone("+1234567890")
                 assert isinstance(result, bool)
 
@@ -55,11 +58,11 @@ class TestBasicCoverageBoost:
             formatter = DataFormatter()
 
             # 测试格式化方法
-            if hasattr(formatter, 'format_date'):
+            if hasattr(formatter, "format_date"):
                 result = formatter.format_date("2023-01-01")
                 assert result is not None
 
-            if hasattr(formatter, 'format_currency'):
+            if hasattr(formatter, "format_currency"):
                 result = formatter.format_currency(100.0)
                 assert result is not None
 
@@ -76,11 +79,11 @@ class TestBasicCoverageBoost:
             builder = ResponseBuilder()
 
             # 测试响应构建
-            if hasattr(builder, 'success'):
+            if hasattr(builder, "success"):
                 response = builder.success({"data": "test"})
                 assert response is not None
 
-            if hasattr(builder, 'error'):
+            if hasattr(builder, "error"):
                 response = builder.error("test error")
                 assert response is not None
 

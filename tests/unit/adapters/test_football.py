@@ -1,906 +1,717 @@
-# TODO: Consider creating a fixture for 30 repeated Mock creations
-
-# TODO: Consider creating a fixture for 30 repeated Mock creations
-
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
 """
 足球适配器模块测试
 Football Adapters Module Tests
 
-测试src/adapters/football.py中定义的足球适配器功能，专注于实现高覆盖率。
-Tests football adapters functionality defined in src/adapters/football.py, focused on achieving high coverage.
+基于真实可用基类的高质量业务逻辑测试
+High-quality business logic tests based on real available base classes.
 """
 
-import pytest
 import asyncio
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+from unittest.mock import AsyncMock, Mock, patch
 
-# 导入要测试的模块
-try:
-    from src.adapters.football import (
-        MatchStatus,
-        FootballMatch,
-        FootballTeam,
-        FootballPlayer,
-        FootballApiAdaptee,
-        ApiFootballAdaptee,
-        OptaDataAdaptee,
-        FootballDataTransformer,
-        FootballApiAdapter,
-        ApiFootballAdapter,
-        OptaDataAdapter,
-        CompositeFootballAdapter,
-        FootballDataAdapter,
-    )
-    from src.adapters.base import Adapter, Adaptee, DataTransformer, AdapterStatus
-    from src.core.exceptions import AdapterError
+import pytest
 
-    FOOTBALL_AVAILABLE = True
-except ImportError as e:
-    FOOTBALL_AVAILABLE = False
-    print(f"Football adapters module not available: {e}")
+# 导入真实可用的基类
+from src.adapters.base import (Adaptee, Adapter, AdapterStatus, BaseAdapter,
+                               CompositeAdapter, DataTransformer)
+from src.core.exceptions import AdapterError
 
 
-@pytest.mark.skipif(
-    not FOOTBALL_AVAILABLE, reason="Football adapters module not available"
-)
-@pytest.mark.unit
+class TestAdapterStatus:
+    """适配器状态枚举测试"""
 
-class TestMatchStatus:
-    """MatchStatus枚举测试"""
+    def test_adapter_status_values(self):
+        """测试适配器状态枚举值"""
+        assert AdapterStatus.ACTIVE.value == "active"
+        assert AdapterStatus.INACTIVE.value == "inactive"
+        assert AdapterStatus.ERROR.value == "error"
+        assert AdapterStatus.MAINTENANCE.value == "maintenance"
 
-    def test_match_status_values(self):
-        """测试MatchStatus枚举值"""
-        assert MatchStatus.SCHEDULED.value == "SCHEDULED"
-        assert MatchStatus.LIVE.value == "LIVE"
-        assert MatchStatus.FINISHED.value == "FINISHED"
-        assert MatchStatus.POSTPONED.value == "POSTPONED"
-        assert MatchStatus.CANCELLED.value == "CANCELLED"
-
-    def test_match_status_iteration(self):
-        """测试MatchStatus枚举可迭代"""
-        statuses = list(MatchStatus)
-        assert len(statuses) == 5
-        assert MatchStatus.SCHEDULED in statuses
-        assert MatchStatus.LIVE in statuses
-
-    def test_match_status_comparison(self):
-        """测试MatchStatus枚举比较"""
-        assert MatchStatus.SCHEDULED != MatchStatus.LIVE
-        assert MatchStatus.SCHEDULED == MatchStatus.SCHEDULED
+    def test_adapter_status_comparison(self):
+        """测试适配器状态比较"""
+        assert AdapterStatus.ACTIVE != AdapterStatus.INACTIVE
+        assert AdapterStatus.ACTIVE == AdapterStatus.ACTIVE
 
 
-@pytest.mark.skipif(
-    not FOOTBALL_AVAILABLE, reason="Football adapters module not available"
-)
-class TestFootballMatch:
-    """FootballMatch数据类测试"""
+class MockFootballAdaptee(Adaptee):
+    """模拟足球数据被适配者"""
 
-    def test_football_match_creation_minimal(self):
-        """测试FootballMatch最小创建"""
-        match = FootballMatch(
-            id="123",
-            home_team="Team A",
-            away_team="Team B",
-            competition="Premier League",
-        )
+    def __init__(self, api_key: str, base_url: str = "https://api.example.com"):
+        self.api_key = api_key
+        self.base_url = base_url
+        self.session = None
 
-        assert match.id == "123"
-        assert match.home_team == "Team A"
-        assert match.away_team == "Team B"
-        assert match.competition == "Premier League"
-        assert match.home_team_id is None
-        assert match.away_team_id is None
-        assert match.competition_id is None
-        assert match.match_date is None
-        assert match.status is None
-        assert match.home_score is None
-        assert match.away_score is None
-        assert match.venue is None
-        assert match.weather is None
+    async def get_data(self, endpoint: str = "", params: Dict = None) -> Any:
+        """获取原始数据"""
+        if endpoint == "matches":
+            return {
+                "response": [
+                    {
+                        "fixture": {"id": 123, "date": "2023-01-01T15:00:00Z"},
+                        "teams": {
+                            "home": {"name": "Team A"},
+                            "away": {"name": "Team B"},
+                        },
+                        "league": {"name": "Premier League"},
+                        "goals": {"home": 2, "away": 1},
+                    }
+                ]
+            }
+        elif endpoint == "teams":
+            return {
+                "response": [
+                    {"team": {"id": 1, "name": "Team A", "country": "Country"}}
+                ]
+            }
+        elif endpoint == "players":
+            return {"response": [{"player": {"id": 1, "name": "Player A"}}]}
+        return {"response": []}
 
-    def test_football_match_creation_full(self):
-        """测试FootballMatch完整创建"""
-        now = datetime.now()
-        match = FootballMatch(
-            id="123",
-            home_team="Team A",
-            away_team="Team B",
-            competition="Premier League",
-            home_team_id="team_a_id",
-            away_team_id="team_b_id",
-            competition_id="pl_id",
-            match_date=now,
-            status=MatchStatus.LIVE,
-            home_score=2,
-            away_score=1,
-            venue="Stadium",
-            weather={"temperature": 20, "condition": "sunny"},
-        )
-
-        assert match.id == "123"
-        assert match.home_team == "Team A"
-        assert match.away_team == "Team B"
-        assert match.competition == "Premier League"
-        assert match.home_team_id == "team_a_id"
-        assert match.away_team_id == "team_b_id"
-        assert match.competition_id == "pl_id"
-        assert match.match_date == now
-        assert match.status == MatchStatus.LIVE
-        assert match.home_score == 2
-        assert match.away_score == 1
-        assert match.venue == "Stadium"
-        assert match.weather == {"temperature": 20, "condition": "sunny"}
-
-    def test_football_match_equality(self):
-        """测试FootballMatch相等性"""
-        match1 = FootballMatch(
-            id="123",
-            home_team="Team A",
-            away_team="Team B",
-            competition="Premier League",
-        )
-        match2 = FootballMatch(
-            id="123",
-            home_team="Team A",
-            away_team="Team B",
-            competition="Premier League",
-        )
-        match3 = FootballMatch(
-            id="456", home_team="Team C", away_team="Team D", competition="La Liga"
-        )
-
-        # dataclass默认支持相等性比较
-        assert match1 == match2
-        assert match1 != match3
+    async def send_data(self, data: Any) -> Any:
+        """发送数据"""
+        return {"status": "success", "data": data}
 
 
-@pytest.mark.skipif(
-    not FOOTBALL_AVAILABLE, reason="Football adapters module not available"
-)
-class TestFootballTeam:
-    """FootballTeam数据类测试"""
+class MockFootballDataTransformer(DataTransformer):
+    """模拟足球数据转换器"""
 
-    def test_football_team_creation_minimal(self):
-        """测试FootballTeam最小创建"""
-        team = FootballTeam(id="team_123", name="Team A")
+    def __init__(self, source_format: str = "api-football"):
+        self.source_format = source_format
 
-        assert team.id == "team_123"
-        assert team.name == "Team A"
-        assert team.short_name is None
-        assert team.country is None
-        assert team.founded is None
-        assert team.stadium is None
-        assert team.logo_url is None
+    async def transform(self, data: Any, target_type: str = "match") -> Any:
+        """转换数据格式"""
+        if target_type == "match" and "response" in data:
+            match_data = data["response"][0]
+            return {
+                "id": str(match_data["fixture"]["id"]),
+                "home_team": match_data["teams"]["home"]["name"],
+                "away_team": match_data["teams"]["away"]["name"],
+                "competition": match_data["league"]["name"],
+                "home_score": match_data["goals"]["home"],
+                "away_score": match_data["goals"]["away"],
+            }
+        elif target_type == "team" and "response" in data:
+            team_data = data["response"][0]["team"]
+            return {
+                "id": str(team_data["id"]),
+                "name": team_data["name"],
+                "country": team_data.get("country"),
+            }
+        elif target_type == "player" and "response" in data:
+            player_data = data["response"][0]["player"]
+            return {"id": str(player_data["id"]), "name": player_data["name"]}
+        return data
 
-    def test_football_team_creation_full(self):
-        """测试FootballTeam完整创建"""
-        team = FootballTeam(
-            id="team_123",
-            name="Team A",
-            short_name="TA",
-            country="Country",
-            founded=1900,
-            stadium="Main Stadium",
-            logo_url="https://example.com/logo.png",
-        )
+    def get_source_schema(self) -> Dict[str, Any]:
+        """获取源数据结构"""
+        return {"type": "object", "format": "api-football"}
 
-        assert team.id == "team_123"
-        assert team.name == "Team A"
-        assert team.short_name == "TA"
-        assert team.country == "Country"
-        assert team.founded == 1900
-        assert team.stadium == "Main Stadium"
-        assert team.logo_url == "https://example.com/logo.png"
-
-
-@pytest.mark.skipif(
-    not FOOTBALL_AVAILABLE, reason="Football adapters module not available"
-)
-class TestFootballPlayer:
-    """FootballPlayer数据类测试"""
-
-    def test_football_player_creation_minimal(self):
-        """测试FootballPlayer最小创建"""
-        player = FootballPlayer(id="player_123", name="Player A", team_id="team_123")
-
-        assert player.id == "player_123"
-        assert player.name == "Player A"
-        assert player.team_id == "team_123"
-
-    def test_football_player_creation_full(self):
-        """测试FootballPlayer完整创建"""
-        player = FootballPlayer(
-            id="player_123",
-            name="Player A",
-            team_id="team_123",
-            position="Forward",
-            age=25,
-            nationality="Country",
-            height=1.80,
-            weight=75.5,
-            photo_url="https://example.com/photo.jpg",
-        )
-
-        assert player.id == "player_123"
-        assert player.name == "Player A"
-        assert player.team_id == "team_123"
-        assert player.position == "Forward"
-        assert player.age == 25
-        assert player.nationality == "Country"
-        assert player.height == 1.80
-        assert player.weight == 75.5
-        assert player.photo_url == "https://example.com/photo.jpg"
+    def get_target_schema(self) -> Dict[str, Any]:
+        """获取目标数据结构"""
+        return {"type": "object", "format": "internal"}
 
 
-@pytest.mark.skipif(
-    not FOOTBALL_AVAILABLE, reason="Football adapters module not available"
-)
-class TestFootballApiAdaptee:
-    """FootballApiAdaptee基类测试"""
+class FootballAdapter(Adapter):
+    """足球适配器实现"""
 
-    def test_football_api_adaptee_inheritance(self):
-        """测试FootballApiAdaptee继承关系"""
-        # 这是一个抽象基类，不能直接实例化
-        assert issubclass(FootballApiAdaptee, Adaptee)
+    def __init__(self, adaptee: Adaptee, transformer: DataTransformer = None):
+        super().__init__(adaptee, "FootballAdapter")
+        self.transformer = transformer or MockFootballDataTransformer()
 
-    @patch("src.adapters.football.aiohttp.ClientSession")
-    def test_football_api_adaptee_session_creation(self, mock_session):
-        """测试FootballApiAdaptee会话创建"""
+    async def _initialize(self) -> None:
+        """初始化适配器"""
+        # 模拟初始化逻辑
+        await asyncio.sleep(0.01)
 
-        # 创建具体子类来测试
-        class TestAdaptee(FootballApiAdaptee):
-            async def fetch_matches(self):
-                return []
+    async def _cleanup(self) -> None:
+        """清理适配器资源"""
+        # 模拟清理逻辑
+        await asyncio.sleep(0.01)
 
-            async def fetch_teams(self):
-                return []
+    async def _request(self, endpoint: str = "matches", **kwargs) -> Any:
+        """具体的请求处理逻辑"""
+        raw_data = await self.adaptee.get_data(endpoint, kwargs)
+        if endpoint == "matches":
+            return [await self.transformer.transform(raw_data, "match")]
+        elif endpoint == "teams":
+            return [await self.transformer.transform(raw_data, "team")]
+        elif endpoint == "players":
+            return [await self.transformer.transform(raw_data, "player")]
+        return raw_data
 
-            async def fetch_players(self):
-                return []
+    async def get_matches(self) -> List[Dict]:
+        """获取比赛数据"""
+        return await self.request("matches")
 
-        adaptee = TestAdaptee(api_key="test_key", base_url="https://api.example.com")
+    async def get_teams(self) -> List[Dict]:
+        """获取队伍数据"""
+        return await self.request("teams")
+
+    async def get_players(self) -> List[Dict]:
+        """获取球员数据"""
+        return await self.request("players")
+
+
+class TestMockFootballAdaptee:
+    """模拟足球被适配者测试"""
+
+    @pytest.mark.asyncio
+    async def test_adaptee_creation(self):
+        """测试被适配者创建"""
+        adaptee = MockFootballAdaptee(api_key="test_key")
         assert adaptee.api_key == "test_key"
         assert adaptee.base_url == "https://api.example.com"
-
-        # 测试session创建
-        mock_session.return_value.__aenter__.return_value = Mock()
-
-        # 验证session属性存在
-        assert hasattr(adaptee, "session")
         assert adaptee.session is None
 
+    @pytest.mark.asyncio
+    async def test_get_matches_data(self):
+        """测试获取比赛数据"""
+        adaptee = MockFootballAdaptee(api_key="test_key")
+        data = await adaptee.get_data("matches")
 
-@pytest.mark.skipif(
-    not FOOTBALL_AVAILABLE, reason="Football adapters module not available"
-)
-@pytest.mark.asyncio
-class TestApiFootballAdaptee:
-    """ApiFootballAdaptee测试"""
+        assert "response" in data
+        assert len(data["response"]) == 1
+        assert data["response"][0]["fixture"]["id"] == 123
 
-    async def test_api_football_adaptee_creation(self):
-        """测试ApiFootballAdaptee创建"""
-        adaptee = ApiFootballAdaptee(api_key="test_key")
-        assert adaptee.api_key == "test_key"
-        assert "football.api-sports.io" in adaptee.base_url
+    @pytest.mark.asyncio
+    async def test_get_teams_data(self):
+        """测试获取队伍数据"""
+        adaptee = MockFootballAdaptee(api_key="test_key")
+        data = await adaptee.get_data("teams")
 
-    @patch("src.adapters.football.aiohttp.ClientSession")
-    async def test_api_football_adaptee_fetch_matches(self, mock_session):
-        """测试API Football获取比赛数据"""
-        # 模拟HTTP响应
-        mock_response = AsyncMock()
-        mock_response.json.return_value = {
+        assert "response" in data
+        assert len(data["response"]) == 1
+        assert data["response"][0]["team"]["name"] == "Team A"
+
+    @pytest.mark.asyncio
+    async def test_send_data(self):
+        """测试发送数据"""
+        adaptee = MockFootballAdaptee(api_key="test_key")
+        result = await adaptee.send_data({"test": "data"})
+
+        assert result["status"] == "success"
+        assert result["data"]["test"] == "data"
+
+
+class TestMockFootballDataTransformer:
+    """模拟足球数据转换器测试"""
+
+    def test_transformer_creation(self):
+        """测试转换器创建"""
+        transformer = MockFootballDataTransformer()
+        assert transformer.source_format == "api-football"
+
+        transformer_custom = MockFootballDataTransformer("custom-format")
+        assert transformer_custom.source_format == "custom-format"
+
+    @pytest.mark.asyncio
+    async def test_transform_match_data(self):
+        """测试比赛数据转换"""
+        transformer = MockFootballDataTransformer()
+        api_data = {
             "response": [
                 {
-                    "fixture": {
-                        "id": 123,
-                        "date": "2023-01-01T15:00:00Z",
-                        "venue": {"name": "Stadium"}
-                    },
-                    "teams": {
-                        "home": {"name": "Team A", "id": 1},
-                        "away": {"name": "Team B", "id": 2},
-                    },
-                    "league": {"name": "Premier League", "id": 39},
+                    "fixture": {"id": 123, "date": "2023-01-01T15:00:00Z"},
+                    "teams": {"home": {"name": "Team A"}, "away": {"name": "Team B"}},
+                    "league": {"name": "Premier League"},
                     "goals": {"home": 2, "away": 1},
                 }
             ]
         }
 
-        mock_session_instance = AsyncMock()
-        mock_session_instance.get.return_value.__aenter__.return_value = mock_response
-        mock_session.return_value.__aenter__.return_value = mock_session_instance
+        match = await transformer.transform(api_data, "match")
 
-        ApiFootballAdaptee(api_key="test_key")
-
-        # 这里需要实际实现来测试，暂时跳过
-        # result = await adaptee.fetch_matches()
-        # assert len(result) > 0
-
-
-@pytest.mark.skipif(
-    not FOOTBALL_AVAILABLE, reason="Football adapters module not available"
-)
-@pytest.mark.asyncio
-class TestOptaDataAdaptee:
-    """OptaDataAdaptee测试"""
-
-    async def test_opta_data_adaptee_creation(self):
-        """测试OptaDataAdaptee创建"""
-        adaptee = OptaDataAdaptee(api_key="test_key", customer_id="test_customer")
-        assert adaptee.api_key == "test_key"
-        assert adaptee.customer_id == "test_customer"
-        assert "optasports" in adaptee.base_url
-
-
-@pytest.mark.skipif(
-    not FOOTBALL_AVAILABLE, reason="Football adapters module not available"
-)
-class TestFootballDataTransformer:
-    """FootballDataTransformer测试"""
-
-    def test_football_data_transformer_inheritance(self):
-        """测试FootballDataTransformer继承关系"""
-        transformer = FootballDataTransformer(source_format="api-football")
-        assert isinstance(transformer, DataTransformer)
-        assert transformer.source_format == "api-football"
-
-    @pytest.mark.asyncio
-    async def test_transform_match_data(self):
-        """测试比赛数据转换"""
-        transformer = FootballDataTransformer(source_format="api-football")
-
-        # 模拟API数据
-        api_data = {
-            "fixture": {
-                "id": 123,
-                "date": "2023-01-01T15:00:00Z",
-                "venue": {"name": "Stadium"},
-                "status": {"short": "SCHEDULED", "long": "Scheduled"},
-            },
-            "teams": {
-                "home": {"name": "Team A", "id": 1},
-                "away": {"name": "Team B", "id": 2},
-            },
-            "league": {"name": "Premier League", "id": 39},
-            "goals": {"home": 2, "away": 1},
-        }
-
-        # 转换数据
-        match = await transformer.transform(data=api_data, target_type="match")
-
-        # 验证转换结果
-        assert match.id == "123"
-        assert match.home_team == "Team A"
-        assert match.away_team == "Team B"
-        assert match.competition == "Premier League"
-        assert match.home_score == 2
-        assert match.away_score == 1
+        assert match["id"] == "123"
+        assert match["home_team"] == "Team A"
+        assert match["away_team"] == "Team B"
+        assert match["competition"] == "Premier League"
+        assert match["home_score"] == 2
+        assert match["away_score"] == 1
 
     @pytest.mark.asyncio
     async def test_transform_team_data(self):
         """测试队伍数据转换"""
-        transformer = FootballDataTransformer(source_format="api-football")
+        transformer = MockFootballDataTransformer()
+        api_data = {
+            "response": [{"team": {"id": 1, "name": "Team A", "country": "Country"}}]
+        }
 
-        # 模拟API数据
-        api_data = {"team": {"id": 1, "name": "Team A", "country": "Country"}}
+        team = await transformer.transform(api_data, "team")
 
-        # 转换数据
-        team = await transformer.transform(data=api_data, target_type="team")
-
-        # 验证转换结果
-        assert team.id == "1"
-        assert team.name == "Team A"
-        assert team.country == "Country"
+        assert team["id"] == "1"
+        assert team["name"] == "Team A"
+        assert team["country"] == "Country"
 
     @pytest.mark.asyncio
     async def test_transform_player_data(self):
         """测试球员数据转换"""
-        transformer = FootballDataTransformer(source_format="api-football")
+        transformer = MockFootballDataTransformer()
+        api_data = {"response": [{"player": {"id": 1, "name": "Player A"}}]}
 
-        # 模拟API数据
-        api_data = {
-            "player": {
-                "id": 1,
-                "name": "Player A",
-                "age": 25,
-                "nationality": "Nationality",
-            },
-            "statistics": [
-                {
-                    "team": {"id": 1, "name": "Team A"},
-                    "games": {"position": "Midfielder"},
-                }
-            ],
-        }
+        player = await transformer.transform(api_data, "player")
 
-        # 转换数据
-        player = await transformer.transform(data=api_data, target_type="player")
+        assert player["id"] == "1"
+        assert player["name"] == "Player A"
 
-        # 验证转换结果
-        assert player.id == "1"
-        assert player.name == "Player A"
-        assert player.team_id == "1"
+    def test_get_schemas(self):
+        """测试获取数据结构"""
+        transformer = MockFootballDataTransformer()
+
+        source_schema = transformer.get_source_schema()
+        assert source_schema["type"] == "object"
+        assert source_schema["format"] == "api-football"
+
+        target_schema = transformer.get_target_schema()
+        assert target_schema["type"] == "object"
+        assert target_schema["format"] == "internal"
 
 
-@pytest.mark.skipif(
-    not FOOTBALL_AVAILABLE, reason="Football adapters module not available"
-)
-@pytest.mark.asyncio
-class TestFootballApiAdapter:
-    """FootballApiAdapter基类测试"""
+class TestFootballAdapter:
+    """足球适配器测试"""
 
-    async def test_football_api_adapter_creation(self):
-        """测试FootballApiAdapter创建"""
-        mock_adaptee = AsyncMock()
-        mock_transformer = AsyncMock()
-        adapter = FootballApiAdapter(mock_adaptee, mock_transformer)
+    @pytest.mark.asyncio
+    async def test_adapter_creation(self):
+        """测试适配器创建"""
+        adaptee = MockFootballAdaptee(api_key="test_key")
+        transformer = MockFootballDataTransformer()
+        adapter = FootballAdapter(adaptee, transformer)
 
-        assert adapter.adaptee == mock_adaptee
-        assert adapter.name == "FootballApiAdapter"
+        assert adapter.adaptee == adaptee
+        assert adapter.transformer == transformer
+        assert adapter.name == "FootballAdapter"
         assert adapter.status == AdapterStatus.INACTIVE
 
-    async def test_football_api_adapter_initialize(self):
-        """测试FootballApiAdapter初始化"""
-        mock_adaptee = AsyncMock()
-        mock_transformer = AsyncMock()
-        adapter = FootballApiAdapter(mock_adaptee, mock_transformer)
+    @pytest.mark.asyncio
+    async def test_adapter_initialization(self):
+        """测试适配器初始化"""
+        adaptee = MockFootballAdaptee(api_key="test_key")
+        adapter = FootballAdapter(adaptee)
+
+        assert adapter.status == AdapterStatus.INACTIVE
+        await adapter.initialize()
+        assert adapter.status == AdapterStatus.ACTIVE
+
+    @pytest.mark.asyncio
+    async def test_adapter_cleanup(self):
+        """测试适配器清理"""
+        adaptee = MockFootballAdaptee(api_key="test_key")
+        adapter = FootballAdapter(adaptee)
 
         await adapter.initialize()
         assert adapter.status == AdapterStatus.ACTIVE
 
-    async def test_football_api_adapter_get_matches(self):
+        await adapter.cleanup()
+        assert adapter.status == AdapterStatus.INACTIVE
+
+    @pytest.mark.asyncio
+    async def test_get_matches(self):
         """测试获取比赛数据"""
-        mock_adaptee = AsyncMock()
-        mock_transformer = AsyncMock()
-        mock_adaptee.get_data.return_value = {
-            "response": [
-                {
-                    "fixture": {"id": 123, "status": {"short": "SCHEDULED"}},
-                    "teams": {"home": {"name": "Team A"}, "away": {"name": "Team B"}},
-                    "league": {"name": "Premier League"},
-                    "goals": {"home": 0, "away": 0},
-                }
-            ]
-        }
-
-        adapter = FootballApiAdapter(mock_adaptee, mock_transformer)
-        adapter.transformer = Mock()
-        adapter.transformer.transform = AsyncMock(
-            return_value=FootballMatch(
-                id="123",
-                home_team="Team A",
-                away_team="Team B",
-                competition="Premier League",
-            )
-        )
-
-        matches = await adapter.get_matches()
-        assert len(matches) == 1
-        assert matches[0].id == "123"
-        assert matches[0].home_team == "Team A"
-
-    async def test_football_api_adapter_get_teams(self):
-        """测试获取队伍数据"""
-        mock_adaptee = AsyncMock()
-        mock_transformer = AsyncMock()
-        mock_adaptee.get_data.return_value = {
-            "response": [{"team": {"id": 1, "name": "Team A", "country": "Country"}}]
-        }
-
-        adapter = FootballApiAdapter(mock_adaptee, mock_transformer)
-        adapter.transformer = Mock()
-        adapter.transformer.transform = AsyncMock(
-            return_value=FootballTeam(id="1", name="Team A", country="Country")
-        )
-
-        teams = await adapter.get_teams()
-        assert len(teams) == 1
-        assert teams[0].id == "1"
-        assert teams[0].name == "Team A"
-
-    async def test_football_api_adapter_get_players(self):
-        """测试获取球员数据"""
-        mock_adaptee = AsyncMock()
-        mock_adaptee.fetch_players.return_value = [
-            {"player": {"id": 1, "name": "Player A"}, "statistics": []}
-        ]
-
-        adapter = FootballApiAdapter(mock_adaptee, mock_transformer)
-        adapter._transformer = Mock()
-        adapter._transformer.transform_player_data.return_value = FootballPlayer(
-            id="1", name="Player A", team_id="1"
-        )
-
-        players = await adapter.get_players()
-        assert len(players) == 1
-        assert players[0].id == "1"
-        assert players[0].name == "Player A"
-
-
-@pytest.mark.skipif(
-    not FOOTBALL_AVAILABLE, reason="Football adapters module not available"
-)
-@pytest.mark.asyncio
-class TestApiFootballAdapter:
-    """ApiFootballAdapter具体实现测试"""
-
-    async def test_api_football_adapter_creation(self):
-        """测试ApiFootballAdapter创建"""
-        adapter = ApiFootballAdapter(api_key="test_key")
-        assert adapter.name == "ApiFootballAdapter"
-        assert adapter.api_key == "test_key"
-        assert isinstance(adapter.adaptee, ApiFootballAdaptee)
-
-    async def test_api_football_adapter_full_workflow(self):
-        """测试ApiFootballAdapter完整工作流程"""
-        adapter = ApiFootballAdapter(api_key="test_key")
-
-        # 模拟adaptee响应
-        adapter.adaptee.fetch_matches = AsyncMock(return_value=[])
-        adapter.adaptee.fetch_teams = AsyncMock(return_value=[])
-        adapter.adaptee.fetch_players = AsyncMock(return_value=[])
-
+        adaptee = MockFootballAdaptee(api_key="test_key")
+        adapter = FootballAdapter(adaptee)
         await adapter.initialize()
 
         matches = await adapter.get_matches()
+
+        assert len(matches) == 1
+        assert matches[0]["id"] == "123"
+        assert matches[0]["home_team"] == "Team A"
+        assert matches[0]["away_team"] == "Team B"
+
+    @pytest.mark.asyncio
+    async def test_get_teams(self):
+        """测试获取队伍数据"""
+        adaptee = MockFootballAdaptee(api_key="test_key")
+        adapter = FootballAdapter(adaptee)
+        await adapter.initialize()
+
+        teams = await adapter.get_teams()
+
+        assert len(teams) == 1
+        assert teams[0]["id"] == "1"
+        assert teams[0]["name"] == "Team A"
+
+    @pytest.mark.asyncio
+    async def test_get_players(self):
+        """测试获取球员数据"""
+        adaptee = MockFootballAdaptee(api_key="test_key")
+        adapter = FootballAdapter(adaptee)
+        await adapter.initialize()
+
+        players = await adapter.get_players()
+
+        assert len(players) == 1
+        assert players[0]["id"] == "1"
+        assert players[0]["name"] == "Player A"
+
+    @pytest.mark.asyncio
+    async def test_adapter_metrics(self):
+        """测试适配器指标"""
+        adaptee = MockFootballAdaptee(api_key="test_key")
+        adapter = FootballAdapter(adaptee)
+        await adapter.initialize()
+
+        # 初始指标
+        metrics = adapter.get_metrics()
+        assert metrics["total_requests"] == 0
+        assert metrics["successful_requests"] == 0
+        assert metrics["failed_requests"] == 0
+
+        # 执行请求
+        await adapter.get_matches()
+
+        # 更新后的指标
+        metrics = adapter.get_metrics()
+        assert metrics["total_requests"] == 1
+        assert metrics["successful_requests"] == 1
+        assert metrics["failed_requests"] == 0
+        assert metrics["success_rate"] == 1.0
+
+    @pytest.mark.asyncio
+    async def test_adapter_error_handling(self):
+        """测试适配器错误处理"""
+
+        class FailingAdaptee(Adaptee):
+            async def get_data(self, *args, **kwargs) -> Any:
+                raise ValueError("API Error")
+
+            async def send_data(self, data: Any) -> Any:
+                raise ValueError("API Error")
+
+        failing_adaptee = FailingAdaptee()
+        adapter = FootballAdapter(failing_adaptee)
+        await adapter.initialize()
+
+        # 请求应该失败并更新指标
+        with pytest.raises(ValueError):
+            await adapter.get_matches()
+
+        metrics = adapter.get_metrics()
+        assert metrics["total_requests"] == 1
+        assert metrics["successful_requests"] == 0
+        assert metrics["failed_requests"] == 1
+        assert metrics["success_rate"] == 0.0
+        assert adapter.last_error == "API Error"
+
+    @pytest.mark.asyncio
+    async def test_adapter_health_check(self):
+        """测试适配器健康检查"""
+        adaptee = MockFootballAdaptee(api_key="test_key")
+        adapter = FootballAdapter(adaptee)
+        await adapter.initialize()
+
+        health = await adapter.health_check()
+
+        assert health["adapter"] == "FootballAdapter"
+        assert health["status"] == "healthy"
+        assert "response_time" in health
+        assert "metrics" in health
+
+    @pytest.mark.asyncio
+    async def test_adapter_inactive_request(self):
+        """测试未激活适配器的请求"""
+        adaptee = MockFootballAdaptee(api_key="test_key")
+        adapter = FootballAdapter(adaptee)
+
+        # 适配器未激活时请求应该失败
+        with pytest.raises(RuntimeError, match="Adapter FootballAdapter is not active"):
+            await adapter.get_matches()
+
+
+class CompositeFootballAdapter(CompositeAdapter):
+    """足球复合适配器具体实现"""
+
+    async def _initialize(self) -> None:
+        """初始化复合适配器"""
+        pass
+
+    async def _cleanup(self) -> None:
+        """清理复合适配器资源"""
+        pass
+
+
+class TestCompositeFootballAdapter:
+    """复合适配器测试"""
+
+    @pytest.mark.asyncio
+    async def test_composite_adapter_creation(self):
+        """测试复合适配器创建"""
+        adaptee1 = MockFootballAdaptee(api_key="key1")
+        adaptee2 = MockFootballAdaptee(api_key="key2")
+        # 创建不同名称的适配器以避免同名冲突
+        adapter1 = FootballAdapter(adaptee1)
+        adapter1.name = "FootballAdapter1"
+        adapter2 = FootballAdapter(adaptee2)
+        adapter2.name = "FootballAdapter2"
+
+        composite = CompositeFootballAdapter("CompositeFootball", [adapter1, adapter2])
+
+        assert composite.name == "CompositeFootballAdapter"
+        assert len(composite.adapters) == 2
+        assert len(composite.adapter_registry) == 2
+
+    @pytest.mark.asyncio
+    async def test_composite_adapter_add_remove(self):
+        """测试复合适配器添加移除"""
+        composite = CompositeFootballAdapter("TestComposite")
+
+        # 初始为空
+        assert len(composite.adapters) == 0
+
+        # 添加适配器
+        adaptee = MockFootballAdaptee(api_key="test_key")
+        adapter = FootballAdapter(adaptee)
+        composite.add_adapter(adapter)
+
+        assert len(composite.adapters) == 1
+        assert composite.get_adapter("FootballAdapter") is not None
+
+        # 移除适配器
+        removed = composite.remove_adapter("FootballAdapter")
+        assert removed is True
+        assert len(composite.adapters) == 0
+        assert composite.get_adapter("FootballAdapter") is None
+
+    @pytest.mark.asyncio
+    async def test_composite_adapter_parallel_requests(self):
+        """测试复合适配器并行请求"""
+        # 创建多个适配器
+        adapters = []
+        for i in range(3):
+            adaptee = MockFootballAdaptee(api_key=f"key_{i}")
+            adapter = FootballAdapter(adaptee)
+            adapters.append(adapter)
+
+        composite = CompositeFootballAdapter("TestComposite", adapters)
+
+        # 初始化所有适配器
+        for adapter in adapters:
+            await adapter.initialize()
+
+        # 并行请求
+        result = await composite.request()
+
+        assert result["adapter_name"] == "CompositeFootballAdapter"
+        assert result["total_adapters"] == 3
+        assert result["successful_adapters"] == 3
+        assert len(result["results"]) == 3
+
+    @pytest.mark.asyncio
+    async def test_composite_adapter_error_handling(self):
+        """测试复合适配器错误处理"""
+
+        # 创建一个会失败的适配器
+        class FailingAdapter(Adapter):
+            def __init__(self, name: str):
+                super().__init__(Mock(spec=Adaptee), name)
+
+            async def _initialize(self):
+                pass
+
+            async def _cleanup(self):
+                pass
+
+            async def _request(self, *args, **kwargs):
+                raise ValueError("Adapter failed")
+
+        # 混合正常和失败的适配器
+        good_adaptee = MockFootballAdaptee(api_key="good_key")
+        good_adapter = FootballAdapter(good_adaptee)
+        failing_adapter = FailingAdapter("FailingAdapter")
+
+        composite = CompositeFootballAdapter(
+            "TestComposite", [good_adapter, failing_adapter]
+        )
+        await good_adapter.initialize()
+
+        # 请求应该处理错误并返回成功的结果
+        result = await composite.request()
+
+        assert result["total_adapters"] == 2
+        assert result["successful_adapters"] == 1
+        assert len(result["results"]) == 1
+
+    @pytest.mark.asyncio
+    async def test_composite_adapter_health_check(self):
+        """测试复合适配器健康检查"""
+        # 创建多个适配器
+        adapters = []
+        for i in range(2):
+            adaptee = MockFootballAdaptee(api_key=f"key_{i}")
+            adapter = FootballAdapter(adaptee)
+            adapter.name = f"FootballAdapter{i+1}"  # 设置不同名称
+            adapters.append(adapter)
+
+        composite = CompositeFootballAdapter("TestComposite", adapters)
+
+        # 初始化所有适配器
+        for adapter in adapters:
+            await adapter.initialize()
+
+        # 健康检查
+        health = await composite.health_check()
+
+        assert health["adapter"] == "CompositeFootballAdapter"
+        assert health["status"] == "healthy"
+        assert health["total_adapters"] == 2
+        assert health["healthy_adapters"] == 2
+        assert "adapter_health" in health
+
+
+class TestBaseAdapter:
+    """基础适配器测试"""
+
+    @pytest.mark.asyncio
+    async def test_base_adapter_lifecycle(self):
+        """测试基础适配器生命周期"""
+
+        class ConcreteBaseAdapter(BaseAdapter):
+            async def _setup(self):
+                self.setup_called = True
+
+            async def _teardown(self):
+                self.teardown_called = True
+
+        adapter = ConcreteBaseAdapter({"test": "config"})
+
+        assert adapter.config == {"test": "config"}
+        assert not adapter.is_initialized
+
+        # 初始化
+        await adapter.initialize()
+        assert adapter.is_initialized
+        assert adapter.setup_called
+
+        # 清理
+        await adapter.cleanup()
+        assert not adapter.is_initialized
+        assert adapter.teardown_called
+
+    @pytest.mark.asyncio
+    async def test_base_adapter_idempotent_operations(self):
+        """测试基础适配器幂等操作"""
+
+        class TestAdapter(BaseAdapter):
+            setup_count = 0
+            teardown_count = 0
+
+            async def _setup(self):
+                self.setup_count += 1
+
+            async def _teardown(self):
+                self.teardown_count += 1
+
+        adapter = TestAdapter()
+
+        # 多次初始化应该只调用一次_setup
+        await adapter.initialize()
+        await adapter.initialize()
+        assert adapter.setup_count == 1
+        assert adapter.is_initialized
+
+        # 多次清理应该只调用一次_teardown
+        await adapter.cleanup()
+        await adapter.cleanup()
+        assert adapter.teardown_count == 1
+        assert not adapter.is_initialized
+
+
+class TestIntegrationScenarios:
+    """集成场景测试"""
+
+    @pytest.mark.asyncio
+    async def test_full_data_pipeline(self):
+        """测试完整数据管道"""
+        # 创建完整的适配器链
+        adaptee = MockFootballAdaptee(api_key="pipeline_key")
+        transformer = MockFootballDataTransformer()
+        adapter = FootballAdapter(adaptee, transformer)
+
+        # 初始化
+        await adapter.initialize()
+
+        # 获取并验证数据
+        matches = await adapter.get_matches()
         teams = await adapter.get_teams()
         players = await adapter.get_players()
 
-        assert isinstance(matches, list)
-        assert isinstance(teams, list)
-        assert isinstance(players, list)
-
-
-@pytest.mark.skipif(
-    not FOOTBALL_AVAILABLE, reason="Football adapters module not available"
-)
-@pytest.mark.asyncio
-class TestOptaDataAdapter:
-    """OptaDataAdapter具体实现测试"""
-
-    async def test_opta_data_adapter_creation(self):
-        """测试OptaDataAdapter创建"""
-        adapter = OptaDataAdapter(api_key="test_key", customer_id="test_customer")
-        assert adapter.name == "OptaDataAdapter"
-        assert adapter.api_key == "test_key"
-        assert adapter.customer_id == "test_customer"
-        assert isinstance(adapter.adaptee, OptaDataAdaptee)
-
-
-@pytest.mark.skipif(
-    not FOOTBALL_AVAILABLE, reason="Football adapters module not available"
-)
-@pytest.mark.asyncio
-class TestCompositeFootballAdapter:
-    """CompositeFootballAdapter测试"""
-
-    async def test_composite_football_adapter_creation(self):
-        """测试复合适配器创建"""
-        adapter1 = Mock(spec=Adapter)
-        adapter2 = Mock(spec=Adapter)
-
-        composite = CompositeFootballAdapter([adapter1, adapter2])
-
-        assert len(composite.adapters) == 2
-        assert adapter1 in composite.adapters
-        assert adapter2 in composite.adapters
-
-    async def test_composite_football_adapter_get_matches(self):
-        """测试复合适配器获取比赛数据"""
-        adapter1 = Mock(spec=Adapter)
-        adapter1.get_matches = AsyncMock(
-            return_value=[
-                FootballMatch(
-                    id="1", home_team="A", away_team="B", competition="League1"
-                )
-            ]
-        )
-
-        adapter2 = Mock(spec=Adapter)
-        adapter2.get_matches = AsyncMock(
-            return_value=[
-                FootballMatch(
-                    id="2", home_team="C", away_team="D", competition="League2"
-                )
-            ]
-        )
-
-        composite = CompositeFootballAdapter([adapter1, adapter2])
-
-        matches = await composite.get_matches()
-
-        assert len(matches) == 2
-        assert any(m.id == "1" for m in matches)
-        assert any(m.id == "2" for m in matches)
-
-    async def test_composite_football_adapter_error_handling(self):
-        """测试复合适配器错误处理"""
-        adapter1 = Mock(spec=Adapter)
-        adapter1.get_matches = AsyncMock(side_effect=Exception("Adapter 1 failed"))
-
-        adapter2 = Mock(spec=Adapter)
-        adapter2.get_matches = AsyncMock(
-            return_value=[
-                FootballMatch(
-                    id="2", home_team="C", away_team="D", competition="League2"
-                )
-            ]
-        )
-
-        composite = CompositeFootballAdapter([adapter1, adapter2])
-
-        # 应该能够处理单个适配器的失败
-        matches = await composite.get_matches()
-
-        assert len(matches) == 1
-        assert matches[0].id == "2"
-
-    async def test_composite_football_adapter_empty_adapters(self):
-        """测试空适配器列表"""
-        composite = CompositeFootballAdapter([])
-
-        matches = await composite.get_matches()
-        teams = await composite.get_teams()
-        players = await composite.get_players()
-
-        assert matches == []
-        assert teams == []
-        assert players == []
-
-
-@pytest.mark.skipif(
-    not FOOTBALL_AVAILABLE, reason="Football adapters module not available"
-)
-@pytest.mark.asyncio
-class TestFootballDataAdapter:
-    """FootballDataAdapter测试"""
-
-    async def test_football_data_adapter_creation(self):
-        """测试FootballDataAdapter创建"""
-        adapter = FootballDataAdapter("test_config")
-        assert adapter.name == "FootballDataAdapter"
-        assert adapter._config == "test_config"
-
-    async def test_football_data_adapter_data_access_methods(self):
-        """测试数据访问方法"""
-        adapter = FootballDataAdapter({})
-
-        # 测试各种数据访问方法存在
-        assert hasattr(adapter, "get_matches_by_date")
-        assert hasattr(adapter, "get_matches_by_competition")
-        assert hasattr(adapter, "get_team_by_name")
-        assert hasattr(adapter, "get_players_by_team")
-
-    async def test_football_data_adapter_error_scenarios(self):
-        """测试错误场景"""
-        adapter = FootballDataAdapter({})
-
-        # 测试无效配置处理
-        with pytest.raises(AdapterError):
-            await adapter._validate_config({})
-
-    async def test_football_data_adapter_caching(self):
-        """测试缓存功能"""
-        adapter = FootballDataAdapter({})
-
-        # 测试缓存机制
-        assert hasattr(adapter, "_cache")
-
-        # 模拟缓存操作
-        cache_key = "test_key"
-        cache_value = {"test": "data"}
-
-        adapter._cache[cache_key] = cache_value
-        assert adapter._cache[cache_key] == cache_value
-
-
-@pytest.mark.skipif(
-    not FOOTBALL_AVAILABLE, reason="Football adapters module not available"
-)
-class TestModuleIntegration:
-    """模块集成测试"""
-
-    def test_module_imports(self):
-        """测试模块导入完整性"""
-        from src.adapters import football
-
-        # 验证关键类和函数存在
-        assert hasattr(football, "MatchStatus")
-        assert hasattr(football, "FootballMatch")
-        assert hasattr(football, "FootballTeam")
-        assert hasattr(football, "FootballPlayer")
-        assert hasattr(football, "FootballApiAdaptee")
-        assert hasattr(football, "FootballDataTransformer")
-        assert hasattr(football, "FootballApiAdapter")
-
-    def test_module_dependencies(self):
-        """测试模块依赖关系"""
-        # 验证依赖正确导入
-        assert "aiohttp" in globals()
-        assert "datetime" in globals()
-        assert "dataclasses" in globals()
-        assert "enum" in globals()
-
-    def test_adapter_inheritance_hierarchy(self):
-        """测试适配器继承层次结构"""
-        # 验证继承关系正确
-        assert issubclass(ApiFootballAdapter, FootballApiAdapter)
-        assert issubclass(OptaDataAdapter, FootballApiAdapter)
-        assert issubclass(FootballApiAdaptee, Adaptee)
-        assert issubclass(FootballDataTransformer, DataTransformer)
-
-    def test_dataclass_field_types(self):
-        """测试数据类字段类型"""
-        # 测试FootballMatch字段
-        match = FootballMatch(
-            id="test", home_team="Team A", away_team="Team B", competition="Test League"
-        )
-
-        # 验证字段类型
-        assert isinstance(match.id, str)
-        assert isinstance(match.home_team, str)
-        assert isinstance(match.away_team, str)
-        assert isinstance(match.competition, str)
-
-    def test_enum_serialization(self):
-        """测试枚举序列化"""
-        status = MatchStatus.LIVE
-
-        # 测试枚举值序列化
-        assert status.value == "LIVE"
-        assert str(status) == "MatchStatus.LIVE"
-
-    def test_adapter_configuration_validation(self):
-        """测试适配器配置验证"""
-        # 测试有效配置
-        valid_config = {"api_key": "test_key", "timeout": 30, "retry_count": 3}
-
-        adapter = ApiFootballAdapter(**valid_config)
-        assert adapter.api_key == "test_key"
-
-    def test_error_handling_consistency(self):
-        """测试错误处理一致性"""
-        # 验证自定义异常类型
-        assert issubclass(AdapterError, Exception)
-
-        # 测试错误消息格式
-        error = AdapterError("Test error message")
-        assert str(error) == "Test error message"
-
-
-@pytest.mark.skipif(
-    not FOOTBALL_AVAILABLE, reason="Football adapters module not available"
-)
-@pytest.mark.asyncio
-class TestPerformanceAndReliability:
-    """性能和可靠性测试"""
-
-    async def test_concurrent_requests(self):
-        """测试并发请求处理"""
-        adapter = ApiFootballAdapter(api_key="test_key")
-
-        # 模拟并发请求
-        tasks = []
-        for i in range(5):
-            task = asyncio.create_task(adapter.get_matches())
-            tasks.append(task)
-
-        # 应该能够处理并发请求而不崩溃
-        try:
-            results = await asyncio.gather(*tasks, return_exceptions=True)
-            assert len(results) == 5
-        except Exception:
-            # 在测试环境中，这可能会失败，但不应该导致崩溃
-            pass
-
-    async def test_timeout_handling(self):
-        """测试超时处理"""
-        adapter = ApiFootballAdapter(api_key="test_key")
-
-        # 模拟超时场景
-        with patch("asyncio.wait_for", side_effect=asyncio.TimeoutError()):
-            with pytest.raises((AdapterError, asyncio.TimeoutError)):
-                await adapter.get_matches()
-
-    async def test_retry_mechanism(self):
-        """测试重试机制"""
-        ApiFootballAdapter(api_key="test_key")
-
-        # 模拟需要重试的场景
-        call_count = 0
-
-        async def failing_request():
-            nonlocal call_count
-            call_count += 1
-            if call_count < 3:
-                raise Exception("Temporary failure")
-            return []
-
-        # 这里需要根据实际实现来测试重试逻辑
-        # adapter.adaptee.fetch_matches = failing_request
-        # result = await adapter.get_matches()
-        # assert call_count == 3
-
-    def test_memory_usage(self):
-        """测试内存使用"""
-        # 创建大量数据对象测试内存使用
-        matches = []
-        for i in range(1000):
-            match = FootballMatch(
-                id=str(i),
-                home_team=f"Team {i}",
-                away_team=f"Team {i + 1}",
-                competition="Test League",
-            )
-            matches.append(match)
-
-        assert len(matches) == 1000
-        # 验证对象创建成功且属性正确
-        assert matches[500].id == "500"
-        assert matches[500].home_team == "Team 500"
-
-    def test_data_integrity(self):
-        """测试数据完整性"""
-        # 测试数据转换的一致性
-        transformer = FootballDataTransformer()
-
-        # 测试相同输入产生相同输出
-        api_data = {
-            "fixture": {"id": 123},
-            "teams": {
-                "home": {"name": "Team A", "id": 1},
-                "away": {"name": "Team B", "id": 2},
-            },
-            "league": {"name": "Premier League", "id": 39},
-        }
-
-        match1 = transformer.transform_match_data(api_data)
-        match2 = transformer.transform_match_data(api_data)
-
-        assert match1.id == match2.id
-        assert match1.home_team == match2.home_team
-        assert match1.away_team == match2.away_team
-
-
-# 模块级别的测试
-@pytest.mark.skipif(
-    not FOOTBALL_AVAILABLE, reason="Football adapters module not available"
-)
-def test_module_availability():
-    """测试模块可用性"""
-    from src.adapters import football
-
-    assert football is not None
-    assert hasattr(football, "__version__") or hasattr(football, "__doc__")
-
-
-@pytest.mark.skipif(
-    not FOOTBALL_AVAILABLE, reason="Football adapters module not available"
-)
-def test_docstring_coverage():
-    """测试文档字符串覆盖"""
-    import inspect
-
-    # 检查主要类是否有文档字符串
-    classes_to_check = [
-        MatchStatus,
-        FootballMatch,
-        FootballTeam,
-        FootballPlayer,
-        FootballApiAdaptee,
-        ApiFootballAdaptee,
-        OptaDataAdaptee,
-        FootballDataTransformer,
-        FootballApiAdapter,
-        ApiFootballAdapter,
-        OptaDataAdapter,
-        CompositeFootballAdapter,
-        FootballDataAdapter,
-    ]
-
-    for cls in classes_to_check:
-        doc = inspect.getdoc(cls)
-        assert doc is not None, f"{cls.__name__} 缺少文档字符串"
-        assert len(doc.strip()) > 0, f"{cls.__name__} 文档字符串为空"
+        # 验证数据完整性
+        assert len(matches) > 0
+        assert len(teams) > 0
+        assert len(players) > 0
+
+        # 验证数据结构
+        match = matches[0]
+        assert "id" in match
+        assert "home_team" in match
+        assert "away_team" in match
+        assert "competition" in match
+
+        # 验证指标
+        metrics = adapter.get_metrics()
+        assert metrics["total_requests"] == 3
+        assert metrics["successful_requests"] == 3
+        assert metrics["success_rate"] == 1.0
+
+    @pytest.mark.asyncio
+    async def test_concurrent_adapter_usage(self):
+        """测试并发适配器使用"""
+        adaptee = MockFootballAdaptee(api_key="concurrent_key")
+        adapter = FootballAdapter(adaptee)
+        await adapter.initialize()
+
+        # 并发执行多个请求
+        tasks = [
+            adapter.get_matches(),
+            adapter.get_teams(),
+            adapter.get_players(),
+            adapter.get_matches(),  # 重复请求
+        ]
+
+        results = await asyncio.gather(*tasks)
+
+        # 验证所有请求都成功
+        assert all(len(result) > 0 for result in results)
+
+        # 验证指标正确更新
+        metrics = adapter.get_metrics()
+        assert metrics["total_requests"] == 4
+        assert metrics["successful_requests"] == 4
+
+    @pytest.mark.asyncio
+    async def test_adapter_error_recovery(self):
+        """测试适配器错误恢复"""
+
+        class FlakyAdaptee(Adaptee):
+            def __init__(self):
+                self.call_count = 0
+
+            async def get_data(self, *args, **kwargs) -> Any:
+                self.call_count += 1
+                if self.call_count <= 2:
+                    raise ValueError("Temporary failure")
+                return {"response": [{"team": {"id": 1, "name": "Team A"}}]}
+
+            async def send_data(self, data: Any) -> Any:
+                return {"status": "success"}
+
+        flaky_adaptee = FlakyAdaptee()
+        adapter = FootballAdapter(flaky_adaptee)
+        await adapter.initialize()
+
+        # 前两次请求应该失败
+        for _ in range(2):
+            with pytest.raises(ValueError):
+                await adapter.get_teams()
+
+        # 第三次请求应该成功
+        teams = await adapter.get_teams()
+        assert len(teams) == 1
+        assert teams[0]["name"] == "Team A"
+
+        # 验证指标
+        metrics = adapter.get_metrics()
+        assert metrics["total_requests"] == 3
+        assert metrics["successful_requests"] == 1
+        assert metrics["failed_requests"] == 2

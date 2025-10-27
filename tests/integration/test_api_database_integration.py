@@ -2,28 +2,31 @@
 
 # TODO: Consider creating a fixture for 13 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 """
 API与数据库集成测试
 测试API端点与数据库的直接交互
 """
 
-import pytest
 import asyncio
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional
+
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Any, Dict, List, Optional
 
 # 导入需要测试的模块
 try:
     from api.app import app
-    from database.connection import get_async_session, engine
-    from database.models.user import User
+    from database.connection import engine, get_async_session
     from database.models.match import Match
     from database.models.prediction import Prediction
-    from database.repositories.prediction_repository import PredictionRepository
+    from database.models.user import User
     from database.repositories.match_repository import MatchRepository
+    from database.repositories.prediction_repository import \
+        PredictionRepository
     from database.repositories.user_repository import UserRepository
 
     IMPORT_SUCCESS = True
@@ -399,9 +402,7 @@ class TestAPIDatabaseIntegration:
         ("/api/v1/health", "GET", [200, 404]),
     ],
 )
-def test_database_connection_health(
-    endpoint, method, expected_codes, client
-):
+def test_database_connection_health(endpoint, method, expected_codes, client):
     """测试API端点可用性"""
     try:
         client = TestClient(app) if IMPORT_SUCCESS else None
@@ -437,9 +438,7 @@ def test_database_connection_health(
         ("status", "invalid", False),
     ],
 )
-def test_database_connection_health(
-    query_param, value, should_validate, client
-):
+def test_database_connection_health(query_param, value, should_validate, client):
     """测试查询参数验证"""
     # 验证参数
     assert isinstance(query_param, str)
@@ -451,15 +450,15 @@ def test_database_connection_health(
     assert query_param in valid_params
 
     # 验证值
-    if query_param     == "page":
+    if query_param == "page":
         assert isinstance(value, int)
         if should_validate:
             assert value >= 1
-    elif query_param     == "limit":
+    elif query_param == "limit":
         assert isinstance(value, int)
         if should_validate:
             assert 1 <= value <= 100
-    elif query_param     == "status":
+    elif query_param == "status":
         assert isinstance(value, str)
         if should_validate:
             assert value in ["upcoming", "live", "finished", "cancelled"]
@@ -479,7 +478,7 @@ def test_database_connection_health(client):
     }
 
     # 验证健康状态
-    assert health_status["database"]["status"]     == "healthy"
+    assert health_status["database"]["status"] == "healthy"
     assert health_status["database"]["response_time_ms"] < 100
     assert health_status["database"]["connection_pool"]["total"] > 0
 

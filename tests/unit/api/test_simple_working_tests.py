@@ -1,13 +1,15 @@
 from unittest.mock import Mock, patch
+
 """
 简单工作测试 - 测试确实工作的功能
 Simple Working Tests - Test Actually Working Functions
 """
 
-import pytest
-from fastapi.testclient import TestClient
 import json
 from datetime import datetime
+
+import pytest
+from fastapi.testclient import TestClient
 
 from src.api.app import app
 
@@ -406,14 +408,9 @@ class TestPydanticModels:
 
     def test_data_models(self):
         """测试数据模型"""
-        from src.api.data_router import (
-            LeagueInfo,
-            TeamInfo,
-            MatchInfo,
-            OddsInfo,
-            MatchStatistics,
-            TeamStatistics,
-        )
+        from src.api.data_router import (LeagueInfo, MatchInfo,
+                                         MatchStatistics, OddsInfo, TeamInfo,
+                                         TeamStatistics)
 
         league = LeagueInfo(id=1, name="Premier League", country="England")
         assert league.id == 1

@@ -4,13 +4,14 @@ API综合测试第二版
 专注于提升API模块覆盖率
 """
 
+import os
+import sys
+from datetime import datetime
+
 import pytest
-from fastapi import FastAPI, HTTPException, Header
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.testclient import TestClient
 from pydantic import BaseModel
-import sys
-import os
-from datetime import datetime
 
 # 添加src目录到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))

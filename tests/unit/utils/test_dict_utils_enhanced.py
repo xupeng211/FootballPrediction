@@ -7,9 +7,10 @@ Phase 2 - 提升核心模块覆盖率至50%+
 目标：覆盖dict_utils模块的所有功能和边界情况
 """
 
-import pytest
-import sys
 import os
+import sys
+
+import pytest
 
 # 添加src到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../src"))
@@ -18,7 +19,6 @@ from utils.dict_utils import DictUtils
 
 
 @pytest.mark.unit
-
 class TestDictUtilsEnhanced:
     """DictUtils增强测试类"""
 

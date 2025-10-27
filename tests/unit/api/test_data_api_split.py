@@ -1,4 +1,5 @@
 from unittest.mock import AsyncMock, MagicMock
+
 """
 测试拆分后的数据API
 Test Split Data API
@@ -11,7 +12,6 @@ import pytest
 @pytest.mark.unit
 @pytest.mark.api
 @pytest.mark.external_api
-
 def test_import_data_api():
     """测试能否正常导入data_api模块"""
     from src.api import data_api
@@ -35,7 +35,8 @@ def test_import_data_module():
 
 def test_import_models():
     """测试能否正常导入模型"""
-    from src.api.data.models.common import TeamInfo, LeagueInfo, MatchInfo, OddsInfo
+    from src.api.data.models.common import (LeagueInfo, MatchInfo, OddsInfo,
+                                            TeamInfo)
 
     # 验证模型类
     assert TeamInfo is not None
@@ -107,6 +108,7 @@ def test_create_team_info():
 def test_create_league_info():
     """测试创建LeagueInfo模型"""
     from datetime import datetime
+
     from src.api.data.models.common import LeagueInfo
 
     league = LeagueInfo(
@@ -127,7 +129,8 @@ def test_create_league_info():
 def test_create_match_info():
     """测试创建MatchInfo模型"""
     from datetime import datetime
-    from src.api.data.models.common import MatchInfo, TeamInfo, LeagueInfo
+
+    from src.api.data.models.common import LeagueInfo, MatchInfo, TeamInfo
 
     home_team = TeamInfo(
         id=1,

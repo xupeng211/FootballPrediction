@@ -7,11 +7,11 @@ Defines core interfaces for events and event handlers.
 """
 
 import asyncio
+import logging
 import uuid
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, Dict, Optional, Type, TypeVar
-import logging
 
 T = TypeVar("T", bound="Event")
 

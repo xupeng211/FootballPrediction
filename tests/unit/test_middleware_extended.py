@@ -1,11 +1,11 @@
 # 中间件扩展测试
-from src.middleware.i18n import I18nMiddleware
 import pytest
+
+from src.middleware.i18n import I18nMiddleware
 from src.middleware.performance_monitoring import PerformanceMiddleware
 
 
 @pytest.mark.unit
-
 def test_i18n_middleware():
     middleware = I18nMiddleware()
     assert middleware is not None

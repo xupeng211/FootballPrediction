@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 8 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 预测工作流端到端测试
 Prediction Workflow E2E Tests
@@ -10,10 +11,11 @@ Prediction Workflow E2E Tests
 测试完整的预测工作流程
 """
 
-import pytest
 import asyncio
 import json
 from datetime import datetime
+
+import pytest
 
 # 测试导入
 try:

@@ -2,9 +2,10 @@
 联赛积分榜业务逻辑测试
 """
 
-import pytest
-from typing import List, Dict, Any, Optional
 from enum import Enum
+from typing import Any, Dict, List, Optional
+
+import pytest
 
 
 class MatchResult(Enum):
@@ -211,19 +212,20 @@ class LeagueStandings:
             "total_teams": len(self.standings),
             "total_goals": total_goals,
             "total_matches": total_matches,
-            "avg_goals_per_match": total_goals / total_matches
-            if total_matches > 0
-            else 0,
+            "avg_goals_per_match": (
+                total_goals / total_matches if total_matches > 0 else 0
+            ),
             "highest_points": self.standings[0].points if self.standings else 0,
             "lowest_points": self.standings[-1].points if self.standings else 0,
-            "biggest_gap": self.standings[0].points - self.standings[-1].points
-            if len(self.standings) > 1
-            else 0,
+            "biggest_gap": (
+                self.standings[0].points - self.standings[-1].points
+                if len(self.standings) > 1
+                else 0
+            ),
         }
 
 
 @pytest.mark.unit
-
 class TestLeagueStandings:
     """测试联赛积分榜"""
 

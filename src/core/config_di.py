@@ -7,14 +7,15 @@ Manages dependency injection through configuration files.
 """
 
 import json
-import yaml
-from typing import Dict, Any, List, Type, Optional, Union
-from pathlib import Path
 import logging
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Type, Union
 
-from .di import DIContainer, ServiceLifetime
+import yaml
+
 from .auto_binding import AutoBinder
+from .di import DIContainer, ServiceLifetime
 from .exceptions import DependencyInjectionError
 
 logger = logging.getLogger(__name__)

@@ -7,39 +7,21 @@ Provides high-level CQRS operation interfaces.
 """
 
 import logging
-from typing import List, Optional, Dict, Any
-from datetime import datetime, date
+from datetime import date, datetime
+from typing import Any, Dict, List, Optional
 
 from .bus import get_command_bus, get_query_bus
-from .commands import (
-    CreatePredictionCommand,
-    UpdatePredictionCommand,
-    DeletePredictionCommand,
-    CreateUserCommand,
-    UpdateUserCommand,
-    CreateMatchCommand,
-    UpdateMatchCommand,
-)
-from .queries import (
-    GetPredictionByIdQuery,
-    GetPredictionsByUserQuery,
-    GetUserStatsQuery,
-    GetMatchByIdQuery,
-    GetUpcomingMatchesQuery,
-    GetPredictionAnalyticsQuery,
-    GetLeaderboardQuery,
-)
-from .dto import (
-    PredictionDTO,
-    MatchDTO,
-    PredictionStatsDTO,
-    CommandResult,
-)
-from .handlers import (
-    PredictionCommandHandlers,
-    PredictionQueryHandlers,
-    UserCommandHandlers,
-)
+from .commands import (CreateMatchCommand, CreatePredictionCommand,
+                       CreateUserCommand, DeletePredictionCommand,
+                       UpdateMatchCommand, UpdatePredictionCommand,
+                       UpdateUserCommand)
+from .dto import CommandResult, MatchDTO, PredictionDTO, PredictionStatsDTO
+from .handlers import (PredictionCommandHandlers, PredictionQueryHandlers,
+                       UserCommandHandlers)
+from .queries import (GetLeaderboardQuery, GetMatchByIdQuery,
+                      GetPredictionAnalyticsQuery, GetPredictionByIdQuery,
+                      GetPredictionsByUserQuery, GetUpcomingMatchesQuery,
+                      GetUserStatsQuery)
 
 logger = logging.getLogger(__name__)
 

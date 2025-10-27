@@ -58,7 +58,7 @@ def analyze_by_lines(content):
 
     for i, line in enumerate(lines):
         line_num = i + 1
-        stripped = line.strip()
+        line.strip()
 
         # 识别函数定义
         if re.match(r'^\s*def\s+\w+', line):

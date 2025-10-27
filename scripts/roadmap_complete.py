@@ -60,18 +60,18 @@ class RoadmapCompleteExecutor:
         duration = time.time() - self.stats['start_time']
         total_success = all([phase1_success, phase2_success, phase3_success, phase4_success, phase5_success])
 
-        print(f"\n🎉 完整路线图执行完成!")
+        print("\n🎉 完整路线图执行完成!")
         print(f"⏱️  总执行时间: {duration:.2f}秒")
         print(f"📊 完成阶段: {self.stats['phases_completed']}/5")
         print(f"🔧 创建特性: {self.stats['total_features_created']}")
 
         if total_success:
-            print(f"\n🏆 路线图执行完全成功!")
+            print("\n🏆 路线图执行完全成功!")
             print(f"📈 测试覆盖率: {self.stats['start_coverage']}% -> {self.stats['target_coverage']}%+")
-            print(f"🚀 系统已达到企业级生产就绪状态")
+            print("🚀 系统已达到企业级生产就绪状态")
         else:
-            print(f"\n⚠️ 路线图部分成功")
-            print(f"建议检查失败的阶段并手动处理")
+            print("\n⚠️ 路线图部分成功")
+            print("建议检查失败的阶段并手动处理")
 
         return total_success
 
@@ -433,7 +433,7 @@ if __name__ == "__main__":
         print(f"\n📋 最终报告已保存: {report_file}")
 
         # 打印摘要
-        print(f"\n📊 路线图执行摘要:")
+        print("\n📊 路线图执行摘要:")
         print(f"⏱️  执行时间: {duration:.2f}秒")
         print(f"📈 完成率: {(self.stats['phases_completed']/5)*100:.1f}%")
         print(f"🔧 创建特性: {self.stats['total_features_created']}")
@@ -447,13 +447,13 @@ def main():
     success = executor.execute_complete_roadmap()
 
     if success:
-        print(f"\n🎯 恭喜！完整5年路线图执行成功！")
-        print(f"🚀 FootballPrediction系统已达到企业级生产就绪状态")
-        print(f"📈 测试覆盖率从15.71%提升到85%+")
-        print(f"🏆 系统已准备好投入生产环境")
+        print("\n🎯 恭喜！完整5年路线图执行成功！")
+        print("🚀 FootballPrediction系统已达到企业级生产就绪状态")
+        print("📈 测试覆盖率从15.71%提升到85%+")
+        print("🏆 系统已准备好投入生产环境")
     else:
-        print(f"\n⚠️ 路线图执行部分成功")
-        print(f"建议检查失败的阶段并手动完成剩余工作")
+        print("\n⚠️ 路线图执行部分成功")
+        print("建议检查失败的阶段并手动完成剩余工作")
 
     return success
 

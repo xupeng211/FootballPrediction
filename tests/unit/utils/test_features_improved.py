@@ -4,7 +4,6 @@ import pytest
 
 
 @pytest.mark.unit
-
 class TestFeaturesImproved:
     """测试改进的功能API"""
 

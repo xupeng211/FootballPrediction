@@ -6,12 +6,13 @@
 优先级: HIGH
 """
 
-import pytest
-from unittest.mock import Mock, patch, AsyncMock, MagicMock, call
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
 import asyncio
 import json
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+from unittest.mock import AsyncMock, MagicMock, Mock, call, patch
+
+import pytest
 
 # 尝试导入目标模块
 try:
@@ -33,11 +34,7 @@ class TestApiDependenciesComprehensive:
     @pytest.fixture
     def setup_mocks(self):
         """设置Mock对象"""
-        return {
-            'config': {'test_mode': True},
-            'mock_data': {'key': 'value'}
-        }
-
+        return {"config": {"test_mode": True}, "mock_data": {"key": "value"}}
 
     def test_jwterror_initialization(self, setup_mocks):
         """测试 JWTError 初始化"""
@@ -48,7 +45,6 @@ class TestApiDependenciesComprehensive:
         """测试 JWTError 核心功能"""
         # TODO: 实现 JWTError 核心功能测试
         assert True
-
 
     def test_validate_secret_key_basic(self, setup_mocks):
         """测试函数 validate_secret_key"""
@@ -64,7 +60,6 @@ class TestApiDependenciesComprehensive:
         with pytest.raises(Exception):
             raise Exception("Edge case test")
 
-
     def test_jwt_basic(self, setup_mocks):
         """测试函数 jwt"""
         # TODO: 实现 jwt 基础测试
@@ -79,7 +74,6 @@ class TestApiDependenciesComprehensive:
         with pytest.raises(Exception):
             raise Exception("Edge case test")
 
-
     @pytest.mark.asyncio
     async def test_get_current_user_async(self, setup_mocks):
         """测试异步函数 get_current_user"""
@@ -87,7 +81,6 @@ class TestApiDependenciesComprehensive:
         mock_async = AsyncMock()
         result = await mock_async()
         assert result is not None
-
 
     @pytest.mark.asyncio
     async def test_get_admin_user_async(self, setup_mocks):
@@ -97,7 +90,6 @@ class TestApiDependenciesComprehensive:
         result = await mock_async()
         assert result is not None
 
-
     @pytest.mark.asyncio
     async def test_get_prediction_engine_async(self, setup_mocks):
         """测试异步函数 get_prediction_engine"""
@@ -105,7 +97,6 @@ class TestApiDependenciesComprehensive:
         mock_async = AsyncMock()
         result = await mock_async()
         assert result is not None
-
 
     @pytest.mark.asyncio
     async def test_get_redis_manager_async(self, setup_mocks):
@@ -115,7 +106,6 @@ class TestApiDependenciesComprehensive:
         result = await mock_async()
         assert result is not None
 
-
     @pytest.mark.asyncio
     async def test_verify_prediction_permission_async(self, setup_mocks):
         """测试异步函数 verify_prediction_permission"""
@@ -123,7 +113,6 @@ class TestApiDependenciesComprehensive:
         mock_async = AsyncMock()
         result = await mock_async()
         assert result is not None
-
 
     def test_module_integration(self, setup_mocks):
         """测试模块集成"""
@@ -144,15 +133,27 @@ class TestApiDependenciesComprehensive:
         end_time = datetime.now()
         assert (end_time - start_time).total_seconds() < 1.0
 
-    @pytest.mark.parametrize("input_data,expected", [
-        ({"key": "value"}, {"key": "value"}),
-        (None, None),
-        ("", ""),
-    ])
+    @pytest.mark.parametrize(
+        "input_data,expected",
+        [
+            ({"key": "value"}, {"key": "value"}),
+            (None, None),
+            ("", ""),
+        ],
+    )
     def test_parameterized_cases(self, setup_mocks, input_data, expected):
         """参数化测试"""
         # TODO: 实现参数化测试
         assert input_data == expected
 
+
 if __name__ == "__main__":
-    pytest.main([__file__, "-v", "--cov=" + "{module_path.replace('src/', '').replace('.py', '').replace('/', '.')}", "--cov-report=term"])
+    pytest.main(
+        [
+            __file__,
+            "-v",
+            "--cov="
+            + "{module_path.replace('src/', '').replace('.py', '').replace('/', '.')}",
+            "--cov-report=term",
+        ]
+    )

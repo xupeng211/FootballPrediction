@@ -2,19 +2,20 @@
 
 # TODO: Consider creating a fixture for 17 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 测试Redis缓存预热管理器
 """
 
-import pytest
 from datetime import datetime, timedelta
+
+import pytest
 
 from src.cache.redis.warmup.warmup_manager import CacheWarmupManager
 
 
 @pytest.mark.unit
-
 class TestCacheWarmupManager:
     """测试缓存预热管理器"""
 
@@ -171,7 +172,8 @@ class TestCacheWarmupManager:
     @pytest.mark.asyncio
     async def test_warmup_on_startup(self):
         """测试系统启动时的缓存预热"""
-        from src.cache.redis.warmup.warmup_manager import warmup_cache_on_startup
+        from src.cache.redis.warmup.warmup_manager import \
+            warmup_cache_on_startup
 
         mock_manager = Mock()
         mock_warmup_manager = Mock()

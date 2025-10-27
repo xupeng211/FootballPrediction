@@ -3,8 +3,10 @@
 原文件存在语法错误，已重新生成
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
+
 
 class TestDomainPrediction_Algorithms_Part_2:
     """TestDomainPrediction_Algorithms_Part_2 测试类"""
@@ -27,6 +29,7 @@ class TestDomainPrediction_Algorithms_Part_2:
         # 错误处理测试
         with pytest.raises(Exception):
             raise Exception("Test exception")
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

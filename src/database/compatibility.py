@@ -5,9 +5,9 @@ Database Compatibility Module
 提供数据库兼容性相关的类和函数。
 """
 
-from typing import Any, Dict
-from enum import Enum
 import re
+from enum import Enum
+from typing import Any, Dict
 
 
 class Compatibility(Enum):

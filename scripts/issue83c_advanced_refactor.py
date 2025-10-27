@@ -179,7 +179,7 @@ class Issue83CAdvancedRefactor:
         mock_categories = module_info.get('mock_categories', ['config'])
 
         # 分析源模块
-        source_analysis = self.analyze_source_module(source_file)
+        self.analyze_source_module(source_file)
 
         # 生成Mock设置代码
         mock_setup_code = self.generate_mock_setup_code(mock_categories, category)

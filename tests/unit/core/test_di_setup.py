@@ -4,9 +4,9 @@
 
 import sys
 from pathlib import Path
-
 # 添加项目路径
-from unittest.mock import Mock, AsyncMock
+from unittest.mock import AsyncMock, Mock
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, "src")
 
@@ -64,7 +64,6 @@ class MockDISetup:
 
 
 @pytest.mark.unit
-
 class TestDISetup:
     """依赖注入设置测试"""
 

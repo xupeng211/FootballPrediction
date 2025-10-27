@@ -6,20 +6,16 @@ ML Model Strategy
 Strategy implementation using machine learning models for prediction.
 """
 
-import time
-from typing import Any, Dict, List, Optional, Tuple, Type
-import numpy as np
-from datetime import datetime
 import logging
+import time
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple, Type
 
-from .base import (
-    PredictionStrategy,
-    PredictionInput,
-    PredictionOutput,
-    StrategyType,
-    StrategyMetrics,
-)
+import numpy as np
+
 from ..models.prediction import Prediction
+from .base import (PredictionInput, PredictionOutput, PredictionStrategy,
+                   StrategyMetrics, StrategyType)
 
 
 class MLModelStrategy(PredictionStrategy):
@@ -354,9 +350,9 @@ class MLModelStrategy(PredictionStrategy):
             probability_distribution=probability_distribution,
             metadata={
                 "model_version": self._model_version,
-                "model_loaded_at": self._model_loaded_at.isoformat()
-                if self._model_loaded_at
-                else None,
+                "model_loaded_at": (
+                    self._model_loaded_at.isoformat() if self._model_loaded_at else None
+                ),
                 "features_used": self._feature_columns,
             },
         )

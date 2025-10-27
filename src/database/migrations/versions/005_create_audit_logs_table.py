@@ -17,10 +17,9 @@ from datetime import datetime, timezone
 
 import sqlalchemy as sa
 from alembic import context, op
-from sqlalchemy.exc import SQLAlchemyError, DatabaseError
-
 from sqlalchemy import text
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.exc import DatabaseError, SQLAlchemyError
 
 # 版本标识
 revision = "005"
@@ -117,9 +116,11 @@ def upgrade():
         # 扩展信息
         sa.Column(
             "metadata",
-            sa.JSON()
-            if db_dialect == "sqlite"
-            else postgresql.JSONB(astext_type=sa.Text()),
+            (
+                sa.JSON()
+                if db_dialect == "sqlite"
+                else postgresql.JSONB(astext_type=sa.Text())
+            ),
             nullable=True,
             comment="扩展元数据",
         ),

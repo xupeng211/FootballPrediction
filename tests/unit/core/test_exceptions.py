@@ -6,41 +6,26 @@ Core Module Exceptions Tests
 Tests all exception classes defined in src/core/exceptions.py.
 """
 
-import pytest
 from typing import Type
+
+import pytest
 
 # 导入要测试的异常模块
 try:
-    from src.core.exceptions import (
-        FootballPredictionError,
-        ConfigError,
-        DataError,
-        ModelError,
-        PredictionError,
-        CacheError,
-        ServiceError,
-        DatabaseError,
-        ConsistencyError,
-        ValidationError,
-        DataQualityError,
-        PipelineError,
-        DomainError,
-        BusinessRuleError,
-        ServiceLifecycleError,
-        DependencyInjectionError,
-        LineageError,
-        TrackingError,
-        BacktestError,
-        DataProcessingError,
-        TaskExecutionError,
-        TaskRetryError,
-        AuthenticationError,
-        AuthorizationError,
-        RateLimitError,
-        TimeoutError,
-        AdapterError,
-        StreamingError,
-    )
+    from src.core.exceptions import (AdapterError, AuthenticationError,
+                                     AuthorizationError, BacktestError,
+                                     BusinessRuleError, CacheError,
+                                     ConfigError, ConsistencyError,
+                                     DatabaseError, DataError,
+                                     DataProcessingError, DataQualityError,
+                                     DependencyInjectionError, DomainError,
+                                     FootballPredictionError, LineageError,
+                                     ModelError, PipelineError,
+                                     PredictionError, RateLimitError,
+                                     ServiceError, ServiceLifecycleError,
+                                     StreamingError, TaskExecutionError,
+                                     TaskRetryError, TimeoutError,
+                                     TrackingError, ValidationError)
 
     EXCEPTIONS_AVAILABLE = True
 except ImportError:
@@ -49,7 +34,6 @@ except ImportError:
 
 @pytest.mark.skipif(not EXCEPTIONS_AVAILABLE, reason="Exceptions module not available")
 @pytest.mark.unit
-
 class TestCoreExceptions:
     """核心异常类测试"""
 

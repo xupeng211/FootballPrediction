@@ -5,10 +5,12 @@
 提供数据处理的缓存功能，避免重复计算。
 """
 
-from src.cache.redis import RedisManager, CacheKeyManager
-from typing import Dict, List, Optional, Any
 import logging
+from typing import Any, Dict, List, Optional
+
 from redis.exceptions import RedisError
+
+from src.cache.redis import CacheKeyManager, RedisManager
 
 
 class ProcessingCache:

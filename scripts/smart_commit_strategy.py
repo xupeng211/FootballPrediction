@@ -172,7 +172,7 @@ def recommend_strategy(commits):
             print(f"  {i}. {commit['name']}")
             print(f"     文件数: {len(commit['files'])}")
 
-        print(f"\n📝 其他提交可以稍后推送:")
+        print("\n📝 其他提交可以稍后推送:")
         other_commits = [c for c in commits if c['priority'] > 2]
         for i, commit in enumerate(other_commits, 1):
             print(f"  {i}. {commit['name']} ({len(commit['files'])} 文件)")
@@ -189,13 +189,13 @@ def execute_first_commit(commits):
         return False
 
     first_commit = commits[0]
-    print(f"\n🚀 准备执行第一个提交:")
+    print("\n🚀 准备执行第一个提交:")
     print(f"名称: {first_commit['name']}")
     print(f"描述: {first_commit['description']}")
     print(f"文件数: {len(first_commit['files'])}")
 
     # 添加文件
-    print(f"\n📁 添加文件...")
+    print("\n📁 添加文件...")
     for file_path in first_commit['files'][:10]:  # 只显示前10个
         print(f"  + {file_path}")
 
@@ -203,7 +203,7 @@ def execute_first_commit(commits):
         print(f"  ... 还有 {len(first_commit['files']) - 10} 个文件")
 
     # 询问是否继续
-    print(f"\n❓ 是否继续执行这个提交? (y/n)")
+    print("\n❓ 是否继续执行这个提交? (y/n)")
     # 这里应该是交互式的，但在这个环境中我们模拟执行
 
     return True
@@ -216,7 +216,7 @@ def main():
     # 1. 分析改动
     changes = analyze_changes()
 
-    print(f"📊 改动统计:")
+    print("📊 改动统计:")
     print(f"  修改文件: {len(changes['modified'])}")
     print(f"  删除文件: {len(changes['deleted'])}")
     print(f"  新增文件: {len(changes['untracked'])}")
@@ -225,7 +225,7 @@ def main():
     # 2. 分类改动
     categories = categorize_changes(changes)
 
-    print(f"\n📂 改动分类:")
+    print("\n📂 改动分类:")
     for category, files in categories.items():
         if files:
             print(f"  {category}: {len(files)} 个文件")
@@ -237,23 +237,23 @@ def main():
     recommended_commits = recommend_strategy(commits)
 
     # 5. 生成最终的推送建议
-    print(f"\n🎯 最终推送建议:")
+    print("\n🎯 最终推送建议:")
     print("=" * 40)
 
-    print(f"✅ 推荐推送以下核心提交:")
+    print("✅ 推荐推送以下核心提交:")
     for i, commit in enumerate(recommended_commits, 1):
         print(f"  {i}. {commit['name']}")
 
-    print(f"\n📝 推送命令:")
-    print(f"  git add [相关文件]")
-    print(f"  git commit -m '🎉 Issue #88 完成重大突破: 测试基础设施和代码质量全面提升'")
-    print(f"  git push origin main")
+    print("\n📝 推送命令:")
+    print("  git add [相关文件]")
+    print("  git commit -m '🎉 Issue #88 完成重大突破: 测试基础设施和代码质量全面提升'")
+    print("  git push origin main")
 
-    print(f"\n⚠️  重要提醒:")
-    print(f"  1. 建议先推送核心功能相关的文件")
-    print(f"  2. 清理和文档文件可以稍后推送")
-    print(f"  3. 推送前请确保CI检查通过")
-    print(f"  4. 考虑创建Pull Request而不是直接推送到main")
+    print("\n⚠️  重要提醒:")
+    print("  1. 建议先推送核心功能相关的文件")
+    print("  2. 清理和文档文件可以稍后推送")
+    print("  3. 推送前请确保CI检查通过")
+    print("  4. 考虑创建Pull Request而不是直接推送到main")
 
 if __name__ == "__main__":
     main()

@@ -2,14 +2,16 @@
 
 # TODO: Consider creating a fixture for 4 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 """
 Tests for streaming.stream_processor
 Auto-generated test file
 """
 
-import pytest
 import asyncio
+
+import pytest
 
 # Test imports
 try:
@@ -22,7 +24,6 @@ except ImportError as e:
 
 
 @pytest.mark.unit
-
 class TestStreamProcessor:
     """Test cases for StreamProcessor"""
 

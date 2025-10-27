@@ -684,7 +684,7 @@ class EnhancedMockContextManager:
         test_dir = Path("tests/unit") / module_info['category']
         test_dir.mkdir(parents=True, exist_ok=True)
 
-        class_name = self._class_name(module_name)
+        self._class_name(module_name)
         test_file = test_dir / f"{module_name.replace('.', '_')}_test_issue83c_extended.py"
 
         # 生成测试内容

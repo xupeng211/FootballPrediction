@@ -1,4 +1,5 @@
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 预测API路由器测试
 Tests for predictions API router
@@ -6,26 +7,22 @@ Tests for predictions API router
 测试预测API的各个端点功能。
 """
 
-import pytest
 from datetime import datetime, timedelta
-from fastapi.testclient import TestClient
-from fastapi import FastAPI
 
-from src.api.predictions.router import (
-    router,
-    PredictionRequest,
-    PredictionResult,
-    BatchPredictionRequest,
-    BatchPredictionResponse,
-    PredictionHistory,
-    RecentPrediction,
-    PredictionVerification,
-)
+import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
+from src.api.predictions.router import (BatchPredictionRequest,
+                                        BatchPredictionResponse,
+                                        PredictionHistory, PredictionRequest,
+                                        PredictionResult,
+                                        PredictionVerification,
+                                        RecentPrediction, router)
 
 
 @pytest.mark.unit
 @pytest.mark.api
-
 class TestPredictionsRouter:
     """预测API路由器测试"""
 

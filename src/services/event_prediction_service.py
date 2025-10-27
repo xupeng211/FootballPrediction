@@ -8,20 +8,16 @@ Prediction service integrated with event system, publishing prediction-related e
 """
 
 import logging
-from typing import Dict, Any, List, Optional, Optional, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from .strategy_prediction_service import StrategyPredictionService
-from ..domain.models import Match, Prediction
-from ..events import (
-    PredictionMadeEvent,
-    PredictionUpdatedEvent,
-    PredictionMadeEventData,
-    PredictionUpdatedEventData,
-    get_event_bus,
-)
-from ..events.types import MatchCreatedEventData, UserRegisteredEventData
 from ..core.di import DIContainer
+from ..domain.models import Match, Prediction
+from ..events import (PredictionMadeEvent, PredictionMadeEventData,
+                      PredictionUpdatedEvent, PredictionUpdatedEventData,
+                      get_event_bus)
+from ..events.types import MatchCreatedEventData, UserRegisteredEventData
+from .strategy_prediction_service import StrategyPredictionService
 
 logger = logging.getLogger(__name__)
 
@@ -165,15 +161,21 @@ class EventDrivenPredictionService(StrategyPredictionService):
                 prediction_id=prediction.id,
                 match_id=prediction.match_id,
                 user_id=prediction.user_id,
-                predicted_home=float(prediction.predicted_home_score)
-                if prediction.predicted_home_score
-                else None,
-                predicted_away=float(prediction.predicted_away_score)
-                if prediction.predicted_away_score
-                else None,
-                confidence=float(prediction.confidence_score)
-                if prediction.confidence_score
-                else None,
+                predicted_home=(
+                    float(prediction.predicted_home_score)
+                    if prediction.predicted_home_score
+                    else None
+                ),
+                predicted_away=(
+                    float(prediction.predicted_away_score)
+                    if prediction.predicted_away_score
+                    else None
+                ),
+                confidence=(
+                    float(prediction.confidence_score)
+                    if prediction.confidence_score
+                    else None
+                ),
                 strategy_used=strategy_name,
                 source=self._event_source,
                 metadata={
@@ -212,15 +214,21 @@ class EventDrivenPredictionService(StrategyPredictionService):
                 prediction_id=prediction.id,
                 match_id=prediction.match_id,
                 user_id=prediction.user_id,
-                predicted_home=float(prediction.predicted_home_score)
-                if prediction.predicted_home_score
-                else None,
-                predicted_away=float(prediction.predicted_away_score)
-                if prediction.predicted_away_score
-                else None,
-                confidence=float(prediction.confidence_score)
-                if prediction.confidence_score
-                else None,
+                predicted_home=(
+                    float(prediction.predicted_home_score)
+                    if prediction.predicted_home_score
+                    else None
+                ),
+                predicted_away=(
+                    float(prediction.predicted_away_score)
+                    if prediction.predicted_away_score
+                    else None
+                ),
+                confidence=(
+                    float(prediction.confidence_score)
+                    if prediction.confidence_score
+                    else None
+                ),
                 strategy_used=None,  # 更新时可能没有策略信息
                 previous_prediction=previous_prediction,
                 update_reason=update_reason,

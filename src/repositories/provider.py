@@ -6,16 +6,16 @@ Repository Provider
 Provides creation and dependency injection configuration for repository instances.
 """
 
-from typing import TypeVar, Type, Protocol, runtime_checkable
 from functools import lru_cache
+from typing import Protocol, Type, TypeVar, runtime_checkable
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..database.models import Match, Prediction, User
 from .base import BaseRepository, Repository
-from .prediction import PredictionRepository, ReadOnlyPredictionRepository
-from .user import UserRepository, ReadOnlyUserRepository
 from .match import MatchRepository, ReadOnlyMatchRepository
-from ..database.models import Prediction, User, Match
+from .prediction import PredictionRepository, ReadOnlyPredictionRepository
+from .user import ReadOnlyUserRepository, UserRepository
 
 T = TypeVar("T")
 ID = TypeVar("ID")

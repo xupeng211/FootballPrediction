@@ -13,54 +13,22 @@ Implements core concepts of Domain-Driven Design (DDD), including:
 - Domain events
 """
 
-from .models import (
-    Match,
-    MatchStatus,
-    MatchResult,
-    MatchScore,
-    Prediction,
-    PredictionStatus,
-    ConfidenceScore,
-    PredictionScore,
-    PredictionPoints,
-    Team,
-    TeamStats,
-    TeamForm,
-    League,
-    LeagueSeason,
-    LeagueSettings,
-)
-from .services import (
-    MatchDomainService,
-    PredictionDomainService,
-    ScoringService,
-)
-from .events import (
-    MatchStartedEvent,
-    MatchFinishedEvent,
-    MatchCancelledEvent,
-    MatchPostponedEvent,
-    PredictionCreatedEvent,
-    PredictionUpdatedEvent,
-    PredictionEvaluatedEvent,
-    PredictionCancelledEvent,
-    PredictionExpiredEvent,
-    PredictionPointsAdjustedEvent,
-)
-from .strategies import (
-    PredictionStrategy,
-    PredictionContext,
-    PredictionInput,
-    PredictionOutput,
-    StrategyType,
-    StrategyMetrics,
-    MLModelStrategy,
-    StatisticalStrategy,
-    HistoricalStrategy,
-    EnsembleStrategy,
-    PredictionStrategyFactory,
-    StrategyConfig,
-)
+from .events import (MatchCancelledEvent, MatchFinishedEvent,
+                     MatchPostponedEvent, MatchStartedEvent,
+                     PredictionCancelledEvent, PredictionCreatedEvent,
+                     PredictionEvaluatedEvent, PredictionExpiredEvent,
+                     PredictionPointsAdjustedEvent, PredictionUpdatedEvent)
+from .models import (ConfidenceScore, League, LeagueSeason, LeagueSettings,
+                     Match, MatchResult, MatchScore, MatchStatus, Prediction,
+                     PredictionPoints, PredictionScore, PredictionStatus, Team,
+                     TeamForm, TeamStats)
+from .services import (MatchDomainService, PredictionDomainService,
+                       ScoringService)
+from .strategies import (EnsembleStrategy, HistoricalStrategy, MLModelStrategy,
+                         PredictionContext, PredictionInput, PredictionOutput,
+                         PredictionStrategy, PredictionStrategyFactory,
+                         StatisticalStrategy, StrategyConfig, StrategyMetrics,
+                         StrategyType)
 
 __all__ = [
     # 领域模型

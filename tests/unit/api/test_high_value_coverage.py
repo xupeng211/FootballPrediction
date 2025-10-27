@@ -1,4 +1,5 @@
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 高价值模块覆盖率提升测试
 High Value Module Coverage Boost Tests
@@ -6,15 +7,16 @@ High Value Module Coverage Boost Tests
 专注于提升API、服务和核心业务逻辑的测试覆盖率
 """
 
-import pytest
-from datetime import datetime
 import asyncio
+from datetime import datetime
+
+import pytest
 
 # 测试导入
 try:
-    from src.services.data_processing import DataProcessingService
-    from src.services.audit_service import AuditService
     from src.core.prediction_engine import PredictionEngine
+    from src.services.audit_service import AuditService
+    from src.services.data_processing import DataProcessingService
 
     SERVICES_AVAILABLE = True
 except ImportError as e:
@@ -24,7 +26,6 @@ except ImportError as e:
 
 @pytest.mark.skipif(not SERVICES_AVAILABLE, reason="服务模块不可用")
 @pytest.mark.unit
-
 class TestCoreServicesCoverage:
     """核心服务覆盖率补充测试"""
 

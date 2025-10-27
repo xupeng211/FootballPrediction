@@ -177,7 +177,7 @@ class LongFileSplitter:
         if hasattr(node, 'end_lineno') and node.end_lineno:
             return node.end_lineno
 
-        lines = content.split('\n')
+        content.split('\n')
         max_line = node.lineno
 
         for child in ast.walk(node):

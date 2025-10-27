@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 4 repeated Mock creations
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 """
 警告过滤器模块测试
 Warning Filters Module Tests
@@ -11,10 +12,11 @@ Warning Filters Module Tests
 Tests warning filters functionality defined in src/utils/warning_filters.py, focused on achieving 100% coverage.
 """
 
-import pytest
 import logging
 import sys
 import warnings
+
+import pytest
 
 # 导入要测试的模块
 try:
@@ -30,7 +32,6 @@ except ImportError:
     not WARNING_FILTERS_AVAILABLE, reason="Warning filters module not available"
 )
 @pytest.mark.unit
-
 class TestSetupWarningFilters:
     """setup_warning_filters函数测试"""
 

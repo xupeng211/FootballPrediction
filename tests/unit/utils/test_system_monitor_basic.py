@@ -3,6 +3,7 @@
 # TODO: Consider creating a fixture for 5 repeated Mock creations
 
 from unittest.mock import Mock, patch
+
 """
 系统监控模块基础测试
 """
@@ -13,14 +14,12 @@ import pytest
 def test_module_import():
     """测试模块导入"""
     # 测试导入新模块
-    from src.monitoring.system_monitor_mod import (
-        SystemMonitor,
-        PrometheusMetrics,
-        get_system_monitor,
-    )
-
     # 测试导入兼容模块
-    from src.monitoring.system_monitor_mod import SystemMonitor as LegacySystemMonitor
+    from src.monitoring.system_monitor_mod import PrometheusMetrics
+    from src.monitoring.system_monitor_mod import SystemMonitor
+    from src.monitoring.system_monitor_mod import \
+        SystemMonitor as LegacySystemMonitor
+    from src.monitoring.system_monitor_mod import get_system_monitor
 
     assert SystemMonitor is not None
     assert PrometheusMetrics is not None
@@ -32,6 +31,7 @@ def test_prometheus_metrics_creation():
     """测试Prometheus指标创建"""
     # 使用独立的注册表避免冲突
     from prometheus_client import CollectorRegistry
+
     from src.monitoring.system_monitor_mod.metrics import PrometheusMetrics
 
     registry = CollectorRegistry()
@@ -118,12 +118,10 @@ def test_global_instance():
 
 def test_convenience_functions():
     """测试便捷函数"""
-    from src.monitoring.system_monitor_mod import (
-        record_http_request,
-        record_db_query,
-        record_cache_op,
-        record_prediction,
-    )
+    from src.monitoring.system_monitor_mod import (record_cache_op,
+                                                   record_db_query,
+                                                   record_http_request,
+                                                   record_prediction)
 
     monitor = Mock()
 

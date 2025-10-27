@@ -6,22 +6,19 @@
 import asyncio
 import logging
 import time
-from typing import Dict, Any, List, Optional, Tuple
-from datetime import datetime
-import numpy
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
-from base import (
-    PredictionStrategy,
-    PredictionInput,
-    PredictionOutput,
-    StrategyType,
-    StrategyMetrics,
-)
-from models.prediction import Prediction
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy
+from base import (PredictionInput, PredictionOutput, PredictionStrategy,
+                  StrategyMetrics, StrategyType)
+from historical import HistoricalStrategy
 from ml_model import MLModelStrategy
 from statistical import StatisticalStrategy
-from historical import HistoricalStrategy
+
+from models.prediction import Prediction
 
 # 常量
 WEIGHTED_AVERAGE = "weighted_average"

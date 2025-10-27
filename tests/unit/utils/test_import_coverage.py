@@ -4,9 +4,10 @@
 只测试模块导入，确保能够运行
 """
 
-import pytest
-import sys
 import os
+import sys
+
+import pytest
 
 # 添加src目录到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))

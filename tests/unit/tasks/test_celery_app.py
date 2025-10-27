@@ -1,4 +1,5 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 """
 Celery应用配置测试
 Tests for Celery App Configuration
@@ -6,12 +7,14 @@ Tests for Celery App Configuration
 测试src.tasks.celery_app模块的Celery配置和任务管理功能
 """
 
-import pytest
 import os
+
+import pytest
 
 # 尝试导入celery_app模块
 try:
-    from src.tasks.celery_app import celery_app, DatabaseManager, RedisManager, logger
+    from src.tasks.celery_app import (DatabaseManager, RedisManager,
+                                      celery_app, logger)
 
     CELERY_APP_AVAILABLE = True
 except ImportError as e:
@@ -25,7 +28,6 @@ except ImportError as e:
 
 @pytest.mark.skipif(not CELERY_APP_AVAILABLE, reason="Celery app module not available")
 @pytest.mark.unit
-
 class TestCeleryApp:
     """Celery应用测试"""
 
@@ -273,12 +275,8 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if CELERY_APP_AVAILABLE:
-        from src.tasks.celery_app import (
-            celery_app,
-            DatabaseManager,
-            RedisManager,
-            logger,
-        )
+        from src.tasks.celery_app import (DatabaseManager, RedisManager,
+                                          celery_app, logger)
 
         assert celery_app is not None
         assert DatabaseManager is not None

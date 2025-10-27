@@ -3,12 +3,13 @@
 # TODO: Consider creating a fixture for 29 repeated Mock creations
 
 from unittest.mock import AsyncMock, MagicMock
+
 """
 测试Mock配置文件 - 在conftest.py加载之前生效
 """
 
-import sys
 import os
+import sys
 
 # 确保测试环境设置
 os.environ["TESTING"] = "true"

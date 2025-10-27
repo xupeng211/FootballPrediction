@@ -1,9 +1,9 @@
 # 外部服务Mock配置
 import asyncio
-from typing import Dict, Any
+from typing import Any, Dict
+from unittest.mock import AsyncMock, Mock
 
 
-from unittest.mock import Mock, AsyncMock
 class MockHTTPClient:
     """模拟HTTP客户端"""
 

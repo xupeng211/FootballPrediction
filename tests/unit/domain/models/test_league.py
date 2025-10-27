@@ -4,13 +4,8 @@ from decimal import Decimal
 import pytest
 
 from src.core.exceptions import DomainError
-from src.domain.models.league import (
-    League,
-    LeagueSeason,
-    LeagueSettings,
-    LeagueStatus,
-    LeagueType,
-)
+from src.domain.models.league import (League, LeagueSeason, LeagueSettings,
+                                      LeagueStatus, LeagueType)
 
 
 @pytest.fixture
@@ -20,7 +15,6 @@ def league() -> League:
 
 @pytest.mark.unit
 @pytest.mark.external_api
-
 class TestLeagueSeason:
     def test_should_validate_basic_constraints(self):
         start = datetime(2024, 8, 1)

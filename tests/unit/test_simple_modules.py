@@ -2,15 +2,15 @@
 简单模块测试 - 替代复杂的 skipped 测试
 """
 
-import pytest
 import sys
+
+import pytest
 
 # 确保模块可以导入
 sys.path.insert(0, "src")
 
 
 @pytest.mark.unit
-
 def test_health_module_basic():
     """基础健康模块测试"""
     try:

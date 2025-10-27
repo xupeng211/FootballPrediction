@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 46 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 """
 DI设置功能测试
 Tests for DI setup functional module
@@ -10,29 +11,24 @@ Tests for DI setup functional module
 专注于测试DI设置的实际功能。
 """
 
-import pytest
-import tempfile
-import os
 import asyncio
-from pathlib import Path
+import os
 import sys
+import tempfile
+from pathlib import Path
+
+import pytest
 
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, "src")
 
-from src.core.di_setup import (
-    DISetup,
-    get_di_setup,
-    configure_di,
-    register_service,
-    create_di_config,
-)
 from src.core.di import ServiceLifetime
+from src.core.di_setup import (DISetup, configure_di, create_di_config,
+                               get_di_setup, register_service)
 
 
 @pytest.mark.unit
-
 class TestDISetupFunctional:
     """DI设置功能测试"""
 
@@ -457,6 +453,7 @@ profiles:
         mock_setup.container = None
 
         with patch("src.core.di_setup.get_di_setup", return_value=mock_setup):
+
             @register_service(ServiceLifetime.SINGLETON)
             class TestService:
                 pass
@@ -493,9 +490,11 @@ profiles:
 
     def test_create_di_config_default_params(self):
         """测试DI配置文件创建默认参数"""
-        with patch("src.core.config_di.generate_sample_config") as mock_generate, patch(
-            "src.core.di_setup.Path"
-        ) as mock_path, patch("builtins.open", create=True) as mock_open:
+        with (
+            patch("src.core.config_di.generate_sample_config") as mock_generate,
+            patch("src.core.di_setup.Path") as mock_path,
+            patch("builtins.open", create=True) as mock_open,
+        ):
             mock_path_instance = Mock()
             mock_path.return_value = mock_path_instance
             mock_path_instance.parent.mkdir = Mock()

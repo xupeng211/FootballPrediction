@@ -1,14 +1,16 @@
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
 """
 扩展模块测试 - 覆盖更多API模块
 Extended Module Tests - Cover More API Modules
 """
 
-import pytest
-from fastapi.testclient import TestClient
 import json
 from datetime import datetime, timedelta
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+
+import pytest
+from fastapi.testclient import TestClient
 
 from src.api.app import app
 
@@ -95,7 +97,7 @@ class TestEventsModule:
 
     def test_event_publish(self):
         """测试事件发布"""
-        from src.api.events import EventManager, Event
+        from src.api.events import Event, EventManager
 
         manager = EventManager()
 
@@ -555,7 +557,7 @@ class TestRepositoriesModuleExtended:
 
     def test_query_spec_builder(self):
         """测试查询规范构建器"""
-        from src.api.repositories import QuerySpec, QueryBuilder
+        from src.api.repositories import QueryBuilder, QuerySpec
 
         query = (
             QueryBuilder()
@@ -628,7 +630,7 @@ class TestIntegrationScenarios:
 
     def test_event_observer_integration(self):
         """测试事件-观察者集成"""
-        from src.api.events import EventManager, Event
+        from src.api.events import Event, EventManager
         from src.api.observers import Observer, Subject
 
         # 创建事件管理器

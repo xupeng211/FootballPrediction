@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from unittest.mock import Mock, patch
+
 """
 Auto-generated basic tests for response_models.py
 TODO: Expand these tests with actual functionality
@@ -12,7 +13,6 @@ import pytest
 
 
 @pytest.mark.unit
-
 class TestResponseModels:
     """Basic test class for response_models.py"""
 

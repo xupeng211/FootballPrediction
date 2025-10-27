@@ -1,10 +1,10 @@
 # 加密工具高级测试
-from src.utils.crypto_utils import CryptoUtils
 import pytest
+
+from src.utils.crypto_utils import CryptoUtils
 
 
 @pytest.mark.unit
-
 def test_hash_password():
     password = "test123"
     hashed = CryptoUtils.hash_password(password)

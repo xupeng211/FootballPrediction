@@ -6,9 +6,10 @@ CQRS API Endpoints
 Provides HTTP interface for CQRS pattern.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
-from typing import List, Optional, Dict, Any
 from datetime import date, datetime
+from typing import Any, Dict, List, Optional
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from ..cqrs.application import CQRSServiceFactory

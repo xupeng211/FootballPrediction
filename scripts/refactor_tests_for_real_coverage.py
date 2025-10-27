@@ -91,7 +91,7 @@ class TestRefactorer:
         todo_patterns = ['TODO:', '# TODO', 'assert True', 'pass  # TODO']
         real_test_patterns = ['assert', 'expect', 'verify', 'check', 'validate']
 
-        has_todo = any(pattern in content for pattern in todo_patterns)
+        any(pattern in content for pattern in todo_patterns)
         has_real = any(pattern in content for pattern in real_test_patterns)
 
         return has_real and not content.count('assert True') > content.count('assert') * 0.8

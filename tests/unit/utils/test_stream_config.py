@@ -1,4 +1,5 @@
 from unittest.mock import Mock
+
 """流配置测试"""
 
 import pytest
@@ -10,7 +11,6 @@ TopicConfig = Mock
 
 
 @pytest.mark.unit
-
 class TestStreamConfig:
     """测试流配置"""
 

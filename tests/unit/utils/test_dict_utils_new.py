@@ -1,11 +1,11 @@
 """字典工具测试"""
 
 import pytest
+
 # from src.utils.dict_utils import DictUtils
 
 
 @pytest.mark.unit
-
 class TestDictUtils:
     """字典工具测试"""
 

@@ -6,8 +6,8 @@
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
 from datetime import datetime
+from typing import Any, Dict, Optional
 
 from src.database.connection import DatabaseManager
 

@@ -9,11 +9,12 @@ Security Middleware
 - 审计日志
 """
 
+import logging
 import os
 import time
-import logging
-from typing import Callable, List, Optional, Dict, Any
-from fastapi import Request, Response, HTTPException, status
+from typing import Any, Callable, Dict, List, Optional
+
+from fastapi import HTTPException, Request, Response, status
 
 try:
     from fastapi.middleware.base import BaseHTTPMiddleware
@@ -22,11 +23,13 @@ except ImportError:
     # 使用starlette的中间件作为替代
     from starlette.middleware.base import BaseHTTPMiddleware
     from starlette.middleware.cors import CORSMiddleware
+
+import asyncio
+from collections import defaultdict
+from datetime import datetime, timedelta
+
 from starlette.middleware.base import RequestResponseEndpoint
 from starlette.types import ASGIApp
-from collections import defaultdict
-import asyncio
-from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 

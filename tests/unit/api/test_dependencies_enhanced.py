@@ -3,7 +3,8 @@
 # TODO: Consider creating a fixture for 34 repeated Mock creations
 
 #!/usr/bin/env python3
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 API 依赖模块增强测试套件
 Enhanced API Dependencies Test Suite
@@ -12,21 +13,18 @@ Phase 2 - 提升核心模块覆盖率至50%+
 目标：覆盖API依赖注入功能的各种场景
 """
 
-import pytest
-import sys
 import os
+import sys
 from typing import Any, Dict
+
+import pytest
 
 # 添加src到路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../src"))
 
 try:
-    from src.database.dependencies import (
-        get_db,
-        get_async_db,
-        get_test_db,
-        get_test_async_db,
-    )
+    from src.database.dependencies import (get_async_db, get_db,
+                                           get_test_async_db, get_test_db)
 
     DEPENDENCIES_AVAILABLE = True
 except ImportError as e:
@@ -38,7 +36,6 @@ except ImportError as e:
     not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available"
 )
 @pytest.mark.unit
-
 class TestAPIDependenciesEnhanced:
     """API依赖模块增强测试类"""
 
@@ -380,9 +377,9 @@ class TestAPIDependenciesEnhanced:
             execution_time = end_time - start_time
 
             # 性能应该在合理范围内（小于1秒）
-            assert execution_time < 1.0, (
-                f"Dependency resolution took too long: {execution_time}s"
-            )
+            assert (
+                execution_time < 1.0
+            ), f"Dependency resolution took too long: {execution_time}s"
 
     # === 配置测试 ===
 

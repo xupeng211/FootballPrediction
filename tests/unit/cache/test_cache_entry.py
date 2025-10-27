@@ -1,11 +1,13 @@
 """测试缓存条目模块"""
 
-import pytest
 import time
 from unittest.mock import patch
 
+import pytest
+
 try:
     from src.cache.ttl_cache_enhanced.cache_entry import CacheEntry
+
     IMPORT_SUCCESS = True
 except ImportError as e:
     IMPORT_SUCCESS = False
@@ -183,7 +185,7 @@ class TestCacheEntry:
         """测试两个都有TTL的条目比较"""
         # 早过期的条目
         entry_early = CacheEntry("key1", "value1", 100)  # 100秒后过期
-        entry_late = CacheEntry("key2", "value2", 200)    # 200秒后过期
+        entry_late = CacheEntry("key2", "value2", 200)  # 200秒后过期
 
         # 早过期的应该更小
         assert entry_early < entry_late
@@ -244,7 +246,7 @@ class TestCacheEntry:
         entry = CacheEntry("test_key", "test_value")
 
         # 确认__slots__生效
-        assert hasattr(entry, '__slots__')
+        assert hasattr(entry, "__slots__")
 
         # 尝试添加新属性应该失败
         with pytest.raises(AttributeError):
@@ -265,7 +267,12 @@ class TestCacheEntry:
 
     def test_edge_cases_special_characters_key(self):
         """测试特殊字符键"""
-        special_keys = ["key with spaces", "key\nwith\nnewlines", "key\twith\ttabs", "🚀emoji"]
+        special_keys = [
+            "key with spaces",
+            "key\nwith\nnewlines",
+            "key\twith\ttabs",
+            "🚀emoji",
+        ]
 
         for key in special_keys:
             entry = CacheEntry(key, "value")
@@ -291,7 +298,7 @@ class TestCacheEntry:
 
     def test_time_manipulation_with_mock(self):
         """测试时间操控"""
-        with patch('time.time') as mock_time:
+        with patch("time.time") as mock_time:
             mock_time.return_value = 1000.0
 
             entry = CacheEntry("key", "value", 100)
@@ -395,7 +402,7 @@ class TestCacheEntryIntegration:
 
         # 性能断言（这些数字可能需要根据实际环境调整）
         assert creation_time < 1.0  # 创建1000个条目应该在1秒内
-        assert access_time < 0.1    # 访问1000个条目应该在0.1秒内
+        assert access_time < 0.1  # 访问1000个条目应该在0.1秒内
 
 
 def test_import_fallback():

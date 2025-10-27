@@ -10,9 +10,9 @@ import logging
 import time
 from collections import defaultdict, deque
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Callable
+from typing import Any, Callable, Dict, List, Optional
 
-from .base import Observer, ObservableEvent, ObservableEventType
+from .base import ObservableEvent, ObservableEventType, Observer
 
 logger = logging.getLogger(__name__)
 

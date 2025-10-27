@@ -1,7 +1,9 @@
 # 测试数据库初始化脚本
 import asyncio
+
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
+
 from src.database.base import Base
 
 
@@ -20,20 +22,24 @@ async def init_test_database():
     with engine.connect() as conn:
         # 插入测试团队
         conn.execute(
-            text("""
+            text(
+                """
             INSERT INTO teams (id, name, founded_year, logo_url) VALUES
             (1, 'Test Team 1', 1900, 'logo1.png'),
             (2, 'Test Team 2', 1920, 'logo2.png')
-        """)
+        """
+            )
         )
 
         # 插入测试比赛
         conn.execute(
-            text("""
+            text(
+                """
             INSERT INTO matches (id, home_team_id, away_team_id, match_date, venue) VALUES
             (1, 1, 2, '2024-01-01', 'Test Stadium'),
             (2, 2, 1, '2024-01-02', 'Another Stadium')
-        """)
+        """
+            )
         )
 
     return engine

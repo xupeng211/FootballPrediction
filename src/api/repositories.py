@@ -7,19 +7,14 @@ Repository Pattern API Endpoints
 Demonstrates query and management features of the repository pattern.
 """
 
-from fastapi import APIRouter, HTTPException, Query
-from typing import Dict, Any, Optional
 from datetime import date
+from typing import Any, Dict, Optional
 
-from ..repositories import (
-    PredictionRepoDep,
-    ReadOnlyPredictionRepoDep,
-    UserRepoDep,
-    ReadOnlyUserRepoDep,
-    MatchRepoDep,
-    ReadOnlyMatchRepoDep,
-    QuerySpec,
-)
+from fastapi import APIRouter, HTTPException, Query
+
+from ..repositories import (MatchRepoDep, PredictionRepoDep, QuerySpec,
+                            ReadOnlyMatchRepoDep, ReadOnlyPredictionRepoDep,
+                            ReadOnlyUserRepoDep, UserRepoDep)
 
 router = APIRouter(prefix="/repositories", tags=["仓储模式"])
 
@@ -300,9 +295,11 @@ async def get_matches(
                 "competition_name": m.competition_name,
                 "match_date": m.match_date,
                 "status": m.status,
-                "score": {"home": m.home_score, "away": m.away_score}
-                if m.home_score is not None
-                else None,
+                "score": (
+                    {"home": m.home_score, "away": m.away_score}
+                    if m.home_score is not None
+                    else None
+                ),
             }
             for m in matches
         ],
@@ -344,9 +341,11 @@ async def get_live_matches(repo: ReadOnlyMatchRepoDep) -> Dict[str, Any]:
                 "id": m.id,
                 "home_team": m.home_team_name,
                 "away_team": m.away_team_name,
-                "score": {"home": m.home_score, "away": m.away_score}
-                if m.home_score is not None
-                else None,
+                "score": (
+                    {"home": m.home_score, "away": m.away_score}
+                    if m.home_score is not None
+                    else None
+                ),
                 "started_at": m.started_at,
             }
             for m in matches
@@ -369,9 +368,11 @@ async def get_match(match_id: int, repo: ReadOnlyMatchRepoDep) -> Dict[str, Any]
         "season": match.season,
         "match_date": match.match_date,
         "status": match.status,
-        "score": {"home": match.home_score, "away": match.away_score}
-        if match.home_score is not None
-        else None,
+        "score": (
+            {"home": match.home_score, "away": match.away_score}
+            if match.home_score is not None
+            else None
+        ),
         "created_at": match.created_at,
     }
 

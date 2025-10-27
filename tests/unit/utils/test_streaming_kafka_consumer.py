@@ -2,17 +2,20 @@
 
 # TODO: Consider creating a fixture for 19 repeated Mock creations
 
-from unittest.mock import patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
 """
 Kafka消费者测试
 """
 
-import pytest
 import asyncio
 import json
-from typing import Any, Dict, Optional, List
-from src.streaming.kafka_consumer_simple import KafkaMessageConsumer
+from typing import Any, Dict, List, Optional
+
+import pytest
+
 from src.core.exceptions import StreamingError
+from src.streaming.kafka_consumer_simple import KafkaMessageConsumer
 
 
 class MockAsyncIterator:
@@ -42,7 +45,6 @@ class CommitFailedError(Exception):
 
 
 @pytest.mark.unit
-
 class TestKafkaMessageConsumer:
     """Kafka消息消费者测试"""
 

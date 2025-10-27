@@ -6,11 +6,11 @@ Tests for String Utils
 """
 
 import pytest
+
 from src.utils.string_utils import StringUtils
 
 
 @pytest.mark.unit
-
 class TestStringUtilsTruncate:
     """字符串截断测试"""
 
@@ -72,7 +72,9 @@ class TestStringUtilsTruncate:
         """测试：截断带空格的文本"""
         text = "Hello World Test"
         _result = StringUtils.truncate(text, 12)
-        assert _result == "Hello Wor..."  # 保留10个字符长度(含空格): "Hello World" -> "Hello Wor..."
+        assert (
+            _result == "Hello Wor..."
+        )  # 保留10个字符长度(含空格): "Hello World" -> "Hello Wor..."
 
     def test_truncate_multiline_text(self):
         """测试：截断多行文本"""

@@ -14,22 +14,17 @@ Odds - 数据库模块
 - [待补充 - 使用注意事项]
 """
 
-from ..base import BaseModel
-from typing import Any, Dict, Optional
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
-from sqlalchemy import (
-    CheckConstraint,
-    DECIMAL,
-    DateTime,
-    Enum as SQLEnum,
-    ForeignKey,
-    Index,
-    String,
-    func,
-)
+from typing import Any, Dict, Optional
+
+from sqlalchemy import DECIMAL, CheckConstraint, DateTime
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import ForeignKey, Index, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from ..base import BaseModel
 
 """
 足球比赛赔率数据模型
@@ -38,15 +33,13 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 """
 
 from typing import Any, Dict, Optional
+
 from sqlalchemy import DECIMAL, CheckConstraint, DateTime
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy import ForeignKey, Index, String, func
+from sqlalchemy.orm import mapped_column, relationship
+
 from src.database.base import BaseModel
-from sqlalchemy import DateTime
-from sqlalchemy import Index
-from sqlalchemy import String
-from sqlalchemy.orm import mapped_column
-from sqlalchemy.orm import relationship
 
 
 class MarketType(Enum):

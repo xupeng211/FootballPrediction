@@ -2,10 +2,11 @@
 球员统计业务逻辑测试
 """
 
-import pytest
 from datetime import datetime, timedelta
-from typing import List, Dict, Any, Optional
 from enum import Enum
+from typing import Any, Dict, List, Optional
+
+import pytest
 
 
 class Position(Enum):
@@ -222,12 +223,14 @@ class PlayerAnalyzer:
             },
             "comparison": {
                 "better_goals": p1.name if p1.stats.goals > p2.stats.goals else p2.name,
-                "better_assists": p1.name
-                if p1.stats.assists > p2.stats.assists
-                else p2.name,
-                "better_rating": p1.name
-                if p1.get_average_rating() > p2.get_average_rating()
-                else p2.name,
+                "better_assists": (
+                    p1.name if p1.stats.assists > p2.stats.assists else p2.name
+                ),
+                "better_rating": (
+                    p1.name
+                    if p1.get_average_rating() > p2.get_average_rating()
+                    else p2.name
+                ),
             },
         }
 
@@ -322,7 +325,6 @@ class PlayerAnalyzer:
 
 
 @pytest.mark.unit
-
 class TestPlayerStats:
     """测试球员统计业务逻辑"""
 

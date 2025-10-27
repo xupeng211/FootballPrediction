@@ -5,19 +5,15 @@ Tests for Helper Functions
 测试src.utils.helpers模块的辅助函数
 """
 
-import pytest
-from datetime import datetime, timezone
 import re
+from datetime import datetime, timezone
+
+import pytest
 
 # 测试导入
 try:
-    from src.utils.helpers import (
-        generate_uuid,
-        generate_hash,
-        safe_get,
-        format_timestamp,
-        sanitize_string,
-    )
+    from src.utils.helpers import (format_timestamp, generate_hash,
+                                   generate_uuid, safe_get, sanitize_string)
 
     HELPERS_AVAILABLE = True
 except ImportError as e:
@@ -27,7 +23,6 @@ except ImportError as e:
 
 @pytest.mark.skipif(not HELPERS_AVAILABLE, reason="Helpers module not available")
 @pytest.mark.unit
-
 class TestGenerateUUID:
     """UUID生成测试"""
 
@@ -275,13 +270,9 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if HELPERS_AVAILABLE:
-        from src.utils.helpers import (
-            generate_uuid,
-            generate_hash,
-            safe_get,
-            format_timestamp,
-            sanitize_string,
-        )
+        from src.utils.helpers import (format_timestamp, generate_hash,
+                                       generate_uuid, safe_get,
+                                       sanitize_string)
 
         assert generate_uuid is not None
         assert generate_hash is not None

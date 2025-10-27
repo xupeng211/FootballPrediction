@@ -4,7 +4,6 @@ import pytest
 
 
 @pytest.mark.unit
-
 class TestCoverageBoost:
     """用于提升覆盖率的简单测试"""
 

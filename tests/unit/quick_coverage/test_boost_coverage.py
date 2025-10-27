@@ -1,7 +1,8 @@
 # noqa: F401,F811,F821,E402
-import pytest
-import sys
 import os
+import sys
+
+import pytest
 
 """
 快速覆盖率提升测试

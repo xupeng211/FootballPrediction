@@ -6,18 +6,15 @@ Simple Formatters Tests
 Tests formatting functionality defined in src/utils/formatters.py, focused on achieving 100% coverage.
 """
 
-import pytest
 import json
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
+
+import pytest
 
 # 导入要测试的模块
 try:
-    from src.utils.formatters import (
-        format_datetime,
-        format_json,
-        format_currency,
-        format_percentage,
-    )
+    from src.utils.formatters import (format_currency, format_datetime,
+                                      format_json, format_percentage)
 
     FORMATTERS_AVAILABLE = True
 except ImportError:
@@ -26,7 +23,6 @@ except ImportError:
 
 @pytest.mark.skipif(not FORMATTERS_AVAILABLE, reason="Formatters module not available")
 @pytest.mark.unit
-
 class TestFormattersSimple:
     """格式化工具简单测试"""
 

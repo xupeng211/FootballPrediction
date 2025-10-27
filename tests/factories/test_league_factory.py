@@ -2,8 +2,8 @@
 
 import factory
 
-from tests.factories.base import BaseFactory
 from src.database.models.league import League
+from tests.factories.base import BaseFactory
 
 
 class LeagueFactory(BaseFactory):

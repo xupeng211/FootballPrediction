@@ -14,9 +14,9 @@ from typing import Dict, List
 基于 DATA_DESIGN.md 第5.1节设计。
 """
 
-from typing import Any, Dict, List
 import logging
 from datetime import datetime
+from typing import Any, Dict, List
 
 from src.database.connection import DatabaseManager
 

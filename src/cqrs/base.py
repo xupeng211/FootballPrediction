@@ -6,11 +6,11 @@ CQRS Base Classes
 Defines base interfaces for commands, queries, and handlers.
 """
 
-from abc import ABC, abstractmethod
-from typing import Any, Dict, Generic, TypeVar, Optional
-from datetime import datetime
-from dataclasses import dataclass
 import uuid
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any, Dict, Generic, Optional, TypeVar
 
 # 定义泛型类型
 CommandResultType = TypeVar("CommandResultType")

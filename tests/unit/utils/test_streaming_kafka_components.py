@@ -2,31 +2,30 @@
 
 # TODO: Consider creating a fixture for 18 repeated Mock creations
 
-from unittest.mock import patch, AsyncMock, MagicMock, mock_open
+from unittest.mock import AsyncMock, MagicMock, mock_open, patch
+
 """
 Kafka组件集成测试
 """
 
-import pytest
 import asyncio
 import json
-from typing import Any, Dict, List, Optional
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 
-from src.streaming.kafka_components_simple import (
-    KafkaAdminClient,
-    KafkaTopicManager,
-    KafkaConsumerGroup,
-    KafkaCluster,
-    KafkaHealthChecker,
-    KafkaMetricsCollector,
-)
+import pytest
+
 from src.core.exceptions import StreamingError
+from src.streaming.kafka_components_simple import (KafkaAdminClient,
+                                                   KafkaCluster,
+                                                   KafkaConsumerGroup,
+                                                   KafkaHealthChecker,
+                                                   KafkaMetricsCollector,
+                                                   KafkaTopicManager)
 
 
 @pytest.mark.unit
-
 class TestKafkaAdminClient:
     """Kafka管理客户端测试"""
 

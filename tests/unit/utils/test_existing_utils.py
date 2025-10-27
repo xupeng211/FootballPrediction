@@ -3,12 +3,13 @@
 直接测试项目中真实存在的工具模块
 """
 
-import pytest
 import json
 import os
 import sys
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+import pytest
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "src"))
@@ -61,7 +62,6 @@ except ImportError:
 
 
 @pytest.mark.unit
-
 class TestExistingModules:
     """测试实际存在的模块"""
 
@@ -452,7 +452,7 @@ class TestPythonBuiltins:
 
     def test_functools_operations(self):
         """测试函数工具操作"""
-        from functools import reduce, lru_cache
+        from functools import lru_cache, reduce
 
         # reduce
         _result = reduce(lambda x, y: x + y, [1, 2, 3, 4])

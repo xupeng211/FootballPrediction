@@ -6,14 +6,14 @@ Prediction Repository
 Implements data access logic for predictions.
 """
 
-from typing import Any, Dict, List, Optional, Type
-from datetime import datetime, date
+from datetime import date, datetime
 from decimal import Decimal
+from typing import Any, Dict, List, Optional, Type
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 
-from .base import Repository, ReadOnlyRepository, QuerySpec
 from ..database.models import Prediction
+from .base import QuerySpec, ReadOnlyRepository, Repository
 
 
 class PredictionRepositoryInterface(Repository[Prediction, int]):

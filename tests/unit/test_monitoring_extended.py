@@ -1,13 +1,13 @@
 # 监控扩展测试
-from src.monitoring.metrics_collector import MetricsCollector
 import pytest
-from src.monitoring.system_monitor import SystemMonitor
+
+from src.monitoring.metrics_collector import MetricsCollector
 from src.monitoring.metrics_exporter import MetricsExporter
+from src.monitoring.system_monitor import SystemMonitor
 
 
 @pytest.mark.unit
 @pytest.mark.monitoring
-
 def test_metrics_collector_extended():
     collector = MetricsCollector()
     collector.record_metric("test_metric", 100)

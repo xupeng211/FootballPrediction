@@ -1,12 +1,12 @@
 """字符串工具测试"""
 
 import pytest
+
 # from src.utils.string_utils import StringUtils
 
 
 @pytest.mark.unit
 @pytest.mark.external_api
-
 class TestStringUtils:
     """字符串工具测试"""
 

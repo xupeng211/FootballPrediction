@@ -1,25 +1,26 @@
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
 """
 工具类覆盖率提升测试
 专门针对utils模块的简单函数进行测试，快速提升覆盖率
 """
 
-import pytest
-import sys
-from pathlib import Path
-from datetime import datetime, timedelta
+import base64
+import hashlib
 import json
 import os
+import sys
 import tempfile
-import hashlib
-import base64
+from datetime import datetime, timedelta
+from pathlib import Path
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 
 @pytest.mark.unit
 @pytest.mark.external_api
-
 class TestStringUtils:
     """字符串工具测试"""
 

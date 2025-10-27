@@ -1,11 +1,13 @@
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 """
 Tests for cache.ttl_cache
 Auto-generated test file
 """
 
-import pytest
 import asyncio
+
+import pytest
 
 # Test imports
 try:
@@ -19,7 +21,6 @@ except ImportError as e:
 
 @pytest.mark.unit
 @pytest.mark.cache
-
 def test_exception_handling():
     """Test exception handling"""
     if not IMPORT_SUCCESS:

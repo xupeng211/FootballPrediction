@@ -1,35 +1,32 @@
-from unittest.mock import patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
 """
 API依赖注入模块测试
 """
 
 pytest_plugins = "asyncio"
 
-import pytest
 from datetime import datetime, timedelta
+
+import pytest
 from fastapi import HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials
+
 try:
     from jose import jwt
 except ImportError:
     # 如果jose不可用，使用python-jose
     from python_jose import jwt
+
 from typing import Dict
 
-from src.api.dependencies import (
-    get_current_user,
-    get_admin_user,
-    get_prediction_engine,
-    get_redis_manager,
-    verify_prediction_permission,
-    rate_limit_check,
-    SECRET_KEY,
-    ALGORITHM,
-)
+from src.api.dependencies import (ALGORITHM, SECRET_KEY, get_admin_user,
+                                  get_current_user, get_prediction_engine,
+                                  get_redis_manager, rate_limit_check,
+                                  verify_prediction_permission)
 
 
 @pytest.mark.unit
-
 class TestGetCurrentUser:
     """获取当前用户测试"""
 

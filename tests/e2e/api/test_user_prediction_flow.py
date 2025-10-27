@@ -3,9 +3,10 @@
 测试用户从注册到创建预测的完整业务流程
 """
 
-import pytest
 import asyncio
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
+
+import pytest
 from httpx import AsyncClient
 
 
@@ -182,9 +183,9 @@ class TestUserPredictionFlow:
 
         # 关键路径性能要求
         assert total_time < 10.0, f"完整流程耗时过长: {total_time:.2f}s"
-        assert performance_metrics.get_duration("create_prediction") < 2.0, (
-            "创建预测耗时过长"
-        )
+        assert (
+            performance_metrics.get_duration("create_prediction") < 2.0
+        ), "创建预测耗时过长"
 
     @pytest.mark.asyncio
     async def test_multiple_predictions_flow(

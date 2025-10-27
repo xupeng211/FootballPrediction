@@ -119,7 +119,7 @@ class Phase4BValidator:
 
             # 6. 断言覆盖主要逻辑和边界条件
             has_asserts = "assert" in content
-            has_edge_cases = any(keyword in content for keyword in ["边界", "edge", "boundary"])
+            any(keyword in content for keyword in ["边界", "edge", "boundary"])
             results["断言覆盖主要逻辑和边界条件"] = has_asserts
 
             # 7. 所有测试可独立运行通过pytest (需要实际测试验证)

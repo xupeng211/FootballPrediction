@@ -1,10 +1,10 @@
 # 预测模型测试
-from src.database.models.predictions import Prediction
 import pytest
+
+from src.database.models.predictions import Prediction
 
 
 @pytest.mark.unit
-
 def test_prediction_model():
     pred = Prediction(match_id=1, predicted_home_win=0.5)
     assert pred.match_id == 1

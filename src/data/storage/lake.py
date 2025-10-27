@@ -6,9 +6,9 @@ Data Lake Storage Module
 
 import json
 import logging
-from typing import Any, Dict, List, Optional, cast
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Dict, List, Optional, cast
 
 
 class LocalDataLakeStorage:
@@ -203,9 +203,9 @@ class LakeStorageUtils:
         result: Dict[str, Any] = {
             "prefix": parts[0] if len(parts) > 0 else "",
             "date": parts[1] if len(parts) > 1 else "",
-            "identifier": parts[2]
-            if len(parts) > 2 and not parts[2].endswith(".json")
-            else "",
+            "identifier": (
+                parts[2] if len(parts) > 2 and not parts[2].endswith(".json") else ""
+            ),
             "filename": parts[-1] if parts else "",
             "format": "json",
         }

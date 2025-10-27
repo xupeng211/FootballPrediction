@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 31 repeated Mock creations
 
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
 """
 数据库连接测试
 Tests for Database Connection
@@ -10,32 +11,26 @@ Tests for Database Connection
 测试src.database.connection模块的功能
 """
 
-import pytest
 import asyncio
 
-from src.database.connection import (
-    DatabaseRole,
-    DatabaseManager,
-    MultiUserDatabaseManager,
-    get_database_manager,
-    get_multi_user_database_manager,
-    initialize_database,
-    initialize_multi_user_database,
-    initialize_test_database,
-    get_db_session,
-    get_async_session,
-    get_reader_session,
-    get_writer_session,
-    get_admin_session,
-    get_session,
-    get_async_reader_session,
-    get_async_writer_session,
-    get_async_admin_session,
-)
+import pytest
+
+from src.database.connection import (DatabaseManager, DatabaseRole,
+                                     MultiUserDatabaseManager,
+                                     get_admin_session,
+                                     get_async_admin_session,
+                                     get_async_reader_session,
+                                     get_async_session,
+                                     get_async_writer_session,
+                                     get_database_manager, get_db_session,
+                                     get_multi_user_database_manager,
+                                     get_reader_session, get_session,
+                                     get_writer_session, initialize_database,
+                                     initialize_multi_user_database,
+                                     initialize_test_database)
 
 
 @pytest.mark.unit
-
 class TestDatabaseRole:
     """数据库角色测试"""
 

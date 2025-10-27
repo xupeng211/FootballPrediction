@@ -5,14 +5,14 @@ Dict Utils Tests
 测试实际存在的字典处理工具。
 """
 
-import pytest
 from typing import Any, Dict, List
+
+import pytest
 
 from src.utils.dict_utils import DictUtils
 
 
 @pytest.mark.unit
-
 class TestDictUtils:
     """测试字典工具类"""
 

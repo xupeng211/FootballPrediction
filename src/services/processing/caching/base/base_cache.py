@@ -3,9 +3,9 @@
 Base Cache Classes
 """
 
+import logging
 from abc import ABC, abstractmethod
 from typing import Any, List, Optional
-import logging
 
 
 class BaseCache(ABC):

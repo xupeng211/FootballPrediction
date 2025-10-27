@@ -1,8 +1,9 @@
 # mypy: ignore-errors
-import os
 import logging
-from sqlalchemy import text
+import os
+
 from alembic import context, op
+from sqlalchemy import text
 
 logger = logging.getLogger(__name__)
 

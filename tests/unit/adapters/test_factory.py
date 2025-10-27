@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 6 repeated Mock creations
 
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
 """
 适配器工厂测试
 Tests for Adapter Factory
@@ -10,21 +11,18 @@ Tests for Adapter Factory
 测试src.adapters.factory模块的适配器工厂功能
 """
 
-import pytest
-from pathlib import Path
-import tempfile
 import json
+import tempfile
+from pathlib import Path
+
+import pytest
 import yaml
 
 # 测试导入
 try:
-    from src.adapters.factory import (
-        AdapterFactory,
-        AdapterConfig,
-        AdapterGroupConfig,
-        adapter_factory,
-    )
     from src.adapters.base import Adapter
+    from src.adapters.factory import (AdapterConfig, AdapterFactory,
+                                      AdapterGroupConfig, adapter_factory)
 
     FACTORY_AVAILABLE = True
 except ImportError as e:
@@ -38,7 +36,6 @@ except ImportError as e:
 
 @pytest.mark.skipif(not FACTORY_AVAILABLE, reason="Factory module not available")
 @pytest.mark.unit
-
 class TestAdapterConfig:
     """适配器配置测试"""
 
@@ -529,11 +526,8 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if FACTORY_AVAILABLE:
-        from src.adapters.factory import (
-            AdapterFactory,
-            AdapterConfig,
-            AdapterGroupConfig,
-        )
+        from src.adapters.factory import (AdapterConfig, AdapterFactory,
+                                          AdapterGroupConfig)
 
         assert AdapterFactory is not None
         assert AdapterConfig is not None

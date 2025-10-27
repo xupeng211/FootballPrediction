@@ -12,7 +12,6 @@ def team() -> Team:
 
 
 @pytest.mark.unit
-
 class TestTeamInitialization:
     def test_should_initialize_with_default_stats_and_form(self, team):
         assert team.stats is not None

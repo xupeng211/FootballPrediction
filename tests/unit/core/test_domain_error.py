@@ -4,18 +4,12 @@
 
 import pytest
 
-from src.core.exceptions import (
-    FootballPredictionError,
-    DomainError,
-    BusinessRuleError,
-    ConfigError,
-    DataError,
-    ValidationError,
-)
+from src.core.exceptions import (BusinessRuleError, ConfigError, DataError,
+                                 DomainError, FootballPredictionError,
+                                 ValidationError)
 
 
 @pytest.mark.unit
-
 class TestDomainErrors:
     """测试领域异常类"""
 

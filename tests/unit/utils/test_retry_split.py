@@ -1,10 +1,12 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 """
 测试拆分后的重试机制
 Test Split Retry Mechanism
 """
 
 import asyncio
+
 import pytest
 
 
@@ -21,13 +23,9 @@ def test_import_retry_config():
 
 def test_import_strategies():
     """测试能否正常导入退避策略"""
-    from src.utils.retry import (
-        BackoffStrategy,
-        ExponentialBackoffStrategy,
-        FixedBackoffStrategy,
-        LinearBackoffStrategy,
-        PolynomialBackoffStrategy,
-    )
+    from src.utils.retry import (BackoffStrategy, ExponentialBackoffStrategy,
+                                 FixedBackoffStrategy, LinearBackoffStrategy,
+                                 PolynomialBackoffStrategy)
 
     assert BackoffStrategy is not None
     assert ExponentialBackoffStrategy is not None
@@ -279,16 +277,10 @@ def test_circuit_breaker_reset():
 # 测试向后兼容性
 def test_backward_compatibility_import():
     """测试向后兼容的导入"""
-    from src.utils.retry import (
-        RetryConfig,
-        ExponentialBackoffStrategy,
-        FixedBackoffStrategy,
-        retry,
-        retry_async,
-        retry_sync,
-        CircuitState,
-        CircuitBreaker,
-    )
+    from src.utils.retry import (CircuitBreaker, CircuitState,
+                                 ExponentialBackoffStrategy,
+                                 FixedBackoffStrategy, RetryConfig, retry,
+                                 retry_async, retry_sync)
 
     assert RetryConfig is not None
     assert ExponentialBackoffStrategy is not None

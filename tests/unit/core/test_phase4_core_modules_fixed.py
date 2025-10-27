@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 4 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 """
 第四阶段核心模块深度覆盖测试
 Phase 4 Core Modules Deep Coverage Tests
@@ -11,19 +12,20 @@ Phase 4 Core Modules Deep Coverage Tests
 目标：30% → 40%覆盖率提升
 """
 
-import pytest
 import asyncio
+import json
 import time
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional
-import json
+from typing import Any, Dict, List, Optional
+
+import pytest
 
 # 测试导入 - 使用核心模块导入策略
 try:
-    from src.core.prediction_engine import PredictionEngine
+    from src.core.error_handler import ErrorHandler, GlobalErrorHandler
     from src.core.prediction.config import PredictionConfig
     from src.core.prediction.statistics import PredictionStatistics
-    from src.core.error_handler import ErrorHandler, GlobalErrorHandler
+    from src.core.prediction_engine import PredictionEngine
 
     CORE_AVAILABLE = True
 except ImportError as e:
@@ -31,8 +33,8 @@ except ImportError as e:
     CORE_AVAILABLE = False
 
 try:
-    from src.api.cqrs import CommandBus, QueryBus, CQRSApplication
-    from src.api.commands import PredictionCommand, MatchDataCommand
+    from src.api.commands import MatchDataCommand, PredictionCommand
+    from src.api.cqrs import CommandBus, CQRSApplication, QueryBus
     from src.api.queries import PredictionQuery, StatisticsQuery
 
     CQRS_AVAILABLE = True
@@ -41,9 +43,9 @@ except ImportError as e:
     CQRS_AVAILABLE = False
 
 try:
-    from src.domain.events import Event, EventBus, DomainEvent
-    from src.observers.base import Observer
+    from src.domain.events import DomainEvent, Event, EventBus
     from src.domain.models.events import MatchEvent, PredictionEvent
+    from src.observers.base import Observer
 
     EVENTS_AVAILABLE = True
 except ImportError as e:
@@ -51,8 +53,8 @@ except ImportError as e:
     EVENTS_AVAILABLE = False
 
 try:
-    from src.facades.facades import PredictionFacade, DataProcessingFacade
     from src.domain.services import PredictionDomainService
+    from src.facades.facades import DataProcessingFacade, PredictionFacade
 
     FACADE_AVAILABLE = True
 except ImportError as e:
@@ -61,7 +63,7 @@ except ImportError as e:
 
 try:
     from src.api.data_router import router
-    from src.api.dependencies import get_prediction_service, get_database
+    from src.api.dependencies import get_database, get_prediction_service
 
     API_AVAILABLE = True
 except ImportError as e:
@@ -71,7 +73,6 @@ except ImportError as e:
 
 @pytest.mark.skipif(not CORE_AVAILABLE, reason="核心预测引擎不可用")
 @pytest.mark.unit
-
 class TestPredictionEngineAdvanced:
     """高级预测引擎测试"""
 

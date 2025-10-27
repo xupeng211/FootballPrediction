@@ -1,4 +1,5 @@
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
 """
 TTL缓存增强版测试
 Tests for Enhanced TTL Cache
@@ -6,22 +7,18 @@ Tests for Enhanced TTL Cache
 测试src.cache.ttl_cache_enhanced模块的功能
 """
 
-import pytest
-import time
 import threading
+import time
+
+import pytest
 
 # 测试导入
 try:
-    from src.cache.ttl_cache_enhanced import (
-        TTLCache,
-        AsyncTTLCache,
-        CacheEntry,
-        CacheFactory,
-        get_cache,
-        get_all_stats,
-        clear_all_caches,
-        cleanup_all_expired,
-    )
+    from src.cache.ttl_cache_enhanced import (AsyncTTLCache, CacheEntry,
+                                              CacheFactory, TTLCache,
+                                              cleanup_all_expired,
+                                              clear_all_caches, get_all_stats,
+                                              get_cache)
 
     TTL_AVAILABLE = True
 except ImportError:
@@ -30,7 +27,6 @@ except ImportError:
 
 @pytest.mark.skipif(not TTL_AVAILABLE, reason="TTL cache enhanced module not available")
 @pytest.mark.unit
-
 class TestCacheEntry:
     """缓存条目测试"""
 

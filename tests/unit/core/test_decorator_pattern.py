@@ -4,11 +4,11 @@
 
 import sys
 from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 # 添加项目路径
 from src.decorators.base import *
 
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, "src")
 
@@ -20,50 +20,27 @@ Unit Tests for Decorator Pattern
 Tests all components of the decorator pattern.
 """
 
-import pytest
 import asyncio
 import time
 from datetime import datetime, timedelta
 
-from src.decorators.base import (
-    Component,
-    ConcreteComponent,
-    Decorator,
-    DecoratorComponent,
-    DecoratorChain,
-    DecoratorContext,
-    DecoratorRegistry,
-)
-from src.decorators.decorators import (
-    LoggingDecorator,
-    RetryDecorator,
-    MetricsDecorator,
-    ValidationDecorator,
-    CacheDecorator,
-    AuthDecorator,
-    RateLimitDecorator,
-    TimeoutDecorator,
-)
-from src.decorators.factory import (
-    DecoratorFactory,
-    DecoratorConfig,
-    DecoratorChainConfig,
-    DecoratorBuilder,
-)
-from src.decorators.service import (
-    DecoratorService,
-    decorate,
-    with_logging,
-    with_retry,
-    with_metrics,
-    with_cache,
-    with_timeout,
-    with_all,
-)
+import pytest
+
+from src.decorators.base import (Component, ConcreteComponent, Decorator,
+                                 DecoratorChain, DecoratorComponent,
+                                 DecoratorContext, DecoratorRegistry)
+from src.decorators.decorators import (AuthDecorator, CacheDecorator,
+                                       LoggingDecorator, MetricsDecorator,
+                                       RateLimitDecorator, RetryDecorator,
+                                       TimeoutDecorator, ValidationDecorator)
+from src.decorators.factory import (DecoratorBuilder, DecoratorChainConfig,
+                                    DecoratorConfig, DecoratorFactory)
+from src.decorators.service import (DecoratorService, decorate, with_all,
+                                    with_cache, with_logging, with_metrics,
+                                    with_retry, with_timeout)
 
 
 @pytest.mark.unit
-
 class TestDecoratorBase:
     """测试装饰器基类"""
 

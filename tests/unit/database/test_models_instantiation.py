@@ -4,10 +4,11 @@
 测试数据库模型的创建和基本属性
 """
 
-import pytest
 import datetime
-import sys
 import os
+import sys
+
+import pytest
 
 # 添加src目录到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))

@@ -8,10 +8,10 @@ from datetime import datetime, timedelta
 import factory
 from faker import Faker
 
-from tests.factories.base import BaseFactory
+from src.database.models.league import League
 from src.database.models.match import Match, MatchStatus
 from src.database.models.team import Team
-from src.database.models.league import League
+from tests.factories.base import BaseFactory
 
 _faker = Faker()
 

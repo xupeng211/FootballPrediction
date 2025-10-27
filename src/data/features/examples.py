@@ -21,11 +21,8 @@ from typing import Any, Dict
 
 import pandas as pd
 
-from .feature_store import (
-    FootballFeatureStore,
-    get_feature_store,
-    initialize_feature_store,
-)
+from .feature_store import (FootballFeatureStore, get_feature_store,
+                            initialize_feature_store)
 
 logger = logging.getLogger(__name__)
 

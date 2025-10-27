@@ -1,13 +1,15 @@
 from unittest.mock import Mock, patch
+
 """
 API 模块综合测试
 Comprehensive API Module Tests
 """
 
-import pytest
-from fastapi.testclient import TestClient
 import json
 from datetime import datetime
+
+import pytest
+from fastapi.testclient import TestClient
 
 from src.api.app import app
 
@@ -15,7 +17,6 @@ from src.api.app import app
 @pytest.mark.unit
 @pytest.mark.api
 @pytest.mark.external_api
-
 class TestAPIComprehensive:
     """API 综合测试类"""
 

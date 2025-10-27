@@ -1,4 +1,5 @@
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
 """
 Tests for streaming.kafka_producer
 """
@@ -17,7 +18,6 @@ except ImportError as e:
 
 @pytest.mark.unit
 @pytest.mark.streaming
-
 class TestKafkaProducer:
     """Test cases for kafka_producer"""
 

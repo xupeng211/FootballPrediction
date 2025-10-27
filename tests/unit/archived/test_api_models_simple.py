@@ -1,6 +1,8 @@
 import pytest
+
 try:
-    from src.api.predictions.models import PredictionRequest, PredictionResponse
+    from src.api.predictions.models import (PredictionRequest,
+                                            PredictionResponse)
 except ImportError:
     # 如果导入失败，创建简单的mock类用于测试
     class APIResponse:
@@ -14,7 +16,6 @@ except ImportError:
 
 @pytest.mark.unit
 @pytest.mark.api
-
 def test_api_response():
     response = APIResponse(success=True)
     assert response.success is True

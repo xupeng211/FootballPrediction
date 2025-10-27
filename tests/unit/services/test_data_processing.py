@@ -1,4 +1,5 @@
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 数据处理服务测试
 Tests for Data Processing Service
@@ -6,19 +7,18 @@ Tests for Data Processing Service
 测试src.services.data_processing模块的功能
 """
 
-import pytest
 from datetime import datetime
-from typing import Dict, Any
+from typing import Any, Dict
+
+import pytest
 
 # 测试导入
 try:
-    from src.services.data_processing import (
-        DataProcessor,
-        MatchDataProcessor,
-        OddsDataProcessor,
-        ScoresDataProcessor,
-        FeaturesDataProcessor,
-    )
+    from src.services.data_processing import (DataProcessor,
+                                              FeaturesDataProcessor,
+                                              MatchDataProcessor,
+                                              OddsDataProcessor,
+                                              ScoresDataProcessor)
 
     PROCESSING_AVAILABLE = True
 except ImportError as e:
@@ -30,7 +30,6 @@ except ImportError as e:
     not PROCESSING_AVAILABLE, reason="Data processing module not available"
 )
 @pytest.mark.unit
-
 class TestDataProcessor:
     """数据处理器基类测试"""
 

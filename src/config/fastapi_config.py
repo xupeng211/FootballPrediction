@@ -4,7 +4,7 @@ FastAPI 中文配置
 
 from fastapi import FastAPI
 
-from src.utils.i18n import init_i18n, I18nUtils
+from src.utils.i18n import I18nUtils, init_i18n
 
 
 def create_chinese_app() -> FastAPI:

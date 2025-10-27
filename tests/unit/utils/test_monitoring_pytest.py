@@ -8,9 +8,10 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock, Mock
+
 import pytest
 
-from unittest.mock import Mock, AsyncMock, MagicMock
 """
 Monitoring模块pytest异步测试
 使用pytest-asyncio提升覆盖率
@@ -269,7 +270,6 @@ async def _get_redis_metrics_test():
 
 # 测试类
 @pytest.mark.unit
-
 class TestMonitoringPytest:
     """监控模块pytest测试"""
 

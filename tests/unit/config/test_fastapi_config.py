@@ -1,4 +1,5 @@
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
 """
 FastAPI配置模块测试
 FastAPI Config Module Tests
@@ -7,9 +8,10 @@ FastAPI Config Module Tests
 Tests FastAPI configuration functionality defined in src/config/fastapi_config.py, focused on achieving 100% coverage.
 """
 
+from typing import Any, Dict
+
 import pytest
 from fastapi import FastAPI
-from typing import Dict, Any
 
 # 导入要测试的模块
 try:
@@ -24,7 +26,6 @@ except ImportError:
     not FASTAPI_CONFIG_AVAILABLE, reason="FastAPI config module not available"
 )
 @pytest.mark.unit
-
 class TestCreateChineseApp:
     """create_chinese_app函数测试"""
 

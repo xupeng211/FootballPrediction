@@ -7,6 +7,7 @@ except Exception:
     pass
     from src.metadata.metadata_manager import MetadataManager
 except ImportError:
+
     class MetadataManager:
         def get_metadata(self):
             return {}

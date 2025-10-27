@@ -90,8 +90,7 @@ def fix_pytest_import_in_try(file_path: Path) -> bool:
 
                 if in_try:
                     # 将import pytest移动到try块之前
-                    import_line = line
-                    current_indent = len(line) - len(line.lstrip())
+                    len(line) - len(line.lstrip())
 
                     # 移除当前行的import
                     new_lines.append(' ' * try_indent + 'import pytest')

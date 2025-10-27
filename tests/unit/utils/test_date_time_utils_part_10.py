@@ -5,22 +5,18 @@ test_date_time_utils - 第10部分
 包含项目: 5 个 (函数/类)
 """
 
+import datetime
+import os
+import sys
+from unittest.mock import Mock, patch
 
 import pytest
-from unittest.mock import Mock, patch
-import sys
-import os
-import datetime
-
 
 
 class TestDateTimeUtilsPart10:
-
     """测试类"""
 
-
     def test_format_date(self):
-
         """测试格式化日期"""
         date_obj = datetime.date(2023, 12, 25)
         result = DateUtils.format_date(date_obj)
@@ -30,9 +26,7 @@ class TestDateTimeUtilsPart10:
         result = DateUtils.format_date(date_obj, "%d/%m/%Y")
         assert result == "25/12/2023"
 
-
     def test_add_days(self):
-
         """测试添加天数"""
         base_date = datetime.date(2023, 12, 25)
 
@@ -50,9 +44,7 @@ class TestDateTimeUtilsPart10:
         result = DateUtils.add_days(base_date, 0)
         assert result == base_date
 
-
     def test_add_months(self):
-
         """测试添加月份"""
         base_date = datetime.date(2023, 12, 25)
 
@@ -71,9 +63,7 @@ class TestDateTimeUtilsPart10:
         expected = datetime.date(2024, 1, 25)
         assert result == expected
 
-
     def test_days_between(self):
-
         """测试计算日期间隔"""
         start = datetime.date(2023, 12, 25)
         end = datetime.date(2023, 12, 30)
@@ -89,9 +79,7 @@ class TestDateTimeUtilsPart10:
         result = DateUtils.days_between(start, start)
         assert result == 0
 
-
     def test_is_weekend(self):
-
         """测试周末检查"""
         # 周六
         saturday = datetime.date(2023, 12, 23)  # 2023-12-23是周六
@@ -104,5 +92,3 @@ class TestDateTimeUtilsPart10:
         # 周一
         monday = datetime.date(2023, 12, 25)  # 2023-12-25是周一
         assert DateUtils.is_weekend(monday) is False
-
-

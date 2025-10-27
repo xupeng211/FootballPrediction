@@ -1,14 +1,15 @@
 from unittest.mock import Mock, patch
+
 """缓存工具测试"""
 
 import pytest
+
 from src.cache.redis_manager import RedisManager
 from src.cache.ttl_cache import TTLCache
 
 
 @pytest.mark.unit
 @pytest.mark.cache
-
 class TestCacheUtils:
     """测试缓存工具"""
 

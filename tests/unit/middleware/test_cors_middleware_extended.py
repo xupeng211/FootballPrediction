@@ -1,12 +1,14 @@
 """测试CORS中间件扩展模块"""
 
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
 from fastapi import Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 try:
     from src.middleware.cors_config import CORSMiddlewareExtended
+
     IMPORT_SUCCESS = True
 except ImportError as e:
     IMPORT_SUCCESS = False
@@ -14,7 +16,9 @@ except ImportError as e:
 
     # 创建备用CORS中间件类
     class CORSMiddlewareExtended:
-        def __init__(self, app, allow_origins=None, allow_methods=None, allow_headers=None):
+        def __init__(
+            self, app, allow_origins=None, allow_methods=None, allow_headers=None
+        ):
             self.app = app
             self.allow_origins = allow_origins or ["*"]
             self.allow_methods = allow_methods or ["GET", "POST", "PUT", "DELETE"]
@@ -22,14 +26,18 @@ except ImportError as e:
 
         async def __call__(self, scope, receive, send):
             if scope["type"] == "http":
-                request = Request(scope, receive)
+                Request(scope, receive)
                 response = await self.app(scope, receive, send)
 
                 # 添加CORS头
-                if hasattr(response, 'headers'):
+                if hasattr(response, "headers"):
                     response.headers["Access-Control-Allow-Origin"] = "*"
-                    response.headers["Access-Control-Allow-Methods"] = ", ".join(self.allow_methods)
-                    response.headers["Access-Control-Allow-Headers"] = ", ".join(self.allow_headers)
+                    response.headers["Access-Control-Allow-Methods"] = ", ".join(
+                        self.allow_methods
+                    )
+                    response.headers["Access-Control-Allow-Headers"] = ", ".join(
+                        self.allow_headers
+                    )
 
                 return response
             else:
@@ -44,8 +52,10 @@ class TestCORSMiddlewareExtended:
     @pytest.fixture
     def mock_app(self):
         """模拟应用"""
+
         async def app(scope, receive, send):
             return Response(content="OK")
+
         return app
 
     @pytest.fixture
@@ -55,16 +65,16 @@ class TestCORSMiddlewareExtended:
             mock_app,
             allow_origins=["http://localhost:3000", "https://example.com"],
             allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            allow_headers=["Content-Type", "Authorization"]
+            allow_headers=["Content-Type", "Authorization"],
         )
 
     def test_cors_middleware_creation(self, cors_middleware):
         """测试CORS中间件创建"""
         assert cors_middleware is not None
-        assert hasattr(cors_middleware, 'app')
-        assert hasattr(cors_middleware, 'allow_origins')
-        assert hasattr(cors_middleware, 'allow_methods')
-        assert hasattr(cors_middleware, 'allow_headers')
+        assert hasattr(cors_middleware, "app")
+        assert hasattr(cors_middleware, "allow_origins")
+        assert hasattr(cors_middleware, "allow_methods")
+        assert hasattr(cors_middleware, "allow_headers")
 
     def test_cors_default_configuration(self, mock_app):
         """测试CORS默认配置"""
@@ -95,8 +105,8 @@ class TestCORSMiddlewareExtended:
             "headers": [
                 (b"origin", b"http://localhost:3000"),
                 (b"access-control-request-method", b"POST"),
-                (b"access-control-request-headers", b"Content-Type")
-            ]
+                (b"access-control-request-headers", b"Content-Type"),
+            ],
         }
 
         async def receive():
@@ -108,7 +118,7 @@ class TestCORSMiddlewareExtended:
         try:
             response = await cors_middleware(scope, receive, send)
             # 验证预检响应
-            if response and hasattr(response, 'headers'):
+            if response and hasattr(response, "headers"):
                 assert "Access-Control-Allow-Origin" in response.headers
                 assert "Access-Control-Allow-Methods" in response.headers
                 assert "Access-Control-Allow-Headers" in response.headers
@@ -122,7 +132,7 @@ class TestCORSMiddlewareExtended:
             "type": "http",
             "method": "GET",
             "path": "/api/test",
-            "headers": [(b"origin", b"http://localhost:3000")]
+            "headers": [(b"origin", b"http://localhost:3000")],
         }
 
         async def receive():
@@ -133,7 +143,7 @@ class TestCORSMiddlewareExtended:
 
         try:
             response = await cors_middleware(scope, receive, send)
-            if response and hasattr(response, 'headers'):
+            if response and hasattr(response, "headers"):
                 assert "Access-Control-Allow-Origin" in response.headers
         except Exception:
             pass
@@ -141,12 +151,7 @@ class TestCORSMiddlewareExtended:
     @pytest.mark.asyncio
     async def test_cors_non_cors_request(self, cors_middleware):
         """测试非CORS请求"""
-        scope = {
-            "type": "http",
-            "method": "GET",
-            "path": "/api/test",
-            "headers": []
-        }
+        scope = {"type": "http", "method": "GET", "path": "/api/test", "headers": []}
 
         async def receive():
             return {"type": "http.request", "body": b""}
@@ -155,7 +160,7 @@ class TestCORSMiddlewareExtended:
             pass
 
         try:
-            response = await cors_middleware(scope, receive, send)
+            await cors_middleware(scope, receive, send)
             # 非CORS请求应该正常处理
             assert True  # 如果没有异常就算通过
         except Exception:
@@ -168,7 +173,7 @@ class TestCORSMiddlewareExtended:
             "http://localhost:3000",
             "https://example.com",
             "http://malicious.com",
-            "https://subdomain.example.com"
+            "https://subdomain.example.com",
         ]
 
         for origin in test_origins:
@@ -179,8 +184,15 @@ class TestCORSMiddlewareExtended:
         """测试CORS方法验证"""
         allowed_methods = cors_middleware.allow_methods
         test_methods = [
-            "GET", "POST", "PUT", "DELETE", "OPTIONS",
-            "PATCH", "HEAD", "TRACE", "CONNECT"
+            "GET",
+            "POST",
+            "PUT",
+            "DELETE",
+            "OPTIONS",
+            "PATCH",
+            "HEAD",
+            "TRACE",
+            "CONNECT",
         ]
 
         for method in test_methods:
@@ -191,8 +203,12 @@ class TestCORSMiddlewareExtended:
         """测试CORS头验证"""
         allowed_headers = cors_middleware.allow_headers
         test_headers = [
-            "Content-Type", "Authorization", "X-Requested-With",
-            "Accept", "Origin", "Custom-Header"
+            "Content-Type",
+            "Authorization",
+            "X-Requested-With",
+            "Accept",
+            "Origin",
+            "Custom-Header",
         ]
 
         for header in test_headers:
@@ -201,15 +217,12 @@ class TestCORSMiddlewareExtended:
 
     def test_cors_wildcard_origins(self, mock_app):
         """测试CORS通配符源"""
-        middleware = CORSMiddlewareExtended(
-            mock_app,
-            allow_origins=["*"]
-        )
+        middleware = CORSMiddlewareExtended(mock_app, allow_origins=["*"])
 
         test_origins = [
             "http://localhost:3000",
             "https://any-domain.com",
-            "http://192.168.1.1:8080"
+            "http://192.168.1.1:8080",
         ]
 
         for origin in test_origins:
@@ -218,10 +231,7 @@ class TestCORSMiddlewareExtended:
 
     def test_cors_wildcard_methods(self, mock_app):
         """测试CORS通配符方法"""
-        middleware = CORSMiddlewareExtended(
-            mock_app,
-            allow_methods=["*"]
-        )
+        middleware = CORSMiddlewareExtended(mock_app, allow_methods=["*"])
 
         test_methods = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
         for method in test_methods:
@@ -230,10 +240,7 @@ class TestCORSMiddlewareExtended:
 
     def test_cors_wildcard_headers(self, mock_app):
         """测试CORS通配符头"""
-        middleware = CORSMiddlewareExtended(
-            mock_app,
-            allow_headers=["*"]
-        )
+        middleware = CORSMiddlewareExtended(mock_app, allow_headers=["*"])
 
         test_headers = ["Content-Type", "Authorization", "Custom-Header"]
         for header in test_headers:
@@ -246,13 +253,10 @@ class TestCORSMiddlewareExtended:
             "http://localhost:3000",
             "https://example.com",
             "https://api.example.com",
-            "http://test.example.org"
+            "http://test.example.org",
         ]
 
-        middleware = CORSMiddlewareExtended(
-            mock_app,
-            allow_origins=origins
-        )
+        middleware = CORSMiddlewareExtended(mock_app, allow_origins=origins)
 
         for origin in origins:
             assert origin in middleware.allow_origins
@@ -260,37 +264,29 @@ class TestCORSMiddlewareExtended:
     def test_cors_credentials_handling(self, mock_app):
         """测试CORS凭据处理"""
         middleware = CORSMiddlewareExtended(
-            mock_app,
-            allow_origins=["http://localhost:3000"],
-            allow_credentials=True
+            mock_app, allow_origins=["http://localhost:3000"], allow_credentials=True
         )
 
         # 测试凭据配置
-        if hasattr(middleware, 'allow_credentials'):
+        if hasattr(middleware, "allow_credentials"):
             assert middleware.allow_credentials is True
 
     def test_cors_max_age_configuration(self, mock_app):
         """测试CORS最大年龄配置"""
-        middleware = CORSMiddlewareExtended(
-            mock_app,
-            max_age=3600
-        )
+        middleware = CORSMiddlewareExtended(mock_app, max_age=3600)
 
         # 测试最大年龄配置
-        if hasattr(middleware, 'max_age'):
+        if hasattr(middleware, "max_age"):
             assert middleware.max_age == 3600
 
     def test_cors_exposed_headers(self, mock_app):
         """测试CORS暴露头"""
         exposed_headers = ["X-Custom-Header", "X-Response-Time"]
 
-        middleware = CORSMiddlewareExtended(
-            mock_app,
-            expose_headers=exposed_headers
-        )
+        middleware = CORSMiddlewareExtended(mock_app, expose_headers=exposed_headers)
 
         # 测试暴露头配置
-        if hasattr(middleware, 'expose_headers'):
+        if hasattr(middleware, "expose_headers"):
             for header in exposed_headers:
                 assert header in middleware.expose_headers
 
@@ -298,11 +294,11 @@ class TestCORSMiddlewareExtended:
         """测试CORS错误处理"""
         # 测试无效配置
         try:
-            invalid_middleware = CORSMiddlewareExtended(
+            CORSMiddlewareExtended(
                 None,  # 无效的应用
                 allow_origins=None,
                 allow_methods=None,
-                allow_headers=None
+                allow_headers=None,
             )
             # 应该能够处理None值
         except Exception:
@@ -314,7 +310,7 @@ class TestCORSMiddlewareExtended:
             mock_app,
             allow_origins=["http://localhost:3000"],
             allow_methods=["GET", "POST"],
-            allow_headers=["Content-Type"]
+            allow_headers=["Content-Type"],
         )
 
         # 测试大小写变化
@@ -330,7 +326,10 @@ class TestCORSMiddlewareExtended:
 
         for test_input, expected in test_cases:
             if test_input in ["GET", "POST", "Content-Type"]:
-                is_allowed = test_input in middleware.allow_methods or test_input in middleware.allow_headers
+                is_allowed = (
+                    test_input in middleware.allow_methods
+                    or test_input in middleware.allow_headers
+                )
                 if not is_allowed:
                     # 检查大小写不匹配的情况
                     pass
@@ -340,10 +339,7 @@ class TestCORSMiddlewareExtended:
         # 测试大量源配置
         many_origins = [f"http://origin{i}.example.com" for i in range(100)]
 
-        middleware = CORSMiddlewareExtended(
-            mock_app,
-            allow_origins=many_origins
-        )
+        middleware = CORSMiddlewareExtended(mock_app, allow_origins=many_origins)
 
         # 测试查找性能
         test_origin = "http://origin50.example.com"
@@ -365,7 +361,10 @@ class TestCORSMiddlewareExtended:
 
         for origin in edge_cases:
             try:
-                is_allowed = origin in cors_middleware.allow_origins or "*" in cors_middleware.allow_origins
+                is_allowed = (
+                    origin in cors_middleware.allow_origins
+                    or "*" in cors_middleware.allow_origins
+                )
                 assert isinstance(is_allowed, bool)
             except Exception:
                 pass
@@ -373,57 +372,60 @@ class TestCORSMiddlewareExtended:
     def test_cors_subdomain_matching(self, mock_app):
         """测试CORS子域名匹配"""
         middleware = CORSMiddlewareExtended(
-            mock_app,
-            allow_origins=["https://example.com"]
+            mock_app, allow_origins=["https://example.com"]
         )
 
         subdomains = [
             "https://api.example.com",
             "https://www.example.com",
             "https://test.api.example.com",
-            "https://malicious-site.com"
+            "https://malicious-site.com",
         ]
 
         for subdomain in subdomains:
             # 严格匹配或通配符匹配
-            is_allowed = subdomain in middleware.allow_origins or "*" in middleware.allow_origins
+            is_allowed = (
+                subdomain in middleware.allow_origins or "*" in middleware.allow_origins
+            )
             assert isinstance(is_allowed, bool)
 
     def test_cors_port_handling(self, mock_app):
         """测试CORS端口处理"""
         middleware = CORSMiddlewareExtended(
-            mock_app,
-            allow_origins=["http://localhost:3000"]
+            mock_app, allow_origins=["http://localhost:3000"]
         )
 
         port_variants = [
-            "http://localhost:3000",    # 匹配端口
-            "http://localhost:8080",    # 不同端口
-            "http://localhost",         # 默认端口
-            "https://localhost:3000",   # 不同协议
+            "http://localhost:3000",  # 匹配端口
+            "http://localhost:8080",  # 不同端口
+            "http://localhost",  # 默认端口
+            "https://localhost:3000",  # 不同协议
         ]
 
         for origin in port_variants:
-            is_allowed = origin in middleware.allow_origins or "*" in middleware.allow_origins
+            is_allowed = (
+                origin in middleware.allow_origins or "*" in middleware.allow_origins
+            )
             assert isinstance(is_allowed, bool)
 
     def test_cors_protocol_handling(self, mock_app):
         """测试CORS协议处理"""
         middleware = CORSMiddlewareExtended(
-            mock_app,
-            allow_origins=["https://example.com"]
+            mock_app, allow_origins=["https://example.com"]
         )
 
         protocols = [
-            "https://example.com",    # HTTPS
-            "http://example.com",     # HTTP
-            "ws://example.com",       # WebSocket
-            "wss://example.com",      # Secure WebSocket
-            "ftp://example.com",      # FTP
+            "https://example.com",  # HTTPS
+            "http://example.com",  # HTTP
+            "ws://example.com",  # WebSocket
+            "wss://example.com",  # Secure WebSocket
+            "ftp://example.com",  # FTP
         ]
 
         for origin in protocols:
-            is_allowed = origin in middleware.allow_origins or "*" in middleware.allow_origins
+            is_allowed = (
+                origin in middleware.allow_origins or "*" in middleware.allow_origins
+            )
             assert isinstance(is_allowed, bool)
 
 
@@ -448,18 +450,14 @@ class TestCORSConfiguration:
             {
                 "allow_origins": ["*"],
                 "allow_methods": ["GET", "POST"],
-                "allow_headers": ["Content-Type"]
+                "allow_headers": ["Content-Type"],
             },
             {
                 "allow_origins": ["http://localhost:3000"],
                 "allow_methods": ["*"],
-                "allow_headers": ["*"]
+                "allow_headers": ["*"],
             },
-            {
-                "allow_origins": [],
-                "allow_methods": [],
-                "allow_headers": []
-            }
+            {"allow_origins": [], "allow_methods": [], "allow_headers": []},
         ]
 
         for config in valid_configs:
@@ -485,7 +483,7 @@ class TestCORSConfiguration:
 
         for config in edge_configs:
             try:
-                middleware = CORSMiddlewareExtended(Mock(), **config)
+                CORSMiddlewareExtended(Mock(), **config)
                 # 应该能够处理None值或空值
             except Exception:
                 pass  # 某些配置可能无效
@@ -503,8 +501,12 @@ class TestCORSConfiguration:
                 middleware = CORSMiddlewareExtended(
                     Mock(),
                     allow_origins=origins if isinstance(origins, list) else [origins],
-                    allow_methods=methods if isinstance(methods, list) else methods.split(","),
-                    allow_headers=headers if isinstance(headers, list) else headers.split(",")
+                    allow_methods=(
+                        methods if isinstance(methods, list) else methods.split(",")
+                    ),
+                    allow_headers=(
+                        headers if isinstance(headers, list) else headers.split(",")
+                    ),
                 )
                 assert middleware is not None
             except Exception:

@@ -6,11 +6,11 @@ import pytest
 from src.domain.models.match import Match
 from src.domain.models.team import Team
 from src.domain.strategies.base import PredictionInput
-from src.domain.strategies.historical import HistoricalMatch, HistoricalStrategy
+from src.domain.strategies.historical import (HistoricalMatch,
+                                              HistoricalStrategy)
 
 
 @pytest.mark.unit
-
 def test_historical_strategy_provides_stable_predictions():
     strategy = HistoricalStrategy()
     asyncio.run(

@@ -340,19 +340,19 @@ if __name__ == "__main__":
     generate_summary_report()
     core_success, total_errors = run_final_test()
 
-    print(f"\n📋 修复总结:")
+    print("\n📋 修复总结:")
     print(f"  🔧 核心业务逻辑类型安全: {'✅ 通过' if core_success else '⚠️ 需要关注'}")
     print(f"  📊 总错误数量: {total_errors}")
     print(f"  🏗️ 生产就绪度: {'高' if core_success else '中等'}")
 
     if core_success:
-        print(f"\n🎉 生产级MyPy优化成功！")
-        print(f"✨ 核心业务逻辑已达到企业级类型安全标准")
-        print(f"📦 可安全部署到生产环境")
+        print("\n🎉 生产级MyPy优化成功！")
+        print("✨ 核心业务逻辑已达到企业级类型安全标准")
+        print("📦 可安全部署到生产环境")
     else:
-        print(f"\n⚠️  部分成功，建议进一步优化核心模块")
+        print("\n⚠️  部分成功，建议进一步优化核心模块")
 
-    print(f"\n📚 相关文件:")
-    print(f"  - mypy_production.ini: 生产环境配置")
-    print(f"  - MYPY_OPTIMIZATION_REPORT.md: 详细报告")
-    print(f"  - .github/workflows/mypy-check.yml: CI/CD配置")
+    print("\n📚 相关文件:")
+    print("  - mypy_production.ini: 生产环境配置")
+    print("  - MYPY_OPTIMIZATION_REPORT.md: 详细报告")
+    print("  - .github/workflows/mypy-check.yml: CI/CD配置")

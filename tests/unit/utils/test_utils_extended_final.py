@@ -6,10 +6,12 @@
 
 
 from datetime import datetime
-import pytest
 from pathlib import Path
-@pytest.mark.unit
 
+import pytest
+
+
+@pytest.mark.unit
 def test_crypto_utils_extended():
     # 测试加密功能
     password = "test123"

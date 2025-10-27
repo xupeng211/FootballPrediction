@@ -5,13 +5,14 @@ Tests for Time Utils
 测试src.utils.time_utils模块的功能
 """
 
+from datetime import datetime, timedelta, timezone
+
 import pytest
-from datetime import datetime, timezone, timedelta
-from src.utils.time_utils import TimeUtils, utc_now, parse_datetime
+
+from src.utils.time_utils import TimeUtils, parse_datetime, utc_now
 
 
 @pytest.mark.unit
-
 class TestTimeUtils:
     """时间工具测试"""
 

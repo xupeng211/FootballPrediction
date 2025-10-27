@@ -6,14 +6,14 @@ Service Lifecycle Management
 Manages service creation, initialization, running and destruction.
 """
 
-from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Any
-from enum import Enum
-from datetime import datetime
 import asyncio
 import logging
 import threading
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 from ..core.exceptions import ServiceLifecycleError
 

@@ -1,5 +1,5 @@
-from typing import cast, defaultdict
 import asyncio
+from typing import cast, defaultdict
 
 """
 Confluent Kafka Mock 实现

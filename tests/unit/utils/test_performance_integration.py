@@ -2,32 +2,30 @@
 
 # TODO: Consider creating a fixture for 23 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 性能监控集成模块测试
 Performance Integration Module Tests
 """
 
-import pytest
-from typing import Dict, Any
+from typing import Any, Dict
 
+import pytest
 from fastapi import FastAPI
 
-from src.performance.integration import (
-    PerformanceMonitoringIntegration,
-    get_performance_integration,
-    setup_performance_monitoring,
-    integrate_performance_monitoring,
-    start_performance_profiling,
-    stop_performance_profiling,
-    generate_performance_report,
-)
+from src.performance.integration import (PerformanceMonitoringIntegration,
+                                         generate_performance_report,
+                                         get_performance_integration,
+                                         integrate_performance_monitoring,
+                                         setup_performance_monitoring,
+                                         start_performance_profiling,
+                                         stop_performance_profiling)
 
 
 @pytest.mark.unit
 @pytest.mark.slow
 @pytest.mark.critical
-
 class TestPerformanceMonitoringIntegration:
     """性能监控集成器测试类"""
 

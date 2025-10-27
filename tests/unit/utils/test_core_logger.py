@@ -1,16 +1,17 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 """
 核心日志模块测试
 """
 
-import pytest
 import logging
+
+import pytest
 
 from src.core.logger import Logger, logger
 
 
 @pytest.mark.unit
-
 class TestLogger:
     """日志管理器测试"""
 

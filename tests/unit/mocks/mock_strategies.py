@@ -23,29 +23,33 @@ Mock策略优化 - Phase 4B高优先级任务
 目标：优化Phase 4B测试的Mock策略，提升测试执行效率
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock, AsyncMock, create_autospec
-from typing import Dict, Any, List, Optional, Union, Type, Callable, TypeVar, Generic
-from datetime import datetime, timedelta
 import asyncio
-from dataclasses import dataclass, field
-from enum import Enum
 import json
-import uuid
 import random
 import string
-from abc import ABC, abstractmethod
-import weakref
 import threading
+import uuid
+import weakref
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from enum import Enum
 from functools import lru_cache
+from typing import (Any, Callable, Dict, Generic, List, Optional, Type,
+                    TypeVar, Union)
+from unittest.mock import AsyncMock, MagicMock, Mock, create_autospec, patch
+
+import pytest
 
 # 类型变量
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 # Mock策略配置
 @dataclass
 class MockStrategyConfig:
     """Mock策略配置"""
+
     enable_caching: bool = True
     cache_size: int = 100
     enable_async_support: bool = True
@@ -54,12 +58,14 @@ class MockStrategyConfig:
     default_async_delay: float = 0.01
     failure_simulation_rate: float = 0.05
 
+
 # 全局配置
 MOCK_CONFIG = MockStrategyConfig()
 
 # Mock对象缓存
 _mock_cache: Dict[str, Any] = {}
 _cache_lock = threading.Lock()
+
 
 class MockFactory:
     """统一的Mock对象工厂"""
@@ -79,7 +85,9 @@ class MockFactory:
         return mock
 
     @staticmethod
-    def create_async_mock(return_value: Any = None, delay: Optional[float] = None) -> AsyncMock:
+    def create_async_mock(
+        return_value: Any = None, delay: Optional[float] = None
+    ) -> AsyncMock:
         """创建异步Mock对象"""
         mock = AsyncMock()
 
@@ -87,7 +95,9 @@ class MockFactory:
             if asyncio.iscoroutine(return_value):
                 mock.return_value = return_value
             else:
-                mock.return_value = asyncio.create_task(asyncio.coroutine(lambda: return_value)())
+                mock.return_value = asyncio.create_task(
+                    asyncio.coroutine(lambda: return_value)()
+                )
 
         if delay is None:
             delay = MOCK_CONFIG.default_async_delay
@@ -125,6 +135,7 @@ class MockFactory:
             _mock_cache.clear()
             MockFactory.get_cached_mock.cache_clear()
 
+
 class MockDataGenerator:
     """Mock数据生成器"""
 
@@ -135,7 +146,7 @@ class MockDataGenerator:
         if include_special:
             chars += string.punctuation
 
-        return ''.join(random.choice(chars) for _ in range(length))
+        return "".join(random.choice(chars) for _ in range(length))
 
     @staticmethod
     def generate_email() -> str:
@@ -147,7 +158,9 @@ class MockDataGenerator:
     @staticmethod
     def generate_phone() -> str:
         """生成随机手机号"""
-        return f"1{random.choice([3,4,5,6,7,8,9])}" + ''.join(random.choices(string.digits, k=9))
+        return f"1{random.choice([3,4,5,6,7,8,9])}" + "".join(
+            random.choices(string.digits, k=9)
+        )
 
     @staticmethod
     def generate_datetime(start_year: int = 2020, end_year: int = 2024) -> datetime:
@@ -168,6 +181,7 @@ class MockDataGenerator:
         """生成随机比分"""
         return random.randint(0, max_score)
 
+
 class MockDataRecord:
     """标准化的Mock数据记录"""
 
@@ -185,7 +199,7 @@ class MockDataRecord:
             "away_score": MockDataGenerator.generate_score(),
             "match_date": MockDataGenerator.generate_datetime(),
             "venue": f"Stadium_{random.randint(1, 10)}",
-            "status": random.choice(["scheduled", "live", "completed", "cancelled"])
+            "status": random.choice(["scheduled", "live", "completed", "cancelled"]),
         }
 
     @staticmethod
@@ -201,7 +215,7 @@ class MockDataRecord:
             "phone": MockDataGenerator.generate_phone(),
             "created_at": MockDataGenerator.generate_datetime(2020, 2023),
             "is_active": random.choice([True, False]),
-            "role": random.choice(["user", "admin", "moderator"])
+            "role": random.choice(["user", "admin", "moderator"]),
         }
 
     @staticmethod
@@ -219,8 +233,9 @@ class MockDataRecord:
             "confidence": round(random.uniform(0.6, 0.95), 2),
             "prediction_type": random.choice(["win", "draw", "lose"]),
             "created_at": MockDataGenerator.generate_datetime(),
-            "status": random.choice(["pending", "confirmed", "failed"])
+            "status": random.choice(["pending", "confirmed", "failed"]),
         }
+
 
 class MockPerformanceMonitor:
     """Mock性能监控"""
@@ -231,10 +246,12 @@ class MockPerformanceMonitor:
             "execution_times": {},
             "error_counts": {},
             "cache_hits": 0,
-            "cache_misses": 0
+            "cache_misses": 0,
         }
 
-    def record_call(self, method_name: str, execution_time: float, success: bool = True):
+    def record_call(
+        self, method_name: str, execution_time: float, success: bool = True
+    ):
         """记录方法调用"""
         if method_name not in self.metrics["call_counts"]:
             self.metrics["call_counts"][method_name] = 0
@@ -278,11 +295,13 @@ class MockPerformanceMonitor:
             "execution_times": {},
             "error_counts": {},
             "cache_hits": 0,
-            "cache_misses": 0
+            "cache_misses": 0,
         }
+
 
 # 全局性能监控器
 performance_monitor = MockPerformanceMonitor()
+
 
 class MockStrategyDecorator:
     """Mock策略装饰器"""
@@ -296,6 +315,7 @@ class MockStrategyDecorator:
         def decorator(func):
             def wrapper(*args, **kwargs):
                 import time
+
                 start_time = time.time()
                 success = True
 
@@ -310,17 +330,21 @@ class MockStrategyDecorator:
                     monitor.record_call(func.__name__, execution_time, success)
 
             return wrapper
+
         return decorator
 
     @staticmethod
     def mock_with_failure_simulation(failure_rate: float = 0.05):
         """失败模拟装饰器"""
+
         def decorator(func):
             def wrapper(*args, **kwargs):
                 if random.random() < failure_rate:
                     raise Exception(f"Simulated failure in {func.__name__}")
                 return func(*args, **kwargs)
+
             return wrapper
+
         return decorator
 
     @staticmethod
@@ -343,8 +367,11 @@ class MockStrategyDecorator:
                 result = func(*args, **kwargs)
                 cache[cache_key] = result
                 return result
+
             return wrapper
+
         return decorator
+
 
 # 专用Mock对象生成器
 class MockObjectGenerator:
@@ -362,11 +389,13 @@ class MockObjectGenerator:
         config.expose_headers = ["X-Custom-Header"]
         config.vary = ["Origin", "Access-Control-Request-Method"]
         config.validate = Mock(return_value=True)
-        config.to_dict = Mock(return_value={
-            "allow_origins": config.allow_origins,
-            "allow_methods": config.allow_methods,
-            "max_age": config.max_age
-        })
+        config.to_dict = Mock(
+            return_value={
+                "allow_origins": config.allow_origins,
+                "allow_methods": config.allow_methods,
+                "max_age": config.max_age,
+            }
+        )
         return config
 
     @staticmethod
@@ -378,10 +407,7 @@ class MockObjectGenerator:
         request = Mock()
         request.method = method
         request.origin = origin
-        request.headers = {
-            "Origin": origin,
-            "Content-Type": "application/json"
-        }
+        request.headers = {"Origin": origin, "Content-Type": "application/json"}
         request.url = "https://api.example.com/test"
         request.host = "api.example.com"
         return request
@@ -393,7 +419,7 @@ class MockObjectGenerator:
         response.status_code = status_code
         response.headers = {
             "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*"
+            "Access-Control-Allow-Origin": "*",
         }
         response.content = '{"success": true}'
         return response
@@ -417,7 +443,9 @@ class MockObjectGenerator:
         return processor
 
     @staticmethod
-    def create_config_source(name: str, config_data: Optional[Dict[str, Any]] = None) -> Mock:
+    def create_config_source(
+        name: str, config_data: Optional[Dict[str, Any]] = None
+    ) -> Mock:
         """创建配置源Mock"""
         if config_data is None:
             config_data = {f"{name}_key": f"{name}_value"}
@@ -434,7 +462,9 @@ class MockObjectGenerator:
         return source
 
     @staticmethod
-    def create_service_mock(service_name: str, methods: Optional[List[str]] = None) -> Mock:
+    def create_service_mock(
+        service_name: str, methods: Optional[List[str]] = None
+    ) -> Mock:
         """创建服务Mock"""
         if methods is None:
             methods = ["get", "create", "update", "delete"]
@@ -447,6 +477,7 @@ class MockObjectGenerator:
             setattr(service, method, mock_method)
 
         return service
+
 
 class MockBatchGenerator:
     """批量数据生成器"""
@@ -472,8 +503,9 @@ class MockBatchGenerator:
         return {
             "matches": MockBatchGenerator.generate_match_records(10),
             "users": MockBatchGenerator.generate_user_records(5),
-            "predictions": MockBatchGenerator.generate_prediction_records(20)
+            "predictions": MockBatchGenerator.generate_prediction_records(20),
         }
+
 
 # Pytest fixtures
 @pytest.fixture
@@ -481,10 +513,12 @@ def mock_factory():
     """Mock工厂fixture"""
     return MockFactory
 
+
 @pytest.fixture
 def mock_data_generator():
     """Mock数据生成器fixture"""
     return MockDataGenerator
+
 
 @pytest.fixture
 def mock_performance_monitor():
@@ -492,30 +526,36 @@ def mock_performance_monitor():
     monitor = MockPerformanceMonitor()
     return monitor
 
+
 @pytest.fixture
 def mock_object_generator():
     """Mock对象生成器fixture"""
     return MockObjectGenerator
+
 
 @pytest.fixture
 def mock_test_data():
     """Mock测试数据fixture"""
     return MockBatchGenerator.generate_test_data_sets()
 
+
 @pytest.fixture
 def mock_cors_config():
     """CORS配置Mock fixture"""
     return MockObjectGenerator.create_cors_config()
+
 
 @pytest.fixture
 def mock_http_request():
     """HTTP请求Mock fixture"""
     return MockObjectGenerator.create_request()
 
+
 @pytest.fixture
 def mock_http_response():
     """HTTP响应Mock fixture"""
     return MockObjectGenerator.create_response()
+
 
 # 便捷函数
 def create_standard_mocks() -> Dict[str, Mock]:
@@ -526,8 +566,9 @@ def create_standard_mocks() -> Dict[str, Mock]:
         "response": MockObjectGenerator.create_response(),
         "data_processor": MockObjectGenerator.create_data_processor("test"),
         "config_source": MockObjectGenerator.create_config_source("test"),
-        "service": MockObjectGenerator.create_service_mock("test")
+        "service": MockObjectGenerator.create_service_mock("test"),
     }
+
 
 def setup_mock_environment():
     """设置Mock环境"""
@@ -535,9 +576,11 @@ def setup_mock_environment():
     performance_monitor.reset_metrics()
     MOCK_CONFIG.failure_simulation_rate = 0.0  # 测试时不模拟失败
 
+
 def enable_failure_simulation(rate: float = 0.1):
     """启用失败模拟"""
     MOCK_CONFIG.failure_simulation_rate = rate
+
 
 def get_mock_metrics() -> Dict[str, Any]:
     """获取Mock性能指标"""
@@ -547,8 +590,8 @@ def get_mock_metrics() -> Dict[str, Any]:
             method: {
                 "call_count": performance_monitor.metrics["call_counts"].get(method, 0),
                 "avg_time": performance_monitor.get_average_execution_time(method),
-                "success_rate": performance_monitor.get_success_rate(method)
+                "success_rate": performance_monitor.get_success_rate(method),
             }
             for method in performance_monitor.metrics["call_counts"]
-        }
+        },
     }

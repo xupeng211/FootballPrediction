@@ -1,4 +1,5 @@
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 缓存示例测试
 Tests for Cache Examples
@@ -6,21 +7,16 @@ Tests for Cache Examples
 测试src.cache.examples模块的缓存示例功能
 """
 
-import pytest
 import asyncio
+
+import pytest
 
 # 测试导入
 try:
-    from src.cache.examples import (
-        expensive_computation,
-        fetch_user_data,
-        get_user_profile,
-        get_match_predictions,
-        get_team_statistics,
-        clear_user_cache,
-        batch_fetch_data,
-        cached_api_call,
-    )
+    from src.cache.examples import (batch_fetch_data, cached_api_call,
+                                    clear_user_cache, expensive_computation,
+                                    fetch_user_data, get_match_predictions,
+                                    get_team_statistics, get_user_profile)
 
     CACHE_EXAMPLES_AVAILABLE = True
 except ImportError as e:
@@ -41,7 +37,6 @@ except ImportError as e:
     not CACHE_EXAMPLES_AVAILABLE, reason="Cache examples module not available"
 )
 @pytest.mark.unit
-
 class TestCacheExamples:
     """缓存示例测试"""
 
@@ -159,11 +154,8 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if CACHE_EXAMPLES_AVAILABLE:
-        from src.cache.examples import (
-            expensive_computation,
-            fetch_user_data,
-            get_user_profile,
-        )
+        from src.cache.examples import (expensive_computation, fetch_user_data,
+                                        get_user_profile)
 
         assert expensive_computation is not None
         assert fetch_user_data is not None

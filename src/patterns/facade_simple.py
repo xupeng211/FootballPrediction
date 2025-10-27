@@ -5,9 +5,9 @@
 """
 
 import asyncio
-from typing import Any, Dict, List, Optional
-from datetime import datetime, timedelta
 from dataclasses import dataclass
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
 
 from src.core.logging import get_logger
 
@@ -457,9 +457,9 @@ class SystemFacade:
         return {
             "prediction": result.prediction["prediction"],
             "confidence": result.confidence,
-            "top_recommendation": result.recommendations[0]
-            if result.recommendations
-            else None,
+            "top_recommendation": (
+                result.recommendations[0] if result.recommendations else None
+            ),
         }
 
     async def get_dashboard_summary(

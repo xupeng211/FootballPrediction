@@ -1,9 +1,9 @@
-from src.data.features.feature_store import FeatureStore
 import pytest
+
+from src.data.features.feature_store import FeatureStore
 
 
 @pytest.mark.unit
-
 def test_feature_store():
     store = FeatureStore()
     assert store is not None

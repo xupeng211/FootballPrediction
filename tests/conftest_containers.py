@@ -3,16 +3,14 @@ pytest容器配置模块
 提供TestContainers相关的pytest fixtures和配置
 """
 
-import pytest
-from typing import Generator, Dict, Any
+from typing import Any, Dict, Generator
 
-from .helpers.testcontainers import (
-    TestPostgresContainer,
-    TestRedisContainer,
-    create_test_database_container,
-    create_test_redis_container,
-    mock_containers
-)
+import pytest
+
+from .helpers.testcontainers import (TestPostgresContainer, TestRedisContainer,
+                                     create_test_database_container,
+                                     create_test_redis_container,
+                                     mock_containers)
 
 
 @pytest.fixture(scope="session")
@@ -44,13 +42,10 @@ def test_redis_container() -> Generator[TestRedisContainer, None, None]:
 @pytest.fixture(scope="session")
 def test_containers(
     test_postgres_container: TestPostgresContainer,
-    test_redis_container: TestRedisContainer
+    test_redis_container: TestRedisContainer,
 ) -> Dict[str, Any]:
     """测试容器fixture"""
-    return {
-        'postgres': test_postgres_container,
-        'redis': test_redis_container
-    }
+    return {"postgres": test_postgres_container, "redis": test_redis_container}
 
 
 @pytest.fixture
@@ -63,10 +58,7 @@ def mock_containers_fixture() -> Generator[Dict[str, Any], None, None]:
     redis.start()
 
     try:
-        yield {
-            'postgres': postgres,
-            'redis': redis
-        }
+        yield {"postgres": postgres, "redis": redis}
     finally:
         postgres.stop()
         redis.stop()
@@ -114,11 +106,13 @@ def mock_redis_container() -> Generator[TestRedisContainer, None, None]:
 # 跳过真实容器的标记
 pytest_plugins = []
 
+
 # 如果没有Docker环境，自动使用Mock
 def pytest_configure(config):
     """pytest配置钩子"""
     try:
         import docker
+
         client = docker.from_env()
         client.ping()
         # Docker可用，可以使用真实容器

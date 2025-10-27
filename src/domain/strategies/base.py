@@ -7,14 +7,14 @@ Defines abstract base classes and data structures for prediction strategies.
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List, Optional, Tuple, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 
 from ..models.match import Match
-from ..models.team import Team
 from ..models.prediction import Prediction
+from ..models.team import Team
 
 
 class StrategyType(Enum):

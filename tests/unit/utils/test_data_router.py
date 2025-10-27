@@ -1,19 +1,20 @@
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 数据路由 API 测试
 Data Router API Tests
 """
 
+import json
+from datetime import date, datetime, timedelta
+
 import pytest
 from fastapi.testclient import TestClient
-import json
-from datetime import datetime, date, timedelta
 
 from src.api.app import app
 
 
 @pytest.mark.unit
-
 class TestDataRouter:
     """数据路由 API 测试类"""
 

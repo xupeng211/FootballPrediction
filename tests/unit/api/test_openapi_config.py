@@ -1,12 +1,12 @@
 """OpenAPI配置测试"""
 
 import pytest
+
 from src.config.openapi_config import OpenAPIConfig, setup_openapi
 
 
 @pytest.mark.unit
 @pytest.mark.api
-
 class TestOpenAPIConfig:
     """测试OpenAPI配置"""
 

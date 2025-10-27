@@ -1,12 +1,14 @@
 """测试加密工具模块"""
 
-import pytest
-import hashlib
 import base64
-from unittest.mock import patch, Mock
+import hashlib
+from unittest.mock import Mock, patch
+
+import pytest
 
 try:
     from src.utils.crypto_utils import CryptoUtils
+
     IMPORT_SUCCESS = True
 except ImportError as e:
     IMPORT_SUCCESS = False
@@ -32,7 +34,7 @@ class TestCryptoUtils:
 
         for hash_type in hash_types:
             try:
-                if hasattr(utils, 'hash'):
+                if hasattr(utils, "hash"):
                     result = utils.hash(test_data, hash_type)
                     if result is not None:
                         assert isinstance(result, str)
@@ -48,18 +50,18 @@ class TestCryptoUtils:
             "simple_password",
             "ComplexP@ssw0rd!",
             "密码123",
-            "very_long_password_with_many_characters_123456789"
+            "very_long_password_with_many_characters_123456789",
         ]
 
         for password in passwords:
             try:
-                if hasattr(utils, 'hash_password'):
+                if hasattr(utils, "hash_password"):
                     result = utils.hash_password(password)
                     if result is not None:
                         assert isinstance(result, str)
                         assert len(result) > len(password)  # Hash should be longer
 
-                if hasattr(utils, 'verify_password'):
+                if hasattr(utils, "verify_password"):
                     # First hash the password
                     hashed = utils.hash_password(password)
                     if hashed is not None:
@@ -79,13 +81,13 @@ class TestCryptoUtils:
 
         for key in keys:
             try:
-                if hasattr(utils, 'encrypt'):
+                if hasattr(utils, "encrypt"):
                     encrypted = utils.encrypt(test_data, key)
                     if encrypted is not None:
                         assert isinstance(encrypted, str)
                         assert encrypted != test_data  # Should be different
 
-                if hasattr(utils, 'decrypt'):
+                if hasattr(utils, "decrypt"):
                     # First encrypt
                     encrypted = utils.encrypt(test_data, key)
                     if encrypted is not None:
@@ -105,17 +107,17 @@ class TestCryptoUtils:
             "test string with spaces",
             "Special@Characters#123",
             "unicode_test_测试",
-            ""
+            "",
         ]
 
         for test_str in test_strings:
             try:
-                if hasattr(utils, 'base64_encode'):
+                if hasattr(utils, "base64_encode"):
                     encoded = utils.base64_encode(test_str)
                     if encoded is not None:
                         assert isinstance(encoded, str)
 
-                if hasattr(utils, 'base64_decode'):
+                if hasattr(utils, "base64_decode"):
                     # First encode
                     encoded = utils.base64_encode(test_str)
                     if encoded is not None:
@@ -135,17 +137,17 @@ class TestCryptoUtils:
             "test+string&with=special#chars",
             "path/to/resource?param=value",
             "email@domain.com",
-            "spaces and symbols!"
+            "spaces and symbols!",
         ]
 
         for test_str in test_strings:
             try:
-                if hasattr(utils, 'url_encode'):
+                if hasattr(utils, "url_encode"):
                     encoded = utils.url_encode(test_str)
                     if encoded is not None:
                         assert isinstance(encoded, str)
 
-                if hasattr(utils, 'url_decode'):
+                if hasattr(utils, "url_decode"):
                     # First encode
                     encoded = utils.url_encode(test_str)
                     if encoded is not None:
@@ -161,18 +163,18 @@ class TestCryptoUtils:
         utils = CryptoUtils()
 
         try:
-            if hasattr(utils, 'random_string'):
+            if hasattr(utils, "random_string"):
                 result = utils.random_string(10)
                 if result is not None:
                     assert isinstance(result, str)
                     assert len(result) == 10
 
-            if hasattr(utils, 'random_bytes'):
+            if hasattr(utils, "random_bytes"):
                 result = utils.random_bytes(16)
                 if result is not None:
                     assert isinstance(result, (str, bytes))
 
-            if hasattr(utils, 'random_number'):
+            if hasattr(utils, "random_number"):
                 result = utils.random_number(1000, 9999)
                 if result is not None:
                     assert isinstance(result, int)
@@ -185,13 +187,13 @@ class TestCryptoUtils:
         utils = CryptoUtils()
 
         try:
-            if hasattr(utils, 'generate_token'):
+            if hasattr(utils, "generate_token"):
                 result = utils.generate_token()
                 if result is not None:
                     assert isinstance(result, str)
                     assert len(result) > 0
 
-            if hasattr(utils, 'generate_token'):
+            if hasattr(utils, "generate_token"):
                 # Test with length parameter
                 result = utils.generate_token(32)
                 if result is not None:
@@ -205,13 +207,13 @@ class TestCryptoUtils:
         utils = CryptoUtils()
 
         try:
-            if hasattr(utils, 'generate_salt'):
+            if hasattr(utils, "generate_salt"):
                 result = utils.generate_salt()
                 if result is not None:
                     assert isinstance(result, str)
                     assert len(result) > 0
 
-            if hasattr(utils, 'generate_salt'):
+            if hasattr(utils, "generate_salt"):
                 # Test different lengths
                 for length in [8, 16, 32, 64]:
                     result = utils.generate_salt(length)
@@ -229,12 +231,12 @@ class TestCryptoUtils:
 
         for data in [test_data, test_bytes]:
             try:
-                if hasattr(utils, 'checksum'):
+                if hasattr(utils, "checksum"):
                     result = utils.checksum(data)
                     if result is not None:
                         assert isinstance(result, str)
 
-                if hasattr(utils, 'verify_checksum'):
+                if hasattr(utils, "verify_checksum"):
                     # First generate checksum
                     checksum = utils.checksum(data)
                     if checksum is not None:
@@ -255,7 +257,7 @@ class TestCryptoUtils:
         for password in passwords:
             for salt in salts:
                 try:
-                    if hasattr(utils, 'derive_key'):
+                    if hasattr(utils, "derive_key"):
                         result = utils.derive_key(password, salt)
                         if result is not None:
                             assert isinstance(result, (str, bytes))
@@ -271,12 +273,12 @@ class TestCryptoUtils:
             ("hello", "hello"),
             ("hello", "world"),
             ("", ""),
-            ("", "non-empty")
+            ("", "non-empty"),
         ]
 
         for str1, str2 in test_pairs:
             try:
-                if hasattr(utils, 'secure_compare'):
+                if hasattr(utils, "secure_compare"):
                     result = utils.secure_compare(str1, str2)
                     if result is not None:
                         assert isinstance(result, bool)
@@ -288,19 +290,13 @@ class TestCryptoUtils:
         """测试错误处理"""
         utils = CryptoUtils()
 
-        error_cases = [
-            None,
-            123,
-            [],
-            {},
-            object()
-        ]
+        error_cases = [None, 123, [], {}, object()]
 
         for case in error_cases:
             try:
                 # Should handle invalid inputs gracefully
-                if hasattr(utils, 'safe_hash'):
-                    result = utils.safe_hash(case)
+                if hasattr(utils, "safe_hash"):
+                    utils.safe_hash(case)
                     # If method exists, shouldn't throw exception
             except Exception:
                 pass
@@ -319,7 +315,7 @@ class TestCryptoUtils:
 
         for case in edge_cases:
             try:
-                if hasattr(utils, 'process'):
+                if hasattr(utils, "process"):
                     result = utils.process(case)
                     if result is not None:
                         assert isinstance(result, str)
@@ -334,7 +330,7 @@ class TestCryptoUtils:
         large_data = "x" * 100000
 
         try:
-            if hasattr(utils, 'hash'):
+            if hasattr(utils, "hash"):
                 result = utils.hash(large_data)
                 if result is not None:
                     assert isinstance(result, str)
@@ -345,7 +341,7 @@ class TestCryptoUtils:
         data_list = ["test_data_" + str(i) for i in range(100)]
 
         try:
-            if hasattr(utils, 'batch_hash'):
+            if hasattr(utils, "batch_hash"):
                 result = utils.batch_hash(data_list)
                 if result is not None:
                     assert isinstance(result, list)
@@ -359,7 +355,7 @@ class TestCryptoUtils:
             {},
             {"algorithm": "sha256"},
             {"iterations": 1000},
-            {"key_length": 32}
+            {"key_length": 32},
         ]
 
         for config in configs:
@@ -371,15 +367,15 @@ class TestCryptoUtils:
                 utils = CryptoUtils()
                 assert utils is not None
 
-    @patch('src.utils.crypto_utils.os.urandom')
+    @patch("src.utils.crypto_utils.os.urandom")
     def test_with_mocked_randomness(self, mock_urandom):
         """测试模拟随机性"""
-        mock_urandom.return_value = b'fixed_random_value'
+        mock_urandom.return_value = b"fixed_random_value"
 
         utils = CryptoUtils()
 
         try:
-            if hasattr(utils, 'random_bytes'):
+            if hasattr(utils, "random_bytes"):
                 result = utils.random_bytes(16)
                 # Result should be deterministic with mocked randomness
                 assert result is not None
@@ -392,7 +388,7 @@ class TestCryptoUtils:
 
         try:
             # Test that hashing is one-way
-            if hasattr(utils, 'hash'):
+            if hasattr(utils, "hash"):
                 original = "test_data"
                 hashed = utils.hash(original)
                 if hashed is not None:
@@ -400,7 +396,7 @@ class TestCryptoUtils:
                     assert original not in hashed
 
             # Test that encryption is reversible with key
-            if hasattr(utils, 'encrypt') and hasattr(utils, 'decrypt'):
+            if hasattr(utils, "encrypt") and hasattr(utils, "decrypt"):
                 original = "secret_message"
                 key = "test_key"
                 encrypted = utils.encrypt(original, key)
@@ -421,17 +417,17 @@ class TestCryptoUtils:
             "привет мир",
             "العربية",
             "🚀 emoji test",
-            "Mixed: English 中文 العربية"
+            "Mixed: English 中文 العربية",
         ]
 
         for test_str in unicode_strings:
             try:
-                if hasattr(utils, 'hash'):
+                if hasattr(utils, "hash"):
                     result = utils.hash(test_str)
                     if result is not None:
                         assert isinstance(result, str)
 
-                if hasattr(utils, 'base64_encode'):
+                if hasattr(utils, "base64_encode"):
                     encoded = utils.base64_encode(test_str)
                     if encoded is not None:
                         decoded = utils.base64_decode(encoded)

@@ -17,7 +17,7 @@ class AlertManager:
 
     def __init__(self):
         self.logger = logging.getLogger(__name__)
-        self.logger.info(f"初始化monitoring特性: Alert Manager")
+        self.logger.info("初始化monitoring特性: Alert Manager")
 
     def process(self, data: Dict) -> Dict:
         """处理数据"""

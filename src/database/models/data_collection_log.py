@@ -1,9 +1,11 @@
 # mypy: ignore-errors
-from ..base import BaseModel
-from typing import Any, Dict, Optional
 from datetime import datetime
 from enum import Enum
+from typing import Any, Dict, Optional
+
 from sqlalchemy import Column, DateTime, Integer, String, Text, func
+
+from ..base import BaseModel
 
 """
 数据采集日志模型
@@ -15,13 +17,11 @@ from sqlalchemy import Column, DateTime, Integer, String, Text, func
 """
 
 from typing import Any, Dict, Optional
+
+from sqlalchemy import DateTime, Enum, Integer, String, Text
 from sqlalchemy.orm import validates
+
 from src.database.base import BaseModel
-from sqlalchemy import DateTime
-from sqlalchemy import Enum
-from sqlalchemy import Integer
-from sqlalchemy import String
-from sqlalchemy import Text
 
 
 class CollectionStatus(Enum):

@@ -32,6 +32,7 @@ except ImportError:
         match_id: int
         home_win: float
 
+
 #     class TeamInfo(BaseModel):
 #         id: int  # 重复定义已注释
 #         name: str  # 重复定义已注释

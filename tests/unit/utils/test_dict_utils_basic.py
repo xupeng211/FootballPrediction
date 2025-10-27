@@ -6,7 +6,6 @@ import pytest
 
 
 @pytest.mark.unit
-
 class TestDictUtilsBasic:
     """字典工具基础测试"""
 

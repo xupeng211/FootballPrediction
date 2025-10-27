@@ -2,7 +2,8 @@
 简化的适配器注册表
 """
 
-from typing import Any, Dict, Optional, Type, List
+from typing import Any, Dict, List, Optional, Type
+
 from src.core.exceptions import AdapterError
 
 

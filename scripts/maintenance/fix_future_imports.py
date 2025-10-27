@@ -12,7 +12,7 @@ def fix_future_import_in_file(file_path: Path) -> bool:
         with open(file_path, 'r', encoding='utf-8') as f:
             lines = f.readlines()
 
-        original_lines = lines[:]
+        lines[:]
 
         # 找到__future__ import行
         future_import_line = None

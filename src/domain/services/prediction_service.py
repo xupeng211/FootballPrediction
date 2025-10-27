@@ -6,24 +6,18 @@ Prediction Domain Service
 Handles complex business logic related to predictions.
 """
 
-from typing import List, Optional, Dict, Any
 from datetime import datetime
 from decimal import Decimal
+from typing import Any, Dict, List, Optional
 
-from ..models.prediction import (
-    Prediction,
-    PredictionStatus,
-    PredictionPoints,
-)
+from ..events.prediction_events import (PredictionCancelledEvent,
+                                        PredictionCreatedEvent,
+                                        PredictionEvaluatedEvent,
+                                        PredictionExpiredEvent,
+                                        PredictionPointsAdjustedEvent,
+                                        PredictionUpdatedEvent)
 from ..models.match import Match, MatchStatus
-from ..events.prediction_events import (
-    PredictionCreatedEvent,
-    PredictionUpdatedEvent,
-    PredictionEvaluatedEvent,
-    PredictionCancelledEvent,
-    PredictionExpiredEvent,
-    PredictionPointsAdjustedEvent,
-)
+from ..models.prediction import Prediction, PredictionPoints, PredictionStatus
 
 
 class PredictionDomainService:
@@ -159,9 +153,9 @@ class PredictionDomainService:
             prediction_id=prediction.id,
             actual_home=actual_home,
             actual_away=actual_away,
-            is_correct=prediction.score.is_correct_result
-            if prediction.score
-            else False,
+            is_correct=(
+                prediction.score.is_correct_result if prediction.score else False
+            ),
             points_earned=points_earned,
             accuracy_score=None,  # 需要实现
         )

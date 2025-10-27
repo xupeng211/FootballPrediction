@@ -13,21 +13,23 @@ API Gateway and Load Balancing Test Suite
 测试覆盖率目标：>=95%
 """
 
-import pytest
 import asyncio
 import json
 import time
-from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional, Tuple
-from dataclasses import dataclass
-from enum import Enum
-from unittest.mock import Mock, AsyncMock, patch
 import uuid
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 # 导入Phase 4A Mock工厂
 try:
     from tests.unit.mocks.mock_factory_phase4a import Phase4AMockFactory
 except ImportError:
+
     class Phase4AMockFactory:
         @staticmethod
         def create_mock_gateway_service():
@@ -40,6 +42,7 @@ except ImportError:
 
 class LoadBalancingStrategy(Enum):
     """负载均衡策略"""
+
     ROUND_ROBIN = "round_robin"
     LEAST_CONNECTIONS = "least_connections"
     WEIGHTED_ROUND_ROBIN = "weighted_round_robin"
@@ -48,6 +51,7 @@ class LoadBalancingStrategy(Enum):
 
 class RoutingRule(Enum):
     """路由规则类型"""
+
     PATH_BASED = "path_based"
     HEADER_BASED = "header_based"
     METHOD_BASED = "method_based"
@@ -57,6 +61,7 @@ class RoutingRule(Enum):
 @dataclass
 class ServiceInstance:
     """服务实例"""
+
     id: str
     host: str
     port: int
@@ -78,6 +83,7 @@ class ServiceInstance:
 @dataclass
 class GatewayMetrics:
     """网关指标"""
+
     total_requests: int = 0
     successful_requests: int = 0
     failed_requests: int = 0
@@ -98,13 +104,17 @@ class GatewayMetrics:
 class MockAPIService:
     """Mock API服务"""
 
-    def __init__(self, service_id: str, response_delay: float = 0.01, failure_rate: float = 0.0):
+    def __init__(
+        self, service_id: str, response_delay: float = 0.01, failure_rate: float = 0.0
+    ):
         self.service_id = service_id
         self.response_delay = response_delay
         self.failure_rate = failure_rate
         self.request_count = 0
 
-    async def handle_request(self, path: str, method: str = "GET", headers: Dict[str, str] = None):
+    async def handle_request(
+        self, path: str, method: str = "GET", headers: Dict[str, str] = None
+    ):
         """处理请求"""
         self.request_count += 1
 
@@ -113,6 +123,7 @@ class MockAPIService:
 
         # 模拟失败
         import random
+
         if random.random() < self.failure_rate:
             raise Exception(f"Service {self.service_id} temporarily unavailable")
 
@@ -121,7 +132,7 @@ class MockAPIService:
             return {
                 "service_id": self.service_id,
                 "status": "healthy",
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
         elif path.startswith("/api/v1/predictions"):
             return {
@@ -130,10 +141,10 @@ class MockAPIService:
                         "id": str(uuid.uuid4()),
                         "match_id": 1,
                         "prediction": "home_win",
-                        "confidence": 0.75
+                        "confidence": 0.75,
                     }
                 ],
-                "service_id": self.service_id
+                "service_id": self.service_id,
             }
         elif path.startswith("/api/v1/matches"):
             return {
@@ -142,22 +153,21 @@ class MockAPIService:
                         "id": 1,
                         "home_team": "Manchester United",
                         "away_team": "Liverpool",
-                        "date": "2025-10-26T15:00:00Z"
+                        "date": "2025-10-26T15:00:00Z",
                     }
                 ],
-                "service_id": self.service_id
+                "service_id": self.service_id,
             }
         else:
-            return {
-                "message": "Not Found",
-                "service_id": self.service_id
-            }
+            return {"message": "Not Found", "service_id": self.service_id}
 
 
 class MockLoadBalancer:
     """Mock负载均衡器"""
 
-    def __init__(self, strategy: LoadBalancingStrategy = LoadBalancingStrategy.ROUND_ROBIN):
+    def __init__(
+        self, strategy: LoadBalancingStrategy = LoadBalancingStrategy.ROUND_ROBIN
+    ):
         self.strategy = strategy
         self.current_index = 0
         self.services: List[ServiceInstance] = []
@@ -197,11 +207,15 @@ class MockLoadBalancer:
         self.current_index += 1
         return service
 
-    def _least_connections_select(self, services: List[ServiceInstance]) -> ServiceInstance:
+    def _least_connections_select(
+        self, services: List[ServiceInstance]
+    ) -> ServiceInstance:
         """最少连接数选择"""
         return min(services, key=lambda s: s.connection_count)
 
-    def _weighted_round_robin_select(self, services: List[ServiceInstance]) -> ServiceInstance:
+    def _weighted_round_robin_select(
+        self, services: List[ServiceInstance]
+    ) -> ServiceInstance:
         """加权轮询选择"""
         # 创建权重列表
         weighted_services = []
@@ -213,6 +227,7 @@ class MockLoadBalancer:
     def _random_select(self, services: List[ServiceInstance]) -> ServiceInstance:
         """随机选择"""
         import random
+
         return random.choice(services)
 
 
@@ -229,7 +244,9 @@ class MockCircuitBreaker:
     async def call(self, func, *args, **kwargs):
         """执行函数调用"""
         if self.state == "OPEN":
-            if datetime.now() - self.last_failure_time > timedelta(seconds=self.recovery_timeout):
+            if datetime.now() - self.last_failure_time > timedelta(
+                seconds=self.recovery_timeout
+            ):
                 self.state = "HALF_OPEN"
             else:
                 raise Exception("Circuit breaker is OPEN")
@@ -280,7 +297,9 @@ class TestAPIGatewayAndLoadBalancing:
     @pytest.mark.e2e
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_round_robin_load_balancing(self, mock_services, load_balancer, gateway_metrics):
+    async def test_round_robin_load_balancing(
+        self, mock_services, load_balancer, gateway_metrics
+    ):
         """测试轮询负载均衡"""
         print("🧪 测试轮询负载均衡策略")
 
@@ -288,10 +307,7 @@ class TestAPIGatewayAndLoadBalancing:
         service_instances = []
         for i, service in enumerate(mock_services):
             instance = ServiceInstance(
-                id=service.service_id,
-                host="localhost",
-                port=8001 + i,
-                weight=1
+                id=service.service_id, host="localhost", port=8001 + i, weight=1
             )
             load_balancer.add_service(instance)
             service_instances.append(instance)
@@ -304,11 +320,7 @@ class TestAPIGatewayAndLoadBalancing:
             selected_services.append(service.service_id)
 
         # 验证轮询分布
-        expected_distribution = {
-            "service_1": 3,
-            "service_2": 3,
-            "service_3": 3
-        }
+        expected_distribution = {"service_1": 3, "service_2": 3, "service_3": 3}
 
         actual_distribution = {}
         for service_id in selected_services:
@@ -322,7 +334,9 @@ class TestAPIGatewayAndLoadBalancing:
     @pytest.mark.e2e
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_least_connections_load_balancing(self, mock_services, gateway_metrics):
+    async def test_least_connections_load_balancing(
+        self, mock_services, gateway_metrics
+    ):
         """测试最少连接数负载均衡"""
         print("🧪 测试最少连接数负载均衡策略")
 
@@ -332,7 +346,7 @@ class TestAPIGatewayAndLoadBalancing:
         service_instances = [
             ServiceInstance("service_1", "localhost", 8001, connection_count=5),
             ServiceInstance("service_2", "localhost", 8002, connection_count=2),
-            ServiceInstance("service_3", "localhost", 8003, connection_count=8)
+            ServiceInstance("service_3", "localhost", 8003, connection_count=8),
         ]
 
         for instance in service_instances:
@@ -355,7 +369,9 @@ class TestAPIGatewayAndLoadBalancing:
     @pytest.mark.e2e
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_weighted_round_robin_load_balancing(self, mock_services, gateway_metrics):
+    async def test_weighted_round_robin_load_balancing(
+        self, mock_services, gateway_metrics
+    ):
         """测试加权轮询负载均衡"""
         print("🧪 测试加权轮询负载均衡策略")
 
@@ -365,7 +381,7 @@ class TestAPIGatewayAndLoadBalancing:
         service_instances = [
             ServiceInstance("service_1", "localhost", 8001, weight=3),
             ServiceInstance("service_2", "localhost", 8002, weight=1),
-            ServiceInstance("service_3", "localhost", 8003, weight=2)
+            ServiceInstance("service_3", "localhost", 8003, weight=2),
         ]
 
         for instance in service_instances:
@@ -381,7 +397,7 @@ class TestAPIGatewayAndLoadBalancing:
         expected_distribution = {
             "service_1": 6,  # weight 3
             "service_2": 2,  # weight 1
-            "service_3": 4   # weight 2
+            "service_3": 4,  # weight 2
         }
 
         actual_distribution = {}
@@ -407,7 +423,7 @@ class TestAPIGatewayAndLoadBalancing:
                 id=service.service_id,
                 host="localhost",
                 port=8001,
-                health_status="healthy"
+                health_status="healthy",
             )
             load_balancer.add_service(instance)
 
@@ -434,7 +450,9 @@ class TestAPIGatewayAndLoadBalancing:
     @pytest.mark.e2e
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_circuit_breaker_functionality(self, circuit_breaker, gateway_metrics):
+    async def test_circuit_breaker_functionality(
+        self, circuit_breaker, gateway_metrics
+    ):
         """测试熔断器功能"""
         print("🧪 测试熔断器功能")
 
@@ -490,18 +508,22 @@ class TestAPIGatewayAndLoadBalancing:
         rate_limiter = {
             "requests_per_minute": 10,
             "current_requests": 0,
-            "request_times": []
+            "request_times": [],
         }
 
         def is_rate_limited():
             now = datetime.now()
             # 清理1分钟前的请求记录
             rate_limiter["request_times"] = [
-                req_time for req_time in rate_limiter["request_times"]
+                req_time
+                for req_time in rate_limiter["request_times"]
                 if now - req_time < timedelta(minutes=1)
             ]
 
-            if len(rate_limiter["request_times"]) >= rate_limiter["requests_per_minute"]:
+            if (
+                len(rate_limiter["request_times"])
+                >= rate_limiter["requests_per_minute"]
+            ):
                 return True
             return False
 
@@ -519,9 +541,7 @@ class TestAPIGatewayAndLoadBalancing:
         gateway_metrics.rate_limit_hits += 1
 
         # 模拟时间过去
-        rate_limiter["request_times"] = [
-            datetime.now() - timedelta(minutes=2)
-        ]
+        rate_limiter["request_times"] = [datetime.now() - timedelta(minutes=2)]
 
         # 现在应该可以正常请求
         assert not is_rate_limited()
@@ -541,23 +561,23 @@ class TestAPIGatewayAndLoadBalancing:
             "/api/v1/predictions/*": {
                 "service": "prediction_service",
                 "method": ["GET", "POST"],
-                "rate_limit": 100
+                "rate_limit": 100,
             },
             "/api/v1/matches/*": {
                 "service": "match_service",
                 "method": ["GET"],
-                "rate_limit": 200
+                "rate_limit": 200,
             },
             "/health": {
                 "service": "health_service",
                 "method": ["GET"],
-                "rate_limit": 1000
-            }
+                "rate_limit": 1000,
+            },
         }
 
         def find_routing_rule(path: str, method: str) -> Optional[Dict[str, Any]]:
             for pattern, rule in routing_rules.items():
-                if path.startswith(pattern.rstrip('*')):
+                if path.startswith(pattern.rstrip("*")):
                     if method in rule["method"]:
                         return rule
             return None
@@ -587,16 +607,16 @@ class TestAPIGatewayAndLoadBalancing:
     @pytest.mark.e2e
     @pytest.mark.integration
     @pytest.mark.asyncio
-    async def test_concurrent_request_handling(self, mock_services, load_balancer, gateway_metrics):
+    async def test_concurrent_request_handling(
+        self, mock_services, load_balancer, gateway_metrics
+    ):
         """测试并发请求处理"""
         print("🧪 测试并发请求处理")
 
         # 注册服务
         for service in mock_services:
             instance = ServiceInstance(
-                id=service.service_id,
-                host="localhost",
-                port=8001
+                id=service.service_id, host="localhost", port=8001
             )
             load_balancer.add_service(instance)
 
@@ -652,7 +672,9 @@ class TestAPIGatewayAndLoadBalancing:
 
         # 性能断言
         assert throughput > 50, f"吞吐量过低: {throughput:.1f} req/s"
-        assert avg_time_per_request < 0.05, f"平均响应时间过长: {avg_time_per_request:.3f}s"
+        assert (
+            avg_time_per_request < 0.05
+        ), f"平均响应时间过长: {avg_time_per_request:.3f}s"
 
         print("✅ 并发请求处理测试通过")
 
@@ -663,9 +685,7 @@ class TestAPIGatewayAndLoadBalancing:
         """测试服务发现集成"""
         print("🧪 测试服务发现集成")
 
-        service_registry = {
-            "services": {}
-        }
+        service_registry = {"services": {}}
 
         async def register_service(service_id: str, host: str, port: int):
             service_registry["services"][service_id] = {
@@ -676,24 +696,23 @@ class TestAPIGatewayAndLoadBalancing:
                 "last_heartbeat": datetime.now().isoformat(),
                 "metadata": {
                     "version": "1.0.0",
-                    "capabilities": ["predictions", "matches"]
-                }
+                    "capabilities": ["predictions", "matches"],
+                },
             }
 
         async def discover_services(service_type: str = None) -> List[Dict[str, Any]]:
             services = []
             for service_id, info in service_registry["services"].items():
-                if service_type is None or service_type in info["metadata"]["capabilities"]:
+                if (
+                    service_type is None
+                    or service_type in info["metadata"]["capabilities"]
+                ):
                     services.append(info)
             return services
 
         # 注册服务
         for i, service in enumerate(mock_services):
-            await register_service(
-                service.service_id,
-                "localhost",
-                8001 + i
-            )
+            await register_service(service.service_id, "localhost", 8001 + i)
 
         # 发现所有服务
         all_services = await discover_services()
@@ -701,7 +720,9 @@ class TestAPIGatewayAndLoadBalancing:
 
         # 发现特定类型服务
         prediction_services = await discover_services("predictions")
-        assert len(prediction_services) == len(mock_services)  # 所有服务都支持predictions
+        assert len(prediction_services) == len(
+            mock_services
+        )  # 所有服务都支持predictions
 
         # 验证服务信息
         for service_info in all_services:
@@ -751,7 +772,9 @@ class TestAPIGatewayAndLoadBalancing:
                 return {"status": "rate_limited", "message": "Too many requests"}
 
             result = await next_handler(request)
-            result["rate_limit_remaining"] = 10 - rate_limit_middleware.request_counts[client_ip]
+            result["rate_limit_remaining"] = (
+                10 - rate_limit_middleware.request_counts[client_ip]
+            )
             return result
 
         rate_limit_middleware.request_counts = {}
@@ -767,13 +790,19 @@ class TestAPIGatewayAndLoadBalancing:
             result = await next_handler(request)
 
             processing_time = time.time() - start_time
-            print(f"[LOG] {method} {path} - {result.get('status', 'unknown')} ({processing_time:.3f}s)")
+            print(
+                f"[LOG] {method} {path} - {result.get('status', 'unknown')} ({processing_time:.3f}s)"
+            )
 
             result["total_processing_time"] = processing_time
             return result
 
         # 构建中间件管道
-        middleware_pipeline = [logging_middleware, auth_middleware, rate_limit_middleware]
+        middleware_pipeline = [
+            logging_middleware,
+            auth_middleware,
+            rate_limit_middleware,
+        ]
 
         # 请求处理器
         async def request_handler(request):
@@ -781,7 +810,7 @@ class TestAPIGatewayAndLoadBalancing:
             return {
                 "status": "success",
                 "service": service,
-                "data": {"message": "Request processed successfully"}
+                "data": {"message": "Request processed successfully"},
             }
 
         # 执行管道
@@ -800,7 +829,7 @@ class TestAPIGatewayAndLoadBalancing:
             "path": "/api/v1/predictions",
             "headers": {"Authorization": "Bearer valid_token"},
             "client_ip": "192.168.1.100",
-            "service": "prediction_service"
+            "service": "prediction_service",
         }
 
         result = await execute_pipeline(valid_request)
@@ -814,7 +843,7 @@ class TestAPIGatewayAndLoadBalancing:
             "method": "GET",
             "path": "/api/v1/predictions",
             "client_ip": "192.168.1.101",
-            "service": "prediction_service"
+            "service": "prediction_service",
         }
 
         result = await execute_pipeline(unauthorized_request)
@@ -826,7 +855,7 @@ class TestAPIGatewayAndLoadBalancing:
             "path": "/api/v1/predictions",
             "headers": {"Authorization": "Bearer valid_token"},
             "client_ip": "192.168.1.102",
-            "service": "prediction_service"
+            "service": "prediction_service",
         }
 
         # 发送11个请求（超过限制）
@@ -838,8 +867,10 @@ class TestAPIGatewayAndLoadBalancing:
             else:
                 assert result["status"] == "rate_limited"
 
-        gateway_metrics.successful_requests += 12  # 1 valid + 1 unauthorized + 10 success + 1 rate_limited
-        gateway_metrics.failed_requests += 1    # 1 unauthorized
+        gateway_metrics.successful_requests += (
+            12  # 1 valid + 1 unauthorized + 10 success + 1 rate_limited
+        )
+        gateway_metrics.failed_requests += 1  # 1 unauthorized
 
         print("✅ 网关中间件管道测试通过")
 

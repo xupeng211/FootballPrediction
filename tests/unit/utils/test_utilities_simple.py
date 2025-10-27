@@ -23,20 +23,22 @@
 目标：将utils模块覆盖率提升至60%
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock, AsyncMock, create_autospec
-from typing import Dict, Any, List, Optional, Union, Tuple
-from datetime import datetime, timedelta, date
 import asyncio
-from dataclasses import dataclass, field
-from enum import Enum
-import json
-import hashlib
 import base64
-import re
+import hashlib
+import json
 import os
+import re
 import tempfile
+from dataclasses import dataclass, field
+from datetime import date, datetime, timedelta
+from enum import Enum
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
+from unittest.mock import AsyncMock, MagicMock, Mock, create_autospec, patch
+
+import pytest
+
 
 # Mock 工具函数
 class MockStringUtils:
@@ -51,7 +53,7 @@ class MockStringUtils:
 
         if remove_special_chars:
             # 移除特殊字符，保留字母数字和基本标点
-            cleaned = re.sub(r'[^\w\s\-.,!?]', '', cleaned)
+            cleaned = re.sub(r"[^\w\s\-.,!?]", "", cleaned)
 
         return cleaned
 
@@ -62,7 +64,7 @@ class MockStringUtils:
             return False
 
         # 简化的邮箱验证正则
-        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         return bool(re.match(pattern, email))
 
     @staticmethod
@@ -73,8 +75,8 @@ class MockStringUtils:
 
         # 转换为小写，替换空格为连字符
         slug = text.lower().strip()
-        slug = re.sub(r'\s+', '-', slug)
-        slug = re.sub(r'[^\w\-]', '', slug)
+        slug = re.sub(r"\s+", "-", slug)
+        slug = re.sub(r"[^\w\-]", "", slug)
 
         return slug
 
@@ -87,7 +89,8 @@ class MockStringUtils:
         if len(text) <= max_length:
             return text
 
-        return text[:max_length - len(suffix)] + suffix
+        return text[: max_length - len(suffix)] + suffix
+
 
 class MockDateUtils:
     @staticmethod
@@ -137,6 +140,7 @@ class MockDateUtils:
 
         return dt.weekday() in [5, 6]  # 周六、周日
 
+
 class MockCryptoUtils:
     @staticmethod
     def generate_hash(text: str, algorithm: str = "sha256") -> str:
@@ -146,7 +150,7 @@ class MockCryptoUtils:
 
         try:
             hash_obj = hashlib.new(algorithm)
-            hash_obj.update(text.encode('utf-8'))
+            hash_obj.update(text.encode("utf-8"))
             return hash_obj.hexdigest()
         except:
             return ""
@@ -158,8 +162,8 @@ class MockCryptoUtils:
             return ""
 
         try:
-            encoded_bytes = base64.b64encode(text.encode('utf-8'))
-            return encoded_bytes.decode('utf-8')
+            encoded_bytes = base64.b64encode(text.encode("utf-8"))
+            return encoded_bytes.decode("utf-8")
         except:
             return ""
 
@@ -170,17 +174,18 @@ class MockCryptoUtils:
             return ""
 
         try:
-            decoded_bytes = base64.b64decode(encoded_text.encode('utf-8'))
-            return decoded_bytes.decode('utf-8')
+            decoded_bytes = base64.b64decode(encoded_text.encode("utf-8"))
+            return decoded_bytes.decode("utf-8")
         except:
             return ""
+
 
 class MockFileUtils:
     @staticmethod
     def safe_read_file(file_path: Union[str, Path]) -> Optional[str]:
         """安全读取文件"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 return f.read()
         except:
             return None
@@ -190,7 +195,7 @@ class MockFileUtils:
         """安全写入文件"""
         try:
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(content)
             return True
         except:
@@ -204,10 +209,12 @@ class MockFileUtils:
         except:
             return 0
 
+
 class MockDataUtils:
     @staticmethod
     def flatten_dict(data: Dict[str, Any], separator: str = ".") -> Dict[str, Any]:
         """扁平化字典"""
+
         def _flatten(obj, parent_key=""):
             items = []
             if isinstance(obj, dict):
@@ -240,13 +247,14 @@ class MockDataUtils:
             return ""
 
         # 移除非数字字符
-        digits = re.sub(r'[^\d]', '', phone)
+        digits = re.sub(r"[^\d]", "", phone)
 
         # 中国手机号格式验证
-        if len(digits) == 11 and digits.startswith('1'):
+        if len(digits) == 11 and digits.startswith("1"):
             return digits
 
         return ""
+
 
 class MockPerformanceUtils:
     @staticmethod
@@ -266,6 +274,7 @@ class MockPerformanceUtils:
     @staticmethod
     def retry(max_attempts: int = 3, delay: float = 1.0):
         """重试装饰器"""
+
         def decorator(func):
             def wrapper(*args, **kwargs):
                 last_exception = None
@@ -276,21 +285,27 @@ class MockPerformanceUtils:
                     except Exception as e:
                         last_exception = e
                         if attempt < max_attempts - 1:
-                            asyncio.sleep(delay) if asyncio.iscoroutinefunction(func) else None
+                            (
+                                asyncio.sleep(delay)
+                                if asyncio.iscoroutinefunction(func)
+                                else None
+                            )
 
                 raise last_exception
 
             return wrapper
+
         return decorator
+
 
 # 设置Mock别名
 try:
-    from src.utils.string_utils import StringUtils
-    from src.utils.date_utils import DateUtils
     from src.utils.crypto_utils import CryptoUtils
-    from src.utils.file_utils import FileUtils
     from src.utils.data_utils import DataUtils
+    from src.utils.date_utils import DateUtils
+    from src.utils.file_utils import FileUtils
     from src.utils.performance_utils import PerformanceUtils
+    from src.utils.string_utils import StringUtils
 except ImportError:
     StringUtils = MockStringUtils
     DateUtils = MockDateUtils
@@ -315,7 +330,9 @@ class TestUtilsSimple:
     def test_string_clean_special_chars_success(self) -> None:
         """✅ 成功用例：清理特殊字符成功"""
         text_with_special = "Hello@#World$%^"
-        cleaned = MockStringUtils.clean_string(text_with_special, remove_special_chars=True)
+        cleaned = MockStringUtils.clean_string(
+            text_with_special, remove_special_chars=True
+        )
 
         assert cleaned == "HelloWorld"
 
@@ -329,7 +346,7 @@ class TestUtilsSimple:
         valid_emails = [
             "test@example.com",
             "user.name@domain.org",
-            "user+tag@example.co.uk"
+            "user+tag@example.co.uk",
         ]
 
         for email in valid_emails:
@@ -342,7 +359,7 @@ class TestUtilsSimple:
             "@domain.com",
             "user@",
             "user@domain",
-            "user..name@domain.com"
+            "user..name@domain.com",
         ]
 
         for email in invalid_emails:
@@ -353,7 +370,7 @@ class TestUtilsSimple:
         test_cases = [
             ("Hello World", "hello-world"),
             ("Python Programming", "python-programming"),
-            ("Test with 123 numbers!", "test-with-123-numbers")
+            ("Test with 123 numbers!", "test-with-123-numbers"),
         ]
 
         for input_text, expected_slug in test_cases:
@@ -415,7 +432,7 @@ class TestUtilsSimple:
             (now - timedelta(days=2), "2天前"),
             (now - timedelta(hours=3), "3小时前"),
             (now - timedelta(minutes=5), "5分钟前"),
-            (now - timedelta(seconds=10), "刚刚")
+            (now - timedelta(seconds=10), "刚刚"),
         ]
 
         for test_time, expected in test_cases:
@@ -474,7 +491,7 @@ class TestUtilsSimple:
     # 文件工具测试
     def test_file_operations_success(self) -> None:
         """✅ 成功用例：文件操作成功"""
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as f:
             temp_path = f.name
             test_content = "Test file content"
             f.write(test_content)
@@ -513,16 +530,8 @@ class TestUtilsSimple:
     def test_dict_flattening_success(self) -> None:
         """✅ 成功用例：字典扁平化成功"""
         nested_dict = {
-            "user": {
-                "name": "John",
-                "address": {
-                    "city": "New York",
-                    "country": "USA"
-                }
-            },
-            "settings": {
-                "theme": "dark"
-            }
+            "user": {"name": "John", "address": {"city": "New York", "country": "USA"}},
+            "settings": {"theme": "dark"},
         }
 
         flattened = MockDataUtils.flatten_dict(nested_dict)
@@ -559,7 +568,7 @@ class TestUtilsSimple:
             ("+86 138 1234 5678", "13812345678"),
             ("Invalid number", ""),
             ("1234567890", ""),  # 不以1开头
-            ("138123456789", "")  # 超过11位
+            ("138123456789", ""),  # 超过11位
         ]
 
         for input_phone, expected in test_phones:
@@ -594,7 +603,7 @@ class TestUtilsSimple:
 
         # 清理缓存
         expensive_function.clear_cache()
-        result4 = expensive_function(5)
+        expensive_function(5)
         assert call_count == 3  # 重新计算
 
     def test_retry_decorator_success(self) -> None:
@@ -702,13 +711,7 @@ def mock_test_data():
         "emails": ["test@example.com", "invalid-email", "user@domain.org"],
         "strings": ["  Hello World  ", "Hello@#World!", ""],
         "dates": ["2023-12-25", "2023-13-45", "invalid-date"],
-        "nested_data": {
-            "level1": {
-                "level2": {
-                    "level3": "deep_value"
-                }
-            }
-        }
+        "nested_data": {"level1": {"level2": {"level3": "deep_value"}}},
     }
 
 

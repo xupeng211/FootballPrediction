@@ -1,4 +1,5 @@
 from unittest.mock import Mock, patch
+
 """
 健康检查API路由器测试
 Tests for health check API router
@@ -6,10 +7,11 @@ Tests for health check API router
 测试健康检查API的各个端点功能。
 """
 
-import pytest
 import time
-from fastapi.testclient import TestClient
+
+import pytest
 from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 from src.api.health import router as health_router
 
@@ -18,7 +20,6 @@ from src.api.health import router as health_router
 @pytest.mark.api
 @pytest.mark.external_api
 @pytest.mark.slow
-
 class TestHealthRouter:
     """健康检查API路由器测试"""
 

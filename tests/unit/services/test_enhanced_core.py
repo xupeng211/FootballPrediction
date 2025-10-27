@@ -2,27 +2,24 @@
 
 # TODO: Consider creating a fixture for 5 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 增强服务核心模块测试
 Tests for Enhanced Core Module
 """
 
-import pytest
-from datetime import datetime, timedelta
 import time
+from datetime import datetime, timedelta
 
-from src.services.enhanced_core import (
-    ServiceConfig,
-    ServiceMetrics,
-    EnhancedBaseService,
-    BaseService,
-    AbstractBaseService,
-)
+import pytest
+
+from src.services.enhanced_core import (AbstractBaseService, BaseService,
+                                        EnhancedBaseService, ServiceConfig,
+                                        ServiceMetrics)
 
 
 @pytest.mark.unit
-
 class TestServiceConfig:
     """测试服务配置类"""
 

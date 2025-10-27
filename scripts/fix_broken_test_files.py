@@ -324,7 +324,7 @@ if __name__ == "__main__":
                 self.fixed_files.append(file_path)
                 success_count += 1
 
-        print(f"\n📊 重建统计:")
+        print("\n📊 重建统计:")
         print(f"  总文件数: {len(broken_files)}")
         print(f"  成功重建: {success_count}")
         print(f"  重建失败: {len(broken_files) - success_count}")
@@ -336,7 +336,7 @@ if __name__ == "__main__":
         self.generate_rebuild_report()
 
         success_rate = (valid_count / len(broken_files)) * 100 if broken_files else 100
-        print(f"\n🎉 测试文件重建完成!")
+        print("\n🎉 测试文件重建完成!")
         print(f"成功率: {success_rate:.2f}%")
         print(f"验证通过: {valid_count}/{len(broken_files)}")
 

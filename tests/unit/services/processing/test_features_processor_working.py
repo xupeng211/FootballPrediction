@@ -5,17 +5,14 @@ Tests for Features Processor (Working Version)
 测试src.services.processing.processors.features_processor模块的功能
 """
 
-import pytest
 import warnings
+
+import pytest
 
 # 测试导入
 try:
     from src.services.processing.processors.features_processor import (
-        aggregator,
-        calculator,
-        processor,
-        validator,
-    )
+        aggregator, calculator, processor, validator)
 
     FEATURES_PROCESSOR_AVAILABLE = True
 except ImportError as e:
@@ -27,7 +24,6 @@ except ImportError as e:
     not FEATURES_PROCESSOR_AVAILABLE, reason="Features processor module not available"
 )
 @pytest.mark.unit
-
 class TestFeaturesProcessorImports:
     """特征处理器导入测试"""
 
@@ -168,9 +164,8 @@ class TestFeaturesProcessorIntegration:
         """测试：向后兼容性"""
         # 验证可以通过旧方式导入
         try:
-            from src.services.processing.processors.features_processor import (
-                aggregator as old_aggregator,
-            )
+            from src.services.processing.processors.features_processor import \
+                aggregator as old_aggregator
 
             assert old_aggregator is aggregator
         except ImportError:

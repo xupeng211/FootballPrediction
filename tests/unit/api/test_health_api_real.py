@@ -1,4 +1,5 @@
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 健康检查API真实测试
 Tests for real health check API
@@ -6,24 +7,24 @@ Tests for real health check API
 测试实际的健康检查API功能。
 """
 
-import pytest
 import sys
 import time
 import warnings
-from fastapi.testclient import TestClient
-from fastapi import FastAPI
 from pathlib import Path
+
+import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, "src")
 
-from src.api.health import router as health_router
 from src.api.health import _check_database
+from src.api.health import router as health_router
 
 
 @pytest.mark.unit
-
 class TestHealthAPIReal:
     """健康检查API真实测试"""
 
@@ -65,9 +66,9 @@ class TestHealthAPIReal:
                 for warning in w
                 if issubclass(warning.category, DeprecationWarning)
             ]
-            assert len(deprecation_warnings) >= 1, (
-                f"Expected deprecation warning, got {len(deprecation_warnings)}"
-            )
+            assert (
+                len(deprecation_warnings) >= 1
+            ), f"Expected deprecation warning, got {len(deprecation_warnings)}"
             assert "直接从 health 导入已弃用" in str(deprecation_warnings[0].message)
 
             # 验证router被正确导入

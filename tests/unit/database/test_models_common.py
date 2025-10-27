@@ -7,6 +7,7 @@ except Exception:
     pass
     from src.database.models.common import CommonModel
 except ImportError:
+
     class CommonModel:
         def __init__(self):
             self.id = 1
@@ -29,6 +30,6 @@ def test_model_attributes():
     except Exception:
         pass
         model = CommonModel()
-        assert hasattr(model, 'id')
+        assert hasattr(model, "id")
     except Exception:
         assert True

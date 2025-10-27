@@ -1,4 +1,5 @@
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 健康检查API测试
 Tests for Health Check API
@@ -6,15 +7,16 @@ Tests for Health Check API
 测试src.api.health模块的健康检查功能
 """
 
-import pytest
 import asyncio
 import json
 from datetime import datetime
 
+import pytest
+
 # 测试导入
 try:
-    from src.api.health.utils import HealthChecker
     from src.api.health import router
+    from src.api.health.utils import HealthChecker
 
     HEALTH_AVAILABLE = True
 except ImportError as e:
@@ -25,7 +27,6 @@ except ImportError as e:
 
 
 @pytest.mark.unit
-
 class TestHealthChecker:
     """健康检查器测试"""
 
@@ -268,8 +269,8 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if HEALTH_AVAILABLE:
-        from src.api.health.utils import HealthChecker
         from src.api.health import router
+        from src.api.health.utils import HealthChecker
 
         assert HealthChecker is not None
         assert router is not None

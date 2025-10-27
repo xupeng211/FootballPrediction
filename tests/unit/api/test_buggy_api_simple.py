@@ -9,8 +9,8 @@ import pytest
 
 # 直接测试导入
 try:
-    import sys
     import os
+    import sys
 
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../src"))
     import importlib.util
@@ -30,7 +30,6 @@ except Exception as e:
 
 @pytest.mark.unit
 @pytest.mark.api
-
 class TestBuggyAPIBasic:
     """Buggy API基础测试"""
 

@@ -1,16 +1,16 @@
 """User 模型工厂。"""
 
 from __future__ import annotations
-import pytest
 
 import hashlib
 import secrets
 from datetime import datetime, timedelta
 
 import factory
+import pytest
 
-from tests.factories.base import BaseFactory
 from src.database.models.user import User
+from tests.factories.base import BaseFactory
 
 
 class UserFactory(BaseFactory):

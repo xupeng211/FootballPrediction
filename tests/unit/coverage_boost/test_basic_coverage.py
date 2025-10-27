@@ -3,15 +3,15 @@
 快速提升项目整体覆盖率
 """
 
-import pytest
-import sys
 import os
+import sys
 from pathlib import Path
+
+import pytest
 
 
 # 测试项目结构
 @pytest.mark.unit
-
 def test_project_structure():
     """测试项目结构存在性"""
     project_root = Path(__file__).parent.parent.parent.parent

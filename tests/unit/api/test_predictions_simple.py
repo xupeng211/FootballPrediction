@@ -19,7 +19,6 @@ except ImportError as e:
 
 @pytest.mark.unit
 @pytest.mark.api
-
 class TestPredictionsAPI:
     """预测API测试"""
 

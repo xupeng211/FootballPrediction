@@ -1,4 +1,5 @@
 from unittest.mock import patch
+
 """
 模拟Redis管理器测试
 Tests for Mock Redis Manager
@@ -6,9 +7,10 @@ Tests for Mock Redis Manager
 测试src.cache.mock_redis模块的模拟Redis功能
 """
 
-import pytest
-import time
 import json
+import time
+
+import pytest
 
 # 测试导入
 try:
@@ -23,7 +25,6 @@ except ImportError as e:
 
 @pytest.mark.skipif(not MOCK_REDIS_AVAILABLE, reason="Mock Redis module not available")
 @pytest.mark.unit
-
 class TestMockRedisManager:
     """模拟Redis管理器测试"""
 
@@ -288,8 +289,8 @@ class TestMockRedisManager:
 
     def test_concurrent_operations(self):
         """测试：并发操作"""
-        import threading
         import queue
+        import threading
 
         redis = MockRedisManager()
         results = queue.Queue()

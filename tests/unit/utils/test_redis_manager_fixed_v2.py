@@ -1,9 +1,11 @@
-import pytest
-import sys
 import os
+import sys
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+
 from src.cache.redis_manager import RedisManager
 
-from unittest.mock import AsyncMock, MagicMock
 """
 Redis管理器修复版测试 V2
 修复了所有已知的问题

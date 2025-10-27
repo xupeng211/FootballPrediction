@@ -2,20 +2,21 @@
 
 # TODO: Consider creating a fixture for 4 repeated Mock creations
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 """
 国际化模块测试
 """
 
-import pytest
-from pathlib import Path
 import os
+from pathlib import Path
 
-from src.utils.i18n import supported_languages, LOCALE_DIR, init_i18n
+import pytest
+
+from src.utils.i18n import LOCALE_DIR, init_i18n, supported_languages
 
 
 @pytest.mark.unit
-
 class TestI18nModule:
     """国际化模块测试"""
 

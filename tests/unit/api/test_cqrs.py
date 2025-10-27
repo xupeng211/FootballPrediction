@@ -2,14 +2,16 @@
 
 # TODO: Consider creating a fixture for 5 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 """
 Tests for api.cqrs
 Auto-generated test file
 """
 
-import pytest
 import asyncio
+
+import pytest
 
 # Test imports
 try:
@@ -22,7 +24,6 @@ except ImportError as e:
 
 
 @pytest.mark.unit
-
 class TestCreatePredictionRequest:
     """Test cases for CreatePredictionRequest"""
 

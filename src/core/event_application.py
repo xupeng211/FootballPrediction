@@ -76,7 +76,7 @@ class EventDrivenApplication:
         # 例如：邮件发送处理器、WebSocket推送处理器等
 
         # 示例：注册一个简单的统计处理器
-        from ..events.base import EventHandler, Event
+        from ..events.base import Event, EventHandler
 
         class SimpleStatsHandler(EventHandler):
             """简单统计处理器"""
@@ -115,9 +115,9 @@ class EventDrivenApplication:
         stats = self.get_event_stats()
 
         return {
-            "status": "healthy"
-            if self._initialized and stats["running"]
-            else "unhealthy",
+            "status": (
+                "healthy" if self._initialized and stats["running"] else "unhealthy"
+            ),
             "initialized": self._initialized,
             "event_bus_stats": stats,
             "handlers_count": stats["total_subscribers"],

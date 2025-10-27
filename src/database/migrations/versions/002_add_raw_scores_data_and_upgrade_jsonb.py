@@ -1,10 +1,10 @@
-import sqlalchemy as sa
-from sqlalchemy.exc import SQLAlchemyError, DatabaseError
-from typing import Union, Sequence
-from sqlalchemy.dialects import postgresql
-
 # mypy: ignore-errors
 import logging
+from typing import Sequence, Union
+
+import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
+from sqlalchemy.exc import DatabaseError, SQLAlchemyError
 
 logger = logging.getLogger(__name__)
 from alembic import op
@@ -51,9 +51,11 @@ def upgrade() -> None:
         ),
         sa.Column(
             "raw_data",
-            sa.JSON()
-            if db_dialect == "sqlite"
-            else postgresql.JSONB(astext_type=sa.Text()),
+            (
+                sa.JSON()
+                if db_dialect == "sqlite"
+                else postgresql.JSONB(astext_type=sa.Text())
+            ),
             nullable=False,
             comment="原始JSON数据",
         ),

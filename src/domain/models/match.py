@@ -9,7 +9,7 @@ Encapsulates match-related business logic and invariants.
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
 
 from ...core.exceptions import DomainError
 
@@ -277,13 +277,15 @@ class Match:
             "season": self.season,
             "match_date": self.match_date.isoformat() if self.match_date else None,
             "status": self.status.value,
-            "score": {
-                "home_score": self.score.home_score,
-                "away_score": self.score.away_score,
-                "result": self.score.result.value,
-            }
-            if self.score
-            else None,
+            "score": (
+                {
+                    "home_score": self.score.home_score,
+                    "away_score": self.score.away_score,
+                    "result": self.score.result.value,
+                }
+                if self.score
+                else None
+            ),
             "venue": self.venue,
             "referee": self.referee,
             "weather": self.weather,

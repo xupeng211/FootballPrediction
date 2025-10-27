@@ -5,18 +5,16 @@
 # 导入
 import logging
 import time
-from typing import Dict, Any, List, Optional, Tuple
-from datetime import datetime
-import numpy
 from dataclasses import dataclass
-from .strategies.base import (
-    PredictionStrategy,
-    PredictionInput,
-    PredictionOutput,
-    StrategyType,
-    StrategyMetrics,
-)
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy
+
 from .models.prediction import Prediction
+from .strategies.base import (PredictionInput, PredictionOutput,
+                              PredictionStrategy, StrategyMetrics,
+                              StrategyType)
 
 
 # 类定义

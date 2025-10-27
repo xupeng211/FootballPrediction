@@ -32,7 +32,7 @@ def test_error_handling():
     except Exception:
         pass
         handler = ErrorHandler()
-        result = handler.handle_error(Exception("test error"))
+        handler.handle_error(Exception("test error"))
         assert True  # 基本测试通过
     except Exception:
         assert True

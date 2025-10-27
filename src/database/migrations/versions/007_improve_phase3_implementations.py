@@ -1,9 +1,8 @@
 # mypy: ignore-errors
 import sqlalchemy as sa
-from sqlalchemy.exc import SQLAlchemyError, DatabaseError
-
-from sqlalchemy import text
 from alembic import op
+from sqlalchemy import text
+from sqlalchemy.exc import DatabaseError, SQLAlchemyError
 
 """Phase 3 改进迁移
 Phase 3 improvements migration

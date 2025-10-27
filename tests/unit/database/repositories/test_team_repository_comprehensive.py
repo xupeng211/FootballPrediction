@@ -6,12 +6,13 @@
 优先级: HIGH
 """
 
-import pytest
-from unittest.mock import Mock, patch, AsyncMock, MagicMock, call
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
 import asyncio
 import json
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+from unittest.mock import AsyncMock, MagicMock, Mock, call, patch
+
+import pytest
 
 # 尝试导入目标模块
 try:
@@ -34,11 +35,7 @@ class TestTeamRepositoryComprehensive:
     @pytest.fixture
     def setup_mocks(self):
         """设置Mock对象"""
-        return {
-            'config': {'test_mode': True},
-            'mock_data': {'key': 'value'}
-        }
-
+        return {"config": {"test_mode": True}, "mock_data": {"key": "value"}}
 
     def test_teamrepository_initialization(self, setup_mocks):
         """测试 TeamRepository 初始化"""
@@ -50,7 +47,6 @@ class TestTeamRepositoryComprehensive:
         # TODO: 实现 TeamRepository 核心功能测试
         assert True
 
-
     @pytest.mark.asyncio
     async def test_get_by_id_async(self, setup_mocks):
         """测试异步函数 get_by_id"""
@@ -58,7 +54,6 @@ class TestTeamRepositoryComprehensive:
         mock_async = AsyncMock()
         result = await mock_async()
         assert result is not None
-
 
     @pytest.mark.asyncio
     async def test_get_by_name_async(self, setup_mocks):
@@ -68,7 +63,6 @@ class TestTeamRepositoryComprehensive:
         result = await mock_async()
         assert result is not None
 
-
     @pytest.mark.asyncio
     async def test_get_all_async(self, setup_mocks):
         """测试异步函数 get_all"""
@@ -76,7 +70,6 @@ class TestTeamRepositoryComprehensive:
         mock_async = AsyncMock()
         result = await mock_async()
         assert result is not None
-
 
     @pytest.mark.asyncio
     async def test_create_async(self, setup_mocks):
@@ -86,7 +79,6 @@ class TestTeamRepositoryComprehensive:
         result = await mock_async()
         assert result is not None
 
-
     @pytest.mark.asyncio
     async def test_update_async(self, setup_mocks):
         """测试异步函数 update"""
@@ -94,7 +86,6 @@ class TestTeamRepositoryComprehensive:
         mock_async = AsyncMock()
         result = await mock_async()
         assert result is not None
-
 
     def test_module_integration(self, setup_mocks):
         """测试模块集成"""
@@ -115,15 +106,27 @@ class TestTeamRepositoryComprehensive:
         end_time = datetime.now()
         assert (end_time - start_time).total_seconds() < 1.0
 
-    @pytest.mark.parametrize("input_data,expected", [
-        ({"key": "value"}, {"key": "value"}),
-        (None, None),
-        ("", ""),
-    ])
+    @pytest.mark.parametrize(
+        "input_data,expected",
+        [
+            ({"key": "value"}, {"key": "value"}),
+            (None, None),
+            ("", ""),
+        ],
+    )
     def test_parameterized_cases(self, setup_mocks, input_data, expected):
         """参数化测试"""
         # TODO: 实现参数化测试
         assert input_data == expected
 
+
 if __name__ == "__main__":
-    pytest.main([__file__, "-v", "--cov=" + "{module_path.replace('src/', '').replace('.py', '').replace('/', '.')}", "--cov-report=term"])
+    pytest.main(
+        [
+            __file__,
+            "-v",
+            "--cov="
+            + "{module_path.replace('src/', '').replace('.py', '').replace('/', '.')}",
+            "--cov-report=term",
+        ]
+    )

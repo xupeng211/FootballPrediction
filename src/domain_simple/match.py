@@ -5,8 +5,8 @@
 """
 
 from datetime import datetime
-from typing import Optional, Dict, Any
 from enum import Enum
+from typing import Any, Dict, Optional
 
 
 class MatchStatus(Enum):
@@ -130,16 +130,16 @@ class Match:
             "home_team_id": self.home_team_id,
             "away_team_id": self.away_team_id,
             "league_id": self.league_id,
-            "scheduled_time": self.scheduled_time.isoformat()
-            if self.scheduled_time
-            else None,
+            "scheduled_time": (
+                self.scheduled_time.isoformat() if self.scheduled_time else None
+            ),
             "status": self.status.value,
             "home_score": self.home_score,
             "away_score": self.away_score,
             "prediction_made": self.prediction_made,
-            "prediction_result": self.prediction_result.value
-            if self.prediction_result
-            else None,
+            "prediction_result": (
+                self.prediction_result.value if self.prediction_result else None
+            ),
             "confidence_score": self.confidence_score,
         }
 
@@ -151,9 +151,11 @@ class Match:
             home_team_id=data.get("home_team_id", 0),
             away_team_id=data.get("away_team_id", 0),
             league_id=data.get("league_id", 0),
-            scheduled_time=datetime.fromisoformat(data["scheduled_time"])
-            if data.get("scheduled_time")
-            else None,
+            scheduled_time=(
+                datetime.fromisoformat(data["scheduled_time"])
+                if data.get("scheduled_time")
+                else None
+            ),
             status=MatchStatus(data.get("status", "scheduled")),
         )
 

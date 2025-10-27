@@ -7,8 +7,9 @@ Implements dispatching mechanism for commands and queries.
 """
 
 import logging
-from typing import Any, Dict, Type, Optional
-from .base import Command, Query, CommandHandler, QueryHandler
+from typing import Any, Dict, Optional, Type
+
+from .base import Command, CommandHandler, Query, QueryHandler
 
 logger = logging.getLogger(__name__)
 

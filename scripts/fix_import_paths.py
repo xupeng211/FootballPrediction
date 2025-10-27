@@ -163,7 +163,7 @@ def verify_imports():
                 module.replace('.', '/') + '.py'
             )
             if spec and spec.loader:
-                module_obj = importlib.util.module_from_spec(spec)
+                importlib.util.module_from_spec(spec)
                 print(f"✅ {module}")
                 success_count += 1
             else:

@@ -6,19 +6,20 @@ Prediction Strategy Factory
 Responsible for creating and managing prediction strategy instances.
 """
 
-import os
 import json
-import yaml
-from typing import Dict, Any, List, Optional, Type, Union
-from pathlib import Path
-from datetime import datetime
 import logging
+import os
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Type, Union
+
+import yaml
 
 from .base import PredictionStrategy, StrategyType
+from .ensemble import EnsembleStrategy
+from .historical import HistoricalStrategy
 from .ml_model import MLModelStrategy
 from .statistical import StatisticalStrategy
-from .historical import HistoricalStrategy
-from .ensemble import EnsembleStrategy
 
 logger = logging.getLogger(__name__)
 
@@ -527,9 +528,9 @@ class PredictionStrategyFactory:
             health_report[name] = {
                 "healthy": strategy.is_healthy(),
                 "type": strategy.strategy_type.value,
-                "metrics": strategy.get_metrics().__dict__
-                if strategy.get_metrics()
-                else None,
+                "metrics": (
+                    strategy.get_metrics().__dict__ if strategy.get_metrics() else None
+                ),
                 "config": strategy.get_config(),
             }
 

@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 32 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 赔率收集器改进版测试
 Tests for improved odds collector
@@ -10,28 +11,26 @@ Tests for improved odds collector
 测试赔率收集器的功能。
 """
 
-import pytest
 import asyncio
-from pathlib import Path
 import sys
+from pathlib import Path
+
+import pytest
 
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, "src")
 
-from src.collectors.odds_collector_improved import (
-    OddsCollector,
-    OddsCollectorManager,
-    OddsSourceManager,
-    OddsProcessor,
-    OddsAnalyzer,
-    OddsStorage,
-    get_odds_manager,
-)
+from src.collectors.odds_collector_improved import (OddsAnalyzer,
+                                                    OddsCollector,
+                                                    OddsCollectorManager,
+                                                    OddsProcessor,
+                                                    OddsSourceManager,
+                                                    OddsStorage,
+                                                    get_odds_manager)
 
 
 @pytest.mark.unit
-
 class TestOddsCollectorImproved:
     """赔率收集器改进版测试"""
 

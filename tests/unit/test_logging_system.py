@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from unittest.mock import Mock, patch
+
 """
 Auto-generated basic tests for logging_system.py
 TODO: Expand these tests with actual functionality
@@ -12,7 +13,6 @@ import pytest
 
 
 @pytest.mark.unit
-
 class TestLoggingSystem:
     """Basic test class for logging_system.py"""
 

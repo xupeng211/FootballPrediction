@@ -3,11 +3,12 @@
 Football Data Cleaner (Compatibility Version)
 """
 
-import pandas as pd
-import numpy as np
-from typing import Dict, Any, List, Optional, Tuple
 import logging
 from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 

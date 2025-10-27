@@ -1,16 +1,17 @@
 from unittest.mock import Mock, patch
+
 """
 测试 health 模块的覆盖率补充
 Test coverage supplement for health module
 """
 
-import pytest
 import warnings
+
+import pytest
 
 
 @pytest.mark.unit
 @pytest.mark.api
-
 def test_health_module_import():
     """测试health模块导入功能"""
     # 测试导入不会抛出异常
@@ -53,7 +54,6 @@ def test_health_module_backward_compatibility():
     # 模拟旧版本的导入方式
     try:
         from src.api.health import router as old_router
-
         # 验证新版本导入方式
         from src.api.health.health import router as new_router
 

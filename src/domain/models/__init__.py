@@ -6,16 +6,11 @@ Domain Models
 Contains core domain models for the football prediction system.
 """
 
-from .match import Match, MatchStatus, MatchResult, MatchScore
-from .prediction import (
-    Prediction,
-    PredictionStatus,
-    ConfidenceScore,
-    PredictionScore,
-    PredictionPoints,
-)
-from .team import Team, TeamStats, TeamForm
 from .league import League, LeagueSeason, LeagueSettings
+from .match import Match, MatchResult, MatchScore, MatchStatus
+from .prediction import (ConfidenceScore, Prediction, PredictionPoints,
+                         PredictionScore, PredictionStatus)
+from .team import Team, TeamForm, TeamStats
 
 __all__ = [
     # 比赛

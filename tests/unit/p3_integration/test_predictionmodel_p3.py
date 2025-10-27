@@ -4,43 +4,44 @@ P3阶段预测模型测试: PredictionModel
 策略: 真实模型验证 + 数据完整性测试
 """
 
-import pytest
-from unittest.mock import Mock, patch
-from datetime import datetime, date
-from typing import Dict, List, Any, Optional
-import sys
 import os
+import sys
+from datetime import date, datetime
+from typing import Any, Dict, List, Optional
+from unittest.mock import Mock, patch
+
+import pytest
 from pydantic import ValidationError
 
 # 确保可以导入源码模块
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../.."))
 
 # 导入目标模块
 try:
-    from src.models.prediction import (
-        Prediction,
-        PredictionCreate,
-        PredictionUpdate,
-        PredictionResponse,
-        PredictionStats
-    )
+    from src.models.prediction import (Prediction, PredictionCreate,
+                                       PredictionResponse, PredictionStats,
+                                       PredictionUpdate)
+
     PREDICTION_MODEL_AVAILABLE = True
 except ImportError as e:
     print(f"PredictionModel模块导入警告: {e}")
     PREDICTION_MODEL_AVAILABLE = False
 
+
 class TestPredictionModelAdvanced:
     """PredictionModel 高级测试套件"""
 
-    @pytest.mark.skipif(not PREDICTION_MODEL_AVAILABLE, reason="PredictionModel模块不可用")
+    @pytest.mark.skipif(
+        not PREDICTION_MODEL_AVAILABLE, reason="PredictionModel模块不可用"
+    )
     def test_prediction_model_import(self):
         """测试预测模型导入"""
         from src.models import prediction
 
         assert prediction is not None
-        assert hasattr(prediction, 'Prediction')
-        assert hasattr(prediction, 'PredictionCreate')
-        assert hasattr(prediction, 'PredictionUpdate')
+        assert hasattr(prediction, "Prediction")
+        assert hasattr(prediction, "PredictionCreate")
+        assert hasattr(prediction, "PredictionUpdate")
 
     def test_prediction_model_validation(self):
         """测试预测模型数据验证"""
@@ -55,7 +56,7 @@ class TestPredictionModelAdvanced:
             "predicted_away": 1,
             "confidence": 0.85,
             "strategy_used": "historical_analysis",
-            "notes": "Test prediction"
+            "notes": "Test prediction",
         }
 
         prediction = Prediction(**valid_data)
@@ -80,7 +81,7 @@ class TestPredictionModelAdvanced:
             "predicted_home": 2,
             "predicted_away": 1,
             "confidence": 1.5,  # 无效：超过1.0
-            "strategy_used": "test"
+            "strategy_used": "test",
         }
 
         with pytest.raises(ValidationError):
@@ -97,7 +98,7 @@ class TestPredictionModelAdvanced:
             "predicted_home": 2,
             "predicted_away": 1,
             "confidence": 0.85,
-            "strategy_used": "ml_model"
+            "strategy_used": "ml_model",
         }
 
         prediction_create = PredictionCreate(**create_data)
@@ -115,7 +116,7 @@ class TestPredictionModelAdvanced:
         update_data = {
             "predicted_home": 3,
             "confidence": 0.90,
-            "notes": "Updated prediction"
+            "notes": "Updated prediction",
         }
 
         prediction_update = PredictionUpdate(**update_data)
@@ -142,7 +143,7 @@ class TestPredictionModelAdvanced:
             "confidence": 0.85,
             "strategy_used": "test",
             "created_at": datetime.now(),
-            "updated_at": datetime.now()
+            "updated_at": datetime.now(),
         }
 
         prediction_response = PredictionResponse(**response_data)
@@ -166,8 +167,8 @@ class TestPredictionModelAdvanced:
             "strategy_distribution": {
                 "historical": 40,
                 "ml_model": 35,
-                "statistical": 25
-            }
+                "statistical": 25,
+            },
         }
 
         prediction_stats = PredictionStats(**stats_data)
@@ -190,7 +191,7 @@ class TestPredictionModelAdvanced:
             "predicted_home": 0,
             "predicted_away": 0,
             "confidence": 0.0,
-            "strategy_used": "test"
+            "strategy_used": "test",
         }
 
         prediction_min = Prediction(**min_data)
@@ -205,7 +206,7 @@ class TestPredictionModelAdvanced:
             "predicted_home": 10,
             "predicted_away": 10,
             "confidence": 1.0,
-            "strategy_used": "test"
+            "strategy_used": "test",
         }
 
         prediction_max = Prediction(**max_data)
@@ -219,19 +220,21 @@ class TestPredictionModelAdvanced:
             pytest.skip("PredictionModel模块不可用")
 
         # 测试业务规则：用户不能对同一比赛多次预测
-        with patch('src.models.prediction.check_duplicate_prediction', return_value=True) as mock_check:
+        with patch(
+            "src.models.prediction.check_duplicate_prediction", return_value=True
+        ) as mock_check:
             data = {
                 "match_id": 1,
                 "user_id": 1,
                 "predicted_home": 2,
                 "predicted_away": 1,
                 "confidence": 0.85,
-                "strategy_used": "test"
+                "strategy_used": "test",
             }
 
             # 如果有重复预测检查函数
             try:
-                prediction = Prediction(**data)
+                Prediction(**data)
                 mock_check.assert_called_once_with(1, 1)
             except AttributeError:
                 # 如果没有重复检查函数，跳过测试
@@ -249,7 +252,7 @@ class TestPredictionModelAdvanced:
             "predicted_away": 1,
             "confidence": 0.85,
             "strategy_used": "test",
-            "notes": None
+            "notes": None,
         }
 
         prediction = Prediction(**data)
@@ -263,6 +266,7 @@ class TestPredictionModelAdvanced:
 
         # 测试JSON序列化
         import json
+
         prediction_json = prediction.json()
         assert isinstance(prediction_json, str)
 
@@ -277,19 +281,20 @@ class TestPredictionModelAdvanced:
             "predicted_home": 2,
             "predicted_away": 1,
             "confidence": 0.85,
-            "strategy_used": "test"
+            "strategy_used": "test",
         }
 
         prediction = Prediction(**data)
 
         # 测试计算字段（如果有）
-        if hasattr(prediction, 'result'):
+        if hasattr(prediction, "result"):
             # 如果预测有结果字段
             assert prediction.result in ["pending", "correct", "incorrect"]
 
-        if hasattr(prediction, 'score'):
+        if hasattr(prediction, "score"):
             # 如果预测有得分字段
             assert isinstance(prediction.score, (int, float))
+
 
 if __name__ == "__main__":
     print("P3阶段预测模型测试: PredictionModel")

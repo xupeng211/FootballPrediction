@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
 
 from ...core.exceptions import DomainError
 
@@ -251,9 +251,9 @@ class Prediction:
                 actual_home=actual_home,
                 actual_away=actual_away,
                 is_correct=self.score.is_correct_score,
-                points_earned=int(self.points.total)
-                if self.points is not None
-                else None,
+                points_earned=(
+                    int(self.points.total) if self.points is not None else None
+                ),
                 accuracy_score=self.accuracy_score,
             )
         )
@@ -356,17 +356,19 @@ class Prediction:
 
         return {
             "predicted": f"{self.score.predicted_home}-{self.score.predicted_away}",
-            "actual": f"{self.score.actual_home}-{self.score.actual_away}"
-            if self.score.is_evaluated
-            else None,
+            "actual": (
+                f"{self.score.actual_home}-{self.score.actual_away}"
+                if self.score.is_evaluated
+                else None
+            ),
             "confidence": str(self.confidence) if self.confidence else None,
             "points": float(self.points.total) if self.points else None,
-            "is_correct_score": self.score.is_correct_score
-            if self.score.is_evaluated
-            else None,
-            "is_correct_result": self.score.is_correct_result
-            if self.score.is_evaluated
-            else None,
+            "is_correct_score": (
+                self.score.is_correct_score if self.score.is_evaluated else None
+            ),
+            "is_correct_result": (
+                self.score.is_correct_result if self.score.is_evaluated else None
+            ),
             "accuracy": self.accuracy_score,
         }
 
@@ -396,30 +398,36 @@ class Prediction:
             "id": self.id,
             "user_id": self.user_id,
             "match_id": self.match_id,
-            "score": {
-                "predicted_home": self.score.predicted_home,
-                "predicted_away": self.score.predicted_away,
-                "actual_home": self.score.actual_home,
-                "actual_away": self.score.actual_away,
-            }
-            if self.score
-            else None,
+            "score": (
+                {
+                    "predicted_home": self.score.predicted_home,
+                    "predicted_away": self.score.predicted_away,
+                    "actual_home": self.score.actual_home,
+                    "actual_away": self.score.actual_away,
+                }
+                if self.score
+                else None
+            ),
             "confidence": float(self.confidence.value) if self.confidence else None,
             "status": self.status.value,
             "model_version": self.model_version,
-            "points": {
-                "total": float(self.points.total),
-                "breakdown": {k: float(v) for k, v in self.points.breakdown.items()},
-            }
-            if self.points
-            else None,
+            "points": (
+                {
+                    "total": float(self.points.total),
+                    "breakdown": {
+                        k: float(v) for k, v in self.points.breakdown.items()
+                    },
+                }
+                if self.points
+                else None
+            ),
             "created_at": self.created_at.isoformat(),
-            "evaluated_at": self.evaluated_at.isoformat()
-            if self.evaluated_at
-            else None,
-            "cancelled_at": self.cancelled_at.isoformat()
-            if self.cancelled_at
-            else None,
+            "evaluated_at": (
+                self.evaluated_at.isoformat() if self.evaluated_at else None
+            ),
+            "cancelled_at": (
+                self.cancelled_at.isoformat() if self.cancelled_at else None
+            ),
             "cancellation_reason": self.cancellation_reason,
         }
 

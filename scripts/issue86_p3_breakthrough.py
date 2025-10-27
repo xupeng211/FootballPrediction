@@ -59,7 +59,7 @@ class Issue86P3Breakthrough:
                 print(f"✅ 当前覆盖率: {total_coverage:.2f}%")
                 return True
             else:
-                print(f"⚠️ 无法获取覆盖率数据，使用默认值")
+                print("⚠️ 无法获取覆盖率数据，使用默认值")
                 self.breakthrough_stats['current_coverage'] = 15.71
                 return False
 
@@ -527,7 +527,7 @@ mock_service.return_value = {"status": "success"}
         start_time = time.time()
 
         # 1. 加载当前覆盖率
-        initial_success = self.load_current_coverage()
+        self.load_current_coverage()
 
         # 2. 识别高优先级模块
         priority_modules = self.identify_priority_modules()
@@ -550,7 +550,7 @@ mock_service.return_value = {"status": "success"}
                 success_count += 1
                 self.breakthrough_stats['modules_processed'] += 1
 
-        print(f"\n📊 P3突破统计:")
+        print("\n📊 P3突破统计:")
         print(f"  目标模块数: {len(priority_modules)}")
         print(f"  成功处理: {success_count}")
         print(f"  创建测试文件: {self.breakthrough_stats['tests_created']}")
@@ -567,7 +567,7 @@ mock_service.return_value = {"status": "success"}
 
         duration = time.time() - start_time
 
-        print(f"\n🎉 P3重点突破完成!")
+        print("\n🎉 P3重点突破完成!")
         print(f"⏱️  总用时: {duration:.2f}秒")
         print(f"📊 处理模块: {self.breakthrough_stats['modules_processed']}")
         print(f"📝 创建测试: {self.breakthrough_stats['tests_created']}")

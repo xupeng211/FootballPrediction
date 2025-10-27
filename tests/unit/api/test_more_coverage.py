@@ -1,13 +1,15 @@
 from unittest.mock import Mock, patch
+
 """
 更多覆盖率测试 - 针对低覆盖率模块
 More Coverage Tests - Target Low Coverage Modules
 """
 
-import pytest
-from fastapi.testclient import TestClient
 import json
 from datetime import datetime, timedelta
+
+import pytest
+from fastapi.testclient import TestClient
 
 from src.api.app import app
 
@@ -261,9 +263,7 @@ class TestMonitoringModuleWorking:
 
     def test_enhanced_metrics_collector(self):
         """测试增强指标收集器"""
-        from src.metrics.collector.enhanced import (
-            EnhancedMetricsCollector,
-        )
+        from src.metrics.collector.enhanced import EnhancedMetricsCollector
 
         collector = EnhancedMetricsCollector()
         assert hasattr(collector, "track_metric")
@@ -306,23 +306,24 @@ class TestFeaturesModuleWorking:
 
     def test_match_events_processor(self):
         """测试比赛事件处理器"""
-        from src.features.match_events_processor_mod import MatchEventsProcessor
+        from src.features.match_events_processor_mod import \
+            MatchEventsProcessor
 
         processor = MatchEventsProcessor()
         assert processor is not None
 
     def test_prediction_events_processor(self):
         """测试预测事件处理器"""
-        from src.features.prediction_events_processor_mod import (
-            PredictionEventsProcessor,
-        )
+        from src.features.prediction_events_processor_mod import \
+            PredictionEventsProcessor
 
         processor = PredictionEventsProcessor()
         assert processor is not None
 
     def test_data_quality_processor(self):
         """测试数据质量处理器"""
-        from src.features.data_quality_processor_mod import DataQualityProcessor
+        from src.features.data_quality_processor_mod import \
+            DataQualityProcessor
 
         processor = DataQualityProcessor()
         assert processor is not None
@@ -368,14 +369,9 @@ class TestPydanticModelsWorking:
 
     def test_all_data_models(self):
         """测试所有数据模型"""
-        from src.api.data_router import (
-            LeagueInfo,
-            TeamInfo,
-            MatchInfo,
-            OddsInfo,
-            MatchStatistics,
-            TeamStatistics,
-        )
+        from src.api.data_router import (LeagueInfo, MatchInfo,
+                                         MatchStatistics, OddsInfo, TeamInfo,
+                                         TeamStatistics)
 
         # 创建LeagueInfo
         league = LeagueInfo(id=1, name="Test League", country="Test Country")
@@ -436,14 +432,12 @@ class TestPydanticModelsWorking:
 
     def test_prediction_models(self):
         """测试预测模型"""
-        from src.api.predictions.router import (
-            PredictionResult,
-            BatchPredictionRequest,
-            BatchPredictionResponse,
-            PredictionHistory,
-            RecentPrediction,
-            PredictionVerification,
-        )
+        from src.api.predictions.router import (BatchPredictionRequest,
+                                                BatchPredictionResponse,
+                                                PredictionHistory,
+                                                PredictionResult,
+                                                PredictionVerification,
+                                                RecentPrediction)
 
         # 创建PredictionResult
         _result = PredictionResult(

@@ -7,7 +7,7 @@ Handles complex business logic related to prediction scoring.
 """
 
 from decimal import Decimal
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from ..models.prediction import PredictionPoints
 

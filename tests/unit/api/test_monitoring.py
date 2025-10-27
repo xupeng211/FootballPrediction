@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 15 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 """
 API监控测试
 Tests for API Monitoring
@@ -27,7 +28,6 @@ except ImportError as e:
 
 @pytest.mark.skipif(not MONITORING_AVAILABLE, reason="Monitoring module not available")
 @pytest.mark.unit
-
 class TestMonitoringRouter:
     """监控路由器测试"""
 

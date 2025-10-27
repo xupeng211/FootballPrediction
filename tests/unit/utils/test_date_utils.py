@@ -2,9 +2,10 @@
 日期工具测试
 """
 
+from datetime import date, datetime, timedelta
+from typing import List, Optional, Tuple
+
 import pytest
-from datetime import datetime, timedelta, date
-from typing import Optional, List, Tuple
 
 
 class DateUtils:
@@ -284,7 +285,6 @@ class DateUtils:
 
 
 @pytest.mark.unit
-
 class TestDateUtils:
     """测试日期工具类"""
 

@@ -2,9 +2,10 @@
 Health check module
 """
 
-import warnings
-from fastapi import APIRouter, HTTPException
 import time
+import warnings
+
+from fastapi import APIRouter, HTTPException
 
 # 发出弃用警告
 warnings.warn(

@@ -1,23 +1,18 @@
-
 """测试数据工厂使用示例。"""
 
 pytest_plugins = ["tests.conftest_containers"]
 
-import pytest
 from datetime import datetime
 
-from tests.factories import (
-    TeamFactory,
-    LeagueFactory,
-    MatchFactory,
-    OddsFactory,
-    PredictionFactory,
-    UserFactory,
-)
-from tests.factories.team_factory import ChineseTeamFactory, HistoricTeamFactory
+import pytest
+
+from src.database.models.match import MatchStatus
+from tests.factories import (LeagueFactory, MatchFactory, OddsFactory,
+                             PredictionFactory, TeamFactory, UserFactory)
 from tests.factories.league_factory import InternationalLeagueFactory
 from tests.factories.prediction_factory import MLModelPredictionFactory
-from src.database.models.match import MatchStatus
+from tests.factories.team_factory import (ChineseTeamFactory,
+                                          HistoricTeamFactory)
 
 
 @pytest.mark.integration
@@ -39,10 +34,7 @@ class TestFactoryUsage:
         """测试创建自定义球队"""
         # 使用自定义参数
         team = TeamFactory.create(
-            team_name="Real Madrid",
-            team_code="RMA",
-            country="Spain",
-            founded_year=1902
+            team_name="Real Madrid", team_code="RMA", country="Spain", founded_year=1902
         )
         test_db_session.commit()
 
@@ -83,10 +75,7 @@ class TestFactoryUsage:
         test_db_session.flush()
 
         # 创建属于该联赛的球队
-        _teams = TeamFactory.create_batch_with_league(
-            count=4,
-            league_id=league.id
-        )
+        _teams = TeamFactory.create_batch_with_league(count=4, league_id=league.id)
         test_db_session.commit()
 
         assert league.id is not None
@@ -132,7 +121,7 @@ class TestFactoryUsage:
             home_team_id=home_team.id,
             away_team_id=away_team.id,
             home_score=2,
-            away_score=1
+            away_score=1,
         )
         test_db_session.flush()
 
@@ -231,14 +220,10 @@ class TestFactoryUsage:
 
         # 2. 创建球队
         manchester_united = TeamFactory.create(
-            team_name="Manchester United",
-            team_code="MUN",
-            country="England"
+            team_name="Manchester United", team_code="MUN", country="England"
         )
         liverpool = TeamFactory.create(
-            team_name="Liverpool",
-            team_code="LIV",
-            country="England"
+            team_name="Liverpool", team_code="LIV", country="England"
         )
         test_db_session.flush()
 
@@ -248,7 +233,7 @@ class TestFactoryUsage:
             away_team_id=liverpool.id,
             league_id=premier_league.id,
             venue="Old Trafford",
-            match_time=datetime.now()
+            match_time=datetime.now(),
         )
         test_db_session.flush()
 

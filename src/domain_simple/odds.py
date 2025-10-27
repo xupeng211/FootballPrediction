@@ -3,8 +3,8 @@
 """
 
 from datetime import datetime
-from typing import Optional, Dict, Any, List
 from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class MarketType(Enum):
@@ -296,9 +296,9 @@ class Odds:
             "is_suspended": self.is_suspended,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
-            "last_movement": self.last_movement.isoformat()
-            if self.last_movement
-            else None,
+            "last_movement": (
+                self.last_movement.isoformat() if self.last_movement else None
+            ),
         }
 
     @classmethod

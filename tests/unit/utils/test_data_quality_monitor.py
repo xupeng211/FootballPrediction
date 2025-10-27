@@ -1,9 +1,9 @@
-from src.data.quality.data_quality_monitor import DataQualityMonitor
 import pytest
+
+from src.data.quality.data_quality_monitor import DataQualityMonitor
 
 
 @pytest.mark.unit
-
 def test_data_quality_monitor():
     monitor = DataQualityMonitor()
     assert monitor is not None

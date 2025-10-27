@@ -119,7 +119,7 @@ class AutomatedMaintenanceSystem:
                 print(f"  📈 覆盖率: {total_coverage:.2f}% (目标: 15%)")
             else:
                 metrics['coverage'] = {'total_coverage': 0, 'target_met': False, 'trend': 'unknown'}
-                print(f"  📈 覆盖率: 无法获取")
+                print("  📈 覆盖率: 无法获取")
         except Exception as e:
             metrics['coverage'] = {'total_coverage': 0, 'target_met': False, 'trend': 'error'}
             print(f"  📈 覆盖率错误: {e}")
@@ -331,7 +331,7 @@ class AutomatedMaintenanceSystem:
         print(f"✅ 维护报告已保存: {report_file}")
 
         # 显示简要总结
-        print(f"\n📊 维护总结:")
+        print("\n📊 维护总结:")
         print(f"  整体健康状态: {report['summary']['overall_health']}")
         print(f"  执行操作数: {report['summary']['total_actions']}")
         print(f"  下次维护: {report['summary']['next_maintenance']}")
@@ -410,7 +410,7 @@ class AutomatedMaintenanceSystem:
 
         duration = time.time() - start_time
 
-        print(f"\n🎉 自动化维护完成!")
+        print("\n🎉 自动化维护完成!")
         print(f"⏱️  总用时: {duration:.2f}秒")
         print(f"📊 系统状态: {report['summary']['overall_health']}")
         print(f"🔧 执行操作: {report['summary']['total_actions']} 个")

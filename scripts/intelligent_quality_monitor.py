@@ -373,7 +373,6 @@ class IntelligentQualityMonitor:
 
             for metric_col, metric_name in metrics:
                 # 获取最近两个数据点
-                current_idx = 0  # 最新的
                 previous_idx = min(1, len(rows) - 1)  # 上一个
 
                 if previous_idx >= len(rows):
@@ -520,7 +519,7 @@ class IntelligentQualityMonitor:
             for i, suggestion in enumerate(suggestions, 1):
                 report += f"{i}. {suggestion}\n"
 
-        report += f"""
+        report += """
 ## 📞 联系方式
 
 如有疑问或需要帮助，请参考：

@@ -11,27 +11,30 @@ P2阶段深度业务逻辑测试: CQRSApplication
 - 数据驱动测试用例
 """
 
-import pytest
-import os
 import asyncio
-from unittest.mock import patch, Mock
-from typing import Dict, List, Any, Optional
-import tempfile
 import json
-from pathlib import Path
-
+import os
 # 确保可以导入源码模块
 import sys
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../..'))
+import tempfile
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+from unittest.mock import Mock, patch
+
+import pytest
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../.."))
 
 # 导入目标模块
 try:
     import cqrs.application
     from cqrs.application import *
+
     MODULE_AVAILABLE = True
 except ImportError as e:
     print(f"模块导入警告: {e}")
     MODULE_AVAILABLE = False
+
 
 class TestCQRSApplicationBusinessLogic:
     """CQRSApplication 真实业务逻辑测试套件"""
@@ -40,8 +43,9 @@ class TestCQRSApplicationBusinessLogic:
     def test_real_module_import(self):
         """测试真实模块导入"""
         import cqrs.application
+
         assert cqrs.application is not None
-        assert hasattr(cqrs.application, '__name__')
+        assert hasattr(cqrs.application, "__name__")
 
         # 验证关键函数/类存在
 
@@ -56,26 +60,25 @@ class TestCQRSApplicationBusinessLogic:
         try:
             result = cqrs.application.__init__()
             assert result is not None
-        except Exception as e:
+        except Exception:
             # 对于需要参数的函数，提供测试数据
-            if "environment" in func['args']:
+            if "environment" in func["args"]:
                 result = cqrs.application.__init__("test")
                 assert result is not None
             elif "config" in func_name.lower():
                 # 配置相关函数测试
-                with patch.dict(os.environ, {
-                    'TEST_DB_HOST': 'localhost',
-                    'TEST_DB_NAME': 'test_db'
-                }):
+                with patch.dict(
+                    os.environ, {"TEST_DB_HOST": "localhost", "TEST_DB_NAME": "test_db"}
+                ):
                     result = cqrs.application.__init__()
                     assert result is not None
             else:
                 pytest.skip(f"函数 {func_name} 需要特定参数")
 
         # 验证返回值的业务逻辑
-        if hasattr(result, '__dict__'):
+        if hasattr(result, "__dict__"):
             # 对于返回对象的函数
-            assert hasattr(result, '__class__')
+            assert hasattr(result, "__class__")
         elif isinstance(result, (str, int, float, bool)):
             # 对于返回基本类型的函数
             assert isinstance(result, (str, int, float, bool))
@@ -92,26 +95,25 @@ class TestCQRSApplicationBusinessLogic:
         try:
             result = cqrs.application.__init__()
             assert result is not None
-        except Exception as e:
+        except Exception:
             # 对于需要参数的函数，提供测试数据
-            if "environment" in func['args']:
+            if "environment" in func["args"]:
                 result = cqrs.application.__init__("test")
                 assert result is not None
             elif "config" in func_name.lower():
                 # 配置相关函数测试
-                with patch.dict(os.environ, {
-                    'TEST_DB_HOST': 'localhost',
-                    'TEST_DB_NAME': 'test_db'
-                }):
+                with patch.dict(
+                    os.environ, {"TEST_DB_HOST": "localhost", "TEST_DB_NAME": "test_db"}
+                ):
                     result = cqrs.application.__init__()
                     assert result is not None
             else:
                 pytest.skip(f"函数 {func_name} 需要特定参数")
 
         # 验证返回值的业务逻辑
-        if hasattr(result, '__dict__'):
+        if hasattr(result, "__dict__"):
             # 对于返回对象的函数
-            assert hasattr(result, '__class__')
+            assert hasattr(result, "__class__")
         elif isinstance(result, (str, int, float, bool)):
             # 对于返回基本类型的函数
             assert isinstance(result, (str, int, float, bool))
@@ -128,26 +130,25 @@ class TestCQRSApplicationBusinessLogic:
         try:
             result = cqrs.application.__init__()
             assert result is not None
-        except Exception as e:
+        except Exception:
             # 对于需要参数的函数，提供测试数据
-            if "environment" in func['args']:
+            if "environment" in func["args"]:
                 result = cqrs.application.__init__("test")
                 assert result is not None
             elif "config" in func_name.lower():
                 # 配置相关函数测试
-                with patch.dict(os.environ, {
-                    'TEST_DB_HOST': 'localhost',
-                    'TEST_DB_NAME': 'test_db'
-                }):
+                with patch.dict(
+                    os.environ, {"TEST_DB_HOST": "localhost", "TEST_DB_NAME": "test_db"}
+                ):
                     result = cqrs.application.__init__()
                     assert result is not None
             else:
                 pytest.skip(f"函数 {func_name} 需要特定参数")
 
         # 验证返回值的业务逻辑
-        if hasattr(result, '__dict__'):
+        if hasattr(result, "__dict__"):
             # 对于返回对象的函数
-            assert hasattr(result, '__class__')
+            assert hasattr(result, "__class__")
         elif isinstance(result, (str, int, float, bool)):
             # 对于返回基本类型的函数
             assert isinstance(result, (str, int, float, bool))
@@ -164,26 +165,25 @@ class TestCQRSApplicationBusinessLogic:
         try:
             result = cqrs.application.__init__()
             assert result is not None
-        except Exception as e:
+        except Exception:
             # 对于需要参数的函数，提供测试数据
-            if "environment" in func['args']:
+            if "environment" in func["args"]:
                 result = cqrs.application.__init__("test")
                 assert result is not None
             elif "config" in func_name.lower():
                 # 配置相关函数测试
-                with patch.dict(os.environ, {
-                    'TEST_DB_HOST': 'localhost',
-                    'TEST_DB_NAME': 'test_db'
-                }):
+                with patch.dict(
+                    os.environ, {"TEST_DB_HOST": "localhost", "TEST_DB_NAME": "test_db"}
+                ):
                     result = cqrs.application.__init__()
                     assert result is not None
             else:
                 pytest.skip(f"函数 {func_name} 需要特定参数")
 
         # 验证返回值的业务逻辑
-        if hasattr(result, '__dict__'):
+        if hasattr(result, "__dict__"):
             # 对于返回对象的函数
-            assert hasattr(result, '__class__')
+            assert hasattr(result, "__class__")
         elif isinstance(result, (str, int, float, bool)):
             # 对于返回基本类型的函数
             assert isinstance(result, (str, int, float, bool))
@@ -200,26 +200,25 @@ class TestCQRSApplicationBusinessLogic:
         try:
             result = cqrs.application.create_prediction_service()
             assert result is not None
-        except Exception as e:
+        except Exception:
             # 对于需要参数的函数，提供测试数据
-            if "environment" in func['args']:
+            if "environment" in func["args"]:
                 result = cqrs.application.create_prediction_service("test")
                 assert result is not None
             elif "config" in func_name.lower():
                 # 配置相关函数测试
-                with patch.dict(os.environ, {
-                    'TEST_DB_HOST': 'localhost',
-                    'TEST_DB_NAME': 'test_db'
-                }):
+                with patch.dict(
+                    os.environ, {"TEST_DB_HOST": "localhost", "TEST_DB_NAME": "test_db"}
+                ):
                     result = cqrs.application.create_prediction_service()
                     assert result is not None
             else:
                 pytest.skip(f"函数 {func_name} 需要特定参数")
 
         # 验证返回值的业务逻辑
-        if hasattr(result, '__dict__'):
+        if hasattr(result, "__dict__"):
             # 对于返回对象的函数
-            assert hasattr(result, '__class__')
+            assert hasattr(result, "__class__")
         elif isinstance(result, (str, int, float, bool)):
             # 对于返回基本类型的函数
             assert isinstance(result, (str, int, float, bool))
@@ -236,26 +235,25 @@ class TestCQRSApplicationBusinessLogic:
         try:
             result = cqrs.application.create_match_service()
             assert result is not None
-        except Exception as e:
+        except Exception:
             # 对于需要参数的函数，提供测试数据
-            if "environment" in func['args']:
+            if "environment" in func["args"]:
                 result = cqrs.application.create_match_service("test")
                 assert result is not None
             elif "config" in func_name.lower():
                 # 配置相关函数测试
-                with patch.dict(os.environ, {
-                    'TEST_DB_HOST': 'localhost',
-                    'TEST_DB_NAME': 'test_db'
-                }):
+                with patch.dict(
+                    os.environ, {"TEST_DB_HOST": "localhost", "TEST_DB_NAME": "test_db"}
+                ):
                     result = cqrs.application.create_match_service()
                     assert result is not None
             else:
                 pytest.skip(f"函数 {func_name} 需要特定参数")
 
         # 验证返回值的业务逻辑
-        if hasattr(result, '__dict__'):
+        if hasattr(result, "__dict__"):
             # 对于返回对象的函数
-            assert hasattr(result, '__class__')
+            assert hasattr(result, "__class__")
         elif isinstance(result, (str, int, float, bool)):
             # 对于返回基本类型的函数
             assert isinstance(result, (str, int, float, bool))
@@ -272,26 +270,25 @@ class TestCQRSApplicationBusinessLogic:
         try:
             result = cqrs.application.create_user_service()
             assert result is not None
-        except Exception as e:
+        except Exception:
             # 对于需要参数的函数，提供测试数据
-            if "environment" in func['args']:
+            if "environment" in func["args"]:
                 result = cqrs.application.create_user_service("test")
                 assert result is not None
             elif "config" in func_name.lower():
                 # 配置相关函数测试
-                with patch.dict(os.environ, {
-                    'TEST_DB_HOST': 'localhost',
-                    'TEST_DB_NAME': 'test_db'
-                }):
+                with patch.dict(
+                    os.environ, {"TEST_DB_HOST": "localhost", "TEST_DB_NAME": "test_db"}
+                ):
                     result = cqrs.application.create_user_service()
                     assert result is not None
             else:
                 pytest.skip(f"函数 {func_name} 需要特定参数")
 
         # 验证返回值的业务逻辑
-        if hasattr(result, '__dict__'):
+        if hasattr(result, "__dict__"):
             # 对于返回对象的函数
-            assert hasattr(result, '__class__')
+            assert hasattr(result, "__class__")
         elif isinstance(result, (str, int, float, bool)):
             # 对于返回基本类型的函数
             assert isinstance(result, (str, int, float, bool))
@@ -308,26 +305,25 @@ class TestCQRSApplicationBusinessLogic:
         try:
             result = cqrs.application.create_analytics_service()
             assert result is not None
-        except Exception as e:
+        except Exception:
             # 对于需要参数的函数，提供测试数据
-            if "environment" in func['args']:
+            if "environment" in func["args"]:
                 result = cqrs.application.create_analytics_service("test")
                 assert result is not None
             elif "config" in func_name.lower():
                 # 配置相关函数测试
-                with patch.dict(os.environ, {
-                    'TEST_DB_HOST': 'localhost',
-                    'TEST_DB_NAME': 'test_db'
-                }):
+                with patch.dict(
+                    os.environ, {"TEST_DB_HOST": "localhost", "TEST_DB_NAME": "test_db"}
+                ):
                     result = cqrs.application.create_analytics_service()
                     assert result is not None
             else:
                 pytest.skip(f"函数 {func_name} 需要特定参数")
 
         # 验证返回值的业务逻辑
-        if hasattr(result, '__dict__'):
+        if hasattr(result, "__dict__"):
             # 对于返回对象的函数
-            assert hasattr(result, '__class__')
+            assert hasattr(result, "__class__")
         elif isinstance(result, (str, int, float, bool)):
             # 对于返回基本类型的函数
             assert isinstance(result, (str, int, float, bool))
@@ -350,11 +346,15 @@ class TestCQRSApplicationBusinessLogic:
 
             # 测试业务方法
             for method_name in dir(instance):
-                if not method_name.startswith('_') and callable(getattr(instance, method_name)):
+                if not method_name.startswith("_") and callable(
+                    getattr(instance, method_name)
+                ):
                     try:
                         method = getattr(instance, method_name)
                         # 尝试调用无参方法或属性
-                        if method_name.startswith('get') or method_name.startswith('is_'):
+                        if method_name.startswith("get") or method_name.startswith(
+                            "is_"
+                        ):
                             result = method()
                             assert result is not None
                     except Exception:
@@ -377,11 +377,15 @@ class TestCQRSApplicationBusinessLogic:
 
             # 测试业务方法
             for method_name in dir(instance):
-                if not method_name.startswith('_') and callable(getattr(instance, method_name)):
+                if not method_name.startswith("_") and callable(
+                    getattr(instance, method_name)
+                ):
                     try:
                         method = getattr(instance, method_name)
                         # 尝试调用无参方法或属性
-                        if method_name.startswith('get') or method_name.startswith('is_'):
+                        if method_name.startswith("get") or method_name.startswith(
+                            "is_"
+                        ):
                             result = method()
                             assert result is not None
                     except Exception:
@@ -404,11 +408,15 @@ class TestCQRSApplicationBusinessLogic:
 
             # 测试业务方法
             for method_name in dir(instance):
-                if not method_name.startswith('_') and callable(getattr(instance, method_name)):
+                if not method_name.startswith("_") and callable(
+                    getattr(instance, method_name)
+                ):
                     try:
                         method = getattr(instance, method_name)
                         # 尝试调用无参方法或属性
-                        if method_name.startswith('get') or method_name.startswith('is_'):
+                        if method_name.startswith("get") or method_name.startswith(
+                            "is_"
+                        ):
                             result = method()
                             assert result is not None
                     except Exception:
@@ -431,11 +439,15 @@ class TestCQRSApplicationBusinessLogic:
 
             # 测试业务方法
             for method_name in dir(instance):
-                if not method_name.startswith('_') and callable(getattr(instance, method_name)):
+                if not method_name.startswith("_") and callable(
+                    getattr(instance, method_name)
+                ):
                     try:
                         method = getattr(instance, method_name)
                         # 尝试调用无参方法或属性
-                        if method_name.startswith('get') or method_name.startswith('is_'):
+                        if method_name.startswith("get") or method_name.startswith(
+                            "is_"
+                        ):
                             result = method()
                             assert result is not None
                     except Exception:
@@ -458,11 +470,15 @@ class TestCQRSApplicationBusinessLogic:
 
             # 测试业务方法
             for method_name in dir(instance):
-                if not method_name.startswith('_') and callable(getattr(instance, method_name)):
+                if not method_name.startswith("_") and callable(
+                    getattr(instance, method_name)
+                ):
                     try:
                         method = getattr(instance, method_name)
                         # 尝试调用无参方法或属性
-                        if method_name.startswith('get') or method_name.startswith('is_'):
+                        if method_name.startswith("get") or method_name.startswith(
+                            "is_"
+                        ):
                             result = method()
                             assert result is not None
                     except Exception:
@@ -481,11 +497,11 @@ class TestCQRSApplicationBusinessLogic:
             instance = getattr(cqrs.application, cls_name)()
 
             # 测试特定业务方法
-            if hasattr(instance, 'create_prediction_service'):
-                method = getattr(instance, 'create_prediction_service')
+            if hasattr(instance, "create_prediction_service"):
+                method = getattr(instance, "create_prediction_service")
 
                 # 根据方法特性进行测试
-                if method_name.startswith('get'):
+                if method_name.startswith("get"):
                     # Getter方法测试
                     try:
                         result = method()
@@ -493,7 +509,7 @@ class TestCQRSApplicationBusinessLogic:
                     except TypeError:
                         # 方法需要参数
                         pass
-                elif method_name.startswith('create'):
+                elif method_name.startswith("create"):
                     # 创建方法测试
                     try:
                         # 提供最小必需参数
@@ -514,11 +530,11 @@ class TestCQRSApplicationBusinessLogic:
             instance = getattr(cqrs.application, cls_name)()
 
             # 测试特定业务方法
-            if hasattr(instance, 'create_match_service'):
-                method = getattr(instance, 'create_match_service')
+            if hasattr(instance, "create_match_service"):
+                method = getattr(instance, "create_match_service")
 
                 # 根据方法特性进行测试
-                if method_name.startswith('get'):
+                if method_name.startswith("get"):
                     # Getter方法测试
                     try:
                         result = method()
@@ -526,7 +542,7 @@ class TestCQRSApplicationBusinessLogic:
                     except TypeError:
                         # 方法需要参数
                         pass
-                elif method_name.startswith('create'):
+                elif method_name.startswith("create"):
                     # 创建方法测试
                     try:
                         # 提供最小必需参数
@@ -547,11 +563,11 @@ class TestCQRSApplicationBusinessLogic:
             instance = getattr(cqrs.application, cls_name)()
 
             # 测试特定业务方法
-            if hasattr(instance, 'create_user_service'):
-                method = getattr(instance, 'create_user_service')
+            if hasattr(instance, "create_user_service"):
+                method = getattr(instance, "create_user_service")
 
                 # 根据方法特性进行测试
-                if method_name.startswith('get'):
+                if method_name.startswith("get"):
                     # Getter方法测试
                     try:
                         result = method()
@@ -559,7 +575,7 @@ class TestCQRSApplicationBusinessLogic:
                     except TypeError:
                         # 方法需要参数
                         pass
-                elif method_name.startswith('create'):
+                elif method_name.startswith("create"):
                     # 创建方法测试
                     try:
                         # 提供最小必需参数
@@ -580,11 +596,11 @@ class TestCQRSApplicationBusinessLogic:
             instance = getattr(cqrs.application, cls_name)()
 
             # 测试特定业务方法
-            if hasattr(instance, 'create_analytics_service'):
-                method = getattr(instance, 'create_analytics_service')
+            if hasattr(instance, "create_analytics_service"):
+                method = getattr(instance, "create_analytics_service")
 
                 # 根据方法特性进行测试
-                if method_name.startswith('get'):
+                if method_name.startswith("get"):
                     # Getter方法测试
                     try:
                         result = method()
@@ -592,7 +608,7 @@ class TestCQRSApplicationBusinessLogic:
                     except TypeError:
                         # 方法需要参数
                         pass
-                elif method_name.startswith('create'):
+                elif method_name.startswith("create"):
                     # 创建方法测试
                     try:
                         # 提供最小必需参数
@@ -614,8 +630,11 @@ class TestCQRSApplicationBusinessLogic:
         import cqrs.application
 
         # 验证模块的主要接口
-        main_functions = [attr for attr in dir(cqrs.application)
-                         if not attr.startswith('_') and callable(getattr(cqrs.application, attr))]
+        main_functions = [
+            attr
+            for attr in dir(cqrs.application)
+            if not attr.startswith("_") and callable(getattr(cqrs.application, attr))
+        ]
 
         assert len(main_functions) > 0, "模块应该至少有一个公共函数"
 
@@ -625,17 +644,21 @@ class TestCQRSApplicationBusinessLogic:
             pytest.skip("模块不可用")
 
         # 测试环境配置集成
-        with patch.dict(os.environ, {
-            'ENVIRONMENT': 'test',
-            'TEST_DB_HOST': 'localhost',
-            'TEST_DB_NAME': 'test_db',
-            'TEST_DB_USER': 'test_user'
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "ENVIRONMENT": "test",
+                "TEST_DB_HOST": "localhost",
+                "TEST_DB_NAME": "test_db",
+                "TEST_DB_USER": "test_user",
+            },
+        ):
             try:
                 import cqrs.application
+
                 # 测试配置读取
-                if hasattr(cqrs.application, 'get_database_config'):
-                    config = cqrs.application.get_database_config('test')
+                if hasattr(cqrs.application, "get_database_config"):
+                    config = cqrs.application.get_database_config("test")
                     assert config is not None
             except Exception as e:
                 pytest.skip(f"配置集成测试失败: {e}")
@@ -650,11 +673,14 @@ class TestCQRSApplicationBusinessLogic:
         import cqrs.application
 
         # 检查是否有异步函数
-        async_functions = [attr for attr in dir(cqrs.application)
-                          if not attr.startswith('_') and
-                          callable(getattr(cqrs.application, attr)) and
-                          getattr(getattr(cqrs.application, attr), '__code__', None) and
-                          getattr(getattr(cqrs.application, attr).__code__, 'co_flags', 0) & 0x80]
+        async_functions = [
+            attr
+            for attr in dir(cqrs.application)
+            if not attr.startswith("_")
+            and callable(getattr(cqrs.application, attr))
+            and getattr(getattr(cqrs.application, attr), "__code__", None)
+            and getattr(getattr(cqrs.application, attr).__code__, "co_flags", 0) & 0x80
+        ]
 
         if async_functions:
             # 有异步函数，进行测试
@@ -669,11 +695,14 @@ class TestCQRSApplicationBusinessLogic:
             pytest.skip("模块没有异步函数")
 
     # 数据驱动测试
-    @pytest.mark.parametrize("test_env,expected_db", [
-        ("development", "football_prediction_dev"),
-        ("test", ":memory:"),
-        ("production", None),
-    ])
+    @pytest.mark.parametrize(
+        "test_env,expected_db",
+        [
+            ("development", "football_prediction_dev"),
+            ("test", ":memory:"),
+            ("production", None),
+        ],
+    )
     def test_environment_based_config(self, test_env, expected_db):
         """测试基于环境的配置"""
         if not MODULE_AVAILABLE:
@@ -683,17 +712,19 @@ class TestCQRSApplicationBusinessLogic:
 
         # 设置环境变量
         env_vars = {
-            'ENVIRONMENT': test_env,
-            f'{test_env.upper() if test_env != "development" else ""}DB_HOST': 'localhost',
-            f'{test_env.upper() if test_env != "development" else ""}DB_USER': 'test_user',
+            "ENVIRONMENT": test_env,
+            f'{test_env.upper() if test_env != "development" else ""}DB_HOST': "localhost",
+            f'{test_env.upper() if test_env != "development" else ""}DB_USER': "test_user",
         }
 
         if test_env != "test":
-            env_vars[f'{test_env.upper() if test_env != "development" else ""}DB_PASSWORD'] = 'test_pass'
+            env_vars[
+                f'{test_env.upper() if test_env != "development" else ""}DB_PASSWORD'
+            ] = "test_pass"
 
         with patch.dict(os.environ, env_vars):
             try:
-                if hasattr(cqrs.application, 'get_database_config'):
+                if hasattr(cqrs.application, "get_database_config"):
                     config = cqrs.application.get_database_config(test_env)
                     assert config is not None
 
@@ -708,11 +739,14 @@ class TestCQRSApplicationBusinessLogic:
             except Exception as e:
                 pytest.skip(f"环境配置测试失败: {e}")
 
-    @pytest.mark.parametrize("pool_config", [
-        {"pool_size": 5, "max_overflow": 10},
-        {"pool_size": 20, "max_overflow": 40},
-        {"pool_size": 1, "max_overflow": 2},
-    ])
+    @pytest.mark.parametrize(
+        "pool_config",
+        [
+            {"pool_size": 5, "max_overflow": 10},
+            {"pool_size": 20, "max_overflow": 40},
+            {"pool_size": 1, "max_overflow": 2},
+        ],
+    )
     def test_pool_configuration(self, pool_config):
         """测试连接池配置"""
         if not MODULE_AVAILABLE:
@@ -721,20 +755,20 @@ class TestCQRSApplicationBusinessLogic:
         import cqrs.application
 
         env_vars = {
-            'ENVIRONMENT': 'test',
-            'TEST_DB_HOST': 'localhost',
-            'TEST_DB_NAME': 'test_db',
-            'TEST_DB_USER': 'test_user',
-            'TEST_DB_POOL_SIZE': str(pool_config['pool_size']),
-            'TEST_DB_MAX_OVERFLOW': str(pool_config['max_overflow']),
+            "ENVIRONMENT": "test",
+            "TEST_DB_HOST": "localhost",
+            "TEST_DB_NAME": "test_db",
+            "TEST_DB_USER": "test_user",
+            "TEST_DB_POOL_SIZE": str(pool_config["pool_size"]),
+            "TEST_DB_MAX_OVERFLOW": str(pool_config["max_overflow"]),
         }
 
         with patch.dict(os.environ, env_vars):
             try:
-                if hasattr(cqrs.application, 'get_database_config'):
-                    config = cqrs.application.get_database_config('test')
-                    assert config.pool_size == pool_config['pool_size']
-                    assert config.max_overflow == pool_config['max_overflow']
+                if hasattr(cqrs.application, "get_database_config"):
+                    config = cqrs.application.get_database_config("test")
+                    assert config.pool_size == pool_config["pool_size"]
+                    assert config.max_overflow == pool_config["max_overflow"]
             except Exception as e:
                 pytest.skip(f"连接池配置测试失败: {e}")
 
@@ -763,6 +797,7 @@ class TestCQRSApplicationBusinessLogic:
 
         # 测试真实错误处理逻辑
         pass
+
 
 if __name__ == "__main__":
     print(f"P2阶段业务逻辑测试: {module_name}")

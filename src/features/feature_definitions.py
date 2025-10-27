@@ -11,7 +11,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
 
 from .entities import MatchEntity, TeamEntity
 

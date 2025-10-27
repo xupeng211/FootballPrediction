@@ -4,8 +4,9 @@
 提供用户画像生成和管理功能。
 """
 
-from typing import Any, Dict, Optional, List
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 from .base_unified import SimpleService
 
 

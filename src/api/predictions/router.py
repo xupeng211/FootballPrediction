@@ -10,7 +10,7 @@ Predictions API Router
 
 import logging
 from datetime import datetime, timedelta
-from typing import List, Optional, Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -102,6 +102,50 @@ class PredictionVerification(BaseModel):
 async def health_check():
     """健康检查"""
     return {"status": "healthy", "service": "predictions"}
+
+
+@router.get("/recent", response_model=List[RecentPrediction])
+async def get_recent_predictions(
+    limit: int = Query(20, ge=1, le=100, description="返回数量"),
+    hours: int = Query(24, ge=1, le=168, description="时间范围（小时）"),
+):
+    """
+    获取最近的预测记录
+
+    返回系统最近生成的预测，默认返回最近24小时内的预测。
+    """
+    logger.info(f"获取最近 {hours} 小时内的 {limit} 条预测")
+
+    try:
+        # TODO: 从数据库获取最近预测
+        # 模拟数据
+        recent = [
+            RecentPrediction(
+                id=i,
+                match_id=1000 + i,
+                home_team=f"Team A{i}",
+                away_team=f"Team B{i}",
+                prediction=PredictionResult(
+                    match_id=1000 + i,
+                    home_win_prob=0.45,
+                    draw_prob=0.30,
+                    away_win_prob=0.25,
+                    predicted_outcome="home",
+                    confidence=0.75,
+                    model_version="default",
+                    predicted_at=datetime.utcnow() - timedelta(hours=i),
+                ),
+                match_date=datetime.utcnow() + timedelta(days=i),
+            )
+            for i in range(min(limit, 10))
+        ]
+
+        logger.info(f"成功获取 {len(recent)} 条最近预测")
+        return recent
+
+    except Exception as e:
+        logger.error(f"获取最近预测失败: {e}")
+        raise HTTPException(status_code=500, detail=f"获取最近预测失败: {str(e)}")
 
 
 @router.get("/{match_id}", response_model=PredictionResult)
@@ -269,50 +313,6 @@ async def get_prediction_history(
     except Exception as e:
         logger.error(f"获取历史记录失败: {e}")
         raise HTTPException(status_code=500, detail=f"获取历史记录失败: {str(e)}")
-
-
-@router.get("/recent", response_model=List[RecentPrediction])
-async def get_recent_predictions(
-    limit: int = Query(20, ge=1, le=100, description="返回数量"),
-    hours: int = Query(24, ge=1, le=168, description="时间范围（小时）"),
-):
-    """
-    获取最近的预测记录
-
-    返回系统最近生成的预测，默认返回最近24小时内的预测。
-    """
-    logger.info(f"获取最近 {hours} 小时内的 {limit} 条预测")
-
-    try:
-        # TODO: 从数据库获取最近预测
-        # 模拟数据
-        recent = [
-            RecentPrediction(
-                id=i,
-                match_id=1000 + i,
-                home_team=f"Team A{i}",
-                away_team=f"Team B{i}",
-                prediction=PredictionResult(
-                    match_id=1000 + i,
-                    home_win_prob=0.45,
-                    draw_prob=0.30,
-                    away_win_prob=0.25,
-                    predicted_outcome="home",
-                    confidence=0.75,
-                    model_version="default",
-                    predicted_at=datetime.utcnow() - timedelta(hours=i),
-                ),
-                match_date=datetime.utcnow() + timedelta(days=i),
-            )
-            for i in range(min(limit, 10))
-        ]
-
-        logger.info(f"成功获取 {len(recent)} 条最近预测")
-        return recent
-
-    except Exception as e:
-        logger.error(f"获取最近预测失败: {e}")
-        raise HTTPException(status_code=500, detail=f"获取最近预测失败: {str(e)}")
 
 
 @router.post("/{match_id}/verify", response_model=PredictionVerification)

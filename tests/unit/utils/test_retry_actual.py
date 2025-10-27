@@ -1,11 +1,11 @@
 """重试功能测试（实际可用功能）"""
 
 import pytest
+
 # from src.utils.retry import RetryConfig, retry
 
 
 @pytest.mark.unit
-
 class TestRetryActual:
     """重试功能测试（实际可用功能）"""
 

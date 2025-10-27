@@ -1,4 +1,5 @@
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 """
 仓储模式API端点测试
 Tests for Repository Pattern API Endpoints
@@ -11,10 +12,11 @@ Tests for Repository Pattern API Endpoints
 - 统计功能
 """
 
+from datetime import date, datetime, timedelta
+
 import pytest
-from datetime import datetime, date, timedelta
-from fastapi.testclient import TestClient
 from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 from src.api.repositories import router
 
@@ -108,10 +110,11 @@ class MockRepository:
         return {
             "user_id": user_id,
             "total_predictions": len(user_predictions),
-            "average_confidence": sum(p.confidence for p in user_predictions)
-            / len(user_predictions)
-            if user_predictions
-            else 0,
+            "average_confidence": (
+                sum(p.confidence for p in user_predictions) / len(user_predictions)
+                if user_predictions
+                else 0
+            ),
             "period_days": period_days or 30,
         }
 
@@ -153,7 +156,6 @@ def client(app):
 
 @pytest.mark.unit
 @pytest.mark.api
-
 class TestPredictionRepository:
     """预测仓储测试"""
 

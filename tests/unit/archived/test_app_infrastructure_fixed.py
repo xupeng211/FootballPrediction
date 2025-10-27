@@ -12,17 +12,18 @@ FastAPI应用基础设施测试 - 符合严格测试规范
 7. ✅ 所有测试可独立运行通过pytest
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock, AsyncMock
-from typing import Dict, Any, Optional
 import asyncio
 from datetime import datetime
+from typing import Any, Dict, Optional
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
+import pytest
 
 # 尝试导入被测试模块
 try:
     from src.api.app import app
     from src.core.di import get_container
-except ImportError as e:
+except ImportError:
     app = None
     get_container = None
 
@@ -54,10 +55,10 @@ class TestFastAPIAppInfrastructure:
                 "description": "Test Description",
                 "version": "1.0.0",
                 "api_prefix": "/api/v1",
-                "debug": False
+                "debug": False,
             }
 
-            with patch('src.core.di.di_container') as mock_get_container:
+            with patch("src.core.di.di_container"):
                 mock_container.return_value = Mock()
                 mock_container.return_value.config = mock_config
 
@@ -71,8 +72,8 @@ class TestFastAPIAppInfrastructure:
         """❌ 异常用例：启动配置失败"""
         # 测试异常情况下的应用启动
         with pytest.raises(Exception):
-            with patch('src.core.di.di_container') as mock_get_container:
-                with patch('src.api.app.setup_openapi') as mock_setup_openapi:
+            with patch("src.core.di.di_container") as mock_get_container:
+                with patch("src.api.app.setup_openapi") as mock_setup_openapi:
                     mock_get_container.return_value = Mock()
                     mock_setup_openapi.side_effect = Exception("Configuration failed")
 
@@ -93,7 +94,7 @@ class TestFastAPIAppInfrastructure:
                 "/api/v1/data",
                 "/docs",
                 "/openapi.json",
-                "/redoc"
+                "/redoc",
             ]
 
             for expected_route in expected_routes:
@@ -104,20 +105,22 @@ class TestFastAPIAppInfrastructure:
         if app is not None:
             # 验证CORS中间件
             cors_middlewares = [
-                middleware.cls for middleware in app.user_middleware
-                if hasattr(middleware.cls, 'orig')
-                and hasattr(middleware.cls.orig, '__name__')
-                and 'CORSMiddleware' in middleware.cls.orig.__name__
+                middleware.cls
+                for middleware in app.user_middleware
+                if hasattr(middleware.cls, "orig")
+                and hasattr(middleware.cls.orig, "__name__")
+                and "CORSMiddleware" in middleware.cls.orig.__name__
             ]
 
             assert len(cors_middlewares) > 0, "应该配置了CORS中间件"
 
             # 验证Gzip中间件
             gzip_middlewares = [
-                middleware.cls for middleware in app.user_middleware
-                if hasattr(middleware.cls, 'orig')
-                and hasattr(middleware.cls.orig, '__name__')
-                and 'GZipMiddleware' in middleware.cls.orig.__name__
+                middleware.cls
+                for middleware in app.user_middleware
+                if hasattr(middleware.cls, "orig")
+                and hasattr(middleware.cls.orig, "__name__")
+                and "GZipMiddleware" in middleware.cls.orig.__name__
             ]
 
             assert len(gzip_middlewares) > 0, "应该配置了Gzip中间件"
@@ -133,11 +136,11 @@ class TestFastAPIAppInfrastructure:
         """✅ 成功用例：错误处理机制正确"""
         if app is not None:
             # 验证错误处理器
-            assert hasattr(app, 'exception_handlers')
+            assert hasattr(app, "exception_handlers")
             assert len(app.exception_handlers) > 0
 
             # 验证HTTP异常处理器
-            assert hasattr(app, 'http_exception_handler')
+            assert hasattr(app, "http_exception_handler")
 
     @pytest.mark.asyncio
     async def test_dependency_injection_success(self) -> None:
@@ -159,8 +162,8 @@ class TestFastAPIAppInfrastructure:
         if app is not None:
             # 验证应用有startup和shutdown事件
             # 这主要验证应用结构支持生命周期管理
-            assert hasattr(app, 'startup')
-            assert hasattr(app, 'shutdown')
+            assert hasattr(app, "startup")
+            assert hasattr(app, "shutdown")
 
     @pytest.mark.asyncio
     async def test_production_features_success(self) -> None:
@@ -217,6 +220,7 @@ class TestFastAPIAppIntegration:
         """✅ 集成用例：完整请求响应流程"""
         if app is not None:
             from fastapi.testclient import TestClient
+
             client = TestClient(app)
 
             # 测试健康检查端点
@@ -236,6 +240,7 @@ class TestFastAPIAppIntegration:
         """✅ 集成用例：错误响应一致性"""
         if app is not None:
             from fastapi.testclient import TestClient
+
             client = TestClient(app)
 
             # 测试404错误
@@ -243,15 +248,16 @@ class TestFastAPIAppIntegration:
             assert response.status_code == 404
 
             # 测试500错误处理
-            with patch('src.api.app.get_container') as mock_container:
+            with patch("src.api.app.get_container") as mock_container:
                 mock_container.return_value = Mock()
-                with patch('src.api.app.setup_openapi') as mock_setup_openapi:
+                with patch("src.api.app.setup_openapi"):
                     mock_get_container.return_value = Mock()
                     mock_container.side_effect = Exception("Container error")
-                    with patch('src.api.app.app') as mock_app:
+                    with patch("src.api.app.app") as mock_app:
                         mock_app.get.return_value.raise_for_status_code = True
 
                         from fastapi.testclient import TestClient
+
                         client = TestClient(mock_app)
 
                         response = client.get("/test")
@@ -262,6 +268,7 @@ class TestFastAPIAppIntegration:
         """✅ 集成用例：CORS功能正常工作"""
         if app is not None:
             from fastapi.testclient import TestClient
+
             client = TestClient(app)
 
             # 测试CORS预检请求

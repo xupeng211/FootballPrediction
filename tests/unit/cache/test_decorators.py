@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 25 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 """
 缓存装饰器测试
 Tests for Cache Decorators
@@ -10,23 +11,19 @@ Tests for Cache Decorators
 测试src.cache.decorators模块的功能
 """
 
-import pytest
 import asyncio
-import json
 import hashlib
+import json
 from typing import Any
 
-from src.cache.decorators import (
-    _make_cache_key,
-    cache_result,
-    cache_with_ttl,
-    cache_by_user,
-    cache_invalidate,
-)
+import pytest
+
+from src.cache.decorators import (_make_cache_key, cache_by_user,
+                                  cache_invalidate, cache_result,
+                                  cache_with_ttl)
 
 
 @pytest.mark.unit
-
 class TestMakeCacheKey:
     """缓存键生成测试"""
 

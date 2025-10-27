@@ -61,7 +61,7 @@ class RoadmapPhase4Executor:
         success = (microservices_success and containerization_success and
                   cicd_success and deployment_success)
 
-        print(f"\n🎉 路线图阶段4执行完成!")
+        print("\n🎉 路线图阶段4执行完成!")
         print(f"⏱️  总用时: {duration:.2f}秒")
         print(f"🔧 微服务创建: {self.phase_stats['microservices_created']}")
         print(f"🐳 容器配置: {self.phase_stats['containers_configured']}")

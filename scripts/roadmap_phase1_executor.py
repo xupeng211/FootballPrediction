@@ -58,7 +58,7 @@ class RoadmapPhase1Executor:
         duration = time.time() - self.phase_stats['start_time']
         success = core_success and api_success and db_success and quality_success
 
-        print(f"\n🎉 路线图阶段1执行完成!")
+        print("\n🎉 路线图阶段1执行完成!")
         print(f"⏱️  总用时: {duration:.2f}秒")
         print(f"📊 处理模块: {self.phase_stats['modules_processed']}")
         print(f"📝 创建测试: {self.phase_stats['tests_created']}")
@@ -537,7 +537,7 @@ mock_service.return_value = {"status": "success"}
     def establish_security_gate(self) -> bool:
         """建立安全门禁"""
         try:
-            result = subprocess.run(
+            subprocess.run(
                 ["bandit", "-r", "src/", "-f", "json"],
                 capture_output=True,
                 text=True,

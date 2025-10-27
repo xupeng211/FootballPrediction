@@ -1,25 +1,22 @@
-from unittest.mock import patch, MagicMock, mock_open
+from unittest.mock import MagicMock, mock_open, patch
+
 """
 流处理配置测试
 """
 
-import pytest
 import json
-import yaml
-from typing import Any, Dict, List, Optional
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-from src.streaming.stream_config_simple import (
-    StreamConfig,
-    KafkaConfig,
-    ConsumerConfig,
-    ProducerConfig,
-)
+import pytest
+import yaml
+
+from src.streaming.stream_config_simple import (ConsumerConfig, KafkaConfig,
+                                                ProducerConfig, StreamConfig)
 
 
 @pytest.mark.unit
 @pytest.mark.streaming
-
 class TestStreamConfig:
     """流配置基础测试"""
 

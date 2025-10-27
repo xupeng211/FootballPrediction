@@ -1,4 +1,5 @@
-from unittest.mock import Mock, AsyncMock
+from unittest.mock import AsyncMock, Mock
+
 """
 特征处理器测试
 Tests for Features Processor
@@ -6,13 +7,15 @@ Tests for Features Processor
 测试src.services.processing.processors.features_processor模块的功能
 """
 
-import pytest
+from typing import Any, Dict
+
 import pandas as pd
-from typing import Dict, Any
+import pytest
 
 # 测试导入
 try:
-    from src.services.processing.processors.features_processor import FeaturesProcessor
+    from src.services.processing.processors.features_processor import \
+        FeaturesProcessor
 
     FEATURES_PROCESSOR_AVAILABLE = True
 except ImportError as e:
@@ -24,7 +27,6 @@ except ImportError as e:
     not FEATURES_PROCESSOR_AVAILABLE, reason="Features processor module not available"
 )
 @pytest.mark.unit
-
 class TestFeaturesProcessor:
     """特征处理器测试"""
 

@@ -8,22 +8,14 @@ Manages observers and subjects centrally.
 
 import asyncio
 import logging
-from typing import Any, Dict, Optional
 from datetime import datetime
+from typing import Any, Dict, Optional
 
-from .base import Observer, Subject, ObservableEventType
-from .observers import (
-    MetricsObserver,
-    LoggingObserver,
-    AlertingObserver,
-    PerformanceObserver,
-)
-from .subjects import (
-    SystemMetricsSubject,
-    PredictionMetricsSubject,
-    AlertSubject,
-    CacheSubject,
-)
+from .base import ObservableEventType, Observer, Subject
+from .observers import (AlertingObserver, LoggingObserver, MetricsObserver,
+                        PerformanceObserver)
+from .subjects import (AlertSubject, CacheSubject, PredictionMetricsSubject,
+                       SystemMetricsSubject)
 
 logger = logging.getLogger(__name__)
 

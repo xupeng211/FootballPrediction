@@ -3,9 +3,10 @@ Redis connection manager
 """
 
 import os
+from typing import Optional
+
 import redis.asyncio as aioredis
 from redis.exceptions import RedisError
-from typing import Optional
 
 
 class RedisConnectionManager:

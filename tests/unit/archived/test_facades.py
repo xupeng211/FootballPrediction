@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 7 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 """
 门面模式API端点测试
 Tests for Facade Pattern API Endpoints
@@ -17,12 +18,14 @@ Tests for Facade Pattern API Endpoints
 - 完整工作流演示
 """
 
-import pytest
 from datetime import datetime
-from fastapi.testclient import TestClient
+
+import pytest
 from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 from src.api.facades import router
+
 try:
     from src.api.facades import global_facades
 except ImportError:
@@ -181,7 +184,6 @@ def mock_facade_factory():
 
 @pytest.mark.unit
 @pytest.mark.api
-
 class TestFacadesAPI:
     """门面API测试"""
 

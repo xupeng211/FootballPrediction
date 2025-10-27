@@ -1,21 +1,18 @@
 from datetime import datetime
+
 import pytest
 
 from src.domain.events.base import DomainEvent
-from src.domain.events.match_events import (
-    MatchCancelledEvent,
-    MatchFinishedEvent,
-    MatchPostponedEvent,
-    MatchStartedEvent,
-)
-from src.domain.events.prediction_events import (
-    PredictionCancelledEvent,
-    PredictionCreatedEvent,
-    PredictionEvaluatedEvent,
-    PredictionExpiredEvent,
-    PredictionPointsAdjustedEvent,
-    PredictionUpdatedEvent,
-)
+from src.domain.events.match_events import (MatchCancelledEvent,
+                                            MatchFinishedEvent,
+                                            MatchPostponedEvent,
+                                            MatchStartedEvent)
+from src.domain.events.prediction_events import (PredictionCancelledEvent,
+                                                 PredictionCreatedEvent,
+                                                 PredictionEvaluatedEvent,
+                                                 PredictionExpiredEvent,
+                                                 PredictionPointsAdjustedEvent,
+                                                 PredictionUpdatedEvent)
 from src.domain.models.match import MatchResult, MatchScore
 
 
@@ -29,7 +26,6 @@ class DummyEvent(DomainEvent):
 
 
 @pytest.mark.unit
-
 class TestBaseEvent:
     def test_should_convert_event_to_dict(self):
         event = DummyEvent(aggregate_id=10, payload="data")

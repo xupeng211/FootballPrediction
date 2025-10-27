@@ -9,11 +9,8 @@ import pytest
 
 # 测试导入
 try:
-    from src.streaming.kafka_consumer import (
-        MessageProcessor,
-        DataProcessor,
-        get_session,
-    )
+    from src.streaming.kafka_consumer import (DataProcessor, MessageProcessor,
+                                              get_session)
 
     KAFKA_AVAILABLE = True
 except ImportError as e:
@@ -23,7 +20,6 @@ except ImportError as e:
 
 @pytest.mark.skipif(not KAFKA_AVAILABLE, reason="Kafka consumer module not available")
 @pytest.mark.unit
-
 class TestKafkaConsumerImports:
     """Kafka消费者导入测试"""
 
@@ -67,9 +63,8 @@ class TestKafkaConsumerCompatibility:
         """测试：向后兼容性"""
         # 验证模块可以通过旧方式导入
         try:
-            from src.streaming.kafka_consumer import (
-                MessageProcessor as OldMessageProcessor,
-            )
+            from src.streaming.kafka_consumer import \
+                MessageProcessor as OldMessageProcessor
 
             assert OldMessageProcessor is MessageProcessor
         except ImportError:
@@ -142,12 +137,10 @@ class TestKafkaConsumerIntegration:
         """测试：从子模块导入"""
         # 验证可以从子模块导入相同的类
         try:
-            from src.streaming.data_processor import (
-                DataProcessor as DirectDataProcessor,
-            )
-            from src.streaming.message_processor import (
-                MessageProcessor as DirectMessageProcessor,
-            )
+            from src.streaming.data_processor import \
+                DataProcessor as DirectDataProcessor
+            from src.streaming.message_processor import \
+                MessageProcessor as DirectMessageProcessor
 
             # 它们应该是相同的对象
             assert DataProcessor is DirectDataProcessor

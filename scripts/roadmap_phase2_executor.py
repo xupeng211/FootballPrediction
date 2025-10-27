@@ -68,7 +68,7 @@ class RoadmapPhase2Executor:
         duration = time.time() - self.phase_stats['start_time']
         success = api_success and db_success and cache_success and async_success
 
-        print(f"\n🎉 路线图阶段2执行完成!")
+        print("\n🎉 路线图阶段2执行完成!")
         print(f"⏱️  总用时: {duration:.2f}秒")
         print(f"📊 性能优化: {self.phase_stats['optimizations_completed']}")
         print(f"🧪 性能测试: {self.phase_stats['performance_tests_run']}")
@@ -280,7 +280,7 @@ if __name__ == "__main__":
 
         try:
             # 创建路由优化配置
-            optimization_config = self.create_route_optimization_config()
+            self.create_route_optimization_config()
 
             # 应用优化
             print("   📝 创建路由优化配置")
@@ -343,7 +343,7 @@ PERFORMANCE_TIPS = [
 
         try:
             # 创建缓存实现
-            cache_implementation = self.create_api_cache_implementation()
+            self.create_api_cache_implementation()
 
             print("   📝 创建API缓存实现")
             self.phase_stats['optimizations_completed'] += 1
@@ -442,7 +442,7 @@ def cache_api_response(ttl: int = 300):
 
         try:
             # 创建查询优化指南
-            query_guide = self.create_query_optimization_guide()
+            self.create_query_optimization_guide()
 
             print("   📝 创建查询优化指南")
             self.phase_stats['optimizations_completed'] += 1
@@ -509,7 +509,7 @@ OPTIMIZED_QUERIES = {{
 
         try:
             # 创建连接池配置
-            pool_config = self.create_connection_pool_config()
+            self.create_connection_pool_config()
 
             print("   📝 创建连接池配置")
             self.phase_stats['optimizations_completed'] += 1
@@ -576,7 +576,7 @@ class DatabaseConnectionPool:
 
         try:
             # 创建读写分离配置
-            rw_separation_config = self.create_read_write_separation_config()
+            self.create_read_write_separation_config()
 
             print("   📝 创建读写分离配置")
             self.phase_stats['optimizations_completed'] += 1
@@ -667,7 +667,7 @@ class ReadWriteSeparation:
 
         try:
             # 创建多级缓存实现
-            cache_system = self.create_multi_level_cache_system()
+            self.create_multi_level_cache_system()
 
             print("   📝 创建多级缓存系统")
             self.phase_stats['optimizations_completed'] += 1
@@ -807,7 +807,7 @@ multi_cache = MultiLevelCache()
 
         try:
             # 创建缓存策略优化
-            strategy_config = self.create_cache_strategy_config()
+            self.create_cache_strategy_config()
 
             print("   📝 创建缓存策略配置")
             self.phase_stats['optimizations_completed'] += 1
@@ -906,7 +906,7 @@ def cache_result(prefix: str, ttl: int = 300, level: str = "L1_MEMORY"):
 
         try:
             # 创建分布式缓存配置
-            distributed_config = self.create_distributed_cache_config()
+            self.create_distributed_cache_config()
 
             print("   📝 创建分布式缓存配置")
             self.phase_stats['optimizations_completed'] += 1
@@ -999,7 +999,7 @@ distributed_cache = DistributedCache()
 
         try:
             # 创建任务队列配置
-            queue_config = self.create_task_queue_config()
+            self.create_task_queue_config()
 
             print("   📝 创建任务队列配置")
             self.phase_stats['optimizations_completed'] += 1
@@ -1103,7 +1103,7 @@ WORKER_CONFIG = {{
 
         try:
             # 创建流处理配置
-            stream_config = self.create_stream_processing_config()
+            self.create_stream_processing_config()
 
             print("   📝 创建流处理配置")
             self.phase_stats['optimizations_completed'] += 1
@@ -1224,7 +1224,7 @@ class StreamProcessor:
 
         try:
             # 创建批量处理配置
-            batch_config = self.create_batch_processing_config()
+            self.create_batch_processing_config()
 
             print("   📝 创建批量处理配置")
             self.phase_stats['optimizations_completed'] += 1
@@ -1380,7 +1380,6 @@ user_activity_batch_processor = UserActivityBatchProcessor()
         print("🧪 运行性能基准测试...")
 
         # 模拟性能测试
-        performance_results = []
 
         # API响应时间测试
         api_times = []

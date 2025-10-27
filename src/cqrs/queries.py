@@ -6,8 +6,9 @@ Query Definitions
 Defines all read operation queries.
 """
 
-from typing import Optional, Dict, Any
 from datetime import date
+from typing import Any, Dict, Optional
+
 from .base import ValidatableQuery, ValidationResult
 
 

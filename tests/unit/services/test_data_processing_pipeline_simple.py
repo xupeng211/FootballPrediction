@@ -22,16 +22,18 @@
 目标：将数据处理服务模块覆盖率提升至60%
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock, AsyncMock, create_autospec
-from typing import Dict, Any, List, Optional, Union, Tuple
-from datetime import datetime, timedelta
 import asyncio
-from dataclasses import dataclass, field
-from enum import Enum
 import json
-import pandas as pd
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple, Union
+from unittest.mock import AsyncMock, MagicMock, Mock, create_autospec, patch
+
+import pandas as pd
+import pytest
+
 
 # Mock 数据处理类
 @dataclass
@@ -46,6 +48,7 @@ class MockDataRecord:
     quality_score: float = 0.0
     processed: bool = False
 
+
 @dataclass
 class MockProcessingResult:
     success: bool
@@ -55,12 +58,14 @@ class MockProcessingResult:
     quality_score: float = 0.0
     errors: List[str] = field(default_factory=list)
 
+
 @dataclass
 class MockDataPipeline:
     name: str
     stages: List[str]
     config: Dict[str, Any] = field(default_factory=dict)
     performance_metrics: Dict[str, float] = field(default_factory=dict)
+
 
 class MockDataProcessor:
     def __init__(self, name: str):
@@ -72,6 +77,7 @@ class MockDataProcessor:
     async def process_record(self, record: MockDataRecord) -> MockProcessingResult:
         """模拟单个记录处理"""
         import random
+
         start_time = datetime.utcnow()
 
         try:
@@ -92,7 +98,7 @@ class MockDataProcessor:
                 success=True,
                 records_processed=1,
                 execution_time=execution_time,
-                quality_score=record.quality_score
+                quality_score=record.quality_score,
             )
 
             self.success_count += 1
@@ -106,14 +112,16 @@ class MockDataProcessor:
                 records_processed=0,
                 records_failed=1,
                 execution_time=execution_time,
-                errors=[str(e)]
+                errors=[str(e)],
             )
 
             self.error_count += 1
             self.processing_history.append(result)
             return result
 
-    async def process_batch(self, records: List[MockDataRecord]) -> MockProcessingResult:
+    async def process_batch(
+        self, records: List[MockDataRecord]
+    ) -> MockProcessingResult:
         """批量处理记录"""
         start_time = datetime.utcnow()
 
@@ -122,9 +130,26 @@ class MockDataProcessor:
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # 汇总结果
-        total_processed = sum(r.records_processed for r in results if isinstance(r, MockProcessingResult))
-        total_failed = sum(r.records_failed for r in results if isinstance(r, MockProcessingResult))
-        avg_quality = sum(r.quality_score for r in results if isinstance(r, MockProcessingResult) and r.success) / max(len([r for r in results if isinstance(r, MockProcessingResult) and r.success]), 1)
+        total_processed = sum(
+            r.records_processed for r in results if isinstance(r, MockProcessingResult)
+        )
+        total_failed = sum(
+            r.records_failed for r in results if isinstance(r, MockProcessingResult)
+        )
+        avg_quality = sum(
+            r.quality_score
+            for r in results
+            if isinstance(r, MockProcessingResult) and r.success
+        ) / max(
+            len(
+                [
+                    r
+                    for r in results
+                    if isinstance(r, MockProcessingResult) and r.success
+                ]
+            ),
+            1,
+        )
         execution_time = (datetime.utcnow() - start_time).total_seconds()
 
         return MockProcessingResult(
@@ -132,16 +157,17 @@ class MockDataProcessor:
             records_processed=total_processed,
             records_failed=total_failed,
             execution_time=execution_time,
-            quality_score=avg_quality
+            quality_score=avg_quality,
         )
+
 
 # Mock 数据验证器
 class MockDataValidator:
     def __init__(self):
         self.validation_rules = {
-            'required_fields': ['id', 'match_id', 'home_team', 'away_team'],
-            'score_range': {'min': 0, 'max': 10},
-            'quality_threshold': 0.6
+            "required_fields": ["id", "match_id", "home_team", "away_team"],
+            "score_range": {"min": 0, "max": 10},
+            "quality_threshold": 0.6,
         }
 
     def validate_record(self, record: MockDataRecord) -> Tuple[bool, List[str]]:
@@ -149,19 +175,27 @@ class MockDataValidator:
         errors = []
 
         # 检查必需字段
-        for field in self.validation_rules['required_fields']:
+        for field in self.validation_rules["required_fields"]:
             if not hasattr(record, field) or getattr(record, field) is None:
                 errors.append(f"Missing required field: {field}")
 
         # 检查比分范围
-        if not (self.validation_rules['score_range']['min'] <= record.home_score <= self.validation_rules['score_range']['max']):
+        if not (
+            self.validation_rules["score_range"]["min"]
+            <= record.home_score
+            <= self.validation_rules["score_range"]["max"]
+        ):
             errors.append(f"Home score out of range: {record.home_score}")
 
-        if not (self.validation_rules['score_range']['min'] <= record.away_score <= self.validation_rules['score_range']['max']):
+        if not (
+            self.validation_rules["score_range"]["min"]
+            <= record.away_score
+            <= self.validation_rules["score_range"]["max"]
+        ):
             errors.append(f"Away score out of range: {record.away_score}")
 
         # 检查质量分数
-        if record.quality_score < self.validation_rules['quality_threshold']:
+        if record.quality_score < self.validation_rules["quality_threshold"]:
             errors.append(f"Quality score too low: {record.quality_score}")
 
         return len(errors) == 0, errors
@@ -180,12 +214,13 @@ class MockDataValidator:
 
         return valid_count, all_errors
 
+
 # 设置Mock别名
 try:
+    from src.core.di import DIContainer
+    from src.domain.models import DataRecord, ProcessingResult
     from src.services.data_processing_pipeline import DataProcessingPipeline
     from src.services.data_validator import DataValidator
-    from src.domain.models import DataRecord, ProcessingResult
-    from src.core.di import DIContainer
 except ImportError:
     DataProcessingPipeline = None
     DataValidator = None
@@ -198,7 +233,7 @@ mock_validator = MockDataValidator()
 mock_processors = {
     "extraction": MockDataProcessor("extraction"),
     "transformation": MockDataProcessor("transformation"),
-    "loading": MockDataProcessor("loading")
+    "loading": MockDataProcessor("loading"),
 }
 
 
@@ -209,8 +244,7 @@ class TestDataProcessingPipelineSimple:
     def test_pipeline_initialization_success(self) -> None:
         """✅ 成功用例：管道初始化成功"""
         pipeline = MockDataPipeline(
-            name="test_pipeline",
-            stages=["extraction", "transformation", "loading"]
+            name="test_pipeline", stages=["extraction", "transformation", "loading"]
         )
 
         # 验证初始化
@@ -226,13 +260,11 @@ class TestDataProcessingPipelineSimple:
             "batch_size": 100,
             "timeout": 30.0,
             "retry_count": 3,
-            "quality_threshold": 0.8
+            "quality_threshold": 0.8,
         }
 
         pipeline = MockDataPipeline(
-            name="custom_pipeline",
-            stages=["validation", "processing"],
-            config=config
+            name="custom_pipeline", stages=["validation", "processing"], config=config
         )
 
         # 验证配置
@@ -250,7 +282,7 @@ class TestDataProcessingPipelineSimple:
             away_team="Team B",
             home_score=2,
             away_score=1,
-            timestamp=datetime.utcnow()
+            timestamp=datetime.utcnow(),
         )
 
         # 验证记录
@@ -273,7 +305,7 @@ class TestDataProcessingPipelineSimple:
             home_score=1,
             away_score=1,
             timestamp=datetime.utcnow(),
-            quality_score=0.8
+            quality_score=0.8,
         )
 
         is_valid, errors = mock_validator.validate_record(valid_record)
@@ -291,7 +323,7 @@ class TestDataProcessingPipelineSimple:
             away_team="Team F",
             home_score=3,
             away_score=0,
-            timestamp=datetime.utcnow()
+            timestamp=datetime.utcnow(),
         )
 
         is_valid, errors = mock_validator.validate_record(invalid_record)
@@ -310,7 +342,7 @@ class TestDataProcessingPipelineSimple:
             away_team="Team H",
             home_score=15,  # 超出最大范围
             away_score=-1,  # 超出最小范围
-            timestamp=datetime.utcnow()
+            timestamp=datetime.utcnow(),
         )
 
         is_valid, errors = mock_validator.validate_record(invalid_record)
@@ -331,7 +363,7 @@ class TestDataProcessingPipelineSimple:
             home_score=2,
             away_score=2,
             timestamp=datetime.utcnow(),
-            quality_score=0.3  # 低于质量阈值
+            quality_score=0.3,  # 低于质量阈值
         )
 
         is_valid, errors = mock_validator.validate_record(invalid_record)
@@ -351,7 +383,7 @@ class TestDataProcessingPipelineSimple:
             away_team="Team L",
             home_score=1,
             away_score=0,
-            timestamp=datetime.utcnow()
+            timestamp=datetime.utcnow(),
         )
 
         result = await processor.process_record(record)
@@ -378,8 +410,9 @@ class TestDataProcessingPipelineSimple:
                 away_team=f"Team {chr(78 + i)}",
                 home_score=i,
                 away_score=i + 1,
-                timestamp=datetime.utcnow()
-            ) for i in range(10)
+                timestamp=datetime.utcnow(),
+            )
+            for i in range(10)
         ]
 
         start_time = datetime.utcnow()
@@ -409,7 +442,7 @@ class TestDataProcessingPipelineSimple:
                 away_team=f"Perf Opponent {i}",
                 home_score=i % 5,
                 away_score=(i + 1) % 5,
-                timestamp=datetime.utcnow()
+                timestamp=datetime.utcnow(),
             )
 
             result = await processor.process_record(record)
@@ -431,7 +464,11 @@ class TestDataProcessingPipelineSimple:
     @pytest.mark.asyncio
     async def test_concurrent_pipeline_processing_success(self) -> None:
         """✅ 成功用例：并发管道处理成功"""
-        processors = [mock_processors["extraction"], mock_processors["transformation"], mock_processors["loading"]]
+        processors = [
+            mock_processors["extraction"],
+            mock_processors["transformation"],
+            mock_processors["loading"],
+        ]
 
         # 创建测试数据
         records = [
@@ -442,8 +479,9 @@ class TestDataProcessingPipelineSimple:
                 away_team=f"Concurrent Opponent {i}",
                 home_score=i,
                 away_score=(i + 2) % 5,
-                timestamp=datetime.utcnow()
-            ) for i in range(15)
+                timestamp=datetime.utcnow(),
+            )
+            for i in range(15)
         ]
 
         # 并发处理多个管道阶段
@@ -474,8 +512,9 @@ class TestDataProcessingPipelineSimple:
                 away_team=f"Recovery Opponent {i}",
                 home_score=i,
                 away_score=0,
-                timestamp=datetime.utcnow()
-            ) for i in range(20)
+                timestamp=datetime.utcnow(),
+            )
+            for i in range(20)
         ]
 
         result = await processor.process_batch(records)
@@ -490,7 +529,7 @@ class TestDataProcessingPipelineSimple:
         pipeline = MockDataPipeline(
             name="metrics_test",
             stages=["extraction", "transformation"],
-            config={"collect_metrics": True}
+            config={"collect_metrics": True},
         )
 
         # 模拟性能指标
@@ -499,7 +538,7 @@ class TestDataProcessingPipelineSimple:
             "average_processing_time": 0.15,
             "success_rate": 0.95,
             "quality_score_average": 0.85,
-            "throughput_per_second": 50.0
+            "throughput_per_second": 50.0,
         }
 
         # 验证指标存在
@@ -527,8 +566,9 @@ class TestDataProcessingPipelineSimple:
                 home_score=i,
                 away_score=(i + 1) % 3,
                 timestamp=datetime.utcnow(),
-                quality_score=0.8
-            ) for i in range(5)
+                quality_score=0.8,
+            )
+            for i in range(5)
         ]
 
         valid_count, errors = mock_validator.validate_batch(valid_records)
@@ -549,7 +589,7 @@ class TestDataProcessingPipelineSimple:
                 home_score=2,
                 away_score=1,
                 timestamp=datetime.utcnow(),
-                quality_score=0.8
+                quality_score=0.8,
             ),
             # 无效记录（缺少ID）
             MockDataRecord(
@@ -559,8 +599,8 @@ class TestDataProcessingPipelineSimple:
                 away_team="Invalid Opponent",
                 home_score=15,  # 超出范围
                 away_score=1,
-                timestamp=datetime.utcnow()
-            )
+                timestamp=datetime.utcnow(),
+            ),
         ]
 
         valid_count, errors = mock_validator.validate_batch(mixed_records)
@@ -584,8 +624,9 @@ class TestDataProcessingPipelineSimple:
                 home_score=i,
                 away_score=0,
                 timestamp=datetime.utcnow(),
-                quality_score=0.3  # 初始低质量
-            ) for i in range(5)
+                quality_score=0.3,  # 初始低质量
+            )
+            for i in range(5)
         ]
 
         # 处理记录
@@ -602,7 +643,9 @@ class TestDataProcessingPipelineSimple:
 
         # 至少部分记录质量得到改进
         assert quality_improved >= 3
-        assert all(result.quality_score >= 0.7 for _, result in results if result.success)
+        assert all(
+            result.quality_score >= 0.7 for _, result in results if result.success
+        )
 
 
 @pytest.fixture
@@ -611,11 +654,7 @@ def mock_data_pipeline():
     return MockDataPipeline(
         name="test_pipeline",
         stages=["extraction", "transformation", "loading"],
-        config={
-            "batch_size": 50,
-            "timeout": 15.0,
-            "quality_threshold": 0.7
-        }
+        config={"batch_size": 50, "timeout": 15.0, "quality_threshold": 0.7},
     )
 
 
@@ -631,7 +670,7 @@ def mock_data_records():
             home_score=2,
             away_score=1,
             timestamp=datetime.utcnow(),
-            quality_score=0.8
+            quality_score=0.8,
         ),
         MockDataRecord(
             id=2,
@@ -641,8 +680,8 @@ def mock_data_records():
             home_score=1,
             away_score=1,
             timestamp=datetime.utcnow(),
-            quality_score=0.9
-        )
+            quality_score=0.9,
+        ),
     ]
 
 

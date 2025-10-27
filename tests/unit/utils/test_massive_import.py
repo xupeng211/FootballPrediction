@@ -4,10 +4,11 @@
 通过导入所有模块来快速提升覆盖率
 """
 
-import pytest
-import sys
-import os
 import importlib
+import os
+import sys
+
+import pytest
 
 # 添加src目录到Python路径
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../"))

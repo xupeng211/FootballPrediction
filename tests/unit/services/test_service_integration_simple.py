@@ -6,10 +6,11 @@ Service Layer Integration Tests (Simplified)
 Tests service layer integration with data layer using simplified but comprehensive approach.
 """
 
-import pytest
-from unittest.mock import Mock, AsyncMock, patch
-from datetime import datetime
 import time
+from datetime import datetime
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 
 @pytest.mark.unit
@@ -80,7 +81,9 @@ class TestServiceIntegrationSimple:
     # ========== 联赛服务测试 ==========
 
     @pytest.mark.asyncio
-    async def test_league_service_create_success(self, mock_league_service, sample_league_data):
+    async def test_league_service_create_success(
+        self, mock_league_service, sample_league_data
+    ):
         """成功用例：创建联赛"""
         # Arrange
         mock_league = Mock()
@@ -96,7 +99,9 @@ class TestServiceIntegrationSimple:
         assert result == mock_league
 
     @pytest.mark.asyncio
-    async def test_league_service_create_failure(self, mock_league_service, sample_league_data):
+    async def test_league_service_create_failure(
+        self, mock_league_service, sample_league_data
+    ):
         """异常用例：创建联赛失败"""
         # Arrange
         mock_league_service.create_league.side_effect = ValueError("联赛已存在")
@@ -137,7 +142,9 @@ class TestServiceIntegrationSimple:
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_league_service_update_success(self, mock_league_service, sample_league_data):
+    async def test_league_service_update_success(
+        self, mock_league_service, sample_league_data
+    ):
         """成功用例：更新联赛"""
         # Arrange
         league_id = 1
@@ -151,7 +158,9 @@ class TestServiceIntegrationSimple:
         result = await mock_league_service.update_league(league_id, updated_data)
 
         # Assert
-        mock_league_service.update_league.assert_called_once_with(league_id, updated_data)
+        mock_league_service.update_league.assert_called_once_with(
+            league_id, updated_data
+        )
         assert result == mock_league
 
     @pytest.mark.asyncio
@@ -181,7 +190,9 @@ class TestServiceIntegrationSimple:
         return mock_service
 
     @pytest.mark.asyncio
-    async def test_match_service_create_success(self, mock_match_service, sample_match_data):
+    async def test_match_service_create_success(
+        self, mock_match_service, sample_match_data
+    ):
         """成功用例：创建比赛"""
         # Arrange
         mock_match = Mock()
@@ -226,7 +237,9 @@ class TestServiceIntegrationSimple:
         return mock_service
 
     @pytest.mark.asyncio
-    async def test_prediction_service_create_success(self, mock_prediction_service, sample_prediction_data):
+    async def test_prediction_service_create_success(
+        self, mock_prediction_service, sample_prediction_data
+    ):
         """成功用例：创建预测"""
         # Arrange
         mock_prediction = Mock()
@@ -239,7 +252,9 @@ class TestServiceIntegrationSimple:
         result = await mock_prediction_service.create_prediction(sample_prediction_data)
 
         # Assert
-        mock_prediction_service.create_prediction.assert_called_once_with(sample_prediction_data)
+        mock_prediction_service.create_prediction.assert_called_once_with(
+            sample_prediction_data
+        )
         assert result == mock_prediction
 
     @pytest.mark.asyncio
@@ -270,14 +285,20 @@ class TestServiceIntegrationSimple:
         mock_prediction_service.evaluate_prediction.return_value = mock_prediction
 
         # Act
-        result = await mock_prediction_service.evaluate_prediction(prediction_id, evaluation_data)
+        result = await mock_prediction_service.evaluate_prediction(
+            prediction_id, evaluation_data
+        )
 
         # Assert
-        mock_prediction_service.evaluate_prediction.assert_called_once_with(prediction_id, evaluation_data)
+        mock_prediction_service.evaluate_prediction.assert_called_once_with(
+            prediction_id, evaluation_data
+        )
         assert result.status == "evaluated"
 
     @pytest.mark.asyncio
-    async def test_prediction_service_get_by_user_success(self, mock_prediction_service):
+    async def test_prediction_service_get_by_user_success(
+        self, mock_prediction_service
+    ):
         """成功用例：根据用户获取预测"""
         # Arrange
         user_id = 123
@@ -298,7 +319,7 @@ class TestServiceIntegrationSimple:
         # Act & Assert
         assert mock_service_config is not None
         assert mock_service_config.name == "测试服务"
-        assert hasattr(mock_service_config, 'config')
+        assert hasattr(mock_service_config, "config")
         assert isinstance(mock_service_config.config, dict)
 
     def test_service_configuration_management(self, mock_service_config):
@@ -341,7 +362,7 @@ class TestServiceIntegrationSimple:
             "total_requests": 100,
             "successful_requests": 95,
             "failed_requests": 5,
-            "average_response_time": 0.25
+            "average_response_time": 0.25,
         }
 
         # Act & Assert
@@ -355,12 +376,12 @@ class TestServiceIntegrationSimple:
     def test_service_transaction_boundary(self, mock_service_config):
         """成功用例：事务边界条件"""
         # Act & Assert - 简化事务测试
-        assert hasattr(mock_service_config, 'config')
+        assert hasattr(mock_service_config, "config")
         # 模拟事务管理逻辑
         transaction_active = True
         assert transaction_active is True
 
-    @patch('src.core.logging.get_logger')
+    @patch("src.core.logging.get_logger")
     def test_service_logging_integration(self, mock_get_logger, mock_service_config):
         """成功用例：服务日志集成"""
         # Arrange
@@ -413,7 +434,7 @@ class TestServiceIntegrationSimple:
             "overall_status": "healthy",
             "services": ["league_service", "match_service", "prediction_service"],
             "database_connected": True,
-            "cache_connected": True
+            "cache_connected": True,
         }
 
         # Assert
@@ -435,7 +456,9 @@ class TestServiceIntegrationSimple:
         assert duration < 1.0  # 应该在合理范围内
 
     @pytest.mark.asyncio
-    async def test_service_concurrent_operations(self, mock_league_service, sample_league_data):
+    async def test_service_concurrent_operations(
+        self, mock_league_service, sample_league_data
+    ):
         """成功用例：服务并发操作"""
         # Arrange
         mock_league_service.create_league.return_value = Mock(id=1, name="测试联赛")
@@ -443,7 +466,7 @@ class TestServiceIntegrationSimple:
         # Act - 模拟并发操作
         tasks = [
             mock_league_service.create_league(sample_league_data),
-            mock_league_service.create_league(sample_league_data)
+            mock_league_service.create_league(sample_league_data),
         ]
         results = await tasks[0]  # 简化并发测试
 

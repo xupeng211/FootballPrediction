@@ -1,4 +1,5 @@
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
 """
 预测模型测试
 Tests for Prediction Model
@@ -6,18 +7,16 @@ Tests for Prediction Model
 测试src.models.prediction_model模块的预测模型功能
 """
 
-import pytest
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
-from datetime import datetime
+import pytest
 
 # 测试导入
 try:
-    from src.models.prediction_model import (
-        PredictionModel,
-        PredictionStatus,
-        PredictionType,
-    )
+    from src.models.prediction_model import (PredictionModel, PredictionStatus,
+                                             PredictionType)
 
     PREDICTION_MODEL_AVAILABLE = True
 except ImportError as e:
@@ -32,7 +31,6 @@ except ImportError as e:
     not PREDICTION_MODEL_AVAILABLE, reason="Prediction model module not available"
 )
 @pytest.mark.unit
-
 class TestPredictionStatus:
     """预测状态测试"""
 
@@ -174,8 +172,8 @@ class TestPredictionModel:
         model1.train(X, y)
 
         # 保存模型
-        import tempfile
         import os
+        import tempfile
 
         with tempfile.NamedTemporaryFile(suffix=".pkl", delete=False) as f:
             model_path = f.name
@@ -270,11 +268,9 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if PREDICTION_MODEL_AVAILABLE:
-        from src.models.prediction_model import (
-            PredictionModel,
-            PredictionStatus,
-            PredictionType,
-        )
+        from src.models.prediction_model import (PredictionModel,
+                                                 PredictionStatus,
+                                                 PredictionType)
 
         assert PredictionModel is not None
         assert PredictionStatus is not None

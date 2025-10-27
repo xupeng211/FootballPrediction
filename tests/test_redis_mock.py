@@ -1,9 +1,9 @@
 # Redis Mock配置用于测试
 import asyncio
 from typing import Any, Dict, Optional
+from unittest.mock import AsyncMock, Mock
 
 
-from unittest.mock import Mock, AsyncMock
 class MockRedis:
     """模拟Redis客户端"""
 

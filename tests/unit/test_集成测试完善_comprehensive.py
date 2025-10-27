@@ -7,9 +7,11 @@
 目标覆盖率: 80%+
 """
 
-import pytest
-from unittest.mock import Mock, patch
 from datetime import datetime
+from unittest.mock import Mock, patch
+
+import pytest
+
 
 class Test集成测试完善:
     """集成测试完善 测试类"""
@@ -31,6 +33,7 @@ class Test集成测试完善:
         # 模拟性能测试
         end_time = datetime.now()
         assert (end_time - start_time).total_seconds() < 1.0
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

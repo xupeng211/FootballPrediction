@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 10 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 核心API模块覆盖率测试 - 第二阶段
 Core API Module Coverage Tests - Phase 2
@@ -11,17 +12,19 @@ Core API Module Coverage Tests - Phase 2
 目标：28% → 35%
 """
 
-import pytest
 import asyncio
-from datetime import datetime
 import json
-from typing import Dict, Any, Optional
+from datetime import datetime
+from typing import Any, Dict, Optional
+
+import pytest
 
 # 测试导入 - 使用灵活导入策略
 try:
     from src.api.schemas import APIResponse
-    from src.core.exceptions import ServiceError, FootballPredictionError
-    from src.security.middleware import SecurityHeadersMiddleware, RateLimitMiddleware
+    from src.core.exceptions import FootballPredictionError, ServiceError
+    from src.security.middleware import (RateLimitMiddleware,
+                                         SecurityHeadersMiddleware)
 
     API_AVAILABLE = True
 except ImportError as e:
@@ -29,7 +32,8 @@ except ImportError as e:
     API_AVAILABLE = False
 
 try:
-    from src.database.models.raw_data import RawMatchData, RawOddsData, RawScoresData
+    from src.database.models.raw_data import (RawMatchData, RawOddsData,
+                                              RawScoresData)
 
     DATABASE_AVAILABLE = True
 except ImportError as e:
@@ -47,7 +51,6 @@ except ImportError as e:
 
 @pytest.mark.skipif(not API_AVAILABLE, reason="API模块不可用")
 @pytest.mark.unit
-
 class TestAPISchemasCoverage:
     """API模式覆盖率补充测试"""
 

@@ -2,20 +2,21 @@
 
 # TODO: Consider creating a fixture for 53 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 """
 策略预测服务测试（简化版）
 Tests for Strategy Prediction Service (Simplified)
 """
 
-import pytest
 from datetime import datetime
+
+import pytest
 
 from src.services.strategy_prediction_service import StrategyPredictionService
 
 
 @pytest.mark.unit
-
 class TestStrategyPredictionServiceSimple:
     """策略预测服务测试"""
 

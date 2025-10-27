@@ -4,11 +4,11 @@
 
 # 导入
 import logging
-from sqlalchemy import text
-from sqlalchemy.exc import SQLAlchemyError, DatabaseError
-from typing import Union, Sequence
+from typing import Sequence, Union
+
 from alembic import context, op
-from alembic import op
+from sqlalchemy import text
+from sqlalchemy.exc import DatabaseError, SQLAlchemyError
 
 
 # 函数定义

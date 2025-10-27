@@ -3,16 +3,16 @@
 专注于测试存在性而非复杂功能
 """
 
-import pytest
-from pathlib import Path
 import sys
+from pathlib import Path
+
+import pytest
 
 # 模块路径
 MODULE_PATH = Path("src") / "events.py"
 
 
 @pytest.mark.unit
-
 class TestTestEvents:
     """简化测试类"""
 

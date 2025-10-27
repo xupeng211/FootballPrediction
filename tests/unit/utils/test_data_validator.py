@@ -5,15 +5,16 @@ Tests for Data Validator
 测试src.utils.data_validator模块的功能
 """
 
+from datetime import date, datetime
+from typing import Any, Dict, List
+
 import pytest
-from datetime import datetime, date
-from typing import Dict, Any, List
+
 from src.utils.data_validator import DataValidator
 
 
 @pytest.mark.unit
 @pytest.mark.external_api
-
 class TestDataValidator:
     """数据验证器测试"""
 

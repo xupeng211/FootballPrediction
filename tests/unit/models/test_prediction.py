@@ -1,33 +1,25 @@
-from unittest.mock import patch, AsyncMock, MagicMock
 """
-预测模块测试
-Prediction Module Tests
+预测模块单元测试
 
-测试src/models/prediction.py中定义的预测功能，专注于实现100%覆盖率。
-Tests prediction functionality defined in src/models/prediction.py, focused on achieving 100% coverage.
+测试 src/models/prediction.py 中的预测功能。
+专注于业务逻辑测试，提高测试密度和质量。
 """
+
+import datetime
+from unittest.mock import AsyncMock, patch
 
 import pytest
-import datetime
-from typing import Any, Dict
 
 # 导入要测试的模块
 try:
-    from src.models.prediction import (
-        PredictionResult,
-        PredictionCache,
-        PredictionService,
-        # 监控指标类
-        Counter,
-        Histogram,
-        Gauge,
-        # 监控指标实例
-        predictions_total,
-        prediction_duration_seconds,
-        prediction_accuracy,
-        model_load_duration_seconds,
-        cache_hit_ratio,
-    )
+    from src.models.prediction import (Counter, Gauge,  # 监控指标类; 监控指标实例
+                                       Histogram, PredictionCache,
+                                       PredictionResult, PredictionService,
+                                       cache_hit_ratio,
+                                       model_load_duration_seconds,
+                                       prediction_accuracy,
+                                       prediction_duration_seconds,
+                                       predictions_total)
 
     PREDICTION_AVAILABLE = True
 except ImportError:
@@ -36,946 +28,574 @@ except ImportError:
 
 @pytest.mark.skipif(not PREDICTION_AVAILABLE, reason="Prediction module not available")
 @pytest.mark.unit
-
 class TestPredictionResult:
-    """PredictionResult测试"""
+    """PredictionResult业务逻辑测试"""
 
-    def test_prediction_result_dataclass(self):
-        """测试PredictionResult dataclass"""
-        # 验证它是一个dataclass
+    def test_prediction_result_dataclass_structure(self):
+        """测试PredictionResult dataclass结构"""
         import dataclasses
 
         assert dataclasses.is_dataclass(PredictionResult)
 
-    def test_prediction_result_class_exists(self):
-        """测试PredictionResult类存在"""
-        assert PredictionResult is not None
-        assert callable(PredictionResult)
+        # 验证字段
+        fields = dataclasses.fields(PredictionResult)
+        field_names = {f.name for f in fields}
+        expected_fields = {
+            "match_id",
+            "predicted_result",
+            "confidence",
+            "prediction_time",
+            "model_version",
+            "features",
+        }
+        assert field_names == expected_fields
 
-    def test_prediction_result_instantiation_full(self):
-        """测试PredictionResult完整实例化"""
-        prediction_time = datetime.datetime(2023, 12, 1, 20, 0, 0)
-        features = {"team_strength": 0.85, "form_index": 0.72}
+    def test_prediction_result_creation_with_business_scenarios(self):
+        """测试业务场景下的PredictionResult创建"""
+        base_time = datetime.datetime(2023, 12, 1, 20, 0, 0)
 
+        # 足球比赛预测场景
+        scenarios = [
+            {
+                "match_id": 12345,
+                "predicted_result": "home_win",
+                "confidence": 0.85,
+                "features": {
+                    "home_team_strength": 0.9,
+                    "away_team_strength": 0.6,
+                    "home_form": [1, 1, 0, 1, 1],
+                    "away_form": [0, 0, 1, 0, 0],
+                    "h2h_home_wins": 3,
+                    "venue_advantage": "home",
+                },
+            },
+            {
+                "match_id": 12346,
+                "predicted_result": "draw",
+                "confidence": 0.65,
+                "features": {
+                    "home_team_strength": 0.7,
+                    "away_team_strength": 0.72,
+                    "home_form": [0, 1, 0, 1, 0],
+                    "away_form": [1, 0, 1, 0, 1],
+                    "h2h_draws": 2,
+                    "venue_advantage": "neutral",
+                },
+            },
+            {
+                "match_id": 12347,
+                "predicted_result": "away_win",
+                "confidence": 0.78,
+                "features": {},
+            },
+        ]
+
+        for scenario in scenarios:
+            result = PredictionResult(
+                match_id=scenario["match_id"],
+                predicted_result=scenario["predicted_result"],
+                confidence=scenario["confidence"],
+                prediction_time=base_time,
+                model_version="v2.1.0",
+                features=scenario["features"],
+            )
+
+            assert result.match_id == scenario["match_id"]
+            assert result.predicted_result == scenario["predicted_result"]
+            assert result.confidence == scenario["confidence"]
+            assert result.features == scenario["features"]
+
+    def test_prediction_result_edge_cases(self):
+        """测试边界情况"""
+        # 最小置信度
+        result_min = PredictionResult(
+            match_id=1,
+            predicted_result="home_win",
+            confidence=0.0,
+            prediction_time=datetime.datetime.utcnow(),
+            model_version="v1.0.0",
+        )
+        assert result_min.confidence == 0.0
+
+        # 最大置信度
+        result_max = PredictionResult(
+            match_id=2,
+            predicted_result="away_win",
+            confidence=1.0,
+            prediction_time=datetime.datetime.utcnow(),
+            model_version="v1.0.0",
+        )
+        assert result_max.confidence == 1.0
+
+        # 极端match_id值
+        result_extreme = PredictionResult(
+            match_id=0,
+            predicted_result="draw",
+            confidence=0.5,
+            prediction_time=datetime.datetime.utcnow(),
+            model_version="v1.0.0",
+        )
+        assert result_extreme.match_id == 0
+
+    def test_prediction_result_features_handling(self):
+        """测试features字段处理逻辑"""
+        prediction_time = datetime.datetime.utcnow()
+
+        # None特征自动转换为空字典
+        result_none = PredictionResult(
+            match_id=1,
+            predicted_result="home_win",
+            confidence=0.8,
+            prediction_time=prediction_time,
+            model_version="v1.0.0",
+            features=None,
+        )
+        assert result_none.features == {}
+
+        # 空字典保持不变
+        result_empty = PredictionResult(
+            match_id=2,
+            predicted_result="draw",
+            confidence=0.6,
+            prediction_time=prediction_time,
+            model_version="v1.0.0",
+            features={},
+        )
+        assert result_empty.features == {}
+
+        # 复杂嵌套特征
+        complex_features = {
+            "teams": {
+                "home": {"name": "Team A", "rating": 85.5, "injuries": 1},
+                "away": {"name": "Team B", "rating": 78.2, "injuries": 2},
+            },
+            "conditions": {
+                "weather": "rain",
+                "temperature": 15.0,
+                "stadium": "Stadium X",
+            },
+            "statistics": {
+                "home_goals_recent": [2, 1, 3, 0, 2],
+                "away_goals_recent": [1, 0, 1, 2, 1],
+            },
+        }
+
+        result_complex = PredictionResult(
+            match_id=3,
+            predicted_result="home_win",
+            confidence=0.75,
+            prediction_time=prediction_time,
+            model_version="v3.0.0",
+            features=complex_features,
+        )
+        assert result_complex.features == complex_features
+
+
+@pytest.mark.skipif(not PREDICTION_AVAILABLE, reason="Prediction module not available")
+class TestPredictionCache:
+    """PredictionCache业务逻辑测试"""
+
+    def test_cache_basic_operations(self):
+        """测试缓存基本操作"""
+        cache = PredictionCache()
+        prediction_time = datetime.datetime.utcnow()
+
+        # 创建预测结果
         result = PredictionResult(
             match_id=12345,
             predicted_result="home_win",
             confidence=0.85,
             prediction_time=prediction_time,
             model_version="v2.1.0",
-            features=features,
         )
 
-        assert result.match_id == 12345
-        assert result.predicted_result == "home_win"
-        assert result.confidence == 0.85
-        assert result.prediction_time == prediction_time
-        assert result.model_version == "v2.1.0"
-        assert result.features == features
+        # 测试设置和获取
+        cache.set("match_12345", result)
+        cached_result = cache.get("match_12345")
 
-    def test_prediction_result_instantiation_minimal(self):
-        """测试PredictionResult最小实例化"""
+        assert cached_result is not None
+        assert cached_result.match_id == 12345
+        assert cached_result.predicted_result == "home_win"
+        assert cached_result.confidence == 0.85
+
+        # 测试不存在的键
+        assert cache.get("nonexistent") is None
+
+    def test_cache_business_scenarios(self):
+        """测试业务场景下的缓存使用"""
+        cache = PredictionCache()
         prediction_time = datetime.datetime.utcnow()
 
-        result = PredictionResult(
-            match_id=67890,
-            predicted_result="draw",
-            confidence=0.60,
-            prediction_time=prediction_time,
-            model_version="v1.0.0",
-        )
-
-        assert result.match_id == 67890
-        assert result.predicted_result == "draw"
-        assert result.confidence == 0.60
-        assert result.prediction_time == prediction_time
-        assert result.model_version == "v1.0.0"
-        # features应该自动初始化为空字典
-        assert result.features == {}
-
-    def test_prediction_result_post_init(self):
-        """测试PredictionResult的__post_init__方法"""
-        # 不提供features，应该自动设置为空字典
-        result1 = PredictionResult(
-            match_id=1,
-            predicted_result="away_win",
-            confidence=0.70,
-            prediction_time=datetime.datetime.utcnow(),
-            model_version="v1.0.0",
-        )
-        assert result1.features == {}
-
-        # 显式提供features=None，也应该自动设置为空字典
-        result2 = PredictionResult(
-            match_id=2,
-            predicted_result="home_win",
-            confidence=0.80,
-            prediction_time=datetime.datetime.utcnow(),
-            model_version="v1.0.0",
-            features=None,
-        )
-        assert result2.features == {}
-
-        # 提供非空features，应该保持不变
-        custom_features = {"test": "value"}
-        result3 = PredictionResult(
-            match_id=3,
-            predicted_result="draw",
-            confidence=0.50,
-            prediction_time=datetime.datetime.utcnow(),
-            model_version="v1.0.0",
-            features=custom_features,
-        )
-        assert result3.features == custom_features
-
-    def test_prediction_result_field_types(self):
-        """测试PredictionResult字段类型"""
-        result = PredictionResult(
-            match_id=123,
-            predicted_result="home_win",
-            confidence=0.75,
-            prediction_time=datetime.datetime.utcnow(),
-            model_version="v1.0.0",
-        )
-
-        assert isinstance(result.match_id, int)
-        assert isinstance(result.predicted_result, str)
-        assert isinstance(result.confidence, float)
-        assert isinstance(result.prediction_time, datetime.datetime)
-        assert isinstance(result.model_version, str)
-        assert isinstance(result.features, dict)
-
-    def test_prediction_result_different_results(self):
-        """测试不同类型的预测结果"""
-        base_time = datetime.datetime.utcnow()
-
-        results = [
-            ("home_win", 0.85),
-            ("away_win", 0.70),
-            ("draw", 0.60),
+        # 模拟多场比赛预测缓存
+        matches = [
+            (12345, "home_win", 0.85),
+            (12346, "draw", 0.65),
+            (12347, "away_win", 0.78),
+            (12348, "home_win", 0.92),
         ]
 
-        for predicted_result, confidence in results:
-            result = PredictionResult(
-                match_id=100 + len([r for r in results if r[0] == predicted_result]),
-                predicted_result=predicted_result,
+        # 批量缓存
+        for match_id, result, confidence in matches:
+            prediction = PredictionResult(
+                match_id=match_id,
+                predicted_result=result,
                 confidence=confidence,
-                prediction_time=base_time,
-                model_version="v1.0.0",
+                prediction_time=prediction_time,
+                model_version="v2.1.0",
             )
-            assert result.predicted_result == predicted_result
-            assert result.confidence == confidence
+            cache_key = f"match_{match_id}_v2.1.0"
+            cache.set(cache_key, prediction)
 
-    def test_prediction_result_complex_features(self):
-        """测试复杂的features结构"""
-        complex_features = {
-            "home_team": {"rating": 85.5, "form": [1, 0, 1, 1, 0], "injuries": 2},
-            "away_team": {"rating": 78.2, "form": [0, 1, 0, 0, 1], "injuries": 1},
-            "match_conditions": {
-                "venue": "home",
-                "weather": "sunny",
-                "temperature": 22.5,
-            },
-        }
+        # 验证缓存命中
+        for match_id, expected_result, expected_confidence in matches:
+            cache_key = f"match_{match_id}_v2.1.0"
+            cached = cache.get(cache_key)
+            assert cached is not None
+            assert cached.predicted_result == expected_result
+            assert cached.confidence == expected_confidence
+
+        # 验证缓存大小
+        assert len(cache._cache) == len(matches)
+
+    def test_cache_ttl_parameter_handling(self):
+        """测试TTL参数处理（虽然当前实现忽略）"""
+        cache = PredictionCache()
+        prediction_time = datetime.datetime.utcnow()
 
         result = PredictionResult(
             match_id=999,
             predicted_result="home_win",
-            confidence=0.75,
-            prediction_time=datetime.datetime.utcnow(),
-            model_version="v3.0.0",
-            features=complex_features,
+            confidence=0.80,
+            prediction_time=prediction_time,
+            model_version="v1.0.0",
         )
 
-        assert result.features == complex_features
-        assert result.features["home_team"]["rating"] == 85.5
+        # 不同TTL值
+        cache.set("match_999_1h", result, ttl=3600)
+        cache.set("match_999_24h", result, ttl=86400)
+        cache.set("match_999_custom", result, ttl=12345)
 
+        # 所有缓存都应该存在（当前实现忽略TTL）
+        assert cache.get("match_999_1h") is not None
+        assert cache.get("match_999_24h") is not None
+        assert cache.get("match_999_custom") is not None
 
-@pytest.mark.skipif(not PREDICTION_AVAILABLE, reason="Prediction module not available")
-class TestPredictionCache:
-    """PredictionCache测试"""
-
-    def test_prediction_cache_class_exists(self):
-        """测试PredictionCache类存在"""
-        assert PredictionCache is not None
-        assert callable(PredictionCache)
-
-    def test_prediction_cache_instantiation(self):
-        """测试PredictionCache实例化"""
-        cache = PredictionCache()
-        assert cache._cache == {}
-
-    def test_prediction_cache_set_and_get(self):
-        """测试PredictionCache设置和获取"""
+    def test_cache_overwrite_and_clear(self):
+        """测试缓存覆盖和清空"""
         cache = PredictionCache()
         prediction_time = datetime.datetime.utcnow()
 
-        # 创建一个预测结果
-        result = PredictionResult(
+        # 初始缓存
+        result1 = PredictionResult(
             match_id=123,
             predicted_result="home_win",
             confidence=0.80,
             prediction_time=prediction_time,
             model_version="v1.0.0",
         )
+        cache.set("match_123", result1)
 
-        # 设置缓存
-        cache.set("match_123", result)
+        # 验证初始值
+        cached = cache.get("match_123")
+        assert cached.confidence == 0.80
+        assert cached.model_version == "v1.0.0"
 
-        # 获取缓存
-        cached_result = cache.get("match_123")
-        assert cached_result is not None
-        assert cached_result.match_id == 123
-        assert cached_result.predicted_result == "home_win"
-        assert cached_result.confidence == 0.80
-
-    def test_prediction_cache_get_nonexistent(self):
-        """测试获取不存在的缓存"""
-        cache = PredictionCache()
-        result = cache.get("nonexistent_key")
-        assert result is None
-
-    def test_prediction_cache_set_with_ttl(self):
-        """测试设置缓存带TTL（尽管当前实现忽略TTL）"""
-        cache = PredictionCache()
-        prediction_time = datetime.datetime.utcnow()
-
-        result = PredictionResult(
-            match_id=456,
-            predicted_result="draw",
-            confidence=0.60,
+        # 覆盖缓存（更新后的预测）
+        result2 = PredictionResult(
+            match_id=123,
+            predicted_result="home_win",
+            confidence=0.85,  # 更新的置信度
             prediction_time=prediction_time,
-            model_version="v1.0.0",
+            model_version="v1.1.0",  # 更新的模型版本
         )
+        cache.set("match_123", result2)
 
-        # 设置带TTL的缓存
-        cache.set("match_456", result, ttl=7200)
-
-        # 验证可以获取
-        cached_result = cache.get("match_456")
-        assert cached_result is not None
-        assert cached_result.match_id == 456
-
-    def test_prediction_cache_clear(self):
-        """测试清空缓存"""
-        cache = PredictionCache()
-        prediction_time = datetime.datetime.utcnow()
-
-        # 添加多个缓存项
-        for i in range(3):
-            result = PredictionResult(
-                match_id=100 + i,
-                predicted_result="home_win",
-                confidence=0.75,
-                prediction_time=prediction_time,
-                model_version="v1.0.0",
-            )
-            cache.set(f"match_{100 + i}", result)
-
-        # 验证缓存不为空
-        assert len(cache._cache) == 3
+        # 验证覆盖
+        cached = cache.get("match_123")
+        assert cached.confidence == 0.85
+        assert cached.model_version == "v1.1.0"
 
         # 清空缓存
         cache.clear()
-
-        # 验证缓存已清空
         assert len(cache._cache) == 0
-        assert cache.get("match_100") is None
-
-    def test_prediction_cache_overwrite(self):
-        """测试覆盖缓存"""
-        cache = PredictionCache()
-        prediction_time = datetime.datetime.utcnow()
-
-        # 设置初始值
-        result1 = PredictionResult(
-            match_id=789,
-            predicted_result="home_win",
-            confidence=0.80,
-            prediction_time=prediction_time,
-            model_version="v1.0.0",
-        )
-        cache.set("match_789", result1)
-
-        # 验证初始值
-        cached_result = cache.get("match_789")
-        assert cached_result.confidence == 0.80
-
-        # 覆盖值
-        result2 = PredictionResult(
-            match_id=789,
-            predicted_result="away_win",
-            confidence=0.20,  # 不同的置信度
-            prediction_time=prediction_time,
-            model_version="v2.0.0",
-        )
-        cache.set("match_789", result2)
-
-        # 验证覆盖成功
-        cached_result = cache.get("match_789")
-        assert cached_result.predicted_result == "away_win"
-        assert cached_result.confidence == 0.20
-        assert cached_result.model_version == "v2.0.0"
-
-    def test_prediction_cache_complex_keys(self):
-        """测试复杂的缓存键"""
-        cache = PredictionCache()
-        prediction_time = datetime.datetime.utcnow()
-
-        # 使用复杂的键
-        complex_keys = [
-            "match_123_home",
-            "match_456_away",
-            "match_789_draw_v1.0.0",
-            "user_123_match_456_model_v2.1.0",
-        ]
-
-        result = PredictionResult(
-            match_id=999,
-            predicted_result="home_win",
-            confidence=0.75,
-            prediction_time=prediction_time,
-            model_version="v1.0.0",
-        )
-
-        for key in complex_keys:
-            cache.set(key, result)
-            cached_result = cache.get(key)
-            assert cached_result is not None
-            assert cached_result.match_id == 999
+        assert cache.get("match_123") is None
 
 
 @pytest.mark.skipif(not PREDICTION_AVAILABLE, reason="Prediction module not available")
 class TestPredictionService:
-    """PredictionService测试"""
+    """PredictionService业务逻辑测试"""
 
-    def test_prediction_service_class_exists(self):
-        """测试PredictionService类存在"""
-        assert PredictionService is not None
-        assert callable(PredictionService)
-
-    def test_prediction_service_instantiation_default(self):
-        """测试PredictionService默认实例化"""
+    def test_service_initialization(self):
+        """测试服务初始化"""
+        # 默认初始化
         service = PredictionService()
         assert service.name == "PredictionService"
         assert service.mlflow_tracking_uri == "http://localhost:5002"
         assert isinstance(service.cache, PredictionCache)
 
-    def test_prediction_service_instantiation_custom_uri(self):
-        """测试PredictionService自定义URI实例化"""
+        # 自定义URI初始化
         custom_uri = "http://custom-mlflow:8080"
-        service = PredictionService(mlflow_tracking_uri=custom_uri)
-        assert service.mlflow_tracking_uri == custom_uri
+        service_custom = PredictionService(mlflow_tracking_uri=custom_uri)
+        assert service_custom.mlflow_tracking_uri == custom_uri
 
-    def test_prediction_service_inheritance(self):
-        """测试PredictionService继承关系"""
-        # 检查是否继承自SimpleService
+    def test_service_inheritance(self):
+        """测试服务继承关系"""
         from src.services.base_unified import SimpleService
 
         assert issubclass(PredictionService, SimpleService)
 
-    def test_prediction_service_predict_match(self):
-        """测试predict_match方法"""
+    @pytest.mark.asyncio
+    async def test_predict_match_business_logic(self):
+        """测试单场比赛预测业务逻辑"""
         service = PredictionService()
 
-        # 由于是异步方法，我们需要使用pytest-asyncio或直接调用协程
-        import asyncio
+        # 测试不同比赛ID的预测
+        test_cases = [1, 123, 456, 789, 999999, 0, -1]
 
-        async def test_predict():
-            result = await service.predict_match(12345)
+        for match_id in test_cases:
+            result = await service.predict_match(match_id)
+
+            # 验证结果结构
             assert isinstance(result, PredictionResult)
-            assert result.match_id == 12345
-            assert result.predicted_result == "home_win"
-            assert result.confidence == 0.75
+            assert result.match_id == match_id
+            assert result.predicted_result == "home_win"  # 当前实现的默认值
+            assert result.confidence == 0.75  # 当前实现的默认值
             assert result.model_version == "v1.0.0"
             assert isinstance(result.prediction_time, datetime.datetime)
+            assert isinstance(result.features, dict)
 
-        asyncio.run(test_predict())
-
-    def test_prediction_service_predict_match_different_ids(self):
-        """测试predict_match方法的不同ID"""
+    @pytest.mark.asyncio
+    async def test_batch_predict_business_scenarios(self):
+        """测试批量预测业务场景"""
         service = PredictionService()
 
-        async def test_different_ids():
-            match_ids = [1, 123, 456, 789, 999999]
+        # 空列表
+        results = await service.batch_predict_matches([])
+        assert results == []
 
-            for match_id in match_ids:
-                result = await service.predict_match(match_id)
-                assert result.match_id == match_id
-                assert result.predicted_result == "home_win"
-                assert result.confidence == 0.75
+        # 单场比赛
+        results = await service.batch_predict_matches([123])
+        assert len(results) == 1
+        assert results[0].match_id == 123
 
-        import asyncio
+        # 多场比赛
+        match_ids = [100, 200, 300, 400, 500]
+        results = await service.batch_predict_matches(match_ids)
 
-        asyncio.run(test_different_ids())
-
-    def test_prediction_service_batch_predict_matches(self):
-        """测试batch_predict_matches方法"""
-        service = PredictionService()
-
-        async def test_batch_predict():
-            match_ids = [123, 456, 789]
-            results = await service.batch_predict_matches(match_ids)
-
-            assert isinstance(results, list)
-            assert len(results) == len(match_ids)
-
-            for i, result in enumerate(results):
-                assert isinstance(result, PredictionResult)
-                assert result.match_id == match_ids[i]
-                assert result.predicted_result == "home_win"
-
-        import asyncio
-
-        asyncio.run(test_batch_predict())
-
-    def test_prediction_service_batch_predict_empty_list(self):
-        """测试批量预测空列表"""
-        service = PredictionService()
-
-        async def test_empty_batch():
-            results = await service.batch_predict_matches([])
-            assert results == []
-
-        import asyncio
-
-        asyncio.run(test_empty_batch())
-
-    def test_prediction_service_batch_predict_single_item(self):
-        """测试批量预测单项"""
-        service = PredictionService()
-
-        async def test_single_batch():
-            match_ids = [999]
-            results = await service.batch_predict_matches(match_ids)
-
-            assert len(results) == 1
-            result = results[0]
-            assert result.match_id == 999
+        assert len(results) == len(match_ids)
+        for i, result in enumerate(results):
+            assert result.match_id == match_ids[i]
             assert isinstance(result, PredictionResult)
+            assert result.predicted_result == "home_win"
+            assert result.confidence == 0.75
 
-        import asyncio
-
-        asyncio.run(test_single_batch())
-
-    def test_prediction_service_verify_prediction(self):
-        """测试verify_prediction方法"""
+    @pytest.mark.asyncio
+    async def test_service_auxiliary_methods(self):
+        """测试服务辅助方法"""
         service = PredictionService()
 
-        async def test_verify():
-            result1 = await service.verify_prediction(123)
-            result2 = await service.verify_prediction(456)
-            result3 = await service.verify_prediction(0)
+        # 验证预测方法（当前实现总是返回True）
+        test_ids = [1, 123, 456, 0, -1]
+        for prediction_id in test_ids:
+            result = await service.verify_prediction(prediction_id)
+            assert result is True
 
-            # 当前简单实现总是返回True
-            assert result1 is True
-            assert result2 is True
-            assert result3 is True
+        # 获取统计信息
+        stats = await service.get_prediction_statistics()
+        assert isinstance(stats, dict)
+        assert "total_predictions" in stats
+        assert "accuracy" in stats
+        assert "model_version" in stats
+        assert stats["total_predictions"] == 0
+        assert stats["accuracy"] == 0.0
+        assert stats["model_version"] == "v1.0.0"
 
-        import asyncio
-
-        asyncio.run(test_verify())
-
-    def test_prediction_service_get_prediction_statistics(self):
-        """测试get_prediction_statistics方法"""
+    @pytest.mark.asyncio
+    async def test_service_cache_integration(self):
+        """测试服务与缓存集成"""
         service = PredictionService()
 
-        async def test_statistics():
-            stats = await service.get_prediction_statistics()
-
-            assert isinstance(stats, dict)
-            assert "total_predictions" in stats
-            assert "accuracy" in stats
-            assert "model_version" in stats
-
-            # 验证当前简单实现的默认值
-            assert stats["total_predictions"] == 0
-            assert stats["accuracy"] == 0.0
-            assert stats["model_version"] == "v1.0.0"
-
-        import asyncio
-
-        asyncio.run(test_statistics())
-
-    def test_prediction_service_cache_integration(self):
-        """测试PredictionService与缓存的集成"""
-        service = PredictionService()
-        datetime.datetime.utcnow()
-
-        async def test_cache_integration():
-            # 创建一个预测
-            result = await service.predict_match(123)
-
-            # 手动添加到缓存
-            service.cache.set("test_key", result)
-
-            # 从缓存获取
-            cached_result = service.cache.get("test_key")
-            assert cached_result is not None
-            assert cached_result.match_id == 123
-
-        import asyncio
-
-        asyncio.run(test_cache_integration())
-
-
-@pytest.mark.skipif(not PREDICTION_AVAILABLE, reason="Prediction module not available")
-class TestCounter:
-    """Counter监控指标测试"""
-
-    def test_counter_class_exists(self):
-        """测试Counter类存在"""
-        assert Counter is not None
-        assert callable(Counter)
-
-    def test_counter_instantiation(self):
-        """测试Counter实例化"""
-        counter = Counter("test_counter", "Test counter description")
-        assert counter.name == "test_counter"
-        assert counter.description == "Test counter description"
-        assert counter.value == 0
-
-    def test_counter_inc(self):
-        """测试Counter递增"""
-        counter = Counter("test_counter", "Test counter")
-
-        # 初始值
-        assert counter() == 0
-
-        # 递增1次
-        counter.inc()
-        assert counter() == 1
-
-        # 递增多次
-        counter.inc()
-        counter.inc()
-        counter.inc()
-        assert counter() == 4
-
-    def test_counter_call_method(self):
-        """测试Counter调用方法"""
-        counter = Counter("call_test", "Call test counter")
-
-        # 初始调用
-        result = counter()
-        assert result == 0
-        assert isinstance(result, int)
-
-        # 递增后调用
-        counter.inc()
-        result = counter()
-        assert result == 1
-
-    def test_counter_multiple_increments(self):
-        """测试Counter多次递增"""
-        counter = Counter("multi_test", "Multiple increment test")
-
-        # 递增100次
-        for _ in range(100):
-            counter.inc()
-
-        assert counter() == 100
-
-    def test_counter_edge_cases(self):
-        """测试Counter边界情况"""
-        counter = Counter("edge_test", "Edge case test")
-
-        # 大数值递增
-        for _ in range(1000):
-            counter.inc()
-
-        assert counter() == 1000
-        assert isinstance(counter.value, int)
-
-
-@pytest.mark.skipif(not PREDICTION_AVAILABLE, reason="Prediction module not available")
-class TestHistogram:
-    """Histogram监控指标测试"""
-
-    def test_histogram_class_exists(self):
-        """测试Histogram类存在"""
-        assert Histogram is not None
-        assert callable(Histogram)
-
-    def test_histogram_instantiation(self):
-        """测试Histogram实例化"""
-        histogram = Histogram("test_histogram", "Test histogram description")
-        assert histogram.name == "test_histogram"
-        assert histogram.description == "Test histogram description"
-        assert histogram.values == []
-
-    def test_histogram_observe(self):
-        """测试Histogram观察值"""
-        histogram = Histogram("observe_test", "Observe test histogram")
-
-        # 初始状态
-        assert histogram() == 0.0  # 空列表时应该返回0.0
-
-        # 观察单个值
-        histogram.observe(1.5)
-        assert histogram() == 1.5
-        assert len(histogram.values) == 1
-
-        # 观察多个值
-        histogram.observe(2.5)
-        histogram.observe(3.5)
-
-        # 计算平均值
-        expected_avg = (1.5 + 2.5 + 3.5) / 3
-        assert histogram() == expected_avg
-
-    def test_histogram_call_method_empty(self):
-        """测试Histogram调用方法（空列表）"""
-        histogram = Histogram("empty_test", "Empty histogram test")
-
-        result = histogram()
-        assert result == 0.0
-        assert isinstance(result, float)
-
-    def test_histogram_call_method_with_values(self):
-        """测试Histogram调用方法（有值）"""
-        histogram = Histogram("values_test", "Values test histogram")
-
-        # 添加一些值
-        test_values = [10.0, 20.0, 30.0, 40.0, 50.0]
-        for value in test_values:
-            histogram.observe(value)
-
-        result = histogram()
-        expected_avg = sum(test_values) / len(test_values)
-        assert result == expected_avg
-        assert isinstance(result, float)
-
-    def test_histogram_different_value_types(self):
-        """测试Histogram不同数值类型"""
-        histogram = Histogram("types_test", "Different value types test")
-
-        # 测试整数
-        histogram.observe(10)
-        assert histogram() == 10.0
-
-        # 测试浮点数
-        histogram.observe(15.5)
-        expected_avg = (10 + 15.5) / 2
-        assert histogram() == expected_avg
-
-        # 测试小数
-        histogram.observe(0.25)
-        expected_avg = (10 + 15.5 + 0.25) / 3
-        assert histogram() == expected_avg
-
-    def test_histogram_negative_values(self):
-        """测试Histogram负值"""
-        histogram = Histogram("negative_test", "Negative values test")
-
-        # 添加负值
-        histogram.observe(-5.0)
-        histogram.observe(10.0)
-        histogram.observe(-2.5)
-
-        expected_avg = (-5.0 + 10.0 + -2.5) / 3
-        assert histogram() == expected_avg
-
-    def test_histogram_large_values(self):
-        """测试Histogram大数值"""
-        histogram = Histogram("large_test", "Large values test")
-
-        # 添加大数值
-        histogram.observe(1000000.0)
-        histogram.observe(2000000.0)
-
-        expected_avg = (1000000.0 + 2000000.0) / 2
-        assert histogram() == expected_avg
-
-
-@pytest.mark.skipif(not PREDICTION_AVAILABLE, reason="Prediction module not available")
-class TestGauge:
-    """Gauge监控指标测试"""
-
-    def test_gauge_class_exists(self):
-        """测试Gauge类存在"""
-        assert Gauge is not None
-        assert callable(Gauge)
-
-    def test_gauge_instantiation(self):
-        """测试Gauge实例化"""
-        gauge = Gauge("test_gauge", "Test gauge description")
-        assert gauge.name == "test_gauge"
-        assert gauge.description == "Test gauge description"
-        assert gauge.value == 0.0
-
-    def test_gauge_set(self):
-        """测试Gauge设置值"""
-        gauge = Gauge("set_test", "Set test gauge")
-
-        # 初始值
-        assert gauge() == 0.0
-
-        # 设置新值
-        gauge.set(5.5)
-        assert gauge() == 5.5
-
-        # 设置另一个值
-        gauge.set(10.0)
-        assert gauge() == 10.0
-
-    def test_gauge_call_method(self):
-        """测试Gauge调用方法"""
-        gauge = Gauge("call_test", "Call test gauge")
-
-        # 初始调用
-        result = gauge()
-        assert result == 0.0
-        assert isinstance(result, float)
-
-        # 设置值后调用
-        gauge.set(7.25)
-        result = gauge()
-        assert result == 7.25
-        assert isinstance(result, float)
-
-    def test_gauge_different_value_types(self):
-        """测试Gauge不同数值类型"""
-        gauge = Gauge("types_test", "Different value types test")
-
-        # 设置整数
-        gauge.set(10)
-        assert gauge() == 10.0
-
-        # 设置浮点数
-        gauge.set(15.75)
-        assert gauge() == 15.75
-
-        # 设置小数
-        gauge.set(0.125)
-        assert gauge() == 0.125
-
-    def test_gauge_negative_values(self):
-        """测试Gauge负值"""
-        gauge = Gauge("negative_test", "Negative values test")
-
-        gauge.set(-10.5)
-        assert gauge() == -10.5
-
-        gauge.set(0.0)
-        assert gauge() == 0.0
-
-    def test_gauge_zero_values(self):
-        """测试Gauge零值"""
-        gauge = Gauge("zero_test", "Zero values test")
-
-        gauge.set(0.0)
-        assert gauge() == 0.0
-
-        gauge.set(0)
-        assert gauge() == 0.0
-
-    def test_gauge_large_values(self):
-        """测试Gauge大数值"""
-        gauge = Gauge("large_test", "Large values test")
-
-        large_value = 999999.999
-        gauge.set(large_value)
-        assert gauge() == large_value
+        # 创建预测
+        result = await service.predict_match(12345)
+
+        # 手动缓存
+        cache_key = f"match_{result.match_id}_{result.model_version}"
+        service.cache.set(cache_key, result)
+
+        # 从缓存获取
+        cached_result = service.cache.get(cache_key)
+        assert cached_result is not None
+        assert cached_result.match_id == 12345
+        assert cached_result.predicted_result == result.predicted_result
+        assert cached_result.confidence == result.confidence
 
 
 @pytest.mark.skipif(not PREDICTION_AVAILABLE, reason="Prediction module not available")
 class TestMonitoringMetrics:
-    """监控指标实例测试"""
+    """监控指标业务逻辑测试"""
 
-    def test_predictions_total_counter(self):
-        """测试predictions_total计数器"""
+    def test_counter_business_usage(self):
+        """测试Counter业务使用场景"""
+        counter = Counter("test_predictions", "Test prediction counter")
+
+        # 初始状态
+        assert counter() == 0
+
+        # 模拟预测计数
+        for i in range(10):
+            counter.inc()
+
+        assert counter() == 10
+        assert counter.value == 10
+
+    def test_histogram_business_usage(self):
+        """测试Histogram业务使用场景"""
+        histogram = Histogram("prediction_duration", "Prediction duration histogram")
+
+        # 初始状态
+        assert histogram() == 0.0
+
+        # 模拟预测耗时记录（秒）
+        durations = [0.5, 0.8, 1.2, 0.6, 1.5, 0.9, 1.1]
+        for duration in durations:
+            histogram.observe(duration)
+
+        # 验证平均耗时
+        expected_avg = sum(durations) / len(durations)
+        assert histogram() == expected_avg
+
+    def test_gauge_business_usage(self):
+        """测试Gauge业务使用场景"""
+        gauge = Gauge("accuracy", "Prediction accuracy gauge")
+
+        # 初始状态
+        assert gauge() == 0.0
+
+        # 模拟准确率更新
+        accuracy_values = [0.75, 0.80, 0.78, 0.82, 0.85]
+        for accuracy in accuracy_values:
+            gauge.set(accuracy)
+
+        # 验证最终值
+        assert gauge() == 0.85
+
+    def test_predefined_metrics(self):
+        """测试预定义监控指标"""
+        # 验证指标存在
         assert predictions_total.name == "predictions_total"
-        assert predictions_total.description == "Total number of predictions"
-        assert predictions_total() == 0
-
-        # 测试递增
-        predictions_total.inc()
-        assert predictions_total() == 1
-
-    def test_prediction_duration_seconds_histogram(self):
-        """测试prediction_duration_seconds直方图"""
         assert prediction_duration_seconds.name == "prediction_duration_seconds"
-        assert (
-            prediction_duration_seconds.description == "Prediction duration in seconds"
-        )
-        assert prediction_duration_seconds() == 0.0
-
-        # 测试观察
-        prediction_duration_seconds.observe(1.25)
-        assert prediction_duration_seconds() == 1.25
-
-    def test_prediction_accuracy_gauge(self):
-        """测试prediction_accuracy仪表"""
         assert prediction_accuracy.name == "prediction_accuracy"
-        assert prediction_accuracy.description == "Prediction accuracy"
-        assert prediction_accuracy() == 0.0
-
-        # 测试设置
-        prediction_accuracy.set(0.85)
-        assert prediction_accuracy() == 0.85
-
-    def test_model_load_duration_seconds_histogram(self):
-        """测试model_load_duration_seconds直方图"""
         assert model_load_duration_seconds.name == "model_load_duration_seconds"
-        assert (
-            model_load_duration_seconds.description == "Model load duration in seconds"
-        )
-        assert model_load_duration_seconds() == 0.0
-
-        # 测试观察
-        model_load_duration_seconds.observe(5.75)
-        assert model_load_duration_seconds() == 5.75
-
-    def test_cache_hit_ratio_gauge(self):
-        """测试cache_hit_ratio仪表"""
         assert cache_hit_ratio.name == "cache_hit_ratio"
-        assert cache_hit_ratio.description == "Cache hit ratio"
-        assert cache_hit_ratio() == 0.0
 
-        # 测试设置
-        cache_hit_ratio.set(0.92)
-        assert cache_hit_ratio() == 0.92
-
-    def test_all_metrics_independent(self):
-        """测试所有指标实例独立工作"""
-        # 保存当前状态并重置指标
-        predictions_total()
-
-        # 重置计数器
-        predictions_total.value = 0
-        prediction_duration_seconds.values = []
-        model_load_duration_seconds.values = []
-
-        # 操作各个指标
+        # 验证指标功能
         predictions_total.inc()
-        prediction_accuracy.set(0.95)
-        prediction_duration_seconds.observe(2.5)
-        model_load_duration_seconds.observe(3.0)
-        cache_hit_ratio.set(0.88)
-
-        # 验证独立性
         assert predictions_total() == 1
-        assert prediction_accuracy() == 0.95
-        assert prediction_duration_seconds() == 2.5
-        assert model_load_duration_seconds() == 3.0
-        assert cache_hit_ratio() == 0.88
+
+        prediction_duration_seconds.observe(1.5)
+        assert prediction_duration_seconds() == 1.5
+
+        prediction_accuracy.set(0.88)
+        assert prediction_accuracy() == 0.88
 
 
 @pytest.mark.skipif(not PREDICTION_AVAILABLE, reason="Prediction module not available")
 class TestPredictionIntegration:
     """预测模块集成测试"""
 
-    def test_complete_prediction_workflow(self):
-        """测试完整的预测工作流"""
-        import asyncio
+    @pytest.mark.asyncio
+    async def test_complete_prediction_workflow(self):
+        """测试完整预测工作流"""
+        # 重置指标状态以避免测试间干扰
+        initial_predictions = predictions_total()
+        prediction_duration_seconds.values.copy()
 
-        async def test_workflow():
-            # 重置监控指标以避免干扰
-            prediction_duration_seconds.values = []
-            prediction_accuracy.value = 0.0
-
-            # 1. 创建服务
-            service = PredictionService()
-
-            # 2. 预测比赛
-            result = await service.predict_match(12345)
-
-            # 3. 缓存结果
-            service.cache.set(f"match_{result.match_id}", result)
-
-            # 4. 从缓存获取
-            cached_result = service.cache.get(f"match_{result.match_id}")
-
-            # 5. 验证工作流
-            assert cached_result is not None
-            assert cached_result.match_id == result.match_id
-            assert cached_result.predicted_result == result.predicted_result
-
-            # 6. 更新监控指标
-            predictions_total.inc()
-            prediction_duration_seconds.observe(1.5)
-            prediction_accuracy.set(0.85)
-
-            # 7. 获取统计信息
-            stats = await service.get_prediction_statistics()
-
-            # 验证所有组件协同工作
-            assert isinstance(stats, dict)
-            assert predictions_total() >= 1
-            assert prediction_duration_seconds() == 1.5
-            assert prediction_accuracy() == 0.85
-
-        asyncio.run(test_workflow())
-
-    def test_batch_prediction_workflow(self):
-        """测试批量预测工作流"""
-        import asyncio
-
-        async def test_batch_workflow():
-            service = PredictionService()
-
-            # 批量预测
-            match_ids = [100, 200, 300, 400, 500]
-            results = await service.batch_predict_matches(match_ids)
-
-            # 验证结果
-            assert len(results) == len(match_ids)
-
-            # 缓存所有结果
-            for result in results:
-                service.cache.set(f"batch_match_{result.match_id}", result)
-
-            # 验证缓存
-            for result in results:
-                cached = service.cache.get(f"batch_match_{result.match_id}")
-                assert cached is not None
-                assert cached.match_id == result.match_id
-
-            # 更新批量预测监控指标
-            for _ in results:
-                predictions_total.inc()
-                prediction_duration_seconds.observe(0.8)
-
-            # 验证指标更新
-            assert predictions_total() >= len(results)
-
-        asyncio.run(test_batch_workflow())
-
-    def test_monitoring_metrics_integration(self):
-        """测试监控指标集成"""
-        # 重置指标
-        while predictions_total() > 0:
-            predictions_total.value -= 1
-
-        # 模拟预测操作
-        for i in range(10):
-            predictions_total.inc()
-            prediction_duration_seconds.observe(0.5 + i * 0.1)
-            cache_hit_ratio.set(0.8 + i * 0.02)
-
-        # 验证指标
-        assert predictions_total() == 10
-        assert prediction_duration_seconds() > 0.0
-        assert cache_hit_ratio() >= 0.8
-
-    def test_prediction_service_error_handling(self):
-        """测试预测服务错误处理"""
         service = PredictionService()
 
-        async def test_error_handling():
-            # 测试边界情况
-            result = await service.predict_match(0)  # match_id = 0
-            assert result.match_id == 0
+        # 1. 执行预测
+        result = await service.predict_match(12345)
 
-            result = await service.predict_match(-1)  # 负数match_id
-            assert result.match_id == -1
+        # 2. 缓存结果
+        cache_key = f"match_{result.match_id}"
+        service.cache.set(cache_key, result)
 
-            # 测试大批量预测
-            large_batch = list(range(1000))
-            results = await service.batch_predict_matches(large_batch)
-            assert len(results) == 1000
+        # 3. 从缓存检索
+        cached_result = service.cache.get(cache_key)
 
-        import asyncio
+        # 4. 验证工作流
+        assert cached_result is not None
+        assert cached_result.match_id == result.match_id
+        assert cached_result.predicted_result == result.predicted_result
 
-        asyncio.run(test_error_handling())
+        # 5. 更新监控指标
+        predictions_total.inc()
+        prediction_duration_seconds.observe(1.2)
+        prediction_accuracy.set(0.85)
+
+        # 6. 验证指标（基于增量变化）
+        assert predictions_total() == initial_predictions + 1
+        assert prediction_accuracy() == 0.85
+        # 验证新增的duration值被记录
+        assert 1.2 in prediction_duration_seconds.values
+
+    @pytest.mark.asyncio
+    async def test_batch_prediction_workflow(self):
+        """测试批量预测工作流"""
+        # 记录初始状态
+        initial_predictions = predictions_total()
+        initial_duration_values = prediction_duration_seconds.values.copy()
+
+        service = PredictionService()
+
+        # 1. 批量预测
+        match_ids = [100, 200, 300]
+        results = await service.batch_predict_matches(match_ids)
+
+        # 2. 批量缓存
+        for result in results:
+            cache_key = f"batch_match_{result.match_id}"
+            service.cache.set(cache_key, result)
+
+        # 3. 验证缓存完整性
+        for result in results:
+            cache_key = f"batch_match_{result.match_id}"
+            cached = service.cache.get(cache_key)
+            assert cached is not None
+            assert cached.match_id == result.match_id
+
+        # 4. 更新批量监控指标
+        batch_count = len(results)
+        for _ in results:
+            predictions_total.inc()
+            prediction_duration_seconds.observe(0.8)
+
+        # 5. 验证指标（基于增量变化）
+        assert predictions_total() == initial_predictions + batch_count
+        # 验证新增的duration值被正确记录
+        new_duration_count = prediction_duration_seconds.values.__len__() - len(
+            initial_duration_values
+        )
+        assert new_duration_count == batch_count
+
+    def test_metrics_reset_and_independence(self):
+        """测试指标重置和独立性"""
+        # 重置指标状态
+        predictions_total.value = 0
+        prediction_duration_seconds.values = []
+        model_load_duration_seconds.values = []
+        prediction_accuracy.value = 0.0
+        cache_hit_ratio.value = 0.0
+
+        # 独立操作各个指标
+        predictions_total.inc()  # 计数器
+        prediction_accuracy.set(0.92)  # 仪表
+        prediction_duration_seconds.observe(2.1)  # 直方图
+        model_load_duration_seconds.observe(4.5)  # 另一个直方图
+        cache_hit_ratio.set(0.87)  # 另一个仪表
+
+        # 验证指标独立性
+        assert predictions_total() == 1
+        assert prediction_accuracy() == 0.92
+        assert prediction_duration_seconds() == 2.1
+        assert model_load_duration_seconds() == 4.5
+        assert cache_hit_ratio() == 0.87

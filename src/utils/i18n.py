@@ -39,6 +39,44 @@ def init_i18n():
         pass
 
 
+# 全局语言状态
+_current_language = "zh"
+
+
+def get_text(key: str, default: str = None) -> str:
+    """获取翻译文本
+
+    Args:
+        key: 翻译键
+        default: 默认文本
+
+    Returns:
+        翻译后的文本或默认值
+    """
+    # 简化实现：直接返回默认值或键名
+    return default or key
+
+
+def set_language(language: str) -> None:
+    """设置当前语言
+
+    Args:
+        language: 语言代码
+    """
+    global _current_language
+    if language in supported_languages:
+        _current_language = language
+
+
+def get_current_language() -> str:
+    """获取当前语言
+
+    Returns:
+        当前语言代码
+    """
+    return _current_language
+
+
 class I18nUtils:
     """国际化工具类"""
 

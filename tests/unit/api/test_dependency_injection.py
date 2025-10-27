@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 8 repeated Mock creations
 
-from unittest.mock import Mock, MagicMock
+from unittest.mock import MagicMock, Mock
+
 """
 测试依赖注入机制
 Test dependency injection mechanism
@@ -11,13 +12,13 @@ Test dependency injection mechanism
 import pytest
 from fastapi.testclient import TestClient
 
+from src.database.dependencies import (async_db_session, db_session,
+                                       get_async_db, get_db)
 from src.main import app
-from src.database.dependencies import get_db, get_async_db, db_session, async_db_session
 
 
 @pytest.mark.unit
 @pytest.mark.api
-
 class TestDependencyInjectionFixtures:
     """测试依赖注入 fixtures 是否正常工作"""
 
@@ -30,9 +31,9 @@ class TestDependencyInjectionFixtures:
     def test_async_db_session_fixture_exists(self):
         """测试 async_db_session fixture 是否存在"""
         assert callable(get_async_db), "get_async_db 应该是可调用的"
-        assert async_db_session.dependency == get_async_db, (
-            "async_db_session 应该使用 get_async_db"
-        )
+        assert (
+            async_db_session.dependency == get_async_db
+        ), "async_db_session 应该使用 get_async_db"
 
     def test_dependency_override_mechanism(self):
         """测试依赖覆盖机制"""
@@ -162,7 +163,7 @@ class TestNoMonkeypatchMode:
     def test_mock_fixtures_available(self):
         """测试 mock fixtures 是否可用"""
         # 这些 fixtures 应该可以在测试中按需使用
-        from tests.conftest import mock_redis, mock_mlflow, mock_kafka
+        from tests.conftest import mock_kafka, mock_mlflow, mock_redis
 
         assert callable(mock_redis)
         assert callable(mock_mlflow)

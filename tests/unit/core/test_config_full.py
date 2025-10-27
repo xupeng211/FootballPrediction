@@ -1,12 +1,14 @@
-
 # 添加项目路径
+import os
 import sys
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 import pytest
-import os
-from src.core.config import get_config, Config
+
 from src.core import config
+from src.core.config import Config, get_config
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, "src")
 
@@ -28,7 +30,6 @@ load_env_config = MockLoadEnvConfig().load_env_config
 
 
 @pytest.mark.unit
-
 class TestConfigModule:
     """测试 config 模块"""
 

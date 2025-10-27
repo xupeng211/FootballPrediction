@@ -2,27 +2,29 @@
 
 # TODO: Consider creating a fixture for 8 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 Health API 综合测试
 提升 api.health 模块覆盖率的关键测试
 """
 
-import pytest
 import asyncio
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
 import json
-
 # 测试导入
 import sys
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional
+
+import pytest
 
 sys.path.insert(0, "src")
 
 try:
-    from src.api.health import HealthChecker, HealthStatus, HealthCheckResult, router
-    from src.database.dependencies import get_db_session
+    from src.api.health import (HealthChecker, HealthCheckResult, HealthStatus,
+                                router)
     from src.cache.redis_manager import RedisManager
+    from src.database.dependencies import get_db_session
 
     HEALTH_AVAILABLE = True
 except ImportError as e:
@@ -32,7 +34,6 @@ except ImportError as e:
 
 @pytest.mark.skipif(not HEALTH_AVAILABLE, reason="Health modules not available")
 @pytest.mark.unit
-
 class TestHealthChecker:
     """HealthChecker测试"""
 

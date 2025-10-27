@@ -2,35 +2,32 @@
 
 # TODO: Consider creating a fixture for 20 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 """
 API中间件测试
 """
 
 pytest_plugins = "asyncio"
 
+import asyncio
+import json
+import time
+from datetime import datetime, timedelta
+
 import pytest
 from fastapi import FastAPI, Request, Response
 from fastapi.testclient import TestClient
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
-import time
-import json
-import asyncio
-from datetime import datetime, timedelta
 
 # 使用try-except导入，如果模块不存在则跳过测试
 try:
-    from src.api.middleware import (
-        TimingMiddleware,
-        LoggingMiddleware,
-        RateLimitMiddleware,
-        AuthenticationMiddleware,
-        CORSMiddleware,
-        SecurityHeadersMiddleware,
-        CacheMiddleware,
-        ErrorHandlingMiddleware,
-    )
+    from src.api.middleware import (AuthenticationMiddleware, CacheMiddleware,
+                                    CORSMiddleware, ErrorHandlingMiddleware,
+                                    LoggingMiddleware, RateLimitMiddleware,
+                                    SecurityHeadersMiddleware,
+                                    TimingMiddleware)
 
     MIDDLEWARE_AVAILABLE = True
 except ImportError:
@@ -41,7 +38,6 @@ TEST_SKIP_REASON = "API middleware module not available"
 
 @pytest.mark.skipif(not MIDDLEWARE_AVAILABLE, reason=TEST_SKIP_REASON)
 @pytest.mark.unit
-
 class TestTimingMiddleware:
     """计时中间件测试"""
 

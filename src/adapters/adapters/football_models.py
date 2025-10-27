@@ -4,12 +4,14 @@
 
 # 导入
 import asyncio
-import aiohttp
-from typing import Any, Dict, List, Optional
-from datetime import datetime
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
-from src.adapters.base import Adapter, Adaptee, DataTransformer, AdapterStatus
+from typing import Any, Dict, List, Optional
+
+import aiohttp
+
+from src.adapters.base import Adaptee, Adapter, AdapterStatus, DataTransformer
 from src.core.exceptions import AdapterError
 
 # 常量

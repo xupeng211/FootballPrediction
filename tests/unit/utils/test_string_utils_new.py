@@ -6,11 +6,11 @@ Tests for String Utils
 """
 
 import pytest
+
 from src.utils.string_utils import StringUtils
 
 
 @pytest.mark.unit
-
 class TestStringUtils:
     """字符串工具测试"""
 

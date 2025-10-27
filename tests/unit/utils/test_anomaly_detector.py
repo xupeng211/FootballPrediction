@@ -1,9 +1,13 @@
 from datetime import datetime
+from unittest.mock import MagicMock
+
 import numpy as np
 import pandas as pd
 import pytest
-from src.monitoring.anomaly_detector import AnomalyType
+
 from src.data.quality.anomaly_detector import StatisticalAnomalyDetector
+from src.monitoring.anomaly_detector import AnomalyType
+
 # 添加异常值
 # 检测到home_goals=50和shots=100的异常
 # home_goals列应该检测到异常
@@ -36,7 +40,7 @@ from src.data.quality.anomaly_detector import StatisticalAnomalyDetector
 # 使用学习到的模式进行预测
 
 
-from unittest.mock import MagicMock
+
 """
 数据质量测试 - 异常检测器
 """

@@ -6,8 +6,9 @@ API Unit Tests
 Tests API component unit functionality avoiding complex integration environment.
 """
 
+from unittest.mock import AsyncMock, Mock, patch
+
 import pytest
-from unittest.mock import Mock, AsyncMock, patch
 
 
 @pytest.mark.unit
@@ -40,7 +41,7 @@ class TestAPIUnit:
         mock_response.status_code = 200
         mock_response.headers = {
             "Content-Type": "application/json",
-            "Cache-Control": "no-cache"
+            "Cache-Control": "no-cache",
         }
 
         # Act
@@ -60,13 +61,9 @@ class TestAPIUnit:
         mock_response.json.return_value = {
             "leagues": [
                 {"id": 1, "name": "英超", "country": "England"},
-                {"id": 2, "name": "西甲", "country": "Spain"}
+                {"id": 2, "name": "西甲", "country": "Spain"},
             ],
-            "pagination": {
-                "page": 1,
-                "size": 10,
-                "total": 2
-            }
+            "pagination": {"page": 1, "size": 10, "total": 2},
         }
 
         # Act
@@ -88,7 +85,7 @@ class TestAPIUnit:
                 "code": "TEST",
                 "country": "测试国家",
                 "level": 1,
-                "type": "domestic_league"
+                "type": "domestic_league",
             },
             {
                 "name": "国际联赛",
@@ -96,7 +93,7 @@ class TestAPIUnit:
                 "code": "INTL",
                 "country": "国际",
                 "level": 0,
-                "type": "international_cup"
+                "type": "international_cup",
             },
         ],
     )
@@ -119,7 +116,6 @@ class TestAPIUnit:
     def test_create_league_endpoint_validation_error(self):
         """异常用例：创建联赛验证错误"""
         # Arrange
-        invalid_data = {"name": ""}  # 无效数据
         mock_response = Mock()
         mock_response.status_code = 422
         mock_response.json.return_value = {
@@ -127,7 +123,7 @@ class TestAPIUnit:
                 {
                     "loc": ["body", "name"],
                     "msg": "field required",
-                    "type": "value_error.missing"
+                    "type": "value_error.missing",
                 }
             ]
         }
@@ -155,10 +151,10 @@ class TestAPIUnit:
                     "home_team": "曼联",
                     "away_team": "曼城",
                     "date": "2025-01-20T20:00:00Z",
-                    "status": "scheduled"
+                    "status": "scheduled",
                 }
             ],
-            "total": 1
+            "total": 1,
         }
 
         # Act
@@ -183,7 +179,10 @@ class TestAPIUnit:
         # Arrange
         mock_response = Mock()
         mock_response.status_code = 200
-        mock_response.json.return_value = {"matches": [], "filters_applied": match_filters}
+        mock_response.json.return_value = {
+            "matches": [],
+            "filters_applied": match_filters,
+        }
 
         # Act
         result = mock_response.status_code
@@ -205,7 +204,7 @@ class TestAPIUnit:
             "predicted_home": 2,
             "predicted_away": 1,
             "confidence": 0.75,
-            "prediction_type": "correct_score"
+            "prediction_type": "correct_score",
         }
 
         mock_response = Mock()
@@ -229,15 +228,10 @@ class TestAPIUnit:
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "predictions": [
-                {
-                    "id": 1,
-                    "match_id": 1,
-                    "prediction": "HOME_WIN",
-                    "result": "pending"
-                }
+                {"id": 1, "match_id": 1, "prediction": "HOME_WIN", "result": "pending"}
             ],
             "user_id": user_id,
-            "total": 1
+            "total": 1,
         }
 
         # Act
@@ -255,17 +249,13 @@ class TestAPIUnit:
     def test_login_endpoint_success(self):
         """成功用例：登录端点"""
         # Arrange
-        login_data = {
-            "username": "testuser",
-            "password": "testpass"
-        }
 
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
             "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
             "token_type": "bearer",
-            "expires_in": 3600
+            "expires_in": 3600,
         }
 
         # Act
@@ -281,16 +271,12 @@ class TestAPIUnit:
     def test_login_endpoint_invalid_credentials(self):
         """异常用例：登录无效凭据"""
         # Arrange
-        login_data = {
-            "username": "wronguser",
-            "password": "wrongpass"
-        }
 
         mock_response = Mock()
         mock_response.status_code = 401
         mock_response.json.return_value = {
             "detail": "Invalid credentials",
-            "error_code": "AUTH_001"
+            "error_code": "AUTH_001",
         }
 
         # Act
@@ -309,23 +295,23 @@ class TestAPIUnit:
             {
                 "status_code": 404,
                 "path": "/api/v1/nonexistent",
-                "expected_detail": "Not Found"
+                "expected_detail": "Not Found",
             },
             {
                 "status_code": 405,
                 "path": "/api/v1/leagues",
                 "method": "DELETE",
-                "expected_detail": "Method Not Allowed"
+                "expected_detail": "Method Not Allowed",
             },
             {
                 "status_code": 429,
                 "path": "/api/v1/predictions",
-                "expected_detail": "Rate limit exceeded"
+                "expected_detail": "Rate limit exceeded",
             },
             {
                 "status_code": 500,
                 "path": "/api/v1/internal-error",
-                "expected_detail": "Internal Server Error"
+                "expected_detail": "Internal Server Error",
             },
         ],
     )
@@ -337,7 +323,7 @@ class TestAPIUnit:
         mock_response.json.return_value = {
             "detail": error_scenario["expected_detail"],
             "path": error_scenario["path"],
-            "method": error_scenario.get("method", "GET")
+            "method": error_scenario.get("method", "GET"),
         }
 
         # Act
@@ -389,7 +375,7 @@ class TestAPIUnit:
         mock_response.elapsed.total_seconds.return_value = 0.15
 
         # Act
-        start_time = pytest.performance_time if hasattr(pytest, 'performance_time') else 0.0
+        pytest.performance_time if hasattr(pytest, "performance_time") else 0.0
         result = mock_response.status_code
         elapsed_time = mock_response.elapsed.total_seconds()
 
@@ -470,10 +456,7 @@ class TestAPIUnit:
         mock_response = Mock()
         mock_response.status_code = 200
         mock_response.headers = {"API-Version": api_version}
-        mock_response.json.return_value = {
-            "version": api_version,
-            "data": []
-        }
+        mock_response.json.return_value = {"version": api_version, "data": []}
 
         # Act
         result = mock_response.status_code
@@ -494,8 +477,8 @@ class TestAPIUnit:
         mock_response.status_code = 200
         mock_response.headers = {
             "Cache-Control": "public, max-age=3600",
-            "ETag": "W/\"123456789\"",
-            "Last-Modified": "Mon, 20 Jan 2025 12:00:00 GMT"
+            "ETag": 'W/"123456789"',
+            "Last-Modified": "Mon, 20 Jan 2025 12:00:00 GMT",
         }
 
         # Act
@@ -519,7 +502,7 @@ class TestAPIUnit:
             "X-RateLimit-Limit": "1000",
             "X-RateLimit-Remaining": "500",
             "X-RateLimit-Reset": "1642694400",
-            "Retry-After": "60"
+            "Retry-After": "60",
         }
         mock_response.json.return_value = {"detail": "Rate limit exceeded"}
 
@@ -545,7 +528,7 @@ class TestAPIUnit:
             "X-Content-Type-Options": "nosniff",
             "X-Frame-Options": "DENY",
             "X-XSS-Protection": "1; mode=block",
-            "Strict-Transport-Security": "max-age=31536000; includeSubDomains"
+            "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
         }
 
         # Act

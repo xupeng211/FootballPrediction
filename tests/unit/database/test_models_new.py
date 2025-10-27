@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 from decimal import Decimal
+
 import pytest
+
 from src.database.models.league import League
 from src.database.models.match import Match, MatchStatus
 from src.database.models.predictions import PredictedResult, Predictions

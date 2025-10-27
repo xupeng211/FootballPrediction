@@ -3,15 +3,15 @@
 测试各种查询模式的性能和正确性
 """
 
-import pytest
-from sqlalchemy import text, select, func, and_, or_
-from sqlalchemy.orm import selectinload, joinedload
-from datetime import datetime, timezone, timedelta
 import time
+from datetime import datetime, timedelta, timezone
+
+import pytest
+from sqlalchemy import and_, func, or_, select, text
+from sqlalchemy.orm import joinedload, selectinload
 
 
 @pytest.mark.integration
-
 class TestDatabaseQueries:
     """数据库查询测试"""
 
@@ -40,7 +40,7 @@ class TestDatabaseQueries:
     @pytest.mark.asyncio
     async def test_complex_join(self, db_session):
         """测试复杂连接查询"""
-        from src.database.models import Team, Match, Prediction, User
+        from src.database.models import Match, Prediction, Team, User
 
         # 创建测试数据
         _teams = []
@@ -169,7 +169,7 @@ class TestDatabaseQueries:
     @pytest.mark.asyncio
     async def test_window_functions(self, db_session):
         """测试窗口函数"""
-        from src.database.models import User, Prediction
+        from src.database.models import Prediction, User
 
         # 创建用户
         users = []
@@ -232,7 +232,7 @@ class TestDatabaseQueries:
     @pytest.mark.asyncio
     async def test_subqueries(self, db_session):
         """测试子查询"""
-        from src.database.models import User, Prediction, Team, Match
+        from src.database.models import Match, Prediction, Team, User
 
         # 创建测试数据
         _teams = []
@@ -316,7 +316,7 @@ class TestDatabaseQueries:
     @pytest.mark.asyncio
     async def test_cte_queries(self, db_session):
         """测试公用表表达式 (CTE)"""
-        from src.database.models import Team, Match
+        from src.database.models import Match, Team
 
         # 创建测试数据
         _teams = []
@@ -380,7 +380,7 @@ class TestDatabaseQueries:
     @pytest.mark.asyncio
     async def test_eager_loading(self, db_session):
         """测试预加载 (eager loading)"""
-        from src.database.models import User, Prediction
+        from src.database.models import Prediction, User
 
         # 创建用户和预测
         users = []
@@ -487,7 +487,7 @@ class TestDatabaseQueries:
     @pytest.mark.asyncio
     async def test_index_hints(self, db_session):
         """测试索引提示"""
-        from src.database.models import User, Prediction
+        from src.database.models import Prediction, User
 
         # 创建大量数据
         users = []

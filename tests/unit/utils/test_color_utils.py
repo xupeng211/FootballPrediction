@@ -2,8 +2,9 @@
 颜色工具测试
 """
 
+from typing import Dict, List, Optional, Tuple
+
 import pytest
-from typing import Tuple, List, Dict, Optional
 
 
 class ColorUtils:
@@ -260,7 +261,6 @@ class ColorUtils:
 
 
 @pytest.mark.unit
-
 class TestColorUtils:
     """测试颜色工具类"""
 

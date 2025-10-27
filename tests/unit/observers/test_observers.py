@@ -1,4 +1,5 @@
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 """
 观察者模块测试
 Observers Module Tests
@@ -7,21 +8,19 @@ Observers Module Tests
 Tests observers implementations defined in src/observers/observers.py, focused on achieving high coverage.
 """
 
-import pytest
 import asyncio
 import time
 from datetime import datetime, timedelta
 from typing import Any, Dict, List
 
+import pytest
+
 # 导入要测试的模块
 try:
-    from src.observers.observers import (
-        MetricsObserver,
-        LoggingObserver,
-        AlertingObserver,
-        PerformanceObserver,
-    )
-    from src.observers.base import Observer, ObservableEvent, ObservableEventType
+    from src.observers.base import (ObservableEvent, ObservableEventType,
+                                    Observer)
+    from src.observers.observers import (AlertingObserver, LoggingObserver,
+                                         MetricsObserver, PerformanceObserver)
 
     OBSERVERS_AVAILABLE = True
 except ImportError as e:
@@ -31,7 +30,6 @@ except ImportError as e:
 
 @pytest.mark.skipif(not OBSERVERS_AVAILABLE, reason="Observers module not available")
 @pytest.mark.unit
-
 class TestMetricsObserver:
     """MetricsObserver测试"""
 

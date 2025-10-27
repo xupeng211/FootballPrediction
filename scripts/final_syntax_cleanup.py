@@ -40,7 +40,7 @@ def fix_function_body(filepath):
         fixed_lines = []
 
         for i, line in enumerate(lines):
-            line_num = i + 1
+            i + 1
 
             # 检查函数定义行
             if re.match(r'^\s*def\s+\w+.*\:$', line):

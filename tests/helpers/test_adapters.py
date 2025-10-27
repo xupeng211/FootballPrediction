@@ -1,4 +1,5 @@
 from unittest.mock import MagicMock
+
 """
 测试辅助工具 - 接口适配器
 Test Interface Adapters for Testing
@@ -8,11 +9,11 @@ Test Interface Adapters for Testing
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
-from src.domain.strategies.base import PredictionInput as BasePredictionInput
 from src.domain.models.match import Match
 from src.domain.models.team import Team
+from src.domain.strategies.base import PredictionInput as BasePredictionInput
 
 
 @dataclass

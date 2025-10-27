@@ -1,4 +1,5 @@
 from unittest.mock import patch
+
 """测试 FastAPI 配置"""
 
 import pytest
@@ -6,7 +7,6 @@ import pytest
 
 @pytest.mark.unit
 @pytest.mark.api
-
 def test_fastapi_config_import():
     """测试 FastAPI 配置模块导入"""
     try:

@@ -8,20 +8,16 @@ Statistical Strategy
 Strategy implementation using statistical methods and mathematical models for prediction.
 """
 
-import time
 import math
-from typing import Any, Dict, List, Tuple, Type
-import numpy as np
+import time
 from datetime import datetime
+from typing import Any, Dict, List, Tuple, Type
 
-from .base import (
-    PredictionStrategy,
-    PredictionInput,
-    PredictionOutput,
-    StrategyType,
-    StrategyMetrics,
-)
+import numpy as np
+
 from ..models.prediction import Prediction
+from .base import (PredictionInput, PredictionOutput, PredictionStrategy,
+                   StrategyMetrics, StrategyType)
 
 
 class StatisticalStrategy(PredictionStrategy):

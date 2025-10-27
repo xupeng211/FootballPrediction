@@ -176,8 +176,8 @@ class EmailHandler(AlertHandler):
         """处理邮件告警"""
         try:
             import smtplib
-            from email.mime.text import MIMEText
             from email.mime.multipart import MIMEMultipart
+            from email.mime.text import MIMEText
 
             # 创建邮件
             msg = MIMEMultipart()

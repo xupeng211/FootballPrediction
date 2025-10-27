@@ -3,9 +3,10 @@
 Performance Monitoring Middleware
 """
 
-import time
 import logging
+import time
 from typing import Callable
+
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 

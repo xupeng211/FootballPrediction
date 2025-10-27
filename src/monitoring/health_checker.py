@@ -8,8 +8,8 @@ Health Checker
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from src.database.connection import DatabaseManager
 from src.cache.redis.core.connection_manager import RedisConnectionManager
+from src.database.connection import DatabaseManager
 
 
 class HealthStatus:
@@ -79,9 +79,9 @@ class HealthChecker:
                 if pool.overflow > 0:
                     if health["status"] == HealthStatus.HEALTHY:
                         health["status"] = HealthStatus.DEGRADED
-                    health["details"]["warning"] = (
-                        f"Connection pool overflow: {pool.overflow}"
-                    )
+                    health["details"][
+                        "warning"
+                    ] = f"Connection pool overflow: {pool.overflow}"
 
         except (ValueError, RuntimeError, TimeoutError) as e:
             health["status"] = HealthStatus.UNHEALTHY
@@ -136,15 +136,15 @@ class HealthChecker:
 
                 if memory_percent > 90:
                     health["status"] = HealthStatus.UNHEALTHY
-                    health["details"]["error"] = (
-                        f"High memory usage: {memory_percent:.2f}%"
-                    )
+                    health["details"][
+                        "error"
+                    ] = f"High memory usage: {memory_percent:.2f}%"
                 elif memory_percent > 80:
                     if health["status"] == HealthStatus.HEALTHY:
                         health["status"] = HealthStatus.DEGRADED
-                    health["details"]["warning"] = (
-                        f"High memory usage: {memory_percent:.2f}%"
-                    )
+                    health["details"][
+                        "warning"
+                    ] = f"High memory usage: {memory_percent:.2f}%"
 
         except (ValueError, RuntimeError, TimeoutError) as e:
             health["status"] = HealthStatus.UNHEALTHY
@@ -183,14 +183,14 @@ class HealthChecker:
 
             if memory.percent > 90:
                 health["status"] = HealthStatus.UNHEALTHY
-                health["details"]["memory"]["error"] = (
-                    f"High memory usage: {memory.percent}%"
-                )
+                health["details"]["memory"][
+                    "error"
+                ] = f"High memory usage: {memory.percent}%"
             elif memory.percent > 80:
                 health["status"] = HealthStatus.DEGRADED
-                health["details"]["memory"]["warning"] = (
-                    f"High memory usage: {memory.percent}%"
-                )
+                health["details"]["memory"][
+                    "warning"
+                ] = f"High memory usage: {memory.percent}%"
 
             # 磁盘
             disk_issues = []
@@ -216,9 +216,9 @@ class HealthChecker:
 
             if disk_issues:
                 health["status"] = HealthStatus.UNHEALTHY
-                health["details"]["disk"]["error"] = (
-                    f"Disk full: {', '.join(disk_issues)}"
-                )
+                health["details"]["disk"][
+                    "error"
+                ] = f"Disk full: {', '.join(disk_issues)}"
 
             # 负载
             load_avg = psutil.getloadavg()
@@ -232,9 +232,9 @@ class HealthChecker:
             cpu_count = psutil.cpu_count()
             if load_avg[0] > cpu_count * 2:
                 health["status"] = HealthStatus.UNHEALTHY
-                health["details"]["load"]["error"] = (
-                    f"High load: {load_avg[0]:.2f} (cores: {cpu_count})"
-                )
+                health["details"]["load"][
+                    "error"
+                ] = f"High load: {load_avg[0]:.2f} (cores: {cpu_count})"
 
         except (ValueError, RuntimeError, TimeoutError) as e:
             health["status"] = HealthStatus.UNHEALTHY
@@ -272,9 +272,9 @@ class HealthChecker:
                 soft_limit, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
                 if num_fds > soft_limit * 0.9:
                     health["status"] = HealthStatus.DEGRADED
-                    health["details"]["file_descriptors_warning"] = (
-                        f"Approaching limit: {num_fds}/{soft_limit}"
-                    )
+                    health["details"][
+                        "file_descriptors_warning"
+                    ] = f"Approaching limit: {num_fds}/{soft_limit}"
             except (AttributeError, OSError):
                 pass
 

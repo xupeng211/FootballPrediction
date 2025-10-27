@@ -6,9 +6,10 @@ Simple API Coverage Improvement
 Focus on improving coverage for basic API modules without complex dependencies.
 """
 
-import pytest
-import sys
 import os
+import sys
+
+import pytest
 
 # 添加项目根目录到sys.path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../.."))
@@ -16,7 +17,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../.."))
 
 @pytest.mark.unit
 @pytest.mark.api
-
 class TestAPIBasics:
     """测试API基础功能"""
 

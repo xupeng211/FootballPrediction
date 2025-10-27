@@ -5,16 +5,16 @@ Tests for Database Base Models
 测试src.database.base模块的功能
 """
 
-import pytest
 from datetime import datetime
-from sqlalchemy import Column, String, Integer
 
-from src.database.base import Base, TimestampMixin, BaseModel
+import pytest
+from sqlalchemy import Column, Integer, String
+
+from src.database.base import Base, BaseModel, TimestampMixin
 
 
 @pytest.mark.unit
 @pytest.mark.database
-
 class TestTimestampMixin:
     """时间戳混入测试"""
 

@@ -6,18 +6,13 @@ Match Domain Service
 Handles complex business logic related to matches.
 """
 
-from typing import List, Optional, Any
 from datetime import datetime
+from typing import Any, List, Optional
 
-from ..models.match import MatchScore, MatchResult
-from ..models.match import Match, MatchStatus
+from ..events.match_events import (MatchCancelledEvent, MatchFinishedEvent,
+                                   MatchPostponedEvent, MatchStartedEvent)
+from ..models.match import Match, MatchResult, MatchScore, MatchStatus
 from ..models.team import Team
-from ..events.match_events import (
-    MatchStartedEvent,
-    MatchFinishedEvent,
-    MatchCancelledEvent,
-    MatchPostponedEvent,
-)
 
 
 class MatchDomainService:

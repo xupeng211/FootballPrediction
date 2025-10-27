@@ -307,7 +307,7 @@ def test_module_import_with_mocks(module_name: str, categories: list = None):
         categories = ['config', 'database']
 
     try:
-        with MockContextManager(categories) as mocks:
+        with MockContextManager(categories):
             # 尝试导入模块
             import importlib
             module = importlib.import_module(module_name)

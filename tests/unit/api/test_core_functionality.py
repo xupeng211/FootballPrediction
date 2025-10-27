@@ -1,13 +1,15 @@
 from unittest.mock import Mock, patch
+
 """
 核心功能测试 - 专注于测试已实现的核心功能
 Core Functionality Tests - Focus on testing implemented core functionality
 """
 
-import pytest
-from fastapi.testclient import TestClient
 import json
 from datetime import datetime, timedelta
+
+import pytest
+from fastapi.testclient import TestClient
 
 from src.api.app import app
 
@@ -245,7 +247,8 @@ class TestModelsAndSchemas:
 
     def test_standard_response_model(self):
         """测试标准响应模型"""
-        from src.api.predictions.models import PredictionRequest, PredictionResponse
+        from src.api.predictions.models import (PredictionRequest,
+                                                PredictionResponse)
 
         _result = standard_response(True, "Test message", {"data": "test"})
         assert _result["success"] is True
@@ -254,7 +257,8 @@ class TestModelsAndSchemas:
 
     def test_error_response_model(self):
         """测试错误响应模型"""
-        from src.api.predictions.models import PredictionRequest, PredictionResponse
+        from src.api.predictions.models import (PredictionRequest,
+                                                PredictionResponse)
 
         _result = error_response("Test error", {"detail": "Error details"})
         assert _result["error"]["type"] == "Test error"
@@ -315,9 +319,9 @@ class TestSecurityFeatures:
         # 确保没有敏感信息泄露
         sensitive_keys = ["password", "secret", "key", "token", "auth"]
         for key in sensitive_keys:
-            assert key not in str(data).lower(), (
-                f"Sensitive key {key} found in response"
-            )
+            assert (
+                key not in str(data).lower()
+            ), f"Sensitive key {key} found in response"
 
     def test_secure_headers(self, client):
         """测试安全头"""

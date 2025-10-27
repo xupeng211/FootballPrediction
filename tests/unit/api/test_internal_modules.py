@@ -1,11 +1,13 @@
-from unittest.mock import Mock, MagicMock
+from unittest.mock import MagicMock, Mock
+
 """
 内部模块测试 - 测试CQRS、事件、观察者等内部模块
 Internal Modules Tests - Test CQRS, Events, Observers and other internal modules
 """
 
-import pytest
 from datetime import datetime, timedelta
+
+import pytest
 
 
 # 测试CQRS模块
@@ -186,7 +188,7 @@ class TestEventsModule:
 
     def test_event_subject_observer_pattern(self):
         """测试事件主题-观察者模式"""
-        from src.api.events import Subject, Observer
+        from src.api.events import Observer, Subject
 
         class TestObserver(Observer):
             def __init__(self):
@@ -245,7 +247,7 @@ class TestObserversModule:
 
     def test_observer_manager_attach_detach(self):
         """测试观察者管理器附加和分离"""
-        from src.api.observers import ObserverManager, Observer
+        from src.api.observers import Observer, ObserverManager
 
         class TestObserver(Observer):
             def update(self, data):

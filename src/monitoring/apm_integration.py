@@ -8,8 +8,8 @@ APM Integration Module
 import logging
 import time
 import traceback
-from typing import Any, Dict, List, Optional
 from contextlib import asynccontextmanager, contextmanager
+from typing import Any, Dict, List, Optional
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -36,12 +36,14 @@ class APMIntegration:
         try:
             # 尝试导入和初始化OpenTelemetry
             try:
-                from opentelemetry import trace, metrics
-                from opentelemetry.exporter.prometheus import PrometheusMetricReader
+                from opentelemetry import metrics, trace
+                from opentelemetry.exporter.prometheus import \
+                    PrometheusMetricReader
                 from opentelemetry.sdk.metrics import MeterProvider
                 from opentelemetry.sdk.trace import TracerProvider
-                from .trace.export import BatchSpanProcessor
+
                 from .jaeger.thrift import JaegerExporter
+                from .trace.export import BatchSpanProcessor
 
                 # 初始化追踪
                 trace.set_tracer_provider(TracerProvider())
@@ -63,8 +65,9 @@ class APMIntegration:
             try:
                 import sentry_sdk
                 from sentry_sdk.integrations.fastapi import FastApiIntegration
-                from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
                 from sentry_sdk.integrations.redis import RedisIntegration
+                from sentry_sdk.integrations.sqlalchemy import \
+                    SqlalchemyIntegration
 
                 sentry_sdk.init(
                     dsn=self.get_sentry_dsn(),

@@ -3,22 +3,15 @@
 """
 
 import pytest
-from src.core.exceptions import (
-    FootballPredictionError,
-    ConfigError,
-    DataError,
-    ModelError,
-    PredictionError,
-    CacheError,
-    DatabaseError,
-    ValidationError,
-    StreamingError,
-    AdapterError,
-)
+
+from src.core.exceptions import (AdapterError, CacheError, ConfigError,
+                                 DatabaseError, DataError,
+                                 FootballPredictionError, ModelError,
+                                 PredictionError, StreamingError,
+                                 ValidationError)
 
 
 @pytest.mark.unit
-
 class TestExceptions:
     """异常类测试"""
 

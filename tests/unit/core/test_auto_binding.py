@@ -1,15 +1,17 @@
-from unittest.mock import Mock, patch, AsyncMock, MagicMock, call, PropertyMock
+from unittest.mock import AsyncMock, MagicMock, Mock, PropertyMock, call, patch
+
 """
 Comprehensive tests for core.auto_binding
 Auto-generated to maximize coverage
 """
 
-import pytest
 import asyncio
 import json
-from datetime import datetime, timezone, timedelta
-from typing import Any, Dict, List, Optional
 import warnings
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional
+
+import pytest
 
 # Import the module under test
 try:
@@ -30,7 +32,6 @@ except ImportError as e:
 
 
 @pytest.mark.unit
-
 class TestModuleIntegration:
     """Module integration and edge case tests"""
 

@@ -4,10 +4,12 @@
 
 import json
 from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
+
 from src.data.collectors.scores_collector import ScoresCollector
 
-from unittest.mock import patch, AsyncMock, MagicMock
 """
 数据收集器测试 - 比分数据收集器
 """

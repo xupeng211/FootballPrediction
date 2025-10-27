@@ -5,17 +5,14 @@
 """
 
 import re
+from typing import Any, Dict, List
 from unittest.mock import Mock, patch
-from typing import Dict, Any, List
 
 import pytest
-from src.utils.validators import (
-    is_valid_email,
-    is_valid_phone,
-    is_valid_url,
-    validate_required_fields,
-    validate_data_types,
-)
+
+from src.utils.validators import (is_valid_email, is_valid_phone, is_valid_url,
+                                  validate_data_types,
+                                  validate_required_fields)
 
 
 @pytest.mark.unit
@@ -80,7 +77,7 @@ class TestEmailValidator:
             result = is_valid_email(email)
             assert isinstance(result, bool)
 
-    @patch('re.match')
+    @patch("re.match")
     def test_email_regex_exception(self, mock_match: Mock) -> None:
         """❌ 异常用例：正则表达式异常"""
         mock_match.side_effect = Exception("Regex error")
@@ -142,7 +139,7 @@ class TestPhoneValidator:
             result = is_valid_phone(phone)
             assert isinstance(result, bool)
 
-    @patch('re.match')
+    @patch("re.match")
     def test_phone_regex_exception(self, mock_match: Mock) -> None:
         """❌ 异常用例：正则表达式异常"""
         mock_match.side_effect = Exception("Regex error")
@@ -209,7 +206,7 @@ class TestURLValidator:
             result = is_valid_url(url)
             assert isinstance(result, bool)
 
-    @patch('re.match')
+    @patch("re.match")
     def test_url_regex_exception(self, mock_match: Mock) -> None:
         """❌ 异常用例：正则表达式异常"""
         mock_match.side_effect = Exception("Regex error")

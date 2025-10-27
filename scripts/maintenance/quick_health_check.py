@@ -45,7 +45,7 @@ def quick_health_check():
     checks.append(('文件完整性', '✅ 完整' if not missing_files else f'❌ 缺失: {missing_files}'))
 
     # 显示结果
-    print(f"\n📊 检查结果:")
+    print("\n📊 检查结果:")
     for name, status in checks:
         print(f"  {name}: {status}")
 

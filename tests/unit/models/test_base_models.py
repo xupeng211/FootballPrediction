@@ -6,21 +6,17 @@ Base Models Tests
 Tests base model functionality defined in src/models/base_models.py.
 """
 
-import pytest
 import datetime
 from typing import Any, Dict, List
+
+import pytest
 from pydantic import ValidationError
 
 # 导入要测试的模块
 try:
-    from src.models.base_models import (
-        BaseModel,
-        TimestampedModel,
-        IdentifiableModel,
-        StatusModel,
-        MetadataModel,
-        base_models,
-    )
+    from src.models.base_models import (BaseModel, IdentifiableModel,
+                                        MetadataModel, StatusModel,
+                                        TimestampedModel, base_models)
 
     BASE_MODELS_AVAILABLE = True
 except ImportError:
@@ -31,7 +27,6 @@ except ImportError:
     not BASE_MODELS_AVAILABLE, reason="Base models module not available"
 )
 @pytest.mark.unit
-
 class TestBaseModel:
     """BaseModel测试"""
 
@@ -484,9 +479,9 @@ class TestBaseModelsNamespace:
         models = [TimestampedModel, IdentifiableModel, StatusModel, MetadataModel]
 
         for model_class in models:
-            assert issubclass(model_class, BaseModel), (
-                f"{model_class.__name__} should inherit from BaseModel"
-            )
+            assert issubclass(
+                model_class, BaseModel
+            ), f"{model_class.__name__} should inherit from BaseModel"
 
 
 @pytest.mark.skipif(

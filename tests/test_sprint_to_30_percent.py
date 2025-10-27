@@ -1,13 +1,14 @@
 import pytest
+
 #!/usr/bin/env python3
 """
 冲刺30%覆盖率脚本
 运行所有可能的测试以达到目标
 """
 
+import os
 import subprocess
 import sys
-import os
 from pathlib import Path
 
 # 所有可能的测试文件

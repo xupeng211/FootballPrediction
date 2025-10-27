@@ -7,12 +7,12 @@ Auto Binding System
 Provides automatic binding from interfaces to implementations.
 """
 
-import inspect
 import importlib
-from typing import Dict, List, Type, TypeVar, Optional
-from pathlib import Path
+import inspect
 import logging
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Dict, List, Optional, Type, TypeVar
 
 from .di import DIContainer, ServiceLifetime
 from .exceptions import DependencyInjectionError

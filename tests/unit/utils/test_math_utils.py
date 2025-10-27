@@ -2,10 +2,11 @@
 数学工具测试
 """
 
-import pytest
 import math
 import random
-from typing import List, Tuple, Optional, Union
+from typing import List, Optional, Tuple, Union
+
+import pytest
 
 
 class MathUtils:
@@ -210,7 +211,6 @@ class MathUtils:
 
 
 @pytest.mark.unit
-
 class TestMathUtils:
     """测试数学工具类"""
 

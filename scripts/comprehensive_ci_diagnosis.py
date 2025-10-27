@@ -47,7 +47,7 @@ def analyze_local_issues():
         if Path(config_file).exists():
             print(f"    ✅ {config_file} 存在")
         else:
-            issues.append(("配置缺失", config_file, f"文件不存在"))
+            issues.append(("配置缺失", config_file, "文件不存在"))
             print(f"    ❌ {config_file} 不存在")
 
     return issues
@@ -214,12 +214,12 @@ def run_comprehensive_diagnosis():
     recommendations = generate_fix_recommendations(all_issues)
 
     # 6. 输出报告
-    print(f"\n📊 诊断总结:")
+    print("\n📊 诊断总结:")
     print(f"  - 发现问题数: {len(all_issues)}")
     print(f"  - 修复建议数: {len(recommendations)}")
 
     if all_issues:
-        print(f"\n🔍 问题分类:")
+        print("\n🔍 问题分类:")
         categories = {}
         for category, item, details in all_issues:
             categories[category] = categories.get(category, 0) + 1
@@ -228,7 +228,7 @@ def run_comprehensive_diagnosis():
             print(f"  - {category}: {count} 个问题")
 
     if recommendations:
-        print(f"\n🔧 修复建议:")
+        print("\n🔧 修复建议:")
         for i, rec in enumerate(recommendations, 1):
             print(f"  {i}. {rec}")
 
@@ -251,7 +251,7 @@ def run_comprehensive_diagnosis():
     with open("CI_DIAGNOSIS_REPORT.md", "w", encoding="utf-8") as f:
         f.write(report_content)
 
-    print(f"\n📄 详细报告已保存到: CI_DIAGNOSIS_REPORT.md")
+    print("\n📄 详细报告已保存到: CI_DIAGNOSIS_REPORT.md")
 
     return all_issues, recommendations
 

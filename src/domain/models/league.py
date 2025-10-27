@@ -8,9 +8,9 @@ Encapsulates league-related business logic and invariants.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
-from typing import Optional, Dict, Any, List
 from decimal import Decimal
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 from ...core.exceptions import DomainError
 
@@ -393,27 +393,31 @@ class League:
             "website": self.website,
             "logo_url": self.logo_url,
             "prestige": self.prestige,
-            "current_season": {
-                "season": self.current_season.season,
-                "start_date": self.current_season.start_date.isoformat(),
-                "end_date": self.current_season.end_date.isoformat(),
-                "status": self.current_season.status.value,
-                "total_rounds": self.current_season.total_rounds,
-                "current_round": self.current_season.current_round,
-                "progress": self.current_season.progress,
-            }
-            if self.current_season
-            else None,
-            "settings": {
-                "points_for_win": self.settings.points_for_win,
-                "points_for_draw": self.settings.points_for_draw,
-                "points_for_loss": self.settings.points_for_loss,
-                "promotion_places": self.settings.promotion_places,
-                "relegation_places": self.settings.relegation_places,
-                "max_foreign_players": self.settings.max_foreign_players,
-            }
-            if self.settings
-            else None,
+            "current_season": (
+                {
+                    "season": self.current_season.season,
+                    "start_date": self.current_season.start_date.isoformat(),
+                    "end_date": self.current_season.end_date.isoformat(),
+                    "status": self.current_season.status.value,
+                    "total_rounds": self.current_season.total_rounds,
+                    "current_round": self.current_season.current_round,
+                    "progress": self.current_season.progress,
+                }
+                if self.current_season
+                else None
+            ),
+            "settings": (
+                {
+                    "points_for_win": self.settings.points_for_win,
+                    "points_for_draw": self.settings.points_for_draw,
+                    "points_for_loss": self.settings.points_for_loss,
+                    "promotion_places": self.settings.promotion_places,
+                    "relegation_places": self.settings.relegation_places,
+                    "max_foreign_players": self.settings.max_foreign_players,
+                }
+                if self.settings
+                else None
+            ),
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
         }

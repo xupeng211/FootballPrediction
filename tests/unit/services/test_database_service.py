@@ -1,10 +1,12 @@
 """测试数据库服务"""
 
+from unittest.mock import AsyncMock, Mock
+
 import pytest
-from unittest.mock import Mock, AsyncMock
 
 try:
     from src.services.database.database_service import DatabaseService
+
     IMPORT_SUCCESS = True
 except ImportError as e:
     IMPORT_SUCCESS = False
@@ -20,7 +22,7 @@ class TestDatabaseService:
         """测试数据库服务创建"""
         service = DatabaseService()
         assert service is not None
-        assert hasattr(service, 'session')
+        assert hasattr(service, "session")
 
     def test_database_service_with_session(self):
         """测试带会话的数据库服务创建"""
@@ -34,32 +36,27 @@ class TestDatabaseService:
         service = DatabaseService()
 
         # 检查是否有session属性
-        assert hasattr(service, 'session')
+        assert hasattr(service, "session")
 
     def test_service_method_existence(self):
         """测试服务方法存在性"""
         service = DatabaseService()
 
         # 检查常见的服务方法
-        expected_methods = [
-            'get_session',
-            'close_session',
-            'commit',
-            'rollback'
-        ]
+        expected_methods = ["get_session", "close_session", "commit", "rollback"]
 
         for method_name in expected_methods:
             assert hasattr(service, method_name), f"Method {method_name} should exist"
 
     def test_repository_integration(self):
         """测试仓储集成"""
-        service = DatabaseService()
+        DatabaseService()
 
         # 检查是否集成了必要的仓储
         expected_repositories = [
-            'MatchRepository',
-            'PredictionRepository',
-            'UserRepository'
+            "MatchRepository",
+            "PredictionRepository",
+            "UserRepository",
         ]
 
         # 这些应该在模块级别可用
@@ -81,7 +78,7 @@ class TestDatabaseService:
         service = DatabaseService()
 
         # 检查是否支持异步会话
-        assert hasattr(service, 'session')
+        assert hasattr(service, "session")
 
     def test_service_configuration(self):
         """测试服务配置"""
@@ -95,7 +92,7 @@ class TestDatabaseService:
             try:
                 service = DatabaseService(**config)
                 assert service is not None
-            except Exception as e:
+            except Exception:
                 # 某些配置可能不支持，这是可以接受的
                 pass
 
@@ -104,7 +101,7 @@ class TestDatabaseService:
         service = DatabaseService()
 
         # 检查基本属性
-        assert hasattr(service, 'session')
+        assert hasattr(service, "session")
 
     @pytest.mark.asyncio
     async def test_async_operations(self):
@@ -112,11 +109,7 @@ class TestDatabaseService:
         service = DatabaseService()
 
         # 测试异步方法（如果存在）
-        async_methods = [
-            'async_get',
-            'async_save',
-            'async_delete'
-        ]
+        async_methods = ["async_get", "async_save", "async_delete"]
 
         for method_name in async_methods:
             if hasattr(service, method_name):
@@ -131,11 +124,7 @@ class TestDatabaseService:
         service = DatabaseService()
 
         # 测试各种错误情况
-        error_cases = [
-            None,
-            "invalid_session",
-            123
-        ]
+        error_cases = [None, "invalid_session", 123]
 
         for case in error_cases:
             try:
@@ -157,13 +146,13 @@ class TestDatabaseService:
         assert service is not None
 
         # 测试服务清理（如果有相关方法）
-        if hasattr(service, 'cleanup'):
+        if hasattr(service, "cleanup"):
             try:
                 service.cleanup()
             except Exception:
                 pass
 
-        if hasattr(service, 'close'):
+        if hasattr(service, "close"):
             try:
                 service.close()
             except Exception:
@@ -175,9 +164,9 @@ class TestDatabaseService:
 
         # 检查事务相关方法
         transaction_methods = [
-            'begin_transaction',
-            'commit_transaction',
-            'rollback_transaction'
+            "begin_transaction",
+            "commit_transaction",
+            "rollback_transaction",
         ]
 
         for method_name in transaction_methods:
@@ -193,11 +182,7 @@ class TestDatabaseService:
         service = DatabaseService()
 
         # 检查连接相关方法
-        connection_methods = [
-            'is_connected',
-            'get_connection_info',
-            'ping'
-        ]
+        connection_methods = ["is_connected", "get_connection_info", "ping"]
 
         for method_name in connection_methods:
             if hasattr(service, method_name):
@@ -224,10 +209,10 @@ class TestDatabaseService:
 
         # 检查是否支持仓储工厂模式
         factory_methods = [
-            'get_match_repository',
-            'get_prediction_repository',
-            'get_user_repository',
-            'create_repository'
+            "get_match_repository",
+            "get_prediction_repository",
+            "get_user_repository",
+            "create_repository",
         ]
 
         for method_name in factory_methods:
@@ -243,12 +228,7 @@ class TestDatabaseService:
         service = DatabaseService()
 
         # 检查关键集成点
-        integration_points = [
-            'cache',
-            'logging',
-            'monitoring',
-            'events'
-        ]
+        integration_points = ["cache", "logging", "monitoring", "events"]
 
         for point in integration_points:
             # 集成点可能作为属性或方法存在
@@ -267,7 +247,7 @@ async def test_async_functionality():
     service = DatabaseService()
 
     # 测试异步方法（如果存在）
-    if hasattr(service, 'async_operation'):
+    if hasattr(service, "async_operation"):
         try:
             result = await service.async_operation()
             assert result is not None

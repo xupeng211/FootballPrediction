@@ -11,27 +11,33 @@ P2阶段深度业务逻辑测试: DatabaseConfig
 - 数据驱动测试用例
 """
 
-import pytest
-import os
 import asyncio
-from unittest.mock import patch, Mock
-from typing import Dict, List, Any, Optional
-import tempfile
 import json
-from pathlib import Path
-
+import os
 # 确保可以导入源码模块
 import sys
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../../..'))
+import tempfile
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+from unittest.mock import Mock, patch
+
+import pytest
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../.."))
 
 # 导入目标模块
 try:
     import database.config
-    from database.config import DatabaseConfig, get_database_config, get_test_database_config, get_production_database_config, get_database_url
+    from database.config import (DatabaseConfig, get_database_config,
+                                 get_database_url,
+                                 get_production_database_config,
+                                 get_test_database_config)
+
     MODULE_AVAILABLE = True
 except ImportError as e:
     print(f"模块导入警告: {e}")
     MODULE_AVAILABLE = False
+
 
 class TestDatabaseConfigBusinessLogic:
     """DatabaseConfig 真实业务逻辑测试套件"""
@@ -40,15 +46,16 @@ class TestDatabaseConfigBusinessLogic:
     def test_real_module_import(self):
         """测试真实模块导入"""
         import database.config
+
         assert database.config is not None
-        assert hasattr(database.config, '__name__')
+        assert hasattr(database.config, "__name__")
 
         # 验证关键函数/类存在
-        assert hasattr(database.config, 'DatabaseConfig')
-        assert hasattr(database.config, 'get_database_config')
-        assert hasattr(database.config, 'get_test_database_config')
-        assert hasattr(database.config, 'get_production_database_config')
-        assert hasattr(database.config, 'get_database_url')
+        assert hasattr(database.config, "DatabaseConfig")
+        assert hasattr(database.config, "get_database_config")
+        assert hasattr(database.config, "get_test_database_config")
+        assert hasattr(database.config, "get_production_database_config")
+        assert hasattr(database.config, "get_database_url")
 
     # 真实函数逻辑测试
     def test_get_database_config_real_logic(self):
@@ -57,19 +64,22 @@ class TestDatabaseConfigBusinessLogic:
             pytest.skip("模块不可用")
 
         # 测试真实函数调用 - 在测试环境中
-        with patch.dict(os.environ, {
-            'ENVIRONMENT': 'test',
-            'TEST_DB_HOST': 'localhost',
-            'TEST_DB_NAME': 'test_db',
-            'TEST_DB_USER': 'test_user'
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "ENVIRONMENT": "test",
+                "TEST_DB_HOST": "localhost",
+                "TEST_DB_NAME": "test_db",
+                "TEST_DB_USER": "test_user",
+            },
+        ):
             try:
-                result = database.config.get_database_config('test')
+                result = database.config.get_database_config("test")
                 assert result is not None
                 assert isinstance(result, DatabaseConfig)
-                assert result.database == ':memory:'
-                assert result.host == 'localhost'
-                assert result.username == 'test_user'
+                assert result.database == ":memory:"
+                assert result.host == "localhost"
+                assert result.username == "test_user"
                 assert result.password is None  # 测试环境可以没有密码
             except Exception as e:
                 pytest.skip(f"get_database_config 测试失败: {e}")
@@ -81,32 +91,32 @@ class TestDatabaseConfigBusinessLogic:
 
         # 测试不同环境
         test_cases = [
-            ('development', 'football_prediction_dev'),
-            ('test', ':memory:'),
-            ('production', 'football_prediction_dev'),  # 默认值
+            ("development", "football_prediction_dev"),
+            ("test", ":memory:"),
+            ("production", "football_prediction_dev"),  # 默认值
         ]
 
         for env, expected_db in test_cases:
             env_vars = {
-                'ENVIRONMENT': env,
-                f'{env.upper() if env != "development" else ""}DB_HOST': 'localhost',
+                "ENVIRONMENT": env,
+                f'{env.upper() if env != "development" else ""}DB_HOST': "localhost",
                 f'{env.upper() if env != "development" else ""}DB_NAME': expected_db,
-                f'{env.upper() if env != "development" else ""}DB_USER': 'test_user'
+                f'{env.upper() if env != "development" else ""}DB_USER': "test_user",
             }
 
             # 生产环境需要密码
-            if env == 'production':
-                env_vars['PROD_DB_PASSWORD'] = 'test_pass'
+            if env == "production":
+                env_vars["PROD_DB_PASSWORD"] = "test_pass"
 
             with patch.dict(os.environ, env_vars):
                 try:
                     result = database.config.get_database_config(env)
                     assert result is not None
                     assert isinstance(result, DatabaseConfig)
-                    if expected_db == ':memory:':
-                        assert result.database == ':memory:'
+                    if expected_db == ":memory:":
+                        assert result.database == ":memory:"
                 except Exception as e:
-                    if env == 'production' and 'password' not in str(e).lower():
+                    if env == "production" and "password" not in str(e).lower():
                         pytest.skip(f"边界条件测试失败: {e}")
 
     def test_get_test_database_config_real_logic(self):
@@ -118,7 +128,7 @@ class TestDatabaseConfigBusinessLogic:
             result = database.config.get_test_database_config()
             assert result is not None
             assert isinstance(result, DatabaseConfig)
-            assert result.database == ':memory:'
+            assert result.database == ":memory:"
         except Exception as e:
             pytest.skip(f"get_test_database_config 测试失败: {e}")
 
@@ -128,18 +138,21 @@ class TestDatabaseConfigBusinessLogic:
             pytest.skip("模块不可用")
 
         # 生产环境需要密码配置
-        with patch.dict(os.environ, {
-            'PROD_DB_HOST': 'localhost',
-            'PROD_DB_NAME': 'prod_db',
-            'PROD_DB_USER': 'prod_user',
-            'PROD_DB_PASSWORD': 'prod_pass'
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "PROD_DB_HOST": "localhost",
+                "PROD_DB_NAME": "prod_db",
+                "PROD_DB_USER": "prod_user",
+                "PROD_DB_PASSWORD": "prod_pass",
+            },
+        ):
             try:
                 result = database.config.get_production_database_config()
                 assert result is not None
                 assert isinstance(result, DatabaseConfig)
-                assert result.database == 'prod_db'
-                assert result.password == 'prod_pass'
+                assert result.database == "prod_db"
+                assert result.password == "prod_pass"
             except Exception as e:
                 pytest.skip(f"get_production_database_config 测试失败: {e}")
 
@@ -148,17 +161,20 @@ class TestDatabaseConfigBusinessLogic:
         if not MODULE_AVAILABLE:
             pytest.skip("模块不可用")
 
-        with patch.dict(os.environ, {
-            'ENVIRONMENT': 'test',
-            'TEST_DB_HOST': 'localhost',
-            'TEST_DB_NAME': 'test_db',
-            'TEST_DB_USER': 'test_user'
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "ENVIRONMENT": "test",
+                "TEST_DB_HOST": "localhost",
+                "TEST_DB_NAME": "test_db",
+                "TEST_DB_USER": "test_user",
+            },
+        ):
             try:
-                result = database.config.get_database_url('test')
+                result = database.config.get_database_url("test")
                 assert result is not None
                 assert isinstance(result, str)
-                assert 'sqlite+aiosqlite' in result or 'postgresql+asyncpg' in result
+                assert "sqlite+aiosqlite" in result or "postgresql+asyncpg" in result
             except Exception as e:
                 pytest.skip(f"get_database_url 测试失败: {e}")
 
@@ -171,17 +187,17 @@ class TestDatabaseConfigBusinessLogic:
         try:
             # 测试类实例化和真实方法调用
             config = DatabaseConfig(
-                host='localhost',
+                host="localhost",
                 port=5432,
-                database='test_db',
-                username='test_user',
+                database="test_db",
+                username="test_user",
                 password=None,
-                pool_size=5
+                pool_size=5,
             )
             assert config is not None
             assert isinstance(config, DatabaseConfig)
-            assert config.host == 'localhost'
-            assert config.database == 'test_db'
+            assert config.host == "localhost"
+            assert config.database == "test_db"
             assert config.pool_size == 5
 
         except Exception as e:
@@ -195,27 +211,27 @@ class TestDatabaseConfigBusinessLogic:
         try:
             # 测试SQLite配置
             config = DatabaseConfig(
-                host='localhost',
+                host="localhost",
                 port=5432,
-                database=':memory:',
-                username='test_user',
-                password=None
+                database=":memory:",
+                username="test_user",
+                password=None,
             )
             sync_url = config.sync_url
-            assert sync_url == 'sqlite:///:memory:'
+            assert sync_url == "sqlite:///:memory:"
 
             # 测试PostgreSQL配置
             config2 = DatabaseConfig(
-                host='localhost',
+                host="localhost",
                 port=5432,
-                database='test_db',
-                username='test_user',
-                password='test_pass'
+                database="test_db",
+                username="test_user",
+                password="test_pass",
             )
             sync_url2 = config2.sync_url
-            assert 'postgresql+psycopg2' in sync_url2
-            assert 'test_user' in sync_url2
-            assert 'test_pass' in sync_url2
+            assert "postgresql+psycopg2" in sync_url2
+            assert "test_user" in sync_url2
+            assert "test_pass" in sync_url2
 
         except Exception as e:
             pytest.skip(f"sync_url 测试失败: {e}")
@@ -228,28 +244,28 @@ class TestDatabaseConfigBusinessLogic:
         try:
             # 测试SQLite配置
             config = DatabaseConfig(
-                host='localhost',
+                host="localhost",
                 port=5432,
-                database='test.db',
-                username='test_user',
-                password=None
+                database="test.db",
+                username="test_user",
+                password=None,
             )
             async_url = config.async_url
-            assert 'sqlite+aiosqlite' in async_url
-            assert 'test.db' in async_url
+            assert "sqlite+aiosqlite" in async_url
+            assert "test.db" in async_url
 
             # 测试PostgreSQL配置
             config2 = DatabaseConfig(
-                host='localhost',
+                host="localhost",
                 port=5432,
-                database='test_db',
-                username='test_user',
-                password='test_pass'
+                database="test_db",
+                username="test_user",
+                password="test_pass",
             )
             async_url2 = config2.async_url
-            assert 'postgresql+asyncpg' in async_url2
-            assert 'test_user' in async_url2
-            assert 'test_pass' in async_url2
+            assert "postgresql+asyncpg" in async_url2
+            assert "test_user" in async_url2
+            assert "test_pass" in async_url2
 
         except Exception as e:
             pytest.skip(f"async_url 测试失败: {e}")
@@ -261,11 +277,11 @@ class TestDatabaseConfigBusinessLogic:
 
         try:
             config = DatabaseConfig(
-                host='localhost',
+                host="localhost",
                 port=5432,
-                database='test_db',
-                username='test_user',
-                password='test_pass'
+                database="test_db",
+                username="test_user",
+                password="test_pass",
             )
             alembic_url = config.alembic_url
             assert alembic_url == config.sync_url
@@ -283,8 +299,11 @@ class TestDatabaseConfigBusinessLogic:
         import database.config
 
         # 验证模块的主要接口
-        main_functions = [attr for attr in dir(database.config)
-                         if not attr.startswith('_') and callable(getattr(database.config, attr))]
+        main_functions = [
+            attr
+            for attr in dir(database.config)
+            if not attr.startswith("_") and callable(getattr(database.config, attr))
+        ]
 
         assert len(main_functions) > 0, "模块应该至少有一个公共函数"
 
@@ -294,16 +313,20 @@ class TestDatabaseConfigBusinessLogic:
             pytest.skip("模块不可用")
 
         # 测试环境配置集成
-        with patch.dict(os.environ, {
-            'ENVIRONMENT': 'test',
-            'TEST_DB_HOST': 'localhost',
-            'TEST_DB_NAME': 'test_db',
-            'TEST_DB_USER': 'test_user'
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "ENVIRONMENT": "test",
+                "TEST_DB_HOST": "localhost",
+                "TEST_DB_NAME": "test_db",
+                "TEST_DB_USER": "test_user",
+            },
+        ):
             try:
                 import database.config
+
                 # 测试配置读取
-                config = database.config.get_database_config('test')
+                config = database.config.get_database_config("test")
                 assert config is not None
                 assert isinstance(config, DatabaseConfig)
             except Exception as e:
@@ -321,24 +344,27 @@ class TestDatabaseConfigBusinessLogic:
         # DatabaseConfig主要是同步类，但async_url属性用于异步连接
         try:
             config = DatabaseConfig(
-                host='localhost',
+                host="localhost",
                 port=5432,
-                database='test.db',
-                username='test_user',
-                password=None
+                database="test.db",
+                username="test_user",
+                password=None,
             )
             async_url = config.async_url
             assert async_url is not None
-            assert 'sqlite+aiosqlite' in async_url
+            assert "sqlite+aiosqlite" in async_url
         except Exception as e:
             pytest.skip(f"异步集成测试失败: {e}")
 
     # 数据驱动测试
-    @pytest.mark.parametrize("test_env,expected_db", [
-        ("development", "football_prediction_dev"),
-        ("test", ":memory:"),
-        ("production", None),
-    ])
+    @pytest.mark.parametrize(
+        "test_env,expected_db",
+        [
+            ("development", "football_prediction_dev"),
+            ("test", ":memory:"),
+            ("production", None),
+        ],
+    )
     def test_environment_based_config(self, test_env, expected_db):
         """测试基于环境的配置"""
         if not MODULE_AVAILABLE:
@@ -348,13 +374,15 @@ class TestDatabaseConfigBusinessLogic:
 
         # 设置环境变量
         env_vars = {
-            'ENVIRONMENT': test_env,
-            f'{test_env.upper() if test_env != "development" else ""}DB_HOST': 'localhost',
-            f'{test_env.upper() if test_env != "development" else ""}DB_USER': 'test_user',
+            "ENVIRONMENT": test_env,
+            f'{test_env.upper() if test_env != "development" else ""}DB_HOST': "localhost",
+            f'{test_env.upper() if test_env != "development" else ""}DB_USER': "test_user",
         }
 
         if test_env != "test":
-            env_vars[f'{test_env.upper() if test_env != "development" else ""}DB_PASSWORD'] = 'test_pass'
+            env_vars[
+                f'{test_env.upper() if test_env != "development" else ""}DB_PASSWORD'
+            ] = "test_pass"
 
         with patch.dict(os.environ, env_vars):
             try:
@@ -372,11 +400,14 @@ class TestDatabaseConfigBusinessLogic:
             except Exception as e:
                 pytest.skip(f"环境配置测试失败: {e}")
 
-    @pytest.mark.parametrize("pool_config", [
-        {"pool_size": 5, "max_overflow": 10},
-        {"pool_size": 20, "max_overflow": 40},
-        {"pool_size": 1, "max_overflow": 2},
-    ])
+    @pytest.mark.parametrize(
+        "pool_config",
+        [
+            {"pool_size": 5, "max_overflow": 10},
+            {"pool_size": 20, "max_overflow": 40},
+            {"pool_size": 1, "max_overflow": 2},
+        ],
+    )
     def test_pool_configuration(self, pool_config):
         """测试连接池配置"""
         if not MODULE_AVAILABLE:
@@ -385,19 +416,19 @@ class TestDatabaseConfigBusinessLogic:
         import database.config
 
         env_vars = {
-            'ENVIRONMENT': 'test',
-            'TEST_DB_HOST': 'localhost',
-            'TEST_DB_NAME': 'test_db',
-            'TEST_DB_USER': 'test_user',
-            'TEST_DB_POOL_SIZE': str(pool_config['pool_size']),
-            'TEST_DB_MAX_OVERFLOW': str(pool_config['max_overflow']),
+            "ENVIRONMENT": "test",
+            "TEST_DB_HOST": "localhost",
+            "TEST_DB_NAME": "test_db",
+            "TEST_DB_USER": "test_user",
+            "TEST_DB_POOL_SIZE": str(pool_config["pool_size"]),
+            "TEST_DB_MAX_OVERFLOW": str(pool_config["max_overflow"]),
         }
 
         with patch.dict(os.environ, env_vars):
             try:
-                config = database.config.get_database_config('test')
-                assert config.pool_size == pool_config['pool_size']
-                assert config.max_overflow == pool_config['max_overflow']
+                config = database.config.get_database_config("test")
+                assert config.pool_size == pool_config["pool_size"]
+                assert config.max_overflow == pool_config["max_overflow"]
             except Exception as e:
                 pytest.skip(f"连接池配置测试失败: {e}")
 
@@ -407,21 +438,24 @@ class TestDatabaseConfigBusinessLogic:
             pytest.skip("模块不可用")
 
         # 模拟真实的应用启动场景
-        with patch.dict(os.environ, {
-            'ENVIRONMENT': 'test',
-            'TEST_DB_HOST': 'localhost',
-            'TEST_DB_NAME': 'test.db',
-            'TEST_DB_USER': 'app_user',
-            'TEST_DB_POOL_SIZE': '10',
-            'TEST_DB_MAX_OVERFLOW': '20'
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "ENVIRONMENT": "test",
+                "TEST_DB_HOST": "localhost",
+                "TEST_DB_NAME": "test.db",
+                "TEST_DB_USER": "app_user",
+                "TEST_DB_POOL_SIZE": "10",
+                "TEST_DB_MAX_OVERFLOW": "20",
+            },
+        ):
             try:
                 # 应用启动时获取数据库配置
                 config = database.config.get_database_config()
 
                 # 验证配置完整性
-                assert config.host == 'localhost'
-                assert config.username == 'app_user'
+                assert config.host == "localhost"
+                assert config.username == "app_user"
                 assert config.pool_size == 10
                 assert config.max_overflow == 20
 
@@ -432,9 +466,9 @@ class TestDatabaseConfigBusinessLogic:
                 assert async_url is not None
 
                 # 验证数据库文件路径
-                if config.database.endswith('.db'):
-                    assert 'sqlite' in sync_url
-                    assert 'sqlite' in async_url
+                if config.database.endswith(".db"):
+                    assert "sqlite" in sync_url
+                    assert "sqlite" in async_url
 
             except Exception as e:
                 pytest.skip(f"真实业务场景测试失败: {e}")
@@ -448,22 +482,22 @@ class TestDatabaseConfigBusinessLogic:
         try:
             # 测试异步URL生成用于异步数据库连接
             config = DatabaseConfig(
-                host='localhost',
+                host="localhost",
                 port=5432,
-                database='async_test.db',
-                username='async_user',
-                password='async_pass'
+                database="async_test.db",
+                username="async_user",
+                password="async_pass",
             )
 
             async_url = config.async_url
-            assert 'sqlite+aiosqlite' in async_url or 'postgresql+asyncpg' in async_url
+            assert "sqlite+aiosqlite" in async_url or "postgresql+asyncpg" in async_url
 
             # 模拟异步数据库连接字符串验证
-            if 'sqlite+aiosqlite' in async_url:
-                assert 'async_test.db' in async_url
-            elif 'postgresql+asyncpg' in async_url:
-                assert 'async_user' in async_url
-                assert 'async_pass' in async_url
+            if "sqlite+aiosqlite" in async_url:
+                assert "async_test.db" in async_url
+            elif "postgresql+asyncpg" in async_url:
+                assert "async_user" in async_url
+                assert "async_pass" in async_url
 
         except Exception as e:
             pytest.skip(f"异步业务逻辑测试失败: {e}")
@@ -474,12 +508,15 @@ class TestDatabaseConfigBusinessLogic:
             pytest.skip("模块不可用")
 
         # 测试生产环境缺少密码的错误处理
-        with patch.dict(os.environ, {
-            'PROD_DB_HOST': 'localhost',
-            'PROD_DB_NAME': 'prod_db',
-            'PROD_DB_USER': 'prod_user'
-            # 故意不设置 PROD_DB_PASSWORD
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "PROD_DB_HOST": "localhost",
+                "PROD_DB_NAME": "prod_db",
+                "PROD_DB_USER": "prod_user",
+                # 故意不设置 PROD_DB_PASSWORD
+            },
+        ):
             try:
                 config = database.config.get_production_database_config()
                 pytest.fail("应该抛出ValueError密码缺失异常")
@@ -490,19 +527,23 @@ class TestDatabaseConfigBusinessLogic:
                 pytest.skip(f"错误处理测试失败: {e}")
 
         # 测试无效数据库端口的处理
-        with patch.dict(os.environ, {
-            'ENVIRONMENT': 'test',
-            'TEST_DB_HOST': 'localhost',
-            'TEST_DB_NAME': 'test.db',
-            'TEST_DB_USER': 'test_user',
-            'TEST_DB_PORT': 'invalid_port'
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "ENVIRONMENT": "test",
+                "TEST_DB_HOST": "localhost",
+                "TEST_DB_NAME": "test.db",
+                "TEST_DB_USER": "test_user",
+                "TEST_DB_PORT": "invalid_port",
+            },
+        ):
             try:
-                config = database.config.get_database_config('test')
+                config = database.config.get_database_config("test")
                 # 应该回退到默认端口5432
                 assert config.port == 5432
             except Exception as e:
                 pytest.skip(f"端口错误处理测试失败: {e}")
+
 
 if __name__ == "__main__":
     print("P2阶段业务逻辑测试: DatabaseConfig")

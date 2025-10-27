@@ -23,9 +23,8 @@ Create Date: 2025-09-12 12:48:23.849021
 from typing import Sequence, Union
 
 from alembic import context, op
-from sqlalchemy.exc import SQLAlchemyError, DatabaseError
-
 from sqlalchemy import text
+from sqlalchemy.exc import DatabaseError, SQLAlchemyError
 
 # revision identifiers, used by Alembic.
 revision: str = "09d03cebf664"

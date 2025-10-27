@@ -4,11 +4,12 @@
 """
 
 import asyncio
-from typing import Any, Dict, List, Optional, AsyncGenerator
-from contextlib import asynccontextmanager
-from unittest.mock import Mock, AsyncMock, MagicMock
-import pytest
 import sqlite3
+from contextlib import asynccontextmanager
+from typing import Any, AsyncGenerator, Dict, List, Optional
+from unittest.mock import AsyncMock, MagicMock, Mock
+
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
@@ -96,7 +97,9 @@ class TestDatabaseHelper:
         else:
             self._data_cache.clear()
 
-    def create_mock_result(self, data: List[Dict[str, Any]], single: bool = False) -> Mock:
+    def create_mock_result(
+        self, data: List[Dict[str, Any]], single: bool = False
+    ) -> Mock:
         """创建模拟查询结果"""
         result = Mock()
 
@@ -139,7 +142,9 @@ class DatabaseTestMixin:
         """模拟引擎fixture"""
         return db_helper.create_mock_engine()
 
-    def assert_query_called(self, mock_session: AsyncMock, table: str, operation: str = "select") -> None:
+    def assert_query_called(
+        self, mock_session: AsyncMock, table: str, operation: str = "select"
+    ) -> None:
         """断言查询被调用"""
         if operation == "select":
             mock_session.execute.assert_called()

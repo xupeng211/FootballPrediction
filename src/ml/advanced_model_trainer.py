@@ -7,16 +7,17 @@ Advanced Model Trainer
 """
 
 import asyncio
-import numpy as np
-import pandas as pd
-from typing import Dict, List, Optional, Any, Tuple
-from datetime import datetime, timedelta
 import json
 import logging
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingRegressor
-from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.metrics import accuracy_score, mean_squared_error
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Tuple
+
 import joblib
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
+from sklearn.metrics import accuracy_score, mean_squared_error
+from sklearn.model_selection import GridSearchCV, train_test_split
 
 logger = logging.getLogger(__name__)
 
@@ -135,9 +136,9 @@ class AdvancedModelTrainer:
             return {
                 "success": True,
                 "predictions": predictions.tolist(),
-                "probabilities": probabilities.tolist()
-                if probabilities is not None
-                else None,
+                "probabilities": (
+                    probabilities.tolist() if probabilities is not None else None
+                ),
                 "timestamp": datetime.now(),
             }
 
@@ -189,9 +190,9 @@ class AdvancedModelTrainer:
                 "baseline_performance": self.performance_metrics.get(metric_name),
                 "performance_drop": performance_drop,
                 "needs_retraining": performance_drop > 0.1,
-                "recommendation": "重新训练模型"
-                if performance_drop > 0.1
-                else "继续监控",
+                "recommendation": (
+                    "重新训练模型" if performance_drop > 0.1 else "继续监控"
+                ),
             }
 
         except Exception as e:

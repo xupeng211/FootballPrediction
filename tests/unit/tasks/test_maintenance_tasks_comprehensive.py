@@ -2,33 +2,31 @@
 
 # TODO: Consider creating a fixture for 9 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 Maintenance Tasks 综合测试
 提升 tasks 模块覆盖率的关键测试
 """
 
-import pytest
 import asyncio
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
-import tempfile
 import os
-
 # 测试导入
 import sys
+import tempfile
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional
+
+import pytest
 
 sys.path.insert(0, "src")
 
 try:
-    from src.tasks.maintenance_tasks import (
-        MaintenanceTaskManager,
-        DatabaseCleanupTask,
-        CacheCleanupTask,
-        LogRotationTask,
-        BackupTask,
-        SystemHealthCheckTask,
-    )
+    from src.tasks.maintenance_tasks import (BackupTask, CacheCleanupTask,
+                                             DatabaseCleanupTask,
+                                             LogRotationTask,
+                                             MaintenanceTaskManager,
+                                             SystemHealthCheckTask)
 
     TASKS_AVAILABLE = True
 except ImportError as e:
@@ -38,7 +36,6 @@ except ImportError as e:
 
 @pytest.mark.skipif(not TASKS_AVAILABLE, reason="Maintenance tasks not available")
 @pytest.mark.unit
-
 class TestMaintenanceTasks:
     """维护任务测试"""
 

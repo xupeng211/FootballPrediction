@@ -1,4 +1,5 @@
 from datetime import timedelta
+
 from sqlalchemy import or_
 
 """
@@ -19,17 +20,13 @@ Match - 数据库模块
 
 from datetime import datetime
 from enum import Enum
-from typing import Optional, Dict, Any
-from sqlalchemy import (
-    CheckConstraint,
-    DateTime,
-    Enum as SQLEnum,
-    ForeignKey,
-    Index,
-    Integer,
-    String,
-)
+from typing import Any, Dict, Optional
+
+from sqlalchemy import CheckConstraint, DateTime
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy import ForeignKey, Index, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from ..base import BaseModel
 
 """

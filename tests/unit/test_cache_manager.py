@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from unittest.mock import Mock, patch
+
 """
 Auto-generated basic tests for cache_manager.py
 TODO: Expand these tests with actual functionality
@@ -13,7 +14,6 @@ import pytest
 
 @pytest.mark.unit
 @pytest.mark.cache
-
 class TestCacheManager:
     """Basic test class for cache_manager.py"""
 

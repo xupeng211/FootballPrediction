@@ -20,12 +20,12 @@ class API性能优化Optimizer:
 
     async def optimize(self):
         """执行优化"""
-        print(f"开始执行 API性能优化 优化")
+        print("开始执行 API性能优化 优化")
 
         # TODO: 实现具体的优化逻辑
         await asyncio.sleep(0.1)
 
-        print(f"API性能优化 优化完成")
+        print("API性能优化 优化完成")
         return {"status": "completed", "improvement": "50%"}
 
     def get_metrics(self) -> Dict[str, Any]:

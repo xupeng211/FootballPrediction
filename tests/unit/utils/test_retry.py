@@ -1,10 +1,12 @@
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """重试工具测试"""
 
-import pytest
 import asyncio
-from time import sleep
 from datetime import datetime, timedelta
+from time import sleep
+
+import pytest
 
 
 class RetryError(Exception):
@@ -55,7 +57,6 @@ def retry(max_attempts=3, delay=0.1, backoff=1.0, exceptions=(Exception,)):
 
 
 @pytest.mark.unit
-
 class TestRetryUtils:
     """测试重试工具"""
 

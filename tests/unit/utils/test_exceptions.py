@@ -1,19 +1,13 @@
 """异常类测试"""
 
 import pytest
-from src.core.exceptions import (
-    FootballPredictionError,
-    ConfigError,
-    DataError,
-    ModelError,
-    PredictionError,
-    DatabaseError,
-    ValidationError,
-)
+
+from src.core.exceptions import (ConfigError, DatabaseError, DataError,
+                                 FootballPredictionError, ModelError,
+                                 PredictionError, ValidationError)
 
 
 @pytest.mark.unit
-
 class TestExceptions:
     """测试自定义异常类"""
 

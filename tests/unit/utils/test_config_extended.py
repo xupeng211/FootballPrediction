@@ -1,14 +1,16 @@
 from unittest.mock import patch
+
 """扩展的core/_config.py测试 - 提升覆盖率"""
 
 import os
+
 import pytest
-from src.core.config import Settings, get_settings, get_config
+
+from src.core.config import Settings, get_config, get_settings
 
 
 @pytest.mark.unit
 @pytest.mark.external_api
-
 class TestConfigExtended:
     """扩展的配置测试，覆盖未测试的代码路径"""
 

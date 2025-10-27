@@ -2,18 +2,20 @@
 
 # TODO: Consider creating a fixture for 4 repeated Mock creations
 
-from unittest.mock import patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
+
 """
 增强基础服务测试
 """
 
-import pytest
 from datetime import datetime, timedelta
+
+import pytest
+
 from src.services.enhanced_core import EnhancedBaseService, ServiceConfig
 
 
 @pytest.mark.unit
-
 class TestServiceConfig:
     """服务配置测试"""
 

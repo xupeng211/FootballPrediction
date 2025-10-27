@@ -1,9 +1,9 @@
-from src.data.storage.data_lake_storage import DataLakeStorage
 import pytest
+
+from src.data.storage.data_lake_storage import DataLakeStorage
 
 
 @pytest.mark.unit
-
 def test_data_lake_storage():
     storage = DataLakeStorage()
     assert storage is not None

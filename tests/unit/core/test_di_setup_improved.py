@@ -2,7 +2,8 @@
 
 # TODO: Consider creating a fixture for 47 repeated Mock creations
 
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 """
 DI设置改进版测试
 Tests for improved DI setup module
@@ -10,28 +11,23 @@ Tests for improved DI setup module
 测试真实的依赖注入设置功能。
 """
 
-import pytest
-import tempfile
-import os
 import asyncio
-from pathlib import Path
+import os
 import sys
+import tempfile
+from pathlib import Path
+
+import pytest
 
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, "src")
 
-from src.core.di_setup import (
-    DISetup,
-    get_di_setup,
-    configure_di,
-    register_service,
-    create_di_config,
-)
+from src.core.di_setup import (DISetup, configure_di, create_di_config,
+                               get_di_setup, register_service)
 
 
 @pytest.mark.unit
-
 class TestDISetupImproved:
     """DI设置改进版测试"""
 

@@ -4,6 +4,7 @@ import pytest
 try:
     from src.collectors.all_collectors import AllCollectors
 except ImportError:
+
     class AllCollectors:
         def get_all_collectors(self):
             return []

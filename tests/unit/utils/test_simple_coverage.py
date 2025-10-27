@@ -3,19 +3,19 @@
 快速提升测试覆盖率的简单测试
 """
 
-import pytest
+import base64
+import hashlib
 import json
 import os
-import hashlib
-import base64
-from datetime import datetime, timezone, timedelta
-from typing import Any, Dict, List, Optional, Union
 import tempfile
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
+
+import pytest
 
 
 @pytest.mark.unit
-
 class TestBasicCoverage:
     """基础覆盖率测试 - 测试简单函数和常量"""
 

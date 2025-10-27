@@ -4,14 +4,14 @@
 包含核心业务逻辑和领域实体。
 """
 
-from .match import Match, MatchStatus, MatchResult
-from .team import Team, TeamStatistics
-from .prediction import Prediction, PredictionType, PredictionConfidence
 from .league import League, LeagueTable
-from .user import User, UserProfile, UserPreferences
-from .odds import Odds, MarketType, ValueBet
+from .match import Match, MatchResult, MatchStatus
+from .odds import MarketType, Odds, ValueBet
+from .prediction import Prediction, PredictionConfidence, PredictionType
 from .rules import BusinessRules, ValidationEngine
 from .services import DomainServiceFactory
+from .team import Team, TeamStatistics
+from .user import User, UserPreferences, UserProfile
 
 __all__ = [
     # 核心实体

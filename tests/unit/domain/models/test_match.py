@@ -1,4 +1,5 @@
 from unittest.mock import Mock, patch
+
 """
 比赛模型测试
 Tests for Match Model
@@ -6,20 +7,15 @@ Tests for Match Model
 测试src.domain.models.match模块的功能
 """
 
-import pytest
 from datetime import datetime, timedelta
 
-from src.domain.models.match import (
-    MatchStatus,
-    MatchResult,
-    MatchScore,
-    Match,
-    DomainError,
-)
+import pytest
+
+from src.domain.models.match import (DomainError, Match, MatchResult,
+                                     MatchScore, MatchStatus)
 
 
 @pytest.mark.unit
-
 class TestMatchStatus:
     """比赛状态测试"""
 

@@ -6,20 +6,12 @@ Dependency Injection Container
 Provides a lightweight dependency injection implementation.
 """
 
-from typing import (
-    Any,
-    Dict,
-    Type,
-    TypeVar,
-    Callable,
-    Optional,
-    List,
-)
-from enum import Enum
 import inspect
+import logging
 from dataclasses import dataclass
 from datetime import datetime
-import logging
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Type, TypeVar
 
 from .exceptions import DependencyInjectionError
 

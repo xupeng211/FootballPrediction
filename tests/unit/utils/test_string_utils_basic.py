@@ -4,6 +4,7 @@ import pytest
 
 try:
     from src.utils.string_utils import StringUtils
+
     IMPORT_SUCCESS = True
 except ImportError as e:
     IMPORT_SUCCESS = False
@@ -30,15 +31,15 @@ class TestStringUtils:
             "\t  test string\n",
             "UPPERCASE",
             "lowercase",
-            "Mixed Case String"
+            "Mixed Case String",
         ]
 
         for test_str in test_strings:
             # 基本操作应该可用
-            if hasattr(utils, 'clean'):
+            if hasattr(utils, "clean"):
                 result = utils.clean(test_str)
                 assert result is not None
-            if hasattr(utils, 'normalize'):
+            if hasattr(utils, "normalize"):
                 result = utils.normalize(test_str)
                 assert result is not None
 
@@ -50,7 +51,7 @@ class TestStringUtils:
             "valid_string",
             "AnotherValidString123",
             "test-with-hyphens",
-            "string_with_underscores"
+            "string_with_underscores",
         ]
 
         invalid_strings = [
@@ -58,12 +59,12 @@ class TestStringUtils:
             None,
             "   ",
             "invalid string with spaces",
-            "string@with#special$chars"
+            "string@with#special$chars",
         ]
 
         for valid_str in valid_strings:
             try:
-                if hasattr(utils, 'is_valid'):
+                if hasattr(utils, "is_valid"):
                     result = utils.is_valid(valid_str)
                     if result is not None:
                         assert isinstance(result, bool)
@@ -72,7 +73,7 @@ class TestStringUtils:
 
         for invalid_str in invalid_strings:
             try:
-                if hasattr(utils, 'is_valid'):
+                if hasattr(utils, "is_valid"):
                     result = utils.is_valid(invalid_str)
                     if result is not None:
                         assert isinstance(result, bool)
@@ -87,18 +88,18 @@ class TestStringUtils:
             ("hello", "HELLO"),
             ("world", "WORLD"),
             ("Test", "test"),
-            ("MiXeD", "mixed")
+            ("MiXeD", "mixed"),
         ]
 
         for original, expected in transformations:
             try:
                 # 测试大小写转换
-                if hasattr(utils, 'to_upper'):
+                if hasattr(utils, "to_upper"):
                     result = utils.to_upper(original)
                     if result is not None:
                         assert isinstance(result, str)
 
-                if hasattr(utils, 'to_lower'):
+                if hasattr(utils, "to_lower"):
                     result = utils.to_lower(original)
                     if result is not None:
                         assert isinstance(result, str)
@@ -112,12 +113,12 @@ class TestStringUtils:
         format_tests = [
             {"template": "Hello {}", "values": ["World"]},
             {"template": "Number: {}", "values": [42]},
-            {"template": "Multiple: {} and {}", "values": ["first", "second"]}
+            {"template": "Multiple: {} and {}", "values": ["first", "second"]},
         ]
 
         for test_case in format_tests:
             try:
-                if hasattr(utils, 'format'):
+                if hasattr(utils, "format"):
                     result = utils.format(test_case["template"], *test_case["values"])
                     if result is not None:
                         assert isinstance(result, str)
@@ -128,16 +129,11 @@ class TestStringUtils:
         """测试字符串分割"""
         utils = StringUtils()
 
-        split_tests = [
-            "a,b,c",
-            "hello world",
-            "one-two-three",
-            "path/to/file"
-        ]
+        split_tests = ["a,b,c", "hello world", "one-two-three", "path/to/file"]
 
         for test_str in split_tests:
             try:
-                if hasattr(utils, 'split'):
+                if hasattr(utils, "split"):
                     result = utils.split(test_str)
                     if result is not None:
                         assert isinstance(result, list)
@@ -151,12 +147,12 @@ class TestStringUtils:
         join_tests = [
             (["a", "b", "c"], ","),
             (["hello", "world"], " "),
-            (["one", "two", "three"], "-")
+            (["one", "two", "three"], "-"),
         ]
 
         for items, separator in join_tests:
             try:
-                if hasattr(utils, 'join'):
+                if hasattr(utils, "join"):
                     result = utils.join(items, separator)
                     if result is not None:
                         assert isinstance(result, str)
@@ -172,12 +168,12 @@ class TestStringUtils:
             "trailing space  ",
             "\t tab character\t",
             "\n newline character\n",
-            "  multiple   spaces  "
+            "  multiple   spaces  ",
         ]
 
         for test_str in whitespace_tests:
             try:
-                if hasattr(utils, 'trim'):
+                if hasattr(utils, "trim"):
                     result = utils.trim(test_str)
                     if result is not None:
                         assert isinstance(result, str)
@@ -188,23 +184,17 @@ class TestStringUtils:
         """测试Unicode处理"""
         utils = StringUtils()
 
-        unicode_tests = [
-            "测试中文",
-            "emoji 🚀",
-            "café résumé",
-            "привет мир",
-            "العربية"
-        ]
+        unicode_tests = ["测试中文", "emoji 🚀", "café résumé", "привет мир", "العربية"]
 
         for test_str in unicode_tests:
             try:
                 # 基本操作应该能处理Unicode
-                if hasattr(utils, 'length'):
+                if hasattr(utils, "length"):
                     result = utils.length(test_str)
                     if result is not None:
                         assert isinstance(result, int)
 
-                if hasattr(utils, 'is_empty'):
+                if hasattr(utils, "is_empty"):
                     result = utils.is_empty(test_str)
                     if result is not None:
                         assert isinstance(result, bool)
@@ -215,19 +205,13 @@ class TestStringUtils:
         """测试错误处理"""
         utils = StringUtils()
 
-        error_cases = [
-            None,
-            123,
-            [],
-            {},
-            object()
-        ]
+        error_cases = [None, 123, [], {}, object()]
 
         for case in error_cases:
             try:
                 # 应该优雅地处理无效输入
-                if hasattr(utils, 'safe_process'):
-                    result = utils.safe_process(case)
+                if hasattr(utils, "safe_process"):
+                    utils.safe_process(case)
                     # 如果方法存在，应该不抛出异常
             except Exception:
                 # 某些输入可能抛出异常，这是可以接受的
@@ -241,7 +225,7 @@ class TestStringUtils:
         large_string = "a" * 10000
 
         try:
-            if hasattr(utils, 'process_large'):
+            if hasattr(utils, "process_large"):
                 result = utils.process_large(large_string)
                 if result is not None:
                     assert isinstance(result, str)
@@ -252,7 +236,7 @@ class TestStringUtils:
         string_list = ["test"] * 1000
 
         try:
-            if hasattr(utils, 'batch_process'):
+            if hasattr(utils, "batch_process"):
                 result = utils.batch_process(string_list)
                 if result is not None:
                     assert isinstance(result, list)
@@ -274,7 +258,7 @@ class TestStringUtils:
         for case in edge_cases:
             try:
                 # 基本操作应该能处理边缘情况
-                if hasattr(utils, 'basic_operation'):
+                if hasattr(utils, "basic_operation"):
                     result = utils.basic_operation(case)
                     if result is not None:
                         assert isinstance(result, str)
@@ -288,7 +272,7 @@ class TestStringUtils:
             {},
             {"encoding": "utf-8"},
             {"trim_whitespace": True},
-            {"case_sensitive": False}
+            {"case_sensitive": False},
         ]
 
         for config in configs:
@@ -307,7 +291,7 @@ class TestStringUtils:
         test_str = "Hello World 123!"
 
         try:
-            if hasattr(utils, 'get_stats'):
+            if hasattr(utils, "get_stats"):
                 stats = utils.get_stats(test_str)
                 if stats is not None:
                     assert isinstance(stats, dict)

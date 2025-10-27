@@ -1,4 +1,5 @@
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import AsyncMock, Mock, patch
+
 """
 第三阶段简单覆盖率提升测试
 Phase 3 Simple Coverage Boost Tests
@@ -6,10 +7,11 @@ Phase 3 Simple Coverage Boost Tests
 专注于快速提升覆盖率的高价值测试，避免复杂的依赖问题
 """
 
-import pytest
-from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional
 import json
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+
+import pytest
 
 # 测试导入 - 使用简单导入策略
 try:
@@ -31,7 +33,7 @@ except ImportError as e:
     UTILS_AVAILABLE = False
 
 try:
-    from src.models.common_models import create_response, create_error_response
+    from src.models.common_models import create_error_response, create_response
 
     MODELS_AVAILABLE = True
 except ImportError as e:
@@ -40,7 +42,6 @@ except ImportError as e:
 
 
 @pytest.mark.unit
-
 class TestCoreConfigCoverage:
     """核心配置覆盖率测试"""
 
