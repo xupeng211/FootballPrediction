@@ -1,4 +1,4 @@
-name: 🚀 自动化质量保障系统
+name: 🚀 自动化质量保障系统 (主工作流)
 
 on:
   push:
@@ -30,6 +30,8 @@ on:
           - critical
           - warning
           - info
+  # 依赖优化工作流完成
+  workflow_call:
 
 env:
   PYTHON_VERSION: '3.11'
@@ -98,16 +100,11 @@ jobs:
             const summary = lines.slice(0, 10).join('\n');
 
             github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: `## 🚀 自动化质量检查报告
-
-${summary}
-
----
-🤖 *由自动化质量保障系统生成*
-            `});
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '## 🚀 自动化质量检查报告\n\n' + summary + '\n\n---\n🤖 *由自动化质量保障系统生成*'
+            });
           } catch (error) {
             console.log('无法读取报告文件:', error.message);
           }
