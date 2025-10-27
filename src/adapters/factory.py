@@ -46,6 +46,12 @@ class AdapterGroupConfig:
 class AdapterFactory:
     """适配器工厂，用于创建适配器实例"""
 
+# 全局适配器工厂实例
+adapter_factory = AdapterFactory()
+
+# 创建默认配置
+adapter_factory.create_default_configs()
+
     def __init__(self):
         self._adapter_types: Dict[str, Type[Adapter]] = {}
         self._configs: Dict[str, AdapterConfig] = {}
@@ -103,6 +109,7 @@ class AdapterFactory:
                 resolved[key] = value
         return resolved
 
+# TODO: 方法 def create_adapter_group 过长(25行)，建议拆分
     def create_adapter_group(self, group_config: AdapterGroupConfig) -> Adapter:
         """创建适配器组"""
         if group_config.adapters:
@@ -128,6 +135,7 @@ class AdapterFactory:
         else:
             raise ValueError(f"No adapters configured for group {group_config.name}")
 
+# TODO: 方法 def load_config_from_file 过长(29行)，建议拆分
     def load_config_from_file(self, file_path: Union[str, Path]) -> None:
         """从文件加载适配器配置"""
         file_path = Path(file_path)
@@ -157,6 +165,7 @@ class AdapterFactory:
                 group_config = AdapterGroupConfig(**group_data)
                 self._group_configs[group_config.name] = group_config
 
+# TODO: 方法 def save_config_to_file 过长(39行)，建议拆分
     def save_config_to_file(self, file_path: Union[str, Path]) -> None:
         """保存配置到文件"""
         file_path = Path(file_path)
@@ -209,6 +218,7 @@ class AdapterFactory:
 
         return masked
 
+# TODO: 方法 def create_default_configs 过长(37行)，建议拆分
     def create_default_configs(self) -> None:
         """创建默认配置"""
         # API Football配置
@@ -216,10 +226,10 @@ class AdapterFactory:
             name="api_football_main",
             adapter_type="api-football",
             enabled=True,
-            priority=100,
+            priority=100,  # TODO: 将魔法数字 100 提取为常量
             parameters={"api_key": "$API_FOOTBALL_KEY"},
             rate_limits={"requests_per_minute": 10},
-            cache_config={"ttl": 300},
+            cache_config={"ttl": 300},  # TODO: 将魔法数字 300 提取为常量
             retry_config={"max_retries": 3, "delay": 1.0},
         )
         self._configs["api_football_main"] = api_football_config
@@ -229,10 +239,10 @@ class AdapterFactory:
             name="openweathermap_main",
             adapter_type="openweathermap",
             enabled=True,
-            priority=100,
+            priority=100,  # TODO: 将魔法数字 100 提取为常量
             parameters={"api_key": "$OPENWEATHERMAP_KEY"},
-            rate_limits={"requests_per_minute": 60},
-            cache_config={"ttl": 600},
+            rate_limits={"requests_per_minute": 60},  # TODO: 将魔法数字 60 提取为常量
+            cache_config={"ttl": 600},  # TODO: 将魔法数字 600 提取为常量
             retry_config={"max_retries": 3, "delay": 1.0},
         )
         self._configs["openweathermap_main"] = weather_config
@@ -280,7 +290,3 @@ class AdapterFactory:
 
 
 # 全局适配器工厂实例
-adapter_factory = AdapterFactory()
-
-# 创建默认配置
-adapter_factory.create_default_configs()

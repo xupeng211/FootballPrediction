@@ -3,7 +3,7 @@
 Advanced Prediction API
 高级预测API，支持多种预测模型
 
-生成时间: 2025-10-26 20:57:38
+生成时间: 2025-10-26 20:57:38  # TODO: 将魔法数字 2025 提取为常量
 """
 
 from datetime import datetime
@@ -38,7 +38,7 @@ async def execute_advanced_prediction_api(
     """执行Advanced Prediction API"""
     try:
         # TODO: 实现具体的API逻辑
-        result = {"status": "processing", "job_id": "12345"}
+        result = {"status": "processing", "job_id": "12345"}  # TODO: 将魔法数字 12345 提取为常量
 
         return AdvancedPredictionAPIResponse(
             success=True,
@@ -47,7 +47,7 @@ async def execute_advanced_prediction_api(
             timestamp=datetime.now(),
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))  # TODO: 将魔法数字 500 提取为常量
 
 
 @router.get("/advanced_prediction_api/status/{job_id}")
@@ -57,7 +57,7 @@ async def get_advanced_prediction_api_status(job_id: str):
     return {
         "job_id": job_id,
         "status": "completed",
-        "progress": 100,
+        "progress": 100,  # TODO: 将魔法数字 100 提取为常量
         "result": {"data": "sample_result"},
     }
 

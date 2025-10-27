@@ -98,12 +98,12 @@ class TestKafkaEventIntegration:
         assert len(self.producer_messages) == 1
         sent_message = self.producer_messages[0]
         assert sent_message["topic"] == "predictions.events"
-        assert sent_message["key"]      == "456"
+        assert sent_message["key"]           == "456"
 
         # 解析发送的消息
         sent_event = json.loads(sent_message["value"])
         assert sent_event["event_type"] == "prediction_created"
-        assert sent_event["data"]["prediction_id"]      == 456
+        assert sent_event["data"]["prediction_id"]           == 456
 
     @pytest.mark.asyncio
     async def test_match_status_update_event_flow(self):
@@ -150,7 +150,7 @@ class TestKafkaEventIntegration:
         # 验证最后一个事件包含比分
         last_event = json.loads(self.producer_messages[-1]["value"])
         assert last_event["data"]["new_status"] == "cancelled"
-        assert last_event["data"]["old_status"]      == "finished"
+        assert last_event["data"]["old_status"]           == "finished"
 
     @pytest.mark.asyncio
     async def test_user_activity_event_aggregation(self):
@@ -207,7 +207,7 @@ class TestKafkaEventIntegration:
         # 检查所有事件都属于同一用户
         for msg in self.producer_messages:
             event = json.loads(msg["value"])
-            assert event["aggregate_id"]      == "user_123"
+            assert event["aggregate_id"]           == "user_123"
 
     @pytest.mark.asyncio
     async def test_event_replay_capability(self):
@@ -240,7 +240,7 @@ class TestKafkaEventIntegration:
                 replayed_count += 1
 
         # 验证重放结果
-        assert replayed_count      == 6  # 包含序列号0到5
+        assert replayed_count           == 6  # 包含序列号0到5
         assert len(self.producer_messages) == 6
 
 
@@ -513,7 +513,7 @@ class TestMessageReliabilityIntegration:
             sent_sequence.append(msg_data["sequence_number"])
 
         # 验证序列是递增的
-        assert sent_sequence      == list(range(10))
+        assert sent_sequence           == list(range(10))
         assert all(
             sent_sequence[i] <= sent_sequence[i + 1]
             for i in range(len(sent_sequence) - 1)
@@ -585,7 +585,7 @@ class TestEventSourcingIntegration:
 
         # 验证最终状态
         assert current_state["status"] == "correct"
-        assert current_state["confidence"]      == 0.90
+        assert current_state["confidence"]           == 0.90
         assert "actual_scores" in current_state
 
     @pytest.mark.asyncio
@@ -621,7 +621,7 @@ class TestEventSourcingIntegration:
 
         # 验证快照生成
         assert len(snapshots) == event_count // snapshot_interval
-        assert snapshots[-1]["sequence_number"]      == 100
+        assert snapshots[-1]["sequence_number"]           == 100
 
     @pytest.mark.asyncio
     async def test_event_replay_from_snapshot(self):
@@ -665,7 +665,7 @@ class TestEventSourcingIntegration:
         # 验证最终状态
         assert current_state["confidence"] == 0.90
         assert current_state["status"] == "correct"
-        assert current_state["predicted_score"]      == "2-1"
+        assert current_state["predicted_score"]           == "2-1"
 
 
 @pytest.mark.integration
@@ -678,7 +678,7 @@ class TestEventSourcingIntegration:
         ("system_alert", "system.notifications", "alert_level"),
     ],
 )
-def test_event_routing_configuration(event_type, topic, partition_key, client, client, client, client, client):
+def test_event_routing_configuration(event_type, topic, partition_key, client, client, client, client, client, client, client, client, client, client):
     """测试事件路由配置"""
     # 验证路由配置
     assert isinstance(event_type, str)
@@ -704,7 +704,7 @@ def test_event_routing_configuration(event_type, topic, partition_key, client, c
         (10485760, "reject"),  # 10MB
     ],
 )
-def test_message_size_handling(client, message_size, expected_behavior, client, client, client, client, client):
+def test_message_size_handling(client, message_size, expected_behavior, client, client, client, client, client, client, client, client, client, client):
     """测试消息大小处理"""
     # 验证消息大小限制
     assert isinstance(message_size, int)
@@ -719,4 +719,4 @@ def test_message_size_handling(client, message_size, expected_behavior, client, 
     elif message_size < 10 * 1024 * 1024:  # < 10MB
         assert expected_behavior == "split"
     else:
-        assert expected_behavior      == "reject"
+        assert expected_behavior           == "reject"

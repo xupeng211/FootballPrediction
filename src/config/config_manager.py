@@ -44,87 +44,31 @@ class ConfigSource(ABC):
 class FileConfigSource(ConfigSource):
     """文件配置源"""
 
-    def __init__(self, file_path: str, format: str = "json"):
-        self.file_path = file_path
-        self.format = format.lower()
-        self._cache: dict = {}
-        self._last_modified = None
-
-    async def load(self) -> Dict[str, Any]:
-        """从文件加载配置"""
-        try:
-            if not os.path.exists(self.file_path):
-                return {}
-
-            # 检查文件修改时间
-            current_modified = os.path.getmtime(self.file_path)
-            if self._last_modified == current_modified and self._cache:
-                return self._cache
-
-            with open(self.file_path, "r", encoding="utf-8") as f:
-                if self.format == "json":
-                    data = json.load(f)
-                elif self.format == "yaml":
-                    data = yaml.safe_load(f) or {}
-                else:
-                    data = {}
-
-            self._cache = data
-            self._last_modified = current_modified
-            return data
-
-        except Exception as e:
-            logger.error(f"Failed to load config from {self.file_path}: {e}")
-            return {}
-
-    async def save(self, config: Dict[str, Any]) -> bool:
-        """保存配置到文件"""
-        try:
-            os.makedirs(os.path.dirname(self.file_path), exist_ok=True)
-
-            with open(self.file_path, "w", encoding="utf-8") as f:
-                if self.format == "json":
-                    json.dump(config, f, indent=2, ensure_ascii=False)
-                elif self.format == "yaml":
-                    yaml.dump(config, f, default_flow_style=False, allow_unicode=True)
-                else:
-                    return False
-
-            self._cache = config
-            self._last_modified = os.path.getmtime(self.file_path)
-            return True
-
-        except Exception as e:
-            logger.error(f"Failed to save config to {self.file_path}: {e}")
-            return False
-
-
 class EnvironmentConfigSource(ConfigSource):
     """环境变量配置源"""
 
-    def __init__(self, prefix: str = "APP_"):
-        self.prefix = prefix.upper()
-        self._cache: dict = {}
+@dataclass
+class ConfigCache:
+    """配置缓存"""
 
-    async def load(self) -> Dict[str, Any]:
-        """从环境变量加载配置"""
-        config = {}
+class ConfigValidator:
+    """配置验证器"""
 
-        for key, value in os.environ.items():
-            if key.startswith(self.prefix):
-                config_key = key[len(self.prefix) :].lower()
+class ConfigManager:
+    """配置管理器"""
 
-                # 尝试转换类型
-                converted_value = self._convert_value(value)
-                config[config_key] = converted_value
+# 默认配置工厂函数
+# 配置管理器实例（单例模式）
+_config_manager = None
 
-        self._cache = config
-        return config
 
-    async def save(self, config: Dict[str, Any]) -> bool:
-        """保存配置到环境变量（只读实现）"""
-        # 环境变量通常不通过程序保存
-        return False
+    def __init__(self):
+        self.sources: List[ConfigSource] = []
+        self._config: Dict[str, Any] = {}
+        self._watchers: List[Callable[[str, Any, Any], None]] = []
+        self._cache = ConfigCache()
+        self._validator = ConfigValidator()
+        self._encryption_key = self._generate_encryption_key()
 
     def _convert_value(self, value: str) -> Union[str, int, float, bool]:
         """尝试转换值的类型"""
@@ -145,134 +89,7 @@ class EnvironmentConfigSource(ConfigSource):
 
 
 @dataclass
-class ConfigCache:
-    """配置缓存"""
-
-    def __init__(self, ttl: int = 300):  # 5分钟TTL
-        self._cache: Dict[str, Any] = {}
-        self._timestamps: Dict[str, float] = {}
-        self.ttl = ttl
-
-    def get(self, key: str) -> Optional[Any]:
-        """获取缓存值"""
-        if key not in self._cache:
-            return None
-
-        timestamp = self._timestamps[key]
-        if datetime.utcnow().timestamp() - timestamp > self.ttl:
-            del self._cache[key]
-            del self._timestamps[key]
-            return None
-
-        return self._cache[key]
-
-    def set(self, key: str, value: Any) -> None:
-        """设置缓存值"""
-        self._cache[key] = value
-        self._timestamps[key] = datetime.utcnow().timestamp()
-
-    def clear(self) -> None:
-        """清空缓存"""
-        self._cache.clear()
-        self._timestamps.clear()
-
-
-class ConfigValidator:
-    """配置验证器"""
-
-    def __init__(self):
-        self.rules: Dict[str, Dict[str, Any]] = {}
-        self.errors: List[str] = []
-
-    def add_rule(
-        self, key: str, validator: Callable[[Any], bool], message: str
-    ) -> None:
-        """添加验证规则"""
-        self.rules[key] = {"validator": validator, "message": message}
-
-    def validate(self, config: Dict[str, Any]) -> bool:
-        """验证配置"""
-        self.errors = []
-
-        for key, rule in self.rules.items():
-            value = self._get_nested_value(config, key)
-
-            try:
-                if not rule["validator"](value):
-                    self.errors.append(f"{key}: {rule['message']}")
-            except Exception as e:
-                self.errors.append(f"{key}: 验证错误 - {str(e)}")
-
-        return len(self.errors) == 0
-
-    def _get_nested_value(self, config: Dict[str, Any], key: str) -> Any:
-        """获取嵌套配置值"""
-        keys = key.split(".")
-        value = config
-
-        try:
-            for k in keys:
-                value = value[k]
-            return value
-        except (KeyError, TypeError):
-            return None
-
-
-class ConfigManager:
-    """配置管理器"""
-
-    def __init__(self):
-        self.sources: List[ConfigSource] = []
-        self._config: Dict[str, Any] = {}
-        self._watchers: List[Callable[[str, Any, Any], None]] = []
-        self._cache = ConfigCache()
-        self._validator = ConfigValidator()
-        self._encryption_key = self._generate_encryption_key()
-
-    def add_source(self, source: ConfigSource) -> None:
-        """添加配置源"""
-        if source not in self.sources:
-            self.sources.append(source)
-
-    def remove_source(self, source: ConfigSource) -> None:
-        """移除配置源"""
-        if source in self.sources:
-            self.sources.remove(source)
-
-    async def load_all(self) -> Dict[str, Any]:
-        """加载所有配置源"""
-        merged_config = {}
-
-        for source in self.sources:
-            try:
-                source_config = await source.load()
-                merged_config.update(source_config)
-            except Exception as e:
-                logger.error(f"Failed to load from source: {e}")
-                continue
-
-        self._config = merged_config
-
-        # 验证配置
-        if not self._validator.validate(merged_config):
-            logger.warning(f"Configuration validation failed: {self._validator.errors}")
-
-        return self._config
-
-    async def save_all(self) -> bool:
-        """保存配置到所有可写源"""
-        success_count = 0
-
-        for source in self.sources:
-            try:
-                if await source.save(self._config):
-                    success_count += 1
-            except Exception as e:
-                logger.error(f"Failed to save to source: {e}")
-                continue
-
-        return success_count > 0
-
+# TODO: 方法 def get 过长(21行)，建议拆分
     def get(self, key: str, default: Any = None) -> Any:
         """获取配置值"""
         # 先检查缓存
@@ -313,6 +130,94 @@ class ConfigManager:
 
         # 通知监听器
         self.notify_watchers(key, old_value, value)
+
+    def clear(self) -> None:
+        """清空缓存"""
+        self._cache.clear()
+        self._timestamps.clear()
+
+
+class ConfigValidator:
+    def add_rule(
+        """TODO: 添加函数文档"""
+        self, key: str, validator: Callable[[Any], bool], message: str
+    ) -> None:
+        """添加验证规则"""
+        self.rules[key] = {"validator": validator, "message": message}
+
+    def validate(self, config: Dict[str, Any]) -> bool:
+        """验证配置"""
+        self.errors = []
+
+        for key, rule in self.rules.items():
+            value = self._get_nested_value(config, key)
+
+            try:
+                if not rule["validator"](value):
+                    self.errors.append(f"{key}: {rule['message']}")
+            except Exception as e:
+                self.errors.append(f"{key}: 验证错误 - {str(e)}")
+
+        return len(self.errors) == 0
+
+    def _get_nested_value(self, config: Dict[str, Any], key: str) -> Any:
+        """获取嵌套配置值"""
+        keys = key.split(".")
+        value = config
+
+        try:
+            for k in keys:
+                value = value[k]
+            return value
+        except (KeyError, TypeError):
+            return None
+
+
+class ConfigManager:
+    def add_source(self, source: ConfigSource) -> None:
+        """添加配置源"""
+        if source not in self.sources:
+            self.sources.append(source)
+
+# TODO: 方法 def remove_source 过长(39行)，建议拆分
+    def remove_source(self, source: ConfigSource) -> None:
+        """移除配置源"""
+        if source in self.sources:
+            self.sources.remove(source)
+
+    async def load_all(self) -> Dict[str, Any]:
+        """加载所有配置源"""
+        merged_config = {}
+
+        for source in self.sources:
+            try:
+                source_config = await source.load()
+                merged_config.update(source_config)
+            except Exception as e:
+                logger.error(f"Failed to load from source: {e}")
+                continue
+
+        self._config = merged_config
+
+        # 验证配置
+        if not self._validator.validate(merged_config):
+            logger.warning(f"Configuration validation failed: {self._validator.errors}")
+
+        return self._config
+
+    async def save_all(self) -> bool:
+        """保存配置到所有可写源"""
+        success_count = 0
+
+        for source in self.sources:
+            try:
+                if await source.save(self._config):
+                    success_count += 1
+            except Exception as e:
+                logger.error(f"Failed to save to source: {e}")
+                continue
+
+        return success_count > 0
 
     def watch(self, callback: Callable[[str, Any, Any], None]) -> None:
         """添加配置变更监听器"""
@@ -357,6 +262,7 @@ class ConfigManager:
             return ""
 
     def add_validation_rule(
+        """TODO: 添加函数文档"""
         self, key: str, validator: Callable[[Any], bool], message: str
     ) -> None:
         """添加配置验证规则"""
@@ -371,9 +277,9 @@ class ConfigManager:
         # 简化实现 - 生产环境应该使用更安全的方式
         import secrets
 
-        return secrets.token_hex(32)
+        return secrets.token_hex(32)  # TODO: 将魔法数字 32 提取为常量
 
-    @lru_cache(maxsize=1000)
+    @lru_cache(maxsize=1000)  # TODO: 将魔法数字 1000 提取为常量
     def get_type_safe(self, key: str, value_type: Type, default: Any = None) -> Any:
         """类型安全的配置获取"""
         value = self.get(key, default)
@@ -405,10 +311,10 @@ def get_development_config() -> Dict[str, Any]:
         "debug": True,
         "database": {
             "host": "localhost",
-            "port": 5432,
+            "port": 5432,  # TODO: 将魔法数字 5432 提取为常量
             "name": "football_prediction_dev",
         },
-        "api": {"host": "localhost", "port": 8000, "cors_origins": ["*"]},
+        "api": {"host": "localhost", "port": 8000, "cors_origins": ["*"]},  # TODO: 将魔法数字 8000 提取为常量
         "logging": {"level": "DEBUG", "format": "detailed"},
     }
 
@@ -419,16 +325,16 @@ def get_production_config() -> Dict[str, Any]:
         "debug": False,
         "database": {
             "host": os.getenv("DB_HOST", "localhost"),
-            "port": int(os.getenv("DB_PORT", "5432")),
+            "port": int(os.getenv("DB_PORT", "5432")),  # TODO: 将魔法数字 5432 提取为常量
             "name": os.getenv("DB_NAME", "football_prediction"),
         },
         "api": {
             "host": os.getenv("API_HOST", "0.0.0.0"),
-            "port": int(os.getenv("API_PORT", "8000")),
+            "port": int(os.getenv("API_PORT", "8000")),  # TODO: 将魔法数字 8000 提取为常量
             "cors_origins": os.getenv("CORS_ORIGINS", "").split(","),
         },
         "logging": {"level": "INFO", "format": "json"},
-        "security": {"secret_key": os.getenv("SECRET_KEY", ""), "jwt_expiration": 3600},
+        "security": {"secret_key": os.getenv("SECRET_KEY", ""), "jwt_expiration": 3600},  # TODO: 将魔法数字 3600 提取为常量
     }
 
 
@@ -443,9 +349,6 @@ def get_config_by_env(env: str = "development") -> Dict[str, Any]:
 
 
 # 配置管理器实例（单例模式）
-_config_manager = None
-
-
 def get_config_manager() -> ConfigManager:
     """获取全局配置管理器实例"""
     global _config_manager

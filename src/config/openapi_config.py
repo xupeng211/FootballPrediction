@@ -14,11 +14,6 @@ class OpenAPIConfig:
     """OpenAPI 配置管理类"""
 
     @staticmethod
-    def get_app_info() -> Dict[str, Any]:
-        """获取应用基本信息"""
-        return {
-            "title": "Football Prediction API",
-            "description": """
 ## 基于机器学习的足球比赛结果预测系统
 
 本系统提供以下功能：
@@ -53,10 +48,10 @@ class OpenAPIConfig:
 ### 1. 快速开始
 ```bash
 # 健康检查
-curl http://localhost:8000/health
+curl http://localhost:8000/health  # TODO: 将魔法数字 8000 提取为常量
 
 # 获取预测
-curl http://localhost:8000/predictions/{match_id}
+curl http://localhost:8000/predictions/{match_id}  # TODO: 将魔法数字 8000 提取为常量
 
 # 查看文档
 # 访问 http://localhost:8000/docs
@@ -68,8 +63,8 @@ curl http://localhost:8000/predictions/{match_id}
 - 使用 Bearer Token 或 API Key Header
 
 ### 3. 限流规则
-- 每分钟最多 100 请求
-- 超出限制返回 429 状态码
+- 每分钟最多 100 请求  # TODO: 将魔法数字 100 提取为常量
+- 超出限制返回 429 状态码  # TODO: 将魔法数字 429 提取为常量
 - 建议合理使用缓存
 
 ### 4. 错误处理
@@ -86,7 +81,7 @@ curl http://localhost:8000/predictions/{match_id}
   "home_team": "Team A",
   "away_team": "Team B",
   "league": "Premier League",
-  "start_time": "2024-01-01T20:00:00Z",
+  "start_time": "2024-01-01T20:00:00Z",  # TODO: 将魔法数字 2024 提取为常量
   "status": "scheduled"
 }
 ```
@@ -96,10 +91,10 @@ curl http://localhost:8000/predictions/{match_id}
 {
   "match_id": "match_123",
   "prediction": "home_win",
-  "confidence": 0.75,
+  "confidence": 0.75,  # TODO: 将魔法数字 75 提取为常量
   "probabilities": {
-    "home_win": 0.75,
-    "draw": 0.15,
+    "home_win": 0.75,  # TODO: 将魔法数字 75 提取为常量
+    "draw": 0.15,  # TODO: 将魔法数字 15 提取为常量
     "away_win": 0.10
   },
   "model_version": "v2.1.0"
@@ -120,10 +115,17 @@ curl http://localhost:8000/predictions/{match_id}
         }
 
     @staticmethod
+# 导出配置函数
+    def get_app_info() -> Dict[str, Any]:
+        """获取应用基本信息"""
+        return {
+            "title": "Football Prediction API",
+            "description": """
+## 基于机器学习的足球比赛结果预测系统
     def get_servers() -> List[Dict[str, str]]:
         """获取服务器配置"""
         return [
-            {"url": "http://localhost:8000", "description": "开发环境 - 本地开发"},
+            {"url": "http://localhost:8000", "description": "开发环境 - 本地开发"},  # TODO: 将魔法数字 8000 提取为常量
             {
                 "url": "https://staging-api.football-prediction.com",
                 "description": "测试环境 - 功能验证",
@@ -135,6 +137,7 @@ curl http://localhost:8000/predictions/{match_id}
         ]
 
     @staticmethod
+# TODO: 方法 def get_tags 过长(54行)，建议拆分
     def get_tags() -> List[Dict[str, str]]:
         """获取API标签定义"""
         return [
@@ -216,7 +219,8 @@ curl http://localhost:8000/predictions/{match_id}
         security_schemes = OpenAPIConfig.get_security_schemes()
 
         # 自定义 OpenAPI
-        def custom_openapi():
+# TODO: 方法 def custom_openapi 过长(333行)，建议拆分
+        def custom_openapi():  # TODO: 添加返回类型注解
             """自定义OpenAPI配置"""
             if app.openapi_schema:
                 return app.openapi_schema
@@ -257,10 +261,10 @@ curl http://localhost:8000/predictions/{match_id}
                         "away_team": "Liverpool",
                         "league": "Premier League",
                         "prediction": "home_win",
-                        "confidence": 0.65,
+                        "confidence": 0.65,  # TODO: 将魔法数字 65 提取为常量
                         "probabilities": {
-                            "home_win": 0.65,
-                            "draw": 0.25,
+                            "home_win": 0.65,  # TODO: 将魔法数字 65 提取为常量
+                            "draw": 0.25,  # TODO: 将魔法数字 25 提取为常量
                             "away_win": 0.10,
                         },
                         "features_used": [
@@ -271,8 +275,8 @@ curl http://localhost:8000/predictions/{match_id}
                             "recent_performance",
                         ],
                         "model_version": "v2.1.0",
-                        "predicted_at": "2024-01-01T10:00:00Z",
-                        "odds": {"home_win": 2.10, "draw": 3.40, "away_win": 3.20},
+                        "predicted_at": "2024-01-01T10:00:00Z",  # TODO: 将魔法数字 2024 提取为常量
+                        "odds": {"home_win": 2.10, "draw": 3.40, "away_win": 3.20},  # TODO: 将魔法数字 40 提取为常量
                     },
                 },
                 "BatchPredictionRequest": {
@@ -293,24 +297,24 @@ curl http://localhost:8000/predictions/{match_id}
                             {
                                 "match_id": "match_123",
                                 "prediction": "home_win",
-                                "confidence": 0.65,
-                                "predicted_at": "2024-01-01T10:00:00Z",
+                                "confidence": 0.65,  # TODO: 将魔法数字 65 提取为常量
+                                "predicted_at": "2024-01-01T10:00:00Z",  # TODO: 将魔法数字 2024 提取为常量
                             },
                             {
                                 "match_id": "match_124",
                                 "prediction": "draw",
-                                "confidence": 0.45,
-                                "predicted_at": "2024-01-01T10:01:00Z",
+                                "confidence": 0.45,  # TODO: 将魔法数字 45 提取为常量
+                                "predicted_at": "2024-01-01T10:01:00Z",  # TODO: 将魔法数字 2024 提取为常量
                             },
                             {
                                 "match_id": "match_125",
                                 "prediction": "away_win",
-                                "confidence": 0.72,
-                                "predicted_at": "2024-01-01T10:02:00Z",
+                                "confidence": 0.72,  # TODO: 将魔法数字 72 提取为常量
+                                "predicted_at": "2024-01-01T10:02:00Z",  # TODO: 将魔法数字 2024 提取为常量
                             },
                         ],
                         "total_count": 3,
-                        "processing_time_ms": 450.5,
+                        "processing_time_ms": 450.5,  # TODO: 将魔法数字 450 提取为常量
                     },
                 },
                 # 健康检查示例
@@ -319,41 +323,41 @@ curl http://localhost:8000/predictions/{match_id}
                     "description": "完整的系统健康状态",
                     "value": {
                         "status": "healthy",
-                        "timestamp": "2024-01-01T10:00:00Z",
+                        "timestamp": "2024-01-01T10:00:00Z",  # TODO: 将魔法数字 2024 提取为常量
                         "version": "1.0.0",
-                        "uptime": 3600.0,
-                        "response_time_ms": 45.2,
+                        "uptime": 3600.0,  # TODO: 将魔法数字 3600 提取为常量
+                        "response_time_ms": 45.2,  # TODO: 将魔法数字 45 提取为常量
                         "checks": {
                             "database": {
                                 "status": "healthy",
-                                "response_time_ms": 15.5,
+                                "response_time_ms": 15.5,  # TODO: 将魔法数字 15 提取为常量
                                 "details": {
-                                    "connection_pool": "8/20",
+                                    "connection_pool": "8/20",  # TODO: 将魔法数字 20 提取为常量
                                     "active_connections": 5,
-                                    "total_connections": 150,
+                                    "total_connections": 150,  # TODO: 将魔法数字 150 提取为常量
                                 },
                             },
                             "redis": {
                                 "status": "healthy",
                                 "response_time_ms": 2.3,
                                 "details": {
-                                    "memory_usage": "45%",
+                                    "memory_usage": "45%",  # TODO: 将魔法数字 45 提取为常量
                                     "connected_clients": 3,
-                                    "hit_rate": 0.89,
+                                    "hit_rate": 0.89,  # TODO: 将魔法数字 89 提取为常量
                                 },
                             },
                             "ml_model": {
                                 "status": "healthy",
-                                "response_time_ms": 125.0,
+                                "response_time_ms": 125.0,  # TODO: 将魔法数字 125 提取为常量
                                 "details": {
                                     "model_version": "v2.1.0",
-                                    "last_prediction": "2024-01-01T09:45:00Z",
-                                    "model_load_time_ms": 45.2,
+                                    "last_prediction": "2024-01-01T09:45:00Z",  # TODO: 将魔法数字 2024 提取为常量
+                                    "model_load_time_ms": 45.2,  # TODO: 将魔法数字 45 提取为常量
                                 },
                             },
                             "external_apis": {
                                 "status": "healthy",
-                                "response_time_ms": 234.5,
+                                "response_time_ms": 234.5,  # TODO: 将魔法数字 234 提取为常量
                                 "details": {"football_api": "OK", "odds_api": "OK"},
                             },
                         },
@@ -372,13 +376,13 @@ curl http://localhost:8000/predictions/{match_id}
                                 "last_5_games": 4,
                                 "goals_scored": 10,
                                 "goals_conceded": 3,
-                                "possession_avg": 58.5,
+                                "possession_avg": 58.5,  # TODO: 将魔法数字 58 提取为常量
                             },
                             "away_team_form": {
                                 "last_5_games": 3,
                                 "goals_scored": 8,
                                 "goals_conceded": 5,
-                                "possession_avg": 52.3,
+                                "possession_avg": 52.3,  # TODO: 将魔法数字 52 提取为常量
                             },
                             "head_to_head": {
                                 "last_10_meetings": {
@@ -389,13 +393,13 @@ curl http://localhost:8000/predictions/{match_id}
                                 "avg_goals": 2.8,
                             },
                             "context": {
-                                "home_advantage": 0.15,
+                                "home_advantage": 0.15,  # TODO: 将魔法数字 15 提取为常量
                                 "days_since_last_match_home": 3,
                                 "days_since_last_match_away": 4,
-                                "travel_distance_km": 35,
+                                "travel_distance_km": 35,  # TODO: 将魔法数字 35 提取为常量
                             },
                         },
-                        "computed_at": "2024-01-01T09:30:00Z",
+                        "computed_at": "2024-01-01T09:30:00Z",  # TODO: 将魔法数字 2024 提取为常量
                     },
                 },
                 # 模型信息示例
@@ -407,24 +411,24 @@ curl http://localhost:8000/predictions/{match_id}
                         "version": "v2.1.0",
                         "type": "gradient_boosting",
                         "status": "active",
-                        "created_at": "2024-01-01T00:00:00Z",
+                        "created_at": "2024-01-01T00:00:00Z",  # TODO: 将魔法数字 2024 提取为常量
                         "performance_metrics": {
-                            "accuracy": 0.68,
-                            "precision": 0.66,
-                            "recall": 0.64,
-                            "f1_score": 0.65,
-                            "auc_roc": 0.72,
+                            "accuracy": 0.68,  # TODO: 将魔法数字 68 提取为常量
+                            "precision": 0.66,  # TODO: 将魔法数字 66 提取为常量
+                            "recall": 0.64,  # TODO: 将魔法数字 64 提取为常量
+                            "f1_score": 0.65,  # TODO: 将魔法数字 65 提取为常量
+                            "auc_roc": 0.72,  # TODO: 将魔法数字 72 提取为常量
                         },
                         "training_data": {
-                            "matches_count": 15000,
-                            "features_count": 45,
+                            "matches_count": 15000,  # TODO: 将魔法数字 15000 提取为常量
+                            "features_count": 45,  # TODO: 将魔法数字 45 提取为常量
                             "training_time_hours": 2.5,
                         },
                         "feature_importance": {
-                            "team_form": 0.23,
-                            "head_to_head": 0.19,
-                            "home_advantage": 0.15,
-                            "player_stats": 0.12,
+                            "team_form": 0.23,  # TODO: 将魔法数字 23 提取为常量
+                            "head_to_head": 0.19,  # TODO: 将魔法数字 19 提取为常量
+                            "home_advantage": 0.15,  # TODO: 将魔法数字 15 提取为常量
+                            "player_stats": 0.12,  # TODO: 将魔法数字 12 提取为常量
                             "recent_goals": 0.10,
                         },
                     },
@@ -435,14 +439,14 @@ curl http://localhost:8000/predictions/{match_id}
                     "description": "API 错误响应格式",
                     "value": {
                         "error": True,
-                        "status_code": 400,
+                        "status_code": 400,  # TODO: 将魔法数字 400 提取为常量
                         "message": "Invalid match_id format",
                         "details": {
                             "field": "match_id",
                             "provided_value": "invalid",
                             "expected_format": "string starting with 'match_'",
                         },
-                        "timestamp": "2024-01-01T10:00:00Z",
+                        "timestamp": "2024-01-01T10:00:00Z",  # TODO: 将魔法数字 2024 提取为常量
                         "path": "/predictions/match/invalid",
                     },
                 },
@@ -531,7 +535,7 @@ curl http://localhost:8000/predictions/{match_id}
                     "type": "http",
                     "scheme": "bearer",
                     "bearerFormat": "JWT",
-                    "description": "JWT Bearer Token 认证流程：\n1. 使用用户名密码登录获取 JWT\n2. 在请求头中添加 Authorization: Bearer <jwt-token>\n3. Token 有效期为 24 小时",
+                    "description": "JWT Bearer Token 认证流程：\n1. 使用用户名密码登录获取 JWT\n2. 在请求头中添加 Authorization: Bearer <jwt-token>\n3. Token 有效期为 24 小时",  # TODO: 将魔法数字 24 提取为常量
                     "example": "curl -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' https://api.football-prediction.com/predictions/match_123",
                 },
             }
