@@ -7,6 +7,7 @@ Manages adapter registration, discovery, and lifecycle.
 """
 
 import asyncio
+import logging
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
@@ -14,6 +15,7 @@ from typing import Any, Dict, List, Optional
 from .base import Adapter, AdapterStatus
 from .factory import AdapterConfig, AdapterFactory, AdapterGroupConfig
 
+logger = logging.getLogger(__name__)
 
 class RegistryStatus(Enum):
     """注册表状态"""

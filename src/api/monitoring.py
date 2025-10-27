@@ -9,10 +9,13 @@
 - /collector/*: 指标收集器控制与状态
 """
 
+import logging
 import time
+from datetime import datetime
 from typing import Any, Dict, Optional
 
 import psutil
+from requests.exceptions import HTTPError, RequestException
 from fastapi import APIRouter, Depends, Response
 from fastapi.responses import PlainTextResponse
 from sqlalchemy import text
@@ -20,6 +23,8 @@ from sqlalchemy.orm import Session
 
 from src.core.logger import get_logger
 from src.database.dependencies import get_db
+
+logger = get_logger(__name__)
 
 from ..monitoring.metrics_collector import get_metrics_collector
 from ..monitoring.metrics_exporter import get_metrics_exporter
