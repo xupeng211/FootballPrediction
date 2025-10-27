@@ -10,8 +10,9 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import pytest
 
 # 尝试导入目标模块
+module_name = "domain.models.prediction"
 try:
-    from domain.models.prediction import *
+    from src.domain.models.prediction import *
 
     IMPORTS_AVAILABLE = True
 except ImportError as e:
