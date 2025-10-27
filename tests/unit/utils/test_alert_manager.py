@@ -268,16 +268,21 @@ class TestAlertManager:
     def test_check_alert_rate_limiting(self, alert_manager):
         """测试告警频率限制"""
         # 快速创建多个相同类型的告警
-        for _ in range(10):
+        for i in range(10):
             alert = alert_manager.create_alert(
                 type=AlertType.ERROR,
                 severity=AlertSeverity.HIGH,
                 message="Database error",
                 source="database",
             )
-            # 检查是否应该发送
-            alert_manager.check_rate_limit(alert)
-            alert_manager._update_rate_limit(alert)
+            # 检查是否应该发送（使用告警类型作为key，限制10次，窗口60秒）
+            should_send = alert_manager.check_rate_limit(
+                key="database_error",
+                limit=10,
+                window=60
+            )
+            if should_send:
+                alert_manager._update_rate_limit("database_error", 60)
 
         # 验证速率限制生效
         assert len(alert_manager.rate_limiter) > 0
