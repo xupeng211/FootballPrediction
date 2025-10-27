@@ -48,11 +48,28 @@ class StringUtils:
     @staticmethod
     def truncate(text: str, length: int, suffix: str = "...") -> str:
         """截断字符串"""
-        if not isinstance(text, str) or length <= 0:
+        if not isinstance(text, str):
             return ""
+
+        # 处理负长度情况
+        if length < 0:
+            # 负长度：从开头截取到 len(suffix) + length - 1
+            effective_length = len(suffix) + length - 1
+            if effective_length <= 0:
+                return suffix
+            return text[:effective_length] + suffix
+
+        # 处理零长度
+        if length == 0:
+            return suffix
 
         if len(text) <= length:
             return text
+
+        # 确保长度至少能容纳后缀
+        if length <= len(suffix):
+            return suffix
+
         return text[: length - len(suffix)] + suffix
 
     @staticmethod
@@ -210,6 +227,97 @@ class StringUtils:
         }
 
         return "".join(html_escape_map.get(char, char) for char in text)
+
+    @staticmethod
+    def unescape_html(text: str) -> str:
+        """HTML反转义"""
+        if not isinstance(text, str):
+            return ""
+
+        html_unescape_map = {
+            "&amp;": "&",
+            "&lt;": "<",
+            "&gt;": ">",
+            "&quot;": '"',
+            "&#x27;": "'",
+            "&#x2F;": "/",
+        }
+
+        for html_char, char in html_unescape_map.items():
+            text = text.replace(html_char, char)
+
+        return text
+
+    @staticmethod
+    def is_url(text: str) -> bool:
+        """检查字符串是否为URL"""
+        if not isinstance(text, str):
+            return False
+
+        url_pattern = re.compile(
+            r'^https?://'  # http:// or https://
+            r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|'  # domain...
+            r'localhost|'  # localhost...
+            r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
+            r'(?::\d+)?'  # optional port
+            r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+        return url_pattern.match(text.strip()) is not None
+
+    @staticmethod
+    def reverse_string(text: str) -> str:
+        """反转字符串"""
+        if not isinstance(text, str):
+            return ""
+        return text[::-1]
+
+    @staticmethod
+    def is_palindrome(text: str) -> bool:
+        """检查是否为回文"""
+        if not isinstance(text, str):
+            return False
+        # 移除非字母数字字符并转为小写
+        cleaned = re.sub(r'[^a-zA-Z0-9]', '', text).lower()
+        return cleaned == cleaned[::-1]
+
+    @staticmethod
+    def capitalize_words(text: str) -> str:
+        """首字母大写每个单词"""
+        if not isinstance(text, str):
+            return ""
+        return ' '.join(word.capitalize() for word in text.split())
+
+    @staticmethod
+    def random_string(length: int = 10, chars: str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") -> str:
+        """生成随机字符串"""
+        import random
+        if length <= 0:
+            return ""
+        return ''.join(random.choice(chars) for _ in range(length))
+
+    @staticmethod
+    def remove_duplicates(text: str) -> str:
+        """移除重复的字符"""
+        if not isinstance(text, str):
+            return ""
+        seen = set()
+        return ''.join(char for char in text if not (char in seen or seen.add(char)))
+
+    @staticmethod
+    def word_count(text: str) -> int:
+        """计算单词数"""
+        if not isinstance(text, str):
+            return 0
+        return len(text.split())
+
+    @staticmethod
+    def char_frequency(text: str) -> dict:
+        """计算字符频率"""
+        if not isinstance(text, str):
+            return {}
+        frequency = {}
+        for char in text:
+            frequency[char] = frequency.get(char, 0) + 1
+        return frequency
 
 
 # 性能优化的字符串处理函数
