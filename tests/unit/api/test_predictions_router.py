@@ -15,7 +15,7 @@ def test_predictions_health():
     from fastapi import FastAPI
 
     app = FastAPI()
-    app.include_router(router, prefix="/predictions")
+    app.include_router(router)  # 路由器已经定义了prefix
 
     client = TestClient(app)
     response = client.get("/predictions/health")
