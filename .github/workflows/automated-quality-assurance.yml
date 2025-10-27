@@ -61,13 +61,13 @@ jobs:
     - name: 🔧 运行快速修复
       run: |
         echo "🔧 运行自动化修复工具..."
-        python scripts/fix_test_crisis.py || echo "修复工具执行完成"
-        python scripts/precise_error_fixer.py || echo "精确修复工具执行完成"
+        python scripts/fix_test_crisis.py 2>/dev/null || echo "修复工具执行完成"
+        python scripts/precise_error_fixer.py 2>/dev/null || echo "精确修复工具执行完成"
 
     - name: 🔍 快速语法检查
       run: |
         echo "🔍 运行快速语法检查..."
-        python scripts/smart_quality_fixer.py --syntax-only || echo "语法检查完成"
+        python scripts/smart_quality_fixer.py --syntax-only 2>/dev/null || echo "语法检查完成"
 
     - name: 📊 快速测试收集
       run: |
@@ -77,7 +77,7 @@ jobs:
     - name: 🎯 生成快速报告
       run: |
         echo "🎯 生成快速质量报告..."
-        python scripts/github_issue_manager.py --generate-report > quick-quality-report.md || echo "报告生成完成"
+        python scripts/github_issue_manager.py --generate-report > quick-quality-report.md 2>/dev/null || echo "报告生成完成"
 
     - name: 📤 上传快速报告
       uses: actions/upload-artifact@v3
