@@ -68,6 +68,7 @@ class AlertManager:
         self.alert_history: List[Dict] = []
         self.notifiers = []
         self.rate_limiter = {}
+        self.suppression_rules = []  # 告警抑制规则列表
         self.logger = logger
 
     def create_alert(
@@ -327,37 +328,121 @@ class AlertManager:
 
     async def monitor_api_response_time(self) -> Dict:
         """监控API响应时间"""
-        return {
-            "average_response_time_ms": 150,
-            "status": "healthy",
-            "check_time": datetime.utcnow().isoformat(),
-        }
+        try:
+            # 获取API响应时间
+            response_time = get_api_response_time()
 
-    def aggregate_alerts(self, window_minutes: int = 60) -> Dict:
+            if response_time > 5.0:  # 超过5秒创建告警
+                alert = self.create_alert(
+                    type=AlertType.WARNING,
+                    severity=AlertSeverity.MEDIUM,
+                    message=f"API response time is slow: {response_time}s",
+                    source="api_monitor",
+                )
+                return alert
+
+            # API响应时间正常
+            return {
+                "average_response_time_ms": response_time * 1000,
+                "status": "healthy",
+                "check_time": datetime.utcnow().isoformat(),
+            }
+
+        except Exception as e:
+            logger.error(f"Failed to monitor API response time: {e}")
+            return {
+                "average_response_time_ms": 0,
+                "status": "error",
+                "check_time": datetime.utcnow().isoformat(),
+                "error": str(e),
+            }
+
+    async def check_api_response_time(self) -> Dict:
+        """检查API响应时间（别名方法，用于测试兼容）"""
+        return await self.monitor_api_response_time()
+
+    def aggregate_alerts(self, alerts: List[Dict] = None, window_minutes: int = 60) -> Dict:
         """聚合告警"""
-        return {
-            "total_alerts": len(self.active_alerts),
-            "by_severity": {},
-            "by_type": {},
-            "window_minutes": window_minutes,
-        }
+        if alerts is None:
+            alerts = self.active_alerts
+
+        if not alerts:
+            return {
+                "total_alerts": 0,
+                "by_severity": {},
+                "by_type": {},
+                "window_minutes": window_minutes,
+            }
+
+        # 按消息内容分组聚合相似告警
+        message_groups = {}
+        for alert in alerts:
+            message = alert.get("message", "Unknown")
+            if message not in message_groups:
+                message_groups[message] = []
+            message_groups[message].append(alert)
+
+        # 创建聚合告警
+        if len(message_groups) == 1 and len(alerts) > 1:
+            # 如果所有告警都相似，返回聚合告警
+            message = list(message_groups.keys())[0]
+            count = len(alerts)
+
+            return {
+                "count": count,
+                "message": f"{message} ({count} occurrences)",
+                "aggregated": True,
+                "type": alerts[0].get("type"),
+                "severity": alerts[0].get("severity"),
+                "source": alerts[0].get("source"),
+                "timestamp": datetime.utcnow(),
+                "window_minutes": window_minutes,
+            }
+        else:
+            # 返回统计信息
+            return {
+                "total_alerts": len(alerts),
+                "by_severity": {},
+                "by_type": {},
+                "window_minutes": window_minutes,
+                "aggregated": False,
+            }
 
     def check_suppression(self, alert: Dict) -> bool:
         """检查告警是否应该被抑制"""
-        # 简化实现：不抑制任何告警
-        return False
+        try:
+            # 遍历所有抑制规则
+            for rule in self.suppression_rules:
+                condition = rule.get("condition")
+                if condition and callable(condition):
+                    if condition(alert):
+                        logger.info(f"Alert suppressed by rule: {rule.get('reason', 'unknown')}")
+                        return True
+            return False
+        except Exception as e:
+            logger.error(f"Error checking suppression rules: {e}")
+            return False
 
     def create_digest(self, alerts: List[Dict]) -> Dict:
         """创建告警摘要"""
         return {
+            "type": AlertType.SYSTEM,
+            "severity": AlertSeverity.MEDIUM,
+            "message": f"Alert Digest: {len(alerts)} alerts",
+            "source": "alert_manager",
             "summary": f"Digest with {len(alerts)} alerts",
             "alerts": alerts,
             "created_at": datetime.utcnow().isoformat(),
+            "timestamp": datetime.utcnow(),
         }
 
     async def send_digest(self, digest: Dict) -> bool:
         """发送告警摘要"""
         try:
+            # 发送到所有通知器
+            for notifier in self.notifiers:
+                await notifier.send(digest)
+
             self.logger.info(f"Sending digest: {digest.get('summary', 'Unknown')}")
             return True
         except Exception as e:
@@ -450,18 +535,32 @@ class AlertManager:
             "last_24h": 0,
         }
 
-    def auto_resolve_alerts(self, hours: int = 24) -> int:
-        """自动解决旧告警"""
-        cutoff_time = datetime.utcnow() - timedelta(hours=hours)
-        resolved_count = 0
+    async def auto_resolve_alerts(self, hours: int = 24) -> List[Dict]:
+        """自动解决告警"""
+        try:
+            resolved_alerts = []
 
-        for alert_id, alert in list(self.active_alerts.items()):
-            created_at = datetime.fromisoformat(alert.get("created_at", ""))
-            if created_at < cutoff_time:
-                self.remove_alert(alert_id)
-                resolved_count += 1
+            # 检查服务健康状态
+            if check_service_health():
+                # 服务健康，解决所有service类型的告警
+                for alert in list(self.active_alerts):
+                    if alert.get("source") == "service":
+                        # 标记为已解决
+                        alert["status"] = "resolved"
+                        alert["resolved_at"] = datetime.utcnow().isoformat()
+                        alert["resolution_reason"] = "service health restored"
 
-        return resolved_count
+                        # 从活跃列表移除
+                        self.active_alerts.remove(alert)
+                        self.alert_history.append(alert)
+
+                        resolved_alerts.append(alert)
+
+            return resolved_alerts
+
+        except Exception as e:
+            logger.error(f"Failed to auto-resolve alerts: {e}")
+            return []
 
     async def test_alert_system(self) -> Dict:
         """测试告警系统"""
@@ -603,6 +702,28 @@ def check_database_health() -> bool:
         return False
 
 
+def get_api_response_time() -> float:
+    """获取API响应时间"""
+    try:
+        # 简化实现：返回模拟响应时间
+        # 在实际应用中，这里应该测量真实的API响应时间
+        import time
+        time.sleep(0.1)  # 模拟请求延迟
+        return 2.5  # 2.5秒响应时间
+    except Exception:
+        return 0.0
+
+
+def check_service_health() -> bool:
+    """检查服务健康状态"""
+    try:
+        # 简化实现：总是返回True（健康）
+        # 在实际应用中，这里应该检查各个服务的健康状态
+        return True
+    except Exception:
+        return False
+
+
 __all__ = [
     "AlertManager",
     "Alert",
@@ -622,4 +743,6 @@ __all__ = [
     "EmailHandler",
     "get_system_metrics",
     "check_database_health",
+    "get_api_response_time",
+    "check_service_health",
 ]
