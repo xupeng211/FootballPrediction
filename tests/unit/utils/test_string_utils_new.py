@@ -269,3 +269,81 @@ class TestStringUtils:
         text = "Hello\nWorld"
         _result = StringUtils.slugify(text)
         assert _result == "hello-world"
+
+    # ==================== 新增方法测试 ====================
+
+    def test_unescape_html(self):
+        """测试：HTML反转义"""
+        html_text = "&lt;div&gt;Hello &amp; World&lt;/div&gt;"
+        result = StringUtils.unescape_html(html_text)
+        assert result == "<div>Hello & World</div>"
+
+    def test_is_url(self):
+        """测试：URL检测"""
+        assert StringUtils.is_url("https://www.example.com") is True
+        assert StringUtils.is_url("http://localhost:8000") is True
+        assert StringUtils.is_url("ftp://example.com") is False
+        assert StringUtils.is_url("not a url") is False
+        assert StringUtils.is_url("") is False
+
+    def test_reverse_string(self):
+        """测试：字符串反转"""
+        assert StringUtils.reverse_string("hello") == "olleh"
+        assert StringUtils.reverse_string("Python") == "nohtyP"
+        assert StringUtils.reverse_string("") == ""
+        assert StringUtils.reverse_string("a") == "a"
+
+    def test_is_palindrome(self):
+        """测试：回文检测"""
+        assert StringUtils.is_palindrome("racecar") is True
+        assert StringUtils.is_palindrome("RaceCar") is True
+        assert StringUtils.is_palindrome("A man, a plan, a canal: Panama") is True
+        assert StringUtils.is_palindrome("hello") is False
+        assert StringUtils.is_palindrome("") is True
+
+    def test_capitalize_words(self):
+        """测试：首字母大写"""
+        assert StringUtils.capitalize_words("hello world") == "Hello World"
+        assert StringUtils.capitalize_words("python programming") == "Python Programming"
+        assert StringUtils.capitalize_words("") == ""
+        assert StringUtils.capitalize_words("single") == "Single"
+
+    def test_random_string(self):
+        """测试：随机字符串生成"""
+        result1 = StringUtils.random_string(10)
+        result2 = StringUtils.random_string(10)
+        assert len(result1) == 10
+        assert len(result2) == 10
+        assert result1 != result2  # 应该不同
+        assert StringUtils.random_string(0) == ""
+        assert StringUtils.random_string(-5) == ""
+
+    def test_remove_duplicates(self):
+        """测试：移除重复字符"""
+        assert StringUtils.remove_duplicates("hello") == "helo"
+        assert StringUtils.remove_duplicates("aabbcc") == "abc"
+        assert StringUtils.remove_duplicates("") == ""
+        assert StringUtils.remove_duplicates("aaaa") == "a"
+
+    def test_word_count(self):
+        """测试：单词计数"""
+        assert StringUtils.word_count("hello world") == 2
+        assert StringUtils.word_count("this is a test") == 4
+        assert StringUtils.word_count("") == 0
+        assert StringUtils.word_count("   ") == 0
+        assert StringUtils.word_count("single") == 1
+
+    def test_char_frequency(self):
+        """测试：字符频率统计"""
+        freq = StringUtils.char_frequency("hello")
+        assert freq['h'] == 1
+        assert freq['e'] == 1
+        assert freq['l'] == 2
+        assert freq['o'] == 1
+
+        freq_empty = StringUtils.char_frequency("")
+        assert freq_empty == {}
+
+        freq_repeat = StringUtils.char_frequency("aaabbb")
+        assert freq_repeat['a'] == 3
+        assert freq_repeat['b'] == 3

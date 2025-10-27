@@ -58,3 +58,9 @@ class OpenAPIConfig:
             {"url": "http://localhost:8000", "description": "开发环境"},  # TODO: 将魔法数字 8000 提取为常量
             {"url": "https://api.footballprediction.com", "description": "生产环境"}
         ]
+
+
+def setup_openapi(app: FastAPI) -> None:
+    """设置OpenAPI配置的便捷函数"""
+    OpenAPIConfig.configure_openapi(app)
+    OpenAPIConfig.setup_docs_servers(app)
