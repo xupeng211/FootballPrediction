@@ -277,9 +277,7 @@ class TestAlertManager:
             )
             # 检查是否应该发送（使用告警类型作为key，限制10次，窗口60秒）
             should_send = alert_manager.check_rate_limit(
-                key="database_error",
-                limit=10,
-                window=60
+                key="database_error", limit=10, window=60
             )
             if should_send:
                 alert_manager._update_rate_limit("database_error", 60)
