@@ -54,37 +54,36 @@ jobs:
     - name: 📦 安装依赖
       run: |
         python -m pip install --upgrade pip
-        pip install pytest pytest-cov ruff
+        pip install pytest pytest-cov ruff mypy
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
 
     - name: 🔧 运行快速修复
       run: |
         echo "🔧 运行自动化修复工具..."
-        python scripts/fix_test_crisis.py || echo "修复工具执行完成"
-        python scripts/precise_error_fixer.py || echo "精确修复工具执行完成"
+        python scripts/fix_test_crisis.py
+        python scripts/precise_error_fixer.py
 
     - name: 🔍 快速语法检查
       run: |
         echo "🔍 运行快速语法检查..."
-        python scripts/smart_quality_fixer.py --syntax-only || echo "语法检查完成"
+        python scripts/smart_quality_fixer.py --syntax-only
 
     - name: 📊 快速测试收集
       run: |
         echo "📊 验证测试收集..."
-        python -m pytest --collect-only -q --disable-warnings || echo "测试收集完成"
+        python -m pytest --collect-only -q --disable-warnings || true
 
     - name: 🎯 生成快速报告
       run: |
         echo "🎯 生成快速质量报告..."
-        python scripts/github_issue_manager.py --generate-report > quick-quality-report.md || echo "报告生成完成"
+        python scripts/github_issue_manager.py --generate-report > quick-quality-report.md
 
     - name: 📤 上传快速报告
       uses: actions/upload-artifact@v3
       with:
         name: quick-quality-report
         path: quick-quality-report.md
-      continue-on-error: true
 
     - name: 💬 快速状态评论 (PR only)
       if: github.event_name == 'pull_request'
@@ -95,6 +94,8 @@ jobs:
           try {
             const report = fs.readFileSync('quick-quality-report.md', 'utf8');
             const lines = report.split('\n');
+
+            // 提取关键信息
             const summary = lines.slice(0, 10).join('\n');
 
             github.rest.issues.createComment({
@@ -111,7 +112,6 @@ ${summary}
           } catch (error) {
             console.log('无法读取报告文件:', error.message);
           }
-      continue-on-error: true
 
   # 完整质量检查 - 每日或手动触发
   full-quality-check:
@@ -131,9 +131,9 @@ ${summary}
     - name: 📦 安装完整依赖
       run: |
         python -m pip install --upgrade pip
-        pip install pytest pytest-cov pytest-xdist ruff mypy
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        pip install pytest pytest-cov pytest-xdist ruff mypy bandit pip-audit
         if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
     - name: 🧹 清理环境
       run: |
@@ -144,28 +144,44 @@ ${summary}
     - name: 🔧 运行完整修复
       run: |
         echo "🔧 运行完整自动化修复..."
-        python scripts/fix_test_crisis.py || echo "修复工具执行完成"
-        python scripts/fix_remaining_test_errors.py || echo "剩余错误修复工具执行完成"
-        python scripts/precise_error_fixer.py || echo "精确修复工具执行完成"
+        python scripts/fix_test_crisis.py
+        python scripts/fix_remaining_test_errors.py
+        python scripts/precise_error_fixer.py
 
     - name: 🎯 执行质量提升
       run: |
         echo "🎯 执行质量提升分析..."
-        python scripts/test_quality_improvement_engine.py --analyze || echo "质量分析完成"
-        python scripts/test_quality_improvement_engine.py --execute-phase 1 || echo "质量改进阶段1完成"
-        python scripts/test_quality_improvement_engine.py --execute-phase 2 || echo "质量改进阶段2完成"
+        python scripts/test_quality_improvement_engine.py --analyze
+        python scripts/test_quality_improvement_engine.py --execute-phase 1
+        python scripts/test_quality_improvement_engine.py --execute-phase 2
 
     - name: 📊 生成覆盖率报告
       run: |
         echo "📊 生成完整覆盖率报告..."
-        python -m pytest --cov=src --cov-report=html --cov-report=xml --cov-report=term-missing --maxfail=10 --disable-warnings -q || echo "覆盖率生成完成"
+        python -m pytest --cov=src --cov-report=html --cov-report=xml --cov-report=term-missing --maxfail=10 --disable-warnings -q || true
 
     - name: 🔍 代码质量检查
       run: |
         echo "🔍 运行代码质量检查..."
-        ruff check . || echo "Ruff检查完成，可能有警告"
-        ruff format . --check || echo "代码格式检查完成"
-        mypy src/ || echo "类型检查完成，可能有警告"
+        make lint || echo "代码检查有警告，但继续执行"
+        make type-check || echo "类型检查有警告，但继续执行"
+
+    - name: 🛡️ 安全扫描
+      run: |
+        echo "🛡️ 运行安全扫描..."
+        bandit -r src/ -f json -o security-report.json || echo "安全扫描完成"
+        pip-audit --format=json --output=audit-report.json || echo "依赖审计完成"
+
+    - name: 📈 性能测试
+      run: |
+        echo "📈 运行性能测试..."
+        python -m pytest tests/unit/utils/test_crypto_utils.py --benchmark-only --benchmark-json=benchmark.json || echo "性能测试完成"
+
+    - name: 📋 生成完整报告
+      run: |
+        echo "📋 生成完整质量报告..."
+        python scripts/github_issue_manager.py --generate-report > full-quality-report.md
+        python scripts/test_quality_improvement_engine.py --report >> full-quality-report.md
 
     - name: 📤 上传所有报告
       uses: actions/upload-artifact@v3
@@ -173,42 +189,48 @@ ${summary}
         name: full-quality-reports
         path: |
           htmlcov/
+          full-quality-report.md
+          security-report.json
+          audit-report.json
+          benchmark.json
           coverage.xml
-          test_quality_improvement_report.md
-          crisis_status_report.md
-      continue-on-error: true
 
     - name: 🎯 覆盖率检查
       run: |
         echo "🎯 检查覆盖率阈值..."
-        python -c "
+        if [ -f coverage.xml ]; then
+          COVERAGE=$(python -c "
 import xml.etree.ElementTree as ET
-import sys
 try:
     tree = ET.parse('coverage.xml')
     root = tree.getroot()
     coverage = float(root.attrib.get('line-rate', 0)) * 100
-    print(f'📊 当前覆盖率: {coverage:.2f}%')
+    print(f'当前覆盖率: {coverage:.2f}%')
 
     if coverage < 15:
-        print('💡 覆盖率低于15%，建议关注但不是阻塞问题')
+        print('❌ 覆盖率低于15%，需要关注')
+        exit(1)
     elif coverage < 30:
-        print('🎯 覆盖率良好，可以继续优化')
+        print('⚠️ 覆盖率低于30%，建议改进')
     else:
-        print('🎉 覆盖率优秀!')
+        print('✅ 覆盖率良好')
 except Exception as e:
     print(f'无法解析覆盖率: {e}')
-    print('💡 继续执行，覆盖率问题可以在后续优化')
-" || echo "覆盖率检查完成"
+    exit(1)
+")
+          echo "$COVERAGE"
+        else
+          echo "⚠️ 覆盖率报告未生成"
+        fi
 
-    - name: 🚨 创建Issue (仅当有严重问题时)
+    - name: 🚨 创建Issue (仅当有问题时)
       if: failure()
       uses: actions/github-script@v6
       with:
         script: |
           const fs = require('fs');
           try {
-            const report = fs.readFileSync('crisis_status_report.md', 'utf8');
+            const report = fs.readFileSync('full-quality-report.md', 'utf8');
 
             github.rest.issues.create({
               owner: context.repo.owner,
@@ -231,7 +253,6 @@ ${report}
           } catch (error) {
             console.log('无法创建Issue:', error.message);
           }
-      continue-on-error: true
 
   # 覆盖率专项检查
   coverage-report:
@@ -257,7 +278,7 @@ ${report}
     - name: 📊 生成详细覆盖率报告
       run: |
         echo "📊 生成详细覆盖率报告..."
-        python -m pytest --cov=src --cov-report=html --cov-report=xml --cov-report=term --cov-report=json -n auto --disable-warnings || echo "覆盖率报告生成完成"
+        python -m pytest --cov=src --cov-report=html --cov-report=xml --cov-report=term --cov-report=json -n auto --disable-warnings
 
     - name: 📤 上传覆盖率报告
       uses: actions/upload-artifact@v3
@@ -267,7 +288,95 @@ ${report}
           htmlcov/
           coverage.xml
           coverage.json
-      continue-on-error: true
+
+    - name: 💬 覆盖率评论 (PR only)
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          try {
+            const coverage = JSON.parse(fs.readFileSync('coverage.json', 'utf8'));
+            const totalCoverage = coverage.totals.lines.covered / coverage.totals.lines.count * 100;
+
+            github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: `## 📊 覆盖率报告
+
+**总覆盖率**: ${totalCoverage.toFixed(2)}%
+
+### 覆盖率详情
+- **行覆盖率**: ${coverage.totals.lines.percent}%
+- **分支覆盖率**: ${coverage.totals.branches.percent}%
+- **函数覆盖率**: ${coverage.totals.functions.percent}%
+
+### 覆盖率趋势
+${totalCoverage >= 30 ? '✅ 覆盖率良好' : '⚠️ 需要提升覆盖率'}
+
+📊 [查看详细覆盖率报告](https://github.com/${{context.repository.owner}/${{context.repository.repo}}/actions/runs/${{context.runId}})
+
+---
+🤖 *由自动化质量保障系统生成*
+            `});
+          } catch (error) {
+            console.log('无法解析覆盖率报告:', error.message);
+          }
+
+  # 质量趋势分析
+  quality-trends:
+    name: 📈 质量趋势分析
+    runs-on: ubuntu-latest
+    if: github.event.inputs.action == 'quality-report'
+
+    steps:
+    - name: 📥 检出代码
+      uses: actions/checkout@v4
+
+    - name: 🐍 设置Python环境
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: 📦 安装依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-cov ruff mypy
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: 📈 分析质量趋势
+      run: |
+        echo "📈 分析质量趋势..."
+        python scripts/github_issue_manager.py --generate-report > quality-trends.md
+        python scripts/test_quality_improvement_engine.py --report >> quality-trends.md
+
+    - name: 📤 上传趋势报告
+      uses: actions/upload-artifact@v3
+      with:
+        name: quality-trends
+        path: quality-trends.md
+
+  # 智能优化建议
+  optimization-suggestions:
+    name: 🤖 智能优化建议
+    runs-on: ubuntu-latest
+    if: github.event.inputs.severity == 'all' || github.event.inputs.severity == 'warning'
+
+    steps:
+    - name: 📥 检出代码
+      uses: actions/checkout@v4
+
+    - name: 🤖 生成优化建议
+      run: |
+        echo "🤖 生成智能优化建议..."
+        python scripts/smart_quality_fixer.py --suggestions-only > optimization-suggestions.md
+
+    - name: 📤 上传优化建议
+      uses: actions/upload-artifact@v3
+      with:
+        name: optimization-suggestions
+        path: optimization-suggestions.md
 
   # 工作流状态总结
   workflow-summary:
@@ -285,4 +394,9 @@ ${report}
         echo "完整检查状态: ${{ needs.full-quality-check.result }}"
         echo "执行时间: $(date)"
         echo "=================="
-        echo "🎉 自动化质量保障系统运行完成!"
+
+    - name: 📤 上传总结
+      uses: actions/upload-artifact@v3
+      with:
+        name: workflow-summary
+        path: workflow-summary.md

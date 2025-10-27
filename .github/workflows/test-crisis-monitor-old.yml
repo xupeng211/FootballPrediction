@@ -1,0 +1,83 @@
+name: 测试覆盖率危机监控
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # 每天UTC 8:00检查一次
+    - cron: '0 8 * * *'
+
+jobs:
+  crisis-monitor:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: 设置Python环境
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: 安装依赖
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-cov
+
+    - name: 运行危机修复脚本
+      run: python scripts/fix_test_crisis.py
+
+    - name: 生成覆盖率报告
+      run: |
+        python -m pytest --cov=src --cov-report=html --cov-report=xml --maxfail=5
+
+    - name: 上传覆盖率报告
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-report
+        path: htmlcov/
+
+    - name: 检查覆盖率阈值
+      run: |
+        COVERAGE=$(python -c "
+import xml.etree.ElementTree as ET
+try:
+    tree = ET.parse('coverage.xml')
+    root = tree.getroot()
+    coverage = float(root.attrib.get('line-rate', 0)) * 100
+    print(coverage)
+except:
+    print(0)
+")
+
+        echo "当前覆盖率: $COVERAGE%"
+
+        if (( $(echo "$COVERAGE < 15" | bc -l) )); then
+          echo "❌ 覆盖率低于15%，需要紧急关注"
+          exit 1
+        elif (( $(echo "$COVERAGE < 30" | bc -l) )); then
+          echo "⚠️ 覆盖率低于30%，需要改进"
+        else
+          echo "✅ 覆盖率良好"
+        fi
+
+    - name: 更新状态报告
+      run: python scripts/github_issue_manager.py --generate-report
+
+    - name: 创建或更新Issue
+      if: failure()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const report = fs.readFileSync('crisis_status_report.md', 'utf8');
+
+          github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: "🚨 测试覆盖率警报 - " + new Date().toISOString().split('T')[0],
+            body: report,
+            labels: ['testing', 'coverage', 'critical', 'auto-generated']
+          });
