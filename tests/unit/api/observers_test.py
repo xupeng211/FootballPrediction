@@ -10,8 +10,9 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import pytest
 
 # 尝试导入目标模块
+module_name = "api.observers"
 try:
-    from api.observers import *
+    from src.api.observers import *
 
     IMPORTS_AVAILABLE = True
 except ImportError as e:
@@ -33,10 +34,16 @@ class TestApiObservers:
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
-        # TODO: 实现{class_name}类的基础测试
+        # TODO: 实现 AlertRequest 类的基础测试
         # 创建AlertRequest实例并测试基础功能
+        class_name = "AlertRequest"
         try:
-            instance = AlertRequest()
+            # 提供必需的参数
+            instance = AlertRequest(
+                alert_type="error",
+                severity="high",
+                message="Test alert"
+            )
             assert instance is not None
         except Exception as e:
             print(f"实例化失败: {e}")
@@ -47,10 +54,15 @@ class TestApiObservers:
         if not IMPORTS_AVAILABLE:
             pytest.skip("模块导入失败")
 
-        # TODO: 实现{class_name}类的基础测试
+        # TODO: 实现 MetricUpdateRequest 类的基础测试
         # 创建MetricUpdateRequest实例并测试基础功能
+        class_name = "MetricUpdateRequest"
         try:
-            instance = MetricUpdateRequest()
+            # 提供必需的参数
+            instance = MetricUpdateRequest(
+                metric_name="cpu_usage",
+                metric_value=75.5
+            )
             assert instance is not None
         except Exception as e:
             print(f"实例化失败: {e}")
