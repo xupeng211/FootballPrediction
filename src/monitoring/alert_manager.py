@@ -298,6 +298,18 @@ class AlertManager:
             self.logger.error(f"Failed to send digest: {e}")
             return False
 
+    def _serialize_alert(self, alert: Dict) -> Dict:
+        """序列化告警对象，转换枚举为字符串"""
+        serialized = {}
+        for key, value in alert.items():
+            if hasattr(value, 'value'):  # 枚举对象
+                serialized[key] = value.value
+            elif isinstance(value, datetime):  # datetime对象
+                serialized[key] = value.isoformat()
+            else:
+                serialized[key] = value
+        return serialized
+
     def export_alerts(self, format: str = "json", format_type: str = None) -> str:
         """导出告警数据"""
         # 兼容两种参数格式
@@ -307,23 +319,68 @@ class AlertManager:
         if format == "json":
             import json
 
+            # 序列化告警数据
+            serialized_active = [self._serialize_alert(alert) for alert in self.active_alerts]
+            serialized_history = [self._serialize_alert(alert) for alert in self.alert_history]
+
             return json.dumps(
                 {
-                    "active_alerts": self.active_alerts,
-                    "alert_history": self.alert_history,
+                    "active_alerts": serialized_active,
+                    "alert_history": serialized_history,
                     "export_time": datetime.utcnow().isoformat(),
                 },
                 indent=2,
             )
+        elif format == "csv":
+            import csv
+            import io
+
+            # 获取所有可能的字段
+            all_fields = set()
+            for alert in self.active_alerts + self.alert_history:
+                all_fields.update(alert.keys())
+
+            # 确保基本字段存在
+            basic_fields = ["id", "type", "severity", "message", "source", "timestamp"]
+            fields = [field for field in basic_fields if field in all_fields] + sorted([f for f in all_fields if f not in basic_fields])
+
+            output = io.StringIO()
+            writer = csv.DictWriter(output, fieldnames=fields)
+            writer.writeheader()
+
+            # 写入活跃告警
+            for alert in self.active_alerts:
+                serialized_alert = self._serialize_alert(alert)
+                # 只包含存在的字段
+                row = {field: serialized_alert.get(field, "") for field in fields}
+                writer.writerow(row)
+
+            return output.getvalue()
         return ""
 
     def get_alert_statistics(self) -> Dict:
         """获取告警统计信息"""
+        # 统计各类型的告警数量
+        by_type = {}
+        by_severity = {}
+
+        for alert in self.active_alerts:
+            # 统计按类型 - 处理枚举对象
+            alert_type_raw = alert.get("type", "unknown")
+            alert_type = alert_type_raw.value if hasattr(alert_type_raw, 'value') else str(alert_type_raw)
+            by_type[alert_type] = by_type.get(alert_type, 0) + 1
+
+            # 统计按严重级别 - 处理枚举对象
+            severity_raw = alert.get("severity", "unknown")
+            severity = severity_raw.value if hasattr(severity_raw, 'value') else str(severity_raw)
+            by_severity[severity] = by_severity.get(severity, 0) + 1
+
         return {
+            "total_alerts": len(self.active_alerts),
+            "by_type": by_type,
+            "by_severity": by_severity,
             "total_active": len(self.active_alerts),
             "total_history": len(self.alert_history),
-            "by_severity": {},
-            "by_type": {},
             "last_24h": 0,
         }
 
@@ -345,8 +402,14 @@ class AlertManager:
         try:
             # 创建测试告警
             test_alert = self.create_alert(
-                "test_alert", AlertSeverity.LOW, AlertType.INFO, "Test alert message"
+                name="test_alert",
+                severity=AlertSeverity.LOW,
+                alert_type=AlertType.SYSTEM,
+                message="Test alert message"
             )
+
+            # 发送测试告警
+            send_result = await self.send_alert(test_alert)
 
             return {
                 "status": "success",
@@ -354,6 +417,8 @@ class AlertManager:
                 "message": "Alert system is working",
                 "test_alert_id": test_alert.get("id", "test"),
                 "test_time": datetime.utcnow().isoformat(),
+                "test_alert_sent_at": datetime.utcnow().isoformat(),  # 添加测试字段
+                "send_result": send_result,
             }
         except Exception as e:
             return {
