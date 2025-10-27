@@ -47,25 +47,24 @@ class Target(ABC):
 
 class Adapter(Target):
     """适配器基类，将Adaptee接口转换为Target接口"""
-
-class CompositeAdapter(Adapter):
-    """组合适配器，可以管理多个子适配器"""
-
-class DataTransformer(ABC):
-    """数据转换器基类"""
-
-    @abstractmethod
-    async def transform(self, data: Any, **kwargs) -> Any:
-        """转换数据格式"""
-        pass
+    pass
 
 
 class BaseAdapter(ABC):
     """基础适配器抽象类"""
 
-    # TODO: 方法 def __init__ 过长(26行)，建议拆分
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
+        self.name = self.__class__.__name__
+        self.status = AdapterStatus.INACTIVE
+        self.last_error = None
+        self.metrics = {
+            "total_requests": 0,
+            "successful_requests": 0,
+            "failed_requests": 0,
+            "total_response_time": 0.0,
+            "average_response_time": 0.0,
+        }
         self.is_initialized = False
 
     async def initialize(self) -> None:
@@ -73,12 +72,14 @@ class BaseAdapter(ABC):
         if not self.is_initialized:
             await self._setup()
             self.is_initialized = True
+            self.status = AdapterStatus.ACTIVE
 
     async def cleanup(self) -> None:
         """清理适配器"""
         if self.is_initialized:
             await self._teardown()
             self.is_initialized = False
+            self.status = AdapterStatus.INACTIVE
 
     @abstractmethod
     async def _setup(self) -> None:
@@ -108,29 +109,27 @@ class BaseAdapter(ABC):
 
 
 class CompositeAdapter(Adapter):
-    def _register_adapters(self):
-        """注册所有子适配器"""
-        for adapter in self.adapters:
-            self.adapter_registry[adapter.name] = adapter
+    """组合适配器，可以管理多个子适配器"""
 
-    def add_adapter(self, adapter: Adapter):  # TODO: 添加返回类型注解
-        """添加子适配器
+    def __init__(self, name: str = "CompositeAdapter"):
+        self.name = name
+        self.adapters: List[Adapter] = []
+        self.adapter_registry: Dict[str, Adapter] = {}
+        self.metrics = {
+            "total_requests": 0,
+            "successful_requests": 0,
+            "failed_requests": 0,
+            "total_response_time": 0.0,
+            "average_response_time": 0.0,
+        }
 
-        Args:
-            adapter: 要添加的适配器
-        """
+    def add_adapter(self, adapter: Adapter) -> None:
+        """添加子适配器"""
         self.adapters.append(adapter)
         self.adapter_registry[adapter.name] = adapter
 
     def remove_adapter(self, adapter_name: str) -> bool:
-        """移除子适配器
-
-        Args:
-            adapter_name: 适配器名称
-
-        Returns:
-            bool: 是否成功移除
-        """
+        """移除子适配器"""
         if adapter_name in self.adapter_registry:
             adapter = self.adapter_registry[adapter_name]
             self.adapters.remove(adapter)
@@ -138,28 +137,12 @@ class CompositeAdapter(Adapter):
             return True
         return False
 
-# TODO: 方法 def get_adapter 过长(82行)，建议拆分
     def get_adapter(self, adapter_name: str) -> Optional[Adapter]:
-        """获取子适配器
-
-        Args:
-            adapter_name: 适配器名称
-
-        Returns:
-            Adapter: 子适配器，如果不存在则返回None
-        """
+        """获取子适配器"""
         return self.adapter_registry.get(adapter_name)
 
     async def request(self, *args, **kwargs) -> Any:
-        """并行请求所有适配器并合并结果
-
-        Args:
-            *args: 位置参数
-            **kwargs: 关键字参数
-
-        Returns:
-            Any: 合并后的结果
-        """
+        """并行请求所有适配器并合并结果"""
         results = []
 
         # 并行请求所有适配器
@@ -179,63 +162,18 @@ class CompositeAdapter(Adapter):
             "successful_adapters": len(successful_results),
         }
 
-    async def _request(self, *args, **kwargs) -> Any:
-        """具体的请求处理逻辑（Composite使用并行请求）"""
-        return await self.request(*args, **kwargs)
-
-    async def health_check(self) -> Dict[str, Any]:
-        """检查所有子适配器的健康状态"""
-        health_results = {}
-
-        # 并行检查所有适配器的健康状态
-        tasks = [(adapter.name, adapter.health_check()) for adapter in self.adapters]
-
-        if tasks:
-            for name, task in tasks:
-                try:
-                    health_results[name] = await task
-                except (
-                    ValueError,
-                    TypeError,
-                    AttributeError,
-                    KeyError,
-                    RuntimeError,
-                ) as e:
-                    health_results[name] = {
-                        "adapter": name,
-                        "status": "unhealthy",
-                        "error": str(e),
-                    }
-
-        # 计算整体健康状态
-        healthy_count = sum(
-            1 for result in health_results.values() if result.get("status") == "healthy"
-        )
-
-        return {
-            "adapter": self.name,
-            "status": "healthy" if healthy_count == len(self.adapters) else "degraded",
-            "total_adapters": len(self.adapters),
-            "healthy_adapters": healthy_count,
-            "adapter_health": health_results,
-            "metrics": self.get_metrics(),
-        }
-
-    def reset_metrics(self) -> None:
-        """重置指标"""
-        self.metrics = {
-            "total_requests": 0,
-            "successful_requests": 0,
-            "failed_requests": 0,
-            "total_response_time": 0.0,
-            "average_response_time": 0.0,
-        }
-
 
 class DataTransformer(ABC):
+    """数据转换器基类"""
+
+    @abstractmethod
+    async def transform(self, data: Any, **kwargs) -> Any:
+        """转换数据格式"""
+        pass
+
     def get_source_schema(self) -> Dict[str, Any]:
         """获取源数据结构"""
-        pass
+        return {}
 
     @abstractmethod
     def get_target_schema(self) -> Dict[str, Any]:

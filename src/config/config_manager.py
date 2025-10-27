@@ -57,11 +57,17 @@ class ConfigValidator:
 class ConfigManager:
     """配置管理器"""
 
+    # 默认配置工厂函数
+    # 配置管理器实例（单例模式）
+    _config_manager = None
+
+@dataclass
+# TODO: 方法 def get 过长(21行)，建议拆分
+class ConfigValidator:
+class ConfigManager:
+# TODO: 方法 def remove_source 过长(39行)，建议拆分
 # 默认配置工厂函数
 # 配置管理器实例（单例模式）
-_config_manager = None
-
-
     def __init__(self):
         self.sources: List[ConfigSource] = []
         self._config: Dict[str, Any] = {}
@@ -179,6 +185,7 @@ class ConfigManager:
         if source not in self.sources:
             self.sources.append(source)
 
+# TODO: 方法 def remove_source 过长(39行)，建议拆分
 # TODO: 方法 def remove_source 过长(39行)，建议拆分
     def remove_source(self, source: ConfigSource) -> None:
         """移除配置源"""
