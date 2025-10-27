@@ -60,7 +60,7 @@ async def test_db():
     # 数据库配置
     database_url = os.getenv(
         "DATABASE_URL",
-        "postgresql+asyncpg://test_user:test_pass@localhost:5433/football_test",
+        "postgresql+asyncpg://postgres:postgres@localhost:5432/football_prediction",
     )
 
     # 调试输出
