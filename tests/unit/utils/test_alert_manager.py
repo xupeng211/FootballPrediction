@@ -245,8 +245,8 @@ class TestAlertManager:
             message="Old alert",
             source="test",
         )
-        # 手动设置旧时间戳
-        old_alert["timestamp"] = datetime.now() - timedelta(hours=25)
+        # 手动设置旧时间戳 (使用UTC时间)
+        old_alert["timestamp"] = datetime.utcnow() - timedelta(hours=25)
 
         recent_alert = alert_manager.create_alert(
             type=AlertType.ERROR,
