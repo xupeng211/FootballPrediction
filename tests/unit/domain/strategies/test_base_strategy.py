@@ -4,13 +4,14 @@ from unittest.mock import MagicMock, patch
 
 import asyncio
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, List, Tuple
 
 import pytest
 
 from src.domain.strategies.base import (PredictionInput, PredictionOutput,
                                         PredictionStrategy, StrategyMetrics,
                                         StrategyType)
+from src.domain.models.prediction import Prediction
 
 
 class MockStrategy(PredictionStrategy):
@@ -22,29 +23,16 @@ class MockStrategy(PredictionStrategy):
         self._pre_process_called = False
         self._post_process_called = False
 
-    async def validate_input(self, input_data: PredictionInput) -> bool:
-        """验证输入"""
-        self._validate_input_called = True
-        return (
-            input_data.match_id is not None
-            and input_data.home_team_id is not None
-            and input_data.away_team_id is not None
-        )
+    async def initialize(self, config: Dict[str, Any]) -> None:
+        """初始化策略"""
+        self._is_initialized = True
+        self.config.update(config)
 
-    async def pre_process(self, input_data: PredictionInput) -> PredictionInput:
-        """预处理"""
-        self._pre_process_called = True
-        # 添加预处理标记
-        input_data.processed = True
-        return input_data
-
-    async def _predict_internal(
-        self, processed_input: PredictionInput
-    ) -> PredictionOutput:
-        """内部预测实现"""
+    async def predict(self, input_data: PredictionInput) -> PredictionOutput:
+        """执行预测"""
         # 简单的模拟预测逻辑
-        home_goals = 2 if processed_input.home_team_form.startswith("W") else 1
-        away_goals = 1 if processed_input.away_team_form.startswith("L") else 0
+        home_goals = 2 if input_data.home_team else 1
+        away_goals = 1 if input_data.away_team else 0
         confidence = 0.75
 
         return PredictionOutput(
@@ -52,16 +40,32 @@ class MockStrategy(PredictionStrategy):
             predicted_away_score=away_goals,
             confidence=confidence,
             metadata={
-                "reasoning": f"Mock prediction based on form: {processed_input.home_team_form} vs {processed_input.away_team_form}"
+                "reasoning": "Mock prediction for testing"
             },
         )
 
-    async def post_process(self, output: PredictionOutput) -> PredictionOutput:
-        """后处理"""
-        self._post_process_called = True
-        # 添加后处理标记
-        output.metadata["reasoning"] += " [Post-processed]"
-        return output
+    async def batch_predict(
+        self, inputs: List[PredictionInput]
+    ) -> List[PredictionOutput]:
+        """批量预测"""
+        results = []
+        for input_data in inputs:
+            result = await self.predict(input_data)
+            results.append(result)
+        return results
+
+    async def update_metrics(
+        self, actual_results: List[Tuple[Prediction, Dict[str, Any]]]
+    ) -> None:
+        """更新策略性能指标"""
+        # 模拟指标更新
+        self._metrics = StrategyMetrics(
+            accuracy=0.8,
+            precision=0.75,
+            recall=0.7,
+            f1_score=0.72,
+            total_predictions=len(actual_results)
+        )
 
 
 @pytest.fixture
@@ -73,22 +77,33 @@ def mock_strategy():
 @pytest.fixture
 def valid_prediction_input():
     """创建有效的预测输入"""
+    # 创建模拟的Match对象
+    match = MagicMock()
+    match.id = 123
+    match.home_team_id = 1
+    match.away_team_id = 2
+
+    # 创建模拟的Team对象
+    home_team = MagicMock()
+    home_team.id = 1
+    home_team.name = "Home Team"
+
+    away_team = MagicMock()
+    away_team.id = 2
+    away_team.name = "Away Team"
+
     return PredictionInput(
-        match_id=123,
-        home_team_id=1,
-        away_team_id=2,
-        home_team_form="WWLDW",
-        away_team_form="LDDLL",
-        home_team_goals_scored=[2, 3, 1, 2, 1],
-        away_team_goals_scored=[0, 1, 0, 2, 0],
-        match_date=datetime(2024, 1, 15, 15, 0),
+        match=match,
+        home_team=home_team,
+        away_team=away_team,
+        historical_data={"home_form": "WWLDW", "away_form": "LDDLL"}
     )
 
 
 @pytest.fixture
 def invalid_prediction_input():
     """创建无效的预测输入"""
-    return PredictionInput(match_id=None, home_team_id=1, away_team_id=None)
+    return PredictionInput(match=None, home_team=None, away_team=None)
 
 
 @pytest.mark.unit
@@ -98,10 +113,9 @@ class TestPredictionStrategy:
     def test_strategy_initialization(self, mock_strategy):
         """测试策略初始化"""
         assert mock_strategy.name == "test_mock_strategy"
-        assert mock_strategy.type == StrategyType.ML_MODEL
+        assert mock_strategy.strategy_type == StrategyType.ML_MODEL
         assert mock_strategy._is_initialized is False
-        assert mock_strategy._prediction_count == 0
-        assert mock_strategy._total_confidence == 0.0
+        # 移除不存在的属性检查
 
     @pytest.mark.asyncio
     async def test_strategy_configuration(self, mock_strategy):
