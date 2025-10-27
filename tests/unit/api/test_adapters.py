@@ -178,12 +178,12 @@ class TestAdaptersAPI:
         """设置模拟对象"""
         import src.api.adapters
 
-        src.api.adapters.adapter_factory = mock_factory
-        src.api.adapters.adapter_registry = mock_registry
+        src.adapters.factory = mock_factory
+        src.adapters.registry = mock_registry
 
     # ==================== 适配器注册表管理测试 ====================
 
-    @patch("src.api.adapters.adapter_registry")
+    @patch("src.adapters.registry")
     def test_get_registry_status_inactive(self, mock_registry, client):
         """测试：获取未初始化的注册表状态"""
         # Given

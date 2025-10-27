@@ -10,7 +10,8 @@ from .base import Adaptee, Adapter, BaseAdapter, Target
 from .factory_simple import AdapterFactory, get_adapter
 from .football import (ApiFootballAdapter, FootballApiAdapter,
                        FootballDataAdapter, OptaDataAdapter)
-from .registry_simple import AdapterRegistry, register_adapter
+from .registry_simple import AdapterRegistry as SimpleAdapterRegistry, register_adapter
+from .registry import AdapterRegistry
 
 __all__ = [
     # Base classes

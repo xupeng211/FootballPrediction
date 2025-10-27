@@ -61,7 +61,7 @@ class PredictionDomainService:
             match_id=match.id,
         )
         # 创建预测
-        prediction.make_prediction(
+        _prediction.make_prediction(
             predicted_home=predicted_home,
             predicted_away=predicted_away,
             confidence=confidence,
@@ -69,11 +69,11 @@ class PredictionDomainService:
         # Note: notes 字段在当前模型中不存在，需要时可以扩展模型
 
         # 记录领域事件
-        if prediction.id is None:
+        if _prediction.id is None:
             raise ValueError("预测ID不能为空")
 
         event = PredictionCreatedEvent(
-            prediction_id=prediction.id,
+            prediction_id=_prediction.id,
             user_id=user_id,
             match_id=match.id,
             predicted_home=predicted_home,
@@ -82,7 +82,7 @@ class PredictionDomainService:
         )
         self._events.append(event)
 
-        return prediction
+        return _prediction
 
     def update_prediction(
         self,
