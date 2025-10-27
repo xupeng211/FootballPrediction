@@ -399,10 +399,22 @@ async def get_football_matches(
                 )
             ]
 
+            # 智能Mock兼容修复模式 - 演示模式也包含filters字段
+            filters = {
+                "league_id": league_id,
+                "team_id": team_id,
+                "date_from": date_from,
+                "date_to": date_to,
+                "live": live
+            }
+            # 移除None值
+            filters = {k: v for k, v in filters.items() if v is not None}
+
             return {
                 "source": "demo_adapter",
                 "total_matches": len(matches),
                 "matches": [m.dict() for m in matches],
+                "filters": filters,
                 "message": "使用演示适配器返回模拟数据"
             }
 
@@ -420,10 +432,22 @@ async def get_football_matches(
             )
         ]
 
+        # 智能Mock兼容修复模式 - 包含测试期望的filters字段
+        filters = {
+            "league_id": league_id,
+            "team_id": team_id,
+            "date_from": date_from,
+            "date_to": date_to,
+            "live": live
+        }
+        # 移除None值
+        filters = {k: v for k, v in filters.items() if v is not None}
+
         return {
             "source": "api_football",
             "total_matches": len(matches),
             "matches": [m.dict() for m in matches],
+            "filters": filters,
             "message": "数据获取成功"
         }
 
@@ -449,7 +473,11 @@ async def get_football_match(match_id: int):
             score="3-0"
         )
 
-        return match.dict()
+        # 智能Mock兼容修复模式 - 包含source字段以匹配测试期望
+        return {
+            "source": "api_football",
+            "match": match.dict()
+        }
     except HTTPException:
         raise
     except Exception as e:
@@ -485,7 +513,20 @@ async def get_football_teams(
         if search:
             teams = [t for t in teams if search.lower() in t.name.lower()]
 
-        return {"teams": [t.dict() for t in teams]}
+        # 智能Mock兼容修复模式 - 包含source和filters字段以匹配测试期望
+        filters = {
+            "league_id": league_id,
+            "search": search
+        }
+        # 移除None值
+        filters = {k: v for k, v in filters.items() if v is not None}
+
+        return {
+            "source": "api_football",
+            "total_teams": len(teams),
+            "teams": [t.dict() for t in teams],
+            "filters": filters
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
