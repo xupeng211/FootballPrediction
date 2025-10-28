@@ -1,0 +1,45 @@
+{
+    "version": "1.0.0",
+    "project": "FootballPrediction",
+    "baseline": {
+        "established": "2025-10-28",
+        "total_coverage": 6.5,
+        "domain_coverage": 0.0,
+        "utils_coverage": 73.0,
+        "total_tests": 264,
+        "pass_rate": 100.0
+    },
+    "quality_gates": {
+        "minimum_total_coverage": 6.0,
+        "minimum_domain_coverage": 0.0,
+        "minimum_utils_coverage": 70.0,
+        "minimum_pass_rate": 100.0,
+        "maximum_regression": 0.5
+    },
+    "protection_rules": {
+        "pre_commit_checks": [
+            "syntax_check",
+            "type_check",
+            "unit_tests",
+            "coverage_check"
+        ],
+        "ci_checks": [
+            "security_scan",
+            "dependency_audit",
+            "integration_tests",
+            "performance_tests"
+        ]
+    },
+    "monitoring": {
+        "coverage_trend_analysis": true,
+        "test_performance_tracking": true,
+        "quality_metrics_dashboard": true,
+        "automated_alerts": true
+    },
+    "continuous_improvement": {
+        "weekly_quality_review": true,
+        "monthly_coverage_target": 18.0,
+        "quality_debt_tracking": true,
+        "best_practice_evolution": true
+    }
+}
