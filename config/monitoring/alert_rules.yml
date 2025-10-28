@@ -168,7 +168,7 @@ groups:
           service: container
         annotations:
           summary: "容器宕机"
-          description: "容器 {{ $labels.instance }} ({'{{'}} $labels.job {{'}}'}) 无法访问"
+          description: "容器 {{ $labels.instance }} ({{ $labels.job }}) 无法访问"
 
       - alert: ContainerRestarts
         expr: increase(container_start_time_seconds[1h]) > 3
