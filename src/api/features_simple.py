@@ -85,8 +85,8 @@ async def health_check() -> Dict[str, str]:
         raise HTTPException(status_code=500, detail="健康检查失败")
 
 
-@router.get("/", response_model=Dict[str, str])
-async def get_features_info() -> Dict[str, str]:
+@router.get("/", response_model=Dict[str, Any])
+async def get_features_info() -> Dict[str, Any]:
     """
     获取特征服务信息
     """
