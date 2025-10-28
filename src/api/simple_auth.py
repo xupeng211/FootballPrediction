@@ -23,6 +23,7 @@ class SimpleUser(BaseModel):
     id: int
     username: str
     email: str
+    password: str
     role: str
     is_active: bool = True
     created_at: datetime
@@ -70,6 +71,7 @@ class SimpleAuthService:
             id=user_data["id"],
             username=user_data["username"],
             email=user_data["email"],
+            password=user_data["password"],
             role=user_data["role"],
             created_at=datetime.utcnow()
         )
@@ -94,9 +96,77 @@ class SimpleAuthService:
             id=new_id,
             username=username,
             email=email,
+            password=password,
             role="user",
             created_at=datetime.utcnow()
         )
+
+    def store_user(self, user: SimpleUser) -> None:
+        """存储用户对象"""
+        self.users[user.username] = {
+            "id": user.id,
+            "username": user.username,
+            "password": user.password,
+            "email": user.email,
+            "role": user.role
+        }
+
+    def get_user(self, username: str) -> Optional[SimpleUser]:
+        """获取用户对象"""
+        user_data = self.users.get(username)
+        if not user_data:
+            return None
+
+        return SimpleUser(
+            id=user_data["id"],
+            username=user_data["username"],
+            email=user_data["email"],
+            password=user_data["password"],
+            role=user_data["role"],
+            created_at=datetime.utcnow()
+        )
+
+    def generate_token(self, user: SimpleUser) -> str:
+        """生成简单的访问令牌"""
+        # 在实际应用中应该使用JWT或其他安全的令牌机制
+        timestamp = datetime.utcnow().timestamp()
+        token_data = f"{user.username}:{user.id}:{timestamp}"
+        return f"Bearer {token_data}"
+
+    def verify_token(self, token: str) -> Optional[SimpleUser]:
+        """验证访问令牌"""
+        if not token.startswith("Bearer "):
+            return None
+
+        try:
+            token_data = token[7:]  # 移除 "Bearer " 前缀
+            parts = token_data.split(":")
+
+            if len(parts) != 3:
+                return None
+
+            username, user_id_str, timestamp_str = parts
+
+            # 简单的令牌过期检查（24小时）
+            token_time = float(timestamp_str)
+            if datetime.utcnow().timestamp() - token_time > 86400:  # 24小时
+                return None
+
+            user_data = self.users.get(username)
+            if not user_data or str(user_data["id"]) != user_id_str:
+                return None
+
+            return SimpleUser(
+                id=user_data["id"],
+                username=user_data["username"],
+                email=user_data["email"],
+                password=user_data["password"],
+                role=user_data["role"],
+                created_at=datetime.utcnow()
+            )
+
+        except (ValueError, IndexError):
+            return None
 
     def get_user_by_username(self, username: str) -> Optional[SimpleUser]:
         """根据用户名获取用户"""
@@ -108,6 +178,7 @@ class SimpleAuthService:
             id=user_data["id"],
             username=user_data["username"],
             email=user_data["email"],
+            password=user_data["password"],
             role=user_data["role"],
             created_at=datetime.utcnow()
         )
