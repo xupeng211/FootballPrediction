@@ -22,12 +22,13 @@ services:
     # redis:
     #   condition: service_healthy
     volumes:
-      - ../src:/app/src:${MOUNT_MODE:-rw}
+      - ./src:/app/src:${MOUNT_MODE:-rw}
     command: uvicorn src.main:app --host 0.0.0.0 --port 8000 ${RELOAD_FLAG}
     environment:
       - PYTHONPATH=/app
       - DATABASE_URL=postgresql+asyncpg://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-football_prediction}
       - REDIS_URL=redis://localhost:6379/0
+      - SECRET_KEY=your-secret-key-here-for-development-only-change-in-production
     networks:
       - backend
     healthcheck:
@@ -162,7 +163,7 @@ services:
       - ./environments/.env.${ENV:-development}
     command: celery -A src.tasks.celery_app worker --loglevel=${LOG_LEVEL:-INFO}
     volumes:
-      - ../src:/app/src:${MOUNT_MODE:-rw}
+      - ./src:/app/src:${MOUNT_MODE:-rw}
     depends_on:
       - db
       - redis
@@ -185,7 +186,7 @@ services:
       - ./environments/.env.${ENV:-development}
     command: celery -A src.tasks.celery_app beat --loglevel=${LOG_LEVEL:-INFO}
     volumes:
-      - ../src:/app/src:${MOUNT_MODE:-rw}
+      - ./src:/app/src:${MOUNT_MODE:-rw}
       - celerybeat_data:/app/celerybeat
     depends_on:
       - db

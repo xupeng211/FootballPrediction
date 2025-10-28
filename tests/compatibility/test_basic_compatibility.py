@@ -32,7 +32,7 @@ def test_project_structure(client):
     print("✅ 项目结构完整性检查通过")
 
 
-def test_core_modules_import(, client):
+def test_core_modules_import(client):
     """测试核心模块导入兼容性"""
     try:
         # 测试核心模块导入

@@ -154,6 +154,33 @@ async def delete_prediction(
     )
 
 
+# CQRS服务根路径
+@router.get("/", summary="CQRS服务根路径")
+async def get_cqrs_root():
+    """CQRS服务根路径"""
+    return {
+        "service": "足球预测API",
+        "module": "cqrs",
+        "version": "1.0.0",
+        "status": "运行中",
+        "description": "CQRS模式实现 - 命令查询职责分离",
+        "endpoints": {
+            "predictions": "/predictions/{prediction_id}",
+            "user_predictions": "/users/{user_id}/predictions",
+            "user_stats": "/users/{user_id}/stats",
+            "match_details": "/matches/{match_id}",
+            "upcoming_matches": "/matches/upcoming",
+            "system_status": "/system/status"
+        },
+        "commands": {
+            "create_prediction": "POST /predictions",
+            "update_prediction": "PUT /predictions/{prediction_id}",
+            "delete_prediction": "DELETE /predictions/{prediction_id}",
+            "create_user": "POST /users"
+        }
+    }
+
+
 # 预测查询端点
 @router.get("/predictions/{prediction_id}", summary="获取预测详情")
 async def get_prediction(

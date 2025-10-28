@@ -40,6 +40,36 @@ class MetricUpdateRequest(BaseModel):
     metric_type: str = "gauge"
 
 
+@router.get("/", summary="观察者系统根路径")
+async def get_observers_root():
+    """观察者系统根路径"""
+    return {
+        "service": "足球预测API",
+        "module": "observers",
+        "version": "1.0.0",
+        "status": "运行中",
+        "description": "事件驱动观察者系统 - 实时监控和事件处理",
+        "endpoints": {
+            "status": "/status",
+            "metrics": "/metrics",
+            "observers": "/observers",
+            "subjects": "/subjects",
+            "alerts": "/alerts",
+            "alert_rules": "/alerts/rules",
+            "predictions": "/predictions",
+            "cache": "/cache",
+            "performance": "/performance",
+            "event_types": "/event-types"
+        },
+        "features": [
+            "实时事件监控",
+            "性能指标收集",
+            "告警系统",
+            "缓存管理",
+            "预测统计"
+        ]
+    }
+
 @router.get("/status", summary="获取观察者系统状态")
 async def get_observer_status() -> Dict[str, Any]:
     """获取观察者系统的整体状态"""
