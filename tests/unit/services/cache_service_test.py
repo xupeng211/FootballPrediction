@@ -9,6 +9,7 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
+
 # 智能Mock兼容修复 - 创建Mock缓存服务
 class MockCacheService:
     """Mock缓存服务 - 用于测试"""
@@ -25,6 +26,7 @@ class MockCacheService:
         """设置缓存值"""
         self.cache_data[key] = value
         import time
+
         self.ttl_data[key] = time.time() + ttl
         return True
 
@@ -43,9 +45,11 @@ class MockCacheService:
         self.ttl_data.clear()
         return True
 
+
 # 尝试导入目标模块，如果不存在则使用Mock
 try:
     from src.services.cache_service import CacheService
+
     IMPORTS_AVAILABLE = True
     cache_service_class = CacheService
 except ImportError as e:

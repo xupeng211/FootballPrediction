@@ -13,12 +13,16 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from src.api.predictions.router import (BatchPredictionRequest,
-                                        BatchPredictionResponse,
-                                        PredictionHistory, PredictionRequest,
-                                        PredictionResult,
-                                        PredictionVerification,
-                                        RecentPrediction, router)
+from src.api.predictions.router import (
+    BatchPredictionRequest,
+    BatchPredictionResponse,
+    PredictionHistory,
+    PredictionRequest,
+    PredictionResult,
+    PredictionVerification,
+    RecentPrediction,
+    router,
+)
 
 
 @pytest.mark.unit

@@ -14,10 +14,19 @@ IMPORTS_AVAILABLE = True
 IMPORT_SUCCESS = True
 IMPORT_ERROR = "Mock模式已启用"
 
+
 # Mock数据库模型
 class MockPrediction:
-    def __init__(self, id=1, user_id=1, match_id=1, predicted_home_score=2, predicted_away_score=1,
-                 confidence=0.85, status="pending"):
+    def __init__(
+        self,
+        id=1,
+        user_id=1,
+        match_id=1,
+        predicted_home_score=2,
+        predicted_away_score=1,
+        confidence=0.85,
+        status="pending",
+    ):
         self.id = id
         self.user_id = user_id
         self.match_id = match_id
@@ -42,8 +51,9 @@ class MockPrediction:
             "status": self.status,
             "created_at": self.created_at.isoformat(),
             "is_correct": self.is_correct,
-            "points_earned": self.points_earned
+            "points_earned": self.points_earned,
         }
+
 
 # Mock数据库管理器
 class MockDatabaseManager:
@@ -57,6 +67,7 @@ class MockDatabaseManager:
     async def get_async_session_async(self):
         """返回MockAsyncSession实例（协程版本）"""
         return MockAsyncSession()
+
 
 # Mock异步会话
 class MockAsyncSession:
@@ -76,6 +87,7 @@ class MockAsyncSession:
 
     async def execute(self, stmt):
         """Mock执行SQL语句"""
+
         class MockResult:
             def __init__(self):
                 self._data = [MockPrediction(), MockPrediction()]
@@ -108,8 +120,10 @@ class MockAsyncSession:
         if obj in self.objects:
             self.objects.remove(obj)
 
+
 class MockScalars:
     """Mock的scalars()返回值"""
+
     def __init__(self):
         self._data = [MockPrediction(), MockPrediction()]
 
@@ -122,11 +136,13 @@ class MockScalars:
     def __iter__(self):
         return iter(self._data)
 
+
 # Mock预测状态常量
 class MockPredictionStatus:
     PENDING = "pending"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
+
 
 # Mock基础仓储
 class MockBaseRepository:
@@ -139,9 +155,9 @@ class MockBaseRepository:
         results = []
 
         if filters:
-            match_id = filters.get('match_id')
-            user_id = filters.get('user_id')
-            status = filters.get('status')
+            match_id = filters.get("match_id")
+            user_id = filters.get("user_id")
+            status = filters.get("status")
 
             if match_id is not None:
                 results.append(MockPrediction(id=1, user_id=1, match_id=match_id))
@@ -170,8 +186,8 @@ class MockBaseRepository:
     async def find_one_by(self, filters=None, session=None):
         # 智能Mock兼容修复模式 - 根据filters返回单个Mock数据
         if filters:
-            user_id = filters.get('user_id')
-            match_id = filters.get('match_id')
+            user_id = filters.get("user_id")
+            match_id = filters.get("match_id")
             return MockPrediction(id=1, user_id=user_id or 1, match_id=match_id or 1)
         return MockPrediction(id=1, user_id=1, match_id=1)
 
@@ -187,37 +203,53 @@ class MockBaseRepository:
                 setattr(mock_pred, key, value)
         return mock_pred
 
+
 # Mock预测仓储
 class MockPredictionRepository(MockBaseRepository):
     def __init__(self, db_manager=None):
         super().__init__(MockPrediction, db_manager)
 
     async def get_by_match(self, match_id, status=None, limit=None, session=None):
-        results = [MockPrediction(id=1, user_id=1, match_id=match_id), MockPrediction(id=2, user_id=2, match_id=match_id)]
+        results = [
+            MockPrediction(id=1, user_id=1, match_id=match_id),
+            MockPrediction(id=2, user_id=2, match_id=match_id),
+        ]
         if limit:
             results = results[:limit]
         return results
 
     async def get_by_user(self, user_id, status=None, limit=None, session=None):
-        results = [MockPrediction(id=1, user_id=user_id, match_id=1), MockPrediction(id=3, user_id=user_id, match_id=2)]
+        results = [
+            MockPrediction(id=1, user_id=user_id, match_id=1),
+            MockPrediction(id=3, user_id=user_id, match_id=2),
+        ]
         if limit:
             results = results[:limit]
         return results
 
     async def get_by_status(self, status, limit=None, session=None):
-        results = [MockPrediction(id=1, status=status), MockPrediction(id=2, status=status)]
+        results = [
+            MockPrediction(id=1, status=status),
+            MockPrediction(id=2, status=status),
+        ]
         if limit:
             results = results[:limit]
         return results
 
     async def get_pending_predictions(self, limit=None, session=None):
-        results = [MockPrediction(id=1, status="pending"), MockPrediction(id=2, status="pending")]
+        results = [
+            MockPrediction(id=1, status="pending"),
+            MockPrediction(id=2, status="pending"),
+        ]
         if limit:
             results = results[:limit]
         return results
 
     async def get_completed_predictions(self, days=7, limit=None, session=None):
-        results = [MockPrediction(id=1, status="completed"), MockPrediction(id=2, status="completed")]
+        results = [
+            MockPrediction(id=1, status="completed"),
+            MockPrediction(id=2, status="completed"),
+        ]
         if limit:
             results = results[:limit]
         return results
@@ -225,15 +257,35 @@ class MockPredictionRepository(MockBaseRepository):
     async def get_user_prediction_for_match(self, user_id, match_id, session=None):
         return MockPrediction(id=1, user_id=user_id, match_id=match_id)
 
-    async def create_prediction(self, user_id, match_id, predicted_home_score, predicted_away_score, confidence=None, model_version=None, session=None):
+    async def create_prediction(
+        self,
+        user_id,
+        match_id,
+        predicted_home_score,
+        predicted_away_score,
+        confidence=None,
+        model_version=None,
+        session=None,
+    ):
         return MockPrediction(
-            id=1, user_id=user_id, match_id=match_id,
+            id=1,
+            user_id=user_id,
+            match_id=match_id,
             predicted_home_score=predicted_home_score,
             predicted_away_score=predicted_away_score,
-            confidence=confidence, status="pending"
+            confidence=confidence,
+            status="pending",
         )
 
-    async def update_prediction_result(self, prediction_id, actual_home_score, actual_away_score, is_correct, points_earned=None, session=None):
+    async def update_prediction_result(
+        self,
+        prediction_id,
+        actual_home_score,
+        actual_away_score,
+        is_correct,
+        points_earned=None,
+        session=None,
+    ):
         pred = MockPrediction(id=prediction_id)
         pred.actual_home_score = actual_home_score
         pred.actual_away_score = actual_away_score
@@ -258,7 +310,7 @@ class MockPredictionRepository(MockBaseRepository):
             "wrong": 2,
             "accuracy": 0.714,
             "total_points": 50.0,
-            "avg_confidence": 0.82
+            "avg_confidence": 0.82,
         }
 
     async def get_match_prediction_summary(self, match_id, session=None):
@@ -271,7 +323,7 @@ class MockPredictionRepository(MockBaseRepository):
             "home_win_predictions": 8,
             "away_win_predictions": 3,
             "draw_predictions": 4,
-            "avg_confidence": 0.79
+            "avg_confidence": 0.79,
         }
 
     async def get_top_predictors(self, days=30, limit=10, session=None):
@@ -282,7 +334,7 @@ class MockPredictionRepository(MockBaseRepository):
                 "correct_predictions": 18,
                 "accuracy": 0.72,
                 "total_points": 180.0,
-                "avg_confidence": 0.85
+                "avg_confidence": 0.85,
             },
             {
                 "user_id": 456,
@@ -290,9 +342,10 @@ class MockPredictionRepository(MockBaseRepository):
                 "correct_predictions": 14,
                 "accuracy": 0.70,
                 "total_points": 140.0,
-                "avg_confidence": 0.80
-            }
+                "avg_confidence": 0.80,
+            },
         ]
+
 
 # 智能Mock兼容修复模式 - 强制使用Mock实现以避免复杂的数据库依赖
 IMPORT_SUCCESS = True
@@ -309,22 +362,27 @@ PredictionStatusClass = MockPredictionStatus
 PredictionRepository = PredictionRepo
 PredictionStatus = PredictionStatusClass
 
+
 # 模拟独立函数（如果存在的话）
 def get_by_match():
     """Mock的get_by_match函数"""
     return lambda match_id: [MockPrediction(match_id=match_id)]
 
+
 def get_by_user():
     """Mock的get_by_user函数"""
     return lambda user_id: [MockPrediction(user_id=user_id)]
+
 
 def get_by_status():
     """Mock的get_by_status函数"""
     return lambda status: [MockPrediction(status=status)]
 
+
 def get_pending_predictions():
     """Mock的get_pending_predictions函数"""
     return lambda: [MockPrediction(status="pending")]
+
 
 def get_completed_predictions():
     """Mock的get_completed_predictions函数"""
@@ -357,11 +415,11 @@ class TestDatabaseRepositoriesPrediction:
         """测试PredictionRepository类基础功能"""
         # 智能Mock兼容修复模式 - 测试仓储基础功能
         assert prediction_repository is not None
-        assert hasattr(prediction_repository, 'get_by_match')
-        assert hasattr(prediction_repository, 'get_by_user')
-        assert hasattr(prediction_repository, 'get_by_status')
-        assert hasattr(prediction_repository, 'get_pending_predictions')
-        assert hasattr(prediction_repository, 'get_completed_predictions')
+        assert hasattr(prediction_repository, "get_by_match")
+        assert hasattr(prediction_repository, "get_by_user")
+        assert hasattr(prediction_repository, "get_by_status")
+        assert hasattr(prediction_repository, "get_pending_predictions")
+        assert hasattr(prediction_repository, "get_completed_predictions")
 
     @pytest.mark.asyncio
     async def test_get_by_match_function(self, prediction_repository):
@@ -464,7 +522,7 @@ class TestDatabaseRepositoriesPrediction:
             "match_id": 1,
             "predicted_home_score": 2,
             "predicted_away_score": 1,
-            "confidence": 0.85
+            "confidence": 0.85,
         }
         created_pred = await prediction_repository.create(prediction_data)
         assert created_pred is not None
@@ -472,15 +530,14 @@ class TestDatabaseRepositoriesPrediction:
         assert created_pred.match_id == 1
 
         # 测试查找单个
-        found_pred = await prediction_repository.find_one_by({
-            "user_id": 1, "match_id": 1
-        })
+        found_pred = await prediction_repository.find_one_by(
+            {"user_id": 1, "match_id": 1}
+        )
         assert found_pred is not None
 
         # 测试更新
         updated_pred = await prediction_repository.update(
-            obj_id=1,
-            obj_data={"status": PredictionStatus.COMPLETED}
+            obj_id=1, obj_data={"status": PredictionStatus.COMPLETED}
         )
         assert updated_pred is not None
         assert updated_pred.status == PredictionStatus.COMPLETED
@@ -491,7 +548,9 @@ class TestDatabaseRepositoriesPrediction:
         user_id = 123
         match_id = 456
 
-        result = await prediction_repository.get_user_prediction_for_match(user_id, match_id)
+        result = await prediction_repository.get_user_prediction_for_match(
+            user_id, match_id
+        )
 
         assert result is not None
         assert result.user_id == user_id
@@ -506,7 +565,7 @@ class TestDatabaseRepositoriesPrediction:
             predicted_home_score=2,
             predicted_away_score=1,
             confidence=0.85,
-            model_version="v1.0"
+            model_version="v1.0",
         )
 
         assert prediction is not None
@@ -525,7 +584,7 @@ class TestDatabaseRepositoriesPrediction:
             actual_home_score=3,
             actual_away_score=1,
             is_correct=True,
-            points_earned=10.0
+            points_earned=10.0,
         )
 
         assert result is not None
@@ -539,8 +598,7 @@ class TestDatabaseRepositoriesPrediction:
     async def test_cancel_prediction(self, prediction_repository):
         """测试取消预测"""
         result = await prediction_repository.cancel_prediction(
-            prediction_id=1,
-            reason="用户取消"
+            prediction_id=1, reason="用户取消"
         )
 
         assert result is not None
@@ -550,7 +608,9 @@ class TestDatabaseRepositoriesPrediction:
     @pytest.mark.asyncio
     async def test_user_prediction_stats(self, prediction_repository):
         """测试获取用户预测统计"""
-        stats = await prediction_repository.get_user_prediction_stats(user_id=123, days=30)
+        stats = await prediction_repository.get_user_prediction_stats(
+            user_id=123, days=30
+        )
 
         assert stats is not None
         assert "total" in stats
@@ -594,7 +654,7 @@ class TestDatabaseRepositoriesPrediction:
 
         # 验证仓储实例化成功
         assert repo is not None
-        assert hasattr(repo, 'db_manager')
+        assert hasattr(repo, "db_manager")
         assert repo.db_manager is not None
 
     def test_error_handling(self):
@@ -606,7 +666,7 @@ class TestDatabaseRepositoriesPrediction:
             assert repo is not None
 
             # 测试调用不存在的方法不会崩溃
-            assert hasattr(repo, 'get_by_match') or True
+            assert hasattr(repo, "get_by_match") or True
 
         except Exception as e:
             # 在Mock模式下，不应该有异常
@@ -615,9 +675,9 @@ class TestDatabaseRepositoriesPrediction:
     def test_constants(self):
         """测试预测状态常量"""
         # 智能Mock兼容修复模式 - 测试常量定义
-        assert hasattr(PredictionStatus, 'PENDING')
-        assert hasattr(PredictionStatus, 'COMPLETED')
-        assert hasattr(PredictionStatus, 'CANCELLED')
+        assert hasattr(PredictionStatus, "PENDING")
+        assert hasattr(PredictionStatus, "COMPLETED")
+        assert hasattr(PredictionStatus, "CANCELLED")
 
         assert PredictionStatus.PENDING == "pending"
         assert PredictionStatus.COMPLETED == "completed"

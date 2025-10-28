@@ -24,8 +24,13 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, "src")
 
 from src.core.di import ServiceLifetime
-from src.core.di_setup import (DISetup, configure_di, create_di_config,
-                               get_di_setup, register_service)
+from src.core.di_setup import (
+    DISetup,
+    configure_di,
+    create_di_config,
+    get_di_setup,
+    register_service,
+)
 
 
 @pytest.mark.unit

@@ -66,7 +66,8 @@ async def get_decorator_stats(
         stats = global_decorator_service.get_function_stats(function_name)
         if not stats:
             raise HTTPException(
-                status_code=404, detail=f"函数 {function_name} 未找到或未装饰"  # TODO: 将魔法数字 404 提取为常量
+                status_code=404,
+                detail=f"函数 {function_name} 未找到或未装饰",  # TODO: 将魔法数字 404 提取为常量
             )
         return stats
     else:
@@ -218,7 +219,9 @@ async def demo_timeout_decorator(
 
 @router.get("/demo/metrics", summary="指标装饰器演示")
 async def demo_metrics_decorator(
-    iterations: int = Query(10, ge=1, le=100, description="执行次数"),  # TODO: 将魔法数字 100 提取为常量
+    iterations: int = Query(
+        10, ge=1, le=100, description="执行次数"
+    ),  # TODO: 将魔法数字 100 提取为常量
 ) -> Dict[str, Any]:
     """演示指标装饰器的效果"""
     # 应用指标装饰器

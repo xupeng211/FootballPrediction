@@ -15,9 +15,15 @@ from typing import Any, Dict, List
 import pandas as pd
 import pytest
 
-from src.features.feature_store import (Entity, FeatureStore, FeatureView,
-                                        Field, Float64, Int64,
-                                        _MockFeastResult)
+from src.features.feature_store import (
+    Entity,
+    FeatureStore,
+    FeatureView,
+    Field,
+    Float64,
+    Int64,
+    _MockFeastResult,
+)
 
 
 @pytest.mark.unit

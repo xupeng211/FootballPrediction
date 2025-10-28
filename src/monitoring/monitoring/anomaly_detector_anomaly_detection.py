@@ -5,7 +5,6 @@
 # 导入
 
 
-
 # 常量
 OUTLIER = "outlier"
 TREND_CHANGE = "trend_change"

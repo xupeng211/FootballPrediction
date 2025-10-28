@@ -19,11 +19,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 # 测试导入
 try:
-    from src.api.features import (build_response_data,
-                                  check_feature_store_availability,
-                                  feature_store, get_feature_store,
-                                  get_features_data, get_match_info, router,
-                                  validate_match_id)
+    from src.api.features import (
+        build_response_data,
+        check_feature_store_availability,
+        feature_store,
+        get_feature_store,
+        get_features_data,
+        get_match_info,
+        router,
+        validate_match_id,
+    )
 
     FEATURES_AVAILABLE = True
 except ImportError as e:

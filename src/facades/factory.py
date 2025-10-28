@@ -15,8 +15,13 @@ from typing import Any, Dict, List, Optional, Type, Union
 import yaml
 
 from .base import SystemFacade
-from .facades import (AnalyticsFacade, DataCollectionFacade, MainSystemFacade,
-                      NotificationFacade, PredictionFacade)
+from .facades import (
+    AnalyticsFacade,
+    DataCollectionFacade,
+    MainSystemFacade,
+    NotificationFacade,
+    PredictionFacade,
+)
 
 
 @dataclass

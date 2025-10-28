@@ -14,13 +14,15 @@ from typing import Any, Dict
 import pytest
 from fastapi import FastAPI
 
-from src.performance.integration import (PerformanceMonitoringIntegration,
-                                         generate_performance_report,
-                                         get_performance_integration,
-                                         integrate_performance_monitoring,
-                                         setup_performance_monitoring,
-                                         start_performance_profiling,
-                                         stop_performance_profiling)
+from src.performance.integration import (
+    PerformanceMonitoringIntegration,
+    generate_performance_report,
+    get_performance_integration,
+    integrate_performance_monitoring,
+    setup_performance_monitoring,
+    start_performance_profiling,
+    stop_performance_profiling,
+)
 
 
 @pytest.mark.unit

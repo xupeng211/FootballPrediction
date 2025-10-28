@@ -13,8 +13,7 @@ import pytest
 
 # 尝试导入celery_app模块
 try:
-    from src.tasks.celery_app import (DatabaseManager, RedisManager,
-                                      celery_app, logger)
+    from src.tasks.celery_app import DatabaseManager, RedisManager, celery_app, logger
 
     CELERY_APP_AVAILABLE = True
 except ImportError as e:
@@ -275,8 +274,12 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if CELERY_APP_AVAILABLE:
-        from src.tasks.celery_app import (DatabaseManager, RedisManager,
-                                          celery_app, logger)
+        from src.tasks.celery_app import (
+            DatabaseManager,
+            RedisManager,
+            celery_app,
+            logger,
+        )
 
         assert celery_app is not None
         assert DatabaseManager is not None

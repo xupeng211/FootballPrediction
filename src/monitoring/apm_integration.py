@@ -36,8 +36,7 @@ class APMIntegration:
             # 尝试导入和初始化OpenTelemetry
             try:
                 from opentelemetry import metrics, trace
-                from opentelemetry.exporter.prometheus import \
-                    PrometheusMetricReader
+                from opentelemetry.exporter.prometheus import PrometheusMetricReader
                 from opentelemetry.sdk.metrics import MeterProvider
                 from opentelemetry.sdk.trace import TracerProvider
 
@@ -65,8 +64,7 @@ class APMIntegration:
                 import sentry_sdk
                 from sentry_sdk.integrations.fastapi import FastApiIntegration
                 from sentry_sdk.integrations.redis import RedisIntegration
-                from sentry_sdk.integrations.sqlalchemy import \
-                    SqlalchemyIntegration
+                from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 
                 sentry_sdk.init(
                     dsn=self.get_sentry_dsn(),

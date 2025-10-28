@@ -8,8 +8,13 @@ Contains core domain models for the football prediction system.
 
 from .league import League, LeagueSeason, LeagueSettings
 from .match import Match, MatchResult, MatchScore, MatchStatus
-from .prediction import (ConfidenceScore, Prediction, PredictionPoints,
-                         PredictionScore, PredictionStatus)
+from .prediction import (
+    ConfidenceScore,
+    Prediction,
+    PredictionPoints,
+    PredictionScore,
+    PredictionStatus,
+)
 from .team import Team, TeamForm, TeamStats
 
 __all__ = [

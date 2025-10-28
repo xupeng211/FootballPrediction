@@ -1,4 +1,3 @@
-
 """
 事件系统API端点
 Event System API Endpoints

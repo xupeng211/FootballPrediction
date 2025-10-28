@@ -14,11 +14,13 @@ import pytest
 
 # 测试导入
 try:
-    from src.services.data_processing import (DataProcessor,
-                                              FeaturesDataProcessor,
-                                              MatchDataProcessor,
-                                              OddsDataProcessor,
-                                              ScoresDataProcessor)
+    from src.services.data_processing import (
+        DataProcessor,
+        FeaturesDataProcessor,
+        MatchDataProcessor,
+        OddsDataProcessor,
+        ScoresDataProcessor,
+    )
 
     PROCESSING_AVAILABLE = True
 except ImportError as e:

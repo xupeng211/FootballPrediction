@@ -38,8 +38,7 @@ def test_import_logger_manager():
 
 def test_import_decorators():
     """测试能否正常导入日志装饰器"""
-    from src.core.logging import (log_async_performance, log_audit,
-                                  log_performance)
+    from src.core.logging import log_async_performance, log_audit, log_performance
 
     assert log_performance is not None
     assert log_async_performance is not None
@@ -130,10 +129,16 @@ def test_audit_decorator():
 # 测试向后兼容性
 def test_backward_compatibility_import():
     """测试向后兼容的导入"""
-    from src.core.logging_system import (LogCategory, LoggerManager, LogLevel,
-                                         StructuredLogger, get_logger,
-                                         log_async_performance, log_audit,
-                                         log_performance)
+    from src.core.logging_system import (
+        LogCategory,
+        LoggerManager,
+        LogLevel,
+        StructuredLogger,
+        get_logger,
+        log_async_performance,
+        log_audit,
+        log_performance,
+    )
 
     assert LogLevel is not None
     assert LogCategory is not None

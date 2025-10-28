@@ -11,12 +11,24 @@ import pytest
 
 # 尝试导入目标模块
 try:
-    from src.api.data_router import (LeagueInfo, MatchInfo, MatchStatistics,
-                                     OddsInfo, TeamInfo, TeamStatistics,
-                                     get_league, get_leagues, get_match,
-                                     get_match_odds, get_match_statistics,
-                                     get_matches, get_odds, get_team,
-                                     get_team_statistics, get_teams)
+    from src.api.data_router import (
+        LeagueInfo,
+        MatchInfo,
+        MatchStatistics,
+        OddsInfo,
+        TeamInfo,
+        TeamStatistics,
+        get_league,
+        get_leagues,
+        get_match,
+        get_match_odds,
+        get_match_statistics,
+        get_matches,
+        get_odds,
+        get_team,
+        get_team_statistics,
+        get_teams,
+    )
 
     IMPORTS_AVAILABLE = True
 except ImportError as e:

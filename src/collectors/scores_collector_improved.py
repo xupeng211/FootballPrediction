@@ -7,6 +7,7 @@ scores_collector_improved 主模块
 """
 
 from .collectors.scores_collector_improved_models import *
+
 # 导入拆分的模块
 from .collectors.scores_collector_improved_services import *
 from .collectors.scores_collector_improved_utils import *

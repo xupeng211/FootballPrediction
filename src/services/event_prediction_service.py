@@ -13,9 +13,13 @@ from typing import Any, Dict, List, Optional
 
 from ..core.di import DIContainer
 from ..domain.models import Match, Prediction
-from ..events import (PredictionMadeEvent, PredictionMadeEventData,
-                      PredictionUpdatedEvent, PredictionUpdatedEventData,
-                      get_event_bus)
+from ..events import (
+    PredictionMadeEvent,
+    PredictionMadeEventData,
+    PredictionUpdatedEvent,
+    PredictionUpdatedEventData,
+    get_event_bus,
+)
 from ..events.types import MatchCreatedEventData, UserRegisteredEventData
 from .strategy_prediction_service import StrategyPredictionService
 

@@ -16,9 +16,11 @@ from typing import Any, AsyncGenerator, Callable, Dict, List, Optional
 import pytest
 
 from src.core.exceptions import StreamingError
-from src.streaming.stream_processor_simple import (BatchProcessor,
-                                                   MessageProcessor,
-                                                   StreamProcessor)
+from src.streaming.stream_processor_simple import (
+    BatchProcessor,
+    MessageProcessor,
+    StreamProcessor,
+)
 
 
 class AsyncIterator:

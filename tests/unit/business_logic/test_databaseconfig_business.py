@@ -14,6 +14,7 @@ P2阶段深度业务逻辑测试: DatabaseConfig
 import asyncio
 import json
 import os
+
 # 确保可以导入源码模块
 import sys
 import tempfile
@@ -28,10 +29,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../.."))
 # 导入目标模块
 try:
     import database.config
-    from database.config import (DatabaseConfig, get_database_config,
-                                 get_database_url,
-                                 get_production_database_config,
-                                 get_test_database_config)
+    from database.config import (
+        DatabaseConfig,
+        get_database_config,
+        get_database_url,
+        get_production_database_config,
+        get_test_database_config,
+    )
 
     MODULE_AVAILABLE = True
 except ImportError as e:

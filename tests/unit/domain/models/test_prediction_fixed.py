@@ -10,9 +10,13 @@ from unittest.mock import patch
 import pytest
 
 from src.core.exceptions import DomainError
-from src.domain.models.prediction import (ConfidenceScore, Prediction,
-                                          PredictionPoints, PredictionScore,
-                                          PredictionStatus)
+from src.domain.models.prediction import (
+    ConfidenceScore,
+    Prediction,
+    PredictionPoints,
+    PredictionScore,
+    PredictionStatus,
+)
 
 
 @pytest.mark.unit

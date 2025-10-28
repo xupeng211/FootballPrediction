@@ -13,14 +13,26 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from src.observers.base import (CompositeObserver, ObservableEvent,
-                                ObservableEventType, Observer, Subject)
+from src.observers.base import (
+    CompositeObserver,
+    ObservableEvent,
+    ObservableEventType,
+    Observer,
+    Subject,
+)
 from src.observers.manager import ObserverManager, get_observer_manager
-from src.observers.observers import (AlertingObserver, LoggingObserver,
-                                     MetricsObserver, PerformanceObserver)
-from src.observers.subjects import (AlertSubject, CacheSubject,
-                                    PredictionMetricsSubject,
-                                    SystemMetricsSubject)
+from src.observers.observers import (
+    AlertingObserver,
+    LoggingObserver,
+    MetricsObserver,
+    PerformanceObserver,
+)
+from src.observers.subjects import (
+    AlertSubject,
+    CacheSubject,
+    PredictionMetricsSubject,
+    SystemMetricsSubject,
+)
 
 
 @pytest.fixture
@@ -731,9 +743,11 @@ class TestGlobalObserverManager:
     @pytest.mark.asyncio
     async def test_system_functions(self):
         """测试系统级函数"""
-        from src.observers.manager import (initialize_observer_system,
-                                           start_observer_system,
-                                           stop_observer_system)
+        from src.observers.manager import (
+            initialize_observer_system,
+            start_observer_system,
+            stop_observer_system,
+        )
 
         await initialize_observer_system()
         await start_observer_system()

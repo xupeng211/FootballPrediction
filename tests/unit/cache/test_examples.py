@@ -13,10 +13,16 @@ import pytest
 
 # 测试导入
 try:
-    from src.cache.examples import (batch_fetch_data, cached_api_call,
-                                    clear_user_cache, expensive_computation,
-                                    fetch_user_data, get_match_predictions,
-                                    get_team_statistics, get_user_profile)
+    from src.cache.examples import (
+        batch_fetch_data,
+        cached_api_call,
+        clear_user_cache,
+        expensive_computation,
+        fetch_user_data,
+        get_match_predictions,
+        get_team_statistics,
+        get_user_profile,
+    )
 
     CACHE_EXAMPLES_AVAILABLE = True
 except ImportError as e:
@@ -154,8 +160,11 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if CACHE_EXAMPLES_AVAILABLE:
-        from src.cache.examples import (expensive_computation, fetch_user_data,
-                                        get_user_profile)
+        from src.cache.examples import (
+            expensive_computation,
+            fetch_user_data,
+            get_user_profile,
+        )
 
         assert expensive_computation is not None
         assert fetch_user_data is not None

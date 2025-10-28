@@ -8,8 +8,12 @@ Used to integrate external systems and APIs.
 
 from .base import Adaptee, Adapter, BaseAdapter, Target
 from .factory_simple import AdapterFactory, get_adapter
-from .football import (ApiFootballAdapter, FootballApiAdapter,
-                       FootballDataAdapter, OptaDataAdapter)
+from .football import (
+    ApiFootballAdapter,
+    FootballApiAdapter,
+    FootballDataAdapter,
+    OptaDataAdapter,
+)
 from .registry_simple import AdapterRegistry as SimpleAdapterRegistry, register_adapter
 from .registry import AdapterRegistry
 

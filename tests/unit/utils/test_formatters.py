@@ -11,8 +11,12 @@ import pytest
 
 # 测试导入
 try:
-    from src.utils.formatters import (format_currency, format_datetime,
-                                      format_json, format_percentage)
+    from src.utils.formatters import (
+        format_currency,
+        format_datetime,
+        format_json,
+        format_percentage,
+    )
 
     FORMATTERS_AVAILABLE = True
 except ImportError as e:
@@ -268,8 +272,12 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if FORMATTERS_AVAILABLE:
-        from src.utils.formatters import (format_currency, format_datetime,
-                                          format_json, format_percentage)
+        from src.utils.formatters import (
+            format_currency,
+            format_datetime,
+            format_json,
+            format_percentage,
+        )
 
         assert format_datetime is not None
         assert format_json is not None

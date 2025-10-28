@@ -13,8 +13,12 @@ import pytest
 
 # 导入要测试的模块
 try:
-    from src.utils.formatters import (format_currency, format_datetime,
-                                      format_json, format_percentage)
+    from src.utils.formatters import (
+        format_currency,
+        format_datetime,
+        format_json,
+        format_percentage,
+    )
 
     FORMATTERS_AVAILABLE = True
 except ImportError:

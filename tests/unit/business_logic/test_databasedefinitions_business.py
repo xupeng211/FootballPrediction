@@ -24,20 +24,25 @@ from sqlalchemy.orm import Session
 
 # 导入目标模块
 try:
-    from src.database.definitions import (DatabaseManager, DatabaseRole,
-                                          MultiUserDatabaseManager,
-                                          get_admin_session,
-                                          get_async_admin_session,
-                                          get_async_reader_session,
-                                          get_async_session,
-                                          get_async_writer_session,
-                                          get_database_manager, get_db_session,
-                                          get_multi_user_database_manager,
-                                          get_reader_session, get_session,
-                                          get_writer_session,
-                                          initialize_database,
-                                          initialize_multi_user_database,
-                                          initialize_test_database)
+    from src.database.definitions import (
+        DatabaseManager,
+        DatabaseRole,
+        MultiUserDatabaseManager,
+        get_admin_session,
+        get_async_admin_session,
+        get_async_reader_session,
+        get_async_session,
+        get_async_writer_session,
+        get_database_manager,
+        get_db_session,
+        get_multi_user_database_manager,
+        get_reader_session,
+        get_session,
+        get_writer_session,
+        initialize_database,
+        initialize_multi_user_database,
+        initialize_test_database,
+    )
 
     MODULE_AVAILABLE = True
 except ImportError as e:

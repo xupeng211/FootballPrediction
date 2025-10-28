@@ -7,10 +7,13 @@ from typing import Any, Dict, Generator
 
 import pytest
 
-from .helpers.testcontainers import (TestPostgresContainer, TestRedisContainer,
-                                     create_test_database_container,
-                                     create_test_redis_container,
-                                     mock_containers)
+from .helpers.testcontainers import (
+    TestPostgresContainer,
+    TestRedisContainer,
+    create_test_database_container,
+    create_test_redis_container,
+    mock_containers,
+)
 
 
 @pytest.fixture(scope="session")

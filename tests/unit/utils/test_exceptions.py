@@ -2,9 +2,15 @@
 
 import pytest
 
-from src.core.exceptions import (ConfigError, DatabaseError, DataError,
-                                 FootballPredictionError, ModelError,
-                                 PredictionError, ValidationError)
+from src.core.exceptions import (
+    ConfigError,
+    DatabaseError,
+    DataError,
+    FootballPredictionError,
+    ModelError,
+    PredictionError,
+    ValidationError,
+)
 
 
 @pytest.mark.unit

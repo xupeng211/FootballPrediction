@@ -2,6 +2,17 @@
 
 import pytest
 
+# 尝试导入API模块并设置可用性标志
+try:
+    from src.api.data_api import router
+
+    API_AVAILABLE = True
+    TEST_SKIP_REASON = "API模块不可用"
+except ImportError as e:
+    print(f"Data API import error: {e}")
+    API_AVAILABLE = False
+    TEST_SKIP_REASON = "Data API模块不可用"
+
 
 @pytest.mark.skipif(not API_AVAILABLE, reason=TEST_SKIP_REASON)
 @pytest.mark.unit

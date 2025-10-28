@@ -36,9 +36,15 @@ try:
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
 
-    from src.api.data_router import (LeagueInfo, MatchInfo, MatchStatistics,
-                                     OddsInfo, TeamInfo, TeamStatistics,
-                                     router)
+    from src.api.data_router import (
+        LeagueInfo,
+        MatchInfo,
+        MatchStatistics,
+        OddsInfo,
+        TeamInfo,
+        TeamStatistics,
+        router,
+    )
     from src.app import app
 except ImportError as e:
     print(f"Warning: Import error - {e}, using Mock classes")

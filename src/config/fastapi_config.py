@@ -9,6 +9,9 @@ from src.utils.i18n import I18nUtils, init_i18n
 
 # TODO: 方法 def custom_openapi 过长(29行)，建议拆分
 # TODO: 方法 def create_chinese_app 过长(21行)，建议拆分
+# TODO: 方法 def custom_openapi 过长(29行)，建议拆分
+# TODO: 方法 def custom_openapi 过长(29行)，建议拆分
+# TODO: 方法 def create_chinese_app 过长(21行)，建议拆分
 def create_chinese_app() -> FastAPI:
     """创建中文界面的 FastAPI 应用"""
 
@@ -29,9 +32,9 @@ def create_chinese_app() -> FastAPI:
     original_openapi = app.openapi
 
     # 自定义文档
-# TODO: 方法 def custom_openapi 过长(29行)，建议拆分
-# TODO: 方法 def custom_openapi 过长(29行)，建议拆分
-    def custom_openapi():  # TODO: 添加返回类型注解
+    # TODO: 方法 def custom_openapi 过长(29行)，建议拆分
+    # TODO: 方法 def custom_openapi 过长(29行)，建议拆分
+    def custom_openapi():  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
         """TODO: 添加函数文档"""
         if app.openapi_schema:
             return app.openapi_schema

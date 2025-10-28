@@ -3,16 +3,20 @@ from datetime import datetime
 import pytest
 
 from src.domain.events.base import DomainEvent
-from src.domain.events.match_events import (MatchCancelledEvent,
-                                            MatchFinishedEvent,
-                                            MatchPostponedEvent,
-                                            MatchStartedEvent)
-from src.domain.events.prediction_events import (PredictionCancelledEvent,
-                                                 PredictionCreatedEvent,
-                                                 PredictionEvaluatedEvent,
-                                                 PredictionExpiredEvent,
-                                                 PredictionPointsAdjustedEvent,
-                                                 PredictionUpdatedEvent)
+from src.domain.events.match_events import (
+    MatchCancelledEvent,
+    MatchFinishedEvent,
+    MatchPostponedEvent,
+    MatchStartedEvent,
+)
+from src.domain.events.prediction_events import (
+    PredictionCancelledEvent,
+    PredictionCreatedEvent,
+    PredictionEvaluatedEvent,
+    PredictionExpiredEvent,
+    PredictionPointsAdjustedEvent,
+    PredictionUpdatedEvent,
+)
 from src.domain.models.match import MatchResult, MatchScore
 
 

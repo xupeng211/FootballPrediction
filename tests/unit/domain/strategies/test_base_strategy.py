@@ -8,9 +8,13 @@ from typing import Any, Dict, List, Tuple
 
 import pytest
 
-from src.domain.strategies.base import (PredictionInput, PredictionOutput,
-                                        PredictionStrategy, StrategyMetrics,
-                                        StrategyType)
+from src.domain.strategies.base import (
+    PredictionInput,
+    PredictionOutput,
+    PredictionStrategy,
+    StrategyMetrics,
+    StrategyType,
+)
 from src.domain.models.prediction import Prediction
 
 
@@ -39,9 +43,7 @@ class MockStrategy(PredictionStrategy):
             predicted_home_score=home_goals,
             predicted_away_score=away_goals,
             confidence=confidence,
-            metadata={
-                "reasoning": "Mock prediction for testing"
-            },
+            metadata={"reasoning": "Mock prediction for testing"},
         )
 
     async def batch_predict(
@@ -64,7 +66,7 @@ class MockStrategy(PredictionStrategy):
             precision=0.75,
             recall=0.7,
             f1_score=0.72,
-            total_predictions=len(actual_results)
+            total_predictions=len(actual_results),
         )
 
 
@@ -96,7 +98,7 @@ def valid_prediction_input():
         match=match,
         home_team=home_team,
         away_team=away_team,
-        historical_data={"home_form": "WWLDW", "away_form": "LDDLL"}
+        historical_data={"home_form": "WWLDW", "away_form": "LDDLL"},
     )
 
 

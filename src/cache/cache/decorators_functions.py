@@ -6,7 +6,6 @@
 from typing import Any, Callable, TypeVar
 
 
-
 # 常量
 F = TypeVar("F", bound=Callable[..., Any])
 T = TypeVar("T")

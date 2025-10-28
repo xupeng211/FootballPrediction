@@ -44,11 +44,13 @@ except ImportError:
     TransactionManager = Mock
 
 # 导入数据库相关的Mock类
-from tests.unit.mocks.mock_factory_phase4a import (MockConnectionPool,
-                                                   MockDatabaseService,
-                                                   MockRepository,
-                                                   MockTransactionManager,
-                                                   Phase4AMockFactory)
+from tests.unit.mocks.mock_factory_phase4a import (
+    MockConnectionPool,
+    MockDatabaseService,
+    MockRepository,
+    MockTransactionManager,
+    Phase4AMockFactory,
+)
 
 
 class DatabaseType(Enum):

@@ -5,8 +5,6 @@
 # 导入
 
 
-
-
 # 类定义
 class ValidationDecorator:
     """验证装饰器，验证函数的输入和输出"""

@@ -18,11 +18,15 @@ import pytest
 
 # 测试导入
 try:
-    from src.monitoring.alert_handlers import (AlertHandler, AlertManager,
-                                               AlertSeverity, AlertStatus,
-                                               EmailAlertHandler,
-                                               SlackAlertHandler,
-                                               WebhookAlertHandler)
+    from src.monitoring.alert_handlers import (
+        AlertHandler,
+        AlertManager,
+        AlertSeverity,
+        AlertStatus,
+        EmailAlertHandler,
+        SlackAlertHandler,
+        WebhookAlertHandler,
+    )
 
     ALERT_HANDLERS_AVAILABLE = True
 except ImportError as e:
@@ -369,10 +373,13 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if ALERT_HANDLERS_AVAILABLE:
-        from src.monitoring.alert_handlers import (AlertHandler, AlertManager,
-                                                   EmailAlertHandler,
-                                                   SlackAlertHandler,
-                                                   WebhookAlertHandler)
+        from src.monitoring.alert_handlers import (
+            AlertHandler,
+            AlertManager,
+            EmailAlertHandler,
+            SlackAlertHandler,
+            WebhookAlertHandler,
+        )
 
         assert AlertHandler is not None
         assert EmailAlertHandler is not None

@@ -20,10 +20,16 @@ except ImportError:
 
 from typing import Dict
 
-from src.api.dependencies import (ALGORITHM, SECRET_KEY, get_admin_user,
-                                  get_current_user, get_prediction_engine,
-                                  get_redis_manager, rate_limit_check,
-                                  verify_prediction_permission)
+from src.api.dependencies import (
+    ALGORITHM,
+    SECRET_KEY,
+    get_admin_user,
+    get_current_user,
+    get_prediction_engine,
+    get_redis_manager,
+    rate_limit_check,
+    verify_prediction_permission,
+)
 
 
 @pytest.mark.unit

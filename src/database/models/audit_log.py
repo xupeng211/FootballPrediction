@@ -1,8 +1,7 @@
 from enum import Enum
 from typing import Any, Dict
 
-from sqlalchemy import (Column, DateTime, Index, Integer, String,
-                        Text, func)
+from sqlalchemy import Column, DateTime, Index, Integer, String, Text, func
 from sqlalchemy.sql import func
 
 from ..base import BaseModel

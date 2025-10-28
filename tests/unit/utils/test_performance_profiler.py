@@ -14,13 +14,21 @@ from typing import Any, Dict
 
 import pytest
 
-from src.performance.profiler import (APIEndpointProfiler,
-                                      DatabaseQueryProfiler, FunctionProfile,
-                                      MemoryProfiler, PerformanceMetric,
-                                      PerformanceProfiler, QueryProfile,
-                                      get_performance_report, get_profiler,
-                                      profile_function, profile_method,
-                                      start_profiling, stop_profiling)
+from src.performance.profiler import (
+    APIEndpointProfiler,
+    DatabaseQueryProfiler,
+    FunctionProfile,
+    MemoryProfiler,
+    PerformanceMetric,
+    PerformanceProfiler,
+    QueryProfile,
+    get_performance_report,
+    get_profiler,
+    profile_function,
+    profile_method,
+    start_profiling,
+    stop_profiling,
+)
 
 
 @pytest.mark.unit

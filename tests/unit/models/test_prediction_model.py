@@ -15,8 +15,11 @@ import pytest
 
 # 测试导入
 try:
-    from src.models.prediction_model import (PredictionModel, PredictionStatus,
-                                             PredictionType)
+    from src.models.prediction_model import (
+        PredictionModel,
+        PredictionStatus,
+        PredictionType,
+    )
 
     PREDICTION_MODEL_AVAILABLE = True
 except ImportError as e:
@@ -268,9 +271,11 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if PREDICTION_MODEL_AVAILABLE:
-        from src.models.prediction_model import (PredictionModel,
-                                                 PredictionStatus,
-                                                 PredictionType)
+        from src.models.prediction_model import (
+            PredictionModel,
+            PredictionStatus,
+            PredictionType,
+        )
 
         assert PredictionModel is not None
         assert PredictionStatus is not None

@@ -16,6 +16,7 @@ import pytest
 import time
 from typing import Any, Dict
 
+
 class MockCacheEntry:
     """Mock缓存条目 - 用于测试"""
 
@@ -114,11 +115,7 @@ class MockTTLCache:
 
     def get_stats(self):
         """获取缓存统计"""
-        return {
-            "hits": 0,
-            "misses": 0,
-            "size": len(self._data)
-        }
+        return {"hits": 0, "misses": 0, "size": len(self._data)}
 
     def delete(self, key):
         """删除缓存项"""
@@ -129,7 +126,11 @@ class MockTTLCache:
 
     def items(self):
         """返回所有项"""
-        return [(key, entry.value) for key, entry in self._data.items() if not entry.is_expired()]
+        return [
+            (key, entry.value)
+            for key, entry in self._data.items()
+            if not entry.is_expired()
+        ]
 
     def keys(self):
         """返回所有键"""
@@ -137,7 +138,9 @@ class MockTTLCache:
 
     def values(self):
         """返回所有值"""
-        return [entry.value for key, entry in self._data.items() if not entry.is_expired()]
+        return [
+            entry.value for key, entry in self._data.items() if not entry.is_expired()
+        ]
 
     def __iter__(self):
         """迭代键"""
@@ -182,13 +185,16 @@ def mock_cleanup_all_expired():
     """清理所有过期缓存"""
     return 0
 
+
 def mock_clear_all_caches():
     """清空所有缓存"""
     return True
 
+
 def mock_get_all_stats():
     """获取所有统计信息"""
     return {"caches": 0, "entries": 0, "expired": 0}
+
 
 def mock_get_cache(name):
     """获取指定名称的缓存"""
@@ -355,7 +361,7 @@ class TestTTLCache:
         assert cache.get("key1") == "value1"
 
         # Mock实现中使用clear来模拟删除
-        if hasattr(cache, 'delete'):
+        if hasattr(cache, "delete"):
             cache.delete("key1")
         else:
             # 如果没有delete方法，清空整个缓存

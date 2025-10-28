@@ -17,8 +17,7 @@ import pytest
 try:
     from src.core.auto_binding import AutoBinding
     from src.core.config_di import ConfigDI
-    from src.core.di import (CircularDependencyError, DIContainer,
-                             ServiceNotFoundError)
+    from src.core.di import CircularDependencyError, DIContainer, ServiceNotFoundError
     from src.core.di_setup import DISetup
     from src.core.service_lifecycle import ServiceLifecycle, ServiceState
 

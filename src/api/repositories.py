@@ -12,9 +12,15 @@ from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, HTTPException, Query
 
-from ..repositories import (MatchRepoDep, PredictionRepoDep, QuerySpec,
-                            ReadOnlyMatchRepoDep, ReadOnlyPredictionRepoDep,
-                            ReadOnlyUserRepoDep, UserRepoDep)
+from ..repositories import (
+    MatchRepoDep,
+    PredictionRepoDep,
+    QuerySpec,
+    ReadOnlyMatchRepoDep,
+    ReadOnlyPredictionRepoDep,
+    ReadOnlyUserRepoDep,
+    UserRepoDep,
+)
 
 router = APIRouter(prefix="/repositories", tags=["仓储模式"])
 

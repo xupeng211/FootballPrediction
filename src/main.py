@@ -48,15 +48,19 @@ except ImportError:
 from src.api.health import router as health_router
 from src.api.schemas import RootResponse
 from src.config.openapi_config import setup_openapi
-from src.core.event_application import (initialize_event_system,
-                                        shutdown_event_system)
+from src.core.event_application import initialize_event_system, shutdown_event_system
 from src.cqrs.application import initialize_cqrs
 from src.database.connection import initialize_database
 from src.middleware.i18n import I18nMiddleware
-from src.monitoring.metrics_collector import (start_metrics_collection,
-                                              stop_metrics_collection)
-from src.observers import (initialize_observer_system, start_observer_system,
-                           stop_observer_system)
+from src.monitoring.metrics_collector import (
+    start_metrics_collection,
+    stop_metrics_collection,
+)
+from src.observers import (
+    initialize_observer_system,
+    start_observer_system,
+    stop_observer_system,
+)
 from src.performance.integration import setup_performance_monitoring
 
 # 配置日志
@@ -182,8 +186,9 @@ if MINIMAL_API_MODE:
 else:
     from src.api.adapters import router as adapters_router
     from src.api.cqrs import router as cqrs_router
-    from src.api.data_router import \
-        router as data_router  # runtime import for minimal mode
+    from src.api.data_router import (
+        router as data_router,
+    )  # runtime import for minimal mode
     from src.api.decorators import router as decorators_router
     from src.api.events import router as events_router
     from src.api.facades import router as facades_router

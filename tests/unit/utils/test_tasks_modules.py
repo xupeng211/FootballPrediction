@@ -17,16 +17,20 @@ import pytest
 try:
     from src.tasks.backup.async_tasks import AsyncBackupTask
     from src.tasks.backup.cleanup import CleanupTask
-    from src.tasks.backup.core import (BackupConfig, BackupScheduler,
-                                       BackupStrategy)
+    from src.tasks.backup.core import BackupConfig, BackupScheduler, BackupStrategy
     from src.tasks.backup.executor import BackupExecutor
     from src.tasks.backup.metrics import BackupMetricsCollector
     from src.tasks.backup.tasks import BackupTask
     from src.tasks.backup.validation import BackupValidator
-    from src.tasks.core import (TaskBatchProcessor, TaskCancellationManager,
-                                TaskDependencyResolver, TaskMetricsCollector,
-                                TaskPriorityQueue, TaskRetryPolicy,
-                                TaskStateManager)
+    from src.tasks.core import (
+        TaskBatchProcessor,
+        TaskCancellationManager,
+        TaskDependencyResolver,
+        TaskMetricsCollector,
+        TaskPriorityQueue,
+        TaskRetryPolicy,
+        TaskStateManager,
+    )
     from src.tasks.notifications import TaskNotificationManager
     from src.tasks.reporting import TaskReportGenerator
 

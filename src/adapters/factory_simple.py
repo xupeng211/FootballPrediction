@@ -19,6 +19,7 @@ class AdapterFactory:
         self._adapters[name] = adapter_class
 
     def create_adapter(
+        """TODO: 添加函数文档"""
         self, name: str, config: Optional[Dict] = None, singleton: bool = False
     ) -> Any:
         """创建适配器实例"""
@@ -43,9 +44,6 @@ class AdapterFactory:
 
 
 # 全局工厂实例
-_global_factory = None
-
-
 def get_global_factory() -> AdapterFactory:
     """获取全局工厂实例"""
     global _global_factory

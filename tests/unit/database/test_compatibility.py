@@ -4,8 +4,11 @@
 
 import pytest
 
-from src.database.compatibility import (Compatibility, CompatibleQueryBuilder,
-                                        SQLCompatibilityHelper)
+from src.database.compatibility import (
+    Compatibility,
+    CompatibleQueryBuilder,
+    SQLCompatibilityHelper,
+)
 
 
 @pytest.mark.unit

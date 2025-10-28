@@ -22,13 +22,19 @@ import pytest
 
 # 导入目标模块
 try:
-    from src.models.prediction import (Counter, Gauge, Histogram,
-                                       PredictionCache, PredictionResult,
-                                       PredictionService, cache_hit_ratio,
-                                       model_load_duration_seconds,
-                                       prediction_accuracy,
-                                       prediction_duration_seconds,
-                                       predictions_total)
+    from src.models.prediction import (
+        Counter,
+        Gauge,
+        Histogram,
+        PredictionCache,
+        PredictionResult,
+        PredictionService,
+        cache_hit_ratio,
+        model_load_duration_seconds,
+        prediction_accuracy,
+        prediction_duration_seconds,
+        predictions_total,
+    )
 
     MODULE_AVAILABLE = True
 except ImportError as e:

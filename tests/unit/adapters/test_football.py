@@ -14,8 +14,14 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 # 导入真实可用的基类
-from src.adapters.base import (Adaptee, Adapter, AdapterStatus, BaseAdapter,
-                               CompositeAdapter, DataTransformer)
+from src.adapters.base import (
+    Adaptee,
+    Adapter,
+    AdapterStatus,
+    BaseAdapter,
+    CompositeAdapter,
+    DataTransformer,
+)
 from src.core.exceptions import AdapterError
 
 

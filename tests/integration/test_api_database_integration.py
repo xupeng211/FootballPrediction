@@ -25,8 +25,7 @@ try:
     from database.models.prediction import Prediction
     from database.models.user import User
     from database.repositories.match_repository import MatchRepository
-    from database.repositories.prediction_repository import \
-        PredictionRepository
+    from database.repositories.prediction_repository import PredictionRepository
     from database.repositories.user_repository import UserRepository
 
     IMPORT_SUCCESS = True

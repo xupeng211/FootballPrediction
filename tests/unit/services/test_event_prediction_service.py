@@ -242,8 +242,7 @@ class TestEventDrivenPredictionService:
 
         # Then
         # 验证继承关系
-        from src.services.strategy_prediction_service import \
-            StrategyPredictionService
+        from src.services.strategy_prediction_service import StrategyPredictionService
 
         assert isinstance(service, StrategyPredictionService)
 

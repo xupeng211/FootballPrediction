@@ -10,8 +10,13 @@ from typing import Any, Dict, Optional
 
 import pytest
 
-from src.utils.helpers import (format_timestamp, generate_hash, generate_uuid,
-                               safe_get, sanitize_string)
+from src.utils.helpers import (
+    format_timestamp,
+    generate_hash,
+    generate_uuid,
+    safe_get,
+    sanitize_string,
+)
 
 
 @pytest.mark.unit

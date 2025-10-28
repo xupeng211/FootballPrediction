@@ -17,8 +17,12 @@ def test_module_imports():
     """测试模块导入"""
     # 测试导入新模块
     from src.data.processing.football_data_cleaner_mod import (
-        DataValidator, FootballDataCleaner, IDMapper, OddsProcessor,
-        TimeProcessor)
+        DataValidator,
+        FootballDataCleaner,
+        IDMapper,
+        OddsProcessor,
+        TimeProcessor,
+    )
 
     assert FootballDataCleaner is not None
     assert TimeProcessor is not None
@@ -240,8 +244,7 @@ async def test_id_mapper():
 
 def test_football_data_cleaner_initialization():
     """测试足球数据清洗器初始化"""
-    from src.data.processing.football_data_cleaner_mod import \
-        FootballDataCleaner
+    from src.data.processing.football_data_cleaner_mod import FootballDataCleaner
 
     with patch("src.database.connection.DatabaseManager"):
         cleaner = FootballDataCleaner()
@@ -255,8 +258,7 @@ def test_football_data_cleaner_initialization():
 @pytest.mark.asyncio
 async def test_football_data_cleaner_methods():
     """测试足球数据清洗器方法"""
-    from src.data.processing.football_data_cleaner_mod import \
-        FootballDataCleaner
+    from src.data.processing.football_data_cleaner_mod import FootballDataCleaner
 
     with patch("src.database.connection.DatabaseManager"):
         cleaner = FootballDataCleaner()
@@ -324,8 +326,7 @@ async def test_football_data_cleaner_methods():
 def test_backward_compatibility():
     """测试向后兼容性"""
     # 测试原始导入方式仍然有效
-    from src.data.processing.football_data_cleaner_mod import \
-        FootballDataCleaner
+    from src.data.processing.football_data_cleaner_mod import FootballDataCleaner
 
     # 验证类可以实例化
     with patch("src.database.connection.DatabaseManager"):
@@ -340,8 +341,7 @@ def test_backward_compatibility():
 @pytest.mark.asyncio
 async def test_error_handling():
     """测试错误处理"""
-    from src.data.processing.football_data_cleaner_mod import \
-        FootballDataCleaner
+    from src.data.processing.football_data_cleaner_mod import FootballDataCleaner
 
     with patch("src.database.connection.DatabaseManager"):
         cleaner = FootballDataCleaner()

@@ -19,14 +19,19 @@ def test_module_import():
     # 测试导入兼容模块
     # 测试导入异常类
     from src.data.quality.exception_handler_mod import DataQualityException
-    from src.data.quality.exception_handler_mod import \
-        DataQualityExceptionHandler
-    from src.data.quality.exception_handler_mod import \
-        DataQualityExceptionHandler as LegacyDataQualityExceptionHandler
+    from src.data.quality.exception_handler_mod import DataQualityExceptionHandler
     from src.data.quality.exception_handler_mod import (
-        InvalidDataHandler, MissingValueException, MissingValueHandler,
-        QualityLogger, StatisticsProvider, SuspiciousOddsException,
-        SuspiciousOddsHandler)
+        DataQualityExceptionHandler as LegacyDataQualityExceptionHandler,
+    )
+    from src.data.quality.exception_handler_mod import (
+        InvalidDataHandler,
+        MissingValueException,
+        MissingValueHandler,
+        QualityLogger,
+        StatisticsProvider,
+        SuspiciousOddsException,
+        SuspiciousOddsHandler,
+    )
 
     assert DataQualityExceptionHandler is not None
     assert MissingValueHandler is not None
@@ -40,8 +45,11 @@ def test_module_import():
 def test_exception_classes():
     """测试异常类"""
     from src.data.quality.exception_handler_mod import (
-        DataQualityException, InvalidDataException, MissingValueException,
-        SuspiciousOddsException)
+        DataQualityException,
+        InvalidDataException,
+        MissingValueException,
+        SuspiciousOddsException,
+    )
 
     # 测试基础异常
     base_exc = DataQualityException("Base error")
@@ -176,8 +184,7 @@ def test_statistics_provider():
 
 def test_exception_handler_initialization():
     """测试异常处理器初始化"""
-    from src.data.quality.exception_handler_mod import \
-        DataQualityExceptionHandler
+    from src.data.quality.exception_handler_mod import DataQualityExceptionHandler
 
     with patch("src.database.connection.DatabaseManager"):
         handler = DataQualityExceptionHandler()
@@ -200,8 +207,11 @@ def test_backward_compatibility():
     """测试向后兼容性"""
     # 测试原始导入方式仍然有效
     from src.data.quality.exception_handler_mod import (
-        DataQualityException, DataQualityExceptionHandler, MissingValueHandler,
-        SuspiciousOddsHandler)
+        DataQualityException,
+        DataQualityExceptionHandler,
+        MissingValueHandler,
+        SuspiciousOddsHandler,
+    )
 
     # 验证类可以实例化
     with patch("src.database.connection.DatabaseManager"):
@@ -215,8 +225,7 @@ def test_backward_compatibility():
 @pytest.mark.asyncio
 async def test_exception_handler_methods():
     """测试异常处理器的方法"""
-    from src.data.quality.exception_handler_mod import \
-        DataQualityExceptionHandler
+    from src.data.quality.exception_handler_mod import DataQualityExceptionHandler
 
     with patch("src.database.connection.DatabaseManager"):
         handler = DataQualityExceptionHandler()
@@ -276,8 +285,7 @@ def test_urgency_score_calculation():
 @pytest.mark.asyncio
 async def test_quality_dashboard():
     """测试质量仪表板"""
-    from src.data.quality.exception_handler_mod import \
-        DataQualityExceptionHandler
+    from src.data.quality.exception_handler_mod import DataQualityExceptionHandler
 
     with patch("src.database.connection.DatabaseManager"):
         handler = DataQualityExceptionHandler()

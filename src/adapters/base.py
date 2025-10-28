@@ -47,17 +47,30 @@ class Target(ABC):
 
 class Adapter(Target):
     """适配器基类，将Adaptee接口转换为Target接口"""
+
     pass
 
 
 class BaseAdapter(ABC):
     """基础适配器抽象类"""
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
-        self.config = config or {}
-        self.name = self.__class__.__name__
-        self.status = AdapterStatus.INACTIVE
-        self.last_error = None
+
+class CompositeAdapter(Adapter):
+    """组合适配器，可以管理多个子适配器"""
+
+
+class DataTransformer(ABC):
+    """数据转换器基类"""
+
+    @abstractmethod
+    async def transform(self, data: Any, **kwargs) -> Any:
+        """转换数据格式"""
+        pass
+
+    def __init__(self, name: str = "CompositeAdapter"):
+        self.name = name
+        self.adapters: List[Adapter] = []
+        self.adapter_registry: Dict[str, Adapter] = {}
         self.metrics = {
             "total_requests": 0,
             "successful_requests": 0,
@@ -65,31 +78,6 @@ class BaseAdapter(ABC):
             "total_response_time": 0.0,
             "average_response_time": 0.0,
         }
-        self.is_initialized = False
-
-    async def initialize(self) -> None:
-        """初始化适配器"""
-        if not self.is_initialized:
-            await self._setup()
-            self.is_initialized = True
-            self.status = AdapterStatus.ACTIVE
-
-    async def cleanup(self) -> None:
-        """清理适配器"""
-        if self.is_initialized:
-            await self._teardown()
-            self.is_initialized = False
-            self.status = AdapterStatus.INACTIVE
-
-    @abstractmethod
-    async def _setup(self) -> None:
-        """设置适配器"""
-        pass
-
-    @abstractmethod
-    async def _teardown(self) -> None:
-        """清理适配器"""
-        pass
 
     def get_metrics(self) -> Dict[str, Any]:
         """获取适配器指标"""
@@ -109,20 +97,6 @@ class BaseAdapter(ABC):
 
 
 class CompositeAdapter(Adapter):
-    """组合适配器，可以管理多个子适配器"""
-
-    def __init__(self, name: str = "CompositeAdapter"):
-        self.name = name
-        self.adapters: List[Adapter] = []
-        self.adapter_registry: Dict[str, Adapter] = {}
-        self.metrics = {
-            "total_requests": 0,
-            "successful_requests": 0,
-            "failed_requests": 0,
-            "total_response_time": 0.0,
-            "average_response_time": 0.0,
-        }
-
     def add_adapter(self, adapter: Adapter) -> None:
         """添加子适配器"""
         self.adapters.append(adapter)
@@ -137,6 +111,7 @@ class CompositeAdapter(Adapter):
             return True
         return False
 
+    # TODO: 方法 def get_adapter 过长(27行)，建议拆分
     def get_adapter(self, adapter_name: str) -> Optional[Adapter]:
         """获取子适配器"""
         return self.adapter_registry.get(adapter_name)
@@ -164,13 +139,6 @@ class CompositeAdapter(Adapter):
 
 
 class DataTransformer(ABC):
-    """数据转换器基类"""
-
-    @abstractmethod
-    async def transform(self, data: Any, **kwargs) -> Any:
-        """转换数据格式"""
-        pass
-
     def get_source_schema(self) -> Dict[str, Any]:
         """获取源数据结构"""
         return {}

@@ -12,7 +12,11 @@ For backward compatibility, this file re-exports all classes from the modules.
 import warnings
 
 from ............src.services.processing.processors.features import (
-    aggregator, calculator, processor, validator)
+    aggregator,
+    calculator,
+    processor,
+    validator,
+)
 
 warnings.warn(
     "直接从 features_processor 导入已弃用。"

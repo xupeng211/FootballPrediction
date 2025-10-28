@@ -52,7 +52,8 @@ class DictUtils:
     def filter_empty_values(d: Dict[str, Any]) -> Dict[str, Any]:
         """过滤掉空值（空字符串、空列表、空字典）的键值对"""
         return {
-            k: v for k, v in d.items()
+            k: v
+            for k, v in d.items()
             if v is not None and v != "" and v != [] and v != {}
         }
 
@@ -78,7 +79,7 @@ class DictUtils:
         Returns:
             找到的值或默认值
         """
-        keys = key_path.split('.')
+        keys = key_path.split(".")
         current = d
 
         try:
@@ -97,7 +98,7 @@ class DictUtils:
             key_path: 键路径，如 "user.profile.name"
             value: 要设置的值
         """
-        keys = key_path.split('.')
+        keys = key_path.split(".")
         current = d
 
         # 创建嵌套结构
@@ -154,7 +155,9 @@ class DictUtils:
     def chunk_dict(d: Dict[str, Any], chunk_size: int) -> List[Dict[str, Any]]:
         """将字典分割成多个小块"""
         items = list(d.items())
-        return [dict(items[i:i + chunk_size]) for i in range(0, len(items), chunk_size)]
+        return [
+            dict(items[i : i + chunk_size]) for i in range(0, len(items), chunk_size)
+        ]
 
     @staticmethod
     def sort_keys(d: Dict[str, Any], reverse: bool = False) -> Dict[str, Any]:
@@ -166,14 +169,16 @@ class DictUtils:
         """按首字母分组"""
         result = {}
         for key, value in d.items():
-            first_char = key[0].upper() if key else '_'
+            first_char = key[0].upper() if key else "_"
             if first_char not in result:
                 result[first_char] = {}
             result[first_char][key] = value
         return result
 
     @staticmethod
-    def validate_required_keys(d: Dict[str, Any], required_keys: List[str]) -> List[str]:
+    def validate_required_keys(
+        d: Dict[str, Any], required_keys: List[str]
+    ) -> List[str]:
         """验证必需的键是否存在"""
         missing = []
         for key in required_keys:
@@ -197,4 +202,5 @@ class DictUtils:
     def deep_clone(d: Dict[str, Any]) -> Dict[str, Any]:
         """深度克隆字典"""
         import copy
+
         return copy.deepcopy(d)

@@ -11,12 +11,16 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from src.services.audit_service import (AuditAction, AuditEvent, AuditService,
-                                        AuditSeverity)
+from src.services.audit_service import (
+    AuditAction,
+    AuditEvent,
+    AuditService,
+    AuditSeverity,
+)
+
 # 导入真实的服务类
 from src.services.base_unified import BaseService, SimpleService
-from src.services.content_analysis import (Content, ContentAnalysisService,
-                                           ContentType)
+from src.services.content_analysis import Content, ContentAnalysisService, ContentType
 from src.services.manager import ServiceManager, service_manager
 from src.services.user_profile import User, UserProfile, UserProfileService
 

@@ -17,17 +17,28 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../.."))
 
 # 导入目标模块
 try:
-    from src.cqrs.application import (AnalyticsCQRSService, CQRSServiceFactory,
-                                      MatchCQRSService, PredictionCQRSService,
-                                      UserCQRSService, initialize_cqrs)
+    from src.cqrs.application import (
+        AnalyticsCQRSService,
+        CQRSServiceFactory,
+        MatchCQRSService,
+        PredictionCQRSService,
+        UserCQRSService,
+        initialize_cqrs,
+    )
     from src.cqrs.bus import CommandBus, QueryBus
-    from src.cqrs.commands import (CreateMatchCommand, CreatePredictionCommand,
-                                   CreateUserCommand, UpdatePredictionCommand)
+    from src.cqrs.commands import (
+        CreateMatchCommand,
+        CreatePredictionCommand,
+        CreateUserCommand,
+        UpdatePredictionCommand,
+    )
     from src.cqrs.dto import CommandResult, MatchDTO, PredictionDTO
-    from src.cqrs.handlers import (PredictionCommandHandlers,
-                                   PredictionQueryHandlers)
-    from src.cqrs.queries import (GetMatchByIdQuery, GetPredictionByIdQuery,
-                                  GetUserStatsQuery)
+    from src.cqrs.handlers import PredictionCommandHandlers, PredictionQueryHandlers
+    from src.cqrs.queries import (
+        GetMatchByIdQuery,
+        GetPredictionByIdQuery,
+        GetUserStatsQuery,
+    )
 
     CQRS_AVAILABLE = True
 except ImportError as e:

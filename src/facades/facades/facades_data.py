@@ -5,7 +5,6 @@
 # 导入
 
 
-
 # 类定义
 class DatabaseSubsystem:
     """数据库子系统"""

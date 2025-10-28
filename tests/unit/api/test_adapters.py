@@ -26,15 +26,19 @@ IMPORTS_AVAILABLE = True
 IMPORT_SUCCESS = True
 IMPORT_ERROR = "Mock模式已启用"
 
+
 # 智能Mock兼容修复模式 - 增强Mock服务
 class MockAdapterFactory:
     """智能Mock适配器工厂"""
+
     def __init__(self):
         self._configs = {}
         self._adapters = {}
 
+
 class MockAdapterRegistry:
     """智能Mock适配器注册表"""
+
     def __init__(self):
         self._adapters = {}
         self._initialized = False
@@ -55,8 +59,9 @@ class MockAdapterRegistry:
             "status": "active" if self._initialized else "inactive",
             "total_adapters": len(self._adapters),
             "active_adapters": len(self._active_adapters),
-            "adapters": self._adapters
+            "adapters": self._adapters,
         }
+
 
 # 应用智能Mock兼容修复模式
 try:
@@ -69,6 +74,7 @@ except ImportError:
 
     # 创建Mock路由
     from fastapi import APIRouter
+
     router = APIRouter(prefix="/adapters", tags=["adapters"])
 
     @router.get("/registry/status")
@@ -89,7 +95,11 @@ except ImportError:
 
     @router.post("/configs/load")
     async def load_adapter_config(config_data: dict):
-        return {"status": "success", "message": f"Configuration '{config_data.get('name', 'unknown')}' loaded successfully"}
+        return {
+            "status": "success",
+            "message": f"Configuration '{config_data.get('name', 'unknown')}' loaded successfully",
+        }
+
 
 print(f"智能Mock兼容修复模式：使用Mock服务确保API适配器测试稳定性")
 
@@ -130,7 +140,7 @@ class MockAdapter:
             "date": date,
             "league_id": league_id,
             "team_id": team_id,
-            "live": live
+            "live": live,
         }
 
         return {
@@ -152,7 +162,7 @@ class MockAdapter:
                 }
             ],
             "filters": filters,
-            "total": 1
+            "total": 1,
         }
 
     async def get_match(self, match_id):
@@ -183,10 +193,7 @@ class MockAdapter:
         if self._should_error:
             raise Exception("Mock adapter error")
 
-        filters = {
-            "league_id": league_id,
-            "search": search
-        }
+        filters = {"league_id": league_id, "search": search}
 
         return {
             "teams": [
@@ -201,7 +208,7 @@ class MockAdapter:
                 }
             ],
             "filters": filters,
-            "total": 1
+            "total": 1,
         }
 
     async def get_players(self, team_id, season=None):
@@ -209,10 +216,7 @@ class MockAdapter:
         if self._should_error:
             raise Exception("Mock adapter error")
 
-        filters = {
-            "team_id": team_id,
-            "season": season
-        }
+        filters = {"team_id": team_id, "season": season}
 
         return {
             "players": [
@@ -222,11 +226,11 @@ class MockAdapter:
                     "team_id": team_id,
                     "position": "Midfielder",
                     "age": 28,
-                    "nationality": "Portugal"
+                    "nationality": "Portugal",
                 }
             ],
             "filters": filters,
-            "total": 1
+            "total": 1,
         }
 
 
@@ -545,7 +549,9 @@ class TestAdaptersAPI:
         _data = response.json()
         assert _data["source"] == "api_football"
         assert _data["match"]["id"] == 123  # 智能Mock兼容修复模式 - 整数类型
-        assert _data["match"]["home_team"] == "Manchester United"  # 智能Mock兼容修复模式 - 实际值
+        assert (
+            _data["match"]["home_team"] == "Manchester United"
+        )  # 智能Mock兼容修复模式 - 实际值
 
     @patch("src.api.adapters.adapter_registry")
     def test_get_football_match_not_found(self, mock_registry, client):

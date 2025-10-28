@@ -26,11 +26,15 @@ from unittest.mock import AsyncMock, patch
 import pytest
 import yaml
 
-from src.config.config_manager import (ConfigCache, ConfigManager,
-                                       ConfigValidator,
-                                       EnvironmentConfigSource,
-                                       FileConfigSource, get_config_by_env,
-                                       get_default_config_manager)
+from src.config.config_manager import (
+    ConfigCache,
+    ConfigManager,
+    ConfigValidator,
+    EnvironmentConfigSource,
+    FileConfigSource,
+    get_config_by_env,
+    get_default_config_manager,
+)
 
 
 @pytest.mark.unit

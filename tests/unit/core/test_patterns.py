@@ -4,6 +4,7 @@
 
 import sys
 from pathlib import Path
+
 # 添加项目路径
 from unittest.mock import AsyncMock, MagicMock
 
@@ -23,16 +24,30 @@ import pytest
 
 # 尝试导入模式模块
 try:
-    from src.patterns.adapter import (AdapterFactory, ExternalData,
-                                      FootballApiAdapter, OddsApiAdapter,
-                                      UnifiedDataCollector, WeatherApiAdapter)
-    from src.patterns.decorator import (DatabaseService, LoggingDecorator,
-                                        MetricsDecorator, RetryDecorator,
-                                        ValidationDecorator, async_log,
-                                        async_retry)
-    from src.patterns.observer import (AlertingObserver, LoggingObserver,
-                                       MetricsObserver, ObservableService,
-                                       PredictionService)
+    from src.patterns.adapter import (
+        AdapterFactory,
+        ExternalData,
+        FootballApiAdapter,
+        OddsApiAdapter,
+        UnifiedDataCollector,
+        WeatherApiAdapter,
+    )
+    from src.patterns.decorator import (
+        DatabaseService,
+        LoggingDecorator,
+        MetricsDecorator,
+        RetryDecorator,
+        ValidationDecorator,
+        async_log,
+        async_retry,
+    )
+    from src.patterns.observer import (
+        AlertingObserver,
+        LoggingObserver,
+        MetricsObserver,
+        ObservableService,
+        PredictionService,
+    )
 
     PATTERNS_AVAILABLE = True
 except ImportError:

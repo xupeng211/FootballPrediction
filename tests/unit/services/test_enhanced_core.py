@@ -14,9 +14,13 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from src.services.enhanced_core import (AbstractBaseService, BaseService,
-                                        EnhancedBaseService, ServiceConfig,
-                                        ServiceMetrics)
+from src.services.enhanced_core import (
+    AbstractBaseService,
+    BaseService,
+    EnhancedBaseService,
+    ServiceConfig,
+    ServiceMetrics,
+)
 
 
 @pytest.mark.unit

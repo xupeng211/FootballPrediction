@@ -14,11 +14,15 @@ import pytest
 
 # 测试导入
 try:
-    from src.tasks.maintenance_tasks import (BackupTask, CacheCleanupTask,
-                                             DatabaseMaintenanceTask,
-                                             HealthCheckTask, LogRotationTask,
-                                             MaintenanceTaskManager,
-                                             MaintenanceTaskStatus)
+    from src.tasks.maintenance_tasks import (
+        BackupTask,
+        CacheCleanupTask,
+        DatabaseMaintenanceTask,
+        HealthCheckTask,
+        LogRotationTask,
+        MaintenanceTaskManager,
+        MaintenanceTaskStatus,
+    )
 
     MAINTENANCE_TASKS_AVAILABLE = True
 except ImportError as e:
@@ -381,12 +385,15 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if MAINTENANCE_TASKS_AVAILABLE:
-        from src.tasks.maintenance_tasks import (BackupTask, CacheCleanupTask,
-                                                 DatabaseMaintenanceTask,
-                                                 HealthCheckTask,
-                                                 LogRotationTask,
-                                                 MaintenanceTaskManager,
-                                                 MaintenanceTaskStatus)
+        from src.tasks.maintenance_tasks import (
+            BackupTask,
+            CacheCleanupTask,
+            DatabaseMaintenanceTask,
+            HealthCheckTask,
+            LogRotationTask,
+            MaintenanceTaskManager,
+            MaintenanceTaskStatus,
+        )
 
         assert MaintenanceTaskManager is not None
         assert DatabaseMaintenanceTask is not None

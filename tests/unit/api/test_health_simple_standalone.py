@@ -185,8 +185,12 @@ class TestHealthCheckSimple:
             # 验证响应时间计算 - 实际值应该是0.1ms（实际执行时间）
             actual_response_time = result["response_time_ms"]
             # 由于mock的时间差没有实际生效，我们检查是否是一个合理的响应时间
-            assert isinstance(actual_response_time, (int, float)), f"Response time should be numeric, got {actual_response_time}"
-            assert actual_response_time >= 0, f"Response time should be non-negative, got {actual_response_time}"
+            assert isinstance(
+                actual_response_time, (int, float)
+            ), f"Response time should be numeric, got {actual_response_time}"
+            assert (
+                actual_response_time >= 0
+            ), f"Response time should be non-negative, got {actual_response_time}"
 
     # === 数据验证测试 ===
 

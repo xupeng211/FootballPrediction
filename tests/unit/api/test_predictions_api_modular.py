@@ -47,10 +47,12 @@ class TestPredictionsAPI:
 
     def test_prediction_models_import(self):
         """测试预测模型可以导入"""
-        from src.api.predictions.models import (BatchPredictionRequest,
-                                                PredictionOverviewResponse,
-                                                PredictionRequest,
-                                                PredictionResponse)
+        from src.api.predictions.models import (
+            BatchPredictionRequest,
+            PredictionOverviewResponse,
+            PredictionRequest,
+            PredictionResponse,
+        )
 
         # 创建一个简单的请求对象
         request = PredictionRequest(match_id=1, model_name="test_model")

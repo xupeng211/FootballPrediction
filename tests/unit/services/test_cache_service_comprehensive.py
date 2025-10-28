@@ -31,9 +31,10 @@ import pytest
 # 导入实际缓存模块，如果失败则使用Mock
 try:
     from src.services.processing.caching.base.base_cache import (
-        BaseCache, CacheKeyManager)
-    from src.services.processing.caching.processing_cache import \
-        ProcessingCache
+        BaseCache,
+        CacheKeyManager,
+    )
+    from src.services.processing.caching.processing_cache import ProcessingCache
 except ImportError:
     # 创建一个简单的异步BaseCache Mock
     class BaseCache:
@@ -69,10 +70,12 @@ except ImportError:
     ProcessingCache = Mock()
 
 # 导入缓存相关的Mock类
-from tests.unit.mocks.mock_factory_phase4a import (MockCacheConfig,
-                                                   MockCacheService,
-                                                   MockRedisClient,
-                                                   Phase4AMockFactory)
+from tests.unit.mocks.mock_factory_phase4a import (
+    MockCacheConfig,
+    MockCacheService,
+    MockRedisClient,
+    Phase4AMockFactory,
+)
 
 
 class CacheType(Enum):

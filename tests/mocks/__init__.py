@@ -4,8 +4,12 @@
 """
 
 # 导出常用的 mock 对象
-from .fast_mocks import (FastAsyncSession, FastDatabaseManager, FastHTTPClient,
-                         FastRedisManager)
+from .fast_mocks import (
+    FastAsyncSession,
+    FastDatabaseManager,
+    FastHTTPClient,
+    FastRedisManager,
+)
 
 __all__ = [
     "FastDatabaseManager",

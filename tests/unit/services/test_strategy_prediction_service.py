@@ -14,9 +14,14 @@ from datetime import datetime
 import pytest
 
 from src.domain.models import Match, Prediction, Team
-from src.domain.strategies import (PredictionContext, PredictionInput,
-                                   PredictionOutput, PredictionStrategy,
-                                   PredictionStrategyFactory, StrategyType)
+from src.domain.strategies import (
+    PredictionContext,
+    PredictionInput,
+    PredictionOutput,
+    PredictionStrategy,
+    PredictionStrategyFactory,
+    StrategyType,
+)
 from src.services.strategy_prediction_service import StrategyPredictionService
 
 

@@ -29,12 +29,13 @@ import pytest
 try:
     from src.core.di import DIContainer
     from src.domain.models import Match, Prediction
-    from src.events.types import (PredictionMadeEvent, PredictionUpdatedEvent,
-                                  get_event_bus)
-    from src.services.event_prediction_service import \
-        EventDrivenPredictionService
-    from src.services.strategy_prediction_service import \
-        StrategyPredictionService
+    from src.events.types import (
+        PredictionMadeEvent,
+        PredictionUpdatedEvent,
+        get_event_bus,
+    )
+    from src.services.event_prediction_service import EventDrivenPredictionService
+    from src.services.strategy_prediction_service import StrategyPredictionService
 except ImportError:
     EventDrivenPredictionService = None
     StrategyPredictionService = None

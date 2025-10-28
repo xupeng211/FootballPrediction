@@ -290,6 +290,7 @@ class TestI18nUtils:
         # 由于模块在导入时会自动调用init_i18n
         # 这里主要验证不会抛出异常
         import importlib
+
         # 重新导入模块
         import sys
 

@@ -23,11 +23,16 @@ from starlette.responses import JSONResponse
 
 # 使用try-except导入，如果模块不存在则跳过测试
 try:
-    from src.api.middleware import (AuthenticationMiddleware, CacheMiddleware,
-                                    CORSMiddleware, ErrorHandlingMiddleware,
-                                    LoggingMiddleware, RateLimitMiddleware,
-                                    SecurityHeadersMiddleware,
-                                    TimingMiddleware)
+    from src.api.middleware import (
+        AuthenticationMiddleware,
+        CacheMiddleware,
+        CORSMiddleware,
+        ErrorHandlingMiddleware,
+        LoggingMiddleware,
+        RateLimitMiddleware,
+        SecurityHeadersMiddleware,
+        TimingMiddleware,
+    )
 
     MIDDLEWARE_AVAILABLE = True
 except ImportError:

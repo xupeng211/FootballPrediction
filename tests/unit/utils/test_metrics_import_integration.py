@@ -11,7 +11,10 @@ def test_import_metric_types():
     """测试导入指标类型"""
     try:
         from src.monitoring.metrics_collector_enhanced.metric_types import (
-            AlertInfo, MetricPoint, MetricSummary)
+            AlertInfo,
+            MetricPoint,
+            MetricSummary,
+        )
 
         assert MetricPoint is not None
         assert MetricSummary is not None
@@ -23,8 +26,9 @@ def test_import_metric_types():
 def test_import_aggregator():
     """测试导入聚合器"""
     try:
-        from src.monitoring.metrics_collector_enhanced.aggregator import \
-            MetricsAggregator
+        from src.monitoring.metrics_collector_enhanced.aggregator import (
+            MetricsAggregator,
+        )
 
         assert MetricsAggregator is not None
     except ImportError as e:
@@ -35,7 +39,9 @@ def test_import_alerting():
     """测试导入告警管理"""
     try:
         from src.monitoring.metrics_collector_enhanced.alerting import (
-            AlertManager, DefaultAlertHandlers)
+            AlertManager,
+            DefaultAlertHandlers,
+        )
 
         assert AlertManager is not None
         assert DefaultAlertHandlers is not None
@@ -46,8 +52,9 @@ def test_import_alerting():
 def test_import_business_metrics():
     """测试导入业务指标收集器"""
     try:
-        from src.monitoring.metrics_collector_enhanced.business_metrics import \
-            BusinessMetricsCollector
+        from src.monitoring.metrics_collector_enhanced.business_metrics import (
+            BusinessMetricsCollector,
+        )
 
         assert BusinessMetricsCollector is not None
     except ImportError as e:
@@ -57,8 +64,9 @@ def test_import_business_metrics():
 def test_import_system_metrics():
     """测试导入系统指标收集器"""
     try:
-        from src.monitoring.metrics_collector_enhanced.system_metrics import \
-            SystemMetricsCollector
+        from src.monitoring.metrics_collector_enhanced.system_metrics import (
+            SystemMetricsCollector,
+        )
 
         assert SystemMetricsCollector is not None
     except ImportError as e:
@@ -69,8 +77,11 @@ def test_import_decorators():
     """测试导入装饰器"""
     try:
         from src.monitoring.metrics_collector_enhanced.decorators import (
-            track_cache_performance, track_database_performance,
-            track_performance, track_prediction_performance)
+            track_cache_performance,
+            track_database_performance,
+            track_performance,
+            track_prediction_performance,
+        )
 
         assert track_performance is not None
         assert track_cache_performance is not None
@@ -83,8 +94,9 @@ def test_import_decorators():
 def test_import_collector():
     """测试导入主收集器（可能因为prometheus依赖失败）"""
     try:
-        from src.monitoring.metrics_collector_enhanced.collector import \
-            EnhancedMetricsCollector
+        from src.monitoring.metrics_collector_enhanced.collector import (
+            EnhancedMetricsCollector,
+        )
 
         assert EnhancedMetricsCollector is not None
     except ImportError as e:
@@ -95,7 +107,9 @@ def test_import_prometheus_metrics():
     """测试导入Prometheus指标管理（可能因为prometheus依赖失败）"""
     try:
         from src.monitoring.metrics_collector_enhanced.prometheus_metrics import (
-            PROMETHEUS_AVAILABLE, PrometheusMetricsManager)
+            PROMETHEUS_AVAILABLE,
+            PrometheusMetricsManager,
+        )
 
         assert PrometheusMetricsManager is not None
         # 检查prometheus是否可用

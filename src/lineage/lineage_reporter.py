@@ -11,10 +11,13 @@ from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 from openlineage.client import OpenLineageClient
-from openlineage.client.event_v2 import (InputDataset, Job, OutputDataset, Run,
-                                         RunEvent)
-from openlineage.client.facet_v2 import (error_message_run, schema_dataset,
-                                         source_code_location_job, sql_job)
+from openlineage.client.event_v2 import InputDataset, Job, OutputDataset, Run, RunEvent
+from openlineage.client.facet_v2 import (
+    error_message_run,
+    schema_dataset,
+    source_code_location_job,
+    sql_job,
+)
 
 logger = logging.getLogger(__name__)
 

@@ -14,9 +14,14 @@ from pydantic import ValidationError
 
 # 导入要测试的模块
 try:
-    from src.models.base_models import (BaseModel, IdentifiableModel,
-                                        MetadataModel, StatusModel,
-                                        TimestampedModel, base_models)
+    from src.models.base_models import (
+        BaseModel,
+        IdentifiableModel,
+        MetadataModel,
+        StatusModel,
+        TimestampedModel,
+        base_models,
+    )
 
     BASE_MODELS_AVAILABLE = True
 except ImportError:

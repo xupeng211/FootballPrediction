@@ -22,18 +22,20 @@ import pytest
 
 # 导入目标模块
 try:
-    from src.services.data_processing import (AnomalyDetector,
-                                              BronzeToSilverProcessor,
-                                              DataProcessingService,
-                                              DataProcessor,
-                                              DataQualityValidator,
-                                              FeaturesDataProcessor,
-                                              MatchDataProcessor,
-                                              MissingDataHandler,
-                                              MissingScoresHandler,
-                                              MissingTeamHandler,
-                                              OddsDataProcessor,
-                                              ScoresDataProcessor)
+    from src.services.data_processing import (
+        AnomalyDetector,
+        BronzeToSilverProcessor,
+        DataProcessingService,
+        DataProcessor,
+        DataQualityValidator,
+        FeaturesDataProcessor,
+        MatchDataProcessor,
+        MissingDataHandler,
+        MissingScoresHandler,
+        MissingTeamHandler,
+        OddsDataProcessor,
+        ScoresDataProcessor,
+    )
 
     MODULE_AVAILABLE = True
 except ImportError as e:

@@ -17,8 +17,7 @@ def test_module_import():
     # 测试导入兼容模块
     from src.monitoring.system_monitor_mod import PrometheusMetrics
     from src.monitoring.system_monitor_mod import SystemMonitor
-    from src.monitoring.system_monitor_mod import \
-        SystemMonitor as LegacySystemMonitor
+    from src.monitoring.system_monitor_mod import SystemMonitor as LegacySystemMonitor
     from src.monitoring.system_monitor_mod import get_system_monitor
 
     assert SystemMonitor is not None
@@ -118,10 +117,12 @@ def test_global_instance():
 
 def test_convenience_functions():
     """测试便捷函数"""
-    from src.monitoring.system_monitor_mod import (record_cache_op,
-                                                   record_db_query,
-                                                   record_http_request,
-                                                   record_prediction)
+    from src.monitoring.system_monitor_mod import (
+        record_cache_op,
+        record_db_query,
+        record_http_request,
+        record_prediction,
+    )
 
     monitor = Mock()
 

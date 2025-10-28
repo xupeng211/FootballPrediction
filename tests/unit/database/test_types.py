@@ -15,8 +15,7 @@ import json
 
 import pytest
 
-from src.database.types import (CompatibleJSON, SQLiteCompatibleJSONB,
-                                get_json_type)
+from src.database.types import CompatibleJSON, SQLiteCompatibleJSONB, get_json_type
 
 
 @pytest.mark.unit

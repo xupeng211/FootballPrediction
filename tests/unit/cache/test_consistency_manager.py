@@ -16,6 +16,7 @@ import logging
 
 import pytest
 
+
 # 智能Mock兼容修复模式 - 为缓存一致性管理器创建Mock支持
 class MockCacheConsistencyManager:
     """Mock缓存一致性管理器 - 用于测试"""
@@ -32,7 +33,10 @@ class MockCacheConsistencyManager:
         self._sync_calls.append((entity_type, entity_id))
 
         # 模拟错误场景
-        if hasattr(self.redis_manager, '_should_error') and self.redis_manager._should_error:
+        if (
+            hasattr(self.redis_manager, "_should_error")
+            and self.redis_manager._should_error
+        ):
             raise ConnectionError("Mock Redis connection failed")
 
         return True
@@ -89,7 +93,9 @@ class TestCacheConsistencyManager:
         mock_redis = Mock()
         mock_db = Mock()
 
-        manager = consistency_manager_class(redis_manager=mock_redis, db_manager=mock_db)
+        manager = consistency_manager_class(
+            redis_manager=mock_redis, db_manager=mock_db
+        )
 
         assert manager.redis_manager is mock_redis
         assert manager.db_manager is mock_db
@@ -106,7 +112,7 @@ class TestCacheConsistencyManager:
         assert result is True
 
         # 对于Mock实现，检查调用历史
-        if hasattr(manager, 'get_sync_history'):
+        if hasattr(manager, "get_sync_history"):
             history = manager.get_sync_history()
             assert ("match", 123) in history
 
@@ -123,7 +129,7 @@ class TestCacheConsistencyManager:
         assert result is True
 
         # 对于Mock实现，检查调用历史
-        if hasattr(manager, 'get_sync_history'):
+        if hasattr(manager, "get_sync_history"):
             history = manager.get_sync_history()
             assert ("prediction", 456) in history
 
@@ -150,7 +156,9 @@ class TestCacheConsistencyManager:
                 pass
         else:
             # 对于真实实现，使用patch模拟错误
-            with patch("src.cache.consistency_manager.get_redis_manager") as mock_get_redis:
+            with patch(
+                "src.cache.consistency_manager.get_redis_manager"
+            ) as mock_get_redis:
                 import redis
 
                 mock_get_redis.side_effect = redis.RedisError("Connection failed")
@@ -179,7 +187,9 @@ class TestCacheConsistencyManager:
                 pass
         else:
             # 对于真实实现，使用patch模拟错误
-            with patch("src.cache.consistency_manager.get_redis_manager") as mock_get_redis:
+            with patch(
+                "src.cache.consistency_manager.get_redis_manager"
+            ) as mock_get_redis:
                 mock_get_redis.side_effect = ConnectionError("Cannot connect")
 
                 manager = consistency_manager_class()
@@ -198,7 +208,7 @@ class TestCacheConsistencyManager:
         assert result is True
 
         # 对于Mock实现，检查调用历史
-        if hasattr(manager, 'get_invalidate_history'):
+        if hasattr(manager, "get_invalidate_history"):
             history = manager.get_invalidate_history()
             assert "test:key" in history
 
@@ -215,7 +225,7 @@ class TestCacheConsistencyManager:
         assert result is True
 
         # 对于Mock实现，检查调用历史
-        if hasattr(manager, 'get_invalidate_history'):
+        if hasattr(manager, "get_invalidate_history"):
             history = manager.get_invalidate_history()
             for key in keys:
                 assert key in history

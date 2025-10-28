@@ -17,8 +17,13 @@ import pytest
 
 # 测试导入
 try:
-    from src.api.facades import (facade_factory, global_facades,
-                                 initialize_facade, list_facades, router)
+    from src.api.facades import (
+        facade_factory,
+        global_facades,
+        initialize_facade,
+        list_facades,
+        router,
+    )
 
     FACADES_AVAILABLE = True
 except ImportError as e:

@@ -14,14 +14,20 @@ from datetime import datetime, timedelta
 import pytest
 import pytest_asyncio
 
-from src.observers.base import (ObservableEvent, ObservableEventType, Observer,
-                                Subject)
+from src.observers.base import ObservableEvent, ObservableEventType, Observer, Subject
 from src.observers.manager import ObserverManager, get_observer_manager
-from src.observers.observers import (AlertingObserver, LoggingObserver,
-                                     MetricsObserver, PerformanceObserver)
-from src.observers.subjects import (AlertSubject, CacheSubject,
-                                    PredictionMetricsSubject,
-                                    SystemMetricsSubject)
+from src.observers.observers import (
+    AlertingObserver,
+    LoggingObserver,
+    MetricsObserver,
+    PerformanceObserver,
+)
+from src.observers.subjects import (
+    AlertSubject,
+    CacheSubject,
+    PredictionMetricsSubject,
+    SystemMetricsSubject,
+)
 
 
 @pytest.mark.unit

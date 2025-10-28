@@ -16,18 +16,22 @@ import pytest
 def test_module_imports():
     """测试模块导入"""
     # 测试导入新模块
-    from src.metrics.collector.enhanced import (AlertInfo, AlertManager,
-                                                BusinessMetricsCollector,
-                                                DefaultAlertHandlers,
-                                                EnhancedMetricsCollector,
-                                                MetricPoint, MetricsAggregator,
-                                                MetricSummary,
-                                                PrometheusMetricsManager,
-                                                SystemMetricsCollector,
-                                                get_metrics_collector,
-                                                track_cache_performance,
-                                                track_database_performance,
-                                                track_prediction_performance)
+    from src.metrics.collector.enhanced import (
+        AlertInfo,
+        AlertManager,
+        BusinessMetricsCollector,
+        DefaultAlertHandlers,
+        EnhancedMetricsCollector,
+        MetricPoint,
+        MetricsAggregator,
+        MetricSummary,
+        PrometheusMetricsManager,
+        SystemMetricsCollector,
+        get_metrics_collector,
+        track_cache_performance,
+        track_database_performance,
+        track_prediction_performance,
+    )
 
     assert MetricPoint is not None
     assert MetricSummary is not None
@@ -47,8 +51,7 @@ def test_module_imports():
 
 def test_metric_types():
     """测试指标数据类型"""
-    from src.metrics.collector.enhanced import (AlertInfo, MetricPoint,
-                                                MetricSummary)
+    from src.metrics.collector.enhanced import AlertInfo, MetricPoint, MetricSummary
 
     # 测试MetricPoint
     point = MetricPoint(
@@ -273,8 +276,10 @@ async def test_aggregation_task():
 
 def test_global_collector():
     """测试全局收集器"""
-    from src.metrics.collector.enhanced import (get_metrics_collector,
-                                                set_metrics_collector)
+    from src.metrics.collector.enhanced import (
+        get_metrics_collector,
+        set_metrics_collector,
+    )
 
     # 获取全局收集器
     collector1 = get_metrics_collector()
@@ -297,10 +302,13 @@ def test_global_collector():
 def test_backward_compatibility():
     """测试向后兼容性"""
     # 测试原始导入方式仍然有效
-    from src.metrics.collector.enhanced import (EnhancedMetricsCollector,
-                                                MetricPoint, MetricsAggregator,
-                                                get_metrics_collector,
-                                                track_prediction_performance)
+    from src.metrics.collector.enhanced import (
+        EnhancedMetricsCollector,
+        MetricPoint,
+        MetricsAggregator,
+        get_metrics_collector,
+        track_prediction_performance,
+    )
 
     # 验证类和函数可以导入
     assert EnhancedMetricsCollector is not None
@@ -317,8 +325,10 @@ def test_backward_compatibility():
 
 def test_decorators():
     """测试装饰器"""
-    from src.metrics.collector.enhanced import (track_cache_performance,
-                                                track_performance)
+    from src.metrics.collector.enhanced import (
+        track_cache_performance,
+        track_performance,
+    )
 
     # 测试缓存性能装饰器
     @track_cache_performance(cache_type="redis")

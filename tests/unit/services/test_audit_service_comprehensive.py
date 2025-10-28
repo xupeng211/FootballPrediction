@@ -10,10 +10,17 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.services.audit_service import (AuditAction, AuditContext, AuditEvent,
-                                        AuditLog, AuditLogSummary,
-                                        AuditService, AuditSeverity,
-                                        DataSanitizer, SeverityAnalyzer)
+from src.services.audit_service import (
+    AuditAction,
+    AuditContext,
+    AuditEvent,
+    AuditLog,
+    AuditLogSummary,
+    AuditService,
+    AuditSeverity,
+    DataSanitizer,
+    SeverityAnalyzer,
+)
 
 
 @pytest.mark.unit

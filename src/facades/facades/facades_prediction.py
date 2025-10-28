@@ -5,7 +5,6 @@
 # 导入
 
 
-
 # 类定义
 class PredictionSubsystem:
     """预测子系统"""

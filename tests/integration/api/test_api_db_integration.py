@@ -9,12 +9,17 @@ import pytest
 import pytest_asyncio
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
-                                    create_async_engine)
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
-from src.database.models import (League, Match, MatchStatus, PredictedResult,
-                                 Predictions, Team)
+from src.database.models import (
+    League,
+    Match,
+    MatchStatus,
+    PredictedResult,
+    Predictions,
+    Team,
+)
 
 """预测API集成测试
 

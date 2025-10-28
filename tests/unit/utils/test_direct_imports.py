@@ -19,8 +19,7 @@ sys.path.insert(0, str(src_path))
 def test_crypto_utils():
     """测试crypto_utils模块"""
     try:
-        from utils.crypto_utils import (generate_token, hash_password,
-                                        verify_password)
+        from utils.crypto_utils import generate_token, hash_password, verify_password
 
         # 测试密码哈希
         password = "test123"
@@ -43,8 +42,7 @@ def test_crypto_utils():
 def test_data_validator():
     """测试data_validator模块"""
     try:
-        from utils.data_validator import (validate_email, validate_phone,
-                                          validate_url)
+        from utils.data_validator import validate_email, validate_phone, validate_url
 
         # 测试邮箱验证
         assert validate_email("test@example.com") is True
@@ -126,8 +124,7 @@ def test_formatters():
     try:
         from datetime import datetime, timezone
 
-        from utils.formatters import (format_bytes, format_currency,
-                                      format_datetime)
+        from utils.formatters import format_bytes, format_currency, format_datetime
 
         # 测试日期时间格式化
         dt = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
@@ -221,8 +218,7 @@ def test_time_utils():
 def test_validators():
     """测试validators模块"""
     try:
-        from utils.validators import (validate_length, validate_range,
-                                      validate_required)
+        from utils.validators import validate_length, validate_range, validate_required
 
         # 测试必填验证
         assert validate_required("test") is True
@@ -247,8 +243,10 @@ def test_warning_filters():
     try:
         import warnings
 
-        from utils.warning_filters import (filter_deprecation_warnings,
-                                           ignore_user_warnings)
+        from utils.warning_filters import (
+            filter_deprecation_warnings,
+            ignore_user_warnings,
+        )
 
         # 测试过滤警告
         with warnings.catch_warnings(record=True) as w:

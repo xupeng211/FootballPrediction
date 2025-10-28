@@ -40,7 +40,10 @@ class TestCollectionModule:
     def test_collection_imports(self):
         """测试数据采集任务导入"""
         from src.scheduler.tasks.collection import (
-            collect_fixtures, collect_live_scores_conditional, collect_odds)
+            collect_fixtures,
+            collect_live_scores_conditional,
+            collect_odds,
+        )
 
         assert collect_fixtures is not None
         assert collect_odds is not None
@@ -51,7 +54,10 @@ class TestCollectionModule:
         from celery import Task
 
         from src.scheduler.tasks.collection import (
-            collect_fixtures, collect_live_scores_conditional, collect_odds)
+            collect_fixtures,
+            collect_live_scores_conditional,
+            collect_odds,
+        )
 
         assert isinstance(collect_fixtures, Task)
         assert isinstance(collect_odds, Task)
@@ -81,8 +87,7 @@ class TestMaintenanceModule:
 
     def test_maintenance_imports(self):
         """测试维护任务导入"""
-        from src.scheduler.tasks.maintenance import (backup_database,
-                                                     cleanup_data)
+        from src.scheduler.tasks.maintenance import backup_database, cleanup_data
 
         assert cleanup_data is not None
         assert backup_database is not None
@@ -91,8 +96,7 @@ class TestMaintenanceModule:
         """测试维护任务是Celery任务"""
         from celery import Task
 
-        from src.scheduler.tasks.maintenance import (backup_database,
-                                                     cleanup_data)
+        from src.scheduler.tasks.maintenance import backup_database, cleanup_data
 
         assert isinstance(cleanup_data, Task)
         assert isinstance(backup_database, Task)
@@ -157,13 +161,18 @@ class TestModularStructure:
 
     def test_import_from_main_module(self):
         """测试从主模块导入"""
-        from src.scheduler.tasks import (BaseDataTask, backup_database,
-                                         calculate_features_batch,
-                                         cleanup_data, collect_fixtures,
-                                         collect_live_scores_conditional,
-                                         collect_odds, generate_predictions,
-                                         process_bronze_to_silver,
-                                         run_quality_checks)
+        from src.scheduler.tasks import (
+            BaseDataTask,
+            backup_database,
+            calculate_features_batch,
+            cleanup_data,
+            collect_fixtures,
+            collect_live_scores_conditional,
+            collect_odds,
+            generate_predictions,
+            process_bronze_to_silver,
+            run_quality_checks,
+        )
 
         assert BaseDataTask is not None
         assert collect_fixtures is not None
@@ -180,8 +189,7 @@ class TestModularStructure:
         """测试向后兼容性导入"""
         # 从原始文件导入应该仍然有效
         from src.scheduler.tasks import BaseDataTask as old_base
-        from src.scheduler.tasks import \
-            calculate_features_batch as old_features
+        from src.scheduler.tasks import calculate_features_batch as old_features
         from src.scheduler.tasks import collect_fixtures as old_fixtures
 
         assert old_base is not None
@@ -190,11 +198,13 @@ class TestModularStructure:
 
     def test_task_aliases_exist(self):
         """测试任务别名存在"""
-        from src.scheduler.tasks import (calculate_features_task,
-                                         collect_fixtures_task,
-                                         collect_odds_task,
-                                         generate_predictions_task,
-                                         process_data_task)
+        from src.scheduler.tasks import (
+            calculate_features_task,
+            collect_fixtures_task,
+            collect_odds_task,
+            generate_predictions_task,
+            process_data_task,
+        )
 
         assert calculate_features_task is not None
         assert collect_fixtures_task is not None
@@ -204,10 +214,12 @@ class TestModularStructure:
 
     def test_task_aliases_are_correct(self):
         """测试任务别名正确"""
-        from src.scheduler.tasks import (calculate_features_batch,
-                                         calculate_features_task,
-                                         collect_fixtures,
-                                         collect_fixtures_task)
+        from src.scheduler.tasks import (
+            calculate_features_batch,
+            calculate_features_task,
+            collect_fixtures,
+            collect_fixtures_task,
+        )
 
         # 别名应该指向相同的任务
         assert calculate_features_task == calculate_features_batch

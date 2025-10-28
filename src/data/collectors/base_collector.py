@@ -260,8 +260,7 @@ class DataCollector(ABC):
         try:
             # 导入相应的Bronze层模型
 
-            from .models.raw_data import (RawMatchData, RawOddsData,
-                                          RawScoresData)
+            from .models.raw_data import RawMatchData, RawOddsData, RawScoresData
 
             # 映射表名到模型类
             model_mapping = {
@@ -419,8 +418,7 @@ class DataCollector(ABC):
             result: 采集结果
         """
         try:
-            from .models.data_collection_log import (CollectionStatus,
-                                                     DataCollectionLog)
+            from .models.data_collection_log import CollectionStatus, DataCollectionLog
 
             if log_id == 0:
                 self.logger.warning("Invalid log_id (0), cannot update collection log.")

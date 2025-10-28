@@ -19,20 +19,35 @@ import pytest
 
 # 业务模块导入
 try:
-    from src.cqrs.base import (Command, CommandHandler, Query, QueryHandler,
-                               ValidatableCommand, ValidatableQuery,
-                               ValidationResult)
-    from src.cqrs.commands import (CreateMatchCommand, CreatePredictionCommand,
-                                   CreateUserCommand, UpdatePredictionCommand)
+    from src.cqrs.base import (
+        Command,
+        CommandHandler,
+        Query,
+        QueryHandler,
+        ValidatableCommand,
+        ValidatableQuery,
+        ValidationResult,
+    )
+    from src.cqrs.commands import (
+        CreateMatchCommand,
+        CreatePredictionCommand,
+        CreateUserCommand,
+        UpdatePredictionCommand,
+    )
 
     CQRS_AVAILABLE = True
 except ImportError:
     CQRS_AVAILABLE = False
 
 try:
-    from src.events.base import (CompositeEventFilter, Event, EventData,
-                                 EventHandler, EventSourceFilter,
-                                 EventTypeFilter)
+    from src.events.base import (
+        CompositeEventFilter,
+        Event,
+        EventData,
+        EventHandler,
+        EventSourceFilter,
+        EventTypeFilter,
+    )
     from src.events.types import DomainEvent, IntegrationEvent
 
     EVENTS_AVAILABLE = True

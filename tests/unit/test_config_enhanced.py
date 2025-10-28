@@ -11,8 +11,7 @@ from unittest.mock import mock_open, patch
 
 import pytest
 
-from src.core.config import (HAS_PYDANTIC, Config, Settings, get_config,
-                             get_settings)
+from src.core.config import HAS_PYDANTIC, Config, Settings, get_config, get_settings
 
 
 @pytest.mark.unit

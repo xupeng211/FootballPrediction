@@ -9,10 +9,12 @@ import pytest
 
 # 导入要测试的模块
 try:
-    from src.adapters.registry_simple import (AdapterRegistry,
-                                              _global_registry,
-                                              get_global_registry,
-                                              register_adapter)
+    from src.adapters.registry_simple import (
+        AdapterRegistry,
+        _global_registry,
+        get_global_registry,
+        register_adapter,
+    )
     from src.core.exceptions import AdapterError
 
     REGISTRY_SIMPLE_AVAILABLE = True

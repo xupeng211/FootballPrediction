@@ -255,12 +255,14 @@ class StringUtils:
             return False
 
         url_pattern = re.compile(
-            r'^https?://'  # http:// or https://
-            r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|'  # domain...
-            r'localhost|'  # localhost...
-            r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
-            r'(?::\d+)?'  # optional port
-            r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+            r"^https?://"  # http:// or https://
+            r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|"  # domain...
+            r"localhost|"  # localhost...
+            r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"  # ...or ip
+            r"(?::\d+)?"  # optional port
+            r"(?:/?|[/?]\S+)$",
+            re.IGNORECASE,
+        )
         return url_pattern.match(text.strip()) is not None
 
     @staticmethod
@@ -276,7 +278,7 @@ class StringUtils:
         if not isinstance(text, str):
             return False
         # 移除非字母数字字符并转为小写
-        cleaned = re.sub(r'[^a-zA-Z0-9]', '', text).lower()
+        cleaned = re.sub(r"[^a-zA-Z0-9]", "", text).lower()
         return cleaned == cleaned[::-1]
 
     @staticmethod
@@ -284,15 +286,19 @@ class StringUtils:
         """首字母大写每个单词"""
         if not isinstance(text, str):
             return ""
-        return ' '.join(word.capitalize() for word in text.split())
+        return " ".join(word.capitalize() for word in text.split())
 
     @staticmethod
-    def random_string(length: int = 10, chars: str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") -> str:
+    def random_string(
+        length: int = 10,
+        chars: str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+    ) -> str:
         """生成随机字符串"""
         import random
+
         if length <= 0:
             return ""
-        return ''.join(random.choice(chars) for _ in range(length))
+        return "".join(random.choice(chars) for _ in range(length))
 
     @staticmethod
     def remove_duplicates(text: str) -> str:
@@ -300,7 +306,7 @@ class StringUtils:
         if not isinstance(text, str):
             return ""
         seen = set()
-        return ''.join(char for char in text if not (char in seen or seen.add(char)))
+        return "".join(char for char in text if not (char in seen or seen.add(char)))
 
     @staticmethod
     def word_count(text: str) -> int:

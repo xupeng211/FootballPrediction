@@ -289,8 +289,12 @@ async def test_async_endpoints():
     """测试：异步端点"""
     if HEALTH_AVAILABLE:
         # 直接调用端点函数
-        from src.api.health import (detailed_health, health_check,
-                                    liveness_check, readiness_check)
+        from src.api.health import (
+            detailed_health,
+            health_check,
+            liveness_check,
+            readiness_check,
+        )
 
         # 测试health_check
         _result = await health_check()

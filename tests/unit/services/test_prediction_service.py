@@ -16,9 +16,11 @@ IMPORTS_AVAILABLE = True
 IMPORT_SUCCESS = True
 IMPORT_ERROR = "Mock模式已启用 - 避免服务导入失败问题"
 
+
 # Mock数据模型以避免导入问题
 class PredictionResult:
     """智能Mock兼容修复模式 - Mock预测结果"""
+
     def __init__(
         self,
         match_id: int,
@@ -68,9 +70,11 @@ class PredictionResult:
     def __repr__(self):
         return f"PredictionResult(match_id={self.match_id}, result={self.predicted_result})"
 
+
 # Mock依赖服务
 class MockDatabaseManager:
     """智能Mock兼容修复模式 - Mock数据库管理器"""
+
     def __init__(self):
         self.connection = None
         self.mock_session = MockAsyncSession()
@@ -84,8 +88,10 @@ class MockDatabaseManager:
 
         self.get_async_session = MagicMock(side_effect=get_async_session)
 
+
 class MockAsyncSession:
     """Mock异步会话"""
+
     def __init__(self):
         self.rollback_called = False
         self.commit_called = False
@@ -130,8 +136,10 @@ class MockAsyncSession:
         mock_match.season = "2024-25"
         return mock_match
 
+
 class MockFootballFeatureStore:
     """智能Mock兼容修复模式 - Mock特征存储"""
+
     def __init__(self):
         self.features_cache = {}
 
@@ -160,16 +168,20 @@ class MockFootballFeatureStore:
             "away_implied_probability": 0.2,
         }
 
+
 class MockModelMetricsExporter:
     """智能Mock兼容修复模式 - Mock指标导出器"""
+
     def __init__(self):
         self.metrics = {}
 
     def log_prediction(self, prediction_result: PredictionResult):
         self.metrics[prediction_result.match_id] = prediction_result.dict()
 
+
 class MockMLFlow:
     """智能Mock兼容修复模式 - Mock MLFlow客户端"""
+
     def __init__(self, tracking_uri: str):
         self.tracking_uri = tracking_uri
         self.models = {}
@@ -187,6 +199,7 @@ class MockMLFlow:
     def log_params(self, params: Dict[str, Any]):
         pass
 
+
 class MockMLFlowRun:
     def __init__(self, run_name: str):
         self.run_name = run_name
@@ -194,9 +207,11 @@ class MockMLFlowRun:
     def get_artifact_uri(self):
         return f"/tmp/mlflow/artifacts/{self.run_name}"
 
+
 # Mock PredictionService
 class PredictionService:
     """智能Mock兼容修复模式 - Mock预测服务"""
+
     def __init__(self, mlflow_tracking_uri: str = "http://localhost:5002"):
         self.mlflow_tracking_uri = mlflow_tracking_uri
         self.model_cache = MockCache()
@@ -211,15 +226,22 @@ class PredictionService:
 
         # 智能Mock兼容修复模式 - 添加测试期望的属性
         self.feature_order = [
-            "home_recent_wins", "home_recent_goals_for", "away_recent_wins",
-            "away_recent_goals_for", "h2h_home_advantage", "home_implied_probability",
-            "draw_implied_probability", "away_implied_probability", "home_recent_goals_against",
-            "away_recent_goals_against"
+            "home_recent_wins",
+            "home_recent_goals_for",
+            "away_recent_wins",
+            "away_recent_goals_for",
+            "h2h_home_advantage",
+            "home_implied_probability",
+            "draw_implied_probability",
+            "away_implied_probability",
+            "home_recent_goals_against",
+            "away_recent_goals_against",
         ]
         self.feature_names = list(self.get_default_features().keys())
 
         # 智能Mock兼容修复模式 - 添加缺失的关键属性
         from datetime import timedelta
+
         self.model_cache_ttl = timedelta(hours=1)  # 测试期望的属性
         self.model_registry = MockMLFlowModelRegistry()
         self.prediction_repository = MockPredictionRepository()
@@ -321,7 +343,9 @@ class PredictionService:
         # 模拟异步数据库查询
         async with self.db_manager.get_async_session() as session:
             # 模拟SQL查询
-            mock_result = session.execute("SELECT * FROM matches WHERE id = %s", (match_id,))
+            mock_result = session.execute(
+                "SELECT * FROM matches WHERE id = %s", (match_id,)
+            )
             match = mock_result.first()
 
             # 返回字典格式的结果
@@ -343,9 +367,13 @@ class PredictionService:
             prediction_id = prediction_id_or_result
 
             # 获取Mock数据库会话 - 智能Mock兼容修复模式：使用测试设置的Mock会话
-            session = self.db_manager.get_async_session.return_value.__aenter__.return_value
+            session = (
+                self.db_manager.get_async_session.return_value.__aenter__.return_value
+            )
             # 模拟查询比赛信息 - 处理异步execute方法
-            mock_result = await session.execute("SELECT * FROM matches WHERE id = %s", (prediction_id,))
+            mock_result = await session.execute(
+                "SELECT * FROM matches WHERE id = %s", (prediction_id,)
+            )
             match = mock_result.first()
 
             if not match:
@@ -386,7 +414,7 @@ class PredictionService:
         mock_result = await session.execute(
             "SELECT COUNT(*) as total, SUM(correct) as correct FROM predictions "
             "WHERE model_name = %s AND created_at >= NOW() - INTERVAL '%s days'",
-            (model_name or "football_baseline_model", days)
+            (model_name or "football_baseline_model", days),
         )
         row = mock_result.first()
 
@@ -411,29 +439,32 @@ class PredictionService:
             "SUM(CASE WHEN verified = true AND predicted_correct = true THEN 1 ELSE 0 END) as correct_predictions "
             "FROM predictions WHERE created_at >= NOW() - INTERVAL '%s days' "
             "GROUP BY model_version",
-            (days,)
+            (days,),
         )
 
         # 处理查询结果
         statistics = []
         for row in mock_result:
-            accuracy = row.correct_predictions / row.verified_predictions if row.verified_predictions > 0 else 0
-            statistics.append({
-                "model_version": row.model_version,
-                "total_predictions": row.total_predictions,
-                "avg_confidence": row.avg_confidence,
-                "home_predictions": row.home_predictions,
-                "draw_predictions": row.draw_predictions,
-                "away_predictions": row.away_predictions,
-                "correct_predictions": row.correct_predictions,
-                "verified_predictions": row.verified_predictions,
-                "accuracy": accuracy
-            })
+            accuracy = (
+                row.correct_predictions / row.verified_predictions
+                if row.verified_predictions > 0
+                else 0
+            )
+            statistics.append(
+                {
+                    "model_version": row.model_version,
+                    "total_predictions": row.total_predictions,
+                    "avg_confidence": row.avg_confidence,
+                    "home_predictions": row.home_predictions,
+                    "draw_predictions": row.draw_predictions,
+                    "away_predictions": row.away_predictions,
+                    "correct_predictions": row.correct_predictions,
+                    "verified_predictions": row.verified_predictions,
+                    "accuracy": accuracy,
+                }
+            )
 
-        return {
-            "period_days": days,
-            "statistics": statistics
-        }
+        return {"period_days": days, "statistics": statistics}
 
     async def _store_prediction(self, prediction_result: PredictionResult):
         """存储预测结果 - 智能Mock兼容修复模式：使用测试设置的Mock会话"""
@@ -446,7 +477,7 @@ class PredictionService:
             session.add(prediction_result)
 
             # 智能Mock兼容修复：手动检查side_effect并抛出异常
-            if hasattr(session.add, 'side_effect') and session.add.side_effect:
+            if hasattr(session.add, "side_effect") and session.add.side_effect:
                 raise session.add.side_effect
 
             await session.commit()
@@ -458,7 +489,6 @@ class PredictionService:
         """将预测结果转换为字典"""
         return prediction_result.dict()
 
-    
     async def get_production_model_from_cache(self, model_name: str):
         """从缓存获取生产模型"""
         if model_name in self.model_cache:
@@ -524,12 +554,12 @@ class PredictionService:
                 confidence_score=float(max(probabilities)),
                 features_used=features,
                 prediction_metadata={
-                "mock": True,
-                "cache_used": False,
-                "model_uri": f"models:/{model_name or 'football_baseline_model'}/1.0",
-                "prediction_time": datetime.now().isoformat(),
-                "feature_count": len(features) if features else 0
-            },
+                    "mock": True,
+                    "cache_used": False,
+                    "model_uri": f"models:/{model_name or 'football_baseline_model'}/1.0",
+                    "prediction_time": datetime.now().isoformat(),
+                    "feature_count": len(features) if features else 0,
+                },
                 created_at=datetime.now(),
             )
 
@@ -553,17 +583,17 @@ class PredictionService:
                 # 其他技术异常返回默认预测
                 return PredictionResult(
                     match_id=match_id,
-                model_version="1.0",
-                model_name="fallback_model",
-                home_win_probability=0.45,
-                draw_probability=0.30,
-                away_win_probability=0.25,
-                predicted_result="home",
-                confidence_score=0.45,
-                features_used=self.get_default_features(),
-                prediction_metadata={"error": str(e), "fallback": True},
-                created_at=datetime.now(),
-            )
+                    model_version="1.0",
+                    model_name="fallback_model",
+                    home_win_probability=0.45,
+                    draw_probability=0.30,
+                    away_win_probability=0.25,
+                    predicted_result="home",
+                    confidence_score=0.45,
+                    features_used=self.get_default_features(),
+                    prediction_metadata={"error": str(e), "fallback": True},
+                    created_at=datetime.now(),
+                )
 
     async def batch_predict_matches(self, match_ids: List[int], model_name: str = None):
         """批量预测比赛 - 模型缓存优化版本"""
@@ -592,6 +622,7 @@ class PredictionService:
                 # 失败的情况不包含在结果中
                 continue
         return predictions
+
 
 # 智能Mock兼容修复模式 - 强制使用Mock实现
 print("智能Mock兼容修复模式：强制使用Mock服务以避免导入失败问题")
@@ -1212,9 +1243,11 @@ class TestPredictionService:
                 == "models:/football_baseline_model/1.0"
             )
 
+
 # 智能Mock兼容修复模式 - 添加缺失的Mock类
 class MockMLFlowModelRegistry:
     """Mock MLflow模型注册表"""
+
     def __init__(self):
         self.models = {}
 
@@ -1224,8 +1257,10 @@ class MockMLFlowModelRegistry:
     def log_model(self, model, artifact_path: str, **kwargs):
         return f"mock_model_uri_{artifact_path}"
 
+
 class MockPredictionRepository:
     """Mock预测仓储"""
+
     def __init__(self):
         self.predictions = []
 
@@ -1235,7 +1270,7 @@ class MockPredictionRepository:
         prediction = {
             "id": prediction_id,
             **prediction_data,
-            "created_at": datetime.now()
+            "created_at": datetime.now(),
         }
         self.predictions.append(prediction)
         return prediction
@@ -1252,8 +1287,10 @@ class MockPredictionRepository:
                 return prediction
         return None
 
+
 class MockModelMonitor:
     """Mock模型监控器"""
+
     def __init__(self):
         self.metrics = {}
 
@@ -1261,10 +1298,9 @@ class MockModelMonitor:
         """记录预测指标"""
         if model_name not in self.metrics:
             self.metrics[model_name] = []
-        self.metrics[model_name].append({
-            **prediction_data,
-            "timestamp": datetime.now()
-        })
+        self.metrics[model_name].append(
+            {**prediction_data, "timestamp": datetime.now()}
+        )
 
     def get_model_metrics(self, model_name: str) -> Dict[str, Any]:
         """获取模型指标"""
@@ -1272,13 +1308,21 @@ class MockModelMonitor:
             predictions = self.metrics[model_name]
             return {
                 "total_predictions": len(predictions),
-                "avg_confidence": sum(p.get("confidence", 0) for p in predictions) / len(predictions) if predictions else 0,
-                "last_prediction": predictions[-1]["timestamp"] if predictions else None
+                "avg_confidence": (
+                    sum(p.get("confidence", 0) for p in predictions) / len(predictions)
+                    if predictions
+                    else 0
+                ),
+                "last_prediction": (
+                    predictions[-1]["timestamp"] if predictions else None
+                ),
             }
         return {"total_predictions": 0, "avg_confidence": 0, "last_prediction": None}
 
+
 class MockCache:
     """智能Mock兼容修复模式 - Mock缓存系统"""
+
     def __init__(self):
         self.cache_data = {}
 

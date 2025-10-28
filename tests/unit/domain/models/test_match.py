@@ -11,8 +11,13 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from src.domain.models.match import (DomainError, Match, MatchResult,
-                                     MatchScore, MatchStatus)
+from src.domain.models.match import (
+    DomainError,
+    Match,
+    MatchResult,
+    MatchScore,
+    MatchStatus,
+)
 
 
 @pytest.mark.unit

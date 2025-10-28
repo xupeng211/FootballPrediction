@@ -36,12 +36,17 @@ import pytest
 
 # 测试导入
 try:
-    from src.config.config_manager import (ConfigManager,
-                                           EnvironmentConfigSource,
-                                           FileConfigSource,
-                                           get_config_manager)
-    from src.middleware.cors_config import (CorsConfig, CorsMiddleware,
-                                            get_cors_config_by_env)
+    from src.config.config_manager import (
+        ConfigManager,
+        EnvironmentConfigSource,
+        FileConfigSource,
+        get_config_manager,
+    )
+    from src.middleware.cors_config import (
+        CorsConfig,
+        CorsMiddleware,
+        get_cors_config_by_env,
+    )
     from src.utils.crypto_utils import CryptoUtils
     from src.utils.data_validator import DataValidator
     from src.utils.date_utils import DateUtils

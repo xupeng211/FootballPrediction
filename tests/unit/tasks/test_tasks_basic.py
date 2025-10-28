@@ -83,8 +83,7 @@ class TestDataCollectionTasks:
             pass
         except Exception:
             pass
-            from src.tasks.data_collection.fixtures_tasks import \
-                collect_fixtures
+            from src.tasks.data_collection.fixtures_tasks import collect_fixtures
 
             assert collect_fixtures is not None
         except ImportError:
@@ -137,9 +136,11 @@ class TestMaintenanceTasks:
             pass
         except Exception:
             pass
-            from src.tasks.maintenance_tasks import (backup_database,
-                                                     cleanup_old_data,
-                                                     update_statistics)
+            from src.tasks.maintenance_tasks import (
+                backup_database,
+                cleanup_old_data,
+                update_statistics,
+            )
 
             assert cleanup_old_data is not None
             assert backup_database is not None
@@ -190,8 +191,11 @@ class TestMonitoringTasks:
             pass
         except Exception:
             pass
-            from src.tasks.monitoring import (check_system_health,
-                                              collect_metrics, send_alert)
+            from src.tasks.monitoring import (
+                check_system_health,
+                collect_metrics,
+                send_alert,
+            )
 
             assert check_system_health is not None
             assert send_alert is not None
@@ -285,9 +289,11 @@ class TestStreamingTasks:
             pass
         except Exception:
             pass
-            from src.tasks.streaming_tasks import (handle_stream_data,
-                                                   process_kafka_message,
-                                                   publish_event)
+            from src.tasks.streaming_tasks import (
+                handle_stream_data,
+                process_kafka_message,
+                publish_event,
+            )
 
             assert process_kafka_message is not None
             assert publish_event is not None
@@ -324,8 +330,11 @@ class TestBackupTasks:
             pass
         except Exception:
             pass
-            from src.tasks.backup_tasks import (create_backup, restore_backup,
-                                                schedule_backup)
+            from src.tasks.backup_tasks import (
+                create_backup,
+                restore_backup,
+                schedule_backup,
+            )
 
             assert create_backup is not None
             assert restore_backup is not None
@@ -364,8 +373,12 @@ class TestTaskUtils:
             pass
         except Exception:
             pass
-            from src.tasks.utils import (cancel_task, format_task_result,
-                                         get_task_status, retry_task)
+            from src.tasks.utils import (
+                cancel_task,
+                format_task_result,
+                get_task_status,
+                retry_task,
+            )
 
             assert get_task_status is not None
             assert cancel_task is not None
@@ -423,9 +436,12 @@ class TestTaskDecorators:
             pass
         except Exception:
             pass
-            from src.tasks.decorators import (task_circuit_breaker,
-                                              task_rate_limit, task_retry,
-                                              task_timeout)
+            from src.tasks.decorators import (
+                task_circuit_breaker,
+                task_rate_limit,
+                task_retry,
+                task_timeout,
+            )
 
             assert task_retry is not None
             assert task_timeout is not None
@@ -462,10 +478,12 @@ class TestTaskScheduler:
             pass
         except Exception:
             pass
-            from src.tasks.scheduler import (TaskScheduler,
-                                             cancel_scheduled_task,
-                                             list_scheduled_tasks,
-                                             schedule_task)
+            from src.tasks.scheduler import (
+                TaskScheduler,
+                cancel_scheduled_task,
+                list_scheduled_tasks,
+                schedule_task,
+            )
 
             assert TaskScheduler is not None
             assert schedule_task is not None
@@ -503,9 +521,13 @@ class TestTaskQueue:
             pass
         except Exception:
             pass
-            from src.tasks.queue_manager import (QueueManager, clear_queue,
-                                                 get_queue_size, pause_queue,
-                                                 resume_queue)
+            from src.tasks.queue_manager import (
+                QueueManager,
+                clear_queue,
+                get_queue_size,
+                pause_queue,
+                resume_queue,
+            )
 
             assert QueueManager is not None
             assert get_queue_size is not None

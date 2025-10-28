@@ -16,6 +16,7 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel, Field
 
 from ..common import api_models
+
 # from ..api.data.models import api_models  # 已重构，移除此导入
 from .base_models import base_models as base_models_mod
 
@@ -37,9 +38,15 @@ warnings.warn(
 
 # 从 database.models 导入 User 以保持兼容性
 from ..database.models import User
+
 # 从 services.content_analysis 导入 Content, ContentType, AnalysisResult, UserProfile 和 UserRole 以保持兼容性
-from ..services.content_analysis import (AnalysisResult, Content, ContentType,
-                                         UserProfile, UserRole)
+from ..services.content_analysis import (
+    AnalysisResult,
+    Content,
+    ContentType,
+    UserProfile,
+    UserRole,
+)
 
 # 导出所有类
 __all__ = [

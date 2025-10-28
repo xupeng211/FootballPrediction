@@ -17,14 +17,17 @@ from fastapi import HTTPException
 def test_module_imports():
     """测试模块导入"""
     # 测试导入新模块
-    from src.api.predictions_mod import (batch_predict_matches_handler,
-                                         get_match_prediction_handler,
-                                         get_match_prediction_history_handler,
-                                         get_rate_limiter,
-                                         get_recent_predictions_handler,
-                                         is_rate_limit_available,
-                                         predict_match_handler, router,
-                                         verify_prediction_handler)
+    from src.api.predictions_mod import (
+        batch_predict_matches_handler,
+        get_match_prediction_handler,
+        get_match_prediction_history_handler,
+        get_rate_limiter,
+        get_recent_predictions_handler,
+        is_rate_limit_available,
+        predict_match_handler,
+        router,
+        verify_prediction_handler,
+    )
 
     assert router is not None
     assert get_rate_limiter is not None
@@ -39,8 +42,10 @@ def test_module_imports():
 
 def test_rate_limiter():
     """测试速率限制器"""
-    from src.api.predictions_mod.rate_limiter import (get_rate_limiter,
-                                                      is_rate_limit_available)
+    from src.api.predictions_mod.rate_limiter import (
+        get_rate_limiter,
+        is_rate_limit_available,
+    )
 
     limiter = get_rate_limiter()
     assert limiter is not None
@@ -53,7 +58,9 @@ def test_rate_limiter():
 def test_prediction_handlers_import():
     """测试预测处理器导入"""
     from src.api.predictions_mod.prediction_handlers import (
-        _format_cached_prediction, _format_realtime_prediction)
+        _format_cached_prediction,
+        _format_realtime_prediction,
+    )
 
     # 测试格式化函数存在
     assert _format_cached_prediction is not None
@@ -63,8 +70,7 @@ def test_prediction_handlers_import():
 @pytest.mark.asyncio
 async def test_get_match_prediction_handler():
     """测试获取比赛预测处理器"""
-    from src.api.predictions_mod.prediction_handlers import \
-        get_match_prediction_handler
+    from src.api.predictions_mod.prediction_handlers import get_match_prediction_handler
     from src.database.models import Match, MatchStatus, Predictions
 
     # Mock依赖
@@ -123,8 +129,7 @@ async def test_get_match_prediction_handler():
 @pytest.mark.asyncio
 async def test_get_match_prediction_not_found():
     """测试比赛不存在的情况"""
-    from src.api.predictions_mod.prediction_handlers import \
-        get_match_prediction_handler
+    from src.api.predictions_mod.prediction_handlers import get_match_prediction_handler
 
     mock_request = Mock()
     mock_session = AsyncMock()
@@ -145,8 +150,7 @@ async def test_get_match_prediction_not_found():
 @pytest.mark.asyncio
 async def test_batch_predict_matches_handler():
     """测试批量预测处理器"""
-    from src.api.predictions_mod.batch_handlers import \
-        batch_predict_matches_handler
+    from src.api.predictions_mod.batch_handlers import batch_predict_matches_handler
     from src.database.models import Match
 
     mock_request = Mock()
@@ -196,8 +200,7 @@ async def test_batch_predict_matches_handler():
 @pytest.mark.asyncio
 async def test_batch_predict_too_many_matches():
     """测试批量预测超过限制"""
-    from src.api.predictions_mod.batch_handlers import \
-        batch_predict_matches_handler
+    from src.api.predictions_mod.batch_handlers import batch_predict_matches_handler
 
     mock_request = Mock()
     mock_session = AsyncMock()
@@ -218,8 +221,9 @@ async def test_batch_predict_too_many_matches():
 @pytest.mark.asyncio
 async def test_get_match_prediction_history_handler():
     """测试获取比赛历史预测处理器"""
-    from src.api.predictions_mod.history_handlers import \
-        get_match_prediction_history_handler
+    from src.api.predictions_mod.history_handlers import (
+        get_match_prediction_history_handler,
+    )
     from src.database.models import Match, Predictions
 
     mock_session = AsyncMock()
@@ -273,8 +277,7 @@ async def test_get_match_prediction_history_handler():
 @pytest.mark.asyncio
 async def test_get_recent_predictions_handler():
     """测试获取最近预测处理器"""
-    from src.api.predictions_mod.history_handlers import \
-        get_recent_predictions_handler
+    from src.api.predictions_mod.history_handlers import get_recent_predictions_handler
 
     mock_session = AsyncMock()
 

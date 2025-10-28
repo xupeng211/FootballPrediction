@@ -15,11 +15,16 @@ import pytest
 # 导入要测试的模块
 try:
     from src.models.raw_data import RawMatchData  # SQLAlchemy模型; Pydantic模型
-    from src.models.raw_data import (RawMatchDataCreate, RawMatchDataResponse,
-                                     RawOddsData, RawOddsDataCreate,
-                                     RawOddsDataResponse, RawStatisticsData,
-                                     RawStatisticsDataCreate,
-                                     RawStatisticsDataResponse)
+    from src.models.raw_data import (
+        RawMatchDataCreate,
+        RawMatchDataResponse,
+        RawOddsData,
+        RawOddsDataCreate,
+        RawOddsDataResponse,
+        RawStatisticsData,
+        RawStatisticsDataCreate,
+        RawStatisticsDataResponse,
+    )
 
     RAW_DATA_AVAILABLE = True
 except ImportError:

@@ -13,13 +13,18 @@ import pytest
 
 # 测试导入
 try:
-    from src.utils.validators import (validate_credit_card,
-                                      validate_date_string, validate_email,
-                                      validate_ipv4_address,
-                                      validate_json_string,
-                                      validate_mac_address, validate_password,
-                                      validate_phone, validate_url,
-                                      validate_username)
+    from src.utils.validators import (
+        validate_credit_card,
+        validate_date_string,
+        validate_email,
+        validate_ipv4_address,
+        validate_json_string,
+        validate_mac_address,
+        validate_password,
+        validate_phone,
+        validate_url,
+        validate_username,
+    )
 
     VALIDATORS_AVAILABLE = True
 except ImportError as e:

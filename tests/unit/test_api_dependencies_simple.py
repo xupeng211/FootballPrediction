@@ -9,8 +9,13 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.api.dependencies import (ALGORITHM, SECRET_KEY, get_current_user,
-                                  security, validate_secret_key)
+from src.api.dependencies import (
+    ALGORITHM,
+    SECRET_KEY,
+    get_current_user,
+    security,
+    validate_secret_key,
+)
 
 
 @pytest.mark.unit

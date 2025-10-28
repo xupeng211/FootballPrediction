@@ -721,8 +721,7 @@ class TestUtilsInitExports:
     def test_exported_functions_exist(self):
         """测试导出的函数存在"""
         try:
-            from src.utils import (deep_merge, generate_uuid, hash_string,
-                                   slugify)
+            from src.utils import deep_merge, generate_uuid, hash_string, slugify
 
             # 函数应该存在且可调用
             assert callable(generate_uuid)
@@ -735,8 +734,7 @@ class TestUtilsInitExports:
     def test_exported_functions_work(self):
         """测试导出的函数工作"""
         try:
-            from src.utils import (format_datetime, generate_short_id,
-                                   generate_uuid)
+            from src.utils import format_datetime, generate_short_id, generate_uuid
 
             # 测试UUID生成
             uuid1 = generate_uuid()

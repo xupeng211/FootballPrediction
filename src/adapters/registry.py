@@ -19,11 +19,15 @@ class AdapterRegistry:
     def _create_default_factory(self):
         """创建默认工厂"""
         # 简单的工厂实现
-        return type('Factory', (), {
-            'create_adapter': lambda self, cls, config=None: cls(config)
-        })()
+        return type(
+            "Factory",
+            (),
+            {"create_adapter": lambda self, cls, config=None: cls(config)},
+        )()
 
-    def register(self, name: str, adapter_class: Type, group: Optional[str] = None) -> None:
+    def register(
+        self, name: str, adapter_class: Type, group: Optional[str] = None
+    ) -> None:
         """注册适配器"""
         if name in self.adapters:
             raise AdapterError(f"Adapter '{name}' already registered")
@@ -67,9 +71,6 @@ class AdapterRegistry:
 
 
 # 全局注册表实例
-_global_registry = None
-
-
 def get_global_registry() -> AdapterRegistry:
     """获取全局注册表实例"""
     global _global_registry

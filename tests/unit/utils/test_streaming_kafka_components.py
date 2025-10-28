@@ -17,12 +17,14 @@ from typing import Any, Dict, List, Optional
 import pytest
 
 from src.core.exceptions import StreamingError
-from src.streaming.kafka_components_simple import (KafkaAdminClient,
-                                                   KafkaCluster,
-                                                   KafkaConsumerGroup,
-                                                   KafkaHealthChecker,
-                                                   KafkaMetricsCollector,
-                                                   KafkaTopicManager)
+from src.streaming.kafka_components_simple import (
+    KafkaAdminClient,
+    KafkaCluster,
+    KafkaConsumerGroup,
+    KafkaHealthChecker,
+    KafkaMetricsCollector,
+    KafkaTopicManager,
+)
 
 
 @pytest.mark.unit

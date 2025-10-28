@@ -7,8 +7,14 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 try:
-    from src.decorators.base import (cache_result, log_execution, rate_limit,
-                                     retry, timing, validate_input)
+    from src.decorators.base import (
+        cache_result,
+        log_execution,
+        rate_limit,
+        retry,
+        timing,
+        validate_input,
+    )
 
     IMPORT_SUCCESS = True
 except ImportError as e:
