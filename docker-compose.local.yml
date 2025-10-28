@@ -1,0 +1,28 @@
+# 本地开发环境配置
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    env_file:
+      - ./environments/.env.development
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./src:/app/src:rw
+    command: uvicorn src.main:app --host 0.0.0.0 --port 8001 --reload
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/football_prediction
+      - REDIS_URL=redis://localhost:6379/0
+      - SECRET_KEY=ft1MUkH4lCuCb_u8ykXCspk3EoGoATaA4qiU2Rc8XbE
+      - DEBUG=true
+      - ENV=development
+    network_mode: host
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
