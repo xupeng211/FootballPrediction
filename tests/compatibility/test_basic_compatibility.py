@@ -10,14 +10,14 @@ from pathlib import Path
 import pytest
 
 
-def test_python_version_compatibility(, client):
+def test_python_version_compatibility(client):
     """测试Python版本兼容性"""
     # 验证Python版本满足最低要求
     assert sys.version_info >= (3, 11), f"Python版本过低: {sys.version}"
     print(f"✅ Python版本兼容: {sys.version}")
 
 
-def test_project_structure(, client):
+def test_project_structure(client):
     """测试项目结构完整性"""
     project_root = Path(__file__).parent.parent.parent
 

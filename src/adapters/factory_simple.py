@@ -19,7 +19,6 @@ class AdapterFactory:
         self._adapters[name] = adapter_class
 
     def create_adapter(
-        """TODO: 添加函数文档"""
         self, name: str, config: Optional[Dict] = None, singleton: bool = False
     ) -> Any:
         """创建适配器实例"""

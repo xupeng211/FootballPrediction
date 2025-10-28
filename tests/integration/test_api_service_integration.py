@@ -496,7 +496,7 @@ class TestDatabaseTransactionIntegration:
         ("/api/v1/stats", "GET", [200, 404]),
     ],
 )
-def test_api_endpoint_availability(endpoint, method, expected_status, client, client):
+def test_api_endpoint_availability(endpoint, method, expected_status, client):
     """测试API端点可用性"""
     try:
         client = TestClient(app) if IMPORT_SUCCESS else None
