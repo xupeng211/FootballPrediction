@@ -523,7 +523,8 @@ class UserCommandHandlers:
 
     def __init__(self):
         self.create = CreateUserHandler()
-        self.update = UpdateUserHandler()
+        # TODO: 实现UpdateUserHandler - 临时注释以解决启动问题
+        # self.update = UpdateUserHandler()
 
 
 class UserQueryHandlers:
