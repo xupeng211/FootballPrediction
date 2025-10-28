@@ -44,6 +44,12 @@ class TeamInfo(BaseModel):
     logo_url: Optional[str] = None
     country: Optional[str] = None
     league_id: Optional[int] = None
+    # 用户建议的新增字段
+    founded_year: Optional[int] = None
+    stadium_name: Optional[str] = None
+    stadium_capacity: Optional[int] = None
+    website_url: Optional[str] = None
+    team_color: Optional[str] = None
 
 
 class MatchInfo(BaseModel):
@@ -60,6 +66,14 @@ class MatchInfo(BaseModel):
     status: str = Field(..., description="pending|live|finished|cancelled")
     home_score: Optional[int] = None
     away_score: Optional[int] = None
+    # 用户建议的新增比赛统计字段
+    attendance: Optional[int] = None
+    referee: Optional[str] = None
+    weather: Optional[str] = None
+    venue: Optional[str] = None
+    match_week: Optional[int] = None
+    home_team_form: Optional[str] = None  # 最近战绩
+    away_team_form: Optional[str] = None  # 最近战绩
 
 
 class OddsInfo(BaseModel):
@@ -192,6 +206,12 @@ async def get_teams(
                 short_name=f"T{i}",
                 country=country or "Country",
                 league_id=league_id,
+                # 用户建议的新增字段
+                founded_year=1980 + i,
+                stadium_name=f"Stadium {i}",
+                stadium_capacity=30000 + (i * 5000),
+                website_url=f"https://team{i}.example.com",
+                team_color=["Red", "Blue", "Green", "Yellow", "Purple"][i-1] if i <= 5 else "Orange",
             )
             for i in range(1, min(limit + 1, 11))  # TODO: 将魔法数字 11 提取为常量
         ]
@@ -286,6 +306,14 @@ async def get_matches(
                 league_name=f"League {league_id or 1}",
                 match_date=datetime.utcnow() + timedelta(days=i),
                 status="pending",
+                # 用户建议的新增比赛统计字段
+                attendance=25000 + (i * 3000),
+                referee=f"Referee {i}",
+                weather=["Sunny", "Cloudy", "Rainy", "Partly Cloudy"][i-1] if i <= 4 else "Clear",
+                venue=f"Stadium {i * 2}",
+                match_week=i,
+                home_team_form=["W-D-W-L-D", "L-W-D-W-W", "D-W-L-D-D", "W-W-L-W-L", "L-D-D-W-W"][i-1] if i <= 5 else "D-L-W-W-D",
+                away_team_form=["D-L-W-W-D", "W-D-L-W-W", "L-W-D-W-W", "D-W-L-D-D", "W-W-L-W-L"][i-1] if i <= 5 else "W-D-D-L-W",
             )
             for i in range(1, min(limit + 1, 11))  # TODO: 将魔法数字 11 提取为常量
         ]

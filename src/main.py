@@ -185,6 +185,8 @@ if MINIMAL_API_MODE:
     logger.info("MINIMAL_API_MODE 启用，仅注册健康检查路由")
 else:
     from src.api.adapters import router as adapters_router
+    # 使用简化的认证系统
+    from src.api.simple_auth import router as auth_router
     from src.api.cqrs import router as cqrs_router
     from src.api.data_router import (
         router as data_router,
@@ -198,6 +200,7 @@ else:
     from src.api.predictions import router as predictions_router
     from src.api.repositories import router as repositories_router
 
+    app.include_router(auth_router, prefix="/api/v1")  # 启用简化的认证系统
     app.include_router(monitoring_router, prefix="/api/v1")
     app.include_router(features_router, prefix="/api/v1")
     app.include_router(data_router, prefix="/api/v1")
