@@ -117,8 +117,12 @@ RUN apt-get update && apt-get install -y \
     libpq5 \
     curl \
     ca-certificates \
+    netcat-openbsd \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
+
+# 安装Python运行时依赖
+RUN pip install --no-cache-dir requests aiohttp psycopg2-binary psutil
 
 # 设置工作目录
 WORKDIR /app
@@ -128,6 +132,10 @@ COPY --from=builder /root/.local /home/appuser/.local
 
 # 复制应用代码
 COPY . .
+
+# 使用启动脚本
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # 创建必要的目录
 RUN mkdir -p logs tmp && \
@@ -145,10 +153,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
 
 # 暴露端口
 EXPOSE 8000
-
-# 使用启动脚本
-COPY docker/entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # 默认命令（生产环境）
 ENTRYPOINT ["entrypoint.sh"]
