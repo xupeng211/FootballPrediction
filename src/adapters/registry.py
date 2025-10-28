@@ -69,6 +69,15 @@ class AdapterRegistry:
         self.adapters.clear()
         self.groups.clear()
 
+    async def initialize(self):
+        """初始化适配器注册表"""
+        # 基础初始化，可以在这里注册默认适配器
+        pass
+
+    def get_adapter(self, name: str) -> Optional[Adapter]:
+        """获取适配器（别名方法，与get方法功能相同）"""
+        return self.get(name)
+
 
 # 全局注册表实例
 def get_global_registry() -> AdapterRegistry:

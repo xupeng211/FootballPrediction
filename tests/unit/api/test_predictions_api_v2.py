@@ -158,7 +158,7 @@ class TestPredictionsAPIV2:
         response = client.get(f"/predictions/history/{match_id}?limit=3")
         assert response.status_code == 200
         _data = response.json()
-assert len(_data["predictions"]) <= 3
+        assert len(_data["predictions"]) <= 3
 
     def test_get_recent_predictions(self, client):
         """测试获取最近预测"""
@@ -201,7 +201,7 @@ assert len(_data["predictions"]) <= 3
         response = client.post(f"/predictions/{match_id}/verify?actual_result=away")
         assert response.status_code == 200
         _data = response.json()
-                assert _data["is_correct"] is False
+        assert _data["is_correct"] is False
 
     def test_verify_prediction_invalid_result(self, client):
         """测试验证预测（无效结果）"""
