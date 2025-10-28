@@ -15,8 +15,7 @@ import pytest
 # 真实模块导入
 try:
     from src.core.prediction_engine import _lazy_import, get_prediction_engine
-    from src.core.service_lifecycle import (ServiceLifecycleManager,
-                                            ServiceState)
+    from src.core.service_lifecycle import ServiceLifecycleManager, ServiceState
     from src.cqrs.application import PredictionCQRSService
     from src.cqrs.bus import get_command_bus, get_query_bus
     from src.events.base import Event, EventHandler
@@ -300,8 +299,7 @@ class TestCoreModulesIntegration:
         """测试模块可用性和导入"""
         # 验证核心模块可以正常导入
         from src.core.prediction_engine import _lazy_import
-        from src.core.service_lifecycle import (ServiceLifecycleManager,
-                                                ServiceState)
+        from src.core.service_lifecycle import ServiceLifecycleManager, ServiceState
         from src.events.base import Event, EventHandler
         from src.events.bus import EventBus
 
@@ -361,8 +359,7 @@ class TestCoreModulesUnit:
 
         # 验证全局变量已设置（可能因为模块依赖问题而失败）
         try:
-            from src.core.prediction_engine import (PredictionConfig,
-                                                    PredictionEngine)
+            from src.core.prediction_engine import PredictionConfig, PredictionEngine
 
             assert PredictionEngine is not None
             assert PredictionConfig is not None

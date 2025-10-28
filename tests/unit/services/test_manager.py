@@ -12,8 +12,12 @@ Tests for Service Manager
 import pytest
 
 from src.services.base_unified import BaseService
-from src.services.manager import (_SERVICE_FACTORIES, ServiceManager,
-                                  _ensure_default_services, service_manager)
+from src.services.manager import (
+    _SERVICE_FACTORIES,
+    ServiceManager,
+    _ensure_default_services,
+    service_manager,
+)
 
 
 @pytest.mark.unit

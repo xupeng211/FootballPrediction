@@ -96,7 +96,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.add_middleware(GZipMiddleware, minimum_size=1000)  # TODO: 将魔法数字 1000 提取为常量
+app.add_middleware(
+    GZipMiddleware, minimum_size=1000
+)  # TODO: 将魔法数字 1000 提取为常量
 
 
 class RequestLoggingMiddleware(BaseHTTPMiddleware):

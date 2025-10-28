@@ -17,10 +17,13 @@ import pytest
 
 # 导入要测试的模块
 try:
-    from src.observers.base import (ObservableEvent, ObservableEventType,
-                                    Observer)
-    from src.observers.observers import (AlertingObserver, LoggingObserver,
-                                         MetricsObserver, PerformanceObserver)
+    from src.observers.base import ObservableEvent, ObservableEventType, Observer
+    from src.observers.observers import (
+        AlertingObserver,
+        LoggingObserver,
+        MetricsObserver,
+        PerformanceObserver,
+    )
 
     OBSERVERS_AVAILABLE = True
 except ImportError as e:

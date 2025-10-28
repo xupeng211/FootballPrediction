@@ -12,8 +12,13 @@ import pytest
 
 # 测试导入
 try:
-    from src.utils.helpers import (format_timestamp, generate_hash,
-                                   generate_uuid, safe_get, sanitize_string)
+    from src.utils.helpers import (
+        format_timestamp,
+        generate_hash,
+        generate_uuid,
+        safe_get,
+        sanitize_string,
+    )
 
     HELPERS_AVAILABLE = True
 except ImportError as e:
@@ -270,9 +275,13 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if HELPERS_AVAILABLE:
-        from src.utils.helpers import (format_timestamp, generate_hash,
-                                       generate_uuid, safe_get,
-                                       sanitize_string)
+        from src.utils.helpers import (
+            format_timestamp,
+            generate_hash,
+            generate_uuid,
+            safe_get,
+            sanitize_string,
+        )
 
         assert generate_uuid is not None
         assert generate_hash is not None

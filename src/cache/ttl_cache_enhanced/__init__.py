@@ -20,11 +20,21 @@ Provides high-performance in-memory cache with:
 from .async_cache import AsyncTTLCache
 from .cache_entry import CacheEntry
 from .cache_factory import CacheFactory
-from .cache_instances import (CACHES, cleanup_all_expired, clear_all_caches,
-                              config_cache, feature_cache, get_all_stats,
-                              get_cache, odds_cache, prediction_cache,
-                              session_cache, start_auto_cleanup,
-                              stop_auto_cleanup, temp_cache)
+from .cache_instances import (
+    CACHES,
+    cleanup_all_expired,
+    clear_all_caches,
+    config_cache,
+    feature_cache,
+    get_all_stats,
+    get_cache,
+    odds_cache,
+    prediction_cache,
+    session_cache,
+    start_auto_cleanup,
+    stop_auto_cleanup,
+    temp_cache,
+)
 from .ttl_cache import TTLCache
 
 __all__ = [

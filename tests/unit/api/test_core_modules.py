@@ -145,10 +145,12 @@ class TestRepositoriesModule:
     def test_repositories_import(self):
         """测试仓储模块导入"""
         try:
-            from src.api.repositories import (MatchRepository,
-                                              PredictionRepository,
-                                              RepositoryManager,
-                                              UserRepository)
+            from src.api.repositories import (
+                MatchRepository,
+                PredictionRepository,
+                RepositoryManager,
+                UserRepository,
+            )
 
             assert PredictionRepository is not None
             assert UserRepository is not None
@@ -211,8 +213,13 @@ class TestDecoratorsModule:
     def test_decorators_import(self):
         """测试装饰器模块导入"""
         try:
-            from src.api.decorators import (cache_result, log_requests,
-                                            rate_limit, retry, timeout)
+            from src.api.decorators import (
+                cache_result,
+                log_requests,
+                rate_limit,
+                retry,
+                timeout,
+            )
 
             assert log_requests is not None
             assert cache_result is not None
@@ -290,9 +297,12 @@ class TestAdaptersModule:
     def test_adapters_import(self):
         """测试适配器模块导入"""
         try:
-            from src.api.adapters import (AdapterRegistry, DataAdapter,
-                                          ExternalAPIAdapter,
-                                          FootballDataAdapter)
+            from src.api.adapters import (
+                AdapterRegistry,
+                DataAdapter,
+                ExternalAPIAdapter,
+                FootballDataAdapter,
+            )
 
             assert DataAdapter is not None
             assert FootballDataAdapter is not None
@@ -353,8 +363,12 @@ class TestFacadesModule:
     def test_facades_import(self):
         """测试门面模块导入"""
         try:
-            from src.api.facades import (DataFacade, FacadeManager,
-                                         NotificationFacade, PredictionFacade)
+            from src.api.facades import (
+                DataFacade,
+                FacadeManager,
+                NotificationFacade,
+                PredictionFacade,
+            )
 
             assert PredictionFacade is not None
             assert DataFacade is not None
@@ -394,8 +408,11 @@ class TestFeaturesModule:
     def test_features_import(self):
         """测试特征模块导入"""
         try:
-            from src.api.features import (FeatureCalculator, FeatureExtractor,
-                                          FeatureStore)
+            from src.api.features import (
+                FeatureCalculator,
+                FeatureExtractor,
+                FeatureStore,
+            )
 
             assert FeatureExtractor is not None
             assert FeatureStore is not None

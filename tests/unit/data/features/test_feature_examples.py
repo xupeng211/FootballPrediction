@@ -18,13 +18,15 @@ import pytest
 
 # 测试导入
 try:
-    from src.data.features.examples import (example_batch_feature_extraction,
-                                            example_feature_statistics,
-                                            example_feature_validation,
-                                            example_get_historical_features,
-                                            example_get_online_features,
-                                            example_initialize_feature_store,
-                                            example_write_match_features)
+    from src.data.features.examples import (
+        example_batch_feature_extraction,
+        example_feature_statistics,
+        example_feature_validation,
+        example_get_historical_features,
+        example_get_online_features,
+        example_initialize_feature_store,
+        example_write_match_features,
+    )
 
     FEATURE_EXAMPLES_AVAILABLE = True
 except ImportError as e:
@@ -227,8 +229,10 @@ def test_module_imports():
     """测试：模块导入"""
     if FEATURE_EXAMPLES_AVAILABLE:
         from src.data.features.examples import (
-            example_get_online_features, example_initialize_feature_store,
-            example_write_match_features)
+            example_get_online_features,
+            example_initialize_feature_store,
+            example_write_match_features,
+        )
 
         assert example_initialize_feature_store is not None
         assert example_write_match_features is not None

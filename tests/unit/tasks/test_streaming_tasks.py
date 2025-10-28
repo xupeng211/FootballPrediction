@@ -15,9 +15,14 @@ import pytest
 
 # 测试导入
 try:
-    from src.tasks.streaming_tasks import (KafkaConsumer, KafkaProducer,
-                                           StreamingTaskStatus, StreamMessage,
-                                           StreamMonitor, StreamProcessor)
+    from src.tasks.streaming_tasks import (
+        KafkaConsumer,
+        KafkaProducer,
+        StreamingTaskStatus,
+        StreamMessage,
+        StreamMonitor,
+        StreamProcessor,
+    )
 
     STREAMING_TASKS_AVAILABLE = True
 except ImportError as e:
@@ -662,10 +667,14 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if STREAMING_TASKS_AVAILABLE:
-        from src.tasks.streaming_tasks import (KafkaConsumer, KafkaProducer,
-                                               StreamingTaskStatus,
-                                               StreamMessage, StreamMonitor,
-                                               StreamProcessor)
+        from src.tasks.streaming_tasks import (
+            KafkaConsumer,
+            KafkaProducer,
+            StreamingTaskStatus,
+            StreamMessage,
+            StreamMonitor,
+            StreamProcessor,
+        )
 
         assert StreamMessage is not None
         assert KafkaProducer is not None

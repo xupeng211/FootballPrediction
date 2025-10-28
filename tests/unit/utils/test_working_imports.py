@@ -508,8 +508,7 @@ class TestUtilityFunctions:
 
     def test_validator_functions(self):
         """测试validators模块函数"""
-        from utils.validators import (is_valid_email, is_valid_phone,
-                                      is_valid_url)
+        from utils.validators import is_valid_email, is_valid_phone, is_valid_url
 
         # 测试邮箱验证
         assert is_valid_email("test@example.com") is True
@@ -527,8 +526,7 @@ class TestUtilityFunctions:
 
     def test_required_fields_and_types_validation(self):
         """测试必填字段和类型验证"""
-        from utils.validators import (validate_data_types,
-                                      validate_required_fields)
+        from utils.validators import validate_data_types, validate_required_fields
 
         # 测试必填字段验证
         data = {"name": "张三", "age": 25}

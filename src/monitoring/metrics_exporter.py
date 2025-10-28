@@ -10,9 +10,16 @@ import time
 from datetime import datetime
 from typing import List, Optional, Tuple
 
-from prometheus_client import (CONTENT_TYPE_LATEST, REGISTRY,
-                               CollectorRegistry, Counter, Gauge, Histogram,
-                               Info, generate_latest)
+from prometheus_client import (
+    CONTENT_TYPE_LATEST,
+    REGISTRY,
+    CollectorRegistry,
+    Counter,
+    Gauge,
+    Histogram,
+    Info,
+    generate_latest,
+)
 from sqlalchemy import text
 
 from src.core.config import get_settings

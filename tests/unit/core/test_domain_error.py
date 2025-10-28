@@ -4,9 +4,14 @@
 
 import pytest
 
-from src.core.exceptions import (BusinessRuleError, ConfigError, DataError,
-                                 DomainError, FootballPredictionError,
-                                 ValidationError)
+from src.core.exceptions import (
+    BusinessRuleError,
+    ConfigError,
+    DataError,
+    DomainError,
+    FootballPredictionError,
+    ValidationError,
+)
 
 
 @pytest.mark.unit

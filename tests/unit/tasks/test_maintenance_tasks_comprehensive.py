@@ -11,6 +11,7 @@ Maintenance Tasks 综合测试
 
 import asyncio
 import os
+
 # 测试导入
 import sys
 import tempfile
@@ -22,11 +23,14 @@ import pytest
 sys.path.insert(0, "src")
 
 try:
-    from src.tasks.maintenance_tasks import (BackupTask, CacheCleanupTask,
-                                             DatabaseCleanupTask,
-                                             LogRotationTask,
-                                             MaintenanceTaskManager,
-                                             SystemHealthCheckTask)
+    from src.tasks.maintenance_tasks import (
+        BackupTask,
+        CacheCleanupTask,
+        DatabaseCleanupTask,
+        LogRotationTask,
+        MaintenanceTaskManager,
+        SystemHealthCheckTask,
+    )
 
     TASKS_AVAILABLE = True
 except ImportError as e:

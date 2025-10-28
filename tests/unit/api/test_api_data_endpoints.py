@@ -5,6 +5,17 @@ from unittest.mock import MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
+# 尝试导入API模块并设置可用性标志
+try:
+    from src.api.data_api import router
+
+    API_AVAILABLE = True
+    TEST_SKIP_REASON = "API模块不可用"
+except ImportError as e:
+    print(f"Data API import error: {e}")
+    API_AVAILABLE = False
+    TEST_SKIP_REASON = "Data API模块不可用"
+
 
 @pytest.mark.skipif(not API_AVAILABLE, reason=TEST_SKIP_REASON)
 @pytest.mark.unit
@@ -16,16 +27,19 @@ class TestAPIData:
     def client(self):
         """创建测试客户端"""
         # 智能Mock兼容修复模式：移除真实API导入
+        try:
+            from src.api.app import app
 
-        return TestClient(app)
+            return TestClient(app)
+        except ImportError:
+            pytest.skip("无法导入app")
 
     def test_get_root(self, client):
         """测试根端点"""
         response = client.get("/")
         assert response.status_code == 200
         _data = response.json()
-                assert "message" in _data
-
+        assert "message" in _data
         assert "version" in _data
 
     def test_cors_headers(self, client):

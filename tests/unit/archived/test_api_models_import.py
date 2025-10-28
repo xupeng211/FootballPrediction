@@ -8,8 +8,7 @@ import pytest
 @pytest.mark.api
 def test_api_models_import():
     try:
-        from src.api.predictions.models import (PredictionRequest,
-                                                PredictionResponse)
+        from src.api.predictions.models import PredictionRequest, PredictionResponse
         from src.api.schemas import HealthResponse
 
         assert True  # Basic assertion - consider enhancing
@@ -19,8 +18,7 @@ def test_api_models_import():
 
 def test_api_models_creation():
     try:
-        from src.api.predictions.models import (PredictionRequest,
-                                                PredictionResponse)
+        from src.api.predictions.models import PredictionRequest, PredictionResponse
 
         response = APIResponse(success=True)
         assert response.success is True

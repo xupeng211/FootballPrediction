@@ -7,11 +7,18 @@ import pytest
 
 # Test imports
 try:
-    from src.api.dependencies import (ALGORITHM, SECRET_KEY, get_admin_user,
-                                      get_current_user, get_prediction_engine,
-                                      get_redis_manager, rate_limit_check,
-                                      security, validate_secret_key,
-                                      verify_prediction_permission)
+    from src.api.dependencies import (
+        ALGORITHM,
+        SECRET_KEY,
+        get_admin_user,
+        get_current_user,
+        get_prediction_engine,
+        get_redis_manager,
+        rate_limit_check,
+        security,
+        validate_secret_key,
+        verify_prediction_permission,
+    )
 
     IMPORT_SUCCESS = True
 except ImportError as e:

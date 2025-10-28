@@ -1,8 +1,7 @@
 import pytest
 
 try:
-    from src.api.predictions.models import (PredictionRequest,
-                                            PredictionResponse)
+    from src.api.predictions.models import PredictionRequest, PredictionResponse
 except ImportError:
     # 如果导入失败，创建简单的mock类用于测试
     class APIResponse:

@@ -258,8 +258,7 @@ class TestAPIDependencies:
     def test_import_dependencies(self):
         """测试依赖导入"""
         try:
-            from src.api.dependencies import (get_current_user, get_db_session,
-                                              get_token)
+            from src.api.dependencies import get_current_user, get_db_session, get_token
 
             assert get_db_session is not None
             assert get_current_user is not None
@@ -301,8 +300,12 @@ class TestAPIDecorators:
     def test_import_decorators(self):
         """测试装饰器导入"""
         try:
-            from src.api.decorators import (cache_response, rate_limit,
-                                            require_admin, require_auth)
+            from src.api.decorators import (
+                cache_response,
+                rate_limit,
+                require_admin,
+                require_auth,
+            )
 
             assert require_auth is not None
             assert require_admin is not None
@@ -357,8 +360,7 @@ class TestAPIResponses:
     def test_standard_responses(self):
         """测试标准响应"""
         try:
-            from src.api.facades import (ApiResponse, ErrorResponse,
-                                         SuccessResponse)
+            from src.api.facades import ApiResponse, ErrorResponse, SuccessResponse
 
             assert ApiResponse is not None
             assert ErrorResponse is not None
@@ -493,8 +495,12 @@ class TestAPISecurity:
     def test_import_security(self):
         """测试安全导入"""
         try:
-            from src.api.security import (create_access_token, hash_password,
-                                          verify_password, verify_token)
+            from src.api.security import (
+                create_access_token,
+                hash_password,
+                verify_password,
+                verify_token,
+            )
 
             assert hash_password is not None
             assert verify_password is not None
@@ -542,8 +548,11 @@ class TestAPIPerformance:
     def test_import_performance(self):
         """测试性能导入"""
         try:
-            from src.api.performance import (cache_manager,
-                                             performance_monitor, rate_limiter)
+            from src.api.performance import (
+                cache_manager,
+                performance_monitor,
+                rate_limiter,
+            )
 
             assert rate_limiter is not None
             assert cache_manager is not None

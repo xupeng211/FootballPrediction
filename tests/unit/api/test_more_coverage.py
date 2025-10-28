@@ -306,24 +306,23 @@ class TestFeaturesModuleWorking:
 
     def test_match_events_processor(self):
         """测试比赛事件处理器"""
-        from src.features.match_events_processor_mod import \
-            MatchEventsProcessor
+        from src.features.match_events_processor_mod import MatchEventsProcessor
 
         processor = MatchEventsProcessor()
         assert processor is not None
 
     def test_prediction_events_processor(self):
         """测试预测事件处理器"""
-        from src.features.prediction_events_processor_mod import \
-            PredictionEventsProcessor
+        from src.features.prediction_events_processor_mod import (
+            PredictionEventsProcessor,
+        )
 
         processor = PredictionEventsProcessor()
         assert processor is not None
 
     def test_data_quality_processor(self):
         """测试数据质量处理器"""
-        from src.features.data_quality_processor_mod import \
-            DataQualityProcessor
+        from src.features.data_quality_processor_mod import DataQualityProcessor
 
         processor = DataQualityProcessor()
         assert processor is not None
@@ -369,9 +368,14 @@ class TestPydanticModelsWorking:
 
     def test_all_data_models(self):
         """测试所有数据模型"""
-        from src.api.data_router import (LeagueInfo, MatchInfo,
-                                         MatchStatistics, OddsInfo, TeamInfo,
-                                         TeamStatistics)
+        from src.api.data_router import (
+            LeagueInfo,
+            MatchInfo,
+            MatchStatistics,
+            OddsInfo,
+            TeamInfo,
+            TeamStatistics,
+        )
 
         # 创建LeagueInfo
         league = LeagueInfo(id=1, name="Test League", country="Test Country")
@@ -432,12 +436,14 @@ class TestPydanticModelsWorking:
 
     def test_prediction_models(self):
         """测试预测模型"""
-        from src.api.predictions.router import (BatchPredictionRequest,
-                                                BatchPredictionResponse,
-                                                PredictionHistory,
-                                                PredictionResult,
-                                                PredictionVerification,
-                                                RecentPrediction)
+        from src.api.predictions.router import (
+            BatchPredictionRequest,
+            BatchPredictionResponse,
+            PredictionHistory,
+            PredictionResult,
+            PredictionVerification,
+            RecentPrediction,
+        )
 
         # 创建PredictionResult
         _result = PredictionResult(

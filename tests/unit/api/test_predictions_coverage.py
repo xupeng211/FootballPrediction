@@ -43,6 +43,7 @@ def test_predictions_module_backward_compatibility():
     # 模拟旧版本的导入方式
     try:
         from src.api.predictions import router as old_router
+
         # 验证新版本导入方式
         from src.api.predictions.router import router as new_router
 

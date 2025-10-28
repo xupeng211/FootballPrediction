@@ -12,8 +12,7 @@ from src.domain.models.prediction import Prediction
 from src.domain.strategies.base import PredictionInput as BasePredictionInput
 from src.domain.strategies.base import PredictionOutput, StrategyType
 from src.domain.strategies.statistical import StatisticalStrategy
-from tests.helpers.test_adapters import \
-    SimplePredictionInput as PredictionInput
+from tests.helpers.test_adapters import SimplePredictionInput as PredictionInput
 
 
 @pytest.fixture

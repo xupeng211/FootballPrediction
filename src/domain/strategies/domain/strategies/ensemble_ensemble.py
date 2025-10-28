@@ -5,7 +5,6 @@
 # 导入
 
 
-
 # 常量
 WEIGHTED_AVERAGE = "weighted_average"
 MAJORITY_VOTING = "majority_voting"

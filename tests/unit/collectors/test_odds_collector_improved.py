@@ -21,13 +21,15 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, "src")
 
-from src.collectors.odds_collector_improved import (OddsAnalyzer,
-                                                    OddsCollector,
-                                                    OddsCollectorManager,
-                                                    OddsProcessor,
-                                                    OddsSourceManager,
-                                                    OddsStorage,
-                                                    get_odds_manager)
+from src.collectors.odds_collector_improved import (
+    OddsAnalyzer,
+    OddsCollector,
+    OddsCollectorManager,
+    OddsProcessor,
+    OddsSourceManager,
+    OddsStorage,
+    get_odds_manager,
+)
 
 
 @pytest.mark.unit

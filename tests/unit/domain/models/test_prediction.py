@@ -3,9 +3,13 @@ from decimal import Decimal
 import pytest
 
 from src.core.exceptions import DomainError
-from src.domain.models.prediction import (ConfidenceScore, Prediction,
-                                          PredictionPoints, PredictionScore,
-                                          PredictionStatus)
+from src.domain.models.prediction import (
+    ConfidenceScore,
+    Prediction,
+    PredictionPoints,
+    PredictionScore,
+    PredictionStatus,
+)
 
 
 @pytest.fixture

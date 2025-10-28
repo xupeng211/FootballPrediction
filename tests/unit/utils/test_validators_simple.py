@@ -12,9 +12,13 @@ import pytest
 
 # 导入要测试的模块
 try:
-    from src.utils.validators import (is_valid_email, is_valid_phone,
-                                      is_valid_url, validate_data_types,
-                                      validate_required_fields)
+    from src.utils.validators import (
+        is_valid_email,
+        is_valid_phone,
+        is_valid_url,
+        validate_data_types,
+        validate_required_fields,
+    )
 
     VALIDATORS_AVAILABLE = True
 except ImportError:

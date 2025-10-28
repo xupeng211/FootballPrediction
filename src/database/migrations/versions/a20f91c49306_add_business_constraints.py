@@ -3,6 +3,7 @@ from typing import Sequence, Union
 
 import sqlalchemy as sa
 from alembic import op
+
 # mypy: ignore-errors
 
 logger = logging.getLogger(__name__)

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 
-
 from ..base import BaseModel
 
 """用户数据模型。"""

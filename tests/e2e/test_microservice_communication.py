@@ -23,6 +23,7 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 
 from src.core.exceptions import StreamingError
+
 # 导入真实业务模块
 from src.streaming.kafka_producer_simple import KafkaMessageProducer
 from src.tasks.celery_app import DatabaseManager

@@ -252,9 +252,17 @@ def test_cache_factory():
 def test_cache_instances():
     """测试预定义缓存实例"""
     from src.cache.ttl_cache_improved_mod.cache_instances import (
-        cleanup_all_expired, clear_all_caches, config_cache, feature_cache,
-        get_all_stats, get_cache, odds_cache, prediction_cache, session_cache,
-        temp_cache)
+        cleanup_all_expired,
+        clear_all_caches,
+        config_cache,
+        feature_cache,
+        get_all_stats,
+        get_cache,
+        odds_cache,
+        prediction_cache,
+        session_cache,
+        temp_cache,
+    )
 
     # 测试预定义实例
     assert prediction_cache.max_size == 10000
@@ -288,10 +296,15 @@ def test_cache_instances():
 
 def test_module_import():
     """测试模块导入"""
-    from src.cache.ttl_cache_improved_mod import (AsyncTTLCache, CacheEntry,
-                                                  CacheFactory, TTLCache,
-                                                  feature_cache, odds_cache,
-                                                  prediction_cache)
+    from src.cache.ttl_cache_improved_mod import (
+        AsyncTTLCache,
+        CacheEntry,
+        CacheFactory,
+        TTLCache,
+        feature_cache,
+        odds_cache,
+        prediction_cache,
+    )
 
     assert TTLCache is not None
     assert AsyncTTLCache is not None

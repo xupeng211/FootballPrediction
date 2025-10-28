@@ -162,7 +162,7 @@ class CryptoUtils:
         """URL编码"""
         if not isinstance(text, str):
             return ""
-        return urllib.parse.quote(text.encode('utf-8'))
+        return urllib.parse.quote(text.encode("utf-8"))
 
     @staticmethod
     def decode_url(encoded_text: str) -> str:
@@ -170,7 +170,7 @@ class CryptoUtils:
         if not isinstance(encoded_text, str):
             return ""
         try:
-            return urllib.parse.unquote(encoded_text, encoding='utf-8')
+            return urllib.parse.unquote(encoded_text, encoding="utf-8")
         except Exception:
             return ""
 
@@ -179,7 +179,7 @@ class CryptoUtils:
         """URL组件编码"""
         if not isinstance(text, str):
             return ""
-        return urllib.parse.quote_plus(text.encode('utf-8'))
+        return urllib.parse.quote_plus(text.encode("utf-8"))
 
     @staticmethod
     def decode_url_component(encoded_text: str) -> str:
@@ -187,7 +187,7 @@ class CryptoUtils:
         if not isinstance(encoded_text, str):
             return ""
         try:
-            return urllib.parse.unquote_plus(encoded_text, encoding='utf-8')
+            return urllib.parse.unquote_plus(encoded_text, encoding="utf-8")
         except Exception:
             return ""
 
@@ -208,7 +208,7 @@ class CryptoUtils:
         chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
         if length <= 0:
             return ""
-        return ''.join(secrets.choice(chars) for _ in range(length))
+        return "".join(secrets.choice(chars) for _ in range(length))
 
     @staticmethod
     def obfuscate(text: str) -> str:
@@ -222,7 +222,7 @@ class CryptoUtils:
         for i, char in enumerate(text):
             key_char = key[i % len(key)]
             result.append(chr(ord(char) ^ ord(key_char)))
-        return ''.join(result)
+        return "".join(result)
 
     @staticmethod
     def deobfuscate(obfuscated_text: str) -> str:
@@ -235,7 +235,7 @@ class CryptoUtils:
         for i, char in enumerate(obfuscated_text):
             key_char = key[i % len(key)]
             result.append(chr(ord(char) ^ ord(key_char)))
-        return ''.join(result)
+        return "".join(result)
 
     @staticmethod
     def compare_strings_secure(a: str, b: str) -> bool:

@@ -13,10 +13,13 @@ import numpy as np
 import pytest
 
 from src.domain.models.prediction import Prediction
-from src.domain.strategies.base import (PredictionInput, PredictionOutput,
-                                        StrategyType)
-from src.domain.strategies.ensemble import (EnsembleMethod, EnsembleResult,
-                                            EnsembleStrategy, StrategyWeight)
+from src.domain.strategies.base import PredictionInput, PredictionOutput, StrategyType
+from src.domain.strategies.ensemble import (
+    EnsembleMethod,
+    EnsembleResult,
+    EnsembleStrategy,
+    StrategyWeight,
+)
 
 
 @pytest.fixture

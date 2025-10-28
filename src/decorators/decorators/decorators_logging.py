@@ -5,8 +5,6 @@
 # 导入
 
 
-
-
 # 类定义
 class LoggingDecorator:
     """日志装饰器，记录函数执行的前后信息"""

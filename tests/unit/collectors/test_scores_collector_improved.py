@@ -14,8 +14,7 @@ import pytest
 # 测试导入
 try:
     from src.cache.redis_manager import RedisManager
-    from src.collectors.scores_collector import (ScoresCollector,
-                                                 ScoresCollectorFactory)
+    from src.collectors.scores_collector import ScoresCollector, ScoresCollectorFactory
     from src.database.connection import DatabaseManager
     from src.database.models import Match, MatchStatus
 
@@ -402,8 +401,10 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试模块导入功能"""
     if SCORES_COLLECTOR_AVAILABLE:
-        from src.collectors.scores_collector import (ScoresCollector,
-                                                     ScoresCollectorFactory)
+        from src.collectors.scores_collector import (
+            ScoresCollector,
+            ScoresCollectorFactory,
+        )
 
         assert ScoresCollector is not None
         assert ScoresCollectorFactory is not None

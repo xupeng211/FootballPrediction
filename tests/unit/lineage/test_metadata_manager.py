@@ -92,8 +92,7 @@ def test_backward_compatibility():
     if METADATA_MANAGER_AVAILABLE:
         # 尝试导入（即使可能失败）
         try:
-            from src.lineage.metadata_manager import \
-                MetadataManager  # type: ignore
+            from src.lineage.metadata_manager import MetadataManager  # type: ignore
 
             # 如果导入成功，验证类型
             assert MetadataManager is not None
@@ -113,18 +112,17 @@ class TestMetadataManagerCompatibility:
         # 测试旧导入路径
         try:
             # 测试新导入路径
-            from src.lineage.metadata import \
-                MetadataManager as NewMetadataManager
-            from src.lineage.metadata_manager import \
-                MetadataManager as OldMetadataManager
+            from src.lineage.metadata import MetadataManager as NewMetadataManager
+            from src.lineage.metadata_manager import (
+                MetadataManager as OldMetadataManager,
+            )
 
             # 如果两者都存在，应该是相同的对象
             assert OldMetadataManager is NewMetadataManager
         except ImportError:
             # 至少旧路径应该工作（作为兼容性包装器）
             try:
-                from src.lineage.metadata_manager import \
-                    MetadataManager  # type: ignore
+                from src.lineage.metadata_manager import MetadataManager  # type: ignore
 
                 assert True  # 导入成功
             except ImportError:
@@ -150,8 +148,7 @@ class TestMetadataManagerCompatibility:
 
             # 触发警告
             try:
-                from src.lineage.metadata_manager import \
-                    MetadataManager  # type: ignore
+                from src.lineage.metadata_manager import MetadataManager  # type: ignore
             except ImportError:
                 pass
 
@@ -207,8 +204,9 @@ class TestMetadataManagerCompatibility:
 
             def import_module():
                 try:
-                    from src.lineage.metadata_manager import \
-                        MetadataManager  # type: ignore
+                    from src.lineage.metadata_manager import (
+                        MetadataManager,
+                    )  # type: ignore
                 except ImportError:
                     pass
 
@@ -258,8 +256,7 @@ def test_integration_with_new_module():
 
             # 如果新路径存在，兼容性模块应该也能工作
             try:
-                from src.lineage.metadata_manager import \
-                    MetadataManager as OldManager
+                from src.lineage.metadata_manager import MetadataManager as OldManager
 
                 # 两者可能相同或不同，取决于实现
                 assert OldManager is not None

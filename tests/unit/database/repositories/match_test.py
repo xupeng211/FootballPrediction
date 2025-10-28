@@ -12,6 +12,7 @@ import pytest
 # 尝试导入目标模块 - 修复导入路径
 try:
     from src.database.repositories.match import *
+
     IMPORTS_AVAILABLE = True
     module_name = "src.database.repositories.match"
 except ImportError as e:
@@ -53,6 +54,7 @@ class TestDatabaseRepositoriesMatch:
         try:
             # 创建模拟对象测试异步函数
             import asyncio
+
             mock_result = asyncio.run(self._test_async_function(func_name))
             assert mock_result is not None or callable(mock_result)
         except Exception as e:
@@ -74,6 +76,7 @@ class TestDatabaseRepositoriesMatch:
         try:
             # 创建模拟对象测试异步函数
             import asyncio
+
             mock_result = asyncio.run(self._test_async_function(func_name))
             assert mock_result is not None or callable(mock_result)
         except Exception as e:
@@ -90,6 +93,7 @@ class TestDatabaseRepositoriesMatch:
         try:
             # 创建模拟对象测试异步函数
             import asyncio
+
             mock_result = asyncio.run(self._test_async_function(func_name))
             assert mock_result is not None or callable(mock_result)
         except Exception as e:
@@ -106,6 +110,7 @@ class TestDatabaseRepositoriesMatch:
         try:
             # 创建模拟对象测试异步函数
             import asyncio
+
             mock_result = asyncio.run(self._test_async_function(func_name))
             assert mock_result is not None or callable(mock_result)
         except Exception as e:
@@ -122,6 +127,7 @@ class TestDatabaseRepositoriesMatch:
         try:
             # 创建模拟对象测试异步函数
             import asyncio
+
             mock_result = asyncio.run(self._test_async_function(func_name))
             assert mock_result is not None or callable(mock_result)
         except Exception as e:

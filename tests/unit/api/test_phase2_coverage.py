@@ -23,8 +23,7 @@ import pytest
 try:
     from src.api.schemas import APIResponse
     from src.core.exceptions import FootballPredictionError, ServiceError
-    from src.security.middleware import (RateLimitMiddleware,
-                                         SecurityHeadersMiddleware)
+    from src.security.middleware import RateLimitMiddleware, SecurityHeadersMiddleware
 
     API_AVAILABLE = True
 except ImportError as e:
@@ -32,8 +31,7 @@ except ImportError as e:
     API_AVAILABLE = False
 
 try:
-    from src.database.models.raw_data import (RawMatchData, RawOddsData,
-                                              RawScoresData)
+    from src.database.models.raw_data import RawMatchData, RawOddsData, RawScoresData
 
     DATABASE_AVAILABLE = True
 except ImportError as e:

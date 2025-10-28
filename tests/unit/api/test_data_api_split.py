@@ -35,8 +35,7 @@ def test_import_data_module():
 
 def test_import_models():
     """测试能否正常导入模型"""
-    from src.api.data.models.common import (LeagueInfo, MatchInfo, OddsInfo,
-                                            TeamInfo)
+    from src.api.data.models.common import LeagueInfo, MatchInfo, OddsInfo, TeamInfo
 
     # 验证模型类
     assert TeamInfo is not None

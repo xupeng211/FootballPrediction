@@ -1,6 +1,3 @@
-
-
-
 """
 Predictions - 数据库模块
 

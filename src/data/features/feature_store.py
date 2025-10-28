@@ -30,8 +30,9 @@ try:
         raise ImportError("Feast explicitly disabled via ENABLE_FEAST=false")
 
     from feast import FeatureStore
-    from feast.infra.offline_stores.contrib.postgres_offline_store.postgres import \
-        PostgreSQLOfflineStoreConfig
+    from feast.infra.offline_stores.contrib.postgres_offline_store.postgres import (
+        PostgreSQLOfflineStoreConfig,
+    )
     from feast.repo_config import RepoConfig
 
     from .online_stores.redis import RedisOnlineStoreConfig
@@ -45,9 +46,13 @@ except ImportError:  # pragma: no cover - optional dependency path
     HAS_FEAST = False
 
 from .feature_definitions import head_to_head_features_view  # noqa: E402
-from .feature_definitions import (match_entity, match_features_view,
-                                  odds_features_view, team_entity,
-                                  team_recent_stats_view)
+from .feature_definitions import (
+    match_entity,
+    match_features_view,
+    odds_features_view,
+    team_entity,
+    team_recent_stats_view,
+)
 
 logger = logging.getLogger(__name__)
 

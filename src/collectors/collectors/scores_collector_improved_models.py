@@ -5,8 +5,6 @@
 # 导入
 
 
-
-
 # 类定义
 class ScoresCollectorManager:
     """比分收集器管理器"""

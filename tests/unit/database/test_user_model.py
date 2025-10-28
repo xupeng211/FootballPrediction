@@ -14,20 +14,21 @@ IMPORTS_AVAILABLE = True
 IMPORT_SUCCESS = True
 IMPORT_ERROR = "Mock模式已启用 - 避免SQLAlchemy关系映射复杂性"
 
+
 # Mock模型以避免SQLAlchemy关系映射问题
 class MockUser:
     def __init__(self, username=None, email=None, **kwargs):
         self.id = None
         self.username = username
         self.email = email
-        self.password_hash = kwargs.get('password_hash')
-        self.first_name = kwargs.get('first_name')
-        self.last_name = kwargs.get('last_name')
-        self.is_active = kwargs.get('is_active', True)
-        self.is_verified = kwargs.get('is_verified', False)
-        self.created_at = kwargs.get('created_at', datetime.now())
-        self.updated_at = kwargs.get('updated_at', datetime.now())
-        self.last_login = kwargs.get('last_login')
+        self.password_hash = kwargs.get("password_hash")
+        self.first_name = kwargs.get("first_name")
+        self.last_name = kwargs.get("last_name")
+        self.is_active = kwargs.get("is_active", True)
+        self.is_verified = kwargs.get("is_verified", False)
+        self.created_at = kwargs.get("created_at", datetime.now())
+        self.updated_at = kwargs.get("updated_at", datetime.now())
+        self.last_login = kwargs.get("last_login")
 
         # 智能Mock兼容修复模式 - 动态添加其他属性
         for key, value in kwargs.items():
@@ -49,12 +50,12 @@ class MockUser:
             "is_verified": self.is_verified,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
-            "last_login": self.last_login
+            "last_login": self.last_login,
         }
 
     def is_admin(self):
         """检查是否为管理员用户"""
-        return getattr(self, 'role', None) == 'admin'
+        return getattr(self, "role", None) == "admin"
 
     def set_password(self, password):
         """设置密码"""
@@ -63,6 +64,7 @@ class MockUser:
     def check_password(self, password):
         """验证密码"""
         return self.password_hash == f"hashed_{password}"
+
 
 # 智能Mock兼容修复模式 - 强制使用Mock以避免SQLAlchemy关系映射问题
 print("智能Mock兼容修复模式：强制使用Mock数据库模型以避免SQLAlchemy关系映射复杂性")
@@ -91,7 +93,7 @@ def test_user_model_extended():
         first_name="Test",
         last_name="User",
         is_active=True,
-        is_verified=False
+        is_verified=False,
     )
 
     # 测试基本属性

@@ -6,8 +6,6 @@
 import os
 
 
-
-
 # 常量
 ENABLE_FEAST = os.getenv("ENABLE_FEAST", "true").lower() == "true"
 HAS_FEAST = True

@@ -74,7 +74,9 @@ class TestIssue94RegressionGuard:
         current_achievement = "13个测试通过，26.7%通过率"
 
         print(f"🎯 Issue #94当前成就: {current_achievement}")
-        assert expected_passing_tests >= 13, f"应该至少有{expected_passing_tests}个测试通过"
+        assert (
+            expected_passing_tests >= 13
+        ), f"应该至少有{expected_passing_tests}个测试通过"
 
         # 验证关键修复模式已生效
         verification_points = [

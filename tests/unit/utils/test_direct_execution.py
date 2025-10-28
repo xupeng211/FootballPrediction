@@ -110,7 +110,9 @@ class TestDirectExecution:
         """测试响应工具"""
         try:
             from src.utils.response import (  # noqa: F401
-                create_error_response, create_success_response)
+                create_error_response,
+                create_success_response,
+            )
 
             # 创建成功响应
             success = create_success_response({"data": "test"})
@@ -146,8 +148,7 @@ class TestDirectExecution:
     def test_database_base_functions(self):
         """测试数据库基础函数"""
         try:
-            from src.database.base import (create_engine,  # noqa: F401
-                                           get_database_url)
+            from src.database.base import create_engine, get_database_url  # noqa: F401
 
             # 获取数据库URL
             url = get_database_url()

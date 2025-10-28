@@ -26,7 +26,6 @@ from ..base import BaseModel
 """
 
 
-
 from src.database.base import BaseModel
 
 

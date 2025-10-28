@@ -34,6 +34,46 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
+## 📄 一页速查（最常用命令）
+
+**🚀 新手快速启动（5分钟）：**
+```bash
+make install && make up          # 安装依赖并启动服务
+make test-quick                  # 快速验证环境
+make help                        # 查看所有命令
+```
+
+**🔧 日常开发核心命令：**
+```bash
+make env-check                   # 环境健康检查
+make test                        # 运行所有测试
+make coverage                    # 查看覆盖率报告
+make lint && make fmt            # 代码检查和格式化
+make prepush                     # 提交前完整验证
+```
+
+**🛡️ AI辅助质量守护：**
+```bash
+python3 scripts/quality_guardian.py --check-only    # 全面质量检查
+python3 scripts/smart_quality_fixer.py             # 智能自动修复
+```
+
+**🐳 容器和部署：**
+```bash
+make up / make down            # 启动/停止服务
+make logs                      # 查看服务日志
+make deploy                    # 构建生产镜像
+```
+
+**🚨 紧急故障排除：**
+```bash
+make down && make up           # 重启所有服务
+make clean-env && make install # 重置环境
+make env-check                 # 环境诊断
+```
+
+---
+
 ## ⚡ 快速导航
 
 **🚀 新手？** → [快速开始](#快速开始-5分钟) | **🔧 开发？** → [核心命令](#核心命令) | **🧪 测试？** → [测试策略](#-测试策略) | **🏗️ 架构？** → [架构设计](#-架构设计)
@@ -73,15 +113,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 基于现代Python技术栈的足球预测系统，采用FastAPI + PostgreSQL + Redis架构。项目遵循企业级开发模式，使用DDD、CQRS等设计模式。
 
 **关键指标：**
-- 测试覆盖率：96.35% (当前HTML报告) - 🎯 优秀水平
-- 代码质量：A+ (通过Ruff + MyPy检查)
-- Python版本：3.11.9 (目标：3.11+)
-- 源代码文件：519个Python文件
-- 测试文件：1850个测试文件
-- 测试用例：385个
-- 开发命令：68个核心命令，233个总Makefile命令
-- 项目成熟度：企业级生产就绪 ⭐⭐⭐⭐⭐
-- 依赖锁定：使用pip-compile管理，确保可重现构建
+- 测试覆盖率：96.35% (超过80%目标) 🎯
+- 代码质量：A+ (Ruff + MyPy检查)
+- 项目规模：519个Python文件，385个测试用例
+- 成熟度：企业级生产就绪 ⭐⭐⭐⭐⭐
+- 技术栈：Python 3.11+，异步架构，Docker化部署
 
 ## 开发环境设置
 
@@ -117,16 +153,24 @@ make help               # 查看所有可用命令
 - ✅ 快速测试通过
 - ✅ 环境检查无错误
 
-### 核心命令
+### 核心命令（按使用频率分类）
+
+#### 🔥 日常高频使用
 ```bash
-make help         # 显示所有可用命令 (68个核心命令，233个总命令)
-make env-check    # 检查开发环境健康状态
-make lint         # 运行ruff和mypy检查
-make fmt          # 使用ruff格式化代码
-make ci           # 模拟完整CI流水线
-make prepush      # 完整的预推送验证
-make syntax-check # 检查测试文件语法错误
+make env-check    # 环境健康检查
+make test         # 运行测试
+make coverage     # 覆盖率报告
+make lint         # 代码检查
+make fmt          # 代码格式化
+make prepush      # 提交前验证
+```
+
+#### 🛠️ 开发和调试
+```bash
+make help         # 显示所有命令
+make syntax-check # 语法检查
 make syntax-fix   # 自动修复语法错误
+make ci           # 模拟CI流水线
 ```
 
 ### 🛡️ 质量守护系统命令 ⭐
@@ -154,34 +198,35 @@ python3 scripts/continuous_improvement_engine.py --automated --interval 30  # �
 python3 scripts/improvement_monitor.py          # 查看改进状态
 ```
 
-### 常用开发命令
+### 常用开发命令（按使用频率分类）
+
+#### 🔥 日常高频使用
 ```bash
-# 环境管理
-make venv               # 创建虚拟环境
-make install-locked     # 从锁文件安装可重现依赖
-make clean-env          # 清理虚拟环境
+make up / make down           # 启动/停止Docker服务
+make logs                     # 查看服务日志
+make test-api                 # 运行API测试
+make coverage-targeted MODULE=<module>  # 模块覆盖率检查
+```
 
-# 测试相关
-make test-api           # 运行API测试
-make test-integration   # 运行集成测试
-make coverage-targeted MODULE=<module>  # 运行特定模块覆盖率
+#### 🛠️ 环境和依赖
+```bash
+make venv                     # 创建虚拟环境
+make install-locked           # 从锁文件安装依赖
+make clean-env                # 清理虚拟环境
+```
 
-# 容器和部署
-make up                 # 启动Docker服务
-make down               # 停止服务
-make deploy             # 构建生产镜像
+#### 📦 部署和文档
+```bash
+make deploy                   # 构建生产镜像
+make docs-all                 # 生成所有文档
+make serve-docs               # 本地文档服务器
+```
 
-# 文档生成
-make docs-api           # 生成API文档
-make docs-code          # 生成代码文档
-make docs-architecture  # 生成架构图和文档
-make docs-all           # 生成所有文档
-make serve-docs         # 本地启动文档服务器
-
-# 监控和日志
-make staging-monitor    # 打开监控面板
-make model-monitor      # 运行模型监控
-make coverage-live      # 启动实时覆盖率监控
+#### 📊 监控和分析
+```bash
+make staging-monitor          # 监控面板
+make model-monitor            # 模型监控
+make coverage-live            # 实时覆盖率监控
 ```
 
 ## 测试策略
@@ -301,20 +346,9 @@ pytest -m "integration or e2e"      # 集成测试和端到端测试
 ```
 
 ### 覆盖率管理
-- **当前覆盖率**: 96.35% (基于HTML报告) - 🎯 已超过目标
-- **目标覆盖率**: 80%
-- **覆盖率阈值**: 80% (最低)、85% (开发)、96.35% (CI当前)
-
-#### 📈 覆盖率提升策略
-**🎉 已达成目标：** 96.35% 覆盖率远超80%目标
-
-**维护策略：**
-1. **保持高水平** - 新功能必须包含相应测试
-2. **回归防护** - 修改现有代码时保持覆盖率
-3. **质量优化** - 关注测试质量和有效性而非单纯数量
-4. **边界测试** - 补充异常处理和边界条件测试
-
-使用 `make coverage-targeted MODULE=<module>` 针对特定模块进行覆盖率检查。
+- **当前覆盖率**: 96.35% (已超过80%目标) 🎯
+- **维护策略**: 新功能必须包含测试，保持高质量覆盖率
+- **使用方式**: `make coverage-targeted MODULE=<module>` 针对性检查
 
 ### ⚠️ 关键测试规则
 **永远不要**对单个测试文件使用 `--cov-fail-under` - 这会破坏CI集成。项目有复杂的覆盖率跟踪系统，仅在集中管理时覆盖率阈值才正常工作。
@@ -539,9 +573,73 @@ make dependency-check    # 检查过期依赖
 - HTTPS强制执行
 - 审计日志记录
 
-## 开发工作流
+## 🎯 实际开发场景和操作流程
 
-### AI辅助开发流程
+### 场景1：首次接触项目
+```bash
+# 1. 环境准备
+make install && make up          # 安装依赖并启动服务
+make test-quick                  # 快速验证环境
+
+# 2. 了解项目
+make help                        # 查看所有命令
+make coverage                    # 查看当前测试覆盖率
+```
+
+### 场景2：日常开发工作流
+```bash
+# 1. 开始开发前
+make env-check                   # 检查环境状态
+make test-quick                  # 快速测试验证
+
+# 2. 开发过程中
+python3 scripts/smart_quality_fixer.py --syntax-only  # 语法检查
+make lint && make fmt            # 代码检查和格式化
+
+# 3. 提交前验证
+make prepush                     # 完整预推送验证
+```
+
+### 场景3：修复Bug或添加新功能
+```bash
+# 1. 定位问题
+pytest -m "critical" -v          # 运行关键测试
+make logs                        # 查看服务日志
+
+# 2. 修复代码
+python3 scripts/smart_quality_fixer.py  # 智能修复
+python3 scripts/quality_guardian.py --check-only  # 质量检查
+
+# 3. 验证修复
+make coverage-targeted MODULE=<module>  # 模块覆盖率检查
+make test                        # 运行所有测试
+```
+
+### 场景4：性能问题诊断
+```bash
+# 1. 监控分析
+make staging-monitor             # 打开监控面板
+docker stats                     # 检查容器资源使用
+make logs | grep "slow"          # 查找慢查询
+
+# 2. 性能优化
+make cache-warm                  # 缓存预热
+docker-compose restart app redis # 重启相关服务
+```
+
+### 场景5：环境问题恢复
+```bash
+# 1. 完全重置环境
+make down
+docker system prune -f --volumes
+make clean-env && make install
+make up
+
+# 2. 验证恢复
+make env-check && make test-quick
+```
+
+## AI辅助开发流程
 1. **环境检查** - `make env-check`
 2. **加载上下文** - `make context`
 3. **质量检查** - `python3 scripts/quality_guardian.py --check-only`
@@ -812,30 +910,18 @@ make logs               # 查看服务日志
 
 ## 📈 项目状态
 
-- **成熟度**: 企业级生产就绪 ⭐⭐⭐⭐⭐
-- **架构**: 现代微服务 + DDD + CQRS
-- **测试**: 96.35%覆盖率，385个测试用例（超过80%目标）🎯
-- **CI/CD**: 全自动化质量门禁
-- **文档**: AI辅助完善文档
-- **代码质量**: A+ (通过Ruff + MyPy检查)
-- **安全**: 通过bandit安全扫描和依赖审计
+**系统成熟度**: 企业级生产就绪 ⭐⭐⭐⭐⭐
 
-### 系统优势
-- **架构清晰**: 模块化设计，清晰的层次分离
-- **设计模式**: 采用多种现代设计模式，代码可维护性高
-- **异步支持**: 全异步架构，高并发处理能力
-- **测试完善**: 完整的单元测试和集成测试体系
-- **容器化**: Docker + Docker Compose一键部署
-- **监控完善**: 完整的监控、日志、告警体系
-- **质量门禁**: 严格的代码质量标准和CI/CD流程
+**核心指标**:
+- 🎯 测试覆盖率: 96.35% (超过80%目标)
+- ⭐ 代码质量: A+ (Ruff + MyPy检查)
+- 🚀 架构: 现代微服务 + DDD + CQRS
+- 🛡️ 安全: 通过bandit扫描和依赖审计
+- 📊 CI/CD: 全自动化质量门禁
 
-### 持续改进方向
-- ✅ **测试覆盖率** - 已达成96.35%，超过80%目标
-- 优化API性能和响应时间
-- 完善错误处理和异常管理
-- 增强安全防护和审计功能
-- 优化CI/CD流水线的自动化程度
-- 保持测试覆盖率在高水平并提升测试质量
+**系统优势**: 模块化设计、异步架构、完整测试体系、Docker化部署、完善监控、严格质量标准
+
+**持续改进**: 保持测试覆盖率、优化性能、完善错误处理、增强安全防护
 
 ### 🔧 系统扩展性设计
 
@@ -868,48 +954,23 @@ strategies:
 - 配置级别的定制化
 - 资源配额和权限管理
 
-这个系统展现了现代工具、实践和全面自动化支持的企业级Python开发最佳实践，特别突出了AI辅助开发、智能质量守护和高度可扩展的架构设计。
+**系统特色**: 现代工具、AI辅助开发、智能质量守护、高度可扩展的企业级Python开发最佳实践
 
 ---
 
-## 🔗 深入学习资源
+## 🔗 快速参考资源
 
-### 📚 必读文档
-- **[完整项目文档](docs/INDEX.md)** - 所有文档的入口点
-- **[系统架构设计](docs/architecture/ARCHITECTURE.md)** - 深入理解系统设计
-- **[API开发指南](docs/reference/API_REFERENCE.md)** - API设计和使用规范
-- **[测试最佳实践](docs/testing/TEST_IMPROVEMENT_GUIDE.md)** - 测试策略和技巧
-- **[部署运维手册](docs/ops/MONITORING.md)** - 生产环境运维指南
+### 📚 核心文档
+- **[项目文档入口](docs/INDEX.md)** - 完整文档导航
+- **[系统架构](docs/architecture/architecture.md)** - 深入理解设计
+- **[API参考](docs/reference/API_REFERENCE.md)** - API使用规范
+- **[质量守护指南](docs/QUALITY_GUARDIAN_SYSTEM_GUIDE.md)** - Claude Code使用指南
 
-### 🛠️ 开发工具链
-- **[Makefile完整指南](docs/project/TOOLS.md)** - 120+命令详解
-- **[Docker容器化指南](docs/how-to/STAGING_ENVIRONMENT.md)** - 容器开发环境
-- **[代码质量标准](docs/reference/DEVELOPMENT_GUIDE.md)** - 质量门禁和检查
-- **[CI/CD流水线](docs/project/CI_VERIFICATION.md)** - 持续集成配置
-
-### 🚀 高级主题
-- **[机器学习模块](docs/ml/ML_MODEL_GUIDE.md)** - ML模型和预测系统
-- **[数据处理管道](docs/data/DATA_COLLECTION_SETUP.md)** - 数据采集和处理
-- **[安全最佳实践](docs/maintenance/SECURITY_AUDIT_GUIDE.md)** - 安全配置和审计
-- **[性能优化指南](docs/ops/MONITORING.md)** - 性能监控和优化
-
-### 📋 故障排除
-- **[常见问题解答](docs/project/ISSUES.md)** - 常见问题和解决方案
-- **[调试指南](docs/testing/QA_TEST_KANBAN.md)** - 调试技巧和工具
-- **[日志分析](docs/ops/MONITORING.md)** - 日志收集和分析
+### 🛠️ 开发工具
+- **[快速开始](docs/how-to/QUICKSTART_TOOLS.md)** - 5分钟开发指南
+- **[故障排除](docs/project/ISSUES.md)** - 常见问题解答
+- **[测试指南](docs/testing/TEST_IMPROVEMENT_GUIDE.md)** - 测试最佳实践
 
 ---
 
-## 📞 获取帮助
-
-### 🤝 社区支持
-- **[贡献指南](CONTRIBUTING.md)** - 如何参与项目贡献
-- **[问题反馈](docs/project/ISSUES.md)** - 报告问题和建议
-- **[开发讨论](docs/reference/COMPREHENSIVE_API_DOCUMENTATION_STYLE_GUIDE.md)** - 技术讨论和规范
-
-### 📖 文档维护
-本文档遵循项目的文档管理最佳实践，定期更新和维护。如发现问题或改进建议，请参考 [文档管理分析报告](DOCUMENTATION_MANAGEMENT_ANALYSIS.md) 中的任务看板。
-
----
-
-*最后更新: 2025-10-26 | 文档版本: v2.2 | 维护者: Claude AI Assistant*
+*最后更新: 2025-10-28 | 文档版本: v2.3 (优化版) | 维护者: Claude AI Assistant*

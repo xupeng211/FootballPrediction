@@ -16,8 +16,13 @@ from typing import Any, Dict, List, Tuple
 import numpy as np
 
 from ..models.prediction import Prediction
-from .base import (PredictionInput, PredictionOutput, PredictionStrategy,
-                   StrategyMetrics, StrategyType)
+from .base import (
+    PredictionInput,
+    PredictionOutput,
+    PredictionStrategy,
+    StrategyMetrics,
+    StrategyType,
+)
 
 
 class StatisticalStrategy(PredictionStrategy):

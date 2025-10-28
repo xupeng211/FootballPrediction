@@ -18,6 +18,7 @@ IMPORTS_AVAILABLE = True
 IMPORT_SUCCESS = True
 IMPORT_ERROR = "Mock模式已启用 - 避免API导入失败问题"
 
+
 # Mock数据模型以避免导入问题
 class MatchSchema(BaseModel):
     id: int
@@ -27,11 +28,13 @@ class MatchSchema(BaseModel):
     date: str
     status: str
 
+
 class TeamSchema(BaseModel):
     id: int
     name: str
     league: str
     country: str
+
 
 class PredictionSchema(BaseModel):
     id: int
@@ -41,15 +44,18 @@ class PredictionSchema(BaseModel):
     confidence: float
     created_at: datetime
 
+
 class UserSchema(BaseModel):
     id: int
     username: str
     email: str
 
+
 class PredictionRequest(BaseModel):
     match_id: int
     user_id: int
     algorithm: str = "ensemble"
+
 
 class PredictionResponse(BaseModel):
     id: int
@@ -58,6 +64,7 @@ class PredictionResponse(BaseModel):
     confidence: float
     model_version: str
 
+
 # Mock API服务
 class MockHealthService:
     def check_database_health(self):
@@ -65,6 +72,7 @@ class MockHealthService:
 
     def check_redis_health(self):
         return {"status": "healthy", "latency_ms": 2}
+
 
 class MockPredictionService:
     def __init__(self):
@@ -107,6 +115,7 @@ class MockPredictionService:
             "limit": limit,
             "offset": offset,
         }
+
 
 # 创建Mock FastAPI应用
 def create_mock_app():
@@ -229,10 +238,7 @@ def create_mock_app():
         """批量预测"""
         return {
             "batch_id": "batch_123",
-            "predictions": [
-                {"id": i, "match_id": 100 + i}
-                for i in range(1, 4)
-            ],
+            "predictions": [{"id": i, "match_id": 100 + i} for i in range(1, 4)],
         }
 
     @app.get("/api/v1/matches/{match_id}")
@@ -294,7 +300,10 @@ def create_mock_app():
     @app.post("/api/v1/auth/login")
     async def login(credentials: dict):
         """登录"""
-        if credentials.get("username") == "test" and credentials.get("password") == "test":
+        if (
+            credentials.get("username") == "test"
+            and credentials.get("password") == "test"
+        ):
             return {
                 "access_token": "mock_token_123",
                 "token_type": "bearer",
@@ -324,15 +333,18 @@ def create_mock_app():
 
     return app
 
+
 # 智能Mock兼容修复模式 - 强制使用Mock应用
 print("智能Mock兼容修复模式：强制使用Mock API应用以避免导入失败问题")
 
 # 创建Mock应用
 app = create_mock_app()
 
+
 # Mock服务函数
 def get_prediction_service():
     return MockPredictionService()
+
 
 # 设置全局标志
 API_AVAILABLE = True

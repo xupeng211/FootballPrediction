@@ -87,8 +87,7 @@ class TestEventAPIRoutes:
                 mock_find.side_effect = find_handler_side_effect
 
                 # 直接调用函数逻辑
-                from src.api.events import (AnalyticsEventHandler,
-                                            MetricsEventHandler)
+                from src.api.events import AnalyticsEventHandler, MetricsEventHandler
 
                 _stats = mock_event_bus.get_stats()
                 detailed_stats = stats.copy()
@@ -206,8 +205,7 @@ class TestEventAPIRoutes:
 
                 mock_find.side_effect = find_handler_side_effect
 
-                from src.api.events import (AnalyticsEventHandler,
-                                            MetricsEventHandler)
+                from src.api.events import AnalyticsEventHandler, MetricsEventHandler
 
                 _stats = mock_bus.get_stats()
                 detailed_stats = stats.copy()

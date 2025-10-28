@@ -5,10 +5,12 @@ from unittest.mock import Mock
 import pytest
 
 try:
-    from src.domain.events.match_events import (MatchCancelledEvent,
-                                                MatchFinishedEvent,
-                                                MatchPostponedEvent,
-                                                MatchStartedEvent)
+    from src.domain.events.match_events import (
+        MatchCancelledEvent,
+        MatchFinishedEvent,
+        MatchPostponedEvent,
+        MatchStartedEvent,
+    )
     from src.domain.models.match import MatchResult, MatchScore
 
     # 测试数据

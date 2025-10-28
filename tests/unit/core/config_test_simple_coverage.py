@@ -19,8 +19,7 @@ class TestCoreConfigCoverage:
     def test_config_imports(self):
         """测试配置模块导入"""
         try:
-            from src.core.config import (AppConfig, ConfigManager,
-                                         DatabaseConfig)
+            from src.core.config import AppConfig, ConfigManager, DatabaseConfig
 
             assert ConfigManager is not None
             assert DatabaseConfig is not None

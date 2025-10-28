@@ -5,8 +5,7 @@ from decimal import Decimal
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from sqlalchemy import (Boolean, Column, DateTime, Integer, Numeric, String,
-                        Text)
+from sqlalchemy import Boolean, Column, DateTime, Integer, Numeric, String, Text
 
 try:
     from src.database.models.features import FeatureSet

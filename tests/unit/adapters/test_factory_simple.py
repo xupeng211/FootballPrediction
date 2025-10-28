@@ -18,8 +18,12 @@ import pytest
 
 # 导入要测试的模块
 try:
-    from src.adapters.factory_simple import (AdapterFactory, _global_factory,
-                                             get_adapter, get_global_factory)
+    from src.adapters.factory_simple import (
+        AdapterFactory,
+        _global_factory,
+        get_adapter,
+        get_global_factory,
+    )
     from src.core.exceptions import AdapterError
 
     FACTORY_SIMPLE_AVAILABLE = True
@@ -798,8 +802,11 @@ class TestModuleIntegration:
     def test_module_import_integrity(self):
         """测试模块导入完整性"""
         # 测试可以正常导入所有必要的组件
-        from src.adapters.factory_simple import (AdapterFactory, get_adapter,
-                                                 get_global_factory)
+        from src.adapters.factory_simple import (
+            AdapterFactory,
+            get_adapter,
+            get_global_factory,
+        )
         from src.core.exceptions import AdapterError
 
         # 验证导入的对象是可用的

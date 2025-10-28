@@ -35,8 +35,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from functools import lru_cache
-from typing import (Any, Callable, Dict, Generic, List, Optional, Type,
-                    TypeVar, Union)
+from typing import Any, Callable, Dict, Generic, List, Optional, Type, TypeVar, Union
 from unittest.mock import AsyncMock, MagicMock, Mock, create_autospec, patch
 
 import pytest

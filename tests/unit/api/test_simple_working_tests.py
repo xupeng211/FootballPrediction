@@ -408,9 +408,14 @@ class TestPydanticModels:
 
     def test_data_models(self):
         """测试数据模型"""
-        from src.api.data_router import (LeagueInfo, MatchInfo,
-                                         MatchStatistics, OddsInfo, TeamInfo,
-                                         TeamStatistics)
+        from src.api.data_router import (
+            LeagueInfo,
+            MatchInfo,
+            MatchStatistics,
+            OddsInfo,
+            TeamInfo,
+            TeamStatistics,
+        )
 
         league = LeagueInfo(id=1, name="Premier League", country="England")
         assert league.id == 1

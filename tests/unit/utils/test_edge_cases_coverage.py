@@ -381,9 +381,13 @@ class TestUtilsEdgeCases:
 
     def test_helpers_utility_functions(self):
         """测试helpers工具函数"""
-        from src.utils.helpers import (format_timestamp, generate_hash,
-                                       generate_uuid, safe_get,
-                                       sanitize_string)
+        from src.utils.helpers import (
+            format_timestamp,
+            generate_hash,
+            generate_uuid,
+            safe_get,
+            sanitize_string,
+        )
 
         # 测试UUID生成
         uuids = [generate_uuid() for _ in range(10)]
@@ -461,9 +465,13 @@ class TestUtilsEdgeCases:
 
     def test_validators_module_functions(self):
         """测试validators模块函数"""
-        from src.utils.validators import (is_valid_email, is_valid_phone,
-                                          is_valid_url, validate_data_types,
-                                          validate_required_fields)
+        from src.utils.validators import (
+            is_valid_email,
+            is_valid_phone,
+            is_valid_url,
+            validate_data_types,
+            validate_required_fields,
+        )
 
         # 测试邮箱验证
         assert is_valid_email("test@example.com") is True

@@ -14,13 +14,26 @@ from datetime import datetime, timedelta
 import pytest
 import pytest_asyncio
 
-from src.events import (Event, EventHandler, get_event_bus, start_event_bus,
-                        stop_event_bus)
-from src.events.handlers import (AnalyticsEventHandler, LoggingEventHandler,
-                                 MetricsEventHandler)
-from src.events.types import (MatchCreatedEvent, MatchCreatedEventData,
-                              PredictionMadeEvent, PredictionMadeEventData,
-                              UserRegisteredEvent, UserRegisteredEventData)
+from src.events import (
+    Event,
+    EventHandler,
+    get_event_bus,
+    start_event_bus,
+    stop_event_bus,
+)
+from src.events.handlers import (
+    AnalyticsEventHandler,
+    LoggingEventHandler,
+    MetricsEventHandler,
+)
+from src.events.types import (
+    MatchCreatedEvent,
+    MatchCreatedEventData,
+    PredictionMadeEvent,
+    PredictionMadeEventData,
+    UserRegisteredEvent,
+    UserRegisteredEventData,
+)
 
 
 @pytest.mark.unit

@@ -39,8 +39,7 @@ class TestCoreModules:
     def test_exceptions_import(self):
         """测试异常模块导入"""
         try:
-            from src.core.exceptions import (FootballPredictionError,
-                                             ValidationError)
+            from src.core.exceptions import FootballPredictionError, ValidationError
 
             assert FootballPredictionError is not None
             assert ValidationError is not None

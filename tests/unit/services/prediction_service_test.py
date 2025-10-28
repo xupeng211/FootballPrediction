@@ -13,9 +13,11 @@ import pytest
 # 导入需要的类型
 try:
     from src.domain.models.match import MatchStatus
+
     IMPORTED_TYPES = True
 except ImportError:
     IMPORTED_TYPES = False
+
     # 创建简单的枚举Mock
     class MockMatchStatus:
         SCHEDULED = "scheduled"
@@ -56,7 +58,7 @@ class MockPredictionService:
         prediction = {
             "id": prediction_id,
             "user_id": user_id,
-            "match_id": getattr(match, 'id', 100),
+            "match_id": getattr(match, "id", 100),
             "predicted_home": predicted_home,
             "predicted_away": predicted_away,
             "confidence": confidence,
@@ -72,7 +74,7 @@ class MockPredictionService:
             "type": "prediction_created",
             "prediction_id": prediction_id,
             "user_id": user_id,
-            "match_id": getattr(match, 'id', 100),
+            "match_id": getattr(match, "id", 100),
         }
         self._events.append(event)
 
@@ -87,7 +89,7 @@ class MockPredictionService:
         new_notes: Optional[str] = None,
     ) -> None:
         """更新预测"""
-        prediction_id = getattr(prediction, 'id', None)
+        prediction_id = getattr(prediction, "id", None)
         if prediction_id not in self.predictions:
             raise ValueError("预测不存在")
 
@@ -115,7 +117,7 @@ class MockPredictionService:
         scoring_rules: Optional[Dict[str, Any]] = None,
     ) -> None:
         """评估预测"""
-        prediction_id = getattr(prediction, 'id', None)
+        prediction_id = getattr(prediction, "id", None)
         if prediction_id not in self.predictions:
             raise ValueError("预测不存在")
 
@@ -125,8 +127,8 @@ class MockPredictionService:
 
         # 计算结果
         is_correct = (
-            pred["predicted_home"] == actual_home and
-            pred["predicted_away"] == actual_away
+            pred["predicted_home"] == actual_home
+            and pred["predicted_away"] == actual_away
         )
 
         points = 10 if is_correct else 0
@@ -152,7 +154,7 @@ class MockPredictionService:
         self, prediction: Any, reason: str, cancelled_by: Optional[int] = None
     ) -> None:
         """取消预测"""
-        prediction_id = getattr(prediction, 'id', None)
+        prediction_id = getattr(prediction, "id", None)
         if prediction_id not in self.predictions:
             raise ValueError("预测不存在")
 
@@ -185,7 +187,7 @@ class MockPredictionService:
         if user_predictions_today >= max_predictions_per_day:
             errors.append(f"每日预测次数不能超过{max_predictions_per_day}次")
 
-        prediction_id = getattr(prediction, 'id', None)
+        prediction_id = getattr(prediction, "id", None)
         if prediction_id in self.predictions:
             pred = self.predictions[prediction_id]
 
@@ -243,6 +245,7 @@ prediction_service_class = MockPredictionService
 # 尝试导入目标模块用于验证存在性
 try:
     from src.domain.services.prediction_service import PredictionDomainService
+
     print(f"真实服务模块存在，但为测试简化使用Mock服务")
 except ImportError as e:
     print(f"导入警告: {e} - 使用Mock服务")
@@ -277,7 +280,7 @@ class TestServicesPredictionService:
             match=mock_match,
             predicted_home=2,
             predicted_away=1,
-            confidence=0.8
+            confidence=0.8,
         )
 
         assert prediction["user_id"] == 1
@@ -302,10 +305,7 @@ class TestServicesPredictionService:
 
         # 测试预测创建和评估流程
         prediction = service.create_prediction(
-            user_id=1,
-            match=mock_match,
-            predicted_home=3,
-            predicted_away=1
+            user_id=1, match=mock_match, predicted_home=3, predicted_away=1
         )
 
         # 创建Mock Prediction对象用于评估
@@ -314,9 +314,7 @@ class TestServicesPredictionService:
 
         # 评估预测 - 正确结果
         service.evaluate_prediction(
-            prediction=mock_prediction,
-            actual_home=3,
-            actual_away=1
+            prediction=mock_prediction, actual_home=3, actual_away=1
         )
 
         # 获取更新后的预测
@@ -347,10 +345,7 @@ class TestServicesPredictionService:
         # 测试无效输入 - 负数比分
         with pytest.raises(ValueError, match="预测比分不能为负数"):
             service.create_prediction(
-                user_id=1,
-                match=mock_match,
-                predicted_home=-1,
-                predicted_away=2
+                user_id=1, match=mock_match, predicted_home=-1, predicted_away=2
             )
 
         # 测试无效输入 - 超出范围的信心度
@@ -360,7 +355,7 @@ class TestServicesPredictionService:
                 match=mock_match,
                 predicted_home=2,
                 predicted_away=1,
-                confidence=1.5
+                confidence=1.5,
             )
 
         # 创建Mock Prediction对象用于测试更新
@@ -390,10 +385,7 @@ class TestServicesPredictionService:
 
         # 测试零比分预测
         prediction = service.create_prediction(
-            user_id=1,
-            match=mock_match,
-            predicted_home=0,
-            predicted_away=0
+            user_id=1, match=mock_match, predicted_home=0, predicted_away=0
         )
         assert prediction["predicted_home"] == 0
         assert prediction["predicted_away"] == 0
@@ -405,7 +397,7 @@ class TestServicesPredictionService:
                 match=mock_match,
                 predicted_home=1,
                 predicted_away=1,
-                confidence=confidence
+                confidence=confidence,
             )
             assert pred["confidence"] == confidence
 
@@ -415,7 +407,7 @@ class TestServicesPredictionService:
         errors = service.validate_prediction_rules(
             prediction=mock_prediction,
             user_predictions_today=5,
-            max_predictions_per_day=10
+            max_predictions_per_day=10,
         )
         assert len(errors) == 0  # 有效输入应该无错误
 
@@ -423,7 +415,7 @@ class TestServicesPredictionService:
         errors = service.validate_prediction_rules(
             prediction=mock_prediction,
             user_predictions_today=10,
-            max_predictions_per_day=5
+            max_predictions_per_day=5,
         )
         assert len(errors) >= 1  # 应该至少有一个错误
 
@@ -431,6 +423,6 @@ class TestServicesPredictionService:
         confidence = service.calculate_prediction_confidence(
             user_history={"accuracy_rate": 0.8},
             match_importance=0.9,
-            team_form_diff=0.2
+            team_form_diff=0.2,
         )
         assert 0.0 <= confidence <= 1.0

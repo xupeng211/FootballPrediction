@@ -22,19 +22,20 @@ from typing import Any, Dict, List, Optional
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
+
 # FastAPI测试客户端
 from fastapi.testclient import TestClient
 from httpx import AsyncClient
 
 from src.cache.redis.core.connection_manager import RedisConnectionManager
+
 # 数据库和缓存管理器
 from src.database.connection import DatabaseManager
-from src.monitoring.alert_manager import (Alert, AlertManager, AlertSeverity,
-                                          AlertType)
+from src.monitoring.alert_manager import Alert, AlertManager, AlertSeverity, AlertType
+
 # 真实监控模块导入
 from src.monitoring.health_checker import HealthChecker, HealthStatus
-from src.monitoring.metrics_collector import (MetricsCollector,
-                                              get_metrics_collector)
+from src.monitoring.metrics_collector import MetricsCollector, get_metrics_collector
 from src.monitoring.router import router
 
 

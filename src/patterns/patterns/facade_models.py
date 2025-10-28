@@ -5,7 +5,6 @@
 # 导入
 
 
-
 # 类定义
 class PredictionRequest:
     """预测请求"""

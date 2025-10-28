@@ -20,6 +20,7 @@ IMPORTS_AVAILABLE = True
 IMPORT_SUCCESS = True
 IMPORT_ERROR = "Mock模式已启用 - 基于Issue #98方法论"
 
+
 # 基于Issue #98成功模式的Mock类
 class MockStringUtils:
     """智能Mock兼容修复模式 - Mock字符串工具类"""
@@ -39,7 +40,7 @@ class MockStringUtils:
 
         if remove_special_chars:
             # 移除特殊字符，只保留字母数字和基本标点
-            cleaned = re.sub(r'[^\w\s\-.,!?]', '', cleaned)
+            cleaned = re.sub(r"[^\w\s\-.,!?]", "", cleaned)
 
         return cleaned
 
@@ -52,7 +53,7 @@ class MockStringUtils:
         if len(text) <= length:
             return text
 
-        return text[:length - len(suffix)] + suffix
+        return text[: length - len(suffix)] + suffix
 
     @staticmethod
     def is_valid_email(email: str) -> bool:
@@ -72,13 +73,13 @@ class MockStringUtils:
         slug = text.lower()
 
         # 移除特殊字符
-        slug = re.sub(r'[^\w\s-]', '', slug)
+        slug = re.sub(r"[^\w\s-]", "", slug)
 
         # 替换空格和多个连字符
-        slug = re.sub(r'[-\s]+', '-', slug)
+        slug = re.sub(r"[-\s]+", "-", slug)
 
         # 移除首尾连字符
-        slug = slug.strip('-')
+        slug = slug.strip("-")
 
         return slug
 
@@ -89,7 +90,7 @@ class MockStringUtils:
             return ""
 
         # 在大写字母前添加下划线，然后转为小写
-        snake = re.sub(r'(?<!^)(?=[A-Z])', '_', name).lower()
+        snake = re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
         return snake
 
     @staticmethod
@@ -98,8 +99,8 @@ class MockStringUtils:
         if not isinstance(name, str):
             return ""
 
-        parts = name.split('_')
-        return parts[0] + ''.join(word.capitalize() for word in parts[1:])
+        parts = name.split("_")
+        return parts[0] + "".join(word.capitalize() for word in parts[1:])
 
     @staticmethod
     def extract_numbers(text: str) -> List[int]:
@@ -107,10 +108,12 @@ class MockStringUtils:
         if not isinstance(text, str):
             return []
 
-        return [int(num) for num in re.findall(r'\d+', text)]
+        return [int(num) for num in re.findall(r"\d+", text)]
 
     @staticmethod
-    def mask_sensitive_data(text: str, mask_char: str = "*", visible_chars: int = 4) -> str:
+    def mask_sensitive_data(
+        text: str, mask_char: str = "*", visible_chars: int = 4
+    ) -> str:
         """遮蔽敏感数据 - Mock实现"""
         if not isinstance(text, str):
             return ""
@@ -147,7 +150,7 @@ class MockStringUtils:
             return ""
 
         # 将多个空白字符替换为单个空格
-        return re.sub(r'\s+', ' ', text.strip())
+        return re.sub(r"\s+", " ", text.strip())
 
     @staticmethod
     def remove_html_tags(text: str) -> str:
@@ -156,7 +159,7 @@ class MockStringUtils:
             return ""
 
         # 简单的HTML标签移除
-        return re.sub(r'<[^>]+>', '', text)
+        return re.sub(r"<[^>]+>", "", text)
 
     @staticmethod
     def generate_random_string(length: int = 10) -> str:
@@ -164,7 +167,7 @@ class MockStringUtils:
         import random
         import string
 
-        return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+        return "".join(random.choices(string.ascii_letters + string.digits, k=length))
 
 
 @pytest.mark.unit
@@ -227,7 +230,7 @@ class TestStringUtilsEnhanced:
             "test@example.com",
             "user.name@domain.co.uk",
             "user+tag@example.org",
-            "test123@test-domain.com"
+            "test123@test-domain.com",
         ]
 
         for email in valid_emails:
@@ -241,11 +244,13 @@ class TestStringUtilsEnhanced:
             "test@",
             "test.example.com",
             "test@.com",
-            ""
+            "",
         ]
 
         for email in invalid_emails:
-            assert not string_utils.is_valid_email(email), f"Should not validate: {email}"
+            assert not string_utils.is_valid_email(
+                email
+            ), f"Should not validate: {email}"
 
     def test_slugify_basic(self, string_utils):
         """测试基本slug生成"""
@@ -266,7 +271,7 @@ class TestStringUtilsEnhanced:
             ("PascalCase", "pascal_case"),
             ("simpleXMLParser", "simple_xml_parser"),
             ("HTMLParser", "html_parser"),
-            ("already_snake", "already_snake")
+            ("already_snake", "already_snake"),
         ]
 
         for input_name, expected in test_cases:
@@ -279,7 +284,7 @@ class TestStringUtilsEnhanced:
             ("snake_case", "snakeCase"),
             ("pascal_case", "pascalCase"),
             ("simple_xml_parser", "simpleXmlParser"),
-            ("alreadyCamel", "alreadyCamel")
+            ("alreadyCamel", "alreadyCamel"),
         ]
 
         for input_name, expected in test_cases:
@@ -316,7 +321,7 @@ class TestStringUtilsEnhanced:
             (512, "512.0 B"),
             (2048, "2.0 KB"),
             (2097152, "2.0 MB"),
-            (2147483648, "2.0 GB")
+            (2147483648, "2.0 GB"),
         ]
 
         for bytes_count, expected in test_cases:
@@ -325,11 +330,7 @@ class TestStringUtilsEnhanced:
 
     def test_is_valid_phone_valid_numbers(self, string_utils):
         """测试有效手机号"""
-        valid_phones = [
-            "13812345678",
-            "15912345678",
-            "18812345678"
-        ]
+        valid_phones = ["13812345678", "15912345678", "18812345678"]
 
         for phone in valid_phones:
             assert string_utils.is_valid_phone(phone), f"Should validate: {phone}"
@@ -338,14 +339,16 @@ class TestStringUtilsEnhanced:
         """测试无效手机号"""
         invalid_phones = [
             "12812345678",  # 不是1开头的
-            "1381234567",   # 长度不够
-            "138123456789", # 长度过长
+            "1381234567",  # 长度不够
+            "138123456789",  # 长度过长
             "abc12345678",  # 包含字母
-            ""             # 空字符串
+            "",  # 空字符串
         ]
 
         for phone in invalid_phones:
-            assert not string_utils.is_valid_phone(phone), f"Should not validate: {phone}"
+            assert not string_utils.is_valid_phone(
+                phone
+            ), f"Should not validate: {phone}"
 
     # 集成测试 - 基于Issue #98集成测试模式
     def test_string_processing_workflow(self, string_utils):
@@ -413,7 +416,9 @@ class TestStringUtilsModule:
         """测试正则表达式模式 - 基于Issue #98常量测试模式"""
         # 验证邮箱正则表达式
         email_pattern = MockStringUtils._EMAIL_REGEX
-        assert email_pattern.pattern == r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+        assert (
+            email_pattern.pattern == r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+        )
 
         # 验证手机号正则表达式
         phone_pattern = MockStringUtils._PHONE_REGEX
@@ -430,16 +435,13 @@ class TestStringUtilsModule:
 pytest.mark.unit = pytest.mark.unit
 pytest.mark.utils = pytest.mark.utils
 
+
 # 基于Issue #98的测试配置
 def pytest_configure(config):
     """pytest配置 - 基于Issue #98配置模式"""
-    config.addinivalue_line(
-        "markers", "unit: 单元测试标记"
-    )
-    config.addinivalue_line(
-        "markers", "utils: 工具类测试标记"
-    )
-  
+    config.addinivalue_line("markers", "unit: 单元测试标记")
+    config.addinivalue_line("markers", "utils: 工具类测试标记")
+
 
 # 基于Issue #98的测试入口
 if __name__ == "__main__":

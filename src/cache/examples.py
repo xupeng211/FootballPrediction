@@ -8,9 +8,15 @@ Cache Decorators Usage Examples
 import asyncio
 from typing import Any, Dict, List, Optional
 
-from .decorators import (cache_by_user, cache_invalidate, cache_match_data,
-                         cache_result, cache_team_stats,
-                         cache_user_predictions, cache_with_ttl)
+from .decorators import (
+    cache_by_user,
+    cache_invalidate,
+    cache_match_data,
+    cache_result,
+    cache_team_stats,
+    cache_user_predictions,
+    cache_with_ttl,
+)
 
 
 # 示例1: 基础结果缓存

@@ -11,6 +11,7 @@ Monitoring API 综合测试
 
 import asyncio
 import json
+
 # 测试导入
 import sys
 from datetime import datetime, timedelta
@@ -21,10 +22,14 @@ import pytest
 sys.path.insert(0, "src")
 
 try:
-    from src.api.monitoring import (_get_application_metrics,
-                                    _get_cache_metrics, _get_database_metrics,
-                                    _get_system_metrics,
-                                    _health_check_detailed, router)
+    from src.api.monitoring import (
+        _get_application_metrics,
+        _get_cache_metrics,
+        _get_database_metrics,
+        _get_system_metrics,
+        _health_check_detailed,
+        router,
+    )
     from src.database.dependencies import get_db_session
 
     MONITORING_AVAILABLE = True

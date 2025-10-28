@@ -27,9 +27,13 @@ class TestAllAvailableModules:
     def test_crypto_utils_functions(self):
         """测试crypto_utils的所有函数"""
         try:
-            from utils.crypto_utils import (decrypt_data, encrypt_data,
-                                            generate_token, hash_password,
-                                            verify_password)
+            from utils.crypto_utils import (
+                decrypt_data,
+                encrypt_data,
+                generate_token,
+                hash_password,
+                verify_password,
+            )
 
             # 测试密码哈希
             password = "test_password_123"
@@ -59,11 +63,16 @@ class TestAllAvailableModules:
     def test_data_validator_functions(self):
         """测试data_validator的所有函数"""
         try:
-            from utils.data_validator import (validate_credit_card,
-                                              validate_date, validate_email,
-                                              validate_ip, validate_json,
-                                              validate_number, validate_phone,
-                                              validate_url)
+            from utils.data_validator import (
+                validate_credit_card,
+                validate_date,
+                validate_email,
+                validate_ip,
+                validate_json,
+                validate_number,
+                validate_phone,
+                validate_url,
+            )
 
             # 测试邮箱验证
             emails = ["test@example.com", "user.name@domain.co.uk", "invalid", "@wrong"]
@@ -104,9 +113,13 @@ class TestAllAvailableModules:
     def test_dict_utils_functions(self):
         """测试dict_utils的所有函数"""
         try:
-            from utils.dict_utils import (deep_merge, filter_none,
-                                          flatten_dict, pick_keys,
-                                          unflatten_dict)
+            from utils.dict_utils import (
+                deep_merge,
+                filter_none,
+                flatten_dict,
+                pick_keys,
+                unflatten_dict,
+            )
 
             # 测试深度合并
             dict1 = {"a": 1, "b": {"x": 1}, "c": [1, 2]}
@@ -135,9 +148,15 @@ class TestAllAvailableModules:
         try:
             import tempfile
 
-            from utils.file_utils import (backup_file, ensure_dir,
-                                          get_file_hash, get_file_size,
-                                          read_file, safe_filename, write_file)
+            from utils.file_utils import (
+                backup_file,
+                ensure_dir,
+                get_file_hash,
+                get_file_size,
+                read_file,
+                safe_filename,
+                write_file,
+            )
 
             # 测试确保目录
             test_dir = "/tmp/test_football_dir"
@@ -184,9 +203,15 @@ class TestAllAvailableModules:
     def test_string_utils_functions(self):
         """测试string_utils的所有函数"""
         try:
-            from utils.string_utils import (camel_to_snake, clean_html,
-                                            pluralize, singularize, slugify,
-                                            snake_to_camel, truncate_words)
+            from utils.string_utils import (
+                camel_to_snake,
+                clean_html,
+                pluralize,
+                singularize,
+                slugify,
+                snake_to_camel,
+                truncate_words,
+            )
 
             # 测试slugify
             texts = [
@@ -220,9 +245,15 @@ class TestAllAvailableModules:
         try:
             from datetime import datetime, timedelta, timezone
 
-            from utils.time_utils import (duration_format, format_datetime,
-                                          get_timezone_offset, is_future,
-                                          is_past, parse_datetime, time_ago)
+            from utils.time_utils import (
+                duration_format,
+                format_datetime,
+                get_timezone_offset,
+                is_future,
+                is_past,
+                parse_datetime,
+                time_ago,
+            )
 
             now = datetime.now(timezone.utc)
 
@@ -257,10 +288,14 @@ class TestAllAvailableModules:
     def test_validators_functions(self):
         """测试validators的所有函数"""
         try:
-            from utils.validators import (validate_choice,
-                                          validate_email_format,
-                                          validate_length, validate_pattern,
-                                          validate_range, validate_required)
+            from utils.validators import (
+                validate_choice,
+                validate_email_format,
+                validate_length,
+                validate_pattern,
+                validate_range,
+                validate_required,
+            )
 
             # 测试必填验证
             values = [None, "", [], {}, "test", 0, False]
@@ -290,9 +325,13 @@ class TestAllAvailableModules:
     def test_config_loader_functions(self):
         """测试config_loader的所有函数"""
         try:
-            from utils.config_loader import (get_config_value, get_env_config,
-                                             load_config, reload_config,
-                                             set_config_value)
+            from utils.config_loader import (
+                get_config_value,
+                get_env_config,
+                load_config,
+                reload_config,
+                set_config_value,
+            )
 
             # 测试加载配置
             _config = load_config()
@@ -318,9 +357,17 @@ class TestAllAvailableModules:
     def test_response_module(self):
         """测试response模块"""
         try:
-            from utils.response import (bad_request, created, deleted, error,
-                                        forbidden, not_found, success,
-                                        unauthorized, updated)
+            from utils.response import (
+                bad_request,
+                created,
+                deleted,
+                error,
+                forbidden,
+                not_found,
+                success,
+                unauthorized,
+                updated,
+            )
 
             # 测试各种响应类型
             responses = [
@@ -345,8 +392,12 @@ class TestAllAvailableModules:
     def test_i18n_module(self):
         """测试i18n模块"""
         try:
-            from utils.i18n import (_, get_current_language, get_translations,
-                                    set_language)
+            from utils.i18n import (
+                _,
+                get_current_language,
+                get_translations,
+                set_language,
+            )
 
             # 测试翻译
             keys = ["hello", "goodbye", "error", "success"]
@@ -367,9 +418,15 @@ class TestAllAvailableModules:
     def test_helpers_module(self):
         """测试helpers模块"""
         try:
-            from utils.helpers import (chunk_list, deep_get, deep_set,
-                                       generate_uuid, is_json, merge_dicts,
-                                       truncate_string)
+            from utils.helpers import (
+                chunk_list,
+                deep_get,
+                deep_set,
+                generate_uuid,
+                is_json,
+                merge_dicts,
+                truncate_string,
+            )
 
             # 测试UUID生成
             for _ in range(5):
@@ -403,10 +460,12 @@ class TestAllAvailableModules:
     def test_warning_filters_module(self):
         """测试warning_filters模块"""
         try:
-            from utils.warning_filters import (filter_deprecation_warnings,
-                                               filter_import_warnings,
-                                               filter_user_warnings,
-                                               setup_warnings)
+            from utils.warning_filters import (
+                filter_deprecation_warnings,
+                filter_import_warnings,
+                filter_user_warnings,
+                setup_warnings,
+            )
 
             # 测试各种警告过滤器
             filters = [
@@ -428,9 +487,14 @@ class TestAllAvailableModules:
         try:
             from datetime import datetime, timezone
 
-            from utils.formatters import (format_address, format_bytes,
-                                          format_currency, format_datetime,
-                                          format_percentage, format_phone)
+            from utils.formatters import (
+                format_address,
+                format_bytes,
+                format_currency,
+                format_datetime,
+                format_percentage,
+                format_phone,
+            )
 
             # 测试日期时间格式化
             dt = datetime.now(timezone.utc)
@@ -458,8 +522,13 @@ class TestAllAvailableModules:
     def test_retry_module(self):
         """测试retry模块"""
         try:
-            from utils.retry import (RetryError, exponential_backoff,
-                                     jitter_backoff, linear_backoff, retry)
+            from utils.retry import (
+                RetryError,
+                exponential_backoff,
+                jitter_backoff,
+                linear_backoff,
+                retry,
+            )
 
             # 测试基本重试
             attempts = 0

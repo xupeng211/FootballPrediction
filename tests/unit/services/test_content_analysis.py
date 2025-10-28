@@ -9,9 +9,14 @@ from datetime import datetime
 
 import pytest
 
-from src.services.content_analysis import (AnalysisResult, Content,
-                                           ContentAnalysisService, ContentType,
-                                           UserProfile, UserRole)
+from src.services.content_analysis import (
+    AnalysisResult,
+    Content,
+    ContentAnalysisService,
+    ContentType,
+    UserProfile,
+    UserRole,
+)
 
 
 @pytest.mark.unit

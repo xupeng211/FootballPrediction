@@ -22,8 +22,10 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 # Mock策略库导入
 try:
-    from scripts.issue83c_practical_mocks import (MockContextManager,
-                                                  PracticalMockStrategies)
+    from scripts.issue83c_practical_mocks import (
+        MockContextManager,
+        PracticalMockStrategies,
+    )
 
     MOCKS_AVAILABLE = True
 except ImportError:
