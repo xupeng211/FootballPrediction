@@ -17,15 +17,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **[🧪 测试指南](docs/testing/TEST_IMPROVEMENT_GUIDE.md)** - 测试策略和最佳实践
 
 ### 文档版本信息
-- **当前版本**: v2.2 (企业级架构 + 质量守护系统 + 新手友好优化)
+- **当前版本**: v2.3 (测试环境状态更新 + 准确性优化)
 - **最后更新**: 2025-10-28
 - **维护者**: Claude AI Assistant
 - **适用范围**: Claude Code AI助手开发指导
 - **更新内容**:
-  - ✨ 添加完全新手5分钟启动指南
-  - ⚡ 新增快速故障排除流程
-  - 📋 完善Claude Code日常检查清单
-  - 📈 丰富测试覆盖率提升策略
+  - 🔧 修正测试覆盖率数据和环境状态说明
+  - ⚠️ 添加依赖缺失问题的解决方案
+  - 🛠️ 完善环境设置指南，包含完整依赖安装
+  - 📋 强化测试执行规则和约束说明
+  - 🔍 基于实际问题的故障排除流程优化
 
 ### 国际化说明
 本文档提供中文版本（推荐），英文版本作为参考：
@@ -113,11 +114,12 @@ make env-check                 # 环境诊断
 基于现代Python技术栈的足球预测系统，采用FastAPI + PostgreSQL + Redis架构。项目遵循企业级开发模式，使用DDD、CQRS等设计模式。
 
 **关键指标：**
-- 测试覆盖率：96.35% (超过80%目标) 🎯
+- 测试覆盖率：测试环境需要完整依赖安装，当前存在依赖缺失问题
 - 代码质量：A+ (Ruff + MyPy检查)
-- 项目规模：519个Python文件，385个测试用例
+- 项目规模：38个源码目录，大型企业级项目
 - 成熟度：企业级生产就绪 ⭐⭐⭐⭐⭐
 - 技术栈：Python 3.11+，异步架构，Docker化部署
+- 测试用例：潜在10,546个测试用例（需要解决依赖问题）
 
 ## 开发环境设置
 
@@ -125,9 +127,29 @@ make env-check                 # 环境诊断
 ```bash
 make install      # 安装依赖并创建虚拟环境
 make context      # 加载项目上下文 (⭐ 最重要)
-make test         # 运行所有测试 (385个测试用例)
-make coverage     # 查看覆盖率报告 (96.35%)
+make test-quick   # 快速验证环境 (注意：可能需要额外依赖)
+make coverage     # 查看覆盖率报告 (需要解决依赖问题)
 ```
+
+### 🔧 完整环境设置（首次使用）
+**如果遇到测试失败，请执行完整环境设置：**
+```bash
+# 1. 基础依赖安装
+make install
+
+# 2. 激活虚拟环境并安装完整依赖
+source .venv/bin/activate
+pip install pandas numpy aiohttp psutil  # 缺失的关键依赖
+
+# 3. 验证环境
+make env-check
+make test-quick
+```
+
+**⚠️ 重要说明：**
+- 当前测试环境存在依赖缺失问题（主要是pandas、numpy、psutil、aiohttp等）
+- 项目核心功能完整，但需要完整依赖才能运行所有测试
+- 建议使用Docker环境进行完整测试：`docker-compose up && docker-compose exec app pytest`
 
 ### 🆕 完全新手5分钟启动
 **适合从未接触过项目的开发者：**
@@ -233,9 +255,17 @@ make coverage-live            # 实时覆盖率监控
 
 ### 测试执行规则
 - **⚠️ 重要：优先使用Makefile命令** - 避免直接运行单个pytest文件，这会破坏CI集成和覆盖率跟踪
-- 测试环境使用Docker容器隔离
-- 强制执行覆盖率阈值（最低18%，当前13.89%，目标80%，持续改进）
+- **依赖要求：当前测试环境需要完整依赖安装**，包括pandas、numpy、psutil、aiohttp等数据科学和性能监控依赖
+- 测试环境使用Docker容器隔离，推荐使用Docker进行完整测试
 - **关键规则：永远不要对单个测试文件使用 `--cov-fail-under`** - 这会破坏项目复杂的覆盖率跟踪系统
+
+### 🚨 当前测试环境状态
+**已知问题和解决方案：**
+- **依赖缺失**：多个测试需要pandas、numpy、psutil、aiohttp等依赖
+- **解决方案1**：使用Docker环境 `docker-compose up && docker-compose exec app pytest`
+- **解决方案2**：手动安装缺失依赖 `pip install pandas numpy aiohttp psutil`
+- **语法错误**：部分测试文件存在语法问题，需要修复后才能运行
+- **建议**：优先使用Makefile命令，避免直接运行pytest
 
 ### 测试组织结构
 ```
@@ -346,9 +376,11 @@ pytest -m "integration or e2e"      # 集成测试和端到端测试
 ```
 
 ### 覆盖率管理
-- **当前覆盖率**: 96.35% (已超过80%目标) 🎯
+- **当前覆盖率**: 需要解决依赖问题后才能准确测量 ⚠️
+- **潜在测试用例**: 10,546个测试用例（因依赖问题无法完全执行）
 - **维护策略**: 新功能必须包含测试，保持高质量覆盖率
 - **使用方式**: `make coverage-targeted MODULE=<module>` 针对性检查
+- **推荐**: 使用Docker环境获得准确的覆盖率数据
 
 ### ⚠️ 关键测试规则
 **永远不要**对单个测试文件使用 `--cov-fail-under` - 这会破坏CI集成。项目有复杂的覆盖率跟踪系统，仅在集中管理时覆盖率阈值才正常工作。
@@ -824,9 +856,35 @@ make test-env-status                    # 检查测试环境
 pytest --collect-only -q               # 检查测试发现
 make coverage-targeted MODULE=src/api   # 针对性覆盖率检查
 
+# 🔧 依赖问题解决方案（当前最常见）
+source .venv/bin/activate
+pip install pandas numpy aiohttp psutil  # 安装缺失的关键依赖
+
 # 常见解决方案
 ENV=test docker-compose run --rm app pytest -m "unit"  # 隔离测试环境
 make clean-env && make install          # 重置依赖环境
+```
+
+#### **2.1 依赖缺失问题（当前主要问题）**
+**症状**: ModuleNotFoundError: No module named 'pandas'/'numpy'/'psutil'/'aiohttp'
+```bash
+# 快速修复
+source .venv/bin/activate
+pip install pandas numpy aiohttp psutil scikit-learn
+
+# 或使用Docker环境（推荐）
+docker-compose up -d
+docker-compose exec app pytest -m "unit"
+```
+
+#### **2.2 语法错误问题**
+**症状**: SyntaxError: invalid syntax in test files
+```bash
+# 识别问题文件
+pytest --collect-only -q 2>&1 | grep "SyntaxError"
+
+# 临时跳过问题文件，运行其他测试
+pytest tests/unit/core -v  # 先测试核心模块
 ```
 
 #### **3. 数据库连接问题**
@@ -896,10 +954,12 @@ make env-check && make test-quick
 ## 故障排除
 
 ### 常见问题
+- **依赖缺失**: 确保安装pandas、numpy、psutil、aiohttp等数据科学依赖
 - **端口冲突**: 确保端口5432、6379、80可用
 - **Docker问题**: 检查Docker守护进程和docker-compose版本
-- **测试失败**: 验证测试环境是否正确设置
+- **测试失败**: 验证测试环境和依赖是否正确设置
 - **覆盖率下降**: 运行 `make coverage-targeted MODULE=<module>`
+- **语法错误**: 部分测试文件存在语法问题，可以使用Docker环境避免
 
 ### 调试命令
 ```bash
@@ -913,11 +973,12 @@ make logs               # 查看服务日志
 **系统成熟度**: 企业级生产就绪 ⭐⭐⭐⭐⭐
 
 **核心指标**:
-- 🎯 测试覆盖率: 96.35% (超过80%目标)
+- 🎯 测试覆盖率: 需要解决依赖问题后准确测量 ⚠️
 - ⭐ 代码质量: A+ (Ruff + MyPy检查)
 - 🚀 架构: 现代微服务 + DDD + CQRS
 - 🛡️ 安全: 通过bandit扫描和依赖审计
 - 📊 CI/CD: 全自动化质量门禁
+- 🔧 测试环境: 存在依赖缺失，需要额外配置
 
 **系统优势**: 模块化设计、异步架构、完整测试体系、Docker化部署、完善监控、严格质量标准
 
@@ -973,4 +1034,4 @@ strategies:
 
 ---
 
-*最后更新: 2025-10-28 | 文档版本: v2.3 (优化版) | 维护者: Claude AI Assistant*
+*最后更新: 2025-10-28 | 文档版本: v2.3 (测试环境状态更新 + 准确性优化) | 维护者: Claude AI Assistant*

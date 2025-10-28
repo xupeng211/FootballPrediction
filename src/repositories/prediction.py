@@ -127,9 +127,8 @@ class ReadOnlyPredictionRepository(ReadOnlyRepository[Prediction, int]):
         """获取用户统计信息"""
         query = select(
             func.count(Prediction.id).label("total_predictions"),
-            func.sum(Prediction.points_earned).label("total_points"),
             func.avg(Prediction.confidence).label("avg_confidence"),
-            func.sum(func.case((Prediction.points_earned > 0, 1), else_=0)).label(
+            func.sum(func.case((Prediction.is_correct == True, 1), else_=0)).label(
                 "successful_predictions"
             ),
         ).where(Prediction.user_id == user_id)
@@ -160,7 +159,7 @@ class ReadOnlyPredictionRepository(ReadOnlyRepository[Prediction, int]):
                 if stats.total_predictions > 0
                 else 0.0
             ),
-            "total_points": stats.total_points or 0,
+            "total_points": stats.successful_predictions or 0,  # 用成功预测数作为积分
             "average_confidence": float(stats.avg_confidence or 0),
         }
 

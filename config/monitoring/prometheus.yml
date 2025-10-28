@@ -3,22 +3,38 @@ global:
   evaluation_interval: 15s
 
 rule_files:
-  # - "first_rules.yml"
-  # - "second_rules.yml"
+  - "alert_rules.yml"
 
 scrape_configs:
   - job_name: 'prometheus'
     static_configs:
-      - targets: ['localhost:9090']
+      - targets: ['prometheus:9090']
+
+  - job_name: 'football-prediction-api'
+    static_configs:
+      - targets: ['docker-app-1:8000']
+    metrics_path: '/api/v1/metrics/prometheus'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  - job_name: 'postgres-exporter'
+    static_configs:
+      - targets: ['docker-db-1:5432']
+    scrape_interval: 30s
+
+  - job_name: 'redis-exporter'
+    static_configs:
+      - targets: ['docker-redis-1:6379']
+    scrape_interval: 30s
 
   - job_name: 'docker'
     static_configs:
-      - targets: ['localhost:9323']
+      - targets: ['docker:9323']
 
   - job_name: 'node-exporter'
     static_configs:
-      - targets: ['localhost:9100']
+      - targets: ['node-exporter:9100']
 
   - job_name: 'cadvisor'
     static_configs:
-      - targets: ['localhost:8080']
+      - targets: ['cadvisor:8080']

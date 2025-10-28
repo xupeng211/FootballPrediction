@@ -79,7 +79,7 @@ class TestEventEndpoints:
 
         assert response.status_code in [200, 202]
         _data = response.json()
-assert "success" in _data or "status" in _data
+        assert "success" in _data or "status" in _data
 
     def test_get_event_metrics(self, client):
         """测试获取事件指标"""
@@ -90,7 +90,7 @@ assert "success" in _data or "status" in _data
 
         assert response.status_code == 200
         _data = response.json()
-                assert "metrics" in _data or "events_processed" in _data
+        assert "metrics" in _data or "events_processed" in _data
 
     def test_get_recent_predictions(self, client):
         """测试获取最近的预测统计"""
@@ -101,7 +101,7 @@ assert "success" in _data or "status" in _data
 
         assert response.status_code == 200
         _data = response.json()
-                assert "predictions" in _data or "stats" in _data
+        assert "predictions" in _data or "stats" in _data
 
     def test_get_user_activity(self, client):
         """测试获取用户活动统计"""
@@ -112,7 +112,7 @@ assert "success" in _data or "status" in _data
 
         assert response.status_code == 200
         _data = response.json()
-                assert "activity" in _data or "users" in _data
+        assert "activity" in _data or "users" in _data
 
     @patch("src.api.events.EventManager.publish")
     def test_publish_event(self, mock_publish, client):
