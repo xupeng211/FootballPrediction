@@ -15,9 +15,13 @@ import pytest
 from src.utils.config_loader import load_config_from_file
 from src.utils.crypto_utils import CryptoUtils
 from src.utils.file_utils import FileUtils
-from src.utils.validators import (is_valid_email, is_valid_phone, is_valid_url,
-                                  validate_data_types,
-                                  validate_required_fields)
+from src.utils.validators import (
+    is_valid_email,
+    is_valid_phone,
+    is_valid_url,
+    validate_data_types,
+    validate_required_fields,
+)
 from src.utils.warning_filters import setup_warning_filters
 
 

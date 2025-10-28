@@ -18,9 +18,13 @@ from typing import Any
 
 import pytest
 
-from src.cache.decorators import (_make_cache_key, cache_by_user,
-                                  cache_invalidate, cache_result,
-                                  cache_with_ttl)
+from src.cache.decorators import (
+    _make_cache_key,
+    cache_by_user,
+    cache_invalidate,
+    cache_result,
+    cache_with_ttl,
+)
 
 
 @pytest.mark.unit

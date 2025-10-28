@@ -10,8 +10,11 @@ import pytest
 def test_module_imports():
     """测试模块导入"""
     # 测试导入新模块
-    from src.api.predictions_mod import (get_rate_limiter,
-                                         is_rate_limit_available, router)
+    from src.api.predictions_mod import (
+        get_rate_limiter,
+        is_rate_limit_available,
+        router,
+    )
 
     assert router is not None
     assert get_rate_limiter is not None
@@ -20,8 +23,10 @@ def test_module_imports():
 
 def test_rate_limiter():
     """测试速率限制器"""
-    from src.api.predictions_mod.rate_limiter import (get_rate_limiter,
-                                                      is_rate_limit_available)
+    from src.api.predictions_mod.rate_limiter import (
+        get_rate_limiter,
+        is_rate_limit_available,
+    )
 
     limiter = get_rate_limiter()
     assert limiter is not None
@@ -34,8 +39,10 @@ def test_rate_limiter():
 def test_prediction_handlers_import():
     """测试预测处理器导入"""
     from src.api.predictions_mod.prediction_handlers import (
-        _format_cached_prediction, _format_realtime_prediction,
-        get_prediction_service)
+        _format_cached_prediction,
+        _format_realtime_prediction,
+        get_prediction_service,
+    )
 
     # 测试格式化函数存在
     assert _format_cached_prediction is not None
@@ -45,10 +52,10 @@ def test_prediction_handlers_import():
 
 def test_batch_handlers_import():
     """测试批量处理器导入"""
-    from src.api.predictions_mod.batch_handlers import \
-        batch_predict_matches_handler
-    from src.api.predictions_mod.batch_handlers import \
-        get_prediction_service as get_batch_prediction_service
+    from src.api.predictions_mod.batch_handlers import batch_predict_matches_handler
+    from src.api.predictions_mod.batch_handlers import (
+        get_prediction_service as get_batch_prediction_service,
+    )
 
     assert batch_predict_matches_handler is not None
     assert get_batch_prediction_service is not None
@@ -57,7 +64,9 @@ def test_batch_handlers_import():
 def test_history_handlers_import():
     """测试历史处理器导入"""
     from src.api.predictions_mod.history_handlers import (
-        get_match_prediction_history_handler, get_recent_predictions_handler)
+        get_match_prediction_history_handler,
+        get_recent_predictions_handler,
+    )
 
     assert get_match_prediction_history_handler is not None
     assert get_recent_predictions_handler is not None
@@ -65,10 +74,13 @@ def test_history_handlers_import():
 
 def test_schemas_import():
     """测试模式导入"""
-    from src.api.predictions_mod.schemas import (BatchPredictionRequest,
-                                                 MatchInfo, PredictionData,
-                                                 PredictionResponse,
-                                                 VerificationResponse)
+    from src.api.predictions_mod.schemas import (
+        BatchPredictionRequest,
+        MatchInfo,
+        PredictionData,
+        PredictionResponse,
+        VerificationResponse,
+    )
 
     assert MatchInfo is not None
     assert PredictionData is not None
@@ -108,8 +120,7 @@ async def test_batch_predict_too_many_matches():
     """测试批量预测超过限制"""
     from fastapi import HTTPException
 
-    from src.api.predictions_mod.batch_handlers import \
-        batch_predict_matches_handler
+    from src.api.predictions_mod.batch_handlers import batch_predict_matches_handler
 
     mock_request = Mock()
     mock_session = AsyncMock()
@@ -129,8 +140,11 @@ async def test_batch_predict_too_many_matches():
 
 def test_prediction_response_schema():
     """测试预测响应模式"""
-    from src.api.predictions_mod.schemas import (MatchInfo, PredictionData,
-                                                 PredictionResponse)
+    from src.api.predictions_mod.schemas import (
+        MatchInfo,
+        PredictionData,
+        PredictionResponse,
+    )
 
     # 创建测试数据
     match_info = MatchInfo(

@@ -11,6 +11,7 @@ Health API 综合测试
 
 import asyncio
 import json
+
 # 测试导入
 import sys
 from datetime import datetime, timedelta
@@ -21,8 +22,7 @@ import pytest
 sys.path.insert(0, "src")
 
 try:
-    from src.api.health import (HealthChecker, HealthCheckResult, HealthStatus,
-                                router)
+    from src.api.health import HealthChecker, HealthCheckResult, HealthStatus, router
     from src.cache.redis_manager import RedisManager
     from src.database.dependencies import get_db_session
 

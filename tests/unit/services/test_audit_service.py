@@ -21,11 +21,17 @@ import pytest
 
 # 测试导入
 try:
-    from src.services.audit_service import (AuditAction, AuditContext,
-                                            AuditEvent, AuditLog,
-                                            AuditLogSummary, AuditService,
-                                            AuditSeverity, DataSanitizer,
-                                            SeverityAnalyzer)
+    from src.services.audit_service import (
+        AuditAction,
+        AuditContext,
+        AuditEvent,
+        AuditLog,
+        AuditLogSummary,
+        AuditService,
+        AuditSeverity,
+        DataSanitizer,
+        SeverityAnalyzer,
+    )
 
     AUDIT_AVAILABLE = True
 except ImportError as e:

@@ -11,8 +11,12 @@ from typing import Protocol
 
 import pytest
 
-from src.core.di import (DependencyInjectionError, DIContainer,
-                         ServiceDescriptor, ServiceLifetime)
+from src.core.di import (
+    DependencyInjectionError,
+    DIContainer,
+    ServiceDescriptor,
+    ServiceLifetime,
+)
 
 
 # 测试用的服务类

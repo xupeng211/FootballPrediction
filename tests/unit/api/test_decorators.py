@@ -20,9 +20,14 @@ from fastapi.testclient import TestClient
 
 # 测试导入
 try:
-    from src.api.decorators import (example_function_1, example_function_2,
-                                    failing_function, global_decorator_service,
-                                    router, slow_function)
+    from src.api.decorators import (
+        example_function_1,
+        example_function_2,
+        failing_function,
+        global_decorator_service,
+        router,
+        slow_function,
+    )
 
     DECORATORS_AVAILABLE = True
 except ImportError as e:

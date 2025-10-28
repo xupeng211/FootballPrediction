@@ -14,9 +14,13 @@ from ..core.di import DIContainer
 from ..database.repositories import MatchRepository, PredictionRepository
 from ..domain.models import Prediction, Team
 from ..domain.services import PredictionDomainService
-from ..domain.strategies import (PredictionContext, PredictionInput,
-                                 PredictionOutput, PredictionStrategy,
-                                 PredictionStrategyFactory)
+from ..domain.strategies import (
+    PredictionContext,
+    PredictionInput,
+    PredictionOutput,
+    PredictionStrategy,
+    PredictionStrategyFactory,
+)
 
 logger = logging.getLogger(__name__)
 

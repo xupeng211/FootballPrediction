@@ -5,8 +5,6 @@
 # 导入
 
 
-
-
 # 类定义
 class ScoresCollector:
     """实时比分收集器

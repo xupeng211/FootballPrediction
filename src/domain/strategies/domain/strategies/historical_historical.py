@@ -5,8 +5,6 @@
 # 导入
 
 
-
-
 # 类定义
 class HistoricalMatch:
     """历史比赛数据结构"""

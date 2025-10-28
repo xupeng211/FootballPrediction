@@ -13,9 +13,11 @@ Tests for SQL Compatibility (Real Implementation)
 
 import pytest
 
-from src.database.sql_compatibility import (Compatibility,
-                                            CompatibleQueryBuilder,
-                                            SQLCompatibilityHelper)
+from src.database.sql_compatibility import (
+    Compatibility,
+    CompatibleQueryBuilder,
+    SQLCompatibilityHelper,
+)
 
 
 @pytest.mark.unit

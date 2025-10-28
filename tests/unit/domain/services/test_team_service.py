@@ -1,10 +1,12 @@
 import pytest
 
 from src.domain.models.team import Team, TeamStats
-from src.domain.services.team_service import (TeamDomainService,
-                                              TeamPerformanceResetEvent,
-                                              TeamProfileUpdatedEvent,
-                                              TeamStatsEvent)
+from src.domain.services.team_service import (
+    TeamDomainService,
+    TeamPerformanceResetEvent,
+    TeamProfileUpdatedEvent,
+    TeamStatsEvent,
+)
 
 
 class InMemoryTeamRepository:

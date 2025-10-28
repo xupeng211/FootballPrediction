@@ -147,8 +147,7 @@ class TestUtilsExtra:
     def test_utils_response_helpers(self):
         """测试响应助手函数"""
         try:
-            from utils import (created_response, error_response,
-                               success_response)
+            from utils import created_response, error_response, success_response
 
             # 测试成功响应
             resp = success_response({"data": "test"})
@@ -215,8 +214,7 @@ class TestUtilsExtra:
     def test_utils_retry_functions(self):
         """测试重试函数"""
         try:
-            from utils import (exponential_backoff, jitter_backoff,
-                               linear_backoff, retry)
+            from utils import exponential_backoff, jitter_backoff, linear_backoff, retry
 
             # 测试指数退避
             delay1 = exponential_backoff(1, 1.0)
@@ -250,9 +248,13 @@ class TestUtilsExtra:
     def test_utils_validator_functions(self):
         """测试验证器函数"""
         try:
-            from utils import (validate_choice, validate_length,
-                               validate_pattern, validate_range,
-                               validate_required)
+            from utils import (
+                validate_choice,
+                validate_length,
+                validate_pattern,
+                validate_range,
+                validate_required,
+            )
 
             # 测试必填验证
             assert validate_required("value") is True

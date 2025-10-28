@@ -12,7 +12,11 @@ import pytest
 # 测试导入
 try:
     from src.services.processing.processors.features_processor import (
-        aggregator, calculator, processor, validator)
+        aggregator,
+        calculator,
+        processor,
+        validator,
+    )
 
     FEATURES_PROCESSOR_AVAILABLE = True
 except ImportError as e:
@@ -164,8 +168,9 @@ class TestFeaturesProcessorIntegration:
         """测试：向后兼容性"""
         # 验证可以通过旧方式导入
         try:
-            from src.services.processing.processors.features_processor import \
-                aggregator as old_aggregator
+            from src.services.processing.processors.features_processor import (
+                aggregator as old_aggregator,
+            )
 
             assert old_aggregator is aggregator
         except ImportError:

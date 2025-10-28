@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-# from src.utils.file_utils import FileUtils
+from src.utils.file_utils import FileUtils
 
 
 @pytest.mark.unit
@@ -33,9 +33,9 @@ class TestFileUtils:
 
             # 使用字符串路径
             str_dir = os.path.join(tmpdir, "string", "dir")
-            _result = FileUtils.ensure_dir(str_dir)
+            result = FileUtils.ensure_dir(str_dir)
             assert isinstance(result, Path)
-            assert _result.exists()
+            assert result.exists()
 
     def test_ensure_directory_alias(self):
         """测试ensure_directory别名方法"""
@@ -49,7 +49,7 @@ class TestFileUtils:
         """测试JSON文件读写"""
         with tempfile.TemporaryDirectory() as tmpdir:
             file_path = Path(tmpdir) / "test.json"
-            _data = {"name": "John", "age": 30, "active": True, "scores": [90, 85, 95]}
+            data = {"name": "John", "age": 30, "active": True, "scores": [90, 85, 95]}
 
             # 写入JSON
             FileUtils.write_json(data, file_path)
@@ -68,7 +68,7 @@ class TestFileUtils:
         """测试写入JSON时自动创建目录"""
         with tempfile.TemporaryDirectory() as tmpdir:
             file_path = Path(tmpdir) / "nested" / "dirs" / "test.json"
-            _data = {"test": "data"}
+            data = {"test": "data"}
 
             # 确保目录不存在
             assert not file_path.parent.exists()

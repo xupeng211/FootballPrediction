@@ -45,7 +45,7 @@ except ImportError:
             "predicted_home": 2,
             "predicted_away": 1,
             "confidence": 0.85,
-            "created_at": datetime.now()
+            "created_at": datetime.now(),
         }
 
     print(f"智能Mock兼容修复模式：使用Mock FastAPI应用确保预测API测试稳定性")

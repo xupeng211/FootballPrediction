@@ -9,9 +9,13 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.utils.validators import (is_valid_email, is_valid_phone, is_valid_url,
-                                  validate_data_types,
-                                  validate_required_fields)
+from src.utils.validators import (
+    is_valid_email,
+    is_valid_phone,
+    is_valid_url,
+    validate_data_types,
+    validate_required_fields,
+)
 
 
 @pytest.mark.unit

@@ -21,12 +21,15 @@ import pytest
 
 # 导入要测试的模块
 try:
-    from src.core.service_lifecycle import (IServiceLifecycle, ServiceInfo,
-                                            ServiceLifecycleError,
-                                            ServiceLifecycleManager,
-                                            ServiceState,
-                                            get_lifecycle_manager,
-                                            lifecycle_service)
+    from src.core.service_lifecycle import (
+        IServiceLifecycle,
+        ServiceInfo,
+        ServiceLifecycleError,
+        ServiceLifecycleManager,
+        ServiceState,
+        get_lifecycle_manager,
+        lifecycle_service,
+    )
 
     SERVICE_LIFECYCLE_AVAILABLE = True
 except ImportError:

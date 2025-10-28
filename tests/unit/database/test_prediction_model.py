@@ -14,6 +14,7 @@ IMPORTS_AVAILABLE = True
 IMPORT_SUCCESS = True
 IMPORT_ERROR = "Mock模式已启用 - 避免SQLAlchemy关系映射复杂性"
 
+
 # Mock模型以避免SQLAlchemy关系映射问题
 class MockPredictedResult:
     # 智能Mock兼容修复模式 - 使用类方法来处理静态访问
@@ -47,12 +48,14 @@ class MockPredictedResult:
 
     # 添加value访问的魔法方法
     def __getattr__(self, name):
-        if name == 'value':
+        if name == "value":
             return self._value
         return super().__getattribute__(name)
 
+
 # 立即初始化枚举值
 MockPredictedResult._init_values()
+
 
 class MockPredictions:
     def __init__(self):
@@ -69,7 +72,7 @@ class MockPredictions:
         self.updated_at = None
         self.is_correct = None  # 智能Mock兼容修复模式 - 添加缺失的属性
         self.actual_result = None  # 智能Mock兼容修复模式 - 添加实际结果属性
-        self.verified_at = None   # 智能Mock兼容修复模式 - 添加验证时间属性
+        self.verified_at = None  # 智能Mock兼容修复模式 - 添加验证时间属性
 
     def dict(self):
         return {
@@ -83,12 +86,13 @@ class MockPredictions:
             "away_win_probability": self.away_win_probability,
             "confidence_score": self.confidence_score,
             "created_at": self.created_at,
-            "updated_at": self.updated_at
+            "updated_at": self.updated_at,
         }
 
     def __repr__(self):
         # 智能Mock兼容修复模式 - 添加repr方法
         return f"MockPredictions(id={self.id}, match_id={self.match_id}, model={self.model_version})"
+
 
 class MockMatch:
     def __init__(self):
@@ -99,6 +103,7 @@ class MockMatch:
         self.date = None
         self.status = None
         self.score = None
+
 
 # 智能Mock兼容修复模式 - 强制使用Mock以避免SQLAlchemy关系映射问题
 print("智能Mock兼容修复模式：强制使用Mock数据库模型以避免SQLAlchemy关系映射复杂性")

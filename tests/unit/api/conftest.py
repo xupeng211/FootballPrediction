@@ -12,8 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import main as main_module
 from src.database.connection import get_async_session
-from src.database.models import (Match, MatchStatus, PredictedResult,
-                                 Predictions)
+from src.database.models import Match, MatchStatus, PredictedResult, Predictions
 
 """API测试配置"""
 

@@ -115,7 +115,7 @@ async def detailed_health():
     # 标准化数据库状态为"ok"以匹配测试期望
     standardized_db_status = {
         "status": "ok" if db_status.get("status") == "healthy" else "error",
-        "latency_ms": 5  # 测试期望5ms
+        "latency_ms": 5,  # 测试期望5ms
     }
 
     return {

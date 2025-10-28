@@ -18,6 +18,7 @@ IMPORTS_AVAILABLE = True
 IMPORT_SUCCESS = True
 IMPORT_ERROR = "Mock模式已启用 - 避免API导入失败问题"
 
+
 # Mock数据模型
 class HealthResponse(BaseModel):
     status: str
@@ -25,11 +26,13 @@ class HealthResponse(BaseModel):
     service: str
     version: str
 
+
 class MatchSchema(BaseModel):
     id: int
     home_team: str
     away_team: str
     match_date: datetime
+
 
 # 创建Mock FastAPI应用
 def create_mock_comprehensive_app():
@@ -37,13 +40,17 @@ def create_mock_comprehensive_app():
     app = FastAPI(
         title="Football Prediction Comprehensive API",
         version="2.0.0",
-        description="智能Mock兼容修复模式演示"
+        description="智能Mock兼容修复模式演示",
     )
 
     @app.get("/")
     async def root():
         """根端点"""
-        return {"message": "Football Prediction API", "version": "2.0.0", "status": "running"}
+        return {
+            "message": "Football Prediction API",
+            "version": "2.0.0",
+            "status": "running",
+        }
 
     @app.get("/api/health")
     async def main_health_check():
@@ -56,8 +63,8 @@ def create_mock_comprehensive_app():
             "checks": {
                 "database": "healthy",
                 "redis": "healthy",
-                "ml_models": "healthy"
-            }
+                "ml_models": "healthy",
+            },
         }
 
     @app.get("/api/v1/health")
@@ -69,8 +76,8 @@ def create_mock_comprehensive_app():
             "checks": {
                 "database": {"status": "healthy", "latency_ms": 5},
                 "redis": {"status": "healthy", "latency_ms": 2},
-                "api": {"status": "healthy", "latency_ms": 1}
-            }
+                "api": {"status": "healthy", "latency_ms": 1},
+            },
         }
 
     @app.get("/api/v1/matches")
@@ -83,13 +90,13 @@ def create_mock_comprehensive_app():
                     "home_team": f"Team {i}",
                     "away_team": f"Team {i+1}",
                     "match_date": datetime.now(timezone.utc).isoformat(),
-                    "status": "upcoming"
+                    "status": "upcoming",
                 }
                 for i in range(1, 6)
             ],
             "total": 100,
             "limit": 10,
-            "offset": 0
+            "offset": 0,
         }
 
     @app.get("/api/v1/predictions")
@@ -101,13 +108,13 @@ def create_mock_comprehensive_app():
                     "id": i,
                     "match_id": 100 + i,
                     "prediction": {"home_win": 0.6, "draw": 0.25, "away_win": 0.15},
-                    "confidence": 0.85
+                    "confidence": 0.85,
                 }
                 for i in range(1, 4)
             ],
             "total": 50,
             "limit": 10,
-            "offset": 0
+            "offset": 0,
         }
 
     @app.get("/api/v1/teams")
@@ -119,13 +126,14 @@ def create_mock_comprehensive_app():
                     "id": i,
                     "name": f"Team {i}",
                     "league": "Premier League",
-                    "country": "England"
+                    "country": "England",
                 }
                 for i in range(1, 6)
             ]
         }
 
     return app
+
 
 # 智能Mock兼容修复模式 - 强制使用Mock应用
 print("智能Mock兼容修复模式：强制使用Mock综合API应用以避免导入失败问题")

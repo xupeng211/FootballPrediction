@@ -6,11 +6,24 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from src.domain_simple import (League, LeagueTable, MarketType, Match,
-                               MatchResult, MatchStatus, Odds, Prediction,
-                               PredictionConfidence, PredictionType, Team,
-                               TeamStatistics, User, UserPreferences,
-                               UserProfile, ValueBet)
+from src.domain_simple import (
+    League,
+    LeagueTable,
+    MarketType,
+    Match,
+    MatchResult,
+    MatchStatus,
+    Odds,
+    Prediction,
+    PredictionConfidence,
+    PredictionType,
+    Team,
+    TeamStatistics,
+    User,
+    UserPreferences,
+    UserProfile,
+    ValueBet,
+)
 
 
 @pytest.mark.unit

@@ -14,8 +14,7 @@ import pytest
 
 # 测试导入
 try:
-    from src.services.processing.processors.features_processor import \
-        FeaturesProcessor
+    from src.services.processing.processors.features_processor import FeaturesProcessor
 
     FEATURES_PROCESSOR_AVAILABLE = True
 except ImportError as e:

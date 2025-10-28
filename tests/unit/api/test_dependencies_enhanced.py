@@ -23,8 +23,12 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../src"))
 
 try:
-    from src.database.dependencies import (get_async_db, get_db,
-                                           get_test_async_db, get_test_db)
+    from src.database.dependencies import (
+        get_async_db,
+        get_db,
+        get_test_async_db,
+        get_test_db,
+    )
 
     DEPENDENCIES_AVAILABLE = True
 except ImportError as e:

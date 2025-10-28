@@ -9,9 +9,13 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.models.base_models import (FootballBaseModel, IdentifiableModel,
-                                    MetadataModel, StatusModel,
-                                    TimestampedModel)
+from src.models.base_models import (
+    FootballBaseModel,
+    IdentifiableModel,
+    MetadataModel,
+    StatusModel,
+    TimestampedModel,
+)
 
 
 @pytest.mark.unit

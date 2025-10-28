@@ -13,6 +13,7 @@ Tests for Redis Manager
 
 import pytest
 
+
 # 智能Mock兼容修复模式 - 为Redis管理器创建Mock支持
 class MockRedisManager:
     """Mock Redis管理器 - 用于测试"""

@@ -18,10 +18,8 @@ import pytest
 # 测试导入
 try:
     from src.adapters.base import Adapter, AdapterStatus
-    from src.adapters.factory import (AdapterConfig, AdapterFactory,
-                                      AdapterGroupConfig)
-    from src.adapters.registry import (AdapterRegistry, RegistryStatus,
-                                       adapter_registry)
+    from src.adapters.factory import AdapterConfig, AdapterFactory, AdapterGroupConfig
+    from src.adapters.registry import AdapterRegistry, RegistryStatus, adapter_registry
 
     REGISTRY_AVAILABLE = True
 except ImportError as e:

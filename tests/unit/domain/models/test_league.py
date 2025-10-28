@@ -4,8 +4,13 @@ from decimal import Decimal
 import pytest
 
 from src.core.exceptions import DomainError
-from src.domain.models.league import (League, LeagueSeason, LeagueSettings,
-                                      LeagueStatus, LeagueType)
+from src.domain.models.league import (
+    League,
+    LeagueSeason,
+    LeagueSettings,
+    LeagueStatus,
+    LeagueType,
+)
 
 
 @pytest.fixture

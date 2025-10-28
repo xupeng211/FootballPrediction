@@ -9,13 +9,16 @@ Tests for Database Connection (Simple Version)
 
 import pytest
 
-from src.database.connection import (DatabaseManager, DatabaseRole,
-                                     MultiUserDatabaseManager,
-                                     get_database_manager,
-                                     get_multi_user_database_manager,
-                                     initialize_database,
-                                     initialize_multi_user_database,
-                                     initialize_test_database)
+from src.database.connection import (
+    DatabaseManager,
+    DatabaseRole,
+    MultiUserDatabaseManager,
+    get_database_manager,
+    get_multi_user_database_manager,
+    initialize_database,
+    initialize_multi_user_database,
+    initialize_test_database,
+)
 
 
 @pytest.mark.unit
@@ -128,14 +131,17 @@ class TestSessionFunctions:
 
     def test_session_functions_import(self):
         """测试：会话函数可以导入"""
-        from src.database.connection import (get_admin_session,
-                                             get_async_admin_session,
-                                             get_async_reader_session,
-                                             get_async_session,
-                                             get_async_writer_session,
-                                             get_db_session,
-                                             get_reader_session, get_session,
-                                             get_writer_session)
+        from src.database.connection import (
+            get_admin_session,
+            get_async_admin_session,
+            get_async_reader_session,
+            get_async_session,
+            get_async_writer_session,
+            get_db_session,
+            get_reader_session,
+            get_session,
+            get_writer_session,
+        )
 
         # 所有函数应该是可调用的
         assert callable(get_db_session)

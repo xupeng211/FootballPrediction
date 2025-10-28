@@ -17,10 +17,12 @@ import pytest
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from src.performance.middleware import (BackgroundTaskPerformanceMonitor,
-                                        CachePerformanceMiddleware,
-                                        DatabasePerformanceMiddleware,
-                                        PerformanceMonitoringMiddleware)
+from src.performance.middleware import (
+    BackgroundTaskPerformanceMonitor,
+    CachePerformanceMiddleware,
+    DatabasePerformanceMiddleware,
+    PerformanceMonitoringMiddleware,
+)
 
 
 @pytest.mark.unit

@@ -9,6 +9,7 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
+
 # 智能Mock兼容修复 - 创建Mock数据服务
 class MockDataService:
     """Mock数据服务 - 用于测试"""
@@ -36,9 +37,11 @@ class MockDataService:
         """获取所有数据"""
         return list(self.data_store.values())
 
+
 # 尝试导入目标模块，如果不存在则使用Mock
 try:
     from src.services.data_service import DataService
+
     IMPORTS_AVAILABLE = True
     data_service_class = DataService
 except ImportError as e:

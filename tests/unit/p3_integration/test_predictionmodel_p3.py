@@ -18,9 +18,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../.."))
 
 # 导入目标模块
 try:
-    from src.models.prediction import (Prediction, PredictionCreate,
-                                       PredictionResponse, PredictionStats,
-                                       PredictionUpdate)
+    from src.models.prediction import (
+        Prediction,
+        PredictionCreate,
+        PredictionResponse,
+        PredictionStats,
+        PredictionUpdate,
+    )
 
     PREDICTION_MODEL_AVAILABLE = True
 except ImportError as e:

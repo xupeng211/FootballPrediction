@@ -17,9 +17,13 @@ from jose import JWTError
 
 # 测试导入
 try:
-    from src.api.dependencies import (get_current_user, get_prediction_engine,
-                                      security, validate_request_data,
-                                      verify_admin_permission)
+    from src.api.dependencies import (
+        get_current_user,
+        get_prediction_engine,
+        security,
+        validate_request_data,
+        verify_admin_permission,
+    )
 
     DEPENDENCIES_AVAILABLE = True
 except ImportError as e:

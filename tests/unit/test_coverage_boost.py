@@ -26,8 +26,13 @@ class TestUtilsImports:
     def test_crypto_utils_imports(self):
         """测试加密工具导入"""
         try:
-            from utils import (generate_short_id, generate_uuid, hash_password,
-                               hash_string, verify_password)
+            from utils import (
+                generate_short_id,
+                generate_uuid,
+                hash_password,
+                hash_string,
+                verify_password,
+            )
 
             # 测试函数可调用
             assert callable(generate_uuid)
@@ -41,9 +46,16 @@ class TestUtilsImports:
     def test_data_validator_imports(self):
         """测试数据验证器导入"""
         try:
-            from utils import (validate_credit_card, validate_date,
-                               validate_email, validate_ip, validate_json,
-                               validate_number, validate_phone, validate_url)
+            from utils import (
+                validate_credit_card,
+                validate_date,
+                validate_email,
+                validate_ip,
+                validate_json,
+                validate_number,
+                validate_phone,
+                validate_url,
+            )
 
             # 测试函数可调用
             assert callable(validate_email)
@@ -60,8 +72,13 @@ class TestUtilsImports:
     def test_dict_utils_imports(self):
         """测试字典工具导入"""
         try:
-            from utils import (deep_merge, exclude_keys, filter_none,
-                               flatten_dict, pick_keys)
+            from utils import (
+                deep_merge,
+                exclude_keys,
+                filter_none,
+                flatten_dict,
+                pick_keys,
+            )
 
             # 测试函数可调用
             assert callable(deep_merge)
@@ -75,9 +92,16 @@ class TestUtilsImports:
     def test_file_utils_imports(self):
         """测试文件工具导入"""
         try:
-            from utils import (backup_file, ensure_dir, get_file_extension,
-                               get_file_hash, get_file_size, read_file,
-                               safe_filename, write_file)
+            from utils import (
+                backup_file,
+                ensure_dir,
+                get_file_extension,
+                get_file_hash,
+                get_file_size,
+                read_file,
+                safe_filename,
+                write_file,
+            )
 
             # 测试函数可调用
             assert callable(ensure_dir)
@@ -94,9 +118,15 @@ class TestUtilsImports:
     def test_formatters_imports(self):
         """测试格式化器导入"""
         try:
-            from utils import (format_address, format_bytes, format_currency,
-                               format_datetime, format_percentage,
-                               format_phone, format_relative_time)
+            from utils import (
+                format_address,
+                format_bytes,
+                format_currency,
+                format_datetime,
+                format_percentage,
+                format_phone,
+                format_relative_time,
+            )
 
             # 测试函数可调用
             assert callable(format_datetime)
@@ -112,9 +142,16 @@ class TestUtilsImports:
     def test_helpers_imports(self):
         """测试帮助工具导入"""
         try:
-            from utils import (chunk_list, deep_get, deep_set, flatten_list,
-                               generate_uuid_helper, is_json, merge_dicts,
-                               truncate_string)
+            from utils import (
+                chunk_list,
+                deep_get,
+                deep_set,
+                flatten_list,
+                generate_uuid_helper,
+                is_json,
+                merge_dicts,
+                truncate_string,
+            )
 
             # 测试函数可调用
             assert callable(generate_uuid_helper)
@@ -131,9 +168,16 @@ class TestUtilsImports:
     def test_string_utils_imports(self):
         """测试字符串工具导入"""
         try:
-            from utils import (camel_to_snake, capitalize_first, clean_html,
-                               pluralize, singularize, slugify, snake_to_camel,
-                               truncate_words)
+            from utils import (
+                camel_to_snake,
+                capitalize_first,
+                clean_html,
+                pluralize,
+                singularize,
+                slugify,
+                snake_to_camel,
+                truncate_words,
+            )
 
             # 测试函数可调用
             assert callable(slugify)
@@ -150,8 +194,14 @@ class TestUtilsImports:
     def test_time_utils_imports(self):
         """测试时间工具导入"""
         try:
-            from utils import (duration_format, get_timezone_offset, is_future,
-                               is_past, parse_datetime, time_ago)
+            from utils import (
+                duration_format,
+                get_timezone_offset,
+                is_future,
+                is_past,
+                parse_datetime,
+                time_ago,
+            )
 
             # 测试函数可调用
             assert callable(time_ago)
@@ -166,11 +216,17 @@ class TestUtilsImports:
     def test_response_imports(self):
         """测试响应工具导入"""
         try:
-            from utils import (bad_request_response, created_response,
-                               deleted_response, error_response,
-                               forbidden_response, not_found_response,
-                               success_response, unauthorized_response,
-                               updated_response)
+            from utils import (
+                bad_request_response,
+                created_response,
+                deleted_response,
+                error_response,
+                forbidden_response,
+                not_found_response,
+                success_response,
+                unauthorized_response,
+                updated_response,
+            )
 
             # 测试函数可调用
             assert callable(success_response)
@@ -188,8 +244,13 @@ class TestUtilsImports:
     def test_i18n_imports(self):
         """测试国际化导入"""
         try:
-            from utils import (_, get_current_language, get_translations,
-                               set_language, translate_list)
+            from utils import (
+                _,
+                get_current_language,
+                get_translations,
+                set_language,
+                translate_list,
+            )
 
             # 测试函数可调用
             assert callable(_)
@@ -203,9 +264,12 @@ class TestUtilsImports:
     def test_warning_filters_imports(self):
         """测试警告过滤器导入"""
         try:
-            from utils import (filter_deprecation_warnings,
-                               filter_import_warnings, filter_user_warnings,
-                               setup_warnings)
+            from utils import (
+                filter_deprecation_warnings,
+                filter_import_warnings,
+                filter_user_warnings,
+                setup_warnings,
+            )
 
             # 测试函数可调用
             assert callable(filter_deprecation_warnings)
@@ -218,8 +282,13 @@ class TestUtilsImports:
     def test_config_loader_imports(self):
         """测试配置加载器导入"""
         try:
-            from utils import (get_config_value, get_env_config, load_config,
-                               reload_config, set_config_value)
+            from utils import (
+                get_config_value,
+                get_env_config,
+                load_config,
+                reload_config,
+                set_config_value,
+            )
 
             # 测试函数可调用
             assert callable(load_config)
@@ -233,8 +302,7 @@ class TestUtilsImports:
     def test_retry_imports(self):
         """测试重试工具导入"""
         try:
-            from utils import (exponential_backoff, jitter_backoff,
-                               linear_backoff, retry)
+            from utils import exponential_backoff, jitter_backoff, linear_backoff, retry
 
             # 测试函数可调用
             assert callable(retry)
@@ -247,10 +315,16 @@ class TestUtilsImports:
     def test_validators_imports(self):
         """测试验证器导入"""
         try:
-            from utils import (validate_choice, validate_email_format,
-                               validate_length, validate_number_format,
-                               validate_pattern, validate_range,
-                               validate_required, validate_url_format)
+            from utils import (
+                validate_choice,
+                validate_email_format,
+                validate_length,
+                validate_number_format,
+                validate_pattern,
+                validate_range,
+                validate_required,
+                validate_url_format,
+            )
 
             # 测试函数可调用
             assert callable(validate_required)
@@ -303,8 +377,12 @@ class TestCoreFunctionality:
     def test_validation_functions(self):
         """测试验证函数"""
         try:
-            from utils import (validate_email, validate_json, validate_phone,
-                               validate_url)
+            from utils import (
+                validate_email,
+                validate_json,
+                validate_phone,
+                validate_url,
+            )
 
             # 测试邮箱验证
             assert validate_email("test@example.com")
@@ -323,8 +401,13 @@ class TestCoreFunctionality:
     def test_dict_functions(self):
         """测试字典函数"""
         try:
-            from utils import (deep_merge, exclude_keys, filter_none,
-                               flatten_dict, pick_keys)
+            from utils import (
+                deep_merge,
+                exclude_keys,
+                filter_none,
+                flatten_dict,
+                pick_keys,
+            )
 
             dict1 = {"a": 1, "b": 2}
             dict2 = {"b": 3, "c": 4}
@@ -361,8 +444,7 @@ class TestCoreFunctionality:
     def test_string_functions(self):
         """测试字符串函数"""
         try:
-            from utils import (camel_to_snake, slugify, snake_to_camel,
-                               truncate_string)
+            from utils import camel_to_snake, slugify, snake_to_camel, truncate_string
 
             # 测试slugify
             assert slugify("Hello World!") == "hello-world"
@@ -410,8 +492,7 @@ class TestCoreFunctionality:
     def test_response_functions(self):
         """测试响应函数"""
         try:
-            from utils import (error_response, not_found_response,
-                               success_response)
+            from utils import error_response, not_found_response, success_response
 
             # 测试成功响应
             resp = success_response({"data": "test"})

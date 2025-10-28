@@ -170,7 +170,9 @@ class FileUtils:
             return []
 
     @staticmethod
-    def list_files_recursive(directory: Union[str, Path], pattern: str = "*") -> List[Path]:
+    def list_files_recursive(
+        directory: Union[str, Path], pattern: str = "*"
+    ) -> List[Path]:
         """递归列出目录中的所有文件"""
         try:
             dir_path = Path(directory)
@@ -196,7 +198,9 @@ class FileUtils:
         return Path(file_path).name
 
     @staticmethod
-    def create_backup(file_path: Union[str, Path], backup_dir: Optional[Union[str, Path]] = None) -> Optional[Path]:
+    def create_backup(
+        file_path: Union[str, Path], backup_dir: Optional[Union[str, Path]] = None
+    ) -> Optional[Path]:
         """创建文件备份"""
         try:
             src_path = Path(file_path)
@@ -208,7 +212,9 @@ class FileUtils:
             else:
                 backup_dir_path = Path(backup_dir)
                 backup_dir_path.mkdir(parents=True, exist_ok=True)
-                backup_path = backup_dir_path / f"{src_path.name}.backup{int(time.time())}"
+                backup_path = (
+                    backup_dir_path / f"{src_path.name}.backup{int(time.time())}"
+                )
 
             shutil.copy2(src_path, backup_path)
             return backup_path
@@ -216,7 +222,9 @@ class FileUtils:
             return None
 
     @staticmethod
-    def read_text_file(file_path: Union[str, Path], encoding: str = "utf-8") -> Optional[str]:
+    def read_text_file(
+        file_path: Union[str, Path], encoding: str = "utf-8"
+    ) -> Optional[str]:
         """读取文本文件"""
         try:
             with open(file_path, "r", encoding=encoding) as f:
@@ -225,8 +233,12 @@ class FileUtils:
             return None
 
     @staticmethod
-    def write_text_file(content: str, file_path: Union[str, Path], encoding: str = "utf-8",
-                        ensure_dir: bool = True) -> bool:
+    def write_text_file(
+        content: str,
+        file_path: Union[str, Path],
+        encoding: str = "utf-8",
+        ensure_dir: bool = True,
+    ) -> bool:
         """写入文本文件"""
         try:
             file_path_obj = Path(file_path)
@@ -240,7 +252,9 @@ class FileUtils:
             return False
 
     @staticmethod
-    def append_to_file(content: str, file_path: Union[str, Path], encoding: str = "utf-8") -> bool:
+    def append_to_file(
+        content: str, file_path: Union[str, Path], encoding: str = "utf-8"
+    ) -> bool:
         """追加内容到文件"""
         try:
             with open(file_path, "a", encoding=encoding) as f:

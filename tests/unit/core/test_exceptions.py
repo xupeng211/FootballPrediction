@@ -12,20 +12,36 @@ import pytest
 
 # 导入要测试的异常模块
 try:
-    from src.core.exceptions import (AdapterError, AuthenticationError,
-                                     AuthorizationError, BacktestError,
-                                     BusinessRuleError, CacheError,
-                                     ConfigError, ConsistencyError,
-                                     DatabaseError, DataError,
-                                     DataProcessingError, DataQualityError,
-                                     DependencyInjectionError, DomainError,
-                                     FootballPredictionError, LineageError,
-                                     ModelError, PipelineError,
-                                     PredictionError, RateLimitError,
-                                     ServiceError, ServiceLifecycleError,
-                                     StreamingError, TaskExecutionError,
-                                     TaskRetryError, TimeoutError,
-                                     TrackingError, ValidationError)
+    from src.core.exceptions import (
+        AdapterError,
+        AuthenticationError,
+        AuthorizationError,
+        BacktestError,
+        BusinessRuleError,
+        CacheError,
+        ConfigError,
+        ConsistencyError,
+        DatabaseError,
+        DataError,
+        DataProcessingError,
+        DataQualityError,
+        DependencyInjectionError,
+        DomainError,
+        FootballPredictionError,
+        LineageError,
+        ModelError,
+        PipelineError,
+        PredictionError,
+        RateLimitError,
+        ServiceError,
+        ServiceLifecycleError,
+        StreamingError,
+        TaskExecutionError,
+        TaskRetryError,
+        TimeoutError,
+        TrackingError,
+        ValidationError,
+    )
 
     EXCEPTIONS_AVAILABLE = True
 except ImportError:

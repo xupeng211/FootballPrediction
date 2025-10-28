@@ -11,11 +11,14 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
 
-from src.database.definitions import (get_async_reader_session,
-                                      get_async_session,
-                                      get_async_writer_session,
-                                      get_db_session,
-                                      get_reader_session, get_writer_session)
+from src.database.definitions import (
+    get_async_reader_session,
+    get_async_session,
+    get_async_writer_session,
+    get_db_session,
+    get_reader_session,
+    get_writer_session,
+)
 
 
 def get_db() -> Generator[Session, None, None]:

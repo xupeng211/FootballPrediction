@@ -21,9 +21,14 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, "src")
 
-from src.collectors import (FixturesCollector, FixturesCollectorFactory,
-                            OddsCollector, OddsCollectorFactory,
-                            ScoresCollector, ScoresCollectorFactory)
+from src.collectors import (
+    FixturesCollector,
+    FixturesCollectorFactory,
+    OddsCollector,
+    OddsCollectorFactory,
+    ScoresCollector,
+    ScoresCollectorFactory,
+)
 
 
 @pytest.mark.unit

@@ -21,8 +21,12 @@ import yaml
 # 测试导入
 try:
     from src.adapters.base import Adapter
-    from src.adapters.factory import (AdapterConfig, AdapterFactory,
-                                      AdapterGroupConfig, adapter_factory)
+    from src.adapters.factory import (
+        AdapterConfig,
+        AdapterFactory,
+        AdapterGroupConfig,
+        adapter_factory,
+    )
 
     FACTORY_AVAILABLE = True
 except ImportError as e:
@@ -526,8 +530,11 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if FACTORY_AVAILABLE:
-        from src.adapters.factory import (AdapterConfig, AdapterFactory,
-                                          AdapterGroupConfig)
+        from src.adapters.factory import (
+            AdapterConfig,
+            AdapterFactory,
+            AdapterGroupConfig,
+        )
 
         assert AdapterFactory is not None
         assert AdapterConfig is not None

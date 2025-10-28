@@ -39,10 +39,17 @@ JWT_AVAILABLE = jwt is not None
 
 # 导入要测试的模块
 try:
-    from src.api.dependencies import (ALGORITHM, SECRET_KEY, get_admin_user,
-                                      get_current_user, get_prediction_engine,
-                                      get_redis_manager, rate_limit_check,
-                                      security, verify_prediction_permission)
+    from src.api.dependencies import (
+        ALGORITHM,
+        SECRET_KEY,
+        get_admin_user,
+        get_current_user,
+        get_prediction_engine,
+        get_redis_manager,
+        rate_limit_check,
+        security,
+        verify_prediction_permission,
+    )
 
     DEPENDENCIES_AVAILABLE = True
 except ImportError as e:
@@ -339,10 +346,14 @@ class TestModuleImports:
     def test_module_imports(self):
         """测试所有必需的模块都能正确导入"""
         try:
-            from src.api.dependencies import (ALGORITHM, SECRET_KEY,
-                                              get_admin_user, get_current_user,
-                                              get_prediction_engine,
-                                              get_redis_manager)
+            from src.api.dependencies import (
+                ALGORITHM,
+                SECRET_KEY,
+                get_admin_user,
+                get_current_user,
+                get_prediction_engine,
+                get_redis_manager,
+            )
 
             assert True
         except ImportError as e:

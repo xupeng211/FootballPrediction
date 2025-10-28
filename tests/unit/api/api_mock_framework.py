@@ -19,8 +19,15 @@ class APITestMockFramework:
         self.mock_data = {}
         self.repositories = {}
 
-    def create_mock_prediction(self, id=1, user_id=1, match_id=123,
-                             predicted_home=2, predicted_away=1, confidence=0.85):
+    def create_mock_prediction(
+        self,
+        id=1,
+        user_id=1,
+        match_id=123,
+        predicted_home=2,
+        predicted_away=1,
+        confidence=0.85,
+    ):
         """创建Mock预测对象"""
         mock_prediction = Mock()
         mock_prediction.id = id
@@ -72,9 +79,9 @@ class APITestMockFramework:
 
             # 应用限制和偏移
             if query_spec.offset:
-                results = results[query_spec.offset:]
+                results = results[query_spec.offset :]
             if query_spec.limit:
-                results = results[:query_spec.limit]
+                results = results[: query_spec.limit]
 
             return results
 
@@ -90,7 +97,8 @@ class APITestMockFramework:
                 "total_predictions": len(user_predictions),
                 "average_confidence": (
                     sum(p.confidence for p in user_predictions) / len(user_predictions)
-                    if user_predictions else 0
+                    if user_predictions
+                    else 0
                 ),
                 "period_days": period_days or 30,
             }
@@ -108,26 +116,33 @@ class APITestMockFramework:
 
         # 1. 数据库层Mock
         mock_db_manager = AsyncMock()
-        patch1 = patch("src.database.definitions.get_database_manager",
-                      return_value=mock_db_manager)
+        patch1 = patch(
+            "src.database.definitions.get_database_manager",
+            return_value=mock_db_manager,
+        )
         patches.append(patch1)
 
         # 2. 数据库连接层Mock
         mock_session = AsyncMock()
-        patch2 = patch("src.database.connection.get_async_session",
-                      return_value=mock_session)
+        patch2 = patch(
+            "src.database.connection.get_async_session", return_value=mock_session
+        )
         patches.append(patch2)
 
         # 3. 仓储提供者层Mock
         mock_repo_provider = AsyncMock()
-        patch3 = patch("src.repositories.provider.get_repository_provider",
-                      return_value=mock_repo_provider)
+        patch3 = patch(
+            "src.repositories.provider.get_repository_provider",
+            return_value=mock_repo_provider,
+        )
         patches.append(patch3)
 
         # 4. 仓储DI层Mock - 最关键的一层
         mock_repo = self.create_mock_repository()
-        patch4 = patch("src.repositories.di.get_read_only_prediction_repository",
-                      return_value=mock_repo)
+        patch4 = patch(
+            "src.repositories.di.get_read_only_prediction_repository",
+            return_value=mock_repo,
+        )
         patches.append(patch4)
 
         return patches, mock_repo
@@ -138,8 +153,9 @@ class APITestMockFramework:
 
         # 直接Mock API层使用的依赖符号
         mock_repo = self.create_mock_repository()
-        patch1 = patch("src.repositories.ReadOnlyPredictionRepoDep",
-                      return_value=mock_repo)
+        patch1 = patch(
+            "src.repositories.ReadOnlyPredictionRepoDep", return_value=mock_repo
+        )
         patches.append((patch1, mock_repo))
 
         return patches
@@ -170,6 +186,7 @@ def apply_successful_api_mock_pattern(test_function):
         response = client.get("/repositories/predictions")
         assert response.status_code == 200
     """
+
     def wrapper(*args, **kwargs):
         # 获取Mock补丁
         patches, mock_repo = get_api_test_mocks()

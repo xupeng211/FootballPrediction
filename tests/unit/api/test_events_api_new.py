@@ -17,8 +17,12 @@ import pytest
 
 # 测试导入
 try:
-    from src.api.events import (_find_handler, event_health_check,
-                                get_event_statistics, router)
+    from src.api.events import (
+        _find_handler,
+        event_health_check,
+        get_event_statistics,
+        router,
+    )
     from src.core.event_application import EventApplication
     from src.events import EventBus
     from src.events.handlers import AnalyticsEventHandler, MetricsEventHandler

@@ -9,10 +9,15 @@ from unittest.mock import Mock, mock_open, patch
 import pytest
 
 try:
-    from src.config.config_manager import (ConfigLoader, ConfigManager,
-                                           Configuration, ConfigValidator,
-                                           EnvironmentConfig, FileConfig,
-                                           MemoryConfig)
+    from src.config.config_manager import (
+        ConfigLoader,
+        ConfigManager,
+        Configuration,
+        ConfigValidator,
+        EnvironmentConfig,
+        FileConfig,
+        MemoryConfig,
+    )
 
     IMPORT_SUCCESS = True
 except ImportError as e:

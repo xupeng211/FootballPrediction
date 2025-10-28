@@ -10,11 +10,16 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.database.config import (_ENV_PREFIX, DatabaseConfig, _get_env_bool,
-                                 _parse_int, get_database_config,
-                                 get_database_url,
-                                 get_production_database_config,
-                                 get_test_database_config)
+from src.database.config import (
+    _ENV_PREFIX,
+    DatabaseConfig,
+    _get_env_bool,
+    _parse_int,
+    get_database_config,
+    get_database_url,
+    get_production_database_config,
+    get_test_database_config,
+)
 
 
 @pytest.mark.unit

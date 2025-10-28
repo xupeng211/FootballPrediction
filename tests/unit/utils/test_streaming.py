@@ -11,8 +11,10 @@ class TestStreaming:
     def test_kafka_components_import(self):
         """测试Kafka组件导入"""
         try:
-            from src.streaming.kafka_components import (KafkaConsumerManager,
-                                                        KafkaProducerManager)
+            from src.streaming.kafka_components import (
+                KafkaConsumerManager,
+                KafkaProducerManager,
+            )
 
             assert KafkaProducerManager is not None
             assert KafkaConsumerManager is not None

@@ -304,7 +304,9 @@ class TestStringUtils:
     def test_capitalize_words(self):
         """测试：首字母大写"""
         assert StringUtils.capitalize_words("hello world") == "Hello World"
-        assert StringUtils.capitalize_words("python programming") == "Python Programming"
+        assert (
+            StringUtils.capitalize_words("python programming") == "Python Programming"
+        )
         assert StringUtils.capitalize_words("") == ""
         assert StringUtils.capitalize_words("single") == "Single"
 
@@ -336,14 +338,14 @@ class TestStringUtils:
     def test_char_frequency(self):
         """测试：字符频率统计"""
         freq = StringUtils.char_frequency("hello")
-        assert freq['h'] == 1
-        assert freq['e'] == 1
-        assert freq['l'] == 2
-        assert freq['o'] == 1
+        assert freq["h"] == 1
+        assert freq["e"] == 1
+        assert freq["l"] == 2
+        assert freq["o"] == 1
 
         freq_empty = StringUtils.char_frequency("")
         assert freq_empty == {}
 
         freq_repeat = StringUtils.char_frequency("aaabbb")
-        assert freq_repeat['a'] == 3
-        assert freq_repeat['b'] == 3
+        assert freq_repeat["a"] == 3
+        assert freq_repeat["b"] == 3

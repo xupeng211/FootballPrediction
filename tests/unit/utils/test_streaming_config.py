@@ -11,8 +11,12 @@ from typing import Any, Dict, List, Optional
 import pytest
 import yaml
 
-from src.streaming.stream_config_simple import (ConsumerConfig, KafkaConfig,
-                                                ProducerConfig, StreamConfig)
+from src.streaming.stream_config_simple import (
+    ConsumerConfig,
+    KafkaConfig,
+    ProducerConfig,
+    StreamConfig,
+)
 
 
 @pytest.mark.unit

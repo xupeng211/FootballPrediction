@@ -18,10 +18,15 @@ import pytest
 
 # 测试导入
 try:
-    from src.tasks.utils import (calculate_next_collection_time,
-                                 cleanup_stale_tasks, get_active_leagues,
-                                 get_task_priority, get_upcoming_matches,
-                                 is_match_day, should_collect_live_scores)
+    from src.tasks.utils import (
+        calculate_next_collection_time,
+        cleanup_stale_tasks,
+        get_active_leagues,
+        get_task_priority,
+        get_upcoming_matches,
+        is_match_day,
+        should_collect_live_scores,
+    )
 
     TASKS_UTILS_AVAILABLE = True
 except ImportError as e:
@@ -644,10 +649,15 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if TASKS_UTILS_AVAILABLE:
-        from src.tasks.utils import (calculate_next_collection_time,
-                                     cleanup_stale_tasks, get_active_leagues,
-                                     get_task_priority, get_upcoming_matches,
-                                     is_match_day, should_collect_live_scores)
+        from src.tasks.utils import (
+            calculate_next_collection_time,
+            cleanup_stale_tasks,
+            get_active_leagues,
+            get_task_priority,
+            get_upcoming_matches,
+            is_match_day,
+            should_collect_live_scores,
+        )
 
         assert should_collect_live_scores is not None
         assert get_upcoming_matches is not None

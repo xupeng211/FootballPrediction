@@ -14,6 +14,7 @@ IMPORTS_AVAILABLE = True
 IMPORT_SUCCESS = True
 IMPORT_ERROR = "Mock模式已启用 - 避免SQLAlchemy关系映射复杂性"
 
+
 # Mock模型以避免SQLAlchemy关系映射问题
 class MockLeague:
     def __init__(self):
@@ -27,6 +28,7 @@ class MockLeague:
 
     def __repr__(self):
         return f"MockLeague(id={self.id}, name={self.league_name})"
+
 
 class MockTeam:
     def __init__(self):
@@ -66,8 +68,9 @@ class MockTeam:
             "created_at": self.created_at,
             "updated_at": self.updated_at,
             "is_active": self.is_active,
-            "league_id": self.league_id
+            "league_id": self.league_id,
         }
+
 
 # 智能Mock兼容修复模式 - 强制使用Mock以避免SQLAlchemy关系映射问题
 print("智能Mock兼容修复模式：强制使用Mock数据库模型以避免SQLAlchemy关系映射复杂性")
@@ -312,7 +315,9 @@ class TestTeamModel:
         # 计算胜率
         if hasattr(sample_team, "get_win_rate"):
             win_rate = sample_team.get_win_rate()
-            expected_rate = _stats["wins"] / _stats["matches_played"]  # 智能Mock兼容修复模式 - 修复变量名
+            expected_rate = (
+                _stats["wins"] / _stats["matches_played"]
+            )  # 智能Mock兼容修复模式 - 修复变量名
             assert abs(win_rate - expected_rate) < 0.01
 
     @pytest.mark.asyncio
@@ -333,7 +338,9 @@ class TestTeamModel:
         for i in range(5):
             team = Team()
             team.id = i + 1
-            team.team_name = f"Team {i + 1} FC"  # 智能Mock兼容修复模式 - 添加team_name属性
+            team.team_name = (
+                f"Team {i + 1} FC"  # 智能Mock兼容修复模式 - 添加team_name属性
+            )
             team.name = f"Team {i + 1} FC"
             team.team_code = f"TC{i + 1}"  # 智能Mock兼容修复模式 - 添加team_code属性
             team.short_name = f"T{i + 1}"

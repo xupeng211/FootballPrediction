@@ -12,8 +12,7 @@ Test dependency injection mechanism
 import pytest
 from fastapi.testclient import TestClient
 
-from src.database.dependencies import (async_db_session, db_session,
-                                       get_async_db, get_db)
+from src.database.dependencies import async_db_session, db_session, get_async_db, get_db
 from src.main import app
 
 

@@ -7,12 +7,17 @@ from datetime import datetime
 import pytest
 
 from src.database.models.match import MatchStatus
-from tests.factories import (LeagueFactory, MatchFactory, OddsFactory,
-                             PredictionFactory, TeamFactory, UserFactory)
+from tests.factories import (
+    LeagueFactory,
+    MatchFactory,
+    OddsFactory,
+    PredictionFactory,
+    TeamFactory,
+    UserFactory,
+)
 from tests.factories.league_factory import InternationalLeagueFactory
 from tests.factories.prediction_factory import MLModelPredictionFactory
-from tests.factories.team_factory import (ChineseTeamFactory,
-                                          HistoricTeamFactory)
+from tests.factories.team_factory import ChineseTeamFactory, HistoricTeamFactory
 
 
 @pytest.mark.integration

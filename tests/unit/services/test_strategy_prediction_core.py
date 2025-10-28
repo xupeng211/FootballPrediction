@@ -35,11 +35,14 @@ try:
     from src.database.repositories import MatchRepository, PredictionRepository
     from src.domain.models import Prediction, Team
     from src.domain.services import PredictionDomainService
-    from src.domain.strategies import (PredictionContext, PredictionInput,
-                                       PredictionOutput, PredictionStrategy,
-                                       PredictionStrategyFactory)
-    from src.services.strategy_prediction_service import \
-        StrategyPredictionService
+    from src.domain.strategies import (
+        PredictionContext,
+        PredictionInput,
+        PredictionOutput,
+        PredictionStrategy,
+        PredictionStrategyFactory,
+    )
+    from src.services.strategy_prediction_service import StrategyPredictionService
 except ImportError:
     StrategyPredictionService = None
     PredictionStrategy = None

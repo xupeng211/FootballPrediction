@@ -19,13 +19,19 @@ from typing import Any
 
 import pytest
 
-from src.facades.base import (Subsystem, SubsystemManager, SubsystemStatus,
-                              SystemFacade)
-from src.facades.facades import (AnalyticsFacade, AnalyticsSubsystem,
-                                 CacheSubsystem, DatabaseSubsystem,
-                                 DataCollectionFacade, MainSystemFacade,
-                                 NotificationFacade, NotificationSubsystem,
-                                 PredictionFacade, PredictionSubsystem)
+from src.facades.base import Subsystem, SubsystemManager, SubsystemStatus, SystemFacade
+from src.facades.facades import (
+    AnalyticsFacade,
+    AnalyticsSubsystem,
+    CacheSubsystem,
+    DatabaseSubsystem,
+    DataCollectionFacade,
+    MainSystemFacade,
+    NotificationFacade,
+    NotificationSubsystem,
+    PredictionFacade,
+    PredictionSubsystem,
+)
 from src.facades.factory import FacadeConfig, FacadeFactory, facade_factory
 
 

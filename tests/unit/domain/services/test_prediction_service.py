@@ -13,12 +13,14 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from src.domain.events.prediction_events import (PredictionCancelledEvent,
-                                                 PredictionCreatedEvent,
-                                                 PredictionEvaluatedEvent,
-                                                 PredictionExpiredEvent,
-                                                 PredictionPointsAdjustedEvent,
-                                                 PredictionUpdatedEvent)
+from src.domain.events.prediction_events import (
+    PredictionCancelledEvent,
+    PredictionCreatedEvent,
+    PredictionEvaluatedEvent,
+    PredictionExpiredEvent,
+    PredictionPointsAdjustedEvent,
+    PredictionUpdatedEvent,
+)
 from src.domain.models.match import Match, MatchScore, MatchStatus
 from src.domain.models.prediction import Prediction, PredictionStatus
 from src.domain.services.prediction_service import PredictionDomainService

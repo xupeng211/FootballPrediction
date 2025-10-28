@@ -14,9 +14,14 @@ import pytest
 
 # 导入要测试的模块
 try:
-    from src.models.model_training import (HAS_MLFLOW, HAS_XGB,
-                                           BaselineModelTrainer, MlflowClient,
-                                           mlflow, xgb)
+    from src.models.model_training import (
+        HAS_MLFLOW,
+        HAS_XGB,
+        BaselineModelTrainer,
+        MlflowClient,
+        mlflow,
+        xgb,
+    )
 
     MODEL_TRAINING_AVAILABLE = True
 except ImportError:

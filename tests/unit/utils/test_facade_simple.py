@@ -12,10 +12,16 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from src.patterns.facade_simple import (AnalyticsFacade, DataCollectionConfig,
-                                        DataCollectionFacade, FacadeFactory,
-                                        PredictionFacade, PredictionRequest,
-                                        PredictionResult, SystemFacade)
+from src.patterns.facade_simple import (
+    AnalyticsFacade,
+    DataCollectionConfig,
+    DataCollectionFacade,
+    FacadeFactory,
+    PredictionFacade,
+    PredictionRequest,
+    PredictionResult,
+    SystemFacade,
+)
 
 
 @pytest.mark.unit

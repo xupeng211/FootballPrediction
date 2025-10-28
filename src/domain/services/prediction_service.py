@@ -10,12 +10,14 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
 
-from ..events.prediction_events import (PredictionCancelledEvent,
-                                        PredictionCreatedEvent,
-                                        PredictionEvaluatedEvent,
-                                        PredictionExpiredEvent,
-                                        PredictionPointsAdjustedEvent,
-                                        PredictionUpdatedEvent)
+from ..events.prediction_events import (
+    PredictionCancelledEvent,
+    PredictionCreatedEvent,
+    PredictionEvaluatedEvent,
+    PredictionExpiredEvent,
+    PredictionPointsAdjustedEvent,
+    PredictionUpdatedEvent,
+)
 from ..models.match import Match, MatchStatus
 from ..models.prediction import Prediction, PredictionPoints, PredictionStatus
 

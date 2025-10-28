@@ -19,9 +19,16 @@ from src.api.repositories import router
 class MockPrediction:
     """模拟预测模型 - API版"""
 
-    def __init__(self, id=1, user_id=1, match_id=123,
-                 predicted_home=2, predicted_away=1, confidence=0.85,
-                 strategy_used="neural_network"):
+    def __init__(
+        self,
+        id=1,
+        user_id=1,
+        match_id=123,
+        predicted_home=2,
+        predicted_away=1,
+        confidence=0.85,
+        strategy_used="neural_network",
+    ):
         self.id = id
         self.user_id = user_id
         self.match_id = match_id
@@ -69,9 +76,9 @@ class MockRepository:
 
         # 应用限制和偏移
         if query_spec.offset:
-            results = results[query_spec.offset:]
+            results = results[query_spec.offset :]
         if query_spec.limit:
-            results = results[:query_spec.limit]
+            results = results[: query_spec.limit]
 
         return results
 
@@ -87,7 +94,8 @@ class MockRepository:
             "total_predictions": len(user_predictions),
             "average_confidence": (
                 sum(p.confidence for p in user_predictions) / len(user_predictions)
-                if user_predictions else 0
+                if user_predictions
+                else 0
             ),
             "period_days": period_days or 30,
         }
@@ -115,7 +123,9 @@ class TestRepositoryAPISuccess:
     def test_get_predictions(self, client):
         """测试：获取预测列表 - 终极成功版"""
         # Given - 终极Mock策略：直接Mock API路由层
-        with patch("src.api.repositories.get_read_only_prediction_repository") as mock_get_repo:
+        with patch(
+            "src.api.repositories.get_read_only_prediction_repository"
+        ) as mock_get_repo:
             mock_repo = MockRepository()
             mock_get_repo.return_value = mock_repo
 
@@ -133,12 +143,16 @@ class TestRepositoryAPISuccess:
     def test_get_predictions_with_filters(self, client):
         """测试：带过滤器的预测列表 - 终极成功版"""
         # Given - 终极Mock策略
-        with patch("src.api.repositories.get_read_only_prediction_repository") as mock_get_repo:
+        with patch(
+            "src.api.repositories.get_read_only_prediction_repository"
+        ) as mock_get_repo:
             mock_repo = MockRepository()
             mock_get_repo.return_value = mock_repo
 
             # When
-            response = client.get("/repositories/predictions?user_id=1&limit=10&offset=0")
+            response = client.get(
+                "/repositories/predictions?user_id=1&limit=10&offset=0"
+            )
 
             # Then
             assert response.status_code == 200
@@ -148,7 +162,9 @@ class TestRepositoryAPISuccess:
     def test_get_prediction_success(self, client):
         """测试：成功获取单个预测 - 终极成功版"""
         # Given - 终极Mock策略
-        with patch("src.api.repositories.get_read_only_prediction_repository") as mock_get_repo:
+        with patch(
+            "src.api.repositories.get_read_only_prediction_repository"
+        ) as mock_get_repo:
             mock_repo = MockRepository()
             mock_get_repo.return_value = mock_repo
 
@@ -166,7 +182,9 @@ class TestRepositoryAPISuccess:
     def test_get_prediction_not_found(self, client):
         """测试：获取不存在的预测 - 终极成功版"""
         # Given - 终极Mock策略
-        with patch("src.api.repositories.get_read_only_prediction_repository") as mock_get_repo:
+        with patch(
+            "src.api.repositories.get_read_only_prediction_repository"
+        ) as mock_get_repo:
             mock_repo = MockRepository()
             mock_get_repo.return_value = mock_repo
 
@@ -180,7 +198,9 @@ class TestRepositoryAPISuccess:
     def test_get_user_prediction_statistics(self, client):
         """测试：获取用户预测统计 - 终极成功版"""
         # Given - 终极Mock策略
-        with patch("src.api.repositories.get_read_only_prediction_repository") as mock_get_repo:
+        with patch(
+            "src.api.repositories.get_read_only_prediction_repository"
+        ) as mock_get_repo:
             mock_repo = MockRepository()
             mock_get_repo.return_value = mock_repo
 
@@ -211,7 +231,9 @@ class TestRepositoryAPISuccess:
     def test_empty_predictions_list(self, client):
         """测试：空的预测列表 - 终极成功版"""
         # Given - 终极Mock策略
-        with patch("src.api.repositories.get_read_only_prediction_repository") as mock_get_repo:
+        with patch(
+            "src.api.repositories.get_read_only_prediction_repository"
+        ) as mock_get_repo:
             mock_repo = MockRepository()
             mock_repo._data = {}  # 空数据
             mock_get_repo.return_value = mock_repo
@@ -228,7 +250,9 @@ class TestRepositoryAPISuccess:
     def test_repository_exception_handling(self, client):
         """测试：仓储异常处理 - 终极成功版"""
         # Given - 终极Mock策略
-        with patch("src.api.repositories.get_read_only_prediction_repository") as mock_get_repo:
+        with patch(
+            "src.api.repositories.get_read_only_prediction_repository"
+        ) as mock_get_repo:
             mock_repo = MockRepository()
             mock_repo.get_by_id = AsyncMock(side_effect=Exception("Database error"))
             mock_get_repo.return_value = mock_repo

@@ -436,8 +436,7 @@ class TestDependenciesAndImports:
 
     def test_import_models(self):
         """测试导入模型"""
-        from src.api.predictions.models import (PredictionRequest,
-                                                PredictionResponse)
+        from src.api.predictions.models import PredictionRequest, PredictionResponse
 
         assert standard_response is not None
         assert error_response is not None

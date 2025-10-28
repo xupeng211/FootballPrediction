@@ -1,8 +1,8 @@
-
 # 智能Mock兼容修复模式 - 避免API导入失败问题
 IMPORTS_AVAILABLE = True
 IMPORT_SUCCESS = True
 IMPORT_ERROR = "Mock模式已启用 - 避免API导入失败问题"
+
 
 # Mock FastAPI应用
 def create_mock_app():
@@ -18,11 +18,17 @@ def create_mock_app():
 
     @app.get("/health")
     async def health():
-        return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
+        return {
+            "status": "healthy",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
 
     @app.get("/api/v1/health")
     async def health_v1():
-        return {"status": "healthy", "checks": {"database": "healthy", "redis": "healthy"}}
+        return {
+            "status": "healthy",
+            "checks": {"database": "healthy", "redis": "healthy"},
+        }
 
     @app.get("/api/v1/matches")
     async def matches():
@@ -30,13 +36,16 @@ def create_mock_app():
 
     @app.get("/api/v1/predictions")
     async def predictions():
-        return {"predictions": [{"id": 1, "match_id": 123, "prediction": {"home_win": 0.6}}]}
+        return {
+            "predictions": [{"id": 1, "match_id": 123, "prediction": {"home_win": 0.6}}]
+        }
 
     @app.get("/api/v1/teams")
     async def teams():
         return {"teams": [{"id": 1, "name": "Team A", "league": "Premier League"}]}
 
     return app
+
 
 # 创建Mock应用
 app = create_mock_app()

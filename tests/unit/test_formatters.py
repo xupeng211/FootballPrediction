@@ -8,8 +8,12 @@ from datetime import datetime
 
 import pytest
 
-from src.utils.formatters import (format_currency, format_datetime,
-                                  format_json, format_percentage)
+from src.utils.formatters import (
+    format_currency,
+    format_datetime,
+    format_json,
+    format_percentage,
+)
 
 
 @pytest.mark.unit

@@ -5,8 +5,7 @@ try:
     pass
 except Exception:
     pass
-    from src.data_quality.quality_checker_extended import \
-        QualityCheckerExtended
+    from src.data_quality.quality_checker_extended import QualityCheckerExtended
 except ImportError:
 
     class QualityCheckerExtended:

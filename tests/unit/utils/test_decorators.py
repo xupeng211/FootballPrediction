@@ -13,12 +13,19 @@ import time
 
 import pytest
 
-from src.cache.decorators import (CacheDecorator, InvalidateCacheDecorator,
-                                  UserCacheDecorator, _make_cache_key,
-                                  cache_by_user, cache_invalidate,
-                                  cache_match_data, cache_result,
-                                  cache_team_stats, cache_user_predictions,
-                                  cache_with_ttl)
+from src.cache.decorators import (
+    CacheDecorator,
+    InvalidateCacheDecorator,
+    UserCacheDecorator,
+    _make_cache_key,
+    cache_by_user,
+    cache_invalidate,
+    cache_match_data,
+    cache_result,
+    cache_team_stats,
+    cache_user_predictions,
+    cache_with_ttl,
+)
 
 
 # 模拟Redis管理器

@@ -6,8 +6,12 @@ from datetime import datetime
 
 import pytest
 
-from src.models.common_models import (DataValidationResult, FeatureVector,
-                                      MatchData, ModelMetrics)
+from src.models.common_models import (
+    DataValidationResult,
+    FeatureVector,
+    MatchData,
+    ModelMetrics,
+)
 
 
 @pytest.mark.unit

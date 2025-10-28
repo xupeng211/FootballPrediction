@@ -19,8 +19,7 @@ class TestDataQuality:
     def test_data_quality_monitor_import(self):
         """测试数据质量监控器导入"""
         try:
-            from src.data.quality.data_quality_monitor import \
-                DataQualityMonitor
+            from src.data.quality.data_quality_monitor import DataQualityMonitor
 
             assert DataQualityMonitor is not None
         except ImportError:
@@ -29,8 +28,7 @@ class TestDataQuality:
     def test_exception_handler_import(self):
         """测试异常处理器导入"""
         try:
-            from src.data.quality.exception_handler_mod import \
-                DataExceptionHandler
+            from src.data.quality.exception_handler_mod import DataExceptionHandler
 
             assert DataExceptionHandler is not None
         except ImportError:
@@ -39,8 +37,7 @@ class TestDataQuality:
     def test_great_expectations_config_import(self):
         """测试Great Expectations配置导入"""
         try:
-            from src.data.quality.great_expectations_config import \
-                get_ge_config
+            from src.data.quality.great_expectations_config import get_ge_config
 
             assert callable(get_ge_config)
         except ImportError:
