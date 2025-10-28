@@ -26,12 +26,13 @@ class PerformanceMonitoringIntegration:
     def __init__(self):
         """初始化性能监控集成"""
         self.settings = get_settings()
-        self.enabled = self.settings.get("PERFORMANCE_MONITORING_ENABLED", True)
+        # 使用getattr访问Pydantic Settings属性，提供默认值
+        self.enabled = getattr(self.settings, "PERFORMANCE_MONITORING_ENABLED", True)
         self.sample_rate = float(
-            self.settings.get("PERFORMANCE_MONITORING_SAMPLE_RATE", 1.0)
+            getattr(self.settings, "PERFORMANCE_MONITORING_SAMPLE_RATE", 1.0)
         )
-        self.profiling_enabled = self.settings.get(
-            "PERFORMANCE_PROFILING_ENABLED", False
+        self.profiling_enabled = getattr(
+            self.settings, "PERFORMANCE_PROFILING_ENABLED", False
         )
 
         self._monitoring_middleware = None
