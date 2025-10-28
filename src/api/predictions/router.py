@@ -98,6 +98,25 @@ class PredictionVerification(BaseModel):
 # ============================================================================
 
 
+@router.get("/")
+async def get_predictions_root():
+    """预测服务根路径"""
+    return {
+        "service": "足球预测API",
+        "module": "predictions",
+        "version": "1.0.0",
+        "status": "运行中",
+        "endpoints": {
+            "recent": "/recent",
+            "health": "/health",
+            "prediction": "/{match_id}",
+            "history": "/history/{match_id}",
+            "predict": "/{match_id}/predict",
+            "batch": "/batch",
+            "verify": "/{match_id}/verify"
+        }
+    }
+
 @router.get("/health")
 async def health_check():
     """健康检查"""

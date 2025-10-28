@@ -113,6 +113,37 @@ class DemoTransformationResponse(BaseModel):
     transformation_steps: List[str]
 
 
+# 适配器服务根路径
+@router.get("/")
+async def get_adapters_root():
+    """适配器服务根路径"""
+    return {
+        "service": "足球预测API",
+        "module": "adapters",
+        "version": "1.0.0",
+        "status": "运行中",
+        "description": "外部API适配器系统 - 数据集成和转换服务",
+        "endpoints": {
+            "registry_status": "/registry/status",
+            "configs": "/configs",
+            "football_matches": "/football/matches",
+            "football_match": "/football/matches/{match_id}",
+            "football_teams": "/football/teams",
+            "football_team_players": "/football/teams/{team_id}/players",
+            "demo_comparison": "/demo/comparison",
+            "demo_fallback": "/demo/fallback",
+            "demo_transformation": "/demo/transformation",
+            "health": "/health"
+        },
+        "features": [
+            "多数据源适配",
+            "实时数据转换",
+            "故障转移机制",
+            "演示和对比功能",
+            "健康监控"
+        ]
+    }
+
 # Registry endpoints
 @router.get("/registry/status")
 async def get_registry_status():

@@ -1,12 +1,12 @@
 """
 adapters 主模块
 
-此文件由长文件拆分工具自动生成
-
-拆分策略: api_split
+外部API适配器接口
+Provides external API adapter interfaces.
 """
 
-# 导入拆分的模块
+# 从子模块导入路由器
+from .adapters.router import router
 
 # 导出所有公共接口
-__all__ = []
+__all__ = ["router"]
