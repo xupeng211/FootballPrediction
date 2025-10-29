@@ -36,7 +36,8 @@ import {
   FireOutlined,
   RocketOutlined
 } from '@ant-design/icons';
-import { useWebSocket, useRealtimeEvent, EVENT_TYPES } from '../hooks/useWebSocket';
+import { useWebSocket, useRealtimeEvent } from '../hooks/useWebSocket';
+import { EVENT_TYPES } from '../services/websocket';
 
 const { Text, Title } = Typography;
 
@@ -364,10 +365,10 @@ const RealtimeStatsPanel: React.FC<RealtimeStatsPanelProps> = ({
                     percent={Math.max(0, 100 - (stats.avgResponseTime / 2))}
                     size="small"
                     style={{ flex: 1 }}
-                    strokeColor={getPerformanceStatus.color}
+                    strokeColor={performanceStatus.color}
                     showInfo={false}
                   />
-                  <Text strong style={{ color: getPerformanceStatus.color }}>
+                  <Text strong style={{ color: performanceStatus.color }}>
                     {stats.avgResponseTime}ms
                   </Text>
                 </div>
@@ -431,7 +432,7 @@ const RealtimeStatsPanel: React.FC<RealtimeStatsPanelProps> = ({
                     title={
                       <Space>
                         <Text>{item.eventType.replace('_', ' ')}</Text>
-                        <Tag color={getTrendColor(item.trend)} size="small">
+                        <Tag color={getTrendColor(item.trend)}>
                           {item.trend === 'up' ? '↑' : item.trend === 'down' ? '↓' : '→'}
                         </Tag>
                       </Space>

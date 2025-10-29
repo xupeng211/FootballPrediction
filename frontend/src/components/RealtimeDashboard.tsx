@@ -36,7 +36,8 @@ import {
   BellOutlined,
   SettingOutlined
 } from '@ant-design/icons';
-import { useWebSocket, useConnectionStatus, EVENT_TYPES } from '../hooks/useWebSocket';
+import { useWebSocket, useConnectionStatus } from '../hooks/useWebSocket';
+import { EVENT_TYPES } from '../services/websocket';
 
 const { Text, Title } = Typography;
 
@@ -164,19 +165,19 @@ const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({
   // 获取连接状态文本
   const getConnectionStatusText = () => {
     if (!connectionStatus.status) return '未连接';
-    switch (connectionStatus.status) {
+    switch (connectionStatus.status as unknown as string) {
       case 'connected': return '已连接';
       case 'connecting': return '连接中...';
       case 'disconnected': return '已断开';
       case 'error': return '连接错误';
-      default: return connectionStatus.status;
+      default: return String(connectionStatus.status);
     }
   };
 
   // 获取连接状态颜色
   const getConnectionStatusColor = () => {
     if (!connectionStatus.status) return 'default';
-    switch (connectionStatus.status) {
+    switch (connectionStatus.status as unknown as string) {
       case 'connected': return 'success';
       case 'connecting': return 'processing';
       case 'disconnected': return 'default';
@@ -209,7 +210,7 @@ const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({
                     size="small"
                     icon={ws.isConnected ? <DisconnectOutlined /> : <ReloadOutlined />}
                     onClick={toggleConnection}
-                    loading={connectionStatus.status === 'connecting'}
+                    loading={(connectionStatus?.status as unknown as string) === 'connecting'}
                   />
                 </Tooltip>
                 <Tooltip title="刷新统计">
@@ -357,7 +358,7 @@ const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({
                   <List.Item style={{ padding: '4px 0' }}>
                     <div style={{ width: '100%' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Tag color={getEventTypeColor(item.eventType)} size="small">
+                        <Tag color={getEventTypeColor(item.eventType)}>
                           {item.eventType}
                         </Tag>
                         <Text type="secondary" style={{ fontSize: '11px' }}>
@@ -402,7 +403,6 @@ const RealtimeDashboard: React.FC<RealtimeDashboardProps> = ({
               type="error"
               showIcon
               closable
-              onClose={() => ws.setError(null)}
             />
           </Col>
         )}
