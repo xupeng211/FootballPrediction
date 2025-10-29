@@ -11,9 +11,7 @@ from typing import Any, Dict, List, Optional
 class StreamConfig:
     """流配置基类"""
 
-    def __init__(
-        self, name: str, bootstrap_servers: List[str], topics: List[str], **kwargs
-    ):
+    def __init__(self, name: str, bootstrap_servers: List[str], topics: List[str], **kwargs):
         if not name:
             raise ValueError("Name is required")
         if not bootstrap_servers:
@@ -83,11 +81,7 @@ class StreamConfig:
         """替换环境变量"""
         result = {}
         for key, value in config.items():
-            if (
-                isinstance(value, str)
-                and value.startswith("${")
-                and value.endswith("}")
-            ):
+            if isinstance(value, str) and value.startswith("${") and value.endswith("}"):
                 env_var = value[2:-1]
                 result[key] = os.getenv(env_var, value)
             else:
@@ -111,9 +105,7 @@ class KafkaConfig(StreamConfig):
         protocol: str = "PLAINTEXT",
         **kwargs,
     ):
-        super().__init__(
-            name="kafka", bootstrap_servers=bootstrap_servers, topics=[], **kwargs
-        )
+        super().__init__(name="kafka", bootstrap_servers=bootstrap_servers, topics=[], **kwargs)
         self.port = port
         self.protocol = protocol
 
@@ -200,9 +192,7 @@ class ConsumerConfig(StreamConfig):
                 value = config[field]
                 expected_type = rule.get("type")
                 if expected_type and not isinstance(value, expected_type):
-                    raise ValueError(
-                        f"{field} must be of type {expected_type.__name__}"
-                    )
+                    raise ValueError(f"{field} must be of type {expected_type.__name__}")
 
                 min_value = rule.get("min_value")
                 if min_value is not None and value < min_value:
@@ -213,11 +203,7 @@ class ConsumerConfig(StreamConfig):
                     raise ValueError(f"{field} must be <= {max_value}")
 
                 pattern = rule.get("pattern")
-                if (
-                    pattern
-                    and hasattr(pattern, "match")
-                    and not pattern.match(str(value))
-                ):
+                if pattern and hasattr(pattern, "match") and not pattern.match(str(value)):
                     raise ValueError(f"{field} does not match required pattern")
 
                 min_items = rule.get("min_items")
@@ -240,9 +226,7 @@ class ProducerConfig(StreamConfig):
         compression_type: Optional[str] = None,
         **kwargs,
     ):
-        super().__init__(
-            name="producer", bootstrap_servers=bootstrap_servers, topics=[], **kwargs
-        )
+        super().__init__(name="producer", bootstrap_servers=bootstrap_servers, topics=[], **kwargs)
 
         # 验证acks值
         if acks not in [0, 1, "all"]:

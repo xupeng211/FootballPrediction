@@ -12,65 +12,59 @@ from typing import Dict, List, Any, Optional, Type
 from pathlib import Path
 from unittest.mock import Mock, AsyncMock, patch, MagicMock
 
+
 class P3AdvancedIntegrationTestGenerator:
     """P3阶段高级集成测试生成器"""
 
     def __init__(self):
         self.p3_modules = [
             {
-                'path': 'src/cqrs/application.py',
-                'name': 'CQRSApplication',
-                'current_coverage': 42.11,
-                'target_coverage': 80,
-                'priority': 'P3',
-                'complexity': 'very_high',
-                'dependencies': [
-                    'cqrs.bus',
-                    'cqrs.commands',
-                    'cqrs.queries',
-                    'cqrs.handlers',
-                    'cqrs.dto'
+                "path": "src/cqrs/application.py",
+                "name": "CQRSApplication",
+                "current_coverage": 42.11,
+                "target_coverage": 80,
+                "priority": "P3",
+                "complexity": "very_high",
+                "dependencies": [
+                    "cqrs.bus",
+                    "cqrs.commands",
+                    "cqrs.queries",
+                    "cqrs.handlers",
+                    "cqrs.dto",
                 ],
-                'test_type': 'advanced_mock_with_real_injection'
+                "test_type": "advanced_mock_with_real_injection",
             },
             {
-                'path': 'src/database/definitions.py',
-                'name': 'DatabaseDefinitions',
-                'current_coverage': 50.00,
-                'target_coverage': 80,
-                'priority': 'P3',
-                'complexity': 'high',
-                'dependencies': [
-                    'database.base',
-                    'database.models',
-                    'sqlalchemy'
-                ],
-                'test_type': 'database_integration_with_mocks'
+                "path": "src/database/definitions.py",
+                "name": "DatabaseDefinitions",
+                "current_coverage": 50.00,
+                "target_coverage": 80,
+                "priority": "P3",
+                "complexity": "high",
+                "dependencies": ["database.base", "database.models", "sqlalchemy"],
+                "test_type": "database_integration_with_mocks",
             },
             {
-                'path': 'src/models/prediction.py',
-                'name': 'PredictionModel',
-                'current_coverage': 64.94,
-                'target_coverage': 90,
-                'priority': 'P3',
-                'complexity': 'medium',
-                'dependencies': [
-                    'sqlalchemy',
-                    'pydantic'
-                ],
-                'test_type': 'model_validation_with_real_logic'
-            }
+                "path": "src/models/prediction.py",
+                "name": "PredictionModel",
+                "current_coverage": 64.94,
+                "target_coverage": 90,
+                "priority": "P3",
+                "complexity": "medium",
+                "dependencies": ["sqlalchemy", "pydantic"],
+                "test_type": "model_validation_with_real_logic",
+            },
         ]
 
     def analyze_complex_dependencies(self, module_info: Dict) -> Dict:
         """分析复杂依赖关系"""
-        module_path = module_info['path']
+        module_path = module_info["path"]
 
         if not os.path.exists(module_path):
-            return {'error': f'文件不存在: {module_path}'}
+            return {"error": f"文件不存在: {module_path}"}
 
         try:
-            with open(module_path, 'r', encoding='utf-8') as f:
+            with open(module_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             tree = ast.parse(content)
@@ -89,49 +83,54 @@ class P3AdvancedIntegrationTestGenerator:
                     if node.module:
                         dependencies.add(node.module)
                         for alias in node.names:
-                            full_import = f"{node.module}.{alias.name}" if alias.name != "*" else node.module
+                            full_import = (
+                                f"{node.module}.{alias.name}" if alias.name != "*" else node.module
+                            )
                             imports.append(full_import)
                 elif isinstance(node, ast.ClassDef):
                     methods = []
                     for n in node.body:
                         if isinstance(n, ast.FunctionDef):
                             method_info = {
-                                'name': n.name,
-                                'args': [arg.arg for arg in n.args.args],
-                                'is_async': isinstance(n, ast.AsyncFunctionDef),
-                                'complexity': self._calculate_complexity(n)
+                                "name": n.name,
+                                "args": [arg.arg for arg in n.args.args],
+                                "is_async": isinstance(n, ast.AsyncFunctionDef),
+                                "complexity": self._calculate_complexity(n),
                             }
                             methods.append(method_info)
 
                     class_info = {
-                        'name': node.name,
-                        'methods': methods,
-                        'bases': [base.id if isinstance(base, ast.Name) else str(base) for base in node.bases],
-                        'lineno': node.lineno
+                        "name": node.name,
+                        "methods": methods,
+                        "bases": [
+                            base.id if isinstance(base, ast.Name) else str(base)
+                            for base in node.bases
+                        ],
+                        "lineno": node.lineno,
                     }
                     classes.append(class_info)
                 elif isinstance(node, ast.FunctionDef):
                     func_info = {
-                        'name': node.name,
-                        'args': [arg.arg for arg in node.args.args],
-                        'is_async': isinstance(node, ast.AsyncFunctionDef),
-                        'complexity': self._calculate_complexity(node),
-                        'lineno': node.lineno
+                        "name": node.name,
+                        "args": [arg.arg for arg in node.args.args],
+                        "is_async": isinstance(node, ast.AsyncFunctionDef),
+                        "complexity": self._calculate_complexity(node),
+                        "lineno": node.lineno,
                     }
                     functions.append(func_info)
 
             return {
-                'dependencies': list(dependencies),
-                'imports': imports,
-                'classes': classes,
-                'functions': functions,
-                'total_lines': len(content.split('\n')),
-                'content': content,
-                'ast_parsed': True
+                "dependencies": list(dependencies),
+                "imports": imports,
+                "classes": classes,
+                "functions": functions,
+                "total_lines": len(content.split("\n")),
+                "content": content,
+                "ast_parsed": True,
             }
 
         except Exception as e:
-            return {'error': f'分析失败: {str(e)}'}
+            return {"error": f"分析失败: {str(e)}"}
 
     def _calculate_complexity(self, node) -> int:
         """计算函数复杂度"""
@@ -147,7 +146,7 @@ class P3AdvancedIntegrationTestGenerator:
         """创建高级CQRS测试"""
         analysis = self.analyze_complex_dependencies(module_info)
 
-        if 'error' in analysis:
+        if "error" in analysis:
             print(f"❌ CQRS分析失败: {analysis['error']}")
             return ""
 
@@ -1330,31 +1329,33 @@ if __name__ == "__main__":
 
             # 分析模块
             analysis = self.analyze_complex_dependencies(module_info)
-            if 'error' in analysis:
+            if "error" in analysis:
                 print(f"  ❌ {analysis['error']}")
                 continue
 
-            print(f"  📊 分析结果: {len(analysis['functions'])}函数, {len(analysis['classes'])}类, {len(analysis['dependencies'])}依赖")
+            print(
+                f"  📊 分析结果: {len(analysis['functions'])}函数, {len(analysis['classes'])}类, {len(analysis['dependencies'])}依赖"
+            )
 
             # 创建测试
             test_content = ""
-            if module_info['name'] == 'CQRSApplication':
+            if module_info["name"] == "CQRSApplication":
                 test_content = self.create_advanced_cqrs_test(module_info)
-            elif module_info['name'] == 'DatabaseDefinitions':
+            elif module_info["name"] == "DatabaseDefinitions":
                 test_content = self.create_database_integration_test(module_info)
-            elif module_info['name'] == 'PredictionModel':
+            elif module_info["name"] == "PredictionModel":
                 test_content = self.create_prediction_model_test(module_info)
 
             if test_content:
                 # 保存测试文件
-                clean_name = module_info['name'].replace(' ', '_').lower()
+                clean_name = module_info["name"].replace(" ", "_").lower()
                 test_filename = f"tests/unit/p3_integration/test_{clean_name}_p3.py"
 
                 # 确保目录存在
                 os.makedirs(os.path.dirname(test_filename), exist_ok=True)
 
                 # 写入测试文件
-                with open(test_filename, 'w', encoding='utf-8') as f:
+                with open(test_filename, "w", encoding="utf-8") as f:
                     f.write(test_content)
 
                 created_files.append(test_filename)
@@ -1368,7 +1369,7 @@ if __name__ == "__main__":
         api_test_filename = "tests/integration/test_end_to_end_api_p3.py"
 
         os.makedirs(os.path.dirname(api_test_filename), exist_ok=True)
-        with open(api_test_filename, 'w', encoding='utf-8') as f:
+        with open(api_test_filename, "w", encoding="utf-8") as f:
             f.write(api_test_content)
 
         created_files.append(api_test_filename)
@@ -1388,11 +1389,13 @@ if __name__ == "__main__":
 
             try:
                 import subprocess
-                result = subprocess.run([
-                    'python3', '-m', 'pytest',
-                    test_file,
-                    '--collect-only', '-q'
-                ], capture_output=True, text=True, timeout=20)
+
+                result = subprocess.run(
+                    ["python3", "-m", "pytest", test_file, "--collect-only", "-q"],
+                    capture_output=True,
+                    text=True,
+                    timeout=20,
+                )
 
                 if result.returncode == 0:
                     print("    ✅ 测试结构正确")
@@ -1403,6 +1406,7 @@ if __name__ == "__main__":
                 print(f"    ❌ 验证失败: {e}")
 
         print(f"\n📊 P3验证结果: {success_count}/{len(test_files)} 个测试文件结构正确")
+
 
 def main():
     """主函数"""
@@ -1429,18 +1433,21 @@ def main():
             print(f"   python3 -m pytest {test_file} --cov=src --cov-report=term")
 
         print("\n📈 批量测试命令:")
-        print("   python3 -m pytest tests/unit/p3_integration/ tests/integration/test_end_to_end_api_p3.py --cov=src --cov-report=term-missing")
+        print(
+            "   python3 -m pytest tests/unit/p3_integration/ tests/integration/test_end_to_end_api_p3.py --cov=src --cov-report=term-missing"
+        )
 
         # 运行一个测试示例
         test_file = created_files[0]
         print(f"\n🔍 运行测试示例: {os.path.basename(test_file)}")
 
         try:
-            result = subprocess.run([
-                'python3', '-m', 'pytest',
-                test_file,
-                '-v', '--tb=short'
-            ], capture_output=True, text=True, timeout=30)
+            result = subprocess.run(
+                ["python3", "-m", "pytest", test_file, "-v", "--tb=short"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
 
             if result.returncode == 0:
                 print("  ✅ 示例测试运行成功")
@@ -1451,6 +1458,8 @@ def main():
     else:
         print("❌ 没有成功创建任何高级测试文件")
 
+
 if __name__ == "__main__":
     import subprocess
+
     main()

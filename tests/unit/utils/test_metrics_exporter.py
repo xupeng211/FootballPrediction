@@ -1,5 +1,4 @@
 # 指标导出器测试
-import pytest
 
 try:
     pass

@@ -10,20 +10,25 @@ import subprocess
 from pathlib import Path
 from typing import List, Tuple
 
+
 def analyze_file_errors(file_path: str) -> List[str]:
     """分析文件的类型错误"""
     try:
-        result = subprocess.run([
-            'mypy', file_path, '--show-error-codes', '--no-error-summary'
-        ], capture_output=True, text=True, cwd='/home/user/projects/FootballPrediction')
+        result = subprocess.run(
+            ["mypy", file_path, "--show-error-codes", "--no-error-summary"],
+            capture_output=True,
+            text=True,
+            cwd="/home/user/projects/FootballPrediction",
+        )
 
         errors = []
-        for line in result.stdout.strip().split('\n'):
-            if ': error:' in line:
+        for line in result.stdout.strip().split("\n"):
+            if ": error:" in line:
                 errors.append(line)
         return errors
     except Exception as e:
         return [f"Error analyzing file: {e}"]
+
 
 def fix_common_type_issues(content: str, file_path: str) -> Tuple[str, List[str]]:
     """修复常见的类型问题"""
@@ -31,9 +36,9 @@ def fix_common_type_issues(content: str, file_path: str) -> Tuple[str, List[str]
     changes_made = []
 
     # 修复1: 缺失的导入
-    if 'Optional' in content and 'from typing import Optional' not in content:
-        if 'from typing import' in content:
-            content = re.sub(r'(from typing import [^\n]+)', r'\1, Optional', content)
+    if "Optional" in content and "from typing import Optional" not in content:
+        if "from typing import" in content:
+            content = re.sub(r"(from typing import [^\n]+)", r"\1, Optional", content)
             changes_made.append("Added Optional import")
         else:
             content = f"from typing import Optional\n\n{content}"
@@ -43,16 +48,20 @@ def fix_common_type_issues(content: str, file_path: str) -> Tuple[str, List[str]
     def fix_function_signatures(text):
         patterns = [
             # def method() -> str: return None
-            (r'(def\s+(\w+)\([^)]*\)\s*->\s*str[^:]*)\s*:\s*(\w+)\s*return\s+None',
-             lambda m: f"{m.group(1)}{m.group(2)} -> Optional[str]:\n    {m.group(3)}return None"),
-
+            (
+                r"(def\s+(\w+)\([^)]*\)\s*->\s*str[^:]*)\s*:\s*(\w+)\s*return\s+None",
+                lambda m: f"{m.group(1)}{m.group(2)} -> Optional[str]:\n    {m.group(3)}return None",
+            ),
             # def method() -> int: return None
-            (r'(def\s+(\w+)\([^)]*\)\s*->\s*int[^:]*)\s*:\s*(\w+)\s*return\s+None',
-             lambda m: f"{m.group(1)}{m.group(2)} -> Optional[int]:\n    {m.group(3)}return None"),
-
+            (
+                r"(def\s+(\w+)\([^)]*\)\s*->\s*int[^:]*)\s*:\s*(\w+)\s*return\s+None",
+                lambda m: f"{m.group(1)}{m.group(2)} -> Optional[int]:\n    {m.group(3)}return None",
+            ),
             # def method() -> dict: return None
-            (r'(def\s+(\w+)\([^)]*\)\s*->\s*dict[^:]*)\s*:\s*(\w+)\s*return\s+None',
-             lambda m: f"{m.group(1)}{m.group(2)} -> Optional[dict]:\n    {m.group(3)}return None"),
+            (
+                r"(def\s+(\w+)\([^)]*\)\s*->\s*dict[^:]*)\s*:\s*(\w+)\s*return\s+None",
+                lambda m: f"{m.group(1)}{m.group(2)} -> Optional[dict]:\n    {m.group(3)}return None",
+            ),
         ]
 
         for pattern, replacement in patterns:
@@ -67,7 +76,10 @@ def fix_common_type_issues(content: str, file_path: str) -> Tuple[str, List[str]
     def fix_dict_annotations(text):
         patterns = [
             # return {"key": value} -> return Dict[str, Any]
-            (r'return\s*\{([^}]+)\}\s*$', lambda m: "return Dict[str, Any]:\n        {{{}}}".format(m.group(1))),
+            (
+                r"return\s*\{([^}]+)\}\s*$",
+                lambda m: "return Dict[str, Any]:\n        {{{}}}".format(m.group(1)),
+            ),
         ]
 
         for pattern, replacement in patterns:
@@ -82,7 +94,10 @@ def fix_common_type_issues(content: str, file_path: str) -> Tuple[str, List[str]
     def fix_list_annotations(text):
         patterns = [
             # return [item] -> return List[str]
-            (r'return\s*\[([^\]]+)\]\s*$', lambda m: "return List[str]:\n        [{}]".format(m.group(1))),
+            (
+                r"return\s*\[([^\]]+)\]\s*$",
+                lambda m: "return List[str]:\n        [{}]".format(m.group(1)),
+            ),
         ]
 
         for pattern, replacement in patterns:
@@ -95,29 +110,27 @@ def fix_common_type_issues(content: str, file_path: str) -> Tuple[str, List[str]
 
     return content, changes_made
 
+
 def select_high_priority_files() -> List[str]:
     """选择第三批高优先级的文件进行修复"""
     # 第三批优先级：API层完整覆盖和关键服务
     third_batch_files = [
         # API基础设施
-        'src/api/middleware.py',
-        'src/api/monitoring.py',
-        'src/api/adapters.py',
-        'src/api/cqrs.py',
-
+        "src/api/middleware.py",
+        "src/api/monitoring.py",
+        "src/api/adapters.py",
+        "src/api/cqrs.py",
         # 关键服务层
-        'src/services/event_prediction_service.py',
-        'src/services/data_processing.py',
-        'src/services/audit_service.py',
-
+        "src/services/event_prediction_service.py",
+        "src/services/data_processing.py",
+        "src/services/audit_service.py",
         # 数据收集器
-        'src/collectors/odds_collector.py',
-        'src/collectors/scores_collector_improved.py',
-
+        "src/collectors/odds_collector.py",
+        "src/collectors/scores_collector_improved.py",
         # 数据库相关
-        'src/database/config.py',
-        'src/database/session.py',
-        'src/api/dependencies.py',  # 重新检查修复效果
+        "src/database/config.py",
+        "src/database/session.py",
+        "src/api/dependencies.py",  # 重新检查修复效果
     ]
 
     # 只返回存在的文件
@@ -127,6 +140,7 @@ def select_high_priority_files() -> List[str]:
             existing_files.append(file_path)
 
     return existing_files[:8]  # 限制为8个文件
+
 
 def main():
     """主函数"""
@@ -158,7 +172,7 @@ def main():
 
         # 修复文件
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
         except Exception as e:
             print(f"   ❌ 读取失败: {e}")
@@ -169,7 +183,7 @@ def main():
 
         if changes:
             try:
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write(fixed_content)
                 fixed_count += 1
                 print(f"   ✅ 修复成功: {'; '.join(changes)}")
@@ -198,5 +212,6 @@ def main():
         print("1. 选择其他高优先级文件")
         print("2. 考虑更复杂的类型问题")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

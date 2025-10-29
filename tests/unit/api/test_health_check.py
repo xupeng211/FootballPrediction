@@ -1,5 +1,3 @@
-from unittest.mock import AsyncMock, Mock, patch
-
 """
 健康检查API测试
 Tests for Health Check API

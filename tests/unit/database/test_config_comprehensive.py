@@ -6,7 +6,6 @@ Comprehensive Tests for Database Configuration
 """
 
 import os
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -119,9 +118,7 @@ class TestDatabaseConfig:
             password="test_pass",
         )
 
-        expected_url = (
-            "postgresql+psycopg2://test_user:test_pass@localhost:5432/test_db"
-        )
+        expected_url = "postgresql+psycopg2://test_user:test_pass@localhost:5432/test_db"
         assert config.sync_url == expected_url
 
     def test_postgresql_sync_url_without_password(self) -> None:

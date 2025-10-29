@@ -33,8 +33,6 @@ class TestConsistencyManager:
 
             manager = ConsistencyManager()
             # 检查基本方法
-            assert hasattr(manager, "validate_cache") or hasattr(
-                manager, "ensure_consistency"
-            )
+            assert hasattr(manager, "validate_cache") or hasattr(manager, "ensure_consistency")
         except Exception:
             pytest.skip("ConsistencyManager methods not testable")

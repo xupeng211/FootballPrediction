@@ -20,7 +20,6 @@
 
 import asyncio
 from datetime import datetime
-from typing import Any, Dict, List, Optional
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
@@ -28,8 +27,6 @@ import pytest
 # 尝试导入被测试模块
 try:
     from src.core.di import DIContainer
-    from src.domain.models import Match, Prediction
-    from src.events.types import (
         PredictionMadeEvent,
         PredictionUpdatedEvent,
         get_event_bus,

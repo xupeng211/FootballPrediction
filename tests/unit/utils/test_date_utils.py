@@ -2,7 +2,6 @@
 日期工具测试
 """
 
-from datetime import date, datetime, timedelta
 from typing import List, Optional, Tuple
 
 import pytest
@@ -110,11 +109,7 @@ class DateUtils:
     @staticmethod
     def is_same_day(date1: date, date2: date) -> bool:
         """判断是否为同一天"""
-        return (
-            date1.year == date2.year
-            and date1.month == date2.month
-            and date1.day == date2.day
-        )
+        return date1.year == date2.year and date1.month == date2.month and date1.day == date2.day
 
     @staticmethod
     def get_date_range(start_date: date, end_date: date) -> List[date]:
@@ -478,9 +473,7 @@ class TestDateUtils:
         range2_start = date(2021, 10, 10)
         range2_end = date(2021, 10, 20)
 
-        overlap = DateUtils.get_overlap(
-            range1_start, range1_end, range2_start, range2_end
-        )
+        overlap = DateUtils.get_overlap(range1_start, range1_end, range2_start, range2_end)
         assert overlap == (date(2021, 10, 10), date(2021, 10, 15))
 
         # 无重叠

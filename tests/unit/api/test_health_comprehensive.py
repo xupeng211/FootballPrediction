@@ -14,8 +14,6 @@ import json
 
 # 测试导入
 import sys
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
 
 import pytest
 
@@ -23,8 +21,6 @@ sys.path.insert(0, "src")
 
 try:
     from src.api.health import HealthChecker, HealthCheckResult, HealthStatus, router
-    from src.cache.redis_manager import RedisManager
-    from src.database.dependencies import get_db_session
 
     HEALTH_AVAILABLE = True
 except ImportError as e:
@@ -134,9 +130,7 @@ class TestHealthChecker:
             mock_http_client.get.return_value = mock_response
             mock_client.return_value.__aenter__.return_value = mock_http_client
 
-        result = await health_checker.check_external_service(
-            "https://api.example.com/health"
-        )
+        result = await health_checker.check_external_service("https://api.example.com/health")
 
         assert isinstance(result, HealthCheckResult)
         assert result.component == "external_service"
@@ -148,9 +142,7 @@ class TestHealthChecker:
         with patch("src.api.health.httpx.AsyncClient") as mock_client:
             mock_client.side_effect = asyncio.TimeoutError("Request timeout")
 
-        result = await health_checker.check_external_service(
-            "https://api.example.com/health"
-        )
+        result = await health_checker.check_external_service("https://api.example.com/health")
 
         assert result.status == HealthStatus.UNHEALTHY
         assert "timeout" in result.details["error"].lower()
@@ -199,9 +191,7 @@ class TestHealthChecker:
 
             mock_check.side_effect = long_running_check
 
-        result = await health_checker.check_component_with_timeout(
-            "database", timeout=1.0
-        )
+        result = await health_checker.check_component_with_timeout("database", timeout=1.0)
 
         assert result.status == HealthStatus.UNHEALTHY
         assert "timeout" in result.details["error"].lower()
@@ -334,15 +324,11 @@ class TestHealthChecker:
 
         # 连续失败
         for _ in range(5):
-            result = await health_checker.check_external_service(
-                "https://api.example.com"
-            )
+            result = await health_checker.check_external_service("https://api.example.com")
             assert result.status == HealthStatus.UNHEALTHY
 
         # 验证熔断器状态
-        circuit_status = health_checker.get_circuit_breaker_status(
-            "https://api.example.com"
-        )
+        circuit_status = health_checker.get_circuit_breaker_status("https://api.example.com")
         assert circuit_status["is_open"] is True
 
     @pytest.mark.asyncio
@@ -364,21 +350,15 @@ class TestHealthChecker:
         component = "database"
 
         # 从健康到降级
-        checker.record_status_transition(
-            component, HealthStatus.HEALTHY, HealthStatus.DEGRADED
-        )
+        checker.record_status_transition(component, HealthStatus.HEALTHY, HealthStatus.DEGRADED)
         assert checker.get_current_status(component) == HealthStatus.DEGRADED
 
         # 从降级到不健康
-        checker.record_status_transition(
-            component, HealthStatus.DEGRADED, HealthStatus.UNHEALTHY
-        )
+        checker.record_status_transition(component, HealthStatus.DEGRADED, HealthStatus.UNHEALTHY)
         assert checker.get_current_status(component) == HealthStatus.UNHEALTHY
 
         # 从不健康恢复到健康
-        checker.record_status_transition(
-            component, HealthStatus.UNHEALTHY, HealthStatus.HEALTHY
-        )
+        checker.record_status_transition(component, HealthStatus.UNHEALTHY, HealthStatus.HEALTHY)
         assert checker.get_current_status(component) == HealthStatus.HEALTHY
 
 
@@ -480,9 +460,7 @@ class TestHealthAPI:
     def test_health_endpoint_error_handling(self, client):
         """测试健康检查端点错误处理"""
         with patch("src.api.health.HealthChecker") as mock_checker_class:
-            mock_checker_class.side_effect = Exception(
-                "Health checker initialization failed"
-            )
+            mock_checker_class.side_effect = Exception("Health checker initialization failed")
 
         response = client.get("/health")
 

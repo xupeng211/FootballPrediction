@@ -342,9 +342,7 @@ class GetUserStatsHandler(QueryHandler):
                 FROM predictions p
                 WHERE p.user_id = :user_id
                 """
-                stats_result = await session.execute(
-                    stats_sql, {"user_id": query.user_id}
-                )
+                stats_result = await session.execute(stats_sql, {"user_id": query.user_id})
                 stats = stats_result.fetchone()
 
                 if not stats or stats.total_predictions == 0:
@@ -372,9 +370,7 @@ class GetUserStatsHandler(QueryHandler):
                 WHERE user_id = :user_id AND strategy_used IS NOT NULL
                 GROUP BY strategy_used
                 """
-                strategy_result = await session.execute(
-                    strategy_sql, {"user_id": query.user_id}
-                )
+                strategy_result = await session.execute(strategy_sql, {"user_id": query.user_id})
                 strategy_rows = strategy_result.fetchall()
 
                 strategy_breakdown: Dict[str, Any] = {}
@@ -401,9 +397,7 @@ class GetUserStatsHandler(QueryHandler):
                 ORDER BY m.match_date DESC
                 LIMIT 10
                 """
-                recent_result = await session.execute(
-                    recent_sql, {"user_id": query.user_id}
-                )
+                recent_result = await session.execute(recent_sql, {"user_id": query.user_id})
                 recent_rows = recent_result.fetchall()
 
                 recent_performance: List[Any] = []
@@ -417,9 +411,7 @@ class GetUserStatsHandler(QueryHandler):
                             "actual_away": row.away_score,
                             "points_earned": row.points_earned,
                             "accuracy_score": (
-                                float(row.accuracy_score)
-                                if row.accuracy_score
-                                else None
+                                float(row.accuracy_score) if row.accuracy_score else None
                             ),
                         }
                     )

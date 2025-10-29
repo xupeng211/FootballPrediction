@@ -1,5 +1,3 @@
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
 """
 集成测试 - 第三阶段
 Integration Tests - Phase 3
@@ -9,16 +7,11 @@ Integration Tests - Phase 3
 """
 
 import asyncio
-import json
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
 
 import pytest
 
 # 测试导入 - 使用灵活导入策略
 try:
-    from src.database.connection import DatabaseConnection
-    from src.database.dependencies import get_db_session
 
     DATABASE_AVAILABLE = True
 except ImportError as e:
@@ -26,7 +19,6 @@ except ImportError as e:
     DATABASE_AVAILABLE = False
 
 try:
-    from src.cache.redis_manager import RedisManager
     from src.cache.ttl_cache import TTLCache
 
     CACHE_AVAILABLE = True
@@ -35,7 +27,6 @@ except ImportError as e:
     CACHE_AVAILABLE = False
 
 try:
-    from src.api.dependencies import get_current_user, get_prediction_engine
 
     API_DEPS_AVAILABLE = True
 except ImportError as e:
@@ -366,9 +357,7 @@ class TestDatabaseIntegration:
 
                 return True
 
-            async def execute_in_transaction(
-                self, transaction_id, operation_func, *args, **kwargs
-            ):
+            async def execute_in_transaction(self, transaction_id, operation_func, *args, **kwargs):
                 """在事务中执行操作"""
                 await self.begin_transaction(transaction_id)
 
@@ -393,9 +382,7 @@ class TestDatabaseIntegration:
                 await db.execute_query("UPDATE accounts SET balance = 100")
                 return {"records_affected": 2}
 
-            result = await tx_manager.execute_in_transaction(
-                "tx_success", successful_operation
-            )
+            result = await tx_manager.execute_in_transaction("tx_success", successful_operation)
             assert result["success"] is True
 
             # 测试失败的事务
@@ -403,9 +390,7 @@ class TestDatabaseIntegration:
                 await db.execute_query("INSERT INTO users VALUES (2, 'test2')")
                 raise ValueError("Simulated operation failure")
 
-            result = await tx_manager.execute_in_transaction(
-                "tx_fail", failing_operation
-            )
+            result = await tx_manager.execute_in_transaction("tx_fail", failing_operation)
             assert result["success"] is False
             assert "Simulated operation failure" in result["error"]
 
@@ -1177,9 +1162,7 @@ class TestSystemIntegration:
                     raise ValueError(f"Task {task_id} not found")
 
                 try:
-                    result = await asyncio.wait_for(
-                        self.tasks[task_id], timeout=timeout
-                    )
+                    result = await asyncio.wait_for(self.tasks[task_id], timeout=timeout)
                     return result
                 except asyncio.TimeoutError:
                     return {"status": "timeout", "task_id": task_id}
@@ -1235,12 +1218,8 @@ class TestSystemIntegration:
                 raise ValueError("Task failed intentionally")
 
             # 提交任务
-            task1_id = await manager.submit_task(
-                long_running_task, 0.5, "Task 1 Complete"
-            )
-            task2_id = await manager.submit_task(
-                long_running_task, 0.3, "Task 2 Complete"
-            )
+            task1_id = await manager.submit_task(long_running_task, 0.5, "Task 1 Complete")
+            task2_id = await manager.submit_task(long_running_task, 0.3, "Task 2 Complete")
             task3_id = await manager.submit_task(failing_task)
 
             # 等待任务完成
@@ -1262,9 +1241,7 @@ class TestSystemIntegration:
             assert manager.get_task_status(task3_id) == "failed"
 
             # 测试任务取消
-            task4_id = await manager.submit_task(
-                long_running_task, 2.0, "Will be cancelled"
-            )
+            task4_id = await manager.submit_task(long_running_task, 2.0, "Will be cancelled")
             await asyncio.sleep(0.1)  # 让任务开始
             await manager.cancel_task(task4_id)
 

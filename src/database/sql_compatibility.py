@@ -38,9 +38,7 @@ class CompatibleQueryBuilder:
         placeholders = ", ".join([f":{key}" for key in data.keys()])
         return f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
 
-    def build_update_query(
-        self, table: str, data: Dict[str, Any], where_clause: str
-    ) -> str:
+    def build_update_query(self, table: str, data: Dict[str, Any], where_clause: str) -> str:
         """构建更新查询"""
         set_clause = ", ".join([f"{key} = :{key}" for key in data.keys()])
         return f"UPDATE {table} SET {set_clause} WHERE {where_clause}"

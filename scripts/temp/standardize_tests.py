@@ -10,6 +10,7 @@ import shutil
 from pathlib import Path
 from typing import List, Dict, Set
 
+
 class TestStandardizer:
     def __init__(self, tests_dir: str = "tests"):
         self.tests_dir = Path(tests_dir)
@@ -48,7 +49,7 @@ class TestStandardizer:
 
         # 读取文件内容推断额外标记
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             if "external_api" in content or "http" in content.lower():
@@ -87,7 +88,7 @@ class TestStandardizer:
             return False
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # 检查是否已经有标记
@@ -95,11 +96,11 @@ class TestStandardizer:
                 return False  # 已有标记，跳过
 
             # 找到第一个测试类或函数
-            lines = content.split('\n')
+            lines = content.split("\n")
             insert_index = -1
 
             for i, line in enumerate(lines):
-                if line.strip().startswith('class Test') or line.strip().startswith('def test_'):
+                if line.strip().startswith("class Test") or line.strip().startswith("def test_"):
                     insert_index = i
                     break
 
@@ -116,24 +117,24 @@ class TestStandardizer:
 
             # 重新组合内容
             lines[insert_index:insert_index] = marker_lines
-            new_content = '\n'.join(lines)
+            new_content = "\n".join(lines)
 
             # 确保有pytest导入
             if "import pytest" not in new_content:
                 # 在第一个import后添加pytest导入
                 import_index = -1
                 for i, line in enumerate(lines):
-                    if line.strip().startswith('import ') or line.strip().startswith('from '):
+                    if line.strip().startswith("import ") or line.strip().startswith("from "):
                         import_index = i + 1
                         break
 
                 if import_index > -1:
-                    lines = new_content.split('\n')
+                    lines = new_content.split("\n")
                     lines.insert(import_index, "import pytest")
-                    new_content = '\n'.join(lines)
+                    new_content = "\n".join(lines)
 
             # 写回文件
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(new_content)
 
             return True
@@ -158,33 +159,28 @@ class TestStandardizer:
 
     def process_directory(self, directory: Path) -> Dict[str, int]:
         """处理目录中的所有测试文件"""
-        stats = {
-            'total_files': 0,
-            'renamed_files': 0,
-            'marked_files': 0,
-            'errors': 0
-        }
+        stats = {"total_files": 0, "renamed_files": 0, "marked_files": 0, "errors": 0}
 
         # 递归查找所有Python文件
         for file_path in directory.rglob("*.py"):
             if file_path.name in ["__init__.py", "conftest.py"]:
                 continue  # 跳过配置文件
 
-            stats['total_files'] += 1
+            stats["total_files"] += 1
 
             # 1. 识别测试类型
             markers = self.identify_test_type(file_path)
 
             # 2. 添加pytest标记
             if self.add_pytest_markers(file_path, markers):
-                stats['marked_files'] += 1
+                stats["marked_files"] += 1
                 self.standardized_count += 1
 
             # 3. 重命名文件（如果需要）
             if not file_path.name.startswith("test_"):
                 new_name = self.generate_standard_name(file_path)
                 if self.rename_file(file_path, new_name):
-                    stats['renamed_files'] += 1
+                    stats["renamed_files"] += 1
                     self.renamed_count += 1
 
         return stats
@@ -200,13 +196,14 @@ class TestStandardizer:
         stats = self.process_directory(self.tests_dir)
 
         result = {
-            'stats': stats,
-            'standardized_count': self.standardized_count,
-            'renamed_count': self.renamed_count,
-            'errors': self.errors
+            "stats": stats,
+            "standardized_count": self.standardized_count,
+            "renamed_count": self.renamed_count,
+            "errors": self.errors,
         }
 
         return result
+
 
 def main():
     """主函数"""
@@ -221,9 +218,9 @@ def main():
         print(f"📝 重命名文件: {result['stats']['renamed_files']}")
         print(f"❌ 错误数量: {len(result['errors'])}")
 
-        if result['errors']:
+        if result["errors"]:
             print("\n⚠️ 错误详情:")
-            for error in result['errors'][:10]:  # 只显示前10个错误
+            for error in result["errors"][:10]:  # 只显示前10个错误
                 print(f"  - {error}")
 
         return result
@@ -231,6 +228,7 @@ def main():
     except Exception as e:
         print(f"❌ 标准化失败: {e}")
         return None
+
 
 if __name__ == "__main__":
     main()

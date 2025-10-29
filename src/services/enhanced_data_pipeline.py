@@ -23,9 +23,7 @@ class EnhancedDataPipeline:
         self.status = "initialized"
         self.metrics = {"processed_items": 0, "errors": 0, "start_time": datetime.now()}
 
-    async def process_data(
-        self, data_source: str
-    ) -> AsyncGenerator[Dict[str, Any], None]:
+    async def process_data(self, data_source: str) -> AsyncGenerator[Dict[str, Any], None]:
         """处理数据流"""
         try:
             # TODO: 实现具体的数据处理逻辑

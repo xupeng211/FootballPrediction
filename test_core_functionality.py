@@ -8,7 +8,9 @@ Core Functionality Quick Tests
 
 import sys
 import os
+
 sys.path.insert(0, os.path.dirname(__file__))
+
 
 def test_domain_models():
     """测试领域模型基本功能"""
@@ -17,21 +19,25 @@ def test_domain_models():
     try:
         # 测试Team模型
         from src.domain.models.team import Team
+
         team = Team(name="Test Team", short_name="TT", code="TTC")
         print(f"✅ Team模型创建成功: {team.display_name}")
 
         # 测试Match模型
         from src.domain.models.match import Match
+
         match = Match(home_team_id=1, away_team_id=2, league_id=100)
         print(f"✅ Match模型创建成功: {match}")
 
         # 测试Prediction模型
         from src.domain.models.prediction import Prediction
+
         prediction = Prediction(match_id=1, user_id=100)
         print(f"✅ Prediction模型创建成功: {prediction}")
 
         # 测试League模型
         from src.domain.models.league import League
+
         league = League(name="Test League", short_name="TL", code="L01")
         print(f"✅ League模型创建成功: {league.display_name}")
 
@@ -40,6 +46,7 @@ def test_domain_models():
     except Exception as e:
         print(f"❌ 领域模型测试失败: {e}")
         return False
+
 
 def test_prediction_logic():
     """测试预测逻辑"""
@@ -65,6 +72,7 @@ def test_prediction_logic():
         print(f"❌ 预测逻辑测试失败: {e}")
         return False
 
+
 def test_api_models():
     """测试API数据模型"""
     print("🧪 测试API数据模型...")
@@ -82,6 +90,7 @@ def test_api_models():
         print(f"❌ API数据模型测试失败: {e}")
         return False
 
+
 def test_utils_functionality():
     """测试工具函数"""
     print("🧪 测试工具函数...")
@@ -98,7 +107,8 @@ def test_utils_functionality():
 
         # 测试文件工具
         import tempfile
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             test_data = {"test": "data"}
             FileUtils.write_json(test_data, f.name)
             loaded_data = FileUtils.read_json(f.name)
@@ -111,17 +121,13 @@ def test_utils_functionality():
         print(f"❌ 工具函数测试失败: {e}")
         return False
 
+
 def main():
     """主测试函数"""
     print("🚀 开始核心功能快速测试...")
     print("=" * 50)
 
-    tests = [
-        test_domain_models,
-        test_prediction_logic,
-        test_api_models,
-        test_utils_functionality
-    ]
+    tests = [test_domain_models, test_prediction_logic, test_api_models, test_utils_functionality]
 
     passed = 0
     total = len(tests)
@@ -140,6 +146,7 @@ def main():
     else:
         print("⚠️ 部分测试失败，需要修复")
         return False
+
 
 if __name__ == "__main__":
     success = main()

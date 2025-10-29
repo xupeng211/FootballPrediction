@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 14 repeated Mock creations
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 """
 API装饰器测试
@@ -230,9 +229,7 @@ class TestDecoratorDemos:
         mock_decorated = AsyncMock()
         mock_decorated.return_value = 30
         mock_decorated.return_value = 30  # 两次调用返回相同结果
-        mock_decorated.get_decorator_stats.return_value = {
-            "cache": {"hits": 1, "misses": 1}
-        }
+        mock_decorated.get_decorator_stats.return_value = {"cache": {"hits": 1, "misses": 1}}
 
         mock_service.apply_decorators.return_value = mock_decorated
 
@@ -433,9 +430,7 @@ class TestDecoratorContext:
 
     @patch("src.api.decorators.global_decorator_service")
     @patch("src.api.decorators.DecoratorContext")
-    async def test_demo_decorator_context(
-        self, mock_context_class, mock_service, client
-    ):
+    async def test_demo_decorator_context(self, mock_context_class, mock_service, client):
         """测试：装饰器上下文演示"""
         # 创建模拟上下文
         mock_context = Mock()
@@ -476,9 +471,7 @@ class TestDecoratorContext:
         assert "total_time" in _data
 
 
-@pytest.mark.skipif(
-    DECORATORS_AVAILABLE, reason="Decorators module should be available"
-)
+@pytest.mark.skipif(DECORATORS_AVAILABLE, reason="Decorators module should be available")
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 

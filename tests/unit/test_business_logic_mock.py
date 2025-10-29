@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 19 repeated Mock creations
 
-from unittest.mock import MagicMock, Mock, call, patch
 
 """
 业务逻辑Mock测试
@@ -10,8 +9,6 @@ from unittest.mock import MagicMock, Mock, call, patch
 """
 
 import sys
-from datetime import datetime, timedelta
-from decimal import Decimal
 from pathlib import Path
 
 import pytest
@@ -411,9 +408,7 @@ class TestRiskManagement:
             "can_continue": True,
         }
 
-        limits = mock_risk_manager.check_loss_limits(
-            daily_pnl=-150, weekly_pnl=-800, bankroll=5000
-        )
+        limits = mock_risk_manager.check_loss_limits(daily_pnl=-150, weekly_pnl=-800, bankroll=5000)
 
         assert limits["can_continue"] is True
         assert abs(limits["daily_loss"]) < limits["daily_limit"]

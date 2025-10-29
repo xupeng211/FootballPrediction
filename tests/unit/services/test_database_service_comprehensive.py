@@ -15,21 +15,11 @@ Database Service Comprehensive Test Suite
 """
 
 import asyncio
-import json
 import time
 import uuid
-from contextlib import asynccontextmanager
-from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
-from unittest.mock import AsyncMock, MagicMock, Mock, call, patch
 
-import asyncpg
 import pytest
-import sqlalchemy as sa
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
 
 # 导入实际数据库模块，如果失败则使用Mock
 try:
@@ -176,9 +166,7 @@ class MockConnection:
 
         return metrics
 
-    async def fetchall(
-        self, query: str, params: Dict[str, Any] = None
-    ) -> List[Dict[str, Any]]:
+    async def fetchall(self, query: str, params: Dict[str, Any] = None) -> List[Dict[str, Any]]:
         """获取所有结果"""
         await self.execute(query, params)
 
@@ -196,9 +184,7 @@ class MockConnection:
         else:
             return []
 
-    async def fetchone(
-        self, query: str, params: Dict[str, Any] = None
-    ) -> Optional[Dict[str, Any]]:
+    async def fetchone(self, query: str, params: Dict[str, Any] = None) -> Optional[Dict[str, Any]]:
         """获取单行结果"""
         results = await self.fetchall(query, params)
         return results[0] if results else None
@@ -872,9 +858,7 @@ class TestRepositoryPattern:
     @pytest.mark.asyncio
     async def test_bulk_operations(self, mock_repository):
         """测试批量操作"""
-        entities_to_create = [
-            {"name": f"Entity {i}", "status": "active"} for i in range(1, 6)
-        ]
+        entities_to_create = [{"name": f"Entity {i}", "status": "active"} for i in range(1, 6)]
 
         with patch.object(mock_repository, "bulk_create") as mock_bulk:
             created_entities = [
@@ -1317,8 +1301,7 @@ class TestDatabasePerformance:
         # 测试批量插入
         batch_size = 1000
         insert_data = [
-            {"value": f"item_{i}", "timestamp": datetime.now()}
-            for i in range(batch_size)
+            {"value": f"item_{i}", "timestamp": datetime.now()} for i in range(batch_size)
         ]
 
         start_time = time.time()

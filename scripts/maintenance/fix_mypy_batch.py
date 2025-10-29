@@ -27,10 +27,7 @@ def fix_redis_errors():
             content = f.read()
 
         # 检查是否需要添加导入
-        if (
-            "RedisError" in content
-            and "from redis.exceptions import RedisError" not in content
-        ):
+        if "RedisError" in content and "from redis.exceptions import RedisError" not in content:
             # 查找导入位置
             import_pattern = r"(import redis\n|import redis\.asyncio)"
             if re.search(import_pattern, content):

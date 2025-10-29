@@ -9,9 +9,6 @@ Issue #83-C 高级重构测试: api.data_router
 
 import inspect
 import sys
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
-from unittest.mock import AsyncMock, MagicMock, Mock, call, patch
 
 import pytest
 
@@ -22,7 +19,6 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 # Mock策略库导入
 try:
-    from scripts.issue83c_practical_mocks import (
         MockContextManager,
         PracticalMockStrategies,
     )

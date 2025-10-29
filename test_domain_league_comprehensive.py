@@ -8,7 +8,12 @@ import pytest
 from datetime import datetime, timedelta
 from decimal import Decimal
 from src.domain.models.league import (
-    League, LeagueType, LeagueStatus, LeagueSeason, LeagueSettings, DomainError
+    League,
+    LeagueType,
+    LeagueStatus,
+    LeagueSeason,
+    LeagueSettings,
+    DomainError,
 )
 
 
@@ -39,7 +44,7 @@ class TestLeagueSettingsComprehensive:
             relegation_places=2,
             max_foreign_players=7,
             match_duration=90,
-            halftime_duration=15
+            halftime_duration=15,
         )
 
         assert settings.points_for_win == 3
@@ -142,11 +147,7 @@ class TestLeagueSeasonComprehensive:
         start_date = datetime.utcnow()
         end_date = start_date + timedelta(days=365)
 
-        season = LeagueSeason(
-            season="2023-2024",
-            start_date=start_date,
-            end_date=end_date
-        )
+        season = LeagueSeason(season="2023-2024", start_date=start_date, end_date=end_date)
 
         assert season.season == "2023-2024"
         assert season.start_date == start_date
@@ -168,7 +169,7 @@ class TestLeagueSeasonComprehensive:
             end_date=end_date,
             status=LeagueStatus.ACTIVE,
             total_rounds=30,
-            current_round=15
+            current_round=15,
         )
 
         assert season.season == "2023"
@@ -184,7 +185,7 @@ class TestLeagueSeasonComprehensive:
             LeagueSeason(
                 season="",
                 start_date=datetime.utcnow(),
-                end_date=datetime.utcnow() + timedelta(days=1)
+                end_date=datetime.utcnow() + timedelta(days=1),
             )
 
     def test_league_season_date_validation(self):
@@ -193,19 +194,11 @@ class TestLeagueSeasonComprehensive:
         end_date = start_date - timedelta(days=1)  # 结束日期早于开始日期
 
         with pytest.raises(DomainError, match="开始日期必须早于结束日期"):
-            LeagueSeason(
-                season="2023-2024",
-                start_date=start_date,
-                end_date=end_date
-            )
+            LeagueSeason(season="2023-2024", start_date=start_date, end_date=end_date)
 
         # 相同日期也不允许
         with pytest.raises(DomainError, match="开始日期必须早于结束日期"):
-            LeagueSeason(
-                season="2023-2024",
-                start_date=start_date,
-                end_date=start_date
-            )
+            LeagueSeason(season="2023-2024", start_date=start_date, end_date=start_date)
 
     def test_league_season_total_rounds_validation(self):
         """测试总轮次验证"""
@@ -214,18 +207,12 @@ class TestLeagueSeasonComprehensive:
 
         with pytest.raises(DomainError, match="总轮次必须大于0"):
             LeagueSeason(
-                season="2023-2024",
-                start_date=start_date,
-                end_date=end_date,
-                total_rounds=0
+                season="2023-2024", start_date=start_date, end_date=end_date, total_rounds=0
             )
 
         with pytest.raises(DomainError, match="总轮次必须大于0"):
             LeagueSeason(
-                season="2023-2024",
-                start_date=start_date,
-                end_date=end_date,
-                total_rounds=-10
+                season="2023-2024", start_date=start_date, end_date=end_date, total_rounds=-10
             )
 
     def test_league_season_current_round_validation(self):
@@ -240,7 +227,7 @@ class TestLeagueSeasonComprehensive:
                 start_date=start_date,
                 end_date=end_date,
                 total_rounds=38,
-                current_round=-1
+                current_round=-1,
             )
 
         # 超过总轮次
@@ -250,7 +237,7 @@ class TestLeagueSeasonComprehensive:
                 start_date=start_date,
                 end_date=end_date,
                 total_rounds=38,
-                current_round=39
+                current_round=39,
             )
 
         # 正好等于总轮次（允许）
@@ -259,7 +246,7 @@ class TestLeagueSeasonComprehensive:
             start_date=start_date,
             end_date=end_date,
             total_rounds=38,
-            current_round=38
+            current_round=38,
         )
         assert season.current_round == 38
 
@@ -274,7 +261,7 @@ class TestLeagueSeasonComprehensive:
             start_date=start_date,
             end_date=end_date,
             total_rounds=1,
-            current_round=0
+            current_round=0,
         )
         assert season.progress == 0.0
 
@@ -284,7 +271,7 @@ class TestLeagueSeasonComprehensive:
             start_date=start_date,
             end_date=end_date,
             total_rounds=38,
-            current_round=19
+            current_round=19,
         )
         assert season.progress == 0.5
 
@@ -305,7 +292,7 @@ class TestLeagueSeasonComprehensive:
             season="2023-2024",
             start_date=start_date,
             end_date=end_date,
-            status=LeagueStatus.UPCOMING
+            status=LeagueStatus.UPCOMING,
         )
 
         season.start_season()
@@ -319,10 +306,7 @@ class TestLeagueSeasonComprehensive:
 
         # 已经进行中
         season = LeagueSeason(
-            season="2023-2024",
-            start_date=start_date,
-            end_date=end_date,
-            status=LeagueStatus.ACTIVE
+            season="2023-2024", start_date=start_date, end_date=end_date, status=LeagueStatus.ACTIVE
         )
 
         with pytest.raises(DomainError, match="赛季状态为 active，无法开始"):
@@ -344,7 +328,7 @@ class TestLeagueSeasonComprehensive:
             end_date=end_date,
             status=LeagueStatus.ACTIVE,
             total_rounds=38,
-            current_round=1
+            current_round=1,
         )
 
         # 正常推进
@@ -372,7 +356,7 @@ class TestLeagueSeasonComprehensive:
             season="2023-2024",
             start_date=start_date,
             end_date=end_date,
-            status=LeagueStatus.UPCOMING
+            status=LeagueStatus.UPCOMING,
         )
 
         with pytest.raises(DomainError, match="只有进行中的赛季才能推进轮次"):
@@ -389,7 +373,7 @@ class TestLeagueSeasonComprehensive:
             end_date=end_date,
             status=LeagueStatus.ACTIVE,
             total_rounds=38,
-            current_round=35  # 还没打完
+            current_round=35,  # 还没打完
         )
 
         season.complete_season()
@@ -403,7 +387,7 @@ class TestLeagueSeasonComprehensive:
             start_date=datetime.utcnow(),
             end_date=datetime.utcnow() + timedelta(days=100),
             total_rounds=38,
-            current_round=15
+            current_round=15,
         )
 
         result_str = str(season)
@@ -425,7 +409,7 @@ class TestLeagueDomainComprehensive:
             country="英格兰",
             level=1,
             founded_year=1888,
-            website="https://www.premierleague.com"
+            website="https://www.premierleague.com",
         )
 
         assert league.name == "英超联赛"
@@ -503,10 +487,7 @@ class TestLeagueDomainComprehensive:
         end_date = start_date + timedelta(days=300)
 
         season = league.start_new_season(
-            season="2023-2024",
-            start_date=start_date,
-            end_date=end_date,
-            total_rounds=38
+            season="2023-2024", start_date=start_date, end_date=end_date, total_rounds=38
         )
 
         assert season.season == "2023-2024"
@@ -542,7 +523,7 @@ class TestLeagueDomainComprehensive:
             name="新名称",
             short_name="新简称",
             website="https://new-website.com",
-            logo_url="https://new-logo.png"
+            logo_url="https://new-logo.png",
         )
 
         assert league.name == "新名称"
@@ -557,10 +538,7 @@ class TestLeagueDomainComprehensive:
         original_updated = league.updated_at
 
         league.update_settings(
-            points_for_win=2,
-            points_for_draw=1,
-            points_for_loss=0,
-            max_foreign_players=6
+            points_for_win=2, points_for_draw=1, points_for_loss=0, max_foreign_players=6
         )
 
         assert league.settings.points_for_win == 2
@@ -705,7 +683,7 @@ class TestLeagueDomainComprehensive:
         # 设置进行中的赛季
         league.current_season.start_season()
         league.current_season.current_round = 19
-        assert league.current_progress == 19/90  # 19轮/90轮 ≈ 0.211
+        assert league.current_progress == 19 / 90  # 19轮/90轮 ≈ 0.211
 
     def test_league_type_properties(self):
         """测试类型属性"""
@@ -792,7 +770,7 @@ class TestLeagueDomainComprehensive:
             country="英格兰",
             level=1,
             founded_year=1888,
-            website="https://www.premierleague.com"
+            website="https://www.premierleague.com",
         )
 
         # 添加赛季
@@ -836,7 +814,7 @@ class TestLeagueDomainComprehensive:
                 "end_date": "2024-05-31T00:00:00",
                 "status": "active",
                 "total_rounds": 38,
-                "current_round": 25
+                "current_round": 25,
             },
             "settings": {
                 "points_for_win": 3,
@@ -844,10 +822,10 @@ class TestLeagueDomainComprehensive:
                 "points_for_loss": 0,
                 "promotion_places": 4,
                 "relegation_places": 3,
-                "max_foreign_players": 5
+                "max_foreign_players": 5,
             },
             "created_at": "2024-01-01T10:00:00",
-            "updated_at": "2024-01-01T15:00:00"
+            "updated_at": "2024-01-01T15:00:00",
         }
 
         league = League.from_dict(data)
@@ -866,11 +844,7 @@ class TestLeagueDomainComprehensive:
 
     def test_league_string_representation(self):
         """测试字符串表示"""
-        league = League(
-            name="英超联赛",
-            country="英格兰",
-            level=1
-        )
+        league = League(name="英超联赛", country="英格兰", level=1)
 
         result_str = str(league)
         assert "英超联赛" in result_str
@@ -894,7 +868,7 @@ class TestLeagueDomainComprehensive:
             country="中国",
             level=3,
             founded_year=2020,
-            website="https://new-league.com"
+            website="https://new-league.com",
         )
 
         # 初始状态
@@ -914,7 +888,7 @@ class TestLeagueDomainComprehensive:
             season.advance_round()
 
         # 验证中期状态
-        assert league.current_progress == 16/30  # 16轮/30轮 ≈ 0.533
+        assert league.current_progress == 16 / 30  # 16轮/30轮 ≈ 0.533
         assert season.status == LeagueStatus.ACTIVE
 
         # 升级

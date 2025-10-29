@@ -51,14 +51,10 @@ def split_large_file(file_path, chunk_size=30 * 1024):  # 30KB chunks
                 with open(chunk_file, "w", encoding="utf-8") as f:
                     f.write(current_chunk)
                 chunk_num += 1
-                current_chunk = sections[i] + (
-                    sections[i + 1] if i + 1 < len(sections) else ""
-                )
+                current_chunk = sections[i] + (sections[i + 1] if i + 1 < len(sections) else "")
             else:
                 current_chunk += (
-                    "\n"
-                    + sections[i]
-                    + (sections[i + 1] if i + 1 < len(sections) else "")
+                    "\n" + sections[i] + (sections[i + 1] if i + 1 < len(sections) else "")
                 )
 
     # 写入最后一块
@@ -168,9 +164,9 @@ def optimize_docs_final():
     print("\n📊 优化结果：")
 
     total_files = len(list(docs_path.rglob("*.md")))
-    total_size_mb = sum(
-        f.stat().st_size for f in docs_path.rglob("*") if f.is_file()
-    ) / (1024 * 1024)
+    total_size_mb = sum(f.stat().st_size for f in docs_path.rglob("*") if f.is_file()) / (
+        1024 * 1024
+    )
 
     print(f"   - 最终文件数: {total_files}")
     print(f"   - 最终大小: {total_size_mb:.2f}MB")

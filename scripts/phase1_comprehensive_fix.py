@@ -17,10 +17,7 @@ def fix_file_imports(file_path):
         # 修复文件头部的缺失导入
         # 模式1：修复 predictions/endpoints 文件
         if "api/predictions/endpoints" in str(file_path):
-            if (
-                "BatchPredictionRequest" in content
-                and "from typing import" not in content
-            ):
+            if "BatchPredictionRequest" in content and "from typing import" not in content:
                 # 添加缺失的导入
                 imports = """from typing import Dict, List
 
@@ -37,10 +34,7 @@ from src.models.common_models import """
 
         # 模式2：修复 stats.py
         if "stats.py" in str(file_path):
-            if (
-                "ModelStatsResponse" in content
-                and "from datetime import" not in content
-            ):
+            if "ModelStatsResponse" in content and "from datetime import" not in content:
                 # 添加缺失的导入
                 imports = """from datetime import datetime
 from typing import Dict, Any

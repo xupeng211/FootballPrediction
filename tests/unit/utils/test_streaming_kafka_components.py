@@ -2,21 +2,14 @@
 
 # TODO: Consider creating a fixture for 18 repeated Mock creations
 
-from unittest.mock import AsyncMock, MagicMock, mock_open, patch
 
 """
 Kafka组件集成测试
 """
 
-import asyncio
-import json
-from dataclasses import dataclass
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
 
 import pytest
 
-from src.core.exceptions import StreamingError
 from src.streaming.kafka_components_simple import (
     KafkaAdminClient,
     KafkaCluster,
@@ -251,9 +244,7 @@ class TestKafkaConsumerGroup:
         """测试删除消费者组"""
         await consumer_group.delete_group()
 
-        consumer_group.admin.delete_consumer_groups.assert_called_once_with(
-            ["test_group"]
-        )
+        consumer_group.admin.delete_consumer_groups.assert_called_once_with(["test_group"])
 
 
 class TestKafkaCluster:
@@ -409,9 +400,7 @@ class TestKafkaMetricsCollector:
             }
         }
 
-        metrics_collector.admin.get_broker_metrics = AsyncMock(
-            return_value=mock_metrics
-        )
+        metrics_collector.admin.get_broker_metrics = AsyncMock(return_value=mock_metrics)
 
         metrics = await metrics_collector.collect_broker_metrics()
         assert "broker1" in metrics

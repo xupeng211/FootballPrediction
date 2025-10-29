@@ -263,9 +263,7 @@ class DateUtils:
             return dt
 
         last_day = DateUtils.get_days_in_month(dt.year, dt.month)
-        return dt.replace(
-            day=last_day, hour=23, minute=59, second=59, microsecond=999999
-        )
+        return dt.replace(day=last_day, hour=23, minute=59, second=59, microsecond=999999)
 
     @staticmethod
     def get_formatted_duration(seconds: float) -> str:

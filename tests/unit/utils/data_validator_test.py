@@ -4,10 +4,6 @@
 重构时间: 2025-10-25 13:28
 """
 
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
 import pytest
 
 # 尝试导入目标模块
@@ -35,9 +31,7 @@ class TestUtilsDataValidatorReal:
         try:
             result = is_valid_email("test_arg_0")
             # 验证函数执行不抛出异常
-            assert result is not None or isinstance(
-                result, (bool, int, float, str, list, dict)
-            )
+            assert result is not None or isinstance(result, (bool, int, float, str, list, dict))
         except Exception as e:
             # 函数可能需要特定参数，记录但不失败
             print(f"函数 {'is_valid_email'} 测试跳过: {e}")
@@ -48,9 +42,7 @@ class TestUtilsDataValidatorReal:
         try:
             result = is_valid_url("test_arg_0")
             # 验证函数执行不抛出异常
-            assert result is not None or isinstance(
-                result, (bool, int, float, str, list, dict)
-            )
+            assert result is not None or isinstance(result, (bool, int, float, str, list, dict))
         except Exception as e:
             # 函数可能需要特定参数，记录但不失败
             print(f"函数 {'is_valid_url'} 测试跳过: {e}")
@@ -61,9 +53,7 @@ class TestUtilsDataValidatorReal:
         try:
             result = validate_required_fields("test_arg_0", "test_arg_1")
             # 验证函数执行不抛出异常
-            assert result is not None or isinstance(
-                result, (bool, int, float, str, list, dict)
-            )
+            assert result is not None or isinstance(result, (bool, int, float, str, list, dict))
         except Exception as e:
             # 函数可能需要特定参数，记录但不失败
             print(f"函数 {'validate_required_fields'} 测试跳过: {e}")
@@ -74,9 +64,7 @@ class TestUtilsDataValidatorReal:
         try:
             result = validate_data_types("test_arg_0", "test_arg_1")
             # 验证函数执行不抛出异常
-            assert result is not None or isinstance(
-                result, (bool, int, float, str, list, dict)
-            )
+            assert result is not None or isinstance(result, (bool, int, float, str, list, dict))
         except Exception as e:
             # 函数可能需要特定参数，记录但不失败
             print(f"函数 {'validate_data_types'} 测试跳过: {e}")
@@ -87,9 +75,7 @@ class TestUtilsDataValidatorReal:
         try:
             result = sanitize_input("test_arg_0")
             # 验证函数执行不抛出异常
-            assert result is not None or isinstance(
-                result, (bool, int, float, str, list, dict)
-            )
+            assert result is not None or isinstance(result, (bool, int, float, str, list, dict))
         except Exception as e:
             # 函数可能需要特定参数，记录但不失败
             print(f"函数 {'sanitize_input'} 测试跳过: {e}")
@@ -112,9 +98,7 @@ class TestUtilsDataValidatorReal:
             instance = DataValidator()
             if hasattr(instance, "is_valid_email"):
                 result = instance.is_valid_email()
-                assert result is not None or isinstance(
-                    result, (bool, int, float, str, list, dict)
-                )
+                assert result is not None or isinstance(result, (bool, int, float, str, list, dict))
             else:
                 pytest.skip("方法 is_valid_email 不存在")
         except Exception as e:
@@ -126,9 +110,7 @@ class TestUtilsDataValidatorReal:
             instance = DataValidator()
             if hasattr(instance, "is_valid_url"):
                 result = instance.is_valid_url()
-                assert result is not None or isinstance(
-                    result, (bool, int, float, str, list, dict)
-                )
+                assert result is not None or isinstance(result, (bool, int, float, str, list, dict))
             else:
                 pytest.skip("方法 is_valid_url 不存在")
         except Exception as e:

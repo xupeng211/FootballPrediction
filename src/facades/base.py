@@ -77,9 +77,7 @@ class SubsystemManager:
         self._dependencies: Dict[str, Set[str]] = {}
         self._initialization_order: List[str] = []
 
-    def register(
-        self, subsystem: Subsystem, dependencies: Optional[List[str]] = None
-    ) -> None:
+    def register(self, subsystem: Subsystem, dependencies: Optional[List[str]] = None) -> None:
         """注册子系统"""
         self._subsystems[subsystem.name] = subsystem
         self._dependencies[subsystem.name] = set(dependencies or [])
@@ -166,9 +164,7 @@ class SubsystemManager:
 
     def get_all_status(self) -> Dict[str, Dict[str, Any]]:
         """获取所有子系统状态"""
-        return {
-            name: subsystem.get_status() for name, subsystem in self._subsystems.items()
-        }
+        return {name: subsystem.get_status() for name, subsystem in self._subsystems.items()}
 
 
 class SystemFacade(ABC):
@@ -247,9 +243,7 @@ class SystemFacade(ABC):
             execution_time = (datetime.utcnow() - start_time).total_seconds()
             self._update_response_time_metrics(execution_time)
 
-            logger.debug(
-                f"Operation {operation_name} completed in {execution_time:.3f}s"
-            )
+            logger.debug(f"Operation {operation_name} completed in {execution_time:.3f}s")
             return result
 
         except (ValueError, TypeError, AttributeError, KeyError, RuntimeError) as e:

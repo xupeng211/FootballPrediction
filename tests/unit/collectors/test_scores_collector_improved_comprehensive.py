@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 5 repeated Mock creations
 
-from unittest.mock import AsyncMock, Mock, patch
 
 """
 ScoresCollectorImproved 综合测试
@@ -13,8 +12,6 @@ import asyncio
 
 # 测试导入
 import sys
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional
 
 import pytest
 
@@ -22,8 +19,6 @@ sys.path.insert(0, "src")
 
 try:
     from src.collectors.scores_collector_improved import ScoresCollector
-    from src.database.models import MatchStatus, RawScoresData
-    from src.utils.time_utils import utc_now
 
     COLLECTOR_AVAILABLE = True
 except ImportError as e:
@@ -40,9 +35,7 @@ class TestScoresCollectorImproved:
     def collector(self):
         """创建收集器实例"""
         with patch("src.collectors.scores_collector_improved.RedisManager"):
-            collector = ScoresCollector(
-                api_key="test_key", cache_ttl=300, retry_attempts=3
-            )
+            collector = ScoresCollector(api_key="test_key", cache_ttl=300, retry_attempts=3)
             return collector
 
     @pytest.fixture
@@ -197,9 +190,7 @@ class TestScoresCollectorImproved:
             mock_connect.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_database_integration(
-        self, collector, mock_session, sample_match_data
-    ):
+    async def test_database_integration(self, collector, mock_session, sample_match_data):
         """测试数据库集成"""
         match_id = 12345
 

@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock, patch
-
 """
 警告过滤器简单测试
 Simple Warning Filters Tests
@@ -23,9 +21,7 @@ except ImportError:
     WARNING_FILTERS_AVAILABLE = False
 
 
-@pytest.mark.skipif(
-    not WARNING_FILTERS_AVAILABLE, reason="Warning filters module not available"
-)
+@pytest.mark.skipif(not WARNING_FILTERS_AVAILABLE, reason="Warning filters module not available")
 @pytest.mark.unit
 class TestWarningFiltersSimple:
     """警告过滤器简单测试"""
@@ -82,9 +78,7 @@ class TestWarningFiltersSimple:
                 # 这里应该执行错误处理逻辑
                 warning_filters_module = sys.modules.get("src.utils.warning_filters")
                 if warning_filters_module and hasattr(warning_filters_module, "logger"):
-                    warning_filters_module.logger.info(
-                        f"⚠️  警告过滤器自动设置失败: {e}"
-                    )
+                    warning_filters_module.logger.info(f"⚠️  警告过滤器自动设置失败: {e}")
 
         # 验证错误处理逻辑
         assert True  # 如果没有异常就通过

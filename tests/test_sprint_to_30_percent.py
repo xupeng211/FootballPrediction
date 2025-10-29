@@ -1,15 +1,11 @@
-import pytest
-
 #!/usr/bin/env python3
 """
 冲刺30%覆盖率脚本
 运行所有可能的测试以达到目标
 """
 
-import os
 import subprocess
 import sys
-from pathlib import Path
 
 # 所有可能的测试文件
 test_patterns = [
@@ -107,9 +103,7 @@ def main():
 
     # 显示通过/失败统计
     for line in lines:
-        if "passed" in line.lower() and (
-            "failed" in line.lower() or "error" in line.lower()
-        ):
+        if "passed" in line.lower() and ("failed" in line.lower() or "error" in line.lower()):
             print(f"\n测试统计: {line.strip()}")
             break
 

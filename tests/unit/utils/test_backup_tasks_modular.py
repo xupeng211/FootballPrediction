@@ -9,7 +9,6 @@ from unittest.mock import MagicMock, patch
 Test modular split of backup tasks
 """
 
-from datetime import datetime
 
 import pytest
 
@@ -335,6 +334,6 @@ class TestTaskDecorators:
         from src.tasks.backup.database import daily_full_backup_task
 
         # 验证任务使用了正确的基类
-        assert isinstance(
-            daily_full_backup_task, DatabaseBackupTask.__class__
-        ) or hasattr(daily_full_backup_task, "__bases__")
+        assert isinstance(daily_full_backup_task, DatabaseBackupTask.__class__) or hasattr(
+            daily_full_backup_task, "__bases__"
+        )

@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock, patch
-
 """API数据端点扩展测试"""
 
 import pytest
@@ -42,9 +40,7 @@ class TestAPIDataExtended:
                 }
             ]
 
-            response = client.get(
-                "/api/data/matches?league=Premier League&date=2024-01-01"
-            )
+            response = client.get("/api/data/matches?league=Premier League&date=2024-01-01")
             assert response.status_code == 200
             mock_get.assert_called_once()
 

@@ -6,19 +6,37 @@ import sys
 from pathlib import Path
 
 # 添加项目路径
-from unittest.mock import AsyncMock, Mock
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-sys.path.insert(0, "src")
-
-"""
-DI设置测试 - 简化版
-"""
 
 import pytest
 
 
 # Mock DI模块
+
+
+# 不需要初始化就能获取mock服务
+# Mock容器返回None
+
+
+# Mock测试
+
+
+# Mock验证
+
+# 通过容器直接注册
+
+
+# Mock不会抛出错误
+
+
+# 不同容器应该有不同的实例
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+sys.path.insert(0, "src")
+"""
+DI设置测试 - 简化版
+"""
+
+
 class MockDIContainer:
     def __init__(self):
         self._services = {}
@@ -90,9 +108,7 @@ class TestDISetup:
     def test_get_service(self):
         """测试获取服务"""
         setup = MockDISetup()
-        # 不需要初始化就能获取mock服务
         service = setup.get_service("config_service")
-        # Mock容器返回None
         assert service is None or service is not None
 
     @pytest.mark.asyncio
@@ -105,7 +121,6 @@ class TestDISetup:
     def test_initialize_with_config_file(self):
         """测试使用配置文件初始化"""
         setup = MockDISetup()
-        # Mock测试
         assert setup.profile == "development"
 
     @pytest.mark.asyncio
@@ -113,7 +128,6 @@ class TestDISetup:
         """测试初始化后获取服务"""
         setup = MockDISetup()
         await setup.initialize()
-
         service = setup.get_service("config_service")
         assert service is not None
 
@@ -125,21 +139,17 @@ class TestDISetupAdvanced:
         """测试配置文件切换"""
         dev_setup = MockDISetup("development")
         prod_setup = MockDISetup("production")
-
         assert dev_setup.profile != prod_setup.profile
 
     def test_configuration_validation(self):
         """测试配置验证"""
         setup = MockDISetup()
-        # Mock验证
         assert setup.profile in ["development", "production", "test"]
 
     def test_service_registration_patterns(self):
         """测试服务注册模式"""
         setup = MockDISetup()
-        # 通过容器直接注册
         setup.container.register_singleton("test_service", lambda: Mock())
-
         service = setup.container.get_service("test_service")
         assert service is not None
 
@@ -149,7 +159,6 @@ class TestDISetupAdvanced:
         setup = MockDISetup()
         try:
             await setup.initialize()
-            # Mock不会抛出错误
             assert setup.initialized
         except Exception:
             pytest.fail("初始化不应该失败")
@@ -159,9 +168,6 @@ class TestDISetupAdvanced:
         """测试容器隔离"""
         setup1 = MockDISetup()
         setup2 = MockDISetup()
-
         await setup1.initialize()
         await setup2.initialize()
-
-        # 不同容器应该有不同的实例
         assert setup1.container is not setup2.container

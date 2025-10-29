@@ -6,17 +6,11 @@
 优先级: HIGH
 """
 
-import asyncio
-import json
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, call, patch
 
 import pytest
 
 # 尝试导入目标模块
 try:
-    from core.config import *
 except ImportError as e:
     print(f"警告: 无法导入模块: {e}")
 

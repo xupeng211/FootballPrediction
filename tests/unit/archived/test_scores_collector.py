@@ -16,8 +16,6 @@ def test_imports_work():
         pass
     except Exception:
         pass
-        import os
-        import sys
 
         assert True
     except ImportError:

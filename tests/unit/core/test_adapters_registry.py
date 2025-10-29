@@ -4,16 +4,17 @@ from pathlib import Path
 # 添加项目路径
 from unittest.mock import AsyncMock, Mock
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-sys.path.insert(0, "src")
-
-"""
-适配器注册表测试 - 简化版
-"""
 
 import pytest
 
 from src.adapters.base import Adapter
+
+
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+sys.path.insert(0, "src")
+"""
+适配器注册表测试 - 简化版
+"""
 
 
 class MockAdapter(Adapter):
@@ -78,7 +79,6 @@ class TestAdapterRegistry:
         """测试注册适配器"""
         registry = MockAdapterRegistry()
         registry.register_adapter("test", MockAdapter, {"version": "1.0"})
-
         assert "test" in registry._adapters
         assert registry._adapters["test"]["metadata"]["version"] == "1.0"
 
@@ -87,21 +87,18 @@ class TestAdapterRegistry:
         registry = MockAdapterRegistry()
         registry.register_adapter("test", MockAdapter)
         registry.unregister_adapter("test")
-
         assert "test" not in registry._adapters
 
     def test_create_adapter(self):
         """测试创建适配器"""
         registry = MockAdapterRegistry()
         registry.register_adapter("test", MockAdapter)
-
         adapter = registry.create_adapter("test")
         assert isinstance(adapter, MockAdapter)
 
     def test_create_unregistered_adapter(self):
         """测试创建未注册的适配器"""
         registry = MockAdapterRegistry()
-
         with pytest.raises(ValueError, match="Unknown adapter"):
             registry.create_adapter("nonexistent")
 
@@ -110,7 +107,6 @@ class TestAdapterRegistry:
         registry = MockAdapterRegistry()
         registry.register_adapter("test1", MockAdapter)
         registry.register_adapter("test2", MockAdapter)
-
         adapters = registry.list_adapters()
         assert len(adapters) == 2
         assert "test1" in adapters
@@ -121,7 +117,6 @@ class TestAdapterRegistry:
         registry = MockAdapterRegistry()
         _metadata = {"version": "1.0", "author": "test"}
         registry.register_adapter("test", MockAdapter, metadata)
-
         info = registry.get_adapter_info("test")
         assert info["version"] == "1.0"
         assert info["author"] == "test"

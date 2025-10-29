@@ -3,7 +3,6 @@ from unittest.mock import MagicMock, patch
 """测试基础策略类"""
 
 import asyncio
-from datetime import datetime
 from typing import Any, Dict, List, Tuple
 
 import pytest
@@ -46,9 +45,7 @@ class MockStrategy(PredictionStrategy):
             metadata={"reasoning": "Mock prediction for testing"},
         )
 
-    async def batch_predict(
-        self, inputs: List[PredictionInput]
-    ) -> List[PredictionOutput]:
+    async def batch_predict(self, inputs: List[PredictionInput]) -> List[PredictionOutput]:
         """批量预测"""
         results = []
         for input_data in inputs:
@@ -56,9 +53,7 @@ class MockStrategy(PredictionStrategy):
             results.append(result)
         return results
 
-    async def update_metrics(
-        self, actual_results: List[Tuple[Prediction, Dict[str, Any]]]
-    ) -> None:
+    async def update_metrics(self, actual_results: List[Tuple[Prediction, Dict[str, Any]]]) -> None:
         """更新策略性能指标"""
         # 模拟指标更新
         self._metrics = StrategyMetrics(
@@ -130,9 +125,7 @@ class TestPredictionStrategy:
         assert mock_strategy._config == _config
 
     @pytest.mark.asyncio
-    async def test_successful_prediction_flow(
-        self, mock_strategy, valid_prediction_input
-    ):
+    async def test_successful_prediction_flow(self, mock_strategy, valid_prediction_input):
         """测试成功的预测流程"""
         # 初始化策略
         await mock_strategy.initialize({})
@@ -161,17 +154,13 @@ class TestPredictionStrategy:
         assert mock_strategy._total_confidence == _result.confidence
 
     @pytest.mark.asyncio
-    async def test_prediction_without_initialization(
-        self, mock_strategy, valid_prediction_input
-    ):
+    async def test_prediction_without_initialization(self, mock_strategy, valid_prediction_input):
         """测试未初始化的预测"""
         with pytest.raises(RuntimeError, match="策略未初始化"):
             await mock_strategy.predict(valid_prediction_input)
 
     @pytest.mark.asyncio
-    async def test_invalid_input_handling(
-        self, mock_strategy, invalid_prediction_input
-    ):
+    async def test_invalid_input_handling(self, mock_strategy, invalid_prediction_input):
         """测试无效输入处理"""
         await mock_strategy.initialize({})
 
@@ -199,9 +188,7 @@ class TestPredictionStrategy:
         assert metrics.is_initialized is True
 
     @pytest.mark.asyncio
-    async def test_average_confidence_calculation(
-        self, mock_strategy, valid_prediction_input
-    ):
+    async def test_average_confidence_calculation(self, mock_strategy, valid_prediction_input):
         """测试平均置信度计算"""
         await mock_strategy.initialize({})
 
@@ -234,9 +221,7 @@ class TestPredictionStrategy:
         assert mock_strategy._total_confidence == 0.0
 
     @pytest.mark.asyncio
-    async def test_preprocessing_modification(
-        self, mock_strategy, valid_prediction_input
-    ):
+    async def test_preprocessing_modification(self, mock_strategy, valid_prediction_input):
         """测试预处理修改"""
         await mock_strategy.initialize({})
 
@@ -247,9 +232,7 @@ class TestPredictionStrategy:
         assert valid_prediction_input.processed is True
 
     @pytest.mark.asyncio
-    async def test_postprocessing_modification(
-        self, mock_strategy, valid_prediction_input
-    ):
+    async def test_postprocessing_modification(self, mock_strategy, valid_prediction_input):
         """测试后处理修改"""
         await mock_strategy.initialize({})
 

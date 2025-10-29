@@ -174,9 +174,7 @@ class MatchProcessor:
 
         # 标准化日期格式
         if isinstance(standardized.get("match_date"), str):
-            standardized["match_date"] = datetime.fromisoformat(
-                standardized["match_date"]
-            )
+            standardized["match_date"] = datetime.fromisoformat(standardized["match_date"])
 
         # 标准化队伍名称（统一大小写）
         standardized["home_team"] = standardized["home_team"].strip().title()
@@ -315,9 +313,7 @@ class MatchProcessor:
             batch = matches[i : i + batch_size]
             batch_num = i // batch_size + 1
 
-            self.logger.info(
-                f"处理批次 {batch_num}/{(total + batch_size - 1) // batch_size}"
-            )
+            self.logger.info(f"处理批次 {batch_num}/{(total + batch_size - 1) // batch_size}")
 
             batch_results: List[Any] = []
             for match in batch:
@@ -327,9 +323,7 @@ class MatchProcessor:
 
             processed_matches.extend(batch_results)
 
-        self.logger.info(
-            f"批量处理完成，成功处理 {len(processed_matches)}/{total} 场比赛"
-        )
+        self.logger.info(f"批量处理完成，成功处理 {len(processed_matches)}/{total} 场比赛")
         return processed_matches
 
     async def detect_duplicate_matches(

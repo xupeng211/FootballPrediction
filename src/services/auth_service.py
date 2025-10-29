@@ -11,8 +11,6 @@ from typing import Optional, Dict, Any
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
-from sqlalchemy import select
 
 from src.database.models.user import User, UserRole
 from src.repositories.auth_user import AuthUserRepository
@@ -73,9 +71,7 @@ class AuthService:
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
         return encoded_jwt
 
-    def verify_token(
-        self, token: str, token_type: str = "access"
-    ) -> Optional[Dict[str, Any]]:
+    def verify_token(self, token: str, token_type: str = "access") -> Optional[Dict[str, Any]]:
         """验证令牌"""
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -161,9 +157,7 @@ class AuthService:
 
         return user
 
-    async def login_user(
-        self, username: str, password: str
-    ) -> Optional[Dict[str, Any]]:
+    async def login_user(self, username: str, password: str) -> Optional[Dict[str, Any]]:
         """用户登录，返回令牌信息"""
         user = await self.authenticate_user(username, password)
         if not user:
@@ -228,9 +222,7 @@ class AuthService:
 
         return user
 
-    async def change_password(
-        self, user: User, current_password: str, new_password: str
-    ) -> bool:
+    async def change_password(self, user: User, current_password: str, new_password: str) -> bool:
         """修改密码"""
         if not self.verify_password(current_password, user.password_hash):
             return False

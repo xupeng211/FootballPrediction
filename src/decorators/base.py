@@ -107,9 +107,7 @@ class Decorator(Component):
             ),
             "total_execution_time": self.total_execution_time,
             "average_execution_time": (
-                self.total_execution_time / self.execution_count
-                if self.execution_count > 0
-                else 0
+                self.total_execution_time / self.execution_count if self.execution_count > 0 else 0
             ),
             "last_execution_time": self.last_execution_time,
         }

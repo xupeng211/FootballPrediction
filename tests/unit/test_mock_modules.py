@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 44 repeated Mock creations
 
-from unittest.mock import MagicMock, Mock, patch
 
 """
 Mock测试模块
@@ -259,7 +258,6 @@ class TestMockModules:
 
     def test_api_endpoints_mock(self):
         """测试API端点Mock"""
-        from src.api.app import app
 
         # Mock FastAPI路由
         mock_router = Mock()
@@ -299,9 +297,7 @@ class TestIntegrationWithMocks:
 
         # Mock预测服务
         predictor = Mock()
-        predictor.predict = Mock(
-            return_value={"prediction": "HOME_WIN", "confidence": 0.75}
-        )
+        predictor.predict = Mock(return_value={"prediction": "HOME_WIN", "confidence": 0.75})
 
         # Mock缓存
         cache = Mock()

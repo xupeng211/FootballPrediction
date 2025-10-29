@@ -11,7 +11,6 @@ Tests for Alert Handlers
 测试src.monitoring.alert_handlers模块的警报处理功能
 """
 
-import json
 from datetime import datetime
 
 import pytest
@@ -42,9 +41,7 @@ except ImportError as e:
     AlertStatus = None
 
 
-@pytest.mark.skipif(
-    not ALERT_HANDLERS_AVAILABLE, reason="Alert handlers module not available"
-)
+@pytest.mark.skipif(not ALERT_HANDLERS_AVAILABLE, reason="Alert handlers module not available")
 @pytest.mark.unit
 class TestAlertHandler:
     """警报处理器基础测试"""
@@ -80,9 +77,7 @@ class TestAlertHandler:
         assert _result is True or result is None  # 可能返回True或None
 
 
-@pytest.mark.skipif(
-    not ALERT_HANDLERS_AVAILABLE, reason="Alert handlers module not available"
-)
+@pytest.mark.skipif(not ALERT_HANDLERS_AVAILABLE, reason="Alert handlers module not available")
 class TestEmailAlertHandler:
     """邮件警报处理器测试"""
 
@@ -146,9 +141,7 @@ class TestEmailAlertHandler:
         assert "85%" in body
 
 
-@pytest.mark.skipif(
-    not ALERT_HANDLERS_AVAILABLE, reason="Alert handlers module not available"
-)
+@pytest.mark.skipif(not ALERT_HANDLERS_AVAILABLE, reason="Alert handlers module not available")
 class TestSlackAlertHandler:
     """Slack警报处理器测试"""
 
@@ -207,9 +200,7 @@ class TestSlackAlertHandler:
         assert payload["attachments"][0]["color"] == "danger"  # critical = red
 
 
-@pytest.mark.skipif(
-    not ALERT_HANDLERS_AVAILABLE, reason="Alert handlers module not available"
-)
+@pytest.mark.skipif(not ALERT_HANDLERS_AVAILABLE, reason="Alert handlers module not available")
 class TestWebhookAlertHandler:
     """Webhook警报处理器测试"""
 
@@ -268,9 +259,7 @@ class TestWebhookAlertHandler:
         assert handler.retry_delay == 1
 
 
-@pytest.mark.skipif(
-    not ALERT_HANDLERS_AVAILABLE, reason="Alert handlers module not available"
-)
+@pytest.mark.skipif(not ALERT_HANDLERS_AVAILABLE, reason="Alert handlers module not available")
 class TestAlertManager:
     """警报管理器测试"""
 
@@ -357,9 +346,7 @@ class TestAlertManager:
                 assert len(handlers) == 2
 
 
-@pytest.mark.skipif(
-    ALERT_HANDLERS_AVAILABLE, reason="Alert handlers module should be available"
-)
+@pytest.mark.skipif(ALERT_HANDLERS_AVAILABLE, reason="Alert handlers module should be available")
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
@@ -388,9 +375,7 @@ def test_module_imports():
         assert AlertManager is not None
 
 
-@pytest.mark.skipif(
-    not ALERT_HANDLERS_AVAILABLE, reason="Alert handlers module not available"
-)
+@pytest.mark.skipif(not ALERT_HANDLERS_AVAILABLE, reason="Alert handlers module not available")
 class TestAlertHandlersIntegration:
     """警报处理器集成测试"""
 
@@ -470,8 +455,7 @@ class TestAlertHandlersIntegration:
 
         # 发送多个警报
         alerts = [
-            {"id": f"rate_test_{i}", "severity": "info", "message": f"Alert {i}"}
-            for i in range(10)
+            {"id": f"rate_test_{i}", "severity": "info", "message": f"Alert {i}"} for i in range(10)
         ]
 
         sent_count = 0
@@ -516,9 +500,7 @@ class TestAlertHandlersIntegration:
         )
 
         # 使用模板生成警报
-        alert = manager.create_alert_from_template(
-            "cpu_alert", service="api-service", value=85
-        )
+        alert = manager.create_alert_from_template("cpu_alert", service="api-service", value=85)
 
         assert alert["subject"] == "High CPU Usage Alert"
         assert "85%" in alert["message"]

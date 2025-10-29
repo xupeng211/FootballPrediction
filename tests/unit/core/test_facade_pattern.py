@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 14 repeated Mock creations
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 """
 门面模式单元测试
@@ -12,9 +11,7 @@ Unit Tests for Facade Pattern
 Tests all components of the facade pattern.
 """
 
-import asyncio
 import os
-from datetime import datetime
 from typing import Any
 
 import pytest
@@ -32,7 +29,6 @@ from src.facades.facades import (
     PredictionFacade,
     PredictionSubsystem,
 )
-from src.facades.factory import FacadeConfig, FacadeFactory, facade_factory
 
 
 @pytest.mark.unit
@@ -56,9 +52,7 @@ class TestSubsystem:
         assert subsystem.query_count > 0
 
         # 测试事务执行
-        success = await subsystem.execute_transaction(
-            [{"query": "INSERT INTO test", "params": {}}]
-        )
+        success = await subsystem.execute_transaction([{"query": "INSERT INTO test", "params": {}}])
         assert success is True
 
         # 测试关闭
@@ -157,9 +151,7 @@ class TestSubsystem:
         assert subsystem.status == SubsystemStatus.ACTIVE
 
         # 测试预测
-        _result = await subsystem.predict(
-            "neural_network", {"feature1": 1.0, "feature2": 2.0}
-        )
+        _result = await subsystem.predict("neural_network", {"feature1": 1.0, "feature2": 2.0})
         assert "model" in result
         assert "output" in result
         assert _result["model"] == "neural_network"
@@ -445,9 +437,7 @@ class TestConcreteFacades:
         await facade.initialize()
 
         # 测试存储数据
-        _result = await facade.execute(
-            "store_data", _data={"key": "value"}, table="test_table"
-        )
+        _result = await facade.execute("store_data", _data={"key": "value"}, table="test_table")
         assert _result["status"] == "success"
         assert _result["table"] == "test_table"
 
@@ -583,7 +573,6 @@ class TestFacadeFactory:
     @patch.dict(os.environ, {"TEST_VAR": "environment_value"})
     def test_resolve_environment_variables(self):
         """测试解析环境变量"""
-        import os
 
         factory = FacadeFactory()
 

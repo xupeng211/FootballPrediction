@@ -29,9 +29,7 @@ def test_data_validation_result():
 def test_feature_vector():
     """测试特征向量"""
     features = {"goals": 2, "assists": 1}
-    vector = FeatureVector(
-        match_id=1, features=features, feature_names=["goals", "assists"]
-    )
+    vector = FeatureVector(match_id=1, features=features, feature_names=["goals", "assists"])
 
     assert vector.match_id == 1
     assert vector.get_feature("goals") == 2

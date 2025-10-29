@@ -7,13 +7,10 @@ Quality Gate System
 """
 
 import json
-from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
 
 from src.core.logging_system import get_logger
-from src.core.config import get_config
 from scripts.quality_guardian import QualityGuardian
 from src.metrics.advanced_analyzer import AdvancedMetricsAnalyzer
 from src.metrics.quality_integration import QualityMetricsIntegrator
@@ -156,14 +153,10 @@ class CodeQualityGate(QualityGate):
 
         # Ruff和MyPy满分各5分，总分10分
         ruff_score = (
-            5.0
-            if report.get("ruff_errors", 0) == 0
-            else max(0, 5.0 - report.get("ruff_errors", 0))
+            5.0 if report.get("ruff_errors", 0) == 0 else max(0, 5.0 - report.get("ruff_errors", 0))
         )
         mypy_score = (
-            5.0
-            if report.get("mypy_errors", 0) == 0
-            else max(0, 5.0 - report.get("mypy_errors", 0))
+            5.0 if report.get("mypy_errors", 0) == 0 else max(0, 5.0 - report.get("mypy_errors", 0))
         )
 
         total_score = ruff_score + mypy_score
@@ -387,12 +380,8 @@ class QualityGateSystem:
 
         # 计算总体分数
         if results:
-            total_score = sum(
-                r.score for r in results if r.status != GateStatus.SKIPPED
-            )
-            avg_score = total_score / len(
-                [r for r in results if r.status != GateStatus.SKIPPED]
-            )
+            total_score = sum(r.score for r in results if r.status != GateStatus.SKIPPED)
+            avg_score = total_score / len([r for r in results if r.status != GateStatus.SKIPPED])
         else:
             total_score = 0.0
             avg_score = 0.0

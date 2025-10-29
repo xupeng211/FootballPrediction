@@ -1,7 +1,5 @@
 """测试数据库服务"""
 
-from unittest.mock import AsyncMock, Mock
-
 import pytest
 
 try:
@@ -73,7 +71,6 @@ class TestDatabaseService:
 
     def test_async_session_support(self):
         """测试异步会话支持"""
-        from sqlalchemy.ext.asyncio import AsyncSession
 
         service = DatabaseService()
 

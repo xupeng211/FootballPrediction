@@ -105,9 +105,7 @@ async def seed_reference_data(session: AsyncSession) -> None:
     # Validate counts for logging purposes
     team_count = await session.scalar(select(func.count(Team.id)))
     league_count = await session.scalar(select(func.count(League.id)))
-    logger.info(
-        "Reference data totals → leagues: %s, teams: %s", league_count, team_count
-    )
+    logger.info("Reference data totals → leagues: %s, teams: %s", league_count, team_count)
 
 
 def run_migrations(db_config) -> None:
@@ -178,9 +176,7 @@ async def main() -> None:
     # Only attempt to seed data if migrations succeeded
     try:
         engine = create_async_engine(db_config.async_url, future=True)
-        async_session = sessionmaker(
-            engine, expire_on_commit=False, class_=AsyncSession
-        )
+        async_session = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
         async with async_session() as session:
             await seed_reference_data(session)

@@ -44,8 +44,7 @@ def analyze_feature_calculator_code():
                     if isinstance(item, ast.FunctionDef):
                         methods.append(item.name)
                         if any(
-                            isinstance(d, ast.Name) and d.id == "async"
-                            for d in item.decorator_list
+                            isinstance(d, ast.Name) and d.id == "async" for d in item.decorator_list
                         ):
                             async_functions.append(f"{node.name}.{item.name}")
                 classes.append({"name": node.name, "methods": methods})
@@ -66,9 +65,7 @@ def analyze_feature_calculator_code():
 
                 # 分类方法
                 async_methods = [
-                    m
-                    for m in cls["methods"]
-                    if m in [af.split(".")[1] for af in async_functions]
+                    m for m in cls["methods"] if m in [af.split(".")[1] for af in async_functions]
                 ]
                 sync_methods = [m for m in cls["methods"] if m not in async_methods]
 
@@ -177,10 +174,7 @@ def test_feature_calculator_concepts():
             def calculate_rolling_mean(self, data, window=3):
                 if not data or len(data) < window:
                     return []
-                return [
-                    sum(data[i : i + window]) / window
-                    for i in range(len(data) - window + 1)
-                ]
+                return [sum(data[i : i + window]) / window for i in range(len(data) - window + 1)]
 
         # 测试模拟计算器
         calculator = MockFeatureCalculator({"cache_enabled": True})
@@ -193,9 +187,7 @@ def test_feature_calculator_concepts():
         print(f"  ✅ 标准差: {calculator.calculate_std(test_data)}")
         print(f"  ✅ 最小值: {calculator.calculate_min(test_data)}")
         print(f"  ✅ 最大值: {calculator.calculate_max(test_data)}")
-        print(
-            f"  ✅ 滚动均值: {len(calculator.calculate_rolling_mean(test_data, 3))} 个值"
-        )
+        print(f"  ✅ 滚动均值: {len(calculator.calculate_rolling_mean(test_data, 3))} 个值")
 
         # 测试特征管理
         print("\n📝 特征管理测试:")
@@ -371,12 +363,8 @@ def test_feature_calculation_algorithms():
         }
 
         # 计算预期进球
-        expected_home_goals = (
-            team_strength["home_attack"] * team_strength["away_defense"] * 2.5
-        )
-        expected_away_goals = (
-            team_strength["away_attack"] * team_strength["home_defense"] * 2.5
-        )
+        expected_home_goals = team_strength["home_attack"] * team_strength["away_defense"] * 2.5
+        expected_away_goals = team_strength["away_attack"] * team_strength["home_defense"] * 2.5
 
         print(f"  ✅ 预期主队进球: {expected_home_goals:.2f}")
         print(f"  ✅ 预期客队进球: {expected_away_goals:.2f}")
@@ -407,9 +395,7 @@ async def test_feature_pipeline_concept():
         print("📋 特征计算管道:")
         for i, stage in enumerate(pipeline_stages, 1):
             async_type = "异步" if stage["async"] else "同步"
-            print(
-                f"  ✅ 第{i}阶段: {stage['stage']} ({async_type}) - {stage['description']}"
-            )
+            print(f"  ✅ 第{i}阶段: {stage['stage']} ({async_type}) - {stage['description']}")
 
         # 模拟并发处理
         print("\n🚀 并发处理模拟:")

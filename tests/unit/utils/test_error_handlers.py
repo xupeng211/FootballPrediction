@@ -1,5 +1,4 @@
 # 错误处理器测试
-import pytest
 
 try:
     pass

@@ -130,9 +130,7 @@ async def test_batch_predict_too_many_matches():
 
     # 执行处理器并期望抛出HTTPException
     with pytest.raises(HTTPException) as exc_info:
-        await batch_predict_matches_handler(
-            mock_request, match_ids, session=mock_session
-        )
+        await batch_predict_matches_handler(mock_request, match_ids, session=mock_session)
 
     assert exc_info.value.status_code == 400
     assert "最多支持50场比赛" in exc_info.value.detail

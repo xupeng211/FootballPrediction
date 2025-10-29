@@ -91,9 +91,7 @@ class ProcessingCache:
         # 添加参数
         if params:
             params_str = json.dumps(params, sort_keys=True)
-            params_hash = hashlib.md5(
-                params_str.encode(), usedforsecurity=False
-            ).hexdigest()
+            params_hash = hashlib.md5(params_str.encode(), usedforsecurity=False).hexdigest()
             key_parts.append(params_hash)
 
         # 生成完整键
@@ -289,9 +287,7 @@ class ProcessingCache:
             缓存统计信息
         """
         total_requests = self.stats["hits"] + self.stats["misses"]
-        hit_rate = (
-            self.stats["hits"] / total_requests * 100 if total_requests > 0 else 0
-        )
+        hit_rate = self.stats["hits"] / total_requests * 100 if total_requests > 0 else 0
 
         cache_stats = {
             **self.stats,

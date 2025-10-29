@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Any
 
+
 class GitHubIssueManager:
     def __init__(self):
         self.project_root = Path(__file__).parent
@@ -24,42 +25,42 @@ class GitHubIssueManager:
                 "body_file": "TESTING_COVERAGE_CRISIS.md",
                 "priority": "critical",
                 "labels": ["testing", "coverage", "critical", "quality-gate"],
-                "milestone": "Phase 1: 紧急修复"
+                "milestone": "Phase 1: 紧急修复",
             },
             "import_errors": {
                 "title": "🔧 修复测试import冲突和收集错误",
                 "body": "当前存在5个测试收集错误，需要紧急修复:\n\n1. tests/examples/test_factory_usage.py - LeagueFactory导入失败\n2. tests/integration/test_api_service_integration_safe_import.py - IMPORT_SUCCESS未定义\n3. tests/integration/test_messaging_event_integration.py - 函数参数错误\n4. tests/unit/archived/test_comprehensive.py - 模块名冲突\n5. tests/unit/database/test_repositories/test_base.py - 模块名冲突",
                 "priority": "high",
                 "labels": ["bug", "testing", "import-error"],
-                "milestone": "Phase 1: 紧急修复"
+                "milestone": "Phase 1: 紧急修复",
             },
             "coverage_drop": {
                 "title": "📉 测试覆盖率从10.12%下降到8.21%",
                 "body": "虽然测试用例数量大幅增加，但覆盖率不升反降，说明测试质量存在问题。\n\n**需要分析的问题:**\n- 为什么7992个测试用例只覆盖了8.21%的代码？\n- 是否存在大量无效或重复的测试？\n- 测试是否真正覆盖了核心业务逻辑？",
                 "priority": "high",
                 "labels": ["testing", "coverage", "analysis"],
-                "milestone": "Phase 2: 质量提升"
+                "milestone": "Phase 2: 质量提升",
             },
             "quality_improvement": {
                 "title": "✨ 测试质量提升计划 - 从8.21%到30%",
                 "body": "制定系统的测试质量提升计划，重点关注核心模块的深度测试。\n\n**目标:**\n- Phase 1: 修复所有测试错误 (2天)\n- Phase 2: 覆盖率提升到15% (1周)\n- Phase 3: 覆盖率提升到30% (2周)",
                 "priority": "medium",
                 "labels": ["enhancement", "testing", "coverage"],
-                "milestone": "Phase 2: 质量提升"
-            }
+                "milestone": "Phase 2: 质量提升",
+            },
         }
 
     def load_issues_data(self) -> Dict[str, Any]:
         """加载issues数据"""
         if self.issues_data_file.exists():
-            with open(self.issues_data_file, 'r', encoding='utf-8') as f:
+            with open(self.issues_data_file, "r", encoding="utf-8") as f:
                 return json.load(f)
         return {"last_updated": None, "issues": {}}
 
     def save_issues_data(self, data: Dict[str, Any]):
         """保存issues数据"""
         data["last_updated"] = datetime.now().isoformat()
-        with open(self.issues_data_file, 'w', encoding='utf-8') as f:
+        with open(self.issues_data_file, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
     def get_current_test_metrics(self) -> Dict[str, Any]:
@@ -67,24 +68,27 @@ class GitHubIssueManager:
         try:
             # 获取测试文件数量
             test_files_result = subprocess.run(
-                ["find", "tests", "-name", "*.py"],
-                capture_output=True,
-                text=True
+                ["find", "tests", "-name", "*.py"], capture_output=True, text=True
             )
-            test_files_count = len(test_files_result.stdout.strip().split('\n')) if test_files_result.stdout.strip() else 0
+            test_files_count = (
+                len(test_files_result.stdout.strip().split("\n"))
+                if test_files_result.stdout.strip()
+                else 0
+            )
 
             # 获取测试用例数量
             pytest_result = subprocess.run(
                 ["python", "-m", "pytest", "--collect-only", "-q"],
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
             test_cases_count = "Unknown"
             if pytest_result.returncode == 0 and "collected" in pytest_result.stdout:
                 import re
-                match = re.search(r'(\d+)\s+tests? collected', pytest_result.stdout)
+
+                match = re.search(r"(\d+)\s+tests? collected", pytest_result.stdout)
                 if match:
                     test_cases_count = int(match.group(1))
 
@@ -92,9 +96,10 @@ class GitHubIssueManager:
             coverage_percent = "Unknown"
             coverage_file = self.project_root / "htmlcov" / "index.html"
             if coverage_file.exists():
-                with open(coverage_file, 'r', encoding='utf-8') as f:
+                with open(coverage_file, "r", encoding="utf-8") as f:
                     content = f.read()
                     import re
+
                     match = re.search(r'<span class="pc_cov">([\d.]+)%</span>', content)
                     if match:
                         coverage_percent = float(match.group(1))
@@ -103,7 +108,7 @@ class GitHubIssueManager:
                 "test_files_count": test_files_count,
                 "test_cases_count": test_cases_count,
                 "coverage_percent": coverage_percent,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
@@ -113,7 +118,7 @@ class GitHubIssueManager:
                 "test_cases_count": "Error",
                 "coverage_percent": "Error",
                 "timestamp": datetime.now().isoformat(),
-                "error": str(e)
+                "error": str(e),
             }
 
     def generate_status_report(self) -> str:
@@ -187,7 +192,6 @@ assignees: ''
 ## 🎯 期望修复
 描述期望的修复结果
 """,
-
             "improvement": """---
 name: 测试质量改进
 about: 提出测试覆盖率改进建议
@@ -207,7 +211,6 @@ assignees: ''
 ## 🔧 实施方案
 描述具体的实施步骤和方案
 """,
-
             "status_update": """---
 name: 状态更新
 about: 更新测试覆盖率改进进度
@@ -232,13 +235,13 @@ assignees: ''
 
 ## 📅 下一步计划
 近期的改进计划
-"""
+""",
         }
         return templates
 
     def update_github_actions(self):
         """更新GitHub Actions工作流"""
-        workflow_content = '''name: 测试覆盖率危机监控
+        workflow_content = """name: 测试覆盖率危机监控
 
 on:
   push:
@@ -321,12 +324,14 @@ except:
             body: report,
             labels: ['testing', 'coverage', 'critical', 'auto-generated']
           });
-'''
+"""
 
-        workflow_file = self.project_root.parent / ".github" / "workflows" / "test-crisis-monitor.yml"
+        workflow_file = (
+            self.project_root.parent / ".github" / "workflows" / "test-crisis-monitor.yml"
+        )
         workflow_file.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(workflow_file, 'w', encoding='utf-8') as f:
+        with open(workflow_file, "w", encoding="utf-8") as f:
             f.write(workflow_content)
 
     def run_maintenance_cycle(self):
@@ -336,7 +341,7 @@ except:
         # 生成状态报告
         report = self.generate_status_report()
         report_file = self.project_root / "crisis_status_report.md"
-        with open(report_file, 'w', encoding='utf-8') as f:
+        with open(report_file, "w", encoding="utf-8") as f:
             f.write(report)
 
         print(f"✅ 状态报告已生成: {report_file}")
@@ -352,7 +357,7 @@ except:
 
         for name, content in templates.items():
             template_file = templates_dir / f"test_{name}.md"
-            with open(template_file, 'w', encoding='utf-8') as f:
+            with open(template_file, "w", encoding="utf-8") as f:
                 f.write(content)
 
         print("✅ Issue模板已创建")
@@ -363,6 +368,7 @@ except:
         self.save_issues_data(data)
 
         print("🎉 GitHub Issue维护完成!")
+
 
 if __name__ == "__main__":
     import sys

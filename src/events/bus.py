@@ -55,9 +55,7 @@ class EventBus:
                         self._queues[event_type] = queue
                         handler.add_subscription(event_type, queue)
 
-                        task = asyncio.create_task(
-                            self._run_handler(handler, event_type, queue)
-                        )
+                        task = asyncio.create_task(self._run_handler(handler, event_type, queue))
                         self._tasks.append(task)
 
             # 启动所有处理器
@@ -127,9 +125,7 @@ class EventBus:
                     self._queues[event_type] = queue
                     handler.add_subscription(event_type, queue)
 
-                    task = asyncio.create_task(
-                        self._run_handler(handler, event_type, queue)
-                    )
+                    task = asyncio.create_task(self._run_handler(handler, event_type, queue))
                     self._tasks.append(task)
 
                 logger.info(f"Handler {handler.name} subscribed to {event_type}")
@@ -193,9 +189,7 @@ class EventBus:
             logger.debug(f"No handlers for event type: {event_type}")
             return
 
-        logger.debug(
-            f"Publishing event {event_type} synchronously to {len(handlers)} handlers"
-        )
+        logger.debug(f"Publishing event {event_type} synchronously to {len(handlers)} handlers")
 
         # 立即处理事件
         tasks = []
@@ -332,9 +326,7 @@ class EventBus:
         return {
             "running": self._running,
             "event_types": len(self._subscribers),
-            "total_subscribers": sum(
-                len(handlers) for handlers in self._subscribers.values()
-            ),
+            "total_subscribers": sum(len(handlers) for handlers in self._subscribers.values()),
             "active_tasks": len(self._tasks),
             "event_types_list": list(self._subscribers.keys()),
         }

@@ -8,82 +8,88 @@ import re
 from collections import Counter
 import json
 
+
 def run_mypy():
     """运行MyPy并获取输出"""
     try:
         result = subprocess.run(
-            ['mypy', 'src/', '--show-error-codes', '--no-error-summary'],
+            ["mypy", "src/", "--show-error-codes", "--no-error-summary"],
             capture_output=True,
             text=True,
-            cwd='/home/user/projects/FootballPrediction'
+            cwd="/home/user/projects/FootballPrediction",
         )
         return result.stdout
     except Exception as e:
         print(f"Error running mypy: {e}")
         return ""
 
+
 def parse_mypy_errors(output):
     """解析MyPy错误输出"""
     errors = []
-    lines = output.split('\n')
+    lines = output.split("\n")
 
     for line in lines:
         # 匹配MyPy错误格式: file:line: error: message [error-code]
-        match = re.match(r'^(.+?):(\d+): error: (.+?)\s*(\[[^\]]+\])?$', line)
+        match = re.match(r"^(.+?):(\d+): error: (.+?)\s*(\[[^\]]+\])?$", line)
         if match:
             file_path, line_num, message, error_code = match.groups()
-            errors.append({
-                'file': file_path,
-                'line': int(line_num),
-                'message': message.strip(),
-                'error_code': error_code.strip('[]') if error_code else 'general'
-            })
+            errors.append(
+                {
+                    "file": file_path,
+                    "line": int(line_num),
+                    "message": message.strip(),
+                    "error_code": error_code.strip("[]") if error_code else "general",
+                }
+            )
 
     return errors
+
 
 def categorize_errors(errors):
     """将错误分类"""
     categories = {
-        'name_not_defined': [],
-        'unexpected_keyword': [],
-        'no_any_return': [],
-        'assignment_issue': [],
-        'return_type': [],
-        'attribute_error': [],
-        'import_not_found': [],
-        'type_annotation': [],
-        'unreachable_code': [],
-        'unused_ignore': [],
-        'other': []
+        "name_not_defined": [],
+        "unexpected_keyword": [],
+        "no_any_return": [],
+        "assignment_issue": [],
+        "return_type": [],
+        "attribute_error": [],
+        "import_not_found": [],
+        "type_annotation": [],
+        "unreachable_code": [],
+        "unused_ignore": [],
+        "other": [],
     }
 
     for error in errors:
-        message = error['message'].lower()
+        message = error["message"].lower()
 
-        if 'name "' in message and ' is not defined' in message:
-            categories['name_not_defined'].append(error)
-        elif 'unexpected keyword argument' in message:
-            categories['unexpected_keyword'].append(error)
-        elif 'returning any' in message and 'declared to return' in message:
-            categories['no_any_return'].append(error)
-        elif 'assignment' in message or 'incompatible types in assignment' in message:
-            categories['assignment_issue'].append(error)
-        elif 'return value' in message or 'incompatible return value' in message:
-            categories['return_type'].append(error)
-        elif 'has no attribute' in message:
-            categories['attribute_error'].append(error)
-        elif 'cannot find implementation' in message or 'import-not-found' in message:
-            categories['import_not_found'].append(error)
-        elif 'need type annotation' in message or 'annotation' in message:
-            categories['type_annotation'].append(error)
-        elif 'unreachable' in message:
-            categories['unreachable_code'].append(error)
+        if 'name "' in message and " is not defined" in message:
+            categories["name_not_defined"].append(error)
+        elif "unexpected keyword argument" in message:
+            categories["unexpected_keyword"].append(error)
+        elif "returning any" in message and "declared to return" in message:
+            categories["no_any_return"].append(error)
+        elif "assignment" in message or "incompatible types in assignment" in message:
+            categories["assignment_issue"].append(error)
+        elif "return value" in message or "incompatible return value" in message:
+            categories["return_type"].append(error)
+        elif "has no attribute" in message:
+            categories["attribute_error"].append(error)
+        elif "cannot find implementation" in message or "import-not-found" in message:
+            categories["import_not_found"].append(error)
+        elif "need type annotation" in message or "annotation" in message:
+            categories["type_annotation"].append(error)
+        elif "unreachable" in message:
+            categories["unreachable_code"].append(error)
         elif 'unused "type: ignore" comment' in message:
-            categories['unused_ignore'].append(error)
+            categories["unused_ignore"].append(error)
         else:
-            categories['other'].append(error)
+            categories["other"].append(error)
 
     return categories
+
 
 def generate_report(errors, categories):
     """生成分析报告"""
@@ -104,7 +110,7 @@ def generate_report(errors, categories):
     print()
 
     # 按文件统计
-    file_errors = Counter(error['file'] for error in errors)
+    file_errors = Counter(error["file"] for error in errors)
     print("📁 错误最多的文件:")
     for file_path, count in file_errors.most_common(10):
         print(f"  {file_path}: {count} errors")
@@ -132,7 +138,7 @@ def generate_report(errors, categories):
     # 简单修复
     simple_fixes = []
     for category, items in categories.items():
-        if category in ['name_not_defined', 'unexpected_keyword', 'unused_ignore']:
+        if category in ["name_not_defined", "unexpected_keyword", "unused_ignore"]:
             simple_fixes.extend(items)
 
     if simple_fixes:
@@ -144,7 +150,7 @@ def generate_report(errors, categories):
     # 中等难度
     medium_fixes = []
     for category, items in categories.items():
-        if category in ['assignment_issue', 'return_type', 'type_annotation']:
+        if category in ["assignment_issue", "return_type", "type_annotation"]:
             medium_fixes.extend(items)
 
     if medium_fixes:
@@ -155,7 +161,7 @@ def generate_report(errors, categories):
     # 复杂问题
     complex_fixes = []
     for category, items in categories.items():
-        if category in ['no_any_return', 'attribute_error', 'import_not_found']:
+        if category in ["no_any_return", "attribute_error", "import_not_found"]:
             complex_fixes.extend(items)
 
     if complex_fixes:
@@ -163,6 +169,7 @@ def generate_report(errors, categories):
         print("     - 重构代码避免 Any 类型")
         print("     - 修复属性访问错误")
         print("     - 解决导入问题")
+
 
 def main():
     """主函数"""
@@ -189,14 +196,19 @@ def main():
     generate_report(errors, categories)
 
     # 保存详细数据
-    with open('/home/user/projects/FootballPrediction/mypy_error_analysis.json', 'w') as f:
-        json.dump({
-            'total_errors': len(errors),
-            'categories': {k: len(v) for k, v in categories.items()},
-            'errors': errors
-        }, f, indent=2)
+    with open("/home/user/projects/FootballPrediction/mypy_error_analysis.json", "w") as f:
+        json.dump(
+            {
+                "total_errors": len(errors),
+                "categories": {k: len(v) for k, v in categories.items()},
+                "errors": errors,
+            },
+            f,
+            indent=2,
+        )
 
     print("\n💾 详细数据已保存到 mypy_error_analysis.json")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

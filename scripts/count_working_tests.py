@@ -114,9 +114,7 @@ def main():
     print(f"总计测试: {total_passed + total_failed + total_errors}")
 
     if total_passed + total_failed + total_errors > 0:
-        success_rate = (
-            total_passed / (total_passed + total_failed + total_errors)
-        ) * 100
+        success_rate = (total_passed / (total_passed + total_failed + total_errors)) * 100
         print(f"通过率: {success_rate:.1f}%")
 
     print("\n🎯 任务 1.3 目标：至少20个测试能够运行")

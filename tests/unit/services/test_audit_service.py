@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock, Mock, patch
-
 """
 import sys
 from pathlib import Path
@@ -13,9 +11,6 @@ Tests for Audit Service
 
 测试src.services.audit_service模块的功能
 """
-
-from datetime import datetime, timedelta
-from typing import Any, Dict
 
 import pytest
 
@@ -106,9 +101,7 @@ class TestAuditContext:
 
     def test_context_creation_full(self):
         """测试：创建完整上下文"""
-        context = AuditContext(
-            user_id="user456", session_id="session789", ip_address="192.168.1.1"
-        )
+        context = AuditContext(user_id="user456", session_id="session789", ip_address="192.168.1.1")
 
         assert context.user_id == "user456"
         assert context.session_id == "session789"
@@ -458,19 +451,14 @@ class TestAuditService:
     def test_event_logging_with_logging(self, audit_service):
         """测试：事件记录时的日志"""
         with patch("src.services.audit_service.logger") as mock_logger:
-            event = audit_service.log_event(
-                action="test_action", user="test_user", details={}
-            )
+            event = audit_service.log_event(action="test_action", user="test_user", details={})
 
-            mock_logger.info.assert_called_once_with(
-                "Audit event logged: test_action by test_user"
-            )
+            mock_logger.info.assert_called_once_with("Audit event logged: test_action by test_user")
             assert event is not None
 
     def test_concurrent_logging(self, audit_service):
         """测试：并发记录日志"""
         import threading
-        import time
 
         results = []
 
@@ -551,9 +539,7 @@ class TestAuditService:
 
         # 记录大量事件
         for i in range(1000):
-            audit_service.log_event(
-                action=f"action_{i}", user="perf_test", details={"index": i}
-            )
+            audit_service.log_event(action=f"action_{i}", user="perf_test", details={"index": i})
 
         end_time = time.time()
         duration = end_time - start_time

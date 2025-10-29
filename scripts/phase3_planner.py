@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 from datetime import datetime
 
+
 class Phase3FinalBoost:
     def __init__(self):
         self.phase3_modules = []
@@ -22,25 +23,25 @@ class Phase3FinalBoost:
 
         # 加载覆盖率分析结果
         try:
-            with open('coverage_analysis_result.json', 'r') as f:
+            with open("coverage_analysis_result.json", "r") as f:
                 coverage_data = json.load(f)
         except FileNotFoundError:
             print("⚠️ 未找到覆盖率分析文件，使用默认配置")
             return self._create_default_plan()
 
         # 统计当前状态
-        total_modules = len(coverage_data.get('modules', []))
+        total_modules = len(coverage_data.get("modules", []))
         high_priority_modules = []
         medium_priority_modules = []
         low_priority_modules = []
 
-        for module in coverage_data.get('modules', []):
-            coverage = module.get('coverage', 0)
-            priority = module.get('priority', 'LOW')
+        for module in coverage_data.get("modules", []):
+            coverage = module.get("coverage", 0)
+            priority = module.get("priority", "LOW")
 
-            if priority == 'HIGH' and coverage < 50:
+            if priority == "HIGH" and coverage < 50:
                 high_priority_modules.append(module)
-            elif priority == 'MEDIUM' and coverage < 60:
+            elif priority == "MEDIUM" and coverage < 60:
                 medium_priority_modules.append(module)
             elif coverage < 40:
                 low_priority_modules.append(module)
@@ -74,79 +75,85 @@ class Phase3FinalBoost:
 
         # 从高优先级中选择10个
         for module in high_pri[:10]:
-            self.phase3_modules.append({
-                'path': module.get('path', ''),
-                'current_coverage': module.get('coverage', 0),
-                'target_coverage': 75,
-                'priority': 'HIGH',
-                'module_type': self._classify_module(module.get('path', '')),
-                'reason': '高优先级核心模块'
-            })
+            self.phase3_modules.append(
+                {
+                    "path": module.get("path", ""),
+                    "current_coverage": module.get("coverage", 0),
+                    "target_coverage": 75,
+                    "priority": "HIGH",
+                    "module_type": self._classify_module(module.get("path", "")),
+                    "reason": "高优先级核心模块",
+                }
+            )
 
         # 2. 中优先级模块 (8个)
         for module in med_pri[:8]:
-            self.phase3_modules.append({
-                'path': module.get('path', ''),
-                'current_coverage': module.get('coverage', 0),
-                'target_coverage': 70,
-                'priority': 'MEDIUM',
-                'module_type': self._classify_module(module.get('path', '')),
-                'reason': '中优先级业务模块'
-            })
+            self.phase3_modules.append(
+                {
+                    "path": module.get("path", ""),
+                    "current_coverage": module.get("coverage", 0),
+                    "target_coverage": 70,
+                    "priority": "MEDIUM",
+                    "module_type": self._classify_module(module.get("path", "")),
+                    "reason": "中优先级业务模块",
+                }
+            )
 
         # 3. 低优先级但有价值的模块 (7个)
         for module in low_pri[:7]:
-            self.phase3_modules.append({
-                'path': module.get('path', ''),
-                'current_coverage': module.get('coverage', 0),
-                'target_coverage': 65,
-                'priority': 'LOW',
-                'module_type': self._classify_module(module.get('path', '')),
-                'reason': '补充覆盖完整性'
-            })
+            self.phase3_modules.append(
+                {
+                    "path": module.get("path", ""),
+                    "current_coverage": module.get("coverage", 0),
+                    "target_coverage": 65,
+                    "priority": "LOW",
+                    "module_type": self._classify_module(module.get("path", "")),
+                    "reason": "补充覆盖完整性",
+                }
+            )
 
         # 4. 集成测试模块 (5个)
         integration_modules = [
             {
-                'path': 'integration/api_endpoints_test.py',
-                'current_coverage': 0,
-                'target_coverage': 80,
-                'priority': 'HIGH',
-                'module_type': 'integration',
-                'reason': 'API端点集成测试'
+                "path": "integration/api_endpoints_test.py",
+                "current_coverage": 0,
+                "target_coverage": 80,
+                "priority": "HIGH",
+                "module_type": "integration",
+                "reason": "API端点集成测试",
             },
             {
-                'path': 'integration/database_operations_test.py',
-                'current_coverage': 0,
-                'target_coverage': 80,
-                'priority': 'HIGH',
-                'module_type': 'integration',
-                'reason': '数据库操作集成测试'
+                "path": "integration/database_operations_test.py",
+                "current_coverage": 0,
+                "target_coverage": 80,
+                "priority": "HIGH",
+                "module_type": "integration",
+                "reason": "数据库操作集成测试",
             },
             {
-                'path': 'integration/cache_integration_test.py',
-                'current_coverage': 0,
-                'target_coverage': 80,
-                'priority': 'MEDIUM',
-                'module_type': 'integration',
-                'reason': '缓存集成测试'
+                "path": "integration/cache_integration_test.py",
+                "current_coverage": 0,
+                "target_coverage": 80,
+                "priority": "MEDIUM",
+                "module_type": "integration",
+                "reason": "缓存集成测试",
             },
             {
-                'path': 'e2e/prediction_workflow_test.py',
-                'current_coverage': 0,
-                'target_coverage': 80,
-                'priority': 'MEDIUM',
-                'module_type': 'e2e',
-                'reason': '预测工作流端到端测试'
+                "path": "e2e/prediction_workflow_test.py",
+                "current_coverage": 0,
+                "target_coverage": 80,
+                "priority": "MEDIUM",
+                "module_type": "e2e",
+                "reason": "预测工作流端到端测试",
             },
             {
-                'path': 'e2e/data_pipeline_test.py',
-                'current_coverage': 0,
-                'target_coverage': 80,
-                'priority': 'MEDIUM',
-                'module_type': 'e2e',
-                'reason': '数据管道端到端测试'
-            }
+                "path": "e2e/data_pipeline_test.py",
+                "current_coverage": 0,
+                "target_coverage": 80,
+                "priority": "MEDIUM",
+                "module_type": "e2e",
+                "reason": "数据管道端到端测试",
+            },
         ]
 
         self.phase3_modules.extend(integration_modules)
@@ -158,28 +165,28 @@ class Phase3FinalBoost:
 
     def _classify_module(self, path):
         """分类模块类型"""
-        if 'models' in path:
-            return 'model'
-        elif 'api' in path:
-            return 'api'
-        elif 'strategies' in path:
-            return 'strategy'
-        elif 'repositories' in path:
-            return 'repository'
-        elif 'services' in path:
-            return 'service'
-        elif 'utils' in path:
-            return 'utility'
-        elif 'collectors' in path:
-            return 'collector'
+        if "models" in path:
+            return "model"
+        elif "api" in path:
+            return "api"
+        elif "strategies" in path:
+            return "strategy"
+        elif "repositories" in path:
+            return "repository"
+        elif "services" in path:
+            return "service"
+        elif "utils" in path:
+            return "utility"
+        elif "collectors" in path:
+            return "collector"
         else:
-            return 'other'
+            return "other"
 
     def _print_module_summary(self):
         """打印模块分类摘要"""
         categories = {}
         for module in self.phase3_modules:
-            category = module['module_type']
+            category = module["module_type"]
             if category not in categories:
                 categories[category] = []
             categories[category].append(module)
@@ -194,35 +201,45 @@ class Phase3FinalBoost:
 
         default_modules = [
             # API模块
-            {'path': 'api/repositories.py', 'priority': 'HIGH', 'module_type': 'api'},
-            {'path': 'api/data_collector.py', 'priority': 'HIGH', 'module_type': 'api'},
-            {'path': 'api/prediction_engine.py', 'priority': 'HIGH', 'module_type': 'api'},
-
+            {"path": "api/repositories.py", "priority": "HIGH", "module_type": "api"},
+            {"path": "api/data_collector.py", "priority": "HIGH", "module_type": "api"},
+            {"path": "api/prediction_engine.py", "priority": "HIGH", "module_type": "api"},
             # 服务模块
-            {'path': 'services/data_service.py', 'priority': 'HIGH', 'module_type': 'service'},
-            {'path': 'services/cache_service.py', 'priority': 'HIGH', 'module_type': 'service'},
-            {'path': 'services/prediction_service.py', 'priority': 'HIGH', 'module_type': 'service'},
-
+            {"path": "services/data_service.py", "priority": "HIGH", "module_type": "service"},
+            {"path": "services/cache_service.py", "priority": "HIGH", "module_type": "service"},
+            {
+                "path": "services/prediction_service.py",
+                "priority": "HIGH",
+                "module_type": "service",
+            },
             # 领域模块
-            {'path': 'domain/services/prediction_service.py', 'priority': 'MEDIUM', 'module_type': 'service'},
-            {'path': 'domain/services/match_service.py', 'priority': 'MEDIUM', 'module_type': 'service'},
-
+            {
+                "path": "domain/services/prediction_service.py",
+                "priority": "MEDIUM",
+                "module_type": "service",
+            },
+            {
+                "path": "domain/services/match_service.py",
+                "priority": "MEDIUM",
+                "module_type": "service",
+            },
             # 工具模块
-            {'path': 'utils/data_processor.py', 'priority': 'MEDIUM', 'module_type': 'utility'},
-            {'path': 'utils/config_loader.py', 'priority': 'MEDIUM', 'module_type': 'utility'},
-
+            {"path": "utils/data_processor.py", "priority": "MEDIUM", "module_type": "utility"},
+            {"path": "utils/config_loader.py", "priority": "MEDIUM", "module_type": "utility"},
             # 集成测试
-            {'path': 'integration/api_test.py', 'priority': 'HIGH', 'module_type': 'integration'},
-            {'path': 'e2e/workflow_test.py', 'priority': 'MEDIUM', 'module_type': 'e2e'},
+            {"path": "integration/api_test.py", "priority": "HIGH", "module_type": "integration"},
+            {"path": "e2e/workflow_test.py", "priority": "MEDIUM", "module_type": "e2e"},
         ]
 
         for module in default_modules:
-            self.phase3_modules.append({
-                **module,
-                'current_coverage': 0,
-                'target_coverage': 75,
-                'reason': f'{module["priority"]}优先级{module["module_type"]}模块'
-            })
+            self.phase3_modules.append(
+                {
+                    **module,
+                    "current_coverage": 0,
+                    "target_coverage": 75,
+                    "reason": f'{module["priority"]}优先级{module["module_type"]}模块',
+                }
+            )
 
         return self.phase3_modules
 
@@ -544,7 +561,7 @@ if __name__ == "__main__":
 '''
 
         # 写入生成器文件
-        with open('scripts/phase3_final_boost.py', 'w', encoding='utf-8') as f:
+        with open("scripts/phase3_final_boost.py", "w", encoding="utf-8") as f:
             f.write(generator_content)
 
         print("✅ 阶段3测试生成器已创建: scripts/phase3_final_boost.py")
@@ -568,12 +585,18 @@ if __name__ == "__main__":
         try:
             # 导入并执行生成器
             import sys
-            sys.path.append('scripts')
+
+            sys.path.append("scripts")
 
             # 这里我们直接执行，不导入
             import subprocess
-            result = subprocess.run(['python3', 'scripts/phase3_final_boost.py'],
-                                  capture_output=True, text=True, cwd='.')
+
+            result = subprocess.run(
+                ["python3", "scripts/phase3_final_boost.py"],
+                capture_output=True,
+                text=True,
+                cwd=".",
+            )
 
             if result.returncode == 0:
                 print("✅ 阶段3执行成功！")
@@ -587,6 +610,7 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"❌ 执行失败: {e}")
             return False
+
 
 def run_phase3_analysis():
     """运行阶段3分析和规划"""
@@ -602,6 +626,7 @@ def run_phase3_analysis():
         print("📋 下一步: 执行测试生成和覆盖率验证")
 
     return success
+
 
 if __name__ == "__main__":
     run_phase3_analysis()

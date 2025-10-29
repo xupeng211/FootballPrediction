@@ -22,14 +22,14 @@ from sklearn.preprocessing import StandardScaler, LabelEncoder
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 # 检查ML库可用性
 try:
     import xgboost as xgb
+
     XGB_AVAILABLE = True
     logger.info("✅ XGBoost可用")
 except ImportError:
@@ -38,6 +38,7 @@ except ImportError:
 
 try:
     import lightgbm as lgb
+
     LGB_AVAILABLE = True
     logger.info("✅ LightGBM可用")
 except ImportError:
@@ -49,7 +50,7 @@ SRS_BASELINE = {
     "accuracy": 0.68,
     "data_points": 1500,
     "features": 45,
-    "distribution": {"draw": 791, "home_win": 480, "away_win": 229}
+    "distribution": {"draw": 791, "home_win": 480, "away_win": 229},
 }
 
 
@@ -61,20 +62,59 @@ def generate_test_data(n_samples: int = 1000) -> tuple[pd.DataFrame, pd.Series]:
 
     # 基于SRS的特征工程
     feature_names = [
-        'home_team_strength', 'away_team_strength', 'home_form', 'away_form',
-        'head_to_head_home', 'head_to_head_away', 'home_goals_scored', 'away_goals_scored',
-        'home_goals_conceded', 'away_goals_conceded', 'home_win_rate', 'away_win_rate',
-        'home_draw_rate', 'away_draw_rate', 'home_loss_rate', 'away_loss_rate',
-        'home_clean_sheets', 'away_clean_sheets', 'home_failed_to_score', 'away_failed_to_score',
-        'avg_total_goals', 'avg_home_goals', 'avg_away_goals',
-        'home_shots_on_target', 'away_shots_on_target', 'home_corners', 'away_corners',
-        'home_fouls', 'away_fouls', 'home_yellow_cards', 'away_yellow_cards',
-        'home_red_cards', 'away_red_cards', 'home_possession', 'away_possession',
-        'travel_distance', 'rest_days', 'weather_impact', 'referee_tendency',
-        'stadium_advantage', 'season_phase', 'motivation_factor', 'injury_impact',
-        'market_odds_home', 'market_odds_draw', 'market_odds_away',
-        'betting_volume', 'momentum_home', 'momentum_away',
-        'xg_home', 'xg_away', 'xga_home', 'xga_away'
+        "home_team_strength",
+        "away_team_strength",
+        "home_form",
+        "away_form",
+        "head_to_head_home",
+        "head_to_head_away",
+        "home_goals_scored",
+        "away_goals_scored",
+        "home_goals_conceded",
+        "away_goals_conceded",
+        "home_win_rate",
+        "away_win_rate",
+        "home_draw_rate",
+        "away_draw_rate",
+        "home_loss_rate",
+        "away_loss_rate",
+        "home_clean_sheets",
+        "away_clean_sheets",
+        "home_failed_to_score",
+        "away_failed_to_score",
+        "avg_total_goals",
+        "avg_home_goals",
+        "avg_away_goals",
+        "home_shots_on_target",
+        "away_shots_on_target",
+        "home_corners",
+        "away_corners",
+        "home_fouls",
+        "away_fouls",
+        "home_yellow_cards",
+        "away_yellow_cards",
+        "home_red_cards",
+        "away_red_cards",
+        "home_possession",
+        "away_possession",
+        "travel_distance",
+        "rest_days",
+        "weather_impact",
+        "referee_tendency",
+        "stadium_advantage",
+        "season_phase",
+        "motivation_factor",
+        "injury_impact",
+        "market_odds_home",
+        "market_odds_draw",
+        "market_odds_away",
+        "betting_volume",
+        "momentum_home",
+        "momentum_away",
+        "xg_home",
+        "xg_away",
+        "xga_home",
+        "xga_away",
     ]
 
     X = np.random.randn(n_samples, len(feature_names))
@@ -82,16 +122,16 @@ def generate_test_data(n_samples: int = 1000) -> tuple[pd.DataFrame, pd.Series]:
 
     # 基于SRS分布生成结果
     probabilities = [0.53, 0.32, 0.15]  # draw, home_win, away_win
-    results = np.random.choice(['draw', 'home_win', 'away_win'],
-                              size=n_samples, p=probabilities)
+    results = np.random.choice(["draw", "home_win", "away_win"], size=n_samples, p=probabilities)
     y = pd.Series(results)
 
     logger.info(f"数据分布: {y.value_counts().to_dict()}")
     return X_df, y
 
 
-def test_xgboost(X_train: pd.DataFrame, X_test: pd.DataFrame,
-                y_train: pd.Series, y_test: pd.Series) -> Dict[str, Any]:
+def test_xgboost(
+    X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Series, y_test: pd.Series
+) -> Dict[str, Any]:
     """测试XGBoost模型"""
     if not XGB_AVAILABLE:
         return {"error": "XGBoost不可用"}
@@ -115,8 +155,8 @@ def test_xgboost(X_train: pd.DataFrame, X_test: pd.DataFrame,
         max_depth=5,
         learning_rate=0.1,
         random_state=42,
-        eval_metric='mlogloss',
-        use_label_encoder=False
+        eval_metric="mlogloss",
+        use_label_encoder=False,
     )
 
     model.fit(X_train_scaled, y_train_encoded)
@@ -135,7 +175,9 @@ def test_xgboost(X_train: pd.DataFrame, X_test: pd.DataFrame,
         "accuracy": accuracy,
         "training_time": training_time,
         "feature_importance": top_features,
-        "improvement_over_srs": (accuracy - SRS_BASELINE["accuracy"]) / SRS_BASELINE["accuracy"] * 100
+        "improvement_over_srs": (accuracy - SRS_BASELINE["accuracy"])
+        / SRS_BASELINE["accuracy"]
+        * 100,
     }
 
     logger.info(f"  XGBoost准确率: {accuracy:.4f} (训练时间: {training_time:.2f}s)")
@@ -144,8 +186,9 @@ def test_xgboost(X_train: pd.DataFrame, X_test: pd.DataFrame,
     return result
 
 
-def test_lightgbm(X_train: pd.DataFrame, X_test: pd.DataFrame,
-                  y_train: pd.Series, y_test: pd.Series) -> Dict[str, Any]:
+def test_lightgbm(
+    X_train: pd.DataFrame, X_test: pd.DataFrame, y_train: pd.Series, y_test: pd.Series
+) -> Dict[str, Any]:
     """测试LightGBM模型"""
     if not LGB_AVAILABLE:
         return {"error": "LightGBM不可用"}
@@ -165,11 +208,7 @@ def test_lightgbm(X_train: pd.DataFrame, X_test: pd.DataFrame,
 
     # LightGBM模型
     model = lgb.LGBMClassifier(
-        n_estimators=100,
-        max_depth=5,
-        learning_rate=0.1,
-        random_state=42,
-        verbose=-1
+        n_estimators=100, max_depth=5, learning_rate=0.1, random_state=42, verbose=-1
     )
 
     model.fit(X_train_scaled, y_train_encoded)
@@ -188,7 +227,9 @@ def test_lightgbm(X_train: pd.DataFrame, X_test: pd.DataFrame,
         "accuracy": accuracy,
         "training_time": training_time,
         "feature_importance": top_features,
-        "improvement_over_srs": (accuracy - SRS_BASELINE["accuracy"]) / SRS_BASELINE["accuracy"] * 100
+        "improvement_over_srs": (accuracy - SRS_BASELINE["accuracy"])
+        / SRS_BASELINE["accuracy"]
+        * 100,
     }
 
     logger.info(f"  LightGBM准确率: {accuracy:.4f} (训练时间: {training_time:.2f}s)")
@@ -242,20 +283,17 @@ def main():
 
     validation_report = {
         "timestamp": datetime.now().isoformat(),
-        "environment": {
-            "xgboost_available": XGB_AVAILABLE,
-            "lightgbm_available": LGB_AVAILABLE
-        },
+        "environment": {"xgboost_available": XGB_AVAILABLE, "lightgbm_available": LGB_AVAILABLE},
         "data_info": {
             "total_samples": len(X),
             "training_samples": len(X_train),
             "test_samples": len(X_test),
             "features": len(X.columns),
-            "distribution": y.value_counts().to_dict()
+            "distribution": y.value_counts().to_dict(),
         },
         "srs_baseline": SRS_BASELINE,
         "results": results,
-        "summary": {}
+        "summary": {},
     }
 
     # 找出最佳模型
@@ -265,7 +303,7 @@ def main():
             "best_model": best_result["model"],
             "best_accuracy": best_result["accuracy"],
             "improvement_over_srs": best_result["improvement_over_srs"],
-            "models_tested": len(results)
+            "models_tested": len(results),
         }
 
         logger.info(f"🏆 最佳模型: {best_result['model']}")

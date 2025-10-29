@@ -27,18 +27,14 @@ class TestMatchUpdateFlow:
         match_data = {
             "home_team_id": teams[0]["id"],
             "away_team_id": teams[1]["id"],
-            "match_date": (
-                datetime.now(timezone.utc) + timedelta(minutes=30)
-            ).isoformat(),
+            "match_date": (datetime.now(timezone.utc) + timedelta(minutes=30)).isoformat(),
             "competition": "E2E Live League",
             "season": "2024/2025",
             "status": "SCHEDULED",
             "venue": "E2E Live Stadium",
         }
 
-        response = await api_client.post(
-            "/api/v1/matches", json=match_data, headers=admin_headers
-        )
+        response = await api_client.post("/api/v1/matches", json=match_data, headers=admin_headers)
         assert response.status_code == 201
         match = response.json()
         match_id = match["id"]
@@ -158,9 +154,7 @@ class TestMatchUpdateFlow:
 
             if websocket_client:
                 try:
-                    message = await asyncio.wait_for(
-                        websocket_client.recv(), timeout=1.0
-                    )
+                    message = await asyncio.wait_for(websocket_client.recv(), timeout=1.0)
                     update = json.loads(message)
                     print(f"✅ WebSocket 实时更新: {update.get('event')}")
                 except asyncio.TimeoutError:
@@ -225,9 +219,7 @@ class TestMatchUpdateFlow:
             match_data = {
                 "home_team_id": teams[i % len(teams)]["id"],
                 "away_team_id": teams[(i + 1) % len(teams)]["id"],
-                "match_date": (
-                    datetime.now(timezone.utc) + timedelta(minutes=i * 10)
-                ).isoformat(),
+                "match_date": (datetime.now(timezone.utc) + timedelta(minutes=i * 10)).isoformat(),
                 "competition": "E2E Matchday League",
                 "season": "2024/2025",
                 "status": "SCHEDULED",
@@ -301,9 +293,7 @@ class TestMatchUpdateFlow:
             "venue": "Stats Stadium",
         }
 
-        response = await api_client.post(
-            "/api/v1/matches", json=match_data, headers=admin_headers
-        )
+        response = await api_client.post("/api/v1/matches", json=match_data, headers=admin_headers)
         assert response.status_code == 201
         match = response.json()
 
@@ -389,9 +379,7 @@ class TestMatchUpdateFlow:
             "venue": "Interrupt Stadium",
         }
 
-        response = await api_client.post(
-            "/api/v1/matches", json=match_data, headers=admin_headers
-        )
+        response = await api_client.post("/api/v1/matches", json=match_data, headers=admin_headers)
         assert response.status_code == 201
         match = response.json()
         print(f"✅ 创建比赛: {match['competition']}")
@@ -415,8 +403,7 @@ class TestMatchUpdateFlow:
             "status": "SUSPENDED",
             "minute": 30,
             "reason": "Weather conditions - heavy rain",
-            "estimated_resume": datetime.now(timezone.utc)
-            + timedelta(minutes=15).isoformat(),
+            "estimated_resume": datetime.now(timezone.utc) + timedelta(minutes=15).isoformat(),
         }
 
         response = await api_client.patch(
@@ -468,9 +455,7 @@ class TestMatchUpdateFlow:
             )
 
             if response.status_code == 200:
-                print(
-                    f"⚽ 第{minute}分钟: {update_data['home_score']}-{update_data['away_score']}"
-                )
+                print(f"⚽ 第{minute}分钟: {update_data['home_score']}-{update_data['away_score']}")
 
         # 结束比赛
         end_data = {

@@ -187,9 +187,7 @@ class DependencyAuditor:
                 if context not in ["environment"] and info["version"] != "any":
                     duplicates[package].append(context)
 
-        duplicate_defs = {
-            pkg: ctxs for pkg, ctxs in duplicates.items() if len(ctxs) > 1
-        }
+        duplicate_defs = {pkg: ctxs for pkg, ctxs in duplicates.items() if len(ctxs) > 1}
         if duplicate_defs:
             self.issues.append(
                 {
@@ -257,9 +255,7 @@ class DependencyAuditor:
 
             for conflict in self.conflicts:
                 for version, contexts in conflict["versions"].items():
-                    report.append(
-                        f"| {conflict['package']} | {version} | {', '.join(contexts)} |"
-                    )
+                    report.append(f"| {conflict['package']} | {version} | {', '.join(contexts)} |")
         else:
             report.append("✅ **未发现版本冲突**\n")
 
@@ -287,9 +283,7 @@ class DependencyAuditor:
 
         env_total = sum(1 for p in self.dependencies.values() if "environment" in p)
         declared_total = sum(
-            1
-            for p in self.dependencies.values()
-            if any(ctx not in ["environment"] for ctx in p)
+            1 for p in self.dependencies.values() if any(ctx not in ["environment"] for ctx in p)
         )
 
         report.append(f"- **当前环境已安装**: {env_total} 个包")

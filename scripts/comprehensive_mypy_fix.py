@@ -99,10 +99,7 @@ class MyPyFixer:
 
                     # 提取缺失的模块名
                     missing_module = None
-                    if (
-                        "Cannot find implementation or library stub for module named"
-                        in message
-                    ):
+                    if "Cannot find implementation or library stub for module named" in message:
                         match = re.search(r'module named "([^"]+)"', message)
                         if match:
                             missing_module = match.group(1)
@@ -113,25 +110,15 @@ class MyPyFixer:
 
                             # 尝试添加常见的导入
                             if missing_name in ["pd", "np"]:
-                                if (
-                                    missing_name == "pd"
-                                    and "import pandas as pd" not in content
-                                ):
+                                if missing_name == "pd" and "import pandas as pd" not in content:
                                     lines = content.split("\n")
-                                    insert_idx = self._find_import_insert_position(
-                                        lines
-                                    )
+                                    insert_idx = self._find_import_insert_position(lines)
                                     lines.insert(insert_idx, "import pandas as pd")
                                     content = "\n".join(lines)
                                     modified = True
-                                elif (
-                                    missing_name == "np"
-                                    and "import numpy as np" not in content
-                                ):
+                                elif missing_name == "np" and "import numpy as np" not in content:
                                     lines = content.split("\n")
-                                    insert_idx = self._find_import_insert_position(
-                                        lines
-                                    )
+                                    insert_idx = self._find_import_insert_position(lines)
                                     lines.insert(insert_idx, "import numpy as np")
                                     content = "\n".join(lines)
                                     modified = True
@@ -148,9 +135,7 @@ class MyPyFixer:
                                 typing_import = self._extract_typing_import(content)
                                 if missing_name not in typing_import:
                                     lines = content.split("\n")
-                                    insert_idx = self._find_import_insert_position(
-                                        lines
-                                    )
+                                    insert_idx = self._find_import_insert_position(lines)
 
                                     if "from typing import" in content:
                                         # 添加到现有的 typing 导入
@@ -158,15 +143,13 @@ class MyPyFixer:
                                             if line.startswith("from typing import"):
                                                 types = [
                                                     t.strip()
-                                                    for t in line.split("import")[
-                                                        1
-                                                    ].split(",")
+                                                    for t in line.split("import")[1].split(",")
                                                 ]
                                                 if missing_name not in types:
                                                     types.append(missing_name)
-                                                    lines[
-                                                        i
-                                                    ] = f"from typing import {', '.join(sorted(types))}"
+                                                    lines[i] = (
+                                                        f"from typing import {', '.join(sorted(types))}"
+                                                    )
                                                     content = "\n".join(lines)
                                                     modified = True
                                                     break
@@ -196,9 +179,7 @@ class MyPyFixer:
 
         return False
 
-    def fix_annotation_errors(
-        self, file_path: Path, errors: List[Dict[str, Any]]
-    ) -> bool:
+    def fix_annotation_errors(self, file_path: Path, errors: List[Dict[str, Any]]) -> bool:
         """
         修复类型注解错误
 
@@ -224,9 +205,7 @@ class MyPyFixer:
                     # 修复 "Need type annotation for" 错误
                     if "Need type annotation for" in error["message"]:
                         # 提取变量名
-                        match = re.search(
-                            r'Need type annotation for "([^"]+)"', error["message"]
-                        )
+                        match = re.search(r'Need type annotation for "([^"]+)"', error["message"])
                         if match:
                             var_name = match.group(1)
 
@@ -268,14 +247,10 @@ class MyPyFixer:
                                         )
                                 elif value.startswith('"') or value.startswith("'"):
                                     # 字符串
-                                    new_line = line.replace(
-                                        f"{var_name} = ", f"{var_name}: str = "
-                                    )
+                                    new_line = line.replace(f"{var_name} = ", f"{var_name}: str = ")
                                 elif value.isdigit():
                                     # 整数
-                                    new_line = line.replace(
-                                        f"{var_name} = ", f"{var_name}: int = "
-                                    )
+                                    new_line = line.replace(f"{var_name} = ", f"{var_name}: int = ")
                                 elif value.replace(".", "").isdigit():
                                     # 浮点数
                                     new_line = line.replace(
@@ -307,10 +282,7 @@ class MyPyFixer:
                             modified = True
 
                     # 修复 "has no attribute" 错误
-                    elif (
-                        "has no attribute" in error["message"]
-                        and "Any" in error["message"]
-                    ):
+                    elif "has no attribute" in error["message"] and "Any" in error["message"]:
                         # 添加类型断言或 ignore
                         if "# type: ignore" not in line:
                             lines[line_num] = line + "  # type: ignore"
@@ -329,9 +301,7 @@ class MyPyFixer:
 
         return False
 
-    def fix_collection_errors(
-        self, file_path: Path, errors: List[Dict[str, Any]]
-    ) -> bool:
+    def fix_collection_errors(self, file_path: Path, errors: List[Dict[str, Any]]) -> bool:
         """
         修复集合类型错误
 
@@ -460,9 +430,7 @@ class MyPyFixer:
             file_fixed = False
 
             # 1. 修复导入错误
-            import_errors = [
-                e for e in errors if e["code"] in ["import-not-found", "name-defined"]
-            ]
+            import_errors = [e for e in errors if e["code"] in ["import-not-found", "name-defined"]]
             if import_errors:
                 if self.fix_import_errors(path, import_errors):
                     file_fixed = True
@@ -470,9 +438,7 @@ class MyPyFixer:
 
             # 2. 修复类型注解错误
             annotation_errors = [
-                e
-                for e in errors
-                if e["code"] in ["var-annotated", "return-value", "assignment"]
+                e for e in errors if e["code"] in ["var-annotated", "return-value", "assignment"]
             ]
             if annotation_errors:
                 if self.fix_annotation_errors(path, annotation_errors):
@@ -587,9 +553,7 @@ def main():
             code = error["code"]
             error_types[code] = error_types.get(code, 0) + 1
 
-        for code, count in sorted(
-            error_types.items(), key=lambda x: x[1], reverse=True
-        ):
+        for code, count in sorted(error_types.items(), key=lambda x: x[1], reverse=True):
             print(f"  {code}: {count} 个")
     else:
         print("\n✅ 所有错误已修复！")

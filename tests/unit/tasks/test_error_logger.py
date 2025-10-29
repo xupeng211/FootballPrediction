@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 16 repeated Mock creations
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 """
 任务错误日志记录器测试
@@ -12,7 +11,6 @@ Tests for Task Error Logger
 """
 
 import asyncio
-import traceback
 from datetime import datetime
 
 import pytest
@@ -30,9 +28,7 @@ except ImportError as e:
     CollectionStatus = None
 
 
-@pytest.mark.skipif(
-    not ERROR_LOGGER_AVAILABLE, reason="Error logger module not available"
-)
+@pytest.mark.skipif(not ERROR_LOGGER_AVAILABLE, reason="Error logger module not available")
 @pytest.mark.unit
 class TestTaskErrorLogger:
     """任务错误日志记录器测试"""
@@ -203,9 +199,7 @@ class TestTaskErrorLogger:
             await logger.log_batch_errors(errors)
 
             # 验证批量插入
-            assert (
-                mock_session.execute.call_count >= 1 or mock_session.add.call_count >= 1
-            )
+            assert mock_session.execute.call_count >= 1 or mock_session.add.call_count >= 1
 
     def test_error_context_serialization(self):
         """测试：错误上下文序列化"""
@@ -356,9 +350,7 @@ class TestTaskErrorLogger:
                         mock_notify.assert_called()
 
 
-@pytest.mark.skipif(
-    ERROR_LOGGER_AVAILABLE, reason="Error logger module should be available"
-)
+@pytest.mark.skipif(ERROR_LOGGER_AVAILABLE, reason="Error logger module should be available")
 class TestModuleNotAvailable:
     """模块不可用时的测试"""
 
@@ -377,9 +369,7 @@ def test_module_imports():
         assert TaskErrorLogger is not None
 
 
-@pytest.mark.skipif(
-    not ERROR_LOGGER_AVAILABLE, reason="Error logger module not available"
-)
+@pytest.mark.skipif(not ERROR_LOGGER_AVAILABLE, reason="Error logger module not available")
 class TestTaskErrorLoggerIntegration:
     """任务错误日志记录器集成测试"""
 
@@ -431,9 +421,7 @@ class TestTaskErrorLoggerIntegration:
             )
 
             # 验证所有记录都被保存
-            assert (
-                mock_session.execute.call_count >= 3 or mock_session.add.call_count >= 3
-            )
+            assert mock_session.execute.call_count >= 3 or mock_session.add.call_count >= 3
 
     @pytest.mark.asyncio
     async def test_concurrent_error_logging(self):
@@ -460,10 +448,7 @@ class TestTaskErrorLoggerIntegration:
             await log_errors()
 
             # 验证并发操作处理
-            assert (
-                mock_session.execute.call_count >= 10
-                or mock_session.add.call_count >= 10
-            )
+            assert mock_session.execute.call_count >= 10 or mock_session.add.call_count >= 10
 
     def test_error_logging_performance(self):
         """测试：错误记录性能"""

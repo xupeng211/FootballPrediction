@@ -11,11 +11,13 @@ from src.main import app
 
 client = TestClient(app)
 
+
 def test_decorators_stats():
     """测试获取装饰器统计信息端点"""
     response = client.get("/api/v1/decorators/stats")
     assert response.status_code in [200, 500]
     print(f"Stats response: {response.json()}")
+
 
 def test_decorators_stats_clear():
     """测试清空统计信息端点"""
@@ -23,11 +25,13 @@ def test_decorators_stats_clear():
     assert response.status_code in [200, 500]
     print(f"Clear stats response: {response.json()}")
 
+
 def test_decorators_demo_logging():
     """测试日志装饰器演示端点"""
     response = client.get("/api/v1/decorators/demo/logging")
     assert response.status_code in [200, 500]
     print(f"Demo logging response: {response.json()}")
+
 
 def test_decorators_demo_retry():
     """测试重试装饰器演示端点"""
@@ -35,11 +39,13 @@ def test_decorators_demo_retry():
     assert response.status_code in [200, 500]
     print(f"Demo retry response: {response.json()}")
 
+
 def test_decorators_demo_cache():
     """测试缓存装饰器演示端点"""
     response = client.get("/api/v1/decorators/demo/cache")
     assert response.status_code in [200, 500]
     print(f"Demo cache response: {response.json()}")
+
 
 def test_decorators_demo_timeout():
     """测试超时装饰器演示端点"""
@@ -47,11 +53,13 @@ def test_decorators_demo_timeout():
     assert response.status_code in [200, 500]
     print(f"Demo timeout response: {response.json()}")
 
+
 def test_decorators_demo_metrics():
     """测试指标装饰器演示端点"""
     response = client.get("/api/v1/decorators/demo/metrics")
     assert response.status_code in [200, 500]
     print(f"Demo metrics response: {response.json()}")
+
 
 def test_decorators_demo_combo():
     """测试组合装饰器演示端点"""
@@ -59,11 +67,13 @@ def test_decorators_demo_combo():
     assert response.status_code in [200, 500]
     print(f"Demo combo response: {response.json()}")
 
+
 def test_decorators_configs():
     """测试获取装饰器配置端点"""
     response = client.get("/api/v1/decorators/configs")
     assert response.status_code in [200, 500]
     print(f"Configs response: {response.json()}")
+
 
 def test_decorators_reload():
     """测试重新加载装饰器配置端点"""
@@ -71,11 +81,13 @@ def test_decorators_reload():
     assert response.status_code in [200, 500]
     print(f"Reload response: {response.json()}")
 
+
 def test_decorators_demo_context():
     """测试装饰器上下文演示端点"""
     response = client.get("/api/v1/decorators/demo/context")
     assert response.status_code in [200, 500]
     print(f"Demo context response: {response.json()}")
+
 
 def test_all_decorators_endpoints():
     """测试所有decorators端点的综合测试"""
@@ -116,6 +128,7 @@ def test_all_decorators_endpoints():
     print(f"成功端点数: {success_count}/{total_endpoints}")
     success_rate = (success_count / total_endpoints) * 100
     print(f"成功率: {success_rate:.1f}%")
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "-s"])

@@ -8,7 +8,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 仓储模式单元测试
 """
 
-from datetime import datetime, timedelta
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -104,9 +103,7 @@ class TestMatchRepository:
         mock_execute.scalars.return_value.all.return_value = mock_matches
 
         with patch("sqlalchemy.select"):
-            with patch.object(
-                match_repo.db_manager, "execute", return_value=mock_execute
-            ):
+            with patch.object(match_repo.db_manager, "execute", return_value=mock_execute):
                 _result = await match_repo.get_upcoming_matches(days=7)
                 assert len(result) == 2
 
@@ -118,9 +115,7 @@ class TestMatchRepository:
         mock_execute.scalars.return_value.all.return_value = mock_matches
 
         with patch("sqlalchemy.select"):
-            with patch.object(
-                match_repo.db_manager, "execute", return_value=mock_execute
-            ):
+            with patch.object(match_repo.db_manager, "execute", return_value=mock_execute):
                 _result = await match_repo.get_matches_by_team(team_id=1, limit=10)
                 assert len(result) == 1
 
@@ -132,9 +127,7 @@ class TestMatchRepository:
         mock_execute.scalars.return_value.all.return_value = mock_matches
 
         with patch("sqlalchemy.select"):
-            with patch.object(
-                match_repo.db_manager, "execute", return_value=mock_execute
-            ):
+            with patch.object(match_repo.db_manager, "execute", return_value=mock_execute):
                 _result = await match_repo.get_live_matches()
                 assert len(result) == 3
 
@@ -145,9 +138,7 @@ class TestMatchRepository:
         mock_execute.return_value.first.return_value = (100, 50, 20)
 
         with patch("sqlalchemy.select"):
-            with patch.object(
-                match_repo.db_manager, "execute", return_value=mock_execute
-            ):
+            with patch.object(match_repo.db_manager, "execute", return_value=mock_execute):
                 _result = await match_repo.get_match_statistics()
                 assert _result["total_matches"] == 100
                 assert _result["completed_matches"] == 50
@@ -175,9 +166,7 @@ class TestUserRepository:
         mock_execute.scalars.return_value.first.return_value = mock_user
 
         with patch("sqlalchemy.select"):
-            with patch.object(
-                user_repo.db_manager, "execute", return_value=mock_execute
-            ):
+            with patch.object(user_repo.db_manager, "execute", return_value=mock_execute):
                 _result = await user_repo.get_user_by_username("testuser")
                 assert _result == mock_user
 
@@ -189,9 +178,7 @@ class TestUserRepository:
         mock_execute.scalars.return_value.first.return_value = mock_user
 
         with patch("sqlalchemy.select"):
-            with patch.object(
-                user_repo.db_manager, "execute", return_value=mock_execute
-            ):
+            with patch.object(user_repo.db_manager, "execute", return_value=mock_execute):
                 _result = await user_repo.get_user_by_email("test@example.com")
                 assert _result == mock_user
 

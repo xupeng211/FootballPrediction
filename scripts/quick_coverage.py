@@ -47,9 +47,7 @@ def main():
 
         print("\n详细统计:")
         print(f"  总覆盖率: {data['totals']['percent_covered']:.1f}%")
-        print(
-            f"  覆盖语句: {data['totals']['covered_lines']}/{data['totals']['num_statements']}"
-        )
+        print(f"  覆盖语句: {data['totals']['covered_lines']}/{data['totals']['num_statements']}")
 
         # 找出0%覆盖率的模块
         zero_modules = []

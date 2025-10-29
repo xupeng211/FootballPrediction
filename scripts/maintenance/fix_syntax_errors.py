@@ -7,22 +7,23 @@ Batch Fix Script for Test File Syntax Errors
 import os
 from pathlib import Path
 
+
 def fix_future_import_order(file_path):
     """修复__future__ import顺序问题"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         # 检查是否有__future__ import在后面
-        if 'from __future__ import annotations' in content:
-            lines = content.split('\n')
+        if "from __future__ import annotations" in content:
+            lines = content.split("\n")
             future_import_line = None
             other_imports = []
 
             for i, line in enumerate(lines):
-                if 'from __future__ import' in line and not future_import_line:
+                if "from __future__ import" in line and not future_import_line:
                     future_import_line = i
-                elif line.strip().startswith(('import', 'from')) and i > 0:
+                elif line.strip().startswith(("import", "from")) and i > 0:
                     other_imports.append(i)
 
             # 如果__future__ import不在第一行，需要移动
@@ -35,24 +36,29 @@ def fix_future_import_order(file_path):
 
                 # 重新组织import部分
                 future_imports = [future_line]
-                other_import_lines = [lines[i] for i in other_imports if lines[i].strip().startswith(('import', 'from'))]
+                other_import_lines = [
+                    lines[i]
+                    for i in other_imports
+                    if lines[i].strip().startswith(("import", "from"))
+                ]
 
                 # 组合新的import部分
                 new_import_section = future_imports + other_import_lines
 
                 # 重建文件内容
                 before_imports = lines[:future_import_line]
-                after_imports = lines[future_import_line + len(other_import_lines):]
+                after_imports = lines[future_import_line + len(other_import_lines) :]
 
-                new_content = '\n'.join(before_imports + new_import_section + after_imports)
+                new_content = "\n".join(before_imports + new_import_section + after_imports)
 
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write(new_content)
 
                 return True, "修复__future__ import顺序"
 
     except Exception as e:
         return False, f"修复失败: {e}"
+
 
 def check_and_fix_file(file_path):
     """检查并修复单个文件"""
@@ -65,8 +71,8 @@ def check_and_fix_file(file_path):
 
     # 2. 验证语法
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            compile(f.read(), file_path, 'exec')
+        with open(file_path, "r", encoding="utf-8") as f:
+            compile(f.read(), file_path, "exec")
         print("  ✅ 语法验证通过")
         return True
     except SyntaxError as e:
@@ -75,6 +81,7 @@ def check_and_fix_file(file_path):
     except Exception as e:
         print(f"  ❌ 验证失败: {e}")
         return False
+
 
 def main():
     """主函数"""
@@ -108,6 +115,7 @@ def main():
 
     print("\n🎯 继续运行更多文件！")
     return 0 if fixed_count > failed_count else 1
+
 
 if __name__ == "__main__":
     exit(main())

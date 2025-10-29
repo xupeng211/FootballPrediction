@@ -8,8 +8,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 API事件模块测试
 """
 
-from datetime import datetime, timedelta
-from typing import Any, Dict, List
 
 import pytest
 
@@ -87,7 +85,6 @@ class TestEventAPIRoutes:
                 mock_find.side_effect = find_handler_side_effect
 
                 # 直接调用函数逻辑
-                from src.api.events import AnalyticsEventHandler, MetricsEventHandler
 
                 _stats = mock_event_bus.get_stats()
                 detailed_stats = stats.copy()
@@ -104,10 +101,7 @@ class TestEventAPIRoutes:
 
                 assert detailed_stats["events_processed"] == 1000
                 assert detailed_stats["metrics"]["events_count"] == 500
-                assert (
-                    detailed_stats["analytics"]["top_events"][0]["event"]
-                    == "match_created"
-                )
+                assert detailed_stats["analytics"]["top_events"][0]["event"] == "match_created"
 
     def test_event_router_configuration(self):
         """测试事件路由配置"""
@@ -204,8 +198,6 @@ class TestEventAPIRoutes:
                     return None
 
                 mock_find.side_effect = find_handler_side_effect
-
-                from src.api.events import AnalyticsEventHandler, MetricsEventHandler
 
                 _stats = mock_bus.get_stats()
                 detailed_stats = stats.copy()

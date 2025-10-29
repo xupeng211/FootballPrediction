@@ -124,9 +124,7 @@ class TestUserPredictionFlow:
         # 7. 验证预测已保存
         performance_metrics.start_timer("verify_prediction")
 
-        response = await api_client.get(
-            f"/api/v1/predictions/{prediction['id']}", headers=headers
-        )
+        response = await api_client.get(f"/api/v1/predictions/{prediction['id']}", headers=headers)
         assert response.status_code == 200
         saved_prediction = response.json()
         assert saved_prediction["id"] == prediction["id"]
@@ -169,23 +167,15 @@ class TestUserPredictionFlow:
         )
 
         print("\n📊 流程性能指标:")
-        print(
-            f"  - 注册时间: {performance_metrics.get_duration('user_registration'):.2f}s"
-        )
+        print(f"  - 注册时间: {performance_metrics.get_duration('user_registration'):.2f}s")
         print(f"  - 登录时间: {performance_metrics.get_duration('user_login'):.2f}s")
-        print(
-            f"  - 获取比赛: {performance_metrics.get_duration('get_upcoming_matches'):.2f}s"
-        )
-        print(
-            f"  - 创建预测: {performance_metrics.get_duration('create_prediction'):.2f}s"
-        )
+        print(f"  - 获取比赛: {performance_metrics.get_duration('get_upcoming_matches'):.2f}s")
+        print(f"  - 创建预测: {performance_metrics.get_duration('create_prediction'):.2f}s")
         print(f"  - 总流程时间: {total_time:.2f}s")
 
         # 关键路径性能要求
         assert total_time < 10.0, f"完整流程耗时过长: {total_time:.2f}s"
-        assert (
-            performance_metrics.get_duration("create_prediction") < 2.0
-        ), "创建预测耗时过长"
+        assert performance_metrics.get_duration("create_prediction") < 2.0, "创建预测耗时过长"
 
     @pytest.mark.asyncio
     async def test_multiple_predictions_flow(
@@ -201,9 +191,7 @@ class TestUserPredictionFlow:
             match_data = {
                 "home_team_id": teams[i % len(teams)]["id"],
                 "away_team_id": teams[(i + 1) % len(teams)]["id"],
-                "match_date": (
-                    datetime.now(timezone.utc) + timedelta(days=i + 1)
-                ).isoformat(),
+                "match_date": (datetime.now(timezone.utc) + timedelta(days=i + 1)).isoformat(),
                 "competition": "E2E Multi League",
                 "season": "2024/2025",
                 "status": "UPCOMING",
@@ -249,9 +237,7 @@ class TestUserPredictionFlow:
         assert len(predictions) == 3
 
         # 获取用户预测列表
-        response = await api_client.get(
-            "/api/v1/users/me/predictions", headers=user_headers
-        )
+        response = await api_client.get("/api/v1/users/me/predictions", headers=user_headers)
         assert response.status_code == 200
         user_predictions = response.json()["data"]
 
@@ -448,9 +434,7 @@ class TestUserPredictionFlow:
             match_data = {
                 "home_team_id": teams[i]["id"],
                 "away_team_id": teams[i + 1]["id"],
-                "match_date": (
-                    datetime.now(timezone.utc) + timedelta(days=i + 1)
-                ).isoformat(),
+                "match_date": (datetime.now(timezone.utc) + timedelta(days=i + 1)).isoformat(),
                 "competition": "Concurrent League",
                 "season": "2024/2025",
                 "status": "UPCOMING",
@@ -484,9 +468,7 @@ class TestUserPredictionFlow:
                 "prediction": "HOME_WIN",
                 "confidence": 0.75,
             }
-            return await api_client.post(
-                "/api/v1/predictions", json=pred_data, headers=headers
-            )
+            return await api_client.post("/api/v1/predictions", json=pred_data, headers=headers)
 
         # 并发执行
         tasks = []
@@ -500,9 +482,7 @@ class TestUserPredictionFlow:
         success_count = sum(
             1
             for r in results
-            if isinstance(r, object)
-            and hasattr(r, "status_code")
-            and r.status_code == 201
+            if isinstance(r, object) and hasattr(r, "status_code") and r.status_code == 201
         )
         total_predictions = len(tasks)
 

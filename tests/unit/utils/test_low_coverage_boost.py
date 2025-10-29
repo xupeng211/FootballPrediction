@@ -8,7 +8,6 @@ import tempfile
 import time
 import uuid
 from pathlib import Path
-from unittest.mock import Mock, mock_open, patch
 
 import pytest
 

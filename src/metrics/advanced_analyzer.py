@@ -7,17 +7,11 @@ Advanced Quality Metrics Analyzer
 """
 
 import ast
-import os
-import subprocess
-import time
-from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
 
 import psutil
 
 from src.core.logging_system import get_logger
-from src.core.config import get_config
 
 logger = get_logger(__name__)
 
@@ -41,16 +35,10 @@ class CodeComplexityAnalyzer:
                 "lines_of_code": len(content.splitlines()),
                 "cyclomatic_complexity": self._calculate_cyclomatic_complexity(tree),
                 "cognitive_complexity": self._calculate_cognitive_complexity(tree),
-                "maintainability_index": self._calculate_maintainability_index(
-                    content, tree
-                ),
+                "maintainability_index": self._calculate_maintainability_index(content, tree),
                 "nesting_depth": self._calculate_max_nesting_depth(tree),
                 "function_count": len(
-                    [
-                        node
-                        for node in ast.walk(tree)
-                        if isinstance(node, ast.FunctionDef)
-                    ]
+                    [node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)]
                 ),
                 "class_count": len(
                     [node for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
@@ -76,9 +64,7 @@ class CodeComplexityAnalyzer:
                 complexity += 1
             elif isinstance(node, ast.BoolOp):
                 complexity += len(node.values) - 1
-            elif isinstance(
-                node, ast.ListComp, ast.DictComp, ast.SetComp, ast.GeneratorExp
-            ):
+            elif isinstance(node, ast.ListComp, ast.DictComp, ast.SetComp, ast.GeneratorExp):
                 complexity += 1
 
         return complexity
@@ -111,9 +97,7 @@ class CodeComplexityAnalyzer:
             return 100.0
 
         # 简化的可维护性指数计算
-        maintainability = max(
-            0, 171 - 5.2 * (cyclomatic_complexity**0.23) - 0.23 * (volume**0.5)
-        )
+        maintainability = max(0, 171 - 5.2 * (cyclomatic_complexity**0.23) - 0.23 * (volume**0.5))
         return round(maintainability, 2)
 
     def _calculate_max_nesting_depth(self, tree: ast.AST) -> int:
@@ -343,11 +327,7 @@ class TechnicalDebtAnalyzer:
                 for node in ast.walk(tree):
                     if isinstance(node, ast.FunctionDef):
                         start_line = node.lineno
-                        end_line = (
-                            node.end_lineno
-                            if hasattr(node, "end_lineno")
-                            else start_line
-                        )
+                        end_line = node.end_lineno if hasattr(node, "end_lineno") else start_line
                         method_length = end_line - start_line + 1
 
                         if method_length > 50:  # 长方法阈值
@@ -385,16 +365,10 @@ class TechnicalDebtAnalyzer:
                 for node in ast.walk(tree):
                     if isinstance(node, ast.ClassDef):
                         start_line = node.lineno
-                        end_line = (
-                            node.end_lineno
-                            if hasattr(node, "end_lineno")
-                            else start_line
-                        )
+                        end_line = node.end_lineno if hasattr(node, "end_lineno") else start_line
                         class_length = end_line - start_line + 1
 
-                        method_count = len(
-                            [n for n in node.body if isinstance(n, ast.FunctionDef)]
-                        )
+                        method_count = len([n for n in node.body if isinstance(n, ast.FunctionDef)])
 
                         if class_length > 200 or method_count > 20:  # 大类阈值
                             large_classes.append(
@@ -446,9 +420,7 @@ class TechnicalDebtAnalyzer:
                 # 找出未调用的函数（排除特殊方法）
                 unused_functions = defined_functions - called_functions
                 for func_name in unused_functions:
-                    if not func_name.startswith("_") and not func_name.startswith(
-                        "test_"
-                    ):
+                    if not func_name.startswith("_") and not func_name.startswith("test_"):
                         dead_code.append(
                             {
                                 "type": "dead_function",

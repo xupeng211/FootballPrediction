@@ -20,16 +20,14 @@ from collections import defaultdict
 import logging
 
 # 设置日志
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class CodeIssue:
     """代码问题数据类"""
+
     file_path: str
     line_number: int
     issue_type: str
@@ -42,6 +40,7 @@ class CodeIssue:
 @dataclass
 class CodeMetrics:
     """代码指标数据类"""
+
     file_path: str
     lines_of_code: int
     cyclomatic_complexity: int
@@ -66,7 +65,7 @@ class AutomatedCodeReviewer:
             "summary": {},
             "recommendations": [],
             "quality_score": 0.0,
-            "issue_98_methodology_applied": True
+            "issue_98_methodology_applied": True,
         }
 
         # 审查规则配置
@@ -82,7 +81,7 @@ class AutomatedCodeReviewer:
             "max_nesting_depth": 4,
             "min_test_coverage": 15.0,
             "duplicate_line_threshold": 5,
-            "magic_number_threshold": 10
+            "magic_number_threshold": 10,
         }
 
     def run_comprehensive_review(self) -> Dict[str, Any]:
@@ -120,8 +119,12 @@ class AutomatedCodeReviewer:
         # 7. 生成综合报告
         print("\n7️⃣ 生成综合审查报告...")
         self.generate_comprehensive_report(
-            issues, metrics, coverage_analysis,
-            duplication_analysis, security_issues, performance_issues
+            issues,
+            metrics,
+            coverage_analysis,
+            duplication_analysis,
+            security_issues,
+            performance_issues,
         )
 
         print("\n✅ 代码审查完成！")
@@ -155,7 +158,7 @@ class AutomatedCodeReviewer:
                 "severity": issue.severity,
                 "message": issue.message,
                 "suggestion": issue.suggestion,
-                "rule_id": issue.rule_id
+                "rule_id": issue.rule_id,
             }
             for issue in issues
         ]
@@ -168,23 +171,25 @@ class AutomatedCodeReviewer:
         issues = []
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
-                lines = content.split('\n')
+                lines = content.split("\n")
 
             # 解析AST
             try:
                 tree = ast.parse(content)
             except SyntaxError:
-                return [CodeIssue(
-                    file_path=str(file_path),
-                    line_number=1,
-                    issue_type="syntax_error",
-                    severity="critical",
-                    message="文件存在语法错误",
-                    suggestion="修复语法错误后重新审查",
-                    rule_id="SYNTAX001"
-                )]
+                return [
+                    CodeIssue(
+                        file_path=str(file_path),
+                        line_number=1,
+                        issue_type="syntax_error",
+                        severity="critical",
+                        message="文件存在语法错误",
+                        suggestion="修复语法错误后重新审查",
+                        rule_id="SYNTAX001",
+                    )
+                ]
 
             # 分析AST节点
             for node in ast.walk(tree):
@@ -201,7 +206,9 @@ class AutomatedCodeReviewer:
 
         return issues
 
-    def _analyze_ast_node(self, node: ast.AST, file_path: Path, lines: List[str]) -> List[CodeIssue]:
+    def _analyze_ast_node(
+        self, node: ast.AST, file_path: Path, lines: List[str]
+    ) -> List[CodeIssue]:
         """分析AST节点问题"""
         issues = []
 
@@ -209,56 +216,64 @@ class AutomatedCodeReviewer:
         if isinstance(node, ast.FunctionDef):
             complexity = self._calculate_cyclomatic_complexity(node)
             if complexity > self.review_rules["complexity_threshold"]:
-                issues.append(CodeIssue(
-                    file_path=str(file_path),
-                    line_number=node.lineno,
-                    issue_type="high_complexity",
-                    severity="high",
-                    message=f"函数 '{node.name}' 的圈复杂度过高: {complexity}",
-                    suggestion=f"建议将函数拆分为更小的函数，目标复杂度 < {self.review_rules['complexity_threshold']}",
-                    rule_id="COMPLEX001"
-                ))
-
-            # 函数长度检查
-            if hasattr(node, 'end_lineno') and node.end_lineno:
-                function_length = node.end_lineno - node.lineno + 1
-                if function_length > self.review_rules["function_length_limit"]:
-                    issues.append(CodeIssue(
+                issues.append(
+                    CodeIssue(
                         file_path=str(file_path),
                         line_number=node.lineno,
-                        issue_type="long_function",
-                        severity="medium",
-                        message=f"函数 '{node.name}' 过长: {function_length} 行",
-                        suggestion=f"建议将函数拆分，目标长度 < {self.review_rules['function_length_limit']} 行",
-                        rule_id="LENGTH001"
-                    ))
+                        issue_type="high_complexity",
+                        severity="high",
+                        message=f"函数 '{node.name}' 的圈复杂度过高: {complexity}",
+                        suggestion=f"建议将函数拆分为更小的函数，目标复杂度 < {self.review_rules['complexity_threshold']}",
+                        rule_id="COMPLEX001",
+                    )
+                )
+
+            # 函数长度检查
+            if hasattr(node, "end_lineno") and node.end_lineno:
+                function_length = node.end_lineno - node.lineno + 1
+                if function_length > self.review_rules["function_length_limit"]:
+                    issues.append(
+                        CodeIssue(
+                            file_path=str(file_path),
+                            line_number=node.lineno,
+                            issue_type="long_function",
+                            severity="medium",
+                            message=f"函数 '{node.name}' 过长: {function_length} 行",
+                            suggestion=f"建议将函数拆分，目标长度 < {self.review_rules['function_length_limit']} 行",
+                            rule_id="LENGTH001",
+                        )
+                    )
 
             # 参数数量检查
             if len(node.args.args) > self.review_rules["max_parameters"]:
-                issues.append(CodeIssue(
-                    file_path=str(file_path),
-                    line_number=node.lineno,
-                    issue_type="too_many_parameters",
-                    severity="medium",
-                    message=f"函数 '{node.name}' 参数过多: {len(node.args.args)} 个",
-                    suggestion=f"考虑使用参数对象或配置字典来减少参数数量",
-                    rule_id="PARAM001"
-                ))
+                issues.append(
+                    CodeIssue(
+                        file_path=str(file_path),
+                        line_number=node.lineno,
+                        issue_type="too_many_parameters",
+                        severity="medium",
+                        message=f"函数 '{node.name}' 参数过多: {len(node.args.args)} 个",
+                        suggestion=f"考虑使用参数对象或配置字典来减少参数数量",
+                        rule_id="PARAM001",
+                    )
+                )
 
         # 类长度检查
         elif isinstance(node, ast.ClassDef):
-            if hasattr(node, 'end_lineno') and node.end_lineno:
+            if hasattr(node, "end_lineno") and node.end_lineno:
                 class_length = node.end_lineno - node.lineno + 1
                 if class_length > self.review_rules["class_length_limit"]:
-                    issues.append(CodeIssue(
-                        file_path=str(file_path),
-                        line_number=node.lineno,
-                        issue_type="large_class",
-                        severity="medium",
-                        message=f"类 '{node.name}' 过大: {class_length} 行",
-                        suggestion=f"建议将类拆分为多个职责单一的类",
-                        rule_id="CLASS001"
-                    ))
+                    issues.append(
+                        CodeIssue(
+                            file_path=str(file_path),
+                            line_number=node.lineno,
+                            issue_type="large_class",
+                            severity="medium",
+                            message=f"类 '{node.name}' 过大: {class_length} 行",
+                            suggestion=f"建议将类拆分为多个职责单一的类",
+                            rule_id="CLASS001",
+                        )
+                    )
 
         return issues
 
@@ -267,42 +282,48 @@ class AutomatedCodeReviewer:
         issues = []
 
         # 魔法数字检查
-        magic_numbers = re.findall(r'\b\d{2,}\b', line)
+        magic_numbers = re.findall(r"\b\d{2,}\b", line)
         for num in magic_numbers:
-            if int(num) > self.review_rules["magic_number_threshold"] and 'TODO' not in line:
-                issues.append(CodeIssue(
-                    file_path=str(file_path),
-                    line_number=line_num,
-                    issue_type="magic_number",
-                    severity="low",
-                    message=f"发现魔法数字: {num}",
-                    suggestion="建议将魔法数字提取为命名常量",
-                    rule_id="MAGIC001"
-                ))
+            if int(num) > self.review_rules["magic_number_threshold"] and "TODO" not in line:
+                issues.append(
+                    CodeIssue(
+                        file_path=str(file_path),
+                        line_number=line_num,
+                        issue_type="magic_number",
+                        severity="low",
+                        message=f"发现魔法数字: {num}",
+                        suggestion="建议将魔法数字提取为命名常量",
+                        rule_id="MAGIC001",
+                    )
+                )
 
         # 长行检查
         if len(line) > 120:
-            issues.append(CodeIssue(
-                file_path=str(file_path),
-                line_number=line_num,
-                issue_type="long_line",
-                severity="low",
-                message=f"代码行过长: {len(line)} 字符",
-                suggestion="建议将长行拆分为多行，提高可读性",
-                rule_id="FORMAT001"
-            ))
+            issues.append(
+                CodeIssue(
+                    file_path=str(file_path),
+                    line_number=line_num,
+                    issue_type="long_line",
+                    severity="low",
+                    message=f"代码行过长: {len(line)} 字符",
+                    suggestion="建议将长行拆分为多行，提高可读性",
+                    rule_id="FORMAT001",
+                )
+            )
 
         # TODO/FIXME检查
-        if 'TODO' in line or 'FIXME' in line:
-            issues.append(CodeIssue(
-                file_path=str(file_path),
-                line_number=line_num,
-                issue_type="todo_comment",
-                severity="low",
-                message="存在待办事项注释",
-                suggestion="及时处理TODO/FIXME项目",
-                rule_id="TODO001"
-            ))
+        if "TODO" in line or "FIXME" in line:
+            issues.append(
+                CodeIssue(
+                    file_path=str(file_path),
+                    line_number=line_num,
+                    issue_type="todo_comment",
+                    severity="low",
+                    message="存在待办事项注释",
+                    suggestion="及时处理TODO/FIXME项目",
+                    rule_id="TODO001",
+                )
+            )
 
         return issues
 
@@ -332,7 +353,7 @@ class AutomatedCodeReviewer:
             "average_complexity": 0.0,
             "max_complexity": 0,
             "average_function_length": 0.0,
-            "test_coverage": 0.0
+            "test_coverage": 0.0,
         }
 
         python_files = list(self.src_dir.rglob("*.py"))
@@ -344,9 +365,9 @@ class AutomatedCodeReviewer:
 
         for py_file in python_files:
             try:
-                with open(py_file, 'r', encoding='utf-8') as f:
+                with open(py_file, "r", encoding="utf-8") as f:
                     content = f.read()
-                    lines = content.split('\n')
+                    lines = content.split("\n")
 
                 metrics["total_lines"] += len(lines)
 
@@ -360,7 +381,7 @@ class AutomatedCodeReviewer:
                         total_complexity += complexity
                         metrics["max_complexity"] = max(metrics["max_complexity"], complexity)
 
-                        if hasattr(node, 'end_lineno') and node.end_lineno:
+                        if hasattr(node, "end_lineno") and node.end_lineno:
                             function_length = node.end_lineno - node.lineno + 1
                             total_function_length += function_length
 
@@ -389,20 +410,20 @@ class AutomatedCodeReviewer:
             "overall_coverage": 0.0,
             "covered_files": 0,
             "uncovered_files": 0,
-            "recommendations": []
+            "recommendations": [],
         }
 
         try:
             # 尝试读取覆盖率报告
             coverage_file = self.project_root / "htmlcov" / "index.html"
             if coverage_file.exists():
-                with open(coverage_file, 'r', encoding='utf-8') as f:
+                with open(coverage_file, "r", encoding="utf-8") as f:
                     content = f.read()
 
                 # 解析覆盖率百分比
-                match = re.search(r'([0-9]*\.[0-9]%)', content)
+                match = re.search(r"([0-9]*\.[0-9]%)", content)
                 if match:
-                    coverage_info["overall_coverage"] = float(match.group(1).rstrip('%'))
+                    coverage_info["overall_coverage"] = float(match.group(1).rstrip("%"))
 
             # 分析测试文件与源文件的比例
             test_files = list(self.test_dir.rglob("test_*.py"))
@@ -419,9 +440,7 @@ class AutomatedCodeReviewer:
                 )
 
             if coverage_info["test_to_source_ratio"] < 0.8:
-                coverage_info["recommendations"].append(
-                    "建议为每个主要源文件编写对应的测试文件"
-                )
+                coverage_info["recommendations"].append("建议为每个主要源文件编写对应的测试文件")
 
         except Exception as e:
             logger.error(f"覆盖率分析失败: {e}")
@@ -435,7 +454,7 @@ class AutomatedCodeReviewer:
             "duplicated_blocks": 0,
             "duplicated_lines": 0,
             "duplication_percentage": 0.0,
-            "similar_functions": []
+            "similar_functions": [],
         }
 
         # 简化的重复检测：检查相似的函数结构
@@ -444,7 +463,7 @@ class AutomatedCodeReviewer:
         python_files = list(self.src_dir.rglob("*.py"))
         for py_file in python_files:
             try:
-                with open(py_file, 'r', encoding='utf-8') as f:
+                with open(py_file, "r", encoding="utf-8") as f:
                     content = f.read()
 
                 tree = ast.parse(content)
@@ -452,11 +471,9 @@ class AutomatedCodeReviewer:
                     if isinstance(node, ast.FunctionDef):
                         # 生成函数签名（简化版）
                         signature = self._generate_function_signature(node)
-                        function_signatures[signature].append({
-                            "file": str(py_file),
-                            "line": node.lineno,
-                            "name": node.name
-                        })
+                        function_signatures[signature].append(
+                            {"file": str(py_file), "line": node.lineno, "name": node.name}
+                        )
 
             except Exception as e:
                 logger.error(f"重复检测失败 {py_file}: {e}")
@@ -465,10 +482,9 @@ class AutomatedCodeReviewer:
         for signature, functions in function_signatures.items():
             if len(functions) > 1:
                 duplication_info["duplicated_blocks"] += len(functions) - 1
-                duplication_info["similar_functions"].append({
-                    "signature": signature,
-                    "occurrences": functions
-                })
+                duplication_info["similar_functions"].append(
+                    {"signature": signature, "occurrences": functions}
+                )
 
         print(f"  ✅ 发现重复块: {duplication_info['duplicated_blocks']} 个")
         return duplication_info
@@ -486,38 +502,44 @@ class AutomatedCodeReviewer:
 
         for py_file in python_files:
             try:
-                with open(py_file, 'r', encoding='utf-8') as f:
+                with open(py_file, "r", encoding="utf-8") as f:
                     content = f.read()
-                    lines = content.split('\n')
+                    lines = content.split("\n")
 
                 for i, line in enumerate(lines, 1):
                     # 检查安全问题
-                    if 'eval(' in line or 'exec(' in line:
-                        security_issues.append({
-                            "file": str(py_file),
-                            "line": i,
-                            "severity": "high",
-                            "issue": "使用危险的eval/exec函数",
-                            "recommendation": "避免使用eval/exec，考虑更安全的替代方案"
-                        })
+                    if "eval(" in line or "exec(" in line:
+                        security_issues.append(
+                            {
+                                "file": str(py_file),
+                                "line": i,
+                                "severity": "high",
+                                "issue": "使用危险的eval/exec函数",
+                                "recommendation": "避免使用eval/exec，考虑更安全的替代方案",
+                            }
+                        )
 
-                    if 'password' in line.lower() and '=' in line and '"' in line:
-                        security_issues.append({
-                            "file": str(py_file),
-                            "line": i,
-                            "severity": "critical",
-                            "issue": "可能硬编码密码",
-                            "recommendation": "使用环境变量或配置文件存储敏感信息"
-                        })
+                    if "password" in line.lower() and "=" in line and '"' in line:
+                        security_issues.append(
+                            {
+                                "file": str(py_file),
+                                "line": i,
+                                "severity": "critical",
+                                "issue": "可能硬编码密码",
+                                "recommendation": "使用环境变量或配置文件存储敏感信息",
+                            }
+                        )
 
-                    if 'sql' in line.lower() and '%' in line and 'format' in line:
-                        security_issues.append({
-                            "file": str(py_file),
-                            "line": i,
-                            "severity": "high",
-                            "issue": "可能的SQL注入风险",
-                            "recommendation": "使用参数化查询替代字符串格式化"
-                        })
+                    if "sql" in line.lower() and "%" in line and "format" in line:
+                        security_issues.append(
+                            {
+                                "file": str(py_file),
+                                "line": i,
+                                "severity": "high",
+                                "issue": "可能的SQL注入风险",
+                                "recommendation": "使用参数化查询替代字符串格式化",
+                            }
+                        )
 
             except Exception as e:
                 logger.error(f"安全分析失败 {py_file}: {e}")
@@ -533,38 +555,44 @@ class AutomatedCodeReviewer:
 
         for py_file in python_files:
             try:
-                with open(py_file, 'r', encoding='utf-8') as f:
+                with open(py_file, "r", encoding="utf-8") as f:
                     content = f.read()
-                    lines = content.split('\n')
+                    lines = content.split("\n")
 
                 for i, line in enumerate(lines, 1):
                     # 检查性能问题
-                    if 'while True:' in line and 'sleep' not in line:
-                        performance_issues.append({
-                            "file": str(py_file),
-                            "line": i,
-                            "severity": "medium",
-                            "issue": "可能的无限循环",
-                            "recommendation": "确保循环有明确的退出条件"
-                        })
+                    if "while True:" in line and "sleep" not in line:
+                        performance_issues.append(
+                            {
+                                "file": str(py_file),
+                                "line": i,
+                                "severity": "medium",
+                                "issue": "可能的无限循环",
+                                "recommendation": "确保循环有明确的退出条件",
+                            }
+                        )
 
-                    if line.count('[') > 3 and 'for' in line:
-                        performance_issues.append({
-                            "file": str(py_file),
-                            "line": i,
-                            "severity": "low",
-                            "issue": "嵌套循环可能影响性能",
-                            "recommendation": "考虑优化算法或使用更高效的数据结构"
-                        })
+                    if line.count("[") > 3 and "for" in line:
+                        performance_issues.append(
+                            {
+                                "file": str(py_file),
+                                "line": i,
+                                "severity": "low",
+                                "issue": "嵌套循环可能影响性能",
+                                "recommendation": "考虑优化算法或使用更高效的数据结构",
+                            }
+                        )
 
-                    if '+=' in line and 'str' in line:
-                        performance_issues.append({
-                            "file": str(py_file),
-                            "line": i,
-                            "severity": "low",
-                            "issue": "字符串拼接可能影响性能",
-                            "recommendation": "考虑使用join()或f-string替代字符串拼接"
-                        })
+                    if "+=" in line and "str" in line:
+                        performance_issues.append(
+                            {
+                                "file": str(py_file),
+                                "line": i,
+                                "severity": "low",
+                                "issue": "字符串拼接可能影响性能",
+                                "recommendation": "考虑使用join()或f-string替代字符串拼接",
+                            }
+                        )
 
             except Exception as e:
                 logger.error(f"性能分析失败 {py_file}: {e}")
@@ -572,12 +600,12 @@ class AutomatedCodeReviewer:
         print(f"  ✅ 发现性能问题: {len(performance_issues)} 个")
         return performance_issues
 
-    def generate_comprehensive_report(self, issues, metrics, coverage, duplication, security, performance):
+    def generate_comprehensive_report(
+        self, issues, metrics, coverage, duplication, security, performance
+    ):
         """生成综合审查报告"""
         # 计算质量评分
-        quality_score = self._calculate_overall_quality_score(
-            issues, metrics, coverage, security
-        )
+        quality_score = self._calculate_overall_quality_score(issues, metrics, coverage, security)
         self.review_results["quality_score"] = quality_score
 
         # 生成问题摘要
@@ -628,30 +656,32 @@ class AutomatedCodeReviewer:
         return {
             "total_issues": len(issues) + len(security_issues) + len(performance_issues),
             "by_severity": {
-                "critical": len([i for i in issues if i.severity == "critical"]) +
-                           len([s for s in security_issues if s["severity"] == "critical"]),
-                "high": len([i for i in issues if i.severity == "high"]) +
-                       len([s for s in security_issues if s["severity"] == "high"]) +
-                       len([p for p in performance_issues if p["severity"] == "high"]),
-                "medium": len([i for i in issues if i.severity == "medium"]) +
-                         len([p for p in performance_issues if p["severity"] == "medium"]),
-                "low": len([i for i in issues if i.severity == "low"]) +
-                     len([p for p in performance_issues if p["severity"] == "low"])
+                "critical": len([i for i in issues if i.severity == "critical"])
+                + len([s for s in security_issues if s["severity"] == "critical"]),
+                "high": len([i for i in issues if i.severity == "high"])
+                + len([s for s in security_issues if s["severity"] == "high"])
+                + len([p for p in performance_issues if p["severity"] == "high"]),
+                "medium": len([i for i in issues if i.severity == "medium"])
+                + len([p for p in performance_issues if p["severity"] == "medium"]),
+                "low": len([i for i in issues if i.severity == "low"])
+                + len([p for p in performance_issues if p["severity"] == "low"]),
             },
             "by_type": {
                 "complexity": len([i for i in issues if i.issue_type == "high_complexity"]),
                 "security": len(security_issues),
                 "performance": len(performance_issues),
-                "style": len([i for i in issues if i.issue_type in ["long_line", "magic_number"]])
-            }
+                "style": len([i for i in issues if i.issue_type in ["long_line", "magic_number"]]),
+            },
         }
 
-    def _generate_comprehensive_recommendations(self, issues, metrics, coverage, duplication, security, performance):
+    def _generate_comprehensive_recommendations(
+        self, issues, metrics, coverage, duplication, security, performance
+    ):
         """生成综合改进建议"""
         recommendations = [
             "🤖 基于Issue #98方法论：建议定期运行代码审查保持代码质量",
             "📊 质量门禁：将代码审查集成到CI/CD流水线中",
-            "🔧 工具集成：与pre-commit钩子结合实现自动化检查"
+            "🔧 工具集成：与pre-commit钩子结合实现自动化检查",
         ]
 
         # 基于具体问题生成建议
@@ -674,7 +704,7 @@ class AutomatedCodeReviewer:
         report_file = self.project_root / "automated_code_review_report.json"
 
         try:
-            with open(report_file, 'w', encoding='utf-8') as f:
+            with open(report_file, "w", encoding="utf-8") as f:
                 json.dump(self.review_results, f, indent=2, ensure_ascii=False)
 
             logger.info(f"代码审查报告已保存: {report_file}")
@@ -684,12 +714,7 @@ class AutomatedCodeReviewer:
 
     def _severity_priority(self, severity: str) -> int:
         """获取严重程度优先级"""
-        priority_map = {
-            "critical": 4,
-            "high": 3,
-            "medium": 2,
-            "low": 1
-        }
+        priority_map = {"critical": 4, "high": 3, "medium": 2, "low": 1}
         return priority_map.get(severity, 0)
 
     def print_review_summary(self):
@@ -735,7 +760,9 @@ def main():
 
     parser = argparse.ArgumentParser(description="AI驱动自动化代码审查系统")
     parser.add_argument("--project-root", type=Path, help="项目根目录")
-    parser.add_argument("--output-format", choices=["text", "json"], default="text", help="输出格式")
+    parser.add_argument(
+        "--output-format", choices=["text", "json"], default="text", help="输出格式"
+    )
     parser.add_argument("--severity-filter", help="过滤问题严重程度 (critical,high,medium,low)")
 
     args = parser.parse_args()

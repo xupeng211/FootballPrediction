@@ -10,11 +10,8 @@ Provides HTTP API endpoints for real-time prediction functionality
 import logging
 from datetime import datetime
 from typing import Dict, Any, Optional, List
-from fastapi import APIRouter, HTTPException, Query, BackgroundTasks, Depends
 from pydantic import BaseModel, Field
 
-from .prediction_service import get_realtime_prediction_service, PredictionStatus
-from .events import EventType, create_system_alert_event
 from .manager import get_websocket_manager
 
 router = APIRouter(prefix="/predictions", tags=["realtime-predictions"])
@@ -39,9 +36,7 @@ class PredictionRequest(BaseModel):
 class BatchPredictionRequest(BaseModel):
     """批量预测请求"""
 
-    match_ids: List[int] = Field(
-        ..., description="比赛ID列表", min_items=1, max_items=50
-    )
+    match_ids: List[int] = Field(..., description="比赛ID列表", min_items=1, max_items=50)
     user_id: Optional[str] = Field(None, description="用户ID")
     model_version: str = Field("default", description="模型版本")
     priority: bool = Field(False, description="是否优先处理")
@@ -94,9 +89,7 @@ class ServiceStatsResponse(BaseModel):
 
 
 @router.post("/request", response_model=PredictionResponse, summary="提交预测请求")
-async def request_prediction(
-    request: PredictionRequest, background_tasks: BackgroundTasks
-):
+async def request_prediction(request: PredictionRequest, background_tasks: BackgroundTasks):
     """
     提交实时预测请求
 
@@ -136,9 +129,7 @@ async def request_prediction(
 
     except Exception as e:
         logger.error(f"Failed to submit prediction request: {e}")
-        raise HTTPException(
-            status_code=500, detail="Failed to submit prediction request"
-        )
+        raise HTTPException(status_code=500, detail="Failed to submit prediction request")
 
 
 @router.post("/batch", summary="批量提交预测请求")
@@ -187,14 +178,10 @@ async def request_batch_predictions(
 
     except Exception as e:
         logger.error(f"Failed to submit batch prediction request: {e}")
-        raise HTTPException(
-            status_code=500, detail="Failed to submit batch prediction request"
-        )
+        raise HTTPException(status_code=500, detail="Failed to submit batch prediction request")
 
 
-@router.get(
-    "/status/{task_id}", response_model=PredictionStatusResponse, summary="获取预测状态"
-)
+@router.get("/status/{task_id}", response_model=PredictionStatusResponse, summary="获取预测状态")
 async def get_prediction_status(task_id: str):
     """
     获取预测任务状态
@@ -370,9 +357,7 @@ async def broadcast_system_alert(
 # ============================================================================
 
 
-async def _send_prediction_notification(
-    match_id: int, user_id: Optional[str], action: str
-) -> None:
+async def _send_prediction_notification(match_id: int, user_id: Optional[str], action: str) -> None:
     """发送预测通知"""
     try:
         websocket_manager = get_websocket_manager()

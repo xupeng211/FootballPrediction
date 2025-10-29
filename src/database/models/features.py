@@ -58,9 +58,7 @@ class FeatureEntity(BaseModel):
     entity_id: Mapped[int] = mapped_column(Integer, nullable=False)
     feature_name: Mapped[str] = mapped_column(String(100), nullable=False)
     feature_value: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    feature_numeric: Mapped[Optional[Decimal]] = mapped_column(
-        DECIMAL(10, 4), nullable=True
-    )
+    feature_numeric: Mapped[Optional[Decimal]] = mapped_column(DECIMAL(10, 4), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow

@@ -18,9 +18,11 @@ from dataclasses import dataclass, asdict
 from datetime import datetime, timedelta
 import subprocess
 
+
 @dataclass
 class QualityMetrics:
     """质量指标数据类"""
+
     timestamp: str
     commit_hash: str
     syntax_score: float
@@ -34,9 +36,11 @@ class QualityMetrics:
     line_count: int
     complexity_score: float
 
+
 @dataclass
 class QualityTrend:
     """质量趋势数据"""
+
     metric_name: str
     current_value: float
     previous_value: float
@@ -44,6 +48,7 @@ class QualityTrend:
     trend_percentage: float
     prediction_7days: float
     confidence: float
+
 
 class IntelligentQualityMonitor:
     """智能质量监控器"""
@@ -56,7 +61,8 @@ class IntelligentQualityMonitor:
     def init_database(self) -> None:
         """初始化数据库"""
         with sqlite3.connect(self.db_path) as conn:
-            conn.execute('''
+            conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS quality_metrics (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     timestamp TEXT NOT NULL,
@@ -73,9 +79,11 @@ class IntelligentQualityMonitor:
                     complexity_score REAL,
                     UNIQUE(timestamp, commit_hash)
                 )
-            ''')
+            """
+            )
 
-            conn.execute('''
+            conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS quality_predictions (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     created_at TEXT NOT NULL,
@@ -85,7 +93,8 @@ class IntelligentQualityMonitor:
                     confidence REAL NOT NULL,
                     model_version TEXT DEFAULT 'v1.0'
                 )
-            ''')
+            """
+            )
 
     def collect_current_metrics(self) -> QualityMetrics:
         """收集当前质量指标"""
@@ -93,9 +102,7 @@ class IntelligentQualityMonitor:
 
         # 获取当前commit hash
         commit_hash = subprocess.check_output(
-            ['git', 'rev-parse', 'HEAD'],
-            cwd=self.root_dir,
-            text=True
+            ["git", "rev-parse", "HEAD"], cwd=self.root_dir, text=True
         ).strip()
 
         # 语法检查
@@ -123,10 +130,9 @@ class IntelligentQualityMonitor:
         file_count, line_count = self._count_code_metrics()
 
         # 计算综合评分
-        overall_score = statistics.mean([
-            syntax_score, style_score, type_score,
-            security_score, test_score, coverage_score
-        ])
+        overall_score = statistics.mean(
+            [syntax_score, style_score, type_score, security_score, test_score, coverage_score]
+        )
 
         metrics = QualityMetrics(
             timestamp=datetime.now().isoformat(),
@@ -140,7 +146,7 @@ class IntelligentQualityMonitor:
             overall_score=overall_score,
             file_count=file_count,
             line_count=line_count,
-            complexity_score=complexity_score
+            complexity_score=complexity_score,
         )
 
         # 保存到数据库
@@ -151,9 +157,13 @@ class IntelligentQualityMonitor:
     def _calculate_syntax_score(self) -> float:
         """计算语法评分"""
         try:
-            result = subprocess.run([
-                'python', '-m', 'py_compile', 'src/**/*.py'
-            ], cwd=self.root_dir, capture_output=True, text=True, shell=True)
+            result = subprocess.run(
+                ["python", "-m", "py_compile", "src/**/*.py"],
+                cwd=self.root_dir,
+                capture_output=True,
+                text=True,
+                shell=True,
+            )
 
             # 如果没有语法错误，返回满分
             return 100.0 if result.returncode == 0 else 0.0
@@ -163,9 +173,12 @@ class IntelligentQualityMonitor:
     def _calculate_style_score(self) -> float:
         """计算代码风格评分"""
         try:
-            result = subprocess.run([
-                'ruff', 'check', 'src/', '--output-format=json'
-            ], cwd=self.root_dir, capture_output=True, text=True)
+            result = subprocess.run(
+                ["ruff", "check", "src/", "--output-format=json"],
+                cwd=self.root_dir,
+                capture_output=True,
+                text=True,
+            )
 
             if result.stdout.strip():
                 issues = json.loads(result.stdout)
@@ -188,12 +201,15 @@ class IntelligentQualityMonitor:
     def _calculate_type_score(self) -> float:
         """计算类型检查评分"""
         try:
-            result = subprocess.run([
-                'mypy', 'src/', '--config-file', 'mypy_minimum.ini', '--show-error-codes'
-            ], cwd=self.root_dir, capture_output=True, text=True)
+            result = subprocess.run(
+                ["mypy", "src/", "--config-file", "mypy_minimum.ini", "--show-error-codes"],
+                cwd=self.root_dir,
+                capture_output=True,
+                text=True,
+            )
 
             if result.stdout.strip():
-                lines = [line for line in result.stdout.split('\n') if line.strip()]
+                lines = [line for line in result.stdout.split("\n") if line.strip()]
                 if len(lines) == 0:
                     return 100.0
                 elif len(lines) <= 3:
@@ -212,18 +228,23 @@ class IntelligentQualityMonitor:
     def _calculate_security_score(self) -> float:
         """计算安全评分"""
         try:
-            result = subprocess.run([
-                'bandit', '-r', 'src/', '-f', 'json'
-            ], cwd=self.root_dir, capture_output=True, text=True)
+            result = subprocess.run(
+                ["bandit", "-r", "src/", "-f", "json"],
+                cwd=self.root_dir,
+                capture_output=True,
+                text=True,
+            )
 
             if result.stdout.strip():
                 report = json.loads(result.stdout)
-                issues = report.get('results', [])
+                issues = report.get("results", [])
 
                 # 根据安全问题严重程度计算评分
-                high_severity = sum(1 for issue in issues if issue.get('issue_severity') == 'HIGH')
-                medium_severity = sum(1 for issue in issues if issue.get('issue_severity') == 'MEDIUM')
-                low_severity = sum(1 for issue in issues if issue.get('issue_severity') == 'LOW')
+                high_severity = sum(1 for issue in issues if issue.get("issue_severity") == "HIGH")
+                medium_severity = sum(
+                    1 for issue in issues if issue.get("issue_severity") == "MEDIUM"
+                )
+                low_severity = sum(1 for issue in issues if issue.get("issue_severity") == "LOW")
 
                 if high_severity > 0:
                     return 20.0
@@ -243,21 +264,24 @@ class IntelligentQualityMonitor:
     def _calculate_test_score(self) -> float:
         """计算测试评分"""
         try:
-            result = subprocess.run([
-                'pytest', 'tests/unit/', '--tb=no', '-q'
-            ], cwd=self.root_dir, capture_output=True, text=True)
+            result = subprocess.run(
+                ["pytest", "tests/unit/", "--tb=no", "-q"],
+                cwd=self.root_dir,
+                capture_output=True,
+                text=True,
+            )
 
             if result.returncode == 0:
                 # 解析pytest输出
-                lines = result.stdout.strip().split('\n')
+                lines = result.stdout.strip().split("\n")
                 if lines:
                     last_line = lines[-1]
-                    if 'passed' in last_line:
+                    if "passed" in last_line:
                         # 提取测试统计
                         parts = last_line.split()
                         for i, part in enumerate(parts):
-                            if part == 'passed' and i > 0:
-                                passed = int(parts[i-1])
+                            if part == "passed" and i > 0:
+                                passed = int(parts[i - 1])
                                 # 根据通过率计算评分
                                 if passed >= 100:
                                     return 100.0
@@ -311,12 +335,12 @@ class IntelligentQualityMonitor:
         line_count = 0
 
         try:
-            src_path = self.root_dir / 'src'
+            src_path = self.root_dir / "src"
             if src_path.exists():
-                for py_file in src_path.rglob('*.py'):
+                for py_file in src_path.rglob("*.py"):
                     file_count += 1
                     try:
-                        with open(py_file, 'r', encoding='utf-8') as f:
+                        with open(py_file, "r", encoding="utf-8") as f:
                             line_count += len(f.readlines())
                     except Exception:
                         continue
@@ -328,18 +352,29 @@ class IntelligentQualityMonitor:
     def _save_metrics(self, metrics: QualityMetrics) -> None:
         """保存质量指标到数据库"""
         with sqlite3.connect(self.db_path) as conn:
-            conn.execute('''
+            conn.execute(
+                """
                 INSERT OR REPLACE INTO quality_metrics
                 (timestamp, commit_hash, syntax_score, style_score, type_score,
                  security_score, test_score, coverage_score, overall_score,
                  file_count, line_count, complexity_score)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (
-                metrics.timestamp, metrics.commit_hash, metrics.syntax_score,
-                metrics.style_score, metrics.type_score, metrics.security_score,
-                metrics.test_score, metrics.coverage_score, metrics.overall_score,
-                metrics.file_count, metrics.line_count, metrics.complexity_score
-            ))
+            """,
+                (
+                    metrics.timestamp,
+                    metrics.commit_hash,
+                    metrics.syntax_score,
+                    metrics.style_score,
+                    metrics.type_score,
+                    metrics.security_score,
+                    metrics.test_score,
+                    metrics.coverage_score,
+                    metrics.overall_score,
+                    metrics.file_count,
+                    metrics.line_count,
+                    metrics.complexity_score,
+                ),
+            )
 
     def analyze_trends(self, days: int = 30) -> List[QualityTrend]:
         """分析质量趋势"""
@@ -347,11 +382,15 @@ class IntelligentQualityMonitor:
 
         with sqlite3.connect(self.db_path) as conn:
             # 获取最近的数据
-            cursor = conn.execute('''
+            cursor = conn.execute(
+                """
                 SELECT * FROM quality_metrics
                 WHERE timestamp > datetime('now', '-{} days')
                 ORDER BY timestamp DESC
-            '''.format(days))
+            """.format(
+                    days
+                )
+            )
 
             rows = cursor.fetchall()
 
@@ -362,13 +401,13 @@ class IntelligentQualityMonitor:
             # 分析每个指标的趋势
             trends = []
             metrics = [
-                ('syntax_score', '语法检查'),
-                ('style_score', '代码风格'),
-                ('type_score', '类型检查'),
-                ('security_score', '安全检查'),
-                ('test_score', '测试'),
-                ('coverage_score', '覆盖率'),
-                ('overall_score', '综合评分')
+                ("syntax_score", "语法检查"),
+                ("style_score", "代码风格"),
+                ("type_score", "类型检查"),
+                ("security_score", "安全检查"),
+                ("test_score", "测试"),
+                ("coverage_score", "覆盖率"),
+                ("overall_score", "综合评分"),
             ]
 
             for metric_col, metric_name in metrics:
@@ -383,13 +422,13 @@ class IntelligentQualityMonitor:
 
                 # 计算趋势
                 if current_value > previous_value:
-                    trend_direction = 'improving'
+                    trend_direction = "improving"
                     trend_percentage = ((current_value - previous_value) / previous_value) * 100
                 elif current_value < previous_value:
-                    trend_direction = 'declining'
+                    trend_direction = "declining"
                     trend_percentage = ((previous_value - current_value) / previous_value) * 100
                 else:
-                    trend_direction = 'stable'
+                    trend_direction = "stable"
                     trend_percentage = 0.0
 
                 # 简单的线性预测
@@ -398,10 +437,12 @@ class IntelligentQualityMonitor:
                     recent_values = [getattr(row, metric_col) for row in rows[:7]]
                     if len(set(recent_values)) > 1:  # 确保有变化
                         # 简单线性预测
-                        avg_change = statistics.mean([
-                            recent_values[i] - recent_values[i+1]
-                            for i in range(len(recent_values)-1)
-                        ])
+                        avg_change = statistics.mean(
+                            [
+                                recent_values[i] - recent_values[i + 1]
+                                for i in range(len(recent_values) - 1)
+                            ]
+                        )
                         prediction_7days = current_value + (avg_change * 7)
                         confidence = 0.7  # 中等置信度
                     else:
@@ -409,23 +450,25 @@ class IntelligentQualityMonitor:
                         confidence = 0.9  # 高置信度（稳定状态）
                 else:
                     # 数据不足，基于当前趋势预测
-                    if trend_direction == 'improving':
+                    if trend_direction == "improving":
                         prediction_7days = min(current_value * 1.1, 100.0)
-                    elif trend_direction == 'declining':
+                    elif trend_direction == "declining":
                         prediction_7days = max(current_value * 0.9, 0.0)
                     else:
                         prediction_7days = current_value
                     confidence = 0.5  # 低置信度
 
-                trends.append(QualityTrend(
-                    metric_name=metric_name,
-                    current_value=current_value,
-                    previous_value=previous_value,
-                    trend_direction=trend_direction,
-                    trend_percentage=trend_percentage,
-                    prediction_7days=prediction_7days,
-                    confidence=confidence
-                ))
+                trends.append(
+                    QualityTrend(
+                        metric_name=metric_name,
+                        current_value=current_value,
+                        previous_value=previous_value,
+                        trend_direction=trend_direction,
+                        trend_percentage=trend_percentage,
+                        prediction_7days=prediction_7days,
+                        confidence=confidence,
+                    )
+                )
 
             return trends
 
@@ -463,8 +506,14 @@ class IntelligentQualityMonitor:
 """
 
         for trend in trends:
-            trend_emoji = '📈' if trend.trend_direction == 'improving' else '📉' if trend.trend_direction == 'declining' else '➡️'
-            status_emoji = '🟢' if trend.current_value >= 80 else '🟡' if trend.current_value >= 60 else '🔴'
+            trend_emoji = (
+                "📈"
+                if trend.trend_direction == "improving"
+                else "📉" if trend.trend_direction == "declining" else "➡️"
+            )
+            status_emoji = (
+                "🟢" if trend.current_value >= 80 else "🟡" if trend.current_value >= 60 else "🔴"
+            )
 
             report += f"""### {trend_emoji} {trend.metric_name}
 
@@ -533,7 +582,9 @@ class IntelligentQualityMonitor:
 
         return report
 
-    def _generate_ai_recommendations(self, metrics: QualityMetrics, trends: List[QualityTrend]) -> str:
+    def _generate_ai_recommendations(
+        self, metrics: QualityMetrics, trends: List[QualityTrend]
+    ) -> str:
         """生成AI编程建议"""
         recommendations = []
 
@@ -542,9 +593,11 @@ class IntelligentQualityMonitor:
             recommendations.append("🚨 **质量警报**: 综合评分偏低，建议立即运行质量检查和修复工具")
 
         # 基于趋势的建议
-        declining_trends = [t for t in trends if t.trend_direction == 'declining']
+        declining_trends = [t for t in trends if t.trend_direction == "declining"]
         if declining_trends:
-            recommendations.append(f"📉 **趋势警告**: {len(declining_trends)}个指标呈下降趋势，需要关注")
+            recommendations.append(
+                f"📉 **趋势警告**: {len(declining_trends)}个指标呈下降趋势，需要关注"
+            )
 
         # 基于特定指标的建议
         if metrics.coverage_score < 15:
@@ -554,9 +607,12 @@ class IntelligentQualityMonitor:
             recommendations.append("🔧 **重构建议**: 代码复杂度较高，建议进行代码重构")
 
         if recommendations:
-            return "\n## 🤖 AI智能建议\n\n" + "\n".join(f"- {rec}" for rec in recommendations) + "\n\n"
+            return (
+                "\n## 🤖 AI智能建议\n\n" + "\n".join(f"- {rec}" for rec in recommendations) + "\n\n"
+            )
         else:
             return "\n## 🤖 AI智能建议\n\n✅ **状态良好**: 当前质量指标正常，继续保持！\n\n"
+
 
 def main():
     """主函数"""
@@ -584,7 +640,7 @@ def main():
     if args.report:
         report = monitor.generate_monitoring_report(args.days)
 
-        with open(args.output, 'w', encoding='utf-8') as f:
+        with open(args.output, "w", encoding="utf-8") as f:
             f.write(report)
 
         print(f"📄 质量监控报告已保存到: {args.output}")
@@ -592,6 +648,7 @@ def main():
         # 默认生成报告
         report = monitor.generate_monitoring_report(args.days)
         print(report)
+
 
 if __name__ == "__main__":
     main()

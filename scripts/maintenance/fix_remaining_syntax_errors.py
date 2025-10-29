@@ -6,10 +6,11 @@
 import re
 from pathlib import Path
 
+
 def fix_broken_try_except_blocks(file_path: Path) -> bool:
     """修复损坏的try-except块结构"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         original_content = content
@@ -17,18 +18,18 @@ def fix_broken_try_except_blocks(file_path: Path) -> bool:
         # 移除无效的except块
         # 模式: 空行 + try: + 空行 + except ImportError:
         patterns = [
-            r'\n\s*try:\s*\n\s*except ImportError:\s*\n\s*pass\s*\n',
-            r'\n\s*try:\s*\n\s*except Exception:\s*\n\s*pass\s*\n',
+            r"\n\s*try:\s*\n\s*except ImportError:\s*\n\s*pass\s*\n",
+            r"\n\s*try:\s*\n\s*except Exception:\s*\n\s*pass\s*\n",
         ]
 
         for pattern in patterns:
-            content = re.sub(pattern, '\n', content)
+            content = re.sub(pattern, "\n", content)
 
         # 修复孤立的except ImportError:
-        content = re.sub(r'\n\s*except ImportError:\s*\n\s*pass\s*\n', '\n', content)
+        content = re.sub(r"\n\s*except ImportError:\s*\n\s*pass\s*\n", "\n", content)
 
         if content != original_content:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(content)
             return True
 
@@ -36,10 +37,11 @@ def fix_broken_try_except_blocks(file_path: Path) -> bool:
     except Exception:
         return False
 
+
 def fix_extra_indented_imports(file_path: Path) -> bool:
     """修复过度缩进的import语句"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             lines = f.readlines()
 
         original_lines = lines[:]
@@ -49,17 +51,19 @@ def fix_extra_indented_imports(file_path: Path) -> bool:
             stripped = line.strip()
 
             # 如果是import语句但过度缩进（超过4个空格）
-            if (stripped.startswith('import ') or stripped.startswith('from ')) and \
-               line.startswith('        ') and \
-               not line.strip().startswith('#'):
+            if (
+                (stripped.startswith("import ") or stripped.startswith("from "))
+                and line.startswith("        ")
+                and not line.strip().startswith("#")
+            ):
                 # 将缩进减少到合适的位置
-                fixed_line = '    ' + stripped + '\n'
+                fixed_line = "    " + stripped + "\n"
                 fixed_lines.append(fixed_line)
             else:
                 fixed_lines.append(line)
 
         if fixed_lines != original_lines:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.writelines(fixed_lines)
             return True
 
@@ -67,16 +71,17 @@ def fix_extra_indented_imports(file_path: Path) -> bool:
     except Exception:
         return False
 
+
 def fix_unterminated_string(file_path: Path) -> bool:
     """修复未终止的三引号字符串"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         original_content = content
 
         # 查找未终止的三引号字符串并修复
-        lines = content.split('\n')
+        lines = content.split("\n")
         fixed_lines = []
         in_triple_quote = False
         triple_quote_start = 0
@@ -102,16 +107,17 @@ def fix_unterminated_string(file_path: Path) -> bool:
         if in_triple_quote:
             fixed_lines.append('"""')
 
-        fixed_content = '\n'.join(fixed_lines)
+        fixed_content = "\n".join(fixed_lines)
 
         if fixed_content != original_content:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(fixed_content)
             return True
 
         return False
     except Exception:
         return False
+
 
 def main():
     print("🔧 精确修复剩余语法错误...")
@@ -129,7 +135,7 @@ def main():
         "tests/unit/repositories/test_lineage_reporter.py",
         "tests/unit/database/test_models_common.py",
         "tests/unit/mocks/mock_factory_phase4a_backup.py",
-        "tests/unit/tasks/test_tasks_coverage_boost.py"
+        "tests/unit/tasks/test_tasks_coverage_boost.py",
     ]
 
     fixed_count = 0
@@ -163,6 +169,7 @@ def main():
     print(f"- 已修复: {fixed_count} 个文件")
 
     return fixed_count
+
 
 if __name__ == "__main__":
     exit(main())

@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 5 repeated Mock creations
 
-from unittest.mock import Mock, patch
 
 """
 SQL兼容性真实测试
@@ -122,7 +121,8 @@ class TestCompatibleQueryBuilder:
         _data = {"status": "active"}
         where_clause = "id = 1 AND status IN ('pending', 'inactive')"
         query = builder.build_update_query("users", data, where_clause)
-        expected = "UPDATE users SET status = :status WHERE id = 1 AND status IN ('pending', 'inactive')"
+        expected =
+    "UPDATE users SET status = :status WHERE id = 1 AND status IN ('pending', 'inactive')"
         assert query == expected
 
 

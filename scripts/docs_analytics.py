@@ -25,8 +25,7 @@ import subprocess
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -50,7 +49,7 @@ class DocsAnalytics:
             "structure_analysis": {},
             "quality_metrics": {},
             "usage_patterns": {},
-            "recommendations": []
+            "recommendations": [],
         }
 
     def _get_project_info(self) -> Dict[str, Any]:
@@ -60,14 +59,14 @@ class DocsAnalytics:
             "description": "足球预测系统文档",
             "version": "v2.0",
             "docs_directory": str(self.docs_dir),
-            "total_size": self._get_directory_size(self.docs_dir)
+            "total_size": self._get_directory_size(self.docs_dir),
         }
 
     def _get_project_name(self) -> str:
         """获取项目名称"""
         try:
             if os.path.exists("pyproject.toml"):
-                with open("pyproject.toml", 'r') as f:
+                with open("pyproject.toml", "r") as f:
                     content = f.read()
                     # 简单的项目名提取
                     match = re.search(r'name\s*=\s*["\']([^"\']+)["\']', content)
@@ -80,11 +79,7 @@ class DocsAnalytics:
     def _get_directory_size(self, directory: Path) -> str:
         """获取目录大小"""
         try:
-            result = subprocess.run(
-                ["du", "-sh", str(directory)],
-                capture_output=True,
-                text=True
-            )
+            result = subprocess.run(["du", "-sh", str(directory)], capture_output=True, text=True)
             if result.returncode == 0:
                 return result.stdout.split()[0]
         except Exception:
@@ -100,7 +95,7 @@ class DocsAnalytics:
             "content_statistics": self._analyze_content_statistics(),
             "topic_analysis": self._analyze_topics(),
             "language_analysis": self._analyze_language(),
-            "readability_analysis": self._analyze_readability()
+            "readability_analysis": self._analyze_readability(),
         }
 
         self.analytics_data["content_analysis"] = content_analysis
@@ -112,7 +107,7 @@ class DocsAnalytics:
             "total_size": 0,
             "file_types": defaultdict(int),
             "largest_files": [],
-            "file_age_distribution": defaultdict(int)
+            "file_age_distribution": defaultdict(int),
         }
 
         try:
@@ -132,7 +127,9 @@ class DocsAnalytics:
                 stats["file_types"][file_path.suffix] += 1
 
                 # 统计文件年龄
-                file_age_days = (current_time - datetime.fromtimestamp(file_path.stat().st_mtime)).days
+                file_age_days = (
+                    current_time - datetime.fromtimestamp(file_path.stat().st_mtime)
+                ).days
                 if file_age_days < 7:
                     stats["file_age_distribution"]["<1_week"] += 1
                 elif file_age_days < 30:
@@ -147,7 +144,7 @@ class DocsAnalytics:
                 {
                     "path": str(f.relative_to(self.docs_dir)),
                     "size": f.stat().st_size,
-                    "size_human": self._format_size(f.stat().st_size)
+                    "size_human": self._format_size(f.stat().st_size),
                 }
                 for f in sorted(all_files, key=lambda x: x.stat().st_size, reverse=True)[:10]
             ]
@@ -171,7 +168,7 @@ class DocsAnalytics:
             "files_with_code_blocks": 0,
             "files_with_images": 0,
             "files_with_tables": 0,
-            "files_with_links": 0
+            "files_with_links": 0,
         }
 
         try:
@@ -180,10 +177,10 @@ class DocsAnalytics:
 
             for md_file in md_files:
                 try:
-                    with open(md_file, 'r', encoding='utf-8') as f:
+                    with open(md_file, "r", encoding="utf-8") as f:
                         content = f.read()
 
-                    lines = content.split('\n')
+                    lines = content.split("\n")
                     words = content.split()
 
                     file_sizes.append(len(content))
@@ -192,22 +189,22 @@ class DocsAnalytics:
                     stats["total_characters"] += len(content)
 
                     # 检查文档结构
-                    if content.startswith('---'):
+                    if content.startswith("---"):
                         stats["files_with_frontmatter"] += 1
 
-                    if '## 📑 目录' in content or '## 目录' in content:
+                    if "## 📑 目录" in content or "## 目录" in content:
                         stats["files_with_toc"] += 1
 
-                    if '```' in content:
+                    if "```" in content:
                         stats["files_with_code_blocks"] += 1
 
-                    if '![' in content:
+                    if "![" in content:
                         stats["files_with_images"] += 1
 
-                    if '|' in content and '-' in content:
+                    if "|" in content and "-" in content:
                         stats["files_with_tables"] += 1
 
-                    if '[' in content and '](' in content:
+                    if "[" in content and "](" in content:
                         stats["files_with_links"] += 1
 
                 except Exception as e:
@@ -215,7 +212,9 @@ class DocsAnalytics:
 
             if file_sizes:
                 stats["average_file_size"] = sum(file_sizes) / len(file_sizes)
-                stats["average_file_size_human"] = self._format_size(int(stats["average_file_size"]))
+                stats["average_file_size_human"] = self._format_size(
+                    int(stats["average_file_size"])
+                )
 
             stats["total_files_analyzed"] = len(md_files)
 
@@ -236,7 +235,7 @@ class DocsAnalytics:
             "database": 0,
             "api": 0,
             "ml": 0,
-            "data": 0
+            "data": 0,
         }
 
         topic_keywords = {
@@ -249,7 +248,7 @@ class DocsAnalytics:
             "database": ["数据库", "database", "db", "sql", "存储"],
             "api": ["API", "api", "接口", "endpoint", "路由"],
             "ml": ["机器学习", "ML", "模型", "训练", "预测"],
-            "data": ["数据", "data", "数据采集", "处理", "特征"]
+            "data": ["数据", "data", "数据采集", "处理", "特征"],
         }
 
         try:
@@ -257,7 +256,7 @@ class DocsAnalytics:
 
             for md_file in md_files:
                 try:
-                    with open(md_file, 'r', encoding='utf-8') as f:
+                    with open(md_file, "r", encoding="utf-8") as f:
                         content = f.read().lower()
 
                     # 计算主题得分
@@ -273,8 +272,7 @@ class DocsAnalytics:
             total_topics = sum(topics.values())
             if total_topics > 0:
                 topic_distribution = {
-                    topic: (count / total_topics) * 100
-                    for topic, count in topics.items()
+                    topic: (count / total_topics) * 100 for topic, count in topics.items()
                 }
             else:
                 topic_distribution = topics
@@ -286,7 +284,7 @@ class DocsAnalytics:
         return {
             "topic_counts": topics,
             "topic_distribution": topic_distribution,
-            "dominant_topic": max(topics.items(), key=lambda x: x[1])[0] if topics else None
+            "dominant_topic": max(topics.items(), key=lambda x: x[1])[0] if topics else None,
         }
 
     def _analyze_language(self) -> Dict[str, Any]:
@@ -297,7 +295,7 @@ class DocsAnalytics:
             "mixed_language_files": 0,
             "chinese_only_files": 0,
             "english_only_files": 0,
-            "language_ratio": 0.0
+            "language_ratio": 0.0,
         }
 
         try:
@@ -305,13 +303,13 @@ class DocsAnalytics:
 
             for md_file in md_files:
                 try:
-                    with open(md_file, 'r', encoding='utf-8') as f:
+                    with open(md_file, "r", encoding="utf-8") as f:
                         content = f.read()
 
                     # 计算中文字符
-                    chinese_chars = len(re.findall(r'[\u4e00-\u9fff]', content))
+                    chinese_chars = len(re.findall(r"[\u4e00-\u9fff]", content))
                     # 计算英文单词
-                    english_words = len(re.findall(r'\b[a-zA-Z]+\b', content))
+                    english_words = len(re.findall(r"\b[a-zA-Z]+\b", content))
 
                     language_stats["chinese_characters"] += chinese_chars
                     language_stats["english_words"] += english_words
@@ -330,7 +328,7 @@ class DocsAnalytics:
             if total > 0:
                 language_stats["language_ratio"] = {
                     "chinese": (language_stats["chinese_characters"] / total) * 100,
-                    "english": (language_stats["english_words"] / total) * 100
+                    "english": (language_stats["english_words"] / total) * 100,
                 }
 
         except Exception as e:
@@ -346,7 +344,7 @@ class DocsAnalytics:
             "average_words_per_sentence": 0,
             "headings_per_file": 0,
             "files_with_multiple_headings": 0,
-            "complex_files": 0
+            "complex_files": 0,
         }
 
         try:
@@ -358,19 +356,19 @@ class DocsAnalytics:
 
             for md_file in md_files:
                 try:
-                    with open(md_file, 'r', encoding='utf-8') as f:
+                    with open(md_file, "r", encoding="utf-8") as f:
                         content = f.read()
 
                     # 统计标题
-                    headings = re.findall(r'^#+\s+', content, re.MULTILINE)
+                    headings = re.findall(r"^#+\s+", content, re.MULTILINE)
                     heading_counts.append(len(headings))
                     if len(headings) > 5:
                         readability["files_with_multiple_headings"] += 1
 
                     # 简单的可读性分析
                     words = content.split()
-                    sentences = re.split(r'[.!?]+', content)
-                    paragraphs = content.split('\n\n')
+                    sentences = re.split(r"[.!?]+", content)
+                    paragraphs = content.split("\n\n")
 
                     word_counts.append(len(words))
                     sentence_counts.append(len([s for s in sentences if s.strip()]))
@@ -384,8 +382,12 @@ class DocsAnalytics:
                     logger.warning(f"可读性分析失败 {md_file}: {e}")
 
             if paragraph_counts:
-                readability["average_words_per_paragraph"] = sum(word_counts) / sum(paragraph_counts)
-                readability["average_sentences_per_paragraph"] = sum(sentence_counts) / sum(paragraph_counts)
+                readability["average_words_per_paragraph"] = sum(word_counts) / sum(
+                    paragraph_counts
+                )
+                readability["average_sentences_per_paragraph"] = sum(sentence_counts) / sum(
+                    paragraph_counts
+                )
                 readability["average_words_per_sentence"] = sum(word_counts) / sum(sentence_counts)
 
             if heading_counts:
@@ -404,7 +406,7 @@ class DocsAnalytics:
             "directory_structure": self._analyze_directory_structure(),
             "navigation_structure": self._analyze_navigation_structure(),
             "cross_references": self._analyze_cross_references(),
-            "depth_analysis": self._analyze_depth()
+            "depth_analysis": self._analyze_depth(),
         }
 
         self.analytics_data["structure_analysis"] = structure_analysis
@@ -416,7 +418,7 @@ class DocsAnalytics:
             "max_depth": 0,
             "directory_distribution": defaultdict(int),
             "empty_directories": [],
-            "large_directories": []
+            "large_directories": [],
         }
 
         try:
@@ -432,10 +434,7 @@ class DocsAnalytics:
 
                 # 检查大目录（文件数>10）
                 if len(files) > 10:
-                    structure["large_directories"].append({
-                        "path": root,
-                        "file_count": len(files)
-                    })
+                    structure["large_directories"].append({"path": root, "file_count": len(files)})
 
         except Exception as e:
             logger.error(f"目录结构分析失败: {e}")
@@ -449,7 +448,7 @@ class DocsAnalytics:
             "has_readme": False,
             "nav_sections": 0,
             "nav_links": 0,
-            "orphaned_files": []
+            "orphaned_files": [],
         }
 
         try:
@@ -461,15 +460,15 @@ class DocsAnalytics:
             navigation["has_readme"] = readme_file.exists()
 
             if index_file.exists():
-                with open(index_file, 'r', encoding='utf-8') as f:
+                with open(index_file, "r", encoding="utf-8") as f:
                     content = f.read()
 
                 # 统计导航链接
-                links = re.findall(r'\[([^\]]+)\]\(([^)]+)\)', content)
+                links = re.findall(r"\[([^\]]+)\]\(([^)]+)\)", content)
                 navigation["nav_links"] = len(links)
 
                 # 统计导航章节
-                sections = re.findall(r'^#+\s+', content, re.MULTILINE)
+                sections = re.findall(r"^#+\s+", content, re.MULTILINE)
                 navigation["nav_sections"] = len(sections)
 
             # 检查孤立文件
@@ -478,11 +477,11 @@ class DocsAnalytics:
 
             for md_file in all_md_files:
                 try:
-                    with open(md_file, 'r', encoding='utf-8') as f:
+                    with open(md_file, "r", encoding="utf-8") as f:
                         content = f.read()
 
                     # 查找内部链接
-                    internal_links = re.findall(r'\[([^\]]+)\]\(([^)]+\.md)\)', content)
+                    internal_links = re.findall(r"\[([^\]]+)\]\(([^)]+\.md)\)", content)
                     for link in internal_links:
                         linked_path = self.docs_dir / link[1]
                         if linked_path.exists():
@@ -492,7 +491,9 @@ class DocsAnalytics:
                     pass
 
             orphaned = all_md_files - linked_files
-            navigation["orphaned_files"] = [str(f.relative_to(self.docs_dir)) for f in orphaned if f != index_file]
+            navigation["orphaned_files"] = [
+                str(f.relative_to(self.docs_dir)) for f in orphaned if f != index_file
+            ]
 
         except Exception as e:
             logger.error(f"导航结构分析失败: {e}")
@@ -507,7 +508,7 @@ class DocsAnalytics:
             "external_references": 0,
             "reference_density": 0.0,
             "well_connected_files": [],
-            "poorly_connected_files": []
+            "poorly_connected_files": [],
         }
 
         try:
@@ -516,16 +517,16 @@ class DocsAnalytics:
 
             for md_file in md_files:
                 try:
-                    with open(md_file, 'r', encoding='utf-8') as f:
+                    with open(md_file, "r", encoding="utf-8") as f:
                         content = f.read()
 
                     # 查找所有链接
-                    links = re.findall(r'\[([^\]]+)\]\(([^)]+)\)', content)
+                    links = re.findall(r"\[([^\]]+)\]\(([^)]+)\)", content)
                     references["total_references"] += len(links)
 
                     for link in links:
                         url = link[1]
-                        if url.startswith('http'):
+                        if url.startswith("http"):
                             references["external_references"] += 1
                         else:
                             references["internal_references"] += 1
@@ -564,7 +565,7 @@ class DocsAnalytics:
             "average_depth": 0.0,
             "max_depth": 0,
             "depth_distribution": defaultdict(int),
-            "deep_files": []
+            "deep_files": [],
         }
 
         try:
@@ -600,7 +601,7 @@ class DocsAnalytics:
             "maintenance_score": self._calculate_maintenance_score(),
             "accessibility_score": self._calculate_accessibility_score(),
             "overall_quality_score": 0.0,
-            "quality_issues": []
+            "quality_issues": [],
         }
 
         # 计算总分
@@ -608,7 +609,7 @@ class DocsAnalytics:
             quality_metrics["completeness_score"],
             quality_metrics["consistency_score"],
             quality_metrics["maintenance_score"],
-            quality_metrics["accessibility_score"]
+            quality_metrics["accessibility_score"],
         ]
         quality_metrics["overall_quality_score"] = sum(scores) / len(scores)
 
@@ -626,7 +627,7 @@ class DocsAnalytics:
                 "README.md",
                 "architecture/ARCHITECTURE.md",
                 "reference/API_REFERENCE.md",
-                "testing/TEST_IMPROVEMENT_GUIDE.md"
+                "testing/TEST_IMPROVEMENT_GUIDE.md",
             ]
 
             for file_name in core_files:
@@ -641,7 +642,12 @@ class DocsAnalytics:
             total_checks += 1
 
             # 检查多语言支持
-            if self.analytics_data.get("content_analysis", {}).get("language_analysis", {}).get("mixed_language_files", 0) > 0:
+            if (
+                self.analytics_data.get("content_analysis", {})
+                .get("language_analysis", {})
+                .get("mixed_language_files", 0)
+                > 0
+            ):
                 score += 1.0
             total_checks += 1
 
@@ -662,9 +668,9 @@ class DocsAnalytics:
             consistent_titles = 0
             for md_file in md_files:
                 try:
-                    with open(md_file, 'r', encoding='utf-8') as f:
+                    with open(md_file, "r", encoding="utf-8") as f:
                         content = f.read()
-                    if re.search(r'^# ', content, re.MULTILINE):
+                    if re.search(r"^# ", content, re.MULTILINE):
                         consistent_titles += 1
                 except Exception:
                     pass
@@ -678,9 +684,9 @@ class DocsAnalytics:
             consistent_links = 0
             for md_file in md_files:
                 try:
-                    with open(md_file, 'r', encoding='utf-8') as f:
+                    with open(md_file, "r", encoding="utf-8") as f:
                         content = f.read()
-                    links = re.findall(r'\[([^\]]+)\]\(([^)]+)\)', content)
+                    links = re.findall(r"\[([^\]]+)\]\(([^)]+)\)", content)
                     if links:
                         consistent_links += 1
                 except Exception:
@@ -739,9 +745,9 @@ class DocsAnalytics:
             files_with_toc = 0
             for md_file in md_files:
                 try:
-                    with open(md_file, 'r', encoding='utf-8') as f:
+                    with open(md_file, "r", encoding="utf-8") as f:
                         content = f.read()
-                    if '## 📑 目录' in content or '## 目录' in content:
+                    if "## 📑 目录" in content or "## 目录" in content:
                         files_with_toc += 1
                 except Exception:
                     pass
@@ -770,70 +776,85 @@ class DocsAnalytics:
         # 基于内容分析的建议
         content_stats = self.analytics_data.get("content_analysis", {})
 
-        if content_stats.get("content_statistics", {}).get("files_with_toc", 0) < len(list(self.docs_dir.rglob("*.md"))) * 0.5:
-            recommendations.append({
-                "type": "structure",
-                "priority": "high",
-                "title": "增加文档目录",
-                "description": "超过50%的文档缺少目录，建议为重要文档添加目录以提高可读性"
-            })
+        if (
+            content_stats.get("content_statistics", {}).get("files_with_toc", 0)
+            < len(list(self.docs_dir.rglob("*.md"))) * 0.5
+        ):
+            recommendations.append(
+                {
+                    "type": "structure",
+                    "priority": "high",
+                    "title": "增加文档目录",
+                    "description": "超过50%的文档缺少目录，建议为重要文档添加目录以提高可读性",
+                }
+            )
 
         if content_stats.get("content_statistics", {}).get("files_with_code_blocks", 0) < 5:
-            recommendations.append({
-                "type": "content",
-                "priority": "medium",
-                "title": "增加代码示例",
-                "description": "文档中缺少代码示例，建议添加实际的代码示例和用法说明"
-            })
+            recommendations.append(
+                {
+                    "type": "content",
+                    "priority": "medium",
+                    "title": "增加代码示例",
+                    "description": "文档中缺少代码示例，建议添加实际的代码示例和用法说明",
+                }
+            )
 
         # 基于结构分析的建议
         structure_stats = self.analytics_data.get("structure_analysis", {})
 
         orphaned_files = structure_stats.get("navigation_structure", {}).get("orphaned_files", [])
         if len(orphaned_files) > 3:
-            recommendations.append({
-                "type": "navigation",
-                "priority": "high",
-                "title": "减少孤立文档",
-                "description": f"发现{len(orphaned_files)}个孤立文档，建议在索引页面或相关文档中添加链接"
-            })
+            recommendations.append(
+                {
+                    "type": "navigation",
+                    "priority": "high",
+                    "title": "减少孤立文档",
+                    "description": f"发现{len(orphaned_files)}个孤立文档，建议在索引页面或相关文档中添加链接",
+                }
+            )
 
         # 基于质量分析的建议
         quality_metrics = self.analytics_data.get("quality_metrics", {})
 
         if quality_metrics.get("overall_quality_score", 0) < 70:
-            recommendations.append({
-                "type": "quality",
-                "priority": "high",
-                "title": "提升文档质量",
-                "description": f"当前文档质量得分为{quality_metrics.get('overall_quality_score', 0):.1f}，建议系统性改进文档质量"
-            })
+            recommendations.append(
+                {
+                    "type": "quality",
+                    "priority": "high",
+                    "title": "提升文档质量",
+                    "description": f"当前文档质量得分为{quality_metrics.get('overall_quality_score', 0):.1f}，建议系统性改进文档质量",
+                }
+            )
 
         # 基于语言分析的建议
         language_stats = content_stats.get("language_analysis", {})
         if language_stats.get("mixed_language_files", 0) == 0:
-            recommendations.append({
-                "type": "internationalization",
-                "priority": "medium",
-                "title": "考虑多语言支持",
-                "description": "当前文档为单一语言，考虑添加英文版本以支持国际用户"
-            })
+            recommendations.append(
+                {
+                    "type": "internationalization",
+                    "priority": "medium",
+                    "title": "考虑多语言支持",
+                    "description": "当前文档为单一语言，考虑添加英文版本以支持国际用户",
+                }
+            )
 
         # 基于交叉引用分析的建议
         cross_refs = structure_stats.get("cross_references", {})
         if cross_refs.get("reference_density", 0) < 5:
-            recommendations.append({
-                "type": "connectivity",
-                "priority": "medium",
-                "title": "增加文档链接",
-                "description": f"文档链接密度较低({cross_refs.get('reference_density', 0):.1f})，建议增加相关文档的交叉引用"
-            })
+            recommendations.append(
+                {
+                    "type": "connectivity",
+                    "priority": "medium",
+                    "title": "增加文档链接",
+                    "description": f"文档链接密度较低({cross_refs.get('reference_density', 0):.1f})，建议增加相关文档的交叉引用",
+                }
+            )
 
         self.analytics_data["recommendations"] = recommendations
 
     def _format_size(self, size_bytes: int) -> str:
         """格式化文件大小"""
-        for unit in ['B', 'KB', 'MB', 'GB']:
+        for unit in ["B", "KB", "MB", "GB"]:
             if size_bytes < 1024:
                 return f"{size_bytes:.1f} {unit}"
             size_bytes /= 1024
@@ -846,7 +867,7 @@ class DocsAnalytics:
             output_path = f"docs-analytics-report-{timestamp}.json"
 
         try:
-            with open(output_path, 'w', encoding='utf-8') as f:
+            with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(self.analytics_data, f, indent=2, ensure_ascii=False, default=str)
 
             logger.info(f"📊 分析报告已保存: {output_path}")
@@ -894,11 +915,15 @@ class DocsAnalytics:
         quality_metrics = self.analytics_data.get("quality_metrics", {})
         if quality_metrics:
             report.append("### 📈 质量评估")
-            report.append(f"- **整体得分**: {quality_metrics.get('overall_quality_score', 0):.1f}/100")
+            report.append(
+                f"- **整体得分**: {quality_metrics.get('overall_quality_score', 0):.1f}/100"
+            )
             report.append(f"- **完整性**: {quality_metrics.get('completeness_score', 0):.1f}/100")
             report.append(f"- **一致性**: {quality_metrics.get('consistency_score', 0):.1f}/100")
             report.append(f"- **维护性**: {quality_metrics.get('maintenance_score', 0):.1f}/100")
-            report.append(f"- **可访问性**: {quality_metrics.get('accessibility_score', 0):.1f}/100")
+            report.append(
+                f"- **可访问性**: {quality_metrics.get('accessibility_score', 0):.1f}/100"
+            )
             report.append("")
 
         # 改进建议
@@ -907,8 +932,12 @@ class DocsAnalytics:
             report.append("## 💡 改进建议")
             report.append("")
             for i, rec in enumerate(recommendations[:5], 1):  # 只显示前5个建议
-                priority_emoji = {"high": "🔴", "medium": "🟡", "low": "🟢"}.get(rec.get("priority", "medium"), "🟡")
-                report.append(f"{i}. **{priority_emoji} {rec.get('title', '未知')}** ({rec.get('priority', 'medium')})")
+                priority_emoji = {"high": "🔴", "medium": "🟡", "low": "🟢"}.get(
+                    rec.get("priority", "medium"), "🟡"
+                )
+                report.append(
+                    f"{i}. **{priority_emoji} {rec.get('title', '未知')}** ({rec.get('priority', 'medium')})"
+                )
                 report.append(f"   {rec.get('description', '无描述')}")
                 report.append("")
 
@@ -916,9 +945,9 @@ class DocsAnalytics:
 
     def print_summary(self) -> None:
         """打印摘要信息"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("📊 文档分析摘要")
-        print("="*60)
+        print("=" * 60)
 
         # 基本信息
         print(f"项目: {self.analytics_data['project_info']['name']}")
@@ -954,11 +983,13 @@ class DocsAnalytics:
         if recommendations:
             print("💡 主要建议:")
             for rec in recommendations[:3]:
-                priority_icon = {"high": "🔴", "medium": "🟡", "low": "🟢"}.get(rec.get("priority", "medium"), "🟡")
+                priority_icon = {"high": "🔴", "medium": "🟡", "low": "🟢"}.get(
+                    rec.get("priority", "medium"), "🟡"
+                )
                 print(f"  {priority_icon} {rec.get('title', '未知')}")
             print()
 
-        print("="*60)
+        print("=" * 60)
 
 
 async def main():
@@ -1002,4 +1033,5 @@ async def main():
 
 if __name__ == "__main__":
     import asyncio
+
     asyncio.run(main())

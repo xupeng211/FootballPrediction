@@ -7,7 +7,6 @@ Tests for Data Validators
 
 import pytest
 
-from src.utils.validators import (
     is_valid_email,
     is_valid_phone,
     is_valid_url,
@@ -303,7 +302,6 @@ class TestDataTypesValidator:
 
     def test_union_types(self):
         """测试：联合类型（需要使用typing.Union）"""
-        from typing import Union
 
         data = {"value": 123, "identifier": "abc123"}
         schema = {

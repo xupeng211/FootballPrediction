@@ -6,7 +6,6 @@
 import json
 import os
 import sys
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -65,9 +64,7 @@ except ImportError:
 class TestExistingModules:
     """测试实际存在的模块"""
 
-    @pytest.mark.skipif(
-        len(modules_to_test) == 0, reason="No modules available for testing"
-    )
+    @pytest.mark.skipif(len(modules_to_test) == 0, reason="No modules available for testing")
     def test_module_imports(self):
         """测试模块导入"""
         for name, module in modules_to_test:

@@ -6,7 +6,6 @@ Helper Functions Tests
 """
 
 from datetime import datetime
-from typing import Any, Dict, Optional
 
 import pytest
 
@@ -73,17 +72,11 @@ class TestHelpers:
         # 测试空字符串
         empty_hash = generate_hash("")
         assert len(empty_hash) == 64
-        assert (
-            empty_hash
-            == "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-        )
+        assert empty_hash == "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
         # 测试已知哈希值
         known_hash = generate_hash("test")
-        assert (
-            known_hash
-            == "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
-        )
+        assert known_hash == "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
 
         # 测试长字符串
         long_text = "a" * 1000
@@ -140,9 +133,7 @@ class TestHelpers:
 
         # 解析时间戳
         parsed = datetime.fromisoformat(
-            timestamp1.replace("Z", "+00:00")
-            if timestamp1.endswith("Z")
-            else timestamp1
+            timestamp1.replace("Z", "+00:00") if timestamp1.endswith("Z") else timestamp1
         )
         assert isinstance(parsed, datetime)
 

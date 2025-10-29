@@ -11,9 +11,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # 添加项目根目录到Python路径
-sys.path.insert(0, '/home/user/projects/FootballPrediction')
+sys.path.insert(0, "/home/user/projects/FootballPrediction")
 
 from src.collectors.data_sources import data_source_manager
+
 
 async def test_data_source_api():
     """测试数据源API功能"""
@@ -35,6 +36,7 @@ async def test_data_source_api():
 
         # 测试获取比赛数据
         from datetime import datetime, timedelta
+
         date_from = datetime.now()
         date_to = date_from + timedelta(days=7)
 
@@ -53,7 +55,7 @@ async def test_data_source_api():
             "test_teams": len(teams),
             "message": f"数据源 football_data_org 测试成功",
             "available_sources": available_sources,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
         print(f"\n🎉 数据源测试成功！")
@@ -77,8 +79,10 @@ async def test_data_source_api():
     except Exception as e:
         print(f"❌ 数据源测试失败: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     success = asyncio.run(test_data_source_api())

@@ -40,9 +40,7 @@ class TypeChecker:
         if not full_check:
             cmd.append("--no-error-summary")
 
-        result = subprocess.run(
-            cmd, capture_output=True, text=True, cwd=self.project_root
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, cwd=self.project_root)
 
         # 解析输出
         errors = []
@@ -141,12 +139,8 @@ class TypeChecker:
             previous = json.load(f)
 
         # 计算改进
-        error_diff = (
-            previous["summary"]["total_errors"] - latest["summary"]["total_errors"]
-        )
-        warning_diff = (
-            previous["summary"]["total_warnings"] - latest["summary"]["total_warnings"]
-        )
+        error_diff = previous["summary"]["total_errors"] - latest["summary"]["total_errors"]
+        warning_diff = previous["summary"]["total_warnings"] - latest["summary"]["total_warnings"]
 
         return {
             "previous_timestamp": previous["timestamp"],

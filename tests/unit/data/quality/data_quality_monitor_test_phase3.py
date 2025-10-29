@@ -3,8 +3,6 @@
 原文件存在语法错误，已重新生成
 """
 
-from unittest.mock import Mock, patch
-
 import pytest
 
 

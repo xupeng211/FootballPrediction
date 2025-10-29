@@ -72,9 +72,7 @@ class EnhancedSyntaxFixer:
                         match = re.match(pattern, line)
                         if match:
                             line = replacement(match)
-                            fixes_applied.append(
-                                f"Line {i+1}: {original_line} → {line}"
-                            )
+                            fixes_applied.append(f"Line {i+1}: {original_line} → {line}")
                     else:
                         # 处理字符串替换
                         new_line = re.sub(pattern, replacement, line)
@@ -141,9 +139,7 @@ class EnhancedSyntaxFixer:
 
                 self.fixed_files.append(str(file_path.relative_to(Path.cwd())))
                 self.total_fixes += len(fixes)
-                print(
-                    f"✅ 修复 {file_path.relative_to(Path.cwd())} ({len(fixes)} 处修复)"
-                )
+                print(f"✅ 修复 {file_path.relative_to(Path.cwd())} ({len(fixes)} 处修复)")
                 return True
 
         except Exception as e:
@@ -152,9 +148,7 @@ class EnhancedSyntaxFixer:
 
         return False
 
-    def scan_and_fix(
-        self, max_files: int = 50, target_dirs: Optional[List[str]] = None
-    ) -> dict:
+    def scan_and_fix(self, max_files: int = 50, target_dirs: Optional[List[str]] = None) -> dict:
         """扫描并修复文件"""
         print("🔧 开始增强的语法修复...")
         print(f"最大文件数: {max_files}")
@@ -164,16 +158,12 @@ class EnhancedSyntaxFixer:
 
         # 过滤文件
         if target_dirs:
-            python_files = [
-                f for f in python_files if any(dir in str(f) for dir in target_dirs)
-            ]
+            python_files = [f for f in python_files if any(dir in str(f) for dir in target_dirs)]
 
         # 跳过某些目录
         skip_patterns = ["__pycache__", ".git", "migrations", "archive", "backup"]
         python_files = [
-            f
-            for f in python_files
-            if not any(pattern in str(f) for pattern in skip_patterns)
+            f for f in python_files if not any(pattern in str(f) for pattern in skip_patterns)
         ]
 
         print(f"找到 {len(python_files)} 个Python文件")
@@ -248,9 +238,7 @@ def main():
 
     parser = argparse.ArgumentParser(description="增强的Python语法修复工具")
     parser.add_argument("--max-files", type=int, default=50, help="最大修复文件数")
-    parser.add_argument(
-        "--target", nargs="*", default=["database", "models"], help="目标目录"
-    )
+    parser.add_argument("--target", nargs="*", default=["database", "models"], help="目标目录")
 
     args = parser.parse_args()
 
@@ -259,9 +247,7 @@ def main():
 
     print("\n下一步:")
     print("1. 运行测试: python -m pytest tests/unit/ -x --tb=short")
-    print(
-        "2. 继续修复: python scripts/enhanced_fix.py --max-files 50 --target api services"
-    )
+    print("2. 继续修复: python scripts/enhanced_fix.py --max-files 50 --target api services")
 
 
 if __name__ == "__main__":

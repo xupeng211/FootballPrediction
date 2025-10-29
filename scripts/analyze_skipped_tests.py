@@ -88,20 +88,13 @@ def analyze_skipped_tests():
         module = test["module"]
 
         # 根据原因分类
-        if any(
-            keyword in reason for keyword in ["placeholder", "占位", "not implemented"]
-        ):
+        if any(keyword in reason for keyword in ["placeholder", "占位", "not implemented"]):
             categories["占位测试"].append(test)
-        elif any(
-            keyword in reason
-            for keyword in ["not available", "不可用", "missing", "依赖"]
-        ):
+        elif any(keyword in reason for keyword in ["not available", "不可用", "missing", "依赖"]):
             categories["依赖缺失"].append(test)
         elif any(keyword in reason for keyword in ["config", "配置", "env", "环境"]):
             categories["配置相关"].append(test)
-        elif any(
-            keyword in reason for keyword in ["condition", "条件", "false", "true"]
-        ):
+        elif any(keyword in reason for keyword in ["condition", "条件", "false", "true"]):
             categories["条件不满足"].append(test)
         else:
             categories["其他"].append(test)

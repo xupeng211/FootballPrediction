@@ -8,7 +8,6 @@
 - 基础工具类
 """
 
-from .config import Config, Settings, get_config, get_settings
 from .config_di import ConfigurationBinder
 from .di import (
     DIContainer,

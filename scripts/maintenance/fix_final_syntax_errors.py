@@ -7,6 +7,7 @@ Issue #84 最终语法错误修复脚本
 import os
 import re
 
+
 def fix_final_syntax_errors():
     """修复最终的语法错误"""
 
@@ -44,12 +45,10 @@ def fix_final_syntax_errors():
         ("tests/unit/core/test_di_setup_real.py", "try_block"),
         ("tests/unit/services/test_services_basic.py", "try_block"),
         ("tests/unit/services/test_prediction_algorithms.py", "try_block"),
-
         # 处理 expected 'except' or 'finally' block
         ("tests/unit/utils/test_core_config_extended.py", "except_block"),
         ("tests/unit/utils/test_streaming_simple.py", "except_block"),
         ("tests/unit/utils/test_config_simple.py", "except_block"),
-
         # 处理 unexpected indent
         ("tests/test_conftest_original.py", "fix_indent"),
         ("tests/test_conftest_new.py", "fix_indent"),
@@ -57,7 +56,6 @@ def fix_final_syntax_errors():
         ("tests/unit/utils/test_config_loader.py", "fix_indent"),
         ("tests/unit/middleware/test_cors_middleware.py", "fix_indent"),
         ("tests/unit/core/test_config.py", "fix_indent"),
-
         # 处理 invalid syntax
         ("tests/unit/tasks/test_tasks_coverage_boost.py", "fix_syntax"),
     ]
@@ -87,6 +85,7 @@ def fix_final_syntax_errors():
 
     return fixed_count, failed_count
 
+
 def apply_fix(file_path, fix_type):
     """应用特定类型的修复"""
 
@@ -95,7 +94,7 @@ def apply_fix(file_path, fix_type):
         return False
 
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         original_content = content
@@ -111,7 +110,7 @@ def apply_fix(file_path, fix_type):
 
         # 如果内容有变化，写回文件
         if content != original_content:
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(content)
             return True
         else:
@@ -122,10 +121,11 @@ def apply_fix(file_path, fix_type):
         print(f"❌ 应用修复时出错 {file_path}: {str(e)}")
         return False
 
+
 def fix_try_statement_blocks(content):
     """修复 try 语句后缺少代码块的问题"""
 
-    lines = content.split('\n')
+    lines = content.split("\n")
     new_lines = []
     i = 0
 
@@ -134,23 +134,26 @@ def fix_try_statement_blocks(content):
         new_lines.append(line)
 
         # 检查是否是 try 语句
-        if re.match(r'\s*try\s*:\s*$', line):
+        if re.match(r"\s*try\s*:\s*$", line):
             # 检查下一行
             if i + 1 < len(lines):
                 next_line = lines[i + 1]
                 # 如果下一行不是缩进的内容，添加 pass
-                if not next_line.strip() or (len(next_line) - len(next_line.lstrip()) <= len(line) - len(line.lstrip())):
+                if not next_line.strip() or (
+                    len(next_line) - len(next_line.lstrip()) <= len(line) - len(line.lstrip())
+                ):
                     indent = len(line) - len(line.lstrip()) + 4
-                    new_lines.append(' ' * indent + 'pass')
+                    new_lines.append(" " * indent + "pass")
 
         i += 1
 
-    return '\n'.join(new_lines)
+    return "\n".join(new_lines)
+
 
 def fix_missing_except_blocks(content):
     """修复缺失的 except 块"""
 
-    lines = content.split('\n')
+    lines = content.split("\n")
     new_lines = []
     i = 0
 
@@ -158,7 +161,7 @@ def fix_missing_except_blocks(content):
         line = lines[i]
 
         # 检查是否是独立的 try 块（没有对应的 except）
-        if re.match(r'\s*try\s*:\s*$', line):
+        if re.match(r"\s*try\s*:\s*$", line):
             new_lines.append(line)
             i += 1
 
@@ -173,11 +176,13 @@ def fix_missing_except_blocks(content):
                 # 如果遇到同级或更小缩进的内容，且不是空行
                 if current_line.strip() and current_indent <= try_indent:
                     # 检查是否有 except
-                    if not re.match(r'\s*except\s+', current_line) and not re.match(r'\s*finally\s+', current_line):
+                    if not re.match(r"\s*except\s+", current_line) and not re.match(
+                        r"\s*finally\s+", current_line
+                    ):
                         # 添加 except 块
                         new_lines.extend(block_content)
-                        new_lines.append(' ' * try_indent + 'except Exception:')
-                        new_lines.append(' ' * (try_indent + 4) + 'pass')
+                        new_lines.append(" " * try_indent + "except Exception:")
+                        new_lines.append(" " * (try_indent + 4) + "pass")
                     new_lines.append(current_line)
                     break
                 else:
@@ -187,49 +192,54 @@ def fix_missing_except_blocks(content):
                 if i >= len(lines):
                     # 文件结束，添加 except 块
                     new_lines.extend(block_content)
-                    new_lines.append(' ' * try_indent + 'except Exception:')
-                    new_lines.append(' ' * (try_indent + 4) + 'pass')
+                    new_lines.append(" " * try_indent + "except Exception:")
+                    new_lines.append(" " * (try_indent + 4) + "pass")
                     break
         else:
             new_lines.append(line)
             i += 1
 
-    return '\n'.join(new_lines)
+    return "\n".join(new_lines)
+
 
 def fix_indentation_errors(content):
     """修复缩进错误"""
 
-    lines = content.split('\n')
+    lines = content.split("\n")
     new_lines = []
 
     for line in lines:
         stripped = line.strip()
 
         # 跳过空行和注释
-        if not stripped or stripped.startswith('#'):
+        if not stripped or stripped.startswith("#"):
             new_lines.append(line)
             continue
 
         # 修复意外缩进的 import 语句
-        if (stripped.startswith('import ') or stripped.startswith('from ')) and line.startswith('    '):
+        if (stripped.startswith("import ") or stripped.startswith("from ")) and line.startswith(
+            "    "
+        ):
             # 检查是否应该在顶层
             new_lines.append(stripped)
         else:
             new_lines.append(line)
 
-    return '\n'.join(new_lines)
+    return "\n".join(new_lines)
+
 
 def fix_syntax_errors(content):
     """修复语法错误"""
 
     # 修复无效的 import 语法
-    content = re.sub(r'\n\s*import pytest\s*\n', '\nimport pytest\n\n', content)
+    content = re.sub(r"\n\s*import pytest\s*\n", "\nimport pytest\n\n", content)
 
     # 确保文件以换行符结束
-    if content and not content.endswith('\n'):
-        content += '\n'
+    if content and not content.endswith("\n"):
+        content += "\n"
 
     return content
+
 
 def create_minimal_test_file(file_path):
     """创建最小测试文件"""
@@ -244,13 +254,14 @@ def test_minimal():
 '''
 
     try:
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(minimal_content)
         print(f"📝 创建最小测试文件: {file_path}")
         return True
     except Exception as e:
         print(f"❌ 创建最小文件失败: {file_path} - {str(e)}")
         return False
+
 
 if __name__ == "__main__":
     print("🔧 Issue #84 最终语法错误修复脚本")

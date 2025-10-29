@@ -11,13 +11,14 @@ CONNECTION_POOL_CONFIG = {
     "database": "football_prediction",
     "username": "postgres",
     "password": "password",
-    "pool_size": 20,           # 连接池大小
-    "max_overflow": 30,       # 最大溢出连接数
-    "pool_timeout": 30,       # 连接超时时间
-    "pool_recycle": 3600,     # 连接回收时间（1小时）
-    "pool_pre_ping": True,      # 连接前检查
-    "max_lifetime": 7200,     # 连接最大生存时间（2小时）
+    "pool_size": 20,  # 连接池大小
+    "max_overflow": 30,  # 最大溢出连接数
+    "pool_timeout": 30,  # 连接超时时间
+    "pool_recycle": 3600,  # 连接回收时间（1小时）
+    "pool_pre_ping": True,  # 连接前检查
+    "max_lifetime": 7200,  # 连接最大生存时间（2小时）
 }
+
 
 # 连接池使用示例
 class DatabaseConnectionPool:

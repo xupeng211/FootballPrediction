@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock, patch
-
 """API特征端点测试"""
 
 import pytest

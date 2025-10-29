@@ -5,7 +5,6 @@ Comprehensive Tests for Audit Service
 测试src.services.audit_service模块的所有功能
 """
 
-from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
 
 import pytest
@@ -78,9 +77,7 @@ class TestAuditContext:
 
     def test_context_creation_full(self) -> None:
         """✅ 成功用例：完整上下文创建"""
-        context = AuditContext(
-            user_id="user123", session_id="session456", ip_address="192.168.1.1"
-        )
+        context = AuditContext(user_id="user123", session_id="session456", ip_address="192.168.1.1")
 
         assert context.user_id == "user123"
         assert context.session_id == "session456"
@@ -605,7 +602,6 @@ class TestAuditServiceIntegration:
     def test_concurrent_event_logging(self) -> None:
         """✅ 并发用例：并发事件记录"""
         import threading
-        import time
 
         service = AuditService()
         results = []
@@ -649,9 +645,7 @@ class TestAuditServiceIntegration:
 
         # 记录1000个事件
         for i in range(1000):
-            service.log_event(
-                f"action_{i}", f"user_{i % 10}", {"index": i, "data": "x" * 100}
-            )
+            service.log_event(f"action_{i}", f"user_{i % 10}", {"index": i, "data": "x" * 100})
 
         end_time = time.perf_counter()
 
@@ -665,9 +659,7 @@ class TestAuditServiceIntegration:
         summary = service.get_summary()
         end_time = time.perf_counter()
 
-        assert (
-            end_time - start_time < 0.1
-        ), f"Retrieval too slow: {end_time - start_time:.3f}s"
+        assert end_time - start_time < 0.1, f"Retrieval too slow: {end_time - start_time:.3f}s"
         assert len(events) == 500
         assert summary.total_logs == 1000
 
@@ -716,9 +708,7 @@ class TestAuditServiceIntegration:
                 assert event.action == action
                 assert event._user == user
             except Exception as e:
-                pytest.fail(
-                    f"Unexpected error for action='{action}', user='{user}': {e}"
-                )
+                pytest.fail(f"Unexpected error for action='{action}', user='{user}': {e}")
 
     @patch("src.services.audit_service.logger")
     def test_logging_integration(self, mock_logger: Mock) -> None:

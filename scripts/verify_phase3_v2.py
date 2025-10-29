@@ -52,9 +52,7 @@ sys.exit(subprocess.run([
     ]
 
     try:
-        result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=30, env=env
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, env=env)
 
         output = result.stdout + result.stderr
 
@@ -83,9 +81,7 @@ sys.exit(subprocess.run([
             print("  ⚠️  连接超时或错误")
             return False, output
         else:
-            print(
-                f"  ✓ 通过: {passed}, 失败: {failed}, 错误: {errors}, 跳过: {skipped}"
-            )
+            print(f"  ✓ 通过: {passed}, 失败: {failed}, 错误: {errors}, 跳过: {skipped}")
             return True, output
 
     except subprocess.TimeoutExpired:
@@ -138,9 +134,7 @@ def main():
         print("  - 可以进入 Phase 4：校准覆盖率配置")
         return True
     else:
-        print(
-            f"\n⚠️  Phase 3 v2 需要继续优化：{total_count - success_count} 个测试仍有问题"
-        )
+        print(f"\n⚠️  Phase 3 v2 需要继续优化：{total_count - success_count} 个测试仍有问题")
         print("\n建议：")
         print("  - 检查失败的测试并修复Mock")
         print("  - 确保Mock在导入阶段就生效")

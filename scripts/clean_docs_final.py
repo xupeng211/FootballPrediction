@@ -146,9 +146,9 @@ def clean_docs_final():
     print("\n📊 最终结果：")
 
     total_files = len(list(docs_path.rglob("*.md")))
-    total_size_mb = sum(
-        f.stat().st_size for f in docs_path.rglob("*") if f.is_file()
-    ) / (1024 * 1024)
+    total_size_mb = sum(f.stat().st_size for f in docs_path.rglob("*") if f.is_file()) / (
+        1024 * 1024
+    )
 
     print(f"   - 最终文件数: {total_files}")
     print(f"   - 最终大小: {total_size_mb:.2f}MB")
@@ -168,9 +168,7 @@ def clean_docs_final():
     print("\n🎉 清理总结：")
     print("   原始: 5.2MB (309文件)")
     print(f"   最终: {total_size_mb:.1f}MB ({total_files}文件)")
-    print(
-        f"   节省: {5.2 - total_size_mb:.1f}MB ({((5.2 - total_size_mb) / 5.2 * 100):.1f}%)"
-    )
+    print(f"   节省: {5.2 - total_size_mb:.1f}MB ({((5.2 - total_size_mb) / 5.2 * 100):.1f}%)")
 
 
 if __name__ == "__main__":

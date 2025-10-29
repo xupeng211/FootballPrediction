@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 30 repeated Mock creations
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 """
 CQRS API端点简化测试
@@ -11,7 +10,6 @@ Simplified Tests for CQRS API Endpoints
 专注于测试CQRS模式的核心API端点功能。
 """
 
-from datetime import datetime
 
 import pytest
 from fastapi import FastAPI
@@ -417,9 +415,7 @@ class TestCQRSAPI:
         mock_get_service.return_value = mock_service
 
         # When
-        response = client.get(
-            "/cqrs/analytics/matches?date_from=2023-12-01&date_to=2023-12-31"
-        )
+        response = client.get("/cqrs/analytics/matches?date_from=2023-12-01&date_to=2023-12-31")
 
         # Then
         assert response.status_code == 200
@@ -431,9 +427,7 @@ class TestCQRSAPI:
         """测试：服务异常处理"""
         # Given
         mock_service = Mock()
-        mock_service.create_prediction = AsyncMock(
-            side_effect=Exception("Service error")
-        )
+        mock_service.create_prediction = AsyncMock(side_effect=Exception("Service error"))
         mock_get_service.return_value = mock_service
 
         request_data = {

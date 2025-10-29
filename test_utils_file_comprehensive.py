@@ -49,7 +49,7 @@ class TestFileUtilsComprehensive:
         """测试成功读取JSON文件"""
         test_data = {"name": "张三", "age": 25, "city": "北京"}
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             json.dump(test_data, f, ensure_ascii=False)
             temp_file = f.name
 
@@ -66,7 +66,7 @@ class TestFileUtilsComprehensive:
 
     def test_read_json_invalid_json(self):
         """测试读取无效JSON文件"""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             f.write('{"invalid": json content}')
             temp_file = f.name
 
@@ -88,7 +88,7 @@ class TestFileUtilsComprehensive:
             assert temp_file.exists()
 
             # 验证写入的内容
-            with open(temp_file, 'r', encoding='utf-8') as f:
+            with open(temp_file, "r", encoding="utf-8") as f:
                 loaded_data = json.load(f)
 
             assert loaded_data == test_data
@@ -119,7 +119,7 @@ class TestFileUtilsComprehensive:
         """测试成功获取文件哈希值"""
         test_content = "Hello, World! 这是一个测试文件。"
 
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, encoding='utf-8') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, encoding="utf-8") as f:
             f.write(test_content)
             temp_file = f.name
 
@@ -164,9 +164,7 @@ class TestFileUtilsComprehensive:
 
     def test_all_methods_exist(self):
         """测试所有方法都存在"""
-        methods = [
-            'ensure_dir', 'read_json', 'write_json', 'get_file_hash'
-        ]
+        methods = ["ensure_dir", "read_json", "write_json", "get_file_hash"]
 
         for method in methods:
             assert hasattr(FileUtils, method), f"方法 {method} 不存在"
@@ -177,7 +175,7 @@ class TestFileUtilsComprehensive:
             "中文名": "张三",
             "emoji": "🎉✨🚀",
             "special_chars": "áéíóú ñ",
-            "mixed": "Hello 世界! 🌍"
+            "mixed": "Hello 世界! 🌍",
         }
 
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -208,11 +206,8 @@ class TestFileUtilsComprehensive:
         """测试大型JSON文件处理"""
         # 创建包含大量数据的测试数据
         large_data = {
-            "users": [
-                {"id": i, "name": f"用户{i}", "data": list(range(100))}
-                for i in range(1000)
-            ],
-            "metadata": {"total": 1000, "version": "1.0"}
+            "users": [{"id": i, "name": f"用户{i}", "data": list(range(100))} for i in range(1000)],
+            "metadata": {"total": 1000, "version": "1.0"},
         }
 
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -223,6 +218,7 @@ class TestFileUtilsComprehensive:
 
             assert len(result["users"]) == 1000
             assert result["metadata"]["total"] == 1000
+
 
 def test_file_utils_comprehensive_suite():
     """FileUtils综合测试套件"""
@@ -242,6 +238,7 @@ def test_file_utils_comprehensive_suite():
         assert result_data == test_data
 
     print("✅ FileUtils综合测试套件通过")
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

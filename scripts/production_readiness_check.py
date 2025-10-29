@@ -20,10 +20,7 @@ import requests
 from requests.exceptions import ConnectionError, Timeout
 
 # 配置日志
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -39,13 +36,14 @@ class ProductionReadinessChecker:
             "performance": {},
             "monitoring": {},
             "configuration": {},
-            "overall": {}
+            "overall": {},
         }
         self.passed_checks = 0
         self.total_checks = 0
 
-    def add_result(self, category: str, check_name: str, passed: bool,
-                   details: str = "", metrics: Dict = None):
+    def add_result(
+        self, category: str, check_name: str, passed: bool, details: str = "", metrics: Dict = None
+    ):
         """添加检查结果"""
         if category not in self.results:
             self.results[category] = {}
@@ -54,7 +52,7 @@ class ProductionReadinessChecker:
             "passed": passed,
             "details": details,
             "metrics": metrics or {},
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
 
         self.total_checks += 1
@@ -75,7 +73,7 @@ class ProductionReadinessChecker:
             ("/api/v1/matches", "比赛数据API"),
             ("/api/v1/teams", "球队API"),
             ("/docs", "API文档"),
-            ("/openapi.json", "OpenAPI规范")
+            ("/openapi.json", "OpenAPI规范"),
         ]
 
         all_passed = True
@@ -101,7 +99,10 @@ class ProductionReadinessChecker:
                     description,
                     passed,
                     details,
-                    {"status_code": response.status_code, "response_time": response.elapsed.total_seconds()}
+                    {
+                        "status_code": response.status_code,
+                        "response_time": response.elapsed.total_seconds(),
+                    },
                 )
 
             except (ConnectionError, Timeout) as e:
@@ -120,32 +121,25 @@ class ProductionReadinessChecker:
         try:
             # 测试数据库迁移状态
             result = subprocess.run(
-                ["python", "-c",
-                 "from alembic import command; "
-                 "from alembic.config import Config; "
-                 "cfg = Config('alembic.ini'); "
-                 "current = command.current(cfg); "
-                 "print(f'Current revision: {current}')"],
+                [
+                    "python",
+                    "-c",
+                    "from alembic import command; "
+                    "from alembic.config import Config; "
+                    "cfg = Config('alembic.ini'); "
+                    "current = command.current(cfg); "
+                    "print(f'Current revision: {current}')",
+                ],
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
             if result.returncode == 0:
-                self.add_result(
-                    "database",
-                    "迁移状态",
-                    True,
-                    f"当前版本: {result.stdout.strip()}"
-                )
+                self.add_result("database", "迁移状态", True, f"当前版本: {result.stdout.strip()}")
                 return True
             else:
-                self.add_result(
-                    "database",
-                    "迁移状态",
-                    False,
-                    f"错误: {result.stderr}"
-                )
+                self.add_result("database", "迁移状态", False, f"错误: {result.stderr}")
                 return False
 
         except subprocess.TimeoutExpired:
@@ -166,7 +160,7 @@ class ProductionReadinessChecker:
             ("SECRET_KEY", "JWT密钥"),
             ("ALGORITHM", "JWT算法"),
             ("DATABASE_URL", "数据库连接"),
-            ("REDIS_URL", "Redis连接")
+            ("REDIS_URL", "Redis连接"),
         ]
 
         for var_name, description in env_vars:
@@ -174,13 +168,7 @@ class ProductionReadinessChecker:
             passed = value is not None and len(value) > 0
             details = "已配置" if passed else "未配置"
 
-            self.add_result(
-                "security",
-                description,
-                passed,
-                details,
-                {"configured": passed}
-            )
+            self.add_result("security", description, passed, details, {"configured": passed})
 
             security_checks.append(passed)
 
@@ -190,7 +178,7 @@ class ProductionReadinessChecker:
                 ["pip-audit", "--requirement", "requirements/requirements.lock", "--format=json"],
                 capture_output=True,
                 text=True,
-                timeout=60
+                timeout=60,
             )
 
             if result.returncode == 0:
@@ -201,11 +189,7 @@ class ProductionReadinessChecker:
                     details = f"发现 {vuln_count} 个漏洞"
 
                     self.add_result(
-                        "security",
-                        "安全漏洞",
-                        passed,
-                        details,
-                        {"vulnerability_count": vuln_count}
+                        "security", "安全漏洞", passed, details, {"vulnerability_count": vuln_count}
                     )
                     security_checks.append(passed)
 
@@ -234,10 +218,7 @@ class ProductionReadinessChecker:
         # MyPy检查
         try:
             result = subprocess.run(
-                ["make", "type-check"],
-                capture_output=True,
-                text=True,
-                timeout=120
+                ["make", "type-check"], capture_output=True, text=True, timeout=120
             )
 
             if result.returncode == 0:
@@ -245,14 +226,14 @@ class ProductionReadinessChecker:
                 quality_checks.append(True)
             else:
                 # 统计错误数量
-                error_lines = [line for line in result.stdout.split('\n') if 'error:' in line]
+                error_lines = [line for line in result.stdout.split("\n") if "error:" in line]
                 error_count = len(error_lines)
                 self.add_result(
                     "configuration",
                     "MyPy类型检查",
                     False,
                     f"发现 {error_count} 个类型错误",
-                    {"error_count": error_count}
+                    {"error_count": error_count},
                 )
                 quality_checks.append(False)
 
@@ -265,26 +246,21 @@ class ProductionReadinessChecker:
 
         # Ruff检查
         try:
-            result = subprocess.run(
-                ["make", "lint"],
-                capture_output=True,
-                text=True,
-                timeout=60
-            )
+            result = subprocess.run(["make", "lint"], capture_output=True, text=True, timeout=60)
 
             if result.returncode == 0:
                 self.add_result("configuration", "Ruff代码检查", True, "代码检查通过")
                 quality_checks.append(True)
             else:
                 # 统计警告数量
-                warning_lines = [line for line in result.stdout.split('\n') if line.strip()]
+                warning_lines = [line for line in result.stdout.split("\n") if line.strip()]
                 warning_count = len(warning_lines)
                 self.add_result(
                     "configuration",
                     "Ruff代码检查",
                     False,
                     f"发现 {warning_count} 个代码问题",
-                    {"warning_count": warning_count}
+                    {"warning_count": warning_count},
                 )
                 quality_checks.append(False)
 
@@ -303,10 +279,7 @@ class ProductionReadinessChecker:
 
         try:
             result = subprocess.run(
-                ["make", "coverage-fast"],
-                capture_output=True,
-                text=True,
-                timeout=300  # 5分钟超时
+                ["make", "coverage-fast"], capture_output=True, text=True, timeout=300  # 5分钟超时
             )
 
             if result.returncode == 0:
@@ -339,16 +312,13 @@ class ProductionReadinessChecker:
         monitoring_files = [
             ("src/monitoring/metrics_collector.py", "指标收集器"),
             ("src/monitoring/system_monitor.py", "系统监控器"),
-            ("config/monitoring/alert_rules.yml", "告警规则配置")
+            ("config/monitoring/alert_rules.yml", "告警规则配置"),
         ]
 
         for file_path, description in monitoring_files:
             exists = Path(file_path).exists()
             self.add_result(
-                "monitoring",
-                description,
-                exists,
-                "文件存在" if exists else "文件不存在"
+                "monitoring", description, exists, "文件存在" if exists else "文件不存在"
             )
             monitoring_checks.append(exists)
 
@@ -360,10 +330,7 @@ class ProductionReadinessChecker:
 
         try:
             result = subprocess.run(
-                ["make", "benchmark"],
-                capture_output=True,
-                text=True,
-                timeout=60
+                ["make", "benchmark"], capture_output=True, text=True, timeout=60
             )
 
             if result.returncode == 0:
@@ -418,7 +385,11 @@ class ProductionReadinessChecker:
             "color": readiness_color,
             "passed_checks": self.passed_checks,
             "total_checks": self.total_checks,
-            "pass_rate": round((self.passed_checks / self.total_checks) * 100, 1) if self.total_checks > 0 else 0
+            "pass_rate": (
+                round((self.passed_checks / self.total_checks) * 100, 1)
+                if self.total_checks > 0
+                else 0
+            ),
         }
 
         return self.results

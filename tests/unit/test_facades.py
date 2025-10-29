@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from unittest.mock import Mock, patch
 
 """
 Auto-generated basic tests for facades.py

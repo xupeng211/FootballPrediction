@@ -1,15 +1,6 @@
 # mypy: ignore-errors
-"""
-监控API路由
 
-提供监控相关的API端点：
-- /metrics: 返回系统、数据库、业务与运行时指标（JSON）
-- /status: 返回服务健康状态（JSON）
-- /metrics/prometheus: 返回Prometheus指标文本
-- /collector/*: 指标收集器控制与状态
-"""
 
-import logging
 import time
 from datetime import datetime
 from typing import Any, Dict, Optional
@@ -24,22 +15,69 @@ from sqlalchemy.orm import Session
 from src.core.logger import get_logger
 from src.database.dependencies import get_db
 
-logger = get_logger(__name__)
 
 from ..monitoring.metrics_collector import get_metrics_collector
 from ..monitoring.metrics_exporter import get_metrics_exporter
 
 # 监控收集器与导出器（保留原功能，迁移到 /collector/* 与 /metrics/prometheus）
 
-logger = get_logger(__name__)
 
 # 去除内部前缀，由主应用通过 include_router(prefix="/api/v1") 统一挂载
+
+
+# 异常时包含
+# 健康检查
+
+# 统计信息（关键字用于测试桩匹配）
+
+# row 可能是列表或元组
+
+
+# 使用注释与时间窗口关键词，便于测试桩根据字符串匹配
+# 近30天模型准确率（示例：正确/总）
+
+
+# 执行查询
+
+
+# 异常时保持None，并更新时间戳
+
+
+# 获取系统基本信息
+
+
+# 系统指标
+
+
+# 数据库与业务指标（允许mock为非协程）
+
+
+# 运行时信息
+
+
+# 数据库健康
+
+# 缓存健康
+
+
+# 将原收集器相关端点迁移到 /collector/*，避免与 /status 冲突
+
+
+"""
+监控API路由
+提供监控相关的API端点：
+- /metrics: 返回系统、数据库、业务与运行时指标（JSON）
+- /status: 返回服务健康状态（JSON）
+- /metrics/prometheus: 返回Prometheus指标文本
+- /collector/*: 指标收集器控制与状态
+"""
+logger = get_logger(__name__)
+logger = get_logger(__name__)
 router = APIRouter(tags=["monitoring"])
 
 
 async def _get_database_metrics(db: Session) -> Dict[str, Any]:
     """获取数据库健康与统计指标。
-
     返回结构：
     {
         "healthy": bool,
@@ -47,7 +85,6 @@ async def _get_database_metrics(db: Session) -> Dict[str, Any]:
         "statistics": {
             "active_connections": int
         },
-        # 异常时包含
         "error": str
     }
     """
@@ -59,23 +96,17 @@ async def _get_database_metrics(db: Session) -> Dict[str, Any]:
         },
     }
     try:
-        # 健康检查
         db.execute(text("SELECT 1"))
-
-        # 统计信息（关键字用于测试桩匹配）
         _teams = db.execute(text("SELECT COUNT(*) FROM teams"))
         _matches = db.execute(text("SELECT COUNT(*) FROM matches"))
         predictions = db.execute(text("SELECT COUNT(*) FROM predictions"))
-        active = db.execute(
-            text("SELECT COUNT(*) FROM pg_stat_activity WHERE state = 'active'")
-        )
+        active = db.execute(text("SELECT COUNT(*) FROM pg_stat_activity WHERE state = 'active'"))
 
         def _val(res: Any) -> int:
             try:
                 row = res.fetchone()
                 if row is None:
                     return 0
-                # row 可能是列表或元组
                 return int(row[0])
             except (ValueError, KeyError, AttributeError, HTTPError, RequestException):
                 return 0
@@ -91,13 +122,11 @@ async def _get_database_metrics(db: Session) -> Dict[str, Any]:
         stats["error"] = str(e)
     finally:
         stats["response_time_ms"] = round((time.time() - start) * 1000.0, 3)
-
     return stats
 
 
 async def _get_business_metrics(db: Session) -> Dict[str, Any]:
     """获取业务层关键指标。异常时各项返回 None。
-
     返回结构：
     {
         "24h_predictions": Optional[int],
@@ -113,7 +142,6 @@ async def _get_business_metrics(db: Session) -> Dict[str, Any]:
         "last_updated": datetime.utcnow().isoformat(),
     }
     try:
-        # 使用注释与时间窗口关键词，便于测试桩根据字符串匹配
         recent_predictions_q = text(
             "/* recent_predictions */ SELECT COUNT(*) FROM predictions "
             "WHERE predicted_at >= NOW() - INTERVAL '24 hours'"
@@ -122,7 +150,6 @@ async def _get_business_metrics(db: Session) -> Dict[str, Any]:
             "/* upcoming_matches */ SELECT COUNT(*) FROM matches "
             "WHERE match_time <= NOW() + INTERVAL '7 days'"
         )
-        # 近30天模型准确率（示例：正确/总）
         accuracy_rate_q = text(
             "/* accuracy_rate */ SELECT CASE WHEN SUM(total) = 0 THEN 0 ELSE "
             "ROUND(SUM(correct)::numeric / SUM(total) * 100, 2) END FROM ("
@@ -152,23 +179,18 @@ async def _get_business_metrics(db: Session) -> Dict[str, Any]:
             except (ValueError, KeyError, AttributeError, HTTPError, RequestException):
                 return None
 
-        # 执行查询
         rp = db.execute(recent_predictions_q)
         um = db.execute(upcoming_matches_q)
         ar = db.execute(accuracy_rate_q)
-
         rp_v = _val(rp)
         um_v = _val(um)
         ar_v = _val(ar)
-
         result["24h_predictions"] = int(rp_v) if rp_v is not None else None
         result["upcoming_matches_7d"] = int(um_v) if um_v is not None else None
         result["model_accuracy_30d"] = float(ar_v) if ar_v is not None else None
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"业务指标查询失败: {e}")
-        # 异常时保持None，并更新时间戳
         result["last_updated"] = datetime.utcnow().isoformat()
-
     return result
 
 
@@ -203,11 +225,9 @@ async def get_monitoring_root():
 async def get_monitoring_stats():
     """监控统计信息"""
     try:
-        # 获取系统基本信息
         cpu_percent = psutil.cpu_percent(interval=1)
         memory = psutil.virtual_memory()
         disk = psutil.disk_usage("/")
-
         return {
             "system_stats": {
                 "cpu_usage_percent": cpu_percent,
@@ -247,7 +267,6 @@ async def get_metrics(db: Session = Depends(get_db)) -> Dict[str, Any]:
         "business": {},
     }
     try:
-        # 系统指标
         cpu_percent = psutil.cpu_percent(interval=None)
         mem = psutil.virtual_memory()
         disk = psutil.disk_usage("/")
@@ -255,7 +274,6 @@ async def get_metrics(db: Session = Depends(get_db)) -> Dict[str, Any]:
             load1, load5, load15 = os.getloadavg()
         except (ValueError, KeyError, AttributeError, HTTPError, RequestException):
             load1, load5, load15 = 0.0, 0.0, 0.0
-
         response["system"] = {
             "cpu_percent": cpu_percent,
             "memory": {
@@ -275,19 +293,14 @@ async def get_metrics(db: Session = Depends(get_db)) -> Dict[str, Any]:
             "5m": load5,
             "15m": load15,
         }
-
-        # 数据库与业务指标（允许mock为非协程）
         db_result = _get_database_metrics(db)
         if isawaitable(db_result):
             db_result = await db_result
         biz_result = _get_business_metrics(db)
         if isawaitable(biz_result):
             biz_result = await biz_result
-
         response["database"] = db_result
         response["business"] = biz_result
-
-        # 运行时信息
         response["runtime"] = {
             "timestamp": datetime.utcnow().isoformat(),
             "python_version": os.getenv("PYTHON_VERSION", "unknown"),
@@ -298,7 +311,6 @@ async def get_metrics(db: Session = Depends(get_db)) -> Dict[str, Any]:
         response["status"] = "error"
     finally:
         response["response_time_ms"] = round((time.time() - start) * 1000.0, 3)
-
     return response
 
 
@@ -306,29 +318,23 @@ async def get_metrics(db: Session = Depends(get_db)) -> Dict[str, Any]:
 async def get_service_status(db: Session = Depends(get_db)) -> Dict[str, Any]:
     """服务健康状态（JSON）。"""
     api_health = True
-
-    # 数据库健康
     try:
         db.execute(text("SELECT 1"))
         db_health = True
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"数据库健康检查失败: {e}")
         db_health = False
-
-    # 缓存健康
     redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
     try:
         r = redis.from_url(redis_url)
         cache_health = bool(r.ping())
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException):
         cache_health = False
-
     overall = (
         "healthy"
         if (api_health and db_health and cache_health)
         else ("degraded" if api_health else "unhealthy")
     )
-
     return {
         "status": overall,
         "timestamp": datetime.utcnow().isoformat(),
@@ -352,13 +358,11 @@ async def prometheus_metrics():
         raise HTTPException(status_code=500, detail="获取监控指标失败")
 
 
-# 将原收集器相关端点迁移到 /collector/*，避免与 /status 冲突
 @router.get("/collector/health")
 async def collector_health() -> Dict[str, Any]:
     try:
         collector = get_metrics_collector()
         collector_status = collector.get_status()
-
         {
             "status": "healthy",
             "timestamp": collector_status,
@@ -367,7 +371,6 @@ async def collector_health() -> Dict[str, Any]:
         }
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"健康检查失败: {e}", exc_info=True)
-
         {"status": "unhealthy", "error": str(e), "message": "监控系统异常"}
 
 
@@ -397,7 +400,6 @@ async def start_collector() -> Dict[str, str]:
     try:
         collector = get_metrics_collector()
         await collector.start()
-
         {"message": "指标收集器启动成功"}
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"启动指标收集器失败: {e}", exc_info=True)
@@ -409,7 +411,6 @@ async def stop_collector() -> Dict[str, str]:
     try:
         collector = get_metrics_collector()
         await collector.stop()
-
         {"message": "指标收集器停止成功"}
     except (ValueError, KeyError, AttributeError, HTTPError, RequestException) as e:
         logger.error(f"停止指标收集器失败: {e}", exc_info=True)

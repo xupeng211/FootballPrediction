@@ -8,6 +8,7 @@ import os
 import re
 from pathlib import Path
 
+
 def fix_split_imports():
     """修复拆分文件中的导入路径错误"""
     print("🔧 修复拆分文件导入路径错误")
@@ -16,28 +17,25 @@ def fix_split_imports():
     # 拆分文件导入错误模式
     error_patterns = {
         # performance.analyzer.performance.analyzer_core -> .performance.analyzer_core
-        r'from performance\.analyzer\.performance\.([^.]+) import': r'from .performance.\1 import',
-
+        r"from performance\.analyzer\.performance\.([^.]+) import": r"from .performance.\1 import",
         # adapters.football.adapters.football_models -> .adapters.football_models
-        r'from adapters\.football\.adapters\.([^.]+) import': r'from .adapters.\1 import',
-
+        r"from adapters\.football\.adapters\.([^.]+) import": r"from .adapters.\1 import",
         # patterns.facade.patterns.facade_models -> .patterns.facade_models
-        r'from patterns\.facade\.patterns\.([^.]+) import': r'from .patterns.\1 import',
-
+        r"from patterns\.facade\.patterns\.([^.]+) import": r"from .patterns.\1 import",
         # 其他类似的模式
-        r'from ([a-z_]+)\.([a-z_]+)\.([a-z_]+)\.([a-z_]+) import': r'from .\3.\4 import',
+        r"from ([a-z_]+)\.([a-z_]+)\.([a-z_]+)\.([a-z_]+) import": r"from .\3.\4 import",
     }
 
     fixed_files = []
 
     # 查找src目录下的Python文件
-    for root, dirs, files in os.walk('src/'):
+    for root, dirs, files in os.walk("src/"):
         for file in files:
-            if file.endswith('.py') and not file.startswith('__'):
+            if file.endswith(".py") and not file.startswith("__"):
                 file_path = os.path.join(root, file)
 
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, "r", encoding="utf-8") as f:
                         original_content = f.read()
 
                     modified_content = original_content
@@ -52,7 +50,7 @@ def fix_split_imports():
 
                     # 如果有修改，写回文件
                     if changes_made:
-                        with open(file_path, 'w', encoding='utf-8') as f:
+                        with open(file_path, "w", encoding="utf-8") as f:
                             f.write(modified_content)
                         fixed_files.append(file_path)
                         print(f"✅ 修复: {file_path}")
@@ -63,6 +61,7 @@ def fix_split_imports():
     print(f"\n📊 修复完成: {len(fixed_files)} 个文件")
     return fixed_files
 
+
 def check_missing_base_classes():
     """检查并创建缺失的基础类"""
     print("\n🔍 检查缺失的基础类")
@@ -70,7 +69,7 @@ def check_missing_base_classes():
 
     # 常见缺失的基础类
     missing_classes = {
-        'src/adapters/base.py': '''
+        "src/adapters/base.py": '''
 """
 适配器基础类
 """
@@ -96,8 +95,7 @@ class BaseAdapter(ABC):
         """执行命令"""
         pass
 ''',
-
-        'src/core/exceptions.py': '''
+        "src/core/exceptions.py": '''
 """
 核心异常类
 """
@@ -117,7 +115,7 @@ class DataValidationError(PredictionException):
 class ModelNotFoundError(PredictionException):
     """模型未找到错误"""
     pass
-'''
+''',
     }
 
     created_files = []
@@ -126,7 +124,7 @@ class ModelNotFoundError(PredictionException):
         if not os.path.exists(file_path):
             try:
                 os.makedirs(os.path.dirname(file_path), exist_ok=True)
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write(content.strip())
                 created_files.append(file_path)
                 print(f"✅ 创建: {file_path}")
@@ -137,20 +135,21 @@ class ModelNotFoundError(PredictionException):
 
     return created_files
 
+
 def verify_imports():
     """验证关键模块的导入"""
     print("\n🧪 验证关键模块导入")
     print("=" * 30)
 
     test_modules = [
-        'src.performance.analyzer',
-        'src.adapters.football',
-        'src.patterns.facade',
-        'src.monitoring.anomaly_detector',
-        'src.cache.decorators',
-        'src.domain.strategies.config',
-        'src.facades.facades',
-        'src.decorators.decorators'
+        "src.performance.analyzer",
+        "src.adapters.football",
+        "src.patterns.facade",
+        "src.monitoring.anomaly_detector",
+        "src.cache.decorators",
+        "src.domain.strategies.config",
+        "src.facades.facades",
+        "src.decorators.decorators",
     ]
 
     success_count = 0
@@ -158,9 +157,9 @@ def verify_imports():
     for module in test_modules:
         try:
             import importlib.util
+
             spec = importlib.util.spec_from_file_location(
-                module.replace('.', '/') + '.py',
-                module.replace('.', '/') + '.py'
+                module.replace(".", "/") + ".py", module.replace(".", "/") + ".py"
             )
             if spec and spec.loader:
                 importlib.util.module_from_spec(spec)
@@ -173,6 +172,7 @@ def verify_imports():
 
     print(f"\n📊 导入验证: {success_count}/{len(test_modules)} 成功")
     return success_count == len(test_modules)
+
 
 def main():
     """主函数"""
@@ -198,6 +198,7 @@ def main():
         print("\n🎉 阶段1完成! pytest应该可以启动了。")
     else:
         print("\n⚠️ 部分问题仍需手动解决。")
+
 
 if __name__ == "__main__":
     main()

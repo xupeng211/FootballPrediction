@@ -1,11 +1,8 @@
-from unittest.mock import AsyncMock, Mock, patch
-
 """
 观察者API端点测试
 Observers API Endpoints Tests
 """
 
-import json
 from datetime import datetime
 
 import pytest
@@ -161,9 +158,7 @@ class TestObserverEndpoints:
             "timestamp": datetime.now().isoformat(),
         }
 
-        response = client.post(
-            "/api/v1/observers/predictions/record", json=prediction_data
-        )
+        response = client.post("/api/v1/observers/predictions/record", json=prediction_data)
 
         if response.status_code == 404:
             pytest.skip("记录预测事件端点未实现")
@@ -318,9 +313,7 @@ class TestObserverEndpoints:
         subject_name = "prediction_service"
         mock_clear.return_value = {"success": True}
 
-        response = client.post(
-            f"/api/v1/observers/subject/{subject_name}/clear-history"
-        )
+        response = client.post(f"/api/v1/observers/subject/{subject_name}/clear-history")
 
         if response.status_code == 404:
             pytest.skip("清空事件历史端点未实现")

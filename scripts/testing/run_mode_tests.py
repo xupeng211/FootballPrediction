@@ -21,9 +21,7 @@ def run_command(cmd: List[str], env: Optional[dict] = None) -> int:
     print(f"Running: {' '.join(cmd)}")
     print("-" * 50)
 
-    result = subprocess.run(
-        cmd, env=env or os.environ, cwd=project_root, capture_output=False
-    )
+    result = subprocess.run(cmd, env=env or os.environ, cwd=project_root, capture_output=False)
 
     print("-" * 50)
     print(f"Exit code: {result.returncode}")

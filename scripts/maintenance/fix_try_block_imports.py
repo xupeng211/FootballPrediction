@@ -238,9 +238,7 @@ def fix_unused_imports_in_try_blocks():
                 try_content = re.sub(pattern, replacement, try_content)
                 return f"try:\n{try_content}    except"
 
-            content = re.sub(
-                try_block_pattern, replace_in_try_block, content, flags=re.MULTILINE
-            )
+            content = re.sub(try_block_pattern, replace_in_try_block, content, flags=re.MULTILINE)
 
         # 特殊处理：修复多行导入中的部分导入
         # 例如：from src.api.models import MatchResponse, TeamInfo, MatchStatus

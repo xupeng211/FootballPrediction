@@ -1,11 +1,8 @@
-from unittest.mock import Mock, patch
-
 """
 简单工作测试 - 测试确实工作的功能
 Simple Working Tests - Test Actually Working Functions
 """
 
-import json
 from datetime import datetime
 
 import pytest
@@ -318,9 +315,7 @@ class TestBatchOperations:
         assert response.status_code == 422
 
         # 超过限制
-        response = client.post(
-            "/predictions/batch", json={"match_ids": list(range(1, 102))}
-        )
+        response = client.post("/predictions/batch", json={"match_ids": list(range(1, 102))})
         assert response.status_code == 422
 
     def test_large_payload(self, client):
@@ -401,10 +396,7 @@ class TestPydanticModels:
         )
         assert _result.match_id == 123
         assert _result.predicted_outcome == "home"
-        assert (
-            abs(result.home_win_prob + result.draw_prob + result.away_win_prob - 1.0)
-            < 0.001
-        )
+        assert abs(result.home_win_prob + result.draw_prob + result.away_win_prob - 1.0) < 0.001
 
     def test_data_models(self):
         """测试数据模型"""
@@ -452,9 +444,7 @@ class TestPydanticModels:
         assert odds.draw > 1.0
         assert odds.away_win > 1.0
 
-        match_stats = MatchStatistics(
-            match_id=1, possession_home=55.5, possession_away=44.5
-        )
+        match_stats = MatchStatistics(match_id=1, possession_home=55.5, possession_away=44.5)
         assert match_stats.match_id == 1
         assert match_stats.possession_home + match_stats.possession_away == 100.0
 

@@ -4,8 +4,6 @@
 提供字典操作相关的工具函数。
 """
 
-from typing import Any, Dict, List, Optional, Union
-
 
 class DictUtils:
     """字典处理工具类"""
@@ -15,11 +13,7 @@ class DictUtils:
         """深度合并字典 - 递归合并嵌套字典，dict2的值会覆盖dict1中的同名键"""
         result = dict1.copy()
         for key, value in dict2.items():
-            if (
-                key in result
-                and isinstance(result[key], dict)
-                and isinstance(value, dict)
-            ):
+            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
                 # 如果两边都是字典，则递归合并，保持嵌套结构
                 result[key] = DictUtils.deep_merge(result[key], value)
             else:
@@ -28,9 +22,7 @@ class DictUtils:
         return result
 
     @staticmethod
-    def flatten_dict(
-        d: Dict[str, Any], parent_key: str = "", sep: str = "."
-    ) -> Dict[str, Any]:
+    def flatten_dict(d: Dict[str, Any], parent_key: str = "", sep: str = ".") -> Dict[str, Any]:
         """扁平化嵌套字典 - 将多层嵌套结构转为单层，便于配置管理和数据传输"""
         items: List[tuple] = []
         for k, v in d.items():
@@ -51,11 +43,7 @@ class DictUtils:
     @staticmethod
     def filter_empty_values(d: Dict[str, Any]) -> Dict[str, Any]:
         """过滤掉空值（空字符串、空列表、空字典）的键值对"""
-        return {
-            k: v
-            for k, v in d.items()
-            if v is not None and v != "" and v != [] and v != {}
-        }
+        return {k: v for k, v in d.items() if v is not None and v != "" and v != [] and v != {}}
 
     @staticmethod
     def filter_by_keys(d: Dict[str, Any], keys: List[str]) -> Dict[str, Any]:
@@ -155,9 +143,7 @@ class DictUtils:
     def chunk_dict(d: Dict[str, Any], chunk_size: int) -> List[Dict[str, Any]]:
         """将字典分割成多个小块"""
         items = list(d.items())
-        return [
-            dict(items[i : i + chunk_size]) for i in range(0, len(items), chunk_size)
-        ]
+        return [dict(items[i : i + chunk_size]) for i in range(0, len(items), chunk_size)]
 
     @staticmethod
     def sort_keys(d: Dict[str, Any], reverse: bool = False) -> Dict[str, Any]:
@@ -176,9 +162,7 @@ class DictUtils:
         return result
 
     @staticmethod
-    def validate_required_keys(
-        d: Dict[str, Any], required_keys: List[str]
-    ) -> List[str]:
+    def validate_required_keys(d: Dict[str, Any], required_keys: List[str]) -> List[str]:
         """验证必需的键是否存在"""
         missing = []
         for key in required_keys:

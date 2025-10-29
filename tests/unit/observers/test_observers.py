@@ -1,5 +1,3 @@
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
 """
 观察者模块测试
 Observers Module Tests
@@ -10,8 +8,6 @@ Tests observers implementations defined in src/observers/observers.py, focused o
 
 import asyncio
 import time
-from datetime import datetime, timedelta
-from typing import Any, Dict, List
 
 import pytest
 
@@ -133,9 +129,7 @@ class TestMetricsObserver:
         await asyncio.sleep(1.1)
 
         # 触发清理
-        cleanup_event = ObservableEvent(
-            type=ObservableEventType.CLEANUP_REQUESTED, data={}
-        )
+        cleanup_event = ObservableEvent(type=ObservableEventType.CLEANUP_REQUESTED, data={})
         await observer.update(cleanup_event)
 
     def test_metrics_observer_get_metrics_summary(self):
@@ -228,9 +222,7 @@ class TestLoggingObserver:
         observer._max_buffer_size = 3  # 设置小的缓冲区
 
         events = [
-            ObservableEvent(
-                type=ObservableEventType.INFO_EVENT, data={"message": f"Message {i}"}
-            )
+            ObservableEvent(type=ObservableEventType.INFO_EVENT, data={"message": f"Message {i}"})
             for i in range(5)
         ]
 
@@ -492,9 +484,7 @@ class TestPerformanceObserver:
         ]
 
         for op in operations:
-            event = ObservableEvent(
-                type=ObservableEventType.OPERATION_COMPLETED, data=op
-            )
+            event = ObservableEvent(type=ObservableEventType.OPERATION_COMPLETED, data=op)
             await observer.update(event)
 
         # 验证失败率被计算 (2失败 / 5总 = 40%)

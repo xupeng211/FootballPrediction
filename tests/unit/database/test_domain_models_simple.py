@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock
-
 """
 简化的领域模型单元测试
 """

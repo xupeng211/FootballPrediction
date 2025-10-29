@@ -9,15 +9,16 @@ import sys
 import ast
 from typing import Dict, List
 
+
 def create_test_for_module(module_info: Dict) -> str:
     """为指定模块创建测试"""
-    module_path = module_info['path']
-    module_name = module_info['name']
-    target_coverage = module_info['target_coverage']
+    module_path = module_info["path"]
+    module_name = module_info["name"]
+    target_coverage = module_info["target_coverage"]
     class_name = f"Test{module_name.replace(' ', '')}"
 
     # 清理模块路径用于导入
-    clean_import_path = module_path.replace('src/', '').replace('/', '.').replace('.py', '')
+    clean_import_path = module_path.replace("src/", "").replace("/", ".").replace(".py", "")
 
     return f'''"""
 高级覆盖率提升测试: {module_name}
@@ -225,33 +226,34 @@ if __name__ == "__main__":
     print(f"目标覆盖率: {module_info['current_coverage']}% → {target_coverage}%")
 '''
 
+
 def create_all_tests():
     """创建所有P1模块的测试"""
     high_value_modules = [
         {
-            'path': 'src/core/config.py',
-            'name': 'ConfigManager',
-            'current_coverage': 36.50,
-            'target_coverage': 75,
+            "path": "src/core/config.py",
+            "name": "ConfigManager",
+            "current_coverage": 36.50,
+            "target_coverage": 75,
         },
         {
-            'path': 'src/core/di.py',
-            'name': 'DependencyInjection',
-            'current_coverage': 21.77,
-            'target_coverage': 65,
+            "path": "src/core/di.py",
+            "name": "DependencyInjection",
+            "current_coverage": 21.77,
+            "target_coverage": 65,
         },
         {
-            'path': 'src/api/data_router.py',
-            'name': 'DataRouter',
-            'current_coverage': 60.32,
-            'target_coverage': 85,
+            "path": "src/api/data_router.py",
+            "name": "DataRouter",
+            "current_coverage": 60.32,
+            "target_coverage": 85,
         },
         {
-            'path': 'src/api/cqrs.py',
-            'name': 'CQRS',
-            'current_coverage': 56.67,
-            'target_coverage': 80,
-        }
+            "path": "src/api/cqrs.py",
+            "name": "CQRS",
+            "current_coverage": 56.67,
+            "target_coverage": 80,
+        },
     ]
 
     print("🚀 创建P1高优先级模块高级测试")
@@ -259,23 +261,23 @@ def create_all_tests():
 
     created_files = []
     for module_info in high_value_modules:
-        module_name = module_info['name']
+        module_name = module_info["name"]
         print(f"📝 处理模块: {module_name}")
 
         # 检查文件是否存在
-        if os.path.exists(module_info['path']):
+        if os.path.exists(module_info["path"]):
             # 创建测试内容
             test_content = create_test_for_module(module_info)
 
             # 保存测试文件
-            clean_name = module_name.replace(' ', '_').lower()
+            clean_name = module_name.replace(" ", "_").lower()
             test_filename = f"tests/unit/advanced/test_{clean_name}_advanced.py"
 
             # 确保目录存在
             os.makedirs(os.path.dirname(test_filename), exist_ok=True)
 
             # 写入文件
-            with open(test_filename, 'w', encoding='utf-8') as f:
+            with open(test_filename, "w", encoding="utf-8") as f:
                 f.write(test_content)
 
             created_files.append(test_filename)
@@ -284,6 +286,7 @@ def create_all_tests():
             print(f"  ⚠️ 模块文件不存在: {module_info['path']}")
 
     return created_files
+
 
 def main():
     """主函数"""
@@ -304,19 +307,23 @@ def main():
             print(f"   python3 -m pytest {test_file} --cov=src --cov-report=term")
 
         print("\n📈 批量测试命令:")
-        print("   python3 -m pytest tests/unit/advanced/test_*_advanced.py --cov=src --cov-report=term-missing")
+        print(
+            "   python3 -m pytest tests/unit/advanced/test_*_advanced.py --cov=src --cov-report=term-missing"
+        )
 
         # 验证一个测试文件
         test_file = created_files[0]
         print(f"\n🔍 验证测试文件结构: {os.path.basename(test_file)}")
 
         import subprocess
+
         try:
-            result = subprocess.run([
-                'python3', '-m', 'pytest',
-                test_file,
-                '--collect-only', '-q'
-            ], capture_output=True, text=True, timeout=10)
+            result = subprocess.run(
+                ["python3", "-m", "pytest", test_file, "--collect-only", "-q"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
 
             if result.returncode == 0:
                 print("  ✅ 测试结构正确")
@@ -326,6 +333,7 @@ def main():
             print(f"  ⚠️ 验证失败: {e}")
     else:
         print("❌ 没有成功创建任何测试文件")
+
 
 if __name__ == "__main__":
     main()

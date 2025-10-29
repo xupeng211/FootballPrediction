@@ -115,10 +115,7 @@ class LeagueSettings:
 
     def __post_init__(self):
         """验证设置"""
-        if any(
-            x < 0
-            for x in [self.points_for_win, self.points_for_draw, self.points_for_loss]
-        ):
+        if any(x < 0 for x in [self.points_for_win, self.points_for_draw, self.points_for_loss]):
             raise DomainError("积分不能为负数")
 
         if self.points_for_win < self.points_for_draw:
@@ -148,9 +145,7 @@ class LeagueSettings:
         )
 
     def __str__(self) -> str:
-        return (
-            f"胜{self.points_for_win} 平{self.points_for_draw} 负{self.points_for_loss}"
-        )
+        return f"胜{self.points_for_win} 平{self.points_for_draw} 负{self.points_for_loss}"
 
 
 @dataclass
@@ -430,13 +425,9 @@ class League:
         if season_data:
             season_data.pop("progress", None)
             if season_data.get("start_date"):
-                season_data["start_date"] = datetime.fromisoformat(
-                    season_data["start_date"]
-                )
+                season_data["start_date"] = datetime.fromisoformat(season_data["start_date"])
             if season_data.get("end_date"):
-                season_data["end_date"] = datetime.fromisoformat(
-                    season_data["end_date"]
-                )
+                season_data["end_date"] = datetime.fromisoformat(season_data["end_date"])
             if season_data.get("status"):
                 season_data["status"] = LeagueStatus(season_data["status"])
             current_season = LeagueSeason(**season_data)

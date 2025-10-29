@@ -12,6 +12,7 @@ import statistics
 from datetime import datetime, timedelta
 import httpx
 
+
 class FinalSystemValidator:
     """最终系统验证器"""
 
@@ -20,8 +21,15 @@ class FinalSystemValidator:
         self.validation_results = []
         self.performance_metrics = []
 
-    def log_validation(self, test_name: str, status: str, details: str = "", score: float = None,
-                      priority: str = "normal", recommendation: str = None):
+    def log_validation(
+        self,
+        test_name: str,
+        status: str,
+        details: str = "",
+        score: float = None,
+        priority: str = "normal",
+        recommendation: str = None,
+    ):
         """记录验证结果"""
         result = {
             "test_name": test_name,
@@ -30,7 +38,7 @@ class FinalSystemValidator:
             "score": score,
             "priority": priority,  # critical, high, normal, low
             "recommendation": recommendation,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
         self.validation_results.append(result)
 
@@ -65,7 +73,9 @@ class FinalSystemValidator:
                 score, status, details, recommendation = await test_func()
                 self.log_validation(test_name, status, details, score, priority, recommendation)
             except Exception as e:
-                self.log_validation(test_name, "fail", f"验证失败: {str(e)}", 0, priority, "检查系统状态")
+                self.log_validation(
+                    test_name, "fail", f"验证失败: {str(e)}", 0, priority, "检查系统状态"
+                )
 
     async def check_service_availability(self):
         """检查服务可用性"""
@@ -100,7 +110,12 @@ class FinalSystemValidator:
                     if db_status == "healthy" and latency < 100:
                         return 100, "pass", f"系统健康，数据库延迟: {latency}ms", "系统完全健康"
                     else:
-                        return 80, "warning", f"数据库状态: {db_status}, 延迟: {latency}ms", "优化数据库性能"
+                        return (
+                            80,
+                            "warning",
+                            f"数据库状态: {db_status}, 延迟: {latency}ms",
+                            "优化数据库性能",
+                        )
                 else:
                     return 60, "warning", "系统不健康", "检查系统组件"
             else:
@@ -143,12 +158,7 @@ class FinalSystemValidator:
 
     async def check_api_consistency(self):
         """检查API响应一致性"""
-        endpoints = [
-            "/api/health/",
-            "/api/v1/data/teams",
-            "/api/v1/predictions/health",
-            "/docs"
-        ]
+        endpoints = ["/api/health/", "/api/v1/data/teams", "/api/v1/predictions/health", "/docs"]
 
         consistency_scores = []
 
@@ -202,7 +212,9 @@ class FinalSystemValidator:
                         if isinstance(error_data, dict) and "detail" in error_data:
                             # 检查是否暴露敏感信息
                             sensitive_info = ["password", "secret", "stack", "trace"]
-                            has_sensitive = any(info in str(error_data).lower() for info in sensitive_info)
+                            has_sensitive = any(
+                                info in str(error_data).lower() for info in sensitive_info
+                            )
 
                             if has_sensitive:
                                 handling_scores.append(60)  # 暴露敏感信息
@@ -228,6 +240,7 @@ class FinalSystemValidator:
 
     async def check_concurrency(self):
         """检查并发处理能力"""
+
         async def make_request():
             try:
                 async with httpx.AsyncClient(timeout=5) as client:
@@ -284,7 +297,9 @@ class FinalSystemValidator:
                 score, status, details, recommendation = await test_func()
                 self.log_validation(test_name, status, details, score, priority, recommendation)
             except Exception as e:
-                self.log_validation(test_name, "fail", f"验证失败: {str(e)}", 0, priority, "检查功能实现")
+                self.log_validation(
+                    test_name, "fail", f"验证失败: {str(e)}", 0, priority, "检查功能实现"
+                )
 
     async def check_core_data_apis(self):
         """检查核心数据API"""
@@ -325,16 +340,36 @@ class FinalSystemValidator:
         working_count = len(working_apis)
 
         if working_count == len(data_apis) and avg_score >= 90:
-            return 100, "pass", f"所有核心数据API正常工作 ({working_count}/{len(data_apis)})", "数据API完全就绪"
+            return (
+                100,
+                "pass",
+                f"所有核心数据API正常工作 ({working_count}/{len(data_apis)})",
+                "数据API完全就绪",
+            )
         elif working_count >= 3:
-            return 85, "pass", f"核心数据API基本正常 ({working_count}/{len(data_apis)})", "修复剩余数据API"
+            return (
+                85,
+                "pass",
+                f"核心数据API基本正常 ({working_count}/{len(data_apis)})",
+                "修复剩余数据API",
+            )
         else:
-            return 40, "fail", f"核心数据API异常 ({working_count}/{len(data_apis)})", "优先修复数据API"
+            return (
+                40,
+                "fail",
+                f"核心数据API异常 ({working_count}/{len(data_apis)})",
+                "优先修复数据API",
+            )
 
     async def check_auth_system(self):
         """检查认证系统"""
         auth_tests = [
-            ("用户注册", "/api/v1/auth/register", "POST", {"username": "test", "email": "test@example.com", "password": "test123"}),
+            (
+                "用户注册",
+                "/api/v1/auth/register",
+                "POST",
+                {"username": "test", "email": "test@example.com", "password": "test123"},
+            ),
             ("用户登出", "/api/v1/auth/logout", "POST", {}),
         ]
 
@@ -446,11 +481,21 @@ class FinalSystemValidator:
                     if path_count >= 20:
                         return 100, "pass", f"API文档完整，包含{path_count}个端点", "文档优秀"
                     elif path_count >= 10:
-                        return 85, "pass", f"API文档基本完整，包含{path_count}个端点", "完善剩余文档"
+                        return (
+                            85,
+                            "pass",
+                            f"API文档基本完整，包含{path_count}个端点",
+                            "完善剩余文档",
+                        )
                     else:
                         return 70, "warning", f"API文档较少，仅{path_count}个端点", "增加API文档"
                 else:
-                    return 50, "fail", f"OpenAPI规范不完整，缺少: {missing_fields}", "完善OpenAPI规范"
+                    return (
+                        50,
+                        "fail",
+                        f"OpenAPI规范不完整，缺少: {missing_fields}",
+                        "完善OpenAPI规范",
+                    )
             else:
                 return 0, "fail", f"API文档不可用: HTTP {response.status_code}", "修复API文档生成"
         except Exception:
@@ -472,15 +517,13 @@ class FinalSystemValidator:
                 score, status, details, recommendation = await test_func()
                 self.log_validation(test_name, status, details, score, priority, recommendation)
             except Exception as e:
-                self.log_validation(test_name, "fail", f"验证失败: {str(e)}", 0, priority, "检查系统性能")
+                self.log_validation(
+                    test_name, "fail", f"验证失败: {str(e)}", 0, priority, "检查系统性能"
+                )
 
     async def check_response_time_benchmarks(self):
         """检查响应时间基准"""
-        critical_endpoints = [
-            "/api/health/",
-            "/api/v1/data/teams",
-            "/api/v1/predictions/health"
-        ]
+        critical_endpoints = ["/api/health/", "/api/v1/data/teams", "/api/v1/predictions/health"]
 
         response_times = []
 
@@ -518,6 +561,7 @@ class FinalSystemValidator:
 
     async def check_throughput(self):
         """检查吞吐量"""
+
         async def single_request():
             try:
                 async with httpx.AsyncClient(timeout=3) as client:
@@ -543,13 +587,33 @@ class FinalSystemValidator:
         success_rate = (success_count / request_count) * 100
 
         if throughput >= 50 and success_rate >= 95:
-            return 100, "pass", f"吞吐量优秀: {throughput:.1f} req/s, 成功率: {success_rate:.1f}%", "吞吐量优秀"
+            return (
+                100,
+                "pass",
+                f"吞吐量优秀: {throughput:.1f} req/s, 成功率: {success_rate:.1f}%",
+                "吞吐量优秀",
+            )
         elif throughput >= 30 and success_rate >= 90:
-            return 85, "pass", f"吞吐量良好: {throughput:.1f} req/s, 成功率: {success_rate:.1f}%", "吞吐量良好"
+            return (
+                85,
+                "pass",
+                f"吞吐量良好: {throughput:.1f} req/s, 成功率: {success_rate:.1f}%",
+                "吞吐量良好",
+            )
         elif throughput >= 20 and success_rate >= 85:
-            return 70, "warning", f"吞吐量一般: {throughput:.1f} req/s, 成功率: {success_rate:.1f}%", "优化吞吐量"
+            return (
+                70,
+                "warning",
+                f"吞吐量一般: {throughput:.1f} req/s, 成功率: {success_rate:.1f}%",
+                "优化吞吐量",
+            )
         else:
-            return 50, "fail", f"吞吐量较低: {throughput:.1f} req/s, 成功率: {success_rate:.1f}%", "优化系统性能"
+            return (
+                50,
+                "fail",
+                f"吞吐量较低: {throughput:.1f} req/s, 成功率: {success_rate:.1f}%",
+                "优化系统性能",
+            )
 
     async def check_resource_efficiency(self):
         """检查资源使用效率"""
@@ -562,13 +626,33 @@ class FinalSystemValidator:
 
             # 资源使用评分
             if cpu_percent < 50 and memory_percent < 70:
-                return 100, "pass", f"资源使用高效: CPU {cpu_percent:.1f}%, 内存 {memory_percent:.1f}%", "资源效率优秀"
+                return (
+                    100,
+                    "pass",
+                    f"资源使用高效: CPU {cpu_percent:.1f}%, 内存 {memory_percent:.1f}%",
+                    "资源效率优秀",
+                )
             elif cpu_percent < 70 and memory_percent < 80:
-                return 85, "pass", f"资源使用良好: CPU {cpu_percent:.1f}%, 内存 {memory_percent:.1f}%", "资源效率良好"
+                return (
+                    85,
+                    "pass",
+                    f"资源使用良好: CPU {cpu_percent:.1f}%, 内存 {memory_percent:.1f}%",
+                    "资源效率良好",
+                )
             elif cpu_percent < 85 and memory_percent < 90:
-                return 70, "warning", f"资源使用一般: CPU {cpu_percent:.1f}%, 内存 {memory_percent:.1f}%", "优化资源使用"
+                return (
+                    70,
+                    "warning",
+                    f"资源使用一般: CPU {cpu_percent:.1f}%, 内存 {memory_percent:.1f}%",
+                    "优化资源使用",
+                )
             else:
-                return 50, "fail", f"资源使用较高: CPU {cpu_percent:.1f}%, 内存 {memory_percent:.1f}%", "优化系统资源"
+                return (
+                    50,
+                    "fail",
+                    f"资源使用较高: CPU {cpu_percent:.1f}%, 内存 {memory_percent:.1f}%",
+                    "优化系统资源",
+                )
         except ImportError:
             return 80, "warning", "无法检查资源使用情况", "安装psutil进行资源监控"
         except Exception:
@@ -580,12 +664,7 @@ class FinalSystemValidator:
             return 0, "fail", "无验证结果"
 
         # 按优先级加权计算
-        weights = {
-            "critical": 0.4,
-            "high": 0.3,
-            "normal": 0.2,
-            "low": 0.1
-        }
+        weights = {"critical": 0.4, "high": 0.3, "normal": 0.2, "low": 0.1}
 
         total_score = 0
         total_weight = 0
@@ -602,8 +681,11 @@ class FinalSystemValidator:
             final_score = 0
 
         # 确定整体状态
-        critical_failures = [r for r in self.validation_results
-                           if r["priority"] == "critical" and r["status"] == "fail"]
+        critical_failures = [
+            r
+            for r in self.validation_results
+            if r["priority"] == "critical" and r["status"] == "fail"
+        ]
 
         if critical_failures:
             return final_score, "fail", f"存在{len(critical_failures)}个关键问题"
@@ -654,7 +736,9 @@ class FinalSystemValidator:
         for priority, stats in priority_stats.items():
             priority_names = {"critical": "关键", "high": "高", "normal": "普通", "low": "低"}
             icons = {"critical": "🔴", "high": "🟠", "normal": "🟡", "low": "🟢"}
-            print(f"   {icons.get(priority, '🔵')} {priority_names.get(priority, priority)}: {stats['count']}项, 平均分: {stats['avg_score']:.1f}")
+            print(
+                f"   {icons.get(priority, '🔵')} {priority_names.get(priority, priority)}: {stats['count']}项, 平均分: {stats['avg_score']:.1f}"
+            )
 
         # 计算总体评分
         overall_score, overall_status, overall_message = self.calculate_overall_score()
@@ -666,8 +750,11 @@ class FinalSystemValidator:
         print(f"   {status_icons.get(overall_status, '❓')} 整体状态: {overall_message}")
 
         # 关键问题
-        critical_issues = [r for r in self.validation_results
-                          if r["priority"] == "critical" and r["status"] in ["fail", "warning"]]
+        critical_issues = [
+            r
+            for r in self.validation_results
+            if r["priority"] == "critical" and r["status"] in ["fail", "warning"]
+        ]
 
         if critical_issues:
             print(f"\n🔴 关键问题需要立即处理:")
@@ -677,8 +764,11 @@ class FinalSystemValidator:
                     print(f"     💡 建议: {issue['recommendation']}")
 
         # 改进建议
-        all_recommendations = [r.get("recommendation") for r in self.validation_results
-                             if r.get("recommendation") and r["status"] in ["fail", "warning"]]
+        all_recommendations = [
+            r.get("recommendation")
+            for r in self.validation_results
+            if r.get("recommendation") and r["status"] in ["fail", "warning"]
+        ]
 
         if all_recommendations:
             print(f"\n💡 改进建议:")
@@ -691,8 +781,17 @@ class FinalSystemValidator:
         if overall_score >= 85 and status_stats["fail"] == 0:
             print(f"   🟢 完全就绪: 系统验证优秀，可以立即开始种子用户测试")
             readiness_score = 100
-        elif overall_score >= 75 and len([r for r in self.validation_results
-                                       if r["priority"] == "critical" and r["status"] == "fail"]) == 0:
+        elif (
+            overall_score >= 75
+            and len(
+                [
+                    r
+                    for r in self.validation_results
+                    if r["priority"] == "critical" and r["status"] == "fail"
+                ]
+            )
+            == 0
+        ):
             print(f"   🟡 基本就绪: 系统基本可用，建议修复关键问题后开始测试")
             readiness_score = 80
         else:
@@ -739,6 +838,7 @@ class FinalSystemValidator:
 
         return overall_score, readiness_score
 
+
 async def main():
     """主函数"""
     validator = FinalSystemValidator()
@@ -752,6 +852,7 @@ async def main():
         print(f"   🔧 并行行动: 修复关键问题 + 准备种子用户测试")
     else:
         print(f"   🔴 优先行动: 修复系统问题")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

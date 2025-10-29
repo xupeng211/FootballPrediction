@@ -6,6 +6,7 @@
 import os
 import re
 
+
 def fix_module_name_errors():
     """修复module_name未定义的错误"""
 
@@ -13,16 +14,16 @@ def fix_module_name_errors():
 
     # 需要修复的文件列表
     test_files = [
-        'tests/unit/adapters/base_test.py',
-        'tests/unit/adapters/factory_test.py',
-        'tests/unit/adapters/factory_simple_test.py',
-        'tests/unit/adapters/football_test.py',
-        'tests/unit/adapters/registry_test.py',
-        'tests/unit/adapters/registry_simple_test.py',
-        'tests/unit/api/adapters_test.py',
-        'tests/unit/api/app_test.py',
-        'tests/unit/api/buggy_api_test.py',
-        'tests/unit/api/decorators_test.py'
+        "tests/unit/adapters/base_test.py",
+        "tests/unit/adapters/factory_test.py",
+        "tests/unit/adapters/factory_simple_test.py",
+        "tests/unit/adapters/football_test.py",
+        "tests/unit/adapters/registry_test.py",
+        "tests/unit/adapters/registry_simple_test.py",
+        "tests/unit/api/adapters_test.py",
+        "tests/unit/api/app_test.py",
+        "tests/unit/api/buggy_api_test.py",
+        "tests/unit/api/decorators_test.py",
     ]
 
     fixed_count = 0
@@ -30,24 +31,23 @@ def fix_module_name_errors():
     for test_file in test_files:
         if os.path.exists(test_file):
             try:
-                with open(test_file, 'r', encoding='utf-8') as f:
+                with open(test_file, "r", encoding="utf-8") as f:
                     content = f.read()
 
                 # 修复module_name变量未定义的问题
                 content = re.sub(
                     r'print\(f"成功导入模块: \{module_name\}"\)',
                     'print("成功导入模块: adapters.base")',
-                    content
+                    content,
                 )
 
                 # 更通用的修复
-                module_name = os.path.basename(test_file).replace('_test.py', '')
+                module_name = os.path.basename(test_file).replace("_test.py", "")
                 content = content.replace(
-                    'print(f"成功导入模块: {module_name}")',
-                    f'print("成功导入模块: {module_name}")'
+                    'print(f"成功导入模块: {module_name}")', f'print("成功导入模块: {module_name}")'
                 )
 
-                with open(test_file, 'w', encoding='utf-8') as f:
+                with open(test_file, "w", encoding="utf-8") as f:
                     f.write(content)
 
                 fixed_count += 1
@@ -63,6 +63,7 @@ def fix_module_name_errors():
 
     return fixed_count
 
+
 def main():
     """主函数"""
     print("🔧 Issue #83 覆盖率测试语法修复工具")
@@ -75,6 +76,7 @@ def main():
         print("📋 现在可以重新运行覆盖率测试验证效果")
     else:
         print("\n⚠️ 没有找到需要修复的文件")
+
 
 if __name__ == "__main__":
     main()

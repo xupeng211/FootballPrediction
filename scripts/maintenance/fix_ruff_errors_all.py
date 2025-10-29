@@ -64,9 +64,7 @@ def check_ruff_errors():
                     error_counts[code] = error_counts.get(code, 0) + 1
 
                 print(f"❌ 仍有 {len(errors)} 个错误:")
-                for code, count in sorted(
-                    error_counts.items(), key=lambda x: x[1], reverse=True
-                ):
+                for code, count in sorted(error_counts.items(), key=lambda x: x[1], reverse=True):
                     print(f"  - {code}: {count} 个")
 
             except Exception:

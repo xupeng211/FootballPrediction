@@ -6,9 +6,6 @@ Core Modules Integration Tests
 """
 
 import asyncio
-from datetime import datetime, timedelta
-from typing import Any, Dict, List
-from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -20,7 +17,6 @@ try:
     from src.cqrs.bus import get_command_bus, get_query_bus
     from src.events.base import Event, EventHandler
     from src.events.bus import EventBus
-    from src.events.types import MatchStartedEvent, PredictionCompletedEvent
 
     CORE_MODULES_AVAILABLE = True
 except ImportError as e:
@@ -93,9 +89,7 @@ class TestCoreModulesIntegration:
         # 启动服务
         start_result = await lifecycle_manager.start_service(service_name)
         assert start_result.success is True
-        assert (
-            lifecycle_manager.get_service_status(service_name) == ServiceState.RUNNING
-        )
+        assert lifecycle_manager.get_service_status(service_name) == ServiceState.RUNNING
 
         # 健康检查
         health = await lifecycle_manager.check_service_health(service_name)
@@ -104,9 +98,7 @@ class TestCoreModulesIntegration:
         # 停止服务
         stop_result = await lifecycle_manager.stop_service(service_name)
         assert stop_result.success is True
-        assert (
-            lifecycle_manager.get_service_status(service_name) == ServiceState.STOPPED
-        )
+        assert lifecycle_manager.get_service_status(service_name) == ServiceState.STOPPED
 
     async def test_event_bus_publish_subscribe(self, event_bus):
         """测试事件总线发布订阅"""
@@ -251,9 +243,7 @@ class TestCoreModulesIntegration:
             return_value={"confidence": 0.85, "outcome": "home_win"}
         )
 
-        lifecycle_manager.register_service(
-            "prediction_service", mock_prediction_service
-        )
+        lifecycle_manager.register_service("prediction_service", mock_prediction_service)
         await lifecycle_manager.start_service("prediction_service")
 
         # 2. 启动事件总线
@@ -298,7 +288,6 @@ class TestCoreModulesIntegration:
     def test_module_availability_and_imports(self):
         """测试模块可用性和导入"""
         # 验证核心模块可以正常导入
-        from src.core.prediction_engine import _lazy_import
         from src.core.service_lifecycle import ServiceLifecycleManager, ServiceState
         from src.events.base import Event, EventHandler
         from src.events.bus import EventBus

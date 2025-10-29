@@ -6,10 +6,11 @@
 import os
 from pathlib import Path
 
+
 def fix_future_import_in_file(file_path: Path) -> bool:
     """修复单个文件中的__future__ import位置"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             lines = f.readlines()
 
         lines[:]
@@ -19,7 +20,7 @@ def fix_future_import_in_file(file_path: Path) -> bool:
         future_import_index = -1
 
         for i, line in enumerate(lines):
-            if 'from __future__ import annotations' in line:
+            if "from __future__ import annotations" in line:
                 future_import_line = line
                 future_import_index = i
                 break
@@ -31,7 +32,7 @@ def fix_future_import_in_file(file_path: Path) -> bool:
         first_non_comment_index = -1
         for i, line in enumerate(lines):
             stripped = line.strip()
-            if stripped and not stripped.startswith('#'):
+            if stripped and not stripped.startswith("#"):
                 first_non_comment_index = i
                 break
 
@@ -44,7 +45,7 @@ def fix_future_import_in_file(file_path: Path) -> bool:
             lines.insert(first_non_comment_index, future_import_line)
 
             # 写回文件
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.writelines(lines)
 
             return True
@@ -53,13 +54,14 @@ def fix_future_import_in_file(file_path: Path) -> bool:
     except Exception:
         return False
 
+
 def main():
     print("🔧 修复__future__ import位置...")
 
     # 需要修复的文件列表
     files_to_fix = [
         "tests/unit/tasks/test_tasks_coverage_boost.py",
-        "tests/unit/tasks/test_tasks_basic.py"
+        "tests/unit/tasks/test_tasks_basic.py",
     ]
 
     fixed_count = 0
@@ -80,6 +82,7 @@ def main():
     print(f"- 已修复: {fixed_count} 个文件")
 
     return fixed_count
+
 
 if __name__ == "__main__":
     exit(main())

@@ -18,10 +18,7 @@ from datetime import datetime
 import logging
 
 # 设置日志
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -33,15 +30,15 @@ class CICoverageMonitor:
         self.coverage_data = {}
         self.targets = {
             "current": 15.0,  # Issue #94当前目标
-            "phase6": 35.0,   # Phase 6目标
+            "phase6": 35.0,  # Phase 6目标
             "phase5_modules": {
                 "crypto_utils": 50.0,
                 "dict_utils": 60.0,
                 "file_utils": 55.0,
                 "time_utils": 71.19,
                 "string_utils": 55.86,
-                "validators": 93.55
-            }
+                "validators": 93.55,
+            },
         }
 
     def run_coverage_analysis(self, analysis_level: str = "standard") -> Dict[str, Any]:
@@ -53,7 +50,7 @@ class CICoverageMonitor:
             "analysis_level": analysis_level,
             "project_root": str(self.project_root),
             "targets": self.targets,
-            "issue_98_methodology_applied": True
+            "issue_98_methodology_applied": True,
         }
 
         try:
@@ -72,7 +69,9 @@ class CICoverageMonitor:
             # 生成建议
             results["recommendations"] = self._generate_recommendations(coverage_result)
 
-            logger.info(f"✅ 覆盖率分析完成，总体覆盖率: {coverage_result.get('overall_coverage', {}).get('percent_covered', 0):.2f}%")
+            logger.info(
+                f"✅ 覆盖率分析完成，总体覆盖率: {coverage_result.get('overall_coverage', {}).get('percent_covered', 0):.2f}%"
+            )
 
         except Exception as e:
             logger.error(f"❌ 覆盖率分析失败: {e}")
@@ -86,21 +85,20 @@ class CICoverageMonitor:
         logger.info("⚡ 执行快速覆盖率检查...")
 
         cmd = [
-            "python", "-m", "pytest", "tests/unit/utils/",
+            "python",
+            "-m",
+            "pytest",
+            "tests/unit/utils/",
             "--cov=src/utils",
             "--cov-report=json",
             "--cov-report=term",
             "--maxfail=5",
             "-q",
-            "--disable-warnings"
+            "--disable-warnings",
         ]
 
         result = subprocess.run(
-            cmd,
-            cwd=self.project_root,
-            capture_output=True,
-            text=True,
-            timeout=300
+            cmd, cwd=self.project_root, capture_output=True, text=True, timeout=300
         )
 
         coverage_file = self.project_root / "coverage.json"
@@ -110,7 +108,7 @@ class CICoverageMonitor:
             return {
                 "overall_coverage": {"percent_covered": 0},
                 "files_coverage": {},
-                "status": "no_data"
+                "status": "no_data",
             }
 
     def _run_standard_coverage(self) -> Dict[str, Any]:
@@ -118,7 +116,11 @@ class CICoverageMonitor:
         logger.info("📊 执行标准覆盖率分析...")
 
         cmd = [
-            "python", "-m", "pytest", "tests/unit/", "tests/integration/",
+            "python",
+            "-m",
+            "pytest",
+            "tests/unit/",
+            "tests/integration/",
             "--cov=src/",
             "--cov-report=xml",
             "--cov-report=html",
@@ -126,7 +128,7 @@ class CICoverageMonitor:
             "--cov-report=term-missing",
             "--tb=short",
             "--maxfail=20",
-            "--timeout=300"
+            "--timeout=300",
         ]
 
         # 尝试使用并行执行
@@ -136,11 +138,7 @@ class CICoverageMonitor:
             logger.warning("⚠️ pytest-xdist不可用，使用单线程执行")
 
         result = subprocess.run(
-            cmd,
-            cwd=self.project_root,
-            capture_output=True,
-            text=True,
-            timeout=600
+            cmd, cwd=self.project_root, capture_output=True, text=True, timeout=600
         )
 
         coverage_file = self.project_root / "coverage.json"
@@ -150,7 +148,7 @@ class CICoverageMonitor:
             return {
                 "overall_coverage": {"percent_covered": 0},
                 "files_coverage": {},
-                "status": "no_data"
+                "status": "no_data",
             }
 
     def _run_comprehensive_coverage(self) -> Dict[str, Any]:
@@ -158,7 +156,9 @@ class CICoverageMonitor:
         logger.info("🔬 执行全面覆盖率分析...")
 
         cmd = [
-            "python", "-m", "pytest",
+            "python",
+            "-m",
+            "pytest",
             "tests/unit/",
             "tests/integration/",
             "--cov=src/",
@@ -169,15 +169,11 @@ class CICoverageMonitor:
             "--tb=short",
             "-x",  # 遇到第一个失败就停止
             "--maxfail=50",
-            "--timeout=600"
+            "--timeout=600",
         ]
 
         result = subprocess.run(
-            cmd,
-            cwd=self.project_root,
-            capture_output=True,
-            text=True,
-            timeout=1200
+            cmd, cwd=self.project_root, capture_output=True, text=True, timeout=1200
         )
 
         coverage_file = self.project_root / "coverage.json"
@@ -191,7 +187,7 @@ class CICoverageMonitor:
                 "overall_coverage": {"percent_covered": 0},
                 "files_coverage": {},
                 "status": "no_data",
-                "execution_errors": result.stderr
+                "execution_errors": result.stderr,
             }
 
     def _parse_coverage_report(self, coverage_file: Path, analysis_type: str) -> Dict[str, Any]:
@@ -199,34 +195,34 @@ class CICoverageMonitor:
         logger.info(f"📊 解析覆盖率报告: {coverage_file}")
 
         try:
-            with open(coverage_file, 'r') as f:
+            with open(coverage_file, "r") as f:
                 data = json.load(f)
 
-            totals = data.get('totals', {})
+            totals = data.get("totals", {})
             overall_coverage = {
-                "percent_covered": totals.get('percent_covered', 0),
-                "covered_lines": totals.get('covered_lines', 0),
-                "missing_lines": totals.get('missing_lines', 0),
-                "total_lines": totals.get('num_statements', 0),
-                "excluded_lines": totals.get('excluded_lines', 0)
+                "percent_covered": totals.get("percent_covered", 0),
+                "covered_lines": totals.get("covered_lines", 0),
+                "missing_lines": totals.get("missing_lines", 0),
+                "total_lines": totals.get("num_statements", 0),
+                "excluded_lines": totals.get("excluded_lines", 0),
             }
 
             # 解析各文件覆盖率
             files_coverage = {}
-            for file_path, file_data in data.get('files', {}).items():
-                if file_path.startswith('src/'):
+            for file_path, file_data in data.get("files", {}).items():
+                if file_path.startswith("src/"):
                     files_coverage[file_path] = {
-                        "percent_covered": file_data['summary']['percent_covered'],
-                        "covered_lines": file_data['summary']['covered_lines'],
-                        "missing_lines": file_data['summary']['missing_lines'],
-                        "total_lines": file_data['summary']['num_statements']
+                        "percent_covered": file_data["summary"]["percent_covered"],
+                        "covered_lines": file_data["summary"]["covered_lines"],
+                        "missing_lines": file_data["summary"]["missing_lines"],
+                        "total_lines": file_data["summary"]["num_statements"],
                     }
 
             # 特别关注utils模块
             utils_modules = {}
             for file_path, file_data in files_coverage.items():
-                if 'src/utils/' in file_path:
-                    module_name = file_path.replace('src/utils/', '').replace('.py', '')
+                if "src/utils/" in file_path:
+                    module_name = file_path.replace("src/utils/", "").replace(".py", "")
                     utils_modules[module_name] = file_data
 
             result = {
@@ -234,7 +230,7 @@ class CICoverageMonitor:
                 "files_coverage": files_coverage,
                 "utils_modules": utils_modules,
                 "analysis_type": analysis_type,
-                "status": "success"
+                "status": "success",
             }
 
             # Phase 5模块评估
@@ -249,7 +245,7 @@ class CICoverageMonitor:
                     "coverage": module_coverage,
                     "target": target,
                     "target_met": module_coverage >= target,
-                    "gap": max(0, target - module_coverage)
+                    "gap": max(0, target - module_coverage),
                 }
 
             result["phase5_module_status"] = phase5_status
@@ -262,7 +258,7 @@ class CICoverageMonitor:
                 "overall_coverage": {"percent_covered": 0},
                 "files_coverage": {},
                 "error": str(e),
-                "status": "parse_error"
+                "status": "parse_error",
             }
 
     def _evaluate_coverage_results(self, coverage_result: Dict[str, Any]) -> Dict[str, Any]:
@@ -273,7 +269,7 @@ class CICoverageMonitor:
             "overall_status": "unknown",
             "target_achievement": {},
             "critical_modules": [],
-            "improvement_areas": []
+            "improvement_areas": [],
         }
 
         # 评估总体状态
@@ -291,13 +287,13 @@ class CICoverageMonitor:
             "current_target": {
                 "target": self.targets["current"],
                 "achieved": overall_cov >= self.targets["current"],
-                "gap": max(0, self.targets["current"] - overall_cov)
+                "gap": max(0, self.targets["current"] - overall_cov),
             },
             "phase6_target": {
                 "target": self.targets["phase6"],
                 "achieved": overall_cov >= self.targets["phase6"],
-                "gap": max(0, self.targets["phase6"] - overall_cov)
-            }
+                "gap": max(0, self.targets["phase6"] - overall_cov),
+            },
         }
 
         # 识别关键模块
@@ -311,7 +307,9 @@ class CICoverageMonitor:
             evaluation["improvement_areas"].append("提升整体覆盖率至15%+")
 
         if evaluation["critical_modules"]:
-            evaluation["improvement_areas"].append(f"修复关键模块: {', '.join(evaluation['critical_modules'])}")
+            evaluation["improvement_areas"].append(
+                f"修复关键模块: {', '.join(evaluation['critical_modules'])}"
+            )
 
         if overall_cov >= self.targets["current"] and overall_cov < self.targets["phase6"]:
             evaluation["improvement_areas"].append("继续推进Phase 6覆盖率目标")
@@ -359,7 +357,7 @@ class CICoverageMonitor:
         output_path = self.project_root / output_file
 
         try:
-            with open(output_path, 'w', encoding='utf-8') as f:
+            with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(results, f, indent=2, ensure_ascii=False)
 
             logger.info(f"✅ 覆盖率报告已保存: {output_path}")
@@ -479,8 +477,12 @@ class CICoverageMonitor:
 def main():
     """主函数"""
     parser = argparse.ArgumentParser(description="CI/CD覆盖率监控集成")
-    parser.add_argument("--analysis-level", choices=["quick", "standard", "comprehensive"],
-                       default="standard", help="分析级别")
+    parser.add_argument(
+        "--analysis-level",
+        choices=["quick", "standard", "comprehensive"],
+        default="standard",
+        help="分析级别",
+    )
     parser.add_argument("--output-file", help="输出文件名")
     parser.add_argument("--save-markdown", action="store_true", help="保存Markdown报告")
     parser.add_argument("--feed-monitor", action="store_true", help="向质量监控系统输入数据")
@@ -503,8 +505,8 @@ def main():
         # 保存Markdown报告
         if args.save_markdown:
             markdown_content = monitor.generate_summary_markdown(results)
-            markdown_file = report_file.replace('.json', '.md')
-            with open(markdown_file, 'w', encoding='utf-8') as f:
+            markdown_file = report_file.replace(".json", ".md")
+            with open(markdown_file, "w", encoding="utf-8") as f:
                 f.write(markdown_content)
             print(f"📝 Markdown报告已保存: {markdown_file}")
 

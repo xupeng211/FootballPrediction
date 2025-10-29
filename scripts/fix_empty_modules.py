@@ -14,7 +14,8 @@ def create_router_for_module(module_path):
         return False
 
     # 创建基本的router.py文件
-    router_content = '''"""
+    router_content = (
+        '''"""
 基本路由器 - 自动生成
 """
 
@@ -26,12 +27,14 @@ router = APIRouter()
 async def health_check():
     """健康检查"""
     return {"status": "ok", "module": "%s"}
-''' % module_dir.name
+'''
+        % module_dir.name
+    )
 
     router_file = module_dir / "router.py"
 
     if not router_file.exists():
-        with open(router_file, 'w', encoding='utf-8') as f:
+        with open(router_file, "w", encoding="utf-8") as f:
             f.write(router_content)
         print(f"   ✅ 创建路由器: {router_file}")
         return True
@@ -45,15 +48,15 @@ def main():
 
     # 需要修复的模块
     modules_to_fix = [
-        'src/api/adapters',
-        'src/api/facades',
-        'src/cqrs',
-        'src/middleware',
-        'src/streaming',
-        'src/ml',
-        'src/monitoring',
-        'src/realtime',
-        'src/tasks'
+        "src/api/adapters",
+        "src/api/facades",
+        "src/cqrs",
+        "src/middleware",
+        "src/streaming",
+        "src/ml",
+        "src/monitoring",
+        "src/realtime",
+        "src/tasks",
     ]
 
     fixed_count = 0

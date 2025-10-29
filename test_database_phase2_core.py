@@ -18,24 +18,26 @@ from src.database.models.team import Team
 from src.database.models.match import Match
 from src.database.models.predictions import Predictions
 
+
 class TestDatabaseCorePhase2:
     """Phase 2 - Database模块核心功能测试"""
 
     def test_base_model_creation(self):
         """测试BaseModel创建"""
         # 由于BaseModel是抽象类，我们测试它的元类行为
-        assert hasattr(Base, '__tablename__')
-        assert hasattr(Base, 'metadata')
+        assert hasattr(Base, "__tablename__")
+        assert hasattr(Base, "metadata")
 
     def test_timestamp_mixin(self):
         """测试TimestampMixin混入类"""
+
         # 创建一个使用TimestampMixin的测试类
         class TestModel(Base, TimestampMixin):
-            __tablename__ = 'test_models'
+            __tablename__ = "test_models"
 
         # 验证时间戳字段存在
-        assert hasattr(TestModel, 'created_at')
-        assert hasattr(TestModel, 'updated_at')
+        assert hasattr(TestModel, "created_at")
+        assert hasattr(TestModel, "updated_at")
 
     def test_database_manager_singleton(self):
         """测试DatabaseManager单例模式"""
@@ -54,7 +56,7 @@ class TestDatabaseCorePhase2:
         assert not manager.initialized
 
         # 模拟初始化
-        with patch.object(manager, 'initialize') as mock_init:
+        with patch.object(manager, "initialize") as mock_init:
             manager.initialize()
             mock_init.assert_called_once()
 
@@ -70,43 +72,45 @@ class TestDatabaseCorePhase2:
         assert DatabaseRole.WRITER in DatabaseRole
         assert DatabaseRole.ADMIN in DatabaseRole
 
+
 class TestDatabaseModelsPhase2:
     """Phase 2 - Database模型测试"""
 
     def test_league_model_structure(self):
         """测试League模型结构"""
         # 测试League模型的基本属性和方法
-        assert hasattr(League, '__tablename__')
-        assert hasattr(League, 'id')
-        assert hasattr(League, 'name')
-        assert hasattr(League, 'season')
+        assert hasattr(League, "__tablename__")
+        assert hasattr(League, "id")
+        assert hasattr(League, "name")
+        assert hasattr(League, "season")
 
     def test_team_model_structure(self):
         """测试Team模型结构"""
         # 测试Team模型的基本属性
-        assert hasattr(Team, '__tablename__')
-        assert hasattr(Team, 'id')
-        assert hasattr(Team, 'name')
-        assert hasattr(Team, 'short_name')
+        assert hasattr(Team, "__tablename__")
+        assert hasattr(Team, "id")
+        assert hasattr(Team, "name")
+        assert hasattr(Team, "short_name")
 
     def test_match_model_structure(self):
         """测试Match模型结构"""
         # 测试Match模型的基本属性
-        assert hasattr(Match, '__tablename__')
-        assert hasattr(Match, 'id')
-        assert hasattr(Match, 'home_team_id')
-        assert hasattr(Match, 'away_team_id')
-        assert hasattr(Match, 'match_date')
+        assert hasattr(Match, "__tablename__")
+        assert hasattr(Match, "id")
+        assert hasattr(Match, "home_team_id")
+        assert hasattr(Match, "away_team_id")
+        assert hasattr(Match, "match_date")
 
     def test_prediction_model_structure(self):
         """测试Predictions模型结构"""
         # 测试Predictions模型的基本属性
-        assert hasattr(Predictions, '__tablename__')
-        assert hasattr(Predictions, 'id')
-        assert hasattr(Predictions, 'match_id')
-        assert hasattr(Predictions, 'user_id')
-        assert hasattr(Predictions, 'predicted_home')
-        assert hasattr(Predictions, 'predicted_away')
+        assert hasattr(Predictions, "__tablename__")
+        assert hasattr(Predictions, "id")
+        assert hasattr(Predictions, "match_id")
+        assert hasattr(Predictions, "user_id")
+        assert hasattr(Predictions, "predicted_home")
+        assert hasattr(Predictions, "predicted_away")
+
 
 class TestDatabaseOperationsPhase2:
     """Phase 2 - 数据库操作测试"""
@@ -117,14 +121,16 @@ class TestDatabaseOperationsPhase2:
         manager = DatabaseManager()
 
         # 模拟数据库引擎创建
-        with patch.object(manager, '_async_engine') as mock_engine, \
-             patch.object(manager, '_async_session_factory') as mock_factory:
+        with (
+            patch.object(manager, "_async_engine") as mock_engine,
+            patch.object(manager, "_async_session_factory") as mock_factory,
+        ):
 
             mock_session = AsyncMock(spec=AsyncSession)
             mock_factory.return_value = mock_session
 
             # 模拟初始化
-            with patch.object(manager, 'initialize'):
+            with patch.object(manager, "initialize"):
                 manager.initialize("sqlite+aiosqlite:///test.db")
 
             # 测试获取异步会话
@@ -136,14 +142,16 @@ class TestDatabaseOperationsPhase2:
         manager = DatabaseManager()
 
         # 模拟数据库引擎创建
-        with patch.object(manager, '_engine') as mock_engine, \
-             patch.object(manager, '_session_factory') as mock_factory:
+        with (
+            patch.object(manager, "_engine") as mock_engine,
+            patch.object(manager, "_session_factory") as mock_factory,
+        ):
 
             mock_session = MagicMock(spec=Session)
             mock_factory.return_value = mock_session
 
             # 模拟初始化
-            with patch.object(manager, 'initialize'):
+            with patch.object(manager, "initialize"):
                 manager.initialize("sqlite:///test.db")
 
             # 测试获取同步会话
@@ -153,24 +161,25 @@ class TestDatabaseOperationsPhase2:
     def test_database_connection_config(self):
         """测试数据库连接配置"""
         # 测试环境变量处理
-        with patch.dict('os.environ', {'DATABASE_URL': 'postgresql://test/test'}):
+        with patch.dict("os.environ", {"DATABASE_URL": "postgresql://test/test"}):
             manager = DatabaseManager()
 
-            with patch.object(manager, 'initialize') as mock_init:
+            with patch.object(manager, "initialize") as mock_init:
                 manager.initialize()
                 # 验证使用了正确的数据库URL
                 mock_init.assert_called_once()
 
     def test_database_connection_default_config(self):
         """测试数据库连接默认配置"""
-        with patch.dict('os.environ', {}, clear=True):
+        with patch.dict("os.environ", {}, clear=True):
             manager = DatabaseManager()
 
             # 验证默认配置
-            with patch.object(manager, 'initialize') as mock_init:
+            with patch.object(manager, "initialize") as mock_init:
                 manager.initialize()
                 # 应该使用默认的PostgreSQL配置
                 mock_init.assert_called_once()
+
 
 class TestDatabaseAdvancedPhase2:
     """Phase 2 - Database高级功能测试"""
@@ -180,10 +189,10 @@ class TestDatabaseAdvancedPhase2:
         manager = DatabaseManager()
 
         # 测试初始化状态
-        assert not hasattr(manager, 'initialized') or not manager.initialized
+        assert not hasattr(manager, "initialized") or not manager.initialized
 
         # 模拟初始化
-        with patch.object(manager, 'initialize') as mock_init:
+        with patch.object(manager, "initialize") as mock_init:
             manager.initialize()
             mock_init.assert_called_once()
 
@@ -210,8 +219,8 @@ class TestDatabaseAdvancedPhase2:
         # 模拟异步会话
         mock_session = AsyncMock(spec=AsyncSession)
 
-        with patch.object(manager, '_async_session_factory', return_value=mock_session):
-            with patch.object(manager, 'initialize'):
+        with patch.object(manager, "_async_session_factory", return_value=mock_session):
+            with patch.object(manager, "initialize"):
                 manager.initialize("sqlite+aiosqlite:///test.db")
 
             # 测试异步会话使用
@@ -224,6 +233,7 @@ class TestDatabaseAdvancedPhase2:
 
             # 验证操作执行
             assert result.scalar.return_value == 1
+
 
 def test_all_database_core_functionality():
     """测试所有database核心功能的综合测试"""
@@ -243,6 +253,7 @@ def test_all_database_core_functionality():
     assert TimestampMixin is not None
 
     print("✅ 所有database核心功能测试通过")
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

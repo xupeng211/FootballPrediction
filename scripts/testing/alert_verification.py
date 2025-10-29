@@ -101,9 +101,7 @@ class AlertVerificationTester:
         )
 
         # 验证告警状态
-        failure_rate_alert = await self._check_alert_status(
-            "DataCollectionFailureRateHigh"
-        )
+        failure_rate_alert = await self._check_alert_status("DataCollectionFailureRateHigh")
 
         self.verification_log.append(
             {
@@ -211,9 +209,7 @@ class AlertVerificationTester:
 
         # 检查指标是否符合预期
         expected_conditions = {
-            "collection_errors_increased": metrics_values[
-                "football_data_collection_errors_total"
-            ]
+            "collection_errors_increased": metrics_values["football_data_collection_errors_total"]
             > 0,
             "scheduler_delay_high": any(
                 await self._get_prometheus_metric_value(
@@ -258,9 +254,7 @@ class AlertVerificationTester:
                 print(f"  ℹ️  告警 {alert_name} 未触发")
 
         # 生成告警通知示例
-        notification_examples = await self._generate_notification_examples(
-            alert_statuses
-        )
+        notification_examples = await self._generate_notification_examples(alert_statuses)
 
         result = {
             "success": any(alert["active"] for alert in alert_statuses.values()),
@@ -292,9 +286,7 @@ class AlertVerificationTester:
         """检查指定告警的状态"""
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    f"{self.alertmanager_url}/api/v1/alerts"
-                ) as response:
+                async with session.get(f"{self.alertmanager_url}/api/v1/alerts") as response:
                     if response.status == 200:
                         alerts = await response.json()
                         for alert in alerts:
@@ -303,15 +295,9 @@ class AlertVerificationTester:
                                     "active": True,
                                     "starts_at": alert.get("startsAt"),
                                     "severity": alert.get("labels", {}).get("severity"),
-                                    "description": alert.get("annotations", {}).get(
-                                        "description"
-                                    ),
-                                    "summary": alert.get("annotations", {}).get(
-                                        "summary"
-                                    ),
-                                    "component": alert.get("labels", {}).get(
-                                        "component"
-                                    ),
+                                    "description": alert.get("annotations", {}).get("description"),
+                                    "summary": alert.get("annotations", {}).get("summary"),
+                                    "component": alert.get("labels", {}).get("component"),
                                 }
                         return {"active": False}
         except Exception as e:
@@ -327,7 +313,8 @@ class AlertVerificationTester:
         for alert_name, status in alert_statuses.items():
             if status["active"]:
                 # 邮件通知示例
-                examples[f"{alert_name}_email"] = f"""
+                examples[f"{alert_name}_email"] = (
+                    f"""
 主题: 🚨 Football Platform Alert: {alert_name}
 
 告警: {status.get('summary', alert_name)}
@@ -338,9 +325,11 @@ class AlertVerificationTester:
 
 请立即检查系统状态并处理相关问题。
                 """.strip()
+                )
 
                 # Slack通知示例
-                examples[f"{alert_name}_slack"] = f"""
+                examples[f"{alert_name}_slack"] = (
+                    f"""
 🚨 *Football Platform Critical Alert*
 
 *{status.get('summary', alert_name)}*
@@ -352,6 +341,7 @@ class AlertVerificationTester:
 
 请立即处理！
                 """.strip()
+                )
 
         return examples
 

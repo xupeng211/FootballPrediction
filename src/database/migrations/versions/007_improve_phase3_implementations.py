@@ -33,14 +33,10 @@ def upgrade():
     )
 
     # 创建预测验证索引
-    op.create_index(
-        "idx_predictions_verified", "predictions", ["is_correct", "verified_at"]
-    )
+    op.create_index("idx_predictions_verified", "predictions", ["is_correct", "verified_at"])
 
     # 创建比赛时间索引（优化即将开始比赛的查询）
-    op.create_index(
-        "idx_matches_time_status", "matches", ["match_date", "match_status"]
-    )
+    op.create_index("idx_matches_time_status", "matches", ["match_date", "match_status"])
 
     # 创建赔率复合索引
     op.create_index(
@@ -74,7 +70,10 @@ def upgrade():
                 f"""
             CREATE TABLE IF NOT EXISTS raw_scores_data_y{year_offset}
             PARTITION OF raw_scores_data_partitioned
-            FOR VALUES FROM ({current_year} + {year_offset}) TO ({current_year} + {year_offset + 1});
+            FOR VALUES FROM ({current_year} +
+        {year_offset}) TO ({current_year} +
+        {year_offset +
+        1});
         """
             )
 
@@ -88,7 +87,8 @@ def upgrade():
             DATE_TRUNC('day', created_at) as prediction_date,
             COUNT(*) as total_predictions,
             COUNT(CASE WHEN is_correct = true THEN 1 END) as correct_predictions,
-            ROUND(COUNT(CASE WHEN is_correct = true THEN 1 END) * 100.0 / COUNT(*), 2) as accuracy_percentage
+            ROUND(COUNT(CASE WHEN is_correct =
+    true THEN 1 END) * 100.0 / COUNT(*), 2) as accuracy_percentage
         FROM predictions
         WHERE is_correct IS NOT NULL
         GROUP BY model_name, model_version, DATE_TRUNC('day', created_at)
@@ -105,7 +105,8 @@ def upgrade():
             model_version,
             COUNT(*) as total_predictions,
             COUNT(CASE WHEN is_correct = true THEN 1 END) as correct_predictions,
-            ROUND(COUNT(CASE WHEN is_correct = true THEN 1 END) * 100.0 / COUNT(*), 2) as accuracy_percentage,
+            ROUND(COUNT(CASE WHEN is_correct =
+    true THEN 1 END) * 100.0 / COUNT(*), 2) as accuracy_percentage,
             MIN(created_at) as first_prediction,
             MAX(created_at) as last_prediction
         FROM predictions
@@ -181,7 +182,8 @@ def upgrade():
             SELECT 'matches' as table_name,
                    COUNT(*) as total_records,
                    COUNT(*) - COUNT(home_team_id) - COUNT(away_team_id) as null_records,
-                   ROUND((COUNT(home_team_id) + COUNT(away_team_id)) * 100.0 / COUNT(*), 2) as quality_percentage
+                   ROUND((COUNT(home_team_id) +
+        COUNT(away_team_id)) * 100.0 / COUNT(*), 2) as quality_percentage
             FROM matches
 
             UNION ALL
@@ -189,7 +191,8 @@ def upgrade():
             SELECT 'predictions' as table_name,
                    COUNT(*) as total_records,
                    COUNT(*) - COUNT(match_id) - COUNT(model_name) as null_records,
-                   ROUND((COUNT(match_id) + COUNT(model_name)) * 100.0 / COUNT(*), 2) as quality_percentage
+                   ROUND((COUNT(match_id) +
+        COUNT(model_name)) * 100.0 / COUNT(*), 2) as quality_percentage
             FROM predictions;
         END;
     $$ LANGUAGE plpgsql;
@@ -228,9 +231,7 @@ def downgrade():
     op.drop_index("idx_predictions_verified", table_name="predictions")
     op.drop_index("idx_matches_time_status", table_name="matches")
     op.drop_index("idx_odds_match_bookmaker_market", table_name="odds")
-    op.drop_index(
-        "idx_data_collection_type_status_time", table_name="data_collection_logs"
-    )
+    op.drop_index("idx_data_collection_type_status_time", table_name="data_collection_logs")
 
     if db_dialect != "sqlite":
         # PostgreSQL环境：删除视图

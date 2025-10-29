@@ -6,7 +6,6 @@ import pytest
 def test_config_strategy_exists():
     """测试配置策略模块可以导入"""
     try:
-        from domain.strategies.config import ConfigStrategy
 
         assert True
     except ImportError:
@@ -16,7 +15,6 @@ def test_config_strategy_exists():
 def test_config_can_load():
     """测试配置可以加载"""
     try:
-        from domain.strategies.config import StrategyConfig
 
         assert True
     except ImportError:

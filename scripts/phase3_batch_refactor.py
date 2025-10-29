@@ -9,16 +9,18 @@ import json
 from datetime import datetime
 from typing import Dict, List, Any
 
+
 def load_coverage_analysis() -> List[Dict]:
     """加载覆盖率分析数据"""
     try:
         if os.path.exists("coverage_analysis.json"):
-            with open("coverage_analysis.json", 'r', encoding='utf-8') as f:
+            with open("coverage_analysis.json", "r", encoding="utf-8") as f:
                 return json.load(f)
     except Exception as e:
         print(f"⚠️ 无法加载覆盖率分析: {e}")
 
     return []
+
 
 def get_phase3_target_modules() -> List[Dict]:
     """获取阶段3的目标模块列表"""
@@ -27,207 +29,200 @@ def get_phase3_target_modules() -> List[Dict]:
     phase3_modules = [
         # Core扩展
         {
-            'source': 'src/core/logging.py',
-            'test': 'tests/unit/core/logging_test_phase3.py',
-            'current_coverage': 61.90,
-            'target_coverage': 80,
-            'priority': 'HIGH',
-            'category': 'core'
+            "source": "src/core/logging.py",
+            "test": "tests/unit/core/logging_test_phase3.py",
+            "current_coverage": 61.90,
+            "target_coverage": 80,
+            "priority": "HIGH",
+            "category": "core",
         },
         {
-            'source': 'src/core/service_lifecycle.py',
-            'test': 'tests/unit/core/service_lifecycle_test_phase3.py',
-            'current_coverage': 14.91,
-            'target_coverage': 40,
-            'priority': 'MEDIUM',
-            'category': 'core'
+            "source": "src/core/service_lifecycle.py",
+            "test": "tests/unit/core/service_lifecycle_test_phase3.py",
+            "current_coverage": 14.91,
+            "target_coverage": 40,
+            "priority": "MEDIUM",
+            "category": "core",
         },
         {
-            'source': 'src/core/auto_binding.py',
-            'test': 'tests/unit/core/auto_binding_test_phase3.py',
-            'current_coverage': 15.50,
-            'target_coverage': 40,
-            'priority': 'MEDIUM',
-            'category': 'core'
+            "source": "src/core/auto_binding.py",
+            "test": "tests/unit/core/auto_binding_test_phase3.py",
+            "current_coverage": 15.50,
+            "target_coverage": 40,
+            "priority": "MEDIUM",
+            "category": "core",
         },
-
         # Utils扩展
         {
-            'source': 'src/utils/helpers.py',
-            'test': 'tests/unit/utils/helpers_test_phase3.py',
-            'current_coverage': 40.91,
-            'target_coverage': 70,
-            'priority': 'HIGH',
-            'category': 'utils'
+            "source": "src/utils/helpers.py",
+            "test": "tests/unit/utils/helpers_test_phase3.py",
+            "current_coverage": 40.91,
+            "target_coverage": 70,
+            "priority": "HIGH",
+            "category": "utils",
         },
         {
-            'source': 'src/utils/time_utils.py',
-            'test': 'tests/unit/utils/time_utils_test_phase3.py',
-            'current_coverage': 40.54,
-            'target_coverage': 70,
-            'priority': 'HIGH',
-            'category': 'utils'
+            "source": "src/utils/time_utils.py",
+            "test": "tests/unit/utils/time_utils_test_phase3.py",
+            "current_coverage": 40.54,
+            "target_coverage": 70,
+            "priority": "HIGH",
+            "category": "utils",
         },
         {
-            'source': 'src/utils/file_utils.py',
-            'test': 'tests/unit/utils/file_utils_test_phase3.py',
-            'current_coverage': 30.95,
-            'target_coverage': 60,
-            'priority': 'MEDIUM',
-            'category': 'utils'
+            "source": "src/utils/file_utils.py",
+            "test": "tests/unit/utils/file_utils_test_phase3.py",
+            "current_coverage": 30.95,
+            "target_coverage": 60,
+            "priority": "MEDIUM",
+            "category": "utils",
         },
         {
-            'source': 'src/utils/dict_utils.py',
-            'test': 'tests/unit/utils/dict_utils_test_phase3.py',
-            'current_coverage': 26.67,
-            'target_coverage': 55,
-            'priority': 'MEDIUM',
-            'category': 'utils'
+            "source": "src/utils/dict_utils.py",
+            "test": "tests/unit/utils/dict_utils_test_phase3.py",
+            "current_coverage": 26.67,
+            "target_coverage": 55,
+            "priority": "MEDIUM",
+            "category": "utils",
         },
         {
-            'source': 'src/utils/formatters.py',
-            'test': 'tests/unit/utils/formatters_test_phase3.py',
-            'current_coverage': 63.64,
-            'target_coverage': 85,
-            'priority': 'HIGH',
-            'category': 'utils'
+            "source": "src/utils/formatters.py",
+            "test": "tests/unit/utils/formatters_test_phase3.py",
+            "current_coverage": 63.64,
+            "target_coverage": 85,
+            "priority": "HIGH",
+            "category": "utils",
         },
-
         # Database相关
         {
-            'source': 'src/database/definitions.py',
-            'test': 'tests/unit/database/definitions_test_phase3.py',
-            'current_coverage': 50.00,
-            'target_coverage': 75,
-            'priority': 'HIGH',
-            'category': 'database'
+            "source": "src/database/definitions.py",
+            "test": "tests/unit/database/definitions_test_phase3.py",
+            "current_coverage": 50.00,
+            "target_coverage": 75,
+            "priority": "HIGH",
+            "category": "database",
         },
         {
-            'source': 'src/database/config.py',
-            'test': 'tests/unit/database/config_test_phase3.py',
-            'current_coverage': 38.10,
-            'target_coverage': 65,
-            'priority': 'MEDIUM',
-            'category': 'database'
+            "source": "src/database/config.py",
+            "test": "tests/unit/database/config_test_phase3.py",
+            "current_coverage": 38.10,
+            "target_coverage": 65,
+            "priority": "MEDIUM",
+            "category": "database",
         },
         {
-            'source': 'src/database/dependencies.py',
-            'test': 'tests/unit/database/dependencies_test_phase3.py',
-            'current_coverage': 42.86,
-            'target_coverage': 70,
-            'priority': 'MEDIUM',
-            'category': 'database'
+            "source": "src/database/dependencies.py",
+            "test": "tests/unit/database/dependencies_test_phase3.py",
+            "current_coverage": 42.86,
+            "target_coverage": 70,
+            "priority": "MEDIUM",
+            "category": "database",
         },
-
         # API相关
         {
-            'source': 'src/api/data_router.py',
-            'test': 'tests/unit/api/data_router_test_phase3.py',
-            'current_coverage': 60.32,
-            'target_coverage': 80,
-            'priority': 'HIGH',
-            'category': 'api'
+            "source": "src/api/data_router.py",
+            "test": "tests/unit/api/data_router_test_phase3.py",
+            "current_coverage": 60.32,
+            "target_coverage": 80,
+            "priority": "HIGH",
+            "category": "api",
         },
         {
-            'source': 'src/api/decorators.py',
-            'test': 'tests/unit/api/decorators_test_phase3.py',
-            'current_coverage': 23.20,
-            'target_coverage': 50,
-            'priority': 'MEDIUM',
-            'category': 'api'
+            "source": "src/api/decorators.py",
+            "test": "tests/unit/api/decorators_test_phase3.py",
+            "current_coverage": 23.20,
+            "target_coverage": 50,
+            "priority": "MEDIUM",
+            "category": "api",
         },
-
         # CQRS相关
         {
-            'source': 'src/cqrs/base.py',
-            'test': 'tests/unit/cqrs/base_test_phase3.py',
-            'current_coverage': 71.05,
-            'target_coverage': 85,
-            'priority': 'HIGH',
-            'category': 'cqrs'
+            "source": "src/cqrs/base.py",
+            "test": "tests/unit/cqrs/base_test_phase3.py",
+            "current_coverage": 71.05,
+            "target_coverage": 85,
+            "priority": "HIGH",
+            "category": "cqrs",
         },
         {
-            'source': 'src/cqrs/application.py',
-            'test': 'tests/unit/cqrs/application_test_phase3.py',
-            'current_coverage': 42.11,
-            'target_coverage': 65,
-            'priority': 'MEDIUM',
-            'category': 'cqrs'
+            "source": "src/cqrs/application.py",
+            "test": "tests/unit/cqrs/application_test_phase3.py",
+            "current_coverage": 42.11,
+            "target_coverage": 65,
+            "priority": "MEDIUM",
+            "category": "cqrs",
         },
         {
-            'source': 'src/cqrs/dto.py',
-            'test': 'tests/unit/cqrs/dto_test_phase3.py',
-            'current_coverage': 91.46,
-            'target_coverage': 95,
-            'priority': 'HIGH',
-            'category': 'cqrs'
+            "source": "src/cqrs/dto.py",
+            "test": "tests/unit/cqrs/dto_test_phase3.py",
+            "current_coverage": 91.46,
+            "target_coverage": 95,
+            "priority": "HIGH",
+            "category": "cqrs",
         },
-
         # Data Quality
         {
-            'source': 'src/data/quality/exception_handler.py',
-            'test': 'tests/unit/data/quality/exception_handler_test_phase3.py',
-            'current_coverage': 47.62,
-            'target_coverage': 70,
-            'priority': 'MEDIUM',
-            'category': 'data_quality'
+            "source": "src/data/quality/exception_handler.py",
+            "test": "tests/unit/data/quality/exception_handler_test_phase3.py",
+            "current_coverage": 47.62,
+            "target_coverage": 70,
+            "priority": "MEDIUM",
+            "category": "data_quality",
         },
         {
-            'source': 'src/data/quality/data_quality_monitor.py',
-            'test': 'tests/unit/data/quality/data_quality_monitor_test_phase3.py',
-            'current_coverage': 10.84,
-            'target_coverage': 35,
-            'priority': 'LOW',
-            'category': 'data_quality'
+            "source": "src/data/quality/data_quality_monitor.py",
+            "test": "tests/unit/data/quality/data_quality_monitor_test_phase3.py",
+            "current_coverage": 10.84,
+            "target_coverage": 35,
+            "priority": "LOW",
+            "category": "data_quality",
         },
-
         # Events
         {
-            'source': 'src/events/base.py',
-            'test': 'tests/unit/events/base_test_phase3.py',
-            'current_coverage': 42.00,
-            'target_coverage': 65,
-            'priority': 'MEDIUM',
-            'category': 'events'
+            "source": "src/events/base.py",
+            "test": "tests/unit/events/base_test_phase3.py",
+            "current_coverage": 42.00,
+            "target_coverage": 65,
+            "priority": "MEDIUM",
+            "category": "events",
         },
         {
-            'source': 'src/events/types.py',
-            'test': 'tests/unit/events/types_test_phase3.py',
-            'current_coverage': 44.37,
-            'target_coverage': 65,
-            'priority': 'MEDIUM',
-            'category': 'events'
+            "source": "src/events/types.py",
+            "test": "tests/unit/events/types_test_phase3.py",
+            "current_coverage": 44.37,
+            "target_coverage": 65,
+            "priority": "MEDIUM",
+            "category": "events",
         },
-
         # Data Processing
         {
-            'source': 'src/data/processing/football_data_cleaner.py',
-            'test': 'tests/unit/data/processing/football_data_cleaner_test_phase3.py',
-            'current_coverage': 34.04,
-            'target_coverage': 60,
-            'priority': 'MEDIUM',
-            'category': 'data_processing'
+            "source": "src/data/processing/football_data_cleaner.py",
+            "test": "tests/unit/data/processing/football_data_cleaner_test_phase3.py",
+            "current_coverage": 34.04,
+            "target_coverage": 60,
+            "priority": "MEDIUM",
+            "category": "data_processing",
         },
-
         # Adapters
         {
-            'source': 'src/adapters/base.py',
-            'test': 'tests/unit/adapters/base_test_phase3.py',
-            'current_coverage': 25.93,
-            'target_coverage': 50,
-            'priority': 'MEDIUM',
-            'category': 'adapters'
-        }
+            "source": "src/adapters/base.py",
+            "test": "tests/unit/adapters/base_test_phase3.py",
+            "current_coverage": 25.93,
+            "target_coverage": 50,
+            "priority": "MEDIUM",
+            "category": "adapters",
+        },
     ]
 
     return phase3_modules
 
+
 def create_phase3_test(source_file: str, test_file: str, module_info: Dict) -> bool:
     """创建阶段3质量优化测试"""
 
-    module_name = source_file.replace('src/', '').replace('.py', '').replace('/', '.')
+    module_name = source_file.replace("src/", "").replace(".py", "").replace("/", ".")
     class_name = module_name.title().replace(".", "").replace("_", "")
-    category = module_info.get('category', 'general')
+    category = module_info.get("category", "general")
 
     # 根据模块类别定制测试策略
     test_strategy = get_test_strategy(category)
@@ -526,7 +521,7 @@ class Test{class_name}Phase3:
         os.makedirs(os.path.dirname(test_file), exist_ok=True)
 
         # 写入测试文件
-        with open(test_file, 'w', encoding='utf-8') as f:
+        with open(test_file, "w", encoding="utf-8") as f:
             f.write(test_content)
 
         return True
@@ -535,18 +530,19 @@ class Test{class_name}Phase3:
         print(f"   ❌ 创建阶段3测试文件失败: {e}")
         return False
 
+
 def get_test_strategy(category: str) -> Dict[str, Any]:
     """根据模块类别获取测试策略"""
 
     strategies = {
-        'core': {
-            'description': '核心模块测试 - 依赖注入和配置管理',
-            'mock_imports': '''
+        "core": {
+            "description": "核心模块测试 - 依赖注入和配置管理",
+            "mock_imports": """
 # 核心模块Mock策略
 from unittest.mock import Mock, patch
 import os
-import sys''',
-            'function_execution_logic': '''
+import sys""",
+            "function_execution_logic": """
             # 核心模块函数执行策略
             try:
                 if func.__code__.co_argcount == 0:
@@ -556,8 +552,8 @@ import sys''',
                 else:
                     result = func({{"debug": True, "port": 8000}})
             except:
-                result = None''',
-            'class_testing_logic': '''
+                result = None""",
+            "class_testing_logic": """
             # 核心模块类测试策略
             test_results = {"class_name": cls_name, "methods_tested": 0}
 
@@ -576,8 +572,8 @@ import sys''',
             except Exception as e:
                 test_results["instantiation_error"] = str(e)
 
-            return test_results''',
-            'integration_test_logic': '''
+            return test_results""",
+            "integration_test_logic": """
             # 核心模块集成测试
             if 'config' in module_name.lower():
                 print("⚙️ 配置模块集成测试")
@@ -590,17 +586,16 @@ import sys''',
                 assert logger is not None
             else:
                 print("🔧 通用核心模块集成测试")
-                assert True'''
+                assert True""",
         },
-
-        'utils': {
-            'description': '工具模块测试 - 字符串、时间、文件处理',
-            'mock_imports': '''
+        "utils": {
+            "description": "工具模块测试 - 字符串、时间、文件处理",
+            "mock_imports": """
 # 工具模块Mock策略
 from unittest.mock import Mock, patch, mock_open
 import tempfile
-import os''',
-            'function_execution_logic': '''
+import os""",
+            "function_execution_logic": """
             # 工具模块函数执行策略
             try:
                 if 'format' in func_name.lower() or 'clean' in func_name.lower():
@@ -612,8 +607,8 @@ import os''',
                 else:
                     result = func()
             except:
-                result = None''',
-            'class_testing_logic': '''
+                result = None""",
+            "class_testing_logic": """
             # 工具模块类测试策略
             test_results = {"class_name": cls_name, "utility_methods": 0}
 
@@ -638,8 +633,8 @@ import os''',
             except Exception as e:
                 test_results["error"] = str(e)
 
-            return test_results''',
-            'integration_test_logic': '''
+            return test_results""",
+            "integration_test_logic": """
             # 工具模块集成测试
             if 'string' in module_name.lower():
                 print("📝 字符串工具集成测试")
@@ -658,17 +653,16 @@ import os''',
                     assert tmp.name is not None
             else:
                 print("🛠️ 通用工具集成测试")
-                assert True'''
+                assert True""",
         },
-
-        'database': {
-            'description': '数据库模块测试 - 连接、配置、依赖',
-            'mock_imports': '''
+        "database": {
+            "description": "数据库模块测试 - 连接、配置、依赖",
+            "mock_imports": """
 # 数据库模块Mock策略
 from unittest.mock import Mock, patch, AsyncMock
 import asyncio
-from sqlalchemy.ext.asyncio import AsyncSession''',
-            'function_execution_logic': '''
+from sqlalchemy.ext.asyncio import AsyncSession""",
+            "function_execution_logic": """
             # 数据库模块函数执行策略
             try:
                 if 'config' in func_name.lower():
@@ -678,8 +672,8 @@ from sqlalchemy.ext.asyncio import AsyncSession''',
                 else:
                     result = func()
             except:
-                result = None''',
-            'class_testing_logic': '''
+                result = None""",
+            "class_testing_logic": """
             # 数据库模块类测试策略
             test_results = {"class_name": cls_name, "db_methods": 0}
 
@@ -699,8 +693,8 @@ from sqlalchemy.ext.asyncio import AsyncSession''',
             except Exception as e:
                 test_results["mock_error"] = str(e)
 
-            return test_results''',
-            'integration_test_logic': '''
+            return test_results""",
+            "integration_test_logic": """
             # 数据库模块集成测试
             print("🗄️ 数据库模块集成测试")
 
@@ -713,17 +707,16 @@ from sqlalchemy.ext.asyncio import AsyncSession''',
             }}
 
             assert test_db_config["host"] is not None
-            assert test_db_config["port"] > 0'''
+            assert test_db_config["port"] > 0""",
         },
-
-        'api': {
-            'description': 'API模块测试 - 路由、装饰器、依赖',
-            'mock_imports': '''
+        "api": {
+            "description": "API模块测试 - 路由、装饰器、依赖",
+            "mock_imports": """
 # API模块Mock策略
 from unittest.mock import Mock, patch
 from fastapi import FastAPI
-from fastapi.testclient import TestClient''',
-            'function_execution_logic': '''
+from fastapi.testclient import TestClient""",
+            "function_execution_logic": """
             # API模块函数执行策略
             try:
                 if 'decorator' in func_name.lower():
@@ -737,8 +730,8 @@ from fastapi.testclient import TestClient''',
                 else:
                     result = func()
             except:
-                result = None''',
-            'class_testing_logic': '''
+                result = None""",
+            "class_testing_logic": """
             # API模块类测试策略
             test_results = {"class_name": cls_name, "api_methods": 0}
 
@@ -757,8 +750,8 @@ from fastapi.testclient import TestClient''',
             except Exception as e:
                 test_results["api_error"] = str(e)
 
-            return test_results''',
-            'integration_test_logic': '''
+            return test_results""",
+            "integration_test_logic": """
             # API模块集成测试
             print("🌐 API模块集成测试")
 
@@ -770,16 +763,15 @@ from fastapi.testclient import TestClient''',
             }}
 
             assert mock_request["method"] == "GET"
-            assert mock_request["url"].startswith("/api")'''
+            assert mock_request["url"].startswith("/api")""",
         },
-
-        'cqrs': {
-            'description': 'CQRS模块测试 - 命令、查询、事件处理',
-            'mock_imports': '''
+        "cqrs": {
+            "description": "CQRS模块测试 - 命令、查询、事件处理",
+            "mock_imports": """
 # CQRS模块Mock策略
 from unittest.mock import Mock, patch, AsyncMock
-import asyncio''',
-            'function_execution_logic': '''
+import asyncio""",
+            "function_execution_logic": """
             # CQRS模块函数执行策略
             try:
                 if 'command' in func_name.lower() or 'query' in func_name.lower():
@@ -789,8 +781,8 @@ import asyncio''',
                 else:
                     result = func()
             except:
-                result = None''',
-            'class_testing_logic': '''
+                result = None""",
+            "class_testing_logic": """
             # CQRS模块类测试策略
             test_results = {"class_name": cls_name, "cqrs_methods": 0}
 
@@ -812,8 +804,8 @@ import asyncio''',
             except Exception as e:
                 test_results["cqrs_error"] = str(e)
 
-            return test_results''',
-            'integration_test_logic': '''
+            return test_results""",
+            "integration_test_logic": """
             # CQRS模块集成测试
             print("📋 CQRS模块集成测试")
 
@@ -825,15 +817,14 @@ import asyncio''',
             mock_query.filters = {"id": 1}
 
             assert mock_command.data is not None
-            assert mock_query.filters is not None'''
+            assert mock_query.filters is not None""",
         },
-
-        'default': {
-            'description': '通用模块测试 - 基础功能验证',
-            'mock_imports': '''
+        "default": {
+            "description": "通用模块测试 - 基础功能验证",
+            "mock_imports": """
 # 通用Mock策略
-from unittest.mock import Mock, patch''',
-            'function_execution_logic': '''
+from unittest.mock import Mock, patch""",
+            "function_execution_logic": """
             # 通用函数执行策略
             try:
                 if func.__code__.co_argcount == 0:
@@ -841,8 +832,8 @@ from unittest.mock import Mock, patch''',
                 else:
                     result = func("test_param")
             except:
-                result = None''',
-            'class_testing_logic': '''
+                result = None""",
+            "class_testing_logic": """
             # 通用类测试策略
             test_results = {"class_name": cls_name, "methods_tested": 0}
 
@@ -860,19 +851,20 @@ from unittest.mock import Mock, patch''',
             except Exception as e:
                 test_results["error"] = str(e)
 
-            return test_results''',
-            'integration_test_logic': '''
+            return test_results""",
+            "integration_test_logic": """
             # 通用集成测试
             print("🔧 通用模块集成测试")
 
             # 基础集成验证
             test_data = {"module": module_name, "status": "testing"}
             assert test_data["status"] == "testing"
-            assert test_data["module"] is not None'''
-        }
+            assert test_data["module"] is not None""",
+        },
     }
 
-    return strategies.get(category, strategies['default'])
+    return strategies.get(category, strategies["default"])
+
 
 def main():
     """主函数"""
@@ -888,7 +880,7 @@ def main():
     # 按类别统计
     categories = {}
     for module in phase3_modules:
-        category = module.get('category', 'general')
+        category = module.get("category", "general")
         categories[category] = categories.get(category, 0) + 1
 
     print("📊 模块类别分布:")
@@ -899,10 +891,10 @@ def main():
     coverage_improvements = []
 
     for module_info in phase3_modules:
-        source_file = module_info['source']
-        test_file = module_info['test']
-        current_coverage = module_info.get('current_coverage', 0)
-        target_coverage = module_info.get('target_coverage', 50)
+        source_file = module_info["source"]
+        test_file = module_info["test"]
+        current_coverage = module_info.get("current_coverage", 0)
+        target_coverage = module_info.get("target_coverage", 50)
         improvement = target_coverage - current_coverage
 
         print(f"\n🔧 创建阶段3测试: {source_file}")
@@ -922,7 +914,9 @@ def main():
 
     if created_files:
         total_improvement = sum(coverage_improvements)
-        avg_improvement = total_improvement / len(coverage_improvements) if coverage_improvements else 0
+        avg_improvement = (
+            total_improvement / len(coverage_improvements) if coverage_improvements else 0
+        )
 
         print("📈 覆盖率提升预期:")
         print(f"   总提升潜力: +{total_improvement:.1f}%")
@@ -937,7 +931,9 @@ def main():
         print("\n📋 建议测试命令:")
         print("   python3 -m pytest tests/unit/utils/helpers_test_phase3.py -v")
         print("   python3 -m pytest tests/unit/core/logging_test_phase3.py -v")
-        print("   python3 -m pytest tests/unit/api/data_router_test_phase3.py --cov=src.api --cov-report=term")
+        print(
+            "   python3 -m pytest tests/unit/api/data_router_test_phase3.py --cov=src.api --cov-report=term"
+        )
 
         print("\n📋 批量测试命令:")
         print("   python3 -m pytest tests/unit/*/*_phase3.py --cov=src --cov-report=term-missing")
@@ -946,6 +942,7 @@ def main():
     else:
         print("\n⚠️ 没有创建任何测试文件")
         return False
+
 
 if __name__ == "__main__":
     main()

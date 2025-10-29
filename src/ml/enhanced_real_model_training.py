@@ -17,15 +17,12 @@ Enhanced Real Model Training for Football Prediction
 import asyncio
 import json
 import logging
-import pickle
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
 
 import joblib
 import numpy as np
 import pandas as pd
-from sklearn.metrics import (
     accuracy_score,
     classification_report,
     confusion_matrix,
@@ -37,14 +34,12 @@ from sklearn.metrics import (
     mean_absolute_error,
     mean_squared_error,
 )
-from sklearn.model_selection import (
     train_test_split,
     cross_val_score,
     StratifiedKFold,
     GridSearchCV,
 )
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 
 # 尝试导入XGBoost和LightGBM
 try:

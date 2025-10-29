@@ -20,9 +20,7 @@ def fix_test_file(file_path: Path):
         # 修复问题：更精确的模式匹配
         # 1. 修复 data -> _data 在assert语句中（但不修复已经正确的 _data）
         # 匹配 assert ... in data 但不匹配 assert ... in _data
-        content = re.sub(
-            r"\bassert\s+(.+?)\s+in\s+data\b(?!\s*=)", r"assert \1 in _data", content
-        )
+        content = re.sub(r"\bassert\s+(.+?)\s+in\s+data\b(?!\s*=)", r"assert \1 in _data", content)
 
         # 2. 修复 data["key"] -> _data["key"]
         content = re.sub(r"\bdata\[([^\]]+)\]", r"_data[\1]", content)
@@ -41,9 +39,7 @@ def fix_test_file(file_path: Path):
 
         # 7. 修复变量赋值（但不包括已经正确的 _data, _config, _result）
         # 匹配 data = response.json() 但不匹配 _data = response.json()
-        content = re.sub(
-            r"\bdata\s*=\s*response\.json\(\)", "_data = response.json()", content
-        )
+        content = re.sub(r"\bdata\s*=\s*response\.json\(\)", "_data = response.json()", content)
 
         # 8. 特殊修复：处理被错误修改的 assert 语句
         # 修复 assert "key" in _data 被错误修改的情况
@@ -55,9 +51,7 @@ def fix_test_file(file_path: Path):
         )
 
         # 9. 修复被错误处理的 assert 语句（去掉多余的引号）
-        content = re.sub(
-            r'assert\s+"([^"]+)"\s+in\s+_data"$', r'assert "\1" in _data', content
-        )
+        content = re.sub(r'assert\s+"([^"]+)"\s+in\s+_data"$', r'assert "\1" in _data', content)
 
         # 保存文件
         if content != original:

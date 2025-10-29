@@ -4,7 +4,6 @@ Team领域模型全面边界条件测试
 目标：将team模块覆盖率提升到90%+
 """
 
-from datetime import datetime, timedelta
 from unittest.mock import patch
 
 import pytest
@@ -208,9 +207,7 @@ class TestTeamForm:
 
     def test_team_form_initialization_with_values(self) -> None:
         """✅ 成功用例：带值初始化"""
-        form = TeamForm(
-            last_matches=["W", "D", "L", "W"], current_streak=2, streak_type="win"
-        )
+        form = TeamForm(last_matches=["W", "D", "L", "W"], current_streak=2, streak_type="win")
 
         assert form.last_matches == ["W", "D", "L", "W"]
         assert form.current_streak == 2

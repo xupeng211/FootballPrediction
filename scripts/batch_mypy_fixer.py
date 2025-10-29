@@ -28,14 +28,10 @@ class MyPyErrorFixer:
 
         try:
             result = subprocess.run(
-                cmd,
-                cwd=self.project_root,
-                capture_output=True,
-                text=True,
-                timeout=120
+                cmd, cwd=self.project_root, capture_output=True, text=True, timeout=120
             )
-            errors = result.stdout.strip().split('\n') if result.stdout else []
-            return [e for e in errors if e and not e.startswith('Success:')]
+            errors = result.stdout.strip().split("\n") if result.stdout else []
+            return [e for e in errors if e and not e.startswith("Success:")]
         except subprocess.TimeoutExpired:
             logger.error("MyPy执行超时")
             return []
@@ -50,11 +46,11 @@ class MyPyErrorFixer:
     def fix_missing_all_annotations(self, file_path: Path) -> int:
         """修复缺失的__all__类型注解"""
         try:
-            content = file_path.read_text(encoding='utf-8')
+            content = file_path.read_text(encoding="utf-8")
             original_content = content
 
             # 匹配需要类型注解的__all__声明
-            pattern = r'(__all__\s*=\s*\[)([^\]]+\])(\])'
+            pattern = r"(__all__\s*=\s*\[)([^\]]+\])(\])"
 
             def add_annotation(match):
                 prefix = match.group(1)
@@ -62,19 +58,19 @@ class MyPyErrorFixer:
                 suffix = match.group(3)
 
                 # 检查是否已经有类型注解
-                if ':' in prefix or 'list[' in prefix:
+                if ":" in prefix or "list[" in prefix:
                     return match.group(0)
 
                 # 分析内容并添加合适的类型注解
                 if '"' in items or "'" in items:
-                    return f'{prefix}  # type: list[str]{items}{suffix}'
+                    return f"{prefix}  # type: list[str]{items}{suffix}"
                 else:
-                    return f'{prefix}  # type: list[str]{items}{suffix}'
+                    return f"{prefix}  # type: list[str]{items}{suffix}"
 
             content = re.sub(pattern, add_annotation, content)
 
             if content != original_content:
-                file_path.write_text(content, encoding='utf-8')
+                file_path.write_text(content, encoding="utf-8")
                 logger.info(f"✅ 修复 {file_path.name} 中的__all__类型注解")
                 return 1
 
@@ -86,29 +82,31 @@ class MyPyErrorFixer:
     def fix_untyped_function_annotations(self, file_path: Path) -> int:
         """修复未类型化函数的注解"""
         try:
-            content = file_path.read_text(encoding='utf-8')
+            content = file_path.read_text(encoding="utf-8")
             original_content = content
 
             # 添加# type: ignore注释来忽略未类型化函数的检查
             # 这是一个保守的修复方法
-            lines = content.split('\n')
+            lines = content.split("\n")
             modified_lines = []
 
             for line in lines:
                 stripped = line.strip()
                 # 查找简单的函数定义行
-                if (re.match(r'^def \w+\([^)]*\)\s*:$', stripped) and
-                    'type: ignore' not in line and
-                    '"""' not in line):
+                if (
+                    re.match(r"^def \w+\([^)]*\)\s*:$", stripped)
+                    and "type: ignore" not in line
+                    and '"""' not in line
+                ):
                     # 在函数定义后添加# type: ignore注释
-                    modified_lines.append(line + '  # type: ignore')
+                    modified_lines.append(line + "  # type: ignore")
                 else:
                     modified_lines.append(line)
 
-            content = '\n'.join(modified_lines)
+            content = "\n".join(modified_lines)
 
             if content != original_content:
-                file_path.write_text(content, encoding='utf-8')
+                file_path.write_text(content, encoding="utf-8")
                 logger.info(f"✅ 修复 {file_path.name} 中的未类型化函数")
                 return 1
 
@@ -120,8 +118,8 @@ class MyPyErrorFixer:
     def fix_var_annotation(self, file_path: Path, error_line: str) -> int:
         """修复变量类型注解错误"""
         try:
-            content = file_path.read_text(encoding='utf-8')
-            lines = content.split('\n')
+            content = file_path.read_text(encoding="utf-8")
+            lines = content.split("\n")
 
             # 从错误信息中提取变量名
             var_match = re.search(r'Need type annotation for "(\w+)"', error_line)
@@ -132,37 +130,37 @@ class MyPyErrorFixer:
 
             # 查找并修复变量声明
             for i, line in enumerate(lines):
-                if var_name in line and '=' in line:
+                if var_name in line and "=" in line:
                     # 检查是否已经有类型注解
-                    if ':' in line.split('=')[0]:
+                    if ":" in line.split("=")[0]:
                         break
 
                     # 添加类型注解
-                    parts = line.split('=', 1)
+                    parts = line.split("=", 1)
                     if len(parts) == 2:
                         var_part = parts[0].strip()
                         value_part = parts[1].strip()
 
                         # 根据值推断类型
-                        inferred_type = 'Any'
-                        if value_part.startswith('[') and value_part.endswith(']'):
-                            inferred_type = 'list'
-                        elif value_part.startswith('{') and value_part.endswith('}'):
-                            inferred_type = 'dict'
-                        elif value_part in ('True', 'False'):
-                            inferred_type = 'bool'
+                        inferred_type = "Any"
+                        if value_part.startswith("[") and value_part.endswith("]"):
+                            inferred_type = "list"
+                        elif value_part.startswith("{") and value_part.endswith("}"):
+                            inferred_type = "dict"
+                        elif value_part in ("True", "False"):
+                            inferred_type = "bool"
                         elif value_part.isdigit():
-                            inferred_type = 'int'
-                        elif '.' in value_part and value_part.replace('.', '').isdigit():
-                            inferred_type = 'float'
+                            inferred_type = "int"
+                        elif "." in value_part and value_part.replace(".", "").isdigit():
+                            inferred_type = "float"
                         elif value_part.startswith(('"', "'")):
-                            inferred_type = 'str'
+                            inferred_type = "str"
 
                         lines[i] = f"{var_part}: {inferred_type} = {value_part}"
                         break
 
-            content = '\n'.join(lines)
-            file_path.write_text(content, encoding='utf-8')
+            content = "\n".join(lines)
+            file_path.write_text(content, encoding="utf-8")
             logger.info(f"✅ 修复 {file_path.name} 中变量 {var_name} 的类型注解")
             return 1
 
@@ -174,23 +172,23 @@ class MyPyErrorFixer:
     def fix_assignment_error(self, file_path: Path, error_line: str) -> int:
         """修复赋值类型错误"""
         try:
-            content = file_path.read_text(encoding='utf-8')
+            content = file_path.read_text(encoding="utf-8")
 
             # 为赋值错误添加# type: ignore注释
-            lines = content.split('\n')
+            lines = content.split("\n")
 
             # 从错误信息中提取行号
-            line_match = re.search(r':(\d+): error:', error_line)
+            line_match = re.search(r":(\d+): error:", error_line)
             if line_match:
                 line_num = int(line_match.group(1)) - 1  # 转换为0-based索引
 
                 if 0 <= line_num < len(lines):
                     # 添加类型忽略注释
-                    if 'type: ignore' not in lines[line_num]:
-                        lines[line_num] += '  # type: ignore'
+                    if "type: ignore" not in lines[line_num]:
+                        lines[line_num] += "  # type: ignore"
 
-                        content = '\n'.join(lines)
-                        file_path.write_text(content, encoding='utf-8')
+                        content = "\n".join(lines)
+                        file_path.write_text(content, encoding="utf-8")
                         logger.info(f"✅ 修复 {file_path.name} 中的赋值类型错误")
                         return 1
 
@@ -202,26 +200,28 @@ class MyPyErrorFixer:
     def add_missing_imports(self, file_path: Path, error_line: str) -> int:
         """添加缺失的导入"""
         try:
-            content = file_path.read_text(encoding='utf-8')
+            content = file_path.read_text(encoding="utf-8")
 
             # 检查是否需要添加typing导入
-            if 'Need type annotation' in error_line and 'from typing import' not in content:
+            if "Need type annotation" in error_line and "from typing import" not in content:
                 # 在文件顶部添加typing导入
-                lines = content.split('\n')
+                lines = content.split("\n")
                 import_index = 0
 
                 # 找到合适的位置添加导入
                 for i, line in enumerate(lines):
-                    if line.startswith('import ') or line.startswith('from '):
+                    if line.startswith("import ") or line.startswith("from "):
                         import_index = i + 1
-                    elif line.strip() == '' and import_index > 0:
+                    elif line.strip() == "" and import_index > 0:
                         break
 
                 # 添加typing导入
-                lines.insert(import_index, 'from typing import Any, List, Dict, Optional, Union, Callable')
+                lines.insert(
+                    import_index, "from typing import Any, List, Dict, Optional, Union, Callable"
+                )
 
-                content = '\n'.join(lines)
-                file_path.write_text(content, encoding='utf-8')
+                content = "\n".join(lines)
+                file_path.write_text(content, encoding="utf-8")
                 logger.info(f"✅ 为 {file_path.name} 添加typing导入")
                 return 1
 
@@ -238,7 +238,7 @@ class MyPyErrorFixer:
         python_files = self.get_all_python_files()
 
         for file_path in python_files:
-            if '__pycache__' in str(file_path):
+            if "__pycache__" in str(file_path):
                 continue
 
             fixes = 0
@@ -263,7 +263,7 @@ class MyPyErrorFixer:
 
         for error in errors:
             # 提取文件路径
-            file_match = re.search(r'^([^\s:]+):', error)
+            file_match = re.search(r"^([^\s:]+):", error)
             if not file_match:
                 continue
 
@@ -279,12 +279,12 @@ class MyPyErrorFixer:
             file_fixes = 0
 
             # 根据错误类型应用不同的修复策略
-            if 'Need type annotation' in error:
+            if "Need type annotation" in error:
                 file_fixes += self.fix_var_annotation(file_path, error)
                 file_fixes += self.add_missing_imports(file_path, error)
-            elif 'Incompatible types in assignment' in error:
+            elif "Incompatible types in assignment" in error:
                 file_fixes += self.fix_assignment_error(file_path, error)
-            elif 'Module.*has no attribute' in error:
+            elif "Module.*has no attribute" in error:
                 # 添加# type: ignore忽略导入错误
                 file_fixes += self.add_type_ignore_to_imports(file_path, error)
 
@@ -299,8 +299,8 @@ class MyPyErrorFixer:
     def add_type_ignore_to_imports(self, file_path: Path, error_line: str) -> int:
         """为导入错误添加type: ignore"""
         try:
-            content = file_path.read_text(encoding='utf-8')
-            lines = content.split('\n')
+            content = file_path.read_text(encoding="utf-8")
+            lines = content.split("\n")
 
             # 从错误信息中提取模块和属性
             module_match = re.search(r'Module "([^"]+)" has no attribute "([^"]+)"', error_line)
@@ -313,14 +313,14 @@ class MyPyErrorFixer:
 
             # 查找相关的导入语句
             for i, line in enumerate(lines):
-                if 'import' in line and attr_name in line:
-                    if 'type: ignore' not in line:
-                        lines[i] = line + '  # type: ignore'
+                if "import" in line and attr_name in line:
+                    if "type: ignore" not in line:
+                        lines[i] = line + "  # type: ignore"
                         fixes += 1
 
             if fixes > 0:
-                content = '\n'.join(lines)
-                file_path.write_text(content, encoding='utf-8')
+                content = "\n".join(lines)
+                file_path.write_text(content, encoding="utf-8")
                 logger.info(f"✅ 修复 {file_path.name} 中的导入错误")
                 return fixes
 
@@ -366,7 +366,7 @@ class MyPyErrorFixer:
             "remaining": remaining_count,
             "fixed": total_fixed,
             "systematic": systematic_fixes,
-            "specific": specific_fixes
+            "specific": specific_fixes,
         }
 
     def run_multiple_iterations(self, max_iterations: int = 5) -> bool:

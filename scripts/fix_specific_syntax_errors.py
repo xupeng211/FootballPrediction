@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 from typing import List, Dict
 
+
 class SpecificSyntaxErrorFixer:
     def __init__(self):
         self.fixed_files = []
@@ -42,7 +43,7 @@ class SpecificSyntaxErrorFixer:
             "tests/unit/data/quality/data_quality_monitor_test_phase3.py",
             "tests/unit/data/quality/exception_handler_test_phase3.py",
             "tests/unit/events/types_test_phase3.py",
-            "tests/unit/events/base_test_phase3.py"
+            "tests/unit/events/base_test_phase3.py",
         ]
 
     def create_minimal_test_file(self, file_path: Path) -> str:
@@ -54,21 +55,21 @@ class SpecificSyntaxErrorFixer:
 
         # 从路径中提取有意义的部分
         for part in parts:
-            if part not in ['tests', 'unit', '__pycache__']:
+            if part not in ["tests", "unit", "__pycache__"]:
                 # 移除前缀和后缀
-                clean_part = part.replace('test_', '').replace('_test', '').replace('.py', '')
+                clean_part = part.replace("test_", "").replace("_test", "").replace(".py", "")
                 if clean_part:
                     class_name_parts.append(clean_part.title())
 
         # 生成类名
         if class_name_parts:
-            class_name = ''.join(class_name_parts[-2:])  # 使用最后两个部分
+            class_name = "".join(class_name_parts[-2:])  # 使用最后两个部分
         else:
             class_name = "GeneratedTest"
 
         # 确保以Test开头
-        if not class_name.startswith('Test'):
-            class_name = 'Test' + class_name
+        if not class_name.startswith("Test"):
+            class_name = "Test" + class_name
 
         return f'''"""
 自动修复的测试文件 - {file_path.name}
@@ -113,21 +114,21 @@ if __name__ == "__main__":
             new_content = self.create_minimal_test_file(file_path)
 
             # 创建备份
-            backup_path = file_path.with_suffix('.py.backup')
+            backup_path = file_path.with_suffix(".py.backup")
             if file_path.exists():
-                with open(file_path, 'r', encoding='utf-8') as src:
+                with open(file_path, "r", encoding="utf-8") as src:
                     original_content = src.read()
-                with open(backup_path, 'w', encoding='utf-8') as dst:
+                with open(backup_path, "w", encoding="utf-8") as dst:
                     dst.write(original_content)
                 print(f"  💾 已备份: {backup_path}")
 
             # 写入新内容
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(new_content)
 
             # 验证语法
             try:
-                compile(new_content, str(file_path), 'exec')
+                compile(new_content, str(file_path), "exec")
                 print(f"  ✅ 修复成功: {file_path}")
                 self.fixed_files.append(file_path)
                 return True
@@ -135,9 +136,9 @@ if __name__ == "__main__":
                 print(f"  ❌ 语法验证失败: {file_path} - {e}")
                 # 恢复备份
                 if backup_path.exists():
-                    with open(backup_path, 'r', encoding='utf-8') as src:
+                    with open(backup_path, "r", encoding="utf-8") as src:
                         backup_content = src.read()
-                    with open(file_path, 'w', encoding='utf-8') as dst:
+                    with open(file_path, "w", encoding="utf-8") as dst:
                         dst.write(backup_content)
                 return False
 
@@ -155,9 +156,9 @@ if __name__ == "__main__":
 
         for file_path in self.fixed_files:
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     content = f.read()
-                compile(content, str(file_path), 'exec')
+                compile(content, str(file_path), "exec")
                 success_count += 1
                 print(f"  ✅ 验证通过: {file_path}")
             except Exception as e:
@@ -218,15 +219,18 @@ if __name__ == "__main__":
             "total_target": len(self.target_files),
             "total_fixed": len(self.fixed_files),
             "total_failed": len(self.failed_files),
-            "success_rate": (len(self.fixed_files) / len(self.target_files) * 100) if self.target_files else 0
+            "success_rate": (
+                (len(self.fixed_files) / len(self.target_files) * 100) if self.target_files else 0
+            ),
         }
 
         report_file = Path("specific_syntax_fix_report.json")
-        with open(report_file, 'w', encoding='utf-8') as f:
+        with open(report_file, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
 
         print(f"📋 修复报告已保存: {report_file}")
         return report
+
 
 def main():
     """主函数"""
@@ -245,6 +249,7 @@ def main():
         print("建议检查失败的文件并手动修复")
 
     return success
+
 
 if __name__ == "__main__":
     success = main()

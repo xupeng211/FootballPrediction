@@ -7,8 +7,6 @@ Tests for Fixtures Collector
 
 import asyncio
 import os
-from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
@@ -23,9 +21,7 @@ except ImportError as e:
     COLLECTORS_AVAILABLE = False
 
 
-@pytest.mark.skipif(
-    not COLLECTORS_AVAILABLE, reason="Fixtures collector module not available"
-)
+@pytest.mark.skipif(not COLLECTORS_AVAILABLE, reason="Fixtures collector module not available")
 @pytest.mark.unit
 class TestFixturesCollector:
     """比赛赛程收集器测试"""
@@ -50,9 +46,7 @@ class TestFixturesCollector:
         with patch.dict(os.environ, {"FOOTBALL_API_TOKEN": "test_token"}):
             return FixturesCollector(mock_db_session, mock_redis_client)
 
-    def test_collector_initialization(
-        self, collector, mock_db_session, mock_redis_client
-    ):
+    def test_collector_initialization(self, collector, mock_db_session, mock_redis_client):
         """测试：收集器初始化"""
         assert collector.db_session is mock_db_session
         assert collector.redis_client is mock_redis_client
@@ -61,17 +55,13 @@ class TestFixturesCollector:
         assert "api-sports" in collector.api_endpoints
         assert collector.headers["X-Auth-Token"] == "test_token"
 
-    def test_collector_initialization_no_token(
-        self, mock_db_session, mock_redis_client
-    ):
+    def test_collector_initialization_no_token(self, mock_db_session, mock_redis_client):
         """测试：收集器初始化（无API令牌）"""
         with patch.dict(os.environ, {}, clear=True):
             with patch("src.collectors.fixtures_collector.logger") as mock_logger:
                 collector = FixturesCollector(mock_db_session, mock_redis_client)
                 assert collector.headers == {}
-                mock_logger.warning.assert_called_with(
-                    "未设置 FOOTBALL_API_TOKEN 环境变量"
-                )
+                mock_logger.warning.assert_called_with("未设置 FOOTBALL_API_TOKEN 环境变量")
 
     @pytest.mark.asyncio
     async def test_collect_team_fixtures_with_cache(self, collector, mock_redis_client):
@@ -88,9 +78,7 @@ class TestFixturesCollector:
         assert _result[0]["homeTeam"] == "Team A"
 
     @pytest.mark.asyncio
-    async def test_collect_team_fixtures_force_refresh(
-        self, collector, mock_redis_client
-    ):
+    async def test_collect_team_fixtures_force_refresh(self, collector, mock_redis_client):
         """测试：强制刷新收集球队赛程"""
         # 模拟缓存存在但强制刷新
         cached_data = '[{"id": 1}]'
@@ -108,9 +96,7 @@ class TestFixturesCollector:
             assert _result[0]["id"] == 2
 
     @pytest.mark.asyncio
-    async def test_collect_team_fixtures_api_success(
-        self, collector, mock_redis_client
-    ):
+    async def test_collect_team_fixtures_api_success(self, collector, mock_redis_client):
         """测试：从API成功收集球队赛程"""
         # 模拟缓存未命中
         mock_redis_client.get.return_value = None
@@ -286,9 +272,7 @@ class TestFixturesCollector:
                 assert mock_redis_client.delete.call_count >= 1
 
 
-@pytest.mark.skipif(
-    not COLLECTORS_AVAILABLE, reason="Fixtures collector module not available"
-)
+@pytest.mark.skipif(not COLLECTORS_AVAILABLE, reason="Fixtures collector module not available")
 class TestFixturesCollectorIntegration:
     """比赛赛程收集器集成测试"""
 

@@ -31,9 +31,7 @@ except ImportError as e:
     DEPENDENCIES_AVAILABLE = False
 
 
-@pytest.mark.skipif(
-    not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available"
-)
+@pytest.mark.skipif(not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available")
 @pytest.mark.unit
 class TestGetCurrentUser:
     """获取当前用户测试"""
@@ -102,9 +100,7 @@ class TestGetCurrentUser:
             assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-@pytest.mark.skipif(
-    not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available"
-)
+@pytest.mark.skipif(not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available")
 class TestGetPredictionEngine:
     """获取预测引擎测试"""
 
@@ -130,9 +126,7 @@ class TestGetPredictionEngine:
                 await get_prediction_engine()
 
 
-@pytest.mark.skipif(
-    not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available"
-)
+@pytest.mark.skipif(not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available")
 class TestVerifyAdminPermission:
     """验证管理员权限测试"""
 
@@ -169,9 +163,7 @@ class TestVerifyAdminPermission:
             assert exc_info.value.status_code == status.HTTP_403_FORBIDDEN
 
 
-@pytest.mark.skipif(
-    not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available"
-)
+@pytest.mark.skipif(not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available")
 class TestValidateRequestData:
     """验证请求数据测试"""
 
@@ -219,9 +211,7 @@ class TestValidateRequestData:
             assert exc_info.value.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
-@pytest.mark.skipif(
-    not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available"
-)
+@pytest.mark.skipif(not DEPENDENCIES_AVAILABLE, reason="Dependencies module not available")
 class TestDependenciesIntegration:
     """依赖注入集成测试"""
 
@@ -291,9 +281,7 @@ class TestDependenciesIntegration:
             }
 
             # 并发调用get_current_user
-            tasks = [
-                get_current_user(credentials) for credentials in mock_credentials_list
-            ]
+            tasks = [get_current_user(credentials) for credentials in mock_credentials_list]
 
             results = await asyncio.gather(*tasks)
 

@@ -126,9 +126,7 @@ class Team:
             return
 
         last_result = self.recent_form[-1]
-        streak_type = (
-            "win" if last_result == "W" else "lose" if last_result == "L" else "draw"
-        )
+        streak_type = "win" if last_result == "W" else "lose" if last_result == "L" else "draw"
         streak_count = 0
 
         # 从最新结果往前数

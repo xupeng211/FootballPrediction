@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock, patch
-
 """
 测试异常检测器模块化拆分
 Test modular split of anomaly detectors
@@ -93,9 +91,7 @@ class TestStatisticalDetector:
         outliers = [150, -50]  # 明显的异常值
         test_data = pd.Series(normal_data + outliers)
 
-        _result = detector.detect_outliers_3sigma(
-            test_data, "test_table", "test_column"
-        )
+        _result = detector.detect_outliers_3sigma(test_data, "test_table", "test_column")
 
         assert _result.table_name == "test_table"
         assert _result.detection_method == "3sigma"

@@ -145,24 +145,12 @@ async def load_test_data(reset: bool = False):
             # 如果需要重置数据
             if reset:
                 logger.info("Resetting test data...")
-                await session.execute(
-                    text("TRUNCATE TABLE predictions RESTART IDENTITY CASCADE")
-                )
-                await session.execute(
-                    text("TRUNCATE TABLE matches RESTART IDENTITY CASCADE")
-                )
-                await session.execute(
-                    text("TRUNCATE TABLE players RESTART IDENTITY CASCADE")
-                )
-                await session.execute(
-                    text("TRUNCATE TABLE teams RESTART IDENTITY CASCADE")
-                )
-                await session.execute(
-                    text("TRUNCATE TABLE leagues RESTART IDENTITY CASCADE")
-                )
-                await session.execute(
-                    text("TRUNCATE TABLE users RESTART IDENTITY CASCADE")
-                )
+                await session.execute(text("TRUNCATE TABLE predictions RESTART IDENTITY CASCADE"))
+                await session.execute(text("TRUNCATE TABLE matches RESTART IDENTITY CASCADE"))
+                await session.execute(text("TRUNCATE TABLE players RESTART IDENTITY CASCADE"))
+                await session.execute(text("TRUNCATE TABLE teams RESTART IDENTITY CASCADE"))
+                await session.execute(text("TRUNCATE TABLE leagues RESTART IDENTITY CASCADE"))
+                await session.execute(text("TRUNCATE TABLE users RESTART IDENTITY CASCADE"))
                 await session.commit()
                 logger.info("✅ Test data reset complete")
 
@@ -171,9 +159,7 @@ async def load_test_data(reset: bool = False):
             team_count = result.scalar()
 
             if team_count > 0 and not reset:
-                logger.info(
-                    f"Test data already exists ({team_count} teams). Skipping load."
-                )
+                logger.info(f"Test data already exists ({team_count} teams). Skipping load.")
                 return
 
             logger.info("Loading test data...")
@@ -192,9 +178,7 @@ async def load_test_data(reset: bool = False):
             # 插入队伍数据
             for team in TEAMS:
                 await session.execute(
-                    text(
-                        "INSERT INTO teams (name, city, founded) VALUES (:name, :city, :founded)"
-                    ),
+                    text("INSERT INTO teams (name, city, founded) VALUES (:name, :city, :founded)"),
                     team,
                 )
             await session.commit()
@@ -405,18 +389,12 @@ async def load_kafka_test_data():
 
 async def main():
     """主函数"""
-    parser = argparse.ArgumentParser(
-        description="Load test data for integration and E2E tests"
-    )
+    parser = argparse.ArgumentParser(description="Load test data for integration and E2E tests")
     parser.add_argument("--env", default="test", help="Environment (test, staging)")
-    parser.add_argument(
-        "--reset", action="store_true", help="Reset existing data before loading"
-    )
+    parser.add_argument("--reset", action="store_true", help="Reset existing data before loading")
     parser.add_argument("--redis", action="store_true", help="Load Redis test data")
     parser.add_argument("--kafka", action="store_true", help="Load Kafka test data")
-    parser.add_argument(
-        "--all", action="store_true", help="Load all test data (DB, Redis, Kafka)"
-    )
+    parser.add_argument("--all", action="store_true", help="Load all test data (DB, Redis, Kafka)")
 
     args = parser.parse_args()
 

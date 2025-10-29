@@ -130,9 +130,9 @@ async def test_adapter_interface():
 
         # 验证实现了正确的接口
         assert isinstance(adapter, DataSourceAdapter)
-        assert hasattr(adapter, 'fetch_matches')
-        assert hasattr(adapter, 'test_connection')
-        assert hasattr(adapter, 'get_source_info')
+        assert hasattr(adapter, "fetch_matches")
+        assert hasattr(adapter, "test_connection")
+        assert hasattr(adapter, "get_source_info")
 
         # 测试接口方法
         info = await adapter.get_source_info()
@@ -166,7 +166,7 @@ async def test_data_conversion():
             status="upcoming",
             odds_home_win=2.45,
             odds_draw=3.20,
-            odds_away_win=2.80
+            odds_away_win=2.80,
         )
 
         # 转换为MatchData
@@ -216,7 +216,7 @@ async def run_all_tests():
         ("Health Check", test_health_check),
         ("Adapter Interface", test_adapter_interface),
         ("Data Conversion", test_data_conversion),
-        ("Error Handling", test_error_handling)
+        ("Error Handling", test_error_handling),
     ]
 
     results = {}

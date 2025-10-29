@@ -8,6 +8,7 @@ import subprocess
 import re
 from pathlib import Path
 
+
 def apply_precise_mypy_fix():
     """应用精确的MyPy修复"""
 
@@ -23,6 +24,7 @@ def apply_precise_mypy_fix():
     add_strategic_file_ignores()
 
     print("✅ 精确MyPy修复完成！")
+
 
 def create_precise_mypy_config():
     """创建精确的MyPy配置"""
@@ -105,10 +107,11 @@ disallow_incomplete_defs = False
 """
 
     config_path = Path("mypy.ini")
-    with open(config_path, 'w', encoding='utf-8') as f:
+    with open(config_path, "w", encoding="utf-8") as f:
         f.write(mypy_config)
 
     print(f"    ✅ 创建了 {config_path}")
+
 
 def clean_useless_ignores():
     """清理无用的类型忽略注释"""
@@ -118,21 +121,22 @@ def clean_useless_ignores():
     src_path = Path("src")
     for py_file in src_path.rglob("*.py"):
         try:
-            with open(py_file, 'r', encoding='utf-8') as f:
+            with open(py_file, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # 移除所有的类型忽略注释
-            content = re.sub(r'\s*#\s*type:\s*ignore.*$', '', content, flags=re.MULTILINE)
+            content = re.sub(r"\s*#\s*type:\s*ignore.*$", "", content, flags=re.MULTILINE)
 
             # 移除空行
-            content = re.sub(r'\n\s*\n\s*\n', '\n\n', content)
+            content = re.sub(r"\n\s*\n\s*\n", "\n\n", content)
 
-            with open(py_file, 'w', encoding='utf-8') as f:
+            with open(py_file, "w", encoding="utf-8") as f:
                 f.write(content)
 
         except Exception:
             # 忽略无法读取的文件
             pass
+
 
 def add_strategic_file_ignores():
     """为关键文件添加策略性文件级忽略"""
@@ -143,24 +147,24 @@ def add_strategic_file_ignores():
         "src/models/model_training.py",
         "src/config/openapi_config.py",
         "src/main.py",
-        "src/api/decorators.py"
+        "src/api/decorators.py",
     ]
 
     for file_path in complex_files:
         path = Path(file_path)
         if path.exists():
             try:
-                with open(path, 'r', encoding='utf-8') as f:
+                with open(path, "r", encoding="utf-8") as f:
                     content = f.read()
 
                 # 如果还没有文件级忽略，添加一个
                 if "mypy: ignore-errors" not in content:
-                    lines = content.split('\n')
+                    lines = content.split("\n")
 
                     # 找到第一个导入或代码行
                     insert_pos = 0
                     for i, line in enumerate(lines):
-                        if line.startswith(('from ', 'import ', 'class ', 'def ', '@')):
+                        if line.startswith(("from ", "import ", "class ", "def ", "@")):
                             insert_pos = i
                             break
 
@@ -168,9 +172,9 @@ def add_strategic_file_ignores():
                     lines.insert(insert_pos, "# mypy: ignore-errors")
                     lines.insert(insert_pos + 1, "# 复杂的业务逻辑文件，类型检查已忽略")
 
-                    content = '\n'.join(lines)
+                    content = "\n".join(lines)
 
-                with open(path, 'w', encoding='utf-8') as f:
+                with open(path, "w", encoding="utf-8") as f:
                     f.write(content)
 
                 print(f"    ✅ 为 {file_path} 添加了文件级忽略")
@@ -178,22 +182,22 @@ def add_strategic_file_ignores():
             except Exception as e:
                 print(f"    处理 {file_path} 时出错: {e}")
 
+
 def run_final_mypy_check():
     """运行最终的MyPy检查"""
     print("🔍 运行最终MyPy检查...")
 
     try:
         # 使用新的配置文件运行MyPy
-        result = subprocess.run([
-            'mypy', 'src/',
-            '--config-file', 'mypy.ini'
-        ], capture_output=True, text=True)
+        result = subprocess.run(
+            ["mypy", "src/", "--config-file", "mypy.ini"], capture_output=True, text=True
+        )
 
         if result.returncode == 0:
             print("✅ MyPy检查完全通过！")
             return 0
         else:
-            error_lines = [line for line in result.stdout.split('\n') if ': error:' in line]
+            error_lines = [line for line in result.stdout.split("\n") if ": error:" in line]
             error_count = len(error_lines)
 
             if error_count == 0:
@@ -205,8 +209,8 @@ def run_final_mypy_check():
                 # 显示错误类型统计
                 error_types = {}
                 for line in error_lines:
-                    if '[' in line and ']' in line:
-                        error_type = line.split('[')[1].split(']')[0]
+                    if "[" in line and "]" in line:
+                        error_type = line.split("[")[1].split("]")[0]
                         error_types[error_type] = error_types.get(error_type, 0) + 1
 
                 print("   错误类型分布:")
@@ -219,17 +223,19 @@ def run_final_mypy_check():
         print(f"❌ MyPy检查失败: {e}")
         return -1
 
+
 def backup_original_config():
     """备份原始配置"""
     original_config = Path("pyproject.toml")
     backup_config = Path("pyproject.toml.backup")
 
     if original_config.exists() and not backup_config.exists():
-        with open(original_config, 'r', encoding='utf-8') as f:
+        with open(original_config, "r", encoding="utf-8") as f:
             content = f.read()
-        with open(backup_config, 'w', encoding='utf-8') as f:
+        with open(backup_config, "w", encoding="utf-8") as f:
             f.write(content)
         print("  ✅ 备份了原始 pyproject.toml")
+
 
 if __name__ == "__main__":
     print("🔧 开始精确MyPy修复...")

@@ -40,9 +40,6 @@ class APMIntegration:
                 from opentelemetry.sdk.metrics import MeterProvider
                 from opentelemetry.sdk.trace import TracerProvider
 
-                from .jaeger.thrift import JaegerExporter
-                from .trace.export import BatchSpanProcessor
-
                 # 初始化追踪
                 trace.set_tracer_provider(TracerProvider())
                 tracer = trace.get_tracer(__name__)
@@ -174,9 +171,7 @@ class APMMiddleware(BaseHTTPMiddleware):
         start_time = time.time()
 
         # 创建请求span
-        with self.apm.trace_operation(
-            f"HTTP {request.method} {request.url.path}"
-        ) as span:
+        with self.apm.trace_operation(f"HTTP {request.method} {request.url.path}") as span:
             try:
                 # 记录请求开始
                 self.apm.record_metric(

@@ -60,9 +60,7 @@ def create_mock_module():
         mock_db_session.add.return_value = None
         mock_db_session.commit.return_value = None
         mock_db_session.refresh.return_value = None
-        mock_db_session.execute.return_value = Mock(
-            scalar_one_or_none=None
-        )  # 用户不存在
+        mock_db_session.execute.return_value = Mock(scalar_one_or_none=None)  # 用户不存在
 
         # 模拟数据库返回
         mock_db_session.refresh.side_effect = lambda obj: setattr(obj, "id", 1)
@@ -202,9 +200,7 @@ def create_mock_module():
         ]
 
         for params in query_params:
-            with patch(
-                "api.dependencies.get_async_session", return_value=mock_db_session
-            ):
+            with patch("api.dependencies.get_async_session", return_value=mock_db_session):
                 response = client.get("/api/v1/matches", params=params)
 
             # 验证响应
@@ -317,9 +313,7 @@ def create_mock_module():
             _data = response.json()
             assert isinstance(data, dict)
             # 验证统计字段存在
-            assert any(
-                key in data for key in ["total_predictions", "accuracy", "stats"]
-            )
+            assert any(key in data for key in ["total_predictions", "accuracy", "stats"])
 
     @pytest.mark.asyncio
     async def test_get_leaderboard(self, client, mock_db_session):
@@ -480,6 +474,4 @@ def test_database_connection_health(client):
         assert isinstance(response, dict)
         assert len(response) > 0
         # 至少有一个标准字段
-        assert any(
-            key in response for key in ["data", "id", "message", "error", "status"]
-        )
+        assert any(key in response for key in ["data", "id", "message", "error", "status"])

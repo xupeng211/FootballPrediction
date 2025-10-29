@@ -30,9 +30,7 @@ def analyze_file_structure():
             current_class = line.strip().split(":")[0]
             methods = []
         elif line.strip().startswith(("def ", "async def ")) and current_class:
-            method_name = (
-                line.strip().split("(")[0].replace("def ", "").replace("async ", "")
-            )
+            method_name = line.strip().split("(")[0].replace("def ", "").replace("async ", "")
             methods.append((method_name, i))
 
     if current_class:
@@ -55,9 +53,7 @@ def create_refactor_plan():
     print("📋 Refactor Plan")
     print("=" * 80)
 
-    print(
-        "\n🎯 Goal: Split service_legacy.py (975 lines) into multiple specialized modules"
-    )
+    print("\n🎯 Goal: Split service_legacy.py (975 lines) into multiple specialized modules")
 
     print("\n📦 Suggested new module structure:")
     print("\n1. core.py - Core audit service class")

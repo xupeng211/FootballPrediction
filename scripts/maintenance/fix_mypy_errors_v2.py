@@ -29,9 +29,7 @@ NEEDS_TYPING_IMPORT = set()
 def run_mypy_get_errors() -> List[str]:
     """运行 MyPy 获取所有错误"""
     print("🔍 运行 MyPy 检查...")
-    result = subprocess.run(
-        ["mypy", "src"], capture_output=True, text=True, cwd=ROOT_DIR
-    )
+    result = subprocess.run(["mypy", "src"], capture_output=True, text=True, cwd=ROOT_DIR)
 
     errors = []
     for line in result.stderr.split("\n"):
@@ -108,17 +106,13 @@ def fix_missing_logger(file_path: Path, content: str) -> str:
             # 在类的第一个方法前添加 logger
             j = i + 1
             while j < len(lines) and (
-                lines[j].startswith('"""')
-                or lines[j].startswith('"""')
-                or not lines[j].strip()
+                lines[j].startswith('"""') or lines[j].startswith('"""') or not lines[j].strip()
             ):
                 j += 1
             if j < len(lines) and "def " in lines[j]:
                 lines.insert(j, "    logger = logging.getLogger(__name__)\n")
                 logger_added = True
-        elif not logger_added and (
-            line.startswith("def ") or line.startswith("async def ")
-        ):
+        elif not logger_added and (line.startswith("def ") or line.startswith("async def ")):
             # 在模块级函数前添加 logger
             lines.insert(i, "logger = logging.getLogger(__name__)\n")
             logger_added = True
@@ -233,13 +227,9 @@ def main():
 
     # 再次运行 MyPy 检查
     print("\n🔍 再次运行 MyPy 检查...")
-    result = subprocess.run(
-        ["mypy", "src"], capture_output=True, text=True, cwd=ROOT_DIR
-    )
+    result = subprocess.run(["mypy", "src"], capture_output=True, text=True, cwd=ROOT_DIR)
 
-    remaining_errors = [
-        line for line in result.stderr.split("\n") if ": error:" in line
-    ]
+    remaining_errors = [line for line in result.stderr.split("\n") if ": error:" in line]
 
     if remaining_errors:
         print(f"⚠️  还有 {len(remaining_errors)} 个错误需要手动修复：")

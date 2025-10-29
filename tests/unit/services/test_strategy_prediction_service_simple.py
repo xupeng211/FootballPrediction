@@ -2,14 +2,12 @@
 
 # TODO: Consider creating a fixture for 53 repeated Mock creations
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 """
 策略预测服务测试（简化版）
 Tests for Strategy Prediction Service (Simplified)
 """
 
-from datetime import datetime
 
 import pytest
 
@@ -107,9 +105,7 @@ class TestStrategyPredictionServiceSimple:
         mock_service.predict_match = AsyncMock()
 
         # When
-        await mock_service.predict_match(
-            match_id=123, user_id=456, strategy_name="custom_strategy"
-        )
+        await mock_service.predict_match(match_id=123, user_id=456, strategy_name="custom_strategy")
 
         # Then
         mock_service.predict_match.assert_called_once()
@@ -138,9 +134,7 @@ class TestStrategyPredictionServiceSimple:
         mock_service.predict_match = AsyncMock()
 
         # When
-        await mock_service.predict_match(
-            match_id=123, user_id=456, notes="测试预测备注"
-        )
+        await mock_service.predict_match(match_id=123, user_id=456, notes="测试预测备注")
 
         # Then
         mock_service.predict_match.assert_called_once()
@@ -224,9 +218,7 @@ class TestStrategyPredictionServiceSimple:
         strategies = ["strategy1", "strategy2"]
 
         # When
-        _result = await mock_service.compare_strategies(
-            match_id=123, strategy_names=strategies
-        )
+        _result = await mock_service.compare_strategies(match_id=123, strategy_names=strategies)
 
         # Then
         assert isinstance(result, dict)

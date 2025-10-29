@@ -11,6 +11,7 @@ import shutil
 from pathlib import Path
 from typing import List, Tuple, Dict
 
+
 class RemainingTestErrorsFixer:
     def __init__(self):
         self.project_root = Path(__file__).parent.parent
@@ -27,62 +28,62 @@ class RemainingTestErrorsFixer:
                 "type": "import_error",
                 "file": "tests/examples/test_factory_usage.py",
                 "error": "cannot import name 'LeagueFactory' from 'tests.factories'",
-                "solution": "创建缺失的LeagueFactory或移除相关测试"
+                "solution": "创建缺失的LeagueFactory或移除相关测试",
             },
             {
                 "type": "name_error",
                 "file": "tests/integration/test_api_service_integration_safe_import.py",
                 "error": "name 'IMPORT_SUCCESS' is not defined",
-                "solution": "添加IMPORT_SUCCESS变量定义"
+                "solution": "添加IMPORT_SUCCESS变量定义",
             },
             {
                 "type": "function_signature",
                 "file": "tests/integration/test_messaging_event_integration.py",
                 "error": "function uses no argument 'message_size'",
-                "solution": "修复函数签名或使用"
+                "solution": "修复函数签名或使用",
             },
             {
                 "type": "module_conflict",
                 "file": "tests/unit/archived/test_comprehensive.py",
                 "error": "import file mismatch with test_comprehensive",
-                "solution": "重命名文件避免冲突"
+                "solution": "重命名文件避免冲突",
             },
             {
                 "type": "module_conflict",
                 "file": "tests/unit/database/test_repositories/test_base.py",
                 "error": "import file mismatch with test_base",
-                "solution": "重命名文件避免冲突"
+                "solution": "重命名文件避免冲突",
             },
             {
                 "type": "dependency_missing",
                 "file": "tests/unit/features/test_feature_store.py",
                 "error": "ModuleNotFoundError: No module named 'psycopg'",
-                "solution": "安装psycopg依赖或跳过相关测试"
+                "solution": "安装psycopg依赖或跳过相关测试",
             },
             {
                 "type": "module_conflict",
                 "file": "tests/unit/security/test_middleware.py",
                 "error": "import file mismatch with test_middleware",
-                "solution": "重命名文件避免冲突"
+                "solution": "重命名文件避免冲突",
             },
             {
                 "type": "module_conflict",
                 "file": "tests/unit/tasks/monitoring_test.py",
                 "error": "import file mismatch with monitoring_test",
-                "solution": "重命名文件避免冲突"
+                "solution": "重命名文件避免冲突",
             },
             {
                 "type": "import_error",
                 "file": "tests/unit/test_base_models.py",
                 "error": "cannot import name 'TimestampMixin'",
-                "solution": "修复导入或创建缺失的类"
+                "solution": "修复导入或创建缺失的类",
             },
             {
                 "type": "import_error",
                 "file": "tests/unit/test_common_models.py",
                 "error": "cannot import name 'APIResponse'",
-                "solution": "修复导入或创建缺失的类"
-            }
+                "solution": "修复导入或创建缺失的类",
+            },
         ]
 
         print(f"📊 识别到 {len(errors)} 个需要修复的错误")
@@ -112,7 +113,7 @@ class RemainingTestErrorsFixer:
         print(f"  🔧 修复 LeagueFactory 导入错误: {file_path}")
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # 检查是否有 LeagueFactory 导入
@@ -121,21 +122,21 @@ class RemainingTestErrorsFixer:
                 factories_file = self.project_root / "tests/factories/__init__.py"
 
                 if factories_file.exists():
-                    with open(factories_file, 'r', encoding='utf-8') as f:
+                    with open(factories_file, "r", encoding="utf-8") as f:
                         factories_content = f.read()
 
                     if "LeagueFactory" not in factories_content:
                         # 添加简单的 LeagueFactory
-                        simple_factory = '''
+                        simple_factory = """
 # 简单的 LeagueFactory 类用于测试
 class LeagueFactory:
     @staticmethod
     def create():
         return {"id": 1, "name": "Test League", "country": "Test Country"}
-'''
+"""
                         factories_content += simple_factory
 
-                        with open(factories_file, 'w', encoding='utf-8') as f:
+                        with open(factories_file, "w", encoding="utf-8") as f:
                             f.write(factories_content)
 
                         print(f"    ✅ 已添加 LeagueFactory 到 {factories_file}")
@@ -145,8 +146,9 @@ class LeagueFactory:
                 else:
                     # 如果 factories 文件不存在，创建它
                     factories_file.parent.mkdir(parents=True, exist_ok=True)
-                    with open(factories_file, 'w', encoding='utf-8') as f:
-                        f.write('''# 测试工厂模块
+                    with open(factories_file, "w", encoding="utf-8") as f:
+                        f.write(
+                            """# 测试工厂模块
 
 # 简单的 LeagueFactory 类用于测试
 class LeagueFactory:
@@ -159,7 +161,8 @@ class TeamFactory:
     @staticmethod
     def create():
         return {"id": 1, "name": "Test Team", "league_id": 1}
-''')
+"""
+                        )
 
                     print(f"    ✅ 已创建 {factories_file} 并添加 LeagueFactory")
                     self.errors_fixed += 1
@@ -183,7 +186,7 @@ class TeamFactory:
         self.project_root / "tests/unit/test_base_models.py"
 
         if base_models_file.exists():
-            with open(base_models_file, 'r', encoding='utf-8') as f:
+            with open(base_models_file, "r", encoding="utf-8") as f:
                 content = f.read()
 
             if "TimestampMixin" not in content:
@@ -198,7 +201,7 @@ class TimestampMixin:
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 '''
 
-                with open(base_models_file, 'a', encoding='utf-8') as f:
+                with open(base_models_file, "a", encoding="utf-8") as f:
                     f.write(timestamp_mixin)
 
                 print(f"    ✅ 已添加 TimestampMixin 到 {base_models_file}")
@@ -211,7 +214,7 @@ class TimestampMixin:
         common_models_file = self.project_root / "src/models/common_models.py"
 
         if common_models_file.exists():
-            with open(common_models_file, 'r', encoding='utf-8') as f:
+            with open(common_models_file, "r", encoding="utf-8") as f:
                 content = f.read()
 
             if "APIResponse" not in content or "ErrorResponse" not in content:
@@ -237,7 +240,7 @@ class ErrorResponse(BaseModel):
     timestamp: datetime = datetime.utcnow()
 '''
 
-                with open(common_models_file, 'a', encoding='utf-8') as f:
+                with open(common_models_file, "a", encoding="utf-8") as f:
                     f.write(response_models)
 
                 print(f"    ✅ 已添加 APIResponse/ErrorResponse 到 {common_models_file}")
@@ -252,25 +255,25 @@ class ErrorResponse(BaseModel):
         feature_test_file = self.project_root / "tests/unit/features/test_feature_store.py"
 
         if feature_test_file.exists():
-            with open(feature_test_file, 'r', encoding='utf-8') as f:
+            with open(feature_test_file, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # 添加 skip 标记来跳过这个测试
             if "psycopg" in content and "import pytest" in content:
                 # 在文件开头添加 skip 标记
-                skip_marker = '''import pytest
+                skip_marker = """import pytest
 
 # 跳过需要 psycopg 的测试
 pytest.importorskip("psycopg", reason="psycopg not installed")
 
-'''
+"""
 
                 # 检查是否已经有 skip 标记
                 if "pytest.importorskip" not in content:
                     # 在 import pytest 后面添加
                     content = content.replace("import pytest", skip_marker.strip())
 
-                    with open(feature_test_file, 'w', encoding='utf-8') as f:
+                    with open(feature_test_file, "w", encoding="utf-8") as f:
                         f.write(content)
 
                     print(f"    ✅ 已添加 psycopg skip 标记到 {feature_test_file}")
@@ -287,10 +290,12 @@ pytest.importorskip("psycopg", reason="psycopg not installed")
 
     def fix_import_success_error(self):
         """修复 IMPORT_SUCCESS 未定义错误"""
-        file_path = self.project_root / "tests/integration/test_api_service_integration_safe_import.py"
+        file_path = (
+            self.project_root / "tests/integration/test_api_service_integration_safe_import.py"
+        )
 
         if file_path.exists():
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             if "IMPORT_SUCCESS" in content and "IMPORT_SUCCESS =" not in content:
@@ -298,11 +303,11 @@ pytest.importorskip("psycopg", reason="psycopg not installed")
                 import_section = []
                 other_section = []
 
-                lines = content.split('\n')
+                lines = content.split("\n")
                 in_imports = True
 
                 for line in lines:
-                    if line.startswith(('import ', 'from ')) or in_imports and line.strip() == '':
+                    if line.startswith(("import ", "from ")) or in_imports and line.strip() == "":
                         import_section.append(line)
                     else:
                         in_imports = False
@@ -313,14 +318,14 @@ pytest.importorskip("psycopg", reason="psycopg not installed")
                     "# 导入成功标志",
                     "IMPORT_SUCCESS = True",
                     "IMPORT_ERROR = None",
-                    ""
+                    "",
                 ]
 
-                fixed_content = '\n'.join(import_section) + '\n\n'
-                fixed_content += '\n'.join(variable_definition)
-                fixed_content += '\n'.join(other_section)
+                fixed_content = "\n".join(import_section) + "\n\n"
+                fixed_content += "\n".join(variable_definition)
+                fixed_content += "\n".join(other_section)
 
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write(fixed_content)
 
                 print("    ✅ 已修复 IMPORT_SUCCESS 变量定义")
@@ -333,7 +338,7 @@ pytest.importorskip("psycopg", reason="psycopg not installed")
         file_path = self.project_root / "tests/integration/test_messaging_event_integration.py"
 
         if file_path.exists():
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # 查找并修复函数签名问题
@@ -341,10 +346,10 @@ pytest.importorskip("psycopg", reason="psycopg not installed")
                 # 修复函数签名
                 content = content.replace(
                     "def test_message_size_handling():",
-                    "def test_message_size_handling(message_size=1024):"
+                    "def test_message_size_handling(message_size=1024):",
                 )
 
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write(content)
 
                 print("    ✅ 已修复函数签名")
@@ -359,7 +364,7 @@ pytest.importorskip("psycopg", reason="psycopg not installed")
             ("tests/unit/archived/test_comprehensive.py", "test_archived_comprehensive.py"),
             ("tests/unit/database/test_repositories/test_base.py", "test_database_base.py"),
             ("tests/unit/security/test_middleware.py", "test_security_middleware.py"),
-            ("tests/unit/tasks/monitoring_test.py", "test_tasks_monitoring.py")
+            ("tests/unit/tasks/monitoring_test.py", "test_tasks_monitoring.py"),
         ]
 
         for old_path, new_name in conflicts:
@@ -379,24 +384,25 @@ pytest.importorskip("psycopg", reason="psycopg not installed")
         print("🧪 验证修复效果...")
 
         import subprocess
+
         try:
             result = subprocess.run(
                 ["python", "-m", "pytest", "--collect-only", "-q"],
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
-                timeout=60
+                timeout=60,
             )
 
             if result.returncode == 0:
-                collected_match = re.search(r'(\d+)\s+tests? collected', result.stdout)
+                collected_match = re.search(r"(\d+)\s+tests? collected", result.stdout)
                 if collected_match:
                     collected = int(collected_match.group(1))
                     print(f"  ✅ 测试收集成功: {collected} 个测试用例")
 
                     # 检查错误数量
                     if "errors" in result.stderr.lower():
-                        error_match = re.search(r'(\d+)\s+errors', result.stderr.lower())
+                        error_match = re.search(r"(\d+)\s+errors", result.stderr.lower())
                         if error_match:
                             errors = int(error_match.group(1))
                             print(f"  ⚠️ 仍有 {errors} 个错误")
@@ -413,7 +419,7 @@ pytest.importorskip("psycopg", reason="psycopg not installed")
                 print("  ❌ 测试收集失败")
                 # 尝试从错误信息中提取错误数量
                 if "errors" in result.stderr.lower():
-                    error_match = re.search(r'(\d+)\s+errors', result.stderr.lower())
+                    error_match = re.search(r"(\d+)\s+errors", result.stderr.lower())
                     if error_match:
                         errors = int(error_match.group(1))
                         print(f"  📊 当前错误数量: {errors}")
@@ -454,6 +460,7 @@ pytest.importorskip("psycopg", reason="psycopg not installed")
         else:
             print(f"📊 剩余错误: {self.errors_remaining}个")
             print("💡 建议运行 'make coverage' 查看详细状态")
+
 
 if __name__ == "__main__":
     fixer = RemainingTestErrorsFixer()

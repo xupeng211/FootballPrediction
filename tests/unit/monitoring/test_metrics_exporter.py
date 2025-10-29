@@ -1,17 +1,12 @@
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
 """
 Tests for monitoring.metrics_exporter
 Auto-generated test file
 """
 
-import asyncio
-
 import pytest
 
 # Test imports
 try:
-    from monitoring.metrics_exporter import *
 
     IMPORT_SUCCESS = True
 except ImportError as e:

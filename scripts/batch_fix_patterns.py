@@ -8,12 +8,13 @@ import os
 import re
 from pathlib import Path
 
+
 def fix_function_with_comment_pattern(file_path: str) -> bool:
     """修复函数定义和注释在同一行的模式"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
-            lines = content.split('\n')
+            lines = content.split("\n")
 
         modified = False
         i = 0
@@ -21,7 +22,12 @@ def fix_function_with_comment_pattern(file_path: str) -> bool:
             line = lines[i]
 
             # 查找模式: def name(...):    """comment"""
-            if 'def ' in line and ':' in line and '"""' in line and not line.strip().startswith('#'):
+            if (
+                "def " in line
+                and ":" in line
+                and '"""' in line
+                and not line.strip().startswith("#")
+            ):
                 # 检查是否是函数定义和注释在同一行
                 match = re.match(r'^(\s*)(def\s+[^:]+:)\s+(.+?)\s*"""([^"]*)"""', line)
                 if match:
@@ -32,16 +38,13 @@ def fix_function_with_comment_pattern(file_path: str) -> bool:
                         new_lines = [
                             f"{indent}{func_def}",
                             f"{indent}    {middle}",
-                            f"{indent}    \"\"\"{docstring}\"\"\""
+                            f'{indent}    """{docstring}"""',
                         ]
                     else:
-                        new_lines = [
-                            f"{indent}{func_def}",
-                            f"{indent}    \"\"\"{docstring}\"\"\""
-                        ]
+                        new_lines = [f"{indent}{func_def}", f'{indent}    """{docstring}"""']
 
                     # 替换原行
-                    lines[i:i+1] = new_lines
+                    lines[i : i + 1] = new_lines
                     modified = True
                     i += len(new_lines) - 1
                     print(f"✅ 修复函数定义: {file_path}:{i+1}")
@@ -49,8 +52,8 @@ def fix_function_with_comment_pattern(file_path: str) -> bool:
             i += 1
 
         if modified:
-            with open(file_path, 'w', encoding='utf-8') as f:
-                f.write('\n'.join(lines))
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write("\n".join(lines))
             return True
 
         return False
@@ -59,17 +62,18 @@ def fix_function_with_comment_pattern(file_path: str) -> bool:
         print(f"❌ 修复失败 {file_path}: {e}")
         return False
 
+
 def fix_assignment_with_comment_pattern(file_path: str) -> bool:
     """修复赋值语句和注释在同一行的模式"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
-            lines = content.split('\n')
+            lines = content.split("\n")
 
         modified = False
         for i, line in enumerate(lines):
             # 查找模式: variable = value    """comment"""
-            if '=' in line and '"""' in line and not line.strip().startswith('#'):
+            if "=" in line and '"""' in line and not line.strip().startswith("#"):
                 match = re.match(r'^(\s*[^=]+=\s*)(.+?)\s*"""([^"]*)"""', line)
                 if match:
                     indent, assignment, docstring = match.groups()
@@ -81,8 +85,8 @@ def fix_assignment_with_comment_pattern(file_path: str) -> bool:
                     print(f"✅ 修复赋值注释: {file_path}:{i+1}")
 
         if modified:
-            with open(file_path, 'w', encoding='utf-8') as f:
-                f.write('\n'.join(lines))
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write("\n".join(lines))
             return True
 
         return False
@@ -91,16 +95,17 @@ def fix_assignment_with_comment_pattern(file_path: str) -> bool:
         print(f"❌ 修复失败 {file_path}: {e}")
         return False
 
+
 def find_files_with_indentation_errors() -> list:
     """查找有缩进错误的文件"""
     files_with_errors = []
 
-    for root, dirs, files in os.walk('src/'):
+    for root, dirs, files in os.walk("src/"):
         for file in files:
-            if file.endswith('.py'):
+            if file.endswith(".py"):
                 file_path = os.path.join(root, file)
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, "r", encoding="utf-8") as f:
                         content = f.read()
 
                     # 检查是否包含问题模式
@@ -113,6 +118,7 @@ def find_files_with_indentation_errors() -> list:
                     continue
 
     return files_with_errors
+
 
 def main():
     """主函数"""
@@ -157,6 +163,7 @@ def main():
             print(f"   ... 还有 {len(remaining_files) - 5} 个文件")
     else:
         print("✅ 所有已知模式已修复完成")
+
 
 if __name__ == "__main__":
     main()

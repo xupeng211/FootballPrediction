@@ -111,18 +111,14 @@ except Exception as e:
     ]
 
     try:
-        result3 = subprocess.run(
-            cmd3, env=env, capture_output=True, text=True, timeout=60
-        )
+        result3 = subprocess.run(cmd3, env=env, capture_output=True, text=True, timeout=60)
         output = result3.stdout + result3.stderr
 
         # 检查是否有通过
         has_passed = "PASSED" in output
         has_errors = "ERROR" in output
         has_failures = "FAILED" in output
-        has_timeout = any(
-            err in output.lower() for err in ["timeout", "time out", "超时"]
-        )
+        has_timeout = any(err in output.lower() for err in ["timeout", "time out", "超时"])
 
         print("输出摘要:")
         print(f"  有通过的测试: {'是' if has_passed else '否'}")

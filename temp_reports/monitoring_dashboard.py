@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Any
 import requests
 
+
 class MonitoringDashboard:
     """监控仪表板类"""
 
@@ -22,7 +23,7 @@ class MonitoringDashboard:
             "健康检查": {"status": "未知", "response_time": 0, "last_check": None},
             "预测功能": {"status": "未知", "response_time": 0, "last_check": None},
             "批量预测": {"status": "未知", "response_time": 0, "last_check": None},
-            "系统性能": {"status": "未知", "response_time": 0, "last_check": None}
+            "系统性能": {"status": "未知", "response_time": 0, "last_check": None},
         }
 
     async def check_health(self) -> Dict[str, Any]:
@@ -38,21 +39,21 @@ class MonitoringDashboard:
                     "status": "健康",
                     "response_time": response_time,
                     "details": data,
-                    "last_check": datetime.now().isoformat()
+                    "last_check": datetime.now().isoformat(),
                 }
             else:
                 return {
                     "status": "异常",
                     "response_time": response_time,
                     "details": f"HTTP {response.status_code}",
-                    "last_check": datetime.now().isoformat()
+                    "last_check": datetime.now().isoformat(),
                 }
         except Exception as e:
             return {
                 "status": "不可用",
                 "response_time": 0,
                 "details": str(e),
-                "last_check": datetime.now().isoformat()
+                "last_check": datetime.now().isoformat(),
             }
 
     async def check_prediction_functionality(self) -> Dict[str, Any]:
@@ -68,35 +69,30 @@ class MonitoringDashboard:
                     "status": "正常",
                     "response_time": response_time,
                     "details": f"预测结果: {data.get('predicted_outcome', '未知')}",
-                    "last_check": datetime.now().isoformat()
+                    "last_check": datetime.now().isoformat(),
                 }
             else:
                 return {
                     "status": "异常",
                     "response_time": response_time,
                     "details": f"HTTP {response.status_code}",
-                    "last_check": datetime.now().isoformat()
+                    "last_check": datetime.now().isoformat(),
                 }
         except Exception as e:
             return {
                 "status": "不可用",
                 "response_time": 0,
                 "details": str(e),
-                "last_check": datetime.now().isoformat()
+                "last_check": datetime.now().isoformat(),
             }
 
     async def check_batch_prediction(self) -> Dict[str, Any]:
         """检查批量预测功能"""
         try:
             start_time = time.time()
-            batch_request = {
-                "match_ids": [12345, 12346],
-                "model_version": "default"
-            }
+            batch_request = {"match_ids": [12345, 12346], "model_version": "default"}
             response = requests.post(
-                f"{self.base_url}/api/v1/predictions/batch",
-                json=batch_request,
-                timeout=10
+                f"{self.base_url}/api/v1/predictions/batch", json=batch_request, timeout=10
             )
             response_time = (time.time() - start_time) * 1000
 
@@ -106,21 +102,21 @@ class MonitoringDashboard:
                     "status": "正常",
                     "response_time": response_time,
                     "details": f"批量预测: {data.get('success_count', 0)}/{data.get('total', 0)} 成功",
-                    "last_check": datetime.now().isoformat()
+                    "last_check": datetime.now().isoformat(),
                 }
             else:
                 return {
                     "status": "异常",
                     "response_time": response_time,
                     "details": f"HTTP {response.status_code}",
-                    "last_check": datetime.now().isoformat()
+                    "last_check": datetime.now().isoformat(),
                 }
         except Exception as e:
             return {
                 "status": "不可用",
                 "response_time": 0,
                 "details": str(e),
-                "last_check": datetime.now().isoformat()
+                "last_check": datetime.now().isoformat(),
             }
 
     async def update_all_metrics(self):
@@ -138,9 +134,12 @@ class MonitoringDashboard:
 
         # 计算系统性能
         avg_response_time = sum(
-            m["response_time"] for m in self.metrics.values()
+            m["response_time"]
+            for m in self.metrics.values()
             if isinstance(m.get("response_time"), (int, float))
-        ) / len([m for m in self.metrics.values() if isinstance(m.get("response_time"), (int, float))])
+        ) / len(
+            [m for m in self.metrics.values() if isinstance(m.get("response_time"), (int, float))]
+        )
 
         healthy_count = sum(1 for m in self.metrics.values() if m.get("status") in ["健康", "正常"])
         total_count = len(self.metrics) - 1  # 排除系统性能本身
@@ -158,17 +157,17 @@ class MonitoringDashboard:
             "status": performance_status,
             "response_time": avg_response_time,
             "details": f"健康服务: {healthy_count}/{total_count}",
-            "last_check": datetime.now().isoformat()
+            "last_check": datetime.now().isoformat(),
         }
 
     def display_dashboard(self):
         """显示仪表板"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("📊 足球预测系统监控仪表板")
-        print("="*60)
+        print("=" * 60)
         print(f"更新时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"系统URL: {self.base_url}")
-        print("-"*60)
+        print("-" * 60)
 
         status_emoji = {
             "健康": "✅",
@@ -179,7 +178,7 @@ class MonitoringDashboard:
             "较差": "❌",
             "异常": "❌",
             "不可用": "💀",
-            "未知": "❓"
+            "未知": "❓",
         }
 
         for name, metrics in self.metrics.items():
@@ -213,6 +212,7 @@ class MonitoringDashboard:
         except KeyboardInterrupt:
             print("\n👋 监控系统已停止")
 
+
 async def main():
     """主函数"""
     dashboard = MonitoringDashboard()
@@ -224,12 +224,13 @@ async def main():
     # 询问是否开始持续监控
     try:
         choice = input("\n是否开始持续监控? (y/n): ").lower().strip()
-        if choice in ['y', 'yes', '是']:
+        if choice in ["y", "yes", "是"]:
             await dashboard.start_monitoring()
         else:
             print("✅ 监控完成")
     except (KeyboardInterrupt, EOFError):
         print("\n✅ 监控完成")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

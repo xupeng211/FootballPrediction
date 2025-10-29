@@ -489,7 +489,8 @@ class TestPredictionService:
         service = PredictionService()
 
         with patch.object(service.db_manager, "get_async_session") as mock_session:
-            mock_session.return_value.__aenter__.return_value.execute.return_value.first.return_value = (
+            mock_session.return_value.__aenter__.return_value.execute.return_value.first.return_value =
+    (
                 2,
                 1,
                 "home",  # home_score, away_score, predicted_result
@@ -511,7 +512,8 @@ class TestPredictionService:
             mock_row.correct_predictions = 60
             mock_row.avg_confidence = 0.75
             mock_row.model_versions_used = 3
-            mock_session.return_value.__aenter__.return_value.execute.return_value.first.return_value = (
+            mock_session.return_value.__aenter__.return_value.execute.return_value.first.return_value =
+    (
                 mock_row
             )
 

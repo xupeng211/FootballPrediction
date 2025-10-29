@@ -163,9 +163,7 @@ class TestPrediction:
         assert prediction.settled_at is not None
 
         # 错误预测
-        prediction2 = Prediction(
-            match_id=124, user_id=456, predicted_outcome="away_win"
-        )
+        prediction2 = Prediction(match_id=124, user_id=456, predicted_outcome="away_win")
         prediction2.settle("home_win", False)
         assert prediction2.is_correct is False
 

@@ -28,12 +28,8 @@ async def test_kafka_consumer():
         # 测试 StreamConfig
         config = StreamConfig()
         print("✅ StreamConfig 创建成功")
-        print(
-            f"   Kafka 服务器: {getattr(config, 'kafka_servers', ['localhost:9092'])}"
-        )
-        print(
-            f"   Kafka 主题: {getattr(config, 'kafka_topics', ['matches', 'odds', 'scores'])}"
-        )
+        print(f"   Kafka 服务器: {getattr(config, 'kafka_servers', ['localhost:9092'])}")
+        print(f"   Kafka 主题: {getattr(config, 'kafka_topics', ['matches', 'odds', 'scores'])}")
 
         # 创建消费者实例（模拟 Kafka 避免 actual connection）
         from unittest.mock import Mock, patch
@@ -105,9 +101,7 @@ async def test_kafka_consumer():
 
         for test_name, config_params in config_tests:
             try:
-                with patch(
-                    "src.streaming.kafka_consumer.Consumer"
-                ) as mock_consumer_class:
+                with patch("src.streaming.kafka_consumer.Consumer") as mock_consumer_class:
                     mock_consumer = Mock()
                     mock_consumer_class.return_value = mock_consumer
 
@@ -148,9 +142,7 @@ async def test_kafka_consumer():
                 elif isinstance(test_data, str):
                     print(f"  ✅ {scenario_name}: 可处理字符串输入")
                 else:
-                    print(
-                        f"  ✅ {scenario_name}: 可处理 {type(test_data).__name__} 输入"
-                    )
+                    print(f"  ✅ {scenario_name}: 可处理 {type(test_data).__name__} 输入")
             except Exception as e:
                 print(f"  ❌ {scenario_name}: 错误 - {e}")
 
@@ -190,9 +182,7 @@ async def test_kafka_consumer():
             final_memory = process.memory_info().rss
             memory_increase = final_memory - initial_memory
 
-            print(
-                f"  ✅ 内存使用: 增加 {memory_increase / 1024:.2f} KB (处理1000条消息)"
-            )
+            print(f"  ✅ 内存使用: 增加 {memory_increase / 1024:.2f} KB (处理1000条消息)")
         except ImportError:
             print("  ⚠️ 内存使用测试: psutil 不可用")
         except Exception as e:
@@ -212,9 +202,7 @@ async def test_kafka_consumer():
             try:
                 if isinstance(test_value, list):
                     # 测试主题订阅
-                    with patch(
-                        "src.streaming.kafka_consumer.Consumer"
-                    ) as mock_consumer_class:
+                    with patch("src.streaming.kafka_consumer.Consumer") as mock_consumer_class:
                         mock_consumer = Mock()
                         mock_consumer_class.return_value = mock_consumer
 

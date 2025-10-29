@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock, patch
-
 """文件工具测试"""
 
 import json

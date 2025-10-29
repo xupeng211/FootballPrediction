@@ -1,15 +1,12 @@
 # 智能Mock兼容修复模式 - 预测API测试增强
 # 解决模块导入失败和patch路径错误问题
 
-from unittest.mock import AsyncMock, Mock, patch
 
 """
 预测 API 测试
 Prediction API Tests
 """
 
-import json
-from datetime import date, datetime
 
 import pytest
 from fastapi.testclient import TestClient
@@ -138,9 +135,7 @@ class TestPredictionsAPI:
             "notes": "更新后的预测",
         }
 
-        with patch(
-            "src.api.predictions_mod.prediction_handlers.PredictionService"
-        ) as mock_service:
+        with patch("src.api.predictions_mod.prediction_handlers.PredictionService") as mock_service:
             # 模拟服务返回更新的预测
             mock_service.return_value.update_prediction.return_value = {
                 "id": prediction_id,
@@ -156,9 +151,7 @@ class TestPredictionsAPI:
         """测试删除预测"""
         prediction_id = 1
 
-        with patch(
-            "src.api.predictions_mod.prediction_handlers.PredictionService"
-        ) as mock_service:
+        with patch("src.api.predictions_mod.prediction_handlers.PredictionService") as mock_service:
             # 模拟服务成功删除
             mock_service.return_value.delete_prediction.return_value = True
 
@@ -170,9 +163,7 @@ class TestPredictionsAPI:
         """测试获取用户的预测列表"""
         user_id = 1
 
-        with patch(
-            "src.api.predictions_mod.history_handlers.PredictionService"
-        ) as mock_service:
+        with patch("src.api.predictions_mod.history_handlers.PredictionService") as mock_service:
             # 模拟服务返回用户的预测列表
             mock_service.return_value.get_user_predictions.return_value = [
                 {
@@ -210,9 +201,7 @@ class TestPredictionsAPI:
             "user_id": 1,
         }
 
-        with patch(
-            "src.api.predictions_mod.batch_handlers.BatchPredictionService"
-        ) as mock_service:
+        with patch("src.api.predictions_mod.batch_handlers.BatchPredictionService") as mock_service:
             # 模拟批量服务
             mock_service.return_value.process_batch.return_value = {
                 "success": True,
@@ -263,9 +252,7 @@ class TestPredictionsAPI:
         """测试分页"""
         params = {"page": 1, "limit": 10, "offset": 0}
 
-        with patch(
-            "src.api.predictions_mod.prediction_handlers.PredictionService"
-        ) as mock_service:
+        with patch("src.api.predictions_mod.prediction_handlers.PredictionService") as mock_service:
             # 模拟分页响应
             mock_service.return_value.get_predictions.return_value = {
                 "items": [],
@@ -287,9 +274,7 @@ class TestPredictionsAPI:
             "filter_value": "1",
         }
 
-        with patch(
-            "src.api.predictions_mod.prediction_handlers.PredictionService"
-        ) as mock_service:
+        with patch("src.api.predictions_mod.prediction_handlers.PredictionService") as mock_service:
             # 模拟过滤和排序响应
             mock_service.return_value.get_predictions.return_value = {
                 "items": [],
@@ -302,9 +287,7 @@ class TestPredictionsAPI:
 
     def test_prediction_statistics(self, client):
         """测试预测统计"""
-        with patch(
-            "src.api.predictions_mod.prediction_handlers.PredictionService"
-        ) as mock_service:
+        with patch("src.api.predictions_mod.prediction_handlers.PredictionService") as mock_service:
             # 模拟统计数据
             mock_service.return_value.get_prediction_statistics.return_value = {
                 "total_predictions": 100,
@@ -344,7 +327,6 @@ class TestPredictionsAPI:
     def test_concurrent_requests(self, client):
         """测试并发请求"""
         import threading
-        import time
 
         results = []
 

@@ -24,16 +24,14 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 # 设置日志
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class QualityMetric:
     """质量指标数据类"""
+
     name: str
     value: float
     unit: str
@@ -45,6 +43,7 @@ class QualityMetric:
 @dataclass
 class FeedbackEvent:
     """反馈事件数据类"""
+
     event_type: str
     message: str
     severity: str
@@ -62,7 +61,7 @@ class QualityFeedbackSystem:
             "events": [],
             "status": "unknown",
             "last_update": None,
-            "issue_98_methodology_applied": True
+            "issue_98_methodology_applied": True,
         }
 
         # 质量阈值
@@ -71,7 +70,7 @@ class QualityFeedbackSystem:
             "code_quality_score": 6.0,
             "critical_issues": 0,
             "high_issues": 5,
-            "complexity_average": 8.0
+            "complexity_average": 8.0,
         }
 
         # 初始化Flask应用
@@ -85,27 +84,29 @@ class QualityFeedbackSystem:
     def _setup_routes(self):
         """设置Web路由"""
 
-        @self.app.route('/')
+        @self.app.route("/")
         def dashboard():
             """主仪表板"""
             return render_template_string(self._get_dashboard_template())
 
-        @self.app.route('/api/metrics')
+        @self.app.route("/api/metrics")
         def get_metrics():
             """获取质量指标API"""
             return jsonify(self.feedback_data)
 
-        @self.app.route('/api/status')
+        @self.app.route("/api/status")
         def get_status():
             """获取状态API"""
-            return jsonify({
-                "status": self.feedback_data["status"],
-                "last_update": self.feedback_data["last_update"],
-                "metrics_count": len(self.feedback_data["metrics"]),
-                "events_count": len(self.feedback_data["events"])
-            })
+            return jsonify(
+                {
+                    "status": self.feedback_data["status"],
+                    "last_update": self.feedback_data["last_update"],
+                    "metrics_count": len(self.feedback_data["metrics"]),
+                    "events_count": len(self.feedback_data["events"]),
+                }
+            )
 
-        @self.app.route('/api/refresh', methods=['POST'])
+        @self.app.route("/api/refresh", methods=["POST"])
         def refresh_metrics():
             """刷新指标API"""
             try:
@@ -114,7 +115,7 @@ class QualityFeedbackSystem:
             except Exception as e:
                 return jsonify({"success": False, "error": str(e)}), 500
 
-        @self.app.route('/api/trigger-check', methods=['POST'])
+        @self.app.route("/api/trigger-check", methods=["POST"])
         def trigger_check():
             """触发质量检查API"""
             try:
@@ -131,9 +132,7 @@ class QualityFeedbackSystem:
 
         self.monitoring_active = True
         self.monitor_thread = threading.Thread(
-            target=self._monitoring_loop,
-            args=(interval,),
-            daemon=True
+            target=self._monitoring_loop, args=(interval,), daemon=True
         )
         self.monitor_thread.start()
         logger.info(f"启动质量监控，间隔: {interval}秒")
@@ -170,9 +169,11 @@ class QualityFeedbackSystem:
                     name="测试覆盖率",
                     value=coverage,
                     unit="%",
-                    status="good" if coverage >= 15 else "warning" if coverage >= 10 else "critical",
+                    status=(
+                        "good" if coverage >= 15 else "warning" if coverage >= 10 else "critical"
+                    ),
                     timestamp=datetime.now(),
-                    trend="stable"  # 简化版，实际应该计算趋势
+                    trend="stable",  # 简化版，实际应该计算趋势
                 )
 
             # 2. 代码质量评分
@@ -182,9 +183,13 @@ class QualityFeedbackSystem:
                     name="代码质量评分",
                     value=quality_score,
                     unit="分",
-                    status="good" if quality_score >= 8 else "warning" if quality_score >= 6 else "critical",
+                    status=(
+                        "good"
+                        if quality_score >= 8
+                        else "warning" if quality_score >= 6 else "critical"
+                    ),
                     timestamp=datetime.now(),
-                    trend="stable"
+                    trend="stable",
                 )
 
             # 3. 问题统计
@@ -197,7 +202,7 @@ class QualityFeedbackSystem:
                         unit="个",
                         status="good" if count == 0 else "warning" if count < 5 else "critical",
                         timestamp=datetime.now(),
-                        trend="stable"
+                        trend="stable",
                     )
 
             # 4. 代码复杂度
@@ -207,9 +212,11 @@ class QualityFeedbackSystem:
                     name="平均复杂度",
                     value=complexity,
                     unit="",
-                    status="good" if complexity <= 5 else "warning" if complexity <= 8 else "critical",
+                    status=(
+                        "good" if complexity <= 5 else "warning" if complexity <= 8 else "critical"
+                    ),
                     timestamp=datetime.now(),
-                    trend="stable"
+                    trend="stable",
                 )
 
             # 更新反馈数据
@@ -238,25 +245,36 @@ class QualityFeedbackSystem:
             # 尝试读取覆盖率报告
             coverage_file = self.project_root / "htmlcov" / "index.html"
             if coverage_file.exists():
-                with open(coverage_file, 'r', encoding='utf-8') as f:
+                with open(coverage_file, "r", encoding="utf-8") as f:
                     content = f.read()
 
                 import re
-                match = re.search(r'([0-9]*\.[0-9]%)', content)
+
+                match = re.search(r"([0-9]*\.[0-9]%)", content)
                 if match:
-                    return float(match.group(1).rstrip('%'))
+                    return float(match.group(1).rstrip("%"))
 
             # 运行快速覆盖率检查
-            result = subprocess.run([
-                "python", "-m", "pytest", "tests/unit/utils/",
-                "--cov=src/utils", "--cov-report=json",
-                "-q"
-            ], capture_output=True, text=True, cwd=self.project_root, timeout=60)
+            result = subprocess.run(
+                [
+                    "python",
+                    "-m",
+                    "pytest",
+                    "tests/unit/utils/",
+                    "--cov=src/utils",
+                    "--cov-report=json",
+                    "-q",
+                ],
+                capture_output=True,
+                text=True,
+                cwd=self.project_root,
+                timeout=60,
+            )
 
             if result.returncode == 0:
                 coverage_file = self.project_root / "htmlcov" / "coverage.json"
                 if coverage_file.exists():
-                    with open(coverage_file, 'r') as f:
+                    with open(coverage_file, "r") as f:
                         data = json.load(f)
                         return data.get("totals", {}).get("percent_covered", 0)
 
@@ -271,14 +289,14 @@ class QualityFeedbackSystem:
             # 尝试读取代码审查报告
             review_file = self.project_root / "automated_code_review_report.json"
             if review_file.exists():
-                with open(review_file, 'r', encoding='utf-8') as f:
+                with open(review_file, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     return data.get("quality_score", 0)
 
             # 尝试读取质量修复报告
             fix_file = self.project_root / "enhanced_smart_quality_fix_report.json"
             if fix_file.exists():
-                with open(fix_file, 'r', encoding='utf-8') as f:
+                with open(fix_file, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     return data.get("quality_score", 0)
 
@@ -292,7 +310,7 @@ class QualityFeedbackSystem:
         try:
             review_file = self.project_root / "automated_code_review_report.json"
             if review_file.exists():
-                with open(review_file, 'r', encoding='utf-8') as f:
+                with open(review_file, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     return data.get("summary", {}).get("by_severity", {})
 
@@ -306,7 +324,7 @@ class QualityFeedbackSystem:
         try:
             review_file = self.project_root / "automated_code_review_report.json"
             if review_file.exists():
-                with open(review_file, 'r', encoding='utf-8') as f:
+                with open(review_file, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     return data.get("metrics", {}).get("average_complexity", 0)
 
@@ -338,9 +356,13 @@ class QualityFeedbackSystem:
 
         try:
             # 运行质量守护工具
-            result = subprocess.run([
-                sys.executable, "scripts/quality_guardian.py", "--check-only"
-            ], capture_output=True, text=True, cwd=self.project_root, timeout=300)
+            result = subprocess.run(
+                [sys.executable, "scripts/quality_guardian.py", "--check-only"],
+                capture_output=True,
+                text=True,
+                cwd=self.project_root,
+                timeout=300,
+            )
 
             # 添加事件记录
             event = FeedbackEvent(
@@ -351,8 +373,8 @@ class QualityFeedbackSystem:
                 details={
                     "returncode": result.returncode,
                     "stdout": result.stdout[:500],  # 限制输出长度
-                    "stderr": result.stderr[:500]
-                }
+                    "stderr": result.stderr[:500],
+                },
             )
 
             self.feedback_data["events"].append(asdict(event))
@@ -365,7 +387,7 @@ class QualityFeedbackSystem:
             return {
                 "success": result.returncode == 0,
                 "message": "质量检查完成" if result.returncode == 0 else "发现问题需要修复",
-                "output": result.stdout[:1000]
+                "output": result.stdout[:1000],
             }
 
         except subprocess.TimeoutExpired:
@@ -374,7 +396,7 @@ class QualityFeedbackSystem:
                 message="质量检查超时",
                 severity="error",
                 timestamp=datetime.now(),
-                details={"error": "timeout"}
+                details={"error": "timeout"},
             )
             self.feedback_data["events"].append(asdict(event))
             self.feedback_data["events"][-1]["timestamp"] = event.timestamp.isoformat()
@@ -387,21 +409,23 @@ class QualityFeedbackSystem:
                 message=f"质量检查失败: {e}",
                 severity="error",
                 timestamp=datetime.now(),
-                details={"error": str(e)}
+                details={"error": str(e)},
             )
             self.feedback_data["events"].append(asdict(event))
             self.feedback_data["events"][-1]["timestamp"] = event.timestamp.isoformat()
 
             return {"success": False, "message": f"质量检查失败: {e}"}
 
-    def add_feedback_event(self, event_type: str, message: str, severity: str = "info", details: Dict = None):
+    def add_feedback_event(
+        self, event_type: str, message: str, severity: str = "info", details: Dict = None
+    ):
         """添加反馈事件"""
         event = FeedbackEvent(
             event_type=event_type,
             message=message,
             severity=severity,
             timestamp=datetime.now(),
-            details=details or {}
+            details=details or {},
         )
 
         self.feedback_data["events"].append(asdict(event))
@@ -413,7 +437,7 @@ class QualityFeedbackSystem:
 
     def _get_dashboard_template(self) -> str:
         """获取仪表板HTML模板"""
-        return '''
+        return """
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -601,7 +625,7 @@ class QualityFeedbackSystem:
     </script>
 </body>
 </html>
-        '''
+        """
 
     def run_server(self, host: str = "127.0.0.1", port: int = 5000, debug: bool = False):
         """运行Web服务器"""
@@ -634,19 +658,12 @@ def main():
 
     # 添加启动事件
     feedback_system.add_feedback_event(
-        "system_start",
-        "质量反馈系统启动",
-        "info",
-        {"host": args.host, "port": args.port}
+        "system_start", "质量反馈系统启动", "info", {"host": args.host, "port": args.port}
     )
 
     try:
         # 运行服务器
-        feedback_system.run_server(
-            host=args.host,
-            port=args.port,
-            debug=args.debug
-        )
+        feedback_system.run_server(host=args.host, port=args.port, debug=args.debug)
     except KeyboardInterrupt:
         logger.info("👋 用户中断，关闭质量反馈系统")
     except Exception as e:

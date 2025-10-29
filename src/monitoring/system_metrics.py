@@ -61,9 +61,7 @@ class SystemMetricsCollector:
             registry=self.registry,
         )
 
-        self.cache_size = Gauge(
-            "cache_size_bytes", "Cache size in bytes", registry=self.registry
-        )
+        self.cache_size = Gauge("cache_size_bytes", "Cache size in bytes", registry=self.registry)
 
     def set_database_manager(self, db_manager: DatabaseManager) -> None:
         """设置数据库管理器"""
@@ -98,9 +96,7 @@ class SystemMetricsCollector:
             if partition.mountpoint:
                 try:
                     usage = psutil.disk_usage(partition.mountpoint)
-                    self.disk_usage.labels(mountpoint=partition.mountpoint).set(
-                        usage.used
-                    )
+                    self.disk_usage.labels(mountpoint=partition.mountpoint).set(usage.used)
                     disk_metrics[partition.mountpoint] = {
                         "total": usage.total,
                         "used": usage.used,
@@ -157,9 +153,7 @@ class SystemMetricsCollector:
             await self.db_manager.execute("SELECT 1")
             duration = (datetime.utcnow() - start_time).total_seconds()
 
-            self.db_query_duration.labels(operation="test", table="system").observe(
-                duration
-            )
+            self.db_query_duration.labels(operation="test", table="system").observe(duration)
             metrics["response_time"] = duration
 
         except (ValueError, RuntimeError, TimeoutError) as e:

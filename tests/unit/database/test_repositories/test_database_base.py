@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock, Mock, patch
-
 """
 Tests for database.repositories.base
 """
@@ -8,7 +6,6 @@ import pytest
 
 # Import the module under test
 try:
-    from database.repositories.base import *
 
     IMPORT_SUCCESS = True
 except ImportError as e:

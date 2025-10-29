@@ -185,9 +185,7 @@ def update_remote_issues(
                     local_issue["state"] = new_issue.state
                     updated_issues.append(local_issue)
 
-                    print(
-                        f"✅ 成功创建新 Issue #{new_issue.number}: {local_issue['title']}"
-                    )
+                    print(f"✅ 成功创建新 Issue #{new_issue.number}: {local_issue['title']}")
 
                 except Exception as e:
                     print(f"❌ 创建 Issue '{local_issue['title']}' 失败: {e}")
@@ -217,9 +215,7 @@ def update_remote_issues(
                                 state=local_issue.get("state", "open"),
                                 labels=local_issue.get("labels", []),
                             )
-                            print(
-                                f"🔄 成功更新 Issue #{issue_id}: {local_issue['title']}"
-                            )
+                            print(f"🔄 成功更新 Issue #{issue_id}: {local_issue['title']}")
 
                         except Exception as e:
                             print(f"❌ 更新 Issue #{issue_id} 失败: {e}")

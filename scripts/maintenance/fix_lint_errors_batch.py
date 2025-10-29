@@ -182,11 +182,7 @@ def fix_undefined_names(file_path: Path, fixes: dict) -> bool:
                 other_lines.append(line)
                 continue
 
-            if (
-                stripped.startswith(("import ", "from "))
-                or stripped.startswith("#")
-                or in_imports
-            ):
+            if stripped.startswith(("import ", "from ")) or stripped.startswith("#") or in_imports:
                 import_section.append(line)
             else:
                 in_imports = False
@@ -200,9 +196,7 @@ def fix_undefined_names(file_path: Path, fixes: dict) -> bool:
                 continue
 
             # 检查导入是否已存在
-            module_name = (
-                import_stmt.split(" import ")[1] if " import " in import_stmt else ""
-            )
+            module_name = import_stmt.split(" import ")[1] if " import " in import_stmt else ""
             if module_name and any(module_name in line for line in import_section):
                 continue
 
@@ -215,9 +209,7 @@ def fix_undefined_names(file_path: Path, fixes: dict) -> bool:
             # 找到合适的位置插入导入
             insert_pos = len(import_section)
             for i, line in enumerate(import_section):
-                if line.strip().startswith("from src.") or line.strip().startswith(
-                    "from tests."
-                ):
+                if line.strip().startswith("from src.") or line.strip().startswith("from tests."):
                     insert_pos = i
                     break
 
@@ -233,15 +225,11 @@ def fix_undefined_names(file_path: Path, fixes: dict) -> bool:
         # 特殊处理某些文件
         if "test_retry_enhanced.py" in str(file_path):
             # 删除不存在的函数调用
-            fixed_content = re.sub(
-                r"retry_with_backoff\(", "# retry_with_backoff(", fixed_content
-            )
+            fixed_content = re.sub(r"retry_with_backoff\(", "# retry_with_backoff(", fixed_content)
             fixed_content = re.sub(
                 r"exponential_backoff\(", "# exponential_backoff(", fixed_content
             )
-            fixed_content = re.sub(
-                r"linear_backoff\(", "# linear_backoff(", fixed_content
-            )
+            fixed_content = re.sub(r"linear_backoff\(", "# linear_backoff(", fixed_content)
 
         if "test_audit_service.py" in str(file_path):
             # 添加变量定义
@@ -321,9 +309,7 @@ def main():
     print("\n4. 运行ruff检查...")
     import subprocess
 
-    result = subprocess.run(
-        ["ruff", "check", "tests/unit/"], capture_output=True, text=True
-    )
+    result = subprocess.run(["ruff", "check", "tests/unit/"], capture_output=True, text=True)
 
     if result.returncode == 0:
         print("  ✓ 所有lint错误已修复！")

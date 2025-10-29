@@ -32,9 +32,7 @@ def check_prerequisites():
         print("✅ Docker Compose 已安装")
     except (subprocess.CalledProcessError, FileNotFoundError):
         try:
-            subprocess.run(
-                ["docker", "compose", "version"], check=True, capture_output=True
-            )
+            subprocess.run(["docker", "compose", "version"], check=True, capture_output=True)
             print("✅ Docker Compose 已安装")
         except (subprocess.CalledProcessError, FileNotFoundError):
             print("❌ Docker Compose 未安装")
@@ -167,9 +165,7 @@ def run_e2e_tests(test_type="all", tags=None, verbose=False):
                     "failed": json_data.get("summary", {}).get("failed", 0),
                     "skipped": json_data.get("summary", {}).get("skipped", 0),
                     "error": json_data.get("summary", {}).get("error", 0),
-                    "duration": json_data.get("summary", {}).get(
-                        "duration", elapsed_time
-                    ),
+                    "duration": json_data.get("summary", {}).get("duration", elapsed_time),
                 }
             )
     except Exception as e:
@@ -400,9 +396,7 @@ def main():
                 sys.exit(1)
 
         # 运行测试
-        success, summary = run_e2e_tests(
-            test_type=args.type, tags=args.tags, verbose=args.verbose
-        )
+        success, summary = run_e2e_tests(test_type=args.type, tags=args.tags, verbose=args.verbose)
 
         # 生成报告
         generate_report(summary)

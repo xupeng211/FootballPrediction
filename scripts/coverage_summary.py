@@ -76,9 +76,7 @@ def generate_final_summary():
 
     # 统计创建的测试文件
     test_files = list(Path("tests/unit").rglob("*test*.py"))
-    test_files = [
-        f for f in test_files if f.name != "__init__.py" and "conftest" not in f.name
-    ]
+    test_files = [f for f in test_files if f.name != "__init__.py" and "conftest" not in f.name]
 
     print("\n📝 测试文件统计:")
     print(f"   总测试文件数: {len(test_files)}")

@@ -2,20 +2,17 @@
 
 # TODO: Consider creating a fixture for 6 repeated Mock creations
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 """
 Tests for api.data_router
 Auto-generated test file
 """
 
-import asyncio
 
 import pytest
 
 # Test imports
 try:
-    from api.data_router import *
 
     IMPORT_SUCCESS = True
 except ImportError as e:

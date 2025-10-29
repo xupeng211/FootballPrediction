@@ -74,9 +74,7 @@ class FixturesCollector:
                     await self._save_fixtures_to_db(fixtures)
 
             # 缓存结果
-            await self.redis_client.set_cache_value(
-                cache_key, fixtures, expire=self.cache_timeout
-            )
+            await self.redis_client.set_cache_value(cache_key, fixtures, expire=self.cache_timeout)
 
             logger.info(f"收集到球队 {team_id} 的 {len(fixtures)} 场比赛")
             return fixtures
@@ -125,9 +123,7 @@ class FixturesCollector:
             logger.error(f"收集联赛 {league_id} 赛程失败: {e}")
             return []
 
-    async def _get_fixtures_from_db(
-        self, team_id: int, days_ahead: int
-    ) -> List[Dict[str, Any]]:
+    async def _get_fixtures_from_db(self, team_id: int, days_ahead: int) -> List[Dict[str, Any]]:
         """从数据库获取比赛信息"""
         start_date = datetime.now().date()
         end_date = start_date + timedelta(days=days_ahead)
@@ -161,9 +157,7 @@ class FixturesCollector:
 
         return fixtures
 
-    async def _fetch_fixtures_from_api(
-        self, team_id: int, days_ahead: int
-    ) -> List[Dict[str, Any]]:
+    async def _fetch_fixtures_from_api(self, team_id: int, days_ahead: int) -> List[Dict[str, Any]]:
         """从API获取比赛信息"""
         # 模拟数据，实际使用时替换为真实API调用
         return await self._get_mock_fixtures(team_id, days_ahead)
@@ -216,9 +210,7 @@ class FixturesCollector:
 
         return fixtures
 
-    async def _get_mock_fixtures(
-        self, team_id: int, days_ahead: int
-    ) -> List[Dict[str, Any]]:
+    async def _get_mock_fixtures(self, team_id: int, days_ahead: int) -> List[Dict[str, Any]]:
         """生成模拟数据（仅用于测试）"""
         fixtures = []
         base_date = datetime.now()
@@ -276,9 +268,7 @@ class FixturesCollector:
 
         try:
             # 获取所有活跃的球队
-            result = await self.db_session.execute(
-                select(Team).where(Team.is_active is True)
-            )
+            result = await self.db_session.execute(select(Team).where(Team.is_active is True))
             _teams = result.scalars().all()
 
             # 为每个球队收集赛程

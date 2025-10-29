@@ -60,9 +60,7 @@ def main():
     # Select medium density files (100-300 errors)
     medium_density_files = []
     for file_name, error_count in file_errors:
-        if (
-            50 <= error_count <= 300
-        ):  # Adjusted range based on actual error distribution
+        if 50 <= error_count <= 300:  # Adjusted range based on actual error distribution
             medium_density_files.append((file_name, error_count))
 
     # Take first 20 files
@@ -89,9 +87,7 @@ def main():
     for i, (file_name, error_count) in enumerate(batch2_files, 1):
         density = "中等" if 100 <= error_count <= 300 else "较低"
         priority = "高" if error_count > 200 else "中"
-        report_content += (
-            f"| {i} | {file_name} | {error_count} | {density} | {priority} |\n"
-        )
+        report_content += f"| {i} | {file_name} | {error_count} | {density} | {priority} |\n"
 
     total_errors = sum(error_count for _, error_count in batch2_files)
     avg_errors = total_errors // len(batch2_files) if batch2_files else 0

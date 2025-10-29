@@ -8,7 +8,6 @@ from unittest.mock import AsyncMock, MagicMock
 门面模式单元测试（简化版）
 """
 
-from datetime import datetime, timedelta
 
 import pytest
 
@@ -202,9 +201,7 @@ class TestAnalyticsFacade:
     @pytest.mark.asyncio
     async def test_generate_performance_report(self, analytics_facade):
         """测试生成性能报告"""
-        report = await analytics_facade.generate_report(
-            "performance", {"period": "30d"}
-        )
+        report = await analytics_facade.generate_report("performance", {"period": "30d"})
 
         assert report["report_type"] == "performance"
         assert report["period"] == "30d"
@@ -221,9 +218,7 @@ class TestAnalyticsFacade:
     @pytest.mark.asyncio
     async def test_generate_profitability_report(self, analytics_facade):
         """测试生成盈利报告"""
-        report = await analytics_facade.generate_report(
-            "profitability", {"period": "90d"}
-        )
+        report = await analytics_facade.generate_report("profitability", {"period": "90d"})
 
         assert report["report_type"] == "profitability"
         assert report["period"] == "90d"
@@ -387,8 +382,6 @@ class TestDataCollectionConfig:
 
     def test_config_defaults(self):
         """测试配置默认值"""
-        _config = DataCollectionConfig(
-            sources=["test"], refresh_interval=timedelta(days=1)
-        )
+        _config = DataCollectionConfig(sources=["test"], refresh_interval=timedelta(days=1))
 
         assert _config.batch_size == 100

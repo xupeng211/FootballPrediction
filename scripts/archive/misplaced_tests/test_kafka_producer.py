@@ -168,32 +168,22 @@ def test_kafka_producer_structure():
                 valid_match = {"match_id": 1, "home_team": "A", "away_team": "B"}
                 invalid_match = {"home_team": "A", "away_team": "B"}  # 缺少match_id
 
-                print(
-                    f"  ✅ 有效比赛数据: {producer._validate_match_data(valid_match)}"
-                )
-                print(
-                    f"  ✅ 无效比赛数据: {producer._validate_match_data(invalid_match)}"
-                )
+                print(f"  ✅ 有效比赛数据: {producer._validate_match_data(valid_match)}")
+                print(f"  ✅ 无效比赛数据: {producer._validate_match_data(invalid_match)}")
 
                 # 测试赔率数据验证
                 valid_odds = {"match_id": 1, "home_odds": 2.1, "away_odds": 3.5}
                 invalid_odds = {"match_id": "1", "home_odds": "invalid"}  # 无效赔率值
 
                 print(f"  ✅ 有效赔率数据: {producer._validate_odds_data(valid_odds)}")
-                print(
-                    f"  ✅ 无效赔率数据: {producer._validate_odds_data(invalid_odds)}"
-                )
+                print(f"  ✅ 无效赔率数据: {producer._validate_odds_data(invalid_odds)}")
 
                 # 测试比分数据验证
                 valid_scores = {"match_id": 1, "home_score": 2, "away_score": 1}
                 invalid_scores = {"match_id": 1, "home_score": "two"}  # 无效比分值
 
-                print(
-                    f"  ✅ 有效比分数据: {producer._validate_scores_data(valid_scores)}"
-                )
-                print(
-                    f"  ✅ 无效比分数据: {producer._validate_scores_data(invalid_scores)}"
-                )
+                print(f"  ✅ 有效比分数据: {producer._validate_scores_data(valid_scores)}")
+                print(f"  ✅ 无效比分数据: {producer._validate_scores_data(invalid_scores)}")
 
             except Exception as e:
                 print(f"  ❌ 数据验证: 错误 - {e}")
@@ -371,9 +361,7 @@ def test_kafka_concepts():
         ]
 
         for topic in topic_designs:
-            print(
-                f"  ✅ {topic['topic']}: {topic['description']} ({topic['partitions']} 分区)"
-            )
+            print(f"  ✅ {topic['topic']}: {topic['description']} ({topic['partitions']} 分区)")
 
         # 模拟消息格式
         print("\n📝 消息格式测试:")
@@ -517,30 +505,20 @@ async def test_streaming_functionality():
             {"match_id": 3, "home_team": "Man United", "away_team": "Tottenham"},
         ]
         batch_result = await mock_batch_send(batch_data, "match")
-        print(
-            f"  ✅ 批量发送: {batch_result['successful']}/{batch_result['total']} 成功"
-        )
+        print(f"  ✅ 批量发送: {batch_result['successful']}/{batch_result['total']} 成功")
 
         # 测试并发流处理
         async def process_concurrent_streams():
             streams = [
-                mock_async_send_match(
-                    {"match_id": 4, "home_team": "A", "away_team": "B"}
-                ),
-                mock_async_send_odds(
-                    {"match_id": 4, "home_odds": 2.0, "away_odds": 3.0}
-                ),
-                mock_async_send_scores(
-                    {"match_id": 4, "home_score": 1, "away_score": 0}
-                ),
+                mock_async_send_match({"match_id": 4, "home_team": "A", "away_team": "B"}),
+                mock_async_send_odds({"match_id": 4, "home_odds": 2.0, "away_odds": 3.0}),
+                mock_async_send_scores({"match_id": 4, "home_score": 1, "away_score": 0}),
                 mock_batch_send([{"match_id": 5}, {"match_id": 6}], "match"),
             ]
             return await asyncio.gather(*streams, return_exceptions=True)
 
         concurrent_results = await process_concurrent_streams()
-        successful_streams = len(
-            [r for r in concurrent_results if not isinstance(r, Exception)]
-        )
+        successful_streams = len([r for r in concurrent_results if not isinstance(r, Exception)])
         print(f"  ✅ 并发流处理: {successful_streams}/{len(concurrent_results)} 成功")
 
         # 测试流处理管道

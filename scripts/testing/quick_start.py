@@ -23,9 +23,7 @@ def run_command(cmd, description, shell=True):
     print("=" * 60)
 
     try:
-        result = subprocess.run(
-            cmd, shell=shell, capture_output=True, text=True, cwd=project_root
-        )
+        result = subprocess.run(cmd, shell=shell, capture_output=True, text=True, cwd=project_root)
 
         if result.stdout:
             print("输出:")
@@ -231,9 +229,7 @@ def generate_improvement_plan(coverage_data):
         difficulty = min(10, lines / 50)
 
         # 优先级分数 = 重要性 * 提升潜力 / 难度
-        priority_score = (
-            (importance * uncovered_lines) / difficulty if difficulty > 0 else 0
-        )
+        priority_score = (importance * uncovered_lines) / difficulty if difficulty > 0 else 0
 
         priority_modules.append(
             {

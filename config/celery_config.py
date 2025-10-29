@@ -16,7 +16,7 @@ CELERY_CONFIG = {
         "predictions.tasks.*": {"queue": "prediction"},
         "data.collection.*": {"queue": "data_collection"},
         "monitoring.*": {"queue": "monitoring"},
-        "notifications.*": {"queue": "notifications"}
+        "notifications.*": {"queue": "notifications"},
     },
     "task_queues": {
         "prediction": {
@@ -25,8 +25,8 @@ CELERY_CONFIG = {
             "queue_arguments": {
                 "x-max-retries": 3,
                 "x-dead-letter-exchange": "celery",
-                "x-message-ttl": 3600
-            }
+                "x-message-ttl": 3600,
+            },
         },
         "data_collection": {
             "exchange": "data_collection",
@@ -34,8 +34,8 @@ CELERY_CONFIG = {
             "queue_arguments": {
                 "x-max-retries": 5,
                 "x-dead-letter-exchange": "celery",
-                "x-message-ttl": 7200
-            }
+                "x-message-ttl": 7200,
+            },
         },
         "monitoring": {
             "exchange": "monitoring",
@@ -43,8 +43,8 @@ CELERY_CONFIG = {
             "queue_arguments": {
                 "x-max-retries": 1,
                 "x-dead-letter-exchange": "celery",
-                "x-message-ttl": 1800
-            }
+                "x-message-ttl": 1800,
+            },
         },
         "notifications": {
             "exchange": "notifications",
@@ -52,15 +52,15 @@ CELERY_CONFIG = {
             "queue_arguments": {
                 "x-max-retries": 2,
                 "x-dead-letter-exchange": "celery",
-                "x-message-ttl": 900
-            }
-        }
+                "x-message-ttl": 900,
+            },
+        },
     },
     "worker_concurrency": 4,
     "worker_prefetch_multiplier": 1,
     "task_acks_late": True,
     "worker_max_tasks_per_child": 1000,
-    "worker_max_memory_per_child": 10000
+    "worker_max_memory_per_child": 10000,
 }
 
 # 工作进程配置
@@ -72,5 +72,5 @@ WORKER_CONFIG = {
     "soft_time_limit": 300,
     "hard_time_limit": 600,
     "enable_utc": True,
-    "optimize": False
+    "optimize": False,
 }

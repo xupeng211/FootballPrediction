@@ -147,9 +147,7 @@ class TestPredictionAPIIntegration:
         assert prediction.is_correct is True
 
     @pytest.mark.asyncio
-    async def test_prediction_validation(
-        self, api_client: AsyncClient, auth_headers: dict
-    ):
+    async def test_prediction_validation(self, api_client: AsyncClient, auth_headers: dict):
         """测试预测数据验证"""
         # 无效的预测类型
         response = await api_client.post(
@@ -211,9 +209,7 @@ class TestPredictionAPIIntegration:
         assert "already exists" in response2.json()["detail"].lower()
 
     @pytest.mark.asyncio
-    async def test_unauthorized_access(
-        self, api_client: AsyncClient, sample_match_data
-    ):
+    async def test_unauthorized_access(self, api_client: AsyncClient, sample_match_data):
         """测试未授权访问"""
         # 没有 token
         response = await api_client.post(

@@ -104,9 +104,7 @@ class KafkaTopicManager:
 
     async def expand_partitions(self, topic_name: str, new_partition_count: int):
         """扩展主题分区"""
-        await self.admin.create_partitions(
-            {"topic": topic_name, "count": new_partition_count}
-        )
+        await self.admin.create_partitions({"topic": topic_name, "count": new_partition_count})
 
 
 class KafkaConsumerGroup:
@@ -137,9 +135,7 @@ class KafkaConsumerGroup:
 
     async def reset_offset(self, topic: str, partition: int, offset: int):
         """重置偏移量"""
-        await self.admin.alter_consumer_group_offsets(
-            self.group_id, {topic: {partition: offset}}
-        )
+        await self.admin.alter_consumer_group_offsets(self.group_id, {topic: {partition: offset}})
 
     async def delete_group(self):
         """删除消费者组"""
@@ -171,9 +167,7 @@ class KafkaCluster:
             return await self.health_checker.check_cluster_health()
         return {
             "healthy": True,
-            "brokers": {
-                f"broker{i + 1}": {"status": "online"} for i in range(len(self.brokers))
-            },
+            "brokers": {f"broker{i + 1}": {"status": "online"} for i in range(len(self.brokers))},
         }
 
     async def get_throughput_metrics(self) -> Dict[str, Any]:
@@ -252,9 +246,7 @@ class KafkaMetricsCollector:
             }
         }
 
-    async def collect_topic_metrics(
-        self, topics: List[str]
-    ) -> Dict[str, Dict[str, Any]]:
+    async def collect_topic_metrics(self, topics: List[str]) -> Dict[str, Dict[str, Any]]:
         """收集主题指标"""
         return {
             "topic1": {

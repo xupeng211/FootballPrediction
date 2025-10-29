@@ -4,14 +4,9 @@
 每个测试包含具体的业务逻辑验证和边界条件测试
 """
 
-import base64
-import hashlib
 import json
-import os
 import sys
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from unittest.mock import Mock, patch
 
 import pytest
 
@@ -208,12 +203,8 @@ class TestDataValidatorBusinessLogic:
         validator = DataValidator()
 
         # 测试实际存在的方法
-        assert hasattr(validator, "validate_email") or hasattr(
-            validator, "is_valid_email"
-        )
-        assert hasattr(validator, "validate_phone") or hasattr(
-            validator, "is_valid_phone"
-        )
+        assert hasattr(validator, "validate_email") or hasattr(validator, "is_valid_email")
+        assert hasattr(validator, "validate_phone") or hasattr(validator, "is_valid_phone")
 
         # 测试基本功能
         test_email = "test@example.com"
@@ -392,27 +383,19 @@ class TestHelpersEdgeCases:
 
         # 正常路径测试
         assert safe_get(complex_data, "level1.level2.level3.target") == "found_value"
-        assert (
-            safe_get(complex_data, "level1.level2.level3.list.2.nested") == "deep_value"
-        )
+        assert safe_get(complex_data, "level1.level2.level3.list.2.nested") == "deep_value"
         assert safe_get(complex_data, "array.0.item") == "array_value"
 
         # 边界条件测试
         assert safe_get(complex_data, "nonexistent") is None
         assert safe_get(complex_data, "level1.nonexistent") is None
         assert safe_get(complex_data, "level1.level2.level3.nonexistent") is None
-        assert (
-            safe_get(complex_data, "level1.level2.level3.list.10") is None
-        )  # 超出索引
-        assert (
-            safe_get(complex_data, "level1.level2.null_value.nonexistent") is None
-        )  # 穿过None
+        assert safe_get(complex_data, "level1.level2.level3.list.10") is None  # 超出索引
+        assert safe_get(complex_data, "level1.level2.null_value.nonexistent") is None  # 穿过None
 
         # 默认值测试
         assert safe_get(complex_data, "nonexistent", "default") == "default"
-        assert safe_get(complex_data, "level1.nonexistent", {"default": True}) == {
-            "default": True
-        }
+        assert safe_get(complex_data, "level1.nonexistent", {"default": True}) == {"default": True}
 
         # 特殊值测试 - 确保不会误判为未找到
         assert safe_get(complex_data, "empty_string") == ""

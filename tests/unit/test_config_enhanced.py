@@ -7,7 +7,6 @@ import json
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import mock_open, patch
 
 import pytest
 
@@ -249,9 +248,7 @@ class TestSettings:
         settings = Settings()
 
         # 数据库配置
-        assert (
-            settings.database_url == "sqlite+aiosqlite:///./data/football_prediction.db"
-        )
+        assert settings.database_url == "sqlite+aiosqlite:///./data/football_prediction.db"
         assert (
             settings.test_database_url
             == "postgresql+asyncpg://postgres:postgres@db:5432/football_prediction_test"
@@ -436,10 +433,7 @@ class TestSettings:
         assert settings.api_football_key == complex_config["api_football_key"]
         assert settings.api_football_url == complex_config["api_football_url"]
         assert settings.metrics_enabled == complex_config["metrics_enabled"]
-        assert (
-            settings.metrics_collection_interval
-            == complex_config["metrics_collection_interval"]
-        )
+        assert settings.metrics_collection_interval == complex_config["metrics_collection_interval"]
 
 
 @pytest.mark.unit
@@ -581,7 +575,6 @@ class TestConfigThreadSafety:
     def test_config_concurrent_access(self) -> None:
         """✅ 并发用例：配置并发访问"""
         import threading
-        import time
 
         config = Config()
         config.config = {}

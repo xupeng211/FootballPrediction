@@ -14,9 +14,7 @@ class BaselineModelTrainer:
     """基准模型训练器（占位符实现）"""
 
     def __init__(self, *args, **kwargs):
-        self.mlflow_tracking_uri = kwargs.get(
-            "mlflow_tracking_uri", "http://localhost:5000"
-        )
+        self.mlflow_tracking_uri = kwargs.get("mlflow_tracking_uri", "http://localhost:5000")
         self.config = {}
 
     def train(self, *args, **kwargs):

@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock, patch
-
 """
 测试拆分后的日志系统
 Test Split Logging System
@@ -82,9 +80,7 @@ def test_logger_manager_configure():
     """测试日志管理器配置"""
     from src.core.logging import LoggerManager, LogLevel
 
-    LoggerManager.configure(
-        level=LogLevel.WARNING, enable_json=False, log_dir="/tmp/test_logs"
-    )
+    LoggerManager.configure(level=LogLevel.WARNING, enable_json=False, log_dir="/tmp/test_logs")
 
     assert LoggerManager._config["level"] == LogLevel.WARNING
     assert LoggerManager._config["enable_json"] is False
@@ -104,7 +100,6 @@ def test_logger_manager_get_logger():
 # 测试装饰器
 def test_performance_decorator():
     """测试性能监控装饰器"""
-    from src.core.logging import LogCategory, log_performance
 
     @log_performance("test_operation")
     def test_function():
@@ -196,8 +191,6 @@ def test_log_handler_manager():
 def test_logger_methods(mock_getenv):
     """测试日志器的各种方法"""
     mock_getenv.return_value = "test"
-
-    from src.core.logging import LogCategory, LogLevel, StructuredLogger
 
     logger = StructuredLogger(
         name="test_methods",

@@ -29,9 +29,7 @@ class PredictionConfig(BaseModel):
     min_matches: int = Field(default=5, description="最小比赛数要求")
 
     # 阈值配置
-    confidence_threshold: float = Field(
-        default=0.6, ge=0, le=1, description="置信度阈值"
-    )
+    confidence_threshold: float = Field(default=0.6, ge=0, le=1, description="置信度阈值")
     min_probability: float = Field(default=0.1, ge=0, le=1, description="最小概率阈值")
 
     class Config:

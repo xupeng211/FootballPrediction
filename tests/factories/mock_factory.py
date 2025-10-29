@@ -7,8 +7,6 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Union
-from unittest.mock import AsyncMock, MagicMock, Mock
 
 from tests.factories.data_factory import DataFactory
 
@@ -287,23 +285,15 @@ class MockFactory:
             )
             mock.get_by_email = Mock(
                 side_effect=lambda email: next(
-                    (
-                        u
-                        for u in mock._data.values()
-                        if hasattr(u, "email") and u.email == email
-                    ),
+                    (u for u in mock._data.values() if hasattr(u, "email") and u.email == email),
                     None,
                 )
             )
-            mock.verify_password = AsyncMock(
-                return_value=overrides.get("password_valid", True)
-            )
+            mock.verify_password = AsyncMock(return_value=overrides.get("password_valid", True))
         elif repository_type == "match":
             mock.get_by_status = Mock(
                 side_effect=lambda status: [
-                    m
-                    for m in mock._data.values()
-                    if hasattr(m, "status") and m.status == status
+                    m for m in mock._data.values() if hasattr(m, "status") and m.status == status
                 ]
             )
             mock.get_by_date_range = Mock(
@@ -317,16 +307,13 @@ class MockFactory:
                 side_effect=lambda team: [
                     m
                     for m in mock._data.values()
-                    if hasattr(m, "home_team")
-                    and (m.home_team == team or m.away_team == team)
+                    if hasattr(m, "home_team") and (m.home_team == team or m.away_team == team)
                 ]
             )
         elif repository_type == "prediction":
             mock.get_by_user = Mock(
                 side_effect=lambda user_id: [
-                    p
-                    for p in mock._data.values()
-                    if hasattr(p, "user_id") and p.user_id == user_id
+                    p for p in mock._data.values() if hasattr(p, "user_id") and p.user_id == user_id
                 ]
             )
             mock.get_by_match = Mock(
@@ -394,9 +381,7 @@ class MockFactory:
 
         # 异步方法
         mock.get = AsyncMock(side_effect=lambda key: mock._redis_get(key))
-        mock.set = AsyncMock(
-            side_effect=lambda key, value, ex=None: mock._redis_set(key, value)
-        )
+        mock.set = AsyncMock(side_effect=lambda key, value, ex=None: mock._redis_set(key, value))
         mock.delete = AsyncMock(side_effect=lambda key: mock._data.pop(key, None))
         mock.exists = AsyncMock(side_effect=lambda key: key in mock._data)
         mock.expire = AsyncMock(return_value=True)
@@ -407,9 +392,7 @@ class MockFactory:
             if value is None:
                 return None
             # 如果是JSON字符串，尝试解析
-            if isinstance(value, str) and (
-                value.startswith("{") or value.startswith("[")
-            ):
+            if isinstance(value, str) and (value.startswith("{") or value.startswith("[")):
                 try:
                     import json
 
@@ -553,20 +536,14 @@ class MockFactory:
         mock.events = overrides.get("events", [])
 
         mock.subscribe = Mock(
-            side_effect=lambda event, handler: mock.handlers.setdefault(
-                event, []
-            ).append(handler)
+            side_effect=lambda event, handler: mock.handlers.setdefault(event, []).append(handler)
         )
         mock.unsubscribe = Mock(
             side_effect=lambda event, handler: (
-                mock.handlers.get(event, []).remove(handler)
-                if event in mock.handlers
-                else None
+                mock.handlers.get(event, []).remove(handler) if event in mock.handlers else None
             )
         )
-        mock.publish = AsyncMock(
-            side_effect=lambda event, data: mock._publish(event, data)
-        )
+        mock.publish = AsyncMock(side_effect=lambda event, data: mock._publish(event, data))
         mock.clear = Mock(side_effect=lambda: mock.handlers.clear())
 
         def _publish(event, data):
@@ -603,9 +580,7 @@ class MockFactory:
         mock.running = overrides.get("running", False)
 
         mock.add_job = Mock(
-            side_effect=lambda func, trigger, **kwargs: mock._add_job(
-                func, trigger, kwargs
-            )
+            side_effect=lambda func, trigger, **kwargs: mock._add_job(func, trigger, kwargs)
         )
         mock.remove_job = Mock(side_effect=lambda job_id: mock._remove_job(job_id))
         mock.start = AsyncMock(return_value=True)
@@ -732,15 +707,11 @@ class MockFactory:
         include_all = not components
 
         if include_all or "users" in components:
-            context["users"] = cls.create_batch(
-                cls.mock_user, components.get("user_count", 3)
-            )
+            context["users"] = cls.create_batch(cls.mock_user, components.get("user_count", 3))
             context["admin_user"] = cls.mock_admin_user()
 
         if include_all or "matches" in components:
-            context["matches"] = cls.create_batch(
-                cls.mock_match, components.get("match_count", 5)
-            )
+            context["matches"] = cls.create_batch(cls.mock_match, components.get("match_count", 5))
 
         if include_all or "predictions" in components:
             context["predictions"] = cls.create_batch(
@@ -748,9 +719,7 @@ class MockFactory:
             )
 
         if include_all or "teams" in components:
-            context["teams"] = cls.create_batch(
-                cls.mock_team, components.get("team_count", 8)
-            )
+            context["teams"] = cls.create_batch(cls.mock_team, components.get("team_count", 8))
 
         if include_all or "repositories" in components:
             context["user_repo"] = cls.mock_repository("user")

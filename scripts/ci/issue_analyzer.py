@@ -155,9 +155,7 @@ class PytestOutputParser(CIToolOutput):
                 # 解析测试名称
                 if line.startswith("_" * 20):
                     if current_test and failure_lines:
-                        issues.append(
-                            self._parse_test_failure(current_test, failure_lines)
-                        )
+                        issues.append(self._parse_test_failure(current_test, failure_lines))
 
                     # 提取新的测试名称
                     test_match = re.search(r"([^:]+)::\w+::(test_\w+)", line)
@@ -186,9 +184,7 @@ class PytestOutputParser(CIToolOutput):
 
         # 检测异常类型
         exception_match = re.search(r"(\w+Error): (.+)", failure_text)
-        exception_type = (
-            exception_match.group(1) if exception_match else "AssertionError"
-        )
+        exception_type = exception_match.group(1) if exception_match else "AssertionError"
         exception_message = exception_match.group(2) if exception_match else ""
 
         return {
@@ -239,9 +235,7 @@ class BanditOutputParser(CIToolOutput):
                             "test_name": result.get("test_name", ""),
                             "issue_text": result.get("issue_text", ""),
                             "issue_severity": result.get("issue_severity", "MEDIUM"),
-                            "issue_confidence": result.get(
-                                "issue_confidence", "MEDIUM"
-                            ),
+                            "issue_confidence": result.get("issue_confidence", "MEDIUM"),
                             "severity": self._get_bandit_severity(
                                 result.get("issue_severity", "MEDIUM")
                             ),
@@ -370,9 +364,7 @@ class CIAnalyzer:
 
         return all_issues
 
-    def generate_problem_analysis_report(
-        self, issues_by_tool: Dict[str, List[Dict]]
-    ) -> Dict:
+    def generate_problem_analysis_report(self, issues_by_tool: Dict[str, List[Dict]]) -> Dict:
         """生成问题分析报告"""
         report = {
             "timestamp": datetime.now().isoformat(),
@@ -409,9 +401,7 @@ class CIAnalyzer:
 
         return report
 
-    def _generate_detailed_analysis(
-        self, issues_by_tool: Dict[str, List[Dict]]
-    ) -> Dict:
+    def _generate_detailed_analysis(self, issues_by_tool: Dict[str, List[Dict]]) -> Dict:
         """生成详细分析"""
         analysis = {}
 
@@ -441,9 +431,7 @@ class CIAnalyzer:
 
         return analysis
 
-    def _generate_recommendations(
-        self, issues_by_tool: Dict[str, List[Dict]]
-    ) -> List[Dict]:
+    def _generate_recommendations(self, issues_by_tool: Dict[str, List[Dict]]) -> List[Dict]:
         """生成解决建议"""
         recommendations = []
 
@@ -603,9 +591,7 @@ class CIAnalyzer:
                     "action": "increase_test_coverage",
                     "description": "为覆盖率低的文件添加更多测试用例",
                     "affected_count": len(low_coverage_files),
-                    "affected_files": [
-                        issue.get("file_path") for issue in low_coverage_files
-                    ],
+                    "affected_files": [issue.get("file_path") for issue in low_coverage_files],
                 }
             )
 
@@ -613,9 +599,7 @@ class CIAnalyzer:
 
 
 @click.command()
-@click.option(
-    "--tool", "-t", help="分析特定工具的输出 (ruff, mypy, pytest, bandit, coverage)"
-)
+@click.option("--tool", "-t", help="分析特定工具的输出 (ruff, mypy, pytest, bandit, coverage)")
 @click.option("--input-file", "-i", help="输入文件路径 (工具输出或日志文件)")
 @click.option("--output", "-o", help="输出分析报告的文件路径")
 @click.option("--log-file", "-l", help="质量检查日志文件路径")
@@ -662,15 +646,11 @@ def main(tool, input_file, output, log_file, summary, recommendations, project_r
 
     elif log_file or Path(project_path / "logs" / "quality_check.json").exists():
         # 分析质量检查日志
-        log_path = (
-            Path(log_file) if log_file else project_path / "logs" / "quality_check.json"
-        )
+        log_path = Path(log_file) if log_file else project_path / "logs" / "quality_check.json"
         issues_by_tool = analyzer.analyze_quality_check_log(log_path)
 
         total_issues = sum(len(issues) for issues in issues_by_tool.values())
-        click.echo(
-            f"📊 从日志中检测到 {total_issues} 个问题，涉及 {len(issues_by_tool)} 个工具"
-        )
+        click.echo(f"📊 从日志中检测到 {total_issues} 个问题，涉及 {len(issues_by_tool)} 个工具")
 
     else:
         click.echo("❌ 请指定输入文件 (-i) 或日志文件 (-l)")

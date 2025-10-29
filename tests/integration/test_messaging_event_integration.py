@@ -1,5 +1,3 @@
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
 """
 消息队列与事件处理集成测试
 测试Kafka消息系统与事件处理的正确交互
@@ -8,18 +6,13 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import asyncio
 import json
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
 
 import pytest
 
 # 导入需要测试的模块
 try:
-    from api.cqrs import CommandBus, EventBus
     from events.handlers import MatchEventHandler, PredictionEventHandler
     from events.observers import MatchObserver, PredictionObserver
-    from streaming.event_processor import EventProcessor
-    from streaming.kafka_consumer import KafkaConsumer
-    from streaming.kafka_producer import KafkaProducer
 
     IMPORT_SUCCESS = True
 except ImportError as e:
@@ -137,9 +130,7 @@ class TestKafkaEventIntegration:
             }
 
             # 发送到不同的主题
-            topic = (
-                "matches.events" if change["to"] != "finished" else "matches.results"
-            )
+            topic = "matches.events" if change["to"] != "finished" else "matches.results"
             await self.mock_producer.send(
                 topic=topic, value=json.dumps(event), key=str(event["data"]["match_id"])
             )
@@ -167,17 +158,13 @@ class TestKafkaEventIntegration:
                 "event_type": "prediction_created",
                 "user_id": 123,
                 "prediction_id": 456,
-                "timestamp": (
-                    datetime.now(timezone.utc) + timedelta(minutes=5)
-                ).isoformat(),
+                "timestamp": (datetime.now(timezone.utc) + timedelta(minutes=5)).isoformat(),
             },
             {
                 "event_type": "profile_updated",
                 "user_id": 123,
                 "updated_fields": ["email"],
-                "timestamp": (
-                    datetime.now(timezone.utc) + timedelta(minutes=10)
-                ).isoformat(),
+                "timestamp": (datetime.now(timezone.utc) + timedelta(minutes=10)).isoformat(),
             },
         ]
 
@@ -221,9 +208,7 @@ class TestKafkaEventIntegration:
                 "aggregate_id": f"prediction_{i}",
                 "sequence_number": i,
                 "data": {"prediction_id": i, "user_id": 123, "match_id": 456 + i},
-                "timestamp": (
-                    datetime.now(timezone.utc) - timedelta(days=i)
-                ).isoformat(),
+                "timestamp": (datetime.now(timezone.utc) - timedelta(days=i)).isoformat(),
             }
             historical_events.append(event)
 
@@ -293,9 +278,7 @@ class TestEventHandlerIntegration:
             try:
                 # 模拟事件处理逻辑
                 if hasattr(prediction_handler, f"handle_{event['event_type']}"):
-                    handler_method = getattr(
-                        prediction_handler, f"handle_{event['event_type']}"
-                    )
+                    handler_method = getattr(prediction_handler, f"handle_{event['event_type']}")
                     if asyncio.iscoroutinefunction(handler_method):
                         await handler_method(event)
                     else:
@@ -475,9 +458,7 @@ class TestMessageReliabilityIntegration:
 
         # 验证死信队列接收
         assert len(self.producer_messages) == 2
-        assert all(
-            msg["topic"] == "dead_letter_queue" for msg in self.producer_messages
-        )
+        assert all(msg["topic"] == "dead_letter_queue" for msg in self.producer_messages)
 
     @pytest.mark.asyncio
     async def test_message_ordering_guarantee(self):
@@ -491,9 +472,7 @@ class TestMessageReliabilityIntegration:
                 "data": {
                     "prediction_id": 1,
                     "version": i,
-                    "timestamp": (
-                        datetime.now(timezone.utc) + timedelta(seconds=i)
-                    ).isoformat(),
+                    "timestamp": (datetime.now(timezone.utc) + timedelta(seconds=i)).isoformat(),
                 },
             }
             ordered_messages.append(message)
@@ -514,10 +493,7 @@ class TestMessageReliabilityIntegration:
 
         # 验证序列是递增的
         assert sent_sequence == list(range(10))
-        assert all(
-            sent_sequence[i] <= sent_sequence[i + 1]
-            for i in range(len(sent_sequence) - 1)
-        )
+        assert all(sent_sequence[i] <= sent_sequence[i + 1] for i in range(len(sent_sequence) - 1))
 
 
 @pytest.mark.integration
@@ -561,9 +537,7 @@ class TestEventSourcingIntegration:
                 "event_type": event_type,
                 "data": data,
                 "sequence_number": i,
-                "timestamp": (
-                    datetime.now(timezone.utc) + timedelta(minutes=i)
-                ).isoformat(),
+                "timestamp": (datetime.now(timezone.utc) + timedelta(minutes=i)).isoformat(),
             }
             event_stream.append(event)
 

@@ -1,5 +1,3 @@
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
 """
 事件总线模块测试
 Event Bus Module Tests
@@ -9,7 +7,6 @@ Tests event bus functionality defined in src/events/bus.py, focused on achieving
 """
 
 import asyncio
-from typing import Any, Callable, Dict, List, Optional
 
 import pytest
 

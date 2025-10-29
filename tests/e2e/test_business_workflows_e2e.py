@@ -24,13 +24,7 @@
 """
 
 import asyncio
-import json
 import os
-import tempfile
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
-from unittest.mock import AsyncMock, MagicMock, Mock, create_autospec, patch
 
 import pytest
 
@@ -148,9 +142,7 @@ class TestBusinessWorkflowsE2E:
         # 步骤1：验证输入数据
         if hasattr(DataValidator, "validate_required_fields"):
             required_fields = ["username", "email", "password"]
-            missing_fields = DataValidator.validate_required_fields(
-                user_data, required_fields
-            )
+            missing_fields = DataValidator.validate_required_fields(user_data, required_fields)
             assert len(missing_fields) == 0
 
         # 步骤2：验证邮箱格式
@@ -170,9 +162,7 @@ class TestBusinessWorkflowsE2E:
         assert "user_id" in registration_result
         assert registration_result["user_id"] == 12345
 
-    async def test_user_authentication_workflow_success(
-        self, mock_user_service
-    ) -> None:
+    async def test_user_authentication_workflow_success(self, mock_user_service) -> None:
         """✅ 成功用例：用户认证完整流程成功"""
         # 模拟登录数据
         login_data = {"username": "testuser123", "password": "securepassword123"}
@@ -180,9 +170,7 @@ class TestBusinessWorkflowsE2E:
         # 步骤1：验证登录数据
         if hasattr(DataValidator, "validate_required_fields"):
             required_fields = ["username", "password"]
-            missing_fields = DataValidator.validate_required_fields(
-                login_data, required_fields
-            )
+            missing_fields = DataValidator.validate_required_fields(login_data, required_fields)
             assert len(missing_fields) == 0
 
         # 步骤2：验证用户存在
@@ -200,9 +188,7 @@ class TestBusinessWorkflowsE2E:
             auth_token = CryptoUtils.generate_token(32)
             assert len(auth_token) == 64  # 32字节的十六进制
 
-    async def test_prediction_creation_workflow_success(
-        self, mock_prediction_service
-    ) -> None:
+    async def test_prediction_creation_workflow_success(self, mock_prediction_service) -> None:
         """✅ 成功用例：预测创建完整流程成功"""
         # 模拟预测数据
         prediction_data = {
@@ -237,9 +223,7 @@ class TestBusinessWorkflowsE2E:
         assert 0.0 <= confidence <= 1.0
 
         # 步骤4：创建预测
-        prediction_result = await mock_prediction_service.create_prediction(
-            prediction_data
-        )
+        prediction_result = await mock_prediction_service.create_prediction(prediction_data)
 
         # 步骤5：验证预测结果
         assert prediction_result["success"] is True
@@ -494,9 +478,7 @@ class TestBusinessWorkflowsE2E:
             # 步骤3：验证环境配置
             if hasattr(DataValidator, "validate_required_fields"):
                 required_fields = ["debug", "database", "api"]
-                missing_fields = DataValidator.validate_required_fields(
-                    config, required_fields
-                )
+                missing_fields = DataValidator.validate_required_fields(config, required_fields)
                 assert len(missing_fields) == 0
 
             # 步骤4：模拟部署验证
@@ -546,9 +528,7 @@ class TestBusinessWorkflowsE2E:
             "confidence": 0.88,
         }
 
-        prediction_result = await mock_prediction_service.create_prediction(
-            prediction_data
-        )
+        prediction_result = await mock_prediction_service.create_prediction(prediction_data)
         assert prediction_result["success"] is True
 
         # 步骤4：查询用户预测历史

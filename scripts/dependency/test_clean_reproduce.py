@@ -53,9 +53,7 @@ def test_clean_install():
 
         # 安装基础依赖
         print("\n📦 Installing base dependencies...")
-        result = run_command(
-            [str(pip_exe), "install", "-r", str(requirements_dir / "base.lock")]
-        )
+        result = run_command([str(pip_exe), "install", "-r", str(requirements_dir / "base.lock")])
         if result.returncode != 0:
             print(f"❌ Failed to install base dependencies: {result.stderr}")
             return False

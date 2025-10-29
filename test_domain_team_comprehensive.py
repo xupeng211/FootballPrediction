@@ -6,9 +6,7 @@ Team领域模型comprehensive测试，业务逻辑全覆盖
 
 import pytest
 from datetime import datetime, timedelta
-from src.domain.models.team import (
-    Team, TeamType, TeamStats, TeamForm, DomainError
-)
+from src.domain.models.team import Team, TeamType, TeamStats, TeamForm, DomainError
 
 
 class TestTeamStatsComprehensive:
@@ -30,12 +28,7 @@ class TestTeamStatsComprehensive:
     def test_team_stats_valid_creation(self):
         """测试有效统计数据创建"""
         stats = TeamStats(
-            matches_played=10,
-            wins=6,
-            draws=2,
-            losses=2,
-            goals_for=15,
-            goals_against=8
+            matches_played=10, wins=6, draws=2, losses=2, goals_for=15, goals_against=8
         )
         assert stats.matches_played == 10
         assert stats.wins == 6
@@ -165,11 +158,7 @@ class TestTeamFormComprehensive:
 
     def test_team_form_valid_creation(self):
         """测试有效状态创建"""
-        form = TeamForm(
-            last_matches=["W", "D", "L", "W", "W"],
-            current_streak=2,
-            streak_type="win"
-        )
+        form = TeamForm(last_matches=["W", "D", "L", "W", "W"], current_streak=2, streak_type="win")
         assert len(form.last_matches) == 5
         assert form.current_streak == 2
         assert form.streak_type == "win"
@@ -366,7 +355,7 @@ class TestTeamDomainComprehensive:
             country="英格兰",
             founded_year=1886,
             stadium="酋长球场",
-            capacity=60364
+            capacity=60364,
         )
 
         assert team.name == "阿森纳"
@@ -421,23 +410,14 @@ class TestTeamDomainComprehensive:
 
     def test_team_national_type(self):
         """测试国家队类型"""
-        team = Team(
-            name="巴西国家队",
-            type=TeamType.NATIONAL,
-            country="巴西"
-        )
+        team = Team(name="巴西国家队", type=TeamType.NATIONAL, country="巴西")
         assert team.type == TeamType.NATIONAL
 
     def test_team_update_info(self):
         """测试更新球队信息"""
         team = Team(name="测试球队")
 
-        team.update_info(
-            name="新名称",
-            short_name="新简称",
-            stadium="新球场",
-            capacity=50000
-        )
+        team.update_info(name="新名称", short_name="新简称", stadium="新球场", capacity=50000)
 
         assert team.name == "新名称"
         assert team.short_name == "新简称"
@@ -529,12 +509,7 @@ class TestTeamDomainComprehensive:
 
         # 设置良好战绩
         team.stats = TeamStats(
-            matches_played=10,
-            wins=6,
-            draws=2,
-            losses=2,
-            goals_for=15,
-            goals_against=8
+            matches_played=10, wins=6, draws=2, losses=2, goals_for=15, goals_against=8
         )
 
         strength = team.calculate_strength()
@@ -546,12 +521,7 @@ class TestTeamDomainComprehensive:
 
         # 设置差战绩
         team.stats = TeamStats(
-            matches_played=10,
-            wins=1,
-            draws=2,
-            losses=7,
-            goals_for=5,
-            goals_against=15
+            matches_played=10, wins=1, draws=2, losses=7, goals_for=5, goals_against=15
         )
 
         strength = team.calculate_strength()
@@ -663,7 +633,7 @@ class TestTeamDomainComprehensive:
             founded_year=1886,
             stadium="酋长球场",
             capacity=60364,
-            website="https://www.arsenal.com"
+            website="https://www.arsenal.com",
         )
 
         # 添加一些比赛结果
@@ -705,15 +675,15 @@ class TestTeamDomainComprehensive:
                 "draws": 1,
                 "losses": 1,
                 "goals_for": 8,
-                "goals_against": 5
+                "goals_against": 5,
             },
             "form": {
                 "last_matches": ["W", "D", "W", "L", "W"],
                 "current_streak": 1,
-                "streak_type": "win"
+                "streak_type": "win",
             },
             "created_at": "2024-01-01T10:00:00",
-            "updated_at": "2024-01-01T15:00:00"
+            "updated_at": "2024-01-01T15:00:00",
         }
 
         team = Team.from_dict(data)
@@ -731,11 +701,7 @@ class TestTeamDomainComprehensive:
 
     def test_team_string_representation(self):
         """测试字符串表示"""
-        team = Team(
-            name="阿森纳",
-            short_name="阿森纳",
-            code="ARS"
-        )
+        team = Team(name="阿森纳", short_name="阿森纳", code="ARS")
 
         # 无统计数据时
         representation = str(team)
@@ -760,7 +726,7 @@ class TestTeamDomainComprehensive:
             country="中国",
             founded_year=2020,
             stadium="新球场",
-            capacity=30000
+            capacity=30000,
         )
 
         # 初始状态
@@ -769,13 +735,7 @@ class TestTeamDomainComprehensive:
         assert team.calculate_strength() == 50.0
 
         # 比赛历程
-        results = [
-            ("win", 2, 0),
-            ("draw", 1, 1),
-            ("win", 3, 1),
-            ("loss", 0, 2),
-            ("win", 2, 1)
-        ]
+        results = [("win", 2, 0), ("draw", 1, 1), ("win", 3, 1), ("loss", 0, 2), ("win", 2, 1)]
 
         for result, goals_for, goals_against in results:
             team.add_match_result(result, goals_for, goals_against)

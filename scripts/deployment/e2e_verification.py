@@ -116,9 +116,7 @@ class EndToEndVerification:
                         self.console.print(f"✅ {service_name} 服务正常")
                         success_count += 1
                     else:
-                        self.console.print(
-                            f"⚠️ {service_name} 响应异常: {response.status_code}"
-                        )
+                        self.console.print(f"⚠️ {service_name} 响应异常: {response.status_code}")
                 except Exception as e:
                     self.console.print(f"❌ {service_name} 连接失败: {e}")
 
@@ -156,9 +154,7 @@ class EndToEndVerification:
 
                 for table in tables_to_check:
                     try:
-                        result = await session.execute(
-                            text(f"SELECT COUNT(*) FROM {table}")
-                        )
+                        result = await session.execute(text(f"SELECT COUNT(*) FROM {table}"))
                         count = result.scalar()
                         self.console.print(f"📊 {table} 表: {count} 条记录")
                     except Exception as e:
@@ -182,9 +178,7 @@ class EndToEndVerification:
                     self.console.print("📈 最近数据采集记录:")
                     for log in logs:
                         status_emoji = "✅" if log[1] == "success" else "❌"
-                        self.console.print(
-                            f"  {status_emoji} {log[0]}: {log[1]} ({log[2]})"
-                        )
+                        self.console.print(f"  {status_emoji} {log[0]}: {log[1]} ({log[2]})")
                     self.verification_results["data_pipeline"] = True
                 else:
                     self.console.print("⚠️ 未找到最近24小时的数据采集记录")
@@ -269,22 +263,16 @@ class EndToEndVerification:
                             self.console.print(
                                 f"📊 预测结果: {prediction_result['predicted_result']}"
                             )
-                            self.console.print(
-                                f"🎯 置信度: {prediction_result['confidence']:.2%}"
-                            )
+                            self.console.print(f"🎯 置信度: {prediction_result['confidence']:.2%}")
                             self.console.print(
                                 f"📈 概率分布: 主胜 {probs.get('home_win', 0):.3f} | 平局 {probs.get('draw', 0):.3f} | 客胜 {probs.get('away_win', 0):.3f}"
                             )
 
                             self.verification_results["prediction_pipeline"] = True
                         else:
-                            self.console.print(
-                                f"❌ 预测结果缺少必要字段: {required_fields}"
-                            )
+                            self.console.print(f"❌ 预测结果缺少必要字段: {required_fields}")
                     else:
-                        self.console.print(
-                            f"❌ 预测API调用失败: {response.status_code}"
-                        )
+                        self.console.print(f"❌ 预测API调用失败: {response.status_code}")
                         self.console.print(f"响应内容: {response.text}")
 
         except Exception as e:

@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 40 repeated Mock creations
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 """
 事件驱动预测服务简单测试
@@ -92,9 +91,7 @@ class TestEventDrivenPredictionServiceSimple:
         mock_service.batch_predict = AsyncMock(return_value=predictions)
 
         # When
-        _result = await mock_service.batch_predict(
-            match_ids=[101, 102, 103], user_id=1001
-        )
+        _result = await mock_service.batch_predict(match_ids=[101, 102, 103], user_id=1001)
 
         # Then
         assert len(result) == 3
@@ -111,9 +108,7 @@ class TestEventDrivenPredictionServiceSimple:
         assert mock_service._event_source == "prediction_service"
 
     @pytest.mark.asyncio
-    async def test_prediction_with_minimal_params(
-        self, mock_service, sample_prediction
-    ):
+    async def test_prediction_with_minimal_params(self, mock_service, sample_prediction):
         """测试：使用最小参数预测"""
         # Given
         mock_service.predict_match = AsyncMock(return_value=sample_prediction)
@@ -151,9 +146,7 @@ class TestEventDrivenPredictionServiceSimple:
         mock_service.predict_match = AsyncMock(return_value=sample_prediction)
 
         # When
-        _result = await mock_service.predict_match(
-            match_id=456, user_id=789, strategy_name=None
-        )
+        _result = await mock_service.predict_match(match_id=456, user_id=789, strategy_name=None)
 
         # Then
         assert _result == sample_prediction
@@ -165,9 +158,7 @@ class TestEventDrivenPredictionServiceSimple:
         mock_service.predict_match = AsyncMock(return_value=sample_prediction)
 
         # When
-        _result = await mock_service.predict_match(
-            match_id=456, user_id=789, confidence=0.0
-        )
+        _result = await mock_service.predict_match(match_id=456, user_id=789, confidence=0.0)
 
         # Then
         assert _result == sample_prediction
@@ -189,9 +180,7 @@ class TestEventDrivenPredictionServiceSimple:
         mock_service.batch_predict = AsyncMock(return_value=predictions)
 
         # When
-        await mock_service.batch_predict(
-            match_ids=[101, 102, 103, 104, 105], user_id=1001
-        )
+        await mock_service.batch_predict(match_ids=[101, 102, 103, 104, 105], user_id=1001)
 
         # Then
         assert len(predictions) == 5

@@ -6,14 +6,11 @@ Issue #83-B阶段3简化测试: cqrs.base
 
 import asyncio
 import inspect
-from datetime import datetime
-from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
 # 安全导入目标模块
 try:
-    from cqrs.base import *
 
     IMPORTS_AVAILABLE = True
     print("✅ 成功导入模块: cqrs.base")
@@ -96,9 +93,7 @@ class TestCqrsBasePhase3:
                                     result = method()
                                 print(f"   方法 {method_name}: {type(result).__name__}")
                             except Exception as method_e:
-                                print(
-                                    f"   方法 {method_name} 异常: {type(method_e).__name__}"
-                                )
+                                print(f"   方法 {method_name} 异常: {type(method_e).__name__}")
 
                     except Exception as e:
                         print(f"   实例化异常: {e}")

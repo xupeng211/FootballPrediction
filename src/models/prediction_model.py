@@ -100,9 +100,7 @@ class PredictionModel:
         self.metadata["last_trained"] = datetime.now().isoformat()
         self.metadata["metrics"] = metrics
 
-        self.logger.info(
-            f"Model trained successfully. Accuracy: {metrics['accuracy']:.3f}"
-        )
+        self.logger.info(f"Model trained successfully. Accuracy: {metrics['accuracy']:.3f}")
         return metrics
 
     def predict(self, X: pd.DataFrame) -> np.ndarray:

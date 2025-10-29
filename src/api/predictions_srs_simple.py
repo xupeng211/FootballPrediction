@@ -12,16 +12,12 @@ SRS Compliant Simple Prediction API - Database Independent
 
 import time
 import asyncio
-from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Union
-from dataclasses import dataclass
 from enum import Enum
-import json
 
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
-import redis.asyncio as redis
 
 from src.core.logging_system import get_logger
 from src.cache.redis_manager import get_redis_manager
@@ -81,9 +77,7 @@ class PredictionResponse(BaseModel):
     model_info: Dict[str, str] = Field(..., description="模型信息")
     processing_time_ms: float = Field(..., description="处理时间(毫秒)")
     timestamp: datetime = Field(default_factory=datetime.now, description="预测时间")
-    srs_compliance: Dict[str, Union[str, float, bool]] = Field(
-        ..., description="SRS合规性信息"
-    )
+    srs_compliance: Dict[str, Union[str, float, bool]] = Field(..., description="SRS合规性信息")
 
 
 class BatchPredictionRequest(BaseModel):
@@ -111,9 +105,7 @@ class BatchPredictionResponse(BaseModel):
     predictions: List[PredictionResponse] = Field(..., description="预测结果列表")
     batch_processing_time_ms: float = Field(..., description="批量处理时间")
     average_response_time_ms: float = Field(..., description="平均响应时间")
-    srs_compliance: Dict[str, Union[str, float, bool]] = Field(
-        ..., description="SRS合规性信息"
-    )
+    srs_compliance: Dict[str, Union[str, float, bool]] = Field(..., description="SRS合规性信息")
 
 
 class SimplePredictionService:
@@ -177,8 +169,7 @@ class SimplePredictionService:
                 ]
 
                 if (
-                    len(self._rate_limit_cache[token])
-                    >= 100  # TODO: 将魔法数字 100 提取为常量
+                    len(self._rate_limit_cache[token]) >= 100  # TODO: 将魔法数字 100 提取为常量
                 ):  # TODO: 将魔法数字 100 提取为常量
                     return False
 
@@ -234,12 +225,10 @@ class SimplePredictionService:
 
         # 基于队名生成模拟特征
         home_strength = (
-            hash(match_info.home_team) % 50 / 100.0
-            + 0.4  # TODO: 将魔法数字 50 提取为常量
+            hash(match_info.home_team) % 50 / 100.0 + 0.4  # TODO: 将魔法数字 50 提取为常量
         )  # TODO: 将魔法数字 50 提取为常量
         away_strength = (
-            hash(match_info.away_team) % 50 / 100.0
-            + 0.4  # TODO: 将魔法数字 50 提取为常量
+            hash(match_info.away_team) % 50 / 100.0 + 0.4  # TODO: 将魔法数字 50 提取为常量
         )  # TODO: 将魔法数字 50 提取为常量
 
         return {
@@ -266,9 +255,7 @@ class SimplePredictionService:
         home_prob = home_strength / (home_strength + away_strength)
 
         # 添加随机性和其他因素
-        home_prob += (
-            features["recent_form_diff"] * 0.1 + features["h2h_advantage"] * 0.05
-        )
+        home_prob += features["recent_form_diff"] * 0.1 + features["h2h_advantage"] * 0.05
         home_prob += features["match_id_factor"] * 0.02
         home_prob = max(0.1, min(0.9, home_prob))  # 限制在0.1-0.9之间
 
@@ -340,9 +327,7 @@ async def predict_match_simple(
         )
 
     # 生成预测
-    prediction_data = await simple_prediction_service.generate_prediction(
-        request.match_info
-    )
+    prediction_data = await simple_prediction_service.generate_prediction(request.match_info)
 
     # 构建响应
     response = PredictionResponse(
@@ -350,9 +335,7 @@ async def predict_match_simple(
         match_id=request.match_info.match_id,
         prediction=PredictionResult(prediction_data["prediction"]),
         probabilities=prediction_data["probabilities"],
-        confidence=(
-            prediction_data["confidence"] if request.include_confidence else None
-        ),
+        confidence=(prediction_data["confidence"] if request.include_confidence else None),
         feature_analysis=None,  # 可选实现
         model_info=prediction_data["model_info"],
         processing_time_ms=prediction_data["processing_time_ms"],
@@ -401,18 +384,14 @@ async def predict_batch_simple(
     async def predict_single(match_info: MatchInfo) -> Optional[PredictionResponse]:
         async with semaphore:
             try:
-                prediction_data = await simple_prediction_service.generate_prediction(
-                    match_info
-                )
+                prediction_data = await simple_prediction_service.generate_prediction(match_info)
                 return PredictionResponse(
                     success=True,
                     match_id=match_info.match_id,
                     prediction=PredictionResult(prediction_data["prediction"]),
                     probabilities=prediction_data["probabilities"],
                     confidence=(
-                        prediction_data["confidence"]
-                        if request.include_confidence
-                        else None
+                        prediction_data["confidence"] if request.include_confidence else None
                     ),
                     model_info=prediction_data["model_info"],
                     processing_time_ms=prediction_data["processing_time_ms"],
@@ -436,9 +415,7 @@ async def predict_batch_simple(
         else:
             failed_predictions += 1
 
-    batch_processing_time = (
-        time.time() - start_time
-    ) * 1000  # TODO: 将魔法数字 1000 提取为常量
+    batch_processing_time = (time.time() - start_time) * 1000  # TODO: 将魔法数字 1000 提取为常量
     avg_response_time = batch_processing_time / len(request.matches)
 
     # 构建响应

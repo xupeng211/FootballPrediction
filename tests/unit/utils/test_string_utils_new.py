@@ -304,9 +304,7 @@ class TestStringUtils:
     def test_capitalize_words(self):
         """测试：首字母大写"""
         assert StringUtils.capitalize_words("hello world") == "Hello World"
-        assert (
-            StringUtils.capitalize_words("python programming") == "Python Programming"
-        )
+        assert StringUtils.capitalize_words("python programming") == "Python Programming"
         assert StringUtils.capitalize_words("") == ""
         assert StringUtils.capitalize_words("single") == "Single"
 

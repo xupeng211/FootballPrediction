@@ -66,9 +66,7 @@ def main():
     for file_path, _, _, _ in long_functions:
         file_count[file_path] = file_count.get(file_path, 0) + 1
 
-    for file_path, count in sorted(
-        file_count.items(), key=lambda x: x[1], reverse=True
-    )[:10]:
+    for file_path, count in sorted(file_count.items(), key=lambda x: x[1], reverse=True)[:10]:
         rel_path = file_path.replace("src/", "")
         print(f"  {count} 个长函数 - {rel_path}")
 

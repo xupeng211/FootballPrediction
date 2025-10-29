@@ -2,16 +2,13 @@
 
 # TODO: Consider creating a fixture for 79 repeated Mock creations
 
-from unittest.mock import MagicMock, Mock, patch
 
 """
 低覆盖率模块测试增强
 专门为覆盖率低于20%的模块创建测试
 """
 
-import json
 import sys
-from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -155,9 +152,7 @@ class TestLineageModule:
         """测试元数据追踪"""
         mock_tracker = Mock()
         mock_tracker.track_data_source = Mock(return_value={"source_id": "src_001"})
-        mock_tracker.track_transformation = Mock(
-            return_value={"transform_id": "tf_001"}
-        )
+        mock_tracker.track_transformation = Mock(return_value={"transform_id": "tf_001"})
         mock_tracker.get_lineage = Mock(
             return_value={
                 "source": "src_001",
@@ -298,18 +293,12 @@ class TestMonitoringModule:
     def test_health_checker(self):
         """测试健康检查"""
         mock_checker = Mock()
-        mock_checker.check_database = Mock(
-            return_value={"status": "healthy", "response_time": 10}
-        )
-        mock_checker.check_redis = Mock(
-            return_value={"status": "healthy", "response_time": 5}
-        )
+        mock_checker.check_database = Mock(return_value={"status": "healthy", "response_time": 10})
+        mock_checker.check_redis = Mock(return_value={"status": "healthy", "response_time": 5})
         mock_checker.check_external_apis = Mock(
             return_value={"status": "degraded", "response_time": 500}
         )
-        mock_checker.get_overall_health = Mock(
-            return_value={"status": "healthy", "score": 95}
-        )
+        mock_checker.get_overall_health = Mock(return_value={"status": "healthy", "score": 95})
 
         # 测试健康检查
         db_health = mock_checker.check_database()
@@ -348,24 +337,16 @@ class TestDatabaseRepositoriesModule:
     def test_user_repository(self):
         """测试用户仓储"""
         mock_repo = Mock()
-        mock_repo.find_by_email = Mock(
-            return_value={"id": 1, "email": "test@example.com"}
-        )
-        mock_repo.find_by_username = Mock(
-            return_value={"id": 1, "username": "testuser"}
-        )
-        mock_repo.authenticate = Mock(
-            return_value={"authenticated": True, "user_id": 1}
-        )
+        mock_repo.find_by_email = Mock(return_value={"id": 1, "email": "test@example.com"})
+        mock_repo.find_by_username = Mock(return_value={"id": 1, "username": "testuser"})
+        mock_repo.authenticate = Mock(return_value={"authenticated": True, "user_id": 1})
         mock_repo.create_user = Mock(return_value={"id": 1, "username": "newuser"})
 
         # 测试用户操作
         user = mock_repo.find_by_email("test@example.com")
         mock_repo.find_by_username("testuser")
         auth = mock_repo.authenticate("testuser", "password")
-        created = mock_repo.create_user(
-            {"username": "newuser", "email": "new@example.com"}
-        )
+        created = mock_repo.create_user({"username": "newuser", "email": "new@example.com"})
 
         assert user["email"] == "test@example.com"
         assert auth["authenticated"] is True
@@ -380,9 +361,7 @@ class TestDatabaseRepositoriesModule:
                 {"id": 2, "prediction": "DRAW", "correct": False},
             ]
         )
-        mock_repo.calculate_accuracy = Mock(
-            return_value={"accuracy": 75.5, "total": 100}
-        )
+        mock_repo.calculate_accuracy = Mock(return_value={"accuracy": 75.5, "total": 100})
         mock_repo.save_prediction = Mock(return_value={"id": 3, "saved": True})
         mock_repo.get_leaderboard = Mock(
             return_value=[
@@ -394,9 +373,7 @@ class TestDatabaseRepositoriesModule:
         # 测试预测操作
         predictions = mock_repo.find_user_predictions(1)
         accuracy = mock_repo.calculate_accuracy(1)
-        saved = mock_repo.save_prediction(
-            1, {"prediction": "HOME_WIN", "confidence": 0.8}
-        )
+        saved = mock_repo.save_prediction(1, {"prediction": "HOME_WIN", "confidence": 0.8})
         leaderboard = mock_repo.get_leaderboard()
 
         assert len(predictions) == 2
@@ -452,9 +429,7 @@ class TestPerformanceMetrics:
         mock_tracker = Mock()
         mock_tracker.record_response_time = Mock(return_value=True)
         mock_tracker.get_average_response_time = Mock(return_value=150.5)
-        mock_tracker.get_percentiles = Mock(
-            return_value={"p50": 120, "p95": 300, "p99": 500}
-        )
+        mock_tracker.get_percentiles = Mock(return_value={"p50": 120, "p95": 300, "p99": 500})
 
         # 测试响应时间
         assert mock_tracker.record_response_time("/api/predict", 200) is True

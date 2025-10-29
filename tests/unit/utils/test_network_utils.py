@@ -2,7 +2,6 @@
 网络工具测试
 """
 
-import json
 import urllib.parse
 from typing import Any, Dict, List, Optional
 
@@ -175,7 +174,8 @@ class NetworkUtils:
         """简单的IP地址验证"""
         import re
 
-        ipv4_pattern = r"^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
+        ipv4_pattern =
+    r"^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
         return bool(re.match(ipv4_pattern, ip))
 
     @staticmethod

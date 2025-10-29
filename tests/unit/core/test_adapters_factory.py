@@ -8,23 +8,26 @@ from pathlib import Path
 # 添加项目路径
 from unittest.mock import AsyncMock, Mock
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-sys.path.insert(0, "src")
-
-"""
-适配器工厂测试 - 简化版
-"""
 
 import pytest
 
 from src.adapters.base import Adapter
 
 
+# 创建一个mock adaptee
+
+
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+sys.path.insert(0, "src")
+"""
+适配器工厂测试 - 简化版
+"""
+
+
 class MockAdapter(Adapter):
     """Mock适配器"""
 
     def __init__(self, adaptee=None, name=None):
-        # 创建一个mock adaptee
         self.mock_adaptee = Mock()
         self.mock_adaptee.request = AsyncMock(return_value={"result": "mocked"})
         super().__init__(self.mock_adaptee, name)

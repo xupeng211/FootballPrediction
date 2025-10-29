@@ -83,9 +83,7 @@ class SmartSyntaxFixer:
             if re.match(r"\s*(def\s+\w+\([^)]*\)|class\s+\w+[^:]*)\s*$", line):
                 if not line.rstrip().endswith(":"):
                     line += ":"
-                    self.fixes_applied.append(
-                        "Added colon to function/class definition"
-                    )
+                    self.fixes_applied.append("Added colon to function/class definition")
             fixed_lines.append(line)
 
         return "\n".join(fixed_lines)

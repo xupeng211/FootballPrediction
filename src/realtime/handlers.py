@@ -13,8 +13,6 @@ from typing import Dict, Any, Optional
 from fastapi import WebSocket, WebSocketDisconnect, Depends, Query
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
-from .manager import get_websocket_manager, WebSocketManager
-from .events import EventType, RealtimeEvent, validate_event
 from .subscriptions import (
     get_subscription_manager,
     subscribe_to_predictions,
@@ -152,9 +150,7 @@ class WebSocketHandler:
         except Exception as e:
             self.logger.error(f"Error handling subscribe: {e}")
 
-    async def _handle_unsubscribe(
-        self, connection_id: str, data: Dict[str, Any]
-    ) -> None:
+    async def _handle_unsubscribe(self, connection_id: str, data: Dict[str, Any]) -> None:
         """处理取消订阅请求"""
         try:
             event_types = data.get("event_types", [])
@@ -212,9 +208,7 @@ class WebSocketHandler:
 
     async def _handle_get_subscriptions(self, connection_id: str) -> None:
         """处理获取订阅信息请求"""
-        subscriptions = self.subscription_manager.get_connection_subscriptions(
-            connection_id
-        )
+        subscriptions = self.subscription_manager.get_connection_subscriptions(connection_id)
         subscriptions_event = RealtimeEvent(
             event_type=EventType.USER_SUBSCRIPTION_CHANGED,
             data={"action": "list", "subscriptions": subscriptions},
@@ -249,9 +243,7 @@ class WebSocketEndpoint:
         connection_id = None
 
         try:
-            connection_id = await self.handler.handle_connection(
-                websocket, user_id, session_id
-            )
+            connection_id = await self.handler.handle_connection(websocket, user_id, session_id)
 
             # 消息处理循环
             while True:

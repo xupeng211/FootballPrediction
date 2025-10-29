@@ -13,14 +13,9 @@
 - 会话工厂和连接池管理
 """
 
-import asyncio
 import os
-from typing import Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
 
 # 导入目标模块
 try:
@@ -159,9 +154,10 @@ class TestDatabaseManagerBusinessLogic:
     @pytest.mark.skipif(not MODULE_AVAILABLE, reason="数据库定义模块不可用")
     def test_database_manager_reinitialization_business_logic(self):
         """测试数据库管理器重复初始化业务逻辑"""
-        with patch(
-            "src.database.definitions.create_engine"
-        ) as mock_create_engine, patch("src.database.definitions.create_async_engine"):
+        with (
+            patch("src.database.definitions.create_engine") as mock_create_engine,
+            patch("src.database.definitions.create_async_engine"),
+        ):
 
             # 重置单例实例
             DatabaseManager._instance = None
@@ -185,10 +181,10 @@ class TestDatabaseManagerBusinessLogic:
         """测试使用环境变量初始化数据库管理器业务逻辑"""
         manager = DatabaseManager()
 
-        with patch.dict(
-            os.environ, {"DATABASE_URL": "postgresql://env:env@localhost/env_db"}
-        ), patch("src.database.definitions.create_engine") as mock_create_engine, patch(
-            "src.database.definitions.create_async_engine"
+        with (
+            patch.dict(os.environ, {"DATABASE_URL": "postgresql://env:env@localhost/env_db"}),
+            patch("src.database.definitions.create_engine") as mock_create_engine,
+            patch("src.database.definitions.create_async_engine"),
         ):
 
             manager.initialize()
@@ -603,11 +599,10 @@ class TestDatabaseIntegrationBusinessLogic:
     @pytest.mark.skipif(not MODULE_AVAILABLE, reason="数据库定义模块不可用")
     def test_database_url_transformation_business_logic(self):
         """测试数据库URL转换业务逻辑"""
-        with patch(
-            "src.database.definitions.create_engine"
-        ) as mock_create_engine, patch(
-            "src.database.definitions.create_async_engine"
-        ) as mock_create_async_engine:
+        with (
+            patch("src.database.definitions.create_engine") as mock_create_engine,
+            patch("src.database.definitions.create_async_engine") as mock_create_async_engine,
+        ):
 
             manager = DatabaseManager()
             original_url = "postgresql://test:test@localhost/test_db"

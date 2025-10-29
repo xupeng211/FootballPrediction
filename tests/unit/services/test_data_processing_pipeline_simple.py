@@ -23,15 +23,8 @@
 """
 
 import asyncio
-import json
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
-from unittest.mock import AsyncMock, MagicMock, Mock, create_autospec, patch
 
-import pandas as pd
 import pytest
 
 
@@ -119,9 +112,7 @@ class MockDataProcessor:
             self.processing_history.append(result)
             return result
 
-    async def process_batch(
-        self, records: List[MockDataRecord]
-    ) -> MockProcessingResult:
+    async def process_batch(self, records: List[MockDataRecord]) -> MockProcessingResult:
         """批量处理记录"""
         start_time = datetime.utcnow()
 
@@ -133,21 +124,11 @@ class MockDataProcessor:
         total_processed = sum(
             r.records_processed for r in results if isinstance(r, MockProcessingResult)
         )
-        total_failed = sum(
-            r.records_failed for r in results if isinstance(r, MockProcessingResult)
-        )
+        total_failed = sum(r.records_failed for r in results if isinstance(r, MockProcessingResult))
         avg_quality = sum(
-            r.quality_score
-            for r in results
-            if isinstance(r, MockProcessingResult) and r.success
+            r.quality_score for r in results if isinstance(r, MockProcessingResult) and r.success
         ) / max(
-            len(
-                [
-                    r
-                    for r in results
-                    if isinstance(r, MockProcessingResult) and r.success
-                ]
-            ),
+            len([r for r in results if isinstance(r, MockProcessingResult) and r.success]),
             1,
         )
         execution_time = (datetime.utcnow() - start_time).total_seconds()
@@ -643,9 +624,7 @@ class TestDataProcessingPipelineSimple:
 
         # 至少部分记录质量得到改进
         assert quality_improved >= 3
-        assert all(
-            result.quality_score >= 0.7 for _, result in results if result.success
-        )
+        assert all(result.quality_score >= 0.7 for _, result in results if result.success)
 
 
 @pytest.fixture

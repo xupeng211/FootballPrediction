@@ -27,9 +27,7 @@ def fix_file():
             assert True'''
 
     # Apply the fix
-    fixed_content = re.sub(
-        pattern, replacement, content, flags=re.MULTILINE | re.DOTALL
-    )
+    fixed_content = re.sub(pattern, replacement, content, flags=re.MULTILINE | re.DOTALL)
 
     # Fix remaining indentation issues
     fixed_content = re.sub(r"(\s+)assert (\w+)", r"\1assert \2", fixed_content)

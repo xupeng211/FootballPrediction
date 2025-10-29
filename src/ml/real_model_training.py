@@ -8,8 +8,6 @@ Real Data Model Training Script
 
 import asyncio
 import json
-import logging
-import os
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -285,8 +283,7 @@ class RealModelTrainingPipeline:
         if result["success"]:
             # 保存模型
             model_path = (
-                self.models_dir
-                / f"{model_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pkl"
+                self.models_dir / f"{model_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pkl"
             )
             trainer.save_model(str(model_path))
 
@@ -299,9 +296,7 @@ class RealModelTrainingPipeline:
 
             self.logger.info(f"Model {model_type} trained and saved successfully")
         else:
-            self.logger.error(
-                f"Model {model_type} training failed: {result.get('error')}"
-            )
+            self.logger.error(f"Model {model_type} training failed: {result.get('error')}")
 
         return result
 
@@ -336,8 +331,7 @@ class RealModelTrainingPipeline:
         if result["success"]:
             # 保存集成模型
             ensemble_path = (
-                self.models_dir
-                / f"ensemble_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pkl"
+                self.models_dir / f"ensemble_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pkl"
             )
             trainer.save_ensemble(str(ensemble_path))
 
@@ -378,9 +372,7 @@ class RealModelTrainingPipeline:
 
         for model_type in model_types_to_test:
             try:
-                result = await automl.train_model(
-                    X, y, model_type, hyperparameter_tuning=True
-                )
+                result = await automl.train_model(X, y, model_type, hyperparameter_tuning=True)
 
                 if result["success"]:
                     score = result.get("metric_value", 0)
@@ -417,9 +409,7 @@ class RealModelTrainingPipeline:
 
         return best_result or {"success": False, "error": "All AutoML models failed"}
 
-    async def compare_models(
-        self, X_test: pd.DataFrame, y_test: pd.Series
-    ) -> Dict[str, Any]:
+    async def compare_models(self, X_test: pd.DataFrame, y_test: pd.Series) -> Dict[str, Any]:
         """
         比较所有训练好的模型
 
@@ -521,15 +511,11 @@ class RealModelTrainingPipeline:
                 matches = self.create_sample_match_data(500)
 
                 # 创建积分榜
-                teams = list(
-                    set([m.home_team for m in matches] + [m.away_team for m in matches])
-                )
+                teams = list(set([m.home_team for m in matches] + [m.away_team for m in matches]))
                 league_table = self.create_sample_league_table(teams)
 
             # 2. 准备训练数据
-            X, y, feature_columns = await self.prepare_training_data(
-                matches, league_table
-            )
+            X, y, feature_columns = await self.prepare_training_data(matches, league_table)
 
             # 3. 数据分割
             from sklearn.model_selection import train_test_split
@@ -607,16 +593,12 @@ class RealModelTrainingPipeline:
                 "duration": duration,
                 "models_trained": list(self.models.keys()),
                 "best_model": comparison_result.get("best_model", {}).get("name"),
-                "best_accuracy": comparison_result.get("best_model", {}).get(
-                    "accuracy"
-                ),
+                "best_accuracy": comparison_result.get("best_model", {}).get("accuracy"),
                 "training_record": training_record,
                 "models_directory": str(self.models_dir),
             }
 
-            self.logger.info(
-                f"Complete training pipeline finished in {duration:.2f} seconds"
-            )
+            self.logger.info(f"Complete training pipeline finished in {duration:.2f} seconds")
             self.logger.info(
                 f"Best model: {result['best_model']} with accuracy {result['best_accuracy']:.4f}"
             )
@@ -664,9 +646,7 @@ async def train_football_prediction_model(
         训练结果
     """
     pipeline = RealModelTrainingPipeline(config)
-    return await pipeline.run_complete_training_pipeline(
-        matches, use_sample_data=use_sample_data
-    )
+    return await pipeline.run_complete_training_pipeline(matches, use_sample_data=use_sample_data)
 
 
 # 主函数示例

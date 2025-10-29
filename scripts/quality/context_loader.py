@@ -212,15 +212,11 @@ class ProjectContextLoader:
                     modules["python_modules"].append(str(relative_path))
 
                     # 分析模块结构
-                    module_name = (
-                        str(relative_path).replace(os.sep, ".").replace(".py", "")
-                    )
+                    module_name = str(relative_path).replace(os.sep, ".").replace(".py", "")
                     modules["module_structure"][module_name] = {
                         "file_path": str(relative_path),
                         "size": py_file.stat().st_size,
-                        "modified": datetime.fromtimestamp(
-                            py_file.stat().st_mtime
-                        ).isoformat(),
+                        "modified": datetime.fromtimestamp(py_file.stat().st_mtime).isoformat(),
                     }
 
         except Exception as e:
@@ -243,9 +239,7 @@ class ProjectContextLoader:
 
                     tests["test_structure"][str(relative_path)] = {
                         "size": test_file.stat().st_size,
-                        "modified": datetime.fromtimestamp(
-                            test_file.stat().st_mtime
-                        ).isoformat(),
+                        "modified": datetime.fromtimestamp(test_file.stat().st_mtime).isoformat(),
                     }
 
         except Exception as e:
@@ -269,9 +263,7 @@ class ProjectContextLoader:
             # 检查requirements.txt
             req_file = self.project_root / "requirements.txt"
             if req_file.exists():
-                dependencies["requirements_txt"] = (
-                    req_file.read_text().strip().split("\n")
-                )
+                dependencies["requirements_txt"] = req_file.read_text().strip().split("\n")
 
             # 检查setup.py
             setup_file = self.project_root / "setup.py"
@@ -420,9 +412,7 @@ class ProjectContextLoader:
         self.logger.info(f"   📁 项目根目录: {self.context['project_root']}")
 
         if self.context["git_info"]["repository_exists"]:
-            self.logger.info(
-                f"   🌿 Git分支: {self.context['git_info']['current_branch']}"
-            )
+            self.logger.info(f"   🌿 Git分支: {self.context['git_info']['current_branch']}")
             self.logger.info(
                 f"   📝 最近提交: {len(self.context['git_info']['recent_commits'])} 条"
             )
@@ -430,15 +420,9 @@ class ProjectContextLoader:
         self.logger.info(
             f"   📦 Python模块: {len(self.context['existing_modules']['python_modules'])} 个"
         )
-        self.logger.info(
-            f"   🧪 测试文件: {len(self.context['existing_tests']['test_files'])} 个"
-        )
-        self.logger.info(
-            f"   📊 代码行数: {self.context['project_stats']['total_lines_of_code']}"
-        )
-        self.logger.info(
-            f"   💾 项目大小: {self.context['project_stats']['project_size_mb']} MB"
-        )
+        self.logger.info(f"   🧪 测试文件: {len(self.context['existing_tests']['test_files'])} 个")
+        self.logger.info(f"   📊 代码行数: {self.context['project_stats']['total_lines_of_code']}")
+        self.logger.info(f"   💾 项目大小: {self.context['project_stats']['project_size_mb']} MB")
 
 
 def main():
@@ -447,9 +431,7 @@ def main():
 
     parser = argparse.ArgumentParser(description="项目上下文加载器")
     parser.add_argument("--project-root", default=".", help="项目根目录")
-    parser.add_argument(
-        "--output", default="logs/project_context.json", help="输出文件"
-    )
+    parser.add_argument("--output", default="logs/project_context.json", help="输出文件")
     parser.add_argument("--summary", action="store_true", help="显示摘要")
 
     args = parser.parse_args()

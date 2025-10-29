@@ -69,9 +69,7 @@ class CompatibleQueryBuilder:
         if limit is not None:
             query += f" {self.compatibility_rules['limit_syntax'].format(limit=limit)}"
         if offset is not None and offset > 0:
-            query += (
-                f" {self.compatibility_rules['offset_syntax'].format(offset=offset)}"
-            )
+            query += f" {self.compatibility_rules['offset_syntax'].format(offset=offset)}"
         return query
 
     def build_json_query(self, column: str, path: str) -> str:

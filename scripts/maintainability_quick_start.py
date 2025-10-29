@@ -59,9 +59,7 @@ class MaintainabilityImprover:
 
                 # 3. 修复 conftest 导入
                 if "conftest" in content and "import" not in content:
-                    content = content.replace(
-                        "conftest", "from tests.conftest import *"
-                    )
+                    content = content.replace("conftest", "from tests.conftest import *")
 
                 # 4. 添加缺失的类型导入
                 if "List[" in content and "from typing" not in content:

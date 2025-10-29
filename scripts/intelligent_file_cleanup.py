@@ -12,15 +12,16 @@ import json
 import time
 from datetime import datetime
 
+
 class IntelligentFileCleanup:
     def __init__(self):
         self.cleanup_stats = {
-            'scripts_cleaned': 0,
-            'tests_organized': 0,
-            'docs_organized': 0,
-            'configs_optimized': 0,
-            'total_files_processed': 0,
-            'errors': 0
+            "scripts_cleaned": 0,
+            "tests_organized": 0,
+            "docs_organized": 0,
+            "configs_optimized": 0,
+            "total_files_processed": 0,
+            "errors": 0,
         }
 
     def analyze_remaining_files(self):
@@ -28,19 +29,15 @@ class IntelligentFileCleanup:
         print("📊 分析剩余文件...")
         print("=" * 40)
 
-        result = subprocess.run(
-            ["git", "status", "--porcelain"],
-            capture_output=True,
-            text=True
-        )
+        result = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True)
 
-        files = result.stdout.strip().split('\n')
+        files = result.stdout.strip().split("\n")
         categorized_files = {
-            'obsolete_scripts': [],
-            'test_files': [],
-            'documentation': [],
-            'config_files': [],
-            'other_files': []
+            "obsolete_scripts": [],
+            "test_files": [],
+            "documentation": [],
+            "config_files": [],
+            "other_files": [],
         }
 
         for file_info in files:
@@ -51,16 +48,16 @@ class IntelligentFileCleanup:
             file_path = file_info[3:]
 
             # 分类文件
-            if 'scripts/fix_' in file_path or 'scripts/issue83' in file_path:
-                categorized_files['obsolete_scripts'].append(file_path)
-            elif file_path.startswith('test_') or file_path.startswith('tests/'):
-                categorized_files['test_files'].append(file_path)
-            elif file_path.endswith('.md') or 'docs/' in file_path:
-                categorized_files['documentation'].append(file_path)
-            elif file_path in ['.github/workflows/main-ci.yml', 'pytest.ini', 'Makefile']:
-                categorized_files['config_files'].append(file_path)
+            if "scripts/fix_" in file_path or "scripts/issue83" in file_path:
+                categorized_files["obsolete_scripts"].append(file_path)
+            elif file_path.startswith("test_") or file_path.startswith("tests/"):
+                categorized_files["test_files"].append(file_path)
+            elif file_path.endswith(".md") or "docs/" in file_path:
+                categorized_files["documentation"].append(file_path)
+            elif file_path in [".github/workflows/main-ci.yml", "pytest.ini", "Makefile"]:
+                categorized_files["config_files"].append(file_path)
             else:
-                categorized_files['other_files'].append(file_path)
+                categorized_files["other_files"].append(file_path)
 
         # 显示统计
         print("📁 剩余文件统计:")
@@ -96,9 +93,9 @@ class IntelligentFileCleanup:
                     print(f"  ❓ 不存在: {script}")
             except Exception as e:
                 print(f"  ❌ 失败: {script} - {e}")
-                self.cleanup_stats['errors'] += 1
+                self.cleanup_stats["errors"] += 1
 
-        self.cleanup_stats['scripts_cleaned'] = moved_count
+        self.cleanup_stats["scripts_cleaned"] = moved_count
         print(f"\n✅ 脚本清理完成: 移动 {moved_count} 个文件到归档目录")
 
     def organize_test_files(self, test_files):
@@ -108,10 +105,10 @@ class IntelligentFileCleanup:
 
         # 创建测试目录结构
         dirs_to_create = [
-            'tests/archived/phase3_tests',
-            'tests/archived/legacy_tests',
-            'tests/integration/archived',
-            'tests/unit/archived'
+            "tests/archived/phase3_tests",
+            "tests/archived/legacy_tests",
+            "tests/integration/archived",
+            "tests/unit/archived",
         ]
 
         for dir_path in dirs_to_create:
@@ -122,16 +119,16 @@ class IntelligentFileCleanup:
             try:
                 if os.path.exists(test_file):
                     # 根据文件名决定归档位置
-                    if 'phase3' in test_file or 'issue83' in test_file:
-                        target_dir = 'tests/archived/phase3_tests'
-                    elif 'legacy' in test_file or 'old' in test_file:
-                        target_dir = 'tests/archived/legacy_tests'
-                    elif 'integration' in test_file:
-                        target_dir = 'tests/integration/archived'
-                    elif 'unit/' in test_file:
-                        target_dir = 'tests/unit/archived'
+                    if "phase3" in test_file or "issue83" in test_file:
+                        target_dir = "tests/archived/phase3_tests"
+                    elif "legacy" in test_file or "old" in test_file:
+                        target_dir = "tests/archived/legacy_tests"
+                    elif "integration" in test_file:
+                        target_dir = "tests/integration/archived"
+                    elif "unit/" in test_file:
+                        target_dir = "tests/unit/archived"
                     else:
-                        target_dir = 'tests/archived'
+                        target_dir = "tests/archived"
 
                     filename = Path(test_file).name
                     target_path = Path(target_dir) / filename
@@ -146,9 +143,9 @@ class IntelligentFileCleanup:
                     print(f"  ❓ 不存在: {test_file}")
             except Exception as e:
                 print(f"  ❌ 失败: {test_file} - {e}")
-                self.cleanup_stats['errors'] += 1
+                self.cleanup_stats["errors"] += 1
 
-        self.cleanup_stats['tests_organized'] = organized_count
+        self.cleanup_stats["tests_organized"] = organized_count
         print(f"\n✅ 测试文件整理完成: 移动 {organized_count} 个文件")
 
     def organize_documentation(self, docs):
@@ -165,7 +162,7 @@ class IntelligentFileCleanup:
             try:
                 if os.path.exists(doc):
                     # Issue报告和进度文档
-                    if 'ISSUE' in doc or 'PHASE' in doc:
+                    if "ISSUE" in doc or "PHASE" in doc:
                         filename = Path(doc).name
                         target_path = docs_dir / filename
 
@@ -181,9 +178,9 @@ class IntelligentFileCleanup:
                     print(f"  ❓ 不存在: {doc}")
             except Exception as e:
                 print(f"  ❌ 失败: {doc} - {e}")
-                self.cleanup_stats['errors'] += 1
+                self.cleanup_stats["errors"] += 1
 
-        self.cleanup_stats['docs_organized'] = organized_count
+        self.cleanup_stats["docs_organized"] = organized_count
         print(f"\n✅ 文档整理完成: 移动 {organized_count} 个文件")
 
     def optimize_config_files(self, config_files):
@@ -196,11 +193,11 @@ class IntelligentFileCleanup:
             try:
                 if os.path.exists(config_file):
                     # 检查配置文件状态
-                    if config_file == 'pytest.ini':
+                    if config_file == "pytest.ini":
                         self._optimize_pytest_ini()
                         optimized_count += 1
                         print(f"  ✅ 已优化: {config_file}")
-                    elif config_file == 'Makefile':
+                    elif config_file == "Makefile":
                         self._optimize_makefile()
                         optimized_count += 1
                         print(f"  ✅ 已优化: {config_file}")
@@ -210,27 +207,26 @@ class IntelligentFileCleanup:
                     print(f"  ❓ 不存在: {config_file}")
             except Exception as e:
                 print(f"  ❌ 失败: {config_file} - {e}")
-                self.cleanup_stats['errors'] += 1
+                self.cleanup_stats["errors"] += 1
 
-        self.cleanup_stats['configs_optimized'] = optimized_count
+        self.cleanup_stats["configs_optimized"] = optimized_count
         print(f"\n✅ 配置优化完成: 优化 {optimized_count} 个文件")
 
     def _optimize_pytest_ini(self):
         """优化pytest.ini配置"""
         try:
-            with open('pytest.ini', 'r', encoding='utf-8') as f:
+            with open("pytest.ini", "r", encoding="utf-8") as f:
                 content = f.read()
 
             # 添加Issue #88相关的标记
-            if 'issue88' not in content.lower():
+            if "issue88" not in content.lower():
                 # 在标记部分添加新标记
                 new_marker = "issue88: Issue #88 相关测试\n"
                 content = content.replace(
-                    "critical: 关键测试\n",
-                    f"critical: 关键测试\n{new_marker}"
+                    "critical: 关键测试\n", f"critical: 关键测试\n{new_marker}"
                 )
 
-                with open('pytest.ini', 'w', encoding='utf-8') as f:
+                with open("pytest.ini", "w", encoding="utf-8") as f:
                     f.write(content)
         except Exception:
             pass  # 忽略优化错误
@@ -238,11 +234,11 @@ class IntelligentFileCleanup:
     def _optimize_makefile(self):
         """优化Makefile配置"""
         try:
-            with open('Makefile', 'r', encoding='utf-8') as f:
+            with open("Makefile", "r", encoding="utf-8") as f:
                 content = f.read()
 
             # 添加Issue #88相关的命令
-            if 'test-issue88' not in content:
+            if "test-issue88" not in content:
                 new_commands = """
 # Issue #88 测试命令
 test-issue88:
@@ -256,7 +252,7 @@ cleanup-issue88:
 """
                 content += new_commands
 
-                with open('Makefile', 'w', encoding='utf-8') as f:
+                with open("Makefile", "w", encoding="utf-8") as f:
                     f.write(content)
         except Exception:
             pass  # 忽略优化错误
@@ -294,7 +290,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"""
                 ["git", "commit", "--no-verify", "-m", commit_message],
                 capture_output=True,
                 text=True,
-                timeout=60
+                timeout=60,
             )
 
             if result.returncode == 0:
@@ -319,26 +315,28 @@ Co-Authored-By: Claude <noreply@anthropic.com>"""
         categorized_files = self.analyze_remaining_files()
 
         # 2. 执行清理操作
-        if categorized_files['obsolete_scripts']:
-            self.clean_obsolete_scripts(categorized_files['obsolete_scripts'])
+        if categorized_files["obsolete_scripts"]:
+            self.clean_obsolete_scripts(categorized_files["obsolete_scripts"])
 
-        if categorized_files['test_files']:
-            self.organize_test_files(categorized_files['test_files'])
+        if categorized_files["test_files"]:
+            self.organize_test_files(categorized_files["test_files"])
 
-        if categorized_files['documentation']:
-            self.organize_documentation(categorized_files['documentation'])
+        if categorized_files["documentation"]:
+            self.organize_documentation(categorized_files["documentation"])
 
-        if categorized_files['config_files']:
-            self.optimize_config_files(categorized_files['config_files'])
+        if categorized_files["config_files"]:
+            self.optimize_config_files(categorized_files["config_files"])
 
         # 3. 计算总处理数
-        total_processed = sum([
-            self.cleanup_stats['scripts_cleaned'],
-            self.cleanup_stats['tests_organized'],
-            self.cleanup_stats['docs_organized'],
-            self.cleanup_stats['configs_optimized']
-        ])
-        self.cleanup_stats['total_files_processed'] = total_processed
+        total_processed = sum(
+            [
+                self.cleanup_stats["scripts_cleaned"],
+                self.cleanup_stats["tests_organized"],
+                self.cleanup_stats["docs_organized"],
+                self.cleanup_stats["configs_optimized"],
+            ]
+        )
+        self.cleanup_stats["total_files_processed"] = total_processed
 
         duration = time.time() - start_time
 
@@ -346,7 +344,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"""
         print("\n📊 清理总结:")
         print("=" * 40)
         for key, value in self.cleanup_stats.items():
-            if key != 'errors':
+            if key != "errors":
                 print(f"  {key}: {value}")
         print(f"  总处理文件: {total_processed}")
         print(f"  处理时间: {duration:.2f}秒")
@@ -361,10 +359,12 @@ Co-Authored-By: Claude <noreply@anthropic.com>"""
 
         return commit_success
 
+
 def main():
     """主函数"""
     cleaner = IntelligentFileCleanup()
     return cleaner.run_intelligent_cleanup()
+
 
 if __name__ == "__main__":
     success = main()

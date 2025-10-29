@@ -106,9 +106,7 @@ class SeverityAnalyzer:
 class AuditEvent:
     """审计事件"""
 
-    def __init__(
-        self, action: str, user: str, severity: AuditSeverity, details: Dict[str, Any]
-    ):
+    def __init__(self, action: str, user: str, severity: AuditSeverity, details: Dict[str, Any]):
         self.action = action
         self._user = user
         self.severity = severity

@@ -4,11 +4,8 @@ P3阶段端到端API集成测试
 策略: 真实API端点测试 + 数据库集成
 """
 
-import json
 import os
 import sys
-from typing import Any, Dict, List
-from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -19,8 +16,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../.."))
 # 导入API模块
 try:
     from src.api.app import app
-    from src.api.data_router import router as data_router
-    from src.api.predictions.router import router as predictions_router
 
     API_AVAILABLE = True
 except ImportError as e:

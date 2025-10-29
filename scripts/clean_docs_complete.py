@@ -221,9 +221,9 @@ def clean_docs_complete():
 
     total_files = len(list(docs_path.rglob("*.md")))
     total_dirs = len([d for d in docs_path.rglob("*") if d.is_dir()])
-    total_size_mb = sum(
-        f.stat().st_size for f in docs_path.rglob("*") if f.is_file()
-    ) / (1024 * 1024)
+    total_size_mb = sum(f.stat().st_size for f in docs_path.rglob("*") if f.is_file()) / (
+        1024 * 1024
+    )
 
     print(f"   - 最终文件数: {total_files}")
     print(f"   - 最终目录数: {total_dirs}")

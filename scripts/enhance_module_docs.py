@@ -115,9 +115,7 @@ def enhance_file_docs(file_path: Path):
     first_code_line = 0
     for i, line in enumerate(lines):
         stripped = line.strip()
-        if stripped and (
-            stripped.startswith(("import ", "from ", "class ", "def ", "async def "))
-        ):
+        if stripped and (stripped.startswith(("import ", "from ", "class ", "def ", "async def "))):
             first_code_line = i
             break
 

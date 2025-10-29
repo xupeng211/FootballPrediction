@@ -1,5 +1,3 @@
-from unittest.mock import AsyncMock, Mock, patch
-
 """
 高价值模块覆盖率提升测试
 High Value Module Coverage Boost Tests
@@ -8,13 +6,11 @@ High Value Module Coverage Boost Tests
 """
 
 import asyncio
-from datetime import datetime
 
 import pytest
 
 # 测试导入
 try:
-    from src.core.prediction_engine import PredictionEngine
     from src.services.audit_service import AuditService
     from src.services.data_processing import DataProcessingService
 
@@ -44,9 +40,7 @@ class TestCoreServicesCoverage:
         service = AuditService()
 
         # 测试事件记录
-        event = service.log_event(
-            action="test_action", user="test_user", details={"key": "value"}
-        )
+        event = service.log_event(action="test_action", user="test_user", details={"key": "value"})
 
         assert event.action == "test_action"
         assert event._user == "test_user"

@@ -7,9 +7,7 @@ from pathlib import Path
 from typing import Dict, List
 
 
-def extract_methods_from_file(
-    file_path: Path, method_names: List[str]
-) -> Dict[str, str]:
+def extract_methods_from_file(file_path: Path, method_names: List[str]) -> Dict[str, str]:
     """从文件中提取指定方法的代码"""
     with open(file_path, "r", encoding="utf-8") as f:
         lines = f.readlines()
@@ -23,8 +21,7 @@ def extract_methods_from_file(
         # 检查是否是方法定义
         stripped = line.strip()
         if any(
-            stripped.startswith(f"def {name}")
-            or stripped.startswith(f"async def {name}")
+            stripped.startswith(f"def {name}") or stripped.startswith(f"async def {name}")
             for name in method_names
         ):
             # 保存之前的方法
@@ -32,9 +29,7 @@ def extract_methods_from_file(
                 methods[current_method] = "".join(method_lines)
 
             # 开始新方法
-            current_method = (
-                stripped.split("(")[0].replace("def ", "").replace("async def ", "")
-            )
+            current_method = stripped.split("(")[0].replace("def ", "").replace("async def ", "")
             method_lines = [line]
             method_indent = len(line) - len(line.lstrip())
         elif current_method:

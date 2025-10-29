@@ -15,9 +15,11 @@ from typing import Dict, List, Optional, Tuple
 from pathlib import Path
 from dataclasses import dataclass
 
+
 @dataclass
 class IssueAnalysis:
     """Issue分析结果"""
+
     title: str
     body: str
     labels: List[str]
@@ -28,6 +30,7 @@ class IssueAnalysis:
     related_workflows: List[str]
     estimated_effort: str
     auto_fixable: bool
+
 
 class AIIssueAnalyzer:
     """AI编程友好Issue分析器"""
@@ -41,60 +44,40 @@ class AIIssueAnalyzer:
     def _load_issue_patterns(self) -> Dict[str, List[str]]:
         """加载Issue识别模式"""
         return {
-            "syntax_error": [
-                r"SyntaxError",
-                r"语法错误",
-                r"invalid syntax",
-                r"Unexpected EOF"
-            ],
+            "syntax_error": [r"SyntaxError", r"语法错误", r"invalid syntax", r"Unexpected EOF"],
             "type_error": [
                 r"MyPy.*error",
                 r"type.*error",
                 r"类型错误",
-                r"Argument.*not.*assignable"
+                r"Argument.*not.*assignable",
             ],
             "import_error": [
                 r"ModuleNotFoundError",
                 r"ImportError",
                 r"模块未找到",
-                r"cannot import"
+                r"cannot import",
             ],
-            "test_failure": [
-                r"test.*failed",
-                r"pytest.*failed",
-                r"测试失败",
-                r"assertion.*error"
-            ],
+            "test_failure": [r"test.*failed", r"pytest.*failed", r"测试失败", r"assertion.*error"],
             "coverage_issue": [
                 r"coverage.*low",
                 r"覆盖率.*低",
                 r"cov-fail-under",
-                r"test coverage"
+                r"test coverage",
             ],
-            "lint_error": [
-                r"Ruff.*error",
-                r"代码风格.*错误",
-                r"format.*error",
-                r"lint.*failed"
-            ],
-            "security_issue": [
-                r"Bandit.*error",
-                r"安全.*问题",
-                r"vulnerability",
-                r"pip-audit"
-            ],
+            "lint_error": [r"Ruff.*error", r"代码风格.*错误", r"format.*error", r"lint.*failed"],
+            "security_issue": [r"Bandit.*error", r"安全.*问题", r"vulnerability", r"pip-audit"],
             "dependency_issue": [
                 r"依赖.*问题",
                 r"pip install.*failed",
                 r"package.*not found",
-                r"version.*conflict"
+                r"version.*conflict",
             ],
             "ci_failure": [
                 r"CI.*failed",
                 r"workflow.*failed",
                 r"GitHub Actions.*failed",
-                r"build.*failed"
-            ]
+                r"build.*failed",
+            ],
         }
 
     def _load_fix_commands(self) -> Dict[str, List[str]]:
@@ -103,48 +86,40 @@ class AIIssueAnalyzer:
             "syntax_error": [
                 "python -m py_compile src/**/*.py",
                 "python scripts/smart_quality_fixer.py --syntax-only",
-                "find . -name '*.py' -exec python -m py_compile {} \\;"
+                "find . -name '*.py' -exec python -m py_compile {} \\;",
             ],
             "type_error": [
                 "python scripts/smart_mypy_fixer.py",
                 "mypy src/ --config-file mypy_minimum.ini",
-                "python scripts/quality_guardian.py --check-only --type-check"
+                "python scripts/quality_guardian.py --check-only --type-check",
             ],
             "import_error": [
                 "make install",
                 "python scripts/smart_quality_fixer.py --imports-only",
-                "pip install -r requirements/requirements.lock"
+                "pip install -r requirements/requirements.lock",
             ],
             "test_failure": [
                 "make test-quick",
                 "pytest tests/unit/ -v --tb=short",
-                "python scripts/smart_quality_fixer.py --test-fix"
+                "python scripts/smart_quality_fixer.py --test-fix",
             ],
             "coverage_issue": [
                 "make coverage-targeted MODULE=<module>",
                 "pytest tests/unit/ --cov=src/ --cov-report=term-missing",
-                "python scripts/improvement_monitor.py"
+                "python scripts/improvement_monitor.py",
             ],
-            "lint_error": [
-                "make fmt",
-                "ruff format src/",
-                "ruff check src/ --fix"
-            ],
+            "lint_error": ["make fmt", "ruff format src/", "ruff check src/ --fix"],
             "security_issue": [
                 "make security-check",
                 "bandit -r src/ -f json -o bandit-report.json",
-                "pip-audit --format=json --output=audit-report.json"
+                "pip-audit --format=json --output=audit-report.json",
             ],
             "dependency_issue": [
                 "make install-locked",
                 "pip install --upgrade pip",
-                "pip install -r requirements/base.txt"
+                "pip install -r requirements/base.txt",
             ],
-            "ci_failure": [
-                "./ci-verify.sh",
-                "make ci",
-                "make prepush"
-            ]
+            "ci_failure": ["./ci-verify.sh", "make ci", "make prepush"],
         }
 
     def _load_workflow_mappings(self) -> Dict[str, List[str]]:
@@ -158,7 +133,7 @@ class AIIssueAnalyzer:
             "lint_error": ["main-ci-optimized.yml", "project-health-monitor.yml"],
             "security_issue": ["main-ci-optimized.yml", "automated-testing.yml"],
             "dependency_issue": ["main-ci-optimized.yml", "automated-testing.yml"],
-            "ci_failure": ["main-ci-optimized.yml", "project-health-monitor.yml"]
+            "ci_failure": ["main-ci-optimized.yml", "project-health-monitor.yml"],
         }
 
     def analyze_issue(self, title: str, body: str) -> IssueAnalysis:
@@ -199,7 +174,7 @@ class AIIssueAnalyzer:
             affected_files=affected_files,
             related_workflows=related_workflows,
             estimated_effort=estimated_effort,
-            auto_fixable=auto_fixable
+            auto_fixable=auto_fixable,
         )
 
     def _identify_issue_type(self, content: str) -> str:
@@ -237,15 +212,15 @@ class AIIssueAnalyzer:
         files = []
 
         # 匹配Python文件路径
-        python_files = re.findall(r'\b([\w/]+\.py)\b', content)
+        python_files = re.findall(r"\b([\w/]+\.py)\b", content)
         files.extend(python_files)
 
         # 匹配src/路径
-        src_files = re.findall(r'\b(src/[\w/]+)\b', content)
+        src_files = re.findall(r"\b(src/[\w/]+)\b", content)
         files.extend(src_files)
 
         # 匹配tests/路径
-        test_files = re.findall(r'\b(tests/[\w/]+)\b', content)
+        test_files = re.findall(r"\b(tests/[\w/]+)\b", content)
         files.extend(test_files)
 
         return list(set(files))
@@ -262,15 +237,18 @@ class AIIssueAnalyzer:
             "security_issue": "120-480分钟",
             "dependency_issue": "15-60分钟",
             "ci_failure": "30-120分钟",
-            "general": "60-240分钟"
+            "general": "60-240分钟",
         }
         return effort_mapping.get(issue_type, "60-240分钟")
 
     def _is_auto_fixable(self, issue_type: str, content: str) -> bool:
         """判断是否可自动修复"""
         auto_fixable_types = [
-            "syntax_error", "lint_error", "import_error",
-            "dependency_issue", "coverage_issue"
+            "syntax_error",
+            "lint_error",
+            "import_error",
+            "dependency_issue",
+            "coverage_issue",
         ]
 
         if issue_type not in auto_fixable_types:
@@ -392,6 +370,7 @@ class AIIssueAnalyzer:
 
         return comment
 
+
 def main():
     """主函数"""
     parser = argparse.ArgumentParser(description="AI编程友好Issue分析器")
@@ -411,12 +390,14 @@ def main():
         output = json.dumps(analysis.__dict__, ensure_ascii=False, indent=2)
 
     if args.output:
-        with open(args.output, 'w', encoding='utf-8') as f:
+        with open(args.output, "w", encoding="utf-8") as f:
             f.write(output)
         print(f"结果已保存到: {args.output}")
     else:
         print(output)
 
+
 if __name__ == "__main__":
     from datetime import datetime
+
     main()

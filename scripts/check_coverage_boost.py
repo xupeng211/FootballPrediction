@@ -72,11 +72,7 @@ def check_coverage():
         # 显示覆盖率最低的5个模块（有测试但覆盖率低）
         print("\n🔧 需要改进的模块（有测试但覆盖率低）:")
         sorted_files = sorted(
-            [
-                (f, m)
-                for f, m in data["files"].items()
-                if m["summary"]["percent_covered"] > 0
-            ],
+            [(f, m) for f, m in data["files"].items() if m["summary"]["percent_covered"] > 0],
             key=lambda x: x[1]["summary"]["percent_covered"],
         )
         for file_path, metrics in sorted_files[:5]:

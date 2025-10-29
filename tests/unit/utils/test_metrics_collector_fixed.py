@@ -61,18 +61,14 @@ class TestMetricsCollectorFixed:
 
                 def calculate_average(self, metric_name):
                     """计算平均值"""
-                    values = [
-                        m["value"] for m in self.metrics if m["name"] == metric_name
-                    ]
+                    values = [m["value"] for m in self.metrics if m["name"] == metric_name]
                     if not values:
                         return 0
                     return sum(values) / len(values)
 
                 def calculate_percentiles(self, metric_name, percentiles=[50, 95, 99]):
                     """计算百分位数"""
-                    values = sorted(
-                        [m["value"] for m in self.metrics if m["name"] == metric_name]
-                    )
+                    values = sorted([m["value"] for m in self.metrics if m["name"] == metric_name])
                     if not values:
                         return {}
                     _result = {}
@@ -98,9 +94,7 @@ class TestMetricsCollectorFixed:
                         return {}
 
                     # 获取时间范围
-                    timestamps = [
-                        m["timestamp"] for m in self.metrics if m["name"] == metric_name
-                    ]
+                    timestamps = [m["timestamp"] for m in self.metrics if m["name"] == metric_name]
                     if not timestamps:
                         return {}
 
@@ -162,9 +156,7 @@ class TestMetricsCollectorFixed:
             assert rate == 4 / 60  # 4个指标在60秒窗口内
 
             # 测试时间窗口聚合
-            time_windows = aggregator.aggregate_by_time_window(
-                "cpu_usage", window_size=300
-            )
+            time_windows = aggregator.aggregate_by_time_window("cpu_usage", window_size=300)
             assert isinstance(time_windows, dict)
 
         except Exception:
@@ -209,16 +201,11 @@ class TestMetricsCollectorFixed:
                             continue
 
                         triggered = False
-                        if (
-                            rule["comparison"] == "greater"
-                            and value > rule["threshold"]
-                        ):
+                        if rule["comparison"] == "greater" and value > rule["threshold"]:
                             triggered = True
                         elif rule["comparison"] == "less" and value < rule["threshold"]:
                             triggered = True
-                        elif (
-                            rule["comparison"] == "equal" and value == rule["threshold"]
-                        ):
+                        elif rule["comparison"] == "equal" and value == rule["threshold"]:
                             triggered = True
 
                         if triggered:
@@ -245,9 +232,7 @@ class TestMetricsCollectorFixed:
                     if "start_time" not in alert:
                         alert["start_time"] = alert["timestamp"]
 
-                    duration = (
-                        alert["timestamp"] - alert["start_time"]
-                    ).total_seconds()
+                    duration = (alert["timestamp"] - alert["start_time"]).total_seconds()
                     return duration >= min_duration
 
                 def check_alert_recovery(self, metric_name, value):
@@ -258,24 +243,14 @@ class TestMetricsCollectorFixed:
                         if alert["metric"] == metric_name:
                             # 检查值是否恢复正常
                             rule = next(
-                                (
-                                    r
-                                    for r in self.alert_rules
-                                    if r["name"] == alert["rule"]
-                                ),
+                                (r for r in self.alert_rules if r["name"] == alert["rule"]),
                                 None,
                             )
                             if rule:
                                 should_alert = False
-                                if (
-                                    rule["comparison"] == "greater"
-                                    and value > rule["threshold"]
-                                ):
+                                if rule["comparison"] == "greater" and value > rule["threshold"]:
                                     should_alert = True
-                                elif (
-                                    rule["comparison"] == "less"
-                                    and value < rule["threshold"]
-                                ):
+                                elif rule["comparison"] == "less" and value < rule["threshold"]:
                                     should_alert = True
 
                                 if not should_alert:
@@ -361,9 +336,7 @@ class TestMetricsCollectorFixed:
             # 测试告警持续时间
             alert = triggered[0]
             alert["start_time"] = datetime.now() - timedelta(seconds=120)
-            duration_ok = manager.check_alert_duration_requirement(
-                alert, min_duration=60
-            )
+            duration_ok = manager.check_alert_duration_requirement(alert, min_duration=60)
             assert duration_ok is True
 
             # 测试告警恢复
@@ -405,18 +378,14 @@ class TestMetricsCollectorFixed:
                     self.metrics = []
 
                 def add_metric(self, name, value, timestamp):
-                    self.metrics.append(
-                        {"name": name, "value": value, "timestamp": timestamp}
-                    )
+                    self.metrics.append({"name": name, "value": value, "timestamp": timestamp})
 
                 def remove_old_metrics(self, older_than_hours=24):
                     """删除超过指定时间的旧指标"""
                     cutoff_time = datetime.now() - timedelta(hours=older_than_hours)
                     initial_count = len(self.metrics)
 
-                    self.metrics = [
-                        m for m in self.metrics if m["timestamp"] > cutoff_time
-                    ]
+                    self.metrics = [m for m in self.metrics if m["timestamp"] > cutoff_time]
 
                     removed_count = initial_count - len(self.metrics)
                     return removed_count
@@ -439,9 +408,7 @@ class TestMetricsCollectorFixed:
             removed = store.remove_old_metrics(older_than_hours=24)
             assert removed == 1
             assert len(store.metrics) == 2
-            assert all(
-                m["timestamp"] > now - timedelta(hours=24) for m in store.metrics
-            )
+            assert all(m["timestamp"] > now - timedelta(hours=24) for m in store.metrics)
 
         except Exception:
             pytest.skip("Remove old metrics test not available")
@@ -457,16 +424,12 @@ class TestMetricsCollectorFixed:
                 def add_metric(self, name, value, timestamp=None):
                     if timestamp is None:
                         timestamp = datetime.now()
-                    self.metrics.append(
-                        {"name": name, "value": value, "timestamp": timestamp}
-                    )
+                    self.metrics.append({"name": name, "value": value, "timestamp": timestamp})
 
                 def get_aggregated_summary(self, time_window_hours=1):
                     """获取聚合摘要"""
                     cutoff_time = datetime.now() - timedelta(hours=time_window_hours)
-                    recent_metrics = [
-                        m for m in self.metrics if m["timestamp"] > cutoff_time
-                    ]
+                    recent_metrics = [m for m in self.metrics if m["timestamp"] > cutoff_time]
 
                     if not recent_metrics:
                         return {}

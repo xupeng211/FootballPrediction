@@ -60,9 +60,7 @@ def fix_file_imports(file_path: Path):
     for line in lines:
         stripped = line.strip()
         if in_imports and (
-            stripped.startswith("from ")
-            or stripped.startswith("import ")
-            or stripped == ""
+            stripped.startswith("from ") or stripped.startswith("import ") or stripped == ""
         ):
             if stripped.startswith("from ") or stripped.startswith("import "):
                 import_lines.append(line)
@@ -124,13 +122,9 @@ def fix_file_imports(file_path: Path):
 
     # 添加导入
     if sqlalchemy_core:
-        new_imports.append(
-            f"from sqlalchemy import {', '.join(sorted(sqlalchemy_core))}"
-        )
+        new_imports.append(f"from sqlalchemy import {', '.join(sorted(sqlalchemy_core))}")
     if sqlalchemy_orm:
-        new_imports.append(
-            f"from sqlalchemy.orm import {', '.join(sorted(sqlalchemy_orm))}"
-        )
+        new_imports.append(f"from sqlalchemy.orm import {', '.join(sorted(sqlalchemy_orm))}")
 
     # 检查类型注解
     if any("Mapped[" in line for line in other_lines):
@@ -142,9 +136,7 @@ def fix_file_imports(file_path: Path):
 
     # 添加现有导入（保留非SQLAlchemy的）
     for imp in import_lines:
-        if not imp.startswith("from sqlalchemy") and not imp.startswith(
-            "import sqlalchemy"
-        ):
+        if not imp.startswith("from sqlalchemy") and not imp.startswith("import sqlalchemy"):
             final_lines.append(imp)
 
     # 添加空行
@@ -156,9 +148,7 @@ def fix_file_imports(file_path: Path):
 
     # 添加项目导入
     for imp in import_lines:
-        if imp.startswith("from ..base import") or imp.startswith(
-            "from src.database.base"
-        ):
+        if imp.startswith("from ..base import") or imp.startswith("from src.database.base"):
             final_lines.append(imp)
 
     # 添加剩余内容

@@ -6,10 +6,6 @@
 策略: 真实业务逻辑测试，避免空洞框架代码
 """
 
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
-from unittest.mock import AsyncMock, MagicMock, Mock, call, patch
-
 import pytest
 
 # 安全导入目标模块
@@ -69,14 +65,12 @@ class TestUtilsStringUtilsEnhanced:
 
                     # 尝试使用合理的参数调用函数
                     try:
-                        if item_name.lower().startswith(
-                            "is_"
-                        ) or item_name.lower().startswith("has_"):
+                        if item_name.lower().startswith("is_") or item_name.lower().startswith(
+                            "has_"
+                        ):
                             # 布尔检查函数
                             result = item(True)
-                            assert isinstance(
-                                result, bool
-                            ), f"{item_name} 应该返回布尔值"
+                            assert isinstance(result, bool), f"{item_name} 应该返回布尔值"
                         elif item_name.lower().startswith("get_"):
                             # 获取函数
                             result = item()
@@ -123,8 +117,7 @@ class TestUtilsStringUtilsEnhanced:
                         methods = [
                             method
                             for method in dir(instance)
-                            if not method.startswith("_")
-                            and callable(getattr(instance, method))
+                            if not method.startswith("_") and callable(getattr(instance, method))
                         ]
 
                         for method_name in methods[:2]:  # 测试前2个方法
@@ -245,9 +238,7 @@ class TestUtilsStringUtilsEnhanced:
                                     else:
                                         item()
                                 except Exception as case_e:
-                                    print(
-                                        f"   边界测试 {test_case}: {type(case_e).__name__}"
-                                    )
+                                    print(f"   边界测试 {test_case}: {type(case_e).__name__}")
                 except Exception as e:
                     print(f"错误处理测试异常: {e}")
 

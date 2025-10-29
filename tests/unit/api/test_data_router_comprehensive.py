@@ -23,11 +23,7 @@
 目标：为数据API提供全面的测试覆盖，提升API路由模块的测试覆盖率
 """
 
-import asyncio
-import json
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
-from unittest.mock import AsyncMock, MagicMock, Mock, create_autospec, patch
 
 import pytest
 
@@ -429,10 +425,7 @@ class TestDataRouterComprehensive:
         assert response.status_code == 200
         response_data = response.json() if hasattr(response, "json") else []
         # 验证搜索结果包含搜索词
-        assert all(
-            search_term.lower() in team.get("name", "").lower()
-            for team in response_data
-        )
+        assert all(search_term.lower() in team.get("name", "").lower() for team in response_data)
 
     def test_get_teams_boundary_values(self, test_client) -> None:
         """✅ 边界测试：球队API参数边界值"""
@@ -515,10 +508,7 @@ class TestDataRouterComprehensive:
             response_data["wins"] + response_data["draws"] + response_data["losses"]
             == response_data["matches_played"]
         )
-        assert (
-            response_data["points"]
-            == response_data["wins"] * 3 + response_data["draws"]
-        )
+        assert response_data["points"] == response_data["wins"] * 3 + response_data["draws"]
 
     def test_get_team_statistics_data_validation(self) -> None:
         """✅ 数据验证：球队统计数据一致性"""
@@ -628,9 +618,7 @@ class TestDataRouterComprehensive:
                 {"id": 1, "match_date": "2024-01-15T19:00:00Z", "date_range": "valid"}
             ]
 
-        response = test_client.get(
-            f"/data/matches?date_from={date_from}&date_to={date_to}"
-        )
+        response = test_client.get(f"/data/matches?date_from={date_from}&date_to={date_to}")
 
         assert response.status_code == 200
         response.json() if hasattr(response, "json") else []
@@ -642,9 +630,7 @@ class TestDataRouterComprehensive:
 
         if hasattr(test_client, "get"):
             test_client.get.return_value.status_code = 200
-            test_client.get.return_value.json.return_value = [
-                {"id": 1, "status": status}
-            ]
+            test_client.get.return_value.json.return_value = [{"id": 1, "status": status}]
 
         response = test_client.get(f"/data/matches?status={status}")
 
@@ -848,7 +834,6 @@ class TestDataRouterComprehensive:
 
     def test_concurrent_data_requests(self, test_client) -> None:
         """✅ 成功用例：并发数据请求处理"""
-        import asyncio
 
         async def make_request(endpoint):
             if hasattr(test_client, "get"):
@@ -940,9 +925,7 @@ class TestDataRouterComprehensive:
         for name in special_names:
             if hasattr(test_client, "get"):
                 test_client.get.return_value.status_code = 200
-                test_client.get.return_value.json.return_value = [
-                    {"id": 1, "name": name}
-                ]
+                test_client.get.return_value.json.return_value = [{"id": 1, "name": name}]
 
             response = test_client.get(f"/data/teams?search={name}")
             assert response.status_code in [200, 422]
@@ -977,9 +960,7 @@ class TestDataRouterComprehensive:
         for unicode_name in unicode_names:
             if hasattr(test_client, "get"):
                 test_client.get.return_value.status_code = 200
-                test_client.get.return_value.json.return_value = [
-                    {"id": 1, "name": unicode_name}
-                ]
+                test_client.get.return_value.json.return_value = [{"id": 1, "name": unicode_name}]
 
             response = test_client.get(f"/data/teams?search={unicode_name}")
             assert response.status_code in [200, 422]
@@ -1035,17 +1016,10 @@ class TestDataRouterComprehensive:
         # 验证控球率范围
         assert 0 <= match_stats["possession_home"] <= 100
         assert 0 <= match_stats["possession_away"] <= 100
-        assert (
-            abs(match_stats["possession_home"] + match_stats["possession_away"] - 100)
-            < 0.1
-        )
+        assert abs(match_stats["possession_home"] + match_stats["possession_away"] - 100) < 0.1
 
         # 验证计数数据非负
-        assert all(
-            value >= 0
-            for value in match_stats.values()
-            if isinstance(value, (int, float))
-        )
+        assert all(value >= 0 for value in match_stats.values() if isinstance(value, (int, float)))
 
     def test_points_calculation_consistency(self) -> None:
         """✅ 数据一致性：积分计算验证"""

@@ -17,11 +17,8 @@ from typing import Dict, List, Optional
 # 配置日志
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('logs/green_monitor.log'),
-        logging.StreamHandler(sys.stdout)
-    ]
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler("logs/green_monitor.log"), logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger(__name__)
 
@@ -43,22 +40,17 @@ class WorkflowMonitor:
         """加载监控状态"""
         if self.state_file.exists():
             try:
-                with open(self.state_file, 'r', encoding='utf-8') as f:
+                with open(self.state_file, "r", encoding="utf-8") as f:
                     return json.load(f)
             except Exception as e:
                 logger.warning(f"无法加载状态文件: {e}")
 
-        return {
-            "last_check": None,
-            "workflow_status": {},
-            "failure_counts": {},
-            "alerts_sent": []
-        }
+        return {"last_check": None, "workflow_status": {}, "failure_counts": {}, "alerts_sent": []}
 
     def save_state(self, state: Dict):
         """保存监控状态"""
         try:
-            with open(self.state_file, 'w', encoding='utf-8') as f:
+            with open(self.state_file, "w", encoding="utf-8") as f:
                 json.dump(state, f, indent=2, ensure_ascii=False)
         except Exception as e:
             logger.error(f"无法保存状态文件: {e}")
@@ -72,7 +64,7 @@ class WorkflowMonitor:
                     "success": result.returncode == 0,
                     "stdout": result.stdout,
                     "stderr": result.stderr,
-                    "returncode": result.returncode
+                    "returncode": result.returncode,
                 }
             else:
                 process = Popen(command, shell=True, stdout=PIPE, stderr=PIPE, text=True)
@@ -95,7 +87,7 @@ class WorkflowMonitor:
                 "workflow": workflow_name,
                 "status": "error",
                 "success": False,
-                "error": result.get("error", "未知错误")
+                "error": result.get("error", "未知错误"),
             }
 
         try:
@@ -105,7 +97,7 @@ class WorkflowMonitor:
                     "workflow": workflow_name,
                     "status": "no_runs",
                     "success": False,
-                    "error": "没有找到运行记录"
+                    "error": "没有找到运行记录",
                 }
 
             latest = data[0]
@@ -124,7 +116,7 @@ class WorkflowMonitor:
                 "branch": branch,
                 "created_at": created_at,
                 "success": is_success,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
@@ -133,7 +125,7 @@ class WorkflowMonitor:
                 "workflow": workflow_name,
                 "status": "parse_error",
                 "success": False,
-                "error": str(e)
+                "error": str(e),
             }
 
     def check_all_workflows(self) -> Dict:
@@ -144,7 +136,7 @@ class WorkflowMonitor:
             "测试工作流",
             "质量守护系统集成",
             "项目健康监控",
-            "🧠 智能质量监控"
+            "🧠 智能质量监控",
         ]
 
         results = {}
@@ -179,7 +171,7 @@ class WorkflowMonitor:
                     "latest_status": result.get("status", "unknown"),
                     "latest_conclusion": result.get("conclusion", "unknown"),
                     "message": f"工作流 {workflow_name} 连续失败 {failure_counts[workflow_name]} 次",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now().isoformat(),
                 }
                 alerts.append(alert)
 
@@ -192,7 +184,7 @@ class WorkflowMonitor:
                     "previous_success": previous_status.get("success"),
                     "current_success": is_success,
                     "message": f"工作流 {workflow_name} 状态从 {'成功' if previous_status.get('success') else '失败'} 变为 {'成功' if is_success else '失败'}",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now().isoformat(),
                 }
                 alerts.append(change_alert)
 
@@ -222,7 +214,7 @@ class WorkflowMonitor:
             "failed_workflows": total_workflows - successful_workflows,
             "success_rate": round(success_rate, 2),
             "all_green": success_rate == 100,
-            "workflows": results
+            "workflows": results,
         }
 
         return report
@@ -231,7 +223,7 @@ class WorkflowMonitor:
         """保存监控报告"""
         report_file = Path("logs/latest_monitor_report.json")
         try:
-            with open(report_file, 'w', encoding='utf-8') as f:
+            with open(report_file, "w", encoding="utf-8") as f:
                 json.dump(report, f, indent=2, ensure_ascii=False)
         except Exception as e:
             logger.error(f"无法保存报告: {e}")
@@ -268,7 +260,9 @@ class WorkflowMonitor:
         if report["all_green"]:
             logger.info(f"🎉 所有工作流都是绿灯！成功率: {report['success_rate']}%")
         else:
-            logger.warning(f"⚠️ 工作流状态: {report['successful_workflows']}/{report['total_workflows']} 成功 ({report['success_rate']}%)")
+            logger.warning(
+                f"⚠️ 工作流状态: {report['successful_workflows']}/{report['total_workflows']} 成功 ({report['success_rate']}%)"
+            )
 
         return report["all_green"]
 
@@ -308,7 +302,7 @@ def main():
         # 显示最新报告
         report_file = Path("logs/latest_monitor_report.json")
         if report_file.exists():
-            with open(report_file, 'r', encoding='utf-8') as f:
+            with open(report_file, "r", encoding="utf-8") as f:
                 report = json.load(f)
 
             print("📊 最新监控报告:")
@@ -319,11 +313,13 @@ def main():
             print(f"成功率: {report['success_rate']}%")
             print(f"全部绿灯: {'是' if report['all_green'] else '否'}")
 
-            if not report['all_green']:
+            if not report["all_green"]:
                 print("\n❌ 失败的工作流:")
-                for name, result in report['workflows'].items():
-                    if not result.get('success', False):
-                        print(f"  - {name}: {result.get('status', 'unknown')}/{result.get('conclusion', 'unknown')}")
+                for name, result in report["workflows"].items():
+                    if not result.get("success", False):
+                        print(
+                            f"  - {name}: {result.get('status', 'unknown')}/{result.get('conclusion', 'unknown')}"
+                        )
         else:
             print("❌ 没有找到监控报告")
 

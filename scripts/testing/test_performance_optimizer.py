@@ -338,9 +338,7 @@ class TestOptimizer:
             "optimization_applied": False,
         }
 
-        config_path = (
-            project_root / "scripts" / "testing" / "test_optimization_config.json"
-        )
+        config_path = project_root / "scripts" / "testing" / "test_optimization_config.json"
         config_path.parent.mkdir(parents=True, exist_ok=True)
 
         with open(config_path, "w") as f:
@@ -348,9 +346,7 @@ class TestOptimizer:
 
     def apply_optimizations(self):
         """应用优化建议"""
-        config_path = (
-            project_root / "scripts" / "testing" / "test_optimization_config.json"
-        )
+        config_path = project_root / "scripts" / "testing" / "test_optimization_config.json"
 
         if not config_path.exists():
             print("❌ No optimization configuration found. Run analysis first.")
@@ -459,12 +455,8 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Test Performance Optimizer")
-    parser.add_argument(
-        "action", choices=["analyze", "apply", "run"], help="Action to perform"
-    )
-    parser.add_argument(
-        "--test-dir", default="tests/unit", help="Test directory to analyze"
-    )
+    parser.add_argument("action", choices=["analyze", "apply", "run"], help="Action to perform")
+    parser.add_argument("--test-dir", default="tests/unit", help="Test directory to analyze")
 
     args = parser.parse_args()
 

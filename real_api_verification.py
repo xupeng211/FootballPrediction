@@ -15,6 +15,7 @@ import httpx
 API_BASE_URL = "http://localhost:8000"
 HEALTH_URL = f"{API_BASE_URL}/api/health/"
 
+
 class RealAPIVerifier:
     """真实API验证器"""
 
@@ -30,7 +31,7 @@ class RealAPIVerifier:
             "success": success,
             "details": details,
             "duration": duration,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
         self.test_results.append(result)
 
@@ -52,31 +53,41 @@ class RealAPIVerifier:
 
                 if response.status_code == expected_status:
                     content_preview = response.text[:100] if response.text else "Empty response"
-                    self.working_apis.append({
-                        "name": name,
-                        "url": url,
-                        "status": response.status_code,
-                        "content_preview": content_preview
-                    })
-                    self.log_test(name, True, f"HTTP {response.status_code}, 内容: {content_preview}...", duration)
+                    self.working_apis.append(
+                        {
+                            "name": name,
+                            "url": url,
+                            "status": response.status_code,
+                            "content_preview": content_preview,
+                        }
+                    )
+                    self.log_test(
+                        name,
+                        True,
+                        f"HTTP {response.status_code}, 内容: {content_preview}...",
+                        duration,
+                    )
                     return True
                 else:
-                    self.problem_apis.append({
-                        "name": name,
-                        "url": url,
-                        "status": response.status_code,
-                        "error": response.text[:100]
-                    })
-                    self.log_test(name, False, f"HTTP {response.status_code}, 错误: {response.text[:50]}...", duration)
+                    self.problem_apis.append(
+                        {
+                            "name": name,
+                            "url": url,
+                            "status": response.status_code,
+                            "error": response.text[:100],
+                        }
+                    )
+                    self.log_test(
+                        name,
+                        False,
+                        f"HTTP {response.status_code}, 错误: {response.text[:50]}...",
+                        duration,
+                    )
                     return False
 
         except Exception as e:
             duration = time.time() - start_time
-            self.problem_apis.append({
-                "name": name,
-                "url": url,
-                "error": str(e)
-            })
+            self.problem_apis.append({"name": name, "url": url, "error": str(e)})
             self.log_test(name, False, f"连接错误: {str(e)}", duration)
             return False
 
@@ -138,13 +149,13 @@ class RealAPIVerifier:
         if self.problem_apis:
             print(f"\n❌ 有问题的API:")
             for api in self.problem_apis:
-                if 'status' in api:
+                if "status" in api:
                     print(f"   • {api['name']}: HTTP {api['status']} ({api['url']})")
                 else:
                     print(f"   • {api['name']}: 连接错误 ({api['url']})")
 
         # 计算平均响应时间
-        durations = [r['duration'] for r in self.test_results if r['duration'] > 0]
+        durations = [r["duration"] for r in self.test_results if r["duration"] > 0]
         if durations:
             avg_duration = sum(durations) / len(durations)
             print(f"\n⏱️  性能统计:")

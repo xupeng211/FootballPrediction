@@ -4,7 +4,6 @@
 
 import random
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
 
 from .base import BaseFactory, DataFactoryMixin, TimestampMixin
 
@@ -48,9 +47,7 @@ class OddsFactory(BaseFactory, DataFactoryMixin, TimestampMixin):
             "first_goal_scorer_home": round(random.uniform(4.0, 25.0), 2),
             "first_goal_scorer_away": round(random.uniform(4.0, 25.0), 2),
             "odds_update_time": cls.generate_timestamp(),
-            "match_start_time": kwargs.get(
-                "match_start_time", cls.generate_timestamp()
-            ),
+            "match_start_time": kwargs.get("match_start_time", cls.generate_timestamp()),
             "is_live": False,
             "volume": random.randint(10000, 1000000),
             "margin": round(random.uniform(0.02, 0.15), 4),  # 博彩公司利润率
@@ -70,9 +67,7 @@ class OddsFactory(BaseFactory, DataFactoryMixin, TimestampMixin):
             default_data["home_win_odds"] = round(
                 default_data["home_win_odds"] * margin_adjustment, 2
             )
-            default_data["draw_odds"] = round(
-                default_data["draw_odds"] * margin_adjustment, 2
-            )
+            default_data["draw_odds"] = round(default_data["draw_odds"] * margin_adjustment, 2)
             default_data["away_win_odds"] = round(
                 default_data["away_win_odds"] * margin_adjustment, 2
             )

@@ -7,7 +7,6 @@ Tests formatting functionality defined in src/utils/formatters.py, focused on ac
 """
 
 import json
-from datetime import datetime, timedelta, timezone
 
 import pytest
 

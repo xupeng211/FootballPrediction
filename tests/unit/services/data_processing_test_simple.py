@@ -5,10 +5,6 @@
 优先级: HIGH
 """
 
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
 import pytest
 
 # 安全导入目标模块
@@ -47,9 +43,7 @@ class TestServicesDataProcessingReal:
 
             # 如果有函数，测试它们
             functions = [
-                name
-                for name in dir()
-                if not name.startswith("_") and callable(globals()[name])
+                name for name in dir() if not name.startswith("_") and callable(globals()[name])
             ]
             if functions:
                 print(f"发现函数: {functions[:3]}")  # 显示前3个函数

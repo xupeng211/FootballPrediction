@@ -10,9 +10,7 @@ from pathlib import Path
 def fix_function_names(content: str) -> str:
     """Fix function names with slashes and other syntax issues"""
     # Fix function definitions with slashes
-    content = re.sub(
-        r"def test_([^/]+)/([^_\s]+)_functions", r"def test_\1_\2_functions", content
-    )
+    content = re.sub(r"def test_([^/]+)/([^_\s]+)_functions", r"def test_\1_\2_functions", content)
 
     # Fix any remaining slashes in function names
     content = re.sub(r"def test_([^/]+)/([^\s(]+)", r"def test_\1_\2", content)

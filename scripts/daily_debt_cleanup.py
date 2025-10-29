@@ -274,13 +274,7 @@ class TechnicalDebtManager:
                 completed = len([t for t in self.completed_tasks if t.startswith("4.")])
 
             progress = (completed / total * 100) if total > 0 else 0
-            status = (
-                "✅"
-                if progress == 100
-                else "🚧"
-                if phase == self.current_phase
-                else "⏳"
-            )
+            status = "✅" if progress == 100 else "🚧" if phase == self.current_phase else "⏳"
 
             self.log(f"{status} Phase {phase}: {completed}/{total} ({progress:.1f}%)")
 

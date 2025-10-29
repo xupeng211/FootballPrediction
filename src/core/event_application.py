@@ -115,9 +115,7 @@ class EventDrivenApplication:
         stats = self.get_event_stats()
 
         return {
-            "status": (
-                "healthy" if self._initialized and stats["running"] else "unhealthy"
-            ),
+            "status": ("healthy" if self._initialized and stats["running"] else "unhealthy"),
             "initialized": self._initialized,
             "event_bus_stats": stats,
             "handlers_count": stats["total_subscribers"],

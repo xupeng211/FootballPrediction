@@ -99,8 +99,7 @@ class CoverageBooster:
                     class_info = {
                         "name": node.name,
                         "bases": [
-                            base.id if hasattr(base, "id") else str(base)
-                            for base in node.bases
+                            base.id if hasattr(base, "id") else str(base) for base in node.bases
                         ],
                         "methods": [],
                         "properties": [],
@@ -118,9 +117,7 @@ class CoverageBooster:
                                 ],
                             }
                             class_info["methods"].append(method_info)
-                        elif isinstance(item, ast.AnnAssign) and isinstance(
-                            item.target, ast.Name
-                        ):
+                        elif isinstance(item, ast.AnnAssign) and isinstance(item.target, ast.Name):
                             class_info["properties"].append(item.target.id)
 
                     analysis["classes"].append(class_info)
@@ -136,8 +133,7 @@ class CoverageBooster:
                         "args": [arg.arg for arg in node.args.args],
                         "is_async": isinstance(node, ast.AsyncFunctionDef),
                         "decorators": [
-                            d.id if hasattr(d, "id") else str(d)
-                            for d in node.decorator_list
+                            d.id if hasattr(d, "id") else str(d) for d in node.decorator_list
                         ],
                     }
                     if func_info["is_async"]:
@@ -171,9 +167,7 @@ class CoverageBooster:
             analysis["has_logging"] = "logging" in content or "logger" in content
             analysis["has_validation"] = "validate" in content or "Check" in content
             analysis["has_error_handling"] = analysis["exceptions"] or "try:" in content
-            analysis["has_async"] = (
-                analysis["async_functions"] or "async def" in content
-            )
+            analysis["has_async"] = analysis["async_functions"] or "async def" in content
             analysis["has_decorators"] = "@" in content
 
             return analysis
@@ -191,9 +185,7 @@ class CoverageBooster:
                 "has_decorators": False,
             }
 
-    def generate_comprehensive_test(
-        self, module_name: str, file_path: str, analysis: Dict
-    ) -> str:
+    def generate_comprehensive_test(self, module_name: str, file_path: str, analysis: Dict) -> str:
         """生成全面的测试"""
         module_import = module_name.replace("/", ".")
 
@@ -344,9 +336,7 @@ class TestModuleIntegration:
 
         return test_content
 
-    def generate_class_tests(
-        self, cls: Dict, module_import: str, analysis: Dict
-    ) -> str:
+    def generate_class_tests(self, cls: Dict, module_import: str, analysis: Dict) -> str:
         """为类生成测试"""
         class_name = cls["name"]
 
@@ -573,9 +563,7 @@ async def test_{func_name}_async(self):
             test_path.parent.mkdir(parents=True, exist_ok=True)
 
             # 生成测试
-            test_content = self.generate_comprehensive_test(
-                module_name, file_path, analysis
-            )
+            test_content = self.generate_comprehensive_test(module_name, file_path, analysis)
 
             # 写入文件
             with open(test_path, "w", encoding="utf-8") as f:

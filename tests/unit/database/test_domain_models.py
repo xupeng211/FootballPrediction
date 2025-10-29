@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from src.domain_simple import (
     League,
     LeagueTable,
     MarketType,

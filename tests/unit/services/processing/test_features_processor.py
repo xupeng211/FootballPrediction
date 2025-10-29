@@ -1,13 +1,9 @@
-from unittest.mock import AsyncMock, Mock
-
 """
 特征处理器测试
 Tests for Features Processor
 
 测试src.services.processing.processors.features_processor模块的功能
 """
-
-from typing import Any, Dict
 
 import pandas as pd
 import pytest
@@ -113,9 +109,7 @@ class TestFeaturesProcessor:
 
         if hasattr(processor, "validate"):
             _result = processor.validate(invalid_features)
-            assert (
-                result is False or isinstance(result, dict) and "errors" in str(result)
-            )
+            assert result is False or isinstance(result, dict) and "errors" in str(result)
 
     @pytest.mark.asyncio
     async def test_process_batch_features(self, processor):
@@ -236,17 +230,13 @@ class TestFeaturesProcessor:
             if isinstance(normalized, dict):
                 for key, values in normalized.items():
                     if isinstance(values, list):
-                        assert all(
-                            0 <= v <= 1 for v in values if isinstance(v, (int, float))
-                        )
+                        assert all(0 <= v <= 1 for v in values if isinstance(v, (int, float)))
 
     @pytest.mark.asyncio
     async def test_processor_performance(self, processor):
         """测试：处理器性能"""
         # 创建大量测试数据
-        large_dataset = [
-            {"match_id": i, "features": {"value": i * 0.1}} for i in range(1000)
-        ]
+        large_dataset = [{"match_id": i, "features": {"value": i * 0.1}} for i in range(1000)]
 
         if hasattr(processor, "process_batch"):
             import time

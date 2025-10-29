@@ -1,12 +1,7 @@
-from unittest.mock import AsyncMock, Mock, patch
-
 """
 数据路由 API 测试
 Data Router API Tests
 """
-
-import json
-from datetime import date, datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -194,9 +189,7 @@ class TestDataRouter:
                 "goals_against": 20,
             }
 
-            response = client.get(
-                f"/data/teams/{team_id}/statistics", params={"season": season}
-            )
+            response = client.get(f"/data/teams/{team_id}/statistics", params={"season": season})
             # 可能返回 200 或 500
             assert response.status_code in [200, 500]
 
@@ -283,9 +276,7 @@ class TestDataRouter:
                 ],
             }
 
-            response = client.get(
-                f"/data/leagues/{league_id}/standings", params={"season": season}
-            )
+            response = client.get(f"/data/leagues/{league_id}/standings", params={"season": season})
             # 可能返回 200 或 500
             assert response.status_code in [200, 500]
 

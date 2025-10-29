@@ -77,10 +77,7 @@ def refactor_test_file(file_path: Path, dry_run: bool = True) -> List[str]:
     old_content = content
 
     # 添加 helpers 导入
-    if (
-        "from tests.helpers import" not in content
-        and "from tests.helpers import" not in content
-    ):
+    if "from tests.helpers import" not in content and "from tests.helpers import" not in content:
         # 找到现有的导入块
         import_block_end = content.find("\n\n")
         if import_block_end == -1:
@@ -92,9 +89,7 @@ def refactor_test_file(file_path: Path, dry_run: bool = True) -> List[str]:
         helpers_import += "    create_sqlite_sessionmaker,\n"
         helpers_import += ")\n"
 
-        content = (
-            content[:import_block_end] + helpers_import + content[import_block_end:]
-        )
+        content = content[:import_block_end] + helpers_import + content[import_block_end:]
         changes.append("添加统一 helpers 导入")
 
     # 2. 替换真实 Redis 为 MockRedis
@@ -203,9 +198,7 @@ def main():
 
     print("\n🎯 下一步:")
     print("  1. 运行测试: pytest tests/unit/api -v")
-    print(
-        "  2. 检查覆盖率: pytest tests/unit/api --cov=src.api --cov-report=term-missing"
-    )
+    print("  2. 检查覆盖率: pytest tests/unit/api --cov=src.api --cov-report=term-missing")
     print("  3. 进入 Phase 2.2: 整理 services 测试")
 
 

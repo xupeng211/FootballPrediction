@@ -3,7 +3,6 @@
 """
 
 import math
-from typing import Any, Dict, List, Optional, Tuple
 
 import pytest
 
@@ -216,9 +215,7 @@ class StatisticsUtils:
             "count": n,
             "mean": StatisticsUtils.mean(data),
             "median": StatisticsUtils.median(data),
-            "mode": (
-                StatisticsUtils.mode(data)[0] if StatisticsUtils.mode(data) else None
-            ),
+            "mode": (StatisticsUtils.mode(data)[0] if StatisticsUtils.mode(data) else None),
             "std": StatisticsUtils.standard_deviation(data, sample=True),
             "variance": StatisticsUtils.variance(data, sample=True),
             "min": min(data),

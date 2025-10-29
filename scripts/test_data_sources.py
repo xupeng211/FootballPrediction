@@ -30,9 +30,9 @@ class DataSourceTester:
 
     async def test_api_key_configuration(self):
         """测试API密钥配置"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("🔑 API密钥配置测试")
-        print("="*60)
+        print("=" * 60)
 
         if not self.api_key:
             print("❌ 错误: 未找到FOOTBALL_DATA_API_KEY环境变量")
@@ -57,9 +57,9 @@ class DataSourceTester:
 
     async def test_api_connection(self):
         """测试API连接"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("🌐 API连接测试")
-        print("="*60)
+        print("=" * 60)
 
         if not self.adapter:
             print("❌ 适配器未初始化")
@@ -79,9 +79,9 @@ class DataSourceTester:
 
     async def test_competitions(self):
         """测试获取联赛列表"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("🏆 联赛列表测试")
-        print("="*60)
+        print("=" * 60)
 
         if not self.adapter:
             print("❌ 适配器未初始化")
@@ -108,9 +108,9 @@ class DataSourceTester:
 
     async def test_matches(self):
         """测试获取比赛数据"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("⚽ 比赛数据测试")
-        print("="*60)
+        print("=" * 60)
 
         if not self.adapter:
             print("❌ 适配器未初始化")
@@ -137,9 +137,9 @@ class DataSourceTester:
 
     async def test_specific_league(self):
         """测试特定联赛数据"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("🏟️ 特定联赛测试 (英超)")
-        print("="*60)
+        print("=" * 60)
 
         if not self.adapter:
             print("❌ 适配器未初始化")
@@ -170,9 +170,9 @@ class DataSourceTester:
 
     async def test_rate_limiting(self):
         """测试速率限制"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("⏱️ 速率限制测试")
-        print("="*60)
+        print("=" * 60)
 
         if not self.adapter:
             print("❌ 适配器未初始化")
@@ -202,9 +202,9 @@ class DataSourceTester:
 
     async def test_data_quality(self):
         """测试数据质量"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("🔍 数据质量测试")
-        print("="*60)
+        print("=" * 60)
 
         if not self.adapter:
             print("❌ 适配器未初始化")
@@ -220,7 +220,7 @@ class DataSourceTester:
             quality_issues = []
 
             # 检查必要字段
-            required_fields = ['id', 'home_team', 'away_team', 'match_date', 'league']
+            required_fields = ["id", "home_team", "away_team", "match_date", "league"]
             for match in matches:
                 for field in required_fields:
                     if not hasattr(match, field) or getattr(match, field) is None:
@@ -264,9 +264,9 @@ class DataSourceTester:
 
     async def test_manager(self):
         """测试数据源管理器"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("🎛️ 数据源管理器测试")
-        print("="*60)
+        print("=" * 60)
 
         try:
             # 获取可用数据源
@@ -294,7 +294,7 @@ class DataSourceTester:
     async def run_all_tests(self):
         """运行所有测试"""
         print("🚀 开始数据源全面测试")
-        print("测试时间:", datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        print("测试时间:", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
         tests = [
             ("API密钥配置", self.test_api_key_configuration),
@@ -316,9 +316,9 @@ class DataSourceTester:
                 results[test_name] = False
 
         # 输出测试总结
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("📊 测试结果总结")
-        print("="*60)
+        print("=" * 60)
 
         passed = sum(1 for result in results.values() if result)
         total = len(results)
@@ -347,7 +347,7 @@ async def main():
 
 if __name__ == "__main__":
     # 设置事件循环策略 (Windows兼容性)
-    if sys.platform == 'win32':
+    if sys.platform == "win32":
         asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
     # 运行测试

@@ -1,18 +1,9 @@
 from __future__ import annotations
 
-from unittest.mock import MagicMock, Mock, patch
 
 """最终覆盖率测试 - 直接测试模块函数"""
 
-import asyncio
-import base64
-import hashlib
-import json
-import re
-import secrets
-import uuid
 from datetime import datetime, timedelta
-from typing import Any, Dict, List
 
 import pytest
 
@@ -646,9 +637,7 @@ class TestConfigLoaderModule:
             # 测试获取配置值
             if hasattr(ConfigLoader, "get_config_value"):
                 value = ConfigLoader.get_config_value("test_key", "default")
-                assert value == "default" or isinstance(
-                    value, (str, int, bool, dict, list)
-                )
+                assert value == "default" or isinstance(value, (str, int, bool, dict, list))
 
             # 测试设置配置值
             if hasattr(ConfigLoader, "set_config_value"):

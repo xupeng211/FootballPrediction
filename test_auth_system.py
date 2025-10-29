@@ -20,7 +20,7 @@ TEST_USER = {
     "email": "testauth@example.com",
     "password": "testpassword123",
     "first_name": "认证",
-    "last_name": "测试用户"
+    "last_name": "测试用户",
 }
 
 # 密码加密上下文
@@ -59,7 +59,9 @@ async def test_api_health():
             if response.status_code == 200:
                 health_data = response.json()
                 print_success(f"API健康状态: {health_data.get('status')}")
-                print_info(f"数据库延迟: {health_data.get('checks', {}).get('database', {}).get('latency_ms')}ms")
+                print_info(
+                    f"数据库延迟: {health_data.get('checks', {}).get('database', {}).get('latency_ms')}ms"
+                )
                 return True
             else:
                 print_error(f"API健康检查失败: {response.status_code}")
@@ -75,10 +77,7 @@ async def test_user_registration():
 
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{API_BASE_URL}/auth/register",
-                json=TEST_USER
-            )
+            response = await client.post(f"{API_BASE_URL}/auth/register", json=TEST_USER)
 
             if response.status_code == 201:
                 user_data = response.json()
@@ -103,15 +102,9 @@ async def test_user_login():
 
     try:
         async with httpx.AsyncClient() as client:
-            login_data = {
-                "username": TEST_USER["username"],
-                "password": TEST_USER["password"]
-            }
+            login_data = {"username": TEST_USER["username"], "password": TEST_USER["password"]}
 
-            response = await client.post(
-                f"{API_BASE_URL}/auth/login",
-                data=login_data
-            )
+            response = await client.post(f"{API_BASE_URL}/auth/login", data=login_data)
 
             if response.status_code == 200:
                 token_data = response.json()
@@ -120,7 +113,7 @@ async def test_user_login():
                 print_info(f"访问令牌: {token_data.get('access_token')[:50]}...")
                 print_info(f"刷新令牌: {token_data.get('refresh_token')[:50]}...")
                 print_info(f"过期时间: {token_data.get('expires_in')}秒")
-                return token_data.get('access_token')
+                return token_data.get("access_token")
             else:
                 error_data = response.json()
                 print_error(f"用户登录失败: {error_data.get('detail')}")
@@ -137,10 +130,7 @@ async def test_get_current_user(access_token: str):
     try:
         headers = {"Authorization": f"Bearer {access_token}"}
         async with httpx.AsyncClient() as client:
-            response = await client.get(
-                f"{API_BASE_URL}/auth/me",
-                headers=headers
-            )
+            response = await client.get(f"{API_BASE_URL}/auth/me", headers=headers)
 
             if response.status_code == 200:
                 user_data = response.json()
@@ -168,16 +158,13 @@ async def test_existing_users():
 
     existing_users = [
         {"username": "admin", "password": "admin123"},
-        {"username": "testuser", "password": "test123"}
+        {"username": "testuser", "password": "test123"},
     ]
 
     for user in existing_users:
         try:
             async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    f"{API_BASE_URL}/auth/login",
-                    data=user
-                )
+                response = await client.post(f"{API_BASE_URL}/auth/login", data=user)
 
                 if response.status_code == 200:
                     token_data = response.json()

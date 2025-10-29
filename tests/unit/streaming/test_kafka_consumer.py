@@ -171,10 +171,7 @@ class TestKafkaConsumerIntegration:
 
         # 验证模块有适当的文档说明
         assert kafka_module.__doc__ is not None
-        assert (
-            "重新导出" in kafka_module.__doc__
-            or "wrapper" in kafka_module.__doc__.lower()
-        )
+        assert "重新导出" in kafka_module.__doc__ or "wrapper" in kafka_module.__doc__.lower()
 
 
 # 如果模块不可用，添加一个占位测试

@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock, patch
-
 """TTL缓存测试"""
 
 import time

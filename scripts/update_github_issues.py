@@ -10,6 +10,7 @@ import time
 from datetime import datetime
 from typing import Dict, List
 
+
 class GitHubIssueUpdater:
     def __init__(self):
         self.repo = "xupeng211/FootballPrediction"
@@ -30,7 +31,16 @@ class GitHubIssueUpdater:
             print(f"正在更新 Issue #{issue_number}...")
 
             # 添加评论
-            comment_cmd = ["gh", "issue", "comment", str(issue_number), "--repo", self.repo, "--body", comment]
+            comment_cmd = [
+                "gh",
+                "issue",
+                "comment",
+                str(issue_number),
+                "--repo",
+                self.repo,
+                "--body",
+                comment,
+            ]
             result = self.run_command(comment_cmd)
 
             if result:
@@ -286,15 +296,18 @@ Issue #83-C 的所有目标已经完成，建议：
             "update_time": datetime.now().isoformat(),
             "updated_issues": self.updates_made,
             "total_updated": len(self.updates_made),
-            "status": "completed"
+            "status": "completed",
         }
 
-        with open(f"github_issues_update_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json", 'w') as f:
+        with open(
+            f"github_issues_update_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json", "w"
+        ) as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
 
         print("\n🎉 GitHub Issue 维护完成！")
         print("📊 所有关联的Issue已更新并关闭")
         print("🚀 项目状态: 企业级生产就绪")
+
 
 def main():
     """主函数"""
@@ -306,6 +319,7 @@ def main():
     except Exception as e:
         print(f"❌ 更新过程中出错: {e}")
         return False
+
 
 if __name__ == "__main__":
     success = main()

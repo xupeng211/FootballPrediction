@@ -1,8 +1,5 @@
 """测试数据质量监控模块"""
 
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
 import pytest
 
 # Test imports

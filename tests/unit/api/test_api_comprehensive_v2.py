@@ -414,9 +414,7 @@ class TestAPIComprehensiveV2:
         assert response.status_code == 401
 
         # 有效认证
-        response = client.get(
-            "/protected", headers={"Authorization": "Bearer token123"}
-        )
+        response = client.get("/protected", headers={"Authorization": "Bearer token123"})
         assert response.status_code == 200
 
     def test_api_pagination(self):

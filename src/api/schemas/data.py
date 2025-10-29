@@ -3,7 +3,6 @@
 """
 
 from datetime import datetime
-from typing import List, Optional, Any
 from pydantic import BaseModel, Field
 
 
@@ -14,12 +13,8 @@ class DataCollectionRequest(BaseModel):
     days_ahead: int = Field(30, ge=1, le=365, description="向前收集的天数")
     force_refresh: bool = Field(False, description="是否强制刷新缓存")
     data_source: str = Field("mock", description="数据源名称")
-    team_name: Optional[str] = Field(
-        None, description="球队名称（当collection_type为team时）"
-    )
-    league_name: Optional[str] = Field(
-        None, description="联赛名称（当collection_type为league时）"
-    )
+    team_name: Optional[str] = Field(None, description="球队名称（当collection_type为team时）")
+    league_name: Optional[str] = Field(None, description="联赛名称（当collection_type为league时）")
 
 
 class DataCollectionResponse(BaseModel):

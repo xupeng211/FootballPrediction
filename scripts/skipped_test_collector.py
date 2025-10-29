@@ -19,9 +19,7 @@ def collect_skipped_from_file(test_file):
     cmd = ["pytest", test_file, "-v", "--disable-warnings", "--tb=no"]
 
     try:
-        result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=30, env=env
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=30, env=env)
         output = result.stdout + result.stderr
 
         skipped_tests = []
@@ -40,9 +38,7 @@ def collect_skipped_from_file(test_file):
                             "file": test_file,
                             "class": class_name,
                             "test": test_full_name,
-                            "full_name": line.split("::")[1]
-                            .split("SKIPPED")[0]
-                            .strip(),
+                            "full_name": line.split("::")[1].split("SKIPPED")[0].strip(),
                         }
                     )
 
@@ -66,15 +62,11 @@ def get_skip_reason(test_file, test_name):
                 for j in range(max(0, i - 10), i):
                     if "pytest.mark.skip" in lines[j] or "pytest.skip" in lines[j]:
                         # 提取原因
-                        reason_match = re.search(
-                            r'reason=["\']([^"\']+)["\']', lines[j]
-                        )
+                        reason_match = re.search(r'reason=["\']([^"\']+)["\']', lines[j])
                         if reason_match:
                             return reason_match.group(1)
                         if "pytest.skip(" in lines[j]:
-                            skip_reason = re.search(
-                                r'pytest\.skip\(["\']([^"\']+)["\']', lines[j]
-                            )
+                            skip_reason = re.search(r'pytest\.skip\(["\']([^"\']+)["\']', lines[j])
                             if skip_reason:
                                 return skip_reason.group(1)
 
@@ -170,9 +162,7 @@ def main():
     os.makedirs("docs/_reports", exist_ok=True)
 
     report_content = "# Skipped 测试分析报告\n\n"
-    report_content += (
-        f"生成时间: {subprocess.check_output(['date'], text=True).strip()}\n\n"
-    )
+    report_content += f"生成时间: {subprocess.check_output(['date'], text=True).strip()}\n\n"
     report_content += f"总计: {len(all_skipped)} 个 skipped 测试\n\n"
 
     for category, tests in categories.items():

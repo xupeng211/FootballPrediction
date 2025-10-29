@@ -11,16 +11,10 @@ P2阶段深度业务逻辑测试: CQRSApplication
 - 数据驱动测试用例
 """
 
-import asyncio
-import json
 import os
 
 # 确保可以导入源码模块
 import sys
-import tempfile
-from pathlib import Path
-from typing import Any, Dict, List, Optional
-from unittest.mock import Mock, patch
 
 import pytest
 
@@ -347,15 +341,11 @@ class TestCQRSApplicationBusinessLogic:
 
             # 测试业务方法
             for method_name in dir(instance):
-                if not method_name.startswith("_") and callable(
-                    getattr(instance, method_name)
-                ):
+                if not method_name.startswith("_") and callable(getattr(instance, method_name)):
                     try:
                         method = getattr(instance, method_name)
                         # 尝试调用无参方法或属性
-                        if method_name.startswith("get") or method_name.startswith(
-                            "is_"
-                        ):
+                        if method_name.startswith("get") or method_name.startswith("is_"):
                             result = method()
                             assert result is not None
                     except Exception:
@@ -378,15 +368,11 @@ class TestCQRSApplicationBusinessLogic:
 
             # 测试业务方法
             for method_name in dir(instance):
-                if not method_name.startswith("_") and callable(
-                    getattr(instance, method_name)
-                ):
+                if not method_name.startswith("_") and callable(getattr(instance, method_name)):
                     try:
                         method = getattr(instance, method_name)
                         # 尝试调用无参方法或属性
-                        if method_name.startswith("get") or method_name.startswith(
-                            "is_"
-                        ):
+                        if method_name.startswith("get") or method_name.startswith("is_"):
                             result = method()
                             assert result is not None
                     except Exception:
@@ -409,15 +395,11 @@ class TestCQRSApplicationBusinessLogic:
 
             # 测试业务方法
             for method_name in dir(instance):
-                if not method_name.startswith("_") and callable(
-                    getattr(instance, method_name)
-                ):
+                if not method_name.startswith("_") and callable(getattr(instance, method_name)):
                     try:
                         method = getattr(instance, method_name)
                         # 尝试调用无参方法或属性
-                        if method_name.startswith("get") or method_name.startswith(
-                            "is_"
-                        ):
+                        if method_name.startswith("get") or method_name.startswith("is_"):
                             result = method()
                             assert result is not None
                     except Exception:
@@ -440,15 +422,11 @@ class TestCQRSApplicationBusinessLogic:
 
             # 测试业务方法
             for method_name in dir(instance):
-                if not method_name.startswith("_") and callable(
-                    getattr(instance, method_name)
-                ):
+                if not method_name.startswith("_") and callable(getattr(instance, method_name)):
                     try:
                         method = getattr(instance, method_name)
                         # 尝试调用无参方法或属性
-                        if method_name.startswith("get") or method_name.startswith(
-                            "is_"
-                        ):
+                        if method_name.startswith("get") or method_name.startswith("is_"):
                             result = method()
                             assert result is not None
                     except Exception:
@@ -471,15 +449,11 @@ class TestCQRSApplicationBusinessLogic:
 
             # 测试业务方法
             for method_name in dir(instance):
-                if not method_name.startswith("_") and callable(
-                    getattr(instance, method_name)
-                ):
+                if not method_name.startswith("_") and callable(getattr(instance, method_name)):
                     try:
                         method = getattr(instance, method_name)
                         # 尝试调用无参方法或属性
-                        if method_name.startswith("get") or method_name.startswith(
-                            "is_"
-                        ):
+                        if method_name.startswith("get") or method_name.startswith("is_"):
                             result = method()
                             assert result is not None
                     except Exception:
@@ -719,9 +693,9 @@ class TestCQRSApplicationBusinessLogic:
         }
 
         if test_env != "test":
-            env_vars[
-                f'{test_env.upper() if test_env != "development" else ""}DB_PASSWORD'
-            ] = "test_pass"
+            env_vars[f'{test_env.upper() if test_env != "development" else ""}DB_PASSWORD'] = (
+                "test_pass"
+            )
 
         with patch.dict(os.environ, env_vars):
             try:

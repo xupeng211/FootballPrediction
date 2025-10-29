@@ -3,12 +3,6 @@ Issue #83 阶段3: integration.api_endpoints_test 全面测试
 优先级: HIGH - API端点集成测试
 """
 
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
-import pytest
-
 # 集成测试 - 多模块协作测试
 IMPORTS_AVAILABLE = True
 

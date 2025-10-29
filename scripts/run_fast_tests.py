@@ -210,9 +210,7 @@ def main():
         help="测试级别 (1: 快速, 2: 中等, 3: 完整)",
     )
     parser.add_argument("--coverage", action="store_true", help="只运行覆盖率检查")
-    parser.add_argument(
-        "--parallel", action="store_true", help="使用并行执行 (需要 pytest-xdist)"
-    )
+    parser.add_argument("--parallel", action="store_true", help="使用并行执行 (需要 pytest-xdist)")
 
     args = parser.parse_args()
 

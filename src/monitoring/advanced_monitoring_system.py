@@ -10,20 +10,12 @@ Issue #123: Phase 3: 高级质量监控系统开发
 - 仪表盘可视化
 """
 
-import json
 import logging
-import time
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, asdict
 import asyncio
-from pathlib import Path
 
-import aiohttp
-import aiofiles
-from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
 import uvicorn
 
 logger = logging.getLogger(__name__)
@@ -170,17 +162,13 @@ class AdvancedMonitoringSystem:
                 "timestamp": latest.timestamp.isoformat(),
                 "metrics": asdict(latest),
                 "quality_gates": await self._check_quality_gates(latest),
-                "status": (
-                    "healthy" if await self._evaluate_health(latest) else "unhealthy"
-                ),
+                "status": ("healthy" if await self._evaluate_health(latest) else "unhealthy"),
             }
 
         @self.app.get("/api/metrics/history")
         async def get_metrics_history(limit: int = 100):
             """获取历史质量指标"""
-            history = (
-                self.metrics_history[-limit:] if limit > 0 else self.metrics_history
-            )
+            history = self.metrics_history[-limit:] if limit > 0 else self.metrics_history
             return {
                 "metrics": [asdict(m) for m in history],
                 "total_count": len(history),
@@ -224,9 +212,7 @@ class AdvancedMonitoringSystem:
                 "monitoring_active": self.monitoring_active,
                 "metrics_count": len(self.metrics_history),
                 "last_update": (
-                    self.metrics_history[-1].timestamp.isoformat()
-                    if self.metrics_history
-                    else None
+                    self.metrics_history[-1].timestamp.isoformat() if self.metrics_history else None
                 ),
             }
 
@@ -309,9 +295,7 @@ class AdvancedMonitoringSystem:
                 if gate.critical:
                     results["critical_failed"] += 1
 
-        results["overall_status"] = (
-            "passed" if results["critical_failed"] == 0 else "failed"
-        )
+        results["overall_status"] = "passed" if results["critical_failed"] == 0 else "failed"
         return results
 
     def _get_metric_field_name(self, gate_name: str) -> str:
@@ -381,11 +365,7 @@ class AdvancedMonitoringSystem:
                 # 发送告警
                 for gate_result in gate_results["gates"]:
                     if not gate_result["passed"]:
-                        gate = next(
-                            g
-                            for g in self.quality_gates
-                            if g.name == gate_result["name"]
-                        )
+                        gate = next(g for g in self.quality_gates if g.name == gate_result["name"])
                         await self._send_alert(gate, gate_result["current"])
 
                 # 等待60秒
@@ -465,13 +445,16 @@ class AdvancedMonitoringSystem:
         <div class="bg-white rounded-lg shadow-md p-6">
             <h2 class="text-xl font-semibold mb-4">⚙️ 监控控制</h2>
             <div class="flex gap-4">
-                <button id="start-monitoring" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                <button id =
+    "start-monitoring" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
                     启动监控
                 </button>
-                <button id="stop-monitoring" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                <button id =
+    "stop-monitoring" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
                     停止监控
                 </button>
-                <button id="refresh-data" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                <button id =
+    "refresh-data" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
                     刷新数据
                 </button>
             </div>
@@ -548,18 +531,24 @@ class AdvancedMonitoringSystem:
                 const data = await response.json();
 
                 if (data.error) {
-                    document.getElementById('system-status').innerHTML = '<span class="status-warning">⚠️ 无数据</span>';
+                    document.getElementById('system-status').innerHTML =
+    '<span class="status-warning">⚠️ 无数据</span>';
                     return;
                 }
 
                 // 更新状态卡片
-                const statusClass = data.status === 'healthy' ? 'status-healthy' : 'status-unhealthy';
+                const statusClass =
+    data.status === 'healthy' ? 'status-healthy' : 'status-unhealthy';
                 const statusText = data.status === 'healthy' ? '✅ 健康' : '❌ 异常';
-                document.getElementById('system-status').innerHTML = `<span class="${statusClass}">${statusText}</span>`;
+                document.getElementById('system-status').innerHTML =
+    `<span class="${statusClass}">${statusText}</span>`;
 
-                document.getElementById('overall-score').innerHTML = `<span class="text-blue-600">${data.metrics.overall_score.toFixed(1)}/10</span>`;
-                document.getElementById('test-coverage').innerHTML = `<span class="text-green-600">${data.metrics.test_coverage.toFixed(1)}%</span>`;
-                document.getElementById('srs-compliance').innerHTML = `<span class="text-purple-600">${data.metrics.srs_compliance.toFixed(1)}%</span>`;
+                document.getElementById('overall-score').innerHTML =
+    `<span class="text-blue-600">${data.metrics.overall_score.toFixed(1)}/10</span>`;
+                document.getElementById('test-coverage').innerHTML =
+    `<span class="text-green-600">${data.metrics.test_coverage.toFixed(1)}%</span>`;
+                document.getElementById('srs-compliance').innerHTML =
+    `<span class="text-purple-600">${data.metrics.srs_compliance.toFixed(1)}%</span>`;
 
                 // 更新质量门禁
                 updateQualityGates(data.quality_gates);
@@ -569,7 +558,8 @@ class AdvancedMonitoringSystem:
 
             } catch (error) {
                 console.error('获取指标失败:', error);
-                document.getElementById('system-status').innerHTML = '<span class="status-unhealthy">❌ 连接失败</span>';
+                document.getElementById('system-status').innerHTML =
+    '<span class="status-unhealthy">❌ 连接失败</span>';
             }
         }
 
@@ -579,7 +569,8 @@ class AdvancedMonitoringSystem:
             container.innerHTML = '';
 
             gateResults.gates.forEach(gate => {
-                const gateClass = gate.passed ? 'bg-green-100 border-green-300' : 'bg-red-100 border-red-300';
+                const gateClass =
+    gate.passed ? 'bg-green-100 border-green-300' : 'bg-red-100 border-red-300';
                 const statusIcon = gate.passed ? '✅' : '❌';
                 const statusText = gate.passed ? '通过' : '失败';
 

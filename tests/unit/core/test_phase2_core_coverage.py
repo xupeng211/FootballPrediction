@@ -11,15 +11,11 @@ High-quality tests based on real business logic, replacing template code.
 """
 
 import asyncio
-from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
-from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
 # 业务模块导入
 try:
-    from src.cqrs.base import (
         Command,
         CommandHandler,
         Query,
@@ -28,7 +24,6 @@ try:
         ValidatableQuery,
         ValidationResult,
     )
-    from src.cqrs.commands import (
         CreateMatchCommand,
         CreatePredictionCommand,
         CreateUserCommand,
@@ -40,7 +35,6 @@ except ImportError:
     CQRS_AVAILABLE = False
 
 try:
-    from src.events.base import (
         CompositeEventFilter,
         Event,
         EventData,
@@ -55,14 +49,12 @@ except ImportError:
     EVENTS_AVAILABLE = False
 
 try:
-    from src.facades.base import Facade, ServiceLocator
 
     FACADES_AVAILABLE = True
 except ImportError:
     FACADES_AVAILABLE = False
 
 try:
-    from src.decorators.base import BaseDecorator, DecoratorRegistry
 
     DECORATORS_AVAILABLE = True
 except ImportError:

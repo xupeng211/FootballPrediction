@@ -1,11 +1,8 @@
-from unittest.mock import AsyncMock, Mock, patch
-
 """
 监控API端点测试
 Monitoring API Endpoints Tests
 """
 
-import json
 from datetime import datetime
 
 import pytest
@@ -53,9 +50,7 @@ class TestMonitoringEndpoints:
         _data = response.json()
         assert "health" in _data or "status" in _data
 
-    @patch(
-        "src.monitoring.metrics_collector_enhanced.EnhancedMetricsCollector.collect_metrics"
-    )
+    @patch("src.monitoring.metrics_collector_enhanced.EnhancedMetricsCollector.collect_metrics")
     def test_collect_metrics(self, mock_collect, client):
         """测试收集指标"""
         mock_collect.return_value = {
@@ -87,9 +82,7 @@ class TestMonitoringEndpoints:
         _data = response.json()
         assert "status" in _data or "collector" in _data
 
-    @patch(
-        "src.monitoring.metrics_collector_enhanced.EnhancedMetricsCollector.start_collection"
-    )
+    @patch("src.monitoring.metrics_collector_enhanced.EnhancedMetricsCollector.start_collection")
     def test_start_collection(self, mock_start, client):
         """测试开始收集"""
         mock_start.return_value = {"success": True}
@@ -103,9 +96,7 @@ class TestMonitoringEndpoints:
         _data = response.json()
         assert "success" in _data or "status" in _data
 
-    @patch(
-        "src.monitoring.metrics_collector_enhanced.EnhancedMetricsCollector.stop_collection"
-    )
+    @patch("src.monitoring.metrics_collector_enhanced.EnhancedMetricsCollector.stop_collection")
     def test_stop_collection(self, mock_stop, client):
         """测试停止收集"""
         mock_stop.return_value = {"success": True}

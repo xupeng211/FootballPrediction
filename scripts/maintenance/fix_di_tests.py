@@ -24,9 +24,7 @@ def fix_di_setup_tests():
     )
 
     # 修复test_dispose
-    content = content.replace(
-        "setup.dispose()", "import asyncio; asyncio.run(setup.dispose())"
-    )
+    content = content.replace("setup.dispose()", "import asyncio; asyncio.run(setup.dispose())")
 
     with open(file_path, "w", encoding="utf-8") as f:
         f.write(content)
@@ -199,9 +197,7 @@ class TestDISetupAdvanced:
     import os
 
     if os.path.exists("tests/unit/core/test_di_setup.py"):
-        os.rename(
-            "tests/unit/core/test_di_setup.py", "tests/unit/core/test_di_setup.py.bak"
-        )
+        os.rename("tests/unit/core/test_di_setup.py", "tests/unit/core/test_di_setup.py.bak")
 
     with open("tests/unit/core/test_di_setup.py", "w", encoding="utf-8") as f:
         f.write(content)

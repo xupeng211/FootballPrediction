@@ -11,6 +11,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple
 
+
 class ProjectCleanlinessMonitor:
     def __init__(self, project_path: str = "."):
         self.project_path = Path(project_path)
@@ -19,15 +20,11 @@ class ProjectCleanlinessMonitor:
 
         # 清洁度标准
         self.standards = {
-            "max_root_files": 50,          # 根目录最大文件数
-            "max_markdown_files": 20,      # 最大Markdown文件数
-            "max_archive_size_mb": 100,    # 最大归档大小(MB)
-            "required_dirs": [             # 必需的目录
-                "src", "tests", "docs", "scripts", "config"
-            ],
-            "forbidden_files": [          # 不应存在的文件
-                "*.pyc", "__pycache__", ".DS_Store"
-            ]
+            "max_root_files": 50,  # 根目录最大文件数
+            "max_markdown_files": 20,  # 最大Markdown文件数
+            "max_archive_size_mb": 100,  # 最大归档大小(MB)
+            "required_dirs": ["src", "tests", "docs", "scripts", "config"],  # 必需的目录
+            "forbidden_files": ["*.pyc", "__pycache__", ".DS_Store"],  # 不应存在的文件
         }
 
     def count_root_files(self) -> int:
@@ -101,7 +98,9 @@ class ProjectCleanlinessMonitor:
         if archive_size > self.standards["max_archive_size_mb"]:
             penalty = min(10, int((archive_size - self.standards["max_archive_size_mb"]) / 10))
             score -= penalty
-            issues.append(f"归档文件过大 ({archive_size:.1f}MB > {self.standards['max_archive_size_mb']}MB)")
+            issues.append(
+                f"归档文件过大 ({archive_size:.1f}MB > {self.standards['max_archive_size_mb']}MB)"
+            )
 
         # 检查必需目录
         missing_dirs = self.check_required_directories()
@@ -132,10 +131,10 @@ class ProjectCleanlinessMonitor:
                 "archive_size_mb": round(self.get_archive_size(), 2),
                 "file_distribution": self.get_file_type_distribution(),
                 "missing_directories": self.check_required_directories(),
-                "forbidden_files": len(self.check_forbidden_files())
+                "forbidden_files": len(self.check_forbidden_files()),
             },
             "issues": issues,
-            "recommendations": self.get_recommendations(score, issues)
+            "recommendations": self.get_recommendations(score, issues),
         }
 
         return report
@@ -180,7 +179,7 @@ class ProjectCleanlinessMonitor:
         history = []
         if self.report_file.exists():
             try:
-                with open(self.report_file, 'r', encoding='utf-8') as f:
+                with open(self.report_file, "r", encoding="utf-8") as f:
                     history = json.load(f)
             except:
                 history = []
@@ -192,7 +191,7 @@ class ProjectCleanlinessMonitor:
         history = history[-30:]
 
         # 保存报告
-        with open(self.report_file, 'w', encoding='utf-8') as f:
+        with open(self.report_file, "w", encoding="utf-8") as f:
             json.dump(history, f, indent=2, ensure_ascii=False)
 
     def print_report(self, report: Dict):
@@ -204,8 +203,8 @@ class ProjectCleanlinessMonitor:
         print()
 
         print("📈 关键指标:")
-        for key, value in report['metrics'].items():
-            if key == 'file_distribution':
+        for key, value in report["metrics"].items():
+            if key == "file_distribution":
                 print("  文件类型分布:")
                 for ext, count in value.items():
                     print(f"    {ext}: {count} 个")
@@ -213,18 +212,19 @@ class ProjectCleanlinessMonitor:
                 print(f"  {key}: {value}")
 
         print()
-        if report['issues']:
+        if report["issues"]:
             print("⚠️  发现的问题:")
-            for issue in report['issues']:
+            for issue in report["issues"]:
                 print(f"  • {issue}")
         else:
             print("✅ 未发现问题")
 
         print()
-        if report['recommendations']:
+        if report["recommendations"]:
             print("💡 改进建议:")
-            for rec in report['recommendations']:
+            for rec in report["recommendations"]:
                 print(f"  • {rec}")
+
 
 def main():
     """主函数"""
@@ -244,9 +244,10 @@ def main():
     print(f"\n📋 报告已保存到: {monitor.report_file}")
 
     # 如果分数较低，建议立即清理
-    if report['cleanliness_score'] < 70:
+    if report["cleanliness_score"] < 70:
         print("\n🚨 项目清洁度较低，建议立即执行清理！")
         print("   运行: ./scripts/weekly_cleanup.sh")
+
 
 if __name__ == "__main__":
     main()

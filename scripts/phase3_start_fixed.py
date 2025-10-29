@@ -46,9 +46,7 @@ def check_current_status():
     )
 
     # 统计TODO
-    run_command(
-        "grep -r 'TODO\\|FIXME' --include='*.py' src/ | wc -l", "统计TODO项数量"
-    )
+    run_command("grep -r 'TODO\\|FIXME' --include='*.py' src/ | wc -l", "统计TODO项数量")
 
     # 查找长文件
     print("\n📊 最长的文件:")

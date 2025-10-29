@@ -138,9 +138,7 @@ def main():
     print("-" * 100)
 
     for i, item in enumerate(analysis_results[:20], 1):
-        priority = (
-            "🔴" if item["coverage"] < 20 else "🟡" if item["coverage"] < 50 else "🟢"
-        )
+        priority = "🔴" if item["coverage"] < 20 else "🟡" if item["coverage"] < 50 else "🟢"
         print(
             f"{item['file_path']:<50} {item['loc']:<8} {item['total_stmts']:<8} {item['coverage']:<8.1f}% {priority}"
         )
@@ -171,9 +169,7 @@ def main():
         json.dump(
             {
                 "timestamp": str(
-                    subprocess.run(
-                        ["date"], capture_output=True, text=True
-                    ).stdout.strip()
+                    subprocess.run(["date"], capture_output=True, text=True).stdout.strip()
                 ),
                 "total_files": len(analysis_results),
                 "top_10_files": top_10_files,

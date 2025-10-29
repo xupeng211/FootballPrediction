@@ -32,6 +32,7 @@ console = Console()
 @dataclass
 class BenchmarkResult:
     """基准测试结果"""
+
     name: str
     total_requests: int
     successful_requests: int
@@ -134,7 +135,7 @@ class PerformanceBenchmark:
         concurrent_users: int = 10,
         requests_per_user: int = 20,
         method: str = "GET",
-        **kwargs
+        **kwargs,
     ) -> BenchmarkResult:
         """负载测试"""
         console.print(f"🚀 开始负载测试: {method} {endpoint}")
@@ -340,7 +341,7 @@ class PerformanceBenchmark:
                 result = await self.load_test(
                     endpoint=scenario["endpoint"],
                     concurrent_users=scenario["users"],
-                    requests_per_user=scenario["requests"]
+                    requests_per_user=scenario["requests"],
                 )
 
                 results.append(result)
@@ -376,7 +377,7 @@ class PerformanceBenchmark:
                 f"{result.requests_per_second:.1f}",
                 f"{result.error_rate:.2f}%",
                 f"{result.cpu_usage:.1f}%",
-                f"{result.memory_usage:.1f}%"
+                f"{result.memory_usage:.1f}%",
             )
 
         console.print(summary_table)
@@ -406,10 +407,11 @@ class PerformanceBenchmark:
 async def main():
     """主函数"""
     console.print("🏃‍♂️ 足球预测系统性能基准测试", style="bold blue")
-    console.print("="*60)
+    console.print("=" * 60)
 
     # 从环境变量或命令行参数获取基础URL
     import os
+
     base_url = os.getenv("BASE_URL", "http://localhost:8000")
 
     async with PerformanceBenchmark(base_url) as benchmark:

@@ -2,14 +2,12 @@
 
 # TODO: Consider creating a fixture for 6 repeated Mock creations
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 """
 Tests for api.schemas
 Auto-generated test file
 """
 
-import asyncio
 
 import pytest
 
@@ -188,9 +186,7 @@ class TestParameterizedInput:
             "types": [str, int, float, bool, list, dict, tuple, set],
         }
 
-    @pytest.mark.parametrize(
-        "input_value", ["", "test", 0, 1, -1, True, False, [], {}, None]
-    )
+    @pytest.mark.parametrize("input_value", ["", "test", 0, 1, -1, True, False, [], {}, None])
     def test_handle_basic_inputs(self, input_value):
         """测试处理基本输入类型"""
         # 基础断言，确保测试能处理各种输入
@@ -231,9 +227,7 @@ class TestParameterizedInput:
         assert isinstance(input_list, list)
         assert len(input_list) >= 0
 
-    @pytest.mark.parametrize(
-        "invalid_data", [None, "", "not-a-number", {}, [], True, False]
-    )
+    @pytest.mark.parametrize("invalid_data", [None, "", "not-a-number", {}, [], True, False])
     def test_error_handling(self, invalid_data):
         """测试错误处理"""
         try:
@@ -254,9 +248,7 @@ class TestParameterizedInput:
 class TestBoundaryConditions:
     """边界条件测试"""
 
-    @pytest.mark.parametrize(
-        "number", [-1, 0, 1, -100, 100, -1000, 1000, -999999, 999999]
-    )
+    @pytest.mark.parametrize("number", [-1, 0, 1, -100, 100, -1000, 1000, -999999, 999999])
     def test_number_boundaries(self, number):
         """测试数字边界值"""
         assert isinstance(number, (int, float))

@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock, Mock, patch
-
 """
 任务监控模块测试
 Tests for Task Monitoring
@@ -83,9 +81,7 @@ class TestTaskMonitor:
 
         # 创建计数器应该可以增加
         if hasattr(monitor.task_counter, "labels"):
-            counter = monitor.task_counter.labels(
-                task_name="test_task", status="success"
-            )
+            counter = monitor.task_counter.labels(task_name="test_task", status="success")
             assert counter is not None
 
     def test_task_duration_observe(self):
@@ -103,9 +99,7 @@ class TestTaskMonitor:
 
         # 创建错误计数器应该可以增加
         if hasattr(monitor.task_errors, "labels"):
-            counter = monitor.task_errors.labels(
-                task_name="test_task", error_type="ValueError"
-            )
+            counter = monitor.task_errors.labels(task_name="test_task", error_type="ValueError")
             assert counter is not None
 
     def test_active_tasks_gauge(self):

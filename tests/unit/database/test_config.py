@@ -1,14 +1,9 @@
-from unittest.mock import MagicMock, patch
-
 """
 数据库配置测试
 Tests for Database Config
 
 测试src.database.config模块的功能
 """
-
-import os
-import tempfile
 
 import pytest
 

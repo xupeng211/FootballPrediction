@@ -4,7 +4,6 @@
 测试 src.utils.i18n 模块的功能
 """
 
-from unittest.mock import Mock, patch
 
 import pytest
 
@@ -147,7 +146,8 @@ class TestI18n:
 
     def test_long_text(self):
         """测试长文本"""
-        long_text = "This is a very long text that contains many words and should be handled properly by the internationalization system without any issues or problems occurring during the processing and rendering of the text content."
+        long_text =
+    "This is a very long text that contains many words and should be handled properly by the internationalization system without any issues or problems occurring during the processing and rendering of the text content."
 
         result = get_text("long_text", long_text)
         assert result == long_text

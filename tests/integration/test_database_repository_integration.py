@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 5 repeated Mock creations
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 """
 数据库与仓储层集成测试
@@ -13,13 +12,9 @@ import asyncio
 from datetime import datetime, timedelta, timezone
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
 
 # 导入需要测试的模块
 try:
-    from src.database.connection import get_async_session
-    from src.database.models.base import Base
     from src.database.models.match import Match
     from src.database.models.prediction import Prediction
     from src.database.models.user import User

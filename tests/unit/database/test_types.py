@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 19 repeated Mock creations
 
-from unittest.mock import MagicMock, Mock
 
 """
 数据库类型测试

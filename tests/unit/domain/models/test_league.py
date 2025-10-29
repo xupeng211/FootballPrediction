@@ -159,9 +159,7 @@ class TestLeagueSeason:
 
 class TestLeagueSettings:
     def test_should_calculate_points(self):
-        settings = LeagueSettings(
-            points_for_win=3, points_for_draw=1, points_for_loss=0
-        )
+        settings = LeagueSettings(points_for_win=3, points_for_draw=1, points_for_loss=0)
         assert settings.calculate_points(10, 5, 3) == 10 * 3 + 5 * 1
 
     def test_should_reject_invalid_configuration(self):
@@ -250,9 +248,7 @@ class TestLeague:
         season.start_season()
 
         with pytest.raises(DomainError):
-            league.start_new_season(
-                "2025", start + timedelta(days=365), end + timedelta(days=365)
-            )
+            league.start_new_season("2025", start + timedelta(days=365), end + timedelta(days=365))
 
     def test_should_update_settings_and_calculate_revenue(self, league):
         league.update_settings(points_for_win=4, max_foreign_players=7)

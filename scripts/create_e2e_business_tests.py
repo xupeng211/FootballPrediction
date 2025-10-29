@@ -22,151 +22,151 @@ class E2EBusinessTestGenerator:
     def _create_business_workflows(self) -> Dict[str, Dict]:
         """创建业务工作流定义"""
         return {
-            'prediction_workflow': {
-                'name': '足球预测完整流程',
-                'steps': [
-                    'data_collection',
-                    'feature_extraction',
-                    'model_prediction',
-                    'result_storage',
-                    'user_notification'
+            "prediction_workflow": {
+                "name": "足球预测完整流程",
+                "steps": [
+                    "data_collection",
+                    "feature_extraction",
+                    "model_prediction",
+                    "result_storage",
+                    "user_notification",
                 ],
-                'modules': [
-                    'services.prediction',
-                    'services.data_processing',
-                    'domain.strategies',
-                    'database.repositories',
-                    'api.predictions'
-                ]
+                "modules": [
+                    "services.prediction",
+                    "services.data_processing",
+                    "domain.strategies",
+                    "database.repositories",
+                    "api.predictions",
+                ],
             },
-            'user_management_workflow': {
-                'name': '用户管理流程',
-                'steps': [
-                    'user_registration',
-                    'profile_creation',
-                    'subscription_setup',
-                    'prediction_history'
+            "user_management_workflow": {
+                "name": "用户管理流程",
+                "steps": [
+                    "user_registration",
+                    "profile_creation",
+                    "subscription_setup",
+                    "prediction_history",
                 ],
-                'modules': [
-                    'services.user',
-                    'database.models.user',
-                    'api.user_management',
-                    'core.auth'
-                ]
+                "modules": [
+                    "services.user",
+                    "database.models.user",
+                    "api.user_management",
+                    "core.auth",
+                ],
             },
-            'match_data_workflow': {
-                'name': '比赛数据处理流程',
-                'steps': [
-                    'match_data_import',
-                    'data_validation',
-                    'statistics_calculation',
-                    'storage_update'
+            "match_data_workflow": {
+                "name": "比赛数据处理流程",
+                "steps": [
+                    "match_data_import",
+                    "data_validation",
+                    "statistics_calculation",
+                    "storage_update",
                 ],
-                'modules': [
-                    'services.data_processing',
-                    'data.collectors',
-                    'database.models.match',
-                    'api.data_router'
-                ]
+                "modules": [
+                    "services.data_processing",
+                    "data.collectors",
+                    "database.models.match",
+                    "api.data_router",
+                ],
             },
-            'analytics_workflow': {
-                'name': '分析报告流程',
-                'steps': [
-                    'data_aggregation',
-                    'report_generation',
-                    'visualization',
-                    'export_delivery'
+            "analytics_workflow": {
+                "name": "分析报告流程",
+                "steps": [
+                    "data_aggregation",
+                    "report_generation",
+                    "visualization",
+                    "export_delivery",
                 ],
-                'modules': [
-                    'services.analytics',
-                    'data.quality',
-                    'api.monitoring',
-                    'core.reporting'
-                ]
-            }
+                "modules": [
+                    "services.analytics",
+                    "data.quality",
+                    "api.monitoring",
+                    "core.reporting",
+                ],
+            },
         }
 
     def _create_test_scenarios(self) -> Dict[str, List[Dict]]:
         """创建测试场景数据"""
         return {
-            'prediction_scenarios': [
+            "prediction_scenarios": [
                 {
-                    'name': 'premier_league_prediction',
-                    'input_data': {
-                        'home_team': 'Manchester United',
-                        'away_team': 'Liverpool',
-                        'league': 'Premier League',
-                        'season': '2023-2024',
-                        'home_form': 'WWDLW',
-                        'away_form': 'LWDWW',
-                        'h2h_history': ['W', 'D', 'L', 'W', 'D']
+                    "name": "premier_league_prediction",
+                    "input_data": {
+                        "home_team": "Manchester United",
+                        "away_team": "Liverpool",
+                        "league": "Premier League",
+                        "season": "2023-2024",
+                        "home_form": "WWDLW",
+                        "away_form": "LWDWW",
+                        "h2h_history": ["W", "D", "L", "W", "D"],
                     },
-                    'expected_output': {
-                        'prediction_available': True,
-                        'confidence_range': '0.7-0.9',
-                        'goals_predicted': True
-                    }
+                    "expected_output": {
+                        "prediction_available": True,
+                        "confidence_range": "0.7-0.9",
+                        "goals_predicted": True,
+                    },
                 },
                 {
-                    'name': 'championship_prediction',
-                    'input_data': {
-                        'home_team': 'Leeds United',
-                        'away_team': 'Southampton',
-                        'league': 'Championship',
-                        'season': '2023-2024',
-                        'home_form': 'DLWDW',
-                        'away_form': 'WDLWD'
+                    "name": "championship_prediction",
+                    "input_data": {
+                        "home_team": "Leeds United",
+                        "away_team": "Southampton",
+                        "league": "Championship",
+                        "season": "2023-2024",
+                        "home_form": "DLWDW",
+                        "away_form": "WDLWD",
                     },
-                    'expected_output': {
-                        'prediction_available': True,
-                        'confidence_range': '0.6-0.8'
-                    }
+                    "expected_output": {
+                        "prediction_available": True,
+                        "confidence_range": "0.6-0.8",
+                    },
                 },
                 {
-                    'name': 'international_prediction',
-                    'input_data': {
-                        'home_team': 'England',
-                        'away_team': 'France',
-                        'league': 'International',
-                        'season': '2024',
-                        'home_form': 'WWWW',
-                        'away_form': 'WWWL'
+                    "name": "international_prediction",
+                    "input_data": {
+                        "home_team": "England",
+                        "away_team": "France",
+                        "league": "International",
+                        "season": "2024",
+                        "home_form": "WWWW",
+                        "away_form": "WWWL",
                     },
-                    'expected_output': {
-                        'prediction_available': True,
-                        'confidence_range': '0.5-0.7'
-                    }
-                }
+                    "expected_output": {
+                        "prediction_available": True,
+                        "confidence_range": "0.5-0.7",
+                    },
+                },
             ],
-            'edge_cases': [
+            "edge_cases": [
                 {
-                    'name': 'new_team_no_history',
-                    'input_data': {
-                        'home_team': 'NewlyPromotedTeam',
-                        'away_team': 'EstablishedTeam',
-                        'home_form': '',
-                        'away_form': 'WWDLW'
+                    "name": "new_team_no_history",
+                    "input_data": {
+                        "home_team": "NewlyPromotedTeam",
+                        "away_team": "EstablishedTeam",
+                        "home_form": "",
+                        "away_form": "WWDLW",
                     },
-                    'expected_output': {
-                        'prediction_available': True,
-                        'confidence_lower': True,
-                        'uses_default_strategy': True
-                    }
+                    "expected_output": {
+                        "prediction_available": True,
+                        "confidence_lower": True,
+                        "uses_default_strategy": True,
+                    },
                 },
                 {
-                    'name': 'missing_data_scenario',
-                    'input_data': {
-                        'home_team': 'TeamA',
-                        'away_team': None,  # 缺失数据
-                        'home_form': 'WW'
+                    "name": "missing_data_scenario",
+                    "input_data": {
+                        "home_team": "TeamA",
+                        "away_team": None,  # 缺失数据
+                        "home_form": "WW",
                     },
-                    'expected_output': {
-                        'prediction_available': False,
-                        'error_handled': True,
-                        'user_notified': True
-                    }
-                }
-            ]
+                    "expected_output": {
+                        "prediction_available": False,
+                        "error_handled": True,
+                        "user_notified": True,
+                    },
+                },
+            ],
         }
 
     def generate_prediction_workflow_test(self) -> str:
@@ -629,8 +629,8 @@ class TestUserManagementWorkflowE2E:
 
         # 生成各个工作流的测试
         workflows = [
-            ('prediction', self.generate_prediction_workflow_test()),
-            ('user_management', self.generate_user_management_workflow_test())
+            ("prediction", self.generate_prediction_workflow_test()),
+            ("user_management", self.generate_user_management_workflow_test()),
         ]
 
         for workflow_name, test_content in workflows:
@@ -639,7 +639,7 @@ class TestUserManagementWorkflowE2E:
                 test_file, _ = self.generate_test_file(workflow_name, test_content)
 
                 # 写入测试文件
-                with open(test_file, 'w', encoding='utf-8') as f:
+                with open(test_file, "w", encoding="utf-8") as f:
                     f.write(test_content)
 
                 print(f"   ✅ 生成成功: {test_file}")
@@ -685,5 +685,6 @@ def main():
 
 if __name__ == "__main__":
     import sys
+
     success = main()
     sys.exit(0 if success else 1)

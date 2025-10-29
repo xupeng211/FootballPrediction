@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 15 repeated Mock creations
 
-from unittest.mock import MagicMock, Mock, patch
 
 """
 数据收集核心测试（语法修复版）

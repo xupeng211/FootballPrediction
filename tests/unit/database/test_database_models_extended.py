@@ -2,15 +2,12 @@
 
 from datetime import date, datetime
 from decimal import Decimal
-from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from sqlalchemy import Boolean, Column, DateTime, Integer, Numeric, String, Text
 
 try:
     from src.database.models.features import FeatureSet
     from src.database.models.league import League
-    from src.database.models.match import Match, MatchResult, MatchStatus
     from src.database.models.odds import Odds
     from src.database.models.predictions import Prediction
     from src.database.models.team import Team
@@ -31,11 +28,7 @@ except ImportError as e:
                 setattr(self, key, value)
 
         def to_dict(self):
-            return {
-                key: value
-                for key, value in self.__dict__.items()
-                if not key.startswith("_")
-            }
+            return {key: value for key, value in self.__dict__.items() if not key.startswith("_")}
 
         def __repr__(self):
             return f"{self.__class__.__name__}(id={self.id})"
@@ -116,9 +109,7 @@ class TestDatabaseModelsExtended:
 
     def test_league_model_attributes(self):
         """测试联赛模型属性"""
-        league = League(
-            id=1, name="Test League", country="Test Country", is_active=False
-        )
+        league = League(id=1, name="Test League", country="Test Country", is_active=False)
 
         # 测试基本属性
         required_attrs = [
@@ -287,9 +278,7 @@ class TestDatabaseModelsExtended:
 
     def test_user_model_attributes(self):
         """测试用户模型属性"""
-        user = User(
-            id=1, username="testuser", email="test@example.com", is_active=False
-        )
+        user = User(id=1, username="testuser", email="test@example.com", is_active=False)
 
         required_attrs = [
             "id",
@@ -318,9 +307,7 @@ class TestDatabaseModelsExtended:
 
     def test_prediction_model_creation(self):
         """测试预测模型创建"""
-        prediction = Prediction(
-            user_id=1, match_id=1, predicted_result="HOME_WIN", confidence=0.75
-        )
+        prediction = Prediction(user_id=1, match_id=1, predicted_result="HOME_WIN", confidence=0.75)
         assert prediction is not None
         assert prediction.user_id == 1
         assert prediction.match_id == 1
@@ -383,9 +370,7 @@ class TestDatabaseModelsExtended:
         valid_odds = Odds(home_win=1.5, draw=2.0, away_win=3.0)
 
         # 测试无效赔率
-        invalid_odds = Odds(
-            home_win=0.0, draw=1.0, away_win=-1.0  # 不可能的赔率  # 负赔率
-        )
+        invalid_odds = Odds(home_win=0.0, draw=1.0, away_win=-1.0)  # 不可能的赔率  # 负赔率
 
         assert valid_odds is not None
         assert invalid_odds is not None
@@ -405,9 +390,7 @@ class TestDatabaseModelsExtended:
 
         required_attrs = ["id", "match_id", "features", "created_at", "updated_at"]
         for attr in required_attrs:
-            assert hasattr(
-                feature_set, attr
-            ), f"FeatureSet should have {attr} attribute"
+            assert hasattr(feature_set, attr), f"FeatureSet should have {attr} attribute"
 
     def test_model_relationships(self):
         """测试模型关系"""
@@ -519,9 +502,7 @@ class TestDatabaseModelsExtended:
     def test_model_decimal_handling(self):
         """测试模型小数处理"""
         # 测试赔率小数
-        odds = Odds(
-            home_win=Decimal("2.5"), draw=Decimal("3.2"), away_win=Decimal("4.1")
-        )
+        odds = Odds(home_win=Decimal("2.5"), draw=Decimal("3.2"), away_win=Decimal("4.1"))
 
         assert isinstance(odds.home_win, (float, Decimal))
         assert isinstance(odds.draw, (float, Decimal))
@@ -588,9 +569,7 @@ class TestDatabaseModelsExtended:
             model = model_class()
             for attr in base_attrs:
                 # 基类属性应该存在
-                assert hasattr(
-                    model, attr
-                ), f"{model_class.__name__} should have {attr}"
+                assert hasattr(model, attr), f"{model_class.__name__} should have {attr}"
 
     def test_model_composition(self):
         """测试模型组合"""

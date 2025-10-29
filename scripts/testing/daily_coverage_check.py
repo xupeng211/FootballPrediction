@@ -84,9 +84,7 @@ def generate_coverage_report():
             print(f"\n📈 整体覆盖率: {coverage['percent']}%")
             print(f"   - 总语句数: {coverage['statements']}")
             print(f"   - 未覆盖: {coverage['missing']}")
-            print(
-                f"   - 覆盖率变化: +{(coverage['percent'] - 19):.1f}%"
-            )  # 假设基准是19%
+            print(f"   - 覆盖率变化: +{(coverage['percent'] - 19):.1f}%")  # 假设基准是19%
     else:
         print("❌ 测试失败")
         if result:

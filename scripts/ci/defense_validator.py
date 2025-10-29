@@ -63,9 +63,7 @@ class TestValidator:
                 results["failed_tests"] += 1
 
         results["validation_time"] = time.time() - start_time
-        results["success_rate"] = (
-            results["passed_tests"] / max(results["total_tests"], 1)
-        ) * 100
+        results["success_rate"] = (results["passed_tests"] / max(results["total_tests"], 1)) * 100
 
         return results
 
@@ -482,9 +480,7 @@ class CIWorkflowValidator:
                 return {"status": "invalid", "message": "工作流文件格式错误"}
 
             required_fields = ["name", "on", "jobs"]
-            missing_fields = [
-                field for field in required_fields if field not in workflow
-            ]
+            missing_fields = [field for field in required_fields if field not in workflow]
             if missing_fields:
                 return {
                     "status": "invalid",
@@ -505,8 +501,7 @@ class CIWorkflowValidator:
                 for step in job.get("steps", []):
                     step_name = step.get("name", "").lower()
                     if any(
-                        keyword in step_name
-                        for keyword in ["defense", "validation", "guardian"]
+                        keyword in step_name for keyword in ["defense", "validation", "guardian"]
                     ):
                         has_defense_steps = True
                         break
@@ -549,9 +544,7 @@ class EffectivenessValidator:
         results["test_reproduction"] = self._test_issue_reproduction(original_issues)
 
         # 分析问题覆盖率
-        results["issue_coverage"] = self._analyze_issue_coverage(
-            original_issues, defenses
-        )
+        results["issue_coverage"] = self._analyze_issue_coverage(original_issues, defenses)
 
         # 计算效果评分
         results["effectiveness_score"] = self._calculate_effectiveness_score(results)
@@ -801,8 +794,7 @@ def vulnerable_function():
                 coverage_analysis["uncovered_types"].append(issue_type)
 
         coverage_analysis["coverage_rate"] = (
-            coverage_analysis["covered_types"]
-            / max(coverage_analysis["total_issue_types"], 1)
+            coverage_analysis["covered_types"] / max(coverage_analysis["total_issue_types"], 1)
         ) * 100
 
         return coverage_analysis
@@ -813,9 +805,7 @@ def vulnerable_function():
 
         # 测试重现评分（30%）
         repro = results.get("test_reproduction", {})
-        total_repro = repro.get("reproducible_issues", 0) + repro.get(
-            "non_reproducible_issues", 0
-        )
+        total_repro = repro.get("reproducible_issues", 0) + repro.get("non_reproducible_issues", 0)
         if total_repro > 0:
             repro_score = (repro.get("reproducible_issues", 0) / total_repro) * 100
             scores.append(repro_score * 0.3)
@@ -870,23 +860,17 @@ class DefenseValidator:
         # 1. 验证测试文件
         if defenses.get("test_files"):
             click.echo("  📋 验证测试文件...")
-            test_results = self.test_validator.validate_test_files(
-                defenses["test_files"]
-            )
+            test_results = self.test_validator.validate_test_files(defenses["test_files"])
             validation_results["detailed_results"]["tests"] = test_results
 
             # 验证测试覆盖率
-            coverage_results = self.test_validator.validate_test_coverage(
-                defenses["test_files"]
-            )
+            coverage_results = self.test_validator.validate_test_coverage(defenses["test_files"])
             validation_results["detailed_results"]["coverage"] = coverage_results
 
         # 2. 验证lint配置
         if defenses.get("lint_configs"):
             click.echo("  🔧 验证lint配置...")
-            lint_results = self.lint_validator.validate_lint_configs(
-                defenses["lint_configs"]
-            )
+            lint_results = self.lint_validator.validate_lint_configs(defenses["lint_configs"])
             validation_results["detailed_results"]["lint_configs"] = lint_results
 
         # 3. 验证pre-commit钩子
@@ -908,14 +892,10 @@ class DefenseValidator:
         # 5. 验证防御效果
         if original_issues:
             click.echo("  🎯 验证防御效果...")
-            effectiveness_results = (
-                self.effectiveness_validator.validate_defense_effectiveness(
-                    original_issues, defenses
-                )
+            effectiveness_results = self.effectiveness_validator.validate_defense_effectiveness(
+                original_issues, defenses
             )
-            validation_results["detailed_results"][
-                "effectiveness"
-            ] = effectiveness_results
+            validation_results["detailed_results"]["effectiveness"] = effectiveness_results
 
         # 计算总体评分
         validation_results["overall_score"] = self._calculate_overall_score(
@@ -977,9 +957,7 @@ class DefenseValidator:
         if "tests" in detailed:
             test_result = detailed["tests"]
             summary["component_status"]["tests"] = {
-                "status": (
-                    "passed" if test_result.get("success_rate", 0) >= 80 else "failed"
-                ),
+                "status": ("passed" if test_result.get("success_rate", 0) >= 80 else "failed"),
                 "passed": test_result.get("passed_tests", 0),
                 "total": test_result.get("total_tests", 0),
                 "success_rate": test_result.get("success_rate", 0),
@@ -989,9 +967,7 @@ class DefenseValidator:
         if "lint_configs" in detailed:
             lint_result = detailed["lint_configs"]
             summary["component_status"]["lint_configs"] = {
-                "status": (
-                    "passed" if lint_result.get("success_rate", 0) >= 80 else "failed"
-                ),
+                "status": ("passed" if lint_result.get("success_rate", 0) >= 80 else "failed"),
                 "valid": lint_result.get("valid_configs", 0),
                 "total": lint_result.get("total_configs", 0),
                 "success_rate": lint_result.get("success_rate", 0),
@@ -1009,11 +985,7 @@ class DefenseValidator:
         if "workflows" in detailed:
             workflow_result = detailed["workflows"]
             summary["component_status"]["workflows"] = {
-                "status": (
-                    "passed"
-                    if workflow_result.get("success_rate", 0) >= 80
-                    else "failed"
-                ),
+                "status": ("passed" if workflow_result.get("success_rate", 0) >= 80 else "failed"),
                 "valid": workflow_result.get("valid_workflows", 0),
                 "total": workflow_result.get("total_workflows", 0),
                 "success_rate": workflow_result.get("success_rate", 0),
@@ -1027,9 +999,9 @@ class DefenseValidator:
                 "coverage_rate": effectiveness_result.get("issue_coverage", {}).get(
                     "coverage_rate", 0
                 ),
-                "reproducible_issues": effectiveness_result.get(
-                    "test_reproduction", {}
-                ).get("reproducible_issues", 0),
+                "reproducible_issues": effectiveness_result.get("test_reproduction", {}).get(
+                    "reproducible_issues", 0
+                ),
             }
 
         return summary
@@ -1100,25 +1072,17 @@ def main(
             except Exception as e:
                 click.echo(f"⚠️ 读取问题文件失败: {e}")
 
-    click.echo(
-        f"📋 验证 {sum(len(files) for files in defenses.values())} 个防御机制文件"
-    )
+    click.echo(f"📋 验证 {sum(len(files) for files in defenses.values())} 个防御机制文件")
 
     # 根据选项执行特定验证
     if tests_only:
-        test_results = validator.test_validator.validate_test_files(
-            defenses.get("test_files", [])
-        )
-        click.echo(
-            f"📊 测试验证结果: {test_results.get('success_rate', 0):.1f}% 通过率"
-        )
+        test_results = validator.test_validator.validate_test_files(defenses.get("test_files", []))
+        click.echo(f"📊 测试验证结果: {test_results.get('success_rate', 0):.1f}% 通过率")
     elif configs_only:
         lint_results = validator.lint_validator.validate_lint_configs(
             defenses.get("lint_configs", [])
         )
-        click.echo(
-            f"📊 配置验证结果: {lint_results.get('success_rate', 0):.1f}% 有效率"
-        )
+        click.echo(f"📊 配置验证结果: {lint_results.get('success_rate', 0):.1f}% 有效率")
     elif effectiveness_only:
         if original_issues:
             effectiveness_results = (

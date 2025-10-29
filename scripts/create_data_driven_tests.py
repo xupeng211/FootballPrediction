@@ -17,138 +17,141 @@ class DataDrivenTestGenerator:
 
     def __init__(self):
         # 加载覆盖率分析结果
-        with open("coverage_analysis_report.json", 'r', encoding='utf-8') as f:
+        with open("coverage_analysis_report.json", "r", encoding="utf-8") as f:
             self.analysis_data = json.load(f)
 
-        self.high_priority_modules = self.analysis_data['strategy']['high_priority_modules']
+        self.high_priority_modules = self.analysis_data["strategy"]["high_priority_modules"]
         self.test_data_templates = self._create_test_data_templates()
         self.business_scenarios = self._create_business_scenarios()
 
     def _create_test_data_templates(self) -> Dict[str, Dict]:
         """创建测试数据模板"""
         return {
-            'football_match': {
-                'home_team': 'Manchester United',
-                'away_team': 'Liverpool',
-                'home_score': 2,
-                'away_score': 1,
-                'match_date': '2024-01-15',
-                'league': 'Premier League',
-                'season': '2023-2024',
-                'venue': 'Old Trafford',
-                'attendance': 75000,
-                'weather': 'Clear',
-                'temperature': 15.5
+            "football_match": {
+                "home_team": "Manchester United",
+                "away_team": "Liverpool",
+                "home_score": 2,
+                "away_score": 1,
+                "match_date": "2024-01-15",
+                "league": "Premier League",
+                "season": "2023-2024",
+                "venue": "Old Trafford",
+                "attendance": 75000,
+                "weather": "Clear",
+                "temperature": 15.5,
             },
-            'prediction_data': {
-                'match_id': 12345,
-                'home_win_prob': 0.65,
-                'draw_prob': 0.25,
-                'away_win_prob': 0.10,
-                'predicted_home_goals': 2.1,
-                'predicted_away_goals': 0.8,
-                'confidence': 0.85,
-                'model_version': 'v2.1',
-                'created_at': '2024-01-15T10:30:00Z'
+            "prediction_data": {
+                "match_id": 12345,
+                "home_win_prob": 0.65,
+                "draw_prob": 0.25,
+                "away_win_prob": 0.10,
+                "predicted_home_goals": 2.1,
+                "predicted_away_goals": 0.8,
+                "confidence": 0.85,
+                "model_version": "v2.1",
+                "created_at": "2024-01-15T10:30:00Z",
             },
-            'odds_data': {
-                'match_id': 12345,
-                'home_win_odds': 1.85,
-                'draw_odds': 3.60,
-                'away_win_odds': 4.20,
-                'over_2_5_odds': 1.75,
-                'under_2_5_odds': 2.10,
-                'bookmaker': 'Bet365',
-                'updated_at': '2024-01-15T09:00:00Z'
+            "odds_data": {
+                "match_id": 12345,
+                "home_win_odds": 1.85,
+                "draw_odds": 3.60,
+                "away_win_odds": 4.20,
+                "over_2_5_odds": 1.75,
+                "under_2_5_odds": 2.10,
+                "bookmaker": "Bet365",
+                "updated_at": "2024-01-15T09:00:00Z",
             },
-            'team_stats': {
-                'team_id': 1,
-                'team_name': 'Manchester United',
-                'matches_played': 25,
-                'wins': 15,
-                'draws': 6,
-                'losses': 4,
-                'goals_for': 42,
-                'goals_against': 18,
-                'points': 51,
-                'league_position': 3,
-                'form': 'WWDLW'
+            "team_stats": {
+                "team_id": 1,
+                "team_name": "Manchester United",
+                "matches_played": 25,
+                "wins": 15,
+                "draws": 6,
+                "losses": 4,
+                "goals_for": 42,
+                "goals_against": 18,
+                "points": 51,
+                "league_position": 3,
+                "form": "WWDLW",
             },
-            'user_data': {
-                'user_id': 1001,
-                'username': 'john_doe',
-                'email': 'john@example.com',
-                'subscription_type': 'premium',
-                'predictions_made': 150,
-                'success_rate': 0.68,
-                'created_at': '2023-06-01T12:00:00Z',
-                'last_login': '2024-01-15T08:30:00Z'
-            }
+            "user_data": {
+                "user_id": 1001,
+                "username": "john_doe",
+                "email": "john@example.com",
+                "subscription_type": "premium",
+                "predictions_made": 150,
+                "success_rate": 0.68,
+                "created_at": "2023-06-01T12:00:00Z",
+                "last_login": "2024-01-15T08:30:00Z",
+            },
         }
 
     def _create_business_scenarios(self) -> Dict[str, List[Dict]]:
         """创建业务场景数据"""
         return {
-            'prediction_scenarios': [
+            "prediction_scenarios": [
                 {
-                    'name': 'high_confidence_prediction',
-                    'input': {'home_strength': 0.8, 'away_strength': 0.4},
-                    'expected_output': {'home_win_prob': '>0.7', 'confidence': '>0.8'}
+                    "name": "high_confidence_prediction",
+                    "input": {"home_strength": 0.8, "away_strength": 0.4},
+                    "expected_output": {"home_win_prob": ">0.7", "confidence": ">0.8"},
                 },
                 {
-                    'name': 'balanced_match',
-                    'input': {'home_strength': 0.6, 'away_strength': 0.55},
-                    'expected_output': {'home_win_prob': '0.4-0.6', 'confidence': '0.6-0.8'}
+                    "name": "balanced_match",
+                    "input": {"home_strength": 0.6, "away_strength": 0.55},
+                    "expected_output": {"home_win_prob": "0.4-0.6", "confidence": "0.6-0.8"},
                 },
                 {
-                    'name': 'underdog_prediction',
-                    'input': {'home_strength': 0.3, 'away_strength': 0.7},
-                    'expected_output': {'away_win_prob': '>0.6', 'confidence': '>0.7'}
-                }
+                    "name": "underdog_prediction",
+                    "input": {"home_strength": 0.3, "away_strength": 0.7},
+                    "expected_output": {"away_win_prob": ">0.6", "confidence": ">0.7"},
+                },
             ],
-            'strategy_scenarios': [
+            "strategy_scenarios": [
                 {
-                    'name': 'historical_performance',
-                    'input': {'team_form': 'WWWWW', 'h2h_record': 'WWLDW'},
-                    'expected_output': {'performance_score': '>0.7'}
+                    "name": "historical_performance",
+                    "input": {"team_form": "WWWWW", "h2h_record": "WWLDW"},
+                    "expected_output": {"performance_score": ">0.7"},
                 },
                 {
-                    'name': 'ensemble_prediction',
-                    'input': {'model_predictions': [0.6, 0.65, 0.58, 0.62]},
-                    'expected_output': {'final_prediction': '0.6-0.65'}
-                }
+                    "name": "ensemble_prediction",
+                    "input": {"model_predictions": [0.6, 0.65, 0.58, 0.62]},
+                    "expected_output": {"final_prediction": "0.6-0.65"},
+                },
             ],
-            'edge_cases': [
+            "edge_cases": [
                 {
-                    'name': 'new_team',
-                    'input': {'team_history': [], 'matches_played': 0},
-                    'expected_output': {'prediction': 'default_values', 'confidence': '<0.5'}
+                    "name": "new_team",
+                    "input": {"team_history": [], "matches_played": 0},
+                    "expected_output": {"prediction": "default_values", "confidence": "<0.5"},
                 },
                 {
-                    'name': 'missing_data',
-                    'input': {'partial_data': True, 'missing_fields': ['weather', 'attendance']},
-                    'expected_output': {'prediction': 'interpolated_values', 'confidence_reduced': True}
-                }
-            ]
+                    "name": "missing_data",
+                    "input": {"partial_data": True, "missing_fields": ["weather", "attendance"]},
+                    "expected_output": {
+                        "prediction": "interpolated_values",
+                        "confidence_reduced": True,
+                    },
+                },
+            ],
         }
 
     def generate_strategy_test(self, module_info: Dict) -> str:
         """为策略模块生成数据驱动测试"""
-        module_name = module_info['module']
-        class_name = module_name.split('.')[-1].title()
+        module_name = module_info["module"]
+        class_name = module_name.split(".")[-1].title()
 
         # 根据模块类型选择测试数据
-        if 'historical' in module_name:
-            test_data = self.test_data_templates['football_match']
-            scenarios = self.business_scenarios['strategy_scenarios']
-        elif 'ensemble' in module_name:
-            test_data = self.test_data_templates['prediction_data']
-            scenarios = self.business_scenarios['strategy_scenarios']
-        elif 'config' in module_name:
-            test_data = self.test_data_templates['team_stats']
+        if "historical" in module_name:
+            test_data = self.test_data_templates["football_match"]
+            scenarios = self.business_scenarios["strategy_scenarios"]
+        elif "ensemble" in module_name:
+            test_data = self.test_data_templates["prediction_data"]
+            scenarios = self.business_scenarios["strategy_scenarios"]
+        elif "config" in module_name:
+            test_data = self.test_data_templates["team_stats"]
             scenarios = []
         else:
-            test_data = self.test_data_templates['football_match']
+            test_data = self.test_data_templates["football_match"]
             scenarios = []
 
         template = f'''"""
@@ -452,8 +455,8 @@ class Test{class_name.replace('_', '')}DataDriven:
 
     def generate_repository_test(self, module_info: Dict) -> str:
         """为仓储模块生成数据驱动测试"""
-        module_name = module_info['module']
-        class_name = module_name.split('.')[-1].title()
+        module_name = module_info["module"]
+        class_name = module_name.split(".")[-1].title()
 
         template = f'''"""
 Issue #83-C 数据驱动测试: {module_name}
@@ -740,20 +743,20 @@ class Test{class_name.replace('_', '')}DataDriven:
 
     def generate_test_for_module(self, module_info: Dict) -> Tuple[str, str]:
         """为模块生成对应的测试"""
-        module_name = module_info['module']
+        module_name = module_info["module"]
 
-        if 'strategies' in module_name:
+        if "strategies" in module_name:
             test_content = self.generate_strategy_test(module_info)
-            category = 'domain'
-        elif 'repositories' in module_name:
+            category = "domain"
+        elif "repositories" in module_name:
             test_content = self.generate_repository_test(module_info)
-            category = 'database'
-        elif 'facades' in module_name or 'adapters' in module_name:
+            category = "database"
+        elif "facades" in module_name or "adapters" in module_name:
             test_content = self.generate_strategy_test(module_info)  # 复用策略测试模板
-            category = 'api'
+            category = "api"
         else:
             test_content = self.generate_strategy_test(module_info)  # 默认使用策略测试模板
-            category = 'general'
+            category = "general"
 
         # 生成测试文件路径
         test_dir = Path("tests/unit") / category
@@ -779,7 +782,7 @@ class Test{class_name.replace('_', '')}DataDriven:
                 test_file, test_content = self.generate_test_for_module(module_info)
 
                 # 写入测试文件
-                with open(test_file, 'w', encoding='utf-8') as f:
+                with open(test_file, "w", encoding="utf-8") as f:
                     f.write(test_content)
 
                 print(f"   ✅ 生成成功: {test_file}")
@@ -787,7 +790,7 @@ class Test{class_name.replace('_', '')}DataDriven:
 
             except Exception as e:
                 print(f"   ❌ 生成失败: {e}")
-                results.append((module_info['module'], False))
+                results.append((module_info["module"], False))
 
         print("=" * 60)
 
@@ -825,5 +828,6 @@ def main():
 
 if __name__ == "__main__":
     import sys
+
     success = main()
     sys.exit(0 if success else 1)

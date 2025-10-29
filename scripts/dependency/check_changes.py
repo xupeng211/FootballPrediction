@@ -17,9 +17,7 @@ def check_requirement_changes():
             text=True,
         )
 
-        changed_files = (
-            result.stdout.strip().split("\n") if result.stdout.strip() else []
-        )
+        changed_files = result.stdout.strip().split("\n") if result.stdout.strip() else []
 
         # 过滤出.in文件的变更
         in_files = [f for f in changed_files if f.endswith(".in")]
@@ -66,9 +64,7 @@ def check_python_imports():
             text=True,
         )
 
-        python_files = (
-            result.stdout.strip().split("\n") if result.stdout.strip() else []
-        )
+        python_files = result.stdout.strip().split("\n") if result.stdout.strip() else []
 
         new_imports = set()
 

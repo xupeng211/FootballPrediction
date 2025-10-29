@@ -16,13 +16,8 @@ def generate_test_report():
     report_data = {
         "timestamp": datetime.utcnow().isoformat(),
         "status": "completed",
-        "summary": {
-            "total": "N/A",
-            "passed": "N/A",
-            "failed": "N/A",
-            "skipped": "N/A"
-        },
-        "message": "Automated testing pipeline completed successfully"
+        "summary": {"total": "N/A", "passed": "N/A", "failed": "N/A", "skipped": "N/A"},
+        "message": "Automated testing pipeline completed successfully",
     }
 
     # 生成HTML报告

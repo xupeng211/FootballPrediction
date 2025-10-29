@@ -269,14 +269,10 @@ class DatabasePerformanceMiddleware:
         for query_type, data in self.query_stats.items():
             stats["query_types"][query_type] = {
                 "count": data["count"],
-                "average_time": (
-                    data["total_time"] / data["count"] if data["count"] > 0 else 0
-                ),
+                "average_time": (data["total_time"] / data["count"] if data["count"] > 0 else 0),
                 "total_time": data["total_time"],
                 "rows_total": data["rows_total"],
-                "error_rate": (
-                    data["error_count"] / data["count"] if data["count"] > 0 else 0
-                ),
+                "error_rate": (data["error_count"] / data["count"] if data["count"] > 0 else 0),
             }
 
         stats["slow_queries"] = self.slow_queries[-10:]  # 最近10个慢查询
@@ -322,9 +318,7 @@ class CachePerformanceMiddleware:
     def get_cache_stats(self) -> Dict:
         """获取缓存统计信息"""
         total_requests = self.cache_stats["hits"] + self.cache_stats["misses"]
-        hit_rate = (
-            self.cache_stats["hits"] / total_requests if total_requests > 0 else 0
-        )
+        hit_rate = self.cache_stats["hits"] / total_requests if total_requests > 0 else 0
 
         stats = {
             "hit_rate": hit_rate,
@@ -415,14 +409,10 @@ class BackgroundTaskPerformanceMonitor:
                 "success_count": data["success_count"],
                 "failure_count": data["failure_count"],
                 "success_rate": (
-                    data["success_count"] / data["total_count"]
-                    if data["total_count"] > 0
-                    else 0
+                    data["success_count"] / data["total_count"] if data["total_count"] > 0 else 0
                 ),
                 "average_time": (
-                    data["total_time"] / data["total_count"]
-                    if data["total_count"] > 0
-                    else 0
+                    data["total_time"] / data["total_count"] if data["total_count"] > 0 else 0
                 ),
                 "min_time": data["min_time"] if data["min_time"] != float("inf") else 0,
                 "max_time": data["max_time"],

@@ -60,9 +60,7 @@ def cache_by_user(user_id_param="user_id", user_param=None, ttl=None, prefix=Non
     return decorator
 
 
-def _make_cache_key(
-    func_or_name, args, kwargs, prefix=None, user_id=None, exclude_args=None
-):
+def _make_cache_key(func_or_name, args, kwargs, prefix=None, user_id=None, exclude_args=None):
     """智能Mock兼容修复模式 - 生成缓存键的辅助函数
 
     Args:

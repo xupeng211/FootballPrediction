@@ -178,9 +178,7 @@ def main():
 """
 
     os.makedirs("docs/_reports", exist_ok=True)
-    with open(
-        "docs/_reports/PHASE6_2_MOCK_SYSTEM_REPORT.md", "w", encoding="utf-8"
-    ) as f:
+    with open("docs/_reports/PHASE6_2_MOCK_SYSTEM_REPORT.md", "w", encoding="utf-8") as f:
         f.write(report)
 
     print("\n📄 报告已保存: docs/_reports/PHASE6_2_MOCK_SYSTEM_REPORT.md")

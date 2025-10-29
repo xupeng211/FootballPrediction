@@ -13,6 +13,7 @@ import httpx
 from sqlalchemy import text
 from src.database.connection import get_async_session
 
+
 class DatabaseIntegrator:
     """数据库集成器"""
 
@@ -28,7 +29,7 @@ class DatabaseIntegrator:
             "success": success,
             "details": details,
             "duration": duration,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
         self.test_results.append(result)
 
@@ -72,7 +73,7 @@ class DatabaseIntegrator:
             ("leagues", "联赛表"),
             ("matches", "比赛表"),
             ("predictions", "预测表"),
-            ("users", "用户表")
+            ("users", "用户表"),
         ]
 
         existing_data = {}
@@ -133,7 +134,9 @@ class DatabaseIntegrator:
                     await self.create_prediction_data(session)
 
                 await session.commit()
-                self.log_test("示例数据创建", True, f"成功创建 {len(tables_needing_data)} 个表的数据")
+                self.log_test(
+                    "示例数据创建", True, f"成功创建 {len(tables_needing_data)} 个表的数据"
+                )
                 return True
 
         except Exception as e:
@@ -147,16 +150,18 @@ class DatabaseIntegrator:
             {"name": "西甲联赛", "country": "西班牙", "season": "2024-25"},
             {"name": "德甲联赛", "country": "德国", "season": "2024-25"},
             {"name": "意甲联赛", "country": "意大利", "season": "2024-25"},
-            {"name": "法甲联赛", "country": "法国", "season": "2024-25"}
+            {"name": "法甲联赛", "country": "法国", "season": "2024-25"},
         ]
 
         for league in leagues:
             await session.execute(
-                text("""
+                text(
+                    """
                     INSERT INTO leagues (name, country, season, created_at)
                     VALUES (:name, :country, :season, NOW())
-                """),
-                league
+                """
+                ),
+                league,
             )
 
     async def create_team_data(self, session):
@@ -171,16 +176,18 @@ class DatabaseIntegrator:
             {"name": "巴塞罗那", "short_name": "BAR", "country": "西班牙", "league_id": 2},
             {"name": "拜仁慕尼黑", "short_name": "FCB", "country": "德国", "league_id": 3},
             {"name": "尤文图斯", "short_name": "JUV", "country": "意大利", "league_id": 4},
-            {"name": "巴黎圣日耳曼", "short_name": "PSG", "country": "法国", "league_id": 5}
+            {"name": "巴黎圣日耳曼", "short_name": "PSG", "country": "法国", "league_id": 5},
         ]
 
         for team in teams:
             await session.execute(
-                text("""
+                text(
+                    """
                     INSERT INTO teams (name, short_name, country, league_id, created_at)
                     VALUES (:name, :short_name, :country, :league_id, NOW())
-                """),
-                team
+                """
+                ),
+                team,
             )
 
     async def create_match_data(self, session):
@@ -190,7 +197,7 @@ class DatabaseIntegrator:
 
         # 创建未来两周的比赛
         for i in range(20):  # 创建20场比赛
-            match_date = current_date + timedelta(days=i*2, hours=random.randint(18, 21))
+            match_date = current_date + timedelta(days=i * 2, hours=random.randint(18, 21))
 
             # 随机选择球队
             home_team_id = random.randint(1, 10)
@@ -198,21 +205,25 @@ class DatabaseIntegrator:
             while away_team_id == home_team_id:
                 away_team_id = random.randint(1, 10)
 
-            matches.append({
-                "home_team_id": home_team_id,
-                "away_team_id": away_team_id,
-                "league_id": random.randint(1, 5),
-                "match_date": match_date,
-                "status": "pending"
-            })
+            matches.append(
+                {
+                    "home_team_id": home_team_id,
+                    "away_team_id": away_team_id,
+                    "league_id": random.randint(1, 5),
+                    "match_date": match_date,
+                    "status": "pending",
+                }
+            )
 
         for match in matches:
             await session.execute(
-                text("""
+                text(
+                    """
                     INSERT INTO matches (home_team_id, away_team_id, league_id, match_date, status, created_at)
                     VALUES (:home_team_id, :away_team_id, :league_id, :match_date, :status, NOW())
-                """),
-                match
+                """
+                ),
+                match,
             )
 
     async def create_prediction_data(self, session):
@@ -226,25 +237,29 @@ class DatabaseIntegrator:
             draw_prob = round(random.uniform(0.2, 0.4), 2)
             away_win_prob = round(1.0 - home_win_prob - draw_prob, 2)
 
-            predictions.append({
-                "match_id": match_id,
-                "home_win_prob": home_win_prob,
-                "draw_prob": draw_prob,
-                "away_win_prob": away_win_prob,
-                "predicted_outcome": random.choice(["home", "draw", "away"]),
-                "confidence": round(random.uniform(0.6, 0.9), 2),
-                "model_version": "v1.0"
-            })
+            predictions.append(
+                {
+                    "match_id": match_id,
+                    "home_win_prob": home_win_prob,
+                    "draw_prob": draw_prob,
+                    "away_win_prob": away_win_prob,
+                    "predicted_outcome": random.choice(["home", "draw", "away"]),
+                    "confidence": round(random.uniform(0.6, 0.9), 2),
+                    "model_version": "v1.0",
+                }
+            )
 
         for prediction in predictions:
             await session.execute(
-                text("""
+                text(
+                    """
                     INSERT INTO predictions (match_id, home_win_prob, draw_prob, away_win_prob,
                                            predicted_outcome, confidence, model_version, created_at)
                     VALUES (:match_id, :home_win_prob, :draw_prob, :away_win_prob,
                            :predicted_outcome, :confidence, :model_version, NOW())
-                """),
-                prediction
+                """
+                ),
+                prediction,
             )
 
     async def test_data_apis_with_real_data(self):
@@ -255,7 +270,7 @@ class DatabaseIntegrator:
             ("球队数据API", "/api/v1/data/teams"),
             ("联赛数据API", "/api/v1/data/leagues"),
             ("比赛数据API", "/api/v1/data/matches"),
-            ("赔率数据API", "/api/v1/data/odds")
+            ("赔率数据API", "/api/v1/data/odds"),
         ]
 
         success_count = 0
@@ -278,14 +293,31 @@ class DatabaseIntegrator:
                             is_real_data = self.check_if_real_data(sample_item, name)
 
                             if is_real_data:
-                                self.log_test(name, True, f"HTTP {response.status_code}, 真实数据: {len(data)}条", duration)
+                                self.log_test(
+                                    name,
+                                    True,
+                                    f"HTTP {response.status_code}, 真实数据: {len(data)}条",
+                                    duration,
+                                )
                                 success_count += 1
                             else:
-                                self.log_test(name, False, f"HTTP {response.status_code}, 仍为TODO假数据", duration)
+                                self.log_test(
+                                    name,
+                                    False,
+                                    f"HTTP {response.status_code}, 仍为TODO假数据",
+                                    duration,
+                                )
                         else:
-                            self.log_test(name, False, f"HTTP {response.status_code}, 无数据返回", duration)
+                            self.log_test(
+                                name, False, f"HTTP {response.status_code}, 无数据返回", duration
+                            )
                     else:
-                        self.log_test(name, False, f"HTTP {response.status_code}: {response.text[:100]}", duration)
+                        self.log_test(
+                            name,
+                            False,
+                            f"HTTP {response.status_code}: {response.text[:100]}",
+                            duration,
+                        )
             except Exception as e:
                 duration = time.time() - start_time
                 self.log_test(name, False, f"连接错误: {str(e)}", duration)
@@ -300,8 +332,15 @@ class DatabaseIntegrator:
 
         # 检查常见的TODO假数据特征
         todo_indicators = [
-            "Team 1", "Team 2", "League 1", "Country", "Country1",
-            "Home Team", "Away Team", "Bookmaker1", "default"
+            "Team 1",
+            "Team 2",
+            "League 1",
+            "Country",
+            "Country1",
+            "Home Team",
+            "Away Team",
+            "Bookmaker1",
+            "default",
         ]
 
         for indicator in todo_indicators:
@@ -321,7 +360,7 @@ class DatabaseIntegrator:
         optimization_tasks = [
             ("数据完整性检查", self.check_data_integrity),
             ("数据一致性验证", self.check_data_consistency),
-            ("性能优化", self.optimize_query_performance)
+            ("性能优化", self.optimize_query_performance),
         ]
 
         completed_tasks = 0
@@ -345,13 +384,17 @@ class DatabaseIntegrator:
         try:
             async with get_async_session() as session:
                 # 检查外键完整性
-                result = await session.execute(text("""
+                result = await session.execute(
+                    text(
+                        """
                     SELECT COUNT(*) as invalid_matches
                     FROM matches m
                     LEFT JOIN teams ht ON m.home_team_id = ht.id
                     LEFT JOIN teams at ON m.away_team_id = at.id
                     WHERE ht.id IS NULL OR at.id IS NULL
-                """))
+                """
+                    )
+                )
                 invalid_matches = result.fetchone()[0]
 
                 if invalid_matches == 0:
@@ -368,12 +411,16 @@ class DatabaseIntegrator:
         try:
             async with get_async_session() as session:
                 # 检查预测数据与比赛数据的一致性
-                result = await session.execute(text("""
+                result = await session.execute(
+                    text(
+                        """
                     SELECT COUNT(*) as orphaned_predictions
                     FROM predictions p
                     LEFT JOIN matches m ON p.match_id = m.id
                     WHERE m.id IS NULL
-                """))
+                """
+                    )
+                )
                 orphaned_predictions = result.fetchone()[0]
 
                 if orphaned_predictions == 0:
@@ -391,12 +438,16 @@ class DatabaseIntegrator:
             async with get_async_session() as session:
                 # 测试关键查询性能
                 start_time = time.time()
-                result = await session.execute(text("""
+                result = await session.execute(
+                    text(
+                        """
                     SELECT t.name, l.name as league_name
                     FROM teams t
                     JOIN leagues l ON t.league_id = l.id
                     LIMIT 10
-                """))
+                """
+                    )
+                )
                 teams = result.fetchall()
                 duration = time.time() - start_time
 
@@ -422,7 +473,9 @@ class DatabaseIntegrator:
         # 执行集成步骤
         integration_results["db_connection"] = await self.test_database_connection()
         existing_data, total_records = await self.check_existing_data()
-        integration_results["data_creation"] = await self.create_sample_data_if_needed(existing_data)
+        integration_results["data_creation"] = await self.create_sample_data_if_needed(
+            existing_data
+        )
         integration_results["api_testing"] = await self.test_data_apis_with_real_data()
         integration_results["quality_optimization"] = await self.optimize_data_quality()
 
@@ -452,7 +505,7 @@ class DatabaseIntegrator:
             ("数据库连接", results["db_connection"]),
             ("数据创建", results["data_creation"]),
             ("API测试", results["api_testing"]),
-            ("质量优化", results["quality_optimization"])
+            ("质量优化", results["quality_optimization"]),
         ]
 
         completed_steps = 0
@@ -514,10 +567,12 @@ class DatabaseIntegrator:
         print(f"   集成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("=" * 60)
 
+
 async def main():
     """主函数"""
     integrator = DatabaseIntegrator()
     await integrator.run_database_integration()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

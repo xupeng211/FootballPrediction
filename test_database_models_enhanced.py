@@ -9,7 +9,8 @@ import sys
 from datetime import datetime
 
 # 添加项目根目录到Python路径
-sys.path.insert(0, '.')
+sys.path.insert(0, ".")
+
 
 class TestDatabaseModelsEnhanced:
     """增强的数据库模型测试类"""
@@ -24,15 +25,15 @@ class TestDatabaseModelsEnhanced:
             assert league is not None
 
             # 测试基本属性
-            if hasattr(league, 'id'):
+            if hasattr(league, "id"):
                 assert league.id is None or isinstance(league.id, int)
-            if hasattr(league, 'name'):
+            if hasattr(league, "name"):
                 assert league.name is None or isinstance(league.name, str)
-            if hasattr(league, 'created_at'):
+            if hasattr(league, "created_at"):
                 assert league.created_at is None or isinstance(league.created_at, datetime)
 
             # 测试方法
-            if hasattr(league, '__repr__'):
+            if hasattr(league, "__repr__"):
                 repr_str = league.__repr__()
                 assert isinstance(repr_str, str)
 
@@ -47,10 +48,10 @@ class TestDatabaseModelsEnhanced:
             league = League()
 
             # 测试验证方法
-            if hasattr(league, 'validate'):
+            if hasattr(league, "validate"):
                 result = league.validate()
                 assert isinstance(result, bool)
-            elif hasattr(league, 'is_valid'):
+            elif hasattr(league, "is_valid"):
                 result = league.is_valid()
                 assert isinstance(result, bool)
 
@@ -65,13 +66,13 @@ class TestDatabaseModelsEnhanced:
             league = League()
 
             # 测试关系方法
-            if hasattr(league, 'get_teams'):
+            if hasattr(league, "get_teams"):
                 teams = league.get_teams()
                 assert isinstance(teams, list)
-            elif hasattr(league, 'teams'):
+            elif hasattr(league, "teams"):
                 # 如果有teams属性，检查其类型
                 if league.teams is not None:
-                    assert hasattr(league.teams, '__iter__')
+                    assert hasattr(league.teams, "__iter__")
 
         except ImportError:
             pytest.skip("League model not available")
@@ -84,10 +85,10 @@ class TestDatabaseModelsEnhanced:
             league = League()
 
             # 测试序列化方法
-            if hasattr(league, 'to_dict'):
+            if hasattr(league, "to_dict"):
                 data = league.to_dict()
                 assert isinstance(data, dict)
-            elif hasattr(league, 'serialize'):
+            elif hasattr(league, "serialize"):
                 data = league.serialize()
                 assert isinstance(data, (dict, str))
 
@@ -102,10 +103,10 @@ class TestDatabaseModelsEnhanced:
             league = League()
 
             # 测试业务逻辑方法
-            if hasattr(league, 'is_active'):
+            if hasattr(league, "is_active"):
                 is_active = league.is_active()
                 assert isinstance(is_active, bool)
-            elif hasattr(league, 'active'):
+            elif hasattr(league, "active"):
                 # 如果有active属性，测试其类型
                 if league.active is not None:
                     assert isinstance(league.active, bool)
@@ -119,10 +120,10 @@ class TestDatabaseModelsEnhanced:
             from src.database.models.league import League
 
             # 测试类方法
-            if hasattr(League, 'find_by_name'):
+            if hasattr(League, "find_by_name"):
                 league = League.find_by_name("Test League")
                 assert league is None or isinstance(league, League)
-            elif hasattr(League, 'get_by_name'):
+            elif hasattr(League, "get_by_name"):
                 league = League.get_by_name("Test League")
                 assert league is None or isinstance(league, League)
 
@@ -137,15 +138,16 @@ class TestDatabaseModelsEnhanced:
             league = League()
 
             # 测试更新方法
-            if hasattr(league, 'update'):
-                league.update({'name': 'Updated League'})
+            if hasattr(league, "update"):
+                league.update({"name": "Updated League"})
                 assert True
-            elif hasattr(league, 'save'):
+            elif hasattr(league, "save"):
                 league.save()
                 assert True
 
         except ImportError:
             pytest.skip("League model not available")
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

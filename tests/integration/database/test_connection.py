@@ -45,18 +45,14 @@ class TestDatabaseConnection:
             await db_session.flush()  # 获取 ID
 
             # 验证数据已插入
-            _result = await db_session.execute(
-                select(Team).where(Team.name == "Rollback Team")
-            )
+            _result = await db_session.execute(select(Team).where(Team.name == "Rollback Team"))
             assert result.scalar_one_or_none() is not None
 
             # 故意抛出异常触发回滚
             raise Exception("Trigger rollback")
 
         # 验证数据已被回滚
-        _result = await db_session.execute(
-            select(Team).where(Team.name == "Rollback Team")
-        )
+        _result = await db_session.execute(select(Team).where(Team.name == "Rollback Team"))
         assert result.scalar_one_or_none() is None
 
     @pytest.mark.asyncio
@@ -70,9 +66,7 @@ class TestDatabaseConnection:
             db_session.add(team)
 
         # 验证数据已提交
-        _result = await db_session.execute(
-            select(Team).where(Team.name == "Commit Team")
-        )
+        _result = await db_session.execute(select(Team).where(Team.name == "Commit Team"))
         saved_team = result.scalar_one_or_none()
         assert saved_team is not None
         assert saved_team.city == "Commit City"
@@ -97,15 +91,11 @@ class TestDatabaseConnection:
                 pass  # 内层回滚
 
             # 验证外层数据仍在
-            _result = await db_session.execute(
-                select(Team).where(Team.name == "Outer Team")
-            )
+            _result = await db_session.execute(select(Team).where(Team.name == "Outer Team"))
             assert result.scalar_one_or_none() is not None
 
         # 验证内层数据被回滚
-        _result = await db_session.execute(
-            select(Team).where(Team.name == "Inner Team")
-        )
+        _result = await db_session.execute(select(Team).where(Team.name == "Inner Team"))
         assert result.scalar_one_or_none() is None
 
     @pytest.mark.asyncio
@@ -139,9 +129,7 @@ class TestDatabaseConnection:
         # 批量插入
         _teams = []
         for i in range(100):
-            team = Team(
-                name=f"Batch Team {i}", city=f"Batch City {i}", founded=2000 + i
-            )
+            team = Team(name=f"Batch Team {i}", city=f"Batch City {i}", founded=2000 + i)
             teams.append(team)
 
         db_session.add_all(teams)
@@ -168,9 +156,7 @@ class TestDatabaseConnection:
         assert count == 100
 
         # 批量删除
-        await db_session.execute(
-            text("DELETE FROM teams WHERE name LIKE 'Batch Team%'")
-        )
+        await db_session.execute(text("DELETE FROM teams WHERE name LIKE 'Batch Team%'"))
         await db_session.commit()
 
         # 验证批量删除
@@ -361,8 +347,6 @@ class TestDatabaseConnection:
         await db_session.rollback()
 
         # 验证只有第一个队伍存在
-        _result = await db_session.execute(
-            select(Team).where(Team.name == "Unique Team")
-        )
+        _result = await db_session.execute(select(Team).where(Team.name == "Unique Team"))
         _teams = result.scalars().all()
         assert len(teams) == 1

@@ -104,9 +104,7 @@ def main():
     print(f"开始扫描和修复 {target_directory} 目录下的导入语句缩进问题...")
     print("=" * 80)
 
-    total_files, fixed_files, fixed_files_list = fix_all_import_indentations(
-        target_directory
-    )
+    total_files, fixed_files, fixed_files_list = fix_all_import_indentations(target_directory)
 
     print("=" * 80)
     print("扫描完成!")

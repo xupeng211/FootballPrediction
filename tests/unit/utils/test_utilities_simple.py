@@ -30,12 +30,7 @@ import json
 import os
 import re
 import tempfile
-from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
-from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
-from unittest.mock import AsyncMock, MagicMock, Mock, create_autospec, patch
 
 import pytest
 
@@ -285,11 +280,7 @@ class MockPerformanceUtils:
                     except Exception as e:
                         last_exception = e
                         if attempt < max_attempts - 1:
-                            (
-                                asyncio.sleep(delay)
-                                if asyncio.iscoroutinefunction(func)
-                                else None
-                            )
+                            (asyncio.sleep(delay) if asyncio.iscoroutinefunction(func) else None)
 
                 raise last_exception
 
@@ -330,9 +321,7 @@ class TestUtilsSimple:
     def test_string_clean_special_chars_success(self) -> None:
         """✅ 成功用例：清理特殊字符成功"""
         text_with_special = "Hello@#World$%^"
-        cleaned = MockStringUtils.clean_string(
-            text_with_special, remove_special_chars=True
-        )
+        cleaned = MockStringUtils.clean_string(text_with_special, remove_special_chars=True)
 
         assert cleaned == "HelloWorld"
 

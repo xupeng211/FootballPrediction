@@ -139,9 +139,7 @@ def refactor_other_files():
 
             if "# TODO: 此文件过长，需要重构" not in content:
                 lines = content.split("\n")
-                lines.insert(
-                    0, f"# TODO: 此文件过长（{line_count}行），需要拆分为更小的模块"
-                )
+                lines.insert(0, f"# TODO: 此文件过长（{line_count}行），需要拆分为更小的模块")
                 lines.insert(
                     1,
                     f"# TODO: This file is too long ({line_count} lines), needs to be split into smaller modules",

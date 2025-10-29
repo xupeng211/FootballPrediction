@@ -7,10 +7,8 @@ import asyncio
 import logging
 import os
 import sys
-import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, AsyncGenerator, Dict
 
 import pytest
 
@@ -52,9 +50,7 @@ async def api_client():
     client = AsyncClient(base_url=api_base, timeout=60.0, follow_redirects=True)
 
     # 等待服务就绪
-    @retry(
-        stop=stop_after_attempt(30), wait=wait_exponential(multiplier=1, min=4, max=10)
-    )
+    @retry(stop=stop_after_attempt(30), wait=wait_exponential(multiplier=1, min=4, max=10))
     async def wait_for_api():
         try:
             response = await client.get("/health")
@@ -109,9 +105,7 @@ async def auth_tokens(api_client) -> Dict[str, str]:
     }
 
     try:
-        await api_client.post(
-            "/api/v1/auth/register", json={**admin_data, "role": "admin"}
-        )
+        await api_client.post("/api/v1/auth/register", json={**admin_data, "role": "admin"})
     except Exception:
         pass
 
@@ -133,9 +127,7 @@ async def auth_tokens(api_client) -> Dict[str, str]:
     }
 
     try:
-        await api_client.post(
-            "/api/v1/auth/register", json={**analyst_data, "role": "analyst"}
-        )
+        await api_client.post("/api/v1/auth/register", json={**analyst_data, "role": "analyst"})
     except Exception:
         pass
 
@@ -195,9 +187,7 @@ async def test_data_loader(api_client, auth_tokens):
             self.created_data["teams"] = []
 
             for team_data in teams_data:
-                response = await self.client.post(
-                    "/api/v1/teams", json=team_data, headers=headers
-                )
+                response = await self.client.post("/api/v1/teams", json=team_data, headers=headers)
                 if response.status_code == 201:
                     self.created_data["teams"].append(response.json())
                     logger.info(f"✅ 创建队伍: {team_data['name']}")
@@ -233,9 +223,7 @@ async def test_data_loader(api_client, auth_tokens):
                 {
                     "home_team_id": self.created_data["teams"][0]["id"],
                     "away_team_id": self.created_data["teams"][1]["id"],
-                    "match_date": (
-                        datetime.now(timezone.utc) + timedelta(days=1)
-                    ).isoformat(),
+                    "match_date": (datetime.now(timezone.utc) + timedelta(days=1)).isoformat(),
                     "competition": "E2E Premier League",
                     "season": "2024/2025",
                     "status": "UPCOMING",
@@ -244,9 +232,7 @@ async def test_data_loader(api_client, auth_tokens):
                 {
                     "home_team_id": self.created_data["teams"][2]["id"],
                     "away_team_id": self.created_data["teams"][3]["id"],
-                    "match_date": (
-                        datetime.now(timezone.utc) + timedelta(days=2)
-                    ).isoformat(),
+                    "match_date": (datetime.now(timezone.utc) + timedelta(days=2)).isoformat(),
                     "competition": "E2E Premier League",
                     "season": "2024/2025",
                     "status": "UPCOMING",
@@ -255,9 +241,7 @@ async def test_data_loader(api_client, auth_tokens):
                 {
                     "home_team_id": self.created_data["teams"][4]["id"],
                     "away_team_id": self.created_data["teams"][5]["id"],
-                    "match_date": (
-                        datetime.now(timezone.utc) - timedelta(days=1)
-                    ).isoformat(),
+                    "match_date": (datetime.now(timezone.utc) - timedelta(days=1)).isoformat(),
                     "competition": "E2E Premier League",
                     "season": "2024/2025",
                     "status": "COMPLETED",
@@ -323,7 +307,6 @@ async def test_data_loader(api_client, auth_tokens):
 async def websocket_client():
     """WebSocket 客户端 fixture"""
     try:
-        import json
 
         import websockets
 

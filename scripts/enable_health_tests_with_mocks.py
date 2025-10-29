@@ -120,10 +120,7 @@ class TestHealthChecker:
 
     # 添加 pytest import（如果不存在）
     if "import pytest" not in content and "from unittest" in content:
-        content = (
-            "import pytest\nfrom unittest.mock import Mock, AsyncMock, patch\n"
-            + content
-        )
+        content = "import pytest\nfrom unittest.mock import Mock, AsyncMock, patch\n" + content
 
     with open(file_path, "w", encoding="utf-8") as f:
         f.write(content)
@@ -197,9 +194,7 @@ def test_results():
     for test_file in test_files:
         if os.path.exists(test_file):
             cmd = ["pytest", test_file, "-v", "--disable-warnings", "--tb=no"]
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=120, env=env
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=120, env=env)
             output = result.stdout + result.stderr
 
             passed = output.count("PASSED")

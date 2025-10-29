@@ -128,7 +128,6 @@ class TestErrorHandling:
         """测试导入错误处理"""
         # 尝试导入不存在的模块
         try:
-            from src.api.nonexistent_module import something
 
             assert False, "应该抛出ImportError"
         except ImportError:

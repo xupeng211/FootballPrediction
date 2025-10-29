@@ -6,7 +6,6 @@ Minimal pytest configuration for Stage 1 testing
 import os
 import sys
 import warnings
-from typing import Any, Generator
 
 import pytest
 

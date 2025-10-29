@@ -40,9 +40,7 @@ class ImprovedSyntaxFixer:
         # 类定义
         content = re.sub(r"(class\s+\w+\([^)]*\))\s*\n", r"\1:\n", content)
         # 函数定义
-        content = re.sub(
-            r"(def\s+\w+\([^)]*\)(?:\s*->\s*[^:]+)?)\s*\n", r"\1:\n", content
-        )
+        content = re.sub(r"(def\s+\w+\([^)]*\)(?:\s*->\s*[^:]+)?)\s*\n", r"\1:\n", content)
         # try/except/finally
         content = re.sub(
             r"\b(try|except|finally|else|elif|if|for|while|with)\b\s*([^\n:])",
@@ -79,10 +77,7 @@ class ImprovedSyntaxFixer:
             stripped = line.strip()
             if stripped and not stripped.startswith("#"):
                 # 确保基本缩进正确
-                if any(
-                    stripped.startswith(kw)
-                    for kw in ["except", "elif:", "else:", "finally:"]
-                ):
+                if any(stripped.startswith(kw) for kw in ["except", "elif:", "else:", "finally:"]):
                     if not line.startswith("    ") and not line.startswith("\t"):
                         lines[i] = "    " + line
 
@@ -147,9 +142,7 @@ class ImprovedSyntaxFixer:
             priority_files.extend(list(self.src_dir.glob(pattern)))
 
         # 去重并添加其他文件
-        all_files = priority_files + [
-            f for f in python_files if f not in priority_files
-        ]
+        all_files = priority_files + [f for f in python_files if f not in priority_files]
 
         # 限制文件数量
         files_to_fix = all_files[:max_files]

@@ -10,6 +10,7 @@ import importlib
 import subprocess
 from pathlib import Path
 
+
 def run_command(cmd, description=""):
     """运行命令并返回结果"""
     print(f"🔧 {description}")
@@ -23,14 +24,15 @@ def run_command(cmd, description=""):
     except Exception as e:
         return False, "", str(e)
 
+
 def check_migration_imports():
     """检查所有迁移文件的导入"""
     print("📋 检查迁移文件导入")
 
     # 添加src目录到Python路径
-    sys.path.insert(0, 'src')
+    sys.path.insert(0, "src")
 
-    migration_dir = Path('src/database/migrations/versions')
+    migration_dir = Path("src/database/migrations/versions")
     if not migration_dir.exists():
         print("   ❌ 迁移目录不存在")
         return False
@@ -38,8 +40,8 @@ def check_migration_imports():
     error_files = []
     total_files = 0
 
-    for py_file in migration_dir.glob('*.py'):
-        if py_file.name == '__init__.py':
+    for py_file in migration_dir.glob("*.py"):
+        if py_file.name == "__init__.py":
             continue
 
         total_files += 1
@@ -47,7 +49,7 @@ def check_migration_imports():
 
         try:
             # 尝试导入模块
-            importlib.import_module(f'database.migrations.versions.{module_name}')
+            importlib.import_module(f"database.migrations.versions.{module_name}")
             print(f"   ✅ {module_name}")
         except Exception as e:
             print(f"   ❌ {module_name}: {e}")
@@ -63,15 +65,13 @@ def check_migration_imports():
 
     return True
 
+
 def check_alembic_status():
     """检查Alembic状态"""
     print("\n🔧 检查Alembic状态")
 
     # 检查当前版本
-    success, stdout, stderr = run_command(
-        "python -m alembic current",
-        "检查当前数据库版本"
-    )
+    success, stdout, stderr = run_command("python -m alembic current", "检查当前数据库版本")
 
     if success:
         print("   ✅ Alembic连接正常")
@@ -84,13 +84,10 @@ def check_alembic_status():
         return False
 
     # 检查迁移历史
-    success, stdout, stderr = run_command(
-        "python -m alembic history",
-        "检查迁移历史"
-    )
+    success, stdout, stderr = run_command("python -m alembic history", "检查迁移历史")
 
     if success:
-        migration_lines = [line for line in stdout.strip().split('\n') if line.strip()]
+        migration_lines = [line for line in stdout.strip().split("\n") if line.strip()]
         print(f"   ✅ 迁移历史完整 ({len(migration_lines)} 个记录)")
     else:
         print(f"   ❌ 迁移历史检查失败: {stderr}")
@@ -98,15 +95,13 @@ def check_alembic_status():
 
     return True
 
+
 def test_migration_execution():
     """测试迁移执行"""
     print("\n🔨 测试迁移执行")
 
     # 使用make命令测试迁移
-    success, stdout, stderr = run_command(
-        "make db-migrate",
-        "执行数据库迁移"
-    )
+    success, stdout, stderr = run_command("make db-migrate", "执行数据库迁移")
 
     if success:
         print("   ✅ 数据库迁移执行成功")
@@ -117,21 +112,22 @@ def test_migration_execution():
         print(f"   ❌ 数据库迁移失败: {stderr}")
         return False
 
+
 def check_migration_syntax():
     """检查迁移文件语法"""
     print("\n🔍 检查迁移文件语法")
 
-    migration_dir = Path('src/database/migrations/versions')
+    migration_dir = Path("src/database/migrations/versions")
     syntax_errors = []
 
-    for py_file in migration_dir.glob('*.py'):
-        if py_file.name == '__init__.py':
+    for py_file in migration_dir.glob("*.py"):
+        if py_file.name == "__init__.py":
             continue
 
         try:
             # 编译检查语法
-            with open(py_file, 'r', encoding='utf-8') as f:
-                compile(f.read(), str(py_file), 'exec')
+            with open(py_file, "r", encoding="utf-8") as f:
+                compile(f.read(), str(py_file), "exec")
             print(f"   ✅ {py_file.name}")
         except SyntaxError as e:
             print(f"   ❌ {py_file.name}: 语法错误 - {e}")
@@ -146,13 +142,14 @@ def check_migration_syntax():
     print("   ✅ 所有迁移文件语法正确")
     return True
 
+
 def check_database_connection():
     """检查数据库连接"""
     print("\n🔗 检查数据库连接")
 
     success, stdout, stderr = run_command(
         "python -c \"import sqlite3; conn = sqlite3.connect('football_prediction.db'); print('数据库连接成功'); conn.close()\"",
-        "测试SQLite数据库连接"
+        "测试SQLite数据库连接",
     )
 
     if success:
@@ -161,6 +158,7 @@ def check_database_connection():
     else:
         print(f"   ❌ 数据库连接失败: {stderr}")
         return False
+
 
 def main():
     """主函数"""
@@ -212,6 +210,7 @@ def main():
     else:
         print("⚠️  存在失败项目，请检查并修复")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

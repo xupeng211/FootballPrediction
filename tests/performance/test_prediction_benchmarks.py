@@ -151,9 +151,7 @@ class TestPredictionBenchmarks:
         # 分析可扩展性
         print("\n可扩展性分析:")
         max_throughput = max(r["throughput"] for r in results.values())
-        optimal_concurrency = max(
-            results.keys(), key=lambda k: results[k]["efficiency"]
-        )
+        optimal_concurrency = max(results.keys(), key=lambda k: results[k]["efficiency"])
         print(f"  最大吞吐量: {max_throughput:.2f} predictions/sec")
         print(f"  最优并发级别: {optimal_concurrency}")
 
@@ -168,9 +166,7 @@ class TestPredictionBenchmarks:
         }
 
         # 测试缓存未命中
-        prediction_engine.prediction_service.predict_match = AsyncMock(
-            return_value=prediction_data
-        )
+        prediction_engine.prediction_service.predict_match = AsyncMock(return_value=prediction_data)
         prediction_engine._get_match_info = AsyncMock(return_value={"id": match_id})
 
         # 第一次预测（缓存未命中）
@@ -184,9 +180,7 @@ class TestPredictionBenchmarks:
         cache_hit_time = (time.perf_counter() - start_time) * 1000
 
         # 计算缓存效果
-        speedup = (
-            cache_miss_time / cache_hit_time if cache_hit_time > 0 else float("inf")
-        )
+        speedup = cache_miss_time / cache_hit_time if cache_hit_time > 0 else float("inf")
 
         print("\n缓存性能:")
         print(f"  缓存未命中: {cache_miss_time:.2f}ms")
@@ -274,9 +268,7 @@ class TestPredictionBenchmarks:
         # 计算成功率
         success_rate = len(results) / len(match_ids)
         avg_confidence = (
-            sum(r.get("confidence", 0) for r in results) / len(results)
-            if results
-            else 0
+            sum(r.get("confidence", 0) for r in results) / len(results) if results else 0
         )
 
         print("\n负载测试结果:")

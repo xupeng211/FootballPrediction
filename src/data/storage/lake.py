@@ -137,9 +137,7 @@ class PartitionManager:
         self.storage = storage_backend
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
-    def get_partition_path(
-        self, base_key: str, partition_values: Dict[str, Any]
-    ) -> str:
+    def get_partition_path(self, base_key: str, partition_values: Dict[str, Any]) -> str:
         """获取分区路径"""
         partition_parts: List[Any] = []
         for key, value in sorted(partition_values.items()):
@@ -203,9 +201,7 @@ class LakeStorageUtils:
         result: Dict[str, Any] = {
             "prefix": parts[0] if len(parts) > 0 else "",
             "date": parts[1] if len(parts) > 1 else "",
-            "identifier": (
-                parts[2] if len(parts) > 2 and not parts[2].endswith(".json") else ""
-            ),
+            "identifier": (parts[2] if len(parts) > 2 and not parts[2].endswith(".json") else ""),
             "filename": parts[-1] if parts else "",
             "format": "json",
         }

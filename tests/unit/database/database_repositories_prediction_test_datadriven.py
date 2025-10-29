@@ -7,10 +7,6 @@ Issue #83-C 数据驱动测试: database.repositories.prediction
 
 import inspect
 import os
-import sys
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
@@ -160,9 +156,7 @@ class TestPredictionDataDriven:
                                 print(f"      方法 {method_name}: {type(result)}")
 
                             except Exception as me:
-                                print(
-                                    f"      方法 {method_name} 异常: {type(me).__name__}"
-                                )
+                                print(f"      方法 {method_name} 异常: {type(me).__name__}")
 
                 except Exception as e:
                     print(f"   ⚠️ 仓储实例化异常: {type(e).__name__}")
@@ -216,9 +210,7 @@ class TestPredictionDataDriven:
                             result = method()
                             print(f"   查询方法 {method_name}: {type(result)}")
                         except Exception as me:
-                            print(
-                                f"   查询方法 {method_name} 异常: {type(me).__name__}"
-                            )
+                            print(f"   查询方法 {method_name} 异常: {type(me).__name__}")
 
                 except Exception as e:
                     print(f"查询测试异常: {e}")
@@ -298,8 +290,7 @@ class TestPredictionDataDriven:
                 methods = [
                     method
                     for method in dir(repo_instance)
-                    if not method.startswith("_")
-                    and callable(getattr(repo_instance, method))
+                    if not method.startswith("_") and callable(getattr(repo_instance, method))
                 ]
 
                 for method_name in methods[:2]:

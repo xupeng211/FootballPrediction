@@ -12,6 +12,7 @@ import shutil
 import glob
 from pathlib import Path
 
+
 class TestCrisisFixer:
     def __init__(self):
         self.project_root = Path(__file__).parent
@@ -44,7 +45,7 @@ class TestCrisisFixer:
             "tests/integration/test_api_service_integration_safe_import.py",
             "tests/integration/test_messaging_event_integration.py",
             "tests/unit/archived/test_comprehensive.py",
-            "tests/unit/database/test_repositories/test_base.py"
+            "tests/unit/database/test_repositories/test_base.py",
         ]
 
         for file_path in problem_files:
@@ -69,29 +70,29 @@ class TestCrisisFixer:
     def fix_import_success_variable(self, file_path):
         """修复IMPORT_SUCCESS变量未定义问题"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
-            if 'IMPORT_SUCCESS' in content and 'IMPORT_SUCCESS =' not in content:
+            if "IMPORT_SUCCESS" in content and "IMPORT_SUCCESS =" not in content:
                 # 在文件开头添加变量定义
-                lines = content.split('\n')
+                lines = content.split("\n")
                 import_lines = []
                 other_lines = []
 
                 for line in lines:
-                    if line.startswith('from ') or line.startswith('import '):
+                    if line.startswith("from ") or line.startswith("import "):
                         import_lines.append(line)
                     else:
                         other_lines.append(line)
 
                 # 添加IMPORT_SUCCESS定义
-                fixed_content = '\n'.join(import_lines) + '\n\n'
-                fixed_content += '# 导入成功标志\n'
-                fixed_content += 'IMPORT_SUCCESS = True\n'
-                fixed_content += 'IMPORT_ERROR = None\n\n'
-                fixed_content += '\n'.join(other_lines)
+                fixed_content = "\n".join(import_lines) + "\n\n"
+                fixed_content += "# 导入成功标志\n"
+                fixed_content += "IMPORT_SUCCESS = True\n"
+                fixed_content += "IMPORT_ERROR = None\n\n"
+                fixed_content += "\n".join(other_lines)
 
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write(fixed_content)
 
                 print(f"    ✅ 修复IMPORT_SUCCESS变量: {file_path}")
@@ -103,18 +104,18 @@ class TestCrisisFixer:
     def fix_message_test_signature(self, file_path):
         """修复测试函数参数问题"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             # 查找并修复函数签名问题
-            if 'def test_message_size_handling(' in content and 'message_size' not in content:
+            if "def test_message_size_handling(" in content and "message_size" not in content:
                 # 修复函数签名
                 content = content.replace(
-                    'def test_message_size_handling():',
-                    'def test_message_size_handling(message_size):'
+                    "def test_message_size_handling():",
+                    "def test_message_size_handling(message_size):",
                 )
 
-                with open(file_path, 'w', encoding='utf-8') as f:
+                with open(file_path, "w", encoding="utf-8") as f:
                     f.write(content)
 
                 print(f"    ✅ 修复函数签名: {file_path}")
@@ -134,7 +135,7 @@ class TestCrisisFixer:
         # 简单的重命名策略
         parent = file_path.parent
         stem = file_path.stem
-        suffix = parent.name.replace('tests_', '').replace('test_', '')
+        suffix = parent.name.replace("tests_", "").replace("test_", "")
         new_name = f"{stem}_{suffix}.py"
 
         try:
@@ -152,15 +153,15 @@ class TestCrisisFixer:
         print("🧪 运行快速测试检查...")
         try:
             result = subprocess.run(
-                ['python', '-m', 'pytest', '--collect-only', '-q'],
+                ["python", "-m", "pytest", "--collect-only", "-q"],
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
             if result.returncode == 0:
-                collected = result.stdout.split('collected')[1].split()[0]
+                collected = result.stdout.split("collected")[1].split()[0]
                 print(f"  ✅ 测试收集成功: {collected}个测试用例")
                 return True
             else:
@@ -179,11 +180,11 @@ class TestCrisisFixer:
         print("📊 生成覆盖率报告...")
         try:
             result = subprocess.run(
-                ['python', '-m', 'pytest', '--cov=src', '--cov-report=html', '--maxfail=5', '-q'],
+                ["python", "-m", "pytest", "--cov=src", "--cov-report=html", "--maxfail=5", "-q"],
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
-                timeout=300  # 5分钟超时
+                timeout=300,  # 5分钟超时
             )
 
             if result.returncode == 0:
@@ -204,16 +205,24 @@ class TestCrisisFixer:
         """运行快速覆盖率检查"""
         try:
             result = subprocess.run(
-                ['python', '-m', 'pytest', '--cov=src', '--cov-report=term-missing', '--maxfail=3', '-q'],
+                [
+                    "python",
+                    "-m",
+                    "pytest",
+                    "--cov=src",
+                    "--cov-report=term-missing",
+                    "--maxfail=3",
+                    "-q",
+                ],
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
-                timeout=120
+                timeout=120,
             )
 
             print("  📊 快速覆盖率报告:")
-            for line in result.stdout.split('\n'):
-                if 'TOTAL' in line or '%' in line:
+            for line in result.stdout.split("\n"):
+                if "TOTAL" in line or "%" in line:
                     print(f"    {line}")
 
             return True
@@ -252,6 +261,7 @@ class TestCrisisFixer:
         print(f"  📊 修复错误: {self.errors_fixed}个")
         print(f"  ⚠️ 发现警告: {self.warnings_found}个")
         print("  📈 建议下一步: 运行 make coverage 查看详细报告")
+
 
 if __name__ == "__main__":
     fixer = TestCrisisFixer()

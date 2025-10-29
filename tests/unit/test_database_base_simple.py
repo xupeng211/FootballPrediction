@@ -4,8 +4,6 @@
 测试 src.database.base 模块的功能
 """
 
-from datetime import datetime
-from unittest.mock import Mock, patch
 
 import pytest
 

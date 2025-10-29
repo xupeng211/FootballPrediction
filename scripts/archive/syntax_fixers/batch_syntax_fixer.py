@@ -86,12 +86,8 @@ class SyntaxFixer:
     def fix_missing_colons(self, content: str) -> str:
         """Fix missing colons after function/class definitions"""
         # Pattern: def/class without colon
-        content = re.sub(
-            r"(def\s+\w+\([^)]*\))\s*$", r"\1:", content, flags=re.MULTILINE
-        )
-        content = re.sub(
-            r"(class\s+\w+\([^)]*\))\s*$", r"\1:", content, flags=re.MULTILINE
-        )
+        content = re.sub(r"(def\s+\w+\([^)]*\))\s*$", r"\1:", content, flags=re.MULTILINE)
+        content = re.sub(r"(class\s+\w+\([^)]*\))\s*$", r"\1:", content, flags=re.MULTILINE)
         return content
 
     def fix_trailing_commas(self, content: str) -> str:

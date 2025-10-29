@@ -3,10 +3,7 @@ MLflow测试辅助工具
 提供MLflow客户端和运行时Mock实现
 """
 
-import json
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Union
-from unittest.mock import AsyncMock, Mock
 
 
 class MockMlflowRun:
@@ -44,9 +41,7 @@ class MockMlflowRun:
         """设置标签"""
         self.tags[key] = value
 
-    def log_artifact(
-        self, local_path: str, artifact_path: Optional[str] = None
-    ) -> None:
+    def log_artifact(self, local_path: str, artifact_path: Optional[str] = None) -> None:
         """记录文件"""
         self.artifacts.append(local_path)
 
@@ -71,9 +66,7 @@ class MockMlflowClient:
         self.runs: Dict[str, MockMlflowRun] = {}
         self.models: Dict[str, Dict[str, Any]] = {}
 
-    def create_experiment(
-        self, name: str, tags: Optional[Dict[str, str]] = None
-    ) -> str:
+    def create_experiment(self, name: str, tags: Optional[Dict[str, str]] = None) -> str:
         """创建实验"""
         experiment_id = f"exp_{len(self.experiments) + 1}"
         self.experiments[experiment_id] = {
@@ -158,9 +151,7 @@ class MockMlflowClient:
         """获取模型版本"""
         return self.models.get(name)
 
-    def transition_model_version_stage(
-        self, name: str, version: str, stage: str
-    ) -> None:
+    def transition_model_version_stage(self, name: str, version: str, stage: str) -> None:
         """转换模型版本阶段"""
         if name in self.models:
             self.models[name]["stage"] = stage
@@ -237,9 +228,7 @@ class MockMlflow:
         if self.active_run:
             self.active_run.set_tag(key, value)
 
-    def log_artifact(
-        self, local_path: str, artifact_path: Optional[str] = None
-    ) -> None:
+    def log_artifact(self, local_path: str, artifact_path: Optional[str] = None) -> None:
         """记录文件"""
         if self.active_run:
             self.active_run.log_artifact(local_path, artifact_path)
@@ -253,13 +242,9 @@ class MockMlflow:
     ) -> None:
         """记录模型"""
         if self.active_run:
-            self.client.log_model(
-                self.active_run.run_id, model_path, model, registered_model_name
-            )
+            self.client.log_model(self.active_run.run_id, model_path, model, registered_model_name)
 
-    def create_experiment(
-        self, name: str, tags: Optional[Dict[str, str]] = None
-    ) -> str:
+    def create_experiment(self, name: str, tags: Optional[Dict[str, str]] = None) -> str:
         """创建实验"""
         return self.client.create_experiment(name, tags)
 

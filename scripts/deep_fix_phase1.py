@@ -19,9 +19,7 @@ def fix_syntax_errors():
     print("🔧 修复语法错误...")
 
     # 获取所有有语法错误的文件
-    cmd = (
-        "ruff check src/ --select=E999 --output-format=concise | cut -d: -f1 | sort -u"
-    )
+    cmd = "ruff check src/ --select=E999 --output-format=concise | cut -d: -f1 | sort -u"
     stdout, stderr = run_command(cmd)
 
     files_with_syntax_errors = stdout.strip().split("\n") if stdout.strip() else []

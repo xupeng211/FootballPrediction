@@ -24,19 +24,12 @@ Mock策略优化 - Phase 4B高优先级任务
 """
 
 import asyncio
-import json
 import random
 import string
 import threading
 import uuid
-import weakref
-from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from enum import Enum
 from functools import lru_cache
-from typing import Any, Callable, Dict, Generic, List, Optional, Type, TypeVar, Union
-from unittest.mock import AsyncMock, MagicMock, Mock, create_autospec, patch
 
 import pytest
 
@@ -84,9 +77,7 @@ class MockFactory:
         return mock
 
     @staticmethod
-    def create_async_mock(
-        return_value: Any = None, delay: Optional[float] = None
-    ) -> AsyncMock:
+    def create_async_mock(return_value: Any = None, delay: Optional[float] = None) -> AsyncMock:
         """创建异步Mock对象"""
         mock = AsyncMock()
 
@@ -94,9 +85,7 @@ class MockFactory:
             if asyncio.iscoroutine(return_value):
                 mock.return_value = return_value
             else:
-                mock.return_value = asyncio.create_task(
-                    asyncio.coroutine(lambda: return_value)()
-                )
+                mock.return_value = asyncio.create_task(asyncio.coroutine(lambda: return_value)())
 
         if delay is None:
             delay = MOCK_CONFIG.default_async_delay
@@ -157,9 +146,7 @@ class MockDataGenerator:
     @staticmethod
     def generate_phone() -> str:
         """生成随机手机号"""
-        return f"1{random.choice([3,4,5,6,7,8,9])}" + "".join(
-            random.choices(string.digits, k=9)
-        )
+        return f"1{random.choice([3,4,5,6,7,8,9])}" + "".join(random.choices(string.digits, k=9))
 
     @staticmethod
     def generate_datetime(start_year: int = 2020, end_year: int = 2024) -> datetime:
@@ -248,9 +235,7 @@ class MockPerformanceMonitor:
             "cache_misses": 0,
         }
 
-    def record_call(
-        self, method_name: str, execution_time: float, success: bool = True
-    ):
+    def record_call(self, method_name: str, execution_time: float, success: bool = True):
         """记录方法调用"""
         if method_name not in self.metrics["call_counts"]:
             self.metrics["call_counts"][method_name] = 0
@@ -442,9 +427,7 @@ class MockObjectGenerator:
         return processor
 
     @staticmethod
-    def create_config_source(
-        name: str, config_data: Optional[Dict[str, Any]] = None
-    ) -> Mock:
+    def create_config_source(name: str, config_data: Optional[Dict[str, Any]] = None) -> Mock:
         """创建配置源Mock"""
         if config_data is None:
             config_data = {f"{name}_key": f"{name}_value"}
@@ -461,9 +444,7 @@ class MockObjectGenerator:
         return source
 
     @staticmethod
-    def create_service_mock(
-        service_name: str, methods: Optional[List[str]] = None
-    ) -> Mock:
+    def create_service_mock(service_name: str, methods: Optional[List[str]] = None) -> Mock:
         """创建服务Mock"""
         if methods is None:
             methods = ["get", "create", "update", "delete"]

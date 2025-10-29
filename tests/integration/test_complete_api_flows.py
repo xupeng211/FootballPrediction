@@ -7,9 +7,6 @@ API集成测试，测试完整API流程
 """
 
 import asyncio
-import json
-from datetime import datetime, timedelta
-from typing import Any, Dict
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -17,8 +14,6 @@ from fastapi.testclient import TestClient
 
 # TODO: 根据实际模块调整导入
 try:
-    from src.cache.redis_client import get_redis_client
-    from src.database.connection import get_db_session
     from src.main import app
 except ImportError as e:
     print(f"导入警告: {e}")
@@ -52,9 +47,7 @@ class TestAPIIntegrationTests:
             mock_redis.set.return_value = True
             yield mock_redis
 
-    def test_complete_workflow_api_integration_tests(
-        self, client, db_session, redis_client
-    ):
+    def test_complete_workflow_api_integration_tests(self, client, db_session, redis_client):
         """测试完整工作流：API Integration Tests"""
         # TODO: 实现具体的集成测试逻辑
 

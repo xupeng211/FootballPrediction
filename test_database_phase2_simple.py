@@ -16,28 +16,29 @@ from src.database.models.team import Team
 from src.database.models.match import Match
 from src.database.models.predictions import Predictions
 
+
 class TestDatabaseSimplePhase2:
     """Phase 2 - Database模块简化核心功能测试"""
 
     def test_base_class_exists(self):
         """测试基础类存在"""
         assert Base is not None
-        assert hasattr(Base, 'metadata')
+        assert hasattr(Base, "metadata")
 
     def test_base_model_class(self):
         """测试BaseModel类"""
         assert BaseModel is not None
-        assert hasattr(BaseModel, 'id')
-        assert hasattr(BaseModel, 'to_dict')
-        assert hasattr(BaseModel, 'from_dict')
-        assert hasattr(BaseModel, 'update_from_dict')
-        assert hasattr(BaseModel, '__repr__')
+        assert hasattr(BaseModel, "id")
+        assert hasattr(BaseModel, "to_dict")
+        assert hasattr(BaseModel, "from_dict")
+        assert hasattr(BaseModel, "update_from_dict")
+        assert hasattr(BaseModel, "__repr__")
 
     def test_timestamp_mixin_class(self):
         """测试TimestampMixin类"""
         assert TimestampMixin is not None
-        assert hasattr(TimestampMixin, 'created_at')
-        assert hasattr(TimestampMixin, 'updated_at')
+        assert hasattr(TimestampMixin, "created_at")
+        assert hasattr(TimestampMixin, "updated_at")
 
     def test_database_manager_singleton(self):
         """测试DatabaseManager单例模式"""
@@ -46,7 +47,7 @@ class TestDatabaseSimplePhase2:
 
         # 验证单例模式
         assert manager1 is manager2
-        assert hasattr(manager1, '_instance')
+        assert hasattr(manager1, "_instance")
 
     def test_database_role_enum(self):
         """测试DatabaseRole枚举"""
@@ -76,10 +77,10 @@ class TestDatabaseSimplePhase2:
 
     def test_database_models_have_tablenames(self):
         """测试模型类有表名"""
-        assert hasattr(League, '__tablename__')
-        assert hasattr(Team, '__tablename__')
-        assert hasattr(Match, '__tablename__')
-        assert hasattr(Predictions, '__tablename__')
+        assert hasattr(League, "__tablename__")
+        assert hasattr(Team, "__tablename__")
+        assert hasattr(Match, "__tablename__")
+        assert hasattr(Predictions, "__tablename__")
 
         assert League.__tablename__ == "leagues"
 
@@ -88,14 +89,14 @@ class TestDatabaseSimplePhase2:
         manager = DatabaseManager()
 
         # 测试方法存在
-        assert hasattr(manager, 'initialize')
-        assert hasattr(manager, 'get_async_session')
-        assert hasattr(manager, 'get_session')
+        assert hasattr(manager, "initialize")
+        assert hasattr(manager, "get_async_session")
+        assert hasattr(manager, "get_session")
 
     def test_database_config_environment(self):
         """测试数据库配置环境变量"""
         # 测试环境变量处理
-        with patch.dict(os.environ, {'DATABASE_URL': 'postgresql://test/test'}):
+        with patch.dict(os.environ, {"DATABASE_URL": "postgresql://test/test"}):
             manager = DatabaseManager()
             assert manager is not None
 
@@ -108,18 +109,20 @@ class TestDatabaseSimplePhase2:
     def test_base_model_methods_functionality(self):
         """测试BaseModel方法功能"""
         # 由于BaseModel是抽象类，我们测试它的类方法
-        assert hasattr(BaseModel, 'to_dict')
-        assert hasattr(BaseModel, 'from_dict')
-        assert hasattr(BaseModel, 'update_from_dict')
-        assert hasattr(BaseModel, '__repr__')
+        assert hasattr(BaseModel, "to_dict")
+        assert hasattr(BaseModel, "from_dict")
+        assert hasattr(BaseModel, "update_from_dict")
+        assert hasattr(BaseModel, "__repr__")
 
     def test_database_imports(self):
         """测试database模块导入"""
         # 测试所有核心组件可以正常导入
         from src.database import base, definitions, models
+
         assert base is not None
         assert definitions is not None
         assert models is not None
+
 
 def test_all_database_simple_functionality():
     """测试所有database简化功能的综合测试"""
@@ -138,6 +141,7 @@ def test_all_database_simple_functionality():
     assert Predictions is not None
 
     print("✅ 所有database简化功能测试通过")
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

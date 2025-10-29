@@ -11,6 +11,7 @@ import time
 from datetime import datetime
 import httpx
 
+
 class AuthIntegrationTester:
     """认证系统集成测试器"""
 
@@ -26,7 +27,7 @@ class AuthIntegrationTester:
             "success": success,
             "details": details,
             "duration": duration,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
         self.test_results.append(result)
 
@@ -66,12 +67,11 @@ class AuthIntegrationTester:
             register_data = {
                 "username": f"integration_test_{int(time.time())}",
                 "email": f"test_{int(time.time())}@example.com",
-                "password": "testpassword123"
+                "password": "testpassword123",
             }
             async with httpx.AsyncClient(timeout=10) as client:
                 response = await client.post(
-                    f"{self.api_base_url}/api/v1/auth/register",
-                    json=register_data
+                    f"{self.api_base_url}/api/v1/auth/register", json=register_data
                 )
                 duration = time.time() - start_time
 
@@ -80,14 +80,21 @@ class AuthIntegrationTester:
 
                     # 解析注册响应
                     register_result = response.json()
-                    print(f"   📝 注册结果: {json.dumps(register_result, indent=2, ensure_ascii=False)}")
+                    print(
+                        f"   📝 注册结果: {json.dumps(register_result, indent=2, ensure_ascii=False)}"
+                    )
 
                     # 测试用户登录
                     await self.test_user_login(register_data["username"], register_data["password"])
 
                     return True
                 else:
-                    self.log_test("用户注册", False, f"HTTP {response.status_code}: {response.text[:100]}", duration)
+                    self.log_test(
+                        "用户注册",
+                        False,
+                        f"HTTP {response.status_code}: {response.text[:100]}",
+                        duration,
+                    )
                     return False
         except Exception as e:
             duration = time.time() - start_time
@@ -98,14 +105,10 @@ class AuthIntegrationTester:
         """测试用户登录"""
         start_time = time.time()
         try:
-            login_data = {
-                "username": username,
-                "password": password
-            }
+            login_data = {"username": username, "password": password}
             async with httpx.AsyncClient(timeout=10) as client:
                 response = await client.post(
-                    f"{self.api_base_url}/api/v1/auth/login",
-                    data=login_data
+                    f"{self.api_base_url}/api/v1/auth/login", data=login_data
                 )
                 duration = time.time() - start_time
 
@@ -115,7 +118,9 @@ class AuthIntegrationTester:
                     # 解析登录响应，保存token
                     login_result = response.json()
                     self.auth_token = login_result.get("access_token", "")
-                    print(f"   📝 登录结果: {json.dumps(login_result, indent=2, ensure_ascii=False)}")
+                    print(
+                        f"   📝 登录结果: {json.dumps(login_result, indent=2, ensure_ascii=False)}"
+                    )
 
                     # 测试获取用户信息
                     if self.auth_token:
@@ -123,7 +128,12 @@ class AuthIntegrationTester:
 
                     return True
                 else:
-                    self.log_test("用户登录", False, f"HTTP {response.status_code}: {response.text[:100]}", duration)
+                    self.log_test(
+                        "用户登录",
+                        False,
+                        f"HTTP {response.status_code}: {response.text[:100]}",
+                        duration,
+                    )
                     return False
         except Exception as e:
             duration = time.time() - start_time
@@ -136,10 +146,7 @@ class AuthIntegrationTester:
         try:
             headers = {"Authorization": self.auth_token}
             async with httpx.AsyncClient(timeout=10) as client:
-                response = await client.get(
-                    f"{self.api_base_url}/api/v1/auth/me",
-                    headers=headers
-                )
+                response = await client.get(f"{self.api_base_url}/api/v1/auth/me", headers=headers)
                 duration = time.time() - start_time
 
                 if response.status_code == 200:
@@ -154,7 +161,12 @@ class AuthIntegrationTester:
 
                     return True
                 else:
-                    self.log_test("获取用户信息", False, f"HTTP {response.status_code}: {response.text[:100]}", duration)
+                    self.log_test(
+                        "获取用户信息",
+                        False,
+                        f"HTTP {response.status_code}: {response.text[:100]}",
+                        duration,
+                    )
                     return False
         except Exception as e:
             duration = time.time() - start_time
@@ -173,7 +185,12 @@ class AuthIntegrationTester:
                     self.log_test("用户登出", True, f"HTTP {response.status_code}", duration)
                     return True
                 else:
-                    self.log_test("用户登出", False, f"HTTP {response.status_code}: {response.text[:100]}", duration)
+                    self.log_test(
+                        "用户登出",
+                        False,
+                        f"HTTP {response.status_code}: {response.text[:100]}",
+                        duration,
+                    )
                     return False
         except Exception as e:
             duration = time.time() - start_time
@@ -289,10 +306,12 @@ class AuthIntegrationTester:
 
         print("=" * 60)
 
+
 async def main():
     """主函数"""
     tester = AuthIntegrationTester()
     await tester.run_integration_tests()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

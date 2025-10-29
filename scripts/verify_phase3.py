@@ -65,9 +65,7 @@ def main():
                 timeout_count += 1
                 print("  ⚠️  超时")
             else:
-                print(
-                    f"  通过: {passed}, 失败: {failed}, 错误: {errors}, 跳过: {skipped}"
-                )
+                print(f"  通过: {passed}, 失败: {failed}, 错误: {errors}, 跳过: {skipped}")
 
             total_tests += passed + failed + errors + skipped
             total_passed += passed

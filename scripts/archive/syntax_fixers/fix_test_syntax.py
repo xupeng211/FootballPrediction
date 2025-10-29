@@ -227,8 +227,7 @@ class EnhancedTestSyntaxFixer:
                 import_block = [i]
                 j = i + 1
                 while j < len(lines) and (
-                    lines[j].strip().startswith("import ")
-                    or lines[j].strip().startswith("from ")
+                    lines[j].strip().startswith("import ") or lines[j].strip().startswith("from ")
                 ):
                     import_block.append(j)
                     j += 1
@@ -274,9 +273,11 @@ class EnhancedTestSyntaxFixer:
             if original_error:
                 content = self.fix_indentation_error(
                     content,
-                    int(original_error.split(":")[0].split()[-1])
-                    if "Line" in original_error
-                    else 1,
+                    (
+                        int(original_error.split(":")[0].split()[-1])
+                        if "Line" in original_error
+                        else 1
+                    ),
                     original_error,
                 )
 
@@ -384,9 +385,7 @@ class EnhancedTestSyntaxFixer:
         if results["unfixable"]:
             with open(unfixed_file, "w", encoding="utf-8") as f:
                 f.write("# Unfixable Test Files\n\n")
-                f.write(
-                    f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
-                )
+                f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
                 f.write(
                     "These files could not be automatically fixed and require manual attention:\n\n"
                 )

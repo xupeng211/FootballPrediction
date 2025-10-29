@@ -3,10 +3,6 @@ Issue #83 阶段2: api.monitoring 综合测试
 优先级: HIGH - API监控模块，系统关键功能
 """
 
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
 import pytest
 
 # 尝试导入目标模块

@@ -5,6 +5,7 @@
 
 from pathlib import Path
 
+
 def rewrite_error_handlers_file():
     """重写错误处理器测试文件"""
     content = """# 错误处理器测试
@@ -37,8 +38,9 @@ def test_error_handling():
     except Exception:
         assert True
 """
-    with open("tests/unit/utils/test_error_handlers.py", 'w', encoding='utf-8') as f:
+    with open("tests/unit/utils/test_error_handlers.py", "w", encoding="utf-8") as f:
         f.write(content)
+
 
 def rewrite_data_collectors_v2_file():
     """重写数据收集器v2测试文件"""
@@ -69,8 +71,9 @@ def test_collect_data():
     except Exception:
         assert True
 """
-    with open("tests/unit/utils/test_data_collectors_v2.py", 'w', encoding='utf-8') as f:
+    with open("tests/unit/utils/test_data_collectors_v2.py", "w", encoding="utf-8") as f:
         f.write(content)
+
 
 def rewrite_metadata_manager_file():
     """重写元数据管理器测试文件"""
@@ -101,8 +104,9 @@ def test_get_metadata():
     except Exception:
         assert True
 """
-    with open("tests/unit/utils/test_metadata_manager.py", 'w', encoding='utf-8') as f:
+    with open("tests/unit/utils/test_metadata_manager.py", "w", encoding="utf-8") as f:
         f.write(content)
+
 
 def rewrite_metrics_exporter_file():
     """重写指标导出器测试文件"""
@@ -133,8 +137,9 @@ def test_export_metrics():
     except Exception:
         assert True
 """
-    with open("tests/unit/utils/test_metrics_exporter.py", 'w', encoding='utf-8') as f:
+    with open("tests/unit/utils/test_metrics_exporter.py", "w", encoding="utf-8") as f:
         f.write(content)
+
 
 def rewrite_data_quality_extended_file():
     """重写数据质量扩展测试文件"""
@@ -165,8 +170,9 @@ def test_check_quality():
     except Exception:
         assert True
 """
-    with open("tests/unit/utils/test_data_quality_extended.py", 'w', encoding='utf-8') as f:
+    with open("tests/unit/utils/test_data_quality_extended.py", "w", encoding="utf-8") as f:
         f.write(content)
+
 
 def rewrite_collectors_all_file():
     """重写所有收集器测试文件"""
@@ -197,8 +203,9 @@ def test_get_collectors():
     except Exception:
         assert True
 """
-    with open("tests/unit/utils/test_collectors_all.py", 'w', encoding='utf-8') as f:
+    with open("tests/unit/utils/test_collectors_all.py", "w", encoding="utf-8") as f:
         f.write(content)
+
 
 def rewrite_lineage_reporter_file():
     """重写血统报告器测试文件"""
@@ -229,8 +236,9 @@ def test_generate_report():
     except Exception:
         assert True
 """
-    with open("tests/unit/repositories/test_lineage_reporter.py", 'w', encoding='utf-8') as f:
+    with open("tests/unit/repositories/test_lineage_reporter.py", "w", encoding="utf-8") as f:
         f.write(content)
+
 
 def rewrite_models_common_file():
     """重写通用模型测试文件"""
@@ -260,8 +268,9 @@ def test_model_attributes():
     except Exception:
         assert True
 """
-    with open("tests/unit/database/test_models_common.py", 'w', encoding='utf-8') as f:
+    with open("tests/unit/database/test_models_common.py", "w", encoding="utf-8") as f:
         f.write(content)
+
 
 def main():
     print("🔄 重写有问题的测试文件...")
@@ -274,7 +283,7 @@ def main():
         rewrite_data_quality_extended_file,
         rewrite_collectors_all_file,
         rewrite_lineage_reporter_file,
-        rewrite_models_common_file
+        rewrite_models_common_file,
     ]
 
     rewritten = 0
@@ -290,6 +299,7 @@ def main():
     print(f"- 已重写: {rewritten} 个文件")
 
     return rewritten
+
 
 if __name__ == "__main__":
     exit(main())

@@ -30,9 +30,7 @@ def run_command(command: str, cwd: Path | None = None) -> bool:
         是否执行成功
     """
     try:
-        result = subprocess.run(
-            command.split(), cwd=cwd, capture_output=True, text=True
-        )
+        result = subprocess.run(command.split(), cwd=cwd, capture_output=True, text=True)
         return result.returncode == 0
     except Exception:
         return False

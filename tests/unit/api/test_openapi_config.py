@@ -2,8 +2,6 @@
 
 import pytest
 
-from src.config.openapi_config import OpenAPIConfig, setup_openapi
-
 
 @pytest.mark.unit
 @pytest.mark.api

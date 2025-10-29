@@ -15,9 +15,7 @@ def freeze_dependencies():
     print("🔒 正在冻结依赖...")
 
     # 获取所有已安装的包
-    result = subprocess.run(
-        [sys.executable, "-m", "pip", "freeze"], capture_output=True, text=True
-    )
+    result = subprocess.run([sys.executable, "-m", "pip", "freeze"], capture_output=True, text=True)
 
     if result.returncode != 0:
         print(f"❌ 冻结依赖失败: {result.stderr}")
@@ -84,9 +82,7 @@ def verify_lock():
     for name, version in current_packages.items():
         if name in locked_packages:
             if locked_packages[name] != version:
-                mismatches.append(
-                    f"{name}: 锁定={locked_packages[name]}, 当前={version}"
-                )
+                mismatches.append(f"{name}: 锁定={locked_packages[name]}, 当前={version}")
         else:
             mismatches.append(f"{name}: 未锁定")
 

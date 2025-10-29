@@ -514,12 +514,8 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="自动修复超过行长限制的代码行")
-    parser.add_argument(
-        "directory", nargs="?", default=".", help="要修复的目录 (默认: 当前目录)"
-    )
-    parser.add_argument(
-        "--max-length", type=int, default=120, help="行长限制 (默认: 120 字符)"
-    )
+    parser.add_argument("directory", nargs="?", default=".", help="要修复的目录 (默认: 当前目录)")
+    parser.add_argument("--max-length", type=int, default=120, help="行长限制 (默认: 120 字符)")
     parser.add_argument(
         "--report",
         default="docs/_reports/LINE_LENGTH_REPORT.md",

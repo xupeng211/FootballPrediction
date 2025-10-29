@@ -20,7 +20,7 @@ def fix_indentation_errors(file_path: str) -> Tuple[bool, str]:
         Tuple[bool, str]: (是否修复成功, 修复描述)
     """
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             original_content = f.read()
 
         # 检查是否真的有语法错误
@@ -37,7 +37,7 @@ def fix_indentation_errors(file_path: str) -> Tuple[bool, str]:
         try:
             ast.parse(fixed_content)
             # 修复成功，写入文件
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(fixed_content)
             return True, "缩进错误修复成功"
         except SyntaxError as e:
@@ -51,14 +51,14 @@ def apply_indentation_fixes(content: str) -> str:
     """
     应用多种缩进修复策略
     """
-    lines = content.split('\n')
+    lines = content.split("\n")
     fixed_lines = []
 
     for i, line in enumerate(lines):
         stripped = line.strip()
 
         # 跳过空行和注释行
-        if not stripped or stripped.startswith('#'):
+        if not stripped or stripped.startswith("#"):
             fixed_lines.append(line)
             continue
 
@@ -66,7 +66,7 @@ def apply_indentation_fixes(content: str) -> str:
         fixed_line = fix_line_indentation(line, i, lines)
         fixed_lines.append(fixed_line)
 
-    return '\n'.join(fixed_lines)
+    return "\n".join(fixed_lines)
 
 
 def fix_line_indentation(line: str, line_num: int, all_lines: List[str]) -> str:
@@ -76,7 +76,7 @@ def fix_line_indentation(line: str, line_num: int, all_lines: List[str]) -> str:
     stripped = line.strip()
 
     # 如果行以def开头且有docstring在同一行，需要特殊处理
-    if stripped.startswith('def ') and '"""' in stripped:
+    if stripped.startswith("def ") and '"""' in stripped:
         # 检查是否是类中的方法
         prev_line = all_lines[line_num - 1] if line_num > 0 else ""
 
@@ -90,23 +90,25 @@ def fix_line_indentation(line: str, line_num: int, all_lines: List[str]) -> str:
                 return f"    {method_def}\n        {docstring_part}"
 
     # 修复方法定义后缺少缩进的问题
-    if stripped.startswith('def ') and not line.startswith('    '):
+    if stripped.startswith("def ") and not line.startswith("    "):
         # 检查是否应该在类中
         if is_in_class_context(line_num, all_lines):
             return f"    {stripped}"
 
     # 修复类定义后缺少缩进的问题
-    if stripped.startswith('class ') and not line.startswith('    '):
+    if stripped.startswith("class ") and not line.startswith("    "):
         # 检查是否应该在模块级别
         if is_nested_class(line_num, all_lines):
             return f"    {stripped}"
 
     # 修复变量赋值后缺少缩进的问题
-    if ('=' in stripped and
-        not stripped.startswith('def ') and
-        not stripped.startswith('class ') and
-        not line.startswith('    ') and
-        is_in_method_context(line_num, all_lines)):
+    if (
+        "=" in stripped
+        and not stripped.startswith("def ")
+        and not stripped.startswith("class ")
+        and not line.startswith("    ")
+        and is_in_method_context(line_num, all_lines)
+    ):
         return f"        {stripped}"
 
     # 修复其他常见的缩进问题
@@ -118,10 +120,11 @@ def should_be_class_method(prev_line: str, line_num: int, all_lines: List[str]) 
     判断是否应该是类方法
     """
     # 如果上一行是__init__方法或者是类定义后的空行
-    if ('def __init__' in prev_line or
-        'class ' in prev_line or
-        (prev_line.strip() == '' and line_num > 1 and
-         'class ' in all_lines[line_num - 2])):
+    if (
+        "def __init__" in prev_line
+        or "class " in prev_line
+        or (prev_line.strip() == "" and line_num > 1 and "class " in all_lines[line_num - 2])
+    ):
         return True
     return False
 
@@ -133,9 +136,9 @@ def is_in_class_context(line_num: int, all_lines: List[str]) -> bool:
     # 向上查找最近的类定义
     for i in range(line_num - 1, -1, -1):
         line = all_lines[i].strip()
-        if line.startswith('class '):
+        if line.startswith("class "):
             return True
-        elif line.startswith('def ') and not line.startswith('    '):
+        elif line.startswith("def ") and not line.startswith("    "):
             return False  # 遇到模块级函数，不在类中
     return False
 
@@ -148,10 +151,10 @@ def is_nested_class(line_num: int, all_lines: List[str]) -> bool:
     indent_level = 0
     for i in range(line_num - 1, -1, -1):
         line = all_lines[i]
-        if line.strip().startswith('class '):
+        if line.strip().startswith("class "):
             return indent_level > 0
         elif line.strip():  # 非空行
-            if line.startswith('    '):
+            if line.startswith("    "):
                 indent_level = max(indent_level, len(line) - len(line.lstrip()))
             else:
                 indent_level = 0
@@ -165,12 +168,12 @@ def is_in_method_context(line_num: int, all_lines: List[str]) -> bool:
     # 向上查找最近的方法定义
     for i in range(line_num - 1, -1, -1):
         line = all_lines[i].strip()
-        if line.startswith('def ') and i > 0:
+        if line.startswith("def ") and i > 0:
             prev_line = all_lines[i - 1]
             # 如果方法定义有4个空格缩进，说明在类中
-            if prev_line.startswith('    def '):
+            if prev_line.startswith("    def "):
                 return True
-        elif line.startswith('class '):
+        elif line.startswith("class "):
             return False
     return False
 
@@ -198,15 +201,21 @@ def main():
     print("🔧 开始批量修复缩进错误...")
 
     # 读取错误报告
-    with open('syntax_errors_report.json', 'r', encoding='utf-8') as f:
+    with open("syntax_errors_report.json", "r", encoding="utf-8") as f:
         report = json.load(f)
 
     # 获取需要修复的文件列表
-    files_to_fix = [file_path for file_path in report['categories']['indentation_errors']
-                   if file_path not in ['src/data/quality/anomaly_detector.py',
-                                       'src/data/quality/exception_handler.py',
-                                       'src/data/quality/exception_handler_mod/__init__.py',
-                                       'src/models/common_models.py']]  # 排除已修复的文件
+    files_to_fix = [
+        file_path
+        for file_path in report["categories"]["indentation_errors"]
+        if file_path
+        not in [
+            "src/data/quality/anomaly_detector.py",
+            "src/data/quality/exception_handler.py",
+            "src/data/quality/exception_handler_mod/__init__.py",
+            "src/models/common_models.py",
+        ]
+    ]  # 排除已修复的文件
 
     print(f"\n📝 需要修复的文件数: {len(files_to_fix)}")
 
@@ -228,15 +237,16 @@ def main():
 
     # 保存修复报告
     fix_report = {
-        'total_files': len(files_to_fix),
-        'success_count': success_count,
-        'failed_count': len(failed_files),
-        'failed_files': failed_files,
-        'results': {path: {"success": success, "message": msg}
-                   for path, (success, msg) in results.items()}
+        "total_files": len(files_to_fix),
+        "success_count": success_count,
+        "failed_count": len(failed_files),
+        "failed_files": failed_files,
+        "results": {
+            path: {"success": success, "message": msg} for path, (success, msg) in results.items()
+        },
     }
 
-    with open('indentation_fixes_report.json', 'w', encoding='utf-8') as f:
+    with open("indentation_fixes_report.json", "w", encoding="utf-8") as f:
         json.dump(fix_report, f, indent=2, ensure_ascii=False)
 
     print("\n📄 修复报告已保存到: indentation_fixes_report.json")

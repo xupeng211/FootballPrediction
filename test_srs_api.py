@@ -16,15 +16,13 @@ BASE_URL = "http://localhost:8001/api/v1"
 # 测试Token (简化版本，实际应该是有效的JWT)
 TEST_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test.token"
 
+
 class SRSApiTester:
     """SRS API测试器"""
 
     def __init__(self):
         self.session = None
-        self.headers = {
-            "Authorization": f"Bearer {TEST_TOKEN}",
-            "Content-Type": "application/json"
-        }
+        self.headers = {"Authorization": f"Bearer {TEST_TOKEN}", "Content-Type": "application/json"}
 
     async def __aenter__(self):
         self.session = aiohttp.ClientSession(headers=self.headers)
@@ -47,16 +45,18 @@ class SRSApiTester:
                 "away_team": "Liverpool",
                 "league": "Premier League",
                 "match_date": (datetime.now() + timedelta(days=1)).isoformat(),
-                "venue": "Old Trafford"
+                "venue": "Old Trafford",
             },
             "include_confidence": True,
-            "include_features": False
+            "include_features": False,
         }
 
         start_time = time.time()
 
         try:
-            async with self.session.post(f"{BASE_URL}/predictions/predict", json=request_data) as response:
+            async with self.session.post(
+                f"{BASE_URL}/predictions/predict", json=request_data
+            ) as response:
                 response_time = (time.time() - start_time) * 1000
 
                 if response.status == 200:
@@ -70,11 +70,17 @@ class SRSApiTester:
                     print(f"⚡ 处理时间: {data.get('processing_time_ms'):.2f}ms")
 
                     # 检查SRS合规性
-                    srs_compliance = data.get('srs_compliance', {})
+                    srs_compliance = data.get("srs_compliance", {})
                     print(f"\n📋 SRS合规性检查:")
-                    print(f"   响应时间 ≤ 200ms: {'✅' if response_time <= 200 else '❌'} ({response_time:.2f}ms)")
-                    print(f"   处理时间合规: {'✅' if srs_compliance.get('meets_srs_requirement') else '❌'}")
-                    print(f"   Token认证: {'✅' if srs_compliance.get('token_authenticated') else '❌'}")
+                    print(
+                        f"   响应时间 ≤ 200ms: {'✅' if response_time <= 200 else '❌'} ({response_time:.2f}ms)"
+                    )
+                    print(
+                        f"   处理时间合规: {'✅' if srs_compliance.get('meets_srs_requirement') else '❌'}"
+                    )
+                    print(
+                        f"   Token认证: {'✅' if srs_compliance.get('token_authenticated') else '❌'}"
+                    )
                     print(f"   频率限制: {'✅' if srs_compliance.get('rate_limited') else '❌'}")
 
                     return True
@@ -105,29 +111,29 @@ class SRSApiTester:
             ("Juventus", "Inter Milan"),
             ("Napoli", "AC Milan"),
             ("Ajax", "Feyenoord"),
-            ("Porto", "Benfica")
+            ("Porto", "Benfica"),
         ]
 
         for i, (home, away) in enumerate(teams):
-            matches.append({
-                "match_id": 10000 + i,
-                "home_team": home,
-                "away_team": away,
-                "league": "Various Leagues",
-                "match_date": (datetime.now() + timedelta(days=i+1)).isoformat(),
-                "venue": f"Stadium {i+1}"
-            })
+            matches.append(
+                {
+                    "match_id": 10000 + i,
+                    "home_team": home,
+                    "away_team": away,
+                    "league": "Various Leagues",
+                    "match_date": (datetime.now() + timedelta(days=i + 1)).isoformat(),
+                    "venue": f"Stadium {i+1}",
+                }
+            )
 
-        request_data = {
-            "matches": matches,
-            "include_confidence": True,
-            "max_concurrent": 5
-        }
+        request_data = {"matches": matches, "include_confidence": True, "max_concurrent": 5}
 
         start_time = time.time()
 
         try:
-            async with self.session.post(f"{BASE_URL}/predictions/predict/batch", json=request_data) as response:
+            async with self.session.post(
+                f"{BASE_URL}/predictions/predict/batch", json=request_data
+            ) as response:
                 response_time = (time.time() - start_time) * 1000
 
                 if response.status == 200:
@@ -141,18 +147,24 @@ class SRSApiTester:
                     print(f"⚡ 平均响应时间: {data.get('average_response_time_ms'):.2f}ms")
 
                     # 检查SRS合规性
-                    srs_compliance = data.get('srs_compliance', {})
+                    srs_compliance = data.get("srs_compliance", {})
                     print(f"\n📋 SRS合规性检查:")
-                    print(f"   支持1000并发: {'✅' if srs_compliance.get('supports_1000_concurrent') else '❌'}")
-                    print(f"   平均响应时间: {'✅' if srs_compliance.get('meets_response_time_requirement') else '❌'} ({data.get('average_response_time_ms'):.2f}ms)")
+                    print(
+                        f"   支持1000并发: {'✅' if srs_compliance.get('supports_1000_concurrent') else '❌'}"
+                    )
+                    print(
+                        f"   平均响应时间: {'✅' if srs_compliance.get('meets_response_time_requirement') else '❌'} ({data.get('average_response_time_ms'):.2f}ms)"
+                    )
                     print(f"   最大并发数: {srs_compliance.get('max_concurrent_requests')}")
 
                     # 显示前3个预测结果
-                    predictions = data.get('predictions', [])
+                    predictions = data.get("predictions", [])
                     if predictions:
                         print(f"\n📊 前3个预测结果:")
                         for i, pred in enumerate(predictions[:3], 1):
-                            print(f"  {i}. {pred['match_id']}: {pred['prediction']} - {pred['probabilities']}")
+                            print(
+                                f"  {i}. {pred['match_id']}: {pred['prediction']} - {pred['probabilities']}"
+                            )
 
                     return True
                 else:
@@ -177,17 +189,17 @@ class SRSApiTester:
 
                     print(f"✅ 指标获取成功")
                     print(f"\n🏆 模型性能指标:")
-                    model_metrics = data.get('model_metrics', {})
+                    model_metrics = data.get("model_metrics", {})
                     for key, value in model_metrics.items():
                         print(f"   {key}: {value}")
 
                     print(f"\n⚡ 性能指标:")
-                    perf_metrics = data.get('performance_metrics', {})
+                    perf_metrics = data.get("performance_metrics", {})
                     for key, value in perf_metrics.items():
                         print(f"   {key}: {value}")
 
                     print(f"\n📋 SRS合规性:")
-                    srs_compliance = data.get('srs_compliance', {})
+                    srs_compliance = data.get("srs_compliance", {})
                     for key, value in srs_compliance.items():
                         print(f"   {key}: {value}")
 
@@ -219,14 +231,16 @@ class SRSApiTester:
                     "away_team": f"Opponent {i}",
                     "league": "Test League",
                     "match_date": (datetime.now() + timedelta(days=1)).isoformat(),
-                    "venue": f"Test Stadium {i}"
+                    "venue": f"Test Stadium {i}",
                 },
                 "include_confidence": False,
-                "include_features": False
+                "include_features": False,
             }
 
             try:
-                async with self.session.post(f"{BASE_URL}/predictions/predict", json=request_data) as response:
+                async with self.session.post(
+                    f"{BASE_URL}/predictions/predict", json=request_data
+                ) as response:
                     if response.status == 200:
                         successful_requests += 1
                     elif response.status == 429:
@@ -239,9 +253,12 @@ class SRSApiTester:
 
         print(f"✅ 成功请求: {successful_requests}")
         print(f"🚦 被限制请求: {rate_limited_requests}")
-        print(f"📊 频率限制功能: {'✅ 正常' if rate_limited_requests > 0 or successful_requests <= 100 else '⚠️ 未触发'}")
+        print(
+            f"📊 频率限制功能: {'✅ 正常' if rate_limited_requests > 0 or successful_requests <= 100 else '⚠️ 未触发'}"
+        )
 
         return True
+
 
 async def run_srs_api_tests():
     """运行SRS API测试套件"""
@@ -299,6 +316,7 @@ async def run_srs_api_tests():
         print("   • 模型准确率监控")
     else:
         print("⚠️ 部分测试未通过，需要进一步优化")
+
 
 if __name__ == "__main__":
     asyncio.run(run_srs_api_tests())

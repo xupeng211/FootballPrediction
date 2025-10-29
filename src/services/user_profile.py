@@ -12,9 +12,7 @@ from .base_unified import SimpleService
 
 # 简化的UserProfile类定义
 class UserProfile:
-    def __init__(
-        self, user_id: str, display_name: str, email: str, preferences: Dict[str, Any]
-    ):
+    def __init__(self, user_id: str, display_name: str, email: str, preferences: Dict[str, Any]):
         self.user_id = user_id
         self.display_name = display_name
         self.email = email
@@ -82,9 +80,7 @@ class UserProfileService(SimpleService):
         profile = UserProfile(
             user_id=user.id,
             display_name=getattr(user, "display_name", user.username),
-            email=(
-                getattr(user.profile, "email", "") if hasattr(user, "profile") else ""
-            ),
+            email=(getattr(user.profile, "email", "") if hasattr(user, "profile") else ""),
             preferences={
                 "interests": interests,
                 "content_type": content_preferences.get(str("preferred_type"), "text"),
@@ -101,9 +97,7 @@ class UserProfileService(SimpleService):
         """获取用户画像"""
         return self._user_profiles.get(user_id)
 
-    async def update_profile(
-        self, user_id: str, updates: Dict[str, Any]
-    ) -> Optional[UserProfile]:
+    async def update_profile(self, user_id: str, updates: Dict[str, Any]) -> Optional[UserProfile]:
         """更新用户画像"""
         profile = await self.get_profile(user_id)
         if not profile:

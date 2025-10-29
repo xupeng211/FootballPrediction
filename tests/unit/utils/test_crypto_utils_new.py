@@ -1,14 +1,9 @@
-from unittest.mock import MagicMock, patch
-
 """
 加密工具测试（新版本）
 Tests for Crypto Utils (New Version)
 
 测试src.utils.crypto_utils模块的功能
 """
-
-import hashlib
-import secrets
 
 import pytest
 
@@ -113,10 +108,7 @@ class TestCryptoUtilsStaticMethods:
 
         assert isinstance(hash_value, str)
         assert len(hash_value) == 64  # SHA256哈希长度
-        assert (
-            hash_value
-            == "d5579c46dfcc7f18207013e65b44e4cb4e2c2298f4ac457ba8f82743f31e930b"
-        )
+        assert hash_value == "d5579c46dfcc7f18207013e65b44e4cb4e2c2298f4ac457ba8f82743f31e930b"
 
     def test_hash_string_unicode(self):
         """测试：Unicode字符串哈希"""

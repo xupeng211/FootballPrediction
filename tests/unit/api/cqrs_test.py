@@ -4,10 +4,6 @@
 重构时间: 2025-10-25 13:28
 """
 
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
 import pytest
 
 # 尝试导入目标模块
@@ -35,9 +31,7 @@ class TestApiCqrsReal:
         try:
             result = get_prediction_cqrs_service()
             # 验证函数执行不抛出异常
-            assert result is not None or isinstance(
-                result, (bool, int, float, str, list, dict)
-            )
+            assert result is not None or isinstance(result, (bool, int, float, str, list, dict))
         except Exception as e:
             # 函数可能需要特定参数，记录但不失败
             print(f"函数 {'get_prediction_cqrs_service'} 测试跳过: {e}")
@@ -48,9 +42,7 @@ class TestApiCqrsReal:
         try:
             result = get_match_cqrs_service()
             # 验证函数执行不抛出异常
-            assert result is not None or isinstance(
-                result, (bool, int, float, str, list, dict)
-            )
+            assert result is not None or isinstance(result, (bool, int, float, str, list, dict))
         except Exception as e:
             # 函数可能需要特定参数，记录但不失败
             print(f"函数 {'get_match_cqrs_service'} 测试跳过: {e}")
@@ -61,9 +53,7 @@ class TestApiCqrsReal:
         try:
             result = get_user_cqrs_service()
             # 验证函数执行不抛出异常
-            assert result is not None or isinstance(
-                result, (bool, int, float, str, list, dict)
-            )
+            assert result is not None or isinstance(result, (bool, int, float, str, list, dict))
         except Exception as e:
             # 函数可能需要特定参数，记录但不失败
             print(f"函数 {'get_user_cqrs_service'} 测试跳过: {e}")
@@ -74,9 +64,7 @@ class TestApiCqrsReal:
         try:
             result = get_analytics_cqrs_service()
             # 验证函数执行不抛出异常
-            assert result is not None or isinstance(
-                result, (bool, int, float, str, list, dict)
-            )
+            assert result is not None or isinstance(result, (bool, int, float, str, list, dict))
         except Exception as e:
             # 函数可能需要特定参数，记录但不失败
             print(f"函数 {'get_analytics_cqrs_service'} 测试跳过: {e}")

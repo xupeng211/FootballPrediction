@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 10 repeated Mock creations
 
-from unittest.mock import AsyncMock, Mock, patch
 
 """
 核心API模块覆盖率测试 - 第二阶段
@@ -15,7 +14,6 @@ Core API Module Coverage Tests - Phase 2
 import asyncio
 import json
 from datetime import datetime
-from typing import Any, Dict, Optional
 
 import pytest
 
@@ -319,9 +317,7 @@ class TestAPIIntegrationPatterns:
         ) -> APIResponse:
             # 模拟数据验证
             if not request_data.get("match_id"):
-                return APIResponse(
-                    success=False, message="验证失败", errors=["match_id是必需的"]
-                )
+                return APIResponse(success=False, message="验证失败", errors=["match_id是必需的"])
 
             # 模拟异步处理
             await asyncio.sleep(0.01)
@@ -369,9 +365,7 @@ class TestAPIIntegrationPatterns:
             "processed_at": datetime.utcnow().isoformat(),
         }
 
-        response = APIResponse(
-            success=True, message="数据转换成功", data=transformed_data
-        )
+        response = APIResponse(success=True, message="数据转换成功", data=transformed_data)
 
         assert response.data["match_id"] == 123
         assert response.data["home_team"] == "Team A"

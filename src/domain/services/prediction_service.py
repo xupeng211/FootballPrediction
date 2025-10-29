@@ -108,9 +108,7 @@ class PredictionDomainService:
         old_away = prediction.score.predicted_away if prediction.score else None
 
         # 更新预测
-        prediction.make_prediction(
-            new_predicted_home, new_predicted_away, new_confidence
-        )
+        prediction.make_prediction(new_predicted_home, new_predicted_away, new_confidence)
 
         # 记录领域事件
         if prediction.id is None:
@@ -155,9 +153,7 @@ class PredictionDomainService:
             prediction_id=prediction.id,
             actual_home=actual_home,
             actual_away=actual_away,
-            is_correct=(
-                prediction.score.is_correct_result if prediction.score else False
-            ),
+            is_correct=(prediction.score.is_correct_result if prediction.score else False),
             points_earned=points_earned,
             accuracy_score=None,  # 需要实现
         )
@@ -268,10 +264,7 @@ class PredictionDomainService:
 
         # 检查预测内容
         if prediction.score:
-            if (
-                prediction.score.predicted_home < 0
-                or prediction.score.predicted_away < 0
-            ):
+            if prediction.score.predicted_home < 0 or prediction.score.predicted_away < 0:
                 errors.append("预测比分不能为负数")
 
         # 检查信心度

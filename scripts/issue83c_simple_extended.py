@@ -15,39 +15,35 @@ class SimpleExtendedTestGenerator:
     def __init__(self):
         self.target_modules = [
             # Core模块 (4个)
-            ('core.di', ['di', 'config']),
-            ('core.config', ['config', 'database']),
-            ('core.logging', ['config']),
-            ('core.exceptions', []),
-
+            ("core.di", ["di", "config"]),
+            ("core.config", ["config", "database"]),
+            ("core.logging", ["config"]),
+            ("core.exceptions", []),
             # API模块 (5个)
-            ('api.data_router', ['api', 'database', 'redis']),
-            ('api.cqrs', ['api', 'cqrs', 'database']),
-            ('api.predictions.router', ['api', 'services', 'database']),
-            ('api.repositories', ['api', 'database']),
-            ('api.facades', ['api', 'services']),
-
+            ("api.data_router", ["api", "database", "redis"]),
+            ("api.cqrs", ["api", "cqrs", "database"]),
+            ("api.predictions.router", ["api", "services", "database"]),
+            ("api.repositories", ["api", "database"]),
+            ("api.facades", ["api", "services"]),
             # Database模块 (5个)
-            ('database.config', ['database', 'config']),
-            ('database.definitions', ['database']),
-            ('database.models.match', ['database']),
-            ('database.models.user', ['database']),
-            ('database.repositories.base', ['database']),
-
+            ("database.config", ["database", "config"]),
+            ("database.definitions", ["database"]),
+            ("database.models.match", ["database"]),
+            ("database.models.user", ["database"]),
+            ("database.repositories.base", ["database"]),
             # Services模块 (3个)
-            ('services.prediction', ['services', 'database', 'redis']),
-            ('services.data_processing', ['services', 'database']),
-            ('services.cache', ['services', 'redis', 'async']),
-
+            ("services.prediction", ["services", "database", "redis"]),
+            ("services.data_processing", ["services", "database"]),
+            ("services.cache", ["services", "redis", "async"]),
             # CQRS模块 (3个)
-            ('cqrs.application', ['cqrs', 'database']),
-            ('cqrs.handlers', ['cqrs', 'services']),
-            ('cqrs.bus', ['cqrs'])
+            ("cqrs.application", ["cqrs", "database"]),
+            ("cqrs.handlers", ["cqrs", "services"]),
+            ("cqrs.bus", ["cqrs"]),
         ]
 
     def create_test_content(self, module_name: str, mock_categories: List[str]) -> str:
         """创建测试内容"""
-        category = module_name.split('.')[0]
+        category = module_name.split(".")[0]
 
         template = f'''"""
 Issue #83-C 扩展测试: {module_name}
@@ -362,12 +358,12 @@ class Test{self._get_class_name(module_name)}:
 
     def _get_class_name(self, module_name: str) -> str:
         """生成类名"""
-        return module_name.replace('.', '').title().replace('_', '')
+        return module_name.replace(".", "").title().replace("_", "")
 
     def _get_integration_test_code(self, category: str) -> str:
         """生成集成测试代码"""
-        if category == 'core':
-            return '''
+        if category == "core":
+            return """
             print("🔧 核心模块集成测试")
             if 'di' in self.mocks:
                 di_data = self.mocks['di']
@@ -375,9 +371,9 @@ class Test{self._get_class_name(module_name)}:
             if 'config' in self.mocks:
                 config_data = self.mocks['config']
                 assert 'app_config' in config_data
-'''
-        elif category == 'api':
-            return '''
+"""
+        elif category == "api":
+            return """
             print("🌐 API模块集成测试")
             if 'api' in self.mocks:
                 api_data = self.mocks['api']
@@ -385,17 +381,17 @@ class Test{self._get_class_name(module_name)}:
             if 'database' in self.mocks:
                 db_data = self.mocks['database']
                 assert 'session' in db_data
-'''
-        elif category == 'database':
-            return '''
+"""
+        elif category == "database":
+            return """
             print("🗄️ 数据库模块集成测试")
             if 'database' in self.mocks:
                 db_data = self.mocks['database']
                 assert 'engine' in db_data
                 assert 'pool' in db_data
-'''
-        elif category == 'services':
-            return '''
+"""
+        elif category == "services":
+            return """
             print("⚙️ 服务模块集成测试")
             if 'services' in self.mocks:
                 services_data = self.mocks['services']
@@ -403,26 +399,26 @@ class Test{self._get_class_name(module_name)}:
             if 'redis' in self.mocks:
                 redis_data = self.mocks['redis']
                 assert 'client' in redis_data
-'''
-        elif category == 'cqrs':
-            return '''
+"""
+        elif category == "cqrs":
+            return """
             print("📋 CQRS模块集成测试")
             if 'cqrs' in self.mocks:
                 cqrs_data = self.mocks['cqrs']
                 assert 'command_bus' in cqrs_data
                 assert 'query_bus' in cqrs_data
-'''
+"""
         else:
-            return '''
+            return """
             print("🔧 通用模块集成测试")
             test_data = {"module": "{module_name}", "status": "testing"}
             assert test_data["status"] == "testing"
-'''
+"""
 
     def create_test_file(self, module_name: str, mock_categories: List[str]) -> tuple:
         """创建测试文件"""
         # 生成测试文件路径
-        category = module_name.split('.')[0]
+        category = module_name.split(".")[0]
         test_dir = Path("tests/unit") / category
         test_dir.mkdir(parents=True, exist_ok=True)
 
@@ -449,7 +445,7 @@ class Test{self._get_class_name(module_name)}:
                 test_file, test_content = self.create_test_file(module_name, mock_categories)
 
                 # 写入测试文件
-                with open(test_file, 'w', encoding='utf-8') as f:
+                with open(test_file, "w", encoding="utf-8") as f:
                     f.write(test_content)
 
                 print(f"   ✅ 生成成功: {test_file}")
@@ -495,5 +491,6 @@ def main():
 
 if __name__ == "__main__":
     import sys
+
     success = main()
     sys.exit(0 if success else 1)

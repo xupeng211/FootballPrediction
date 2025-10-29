@@ -5,7 +5,6 @@
 from datetime import datetime
 
 import pytest
-from pydantic import ValidationError
 
 from src.models.common_models import (
     DataValidationResult,

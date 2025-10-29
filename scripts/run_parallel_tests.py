@@ -129,13 +129,9 @@ def main():
 
     parser = argparse.ArgumentParser(description="并行测试运行器")
     parser.add_argument("--workers", type=int, help="并行进程数（默认：CPU核心数-1）")
-    parser.add_argument(
-        "--path", default="tests/unit", help="测试路径（默认：tests/unit）"
-    )
+    parser.add_argument("--path", default="tests/unit", help="测试路径（默认：tests/unit）")
     parser.add_argument("--coverage", action="store_true", help="运行覆盖率测试")
-    parser.add_argument(
-        "--fast", action="store_true", help="快速模式（只运行单元测试）"
-    )
+    parser.add_argument("--fast", action="store_true", help="快速模式（只运行单元测试）")
 
     args = parser.parse_args()
 
@@ -152,9 +148,7 @@ def main():
         sys.exit(1)
 
     # 运行测试
-    success = run_parallel_tests(
-        test_path=args.path, workers=args.workers, coverage=args.coverage
-    )
+    success = run_parallel_tests(test_path=args.path, workers=args.workers, coverage=args.coverage)
 
     if success:
         print("\n✅ 并行测试执行成功！")

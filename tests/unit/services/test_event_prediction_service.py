@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 27 repeated Mock creations
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 """
 事件驱动预测服务测试
@@ -13,9 +12,7 @@ from datetime import datetime
 
 import pytest
 
-from src.core.di import DIContainer
 from src.domain.models import Prediction, PredictionStatus
-from src.events import EventBus, get_event_bus
 from src.services.event_prediction_service import EventDrivenPredictionService
 
 
@@ -26,9 +23,7 @@ class TestEventDrivenPredictionService:
     @pytest.fixture
     def mock_strategy_service(self):
         """Mock策略预测服务"""
-        with patch(
-            "src.services.event_prediction_service.StrategyPredictionService"
-        ) as mock:
+        with patch("src.services.event_prediction_service.StrategyPredictionService") as mock:
             # 设置基类方法
             mock_instance = Mock()
             mock_instance.predict_match = AsyncMock()
@@ -114,9 +109,7 @@ class TestEventDrivenPredictionService:
         assert event.source == "prediction_service"
 
     @pytest.mark.asyncio
-    async def test_predict_match_without_optional_params(
-        self, service, sample_prediction
-    ):
+    async def test_predict_match_without_optional_params(self, service, sample_prediction):
         """测试：预测比赛（不提供可选参数）"""
         # Given
         service.predict_match = AsyncMock(return_value=sample_prediction)
@@ -129,9 +122,7 @@ class TestEventDrivenPredictionService:
         service._event_bus.publish.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_update_prediction_and_publish_event(
-        self, service, sample_prediction
-    ):
+    async def test_update_prediction_and_publish_event(self, service, sample_prediction):
         """测试：更新预测并发布事件"""
         # Given
         # Mock仓库返回原预测
@@ -261,9 +252,7 @@ class TestEventDrivenPredictionService:
         assert event.source == "prediction_service"
 
     @pytest.mark.asyncio
-    async def test_prediction_made_event_data_structure(
-        self, service, sample_prediction
-    ):
+    async def test_prediction_made_event_data_structure(self, service, sample_prediction):
         """测试：预测创建事件数据结构"""
         # Given
         service.predict_match = AsyncMock(return_value=sample_prediction)

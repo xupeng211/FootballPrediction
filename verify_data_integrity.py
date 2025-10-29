@@ -11,6 +11,7 @@ import time
 from datetime import datetime
 import httpx
 
+
 class DataIntegrityVerifier:
     """数据完整性验证器"""
 
@@ -25,7 +26,7 @@ class DataIntegrityVerifier:
             "success": success,
             "details": details,
             "duration": duration,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
         self.test_results.append(result)
 
@@ -39,19 +40,11 @@ class DataIntegrityVerifier:
     def analyze_data_quality(self, data, api_name):
         """分析数据质量"""
         if not isinstance(data, list) or len(data) == 0:
-            return {
-                "is_real": False,
-                "reason": "无数据或格式错误",
-                "score": 0
-            }
+            return {"is_real": False, "reason": "无数据或格式错误", "score": 0}
 
         sample_item = data[0]
         if not isinstance(sample_item, dict):
-            return {
-                "is_real": False,
-                "reason": "数据项不是字典格式",
-                "score": 0
-            }
+            return {"is_real": False, "reason": "数据项不是字典格式", "score": 0}
 
         # 检查TODO假数据特征
         todo_patterns = [
@@ -66,6 +59,7 @@ class DataIntegrityVerifier:
         ]
 
         import re
+
         todo_score = 0
         total_checks = 0
 
@@ -78,7 +72,11 @@ class DataIntegrityVerifier:
         rich_data_indicators = 0
         if "id" in sample_item and isinstance(sample_item["id"], int) and sample_item["id"] > 0:
             rich_data_indicators += 1
-        if "name" in sample_item and isinstance(sample_item["name"], str) and len(sample_item["name"]) > 2:
+        if (
+            "name" in sample_item
+            and isinstance(sample_item["name"], str)
+            and len(sample_item["name"]) > 2
+        ):
             rich_data_indicators += 1
         if len(sample_item) >= 4:  # 至少4个字段
             rich_data_indicators += 1
@@ -94,7 +92,7 @@ class DataIntegrityVerifier:
         return {
             "is_real": is_real,
             "reason": f"TODO特征: {todo_score}/{total_checks}, 数据丰富度: {rich_data_indicators}/3",
-            "score": overall_score
+            "score": overall_score,
         }
 
     async def test_data_quality(self):
@@ -105,7 +103,7 @@ class DataIntegrityVerifier:
             ("球队数据API", "/api/v1/data/teams"),
             ("联赛数据API", "/api/v1/data/leagues"),
             ("比赛数据API", "/api/v1/data/matches"),
-            ("赔率数据API", "/api/v1/data/odds")
+            ("赔率数据API", "/api/v1/data/odds"),
         ]
 
         quality_results = []
@@ -122,30 +120,51 @@ class DataIntegrityVerifier:
                         quality = self.analyze_data_quality(data, name)
 
                         if quality["is_real"]:
-                            self.log_test(name, True, f"HTTP {response.status_code}, 真实数据: {len(data)}条", duration)
+                            self.log_test(
+                                name,
+                                True,
+                                f"HTTP {response.status_code}, 真实数据: {len(data)}条",
+                                duration,
+                            )
                         else:
-                            self.log_test(name, False, f"HTTP {response.status_code}, {quality['reason']}", duration)
+                            self.log_test(
+                                name,
+                                False,
+                                f"HTTP {response.status_code}, {quality['reason']}",
+                                duration,
+                            )
 
-                        quality_results.append({
-                            "name": name,
-                            "quality": quality,
-                            "data_count": len(data) if isinstance(data, list) else 0
-                        })
+                        quality_results.append(
+                            {
+                                "name": name,
+                                "quality": quality,
+                                "data_count": len(data) if isinstance(data, list) else 0,
+                            }
+                        )
                     else:
-                        self.log_test(name, False, f"HTTP {response.status_code}: {response.text[:100]}", duration)
-                        quality_results.append({
-                            "name": name,
-                            "quality": {"is_real": False, "reason": "API错误"},
-                            "data_count": 0
-                        })
+                        self.log_test(
+                            name,
+                            False,
+                            f"HTTP {response.status_code}: {response.text[:100]}",
+                            duration,
+                        )
+                        quality_results.append(
+                            {
+                                "name": name,
+                                "quality": {"is_real": False, "reason": "API错误"},
+                                "data_count": 0,
+                            }
+                        )
             except Exception as e:
                 duration = time.time() - start_time
                 self.log_test(name, False, f"连接错误: {str(e)}", duration)
-                quality_results.append({
-                    "name": name,
-                    "quality": {"is_real": False, "reason": "连接错误"},
-                    "data_count": 0
-                })
+                quality_results.append(
+                    {
+                        "name": name,
+                        "quality": {"is_real": False, "reason": "连接错误"},
+                        "data_count": 0,
+                    }
+                )
 
         return quality_results
 
@@ -175,14 +194,28 @@ class DataIntegrityVerifier:
                         # 检查状态数据
                         if isinstance(data, dict):
                             if "status" in data and data["status"] in ["healthy", "运行中"]:
-                                self.log_test(name, True, f"HTTP {response.status_code}, 状态: {data.get('status')}", duration)
+                                self.log_test(
+                                    name,
+                                    True,
+                                    f"HTTP {response.status_code}, 状态: {data.get('status')}",
+                                    duration,
+                                )
                                 success_count += 1
                             else:
-                                self.log_test(name, False, f"HTTP {response.status_code}, 状态异常", duration)
+                                self.log_test(
+                                    name, False, f"HTTP {response.status_code}, 状态异常", duration
+                                )
                         else:
-                            self.log_test(name, False, f"HTTP {response.status_code}, 响应格式错误", duration)
+                            self.log_test(
+                                name, False, f"HTTP {response.status_code}, 响应格式错误", duration
+                            )
                     else:
-                        self.log_test(name, False, f"HTTP {response.status_code}: {response.text[:100]}", duration)
+                        self.log_test(
+                            name,
+                            False,
+                            f"HTTP {response.status_code}: {response.text[:100]}",
+                            duration,
+                        )
             except Exception as e:
                 duration = time.time() - start_time
                 self.log_test(name, False, f"连接错误: {str(e)}", duration)
@@ -217,14 +250,31 @@ class DataIntegrityVerifier:
                             consistency_ok = self.check_data_consistency(data, name)
 
                             if consistency_ok:
-                                self.log_test(name, True, f"HTTP {response.status_code}, 数据一致性良好", duration)
+                                self.log_test(
+                                    name,
+                                    True,
+                                    f"HTTP {response.status_code}, 数据一致性良好",
+                                    duration,
+                                )
                                 success_count += 1
                             else:
-                                self.log_test(name, False, f"HTTP {response.status_code}, 数据一致性问题", duration)
+                                self.log_test(
+                                    name,
+                                    False,
+                                    f"HTTP {response.status_code}, 数据一致性问题",
+                                    duration,
+                                )
                         else:
-                            self.log_test(name, False, f"HTTP {response.status_code}, 无数据检查", duration)
+                            self.log_test(
+                                name, False, f"HTTP {response.status_code}, 无数据检查", duration
+                            )
                     else:
-                        self.log_test(name, False, f"HTTP {response.status_code}: {response.text[:100]}", duration)
+                        self.log_test(
+                            name,
+                            False,
+                            f"HTTP {response.status_code}: {response.text[:100]}",
+                            duration,
+                        )
             except Exception as e:
                 duration = time.time() - start_time
                 self.log_test(name, False, f"连接错误: {str(e)}", duration)
@@ -297,11 +347,15 @@ class DataIntegrityVerifier:
                 real_data_count += 1
             total_data_count += result["data_count"]
             status = "🟢" if result["quality"]["is_real"] else "🔴"
-            print(f"   {status} {result['name']}: {result['data_count']}条记录, 质量: {result['quality']['reason']}")
+            print(
+                f"   {status} {result['name']}: {result['data_count']}条记录, 质量: {result['quality']['reason']}"
+            )
 
         if total_data_count > 0:
             real_data_ratio = (real_data_count / len(quality_results)) * 100
-            print(f"\n   📊 真实数据比例: {real_data_count}/{len(quality_results)} ({real_data_ratio:.1f}%)")
+            print(
+                f"\n   📊 真实数据比例: {real_data_count}/{len(quality_results)} ({real_data_ratio:.1f}%)"
+            )
 
         # 系统状态
         print(f"\n🔧 系统状态:")
@@ -369,10 +423,12 @@ class DataIntegrityVerifier:
         print(f"   验证时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("=" * 60)
 
+
 async def main():
     """主函数"""
     verifier = DataIntegrityVerifier()
     await verifier.run_data_integrity_verification()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -1,9 +1,6 @@
-from unittest.mock import AsyncMock, Mock, patch
-
 """重试工具测试"""
 
 import asyncio
-from datetime import datetime, timedelta
 from time import sleep
 
 import pytest

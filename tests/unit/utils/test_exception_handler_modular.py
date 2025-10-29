@@ -8,7 +8,6 @@ from unittest.mock import AsyncMock, Mock, patch
 数据质量异常处理器模块化测试
 """
 
-from datetime import datetime
 
 import pytest
 
@@ -18,12 +17,10 @@ def test_module_import():
     # 测试导入新模块
     # 测试导入兼容模块
     # 测试导入异常类
-    from src.data.quality.exception_handler_mod import DataQualityException
     from src.data.quality.exception_handler_mod import DataQualityExceptionHandler
     from src.data.quality.exception_handler_mod import (
         DataQualityExceptionHandler as LegacyDataQualityExceptionHandler,
     )
-    from src.data.quality.exception_handler_mod import (
         InvalidDataHandler,
         MissingValueException,
         MissingValueHandler,
@@ -206,7 +203,6 @@ def test_exception_handler_initialization():
 def test_backward_compatibility():
     """测试向后兼容性"""
     # 测试原始导入方式仍然有效
-    from src.data.quality.exception_handler_mod import (
         DataQualityException,
         DataQualityExceptionHandler,
         MissingValueHandler,

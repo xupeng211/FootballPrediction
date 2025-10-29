@@ -46,9 +46,7 @@ sys.path.insert(0, "src")
             "def test_adapter_initialization(self):",
             "def test_adapter_initialization():",
         )
-        content = content.replace(
-            "def test_adapter_request(self):", "def test_adapter_request():"
-        )
+        content = content.replace("def test_adapter_request(self):", "def test_adapter_request():")
         content = content.replace(
             "def test_adapter_health_check(self):", "def test_adapter_health_check():"
         )

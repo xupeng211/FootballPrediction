@@ -2,15 +2,12 @@
 
 # TODO: Consider creating a fixture for 14 repeated Mock creations
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 """
 特征计算器测试
 Tests for Feature Calculator
 """
 
-from datetime import datetime, timedelta
-from decimal import Decimal
 
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -70,9 +67,7 @@ class TestFeatureCalculator:
 
         # When
         with patch.object(calculator, "db_manager") as mock_db:
-            mock_db.get_async_session.return_value.__aenter__.return_value = (
-                mock_session
-            )
+            mock_db.get_async_session.return_value.__aenter__.return_value = mock_session
             features = await calculator.calculate_recent_performance_features(
                 team_id=1, calculation_date=sample_date
             )
@@ -109,9 +104,7 @@ class TestFeatureCalculator:
 
         # When
         with patch.object(calculator, "db_manager") as mock_db:
-            mock_db.get_async_session.return_value.__aenter__.return_value = (
-                mock_session
-            )
+            mock_db.get_async_session.return_value.__aenter__.return_value = mock_session
             features = await calculator.calculate_recent_performance_features(
                 team_id=1, calculation_date=sample_date
             )
@@ -142,9 +135,7 @@ class TestFeatureCalculator:
 
         # When
         with patch.object(calculator, "db_manager") as mock_db:
-            mock_db.get_async_session.return_value.__aenter__.return_value = (
-                mock_session
-            )
+            mock_db.get_async_session.return_value.__aenter__.return_value = mock_session
             features = await calculator.calculate_historical_matchup_features(
                 home_team_id=1, away_team_id=2, calculation_date=sample_date
             )
@@ -208,9 +199,7 @@ class TestFeatureCalculator:
                 mock_result = AsyncMock()
                 mock_result.scalars.return_value.all.return_value = []
                 mock_session.execute.return_value = mock_result
-                mock_db.get_async_session.return_value.__aenter__.return_value = (
-                    mock_session
-                )
+                mock_db.get_async_session.return_value.__aenter__.return_value = mock_session
 
                 features = await calculator.calculate_recent_performance_features(
                     team_id=1, calculation_date=date
@@ -233,9 +222,7 @@ class TestFeatureCalculator:
                 mock_result = AsyncMock()
                 mock_result.scalars.return_value.all.return_value = []
                 mock_session.execute.return_value = mock_result
-                mock_db.get_async_session.return_value.__aenter__.return_value = (
-                    mock_session
-                )
+                mock_db.get_async_session.return_value.__aenter__.return_value = mock_session
 
                 features = await calculator.calculate_recent_performance_features(
                     team_id=team_id, calculation_date=sample_date

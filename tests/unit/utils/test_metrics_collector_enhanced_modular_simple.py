@@ -217,7 +217,6 @@ def test_business_metrics_collector():
 def test_backward_compatibility():
     """测试向后兼容性"""
     # 测试原始导入方式仍然有效
-    from src.metrics.collector.enhanced import (
         EnhancedMetricsCollector,
         MetricPoint,
         MetricsAggregator,
@@ -265,7 +264,6 @@ def test_decorators():
 
 def test_alert_handlers():
     """测试告警处理器"""
-    from datetime import datetime
 
     from src.monitoring.metrics_collector_enhanced.alerting import (
         AlertInfo,
@@ -322,7 +320,6 @@ def test_metric_summary():
 
 def test_alert_info():
     """测试告警信息"""
-    from datetime import datetime
 
     from src.monitoring.metrics_collector_enhanced.metric_types import AlertInfo
 

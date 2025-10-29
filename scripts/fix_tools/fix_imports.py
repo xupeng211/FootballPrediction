@@ -78,9 +78,7 @@ def find_import_section_end(lines):
         stripped = line.strip()
 
         # 检测文档字符串
-        if not in_docstring and (
-            stripped.startswith('"""') or stripped.startswith("'''")
-        ):
+        if not in_docstring and (stripped.startswith('"""') or stripped.startswith("'''")):
             in_docstring = True
             docstring_char = stripped[:3]
         elif in_docstring and docstring_char in stripped:
@@ -92,9 +90,7 @@ def find_import_section_end(lines):
             continue
 
         # 找到导入语句
-        if stripped.startswith(("import ", "from ")) and not stripped.startswith(
-            "from ."
-        ):
+        if stripped.startswith(("import ", "from ")) and not stripped.startswith("from ."):
             import_end = max(import_end, i + 1)
         # 遇到非导入语句，非空行，非注释则停止
         elif stripped and not stripped.startswith("#") and "import" not in stripped:

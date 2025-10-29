@@ -151,7 +151,6 @@ async def test_get_match_prediction_not_found():
 async def test_batch_predict_matches_handler():
     """测试批量预测处理器"""
     from src.api.predictions_mod.batch_handlers import batch_predict_matches_handler
-    from src.database.models import Match
 
     mock_request = Mock()
     mock_session = AsyncMock()
@@ -173,9 +172,7 @@ async def test_batch_predict_matches_handler():
         mock_session.execute.return_value = mock_result
 
         # Mock预测服务
-        with patch(
-            "src.api.predictions_mod.batch_handlers.prediction_service"
-        ) as mock_service:
+        with patch("src.api.predictions_mod.batch_handlers.prediction_service") as mock_service:
             mock_prediction = Mock()
             mock_prediction.to_dict.return_value = {"test": "prediction"}
             mock_service.batch_predict_matches.return_value = [
@@ -210,9 +207,7 @@ async def test_batch_predict_too_many_matches():
 
     # 执行处理器并期望抛出HTTPException
     with pytest.raises(HTTPException) as exc_info:
-        await batch_predict_matches_handler(
-            mock_request, match_ids, session=mock_session
-        )
+        await batch_predict_matches_handler(mock_request, match_ids, session=mock_session)
 
     assert exc_info.value.status_code == 400
     assert "最多支持50场比赛" in exc_info.value.detail
@@ -262,9 +257,7 @@ async def test_get_match_prediction_history_handler():
         mock_session.execute.side_effect = execute_results
 
         # 执行处理器
-        _result = await get_match_prediction_history_handler(
-            123, limit=10, session=mock_session
-        )
+        _result = await get_match_prediction_history_handler(123, limit=10, session=mock_session)
 
         # 验证结果
         assert _result is not None
@@ -304,9 +297,7 @@ async def test_get_recent_predictions_handler():
         mock_session.execute.return_value = mock_result
 
         # 执行处理器
-        _result = await get_recent_predictions_handler(
-            hours=24, limit=50, session=mock_session
-        )
+        _result = await get_recent_predictions_handler(hours=24, limit=50, session=mock_session)
 
         # 验证结果
         assert _result is not None

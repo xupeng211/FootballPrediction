@@ -8,6 +8,7 @@ import subprocess
 import re
 from pathlib import Path
 
+
 def apply_production_mypy_fix():
     """应用生产级MyPy修复"""
 
@@ -23,6 +24,7 @@ def apply_production_mypy_fix():
     run_production_validation()
 
     print("✅ 生产级MyPy修复完成！")
+
 
 def create_production_mypy_config():
     """创建生产级MyPy配置"""
@@ -143,10 +145,11 @@ warn_return_any = True
 """
 
     config_path = Path("mypy_production.ini")
-    with open(config_path, 'w', encoding='utf-8') as f:
+    with open(config_path, "w", encoding="utf-8") as f:
         f.write(production_config)
 
     print(f"    ✅ 创建了生产级配置 {config_path}")
+
 
 def restore_original_config():
     """恢复原始配置文件"""
@@ -156,11 +159,12 @@ def restore_original_config():
     original_config = Path("pyproject.toml")
 
     if backup_config.exists():
-        with open(backup_config, 'r', encoding='utf-8') as f:
+        with open(backup_config, "r", encoding="utf-8") as f:
             content = f.read()
-        with open(original_config, 'w', encoding='utf-8') as f:
+        with open(original_config, "w", encoding="utf-8") as f:
             f.write(content)
         print("    ✅ 恢复了原始 pyproject.toml")
+
 
 def run_production_validation():
     """运行生产级验证"""
@@ -168,16 +172,15 @@ def run_production_validation():
 
     try:
         # 使用生产配置运行MyPy
-        result = subprocess.run([
-            'mypy', 'src/',
-            '--config-file', 'mypy_production.ini'
-        ], capture_output=True, text=True)
+        result = subprocess.run(
+            ["mypy", "src/", "--config-file", "mypy_production.ini"], capture_output=True, text=True
+        )
 
         if result.returncode == 0:
             print("    ✅ 生产级MyPy检查完全通过！")
             return 0
         else:
-            error_lines = [line for line in result.stdout.split('\n') if ': error:' in line]
+            error_lines = [line for line in result.stdout.split("\n") if ": error:" in line]
             error_count = len(error_lines)
 
             if error_count == 0:
@@ -187,9 +190,22 @@ def run_production_validation():
                 print(f"    ⚠️  生产环境中剩余 {error_count} 个错误")
 
                 # 显示关键错误
-                critical_errors = [line for line in error_lines if any(x in line for x in [
-                    'domain', 'services', 'database', 'cache', 'adapters', 'utils', 'core'
-                ])]
+                critical_errors = [
+                    line
+                    for line in error_lines
+                    if any(
+                        x in line
+                        for x in [
+                            "domain",
+                            "services",
+                            "database",
+                            "cache",
+                            "adapters",
+                            "utils",
+                            "core",
+                        ]
+                    )
+                ]
 
                 if critical_errors:
                     print("    关键业务逻辑错误:")
@@ -201,6 +217,7 @@ def run_production_validation():
     except Exception as e:
         print(f"    ❌ 生产级验证失败: {e}")
         return -1
+
 
 def create_ci_cd_config():
     """为CI/CD创建配置"""
@@ -229,10 +246,11 @@ jobs:
 
     config_path = Path(".github/workflows/mypy-check.yml")
     config_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(config_path, 'w', encoding='utf-8') as f:
+    with open(config_path, "w", encoding="utf-8") as f:
         f.write(ci_config)
 
     print(f"    ✅ 创建了CI/CD配置 {config_path}")
+
 
 def generate_summary_report():
     """生成总结报告"""
@@ -298,10 +316,11 @@ def generate_summary_report():
 """
 
     report_path = Path("MYPY_OPTIMIZATION_REPORT.md")
-    with open(report_path, 'w', encoding='utf-8') as f:
+    with open(report_path, "w", encoding="utf-8") as f:
         f.write(report)
 
     print(f"    ✅ 生成了总结报告 {report_path}")
+
 
 def run_final_test():
     """运行最终测试"""
@@ -309,10 +328,11 @@ def run_final_test():
 
     # 测试生产配置
     print("  测试生产配置...")
-    result = subprocess.run([
-        'mypy', 'src/domain', 'src/services', 'src/core',
-        '--config-file', 'mypy_production.ini'
-    ], capture_output=True, text=True)
+    result = subprocess.run(
+        ["mypy", "src/domain", "src/services", "src/core", "--config-file", "mypy_production.ini"],
+        capture_output=True,
+        text=True,
+    )
 
     if result.returncode == 0:
         print("  ✅ 核心模块类型检查通过")
@@ -323,15 +343,18 @@ def run_final_test():
 
     # 测试原始配置
     print("  测试原始配置...")
-    result = subprocess.run([
-        'mypy', 'src/', '--ignore-missing-imports', '--allow-untyped-defs'
-    ], capture_output=True, text=True)
+    result = subprocess.run(
+        ["mypy", "src/", "--ignore-missing-imports", "--allow-untyped-defs"],
+        capture_output=True,
+        text=True,
+    )
 
-    error_count = len([line for line in result.stdout.split('\n') if ': error:' in line])
+    error_count = len([line for line in result.stdout.split("\n") if ": error:" in line])
 
     print(f"  📊 原始配置错误数: {error_count}")
 
     return core_success, error_count
+
 
 if __name__ == "__main__":
     print("🚀 开始生产级MyPy修复...")

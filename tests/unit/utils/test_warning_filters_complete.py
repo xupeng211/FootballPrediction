@@ -102,9 +102,7 @@ class TestWarningFiltersComplete:
                 warnings.warn("Test user warning", UserWarning)
                 warnings.warn("Test deprecation warning", DeprecationWarning)
                 warnings.warn("Test future warning", FutureWarning)
-                warnings.warn(
-                    "Test pending deprecation warning", PendingDeprecationWarning
-                )
+                warnings.warn("Test pending deprecation warning", PendingDeprecationWarning)
 
                 # 验证没有崩溃
                 assert isinstance(w, list)

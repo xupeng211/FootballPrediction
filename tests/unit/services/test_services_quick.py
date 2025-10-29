@@ -1,7 +1,6 @@
 import pytest
 
 from tests.base import ServiceTestCase
-from tests.utils import create_mock_match, create_mock_prediction
 
 
 @pytest.mark.unit

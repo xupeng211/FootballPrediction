@@ -3,7 +3,6 @@
 # TODO: Consider creating a fixture for 5 repeated Mock creations
 
 from typing import List
-from unittest.mock import AsyncMock, Mock, patch
 
 """
 缓存一致性管理器测试
@@ -12,7 +11,6 @@ Tests for Cache Consistency Manager
 测试src.cache.consistency_manager模块的功能
 """
 
-import logging
 
 import pytest
 
@@ -33,10 +31,7 @@ class MockCacheConsistencyManager:
         self._sync_calls.append((entity_type, entity_id))
 
         # 模拟错误场景
-        if (
-            hasattr(self.redis_manager, "_should_error")
-            and self.redis_manager._should_error
-        ):
+        if hasattr(self.redis_manager, "_should_error") and self.redis_manager._should_error:
             raise ConnectionError("Mock Redis connection failed")
 
         return True
@@ -93,9 +88,7 @@ class TestCacheConsistencyManager:
         mock_redis = Mock()
         mock_db = Mock()
 
-        manager = consistency_manager_class(
-            redis_manager=mock_redis, db_manager=mock_db
-        )
+        manager = consistency_manager_class(redis_manager=mock_redis, db_manager=mock_db)
 
         assert manager.redis_manager is mock_redis
         assert manager.db_manager is mock_db
@@ -156,9 +149,7 @@ class TestCacheConsistencyManager:
                 pass
         else:
             # 对于真实实现，使用patch模拟错误
-            with patch(
-                "src.cache.consistency_manager.get_redis_manager"
-            ) as mock_get_redis:
+            with patch("src.cache.consistency_manager.get_redis_manager") as mock_get_redis:
                 import redis
 
                 mock_get_redis.side_effect = redis.RedisError("Connection failed")
@@ -187,9 +178,7 @@ class TestCacheConsistencyManager:
                 pass
         else:
             # 对于真实实现，使用patch模拟错误
-            with patch(
-                "src.cache.consistency_manager.get_redis_manager"
-            ) as mock_get_redis:
+            with patch("src.cache.consistency_manager.get_redis_manager") as mock_get_redis:
                 mock_get_redis.side_effect = ConnectionError("Cannot connect")
 
                 manager = consistency_manager_class()
@@ -427,9 +416,7 @@ class TestCacheConsistencyManagerIntegration:
         custom_redis = Mock()
         custom_db = Mock()
 
-        manager = consistency_manager_class(
-            redis_manager=custom_redis, db_manager=custom_db
-        )
+        manager = consistency_manager_class(redis_manager=custom_redis, db_manager=custom_db)
 
         # 验证自定义组件被正确设置
         assert manager.redis_manager is custom_redis

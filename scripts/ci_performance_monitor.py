@@ -16,9 +16,11 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
+
 @dataclass
 class PerformanceMetrics:
     """性能指标数据类"""
+
     job_name: str
     start_time: float
     end_time: float
@@ -31,6 +33,7 @@ class PerformanceMetrics:
     test_failed: int = 0
     coverage_percent: float = 0.0
 
+
 class CIPerformanceMonitor:
     """CI/CD性能监控器"""
 
@@ -42,11 +45,7 @@ class CIPerformanceMonitor:
     def start_job_timer(self, job_name: str) -> None:
         """开始计时作业"""
         metric = PerformanceMetrics(
-            job_name=job_name,
-            start_time=time.time(),
-            end_time=0.0,
-            duration=0.0,
-            status="running"
+            job_name=job_name, start_time=time.time(), end_time=0.0, duration=0.0, status="running"
         )
         self.metrics.append(metric)
         print(f"⏱️  开始计时: {job_name}")
@@ -71,9 +70,11 @@ class CIPerformanceMonitor:
         print("📦 测试依赖安装性能...")
         start_time = time.time()
         try:
-            subprocess.run([
-                "pip", "install", "--quiet", "-r", "requirements/requirements.lock"
-            ], check=True, capture_output=True)
+            subprocess.run(
+                ["pip", "install", "--quiet", "-r", "requirements/requirements.lock"],
+                check=True,
+                capture_output=True,
+            )
             install_time = time.time() - start_time
             results["install_time"] = install_time
             print(f"✅ 依赖安装耗时: {install_time:.2f}s")
@@ -85,9 +86,12 @@ class CIPerformanceMonitor:
         print("🔧 测试语法检查性能...")
         start_time = time.time()
         try:
-            result = subprocess.run([
-                "python", "-m", "py_compile", "src/**/*.py"
-            ], check=True, capture_output=True, shell=True)
+            result = subprocess.run(
+                ["python", "-m", "py_compile", "src/**/*.py"],
+                check=True,
+                capture_output=True,
+                shell=True,
+            )
             syntax_time = time.time() - start_time
             results["syntax_time"] = syntax_time
             print(f"✅ 语法检查耗时: {syntax_time:.2f}s")
@@ -100,14 +104,19 @@ class CIPerformanceMonitor:
         print("🔍 测试Lint检查性能...")
         start_time = time.time()
         try:
-            result = subprocess.run([
-                "ruff", "check", "src/", "--output-format=json"
-            ], check=True, capture_output=True, text=True)
+            result = subprocess.run(
+                ["ruff", "check", "src/", "--output-format=json"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
             lint_time = time.time() - start_time
             lint_issues = len(result.stdout.strip()) if result.stdout.strip() else 0
             results["lint_time"] = lint_time
             results["lint_issues"] = lint_issues
-            print(f"✅ Lint检查耗时: {lint_time:.2f}s (问题: {len(json.loads(result.stdout) if result.stdout.strip() else '[]')})")
+            print(
+                f"✅ Lint检查耗时: {lint_time:.2f}s (问题: {len(json.loads(result.stdout) if result.stdout.strip() else '[]')})"
+            )
         except subprocess.CalledProcessError:
             lint_time = time.time() - start_time
             results["lint_time"] = lint_time
@@ -119,12 +128,15 @@ class CIPerformanceMonitor:
             print("🧪 测试测试执行性能...")
             start_time = time.time()
             try:
-                result = subprocess.run([
-                    "pytest", "tests/unit/", "--tb=no", "-q"
-                ], check=True, capture_output=True, text=True)
+                result = subprocess.run(
+                    ["pytest", "tests/unit/", "--tb=no", "-q"],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
                 test_time = time.time() - start_time
                 # 解析pytest输出
-                lines = result.stdout.strip().split('\n')
+                lines = result.stdout.strip().split("\n")
                 test_summary = lines[-1] if lines else ""
                 results["test_time"] = test_time
                 results["test_summary"] = test_summary
@@ -177,13 +189,14 @@ class CIPerformanceMonitor:
         report = self.generate_performance_report()
         report_path = Path(filename)
 
-        with open(report_path, 'w', encoding='utf-8') as f:
+        with open(report_path, "w", encoding="utf-8") as f:
             f.write("# CI/CD性能监控报告\n\n")
             f.write(f"**生成时间**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             f.write("**监控器版本**: v1.0\n\n")
             f.write(report)
 
         print(f"📄 性能报告已保存到: {report_path}")
+
 
 def main():
     """主函数"""
@@ -216,6 +229,7 @@ def main():
         # 默认运行快速性能测试
         results = monitor.run_performance_test("quick")
         monitor.save_report()
+
 
 if __name__ == "__main__":
     main()

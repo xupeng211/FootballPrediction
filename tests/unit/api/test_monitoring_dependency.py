@@ -1,5 +1,3 @@
-from unittest.mock import Mock, patch
-
 """
 测试监控API的依赖注入功能
 Test monitoring API dependency injection

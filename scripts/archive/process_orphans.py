@@ -75,16 +75,12 @@ def analyze_document_value(filepath):
         )
 
         # Additional heuristics
-        is_large_file = (
-            filepath.stat().st_size > 5000
-        )  # Large files are often more comprehensive
+        is_large_file = filepath.stat().st_size > 5000  # Large files are often more comprehensive
         has_code_blocks = len(re.findall(r"```", content)) >= 2
         has_links = len(re.findall(r"\[.*\]\(.*\)", content)) >= 3
 
         # Decision logic
-        if valuable_score > outdated_score and (
-            is_large_file or has_code_blocks or has_links
-        ):
+        if valuable_score > outdated_score and (is_large_file or has_code_blocks or has_links):
             return "keep", valuable_score, outdated_score
         elif outdated_score > valuable_score or days_old > 180:
             return "archive", valuable_score, outdated_score
@@ -105,11 +101,7 @@ def add_to_index(filepath, category="Uncategorized"):
         # Read title from file
         content = filepath.read_text(encoding="utf-8")
         title_match = re.search(r"^#\s+(.+)$", content, re.MULTILINE)
-        title = (
-            title_match.group(1)
-            if title_match
-            else rel_path.stem.replace("_", " ").title()
-        )
+        title = title_match.group(1) if title_match else rel_path.stem.replace("_", " ").title()
 
         # Add to INDEX.md
         with open(INDEX_FILE, "a", encoding="utf-8") as f:
@@ -219,9 +211,7 @@ def main():
         if process_orphan(orphan_path):
             processed += 1
 
-    print(
-        f"\n📊 Processing complete: {processed}/{len(orphan_paths)} documents processed"
-    )
+    print(f"\n📊 Processing complete: {processed}/{len(orphan_paths)} documents processed")
 
 
 if __name__ == "__main__":

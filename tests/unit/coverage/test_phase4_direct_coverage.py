@@ -1,5 +1,3 @@
-from unittest.mock import MagicMock, Mock, patch
-
 """
 第四阶段直接覆盖率提升测试
 Phase 4 Direct Coverage Boost Tests
@@ -8,10 +6,7 @@ Phase 4 Direct Coverage Boost Tests
 目标：30% → 40%覆盖率提升
 """
 
-import asyncio
 import json
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
 
 import pytest
 
@@ -398,9 +393,7 @@ def test_error_handling_patterns_coverage():
 
     @retry_operation(max_attempts=3)
     def failing_operation():
-        failing_operation.attempt_count = (
-            getattr(failing_operation, "attempt_count", 0) + 1
-        )
+        failing_operation.attempt_count = getattr(failing_operation, "attempt_count", 0) + 1
         if failing_operation.attempt_count < 3:
             raise ConnectionError("Temporary failure")
         return "success"
@@ -485,9 +478,7 @@ def test_performance_monitoring_coverage():
         def get_stats(self):
             return {
                 "timings": {
-                    k: v.get("duration", 0)
-                    for k, v in self.timings.items()
-                    if "duration" in v
+                    k: v.get("duration", 0) for k, v in self.timings.items() if "duration" in v
                 },
                 "counters": self.counters,
             }

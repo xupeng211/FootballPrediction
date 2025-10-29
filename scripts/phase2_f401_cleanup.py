@@ -27,9 +27,7 @@ def get_f401_files():
             file_path = item["filename"]
             if file_path not in files:
                 files[file_path] = []
-            files[file_path].append(
-                {"line": item["location"]["row"], "message": item["message"]}
-            )
+            files[file_path].append({"line": item["location"]["row"], "message": item["message"]})
         return files
     except Exception:
         # 如果JSON解析失败，使用文本方式

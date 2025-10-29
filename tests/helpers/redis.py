@@ -5,8 +5,6 @@ Redis测试辅助工具
 
 import json
 import time
-from typing import Any, AsyncGenerator, Dict, List, Optional, Union
-from unittest.mock import AsyncMock, Mock
 
 
 class MockRedis:

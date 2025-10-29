@@ -3,10 +3,8 @@ Kafka测试辅助工具
 提供Kafka生产者和消费者的Mock实现
 """
 
-import asyncio
 import json
 from typing import Any, AsyncGenerator, Dict, List, Optional
-from unittest.mock import AsyncMock, Mock
 
 
 class MockKafkaMessage:

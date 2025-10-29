@@ -7,10 +7,6 @@ Based on the 100% verified intelligent Mock compatibility fix pattern from the s
 provide complete Mock solutions for the API layer.
 """
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-from typing import Dict, Any, List
-from datetime import datetime, timedelta
-
 
 class APITestMockFramework:
     """API测试Mock框架 - 智能Mock兼容修复模式API版"""
@@ -124,9 +120,7 @@ class APITestMockFramework:
 
         # 2. 数据库连接层Mock
         mock_session = AsyncMock()
-        patch2 = patch(
-            "src.database.connection.get_async_session", return_value=mock_session
-        )
+        patch2 = patch("src.database.connection.get_async_session", return_value=mock_session)
         patches.append(patch2)
 
         # 3. 仓储提供者层Mock
@@ -153,9 +147,7 @@ class APITestMockFramework:
 
         # 直接Mock API层使用的依赖符号
         mock_repo = self.create_mock_repository()
-        patch1 = patch(
-            "src.repositories.ReadOnlyPredictionRepoDep", return_value=mock_repo
-        )
+        patch1 = patch("src.repositories.ReadOnlyPredictionRepoDep", return_value=mock_repo)
         patches.append((patch1, mock_repo))
 
         return patches

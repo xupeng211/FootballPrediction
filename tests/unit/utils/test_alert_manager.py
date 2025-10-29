@@ -140,9 +140,7 @@ class TestAlertManager:
         """测试确认告警"""
         alert_manager.add_alert(sample_alert)
 
-        alert = alert_manager.acknowledge_alert(
-            sample_alert["id"], acknowledged_by="test_user"
-        )
+        alert = alert_manager.acknowledge_alert(sample_alert["id"], acknowledged_by="test_user")
 
         assert alert["acknowledged"] is True
         assert alert["acknowledged_by"] == "test_user"
@@ -164,8 +162,7 @@ class TestAlertManager:
 
         assert len(active_alerts) == 5
         assert all(
-            alert["id"] in [a["id"] for a in active_alerts]
-            for alert in alert_manager.active_alerts
+            alert["id"] in [a["id"] for a in active_alerts] for alert in alert_manager.active_alerts
         )
 
     def test_get_alerts_by_severity(self, alert_manager):
@@ -276,9 +273,7 @@ class TestAlertManager:
                 source="database",
             )
             # 检查是否应该发送（使用告警类型作为key，限制10次，窗口60秒）
-            should_send = alert_manager.check_rate_limit(
-                key="database_error", limit=10, window=60
-            )
+            should_send = alert_manager.check_rate_limit(key="database_error", limit=10, window=60)
             if should_send:
                 alert_manager._update_rate_limit("database_error", 60)
 
@@ -296,9 +291,7 @@ class TestAlertManager:
             "error_rate": 0.1,
         }
 
-        with patch(
-            "src.monitoring.alert_manager.get_system_metrics", return_value=mock_metrics
-        ):
+        with patch("src.monitoring.alert_manager.get_system_metrics", return_value=mock_metrics):
             alerts_created = await alert_manager.monitor_system_health()
 
             # 高CPU和内存应该触发告警
@@ -319,9 +312,7 @@ class TestAlertManager:
     async def test_monitor_database_connection(self, alert_manager):
         """测试数据库连接监控"""
         # Mock数据库检查失败
-        with patch(
-            "src.monitoring.alert_manager.check_database_health", return_value=False
-        ):
+        with patch("src.monitoring.alert_manager.check_database_health", return_value=False):
             alert = await alert_manager.check_database_connection()
 
             assert alert is not None
@@ -468,9 +459,7 @@ class TestAlertManager:
         alert_manager.add_alert(alert)
 
         # Mock服务恢复检查
-        with patch(
-            "src.monitoring.alert_manager.check_service_health", return_value=True
-        ):
+        with patch("src.monitoring.alert_manager.check_service_health", return_value=True):
             resolved = await alert_manager.auto_resolve_alerts()
 
             assert len(resolved) == 1

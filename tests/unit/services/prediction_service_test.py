@@ -4,9 +4,7 @@ Issue #83 阶段3: services.prediction_service 全面测试
 """
 
 from datetime import datetime, timedelta
-from decimal import Decimal
 from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
@@ -126,10 +124,7 @@ class MockPredictionService:
             raise ValueError("只能评估待处理的预测")
 
         # 计算结果
-        is_correct = (
-            pred["predicted_home"] == actual_home
-            and pred["predicted_away"] == actual_away
-        )
+        is_correct = pred["predicted_home"] == actual_home and pred["predicted_away"] == actual_away
 
         points = 10 if is_correct else 0
 
@@ -244,7 +239,6 @@ prediction_service_class = MockPredictionService
 
 # 尝试导入目标模块用于验证存在性
 try:
-    from src.domain.services.prediction_service import PredictionDomainService
 
     print(f"真实服务模块存在，但为测试简化使用Mock服务")
 except ImportError as e:
@@ -313,9 +307,7 @@ class TestServicesPredictionService:
         mock_prediction.id = prediction["id"]
 
         # 评估预测 - 正确结果
-        service.evaluate_prediction(
-            prediction=mock_prediction, actual_home=3, actual_away=1
-        )
+        service.evaluate_prediction(prediction=mock_prediction, actual_home=3, actual_away=1)
 
         # 获取更新后的预测
         updated_prediction = service.predictions[prediction["id"]]

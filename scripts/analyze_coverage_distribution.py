@@ -9,18 +9,19 @@ import subprocess
 import json
 from collections import defaultdict
 
+
 def parse_coverage_output(coverage_output):
     """解析覆盖率输出，提取模块覆盖率信息"""
 
     coverage_data = {}
 
     # 解析覆盖率输出
-    lines = coverage_output.split('\n')
+    lines = coverage_output.split("\n")
 
     for line in lines:
         # 匹配覆盖率行，例如：
         # src/api/cqrs.py                                                84     33      6      0  56.67%   73, 78, 83, 88, 99-109, 126-135, 150-152, 166-170, 183-191, 206-210, 219-227, 243-247, 259-263, 282, 294-299
-        match = re.match(r'^src/([^\s]+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+([\d.]+)%', line)
+        match = re.match(r"^src/([^\s]+)\s+(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+([\d.]+)%", line)
         if match:
             module_path = match.group(1)
             statements = int(match.group(2))
@@ -30,45 +31,47 @@ def parse_coverage_output(coverage_output):
             coverage = float(match.group(6))
 
             module_data = {
-                'path': module_path,
-                'statements': statements,
-                'missing': missing,
-                'branches': branches,
-                'branch_partial': branch_partial,
-                'coverage': coverage,
-                'missing_lines': line.split('%')[-1].strip() if '%' in line else ''
+                "path": module_path,
+                "statements": statements,
+                "missing": missing,
+                "branches": branches,
+                "branch_partial": branch_partial,
+                "coverage": coverage,
+                "missing_lines": line.split("%")[-1].strip() if "%" in line else "",
             }
 
             coverage_data[module_path] = module_data
 
     return coverage_data
 
+
 def categorize_modules(coverage_data):
     """将模块按覆盖率分类"""
 
     categories = {
-        'high_coverage': [],    # >70%
-        'medium_coverage': [],  # 30-70%
-        'low_coverage': [],     # 10-30%
-        'no_coverage': [],      # 0-10%
-        'untested': []          # 0%覆盖率
+        "high_coverage": [],  # >70%
+        "medium_coverage": [],  # 30-70%
+        "low_coverage": [],  # 10-30%
+        "no_coverage": [],  # 0-10%
+        "untested": [],  # 0%覆盖率
     }
 
     for module_path, data in coverage_data.items():
-        coverage = data['coverage']
+        coverage = data["coverage"]
 
         if coverage == 0:
-            categories['untested'].append((module_path, data))
+            categories["untested"].append((module_path, data))
         elif coverage < 10:
-            categories['no_coverage'].append((module_path, data))
+            categories["no_coverage"].append((module_path, data))
         elif coverage < 30:
-            categories['low_coverage'].append((module_path, data))
+            categories["low_coverage"].append((module_path, data))
         elif coverage < 70:
-            categories['medium_coverage'].append((module_path, data))
+            categories["medium_coverage"].append((module_path, data))
         else:
-            categories['high_coverage'].append((module_path, data))
+            categories["high_coverage"].append((module_path, data))
 
     return categories
+
 
 def identify_high_priority_modules(categories):
     """识别高优先级提升模块"""
@@ -76,50 +79,55 @@ def identify_high_priority_modules(categories):
     high_priority = []
 
     # 优先级1: 核心业务模块但覆盖率低
-    core_modules = [
-        'api/', 'domain/', 'database/', 'services/', 'collectors/'
-    ]
+    core_modules = ["api/", "domain/", "database/", "services/", "collectors/"]
 
-    for category in ['untested', 'no_coverage', 'low_coverage']:
+    for category in ["untested", "no_coverage", "low_coverage"]:
         for module_path, data in categories[category]:
             for core_prefix in core_modules:
                 if module_path.startswith(core_prefix):
-                    high_priority.append({
-                        'module': module_path,
-                        'current_coverage': data['coverage'],
-                        'statements': data['statements'],
-                        'priority': 'HIGH',
-                        'reason': f'核心模块覆盖率极低 ({data["coverage"]}%)'
-                    })
+                    high_priority.append(
+                        {
+                            "module": module_path,
+                            "current_coverage": data["coverage"],
+                            "statements": data["statements"],
+                            "priority": "HIGH",
+                            "reason": f'核心模块覆盖率极低 ({data["coverage"]}%)',
+                        }
+                    )
                     break
 
     # 优先级2: API和路由模块
-    for category in ['low_coverage', 'medium_coverage']:
+    for category in ["low_coverage", "medium_coverage"]:
         for module_path, data in categories[category]:
-            if module_path.startswith('api/') or 'router' in module_path:
-                high_priority.append({
-                    'module': module_path,
-                    'current_coverage': data['coverage'],
-                    'statements': data['statements'],
-                    'priority': 'HIGH',
-                    'reason': f'API模块覆盖率需要提升 ({data["coverage"]}%)'
-                })
+            if module_path.startswith("api/") or "router" in module_path:
+                high_priority.append(
+                    {
+                        "module": module_path,
+                        "current_coverage": data["coverage"],
+                        "statements": data["statements"],
+                        "priority": "HIGH",
+                        "reason": f'API模块覆盖率需要提升 ({data["coverage"]}%)',
+                    }
+                )
 
     # 优先级3: 中等覆盖率的实用模块
-    for module_path, data in categories['medium_coverage']:
-        if data['statements'] > 50:  # 代码量较大的模块
-            high_priority.append({
-                'module': module_path,
-                'current_coverage': data['coverage'],
-                'statements': data['statements'],
-                'priority': 'MEDIUM',
-                'reason': f'中等覆盖率大模块 ({data["coverage"]}%, {data["statements"]}行)'
-            })
+    for module_path, data in categories["medium_coverage"]:
+        if data["statements"] > 50:  # 代码量较大的模块
+            high_priority.append(
+                {
+                    "module": module_path,
+                    "current_coverage": data["coverage"],
+                    "statements": data["statements"],
+                    "priority": "MEDIUM",
+                    "reason": f'中等覆盖率大模块 ({data["coverage"]}%, {data["statements"]}行)',
+                }
+            )
 
     # 按优先级和语句数量排序
     high_priority.sort(key=lambda x: (x["priority"] != "HIGH", -x["statements"]))
 
     return high_priority
+
 
 def analyze_coverage_distribution():
     """分析覆盖率分布"""
@@ -130,14 +138,21 @@ def analyze_coverage_distribution():
     # 运行覆盖率测试
     print("📊 运行覆盖率测试...")
     try:
-        result = subprocess.run([
-            'python3', '-m', 'pytest',
-            'tests/unit/test_lineage_basic.py',
-            'tests/unit/test_utils_complete.py',
-            '--cov=src',
-            '--cov-report=term-missing',
-            '--tb=no'
-        ], capture_output=True, text=True, cwd='/home/user/projects/FootballPrediction')
+        result = subprocess.run(
+            [
+                "python3",
+                "-m",
+                "pytest",
+                "tests/unit/test_lineage_basic.py",
+                "tests/unit/test_utils_complete.py",
+                "--cov=src",
+                "--cov-report=term-missing",
+                "--tb=no",
+            ],
+            capture_output=True,
+            text=True,
+            cwd="/home/user/projects/FootballPrediction",
+        )
 
         if result.returncode != 0:
             print(f"⚠️ 覆盖率测试返回非零退出码: {result.returncode}")
@@ -170,8 +185,8 @@ def analyze_coverage_distribution():
     print(f"⚫ 无覆盖 (0%): {len(categories['untested'])} 个模块")
 
     total_modules = len(coverage_data)
-    total_statements = sum(data['statements'] for data in coverage_data.values())
-    total_covered = sum(data['statements'] - data['missing'] for data in coverage_data.values())
+    total_statements = sum(data["statements"] for data in coverage_data.values())
+    total_covered = sum(data["statements"] - data["missing"] for data in coverage_data.values())
     overall_coverage = (total_covered / total_statements * 100) if total_statements > 0 else 0
 
     print("\n📊 总体统计:")
@@ -199,31 +214,34 @@ def analyze_coverage_distribution():
     print("-" * 30)
 
     # 阶段1: 快速提升
-    quick_wins = [m for m in high_priority if m['statements'] < 100 and m['priority'] == 'HIGH'][:5]
+    quick_wins = [m for m in high_priority if m["statements"] < 100 and m["priority"] == "HIGH"][:5]
     print(f"阶段1 - 快速提升 ({len(quick_wins)}个模块):")
     for module in quick_wins:
         print(f"  • {module['module']} ({module['current_coverage']:.1f}% → 目标70%+)")
 
     # 阶段2: 核心模块
-    core_modules = [m for m in high_priority if 'api/' in m['module'] or 'domain/' in m['module']][:5]
+    core_modules = [m for m in high_priority if "api/" in m["module"] or "domain/" in m["module"]][
+        :5
+    ]
     print(f"\n阶段2 - 核心模块 ({len(core_modules)}个模块):")
     for module in core_modules:
         print(f"  • {module['module']} ({module['current_coverage']:.1f}% → 目标60%+)")
 
     # 阶段3: 大型模块
-    large_modules = [m for m in high_priority if m['statements'] > 100][:5]
+    large_modules = [m for m in high_priority if m["statements"] > 100][:5]
     print(f"\n阶段3 - 大型模块 ({len(large_modules)}个模块):")
     for module in large_modules:
         print(f"  • {module['module']} ({module['current_coverage']:.1f}% → 目标50%+)")
 
     return {
-        'coverage_data': coverage_data,
-        'categories': categories,
-        'high_priority': high_priority,
-        'overall_coverage': overall_coverage,
-        'total_modules': total_modules,
-        'total_statements': total_statements
+        "coverage_data": coverage_data,
+        "categories": categories,
+        "high_priority": high_priority,
+        "overall_coverage": overall_coverage,
+        "total_modules": total_modules,
+        "total_statements": total_statements,
     }
+
 
 def generate_boost_plan(analysis_result):
     """生成覆盖率提升计划"""
@@ -235,8 +253,8 @@ def generate_boost_plan(analysis_result):
     print("📋 Issue #83 覆盖率提升执行计划")
     print("=" * 60)
 
-    high_priority = analysis_result['high_priority']
-    overall_coverage = analysis_result['overall_coverage']
+    high_priority = analysis_result["high_priority"]
+    overall_coverage = analysis_result["overall_coverage"]
 
     # 计算目标
     target_coverage = 80.0
@@ -250,26 +268,26 @@ def generate_boost_plan(analysis_result):
     # 分阶段计划
     phases = [
         {
-            'name': '阶段1: 快速见效',
-            'duration': '1-2天',
-            'modules': high_priority[:5],
-            'target_coverage': '60%',
-            'focus': '小模块快速覆盖'
+            "name": "阶段1: 快速见效",
+            "duration": "1-2天",
+            "modules": high_priority[:5],
+            "target_coverage": "60%",
+            "focus": "小模块快速覆盖",
         },
         {
-            'name': '阶段2: 核心强化',
-            'duration': '3-5天',
-            'modules': high_priority[5:15],
-            'target_coverage': '70%',
-            'focus': 'API和核心业务逻辑'
+            "name": "阶段2: 核心强化",
+            "duration": "3-5天",
+            "modules": high_priority[5:15],
+            "target_coverage": "70%",
+            "focus": "API和核心业务逻辑",
         },
         {
-            'name': '阶段3: 全面提升',
-            'duration': '5-7天',
-            'modules': high_priority[15:30],
-            'target_coverage': '80%',
-            'focus': '剩余模块和集成测试'
-        }
+            "name": "阶段3: 全面提升",
+            "duration": "5-7天",
+            "modules": high_priority[15:30],
+            "target_coverage": "80%",
+            "focus": "剩余模块和集成测试",
+        },
     ]
 
     for i, phase in enumerate(phases, 1):
@@ -277,10 +295,11 @@ def generate_boost_plan(analysis_result):
         print(f"  目标覆盖率: {phase['target_coverage']}")
         print(f"  重点: {phase['focus']}")
         print("  模块列表:")
-        for j, module in enumerate(phase['modules'], 1):
+        for j, module in enumerate(phase["modules"], 1):
             print(f"    {j}. {module['module']} ({module['current_coverage']:.1f}%)")
 
     return phases
+
 
 if __name__ == "__main__":
     # 执行分析
@@ -296,7 +315,7 @@ if __name__ == "__main__":
         print(f"📈 提升空间: {80 - analysis_result['overall_coverage']:.2f}%")
 
         # 保存分析结果
-        with open('/home/user/projects/FootballPrediction/coverage_analysis_result.json', 'w') as f:
+        with open("/home/user/projects/FootballPrediction/coverage_analysis_result.json", "w") as f:
             json.dump(analysis_result, f, indent=2, ensure_ascii=False)
 
         print("💾 分析结果已保存到 coverage_analysis_result.json")

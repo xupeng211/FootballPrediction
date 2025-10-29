@@ -2,15 +2,11 @@
 
 # TODO: Consider creating a fixture for 6 repeated Mock creations
 
-from unittest.mock import AsyncMock, MagicMock, mock_open, patch
 
 """
 Kafka生产者测试
 """
 
-import asyncio
-import json
-from typing import Any, Dict, Optional
 
 import pytest
 

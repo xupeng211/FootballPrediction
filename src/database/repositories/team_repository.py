@@ -13,16 +13,12 @@ class TeamRepository(ABC):
     """队伍数据仓库接口"""
 
     @abstractmethod
-    async def get_by_id(
-        self, team_id: int, db: AsyncSession
-    ) -> Optional[Dict[str, Any]]:
+    async def get_by_id(self, team_id: int, db: AsyncSession) -> Optional[Dict[str, Any]]:
         """根据ID获取队伍"""
         pass
 
     @abstractmethod
-    async def get_by_name(
-        self, name: str, db: AsyncSession
-    ) -> Optional[Dict[str, Any]]:
+    async def get_by_name(self, name: str, db: AsyncSession) -> Optional[Dict[str, Any]]:
         """根据名称获取队伍"""
         pass
 
@@ -32,9 +28,7 @@ class TeamRepository(ABC):
         pass
 
     @abstractmethod
-    async def create(
-        self, team_data: Dict[str, Any], db: AsyncSession
-    ) -> Dict[str, Any]:
+    async def create(self, team_data: Dict[str, Any], db: AsyncSession) -> Dict[str, Any]:
         """创建队伍"""
         pass
 

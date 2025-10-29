@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 4 repeated Mock creations
 
-from unittest.mock import AsyncMock, Mock, patch
 
 """
 测试覆盖率提升 - API模块测试
@@ -346,7 +345,6 @@ class TestModuleImports:
     def test_module_imports(self):
         """测试所有必需的模块都能正确导入"""
         try:
-            from src.api.dependencies import (
                 ALGORITHM,
                 SECRET_KEY,
                 get_admin_user,

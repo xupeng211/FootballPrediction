@@ -151,9 +151,7 @@ def fix_pytest_plugins():
 
         # 添加类型注解
         if "pytest_plugins = [" in content and ":" not in content:
-            content = content.replace(
-                "pytest_plugins = [", "pytest_plugins: list[str] = ["
-            )
+            content = content.replace("pytest_plugins = [", "pytest_plugins: list[str] = [")
 
             with open(path, "w", encoding="utf-8") as f:
                 f.write(content)

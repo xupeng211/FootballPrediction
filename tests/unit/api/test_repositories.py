@@ -1,5 +1,3 @@
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
-
 """
 仓储模式API端点测试
 Tests for Repository Pattern API Endpoints
@@ -11,8 +9,6 @@ Tests for Repository Pattern API Endpoints
 - 查询规范
 - 统计功能
 """
-
-from datetime import date, datetime, timedelta
 
 import pytest
 from fastapi import FastAPI
@@ -169,11 +165,10 @@ class TestPredictionRepository:
     def test_get_predictions(self, client):
         """测试：获取预测列表 - 智能Mock兼容修复模式API版最终成功版"""
         # Given - 基于服务层100%验证成功经验的完整解决方案
-        with patch(
-            "src.database.definitions.get_database_manager"
-        ) as mock_get_db_manager, patch(
-            "src.repositories.di.get_read_only_prediction_repository"
-        ) as mock_get_repo:
+        with (
+            patch("src.database.definitions.get_database_manager") as mock_get_db_manager,
+            patch("src.repositories.di.get_read_only_prediction_repository") as mock_get_repo,
+        ):
 
             # 创建Mock框架实例 - API层智能Mock兼容修复模式
             from tests.unit.api.api_mock_framework import APITestMockFramework
@@ -202,11 +197,10 @@ class TestPredictionRepository:
     def test_get_predictions_with_filters(self, client):
         """测试：带过滤器的预测列表 - 智能Mock兼容修复模式"""
         # Given - 基于验证成功的智能Mock兼容修复模式
-        with patch(
-            "src.database.definitions.get_database_manager"
-        ) as mock_get_db_manager, patch(
-            "src.repositories.di.get_read_only_prediction_repository"
-        ) as mock_get_repo:
+        with (
+            patch("src.database.definitions.get_database_manager") as mock_get_db_manager,
+            patch("src.repositories.di.get_read_only_prediction_repository") as mock_get_repo,
+        ):
 
             from tests.unit.api.api_mock_framework import APITestMockFramework
 
@@ -219,9 +213,7 @@ class TestPredictionRepository:
             mock_get_repo.return_value = mock_repo
 
             # When
-            response = client.get(
-                "/repositories/predictions?user_id=1&limit=10&offset=0"
-            )
+            response = client.get("/repositories/predictions?user_id=1&limit=10&offset=0")
 
             # Then
             assert response.status_code == 200
@@ -231,11 +223,10 @@ class TestPredictionRepository:
     def test_get_predictions_with_match_filter(self, client):
         """测试：按比赛ID过滤预测 - 智能Mock兼容修复模式"""
         # Given - 基于验证成功的智能Mock兼容修复模式
-        with patch(
-            "src.database.definitions.get_database_manager"
-        ) as mock_get_db_manager, patch(
-            "src.repositories.di.get_read_only_prediction_repository"
-        ) as mock_get_repo:
+        with (
+            patch("src.database.definitions.get_database_manager") as mock_get_db_manager,
+            patch("src.repositories.di.get_read_only_prediction_repository") as mock_get_repo,
+        ):
 
             from tests.unit.api.api_mock_framework import APITestMockFramework
 
@@ -259,11 +250,10 @@ class TestPredictionRepository:
     def test_get_predictions_pagination(self, client):
         """测试：预测列表分页 - 智能Mock兼容修复模式"""
         # Given - 基于验证成功的智能Mock兼容修复模式
-        with patch(
-            "src.database.definitions.get_database_manager"
-        ) as mock_get_db_manager, patch(
-            "src.repositories.di.get_read_only_prediction_repository"
-        ) as mock_get_repo:
+        with (
+            patch("src.database.definitions.get_database_manager") as mock_get_db_manager,
+            patch("src.repositories.di.get_read_only_prediction_repository") as mock_get_repo,
+        ):
 
             from tests.unit.api.api_mock_framework import APITestMockFramework
 
@@ -287,11 +277,10 @@ class TestPredictionRepository:
     def test_get_prediction_success(self, client):
         """测试：成功获取单个预测 - 智能Mock兼容修复模式"""
         # Given - 基于验证成功的智能Mock兼容修复模式
-        with patch(
-            "src.database.definitions.get_database_manager"
-        ) as mock_get_db_manager, patch(
-            "src.repositories.di.get_read_only_prediction_repository"
-        ) as mock_get_repo:
+        with (
+            patch("src.database.definitions.get_database_manager") as mock_get_db_manager,
+            patch("src.repositories.di.get_read_only_prediction_repository") as mock_get_repo,
+        ):
 
             from tests.unit.api.api_mock_framework import APITestMockFramework
 
@@ -318,11 +307,10 @@ class TestPredictionRepository:
     def test_get_prediction_not_found(self, client):
         """测试：获取不存在的预测 - 智能Mock兼容修复模式"""
         # Given - 基于验证成功的智能Mock兼容修复模式
-        with patch(
-            "src.database.definitions.get_database_manager"
-        ) as mock_get_db_manager, patch(
-            "src.repositories.di.get_read_only_prediction_repository"
-        ) as mock_get_repo:
+        with (
+            patch("src.database.definitions.get_database_manager") as mock_get_db_manager,
+            patch("src.repositories.di.get_read_only_prediction_repository") as mock_get_repo,
+        ):
 
             from tests.unit.api.api_mock_framework import APITestMockFramework
 
@@ -344,11 +332,10 @@ class TestPredictionRepository:
     def test_get_user_prediction_statistics(self, client):
         """测试：获取用户预测统计 - 智能Mock兼容修复模式"""
         # Given - 基于验证成功的智能Mock兼容修复模式
-        with patch(
-            "src.database.definitions.get_database_manager"
-        ) as mock_get_db_manager, patch(
-            "src.repositories.di.get_read_only_prediction_repository"
-        ) as mock_get_repo:
+        with (
+            patch("src.database.definitions.get_database_manager") as mock_get_db_manager,
+            patch("src.repositories.di.get_read_only_prediction_repository") as mock_get_repo,
+        ):
 
             from tests.unit.api.api_mock_framework import APITestMockFramework
 
@@ -373,11 +360,10 @@ class TestPredictionRepository:
     def test_get_user_prediction_statistics_with_period(self, client):
         """测试：获取用户预测统计（指定时间范围） - 智能Mock兼容修复模式"""
         # Given - 基于验证成功的智能Mock兼容修复模式
-        with patch(
-            "src.database.definitions.get_database_manager"
-        ) as mock_get_db_manager, patch(
-            "src.repositories.di.get_read_only_prediction_repository"
-        ) as mock_get_repo:
+        with (
+            patch("src.database.definitions.get_database_manager") as mock_get_db_manager,
+            patch("src.repositories.di.get_read_only_prediction_repository") as mock_get_repo,
+        ):
 
             from tests.unit.api.api_mock_framework import APITestMockFramework
 
@@ -425,11 +411,10 @@ class TestRepositoryEdgeCases:
     def test_empty_predictions_list(self, client):
         """测试：空的预测列表 - 智能Mock兼容修复模式"""
         # Given - 基于验证成功的智能Mock兼容修复模式
-        with patch(
-            "src.database.definitions.get_database_manager"
-        ) as mock_get_db_manager, patch(
-            "src.repositories.di.get_read_only_prediction_repository"
-        ) as mock_get_repo:
+        with (
+            patch("src.database.definitions.get_database_manager") as mock_get_db_manager,
+            patch("src.repositories.di.get_read_only_prediction_repository") as mock_get_repo,
+        ):
 
             from tests.unit.api.api_mock_framework import APITestMockFramework
 
@@ -454,11 +439,10 @@ class TestRepositoryEdgeCases:
     def test_predictions_with_no_filters(self, client):
         """测试：没有过滤器的预测列表 - 智能Mock兼容修复模式"""
         # Given - 基于验证成功的智能Mock兼容修复模式
-        with patch(
-            "src.database.definitions.get_database_manager"
-        ) as mock_get_db_manager, patch(
-            "src.repositories.di.get_read_only_prediction_repository"
-        ) as mock_get_repo:
+        with (
+            patch("src.database.definitions.get_database_manager") as mock_get_db_manager,
+            patch("src.repositories.di.get_read_only_prediction_repository") as mock_get_repo,
+        ):
 
             from tests.unit.api.api_mock_framework import APITestMockFramework
 
@@ -482,11 +466,10 @@ class TestRepositoryEdgeCases:
     def test_predictions_beyond_limit(self, client):
         """测试：超出数据量的查询 - 智能Mock兼容修复模式"""
         # Given - 基于验证成功的智能Mock兼容修复模式
-        with patch(
-            "src.database.definitions.get_database_manager"
-        ) as mock_get_db_manager, patch(
-            "src.repositories.di.get_read_only_prediction_repository"
-        ) as mock_get_repo:
+        with (
+            patch("src.database.definitions.get_database_manager") as mock_get_db_manager,
+            patch("src.repositories.di.get_read_only_prediction_repository") as mock_get_repo,
+        ):
 
             from tests.unit.api.api_mock_framework import APITestMockFramework
 
@@ -509,11 +492,10 @@ class TestRepositoryEdgeCases:
     def test_predictions_offset_beyond_data(self, client):
         """测试：偏移量超出数据范围 - 智能Mock兼容修复模式"""
         # Given - 基于验证成功的智能Mock兼容修复模式
-        with patch(
-            "src.database.definitions.get_database_manager"
-        ) as mock_get_db_manager, patch(
-            "src.repositories.di.get_read_only_prediction_repository"
-        ) as mock_get_repo:
+        with (
+            patch("src.database.definitions.get_database_manager") as mock_get_db_manager,
+            patch("src.repositories.di.get_read_only_prediction_repository") as mock_get_repo,
+        ):
 
             from tests.unit.api.api_mock_framework import APITestMockFramework
 
@@ -536,11 +518,10 @@ class TestRepositoryEdgeCases:
     def test_repository_exception_handling(self, client):
         """测试：仓储异常处理 - 智能Mock兼容修复模式"""
         # Given - 基于验证成功的智能Mock兼容修复模式
-        with patch(
-            "src.database.definitions.get_database_manager"
-        ) as mock_get_db_manager, patch(
-            "src.repositories.di.get_read_only_prediction_repository"
-        ) as mock_get_repo:
+        with (
+            patch("src.database.definitions.get_database_manager") as mock_get_db_manager,
+            patch("src.repositories.di.get_read_only_prediction_repository") as mock_get_repo,
+        ):
 
             from tests.unit.api.api_mock_framework import APITestMockFramework
 
@@ -562,11 +543,10 @@ class TestRepositoryEdgeCases:
     def test_statistics_for_user_with_no_predictions(self, client):
         """测试：没有预测的用户统计 - 智能Mock兼容修复模式"""
         # Given - 基于验证成功的智能Mock兼容修复模式
-        with patch(
-            "src.database.definitions.get_database_manager"
-        ) as mock_get_db_manager, patch(
-            "src.repositories.di.get_read_only_prediction_repository"
-        ) as mock_get_repo:
+        with (
+            patch("src.database.definitions.get_database_manager") as mock_get_db_manager,
+            patch("src.repositories.di.get_read_only_prediction_repository") as mock_get_repo,
+        ):
 
             from tests.unit.api.api_mock_framework import APITestMockFramework
 

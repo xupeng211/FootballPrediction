@@ -1,5 +1,3 @@
-from unittest.mock import patch
-
 """TTL 缓存简单测试"""
 
 import time

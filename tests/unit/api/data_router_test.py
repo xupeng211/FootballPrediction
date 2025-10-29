@@ -3,15 +3,11 @@ Issue #83 阶段2: api.data_router 综合测试
 优先级: HIGH - 数据路由API，业务接口核心
 """
 
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
 # 尝试导入目标模块
 try:
-    from src.api.data_router import (
         LeagueInfo,
         MatchInfo,
         MatchStatistics,

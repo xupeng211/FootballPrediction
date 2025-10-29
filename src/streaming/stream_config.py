@@ -76,15 +76,11 @@ class StreamConfig:
             ),
             producer_acks=os.getenv("KAFKA_PRODUCER_ACKS", "all"),
             producer_retries=int(os.getenv("KAFKA_PRODUCER_RETRIES", "3")),
-            consumer_group_id=os.getenv(
-                "KAFKA_CONSUMER_GROUP_ID", "football-prediction-consumers"
-            ),
+            consumer_group_id=os.getenv("KAFKA_CONSUMER_GROUP_ID", "football-prediction-consumers"),
             consumer_client_id=os.getenv(
                 "KAFKA_CONSUMER_CLIENT_ID", "football-prediction-consumer"
             ),
-            consumer_auto_offset_reset=os.getenv(
-                "KAFKA_CONSUMER_AUTO_OFFSET_RESET", "latest"
-            ),
+            consumer_auto_offset_reset=os.getenv("KAFKA_CONSUMER_AUTO_OFFSET_RESET", "latest"),
         )
 
     def _init_topics(self) -> Dict[str, TopicConfig]:
@@ -131,9 +127,7 @@ class StreamConfig:
             "max.in.flight.requests.per.connection": 1,  # 保证消息顺序
         }
 
-    def get_consumer_config(
-        self, consumer_group_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+    def get_consumer_config(self, consumer_group_id: Optional[str] = None) -> Dict[str, Any]:
         """获取消费者配置"""
         group_id = consumer_group_id or self.kafka_config.consumer_group_id
 

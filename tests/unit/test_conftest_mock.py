@@ -2,7 +2,6 @@
 
 # TODO: Consider creating a fixture for 28 repeated Mock creations
 
-from unittest.mock import MagicMock, Mock
 
 """
 Mock配置文件
@@ -64,7 +63,6 @@ def pytest_configure(config):
 
     # Mock FastAPI相关
     try:
-        from fastapi import FastAPI
     except ImportError:
         sys.modules["fastapi"] = Mock()
         sys.modules["fastapi.app"] = Mock()

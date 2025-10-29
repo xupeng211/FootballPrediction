@@ -2,16 +2,13 @@
 
 # TODO: Consider creating a fixture for 16 repeated Mock creations
 
-from unittest.mock import MagicMock, Mock, patch
 
 """
 数据处理功能测试
 覆盖数据处理相关的业务逻辑
 """
 
-import json
 import sys
-from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -151,9 +148,7 @@ class TestDataQualityChecks:
         checker.check_consistency = Mock(
             return_value={"score": 0.92, "inconsistencies": [], "fixed": 5}
         )
-        checker.check_accuracy = Mock(
-            return_value={"score": 0.88, "errors": 3, "warnings": 7}
-        )
+        checker.check_accuracy = Mock(return_value={"score": 0.88, "errors": 3, "warnings": 7})
         return checker
 
     def test_completeness_check(self, mock_quality_checker):
@@ -235,9 +230,7 @@ class TestDataQualityChecks:
             },
         }
 
-        profile = mock_quality_checker.profile_data(
-            data=[{"date": d} for d in range(1000)]
-        )
+        profile = mock_quality_checker.profile_data(data=[{"date": d} for d in range(1000)])
 
         assert profile["total_records"] == 1000
         assert profile["unique_teams"] == 20
@@ -314,9 +307,7 @@ class TestFeatureEngineering:
             "expectation": "home_favorite",
         }
 
-        features = mock_feature_engineer.create_match_features(
-            home_stats, away_stats, h2h_stats
-        )
+        features = mock_feature_engineer.create_match_features(home_stats, away_stats, h2h_stats)
 
         assert features["position_difference"] == -5
         assert features["form_advantage"] == "home"
@@ -338,9 +329,7 @@ class TestFeatureEngineering:
             "fatigue_factor": 0.85,
         }
 
-        features = mock_feature_engineer.create_temporal_features(
-            match_date, team_matches
-        )
+        features = mock_feature_engineer.create_temporal_features(match_date, team_matches)
 
         assert features["day_of_week"] == 0
         assert features["month"] == 1
@@ -356,9 +345,7 @@ class TestFeatureEngineering:
             "poisson_probabilities": {"home_win": 0.45, "draw": 0.28, "away_win": 0.27},
         }
 
-        features = mock_feature_engineer.create_advanced_features(
-            team_a_stats={}, team_b_stats={}
-        )
+        features = mock_feature_engineer.create_advanced_features(team_a_stats={}, team_b_stats={})
 
         assert "expected_goals" in features
         assert "elo_difference" in features
