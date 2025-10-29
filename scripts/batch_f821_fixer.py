@@ -292,7 +292,7 @@ def main():
     # 生成报告
     report = fixer.generate_report()
 
-    print(f"\n📊 修复摘要:")
+    print("\n📊 修复摘要:")
     print(f"   修复错误数: {result['errors_fixed']}")
     print(f"   处理文件数: {result['files_processed']}")
     print(f"   修复文件数: {result['files_fixed']}")

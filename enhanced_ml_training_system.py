@@ -467,7 +467,7 @@ class EnhancedMLTrainingSystem:
         self.training_history.append(results)
         self.best_accuracy = best_accuracy
 
-        logger.info(f"增强模型训练完成!")
+        logger.info("增强模型训练完成!")
         logger.info(f"最佳模型: {best_model_name}, 准确率: {best_accuracy:.4f}")
         logger.info(f"相比SRS基线改进: {improvement:+.2f}%")
 

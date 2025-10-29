@@ -175,11 +175,11 @@ class FinalSystemValidator:
                             consistency_scores.append(100)
                         else:
                             consistency_scores.append(80)
-                    except:
+except Exception:
                         consistency_scores.append(60)
                 else:
                     consistency_scores.append(0)
-            except:
+except Exception:
                 consistency_scores.append(0)
 
         avg_consistency = statistics.mean(consistency_scores)
@@ -222,11 +222,11 @@ class FinalSystemValidator:
                                 handling_scores.append(100)  # 良好的错误处理
                         else:
                             handling_scores.append(80)
-                    except:
+except Exception:
                         handling_scores.append(70)
                 else:
                     handling_scores.append(50)
-            except:
+except Exception:
                 handling_scores.append(0)
 
         avg_handling = statistics.mean(handling_scores)
@@ -246,7 +246,7 @@ class FinalSystemValidator:
                 async with httpx.AsyncClient(timeout=5) as client:
                     response = await client.get(f"{self.api_base_url}/api/health/")
                     return response.status_code == 200
-            except:
+except Exception:
                 return False
 
         # 并发测试
@@ -333,7 +333,7 @@ class FinalSystemValidator:
                         api_scores.append(60)
                 else:
                     api_scores.append(0)
-            except:
+except Exception:
                 api_scores.append(0)
 
         avg_score = statistics.mean(api_scores)
@@ -387,7 +387,7 @@ class FinalSystemValidator:
                         auth_scores.append(100)
                     else:
                         auth_scores.append(50)
-            except:
+except Exception:
                 auth_scores.append(0)
 
         avg_score = statistics.mean(auth_scores)
@@ -417,7 +417,7 @@ class FinalSystemValidator:
                     prediction_scores.append(100)
                 else:
                     prediction_scores.append(50)
-            except:
+except Exception:
                 prediction_scores.append(0)
 
         avg_score = statistics.mean(prediction_scores)
@@ -449,7 +449,7 @@ class FinalSystemValidator:
                     monitoring_scores.append(100)
                 else:
                     monitoring_scores.append(50)
-            except:
+except Exception:
                 monitoring_scores.append(0)
 
         avg_score = statistics.mean(monitoring_scores)
@@ -536,7 +536,7 @@ class FinalSystemValidator:
                         response = await client.get(f"{self.api_base_url}{endpoint}")
                         if response.status_code == 200:
                             times.append(time.time() - start_time)
-                except:
+except Exception:
                     pass
 
             if times:
@@ -567,7 +567,7 @@ class FinalSystemValidator:
                 async with httpx.AsyncClient(timeout=3) as client:
                     response = await client.get(f"{self.api_base_url}/api/health/")
                     return response.status_code == 200
-            except:
+except Exception:
                 return False
 
         # 吞吐量测试：30秒内处理请求数
@@ -726,13 +726,13 @@ class FinalSystemValidator:
             if priority_stats[priority]["count"] > 0:
                 priority_stats[priority]["avg_score"] /= priority_stats[priority]["count"]
 
-        print(f"📊 验证统计:")
+        print("📊 验证统计:")
         print(f"   总验证项: {len(self.validation_results)}")
         print(f"   ✅ 通过: {status_stats['pass']}")
         print(f"   ❌ 失败: {status_stats['fail']}")
         print(f"   ⚠️ 警告: {status_stats['warning']}")
 
-        print(f"\n🎯 按优先级分析:")
+        print("\n🎯 按优先级分析:")
         for priority, stats in priority_stats.items():
             priority_names = {"critical": "关键", "high": "高", "normal": "普通", "low": "低"}
             icons = {"critical": "🔴", "high": "🟠", "normal": "🟡", "low": "🟢"}
@@ -743,7 +743,7 @@ class FinalSystemValidator:
         # 计算总体评分
         overall_score, overall_status, overall_message = self.calculate_overall_score()
 
-        print(f"\n🏆 总体验证结果:")
+        print("\n🏆 总体验证结果:")
         print(f"   📊 总体评分: {overall_score:.1f}/100")
 
         status_icons = {"pass": "✅", "fail": "❌", "warning": "⚠️"}
@@ -757,7 +757,7 @@ class FinalSystemValidator:
         ]
 
         if critical_issues:
-            print(f"\n🔴 关键问题需要立即处理:")
+            print("\n🔴 关键问题需要立即处理:")
             for issue in critical_issues:
                 print(f"   • {issue['test_name']}: {issue['details']}")
                 if issue.get("recommendation"):
@@ -771,15 +771,15 @@ class FinalSystemValidator:
         ]
 
         if all_recommendations:
-            print(f"\n💡 改进建议:")
+            print("\n💡 改进建议:")
             for i, rec in enumerate(all_recommendations[:5], 1):  # 显示前5个建议
                 print(f"   {i}. {rec}")
 
         # 种子用户测试就绪度评估
-        print(f"\n🌱 种子用户测试就绪度评估:")
+        print("\n🌱 种子用户测试就绪度评估:")
 
         if overall_score >= 85 and status_stats["fail"] == 0:
-            print(f"   🟢 完全就绪: 系统验证优秀，可以立即开始种子用户测试")
+            print("   🟢 完全就绪: 系统验证优秀，可以立即开始种子用户测试")
             readiness_score = 100
         elif (
             overall_score >= 75
@@ -792,27 +792,27 @@ class FinalSystemValidator:
             )
             == 0
         ):
-            print(f"   🟡 基本就绪: 系统基本可用，建议修复关键问题后开始测试")
+            print("   🟡 基本就绪: 系统基本可用，建议修复关键问题后开始测试")
             readiness_score = 80
         else:
-            print(f"   🔴 需要改进: 建议优先修复问题后再进行种子用户测试")
+            print("   🔴 需要改进: 建议优先修复问题后再进行种子用户测试")
             readiness_score = 60
 
-        print(f"\n🚀 推荐行动:")
+        print("\n🚀 推荐行动:")
         if readiness_score >= 90:
-            print(f"   ✨ 立即开始种子用户测试！")
-            print(f"   📋 准备测试计划和用户招募")
-            print(f"   🎊 系统已完全就绪")
+            print("   ✨ 立即开始种子用户测试！")
+            print("   📋 准备测试计划和用户招募")
+            print("   🎊 系统已完全就绪")
         elif readiness_score >= 75:
-            print(f"   🔧 优先修复关键问题")
-            print(f"   📋 并行准备种子用户测试计划")
-            print(f"   🌱 问题修复后立即开始测试")
+            print("   🔧 优先修复关键问题")
+            print("   📋 并行准备种子用户测试计划")
+            print("   🌱 问题修复后立即开始测试")
         else:
-            print(f"   🔴 立即修复所有关键问题")
-            print(f"   🔧 进行系统优化和改进")
-            print(f"   📋 重新进行系统验证")
+            print("   🔴 立即修复所有关键问题")
+            print("   🔧 进行系统优化和改进")
+            print("   📋 重新进行系统验证")
 
-        print(f"\n🎊 最终系统验证完成!")
+        print("\n🎊 最终系统验证完成!")
         print(f"   验证时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"   总体评分: {overall_score:.1f}/100")
         print(f"   测试就绪度: {readiness_score}/100")
@@ -845,13 +845,13 @@ async def main():
     overall_score, readiness_score = await validator.run_final_validation()
 
     # 根据验证结果给出明确建议
-    print(f"\n🎯 基于最佳实践的建议:")
+    print("\n🎯 基于最佳实践的建议:")
     if readiness_score >= 90:
-        print(f"   🚀 立即行动: 开始种子用户测试")
+        print("   🚀 立即行动: 开始种子用户测试")
     elif readiness_score >= 75:
-        print(f"   🔧 并行行动: 修复关键问题 + 准备种子用户测试")
+        print("   🔧 并行行动: 修复关键问题 + 准备种子用户测试")
     else:
-        print(f"   🔴 优先行动: 修复系统问题")
+        print("   🔴 优先行动: 修复系统问题")
 
 
 if __name__ == "__main__":

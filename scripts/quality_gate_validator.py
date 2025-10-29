@@ -173,7 +173,7 @@ class QualityGateValidator:
 
         # 错误统计
         quality_data = report['quality_data']
-        print(f"📊 错误统计:")
+        print("📊 错误统计:")
         print(f"   总错误数: {quality_data['total_errors']:,}")
 
         if quality_data['error_counts']:
@@ -244,7 +244,7 @@ class QualityGateValidator:
         print("⚙️ 设置质量门禁标准...")
 
         # 创建GitHub Actions工作流片段
-        workflow_content = f"""
+        workflow_content = """
 # Quality Gate - 质量门禁检查
 name: Quality Gate Check
 
