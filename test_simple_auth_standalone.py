@@ -102,7 +102,7 @@ class SimpleAuthTester:
 
             # 测试重复用户创建
             try:
-                duplicate_user = auth_service.create_user(
+                auth_service.create_user(
                     unique_username, "test2@example.com", "password456"
                 )
                 self.log_test("重复用户创建", False, "应该抛出ValueError")
@@ -190,25 +190,25 @@ class SimpleAuthTester:
         failed_tests = total_tests - successful_tests
         success_rate = (successful_tests / total_tests * 100) if total_tests > 0 else 0
 
-        print(f"📈 测试统计:")
+        print("📈 测试统计:")
         print(f"   总测试数: {total_tests}")
         print(f"   成功测试: {successful_tests}")
         print(f"   失败测试: {failed_tests}")
         print(f"   成功率: {success_rate:.1f}%")
 
-        print(f"\n✅ 成功的测试:")
+        print("\n✅ 成功的测试:")
         for result in self.test_results:
             if result["success"]:
                 print(f"   • {result['test_name']}")
 
         if failed_tests > 0:
-            print(f"\n❌ 失败的测试:")
+            print("\n❌ 失败的测试:")
             for result in self.test_results:
                 if not result["success"]:
                     print(f"   • {result['test_name']}: {result['details']}")
 
         # 系统评估
-        print(f"\n🎯 系统评估:")
+        print("\n🎯 系统评估:")
         if success_rate >= 90:
             print("   🟢 优秀: 简化认证系统功能完整，可以投入使用")
         elif success_rate >= 70:
@@ -216,7 +216,7 @@ class SimpleAuthTester:
         else:
             print("   🔴 需要改进: 存在较多问题，需要修复")
 
-        print(f"\n🚀 下一步建议:")
+        print("\n🚀 下一步建议:")
         if success_rate >= 90:
             print("   1. 集成到主应用中替换复杂认证系统")
             print("   2. 添加更安全的密码哈希")

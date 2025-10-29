@@ -335,8 +335,8 @@ class TestHealthCheckSimple:
         assert min_time > 0, "Min response time should be greater than 0"
 
         print(
-            f"Health check performance: avg =
-    {avg_time:.2f}ms, min={min_time:.2f}ms, max={max_time:.2f}ms"
+            f"Health check performance: avg={avg_time:.2f}ms, "
+            f"min={min_time:.2f}ms, max={max_time:.2f}ms"
         )
 
     # === 测试工具函数 ===
@@ -385,7 +385,7 @@ def test_health_function_signature():
     try:
         import inspect
 
-        from src.api.predictions.health_simple import health_check
+from src.api.predictions.health_simple import health_check
 
         sig = inspect.signature(health_check)
         assert len(sig.parameters) == 0, "Health function should take no parameters"

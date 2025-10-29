@@ -283,7 +283,7 @@ class TestGlobalServiceManager:
 
     def test_global_manager_exists(self):
         """测试：全局管理器存在"""
-        from src.services.manager import service_manager
+from src.services.manager import service_manager
 
         assert service_manager is not None
         assert isinstance(service_manager, ServiceManager)
@@ -310,7 +310,7 @@ class TestGlobalServiceManager:
 
         # Then
         # 全局管理器应该被使用
-        from src.services.manager import service_manager
+from src.services.manager import service_manager
 
         assert isinstance(service_manager, ServiceManager)
 

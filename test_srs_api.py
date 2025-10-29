@@ -62,7 +62,7 @@ class SRSApiTester:
                 if response.status == 200:
                     data = await response.json()
 
-                    print(f"✅ 预测成功")
+                    print("✅ 预测成功")
                     print(f"📊 响应时间: {response_time:.2f}ms")
                     print(f"🏆 预测结果: {data.get('prediction')}")
                     print(f"📈 概率分布: {data.get('probabilities')}")
@@ -71,7 +71,7 @@ class SRSApiTester:
 
                     # 检查SRS合规性
                     srs_compliance = data.get("srs_compliance", {})
-                    print(f"\n📋 SRS合规性检查:")
+                    print("\n📋 SRS合规性检查:")
                     print(
                         f"   响应时间 ≤ 200ms: {'✅' if response_time <= 200 else '❌'} ({response_time:.2f}ms)"
                     )
@@ -139,7 +139,7 @@ class SRSApiTester:
                 if response.status == 200:
                     data = await response.json()
 
-                    print(f"✅ 批量预测成功")
+                    print("✅ 批量预测成功")
                     print(f"📊 总响应时间: {response_time:.2f}ms")
                     print(f"🔢 总比赛数: {data.get('total_matches')}")
                     print(f"✅ 成功预测数: {data.get('successful_predictions')}")
@@ -148,7 +148,7 @@ class SRSApiTester:
 
                     # 检查SRS合规性
                     srs_compliance = data.get("srs_compliance", {})
-                    print(f"\n📋 SRS合规性检查:")
+                    print("\n📋 SRS合规性检查:")
                     print(
                         f"   支持1000并发: {'✅' if srs_compliance.get('supports_1000_concurrent') else '❌'}"
                     )
@@ -160,7 +160,7 @@ class SRSApiTester:
                     # 显示前3个预测结果
                     predictions = data.get("predictions", [])
                     if predictions:
-                        print(f"\n📊 前3个预测结果:")
+                        print("\n📊 前3个预测结果:")
                         for i, pred in enumerate(predictions[:3], 1):
                             print(
                                 f"  {i}. {pred['match_id']}: {pred['prediction']} - {pred['probabilities']}"
@@ -187,18 +187,18 @@ class SRSApiTester:
                 if response.status == 200:
                     data = await response.json()
 
-                    print(f"✅ 指标获取成功")
-                    print(f"\n🏆 模型性能指标:")
+                    print("✅ 指标获取成功")
+                    print("\n🏆 模型性能指标:")
                     model_metrics = data.get("model_metrics", {})
                     for key, value in model_metrics.items():
                         print(f"   {key}: {value}")
 
-                    print(f"\n⚡ 性能指标:")
+                    print("\n⚡ 性能指标:")
                     perf_metrics = data.get("performance_metrics", {})
                     for key, value in perf_metrics.items():
                         print(f"   {key}: {value}")
 
-                    print(f"\n📋 SRS合规性:")
+                    print("\n📋 SRS合规性:")
                     srs_compliance = data.get("srs_compliance", {})
                     for key, value in srs_compliance.items():
                         print(f"   {key}: {value}")

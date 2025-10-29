@@ -64,11 +64,6 @@ class ConfigCache:
 class ConfigValidator:
     """配置验证器"""
 
-    def __init__(self):
-        pass
-    """配置验证器"""
-
-
 class ConfigManager:
     """配置管理器"""
 
@@ -89,11 +84,6 @@ class ConfigCache:
 class ConfigValidator:
     """配置验证器"""
 
-    def __init__(self):
-        pass
-    """配置验证器"""
-
-
 # TODO: 方法 def _convert_value 过长(50行)，建议拆分
 # TODO: 方法 def _convert_value 过长(50行)，建议拆分
 # 全局配置管理器实例
@@ -107,13 +97,6 @@ class ConfigCache:
 class ConfigValidator:
     """配置验证器"""
 
-    def __init__(self):
-        pass
-    """配置验证器"""
-
-    def __init__(self):
-        pass
-
 # 全局配置管理器实例
 # TODO: 方法 def get_config_by_env 过长(32行)，建议拆分
 class ConfigCache:
@@ -121,9 +104,16 @@ class ConfigCache:
 
     pass
 
-    def __init__(self):
-        self._rules = {}
+# TODO: 方法 def _convert_value 过长(50行)，建议拆分
+# 全局配置管理器实例
+# TODO: 方法 def get_config_by_env 过长(32行)，建议拆分
+# TODO: 方法 def get_config_by_env 过长(52行)，建议拆分
+class ConfigCache:
+class ConfigValidator:
+    """配置验证器"""
 
+    def __init__(self):
+        pass
     def add_rule(self, key: str, validator: Callable[[Any], bool]) -> None:
         """添加验证规则"""
         self._rules[key] = validator
@@ -165,6 +155,7 @@ class ConfigCache:
     # TODO: 方法 def _convert_value 过长(50行)，建议拆分
     # TODO: 方法 def _convert_value 过长(50行)，建议拆分
     # TODO: 方法 def _convert_value 过长(50行)，建议拆分
+# TODO: 方法 def _convert_value 过长(50行)，建议拆分
 # TODO: 方法 def _convert_value 过长(50行)，建议拆分
     def _convert_value(self, value: str) -> Union[str, int, float, bool]:
         """尝试转换值的类型"""
@@ -322,7 +313,3 @@ class ConfigCache:
 
 
 class ConfigValidator:
-    """配置验证器"""
-
-    def __init__(self):
-        pass

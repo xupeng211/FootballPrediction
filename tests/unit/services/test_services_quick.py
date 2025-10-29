@@ -9,7 +9,7 @@ class TestServicesQuick(ServiceTestCase):
 
     def test_base_service_init(self):
         """测试基础服务初始化"""
-        from src.services.base import BaseService
+from src.services.base import BaseService
 
         service = BaseService()
         assert service is not None

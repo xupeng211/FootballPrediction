@@ -21,14 +21,14 @@ def test_imports_coverage():
     """测试：模块导入覆盖率"""
     # 测试核心模块导入
     try:
-        from src.core.config import Config
+from src.core.config import Config
 
         assert Config is not None
     except ImportError:
         pytest.skip("Config module not available")
 
     try:
-        from src.core.exceptions import FootballPredictionError, ServiceError
+from src.core.exceptions import FootballPredictionError, ServiceError
 
         assert FootballPredictionError is not None
         assert ServiceError is not None
@@ -36,7 +36,7 @@ def test_imports_coverage():
         pytest.skip("Exceptions module not available")
 
     try:
-        from src.api.schemas import APIResponse
+from src.api.schemas import APIResponse
 
         assert APIResponse is not None
     except ImportError:
@@ -46,7 +46,7 @@ def test_imports_coverage():
 def test_config_class_coverage():
     """测试：配置类覆盖率提升"""
     try:
-        from src.core.config import Config
+from src.core.config import Config
 
         # 测试配置初始化
         config = Config()
@@ -72,7 +72,7 @@ def test_config_class_coverage():
 def test_exceptions_hierarchy_coverage():
     """测试：异常层次结构覆盖率"""
     try:
-        from src.core.exceptions import FootballPredictionError, ServiceError
+from src.core.exceptions import FootballPredictionError, ServiceError
 
         # 测试基础异常类
         base_error = FootballPredictionError("基础错误")
@@ -105,7 +105,7 @@ def test_exceptions_hierarchy_coverage():
 def test_api_schemas_coverage():
     """测试：API模式覆盖率"""
     try:
-        from src.api.schemas import APIResponse
+from src.api.schemas import APIResponse
 
         # 测试成功响应
         success_response = APIResponse(
@@ -148,7 +148,7 @@ def test_utils_modules_coverage():
     """测试：工具模块覆盖率"""
     # 测试字符串工具
     try:
-        from src.utils.string_utils import clean_string, format_currency
+from src.utils.string_utils import clean_string, format_currency
 
         # 测试字符串清理
         assert clean_string("  Test String  ") == "test string"
@@ -164,7 +164,7 @@ def test_utils_modules_coverage():
 
     # 测试时间工具
     try:
-        from src.utils.time_utils import format_duration, parse_iso_date
+from src.utils.time_utils import format_duration, parse_iso_date
 
         # 测试持续时间格式化
         assert format_duration(60) == "1分0秒"
@@ -181,7 +181,7 @@ def test_utils_modules_coverage():
 
     # 测试字典工具
     try:
-        from src.utils.dict_utils import merge_dicts, safe_get
+from src.utils.dict_utils import merge_dicts, safe_get
 
         # 测试安全字典访问
         data = {"level1": {"level2": {"value": "found"}}}
@@ -204,7 +204,7 @@ def test_validation_utilities_coverage():
     """测试：验证工具覆盖率"""
     # 测试邮箱验证
     try:
-        from src.utils.validators import validate_email
+from src.utils.validators import validate_email
 
         # 有效邮箱
         valid_emails = [
@@ -233,7 +233,7 @@ def test_validation_utilities_coverage():
 
     # 测试电话验证
     try:
-        from src.utils.validators import validate_phone
+from src.utils.validators import validate_phone
 
         valid_phones = ["+1234567890", "123-456-7890", "(123) 456-7890", "1234567890"]
 
@@ -248,7 +248,7 @@ def test_validation_utilities_coverage():
 def test_crypto_utilities_coverage():
     """测试：加密工具覆盖率"""
     try:
-        from src.utils.crypto_utils import hash_password, verify_password
+from src.utils.crypto_utils import hash_password, verify_password
 
         password = "test_password_123"
 

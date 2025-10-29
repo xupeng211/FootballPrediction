@@ -253,7 +253,7 @@ class AutomatedCodeReviewer:
                         issue_type="too_many_parameters",
                         severity="medium",
                         message=f"函数 '{node.name}' 参数过多: {len(node.args.args)} 个",
-                        suggestion=f"考虑使用参数对象或配置字典来减少参数数量",
+                        suggestion="考虑使用参数对象或配置字典来减少参数数量",
                         rule_id="PARAM001",
                     )
                 )
@@ -270,7 +270,7 @@ class AutomatedCodeReviewer:
                             issue_type="large_class",
                             severity="medium",
                             message=f"类 '{node.name}' 过大: {class_length} 行",
-                            suggestion=f"建议将类拆分为多个职责单一的类",
+                            suggestion="建议将类拆分为多个职责单一的类",
                             rule_id="CLASS001",
                         )
                     )
@@ -730,7 +730,7 @@ class AutomatedCodeReviewer:
 
         # 问题统计
         summary = self.review_results["summary"]
-        print(f"\n📋 问题统计:")
+        print("\n📋 问题统计:")
         print(f"  总问题数: {summary['total_issues']}")
         for severity, count in summary["by_severity"].items():
             if count > 0:
@@ -739,7 +739,7 @@ class AutomatedCodeReviewer:
 
         # 指标信息
         metrics = self.review_results["metrics"]
-        print(f"\n📈 代码指标:")
+        print("\n📈 代码指标:")
         print(f"  文件总数: {metrics['total_files']}")
         print(f"  代码行数: {metrics['total_lines']}")
         print(f"  函数数量: {metrics['total_functions']}")
@@ -747,7 +747,7 @@ class AutomatedCodeReviewer:
 
         # 关键建议
         if self.review_results["recommendations"]:
-            print(f"\n💡 关键建议:")
+            print("\n💡 关键建议:")
             for rec in self.review_results["recommendations"][:5]:
                 print(f"  {rec}")
 

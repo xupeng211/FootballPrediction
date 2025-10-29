@@ -60,7 +60,7 @@ class TestDatabaseDefinitionsAdvanced:
     @pytest.mark.skipif(not DATABASE_DEFINITIONS_AVAILABLE, reason="DatabaseDefinitions模块不可用")
     def test_database_definitions_import(self):
         """测试数据库定义模块导入"""
-        from src.database import definitions
+from src.database import definitions
 
         assert definitions is not None
         assert hasattr(definitions, "get_database_manager")

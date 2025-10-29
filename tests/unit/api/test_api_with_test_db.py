@@ -31,7 +31,7 @@ class TestAPIWithTestDatabase:
 
     def test_dependency_override_without_testclient(self, mock_db_session):
         """测试依赖覆盖（不使用 TestClient）"""
-        from src.main import app
+from src.main import app
 
         # 应用依赖覆盖
         def override_get_db():
@@ -78,7 +78,7 @@ class TestAPIWithTestDatabase:
 
     def test_async_db_dependency_is_callable(self):
         """测试异步数据库依赖是可调用的"""
-        from src.database.dependencies import get_async_db
+from src.database.dependencies import get_async_db
 
         assert callable(get_async_db)
 
@@ -86,7 +86,7 @@ class TestAPIWithTestDatabase:
         """测试异步数据库依赖生成器"""
         import asyncio
 
-        from src.database.dependencies import get_async_db
+from src.database.dependencies import get_async_db
 
         async def test_async():
             db_gen = get_async_db()

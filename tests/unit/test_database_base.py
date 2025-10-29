@@ -192,7 +192,7 @@ class TestTimestampMixin:
 
         importlib.reload(src.database.base)
 
-        from src.database.base import TimestampMixin
+from src.database.base import TimestampMixin
 
         # 验证时间戳字段使用mock的时间
         # 注意：由于列定义在模块级别，这里我们主要验证结构

@@ -383,7 +383,7 @@ class TestPydanticModels:
 
     def test_prediction_result_model(self):
         """测试预测结果模型"""
-        from src.api.predictions.router import PredictionResult
+from src.api.predictions.router import PredictionResult
 
         _result = PredictionResult(
             match_id=123,
@@ -400,7 +400,7 @@ class TestPydanticModels:
 
     def test_data_models(self):
         """测试数据模型"""
-        from src.api.data_router import (
+from src.api.data_router import (
             LeagueInfo,
             MatchInfo,
             MatchStatistics,

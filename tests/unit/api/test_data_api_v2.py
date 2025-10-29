@@ -193,8 +193,8 @@ class TestDataAPIV2:
         tomorrow = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
 
         response = client.get(
-            f"/data/matches?league_id =
-    1&team_id=1&date_from={today}&date_to={tomorrow}&status=pending&limit=10"
+            f"/data/matches?league_id=1&team_id=1&date_from={today}&"
+            f"date_to={tomorrow}&status=pending&limit=10"
         )
         assert response.status_code == 200
         _data = response.json()

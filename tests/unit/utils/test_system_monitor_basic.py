@@ -59,7 +59,7 @@ def test_system_monitor_basic():
         mock_process.cpu_percent.return_value = 30.0
         mock_psutil.Process.return_value = mock_process
 
-        from src.monitoring.system_monitor_mod import SystemMonitor
+from src.monitoring.system_monitor_mod import SystemMonitor
 
         monitor = SystemMonitor()
 

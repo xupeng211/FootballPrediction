@@ -1,3 +1,4 @@
+import random
 """
 Issue #83-C 数据驱动测试: config.openapi_config
 覆盖率目标: 60% → 85%

@@ -57,7 +57,7 @@ class TestHealthModule:
         mock_health_checker.HealthChecker.return_value = mock_checker
 
         # 测试导入
-        from src.api.health import get_health_status
+from src.api.health import get_health_status
 
         # 如果函数存在，调用它
         if hasattr(health, "get_health_status"):

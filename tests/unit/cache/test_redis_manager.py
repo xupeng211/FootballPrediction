@@ -84,7 +84,7 @@ delete_cache_func = mock_delete_cache
 exists_cache_func = mock_exists_cache
 ttl_cache_func = mock_ttl_cache
 get_redis_manager_func = mock_get_redis_manager
-print(f"智能Mock兼容修复模式：使用Mock服务确保测试稳定性")
+print("智能Mock兼容修复模式：使用Mock服务确保测试稳定性")
 
 
 @pytest.mark.unit

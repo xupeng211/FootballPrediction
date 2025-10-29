@@ -244,8 +244,8 @@ class TestDataSanitizer:
         data_mixed = {"Password": "secret"}
 
         result_lower = sanitizer.sanitize(data_lowercase)
-        result_upper = sanitizer.sanitize(data_uppercase)
-        result_mixed = sanitizer.sanitize(data_mixed)
+        sanitizer.sanitize(data_uppercase)
+        sanitizer.sanitize(data_mixed)
 
         assert result_lower["password"] == "***"
         # 其他情况取决于实现的具体大小写处理
@@ -716,7 +716,7 @@ class TestAuditServiceIntegration:
         """✅ 集成用例：日志集成"""
         service = AuditService()
 
-        event = service.log_event("test_action", "test_user", {"test": "data"})
+        service.log_event("test_action", "test_user", {"test": "data"})
 
         # 验证日志记录
         mock_logger.info.assert_called_once()

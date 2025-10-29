@@ -23,8 +23,8 @@ from pathlib import Path
 import joblib
 import numpy as np
 import pandas as pd
-    accuracy_score,
-    classification_report,
+accuracy_score,
+classification_report,
     confusion_matrix,
     precision_score,
     recall_score,

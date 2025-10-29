@@ -253,7 +253,7 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if PREDICTION_MODEL_AVAILABLE:
-        from src.models.prediction_model import (
+from src.models.prediction_model import (
             PredictionModel,
             PredictionStatus,
             PredictionType,

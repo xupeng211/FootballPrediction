@@ -519,11 +519,10 @@ class TestCryptoUtilsComplete:
         # 模拟真实使用场景
 
         # 1. 用户注册和验证
-        username = "testuser"
         password = "secure_password_123"
 
         # 生成用户ID和盐值
-        user_id = CryptoUtils.generate_uuid()
+        CryptoUtils.generate_uuid()
         salt = CryptoUtils.generate_salt()
 
         # 哈希密码

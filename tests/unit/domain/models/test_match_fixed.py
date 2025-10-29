@@ -618,7 +618,7 @@ class TestMatch:
         start_time = time.perf_counter()
 
         for i in range(1000):
-            match = Match(home_team_id=i, away_team_id=i + 1, league_id=10, season="2023-2024")
+            Match(home_team_id=i, away_team_id=i + 1, league_id=10, season="2023-2024")
 
         end_time = time.perf_counter()
 

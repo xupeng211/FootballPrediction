@@ -374,10 +374,10 @@ class DevCLI:
         setup_parser.add_argument("--full", action="store_true", help="完整环境设置")
 
         # 状态命令
-        status_parser = subparsers.add_parser("status", help="检查项目状态")
+        subparsers.add_parser("status", help="检查项目状态")
 
         # 改进命令
-        improve_parser = subparsers.add_parser("improve", help="运行改进周期")
+        subparsers.add_parser("improve", help="运行改进周期")
 
         return parser
 

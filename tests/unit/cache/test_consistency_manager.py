@@ -61,7 +61,7 @@ class MockCacheConsistencyManager:
 # 真实模块存在但依赖复杂，在测试环境中使用Mock是最佳实践
 IMPORTS_AVAILABLE = True
 consistency_manager_class = MockCacheConsistencyManager
-print(f"智能Mock兼容修复模式：使用Mock服务确保测试稳定性")
+print("智能Mock兼容修复模式：使用Mock服务确保测试稳定性")
 
 
 @pytest.mark.unit

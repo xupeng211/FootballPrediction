@@ -10,6 +10,7 @@ from src.core.exceptions import AdapterError
 class AdapterRegistry:
     """适配器注册表"""
 
+# 全局注册表实例
     def __init__(self):
         """初始化适配器注册表"""
         self._registry: Dict[str, Dict] = {}
@@ -61,9 +62,6 @@ class AdapterRegistry:
 
 
 # 全局注册表实例
-_global_registry: Optional[AdapterRegistry] = None
-
-
 def get_global_registry() -> AdapterRegistry:
     """获取全局注册表实例"""
     global _global_registry

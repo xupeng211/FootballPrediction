@@ -257,25 +257,25 @@ class AuthIntegrationTester:
         failed_tests = total_tests - successful_tests
         success_rate = (successful_tests / total_tests * 100) if total_tests > 0 else 0
 
-        print(f"📈 集成测试统计:")
+        print("📈 集成测试统计:")
         print(f"   总测试数: {total_tests}")
         print(f"   成功测试: {successful_tests}")
         print(f"   失败测试: {failed_tests}")
         print(f"   成功率: {success_rate:.1f}%")
 
-        print(f"\n✅ 成功的测试:")
+        print("\n✅ 成功的测试:")
         for result in self.test_results:
             if result["success"]:
                 print(f"   • {result['test_name']}")
 
         if failed_tests > 0:
-            print(f"\n❌ 失败的测试:")
+            print("\n❌ 失败的测试:")
             for result in self.test_results:
                 if not result["success"]:
                     print(f"   • {result['test_name']}: {result['details']}")
 
         # 系统评估
-        print(f"\n🎯 集成测试评估:")
+        print("\n🎯 集成测试评估:")
         if success_rate >= 90:
             print("   🟢 优秀: 认证系统完美集成，可以支持用户测试")
             integration_status = "完美集成"
@@ -287,14 +287,14 @@ class AuthIntegrationTester:
             integration_status = "需要修复"
 
         # 更新种子用户测试就绪度
-        print(f"\n🚀 种子用户测试就绪度更新:")
+        print("\n🚀 种子用户测试就绪度更新:")
         print(f"   认证系统集成状态: {integration_status}")
         if success_rate >= 90:
-            print(f"   整体就绪度: 85% 🟢 (可以开始种子用户测试)")
+            print("   整体就绪度: 85% 🟢 (可以开始种子用户测试)")
         else:
-            print(f"   整体就绪度: 75% 🟡 (需要继续完善)")
+            print("   整体就绪度: 75% 🟡 (需要继续完善)")
 
-        print(f"\n📋 下一步建议:")
+        print("\n📋 下一步建议:")
         if success_rate >= 90:
             print("   1. 开始修复其他API路由问题")
             print("   2. 集成真实数据库数据")

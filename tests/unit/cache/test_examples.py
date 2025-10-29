@@ -154,7 +154,7 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if CACHE_EXAMPLES_AVAILABLE:
-        from src.cache.examples import (
+from src.cache.examples import (
             expensive_computation,
             fetch_user_data,
             get_user_profile,

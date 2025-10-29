@@ -73,7 +73,7 @@ class APITestCase(BaseTestCase):
         from fastapi.testclient import TestClient
 
         # 延迟导入避免循环依赖
-        from src.api.app import app
+from src.api.app import app
 
         return TestClient(app)
 

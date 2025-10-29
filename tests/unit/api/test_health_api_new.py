@@ -12,7 +12,7 @@ class TestHealthAPI:
     @pytest.fixture
     def client(self):
         """创建测试客户端"""
-        from src.api.app import app
+from src.api.app import app
 
         return TestClient(app)
 

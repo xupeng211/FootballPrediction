@@ -190,7 +190,7 @@ def apply_successful_api_mock_pattern(test_function):
                 p.start()
 
             # 执行测试
-            result = test_function(*args, **kwargs)
+            test_function(*args, **kwargs)
 
         finally:
             # 清理所有补丁

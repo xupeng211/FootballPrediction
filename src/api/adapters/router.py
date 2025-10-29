@@ -9,10 +9,12 @@ Provides API endpoints for adapter management, football data retrieval, and demo
 
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
+import logging
 
 from src.adapters import AdapterRegistry, AdapterFactory
 
 router = APIRouter(prefix="/adapters", tags=["adapters"])
+logger = logging.getLogger(__name__)
 
 # 全局适配器注册表实例 - 延迟导入以支持测试mock
 adapter_registry = None

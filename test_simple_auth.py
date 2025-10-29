@@ -28,7 +28,7 @@ class SimpleAuthTester:
         print("🧪" + "=" * 60)
         print("🧪 简化认证系统测试")
         print("=" * 62)
-        print(f"🎯 目标: 验证简化认证系统核心功能")
+        print("🎯 目标: 验证简化认证系统核心功能")
         print(f"📅 测试时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("🧪" + "=" * 60)
 
@@ -47,7 +47,7 @@ class SimpleAuthTester:
                 created_at=datetime.now(),
             )
 
-            print(f"✅ 用户创建成功")
+            print("✅ 用户创建成功")
             print(f"   用户名: {user.username}")
             print(f"   邮箱: {user.email}")
             print(f"   角色: {user.role}")
@@ -88,7 +88,7 @@ class SimpleAuthTester:
             stored_user = self.service.get_user("storage_test")
 
             if stored_user is not None:
-                print(f"✅ 用户存储成功")
+                print("✅ 用户存储成功")
                 print(f"   存储用户名: {stored_user.username}")
                 print(f"   存储邮箱: {stored_user.email}")
 
@@ -97,7 +97,7 @@ class SimpleAuthTester:
                 )
                 return True
             else:
-                print(f"❌ 用户存储失败：无法检索存储的用户")
+                print("❌ 用户存储失败：无法检索存储的用户")
                 self.test_results.append(
                     {"test": "user_storage", "status": "FAIL", "message": "无法检索存储的用户"}
                 )
@@ -124,13 +124,13 @@ class SimpleAuthTester:
             print(f"✅ 错误密码验证: {incorrect_result}")
 
             if correct_result and not incorrect_result:
-                print(f"✅ 密码验证功能正常")
+                print("✅ 密码验证功能正常")
                 self.test_results.append(
                     {"test": "password_validation", "status": "PASS", "message": "密码验证功能正常"}
                 )
                 return True
             else:
-                print(f"❌ 密码验证功能异常")
+                print("❌ 密码验证功能异常")
                 self.test_results.append(
                     {"test": "password_validation", "status": "FAIL", "message": "密码验证逻辑错误"}
                 )
@@ -165,16 +165,16 @@ class SimpleAuthTester:
             token = self.service.generate_token(user)
 
             if token is not None and "Bearer" in token:
-                print(f"✅ 令牌生成成功")
+                print("✅ 令牌生成成功")
                 print(f"   令牌前缀: {token[:20]}...")
-                print(f"   令牌类型: Bearer")
+                print("   令牌类型: Bearer")
 
                 self.test_results.append(
                     {"test": "token_generation", "status": "PASS", "message": "令牌生成功能正常"}
                 )
                 return True
             else:
-                print(f"❌ 令牌生成失败：令牌为空或格式错误")
+                print("❌ 令牌生成失败：令牌为空或格式错误")
                 self.test_results.append(
                     {"test": "token_generation", "status": "FAIL", "message": "令牌为空或格式错误"}
                 )
@@ -212,9 +212,9 @@ class SimpleAuthTester:
             invalid_user = self.service.verify_token("invalid_token")
 
             if valid_user is not None and invalid_user is None:
-                print(f"✅ 令牌验证功能正常")
-                print(f"   有效令牌验证: 通过")
-                print(f"   无效令牌验证: 拒绝")
+                print("✅ 令牌验证功能正常")
+                print("   有效令牌验证: 通过")
+                print("   无效令牌验证: 拒绝")
                 print(f"   验证用户名: {valid_user.username}")
 
                 self.test_results.append(
@@ -222,7 +222,7 @@ class SimpleAuthTester:
                 )
                 return True
             else:
-                print(f"❌ 令牌验证功能异常")
+                print("❌ 令牌验证功能异常")
                 print(f"   有效令牌验证: {'通过' if valid_user else '失败'}")
                 print(f"   无效令牌验证: {'拒绝' if invalid_user is None else '通过（错误）'}")
 
@@ -270,19 +270,19 @@ class SimpleAuthTester:
                 and user.role == verified_user.role
             ):
 
-                print(f"✅ 完整认证流程成功")
+                print("✅ 完整认证流程成功")
                 print(f"   创建用户: {user.username}")
-                print(f"   存储用户: 成功")
-                print(f"   生成令牌: 成功")
-                print(f"   验证令牌: 成功")
-                print(f"   用户信息一致性: 通过")
+                print("   存储用户: 成功")
+                print("   生成令牌: 成功")
+                print("   验证令牌: 成功")
+                print("   用户信息一致性: 通过")
 
                 self.test_results.append(
                     {"test": "complete_auth_flow", "status": "PASS", "message": "完整认证流程正常"}
                 )
                 return True
             else:
-                print(f"❌ 完整认证流程失败：用户信息不一致")
+                print("❌ 完整认证流程失败：用户信息不一致")
                 self.test_results.append(
                     {"test": "complete_auth_flow", "status": "FAIL", "message": "用户信息不一致"}
                 )
@@ -323,7 +323,7 @@ class SimpleAuthTester:
         if success_rate == 100:
             print("🎉 所有测试通过！简化认证系统功能正常！")
         else:
-            print(f"⚠️ 部分测试失败，需要进一步检查。")
+            print("⚠️ 部分测试失败，需要进一步检查。")
 
     def run_all_tests(self):
         """运行所有测试"""

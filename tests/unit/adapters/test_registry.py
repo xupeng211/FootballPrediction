@@ -483,7 +483,7 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if REGISTRY_AVAILABLE:
-        from src.adapters.registry import AdapterRegistry, RegistryStatus
+from src.adapters.registry import AdapterRegistry, RegistryStatus
 
         assert AdapterRegistry is not None
         assert RegistryStatus is not None

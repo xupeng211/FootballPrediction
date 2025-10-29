@@ -10,7 +10,7 @@ import pytest
 def test_import_metric_types():
     """测试导入指标类型"""
     try:
-        from src.monitoring.metrics_collector_enhanced.metric_types import (
+from src.monitoring.metrics_collector_enhanced.metric_types import (
             AlertInfo,
             MetricPoint,
             MetricSummary,
@@ -26,7 +26,7 @@ def test_import_metric_types():
 def test_import_aggregator():
     """测试导入聚合器"""
     try:
-        from src.monitoring.metrics_collector_enhanced.aggregator import (
+from src.monitoring.metrics_collector_enhanced.aggregator import (
             MetricsAggregator,
         )
 
@@ -38,7 +38,7 @@ def test_import_aggregator():
 def test_import_alerting():
     """测试导入告警管理"""
     try:
-        from src.monitoring.metrics_collector_enhanced.alerting import (
+from src.monitoring.metrics_collector_enhanced.alerting import (
             AlertManager,
             DefaultAlertHandlers,
         )
@@ -52,7 +52,7 @@ def test_import_alerting():
 def test_import_business_metrics():
     """测试导入业务指标收集器"""
     try:
-        from src.monitoring.metrics_collector_enhanced.business_metrics import (
+from src.monitoring.metrics_collector_enhanced.business_metrics import (
             BusinessMetricsCollector,
         )
 
@@ -64,7 +64,7 @@ def test_import_business_metrics():
 def test_import_system_metrics():
     """测试导入系统指标收集器"""
     try:
-        from src.monitoring.metrics_collector_enhanced.system_metrics import (
+from src.monitoring.metrics_collector_enhanced.system_metrics import (
             SystemMetricsCollector,
         )
 
@@ -76,7 +76,7 @@ def test_import_system_metrics():
 def test_import_decorators():
     """测试导入装饰器"""
     try:
-        from src.monitoring.metrics_collector_enhanced.decorators import (
+from src.monitoring.metrics_collector_enhanced.decorators import (
             track_cache_performance,
             track_database_performance,
             track_performance,
@@ -94,7 +94,7 @@ def test_import_decorators():
 def test_import_collector():
     """测试导入主收集器（可能因为prometheus依赖失败）"""
     try:
-        from src.monitoring.metrics_collector_enhanced.collector import (
+from src.monitoring.metrics_collector_enhanced.collector import (
             EnhancedMetricsCollector,
         )
 
@@ -134,7 +134,7 @@ def test_backward_compatibility_import():
     """测试向后兼容性导入"""
     # 原始模块应该仍然可以导入
     try:
-        from src.metrics.collector.enhanced import EnhancedMetricsCollector
+from src.metrics.collector.enhanced import EnhancedMetricsCollector
 
         assert EnhancedMetricsCollector is not None
     except ImportError as e:

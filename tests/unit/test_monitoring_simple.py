@@ -177,7 +177,7 @@ class TestMonitoringAPI:
         from sqlalchemy import text
         from sqlalchemy.orm import Session
 
-        from src.api.monitoring import _get_database_metrics, router
+from src.api.monitoring import _get_database_metrics, router
 
         assert router is not None
         assert _get_database_metrics is not None
@@ -195,7 +195,7 @@ class TestMonitoringAPI:
     def test_module_structure(self):
         """测试模块结构"""
         # 验证模块有预期的结构
-        from src.api.monitoring import __file__, __name__
+from src.api.monitoring import __file__, __name__
 
         assert __file__ is not None
         assert __name__ is not None
@@ -212,7 +212,7 @@ class TestMonitoringAPI:
     def test_monitoring_dependencies(self):
         """测试监控依赖"""
         # 验证监控相关依赖
-        from src.core.logger import get_logger
+from src.core.logger import get_logger
 
         # 验证logger可以获取
         logger = get_logger("test")

@@ -236,7 +236,7 @@ class TestRedisManagerFixedV2:
 
     def test_cache_key_manager(self):
         """测试缓存键管理器"""
-        from src.cache.redis_manager import CacheKeyManager
+from src.cache.redis_manager import CacheKeyManager
 
         # 测试键构建
         key = CacheKeyManager.build_key("match", 123, "features")

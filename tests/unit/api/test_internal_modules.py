@@ -14,7 +14,7 @@ class TestCQRSModule:
 
     def test_command_response_creation(self):
         """测试命令响应创建"""
-        from src.api.cqrs import CommandResponse
+from src.api.cqrs import CommandResponse
 
         response = CommandResponse(
             success=True, message="Command executed successfully", _data={"id": 123}
@@ -25,7 +25,7 @@ class TestCQRSModule:
 
     def test_command_response_failure(self):
         """测试命令响应失败"""
-        from src.api.cqrs import CommandResponse
+from src.api.cqrs import CommandResponse
 
         response = CommandResponse(
             success=False, message="Command failed", error={"code": "VALIDATION_ERROR"}
@@ -35,7 +35,7 @@ class TestCQRSModule:
 
     def test_query_response_creation(self):
         """测试查询响应创建"""
-        from src.api.cqrs import QueryResponse
+from src.api.cqrs import QueryResponse
 
         response = QueryResponse(_data=[{"id": 1, "name": "test"}], total=1, page=1, per_page=10)
         assert len(response.data) == 1
@@ -44,7 +44,7 @@ class TestCQRSModule:
 
     def test_create_command(self):
         """测试创建命令"""
-        from src.api.cqrs import CreateCommand
+from src.api.cqrs import CreateCommand
 
         command = CreateCommand(aggregate_id="test_123", _data={"name": "test", "value": 100})
         assert command.aggregate_id == "test_123"
@@ -52,7 +52,7 @@ class TestCQRSModule:
 
     def test_update_command(self):
         """测试更新命令"""
-        from src.api.cqrs import UpdateCommand
+from src.api.cqrs import UpdateCommand
 
         command = UpdateCommand(aggregate_id="test_123", _data={"name": "updated"})
         assert command.aggregate_id == "test_123"
@@ -60,14 +60,14 @@ class TestCQRSModule:
 
     def test_delete_command(self):
         """测试删除命令"""
-        from src.api.cqrs import DeleteCommand
+from src.api.cqrs import DeleteCommand
 
         command = DeleteCommand(aggregate_id="test_123")
         assert command.aggregate_id == "test_123"
 
     def test_command_bus_initialization(self):
         """测试命令总线初始化"""
-        from src.api.cqrs import CommandBus
+from src.api.cqrs import CommandBus
 
         bus = CommandBus()
         assert bus is not None
@@ -77,7 +77,7 @@ class TestCQRSModule:
 
     def test_command_bus_registration(self):
         """测试命令总线注册"""
-        from src.api.cqrs import CommandBus, CreateCommand
+from src.api.cqrs import CommandBus, CreateCommand
 
         bus = CommandBus()
 
@@ -89,7 +89,7 @@ class TestCQRSModule:
 
     def test_query_bus_initialization(self):
         """测试查询总线初始化"""
-        from src.api.cqrs import QueryBus
+from src.api.cqrs import QueryBus
 
         bus = QueryBus()
         assert bus is not None
@@ -105,7 +105,7 @@ class TestEventsModule:
 
     def test_event_creation(self):
         """测试事件创建"""
-        from src.api.events import Event
+from src.api.events import Event
 
         event = Event(
             event_type="test_event",
@@ -118,7 +118,7 @@ class TestEventsModule:
 
     def test_event_handler_interface(self):
         """测试事件处理器接口"""
-        from src.api.events import EventHandler
+from src.api.events import EventHandler
 
         class TestHandler(EventHandler):
             def handle(self, event):
@@ -134,7 +134,7 @@ class TestEventsModule:
 
     def test_event_manager_initialization(self):
         """测试事件管理器初始化"""
-        from src.api.events import EventManager
+from src.api.events import EventManager
 
         manager = EventManager()
         assert manager is not None
@@ -144,7 +144,7 @@ class TestEventsModule:
 
     def test_event_manager_registration(self):
         """测试事件管理器注册"""
-        from src.api.events import EventManager
+from src.api.events import EventManager
 
         manager = EventManager()
 
@@ -156,7 +156,7 @@ class TestEventsModule:
 
     def test_event_observer_interface(self):
         """测试事件观察者接口"""
-        from src.api.events import Observer
+from src.api.events import Observer
 
         class TestObserver(Observer):
             def update(self, data):
@@ -171,7 +171,7 @@ class TestEventsModule:
 
     def test_event_subject_interface(self):
         """测试事件主题接口"""
-        from src.api.events import Subject
+from src.api.events import Subject
 
         subject = Subject()
         assert hasattr(subject, "_observers")
@@ -181,7 +181,7 @@ class TestEventsModule:
 
     def test_event_subject_observer_pattern(self):
         """测试事件主题-观察者模式"""
-        from src.api.events import Observer, Subject
+from src.api.events import Observer, Subject
 
         class TestObserver(Observer):
             def __init__(self):
@@ -208,7 +208,7 @@ class TestObserversModule:
 
     def test_prediction_observer(self):
         """测试预测观察者"""
-        from src.api.observers import PredictionObserver
+from src.api.observers import PredictionObserver
 
         observer = PredictionObserver()
         assert observer is not None
@@ -216,7 +216,7 @@ class TestObserversModule:
 
     def test_metrics_observer(self):
         """测试指标观察者"""
-        from src.api.observers import MetricsObserver
+from src.api.observers import MetricsObserver
 
         observer = MetricsObserver()
         assert observer is not None
@@ -224,7 +224,7 @@ class TestObserversModule:
 
     def test_cache_observer(self):
         """测试缓存观察者"""
-        from src.api.observers import CacheObserver
+from src.api.observers import CacheObserver
 
         observer = CacheObserver()
         assert observer is not None
@@ -232,7 +232,7 @@ class TestObserversModule:
 
     def test_observer_manager_initialization(self):
         """测试观察者管理器初始化"""
-        from src.api.observers import ObserverManager
+from src.api.observers import ObserverManager
 
         manager = ObserverManager()
         assert manager is not None
@@ -240,7 +240,7 @@ class TestObserversModule:
 
     def test_observer_manager_attach_detach(self):
         """测试观察者管理器附加和分离"""
-        from src.api.observers import Observer, ObserverManager
+from src.api.observers import Observer, ObserverManager
 
         class TestObserver(Observer):
             def update(self, data):
@@ -263,7 +263,7 @@ class TestRepositoriesModule:
 
     def test_query_spec_creation(self):
         """测试查询规范创建"""
-        from src.api.repositories import QuerySpec
+from src.api.repositories import QuerySpec
 
         spec = QuerySpec(filters={"status": "active"}, limit=10, offset=0)
         assert spec.filters["status"] == "active"
@@ -272,7 +272,7 @@ class TestRepositoriesModule:
 
     def test_base_repository_methods(self):
         """测试基础仓储方法"""
-        from src.api.repositories import BaseRepository
+from src.api.repositories import BaseRepository
 
         repo = BaseRepository()
         assert hasattr(repo, "create")
@@ -283,7 +283,7 @@ class TestRepositoriesModule:
 
     def test_prediction_repository_methods(self):
         """测试预测仓储方法"""
-        from src.api.repositories import PredictionRepository
+from src.api.repositories import PredictionRepository
 
         repo = PredictionRepository()
         assert hasattr(repo, "create")
@@ -292,7 +292,7 @@ class TestRepositoriesModule:
 
     def test_user_repository_methods(self):
         """测试用户仓储方法"""
-        from src.api.repositories import UserRepository
+from src.api.repositories import UserRepository
 
         repo = UserRepository()
         assert hasattr(repo, "create")
@@ -301,7 +301,7 @@ class TestRepositoriesModule:
 
     def test_match_repository_methods(self):
         """测试比赛仓储方法"""
-        from src.api.repositories import MatchRepository
+from src.api.repositories import MatchRepository
 
         repo = MatchRepository()
         assert hasattr(repo, "create")
@@ -316,7 +316,7 @@ class TestAdaptersModule:
 
     def test_data_adapter_interface(self):
         """测试数据适配器接口"""
-        from src.api.adapters import DataAdapter
+from src.api.adapters import DataAdapter
 
         class TestAdapter(DataAdapter):
             def get_data(self, params):
@@ -330,7 +330,7 @@ class TestAdaptersModule:
 
     def test_football_data_adapter(self):
         """测试足球数据适配器"""
-        from src.api.adapters import FootballDataAdapter
+from src.api.adapters import FootballDataAdapter
 
         adapter = FootballDataAdapter()
         assert adapter is not None
@@ -339,7 +339,7 @@ class TestAdaptersModule:
 
     def test_external_api_adapter(self):
         """测试外部API适配器"""
-        from src.api.adapters import ExternalAPIAdapter
+from src.api.adapters import ExternalAPIAdapter
 
         adapter = ExternalAPIAdapter(base_url="https://api.example.com")
         assert adapter.base_url == "https://api.example.com"
@@ -347,7 +347,7 @@ class TestAdaptersModule:
 
     def test_adapter_registry_initialization(self):
         """测试适配器注册表初始化"""
-        from src.api.adapters import AdapterRegistry
+from src.api.adapters import AdapterRegistry
 
         registry = AdapterRegistry()
         assert registry is not None
@@ -355,7 +355,7 @@ class TestAdaptersModule:
 
     def test_adapter_registry_operations(self):
         """测试适配器注册表操作"""
-        from src.api.adapters import AdapterRegistry, DataAdapter
+from src.api.adapters import AdapterRegistry, DataAdapter
 
         class TestAdapter(DataAdapter):
             def get_data(self, params):
@@ -378,7 +378,7 @@ class TestFacadesModule:
 
     def test_prediction_facade_methods(self):
         """测试预测门面方法"""
-        from src.api.facades import PredictionFacade
+from src.api.facades import PredictionFacade
 
         facade = PredictionFacade()
         assert hasattr(facade, "get_prediction")
@@ -387,7 +387,7 @@ class TestFacadesModule:
 
     def test_data_facade_methods(self):
         """测试数据门面方法"""
-        from src.api.facades import DataFacade
+from src.api.facades import DataFacade
 
         facade = DataFacade()
         assert hasattr(facade, "get_leagues")
@@ -396,7 +396,7 @@ class TestFacadesModule:
 
     def test_notification_facade_methods(self):
         """测试通知门面方法"""
-        from src.api.facades import NotificationFacade
+from src.api.facades import NotificationFacade
 
         facade = NotificationFacade()
         assert hasattr(facade, "send_notification")
@@ -404,7 +404,7 @@ class TestFacadesModule:
 
     def test_facade_manager_initialization(self):
         """测试门面管理器初始化"""
-        from src.api.facades import FacadeManager
+from src.api.facades import FacadeManager
 
         manager = FacadeManager()
         assert manager is not None
@@ -418,7 +418,7 @@ class TestFeaturesModule:
 
     def test_feature_calculator_methods(self):
         """测试特征计算器方法"""
-        from src.api.features import FeatureCalculator
+from src.api.features import FeatureCalculator
 
         calculator = FeatureCalculator()
         assert hasattr(calculator, "calculate_team_form")
@@ -427,7 +427,7 @@ class TestFeaturesModule:
 
     def test_feature_extractor_methods(self):
         """测试特征提取器方法"""
-        from src.api.features import FeatureExtractor
+from src.api.features import FeatureExtractor
 
         extractor = FeatureExtractor()
         assert hasattr(extractor, "extract_match_features")
@@ -435,7 +435,7 @@ class TestFeaturesModule:
 
     def test_team_features_methods(self):
         """测试球队特征方法"""
-        from src.api.features import TeamFeatures
+from src.api.features import TeamFeatures
 
         features = TeamFeatures()
         assert hasattr(features, "get_recent_form")
@@ -443,7 +443,7 @@ class TestFeaturesModule:
 
     def test_match_features_methods(self):
         """测试比赛特征方法"""
-        from src.api.features import MatchFeatures
+from src.api.features import MatchFeatures
 
         features = MatchFeatures()
         assert hasattr(features, "get_match_context")
@@ -457,7 +457,7 @@ class TestMonitoringModule:
 
     def test_metrics_point_creation(self):
         """测试指标点创建"""
-        from src.api.monitoring import MetricsPoint
+from src.api.monitoring import MetricsPoint
 
         point = MetricsPoint(name="test_metric", value=100.5, timestamp=datetime.utcnow())
         assert point.name == "test_metric"
@@ -466,7 +466,7 @@ class TestMonitoringModule:
 
     def test_metrics_aggregator(self):
         """测试指标聚合器"""
-        from src.api.monitoring import MetricsAggregator
+from src.api.monitoring import MetricsAggregator
 
         aggregator = MetricsAggregator()
         assert hasattr(aggregator, "add_metric")
@@ -475,7 +475,7 @@ class TestMonitoringModule:
 
     def test_system_health_checker(self):
         """测试系统健康检查器"""
-        from src.api.monitoring import SystemHealthChecker
+from src.api.monitoring import SystemHealthChecker
 
         checker = SystemHealthChecker()
         assert hasattr(checker, "check_database")
@@ -484,7 +484,7 @@ class TestMonitoringModule:
 
     def test_alert_manager(self):
         """测试告警管理器"""
-        from src.api.monitoring import AlertManager
+from src.api.monitoring import AlertManager
 
         manager = AlertManager()
         assert hasattr(manager, "create_alert")
@@ -493,7 +493,7 @@ class TestMonitoringModule:
 
     def test_system_monitor(self):
         """测试系统监控器"""
-        from src.api.monitoring import SystemMonitor
+from src.api.monitoring import SystemMonitor
 
         monitor = SystemMonitor()
         assert hasattr(monitor, "get_cpu_usage")

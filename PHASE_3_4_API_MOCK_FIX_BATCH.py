@@ -171,7 +171,7 @@ def main():
     for item in results["失败"]:
         print(f"  ❌ {item}")
 
-    print(f"\n🎯 总结:")
+    print("\n🎯 总结:")
     total_files = len(results["成功"]) + len(results["跳过"]) + len(results["失败"])
     success_rate = len(results["成功"]) / total_files * 100 if total_files > 0 else 0
     print(f"  处理文件总数: {total_files}")
@@ -179,8 +179,8 @@ def main():
     print(f"  修复成功率: {success_rate:.1f}%")
 
     if results["成功"]:
-        print(f"\n🎉 Phase 3.4: API层智能Mock兼容修复模式应用成功！")
-        print(f"建议下一步: 运行 pytest tests/unit/api/ -v 验证修复效果")
+        print("\n🎉 Phase 3.4: API层智能Mock兼容修复模式应用成功！")
+        print("建议下一步: 运行 pytest tests/unit/api/ -v 验证修复效果")
 
 
 if __name__ == "__main__":

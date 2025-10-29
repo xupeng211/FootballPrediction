@@ -22,7 +22,7 @@ class TestCryptoUtilsHighQuality:
 
     def test_uuid_generation_and_validation(self):
         """测试UUID生成和验证 - 业务场景"""
-        from src.utils.crypto_utils import CryptoUtils
+from src.utils.crypto_utils import CryptoUtils
 
         # 生成多个UUID确保唯一性
         uuids = [CryptoUtils.generate_uuid() for _ in range(100)]
@@ -48,7 +48,7 @@ class TestCryptoUtilsHighQuality:
 
     def test_password_hashing_security_scenarios(self):
         """测试密码哈希 - 安全场景验证"""
-        from src.utils.crypto_utils import CryptoUtils
+from src.utils.crypto_utils import CryptoUtils
 
         test_passwords = [
             "123456",  # 弱密码
@@ -77,7 +77,7 @@ class TestCryptoUtilsHighQuality:
 
     def test_hash_algorithms_consistency(self):
         """测试哈希算法一致性 - 数据完整性验证"""
-        from src.utils.crypto_utils import CryptoUtils
+from src.utils.crypto_utils import CryptoUtils
 
         test_data = "重要的业务数据"
         algorithms = ["md5", "sha256", "sha1"]
@@ -104,7 +104,7 @@ class TestCryptoUtilsHighQuality:
 
     def test_short_id_generation_business_rules(self):
         """测试短ID生成 - 业务规则验证"""
-        from src.utils.crypto_utils import CryptoUtils
+from src.utils.crypto_utils import CryptoUtils
 
         business_scenarios = [
             (4, "订单号"),
@@ -142,7 +142,7 @@ class TestDataValidatorBusinessLogic:
 
     def test_email_validation_business_scenarios(self):
         """测试邮箱验证 - 真实业务场景"""
-        from src.utils.data_validator import DataValidator
+from src.utils.data_validator import DataValidator
 
         validator = DataValidator()
 
@@ -175,7 +175,7 @@ class TestDataValidatorBusinessLogic:
 
     def test_phone_validation_international_formats(self):
         """测试电话验证 - 国际格式支持"""
-        from src.utils.data_validator import DataValidator
+from src.utils.data_validator import DataValidator
 
         validator = DataValidator()
 
@@ -199,7 +199,7 @@ class TestDataValidatorBusinessLogic:
 
     def test_data_validator_available_methods(self):
         """测试数据验证器可用方法 - 实际API测试"""
-        from src.utils.data_validator import DataValidator
+from src.utils.data_validator import DataValidator
 
         validator = DataValidator()
 
@@ -223,7 +223,7 @@ class TestFormattersDataIntegrity:
 
     def test_datetime_formatting_consistency(self):
         """测试日期时间格式化 - 一致性验证"""
-        from src.utils.formatters import format_datetime
+from src.utils.formatters import format_datetime
 
         # 固定时间测试一致性
         test_time = datetime(2024, 1, 15, 14, 30, 45)
@@ -246,7 +246,7 @@ class TestFormattersDataIntegrity:
 
     def test_json_formatting_pretty_output(self):
         """测试JSON格式化 - 美化输出验证"""
-        from src.utils.formatters import format_json
+from src.utils.formatters import format_json
 
         test_data = {
             "user": {
@@ -275,7 +275,7 @@ class TestFormattersDataIntegrity:
 
     def test_currency_formatting_precision(self):
         """测试货币格式化 - 精度验证"""
-        from src.utils.formatters import format_currency
+from src.utils.formatters import format_currency
 
         # 测试基本格式化功能
         test_amounts = [1234.56, 0, 1234567.89, -1234.56]
@@ -296,7 +296,7 @@ class TestFormattersDataIntegrity:
 
     def test_percentage_formatting_business_rules(self):
         """测试百分比格式化 - 业务规则验证"""
-        from src.utils.formatters import format_percentage
+from src.utils.formatters import format_percentage
 
         # 测试基本百分比格式化
         test_values = [0.1234, 1.0, 0.0, -0.1, 2.5]
@@ -321,7 +321,7 @@ class TestHelpersEdgeCases:
 
     def test_uuid_generation_collision_resistance(self):
         """测试UUID生成碰撞抵抗 - 大量生成验证"""
-        from src.utils.helpers import generate_uuid
+from src.utils.helpers import generate_uuid
 
         # 生成大量UUID测试碰撞
         uuid_count = 10000
@@ -339,7 +339,7 @@ class TestHelpersEdgeCases:
 
     def test_hash_function_security_properties(self):
         """测试哈希函数安全属性"""
-        from src.utils.helpers import generate_hash
+from src.utils.helpers import generate_hash
 
         test_data = "sensitive_business_data"
 
@@ -363,7 +363,7 @@ class TestHelpersEdgeCases:
 
     def test_safe_get_robustness(self):
         """测试安全获取函数健壮性"""
-        from src.utils.helpers import safe_get
+from src.utils.helpers import safe_get
 
         # 复杂嵌套数据结构
         complex_data = {
@@ -405,7 +405,7 @@ class TestHelpersEdgeCases:
 
     def test_string_sanitization_security(self):
         """测试字符串清理 - 安全场景"""
-        from src.utils.helpers import sanitize_string
+from src.utils.helpers import sanitize_string
 
         # XSS攻击向量测试
         xss_attempts = [
@@ -445,7 +445,7 @@ class TestI18nLocalization:
 
     def test_language_switching_isolation(self):
         """测试语言切换隔离性"""
-        from src.utils.i18n import get_current_language, get_text, set_language
+from src.utils.i18n import get_current_language, get_text, set_language
 
         # 保存初始语言
         initial_lang = get_current_language()
@@ -470,7 +470,7 @@ class TestI18nLocalization:
 
     def test_unicode_handling_robustness(self):
         """测试Unicode处理健壮性"""
-        from src.utils.i18n import get_text
+from src.utils.i18n import get_text
 
         unicode_test_cases = [
             ("test_key", "中文测试 🎉", "中文和emoji"),
@@ -498,7 +498,7 @@ class TestI18nLocalization:
 
     def test_placeholder_replacement(self):
         """测试占位符替换功能"""
-        from src.utils.i18n import get_text
+from src.utils.i18n import get_text
 
         # 带占位符的测试用例
         placeholder_tests = [

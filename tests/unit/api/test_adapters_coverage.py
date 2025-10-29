@@ -383,8 +383,8 @@ class TestAdaptersAPI:
         mock_registry.get_adapter.return_value = mock_adapter
 
         response = client.get(
-            "/adapters/football/matches?demo =
-    false&live=true&start_date=2024-01-01&end_date=2024-12-31&league=premier"
+            "/adapters/football/matches?demo=false&live=true&"
+            "start_date=2024-01-01&end_date=2024-12-31&league=premier"
         )
 
         assert response.status_code == 200

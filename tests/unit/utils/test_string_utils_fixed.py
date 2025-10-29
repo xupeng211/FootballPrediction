@@ -395,7 +395,7 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if STRING_UTILS_AVAILABLE:
-        from src.utils.string_utils import StringUtils
+from src.utils.string_utils import StringUtils
 
         assert StringUtils is not None
 
@@ -403,7 +403,7 @@ def test_module_imports():
 def test_class_methods(self):
     """测试：类方法存在"""
     if STRING_UTILS_AVAILABLE:
-        from src.utils.string_utils import StringUtils
+from src.utils.string_utils import StringUtils
 
         expected_methods = [
             "truncate",

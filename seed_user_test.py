@@ -316,7 +316,7 @@ class SeedUserTester:
             return False
 
         # 3. 用户登录和功能测试
-        print(f"\n🔐 测试用户登录和功能...")
+        print("\n🔐 测试用户登录和功能...")
         for i, user_config in enumerate(SEED_USERS):
             if i >= len(self.created_users):
                 continue
@@ -352,23 +352,23 @@ class SeedUserTester:
         successful_tests = sum(1 for r in self.test_results if r["success"])
         success_rate = (successful_tests / total_tests * 100) if total_tests > 0 else 0
 
-        print(f"📈 测试统计:")
+        print("📈 测试统计:")
         print(f"   总测试数: {total_tests}")
         print(f"   成功测试: {successful_tests}")
         print(f"   失败测试: {total_tests - successful_tests}")
         print(f"   成功率: {success_rate:.1f}%")
 
-        print(f"\n👥 用户创建情况:")
+        print("\n👥 用户创建情况:")
         print(f"   成功创建用户: {len(self.created_users)}/{len(SEED_USERS)}")
 
-        print(f"\n🔐 登录验证情况:")
+        print("\n🔐 登录验证情况:")
         print(f"   成功登录用户: {len(self.active_tokens)}")
 
         # 计算平均响应时间
         durations = [r["duration"] for r in self.test_results if r["duration"] > 0]
         if durations:
             avg_duration = sum(durations) / len(durations)
-            print(f"\n⏱️  性能统计:")
+            print("\n⏱️  性能统计:")
             print(f"   平均响应时间: {avg_duration:.2f}秒")
             print(f"   最慢响应: {max(durations):.2f}秒")
             print(f"   最快响应: {min(durations):.2f}秒")
@@ -376,14 +376,14 @@ class SeedUserTester:
         # 显示失败的测试
         failed_tests = [r for r in self.test_results if not r["success"]]
         if failed_tests:
-            print(f"\n❌ 失败的测试:")
+            print("\n❌ 失败的测试:")
             for test in failed_tests[:5]:  # 只显示前5个
                 print(f"   • {test['test_name']}: {test['details']}")
             if len(failed_tests) > 5:
                 print(f"   ... 还有 {len(failed_tests) - 5} 个失败测试")
 
         # 系统评估
-        print(f"\n🎯 系统评估:")
+        print("\n🎯 系统评估:")
         if success_rate >= 90:
             print("   🟢 优秀: 系统表现良好，可以支持种子用户测试")
         elif success_rate >= 70:

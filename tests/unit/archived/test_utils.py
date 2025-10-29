@@ -336,7 +336,7 @@ class TestHealthChecker:
 
     def test_class_is_importable(self):
         """测试类可以正常导入"""
-        from src.api.health.utils import HealthChecker
+from src.api.health.utils import HealthChecker
 
         # 验证类存在
         assert HealthChecker is not None

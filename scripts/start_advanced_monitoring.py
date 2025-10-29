@@ -64,8 +64,8 @@ def main():
     logger.info("=" * 60)
     logger.info(f"📊 监控面板: http://{args.host}:{args.port}")
     logger.info(f"📡 API端点: http://{args.host}:{args.port}/api")
-    logger.info(f"🛡️ 质量门禁: 自动启用")
-    logger.info(f"📈 实时监控: 自动启动")
+    logger.info("🛡️ 质量门禁: 自动启用")
+    logger.info("📈 实时监控: 自动启动")
     logger.info("=" * 60)
 
     try:

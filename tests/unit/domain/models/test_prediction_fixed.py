@@ -433,7 +433,6 @@ class TestPrediction:
         prediction = Prediction(user_id=1, match_id=100)
         prediction.make_prediction(predicted_home=2, predicted_away=1, confidence=0.75)
 
-        original_evaluated_at = prediction.evaluated_at  # 应该是None
 
         prediction.evaluate(actual_home=3, actual_away=1)
 

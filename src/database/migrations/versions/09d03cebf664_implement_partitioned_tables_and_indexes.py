@@ -285,7 +285,8 @@ def _create_postgresql_advanced_indexes():
             "table": "matches",
             "columns": ["match_date DESC", "league_id"],
             "method": "btree",
-            "condition": "match_status = 'finished' AND match_date >= CURRENT_DATE - INTERVAL '2 years'"
+            "condition": "match_status ="
+    'finished' AND match_date >= CURRENT_DATE - INTERVAL '2 years'""
         },
     ]
     for idx in advanced_indexes:

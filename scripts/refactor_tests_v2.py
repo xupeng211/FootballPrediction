@@ -100,7 +100,7 @@ class TestRefactorerV2:
                 timeout=10,
             )
             return result.returncode == 0
-        except:
+except Exception:
             return False
 
     def analyze_source_code_deep(self, source_file):

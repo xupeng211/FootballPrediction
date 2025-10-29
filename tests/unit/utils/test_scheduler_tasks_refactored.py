@@ -13,7 +13,7 @@ class TestBaseDataTask:
 
     def test_base_task_initialization(self):
         """测试基础任务初始化"""
-        from src.scheduler.tasks.base.base_task import BaseDataTask
+from src.scheduler.tasks.base.base_task import BaseDataTask
 
         # 基础任务类应该可以被继承
         assert hasattr(BaseDataTask, "on_failure")
@@ -26,7 +26,7 @@ class TestDataCollectionTasks:
 
     def test_import_data_collection_tasks(self):
         """测试导入数据采集任务"""
-        from src.scheduler.tasks.data_collection import (
+from src.scheduler.tasks.data_collection import (
             collect_fixtures,
             collect_live_scores_conditional,
             collect_odds,
@@ -40,7 +40,7 @@ class TestDataCollectionTasks:
     @patch("src.scheduler.tasks.data_collection.fixtures_task.FixturesCollector")
     def test_collect_fixtures_task(self, mock_collector_class):
         """测试赛程采集任务"""
-        from src.scheduler.tasks.data_collection.fixtures_task import collect_fixtures
+from src.scheduler.tasks.data_collection.fixtures_task import collect_fixtures
 
         # Mock采集器
         mock_collector = Mock()
@@ -60,7 +60,7 @@ class TestFeatureCalculationTask:
 
     def test_import_feature_calculation_task(self):
         """测试导入特征计算任务"""
-        from src.scheduler.tasks.feature_calculation import calculate_features_batch
+from src.scheduler.tasks.feature_calculation import calculate_features_batch
 
         # 任务应该可以被导入
         assert calculate_features_batch is not None
@@ -71,7 +71,7 @@ class TestCleanupTask:
 
     def test_import_cleanup_task(self):
         """测试导入数据清理任务"""
-        from src.scheduler.tasks.data_cleanup import cleanup_data
+from src.scheduler.tasks.data_cleanup import cleanup_data
 
         # 任务应该可以被导入
         assert cleanup_data is not None
@@ -82,7 +82,7 @@ class TestQualityCheckTask:
 
     def test_import_quality_check_task(self):
         """测试导入质量检查任务"""
-        from src.scheduler.tasks.quality_check import run_quality_checks
+from src.scheduler.tasks.quality_check import run_quality_checks
 
         # 任务应该可以被导入
         assert run_quality_checks is not None
@@ -93,7 +93,7 @@ class TestBackupTask:
 
     def test_import_backup_task(self):
         """测试导入数据库备份任务"""
-        from src.scheduler.tasks.database_backup import backup_database
+from src.scheduler.tasks.database_backup import backup_database
 
         # 任务应该可以被导入
         assert backup_database is not None
@@ -104,7 +104,7 @@ class TestPredictionTask:
 
     def test_import_prediction_task(self):
         """测试导入预测任务"""
-        from src.scheduler.tasks.prediction import generate_predictions
+from src.scheduler.tasks.prediction import generate_predictions
 
         # 任务应该可以被导入
         assert generate_predictions is not None
@@ -115,7 +115,7 @@ class TestTransformationTask:
 
     def test_import_transformation_task(self):
         """测试导入数据转换任务"""
-        from src.scheduler.tasks.data_transformation import process_bronze_to_silver
+from src.scheduler.tasks.data_transformation import process_bronze_to_silver
 
         # 任务应该可以被导入
         assert process_bronze_to_silver is not None
@@ -126,7 +126,7 @@ class TestTasksModule:
 
     def test_import_all_tasks(self):
         """测试导入所有任务"""
-        from src.scheduler.tasks import (
+from src.scheduler.tasks import (
             BaseDataTask,
             backup_database,
             calculate_features_batch,

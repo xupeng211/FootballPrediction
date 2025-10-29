@@ -128,7 +128,7 @@ class TestDataRouterComprehensive:
         if hasattr(TestClient, "__call__"):
             try:
                 return TestClient(app)
-            except:
+except Exception:
                 # 如果TestClient不可用，创建Mock客户端
                 mock_client = Mock()
                 mock_client.get = Mock()
@@ -1117,7 +1117,7 @@ def setup_data_test_app():
     try:
         from fastapi import FastAPI
 
-        from src.api.data_router import router
+from src.api.data_router import router
 
         app = FastAPI()
         app.include_router(router, prefix="/data")

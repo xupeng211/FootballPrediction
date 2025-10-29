@@ -37,7 +37,7 @@ class TestUserAPIIntegration:
         assert "created_at" in data
 
         # 验证数据库中的用户
-        from src.database.models import User
+from src.database.models import User
 
         _user = await db_session.execute(select(User).where(User.username == user_data["username"]))
         _user = user.scalar_one_or_none()
@@ -168,7 +168,7 @@ class TestUserAPIIntegration:
         _user = sample_prediction_data["user"]
 
         # 创建更多预测数据
-        from src.database.models import Prediction
+from src.database.models import Prediction
 
         predictions = [
             Prediction(
@@ -213,7 +213,7 @@ class TestUserAPIIntegration:
     async def test_admin_get_users(self, api_client: AsyncClient, db_session, auth_headers: dict):
         """测试管理员获取用户列表"""
         # 创建多个用户
-        from src.database.models import User
+from src.database.models import User
 
         users = []
         for i in range(5):
@@ -250,7 +250,7 @@ class TestUserAPIIntegration:
     async def test_deactivate_user(self, api_client: AsyncClient, db_session, auth_headers: dict):
         """测试停用用户"""
         # 创建要停用的用户
-        from src.database.models import User
+from src.database.models import User
 
         _user = User(
             username="to_deactivate",

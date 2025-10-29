@@ -100,7 +100,7 @@ except ImportError:
         }
 
 
-print(f"智能Mock兼容修复模式：使用Mock服务确保API适配器测试稳定性")
+print("智能Mock兼容修复模式：使用Mock服务确保API适配器测试稳定性")
 
 
 class MockAdapter:

@@ -53,7 +53,7 @@ class TestWarningFiltersSimple:
 
     def test_module_logger_exists(self):
         """测试模块logger存在"""
-        from src.utils import warning_filters
+from src.utils import warning_filters
 
         assert hasattr(warning_filters, "logger")
         assert isinstance(warning_filters.logger, logging.Logger)
