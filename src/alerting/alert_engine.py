@@ -451,7 +451,8 @@ class AlertEngine:
                             type=rule.type,
                             severity=rule.severity,
                             title=rule.name,
-                            message=f"{rule.description}: 当前值 {current_value} {rule.operator} {rule.threshold}",
+                            message =
+    f"{rule.description}: 当前值 {current_value} {rule.operator} {rule.threshold}",
                             source="alert_engine",
                             timestamp=current_time,
                             details={

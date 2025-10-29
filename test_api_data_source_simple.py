@@ -53,13 +53,13 @@ async def test_data_source_api():
             "data_source": "football_data_org",
             "test_matches": len(matches),
             "test_teams": len(teams),
-            "message": f"数据源 football_data_org 测试成功",
+            "message": "数据源 football_data_org 测试成功",
             "available_sources": available_sources,
             "timestamp": datetime.now().isoformat(),
         }
 
-        print(f"\n🎉 数据源测试成功！")
-        print(f"📋 测试结果:")
+        print("\n🎉 数据源测试成功！")
+        print("📋 测试结果:")
         print(f"   数据源: {response['data_source']}")
         print(f"   测试比赛数: {response['test_matches']}")
         print(f"   测试球队数: {response['test_teams']}")
@@ -67,7 +67,7 @@ async def test_data_source_api():
 
         # 显示前3场比赛示例
         if matches:
-            print(f"\n📊 前3场比赛示例:")
+            print("\n📊 前3场比赛示例:")
             for i, match in enumerate(matches[:3], 1):
                 print(f"  {i}. {match.home_team} vs {match.away_team}")
                 print(f"     联赛: {match.league}")
@@ -87,11 +87,11 @@ async def test_data_source_api():
 if __name__ == "__main__":
     success = asyncio.run(test_data_source_api())
     if success:
-        print(f"\n✅ 数据源API功能验证成功！")
-        print(f"📝 状态:")
-        print(f"   ✅ Football-Data.org API连接正常")
-        print(f"   ✅ 可以获取真实比赛数据")
-        print(f"   ✅ 数据适配器工作正常")
-        print(f"\n🚀 准备集成到完整API端点！")
+        print("\n✅ 数据源API功能验证成功！")
+        print("📝 状态:")
+        print("   ✅ Football-Data.org API连接正常")
+        print("   ✅ 可以获取真实比赛数据")
+        print("   ✅ 数据适配器工作正常")
+        print("\n🚀 准备集成到完整API端点！")
     else:
-        print(f"\n❌ 数据源API功能验证失败！")
+        print("\n❌ 数据源API功能验证失败！")

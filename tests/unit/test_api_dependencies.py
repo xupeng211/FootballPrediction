@@ -39,7 +39,7 @@ class TestAPIDependencies:
         """测试无效token的用户获取"""
         from fastapi import HTTPException
 
-        from src.api.dependencies import JWTError
+from src.api.dependencies import JWTError
 
         mock_credentials.scheme = "Bearer"
         mock_credentials.credentials = "invalid_token"
@@ -169,7 +169,7 @@ class TestAPIDependencies:
 
     def test_security_scheme(self):
         """测试安全方案配置"""
-        from src.api.dependencies import security
+from src.api.dependencies import security
 
         # 验证安全方案是HTTPBearer
         assert hasattr(security, "scheme")
@@ -177,7 +177,7 @@ class TestAPIDependencies:
 
     def test_logger_configuration(self):
         """测试日志配置"""
-        from src.api.dependencies import logger
+from src.api.dependencies import logger
 
         # 验证logger已配置
         assert logger is not None

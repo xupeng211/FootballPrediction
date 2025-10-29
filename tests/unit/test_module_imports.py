@@ -14,7 +14,7 @@ sys.path.insert(0, "src")
 def test_health_module_import():
     """测试健康模块可以导入"""
     try:
-        from src.api.health.utils import HealthChecker
+from src.api.health.utils import HealthChecker
 
         assert HealthChecker is not None
     except ImportError:
@@ -24,7 +24,7 @@ def test_health_module_import():
 def test_audit_module_import():
     """测试审计模块可以导入"""
     try:
-        from src.services.audit_service import AuditService
+from src.services.audit_service import AuditService
 
         assert AuditService is not None
     except ImportError:
@@ -34,7 +34,7 @@ def test_audit_module_import():
 def test_di_module_import():
     """测试DI模块可以导入"""
     try:
-        from src.core.di import DIContainer
+from src.core.di import DIContainer
 
         assert DIContainer is not None
     except ImportError:

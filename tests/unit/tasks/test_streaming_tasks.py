@@ -646,7 +646,7 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if STREAMING_TASKS_AVAILABLE:
-        from src.tasks.streaming_tasks import (
+from src.tasks.streaming_tasks import (
             KafkaConsumer,
             KafkaProducer,
             StreamingTaskStatus,

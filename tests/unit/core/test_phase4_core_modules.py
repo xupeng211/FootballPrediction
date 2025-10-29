@@ -289,9 +289,9 @@ class TestCoreModulesIntegration:
     def test_module_availability_and_imports(self):
         """测试模块可用性和导入"""
         # 验证核心模块可以正常导入
-        from src.core.service_lifecycle import ServiceLifecycleManager, ServiceState
-        from src.events.base import Event, EventHandler
-        from src.events.bus import EventBus
+from src.core.service_lifecycle import ServiceLifecycleManager, ServiceState
+from src.events.base import Event, EventHandler
+from src.events.bus import EventBus
 
         # 验证类的存在
         assert ServiceLifecycleManager is not None
@@ -312,7 +312,7 @@ class TestCoreModulesUnit:
 
     def test_service_state_enum(self):
         """测试服务状态枚举"""
-        from src.core.service_lifecycle import ServiceState
+from src.core.service_lifecycle import ServiceState
 
         # 验证枚举值
         assert ServiceState.UNINITIALIZED.value == "uninitialized"
@@ -326,7 +326,7 @@ class TestCoreModulesUnit:
 
     def test_event_bus_initialization(self):
         """测试事件总线初始化"""
-        from src.events.bus import EventBus
+from src.events.bus import EventBus
 
         # 测试不同参数的初始化
         bus1 = EventBus()
@@ -339,7 +339,7 @@ class TestCoreModulesUnit:
 
     def test_lazy_import_functionality(self):
         """测试延迟导入功能"""
-        from src.core.prediction_engine import _lazy_import
+from src.core.prediction_engine import _lazy_import
 
         # 第一次调用应该成功导入
         _lazy_import()

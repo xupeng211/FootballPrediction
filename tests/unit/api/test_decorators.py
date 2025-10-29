@@ -485,7 +485,7 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if DECORATORS_AVAILABLE:
-        from src.api.decorators import global_decorator_service, router
+from src.api.decorators import global_decorator_service, router
 
         assert router is not None
         assert global_decorator_service is not None

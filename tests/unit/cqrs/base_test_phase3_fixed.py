@@ -138,7 +138,7 @@ class TestCqrsBasePhase3:
                 if callable(item):
                     try:
                         item()
-                    except:
+except Exception:
                         pass
 
         end_time = time.time()
@@ -163,7 +163,7 @@ class TestCqrsBasePhase3:
                         if callable(item):
                             try:
                                 item(test_case)
-                            except:
+except Exception:
                                 pass  # 预期的错误
                 except Exception as e:
                     print(f"错误处理测试: {e}")

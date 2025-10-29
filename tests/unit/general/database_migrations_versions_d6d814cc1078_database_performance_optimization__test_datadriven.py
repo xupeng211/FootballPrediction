@@ -1,3 +1,4 @@
+import random
 """
 Issue #83-C 数据驱动测试: database.migrations.versions.d6d814cc1078_database_performance_optimization_
 覆盖率目标: 60% → 85%

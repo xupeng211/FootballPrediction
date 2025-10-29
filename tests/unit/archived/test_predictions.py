@@ -21,6 +21,6 @@ class TestPredictionsModule:
 
     def test_module_exports(self):
         """测试模块导出"""
-        from src.api.predictions import __all__
+from src.api.predictions import __all__
 
-        assert "router" in __all__
+assert "router" in __all__

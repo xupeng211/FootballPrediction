@@ -259,7 +259,7 @@ class TestSimpleLogger:
 
         importlib.reload(src.core.logger_simple)
 
-        from src.core.logger_simple import get_simple_logger
+from src.core.logger_simple import get_simple_logger
 
         get_simple_logger("formatter_test")
 

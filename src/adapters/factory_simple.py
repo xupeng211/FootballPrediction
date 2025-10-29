@@ -10,15 +10,22 @@ from src.core.exceptions import AdapterError
 class AdapterFactory:
     """适配器工厂"""
 
+# 全局工厂实例
+_global_factory = AdapterFactory()
+
+
     def __init__(self):
         self._adapters: Dict[str, Type] = {}
         self._instances: Dict[str, Any] = {}
 
-    def register_adapter(self, name: str, adapter_class: Type, **kwargs) -> None:
-        """注册适配器类"""
-        self._adapters[name] = adapter_class
+def register_adapter(name: str, adapter_class: Type, **kwargs) -> None:
+    """注册适配器类（便捷函数）"""
+    _global_factory.register_adapter(name, adapter_class, **kwargs)
 
+
+# TODO: 方法 def create_adapter 过长(23行)，建议拆分
     def create_adapter(
+        """TODO: 添加函数文档"""
         self, name: str, config: Optional[Dict] = None, singleton: bool = False
     ) -> Any:
         """创建适配器实例"""
@@ -40,9 +47,10 @@ class AdapterFactory:
 
         return instance
 
-    def get_adapter_names(self) -> list[str]:
-        """获取已注册的适配器名称"""
-        return list(self._adapters.keys())
+def get_adapter_names() -> list[str]:
+    """获取已注册的适配器名称（全局工厂）"""
+    return _global_factory.get_adapter_names()
+
 
     def clear_instances(self) -> None:
         """清除所有实例"""
@@ -50,22 +58,9 @@ class AdapterFactory:
 
 
 # 全局工厂实例
-_global_factory = AdapterFactory()
-
-
 def get_adapter(name: str, config: Optional[Dict] = None, singleton: bool = False) -> Any:
-    """获取适配器实例（全局工厂）"""
+    """获取适配器实例（便捷函数）"""
     return _global_factory.create_adapter(name, config, singleton)
-
-
-def register_adapter(name: str, adapter_class: Type, **kwargs) -> None:
-    """注册适配器类（全局工厂）"""
-    _global_factory.register_adapter(name, adapter_class, **kwargs)
-
-
-def get_adapter_names() -> list[str]:
-    """获取已注册的适配器名称（全局工厂）"""
-    return _global_factory.get_adapter_names()
 
 
 def clear_adapter_instances() -> None:
@@ -76,13 +71,3 @@ def clear_adapter_instances() -> None:
 def get_global_factory() -> AdapterFactory:
     """获取全局工厂实例"""
     return _global_factory
-
-
-def get_adapter(name: str, config: Optional[Dict] = None, singleton: bool = False) -> Any:
-    """获取适配器实例（便捷函数）"""
-    return _global_factory.create_adapter(name, config, singleton)
-
-
-def register_adapter(name: str, adapter_class: Type, **kwargs) -> None:
-    """注册适配器类（便捷函数）"""
-    _global_factory.register_adapter(name, adapter_class, **kwargs)

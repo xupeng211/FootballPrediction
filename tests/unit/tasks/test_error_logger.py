@@ -364,7 +364,7 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if ERROR_LOGGER_AVAILABLE:
-        from src.tasks.error_logger import TaskErrorLogger
+from src.tasks.error_logger import TaskErrorLogger
 
         assert TaskErrorLogger is not None
 

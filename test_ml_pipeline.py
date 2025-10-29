@@ -173,7 +173,7 @@ async def test_complete_pipeline():
     )
 
     if result["success"]:
-        logger.info(f"Complete pipeline test passed!")
+        logger.info("Complete pipeline test passed!")
         logger.info(f"Best model: {result['best_model']}")
         logger.info(f"Best accuracy: {result.get('best_accuracy', 'N/A')}")
         return True

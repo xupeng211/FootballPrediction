@@ -624,7 +624,7 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if TASKS_UTILS_AVAILABLE:
-        from src.tasks.utils import (
+from src.tasks.utils import (
             calculate_next_collection_time,
             cleanup_stale_tasks,
             get_active_leagues,

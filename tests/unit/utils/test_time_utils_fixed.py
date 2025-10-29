@@ -294,7 +294,7 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if TIME_UTILS_AVAILABLE:
-        from src.utils.time_utils import TimeUtils, parse_datetime, utc_now
+from src.utils.time_utils import TimeUtils, parse_datetime, utc_now
 
         assert TimeUtils is not None
         assert utc_now is not None

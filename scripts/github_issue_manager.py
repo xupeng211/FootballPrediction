@@ -291,7 +291,7 @@ try:
     root = tree.getroot()
     coverage = float(root.attrib.get('line-rate', 0)) * 100
     print(coverage)
-except:
+except Exception:
     print(0)
 ")
 

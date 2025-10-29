@@ -161,7 +161,7 @@ class TestTimestampMixin:
     def test_module_imports(self):
         """测试模块导入"""
         # 验证模块导入正常
-        from src.database.base import Base, TimestampMixin
+from src.database.base import Base, TimestampMixin
 
         assert Base is not None
         assert TimestampMixin is not None

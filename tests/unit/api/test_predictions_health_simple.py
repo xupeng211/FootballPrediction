@@ -316,7 +316,7 @@ class TestPredictionsHealthSimple:
 def test_health_router_import():
     """测试健康路由器导入"""
     try:
-        from src.api.predictions.health_simple import health_router
+from src.api.predictions.health_simple import health_router
 
         assert health_router is not None
         assert hasattr(health_router, "routes")
@@ -327,7 +327,7 @@ def test_health_router_import():
 def test_health_check_endpoint_exists():
     """测试健康检查端点是否存在"""
     try:
-        from src.api.predictions.health_simple import health_router
+from src.api.predictions.health_simple import health_router
 
         # 检查路由
         routes = [route.path for route in health_router.routes]

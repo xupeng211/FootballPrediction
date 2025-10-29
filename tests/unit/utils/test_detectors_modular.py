@@ -13,13 +13,13 @@ class TestBaseModule:
 
     def test_anomaly_detection_result_import(self):
         """测试异常检测结果类导入"""
-        from src.data.quality.detectors.base import AnomalyDetectionResult
+from src.data.quality.detectors.base import AnomalyDetectionResult
 
         assert AnomalyDetectionResult is not None
 
     def test_anomaly_detection_result_creation(self):
         """测试异常检测结果创建"""
-        from src.data.quality.detectors.base import AnomalyDetectionResult
+from src.data.quality.detectors.base import AnomalyDetectionResult
 
         _result = AnomalyDetectionResult(
             table_name="test_table",
@@ -38,7 +38,7 @@ class TestBaseModule:
 
     def test_anomaly_detection_result_methods(self):
         """测试异常检测结果方法"""
-        from src.data.quality.detectors.base import AnomalyDetectionResult
+from src.data.quality.detectors.base import AnomalyDetectionResult
 
         _result = AnomalyDetectionResult(
             table_name="test_table",
@@ -68,13 +68,13 @@ class TestStatisticalDetector:
 
     def test_statistical_detector_import(self):
         """测试统计学检测器导入"""
-        from src.data.quality.detectors.statistical import StatisticalAnomalyDetector
+from src.data.quality.detectors.statistical import StatisticalAnomalyDetector
 
         assert StatisticalAnomalyDetector is not None
 
     def test_statistical_detector_init(self):
         """测试统计学检测器初始化"""
-        from src.data.quality.detectors.statistical import StatisticalAnomalyDetector
+from src.data.quality.detectors.statistical import StatisticalAnomalyDetector
 
         detector = StatisticalAnomalyDetector(sigma_threshold=2.5)
         assert detector.sigma_threshold == 2.5
@@ -82,7 +82,7 @@ class TestStatisticalDetector:
 
     def test_detect_outliers_3sigma(self):
         """测试3σ异常检测"""
-        from src.data.quality.detectors.statistical import StatisticalAnomalyDetector
+from src.data.quality.detectors.statistical import StatisticalAnomalyDetector
 
         detector = StatisticalAnomalyDetector()
 
@@ -101,7 +101,7 @@ class TestStatisticalDetector:
 
     def test_detect_outliers_iqr(self):
         """测试IQR异常检测"""
-        from src.data.quality.detectors.statistical import StatisticalAnomalyDetector
+from src.data.quality.detectors.statistical import StatisticalAnomalyDetector
 
         detector = StatisticalAnomalyDetector()
 
@@ -118,7 +118,7 @@ class TestStatisticalDetector:
         """测试分布偏移检测"""
         import numpy as np
 
-        from src.data.quality.detectors.statistical import StatisticalAnomalyDetector
+from src.data.quality.detectors.statistical import StatisticalAnomalyDetector
 
         detector = StatisticalAnomalyDetector()
 
@@ -141,7 +141,7 @@ class TestMachineLearningDetector:
 
     def test_ml_detector_import(self):
         """测试机器学习检测器导入"""
-        from src.data.quality.detectors.machine_learning import (
+from src.data.quality.detectors.machine_learning import (
             MachineLearningAnomalyDetector,
         )
 
@@ -149,7 +149,7 @@ class TestMachineLearningDetector:
 
     def test_ml_detector_init(self):
         """测试机器学习检测器初始化"""
-        from src.data.quality.detectors.machine_learning import (
+from src.data.quality.detectors.machine_learning import (
             MachineLearningAnomalyDetector,
         )
 
@@ -162,7 +162,7 @@ class TestMachineLearningDetector:
         """测试Isolation Forest异常检测"""
         import numpy as np
 
-        from src.data.quality.detectors.machine_learning import (
+from src.data.quality.detectors.machine_learning import (
             MachineLearningAnomalyDetector,
         )
 
@@ -188,7 +188,7 @@ class TestMachineLearningDetector:
         """测试DBSCAN聚类异常检测"""
         import numpy as np
 
-        from src.data.quality.detectors.machine_learning import (
+from src.data.quality.detectors.machine_learning import (
             MachineLearningAnomalyDetector,
         )
 
@@ -212,13 +212,13 @@ class TestAdvancedDetector:
 
     def test_advanced_detector_import(self):
         """测试高级检测器导入"""
-        from src.data.quality.detectors.advanced import AdvancedAnomalyDetector
+from src.data.quality.detectors.advanced import AdvancedAnomalyDetector
 
         assert AdvancedAnomalyDetector is not None
 
     def test_advanced_detector_init(self):
         """测试高级检测器初始化"""
-        from src.data.quality.detectors.advanced import AdvancedAnomalyDetector
+from src.data.quality.detectors.advanced import AdvancedAnomalyDetector
 
         detector = AdvancedAnomalyDetector()
         assert hasattr(detector, "statistical_detector")
@@ -227,7 +227,7 @@ class TestAdvancedDetector:
 
     def test_detection_config_structure(self):
         """测试检测配置结构"""
-        from src.data.quality.detectors.advanced import AdvancedAnomalyDetector
+from src.data.quality.detectors.advanced import AdvancedAnomalyDetector
 
         detector = AdvancedAnomalyDetector()
 
@@ -248,7 +248,7 @@ class TestMetricsModule:
 
     def test_metrics_import(self):
         """测试监控指标导入"""
-        from src.data.quality.detectors.metrics import (
+from src.data.quality.detectors.metrics import (
             anomalies_detected_total,
             anomaly_detection_coverage,
             anomaly_detection_duration_seconds,
@@ -262,7 +262,7 @@ class TestMetricsModule:
 
     def test_metrics_are_callable(self):
         """测试监控指标可调用"""
-        from src.data.quality.detectors.metrics import (
+from src.data.quality.detectors.metrics import (
             anomalies_detected_total,
             data_drift_score,
         )
@@ -279,7 +279,7 @@ class TestModularStructure:
 
     def test_import_from_main_module(self):
         """测试从主模块导入"""
-        from src.data.quality.detectors import (
+from src.data.quality.detectors import (
             AdvancedAnomalyDetector,
             AnomalyDetectionResult,
             MachineLearningAnomalyDetector,
@@ -296,13 +296,13 @@ class TestModularStructure:
     def test_backward_compatibility_imports(self):
         """测试向后兼容性导入"""
         # 从原始文件导入应该仍然有效
-        from src.data.quality.anomaly_detector_original import (
+from src.data.quality.anomaly_detector_original import (
             AdvancedAnomalyDetector as old_advanced,
         )
-        from src.data.quality.anomaly_detector_original import (
+from src.data.quality.anomaly_detector_original import (
             AnomalyDetectionResult as old_result,
         )
-        from src.data.quality.anomaly_detector_original import (
+from src.data.quality.anomaly_detector_original import (
             StatisticalAnomalyDetector as old_statistical,
         )
 
@@ -312,7 +312,7 @@ class TestModularStructure:
 
     def test_all_classes_are_exported(self):
         """测试所有类都被导出"""
-        from src.data.quality.detectors import __all__
+from src.data.quality.detectors import __all__
 
         expected_exports = [
             "AnomalyDetectionResult",

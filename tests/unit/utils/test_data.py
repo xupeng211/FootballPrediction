@@ -583,7 +583,7 @@ class TestSystemHealth:
         mock_session.execute.side_effect = [mock_db_result, mock_logs_result]
 
         # 直接调用函数
-        from src.api.data import get_system_health
+from src.api.data import get_system_health
 
         health = await get_system_health(mock_session)
 
@@ -602,7 +602,7 @@ class TestSystemHealth:
         mock_session.execute.side_effect = Exception("Connection failed")
 
         # 直接调用函数
-        from src.api.data import get_system_health
+from src.api.data import get_system_health
 
         health = await get_system_health(mock_session)
 
@@ -637,7 +637,7 @@ class TestSystemHealth:
         mock_session.execute.side_effect = [mock_db_result, mock_logs_result]
 
         # 直接调用函数
-        from src.api.data import get_system_health
+from src.api.data import get_system_health
 
         health = await get_system_health(mock_session)
 

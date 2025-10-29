@@ -34,7 +34,7 @@ class MVPTester:
         print("🧪" + "=" * 60)
         print("🧪 MVP测试覆盖率验证")
         print("=" * 62)
-        print(f"🎯 目标: 提升测试覆盖率至80%")
+        print("🎯 目标: 提升测试覆盖率至80%")
         print(f"📅 测试时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("🧪" + "=" * 60)
 
@@ -128,7 +128,7 @@ class MVPTester:
 
                 if response.status_code == 200:
                     data = response.json()
-                    print(f"✅ 用户登录成功")
+                    print("✅ 用户登录成功")
                     self.coverage_areas["用户认证系统"] += 1
                     self.test_results.append(
                         {
@@ -377,7 +377,7 @@ class MVPTester:
                 if response.status_code == 404:
                     print("✅ 404错误处理正常")
                     error_tests_passed += 1
-        except:
+except Exception:
             pass
 
         # 测试无效数据
@@ -389,7 +389,7 @@ class MVPTester:
                 if response.status_code >= 400:
                     print("✅ 数据验证错误处理正常")
                     error_tests_passed += 1
-        except:
+except Exception:
             pass
 
         # 测试无效认证
@@ -402,7 +402,7 @@ class MVPTester:
                 if response.status_code == 401:
                     print("✅ 认证错误处理正常")
                     error_tests_passed += 1
-        except:
+except Exception:
             pass
 
         self.coverage_areas["错误处理"] = error_tests_passed
@@ -437,7 +437,7 @@ class MVPTester:
                     if len(teams_data) > 0 and len(matches_data) > 0:
                         print("✅ 球队和比赛数据都可用")
                         integrity_tests_passed += 1
-        except:
+except Exception:
             pass
 
         # 测试数据结构一致性
@@ -451,7 +451,7 @@ class MVPTester:
                         if "id" in sample_team and "name" in sample_team:
                             print("✅ 数据结构一致性良好")
                             integrity_tests_passed += 1
-        except:
+except Exception:
             pass
 
         self.coverage_areas["数据完整性"] = integrity_tests_passed
@@ -493,7 +493,7 @@ class MVPTester:
         overall_coverage = (total_score / total_possible) * 100 if total_possible > 0 else 0
 
         print(f"\n🌟 总体覆盖率: {overall_coverage:.1f}%")
-        print(f"🎯 目标覆盖率: 80%")
+        print("🎯 目标覆盖率: 80%")
 
         if overall_coverage >= 80:
             print("🎉 恭喜！已达到测试覆盖率目标！")

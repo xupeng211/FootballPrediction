@@ -122,7 +122,7 @@ class TestDatabaseOperationsPhase2:
 
         # 模拟数据库引擎创建
         with (
-            patch.object(manager, "_async_engine") as mock_engine,
+            patch.object(manager, "_async_engine"),
             patch.object(manager, "_async_session_factory") as mock_factory,
         ):
 
@@ -143,7 +143,7 @@ class TestDatabaseOperationsPhase2:
 
         # 模拟数据库引擎创建
         with (
-            patch.object(manager, "_engine") as mock_engine,
+            patch.object(manager, "_engine"),
             patch.object(manager, "_session_factory") as mock_factory,
         ):
 

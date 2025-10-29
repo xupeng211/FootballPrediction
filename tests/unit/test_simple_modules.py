@@ -14,7 +14,7 @@ sys.path.insert(0, "src")
 def test_health_module_basic():
     """基础健康模块测试"""
     try:
-        from src.api.health.utils import HealthChecker
+from src.api.health.utils import HealthChecker
 
         # 测试基本属性
         assert hasattr(HealthChecker, "__name__")
@@ -35,7 +35,7 @@ def test_health_module_basic():
 def test_di_container_basic():
     """基础 DI 容器测试"""
     try:
-        from src.core.di import DIContainer
+from src.core.di import DIContainer
 
         container = DIContainer()
         assert container is not None
@@ -51,7 +51,7 @@ def test_di_container_basic():
 def test_audit_service_basic():
     """基础审计服务测试"""
     try:
-        from src.services.audit_service import AuditService
+from src.services.audit_service import AuditService
 
         # 测试类定义
         assert AuditService is not None

@@ -62,7 +62,7 @@ class {class_name}:
                         try:
                             instance = attr()
                             break
-                        except:
+except Exception:
                             continue
 
             # 如果没有找到类，至少验证模块存在
@@ -118,7 +118,7 @@ class {class_name}:
         try:
             import asyncio
             asyncio.run(test_async())
-        except:
+except Exception:
             pytest.skip("异步功能测试跳过")
 
     def test_data_validation(self):

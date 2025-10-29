@@ -266,7 +266,7 @@ class TestAlertManager:
         """测试告警频率限制"""
         # 快速创建多个相同类型的告警
         for i in range(10):
-            alert = alert_manager.create_alert(
+            alert_manager.create_alert(
                 type=AlertType.ERROR,
                 severity=AlertSeverity.HIGH,
                 message="Database error",

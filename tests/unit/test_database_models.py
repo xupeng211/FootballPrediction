@@ -180,8 +180,8 @@ class TestDatabaseModelIntegration:
     def test_model_imports(self):
         """测试模型导入"""
         # 验证所有模型都可以正常导入
-        from src.database.base import BaseModel
-        from src.database.models.team import Team, TeamForm
+from src.database.base import BaseModel
+from src.database.models.team import Team, TeamForm
 
         assert Team is not None
         assert TeamForm is not None

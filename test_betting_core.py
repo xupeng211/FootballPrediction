@@ -587,19 +587,19 @@ class BettingCoreTester:
 
         if "summary" in self.test_results:
             summary = self.test_results["summary"]
-            print(f"\n📈 总体结果:")
+            print("\n📈 总体结果:")
             print(f"  - 总测试数: {summary['total_tests']}")
             print(f"  - 通过测试数: {summary['total_passed']}")
             print(f"  - 总体准确率: {summary['overall_accuracy']*100:.1f}%")
 
             critical = summary["critical_scores"]
-            print(f"\n🔧 关键功能评分:")
+            print("\n🔧 关键功能评分:")
             print(f"  - EV计算精度: {critical['ev_calculation']*100:.1f}%")
             print(f"  - Kelly准则: {critical['kelly_criterion']*100:.1f}%")
             print(f"  - SRS合规性: {critical['srs_compliance']*100:.1f}%")
             print(f"  - 风险评估: {critical['risk_assessment']*100:.1f}%")
 
-        print(f"\n📋 详细测试结果:")
+        print("\n📋 详细测试结果:")
         for test_name, result in self.test_results["individual_tests"].items():
             status_icon = (
                 "✅"

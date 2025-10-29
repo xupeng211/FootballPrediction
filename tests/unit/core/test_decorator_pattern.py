@@ -318,7 +318,7 @@ class TestConcreteDecorators:
 
         decorator = AuthDecorator(mock_component, auth_service=mock_auth_service)
 
-        from src.core.exceptions import AuthenticationError
+from src.core.exceptions import AuthenticationError
 
         with pytest.raises(AuthenticationError):
             await decorator.execute(token="invalid_token")
@@ -333,7 +333,7 @@ class TestConcreteDecorators:
         await decorator.execute(key="user1")
 
         # 第三次应该失败
-        from src.core.exceptions import RateLimitError
+from src.core.exceptions import RateLimitError
 
         with pytest.raises(RateLimitError):
             await decorator.execute(key="user1")
@@ -370,7 +370,7 @@ class TestConcreteDecorators:
 
         decorator = TimeoutDecorator(mock_component, timeout_seconds=0.1)
 
-        from src.core.exceptions import TimeoutError
+from src.core.exceptions import TimeoutError
 
         with pytest.raises(TimeoutError):
             await decorator.execute()

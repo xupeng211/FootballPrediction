@@ -1,3 +1,4 @@
+import pytest
 #!/usr/bin/env python3
 """
 最终覆盖率提升脚本

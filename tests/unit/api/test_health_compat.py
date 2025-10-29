@@ -60,7 +60,7 @@ class TestHealthCompatibility:
     def test_backward_compatibility(self):
         """测试：向后兼容性"""
         # 验证可以从旧的导入路径访问
-        from src.api.health import router as old_router
+from src.api.health import router as old_router
 
         # 验证与新导入路径一致
         try:

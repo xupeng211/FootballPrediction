@@ -41,7 +41,7 @@ class SimpleSRSApiTester:
             async with self.session.get(f"{BASE_URL}/predictions-srs-simple/health") as response:
                 if response.status == 200:
                     data = await response.json()
-                    print(f"✅ 健康检查成功")
+                    print("✅ 健康检查成功")
                     print(f"📊 状态: {data.get('status')}")
                     print(f"🔧 服务: {data.get('service')}")
                     print(f"💾 数据库独立: {data.get('database_independent')}")
@@ -87,7 +87,7 @@ class SimpleSRSApiTester:
                 if response.status == 200:
                     data = await response.json()
 
-                    print(f"✅ 预测成功")
+                    print("✅ 预测成功")
                     print(f"📊 响应时间: {response_time:.2f}ms")
                     print(f"🏆 预测结果: {data.get('prediction')}")
                     print(f"📈 概率分布: {data.get('probabilities')}")
@@ -96,7 +96,7 @@ class SimpleSRSApiTester:
 
                     # 检查SRS合规性
                     srs_compliance = data.get("srs_compliance", {})
-                    print(f"\n📋 SRS合规性检查:")
+                    print("\n📋 SRS合规性检查:")
                     print(
                         f"   响应时间 ≤ 200ms: {'✅' if response_time <= 200 else '❌'} ({response_time:.2f}ms)"
                     )
@@ -177,7 +177,7 @@ class SimpleSRSApiTester:
                 if response.status == 200:
                     data = await response.json()
 
-                    print(f"✅ 批量预测成功")
+                    print("✅ 批量预测成功")
                     print(f"📊 总响应时间: {response_time:.2f}ms")
                     print(f"🔢 总比赛数: {data.get('total_matches')}")
                     print(f"✅ 成功预测数: {data.get('successful_predictions')}")
@@ -186,7 +186,7 @@ class SimpleSRSApiTester:
 
                     # 检查SRS合规性
                     srs_compliance = data.get("srs_compliance", {})
-                    print(f"\n📋 SRS合规性检查:")
+                    print("\n📋 SRS合规性检查:")
                     print(
                         f"   支持1000并发: {'✅' if srs_compliance.get('supports_1000_concurrent') else '❌'}"
                     )
@@ -201,7 +201,7 @@ class SimpleSRSApiTester:
                     # 显示前5个预测结果
                     predictions = data.get("predictions", [])
                     if predictions:
-                        print(f"\n📊 前5个预测结果:")
+                        print("\n📊 前5个预测结果:")
                         for i, pred in enumerate(predictions[:5], 1):
                             print(
                                 f"  {i}. {pred['match_id']}: {pred['prediction']} - {pred['probabilities']}"
@@ -228,23 +228,23 @@ class SimpleSRSApiTester:
                 if response.status == 200:
                     data = await response.json()
 
-                    print(f"✅ 指标获取成功")
-                    print(f"\n🏆 模型性能指标:")
+                    print("✅ 指标获取成功")
+                    print("\n🏆 模型性能指标:")
                     model_metrics = data.get("model_metrics", {})
                     for key, value in model_metrics.items():
                         print(f"   {key}: {value}")
 
-                    print(f"\n⚡ 性能指标:")
+                    print("\n⚡ 性能指标:")
                     perf_metrics = data.get("performance_metrics", {})
                     for key, value in perf_metrics.items():
                         print(f"   {key}: {value}")
 
-                    print(f"\n📋 SRS合规性:")
+                    print("\n📋 SRS合规性:")
                     srs_compliance = data.get("srs_compliance", {})
                     for key, value in srs_compliance.items():
                         print(f"   {key}: {value}")
 
-                    print(f"\n🔧 系统信息:")
+                    print("\n🔧 系统信息:")
                     system_info = data.get("system_info", {})
                     for key, value in system_info.items():
                         print(f"   {key}: {value}")
@@ -308,7 +308,7 @@ class SimpleSRSApiTester:
         successful_requests = sum(1 for r in results if isinstance(r, dict) and r.get("success"))
         failed_requests = concurrent_requests - successful_requests
 
-        print(f"✅ 并发测试完成")
+        print("✅ 并发测试完成")
         print(f"🔢 并发请求数: {concurrent_requests}")
         print(f"✅ 成功请求: {successful_requests}")
         print(f"❌ 失败请求: {failed_requests}")
@@ -352,7 +352,7 @@ class SimpleSRSApiTester:
                 if response.status == 200:
                     data = await response.json()
 
-                    print(f"✅ 大批量预测成功")
+                    print("✅ 大批量预测成功")
                     print(f"📊 比赛数量: {data.get('total_matches')}")
                     print(f"✅ 成功预测: {data.get('successful_predictions')}")
                     print(f"❌ 失败预测: {data.get('failed_predictions')}")

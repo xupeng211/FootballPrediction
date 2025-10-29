@@ -1,3 +1,4 @@
+import pytest
 #!/usr/bin/env python3
 """
 批量测试脚本，目标覆盖率达到30%

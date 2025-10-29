@@ -272,7 +272,7 @@ class SeedUserTester:
             async with httpx.AsyncClient(timeout=5) as client:
                 response = await client.get("http://localhost:8000/")
                 return response.status_code == 200
-        except:
+except Exception:
             return False
 
     async def _visit_docs(self) -> bool:
@@ -281,7 +281,7 @@ class SeedUserTester:
             async with httpx.AsyncClient(timeout=5) as client:
                 response = await client.get("http://localhost:8000/docs")
                 return response.status_code == 200
-        except:
+except Exception:
             return False
 
     async def _check_health(self) -> bool:
@@ -290,7 +290,7 @@ class SeedUserTester:
             async with httpx.AsyncClient(timeout=5) as client:
                 response = await client.get(HEALTH_URL)
                 return response.status_code == 200
-        except:
+except Exception:
             return False
 
     async def _browse_data(self) -> bool:
@@ -304,7 +304,7 @@ class SeedUserTester:
                     if response.status_code == 200:
                         success_count += 1
                 return success_count > 0
-        except:
+except Exception:
             return False
 
     async def _view_metrics(self) -> bool:
@@ -313,7 +313,7 @@ class SeedUserTester:
             async with httpx.AsyncClient(timeout=5) as client:
                 response = await client.get(f"{API_BASE_URL}/monitoring/metrics")
                 return response.status_code == 200
-        except:
+except Exception:
             return False
 
     async def run_seed_user_test(self):
@@ -322,7 +322,7 @@ class SeedUserTester:
         print("=" * 60)
         print(f"📅 测试时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"🔗 API地址: {API_BASE_URL}")
-        print(f"👥 测试用户: 现有账户模拟")
+        print("👥 测试用户: 现有账户模拟")
         print("=" * 60)
 
         # 1. 系统健康检查
@@ -341,7 +341,7 @@ class SeedUserTester:
         monitoring_ok = await self.test_monitoring_system()
 
         # 5. 用户交互模拟
-        print(f"\n🎭 模拟用户交互...")
+        print("\n🎭 模拟用户交互...")
         for user_config in EXISTING_USERS:
             session_data = await self.simulate_user_interaction(user_config)
             self.user_sessions[user_config["username"]] = session_data
@@ -361,13 +361,13 @@ class SeedUserTester:
         successful_tests = sum(1 for r in self.test_results if r["success"])
         success_rate = (successful_tests / total_tests * 100) if total_tests > 0 else 0
 
-        print(f"📈 核心功能测试:")
+        print("📈 核心功能测试:")
         print(f"   ✅ 系统健康检查: {'通过' if health_ok else '失败'}")
         print(f"   ✅ API可访问性: {'通过' if api_ok else '失败'}")
         print(f"   ✅ 数据库功能: {'通过' if db_ok else '失败'}")
         print(f"   ✅ 监控系统: {'通过' if monitoring_ok else '失败'}")
 
-        print(f"\n👥 用户交互测试:")
+        print("\n👥 用户交互测试:")
         total_interactions = 0
         successful_interactions = 0
 
@@ -385,7 +385,7 @@ class SeedUserTester:
             interaction_success_rate = successful_interactions / total_interactions * 100
             print(f"   📊 总体交互成功率: {interaction_success_rate:.1f}%")
 
-        print(f"\n📊 测试统计:")
+        print("\n📊 测试统计:")
         print(f"   总测试数: {total_tests}")
         print(f"   成功测试: {successful_tests}")
         print(f"   失败测试: {total_tests - successful_tests}")
@@ -395,13 +395,13 @@ class SeedUserTester:
         durations = [r["duration"] for r in self.test_results if r["duration"] > 0]
         if durations:
             avg_duration = sum(durations) / len(durations)
-            print(f"\n⏱️  性能统计:")
+            print("\n⏱️  性能统计:")
             print(f"   平均响应时间: {avg_duration:.2f}秒")
             print(f"   最慢响应: {max(durations):.2f}秒")
             print(f"   最快响应: {min(durations):.2f}秒")
 
         # 系统整体评估
-        print(f"\n🎯 系统整体评估:")
+        print("\n🎯 系统整体评估:")
         core_functions_ok = all([health_ok, api_ok, db_ok, monitoring_ok])
         user_experience_good = success_rate >= 80
 
@@ -416,7 +416,7 @@ class SeedUserTester:
             print("   🌱 建议: 优先修复核心功能问题")
 
         # 种子用户测试建议
-        print(f"\n🌱 种子用户测试建议:")
+        print("\n🌱 种子用户测试建议:")
         if health_ok and db_ok:
             print("   ✅ 系统基础稳定，可以创建测试用户账户")
             print("   ✅ 数据连接正常，可以存储用户数据")

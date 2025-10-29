@@ -331,14 +331,14 @@ class DataIntegrityVerifier:
         failed_tests = total_tests - successful_tests
         success_rate = (successful_tests / total_tests * 100) if total_tests > 0 else 0
 
-        print(f"📈 验证统计:")
+        print("📈 验证统计:")
         print(f"   总测试数: {total_tests}")
         print(f"   成功测试: {successful_tests}")
         print(f"   失败测试: {failed_tests}")
         print(f"   成功率: {success_rate:.1f}%")
 
         # 数据质量分析
-        print(f"\n🎯 数据质量分析:")
+        print("\n🎯 数据质量分析:")
         real_data_count = 0
         total_data_count = 0
 
@@ -358,12 +358,12 @@ class DataIntegrityVerifier:
             )
 
         # 系统状态
-        print(f"\n🔧 系统状态:")
+        print("\n🔧 系统状态:")
         print(f"   数据完整性: {'✅ 通过' if completeness_ok else '❌ 失败'}")
         print(f"   数据一致性: {'✅ 通过' if consistency_ok else '❌ 失败'}")
 
         # 综合评估
-        print(f"\n🎯 数据质量评估:")
+        print("\n🎯 数据质量评估:")
 
         # 计算综合得分
         quality_score = success_rate * 0.4
@@ -375,24 +375,20 @@ class DataIntegrityVerifier:
         if overall_score >= 80:
             print("   🟢 优秀: 数据质量良好，可以支持生产使用")
             system_status = "优秀"
-            production_ready = True
         elif overall_score >= 65:
             print("   🟡 良好: 数据质量基本满足需求，建议改进")
             system_status = "良好"
-            production_ready = True
         elif overall_score >= 50:
             print("   🟡 一般: 数据质量可用，需要优化")
             system_status = "一般"
-            production_ready = False
         else:
             print("   🔴 需要改进: 数据质量存在较多问题")
             system_status = "需要改进"
-            production_ready = False
 
         print(f"   📊 综合评分: {overall_score:.1f}/100")
 
         # 改进建议
-        print(f"\n🚀 改进建议:")
+        print("\n🚀 改进建议:")
         if real_data_count == 0:
             print("   🔴 优先任务:")
             print("      • 替换TODO假数据为真实数据")
@@ -410,7 +406,7 @@ class DataIntegrityVerifier:
 
         # 种子用户测试就绪度
         seed_user_ready = overall_score >= 65
-        print(f"\n🌱 种子用户测试就绪度:")
+        print("\n🌱 种子用户测试就绪度:")
         if seed_user_ready:
             print("   🟢 系统已准备好进行种子用户测试")
             print("   📋 可以开始真实用户测试流程")
@@ -418,7 +414,7 @@ class DataIntegrityVerifier:
             print("   🔴 建议优先解决数据质量问题")
             print("   📋 完成数据优化后再进行用户测试")
 
-        print(f"\n🎊 数据完整性验证完成!")
+        print("\n🎊 数据完整性验证完成!")
         print(f"   系统状态: {system_status}")
         print(f"   验证时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("=" * 60)

@@ -541,7 +541,7 @@ class TestDatabaseConfigPerformance:
         start_time = time.perf_counter()
 
         for _ in range(1000):
-            config = DatabaseConfig(
+            DatabaseConfig(
                 host="localhost",
                 port=5432,
                 database="test_db",
@@ -587,7 +587,7 @@ class TestDatabaseConfigPerformance:
             start_time = time.perf_counter()
 
             for _ in range(100):
-                config = get_database_config("development")
+                get_database_config("development")
 
             end_time = time.perf_counter()
             duration = end_time - start_time
@@ -666,7 +666,7 @@ class TestDatabaseConfigIntegration:
             # 多次获取配置应该返回相同结果
             config1 = get_database_config("test")
             config2 = get_database_config("test")
-            config3 = get_test_database_config()
+            get_test_database_config()
 
             assert config1.host == config2.host == "consistent.db.com"
             assert config1.password == config2.password == "consistent_pass"

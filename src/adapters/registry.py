@@ -11,6 +11,10 @@ from src.adapters.base import Adapter
 class AdapterRegistry:
     """适配器注册表"""
 
+# 全局注册表实例
+_global_registry = AdapterRegistry()
+
+
     def __init__(self, factory=None):
         self.factory = factory or self._create_default_factory()
         self.adapters: Dict[str, Adapter] = {}
@@ -44,27 +48,23 @@ class AdapterRegistry:
             del self.adapters[name]
 
     def get_adapter(self, name: str) -> Optional[Adapter]:
-        """获取适配器实例"""
+        """获取适配器"""
         return self.adapters.get(name)
 
-    def get_adapter_names(self) -> List[str]:
-        """获取所有适配器名称"""
-        return list(self.adapters.keys())
-
-    def get_group_adapters(self, group: str) -> List[Adapter]:
-        """获取指定组的适配器"""
+    def get_adapters_by_group(self, group: str) -> List[Adapter]:
+        """按组获取适配器"""
         return self.groups.get(group, [])
 
-    def clear(self) -> None:
-        """清除所有适配器"""
-        self.adapters.clear()
-        self.groups.clear()
+    def list_adapters(self) -> List[str]:
+        """列出所有适配器名称"""
+        return list(self.adapters.keys())
+
+    def list_groups(self) -> List[str]:
+        """列出所有组名称"""
+        return list(self.groups.keys())
 
 
 # 全局注册表实例
-_global_registry = AdapterRegistry()
-
-
 def get_global_registry() -> AdapterRegistry:
     """获取全局注册表实例"""
     return _global_registry

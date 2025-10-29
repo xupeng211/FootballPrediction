@@ -214,7 +214,7 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if FEATURE_EXAMPLES_AVAILABLE:
-        from src.data.features.examples import (
+from src.data.features.examples import (
             example_get_online_features,
             example_initialize_feature_store,
             example_write_match_features,

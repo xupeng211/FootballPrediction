@@ -61,7 +61,7 @@ async def test_data_parsing():
     logger.info("Testing data parsing functionality...")
 
     try:
-        scraper = OddsPortalScraper()
+        OddsPortalScraper()
 
         # 模拟HTML响应进行解析测试
         sample_html = """

@@ -381,7 +381,7 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if MAINTENANCE_TASKS_AVAILABLE:
-        from src.tasks.maintenance_tasks import (
+from src.tasks.maintenance_tasks import (
             BackupTask,
             CacheCleanupTask,
             DatabaseMaintenanceTask,

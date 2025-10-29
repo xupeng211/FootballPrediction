@@ -360,7 +360,7 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if ALERT_HANDLERS_AVAILABLE:
-        from src.monitoring.alert_handlers import (
+from src.monitoring.alert_handlers import (
             AlertHandler,
             AlertManager,
             EmailAlertHandler,

@@ -124,7 +124,7 @@ class TestAPIDependenciesSimple:
 
     def test_jwt_error_handling(self):
         """测试JWT错误处理"""
-        from src.api.dependencies import JWTError
+from src.api.dependencies import JWTError
 
         # 验证JWTError类存在
         assert JWTError is not None

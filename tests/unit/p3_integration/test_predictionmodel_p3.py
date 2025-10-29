@@ -36,7 +36,7 @@ class TestPredictionModelAdvanced:
     @pytest.mark.skipif(not PREDICTION_MODEL_AVAILABLE, reason="PredictionModel模块不可用")
     def test_prediction_model_import(self):
         """测试预测模型导入"""
-        from src.models import prediction
+from src.models import prediction
 
         assert prediction is not None
         assert hasattr(prediction, "Prediction")

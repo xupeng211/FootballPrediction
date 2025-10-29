@@ -215,7 +215,7 @@ class TestI18nUtils:
 
     def test_supported_languages(self):
         """测试支持的语言列表"""
-        from src.utils.i18n import supported_languages
+from src.utils.i18n import supported_languages
 
         assert isinstance(supported_languages, dict)
         assert "zh" in supported_languages
@@ -227,7 +227,7 @@ class TestI18nUtils:
 
     def test_locale_dir(self):
         """测试本地化目录"""
-        from src.utils.i18n import LOCALE_DIR
+from src.utils.i18n import LOCALE_DIR
 
         assert LOCALE_DIR.name == "locales"
         assert LOCALE_DIR.parent.name == "utils"
@@ -267,7 +267,7 @@ class TestI18nUtils:
 
     def test_i18n_module_import(self):
         """测试i18n模块可以正常导入"""
-        from src.utils import i18n
+from src.utils import i18n
 
         # 验证模块属性
         assert hasattr(i18n, "supported_languages")

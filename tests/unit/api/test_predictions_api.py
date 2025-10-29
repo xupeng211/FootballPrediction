@@ -46,7 +46,7 @@ except ImportError:
             "created_at": datetime.now(),
         }
 
-    print(f"智能Mock兼容修复模式：使用Mock FastAPI应用确保预测API测试稳定性")
+    print("智能Mock兼容修复模式：使用Mock FastAPI应用确保预测API测试稳定性")
 
 
 @pytest.mark.unit

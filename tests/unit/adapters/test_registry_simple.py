@@ -307,7 +307,7 @@ class TestModuleIntegration:
 
     def test_module_exports(self):
         """测试模块导出完整性"""
-        from src.adapters import registry_simple
+from src.adapters import registry_simple
 
         expected_exports = [
             "AdapterRegistry",

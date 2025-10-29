@@ -298,7 +298,7 @@ class TestModuleNotAvailable:
 def test_module_imports():
     """测试：模块导入"""
     if DATA_COLLECTION_CORE_AVAILABLE:
-        from src.tasks.data_collection_core import (
+from src.tasks.data_collection_core import (
             DataCollectionTask,
             celery_app,
             logger,
@@ -328,8 +328,8 @@ def test_class_exported():
 def test_celery_app_isolation():
     """测试：Celery应用隔离"""
     if DATA_COLLECTION_CORE_AVAILABLE:
-        from src.tasks.data_collection_core import celery_app as app1
-        from src.tasks.data_collection_core import celery_app as app2
+from src.tasks.data_collection_core import celery_app as app1
+from src.tasks.data_collection_core import celery_app as app2
 
         # 应该是同一个实例
         assert app1 is app2

@@ -1,3 +1,4 @@
+import pytest
 #!/usr/bin/env python3
 """
 冲刺30%覆盖率脚本

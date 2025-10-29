@@ -155,7 +155,7 @@ for pkg in packages:
     try:
         version = pkg_resources.get_distribution(pkg).version
         print(f"   {pkg}: {version}")
-    except:
+except Exception:
         print(f"   {pkg}: not found")
 """
 

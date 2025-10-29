@@ -12,13 +12,13 @@ class TestBaseModule:
 
     def test_base_data_task_import(self):
         """测试基础任务类导入"""
-        from src.scheduler.tasks.base import BaseDataTask
+from src.scheduler.tasks.base import BaseDataTask
 
         assert BaseDataTask is not None
 
     def test_base_data_task_methods(self):
         """测试基础任务类方法"""
-        from src.scheduler.tasks.base import BaseDataTask
+from src.scheduler.tasks.base import BaseDataTask
 
         # 创建实例
         task = BaseDataTask()
@@ -35,7 +35,7 @@ class TestCollectionModule:
 
     def test_collection_imports(self):
         """测试数据采集任务导入"""
-        from src.scheduler.tasks.collection import (
+from src.scheduler.tasks.collection import (
             collect_fixtures,
             collect_live_scores_conditional,
             collect_odds,
@@ -49,7 +49,7 @@ class TestCollectionModule:
         """测试数据采集任务是Celery任务"""
         from celery import Task
 
-        from src.scheduler.tasks.collection import (
+from src.scheduler.tasks.collection import (
             collect_fixtures,
             collect_live_scores_conditional,
             collect_odds,
@@ -65,7 +65,7 @@ class TestFeaturesModule:
 
     def test_features_import(self):
         """测试特征计算任务导入"""
-        from src.scheduler.tasks.features import calculate_features_batch
+from src.scheduler.tasks.features import calculate_features_batch
 
         assert calculate_features_batch is not None
 
@@ -73,7 +73,7 @@ class TestFeaturesModule:
         """测试特征计算任务是Celery任务"""
         from celery import Task
 
-        from src.scheduler.tasks.features import calculate_features_batch
+from src.scheduler.tasks.features import calculate_features_batch
 
         assert isinstance(calculate_features_batch, Task)
 
@@ -83,7 +83,7 @@ class TestMaintenanceModule:
 
     def test_maintenance_imports(self):
         """测试维护任务导入"""
-        from src.scheduler.tasks.maintenance import backup_database, cleanup_data
+from src.scheduler.tasks.maintenance import backup_database, cleanup_data
 
         assert cleanup_data is not None
         assert backup_database is not None
@@ -92,7 +92,7 @@ class TestMaintenanceModule:
         """测试维护任务是Celery任务"""
         from celery import Task
 
-        from src.scheduler.tasks.maintenance import backup_database, cleanup_data
+from src.scheduler.tasks.maintenance import backup_database, cleanup_data
 
         assert isinstance(cleanup_data, Task)
         assert isinstance(backup_database, Task)
@@ -103,7 +103,7 @@ class TestQualityModule:
 
     def test_quality_import(self):
         """测试质量检查任务导入"""
-        from src.scheduler.tasks.quality import run_quality_checks
+from src.scheduler.tasks.quality import run_quality_checks
 
         assert run_quality_checks is not None
 
@@ -111,7 +111,7 @@ class TestQualityModule:
         """测试质量检查任务是Celery任务"""
         from celery import Task
 
-        from src.scheduler.tasks.quality import run_quality_checks
+from src.scheduler.tasks.quality import run_quality_checks
 
         assert isinstance(run_quality_checks, Task)
 
@@ -121,7 +121,7 @@ class TestPredictionsModule:
 
     def test_predictions_import(self):
         """测试预测任务导入"""
-        from src.scheduler.tasks.predictions import generate_predictions
+from src.scheduler.tasks.predictions import generate_predictions
 
         assert generate_predictions is not None
 
@@ -129,7 +129,7 @@ class TestPredictionsModule:
         """测试预测任务是Celery任务"""
         from celery import Task
 
-        from src.scheduler.tasks.predictions import generate_predictions
+from src.scheduler.tasks.predictions import generate_predictions
 
         assert isinstance(generate_predictions, Task)
 
@@ -139,7 +139,7 @@ class TestProcessingModule:
 
     def test_processing_import(self):
         """测试数据处理任务导入"""
-        from src.scheduler.tasks.processing import process_bronze_to_silver
+from src.scheduler.tasks.processing import process_bronze_to_silver
 
         assert process_bronze_to_silver is not None
 
@@ -147,7 +147,7 @@ class TestProcessingModule:
         """测试数据处理任务是Celery任务"""
         from celery import Task
 
-        from src.scheduler.tasks.processing import process_bronze_to_silver
+from src.scheduler.tasks.processing import process_bronze_to_silver
 
         assert isinstance(process_bronze_to_silver, Task)
 
@@ -157,7 +157,7 @@ class TestModularStructure:
 
     def test_import_from_main_module(self):
         """测试从主模块导入"""
-        from src.scheduler.tasks import (
+from src.scheduler.tasks import (
             BaseDataTask,
             backup_database,
             calculate_features_batch,
@@ -184,9 +184,9 @@ class TestModularStructure:
     def test_backward_compatibility_imports(self):
         """测试向后兼容性导入"""
         # 从原始文件导入应该仍然有效
-        from src.scheduler.tasks import BaseDataTask as old_base
-        from src.scheduler.tasks import calculate_features_batch as old_features
-        from src.scheduler.tasks import collect_fixtures as old_fixtures
+from src.scheduler.tasks import BaseDataTask as old_base
+from src.scheduler.tasks import calculate_features_batch as old_features
+from src.scheduler.tasks import collect_fixtures as old_fixtures
 
         assert old_base is not None
         assert old_fixtures is not None
@@ -194,7 +194,7 @@ class TestModularStructure:
 
     def test_task_aliases_exist(self):
         """测试任务别名存在"""
-        from src.scheduler.tasks import (
+from src.scheduler.tasks import (
             calculate_features_task,
             collect_fixtures_task,
             collect_odds_task,
@@ -210,7 +210,7 @@ class TestModularStructure:
 
     def test_task_aliases_are_correct(self):
         """测试任务别名正确"""
-        from src.scheduler.tasks import (
+from src.scheduler.tasks import (
             calculate_features_batch,
             calculate_features_task,
             collect_fixtures,
@@ -223,7 +223,7 @@ class TestModularStructure:
 
     def test_all_tasks_are_exported(self):
         """测试所有任务都被导出"""
-        from src.scheduler.tasks import __all__
+from src.scheduler.tasks import __all__
 
         expected_exports = [
             "BaseDataTask",

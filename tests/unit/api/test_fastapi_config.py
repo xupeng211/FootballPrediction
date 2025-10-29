@@ -27,7 +27,7 @@ import pytest
 
 
 
-        from src._config.openapi_config import setup_openapi
+from src._config.openapi_config import setup_openapi
 
 IMPORTS_AVAILABLE = True
 IMPORT_SUCCESS = True

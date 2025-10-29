@@ -129,7 +129,7 @@ class TestSessionFunctions:
 
     def test_session_functions_import(self):
         """测试：会话函数可以导入"""
-        from src.database.connection import (
+from src.database.connection import (
             get_admin_session,
             get_async_admin_session,
             get_async_reader_session,
@@ -156,7 +156,7 @@ class TestSessionFunctions:
         """测试：获取数据库会话返回会话对象"""
         from sqlalchemy.orm import Session
 
-        from src.database.connection import get_db_session
+from src.database.connection import get_db_session
 
         # 这可能会尝试初始化数据库，但我们只检查返回类型
         try:
@@ -170,7 +170,7 @@ class TestSessionFunctions:
         """测试：获取异步会话返回异步会话对象"""
         from sqlalchemy.ext.asyncio import AsyncSession
 
-        from src.database.connection import get_async_session
+from src.database.connection import get_async_session
 
         try:
             session = get_async_session()

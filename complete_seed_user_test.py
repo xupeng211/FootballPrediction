@@ -238,7 +238,7 @@ class SeedUserTester:
         except Exception as e:
             self.log_test("创建预测", False, f"预测功能测试失败: {str(e)}")
 
-        print(f"\n   📈 预测功能结果: 测试完成")
+        print("\n   📈 预测功能结果: 测试完成")
         return success_count >= 2  # 至少健康检查和最近预测成功
 
     async def test_monitoring_system(self):
@@ -268,7 +268,7 @@ class SeedUserTester:
 
                         if "prometheus" in name:
                             # Prometheus指标通常很长，只显示前几行
-                            text = response.text[:200]
+                            response.text[:200]
                             print(f"   📊 {name}: Prometheus指标格式正常")
                         else:
                             data = response.json()
@@ -395,14 +395,14 @@ class SeedUserTester:
         failed_tests = total_tests - successful_tests
         success_rate = (successful_tests / total_tests * 100) if total_tests > 0 else 0
 
-        print(f"📈 测试统计:")
+        print("📈 测试统计:")
         print(f"   总测试数: {total_tests}")
         print(f"   成功测试: {successful_tests}")
         print(f"   失败测试: {failed_tests}")
         print(f"   成功率: {success_rate:.1f}%")
 
         # 用户旅程测试结果
-        print(f"\n🎯 用户旅程测试结果:")
+        print("\n🎯 用户旅程测试结果:")
         journey_steps = [
             ("用户注册", test_results["registration"]),
             ("用户登录", test_results["login"]),
@@ -427,7 +427,7 @@ class SeedUserTester:
 
         # 失败的测试
         if failed_tests > 0:
-            print(f"\n❌ 失败的测试:")
+            print("\n❌ 失败的测试:")
             for result in self.test_results:
                 if not result["success"]:
                     print(f"   • {result['test_name']}: {result['details']}")
@@ -436,13 +436,13 @@ class SeedUserTester:
         durations = [r["duration"] for r in self.test_results if r["duration"] > 0]
         if durations:
             avg_duration = sum(durations) / len(durations)
-            print(f"\n⏱️  性能统计:")
+            print("\n⏱️  性能统计:")
             print(f"   平均响应时间: {avg_duration:.2f}秒")
             print(f"   最慢响应: {max(durations):.2f}秒")
             print(f"   最快响应: {min(durations):.2f}秒")
 
         # 系统评估
-        print(f"\n🎯 种子用户测试评估:")
+        print("\n🎯 种子用户测试评估:")
         if success_rate >= 85 and journey_completion >= 80:
             print("   🟢 优秀: 系统完全支持种子用户测试，用户体验良好")
             system_status = "优秀"
@@ -465,7 +465,7 @@ class SeedUserTester:
         print(f"\n🎨 用户体验评分: {ux_score:.1f}/100")
 
         # 最终建议
-        print(f"\n🚀 最终建议:")
+        print("\n🚀 最终建议:")
         if deployment_ready:
             print("   ✨ 系统已准备好进行种子用户测试")
             print("   📋 建议的种子用户测试计划:")
@@ -492,7 +492,7 @@ class SeedUserTester:
             print("      3. 改善错误处理")
             print("      4. 重新进行种子用户测试")
 
-        print(f"\n🎊 种子用户测试完成!")
+        print("\n🎊 种子用户测试完成!")
         print(f"   系统状态: {system_status}")
         print(f"   测试时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("=" * 60)

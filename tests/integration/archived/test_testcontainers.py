@@ -82,7 +82,7 @@ class TestPostgreSQLIntegration:
 
     async def test_database_migrations(self, postgres_container):
         """测试：数据库迁移"""
-        from src.database.connection import DatabaseManager
+from src.database.connection import DatabaseManager
 
         # 使用测试数据库URL
         db_manager = DatabaseManager(
@@ -126,7 +126,7 @@ class TestPostgreSQLIntegration:
         from sqlalchemy.ext.declarative import declarative_base
         from sqlalchemy.orm import sessionmaker
 
-        from src.database.repositories import BaseRepository
+from src.database.repositories import BaseRepository
 
         # 创建模型
         Base = declarative_base()
@@ -210,7 +210,7 @@ class TestRedisIntegration:
 
     async def test_redis_cache_operations(self, redis_container):
         """测试：Redis缓存操作"""
-        from src.cache.redis_manager import RedisManager
+from src.cache.redis_manager import RedisManager
 
         # 创建Redis管理器
         redis_manager = RedisManager(host=redis_container["host"], port=redis_container["port"])

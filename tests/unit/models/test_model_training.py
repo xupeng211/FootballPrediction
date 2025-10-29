@@ -320,7 +320,7 @@ class TestModuleAll:
 
     def test_module_all_contents(self):
         """测试__all__内容"""
-        from src.models import model_training
+from src.models import model_training
 
         expected_all = [
             "BaselineModelTrainer",
@@ -336,7 +336,7 @@ class TestModuleAll:
 
     def test_module_all_exports_exist(self):
         """测试__all__中的导出都存在"""
-        from src.models import model_training
+from src.models import model_training
 
         for name in model_training.__all__:
             assert hasattr(model_training, name)
