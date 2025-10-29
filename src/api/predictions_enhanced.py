@@ -1,3 +1,4 @@
+from datetime import datetime
 """
 增强版预测API - 符合SRS规范
 SRS Compliant Enhanced Prediction API

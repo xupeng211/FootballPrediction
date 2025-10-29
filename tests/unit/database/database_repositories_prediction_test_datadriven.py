@@ -1,3 +1,4 @@
+from datetime import datetime
 """
 Issue #83-C 数据驱动测试: database.repositories.prediction
 覆盖率目标: 60% → 85%

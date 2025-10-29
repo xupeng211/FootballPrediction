@@ -1,3 +1,4 @@
+from datetime import datetime
 """测试赔率收集器模块"""
 
 import asyncio

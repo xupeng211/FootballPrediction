@@ -1,7 +1,8 @@
+from datetime import datetime
+
+
 # 智能Mock兼容修复模式 - 预测API测试增强
 # 解决模块导入失败和patch路径错误问题
-
-
 """
 预测 API 测试
 Prediction API Tests

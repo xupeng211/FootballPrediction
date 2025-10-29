@@ -1,3 +1,4 @@
+from datetime import datetime
 """
 智能Mock兼容修复模式 - Prediction Repository测试修复
 解决模块导入失败和函数调用问题

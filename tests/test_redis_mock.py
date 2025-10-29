@@ -1,6 +1,8 @@
+from typing import Optional
+from typing import Any
+
+
 # Redis Mock配置用于测试
-
-
 class MockRedis:
     """模拟Redis客户端"""
 

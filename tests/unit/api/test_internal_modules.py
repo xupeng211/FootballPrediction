@@ -1,3 +1,4 @@
+from datetime import datetime
 """
 内部模块测试 - 测试CQRS、事件、观察者等内部模块
 Internal Modules Tests - Test CQRS, Events, Observers and other internal modules

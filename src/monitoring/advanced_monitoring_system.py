@@ -1,3 +1,6 @@
+from typing import List
+from typing import Dict
+from typing import Any
 """
 高级质量监控系统
 Issue #123: Phase 3: 高级质量监控系统开发

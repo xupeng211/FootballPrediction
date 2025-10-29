@@ -1,73 +1,78 @@
+from typing import Set
+from typing import Optional
+from typing import Any
+from typing import List
+from typing import Dict
 import logging
 from datetime import datetime
 from dataclasses import dataclass, field
 from enum import Enum
 
 
-# 检查比赛ID
-
-# 检查联赛
-
-# 检查用户
-
-# 检查置信度
-
-# 检查事件源
-
-# 检查自定义过滤器
 
 
-# 检查事件类型
-
-# 应用过滤器
 
 
-# 启动清理任务
 
 
-# 创建过滤器
-
-# 创建订阅
-
-# 添加订阅
 
 
-# 更新事件订阅者索引
 
 
-# 移除订阅
-
-# 更新事件订阅者索引
-
-# 如果连接没有任何订阅了，清理索引
 
 
-# 清理事件订阅者索引
-
-# 删除连接的所有订阅
 
 
-# 检查是否超过非活跃阈值
 
 
-# 清理没有活跃订阅的连接
 
 
-# 便捷订阅函数
 
 
-# 订阅所有比赛事件类型
 
 
-# 订阅所有赔率事件类型
 
 
-# 全局订阅管理器实例
 
 
-# 需要导入asyncio
+
+
+
+
+
+
+
+
+
+
+
 import asyncio
 
+# 检查比赛ID
+# 检查联赛
+# 检查用户
+# 检查置信度
+# 检查事件源
+# 检查自定义过滤器
+# 检查事件类型
+# 应用过滤器
+# 启动清理任务
+# 创建过滤器
+# 创建订阅
+# 添加订阅
+# 更新事件订阅者索引
+# 移除订阅
+# 更新事件订阅者索引
+# 如果连接没有任何订阅了，清理索引
+# 清理事件订阅者索引
+# 删除连接的所有订阅
+# 检查是否超过非活跃阈值
+# 清理没有活跃订阅的连接
+# 便捷订阅函数
+# 订阅所有比赛事件类型
+# 订阅所有赔率事件类型
+# 全局订阅管理器实例
+# 需要导入asyncio
 """
 订阅管理模块 - WebSocket事件订阅
 Subscription Management Module - WebSocket Event Subscriptions

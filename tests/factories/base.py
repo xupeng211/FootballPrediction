@@ -1,3 +1,5 @@
+from typing import List
+from typing import Dict
 """
 基础测试工厂类
 提供所有工厂的基类和通用功能
@@ -6,6 +8,7 @@
 import uuid
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
+from typing import Any
 
 
 class BaseFactory(ABC):

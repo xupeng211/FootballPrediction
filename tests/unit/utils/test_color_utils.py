@@ -1,3 +1,6 @@
+from typing import List
+from typing import Tuple
+from typing import Dict
 """
 颜色工具测试
 """

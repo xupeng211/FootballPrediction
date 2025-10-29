@@ -1,3 +1,4 @@
+from datetime import datetime
 """
 Prediction领域模型边界条件测试 - 修复版本
 基于实际Prediction模型API的完整测试覆盖，目标达到90%+覆盖率
