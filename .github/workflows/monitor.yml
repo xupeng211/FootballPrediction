@@ -1,0 +1,26 @@
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Check Application Health
+      run: "\n                           curl -f http://football-prediction.local/health\
+        \ || exit 1\n                           echo \"✅ Application health check\
+        \ passed\"\n                         "
+    - name: Check Database Connection
+      run: "\n                           docker-compose exec -T db pg_isready -U postgres\
+        \ || exit 1\n                           echo \"✅ Database connection check\
+        \ passed\"\n                         "
+    - name: Check Redis Connection
+      run: "\n                           docker-compose exec -T redis redis-cli ping\
+        \ || exit 1\n                           echo \"✅ Redis connection check passed\"\
+        \n                         "
+    - name: Run Quality Checks
+      run: "\n                           python3 scripts/quality_guardian.py --check-only\n\
+        \                           echo \"✅ Quality checks passed\"\n           \
+        \              "
+name: System Monitoring
+'on':
+  schedule:
+  - cron: '*/5 * * * *'
+  workflow_dispatch: {}
