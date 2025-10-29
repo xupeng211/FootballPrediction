@@ -542,7 +542,9 @@ __all__ = [
 # 导出
 # 导出
 
-def register_betting_api(app):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
+# 导出
+# 导出
+def register_betting_api(app):  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解  # TODO: 添加返回类型注解
     """注册投注API路由"""
     app.include_router(router)
     logger.info("投注API路由注册完成")

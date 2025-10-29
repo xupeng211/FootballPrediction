@@ -323,7 +323,7 @@ class LSTMPredictor:
             self.logger.error(f"预测失败: {e}")
             raise
 
-    def predict_future(self, hours_ahead: int = 6) -> PredictionResult:
+    async def predict_future(self, hours_ahead: int = 6) -> PredictionResult:
         """预测未来质量指标"""
         try:
             # 获取最近的历史数据

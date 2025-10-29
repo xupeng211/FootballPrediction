@@ -11,9 +11,6 @@ from src.adapters.base import Adapter
 class AdapterRegistry:
     """适配器注册表"""
 
-# 全局注册表实例
-# 全局注册表实例
-# 全局注册表实例
     def __init__(self, factory=None):
         self.factory = factory or self._create_default_factory()
         self.adapters: Dict[str, Adapter] = {}
@@ -47,45 +44,29 @@ class AdapterRegistry:
         """注销适配器"""
         if name in self.adapters:
             del self.adapters[name]
-            # 从组中移除
-            for group_name, group_adapters in self.groups.items():
-                self.groups[group_name] = [a for a in group_adapters if a.name != name]
 
-    def get(self, name: str) -> Optional[Adapter]:
-        """获取适配器"""
+    def get_adapter(self, name: str) -> Optional[Adapter]:
+        """获取适配器实例"""
         return self.adapters.get(name)
 
-    def list_adapters(self) -> List[str]:
-        """列出所有适配器名称"""
+    def get_adapter_names(self) -> List[str]:
+        """获取所有适配器名称"""
         return list(self.adapters.keys())
 
-    def list_groups(self) -> List[str]:
-        """列出所有组名称"""
-        return list(self.groups.keys())
-
     def get_group_adapters(self, group: str) -> List[Adapter]:
-        """获取组中的适配器"""
+        """获取指定组的适配器"""
         return self.groups.get(group, [])
 
     def clear(self) -> None:
-        """清空注册表"""
+        """清除所有适配器"""
         self.adapters.clear()
         self.groups.clear()
 
-    async def initialize(self):
-        """初始化适配器注册表"""
-        # 基础初始化，可以在这里注册默认适配器
-        pass
-
-    def get_adapter(self, name: str) -> Optional[Adapter]:
-        """获取适配器（别名方法，与get方法功能相同）"""
-        return self.get(name)
-
 
 # 全局注册表实例
+_global_registry = AdapterRegistry()
+
+
 def get_global_registry() -> AdapterRegistry:
     """获取全局注册表实例"""
-    global _global_registry
-    if _global_registry is None:
-        _global_registry = AdapterRegistry()
     return _global_registry

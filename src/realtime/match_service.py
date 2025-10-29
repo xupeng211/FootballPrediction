@@ -74,6 +74,8 @@ class MatchInfo:
         """更新状态，返回是否有变化"""
         if self.status != status:
             old_status = self.status
+            # 记录状态变化（用于日志或调试）
+            logger.debug(f"Status changed from {old_status} to {status}")
             self.status = status
             self.last_update = datetime.now()
             return True

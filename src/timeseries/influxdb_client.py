@@ -431,6 +431,8 @@ class InfluxDBManager:
                 |> range(start: -365d, stop: {delete_time})
                 |> drop()
             '''
+            # 记录删除查询（用于调试）
+            logger.debug(f"Generated delete query for data older than {delete_time}: {delete_query.strip()}")
 
             # 执行删除 (注意：这需要适当的权限)
             # self.query_api.query(delete_query)
