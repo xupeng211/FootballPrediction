@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import {
   Card,
   Row,
@@ -6,7 +6,6 @@ import {
   Select,
   DatePicker,
   Button,
-  Space,
   Table,
   Tag,
   Statistic,
@@ -21,12 +20,13 @@ import {
   ReloadOutlined,
   LineChartOutlined,
 } from '@ant-design/icons';
-import ReactECharts from 'echarts-for-react';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState, AppDispatch } from '../store';
-import { fetchMatches, selectFilteredMatches } from '../store/slices/matchesSlice';
-import { MatchData } from '../services/api';
-import HistoryTrendChart from './HistoryTrendChart';
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from '../store';
+import { fetchMatches } from '../store/slices/matchesSlice';
+
+// 懒加载ECharts组件
+const ReactECharts = lazy(() => import('echarts-for-react').then(module => ({ default: module.default })));
+const HistoryTrendChart = lazy(() => import('./HistoryTrendChart'));
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
@@ -57,7 +57,6 @@ interface AnalyticsData {
 
 const Analytics: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const matches = useSelector(selectFilteredMatches);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
@@ -68,7 +67,7 @@ const Analytics: React.FC = () => {
   });
 
   // 加载分析数据
-  const loadAnalyticsData = async () => {
+  const loadAnalyticsData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -137,7 +136,7 @@ const Analytics: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // 联赛性能图表配置
   const getLeaguePerformanceOption = () => {
@@ -351,7 +350,7 @@ const Analytics: React.FC = () => {
   useEffect(() => {
     dispatch(fetchMatches());
     loadAnalyticsData();
-  }, [dispatch, filters]);
+  }, [dispatch, filters, loadAnalyticsData]);
 
   if (loading) {
     return (
@@ -462,22 +461,26 @@ const Analytics: React.FC = () => {
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={24} lg={12}>
           <Card>
-            <ReactECharts
-              option={getLeaguePerformanceOption()}
-              style={{ height: 400 }}
-              notMerge={true}
-              lazyUpdate={true}
-            />
+            <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}>加载图表...</div>}>
+              <ReactECharts
+                option={getLeaguePerformanceOption()}
+                style={{ height: 400 }}
+                notMerge={true}
+                lazyUpdate={true}
+              />
+            </Suspense>
           </Card>
         </Col>
         <Col xs={24} lg={12}>
           <Card>
-            <ReactECharts
-              option={getPredictionTrendsOption()}
-              style={{ height: 400 }}
-              notMerge={true}
-              lazyUpdate={true}
-            />
+            <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}>加载图表...</div>}>
+              <ReactECharts
+                option={getPredictionTrendsOption()}
+                style={{ height: 400 }}
+                notMerge={true}
+                lazyUpdate={true}
+              />
+            </Suspense>
           </Card>
         </Col>
       </Row>
@@ -485,7 +488,9 @@ const Analytics: React.FC = () => {
       {/* 历史趋势分析 */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col span={24}>
-          <HistoryTrendChart height={400} />
+          <Suspense fallback={<div style={{ textAlign: 'center', padding: '50px' }}>加载历史趋势...</div>}>
+            <HistoryTrendChart height={400} />
+          </Suspense>
         </Col>
       </Row>
 

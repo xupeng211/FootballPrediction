@@ -6,23 +6,18 @@ import {
   Statistic,
   Button,
   Tag,
-  Tooltip,
   Alert,
   Space,
-  Progress,
   Table,
   Modal,
   InputNumber,
-  Switch,
 } from 'antd';
 import {
   DollarCircleOutlined,
   TrophyOutlined,
   ExclamationCircleOutlined,
   InfoCircleOutlined,
-  CalculatorOutlined,
   StarOutlined,
-  LineChartOutlined,
 } from '@ant-design/icons';
 import ReactECharts from 'echarts-for-react';
 import { PredictionResponse } from '../services/api';
