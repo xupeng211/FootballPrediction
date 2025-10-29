@@ -1,0 +1,35 @@
+{
+  "status": "healthy",
+  "service": "football-prediction-api",
+  "version": "1.0.0-test",
+  "timestamp": "2025-10-29T14:30:00Z",
+  "uptime": "0 days, 0 hours, 5 minutes",
+  "environment": "test",
+  "dependencies": {
+    "database": {
+      "status": "connected",
+      "type": "postgresql",
+      "host": "db",
+      "port": 5432,
+      "database": "football_prediction_test"
+    },
+    "cache": {
+      "status": "connected",
+      "type": "redis",
+      "host": "redis",
+      "port": 6379,
+      "database": 0
+    }
+  },
+  "endpoints": {
+    "health": "/health",
+    "api_health": "/api/v1/health",
+    "metrics": "/metrics",
+    "info": "/api/v1/info"
+  },
+  "monitoring": {
+    "prometheus": "http://prometheus:9090",
+    "grafana": "http://grafana:3000",
+    "loki": "http://loki:3100"
+  }
+}
